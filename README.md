@@ -1,2 +1,3 @@
-# phosphor
+PhosphorJS
+==========
 The PhosphorJS library
