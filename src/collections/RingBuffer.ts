@@ -11,7 +11,7 @@ export = RingBuffer;
 
 
 /**
- * A generic ring buffer container.
+ * A concrete implementation of IQueue.
  *
  * A ring buffer is a queue with a maximum size and constant time access
  * to its elements. Once the ring buffer reaches its maximum size, newly
