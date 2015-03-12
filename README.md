@@ -1,3 +1,3 @@
-PhosphorJS
-==========
-The PhosphorJS library
+Phosphor
+========
+The Phosphor UI library
