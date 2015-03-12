@@ -5,21 +5,20 @@
 |
 | The full license is in the file LICENSE, distributed with this software.
 |----------------------------------------------------------------------------*/
-'use strict';
 
 
 /**
- * A pair of index and value.
+ * The result of a find operation.
  */
 export
-interface IItem<T> {
+interface IFindResult<T> {
   /**
-   * The index of the value.
+   * The index of the found value.
    */
   index: number;
 
   /**
-   * The value of interest.
+   * The found value.
    */
   value: T;
 }
@@ -39,7 +38,7 @@ function findFirst<T>(
   array: T[],
   predicate: (v: T) => boolean,
   fromIndex = 0,
-  wrap = false): IItem<T> {
+  wrap = false): IFindResult<T> {
   var n = array.length;
   var f = fromIndex | 0;
   if (f > n) f = n;
@@ -78,7 +77,7 @@ function findLast<T>(
   array: T[],
   predicate: (v: T) => boolean,
   fromIndex = array.length,
-  wrap = false): IItem<T> {
+  wrap = false): IFindResult<T> {
   var n = array.length;
   var f = fromIndex | 0;
   if (f >= n) f = n - 1;
@@ -108,7 +107,7 @@ function findLast<T>(
  *
  * The array must be sorted.
  *
- * Returns `array.length` if no matching value is found.
+ * Returns `array.length` if all elements compare `<` than `value`.
  */
 export
 function lowerBound<T, U>(
@@ -138,7 +137,7 @@ function lowerBound<T, U>(
  *
  * The array must be sorted.
  *
- * Returns `array.length` if no matching value is found.
+ * Returns `0` if all elements compare `<=` than `value`.
  */
 export
 function upperBound<T, U>(
@@ -174,10 +173,7 @@ export
 function binaryFindFirst<T, U>(
   array: T[],
   value: U,
-  compare: (a: T, b: U) => number): IItem<T> {
-  if (array.length === 0) {
-    return void 0;
-  }
+  compare: (a: T, b: U) => number): IFindResult<T> {
   var i = lowerBound(array, value, compare);
   if (i === array.length) {
     return void 0;
@@ -201,10 +197,7 @@ export
 function binaryFindLast<T, U>(
   array: T[],
   value: U,
-  compare: (a: T, b: U) => number): IItem<T> {
-  if (array.length === 0) {
-    return void 0;
-  }
+  compare: (a: T, b: U) => number): IFindResult<T> {
   var i = upperBound(array, value, compare);
   if (i === 0) {
     return void 0;
@@ -247,8 +240,11 @@ function insertAt<T>(array: T[], value: T, index: number): number {
  * Returns the index of the inserted value.
  */
 export
-function insortLower<T>(array: T[], value: T, cmp: ICompare<T, T>): number {
-  var i = lowerBound(array, value, cmp);
+function insortLower<T>(
+  array: T[],
+  value: T,
+  compare: (a: T, b: T) => number): number {
+  var i = lowerBound(array, value, compare);
   return insertAt(array, value, i);
 }
 
@@ -261,8 +257,11 @@ function insortLower<T>(array: T[], value: T, cmp: ICompare<T, T>): number {
  * Returns the index of the inserted value.
  */
 export
-function insortUpper<T>(array: T[], value: T, cmp: ICompare<T, T>): number {
-  var i = upperBound(array, value, cmp);
+function insortUpper<T>(
+  array: T[],
+  value: T,
+  compare: (a: T, b: T) => number): number {
+  var i = upperBound(array, value, compare);
   return insertAt(array, value, i);
 }
 
@@ -275,7 +274,7 @@ function insortUpper<T>(array: T[], value: T, cmp: ICompare<T, T>): number {
  * Returns `undefined` if the index is out of range.
  */
 export
-function takeAt<T>(array: T[], index: number): T {
+function removeAt<T>(array: T[], index: number): T {
   var n = array.length;
   var i = index | 0;
   if (i < 0) i += n;
@@ -305,9 +304,9 @@ function removeFirst<T>(
   array: T[],
   predicate: (v: T) => boolean,
   fromIndex?: number,
-  wrap?: boolean): IItem<T> {
+  wrap?: boolean): IFindResult<T> {
   var found = findFirst(array, predicate, fromIndex, wrap);
-  if (found !== void 0) takeAt(array, found.index);
+  if (found !== void 0) removeAt(array, found.index);
   return found;
 }
 
@@ -322,9 +321,9 @@ function removeLast<T>(
   array: T[],
   predicate: (v: T) => boolean,
   fromIndex?: number,
-  wrap?: boolean): IItem<T> {
+  wrap?: boolean): IFindResult<T> {
   var found = findLast(array, predicate, fromIndex, wrap);
-  if (found !== void 0) takeAt(array, found.index);
+  if (found !== void 0) removeAt(array, found.index);
   return found;
 }
 
@@ -359,7 +358,7 @@ function reverseSlice<T>(array: T[], start = 0, end = array.length - 1): T[] {
  * If the array is sorted, the result will have all unique elements.
  */
 export
-function unique<T>(array: T[], compare: ICompare<T, T>): T[] {
+function unique<T>(array: T[], compare: (a: T, b: T) => number): T[] {
   var n = array.length;
   if (n === 0) {
     return [];
@@ -382,7 +381,7 @@ function unique<T>(array: T[], compare: ICompare<T, T>): T[] {
  */
 export
 function makeSet<T>(array: T[], compare: (a: T, b: T) => number): T[] {
-  var sorted = array.slice.sort(compare);
+  var sorted = array.slice().sort(compare);
   return unique(sorted, compare);
 }
 
