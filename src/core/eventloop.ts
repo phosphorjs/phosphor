@@ -85,12 +85,10 @@ function clearPendingEvents(handler: IEventHandler): void {
  * method. If any installed event hook returns true from `hookEvent`,
  * the event will not be delivered to the handler.
  *
- * The most recently installed event hook is executed first. If the
- * hook is already installed, it is moved to the front of the list.
+ * The most recently installed event hook is executed first.
  */
 export
 function installEventHook(handler: IEventHandler, hook: IEventHook): void {
-  removeEventHook(handler, hook);
   var hooks = ensureEventHooks(handler);
   hooks.push(new EventHookWrapper(hook));
 }
