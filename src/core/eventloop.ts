@@ -91,8 +91,8 @@ function clearPendingEvents(handler: IEventHandler): void {
 export
 function installEventHook(handler: IEventHandler, hook: IEventHook): void {
   removeEventHook(handler, hook);
-  var data = ensureData(handler);
-  data.eventHooks = { next: data.eventHooks, hook: hook };
+  var hooks = ensureEventHooks(handler);
+  hooks.push(new EventHookWrapper(hook));
 }
 
 
@@ -101,7 +101,7 @@ function installEventHook(handler: IEventHandler, hook: IEventHook): void {
  *
  * It is safe to call this function while the event hook is executing.
  *
- * If the given hook is not installed, this is a no-op.
+ * If the hook is not installed, this is a no-op.
  */
 export
 function removeEventHook(handler: IEventHandler, hook: IEventHook): void {
@@ -109,22 +109,20 @@ function removeEventHook(handler: IEventHandler, hook: IEventHook): void {
   if (data === void 0) {
     return;
   }
-  var link = data.eventHooks;
-  var prev: typeof link = null;
-  while (link !== null) {
-    if (link.hook === hook) {
-      if (prev === null) {
-        data.eventHooks = link.next;
-      } else {
-        prev.next = link.next;
-      }
-      link.hook = null;
-      link.next = null;
-      return;
-    }
-    prev = link;
-    link = link.next;
+  var hooks = data.eventHooks;
+  if (hooks === null || hooks.length === 0) {
+    return;
   }
+  var rest: EventHookWrapper[] = [];
+  for (var i = 0, n = hooks.length; i < n; ++i) {
+    var wrapper = hooks[i];
+    if (wrapper.equals(hook)) {
+      wrapper.clear();
+    } else {
+      rest.push(wrapper);
+    }
+  }
+  data.eventHooks = rest;
 }
 
 
@@ -142,12 +140,8 @@ function clearEventData(handler: IEventHandler): void {
   if (data.postedEvents !== null) {
     data.postedEvents.clear();
   }
-  var link = data.eventHooks;
-  while (link !== null) {
-    var next = link.next;
-    link.hook = null;
-    link.next = null;
-    link = next;
+  if (data.eventHooks !== null) {
+    data.eventHooks.forEach(hook => hook.clear());
   }
   handlerDataMap.delete(handler);
 }
@@ -178,22 +172,6 @@ var raf = requestAnimationFrame;
 
 
 /**
- * A node in a singly-linked event hook list.
- */
-interface IEventHookLink {
-  /**
-   * The next link in the list.
-   */
-  next: IEventHookLink;
-
-  /**
-   * Construct a new event hook link.
-   */
-  hook: IEventHook;
-}
-
-
-/**
  * An object which holds data for an event handler.
  */
 interface IEventHandlerData {
@@ -205,12 +183,50 @@ interface IEventHandlerData {
   /**
    * The event hooks installed for the handler.
    */
-  eventHooks: IEventHookLink;
+  eventHooks: EventHookWrapper[];
 }
 
 
 /**
- * Get the data object for an event handler, creating it if necessary.
+ * A thin wrapper around an event hook.
+ */
+class EventHookWrapper {
+  /**
+   * construct a new event hook wrapper.
+   */
+  constructor(hook: IEventHook) {
+    this._m_hook = hook;
+  }
+
+  /**
+   * Clear the contents of the wrapper.
+   */
+  clear(): void {
+    this._m_hook = null;
+  }
+
+  /**
+   * Test whether the wrapper is equivalent to the given hook.
+   */
+  equals(hook: IEventHook): boolean {
+    return this._m_hook === hook;
+  }
+
+  /**
+   * Invoke the hook with the given handler and event.
+   *
+   * Returns true if the event should be filtered, false otherwise.
+   */
+  invoke(handler: IEventHandler, event: ICoreEvent): boolean {
+    return this._m_hook ? this._m_hook.hookEvent(handler, event) : false;
+  }
+
+  private _m_hook: IEventHook;
+}
+
+
+/**
+ * Get the data object for a handler, creating it if necessary.
  */
 function ensureData(handler: IEventHandler): IEventHandlerData {
   var data = handlerDataMap.get(handler);
@@ -235,32 +251,36 @@ function ensureEventQueue(handler: IEventHandler): IQueue<ICoreEvent> {
 
 
 /**
+ * Get the event hooks array for a handler, creating it if necessary.
+ */
+function ensureEventHooks(handler: IEventHandler): EventHookWrapper[] {
+  var data = ensureData(handler);
+  if (data.eventHooks === null) {
+    data.eventHooks = [];
+  }
+  return data.eventHooks;
+}
+
+
+/**
  * Run the event hooks installed for the event handler.
  *
  * Returns true if the event should be filtered, false otherwise.
  */
 function runEventHooks(handler: IEventHandler, event: ICoreEvent): boolean {
   var data = handlerDataMap.get(handler);
-  if (data === void 0 || data.eventHooks === null) {
+  if (data === void 0) {
     return false;
   }
-  var link = data.eventHooks;
-  if (link.next === null) {
-    return link.hook.hookEvent(handler, event);
+  var hooks = data.eventHooks;
+  if (hooks === null) {
+    return false;
   }
-  var links: typeof link[] = [];
-  while (link !== null) {
-    links.push(link);
-    link = link.next;
+  var filtered = false;
+  for (var i = hooks.length - 1; i >= 0; --i) {
+    filtered = hooks[i].invoke(handler, event) || filtered;
   }
-  var filter = false;
-  for (var i = 0, n = links.length; i < n; ++i) {
-    link = links[i];
-    if (link.hook !== null && link.hook.hookEvent(handler, event)) {
-      filter = true;
-    }
-  }
-  return filter;
+  return filtered;
 }
 
 
