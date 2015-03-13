@@ -5,134 +5,155 @@
 |
 | The full license is in the file LICENSE, distributed with this software.
 |----------------------------------------------------------------------------*/
-import IDisposable = require('./IDisposable');
-
 export = Signal;
 
 
 /**
- * An object which manages a collection of listeners.
+ * An object used for loosely coupled inter-object communication.
+ *
+ * A signal is emitted by an object in response to some event. User
+ * code may connect listener functions (slots) to the signal to be
+ * notified when that event occurs. This is a simple and efficient
+ * form of the pub-sub pattern which promotes type-safe and loosely
+ * coupled communication between objects.
  */
-class Signal<T, U> implements IDisposable {
+class Signal<T, U> {
   /**
    * Construct a new signal.
    */
   constructor() { }
 
   /**
-   * Dispose of the resources held by the signal.
-   */
-  dispose(): void {
-    var link = this._m_link;
-    while (link !== null) {
-      var next = link.next;
-      link.listener = null;
-      link.thisArg = null;
-      link.next = null;
-      link = next;
-    }
-    this._m_link = null;
-  }
-
-  /**
-   * Connect a listener to the signal.
+   * Connect a slot to the signal.
    *
-   * If the listener is already connected, this is a no-op.
+   * Slot connections are not de-duplicated. If the slot is connected
+   * to the signal multiple times, it will be invoked multiple times
+   * when the signal is emitted.
    *
-   * A listener is not invoked if it is connected during dispatch.
+   * It is safe to connect a slot while the signal is being emitted.
+   * The slot will not be invoked until the next emit.
    */
-  connect(listener: (sender: T, args: U) => void, thisArg?: any): void {
-    var link = this._m_link;
-    var prev: typeof link = null;
-    while (link !== null) {
-      if (link.listener === listener && link.thisArg === thisArg) {
-        return;
-      }
-      prev = link;
-      link = link.next;
-    }
-    link = { next: null, listener: listener, thisArg: thisArg };
-    if (prev === null) {
-      this._m_link = link;
+  connect(slot: (sender: T, args: U) => void, thisArg?: any): void {
+    var wrapper = new SlotWrapper(slot, thisArg);
+    var slots = this._m_slots;
+    if (slots === null) {
+      this._m_slots = wrapper;
+    } else if (slots instanceof SlotWrapper) {
+      this._m_slots = [slots, wrapper];
     } else {
-      prev.next = link;
+      (<SlotWrapper<T, U>[]>slots).push(wrapper);
     }
   }
 
   /**
-   * Disconnect a listener from the signal.
+   * Disconnect a slot from the signal.
    *
-   * If the listener is not connected, this is a no-op.
+   * This will remove all connections to the slot, even if the slot
+   * was connected multiple times. If no slot is provided, all slots
+   * will be disconnected.
    *
-   * A listener is not invoked if it is removed during dispatch.
+   * It is safe to disconnect a slot while the signal is being emitted.
+   * The slot is removed immediately and will not be invoked.
    */
-  disconnect(listener: (sender: T, args: U) => void, thisArg?: any): void {
-    var link = this._m_link;
-    var prev: typeof link = null;
-    while (link !== null) {
-      if (link.listener === listener && link.thisArg === thisArg) {
-        if (prev === null) {
-          this._m_link = link.next;
-        } else {
-          prev.next = link.next;
-        }
-        link.listener = null;
-        link.thisArg = null;
-        link.next = null;
-        return;
+  disconnect(slot?: (sender: T, args: U) => void, thisArg?: any): void {
+    var slots = this._m_slots;
+    if (slots === null) {
+      return;
+    }
+    if (slots instanceof SlotWrapper) {
+      if (!slot || slots.equals(slot, thisArg)) {
+        slots.clear();
+        this._m_slots = null;
       }
-      prev = link;
-      link = link.next;
+    } else if (!slot) {
+      var array = <SlotWrapper<T, U>[]>slots;
+      for (var i = 0, n = array.length; i < n; ++i) {
+        array[i].clear();
+      }
+      this._m_slots = null;
+    } else {
+      var rest: SlotWrapper<T, U>[] = [];
+      var array = <SlotWrapper<T, U>[]>slots;
+      for (var i = 0, n = array.length; i < n; ++i) {
+        var wrapper = array[i];
+        if (wrapper.equals(slot, thisArg)) {
+          wrapper.clear();
+        } else {
+          rest.push(wrapper);
+        }
+      }
+      if (rest.length === 0) {
+        this._m_slots = null;
+      } else if (rest.length === 1) {
+        this._m_slots = rest[0];
+      } else {
+        this._m_slots = rest;
+      }
     }
   }
 
   /**
-   * Emit the signal and invoke its connected listeners.
+   * Emit the signal and invoke its connected slots.
    *
-   * Listeners are invoked in the order in which they are connected.
+   * Slots are invoked in the order in which they are connected.
    */
   emit(sender: T, args: U): void {
-    var link = this._m_link;
-    if (link === null) {
+    var slots = this._m_slots;
+    if (slots === null) {
       return;
     }
-    if (link.next === null) {
-      link.listener.call(link.thisArg, sender, args);
-      return;
-    }
-    var links: typeof link[] = [];
-    while (link !== null) {
-      links.push(link);
-      link = link.next;
-    }
-    for (var i = 0, n = links.length; i < n; ++i) {
-      link = links[i];
-      if (link.listener !== null) {
-        link.listener.call(link.thisArg, sender, args);
+    if (slots instanceof SlotWrapper) {
+      slots.invoke(sender, args);
+    } else {
+      var array = <SlotWrapper<T, U>[]>slots;
+      for (var i = 0, n = array.length; i < n; ++i) {
+        array[i].invoke(sender, args);
       }
     }
   }
 
-  private _m_link: IListenerLink<T, U> = null;
+  private _m_slots: SlotWrapper<T, U> | SlotWrapper<T, U>[] = null;
 }
 
 
 /**
- * A link in a signal listener chain.
+ * A thin wrapper around a slot function and context object.
  */
-interface IListenerLink<T, U> {
+class SlotWrapper<T, U> {
   /**
-   * The next link in the chain.
+   * Construct a new slot wrapper.
    */
-  next: IListenerLink<T, U>;
+  constructor(slot: (sender: T, args: U) => void, thisArg: any) {
+    this._m_slot = slot;
+    this._m_thisArg = thisArg;
+  }
 
   /**
-   * The listener function.
+   * Clear the contents of the slot wrapper.
    */
-  listener: (sender: T, args: U) => void;
+  clear(): void {
+    this._m_slot = null;
+    this._m_thisArg = null;
+  }
 
   /**
-   * The listener function context.
+   * Test whether the wrapper equals a slot and context.
    */
-  thisArg: any;
+  equals(slot: (sender: T, args: U) => void, thisArg: any): boolean {
+    return this._m_slot === slot && this._m_thisArg === thisArg;
+  }
+
+  /**
+   * Invoke the wrapper slot with the given sender and args.
+   *
+   * This is a no-op if the wrapper has been cleared.
+   */
+  invoke(sender: T, args: U): void {
+    if (this._m_slot) {
+      this._m_slot.call(this._m_thisArg, sender, args);
+    }
+  }
+
+  private _m_slot: (sender: T, args: U) => void;
+  private _m_thisArg: any;
 }
