@@ -28,14 +28,18 @@ function sendEvent(handler: IEventHandler, event: ICoreEvent): void {
 export
 function postEvent(handler: IEventHandler, event: ICoreEvent): void {
   var data = ensureData(handler);
-  if (data.postedEvents === null) {
-    data.postedEvents = new Queue<ICoreEvent>();
+  var postedEvents = data.postedEvents;
+  if (postedEvents === null) {
+    postedEvents = data.postedEvents = new Queue<ICoreEvent>();
   }
-  if (!compressEvent(handler, event, data.postedEvents)) {
-    data.postedEvents.push(event);
-    handlerQueue.push(handler);
-    wakeUpEventLoop();
+  if (postedEvents.length > 0 && handler.compressEvent !== void 0) {
+    if (handler.compressEvent(event, postedEvents)) {
+      return;
+    }
   }
+  postedEvents.push(event);
+  handlerQueue.push(handler);
+  wakeUpEventLoop();
 }
 
 
@@ -278,22 +282,6 @@ function runEventFilters(handler: IEventHandler, event: ICoreEvent): boolean {
     }
   }
   return false;
-}
-
-
-/**
- * Compress an event posted to the handler, if appropriate.
- *
- * Returns true if the event was compressed, false otherwise.
- */
-function compressEvent(
-  handler: IEventHandler,
-  event: ICoreEvent,
-  postedEvents: IQueue<ICoreEvent>): boolean {
-  if (postedEvents.length > 0 || handler.compressEvent === void 0) {
-    return false;
-  }
-  return handler.compressEvent(event, postedEvents);
 }
 
 
