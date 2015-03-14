@@ -5,8 +5,9 @@
 |
 | The full license is in the file LICENSE, distributed with this software.
 |----------------------------------------------------------------------------*/
-import ICoreEvent = require('./ICoreEvent');
 import IQueue = require('../collections/IQueue');
+
+import ICoreEvent = require('./ICoreEvent');
 
 export = IEventHandler;
 

@@ -5,10 +5,11 @@
 |
 | The full license is in the file LICENSE, distributed with this software.
 |----------------------------------------------------------------------------*/
+import Queue = require('../collections/Queue');
+
 import ICoreEvent = require('./ICoreEvent');
 import IEventFilter = require('./IEventFilter');
 import IEventHandler = require('./IEventHandler');
-import Queue = require('../collections/Queue');
 
 
 /**
