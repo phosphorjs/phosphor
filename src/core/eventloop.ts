@@ -6,8 +6,8 @@
 | The full license is in the file LICENSE, distributed with this software.
 |----------------------------------------------------------------------------*/
 import ICoreEvent = require('./ICoreEvent');
+import IEventFilter = require('./IEventFilter');
 import IEventHandler = require('./IEventHandler');
-import IEventHook = require('./IEventHook');
 import IQueue = require('../collections/IQueue');
 import Queue = require('../collections/Queue');
 
@@ -17,7 +17,7 @@ import Queue = require('../collections/Queue');
  */
 export
 function sendEvent(handler: IEventHandler, event: ICoreEvent): void {
-  var filtered = runEventHooks(handler, event);
+  var filtered = runEventFilters(handler, event);
   if (!filtered) handler.processEvent(event);
 }
 
@@ -27,9 +27,12 @@ function sendEvent(handler: IEventHandler, event: ICoreEvent): void {
  */
 export
 function postEvent(handler: IEventHandler, event: ICoreEvent): void {
-  var postedEvents = ensureEventQueue(handler);
-  if (!compressEvent(handler, event, postedEvents)) {
-    postedEvents.push(event);
+  var data = ensureData(handler);
+  if (data.postedEvents === null) {
+    data.postedEvents = new Queue<ICoreEvent>();
+  }
+  if (!compressEvent(handler, event, data.postedEvents)) {
+    data.postedEvents.push(event);
     handlerQueue.push(handler);
     wakeUpEventLoop();
   }
@@ -67,67 +70,77 @@ function hasPendingEvents(handler: IEventHandler): boolean {
 
 
 /**
- * Clear the pending posted events for the event handler.
+ * Install an event filter for an event handler.
+ *
+ * An event filter is invoked before the event handler's `processEvent`
+ * method. If the filter returns true from its `filterEvent` method,
+ * processing of the event will stop immediately.
+ *
+ * The most recently installed event filter is executed first.
  */
 export
-function clearPendingEvents(handler: IEventHandler): void {
-  var data = handlerDataMap.get(handler);
-  if (data !== void 0 && data.postedEvents !== null) {
-    data.postedEvents.clear();
+function installEventFilter(handler: IEventHandler, filter: IEventFilter): void {
+  var wrapper = new EventFilterWrapper(filter);
+  var data = ensureData(handler);
+  var filters = data.eventFilters;
+  if (filters === null) {
+    data.eventFilters = wrapper;
+  } else if (filters instanceof EventFilterWrapper) {
+    data.eventFilters = [filters, wrapper];
+  } else {
+    (<EventFilterWrapper[]>filters).push(wrapper);
   }
 }
 
 
 /**
- * Install an event hook for an event handler.
+ * Remove an event filter installed for an event handler.
  *
- * An event hook is invoked before the event handler's `processEvent`
- * method. If any installed event hook returns true from `hookEvent`,
- * the event will not be delivered to the handler.
+ * It is safe to call this function while the filter is executing.
  *
- * The most recently installed event hook is executed first.
+ * If the filter is not installed, this is a no-op.
  */
 export
-function installEventHook(handler: IEventHandler, hook: IEventHook): void {
-  var hooks = ensureEventHooks(handler);
-  hooks.push(new EventHookWrapper(hook));
-}
-
-
-/**
- * Remove an event hook installed for an event handler.
- *
- * It is safe to call this function while the event hook is executing.
- *
- * If the hook is not installed, this is a no-op.
- */
-export
-function removeEventHook(handler: IEventHandler, hook: IEventHook): void {
+function removeEventFilter(handler: IEventHandler, filter: IEventFilter): void {
   var data = handlerDataMap.get(handler);
   if (data === void 0) {
     return;
   }
-  var hooks = data.eventHooks;
-  if (hooks === null || hooks.length === 0) {
+  var filters = data.eventFilters;
+  if (filters === null) {
     return;
   }
-  var rest: EventHookWrapper[] = [];
-  for (var i = 0, n = hooks.length; i < n; ++i) {
-    var wrapper = hooks[i];
-    if (wrapper.equals(hook)) {
-      wrapper.clear();
+  if (filters instanceof EventFilterWrapper) {
+    if (filters.equals(filter)) {
+      filters.clear();
+      data.eventFilters = null;
+    }
+  } else {
+    var rest: EventFilterWrapper[] = [];
+    var array = <EventFilterWrapper[]>filters;
+    for (var i = 0, n = array.length; i < n; ++i) {
+      var wrapper = array[i];
+      if (wrapper.equals(filter)) {
+        wrapper.clear();
+      } else {
+        rest.push(wrapper);
+      }
+    }
+    if (rest.length === 0) {
+      data.eventFilters = null;
+    } else if (rest.length === 1) {
+      data.eventFilters = rest[0];
     } else {
-      rest.push(wrapper);
+      data.eventFilters = rest;
     }
   }
-  data.eventHooks = rest;
 }
 
 
 /**
  * Clear all data associated with the event handler.
  *
- * This removes all posted events and event hooks for the handler.
+ * This removes all posted events and event filters for the handler.
  */
 export
 function clearEventData(handler: IEventHandler): void {
@@ -138,8 +151,13 @@ function clearEventData(handler: IEventHandler): void {
   if (data.postedEvents !== null) {
     data.postedEvents.clear();
   }
-  if (data.eventHooks !== null) {
-    data.eventHooks.forEach(hook => hook.clear());
+  var filters = data.eventFilters;
+  if (filters !== null) {
+    if (filters instanceof EventFilterWrapper) {
+      filters.clear();
+    } else {
+      (<EventFilterWrapper[]>filters).forEach(wrapper => wrapper.clear());
+    }
   }
   handlerDataMap.delete(handler);
 }
@@ -179,47 +197,47 @@ interface IEventHandlerData {
   postedEvents: IQueue<ICoreEvent>;
 
   /**
-   * The event hooks installed for the handler.
+   * The event filters installed for the handler.
    */
-  eventHooks: EventHookWrapper[];
+  eventFilters: EventFilterWrapper | EventFilterWrapper[];
 }
 
 
 /**
- * A thin wrapper around an event hook.
+ * A thin wrapper around an event filter.
  */
-class EventHookWrapper {
+class EventFilterWrapper {
   /**
-   * construct a new event hook wrapper.
+   * construct a new event filter wrapper.
    */
-  constructor(hook: IEventHook) {
-    this._m_hook = hook;
+  constructor(filter: IEventFilter) {
+    this._m_filter = filter;
   }
 
   /**
    * Clear the contents of the wrapper.
    */
   clear(): void {
-    this._m_hook = null;
+    this._m_filter = null;
   }
 
   /**
-   * Test whether the wrapper is equivalent to the given hook.
+   * Test whether the wrapper is equivalent to the given filter.
    */
-  equals(hook: IEventHook): boolean {
-    return this._m_hook === hook;
+  equals(filter: IEventFilter): boolean {
+    return this._m_filter === filter;
   }
 
   /**
-   * Invoke the hook with the given handler and event.
+   * Invoke the filter with the given handler and event.
    *
    * Returns true if the event should be filtered, false otherwise.
    */
   invoke(handler: IEventHandler, event: ICoreEvent): boolean {
-    return this._m_hook ? this._m_hook.hookEvent(handler, event) : false;
+    return this._m_filter ? this._m_filter.filterEvent(handler, event) : false;
   }
 
-  private _m_hook: IEventHook;
+  private _m_filter: IEventFilter;
 }
 
 
@@ -229,7 +247,7 @@ class EventHookWrapper {
 function ensureData(handler: IEventHandler): IEventHandlerData {
   var data = handlerDataMap.get(handler);
   if (data === void 0) {
-    data = { postedEvents: null, eventHooks: null };
+    data = { postedEvents: null, eventFilters: null };
     handlerDataMap.set(handler, data);
   }
   return data;
@@ -237,48 +255,29 @@ function ensureData(handler: IEventHandler): IEventHandlerData {
 
 
 /**
- * Get the posted events queue for a handler, creating it if necessary.
- */
-function ensureEventQueue(handler: IEventHandler): IQueue<ICoreEvent> {
-  var data = ensureData(handler);
-  if (data.postedEvents === null) {
-    data.postedEvents = new Queue<ICoreEvent>();
-  }
-  return data.postedEvents;
-}
-
-
-/**
- * Get the event hooks array for a handler, creating it if necessary.
- */
-function ensureEventHooks(handler: IEventHandler): EventHookWrapper[] {
-  var data = ensureData(handler);
-  if (data.eventHooks === null) {
-    data.eventHooks = [];
-  }
-  return data.eventHooks;
-}
-
-
-/**
- * Run the event hooks installed for the event handler.
+ * Run the event filters installed for the event handler.
  *
  * Returns true if the event should be filtered, false otherwise.
  */
-function runEventHooks(handler: IEventHandler, event: ICoreEvent): boolean {
+function runEventFilters(handler: IEventHandler, event: ICoreEvent): boolean {
   var data = handlerDataMap.get(handler);
   if (data === void 0) {
     return false;
   }
-  var hooks = data.eventHooks;
-  if (hooks === null) {
+  var filters = data.eventFilters;
+  if (filters === null) {
     return false;
   }
-  var filtered = false;
-  for (var i = hooks.length - 1; i >= 0; --i) {
-    filtered = hooks[i].invoke(handler, event) || filtered;
+  if (filters instanceof EventFilterWrapper) {
+    return filters.invoke(handler, event);
   }
-  return filtered;
+  var array = <EventFilterWrapper[]>filters;
+  for (var i = array.length - 1; i >= 0; --i) {
+    if (array[i].invoke(handler, event)) {
+      return true;
+    }
+  }
+  return false;
 }
 
 

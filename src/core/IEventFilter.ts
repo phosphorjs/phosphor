@@ -8,17 +8,17 @@
 import ICoreEvent = require('./ICoreEvent');
 import IEventHandler = require('./IEventHandler');
 
-export = IEventHook;
+export = IEventFilter;
 
 
 /**
- * An object which hooks events dispatched to an event handler.
+ * An object which filters events dispatched to an event handler.
  */
-interface IEventHook {
+interface IEventFilter {
   /**
-   * Hook an event dispatched to a handler.
+   * Filter an event dispatched to a handler.
    *
    * Returns true if the event should be filtered, false otherwise.
    */
-  hookEvent(handler: IEventHandler, event: ICoreEvent): boolean;
+  filterEvent(handler: IEventHandler, event: ICoreEvent): boolean;
 }
