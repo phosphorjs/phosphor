@@ -16,7 +16,7 @@ export = IEventFilter;
  */
 interface IEventFilter {
   /**
-   * Filter an event dispatched to a handler.
+   * Filter an event dispatched to an event handler.
    *
    * Returns true if the event should be filtered, false otherwise.
    */
