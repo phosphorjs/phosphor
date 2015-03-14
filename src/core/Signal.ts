@@ -31,7 +31,7 @@ class Signal<T, U> {
    * when the signal is emitted.
    *
    * It is safe to connect a slot while the signal is being emitted.
-   * The slot will not be invoked until the next emit.
+   * The slot will be invoked the next time the signal is emitted.
    */
   connect(slot: (sender: T, args: U) => void, thisArg?: any): void {
     var wrapper = new SlotWrapper(slot, thisArg);
@@ -90,6 +90,26 @@ class Signal<T, U> {
         this._m_slots = rest;
       }
     }
+  }
+
+  /**
+   * Test whether a slot is connected to the signal.
+   */
+  isConnected(slot: (sender: T, args: U) => void, thisArg?: any): boolean {
+    var slots = this._m_slots;
+    if (slots === null) {
+      return false;
+    }
+    if (slots instanceof SlotWrapper) {
+      return slots.equals(slot, thisArg);
+    }
+    var array = <SlotWrapper<T, U>[]>slots;
+    for (var i = 0, n = array.length; i < n; ++i) {
+      if (array[i].equals(slot, thisArg)) {
+        return true;
+      }
+    }
+    return false;
   }
 
   /**
