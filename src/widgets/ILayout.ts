@@ -21,7 +21,6 @@ export = ILayout;
  * The parent widget will automatically install the layout as an
  * event filter, allowing the layout to react to all widget events.
  */
-export
 interface ILayout extends IEventFilter, IDisposable {
   /**
    * The parent widget of the layout.
