@@ -8,7 +8,6 @@
 import ICoreEvent = require('./ICoreEvent');
 import IEventFilter = require('./IEventFilter');
 import IEventHandler = require('./IEventHandler');
-import IQueue = require('../collections/IQueue');
 import Queue = require('../collections/Queue');
 
 
@@ -17,8 +16,7 @@ import Queue = require('../collections/Queue');
  */
 export
 function sendEvent(handler: IEventHandler, event: ICoreEvent): void {
-  var filtered = runEventFilters(handler, event);
-  if (!filtered) handler.processEvent(event);
+  getDispatcher(handler).sendEvent(event);
 }
 
 
@@ -27,35 +25,7 @@ function sendEvent(handler: IEventHandler, event: ICoreEvent): void {
  */
 export
 function postEvent(handler: IEventHandler, event: ICoreEvent): void {
-  var data = ensureData(handler);
-  var postedEvents = data.postedEvents;
-  if (postedEvents === null) {
-    postedEvents = data.postedEvents = new Queue<ICoreEvent>();
-  }
-  if (postedEvents.length > 0 && handler.compressEvent !== void 0) {
-    if (handler.compressEvent(event, postedEvents)) {
-      return;
-    }
-  }
-  postedEvents.push(event);
-  handlerQueue.push(handler);
-  wakeUpEventLoop();
-}
-
-
-/**
- * Send the first pending posted event to the event handler.
- */
-export
-function sendPendingEvent(handler: IEventHandler): void {
-  var data = handlerDataMap.get(handler);
-  if (data === void 0) {
-    return;
-  }
-  var postedEvents = data.postedEvents;
-  if (postedEvents !== null && postedEvents.length > 0) {
-    sendEvent(handler, postedEvents.pop());
-  }
+  getDispatcher(handler).postEvent(event);
 }
 
 
@@ -64,12 +34,16 @@ function sendPendingEvent(handler: IEventHandler): void {
  */
 export
 function hasPendingEvents(handler: IEventHandler): boolean {
-  var data = handlerDataMap.get(handler);
-  if (data === void 0) {
-    return false;
-  }
-  var postedEvents = data.postedEvents;
-  return postedEvents !== null && postedEvents.length > 0;
+  return getDispatcher(handler).hasPendingEvents();
+}
+
+
+/**
+ * Send the first pending posted event to the event handler.
+ */
+export
+function sendPendingEvent(handler: IEventHandler): void {
+  getDispatcher(handler).sendPendingEvent();
 }
 
 
@@ -78,22 +52,14 @@ function hasPendingEvents(handler: IEventHandler): boolean {
  *
  * An event filter is invoked before the event handler's `processEvent`
  * method. If the filter returns true from its `filterEvent` method,
- * processing of the event will stop immediately.
+ * processing of the event will stop immediately and no other event
+ * filters or the event handler will be invoked.
  *
  * The most recently installed event filter is executed first.
  */
 export
 function installEventFilter(handler: IEventHandler, filter: IEventFilter): void {
-  var wrapper = new EventFilterWrapper(filter);
-  var data = ensureData(handler);
-  var filters = data.eventFilters;
-  if (filters === null) {
-    data.eventFilters = wrapper;
-  } else if (filters instanceof EventFilterWrapper) {
-    data.eventFilters = [filters, wrapper];
-  } else {
-    (<EventFilterWrapper[]>filters).push(wrapper);
-  }
+  getDispatcher(handler).installEventFilter(filter);
 }
 
 
@@ -106,77 +72,36 @@ function installEventFilter(handler: IEventHandler, filter: IEventFilter): void 
  */
 export
 function removeEventFilter(handler: IEventHandler, filter: IEventFilter): void {
-  var data = handlerDataMap.get(handler);
-  if (data === void 0) {
-    return;
-  }
-  var filters = data.eventFilters;
-  if (filters === null) {
-    return;
-  }
-  if (filters instanceof EventFilterWrapper) {
-    if (filters.equals(filter)) {
-      filters.clear();
-      data.eventFilters = null;
-    }
-  } else {
-    var rest: EventFilterWrapper[] = [];
-    var array = <EventFilterWrapper[]>filters;
-    for (var i = 0, n = array.length; i < n; ++i) {
-      var wrapper = array[i];
-      if (wrapper.equals(filter)) {
-        wrapper.clear();
-      } else {
-        rest.push(wrapper);
-      }
-    }
-    if (rest.length === 0) {
-      data.eventFilters = null;
-    } else if (rest.length === 1) {
-      data.eventFilters = rest[0];
-    } else {
-      data.eventFilters = rest;
-    }
-  }
+  getDispatcher(handler).removeEventFilter(filter);
 }
 
 
 /**
- * Clear all data associated with the event handler.
+ * Clear all event data associated with the event handler.
  *
  * This removes all posted events and event filters for the handler.
  */
 export
 function clearEventData(handler: IEventHandler): void {
-  var data = handlerDataMap.get(handler);
-  if (data === void 0) {
-    return;
+  var dispatcher = dispatcherMap.get(handler);
+  if (dispatcher !== void 0) {
+    dispatcherMap.delete(handler);
+    dispatcher.clearPendingEvents();
+    dispatcher.clearEventFilters();
   }
-  if (data.postedEvents !== null) {
-    data.postedEvents.clear();
-  }
-  var filters = data.eventFilters;
-  if (filters !== null) {
-    if (filters instanceof EventFilterWrapper) {
-      filters.clear();
-    } else {
-      (<EventFilterWrapper[]>filters).forEach(wrapper => wrapper.clear());
-    }
-  }
-  handlerDataMap.delete(handler);
 }
 
 
 /**
- * The internal map of event handler data.
+ * The internal mapping of event handler to event dispatcher.
  */
-var handlerDataMap = new WeakMap<IEventHandler, IEventHandlerData>();
+var dispatcherMap = new WeakMap<IEventHandler, EventDispatcher>();
 
 
 /**
- * The internal queue of posted event handlers.
+ * The internal queue of posted event dispatchers.
  */
-var handlerQueue = new Queue<IEventHandler>();
+var dispatchQueue = new Queue<EventDispatcher>();
 
 
 /**
@@ -192,18 +117,83 @@ var raf = requestAnimationFrame;
 
 
 /**
- * An object which holds data for an event handler.
+ * Get or create the event dispatcher for an event handler.
  */
-interface IEventHandlerData {
-  /**
-   * The queue of posted events for the handler.
-   */
-  postedEvents: IQueue<ICoreEvent>;
+function getDispatcher(handler: IEventHandler): EventDispatcher {
+  var dispatcher = dispatcherMap.get(handler);
+  if (dispatcher === void 0) {
+    dispatcher = new EventDispatcher(handler);
+    dispatcherMap.set(handler, dispatcher);
+  }
+  return dispatcher;
+}
 
-  /**
-   * The event filters installed for the handler.
-   */
-  eventFilters: EventFilterWrapper | EventFilterWrapper[];
+
+/**
+ * Wake up the event loop to process any pending dispatchers.
+ *
+ * This is a no-op if a wake up is not needed or is already pending.
+ */
+function wakeUpEventLoop(): void {
+  if (frameId === 0 && dispatchQueue.length > 0) {
+    frameId = raf(runEventLoop);
+  }
+}
+
+
+/**
+ * Run an iteration of the event loop.
+ *
+ * This will process all pending dispatchers in the queue.
+ * Dispatchers which are added to the queue while the loop
+ * is running will be processed on the next loop cycle.
+ */
+function runEventLoop(): void {
+  // Clear the frame id so the next wake up call can be scheduled.
+  frameId = 0;
+
+  // If the queue is empty, there is nothing else to do.
+  if (dispatchQueue.length === 0) {
+    return;
+  }
+
+  // Add a null sentinel value to the end of the queue. The queue
+  // will only be processed up to the first null value. This means
+  // that events posted during this cycle will execute on the next
+  // cycle of the loop. If the last value in the array is null, it
+  // means that an exception was thrown by an event handler and the
+  // loop had to be restarted.
+  if (dispatchQueue.back !== null) {
+    dispatchQueue.push(null);
+  }
+
+  // The event dispatch loop. If the dispatcher is the null sentinel,
+  // the processing of the current section is complete and another
+  // loop is scheduled. Otherwise, the pending event is dispatched.
+  while (dispatchQueue.length > 0) {
+    var dispatcher = dispatchQueue.pop();
+    if (dispatcher === null) {
+      wakeUpEventLoop();
+      return;
+    }
+    dispatchEvent(dispatcher);
+  }
+}
+
+
+/**
+ * Safely process the pending handler event.
+ *
+ * If the event handler throws an exception, the event loop will
+ * be restarted and the exception will be rethrown.
+ */
+function dispatchEvent(dispatcher: EventDispatcher): void {
+  try {
+    dispatcher.sendPendingEvent();
+  } catch (ex) {
+    wakeUpEventLoop();
+    throw ex;
+  }
 }
 
 
@@ -246,108 +236,186 @@ class EventFilterWrapper {
 
 
 /**
- * Get the data object for a handler, creating it if necessary.
+ * An object which manages events and filters for an event handler.
  */
-function ensureData(handler: IEventHandler): IEventHandlerData {
-  var data = handlerDataMap.get(handler);
-  if (data === void 0) {
-    data = { postedEvents: null, eventFilters: null };
-    handlerDataMap.set(handler, data);
+class EventDispatcher {
+  /**
+   * Construct a new event dispatcher.
+   */
+  constructor(handler: IEventHandler) {
+    this._m_handler = handler;
   }
-  return data;
-}
 
-
-/**
- * Run the event filters installed for the event handler.
- *
- * Returns true if the event should be filtered, false otherwise.
- */
-function runEventFilters(handler: IEventHandler, event: ICoreEvent): boolean {
-  var data = handlerDataMap.get(handler);
-  if (data === void 0) {
-    return false;
-  }
-  var filters = data.eventFilters;
-  if (filters === null) {
-    return false;
-  }
-  if (filters instanceof EventFilterWrapper) {
-    return filters.invoke(handler, event);
-  }
-  var array = <EventFilterWrapper[]>filters;
-  for (var i = array.length - 1; i >= 0; --i) {
-    if (array[i].invoke(handler, event)) {
-      return true;
+  /**
+   * Send an event to the event handler to process immediately.
+   *
+   * The event will first be sent through the installed filters.
+   * If the event is filtered, it will not be sent to the handler.
+   */
+  sendEvent(event: ICoreEvent): void {
+    if (!this._filterEvent(event)) {
+      this._m_handler.processEvent(event);
     }
   }
-  return false;
-}
 
-
-/**
- * Wake up the event loop to process the pending handlers.
- *
- * If a wake up is pending or if there are no handlers, this is a no-op.
- */
-function wakeUpEventLoop(): void {
-  if (frameId === 0 && handlerQueue.length > 0) {
-    frameId = raf(runEventLoop);
-  }
-}
-
-
-/**
- * The main event loop.
- *
- * This will process all pending handlers currently in the queue.
- * Event handlers which are added to the queue while the loop is
- * running will be processed on the next invocation of the loop.
- */
-function runEventLoop(): void {
-  // Clear the frame id so the next wake up call can be scheduled.
-  frameId = 0;
-
-  // If the queue is empty, there is nothing else to do.
-  if (handlerQueue.length === 0) {
-    return;
+  /**
+   * Post an event to the event handler to process in the future.
+   *
+   * The event will first be compressed if possible. If the event
+   * cannot be compressed, it will be posted to the event queue.
+   */
+  postEvent(event: ICoreEvent): void {
+    if (!this._compressEvent(event)) {
+      this._enqueueEvent(event);
+    }
   }
 
-  // Add a null sentinel value to the end of the queue. The queue
-  // will only be processed up to the first null value. This means
-  // that events posted during this cycle will execute on the next
-  // cycle of the loop. If the last value in the array is null, it
-  // means that an exception was thrown by an event handler and the
-  // loop had to be restarted.
-  if (handlerQueue.back !== null) {
-    handlerQueue.push(null);
+  /**
+   * Test whether the event handler has pending posted events.
+   */
+  hasPendingEvents(): boolean {
+    return this._m_events !== null && this._m_events.length > 0;
   }
 
-  // The event dispatch loop. If the handler is the null sentinel,
-  // the processing of the current section is complete and another
-  // loop is scheduled. Otherwise, the handler is dispatched.
-  while (handlerQueue.length > 0) {
-    var handler = handlerQueue.pop();
-    if (handler === null) {
-      wakeUpEventLoop();
+  /**
+   * Send the first pending posted event to the event handler.
+   */
+  sendPendingEvent(): void {
+    if (this._m_events !== null && this._m_events.length > 0) {
+      this.sendEvent(this._m_events.pop());
+    }
+  }
+
+  /**
+   * Clear the pending posted events for the event handler.
+   */
+  clearPendingEvents(): void {
+    if (this._m_events !== null) {
+      this._m_events.clear();
+      this._m_events = null;
+    }
+  }
+
+  /**
+   * Install an event filter for the event handler.
+   */
+  installEventFilter(filter: IEventFilter): void {
+    var wrapper = new EventFilterWrapper(filter);
+    var filters = this._m_filters;
+    if (filters === null) {
+      this._m_filters = wrapper;
+    } else if (filters instanceof EventFilterWrapper) {
+      this._m_filters = [filters, wrapper];
+    } else {
+      (<EventFilterWrapper[]>filters).push(wrapper);
+    }
+  }
+
+  /**
+   * Remove an event filter installed for the event handler.
+   */
+  removeEventFilter(filter: IEventFilter): void {
+    var filters = this._m_filters;
+    if (filters === null) {
       return;
     }
-    dispatchEvent(handler);
+    if (filters instanceof EventFilterWrapper) {
+      if (filters.equals(filter)) {
+        filters.clear();
+        this._m_filters = null;
+      }
+    } else {
+      var rest: EventFilterWrapper[] = [];
+      var array = <EventFilterWrapper[]>filters;
+      for (var i = 0, n = array.length; i < n; ++i) {
+        var wrapper = array[i];
+        if (wrapper.equals(filter)) {
+          wrapper.clear();
+        } else {
+          rest.push(wrapper);
+        }
+      }
+      if (rest.length === 0) {
+        this._m_filters = null;
+      } else if (rest.length === 1) {
+        this._m_filters = rest[0];
+      } else {
+        this._m_filters = rest;
+      }
+    }
   }
-}
 
+  /**
+   * Remove all event filters installed for the handler.
+   */
+  clearEventFilters(): void {
+    var filters = this._m_filters;
+    if (filters === null) {
+      return;
+    }
+    this._m_filters = null;
+    if (filters instanceof EventFilterWrapper) {
+      filters.clear();
+    } else {
+      var array = <EventFilterWrapper[]>filters;
+      for (var i = 0, n = array.length; i < n; ++i) {
+        array[i].clear();
+      }
+    }
+  }
 
-/**
- * Safely process the pending handler event.
- *
- * If the event handler throws an exception, the event loop will
- * be restarted and the exception will be rethrown.
- */
-function dispatchEvent(handler: IEventHandler): void {
-  try {
-    sendPendingEvent(handler);
-  } catch (ex) {
+  /**
+   * Compress an event posted to the event handler, if possible.
+   *
+   * Returns true if the event was compressed, or false if the
+   * event should be posted to the event queue as normal.
+   */
+  private _compressEvent(event: ICoreEvent): boolean {
+    if (this._m_handler.compressEvent === void 0) {
+      return false;
+    }
+    if (this._m_events === null || this._m_events.length === 0) {
+      return false;
+    }
+    return this._m_handler.compressEvent(event, this._m_events);
+  }
+
+  /**
+   * Send an event through the installed event filters.
+   *
+   * Returns true if the event should be filtered, false otherwise.
+   */
+  private _filterEvent(event: ICoreEvent): boolean {
+    var filters = this._m_filters;
+    if (filters === null) {
+      return false;
+    }
+    if (filters instanceof EventFilterWrapper) {
+      return filters.invoke(this._m_handler, event);
+    }
+    var handler = this._m_handler;
+    var array = <EventFilterWrapper[]>filters;
+    for (var i = array.length - 1; i >= 0; --i) {
+      if (array[i].invoke(handler, event)) {
+        return true;
+      }
+    }
+    return false;
+  }
+
+  /**
+   * Add an event to the event queue and wake up the event loop.
+   */
+  private _enqueueEvent(event: ICoreEvent): void {
+    if (this._m_events === null) {
+      this._m_events = new Queue<ICoreEvent>();
+    }
+    this._m_events.push(event);
+    dispatchQueue.push(this);
     wakeUpEventLoop();
-    throw ex;
   }
+
+  private _m_handler: IEventHandler;
+  private _m_events: Queue<ICoreEvent> = null;
+  private _m_filters: EventFilterWrapper | EventFilterWrapper[] = null;
 }
