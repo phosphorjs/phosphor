@@ -136,7 +136,7 @@ function getDispatcher(handler: IEventHandler): EventDispatcher {
  * This is a no-op if a wake up is not needed or is already pending.
  */
 function wakeUpEventLoop(): void {
-  if (frameId === 0 && dispatchQueue.length > 0) {
+  if (frameId === 0 && !dispatchQueue.empty) {
     frameId = raf(runEventLoop);
   }
 }
@@ -154,7 +154,7 @@ function runEventLoop(): void {
   frameId = 0;
 
   // If the queue is empty, there is nothing else to do.
-  if (dispatchQueue.length === 0) {
+  if (dispatchQueue.empty) {
     return;
   }
 
@@ -165,14 +165,14 @@ function runEventLoop(): void {
   // means that an exception was thrown by an event handler and the
   // loop had to be restarted.
   if (dispatchQueue.back !== null) {
-    dispatchQueue.push(null);
+    dispatchQueue.pushBack(null);
   }
 
   // The event dispatch loop. If the dispatcher is the null sentinel,
   // the processing of the current section is complete and another
   // loop is scheduled. Otherwise, the pending event is dispatched.
-  while (dispatchQueue.length > 0) {
-    var dispatcher = dispatchQueue.pop();
+  while (!dispatchQueue.empty) {
+    var dispatcher = dispatchQueue.popFront();
     if (dispatcher === null) {
       wakeUpEventLoop();
       return;
@@ -275,15 +275,15 @@ class EventDispatcher {
    * Test whether the event handler has pending posted events.
    */
   hasPendingEvents(): boolean {
-    return this._m_events !== null && this._m_events.length > 0;
+    return this._m_events !== null && !this._m_events.empty;
   }
 
   /**
    * Send the first pending posted event to the event handler.
    */
   sendPendingEvent(): void {
-    if (this._m_events !== null && this._m_events.length > 0) {
-      this.sendEvent(this._m_events.pop());
+    if (this._m_events !== null && !this._m_events.empty) {
+      this.sendEvent(this._m_events.popFront());
     }
   }
 
@@ -375,7 +375,7 @@ class EventDispatcher {
     if (this._m_handler.compressEvent === void 0) {
       return false;
     }
-    if (this._m_events === null || this._m_events.length === 0) {
+    if (this._m_events === null || this._m_events.empty) {
       return false;
     }
     return this._m_handler.compressEvent(event, this._m_events);
@@ -411,8 +411,8 @@ class EventDispatcher {
     if (this._m_events === null) {
       this._m_events = new Queue<ICoreEvent>();
     }
-    this._m_events.push(event);
-    dispatchQueue.push(this);
+    this._m_events.pushBack(event);
+    dispatchQueue.pushBack(this);
     wakeUpEventLoop();
   }
 
