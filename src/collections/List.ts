@@ -5,6 +5,7 @@
 |
 | The full license is in the file LICENSE, distributed with this software.
 |----------------------------------------------------------------------------*/
+import ICollection = require('./ICollection');
 import IIterator = require('./IIterator');
 import IIteratorResult = require('./IIteratorResult');
 import IList = require('./IList');
@@ -19,7 +20,9 @@ class List<T> implements IList<T> {
   /**
    * Construct a new list.
    */
-  constructor() { }
+  constructor(collection?: ICollection<T>) {
+    this._m_array = collection ? collection.asArray() : [];
+  }
 
   /**
    * The number of items in the collection.
@@ -42,6 +45,22 @@ class List<T> implements IList<T> {
    */
   at(index: number): T {
     return this._m_array[index];
+  }
+
+  /**
+   * Set the value at the given index.
+   *
+   * Returns true if the value was set, false otherwise.
+   */
+  set(index: number, value: T): boolean {
+    var array = this._m_array;
+    var n = array.length;
+    var i = index | 0;
+    if (i < 0 || i >= n) {
+      return false;
+    }
+    array[i] = value;
+    return true;
   }
 
   /**
@@ -144,7 +163,7 @@ class List<T> implements IList<T> {
     this._m_array.length = 0;
   }
 
-  private _m_array: T[] = [];
+  private _m_array: T[];
 }
 
 

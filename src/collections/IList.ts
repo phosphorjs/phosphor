@@ -29,6 +29,13 @@ interface IList<T> extends ICollection<T> {
   indexOf(value: T): number;
 
   /**
+   * Set the value at the given index.
+   *
+   * Returns true if the value was set, false otherwise.
+   */
+  set(index: number, value: T): boolean;
+
+  /**
    * Add a value to the end of the list.
    *
    * Returns the new index of the value.
