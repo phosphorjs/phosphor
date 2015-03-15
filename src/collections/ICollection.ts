@@ -11,26 +11,45 @@ export = ICollection;
 
 
 /**
- * An iterable collection of items with a definite size.
+ * A collection of elements with a definite size.
  */
 interface ICollection<T> extends IIterable<T> {
   /**
-   * The number of items in the collection.
+   * True if the collection has elements, false otherwise.
    */
-  length: number;
+  empty: boolean;
 
   /**
-   * Create a new array filled with the items in the collection.
+   * The number of elements in the collection.
    */
-  asArray(): T[];
+  size: number;
 
   /**
-   * Test whether the collection contains a value.
+   * Test whether the collection contains the given value.
    */
   contains(value: T): boolean;
 
   /**
-   * Remove all items from the collection.
+   * Add a value to the collection.
+   *
+   * Returns true if the collection was changed, false otherwise.
+   */
+  add(value: T): boolean;
+
+  /**
+   * Remove a value from the collection.
+   *
+   * Returns true if the collection was changed, false otherwise.
+   */
+  remove(value: T): boolean;
+
+  /**
+   * Remove all elements from the collection.
    */
   clear(): void;
+
+  /**
+   * Returns an array containing all elements in the collection.
+   */
+  toArray(): T[];
 }

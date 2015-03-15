@@ -5,22 +5,39 @@
 |
 | The full license is in the file LICENSE, distributed with this software.
 |----------------------------------------------------------------------------*/
-export = IIterator;
+import IIterator = require('./IIterator');
+import IList = require('./IList');
+
+export = ListIterator;
 
 
 /**
- * An object which iterates over elements in an iterable.
+ * An iterator for a generic list collection.
  */
-interface IIterator<T> {
+class ListIterator<T> implements IIterator<T> {
+  /**
+   * Construct a new list iterator.
+   */
+  constructor(list: IList<T>) {
+    this._m_list = list;
+  }
+
   /**
    * Test whether the iterable has more elements.
    */
-  hasNext(): boolean;
+  hasNext(): boolean {
+    return this._m_index < this._m_list.size;
+  }
 
   /**
    * Get the next element in the iterable.
    *
    * Returns `undefined` when `hasNext` returns false.
    */
-  next(): T;
+  next(): T {
+    return this._m_list.get(this._m_index++);
+  }
+
+  private _m_index = 0;
+  private _m_list: IList<T>;
 }

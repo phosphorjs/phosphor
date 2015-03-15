@@ -11,13 +11,13 @@ export = IIterable;
 
 
 /**
- * An object which supports iteration over its items.
+ * An object which supports iteration over its elements.
  *
  * In general, it is not safe to modify the iterable while iterating.
  */
 interface IIterable<T> {
   /**
-   * Get an iterator for the items in the iterable.
+   * Get an iterator for the elements in the iterable.
    */
-  $$iterator(): IIterator<T>;
+  iterator(): IIterator<T>;
 }

@@ -11,15 +11,22 @@ export = IList;
 
 
 /**
- * A collection of items which can be accessed by index.
+ * A collection of elements which can be accessed by index.
  */
 interface IList<T> extends ICollection<T> {
   /**
-   * Get the value at the given index.
+   * Get the element at the given index.
    *
    * Returns `undefined` if the index is out of range.
    */
-  at(index: number): T;
+  get(index: number): T;
+
+  /**
+   * Set the value at the given index.
+   *
+   * Returns false if the index is out of range.
+   */
+  set(index: number, value: T): boolean;
 
   /**
    * Get the index of the given value.
@@ -29,39 +36,16 @@ interface IList<T> extends ICollection<T> {
   indexOf(value: T): number;
 
   /**
-   * Set the value at the given index.
-   *
-   * Returns true if the value was set, false otherwise.
-   */
-  set(index: number, value: T): boolean;
-
-  /**
-   * Add a value to the end of the list.
-   *
-   * Returns the new index of the value.
-   */
-  add(value: T): number;
-
-  /**
    * Insert a value at the given index.
    *
-   * An out of range index will be clamped.
-   *
-   * Returns the new index of the value.
+   * Returns false if the index is out of range.
    */
-  insert(index: number, value: T): number;
-
-  /**
-   * Remove the first matching value from the list.
-   *
-   * Returns the index of the removed value, or -1.
-   */
-  remove(value: T): number;
+  insert(index: number, value: T): boolean;
 
   /**
    * Remove and return the value at the given index.
    *
-   * Returns `undefined` if no matching value is found.
+   * Returns `undefined` if the index is out of range.
    */
   removeAt(index: number): T;
 }

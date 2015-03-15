@@ -27,10 +27,10 @@ interface IQueue<T> extends ICollection<T> {
   /**
    * Push a value onto the back of the queue.
    */
-  push(value: T): void;
+  pushBack(value: T): void;
 
   /**
-   * Pop and return the first value in the queue.
+   * Pop and return the value at the front of the queue.
    */
-  pop(): T;
+  popFront(): T;
 }

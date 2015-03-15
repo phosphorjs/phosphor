@@ -6,14 +6,13 @@
 | The full license is in the file LICENSE, distributed with this software.
 |----------------------------------------------------------------------------*/
 import IIterator = require('./IIterator');
-import IIteratorResult = require('./IIteratorResult');
 import IQueue = require('./IQueue');
 
 export = Queue;
 
 
 /**
- * A canonical node based FIFO queue.
+ * A canonical singly linked FIFO queue.
  */
 class Queue<T> implements IQueue<T> {
   /**
@@ -22,50 +21,42 @@ class Queue<T> implements IQueue<T> {
   constructor() { }
 
   /**
-   * The length of the queue.
+   * True if the queue has elements, false otherwise.
    */
-  get length(): number {
-    return this._m_length;
+  get empty(): boolean {
+    return this._m_size === 0;
+  }
+
+  /**
+   * The number of elements in the queue.
+   */
+  get size(): number {
+    return this._m_size;
   }
 
   /**
    * The value at the front of the queue.
    */
   get front(): T {
-    var front = this._m_front;
-    return front !== null ? front.value : void 0;
+    return this._m_front !== null ? this._m_front.value : void 0;
   }
 
   /**
    * The value at the back of the queue.
    */
   get back(): T {
-    var back = this._m_back;
-    return back !== null ? back.value : void 0;
+    return this._m_back !== null ? this._m_back.value : void 0;
   }
 
   /**
-   * Get an iterator for the items in the queue.
+   * Get an iterator for the elements in the queue.
    */
-  $$iterator(): IIterator<T> {
+  iterator(): IIterator<T> {
     return new QueueIterator(this._m_front);
   }
 
   /**
-   * Create a new array of the items in the queue.
-   */
-  asArray(): T[] {
-    var result: T[] = [];
-    var link = this._m_front;
-    while (link !== null) {
-      result.push(link.value);
-      link = link.next;
-    }
-    return result;
-  }
-
-  /**
-   * Test whether the queue contains a value.
+   * Test whether the queue contains the given value.
    */
   contains(value: T): boolean {
     var link = this._m_front;
@@ -79,9 +70,19 @@ class Queue<T> implements IQueue<T> {
   }
 
   /**
+   * Add a value to the end of the queue.
+   *
+   * This method always succeeds.
+   */
+  add(value: T): boolean {
+    this.pushBack(value);
+    return true;
+  }
+
+  /**
    * Push a value onto the back of the queue.
    */
-  push(value: T): void {
+  pushBack(value: T): void {
     var link = createLink(value);
     if (this._m_back === null) {
       this._m_front = link;
@@ -90,13 +91,13 @@ class Queue<T> implements IQueue<T> {
       this._m_back.next = link;
       this._m_back = link;
     }
-    this._m_length++;
+    this._m_size++;
   }
 
   /**
-   * Pop and return the first value in the queue.
+   * Pop and return the value at the front of the queue.
    */
-  pop(): T {
+  popFront(): T {
     var link = this._m_front;
     if (link === null) {
       return void 0;
@@ -107,10 +108,38 @@ class Queue<T> implements IQueue<T> {
     } else {
       this._m_front = link.next;
     }
-    this._m_length--;
+    this._m_size--;
     var value = link.value;
     releaseLink(link);
     return value;
+  }
+
+  /**
+   * Remove the first matching value from the queue.
+   *
+   * Returns false if the value is not in the queue.
+   */
+  remove(value: T): boolean {
+    var link = this._m_front;
+    var prev: typeof link = null;
+    while (link !== null) {
+      if (link.value === value) {
+        if (prev === null) {
+          this._m_front = link.next;
+        } else {
+          prev.next = link.next;
+        }
+        if (link.next === null) {
+          this._m_back = prev;
+        }
+        this._m_size--;
+        releaseLink(link);
+        return true;
+      }
+      prev = link;
+      link = link.next;
+    }
+    return false;
   }
 
   /**
@@ -123,12 +152,25 @@ class Queue<T> implements IQueue<T> {
       releaseLink(link);
       link = next;
     }
-    this._m_length = 0;
+    this._m_size = 0;
     this._m_front = null;
     this._m_back = null;
   }
 
-  private _m_length = 0;
+  /**
+   * Returns an array containing all elements in the queue.
+   */
+  toArray(): T[] {
+    var result: T[] = [];
+    var link = this._m_front;
+    while (link !== null) {
+      result.push(link.value);
+      link = link.next;
+    }
+    return result;
+  }
+
+  private _m_size = 0;
   private _m_front: IQueueLink<T> = null;
   private _m_back: IQueueLink<T> = null;
 }
@@ -190,7 +232,7 @@ function releaseLink(link: IQueueLink<any>): void {
 
 
 /**
- * An iterator object for a queue.
+ * An iterator for a queue.
  */
 class QueueIterator<T> implements IIterator<T> {
   /**
@@ -201,15 +243,24 @@ class QueueIterator<T> implements IIterator<T> {
   }
 
   /**
-   * Get the next value in the queue.
+   * Test whether the iterable has more elements.
    */
-  next(): IIteratorResult<T> {
+  hasNext(): boolean {
+    return this._m_link !== null;
+  }
+
+  /**
+   * Get the next element in the iterable.
+   *
+   * Returns `undefined` when `hasNext` returns false.
+   */
+  next(): T {
     var link = this._m_link;
     if (link === null) {
-      return { done: true, value: void 0 };
+      return void 0;
     }
     this._m_link = link.next;
-    return { done: false, value: link.value };
+    return link.value;
   }
 
   private _m_link: IQueueLink<T>;
