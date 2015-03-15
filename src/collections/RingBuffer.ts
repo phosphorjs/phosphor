@@ -5,19 +5,22 @@
 |
 | The full license is in the file LICENSE, distributed with this software.
 |----------------------------------------------------------------------------*/
+import IIterator = require('./IIterator');
+import IIteratorResult = require('./IIteratorResult');
 import IQueue = require('./IQueue');
+import IReadOnlyList = require('./IReadOnlyList');
 
 export = RingBuffer;
 
 
 /**
- * A concrete implementation of IQueue.
+ * A fixed-length circular buffer.
  *
  * A ring buffer is a queue with a maximum size and constant time access
  * to its elements. Once the ring buffer reaches its maximum size, newly
  * added elements will overwrite the oldest elements.
  */
-class RingBuffer<T> implements IQueue<T> {
+class RingBuffer<T> implements IQueue<T>, IReadOnlyList<T> {
   /**
    * Construct a new ring buffer.
    */
@@ -61,6 +64,27 @@ class RingBuffer<T> implements IQueue<T> {
   }
 
   /**
+   * Get an iterator for the items in the queue.
+   */
+  $$iterator(): IIterator<T> {
+    return new RingBufferIterator(this);
+  }
+
+  /**
+   * Create a new array of the items in the queue.
+   */
+  asArray(): T[] {
+    var result: T[] = [];
+    var items = this._m_items;
+    var offset = this._m_offset;
+    var maxLength = this._m_maxLength;
+    for (var i = 0, n = this._m_count; i < n; ++i) {
+      result.push(items[(offset + i) % maxLength]);
+    }
+    return result;
+  }
+
+  /**
    * Get the value at the given index.
    */
   at(index: number): T {
@@ -68,6 +92,30 @@ class RingBuffer<T> implements IQueue<T> {
       return void 0;
     }
     return this._m_items[(index + this._m_offset) % this._m_maxLength];
+  }
+
+  /**
+   * Test whether the buffer contains a value.
+   */
+  contains(value: T): boolean {
+    return this.indexOf(value) !== -1;
+  }
+
+  /**
+   * Get the index of the given value.
+   *
+   * Returns -1 if the value is not in the buffer.
+   */
+  indexOf(value: T): number {
+    var items = this._m_items;
+    var offset = this._m_offset;
+    var maxLength = this._m_maxLength;
+    for (var i = 0, n = this._m_count; i < n; ++i) {
+      if (items[(offset + i) % maxLength] === value) {
+        return i;
+      }
+    }
+    return -1;
   }
 
   /**
@@ -109,54 +157,6 @@ class RingBuffer<T> implements IQueue<T> {
     this._m_items.length = 0;
   }
 
-  /**
-   * Execute a callback for each value in the queue.
-   *
-   * It is not safe to modify the queue while iterating.
-   */
-  forEach(callback: (value: T, index: number) => void): void {
-    var items = this._m_items;
-    var offset = this._m_offset;
-    var maxLength = this._m_maxLength;
-    for (var i = 0, n = this._m_count; i < n; ++i) {
-      callback(items[(offset + i) % maxLength], i);
-    }
-  }
-
-  /**
-   * Returns true if all values pass the given test.
-   *
-   * It is not safe to modify the queue while iterating.
-   */
-  every(callback: (value: T, index: number) => boolean): boolean {
-    var items = this._m_items;
-    var offset = this._m_offset;
-    var maxLength = this._m_maxLength;
-    for (var i = 0, n = this._m_count; i < n; ++i) {
-      if (!callback(items[(offset + i) % maxLength], i)) {
-        return false;
-      }
-    }
-    return true;
-  }
-
-  /**
-   * Returns true if any value passes the given test.
-   *
-   * It is not safe to modify the queue while iterating.
-   */
-  some(callback: (value: T, index: number) => boolean): boolean {
-    var items = this._m_items;
-    var offset = this._m_offset;
-    var maxLength = this._m_maxLength;
-    for (var i = 0, n = this._m_count; i < n; ++i) {
-      if (callback(items[(offset + i) % maxLength], i)) {
-        return true;
-      }
-    }
-    return false;
-  }
-
   private _m_count = 0;
   private _m_offset = 0;
   private _m_items: T[] = [];
@@ -175,4 +175,30 @@ var MAX_ARRAY_LENGTH = 4294967295;
  */
 function clipLength(length: number) {
   return Math.max(1, Math.min(Math.floor(length), MAX_ARRAY_LENGTH));
+}
+
+
+/**
+ * An iterator object for a ring buffer.
+ */
+class RingBufferIterator<T> implements IIterator<T> {
+  /**
+   * Construct a new ring buffer iterator.
+   */
+  constructor(buffer: RingBuffer<T>) {
+    this._m_buffer = buffer;
+  }
+
+  /**
+   * Get the next value in the queue.
+   */
+  next(): IIteratorResult<T> {
+    if (this._m_index >= this._m_buffer.length) {
+      return { done: true, value: void 0 };
+    }
+    return { done: false, value: this._m_buffer.at(this._m_index++) };
+  }
+
+  private _m_index = 0;
+  private _m_buffer: RingBuffer<T>;
 }

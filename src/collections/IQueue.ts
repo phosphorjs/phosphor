@@ -5,18 +5,15 @@
 |
 | The full license is in the file LICENSE, distributed with this software.
 |----------------------------------------------------------------------------*/
+import ICollection = require('./ICollection');
+
 export = IQueue;
 
 
 /**
- * A FIFO queue.
+ * A collection with first-in-first-out semantics.
  */
-interface IQueue<T> {
-  /**
-   * The length of the queue.
-   */
-  length: number;
-
+interface IQueue<T> extends ICollection<T> {
   /**
    * The value at the front of the queue.
    */
@@ -36,30 +33,4 @@ interface IQueue<T> {
    * Pop and return the first value in the queue.
    */
   pop(): T;
-
-  /**
-   * Remove all values from the queue.
-   */
-  clear(): void;
-
-  /**
-   * Execute a callback for each value in the queue.
-   *
-   * It is not safe to modify the queue while iterating.
-   */
-  forEach(callback: (value: T, index: number) => void): void;
-
-  /**
-   * Returns true if all values pass the given test.
-   *
-   * It is not safe to modify the queue while iterating.
-   */
-  every(callback: (value: T, index: number) => boolean): boolean;
-
-  /**
-   * Returns true if any value passes the given test.
-   *
-   * It is not safe to modify the queue while iterating.
-   */
-  some(callback: (value: T, index: number) => boolean): boolean;
 }

@@ -5,13 +5,15 @@
 |
 | The full license is in the file LICENSE, distributed with this software.
 |----------------------------------------------------------------------------*/
+import IIterator = require('./IIterator');
+import IIteratorResult = require('./IIteratorResult');
 import IQueue = require('./IQueue');
 
 export = Queue;
 
 
 /**
- * A concrete implementation of IQueue.
+ * A canonical node based FIFO queue.
  */
 class Queue<T> implements IQueue<T> {
   /**
@@ -40,6 +42,40 @@ class Queue<T> implements IQueue<T> {
   get back(): T {
     var back = this._m_back;
     return back !== null ? back.value : void 0;
+  }
+
+  /**
+   * Get an iterator for the items in the queue.
+   */
+  $$iterator(): IIterator<T> {
+    return new QueueIterator(this._m_front);
+  }
+
+  /**
+   * Create a new array of the items in the queue.
+   */
+  asArray(): T[] {
+    var result: T[] = [];
+    var link = this._m_front;
+    while (link !== null) {
+      result.push(link.value);
+      link = link.next;
+    }
+    return result;
+  }
+
+  /**
+   * Test whether the queue contains a value.
+   */
+  contains(value: T): boolean {
+    var link = this._m_front;
+    while (link !== null) {
+      if (link.value === value) {
+        return true;
+      }
+      link = link.next;
+    }
+    return false;
   }
 
   /**
@@ -90,54 +126,6 @@ class Queue<T> implements IQueue<T> {
     this._m_length = 0;
     this._m_front = null;
     this._m_back = null;
-  }
-
-  /**
-   * Execute a callback for each value in the queue.
-   *
-   * It is not safe to modify the queue while iterating.
-   */
-  forEach(callback: (value: T, index: number) => void): void {
-    var i = 0;
-    var link = this._m_front;
-    while (link !== null) {
-      callback(link.value, i++);
-      link = link.next;
-    }
-  }
-
-  /**
-   * Returns true if all values pass the given test.
-   *
-   * It is not safe to modify the queue while iterating.
-   */
-  every(callback: (value: T, index: number) => boolean): boolean {
-    var i = 0;
-    var link = this._m_front;
-    while (link !== null) {
-      if (!callback(link.value, i++)) {
-        return false;
-      }
-      link = link.next;
-    }
-    return true;
-  }
-
-  /**
-   * Returns true if any value passes the given test.
-   *
-   * It is not safe to modify the queue while iterating.
-   */
-  some(callback: (value: T, index: number) => boolean): boolean {
-    var i = 0;
-    var link = this._m_front;
-    while (link !== null) {
-      if (callback(link.value, i++)) {
-        return true;
-      }
-      link = link.next;
-    }
-    return false;
   }
 
   private _m_length = 0;
@@ -198,4 +186,31 @@ function releaseLink(link: IQueueLink<any>): void {
   if (linkPool.length < MAX_POOL_SIZE) {
     linkPool.push(link);
   }
+}
+
+
+/**
+ * An iterator object for a queue.
+ */
+class QueueIterator<T> implements IIterator<T> {
+  /**
+   * Construct a new queue iterator.
+   */
+  constructor(link: IQueueLink<T>) {
+    this._m_link = link;
+  }
+
+  /**
+   * Get the next value in the queue.
+   */
+  next(): IIteratorResult<T> {
+    var link = this._m_link;
+    if (link === null) {
+      return { done: true, value: void 0 };
+    }
+    this._m_link = link.next;
+    return { done: false, value: link.value };
+  }
+
+  private _m_link: IQueueLink<T>;
 }
