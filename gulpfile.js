@@ -9,17 +9,22 @@
 
 var del = require('del');
 var gulp = require('gulp');
+var nib = require('nib');
 var stream = require('event-stream');
+var stylus = require('gulp-stylus');
 var typescript = require('gulp-typescript');
 
 
 var sourceDir = './src/';
+var stylDir = './styl/';
 var distDir = './dist/';
 var buildDir = './build/';
 var jsBuildDir = buildDir + 'js/';
 var dtsBuildDir = buildDir + 'dts/';
+var cssBuildDir = buildDir + 'css/';
 
 var tsSources = sourceDir + '**/*.ts';
+var stylSources = stylDir + 'index.styl';
 
 
 var project = typescript.createProject({
@@ -39,7 +44,10 @@ gulp.task('build', function() {
   var src = gulp.src(tsSources).pipe(typescript(project));
   var dts = src.dts.pipe(gulp.dest(dtsBuildDir));
   var js = src.pipe(gulp.dest(jsBuildDir));
-  return stream.merge(dts, js);
+  var css = gulp.src(stylSources)
+    .pipe(stylus({ use: [nib()] }))
+    .pipe(gulp.dest(cssBuildDir));
+  return stream.merge(dts, js, css);
 });
 
 
