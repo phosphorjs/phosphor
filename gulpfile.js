@@ -50,6 +50,7 @@ var tsSources = [
   'di/Container',
 
   'dom/boxdata',
+  'dom/hitTest',
   'dom/overrideCursor',
 
   'enums/Alignment',
@@ -86,12 +87,15 @@ var tsSources = [
   'virtualdom/renderer',
   'virtualdom/Component',
 
+  'widgets/ITab',
   'widgets/ChildEvent',
   'widgets/MoveEvent',
   'widgets/ResizeEvent',
   'widgets/Widget',
   'widgets/CodeMirrorWidget',
-  'widgets/Splitter'
+  'widgets/Splitter',
+  'widgets/Tab',
+  'widgets/TabBar'
 ].map(function(name) { return './src/' + name + '.ts'; });
 
 
