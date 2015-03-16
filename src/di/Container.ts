@@ -7,7 +7,6 @@
 |----------------------------------------------------------------------------*/
 module phosphor.di {
 
-
 /**
  * A lightweight dependency injection container.
  */

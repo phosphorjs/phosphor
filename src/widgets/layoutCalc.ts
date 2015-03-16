@@ -7,7 +7,6 @@
 |----------------------------------------------------------------------------*/
 module phosphor.widgets {
 
-
 /**
  * Distribute space among the given sizing items.
  *

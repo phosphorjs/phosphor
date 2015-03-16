@@ -7,7 +7,6 @@
 |----------------------------------------------------------------------------*/
 module phosphor.dom {
 
-
 /**
  * The box sizing data for an HTML element.
  */

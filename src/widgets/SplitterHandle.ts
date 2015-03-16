@@ -7,7 +7,6 @@
 |----------------------------------------------------------------------------*/
 module phosphor.widgets {
 
-
 /**
  * The class name assigned to a splitter handle.
  */

@@ -9,6 +9,7 @@ module phosphor.widgets {
 
 import CoreEvent = core.CoreEvent;
 
+
 /**
  * An event class for 'move' events.
  */

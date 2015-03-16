@@ -7,7 +7,6 @@
 |----------------------------------------------------------------------------*/
 module phosphor.widgets {
 
-
 /**
  * A sizing item for the `layoutCalc` function.
  */

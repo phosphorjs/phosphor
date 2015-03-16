@@ -7,7 +7,6 @@
 |----------------------------------------------------------------------------*/
 module phosphor.di {
 
-
 /**
  * A class type which declares its injection dependencies.
  */

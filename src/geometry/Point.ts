@@ -7,7 +7,6 @@
 |----------------------------------------------------------------------------*/
 module phosphor.geometry {
 
-
 /**
  * The position of a two dimensional object.
  */

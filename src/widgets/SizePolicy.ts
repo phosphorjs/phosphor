@@ -7,7 +7,6 @@
 |----------------------------------------------------------------------------*/
 module phosphor.widgets {
 
-
 /**
  * An enum of size policy values.
  *
