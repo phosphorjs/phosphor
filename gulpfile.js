@@ -93,6 +93,7 @@ var tsSources = [
   'widgets/ResizeEvent',
   'widgets/Widget',
   'widgets/CodeMirrorWidget',
+  'widgets/ElementHost',
   'widgets/Menu',
   'widgets/MenuBar',
   'widgets/MenuItem',
