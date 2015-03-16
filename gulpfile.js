@@ -18,6 +18,9 @@ var stylus = require('gulp-stylus');
 var typescript = require('gulp-typescript');
 
 
+var typings = ['./typings/tsd.d.ts'];
+
+
 var tsSources = [
   'collections/IIterator',
   'collections/IIterable',
@@ -87,6 +90,7 @@ var tsSources = [
   'widgets/MoveEvent',
   'widgets/ResizeEvent',
   'widgets/Widget',
+  'widgets/CodeMirrorWidget',
   'widgets/Splitter'
 ].map(function(name) { return './src/' + name + '.ts'; });
 
@@ -106,7 +110,9 @@ gulp.task('dist', function() {
     target: 'ES5',
   });
 
-  var src = gulp.src(tsSources)
+  var sources = typings.concat(tsSources);
+
+  var src = gulp.src(sources)
     .pipe(typescript(project));
 
   var dts = src.dts.pipe(concat('phosphor.d.ts'))
