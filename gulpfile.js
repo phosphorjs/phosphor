@@ -10,6 +10,7 @@
 var del = require('del');
 var concat = require('gulp-concat');
 var gulp = require('gulp');
+var header = require('gulp-header');
 var nib = require('nib');
 var rename = require('gulp-rename');
 var stream = require('event-stream');
@@ -92,6 +93,7 @@ gulp.task('dist', function() {
     .pipe(gulp.dest('./dist'));
 
   var js = src.pipe(concat('phosphor.js'))
+    .pipe(header('"use strict";'))
     .pipe(gulp.dest('./dist'));
 
   var css = gulp.src(stylSources)

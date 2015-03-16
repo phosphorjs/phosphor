@@ -9,6 +9,7 @@
     "expect.js": "^0.3.1",
     "gulp": "^3.8.9",
     "gulp-concat": "^2.5.2",
+    "gulp-header": "^1.2.2",
     "gulp-rename": "^1.2.0",
     "gulp-stylus": "^2.0.1",
     "gulp-typescript": "^2.4.0",
