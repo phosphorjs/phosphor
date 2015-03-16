@@ -96,7 +96,8 @@ var tsSources = [
   'widgets/Splitter',
   'widgets/StackWidget',
   'widgets/Tab',
-  'widgets/TabBar'
+  'widgets/TabBar',
+  'widgets/TabWidget'
 ].map(function(name) { return './src/' + name + '.ts'; });
 
 
