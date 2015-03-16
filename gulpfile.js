@@ -70,6 +70,7 @@ var tsSources = [
   'layout/WidgetItem',
   'layout/layoutCalc',
   'layout/BoxLayout',
+  'layout/SingleLayout',
   'layout/SplitterHandle',
   'layout/SplitterLayout',
   'layout/StackLayout',
