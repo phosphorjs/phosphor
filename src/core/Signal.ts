@@ -7,7 +7,6 @@
 |----------------------------------------------------------------------------*/
 module phosphor.core {
 
-
 /**
  * An object used for loosely coupled inter-object communication.
  *

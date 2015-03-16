@@ -7,7 +7,6 @@
 |----------------------------------------------------------------------------*/
 module phosphor.core {
 
-
 /**
  * An object which holds disposable resources.
  */

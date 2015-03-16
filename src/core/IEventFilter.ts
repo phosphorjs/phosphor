@@ -7,7 +7,6 @@
 |----------------------------------------------------------------------------*/
 module phosphor.core {
 
-
 /**
  * An object which filters events dispatched to an event handler.
  */

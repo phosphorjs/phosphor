@@ -7,7 +7,6 @@
 |----------------------------------------------------------------------------*/
 module phosphor.core {
 
-
 /**
  * An object which can be sent to an event handler.
  */

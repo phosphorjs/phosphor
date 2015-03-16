@@ -7,7 +7,6 @@
 |----------------------------------------------------------------------------*/
 module phosphor.core {
 
-
 /**
  * A concrete implementation of IDisposable.
  *
