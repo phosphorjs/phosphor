@@ -31,11 +31,13 @@ var tsSources = [
   'collections/CircularBuffer',
   'collections/Queue',
 
+  'algorithm/binarysearch',
+  'algorithm/iteration',
+
   'core/ICoreEvent',
   'core/IDisposable',
   'core/IEventFilter',
   'core/IEventHandler',
-  'core/algorithm',
   'core/CoreEvent',
   'core/Disposable',
   'core/eventloop',
