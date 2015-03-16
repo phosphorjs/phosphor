@@ -5,7 +5,7 @@
 |
 | The full license is in the file LICENSE, distributed with this software.
 |----------------------------------------------------------------------------*/
-import IQueue = require('../collections/IQueue');
+import IIterable = require('../collections/IIterable');
 
 import ICoreEvent = require('./ICoreEvent');
 
@@ -29,5 +29,5 @@ interface IEventHandler {
    * if the event was compressed and should be dropped, or false if
    * the event should be queued for delivery as normal.
    */
-  compressEvent?(event: ICoreEvent, postedEvents: IQueue<ICoreEvent>): boolean;
+  compressEvent?(event: ICoreEvent, posted: IIterable<ICoreEvent>): boolean;
 }
