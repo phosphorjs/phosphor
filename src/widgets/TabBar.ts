@@ -34,17 +34,17 @@ var INNER_CLASS = 'p-TabBar-inner';
 /**
  * The class name added to the inner div when transitioning tabs.
  */
-var TRANSITION_CLASS = 'p-transition';
+var TRANSITION_CLASS = 'p-mod-transition';
 
 /**
  * The class name added to a tab being inserted.
  */
-var INSERTING_CLASS = 'p-inserting';
+var INSERTING_CLASS = 'p-mod-inserting';
 
 /**
  * The class name added to a tab being removed.
  */
-var REMOVING_CLASS = 'p-removing';
+var REMOVING_CLASS = 'p-mod-removing';
 
 /**
  * The overlap threshold before swapping tabs.

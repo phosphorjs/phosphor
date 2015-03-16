@@ -44,22 +44,22 @@ var TEXT_CLASS = 'p-MenuBar-item-text';
 /**
  * The class name added to a separator type menu item.
  */
-var SEPARATOR_TYPE_CLASS = 'p-separator-type';
+var SEPARATOR_TYPE_CLASS = 'p-mod-separator-type';
 
 /**
  * The class name added to active menu items.
  */
-var ACTIVE_CLASS = 'p-active';
+var ACTIVE_CLASS = 'p-mod-active';
 
 /**
  * The class name added to active menu items.
  */
-var SELECTED_CLASS = 'p-selected';
+var SELECTED_CLASS = 'p-mod-selected';
 
 /**
  * The class name added to a disabled menu item.
  */
-var DISABLED_CLASS = 'p-disabled';
+var DISABLED_CLASS = 'p-mod-disabled';
 
 
 /**
