@@ -5,12 +5,27 @@
 |
 | The full license is in the file LICENSE, distributed with this software.
 |----------------------------------------------------------------------------*/
-@require 'nib'
-@require './misc'
-@require './widget'
-@require './codemirror'
-@require './dockarea'
-@require './menu'
-@require './menubar'
-@require './splitter'
-@require './tabbar'
+.p-MenuBar {
+  display: flex;
+  flex-direction: row;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+
+.p-MenuBar-item {
+  box-sizing: border-box;
+}
+
+
+.p-MenuBar-item.p-mod-separator-type {
+  margin: 2px;
+  padding: 0;
+  border: none;
+  &:first-child
+  &:last-child
+  > span {
+    display: none;
+  }
+}

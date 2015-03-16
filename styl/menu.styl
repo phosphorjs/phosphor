@@ -1,0 +1,75 @@
+/*-----------------------------------------------------------------------------
+| Copyright (c) 2014-2015, S. Chris Colbert
+|
+| Distributed under the terms of the BSD 3-Clause License.
+|
+| The full license is in the file LICENSE, distributed with this software.
+|----------------------------------------------------------------------------*/
+.p-Menu {
+  display: table;
+  margin: 0;
+  padding: 3px 0px;
+  width: auto;
+  height: auto;
+  z-index: 100000;
+  list-style: none;
+  border-spacing: 0;
+}
+
+
+.p-Menu-item {
+  display: table-row;
+  > span {
+    display: table-cell;
+    padding-top: 4px;
+    padding-bottom: 4px;
+  }
+}
+
+
+.p-Menu-item-icon {
+  width: 21px;
+  padding-left: 2px
+  padding-right: 2px;
+  text-align: center;
+}
+
+
+.p-Menu-item-text {
+  padding-left: 2px;
+  padding-right: 35px;
+}
+
+
+.p-Menu-item-shortcut {
+  text-align: right;
+}
+
+
+.p-Menu-item-submenu-icon {
+  width: 16px;
+  text-align: center;
+}
+
+
+.p-Menu-item.p-mod-separator-type {
+  > span {
+    padding: 0;
+    height: 9px;
+    line-height: 0;
+    text-indent: 100%;
+    overflow: hidden;
+    whitespace: nowrap;
+    vertical-align: top; // https://bugzilla.mozilla.org/show_bug.cgi?id=634489
+  }
+  > span::after {
+    content: '';
+    display: block;
+    position: relative;
+    top: 4px;
+  }
+  &:first-child
+  &:last-child {
+    display: none;
+  }
+}

@@ -1,0 +1,73 @@
+/*-----------------------------------------------------------------------------
+| Copyright (c) 2014-2015, S. Chris Colbert
+|
+| Distributed under the terms of the BSD 3-Clause License.
+|
+| The full license is in the file LICENSE, distributed with this software.
+|----------------------------------------------------------------------------*/
+.p-TabBar-inner {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  margin: 0;
+  padding: 0;
+  > .p-Tab {
+    position: absolute;
+    bottom: 0px;
+    &.p-mod-inserting {
+      animation: p-keyframes-inserting-tab 150ms ease
+    }
+    &.p-mod-removing {
+      animation: p-keyframes-removing-tab 150ms ease
+    }
+  }
+  &.p-mod-transition > .p-Tab {
+    transition-property: left, width;
+    transition-duration: 150ms;
+  }
+}
+
+
+.p-Tab {
+  display: flex;
+  flex-direction: row;
+  box-sizing: border-box;
+  overflow: hidden;
+  list-style-type: none;
+}
+
+
+.p-Tab-icon
+.p-Tab-close-icon {
+  flex: 0 0 auto;
+}
+
+
+.p-Tab-text {
+  flex: 1 1 auto;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+
+@keyframes p-keyframes-inserting-tab {
+  from {
+    bottom: -100%;
+  }
+  to {
+    bottom: 0;
+  }
+}
+
+
+@keyframes p-keyframes-removing-tab {
+  from {
+    bottom: 0;
+  }
+  to {
+    bottom: -100%;
+  }
+}

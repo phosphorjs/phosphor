@@ -5,12 +5,19 @@
 |
 | The full license is in the file LICENSE, distributed with this software.
 |----------------------------------------------------------------------------*/
-@require 'nib'
-@require './misc'
-@require './widget'
-@require './codemirror'
-@require './dockarea'
-@require './menu'
-@require './menubar'
-@require './splitter'
-@require './tabbar'
+.p-DockPanel-overlay {
+  box-sizing: border-box;
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 2;
+  transition: all 150ms ease;
+}
+
+
+// TODO the tab should really have a DockArea specific tag
+.p-Tab.p-mod-floating {
+  position: absolute;
+}
