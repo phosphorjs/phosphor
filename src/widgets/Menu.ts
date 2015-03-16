@@ -1002,8 +1002,8 @@ function firstWrap<T>(items: T[], cb: (v: T) => boolean, s: number): number {
 
 function lastWrap<T>(items: T[], cb: (v: T) => boolean, s: number): number {
   for (var i = 0, n = items.length; i < n; ++i) {
-    var j = ((s - 1 % n) + n) % n;
-    if (cb(items[i])) return j;
+    var j = (((s - i) % n) + n) % n;
+    if (cb(items[j])) return j;
   }
   return -1;
 }
