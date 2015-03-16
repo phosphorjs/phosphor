@@ -75,6 +75,13 @@ var tsSources = [
   'layout/SplitterLayout',
   'layout/StackLayout',
 
+  'virtualdom/IComponent',
+  'virtualdom/IVirtualElement',
+  'virtualdom/VirtualElementType',
+  'virtualdom/factory',
+  'virtualdom/dom',
+  'virtualdom/renderer',
+
   'widgets/ChildEvent',
   'widgets/MoveEvent',
   'widgets/ResizeEvent',
