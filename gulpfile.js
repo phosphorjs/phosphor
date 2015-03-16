@@ -94,6 +94,7 @@ var tsSources = [
   'widgets/Widget',
   'widgets/CodeMirrorWidget',
   'widgets/Splitter',
+  'widgets/StackWidget',
   'widgets/Tab',
   'widgets/TabBar'
 ].map(function(name) { return './src/' + name + '.ts'; });
