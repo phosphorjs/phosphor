@@ -29,8 +29,9 @@ var tsSources = [
   'collections/IQueue',
   'collections/ReadOnlyCollection',
   'collections/ReadOnlyList',
-  'collections/ListIterator',
+  'collections/ArrayIterator',
   'collections/ArrayList',
+  'collections/ListIterator',
   'collections/CircularBuffer',
   'collections/Queue',
 

@@ -35,7 +35,7 @@ class ArrayList<T> implements IList<T> {
    * Get an iterator for the elements in the list.
    */
   iterator(): IIterator<T> {
-    return new ArrayListIterator(this._m_array);
+    return new ArrayIterator(this._m_array);
   }
 
   /**
@@ -161,45 +161,6 @@ class ArrayList<T> implements IList<T> {
     return result;
   }
 
-  private _m_array: T[] = [];
-}
-
-
-/**
- * An iterator for an array list.
- */
-class ArrayListIterator<T> implements IIterator<T> {
-  /**
-   * Construct a new array list iterator.
-   */
-  constructor(array: T[]) {
-    this._m_array = array;
-  }
-
-  /**
-   * Test whether the iterable has more elements.
-   */
-  hasNext(): boolean {
-    return this._m_index < this._m_array.length;
-  }
-
-  /**
-   * Get the next element in the iterable.
-   *
-   * Returns `undefined` when `hasNext` returns false.
-   */
-  next(): T {
-    return this._m_array[this._m_index++];
-  }
-
-  /**
-   * Returns `this` so that the iterator is iterable.
-   */
-  iterator(): IIterator<T> {
-    return this;
-  }
-
-  private _m_index = 0;
   private _m_array: T[] = [];
 }
 
