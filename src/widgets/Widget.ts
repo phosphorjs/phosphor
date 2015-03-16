@@ -31,7 +31,7 @@ import Point = geometry.Point;
 import Rect = geometry.Rect;
 import Size = geometry.Size;
 
-import ILayout = layout.ILayout;
+import Layout = layout.Layout;
 
 
 /**
@@ -156,7 +156,7 @@ class Widget implements IEventHandler {
   /**
    * Get the layout associated with the widget.
    */
-  get layout(): ILayout {
+  get layout(): Layout {
     return this._m_layout;
   }
 
@@ -168,7 +168,7 @@ class Widget implements IEventHandler {
    *
    * The current layout will be disposed and cannot be reused.
    */
-  set layout(layout: ILayout) {
+  set layout(layout: Layout) {
     layout = layout || null;
     var old = this._m_layout;
     if (old === layout) {
@@ -1132,7 +1132,7 @@ class Widget implements IEventHandler {
   private _m_node: HTMLElement;
   private _m_extra = createExtra();
   private _m_parent: Widget = null;
-  private _m_layout: ILayout = null;
+  private _m_layout: Layout = null;
   private _m_children = new ArrayList<Widget>();
 }
 

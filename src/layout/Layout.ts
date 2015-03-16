@@ -9,7 +9,9 @@ module phosphor.layout {
 
 import CoreEvent = core.CoreEvent;
 import ICoreEvent = core.ICoreEvent;
+import IDisposable = core.IDisposable;
 import IEventHandler = core.IEventHandler;
+import IEventFilter = core.IEventFilter;
 
 import Alignment = enums.Alignment;
 
@@ -30,7 +32,7 @@ import Widget = widgets.Widget;
  * This class must be subclassed to be useful.
  */
 export
-class Layout implements ILayout {
+class Layout implements IEventFilter, IDisposable {
   /**
    * Construct a new layout.
    */
@@ -54,7 +56,7 @@ class Layout implements ILayout {
    * Set the parent widget of the layout.
    *
    * The parent widget can only be set once, and is done automatically
-   * when the layout is installed on a widget. It should not be set
+   * when the layout is installed on a widget. This should not be set
    * directly by user code.
    */
   set parentWidget(widget: Widget) {

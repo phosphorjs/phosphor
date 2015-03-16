@@ -62,7 +62,6 @@ var tsSources = [
   'geometry/Size',
   'geometry/Rect',
 
-  'layout/ILayout',
   'layout/ILayoutItem',
   'layout/Layout',
   'layout/SizingItem',
