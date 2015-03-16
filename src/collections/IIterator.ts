@@ -23,4 +23,9 @@ interface IIterator<T> {
    * Returns `undefined` when `hasNext` returns false.
    */
   next(): T;
+
+  /**
+   * Returns `this` so that the iterator is iterable.
+   */
+  iterator(): IIterator<T>;
 }
