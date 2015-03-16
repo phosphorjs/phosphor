@@ -5,15 +5,17 @@
 |
 | The full license is in the file LICENSE, distributed with this software.
 |----------------------------------------------------------------------------*/
-import ConstArrayView = require('../collections/ConstArrayView');
-import IQueue = require('../collections/IQueue');
+import ArrayList = require('../collections/ArrayList');
+import IIterable = require('../collections/IIterable');
+import IList = require('../collections/IList');
+import ReadOnlyList = require('../collections/ReadOnlyList');
 
 import CoreEvent = require('../core/CoreEvent');
 import ICoreEvent = require('../core/ICoreEvent');
 import IEventHandler = require('../core/IEventHandler');
 import Signal = require('../core/Signal');
 import algo = require('../core/algorithm');
-import loop = require('../core/eventloop');
+import evtl = require('../core/eventloop');
 
 import boxdata = require('../dom/boxdata');
 
@@ -71,7 +73,7 @@ class Widget implements IEventHandler {
     this.setFlag(WidgetFlag.IsDisposed);
 
     // Clear event data before potentially invoking user code.
-    loop.clearEventData(this);
+    evtl.clearEventData(this);
 
     // Allow user code to a chance to cleanup resources or take action
     // in response to the widget being disposed.
@@ -85,9 +87,8 @@ class Widget implements IEventHandler {
     var parent = this._m_parent;
     if (parent) {
       this._m_parent = null;
-      var i = parent._m_children.indexOf(this);
-      if (i !== -1) algo.removeAt(parent._m_children, i);
-      loop.sendEvent(parent, new ChildEvent('child-removed', this));
+      this._m_parent._m_children.remove(this);
+      evtl.sendEvent(parent, new ChildEvent('child-removed', this));
     } else if (this.isAttached) {
       this.detach();
     }
@@ -105,16 +106,13 @@ class Widget implements IEventHandler {
     // Dispose of the children. A child's parent reference is first
     // cleared so that it does not try to recursively remove itself.
     var children = this._m_children;
-    if (children) {
-      for (var i = 0; i < children.length; ++i) {
-        var child = children[i];
-        if (!child) continue;
-        children[i] = null;
-        child._m_parent = null;
-        child.dispose();
-      }
-      this._m_children = null;
+    for (var i = 0, n = children.size; i < n; ++i) {
+      var child = children.get(i);
+      children.set(i, null);
+      child._m_parent = null;
+      child.dispose();
     }
+    children.clear();
   }
 
   /**
@@ -135,23 +133,22 @@ class Widget implements IEventHandler {
     }
     if (old) {
       this._m_parent = null;
-      var i = old._m_children.indexOf(this);
-      if (i !== -1) algo.removeAt(old._m_children, i);
-      loop.sendEvent(old, new ChildEvent('child-removed', this));
+      old._m_children.remove(this);
+      evtl.sendEvent(old, new ChildEvent('child-removed', this));
     }
     if (parent) {
       this._m_parent = parent;
-      parent._m_children.push(this);
-      loop.sendEvent(parent, new ChildEvent('child-added', this));
+      parent._m_children.add(this);
+      evtl.sendEvent(parent, new ChildEvent('child-added', this));
     }
-    loop.sendEvent(this, EVT_PARENT_CHANGED);
+    evtl.sendEvent(this, EVT_PARENT_CHANGED);
   }
 
   /**
-   * Get a read only view of the array of child widgets.
+   * Get a read only list of the child widgets.
    */
-  get children(): ConstArrayView<Widget> {
-    return new ConstArrayView(this._m_children);
+  get children(): IList<Widget> {
+    return new ReadOnlyList(this._m_children);
   }
 
   /**
@@ -183,15 +180,15 @@ class Widget implements IEventHandler {
     }
     if (old) {
       this._m_layout = null;
-      loop.removeEventFilter(this, old);
+      evtl.removeEventFilter(this, old);
       old.dispose();
     }
     if (layout) {
       this._m_layout = layout;
-      loop.installEventFilter(this, layout);
+      evtl.installEventFilter(this, layout);
       layout.parentWidget = this;
     }
-    loop.sendEvent(this, EVT_LAYOUT_CHANGED);
+    evtl.sendEvent(this, EVT_LAYOUT_CHANGED);
   }
 
   /**
@@ -596,16 +593,16 @@ class Widget implements IEventHandler {
     }
     var p = this._m_parent;
     if (this.isAttached && (!p || p.isVisible)) {
-      loop.sendEvent(this, EVT_BEFORE_SHOW);
+      evtl.sendEvent(this, EVT_BEFORE_SHOW);
       this.classList.remove(HIDDEN_CLASS);
       this.clearFlag(WidgetFlag.IsHidden);
-      loop.sendEvent(this, EVT_AFTER_SHOW);
+      evtl.sendEvent(this, EVT_AFTER_SHOW);
     } else {
       this.classList.remove(HIDDEN_CLASS);
       this.clearFlag(WidgetFlag.IsHidden);
     }
     if (p) {
-      loop.sendEvent(p, new ChildEvent('child-shown', this));
+      evtl.sendEvent(p, new ChildEvent('child-shown', this));
     }
     this.updateGeometry();
   }
@@ -621,16 +618,16 @@ class Widget implements IEventHandler {
     }
     var p = this._m_parent;
     if (this.isAttached && (!p || p.isVisible)) {
-      loop.sendEvent(this, EVT_BEFORE_HIDE);
+      evtl.sendEvent(this, EVT_BEFORE_HIDE);
       this.classList.add(HIDDEN_CLASS);
       this.setFlag(WidgetFlag.IsHidden);
-      loop.sendEvent(this, EVT_AFTER_HIDE);
+      evtl.sendEvent(this, EVT_AFTER_HIDE);
     } else {
       this.classList.add(HIDDEN_CLASS);
       this.setFlag(WidgetFlag.IsHidden);
     }
     if (p) {
-      loop.sendEvent(p, new ChildEvent('child-hidden', this));
+      evtl.sendEvent(p, new ChildEvent('child-hidden', this));
     }
     this.updateGeometry(true);
   }
@@ -643,7 +640,7 @@ class Widget implements IEventHandler {
    * close event handler will unparent the widget.
    */
   close(): void {
-    loop.sendEvent(this, EVT_CLOSE);
+    evtl.sendEvent(this, EVT_CLOSE);
   }
 
   /**
@@ -659,9 +656,9 @@ class Widget implements IEventHandler {
     if (this._m_parent) {
       throw new Error('can only attach a root widget to the DOM');
     }
-    loop.sendEvent(this, EVT_BEFORE_ATTACH);
+    evtl.sendEvent(this, EVT_BEFORE_ATTACH);
     node.appendChild(this._m_node);
-    loop.sendEvent(this, EVT_AFTER_ATTACH);
+    evtl.sendEvent(this, EVT_AFTER_ATTACH);
   }
 
   /**
@@ -678,9 +675,9 @@ class Widget implements IEventHandler {
     if (!parentNode) {
       return;
     }
-    loop.sendEvent(this, EVT_BEFORE_DETACH);
+    evtl.sendEvent(this, EVT_BEFORE_DETACH);
     parentNode.removeChild(node);
-    loop.sendEvent(this, EVT_AFTER_DETACH);
+    evtl.sendEvent(this, EVT_AFTER_DETACH);
   }
 
   /**
@@ -777,7 +774,7 @@ class Widget implements IEventHandler {
     if (parent._m_layout) {
       parent._m_layout.invalidate();
     } else {
-      loop.postEvent(parent, EVT_LAYOUT_REQUEST);
+      evtl.postEvent(parent, EVT_LAYOUT_REQUEST);
       parent.updateGeometry();
     }
   }
@@ -792,7 +789,7 @@ class Widget implements IEventHandler {
     if (this._m_layout) {
       this._m_layout.invalidate();
     } else {
-      loop.postEvent(this, EVT_LAYOUT_REQUEST);
+      evtl.postEvent(this, EVT_LAYOUT_REQUEST);
     }
     this.updateGeometry();
   }
@@ -854,10 +851,10 @@ class Widget implements IEventHandler {
       style.height = height + 'px';
     }
     if (isMove) {
-      loop.sendEvent(this, new MoveEvent(oldX, oldY, x, y));
+      evtl.sendEvent(this, new MoveEvent(oldX, oldY, x, y));
     }
     if (isResize) {
-      loop.sendEvent(this, new ResizeEvent(oldWidth, oldHeight, width, height));
+      evtl.sendEvent(this, new ResizeEvent(oldWidth, oldHeight, width, height));
     }
   }
 
@@ -929,7 +926,9 @@ class Widget implements IEventHandler {
       extra.vSizePolicy = vertical;
       changed = true;
     }
-    if (changed) this.updateGeometry();
+    if (changed) {
+      this.updateGeometry();
+    }
   }
 
   /**
@@ -950,9 +949,9 @@ class Widget implements IEventHandler {
       case 'child-added':
         var child = (<ChildEvent>event).child;
         if (this.isAttached) {
-          loop.sendEvent(child, EVT_BEFORE_ATTACH);
+          evtl.sendEvent(child, EVT_BEFORE_ATTACH);
           this._m_node.appendChild(child._m_node);
-          loop.sendEvent(child, EVT_AFTER_ATTACH);
+          evtl.sendEvent(child, EVT_AFTER_ATTACH);
         } else {
           this._m_node.appendChild(child._m_node);
         }
@@ -960,9 +959,9 @@ class Widget implements IEventHandler {
       case 'child-removed':
         var child = (<ChildEvent>event).child;
         if (this.isAttached) {
-          loop.sendEvent(child, EVT_BEFORE_DETACH);
+          evtl.sendEvent(child, EVT_BEFORE_DETACH);
           this._m_node.removeChild(child._m_node);
-          loop.sendEvent(child, EVT_AFTER_DETACH);
+          evtl.sendEvent(child, EVT_AFTER_DETACH);
         } else {
           this._m_node.removeChild(child._m_node);
         }
@@ -1027,10 +1026,10 @@ class Widget implements IEventHandler {
    *
    * By default 'layout-request' events are compressed.
    */
-  compressEvent(event: ICoreEvent, postedEvents: IQueue<ICoreEvent>): boolean {
+  compressEvent(event: ICoreEvent, posted: IIterable<ICoreEvent>): boolean {
     var type = event.type;
     if (type === 'layout-request') {
-      return postedEvents.some(other => other.type === type);
+      return algo.some(posted, p => p.type === type);
     }
     return false;
   }
@@ -1131,7 +1130,7 @@ class Widget implements IEventHandler {
   private _m_extra = createExtra();
   private _m_parent: Widget = null;
   private _m_layout: ILayout = null;
-  private _m_children: Widget[] = [];
+  private _m_children = new ArrayList<Widget>();
 }
 
 
@@ -1290,23 +1289,23 @@ function createExtra(): IWidgetExtra {
 
 
 /**
- * Send an event to the given widget children.
+ * Send an event to a list of child widgets.
  */
-function sendChildrenEvent(children: Widget[], event: ICoreEvent): void {
-  for (var i = 0; i < children.length; ++i) {
-    loop.sendEvent(children[i], event);
+function sendChildrenEvent(children: IList<Widget>, event: ICoreEvent): void {
+  for (var i = 0, n = children.size; i < n; ++i) {
+    evtl.sendEvent(children.get(i), event);
   }
 }
 
 
 /**
- * Send an event to the given widget children which are not hidden.
+ * Send an event to the non-hidden children in the list.
  */
-function sendNonHiddenChildrenEvent(children: Widget[], event: ICoreEvent): void {
-  for (var i = 0; i < children.length; ++i) {
-    var child = children[i];
+function sendNonHiddenChildrenEvent(children: IList<Widget>, event: ICoreEvent): void {
+  for (var i = 0, n = children.size; i < n; ++i) {
+    var child = children.get(i);
     if (!child.isHidden) {
-      loop.sendEvent(child, event);
+      evtl.sendEvent(child, event);
     }
   }
 }
