@@ -14,7 +14,6 @@ import CoreEvent = require('../core/CoreEvent');
 import ICoreEvent = require('../core/ICoreEvent');
 import IEventHandler = require('../core/IEventHandler');
 import Signal = require('../core/Signal');
-import algo = require('../core/algorithm');
 import evtl = require('../core/eventloop');
 
 import boxdata = require('../dom/boxdata');
@@ -1027,9 +1026,10 @@ class Widget implements IEventHandler {
    * By default 'layout-request' events are compressed.
    */
   compressEvent(event: ICoreEvent, posted: IIterable<ICoreEvent>): boolean {
-    var type = event.type;
-    if (type === 'layout-request') {
-      return algo.some(posted, p => p.type === type);
+    if (event.type === 'layout-request') {
+      for (var it = posted.iterator(); it.hasNext();) {
+        if (it.next().type === event.type) return true;
+      }
     }
     return false;
   }
