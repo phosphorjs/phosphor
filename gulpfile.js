@@ -55,6 +55,7 @@ var tsSources = [
 
   'enums/Alignment',
   'enums/Direction',
+  'enums/DockMode',
   'enums/Orientation',
   'enums/SizePolicy',
   'enums/WidgetFlag',
@@ -101,7 +102,8 @@ var tsSources = [
   'widgets/StackWidget',
   'widgets/Tab',
   'widgets/TabBar',
-  'widgets/TabWidget'
+  'widgets/TabWidget',
+  'widgets/DockArea'
 ].map(function(name) { return './src/' + name + '.ts'; });
 
 
