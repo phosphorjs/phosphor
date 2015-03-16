@@ -5,6 +5,90 @@
 |
 | The full license is in the file LICENSE, distributed with this software.
 |----------------------------------------------------------------------------*/
+import IIterable = require('../collections/IIterable');
+
+
+/**
+ * Invoke a callback once for each element in an iterable.
+ */
+export
+function forEach<T>(
+  iterable: IIterable<T>,
+  callback: (value: T, index: number) => void): void {
+  var iter = iterable.iterator();
+  for (var i = 0; iter.hasNext(); ++i) {
+    callback(iter.next(), i);
+  }
+}
+
+
+/**
+ * Test whether some element in an iterable passes a test.
+ */
+export
+function some<T>(
+  iterable: IIterable<T>,
+  callback: (value: T, index: number) => boolean): boolean {
+  var iter = iterable.iterator();
+  for (var i = 0; iter.hasNext(); ++i) {
+    if (callback(iter.next(), i)) {
+      return true;
+    }
+  }
+  return false;
+}
+
+
+/**
+ * Test whether all elements in an iterable pass a test.
+ */
+export
+function every<T>(
+  iterable: IIterable<T>,
+  callback: (value: T, index: number) => boolean): boolean {
+  var iter = iterable.iterator();
+  for (var i = 0; iter.hasNext(); ++i) {
+    if (!callback(iter.next(), i)) {
+      return false;
+    }
+  }
+  return true;
+}
+
+
+/**
+ * Create an array of the iterable elements which pass a test.
+ */
+export
+function filter<T>(
+  iterable: IIterable<T>,
+  callback: (value: T, index: number) => boolean): T[] {
+  var result: T[] = [];
+  var iter = iterable.iterator();
+  for (var i = 0; iter.hasNext(); ++i) {
+    var value = iter.next();
+    if (callback(value, i)) {
+      result.push(value);
+    }
+  }
+  return result;
+}
+
+
+/**
+ * Create an array of callback results for each element in an iterable.
+ */
+export
+function map<T, U>(
+  iterable: IIterable<T>,
+  callback: (value: T, index: number) => U): U[] {
+  var result: U[] = [];
+  var iter = iterable.iterator();
+  for (var i = 0; iter.hasNext(); ++i) {
+    result.push(callback(iter.next(), i));
+  }
+  return result;
+}
 
 
 /**
