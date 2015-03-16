@@ -50,6 +50,7 @@ var tsSources = [
   'dom/overrideCursor',
 
   'enums/Alignment',
+  'enums/Direction',
   'enums/Orientation',
   'enums/SizePolicy',
   'enums/WidgetFlag',
@@ -65,8 +66,10 @@ var tsSources = [
   'layout/ILayoutItem',
   'layout/Layout',
   'layout/SizingItem',
+  'layout/SpacerItem',
   'layout/WidgetItem',
   'layout/layoutCalc',
+  'layout/BoxLayout',
   'layout/SplitterHandle',
   'layout/SplitterLayout',
 
