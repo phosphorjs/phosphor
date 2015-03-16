@@ -7,7 +7,8 @@
 |----------------------------------------------------------------------------*/
 module example {
 
-import Orientation = phosphor.widgets.Orientation;
+import Orientation = phosphor.enums.Orientation;
+
 import Splitter = phosphor.widgets.Splitter;
 import Widget = phosphor.widgets.Widget;
 
@@ -44,7 +45,6 @@ function main(): void {
 
   window.onresize = () => sp1.fitToHost();
 }
-
 
 window.onload = main;
 
