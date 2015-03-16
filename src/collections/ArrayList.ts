@@ -7,7 +7,6 @@
 |----------------------------------------------------------------------------*/
 module phosphor.collections {
 
-
 /**
  * An array-based implementation of IList.
  */

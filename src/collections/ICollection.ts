@@ -7,7 +7,6 @@
 |----------------------------------------------------------------------------*/
 module phosphor.collections {
 
-
 /**
  * A collection of elements with a definite size.
  */

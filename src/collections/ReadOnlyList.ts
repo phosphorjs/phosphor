@@ -7,7 +7,6 @@
 |----------------------------------------------------------------------------*/
 module phosphor.collections {
 
-
 /**
  * A read only view of a list.
  */

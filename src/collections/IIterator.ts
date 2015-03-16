@@ -7,7 +7,6 @@
 |----------------------------------------------------------------------------*/
 module phosphor.collections {
 
-
 /**
  * An object which iterates over elements in an iterable.
  */

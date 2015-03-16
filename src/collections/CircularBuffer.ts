@@ -7,7 +7,6 @@
 |----------------------------------------------------------------------------*/
 module phosphor.collections {
 
-
 /**
  * A circular buffer with a fixed maximum size.
  *
