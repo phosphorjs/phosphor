@@ -131,7 +131,7 @@ gulp.task('dist', function() {
     .pipe(gulp.dest('./dist'));
 
   var js = src.pipe(concat('phosphor.js'))
-    .pipe(header('"use strict";'))
+    .pipe(header('"use strict";\n'))
     .pipe(gulp.dest('./dist'));
 
   var css = gulp.src(stylSources)
@@ -155,10 +155,16 @@ gulp.task('examples', function() {
     target: 'ES5',
   });
 
-  var src = gulp.src(['dist/phosphor.d.ts', 'examples/**/index.ts'])
+  var sources = typings.concat([
+    'dist/phosphor.d.ts',
+    'examples/**/index.ts'
+  ]);
+
+  var src = gulp.src(sources)
     .pipe(typescript(project))
     .pipe(rename(function (path) {
       path.dirname += '/build'; }))
+    .pipe(header('"use strict";\n'))
     .pipe(gulp.dest('examples'));
 
   var css = gulp.src('examples/**/index.styl')
