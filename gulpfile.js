@@ -81,6 +81,7 @@ var tsSources = [
   'virtualdom/factory',
   'virtualdom/dom',
   'virtualdom/renderer',
+  'virtualdom/Component',
 
   'widgets/ChildEvent',
   'widgets/MoveEvent',
