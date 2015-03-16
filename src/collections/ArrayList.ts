@@ -165,7 +165,7 @@ class ArrayList<T> implements IList<T> {
     return result;
   }
 
-  private _m_array: T[];
+  private _m_array: T[] = [];
 }
 
 
