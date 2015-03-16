@@ -5,12 +5,13 @@
 |
 | The full license is in the file LICENSE, distributed with this software.
 |----------------------------------------------------------------------------*/
-export = IInjectable;
+module phosphor.di {
 
 
 /**
  * A class type which declares its injection dependencies.
  */
+export
 interface IInjectable<T> {
   /**
    * The constructor signature for the class.
@@ -22,3 +23,5 @@ interface IInjectable<T> {
    */
   $inject?: string[];
 }
+
+} // module phosphor.di

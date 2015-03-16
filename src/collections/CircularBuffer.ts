@@ -5,12 +5,7 @@
 |
 | The full license is in the file LICENSE, distributed with this software.
 |----------------------------------------------------------------------------*/
-import IIterator = require('./IIterator');
-import IList = require('./IList');
-import IQueue = require('./IQueue');
-import ListIterator = require('./ListIterator');
-
-export = CircularBuffer;
+module phosphor.collections {
 
 
 /**
@@ -21,6 +16,7 @@ export = CircularBuffer;
  * and back of the buffer. When the buffer reaches its maximum
  * size, newly added elements will overwrite existing elements.
  */
+export
 class CircularBuffer<T> implements IQueue<T>, IList<T> {
   /**
    * Construct a new circular buffer.
@@ -305,3 +301,5 @@ class CircularBuffer<T> implements IQueue<T>, IList<T> {
   private _m_offset = 0;
   private _m_array: T[];
 }
+
+} // module phosphor.collections

@@ -5,14 +5,13 @@
 |
 | The full license is in the file LICENSE, distributed with this software.
 |----------------------------------------------------------------------------*/
-import IInjectable = require('./IInjectable');
-
-export = Container;
+module phosphor.di {
 
 
 /**
  * A lightweight dependency injection container.
  */
+export
 class Container {
   /**
    * Construct a new container.
@@ -259,3 +258,5 @@ class PerResolveLifetime implements ILifetime {
   private _m_key = 0;
   private _m_val: any = null;
 }
+
+} // module phosphor.di

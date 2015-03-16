@@ -5,9 +5,7 @@
 |
 | The full license is in the file LICENSE, distributed with this software.
 |----------------------------------------------------------------------------*/
-import IIterator = require('./IIterator');
-
-export = IIterable;
+module phosphor.collections {
 
 
 /**
@@ -15,9 +13,12 @@ export = IIterable;
  *
  * In general, it is not safe to modify the iterable while iterating.
  */
+export
 interface IIterable<T> {
   /**
    * Get an iterator for the elements in the iterable.
    */
   iterator(): IIterator<T>;
 }
+
+} // module phosphor.collections

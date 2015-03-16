@@ -5,12 +5,13 @@
 |
 | The full license is in the file LICENSE, distributed with this software.
 |----------------------------------------------------------------------------*/
-export = IIterator;
+module phosphor.collections {
 
 
 /**
  * An object which iterates over elements in an iterable.
  */
+export
 interface IIterator<T> {
   /**
    * Test whether the iterable has more elements.
@@ -29,3 +30,5 @@ interface IIterator<T> {
    */
   iterator(): IIterator<T>;
 }
+
+} // module phosphor.collections

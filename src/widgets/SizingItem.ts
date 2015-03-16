@@ -5,12 +5,13 @@
 |
 | The full license is in the file LICENSE, distributed with this software.
 |----------------------------------------------------------------------------*/
-export = SizingItem;
+module phosphor.widgets {
 
 
 /**
  * A sizing item for the `layoutCalc` function.
  */
+export
 class SizingItem {
   /**
    * The preferred size of the item.
@@ -67,3 +68,5 @@ class SizingItem {
    */
   done = false;
 }
+
+} // module phosphor.widgets

@@ -5,19 +5,12 @@
 |
 | The full license is in the file LICENSE, distributed with this software.
 |----------------------------------------------------------------------------*/
-import ICoreEvent = require('../core/ICoreEvent');
-import IDisposable = require('../core/IDisposable');
+module phosphor.widgets {
 
-import overrideCursor = require('../dom/overrideCursor');
+import ICoreEvent = core.ICoreEvent;
+import IDisposable = core.IDisposable;
 
-import Alignment = require('./Alignment');
-import Orientation = require('./Orientation');
-import SplitterHandle = require('./SplitterHandle');
-import SplitterLayout = require('./SplitterLayout');
-import Widget = require('./Widget');
-import WidgetFlag = require('./WidgetFlag');
-
-export = Splitter;
+import overrideCursor = dom.overrideCursor;
 
 
 /**
@@ -29,6 +22,7 @@ var SPLITTER_CLASS = 'p-Splitter';
 /**
  * A widget which separates its children into resizable sections.
  */
+export
 class Splitter extends Widget {
   /**
    * Construct a new splitter.
@@ -354,3 +348,5 @@ interface IPressData {
    */
   grab: IDisposable;
 }
+
+} // module phosphor.widgets

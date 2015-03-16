@@ -5,19 +5,9 @@
 |
 | The full license is in the file LICENSE, distributed with this software.
 |----------------------------------------------------------------------------*/
-import Size = require('../geometry/Size');
+module phosphor.widgets {
 
-import Alignment = require('./Alignment');
-import ILayoutItem = require('./ILayoutItem');
-import Layout = require('./Layout');
-import Orientation = require('./Orientation');
-import SizingItem = require('./SizingItem');
-import SplitterHandle = require('./SplitterHandle');
-import Widget = require('./Widget');
-import WidgetItem = require('./WidgetItem');
-import layoutCalc = require('./layoutCalc');
-
-export = SplitterLayout;
+import Size = geometry.Size;
 
 
 /**
@@ -25,6 +15,7 @@ export = SplitterLayout;
  *
  * This will not typically be used directly by user code.
  */
+export
 class SplitterLayout extends Layout {
   /**
    * Construct a new splitter layout.
@@ -652,3 +643,5 @@ function normalize(values: number[]): number[] {
   }
   return result;
 }
+
+} // module phosphor.widgets

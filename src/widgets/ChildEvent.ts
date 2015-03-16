@@ -5,16 +5,15 @@
 |
 | The full license is in the file LICENSE, distributed with this software.
 |----------------------------------------------------------------------------*/
-import CoreEvent = require('../core/CoreEvent');
+module phosphor.widgets {
 
-import Widget = require('./Widget');
-
-export = ChildEvent;
+import CoreEvent = core.CoreEvent;
 
 
 /**
  * An event class for child widget related events.
  */
+export
 class ChildEvent extends CoreEvent {
   /**
    * Construct a new child event.
@@ -33,3 +32,5 @@ class ChildEvent extends CoreEvent {
 
   private _m_child: Widget;
 }
+
+} // module phosphor.widgets

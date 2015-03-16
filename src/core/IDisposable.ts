@@ -5,12 +5,13 @@
 |
 | The full license is in the file LICENSE, distributed with this software.
 |----------------------------------------------------------------------------*/
-export = IDisposable;
+module phosphor.core {
 
 
 /**
  * An object which holds disposable resources.
  */
+export
 interface IDisposable {
   /**
    * Dispose of the resources held by the object.
@@ -19,3 +20,5 @@ interface IDisposable {
    */
   dispose(): void;
 }
+
+} // module phosphor.core

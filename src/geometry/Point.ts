@@ -5,12 +5,13 @@
 |
 | The full license is in the file LICENSE, distributed with this software.
 |----------------------------------------------------------------------------*/
-export = Point;
+module phosphor.geometry {
 
 
 /**
  * The position of a two dimensional object.
  */
+export
 class Point {
   /**
    * Construct a new point.
@@ -44,3 +45,5 @@ class Point {
   private _m_x: number;
   private _m_y: number;
 }
+
+} // module phosphor.geometry

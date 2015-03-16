@@ -5,10 +5,10 @@
 |
 | The full license is in the file LICENSE, distributed with this software.
 |----------------------------------------------------------------------------*/
-import Disposable = require('../core/Disposable');
-import IDisposable = require('../core/IDisposable');
+module phosphor.dom {
 
-export = overrideCursor;
+import Disposable = core.Disposable;
+import IDisposable = core.IDisposable;
 
 
 /**
@@ -28,6 +28,7 @@ var current: IDisposable = null;
  *
  * Returns an IDisposable which will clear the override.
  */
+export
 function overrideCursor(cursor: string): IDisposable {
   if (current) current.dispose();
   var body = document.body;
@@ -46,3 +47,5 @@ function clearOverride(): void {
   body.style.cursor = '';
   body.classList.remove(CURSOR_CLASS);
 }
+
+} // module phosphor.dom

@@ -5,15 +5,13 @@
 |
 | The full license is in the file LICENSE, distributed with this software.
 |----------------------------------------------------------------------------*/
-import IIterator = require('./IIterator');
-import IQueue = require('./IQueue');
-
-export = Queue;
+module phosphor.collections {
 
 
 /**
  * A canonical singly linked FIFO queue.
  */
+export
 class Queue<T> implements IQueue<T> {
   /**
    * Construct a new queue.
@@ -272,3 +270,5 @@ class QueueIterator<T> implements IIterator<T> {
 
   private _m_link: IQueueLink<T>;
 }
+
+} // module phosphor.collections

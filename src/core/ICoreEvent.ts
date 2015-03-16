@@ -5,15 +5,18 @@
 |
 | The full license is in the file LICENSE, distributed with this software.
 |----------------------------------------------------------------------------*/
-export = ICoreEvent;
+module phosphor.core {
 
 
 /**
  * An object which can be sent to an event handler.
  */
+export
 interface ICoreEvent {
   /**
    * The type of the event.
    */
   type: string;
 }
+
+} // module phosphor.core

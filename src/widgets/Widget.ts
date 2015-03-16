@@ -5,31 +5,24 @@
 |
 | The full license is in the file LICENSE, distributed with this software.
 |----------------------------------------------------------------------------*/
-import ArrayList = require('../collections/ArrayList');
-import IIterable = require('../collections/IIterable');
-import IList = require('../collections/IList');
-import ReadOnlyList = require('../collections/ReadOnlyList');
+module phosphor.widgets {
 
-import CoreEvent = require('../core/CoreEvent');
-import ICoreEvent = require('../core/ICoreEvent');
-import IEventHandler = require('../core/IEventHandler');
-import Signal = require('../core/Signal');
-import evtl = require('../core/eventloop');
+import ArrayList = collections.ArrayList;
+import IIterable = collections.IIterable;
+import IList = collections.IList;
+import ReadOnlyList = collections.ReadOnlyList;
 
-import boxdata = require('../dom/boxdata');
+import CoreEvent = core.CoreEvent;
+import ICoreEvent = core.ICoreEvent;
+import IEventHandler = core.IEventHandler;
+import Signal = core.Signal;
 
-import Point = require('../geometry/Point');
-import Rect = require('../geometry/Rect');
-import Size = require('../geometry/Size');
+import IBoxData = dom.IBoxData;
+import createBoxData = dom.createBoxData;
 
-import ChildEvent = require('./ChildEvent');
-import ILayout = require('./ILayout');
-import MoveEvent = require('./MoveEvent');
-import ResizeEvent = require('./ResizeEvent');
-import SizePolicy = require('./SizePolicy');
-import WidgetFlag = require('./WidgetFlag');
-
-export = Widget;
+import Point = geometry.Point;
+import Rect = geometry.Rect;
+import Size = geometry.Size;
 
 
 /**
@@ -46,6 +39,7 @@ var HIDDEN_CLASS = 'p-mod-hidden';
 /**
  * The base class of the Phosphor widget hierarchy.
  */
+export
 class Widget implements IEventHandler {
   /**
    * A signal emitted when the widget is disposed.
@@ -72,7 +66,7 @@ class Widget implements IEventHandler {
     this.setFlag(WidgetFlag.IsDisposed);
 
     // Clear event data before potentially invoking user code.
-    evtl.clearEventData(this);
+    core.clearEventData(this);
 
     // Allow user code to a chance to cleanup resources or take action
     // in response to the widget being disposed.
@@ -87,7 +81,7 @@ class Widget implements IEventHandler {
     if (parent) {
       this._m_parent = null;
       this._m_parent._m_children.remove(this);
-      evtl.sendEvent(parent, new ChildEvent('child-removed', this));
+      core.sendEvent(parent, new ChildEvent('child-removed', this));
     } else if (this.isAttached) {
       this.detach();
     }
@@ -133,14 +127,14 @@ class Widget implements IEventHandler {
     if (old) {
       this._m_parent = null;
       old._m_children.remove(this);
-      evtl.sendEvent(old, new ChildEvent('child-removed', this));
+      core.sendEvent(old, new ChildEvent('child-removed', this));
     }
     if (parent) {
       this._m_parent = parent;
       parent._m_children.add(this);
-      evtl.sendEvent(parent, new ChildEvent('child-added', this));
+      core.sendEvent(parent, new ChildEvent('child-added', this));
     }
-    evtl.sendEvent(this, EVT_PARENT_CHANGED);
+    core.sendEvent(this, EVT_PARENT_CHANGED);
   }
 
   /**
@@ -179,15 +173,15 @@ class Widget implements IEventHandler {
     }
     if (old) {
       this._m_layout = null;
-      evtl.removeEventFilter(this, old);
+      core.removeEventFilter(this, old);
       old.dispose();
     }
     if (layout) {
       this._m_layout = layout;
-      evtl.installEventFilter(this, layout);
+      core.installEventFilter(this, layout);
       layout.parentWidget = this;
     }
-    evtl.sendEvent(this, EVT_LAYOUT_CHANGED);
+    core.sendEvent(this, EVT_LAYOUT_CHANGED);
   }
 
   /**
@@ -520,11 +514,11 @@ class Widget implements IEventHandler {
    * If an external style change causes the box data to change, the
    * `updateBoxData` method should be called to update the widget.
    */
-  get boxData(): boxdata.IBoxData {
+  get boxData(): IBoxData {
     var extra = this._m_extra;
     var data = extra.boxData;
     if (data) return data;
-    return extra.boxData = boxdata.createBoxData(this._m_node);
+    return extra.boxData = createBoxData(this._m_node);
   }
 
   /**
@@ -592,16 +586,16 @@ class Widget implements IEventHandler {
     }
     var p = this._m_parent;
     if (this.isAttached && (!p || p.isVisible)) {
-      evtl.sendEvent(this, EVT_BEFORE_SHOW);
+      core.sendEvent(this, EVT_BEFORE_SHOW);
       this.classList.remove(HIDDEN_CLASS);
       this.clearFlag(WidgetFlag.IsHidden);
-      evtl.sendEvent(this, EVT_AFTER_SHOW);
+      core.sendEvent(this, EVT_AFTER_SHOW);
     } else {
       this.classList.remove(HIDDEN_CLASS);
       this.clearFlag(WidgetFlag.IsHidden);
     }
     if (p) {
-      evtl.sendEvent(p, new ChildEvent('child-shown', this));
+      core.sendEvent(p, new ChildEvent('child-shown', this));
     }
     this.updateGeometry();
   }
@@ -617,16 +611,16 @@ class Widget implements IEventHandler {
     }
     var p = this._m_parent;
     if (this.isAttached && (!p || p.isVisible)) {
-      evtl.sendEvent(this, EVT_BEFORE_HIDE);
+      core.sendEvent(this, EVT_BEFORE_HIDE);
       this.classList.add(HIDDEN_CLASS);
       this.setFlag(WidgetFlag.IsHidden);
-      evtl.sendEvent(this, EVT_AFTER_HIDE);
+      core.sendEvent(this, EVT_AFTER_HIDE);
     } else {
       this.classList.add(HIDDEN_CLASS);
       this.setFlag(WidgetFlag.IsHidden);
     }
     if (p) {
-      evtl.sendEvent(p, new ChildEvent('child-hidden', this));
+      core.sendEvent(p, new ChildEvent('child-hidden', this));
     }
     this.updateGeometry(true);
   }
@@ -639,7 +633,7 @@ class Widget implements IEventHandler {
    * close event handler will unparent the widget.
    */
   close(): void {
-    evtl.sendEvent(this, EVT_CLOSE);
+    core.sendEvent(this, EVT_CLOSE);
   }
 
   /**
@@ -655,9 +649,9 @@ class Widget implements IEventHandler {
     if (this._m_parent) {
       throw new Error('can only attach a root widget to the DOM');
     }
-    evtl.sendEvent(this, EVT_BEFORE_ATTACH);
+    core.sendEvent(this, EVT_BEFORE_ATTACH);
     node.appendChild(this._m_node);
-    evtl.sendEvent(this, EVT_AFTER_ATTACH);
+    core.sendEvent(this, EVT_AFTER_ATTACH);
   }
 
   /**
@@ -674,9 +668,9 @@ class Widget implements IEventHandler {
     if (!parentNode) {
       return;
     }
-    evtl.sendEvent(this, EVT_BEFORE_DETACH);
+    core.sendEvent(this, EVT_BEFORE_DETACH);
     parentNode.removeChild(node);
-    evtl.sendEvent(this, EVT_AFTER_DETACH);
+    core.sendEvent(this, EVT_AFTER_DETACH);
   }
 
   /**
@@ -687,7 +681,7 @@ class Widget implements IEventHandler {
    * If the size of the host node is known, it can be provided
    * so that the size does not need to be read from the DOM.
    */
-  fitToHost(width?: number, height?: number, box?: boxdata.IBoxData): void {
+  fitToHost(width?: number, height?: number, box?: IBoxData): void {
     if (this._m_parent) {
       throw new Error('can only fit a root widget');
     }
@@ -696,7 +690,7 @@ class Widget implements IEventHandler {
       return;
     }
     if (box === void 0) {
-      box = boxdata.createBoxData(parentNode);
+      box = createBoxData(parentNode);
     }
     if (width === void 0) {
       width = parentNode.offsetWidth - box.horizontalSum;
@@ -773,7 +767,7 @@ class Widget implements IEventHandler {
     if (parent._m_layout) {
       parent._m_layout.invalidate();
     } else {
-      evtl.postEvent(parent, EVT_LAYOUT_REQUEST);
+      core.postEvent(parent, EVT_LAYOUT_REQUEST);
       parent.updateGeometry();
     }
   }
@@ -788,7 +782,7 @@ class Widget implements IEventHandler {
     if (this._m_layout) {
       this._m_layout.invalidate();
     } else {
-      evtl.postEvent(this, EVT_LAYOUT_REQUEST);
+      core.postEvent(this, EVT_LAYOUT_REQUEST);
     }
     this.updateGeometry();
   }
@@ -850,10 +844,10 @@ class Widget implements IEventHandler {
       style.height = height + 'px';
     }
     if (isMove) {
-      evtl.sendEvent(this, new MoveEvent(oldX, oldY, x, y));
+      core.sendEvent(this, new MoveEvent(oldX, oldY, x, y));
     }
     if (isResize) {
-      evtl.sendEvent(this, new ResizeEvent(oldWidth, oldHeight, width, height));
+      core.sendEvent(this, new ResizeEvent(oldWidth, oldHeight, width, height));
     }
   }
 
@@ -948,9 +942,9 @@ class Widget implements IEventHandler {
       case 'child-added':
         var child = (<ChildEvent>event).child;
         if (this.isAttached) {
-          evtl.sendEvent(child, EVT_BEFORE_ATTACH);
+          core.sendEvent(child, EVT_BEFORE_ATTACH);
           this._m_node.appendChild(child._m_node);
-          evtl.sendEvent(child, EVT_AFTER_ATTACH);
+          core.sendEvent(child, EVT_AFTER_ATTACH);
         } else {
           this._m_node.appendChild(child._m_node);
         }
@@ -958,9 +952,9 @@ class Widget implements IEventHandler {
       case 'child-removed':
         var child = (<ChildEvent>event).child;
         if (this.isAttached) {
-          evtl.sendEvent(child, EVT_BEFORE_DETACH);
+          core.sendEvent(child, EVT_BEFORE_DETACH);
           this._m_node.removeChild(child._m_node);
-          evtl.sendEvent(child, EVT_AFTER_DETACH);
+          core.sendEvent(child, EVT_AFTER_DETACH);
         } else {
           this._m_node.removeChild(child._m_node);
         }
@@ -1252,7 +1246,7 @@ interface IWidgetExtra {
   /**
    * The box data for the widget.
    */
-  boxData: boxdata.IBoxData;
+  boxData: IBoxData;
 
   /**
    * The name of the widget.
@@ -1293,7 +1287,7 @@ function createExtra(): IWidgetExtra {
  */
 function sendChildrenEvent(children: IList<Widget>, event: ICoreEvent): void {
   for (var i = 0, n = children.size; i < n; ++i) {
-    evtl.sendEvent(children.get(i), event);
+    core.sendEvent(children.get(i), event);
   }
 }
 
@@ -1305,7 +1299,9 @@ function sendNonHiddenChildrenEvent(children: IList<Widget>, event: ICoreEvent):
   for (var i = 0, n = children.size; i < n; ++i) {
     var child = children.get(i);
     if (!child.isHidden) {
-      evtl.sendEvent(child, event);
+      core.sendEvent(child, event);
     }
   }
 }
+
+} // module phosphor.widgets

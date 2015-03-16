@@ -5,12 +5,13 @@
 |
 | The full license is in the file LICENSE, distributed with this software.
 |----------------------------------------------------------------------------*/
-export = Size;
+module phosphor.geometry {
 
 
 /**
  * The size of a 2-dimensional object.
  */
+export
 class Size {
   /**
    * Construct a new size.
@@ -45,3 +46,5 @@ class Size {
   private _m_width: number;
   private _m_height: number;
 }
+
+} // module phosphor.geometry

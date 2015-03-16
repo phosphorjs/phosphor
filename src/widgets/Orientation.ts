@@ -5,12 +5,13 @@
 |
 | The full license is in the file LICENSE, distributed with this software.
 |----------------------------------------------------------------------------*/
-export = Orientation;
+module phosphor.widgets {
 
 
 /**
  * An enum of orientation values.
  */
+export
 enum Orientation {
   /**
    * Horizontal orientation.
@@ -22,3 +23,5 @@ enum Orientation {
    */
   Vertical,
 }
+
+} // module phosphor.widgets

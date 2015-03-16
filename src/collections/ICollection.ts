@@ -5,14 +5,13 @@
 |
 | The full license is in the file LICENSE, distributed with this software.
 |----------------------------------------------------------------------------*/
-import IIterable = require('./IIterable');
-
-export = ICollection;
+module phosphor.collections {
 
 
 /**
  * A collection of elements with a definite size.
  */
+export
 interface ICollection<T> extends IIterable<T> {
   /**
    * True if the collection has elements, false otherwise.
@@ -53,3 +52,5 @@ interface ICollection<T> extends IIterable<T> {
    */
   toArray(): T[];
 }
+
+} // module phosphor.collections

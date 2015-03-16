@@ -5,11 +5,9 @@
 |
 | The full license is in the file LICENSE, distributed with this software.
 |----------------------------------------------------------------------------*/
-import Queue = require('../collections/Queue');
+module phosphor.core {
 
-import ICoreEvent = require('./ICoreEvent');
-import IEventFilter = require('./IEventFilter');
-import IEventHandler = require('./IEventHandler');
+import Queue = collections.Queue;
 
 
 /**
@@ -420,3 +418,5 @@ class EventDispatcher {
   private _m_events: Queue<ICoreEvent> = null;
   private _m_filters: EventFilterWrapper | EventFilterWrapper[] = null;
 }
+
+} // module phosphor.core

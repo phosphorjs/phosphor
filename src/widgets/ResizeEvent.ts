@@ -5,14 +5,15 @@
 |
 | The full license is in the file LICENSE, distributed with this software.
 |----------------------------------------------------------------------------*/
-import CoreEvent = require('../core/CoreEvent');
+module phosphor.widgets {
 
-export = ResizeEvent;
+import CoreEvent = core.CoreEvent;
 
 
 /**
  * An event class for 'resize' events.
  */
+export
 class ResizeEvent extends CoreEvent {
   /**
    * Construct a new resize event.
@@ -58,3 +59,5 @@ class ResizeEvent extends CoreEvent {
   private _m_width: number;
   private _m_height: number;
 }
+
+} // module phosphor.widgets

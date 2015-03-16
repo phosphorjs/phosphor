@@ -5,9 +5,7 @@
 |
 | The full license is in the file LICENSE, distributed with this software.
 |----------------------------------------------------------------------------*/
-import IDisposable = require('./IDisposable');
-
-export = Disposable;
+module phosphor.core {
 
 
 /**
@@ -15,6 +13,7 @@ export = Disposable;
  *
  * A Disposable invokes a user provided callback when disposed.
  */
+export
 class Disposable implements IDisposable {
   /**
    * Construct a new disposable.
@@ -34,3 +33,5 @@ class Disposable implements IDisposable {
 
   private _m_callback: () => void;
 }
+
+} // module phosphor.core

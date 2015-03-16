@@ -5,15 +5,13 @@
 |
 | The full license is in the file LICENSE, distributed with this software.
 |----------------------------------------------------------------------------*/
-import Point = require('./Point');
-import Size = require('./Size');
-
-export = Rect;
+module phosphor.geometry {
 
 
 /**
  * The position and size of a 2-dimensional object.
  */
+export
 class Rect {
   /**
    * Construct a new rect.
@@ -154,3 +152,5 @@ class Rect {
   private _m_width: number;
   private _m_height: number;
 }
+
+} // module phosphor.geometry

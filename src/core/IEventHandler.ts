@@ -5,16 +5,15 @@
 |
 | The full license is in the file LICENSE, distributed with this software.
 |----------------------------------------------------------------------------*/
-import IIterable = require('../collections/IIterable');
+module phosphor.core {
 
-import ICoreEvent = require('./ICoreEvent');
-
-export = IEventHandler;
+import IIterable = collections.IIterable;
 
 
 /**
  * An object which handles core events.
  */
+export
 interface IEventHandler {
   /**
    * Process an event dispatched to the handler.
@@ -31,3 +30,5 @@ interface IEventHandler {
    */
   compressEvent?(event: ICoreEvent, posted: IIterable<ICoreEvent>): boolean;
 }
+
+} // module phosphor.core

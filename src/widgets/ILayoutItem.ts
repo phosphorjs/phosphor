@@ -5,17 +5,15 @@
 |
 | The full license is in the file LICENSE, distributed with this software.
 |----------------------------------------------------------------------------*/
-import Size = require('../geometry/Size');
+module phosphor.widgets {
 
-import Alignment = require('./Alignment');
-import Widget = require('./Widget');
-
-export = ILayoutItem;
+import Size = geometry.Size;
 
 
 /**
  * An object which manages an item in a layout.
  */
+export
 interface ILayoutItem {
   /**
    * Test whether the item manages a widget.
@@ -84,3 +82,4 @@ interface ILayoutItem {
   setGeometry(x: number, y: number, width: number, height: number): void;
 }
 
+} // module phosphor.widgets

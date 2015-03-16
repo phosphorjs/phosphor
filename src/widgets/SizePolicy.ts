@@ -5,7 +5,7 @@
 |
 | The full license is in the file LICENSE, distributed with this software.
 |----------------------------------------------------------------------------*/
-export = SizePolicy;
+module phosphor.widgets {
 
 
 /**
@@ -13,6 +13,7 @@ export = SizePolicy;
  *
  * A size policy controls how a layout interprets a widget's `sizeHint`.
  */
+export
 enum SizePolicy {
   /**
    * A policy indicating that the `sizeHint` is the only acceptable
@@ -78,3 +79,5 @@ enum SizePolicy {
    */
   Ignored = GrowFlag | ShrinkFlag | IgnoreFlag,
 }
+
+} // module phosphor.widgets

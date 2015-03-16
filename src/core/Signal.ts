@@ -5,7 +5,7 @@
 |
 | The full license is in the file LICENSE, distributed with this software.
 |----------------------------------------------------------------------------*/
-export = Signal;
+module phosphor.core {
 
 
 /**
@@ -17,6 +17,7 @@ export = Signal;
  * form of the pub-sub pattern which promotes type-safe and loosely
  * coupled communication between objects.
  */
+export
 class Signal<T, U> {
   /**
    * Construct a new signal.
@@ -177,3 +178,5 @@ class SlotWrapper<T, U> {
   private _m_slot: (sender: T, args: U) => void;
   private _m_thisArg: any;
 }
+
+} // module phosphor.core

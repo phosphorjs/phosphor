@@ -5,15 +5,13 @@
 |
 | The full license is in the file LICENSE, distributed with this software.
 |----------------------------------------------------------------------------*/
-import ICollection = require('./ICollection');
-import IIterator = require('./IIterator');
-
-export = ReadOnlyCollection;
+module phosphor.collections {
 
 
 /**
  * A read only view of a collection.
  */
+export
 class ReadOnlyCollection<T> implements ICollection<T> {
   /**
    * Construct a new read only collection.
@@ -86,3 +84,5 @@ class ReadOnlyCollection<T> implements ICollection<T> {
 
   protected _m_collection: ICollection<T>;
 }
+
+} // module phosphor.collections

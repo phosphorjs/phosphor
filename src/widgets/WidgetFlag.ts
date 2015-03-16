@@ -5,7 +5,7 @@
 |
 | The full license is in the file LICENSE, distributed with this software.
 |----------------------------------------------------------------------------*/
-export = WidgetFlag;
+module phosphor.widgets {
 
 
 /**
@@ -14,6 +14,7 @@ export = WidgetFlag;
  * Widget flags are used to control various low-level behaviors of
  * a widget. They are typcially not used directly by user code.
  */
+export
 enum WidgetFlag {
   /**
    * The widget is attached to the DOM.
@@ -40,3 +41,5 @@ enum WidgetFlag {
    */
   DisallowLayoutChange = 0x10,
 }
+
+} // module phosphor.widgets

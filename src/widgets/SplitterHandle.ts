@@ -5,9 +5,7 @@
 |
 | The full license is in the file LICENSE, distributed with this software.
 |----------------------------------------------------------------------------*/
-import Orientation = require('./Orientation');
-
-export = SplitterHandle;
+module phosphor.widgets {
 
 
 /**
@@ -39,6 +37,7 @@ var HIDDEN_CLASS = 'p-mod-hidden';
 /**
  * A class which manages a handle node for a splitter.
  */
+export
 class SplitterHandle {
   /**
    * Construct a new splitter handle.
@@ -118,3 +117,5 @@ class SplitterHandle {
   private _m_node: HTMLElement;
   private _m_orientation: Orientation;
 }
+
+} // module phosphor.widgets

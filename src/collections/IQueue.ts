@@ -5,14 +5,13 @@
 |
 | The full license is in the file LICENSE, distributed with this software.
 |----------------------------------------------------------------------------*/
-import ICollection = require('./ICollection');
-
-export = IQueue;
+module phosphor.collections {
 
 
 /**
  * A collection with first-in-first-out semantics.
  */
+export
 interface IQueue<T> extends ICollection<T> {
   /**
    * The value at the front of the queue.
@@ -34,3 +33,5 @@ interface IQueue<T> extends ICollection<T> {
    */
   popFront(): T;
 }
+
+} // module phosphor.collections

@@ -5,14 +5,12 @@
 |
 | The full license is in the file LICENSE, distributed with this software.
 |----------------------------------------------------------------------------*/
-import IDisposable = require('../core/IDisposable');
-import IEventFilter = require('../core/IEventFilter');
+module phosphor.widgets {
 
-import Size = require('../geometry/Size');
+import IDisposable = core.IDisposable;
+import IEventFilter = core.IEventFilter;
 
-import Widget = require('./Widget');
-
-export = ILayout;
+import Size = geometry.Size;
 
 
 /**
@@ -21,6 +19,7 @@ export = ILayout;
  * The parent widget will automatically install the layout as an
  * event filter, allowing the layout to react to all widget events.
  */
+export
 interface ILayout extends IEventFilter, IDisposable {
   /**
    * The parent widget of the layout.
@@ -52,3 +51,5 @@ interface ILayout extends IEventFilter, IDisposable {
    */
   maxSize(): Size;
 }
+
+} // module phosphor.widgets

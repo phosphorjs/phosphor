@@ -5,9 +5,7 @@
 |
 | The full license is in the file LICENSE, distributed with this software.
 |----------------------------------------------------------------------------*/
-import SizingItem = require('./SizingItem');
-
-export = layoutCalc;
+module phosphor.widgets {
 
 
 /**
@@ -60,6 +58,7 @@ export = layoutCalc;
  *        among items with a stretch factor of zero. If an item
  *        reaches its maximum size, remove it from the computation.
  */
+export
 function layoutCalc(items: SizingItem[], space: number): void {
   var count = items.length;
   if (count === 0) {
@@ -256,3 +255,5 @@ function layoutCalc(items: SizingItem[], space: number): void {
     }
   }
 }
+
+} // module phosphor.widgets

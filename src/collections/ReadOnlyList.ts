@@ -5,15 +5,13 @@
 |
 | The full license is in the file LICENSE, distributed with this software.
 |----------------------------------------------------------------------------*/
-import IList = require('./IList');
-import ReadOnlyCollection = require('./ReadOnlyCollection');
-
-export = ReadOnlyList;
+module phosphor.collections {
 
 
 /**
  * A read only view of a list.
  */
+export
 class ReadOnlyList<T> extends ReadOnlyCollection<T> implements IList<T> {
   /**
    * Construct a new read only list.
@@ -65,3 +63,5 @@ class ReadOnlyList<T> extends ReadOnlyCollection<T> implements IList<T> {
     throw new Error('list is read only');
   }
 }
+
+} // module phosphor.collections

@@ -5,14 +5,14 @@
 |
 | The full license is in the file LICENSE, distributed with this software.
 |----------------------------------------------------------------------------*/
-import CoreEvent = require('../core/CoreEvent');
+module phosphor.widgets {
 
-export = MoveEvent;
-
+import CoreEvent = core.CoreEvent;
 
 /**
  * An event class for 'move' events.
  */
+export
 class MoveEvent extends CoreEvent {
   /**
    * Construct a new move event.
@@ -58,3 +58,5 @@ class MoveEvent extends CoreEvent {
   private _m_x: number;
   private _m_y: number;
 }
+
+} // module phosphor.widgets

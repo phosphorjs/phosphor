@@ -5,15 +5,13 @@
 |
 | The full license is in the file LICENSE, distributed with this software.
 |----------------------------------------------------------------------------*/
-import IIterator = require('./IIterator');
-import IList = require('./IList');
-
-export = ListIterator;
+module phosphor.collections {
 
 
 /**
  * An iterator for a generic list collection.
  */
+export
 class ListIterator<T> implements IIterator<T> {
   /**
    * Construct a new list iterator.
@@ -48,3 +46,5 @@ class ListIterator<T> implements IIterator<T> {
   private _m_index = 0;
   private _m_list: IList<T>;
 }
+
+} // module phosphor.collections

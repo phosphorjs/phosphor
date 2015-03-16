@@ -5,14 +5,13 @@
 |
 | The full license is in the file LICENSE, distributed with this software.
 |----------------------------------------------------------------------------*/
-import ICoreEvent = require('./ICoreEvent');
-
-export = CoreEvent;
+module phosphor.core {
 
 
 /**
  * A concrete implementation of ICoreEvent.
  */
+export
 class CoreEvent implements ICoreEvent {
   /**
    * Construct a new core event.
@@ -30,3 +29,5 @@ class CoreEvent implements ICoreEvent {
 
   private _m_type: string;
 }
+
+} // module phosphor.core

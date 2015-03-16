@@ -5,12 +5,13 @@
 |
 | The full license is in the file LICENSE, distributed with this software.
 |----------------------------------------------------------------------------*/
-export = Alignment;
+module phosphor.widgets {
 
 
 /**
  * An enum of alignment bit flags.
  */
+export
 enum Alignment {
   /**
    * Align with the left edge.
@@ -57,3 +58,5 @@ enum Alignment {
    */
   V_Mask = Top | Bottom | VCenter,
 }
+
+} // module phosphor.widgets

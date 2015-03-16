@@ -5,20 +5,13 @@
 |
 | The full license is in the file LICENSE, distributed with this software.
 |----------------------------------------------------------------------------*/
-import CoreEvent = require('../core/CoreEvent');
-import ICoreEvent = require('../core/ICoreEvent');
-import IEventHandler = require('../core/IEventHandler');
-import evtl = require('../core/eventloop');
+module phosphor.widgets {
 
-import Size = require('../geometry/Size');
+import CoreEvent = core.CoreEvent;
+import ICoreEvent = core.ICoreEvent;
+import IEventHandler = core.IEventHandler;
 
-import Alignment = require('./Alignment');
-import ChildEvent = require('./ChildEvent');
-import ILayout = require('./ILayout');
-import ILayoutItem = require('./ILayoutItem');
-import Widget = require('./Widget');
-
-export = Layout;
+import Size = geometry.Size;
 
 
 /**
@@ -30,6 +23,7 @@ export = Layout;
  *
  * This class must be subclassed to be useful.
  */
+export
 class Layout implements ILayout {
   /**
    * Construct a new layout.
@@ -226,7 +220,7 @@ class Layout implements ILayout {
   invalidate(): void {
     var parent = this._m_parentWidget;
     if (parent) {
-      evtl.postEvent(parent, EVT_LAYOUT_REQUEST);
+      core.postEvent(parent, EVT_LAYOUT_REQUEST);
       parent.updateGeometry();
     }
   }
@@ -312,3 +306,5 @@ class Layout implements ILayout {
  * A singleton 'layout-request' event.
  */
 var EVT_LAYOUT_REQUEST = new CoreEvent('layout-request');
+
+} // module phosphor.widgets

@@ -5,15 +5,13 @@
 |
 | The full license is in the file LICENSE, distributed with this software.
 |----------------------------------------------------------------------------*/
-import ICoreEvent = require('./ICoreEvent');
-import IEventHandler = require('./IEventHandler');
-
-export = IEventFilter;
+module phosphor.core {
 
 
 /**
  * An object which filters events dispatched to an event handler.
  */
+export
 interface IEventFilter {
   /**
    * Filter an event dispatched to an event handler.
@@ -22,3 +20,5 @@ interface IEventFilter {
    */
   filterEvent(handler: IEventHandler, event: ICoreEvent): boolean;
 }
+
+} // module phosphor.core

@@ -5,14 +5,9 @@
 |
 | The full license is in the file LICENSE, distributed with this software.
 |----------------------------------------------------------------------------*/
-import Size = require('../geometry/Size');
+module phosphor.widgets {
 
-import Alignment = require('./Alignment');
-import ILayoutItem = require('./ILayoutItem');
-import SizePolicy = require('./SizePolicy');
-import Widget = require('./Widget');
-
-export = WidgetItem;
+import Size = geometry.Size;
 
 
 /**
@@ -20,6 +15,7 @@ export = WidgetItem;
  *
  * User code will not typically create instances of this class directly.
  */
+export
 class WidgetItem implements ILayoutItem {
   /**
    * Construct a new widget item.
@@ -301,3 +297,5 @@ function makeMaxSize(
   }
   return new Size(w, h);
 }
+
+} // module phosphor.widgets

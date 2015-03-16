@@ -5,16 +5,13 @@
 |
 | The full license is in the file LICENSE, distributed with this software.
 |----------------------------------------------------------------------------*/
-import ICollection = require('./ICollection');
-import IIterator = require('./IIterator');
-import IList = require('./IList');
-
-export = ArrayList;
+module phosphor.collections {
 
 
 /**
  * An array-based implementation of IList.
  */
+export
 class ArrayList<T> implements IList<T> {
   /**
    * Construct a new array list.
@@ -206,3 +203,5 @@ class ArrayListIterator<T> implements IIterator<T> {
   private _m_index = 0;
   private _m_array: T[] = [];
 }
+
+} // module phosphor.collections

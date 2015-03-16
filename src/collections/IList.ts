@@ -5,14 +5,13 @@
 |
 | The full license is in the file LICENSE, distributed with this software.
 |----------------------------------------------------------------------------*/
-import ICollection = require('./ICollection');
-
-export = IList;
+module phosphor.collections {
 
 
 /**
  * A collection of elements which can be accessed by index.
  */
+export
 interface IList<T> extends ICollection<T> {
   /**
    * Get the element at the given index.
@@ -49,3 +48,5 @@ interface IList<T> extends ICollection<T> {
    */
   removeAt(index: number): T;
 }
+
+} // module phosphor.collections

@@ -5,7 +5,9 @@
 |
 | The full license is in the file LICENSE, distributed with this software.
 |----------------------------------------------------------------------------*/
-import IIterable = require('../collections/IIterable');
+module phosphor.core {
+
+import IIterable = collections.IIterable;
 
 
 /**
@@ -677,3 +679,5 @@ function setSymmetricDifference<T>(
   }
   return merged;
 }
+
+} // module phosphor.core

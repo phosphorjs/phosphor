@@ -5,6 +5,7 @@
 |
 | The full license is in the file LICENSE, distributed with this software.
 |----------------------------------------------------------------------------*/
+module phosphor.dom {
 
 
 /**
@@ -109,3 +110,5 @@ var boxDataProto: IBoxData = {
   get horizontalSum() { return this._m_bl + this._m_br + this._m_pl + this._m_pr; },
   _m_bt: 0, _m_bl: 0, _m_br: 0, _m_bb: 0, _m_pt: 0, _m_pl: 0, _m_pr: 0, _m_pb: 0,
 };
+
+} // module phosphor.dom
