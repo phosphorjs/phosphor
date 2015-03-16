@@ -72,6 +72,7 @@ var tsSources = [
   'layout/BoxLayout',
   'layout/SplitterHandle',
   'layout/SplitterLayout',
+  'layout/StackLayout',
 
   'widgets/ChildEvent',
   'widgets/MoveEvent',
