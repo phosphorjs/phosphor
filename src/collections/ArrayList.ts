@@ -17,11 +17,9 @@ export = ArrayList;
  */
 class ArrayList<T> implements IList<T> {
   /**
-   * Construct a new list.
+   * Construct a new array list.
    */
-  constructor(collection?: ICollection<T>) {
-    this._m_array = collection ? collection.toArray() : [];
-  }
+  constructor() { }
 
   /**
    * True if the list has elements, false otherwise.
@@ -199,5 +197,5 @@ class ArrayListIterator<T> implements IIterator<T> {
   }
 
   private _m_index = 0;
-  private _m_array: T[];
+  private _m_array: T[] = [];
 }
