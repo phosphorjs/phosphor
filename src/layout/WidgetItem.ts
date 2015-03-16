@@ -5,9 +5,14 @@
 |
 | The full license is in the file LICENSE, distributed with this software.
 |----------------------------------------------------------------------------*/
-module phosphor.widgets {
+module phosphor.layout {
+
+import Alignment = enums.Alignment;
+import SizePolicy = enums.SizePolicy;
 
 import Size = geometry.Size;
+
+import Widget = widgets.Widget;
 
 
 /**
@@ -298,4 +303,4 @@ function makeMaxSize(
   return new Size(w, h);
 }
 
-} // module phosphor.widgets
+} // module phosphor.layout

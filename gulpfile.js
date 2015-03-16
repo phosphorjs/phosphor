@@ -49,26 +49,32 @@ var tsSources = [
   'dom/boxdata',
   'dom/overrideCursor',
 
+  'enums/Alignment',
+  'enums/Orientation',
+  'enums/SizePolicy',
+  'enums/WidgetFlag',
+
+  'events/ChildEvent',
+  'events/MoveEvent',
+  'events/ResizeEvent',
+
   'geometry/Point',
   'geometry/Size',
   'geometry/Rect',
 
-  'widgets/ILayout',
-  'widgets/ILayoutItem',
-  'widgets/Alignment',
-  'widgets/Orientation',
-  'widgets/SizePolicy',
-  'widgets/WidgetFlag',
+  'layout/ILayout',
+  'layout/ILayoutItem',
+  'layout/Layout',
+  'layout/SizingItem',
+  'layout/WidgetItem',
+  'layout/layoutCalc',
+  'layout/SplitterHandle',
+  'layout/SplitterLayout',
+
   'widgets/ChildEvent',
   'widgets/MoveEvent',
   'widgets/ResizeEvent',
-  'widgets/SizingItem',
-  'widgets/layoutCalc',
-  'widgets/WidgetItem',
-  'widgets/Layout',
   'widgets/Widget',
-  'widgets/SplitterHandle',
-  'widgets/SplitterLayout',
   'widgets/Splitter'
 ].map(function(name) { return './src/' + name + '.ts'; });
 

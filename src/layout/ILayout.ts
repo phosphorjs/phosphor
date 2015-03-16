@@ -5,12 +5,14 @@
 |
 | The full license is in the file LICENSE, distributed with this software.
 |----------------------------------------------------------------------------*/
-module phosphor.widgets {
+module phosphor.layout {
 
 import IDisposable = core.IDisposable;
 import IEventFilter = core.IEventFilter;
 
 import Size = geometry.Size;
+
+import Widget = widgets.Widget;
 
 
 /**
@@ -52,4 +54,4 @@ interface ILayout extends IEventFilter, IDisposable {
   maxSize(): Size;
 }
 
-} // module phosphor.widgets
+} // module phosphor.layout

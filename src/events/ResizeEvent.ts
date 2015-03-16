@@ -5,7 +5,7 @@
 |
 | The full license is in the file LICENSE, distributed with this software.
 |----------------------------------------------------------------------------*/
-module phosphor.widgets {
+module phosphor.events {
 
 import CoreEvent = core.CoreEvent;
 
@@ -60,4 +60,4 @@ class ResizeEvent extends CoreEvent {
   private _m_height: number;
 }
 
-} // module phosphor.widgets
+} // module phosphor.events

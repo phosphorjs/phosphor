@@ -5,9 +5,14 @@
 |
 | The full license is in the file LICENSE, distributed with this software.
 |----------------------------------------------------------------------------*/
-module phosphor.widgets {
+module phosphor.layout {
+
+import Alignment = enums.Alignment;
+import Orientation = enums.Orientation;
 
 import Size = geometry.Size;
+
+import Widget = widgets.Widget;
 
 
 /**
@@ -644,4 +649,4 @@ function normalize(values: number[]): number[] {
   return result;
 }
 
-} // module phosphor.widgets
+} // module phosphor.layout

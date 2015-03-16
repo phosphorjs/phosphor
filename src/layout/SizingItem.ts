@@ -5,7 +5,7 @@
 |
 | The full license is in the file LICENSE, distributed with this software.
 |----------------------------------------------------------------------------*/
-module phosphor.widgets {
+module phosphor.layout {
 
 /**
  * A sizing item for the `layoutCalc` function.
@@ -68,4 +68,4 @@ class SizingItem {
   done = false;
 }
 
-} // module phosphor.widgets
+} // module phosphor.layout

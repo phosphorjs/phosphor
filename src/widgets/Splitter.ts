@@ -12,6 +12,13 @@ import IDisposable = core.IDisposable;
 
 import overrideCursor = dom.overrideCursor;
 
+import Alignment = enums.Alignment;
+import Orientation = enums.Orientation;
+import WidgetFlag = enums.WidgetFlag;
+
+import SplitterHandle = layout.SplitterHandle;
+import SplitterLayout = layout.SplitterLayout;
+
 
 /**
  * The class name added to Splitter instances.

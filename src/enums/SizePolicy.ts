@@ -5,7 +5,7 @@
 |
 | The full license is in the file LICENSE, distributed with this software.
 |----------------------------------------------------------------------------*/
-module phosphor.widgets {
+module phosphor.enums {
 
 /**
  * An enum of size policy values.
@@ -79,4 +79,4 @@ enum SizePolicy {
   Ignored = GrowFlag | ShrinkFlag | IgnoreFlag,
 }
 
-} // module phosphor.widgets
+} // module phosphor.enums

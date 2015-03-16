@@ -5,7 +5,10 @@
 |
 | The full license is in the file LICENSE, distributed with this software.
 |----------------------------------------------------------------------------*/
-module phosphor.widgets {
+module phosphor.layout {
+
+import Orientation = enums.Orientation;
+
 
 /**
  * The class name assigned to a splitter handle.
@@ -117,4 +120,4 @@ class SplitterHandle {
   private _m_orientation: Orientation;
 }
 
-} // module phosphor.widgets
+} // module phosphor.layout

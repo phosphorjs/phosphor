@@ -5,7 +5,7 @@
 |
 | The full license is in the file LICENSE, distributed with this software.
 |----------------------------------------------------------------------------*/
-module phosphor.widgets {
+module phosphor.enums {
 
 /**
  * An enum of orientation values.
@@ -23,4 +23,4 @@ enum Orientation {
   Vertical,
 }
 
-} // module phosphor.widgets
+} // module phosphor.enums

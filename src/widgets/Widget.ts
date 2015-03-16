@@ -20,9 +20,18 @@ import Signal = core.Signal;
 import IBoxData = dom.IBoxData;
 import createBoxData = dom.createBoxData;
 
+import SizePolicy = enums.SizePolicy;
+import WidgetFlag = enums.WidgetFlag;
+
+import ChildEvent = events.ChildEvent;
+import MoveEvent = events.MoveEvent;
+import ResizeEvent = events.ResizeEvent;
+
 import Point = geometry.Point;
 import Rect = geometry.Rect;
 import Size = geometry.Size;
+
+import ILayout = layout.ILayout;
 
 
 /**

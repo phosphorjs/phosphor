@@ -5,7 +5,7 @@
 |
 | The full license is in the file LICENSE, distributed with this software.
 |----------------------------------------------------------------------------*/
-module phosphor.widgets {
+module phosphor.enums {
 
 /**
  * An enum of alignment bit flags.
@@ -58,4 +58,4 @@ enum Alignment {
   V_Mask = Top | Bottom | VCenter,
 }
 
-} // module phosphor.widgets
+} // module phosphor.enums

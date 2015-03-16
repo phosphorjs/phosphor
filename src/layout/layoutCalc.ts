@@ -5,7 +5,7 @@
 |
 | The full license is in the file LICENSE, distributed with this software.
 |----------------------------------------------------------------------------*/
-module phosphor.widgets {
+module phosphor.layout {
 
 /**
  * Distribute space among the given sizing items.
@@ -255,4 +255,4 @@ function layoutCalc(items: SizingItem[], space: number): void {
   }
 }
 
-} // module phosphor.widgets
+} // module phosphor.layout

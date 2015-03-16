@@ -5,13 +5,19 @@
 |
 | The full license is in the file LICENSE, distributed with this software.
 |----------------------------------------------------------------------------*/
-module phosphor.widgets {
+module phosphor.layout {
 
 import CoreEvent = core.CoreEvent;
 import ICoreEvent = core.ICoreEvent;
 import IEventHandler = core.IEventHandler;
 
+import Alignment = enums.Alignment;
+
+import ChildEvent = events.ChildEvent;
+
 import Size = geometry.Size;
+
+import Widget = widgets.Widget;
 
 
 /**
@@ -307,4 +313,4 @@ class Layout implements ILayout {
  */
 var EVT_LAYOUT_REQUEST = new CoreEvent('layout-request');
 
-} // module phosphor.widgets
+} // module phosphor.layout

@@ -5,9 +5,11 @@
 |
 | The full license is in the file LICENSE, distributed with this software.
 |----------------------------------------------------------------------------*/
-module phosphor.widgets {
+module phosphor.events {
 
 import CoreEvent = core.CoreEvent;
+
+import Widget = widgets.Widget;
 
 
 /**
@@ -33,4 +35,4 @@ class ChildEvent extends CoreEvent {
   private _m_child: Widget;
 }
 
-} // module phosphor.widgets
+} // module phosphor.events

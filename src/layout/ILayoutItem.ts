@@ -5,9 +5,13 @@
 |
 | The full license is in the file LICENSE, distributed with this software.
 |----------------------------------------------------------------------------*/
-module phosphor.widgets {
+module phosphor.layout {
+
+import Alignment = enums.Alignment;
 
 import Size = geometry.Size;
+
+import Widget = widgets.Widget;
 
 
 /**
@@ -82,4 +86,4 @@ interface ILayoutItem {
   setGeometry(x: number, y: number, width: number, height: number): void;
 }
 
-} // module phosphor.widgets
+} // module phosphor.layout

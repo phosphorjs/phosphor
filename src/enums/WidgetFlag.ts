@@ -5,7 +5,7 @@
 |
 | The full license is in the file LICENSE, distributed with this software.
 |----------------------------------------------------------------------------*/
-module phosphor.widgets {
+module phosphor.enums {
 
 /**
  * An enum of widget bit flags.
@@ -41,4 +41,4 @@ enum WidgetFlag {
   DisallowLayoutChange = 0x10,
 }
 
-} // module phosphor.widgets
+} // module phosphor.enums
