@@ -30,7 +30,7 @@ var tsSources = [
   'collections/ReadOnlyCollection',
   'collections/ReadOnlyList',
   'collections/ArrayIterator',
-  'collections/ArrayList',
+  'collections/List',
   'collections/ListIterator',
   'collections/CircularBuffer',
   'collections/Queue',

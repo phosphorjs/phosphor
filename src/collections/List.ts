@@ -8,14 +8,21 @@
 module phosphor.collections {
 
 /**
- * An array-based implementation of IList.
+ * A collection of elements which can be accessed by index.
  */
 export
-class ArrayList<T> implements IList<T> {
+class List<T> implements IList<T> {
   /**
-   * Construct a new array list.
+   * Construct a new list.
    */
-  constructor() { }
+  constructor(items?: IIterable<T>) {
+    if (items !== void 0) {
+      var array = this._m_array;
+      for (var iter = items.iterator(); iter.hasNext();) {
+        array.push(iter.next());
+      }
+    }
+  }
 
   /**
    * True if the list has elements, false otherwise.
