@@ -11,7 +11,7 @@ module phosphor.collections {
  * A collection of elements which can be accessed by index.
  */
 export
-class List<T> implements IList<T> {
+class List<T> implements IList<T>, IStack<T> {
   /**
    * Construct a new list.
    */
@@ -36,6 +36,13 @@ class List<T> implements IList<T> {
    */
   get size(): number {
     return this._m_array.length;
+  }
+
+  /**
+   * The value at the back of the list.
+   */
+  get back(): T {
+    return this._m_array[this._m_array.length - 1];
   }
 
   /**
@@ -101,6 +108,13 @@ class List<T> implements IList<T> {
   }
 
   /**
+   * Push a value onto the back of the list.
+   */
+  pushBack(value: T): void {
+    this._m_array.push(value);
+  }
+
+  /**
    * Insert a value at the given index.
    *
    * Returns false if the index is out of range.
@@ -115,6 +129,13 @@ class List<T> implements IList<T> {
     }
     array[index] = value;
     return true;
+  }
+
+  /**
+   * Pop and return the value at the back of the list.
+   */
+  popBack(): T {
+    return this._m_array.pop();
   }
 
   /**
