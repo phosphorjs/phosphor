@@ -12,14 +12,19 @@ import IIterable = collections.IIterable;
 
 /**
  * Invoke a function once for each element in an iterable.
+ *
+ * If the callback returns anything but `undefined`, iteration
+ * will stop and that value will be returned from the function.
  */
 export
-function forEach<T>(
+function forEach<T, U>(
   iterable: IIterable<T>,
-  callback: (value: T, index: number) => void): void {
+  callback: (value: T, index: number) => U): U {
   for (var i = 0, iter = iterable.iterator(); iter.hasNext(); ++i) {
-    callback(iter.next(), i);
+    var result = callback(iter.next(), i);
+    if (result !== void 0) return result;
   }
+  return void 0;
 }
 
 
