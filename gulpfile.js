@@ -25,6 +25,7 @@ var tsSources = [
   'collections/IIterator',
   'collections/IIterable',
   'collections/ICollection',
+  'collections/IDeque',
   'collections/IList',
   'collections/IQueue',
   'collections/ReadOnlyCollection',
