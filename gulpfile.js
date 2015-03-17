@@ -108,14 +108,14 @@ var tsSources = [
   'widgets/TabWidget',
   'widgets/DockArea',
 
-  'shell/IPlugin',
-  'shell/IPluginList',
-  'shell/IRegion',
-  'shell/IRegionManager',
-  'shell/AutoHidePanel',
-  'shell/PluginList',
-  'shell/RegionManager',
-  'shell/Bootstrapper'
+  // 'shell/IPlugin',
+  // 'shell/IPluginList',
+  // 'shell/IRegion',
+  // 'shell/IRegionManager',
+  // 'shell/AutoHidePanel',
+  // 'shell/PluginList',
+  // 'shell/RegionManager',
+  // 'shell/Bootstrapper'
 ].map(function(name) { return './src/' + name + '.ts'; });
 
 
