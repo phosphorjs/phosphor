@@ -13,6 +13,13 @@ module phosphor.collections {
 export
 interface IList<T> extends ICollection<T> {
   /**
+   * Get the index of the given value.
+   *
+   * Returns -1 if the value is not in the list.
+   */
+  indexOf(value: T): number;
+
+  /**
    * Get the element at the given index.
    *
    * Returns `undefined` if the index is out of range.
@@ -25,13 +32,6 @@ interface IList<T> extends ICollection<T> {
    * Returns false if the index is out of range.
    */
   set(index: number, value: T): boolean;
-
-  /**
-   * Get the index of the given value.
-   *
-   * Returns -1 if the value is not in the list.
-   */
-  indexOf(value: T): number;
 
   /**
    * Insert a value at the given index.
