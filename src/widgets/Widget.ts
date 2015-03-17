@@ -7,9 +7,9 @@
 |----------------------------------------------------------------------------*/
 module phosphor.widgets {
 
-import ArrayList = collections.ArrayList;
 import IIterable = collections.IIterable;
 import IList = collections.IList;
+import List = collections.List;
 import ReadOnlyList = collections.ReadOnlyList;
 
 import CoreEvent = core.CoreEvent;
@@ -1133,7 +1133,7 @@ class Widget implements IEventHandler {
   private _m_extra = createExtra();
   private _m_parent: Widget = null;
   private _m_layout: Layout = null;
-  private _m_children = new ArrayList<Widget>();
+  private _m_children = new List<Widget>();
 }
 
 
