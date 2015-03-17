@@ -7,26 +7,30 @@
 |----------------------------------------------------------------------------*/
 module phosphor.algorithm {
 
+import IList = collections.IList;
+
+
 /**
  * Find the index of the first element which compares `>=` to `value`.
  *
- * The array must be sorted.
+ * This uses a binary search algorithm which must be applied to a
+ * sorted list in order for the results to be correct.
  *
- * Returns `array.length` if all elements compare `<` than `value`.
+ * Returns `list.size` if all elements compare `<` than `value`.
  */
 export
 function lowerBound<T, U>(
-  array: T[],
+  list: IList<T>,
   value: U,
   compare: (a: T, b: U) => number): number {
   var begin = 0;
   var half: number;
   var middle: number;
-  var n = array.length;
+  var n = list.size;
   while (n > 0) {
     half = n >> 1;
     middle = begin + half;
-    if (compare(array[middle], value) < 0) {
+    if (compare(list.get(middle), value) < 0) {
       begin = middle + 1;
       n -= half + 1;
     } else {
@@ -40,23 +44,24 @@ function lowerBound<T, U>(
 /**
  * Find the index of the first element which compares `>` than `value`.
  *
- * The array must be sorted.
+ * This uses a binary search algorithm which must be applied to a
+ * sorted list in order for the results to be correct.
  *
  * Returns `0` if all elements compare `<=` than `value`.
  */
 export
 function upperBound<T, U>(
-  array: T[],
+  list: IList<T>,
   value: U,
   compare: (a: T, b: U) => number): number {
   var begin = 0;
   var half: number;
   var middle: number;
-  var n = array.length;
+  var n = list.size;
   while (n > 0) {
     half = n >> 1;
     middle = begin + half;
-    if (compare(array[middle], value) > 0) {
+    if (compare(list.get(middle), value) > 0) {
       n = half;
     } else {
       begin = middle + 1;
@@ -70,21 +75,22 @@ function upperBound<T, U>(
 /**
  * Find the index of the first element which compares `==` to `value`.
  *
- * The array must be sorted.
+ * This uses a binary search algorithm which must be applied to a
+ * sorted list in order for the results to be correct.
  *
  * Returns `-1` if no matching value is found.
  */
 export
-function binaryFind<T, U>(
-  array: T[],
+function lowerFind<T, U>(
+  list: IList<T>,
   value: U,
   compare: (a: T, b: U) => number): number {
-  var i = lowerBound(array, value, compare);
-  if (i === array.length) {
+  var i = lowerBound(list, value, compare);
+  if (i === list.size) {
     return -1;
   }
-  if (compare(array[i], value) === 0) {
-    return i
+  if (compare(list.get(i), value) === 0) {
+    return i;
   }
   return -1;
 }
@@ -93,21 +99,22 @@ function binaryFind<T, U>(
 /**
  * Find the index of the last element which compares `==` to `value`.
  *
- * The array must be sorted.
+ * This uses a binary search algorithm which must be applied to a
+ * sorted list in order for the results to be correct.
  *
  * Returns `-1` if no matching value is found.
  */
 export
-function binaryFindLast<T, U>(
-  array: T[],
+function upperFind<T, U>(
+  list: IList<T>,
   value: U,
   compare: (a: T, b: U) => number): number {
-  var i = upperBound(array, value, compare);
+  var i = upperBound(list, value, compare);
   if (i === 0) {
     return -1;
   }
-  if (compare(array[i - 1], value) === 0) {
-    return i - 1;
+  if (compare(list.get(--i), value) === 0) {
+    return i;
   }
   return -1;
 }
