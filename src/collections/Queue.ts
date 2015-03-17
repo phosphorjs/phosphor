@@ -15,7 +15,13 @@ class Queue<T> implements IQueue<T> {
   /**
    * Construct a new queue.
    */
-  constructor() { }
+  constructor(items?: IIterable<T>) {
+    if (items !== void 0) {
+      for (var iter = items.iterator(); iter.hasNext();) {
+        this.pushBack(iter.next());
+      }
+    }
+  }
 
   /**
    * True if the queue has elements, false otherwise.

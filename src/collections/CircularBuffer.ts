@@ -20,8 +20,13 @@ class CircularBuffer<T> implements IQueue<T>, IList<T> {
   /**
    * Construct a new circular buffer.
    */
-  constructor(maxSize: number) {
+  constructor(maxSize: number, items?: IIterable<T>) {
     this._m_array = new Array<T>(Math.max(1, maxSize));
+    if (items !== void 0) {
+      for (var iter = items.iterator(); iter.hasNext();) {
+        this.pushBack(iter.next());
+      }
+    }
   }
 
   /**
