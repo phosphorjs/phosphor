@@ -8,19 +8,28 @@
 module phosphor.di {
 
 /**
- * A class type which declares its injection dependencies.
+ * A token object which holds compile-time type information.
  */
 export
-interface IInjectable<T> {
+interface IToken<T> {
   /**
-   * The constructor signature for the class.
+   * A human readable name for the token.
    */
-  new(...args: any[]): T;
+  name: string;
 
   /**
-   * The type ids of the dependencies needed to instantiate the type.
+   * A hidden property which makes a token structurally unique.
    */
-  $inject?: IToken<any>[];
+  __itoken_structural_property: any;
+}
+
+
+/**
+ * Create a token with the given name.
+ */
+export
+function createToken<T>(name: string): IToken<T> {
+  return Object.freeze({ name: name });
 }
 
 } // module phosphor.di

@@ -47,7 +47,9 @@ var tsSources = [
   'core/eventloop',
   'core/Signal',
 
+  'di/token',
   'di/IInjectable',
+  'di/IContainer',
   'di/Container',
 
   'dom/boxdata',

@@ -11,23 +11,23 @@ module phosphor.di {
  * A lightweight dependency injection container.
  */
 export
-class Container {
+class Container implements IContainer {
   /**
    * Construct a new container.
    */
   constructor() { }
 
   /**
-   * Test whether a type id is registered with the container.
+   * Test whether a type is registered with the container.
    */
-  isRegistered(id: string): boolean {
-    return id in this._m_registry;
+  isRegistered<T>(token: IToken<T>): boolean {
+    return this._m_registry.has(token);
   }
 
   /**
    * Register a type mapping with the container.
    *
-   * An exception will be thrown if the type id is already registered.
+   * An exception will be thrown if the type is already registered.
    *
    * The allowed lifetimes are:
    *
@@ -47,12 +47,12 @@ class Container {
    *
    * The default lifetime is 'singleton'.
    */
-  registerType(id: string, type: IInjectable<any>, lifetime?: string): void {
-    if (id in this._m_registry) {
-      throw new Error('id is already registered');
+  registerType<T>(token: IToken<T>, type: IInjectable<T>, lifetime?: string): void {
+    if (this._m_registry.has(token)) {
+      throw new Error('token is already registered');
     }
-    var lt = createLifetime(lifetime || 'singleton');
-    this._m_registry[id] = { type: type, lifetime: lt };
+    var lt = createLifetime<T>(lifetime || 'singleton');
+    this._m_registry.set(token, { type: type, lifetime: lt });
   }
 
   /**
@@ -61,53 +61,38 @@ class Container {
    * This is the same as a 'singleton' type registration, except
    * that the user creates the instance of the type beforehand.
    *
-   * This will throw an exception if the type id is already registered.
+   * This will throw an exception if the token is already registered.
    */
-  registerInstance(id: string, instance: any): void {
-    if (id in this._m_registry) {
-      throw new Error('id is already registered');
+  registerInstance<T>(token: IToken<T>, instance: T): void {
+    if (this._m_registry.has(token)) {
+      throw new Error('token is already registered');
     }
     var lt = new SingletonLifetime(instance);
-    this._m_registry[id] = { type: null, lifetime: lt };
+    this._m_registry.set(token, { type: null, lifetime: lt });
   }
 
   /**
-   * Resolve an instance of the type registered for a type id.
+   * Resolve an instance for the given token or type.
    *
-   * An error is thrown if no type is registered for the type id.
+   * An error is thrown if no type mapping is registered for the
+   * token or if the injection dependencies cannot be fulfilled.
    */
-  resolve(id: string): any;
-
-  /**
-   * Create an instance of the type injected with its dependencies.
-   *
-   * An error is thrown if the type dependencies cannot be fulfilled.
-   */
-  resolve<T>(type: IInjectable<T>): T;
-
-  /**
-   * Resolve an instance of a type or type id.
-   */
-  resolve(id: string | IInjectable<any>): any {
-    var instance: any;
-    var key = resolveKeyTick++;
-    if (typeof id === 'string') {
-      instance = this._resolveId(id, key);
-    } else {
-      instance = this._resolveType(id, key);
+  resolve<T>(token: IToken<T> | IInjectable<T>): T {
+    if (typeof token === 'function') {
+      return this._resolveType(<IInjectable<T>>token, resolveKeyTick++);
     }
-    return instance;
+    return this._resolveToken(<IToken<T>>token, resolveKeyTick++);
   }
 
   /**
-   * Resolve an instance for the given type id.
+   * Resolve an instance for the given token.
    *
-   * An error is thrown if the type id is not registered.
+   * An error is thrown if the token is not registered.
    */
-  private _resolveId(id: string, key: number): any {
-    var item = this._m_registry[id];
-    if (!item) {
-      throw new Error('`' + id + '` is not registered');
+  private _resolveToken<T>(token: IToken<T>, key: number): T {
+    var item: IRegistryItem<T> = this._m_registry.get(token);
+    if (item === void 0) {
+      throw new Error('`' + token.name + '` is not registered');
     }
     var instance = item.lifetime.get(key);
     if (instance) {
@@ -123,20 +108,20 @@ class Container {
    *
    * An error is thrown if the type dependencies cannot be fulfilled.
    */
-  private _resolveType(type: IInjectable<any>, key: number): any {
+  private _resolveType<T>(type: IInjectable<T>, key: number): T {
+    var instance: T = Object.create(type.prototype);
     var deps = type.$inject;
-    var instance = Object.create(type.prototype);
     if (!deps || deps.length === 0) {
       return type.call(instance) || instance;
     }
     var args: any[] = [];
     for (var i = 0, n = deps.length; i < n; ++i) {
-      args[i] = this._resolveId(deps[i], key);
+      args[i] = this._resolveToken(deps[i], key);
     }
     return type.apply(instance, args) || instance;
   }
 
-  private _m_registry: { [key: string]: IRegistryItem } = Object.create(null);
+  private _m_registry = new Map<IToken<any>, IRegistryItem<any>>();
 }
 
 
@@ -149,47 +134,47 @@ var resolveKeyTick = 0;
 /**
  * An object which holds the data for a type registration.
  */
-interface IRegistryItem {
+interface IRegistryItem<T> {
   /**
    * The type for the registration.
    */
-  type: IInjectable<any>;
+  type: IInjectable<T>;
 
   /**
    * The lifetime for the registration.
    */
-  lifetime: ILifetime;
+  lifetime: ILifetime<T>;
 }
 
 
 /**
  * An object which controls the resolve lifetime of a type.
  */
-interface ILifetime {
+interface ILifetime<T> {
   /**
    * Get the cached object for the lifetime if one exists.
    */
-  get(key: number): any;
+  get(key: number): T;
 
   /**
    * Set the cached object for the lifetime if needed.
    */
-  set(key: number, val: any): void;
+  set(key: number, val: T): void;
 }
 
 
 /**
  * Create a lifetime object for the given string.
  */
-function createLifetime(lifetime: string): ILifetime {
+function createLifetime<T>(lifetime: string): ILifetime<T> {
   if (lifetime === 'transient') {
     return transientInstance;
   }
   if (lifetime === 'singleton') {
-    return new SingletonLifetime();
+    return new SingletonLifetime<T>();
   }
   if (lifetime === 'perresolve') {
-    return new PerResolveLifetime();
+    return new PerResolveLifetime<T>();
   }
   throw new Error('invalid lifetime: ' + lifetime);
 }
@@ -198,64 +183,64 @@ function createLifetime(lifetime: string): ILifetime {
 /**
  * A lifetime which never caches its object.
  */
-class TransientLifetime implements ILifetime {
+class TransientLifetime<T> implements ILifetime<T> {
   /**
    * Get the cached object for the lifetime.
    */
-  get(key: number): any { return null; }
+  get(key: number): T { return null; }
 
   /**
    * Set the cached object for the lifetime.
    */
-  set(key: number, val: any): void { }
+  set(key: number, val: T): void { }
 }
 
 
 /**
  * Only a single transient lifetime instance is ever needed.
  */
-var transientInstance = new TransientLifetime();
+var transientInstance = new TransientLifetime<any>();
 
 
 /**
  * A lifetime which always caches its object.
  */
-class SingletonLifetime implements ILifetime {
+class SingletonLifetime<T> implements ILifetime<T> {
   /**
    * Construct a new singleton lifetime.
    */
-  constructor(val: any = null) { this._m_val = val; }
+  constructor(val: T = null) { this._m_val = val; }
 
   /**
    * Get the cached object for the lifetime if one exists.
    */
-  get(key: number): any { return this._m_val; }
+  get(key: number): T { return this._m_val; }
 
   /**
    * Set the cached object for the lifetime if needed.
    */
-  set(key: number, val: any): void { this._m_val = val; }
+  set(key: number, val: T): void { this._m_val = val; }
 
-  private _m_val: any;
+  private _m_val: T;
 }
 
 
 /**
  * A lifetime which caches the instance on a per-resolve basis.
  */
-class PerResolveLifetime implements ILifetime {
+class PerResolveLifetime<T> implements ILifetime<T> {
   /**
    * Get the cached object for the lifetime if one exists.
    */
-  get(key: number): any { return this._m_key === key ? this._m_val : null; }
+  get(key: number): T { return this._m_key === key ? this._m_val : null; }
 
   /**
    * Set the cached object for the lifetime if needed.
    */
-  set(key: number, val: any): void { this._m_key = key; this._m_val = val; }
+  set(key: number, val: T): void { this._m_key = key; this._m_val = val; }
 
   private _m_key = 0;
-  private _m_val: any = null;
+  private _m_val: T = null;
 }
 
 } // module phosphor.di
