@@ -16,7 +16,7 @@ module phosphor.collections {
  * size, newly added elements will overwrite existing elements.
  */
 export
-class CircularBuffer<T> implements IDeque<T>, IList<T> {
+class CircularBuffer<T> implements IDeque<T>, IList<T>, IStack<T> {
   /**
    * Construct a new circular buffer.
    */
