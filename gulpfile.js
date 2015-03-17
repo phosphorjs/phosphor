@@ -15,6 +15,7 @@ var nib = require('nib');
 var rename = require('gulp-rename');
 var stream = require('event-stream');
 var stylus = require('gulp-stylus');
+var typedoc = require('gulp-typedoc');
 var typescript = require('gulp-typescript');
 
 
@@ -190,5 +191,15 @@ gulp.task('examples', function() {
   return stream.merge(src, css);
 });
 
+
+gulp.task('docs', function() {
+  return gulp.src(typings.concat(tsSources))
+    .pipe(typedoc({
+      out: './docs',
+      name: 'Phosphor',
+      target: 'ES5',
+      mode: 'file',
+      includeDeclarations: true }));
+});
 
 gulp.task('default', ['dist']);
