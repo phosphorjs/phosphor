@@ -260,13 +260,6 @@ class QueueIterator<T> implements IIterator<T> {
     return link.value;
   }
 
-  /**
-   * Returns `this` so that the iterator is iterable.
-   */
-  iterator(): IIterator<T> {
-    return this;
-  }
-
   private _m_link: IQueueLink<T>;
 }
 

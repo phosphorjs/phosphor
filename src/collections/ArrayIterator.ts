@@ -35,13 +35,6 @@ class ArrayIterator<T> implements IIterator<T> {
     return this._m_array[this._m_index++];
   }
 
-  /**
-   * Returns `this` so that the iterator is iterable.
-   */
-  iterator(): IIterator<T> {
-    return this;
-  }
-
   private _m_index = 0;
   private _m_array: T[] = [];
 }

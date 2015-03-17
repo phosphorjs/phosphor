@@ -35,13 +35,6 @@ class ListIterator<T> implements IIterator<T> {
     return this._m_list.get(this._m_index++);
   }
 
-  /**
-   * Returns `this` so that the iterator is iterable.
-   */
-  iterator(): IIterator<T> {
-    return this;
-  }
-
   private _m_index = 0;
   private _m_list: IList<T>;
 }
