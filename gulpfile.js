@@ -93,6 +93,7 @@ var tsSources = [
   'virtualdom/dom',
   'virtualdom/renderer',
   'virtualdom/Component',
+  'virtualdom/CodeMirrorComponent',
 
   'widgets/ITab',
   'widgets/ChildEvent',

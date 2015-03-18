@@ -5,7 +5,7 @@
 |
 | The full license is in the file LICENSE, distributed with this software.
 |----------------------------------------------------------------------------*/
-module phosphor.widgets {
+module phosphor.virtualdom {
 
 import ICoreEvent = core.ICoreEvent;
 
@@ -16,49 +16,46 @@ import ResizeEvent = events.ResizeEvent;
 import Point = geometry.Point;
 import Size = geometry.Size;
 
+import Component = virtualdom.Component
+import IVirtualElementData = phosphor.virtualdom.IVirtualElementData;
+import createFactory = phosphor.virtualdom.createFactory;
+
 
 /**
- * The class name added to code mirror widget classes.
+ * The class name added to code mirror component classes.
  */
-var CODE_MIRROR_WIDGET_CLASS = 'p-CodeMirrorWidget';
+var CODE_MIRROR_WIDGET_CLASS = 'p-CodeMirrorComponent';
 
-
-/**
- * The default size hint for a code mirror widget.
- */
-var defaultSizeHint = new Size(500, 200);
-
+export interface ICodeMirrorData extends IVirtualElementData {
+  config: CodeMirror.EditorConfiguration;
+}
 
 /**
- * A widget which hosts a CodeMirror editor.
+ * A component which hosts a CodeMirror editor.
  */
 export
-class CodeMirrorWidget extends Widget {
-  /**
-   * Construct a new code mirror widget.
-   */
-  constructor(options?: CodeMirror.EditorConfiguration) {
-    super();
-    this.classList.add(CODE_MIRROR_WIDGET_CLASS);
-    this._m_editor = this.createEditor(options);
-    this.setSizePolicy(SizePolicy.Expanding, SizePolicy.Expanding);
+class CodeMirrorComponent extends Component<ICodeMirrorData> {
+    
+  static tagName = 'div';
+  
+  static className = CODE_MIRROR_WIDGET_CLASS;
+  
+  init(data: ICodeMirrorData, children: IVirtualElement[]): boolean {
+    super.init(data, children);
+    if (!this._m_editor) {
+        this._m_editor = this.createEditor(data.config);
+    }
+    return false;
   }
 
   /**
-   * Get the code mirror editor for the widget.
+   * Get the code mirror editor for the component.
    *
    * This widget does not attempt to wrap the code mirror api.
    * User code should interact with the editor object directly.
    */
   get editor(): CodeMirror.Editor {
     return this._m_editor;
-  }
-
-  /**
-   * Calculate the preferred size for the widget.
-   */
-  sizeHint(): Size {
-    return defaultSizeHint;
   }
 
   /**
@@ -73,39 +70,23 @@ class CodeMirrorWidget extends Widget {
   }
 
   /**
-   * A method invoked on an 'after-show' event.
+   * Override the base component event logic to prevent the virtual DOM
+   * from rendering this component.
    */
-  protected afterShowEvent(event: ICoreEvent): void {
-    var pos = this._m_scrollPos;
-    if (pos) this._m_editor.scrollTo(pos.x, pos.y);
-  }
-
-  /**
-   * A method invoked on a 'before-hide' event.
-   */
-  protected beforeHideEvent(event: ICoreEvent): void {
-    var info = this._m_editor.getScrollInfo();
-    this._m_scrollPos = new Point(info.left, info.top);
-  }
-
-  /**
-   * A method invoked on an 'after-attach' event.
-   */
-  protected afterAttachEvent(event: ICoreEvent): void {
-    this._m_editor.refresh();
-  }
-
-  /**
-   * A method invoked on a 'resize' event.
-   */
-  protected resizeEvent(event: ResizeEvent): void {
-    if (this.isVisible) {
-      this._m_editor.setSize(event.width, event.height);
+  processEvent(event: ICoreEvent): void {
+    switch (event.type) {
+      case 'render-request':
+        break;
+      default:
+        break;
     }
   }
 
-  private _m_editor: CodeMirror.Editor;
+  private _m_editor: CodeMirror.Editor = null;
   private _m_scrollPos: Point = null;
 }
 
-} // module phosphor.widgets
+export var CodeMirrorFactory = createFactory(CodeMirrorComponent);
+
+
+} // module phosphor.virtualdom
