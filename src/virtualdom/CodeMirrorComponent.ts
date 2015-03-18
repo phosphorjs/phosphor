@@ -22,8 +22,9 @@ import Size = geometry.Size;
  */
 var CODE_MIRROR_WIDGET_CLASS = 'p-CodeMirrorComponent';
 
-export interface ICodeMirrorData extends IVirtualElementData {
+export interface ICodeMirrorData {
   config: CodeMirror.EditorConfiguration;
+  model: 
 }
 
 /**
