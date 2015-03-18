@@ -86,15 +86,16 @@ var tsSources = [
   'layout/SplitterLayout',
   'layout/StackLayout',
 
-  'virtualdom/IComponent',
   'virtualdom/IVirtualElement',
   'virtualdom/VirtualElementType',
   'virtualdom/factory',
   'virtualdom/dom',
   'virtualdom/renderer',
-  'virtualdom/BaseComponent',
-  'virtualdom/Component',
-  'virtualdom/CodeMirrorComponent',
+
+  'components/IComponent',
+  'components/BaseComponent',
+  'components/Component',
+  'components/CodeMirrorComponent',
 
   'widgets/ITab',
   'widgets/ChildEvent',
