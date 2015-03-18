@@ -7,8 +7,8 @@ Build Source
 **Prerequisites**
 - [git](http://git-scm.com/)
 - [node](http://nodejs.org/)
-- [gulp](http://gulpjs.com/)
-- [tsd](https://github.com/DefinitelyTyped/tsd) (npm install -g tsd@next)
+- [gulp](http://gulpjs.com/) `npm install -g gulp`
+- [tsd](https://github.com/DefinitelyTyped/tsd) `npm install -g tsd@next`
 
 ```
 git clone https://github.com/phosphorjs/phosphor.git
