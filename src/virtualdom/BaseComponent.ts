@@ -23,7 +23,13 @@ var emptyArray: any[] = Object.freeze([]);
 
 
 /**
- * A concrete implementation of IComponent.
+ * A concrete implementation of IComponent that does not use the virtual DOM to
+ * render content.
+ *
+ * This should be used by subclasses that want to manage their own content
+ * outside the virtual DOM. However, the lifecycle of BaseComponent
+ * instances is still managed by the virtual DOM renderer, which allows
+ * nested hierarchies of Component and BaseComponents.
  */
 export
 class BaseComponent<T extends IVirtualElementData> implements IComponent<T> {

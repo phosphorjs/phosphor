@@ -24,7 +24,6 @@ var CODE_MIRROR_WIDGET_CLASS = 'p-CodeMirrorComponent';
 
 export interface ICodeMirrorData {
   config: CodeMirror.EditorConfiguration;
-  model: 
 }
 
 /**

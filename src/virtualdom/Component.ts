@@ -31,7 +31,8 @@ var EVT_RENDER_REQUEST = { type: 'render-request' };
 
 
 /**
- * A concrete implementation of IComponent.
+ * A concrete implementation of IComponent that renders content using a virual
+ * DOM.
  */
 export
 class Component<T extends IVirtualElementData> extends BaseComponent<T> {
