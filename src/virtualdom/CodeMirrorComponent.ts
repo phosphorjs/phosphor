@@ -20,11 +20,13 @@ import Size = geometry.Size;
 /**
  * The class name added to code mirror component classes.
  */
-var CODE_MIRROR_WIDGET_CLASS = 'p-CodeMirrorComponent';
+var CODE_MIRROR_COMPONENT_CLASS = 'p-CodeMirrorComponent';
+
 
 export interface ICodeMirrorData {
   config: CodeMirror.EditorConfiguration;
 }
+
 
 /**
  * A component which hosts a CodeMirror editor.
@@ -34,7 +36,7 @@ class CodeMirrorComponent extends BaseComponent<ICodeMirrorData> {
     
   static tagName = 'div';
   
-  static className = CODE_MIRROR_WIDGET_CLASS;
+  static className = CODE_MIRROR_COMPONENT_CLASS;
   
   init(data: ICodeMirrorData, children: IVirtualElement[]): boolean {
     super.init(data, children);
@@ -64,7 +66,6 @@ class CodeMirrorComponent extends BaseComponent<ICodeMirrorData> {
   protected createEditor(options?: CodeMirror.EditorConfiguration): CodeMirror.Editor {
     return CodeMirror(this.node, options);
   }
-
 
   private _m_editor: CodeMirror.Editor = null;
   private _m_scrollPos: Point = null;

@@ -11,6 +11,7 @@ import IIterable = collections.IIterable;
 
 import ICoreEvent = core.ICoreEvent;
 
+
 /**
  * A singleton empty object.
  */
@@ -23,8 +24,7 @@ var emptyArray: any[] = Object.freeze([]);
 
 
 /**
- * A concrete implementation of IComponent that does not use the virtual DOM to
- * render content.
+ * A concrete implementation of IComponent with no virtual DOM rendering.
  *
  * This should be used by subclasses that want to manage their own content
  * outside the virtual DOM. However, the lifecycle of BaseComponent

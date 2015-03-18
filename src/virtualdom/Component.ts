@@ -31,8 +31,7 @@ var EVT_RENDER_REQUEST = { type: 'render-request' };
 
 
 /**
- * A concrete implementation of IComponent that renders content using a virual
- * DOM.
+ * A concrete implementation of IComponent with virtual DOM rendering.
  */
 export
 class Component<T extends IVirtualElementData> extends BaseComponent<T> {
@@ -41,8 +40,8 @@ class Component<T extends IVirtualElementData> extends BaseComponent<T> {
    * Dispose of the resources held by the component.
    */
   dispose(): void {
-    super.dispose();
     this._m_refs = null;
+    super.dispose();
   }
 
   /**
