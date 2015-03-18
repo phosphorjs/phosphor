@@ -34,59 +34,14 @@ var EVT_RENDER_REQUEST = { type: 'render-request' };
  * A concrete implementation of IComponent.
  */
 export
-class Component<T extends IVirtualElementData> implements IComponent<T> {
-  /**
-   * The tag name used to create the component's DOM node.
-   *
-   * A subclass may redefine this property.
-   */
-  static tagName = 'div';
-
-  /**
-   * The initial class name for the component's DOM node.
-   *
-   * A subclass may redefine this property.
-   */
-  static className = '';
-
-  /**
-   * Construct a new component.
-   */
-  constructor() {
-    var ctor = <any>this.constructor;
-    this._m_node = document.createElement(<string>ctor.tagName);
-    this._m_node.className = <string>ctor.className;
-  }
+class Component<T extends IVirtualElementData> extends BaseComponent<T> {
 
   /**
    * Dispose of the resources held by the component.
    */
   dispose(): void {
-    this._m_node = null;
-    this._m_data = null;
+    super.dispose();
     this._m_refs = null;
-    this._m_children = null;
-  }
-
-  /**
-   * Get the DOM node for the component.
-   */
-  get node(): HTMLElement {
-    return this._m_node;
-  }
-
-  /**
-   * Get the current data object for the component.
-   */
-  get data(): T {
-    return this._m_data;
-  }
-
-  /**
-   * Get the current children for the component.
-   */
-  get children(): IVirtualElement[] {
-    return this._m_children;
   }
 
   /**
@@ -94,21 +49,6 @@ class Component<T extends IVirtualElementData> implements IComponent<T> {
    */
   get refs(): any {
     return this._m_refs;
-  }
-
-  /**
-   * Initialize the component with new data and children.
-   *
-   * This is called automatically by the renderer at the proper times.
-   *
-   * Returns true if the component should be updated, false otherwise.
-   * The default implementation returns true. A reimplementation must
-   * call the superclass method to update the internal component state.
-   */
-  init(data: T, children: IVirtualElement[]): boolean {
-    this._m_data = data || emptyObject;
-    this._m_children = children || emptyArray;
-    return true;
   }
 
   /**
@@ -143,7 +83,7 @@ class Component<T extends IVirtualElementData> implements IComponent<T> {
     switch (event.type) {
       case 'render-request':
         sendEvent(this, EVT_BEFORE_RENDER);
-        this._m_refs = render(this.render(), this._m_node);
+        this._m_refs = render(this.render(), this.node);
         sendEvent(this, EVT_AFTER_RENDER);
         break;
       case 'before-render':
@@ -183,10 +123,7 @@ class Component<T extends IVirtualElementData> implements IComponent<T> {
    */
   protected afterRenderEvent(event: ICoreEvent): void { }
 
-  private _m_node: HTMLElement;
-  private _m_data: T = emptyObject;
   private _m_refs: any = emptyObject;
-  private _m_children: IVirtualElement[] = emptyArray;
 }
 
 } // module phosphor.virtualdom

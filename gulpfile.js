@@ -92,6 +92,7 @@ var tsSources = [
   'virtualdom/factory',
   'virtualdom/dom',
   'virtualdom/renderer',
+  'virtualdom/BaseComponent',
   'virtualdom/Component',
   'virtualdom/CodeMirrorComponent',
 

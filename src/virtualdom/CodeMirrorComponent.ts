@@ -16,10 +16,6 @@ import ResizeEvent = events.ResizeEvent;
 import Point = geometry.Point;
 import Size = geometry.Size;
 
-import Component = virtualdom.Component
-import IVirtualElementData = phosphor.virtualdom.IVirtualElementData;
-import createFactory = phosphor.virtualdom.createFactory;
-
 
 /**
  * The class name added to code mirror component classes.
@@ -34,7 +30,7 @@ export interface ICodeMirrorData extends IVirtualElementData {
  * A component which hosts a CodeMirror editor.
  */
 export
-class CodeMirrorComponent extends Component<ICodeMirrorData> {
+class CodeMirrorComponent extends BaseComponent<ICodeMirrorData> {
     
   static tagName = 'div';
   
@@ -69,18 +65,6 @@ class CodeMirrorComponent extends Component<ICodeMirrorData> {
     return CodeMirror(this.node, options);
   }
 
-  /**
-   * Override the base component event logic to prevent the virtual DOM
-   * from rendering this component.
-   */
-  processEvent(event: ICoreEvent): void {
-    switch (event.type) {
-      case 'render-request':
-        break;
-      default:
-        break;
-    }
-  }
 
   private _m_editor: CodeMirror.Editor = null;
   private _m_scrollPos: Point = null;
