@@ -11,8 +11,7 @@ import any = collections.any;
 import IIterable = collections.IIterable;
 
 import IMessage = core.IMessage;
-import postMessage = core.postMessage;
-import sendMessage = core.sendMessage;
+import dispatch = core.dispatch;
 
 import IVirtualElement = phosphor.virtualdom.IVirtualElement;
 import IVirtualElementData = phosphor.virtualdom.IVirtualElementData;
@@ -76,7 +75,7 @@ class Component<T extends IVirtualElementData> extends BaseComponent<T> {
    * Multiple synchronous calls to this method are collapsed.
    */
   update(): void {
-    postMessage(this, MSG_RENDER_REQUEST);
+    dispatch.postMessage(this, MSG_RENDER_REQUEST);
   }
 
   /**
@@ -85,9 +84,9 @@ class Component<T extends IVirtualElementData> extends BaseComponent<T> {
   processMessage(msg: IMessage): void {
     switch (msg.type) {
       case 'render-request':
-        sendMessage(this, MSG_BEFORE_RENDER);
+        dispatch.sendMessage(this, MSG_BEFORE_RENDER);
         this._m_refs = render(this.render(), this.node);
-        sendMessage(this, MSG_AFTER_RENDER);
+        dispatch.sendMessage(this, MSG_AFTER_RENDER);
         break;
       case 'before-render':
         this.onBeforeRender(msg)

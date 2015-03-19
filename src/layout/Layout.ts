@@ -7,12 +7,12 @@
 |----------------------------------------------------------------------------*/
 module phosphor.layout {
 
+import dispatch = core.dispatch;
 import IDisposable = core.IDisposable;
 import IMessage = core.IMessage;
 import IMessageHandler = core.IMessageHandler;
 import IMessageFilter = core.IMessageFilter;
 import Message = core.Message;
-import postMessage = core.postMessage;
 
 import Alignment = enums.Alignment;
 
@@ -229,7 +229,7 @@ class Layout implements IMessageFilter, IDisposable {
   invalidate(): void {
     var parent = this._m_parentWidget;
     if (parent) {
-      postMessage(parent, EVT_LAYOUT_REQUEST);
+      dispatch.postMessage(parent, EVT_LAYOUT_REQUEST);
       parent.updateGeometry();
     }
   }

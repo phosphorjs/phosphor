@@ -43,9 +43,9 @@ var tsSources = [
   'core/IMessage',
   'core/IMessageFilter',
   'core/IMessageHandler',
+  'core/dispatch',
   'core/Disposable',
   'core/Message',
-  'core/messageloop',
   'core/Signal',
 
   'di/token',

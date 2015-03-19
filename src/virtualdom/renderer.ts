@@ -7,10 +7,10 @@
 |----------------------------------------------------------------------------*/
 module phosphor.virtualdom {
 
-import sendMessage = core.sendMessage;
+import dispatch = core.dispatch;
 
-import IComponentClass = phosphor.components.IComponentClass
-import IComponent = phosphor.components.IComponent
+import IComponentClass = components.IComponentClass
+import IComponent = components.IComponent
 
 
 /**
@@ -179,7 +179,7 @@ function createNode(elem: IVirtualElement): Node {
     var component = new (<IComponentClass<any>>elem.tag)();
     componentMap.set(component.node, component);
     if (component.init(elem.data, elem.children)) {
-      sendMessage(component, EVT_RENDER_REQUEST);
+      dispatch.sendMessage(component, EVT_RENDER_REQUEST);
     }
     return component.node;
   }
@@ -315,7 +315,7 @@ function updateContent(host: HTMLElement, oldContent: IVirtualElement[], newCont
     // the component with new data and render it if necessary.
     var component = componentMap.get(<HTMLElement>currentNode);
     if (component.init(newElem.data, newElem.children)) {
-      sendMessage(component, EVT_RENDER_REQUEST);
+      dispatch.sendMessage(component, EVT_RENDER_REQUEST);
     }
   }
 
