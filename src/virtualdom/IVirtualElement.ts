@@ -7,9 +7,6 @@
 |----------------------------------------------------------------------------*/
 module phosphor.virtualdom {
 
-import IComponentClass = phosphor.components.IComponentClass
-
-
 /**
  * A base interface for a virtual element data object.
  */

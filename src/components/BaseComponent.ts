@@ -9,6 +9,7 @@ module phosphor.components {
 
 import IMessage = core.IMessage;
 
+import IComponent = virtualdom.IComponent;
 import IVirtualElement = virtualdom.IVirtualElement;
 import IVirtualElementData = virtualdom.IVirtualElementData;
 

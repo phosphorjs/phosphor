@@ -9,9 +9,6 @@ module phosphor.virtualdom {
 
 import dispatch = core.dispatch;
 
-import IComponentClass = components.IComponentClass
-import IComponent = components.IComponent
-
 
 /**
  * Render virtual content into a host node.

@@ -7,9 +7,6 @@
 |----------------------------------------------------------------------------*/
 module phosphor.virtualdom {
 
-import IComponentClass = phosphor.components.IComponentClass
-
-
 /**
  * Create a virtual element factory function for the given tag.
  */
