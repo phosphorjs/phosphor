@@ -17,8 +17,8 @@ class Queue<T> implements IQueue<T> {
    */
   constructor(items?: IIterable<T>) {
     if (items !== void 0) {
-      for (var iter = items.iterator(); iter.hasNext();) {
-        this.pushBack(iter.next());
+      for (var iter = items.iterator(); iter.moveNext();) {
+        this.pushBack(iter.current);
       }
     }
   }
@@ -235,38 +235,55 @@ function releaseLink(link: IQueueLink<any>): void {
 
 
 /**
- * An iterator for a queue.
+ * An iterator for a Queue.
  */
 class QueueIterator<T> implements IIterator<T> {
   /**
    * Construct a new queue iterator.
    */
   constructor(link: IQueueLink<T>) {
-    this._m_link = link;
+    this._m_link = { next: link, value: void 0 };
   }
 
   /**
-   * Test whether the iterable has more elements.
-   */
-  hasNext(): boolean {
-    return this._m_link !== null;
-  }
-
-  /**
-   * Get the next element in the iterable.
+   * The current value of the iterable.
    *
-   * Returns `undefined` when `hasNext` returns false.
+   * Returns `undefined` if there is no current value.
    */
-  next(): T {
+  get current(): T {
+    return this._m_current;
+  }
+
+  /**
+   * Move the iterator to the next value.
+   *
+   * Returns true on success, false when the iterator is exhausted.
+   */
+  moveNext(): boolean {
     var link = this._m_link;
     if (link === null) {
-      return void 0;
+      return false;
     }
-    this._m_link = link.next;
-    return link.value;
+    var next = link.next;
+    if (next === null) {
+      this._m_link = null;
+      this._m_current = void 0;
+      return false;
+    }
+    this._m_link = next;
+    this._m_current = next.value;
+    return true;
+  }
+
+  /**
+   * Returns `this` to make the iterator iterable.
+   */
+  iterator(): IIterator<T> {
+    return this;
   }
 
   private _m_link: IQueueLink<T>;
+  private _m_current: T = void 0;
 }
 
 } // module phosphor.collections

@@ -1,5 +1,5 @@
 /*-----------------------------------------------------------------------------
-| Copyright (c) 2014-2015, S. Chris Colbert
+| Copyright (c) 2014-2015, S. Chris Colbert and Phosphor Contributors
 |
 | Distributed under the terms of the BSD 3-Clause License.
 |
@@ -16,27 +16,49 @@ class ListIterator<T> implements IIterator<T> {
    * Construct a new list iterator.
    */
   constructor(list: IList<T>) {
-    this._m_list = list;
+    this._m_list = list || null;
   }
 
   /**
-   * Test whether the iterable has more elements.
-   */
-  hasNext(): boolean {
-    return this._m_index < this._m_list.size;
-  }
-
-  /**
-   * Get the next element in the iterable.
+   * The current value of the iterable.
    *
-   * Returns `undefined` when `hasNext` returns false.
+   * Returns `undefined` if there is no current value.
    */
-  next(): T {
-    return this._m_list.get(this._m_index++);
+  get current(): T {
+    return this._m_current;
   }
 
-  private _m_index = 0;
+  /**
+   * Move the iterator to the next value.
+   *
+   * Returns true on success, false when the iterator is exhausted.
+   */
+  moveNext(): boolean {
+    var list = this._m_list;
+    if (list === null) {
+      return false;
+    }
+    var index = this._m_index + 1;
+    if (index >= list.size) {
+      this._m_list = null;
+      this._m_current = void 0;
+      return false;
+    }
+    this._m_index = index;
+    this._m_current = list.get(index);
+    return true;
+  }
+
+  /**
+   * Returns `this` to make the iterator iterable.
+   */
+  iterator(): IIterator<T> {
+    return this;
+  }
+
+  private _m_index = -1;
   private _m_list: IList<T>;
+  private _m_current: T = void 0;
 }
 
 } // module phosphor.collections
