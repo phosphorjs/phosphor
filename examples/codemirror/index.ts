@@ -20,7 +20,6 @@ function main(): void {
       mode: 'javascript',
       lineNumbers: true,
       tabSize: 2,
-      inputStyle: 'contenteditable'
     }
   });
 
