@@ -260,13 +260,6 @@ class ViewItemList<T> implements IList<T> {
     throw new Error('list is read only');
   }
 
-  /**
-   * Returns an array containing all elements in the list.
-   */
-  toArray(): T[] {
-    return this._m_items.toArray();
-  }
-
   private _m_items: ViewItem<T>[];
 }
 
