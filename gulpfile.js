@@ -93,7 +93,7 @@ var tsSources = [
   'components/IComponent',
   'components/BaseComponent',
   'components/Component',
-  'components/CodeMirrorComponent',
+  'components/CodeMirror',
 
   'widgets/ITab',
   'widgets/ChildEvent',
