@@ -9,20 +9,25 @@ module phosphor.collections {
 
 /**
  * An object which iterates over elements in an iterable.
+ *
+ * The `moveNext` method must be called after creating the iterator to
+ * advance it to the first element or `current` will return `undefined`.
  */
 export
-interface IIterator<T> {
+interface IIterator<T> extends IIterable<T> {
   /**
-   * Test whether the iterable has more elements.
+   * The current value of the iterable.
+   *
+   * Returns `undefined` if there is no current value.
    */
-  hasNext(): boolean;
+  current: T;
 
   /**
-   * Get the next element in the iterable.
+   * Move the iterator to the next value.
    *
-   * Returns `undefined` when `hasNext` returns false.
+   * Returns true on success, false when the iterator is exhausted.
    */
-  next(): T;
+  moveNext(): boolean;
 }
 
 } // module phosphor.collections

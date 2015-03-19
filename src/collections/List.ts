@@ -18,8 +18,8 @@ class List<T> implements IList<T>, IStack<T> {
   constructor(items?: IIterable<T>) {
     if (items !== void 0) {
       var array = this._m_array;
-      for (var iter = items.iterator(); iter.hasNext();) {
-        array.push(iter.next());
+      for (var iter = items.iterator(); iter.moveNext();) {
+        array.push(iter.current);
       }
     }
   }

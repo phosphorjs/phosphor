@@ -1030,8 +1030,8 @@ class Widget implements IEventHandler {
    */
   compressEvent(event: ICoreEvent, posted: IIterable<ICoreEvent>): boolean {
     if (event.type === 'layout-request') {
-      for (var iter = posted.iterator(); iter.hasNext();) {
-        if (iter.next().type === event.type) return true;
+      for (var iter = posted.iterator(); iter.moveNext();) {
+        if (iter.current.type === event.type) return true;
       }
     }
     return false;

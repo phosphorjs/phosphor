@@ -23,8 +23,8 @@ class CircularBuffer<T> implements IDeque<T>, IList<T>, IStack<T> {
   constructor(maxSize: number, items?: IIterable<T>) {
     this._m_array = new Array<T>(Math.max(1, maxSize));
     if (items !== void 0) {
-      for (var iter = items.iterator(); iter.hasNext();) {
-        this.pushBack(iter.next());
+      for (var iter = items.iterator(); iter.moveNext();) {
+        this.pushBack(iter.current);
       }
     }
   }
