@@ -251,7 +251,7 @@ class QueueIterator<T> implements IIterator<T> {
    * Returns `undefined` if there is no current value.
    */
   get current(): T {
-    return this._m_current;
+    return this._m_link !== null ? this._m_link.value : void 0;
   }
 
   /**
@@ -264,14 +264,7 @@ class QueueIterator<T> implements IIterator<T> {
     if (link === null) {
       return false;
     }
-    var next = link.next;
-    if (next === null) {
-      this._m_link = null;
-      this._m_current = void 0;
-      return false;
-    }
-    this._m_link = next;
-    this._m_current = next.value;
+    this._m_link = link.next;
     return true;
   }
 
@@ -283,7 +276,6 @@ class QueueIterator<T> implements IIterator<T> {
   }
 
   private _m_link: IQueueLink<T>;
-  private _m_current: T = void 0;
 }
 
 } // module phosphor.collections
