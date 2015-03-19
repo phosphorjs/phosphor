@@ -7,6 +7,7 @@
 |----------------------------------------------------------------------------*/
 module phosphor.components {
 
+import any = collections.any;
 import IIterable = collections.IIterable;
 
 import ICoreEvent = core.ICoreEvent;
@@ -106,9 +107,7 @@ class Component<T extends IVirtualElementData> extends BaseComponent<T> {
    */
   compressEvent(event: ICoreEvent, posted: IIterable<ICoreEvent>): boolean {
     if (event.type === 'render-request') {
-      for (var iter = posted.iterator(); iter.hasNext();) {
-        if (iter.next().type === event.type) return true;
-      }
+      return any(posted, ev => ev.type === event.type);
     }
     return false;
   }

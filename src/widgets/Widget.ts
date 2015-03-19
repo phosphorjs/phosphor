@@ -7,6 +7,8 @@
 |----------------------------------------------------------------------------*/
 module phosphor.widgets {
 
+import any = collections.any;
+import forEach = collections.forEach;
 import IIterable = collections.IIterable;
 import IList = collections.IList;
 import List = collections.List;
@@ -1030,9 +1032,7 @@ class Widget implements IEventHandler {
    */
   compressEvent(event: ICoreEvent, posted: IIterable<ICoreEvent>): boolean {
     if (event.type === 'layout-request') {
-      for (var iter = posted.iterator(); iter.moveNext();) {
-        if (iter.current.type === event.type) return true;
-      }
+      return any(posted, ev => ev.type === event.type);
     }
     return false;
   }
@@ -1295,9 +1295,7 @@ function createExtra(): IWidgetExtra {
  * Send an event to a list of child widgets.
  */
 function sendChildrenEvent(children: IList<Widget>, event: ICoreEvent): void {
-  for (var i = 0, n = children.size; i < n; ++i) {
-    core.sendEvent(children.get(i), event);
-  }
+  forEach(children, ch => { core.sendEvent(ch, event); });
 }
 
 
@@ -1305,12 +1303,7 @@ function sendChildrenEvent(children: IList<Widget>, event: ICoreEvent): void {
  * Send an event to the non-hidden children in the list.
  */
 function sendNonHiddenChildrenEvent(children: IList<Widget>, event: ICoreEvent): void {
-  for (var i = 0, n = children.size; i < n; ++i) {
-    var child = children.get(i);
-    if (!child.isHidden) {
-      core.sendEvent(child, event);
-    }
-  }
+  forEach(children, ch => { if (!ch.isHidden) core.sendEvent(ch, event); });
 }
 
 } // module phosphor.widgets
