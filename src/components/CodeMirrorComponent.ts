@@ -1,5 +1,5 @@
 /*-----------------------------------------------------------------------------
-| Copyright (c) 2014, S. Chris Colbert
+| Copyright (c) 2014-2015, S. Chris Colbert
 |
 | Distributed under the terms of the BSD 3-Clause License.
 |
@@ -36,11 +36,11 @@ export interface ICodeMirrorData {
  */
 export
 class CodeMirrorComponent extends BaseComponent<ICodeMirrorData> {
-    
+
   static tagName = 'div';
-  
+
   static className = CODE_MIRROR_COMPONENT_CLASS;
-  
+
   init(data: ICodeMirrorData, children: IVirtualElement[]): boolean {
     super.init(data, children);
     if (!this._m_editor) {
