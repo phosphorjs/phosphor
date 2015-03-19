@@ -8,7 +8,7 @@
 module phosphor.collections {
 
 /**
- * An iterator for an array.
+ * An iterator for a generic array.
  */
 export
 class ArrayIterator<T> implements IIterator<T> {
@@ -16,7 +16,7 @@ class ArrayIterator<T> implements IIterator<T> {
    * Construct a new array iterator.
    */
   constructor(array: T[]) {
-    this._m_array = array || null;
+    this._m_array = array;
   }
 
   /**
@@ -25,7 +25,7 @@ class ArrayIterator<T> implements IIterator<T> {
    * Returns `undefined` if there is no current value.
    */
   get current(): T {
-    return this._m_current;
+    return this._m_array[this._m_index];
   }
 
   /**
@@ -34,19 +34,7 @@ class ArrayIterator<T> implements IIterator<T> {
    * Returns true on success, false when the iterator is exhausted.
    */
   moveNext(): boolean {
-    var array = this._m_array;
-    if (array === null) {
-      return false;
-    }
-    var index = this._m_index + 1;
-    if (index >= array.length) {
-      this._m_array = null;
-      this._m_current = void 0;
-      return false;
-    }
-    this._m_index = index;
-    this._m_current = array[index];
-    return true;
+    return ++this._m_index < this._m_array.length;
   }
 
   /**
@@ -56,9 +44,8 @@ class ArrayIterator<T> implements IIterator<T> {
     return this;
   }
 
-  private _m_array: T[];
   private _m_index = -1;
-  private _m_current: T = void 0;
+  private _m_array: T[];
 }
 
 } // module phosphor.collections

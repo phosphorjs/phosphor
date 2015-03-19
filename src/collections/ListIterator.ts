@@ -8,7 +8,7 @@
 module phosphor.collections {
 
 /**
- * An iterator for a generic list collection.
+ * An iterator for a generic list.
  */
 export
 class ListIterator<T> implements IIterator<T> {
@@ -16,7 +16,7 @@ class ListIterator<T> implements IIterator<T> {
    * Construct a new list iterator.
    */
   constructor(list: IList<T>) {
-    this._m_list = list || null;
+    this._m_list = list;
   }
 
   /**
@@ -25,7 +25,7 @@ class ListIterator<T> implements IIterator<T> {
    * Returns `undefined` if there is no current value.
    */
   get current(): T {
-    return this._m_current;
+    return this._m_list.get(this._m_index);
   }
 
   /**
@@ -34,19 +34,7 @@ class ListIterator<T> implements IIterator<T> {
    * Returns true on success, false when the iterator is exhausted.
    */
   moveNext(): boolean {
-    var list = this._m_list;
-    if (list === null) {
-      return false;
-    }
-    var index = this._m_index + 1;
-    if (index >= list.size) {
-      this._m_list = null;
-      this._m_current = void 0;
-      return false;
-    }
-    this._m_index = index;
-    this._m_current = list.get(index);
-    return true;
+    return ++this._m_index < this._m_list.size;
   }
 
   /**
@@ -58,7 +46,6 @@ class ListIterator<T> implements IIterator<T> {
 
   private _m_index = -1;
   private _m_list: IList<T>;
-  private _m_current: T = void 0;
 }
 
 } // module phosphor.collections
