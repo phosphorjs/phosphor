@@ -7,26 +7,15 @@
 |----------------------------------------------------------------------------*/
 module phosphor.components {
 
-import ICoreEvent = core.ICoreEvent;
-
-import SizePolicy = enums.SizePolicy;
-
-import ResizeEvent = events.ResizeEvent;
-
-import Point = geometry.Point;
-import Size = geometry.Size;
-
-import IVirtualElement = phosphor.virtualdom.IVirtualElement;
-import createFactory = phosphor.virtualdom.createFactory;
+import IVirtualElement = virtualdom.IVirtualElement;
+import createFactory = virtualdom.createFactory;
 
 
 /**
- * The class name added to code mirror component classes.
+ * The data object for a code mirror component.
  */
-var CODE_MIRROR_COMPONENT_CLASS = 'p-CodeMirrorComponent';
-
-
-export interface ICodeMirrorData {
+export
+interface ICodeMirrorData {
   config: CodeMirror.EditorConfiguration;
 }
 
@@ -36,15 +25,26 @@ export interface ICodeMirrorData {
  */
 export
 class CodeMirrorComponent extends BaseComponent<ICodeMirrorData> {
-
+  /**
+   * The tag name for the component node.
+   */
   static tagName = 'div';
 
-  static className = CODE_MIRROR_COMPONENT_CLASS;
+  /**
+   * The default class name for the component node.
+   */
+  static className = 'p-CodeMirrorComponent';
 
+  /**
+   * Initialize the component with new data and children.
+   *
+   * A code mirror component does not update its content using the
+   * virtual DOM, so this method always returns false.
+   */
   init(data: ICodeMirrorData, children: IVirtualElement[]): boolean {
     super.init(data, children);
-    if (!this._m_editor) {
-        this._m_editor = this.createEditor(data.config);
+    if (this._m_editor === null) {
+      this._m_editor = this.createEditor(data.config);
     }
     return false;
   }
@@ -71,10 +71,13 @@ class CodeMirrorComponent extends BaseComponent<ICodeMirrorData> {
   }
 
   private _m_editor: CodeMirror.Editor = null;
-  private _m_scrollPos: Point = null;
 }
 
-export var CodeMirrorFactory = createFactory(CodeMirrorComponent);
 
+/**
+ * The default virtual element factory for the CodeMirrorComponent.
+ */
+export
+var CodeMirrorFactory = createFactory(CodeMirrorComponent);
 
 } // module phosphor.components

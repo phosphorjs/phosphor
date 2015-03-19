@@ -7,7 +7,7 @@
 |----------------------------------------------------------------------------*/
 module phosphor.widgets {
 
-import ICoreEvent = core.ICoreEvent;
+import IMessage = core.IMessage;
 
 import SizePolicy = enums.SizePolicy;
 
@@ -337,7 +337,7 @@ class MenuBar extends Widget {
   /**
    * A method invoked on the 'after-attach' event.
    */
-  protected afterAttachEvent(event: ICoreEvent): void {
+  protected afterAttachEvent(event: IMessage): void {
     this.node.addEventListener('mousedown', <any>this);
     this.node.addEventListener('mousemove', <any>this);
     this.node.addEventListener('mouseleave', <any>this);
@@ -346,7 +346,7 @@ class MenuBar extends Widget {
   /**
    * A method invoked on the 'after-detach' event.
    */
-  protected afterDetachEvent(event: ICoreEvent): void {
+  protected afterDetachEvent(event: IMessage): void {
     this.node.removeEventListener('mousedown', <any>this);
     this.node.removeEventListener('mousemove', <any>this);
     this.node.removeEventListener('mouseleave', <any>this);

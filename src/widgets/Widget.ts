@@ -14,10 +14,15 @@ import IList = collections.IList;
 import List = collections.List;
 import ReadOnlyList = collections.ReadOnlyList;
 
-import CoreEvent = core.CoreEvent;
-import ICoreEvent = core.ICoreEvent;
-import IEventHandler = core.IEventHandler;
+import IMessage = core.IMessage;
+import IMessageHandler = core.IMessageHandler;
+import Message = core.Message;
 import Signal = core.Signal;
+import clearMessageData = core.clearMessageData;
+import installMessageFilter = core.installMessageFilter;
+import postMessage = core.postMessage;
+import removeMessageFilter = core.removeMessageFilter;
+import sendMessage = core.sendMessage;
 
 import IBoxData = dom.IBoxData;
 import createBoxData = dom.createBoxData;
@@ -51,7 +56,7 @@ var HIDDEN_CLASS = 'p-mod-hidden';
  * The base class of the Phosphor widget hierarchy.
  */
 export
-class Widget implements IEventHandler {
+class Widget implements IMessageHandler {
   /**
    * A signal emitted when the widget is disposed.
    */
@@ -77,7 +82,7 @@ class Widget implements IEventHandler {
     this.setFlag(WidgetFlag.IsDisposed);
 
     // Clear event data before potentially invoking user code.
-    core.clearEventData(this);
+    clearMessageData(this);
 
     // Allow user code to a chance to cleanup resources or take action
     // in response to the widget being disposed.
@@ -92,7 +97,7 @@ class Widget implements IEventHandler {
     if (parent) {
       this._m_parent = null;
       this._m_parent._m_children.remove(this);
-      core.sendEvent(parent, new ChildEvent('child-removed', this));
+      sendMessage(parent, new ChildEvent('child-removed', this));
     } else if (this.isAttached) {
       this.detach();
     }
@@ -138,14 +143,14 @@ class Widget implements IEventHandler {
     if (old) {
       this._m_parent = null;
       old._m_children.remove(this);
-      core.sendEvent(old, new ChildEvent('child-removed', this));
+      sendMessage(old, new ChildEvent('child-removed', this));
     }
     if (parent) {
       this._m_parent = parent;
       parent._m_children.add(this);
-      core.sendEvent(parent, new ChildEvent('child-added', this));
+      sendMessage(parent, new ChildEvent('child-added', this));
     }
-    core.sendEvent(this, EVT_PARENT_CHANGED);
+    sendMessage(this, EVT_PARENT_CHANGED);
   }
 
   /**
@@ -184,15 +189,15 @@ class Widget implements IEventHandler {
     }
     if (old) {
       this._m_layout = null;
-      core.removeEventFilter(this, old);
+      removeMessageFilter(this, old);
       old.dispose();
     }
     if (layout) {
       this._m_layout = layout;
-      core.installEventFilter(this, layout);
+      installMessageFilter(this, layout);
       layout.parentWidget = this;
     }
-    core.sendEvent(this, EVT_LAYOUT_CHANGED);
+    sendMessage(this, EVT_LAYOUT_CHANGED);
   }
 
   /**
@@ -597,16 +602,16 @@ class Widget implements IEventHandler {
     }
     var p = this._m_parent;
     if (this.isAttached && (!p || p.isVisible)) {
-      core.sendEvent(this, EVT_BEFORE_SHOW);
+      sendMessage(this, EVT_BEFORE_SHOW);
       this.classList.remove(HIDDEN_CLASS);
       this.clearFlag(WidgetFlag.IsHidden);
-      core.sendEvent(this, EVT_AFTER_SHOW);
+      sendMessage(this, EVT_AFTER_SHOW);
     } else {
       this.classList.remove(HIDDEN_CLASS);
       this.clearFlag(WidgetFlag.IsHidden);
     }
     if (p) {
-      core.sendEvent(p, new ChildEvent('child-shown', this));
+      sendMessage(p, new ChildEvent('child-shown', this));
     }
     this.updateGeometry();
   }
@@ -622,16 +627,16 @@ class Widget implements IEventHandler {
     }
     var p = this._m_parent;
     if (this.isAttached && (!p || p.isVisible)) {
-      core.sendEvent(this, EVT_BEFORE_HIDE);
+      sendMessage(this, EVT_BEFORE_HIDE);
       this.classList.add(HIDDEN_CLASS);
       this.setFlag(WidgetFlag.IsHidden);
-      core.sendEvent(this, EVT_AFTER_HIDE);
+      sendMessage(this, EVT_AFTER_HIDE);
     } else {
       this.classList.add(HIDDEN_CLASS);
       this.setFlag(WidgetFlag.IsHidden);
     }
     if (p) {
-      core.sendEvent(p, new ChildEvent('child-hidden', this));
+      sendMessage(p, new ChildEvent('child-hidden', this));
     }
     this.updateGeometry(true);
   }
@@ -644,7 +649,7 @@ class Widget implements IEventHandler {
    * close event handler will unparent the widget.
    */
   close(): void {
-    core.sendEvent(this, EVT_CLOSE);
+    sendMessage(this, EVT_CLOSE);
   }
 
   /**
@@ -660,9 +665,9 @@ class Widget implements IEventHandler {
     if (this._m_parent) {
       throw new Error('can only attach a root widget to the DOM');
     }
-    core.sendEvent(this, EVT_BEFORE_ATTACH);
+    sendMessage(this, EVT_BEFORE_ATTACH);
     node.appendChild(this._m_node);
-    core.sendEvent(this, EVT_AFTER_ATTACH);
+    sendMessage(this, EVT_AFTER_ATTACH);
   }
 
   /**
@@ -679,9 +684,9 @@ class Widget implements IEventHandler {
     if (!parentNode) {
       return;
     }
-    core.sendEvent(this, EVT_BEFORE_DETACH);
+    sendMessage(this, EVT_BEFORE_DETACH);
     parentNode.removeChild(node);
-    core.sendEvent(this, EVT_AFTER_DETACH);
+    sendMessage(this, EVT_AFTER_DETACH);
   }
 
   /**
@@ -778,7 +783,7 @@ class Widget implements IEventHandler {
     if (parent._m_layout) {
       parent._m_layout.invalidate();
     } else {
-      core.postEvent(parent, EVT_LAYOUT_REQUEST);
+      postMessage(parent, EVT_LAYOUT_REQUEST);
       parent.updateGeometry();
     }
   }
@@ -793,7 +798,7 @@ class Widget implements IEventHandler {
     if (this._m_layout) {
       this._m_layout.invalidate();
     } else {
-      core.postEvent(this, EVT_LAYOUT_REQUEST);
+      postMessage(this, EVT_LAYOUT_REQUEST);
     }
     this.updateGeometry();
   }
@@ -855,10 +860,10 @@ class Widget implements IEventHandler {
       style.height = height + 'px';
     }
     if (isMove) {
-      core.sendEvent(this, new MoveEvent(oldX, oldY, x, y));
+      sendMessage(this, new MoveEvent(oldX, oldY, x, y));
     }
     if (isResize) {
-      core.sendEvent(this, new ResizeEvent(oldWidth, oldHeight, width, height));
+      sendMessage(this, new ResizeEvent(oldWidth, oldHeight, width, height));
     }
   }
 
@@ -942,7 +947,7 @@ class Widget implements IEventHandler {
    * installed event filters and one of them returns true from its
    * `filterEvent` method, this method will not be called.
    */
-  processEvent(event: ICoreEvent): void {
+  processMessage(event: IMessage): void {
     switch (event.type) {
       case 'move':
         this.moveEvent(<MoveEvent>event);
@@ -953,9 +958,9 @@ class Widget implements IEventHandler {
       case 'child-added':
         var child = (<ChildEvent>event).child;
         if (this.isAttached) {
-          core.sendEvent(child, EVT_BEFORE_ATTACH);
+          sendMessage(child, EVT_BEFORE_ATTACH);
           this._m_node.appendChild(child._m_node);
-          core.sendEvent(child, EVT_AFTER_ATTACH);
+          sendMessage(child, EVT_AFTER_ATTACH);
         } else {
           this._m_node.appendChild(child._m_node);
         }
@@ -963,9 +968,9 @@ class Widget implements IEventHandler {
       case 'child-removed':
         var child = (<ChildEvent>event).child;
         if (this.isAttached) {
-          core.sendEvent(child, EVT_BEFORE_DETACH);
+          sendMessage(child, EVT_BEFORE_DETACH);
           this._m_node.removeChild(child._m_node);
-          core.sendEvent(child, EVT_AFTER_DETACH);
+          sendMessage(child, EVT_AFTER_DETACH);
         } else {
           this._m_node.removeChild(child._m_node);
         }
@@ -1030,7 +1035,7 @@ class Widget implements IEventHandler {
    *
    * By default 'layout-request' events are compressed.
    */
-  compressEvent(event: ICoreEvent, posted: IIterable<ICoreEvent>): boolean {
+  compressEvent(event: IMessage, posted: IIterable<IMessage>): boolean {
     if (event.type === 'layout-request') {
       return any(posted, ev => ev.type === event.type);
     }
@@ -1054,7 +1059,7 @@ class Widget implements IEventHandler {
    *
    * The default behavior sets the parent to null.
    */
-  protected closeEvent(event: ICoreEvent): void {
+  protected closeEvent(event: IMessage): void {
     this.parent = null;
   }
 
@@ -1077,56 +1082,56 @@ class Widget implements IEventHandler {
    *
    * The default implementation is a no-op.
    */
-  protected beforeShowEvent(event: ICoreEvent): void { }
+  protected beforeShowEvent(event: IMessage): void { }
 
   /**
    * A method invoked on an 'after-show' event.
    *
    * The default implementation is a no-op.
    */
-  protected afterShowEvent(event: ICoreEvent): void { }
+  protected afterShowEvent(event: IMessage): void { }
 
   /**
    * A method invoked on a 'before-hide' event.
    *
    * The default implementation is a no-op.
    */
-  protected beforeHideEvent(event: ICoreEvent): void { }
+  protected beforeHideEvent(event: IMessage): void { }
 
   /**
    * A method invoked on an 'after-hide' event.
    *
    * The default implementation is a no-op.
    */
-  protected afterHideEvent(event: ICoreEvent): void { }
+  protected afterHideEvent(event: IMessage): void { }
 
   /**
    * A method invoked on a 'before-attach' event.
    *
    * The default implementation is a no-op.
    */
-  protected beforeAttachEvent(event: ICoreEvent): void { }
+  protected beforeAttachEvent(event: IMessage): void { }
 
   /**
    * A method invoked on an 'after-attach' event.
    *
    * The default implementation is a no-op.
    */
-  protected afterAttachEvent(event: ICoreEvent): void { }
+  protected afterAttachEvent(event: IMessage): void { }
 
   /**
    * A method invoked on a 'before-detach' event.
    *
    * The default implementation is a no-op.
    */
-  protected beforeDetachEvent(event: ICoreEvent): void { }
+  protected beforeDetachEvent(event: IMessage): void { }
 
   /**
    * A method invoked on an 'after-detach' event.
    *
    * The default implementation is a no-op.
    */
-  protected afterDetachEvent(event: ICoreEvent): void { }
+  protected afterDetachEvent(event: IMessage): void { }
 
   private _m_flags = 0;
   private _m_node: HTMLElement;
@@ -1140,62 +1145,62 @@ class Widget implements IEventHandler {
 /**
  * A singleton 'before-show' event.
  */
-var EVT_BEFORE_SHOW = new CoreEvent('before-show');
+var EVT_BEFORE_SHOW = new Message('before-show');
 
 /**
  * A singleton 'after-show' event.
  */
-var EVT_AFTER_SHOW = new CoreEvent('after-show');
+var EVT_AFTER_SHOW = new Message('after-show');
 
 /**
  * A singleton 'before-hide' event.
  */
-var EVT_BEFORE_HIDE = new CoreEvent('before-hide');
+var EVT_BEFORE_HIDE = new Message('before-hide');
 
 /**
  * A singleton 'after-hide' event.
  */
-var EVT_AFTER_HIDE = new CoreEvent('after-hide');
+var EVT_AFTER_HIDE = new Message('after-hide');
 
 /**
  * A singleton 'before-attach' event.
  */
-var EVT_BEFORE_ATTACH = new CoreEvent('before-attach');
+var EVT_BEFORE_ATTACH = new Message('before-attach');
 
 /**
  * A singleton 'after-attach' event.
  */
-var EVT_AFTER_ATTACH = new CoreEvent('after-attach');
+var EVT_AFTER_ATTACH = new Message('after-attach');
 
 /**
  * A singleton 'before-detach' event.
  */
-var EVT_BEFORE_DETACH = new CoreEvent('before-detach');
+var EVT_BEFORE_DETACH = new Message('before-detach');
 
 /**
  * A singleton 'after-detach' event.
  */
-var EVT_AFTER_DETACH = new CoreEvent('after-detach');
+var EVT_AFTER_DETACH = new Message('after-detach');
 
 /**
  * A singleton 'parent-changed' event.
  */
-var EVT_PARENT_CHANGED = new CoreEvent('parent-changed');
+var EVT_PARENT_CHANGED = new Message('parent-changed');
 
 /**
  * A singleton 'layout-changed' event.
  */
-var EVT_LAYOUT_CHANGED = new CoreEvent('layout-changed');
+var EVT_LAYOUT_CHANGED = new Message('layout-changed');
 
 /**
  * A singleton 'layout-request' event.
  */
-var EVT_LAYOUT_REQUEST = new CoreEvent('layout-request');
+var EVT_LAYOUT_REQUEST = new Message('layout-request');
 
 /**
  * A singleton 'close' event.
  */
-var EVT_CLOSE = new CoreEvent('close');
+var EVT_CLOSE = new Message('close');
 
 
 /**
@@ -1294,16 +1299,16 @@ function createExtra(): IWidgetExtra {
 /**
  * Send an event to a list of child widgets.
  */
-function sendChildrenEvent(children: IList<Widget>, event: ICoreEvent): void {
-  forEach(children, ch => { core.sendEvent(ch, event); });
+function sendChildrenEvent(children: IList<Widget>, event: IMessage): void {
+  forEach(children, ch => { sendMessage(ch, event); });
 }
 
 
 /**
  * Send an event to the non-hidden children in the list.
  */
-function sendNonHiddenChildrenEvent(children: IList<Widget>, event: ICoreEvent): void {
-  forEach(children, ch => { if (!ch.isHidden) core.sendEvent(ch, event); });
+function sendNonHiddenChildrenEvent(children: IList<Widget>, event: IMessage): void {
+  forEach(children, ch => { if (!ch.isHidden) sendMessage(ch, event); });
 }
 
 } // module phosphor.widgets

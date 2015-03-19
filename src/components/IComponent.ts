@@ -8,10 +8,10 @@
 module phosphor.components {
 
 import IDisposable = core.IDisposable;
-import IEventHandler = core.IEventHandler;
+import IMessageHandler = core.IMessageHandler;
 
-import IVirtualElement = phosphor.virtualdom.IVirtualElement;
-import IVirtualElementData = phosphor.virtualdom.IVirtualElementData;
+import IVirtualElement = virtualdom.IVirtualElement;
+import IVirtualElementData = virtualdom.IVirtualElementData;
 
 
 /**
@@ -22,7 +22,7 @@ import IVirtualElementData = phosphor.virtualdom.IVirtualElementData;
  * `render` function of the virtual renderer with updated content.
  */
 export
-interface IComponent<T extends IVirtualElementData> extends IEventHandler, IDisposable {
+interface IComponent<T extends IVirtualElementData> extends IMessageHandler, IDisposable {
   /**
    * The DOM node for the component.
    *
@@ -31,11 +31,11 @@ interface IComponent<T extends IVirtualElementData> extends IEventHandler, IDisp
   node: HTMLElement;
 
   /**
-   * Initialize the component with data and children.
+   * Initialize the component with new data and children.
    *
-   * This is called whenever the component is "rendered" by its parent.
+   * This is called whenever the component is rendered by its parent.
    *
-   * Returns true if the component should update, false otherwise.
+   * Returns true if the component should be updated, false otherwise.
    */
   init(data: T, children: IVirtualElement[]): boolean;
 }

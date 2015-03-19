@@ -7,11 +7,12 @@
 |----------------------------------------------------------------------------*/
 module phosphor.layout {
 
-import CoreEvent = core.CoreEvent;
-import ICoreEvent = core.ICoreEvent;
 import IDisposable = core.IDisposable;
-import IEventHandler = core.IEventHandler;
-import IEventFilter = core.IEventFilter;
+import IMessage = core.IMessage;
+import IMessageHandler = core.IMessageHandler;
+import IMessageFilter = core.IMessageFilter;
+import Message = core.Message;
+import postMessage = core.postMessage;
 
 import Alignment = enums.Alignment;
 
@@ -32,7 +33,7 @@ import Widget = widgets.Widget;
  * This class must be subclassed to be useful.
  */
 export
-class Layout implements IEventFilter, IDisposable {
+class Layout implements IMessageFilter, IDisposable {
   /**
    * Construct a new layout.
    */
@@ -228,18 +229,18 @@ class Layout implements IEventFilter, IDisposable {
   invalidate(): void {
     var parent = this._m_parentWidget;
     if (parent) {
-      core.postEvent(parent, EVT_LAYOUT_REQUEST);
+      postMessage(parent, EVT_LAYOUT_REQUEST);
       parent.updateGeometry();
     }
   }
 
   /**
-   * Hook an event dispatched to an event handler.
+   * Filter a message sent to a message handler.
    *
    * This calls the `processWidgetEvent` method when the event handler
    * target is the parent widget. This always returns false.
    */
-  filterEvent(handler: IEventHandler, event: ICoreEvent): boolean {
+  filterMessage(handler: IMessageHandler, event: IMessage): boolean {
     if (handler === this._m_parentWidget) {
       this.processWidgetEvent(event);
     }
@@ -251,7 +252,7 @@ class Layout implements IEventFilter, IDisposable {
    *
    * Subclasses should reimplement this method as needed.
    */
-  protected processWidgetEvent(event: ICoreEvent): void {
+  protected processWidgetEvent(event: IMessage): void {
     switch (event.type) {
       case 'resize':
       case 'layout-request':
@@ -313,6 +314,6 @@ class Layout implements IEventFilter, IDisposable {
 /**
  * A singleton 'layout-request' event.
  */
-var EVT_LAYOUT_REQUEST = new CoreEvent('layout-request');
+var EVT_LAYOUT_REQUEST = new Message('layout-request');
 
 } // module phosphor.layout

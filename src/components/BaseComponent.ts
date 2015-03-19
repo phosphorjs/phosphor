@@ -7,32 +7,30 @@
 |----------------------------------------------------------------------------*/
 module phosphor.components {
 
-import IIterable = collections.IIterable;
+import IMessage = core.IMessage;
 
-import ICoreEvent = core.ICoreEvent;
-
-import IVirtualElement = phosphor.virtualdom.IVirtualElement;
-import IVirtualElementData = phosphor.virtualdom.IVirtualElementData;
+import IVirtualElement = virtualdom.IVirtualElement;
+import IVirtualElementData = virtualdom.IVirtualElementData;
 
 
 /**
- * A singleton empty object.
+ * A singleton frozen empty object.
  */
 var emptyObject: any = Object.freeze(Object.create(null));
 
 /**
- * A singleton empty array.
+ * A singleton frozen empty array.
  */
 var emptyArray: any[] = Object.freeze([]);
 
 
 /**
- * A concrete implementation of IComponent with no virtual DOM rendering.
+ * A concrete base implementation of IComponent.
  *
- * This should be used by subclasses that want to manage their own content
- * outside the virtual DOM. However, the lifecycle of BaseComponent
- * instances is still managed by the virtual DOM renderer, which allows
- * nested hierarchies of Component and BaseComponents.
+ * This class should be used by subclasses that want to manage their
+ * own DOM content outside the virtual DOM. However, the lifecycle of
+ * BaseComponent instances is still managed by the virtual DOM renderer,
+ * which allows nested hierarchies of Component and BaseComponents.
  */
 export
 class BaseComponent<T extends IVirtualElementData> implements IComponent<T> {
@@ -92,7 +90,7 @@ class BaseComponent<T extends IVirtualElementData> implements IComponent<T> {
   /**
    * Initialize the component with new data and children.
    *
-   * This is called automatically by the renderer at the proper times.
+   * This is called whenever the component is rendered by its parent.
    *
    * Returns true if the component should be updated, false otherwise.
    * The default implementation returns true. A reimplementation must
@@ -105,13 +103,15 @@ class BaseComponent<T extends IVirtualElementData> implements IComponent<T> {
   }
 
   /**
-   * Process an event dispatched to the component.
+   * Process a message sent to the component.
+   *
+   * The default implementation is a no-op.
    */
-  processEvent(event: ICoreEvent): void {}
+  processMessage(msg: IMessage): void { }
 
+  private _m_data: T;
   private _m_node: HTMLElement;
-  private _m_data: T = emptyObject;
-  private _m_children: IVirtualElement[] = emptyArray;
+  private _m_children: IVirtualElement[];
 }
 
 } // module phosphor.components

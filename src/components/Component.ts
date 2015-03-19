@@ -10,9 +10,9 @@ module phosphor.components {
 import any = collections.any;
 import IIterable = collections.IIterable;
 
-import ICoreEvent = core.ICoreEvent;
-import postEvent = core.postEvent;
-import sendEvent = core.sendEvent;
+import IMessage = core.IMessage;
+import postMessage = core.postMessage;
+import sendMessage = core.sendMessage;
 
 import IVirtualElement = phosphor.virtualdom.IVirtualElement;
 import IVirtualElementData = phosphor.virtualdom.IVirtualElementData;
@@ -20,27 +20,25 @@ import render = phosphor.virtualdom.render;
 
 
 /**
- * A singleton empty object.
+ * A singleton frozen empty object.
  */
 var emptyObject: any = Object.freeze(Object.create(null));
 
-/**
- * A singleton empty array.
- */
-var emptyArray: any[] = Object.freeze([]);
-
 // TODO fix me
-var EVT_BEFORE_RENDER = { type: 'before-render' };
-var EVT_AFTER_RENDER = { type: 'after-render' };
-var EVT_RENDER_REQUEST = { type: 'render-request' };
+var MSG_BEFORE_RENDER = { type: 'before-render' };
+var MSG_AFTER_RENDER = { type: 'after-render' };
+var MSG_RENDER_REQUEST = { type: 'render-request' };
 
 
 /**
  * A concrete implementation of IComponent with virtual DOM rendering.
+ *
+ * User code will typically subclass this class to create a custom
+ * component. Subclasses should reimplement the `render` method to
+ * generate the virtual DOM content for the component.
  */
 export
 class Component<T extends IVirtualElementData> extends BaseComponent<T> {
-
   /**
    * Dispose of the resources held by the component.
    */
@@ -78,24 +76,24 @@ class Component<T extends IVirtualElementData> extends BaseComponent<T> {
    * Multiple synchronous calls to this method are collapsed.
    */
   update(): void {
-    postEvent(this, EVT_RENDER_REQUEST);
+    postMessage(this, MSG_RENDER_REQUEST);
   }
 
   /**
-   * Process an event dispatched to the component.
+   * Process a message sent to the component.
    */
-  processEvent(event: ICoreEvent): void {
-    switch (event.type) {
+  processMessage(msg: IMessage): void {
+    switch (msg.type) {
       case 'render-request':
-        sendEvent(this, EVT_BEFORE_RENDER);
+        sendMessage(this, MSG_BEFORE_RENDER);
         this._m_refs = render(this.render(), this.node);
-        sendEvent(this, EVT_AFTER_RENDER);
+        sendMessage(this, MSG_AFTER_RENDER);
         break;
       case 'before-render':
-        this.beforeRenderEvent(event)
+        this.onBeforeRender(msg)
         break;
       case 'after-render':
-        this.afterRenderEvent(event);
+        this.onAfterRender(msg);
         break;
       default:
         break;
@@ -103,28 +101,28 @@ class Component<T extends IVirtualElementData> extends BaseComponent<T> {
   }
 
   /**
-   * Compress an event posted to the component.
+   * Compress a message posted to the component.
    */
-  compressEvent(event: ICoreEvent, posted: IIterable<ICoreEvent>): boolean {
-    if (event.type === 'render-request') {
-      return any(posted, ev => ev.type === event.type);
+  compressMessage(msg: IMessage, pending: IIterable<IMessage>): boolean {
+    if (msg.type === 'render-request') {
+      return any(pending, p => p.type === msg.type);
     }
     return false;
   }
 
   /**
-   * A method invoked on a 'before-render' event.
+   * A method invoked on a 'before-render' message.
    *
    * The default implementation is a no-op.
    */
-  protected beforeRenderEvent(event: ICoreEvent): void { }
+  protected onBeforeRender(msg: IMessage): void { }
 
   /**
-   * A method invoked on an 'after-render' event.
+   * A method invoked on an 'after-render' message.
    *
    * The default implementation is a no-op.
    */
-  protected afterRenderEvent(event: ICoreEvent): void { }
+  protected onAfterRender(msg: IMessage): void { }
 
   private _m_refs: any = emptyObject;
 }

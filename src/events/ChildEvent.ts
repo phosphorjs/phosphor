@@ -7,7 +7,7 @@
 |----------------------------------------------------------------------------*/
 module phosphor.events {
 
-import CoreEvent = core.CoreEvent;
+import Message = core.Message;
 
 import Widget = widgets.Widget;
 
@@ -16,7 +16,7 @@ import Widget = widgets.Widget;
  * An event class for child widget related events.
  */
 export
-class ChildEvent extends CoreEvent {
+class ChildEvent extends Message {
   /**
    * Construct a new child event.
    */

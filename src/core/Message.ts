@@ -8,14 +8,27 @@
 module phosphor.core {
 
 /**
- * An object which can be sent to an event handler.
+ * A concrete implementation of IMessage.
+ *
+ * This may be subclassed to create complex message types.
  */
 export
-interface ICoreEvent {
+class Message implements IMessage {
   /**
-   * The type of the event.
+   * Construct a new message.
    */
-  type: string;
+  constructor(type: string) {
+    this._m_type = type;
+  }
+
+  /**
+   * The type of the message.
+   */
+  get type(): string {
+    return this._m_type;
+  }
+
+  private _m_type: string;
 }
 
 } // module phosphor.core

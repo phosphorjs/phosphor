@@ -7,7 +7,7 @@
 |----------------------------------------------------------------------------*/
 module phosphor.widgets {
 
-import ICoreEvent = core.ICoreEvent;
+import IMessage = core.IMessage;
 import IDisposable = core.IDisposable;
 import Signal = core.Signal;
 
@@ -569,7 +569,7 @@ class TabBar extends Widget {
   /**
    * A method invoked on the 'after-attach' event.
    */
-  protected afterAttachEvent(event: ICoreEvent): void {
+  protected afterAttachEvent(event: IMessage): void {
     var node = this.node;
     node.addEventListener('mousedown', <any>this);
     node.addEventListener('click', <any>this);
@@ -578,7 +578,7 @@ class TabBar extends Widget {
   /**
    * A method invoked on the 'after-dettach' event.
    */
-  protected afterDetachEvent(event: ICoreEvent): void {
+  protected afterDetachEvent(event: IMessage): void {
     var node = this.node;
     node.removeEventListener('mousedown', <any>this);
     node.removeEventListener('click', <any>this);

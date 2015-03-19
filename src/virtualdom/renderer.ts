@@ -7,7 +7,7 @@
 |----------------------------------------------------------------------------*/
 module phosphor.virtualdom {
 
-import sendEvent = core.sendEvent;
+import sendMessage = core.sendMessage;
 
 import IComponentClass = phosphor.components.IComponentClass
 import IComponent = phosphor.components.IComponent
@@ -178,8 +178,9 @@ function createNode(elem: IVirtualElement): Node {
   if (type === VirtualElementType.Component) {
     var component = new (<IComponentClass<any>>elem.tag)();
     componentMap.set(component.node, component);
-    component.init(elem.data, elem.children);
-    sendEvent(component, EVT_RENDER_REQUEST);
+    if (component.init(elem.data, elem.children)) {
+      sendMessage(component, EVT_RENDER_REQUEST);
+    }
     return component.node;
   }
   throw new Error('invalid element type');
@@ -314,7 +315,7 @@ function updateContent(host: HTMLElement, oldContent: IVirtualElement[], newCont
     // the component with new data and render it if necessary.
     var component = componentMap.get(<HTMLElement>currentNode);
     if (component.init(newElem.data, newElem.children)) {
-      sendEvent(component, EVT_RENDER_REQUEST);
+      sendMessage(component, EVT_RENDER_REQUEST);
     }
   }
 

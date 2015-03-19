@@ -7,14 +7,14 @@
 |----------------------------------------------------------------------------*/
 module phosphor.events {
 
-import CoreEvent = core.CoreEvent;
+import Message = core.Message;
 
 
 /**
  * An event class for 'resize' events.
  */
 export
-class ResizeEvent extends CoreEvent {
+class ResizeEvent extends Message {
   /**
    * Construct a new resize event.
    */

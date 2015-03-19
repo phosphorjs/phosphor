@@ -7,14 +7,14 @@
 |----------------------------------------------------------------------------*/
 module phosphor.events {
 
-import CoreEvent = core.CoreEvent;
+import Message = core.Message;
 
 
 /**
  * An event class for 'move' events.
  */
 export
-class MoveEvent extends CoreEvent {
+class MoveEvent extends Message {
   /**
    * Construct a new move event.
    */

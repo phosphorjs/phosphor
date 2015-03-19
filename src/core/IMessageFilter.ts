@@ -8,25 +8,16 @@
 module phosphor.core {
 
 /**
- * A concrete implementation of ICoreEvent.
+ * An object which filters messages sent to a message handler.
  */
 export
-class CoreEvent implements ICoreEvent {
+interface IMessageFilter {
   /**
-   * Construct a new core event.
+   * Filter a message sent to a message handler.
+   *
+   * Returns true if the message should be filtered, false otherwise.
    */
-  constructor(type: string) {
-    this._m_type = type;
-  }
-
-  /**
-   * The type of the event.
-   */
-  get type(): string {
-    return this._m_type;
-  }
-
-  private _m_type: string;
+  filterMessage(handler: IMessageHandler, msg: IMessage): boolean;
 }
 
 } // module phosphor.core

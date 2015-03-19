@@ -8,16 +8,14 @@
 module phosphor.core {
 
 /**
- * An object which filters events dispatched to an event handler.
+ * The base message object which can be sent to a message handler.
  */
 export
-interface IEventFilter {
+interface IMessage {
   /**
-   * Filter an event dispatched to an event handler.
-   *
-   * Returns true if the event should be filtered, false otherwise.
+   * The type of the message.
    */
-  filterEvent(handler: IEventHandler, event: ICoreEvent): boolean;
+  type: string;
 }
 
 } // module phosphor.core

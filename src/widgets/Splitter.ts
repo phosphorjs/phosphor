@@ -7,7 +7,7 @@
 |----------------------------------------------------------------------------*/
 module phosphor.widgets {
 
-import ICoreEvent = core.ICoreEvent;
+import IMessage = core.IMessage;
 import IDisposable = core.IDisposable;
 
 import overrideCursor = dom.overrideCursor;
@@ -202,14 +202,14 @@ class Splitter extends Widget {
   /**
    * A method invoked after the node is attached to the DOM.
    */
-  protected afterAttachEvent(event: ICoreEvent): void {
+  protected afterAttachEvent(event: IMessage): void {
     this.node.addEventListener('mousedown', <any>this);
   }
 
   /**
    * A method invoked after the node is detached from the DOM.
    */
-  protected afterDetachEvent(event: ICoreEvent): void {
+  protected afterDetachEvent(event: IMessage): void {
     this.node.removeEventListener('mousedown', <any>this);
   }
 

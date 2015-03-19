@@ -39,13 +39,13 @@ var tsSources = [
   'collections/CircularBuffer',
   'collections/Queue',
 
-  'core/ICoreEvent',
   'core/IDisposable',
-  'core/IEventFilter',
-  'core/IEventHandler',
-  'core/CoreEvent',
+  'core/IMessage',
+  'core/IMessageFilter',
+  'core/IMessageHandler',
   'core/Disposable',
-  'core/eventloop',
+  'core/Message',
+  'core/messageloop',
   'core/Signal',
 
   'di/token',

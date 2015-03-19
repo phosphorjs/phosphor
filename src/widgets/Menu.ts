@@ -7,7 +7,7 @@
 |----------------------------------------------------------------------------*/
 module phosphor.widgets {
 
-import ICoreEvent = core.ICoreEvent;
+import IMessage = core.IMessage;
 import Signal = core.Signal;
 
 import hitTest = dom.hitTest;
@@ -412,7 +412,7 @@ class Menu extends Widget {
    * If the menu is currently attached, this will detach the menu
    * and emit the `closed` signal. The super handler is not called.
    */
-  protected closeEvent(event: ICoreEvent): void {
+  protected closeEvent(event: IMessage): void {
     if (!this.isAttached) {
       return;
     }
@@ -461,7 +461,7 @@ class Menu extends Widget {
   /**
    * A method invoked on the 'after-attach' event.
    */
-  protected afterAttachEvent(event: ICoreEvent): void {
+  protected afterAttachEvent(event: IMessage): void {
     var node = this.node;
     node.addEventListener('mouseup', <any>this);
     node.addEventListener('mouseleave', <any>this);
@@ -471,7 +471,7 @@ class Menu extends Widget {
   /**
    * A method invoked on the 'after-detach' event.
    */
-  protected afterDetachEvent(event: ICoreEvent): void {
+  protected afterDetachEvent(event: IMessage): void {
     var node = this.node;
     node.removeEventListener('mouseup', <any>this);
     node.removeEventListener('mouseleave', <any>this);

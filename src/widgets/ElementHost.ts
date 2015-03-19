@@ -7,7 +7,7 @@
 |----------------------------------------------------------------------------*/
 module phosphor.widgets {
 
-import ICoreEvent = core.ICoreEvent;
+import IMessage = core.IMessage;
 
 import WidgetFlag = enums.WidgetFlag;
 
@@ -86,14 +86,14 @@ class ElementHost extends Widget {
   /**
    * A method invoked on the 'after-attach' event.
    */
-  protected afterAttachEvent(event: ICoreEvent): void {
+  protected afterAttachEvent(event: IMessage): void {
     render(this._m_element, this.node);
   }
 
   /**
    * A method invoked on the 'after-detach' event.
    */
-  protected afterDetachEvent(event: ICoreEvent): void {
+  protected afterDetachEvent(event: IMessage): void {
     render(null, this.node);
   }
 
