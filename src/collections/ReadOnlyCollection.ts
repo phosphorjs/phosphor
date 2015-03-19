@@ -74,13 +74,6 @@ class ReadOnlyCollection<T> implements ICollection<T> {
     throw new Error('collection is read only');
   }
 
-  /**
-   * Returns an array containing all elements in the collection.
-   */
-  toArray(): T[] {
-    return this._m_collection.toArray();
-  }
-
   protected _m_collection: ICollection<T>;
 }
 

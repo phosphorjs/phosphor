@@ -16,11 +16,7 @@ class Queue<T> implements IQueue<T> {
    * Construct a new queue.
    */
   constructor(items?: IIterable<T>) {
-    if (items !== void 0) {
-      for (var iter = items.iterator(); iter.moveNext();) {
-        this.pushBack(iter.current);
-      }
-    }
+    if (items !== void 0) forEach(items, it => { this.pushBack(it) });
   }
 
   /**
@@ -86,7 +82,7 @@ class Queue<T> implements IQueue<T> {
    * Push a value onto the back of the queue.
    */
   pushBack(value: T): void {
-    var link = createLink(value);
+    var link: IQueueLink<T> = { next: null, value: value };
     if (this._m_back === null) {
       this._m_front = link;
       this._m_back = link;
@@ -112,9 +108,7 @@ class Queue<T> implements IQueue<T> {
       this._m_front = link.next;
     }
     this._m_size--;
-    var value = link.value;
-    releaseLink(link);
-    return value;
+    return link.value;
   }
 
   /**
@@ -136,7 +130,6 @@ class Queue<T> implements IQueue<T> {
           this._m_back = prev;
         }
         this._m_size--;
-        releaseLink(link);
         return true;
       }
       prev = link;
@@ -149,28 +142,9 @@ class Queue<T> implements IQueue<T> {
    * Remove all values from the queue.
    */
   clear(): void {
-    var link = this._m_front;
-    while (link !== null) {
-      var next = link.next;
-      releaseLink(link);
-      link = next;
-    }
     this._m_size = 0;
     this._m_front = null;
     this._m_back = null;
-  }
-
-  /**
-   * Returns an array containing all elements in the queue.
-   */
-  toArray(): T[] {
-    var result: T[] = [];
-    var link = this._m_front;
-    while (link !== null) {
-      result.push(link.value);
-      link = link.next;
-    }
-    return result;
   }
 
   private _m_size = 0;
@@ -192,45 +166,6 @@ interface IQueueLink<T> {
    * The value for the link.
    */
   value: T;
-}
-
-
-/**
- * The maximum size of the queue link pool.
- */
-var MAX_POOL_SIZE = 10000;
-
-
-/**
- * A shared pool of queue links.
- */
-var linkPool: IQueueLink<any>[] = [];
-
-
-/**
- * Create a new link with the given value.
- *
- * This will use a link from the pool if available.
- */
-function createLink<T>(value: T): IQueueLink<T> {
-  if (linkPool.length > 0) {
-    var link = linkPool.pop();
-    link.value = value;
-    return link;
-  }
-  return { next: null, value: value };
-}
-
-
-/**
- * Release a link back to the pool.
- */
-function releaseLink(link: IQueueLink<any>): void {
-  link.next = null;
-  link.value = void 0;
-  if (linkPool.length < MAX_POOL_SIZE) {
-    linkPool.push(link);
-  }
 }
 
 

@@ -45,11 +45,6 @@ interface ICollection<T> extends IIterable<T> {
    * Remove all elements from the collection.
    */
   clear(): void;
-
-  /**
-   * Returns an array containing all elements in the collection.
-   */
-  toArray(): T[];
 }
 
 } // module phosphor.collections

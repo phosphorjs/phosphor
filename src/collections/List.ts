@@ -16,12 +16,7 @@ class List<T> implements IList<T>, IStack<T> {
    * Construct a new list.
    */
   constructor(items?: IIterable<T>) {
-    if (items !== void 0) {
-      var array = this._m_array;
-      for (var iter = items.iterator(); iter.moveNext();) {
-        array.push(iter.current);
-      }
-    }
+    this._m_array = items !== void 0 ? toArray(items) : [];
   }
 
   /**
@@ -177,19 +172,7 @@ class List<T> implements IList<T>, IStack<T> {
     this._m_array.length = 0;
   }
 
-  /**
-   * Returns an array containing all elements in the list.
-   */
-  toArray(): T[] {
-    var result: T[] = [];
-    var array = this._m_array;
-    for (var i = 0, n = array.length; i < n; ++i) {
-      result.push(array[i]);
-    }
-    return result;
-  }
-
-  private _m_array: T[] = [];
+  private _m_array: T[];
 }
 
 } // module phosphor.collections

@@ -30,6 +30,7 @@ var tsSources = [
   'collections/IList',
   'collections/IQueue',
   'collections/IStack',
+  'collections/algorithm',
   'collections/ReadOnlyCollection',
   'collections/ReadOnlyList',
   'collections/ArrayIterator',
@@ -37,9 +38,6 @@ var tsSources = [
   'collections/ListIterator',
   'collections/CircularBuffer',
   'collections/Queue',
-
-  'algorithm/binarysearch',
-  'algorithm/iteration',
 
   'core/ICoreEvent',
   'core/IDisposable',

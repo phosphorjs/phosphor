@@ -22,11 +22,7 @@ class CircularBuffer<T> implements IDeque<T>, IList<T>, IStack<T> {
    */
   constructor(maxSize: number, items?: IIterable<T>) {
     this._m_array = new Array<T>(Math.max(1, maxSize));
-    if (items !== void 0) {
-      for (var iter = items.iterator(); iter.moveNext();) {
-        this.pushBack(iter.current);
-      }
-    }
+    if (items !== void 0) forEach(items, it => { this.pushBack(it) });
   }
 
   /**
@@ -236,17 +232,6 @@ class CircularBuffer<T> implements IDeque<T>, IList<T>, IStack<T> {
     this._m_array.length = max;
     this._m_size = 0;
     this._m_offset = 0;
-  }
-
-  /**
-   * Returns an array containing all elements in the buffer.
-   */
-  toArray(): T[] {
-    var result: T[] = [];
-    for (var i = 0, n = this._m_size; i < n; ++i) {
-      result.push(this._get(i));
-    }
-    return result;
   }
 
   /**
