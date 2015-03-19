@@ -14,8 +14,9 @@ import Size = phosphor.geometry.Size;
 
 import BoxLayout = phosphor.layout.BoxLayout;
 
+import Component = phosphor.components.Component;
+
 import DOM = phosphor.virtualdom.DOM;
-import Component = phosphor.virtualdom.Component;
 import IVirtualElement = phosphor.virtualdom.IVirtualElement;
 import IVirtualElementData = phosphor.virtualdom.IVirtualElementData;
 import createFactory = phosphor.virtualdom.createFactory;

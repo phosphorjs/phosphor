@@ -5,11 +5,14 @@
 |
 | The full license is in the file LICENSE, distributed with this software.
 |----------------------------------------------------------------------------*/
-module phosphor.virtualdom {
+module phosphor.components {
 
 import IIterable = collections.IIterable;
 
 import ICoreEvent = core.ICoreEvent;
+
+import IVirtualElement = phosphor.virtualdom.IVirtualElement;
+import IVirtualElementData = phosphor.virtualdom.IVirtualElementData;
 
 
 /**
@@ -111,4 +114,4 @@ class BaseComponent<T extends IVirtualElementData> implements IComponent<T> {
   private _m_children: IVirtualElement[] = emptyArray;
 }
 
-} // module phosphor.virtualdom
+} // module phosphor.components

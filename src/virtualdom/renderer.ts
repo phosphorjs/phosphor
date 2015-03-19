@@ -9,6 +9,9 @@ module phosphor.virtualdom {
 
 import sendEvent = core.sendEvent;
 
+import IComponentClass = phosphor.components.IComponentClass
+import IComponent = phosphor.components.IComponent
+
 
 /**
  * Render virtual content into a host node.

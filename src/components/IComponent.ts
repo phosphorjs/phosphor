@@ -5,10 +5,13 @@
 |
 | The full license is in the file LICENSE, distributed with this software.
 |----------------------------------------------------------------------------*/
-module phosphor.virtualdom {
+module phosphor.components {
 
 import IDisposable = core.IDisposable;
 import IEventHandler = core.IEventHandler;
+
+import IVirtualElement = phosphor.virtualdom.IVirtualElement;
+import IVirtualElementData = phosphor.virtualdom.IVirtualElementData;
 
 
 /**
@@ -49,4 +52,4 @@ interface IComponentClass<T extends IVirtualElementData> {
   new(): IComponent<T>;
 }
 
-} // module phosphor.virtualdom
+} // module phosphor.components

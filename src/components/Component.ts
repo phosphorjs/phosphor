@@ -5,13 +5,17 @@
 |
 | The full license is in the file LICENSE, distributed with this software.
 |----------------------------------------------------------------------------*/
-module phosphor.virtualdom {
+module phosphor.components {
 
 import IIterable = collections.IIterable;
 
 import ICoreEvent = core.ICoreEvent;
 import postEvent = core.postEvent;
 import sendEvent = core.sendEvent;
+
+import IVirtualElement = phosphor.virtualdom.IVirtualElement;
+import IVirtualElementData = phosphor.virtualdom.IVirtualElementData;
+import render = phosphor.virtualdom.render;
 
 
 /**
@@ -126,4 +130,4 @@ class Component<T extends IVirtualElementData> extends BaseComponent<T> {
   private _m_refs: any = emptyObject;
 }
 
-} // module phosphor.virtualdom
+} // module phosphor.components

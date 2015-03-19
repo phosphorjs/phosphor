@@ -5,7 +5,7 @@
 |
 | The full license is in the file LICENSE, distributed with this software.
 |----------------------------------------------------------------------------*/
-module phosphor.virtualdom {
+module phosphor.components {
 
 import ICoreEvent = core.ICoreEvent;
 
@@ -15,6 +15,9 @@ import ResizeEvent = events.ResizeEvent;
 
 import Point = geometry.Point;
 import Size = geometry.Size;
+
+import IVirtualElement = phosphor.virtualdom.IVirtualElement;
+import createFactory = phosphor.virtualdom.createFactory;
 
 
 /**
@@ -74,4 +77,4 @@ class CodeMirrorComponent extends BaseComponent<ICodeMirrorData> {
 export var CodeMirrorFactory = createFactory(CodeMirrorComponent);
 
 
-} // module phosphor.virtualdom
+} // module phosphor.components
