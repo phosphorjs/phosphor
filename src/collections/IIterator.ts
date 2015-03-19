@@ -12,6 +12,10 @@ module phosphor.collections {
  *
  * The `moveNext` method must be called after creating the iterator to
  * advance it to the first element or `current` will return `undefined`.
+ *
+ * The behavior of an iterator is undefined if the underlying collection
+ * is modified during iteration. It is not safe to modify a collection
+ * while using an iterator to iterate over its values.
  */
 export
 interface IIterator<T> extends IIterable<T> {
