@@ -8,18 +8,13 @@
 module phosphor.virtualdom {
 
 import IDisposable = core.IDisposable;
-import IMessageHandler = core.IMessageHandler;
 
 
 /**
- * An object which renders virtual DOM content.
- *
- * A component should update the content of its node when it receives
- * a 'render-request' event. This is typically done by calling the
- * `render` function of the virtual renderer with updated content.
+ * An object which manages its own node in a virtual DOM tree.
  */
 export
-interface IComponent<T extends IVirtualElementData> extends IMessageHandler, IDisposable {
+interface IComponent<T extends IData> extends IDisposable {
   /**
    * The DOM node for the component.
    *
@@ -30,11 +25,10 @@ interface IComponent<T extends IVirtualElementData> extends IMessageHandler, IDi
   /**
    * Initialize the component with new data and children.
    *
-   * This is called whenever the component is rendered by its parent.
-   *
-   * Returns true if the component should be updated, false otherwise.
+   * This is called when the component is rendered by its parent. The
+   * component should ensure that the content of its node is current.
    */
-  init(data: T, children: IVirtualElement[]): boolean;
+  init(data: T, children: IElement[]): boolean;
 }
 
 
@@ -42,7 +36,7 @@ interface IComponent<T extends IVirtualElementData> extends IMessageHandler, IDi
  * A component class type.
  */
 export
-interface IComponentClass<T extends IVirtualElementData> {
+interface IComponentClass<T extends IData> {
   /**
    * Construct a new component.
    */

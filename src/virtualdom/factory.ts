@@ -7,74 +7,115 @@
 |----------------------------------------------------------------------------*/
 module phosphor.virtualdom {
 
+import emptyArray = core.emptyArray;
+import emptyObject = core.emptyObject;
+
+
 /**
- * Create a virtual element factory function for the given tag.
+ * A typedef of the child types for an element factory.
  */
 export
-function createFactory<T extends IVirtualElementData>(tag: string | IComponentClass<T>): IVirtualElementFactory<T> {
-  return createElement.bind(void 0, tag);
+type FactoryChildType = string | IElement;
+
+
+/**
+ * A typedef for the factory child argument type.
+ */
+export
+type FactoryChildArgType = FactoryChildType | FactoryChildType[];
+
+
+/**
+ * A factory function which creates a virtual element.
+ */
+export
+interface IElementFactory<T extends IData> {
+  /**
+   * Create a virtual element with the given children.
+   */
+  (...children: FactoryChildArgType[]): IElement;
+
+  /**
+   * Create a virtual element with the given data and children.
+   */
+  (data: T, ...children: FactoryChildArgType[]): IElement;
 }
 
 
 /**
- * A concrete implementation of IVirtualElement.
+ * Create a virtual element factory function for the given tag.
+ *
+ * This will typically be used to create an element factory for a user
+ * defined component. The `virtualdom` module exports a `dom` object
+ * which contains factories for the standard DOM elements.
  */
-class VirtualElement implements IVirtualElement {
+export
+function createFactory<T extends IData>(
+  tag: string | IComponentClass<T>): IElementFactory<T> {
+  return factory.bind(void 0, tag);
+}
+
+
+/**
+ * A concrete implementation of IElement.
+ */
+class VirtualElement implements IElement {
   /**
-   * A property used to quickly type-check a virtual element object.
+   * A prototype property used to quickly type-check an element.
    */
-  isElement: boolean;
+  __isElement: boolean;
 
   /**
-   * Construct a new virtual element.
+   * Construct a new element.
    */
   constructor(
-    public type: VirtualElementType,
+    public type: ElementType,
     public tag: string | IComponentClass<any>,
-    public data: IVirtualElementData,
-    public children: IVirtualElement[]) { }
+    public data: IData,
+    public children: IElement[]) { }
 }
 
-VirtualElement.prototype.isElement = true;
-
-
-/**
- * A singleton empty object.
- */
-var emptyObject: any = Object.freeze(Object.create(null));
-
-/**
- * A singleton empty array.
- */
-var emptyArray: any[] = Object.freeze([]);
+VirtualElement.prototype.__isElement = true;
 
 
 /**
  * Create a new virtual text element.
  */
-function createTextElement(text: string): IVirtualElement {
-  return new VirtualElement(VirtualElementType.Text, text, emptyObject, emptyArray);
+function createTextElement(text: string): IElement {
+  return new VirtualElement(ElementType.Text, text, emptyObject, emptyArray);
 }
 
 
 /**
  * Create a new virtual node element.
  */
-function createNodeElement(tag: string, data: IVirtualElementData, children: IVirtualElement[]): IVirtualElement {
-  return new VirtualElement(VirtualElementType.Node, tag, data || emptyObject, children || emptyArray);
+function createNodeElement(
+  tag: string,
+  data: IData,
+  children: IElement[]): IElement {
+  data = data || emptyObject;
+  children = children || emptyArray;
+  return new VirtualElement(ElementType.Node, tag, data, children);
 }
 
 
 /**
  * Create a new virtual component element.
  */
-function createComponentElement(tag: IComponentClass<any>, data: IVirtualElementData, children: IVirtualElement[]): IVirtualElement {
-  return new VirtualElement(VirtualElementType.Component, tag, data || emptyObject, children || emptyArray);
+function createComponentElement(
+  tag: IComponentClass<any>,
+  data: IData,
+  children: IElement[]): IElement {
+  data = data || emptyObject;
+  children = children || emptyArray;
+  return new VirtualElement(ElementType.Component, tag, data, children);
 }
 
 
 /**
  * Extend the first array with elements of the second.
+ *
+ * Falsey values in the second array are ignored.
  */
 function extend(first: any[], second: any[]): void {
   for (var i = 0, n = second.length; i < n; ++i) {
@@ -85,17 +126,17 @@ function extend(first: any[], second: any[]): void {
 
 
 /**
- * Create a new virtual element with the given tag name.
+ * The virtual element factory function implementation.
  *
- * This can be bound to the tag name to create an element factory.
+ * When bound to a tag, this function implements IElementFactory.
  */
-function createElement(tag: string | IComponentClass<any>, first?: any): IVirtualElement {
+function factory(tag: string | IComponentClass<any>, first?: any): IElement {
   var data: any = null;
   var children: any[] = null;
   if (first) {
-    if (typeof first === 'string' || first.isElement) {
+    if (typeof first === 'string' || first.__isElement) {
       children = [first];
-    } else if (Array.isArray(first)) {
+    } else if (first instanceof Array) {
       children = first.slice();
     } else {
       data = first;
@@ -106,7 +147,7 @@ function createElement(tag: string | IComponentClass<any>, first?: any): IVirtua
     children = children || [];
     for (var i = 2; i < count; ++i) {
       var child = arguments[i];
-      if (Array.isArray(child)) {
+      if (child instanceof Array) {
         extend(children, child);
       } else if (child) {
         children.push(child);
@@ -121,7 +162,7 @@ function createElement(tag: string | IComponentClass<any>, first?: any): IVirtua
       }
     }
   }
-  var elem: IVirtualElement;
+  var elem: IElement;
   if (typeof tag === 'string') {
     elem = createNodeElement(tag, data, children);
   } else {

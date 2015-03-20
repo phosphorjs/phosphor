@@ -13,7 +13,7 @@ module phosphor.virtualdom {
  * Arbitrary 'data-*' attributes are also supported.
  */
 export
-interface IElementAttributes extends IVirtualElementData {
+interface IElementAttributes extends IData {
   accessKey?: string;
   className?: string;
   contentEditable?: string;
@@ -550,10 +550,10 @@ interface IVideoAttributes extends IMediaAttributes {
 
 
 /**
- * The virtual DOM factory functions.
+ * The virtual dom factory functions.
  */
 export
-var DOM = {
+var dom = {
   a:          createFactory<IAnchorAttributes>('a'),
   abbr:       createFactory<IElementAttributes>('abbr'),
   address:    createFactory<IElementAttributes>('address'),

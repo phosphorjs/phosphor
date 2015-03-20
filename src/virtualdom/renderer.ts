@@ -7,7 +7,8 @@
 |----------------------------------------------------------------------------*/
 module phosphor.virtualdom {
 
-import dispatch = core.dispatch;
+import emptyArray = core.emptyArray;
+import emptyObject = core.emptyObject;
 
 
 /**
@@ -17,10 +18,10 @@ import dispatch = core.dispatch;
  * the contents of the host node are not manipulated by external code.
  * Modifying the host node will result in undefined rendering behavior.
  *
- * Returns a mapping of ref nodes and components.
+ * Returns an object which maps ref names to nodes and components.
  */
 export
-function render(content: IVirtualElement | IVirtualElement[], host: HTMLElement): any {
+function render(content: IElement | IElement[], host: HTMLElement): any {
   var oldContent = hostMap.get(host) || emptyArray;
   var newContent = asElementArray(content);
   hostMap.set(host, newContent);
@@ -29,57 +30,44 @@ function render(content: IVirtualElement | IVirtualElement[], host: HTMLElement)
 }
 
 
-// TODO fix me
-var EVT_RENDER_REQUEST = { type: 'render-request' };
-
-
 /**
  * A weak mapping of host node to rendered content.
  */
-var hostMap = new WeakMap<HTMLElement, IVirtualElement[]>();
+var hostMap = new WeakMap<HTMLElement, IElement[]>();
+
 
 /**
  * A weak mapping of component node to component.
  */
 var componentMap = new WeakMap<HTMLElement, IComponent<any>>();
 
-/**
- * A singleton empty object.
- */
-var emptyObject: any = Object.freeze(Object.create(null));
-
-/**
- * A singleton empty array.
- */
-var emptyArray: any[] = Object.freeze([]);
 
 /**
  * A regex for testing for 'data-*' attributes.
  */
 var dataRegex = /^data-/;
 
-/**
- * A constant indicating an attribute is node property.
- */
-var IS_PROPERTY = 0;
 
 /**
- * A constant indicating an attribute is node attribute.
+ * An enum of element attribute types.
  */
-var IS_ATTRIBUTE = 1;
-
-/**
- * A constant indicate an attribute is an inline event handler.
- */
-var IS_EVENT = 2;
+const enum AttrMode { Property, Attribute, Event }
 
 
 /**
- * An object which holds an element and its rendered node.
+ * A pair of virtual element and rendered node.
  */
-interface IElementPair {
-  elem: IVirtualElement;
+interface IElemPair {
+  elem: IElement;
   node: HTMLElement;
+}
+
+
+/**
+ * A mapping of string key to pair of element and rendered node.
+ */
+interface IKeyMap {
+  [key: string]: IElemPair;
 }
 
 
@@ -88,23 +76,23 @@ interface IElementPair {
  *
  * Null content will be coerced to an empty array.
  */
-function asElementArray(content: IVirtualElement | IVirtualElement[]): IVirtualElement[] {
-  if (Array.isArray(content)) {
-    return <IVirtualElement[]>content;
+function asElementArray(content: IElement | IElement[]): IElement[] {
+  if (content instanceof Array) {
+    return <IElement[]>content;
   }
   if (content) {
-    return [<IVirtualElement>content];
+    return [<IElement>content];
   }
   return emptyArray;
 }
 
 
 /**
- * Collect the mapping of keyed elements for the host content.
+ * Collect a mapping of keyed elements for the host content.
  */
-function collectKeys(host: HTMLElement, content: IVirtualElement[]): { [k: string]: IElementPair } {
+function collectKeys(host: HTMLElement, content: IElement[]): IKeyMap {
   var childNodes = host.childNodes;
-  var keyed: { [k: string]: IElementPair } = Object.create(null);
+  var keyed: IKeyMap = Object.create(null);
   for (var i = 0, n = content.length; i < n; ++i) {
     var elem = content[i];
     var key = elem.data.key;
@@ -117,9 +105,9 @@ function collectKeys(host: HTMLElement, content: IVirtualElement[]): { [k: strin
 /**
  * Walk the element tree and collect the refs into a new object.
  */
-function collectRefs(host: HTMLElement, content: IVirtualElement[]): any {
+function collectRefs(host: HTMLElement, content: IElement[]): any {
   var refs = Object.create(null);
-  collectRefsRecursive(host, content, refs);
+  refsHelper(host, content, refs);
   return refs;
 }
 
@@ -127,17 +115,17 @@ function collectRefs(host: HTMLElement, content: IVirtualElement[]): any {
 /**
  * A recursive implementation helper for `collectRefs`.
  */
-function collectRefsRecursive(host: HTMLElement, content: IVirtualElement[], refs: any): void {
+function refsHelper(host: HTMLElement, content: IElement[], refs: any): void {
   var childNodes = host.childNodes;
   for (var i = 0, n = content.length; i < n; ++i) {
     var elem = content[i];
     var type = elem.type;
-    if (type === VirtualElementType.Node) {
+    if (type === ElementType.Node) {
       var node = <HTMLElement>childNodes[i];
       var ref = elem.data.ref;
       if (ref) refs[ref] = node;
-      collectRefsRecursive(node, elem.children, refs);
-    } else if (type === VirtualElementType.Component) {
+      refsHelper(node, elem.children, refs);
+    } else if (type === ElementType.Component) {
       var ref = elem.data.ref;
       if (ref) refs[ref] = componentMap.get(<HTMLElement>childNodes[i]);
     }
@@ -161,23 +149,21 @@ function moveNode(host: HTMLElement, node: HTMLElement, ref: Node): void {
 /**
  * Create a new DOM node for the given virtual element.
  */
-function createNode(elem: IVirtualElement): Node {
+function createNode(elem: IElement): Node {
   var type = elem.type;
-  if (type === VirtualElementType.Text) {
+  if (type === ElementType.Text) {
     return document.createTextNode(<string>elem.tag);
   }
-  if (type === VirtualElementType.Node) {
+  if (type === ElementType.Node) {
     var node = document.createElement(<string>elem.tag);
     addAttributes(node, elem.data);
     addContent(node, elem.children);
     return node;
   }
-  if (type === VirtualElementType.Component) {
+  if (type === ElementType.Component) {
     var component = new (<IComponentClass<any>>elem.tag)();
     componentMap.set(component.node, component);
-    if (component.init(elem.data, elem.children)) {
-      dispatch.sendMessage(component, EVT_RENDER_REQUEST);
-    }
+    component.init(elem.data, elem.children);
     return component.node;
   }
   throw new Error('invalid element type');
@@ -187,7 +173,7 @@ function createNode(elem: IVirtualElement): Node {
 /**
  * Add content to a newly created DOM node.
  */
-function addContent(node: HTMLElement, content: IVirtualElement[]): void {
+function addContent(node: HTMLElement, content: IElement[]): void {
   for (var i = 0, n = content.length; i < n; ++i) {
     node.appendChild(createNode(content[i]));
   }
@@ -200,9 +186,9 @@ function addContent(node: HTMLElement, content: IVirtualElement[]): void {
 function addAttributes(node: HTMLElement, attrs: any): void {
   for (var name in attrs) {
     var mode = attrModeTable[name];
-    if (mode === IS_PROPERTY || mode === IS_EVENT) {
+    if (mode === AttrMode.Property || mode === AttrMode.Event) {
       (<any>node)[name] = attrs[name];
-    } else if (mode === IS_ATTRIBUTE) {
+    } else if (mode === AttrMode.Attribute) {
       node.setAttribute(name.toLowerCase(), attrs[name]);
     } else if (dataRegex.test(name)) {
       node.setAttribute(name, attrs[name]);
@@ -222,7 +208,10 @@ function addAttributes(node: HTMLElement, attrs: any): void {
 /**
  * Update a host node with the delta of the virtual content.
  */
-function updateContent(host: HTMLElement, oldContent: IVirtualElement[], newContent: IVirtualElement[]): void {
+function updateContent(
+  host: HTMLElement,
+  oldContent: IElement[],
+  newContent: IElement[]): void {
   // Bail early if the content is identical. This can occur when an
   // element has no children or if a component renders cached content.
   if (oldContent === newContent) {
@@ -255,7 +244,7 @@ function updateContent(host: HTMLElement, oldContent: IVirtualElement[], newCont
     }
 
     var oldElem = oldCopy[i];
-    var currentNode = childNodes[i];
+    var currNode = childNodes[i];
 
     // If the new element is keyed, move a keyed old element
     // to the proper location before proceeding with the diff.
@@ -266,9 +255,9 @@ function updateContent(host: HTMLElement, oldContent: IVirtualElement[], newCont
         var k = oldCopy.indexOf(pair.elem);
         if (k !== -1) oldCopy.splice(k, 1);
         oldCopy.splice(i, 0, pair.elem);
-        moveNode(host, pair.node, currentNode);
+        moveNode(host, pair.node, currNode);
         oldElem = pair.elem;
-        currentNode = pair.node;
+        currNode = pair.node;
       }
     }
 
@@ -281,14 +270,14 @@ function updateContent(host: HTMLElement, oldContent: IVirtualElement[], newCont
     // If the elements have different types, create a new node.
     if (oldElem.type !== newElem.type) {
       oldCopy.splice(i, 0, newElem);
-      host.insertBefore(createNode(newElem), currentNode);
+      host.insertBefore(createNode(newElem), currNode);
       continue;
     }
 
     // If the element is a text node, update its text content.
-    if (newElem.type === VirtualElementType.Text) {
+    if (newElem.type === ElementType.Text) {
       if (oldElem.tag !== newElem.tag) {
-        currentNode.textContent = <string>newElem.tag;
+        currNode.textContent = <string>newElem.tag;
       }
       continue;
     }
@@ -297,23 +286,20 @@ function updateContent(host: HTMLElement, oldContent: IVirtualElement[], newCont
     // If the element tags are different, create a new node.
     if (oldElem.tag !== newElem.tag) {
       oldCopy.splice(i, 0, newElem);
-      host.insertBefore(createNode(newElem), currentNode);
+      host.insertBefore(createNode(newElem), currNode);
       continue;
     }
 
     // If the element is a Node type, update the node in place.
-    if (newElem.type === VirtualElementType.Node) {
-      updateAttributes(<HTMLElement>currentNode, oldElem.data, newElem.data);
-      updateContent(<HTMLElement>currentNode, oldElem.children, newElem.children);
+    if (newElem.type === ElementType.Node) {
+      updateAttrs(<HTMLElement>currNode, oldElem.data, newElem.data);
+      updateContent(<HTMLElement>currNode, oldElem.children, newElem.children);
       continue;
     }
 
-    // At this point, the node is a Component type. Initialize
-    // the component with new data and render it if necessary.
-    var component = componentMap.get(<HTMLElement>currentNode);
-    if (component.init(newElem.data, newElem.children)) {
-      dispatch.sendMessage(component, EVT_RENDER_REQUEST);
-    }
+    // At this point, the node is a Component type; re-init it.
+    var component = componentMap.get(<HTMLElement>currNode);
+    component.init(newElem.data, newElem.children);
   }
 
   // Dispose of the old content pushed to the end of the host.
@@ -326,20 +312,20 @@ function updateContent(host: HTMLElement, oldContent: IVirtualElement[], newCont
 
 
 /**
- * Update node attributes with the delta of attribute objects.
+ * Update the node attributes with the delta of attribute objects.
  */
-function updateAttributes(node: HTMLElement, oldAttrs: any, newAttrs: any): void {
+function updateAttrs(node: HTMLElement, oldAttrs: any, newAttrs: any): void {
   if (oldAttrs === newAttrs) {
     return;
   }
   for (var name in oldAttrs) {
     if (!(name in newAttrs)) {
       var mode = attrModeTable[name];
-      if (mode === IS_PROPERTY) {
+      if (mode === AttrMode.Property) {
         node.removeAttribute(name);
-      } else if (mode === IS_ATTRIBUTE) {
+      } else if (mode === AttrMode.Attribute) {
         node.removeAttribute(name.toLowerCase());
-      } else if (mode === IS_EVENT) {
+      } else if (mode === AttrMode.Event) {
         (<any>node)[name] = null;
       } else if (dataRegex.test(name)) {
         node.removeAttribute(name);
@@ -350,9 +336,9 @@ function updateAttributes(node: HTMLElement, oldAttrs: any, newAttrs: any): void
     var value = newAttrs[name];
     if (oldAttrs[name] !== value) {
       var mode = attrModeTable[name];
-      if (mode === IS_PROPERTY || mode === IS_EVENT) {
+      if (mode === AttrMode.Property || mode === AttrMode.Event) {
         (<any>node)[name] = value;
-      } else if (mode === IS_ATTRIBUTE) {
+      } else if (mode === AttrMode.Attribute) {
         node.setAttribute(name.toLowerCase(), value);
       } else if (dataRegex.test(name)) {
         node.setAttribute(name, value);
@@ -387,8 +373,8 @@ function disposeBranch(root: Node): void {
     var component = componentMap.get(<HTMLElement>root);
     if (component) component.dispose();
   }
-  for (var node = root.firstChild; node; node = node.nextSibling) {
-    disposeBranch(node);
+  for (var child = root.firstChild; child; child = child.nextSibling) {
+    disposeBranch(child);
   }
 }
 
@@ -397,165 +383,165 @@ function disposeBranch(root: Node): void {
  * A mapping of attribute name to required setattr mode.
  */
 var attrModeTable: { [k: string]: number } = {
-  accept:             IS_PROPERTY,
-  acceptCharset:      IS_PROPERTY,
-  accessKey:          IS_PROPERTY,
-  action:             IS_PROPERTY,
-  allowFullscreen:    IS_ATTRIBUTE,
-  alt:                IS_PROPERTY,
-  autocomplete:       IS_PROPERTY,
-  autofocus:          IS_PROPERTY,
-  autoplay:           IS_PROPERTY,
-  checked:            IS_PROPERTY,
-  cite:               IS_PROPERTY,
-  className:          IS_PROPERTY,
-  colSpan:            IS_PROPERTY,
-  cols:               IS_PROPERTY,
-  contentEditable:    IS_PROPERTY,
-  controls:           IS_PROPERTY,
-  coords:             IS_PROPERTY,
-  crossOrigin:        IS_PROPERTY,
-  data:               IS_PROPERTY,
-  dateTime:           IS_PROPERTY,
-  default:            IS_PROPERTY,
-  dir:                IS_PROPERTY,
-  dirName:            IS_PROPERTY,
-  disabled:           IS_PROPERTY,
-  download:           IS_PROPERTY,
-  draggable:          IS_PROPERTY,
-  enctype:            IS_PROPERTY,
-  form:               IS_ATTRIBUTE,
-  formAction:         IS_PROPERTY,
-  formEnctype:        IS_PROPERTY,
-  formMethod:         IS_PROPERTY,
-  formNoValidate:     IS_PROPERTY,
-  formTarget:         IS_PROPERTY,
-  headers:            IS_PROPERTY,
-  height:             IS_PROPERTY,
-  hidden:             IS_PROPERTY,
-  high:               IS_PROPERTY,
-  href:               IS_PROPERTY,
-  hreflang:           IS_PROPERTY,
-  htmlFor:            IS_PROPERTY,
-  id:                 IS_PROPERTY,
-  inputMode:          IS_PROPERTY,
-  isMap:              IS_PROPERTY,
-  kind:               IS_PROPERTY,
-  label:              IS_PROPERTY,
-  lang:               IS_PROPERTY,
-  list:               IS_ATTRIBUTE,
-  loop:               IS_PROPERTY,
-  low:                IS_PROPERTY,
-  max:                IS_PROPERTY,
-  maxLength:          IS_PROPERTY,
-  media:              IS_ATTRIBUTE,
-  mediaGroup:         IS_PROPERTY,
-  method:             IS_PROPERTY,
-  min:                IS_PROPERTY,
-  minLength:          IS_PROPERTY,
-  multiple:           IS_PROPERTY,
-  muted:              IS_PROPERTY,
-  name:               IS_PROPERTY,
-  noValidate:         IS_PROPERTY,
-  optimum:            IS_PROPERTY,
-  pattern:            IS_PROPERTY,
-  placeholder:        IS_PROPERTY,
-  poster:             IS_PROPERTY,
-  preload:            IS_PROPERTY,
-  readOnly:           IS_PROPERTY,
-  rel:                IS_PROPERTY,
-  required:           IS_PROPERTY,
-  reversed:           IS_PROPERTY,
-  rowSpan:            IS_PROPERTY,
-  rows:               IS_PROPERTY,
-  sandbox:            IS_PROPERTY,
-  scope:              IS_PROPERTY,
-  seamless:           IS_ATTRIBUTE,
-  selected:           IS_PROPERTY,
-  shape:              IS_PROPERTY,
-  size:               IS_PROPERTY,
-  sizes:              IS_ATTRIBUTE,
-  sorted:             IS_PROPERTY,
-  span:               IS_PROPERTY,
-  spellcheck:         IS_PROPERTY,
-  src:                IS_PROPERTY,
-  srcdoc:             IS_PROPERTY,
-  srclang:            IS_PROPERTY,
-  srcset:             IS_ATTRIBUTE,
-  start:              IS_PROPERTY,
-  step:               IS_PROPERTY,
-  tabIndex:           IS_PROPERTY,
-  target:             IS_PROPERTY,
-  title:              IS_PROPERTY,
-  type:               IS_PROPERTY,
-  typeMustMatch:      IS_PROPERTY,
-  useMap:             IS_PROPERTY,
-  value:              IS_PROPERTY,
-  volume:             IS_PROPERTY,
-  width:              IS_PROPERTY,
-  wrap:               IS_PROPERTY,
-  onabort:            IS_EVENT,
-  onbeforecopy:       IS_EVENT,
-  onbeforecut:        IS_EVENT,
-  onbeforepaste:      IS_EVENT,
-  onblur:             IS_EVENT,
-  oncanplay:          IS_EVENT,
-  oncanplaythrough:   IS_EVENT,
-  onchange:           IS_EVENT,
-  onclick:            IS_EVENT,
-  oncontextmenu:      IS_EVENT,
-  oncopy:             IS_EVENT,
-  oncuechange:        IS_EVENT,
-  oncut:              IS_EVENT,
-  ondblclick:         IS_EVENT,
-  ondrag:             IS_EVENT,
-  ondragend:          IS_EVENT,
-  ondragenter:        IS_EVENT,
-  ondragleave:        IS_EVENT,
-  ondragover:         IS_EVENT,
-  ondragstart:        IS_EVENT,
-  ondrop:             IS_EVENT,
-  ondurationchange:   IS_EVENT,
-  onended:            IS_EVENT,
-  onemptied:          IS_EVENT,
-  onerror:            IS_EVENT,
-  onfocus:            IS_EVENT,
-  onhelp:             IS_EVENT,
-  oninput:            IS_EVENT,
-  onkeydown:          IS_EVENT,
-  onkeypress:         IS_EVENT,
-  onkeyup:            IS_EVENT,
-  onload:             IS_EVENT,
-  onloadeddata:       IS_EVENT,
-  onloadedmetadata:   IS_EVENT,
-  onloadstart:        IS_EVENT,
-  onmousedown:        IS_EVENT,
-  onmouseenter:       IS_EVENT,
-  onmouseleave:       IS_EVENT,
-  onmousemove:        IS_EVENT,
-  onmouseout:         IS_EVENT,
-  onmouseover:        IS_EVENT,
-  onmouseup:          IS_EVENT,
-  onmousewheel:       IS_EVENT,
-  onpaste:            IS_EVENT,
-  onpause:            IS_EVENT,
-  onplay:             IS_EVENT,
-  onplaying:          IS_EVENT,
-  onprogress:         IS_EVENT,
-  onratechange:       IS_EVENT,
-  onreadystatechange: IS_EVENT,
-  onreset:            IS_EVENT,
-  onscroll:           IS_EVENT,
-  onseeked:           IS_EVENT,
-  onseeking:          IS_EVENT,
-  onselect:           IS_EVENT,
-  onselectstart:      IS_EVENT,
-  onstalled:          IS_EVENT,
-  onsubmit:           IS_EVENT,
-  onsuspend:          IS_EVENT,
-  ontimeupdate:       IS_EVENT,
-  onvolumechange:     IS_EVENT,
-  onwaiting:          IS_EVENT,
+  accept:             AttrMode.Property,
+  acceptCharset:      AttrMode.Property,
+  accessKey:          AttrMode.Property,
+  action:             AttrMode.Property,
+  allowFullscreen:    AttrMode.Attribute,
+  alt:                AttrMode.Property,
+  autocomplete:       AttrMode.Property,
+  autofocus:          AttrMode.Property,
+  autoplay:           AttrMode.Property,
+  checked:            AttrMode.Property,
+  cite:               AttrMode.Property,
+  className:          AttrMode.Property,
+  colSpan:            AttrMode.Property,
+  cols:               AttrMode.Property,
+  contentEditable:    AttrMode.Property,
+  controls:           AttrMode.Property,
+  coords:             AttrMode.Property,
+  crossOrigin:        AttrMode.Property,
+  data:               AttrMode.Property,
+  dateTime:           AttrMode.Property,
+  default:            AttrMode.Property,
+  dir:                AttrMode.Property,
+  dirName:            AttrMode.Property,
+  disabled:           AttrMode.Property,
+  download:           AttrMode.Property,
+  draggable:          AttrMode.Property,
+  enctype:            AttrMode.Property,
+  form:               AttrMode.Attribute,
+  formAction:         AttrMode.Property,
+  formEnctype:        AttrMode.Property,
+  formMethod:         AttrMode.Property,
+  formNoValidate:     AttrMode.Property,
+  formTarget:         AttrMode.Property,
+  headers:            AttrMode.Property,
+  height:             AttrMode.Property,
+  hidden:             AttrMode.Property,
+  high:               AttrMode.Property,
+  href:               AttrMode.Property,
+  hreflang:           AttrMode.Property,
+  htmlFor:            AttrMode.Property,
+  id:                 AttrMode.Property,
+  inputMode:          AttrMode.Property,
+  isMap:              AttrMode.Property,
+  kind:               AttrMode.Property,
+  label:              AttrMode.Property,
+  lang:               AttrMode.Property,
+  list:               AttrMode.Attribute,
+  loop:               AttrMode.Property,
+  low:                AttrMode.Property,
+  max:                AttrMode.Property,
+  maxLength:          AttrMode.Property,
+  media:              AttrMode.Attribute,
+  mediaGroup:         AttrMode.Property,
+  method:             AttrMode.Property,
+  min:                AttrMode.Property,
+  minLength:          AttrMode.Property,
+  multiple:           AttrMode.Property,
+  muted:              AttrMode.Property,
+  name:               AttrMode.Property,
+  noValidate:         AttrMode.Property,
+  optimum:            AttrMode.Property,
+  pattern:            AttrMode.Property,
+  placeholder:        AttrMode.Property,
+  poster:             AttrMode.Property,
+  preload:            AttrMode.Property,
+  readOnly:           AttrMode.Property,
+  rel:                AttrMode.Property,
+  required:           AttrMode.Property,
+  reversed:           AttrMode.Property,
+  rowSpan:            AttrMode.Property,
+  rows:               AttrMode.Property,
+  sandbox:            AttrMode.Property,
+  scope:              AttrMode.Property,
+  seamless:           AttrMode.Attribute,
+  selected:           AttrMode.Property,
+  shape:              AttrMode.Property,
+  size:               AttrMode.Property,
+  sizes:              AttrMode.Attribute,
+  sorted:             AttrMode.Property,
+  span:               AttrMode.Property,
+  spellcheck:         AttrMode.Property,
+  src:                AttrMode.Property,
+  srcdoc:             AttrMode.Property,
+  srclang:            AttrMode.Property,
+  srcset:             AttrMode.Attribute,
+  start:              AttrMode.Property,
+  step:               AttrMode.Property,
+  tabIndex:           AttrMode.Property,
+  target:             AttrMode.Property,
+  title:              AttrMode.Property,
+  type:               AttrMode.Property,
+  typeMustMatch:      AttrMode.Property,
+  useMap:             AttrMode.Property,
+  value:              AttrMode.Property,
+  volume:             AttrMode.Property,
+  width:              AttrMode.Property,
+  wrap:               AttrMode.Property,
+  onabort:            AttrMode.Event,
+  onbeforecopy:       AttrMode.Event,
+  onbeforecut:        AttrMode.Event,
+  onbeforepaste:      AttrMode.Event,
+  onblur:             AttrMode.Event,
+  oncanplay:          AttrMode.Event,
+  oncanplaythrough:   AttrMode.Event,
+  onchange:           AttrMode.Event,
+  onclick:            AttrMode.Event,
+  oncontextmenu:      AttrMode.Event,
+  oncopy:             AttrMode.Event,
+  oncuechange:        AttrMode.Event,
+  oncut:              AttrMode.Event,
+  ondblclick:         AttrMode.Event,
+  ondrag:             AttrMode.Event,
+  ondragend:          AttrMode.Event,
+  ondragenter:        AttrMode.Event,
+  ondragleave:        AttrMode.Event,
+  ondragover:         AttrMode.Event,
+  ondragstart:        AttrMode.Event,
+  ondrop:             AttrMode.Event,
+  ondurationchange:   AttrMode.Event,
+  onended:            AttrMode.Event,
+  onemptied:          AttrMode.Event,
+  onerror:            AttrMode.Event,
+  onfocus:            AttrMode.Event,
+  onhelp:             AttrMode.Event,
+  oninput:            AttrMode.Event,
+  onkeydown:          AttrMode.Event,
+  onkeypress:         AttrMode.Event,
+  onkeyup:            AttrMode.Event,
+  onload:             AttrMode.Event,
+  onloadeddata:       AttrMode.Event,
+  onloadedmetadata:   AttrMode.Event,
+  onloadstart:        AttrMode.Event,
+  onmousedown:        AttrMode.Event,
+  onmouseenter:       AttrMode.Event,
+  onmouseleave:       AttrMode.Event,
+  onmousemove:        AttrMode.Event,
+  onmouseout:         AttrMode.Event,
+  onmouseover:        AttrMode.Event,
+  onmouseup:          AttrMode.Event,
+  onmousewheel:       AttrMode.Event,
+  onpaste:            AttrMode.Event,
+  onpause:            AttrMode.Event,
+  onplay:             AttrMode.Event,
+  onplaying:          AttrMode.Event,
+  onprogress:         AttrMode.Event,
+  onratechange:       AttrMode.Event,
+  onreadystatechange: AttrMode.Event,
+  onreset:            AttrMode.Event,
+  onscroll:           AttrMode.Event,
+  onseeked:           AttrMode.Event,
+  onseeking:          AttrMode.Event,
+  onselect:           AttrMode.Event,
+  onselectstart:      AttrMode.Event,
+  onstalled:          AttrMode.Event,
+  onsubmit:           AttrMode.Event,
+  onsuspend:          AttrMode.Event,
+  ontimeupdate:       AttrMode.Event,
+  onvolumechange:     AttrMode.Event,
+  onwaiting:          AttrMode.Event,
 };
 
 } // module phosphor.virtualdom

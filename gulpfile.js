@@ -44,6 +44,7 @@ var tsSources = [
   'core/IMessageFilter',
   'core/IMessageHandler',
   'core/dispatch',
+  'core/empty',
   'core/Disposable',
   'core/Message',
   'core/Signal',
@@ -85,8 +86,8 @@ var tsSources = [
   'layout/StackLayout',
 
   'virtualdom/IComponent',
-  'virtualdom/IVirtualElement',
-  'virtualdom/VirtualElementType',
+  'virtualdom/IData',
+  'virtualdom/IElement',
   'virtualdom/factory',
   'virtualdom/dom',
   'virtualdom/renderer',
