@@ -13,7 +13,7 @@ import WidgetFlag = enums.WidgetFlag;
 
 import Size = geometry.Size;
 
-import IVirtualElement = virtualdom.IVirtualElement;
+import IElement = virtualdom.IElement;
 import render = virtualdom.render;
 
 
@@ -33,7 +33,7 @@ class ElementHost extends Widget {
   /**
    * Construct a new console view.
    */
-  constructor(element: IVirtualElement = null, width = 0, height = 0) {
+  constructor(element: IElement = null, width = 0, height = 0) {
     super();
     this.classList.add(ELEMENT_HOST_CLASS);
     this.setFlag(WidgetFlag.DisallowLayoutChange);
@@ -46,14 +46,14 @@ class ElementHost extends Widget {
   /**
    * Get the virtual element hosted by the widget.
    */
-  get element(): IVirtualElement {
+  get element(): IElement {
     return this._m_element;
   }
 
   /**
    * Set the virtual element hosted by the widget.
    */
-  set element(element: IVirtualElement) {
+  set element(element: IElement) {
     element = element || null;
     if (element === this._m_element) {
       return;
@@ -98,7 +98,7 @@ class ElementHost extends Widget {
   }
 
   private _m_preferredSize: Size;
-  private _m_element: IVirtualElement;
+  private _m_element: IElement;
 }
 
 } // module phosphor.widgets
