@@ -24,7 +24,6 @@ function main(): void {
   });
 
   var refs = render(cm, document.getElementById('main'));
-  refs.cm.editor.refresh();
 }
 
 window.onload = main;
