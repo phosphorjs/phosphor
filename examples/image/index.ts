@@ -7,6 +7,8 @@
 |----------------------------------------------------------------------------*/
 module example {
 
+import Component = phosphor.components.Component;
+
 import Direction = phosphor.enums.Direction;
 import SizePolicy = phosphor.enums.SizePolicy;
 
@@ -14,12 +16,10 @@ import Size = phosphor.geometry.Size;
 
 import BoxLayout = phosphor.layout.BoxLayout;
 
-import Component = phosphor.components.Component;
-
-import DOM = phosphor.virtualdom.DOM;
-import IVirtualElement = phosphor.virtualdom.IVirtualElement;
-import IVirtualElementData = phosphor.virtualdom.IVirtualElementData;
+import IData = phosphor.virtualdom.IData;
+import IElement = phosphor.virtualdom.IElement;
 import createFactory = phosphor.virtualdom.createFactory;
+import dom = phosphor.virtualdom.dom;
 
 import ElementHost = phosphor.widgets.ElementHost;
 import Widget = phosphor.widgets.Widget;
@@ -64,7 +64,7 @@ var imageItems: IImageItem[] = [
 /**
  * A data object for a selector component.
  */
-interface ISelectorData extends IVirtualElementData {
+interface ISelectorData extends IData {
   values: string[];
   onSelected: (value: string) => void;
 }
@@ -81,21 +81,23 @@ class SelectorComponent extends Component<ISelectorData> {
 
   constructor() {
     super();
-    this.node.addEventListener('change', this._onChange);
+    this.node.addEventListener('change', <any>this);
   }
 
   dispose(): void {
-    this.node.removeEventListener('change', this._onChange);
+    this.node.removeEventListener('change', <any>this);
     super.dispose();
   }
 
-  render(): IVirtualElement[] {
-    return this.data.values.map(value => DOM.option(value));
+  render(): IElement[] {
+    return this.data.values.map(value => dom.option(value));
   }
 
-  private _onChange = (event: Event): void => {
-    this.data.onSelected((<HTMLSelectElement>this.node).value);
-  };
+  handleEvent(event: Event): void {
+    if (event.type === 'change') {
+      this.data.onSelected((<HTMLSelectElement>this.node).value);
+    }
+  }
 }
 
 

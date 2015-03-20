@@ -9,31 +9,31 @@ module example {
 
 import Component = phosphor.components.Component;
 
-import DOM = phosphor.virtualdom.DOM;
-import IVirtualElement = phosphor.virtualdom.IVirtualElement;
-import IVirtualElementData = phosphor.virtualdom.IVirtualElementData;
+import IData = phosphor.virtualdom.IData;
+import IElement = phosphor.virtualdom.IElement;
 import createFactory = phosphor.virtualdom.createFactory;
+import dom = phosphor.virtualdom.dom;
 import render = phosphor.virtualdom.render;
 
 
-var div = DOM.div;
-var h1 = DOM.h1;
-var h2 = DOM.h2;
-var li = DOM.li;
-var span = DOM.span;
+var div = dom.div;
+var h1 = dom.h1;
+var h2 = dom.h2;
+var li = dom.li;
+var span = dom.span;
 
 
-interface ITickData extends IVirtualElementData {
+interface ITicksData extends IData {
   title: string;
   count: number;
 }
 
 
-class TicksComponent extends Component<ITickData> {
+class TicksComponent extends Component<ITicksData> {
 
   static tagName = 'ul';
 
-  render(): IVirtualElement[] {
+  render(): IElement[] {
     var data = this.data;
     var items = [li(data.title)];
     for (var i = 0, n = data.count; i <= n; ++i) {
@@ -46,7 +46,7 @@ class TicksComponent extends Component<ITickData> {
 var Ticks = createFactory(TicksComponent);
 
 
-interface ITimeData extends IVirtualElementData {
+interface ITimeData extends IData {
   time: Date;
   now: number;
 }
@@ -56,7 +56,7 @@ class TimeComponent extends Component<ITimeData> {
 
   static className = 'time-component';
 
-  render(): IVirtualElement[] {
+  render(): IElement[] {
     var data = this.data;
     var time = data.time;
     var now = data.now;
