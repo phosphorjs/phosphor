@@ -147,35 +147,34 @@ function moveNode(host: HTMLElement, node: HTMLElement, ref: Node): void {
 
 
 /**
- * Create a new DOM node for the given virtual element.
+ * Create a node for a virtual element and add it to a host.
  */
-function createNode(elem: IElement): Node {
+function addNode(host: HTMLElement, elem: IElement, ref?: Node): void {
   var type = elem.type;
   if (type === ElementType.Text) {
-    return document.createTextNode(<string>elem.tag);
-  }
-  if (type === ElementType.Node) {
+    host.insertBefore(document.createTextNode(<string>elem.tag), ref);
+  } else if (type === ElementType.Node) {
     var node = document.createElement(<string>elem.tag);
     addAttributes(node, elem.data);
+    host.insertBefore(node, ref);
     addContent(node, elem.children);
-    return node;
-  }
-  if (type === ElementType.Component) {
+  } else if (type === ElementType.Component) {
     var component = new (<IComponentClass<any>>elem.tag)();
     componentMap.set(component.node, component);
+    host.insertBefore(component.node, ref);
     component.init(elem.data, elem.children);
-    return component.node;
+  } else {
+    throw new Error('invalid element type');
   }
-  throw new Error('invalid element type');
 }
 
 
 /**
  * Add content to a newly created DOM node.
  */
-function addContent(node: HTMLElement, content: IElement[]): void {
+function addContent(host: HTMLElement, content: IElement[]): void {
   for (var i = 0, n = content.length; i < n; ++i) {
-    node.appendChild(createNode(content[i]));
+    addNode(host, content[i]);
   }
 }
 
@@ -239,7 +238,7 @@ function updateContent(
     // If the old elements are exhausted, create a new node.
     if (i >= oldCopy.length) {
       oldCopy.push(newElem);
-      host.appendChild(createNode(newElem));
+      addNode(host, newElem);
       continue;
     }
 
@@ -270,7 +269,7 @@ function updateContent(
     // If the elements have different types, create a new node.
     if (oldElem.type !== newElem.type) {
       oldCopy.splice(i, 0, newElem);
-      host.insertBefore(createNode(newElem), currNode);
+      addNode(host, newElem, currNode);
       continue;
     }
 
@@ -286,7 +285,7 @@ function updateContent(
     // If the element tags are different, create a new node.
     if (oldElem.tag !== newElem.tag) {
       oldCopy.splice(i, 0, newElem);
-      host.insertBefore(createNode(newElem), currNode);
+      addNode(host, newElem, currNode);
       continue;
     }
 
