@@ -7,7 +7,7 @@
 |----------------------------------------------------------------------------*/
 module phosphor.widgets {
 
-import any = collections.any;
+import some = collections.some;
 import forEach = collections.forEach;
 import IIterable = collections.IIterable;
 import IList = collections.IList;
@@ -1033,7 +1033,7 @@ class Widget implements IMessageHandler {
    */
   compressEvent(event: IMessage, posted: IIterable<IMessage>): boolean {
     if (event.type === 'layout-request') {
-      return any(posted, ev => ev.type === event.type);
+      return some(posted, ev => ev.type === event.type);
     }
     return false;
   }

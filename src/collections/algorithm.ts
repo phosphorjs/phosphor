@@ -42,7 +42,7 @@ function forEach<T, U>(
  * Returns true if any element in the iterable passes the given test.
  */
 export
-function any<T>(
+function some<T>(
   iterable: IIterable<T>,
   callback: (value: T, index: number) => boolean): boolean {
   for (var i = 0, iter = iterable.iterator(); iter.moveNext(); ++i) {
@@ -56,7 +56,7 @@ function any<T>(
  * Returns true if all elements in the iterable pass the given test.
  */
 export
-function all<T>(
+function every<T>(
   iterable: IIterable<T>,
   callback: (value: T, index: number) => boolean): boolean {
   for (var i = 0, iter = iterable.iterator(); iter.moveNext(); ++i) {
