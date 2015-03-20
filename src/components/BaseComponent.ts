@@ -7,34 +7,23 @@
 |----------------------------------------------------------------------------*/
 module phosphor.components {
 
-import IMessage = core.IMessage;
+import emptyArray = core.emptyArray;
+import emptyObject = core.emptyObject;
 
 import IComponent = virtualdom.IComponent;
-import IVirtualElement = virtualdom.IVirtualElement;
-import IVirtualElementData = virtualdom.IVirtualElementData;
-
-
-/**
- * A singleton frozen empty object.
- */
-var emptyObject: any = Object.freeze(Object.create(null));
-
-/**
- * A singleton frozen empty array.
- */
-var emptyArray: any[] = Object.freeze([]);
+import IElement = virtualdom.IElement;
+import IData = virtualdom.IData;
 
 
 /**
  * A concrete base implementation of IComponent.
  *
  * This class should be used by subclasses that want to manage their
- * own DOM content outside the virtual DOM. However, the lifecycle of
- * BaseComponent instances is still managed by the virtual DOM renderer,
- * which allows nested hierarchies of Component and BaseComponents.
+ * own DOM content outside the virtual DOM, but still be embeddable
+ * inside a virtual DOM hierarchy.
  */
 export
-class BaseComponent<T extends IVirtualElementData> implements IComponent<T> {
+class BaseComponent<T extends IData> implements IComponent<T> {
   /**
    * The tag name used to create the component's DOM node.
    *
@@ -50,7 +39,7 @@ class BaseComponent<T extends IVirtualElementData> implements IComponent<T> {
   static className = '';
 
   /**
-   * Construct a new component.
+   * Construct a new base component.
    */
   constructor() {
     var ctor = <any>this.constructor;
@@ -84,7 +73,7 @@ class BaseComponent<T extends IVirtualElementData> implements IComponent<T> {
   /**
    * Get the current children for the component.
    */
-  get children(): IVirtualElement[] {
+  get children(): IElement[] {
     return this._m_children;
   }
 
@@ -92,27 +81,15 @@ class BaseComponent<T extends IVirtualElementData> implements IComponent<T> {
    * Initialize the component with new data and children.
    *
    * This is called whenever the component is rendered by its parent.
-   *
-   * Returns true if the component should be updated, false otherwise.
-   * The default implementation returns true. A reimplementation must
-   * call the superclass method to update the internal component state.
    */
-  init(data: T, children: IVirtualElement[]): boolean {
-    this._m_data = data || emptyObject;
-    this._m_children = children || emptyArray;
-    return true;
+  init(data: T, children: IElement[]): void {
+    this._m_data = data;
+    this._m_children = children;
   }
 
-  /**
-   * Process a message sent to the component.
-   *
-   * The default implementation is a no-op.
-   */
-  processMessage(msg: IMessage): void { }
-
-  private _m_data: T;
   private _m_node: HTMLElement;
-  private _m_children: IVirtualElement[];
+  private _m_data: T = emptyObject;
+  private _m_children: IElement[] = emptyArray;
 }
 
 } // module phosphor.components

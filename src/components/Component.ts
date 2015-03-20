@@ -7,37 +7,28 @@
 |----------------------------------------------------------------------------*/
 module phosphor.components {
 
-import any = collections.any;
 import IIterable = collections.IIterable;
+import some = collections.some;
 
 import IMessage = core.IMessage;
+import IMessageHandler = core.IMessageHandler;
 import dispatch = core.dispatch;
+import emptyObject = core.emptyObject;
 
-import IVirtualElement = phosphor.virtualdom.IVirtualElement;
-import IVirtualElementData = phosphor.virtualdom.IVirtualElementData;
-import render = phosphor.virtualdom.render;
-
-
-/**
- * A singleton frozen empty object.
- */
-var emptyObject: any = Object.freeze(Object.create(null));
-
-// TODO fix me
-var MSG_BEFORE_RENDER = { type: 'before-render' };
-var MSG_AFTER_RENDER = { type: 'after-render' };
-var MSG_RENDER_REQUEST = { type: 'render-request' };
+import IElement = virtualdom.IElement;
+import IData = virtualdom.IData;
+import render = virtualdom.render;
 
 
 /**
  * A concrete implementation of IComponent with virtual DOM rendering.
  *
- * User code will typically subclass this class to create a custom
- * component. Subclasses should reimplement the `render` method to
- * generate the virtual DOM content for the component.
+ * User code should subclass this class to create a custom component.
+ * The subclasses should reimplement the `render` method to generate
+ * the virtual DOM content for the component.
  */
 export
-class Component<T extends IVirtualElementData> extends BaseComponent<T> {
+class Component<T extends IData> extends BaseComponent<T> implements IMessageHandler {
   /**
    * Dispose of the resources held by the component.
    */
@@ -47,22 +38,41 @@ class Component<T extends IVirtualElementData> extends BaseComponent<T> {
   }
 
   /**
-   * Get the current refs mapping for the component.
+   * Get the refs mapping for the component.
+   *
+   * This is an object which maps a ref name to the corresponding node
+   * or component instance created for the most recent rendering pass.
    */
   get refs(): any {
     return this._m_refs;
   }
 
   /**
-   * Render the virtual content for the component.
+   * Initialize the component with new data and children.
+   *
+   * This is called whenever the component is rendered by its parent.
+   *
+   * This method first invokes the `shouldUpdate` method, passing the
+   * new data and children. It then invokes the superclass method to
+   * update the internal component state. Lastly if the `shouldUpdate`
+   * method returned true, the component is immediately re-rendered.
+   *
+   * The method will normally not be reimplemented by a subclass.
+   */
+  init(data: T, children: IElement[]): void {
+    var update = this.shouldUpdate(data, children);
+    super.init(data, children);
+    if (update) this.doRender();
+  }
+
+  /**
+   * Create the virtual content for the component.
    *
    * The rendered content is used to populate the component's node.
    *
    * This should be reimplemented by a subclass.
-   *
-   * The default implementation returns null.
    */
-  render(): IVirtualElement | IVirtualElement[] {
+  render(): IElement | IElement[] {
     return null;
   }
 
@@ -70,32 +80,21 @@ class Component<T extends IVirtualElementData> extends BaseComponent<T> {
    * Schedule a rendering update for the component.
    *
    * This should be called whenever the internal state of the component
-   * has changed such that it requires the component to be re-rendered.
+   * has changed such that it requires the component to be re-rendered,
+   * or when external code requires the component to be refreshed.
    *
    * Multiple synchronous calls to this method are collapsed.
    */
   update(): void {
-    dispatch.postMessage(this, MSG_RENDER_REQUEST);
+    dispatch.postMessage(this, { type: 'update-request' });
   }
 
   /**
    * Process a message sent to the component.
    */
   processMessage(msg: IMessage): void {
-    switch (msg.type) {
-      case 'render-request':
-        dispatch.sendMessage(this, MSG_BEFORE_RENDER);
-        this._m_refs = render(this.render(), this.node);
-        dispatch.sendMessage(this, MSG_AFTER_RENDER);
-        break;
-      case 'before-render':
-        this.onBeforeRender(msg)
-        break;
-      case 'after-render':
-        this.onAfterRender(msg);
-        break;
-      default:
-        break;
+    if (msg.type === 'update-request') {
+      this.doRender();
     }
   }
 
@@ -103,27 +102,61 @@ class Component<T extends IVirtualElementData> extends BaseComponent<T> {
    * Compress a message posted to the component.
    */
   compressMessage(msg: IMessage, pending: IIterable<IMessage>): boolean {
-    if (msg.type === 'render-request') {
-      return any(pending, p => p.type === msg.type);
+    if (msg.type === 'update-request') {
+      return some(pending, p => p.type === msg.type);
     }
     return false;
   }
 
   /**
-   * A method invoked on a 'before-render' message.
+   * Test whether the component should be updated.
    *
-   * The default implementation is a no-op.
+   * This method is invoked when the component is initialized with new
+   * data and children. It should return true if the component should
+   * be re-rendered, or false if the new values will not cause a visual
+   * change. If this method returns false, the component will not be
+   * updated when it is (re)initialized.
+   *
+   * Determining whether a component should update is error prone and
+   * can be just as expensive as performing the virtual DOM diff, so
+   * this should only be reimplemented if performance is a problem.
+   *
+   * The default implementation of this method always returns true.
    */
-  protected onBeforeRender(msg: IMessage): void { }
+  protected shouldUpdate(data: T, children: IElement[]): boolean {
+    return true;
+  }
 
   /**
-   * A method invoked on an 'after-render' message.
+   * Perform the actual rendering of the component content.
+   *
+   * This method immediately (re)renders the component content. It
+   * is called automatically at the proper times, but can be invoked
+   * directly by a subclass if it requires a synchronous update.
+   *
+   * This method should not be reimplemented.
+   */
+  protected doRender(): void {
+    this.beforeRender();
+    this._m_refs = render(this.render(), this.node);
+    this.afterRender();
+  }
+
+  /**
+   * A method invoked immediately before the component is rendered.
    *
    * The default implementation is a no-op.
    */
-  protected onAfterRender(msg: IMessage): void { }
+  protected beforeRender(): void { }
 
-  private _m_refs: any = emptyObject;
+  /**
+   * A method invoked immediately after the component is rendered.
+   *
+   * The default implementation is a no-op.
+   */
+  protected afterRender(): void { }
+
+  private _m_refs = emptyObject;
 }
 
 } // module phosphor.components

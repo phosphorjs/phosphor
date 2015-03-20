@@ -7,7 +7,8 @@
 |----------------------------------------------------------------------------*/
 module phosphor.components {
 
-import IVirtualElement = virtualdom.IVirtualElement;
+import IData = virtualdom.IData;
+import IElement = virtualdom.IElement;
 import createFactory = virtualdom.createFactory;
 
 
@@ -15,7 +16,7 @@ import createFactory = virtualdom.createFactory;
  * The data object for a code mirror component.
  */
 export
-interface ICodeMirrorData {
+interface ICodeMirrorData extends IData {
   config: CodeMirror.EditorConfiguration;
 }
 
@@ -26,48 +27,47 @@ interface ICodeMirrorData {
 export
 class CodeMirrorComponent extends BaseComponent<ICodeMirrorData> {
   /**
-   * The tag name for the component node.
-   */
-  static tagName = 'div';
-
-  /**
-   * The default class name for the component node.
+   * The default class name for a code mirror component.
    */
   static className = 'p-CodeMirrorComponent';
 
   /**
-   * Initialize the component with new data and children.
-   *
-   * A code mirror component does not update its content using the
-   * virtual DOM, so this method always returns false.
+   * Dispose of the resources held by the component.
    */
-  init(data: ICodeMirrorData, children: IVirtualElement[]): boolean {
+  dispose(): void {
+    this._m_editor = null;
+    super.dispose();
+  }
+
+  /**
+   * Initialize the component with new data and children.
+   */
+  init(data: ICodeMirrorData, children: IElement[]): void {
     super.init(data, children);
     if (this._m_editor === null) {
-      this._m_editor = this.createEditor(data.config);
+      this._m_editor = this.createEditor();
     }
-    return false;
   }
 
   /**
    * Get the code mirror editor for the component.
    *
-   * This widget does not attempt to wrap the code mirror api.
-   * User code should interact with the editor object directly.
+   * This component does not attempt to wrap the extensive code mirror
+   * api. User code should interact with the editor object directly.
    */
   get editor(): CodeMirror.Editor {
     return this._m_editor;
   }
 
   /**
-   * Create the editor for the widget.
+   * Create the editor for the component.
    *
    * This can be reimplemented by subclasses which require custom
    * creation of the editor instance. The default implementation
    * assumes `CodeMirror` is available in the global scope.
    */
-  protected createEditor(options?: CodeMirror.EditorConfiguration): CodeMirror.Editor {
-    return CodeMirror(this.node, options);
+  protected createEditor(): CodeMirror.Editor {
+    return CodeMirror(this.node, this.data.config);
   }
 
   private _m_editor: CodeMirror.Editor = null;
