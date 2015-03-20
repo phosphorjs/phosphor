@@ -25,10 +25,11 @@ interface IComponent<T extends IData> extends IDisposable {
   /**
    * Initialize the component with new data and children.
    *
-   * This is called when the component is rendered by its parent. The
-   * component should ensure that the content of its node is current.
+   * This is called whenever the component is rendered by its parent.
+   *
+   * A component is resposible for updating the content of its node.
    */
-  init(data: T, children: IElement[]): boolean;
+  init(data: T, children: IElement[]): void;
 }
 
 
