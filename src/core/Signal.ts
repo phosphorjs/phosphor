@@ -31,13 +31,13 @@ class Signal<T, U> {
    * is being emitted. The callback will not be invoked until the next
    * time the signal is emitted.
    */
-  connect(cb: (sender: T, args: U) => void, thisArg?: any): void {
-    var wrapper = new CBWrapper(cb, thisArg);
-    var current = this._m_callbacks;
+  connect(callback: (sender: T, args: U) => void, thisArg?: any): void {
+    var wrapper = new CBWrapper(callback, thisArg);
+    var current = this._callbacks;
     if (current === null) {
-      this._m_callbacks = wrapper;
+      this._callbacks = wrapper;
     } else if (current instanceof CBWrapper) {
-      this._m_callbacks = [current, wrapper];
+      this._callbacks = [current, wrapper];
     } else {
       (<CBWrapper<T, U>[]>current).push(wrapper);
     }
@@ -52,39 +52,39 @@ class Signal<T, U> {
    * It is safe to disconnect a callback from the signal while the
    * signal is being emitted. The callback will not be invoked.
    */
-  disconnect(cb?: (sender: T, args: U) => void, thisArg?: any): void {
-    var current = this._m_callbacks;
+  disconnect(callback?: (sender: T, args: U) => void, thisArg?: any): void {
+    var current = this._callbacks;
     if (current === null) {
       return;
     }
     if (current instanceof CBWrapper) {
-      if (!cb || current.equals(cb, thisArg)) {
+      if (!callback || current.equals(callback, thisArg)) {
         current.clear();
-        this._m_callbacks = null;
+        this._callbacks = null;
       }
-    } else if (!cb) {
+    } else if (!callback) {
       var array = <CBWrapper<T, U>[]>current;
       for (var i = 0, n = array.length; i < n; ++i) {
         array[i].clear();
       }
-      this._m_callbacks = null;
+      this._callbacks = null;
     } else {
       var rest: CBWrapper<T, U>[] = [];
       var array = <CBWrapper<T, U>[]>current;
       for (var i = 0, n = array.length; i < n; ++i) {
         var wrapper = array[i];
-        if (wrapper.equals(cb, thisArg)) {
+        if (wrapper.equals(callback, thisArg)) {
           wrapper.clear();
         } else {
           rest.push(wrapper);
         }
       }
       if (rest.length === 0) {
-        this._m_callbacks = null;
+        this._callbacks = null;
       } else if (rest.length === 1) {
-        this._m_callbacks = rest[0];
+        this._callbacks = rest[0];
       } else {
-        this._m_callbacks = rest;
+        this._callbacks = rest;
       }
     }
   }
@@ -92,17 +92,17 @@ class Signal<T, U> {
   /**
    * Test whether a callback is connected to the signal.
    */
-  isConnected(cb: (sender: T, args: U) => void, thisArg?: any): boolean {
-    var current = this._m_callbacks;
+  isConnected(callback: (sender: T, args: U) => void, thisArg?: any): boolean {
+    var current = this._callbacks;
     if (current === null) {
       return false;
     }
     if (current instanceof CBWrapper) {
-      return current.equals(cb, thisArg);
+      return current.equals(callback, thisArg);
     }
     var array = <CBWrapper<T, U>[]>current;
     for (var i = 0, n = array.length; i < n; ++i) {
-      if (array[i].equals(cb, thisArg)) {
+      if (array[i].equals(callback, thisArg)) {
         return true;
       }
     }
@@ -115,7 +115,7 @@ class Signal<T, U> {
    * Callbacks are invoked in the order in which they are connected.
    */
   emit(sender: T, args: U): void {
-    var current = this._m_callbacks;
+    var current = this._callbacks;
     if (current === null) {
       return;
     }
@@ -129,7 +129,7 @@ class Signal<T, U> {
     }
   }
 
-  private _m_callbacks: CBWrapper<T, U> | CBWrapper<T, U>[] = null;
+  private _callbacks: CBWrapper<T, U> | CBWrapper<T, U>[] = null;
 }
 
 
@@ -140,24 +140,24 @@ class CBWrapper<T, U> {
   /**
    * Construct a new callback wrapper.
    */
-  constructor(cb: (sender: T, args: U) => void, thisArg: any) {
-    this._m_cb = cb;
-    this._m_thisArg = thisArg;
+  constructor(callback: (sender: T, args: U) => void, thisArg: any) {
+    this._callback = callback;
+    this._thisArg = thisArg;
   }
 
   /**
    * Clear the contents of the callback wrapper.
    */
   clear(): void {
-    this._m_cb = null;
-    this._m_thisArg = null;
+    this._callback = null;
+    this._thisArg = null;
   }
 
   /**
    * Test whether the wrapper equals a callback and context.
    */
-  equals(cb: (sender: T, args: U) => void, thisArg: any): boolean {
-    return this._m_cb === cb && this._m_thisArg === thisArg;
+  equals(callback: (sender: T, args: U) => void, thisArg: any): boolean {
+    return this._callback === callback && this._thisArg === thisArg;
   }
 
   /**
@@ -166,13 +166,13 @@ class CBWrapper<T, U> {
    * This is a no-op if the wrapper has been cleared.
    */
   invoke(sender: T, args: U): void {
-    if (this._m_cb) {
-      this._m_cb.call(this._m_thisArg, sender, args);
+    if (this._callback) {
+      this._callback.call(this._thisArg, sender, args);
     }
   }
 
-  private _m_cb: (sender: T, args: U) => void;
-  private _m_thisArg: any;
+  private _callback: (sender: T, args: U) => void;
+  private _thisArg: any;
 }
 
 } // module phosphor.core

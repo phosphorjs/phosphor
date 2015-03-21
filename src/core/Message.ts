@@ -18,17 +18,17 @@ class Message implements IMessage {
    * Construct a new message.
    */
   constructor(type: string) {
-    this._m_type = type;
+    this._type = type;
   }
 
   /**
    * The type of the message.
    */
   get type(): string {
-    return this._m_type;
+    return this._type;
   }
 
-  private _m_type: string;
+  private _type: string;
 }
 
 } // module phosphor.core

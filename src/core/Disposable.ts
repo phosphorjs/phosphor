@@ -18,19 +18,19 @@ class Disposable implements IDisposable {
    * Construct a new disposable.
    */
   constructor(callback: () => void) {
-    this._m_callback = callback;
+    this._callback = callback;
   }
 
   /**
    * Dispose the object and invoke the user provided callback.
    */
   dispose(): void {
-    var callback = this._m_callback;
-    this._m_callback = null;
+    var callback = this._callback;
+    this._callback = null;
     if (callback) callback();
   }
 
-  private _m_callback: () => void;
+  private _callback: () => void;
 }
 
 } // module phosphor.core

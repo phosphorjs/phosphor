@@ -210,21 +210,21 @@ class FilterWrapper {
    * construct a new filter wrapper.
    */
   constructor(filter: IMessageFilter) {
-    this._m_filter = filter;
+    this._filter = filter;
   }
 
   /**
    * Clear the contents of the wrapper.
    */
   clear(): void {
-    this._m_filter = null;
+    this._filter = null;
   }
 
   /**
    * Test whether the wrapper is equivalent to the given filter.
    */
   equals(filter: IMessageFilter): boolean {
-    return this._m_filter === filter;
+    return this._filter === filter;
   }
 
   /**
@@ -233,10 +233,10 @@ class FilterWrapper {
    * Returns true if the message should be filtered, false otherwise.
    */
   invoke(handler: IMessageHandler, msg: IMessage): boolean {
-    return this._m_filter ? this._m_filter.filterMessage(handler, msg) : false;
+    return this._filter ? this._filter.filterMessage(handler, msg) : false;
   }
 
-  private _m_filter: IMessageFilter;
+  private _filter: IMessageFilter;
 }
 
 
@@ -248,7 +248,7 @@ class MessageDispatcher {
    * Construct a new message dispatcher.
    */
   constructor(handler: IMessageHandler) {
-    this._m_handler = handler;
+    this._handler = handler;
   }
 
   /**
@@ -259,7 +259,7 @@ class MessageDispatcher {
    */
   sendMessage(msg: IMessage): void {
     if (!this._filterMessage(msg)) {
-      this._m_handler.processMessage(msg);
+      this._handler.processMessage(msg);
     }
   }
 
@@ -279,15 +279,15 @@ class MessageDispatcher {
    * Test whether the message handler has pending messages.
    */
   hasPendingMessages(): boolean {
-    return this._m_messages !== null && !this._m_messages.empty;
+    return this._messages !== null && !this._messages.empty;
   }
 
   /**
    * Send the first pending message to the message handler.
    */
   sendPendingMessage(): void {
-    if (this._m_messages !== null && !this._m_messages.empty) {
-      this.sendMessage(this._m_messages.popFront());
+    if (this._messages !== null && !this._messages.empty) {
+      this.sendMessage(this._messages.popFront());
     }
   }
 
@@ -295,9 +295,9 @@ class MessageDispatcher {
    * Clear the pending messages for the message handler.
    */
   clearPendingMessages(): void {
-    if (this._m_messages !== null) {
-      this._m_messages.clear();
-      this._m_messages = null;
+    if (this._messages !== null) {
+      this._messages.clear();
+      this._messages = null;
     }
   }
 
@@ -306,11 +306,11 @@ class MessageDispatcher {
    */
   installMessageFilter(filter: IMessageFilter): void {
     var wrapper = new FilterWrapper(filter);
-    var current = this._m_filters;
+    var current = this._filters;
     if (current === null) {
-      this._m_filters = wrapper;
+      this._filters = wrapper;
     } else if (current instanceof FilterWrapper) {
-      this._m_filters = [current, wrapper];
+      this._filters = [current, wrapper];
     } else {
       (<FilterWrapper[]>current).push(wrapper);
     }
@@ -320,14 +320,14 @@ class MessageDispatcher {
    * Remove an message filter installed for the message handler.
    */
   removeMessageFilter(filter: IMessageFilter): void {
-    var current = this._m_filters;
+    var current = this._filters;
     if (current === null) {
       return;
     }
     if (current instanceof FilterWrapper) {
       if (current.equals(filter)) {
         current.clear();
-        this._m_filters = null;
+        this._filters = null;
       }
     } else {
       var rest: FilterWrapper[] = [];
@@ -341,11 +341,11 @@ class MessageDispatcher {
         }
       }
       if (rest.length === 0) {
-        this._m_filters = null;
+        this._filters = null;
       } else if (rest.length === 1) {
-        this._m_filters = rest[0];
+        this._filters = rest[0];
       } else {
-        this._m_filters = rest;
+        this._filters = rest;
       }
     }
   }
@@ -354,11 +354,11 @@ class MessageDispatcher {
    * Remove all message filters installed for the message handler.
    */
   clearMessageFilters(): void {
-    var current = this._m_filters;
+    var current = this._filters;
     if (current === null) {
       return;
     }
-    this._m_filters = null;
+    this._filters = null;
     if (current instanceof FilterWrapper) {
       current.clear();
     } else {
@@ -376,13 +376,13 @@ class MessageDispatcher {
    * message should be posted to the message queue as normal.
    */
   private _compressMessage(msg: IMessage): boolean {
-    if (this._m_handler.compressMessage === void 0) {
+    if (this._handler.compressMessage === void 0) {
       return false;
     }
-    if (this._m_messages === null || this._m_messages.empty) {
+    if (this._messages === null || this._messages.empty) {
       return false;
     }
-    return this._m_handler.compressMessage(msg, this._m_messages);
+    return this._handler.compressMessage(msg, this._messages);
   }
 
   /**
@@ -391,14 +391,14 @@ class MessageDispatcher {
    * Returns true if the message should be filtered, false otherwise.
    */
   private _filterMessage(msg: IMessage): boolean {
-    var current = this._m_filters;
+    var current = this._filters;
     if (current === null) {
       return false;
     }
     if (current instanceof FilterWrapper) {
-      return current.invoke(this._m_handler, msg);
+      return current.invoke(this._handler, msg);
     }
-    var handler = this._m_handler;
+    var handler = this._handler;
     var array = <FilterWrapper[]>current;
     for (var i = array.length - 1; i >= 0; --i) {
       if (array[i].invoke(handler, msg)) {
@@ -412,17 +412,17 @@ class MessageDispatcher {
    * Add a message to the message queue and wake up the message loop.
    */
   private _enqueueMessage(msg: IMessage): void {
-    if (this._m_messages === null) {
-      this._m_messages = new Queue<IMessage>();
+    if (this._messages === null) {
+      this._messages = new Queue<IMessage>();
     }
-    this._m_messages.pushBack(msg);
+    this._messages.pushBack(msg);
     dispatchQueue.pushBack(this);
     wakeUpMessageLoop();
   }
 
-  private _m_handler: IMessageHandler;
-  private _m_messages: Queue<IMessage> = null;
-  private _m_filters: FilterWrapper | FilterWrapper[] = null;
+  private _handler: IMessageHandler;
+  private _messages: Queue<IMessage> = null;
+  private _filters: FilterWrapper | FilterWrapper[] = null;
 }
 
 } // module phosphor.core
