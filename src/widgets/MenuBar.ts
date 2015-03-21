@@ -92,14 +92,14 @@ class MenuBar extends Widget {
    * This will be null if the menu bar does not have an open menu.
    */
   get childMenu(): Menu {
-    return this._m_childMenu;
+    return this._childMenu;
   }
 
   /**
    * Get the index of the active (highlighted) item.
    */
   get activeIndex(): number {
-    return this._m_activeIndex;
+    return this._activeIndex;
   }
 
   /**
@@ -108,7 +108,7 @@ class MenuBar extends Widget {
    * Only an enabled non-separator item can be set as the active item.
    */
   set activeIndex(index: number) {
-    var ok = isSelectable(this._m_items[index]);
+    var ok = isSelectable(this._items[index]);
     this._setActiveIndex(ok ? index : -1);
   }
 
@@ -116,7 +116,7 @@ class MenuBar extends Widget {
    * Get the active (highlighted) item.
    */
   get activeItem(): MenuItem {
-    return this._m_items[this._m_activeIndex];
+    return this._items[this._activeIndex];
   }
 
   /**
@@ -125,28 +125,28 @@ class MenuBar extends Widget {
    * Only an enabled non-separator item can be set as the active item.
    */
   set activeItem(item: MenuItem) {
-    this.activeIndex = this._m_items.indexOf(item);
+    this.activeIndex = this._items.indexOf(item);
   }
 
   /**
    * Get the number of menu items in the menu bar.
    */
   get count(): number {
-    return this._m_items.length;
+    return this._items.length;
   }
 
   /**
    * Get the menu item at the given index.
    */
   itemAt(index: number): MenuItem {
-    return this._m_items[index];
+    return this._items[index];
   }
 
   /**
    * Get the index of the given menu item.
    */
   itemIndex(item: MenuItem): number {
-    return this._m_items.indexOf(item);
+    return this._items.indexOf(item);
   }
 
   /**
@@ -155,7 +155,7 @@ class MenuBar extends Widget {
    * Returns the new index of the item.
    */
   addItem(item: MenuItem): number {
-    return this.insertItem(this._m_items.length, item);
+    return this.insertItem(this._items.length, item);
   }
 
   /**
@@ -164,7 +164,7 @@ class MenuBar extends Widget {
    * Returns the new index of the item.
    */
   insertItem(index: number, item: MenuItem): number {
-    var items = this._m_items;
+    var items = this._items;
     index = Math.max(0, Math.min(index | 0, items.length));
     if (index === items.length) {
       items.push(item);
@@ -182,7 +182,7 @@ class MenuBar extends Widget {
    */
   takeItem(index: number): MenuItem {
     index = index | 0;
-    var items = this._m_items;
+    var items = this._items;
     if (index < 0 || index >= items.length) {
       return void 0;
     }
@@ -202,7 +202,7 @@ class MenuBar extends Widget {
    * Returns the index of the removed item.
    */
   removeItem(item: MenuItem): number {
-    var index = this._m_items.indexOf(item);
+    var index = this._items.indexOf(item);
     if (index === -1) {
       return -1;
     }
@@ -214,7 +214,7 @@ class MenuBar extends Widget {
    * Remove all menu items from the menu bar.
    */
   clearItems(): void {
-    var items = this._m_items;
+    var items = this._items;
     while (items.length) {
       var item = items.pop();
       var index = items.length;
@@ -228,10 +228,10 @@ class MenuBar extends Widget {
    * This is equivalent to pressing the right arrow key.
    */
   activateNextItem(): void {
-    var from = this._m_activeIndex + 1;
-    var i = firstWrap(this._m_items, isSelectable, from);
+    var from = this._activeIndex + 1;
+    var i = firstWrap(this._items, isSelectable, from);
     this._setActiveIndex(i);
-    var menu = this._m_childMenu;
+    var menu = this._childMenu;
     if (menu) menu.activateNextItem();
   }
 
@@ -241,10 +241,10 @@ class MenuBar extends Widget {
    * This is equivalent to pressing the left arrow key.
    */
   activatePreviousItem(): void {
-    var from = this._m_activeIndex - 1;
-    var i = lastWrap(this._m_items, isSelectable, from);
+    var from = this._activeIndex - 1;
+    var i = lastWrap(this._items, isSelectable, from);
     this._setActiveIndex(i);
-    var menu = this._m_childMenu;
+    var menu = this._childMenu;
     if (menu) menu.activateNextItem();
   }
 
@@ -255,11 +255,11 @@ class MenuBar extends Widget {
    */
   activateMnemonicItem(key: string): void {
     key = key.toUpperCase();
-    var i = firstWrap(this._m_items, it => {
+    var i = firstWrap(this._items, it => {
       return isSelectable(it) && it.mnemonic.toUpperCase() === key;
-    }, this._m_activeIndex + 1);
+    }, this._activeIndex + 1);
     this._setActiveIndex(i);
-    var menu = this._m_childMenu;
+    var menu = this._childMenu;
     if (menu) menu.activateNextItem();
   }
 
@@ -271,14 +271,14 @@ class MenuBar extends Widget {
    * Returns true if the item was opened, false otherwise.
    */
   openActiveItem(): boolean {
-    var index = this._m_activeIndex;
-    var item = this._m_items[index];
+    var index = this._activeIndex;
+    var item = this._items[index];
     if (!item) {
       return false;
     }
     this._setState(MBState.Active);
     this._setActiveIndex(index);
-    var menu = this._m_childMenu;
+    var menu = this._childMenu;
     if (menu) menu.activateNextItem();
     return true;
   }
@@ -303,14 +303,14 @@ class MenuBar extends Widget {
    * A method called when a menu item is inserted into the menu bar.
    */
   protected itemInserted(index: number, item: MenuItem): void {
-    if (this._m_activeIndex !== -1) {
+    if (this._activeIndex !== -1) {
       this._setState(MBState.Inactive);
       this._setActiveIndex(-1);
     }
     var node = createItemNode(item);
-    var next = this._m_nodes[index];
+    var next = this._nodes[index];
     this.node.insertBefore(node, next);
-    this._m_nodes.splice(index, 0, node);
+    this._nodes.splice(index, 0, node);
     item.changed.connect(this._mi_changed, this);
   }
 
@@ -318,11 +318,11 @@ class MenuBar extends Widget {
    * A method called when a menu item is removed from the menu bar.
    */
   protected itemRemoved(index: number, item: MenuItem): void {
-    if (this._m_activeIndex !== -1) {
+    if (this._activeIndex !== -1) {
       this._setState(MBState.Inactive);
       this._setActiveIndex(-1);
     }
-    var node = this._m_nodes.splice(index, 1)[0];
+    var node = this._nodes.splice(index, 1)[0];
     this.node.removeChild(node);
     item.changed.disconnect(this._mi_changed, this);
   }
@@ -383,23 +383,23 @@ class MenuBar extends Widget {
   protected domEvent_mousedown(event: MouseEvent): void {
     var x = event.clientX;
     var y = event.clientY;
-    if (this._m_state === MBState.Inactive) {
+    if (this._state === MBState.Inactive) {
       if (event.button !== 0) {
         return;
       }
-      var index = firstWrap(this._m_nodes, n => hitTest(n, x, y), 0);
-      if (!isSelectable(this._m_items[index])) {
+      var index = firstWrap(this._nodes, n => hitTest(n, x, y), 0);
+      if (!isSelectable(this._items[index])) {
         return;
       }
       this._setState(MBState.Active);
       this._setActiveIndex(index);
     } else {
-      if (hitTestMenus(this._m_childMenu, x, y)) {
+      if (hitTestMenus(this._childMenu, x, y)) {
         return;
       }
       this._setState(MBState.Inactive);
-      var index = firstWrap(this._m_nodes, n => hitTest(n, x, y), 0);
-      var ok = isSelectable(this._m_items[index]);
+      var index = firstWrap(this._nodes, n => hitTest(n, x, y), 0);
+      var ok = isSelectable(this._items[index]);
       this._setActiveIndex(ok ? index : -1);
     }
   }
@@ -410,14 +410,14 @@ class MenuBar extends Widget {
   protected domEvent_mousemove(event: MouseEvent): void {
     var x = event.clientX;
     var y = event.clientY;
-    var index = firstWrap(this._m_nodes, n => hitTest(n, x, y), 0);
-    if (index === this._m_activeIndex) {
+    var index = firstWrap(this._nodes, n => hitTest(n, x, y), 0);
+    if (index === this._activeIndex) {
       return;
     }
-    if (index === -1 && this._m_state === MBState.Active) {
+    if (index === -1 && this._state === MBState.Active) {
       return;
     }
-    var ok = isSelectable(this._m_items[index]);
+    var ok = isSelectable(this._items[index]);
     this._setActiveIndex(ok ? index : -1);
   }
 
@@ -425,7 +425,7 @@ class MenuBar extends Widget {
    * Handle the 'mouseleave' event for the menu bar.
    */
   protected domEvent_mouseleave(event: MouseEvent): void {
-    if (this._m_state === MBState.Inactive) {
+    if (this._state === MBState.Inactive) {
       this._setActiveIndex(-1);
     }
   }
@@ -435,7 +435,7 @@ class MenuBar extends Widget {
    */
   protected domEvent_keydown(event: KeyboardEvent): void {
     event.stopPropagation();
-    var menu = this._m_childMenu;
+    var menu = this._childMenu;
     var leaf = menu && Menu.leafMenu(menu);
     switch (event.keyCode) {
       case 13:  // Enter
@@ -485,8 +485,8 @@ class MenuBar extends Widget {
     event.preventDefault();
     event.stopPropagation();
     var str = String.fromCharCode(event.charCode);
-    if (this._m_childMenu) {
-      Menu.leafMenu(this._m_childMenu).activateMnemonicItem(str);
+    if (this._childMenu) {
+      Menu.leafMenu(this._childMenu).activateMnemonicItem(str);
     } else {
       this.activateMnemonicItem(str)
     }
@@ -500,9 +500,9 @@ class MenuBar extends Widget {
    * This will take the appropriate action based on the menu bar state.
    */
   private _setActiveIndex(index: number): void {
-    var curr = this._m_nodes[this._m_activeIndex];
-    var next = this._m_nodes[index];
-    this._m_activeIndex = index;
+    var curr = this._nodes[this._activeIndex];
+    var next = this._nodes[index];
+    this._activeIndex = index;
     if (curr) {
       curr.classList.remove(ACTIVE_CLASS);
       curr.classList.remove(SELECTED_CLASS);
@@ -510,14 +510,14 @@ class MenuBar extends Widget {
     if (next) {
       next.classList.add(ACTIVE_CLASS);
     }
-    if (next && this._m_state !== MBState.Inactive) {
+    if (next && this._state !== MBState.Inactive) {
       next.classList.add(SELECTED_CLASS);
     }
     this._closeChildMenu();
-    if (!next || this._m_state !== MBState.Active) {
+    if (!next || this._state !== MBState.Active) {
       return;
     }
-    var item = this._m_items[index];
+    var item = this._items[index];
     if (!item.submenu) {
       return;
     }
@@ -529,7 +529,7 @@ class MenuBar extends Widget {
    */
   private _openChildMenu(menu: Menu, node: HTMLElement): void {
     var rect = node.getBoundingClientRect();
-    this._m_childMenu = menu;
+    this._childMenu = menu;
     menu.classList.add(MENU_CLASS);
     menu.closed.connect(this._mn_closed, this);
     menu.open(rect.left, rect.bottom, false, true);
@@ -539,11 +539,11 @@ class MenuBar extends Widget {
    * Close the current child menu, if one exists.
    */
   private _closeChildMenu(): void  {
-    if (this._m_childMenu) {
-      this._m_childMenu.classList.remove(MENU_CLASS);
-      this._m_childMenu.closed.disconnect(this._mn_closed, this);
-      this._m_childMenu.close();
-      this._m_childMenu = null;
+    if (this._childMenu) {
+      this._childMenu.classList.remove(MENU_CLASS);
+      this._childMenu.closed.disconnect(this._mn_closed, this);
+      this._childMenu.close();
+      this._childMenu = null;
     }
   }
 
@@ -553,7 +553,7 @@ class MenuBar extends Widget {
    * This will update the menu bar event listeners accordingly.
    */
   private _setState(state: MBState): void {
-    if (state === this._m_state) {
+    if (state === this._state) {
       return;
     }
     if (state === MBState.Inactive) {
@@ -561,7 +561,7 @@ class MenuBar extends Widget {
     } else {
       this._useActiveListeners();
     }
-    this._m_state = state;
+    this._state = state;
   }
 
   /**
@@ -594,7 +594,7 @@ class MenuBar extends Widget {
   private _mn_closed(sender: Menu): void {
     sender.closed.disconnect(this._mn_closed, this);
     sender.classList.remove(MENU_CLASS);
-    this._m_childMenu = null;
+    this._childMenu = null;
     this._setState(MBState.Inactive);
     this._setActiveIndex(-1);
   }
@@ -603,13 +603,13 @@ class MenuBar extends Widget {
    * Handle the `changed` signal from a menu item.
    */
   private _mi_changed(sender: MenuItem): void {
-    var items = this._m_items;
-    var nodes = this._m_nodes;
+    var items = this._items;
+    var nodes = this._nodes;
     for (var i = 0, n = items.length; i < n; ++i) {
       if (items[i] !== sender) {
         continue;
       }
-      if (i === this._m_activeIndex) {
+      if (i === this._activeIndex) {
         this._setState(MBState.Inactive);
         this._setActiveIndex(-1);
       }
@@ -617,11 +617,11 @@ class MenuBar extends Widget {
     }
   }
 
-  private _m_childMenu: Menu = null;
-  private _m_items: MenuItem[] = [];
-  private _m_nodes: HTMLElement[] = [];
-  private _m_state = MBState.Inactive;
-  private _m_activeIndex = -1;
+  private _childMenu: Menu = null;
+  private _items: MenuItem[] = [];
+  private _nodes: HTMLElement[] = [];
+  private _state = MBState.Inactive;
+  private _activeIndex = -1;
 }
 
 

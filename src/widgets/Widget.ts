@@ -62,7 +62,7 @@ class Widget implements IMessageHandler {
    * Construct a new widget.
    */
   constructor() {
-    this._m_node = this.createNode();
+    this._node = this.createNode();
     this.classList.add(WIDGET_CLASS);
   }
 
@@ -89,32 +89,32 @@ class Widget implements IMessageHandler {
     // The parent references on the children are cleared before they
     // are disposed, so the expensive path is only taken for the
     // widget at the root of the disposal tree.
-    var parent = this._m_parent;
+    var parent = this._parent;
     if (parent) {
-      this._m_parent = null;
-      this._m_parent._m_children.remove(this);
+      this._parent = null;
+      this._parent._children.remove(this);
       dispatch.sendMessage(parent, new ChildEvent('child-removed', this));
     } else if (this.isAttached) {
       this.detach();
     }
 
     // Drop what should be the last reference to the DOM node.
-    this._m_node = null;
+    this._node = null;
 
     // Dispose of the layout.
-    var layout = this._m_layout;
+    var layout = this._layout;
     if (layout) {
-      this._m_layout = null;
+      this._layout = null;
       layout.dispose();
     }
 
     // Dispose of the children. A child's parent reference is first
     // cleared so that it does not try to recursively remove itself.
-    var children = this._m_children;
+    var children = this._children;
     for (var i = 0, n = children.size; i < n; ++i) {
       var child = children.get(i);
       children.set(i, null);
-      child._m_parent = null;
+      child._parent = null;
       child.dispose();
     }
     children.clear();
@@ -124,7 +124,7 @@ class Widget implements IMessageHandler {
    * Get the parent widget of the widget.
    */
   get parent(): Widget {
-    return this._m_parent;
+    return this._parent;
   }
 
   /**
@@ -132,18 +132,18 @@ class Widget implements IMessageHandler {
    */
   set parent(parent: Widget) {
     parent = parent || null;
-    var old = this._m_parent;
+    var old = this._parent;
     if (old === parent) {
       return;
     }
     if (old) {
-      this._m_parent = null;
-      old._m_children.remove(this);
+      this._parent = null;
+      old._children.remove(this);
       dispatch.sendMessage(old, new ChildEvent('child-removed', this));
     }
     if (parent) {
-      this._m_parent = parent;
-      parent._m_children.add(this);
+      this._parent = parent;
+      parent._children.add(this);
       dispatch.sendMessage(parent, new ChildEvent('child-added', this));
     }
     dispatch.sendMessage(this, EVT_PARENT_CHANGED);
@@ -153,14 +153,14 @@ class Widget implements IMessageHandler {
    * Get a read only list of the child widgets.
    */
   get children(): IList<Widget> {
-    return new ReadOnlyList(this._m_children);
+    return new ReadOnlyList(this._children);
   }
 
   /**
    * Get the layout associated with the widget.
    */
   get layout(): Layout {
-    return this._m_layout;
+    return this._layout;
   }
 
   /**
@@ -173,7 +173,7 @@ class Widget implements IMessageHandler {
    */
   set layout(layout: Layout) {
     layout = layout || null;
-    var old = this._m_layout;
+    var old = this._layout;
     if (old === layout) {
       return;
     }
@@ -184,12 +184,12 @@ class Widget implements IMessageHandler {
       throw new Error('layout already installed on a widget');
     }
     if (old) {
-      this._m_layout = null;
+      this._layout = null;
       dispatch.removeMessageFilter(this, old);
       old.dispose();
     }
     if (layout) {
-      this._m_layout = layout;
+      this._layout = layout;
       dispatch.installMessageFilter(this, layout);
       layout.parentWidget = this;
     }
@@ -206,7 +206,7 @@ class Widget implements IMessageHandler {
    * The default name is an empty string.
    */
   get name(): string {
-    return this._m_extra.name;
+    return this._extra.name;
   }
 
   /**
@@ -219,38 +219,38 @@ class Widget implements IMessageHandler {
    * This should typically by set to a unique value.
    */
   set name(name: string) {
-    if (name === this._m_extra.name) {
+    if (name === this._extra.name) {
       return;
     }
-    this._m_extra.name = name;
+    this._extra.name = name;
   }
 
   /**
    * Get the DOM node managed by the widget.
    */
   get node(): HTMLElement {
-    return this._m_node;
+    return this._node;
   }
 
   /**
    * Get the id of the widget's DOM node.
    */
   get id(): string {
-    return this._m_node.id;
+    return this._node.id;
   }
 
   /**
    * Set the id of the widget's DOM node.
    */
   set id(value: string) {
-    this._m_node.id = value;
+    this._node.id = value;
   }
 
   /**
    * Get the class list for the widget's DOM node.
    */
   get classList(): DOMTokenList {
-    return this._m_node.classList;
+    return this._node.classList;
   }
 
   /**
@@ -259,7 +259,7 @@ class Widget implements IMessageHandler {
    * This does not apply when using CSS for layout.
    */
   get x(): number {
-    return this._m_extra.x;
+    return this._extra.x;
   }
 
   /**
@@ -268,7 +268,7 @@ class Widget implements IMessageHandler {
    * This does not apply when using CSS for layout.
    */
   set x(x: number) {
-    this.move(x, this._m_extra.y);
+    this.move(x, this._extra.y);
   }
 
   /**
@@ -277,7 +277,7 @@ class Widget implements IMessageHandler {
    * This does not apply when using CSS for layout.
    */
   get y(): number {
-    return this._m_extra.y;
+    return this._extra.y;
   }
 
   /**
@@ -286,7 +286,7 @@ class Widget implements IMessageHandler {
    * This does not apply when using CSS for layout.
    */
   set y(y: number) {
-    this.move(this._m_extra.x, y);
+    this.move(this._extra.x, y);
   }
 
   /**
@@ -295,7 +295,7 @@ class Widget implements IMessageHandler {
    * This does not apply when using CSS for layout.
    */
   get width(): number {
-    return this._m_extra.width;
+    return this._extra.width;
   }
 
   /**
@@ -304,7 +304,7 @@ class Widget implements IMessageHandler {
    * This does not apply when using CSS for layout.
    */
   set width(width: number) {
-    this.resize(width, this._m_extra.height);
+    this.resize(width, this._extra.height);
   }
 
   /**
@@ -313,7 +313,7 @@ class Widget implements IMessageHandler {
    * This does not apply when using CSS for layout.
    */
   get height(): number {
-    return this._m_extra.height;
+    return this._extra.height;
   }
 
   /**
@@ -322,7 +322,7 @@ class Widget implements IMessageHandler {
    * This does not apply when using CSS for layout.
    */
   set height(height: number) {
-    this.resize(this._m_extra.width, height);
+    this.resize(this._extra.width, height);
   }
 
   /**
@@ -331,7 +331,7 @@ class Widget implements IMessageHandler {
    * This does not apply when using CSS for layout.
    */
   get pos(): Point {
-    var extra = this._m_extra;
+    var extra = this._extra;
     return new Point(extra.x, extra.y);
   }
 
@@ -350,7 +350,7 @@ class Widget implements IMessageHandler {
    * This does not apply when using CSS for layout.
    */
   get size(): Size {
-    var extra = this._m_extra;
+    var extra = this._extra;
     return new Size(extra.width, extra.height);
   }
 
@@ -369,7 +369,7 @@ class Widget implements IMessageHandler {
    * This does not apply when using CSS for layout.
    */
   get geometry(): Rect {
-    var extra = this._m_extra;
+    var extra = this._extra;
     return new Rect(extra.x, extra.y, extra.width, extra.height);
   }
 
@@ -388,7 +388,7 @@ class Widget implements IMessageHandler {
    * This does not apply when using CSS for layout.
    */
   get minWidth(): number {
-    return this._m_extra.minWidth;
+    return this._extra.minWidth;
   }
 
   /**
@@ -397,7 +397,7 @@ class Widget implements IMessageHandler {
    * This does not apply when using CSS for layout.
    */
   set minWidth(width: number) {
-    this.setMinSize(width, this._m_extra.minHeight);
+    this.setMinSize(width, this._extra.minHeight);
   }
 
   /**
@@ -406,7 +406,7 @@ class Widget implements IMessageHandler {
    * This does not apply when using CSS for layout.
    */
   get minHeight(): number {
-    return this._m_extra.minHeight;
+    return this._extra.minHeight;
   }
 
   /**
@@ -415,7 +415,7 @@ class Widget implements IMessageHandler {
    * This does not apply when using CSS for layout.
    */
   set minHeight(height: number) {
-    this.setMinSize(this._m_extra.minWidth, height);
+    this.setMinSize(this._extra.minWidth, height);
   }
 
   /**
@@ -424,7 +424,7 @@ class Widget implements IMessageHandler {
    * This does not apply when using CSS for layout.
    */
   get maxWidth(): number {
-    return this._m_extra.maxWidth;
+    return this._extra.maxWidth;
   }
 
   /**
@@ -433,7 +433,7 @@ class Widget implements IMessageHandler {
    * This does not apply when using CSS for layout.
    */
   set maxWidth(width: number) {
-    this.setMaxSize(width, this._m_extra.maxHeight);
+    this.setMaxSize(width, this._extra.maxHeight);
   }
 
   /**
@@ -442,7 +442,7 @@ class Widget implements IMessageHandler {
    * This does not apply when using CSS for layout.
    */
   get maxHeight(): number {
-    return this._m_extra.maxHeight;
+    return this._extra.maxHeight;
   }
 
   /**
@@ -451,7 +451,7 @@ class Widget implements IMessageHandler {
    * This does not apply when using CSS for layout.
    */
   set maxHeight(height: number) {
-    this.setMaxSize(this._m_extra.maxWidth, height);
+    this.setMaxSize(this._extra.maxWidth, height);
   }
 
   /**
@@ -460,7 +460,7 @@ class Widget implements IMessageHandler {
    * This does not apply when using CSS for layout.
    */
   get minSize(): Size {
-    var extra = this._m_extra;
+    var extra = this._extra;
     return new Size(extra.minWidth, extra.minHeight);
   }
 
@@ -479,7 +479,7 @@ class Widget implements IMessageHandler {
    * This does not apply when using CSS for layout.
    */
   get maxSize(): Size {
-    var extra = this._m_extra;
+    var extra = this._extra;
     return new Size(extra.maxWidth, extra.maxHeight);
   }
 
@@ -496,28 +496,28 @@ class Widget implements IMessageHandler {
    * Get the horizontal size policy for the widget.
    */
   get horizontalSizePolicy(): SizePolicy {
-    return this._m_extra.hSizePolicy;
+    return this._extra.hSizePolicy;
   }
 
   /**
    * Set the horizontal size policy for the widget.
    */
   set horizontalSizePolicy(policy: SizePolicy) {
-    this.setSizePolicy(policy, this._m_extra.vSizePolicy);
+    this.setSizePolicy(policy, this._extra.vSizePolicy);
   }
 
   /**
    * Get the vertical size policy for the widget.
    */
   get verticalSizePolicy(): SizePolicy {
-    return this._m_extra.vSizePolicy;
+    return this._extra.vSizePolicy;
   }
 
   /**
    * Set the vertical size policy for the widget.
    */
   set verticalSizePolicy(policy: SizePolicy) {
-    this.setSizePolicy(this._m_extra.hSizePolicy, policy);
+    this.setSizePolicy(this._extra.hSizePolicy, policy);
   }
 
   /**
@@ -527,10 +527,10 @@ class Widget implements IMessageHandler {
    * `updateBoxData` method should be called to update the widget.
    */
   get boxData(): IBoxData {
-    var extra = this._m_extra;
+    var extra = this._extra;
     var data = extra.boxData;
     if (data) return data;
-    return extra.boxData = createBoxData(this._m_node);
+    return extra.boxData = createBoxData(this._node);
   }
 
   /**
@@ -570,21 +570,21 @@ class Widget implements IMessageHandler {
    * Test whether a widget flag is set.
    */
   testFlag(flag: WidgetFlag): boolean {
-    return (this._m_flags & flag) !== 0;
+    return (this._flags & flag) !== 0;
   }
 
   /**
    * Set the given widget flag.
    */
   setFlag(flag: WidgetFlag): void {
-    this._m_flags |= flag;
+    this._flags |= flag;
   }
 
   /**
    * Clear the given widget flag.
    */
   clearFlag(flag: WidgetFlag): void {
-    this._m_flags &= ~flag;
+    this._flags &= ~flag;
   }
 
   /**
@@ -596,7 +596,7 @@ class Widget implements IMessageHandler {
     if (!this.isHidden) {
       return;
     }
-    var p = this._m_parent;
+    var p = this._parent;
     if (this.isAttached && (!p || p.isVisible)) {
       dispatch.sendMessage(this, EVT_BEFORE_SHOW);
       this.classList.remove(HIDDEN_CLASS);
@@ -621,7 +621,7 @@ class Widget implements IMessageHandler {
     if (this.isHidden) {
       return;
     }
-    var p = this._m_parent;
+    var p = this._parent;
     if (this.isAttached && (!p || p.isVisible)) {
       dispatch.sendMessage(this, EVT_BEFORE_HIDE);
       this.classList.add(HIDDEN_CLASS);
@@ -658,11 +658,11 @@ class Widget implements IMessageHandler {
    * Only a root widget can be attached to a host node.
    */
   attach(node: HTMLElement): void {
-    if (this._m_parent) {
+    if (this._parent) {
       throw new Error('can only attach a root widget to the DOM');
     }
     dispatch.sendMessage(this, EVT_BEFORE_ATTACH);
-    node.appendChild(this._m_node);
+    node.appendChild(this._node);
     dispatch.sendMessage(this, EVT_AFTER_ATTACH);
   }
 
@@ -672,10 +672,10 @@ class Widget implements IMessageHandler {
    * Only a root widget can be detached from its host node.
    */
   detach(): void {
-    if (this._m_parent) {
+    if (this._parent) {
       throw new Error('can only detach a root widget from the DOM');
     }
-    var node = this._m_node;
+    var node = this._node;
     var parentNode = node.parentNode;
     if (!parentNode) {
       return;
@@ -694,10 +694,10 @@ class Widget implements IMessageHandler {
    * so that the size does not need to be read from the DOM.
    */
   fitToHost(width?: number, height?: number, box?: IBoxData): void {
-    if (this._m_parent) {
+    if (this._parent) {
       throw new Error('can only fit a root widget');
     }
-    var parentNode = <HTMLElement>this._m_node.parentNode;
+    var parentNode = <HTMLElement>this._node.parentNode;
     if (!parentNode) {
       return;
     }
@@ -724,8 +724,8 @@ class Widget implements IMessageHandler {
    * Most leaf widgets will reimplement this method.
    */
   sizeHint(): Size {
-    if (this._m_layout) {
-      return this._m_layout.sizeHint();
+    if (this._layout) {
+      return this._layout.sizeHint();
     }
     return new Size(0, 0);
   }
@@ -741,8 +741,8 @@ class Widget implements IMessageHandler {
    * Most leaf widgets will reimplement this method.
    */
   minSizeHint(): Size {
-    if (this._m_layout) {
-      return this._m_layout.minSize();
+    if (this._layout) {
+      return this._layout.minSize();
     }
     return new Size(0, 0);
   }
@@ -756,8 +756,8 @@ class Widget implements IMessageHandler {
    * a layout is installed, otherwise it returns an inf size.
    */
   maxSizeHint(): Size {
-    if (this._m_layout) {
-      return this._m_layout.maxSize();
+    if (this._layout) {
+      return this._layout.maxSize();
     }
     return new Size(Infinity, Infinity);
   }
@@ -772,12 +772,12 @@ class Widget implements IMessageHandler {
    * widget is made visible.
    */
   updateGeometry(force = false): void {
-    var parent = this._m_parent;
+    var parent = this._parent;
     if (!parent || (this.isHidden && !force)) {
       return;
     }
-    if (parent._m_layout) {
-      parent._m_layout.invalidate();
+    if (parent._layout) {
+      parent._layout.invalidate();
     } else {
       dispatch.postMessage(parent, EVT_LAYOUT_REQUEST);
       parent.updateGeometry();
@@ -790,9 +790,9 @@ class Widget implements IMessageHandler {
    * This should be called if the node's padding or border has changed.
    */
   updateBoxData(): void {
-    this._m_extra.boxData = null;
-    if (this._m_layout) {
-      this._m_layout.invalidate();
+    this._extra.boxData = null;
+    if (this._layout) {
+      this._layout.invalidate();
     } else {
       dispatch.postMessage(this, EVT_LAYOUT_REQUEST);
     }
@@ -805,7 +805,7 @@ class Widget implements IMessageHandler {
    * This does not apply when using CSS for layout.
    */
   move(x: number, y: number): void {
-    var extra = this._m_extra;
+    var extra = this._extra;
     this.setGeometry(x, y, extra.width, extra.height);
   }
 
@@ -815,7 +815,7 @@ class Widget implements IMessageHandler {
    * This does not apply when using CSS for layout.
    */
   resize(width: number, height: number): void {
-    var extra = this._m_extra;
+    var extra = this._extra;
     this.setGeometry(extra.x, extra.y, width, height);
   }
 
@@ -825,7 +825,7 @@ class Widget implements IMessageHandler {
    * This does not apply when using CSS for layout.
    */
   setGeometry(x: number, y: number, width: number, height: number): void {
-    var extra = this._m_extra;
+    var extra = this._extra;
     width = Math.max(extra.minWidth, Math.min(width, extra.maxWidth));
     height = Math.max(extra.minHeight, Math.min(height, extra.maxHeight));
     var isMove = false;
@@ -834,7 +834,7 @@ class Widget implements IMessageHandler {
     var oldY = extra.y;
     var oldWidth = extra.width;
     var oldHeight = extra.height;
-    var style = this._m_node.style;
+    var style = this._node.style;
     if (oldX !== x) {
       isMove = true;
       extra.x = x;
@@ -869,7 +869,7 @@ class Widget implements IMessageHandler {
    * This does not apply when using CSS for layout.
    */
   setMinSize(width: number, height: number): void {
-    var extra = this._m_extra;
+    var extra = this._extra;
     this.setSizeLimits(width, height, extra.maxWidth, extra.maxHeight);
   }
 
@@ -879,7 +879,7 @@ class Widget implements IMessageHandler {
    * This does not apply when using CSS for layout.
    */
   setMaxSize(width: number, height: number): void {
-    var extra = this._m_extra;
+    var extra = this._extra;
     this.setSizeLimits(extra.minWidth, extra.minHeight, width, height);
   }
 
@@ -894,7 +894,7 @@ class Widget implements IMessageHandler {
     maxW = Math.max(minW, maxW);
     maxH = Math.max(minH, maxH);
     var changed = false;
-    var extra = this._m_extra;
+    var extra = this._extra;
     if (minW !== extra.minWidth) {
       extra.minWidth = minW;
       changed = true;
@@ -922,7 +922,7 @@ class Widget implements IMessageHandler {
    */
   setSizePolicy(horizontal: SizePolicy, vertical: SizePolicy): void {
     var changed = false;
-    var extra = this._m_extra;
+    var extra = this._extra;
     if (horizontal !== extra.hSizePolicy) {
       extra.hSizePolicy = horizontal;
       changed = true;
@@ -955,63 +955,63 @@ class Widget implements IMessageHandler {
         var child = (<ChildEvent>event).child;
         if (this.isAttached) {
           dispatch.sendMessage(child, EVT_BEFORE_ATTACH);
-          this._m_node.appendChild(child._m_node);
+          this._node.appendChild(child._node);
           dispatch.sendMessage(child, EVT_AFTER_ATTACH);
         } else {
-          this._m_node.appendChild(child._m_node);
+          this._node.appendChild(child._node);
         }
         break;
       case 'child-removed':
         var child = (<ChildEvent>event).child;
         if (this.isAttached) {
           dispatch.sendMessage(child, EVT_BEFORE_DETACH);
-          this._m_node.removeChild(child._m_node);
+          this._node.removeChild(child._node);
           dispatch.sendMessage(child, EVT_AFTER_DETACH);
         } else {
-          this._m_node.removeChild(child._m_node);
+          this._node.removeChild(child._node);
         }
         break;
       case 'before-show':
         this.beforeShowEvent(event);
-        sendNonHiddenChildrenEvent(this._m_children, event);
+        sendNonHiddenChildrenEvent(this._children, event);
         break;
       case 'after-show':
         this.setFlag(WidgetFlag.IsVisible);
         this.afterShowEvent(event);
-        sendNonHiddenChildrenEvent(this._m_children, event);
+        sendNonHiddenChildrenEvent(this._children, event);
         break;
       case 'before-hide':
         this.beforeHideEvent(event);
-        sendNonHiddenChildrenEvent(this._m_children, event);
+        sendNonHiddenChildrenEvent(this._children, event);
         break;
       case 'after-hide':
         this.clearFlag(WidgetFlag.IsVisible);
         this.afterHideEvent(event);
-        sendNonHiddenChildrenEvent(this._m_children, event);
+        sendNonHiddenChildrenEvent(this._children, event);
         break;
       case 'before-attach':
-        this._m_extra.boxData = null;
+        this._extra.boxData = null;
         this.beforeAttachEvent(event);
-        sendChildrenEvent(this._m_children, event);
+        sendChildrenEvent(this._children, event);
         break;
       case 'after-attach':
-        var p = this._m_parent;
+        var p = this._parent;
         var v = !p || p.isVisible;
         v = v && !this.isHidden;
         if (v) this.setFlag(WidgetFlag.IsVisible);
         this.setFlag(WidgetFlag.IsAttached);
         this.afterAttachEvent(event);
-        sendChildrenEvent(this._m_children, event);
+        sendChildrenEvent(this._children, event);
         break;
       case 'before-detach':
         this.beforeDetachEvent(event);
-        sendChildrenEvent(this._m_children, event);
+        sendChildrenEvent(this._children, event);
         break;
       case 'after-detach':
         this.clearFlag(WidgetFlag.IsVisible);
         this.clearFlag(WidgetFlag.IsAttached);
         this.afterDetachEvent(event);
-        sendChildrenEvent(this._m_children, event);
+        sendChildrenEvent(this._children, event);
         break;
       case 'close':
         this.closeEvent(event);
@@ -1129,12 +1129,12 @@ class Widget implements IMessageHandler {
    */
   protected afterDetachEvent(event: IMessage): void { }
 
-  private _m_flags = 0;
-  private _m_node: HTMLElement;
-  private _m_extra = createExtra();
-  private _m_parent: Widget = null;
-  private _m_layout: Layout = null;
-  private _m_children = new List<Widget>();
+  private _flags = 0;
+  private _node: HTMLElement;
+  private _extra = createExtra();
+  private _parent: Widget = null;
+  private _layout: Layout = null;
+  private _children = new List<Widget>();
 }
 
 

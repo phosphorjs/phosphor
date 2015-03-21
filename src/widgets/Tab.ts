@@ -47,7 +47,7 @@ class Tab implements ITab {
    * Construct a new tab.
    */
   constructor(text?: string) {
-    this._m_node = this.createNode();
+    this._node = this.createNode();
     if (text) this.text = text;
   }
 
@@ -55,21 +55,21 @@ class Tab implements ITab {
    * Get the text for the tab.
    */
   get text(): string {
-    return (<HTMLElement>this._m_node.children[1]).textContent;
+    return (<HTMLElement>this._node.children[1]).textContent;
   }
 
   /**
    * Set the text for the tab.
    */
   set text(text: string) {
-    (<HTMLElement>this._m_node.children[1]).textContent = text;
+    (<HTMLElement>this._node.children[1]).textContent = text;
   }
 
   /**
    * Get whether the tab is selected.
    */
   get selected(): boolean {
-    return this._m_node.classList.contains(SELECTED_CLASS);
+    return this._node.classList.contains(SELECTED_CLASS);
   }
 
   /**
@@ -77,9 +77,9 @@ class Tab implements ITab {
    */
   set selected(selected: boolean) {
     if (selected) {
-      this._m_node.classList.add(SELECTED_CLASS);
+      this._node.classList.add(SELECTED_CLASS);
     } else {
-      this._m_node.classList.remove(SELECTED_CLASS);
+      this._node.classList.remove(SELECTED_CLASS);
     }
   }
 
@@ -87,7 +87,7 @@ class Tab implements ITab {
    * Get whether the tab is closable.
    */
   get closable(): boolean {
-    return this._m_node.classList.contains(CLOSABLE_CLASS);
+    return this._node.classList.contains(CLOSABLE_CLASS);
   }
 
   /**
@@ -95,9 +95,9 @@ class Tab implements ITab {
    */
   set closable(closable: boolean) {
     if (closable) {
-      this._m_node.classList.add(CLOSABLE_CLASS);
+      this._node.classList.add(CLOSABLE_CLASS);
     } else {
-      this._m_node.classList.remove(CLOSABLE_CLASS);
+      this._node.classList.remove(CLOSABLE_CLASS);
     }
   }
 
@@ -105,14 +105,14 @@ class Tab implements ITab {
    * The DOM node for the tab.
    */
   get node(): HTMLElement {
-    return this._m_node;
+    return this._node;
   }
 
   /**
    * The DOM node for the close icon, if available.
    */
   get closeIconNode(): HTMLElement {
-    return <HTMLElement>this._m_node.lastChild;
+    return <HTMLElement>this._node.lastChild;
   }
 
   /**
@@ -133,7 +133,7 @@ class Tab implements ITab {
     return node;
   }
 
-  private _m_node: HTMLElement;
+  private _node: HTMLElement;
 }
 
 } // module phosphor.widgets

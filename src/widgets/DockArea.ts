@@ -55,8 +55,8 @@ class DockArea extends Widget {
   constructor() {
     super();
     this.classList.add(DOCK_AREA_CLASS);
-    this._m_root = this._createSplitter(Orientation.Horizontal);
-    this.layout = new SingleLayout(this._m_root);
+    this._root = this._createSplitter(Orientation.Horizontal);
+    this.layout = new SingleLayout(this._root);
     this.setFlag(WidgetFlag.DisallowLayoutChange);
   }
 
@@ -65,8 +65,8 @@ class DockArea extends Widget {
    */
   dispose(): void {
     this._abortDrag();
-    this._m_root = null;
-    this._m_dockItems = null;
+    this._root = null;
+    this._dockItems = null;
     super.dispose();
   }
 
@@ -74,7 +74,7 @@ class DockArea extends Widget {
    * Get the width of the tabs in the dock area.
    */
   get tabWidth(): number {
-    return this._m_tabWidth;
+    return this._tabWidth;
   }
 
   /**
@@ -82,11 +82,11 @@ class DockArea extends Widget {
    */
   set tabWidth(width: number) {
     width = Math.max(0, width);
-    if (width === this._m_tabWidth) {
+    if (width === this._tabWidth) {
       return;
     }
-    this._m_tabWidth = width;
-    iterPanels(this._m_root, panel => {
+    this._tabWidth = width;
+    iterPanels(this._root, panel => {
       panel.tabBar.tabWidth = width;
     });
   }
@@ -95,7 +95,7 @@ class DockArea extends Widget {
    * Get the minimum tab width in pixels.
    */
   get minTabWidth(): number {
-    return this._m_minTabWidth;
+    return this._minTabWidth;
   }
 
   /**
@@ -103,11 +103,11 @@ class DockArea extends Widget {
    */
   set minTabWidth(width: number) {
     width = Math.max(0, width);
-    if (width === this._m_minTabWidth) {
+    if (width === this._minTabWidth) {
       return;
     }
-    this._m_minTabWidth = width;
-    iterPanels(this._m_root, panel => {
+    this._minTabWidth = width;
+    iterPanels(this._root, panel => {
       panel.tabBar.minTabWidth = width;
     });
   }
@@ -116,18 +116,18 @@ class DockArea extends Widget {
    * Get the tab overlap amount in pixels.
    */
   get tabOverlap(): number {
-    return this._m_tabOverlap;
+    return this._tabOverlap;
   }
 
   /**
    * Set the tab overlap amount in pixels.
    */
   set tabOverlap(overlap: number) {
-    if (overlap === this._m_tabOverlap) {
+    if (overlap === this._tabOverlap) {
       return;
     }
-    this._m_tabOverlap = overlap;
-    iterPanels(this._m_root, panel => {
+    this._tabOverlap = overlap;
+    iterPanels(this._root, panel => {
       panel.tabBar.tabOverlap = overlap;
     });
   }
@@ -136,18 +136,18 @@ class DockArea extends Widget {
    * Get the handle size of the dock splitters.
    */
   get handleSize(): number {
-    return this._m_handleSize;
+    return this._handleSize;
   }
 
   /**
    * Set the handle size of the dock splitters.
    */
   set handleSize(size: number) {
-    if (size === this._m_handleSize) {
+    if (size === this._handleSize) {
       return;
     }
-    this._m_handleSize = size;
-    iterSplitters(this._m_root, splitter => {
+    this._handleSize = size;
+    iterSplitters(this._root, splitter => {
       splitter.handleSize = size;
     });
   }
@@ -209,7 +209,7 @@ class DockArea extends Widget {
    * Returns true if the widget was activated, false otherwise.
    */
   activateWidget(widget: Widget): boolean {
-    var item = find(this._m_dockItems, it => it.widget === widget);
+    var item = find(this._dockItems, it => it.widget === widget);
     if (!item) {
       return false;
     }
@@ -222,7 +222,7 @@ class DockArea extends Widget {
    */
   activeWidgets(): Widget[] {
     var result: Widget[] = [];
-    iterPanels(this._m_root, panel => {
+    iterPanels(this._root, panel => {
       var current = panel.stackWidget.currentWidget;
       if (current) result.push(current);
     });
@@ -257,7 +257,7 @@ class DockArea extends Widget {
   protected domEvent_mousemove(event: MouseEvent): void {
     event.preventDefault();
     event.stopPropagation();
-    var dragData = this._m_dragData;
+    var dragData = this._dragData;
     if (!dragData) {
       return;
     }
@@ -265,7 +265,7 @@ class DockArea extends Widget {
     // Hit test the panels using the current mouse position.
     var clientX = event.clientX;
     var clientY = event.clientY;
-    var hitPanel = iterPanels(this._m_root, p => {
+    var hitPanel = iterPanels(this._root, p => {
       return hitTest(p.node, clientX, clientY) ? p : void 0;
     });
 
@@ -352,11 +352,11 @@ class DockArea extends Widget {
     document.removeEventListener('mouseup', <any>this, true);
     document.removeEventListener('mousemove', <any>this, true);
     document.removeEventListener('contextmenu', <any>this, true);
-    var dragData = this._m_dragData;
+    var dragData = this._dragData;
     if (!dragData) {
       return;
     }
-    this._m_dragData = null;
+    this._dragData = null;
 
     // Restore the application cursor and hide the overlay.
     dragData.grab.dispose();
@@ -380,9 +380,9 @@ class DockArea extends Widget {
     // the widget is not actually being removed from the area.
     if (dragData.tempPanel) {
       item.panel = dragData.tempPanel;
-      this._m_ignoreRemoved = true;
+      this._ignoreRemoved = true;
       item.panel.stackWidget.addWidget(item.widget);
-      this._m_ignoreRemoved = false;
+      this._ignoreRemoved = false;
       item.panel.stackWidget.currentWidget = item.widget;
       if (ownPanel.stackWidget.count === 0) {
         this._removePanel(ownPanel);
@@ -445,9 +445,9 @@ class DockArea extends Widget {
     panel.tabBar.addTab(widget.tab);
     this._ensureRoot(orientation);
     if (after) {
-      this._m_root.addWidget(panel);
+      this._root.addWidget(panel);
     } else {
-      this._m_root.insertWidget(0, panel);
+      this._root.insertWidget(0, panel);
     }
   }
 
@@ -462,7 +462,7 @@ class DockArea extends Widget {
     if (widget === ref) {
       return;
     }
-    var refItem = find(this._m_dockItems, it => it.widget === ref);
+    var refItem = find(this._dockItems, it => it.widget === ref);
     if (!refItem) {
       return;
     }
@@ -516,7 +516,7 @@ class DockArea extends Widget {
     if (widget === ref) {
       return;
     }
-    var refItem = find(this._m_dockItems, it => it.widget === ref);
+    var refItem = find(this._dockItems, it => it.widget === ref);
     if (!refItem) {
       return;
     }
@@ -539,16 +539,16 @@ class DockArea extends Widget {
    * and the current root will be added as the new root's first child.
    */
   private _ensureRoot(orientation: Orientation): void {
-    var root = this._m_root;
+    var root = this._root;
     if (root.orientation === orientation) {
       return;
     }
     if (root.count <= 1) {
       root.orientation = orientation;
     } else {
-      this._m_root = this._createSplitter(orientation);
-      this._m_root.addWidget(root);
-      (<SingleLayout>this.layout).widget = this._m_root;
+      this._root = this._createSplitter(orientation);
+      this._root.addWidget(root);
+      (<SingleLayout>this.layout).widget = this._root;
     }
   }
 
@@ -556,7 +556,7 @@ class DockArea extends Widget {
    * Add a new item to the dock area and install its signal handlers.
    */
   private _addItem(widget: IDockableWidget, panel: DockPanel): void {
-    this._m_dockItems.push({ widget: widget, panel: panel });
+    this._dockItems.push({ widget: widget, panel: panel });
   }
 
   /**
@@ -565,9 +565,9 @@ class DockArea extends Widget {
   private _createPanel(): DockPanel {
     var panel = new DockPanel();
     var tabBar = panel.tabBar;
-    tabBar.tabWidth = this._m_tabWidth;
-    tabBar.tabOverlap = this._m_tabOverlap;
-    tabBar.minTabWidth = this._m_minTabWidth;
+    tabBar.tabWidth = this._tabWidth;
+    tabBar.tabOverlap = this._tabOverlap;
+    tabBar.minTabWidth = this._minTabWidth;
     tabBar.currentChanged.connect(this._tb_currentChanged, this);
     tabBar.tabCloseRequested.connect(this._tb_tabCloseRequested, this);
     tabBar.tabDetachRequested.connect(this._tb_tabDetachRequested, this);
@@ -580,7 +580,7 @@ class DockArea extends Widget {
    */
   private _createSplitter(orientation: Orientation): DockSplitter {
     var splitter = new DockSplitter(orientation);
-    splitter.handleSize = this._m_handleSize;
+    splitter.handleSize = this._handleSize;
     return splitter;
   }
 
@@ -609,13 +609,13 @@ class DockArea extends Widget {
 
     // If the splitter is the root splitter and has a remaining
     // child which is a splitter, that child becomes the root.
-    if (splitter === this._m_root) {
+    if (splitter === this._root) {
       if (splitter.count === 1) {
         var child = splitter.widgetAt(0);
         if (child instanceof DockSplitter) {
           var layout = <SingleLayout>this.layout;
           var sizes = child.sizes();
-          this._m_root = child;
+          this._root = child;
           splitter.parent = null;
           layout.widget = child;
           child.setSizes(sizes);
@@ -654,11 +654,11 @@ class DockArea extends Widget {
    * Abort the tab drag operation if one is in progress.
    */
   private _abortDrag(): void {
-    var dragData = this._m_dragData;
+    var dragData = this._dragData;
     if (!dragData) {
       return;
     }
-    this._m_dragData = null;
+    this._dragData = null;
 
     // Release the mouse grab and restore the application cursor.
     document.removeEventListener('mouseup', <any>this, true);
@@ -697,7 +697,7 @@ class DockArea extends Widget {
    * Handle the `currentChanged` signal from a tab bar.
    */
   private _tb_currentChanged(sender: TabBar, args: ITabIndexArgs): void {
-    var item = find(this._m_dockItems, it => it.widget.tab === args.tab);
+    var item = find(this._dockItems, it => it.widget.tab === args.tab);
     if (item && item.panel.tabBar === sender) {
       item.panel.stackWidget.currentWidget = item.widget;
     }
@@ -707,7 +707,7 @@ class DockArea extends Widget {
    * Handle the `tabCloseRequested` signal from a tab bar.
    */
   private _tb_tabCloseRequested(sender: TabBar, args: ITabIndexArgs): void {
-    var item = find(this._m_dockItems, it => it.widget.tab === args.tab);
+    var item = find(this._dockItems, it => it.widget.tab === args.tab);
     if (item) item.widget.close();
   }
 
@@ -717,17 +717,17 @@ class DockArea extends Widget {
   private _tb_tabDetachRequested(sender: TabBar, args: ITabDetachArgs): void {
     // Find the dock item for the detach operation.
     var tab = args.tab;
-    var item = find(this._m_dockItems, it => it.widget.tab === tab);
+    var item = find(this._dockItems, it => it.widget.tab === tab);
     if (!item) {
       return;
     }
 
     // Create the drag data the first time a tab is detached.
     // The drag data will be cleared on the mouse up event.
-    if (!this._m_dragData) {
+    if (!this._dragData) {
       var prevTab = sender.previousTab;
       var grab = overrideCursor(window.getComputedStyle(tab.node).cursor);
-      this._m_dragData = {
+      this._dragData = {
         item: item,
         index: args.index,
         tabWidth: 0,
@@ -742,7 +742,7 @@ class DockArea extends Widget {
     }
 
     // Update the drag data with the current tab geometry.
-    var dragData = this._m_dragData;
+    var dragData = this._dragData;
     dragData.tabWidth = args.tabWidth;
     dragData.offsetX = args.offsetX;
     dragData.offsetY = args.offsetY;
@@ -787,10 +787,10 @@ class DockArea extends Widget {
    * Handle the `widgetRemoved` signal from a stack widget.
    */
   private _sw_widgetRemoved(sender: StackWidget, args: IStackIndexArgs): void {
-    if (this._m_ignoreRemoved) {
+    if (this._ignoreRemoved) {
       return;
     }
-    var item = remove(this._m_dockItems, it => it.widget === args.widget);
+    var item = remove(this._dockItems, it => it.widget === args.widget);
     if (!item) {
       return;
     }
@@ -801,14 +801,14 @@ class DockArea extends Widget {
     }
   }
 
-  private _m_handleSize = 3;
-  private _m_tabWidth = 175;
-  private _m_tabOverlap = 1;
-  private _m_minTabWidth = 45;
-  private _m_ignoreRemoved = false;
-  private _m_root: DockSplitter = null;
-  private _m_dragData: IDragData = null;
-  private _m_dockItems: IDockItem[] = [];
+  private _handleSize = 3;
+  private _tabWidth = 175;
+  private _tabOverlap = 1;
+  private _minTabWidth = 45;
+  private _ignoreRemoved = false;
+  private _root: DockSplitter = null;
+  private _dragData: IDragData = null;
+  private _dockItems: IDockItem[] = [];
 }
 
 
@@ -954,31 +954,31 @@ class DockPanel extends Widget {
   constructor() {
     super();
     this.classList.add(DOCK_PANEL_CLASS);
-    this._m_tabBar = new TabBar();
-    this._m_stackWidget = new StackWidget();
-    this._m_overlayNode = this.createOverlay();
+    this._tabBar = new TabBar();
+    this._stackWidget = new StackWidget();
+    this._overlayNode = this.createOverlay();
 
     var layout = new BoxLayout(Direction.TopToBottom, 0);
-    layout.addWidget(this._m_tabBar);
-    layout.addWidget(this._m_stackWidget);
+    layout.addWidget(this._tabBar);
+    layout.addWidget(this._stackWidget);
 
     this.layout = layout;
     this.setFlag(WidgetFlag.DisallowLayoutChange);
-    this.node.appendChild(this._m_overlayNode);
+    this.node.appendChild(this._overlayNode);
   }
 
   /**
    * Get the tab bar child of the dock panel.
    */
   get tabBar(): TabBar {
-    return this._m_tabBar;
+    return this._tabBar;
   }
 
   /**
    * Get the stack widget child of the dock panel.
    */
   get stackWidget(): StackWidget {
-    return this._m_stackWidget;
+    return this._stackWidget;
   }
 
   /**
@@ -986,9 +986,9 @@ class DockPanel extends Widget {
    */
   dispose(): void {
     this._clearOverlayTimer();
-    this._m_tabBar = null;
-    this._m_stackWidget = null;
-    this._m_overlayNode = null;
+    this._tabBar = null;
+    this._stackWidget = null;
+    this._overlayNode = null;
     super.dispose();
   }
 
@@ -1045,16 +1045,16 @@ class DockPanel extends Widget {
     // the cursor with zero size before being displayed. This allows
     // for a nice transition to the normally computed size. Since the
     // elements starts with display: none, a restyle must be forced.
-    var style = this._m_overlayNode.style;
-    if (this._m_overlayHidden) {
-      this._m_overlayHidden = false;
+    var style = this._overlayNode.style;
+    if (this._overlayHidden) {
+      this._overlayHidden = false;
       var rect = this.node.getBoundingClientRect();
       style.top = clientY - rect.top + 'px';
       style.left = clientX - rect.left + 'px';
       style.right = rect.right - clientX + 'px';
       style.bottom = rect.bottom - clientY + 'px';
       style.display = '';
-      this._m_overlayNode.offsetWidth; // force restyle
+      this._overlayNode.offsetWidth; // force restyle
     }
     style.opacity = '1';
     style.top = top + 'px';
@@ -1069,15 +1069,15 @@ class DockPanel extends Widget {
    * If the overlay is already hidden, this is a no-op.
    */
   hideOverlay(): void {
-    if (this._m_overlayHidden) {
+    if (this._overlayHidden) {
       return;
     }
     this._clearOverlayTimer();
-    this._m_overlayHidden = true;
-    this._m_overlayNode.style.opacity = '0';
-    this._m_overlayTimer = setTimeout(() => {
-      this._m_overlayTimer = 0;
-      this._m_overlayNode.style.display = 'none';
+    this._overlayHidden = true;
+    this._overlayNode.style.opacity = '0';
+    this._overlayTimer = setTimeout(() => {
+      this._overlayTimer = 0;
+      this._overlayNode.style.display = 'none';
     }, 150);
   }
 
@@ -1095,17 +1095,17 @@ class DockPanel extends Widget {
    * Clear the overlay timer.
    */
   private _clearOverlayTimer(): void {
-    if (this._m_overlayTimer) {
-      clearTimeout(this._m_overlayTimer);
-      this._m_overlayTimer = 0;
+    if (this._overlayTimer) {
+      clearTimeout(this._overlayTimer);
+      this._overlayTimer = 0;
     }
   }
 
-  private _m_tabBar: TabBar;
-  private _m_overlayTimer = 0;
-  private _m_overlayHidden = true;
-  private _m_stackWidget: StackWidget;
-  private _m_overlayNode: HTMLElement = null;
+  private _tabBar: TabBar;
+  private _overlayTimer = 0;
+  private _overlayHidden = true;
+  private _stackWidget: StackWidget;
+  private _overlayNode: HTMLElement = null;
 }
 
 

@@ -256,7 +256,7 @@ class Splitter extends Widget {
       delta = event.clientY - rect.top;
     }
     var grab = overrideCursor(window.getComputedStyle(node).cursor);
-    this._m_pressData = { index: data.index, delta: delta, grab: grab };
+    this._pressData = { index: data.index, delta: delta, grab: grab };
   }
 
   /**
@@ -278,7 +278,7 @@ class Splitter extends Widget {
     event.preventDefault();
     event.stopPropagation();
     var pos: number;
-    var data = this._m_pressData;
+    var data = this._pressData;
     var rect = this.node.getBoundingClientRect();
     var layout = <SplitterLayout>this.layout;
     if (layout.orientation === Orientation.Horizontal) {
@@ -307,16 +307,16 @@ class Splitter extends Widget {
    * Release the mouse grab for the splitter.
    */
   private _releaseMouse(): void {
-    if (!this._m_pressData) {
+    if (!this._pressData) {
       return;
     }
-    this._m_pressData.grab.dispose();
-    this._m_pressData = null;
+    this._pressData.grab.dispose();
+    this._pressData = null;
     document.removeEventListener('mouseup', <any>this, true);
     document.removeEventListener('mousemove', <any>this, true);
   }
 
-  private _m_pressData: IPressData = null;
+  private _pressData: IPressData = null;
 }
 
 

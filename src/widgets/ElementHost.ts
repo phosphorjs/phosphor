@@ -39,15 +39,15 @@ class ElementHost extends Widget {
     this.setFlag(WidgetFlag.DisallowLayoutChange);
     width = Math.max(0, width);
     height = Math.max(0, height);
-    this._m_element = element;
-    this._m_preferredSize = new Size(width, height);
+    this._element = element;
+    this._preferredSize = new Size(width, height);
   }
 
   /**
    * Get the virtual element hosted by the widget.
    */
   get element(): IElement {
-    return this._m_element;
+    return this._element;
   }
 
   /**
@@ -55,10 +55,10 @@ class ElementHost extends Widget {
    */
   set element(element: IElement) {
     element = element || null;
-    if (element === this._m_element) {
+    if (element === this._element) {
       return;
     }
-    this._m_element = element;
+    this._element = element;
     render(element, this.node);
   }
 
@@ -66,7 +66,7 @@ class ElementHost extends Widget {
    * Calculate the preferred size of the widget.
    */
   sizeHint(): Size {
-    return this._m_preferredSize;
+    return this._preferredSize;
   }
 
   /**
@@ -75,11 +75,11 @@ class ElementHost extends Widget {
   setPreferredSize(width: number, height: number): void {
     width = Math.max(0, width);
     height = Math.max(0, height);
-    var old = this._m_preferredSize;
+    var old = this._preferredSize;
     if (width === old.width && height === old.height) {
       return;
     }
-    this._m_preferredSize = new Size(width, height);
+    this._preferredSize = new Size(width, height);
     this.updateGeometry();
   }
 
@@ -87,7 +87,7 @@ class ElementHost extends Widget {
    * A method invoked on the 'after-attach' event.
    */
   protected afterAttachEvent(event: IMessage): void {
-    render(this._m_element, this.node);
+    render(this._element, this.node);
   }
 
   /**
@@ -97,8 +97,8 @@ class ElementHost extends Widget {
     render(null, this.node);
   }
 
-  private _m_preferredSize: Size;
-  private _m_element: IElement;
+  private _preferredSize: Size;
+  private _element: IElement;
 }
 
 } // module phosphor.widgets

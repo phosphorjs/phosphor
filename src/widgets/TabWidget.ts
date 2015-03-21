@@ -80,8 +80,8 @@ class TabWidget extends Widget {
    * Dispose of the resources held by the widget.
    */
   dispose(): void {
-    this._m_tabBar = null;
-    this._m_stackWidget = null;
+    this._tabBar = null;
+    this._stackWidget = null;
     this.currentChanged.disconnect();
     super.dispose();
   }
@@ -90,56 +90,56 @@ class TabWidget extends Widget {
    * Get the index of the currently selected widget.
    */
   get currentIndex(): number {
-    return this._m_stackWidget.currentIndex;
+    return this._stackWidget.currentIndex;
   }
 
   /**
    * Set the index of the currently selected widget.
    */
   set currentIndex(index: number) {
-    this._m_tabBar.currentIndex = index;
+    this._tabBar.currentIndex = index;
   }
 
   /**
    * Get the currently selected widget.
    */
   get currentWidget(): Widget {
-    return this._m_stackWidget.currentWidget;
+    return this._stackWidget.currentWidget;
   }
 
   /**
    * Set the currently selected widget.
    */
   set currentWidget(widget: Widget) {
-    this._m_tabBar.currentIndex = this.widgetIndex(widget);
+    this._tabBar.currentIndex = this.widgetIndex(widget);
   }
 
   /**
    * Get the number of widgets in the tab widget.
    */
   get count(): number {
-    return this._m_tabBar.count;
+    return this._tabBar.count;
   }
 
   /**
    * Get whether the tabs are movable by the user.
    */
   get tabsMovable(): boolean {
-    return this._m_tabBar.tabsMovable;
+    return this._tabBar.tabsMovable;
   }
 
   /**
    * Set whether the tabs are movable by the user.
    */
   set tabsMovable(movable: boolean) {
-    this._m_tabBar.tabsMovable = movable;
+    this._tabBar.tabsMovable = movable;
   }
 
   /**
    * Get the tab bar used by the tab widget.
    */
   get tabBar(): TabBar {
-    return this._m_tabBar;
+    return this._tabBar;
   }
 
   /**
@@ -151,12 +151,12 @@ class TabWidget extends Widget {
    * The old tab bar will be disposed.
    */
   set tabBar(bar: TabBar) {
-    var old = this._m_tabBar;
+    var old = this._tabBar;
     if (!bar || bar === old) {
       return;
     }
     if (old) old.dispose();
-    this._m_tabBar = bar;
+    this._tabBar = bar;
     bar.tabMoved.connect(this._tb_tabMoved, this);
     bar.currentChanged.connect(this._tb_currentChanged, this);
     bar.tabCloseRequested.connect(this._tb_tabCloseRequested, this);
@@ -167,7 +167,7 @@ class TabWidget extends Widget {
    * Get the stack widget used by the tab widget.
    */
   get stackWidget(): StackWidget {
-    return this._m_stackWidget;
+    return this._stackWidget;
   }
 
   /**
@@ -179,12 +179,12 @@ class TabWidget extends Widget {
    * The old stack widget will be disposed.
    */
   set stackWidget(stack: StackWidget) {
-    var old = this._m_stackWidget;
+    var old = this._stackWidget;
     if (!stack || stack === old) {
       return;
     }
     if (old) old.dispose();
-    this._m_stackWidget = stack;
+    this._stackWidget = stack;
     stack.widgetRemoved.connect(this._sw_widgetRemoved, this);
     (<BoxLayout>this.layout).insertWidget(1, stack);
   }
@@ -193,14 +193,14 @@ class TabWidget extends Widget {
    * Get the widget at the given index.
    */
   widgetAt(index: number): Widget {
-    return this._m_stackWidget.widgetAt(index);
+    return this._stackWidget.widgetAt(index);
   }
 
   /**
    * Get the index of the given widget.
    */
   widgetIndex(widget: Widget): number {
-    return this._m_stackWidget.widgetIndex(widget);
+    return this._stackWidget.widgetIndex(widget);
   }
 
   /**
@@ -226,8 +226,8 @@ class TabWidget extends Widget {
     if (i >= 0) {
       return i;
     }
-    index = this._m_stackWidget.insertWidget(index, widget);
-    return this._m_tabBar.insertTab(index, widget.tab);
+    index = this._stackWidget.insertWidget(index, widget);
+    return this._tabBar.insertTab(index, widget.tab);
   }
 
   /**
@@ -236,7 +236,7 @@ class TabWidget extends Widget {
    * Returns the new index of the widget.
    */
   moveWidget(fromIndex: number, toIndex: number): number {
-    return this._m_tabBar.moveTab(fromIndex, toIndex);
+    return this._tabBar.moveTab(fromIndex, toIndex);
   }
 
   /**
@@ -248,22 +248,22 @@ class TabWidget extends Widget {
    * If the widget is not a child, this returns -1.
    */
   removeWidget(widget: Widget): number {
-    return this._m_stackWidget.removeWidget(widget);
+    return this._stackWidget.removeWidget(widget);
   }
 
   /**
    * Handle the `tabMoved` signal from the tab bar.
    */
   private _tb_tabMoved(sender: TabBar, args: ITabMoveArgs): void {
-    this._m_stackWidget.moveWidget(args.fromIndex, args.toIndex);
+    this._stackWidget.moveWidget(args.fromIndex, args.toIndex);
   }
 
   /**
    * Handle the `currentChanged` signal from the tab bar.
    */
   private _tb_currentChanged(sender: TabBar, args: ITabIndexArgs): void {
-    this._m_stackWidget.currentIndex = args.index;
-    var widget = this._m_stackWidget.currentWidget;
+    this._stackWidget.currentIndex = args.index;
+    var widget = this._stackWidget.currentWidget;
     this.currentChanged.emit(this, { index: args.index, widget: widget });
   }
 
@@ -271,18 +271,18 @@ class TabWidget extends Widget {
    * Handle the `tabCloseRequested` signal from the tab bar.
    */
   private _tb_tabCloseRequested(sender: TabBar, args: ITabIndexArgs): void {
-    this._m_stackWidget.widgetAt(args.index).close();
+    this._stackWidget.widgetAt(args.index).close();
   }
 
   /**
    * Handle the `widgetRemoved` signal from the stack widget.
    */
   private _sw_widgetRemoved(sender: StackWidget, args: IStackIndexArgs): void {
-    this._m_tabBar.takeAt(args.index);
+    this._tabBar.takeAt(args.index);
   }
 
-  private _m_tabBar: TabBar = null;
-  private _m_stackWidget: StackWidget = null;
+  private _tabBar: TabBar = null;
+  private _stackWidget: StackWidget = null;
 }
 
 } // module phosphor.widgets

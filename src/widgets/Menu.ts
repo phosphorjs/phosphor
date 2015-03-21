@@ -98,8 +98,8 @@ class Menu extends Widget {
    * Find the root menu of a menu hierarchy.
    */
   static rootMenu(menu: Menu): Menu {
-    while (menu._m_parentMenu) {
-      menu = menu._m_parentMenu;
+    while (menu._parentMenu) {
+      menu = menu._parentMenu;
     }
     return menu;
   }
@@ -108,8 +108,8 @@ class Menu extends Widget {
    * Find the leaf menu of the menu hierarchy.
    */
   static leafMenu(menu: Menu): Menu {
-    while (menu._m_childMenu) {
-      menu = menu._m_childMenu;
+    while (menu._childMenu) {
+      menu = menu._childMenu;
     }
     return menu;
   }
@@ -146,7 +146,7 @@ class Menu extends Widget {
    * This will be null if the menu is not an open submenu.
    */
   get parentMenu(): Menu {
-    return this._m_parentMenu;
+    return this._parentMenu;
   }
 
   /**
@@ -155,14 +155,14 @@ class Menu extends Widget {
    * This will be null if the menu does not have an open submenu.
    */
   get childMenu(): Menu {
-    return this._m_childMenu;
+    return this._childMenu;
   }
 
   /**
    * Get the index of the active (highlighted) item.
    */
   get activeIndex(): number {
-    return this._m_activeIndex;
+    return this._activeIndex;
   }
 
   /**
@@ -171,7 +171,7 @@ class Menu extends Widget {
    * Only a non-separator item can be set as the active item.
    */
   set activeIndex(index: number) {
-    var item = this._m_items[index];
+    var item = this._items[index];
     var ok = item && item.type !== 'separator';
     this._setActiveIndex(ok ? index : -1);
   }
@@ -180,7 +180,7 @@ class Menu extends Widget {
    * Get the active (highlighted) item.
    */
   get activeItem(): MenuItem {
-    return this._m_items[this._m_activeIndex];
+    return this._items[this._activeIndex];
   }
 
   /**
@@ -189,28 +189,28 @@ class Menu extends Widget {
    * Only a non-separator item can be set as the active item.
    */
   set activeItem(item: MenuItem) {
-    this.activeIndex = this._m_items.indexOf(item);
+    this.activeIndex = this._items.indexOf(item);
   }
 
   /**
    * Get the number of menu items in the menu.
    */
   get count(): number {
-    return this._m_items.length;
+    return this._items.length;
   }
 
   /**
    * Get the menu item at the given index.
    */
   itemAt(index: number): MenuItem {
-    return this._m_items[index];
+    return this._items[index];
   }
 
   /**
    * Get the index of the given menu item.
    */
   itemIndex(item: MenuItem): number {
-    return this._m_items.indexOf(item);
+    return this._items.indexOf(item);
   }
 
   /**
@@ -219,7 +219,7 @@ class Menu extends Widget {
    * Returns the new index of the item.
    */
   addItem(item: MenuItem): number {
-    return this.insertItem(this._m_items.length, item);
+    return this.insertItem(this._items.length, item);
   }
 
   /**
@@ -228,7 +228,7 @@ class Menu extends Widget {
    * Returns the new index of the item.
    */
   insertItem(index: number, item: MenuItem): number {
-    var items = this._m_items;
+    var items = this._items;
     index = Math.max(0, Math.min(index | 0, items.length));
     if (index === items.length) {
       items.push(item);
@@ -246,7 +246,7 @@ class Menu extends Widget {
    */
   takeItem(index: number): MenuItem {
     index = index | 0;
-    var items = this._m_items;
+    var items = this._items;
     if (index < 0 || index >= items.length) {
       return void 0;
     }
@@ -266,7 +266,7 @@ class Menu extends Widget {
    * Returns the index of the removed item.
    */
   removeItem(item: MenuItem): number {
-    var index = this._m_items.indexOf(item);
+    var index = this._items.indexOf(item);
     if (index === -1) {
       return -1;
     }
@@ -278,7 +278,7 @@ class Menu extends Widget {
    * Remove all menu items from the menu.
    */
   clearItems(): void {
-    var items = this._m_items;
+    var items = this._items;
     while (items.length) {
       var item = items.pop();
       var index = items.length;
@@ -292,8 +292,8 @@ class Menu extends Widget {
    * This is equivalent to pressing the down arrow key.
    */
   activateNextItem(): void {
-    var k = this._m_activeIndex + 1;
-    var i = firstWrap(this._m_items, it => it.type !== 'separator', k);
+    var k = this._activeIndex + 1;
+    var i = firstWrap(this._items, it => it.type !== 'separator', k);
     this._setActiveIndex(i);
   }
 
@@ -303,8 +303,8 @@ class Menu extends Widget {
    * This is equivalent to pressing the up arrow key.
    */
   activatePreviousItem(): void {
-    var k = this._m_activeIndex - 1;
-    var i = lastWrap(this._m_items, it => it.type !== 'separator', k);
+    var k = this._activeIndex - 1;
+    var i = lastWrap(this._items, it => it.type !== 'separator', k);
     this._setActiveIndex(i);
   }
 
@@ -315,12 +315,12 @@ class Menu extends Widget {
    */
   activateMnemonicItem(key: string): void {
     key = key.toUpperCase();
-    var i = firstWrap(this._m_items, it => {
+    var i = firstWrap(this._items, it => {
       if (it.type !== 'separator' && it.enabled) {
         return it.mnemonic.toUpperCase() === key;
       }
       return false;
-    }, this._m_activeIndex + 1);
+    }, this._activeIndex + 1);
     this._setActiveIndex(i);
   }
 
@@ -332,13 +332,13 @@ class Menu extends Widget {
    * Returns true if the item was opened, false otherwise.
    */
   openActiveItem(): boolean {
-    var index = this._m_activeIndex;
-    var item = this._m_items[index];
+    var index = this._activeIndex;
+    var item = this._items[index];
     if (!item || !item.submenu || !item.enabled) {
       return false;
     }
-    this._openChildMenu(item, this._m_nodes[index], false);
-    this._m_childMenu.activateNextItem();
+    this._openChildMenu(item, this._nodes[index], false);
+    this._childMenu.activateNextItem();
     return true;
   }
 
@@ -350,14 +350,14 @@ class Menu extends Widget {
    * Returns true if the item was triggered, false otherwise.
    */
   triggerActiveItem(): boolean {
-    var index = this._m_activeIndex;
-    var item = this._m_items[index];
+    var index = this._activeIndex;
+    var item = this._items[index];
     if (!item || !item.enabled) {
       return false;
     }
     if (item.submenu) {
-      this._openChildMenu(item, this._m_nodes[index], false);
-      this._m_childMenu.activateNextItem();
+      this._openChildMenu(item, this._nodes[index], false);
+      this._childMenu.activateNextItem();
     } else {
       Menu.rootMenu(this).close();
       item.trigger();
@@ -427,13 +427,13 @@ class Menu extends Widget {
    * A method invoked when a menu item is inserted into the menu.
    */
   protected itemInserted(index: number, item: MenuItem): void {
-    if (this._m_activeIndex !== -1) {
+    if (this._activeIndex !== -1) {
       this._reset();
     }
     var node = createItemNode(item);
-    var next = this._m_nodes[index];
+    var next = this._nodes[index];
     this.node.insertBefore(node, next);
-    this._m_nodes.splice(index, 0, node);
+    this._nodes.splice(index, 0, node);
     node.addEventListener('mouseenter', <any>this);
     item.changed.connect(this._mi_changed, this);
   }
@@ -442,10 +442,10 @@ class Menu extends Widget {
    * A method invoked when a menu item is removed from the menu.
    */
   protected itemRemoved(index: number, item: MenuItem): void {
-    if (this._m_activeIndex !== -1) {
+    if (this._activeIndex !== -1) {
       this._reset();
     }
-    var node = this._m_nodes.splice(index, 1)[0];
+    var node = this._nodes.splice(index, 1)[0];
     this.node.removeChild(node);
     node.removeEventListener('mouseenter', <any>this);
     item.changed.disconnect(this._mi_changed, this);
@@ -522,19 +522,19 @@ class Menu extends Widget {
     this._closeChildMenu();
     this._cancelPendingOpen();
     var node = <HTMLElement>event.currentTarget;
-    var index = this._m_nodes.indexOf(node);
+    var index = this._nodes.indexOf(node);
     if (index === -1) {
       this._setActiveIndex(-1);
       return;
     }
-    var item = this._m_items[index];
+    var item = this._items[index];
     if (item.type === 'separator') {
       this._setActiveIndex(-1);
       return;
     }
     this._setActiveIndex(index);
     if (item.submenu && item.enabled) {
-      if (item === this._m_childItem) {
+      if (item === this._childItem) {
         this._cancelPendingClose();
       } else {
         this._openChildMenu(item, node, true);
@@ -551,7 +551,7 @@ class Menu extends Widget {
     this._cancelPendingOpen();
     var x = event.clientX;
     var y = event.clientY;
-    var child = this._m_childMenu;
+    var child = this._childMenu;
     if (!child || !hitTest(child.node, x, y)) {
       this._setActiveIndex(-1);
       this._closeChildMenu();
@@ -594,7 +594,7 @@ class Menu extends Widget {
     var y = event.clientY;
     while (!hit && menu) {
       hit = hitTest(menu.node, x, y);
-      menu = menu._m_childMenu;
+      menu = menu._childMenu;
     }
     if (!hit) this.close();
   }
@@ -657,9 +657,9 @@ class Menu extends Widget {
    * This updates the class name of the relevant item nodes.
    */
   private _setActiveIndex(index: number): void {
-    var curr = this._m_nodes[this._m_activeIndex];
-    var next = this._m_nodes[index];
-    this._m_activeIndex = index;
+    var curr = this._nodes[this._activeIndex];
+    var next = this._nodes[index];
+    this._activeIndex = index;
     if (curr === next) {
       return;
     }
@@ -675,12 +675,12 @@ class Menu extends Widget {
    * tasks are cleared.
    */
   private _syncAncestors(): void {
-    var menu = this._m_parentMenu;
+    var menu = this._parentMenu;
     while (menu) {
       menu._cancelPendingOpen();
       menu._cancelPendingClose();
       menu._syncChildItem();
-      menu = menu._m_parentMenu;
+      menu = menu._parentMenu;
     }
   }
 
@@ -690,11 +690,11 @@ class Menu extends Widget {
    * This ensures that the active item is the child menu item.
    */
   private _syncChildItem(): void {
-    var menu = this._m_childMenu;
+    var menu = this._childMenu;
     if (!menu) {
       return;
     }
-    var index = this._m_items.indexOf(this._m_childItem);
+    var index = this._items.indexOf(this._childItem);
     if (index === -1) {
       return;
     }
@@ -713,24 +713,24 @@ class Menu extends Widget {
       item: MenuItem,
       node: HTMLElement,
       delayed: boolean): void {
-    if (item === this._m_childItem) {
+    if (item === this._childItem) {
       return;
     }
     this._cancelPendingOpen();
     if (delayed) {
-      this._m_openTimer = setTimeout(() => {
+      this._openTimer = setTimeout(() => {
         var menu = item.submenu;
-        this._m_openTimer = 0;
-        this._m_childItem = item;
-        this._m_childMenu = menu;
-        menu._m_parentMenu = this;
+        this._openTimer = 0;
+        this._childItem = item;
+        this._childMenu = menu;
+        menu._parentMenu = this;
         openSubmenu(menu, node);
       }, OPEN_DELAY);
     } else {
       var menu = item.submenu;
-      this._m_childItem = item;
-      this._m_childMenu = menu;
-      menu._m_parentMenu = this;
+      this._childItem = item;
+      this._childMenu = menu;
+      menu._parentMenu = this;
       openSubmenu(menu, node);
     }
   }
@@ -741,15 +741,15 @@ class Menu extends Widget {
    * If a task is pending or if there is no child menu, this is a no-op.
    */
   private _closeChildMenu(): void {
-    if (this._m_closeTimer || !this._m_childMenu) {
+    if (this._closeTimer || !this._childMenu) {
       return;
     }
-    this._m_closeTimer = setTimeout(() => {
-      this._m_closeTimer = 0;
-      if (this._m_childMenu) {
-        this._m_childMenu.close();
-        this._m_childMenu = null;
-        this._m_childItem = null;
+    this._closeTimer = setTimeout(() => {
+      this._closeTimer = 0;
+      if (this._childMenu) {
+        this._childMenu.close();
+        this._childMenu = null;
+        this._childItem = null;
       }
     }, CLOSE_DELAY);
   }
@@ -763,10 +763,10 @@ class Menu extends Widget {
     this._cancelPendingOpen();
     this._cancelPendingClose();
     this._setActiveIndex(-1);
-    if (this._m_childMenu) {
-      this._m_childMenu.close();
-      this._m_childMenu = null;
-      this._m_childItem = null;
+    if (this._childMenu) {
+      this._childMenu.close();
+      this._childMenu = null;
+      this._childItem = null;
     }
   }
 
@@ -774,24 +774,24 @@ class Menu extends Widget {
    * Remove the menu from its parent menu.
    */
   private _removeFromParentMenu(): void {
-    var parent = this._m_parentMenu;
+    var parent = this._parentMenu;
     if (!parent) {
       return;
     }
-    this._m_parentMenu = null;
+    this._parentMenu = null;
     parent._cancelPendingOpen();
     parent._cancelPendingClose();
-    parent._m_childMenu = null;
-    parent._m_childItem = null;
+    parent._childMenu = null;
+    parent._childItem = null;
   }
 
   /**
    * Cancel any pending child menu open task.
    */
   private _cancelPendingOpen(): void {
-    if (this._m_openTimer) {
-      clearTimeout(this._m_openTimer);
-      this._m_openTimer = 0;
+    if (this._openTimer) {
+      clearTimeout(this._openTimer);
+      this._openTimer = 0;
     }
   }
 
@@ -799,9 +799,9 @@ class Menu extends Widget {
    * Cancel any pending child menu close task.
    */
   private _cancelPendingClose(): void {
-    if (this._m_closeTimer) {
-      clearTimeout(this._m_closeTimer);
-      this._m_closeTimer = 0;
+    if (this._closeTimer) {
+      clearTimeout(this._closeTimer);
+      this._closeTimer = 0;
     }
   }
 
@@ -809,27 +809,27 @@ class Menu extends Widget {
    * Handle the `changed` signal from a menu item.
    */
   private _mi_changed(sender: MenuItem): void {
-    var items = this._m_items;
-    var nodes = this._m_nodes;
+    var items = this._items;
+    var nodes = this._nodes;
     for (var i = 0, n = items.length; i < n; ++i) {
       if (items[i] !== sender) {
         continue;
       }
-      if (i === this._m_activeIndex) {
+      if (i === this._activeIndex) {
         this._reset();
       }
       initItemNode(sender, nodes[i]);
     }
   }
 
-  private _m_childItem: MenuItem = null;
-  private _m_childMenu: Menu = null;
-  private _m_parentMenu: Menu = null;
-  private _m_items: MenuItem[] = [];
-  private _m_nodes: HTMLElement[] = [];
-  private _m_activeIndex = -1;
-  private _m_openTimer = 0;
-  private _m_closeTimer = 0;
+  private _childItem: MenuItem = null;
+  private _childMenu: Menu = null;
+  private _parentMenu: Menu = null;
+  private _items: MenuItem[] = [];
+  private _nodes: HTMLElement[] = [];
+  private _activeIndex = -1;
+  private _openTimer = 0;
+  private _closeTimer = 0;
 }
 
 

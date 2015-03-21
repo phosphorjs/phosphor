@@ -98,21 +98,21 @@ class MenuItem {
    * Get the type of the menu item: 'normal' | 'check' | 'separator'.
    */
   get type(): string {
-    return this._m_type;
+    return this._type;
   }
 
   /**
    * Set the type of the menu item: 'normal' | 'check' | 'separator'.
    */
   set type(type: string) {
-    if (type === this._m_type) {
+    if (type === this._type) {
       return;
     }
     if (type !== 'normal' && type !== 'check' && type !== 'separator') {
       throw new Error('invalid menu item type: ' + type);
     }
-    this._m_type = type;
-    this._m_checked = false;
+    this._type = type;
+    this._checked = false;
     this.changed.emit(this, void 0);
   }
 
@@ -120,17 +120,17 @@ class MenuItem {
    * Get the text for the menu item.
    */
   get text(): string {
-    return this._m_text;
+    return this._text;
   }
 
   /**
    * Set the text for the menu item.
    */
   set text(text: string) {
-    if (text === this._m_text) {
+    if (text === this._text) {
       return;
     }
-    this._m_text = text;
+    this._text = text;
     this.changed.emit(this, void 0);
   }
 
@@ -138,17 +138,17 @@ class MenuItem {
    * Get the mnemonic key for the menu item.
    */
   get mnemonic(): string {
-    return this._m_mnemonic;
+    return this._mnemonic;
   }
 
   /**
    * Set the mnemonic key for the menu item.
    */
   set mnemonic(mnemonic: string) {
-    if (mnemonic === this._m_mnemonic || mnemonic.length > 1) {
+    if (mnemonic === this._mnemonic || mnemonic.length > 1) {
       return;
     }
-    this._m_mnemonic = mnemonic;
+    this._mnemonic = mnemonic;
     this.changed.emit(this, void 0);
   }
 
@@ -156,17 +156,17 @@ class MenuItem {
    * Get the shortcut key for the menu item (decoration only).
    */
   get shortcut(): string {
-    return this._m_shortcut;
+    return this._shortcut;
   }
 
   /**
    * Set the shortcut key for the menu item (decoration only).
    */
   set shortcut(shortcut: string) {
-    if (shortcut === this._m_shortcut) {
+    if (shortcut === this._shortcut) {
       return;
     }
-    this._m_shortcut = shortcut;
+    this._shortcut = shortcut;
     this.changed.emit(this, void 0);
   }
 
@@ -174,17 +174,17 @@ class MenuItem {
    * Get whether the menu item is enabled.
    */
   get enabled(): boolean {
-    return this._m_enabled;
+    return this._enabled;
   }
 
   /**
    * Set whether the menu item is enabled.
    */
   set enabled(enabled: boolean) {
-    if (enabled === this._m_enabled) {
+    if (enabled === this._enabled) {
       return;
     }
-    this._m_enabled = enabled;
+    this._enabled = enabled;
     this.changed.emit(this, void 0);
   }
 
@@ -192,17 +192,17 @@ class MenuItem {
    * Get whether the 'check' type menu item is checked.
    */
   get checked(): boolean {
-    return this._m_checked;
+    return this._checked;
   }
 
   /**
    * Set whether the 'check' type menu item is checked.
    */
   set checked(checked: boolean) {
-    if (this._m_type !== 'check' || checked === this._m_checked) {
+    if (this._type !== 'check' || checked === this._checked) {
       return;
     }
-    this._m_checked = checked;
+    this._checked = checked;
     this.changed.emit(this, void 0);
     this.toggled.emit(this, void 0);
   }
@@ -211,17 +211,17 @@ class MenuItem {
    * Get the submenu for the menu item.
    */
   get submenu(): Menu {
-    return this._m_submenu;
+    return this._submenu;
   }
 
   /**
    * Set the submenu for the menu item.
    */
   set submenu(submenu: Menu) {
-    if (submenu === this._m_submenu) {
+    if (submenu === this._submenu) {
       return;
     }
-    this._m_submenu = submenu;
+    this._submenu = submenu;
     this.changed.emit(this, void 0);
   }
 
@@ -229,17 +229,17 @@ class MenuItem {
    * Get the class name for the menu item.
    */
   get className(): string {
-    return this._m_className;
+    return this._className;
   }
 
   /**
    * Set the class name for the menu item.
    */
   set className(name: string) {
-    if (name === this._m_className) {
+    if (name === this._className) {
       return;
     }
-    this._m_className = name;
+    this._className = name;
     this.changed.emit(this, void 0);
   }
 
@@ -251,7 +251,7 @@ class MenuItem {
    * If the item is a `check` type, it will also be toggled.
    */
   trigger(): void {
-    if (this._m_type === 'check') {
+    if (this._type === 'check') {
       this.checked = !this.checked;
     }
     this.triggered.emit(this, void 0);
@@ -265,25 +265,25 @@ class MenuItem {
       this.type = opts.type;
     }
     if (opts.text !== void 0) {
-      this._m_text = opts.text;
+      this._text = opts.text;
     }
     if (opts.mnemonic !== void 0) {
       this.mnemonic = opts.mnemonic;
     }
     if (opts.shortcut !== void 0) {
-      this._m_shortcut = opts.shortcut;
+      this._shortcut = opts.shortcut;
     }
     if (opts.enabled !== void 0) {
-      this._m_enabled = opts.enabled;
+      this._enabled = opts.enabled;
     }
     if (opts.checked !== void 0) {
       this.checked = opts.checked;
     }
     if (opts.submenu !== void 0) {
-      this._m_submenu = opts.submenu;
+      this._submenu = opts.submenu;
     }
     if (opts.className !== void 0) {
-      this._m_className = opts.className;
+      this._className = opts.className;
     }
     if (opts.onTriggered !== void 0) {
       this.triggered.connect(opts.onTriggered);
@@ -293,14 +293,14 @@ class MenuItem {
     }
   }
 
-  private _m_text: string;
-  private _m_mnemonic = '';
-  private _m_shortcut = '';
-  private _m_className = '';
-  private _m_enabled = true;
-  private _m_type = 'normal';
-  private _m_checked = false;
-  private _m_submenu: Menu = null;
+  private _text: string;
+  private _mnemonic = '';
+  private _shortcut = '';
+  private _className = '';
+  private _enabled = true;
+  private _type = 'normal';
+  private _checked = false;
+  private _submenu: Menu = null;
 }
 
 } // module phosphor.widgets
