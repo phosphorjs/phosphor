@@ -26,8 +26,8 @@ class WidgetItem implements ILayoutItem {
    * Construct a new widget item.
    */
   constructor(widget: Widget, alignment: Alignment = 0) {
-    this._m_widget = widget;
-    this._m_alignment = alignment;
+    this._widget = widget;
+    this._alignment = alignment;
   }
 
   /**
@@ -48,24 +48,24 @@ class WidgetItem implements ILayoutItem {
    * Test whether the item should be treated as hidden.
    */
   get isHidden(): boolean {
-    return this._m_widget.isHidden;
+    return this._widget.isHidden;
   }
 
   /**
    * The widget the item manages, if any.
    */
   get widget(): Widget {
-    return this._m_widget;
+    return this._widget;
   }
 
   /**
    * Test whether the item should be expanded horizontally.
    */
   get expandHorizontal(): boolean {
-    if (this._m_alignment & Alignment.H_Mask) {
+    if (this._alignment & Alignment.H_Mask) {
       return false;
     }
-    if (this._m_widget.horizontalSizePolicy & SizePolicy.ExpandFlag) {
+    if (this._widget.horizontalSizePolicy & SizePolicy.ExpandFlag) {
       return true;
     }
     return false;
@@ -75,10 +75,10 @@ class WidgetItem implements ILayoutItem {
    * Test Whether the item should be expanded vertically.
    */
   get expandVertical(): boolean {
-    if (this._m_alignment & Alignment.V_Mask) {
+    if (this._alignment & Alignment.V_Mask) {
       return false;
     }
-    if (this._m_widget.verticalSizePolicy & SizePolicy.ExpandFlag) {
+    if (this._widget.verticalSizePolicy & SizePolicy.ExpandFlag) {
       return true;
     }
     return false;
@@ -88,77 +88,77 @@ class WidgetItem implements ILayoutItem {
    * Get the alignment of the item in its layout cell.
    */
   get alignment(): Alignment {
-    return this._m_alignment;
+    return this._alignment;
   }
 
   /**
    * Set the alignment of the item in its layout cell.
    */
   set alignment(alignment: Alignment) {
-    this._m_alignment = alignment;
+    this._alignment = alignment;
   }
 
   /**
    * Invalidate the cached data for the item.
    */
   invalidate(): void {
-    this._m_origHint = null;
-    this._m_sizeHint = null;
-    this._m_minSize = null;
-    this._m_maxSize = null;
+    this._origHint = null;
+    this._sizeHint = null;
+    this._minSize = null;
+    this._maxSize = null;
   }
 
   /**
    * Compute the preferred size of the item.
    */
   sizeHint(): Size {
-    if (this._m_sizeHint === null) {
+    if (this._sizeHint === null) {
       this._updateSizes();
     }
-    return this._m_sizeHint;
+    return this._sizeHint;
   }
 
   /**
    * Compute the minimum size of the item.
    */
   minSize(): Size {
-    if (this._m_minSize === null) {
+    if (this._minSize === null) {
       this._updateSizes();
     }
-    return this._m_minSize;
+    return this._minSize;
   }
 
   /**
    * Compute the maximum size of the item.
    */
   maxSize(): Size {
-    if (this._m_maxSize === null) {
+    if (this._maxSize === null) {
       this._updateSizes();
     }
-    return this._m_maxSize;
+    return this._maxSize;
   }
 
   /**
    * Set the geometry of the item.
    */
   setGeometry(x: number, y: number, width: number, height: number): void {
-    var widget = this._m_widget;
+    var widget = this._widget;
     if (widget.isHidden) {
       return;
     }
     var w = width;
     var h = height;
-    var alignment = this._m_alignment;
+    var alignment = this._alignment;
     if (alignment & Alignment.H_Mask) {
       var igW = widget.horizontalSizePolicy === SizePolicy.Ignored;
-      w = Math.min(w, igW ? this._m_origHint.width : this._m_sizeHint.width);
+      w = Math.min(w, igW ? this._origHint.width : this._sizeHint.width);
     }
     if (alignment & Alignment.V_Mask) {
       var igH = widget.verticalSizePolicy === SizePolicy.Ignored;
-      h = Math.min(h, igH ? this._m_origHint.height : this._m_sizeHint.height);
+      h = Math.min(h, igH ? this._origHint.height : this._sizeHint.height);
     }
-    var minSize = this._m_minSize;
-    var maxSize = this._m_maxSize;
+    var minSize = this._minSize;
+    var maxSize = this._maxSize;
     var w = Math.max(minSize.width, Math.min(w, maxSize.width));
     var h = Math.max(minSize.height, Math.min(h, maxSize.height));
     if (alignment & Alignment.Right) {
@@ -178,13 +178,13 @@ class WidgetItem implements ILayoutItem {
    * Update the computed sizes for the widget item.
    */
   private _updateSizes(): void {
-    var widget = this._m_widget;
+    var widget = this._widget;
     if (widget.isHidden) {
       var zero = new Size(0, 0);
-      this._m_origHint = zero;
-      this._m_sizeHint = zero;
-      this._m_minSize = zero;
-      this._m_maxSize = zero;
+      this._origHint = zero;
+      this._sizeHint = zero;
+      this._minSize = zero;
+      this._maxSize = zero;
       return;
     }
     var min = widget.minSize;
@@ -194,19 +194,19 @@ class WidgetItem implements ILayoutItem {
     var xHint = widget.maxSizeHint();
     var vsp = widget.verticalSizePolicy;
     var hsp = widget.horizontalSizePolicy;
-    var al = this._m_alignment;
-    this._m_origHint = sHint;
-    this._m_sizeHint = makeSizeHint(sHint, mHint, min, max, hsp, vsp);
-    this._m_minSize = makeMinSize(sHint, mHint, min, max, hsp, vsp);
-    this._m_maxSize = makeMaxSize(sHint, mHint, xHint, min, max, hsp, vsp, al);
+    var al = this._alignment;
+    this._origHint = sHint;
+    this._sizeHint = makeSizeHint(sHint, mHint, min, max, hsp, vsp);
+    this._minSize = makeMinSize(sHint, mHint, min, max, hsp, vsp);
+    this._maxSize = makeMaxSize(sHint, mHint, xHint, min, max, hsp, vsp, al);
   }
 
-  private _m_widget: Widget;
-  private _m_alignment: Alignment;
-  private _m_origHint: Size = null;
-  private _m_sizeHint: Size = null;
-  private _m_minSize: Size = null;
-  private _m_maxSize: Size = null;
+  private _widget: Widget;
+  private _alignment: Alignment;
+  private _origHint: Size = null;
+  private _sizeHint: Size = null;
+  private _minSize: Size = null;
+  private _maxSize: Size = null;
 }
 
 

@@ -61,14 +61,14 @@ class SpacerItem implements ILayoutItem {
    * Test whether the item should be expanded horizontally.
    */
   get expandHorizontal(): boolean {
-    return (this._m_hPolicy & SizePolicy.ExpandFlag) !== 0;
+    return (this._hPolicy & SizePolicy.ExpandFlag) !== 0;
   }
 
   /**
    * Test Whether the item should be expanded vertically.
    */
   get expandVertical(): boolean {
-    return (this._m_vPolicy & SizePolicy.ExpandFlag) !== 0;
+    return (this._vPolicy & SizePolicy.ExpandFlag) !== 0;
   }
 
   /**
@@ -86,21 +86,21 @@ class SpacerItem implements ILayoutItem {
   setSize(width: number, height: number, hPolicy: SizePolicy, vPolicy: SizePolicy): void {
     var w = Math.max(0, width);
     var h = Math.max(0, height);
-    this._m_size = new Size(w, h);
-    this._m_hPolicy = hPolicy;
-    this._m_vPolicy = vPolicy;
+    this._size = new Size(w, h);
+    this._hPolicy = hPolicy;
+    this._vPolicy = vPolicy;
   }
 
   /**
    * Transpose the effective orientation of the spacer item.
    */
   transpose(): void {
-    var size = this._m_size;
-    var hPolicy = this._m_hPolicy;
-    var vPolicy = this._m_vPolicy;
-    this._m_size = new Size(size.height, size.width);
-    this._m_vPolicy = hPolicy;
-    this._m_hPolicy = vPolicy;
+    var size = this._size;
+    var hPolicy = this._hPolicy;
+    var vPolicy = this._vPolicy;
+    this._size = new Size(size.height, size.width);
+    this._vPolicy = hPolicy;
+    this._hPolicy = vPolicy;
   }
 
   /**
@@ -112,16 +112,16 @@ class SpacerItem implements ILayoutItem {
    * Compute the preferred size of the item.
    */
   sizeHint(): Size {
-    return this._m_size;
+    return this._size;
   }
 
   /**
    * Compute the minimum size of the item.
    */
   minSize(): Size {
-    var size = this._m_size;
-    var w = this._m_hPolicy & SizePolicy.ShrinkFlag ? 0 : size.width;
-    var h = this._m_vPolicy & SizePolicy.ShrinkFlag ? 0 : size.height;
+    var size = this._size;
+    var w = this._hPolicy & SizePolicy.ShrinkFlag ? 0 : size.width;
+    var h = this._vPolicy & SizePolicy.ShrinkFlag ? 0 : size.height;
     return new Size(w, h);
   }
 
@@ -129,9 +129,9 @@ class SpacerItem implements ILayoutItem {
    * Compute the maximum size of the item.
    */
   maxSize(): Size {
-    var size = this._m_size;
-    var w = this._m_hPolicy & SizePolicy.GrowFlag ? Infinity : size.width;
-    var h = this._m_vPolicy & SizePolicy.GrowFlag ? Infinity : size.height;
+    var size = this._size;
+    var w = this._hPolicy & SizePolicy.GrowFlag ? Infinity : size.width;
+    var h = this._vPolicy & SizePolicy.GrowFlag ? Infinity : size.height;
     return new Size(w, h);
   }
 
@@ -140,9 +140,9 @@ class SpacerItem implements ILayoutItem {
    */
   setGeometry(x: number, y: number, width: number, height: number): void { }
 
-  private _m_size: Size;
-  private _m_hPolicy: SizePolicy;
-  private _m_vPolicy: SizePolicy;
+  private _size: Size;
+  private _hPolicy: SizePolicy;
+  private _vPolicy: SizePolicy;
 }
 
 } // module phosphor.layout

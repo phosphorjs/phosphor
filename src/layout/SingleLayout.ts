@@ -31,7 +31,7 @@ class SingleLayout extends Layout {
    * Dispose of the resources held by the layout.
    */
   dispose(): void {
-    this._m_widgetItem = null;
+    this._widgetItem = null;
     super.dispose();
   }
 
@@ -39,7 +39,7 @@ class SingleLayout extends Layout {
    * Get the widget managed by the layout.
    */
   get widget(): Widget {
-    var item = this._m_widgetItem;
+    var item = this._widgetItem;
     return item ? item.widget : null;
   }
 
@@ -47,11 +47,11 @@ class SingleLayout extends Layout {
    * Set the widget managed by the layout.
    */
   set widget(widget: Widget) {
-    var item = this._m_widgetItem;
+    var item = this._widgetItem;
     if (item && item.widget === widget) {
       return;
     }
-    this._m_widgetItem = new WidgetItem(widget);
+    this._widgetItem = new WidgetItem(widget);
     this.addChildWidget(widget);
     this.invalidate();
   }
@@ -60,14 +60,14 @@ class SingleLayout extends Layout {
    * Get the number of layout items in the layout.
    */
   get count(): number {
-    return this._m_widgetItem ? 1 : 0;
+    return this._widgetItem ? 1 : 0;
   }
 
   /**
    * Get the layout item at the specified index.
    */
   itemAt(index: number): ILayoutItem {
-    var item = this._m_widgetItem;
+    var item = this._widgetItem;
     if (item && index === 0) {
       return item;
     }
@@ -78,9 +78,9 @@ class SingleLayout extends Layout {
    * Remove and return the layout item at the specified index.
    */
   takeAt(index: number): ILayoutItem {
-    var item = this._m_widgetItem;
+    var item = this._widgetItem;
     if (item && index === 0) {
-      this._m_widgetItem = null;
+      this._widgetItem = null;
       this.invalidate();
       return item;
     }
@@ -91,7 +91,7 @@ class SingleLayout extends Layout {
    * Invalidate the cached layout data and enqueue an update.
    */
   invalidate(): void {
-    this._m_dirty = true;
+    this._dirty = true;
     super.invalidate();
   }
 
@@ -99,30 +99,30 @@ class SingleLayout extends Layout {
    * Compute the preferred size of the layout.
    */
   sizeHint(): Size {
-    if (this._m_dirty) {
+    if (this._dirty) {
       this._setupGeometry();
     }
-    return this._m_sizeHint;
+    return this._sizeHint;
   }
 
   /**
    * Compute the minimum size of the layout.
    */
   minSize(): Size {
-    if (this._m_dirty) {
+    if (this._dirty) {
       this._setupGeometry();
     }
-    return this._m_minSize;
+    return this._minSize;
   }
 
   /**
    * Compute the maximum size of the layout.
    */
   maxSize(): Size {
-    if (this._m_dirty) {
+    if (this._dirty) {
       this._setupGeometry();
     }
-    return this._m_maxSize;
+    return this._maxSize;
   }
 
   /**
@@ -138,13 +138,13 @@ class SingleLayout extends Layout {
     if (!parent) {
       return;
     }
-    var item = this._m_widgetItem;
+    var item = this._widgetItem;
     if (!item) {
       return;
     }
 
     // Refresh the layout items if needed.
-    if (this._m_dirty) {
+    if (this._dirty) {
       this._setupGeometry();
     }
 
@@ -162,18 +162,18 @@ class SingleLayout extends Layout {
    */
   private _setupGeometry(): void {
     // Bail early when no work needs to be done.
-    if (!this._m_dirty) {
+    if (!this._dirty) {
       return;
     }
-    this._m_dirty = false;
+    this._dirty = false;
 
     // No parent means the layout is not yet attached.
     var parent = this.parentWidget;
     if (!parent) {
       var zero = new Size(0, 0);
-      this._m_sizeHint = zero;
-      this._m_minSize = zero;
-      this._m_maxSize = zero;
+      this._sizeHint = zero;
+      this._minSize = zero;
+      this._maxSize = zero;
       return;
     }
 
@@ -184,7 +184,7 @@ class SingleLayout extends Layout {
     var minH = 0;
     var maxW = Infinity;
     var maxH = Infinity;
-    var item = this._m_widgetItem;
+    var item = this._widgetItem;
     if (item) {
       item.invalidate();
       var itemHint = item.sizeHint();
@@ -210,16 +210,16 @@ class SingleLayout extends Layout {
     maxH += boxH;
 
     // Update the internal sizes.
-    this._m_sizeHint = new Size(hintW, hintH);
-    this._m_minSize = new Size(minW, minH);
-    this._m_maxSize = new Size(maxW, maxH);
+    this._sizeHint = new Size(hintW, hintH);
+    this._minSize = new Size(minW, minH);
+    this._maxSize = new Size(maxW, maxH);
   }
 
-  private _m_dirty = true;
-  private _m_sizeHint: Size = null;
-  private _m_minSize: Size = null;
-  private _m_maxSize: Size = null;
-  private _m_widgetItem: WidgetItem = null;
+  private _dirty = true;
+  private _sizeHint: Size = null;
+  private _minSize: Size = null;
+  private _maxSize: Size = null;
+  private _widgetItem: WidgetItem = null;
 }
 
 } // module phosphor.layout

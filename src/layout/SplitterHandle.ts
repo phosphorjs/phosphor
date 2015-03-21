@@ -45,7 +45,7 @@ class SplitterHandle {
    * Construct a new splitter handle.
    */
   constructor(orientation: Orientation) {
-    this._m_node = this.createNode();
+    this._node = this.createNode();
     this.orientation = orientation;
   }
 
@@ -53,21 +53,21 @@ class SplitterHandle {
    * Get whether the handle is hidden.
    */
   get hidden(): boolean {
-    return this._m_hidden;
+    return this._hidden;
   }
 
   /**
    * Set whether the handle is hidden.
    */
   set hidden(hidden: boolean) {
-    if (hidden === this._m_hidden) {
+    if (hidden === this._hidden) {
       return;
     }
-    this._m_hidden = hidden;
+    this._hidden = hidden;
     if (hidden) {
-      this._m_node.classList.add(HIDDEN_CLASS);
+      this._node.classList.add(HIDDEN_CLASS);
     } else {
-      this._m_node.classList.remove(HIDDEN_CLASS);
+      this._node.classList.remove(HIDDEN_CLASS);
     }
   }
 
@@ -75,17 +75,17 @@ class SplitterHandle {
    * Get the orientation of the handle.
    */
   get orientation(): Orientation {
-    return this._m_orientation;
+    return this._orientation;
   }
 
   /**
    * Set the orientation of the handle.
    */
   set orientation(value: Orientation) {
-    if (value === this._m_orientation) {
+    if (value === this._orientation) {
       return;
     }
-    var node = this._m_node;
+    var node = this._node;
     if (value === Orientation.Horizontal) {
       node.classList.remove(VERTICAL_CLASS);
       node.classList.add(HORIZONTAL_CLASS);
@@ -93,14 +93,14 @@ class SplitterHandle {
       node.classList.remove(HORIZONTAL_CLASS);
       node.classList.add(VERTICAL_CLASS);
     }
-    this._m_orientation = value;
+    this._orientation = value;
   }
 
   /**
    * Get the DOM node for the handle.
    */
   get node(): HTMLElement {
-    return this._m_node;
+    return this._node;
   }
 
   /**
@@ -115,9 +115,9 @@ class SplitterHandle {
     return node;
   }
 
-  private _m_hidden = false;
-  private _m_node: HTMLElement;
-  private _m_orientation: Orientation;
+  private _hidden = false;
+  private _node: HTMLElement;
+  private _orientation: Orientation;
 }
 
 } // module phosphor.layout

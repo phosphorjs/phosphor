@@ -26,16 +26,16 @@ class BoxLayout extends Layout {
    */
   constructor(direction: Direction, spacing = 8) {
     super();
-    this._m_direction = direction;
-    this._m_spacing = Math.max(0, spacing);
+    this._direction = direction;
+    this._spacing = Math.max(0, spacing);
   }
 
   /**
    * Dispose of the resources held by the layout.
    */
   dispose(): void {
-    this._m_sizingItems = null;
-    this._m_layoutItems = null;
+    this._sizingItems = null;
+    this._layoutItems = null;
     super.dispose();
   }
 
@@ -43,26 +43,26 @@ class BoxLayout extends Layout {
    * Get the layout direction for the box layout.
    */
   get direction(): Direction {
-    return this._m_direction;
+    return this._direction;
   }
 
   /**
    * Set the layout direction for the box layout.
    */
   set direction(direction: Direction) {
-    if (direction === this._m_direction) {
+    if (direction === this._direction) {
       return;
     }
-    var wasHoriz = isHorizontal(this._m_direction);
+    var wasHoriz = isHorizontal(this._direction);
     var nowHoriz = isHorizontal(direction);
     if (wasHoriz !== nowHoriz) {
-      this._m_layoutItems.forEach(item => {
+      this._layoutItems.forEach(item => {
         if (item instanceof SpacerItem) {
           (<SpacerItem>item).transpose();
         }
       });
     }
-    this._m_direction = direction;
+    this._direction = direction;
     this.invalidate();
   }
 
@@ -70,7 +70,7 @@ class BoxLayout extends Layout {
    * Get the inter-element fixed spacing for the box layout.
    */
   get spacing(): number {
-    return this._m_spacing;
+    return this._spacing;
   }
 
   /**
@@ -78,10 +78,10 @@ class BoxLayout extends Layout {
    */
   set spacing(spacing: number) {
     spacing = Math.max(0, spacing);
-    if (spacing === this._m_spacing) {
+    if (spacing === this._spacing) {
       return;
     }
-    this._m_spacing = spacing;
+    this._spacing = spacing;
     this.invalidate();
   }
 
@@ -89,14 +89,14 @@ class BoxLayout extends Layout {
    * Get the number of layout items in the layout.
    */
   get count(): number {
-    return this._m_layoutItems.length;
+    return this._layoutItems.length;
   }
 
   /**
    * Get the layout item at the specified index.
    */
   itemAt(index: number): ILayoutItem {
-    return this._m_layoutItems[index];
+    return this._layoutItems[index];
   }
 
   /**
@@ -104,11 +104,11 @@ class BoxLayout extends Layout {
    */
   takeAt(index: number): ILayoutItem {
     index = index | 0;
-    if (index < 0 || index >= this._m_layoutItems.length) {
+    if (index < 0 || index >= this._layoutItems.length) {
       return void 0;
     }
-    var item = this._m_layoutItems.splice(index, 1)[0];
-    this._m_sizingItems.splice(index, 1);
+    var item = this._layoutItems.splice(index, 1)[0];
+    this._sizingItems.splice(index, 1);
     this.invalidate();
     return item;
   }
@@ -120,7 +120,7 @@ class BoxLayout extends Layout {
    */
   moveItem(fromIndex: number, toIndex: number): number {
     fromIndex = fromIndex | 0;
-    var n = this._m_layoutItems.length;
+    var n = this._layoutItems.length;
     if (fromIndex < 0 || fromIndex >= n) {
       return -1;
     }
@@ -128,10 +128,10 @@ class BoxLayout extends Layout {
     if (fromIndex === toIndex) {
       return toIndex;
     }
-    var item = this._m_layoutItems.splice(fromIndex, 1)[0];
-    this._m_layoutItems.splice(toIndex, 0, item);
-    var sizeItem = this._m_sizingItems.splice(fromIndex, 1)[0];
-    this._m_sizingItems.splice(toIndex, 0, sizeItem);
+    var item = this._layoutItems.splice(fromIndex, 1)[0];
+    this._layoutItems.splice(toIndex, 0, item);
+    var sizeItem = this._sizingItems.splice(fromIndex, 1)[0];
+    this._sizingItems.splice(toIndex, 0, sizeItem);
     this.invalidate();
     return toIndex;
   }
@@ -179,7 +179,7 @@ class BoxLayout extends Layout {
    * Returns the index of the added space.
    */
   insertSpacing(index: number, size: number): number {
-    var item = createFixedSpacer(this._m_direction, size);
+    var item = createFixedSpacer(this._direction, size);
     return this._insertItem(index, item, 0);
   }
 
@@ -196,7 +196,7 @@ class BoxLayout extends Layout {
    * Insert stretchable space at the given index.
    */
   insertStretch(index: number, stretch = 0): number {
-    var item = createStretchSpacer(this._m_direction);
+    var item = createStretchSpacer(this._direction);
     return this._insertItem(index, item, stretch);
   }
 
@@ -206,7 +206,7 @@ class BoxLayout extends Layout {
    * Returns -1 if the index is out of range.
    */
   stretchAt(index: number): number {
-    var item = this._m_sizingItems[index];
+    var item = this._sizingItems[index];
     return item ? item.stretch : - 1;
   }
 
@@ -215,7 +215,7 @@ class BoxLayout extends Layout {
    */
   setStretch(index: number, stretch: number): void {
     stretch = Math.max(0, stretch | 0);
-    var item = this._m_sizingItems[index];
+    var item = this._sizingItems[index];
     if (item && item.stretch !== stretch) {
       item.stretch = stretch;
       this.invalidate();
@@ -226,7 +226,7 @@ class BoxLayout extends Layout {
    * Invalidate the cached layout data and enqueue an update.
    */
   invalidate(): void {
-    this._m_dirty = true;
+    this._dirty = true;
     super.invalidate();
   }
 
@@ -234,30 +234,30 @@ class BoxLayout extends Layout {
    * Compute the preferred size of the layout.
    */
   sizeHint(): Size {
-    if (this._m_dirty) {
+    if (this._dirty) {
       this._setupGeometry();
     }
-    return this._m_sizeHint;
+    return this._sizeHint;
   }
 
   /**
    * Compute the minimum size of the layout.
    */
   minSize(): Size {
-    if (this._m_dirty) {
+    if (this._dirty) {
       this._setupGeometry();
     }
-    return this._m_minSize;
+    return this._minSize;
   }
 
   /**
    * Compute the maximum size of the layout.
    */
   maxSize(): Size {
-    if (this._m_dirty) {
+    if (this._dirty) {
       this._setupGeometry();
     }
-    return this._m_maxSize;
+    return this._maxSize;
   }
 
   /**
@@ -273,13 +273,13 @@ class BoxLayout extends Layout {
     if (!parent) {
       return;
     }
-    var layoutItems = this._m_layoutItems;
+    var layoutItems = this._layoutItems;
     if (layoutItems.length === 0) {
       return;
     }
 
     // Refresh the layout items if needed.
-    if (this._m_dirty) {
+    if (this._dirty) {
       this._setupGeometry();
     }
 
@@ -287,13 +287,13 @@ class BoxLayout extends Layout {
     var boxD = parent.boxData;
     var width = parent.width - boxD.horizontalSum;
     var height = parent.height - boxD.verticalSum;
-    var dir = this._m_direction;
-    var sizingItems = this._m_sizingItems;
-    var lastSpaceIndex = this._m_lastSpaceIndex;
+    var dir = this._direction;
+    var sizingItems = this._sizingItems;
+    var lastSpaceIndex = this._lastSpaceIndex;
 
     // Distribute the layout space to the sizing items.
     var mainSpace = isHorizontal(dir) ? width : height;
-    layoutCalc(sizingItems, mainSpace - this._m_fixedSpace);
+    layoutCalc(sizingItems, mainSpace - this._fixedSpace);
 
     // Update the geometry of the items according to the layout
     // direction. Fixed spacing is added before each item which
@@ -305,7 +305,7 @@ class BoxLayout extends Layout {
     var y = boxD.paddingTop;
     var x = boxD.paddingLeft;
     var lastWasWidget = false;
-    var spacing = this._m_spacing;
+    var spacing = this._spacing;
     var count = layoutItems.length;
     if (dir === Direction.LeftToRight) {
       for (var i = 0; i < count; ++i) {
@@ -373,19 +373,19 @@ class BoxLayout extends Layout {
    */
   private _setupGeometry(): void {
     // Bail early when no work needs to be done.
-    if (!this._m_dirty) {
+    if (!this._dirty) {
       return;
     }
-    this._m_dirty = false;
+    this._dirty = false;
 
     // No parent means the layout is not yet attached.
     var parent = this.parentWidget;
     if (!parent) {
       var zero = new Size(0, 0);
-      this._m_sizeHint = zero;
-      this._m_minSize = zero;
-      this._m_maxSize = zero;
-      this._m_fixedSpace = 0;
+      this._sizeHint = zero;
+      this._minSize = zero;
+      this._maxSize = zero;
+      this._fixedSpace = 0;
       return;
     }
 
@@ -394,7 +394,7 @@ class BoxLayout extends Layout {
     // typically on a collapsed event. It also finds the last visible
     // widget item index, which is needed for fixed spacing allocation.
     var lastSpaceIndex = -1;
-    var layoutItems = this._m_layoutItems;
+    var layoutItems = this._layoutItems;
     var count = layoutItems.length;
     for (var i = 0; i < count; ++i) {
       var item = layoutItems[i];
@@ -413,9 +413,9 @@ class BoxLayout extends Layout {
     var maxH: number;
     var fixedSpace = 0;
     var lastWasWidget = false;
-    var dir = this._m_direction;
-    var spacing = this._m_spacing;
-    var sizingItems = this._m_sizingItems;
+    var dir = this._direction;
+    var spacing = this._spacing;
+    var sizingItems = this._sizingItems;
 
     // Compute the size bounds according to the layout orientation.
     // Empty layout items behave as if they don't exist and fixed
@@ -507,11 +507,11 @@ class BoxLayout extends Layout {
     maxH += boxH;
 
     // Update the internal sizes.
-    this._m_sizeHint = new Size(hintW, hintH);
-    this._m_minSize = new Size(minW, minH);
-    this._m_maxSize = new Size(maxW, maxH);
-    this._m_fixedSpace = fixedSpace;
-    this._m_lastSpaceIndex = lastSpaceIndex;
+    this._sizeHint = new Size(hintW, hintH);
+    this._minSize = new Size(minW, minH);
+    this._maxSize = new Size(maxW, maxH);
+    this._fixedSpace = fixedSpace;
+    this._lastSpaceIndex = lastSpaceIndex;
   }
 
   /**
@@ -521,23 +521,23 @@ class BoxLayout extends Layout {
    */
   private _insertItem(index: number, item: ILayoutItem, stretch: number): number {
     var sizingItem = createSizingItem(Math.max(0, stretch | 0));
-    index = Math.max(0, Math.min(index | 0, this._m_layoutItems.length));
-    this._m_layoutItems.splice(index, 0, item);
-    this._m_sizingItems.splice(index, 0, sizingItem);
+    index = Math.max(0, Math.min(index | 0, this._layoutItems.length));
+    this._layoutItems.splice(index, 0, item);
+    this._sizingItems.splice(index, 0, sizingItem);
     this.invalidate();
     return index;
   }
 
-  private _m_dirty = true;
-  private _m_fixedSpace = 0;
-  private _m_spacing: number;
-  private _m_lastSpaceIndex = -1;
-  private _m_direction: Direction;
-  private _m_sizeHint: Size = null;
-  private _m_minSize: Size = null;
-  private _m_maxSize: Size = null;
-  private _m_sizingItems: SizingItem[] = [];
-  private _m_layoutItems: ILayoutItem[] = [];
+  private _dirty = true;
+  private _fixedSpace = 0;
+  private _spacing: number;
+  private _lastSpaceIndex = -1;
+  private _direction: Direction;
+  private _sizeHint: Size = null;
+  private _minSize: Size = null;
+  private _maxSize: Size = null;
+  private _sizingItems: SizingItem[] = [];
+  private _layoutItems: ILayoutItem[] = [];
 }
 
 

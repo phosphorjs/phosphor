@@ -55,7 +55,7 @@ class StackLayout extends Layout {
    * Dispose of the resources held by the layout.
    */
   dispose(): void {
-    this._m_layoutItems = null;
+    this._layoutItems = null;
     this.currentChanged.disconnect();
     this.widgetRemoved.disconnect();
     super.dispose();
@@ -65,7 +65,7 @@ class StackLayout extends Layout {
    * Get the current index of the stack.
    */
   get currentIndex(): number {
-    return this._m_currentIndex;
+    return this._currentIndex;
   }
 
   /**
@@ -78,7 +78,7 @@ class StackLayout extends Layout {
       return;
     }
     index = next ? index : -1;
-    this._m_currentIndex = index;
+    this._currentIndex = index;
     if (prev) prev.hide();
     if (next) next.show();
     // IE repaints before firing the animation frame which processes
@@ -107,14 +107,14 @@ class StackLayout extends Layout {
    * Get the number of layout items in the layout.
    */
   get count(): number {
-    return this._m_layoutItems.length;
+    return this._layoutItems.length;
   }
 
   /**
    * Get the layout item at the specified index.
    */
   itemAt(index: number): ILayoutItem {
-    return this._m_layoutItems[index];
+    return this._layoutItems[index];
   }
 
   /**
@@ -122,16 +122,16 @@ class StackLayout extends Layout {
    */
   takeAt(index: number): ILayoutItem {
     index = index | 0;
-    if (index < 0 || index >= this._m_layoutItems.length) {
+    if (index < 0 || index >= this._layoutItems.length) {
       return void 0;
     }
-    var item = this._m_layoutItems.splice(index, 1)[0];
-    if (index === this._m_currentIndex) {
-      this._m_currentIndex = -1;
+    var item = this._layoutItems.splice(index, 1)[0];
+    if (index === this._currentIndex) {
+      this._currentIndex = -1;
       this.invalidate();
       this.currentChanged.emit(this, { index: -1, widget: void 0 });
-    } else if (index < this._m_currentIndex) {
-      this._m_currentIndex--;
+    } else if (index < this._currentIndex) {
+      this._currentIndex--;
     }
     this.widgetRemoved.emit(this, { index: index, widget: item.widget });
     return item;
@@ -144,7 +144,7 @@ class StackLayout extends Layout {
    */
   moveItem(fromIndex: number, toIndex: number): number {
     fromIndex = fromIndex | 0;
-    var n = this._m_layoutItems.length;
+    var n = this._layoutItems.length;
     if (fromIndex < 0 || fromIndex >= n) {
       return -1;
     }
@@ -152,16 +152,16 @@ class StackLayout extends Layout {
     if (fromIndex === toIndex) {
       return toIndex;
     }
-    var item = this._m_layoutItems.splice(fromIndex, 1)[0];
-    this._m_layoutItems.splice(toIndex, 0, item);
-    var current = this._m_currentIndex;
+    var item = this._layoutItems.splice(fromIndex, 1)[0];
+    this._layoutItems.splice(toIndex, 0, item);
+    var current = this._currentIndex;
     if (fromIndex === current) {
       current = toIndex;
     } else {
       if (fromIndex < current) current--;
       if (toIndex <= current) current++;
     }
-    this._m_currentIndex = current;
+    this._currentIndex = current;
     return toIndex;
   }
 
@@ -173,7 +173,7 @@ class StackLayout extends Layout {
    * Returns the index of the added widget.
    */
   addWidget(widget: Widget): number {
-    return this.insertWidget(this._m_layoutItems.length, widget);
+    return this.insertWidget(this._layoutItems.length, widget);
   }
 
   /**
@@ -190,10 +190,10 @@ class StackLayout extends Layout {
     }
     widget.hide();
     this.addChildWidget(widget);
-    index = Math.max(0, Math.min(index | 0, this._m_layoutItems.length));
-    this._m_layoutItems.splice(index, 0, new WidgetItem(widget));
-    if (index <= this._m_currentIndex) {
-      this._m_currentIndex++;
+    index = Math.max(0, Math.min(index | 0, this._layoutItems.length));
+    this._layoutItems.splice(index, 0, new WidgetItem(widget));
+    if (index <= this._currentIndex) {
+      this._currentIndex++;
     }
     return index;
   }
@@ -202,7 +202,7 @@ class StackLayout extends Layout {
    * Invalidate the cached layout data and enqueue an update.
    */
   invalidate(): void {
-    this._m_dirty = true;
+    this._dirty = true;
     super.invalidate();
   }
 
@@ -210,30 +210,30 @@ class StackLayout extends Layout {
    * Compute the preferred size of the layout.
    */
   sizeHint(): Size {
-    if (this._m_dirty) {
+    if (this._dirty) {
       this._setupGeometry();
     }
-    return this._m_sizeHint;
+    return this._sizeHint;
   }
 
   /**
    * Compute the minimum size of the layout.
    */
   minSize(): Size {
-    if (this._m_dirty) {
+    if (this._dirty) {
       this._setupGeometry();
     }
-    return this._m_minSize;
+    return this._minSize;
   }
 
   /**
    * Compute the maximum size of the layout.
    */
   maxSize(): Size {
-    if (this._m_dirty) {
+    if (this._dirty) {
       this._setupGeometry();
     }
-    return this._m_maxSize;
+    return this._maxSize;
   }
 
   /**
@@ -249,13 +249,13 @@ class StackLayout extends Layout {
     if (!parent) {
       return;
     }
-    var item = this._m_layoutItems[this._m_currentIndex];
+    var item = this._layoutItems[this._currentIndex];
     if (!item) {
       return;
     }
 
     // Refresh the layout items if needed.
-    if (this._m_dirty) {
+    if (this._dirty) {
       this._setupGeometry();
     }
 
@@ -273,18 +273,18 @@ class StackLayout extends Layout {
    */
   private _setupGeometry(): void {
     // Bail early when no work needs to be done.
-    if (!this._m_dirty) {
+    if (!this._dirty) {
       return;
     }
-    this._m_dirty = false;
+    this._dirty = false;
 
     // No parent means the layout is not yet attached.
     var parent = this.parentWidget;
     if (!parent) {
       var zero = new Size(0, 0);
-      this._m_sizeHint = zero;
-      this._m_minSize = zero;
-      this._m_maxSize = zero;
+      this._sizeHint = zero;
+      this._minSize = zero;
+      this._maxSize = zero;
       return;
     }
 
@@ -295,7 +295,7 @@ class StackLayout extends Layout {
     var minH = 0;
     var maxW = Infinity;
     var maxH = Infinity;
-    var item = this._m_layoutItems[this._m_currentIndex];
+    var item = this._layoutItems[this._currentIndex];
     if (item) {
       item.invalidate();
       var itemHint = item.sizeHint();
@@ -321,17 +321,17 @@ class StackLayout extends Layout {
     maxH += boxH;
 
     // Update the internal sizes.
-    this._m_sizeHint = new Size(hintW, hintH);
-    this._m_minSize = new Size(minW, minH);
-    this._m_maxSize = new Size(maxW, maxH);
+    this._sizeHint = new Size(hintW, hintH);
+    this._minSize = new Size(minW, minH);
+    this._maxSize = new Size(maxW, maxH);
   }
 
-  private _m_dirty = true;
-  private _m_currentIndex = -1;
-  private _m_sizeHint: Size = null;
-  private _m_minSize: Size = null;
-  private _m_maxSize: Size = null;
-  private _m_layoutItems: ILayoutItem[] = [];
+  private _dirty = true;
+  private _currentIndex = -1;
+  private _sizeHint: Size = null;
+  private _minSize: Size = null;
+  private _maxSize: Size = null;
+  private _layoutItems: ILayoutItem[] = [];
 }
 
 } // module phosphor.layout

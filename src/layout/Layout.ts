@@ -43,14 +43,14 @@ class Layout implements IMessageFilter, IDisposable {
    * Dispose of the resources held by the layout.
    */
   dispose(): void {
-    this._m_parentWidget = null;
+    this._parentWidget = null;
   }
 
   /**
    * Get the parent widget of the layout.
    */
   get parentWidget(): Widget {
-    return this._m_parentWidget;
+    return this._parentWidget;
   }
 
   /**
@@ -64,13 +64,13 @@ class Layout implements IMessageFilter, IDisposable {
     if (!widget) {
       throw new Error('cannot set parent widget to null');
     }
-    if (widget === this._m_parentWidget) {
+    if (widget === this._parentWidget) {
       return;
     }
-    if (this._m_parentWidget) {
+    if (this._parentWidget) {
       throw new Error('layout already installed on a widget');
     }
-    this._m_parentWidget = widget;
+    this._parentWidget = widget;
     this.reparentChildWidgets();
     this.invalidate();
   }
@@ -227,7 +227,7 @@ class Layout implements IMessageFilter, IDisposable {
    * This should be reimplemented by a subclass as needed.
    */
   invalidate(): void {
-    var parent = this._m_parentWidget;
+    var parent = this._parentWidget;
     if (parent) {
       dispatch.postMessage(parent, EVT_LAYOUT_REQUEST);
       parent.updateGeometry();
@@ -241,7 +241,7 @@ class Layout implements IMessageFilter, IDisposable {
    * target is the parent widget. This always returns false.
    */
   filterMessage(handler: IMessageHandler, event: IMessage): boolean {
-    if (handler === this._m_parentWidget) {
+    if (handler === this._parentWidget) {
       this.processWidgetEvent(event);
     }
     return false;
@@ -256,7 +256,7 @@ class Layout implements IMessageFilter, IDisposable {
     switch (event.type) {
       case 'resize':
       case 'layout-request':
-        if (this._m_parentWidget.isVisible) {
+        if (this._parentWidget.isVisible) {
           this.updateLayout();
         }
         break;
@@ -286,7 +286,7 @@ class Layout implements IMessageFilter, IDisposable {
    * This is called when the layout is installed on a widget.
    */
   protected reparentChildWidgets(): void {
-    var parent = this._m_parentWidget;
+    var parent = this._parentWidget;
     if (parent) {
       for (var i = 0, n = this.count; i < n; ++i) {
         var child = this.itemAt(i).widget;
@@ -303,11 +303,11 @@ class Layout implements IMessageFilter, IDisposable {
    * layout's parent widget.
    */
   protected addChildWidget(child: Widget): void {
-    var parent = this._m_parentWidget;
+    var parent = this._parentWidget;
     if (parent) child.parent = parent;
   }
 
-  private _m_parentWidget: Widget = null;
+  private _parentWidget: Widget = null;
 }
 
 
