@@ -16,35 +16,35 @@ class List<T> implements IList<T>, IStack<T> {
    * Construct a new list.
    */
   constructor(items?: IIterable<T> | T[]) {
-    this._m_array = items !== void 0 ? toArray(items) : [];
+    this._array = items !== void 0 ? toArray(items) : [];
   }
 
   /**
    * True if the list has elements, false otherwise.
    */
   get empty(): boolean {
-    return this._m_array.length === 0;
+    return this._array.length === 0;
   }
 
   /**
    * The number of elements in the list.
    */
   get size(): number {
-    return this._m_array.length;
+    return this._array.length;
   }
 
   /**
    * The value at the back of the list.
    */
   get back(): T {
-    return this._m_array[this._m_array.length - 1];
+    return this._array[this._array.length - 1];
   }
 
   /**
    * Get an iterator for the elements in the list.
    */
   iterator(): IIterator<T> {
-    return new ArrayIterator(this._m_array);
+    return new ArrayIterator(this._array);
   }
 
   /**
@@ -60,7 +60,7 @@ class List<T> implements IList<T>, IStack<T> {
    * Returns -1 if the value is not in the list.
    */
   indexOf(value: T): number {
-    var array = this._m_array;
+    var array = this._array;
     for (var i = 0, n = array.length; i < n; ++i) {
       if (array[i] === value) {
         return i;
@@ -75,7 +75,7 @@ class List<T> implements IList<T>, IStack<T> {
    * Returns `undefined` if the index is out of range.
    */
   get(index: number): T {
-    return this._m_array[index];
+    return this._array[index];
   }
 
   /**
@@ -84,7 +84,7 @@ class List<T> implements IList<T>, IStack<T> {
    * Returns false if the index is out of range.
    */
   set(index: number, value: T): boolean {
-    var array = this._m_array;
+    var array = this._array;
     if (index < 0 || index >= array.length) {
       return false;
     }
@@ -98,7 +98,7 @@ class List<T> implements IList<T>, IStack<T> {
    * This method always succeeds.
    */
   add(value: T): boolean {
-    this._m_array.push(value);
+    this._array.push(value);
     return true;
   }
 
@@ -106,7 +106,7 @@ class List<T> implements IList<T>, IStack<T> {
    * Push a value onto the back of the list.
    */
   pushBack(value: T): void {
-    this._m_array.push(value);
+    this._array.push(value);
   }
 
   /**
@@ -115,7 +115,7 @@ class List<T> implements IList<T>, IStack<T> {
    * Returns false if the index is out of range.
    */
   insert(index: number, value: T): boolean {
-    var array = this._m_array;
+    var array = this._array;
     if (index < 0 || index > array.length) {
       return false;
     }
@@ -130,7 +130,7 @@ class List<T> implements IList<T>, IStack<T> {
    * Pop and return the value at the back of the list.
    */
   popBack(): T {
-    return this._m_array.pop();
+    return this._array.pop();
   }
 
   /**
@@ -153,7 +153,7 @@ class List<T> implements IList<T>, IStack<T> {
    * Returns `undefined` if the index is out of range.
    */
   removeAt(index: number): T {
-    var array = this._m_array;
+    var array = this._array;
     if (index < 0 || index >= array.length) {
       return void 0;
     }
@@ -169,10 +169,10 @@ class List<T> implements IList<T>, IStack<T> {
    * Remove all elements from the list.
    */
   clear(): void {
-    this._m_array.length = 0;
+    this._array.length = 0;
   }
 
-  private _m_array: T[];
+  private _array: T[];
 }
 
 } // module phosphor.collections

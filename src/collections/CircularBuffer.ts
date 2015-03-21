@@ -21,7 +21,7 @@ class CircularBuffer<T> implements IDeque<T>, IList<T>, IStack<T> {
    * Construct a new circular buffer.
    */
   constructor(maxSize: number, items?: IIterable<T> | T[]) {
-    this._m_array = new Array<T>(Math.max(1, maxSize));
+    this._array = new Array<T>(Math.max(1, maxSize));
     if (items !== void 0) forEach(items, it => { this.pushBack(it) });
   }
 
@@ -29,35 +29,35 @@ class CircularBuffer<T> implements IDeque<T>, IList<T>, IStack<T> {
    * The maximum size of the buffer.
    */
   get maxSize(): number {
-    return this._m_array.length;
+    return this._array.length;
   }
 
   /**
    * True if the buffer has elements, false otherwise.
    */
   get empty(): boolean {
-    return this._m_size === 0;
+    return this._size === 0;
   }
 
   /**
    * The number of elements in the buffer.
    */
   get size(): number {
-    return this._m_size;
+    return this._size;
   }
 
   /**
    * The value at the front of the buffer.
    */
   get front(): T {
-    return this._m_size !== 0 ? this._get(0) : void 0;
+    return this._size !== 0 ? this._get(0) : void 0;
   }
 
   /**
    * The value at the back of the buffer.
    */
   get back(): T {
-    return this._m_size !== 0 ? this._get(this._m_size - 1) : void 0;
+    return this._size !== 0 ? this._get(this._size - 1) : void 0;
   }
 
   /**
@@ -80,7 +80,7 @@ class CircularBuffer<T> implements IDeque<T>, IList<T>, IStack<T> {
    * Returns -1 if the value is not in the buffer.
    */
   indexOf(value: T): number {
-    for (var i = 0, n = this._m_size; i < n; ++i) {
+    for (var i = 0, n = this._size; i < n; ++i) {
       if (this._get(i) === value) {
         return i;
       }
@@ -94,7 +94,7 @@ class CircularBuffer<T> implements IDeque<T>, IList<T>, IStack<T> {
    * Returns `undefined` if the index is out of range.
    */
   get(index: number): T {
-    if (index < 0 || index >= this._m_size) {
+    if (index < 0 || index >= this._size) {
       return void 0;
     }
     return this._get(index);
@@ -106,7 +106,7 @@ class CircularBuffer<T> implements IDeque<T>, IList<T>, IStack<T> {
    * Returns false if the index is out of range.
    */
   set(index: number, value: T): boolean {
-    if (index < 0 || index >= this._m_size) {
+    if (index < 0 || index >= this._size) {
       return false;
     }
     this._set(index, value);
@@ -119,11 +119,11 @@ class CircularBuffer<T> implements IDeque<T>, IList<T>, IStack<T> {
    * If the buffer is full, the front element will be overwritten.
    */
   pushBack(value: T): void {
-    this._set(this._m_size, value);
-    if (this._m_size === this._m_array.length) {
-      this._incrOffset();
+    this._set(this._size, value);
+    if (this._size === this._array.length) {
+      this._increment();
     } else {
-      this._m_size++;
+      this._size++;
     }
   }
 
@@ -133,10 +133,10 @@ class CircularBuffer<T> implements IDeque<T>, IList<T>, IStack<T> {
    * If the buffer is full, the back element will be overwritten.
    */
   pushFront(value: T): void {
-    this._decrOffset();
+    this._decrement();
     this._set(0, value);
-    if (this._m_size < this._m_array.length) {
-      this._m_size++;
+    if (this._size < this._array.length) {
+      this._size++;
     }
   }
 
@@ -144,22 +144,22 @@ class CircularBuffer<T> implements IDeque<T>, IList<T>, IStack<T> {
    * Pop and return the value at the back of the buffer.
    */
   popBack(): T {
-    if (this._m_size === 0) {
+    if (this._size === 0) {
       return void 0;
     }
-    return this._del(--this._m_size);
+    return this._del(--this._size);
   }
 
   /**
    * Pop and return the value at the front of the buffer.
    */
   popFront(): T {
-    if (this._m_size === 0) {
+    if (this._size === 0) {
       return void 0;
     }
     var value = this._del(0);
-    this._incrOffset();
-    this._m_size--;
+    this._increment();
+    this._size--;
     return value;
   }
 
@@ -181,11 +181,11 @@ class CircularBuffer<T> implements IDeque<T>, IList<T>, IStack<T> {
    * Returns false if the index is out of range.
    */
   insert(index: number, value: T): boolean {
-    if (index < 0 || index > this._m_size) {
+    if (index < 0 || index > this._size) {
       return false;
     }
     this.pushBack(void 0);
-    for (var i = this._m_size - 1; i > index; --i) {
+    for (var i = this._size - 1; i > index; --i) {
       this._set(i, this._get(i - 1));
     }
     this._set(index, value);
@@ -212,11 +212,11 @@ class CircularBuffer<T> implements IDeque<T>, IList<T>, IStack<T> {
    * Returns `undefined` if the index is out of range.
    */
   removeAt(index: number): T {
-    if (index < 0 || index >= this._m_size) {
+    if (index < 0 || index >= this._size) {
       return void 0;
     }
     var value = this._get(index);
-    for (var i = index + 1, n = this._m_size; i < n; ++i) {
+    for (var i = index + 1, n = this._size; i < n; ++i) {
       this._set(i - 1, this._get(i));
     }
     this.popBack();
@@ -227,11 +227,11 @@ class CircularBuffer<T> implements IDeque<T>, IList<T>, IStack<T> {
    * Remove all elements from the buffer.
    */
   clear(): void {
-    var max = this._m_array.length;
-    this._m_array.length = 0;
-    this._m_array.length = max;
-    this._m_size = 0;
-    this._m_offset = 0;
+    var max = this._array.length;
+    this._array.length = 0;
+    this._array.length = max;
+    this._size = 0;
+    this._offset = 0;
   }
 
   /**
@@ -240,7 +240,7 @@ class CircularBuffer<T> implements IDeque<T>, IList<T>, IStack<T> {
    * The index is assumed to be in-range.
    */
   private _get(index: number): T {
-    return this._m_array[(index + this._m_offset) % this._m_array.length];
+    return this._array[(index + this._offset) % this._array.length];
   }
 
   /**
@@ -249,7 +249,7 @@ class CircularBuffer<T> implements IDeque<T>, IList<T>, IStack<T> {
    * The index is assumed to be in-range.
    */
   private _set(index: number, value: T): void {
-    this._m_array[(index + this._m_offset) % this._m_array.length] = value;
+    this._array[(index + this._offset) % this._array.length] = value;
   }
 
   /**
@@ -258,37 +258,37 @@ class CircularBuffer<T> implements IDeque<T>, IList<T>, IStack<T> {
    * The index is assumed to be in-range.
    */
   private _del(index: number): T {
-    var i = (index + this._m_offset) % this._m_array.length;
-    var value = this._m_array[i];
-    this._m_array[i] = void 0;
+    var i = (index + this._offset) % this._array.length;
+    var value = this._array[i];
+    this._array[i] = void 0;
     return value;
   }
 
   /**
    * Increment the offset by one.
    */
-  private _incrOffset(): void {
-    if (this._m_offset === this._m_array.length - 1) {
-      this._m_offset = 0;
+  private _increment(): void {
+    if (this._offset === this._array.length - 1) {
+      this._offset = 0;
     } else {
-      this._m_offset++;
+      this._offset++;
     }
   }
 
   /**
    * Decrement the offset by one.
    */
-  private _decrOffset(): void {
-    if (this._m_offset === 0) {
-      this._m_offset = this._m_array.length - 1;
+  private _decrement(): void {
+    if (this._offset === 0) {
+      this._offset = this._array.length - 1;
     } else {
-      this._m_offset--;
+      this._offset--;
     }
   }
 
-  private _m_size = 0;
-  private _m_offset = 0;
-  private _m_array: T[];
+  private _size = 0;
+  private _offset = 0;
+  private _array: T[];
 }
 
 } // module phosphor.collections

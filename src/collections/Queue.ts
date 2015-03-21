@@ -23,42 +23,42 @@ class Queue<T> implements IQueue<T> {
    * True if the queue has elements, false otherwise.
    */
   get empty(): boolean {
-    return this._m_size === 0;
+    return this._size === 0;
   }
 
   /**
    * The number of elements in the queue.
    */
   get size(): number {
-    return this._m_size;
+    return this._size;
   }
 
   /**
    * The value at the front of the queue.
    */
   get front(): T {
-    return this._m_front !== null ? this._m_front.value : void 0;
+    return this._front !== null ? this._front.value : void 0;
   }
 
   /**
    * The value at the back of the queue.
    */
   get back(): T {
-    return this._m_back !== null ? this._m_back.value : void 0;
+    return this._back !== null ? this._back.value : void 0;
   }
 
   /**
    * Get an iterator for the elements in the queue.
    */
   iterator(): IIterator<T> {
-    return new QueueIterator(this._m_front);
+    return new QueueIterator(this._front);
   }
 
   /**
    * Test whether the queue contains the given value.
    */
   contains(value: T): boolean {
-    var link = this._m_front;
+    var link = this._front;
     while (link !== null) {
       if (link.value === value) {
         return true;
@@ -83,31 +83,31 @@ class Queue<T> implements IQueue<T> {
    */
   pushBack(value: T): void {
     var link: IQueueLink<T> = { next: null, value: value };
-    if (this._m_back === null) {
-      this._m_front = link;
-      this._m_back = link;
+    if (this._back === null) {
+      this._front = link;
+      this._back = link;
     } else {
-      this._m_back.next = link;
-      this._m_back = link;
+      this._back.next = link;
+      this._back = link;
     }
-    this._m_size++;
+    this._size++;
   }
 
   /**
    * Pop and return the value at the front of the queue.
    */
   popFront(): T {
-    var link = this._m_front;
+    var link = this._front;
     if (link === null) {
       return void 0;
     }
     if (link.next === null) {
-      this._m_front = null;
-      this._m_back = null;
+      this._front = null;
+      this._back = null;
     } else {
-      this._m_front = link.next;
+      this._front = link.next;
     }
-    this._m_size--;
+    this._size--;
     return link.value;
   }
 
@@ -117,19 +117,19 @@ class Queue<T> implements IQueue<T> {
    * Returns false if the value is not in the queue.
    */
   remove(value: T): boolean {
-    var link = this._m_front;
+    var link = this._front;
     var prev: typeof link = null;
     while (link !== null) {
       if (link.value === value) {
         if (prev === null) {
-          this._m_front = link.next;
+          this._front = link.next;
         } else {
           prev.next = link.next;
         }
         if (link.next === null) {
-          this._m_back = prev;
+          this._back = prev;
         }
-        this._m_size--;
+        this._size--;
         return true;
       }
       prev = link;
@@ -142,14 +142,14 @@ class Queue<T> implements IQueue<T> {
    * Remove all values from the queue.
    */
   clear(): void {
-    this._m_size = 0;
-    this._m_front = null;
-    this._m_back = null;
+    this._size = 0;
+    this._front = null;
+    this._back = null;
   }
 
-  private _m_size = 0;
-  private _m_front: IQueueLink<T> = null;
-  private _m_back: IQueueLink<T> = null;
+  private _size = 0;
+  private _front: IQueueLink<T> = null;
+  private _back: IQueueLink<T> = null;
 }
 
 

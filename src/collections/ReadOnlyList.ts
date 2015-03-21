@@ -23,7 +23,7 @@ class ReadOnlyList<T> extends ReadOnlyCollection<T> implements IList<T> {
    * Returns -1 if the value is not in the list.
    */
   indexOf(value: T): number {
-    return (<IList<T>>this._m_collection).indexOf(value);
+    return (<IList<T>>this._collection).indexOf(value);
   }
 
   /**
@@ -32,7 +32,7 @@ class ReadOnlyList<T> extends ReadOnlyCollection<T> implements IList<T> {
    * Returns `undefined` if the index is out of range.
    */
   get(index: number): T {
-    return (<IList<T>>this._m_collection).get(index);
+    return (<IList<T>>this._collection).get(index);
   }
 
   /**

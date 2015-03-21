@@ -16,35 +16,35 @@ class ReadOnlyCollection<T> implements ICollection<T> {
    * Construct a new read only collection.
    */
   constructor(collection: ICollection<T>) {
-    this._m_collection = collection;
+    this._collection = collection;
   }
 
   /**
    * True if the collection has elements, false otherwise.
    */
   get empty(): boolean {
-    return this._m_collection.empty;
+    return this._collection.empty;
   }
 
   /**
    * The number of elements in the collection.
    */
   get size(): number {
-    return this._m_collection.size;
+    return this._collection.size;
   }
 
   /**
    * Get an iterator for the elements in the collection.
    */
   iterator(): IIterator<T> {
-    return this._m_collection.iterator();
+    return this._collection.iterator();
   }
 
   /**
    * Test whether the collection contains the given value.
    */
   contains(value: T): boolean {
-    return this._m_collection.contains(value);
+    return this._collection.contains(value);
   }
 
   /**
@@ -74,7 +74,7 @@ class ReadOnlyCollection<T> implements ICollection<T> {
     throw new Error('collection is read only');
   }
 
-  protected _m_collection: ICollection<T>;
+  protected _collection: ICollection<T>;
 }
 
 } // module phosphor.collections
