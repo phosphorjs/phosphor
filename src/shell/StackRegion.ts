@@ -21,14 +21,14 @@ class StackRegion extends Region<Widget> {
    */
   constructor(token: IRegionToken<Widget>, host: StackWidget) {
     super(token);
-    this._m_host = host;
+    this._host = host;
   }
 
   /**
    * A method invoked when a view is added to the region.
    */
   protected viewAdded(index: number, view: Widget): void {
-    this._m_host.insertWidget(index, view);
+    this._host.insertWidget(index, view);
     super.viewAdded(index, view);
   }
 
@@ -40,7 +40,7 @@ class StackRegion extends Region<Widget> {
     super.viewRemoved(index, view);
   }
 
-  private _m_host: StackWidget;
+  private _host: StackWidget;
 }
 
 } // module phosphor.shell

@@ -31,7 +31,7 @@ class RegionManager implements IRegionManager {
    * A read-only collection of regions in the manager.
    */
   get regions(): IRegionCollection {
-    return new RegionsCollection(this._m_regions);
+    return new RegionsCollection(this._regions);
   }
 
   /**
@@ -40,7 +40,7 @@ class RegionManager implements IRegionManager {
    * Returns undefined if no such region has been added.
    */
   region(name: string): IRegion<any> {
-    return this._m_regions.get(name);
+    return this._regions.get(name);
   }
 
   /**
@@ -52,15 +52,15 @@ class RegionManager implements IRegionManager {
    */
   add(region: IRegion<any>): boolean {
     var name = region.name;
-    if (this._m_regions.has(name)) {
+    if (this._regions.has(name)) {
       return false;
     }
-    this._m_regions.set(name, region);
-    var factories = this._m_factories.get(name);
+    this._regions.set(name, region);
+    var factories = this._factories.get(name);
     if (factories) {
       factories.forEach(item => item.addViewTo(region));
     }
-    this._m_regionsChanged.emit(this, { action: 'added', region: region });
+    this._regionsChanged.emit(this, { action: 'added', region: region });
     return true;
   }
 
@@ -72,12 +72,12 @@ class RegionManager implements IRegionManager {
    * Returns true if the region was removed, false otherwise.
    */
   remove(name: string): boolean {
-    var region = this._m_regions.get(name);
+    var region = this._regions.get(name);
     if (!region) {
       return false;
     }
-    this._m_regions.delete(name);
-    this._m_regionsChanged.emit(this, { action: 'removed', region: region });
+    this._regions.delete(name);
+    this._regionsChanged.emit(this, { action: 'removed', region: region });
     return true;
   }
 
@@ -91,13 +91,13 @@ class RegionManager implements IRegionManager {
    */
   registerView(name: string, factory: () => any, rank?: number): IDisposable {
     var item = new FactoryItem(factory, rank);
-    var factories = this._m_factories.get(name);
+    var factories = this._factories.get(name);
     if (factories) {
       factories.push(item);
     } else {
-      this._m_factories.set(name, [item]);
+      this._factories.set(name, [item]);
     }
-    var region = this._m_regions.get(name);
+    var region = this._regions.get(name);
     if (region) {
       item.addViewTo(region);
     }
@@ -108,19 +108,19 @@ class RegionManager implements IRegionManager {
    * Remove a previously registered view factory from the manager.
    */
   private _unregisterView(name: string, item: FactoryItem<T>): void {
-    var factories = this._m_factories.get(name);
+    var factories = this._factories.get(name);
     if (!factories) {
       return;
     }
     var i = factories.indexOf(item);
     if (i !== -1) factories.splice(i, 1);
     if (factories.length === 0) {
-      this._m_factories.delete(name);
+      this._factories.delete(name);
     }
   }
 
-  private _m_regions = new Map<string, IRegion<any>>();
-  private _m_factories = new Map<string, FactoryItem<any>[]>();
+  private _regions = new Map<string, IRegion<any>>();
+  private _factories = new Map<string, FactoryItem<any>[]>();
 }
 
 
@@ -132,24 +132,24 @@ class RegionsCollection implements IRegionCollection {
    * Construct a new region collection.
    */
   constructor(regions: Map<string, IRegion<any>>) {
-    this._m_regions = regions;
+    this._regions = regions;
   }
 
   /**
    * Test whether the collection contains the given region.
    */
   contains(region: IRegion<any>): boolean {
-    return this._m_regions.get(region.token) === region;
+    return this._regions.get(region.token) === region;
   }
 
   /**
    * Invoke a callback for each region in the collection.
    */
   forEach(callback: (region: IRegion<any>) => void): void {
-    this._m_regions.forEach(region => { callback(region); });
+    this._regions.forEach(region => { callback(region); });
   }
 
-  private _m_regions: Map<string, IRegion<any>>;
+  private _regions: Map<string, IRegion<any>>;
 }
 
 
@@ -161,20 +161,20 @@ class FactoryItem<T> {
    * Construct a new factory item.
    */
   constructor(factory: () => T, rank: number) {
-    this._m_factory = factory;
-    this._m_rank = rank;
+    this._factory = factory;
+    this._rank = rank;
   }
 
   /**
    * Create a view and add it to the given region.
    */
   addViewTo(region: IRegion<T>): void {
-    var factory = this._m_factory;
-    region.add(factory(), this._m_rank);
+    var factory = this._factory;
+    region.add(factory(), this._rank);
   }
 
-  private _m_factory: () => T;
-  private _m_rank: number;
+  private _factory: () => T;
+  private _rank: number;
 }
 
 } // module phosphor.shell

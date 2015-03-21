@@ -23,7 +23,7 @@ class DockRegion extends Region<IDockableWidget> {
    */
   constructor(token: IRegionToken<IDockableWidget>, host: DockArea) {
     super(token);
-    this._m_host = host;
+    this._host = host;
   }
 
   /**
@@ -32,7 +32,7 @@ class DockRegion extends Region<IDockableWidget> {
   protected viewAdded(index: number, view: IDockableWidget): void {
     var ref = this.views.at(index - 1);
     var mode = ref ? DockMode.TabAfter : DockMode.Left;
-    this._m_host.addWidget(view, mode, ref);
+    this._host.addWidget(view, mode, ref);
   }
 
   /**
@@ -43,7 +43,7 @@ class DockRegion extends Region<IDockableWidget> {
     super.viewRemoved(index, view);
   }
 
-  private _m_host: DockArea;
+  private _host: DockArea;
 }
 
 } // module phosphor.shell

@@ -31,21 +31,21 @@ class Region<T> implements IRegion<T> {
    * Construct a new region.
    */
   constructor(name: string) {
-    this._m_name = name;
+    this._name = name;
   }
 
   /**
    * The name of the region.
    */
   get token(): string {
-    return this._m_name;
+    return this._name;
   }
 
   /**
    * A read-only collection of views in the region.
    */
   get views(): IViewCollection<T> {
-    return new ViewItemCollection(this._m_items);
+    return new ViewItemCollection(this._items);
   }
 
   /**
@@ -65,11 +65,11 @@ class Region<T> implements IRegion<T> {
    * Returns true if the view was added, false otherwise.
    */
   add(view: T, rank = 100): boolean {
-    if (algo.find(this._m_items, it => it.view === view)) {
+    if (algo.find(this._items, it => it.view === view)) {
       return false;
     }
     var item = new ViewItem(view, rank);
-    var index = algo.insortLower(this._m_items, item, itemCompare);
+    var index = algo.insortLower(this._items, item, itemCompare);
     this.viewAdded(index, view);
     return true;
   }
@@ -82,11 +82,11 @@ class Region<T> implements IRegion<T> {
    * Returns true if the view was removed, false otherwise.
    */
   remove(view: T): boolean {
-    var index = algo.findIndex(this._m_items, it => it.view === view);
+    var index = algo.findIndex(this._items, it => it.view === view);
     if (index === -1) {
       return false;
     }
-    this._m_items.splice(index, 1);
+    this._items.splice(index, 1);
     this.viewRemoved(index, view);
     return true;
   }
@@ -120,7 +120,7 @@ class Region<T> implements IRegion<T> {
    */
   protected viewAdded(index: number, view: T): void {
     var args = { action: 'added', index: index, view: view };
-    this._m_viewsChanged.emit(this, args);
+    this._viewsChanged.emit(this, args);
   }
 
   /**
@@ -130,7 +130,7 @@ class Region<T> implements IRegion<T> {
    */
   protected viewRemoved(index: number, view: T): void {
     var args = { action: 'removed', index: index, view: view };
-    this._m_viewsChanged.emit(this, args);
+    this._viewsChanged.emit(this, args);
   }
 
   /**
@@ -139,13 +139,13 @@ class Region<T> implements IRegion<T> {
    * Subclasses may invoke this method as needed.
    */
   protected emitActiveViewsChanged(): void {
-    this._m_activeViewsChanged.emit(this, void 0);
+    this._activeViewsChanged.emit(this, void 0);
   }
 
-  private _m_name: string;
-  private _m_items: ViewItem<T>[] = [];
-  private _m_viewsChanged = new Signal<IRegion<T>, IViewsChangedArgs<T>>();
-  private _m_activeViewsChanged = new Signal<IRegion<T>, void>();
+  private _name: string;
+  private _items: ViewItem<T>[] = [];
+  private _viewsChanged = new Signal<IRegion<T>, IViewsChangedArgs<T>>();
+  private _activeViewsChanged = new Signal<IRegion<T>, void>();
 }
 
 
@@ -202,35 +202,35 @@ class ViewItemList<T> implements IList<T> {
    * Construct a new view item list.
    */
   constructor(items: ViewItem<T>[]) {
-    this._m_items = items;
+    this._items = items;
   }
 
   /**
    * True if the list has elements, false otherwise.
    */
   get empty(): boolean {
-    return this._m_items.length === 0;
+    return this._items.length === 0;
   }
 
   /**
    * The number of elements in the list.
    */
   get size(): number {
-    return this._m_items.length;
+    return this._items.length;
   }
 
   /**
    * Get an iterator for the elements in the list.
    */
   iterator(): IIterator<T> {
-    return this._m_items.iterator();
+    return this._items.iterator();
   }
 
   /**
    * Test whether the list contains the given value.
    */
   contains(value: T): boolean {
-    return this._m_items.contains(value);
+    return this._items.contains(value);
   }
 
   /**
@@ -260,7 +260,7 @@ class ViewItemList<T> implements IList<T> {
     throw new Error('list is read only');
   }
 
-  private _m_items: ViewItem<T>[];
+  private _items: ViewItem<T>[];
 }
 
 } // module phosphor.shell

@@ -22,14 +22,14 @@ class MenuRegion extends Region<MenuItem> {
    */
   constructor(token: IRegionToken<MenuItem>, host: Menu | MenuBar) {
     super(token);
-    this._m_host = host;
+    this._host = host;
   }
 
   /**
    * A method invoked when a view is added to the region.
    */
   protected viewAdded(index: number, view: MenuItem): void {
-    this._m_host.insertItem(index, view);
+    this._host.insertItem(index, view);
     super.viewAdded(index, view);
   }
 
@@ -37,11 +37,11 @@ class MenuRegion extends Region<MenuItem> {
    * A method invoked when a view is removed from the region.
    */
   protected viewRemoved(index: number, view: MenuItem): void {
-    this._m_host.removeItem(view);
+    this._host.removeItem(view);
     super.viewRemoved(index, view);
   }
 
-  private _m_host: Menu | MenuBar;
+  private _host: Menu | MenuBar;
 }
 
 } // module phosphor.shell

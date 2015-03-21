@@ -25,7 +25,7 @@ class BoxRegion extends Region<Widget> {
    */
   constructor(token: IRegionToken<Widget>, host: Widget, direction: Direction, spacing = 0) {
     super(token);
-    this._m_host = host;
+    this._host = host;
     host.layout = new BoxLayout(direction, spacing);
     host.setFlag(WidgetFlag.DisallowLayoutChange);
   }
@@ -34,7 +34,7 @@ class BoxRegion extends Region<Widget> {
    * A method invoked when a view is added to the region.
    */
   protected viewAdded(index: number, view: Widget): void {
-    (<BoxLayout>this._m_host.layout).insertWidget(index, view);
+    (<BoxLayout>this._host.layout).insertWidget(index, view);
     super.viewAdded(index, view);
   }
 
@@ -46,7 +46,7 @@ class BoxRegion extends Region<Widget> {
     super.viewRemoved(index, view);
   }
 
-  private _m_host: Widget;
+  private _host: Widget;
 }
 
 } // module phosphor.shell

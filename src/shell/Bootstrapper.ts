@@ -33,7 +33,7 @@ class Bootstrapper {
    * This is created by the `createContainer` method.
    */
   get container(): Container {
-    return this._m_container;
+    return this._container;
   }
 
   /**
@@ -42,7 +42,7 @@ class Bootstrapper {
    * This is created by the `createPluginList` method.
    */
   get pluginList(): IPluginList {
-    return this._m_pluginList;
+    return this._pluginList;
   }
 
   /**
@@ -51,7 +51,7 @@ class Bootstrapper {
    * This is created by the `createShell` method.
    */
   get shell(): Widget {
-    return this._m_shell;
+    return this._shell;
   }
 
   /**
@@ -63,16 +63,16 @@ class Bootstrapper {
    * This method should not be reimplemented.
    */
   run(): void {
-    this._m_container = new Container();
+    this._container = new Container();
     this.configureContainer();
 
-    this._m_pluginList = this.createPluginList();
+    this._pluginList = this.createPluginList();
     this.configurePlugins();
 
-    this._m_shell = this.createShell();
+    this._shell = this.createShell();
     this.configureShell();
 
-    this._m_pluginList.initialize().then(() => {
+    this._pluginList.initialize().then(() => {
       this.finalize();
     }).catch(ex => {
       console.error('plugin initialization failed', ex);
@@ -165,9 +165,9 @@ class Bootstrapper {
     doResize();
   }
 
-  private _m_shell: Widget = null;
-  private _m_container: Container = null;
-  private _m_pluginList: IPluginList = null;
+  private _shell: Widget = null;
+  private _container: Container = null;
+  private _pluginList: IPluginList = null;
 }
 
 } // module phosphor.shell

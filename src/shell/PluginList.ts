@@ -22,14 +22,14 @@ class PluginList implements IPluginList {
    * Construct a new plugin list.
    */
   constructor(container: Container) {
-    this._m_container = container;
+    this._container = container;
   }
 
   /**
    * Get an iterator over the loaded plugins.
    */
   iterator(): IIterator<IPlugin> {
-    return new ArrayIterator(this._m_plugins);
+    return new ArrayIterator(this._plugins);
   }
 
   /**
@@ -41,7 +41,7 @@ class PluginList implements IPluginList {
    * initialized in the order they were added to the list.
    */
   add(plugin: IPlugin | Promise<IPlugin>): void {
-    this._m_pending.push(plugin);
+    this._pending.push(plugin);
   }
 
   /**
@@ -50,11 +50,11 @@ class PluginList implements IPluginList {
    * Returns a promise which resolves after all plugins are initialized.
    */
   initialize(): Promise<void> {
-    var pending = this._m_pending;
+    var pending = this._pending;
     if (pending.length === 0) {
       return Promise.resolve<void>();
     }
-    this._m_pending = [];
+    this._pending = [];
     return Promise.all(pending).then(plugins => {
       plugins.forEach(plugin => this._addPlugin(plugin));
     });
@@ -64,20 +64,20 @@ class PluginList implements IPluginList {
    * Invoke the given callback for each resolved plugin in the list.
    */
   forEach(callback: (plugin: IPlugin) => void): void {
-    return this._m_plugins.forEach(plugin => callback(plugin));
+    return this._plugins.forEach(plugin => callback(plugin));
   }
 
   /**
    * Initialize a plugin and append it to the plugins list.
    */
   private _addPlugin(plugin: IPlugin): void {
-    plugin.initialize(this._m_container);
-    this._m_plugins.push(plugin);
+    plugin.initialize(this._container);
+    this._plugins.push(plugin);
   }
 
-  private _m_container: Container;
-  private _m_plugins: IPlugin[] = [];
-  private _m_pending: (IPlugin | Promise<IPlugin>)[] = [];
+  private _container: Container;
+  private _plugins: IPlugin[] = [];
+  private _pending: (IPlugin | Promise<IPlugin>)[] = [];
 }
 
 } // module phosphor.shell

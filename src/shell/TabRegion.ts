@@ -21,7 +21,7 @@ class TabRegion extends Region<ITabbableWidget> {
    */
   constructor(token: IRegionToken<ITabbableWidget>, host: TabWidget) {
     super(token);
-    this._m_host = host;
+    this._host = host;
   }
 
   /**
@@ -29,8 +29,8 @@ class TabRegion extends Region<ITabbableWidget> {
    */
   protected viewAdded(index: number, view: ITabbableWidget): void {
     var ref = this.views.at(index - 1);
-    var viewIndex = this._m_host.widgetIndex(ref) + 1;
-    this._m_host.insertWidget(viewIndex, view);
+    var viewIndex = this._host.widgetIndex(ref) + 1;
+    this._host.insertWidget(viewIndex, view);
     super.viewAdded(index, view);
   }
 
@@ -42,7 +42,7 @@ class TabRegion extends Region<ITabbableWidget> {
     super.viewRemoved(index, view);
   }
 
-  private _m_host: TabWidget;
+  private _host: TabWidget;
 }
 
 } // module phosphor.shell
