@@ -15,7 +15,7 @@ class List<T> implements IList<T>, IStack<T> {
   /**
    * Construct a new list.
    */
-  constructor(items?: IIterable<T>) {
+  constructor(items?: IIterable<T> | T[]) {
     this._m_array = items !== void 0 ? toArray(items) : [];
   }
 

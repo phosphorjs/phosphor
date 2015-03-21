@@ -15,7 +15,7 @@ class Queue<T> implements IQueue<T> {
   /**
    * Construct a new queue.
    */
-  constructor(items?: IIterable<T>) {
+  constructor(items?: IIterable<T> | T[]) {
     if (items !== void 0) forEach(items, it => { this.pushBack(it) });
   }
 

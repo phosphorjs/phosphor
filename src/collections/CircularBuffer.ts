@@ -20,7 +20,7 @@ class CircularBuffer<T> implements IDeque<T>, IList<T>, IStack<T> {
   /**
    * Construct a new circular buffer.
    */
-  constructor(maxSize: number, items?: IIterable<T>) {
+  constructor(maxSize: number, items?: IIterable<T> | T[]) {
     this._m_array = new Array<T>(Math.max(1, maxSize));
     if (items !== void 0) forEach(items, it => { this.pushBack(it) });
   }
