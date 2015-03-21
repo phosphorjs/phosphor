@@ -24,14 +24,14 @@ class Content extends Widget {
     this.classList.add(title.toLowerCase());
     this.minWidth = 50;
     this.minHeight = 50;
-    this._m_tab = new Tab(title);
+    this._tab = new Tab(title);
   }
 
   get tab(): ITab {
-    return this._m_tab;
+    return this._tab;
   }
 
-  private _m_tab: Tab;
+  private _tab: Tab;
 }
 
 

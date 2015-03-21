@@ -156,7 +156,7 @@ class MainWidget extends Widget {
     host.horizontalSizePolicy = SizePolicy.Expanding;
     host.verticalSizePolicy = SizePolicy.Fixed;
 
-    var image = this._m_imageWidget = new SimpleImageWidget();
+    var image = this._imageWidget = new SimpleImageWidget();
     image.horizontalSizePolicy = SizePolicy.Fixed;
     image.verticalSizePolicy = SizePolicy.Fixed;
     image.src = imageItems[0].path;
@@ -171,14 +171,14 @@ class MainWidget extends Widget {
     for (var i = 0; i < imageItems.length; ++i) {
       var item = imageItems[i];
       if (item.name === value) {
-        this._m_imageWidget.src = item.path;
+        this._imageWidget.src = item.path;
         return;
       }
     }
-    this._m_imageWidget.src = item.path;
+    this._imageWidget.src = item.path;
   };
 
-  private _m_imageWidget: SimpleImageWidget;
+  private _imageWidget: SimpleImageWidget;
 }
 
 

@@ -19,14 +19,14 @@ class Content extends Widget {
     super();
     this.classList.add('content');
     this.classList.add(title.toLowerCase());
-    this._m_tab = new Tab(title);
+    this._tab = new Tab(title);
   }
 
   get tab(): ITab {
-    return this._m_tab;
+    return this._tab;
   }
 
-  private _m_tab: Tab;
+  private _tab: Tab;
 }
 
 
