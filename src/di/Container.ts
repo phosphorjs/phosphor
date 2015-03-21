@@ -21,7 +21,7 @@ class Container implements IContainer {
    * Test whether a type is registered with the container.
    */
   isRegistered<T>(token: IToken<T>): boolean {
-    return this._m_registry.has(token);
+    return this._registry.has(token);
   }
 
   /**
@@ -48,11 +48,11 @@ class Container implements IContainer {
    * The default lifetime is 'singleton'.
    */
   registerType<T>(token: IToken<T>, type: IInjectable<T>, lifetime?: string): void {
-    if (this._m_registry.has(token)) {
+    if (this._registry.has(token)) {
       throw new Error('token is already registered');
     }
     var lt = createLifetime<T>(lifetime || 'singleton');
-    this._m_registry.set(token, { type: type, lifetime: lt });
+    this._registry.set(token, { type: type, lifetime: lt });
   }
 
   /**
@@ -64,11 +64,11 @@ class Container implements IContainer {
    * This will throw an exception if the token is already registered.
    */
   registerInstance<T>(token: IToken<T>, instance: T): void {
-    if (this._m_registry.has(token)) {
+    if (this._registry.has(token)) {
       throw new Error('token is already registered');
     }
     var lt = new SingletonLifetime(instance);
-    this._m_registry.set(token, { type: null, lifetime: lt });
+    this._registry.set(token, { type: null, lifetime: lt });
   }
 
   /**
@@ -90,7 +90,7 @@ class Container implements IContainer {
    * An error is thrown if the token is not registered.
    */
   private _resolveToken<T>(token: IToken<T>, key: number): T {
-    var item: IRegistryItem<T> = this._m_registry.get(token);
+    var item: IRegistryItem<T> = this._registry.get(token);
     if (item === void 0) {
       throw new Error('`' + token.name + '` is not registered');
     }
@@ -121,7 +121,7 @@ class Container implements IContainer {
     return type.apply(instance, args) || instance;
   }
 
-  private _m_registry = new Map<IToken<any>, IRegistryItem<any>>();
+  private _registry = new Map<IToken<any>, IRegistryItem<any>>();
 }
 
 
@@ -209,19 +209,19 @@ class SingletonLifetime<T> implements ILifetime<T> {
   /**
    * Construct a new singleton lifetime.
    */
-  constructor(val: T = null) { this._m_val = val; }
+  constructor(val: T = null) { this._val = val; }
 
   /**
    * Get the cached object for the lifetime if one exists.
    */
-  get(key: number): T { return this._m_val; }
+  get(key: number): T { return this._val; }
 
   /**
    * Set the cached object for the lifetime if needed.
    */
-  set(key: number, val: T): void { this._m_val = val; }
+  set(key: number, val: T): void { this._val = val; }
 
-  private _m_val: T;
+  private _val: T;
 }
 
 
@@ -232,15 +232,15 @@ class PerResolveLifetime<T> implements ILifetime<T> {
   /**
    * Get the cached object for the lifetime if one exists.
    */
-  get(key: number): T { return this._m_key === key ? this._m_val : null; }
+  get(key: number): T { return this._key === key ? this._val : null; }
 
   /**
    * Set the cached object for the lifetime if needed.
    */
-  set(key: number, val: T): void { this._m_key = key; this._m_val = val; }
+  set(key: number, val: T): void { this._key = key; this._val = val; }
 
-  private _m_key = 0;
-  private _m_val: T = null;
+  private _key = 0;
+  private _val: T = null;
 }
 
 } // module phosphor.di
