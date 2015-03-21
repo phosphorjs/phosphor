@@ -20,44 +20,44 @@ class MoveEvent extends Message {
    */
   constructor(oldX: number, oldY: number, x: number, y: number) {
     super('move');
-    this._m_oldX = oldX;
-    this._m_oldY = oldY;
-    this._m_x = x;
-    this._m_y = y;
+    this._oldX = oldX;
+    this._oldY = oldY;
+    this._x = x;
+    this._y = y;
   }
 
   /**
    * The old X coordinate of the widget.
    */
   get oldX(): number {
-    return this._m_oldX;
+    return this._oldX;
   }
 
   /**
    * The old Y coordinate of the widget.
    */
   get oldY(): number {
-    return this._m_oldY;
+    return this._oldY;
   }
 
   /**
    * The current X coordinate of the widget.
    */
   get x(): number {
-    return this._m_x;
+    return this._x;
   }
 
   /**
    * The current Y coordinate of the widget.
    */
   get y(): number {
-    return this._m_y;
+    return this._y;
   }
 
-  private _m_oldX: number;
-  private _m_oldY: number;
-  private _m_x: number;
-  private _m_y: number;
+  private _oldX: number;
+  private _oldY: number;
+  private _x: number;
+  private _y: number;
 }
 
 } // module phosphor.events

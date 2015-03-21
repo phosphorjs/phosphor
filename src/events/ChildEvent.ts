@@ -22,17 +22,17 @@ class ChildEvent extends Message {
    */
   constructor(type: string, child: Widget) {
     super(type);
-    this._m_child = child;
+    this._child = child;
   }
 
   /**
    * The child widget for the event.
    */
   get child(): Widget {
-    return this._m_child;
+    return this._child;
   }
 
-  private _m_child: Widget;
+  private _child: Widget;
 }
 
 } // module phosphor.events

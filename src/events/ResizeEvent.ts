@@ -20,44 +20,44 @@ class ResizeEvent extends Message {
    */
   constructor(oldWidth: number, oldHeight: number, width: number, height: number) {
     super('resize');
-    this._m_oldWidth = oldWidth;
-    this._m_oldHeight = oldHeight;
-    this._m_width = width;
-    this._m_height = height;
+    this._oldWidth = oldWidth;
+    this._oldHeight = oldHeight;
+    this._width = width;
+    this._height = height;
   }
 
   /**
    * The old width of the widget.
    */
   get oldWidth(): number {
-    return this._m_oldWidth;
+    return this._oldWidth;
   }
 
   /**
    * The old height of the widget.
    */
   get oldHeight(): number {
-    return this._m_oldHeight;
+    return this._oldHeight;
   }
 
   /**
    * The current width of the widget.
    */
   get width(): number {
-    return this._m_width;
+    return this._width;
   }
 
   /**
    * The current height of the widget.
    */
   get height(): number {
-    return this._m_height;
+    return this._height;
   }
 
-  private _m_oldWidth: number;
-  private _m_oldHeight: number;
-  private _m_width: number;
-  private _m_height: number;
+  private _oldWidth: number;
+  private _oldHeight: number;
+  private _width: number;
+  private _height: number;
 }
 
 } // module phosphor.events
