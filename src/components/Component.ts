@@ -33,7 +33,7 @@ class Component<T extends IData> extends BaseComponent<T> implements IMessageHan
    * Dispose of the resources held by the component.
    */
   dispose(): void {
-    this._m_refs = null;
+    this._refs = null;
     super.dispose();
   }
 
@@ -44,7 +44,7 @@ class Component<T extends IData> extends BaseComponent<T> implements IMessageHan
    * or component instance created for the most recent rendering pass.
    */
   get refs(): any {
-    return this._m_refs;
+    return this._refs;
   }
 
   /**
@@ -138,7 +138,7 @@ class Component<T extends IData> extends BaseComponent<T> implements IMessageHan
    */
   protected doRender(): void {
     this.beforeRender();
-    this._m_refs = render(this.render(), this.node);
+    this._refs = render(this.render(), this.node);
     this.afterRender();
   }
 
@@ -156,7 +156,7 @@ class Component<T extends IData> extends BaseComponent<T> implements IMessageHan
    */
   protected afterRender(): void { }
 
-  private _m_refs = emptyObject;
+  private _refs = emptyObject;
 }
 
 } // module phosphor.components

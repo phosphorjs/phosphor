@@ -43,38 +43,38 @@ class BaseComponent<T extends IData> implements IComponent<T> {
    */
   constructor() {
     var ctor = <any>this.constructor;
-    this._m_node = document.createElement(<string>ctor.tagName);
-    this._m_node.className = <string>ctor.className;
+    this._node = document.createElement(<string>ctor.tagName);
+    this._node.className = <string>ctor.className;
   }
 
   /**
    * Dispose of the resources held by the component.
    */
   dispose(): void {
-    this._m_node = null;
-    this._m_data = null;
-    this._m_children = null;
+    this._node = null;
+    this._data = null;
+    this._children = null;
   }
 
   /**
    * Get the DOM node for the component.
    */
   get node(): HTMLElement {
-    return this._m_node;
+    return this._node;
   }
 
   /**
    * Get the current data object for the component.
    */
   get data(): T {
-    return this._m_data;
+    return this._data;
   }
 
   /**
    * Get the current children for the component.
    */
   get children(): IElement[] {
-    return this._m_children;
+    return this._children;
   }
 
   /**
@@ -83,13 +83,13 @@ class BaseComponent<T extends IData> implements IComponent<T> {
    * This is called whenever the component is rendered by its parent.
    */
   init(data: T, children: IElement[]): void {
-    this._m_data = data;
-    this._m_children = children;
+    this._data = data;
+    this._children = children;
   }
 
-  private _m_node: HTMLElement;
-  private _m_data: T = emptyObject;
-  private _m_children: IElement[] = emptyArray;
+  private _node: HTMLElement;
+  private _data: T = emptyObject;
+  private _children: IElement[] = emptyArray;
 }
 
 } // module phosphor.components

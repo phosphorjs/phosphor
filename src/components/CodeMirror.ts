@@ -35,7 +35,7 @@ class CodeMirrorComponent extends BaseComponent<ICodeMirrorData> {
    * Dispose of the resources held by the component.
    */
   dispose(): void {
-    this._m_editor = null;
+    this._editor = null;
     super.dispose();
   }
 
@@ -44,8 +44,8 @@ class CodeMirrorComponent extends BaseComponent<ICodeMirrorData> {
    */
   init(data: ICodeMirrorData, children: IElement[]): void {
     super.init(data, children);
-    if (this._m_editor === null) {
-      this._m_editor = this.createEditor();
+    if (this._editor === null) {
+      this._editor = this.createEditor();
     }
   }
 
@@ -56,7 +56,7 @@ class CodeMirrorComponent extends BaseComponent<ICodeMirrorData> {
    * api. User code should interact with the editor object directly.
    */
   get editor(): CodeMirror.Editor {
-    return this._m_editor;
+    return this._editor;
   }
 
   /**
@@ -70,7 +70,7 @@ class CodeMirrorComponent extends BaseComponent<ICodeMirrorData> {
     return CodeMirror(this.node, this.data.config);
   }
 
-  private _m_editor: CodeMirror.Editor = null;
+  private _editor: CodeMirror.Editor = null;
 }
 
 
