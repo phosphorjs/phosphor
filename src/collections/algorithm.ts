@@ -8,13 +8,25 @@
 module phosphor.collections {
 
 /**
+ * Create an iterator for an iterable or array.
+ */
+export
+function iter<T>(iterable: IIterable<T> | T[]): IIterator<T> {
+  if (iterable instanceof Array) {
+    return new ArrayIterator(<T[]>iterable);
+  }
+  return (<IIterable<T>>iterable).iterator();
+}
+
+
+/**
  * Create an array from the values in an iterable.
  */
 export
-function toArray<T>(iterable: IIterable<T>): T[] {
+function toArray<T>(iterable: IIterable<T> | T[]): T[] {
   var result: T[] = [];
-  for (var iter = iterable.iterator(); iter.moveNext();) {
-    result.push(iter.current);
+  for (var it = iter(iterable); it.moveNext();) {
+    result.push(it.current);
   }
   return result;
 }
@@ -28,10 +40,10 @@ function toArray<T>(iterable: IIterable<T>): T[] {
  */
 export
 function forEach<T, U>(
-  iterable: IIterable<T>,
+  iterable: IIterable<T> | T[],
   callback: (value: T, index: number) => U): U {
-  for (var i = 0, iter = iterable.iterator(); iter.moveNext(); ++i) {
-    var result = callback(iter.current, i);
+  for (var i = 0, it = iter(iterable); it.moveNext(); ++i) {
+    var result = callback(it.current, i);
     if (result !== void 0) return result;
   }
   return void 0;
@@ -43,10 +55,10 @@ function forEach<T, U>(
  */
 export
 function some<T>(
-  iterable: IIterable<T>,
+  iterable: IIterable<T> | T[],
   callback: (value: T, index: number) => boolean): boolean {
-  for (var i = 0, iter = iterable.iterator(); iter.moveNext(); ++i) {
-    if (callback(iter.current, i)) return true;
+  for (var i = 0, it = iter(iterable); it.moveNext(); ++i) {
+    if (callback(it.current, i)) return true;
   }
   return false;
 }
@@ -57,10 +69,10 @@ function some<T>(
  */
 export
 function every<T>(
-  iterable: IIterable<T>,
+  iterable: IIterable<T> | T[],
   callback: (value: T, index: number) => boolean): boolean {
-  for (var i = 0, iter = iterable.iterator(); iter.moveNext(); ++i) {
-    if (!callback(iter.current, i)) return false;
+  for (var i = 0, it = iter(iterable); it.moveNext(); ++i) {
+    if (!callback(it.current, i)) return false;
   }
   return true;
 }
@@ -71,11 +83,11 @@ function every<T>(
  */
 export
 function filter<T>(
-  iterable: IIterable<T>,
+  iterable: IIterable<T> | T[],
   callback: (value: T, index: number) => boolean): T[] {
   var result: T[] = [];
-  for (var i = 0, iter = iterable.iterator(); iter.moveNext(); ++i) {
-    if (callback(iter.current, i)) result.push(iter.current);
+  for (var i = 0, it = iter(iterable); it.moveNext(); ++i) {
+    if (callback(it.current, i)) result.push(it.current);
   }
   return result;
 }
@@ -86,11 +98,11 @@ function filter<T>(
  */
 export
 function map<T, U>(
-  iterable: IIterable<T>,
+  iterable: IIterable<T> | T[],
   callback: (value: T, index: number) => U): U[] {
   var result: U[] = [];
-  for (var i = 0, iter = iterable.iterator(); iter.moveNext(); ++i) {
-    result.push(callback(iter.current, i));
+  for (var i = 0, it = iter(iterable); it.moveNext(); ++i) {
+    result.push(callback(it.current, i));
   }
   return result;
 }
@@ -103,10 +115,10 @@ function map<T, U>(
  */
 export
 function find<T>(
-  iterable: IIterable<T>,
+  iterable: IIterable<T> | T[],
   callback: (value: T, index: number) => boolean): T {
-  for (var i = 0, iter = iterable.iterator(); iter.moveNext(); ++i) {
-    if (callback(iter.current, i)) return iter.current;
+  for (var i = 0, it = iter(iterable); it.moveNext(); ++i) {
+    if (callback(it.current, i)) return it.current;
   }
   return void 0;
 }
