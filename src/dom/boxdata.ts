@@ -81,14 +81,14 @@ function createBoxData(node: HTMLElement): IBoxData {
   var pr = parseInt(style.paddingRight, 10) || 0;
   var pb = parseInt(style.paddingBottom, 10) || 0;
   var data = Object.create(boxDataProto);
-  if (bt !== 0) data._m_bt = bt;
-  if (bl !== 0) data._m_bl = bl;
-  if (br !== 0) data._m_br = br;
-  if (bb !== 0) data._m_bb = bb;
-  if (pt !== 0) data._m_pt = pt;
-  if (pl !== 0) data._m_pl = pl;
-  if (pr !== 0) data._m_pr = pr;
-  if (pb !== 0) data._m_pb = pb;
+  if (bt !== 0) data._bt = bt;
+  if (bl !== 0) data._bl = bl;
+  if (br !== 0) data._br = br;
+  if (bb !== 0) data._bb = bb;
+  if (pt !== 0) data._pt = pt;
+  if (pl !== 0) data._pl = pl;
+  if (pr !== 0) data._pr = pr;
+  if (pb !== 0) data._pb = pb;
   return <IBoxData>data;
 }
 
@@ -97,17 +97,17 @@ function createBoxData(node: HTMLElement): IBoxData {
  * The box data prototype object used by `createBoxData`.
  */
 var boxDataProto: IBoxData = {
-  get borderTop() { return this._m_bt; },
-  get borderLeft() { return this._m_bl; },
-  get borderRight() { return this._m_br; },
-  get borderBottom() { return this._m_bb; },
-  get paddingTop() { return this._m_pt; },
-  get paddingLeft() { return this._m_pl; },
-  get paddingRight() { return this._m_pr; },
-  get paddingBottom() { return this._m_pb; },
-  get verticalSum() { return this._m_bt + this._m_bb + this._m_pt + this._m_pb; },
-  get horizontalSum() { return this._m_bl + this._m_br + this._m_pl + this._m_pr; },
-  _m_bt: 0, _m_bl: 0, _m_br: 0, _m_bb: 0, _m_pt: 0, _m_pl: 0, _m_pr: 0, _m_pb: 0,
+  get borderTop() { return this._bt; },
+  get borderLeft() { return this._bl; },
+  get borderRight() { return this._br; },
+  get borderBottom() { return this._bb; },
+  get paddingTop() { return this._pt; },
+  get paddingLeft() { return this._pl; },
+  get paddingRight() { return this._pr; },
+  get paddingBottom() { return this._pb; },
+  get verticalSum() { return this._bt + this._bb + this._pt + this._pb; },
+  get horizontalSum() { return this._bl + this._br + this._pl + this._pr; },
+  _bt: 0, _bl: 0, _br: 0, _bb: 0, _pt: 0, _pl: 0, _pr: 0, _pb: 0,
 };
 
 } // module phosphor.dom
