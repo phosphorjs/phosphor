@@ -177,7 +177,7 @@ class QueueIterator<T> implements IIterator<T> {
    * Construct a new queue iterator.
    */
   constructor(link: IQueueLink<T>) {
-    this._m_link = { next: link, value: void 0 };
+    this._link = link;
   }
 
   /**
@@ -186,7 +186,7 @@ class QueueIterator<T> implements IIterator<T> {
    * Returns `undefined` if there is no current value.
    */
   get current(): T {
-    return this._m_link !== null ? this._m_link.value : void 0;
+    return this._current;
   }
 
   /**
@@ -195,11 +195,11 @@ class QueueIterator<T> implements IIterator<T> {
    * Returns true on success, false when the iterator is exhausted.
    */
   moveNext(): boolean {
-    var link = this._m_link;
-    if (link === null) {
+    if (this._link === null) {
       return false;
     }
-    this._m_link = link.next;
+    this._current = this._link.value;
+    this._link = this._link.next;
     return true;
   }
 
@@ -210,7 +210,8 @@ class QueueIterator<T> implements IIterator<T> {
     return this;
   }
 
-  private _m_link: IQueueLink<T>;
+  private _link: IQueueLink<T>;
+  private _current: T = void 0;
 }
 
 } // module phosphor.collections

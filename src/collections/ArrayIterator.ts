@@ -16,7 +16,7 @@ class ArrayIterator<T> implements IIterator<T> {
    * Construct a new array iterator.
    */
   constructor(array: T[]) {
-    this._m_array = array;
+    this._array = array || null;
   }
 
   /**
@@ -25,7 +25,7 @@ class ArrayIterator<T> implements IIterator<T> {
    * Returns `undefined` if there is no current value.
    */
   get current(): T {
-    return this._m_array[this._m_index];
+    return this._current;
   }
 
   /**
@@ -34,7 +34,16 @@ class ArrayIterator<T> implements IIterator<T> {
    * Returns true on success, false when the iterator is exhausted.
    */
   moveNext(): boolean {
-    return ++this._m_index < this._m_array.length;
+    if (this._array === null) {
+      return false;
+    }
+    if (this._index < this._array.length) {
+      this._current = this._array[this._index++];
+      return true;
+    }
+    this._array = null;
+    this._current = void 0;
+    return false;
   }
 
   /**
@@ -44,8 +53,9 @@ class ArrayIterator<T> implements IIterator<T> {
     return this;
   }
 
-  private _m_index = -1;
-  private _m_array: T[];
+  private _index = 0;
+  private _array: T[];
+  private _current: T = void 0;
 }
 
 } // module phosphor.collections

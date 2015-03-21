@@ -16,7 +16,7 @@ class ListIterator<T> implements IIterator<T> {
    * Construct a new list iterator.
    */
   constructor(list: IList<T>) {
-    this._m_list = list;
+    this._list = list || null;
   }
 
   /**
@@ -25,7 +25,7 @@ class ListIterator<T> implements IIterator<T> {
    * Returns `undefined` if there is no current value.
    */
   get current(): T {
-    return this._m_list.get(this._m_index);
+    return this._current;
   }
 
   /**
@@ -34,7 +34,16 @@ class ListIterator<T> implements IIterator<T> {
    * Returns true on success, false when the iterator is exhausted.
    */
   moveNext(): boolean {
-    return ++this._m_index < this._m_list.size;
+    if (this._list === null) {
+      return false;
+    }
+    if (this._index < this._list.size) {
+      this._current = this._list.get(this._index++);
+      return true;
+    }
+    this._list = null;
+    this._current = void 0;
+    return false;
   }
 
   /**
@@ -44,8 +53,9 @@ class ListIterator<T> implements IIterator<T> {
     return this;
   }
 
-  private _m_index = -1;
-  private _m_list: IList<T>;
+  private _index = 0;
+  private _list: IList<T>;
+  private _current: T = void 0;
 }
 
 } // module phosphor.collections
