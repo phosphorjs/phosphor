@@ -16,33 +16,33 @@ class Point {
    * Construct a new point.
    */
   constructor(x: number, y: number) {
-    this._m_x = x;
-    this._m_y = y;
+    this._x = x;
+    this._y = y;
   }
 
   /**
    * The X coordinate of the point.
    */
   get x(): number {
-    return this._m_x;
+    return this._x;
   }
 
   /**
    * The Y coordinate of the point.
    */
   get y(): number {
-    return this._m_y;
+    return this._y;
   }
 
   /**
    * Test whether the point is equivalent to another.
    */
   equals(other: Point): boolean {
-    return this._m_x === other._m_x && this._m_y === other._m_y;
+    return this._x === other._x && this._y === other._y;
   }
 
-  private _m_x: number;
-  private _m_y: number;
+  private _x: number;
+  private _y: number;
 }
 
 } // module phosphor.geometry

@@ -16,34 +16,33 @@ class Size {
    * Construct a new size.
    */
   constructor(width: number, height: number) {
-    this._m_width = width;
-    this._m_height = height;
+    this._width = width;
+    this._height = height;
   }
 
   /**
    * The width of the size.
    */
   get width(): number {
-    return this._m_width;
+    return this._width;
   }
 
   /**
    * The height of the size.
    */
   get height(): number {
-    return this._m_height;
+    return this._height;
   }
 
   /**
    * Test whether the size is equivalent to another.
    */
   equals(other: Size): boolean {
-    return this._m_width === other._m_width &&
-           this._m_height === other._m_height;
+    return this._width === other._width && this._height === other._height;
   }
 
-  private _m_width: number;
-  private _m_height: number;
+  private _width: number;
+  private _height: number;
 }
 
 } // module phosphor.geometry

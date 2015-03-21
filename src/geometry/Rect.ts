@@ -16,10 +16,10 @@ class Rect {
    * Construct a new rect.
    */
   constructor(x: number, y: number, width: number, height: number) {
-    this._m_x = x;
-    this._m_y = y;
-    this._m_width = width;
-    this._m_height = height;
+    this._x = x;
+    this._y = y;
+    this._width = width;
+    this._height = height;
   }
 
   /**
@@ -28,7 +28,7 @@ class Rect {
    * This is equivalent to `left`.
    */
   get x(): number {
-    return this._m_x;
+    return this._x;
   }
 
   /**
@@ -37,21 +37,21 @@ class Rect {
    * This is equivalent to `top`.
    */
   get y(): number {
-    return this._m_y;
+    return this._y;
   }
 
   /**
    * The width of the rect.
    */
   get width(): number {
-    return this._m_width;
+    return this._width;
   }
 
   /**
    * The height of the rect.
    */
   get height(): number {
-    return this._m_height;
+    return this._height;
   }
 
   /**
@@ -60,14 +60,14 @@ class Rect {
    * This is equivalent to `topLeft`.
    */
   get pos(): Point {
-    return new Point(this._m_x, this._m_y);
+    return new Point(this._x, this._y);
   }
 
   /**
    * The size of the rect.
    */
   get size(): Size {
-    return new Size(this._m_width, this._m_height);
+    return new Size(this._width, this._height);
   }
 
   /**
@@ -76,7 +76,7 @@ class Rect {
    * This is equivalent to `y`.
    */
   get top(): number {
-    return this._m_y;
+    return this._y;
   }
 
   /**
@@ -85,7 +85,7 @@ class Rect {
    * This is equivalent to `x`.
    */
   get left(): number {
-    return this._m_x;
+    return this._x;
   }
 
   /**
@@ -94,7 +94,7 @@ class Rect {
    * This is equivalent to `x + width`.
    */
   get right(): number {
-    return this._m_x + this._m_width;
+    return this._x + this._width;
   }
 
   /**
@@ -103,7 +103,7 @@ class Rect {
    * This is equivalent to `y + height`.
    */
   get bottom(): number {
-    return this._m_y + this._m_height;
+    return this._y + this._height;
   }
 
   /**
@@ -112,44 +112,42 @@ class Rect {
    * This is equivalent to `pos`.
    */
   get topLeft(): Point {
-    return new Point(this._m_x, this._m_y);
+    return new Point(this._x, this._y);
   }
 
   /**
    * The position of the top right corner of the rect.
    */
   get topRight(): Point {
-    return new Point(this._m_x + this._m_width, this._m_y);
+    return new Point(this._x + this._width, this._y);
   }
 
   /**
    * The position bottom left corner of the rect.
    */
   get bottomLeft(): Point {
-    return new Point(this._m_x, this._m_y + this._m_height);
+    return new Point(this._x, this._y + this._height);
   }
 
   /**
    * The position bottom right corner of the rect.
    */
   get bottomRight(): Point {
-    return new Point(this._m_x + this._m_width, this._m_y + this._m_height);
+    return new Point(this._x + this._width, this._y + this._height);
   }
 
   /**
    * Test whether the rect is equivalent to another.
    */
   equals(other: Rect): boolean {
-    return this._m_x === other._m_x &&
-           this._m_y === other._m_y &&
-           this._m_width === other._m_width &&
-           this._m_height === other._m_height;
+    return this._x === other._x && this._y === other._y &&
+           this._width === other._width && this._height === other._height;
   }
 
-  private _m_x: number;
-  private _m_y: number;
-  private _m_width: number;
-  private _m_height: number;
+  private _x: number;
+  private _y: number;
+  private _width: number;
+  private _height: number;
 }
 
 } // module phosphor.geometry
