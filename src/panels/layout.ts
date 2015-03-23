@@ -50,7 +50,7 @@ class Layout implements IMessageFilter, IDisposable {
    * when the layout is installed on a panel. This should not be set
    * directly by user code.
    */
-  set parentPanel(panel: Panel) {
+  set parent(panel: Panel) {
     if (!panel) {
       throw new Error('cannot set parent panel to null');
     }
