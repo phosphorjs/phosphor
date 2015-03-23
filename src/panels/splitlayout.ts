@@ -407,6 +407,7 @@ class SplitLayout extends Layout {
         var sizer = sizers[i];
         if (item.isHidden) {
           sizer.expansive = false;
+          sizer.stretch = 0;
           sizer.minSize = 0;
           sizer.maxSize = 0;
           continue;
@@ -439,6 +440,7 @@ class SplitLayout extends Layout {
         var sizer = sizers[i];
         if (item.isHidden) {
           sizer.expansive = false;
+          sizer.stretch = 0;
           sizer.minSize = 0;
           sizer.maxSize = 0;
           continue;
