@@ -305,7 +305,7 @@ class Panel implements IMessageHandler, IDisposable {
     if (this.testFlag(PanelFlag.DisallowLayoutChange)) {
       throw new Error('cannot change panel layout');
     }
-    if (layout !== null && layout.parentPanel !== null) {
+    if (layout !== null && layout.parent !== null) {
       throw new Error('layout already installed on a panel');
     }
     if (old !== null) {
@@ -316,7 +316,7 @@ class Panel implements IMessageHandler, IDisposable {
     if (layout !== null) {
       this._layout = layout;
       dispatch.installMessageFilter(this, layout);
-      layout.parentPanel = this;
+      layout.parent = this;
     }
     dispatch.sendMessage(this, new Message('layout-changed'));
   }
