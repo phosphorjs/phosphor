@@ -82,15 +82,14 @@ class SplitHandle {
     if (value === this._orientation) {
       return;
     }
-    var node = this._node;
-    if (value === Orientation.Horizontal) {
-      node.classList.remove(VERTICAL_CLASS);
-      node.classList.add(HORIZONTAL_CLASS);
-    } else {
-      node.classList.remove(HORIZONTAL_CLASS);
-      node.classList.add(VERTICAL_CLASS);
-    }
     this._orientation = value;
+    if (value === Orientation.Horizontal) {
+      this._node.classList.remove(VERTICAL_CLASS);
+      this._node.classList.add(HORIZONTAL_CLASS);
+    } else {
+      this._node.classList.remove(HORIZONTAL_CLASS);
+      this._node.classList.add(VERTICAL_CLASS);
+    }
   }
 
   /**
