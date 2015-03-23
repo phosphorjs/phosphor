@@ -58,18 +58,6 @@ var tsSources = [
   'dom/hitTest',
   'dom/overrideCursor',
 
-  // 'layout/ILayoutItem',
-  // 'layout/Layout',
-  // 'layout/SizingItem',
-  // 'layout/SpacerItem',
-  // 'layout/WidgetItem',
-  // 'layout/layoutCalc',
-  // 'layout/BoxLayout',
-  // 'layout/SingleLayout',
-  // 'layout/SplitterHandle',
-  // 'layout/SplitterLayout',
-  // 'layout/StackLayout',
-
   'virtualdom/IComponent',
   'virtualdom/IData',
   'virtualdom/IElement',
