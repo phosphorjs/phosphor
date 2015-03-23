@@ -46,8 +46,12 @@ class SingleLayout extends Layout {
     if (item && item.panel === panel) {
       return;
     }
-    this._item = new PanelItem(panel);
-    this.ensureParent(panel);
+    if (panel) {
+      this._item = new PanelItem(panel);
+      this.ensureParent(panel);
+    } else {
+      this._item = null;
+    }
     this.invalidate();
   }
 
