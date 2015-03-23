@@ -21,6 +21,9 @@ var SPLIT_PANEL_CLASS = 'p-SplitPanel';
 
 /**
  * A panel which separates its children into resizable sections.
+ *
+ * This panel delegates to a permanently installed split layout and
+ * can be used as a more convenient interface to a split layout.
  */
 export
 class SplitPanel extends Panel {
