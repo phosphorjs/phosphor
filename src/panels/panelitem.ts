@@ -17,9 +17,8 @@ class PanelItem implements ILayoutItem {
   /**
    * Construct a new panel item.
    */
-  constructor(panel: Panel, alignment: Alignment = 0) {
+  constructor(panel: Panel) {
     this._panel = panel;
-    this._alignment = alignment;
   }
 
   /**
@@ -54,7 +53,7 @@ class PanelItem implements ILayoutItem {
    * Test whether the item should be expanded horizontally.
    */
   get expandHorizontal(): boolean {
-    if (this._alignment & Alignment.Horizontal_Mask) {
+    if (this._panel.alignment & Alignment.Horizontal_Mask) {
       return false;
     }
     var hPolicy = this._panel.horizontalSizePolicy;
@@ -65,7 +64,7 @@ class PanelItem implements ILayoutItem {
    * Test Whether the item should be expanded vertically.
    */
   get expandVertical(): boolean {
-    if (this._alignment & Alignment.Vertical_Mask) {
+    if (this._panel.alignment & Alignment.Vertical_Mask) {
       return false;
     }
     var vPolicy = this._panel.verticalSizePolicy;
@@ -73,17 +72,17 @@ class PanelItem implements ILayoutItem {
   }
 
   /**
-   * Get the alignment of the item in its layout cell.
+   * The horizontal stretch factor for the item.
    */
-  get alignment(): Alignment {
-    return this._alignment;
+  get horiztonalStretch(): number {
+    return this._panel.horizontalStretch;
   }
 
   /**
-   * Set the alignment of the item in its layout cell.
+   * The vertical stretch factor for the item.
    */
-  set alignment(alignment: Alignment) {
-    this._alignment = alignment;
+  get verticalStretch(): number {
+    return this._panel.verticalStretch;
   }
 
   /**
@@ -136,7 +135,7 @@ class PanelItem implements ILayoutItem {
     }
     var w = width;
     var h = height;
-    var alignment = this._alignment;
+    var alignment = panel.alignment;
     if (alignment & Alignment.Horizontal_Mask) {
       var igW = panel.horizontalSizePolicy === SizePolicy.Ignored;
       w = Math.min(w, igW ? this._origHint.width : this._sizeHint.width);
@@ -182,7 +181,7 @@ class PanelItem implements ILayoutItem {
     var xHint = panel.maxSizeHint();
     var vsp = panel.verticalSizePolicy;
     var hsp = panel.horizontalSizePolicy;
-    var al = this._alignment;
+    var al = panel.alignment;
     this._origHint = sHint;
     this._sizeHint = makeSizeHint(sHint, mHint, min, max, hsp, vsp);
     this._minSize = makeMinSize(sHint, mHint, min, max, hsp, vsp);
@@ -190,7 +189,6 @@ class PanelItem implements ILayoutItem {
   }
 
   private _panel: Panel;
-  private _alignment: Alignment;
   private _origHint: Size = null;
   private _sizeHint: Size = null;
   private _minSize: Size = null;

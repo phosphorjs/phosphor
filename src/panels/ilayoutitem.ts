@@ -49,9 +49,14 @@ interface ILayoutItem {
   expandVertical: boolean;
 
   /**
-   * The alignment of the item within its layout cell.
+   * The horizontal stretch factor for the item.
    */
-  alignment: Alignment;
+  horiztonalStretch: number;
+
+  /**
+   * The vertical stretch factor for the item.
+   */
+  verticalStretch: number;
 
   /**
    * Invalidate the cached data for the item.

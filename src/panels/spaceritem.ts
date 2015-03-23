@@ -20,9 +20,11 @@ class SpacerItem implements ILayoutItem {
   constructor(
     width: number,
     height: number,
+    hStretch: number,
+    vStretch: number,
     hPolicy: SizePolicy,
     vPolicy: SizePolicy) {
-    this.setSize(width, height, hPolicy, vPolicy);
+    this.setSizing(width, height, hStretch, vStretch, hPolicy, vPolicy);
   }
 
   /**
@@ -57,7 +59,7 @@ class SpacerItem implements ILayoutItem {
    * Test whether the item should be expanded horizontally.
    */
   get expandHorizontal(): boolean {
-    var hPolicy = this._sizePolicy >> 4;
+    var hPolicy = this._sizePolicy >> 16;
     return (hPolicy & SizePolicy.ExpandFlag) !== 0;
   }
 
@@ -65,31 +67,43 @@ class SpacerItem implements ILayoutItem {
    * Test Whether the item should be expanded vertically.
    */
   get expandVertical(): boolean {
-    var vPolicy = this._sizePolicy & 0xF;
+    var vPolicy = this._sizePolicy & 0xFFFF;
     return (vPolicy & SizePolicy.ExpandFlag) !== 0;
   }
 
   /**
-   * The alignment of the item in its layout cell.
+   * The horizontal stretch factor for the item.
    */
-  get alignment(): Alignment {
-    return 0;
+  get horiztonalStretch(): number {
+    return this._stretch >> 16;
   }
 
   /**
-   * Change the size of the spacer item.
+   * The vertical stretch factor for the item.
+   */
+  get verticalStretch(): number {
+    return this._stretch & 0xFFFF;
+  }
+
+  /**
+   * Change the sizing of the spacer item.
    *
    * The owner layout must be invalidated to reflect the change.
    */
-  setSize(
+  setSizing(
     width: number,
     height: number,
+    hStretch: number,
+    vStretch: number,
     hPolicy: SizePolicy,
     vPolicy: SizePolicy): void {
     var w = Math.max(0, width);
     var h = Math.max(0, height);
+    hStretch = Math.max(0, Math.min(hStretch, 0x7FFF));
+    vStretch = Math.max(0, Math.min(vStretch, 0x7FFF));
     this._size = new Size(w, h);
-    this._sizePolicy = (hPolicy << 4) | vPolicy;
+    this._stretch = (hStretch << 16) | vStretch;
+    this._sizePolicy = (hPolicy << 16) | vPolicy;
   }
 
   /**
@@ -97,10 +111,13 @@ class SpacerItem implements ILayoutItem {
    */
   transpose(): void {
     var size = this._size;
-    var hPolicy = this._sizePolicy >> 4;
-    var vPolicy = this._sizePolicy & 0xF;
+    var hStretch = this._stretch >> 16;
+    var vStretch = this._stretch & 0xFFFF;
+    var hPolicy = this._sizePolicy >> 16;
+    var vPolicy = this._sizePolicy & 0xFFFF;
     this._size = new Size(size.height, size.width);
-    this._sizePolicy = (vPolicy << 4) | hPolicy;
+    this._stretch = (vStretch << 16) | hStretch;
+    this._sizePolicy = (vPolicy << 16) | hPolicy;
   }
 
   /**
@@ -145,6 +162,7 @@ class SpacerItem implements ILayoutItem {
   setGeometry(x: number, y: number, width: number, height: number): void { }
 
   private _size: Size;
+  private _stretch: number;
   private _sizePolicy: number;
 }
 
