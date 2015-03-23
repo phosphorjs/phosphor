@@ -93,6 +93,7 @@ var tsSources = [
   'panels/boxlayout',
   'panels/boxpanel',
   'panels/singlelayout',
+  'panels/singlepanel',
   'panels/splithandle',
   'panels/splitlayout',
   'panels/splitpanel',
