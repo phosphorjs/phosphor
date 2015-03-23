@@ -33,14 +33,14 @@ class Layout implements IMessageFilter, IDisposable {
    * Dispose of the resources held by the layout.
    */
   dispose(): void {
-    this._parentPanel = null;
+    this._parent = null;
   }
 
   /**
    * Get the parent panel of the layout.
    */
-  get parentPanel(): Panel {
-    return this._parentPanel;
+  get parent(): Panel {
+    return this._parent;
   }
 
   /**
@@ -54,14 +54,14 @@ class Layout implements IMessageFilter, IDisposable {
     if (!panel) {
       throw new Error('cannot set parent panel to null');
     }
-    if (panel === this._parentPanel) {
+    if (panel === this._parent) {
       return;
     }
-    if (this._parentPanel !== null) {
+    if (this._parent) {
       throw new Error('layout already installed on a panel');
     }
-    this._parentPanel = panel;
-    this.reparentChildPanels();
+    this._parent = panel;
+    this.reparentChildren();
     this.invalidate();
   }
 
@@ -215,8 +215,8 @@ class Layout implements IMessageFilter, IDisposable {
    * This should be reimplemented by a subclass as needed.
    */
   invalidate(): void {
-    var parent = this._parentPanel;
-    if (parent !== null) {
+    var parent = this._parent;
+    if (parent) {
       dispatch.postMessage(parent, new Message('layout-request'));
       parent.updateGeometry();
     }
@@ -226,7 +226,7 @@ class Layout implements IMessageFilter, IDisposable {
    * Filter a message sent to a message handler.
    */
   filterMessage(handler: IMessageHandler, msg: IMessage): boolean {
-    if (handler === this._parentPanel) {
+    if (handler === this._parent) {
       this.processPanelMessage(msg);
     }
     return false;
@@ -241,7 +241,7 @@ class Layout implements IMessageFilter, IDisposable {
     switch (msg.type) {
       case 'resize':
       case 'layout-request':
-        if (this._parentPanel.isVisible) {
+        if (this._parent.isVisible) {
           this.updateLayout();
         }
         break;
@@ -270,9 +270,9 @@ class Layout implements IMessageFilter, IDisposable {
    *
    * This is called when the layout is installed on a panel.
    */
-  protected reparentChildPanels(): void {
-    var parent = this._parentPanel;
-    if (parent !== null) {
+  protected reparentChildren(): void {
+    var parent = this._parent;
+    if (parent) {
       for (var i = 0, n = this.count; i < n; ++i) {
         var child = this.itemAt(i).panel;
         if (child) child.parent = parent;
@@ -281,18 +281,16 @@ class Layout implements IMessageFilter, IDisposable {
   }
 
   /**
-   * Add a child panel to the layout.
+   * Ensure a child panel is parented to the layout parent.
    *
-   * This should be called by a subclass when a panel is added to
-   * layout. It ensures that the panel is properly parented to the
-   * layout's parent panel.
+   * This should be called by a subclass when adding a panel.
    */
-  protected addChildPanel(child: Panel): void {
-    var parent = this._parentPanel;
+  protected ensureParent(child: Panel): void {
+    var parent = this._parent;
     if (parent) child.parent = parent;
   }
 
-  private _parentPanel: Panel = null;
+  private _parent: Panel = null;
 }
 
 } // module phosphor.panels
