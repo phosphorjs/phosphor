@@ -109,7 +109,7 @@ class Layout implements IMessageFilter, IDisposable {
    *
    * This must be implemented by a subclass.
    */
-  removePanel(panel: Panel): void {
+  remove(panel: Panel): void {
     throw new Error('not implemented');
   }
 
@@ -146,11 +146,11 @@ class Layout implements IMessageFilter, IDisposable {
       case 'resize':
       case 'layout-request':
         if (this._parent.isVisible) {
-          this.updateLayout();
+          this.layout();
         }
         break;
       case 'child-removed':
-        this.removePanel((<ChildMessage>msg).child);
+        this.remove((<ChildMessage>msg).child);
         break;
       case 'before-attach':
         this.invalidate();
@@ -177,7 +177,7 @@ class Layout implements IMessageFilter, IDisposable {
    *
    * The default implementation is a no-op.
    */
-  protected updateLayout(): void { }
+  protected layout(): void { }
 
   private _parent: Panel = null;
 }
