@@ -5,12 +5,14 @@
 |
 | The full license is in the file LICENSE, distributed with this software.
 |----------------------------------------------------------------------------*/
-module phosphor.layout {
+module phosphor.panels {
+
+import ArrayIterator = collections.ArrayIterator;
+import IIterator = collections.IIterator;
+
 
 /**
  * The layout class used by a SplitPanel.
- *
- * This will not typically be used directly by user code.
  */
 export
 class SplitLayout extends Layout {
@@ -26,8 +28,8 @@ class SplitLayout extends Layout {
    * Dispose of the resources held by the layout.
    */
   dispose(): void {
-    this._sizingItems = null;
-    this._splitterItems = null;
+    this._items = null;
+    this._sizers = null;
     super.dispose();
   }
 
@@ -41,11 +43,11 @@ class SplitLayout extends Layout {
   /**
    * Set the orientation of the split layout.
    */
-  set orientation(value: Orientation) {
-    if (value === this._orientation) {
+  set orientation(orient: Orientation) {
+    if (orient === this._orientation) {
       return;
     }
-    this._orientation = value;
+    this._orientation = orient;
     this.invalidate();
   }
 
@@ -72,14 +74,14 @@ class SplitLayout extends Layout {
    * Get the number of layout items in the layout.
    */
   get count(): number {
-    return this._splitterItems.length;
+    return this._items.length;
   }
 
   /**
    * Get the normalized sizes of the items in the layout.
    */
   sizes(): number[] {
-    return normalize(this._sizingItems.map(it => it.size));
+    return normalize(this._sizers.map(it => it.size));
   }
 
   /**
@@ -88,7 +90,7 @@ class SplitLayout extends Layout {
    * Extra values are ignored, too few will yield an undefined layout.
    */
   setSizes(sizes: number[]): void {
-    var parent = this.parentWidget;
+    var parent = this.parent;
     if (!parent) {
       return;
     }
@@ -99,30 +101,50 @@ class SplitLayout extends Layout {
     } else {
       totalSize = parent.height - boxD.verticalSum - this._fixedSpace;
     }
+    var sizers = this._sizers;
     var normed = normalize(sizes);
-    var items = this._sizingItems;
-    var n = Math.min(items.length, normed.length);
+    var n = Math.min(sizers.length, normed.length);
     for (var i = 0; i < n; ++i) {
-      items[i].sizeHint = Math.round(normed[i] * totalSize);
+      sizers[i].sizeHint = Math.round(normed[i] * totalSize);
     }
     if (parent.isVisible) {
-      this.updateLayout();
+      this.layout();
     }
+  }
+
+  /**
+   * Returns an iterator over the layout items in the layout.
+   */
+  items(): IIterator<ILayoutItem> {
+    return new ArrayIterator(this._items);
+  }
+
+  /**
+   * Get the index of the given panel.
+   *
+   * Returns -1 if the panel does not exist in the layout.
+   */
+  indexOf(panel: Panel): number {
+    var items = this._items;
+    for (var i = 0, n = items.length; i < n; ++i) {
+      if (items[i].panel === panel) return i;
+    }
+    return -1;
   }
 
   /**
    * Get the splitter handle at the given index.
    */
-  handleAt(index: number): SplitterHandle {
-    var item = this._splitterItems[index];
-    return (item && item.handle) || void 0;
+  handleAt(index: number): SplitHandle {
+    var item = this._items[index];
+    return item ? item.handle : void 0;
   }
 
   /**
    * Get the layout item at the specified index.
    */
   itemAt(index: number): ILayoutItem {
-    return this._splitterItems[index];
+    return this._items[index];
   }
 
   /**
@@ -130,11 +152,11 @@ class SplitLayout extends Layout {
    */
   takeAt(index: number): ILayoutItem {
     index = index | 0;
-    if (index < 0 || index >= this._splitterItems.length) {
+    if (index < 0 || index >= this._items.length) {
       return void 0;
     }
-    var item = this._splitterItems.splice(index, 1)[0];
-    this._sizingItems.splice(index, 1);
+    var item = this._items.splice(index, 1)[0];
+    this._sizers.splice(index, 1);
     var hNode = item.handle.node;
     var pNode = hNode.parentNode;
     if (pNode) pNode.removeChild(hNode);
@@ -143,78 +165,44 @@ class SplitLayout extends Layout {
   }
 
   /**
-   * Move a layout item from one index to another.
+   * Add a panel as the last item in the layout.
    *
-   * Returns the new index of the item.
+   * If the panel already exists in the layout, it will be moved.
+   *
+   * Returns the index of the added panel.
    */
-  moveItem(fromIndex: number, toIndex: number): number {
-    fromIndex = fromIndex | 0;
-    var n = this._splitterItems.length;
-    if (fromIndex < 0 || fromIndex >= n) {
-      return -1;
-    }
-    toIndex = Math.max(0, Math.min(toIndex | 0, n - 1));
-    if (fromIndex === toIndex) {
-      return toIndex;
-    }
-    var item = this._splitterItems.splice(fromIndex, 1)[0];
-    this._splitterItems.splice(toIndex, 0, item);
-    var sizeItem = this._sizingItems.splice(fromIndex, 1)[0];
-    this._sizingItems.splice(toIndex, 0, sizeItem);
+  add(panel: Panel): number {
+    return this.insert(this.count, panel);
+  }
+
+  /**
+   * Insert a panel into the layout at the given index.
+   *
+   * If the panel already exists in the layout, it will be moved.
+   *
+   * Returns the index of the added panel.
+   */
+  insert(index: number, panel: Panel): number {
+    this.remove(panel);
+    this.ensureParent(panel);
+    var handle = new SplitHandle(this._orientation);
+    var item = new SplitItem(panel, handle);
+    var sizer = new LayoutSizer();
+    index = Math.max(0, Math.min(index, this._items.length));
+    this._items.splice(index, 0, item);
+    this._sizers.splice(index, 0, sizer);
     this.invalidate();
-    return toIndex;
+    return index;
   }
 
   /**
-   * Add a widget as the last item in the layout.
+   * Remove the given panel from the layout.
    *
-   * If the widget already exists in the layout, it will be moved.
-   *
-   * Returns the index of the added widget.
+   * This is a no-op if the panel does not exist in the layout.
    */
-  addWidget(widget: Widget, stretch = 0, alignment: Alignment = 0): number {
-    return this.insertWidget(this.count, widget, stretch, alignment);
-  }
-
-  /**
-   * Insert a widget into the layout at the given index.
-   *
-   * If the widget already exists in the layout, it will be moved.
-   *
-   * Returns the index of the added item.
-   */
-  insertWidget(index: number, widget: Widget, stretch = 0, alignment: Alignment = 0): number {
-    var i = this.widgetIndex(widget);
-    if (i >= 0) {
-      return this.moveItem(i, index);
-    }
-    this.addChildWidget(widget);
-    var orient = this._orientation;
-    var handle = new SplitterHandle(orient);
-    var item = new SplitterItem(widget, handle, alignment);
-    return this._insertItem(index, item, stretch);
-  }
-
-  /**
-   * Get the stretch factor for the item at the given index.
-   *
-   * Returns -1 if the index is out of range.
-   */
-  stretchAt(index: number): number {
-    var item = this._sizingItems[index];
-    return item ? item.stretch : - 1;
-  }
-
-  /**
-   * Set the stretch factor for the item at the given index.
-   */
-  setStretch(index: number, stretch: number): void {
-    stretch = Math.max(0, stretch | 0);
-    var item = this._sizingItems[index];
-    if (item && item.stretch !== stretch) {
-      item.stretch = stretch;
-      this.invalidate();
-    }
+  remove(panel: Panel): void {
+    var i = this.indexOf(panel);
+    if (i !== -1) this.takeAt(i);
   }
 
   /**
@@ -224,7 +212,7 @@ class SplitLayout extends Layout {
    * offset position, without violating item size constraints.
    */
   moveHandle(index: number, pos: number): void {
-    var item = this._splitterItems[index];
+    var item = this._items[index];
     if (!item || item.handle.hidden) {
       return;
     }
@@ -237,15 +225,15 @@ class SplitLayout extends Layout {
     if (delta === 0) {
       return;
     }
-    var sizingItems = this._sizingItems;
+    var sizers = this._sizers;
     if (delta > 0) {
-      growItem(sizingItems, index, delta);
+      growSizer(sizers, index, delta);
     } else {
-      sizingItems.reverse();
-      growItem(sizingItems, sizingItems.length - (index + 2), -delta);
-      sizingItems.reverse();
+      sizers.reverse();
+      growSizer(sizers, sizers.length - (index + 2), -delta);
+      sizers.reverse();
     }
-    this.updateLayout();
+    this.layout();
   }
 
   /**
@@ -288,19 +276,12 @@ class SplitLayout extends Layout {
 
   /**
    * Update the geometry of the child layout items.
-   *
-   * This is called automatically when the parent widget is resized
-   * or when it receives a posted 'layout-request' event. It should
-   * not normally be invoked directly.
    */
-  protected updateLayout(): void {
+  protected layout(): void {
     // Bail early when no work needs to be done.
-    var parent = this.parentWidget;
-    if (!parent) {
-      return;
-    }
-    var splitterItems = this._splitterItems;
-    if (splitterItems.length === 0) {
+    var parent = this.parent;
+    var items = this._items;
+    if (!parent || items.length === 0) {
       return;
     }
 
@@ -314,24 +295,24 @@ class SplitLayout extends Layout {
     var width = parent.width - boxD.horizontalSum;
     var height = parent.height - boxD.verticalSum;
     var orient = this._orientation;
-    var sizingItems = this._sizingItems;
+    var sizers = this._sizers;
 
     // Distribute the layout space to the sizing items.
     var mainSpace = orient === Orientation.Horizontal ? width : height;
-    layoutCalc(sizingItems, mainSpace - this._fixedSpace);
+    layoutCalc(sizers, mainSpace - this._fixedSpace);
 
     // Update the geometry of the items according to the orientation.
     var y = boxD.paddingTop;
     var x = boxD.paddingLeft;
     var hSize = this._handleSize;
-    var count = splitterItems.length;
+    var count = items.length;
     if (orient === Orientation.Horizontal) {
       for (var i = 0; i < count; ++i) {
-        var item = splitterItems[i];
+        var item = items[i];
         if (item.isHidden) {
           continue;
         }
-        var size = sizingItems[i].size;
+        var size = sizers[i].size;
         var hStyle = item.handle.node.style;
         item.setGeometry(x, y, size, height);
         hStyle.top = y + 'px';
@@ -342,11 +323,11 @@ class SplitLayout extends Layout {
       }
     } else {
       for (var i = 0; i < count; ++i) {
-        var item = splitterItems[i];
+        var item = items[i];
         if (item.isHidden) {
           continue;
         }
-        var size = sizingItems[i].size;
+        var size = sizers[i].size;
         var hStyle = item.handle.node.style;
         item.setGeometry(x, y, width, size);
         hStyle.top = y + size + 'px';
@@ -369,7 +350,7 @@ class SplitLayout extends Layout {
     this._dirty = false;
 
     // No parent means the layout is not yet attached.
-    var parent = this.parentWidget;
+    var parent = this.parent;
     if (!parent) {
       var zero = new Size(0, 0);
       this._sizeHint = zero;
@@ -386,10 +367,10 @@ class SplitLayout extends Layout {
     var hidFirst = false;
     var pNode = parent.node;
     var orient = this._orientation;
-    var splitterItems = this._splitterItems;
-    var count = splitterItems.length;
+    var items = this._items;
+    var count = items.length;
     for (var i = count - 1; i >= 0; --i) {
-      var item = splitterItems[i];
+      var item = items[i];
       var handle = item.handle;
       var hNode = handle.node;
       item.invalidate();
@@ -413,7 +394,7 @@ class SplitLayout extends Layout {
     var maxH: number;
     var fixedSpace = 0;
     var handleSize = this._handleSize;
-    var sizingItems = this._sizingItems;
+    var sizers = this._sizers;
 
     // Compute the size bounds according to the splitter orientation.
     // The size hints for the sizing items are explicitly not updated.
@@ -424,12 +405,12 @@ class SplitLayout extends Layout {
       maxH = Infinity;
       maxW = count > 0 ? 0 : Infinity;
       for (var i = 0; i < count; ++i) {
-        var item = splitterItems[i];
-        var sizingItem = sizingItems[i];
+        var item = items[i];
+        var sizer = sizers[i];
         if (item.isHidden) {
-          sizingItem.expansive = false;
-          sizingItem.minSize = 0;
-          sizingItem.maxSize = 0;
+          sizer.expansive = false;
+          sizer.minSize = 0;
+          sizer.maxSize = 0;
           continue;
         }
         var itemHint = item.sizeHint();
@@ -441,9 +422,10 @@ class SplitLayout extends Layout {
         hintW += itemHint.width;
         minW += itemMin.width;
         maxW += itemMax.width;
-        sizingItem.expansive = item.expandHorizontal;
-        sizingItem.minSize = itemMin.width;
-        sizingItem.maxSize = itemMax.width;
+        sizer.expansive = item.expandHorizontal;
+        sizer.stretch = item.horizontalStretch;
+        sizer.minSize = itemMin.width;
+        sizer.maxSize = itemMax.width;
         if (!item.handle.hidden) {
           fixedSpace += handleSize;
         }
@@ -455,12 +437,12 @@ class SplitLayout extends Layout {
       maxW = Infinity;
       maxH = count > 0 ? 0 : Infinity;
       for (var i = 0; i < count; ++i) {
-        var item = splitterItems[i];
-        var sizingItem = sizingItems[i];
+        var item = items[i];
+        var sizer = sizers[i];
         if (item.isHidden) {
-          sizingItem.expansive = false;
-          sizingItem.minSize = 0;
-          sizingItem.maxSize = 0;
+          sizer.expansive = false;
+          sizer.minSize = 0;
+          sizer.maxSize = 0;
           continue;
         }
         var itemHint = item.sizeHint();
@@ -472,9 +454,10 @@ class SplitLayout extends Layout {
         hintH += itemHint.height;
         minH += itemMin.height;
         maxH += itemMax.height;
-        sizingItem.expansive = item.expandVertical;
-        sizingItem.minSize = itemMin.height;
-        sizingItem.maxSize = itemMax.height;
+        sizer.expansive = item.expandVertical;
+        sizer.stretch = item.verticalStretch;
+        sizer.minSize = itemMin.height;
+        sizer.maxSize = itemMax.height;
         if (!item.handle.hidden) {
           fixedSpace += handleSize;
         }
@@ -502,20 +485,6 @@ class SplitLayout extends Layout {
     this._fixedSpace = fixedSpace;
   }
 
-  /**
-   * Insert a splitter item with the specified stretch factor.
-   *
-   * Returns the index of the added item.
-   */
-  private _insertItem(index: number, item: SplitterItem, stretch: number): number {
-    var sizingItem = createSizingItem(Math.max(0, stretch | 0));
-    index = Math.max(0, Math.min(index | 0, this._splitterItems.length));
-    this._splitterItems.splice(index, 0, item);
-    this._sizingItems.splice(index, 0, sizingItem);
-    this.invalidate();
-    return index;
-  }
-
   private _dirty = true;
   private _handleSize = 3;
   private _fixedSpace = 0;
@@ -523,93 +492,84 @@ class SplitLayout extends Layout {
   private _minSize: Size = null;
   private _maxSize: Size = null;
   private _orientation: Orientation;
-  private _sizingItems: SizingItem[] = [];
-  private _splitterItems: SplitterItem[] = [];
+  private _items: SplitItem[] = [];
+  private _sizers: LayoutSizer[] = [];
 }
 
 
 /**
- * A custom widget item class used by the splitter layout.
+ * A custom panel item used by a split layout.
  */
-class SplitterItem extends WidgetItem {
+export
+class SplitItem extends PanelItem {
   /**
-   * Construct a new splitter item.
+   * Construct a new split item.
    */
-  constructor(widget: Widget, handle: SplitterHandle, alignment: Alignment = 0) {
-    super(widget, alignment);
+  constructor(panel: Panel, handle: SplitHandle) {
+    super(panel);
     this._handle = handle;
   }
 
   /**
-   * Get the splitter handle for the item.
+   * Get the split handle for the item.
    */
-  get handle(): SplitterHandle {
+  get handle(): SplitHandle {
     return this._handle;
   }
 
-  private _handle: SplitterHandle;
+  private _handle: SplitHandle;
 }
 
 
 /**
- * Create a sizing item with the given stretch factor.
- */
-function createSizingItem(stretch: number): SizingItem {
-  var item = new SizingItem();
-  item.stretch = stretch;
-  return item;
-}
-
-
-/**
- * Grow an item to the right by a positive delta.
+ * Grow a sizer to the right by a positive delta.
  *
- * This will adjust the items neighbors if required.
+ * This will adjust the sizer's neighbors if required.
  *
- * Before adjusting the item, the size hints of all items will be
+ * Before adjusting the sizer, the size hints of all sizers will be
  * updated to their current size. This allows the sections to remain
  * well sized on the subsequent layout since the size hint is the
  * effective input to the `layoutCalc` function.
  */
-function growItem(items: SizingItem[], index: number, delta: number): void {
-  // TODO - the size hint of hidden items gets forced to zero here. It
+function growSizer(sizers: LayoutSizer[], index: number, delta: number): void {
+  // TODO - the size hint of hidden sizers gets forced to zero here. It
   // would be nice to preserve it so it's a reasonable size when shown.
-  for (var i = 0, n = items.length; i < n; ++i) {
-    var item = items[i];
-    item.sizeHint = item.size;
+  for (var i = 0, n = sizers.length; i < n; ++i) {
+    var sizer = sizers[i];
+    sizer.sizeHint = sizer.size;
   }
   var growLimit = 0;
   for (var i = 0; i <= index; ++i) {
-    var item = items[i];
-    growLimit += item.maxSize - item.size;
+    var sizer = sizers[i];
+    growLimit += sizer.maxSize - sizer.size;
   }
   var shrinkLimit = 0;
-  for (var i = index + 1, n = items.length; i < n; ++i) {
-    var item = items[i];
-    shrinkLimit += item.size - item.minSize;
+  for (var i = index + 1, n = sizers.length; i < n; ++i) {
+    var sizer = sizers[i];
+    shrinkLimit += sizer.size - sizer.minSize;
   }
   delta = Math.min(delta, growLimit, shrinkLimit);
   var grow = delta;
   for (var i = index; i >= 0 && grow > 0; --i) {
-    var item = items[i];
-    var limit = item.maxSize - item.size;
+    var sizer = sizers[i];
+    var limit = sizer.maxSize - sizer.size;
     if (limit >= grow) {
-      item.sizeHint = item.size + grow;
+      sizer.sizeHint = sizer.size + grow;
       grow = 0;
     } else {
-      item.sizeHint = item.size + limit;
+      sizer.sizeHint = sizer.size + limit;
       grow -= limit;
     }
   }
   var shrink = delta;
-  for (var i = index + 1, n = items.length; i < n && shrink > 0; ++i) {
-    var item = items[i];
-    var limit = item.size - item.minSize;
+  for (var i = index + 1, n = sizers.length; i < n && shrink > 0; ++i) {
+    var sizer = sizers[i];
+    var limit = sizer.size - sizer.minSize;
     if (limit >= shrink) {
-      item.sizeHint = item.size - shrink;
+      sizer.sizeHint = sizer.size - shrink;
       shrink = 0;
     } else {
-      item.sizeHint = item.size - limit;
+      sizer.sizeHint = sizer.size - limit;
       shrink -= limit;
     }
   }
@@ -641,4 +601,4 @@ function normalize(values: number[]): number[] {
   return result;
 }
 
-} // module phosphor.layout
+} // module phosphor.panels

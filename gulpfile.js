@@ -90,7 +90,9 @@ var tsSources = [
   'panels/panel',
   'panels/panelitem',
   'panels/spaceritem',
-  'panels/splithandle'
+  'panels/splithandle',
+  'panels/splitlayout',
+  'panels/splitpanel'
   // 'widgets/ITab',
   // 'widgets/ChildEvent',
   // 'widgets/MoveEvent',
