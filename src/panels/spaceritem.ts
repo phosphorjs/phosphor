@@ -145,7 +145,7 @@ class SpacerItem implements ILayoutItem {
   setGeometry(x: number, y: number, width: number, height: number): void { }
 
   private _size: Size;
-  private _sizePolicy: SizePolicy;
+  private _sizePolicy: number;
 }
 
 } // module phosphor.panels
