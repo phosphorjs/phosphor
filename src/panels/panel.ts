@@ -30,7 +30,7 @@ import createBoxData = dom.createBoxData;
 var PANEL_CLASS = 'p-Panel';
 
 /**
- * The class name added to hidden widgets.
+ * The class name added to hidden panels.
  */
 var HIDDEN_CLASS = 'p-mod-hidden';
 
@@ -578,7 +578,7 @@ class Panel implements IMessageHandler, IDisposable {
    */
   detach(): void {
     if (this._parent) {
-      throw new Error('can only detach a root widget from the DOM');
+      throw new Error('can only detach a root panel from the DOM');
     }
     var node = this._node;
     var host = node.parentNode;
@@ -600,7 +600,7 @@ class Panel implements IMessageHandler, IDisposable {
    */
   fit(width?: number, height?: number, box?: IBoxData): void {
     if (this._parent) {
-      throw new Error('can only fit a root widget');
+      throw new Error('can only fit a root panel');
     }
     var host = <HTMLElement>this._node.parentNode;
     if (!host) {
