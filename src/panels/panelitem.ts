@@ -74,7 +74,7 @@ class PanelItem implements ILayoutItem {
   /**
    * The horizontal stretch factor for the item.
    */
-  get horiztonalStretch(): number {
+  get horizontalStretch(): number {
     return this._panel.horizontalStretch;
   }
 

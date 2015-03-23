@@ -51,7 +51,7 @@ interface ILayoutItem {
   /**
    * The horizontal stretch factor for the item.
    */
-  horiztonalStretch: number;
+  horizontalStretch: number;
 
   /**
    * The vertical stretch factor for the item.
