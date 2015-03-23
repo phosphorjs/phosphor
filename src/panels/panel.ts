@@ -192,17 +192,48 @@ class Panel implements IMessageHandler, IDisposable {
   }
 
   /**
+   * Get the horizontal stretch factor for the panel.
+   */
+  get horizontalStretch(): number {
+    return this._stretch >> 16;
+  }
+
+  /**
+   * Get the vertical stretch factor for the panel.
+   */
+  get verticalStretch(): number {
+    return this._stretch & 0xFFFF;
+  }
+
+  /**
    * Get the horizontal size policy for the panel.
    */
   get horizontalSizePolicy(): SizePolicy {
-    return this._sizePolicy >> 4;
+    return this._sizePolicy >> 16;
   }
 
   /**
    * Get the vertical size policy for the panel.
    */
   get verticalSizePolicy(): SizePolicy {
-    return this._sizePolicy & 0xF;
+    return this._sizePolicy & 0xFFFF;
+  }
+
+  /**
+   * Get the alignment flags for the panel.
+   */
+  get alignment(): Alignment {
+    return this._alignment;
+  }
+
+  /**
+   * Set the alignment flags for the panel.
+   */
+  set alignment(align: Alignment) {
+    if (align !== this._alignment) {
+      this._alignment = align;
+      this.updateGeometry();
+    }
   }
 
   /**
@@ -651,10 +682,22 @@ class Panel implements IMessageHandler, IDisposable {
   }
 
   /**
+   * Set the stretch factors for the panel.
+   */
+  setStretch(horizontal: number, vertical: number): void {
+    horizontal = Math.max(0, Math.min(horizontal, 0x7FFF));
+    vertical = Math.max(0, Math.min(vertical, 0x7FFF));
+    var stretch = (horizontal << 16) | vertical;
+    var changed = stretch !== this._stretch;
+    this._stretch = stretch;
+    if (changed) this.updateGeometry();
+  }
+
+  /**
    * Set the size policy values for the panel.
    */
   setSizePolicy(horizontal: SizePolicy, vertical: SizePolicy): void {
-    var policy = (horizontal << 4) | vertical;
+    var policy = (horizontal << 16) | vertical;
     var changed = policy !== this._sizePolicy;
     this._sizePolicy = policy;
     if (changed) this.updateGeometry();
@@ -872,8 +915,16 @@ class Panel implements IMessageHandler, IDisposable {
   private _maxWidth = Infinity;
   private _maxHeight = Infinity;
   private _boxData: IBoxData = null;
-  private _sizePolicy = 51; // Preferred, Preferred
+  private _stretch = 0;
+  private _alignment: Alignment = 0;
+  private _sizePolicy = defaultPolicy;
 }
+
+
+/**
+ * The default panel size policy.
+ */
+var defaultPolicy = (SizePolicy.Preferred << 16) | SizePolicy.Preferred;
 
 
 /**
