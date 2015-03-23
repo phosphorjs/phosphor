@@ -727,23 +727,23 @@ class Panel implements IMessageHandler, IDisposable {
     var style = this._node.style;
     if (oldX !== x) {
       this._x = x;
-      isMove = true;
       style.left = x + 'px';
+      isMove = true;
     }
     if (oldY !== y) {
       this._y = y;
-      isMove = true;
       style.top = y + 'px';
+      isMove = true;
     }
     if (oldWidth !== width) {
       this._width = width;
-      isResize = true;
       style.width = width + 'px';
+      isResize = true;
     }
     if (oldHeight !== height) {
       this._height = height;
-      isResize = true;
       style.height = height + 'px';
+      isResize = true;
     }
     if (isMove) {
       var move = new MoveMessage(oldX, oldY, x, y);
@@ -759,20 +759,20 @@ class Panel implements IMessageHandler, IDisposable {
    * Set the minimum size of the panel.
    */
   setMinSize(width: number, height: number): void {
-    this.setSizeLimits(width, height, this._maxWidth, this._maxHeight);
+    this.setMinMaxSize(width, height, this._maxWidth, this._maxHeight);
   }
 
   /**
    * Set the maximum size of the panel.
    */
   setMaxSize(width: number, height: number): void {
-    this.setSizeLimits(this._minWidth, this._minHeight, width, height);
+    this.setMinMaxSize(this._minWidth, this._minHeight, width, height);
   }
 
   /**
-   * Set the size limits of the panel.
+   * Set the minimum and maximum size of the panel.
    */
-  setSizeLimits(minW: number, minH: number, maxW: number, maxH: number): void {
+  setMinMaxSize(minW: number, minH: number, maxW: number, maxH: number): void {
     minW = Math.max(0, minW);
     minH = Math.max(0, minH);
     maxW = Math.max(minW, maxW);
@@ -807,9 +807,10 @@ class Panel implements IMessageHandler, IDisposable {
     horizontal = Math.max(0, Math.min(horizontal, 0x7FFF));
     vertical = Math.max(0, Math.min(vertical, 0x7FFF));
     var stretch = (horizontal << 16) | vertical;
-    var changed = stretch !== this._stretch;
-    this._stretch = stretch;
-    if (changed) this.updateGeometry();
+    if (stretch !== this._stretch) {
+      this._stretch = stretch;
+      this.updateGeometry();
+    }
   }
 
   /**
@@ -817,9 +818,10 @@ class Panel implements IMessageHandler, IDisposable {
    */
   setSizePolicy(horizontal: SizePolicy, vertical: SizePolicy): void {
     var policy = (horizontal << 16) | vertical;
-    var changed = policy !== this._sizePolicy;
-    this._sizePolicy = policy;
-    if (changed) this.updateGeometry();
+    if (policy !== this._sizePolicy) {
+      this._sizePolicy = policy;
+      this.updateGeometry();
+    }
   }
 
   /**
