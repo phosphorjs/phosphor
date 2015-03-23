@@ -184,7 +184,7 @@ class BoxLayout extends Layout {
   /**
    * Add stretchable space to the end of the layout.
    *
-   * Returns the index of the added spac.
+   * Returns the index of the added space.
    */
   addStretch(stretch = 0): number {
     return this.insertStretch(this.count, stretch);
