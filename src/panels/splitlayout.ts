@@ -294,7 +294,7 @@ class SplitLayout extends Layout {
     var orient = this._orientation;
     var sizers = this._sizers;
 
-    // Distribute the layout space to the sizing items.
+    // Distribute the layout space to the sizers.
     var mainSpace = orient === Orientation.Horizontal ? width : height;
     layoutCalc(sizers, mainSpace - this._fixedSpace);
 
@@ -394,10 +394,11 @@ class SplitLayout extends Layout {
     var sizers = this._sizers;
 
     // Compute the size bounds according to the splitter orientation.
-    // The size hints for the sizing items are explicitly not updated.
-    // The hint is only adjusted when the user moves a handle. This
-    // allows the sections to remain well-sized when siblings are
-    // added/removed or shown/hidden (see the growItem function).
+    // The size hints for the sizers are explicitly not updated. The
+    // size hint for a panel is only adjusted when the user moves a
+    // handle. This allows the panels to remain well-sized when their
+    // siblings panels are added of removed or when the panel is shown
+    // or hidden (see the growItem function).
     if (orient === Orientation.Horizontal) {
       maxH = Infinity;
       maxW = count > 0 ? 0 : Infinity;
