@@ -67,7 +67,7 @@ class Panel implements IMessageHandler, IDisposable {
     this.disposed.disconnect();
 
     var parent = this._parent;
-    if (parent !== null) {
+    if (parent) {
       this._parent = null;
       parent._children.remove(this);
       dispatch.sendMessage(parent, new ChildMessage('child-removed', this));
@@ -76,7 +76,7 @@ class Panel implements IMessageHandler, IDisposable {
     }
 
     var layout = this._layout;
-    if (layout !== null) {
+    if (layout) {
       this._layout = null;
       layout.dispose();
     }
@@ -261,12 +261,12 @@ class Panel implements IMessageHandler, IDisposable {
     if (old === parent) {
       return;
     }
-    if (old !== null) {
+    if (old) {
       this._parent = null;
       old._children.remove(this);
       dispatch.sendMessage(old, new ChildMessage('child-removed', this));
     }
-    if (parent !== null) {
+    if (parent) {
       this._parent = parent;
       parent._children.add(this);
       dispatch.sendMessage(parent, new ChildMessage('child-added', this));
@@ -305,15 +305,15 @@ class Panel implements IMessageHandler, IDisposable {
     if (this.testFlag(PanelFlag.DisallowLayoutChange)) {
       throw new Error('cannot change panel layout');
     }
-    if (layout !== null && layout.parent !== null) {
+    if (layout && layout.parent) {
       throw new Error('layout already installed on a panel');
     }
-    if (old !== null) {
+    if (old) {
       this._layout = null;
       dispatch.removeMessageFilter(this, old);
       old.dispose();
     }
-    if (layout !== null) {
+    if (layout) {
       this._layout = layout;
       dispatch.installMessageFilter(this, layout);
       layout.parent = this;
@@ -352,7 +352,7 @@ class Panel implements IMessageHandler, IDisposable {
       return;
     }
     var parent = this._parent;
-    if (this.isAttached && (parent === null || parent.isVisible)) {
+    if (this.isAttached && (!parent || parent.isVisible)) {
       dispatch.sendMessage(this, new Message('before-show'));
       this._node.classList.remove(HIDDEN_CLASS);
       this.clearFlag(PanelFlag.IsHidden);
@@ -361,7 +361,7 @@ class Panel implements IMessageHandler, IDisposable {
       this._node.classList.remove(HIDDEN_CLASS);
       this.clearFlag(PanelFlag.IsHidden);
     }
-    if (parent !== null) {
+    if (parent) {
       dispatch.sendMessage(parent, new ChildMessage('child-shown', this));
     }
     this.updateGeometry();
@@ -377,7 +377,7 @@ class Panel implements IMessageHandler, IDisposable {
       return;
     }
     var parent = this._parent;
-    if (this.isAttached && (parent === null || parent.isVisible)) {
+    if (this.isAttached && (!parent || parent.isVisible)) {
       dispatch.sendMessage(this, new Message('before-hide'));
       this._node.classList.add(HIDDEN_CLASS);
       this.setFlag(PanelFlag.IsHidden);
@@ -386,7 +386,7 @@ class Panel implements IMessageHandler, IDisposable {
       this._node.classList.add(HIDDEN_CLASS);
       this.setFlag(PanelFlag.IsHidden);
     }
-    if (parent !== null) {
+    if (parent) {
       dispatch.sendMessage(parent, new ChildMessage('child-hidden', this));
     }
     this.updateGeometry(true);
@@ -413,7 +413,7 @@ class Panel implements IMessageHandler, IDisposable {
    * Only a root panel can be attached to a host node.
    */
   attach(host: HTMLElement): void {
-    if (this._parent !== null) {
+    if (this._parent) {
       throw new Error('can only attach a root panel to the DOM');
     }
     dispatch.sendMessage(this, new Message('before-attach'));
@@ -427,12 +427,12 @@ class Panel implements IMessageHandler, IDisposable {
    * Only a root panel can be detached from its host node.
    */
   detach(): void {
-    if (this._parent !== null) {
+    if (this._parent) {
       throw new Error('can only detach a root widget from the DOM');
     }
     var node = this._node;
     var host = node.parentNode;
-    if (host === null) {
+    if (!host) {
       return;
     }
     dispatch.sendMessage(this, new Message('before-detach'));
@@ -449,11 +449,11 @@ class Panel implements IMessageHandler, IDisposable {
    * will prevent a read from the DOM and avoid a potential reflow.
    */
   fit(width?: number, height?: number, box?: IBoxData): void {
-    if (this._parent !== null) {
+    if (this._parent) {
       throw new Error('can only fit a root widget');
     }
     var host = <HTMLElement>this._node.parentNode;
-    if (host === null) {
+    if (!host) {
       return;
     }
     if (width === void 0) {
@@ -479,7 +479,7 @@ class Panel implements IMessageHandler, IDisposable {
    * a layout is installed, otherwise it returns a zero size.
    */
   sizeHint(): Size {
-    if (this._layout !== null) {
+    if (this._layout) {
       return this._layout.sizeHint();
     }
     return new Size(0, 0);
@@ -492,7 +492,7 @@ class Panel implements IMessageHandler, IDisposable {
    * a layout is installed, otherwise it returns a zero size.
    */
   minSizeHint(): Size {
-    if (this._layout !== null) {
+    if (this._layout) {
       return this._layout.minSize();
     }
     return new Size(0, 0);
@@ -505,7 +505,7 @@ class Panel implements IMessageHandler, IDisposable {
    * a layout is installed, otherwise it returns an inf size.
    */
   maxSizeHint(): Size {
-    if (this._layout !== null) {
+    if (this._layout) {
       return this._layout.maxSize();
     }
     return new Size(Infinity, Infinity);
@@ -522,10 +522,10 @@ class Panel implements IMessageHandler, IDisposable {
    */
   updateGeometry(force = false): void {
     var parent = this._parent;
-    if (parent === null || (this.isHidden && !force)) {
+    if (!parent || (this.isHidden && !force)) {
       return;
     }
-    if (parent._layout !== null) {
+    if (parent._layout) {
       parent._layout.invalidate();
     } else {
       dispatch.postMessage(parent, new Message('layout-request'));
@@ -540,7 +540,7 @@ class Panel implements IMessageHandler, IDisposable {
    */
   updateBoxData(): void {
     this._boxData = null;
-    if (this._layout !== null) {
+    if (this._layout) {
       this._layout.invalidate();
     } else {
       dispatch.postMessage(this, new Message('layout-request'));
@@ -701,9 +701,9 @@ class Panel implements IMessageHandler, IDisposable {
         sendAll(this._children, msg);
         break;
       case 'after-attach':
-        var p = this._parent
-        var v = !this.isHidden && (p === null || p.isVisible);
-        if (v) this.setFlag(PanelFlag.IsVisible);
+        var parent = this._parent
+        var visible = !this.isHidden && (!parent || parent.isVisible);
+        if (visible) this.setFlag(PanelFlag.IsVisible);
         this.setFlag(PanelFlag.IsAttached);
         this.onAfterAttach(msg);
         sendAll(this._children, msg);
