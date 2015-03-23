@@ -92,6 +92,7 @@ var tsSources = [
   'panels/spaceritem',
   'panels/boxlayout',
   'panels/boxpanel',
+  'panels/singlelayout',
   'panels/splithandle',
   'panels/splitlayout',
   'panels/splitpanel',
