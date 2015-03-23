@@ -132,7 +132,7 @@ function find<T>(
 export
 function findIndex<T>(
   iterable: IIterable<T> | T[],
-  callback: (value: T, index: number) => boolean): T {
+  callback: (value: T, index: number) => boolean): number {
   for (var i = 0, it = iter(iterable); it.moveNext(); ++i) {
     if (callback(it.current, i)) return i;
   }
