@@ -64,7 +64,7 @@ class Layout implements IMessageFilter, IDisposable {
       throw new Error('layout already installed on a panel');
     }
     this._parent = parent;
-    forEach(this.panels(), panel => { panel.parent = parent; });
+    forEach(this.items(), it => { if (it.panel) it.panel.parent = parent; });
     this.invalidate();
   }
 
@@ -96,11 +96,11 @@ class Layout implements IMessageFilter, IDisposable {
   }
 
   /**
-   * Returns an iterator over the panels in the layout.
+   * Returns an iterator over the layout items in the layout.
    *
    * This must be implemented by a subclass.
    */
-  panels(): IIterator<Panel> {
+  items(): IIterator<ILayoutItem> {
     throw new Error('not implemented');
   }
 
