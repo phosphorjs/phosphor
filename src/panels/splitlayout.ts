@@ -9,6 +9,7 @@ module phosphor.panels {
 
 import ArrayIterator = collections.ArrayIterator;
 import IIterator = collections.IIterator;
+import findIndex = collections.findIndex;
 
 
 /**
@@ -125,11 +126,7 @@ class SplitLayout extends Layout {
    * Returns -1 if the panel does not exist in the layout.
    */
   indexOf(panel: Panel): number {
-    var items = this._items;
-    for (var i = 0, n = items.length; i < n; ++i) {
-      if (items[i].panel === panel) return i;
-    }
-    return -1;
+    return findIndex(this._items, item => item.panel === panel);
   }
 
   /**
