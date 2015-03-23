@@ -7,7 +7,7 @@
 |----------------------------------------------------------------------------*/
 module example {
 
-import BoxLayout = phosphor.panels.BoxLayout;
+import BoxPanel = phosphor.panels.BoxPanel;
 import Direction = phosphor.panels.Direction;
 import Panel = phosphor.panels.Panel;
 
@@ -22,60 +22,42 @@ function createContent(text: string): Panel {
 
 
 function main(): void {
-  var ttbLayout = new BoxLayout(Direction.TopToBottom);
-  ttbLayout.add(createContent('Top'));
-  ttbLayout.add(createContent('To'));
-  ttbLayout.add(createContent('Bottom'));
-  ttbLayout.addStretch();
-
-  var ttb = new Panel();
+  var ttb = new BoxPanel(Direction.TopToBottom);
   ttb.node.classList.add('red');
-  ttb.layout = ttbLayout;
+  ttb.add(createContent('Top'));
+  ttb.add(createContent('To'));
+  ttb.add(createContent('Bottom'));
+  ttb.addStretch();
 
-  var bttLayout = new BoxLayout(Direction.BottomToTop);
-  bttLayout.add(createContent('Top'));
-  bttLayout.add(createContent('To'));
-  bttLayout.add(createContent('Bottom'));
-  bttLayout.addStretch();
-
-  var btt = new Panel();
+  var btt = new BoxPanel(Direction.BottomToTop);
   btt.node.classList.add('green');
-  btt.layout = bttLayout;
+  btt.add(createContent('Top'));
+  btt.add(createContent('To'));
+  btt.add(createContent('Bottom'));
+  btt.addStretch();
 
-  var ltrLayout = new BoxLayout(Direction.LeftToRight);
-  ltrLayout.add(createContent('Left'));
-  ltrLayout.add(createContent('To'));
-  ltrLayout.add(createContent('Right'));
-  ltrLayout.addStretch();
-
-  var ltr = new Panel();
+  var ltr = new BoxPanel(Direction.LeftToRight);
   ltr.node.classList.add('yellow');
-  ltr.layout = ltrLayout;
+  ltr.add(createContent('Left'));
+  ltr.add(createContent('To'));
+  ltr.add(createContent('Right'));
+  ltr.addStretch();
 
-  var rtlLayout = new BoxLayout(Direction.RightToLeft);
-  rtlLayout.add(createContent('Left'));
-  rtlLayout.add(createContent('To'));
-  rtlLayout.add(createContent('Right'));
-  rtlLayout.addStretch();
-
-  var rtl = new Panel();
+  var rtl = new BoxPanel(Direction.RightToLeft);
   rtl.node.classList.add('blue');
-  rtl.layout = rtlLayout;
+  rtl.add(createContent('Left'));
+  rtl.add(createContent('To'));
+  rtl.add(createContent('Right'));
+  rtl.addStretch();
 
-  var rowLayout = new BoxLayout(Direction.LeftToRight);
-  rowLayout.add(ttb);
-  rowLayout.add(btt);
+  var row = new BoxPanel(Direction.LeftToRight);
+  row.add(ttb);
+  row.add(btt);
 
-  var row = new Panel();
-  row.layout = rowLayout;
-
-  var colLayout = new BoxLayout(Direction.TopToBottom);
-  colLayout.add(row);
-  colLayout.add(ltr);
-  colLayout.add(rtl);
-
-  var col = new Panel();
-  col.layout = colLayout;
+  var col = new BoxPanel(Direction.TopToBottom);
+  col.add(row);
+  col.add(ltr);
+  col.add(rtl);
 
   col.attach(document.getElementById('main'));
   col.fit();
