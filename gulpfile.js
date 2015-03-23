@@ -76,6 +76,7 @@ var tsSources = [
   'panels/layoutengine',
   'panels/messages',
   'panels/panel',
+  'panels/elementhost',
   'panels/panelitem',
   'panels/spaceritem',
   'panels/boxlayout',
