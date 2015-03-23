@@ -7,13 +7,8 @@
 |----------------------------------------------------------------------------*/
 module phosphor.panels {
 
-import ArrayIterator = collections.ArrayIterator;
-import IIterator = collections.IIterator;
-import findIndex = collections.findIndex;
-
-
 /**
- * The layout class used by a SplitPanel.
+ * A layout which arranges its panels in resizable sections.
  */
 export
 class SplitLayout extends Layout {
@@ -114,22 +109,6 @@ class SplitLayout extends Layout {
   }
 
   /**
-   * Returns an iterator over the layout items in the layout.
-   */
-  items(): IIterator<ILayoutItem> {
-    return new ArrayIterator(this._items);
-  }
-
-  /**
-   * Get the index of the given panel.
-   *
-   * Returns -1 if the panel does not exist in the layout.
-   */
-  indexOf(panel: Panel): number {
-    return findIndex(this._items, item => item.panel === panel);
-  }
-
-  /**
    * Get the splitter handle at the given index.
    */
   handleAt(index: number): SplitHandle {
@@ -190,16 +169,6 @@ class SplitLayout extends Layout {
     this._sizers.splice(index, 0, sizer);
     this.invalidate();
     return index;
-  }
-
-  /**
-   * Remove the given panel from the layout.
-   *
-   * This is a no-op if the panel does not exist in the layout.
-   */
-  remove(panel: Panel): void {
-    var i = this.indexOf(panel);
-    if (i !== -1) this.takeAt(i);
   }
 
   /**

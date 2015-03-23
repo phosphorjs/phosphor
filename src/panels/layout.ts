@@ -7,9 +7,6 @@
 |----------------------------------------------------------------------------*/
 module phosphor.panels {
 
-import IIterator = collections.IIterator;
-import forEach = collections.forEach;
-
 import dispatch = core.dispatch;
 import IDisposable = core.IDisposable;
 import IMessage = core.IMessage;
@@ -64,8 +61,35 @@ class Layout implements IMessageFilter, IDisposable {
       throw new Error('layout already installed on a panel');
     }
     this._parent = parent;
-    forEach(this.items(), it => { if (it.panel) it.panel.parent = parent; });
+    this.reparentChildPanels();
     this.invalidate();
+  }
+
+  /**
+   * Get the number of layout items in the layout.
+   *
+   * This must be implemented by a subclass.
+   */
+  get count(): number {
+    throw new Error('not implemented');
+  }
+
+  /**
+   * Get the layout item at the given index.
+   *
+   * This must be implemented by a subclass.
+   */
+  itemAt(index: number): ILayoutItem {
+    throw new Error('not implemented');
+  }
+
+  /**
+   * Remove and return the layout item at the given index.
+   *
+   * This must be implemented by a subclass.
+   */
+  takeAt(index: number): ILayoutItem {
+    throw new Error('not implemented');
   }
 
   /**
@@ -96,21 +120,25 @@ class Layout implements IMessageFilter, IDisposable {
   }
 
   /**
-   * Returns an iterator over the layout items in the layout.
+   * Get the index of the given panel.
    *
-   * This must be implemented by a subclass.
+   * Returns -1 if the panel does not exist in the layout.
    */
-  items(): IIterator<ILayoutItem> {
-    throw new Error('not implemented');
+  indexOf(panel: Panel): number {
+    for (var i = 0, n = this.count; i < n; ++i) {
+      if (this.itemAt(i).panel === panel) {
+        return i;
+      }
+    }
+    return -1;
   }
 
   /**
    * Remove the given panel from the layout.
-   *
-   * This must be implemented by a subclass.
    */
   remove(panel: Panel): void {
-    throw new Error('not implemented');
+    var i = this.indexOf(panel);
+    if (i !== -1) this.takeAt(i);
   }
 
   /**
@@ -168,6 +196,22 @@ class Layout implements IMessageFilter, IDisposable {
   protected ensureParent(panel: Panel): void {
     var parent = this._parent;
     if (parent) panel.parent = parent;
+  }
+
+  /**
+   * Reparent the child panels to the current layout parent.
+   *
+   * This is typically called automatically at the proper times.
+   */
+  protected reparentChildPanels(): void {
+    var parent = this.parent;
+    if (!parent) {
+      return;
+    }
+    for (var i = 0, n = this.count; i < n; ++i) {
+      var panel = this.itemAt(i).panel;
+      if (panel) panel.parent = parent;
+    }
   }
 
   /**

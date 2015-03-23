@@ -7,10 +7,6 @@
 |----------------------------------------------------------------------------*/
 module phosphor.panels {
 
-import ArrayIterator = collections.ArrayIterator;
-import IIterator = collections.IIterator;
-import findIndex = collections.findIndex;
-
 import Signal = core.Signal;
 
 
@@ -113,22 +109,6 @@ class StackLayout extends Layout {
   }
 
   /**
-   * Returns an iterator over the layout items in the layout.
-   */
-  items(): IIterator<ILayoutItem> {
-    return new ArrayIterator(this._items);
-  }
-
-  /**
-   * Get the index of the given panel.
-   *
-   * Returns -1 if the panel does not exist in the layout.
-   */
-  indexOf(panel: Panel): number {
-    return findIndex(this._items, item => item.panel === panel);
-  }
-
-  /**
    * Get the layout item at the specified index.
    */
   itemAt(index: number): ILayoutItem {
@@ -186,16 +166,6 @@ class StackLayout extends Layout {
       this._currentIndex++;
     }
     return index;
-  }
-
-  /**
-   * Remove the given panel from the layout.
-   *
-   * This is a no-op if the panel does not exist in the layout.
-   */
-  remove(panel: Panel): void {
-    var i = this.indexOf(panel);
-    if (i !== -1) this.takeAt(i);
   }
 
   /**
