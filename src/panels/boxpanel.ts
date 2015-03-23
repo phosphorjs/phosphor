@@ -27,7 +27,7 @@ class BoxPanel extends Panel {
   constructor(direction = Direction.TopToBottom, spacing = 8) {
     super();
     this.node.classList.add(BOX_PANEL_CLASS);
-    var layout = this.layout = new BoxLayout(direction, spacing);
+    this.layout = new BoxLayout(direction, spacing);
     this.setFlag(PanelFlag.DisallowLayoutChange);
   }
 
