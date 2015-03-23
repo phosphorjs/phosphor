@@ -108,10 +108,24 @@ class Panel implements IMessageHandler, IDisposable {
   }
 
   /**
+   * Set the X position of the panel.
+   */
+  set x(x: number) {
+    this.move(x, this._y);
+  }
+
+  /**
    * Get the Y position of the panel.
    */
   get y(): number {
     return this._y;
+  }
+
+  /**
+   * Set the Y position of the panel.
+   */
+  set y(y: number) {
+    this.move(this._x, y);
   }
 
   /**
@@ -122,10 +136,24 @@ class Panel implements IMessageHandler, IDisposable {
   }
 
   /**
+   * Set the width of the panel.
+   */
+  set width(width: number) {
+    this.resize(width, this._height);
+  }
+
+  /**
    * Get the height of the panel.
    */
   get height(): number {
     return this._height;
+  }
+
+  /**
+   * Set the height of the panel.
+   */
+  set height(height: number) {
+    this.resize(this._width, height);
   }
 
   /**
@@ -136,10 +164,24 @@ class Panel implements IMessageHandler, IDisposable {
   }
 
   /**
+   * Set the position of the panel.
+   */
+  set pos(pos: Point) {
+    this.move(pos.x, pos.y);
+  }
+
+  /**
    * Get the size of the panel.
    */
   get size(): Size {
     return new Size(this._width, this._height);
+  }
+
+  /**
+   * Set the size of the panel.
+   */
+  set size(size: Size) {
+    this.resize(size.width, size.height);
   }
 
   /**
@@ -150,10 +192,24 @@ class Panel implements IMessageHandler, IDisposable {
   }
 
   /**
+   * Set the geometry of the panel.
+   */
+  set geometry(geo: Rect) {
+    this.setGeometry(geo.x, geo.y, geo.width, geo.height);
+  }
+
+  /**
    * Get the minimum width of the panel.
    */
   get minWidth(): number {
     return this._minWidth;
+  }
+
+  /**
+   * Set the minimum width of the panel.
+   */
+  set minWidth(width: number) {
+    this.setMinSize(width, this._minHeight);
   }
 
   /**
@@ -164,10 +220,24 @@ class Panel implements IMessageHandler, IDisposable {
   }
 
   /**
+   * Set the minimum height of the panel.
+   */
+  set minHeight(height: number) {
+    this.setMinSize(this._minWidth, height);
+  }
+
+  /**
    * Get the maximum width of the panel.
    */
   get maxWidth(): number {
     return this._maxWidth;
+  }
+
+  /**
+   * Set the maximum width of the panel.
+   */
+  set maxWidth(width: number) {
+    this.setMaxSize(width, this._maxHeight);
   }
 
   /**
@@ -178,10 +248,24 @@ class Panel implements IMessageHandler, IDisposable {
   }
 
   /**
+   * Set the maxmimum height of the panel.
+   */
+  set maxHeight(height: number) {
+    this.setMaxSize(this._maxWidth, height);
+  }
+
+  /**
    * Get the minimum size of the panel.
    */
   get minSize(): Size {
     return new Size(this._minWidth, this._minHeight);
+  }
+
+  /**
+   * Set the minimum size of the panel.
+   */
+  set minSize(size: Size) {
+    this.setMinSize(size.width, size.height);
   }
 
   /**
@@ -192,10 +276,24 @@ class Panel implements IMessageHandler, IDisposable {
   }
 
   /**
+   * Set the maximum size of the panel.
+   */
+  set maxSize(size: Size) {
+    this.setMaxSize(size.width, size.height);
+  }
+
+  /**
    * Get the horizontal stretch factor for the panel.
    */
   get horizontalStretch(): number {
     return this._stretch >> 16;
+  }
+
+  /**
+   * Set the horizontal stretch factor for the panel.
+   */
+  set horizontalStretch(stretch: number) {
+    this.setStretch(stretch, this.verticalStretch);
   }
 
   /**
@@ -206,6 +304,13 @@ class Panel implements IMessageHandler, IDisposable {
   }
 
   /**
+   * Set the vertical stretch factor for the panel.
+   */
+  set verticalStretch(stretch: number) {
+    this.setStretch(this.horizontalStretch, stretch);
+  }
+
+  /**
    * Get the horizontal size policy for the panel.
    */
   get horizontalSizePolicy(): SizePolicy {
@@ -213,10 +318,24 @@ class Panel implements IMessageHandler, IDisposable {
   }
 
   /**
+   * Set the horizontal size policy for the panel.
+   */
+  set horizontalSizePolicy(policy: SizePolicy) {
+    this.setSizePolicy(policy, this.verticalSizePolicy);
+  }
+
+  /**
    * Get the vertical size policy for the panel.
    */
   get verticalSizePolicy(): SizePolicy {
     return this._sizePolicy & 0xFFFF;
+  }
+
+  /**
+   * Set the vertical size policy for the panel.
+   */
+  set verticalSizePolicy(policy: SizePolicy) {
+    this.setSizePolicy(this.horizontalSizePolicy, policy);
   }
 
   /**
