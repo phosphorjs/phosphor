@@ -10,7 +10,7 @@ module phosphor.panels {
 /**
  * A concrete implementation of ILayoutItem which manages a panel.
  *
- * User code will not typically create instances of this class directly.
+ * User code will not typically use this class directly.
  */
 export
 class PanelItem implements ILayoutItem {
@@ -58,7 +58,7 @@ class PanelItem implements ILayoutItem {
       return false;
     }
     var hPolicy = this._panel.horizontalSizePolicy;
-    return !!(hPolicy & SizePolicy.ExpandFlag);
+    return (hPolicy & SizePolicy.ExpandFlag) !== 0;
   }
 
   /**
@@ -69,7 +69,7 @@ class PanelItem implements ILayoutItem {
       return false;
     }
     var vPolicy = this._panel.verticalSizePolicy;
-    return !!(vPolicy & SizePolicy.ExpandFlag);
+    return (vPolicy & SizePolicy.ExpandFlag) !== 0;
   }
 
   /**
@@ -100,7 +100,7 @@ class PanelItem implements ILayoutItem {
    * Compute the preferred size of the item.
    */
   sizeHint(): Size {
-    if (this._sizeHint === null) {
+    if (!this._sizeHint) {
       this._updateSizes();
     }
     return this._sizeHint;
@@ -110,7 +110,7 @@ class PanelItem implements ILayoutItem {
    * Compute the minimum size of the item.
    */
   minSize(): Size {
-    if (this._minSize === null) {
+    if (!this._minSize) {
       this._updateSizes();
     }
     return this._minSize;
@@ -120,7 +120,7 @@ class PanelItem implements ILayoutItem {
    * Compute the maximum size of the item.
    */
   maxSize(): Size {
-    if (this._maxSize === null) {
+    if (!this._maxSize) {
       this._updateSizes();
     }
     return this._maxSize;
