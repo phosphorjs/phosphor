@@ -7,84 +7,81 @@
 |----------------------------------------------------------------------------*/
 module example {
 
-import Direction = phosphor.enums.Direction;
-
-import BoxLayout = phosphor.layout.BoxLayout;
-
-import Widget = phosphor.widgets.Widget;
+import BoxLayout = phosphor.panels.BoxLayout;
+import Direction = phosphor.panels.Direction;
+import Panel = phosphor.panels.Panel;
 
 
-function createContentWidget(text: string): Widget {
-  var w = new Widget();
-  w.classList.add('content');
-  w.minHeight = 25;
-  w.maxHeight = 25;
-  w.minWidth = 50;
-  w.node.innerHTML = '<span>' + text + '</span>';
-  return w;
+function createContent(text: string): Panel {
+  var panel = new Panel();
+  panel.node.classList.add('content');
+  panel.node.innerHTML = '<span>' + text + '</span>';
+  panel.setMinMaxSize(60, 25, Infinity, 25);
+  return panel;
 }
 
 
 function main(): void {
   var ttbLayout = new BoxLayout(Direction.TopToBottom);
-  ttbLayout.addWidget(createContentWidget('Top'));
-  ttbLayout.addWidget(createContentWidget('To'));
-  ttbLayout.addWidget(createContentWidget('Bottom'));
+  ttbLayout.add(createContent('Top'));
+  ttbLayout.add(createContent('To'));
+  ttbLayout.add(createContent('Bottom'));
   ttbLayout.addStretch();
 
-  var ttb = new Widget();
-  ttb.classList.add('red');
+  var ttb = new Panel();
+  ttb.node.classList.add('red');
   ttb.layout = ttbLayout;
 
   var bttLayout = new BoxLayout(Direction.BottomToTop);
-  bttLayout.addWidget(createContentWidget('Top'));
-  bttLayout.addWidget(createContentWidget('To'));
-  bttLayout.addWidget(createContentWidget('Bottom'));
+  bttLayout.add(createContent('Top'));
+  bttLayout.add(createContent('To'));
+  bttLayout.add(createContent('Bottom'));
   bttLayout.addStretch();
 
-  var btt = new Widget();
-  btt.classList.add('green');
+  var btt = new Panel();
+  btt.node.classList.add('green');
   btt.layout = bttLayout;
 
   var ltrLayout = new BoxLayout(Direction.LeftToRight);
-  ltrLayout.addWidget(createContentWidget('Left'));
-  ltrLayout.addWidget(createContentWidget('To'));
-  ltrLayout.addWidget(createContentWidget('Right'));
+  ltrLayout.add(createContent('Left'));
+  ltrLayout.add(createContent('To'));
+  ltrLayout.add(createContent('Right'));
   ltrLayout.addStretch();
 
-  var ltr = new Widget();
-  ltr.classList.add('yellow');
+  var ltr = new Panel();
+  ltr.node.classList.add('yellow');
   ltr.layout = ltrLayout;
 
   var rtlLayout = new BoxLayout(Direction.RightToLeft);
-  rtlLayout.addWidget(createContentWidget('Left'));
-  rtlLayout.addWidget(createContentWidget('To'));
-  rtlLayout.addWidget(createContentWidget('Right'));
+  rtlLayout.add(createContent('Left'));
+  rtlLayout.add(createContent('To'));
+  rtlLayout.add(createContent('Right'));
   rtlLayout.addStretch();
 
-  var rtl = new Widget();
-  rtl.classList.add('blue');
+  var rtl = new Panel();
+  rtl.node.classList.add('blue');
   rtl.layout = rtlLayout;
 
   var rowLayout = new BoxLayout(Direction.LeftToRight);
-  rowLayout.addWidget(ttb);
-  rowLayout.addWidget(btt);
+  rowLayout.add(ttb);
+  rowLayout.add(btt);
 
-  var row = new Widget();
+  var row = new Panel();
   row.layout = rowLayout;
 
-  var colLayout = new BoxLayout(Direction.TopToBottom);
-  colLayout.addWidget(row);
-  colLayout.addWidget(ltr);
-  colLayout.addWidget(rtl);
+  // var colLayout = new BoxLayout(Direction.TopToBottom);
+  // colLayout.add(row);
+  // colLayout.add(ltr);
+  // colLayout.add(rtl);
 
-  var col = new Widget();
-  col.layout = colLayout;
+  // var col = new Panel();
+  // col.layout = colLayout;
 
+  var col = row;
   col.attach(document.getElementById('main'));
-  col.fitToHost();
-
-  window.onresize = () => col.fitToHost();
+  col.fit();
+  (<any>window).col = col;
+  window.onresize = () => col.fit();
 }
 
 

@@ -137,8 +137,8 @@ class SpacerItem implements ILayoutItem {
    */
   minSize(): Size {
     var size = this._size;
-    var hPolicy = this._sizePolicy >> 4;
-    var vPolicy = this._sizePolicy & 0xF;
+    var hPolicy = this._sizePolicy >> 16;
+    var vPolicy = this._sizePolicy & 0xFFFF;
     var w = hPolicy & SizePolicy.ShrinkFlag ? 0 : size.width;
     var h = vPolicy & SizePolicy.ShrinkFlag ? 0 : size.height;
     return new Size(w, h);
@@ -149,8 +149,8 @@ class SpacerItem implements ILayoutItem {
    */
   maxSize(): Size {
     var size = this._size;
-    var hPolicy = this._sizePolicy >> 4;
-    var vPolicy = this._sizePolicy & 0xF;
+    var hPolicy = this._sizePolicy >> 16;
+    var vPolicy = this._sizePolicy & 0xFFFF;
     var w = hPolicy & SizePolicy.GrowFlag ? Infinity : size.width;
     var h = vPolicy & SizePolicy.GrowFlag ? Infinity : size.height;
     return new Size(w, h);
