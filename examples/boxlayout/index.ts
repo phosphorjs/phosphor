@@ -69,18 +69,17 @@ function main(): void {
   var row = new Panel();
   row.layout = rowLayout;
 
-  // var colLayout = new BoxLayout(Direction.TopToBottom);
-  // colLayout.add(row);
-  // colLayout.add(ltr);
-  // colLayout.add(rtl);
+  var colLayout = new BoxLayout(Direction.TopToBottom);
+  colLayout.add(row);
+  colLayout.add(ltr);
+  colLayout.add(rtl);
 
-  // var col = new Panel();
-  // col.layout = colLayout;
+  var col = new Panel();
+  col.layout = colLayout;
 
-  var col = row;
   col.attach(document.getElementById('main'));
   col.fit();
-  (<any>window).col = col;
+
   window.onresize = () => col.fit();
 }
 
