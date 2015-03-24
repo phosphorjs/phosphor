@@ -68,6 +68,7 @@ var tsSources = [
   'components/basecomponent',
   'components/component',
   'components/codemirror',
+  'components/tabbar',
 
   'panels/enums',
   'panels/geometry',
@@ -176,6 +177,14 @@ gulp.task('examples', function() {
     .pipe(gulp.dest('examples'));
 
   return stream.merge(src, css);
+});
+
+
+gulp.task('css', function() {
+  return gulp.src(stylSources)
+    .pipe(stylus({ use: [nib()] }))
+    .pipe(rename('phosphor.css'))
+    .pipe(gulp.dest('./dist'));
 });
 
 

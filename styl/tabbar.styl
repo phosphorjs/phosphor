@@ -5,69 +5,39 @@
 |
 | The full license is in the file LICENSE, distributed with this software.
 |----------------------------------------------------------------------------*/
-.p-TabBar-inner {
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  margin: 0;
-  padding: 0;
-  > .p-Tab {
-    position: absolute;
-    bottom: 0px;
-    &.p-mod-inserting {
-      animation: p-keyframes-inserting-tab 150ms ease
-    }
-    &.p-mod-removing {
-      animation: p-keyframes-removing-tab 150ms ease
-    }
-  }
-  &.p-mod-transition > .p-Tab {
-    transition-property: left, width;
-    transition-duration: 150ms;
-  }
+.p-TabBarComponent {
+  user-select: none;
+  cursor: default;
 }
 
 
-.p-Tab {
+.p-TabBarComponent-inner {
+  margin: 0;
+  padding: 0;
   display: flex;
   flex-direction: row;
-  box-sizing: border-box;
-  overflow: hidden;
+  justify-content: flex-start;
   list-style-type: none;
 }
 
 
-.p-Tab-icon
-.p-Tab-close-icon {
+.p-TabBarComponent-tab {
+  display: flex;
+  flex-direction: row;
+  flex-basis: 125px;
+  overflow: hidden;
+}
+
+
+.p-TabBarComponent-tab-icon
+.p-TabBarComponent-tab-close-icon {
   flex: 0 0 auto;
 }
 
 
-.p-Tab-text {
+.p-TabBarComponent-tab-text {
   flex: 1 1 auto;
   overflow: hidden;
   white-space: nowrap;
   text-overflow: ellipsis;
-}
-
-
-@keyframes p-keyframes-inserting-tab {
-  from {
-    bottom: -100%;
-  }
-  to {
-    bottom: 0;
-  }
-}
-
-
-@keyframes p-keyframes-removing-tab {
-  from {
-    bottom: 0;
-  }
-  to {
-    bottom: -100%;
-  }
 }
