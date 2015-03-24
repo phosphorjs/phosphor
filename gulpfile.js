@@ -92,7 +92,8 @@ var tsSources = [
   'panels/stackpanel',
   'panels/tab',
   'panels/tabbar',
-  'panels/tabpanel'
+  'panels/tabpanel',
+  'panels/dockarea'
   // 'widgets/ITab',
   // 'widgets/ChildEvent',
   // 'widgets/MoveEvent',
