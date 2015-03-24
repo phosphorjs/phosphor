@@ -60,14 +60,14 @@ class ElementHost extends Panel {
   }
 
   /**
-   * Calculate the preferred size of the widget.
+   * Calculate the preferred size of the panel.
    */
   sizeHint(): Size {
     return this._size;
   }
 
   /**
-   * Set the size hint for the widget.
+   * Set the preferred size for the panel.
    */
   setSizeHint(width: number, height: number): void {
     width = Math.max(0, width);
