@@ -7,23 +7,21 @@
 |----------------------------------------------------------------------------*/
 module example {
 
-import Orientation = phosphor.enums.Orientation;
+import ITab = phosphor.panels.ITab;
+import Orientation = phosphor.panels.Orientation;
+import Panel = phosphor.panels.Panel;
+import SplitPanel = phosphor.panels.SplitPanel;
+import Tab = phosphor.panels.Tab;
+import TabPanel = phosphor.panels.TabPanel;
 
-import ITab = phosphor.widgets.ITab;
-import Splitter = phosphor.widgets.Splitter;
-import Tab = phosphor.widgets.Tab;
-import TabWidget = phosphor.widgets.TabWidget;
-import Widget = phosphor.widgets.Widget;
 
-
-class Content extends Widget {
+class Content extends Panel {
 
   constructor(title: string) {
     super();
-    this.classList.add('content');
-    this.classList.add(title.toLowerCase());
-    this.minWidth = 50;
-    this.minHeight = 50;
+    this.node.classList.add('content');
+    this.node.classList.add(title.toLowerCase());
+    this.setMinSize(50, 50);
     this._tab = new Tab(title);
   }
 
@@ -35,35 +33,35 @@ class Content extends Widget {
 }
 
 
-function createTabWidget(index: number): TabWidget {
-  var tw = new TabWidget();
-  tw.addWidget(new Content('Red'));
-  tw.addWidget(new Content('Yellow'));
-  tw.addWidget(new Content('Blue'));
-  tw.addWidget(new Content('Green'));
-  tw.currentIndex = index;
-  return tw;
+function createTabs(index: number): TabPanel {
+  var tabs = new TabPanel();
+  tabs.addPanel(new Content('Red'));
+  tabs.addPanel(new Content('Yellow'));
+  tabs.addPanel(new Content('Blue'));
+  tabs.addPanel(new Content('Green'));
+  tabs.currentIndex = index;
+  return tabs;
 }
 
 
 function main(): void {
-  var sp1 = new Splitter(Orientation.Horizontal);
-  var sp2 = new Splitter(Orientation.Vertical);
-  var sp3 = new Splitter(Orientation.Vertical);
+  var sp1 = new SplitPanel(Orientation.Horizontal);
+  var sp2 = new SplitPanel(Orientation.Vertical);
+  var sp3 = new SplitPanel(Orientation.Vertical);
 
-  sp2.addWidget(createTabWidget(0));
-  sp2.addWidget(createTabWidget(1));
+  sp2.addPanel(createTabs(0));
+  sp2.addPanel(createTabs(1));
 
-  sp3.addWidget(createTabWidget(2));
-  sp3.addWidget(createTabWidget(3));
+  sp3.addPanel(createTabs(2));
+  sp3.addPanel(createTabs(3));
 
-  sp1.addWidget(sp2);
-  sp1.addWidget(sp3);
+  sp1.addPanel(sp2);
+  sp1.addPanel(sp3);
 
   sp1.attach(document.getElementById('main'));
-  sp1.fitToHost();
+  sp1.fit();
 
-  window.onresize = () => sp1.fitToHost();
+  window.onresize = () => sp1.fit();
 }
 
 

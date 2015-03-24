@@ -156,8 +156,8 @@ class MainPanel extends BoxPanel {
     image.setSizePolicy(SizePolicy.Fixed, SizePolicy.Fixed);
     image.src = imageItems[0].path;
 
-    this.add(host);
-    this.add(image);
+    this.addPanel(host);
+    this.addPanel(image);
   }
 
   private _onSelected = (value: string): void => {

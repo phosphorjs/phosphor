@@ -24,40 +24,40 @@ function createContent(text: string): Panel {
 function main(): void {
   var ttb = new BoxPanel(Direction.TopToBottom);
   ttb.node.classList.add('red');
-  ttb.add(createContent('Top'));
-  ttb.add(createContent('To'));
-  ttb.add(createContent('Bottom'));
+  ttb.addPanel(createContent('Top'));
+  ttb.addPanel(createContent('To'));
+  ttb.addPanel(createContent('Bottom'));
   ttb.addStretch();
 
   var btt = new BoxPanel(Direction.BottomToTop);
   btt.node.classList.add('green');
-  btt.add(createContent('Top'));
-  btt.add(createContent('To'));
-  btt.add(createContent('Bottom'));
+  btt.addPanel(createContent('Top'));
+  btt.addPanel(createContent('To'));
+  btt.addPanel(createContent('Bottom'));
   btt.addStretch();
 
   var ltr = new BoxPanel(Direction.LeftToRight);
   ltr.node.classList.add('yellow');
-  ltr.add(createContent('Left'));
-  ltr.add(createContent('To'));
-  ltr.add(createContent('Right'));
+  ltr.addPanel(createContent('Left'));
+  ltr.addPanel(createContent('To'));
+  ltr.addPanel(createContent('Right'));
   ltr.addStretch();
 
   var rtl = new BoxPanel(Direction.RightToLeft);
   rtl.node.classList.add('blue');
-  rtl.add(createContent('Left'));
-  rtl.add(createContent('To'));
-  rtl.add(createContent('Right'));
+  rtl.addPanel(createContent('Left'));
+  rtl.addPanel(createContent('To'));
+  rtl.addPanel(createContent('Right'));
   rtl.addStretch();
 
   var row = new BoxPanel(Direction.LeftToRight);
-  row.add(ttb);
-  row.add(btt);
+  row.addPanel(ttb);
+  row.addPanel(btt);
 
   var col = new BoxPanel(Direction.TopToBottom);
-  col.add(row);
-  col.add(ltr);
-  col.add(rtl);
+  col.addPanel(row);
+  col.addPanel(ltr);
+  col.addPanel(rtl);
 
   col.attach(document.getElementById('main'));
   col.fit();

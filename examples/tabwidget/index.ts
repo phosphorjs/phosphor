@@ -7,18 +7,18 @@
 |----------------------------------------------------------------------------*/
 module example {
 
-import ITab = phosphor.widgets.ITab;
-import Tab = phosphor.widgets.Tab;
-import TabWidget = phosphor.widgets.TabWidget;
-import Widget = phosphor.widgets.Widget;
+import ITab = phosphor.panels.ITab;
+import Panel = phosphor.panels.Panel;
+import Tab = phosphor.panels.Tab;
+import TabPanel = phosphor.panels.TabPanel;
 
 
-class Content extends Widget {
+class Content extends Panel {
 
   constructor(title: string) {
     super();
-    this.classList.add('content');
-    this.classList.add(title.toLowerCase());
+    this.node.classList.add('content');
+    this.node.classList.add(title.toLowerCase());
     this._tab = new Tab(title);
   }
 
@@ -31,17 +31,17 @@ class Content extends Widget {
 
 
 function main(): void {
-  var tw = new TabWidget();
+  var tabs = new TabPanel();
 
-  tw.addWidget(new Content('Red'));
-  tw.addWidget(new Content('Yellow'));
-  tw.addWidget(new Content('Blue'));
-  tw.addWidget(new Content('Green'));
+  tabs.addPanel(new Content('Red'));
+  tabs.addPanel(new Content('Yellow'));
+  tabs.addPanel(new Content('Blue'));
+  tabs.addPanel(new Content('Green'));
 
-  tw.attach(document.getElementById('main'));
-  tw.fitToHost();
+  tabs.attach(document.getElementById('main'));
+  tabs.fit();
 
-  window.onresize = () => tw.fitToHost();
+  window.onresize = () => tabs.fit();
 }
 
 

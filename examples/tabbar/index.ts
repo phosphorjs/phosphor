@@ -7,7 +7,7 @@
 |----------------------------------------------------------------------------*/
 module example {
 
-import TabBar = phosphor.widgets.TabBar;
+import TabBar = phosphor.panels.TabBar;
 
 
 function main(): void {
@@ -23,9 +23,9 @@ function main(): void {
   tb.addTab('Seven');
 
   tb.attach(document.getElementById('main'));
-  tb.fitToHost();
+  tb.fit();
 
-  window.onresize = () => tb.fitToHost();
+  window.onresize = () => tb.fit();
 }
 
 

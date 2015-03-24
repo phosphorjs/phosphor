@@ -25,24 +25,25 @@ function main(): void {
   var sp2 = new SplitPanel(Orientation.Horizontal);
   var sp3 = new SplitPanel(Orientation.Vertical);
 
-  sp3.add(createContent('red'));
-  sp3.add(createContent('green'));
-  sp3.add(createContent('blue'));
+  sp3.addPanel(createContent('red'));
+  sp3.addPanel(createContent('green'));
+  sp3.addPanel(createContent('blue'));
 
-  sp2.add(sp3);
-  sp2.add(createContent('yellow'));
-  sp2.add(createContent('red'));
+  sp2.addPanel(sp3);
+  sp2.addPanel(createContent('yellow'));
+  sp2.addPanel(createContent('red'));
 
-  sp1.add(createContent('yellow'));
-  sp1.add(createContent('blue'));
-  sp1.add(sp2);
-  sp1.add(createContent('green'));
+  sp1.addPanel(createContent('yellow'));
+  sp1.addPanel(createContent('blue'));
+  sp1.addPanel(sp2);
+  sp1.addPanel(createContent('green'));
 
   sp1.attach(document.getElementById('main'));
   sp1.fit();
 
   window.onresize = () => sp1.fit();
 }
+
 
 window.onload = main;
 
