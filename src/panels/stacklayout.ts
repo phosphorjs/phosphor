@@ -69,8 +69,7 @@ class StackLayout extends Layout {
    */
   set currentIndex(index: number) {
     var prev = this.currentPanel;
-    var item = this._items[index];
-    var next = item ? item.panel : void 0;
+    var next = this.panelAt(index);
     if (prev === next) {
       return;
     }
@@ -90,8 +89,7 @@ class StackLayout extends Layout {
    * Get the current panel in the stack.
    */
   get currentPanel(): Panel {
-    var item = this._items[this._currentIndex];
-    return item ? item.panel : void 0;
+    return this.panelAt(this.currentIndex);
   }
 
   /**
@@ -142,8 +140,8 @@ class StackLayout extends Layout {
    *
    * Returns the index of the added panel.
    */
-  add(panel: Panel): number {
-    return this.insert(this._items.length, panel);
+  addPanel(panel: Panel): number {
+    return this.insertPanel(this.count, panel);
   }
 
   /**
@@ -153,10 +151,10 @@ class StackLayout extends Layout {
    *
    * Returns the index of the added panel.
    */
-  insert(index: number, panel: Panel): number {
+  insertPanel(index: number, panel: Panel): number {
     var i = this.indexOf(panel);
     if (i !== -1) {
-      return this.move(i, index);
+      return this.movePanel(i, index);
     }
     panel.hide();
     this.ensureParent(panel);
@@ -169,11 +167,11 @@ class StackLayout extends Layout {
   }
 
   /**
-   * Move a layout item from one index to another.
+   * Move a panel from one index to another.
    *
-   * Returns the new index of the item.
+   * Returns the new index of the panel.
    */
-  move(fromIndex: number, toIndex: number): number {
+  movePanel(fromIndex: number, toIndex: number): number {
     fromIndex = fromIndex | 0;
     var n = this._items.length;
     if (fromIndex < 0 || fromIndex >= n) {

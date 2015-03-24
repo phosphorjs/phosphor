@@ -107,8 +107,8 @@ class BoxLayout extends Layout {
    *
    * Returns the index of the added panel.
    */
-  add(panel: Panel): number {
-    return this.insert(this.count, panel);
+  addPanel(panel: Panel): number {
+    return this.insertPanel(this.count, panel);
   }
 
   /**
@@ -118,7 +118,7 @@ class BoxLayout extends Layout {
    *
    * Returns the index of the added panel.
    */
-  insert(index: number, panel: Panel): number {
+  insertPanel(index: number, panel: Panel): number {
     this.remove(panel);
     this.ensureParent(panel);
     return this._insert(index, new PanelItem(panel));

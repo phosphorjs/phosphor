@@ -97,12 +97,21 @@ class SplitPanel extends Panel {
   }
 
   /**
-   * Get the index of the given child panel.
+   * Get the index of the given panel.
    *
    * Returns -1 if the panel is not found.
    */
   indexOf(panel: Panel): number {
     return (<SplitLayout>this.layout).indexOf(panel);
+  }
+
+  /**
+   * Get the panel at the given index.
+   *
+   * Returns `undefined` if there is no panel at the given index.
+   */
+  panelAt(index: number): Panel {
+    return (<SplitLayout>this.layout).panelAt(index);
   }
 
   /**
@@ -112,8 +121,8 @@ class SplitPanel extends Panel {
    *
    * Returns the index of the added panel.
    */
-  add(panel: Panel): number {
-    return (<SplitLayout>this.layout).add(panel);
+  addPanel(panel: Panel): number {
+    return (<SplitLayout>this.layout).addPanel(panel);
   }
 
   /**
@@ -123,8 +132,8 @@ class SplitPanel extends Panel {
    *
    * Returns the index of the added panel.
    */
-  insert(index: number, panel: Panel): number {
-    return (<SplitLayout>this.layout).insert(index, panel);
+  insertPanel(index: number, panel: Panel): number {
+    return (<SplitLayout>this.layout).insertPanel(index, panel);
   }
 
   /**

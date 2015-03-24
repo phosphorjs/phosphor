@@ -92,9 +92,20 @@ class StackPanel extends Panel {
 
   /**
    * Get the index of the given panel.
+   *
+   * Returns -1 if the panel is not found.
    */
   indexOf(panel: Panel): number {
     return (<StackLayout>this.layout).indexOf(panel);
+  }
+
+  /**
+   * Get the panel at the given index.
+   *
+   * Returns `undefined` if there is no panel at the given index.
+   */
+  panelAt(index: number): Panel {
+    return (<StackLayout>this.layout).panelAt(index);
   }
 
   /**
@@ -104,8 +115,8 @@ class StackPanel extends Panel {
    *
    * Returns the index of the added panel.
    */
-  add(panel: Panel): number {
-    return (<StackLayout>this.layout).add(panel);
+  addPanel(panel: Panel): number {
+    return (<StackLayout>this.layout).addPanel(panel);
   }
 
   /**
@@ -115,8 +126,8 @@ class StackPanel extends Panel {
    *
    * Returns the index of the added panel.
    */
-  insert(index: number, panel: Panel): number {
-    return (<StackLayout>this.layout).insert(index, panel);
+  insertPanel(index: number, panel: Panel): number {
+    return (<StackLayout>this.layout).insertPanel(index, panel);
   }
 
   /**
@@ -124,8 +135,8 @@ class StackPanel extends Panel {
    *
    * Returns the new index of the panel.
    */
-  move(fromIndex: number, toIndex: number): number {
-    return (<StackLayout>this.layout).move(fromIndex, toIndex);
+  movePanel(fromIndex: number, toIndex: number): number {
+    return (<StackLayout>this.layout).movePanel(fromIndex, toIndex);
   }
 
   /**

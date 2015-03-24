@@ -68,9 +68,20 @@ class BoxPanel extends Panel {
 
   /**
    * Get the index of the given panel.
+   *
+   * Returns -1 if the panel is not found.
    */
   indexOf(panel: Panel): number {
     return (<BoxLayout>this.layout).indexOf(panel);
+  }
+
+  /**
+   * Get the panel at the given index.
+   *
+   * Returns `undefined` if there is no panel at the given index.
+   */
+  panelAt(index: number): Panel {
+    return (<BoxLayout>this.layout).panelAt(index);
   }
 
   /**
@@ -80,8 +91,8 @@ class BoxPanel extends Panel {
    *
    * Returns the index of the added panel.
    */
-  add(panel: Panel): number {
-    return (<BoxLayout>this.layout).add(panel);
+  addPanel(panel: Panel): number {
+    return (<BoxLayout>this.layout).addPanel(panel);
   }
 
   /**
@@ -91,8 +102,8 @@ class BoxPanel extends Panel {
    *
    * Returns the index of the added panel.
    */
-  insert(index: number, panel: Panel): number {
-    return (<BoxLayout>this.layout).insert(index, panel);
+  insertPanel(index: number, panel: Panel): number {
+    return (<BoxLayout>this.layout).insertPanel(index, panel);
   }
 
   /**
@@ -124,6 +135,8 @@ class BoxPanel extends Panel {
 
   /**
    * Insert stretchable space at the given index.
+   *
+   * Returns the index of the added space.
    */
   insertStretch(index: number, stretch = 0): number {
     return (<BoxLayout>this.layout).insertStretch(index, stretch);

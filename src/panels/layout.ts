@@ -120,13 +120,24 @@ class Layout implements IMessageFilter, IDisposable {
   }
 
   /**
-   * Get the index of the given panel.
+   * Get the panel at the given index.
    *
-   * Returns -1 if the panel does not exist in the layout.
+   * Returns `undefined` if there is no panel at the given index.
    */
-  indexOf(panel: Panel): number {
+  panelAt(index: number): Panel {
+    var item = this.itemAt(index);
+    return (item && item.panel) || void 0;
+  }
+
+  /**
+   * Get the index of the given panel or layout item.
+   *
+   * Returns -1 if the panel or item does not exist in the layout.
+   */
+  indexOf(value: Panel | ILayoutItem): number {
     for (var i = 0, n = this.count; i < n; ++i) {
-      if (this.itemAt(i).panel === panel) {
+      var item = this.itemAt(i);
+      if (item === value || item.panel === value) {
         return i;
       }
     }
@@ -134,10 +145,10 @@ class Layout implements IMessageFilter, IDisposable {
   }
 
   /**
-   * Remove the given panel from the layout.
+   * Remove the given panel or layout item from the layout.
    */
-  remove(panel: Panel): void {
-    var i = this.indexOf(panel);
+  remove(value: Panel | ILayoutItem): void {
+    var i = this.indexOf(value);
     if (i !== -1) this.takeAt(i);
   }
 
