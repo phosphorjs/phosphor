@@ -65,9 +65,9 @@ var tsSources = [
   'virtualdom/dom',
   'virtualdom/renderer',
 
-  'components/BaseComponent',
-  'components/Component',
-  'components/CodeMirror',
+  'components/basecomponent',
+  'components/component',
+  'components/codemirror',
 
   'panels/enums',
   'panels/geometry',
