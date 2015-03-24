@@ -26,6 +26,7 @@ function main(): void {
   var refs = render(cm, document.getElementById('main'));
 }
 
+
 window.onload = main;
 
 } // module example

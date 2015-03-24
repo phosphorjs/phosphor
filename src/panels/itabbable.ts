@@ -5,12 +5,17 @@
 |
 | The full license is in the file LICENSE, distributed with this software.
 |----------------------------------------------------------------------------*/
-@require 'nib'
-@require './misc'
-@require './panel'
-@require './codemirror'
-@require './dockarea'
-@require './menu'
-@require './menubar'
-@require './splitpanel'
-@require './tabbar'
+module phosphor.panels {
+
+/**
+ * A panel which owns and manages its own tab.
+ */
+export
+interface ITabbable extends Panel {
+  /**
+   * The tab to associate with the panel.
+   */
+  tab: ITab;
+}
+
+} // module phosphor.panels

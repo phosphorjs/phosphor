@@ -125,6 +125,22 @@ function find<T>(
 
 
 /**
+ * Find the index of the first element which passes the given test.
+ *
+ * Returns -1 if no element passes the test.
+ */
+export
+function findIndex<T>(
+  iterable: IIterable<T> | T[],
+  callback: (value: T, index: number) => boolean): number {
+  for (var i = 0, it = iter(iterable); it.moveNext(); ++i) {
+    if (callback(it.current, i)) return i;
+  }
+  return -1;
+}
+
+
+/**
  * Find the index of the first element which compares `>=` to `value`.
  *
  * This uses a binary search algorithm which must be applied to a

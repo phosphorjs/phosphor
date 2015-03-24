@@ -9,20 +9,17 @@ module example {
 
 import Component = phosphor.components.Component;
 
-import Direction = phosphor.enums.Direction;
-import SizePolicy = phosphor.enums.SizePolicy;
-
-import Size = phosphor.geometry.Size;
-
-import BoxLayout = phosphor.layout.BoxLayout;
+import BoxPanel = phosphor.panels.BoxPanel;
+import Direction = phosphor.panels.Direction;
+import ElementHost = phosphor.panels.ElementHost;
+import Panel = phosphor.panels.Panel;
+import Size = phosphor.panels.Size;
+import SizePolicy = phosphor.panels.SizePolicy;
 
 import IData = phosphor.virtualdom.IData;
 import IElement = phosphor.virtualdom.IElement;
 import createFactory = phosphor.virtualdom.createFactory;
 import dom = phosphor.virtualdom.dom;
-
-import ElementHost = phosphor.widgets.ElementHost;
-import Widget = phosphor.widgets.Widget;
 
 
 /**
@@ -108,16 +105,16 @@ var Selector = createFactory(SelectorComponent);
 
 
 /**
- * A simple widget which displays an image.
+ * A simple panel which displays an image.
  *
  * This could just as easily be rendered as part of the component,
- * but for this example it demonstrates a simple custom widget.
+ * but for this example it demonstrates a simple custom panel.
  */
-class SimpleImageWidget extends Widget {
+class SimpleImagePanel extends Panel {
 
   constructor() {
     super();
-    this.classList.add('SimpleImageWidget');
+    this.node.classList.add('SimpleImagePanel');
     this.node.onload = () => this.updateGeometry();
   }
 
@@ -141,54 +138,50 @@ class SimpleImageWidget extends Widget {
 
 
 /**
- * A top level widget which combines a selector and image widget.
+ * A top level panel which combines a selector and image panel.
  */
-class MainWidget extends Widget {
+class MainPanel extends BoxPanel {
 
   constructor() {
-    super();
-    this.classList.add('MainWidget');
+    super(Direction.TopToBottom);
+    this.node.classList.add('MainPanel');
 
     var names = imageItems.map(item => item.name);
     var selector = Selector({ values: names, onSelected: this._onSelected });
 
     var host = new ElementHost(selector, 200, 24);
-    host.horizontalSizePolicy = SizePolicy.Expanding;
-    host.verticalSizePolicy = SizePolicy.Fixed;
+    host.setSizePolicy(SizePolicy.Expanding, SizePolicy.Fixed);
 
-    var image = this._imageWidget = new SimpleImageWidget();
-    image.horizontalSizePolicy = SizePolicy.Fixed;
-    image.verticalSizePolicy = SizePolicy.Fixed;
+    var image = this._image = new SimpleImagePanel();
+    image.setSizePolicy(SizePolicy.Fixed, SizePolicy.Fixed);
     image.src = imageItems[0].path;
 
-    var layout = new BoxLayout(Direction.TopToBottom);
-    layout.addWidget(host);
-    layout.addWidget(image);
-    this.layout = layout;
+    this.addPanel(host);
+    this.addPanel(image);
   }
 
   private _onSelected = (value: string): void => {
     for (var i = 0; i < imageItems.length; ++i) {
       var item = imageItems[i];
       if (item.name === value) {
-        this._imageWidget.src = item.path;
+        this._image.src = item.path;
         return;
       }
     }
-    this._imageWidget.src = item.path;
+    this._image.src = item.path;
   };
 
-  private _imageWidget: SimpleImageWidget;
+  private _image: SimpleImagePanel;
 }
 
 
 function main(): void {
-  var mw = new MainWidget();
+  var panel = new MainPanel();
 
-  mw.attach(document.getElementById('main'));
-  mw.fitToHost();
+  panel.attach(document.getElementById('main'));
+  panel.fit();
 
-  window.onresize = () => mw.fitToHost();
+  window.onresize = () => panel.fit();
 }
 
 
