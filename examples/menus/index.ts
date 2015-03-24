@@ -7,9 +7,9 @@
 |----------------------------------------------------------------------------*/
 module example {
 
-import Menu = phosphor.widgets.Menu;
-import MenuBar = phosphor.widgets.MenuBar;
-import MenuItem = phosphor.widgets.MenuItem;
+import Menu = phosphor.panels.Menu;
+import MenuBar = phosphor.panels.MenuBar;
+import MenuItem = phosphor.panels.MenuItem;
 
 
 var cutCmd = () => console.log('Cut');
