@@ -72,6 +72,7 @@ var tsSources = [
   'panels/enums',
   'panels/geometry',
   'panels/ilayoutitem',
+  'panels/itab',
   'panels/layout',
   'panels/layoutengine',
   'panels/messages',
@@ -87,7 +88,9 @@ var tsSources = [
   'panels/splitlayout',
   'panels/splitpanel',
   'panels/stacklayout',
-  'panels/stackpanel'
+  'panels/stackpanel',
+  'panels/tab',
+  'panels/tabbar'
   // 'widgets/ITab',
   // 'widgets/ChildEvent',
   // 'widgets/MoveEvent',
