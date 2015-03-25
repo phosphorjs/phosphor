@@ -14,15 +14,16 @@ import render = phosphor.virtualdom.render;
 
 function main(): void {
   var items = [
-    { text: 'One', selected: true, closable: false },
-    { text: 'Two', selected: false, closable: false },
-    { text: 'Three', selected: false, closable: false },
-    { text: 'Four', selected: false, closable: false },
-    { text: 'Five', selected: false, closable: false },
-    { text: 'Six', selected: false, closable: false },
-    { text: 'Seven', selected: false, closable: false },
+    { id: '1', text: 'One', selected: true },
+    { id: '2', text: 'Two' },
+    { id: '3', text: 'Three' },
+    { id: '4', text: 'Four' },
+    { id: '5', text: 'Five' },
+    { id: '6', text: 'Six' },
+    { id: '7', text: 'Seven' },
   ];
-  render(TabBar({ items: items }), document.getElementById('main'));
+  var host = document.getElementById('main');
+  render(TabBar({ items: items, tabsMovable: true }), host);
 }
 
 

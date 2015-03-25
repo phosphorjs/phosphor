@@ -21,30 +21,12 @@ body {
 }
 
 
-.p-TabBarComponent-header {
-  display: none;
-}
-
-
-.p-TabBarComponent-inner {
-  z-index: 1;
-}
-
-
-.p-TabBarComponent-footer {
-  z-index: 0;
-  height: 1px;
-  background: #C0C0C0;
-}
-
-
 .p-TabBarComponent-tab {
-  min-width: 50px;
   padding: 4px;
+  min-width: 20px;
   font: 12px Helvetica, Arial, sans-serif;
   background: #E5E5E5;
   border: 1px solid #C0C0C0;
-  border-bottom: none;
   &.p-mod-selected {
     background: white;
   }
@@ -55,44 +37,3 @@ body {
     margin-left: -1px;
   }
 }
-
-
-
-// .p-TabBar {
-//   min-height: 24px;
-//   &::after {
-//     position: absolute;
-//     left: 0;
-//     right: 0;
-//     bottom: 0;
-//     height: 1px;
-//     content: '';
-//     z-index: 0;
-//     background: #C0C0C0;
-//   }
-// }
-
-
-// .p-TabBar-inner {
-//   bottom: 1px;
-//   z-index: 1;
-//   > .p-Tab {
-//     font: 12px Helvetica, Arial, sans-serif;
-//     height: 21px;
-//     padding: 0px 10px;
-//     background: #E5E5E5;
-//     border: 1px solid #C0C0C0;
-//     border-bottom: none;
-//     &.p-mod-selected {
-//       height: 24px;
-//       background: white;
-//       transform: translateY(1px);
-//     }
-//     &:hover:not(.p-mod-selected) {
-//       background: #F0F0F0;
-//     }
-//     > span {
-//       line-height: 21px;
-//     }
-//   }
-// }
