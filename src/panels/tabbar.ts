@@ -11,8 +11,8 @@ import IMessage = core.IMessage;
 import IDisposable = core.IDisposable;
 import Signal = core.Signal;
 
-import hitTest = dom.hitTest;
-import overrideCursor = dom.overrideCursor;
+import hitTest = domutil.hitTest;
+import overrideCursor = domutil.overrideCursor;
 
 
 /**

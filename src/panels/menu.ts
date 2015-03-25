@@ -10,7 +10,7 @@ module phosphor.panels {
 import IMessage = core.IMessage;
 import Signal = core.Signal;
 
-import hitTest = dom.hitTest;
+import hitTest = domutil.hitTest;
 
 
 /**

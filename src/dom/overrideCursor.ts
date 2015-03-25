@@ -5,7 +5,7 @@
 |
 | The full license is in the file LICENSE, distributed with this software.
 |----------------------------------------------------------------------------*/
-module phosphor.dom {
+module phosphor.domutil {
 
 import Disposable = core.Disposable;
 import IDisposable = core.IDisposable;
@@ -48,4 +48,4 @@ function clearOverride(): void {
   body.classList.remove(CURSOR_CLASS);
 }
 
-} // module phosphor.dom
+} // module phosphor.domutil

@@ -5,7 +5,7 @@
 |
 | The full license is in the file LICENSE, distributed with this software.
 |----------------------------------------------------------------------------*/
-module phosphor.dom {
+module phosphor.domutil {
 
 /**
  * The box sizing data for an HTML element.
@@ -110,4 +110,4 @@ var boxDataProto: IBoxData = {
   _bt: 0, _bl: 0, _br: 0, _bb: 0, _pt: 0, _pl: 0, _pr: 0, _pb: 0,
 };
 
-} // module phosphor.dom
+} // module phosphor.domutil
