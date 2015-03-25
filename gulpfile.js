@@ -54,9 +54,9 @@ var tsSources = [
   'di/IContainer',
   'di/Container',
 
-  'dom/boxdata',
-  'dom/hitTest',
-  'dom/overrideCursor',
+  'domutil/boxdata',
+  'domutil/hitTest',
+  'domutil/overrideCursor',
 
   'virtualdom/IComponent',
   'virtualdom/IData',
