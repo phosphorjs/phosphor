@@ -15,14 +15,14 @@ interface IElementAttributes extends IData {
   accessKey?: string;
   className?: string;
   contentEditable?: string;
-  dataset: { [k: string]: string };
+  dataset?: any;
   dir?: string;
   draggable?: boolean;
   hidden?: any;
   id?: string;
   lang?: string;
   spellcheck?: boolean;
-  style?: { [k: string]: string };
+  style?: any;
   tabIndex?: number;
   title?: string;
   onabort?: (ev: UIEvent) => any;
