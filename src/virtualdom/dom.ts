@@ -9,14 +9,13 @@ module phosphor.virtualdom {
 
 /**
  * The attributes available for all elements.
- *
- * Arbitrary 'data-*' attributes are also supported.
  */
 export
 interface IElementAttributes extends IData {
   accessKey?: string;
   className?: string;
   contentEditable?: string;
+  dataset: { [k: string]: string };
   dir?: string;
   draggable?: boolean;
   hidden?: any;
