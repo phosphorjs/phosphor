@@ -43,12 +43,6 @@ var componentMap = new WeakMap<HTMLElement, IComponent<any>>();
 
 
 /**
- * A regex for testing for 'data-*' attributes.
- */
-var dataRegex = /^data-/;
-
-
-/**
  * An enum of element attribute types.
  */
 const enum AttrMode { Property, Attribute, Event }
@@ -189,17 +183,20 @@ function addAttributes(node: HTMLElement, attrs: any): void {
       (<any>node)[name] = attrs[name];
     } else if (mode === AttrMode.Attribute) {
       node.setAttribute(name.toLowerCase(), attrs[name]);
-    } else if (dataRegex.test(name)) {
-      node.setAttribute(name, attrs[name]);
+    }
+  }
+  var dataset = attrs.dataset;
+  if (dataset) {
+    for (var name in dataset) {
+      node.setAttribute('data-' + name, dataset[name]);
     }
   }
   var inlineStyles = attrs.style;
-  if (!inlineStyles) {
-    return;
-  }
-  var style = node.style;
-  for (var name in inlineStyles) {
-    style[name] = inlineStyles[name];
+  if (inlineStyles) {
+    var style = node.style;
+    for (var name in inlineStyles) {
+      style[name] = inlineStyles[name];
+    }
   }
 }
 
@@ -326,8 +323,6 @@ function updateAttrs(node: HTMLElement, oldAttrs: any, newAttrs: any): void {
         node.removeAttribute(name.toLowerCase());
       } else if (mode === AttrMode.Event) {
         (<any>node)[name] = null;
-      } else if (dataRegex.test(name)) {
-        node.removeAttribute(name);
       }
     }
   }
@@ -339,26 +334,38 @@ function updateAttrs(node: HTMLElement, oldAttrs: any, newAttrs: any): void {
         (<any>node)[name] = value;
       } else if (mode === AttrMode.Attribute) {
         node.setAttribute(name.toLowerCase(), value);
-      } else if (dataRegex.test(name)) {
-        node.setAttribute(name, value);
+      }
+    }
+  }
+  var oldDataset = oldAttrs.dataset || emptyObject;
+  var newDataset = newAttrs.dataset || emptyObject;
+  if (oldDataset !== newDataset) {
+    for (var name in oldDataset) {
+      if (!(name in newDataset)) {
+        node.removeAttribute('data-' + name);
+      }
+    }
+    for (var name in newDataset) {
+      var value = newDataset[name];
+      if (oldDataset[name] !== value) {
+        node.setAttribute('data-' + name, value);
       }
     }
   }
   var oldInlineStyles = oldAttrs.style || emptyObject;
   var newInlineStyles = newAttrs.style || emptyObject;
-  if (oldInlineStyles === newInlineStyles) {
-    return;
-  }
-  var style = node.style;
-  for (var name in oldInlineStyles) {
-    if (!(name in newInlineStyles)) {
-      style[name] = '';
+  if (oldInlineStyles !== newInlineStyles) {
+    var style = node.style;
+    for (var name in oldInlineStyles) {
+      if (!(name in newInlineStyles)) {
+        style[name] = '';
+      }
     }
-  }
-  for (var name in newInlineStyles) {
-    var value = newInlineStyles[name];
-    if (oldInlineStyles[name] !== value) {
-      style[name] = value;
+    for (var name in newInlineStyles) {
+      var value = newInlineStyles[name];
+      if (oldInlineStyles[name] !== value) {
+        style[name] = value;
+      }
     }
   }
 }

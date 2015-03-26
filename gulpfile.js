@@ -54,9 +54,9 @@ var tsSources = [
   'di/IContainer',
   'di/Container',
 
-  'dom/boxdata',
-  'dom/hitTest',
-  'dom/overrideCursor',
+  'domutil/boxdata',
+  'domutil/hitTest',
+  'domutil/overrideCursor',
 
   'virtualdom/IComponent',
   'virtualdom/IData',
@@ -176,6 +176,14 @@ gulp.task('examples', function() {
     .pipe(gulp.dest('examples'));
 
   return stream.merge(src, css);
+});
+
+
+gulp.task('css', function() {
+  return gulp.src(stylSources)
+    .pipe(stylus({ use: [nib()] }))
+    .pipe(rename('phosphor.css'))
+    .pipe(gulp.dest('./dist'));
 });
 
 

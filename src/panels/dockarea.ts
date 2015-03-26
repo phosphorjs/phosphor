@@ -9,8 +9,8 @@ module phosphor.panels {
 
 import IDisposable = core.IDisposable;
 
-import hitTest = dom.hitTest;
-import overrideCursor = dom.overrideCursor;
+import hitTest = domutil.hitTest;
+import overrideCursor = domutil.overrideCursor;
 
 
 /**

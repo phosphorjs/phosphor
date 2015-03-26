@@ -10,7 +10,7 @@ module phosphor.panels {
 import IMessage = core.IMessage;
 import IDisposable = core.IDisposable;
 
-import overrideCursor = dom.overrideCursor;
+import overrideCursor = domutil.overrideCursor;
 
 
 /**

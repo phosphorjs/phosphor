@@ -20,8 +20,8 @@ import Message = core.Message;
 import Signal = core.Signal;
 import dispatch = core.dispatch;
 
-import IBoxData = dom.IBoxData;
-import createBoxData = dom.createBoxData;
+import IBoxData = domutil.IBoxData;
+import createBoxData = domutil.createBoxData;
 
 
 /**

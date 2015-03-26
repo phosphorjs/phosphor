@@ -7,17 +7,16 @@
 |----------------------------------------------------------------------------*/
 module phosphor.components {
 
-import IIterable = collections.IIterable;
-import some = collections.some;
-
-import IMessage = core.IMessage;
-import IMessageHandler = core.IMessageHandler;
-import dispatch = core.dispatch;
 import emptyObject = core.emptyObject;
 
 import IElement = virtualdom.IElement;
 import IData = virtualdom.IData;
 import render = virtualdom.render;
+
+
+// cache frequently used globals
+var raf = requestAnimationFrame;
+var caf = cancelAnimationFrame;
 
 
 /**
@@ -28,12 +27,13 @@ import render = virtualdom.render;
  * the virtual DOM content for the component.
  */
 export
-class Component<T extends IData> extends BaseComponent<T> implements IMessageHandler {
+class Component<T extends IData> extends BaseComponent<T> {
   /**
    * Dispose of the resources held by the component.
    */
   dispose(): void {
     this._refs = null;
+    this._cancelFrame();
     super.dispose();
   }
 
@@ -52,17 +52,12 @@ class Component<T extends IData> extends BaseComponent<T> implements IMessageHan
    *
    * This is called whenever the component is rendered by its parent.
    *
-   * This method first invokes the `shouldUpdate` method, passing the
-   * new data and children. It then invokes the superclass method to
-   * update the internal component state. Lastly if the `shouldUpdate`
-   * method returned true, the component is immediately re-rendered.
-   *
    * The method will normally not be reimplemented by a subclass.
    */
   init(data: T, children: IElement[]): void {
     var update = this.shouldUpdate(data, children);
     super.init(data, children);
-    if (update) this.doRender();
+    if (update) this.update(true);
   }
 
   /**
@@ -83,63 +78,22 @@ class Component<T extends IData> extends BaseComponent<T> implements IMessageHan
    * has changed such that it requires the component to be re-rendered,
    * or when external code requires the component to be refreshed.
    *
-   * Multiple synchronous calls to this method are collapsed.
+   * If the 'immediate' flag is false (the default) the update will be
+   * scheduled for the next cycle of the event loop. If the flag is set
+   * to true, the component will be updated immediately.
+   *
+   * Multiple pending requests are collapsed into a single update.
    */
-  update(): void {
-    dispatch.postMessage(this, { type: 'update-request' });
-  }
-
-  /**
-   * Process a message sent to the component.
-   */
-  processMessage(msg: IMessage): void {
-    if (msg.type === 'update-request') {
-      this.doRender();
+  update(immediate = false): void {
+    if (immediate) {
+      this._cancelFrame();
+      this._render();
+    } else if (this._frameId === 0) {
+      this._frameId = raf(() => {
+        this._frameId = 0;
+        this._render();
+      });
     }
-  }
-
-  /**
-   * Compress a message posted to the component.
-   */
-  compressMessage(msg: IMessage, pending: IIterable<IMessage>): boolean {
-    if (msg.type === 'update-request') {
-      return some(pending, p => p.type === msg.type);
-    }
-    return false;
-  }
-
-  /**
-   * Test whether the component should be updated.
-   *
-   * This method is invoked when the component is initialized with new
-   * data and children. It should return true if the component should
-   * be re-rendered, or false if the new values will not cause a visual
-   * change. If this method returns false, the component will not be
-   * updated when it is (re)initialized.
-   *
-   * Determining whether a component should update is error prone and
-   * can be just as expensive as performing the virtual DOM diff, so
-   * this should only be reimplemented if performance is a problem.
-   *
-   * The default implementation of this method always returns true.
-   */
-  protected shouldUpdate(data: T, children: IElement[]): boolean {
-    return true;
-  }
-
-  /**
-   * Perform the actual rendering of the component content.
-   *
-   * This method immediately (re)renders the component content. It
-   * is called automatically at the proper times, but can be invoked
-   * directly by a subclass if it requires a synchronous update.
-   *
-   * This method should not be reimplemented.
-   */
-  protected doRender(): void {
-    this.beforeRender();
-    this._refs = render(this.render(), this.node);
-    this.afterRender();
   }
 
   /**
@@ -156,6 +110,43 @@ class Component<T extends IData> extends BaseComponent<T> implements IMessageHan
    */
   protected afterRender(): void { }
 
+  /**
+   * Test whether the component should be updated.
+   *
+   * This method is invoked when the component is initialized with new
+   * data and children. It should return true if the component should
+   * be updated, or false if the values do not cause a visual change.
+   *
+   * Determining whether a component should update is error prone and
+   * can be just as expensive as performing the virtual DOM diff, so
+   * this should only be reimplemented if performance is a problem.
+   *
+   * The default implementation of this method always returns true.
+   */
+  protected shouldUpdate(data: T, children: IElement[]): boolean {
+    return true;
+  }
+
+  /**
+   * Perform an immediate rendering of the component.
+   */
+  private _render(): void {
+    this.beforeRender();
+    this._refs = render(this.render(), this.node);
+    this.afterRender();
+  }
+
+  /**
+   * Clear the pending animation frame.
+   */
+  private _cancelFrame(): void {
+    if (this._frameId !== 0) {
+      caf(this._frameId);
+      this._frameId = 0;
+    }
+  }
+
+  private _frameId = 0;
   private _refs = emptyObject;
 }
 
