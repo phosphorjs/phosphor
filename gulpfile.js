@@ -68,7 +68,6 @@ var tsSources = [
   'components/basecomponent',
   'components/component',
   'components/codemirror',
-  'components/tabbar',
 
   'panels/enums',
   'panels/geometry',
