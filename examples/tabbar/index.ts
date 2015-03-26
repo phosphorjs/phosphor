@@ -7,23 +7,25 @@
 |----------------------------------------------------------------------------*/
 module example {
 
-import TabBar = phosphor.components.TabBar;
-
-import render = phosphor.virtualdom.render;
+import TabBar = phosphor.panels.TabBar;
 
 
 function main(): void {
-  var items = [
-    { id: '1', text: 'One', selected: true },
-    { id: '2', text: 'Two' },
-    { id: '3', text: 'Three' },
-    { id: '4', text: 'Four' },
-    { id: '5', text: 'Five' },
-    { id: '6', text: 'Six' },
-    { id: '7', text: 'Seven' },
-  ];
-  var host = document.getElementById('main');
-  render(TabBar({ items: items, tabsMovable: true }), host);
+  var tb = new TabBar();
+  tb.minTabWidth = 100;
+
+  tb.addTab('One');
+  tb.addTab('Two');
+  tb.addTab('Three');
+  tb.addTab('Four');
+  tb.addTab('Five');
+  tb.addTab('Six');
+  tb.addTab('Seven');
+
+  tb.attach(document.getElementById('main'));
+  tb.fit();
+
+  window.onresize = () => tb.fit();
 }
 
 
