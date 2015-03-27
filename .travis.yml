@@ -1,0 +1,47 @@
+language: node_js
+node_js:
+  - "0.12"
+sudo: false
+env:
+  matrix:
+    - GROUP=
+    - GROUP=docs
+  global:
+    - secure: SKQkQa06ymTKMcywnL9Q2JdgvEr7y2PYwBlEPiSzsTxKhSwB73sRyS7Bc6DazHn8P6Ljadu7hOX6Z8FuxIrdDz9LkPdvce715N2NCvRFNgCm6KLDRYVeNm1yQYrxhm9z0tOGe92txAlq+ZxgtjXBujXFrEoASjZWPeGzeNPqr2Y=
+install:
+    - npm install -g tsd@next
+    - npm install -g typedoc
+    - npm install gulp
+    - npm install
+    - 'echo "{\"token\": \"$GHTOKEN\"}" > ~/.tsdrc'
+    - tsd reinstall -s
+    - gulp
+script:
+    - if [[ $GROUP == docs ]];then gulp examples; gulp docs; fi 
+    - true
+after_success:
+  |
+  if [[ $TRAVIS_PULL_REQUEST == false && $TRAVIS_BRANCH == 'master' ]]; then
+    echo "Will build Documentation"
+    gulp examples
+    # shoudl decrypt ssh key
+    #openssl aes-256-cbc -K $encrypted_7d2843e800b0_key -iv $encrypted_7d2843e800b0_iv -in .travis/travis_id_rsa_2048.enc -out .travis/travis_id_rsa_2048 -d
+    #eval `ssh-agent -s`
+    #chmod 600 .travis/travis_id_rsa_2048
+    #ssh-add .travis/travis_id_rsa_2048
+    echo 'Phosphor examples' > index.html
+    git config credential.helper 'store --file=.git/credentials'
+    git remote add ghpages https://github.com/Carreau/phosphor.git
+    echo "https://${GHTOKEN}:@github.com" > .git/credentials
+    git config --global user.email "travis@travis-ci.com"
+    git config --global user.name "Travis Bot"
+    git add index.html
+    git add -f dist 
+    git add -f examples
+    git add -f docs
+    git commit -am'autocommit docs'
+    git checkout -b gh-pages
+    git push ghpages gh-pages:gh-pages -f
+  else
+    echo "Will only deploy docs build from phosphor master branch"
+  fi
