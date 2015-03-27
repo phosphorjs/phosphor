@@ -14,6 +14,7 @@ install:
     - npm install gulp
     - npm install
     - 'echo "{\"token\": \"$GHTOKEN\"}" > ~/.tsdrc'
+    - tsd rate
     - tsd reinstall -s
     - gulp
 script:
