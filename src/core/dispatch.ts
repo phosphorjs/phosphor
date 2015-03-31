@@ -10,9 +10,6 @@ module phosphor.core {
 import Queue = collections.Queue;
 
 
-export
-module dispatch {
-
 /**
  * Send a message to the message handler to process immediately.
  */
@@ -92,8 +89,6 @@ function clearMessageData(handler: IMessageHandler): void {
     dispatcher.clearMessageFilters();
   }
 }
-
-} // module dispatch
 
 
 /**

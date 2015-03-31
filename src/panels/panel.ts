@@ -18,7 +18,11 @@ import IMessage = core.IMessage;
 import IMessageHandler = core.IMessageHandler;
 import Message = core.Message;
 import Signal = core.Signal;
-import dispatch = core.dispatch;
+import clearMessageData = core.clearMessageData;
+import installMessageFilter = core.installMessageFilter;
+import postMessage = core.postMessage;
+import sendMessage = core.sendMessage;
+import removeMessageFilter = core.removeMessageFilter;
 
 import IBoxData = domutil.IBoxData;
 import createBoxData = domutil.createBoxData;
@@ -61,7 +65,7 @@ class Panel implements IMessageHandler, IDisposable {
    * Dispose of the panel and its descendants.
    */
   dispose(): void {
-    dispatch.clearMessageData(this);
+    clearMessageData(this);
     this.setFlag(PanelFlag.IsDisposed);
     this.disposed.emit(this, void 0);
     this.disposed.disconnect();
@@ -70,7 +74,7 @@ class Panel implements IMessageHandler, IDisposable {
     if (parent) {
       this._parent = null;
       parent._children.remove(this);
-      dispatch.sendMessage(parent, new ChildMessage('child-removed', this));
+      sendMessage(parent, new ChildMessage('child-removed', this));
     } else if (this.isAttached) {
       this.detach();
     }
@@ -414,14 +418,14 @@ class Panel implements IMessageHandler, IDisposable {
     if (old) {
       this._parent = null;
       old._children.remove(this);
-      dispatch.sendMessage(old, new ChildMessage('child-removed', this));
+      sendMessage(old, new ChildMessage('child-removed', this));
     }
     if (parent) {
       this._parent = parent;
       parent._children.add(this);
-      dispatch.sendMessage(parent, new ChildMessage('child-added', this));
+      sendMessage(parent, new ChildMessage('child-added', this));
     }
-    dispatch.sendMessage(this, new Message('parent-changed'));
+    sendMessage(this, new Message('parent-changed'));
   }
 
   /**
@@ -460,15 +464,15 @@ class Panel implements IMessageHandler, IDisposable {
     }
     if (old) {
       this._layout = null;
-      dispatch.removeMessageFilter(this, old);
+      removeMessageFilter(this, old);
       old.dispose();
     }
     if (layout) {
       this._layout = layout;
-      dispatch.installMessageFilter(this, layout);
+      installMessageFilter(this, layout);
       layout.parent = this;
     }
-    dispatch.sendMessage(this, new Message('layout-changed'));
+    sendMessage(this, new Message('layout-changed'));
   }
 
   /**
@@ -503,16 +507,16 @@ class Panel implements IMessageHandler, IDisposable {
     }
     var parent = this._parent;
     if (this.isAttached && (!parent || parent.isVisible)) {
-      dispatch.sendMessage(this, new Message('before-show'));
+      sendMessage(this, new Message('before-show'));
       this._node.classList.remove(HIDDEN_CLASS);
       this.clearFlag(PanelFlag.IsHidden);
-      dispatch.sendMessage(this, new Message('after-show'));
+      sendMessage(this, new Message('after-show'));
     } else {
       this._node.classList.remove(HIDDEN_CLASS);
       this.clearFlag(PanelFlag.IsHidden);
     }
     if (parent) {
-      dispatch.sendMessage(parent, new ChildMessage('child-shown', this));
+      sendMessage(parent, new ChildMessage('child-shown', this));
     }
     this.updateGeometry();
   }
@@ -528,16 +532,16 @@ class Panel implements IMessageHandler, IDisposable {
     }
     var parent = this._parent;
     if (this.isAttached && (!parent || parent.isVisible)) {
-      dispatch.sendMessage(this, new Message('before-hide'));
+      sendMessage(this, new Message('before-hide'));
       this._node.classList.add(HIDDEN_CLASS);
       this.setFlag(PanelFlag.IsHidden);
-      dispatch.sendMessage(this, new Message('after-hide'));
+      sendMessage(this, new Message('after-hide'));
     } else {
       this._node.classList.add(HIDDEN_CLASS);
       this.setFlag(PanelFlag.IsHidden);
     }
     if (parent) {
-      dispatch.sendMessage(parent, new ChildMessage('child-hidden', this));
+      sendMessage(parent, new ChildMessage('child-hidden', this));
     }
     this.updateGeometry(true);
   }
@@ -550,7 +554,7 @@ class Panel implements IMessageHandler, IDisposable {
    * close message handler will unparent the panel.
    */
   close(): void {
-    dispatch.sendMessage(this, new Message('close'));
+    sendMessage(this, new Message('close'));
   }
 
   /**
@@ -566,9 +570,9 @@ class Panel implements IMessageHandler, IDisposable {
     if (this._parent) {
       throw new Error('can only attach a root panel to the DOM');
     }
-    dispatch.sendMessage(this, new Message('before-attach'));
+    sendMessage(this, new Message('before-attach'));
     host.appendChild(this._node);
-    dispatch.sendMessage(this, new Message('after-attach'));
+    sendMessage(this, new Message('after-attach'));
   }
 
   /**
@@ -585,9 +589,9 @@ class Panel implements IMessageHandler, IDisposable {
     if (!host) {
       return;
     }
-    dispatch.sendMessage(this, new Message('before-detach'));
+    sendMessage(this, new Message('before-detach'));
     host.removeChild(node);
-    dispatch.sendMessage(this, new Message('after-detach'));
+    sendMessage(this, new Message('after-detach'));
   }
 
   /**
@@ -678,7 +682,7 @@ class Panel implements IMessageHandler, IDisposable {
     if (parent._layout) {
       parent._layout.invalidate();
     } else {
-      dispatch.postMessage(parent, new Message('layout-request'));
+      postMessage(parent, new Message('layout-request'));
       parent.updateGeometry();
     }
   }
@@ -693,7 +697,7 @@ class Panel implements IMessageHandler, IDisposable {
     if (this._layout) {
       this._layout.invalidate();
     } else {
-      dispatch.postMessage(this, new Message('layout-request'));
+      postMessage(this, new Message('layout-request'));
     }
     this.updateGeometry();
   }
@@ -747,11 +751,11 @@ class Panel implements IMessageHandler, IDisposable {
     }
     if (isMove) {
       var move = new MoveMessage(oldX, oldY, x, y);
-      dispatch.sendMessage(this, move);
+      sendMessage(this, move);
     }
     if (isResize) {
       var resize = new ResizeMessage(oldWidth, oldHeight, width, height);
-      dispatch.sendMessage(this, resize);
+      sendMessage(this, resize);
     }
   }
 
@@ -919,9 +923,9 @@ class Panel implements IMessageHandler, IDisposable {
   protected onChildAdded(msg: ChildMessage): void {
     var child = msg.child;
     if (this.isAttached) {
-      dispatch.sendMessage(child, new Message('before-attach'));
+      sendMessage(child, new Message('before-attach'));
       this._node.appendChild(child._node);
-      dispatch.sendMessage(child, new Message('after-attach'));
+      sendMessage(child, new Message('after-attach'));
     } else {
       this._node.appendChild(child._node);
     }
@@ -935,9 +939,9 @@ class Panel implements IMessageHandler, IDisposable {
   protected onChildRemoved(msg: ChildMessage): void {
     var child = msg.child;
     if (this.isAttached) {
-      dispatch.sendMessage(child, new Message('before-detach'));
+      sendMessage(child, new Message('before-detach'));
       this._node.removeChild(child._node);
-      dispatch.sendMessage(child, new Message('after-detach'));
+      sendMessage(child, new Message('after-detach'));
     } else {
       this._node.removeChild(child._node);
     }
@@ -1053,7 +1057,7 @@ var defaultPolicy = (SizePolicy.Preferred << 16) | SizePolicy.Preferred;
  */
 function sendAll(list: IList<Panel>, msg: IMessage): void {
   for (var i = 0; i < list.size; ++i) {
-    dispatch.sendMessage(list.get(i), msg);
+    sendMessage(list.get(i), msg);
   }
 }
 
@@ -1065,7 +1069,7 @@ function sendNonHidden(list: IList<Panel>, msg: IMessage): void {
   for (var i = 0; i < list.size; ++i) {
     var panel = list.get(i);
     if (!panel.isHidden) {
-      dispatch.sendMessage(panel, msg);
+      sendMessage(panel, msg);
     }
   }
 }
