@@ -47,6 +47,7 @@ var tsSources = [
   'core/empty',
   'core/message',
   'core/messageloop',
+  'core/coreobject',
   'core/signal',
 
   'di/token',
