@@ -242,11 +242,11 @@ function updateContent(
     var oldElem = oldCopy[i];
     var currNode = childNodes[i];
 
-    // If the new element is keyed, move a keyed old element
-    // to the proper location before proceeding with the diff.
-    var key = newElem.data.key;
-    if (key && key in oldKeyed) {
-      var pair = oldKeyed[key];
+    // If the new element is keyed, move a keyed old element to the
+    // proper location before proceeding with the diff.
+    var newKey = newElem.data.key;
+    if (newKey && newKey in oldKeyed) {
+      var pair = oldKeyed[newKey];
       if (pair.elem !== oldElem) {
         var k = oldCopy.indexOf(pair.elem);
         if (k !== -1) oldCopy.splice(k, 1);
@@ -260,6 +260,16 @@ function updateContent(
     // If both elements are identical, there is nothing to do.
     // This can occur when a component renders cached content.
     if (oldElem === newElem) {
+      continue;
+    }
+
+    // If the old element is keyed and does not match the new element
+    // key, create a new node. This is necessary since the old element
+    // may be moved forward in the tree at a later point in the diff.
+    var oldKey = oldElem.data.key;
+    if (oldKey && oldKey !== newKey) {
+      oldCopy.splice(i, 0, newElem);
+      addNode(host, newElem, currNode);
       continue;
     }
 
