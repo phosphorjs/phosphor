@@ -43,10 +43,10 @@ var tsSources = [
   'core/imessage',
   'core/imessagefilter',
   'core/imessagehandler',
-  'core/dispatch',
-  'core/empty',
   'core/disposable',
+  'core/empty',
   'core/message',
+  'core/messageloop',
   'core/signal',
 
   'di/token',
