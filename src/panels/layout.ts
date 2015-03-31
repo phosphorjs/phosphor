@@ -7,12 +7,12 @@
 |----------------------------------------------------------------------------*/
 module phosphor.panels {
 
-import dispatch = core.dispatch;
 import IDisposable = core.IDisposable;
 import IMessage = core.IMessage;
 import IMessageHandler = core.IMessageHandler;
 import IMessageFilter = core.IMessageFilter;
 import Message = core.Message;
+import postMessage = core.postMessage;
 
 
 /**
@@ -160,7 +160,7 @@ class Layout implements IMessageFilter, IDisposable {
   invalidate(): void {
     var parent = this._parent;
     if (parent) {
-      dispatch.postMessage(parent, new Message('layout-request'));
+      postMessage(parent, new Message('layout-request'));
       parent.updateGeometry();
     }
   }
