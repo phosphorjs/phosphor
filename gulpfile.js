@@ -47,7 +47,6 @@ var tsSources = [
   'core/empty',
   'core/message',
   'core/messageloop',
-  'core/coreobject',
   'core/signal',
 
   'di/token',
@@ -77,8 +76,7 @@ var tsSources = [
   'panels/itabbable',
   'panels/layout',
   'panels/layoutengine',
-  'panels/messages',
-  'panels/panel',
+  'panels/widget',
   'panels/elementhost',
   'panels/panelitem',
   'panels/spaceritem',

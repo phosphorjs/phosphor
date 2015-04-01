@@ -161,13 +161,13 @@ enum Orientation {
 
 
 /**
- * An enum of panel bit flags.
+ * An enum of widget bit flags.
  *
- * Panel flags are used to control various low-level behaviors of
- * a panel. They are typcially not used directly by user code.
+ * Widget flags are used to control various low-level behaviors of
+ * a widget. They are typically not used directly by user code.
  */
 export
-enum PanelFlag {
+enum WidgetFlag {
   /**
    * The panel is attached to the DOM.
    */
@@ -192,79 +192,6 @@ enum PanelFlag {
    * Changing the panel layout is disallowed.
    */
   DisallowLayoutChange = 0x10,
-}
-
-
-/**
- * An enum of size policy values.
- *
- * A size policy controls how a layout interprets a panel's `sizeHint`.
- */
-export
-enum SizePolicy {
-  /**
-   * A policy indicating that the `sizeHint` is the only acceptable
-   * size for the panel.
-   */
-  Fixed = 0,
-
-  /**
-   * A bit flag indicating the panel can grow beyond `sizeHint`.
-   */
-  GrowFlag = 0x1,
-
-  /**
-   * A bit flag indicating the panel can shrink below `sizeHint`.
-   */
-  ShrinkFlag = 0x2,
-
-  /**
-   * A bit flag indicating the panel should expand beyond `sizeHint`.
-   */
-  ExpandFlag = 0x4,
-
-  /**
-   * A bit flag indicating the `sizeHint` is ignored.
-   */
-  IgnoreFlag = 0x8,
-
-  /**
-   * A policy indicating that the `sizeHint` is a minimum, but the
-   * panel can be expanded if needed and still be useful.
-   */
-  Minimum = GrowFlag,
-
-  /**
-   * A policy indicating that the `sizeHint` is a maximum, but the
-   * panel can be shrunk if needed and still be useful.
-   */
-  Maximum = ShrinkFlag,
-
-  /**
-   * A policy indicating that the `sizeHint` is preferred, but the
-   * panel can grow or shrink if needed and still be useful.
-   *
-   * This is the default size policy.
-   */
-  Preferred = GrowFlag | ShrinkFlag,
-
-  /**
-   * A policy indicating that `sizeHint` is reasonable, but the panel
-   * can shrink if needed and still be useful. It can also make use of
-   * extra space and should expand as much as possible.
-   */
-  Expanding = GrowFlag | ShrinkFlag | ExpandFlag,
-
-  /**
-   * A policy indicating that `sizeHint` is a minimum. The panel can
-   * make use of extra space and should expand as much as possible.
-   */
-  MinimumExpanding = GrowFlag | ExpandFlag,
-
-  /**
-   * A policy indicating the `sizeHint` is ignored.
-   */
-  Ignored = GrowFlag | ShrinkFlag | IgnoreFlag,
 }
 
 } // module phosphor.panels

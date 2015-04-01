@@ -61,6 +61,26 @@ interface IBoxData {
    * The sum of the horizontal padding and border.
    */
   horizontalSum: number;
+
+  /**
+   * The minimum width, in pixels.
+   */
+  minWidth: number;
+
+  /**
+   * The minimum height, in pixels.
+   */
+  minHeight: number;
+
+  /**
+   * The maximum width, in pixels.
+   */
+  maxWidth: number;
+
+  /**
+   * The maximum height, in pixels.
+   */
+  maxHeight: number;
 }
 
 
@@ -80,6 +100,10 @@ function createBoxData(node: HTMLElement): IBoxData {
   var pl = parseInt(style.paddingLeft, 10) || 0;
   var pr = parseInt(style.paddingRight, 10) || 0;
   var pb = parseInt(style.paddingBottom, 10) || 0;
+  var mw = parseInt(style.minWidth, 10) || 0;
+  var mh = parseInt(style.minHeight, 10) || 0;
+  var xw = parseInt(style.maxWidth, 10) || Infinity;
+  var xh = parseInt(style.maxHeight, 10) || Infinity;
   var data = Object.create(boxDataProto);
   if (bt !== 0) data._bt = bt;
   if (bl !== 0) data._bl = bl;
@@ -89,6 +113,10 @@ function createBoxData(node: HTMLElement): IBoxData {
   if (pl !== 0) data._pl = pl;
   if (pr !== 0) data._pr = pr;
   if (pb !== 0) data._pb = pb;
+  if (mw !== 0) data._mw = mw;
+  if (mh !== 0) data._mh = mh;
+  if (xw !== Infinity) data._xw = xw;
+  if (xh !== Infinity) data._xh = xh;
   return <IBoxData>data;
 }
 
@@ -107,7 +135,13 @@ var boxDataProto: IBoxData = {
   get paddingBottom() { return this._pb; },
   get verticalSum() { return this._bt + this._bb + this._pt + this._pb; },
   get horizontalSum() { return this._bl + this._br + this._pl + this._pr; },
-  _bt: 0, _bl: 0, _br: 0, _bb: 0, _pt: 0, _pl: 0, _pr: 0, _pb: 0,
+  get minWidth() { return this._mw; },
+  get minHeight() { return this._mh; },
+  get maxWidth() { return this._xw; },
+  get maxHeight() { return this._xh; },
+  _bt: 0, _bl: 0, _br: 0, _bb: 0,
+  _pt: 0, _pl: 0, _pr: 0, _pb: 0,
+  _mw: 0, _mh: 0, _xw: 0, _xh: 0,
 };
 
 } // module phosphor.domutil
