@@ -66,10 +66,12 @@ class Panel extends CoreObject {
     if (!this.parent && this.isAttached) {
       this.detach();
     }
+
     if (this._layout) {
       this._layout.dispose();
       this._layout = null;
     }
+
     this._node = null;
     super.dispose();
   }
