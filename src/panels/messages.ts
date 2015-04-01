@@ -11,30 +11,6 @@ import Message = core.Message;
 
 
 /**
- * A message class for child panel related messages.
- */
-export
-class ChildMessage extends Message {
-  /**
-   * Construct a new child message.
-   */
-  constructor(type: string, child: Panel) {
-    super(type);
-    this._child = child;
-  }
-
-  /**
-   * The child panel for the message.
-   */
-  get child(): Panel {
-    return this._child;
-  }
-
-  private _child: Panel;
-}
-
-
-/**
  * A message class for 'move' messages.
  */
 export

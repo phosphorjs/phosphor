@@ -13,6 +13,8 @@ import IList = collections.IList;
 import List = collections.List;
 import ReadOnlyList = collections.ReadOnlyList;
 
+import ChildMessage = core.ChildMessage;
+import CoreObject = core.CoreObject;
 import IDisposable = core.IDisposable;
 import IMessage = core.IMessage;
 import IMessageHandler = core.IMessageHandler;
@@ -47,16 +49,12 @@ var HIDDEN_CLASS = 'p-mod-hidden';
  * be used to host any other leaf DOM content.
  */
 export
-class Panel implements IMessageHandler, IDisposable {
-  /**
-   * A signal emitted when the panel is disposed.
-   */
-  disposed = new Signal<Panel, void>();
-
+class Panel extends CoreObject {
   /**
    * Construct a new panel.
    */
   constructor() {
+    super();
     this._node = this.createNode();
     this._node.classList.add(PANEL_CLASS);
   }
@@ -65,36 +63,15 @@ class Panel implements IMessageHandler, IDisposable {
    * Dispose of the panel and its descendants.
    */
   dispose(): void {
-    clearMessageData(this);
-    this.setFlag(PanelFlag.IsDisposed);
-    this.disposed.emit(this, void 0);
-    this.disposed.disconnect();
-
-    var parent = this._parent;
-    if (parent) {
-      this._parent = null;
-      parent._children.remove(this);
-      sendMessage(parent, new ChildMessage('child-removed', this));
-    } else if (this.isAttached) {
+    if (!this.parent && this.isAttached) {
       this.detach();
     }
-
-    var layout = this._layout;
-    if (layout) {
+    if (this._layout) {
+      this._layout.dispose();
       this._layout = null;
-      layout.dispose();
     }
-
-    var children = this._children;
-    for (var i = 0, n = children.size; i < n; ++i) {
-      var child = children.get(i);
-      children.set(i, null);
-      child._parent = null;
-      child.dispose();
-    }
-    children.clear();
-
     this._node = null;
+    super.dispose();
   }
 
   /**
@@ -400,39 +377,13 @@ class Panel implements IMessageHandler, IDisposable {
   }
 
   /**
-   * Get the parent panel of the panel.
+   * Get parent panel of the panel.
+   *
+   * Returns null the parent is not a panel.
    */
-  get parent(): Panel {
-    return this._parent;
-  }
-
-  /**
-   * Set the parent panel of the panel.
-   */
-  set parent(parent: Panel) {
-    parent = parent || null;
-    var old = this._parent;
-    if (old === parent) {
-      return;
-    }
-    if (old) {
-      this._parent = null;
-      old._children.remove(this);
-      sendMessage(old, new ChildMessage('child-removed', this));
-    }
-    if (parent) {
-      this._parent = parent;
-      parent._children.add(this);
-      sendMessage(parent, new ChildMessage('child-added', this));
-    }
-    sendMessage(this, new Message('parent-changed'));
-  }
-
-  /**
-   * Get a read only list of the child panels.
-   */
-  get children(): IList<Panel> {
-    return new ReadOnlyList(this._children);
+  get parentPanel(): Panel {
+    var parent = this.parent;
+    return parent && parent instanceof Panel ? parent : null;
   }
 
   /**
@@ -505,7 +456,7 @@ class Panel implements IMessageHandler, IDisposable {
     if (!this.isHidden) {
       return;
     }
-    var parent = this._parent;
+    var parent = this.parentPanel;
     if (this.isAttached && (!parent || parent.isVisible)) {
       sendMessage(this, new Message('before-show'));
       this._node.classList.remove(HIDDEN_CLASS);
@@ -530,7 +481,7 @@ class Panel implements IMessageHandler, IDisposable {
     if (this.isHidden) {
       return;
     }
-    var parent = this._parent;
+    var parent = this.parentPanel;
     if (this.isAttached && (!parent || parent.isVisible)) {
       sendMessage(this, new Message('before-hide'));
       this._node.classList.add(HIDDEN_CLASS);
@@ -567,7 +518,7 @@ class Panel implements IMessageHandler, IDisposable {
    * Only a root panel can be attached to a host node.
    */
   attach(host: HTMLElement): void {
-    if (this._parent) {
+    if (this.parent) {
       throw new Error('can only attach a root panel to the DOM');
     }
     sendMessage(this, new Message('before-attach'));
@@ -581,7 +532,7 @@ class Panel implements IMessageHandler, IDisposable {
    * Only a root panel can be detached from its host node.
    */
   detach(): void {
-    if (this._parent) {
+    if (this.parent) {
       throw new Error('can only detach a root panel from the DOM');
     }
     var node = this._node;
@@ -603,7 +554,7 @@ class Panel implements IMessageHandler, IDisposable {
    * will prevent a read from the DOM and avoid a potential reflow.
    */
   fit(width?: number, height?: number, box?: IBoxData): void {
-    if (this._parent) {
+    if (this.parent) {
       throw new Error('can only fit a root panel');
     }
     var host = <HTMLElement>this._node.parentNode;
@@ -675,7 +626,7 @@ class Panel implements IMessageHandler, IDisposable {
    * panel is made visible.
    */
   updateGeometry(force = false): void {
-    var parent = this._parent;
+    var parent = this.parentPanel;
     if (!parent || (this.isHidden && !force)) {
       return;
     }
@@ -832,65 +783,58 @@ class Panel implements IMessageHandler, IDisposable {
    * Process a message dispatched to the handler.
    */
   processMessage(msg: IMessage): void {
+    super.processMessage(msg);
     switch (msg.type) {
-      case 'move':
-        this.onMove(<MoveMessage>msg);
-        break;
-      case 'resize':
-        this.onResize(<ResizeMessage>msg);
-        break;
-      case 'child-added':
-        this.onChildAdded(<ChildMessage>msg);
-        break;
-      case 'child-removed':
-        this.onChildRemoved(<ChildMessage>msg);
-        break;
-      case 'before-show':
-        this.onBeforeShow(msg);
-        sendNonHidden(this._children, msg);
-        break;
-      case 'after-show':
-        this.setFlag(PanelFlag.IsVisible);
-        this.onAfterShow(msg);
-        sendNonHidden(this._children, msg);
-        break;
-      case 'before-hide':
-        this.onBeforeHide(msg);
-        sendNonHidden(this._children, msg);
-        break;
-      case 'after-hide':
-        this.clearFlag(PanelFlag.IsVisible);
-        this.onAfterHide(msg);
-        sendNonHidden(this._children, msg);
-        break;
-      case 'before-attach':
-        this._boxData = null;
-        this.onBeforeAttach(msg);
-        sendAll(this._children, msg);
-        break;
-      case 'after-attach':
-        var parent = this._parent
-        var visible = !this.isHidden && (!parent || parent.isVisible);
-        if (visible) this.setFlag(PanelFlag.IsVisible);
-        this.setFlag(PanelFlag.IsAttached);
-        this.onAfterAttach(msg);
-        sendAll(this._children, msg);
-        break;
-      case 'before-detach':
-        this.onBeforeDetach(msg);
-        sendAll(this._children, msg);
-        break;
-      case 'after-detach':
-        this.clearFlag(PanelFlag.IsVisible);
-        this.clearFlag(PanelFlag.IsAttached);
-        this.onAfterDetach(msg);
-        sendAll(this._children, msg);
-        break;
-      case 'close':
-        this.onClose(msg);
-        break;
-      default:
-        break;
+    case 'move':
+      this.onMove(<MoveMessage>msg);
+      break;
+    case 'resize':
+      this.onResize(<ResizeMessage>msg);
+      break;
+    case 'before-show':
+      this.onBeforeShow(msg);
+      sendNonHidden(this.children, msg);
+      break;
+    case 'after-show':
+      this.setFlag(PanelFlag.IsVisible);
+      this.onAfterShow(msg);
+      sendNonHidden(this.children, msg);
+      break;
+    case 'before-hide':
+      this.onBeforeHide(msg);
+      sendNonHidden(this.children, msg);
+      break;
+    case 'after-hide':
+      this.clearFlag(PanelFlag.IsVisible);
+      this.onAfterHide(msg);
+      sendNonHidden(this.children, msg);
+      break;
+    case 'before-attach':
+      this._boxData = null;
+      this.onBeforeAttach(msg);
+      sendAll(this.children, msg);
+      break;
+    case 'after-attach':
+      var parent = this.parentPanel;
+      var visible = !this.isHidden && (!parent || parent.isVisible);
+      if (visible) this.setFlag(PanelFlag.IsVisible);
+      this.setFlag(PanelFlag.IsAttached);
+      this.onAfterAttach(msg);
+      sendAll(this.children, msg);
+      break;
+    case 'before-detach':
+      this.onBeforeDetach(msg);
+      sendAll(this.children, msg);
+      break;
+    case 'after-detach':
+      this.clearFlag(PanelFlag.IsVisible);
+      this.clearFlag(PanelFlag.IsAttached);
+      this.onAfterDetach(msg);
+      sendAll(this.children, msg);
+      break;
+    case 'close':
+      this.onClose(msg);
+      break;
     }
   }
 
@@ -922,12 +866,14 @@ class Panel implements IMessageHandler, IDisposable {
    */
   protected onChildAdded(msg: ChildMessage): void {
     var child = msg.child;
-    if (this.isAttached) {
-      sendMessage(child, new Message('before-attach'));
-      this._node.appendChild(child._node);
-      sendMessage(child, new Message('after-attach'));
-    } else {
-      this._node.appendChild(child._node);
+    if (child instanceof Panel) {
+      if (this.isAttached) {
+        sendMessage(child, new Message('before-attach'));
+        this._node.appendChild(child._node);
+        sendMessage(child, new Message('after-attach'));
+      } else {
+        this._node.appendChild(child._node);
+      }
     }
   }
 
@@ -938,12 +884,14 @@ class Panel implements IMessageHandler, IDisposable {
    */
   protected onChildRemoved(msg: ChildMessage): void {
     var child = msg.child;
-    if (this.isAttached) {
-      sendMessage(child, new Message('before-detach'));
-      this._node.removeChild(child._node);
-      sendMessage(child, new Message('after-detach'));
-    } else {
-      this._node.removeChild(child._node);
+    if (child instanceof Panel) {
+      if (this.isAttached) {
+        sendMessage(child, new Message('before-detach'));
+        this._node.removeChild(child._node);
+        sendMessage(child, new Message('after-detach'));
+      } else {
+        this._node.removeChild(child._node);
+      }
     }
   }
 
@@ -1028,9 +976,7 @@ class Panel implements IMessageHandler, IDisposable {
 
   private _flags = 0;
   private _node: HTMLElement;
-  private _parent: Panel = null;
   private _layout: Layout = null;
-  private _children = new List<Panel>();
   private _x = 0;
   private _y = 0;
   private _width = 0;
@@ -1055,7 +1001,7 @@ var defaultPolicy = (SizePolicy.Preferred << 16) | SizePolicy.Preferred;
 /**
  * Send a message to all panels in a list.
  */
-function sendAll(list: IList<Panel>, msg: IMessage): void {
+function sendAll(list: IList<CoreObject>, msg: IMessage): void {
   for (var i = 0; i < list.size; ++i) {
     sendMessage(list.get(i), msg);
   }
@@ -1065,11 +1011,11 @@ function sendAll(list: IList<Panel>, msg: IMessage): void {
 /**
  * Send a message to all non-hidden panels in a list.
  */
-function sendNonHidden(list: IList<Panel>, msg: IMessage): void {
+function sendNonHidden(list: IList<CoreObject>, msg: IMessage): void {
   for (var i = 0; i < list.size; ++i) {
-    var panel = list.get(i);
-    if (!panel.isHidden) {
-      sendMessage(panel, msg);
+    var obj = list.get(i);
+    if (obj instanceof Panel && !obj.isHidden) {
+      sendMessage(obj, msg);
     }
   }
 }

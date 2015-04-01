@@ -7,6 +7,7 @@
 |----------------------------------------------------------------------------*/
 module phosphor.panels {
 
+import ChildMessage = core.ChildMessage;
 import IDisposable = core.IDisposable;
 import IMessage = core.IMessage;
 import IMessageHandler = core.IMessageHandler;
@@ -189,7 +190,8 @@ class Layout implements IMessageFilter, IDisposable {
         }
         break;
       case 'child-removed':
-        this.remove((<ChildMessage>msg).child);
+        var child = (<ChildMessage>msg).child;
+        if (child instanceof Panel) this.remove(child);
         break;
       case 'before-attach':
         this.invalidate();
