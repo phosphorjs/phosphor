@@ -13,9 +13,9 @@ module phosphor.panels {
 export
 interface ILayoutItem {
   /**
-   * Test whether the item manages a panel.
+   * Test whether the item manages a widget.
    */
-  isPanel: boolean;
+  isWidget: boolean;
 
   /**
    * Test whether the item manages empty space.
@@ -28,9 +28,9 @@ interface ILayoutItem {
   isHidden: boolean;
 
   /**
-   * The panel the item manages, if any.
+   * The widget the item manages, if any.
    */
-  panel: Panel;
+  widget: Widget;
 
   /**
    * Test whether the item should be expanded horizontally.
@@ -64,11 +64,6 @@ interface ILayoutItem {
   invalidate(): void;
 
   /**
-   * Compute the preferred size of the item.
-   */
-  sizeHint(): Size;
-
-  /**
    * Compute the minimum allowed size of the item.
    */
   minSize(): Size;
@@ -79,9 +74,9 @@ interface ILayoutItem {
   maxSize(): Size;
 
   /**
-   * Set the geometry of the item using the given values.
+   * Set the geometry rect of the item using the given values.
    */
-  setGeometry(x: number, y: number, width: number, height: number): void;
+  setRect(x: number, y: number, width: number, height: number): void;
 }
 
 } // module phosphor.panels

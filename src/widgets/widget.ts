@@ -222,55 +222,6 @@ class Widget implements IMessageHandler, IDisposable {
   }
 
   /**
-   * Get the horizontal stretch factor for the widget.
-   */
-  get horizontalStretch(): number {
-    return this._stretch >> 16;
-  }
-
-  /**
-   * Set the horizontal stretch factor for the widget.
-   *
-   * This is equivalent to `setStretch(stretch, this.verticalStretch)`.
-   */
-  set horizontalStretch(stretch: number) {
-    this.setStretch(stretch, this.verticalStretch);
-  }
-
-  /**
-   * Get the vertical stretch factor for the widget.
-   */
-  get verticalStretch(): number {
-    return this._stretch & 0xFFFF;
-  }
-
-  /**
-   * Set the vertical stretch factor for the widget.
-   *
-   * This is equivalent to `setStretch(this.horizontalStretch, stretch)`.
-   */
-  set verticalStretch(stretch: number) {
-    this.setStretch(this.horizontalStretch, stretch);
-  }
-
-  /**
-   * Get the alignment flags for the widget.
-   */
-  get alignment(): Alignment {
-    return this._alignment;
-  }
-
-  /**
-   * Set the alignment flags for the widget.
-   */
-  set alignment(alignment: Alignment) {
-    if (alignment !== this._alignment) {
-      this._alignment = alignment;
-      this.updateGeometry();
-    }
-  }
-
-  /**
    * Test whether the widget's node is attached to the DOM.
    */
   get isAttached(): boolean {
@@ -709,19 +660,6 @@ class Widget implements IMessageHandler, IDisposable {
   }
 
   /**
-   * Set the stretch factors for the panel.
-   */
-  setStretch(horizontal: number, vertical: number): void {
-    horizontal = Math.max(0, Math.min(horizontal | 0, 0x7FFF));
-    vertical = Math.max(0, Math.min(vertical | 0, 0x7FFF));
-    var stretch = (horizontal << 16) | vertical;
-    if (stretch !== this._stretch) {
-      this._stretch = stretch;
-      this.updateGeometry();
-    }
-  }
-
-  /**
    * Process a message sent to the widget.
    *
    * This implements the IMessageHandler interface.
@@ -934,10 +872,9 @@ class Widget implements IMessageHandler, IDisposable {
   private _y = 0;
   private _width = 0;
   private _height = 0;
-  private _stretch = 0;
   private _boxData: IBoxData = null;
-  private _alignment: Alignment = 0;
 }
+
 
 /**
  * A message class for child messages.

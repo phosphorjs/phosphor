@@ -7,7 +7,6 @@
 |----------------------------------------------------------------------------*/
 module phosphor.panels {
 
-import ChildMessage = core.ChildMessage;
 import IDisposable = core.IDisposable;
 import IMessage = core.IMessage;
 import IMessageHandler = core.IMessageHandler;
@@ -19,7 +18,7 @@ import postMessage = core.postMessage;
 /**
  * The base class of phosphor layouts.
  *
- * The Layout class does not define an interface for adding panels to
+ * The Layout class does not define an interface for adding widgets to
  * the layout. A subclass should define that API in a manner suitable
  * for its intended use.
  */
@@ -38,31 +37,31 @@ class Layout implements IMessageFilter, IDisposable {
   }
 
   /**
-   * Get the parent panel of the layout.
+   * Get the parent widget of the layout.
    */
-  get parent(): Panel {
+  get parent(): Widget {
     return this._parent;
   }
 
   /**
-   * Set the parent panel of the layout.
+   * Set the parent widget of the layout.
    *
-   * The parent panel can only be set once, and is done automatically
-   * when the layout is installed on a panel. This should not be set
+   * The parent widget can only be set once, and is done automatically
+   * when the layout is installed on a widget. This should not be set
    * directly by user code.
    */
-  set parent(parent: Panel) {
+  set parent(parent: Widget) {
     if (!parent) {
-      throw new Error('cannot set parent panel to null');
+      throw new Error('cannot set parent widget to null');
     }
     if (parent === this._parent) {
       return;
     }
     if (this._parent) {
-      throw new Error('layout already installed on a panel');
+      throw new Error('layout already installed on a widget');
     }
     this._parent = parent;
-    this.reparentChildPanels();
+    this.reparentChildWidgets();
     this.invalidate();
   }
 
@@ -94,15 +93,6 @@ class Layout implements IMessageFilter, IDisposable {
   }
 
   /**
-   * Compute the preferred size of the layout.
-   *
-   * This must be implemented by a subclass.
-   */
-  sizeHint(): Size {
-    throw new Error('not implemented');
-  }
-
-  /**
    * Compute the minimum required size for the layout.
    *
    * This must be implemented by a subclass.
@@ -121,24 +111,24 @@ class Layout implements IMessageFilter, IDisposable {
   }
 
   /**
-   * Get the panel at the given index.
+   * Get the widget at the given index.
    *
-   * Returns `undefined` if there is no panel at the given index.
+   * Returns `undefined` if there is no widget at the given index.
    */
-  panelAt(index: number): Panel {
+  widgetAt(index: number): Widget {
     var item = this.itemAt(index);
-    return (item && item.panel) || void 0;
+    return (item && item.widget) || void 0;
   }
 
   /**
-   * Get the index of the given panel or layout item.
+   * Get the index of the given widget or layout item.
    *
-   * Returns -1 if the panel or item does not exist in the layout.
+   * Returns -1 if the widget or item does not exist in the layout.
    */
-  indexOf(value: Panel | ILayoutItem): number {
+  indexOf(value: Widget | ILayoutItem): number {
     for (var i = 0, n = this.count; i < n; ++i) {
       var item = this.itemAt(i);
-      if (item === value || item.panel === value) {
+      if (item === value || item.widget === value) {
         return i;
       }
     }
@@ -146,9 +136,9 @@ class Layout implements IMessageFilter, IDisposable {
   }
 
   /**
-   * Remove the given panel or layout item from the layout.
+   * Remove the given widget or layout item from the layout.
    */
-  remove(value: Panel | ILayoutItem): void {
+  remove(value: Widget | ILayoutItem): void {
     var i = this.indexOf(value);
     if (i !== -1) this.takeAt(i);
   }
@@ -171,72 +161,79 @@ class Layout implements IMessageFilter, IDisposable {
    */
   filterMessage(handler: IMessageHandler, msg: IMessage): boolean {
     if (handler === this._parent) {
-      this.processPanelMessage(msg);
+      this.processParentMessage(msg);
     }
     return false;
   }
 
   /**
-   * Process a message dispatched to the parent panel.
+   * Process a message dispatched to the parent widget.
    *
    * Subclasses may reimplement this method as needed.
    */
-  protected processPanelMessage(msg: IMessage): void {
+  protected processParentMessage(msg: IMessage): void {
     switch (msg.type) {
-      case 'resize':
-      case 'layout-request':
-        if (this._parent.isVisible) {
-          this.layout();
-        }
-        break;
-      case 'child-removed':
-        var child = (<ChildMessage>msg).child;
-        if (child instanceof Panel) this.remove(child);
-        break;
-      case 'before-attach':
-        this.invalidate();
-        break;
-      default:
-        break;
+    case 'resize':
+    case 'layout-request':
+      var parent = this._parent;
+      if (parent.isVisible) {
+        var box = parent.boxData();
+        var x = box.paddingLeft;
+        var y = box.paddingTop;
+        var w = parent.width - box.horizontalSum;
+        var h = parent.height - box.verticalSum;
+        this.layout(x, y, w, h);
+      }
+      break;
+    case 'child-removed':
+      this.remove((<ChildMessage>msg).child);
+      break;
+    case 'before-attach':
+      this.invalidate();
+      break;
     }
   }
 
   /**
-   * Ensure a child panel is parented to the layout parent.
+   * Ensure a child widget is parented to the layout's parent.
    *
-   * This should be called by a subclass when adding a panel.
+   * This should be called by a subclass when adding a widget.
    */
-  protected ensureParent(panel: Panel): void {
+  protected ensureParent(widget: Widget): void {
     var parent = this._parent;
-    if (parent) panel.parent = parent;
+    if (parent) widget.parent = parent;
   }
 
   /**
-   * Reparent the child panels to the current layout parent.
+   * Reparent the child widgets to the layout's parent.
    *
    * This is typically called automatically at the proper times.
    */
-  protected reparentChildPanels(): void {
-    var parent = this.parent;
+  protected reparentChildWidgets(): void {
+    var parent = this._parent;
     if (!parent) {
       return;
     }
     for (var i = 0, n = this.count; i < n; ++i) {
-      var panel = this.itemAt(i).panel;
-      if (panel) panel.parent = parent;
+      var widget = this.itemAt(i).widget;
+      if (widget) widget.parent = parent;
     }
   }
 
   /**
    * A method invoked on parent 'resize' and 'layout-request' messages.
    *
-   * Subclasses should reimplement this method to update the layout.
+   * The arguments are the content boundaries for the layout and take
+   * into account the padding and border values of the parent widget.
    *
-   * The default implementation is a no-op.
+   * Subclasses should reimplement this method to arrange their child
+   * widgets into the specified area.
+   *
+   * The default implementation of this method is a no-op.
    */
-  protected layout(): void { }
+  protected layout(x: number, y: number, width: number, height: number): void { }
 
-  private _parent: Panel = null;
+  private _parent: Widget = null;
 }
 
 } // module phosphor.panels
