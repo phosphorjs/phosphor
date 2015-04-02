@@ -10,7 +10,6 @@ module phosphor.panels {
 import some = collections.some;
 import IIterable = collections.IIterable;
 import IIterator = collections.IIterator;
-import IList = collections.IList;
 import List = collections.List;
 
 import IDisposable = core.IDisposable;
@@ -243,9 +242,9 @@ class Widget implements IMessageHandler, IDisposable {
   }
 
   /**
-   * Test whether the panel is visible.
+   * Test whether the widget is visible.
    *
-   * A panel is visible under the following conditions:
+   * A widget is visible under the following conditions:
    *   - it is attached to the DOM
    *   - it is not explicitly hidden
    *   - it has no explicitly hidden ancestors
@@ -621,41 +620,37 @@ class Widget implements IMessageHandler, IDisposable {
    * a move or resize of the node, appropriate messages are sent.
    */
   setRect(x: number, y: number, width: number, height: number): void {
-    var moved = false;
-    var resized = false;
-    var oldX = this._x;
-    var oldY = this._y;
-    var oldW = this._width;
-    var oldH = this._height;
+    var isMove = false;
+    var isResize = false;
     var box = this.boxData();
     var style = this._node.style;
     var w = Math.max(box.minWidth, Math.min(width, box.maxWidth));
     var h = Math.max(box.minHeight, Math.min(height, box.maxHeight));
-    if (oldX !== x) {
+    if (this._x !== x) {
       this._x = x;
       style.left = x + 'px';
-      moved = true;
+      isMove = true;
     }
-    if (oldY !== y) {
+    if (this._y !== y) {
       this._y = y;
       style.top = y + 'px';
-      moved = true;
+      isMove = true;
     }
-    if (oldW !== w) {
+    if (this._width !== w) {
       this._width = w;
       style.width = w + 'px';
-      resized = true;
+      isResize = true;
     }
-    if (oldH !== h) {
+    if (this._height !== h) {
       this._height = h;
       style.height = h + 'px';
-      resized = true;
+      isResize = true;
     }
-    if (moved) {
-      sendMessage(this, new MoveMessage(oldX, oldY, x, y));
+    if (isMove) {
+      sendMessage(this, new Message('move'));
     }
-    if (resized) {
-      sendMessage(this, new ResizeMessage(oldW, oldH, w, h));
+    if (isResize) {
+      sendMessage(this, new Message('resize'));
     }
   }
 
@@ -669,10 +664,10 @@ class Widget implements IMessageHandler, IDisposable {
   processMessage(msg: IMessage): void {
     switch (msg.type) {
     case 'move':
-      this.onMove(<MoveMessage>msg);
+      this.onMove(msg);
       break;
     case 'resize':
-      this.onResize(<ResizeMessage>msg);
+      this.onResize(msg);
       break;
     case 'child-added':
       this.onChildAdded(<ChildMessage>msg);
@@ -798,14 +793,14 @@ class Widget implements IMessageHandler, IDisposable {
    *
    * The default implementation is a no-op.
    */
-  protected onMove(msg: MoveMessage): void { }
+  protected onMove(msg: IMessage): void { }
 
   /**
    * A method invoked when a 'resize' message is received.
    *
    * The default implementation is a no-op.
    */
-  protected onResize(msg: ResizeMessage): void { }
+  protected onResize(msg: IMessage): void { }
 
   /**
    * A method invoked when a 'before-show' message is received.
@@ -863,177 +858,23 @@ class Widget implements IMessageHandler, IDisposable {
    */
   protected onAfterDetach(msg: IMessage): void { }
 
-  private _flags = 0;
   private _node: HTMLElement;
   private _layout: Layout = null;
   private _parent: Widget = null;
   private _children = new List<Widget>();
+  private _boxData: IBoxData = null;
+  private _flags = 0;
   private _x = 0;
   private _y = 0;
   private _width = 0;
   private _height = 0;
-  private _boxData: IBoxData = null;
-}
-
-
-/**
- * A message class for child messages.
- */
-export
-class ChildMessage extends Message {
-  /**
-   * Construct a new child message.
-   */
-  constructor(type: string, child: Widget) {
-    super(type);
-    this._child = child;
-  }
-
-  /**
-   * The child widget for the message.
-   */
-  get child(): Widget {
-    return this._child;
-  }
-
-  private _child: Widget;
-}
-
-
-/**
- * A message class for 'move' messages.
- */
-export
-class MoveMessage extends Message {
-  /**
-   * Construct a new move message.
-   */
-  constructor(oldX: number, oldY: number, x: number, y: number) {
-    super('move');
-    this._oldX = oldX;
-    this._oldY = oldY;
-    this._x = x;
-    this._y = y;
-  }
-
-  /**
-   * The previous X coordinate of the widget.
-   */
-  get oldX(): number {
-    return this._oldX;
-  }
-
-  /**
-   * The previous Y coordinate of the widget.
-   */
-  get oldY(): number {
-    return this._oldY;
-  }
-
-  /**
-   * The current X coordinate of the widget.
-   */
-  get x(): number {
-    return this._x;
-  }
-
-  /**
-   * The current Y coordinate of the widget.
-   */
-  get y(): number {
-    return this._y;
-  }
-
-  /**
-   * Get the change in the X coordinate of widget.
-   */
-  get deltaX(): number {
-    return this._x - this._oldX;
-  }
-
-  /**
-   * Get the change in the Y coordinate of widget.
-   */
-  get deltaY(): number {
-    return this._y - this._oldY;
-  }
-
-  private _oldX: number;
-  private _oldY: number;
-  private _x: number;
-  private _y: number;
-}
-
-
-/**
- * A message class for 'resize' messages.
- */
-export
-class ResizeMessage extends Message {
-  /**
-   * Construct a new resize message.
-   */
-  constructor(oldWidth: number, oldHeight: number, width: number, height: number) {
-    super('resize');
-    this._oldWidth = oldWidth;
-    this._oldHeight = oldHeight;
-    this._width = width;
-    this._height = height;
-  }
-
-  /**
-   * The previous width of the widget.
-   */
-  get oldWidth(): number {
-    return this._oldWidth;
-  }
-
-  /**
-   * The previous height of the widget.
-   */
-  get oldHeight(): number {
-    return this._oldHeight;
-  }
-
-  /**
-   * The current width of the widget.
-   */
-  get width(): number {
-    return this._width;
-  }
-
-  /**
-   * The current height of the widget.
-   */
-  get height(): number {
-    return this._height;
-  }
-
-  /**
-   * Get the change in width of widget.
-   */
-  get deltaWidth(): number {
-    return this._width - this._oldWidth;
-  }
-
-  /**
-   * Get the change in height of widget.
-   */
-  get deltaHeight(): number {
-    return this._height - this._oldHeight;
-  }
-
-  private _oldWidth: number;
-  private _oldHeight: number;
-  private _width: number;
-  private _height: number;
 }
 
 
 /**
  * Send a message to all widgets in a list.
  */
-function sendAll(list: IList<Widget>, msg: IMessage): void {
+function sendAll(list: List<Widget>, msg: IMessage): void {
   for (var i = 0; i < list.size; ++i) {
     sendMessage(list.get(i), msg);
   }
@@ -1043,7 +884,7 @@ function sendAll(list: IList<Widget>, msg: IMessage): void {
 /**
  * Send a message to all non-hidden widgets in a list.
  */
-function sendNonHidden(list: IList<Widget>, msg: IMessage): void {
+function sendNonHidden(list: List<Widget>, msg: IMessage): void {
   for (var i = 0; i < list.size; ++i) {
     var widget = list.get(i);
     if (!widget.isHidden) {

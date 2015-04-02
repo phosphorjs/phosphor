@@ -69,6 +69,7 @@ var tsSources = [
   'components/component',
   'components/codemirror',
 
+  'widgets/childmessage',
   'widgets/enums',
   'widgets/geometry',
   'widgets/ilayoutitem',
