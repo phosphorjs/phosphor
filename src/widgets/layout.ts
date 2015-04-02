@@ -157,7 +157,26 @@ class Layout implements IMessageFilter, IDisposable {
   }
 
   /**
+   * Update the layout for the parent widget immediately.
+   *
+   * This is typically called automatically at the appropriate times.
+   */
+  update(): void {
+    var parent = this._parent;
+    if (parent.isVisible) {
+      var box = parent.boxData();
+      var x = box.paddingLeft;
+      var y = box.paddingTop;
+      var w = parent.width - box.horizontalSum;
+      var h = parent.height - box.verticalSum;
+      this.layout(x, y, w, h);
+    }
+  }
+
+  /**
    * Filter a message sent to a message handler.
+   *
+   * This implements the `IMessageFilter` interface.
    */
   filterMessage(handler: IMessageHandler, msg: IMessage): boolean {
     if (handler === this._parent) {
@@ -175,15 +194,7 @@ class Layout implements IMessageFilter, IDisposable {
     switch (msg.type) {
     case 'resize':
     case 'layout-request':
-      var parent = this._parent;
-      if (parent.isVisible) {
-        var box = parent.boxData();
-        var x = box.paddingLeft;
-        var y = box.paddingTop;
-        var w = parent.width - box.horizontalSum;
-        var h = parent.height - box.verticalSum;
-        this.layout(x, y, w, h);
-      }
+      this.update();
       break;
     case 'child-removed':
       this.remove((<ChildMessage>msg).child);
@@ -193,6 +204,16 @@ class Layout implements IMessageFilter, IDisposable {
       break;
     }
   }
+
+  /**
+   * A method invoked when widget layout should be updated.
+   *
+   * The arguments are the content boundaries for the layout which are
+   * already adjusted to account for the parent widget box sizing data.
+   *
+   * The default implementation of this method is a no-op.
+   */
+  protected layout(x: number, y: number, width: number, height: number): void { }
 
   /**
    * Ensure a child widget is parented to the layout's parent.
@@ -211,27 +232,13 @@ class Layout implements IMessageFilter, IDisposable {
    */
   protected reparentChildWidgets(): void {
     var parent = this._parent;
-    if (!parent) {
-      return;
-    }
-    for (var i = 0, n = this.count; i < n; ++i) {
-      var widget = this.itemAt(i).widget;
-      if (widget) widget.parent = parent;
+    if (parent) {
+      for (var i = 0, n = this.count; i < n; ++i) {
+        var widget = this.itemAt(i).widget;
+        if (widget) widget.parent = parent;
+      }
     }
   }
-
-  /**
-   * A method invoked on parent 'resize' and 'layout-request' messages.
-   *
-   * The arguments are the content boundaries for the layout and take
-   * into account the padding and border values of the parent widget.
-   *
-   * Subclasses should reimplement this method to arrange their child
-   * widgets into the specified area.
-   *
-   * The default implementation of this method is a no-op.
-   */
-  protected layout(x: number, y: number, width: number, height: number): void { }
 
   private _parent: Widget = null;
 }
