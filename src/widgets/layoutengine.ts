@@ -5,7 +5,7 @@
 |
 | The full license is in the file LICENSE, distributed with this software.
 |----------------------------------------------------------------------------*/
-module phosphor.panels {
+module phosphor.widgets {
 
 /**
  * A sizer object for the `layoutCalc` function.
@@ -17,9 +17,11 @@ module phosphor.panels {
 export
 class LayoutSizer {
   /**
-   * The preferred size of the sizer.
+   * The size basis for the sizer.
+   *
+   * The sizer will be given this initial size subject to its bounds.
    */
-  sizeHint = 0;
+  basis = 0;
 
   /**
    * The minimum size of the sizer.
@@ -143,8 +145,7 @@ function layoutCalc(sizers: LayoutSizer[], space: number): void {
     var sizer = sizers[i];
     var minSize = sizer.minSize;
     var maxSize = sizer.maxSize;
-    var sizeHint = sizer.sizeHint;
-    var size = Math.max(minSize, Math.min(sizeHint, maxSize));
+    var size = Math.max(minSize, Math.min(sizer.basis, maxSize));
     sizer.done = false;
     sizer.size = size;
     totalSize += size;
@@ -324,4 +325,4 @@ function layoutCalc(sizers: LayoutSizer[], space: number): void {
   }
 }
 
-} // module phosphor.panels
+} // module phosphor.widgets

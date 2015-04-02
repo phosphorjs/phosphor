@@ -36,6 +36,16 @@ interface ILayoutItem {
   widget: Widget;
 
   /**
+   * The size basis for the item.
+   *
+   * This is used as the initial size for the item in the direction
+   * of layout before the item is sized to account for its siblings.
+   *
+   * A basis of -1 means the basis should be chosen automatically.
+   */
+  basis: number;
+
+  /**
    * The stretch factor for the item.
    */
   stretch: number;
@@ -50,12 +60,9 @@ interface ILayoutItem {
   expansive: boolean;
 
   /**
-   * The size basis for the item.
-   *
-   * This is used as the initial size for the item in the direction
-   * of layout before the item is sized to account for its siblings.
+   * The alignment for the item within its layout cell.
    */
-  basis: number;
+  alignment: Alignment;
 
   /**
    * Invalidate the cached data for the item.

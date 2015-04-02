@@ -72,6 +72,7 @@ var tsSources = [
   'components/component',
   'components/codemirror',
 
+  'widgets/alignment',
   'widgets/childmessage',
   'widgets/widgetflag',
   //'widgets/enums',
@@ -79,7 +80,8 @@ var tsSources = [
   //'widgets/itab',
   //'widgets/itabbable',
   'widgets/layout',
-  //'widgets/layoutengine',
+  'widgets/layoutengine',
+  'widgets/widgetitem',
   'widgets/widget',
   //'widgets/elementhost',
   //'widgets/panelitem',
