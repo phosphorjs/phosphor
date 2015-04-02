@@ -5,105 +5,7 @@
 |
 | The full license is in the file LICENSE, distributed with this software.
 |----------------------------------------------------------------------------*/
-module phosphor.panels {
-
-/**
- * The position of a two dimensional object.
- */
-export
-class Point {
-  /**
-   * A static zero point.
-   */
-  static Zero = new Point(0, 0);
-
-  /**
-   * A static infinite point.
-   */
-  static Infinite = new Point(Infinity, Infinity);
-
-  /**
-   * Construct a new point.
-   */
-  constructor(x: number, y: number) {
-    this._x = x;
-    this._y = y;
-  }
-
-  /**
-   * The X coordinate of the point.
-   */
-  get x(): number {
-    return this._x;
-  }
-
-  /**
-   * The Y coordinate of the point.
-   */
-  get y(): number {
-    return this._y;
-  }
-
-  /**
-   * Test whether the point is equivalent to another.
-   */
-  equals(other: Point): boolean {
-    return this._x === other._x && this._y === other._y;
-  }
-
-  private _x: number;
-  private _y: number;
-}
-
-
-/**
- * The size of a 2-dimensional object.
- */
-export
-class Size {
-  /**
-   * A static zero size.
-   */
-  static Zero = new Size(0, 0);
-
-  /**
-   * A static infinite size.
-   */
-  static Infinite = new Size(Infinity, Infinity);
-
-  /**
-   * Construct a new size.
-   */
-  constructor(width: number, height: number) {
-    this._width = width;
-    this._height = height;
-  }
-
-  /**
-   * The width of the size.
-   */
-  get width(): number {
-    return this._width;
-  }
-
-  /**
-   * The height of the size.
-   */
-  get height(): number {
-    return this._height;
-  }
-
-  /**
-   * Test whether the size is equivalent to another.
-   */
-  equals(other: Size): boolean {
-    return this._width === other._width && this._height === other._height;
-  }
-
-  private _width: number;
-  private _height: number;
-}
-
+module phosphor.utility {
 
 /**
  * The position and size of a 2-dimensional object.
@@ -252,4 +154,4 @@ class Rect {
   private _height: number;
 }
 
-} // module phosphor.panels
+} // module phosphor.utility

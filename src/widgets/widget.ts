@@ -5,7 +5,7 @@
 |
 | The full license is in the file LICENSE, distributed with this software.
 |----------------------------------------------------------------------------*/
-module phosphor.panels {
+module phosphor.widgets {
 
 import some = collections.some;
 import IIterable = collections.IIterable;
@@ -23,8 +23,11 @@ import postMessage = core.postMessage;
 import sendMessage = core.sendMessage;
 import removeMessageFilter = core.removeMessageFilter;
 
-import IBoxData = domutil.IBoxData;
-import createBoxData = domutil.createBoxData;
+import IBoxData = utility.IBoxData;
+import Point = utility.Point;
+import Rect = utility.Rect;
+import Size = utility.Size;
+import createBoxData = utility.createBoxData;
 
 
 /**
@@ -893,4 +896,4 @@ function sendNonHidden(list: List<Widget>, msg: IMessage): void {
   }
 }
 
-} // module phosphor.panels
+} // module phosphor.widgets

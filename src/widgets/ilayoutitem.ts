@@ -5,7 +5,10 @@
 |
 | The full license is in the file LICENSE, distributed with this software.
 |----------------------------------------------------------------------------*/
-module phosphor.panels {
+module phosphor.widgets {
+
+import Size = utility.Size;
+
 
 /**
  * An object which manages an item in a layout.
@@ -33,30 +36,26 @@ interface ILayoutItem {
   widget: Widget;
 
   /**
-   * Test whether the item should be expanded horizontally.
+   * The stretch factor for the item.
+   */
+  stretch: number;
+
+  /**
+   * Test whether the item is expansive.
    *
-   * If this is true, the item will get as much space as possible
-   * in the horizontal direction up to its maximum size.
+   * If this is true, this item will get as much space as possible in
+   * the direction of layout, but only after all other sibling items
+   * with a stretch factor > 0 have been sized to their maximum.
    */
-  expandHorizontal: boolean;
+  expansive: boolean;
 
   /**
-   * Test Whether the item should be expanded vertically.
+   * The size basis for the item.
    *
-   * If this is true, the item will get as much space as possible
-   * in the vertical direction up to its maximum size.
+   * This is used as the initial size for the item in the direction
+   * of layout before the item is sized to account for its siblings.
    */
-  expandVertical: boolean;
-
-  /**
-   * The horizontal stretch factor for the item.
-   */
-  horizontalStretch: number;
-
-  /**
-   * The vertical stretch factor for the item.
-   */
-  verticalStretch: number;
+  basis: number;
 
   /**
    * Invalidate the cached data for the item.
@@ -79,4 +78,4 @@ interface ILayoutItem {
   setRect(x: number, y: number, width: number, height: number): void;
 }
 
-} // module phosphor.panels
+} // module phosphor.widgets

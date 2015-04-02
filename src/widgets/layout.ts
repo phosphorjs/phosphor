@@ -5,7 +5,7 @@
 |
 | The full license is in the file LICENSE, distributed with this software.
 |----------------------------------------------------------------------------*/
-module phosphor.panels {
+module phosphor.widgets {
 
 import IDisposable = core.IDisposable;
 import IMessage = core.IMessage;
@@ -13,6 +13,8 @@ import IMessageHandler = core.IMessageHandler;
 import IMessageFilter = core.IMessageFilter;
 import Message = core.Message;
 import postMessage = core.postMessage;
+
+import Size = utility.Size;
 
 
 /**
@@ -243,4 +245,4 @@ class Layout implements IMessageFilter, IDisposable {
   private _parent: Widget = null;
 }
 
-} // module phosphor.panels
+} // module phosphor.widgets

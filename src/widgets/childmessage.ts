@@ -5,7 +5,7 @@
 |
 | The full license is in the file LICENSE, distributed with this software.
 |----------------------------------------------------------------------------*/
-module phosphor.panels {
+module phosphor.widgets {
 
 import Message = core.Message;
 
@@ -33,4 +33,4 @@ class ChildMessage extends Message {
   private _child: Widget;
 }
 
-} // module phosphor.panels
+} // module phosphor.widgets

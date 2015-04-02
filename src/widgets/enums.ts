@@ -159,39 +159,4 @@ enum Orientation {
   Vertical,
 }
 
-
-/**
- * An enum of widget bit flags.
- *
- * Widget flags are used to control various low-level behaviors of
- * a widget. They are typically not used directly by user code.
- */
-export
-enum WidgetFlag {
-  /**
-   * The panel is attached to the DOM.
-   */
-  IsAttached = 0x1,
-
-  /**
-   * The panel is explicitly hidden.
-   */
-  IsHidden = 0x2,
-
-  /**
-   * The panel is visible.
-   */
-  IsVisible = 0x4,
-
-  /**
-   * The panel has been disposed.
-   */
-  IsDisposed = 0x8,
-
-  /**
-   * Changing the panel layout is disallowed.
-   */
-  DisallowLayoutChange = 0x10,
-}
-
 } // module phosphor.panels

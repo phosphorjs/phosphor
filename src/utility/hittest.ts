@@ -5,7 +5,7 @@
 |
 | The full license is in the file LICENSE, distributed with this software.
 |----------------------------------------------------------------------------*/
-module phosphor.domutil {
+module phosphor.utility {
 
 /**
  * Test whether a client position lies within a node.
@@ -16,4 +16,4 @@ function hitTest(node: HTMLElement, x: number, y: number): boolean {
   return x >= rect.left && x < rect.right && y >= rect.top && y < rect.bottom;
 }
 
-} // module phosphor.domutil
+} // module phosphor.utility
