@@ -62,6 +62,8 @@ class WidgetItem implements ILayoutItem {
 
   /**
    * Set the alignment for the item in its layout cell.
+   *
+   * The owner layout must be invalidated to reflect the change.
    */
   set alignment(alignment: Alignment) {
     this._alignment = alignment;
