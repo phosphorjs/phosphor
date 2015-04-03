@@ -20,8 +20,9 @@ class WidgetItem implements ILayoutItem {
   /**
    * Construct a new widget item.
    */
-  constructor(widget: Widget) {
+  constructor(widget: Widget, alignment: Alignment = 0) {
     this._widget = widget;
+    this._alignment = alignment;
   }
 
   /**
@@ -53,67 +54,59 @@ class WidgetItem implements ILayoutItem {
   }
 
   /**
-   * Get the size basis for the item.
-   */
-  get basis(): number {
-    return this._basis;
-  }
-
-  /**
-   * Set the size basis for the item.
-   */
-  set basis(basis: number) {
-    this._basis = Math.max(-1, basis | 0);
-  }
-
-  /**
-   * Get the stretch factor for the item.
-   */
-  get stretch(): number {
-    return this._stretch;
-  }
-
-  /**
-   * Set the stretch factor for the item.
-   */
-  set stretch(stretch: number) {
-    this._stretch = Math.max(0, stretch | 0);
-  }
-
-  /**
-   * Test whether the item is expansive.
-   */
-  get expansive(): boolean {
-    return this._expansive;
-  }
-
-  /**
-   * Set whether the item is expansive.
-   */
-  set expansive(expansive: boolean) {
-    this._expansive = expansive;
-  }
-
-  /**
-   * Get the alignment for the item.
+   * Get the alignment for the item in its layout cell.
    */
   get alignment(): Alignment {
     return this._alignment;
   }
 
   /**
-   * Set the alignment for the item.
+   * Set the alignment for the item in its layout cell.
    */
   set alignment(alignment: Alignment) {
     this._alignment = alignment;
   }
 
   /**
+   * Test whether the item should be expanded horizontally.
+   */
+  get expandHorizontal(): boolean {
+    if (this._alignment & Alignment.Horizontal_Mask) {
+      return false;
+    }
+    var horizontalPolicy = this._widget.horizontalSizePolicy;
+    return (horizontalPolicy & SizePolicy.ExpandFlag) !== 0;
+  }
+
+  /**
+   * Test Whether the item should be expanded vertically.
+   */
+  get expandVertical(): boolean {
+    if (this._alignment & Alignment.Vertical_Mask) {
+      return false;
+    }
+    var verticalPolicy = this._widget.verticalSizePolicy;
+    return (verticalPolicy & SizePolicy.ExpandFlag) !== 0;
+  }
+
+  /**
    * Invalidate the cached data for the item.
    */
   invalidate(): void {
+    this._origHint = null;
+    this._sizeHint = null;
     this._minSize = null;
     this._maxSize = null;
+  }
+
+  /**
+   * Compute the preferred size of the item.
+   */
+  sizeHint(): Size {
+    if (!this._sizeHint) {
+      this._updateSizes();
+    }
+    return this._sizeHint;
   }
 
   /**
@@ -137,9 +130,9 @@ class WidgetItem implements ILayoutItem {
   }
 
   /**
-   * Set the geometry rect of the item using the given values.
+   * Set the geometry of the item using the given values.
    */
-  setRect(x: number, y: number, width: number, height: number): void {
+  setGeometry(x: number, y: number, width: number, height: number): void {
     var widget = this._widget;
     if (widget.isHidden) {
       return;
@@ -148,17 +141,17 @@ class WidgetItem implements ILayoutItem {
     var h = height;
     var alignment = this._alignment;
     if (alignment & Alignment.Horizontal_Mask) {
-      var igW = panel.horizontalSizePolicy === SizePolicy.Ignored;
-      w = Math.min(w, igW ? this._origHint.width : this._sizeHint.width);
+      var ignW = widget.horizontalSizePolicy === SizePolicy.Ignored;
+      w = Math.min(w, ignW ? this._origHint.width : this._sizeHint.width);
     }
     if (alignment & Alignment.Vertical_Mask) {
-      var igH = panel.verticalSizePolicy === SizePolicy.Ignored;
-      h = Math.min(h, igH ? this._origHint.height : this._sizeHint.height);
+      var ignH = widget.verticalSizePolicy === SizePolicy.Ignored;
+      h = Math.min(h, ignH ? this._origHint.height : this._sizeHint.height);
     }
     var minSize = this._minSize;
     var maxSize = this._maxSize;
-    var w = Math.max(minSize.width, Math.min(w, maxSize.width));
-    var h = Math.max(minSize.height, Math.min(h, maxSize.height));
+    w = Math.max(minSize.width, Math.min(w, maxSize.width));
+    h = Math.max(minSize.height, Math.min(h, maxSize.height));
     if (alignment & Alignment.Right) {
       x += width - w;
     } else if (alignment & Alignment.HorizontalCenter) {
@@ -173,41 +166,91 @@ class WidgetItem implements ILayoutItem {
   }
 
   /**
-   * Update the computed sizes for the panel item.
+   * Update the computed sizes for the widget item.
    */
   private _updateSizes(): void {
     var widget = this._widget;
     if (widget.isHidden) {
+      this._origHint = Size.Zero;
+      this._sizeHint = Size.Zero;
       this._minSize = Size.Zero;
       this._maxSize = Size.Zero;
       return;
     }
-    var box = widget.boxData();
+    var box = widget.boxSizing();
+    var sizeHint = widget.sizeHint();
     var minHint = widget.minSizeHint();
     var maxHint = widget.maxSizeHint();
+    var verticalPolicy = widget.verticalSizePolicy;
+    var horizontalPolicy = widget.horizontalSizePolicy;
 
-    var minWidth = Math.max(box.minWidth, Math.min(minHint.width, box.maxWidth));
-    var minHeight = Math.max(box.minHeight, Math.min(minHint.height, box.maxHeight));
+    // computed size hint
+    var hintW = 0;
+    var hintH = 0;
+    if (horizontalPolicy !== SizePolicy.Ignored) {
+      hintW = Math.max(minHint.width, sizeHint.width);
+    }
+    if (verticalPolicy !== SizePolicy.Ignored) {
+      hintH = Math.max(minHint.height, sizeHint.height);
+    }
+    hintW = Math.max(box.minWidth, Math.min(hintW, box.maxWidth));
+    hintH = Math.max(box.minHeight, Math.min(hintH, box.maxHeight));
 
-    var maxWidth = Infinity;
-    var maxHeight = Infinity;
+    // computed min size
+    var minW = 0;
+    var minH = 0;
+    if (horizontalPolicy !== SizePolicy.Ignored) {
+      if (horizontalPolicy & SizePolicy.ShrinkFlag) {
+        minW = minHint.width;
+      } else {
+        minW = Math.max(minHint.width, sizeHint.width);
+      }
+    }
+    if (verticalPolicy !== SizePolicy.Ignored) {
+      if (verticalPolicy & SizePolicy.ShrinkFlag) {
+        minH = minHint.height;
+      } else {
+        minH = Math.max(minHint.height, sizeHint.height);
+      }
+    }
+    minW = Math.max(box.minWidth, Math.min(minW, box.maxWidth));
+    minH = Math.max(box.minHeight, Math.min(minH, box.maxHeight));
+
+    // computed max size
+    var maxW = Infinity;
+    var maxH = Infinity;
     var alignment = this._alignment;
-    if ((alignment & Alignment.Horizontal_Mask) === 0) {
-      maxWidth = Math.max(box.minWidth, Math.min(maxHint.width, box.maxWidth));
+    if (!(alignment & Alignment.Horizontal_Mask)) {
+      if (horizontalPolicy !== SizePolicy.Ignored) {
+        if (horizontalPolicy & SizePolicy.GrowFlag) {
+          maxW = Math.max(minHint.width, maxHint.width);
+        } else {
+          maxW = Math.max(minHint.width, sizeHint.width);
+        }
+      }
+      maxW = Math.max(box.minWidth, Math.min(maxW, box.maxWidth));
     }
-    if ((alignment & Alignment.Vertical_Mask) === 0) {
-      maxHeight = Math.max(box.minHeight, Math.min(maxHint.height, box.maxHeight));
+    if (!(alignment & Alignment.Vertical_Mask)) {
+      if (verticalPolicy !== SizePolicy.Ignored) {
+        if (verticalPolicy & SizePolicy.GrowFlag) {
+          maxH = Math.max(minHint.height, maxHint.height);
+        } else {
+          maxH = Math.max(minHint.height, sizeHint.height);
+        }
+      }
+      maxH = Math.max(box.minHeight, Math.min(maxH, box.maxHeight));
     }
 
-    this._minSize = new Size(minWidth, minHeight);
-    this._maxSize = new Size(maxWidth, maxHeight);
+    this._origHint = sizeHint;
+    this._sizeHint = new Size(hintW, hintH);
+    this._minSize = new Size(minW, minH);
+    this._maxSize = new Size(maxW, maxH);
   }
 
   private _widget: Widget;
-  private _basis = -1;
-  private _stretch = 0;
-  private _expansive = false;
-  private _alignment: Alignment = 0;
+  private _alignment: Alignment;
+  private _origHint: Size = null;
+  private _sizeHint: Size = null;
   private _minSize: Size = null;
   private _maxSize: Size = null;
 }
