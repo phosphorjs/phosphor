@@ -54,7 +54,7 @@ var tsSources = [
   'di/IContainer',
   'di/Container',
 
-  'utility/boxdata',
+  'utility/boxsizing',
   'utility/cursor',
   'utility/hittest',
   'utility/point',
