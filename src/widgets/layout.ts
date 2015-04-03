@@ -95,6 +95,15 @@ class Layout implements IMessageFilter, IDisposable {
   }
 
   /**
+   * Compute the size hint for the layout.
+   *
+   * This must be implemented by a subclass.
+   */
+  sizeHint(): Size {
+    throw new Error('not implemented');
+  }
+
+  /**
    * Compute the minimum required size for the layout.
    *
    * This must be implemented by a subclass.
