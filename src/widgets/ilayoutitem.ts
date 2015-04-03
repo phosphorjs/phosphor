@@ -36,38 +36,30 @@ interface ILayoutItem {
   widget: Widget;
 
   /**
-   * The size basis for the item.
+   * Test whether the item should be expanded horizontally.
    *
-   * This is used as the initial size for the item in the direction
-   * of layout before the item is sized to account for its siblings.
-   *
-   * A basis of -1 means the basis should be chosen automatically.
+   * If this is true, the item will get as much space as possible
+   * in the horizontal direction up to its maximum size.
    */
-  basis: number;
+  expandHorizontal: boolean;
 
   /**
-   * The stretch factor for the item.
-   */
-  stretch: number;
-
-  /**
-   * Test whether the item is expansive.
+   * Test Whether the item should be expanded vertically.
    *
-   * If this is true, this item will get as much space as possible in
-   * the direction of layout, but only after all other sibling items
-   * with a stretch factor > 0 have been sized to their maximum.
+   * If this is true, the item will get as much space as possible
+   * in the vertical direction up to its maximum size.
    */
-  expansive: boolean;
-
-  /**
-   * The alignment for the item within its layout cell.
-   */
-  alignment: Alignment;
+  expandVertical: boolean;
 
   /**
    * Invalidate the cached data for the item.
    */
   invalidate(): void;
+
+  /**
+   * Compute the preferred size of the item.
+   */
+  sizeHint(): Size;
 
   /**
    * Compute the minimum allowed size of the item.
@@ -80,9 +72,9 @@ interface ILayoutItem {
   maxSize(): Size;
 
   /**
-   * Set the geometry rect of the item using the given values.
+   * Set the geometry of the item using the given values.
    */
-  setRect(x: number, y: number, width: number, height: number): void;
+  setGeometry(x: number, y: number, width: number, height: number): void;
 }
 
 } // module phosphor.widgets
