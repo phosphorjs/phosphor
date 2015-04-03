@@ -175,7 +175,7 @@ class Layout implements IMessageFilter, IDisposable {
   update(): void {
     var parent = this._parent;
     if (parent.isVisible) {
-      var box = parent.boxData();
+      var box = parent.boxSizing();
       var x = box.paddingLeft;
       var y = box.paddingTop;
       var w = parent.width - box.horizontalSum;
