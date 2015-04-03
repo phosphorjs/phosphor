@@ -8,33 +8,6 @@
 module phosphor.panels {
 
 /**
- * An enum of direction values.
- */
-export
-enum Direction {
-  /**
-   * Left to right direction.
-   */
-  LeftToRight,
-
-  /**
-   * Right to left direction.
-   */
-  RightToLeft,
-
-  /**
-   * Top to bottom direction.
-   */
-  TopToBottom,
-
-  /**
-   * Bottom to top direction.
-   */
-  BottomToTop,
-}
-
-
-/**
  * The available docking modes for a dock area.
  */
 export
