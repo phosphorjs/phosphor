@@ -8,29 +8,19 @@
 module phosphor.widgets {
 
 /**
- * An enum of layout directions.
+ * An enum of layout orientations.
  */
 export
-enum Direction {
+enum Orientation {
   /**
-   * Left to right direction.
+   * Horizontal orientation.
    */
-  LeftToRight,
+  Horizontal,
 
   /**
-   * Right to left direction.
+   * Vertical orientation.
    */
-  RightToLeft,
-
-  /**
-   * Top to bottom direction.
-   */
-  TopToBottom,
-
-  /**
-   * Bottom to top direction.
-   */
-  BottomToTop,
+  Vertical,
 }
 
 } // module phosphor.widgets
