@@ -20,14 +20,12 @@ import Signal = core.Signal;
 import clearMessageData = core.clearMessageData;
 import installMessageFilter = core.installMessageFilter;
 import postMessage = core.postMessage;
-import sendMessage = core.sendMessage;
 import removeMessageFilter = core.removeMessageFilter;
+import sendMessage = core.sendMessage;
 
-import IBoxData = utility.IBoxData;
-import Point = utility.Point;
-import Rect = utility.Rect;
+import IBoxSizing = utility.IBoxSizing;
 import Size = utility.Size;
-import createBoxData = utility.createBoxData;
+import createBoxSizing = utility.createBoxSizing;
 
 
 /**
@@ -77,6 +75,12 @@ class Widget implements IMessageHandler, IDisposable {
     this.disposed.emit(this, void 0);
     this.disposed.disconnect();
 
+    var layout = this._layout;
+    if (layout) {
+      this._layout = null;
+      layout.dispose();
+    }
+
     var parent = this._parent;
     if (parent) {
       this._parent = null;
@@ -86,14 +90,8 @@ class Widget implements IMessageHandler, IDisposable {
       this.detach();
     }
 
-    var layout = this._layout;
-    if (layout) {
-      this._layout = null;
-      layout.dispose();
-    }
-
     var children = this._children;
-    for (var i = 0, n = children.size; i < n; ++i) {
+    for (var i = 0; i < children.size; ++i) {
       var child = children.get(i);
       children.set(i, null);
       child._parent = null;
@@ -112,115 +110,99 @@ class Widget implements IMessageHandler, IDisposable {
   }
 
   /**
-   * Get the X position of the widget.
+   * Get the X position set for the widget.
    */
   get x(): number {
     return this._x;
   }
 
   /**
-   * Set the X position of the widget.
+   * Set the X position for the widget.
    *
-   * This is equivalent to `setPos(x, this.y)`.
+   * This is equivalent to `move(x, this.y)`.
    */
   set x(x: number) {
-    this.setPos(x, this._y);
+    this.move(x, this._y);
   }
 
   /**
-   * Get the Y position of the widget.
+   * Get the Y position set for the widget.
    */
   get y(): number {
     return this._y;
   }
 
   /**
-   * Set the Y position of the widget.
+   * Set the Y position for the widget.
    *
-   * This is equivalent to `setPos(this.x, y)`.
+   * This is equivalent to `move(this.x, y)`.
    */
   set y(y: number) {
-    this.setPos(this._x, y);
+    this.move(this._x, y);
   }
 
   /**
-   * Get the width of the widget.
+   * Get the width set for the widget.
    */
   get width(): number {
     return this._width;
   }
 
   /**
-   * Set the width of the widget.
+   * Set the width for the widget.
    *
-   * This is equivalent to `setSize(width, this.height)`.
+   * This is equivalent to `resize(width, this.height)`.
    */
   set width(width: number) {
-    this.setSize(width, this._height);
+    this.resize(width, this._height);
   }
 
   /**
-   * Get the height of the widget.
+   * Get the height set for the widget.
    */
   get height(): number {
     return this._height;
   }
 
   /**
-   * Set the height of the widget.
+   * Set the height for the widget.
    *
-   * This is equivalent to `setSize(this.width, height)`.
+   * This is equivalent to `resize(this.width, height)`.
    */
   set height(height: number) {
-    this.setSize(this._width, height);
+    this.resize(this._width, height);
   }
 
   /**
-   * Get the position of the widget.
+   * Get the horizontal size policy for the widget.
    */
-  get pos(): Point {
-    return new Point(this._x, this._y);
+  get horizontalSizePolicy(): SizePolicy {
+    return this._sizePolicy >> 16;
   }
 
   /**
-   * Set the position of the widget.
+   * Set the horizontal size policy for the widget.
    *
-   * This is equivalent to `setPos(pos.x, pos.y)`.
+   * This is equivalent to `setSizePolicy(policy, this.verticalSizePolicy)`.
    */
-  set pos(pos: Point) {
-    this.setPos(pos.x, pos.y);
+  set horizontalSizePolicy(policy: SizePolicy) {
+    this.setSizePolicy(policy, this.verticalSizePolicy);
   }
 
   /**
-   * Get the size of the widget.
+   * Get the vertical size policy for the widget.
    */
-  get size(): Size {
-    return new Size(this._width, this._height);
+  get verticalSizePolicy(): SizePolicy {
+    return this._sizePolicy & 0xFFFF;
   }
 
   /**
-   * Set the size of the widget.
+   * Set the vertical size policy for the widget.
    *
-   * This is equivalent to `setSize(size.width, size.height)`.
+   * This is equivalent to `setSizePolicy(this.horizontalPolicy, policy)`.
    */
-  set size(size: Size) {
-    this.setSize(size.width, size.height);
-  }
-
-  /**
-   * Get the geometry rect of the widget.
-   */
-  get rect(): Rect {
-    return new Rect(this._x, this._y, this._width, this._height);
-  }
-
-  /**
-   * Set the geometry rect of the widget.
-   *
-   * This is equivalent to `setRect(r.x, r.y, r.width, r.height)`.
-   */
-  set rect(rect: Rect) {
-    this.setRect(rect.x, rect.y, rect.width, rect.height);
+  set verticalSizePolicy(policy: SizePolicy) {
+    this.setSizePolicy(this.horizontalSizePolicy, policy);
   }
 
   /**
@@ -257,44 +239,9 @@ class Widget implements IMessageHandler, IDisposable {
   }
 
   /**
-   * Get the parent of the widget.
-   *
-   * This is null if the widget has no parent.
-   */
-  get parent(): Widget {
-    return this._parent;
-  }
-
-  /**
-   * Set the parent of the widget.
-   *
-   * Setting the parent to null will detach the widget from the DOM and
-   * remove the widget from the hierarchy and any layout manager which
-   * is attached to its parent.
-   */
-  set parent(parent: Widget) {
-    parent = parent || null;
-    var oldParent = this._parent;
-    if (oldParent === parent) {
-      return;
-    }
-    if (oldParent) {
-      this._parent = null;
-      oldParent._children.remove(this);
-      sendMessage(oldParent, new ChildMessage('child-removed', this));
-    }
-    if (parent) {
-      this._parent = parent;
-      parent._children.add(this);
-      sendMessage(parent, new ChildMessage('child-added', this));
-    }
-    sendMessage(this, new Message('parent-changed'));
-  }
-
-  /**
    * Get the layout manager attached to the widget.
    *
-   * This is null if the widget has no layout manager.
+   * Returns null if the widget has no layout manager.
    */
   get layout(): Layout {
     return this._layout;
@@ -303,9 +250,11 @@ class Widget implements IMessageHandler, IDisposable {
   /**
    * Set the layout manager for the widget.
    *
-   * The given layout must be null or a new layout which has not been
-   * assigned to any other widget or an exception will be thrown. The
-   * existing layout will be disposed and cannot be reused.
+   * A layout is single-use only. The current layout can be set to null
+   * or to a new layout instance, but not to a layout which is already
+   * installed on another widget.
+   *
+   * The current layout will be disposed and cannot be reused.
    */
   set layout(layout: Layout) {
     layout = layout || null;
@@ -330,6 +279,40 @@ class Widget implements IMessageHandler, IDisposable {
       layout.parent = this;
     }
     sendMessage(this, new Message('layout-changed'));
+  }
+
+  /**
+   * Get the parent of the widget.
+   *
+   * Returns null if the widget has no parent.
+   */
+  get parent(): Widget {
+    return this._parent;
+  }
+
+  /**
+   * Set the parent of the widget.
+   *
+   * Setting the parent to null will detach the widget from the DOM
+   * and automatically remove it from the relevant layout manager.
+   */
+  set parent(parent: Widget) {
+    parent = parent || null;
+    var oldParent = this._parent;
+    if (oldParent === parent) {
+      return;
+    }
+    if (oldParent) {
+      this._parent = null;
+      oldParent._children.remove(this);
+      sendMessage(oldParent, new ChildMessage('child-removed', this));
+    }
+    if (parent) {
+      this._parent = parent;
+      parent._children.add(this);
+      sendMessage(parent, new ChildMessage('child-added', this));
+    }
+    sendMessage(this, new Message('parent-changed'));
   }
 
   /**
@@ -434,8 +417,7 @@ class Widget implements IMessageHandler, IDisposable {
   /**
    * Close the widget by sending it a 'close' message.
    *
-   * Subclasses may reimplement the `onClose` method to perform custom
-   * actions before removing the widget from the hierarchy.
+   * Subclasses should reimplement `onClose` to perform custom actions.
    */
   close(): void {
     sendMessage(this, new Message('close'));
@@ -478,14 +460,14 @@ class Widget implements IMessageHandler, IDisposable {
   }
 
   /**
-   * Resize the widget so that its fills its host node.
+   * Resize the widget so that it fills its host node.
    *
    * Only a root widget can be fit to its host.
    *
    * If the size of the host node is known, it can be provided. This
-   * will prevent a read from the DOM and avoid a potential reflow.
+   * will prevent a DOM geometry read and avoid a potential reflow.
    */
-  fit(width?: number, height?: number, box?: IBoxData): void {
+  fit(width?: number, height?: number, box?: IBoxSizing): void {
     if (this._parent) {
       throw new Error('cannot fit a non-root widget');
     }
@@ -500,13 +482,30 @@ class Widget implements IMessageHandler, IDisposable {
       height = host.offsetHeight;
     }
     if (box === void 0) {
-      box = createBoxData(host);
+      box = createBoxSizing(host);
     }
     var x = box.paddingLeft;
     var y = box.paddingTop;
     var w = width - box.horizontalSum;
     var h = height - box.verticalSum;
-    this.setRect(x, y, w, h);
+    this.setGeometry(x, y, w, h);
+  }
+
+  /**
+   * Calculate the preferred size for the widget.
+   *
+   * This is used by Phosphor's layout machinery to compute the natural
+   * space required for the widget and its children. A subclass which
+   * provides leaf content should reimplement this method.
+   *
+   * The default implementation of this method delegates to the layout
+   * manager if installed, otherwise it returns a zero size.
+   */
+  sizeHint(): Size {
+    if (this._layout) {
+      return this._layout.sizeHint();
+    }
+    return Size.Zero;
   }
 
   /**
@@ -546,26 +545,26 @@ class Widget implements IMessageHandler, IDisposable {
   }
 
   /**
-   * Get the CSS box data for the widget.
+   * Get the CSS box sizing for the widget.
    *
-   * This method computes the box data once, then caches it. The cached
-   * box data can be cleared by calling the `invalidateBoxData` method.
+   * This method computes the data once, then caches it. The cached
+   * data can be cleared by calling the `invalidateBoxSizing` method.
    */
-  boxData(): IBoxData {
-    if (!this._boxData) {
-      this._boxData = createBoxData(this._node);
+  boxSizing(): IBoxSizing {
+    if (!this._boxSizing) {
+      this._boxSizing = createBoxSizing(this._node);
     }
-    return this._boxData;
+    return this._boxSizing;
   }
 
   /**
-   * Invalidate the cached CSS box data for the widget.
+   * Invalidate the cached CSS box sizing for the widget.
    *
-   * This should be called when the node's min or max size, padding,
-   * or border changes due to user modifications to the node's CSS.
+   * User code should invoke this method when it makes a change to the
+   * node's style which changes its border, padding, or size limits.
    */
   invalidateBoxData(): void {
-    this._boxData = null;
+    this._boxSizing = null;
     if (this._layout) {
       this._layout.invalidate();
     } else {
@@ -575,10 +574,11 @@ class Widget implements IMessageHandler, IDisposable {
   }
 
   /**
-   * Notify the layout system that the widget geometry needs updating.
+   * Notify the layout system that the widget's geometry is dirty.
    *
-   * This is typically called automatically at the proper times, so
-   * user code will not normally need to interact with this method.
+   * This is typically called automatically at the proper times, but
+   * a custom leaf widget should call this method when its size hint
+   * changes so that the ancestor layout will refresh.
    *
    * If the `force` flag is false and the widget is explicitly hidden,
    * this is a no-op. The geometry will update automatically when the
@@ -598,62 +598,74 @@ class Widget implements IMessageHandler, IDisposable {
   }
 
   /**
-   * Set the position of the widget.
-   *
-   * This is equivalent to `setRect(x, y, this.width, this.height)`.
+   * Move the widget to the specified X-Y coordinate.
    */
-  setPos(x: number, y: number): void {
-    this.setRect(x, y, this._width, this._height);
+  move(x: number, y: number): void {
+    this.setGeometry(x, y, this._width, this._height);
   }
 
   /**
-   * Set the size of the widget.
-   *
-   * This is equivalent to `setRect(this.x, this.y, width, height)`.
+   * Resize the widget to the specified width and height.
    */
-  setSize(width: number, height: number): void {
-    this.setRect(this._x, this._y, width, height);
+  resize(width: number, height: number): void {
+    this.setGeometry(this._x, this._y, width, height);
   }
 
   /**
-   * Set the geometry rect of the widget.
+   * Set the position and size of the widget.
    *
-   * This clips the values to allowed size limits and updates the
-   * inline style of the widget's node. If the change results in
-   * a move or resize of the node, appropriate messages are sent.
+   * The size is clipped to the limits specified by the node's style.
+   *
+   * This method will send 'move' and 'resize' messages to the widget if
+   * the new geometry changes the position or size of the widget's node.
    */
-  setRect(x: number, y: number, width: number, height: number): void {
+  setGeometry(x: number, y: number, width: number, height: number): void {
     var isMove = false;
     var isResize = false;
-    var box = this.boxData();
+    var oldX = this._x;
+    var oldY = this._y;
+    var oldW = this._width;
+    var oldH = this._height;
+    var box = this.boxSizing();
     var style = this._node.style;
     var w = Math.max(box.minWidth, Math.min(width, box.maxWidth));
     var h = Math.max(box.minHeight, Math.min(height, box.maxHeight));
-    if (this._x !== x) {
+    if (oldX !== x) {
       this._x = x;
       style.left = x + 'px';
       isMove = true;
     }
-    if (this._y !== y) {
+    if (oldY !== y) {
       this._y = y;
       style.top = y + 'px';
       isMove = true;
     }
-    if (this._width !== w) {
+    if (oldW !== w) {
       this._width = w;
       style.width = w + 'px';
       isResize = true;
     }
-    if (this._height !== h) {
+    if (oldH !== h) {
       this._height = h;
       style.height = h + 'px';
       isResize = true;
     }
     if (isMove) {
-      sendMessage(this, new Message('move'));
+      sendMessage(this, new MoveMessage(oldX, oldY, x, y));
     }
     if (isResize) {
-      sendMessage(this, new Message('resize'));
+      sendMessage(this, new ResizeMessage(oldW, oldH, w, h));
+    }
+  }
+
+  /**
+   * Set the size policy for the widget.
+   */
+  setSizePolicy(horizontal: SizePolicy, vertical: SizePolicy): void {
+    var policy = (horizontal << 16) | vertical;
+    if (policy !== this._sizePolicy) {
+      this._sizePolicy = policy;
+      this.updateGeometry();
     }
   }
 
@@ -667,10 +679,10 @@ class Widget implements IMessageHandler, IDisposable {
   processMessage(msg: IMessage): void {
     switch (msg.type) {
     case 'move':
-      this.onMove(msg);
+      this.onMove(<MoveMessage>msg);
       break;
     case 'resize':
-      this.onResize(msg);
+      this.onResize(<ResizeMessage>msg);
       break;
     case 'child-added':
       this.onChildAdded(<ChildMessage>msg);
@@ -697,7 +709,7 @@ class Widget implements IMessageHandler, IDisposable {
       sendNonHidden(this._children, msg);
       break;
     case 'before-attach':
-      this._boxData = null;
+      this._boxSizing = null;
       this.onBeforeAttach(msg);
       sendAll(this._children, msg);
       break;
@@ -753,7 +765,7 @@ class Widget implements IMessageHandler, IDisposable {
   /**
    * A method invoked when a 'close' message is received.
    *
-   * The default implementation sets the widget parent to null.
+   * The default implementation sets the parent to null.
    */
   protected onClose(msg: IMessage): void {
     this.parent = null;
@@ -796,14 +808,14 @@ class Widget implements IMessageHandler, IDisposable {
    *
    * The default implementation is a no-op.
    */
-  protected onMove(msg: IMessage): void { }
+  protected onMove(msg: MoveMessage): void { }
 
   /**
    * A method invoked when a 'resize' message is received.
    *
    * The default implementation is a no-op.
    */
-  protected onResize(msg: IMessage): void { }
+  protected onResize(msg: ResizeMessage): void { }
 
   /**
    * A method invoked when a 'before-show' message is received.
@@ -865,13 +877,20 @@ class Widget implements IMessageHandler, IDisposable {
   private _layout: Layout = null;
   private _parent: Widget = null;
   private _children = new List<Widget>();
-  private _boxData: IBoxData = null;
-  private _flags = 0;
+  private _sizePolicy = defaultSizePolicy;
+  private _boxSizing: IBoxSizing = null;
   private _x = 0;
   private _y = 0;
   private _width = 0;
   private _height = 0;
+  private _flags = 0;
 }
+
+
+/**
+ * The default widget size policy.
+ */
+var defaultSizePolicy = (SizePolicy.Preferred << 16) | SizePolicy.Preferred;
 
 
 /**
