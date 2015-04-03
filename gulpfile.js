@@ -74,6 +74,8 @@ var tsSources = [
 
   'widgets/alignment',
   'widgets/childmessage',
+  'widgets/movemessage',
+  'widgets/resizemessage',
   'widgets/widgetflag',
   //'widgets/enums',
   'widgets/ilayoutitem',
