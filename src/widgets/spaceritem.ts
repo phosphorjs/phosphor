@@ -20,11 +20,7 @@ class SpacerItem implements ILayoutItem {
   /**
    * Construct a new spacer item.
    */
-  constructor(
-    width: number,
-    height: number,
-    hPolicy: SizePolicy,
-    vPolicy: SizePolicy) {
+  constructor(width: number, height: number, hPolicy: SizePolicy, vPolicy: SizePolicy) {
     this.setSizing(width, height, hPolicy, vPolicy);
   }
 
@@ -84,11 +80,7 @@ class SpacerItem implements ILayoutItem {
    *
    * The owner layout must be invalidated to reflect the change.
    */
-  setSizing(
-    width: number,
-    height: number,
-    hPolicy: SizePolicy,
-    vPolicy: SizePolicy): void {
+  setSizing(width: number, height: number, hPolicy: SizePolicy, vPolicy: SizePolicy): void {
     var w = Math.max(0, width);
     var h = Math.max(0, height);
     this._size = new Size(w, h);
