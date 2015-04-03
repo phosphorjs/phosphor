@@ -84,6 +84,7 @@ var tsSources = [
   //'widgets/itabbable',
   'widgets/layout',
   'widgets/layoutengine',
+  'widgets/spaceritem',
   'widgets/widgetitem',
   'widgets/widget',
   //'widgets/elementhost',

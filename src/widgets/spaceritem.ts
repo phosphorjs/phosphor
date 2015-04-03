@@ -5,12 +5,15 @@
 |
 | The full license is in the file LICENSE, distributed with this software.
 |----------------------------------------------------------------------------*/
-module phosphor.panels {
+module phosphor.widgets {
+
+import Size = utility.Size;
+
 
 /**
- * A concrete implementation of ILayoutItem which manages empty space.
+ * A layout item which manages empty space.
  *
- * User code will not typically create instances of this class directly.
+ * User code will not typically use this class directly.
  */
 export
 class SpacerItem implements ILayoutItem {
@@ -20,17 +23,15 @@ class SpacerItem implements ILayoutItem {
   constructor(
     width: number,
     height: number,
-    hStretch: number,
-    vStretch: number,
     hPolicy: SizePolicy,
     vPolicy: SizePolicy) {
-    this.setSizing(width, height, hStretch, vStretch, hPolicy, vPolicy);
+    this.setSizing(width, height, hPolicy, vPolicy);
   }
 
   /**
-   * Test whether the item manages a panel.
+   * Test whether the item manages a widget.
    */
-  get isPanel(): boolean {
+  get isWidget(): boolean {
     return false;
   }
 
@@ -49,10 +50,17 @@ class SpacerItem implements ILayoutItem {
   }
 
   /**
-   * The panel the item manages, if any.
+   * The widget the item manages, if any.
    */
-  get panel(): Panel {
+  get widget(): Widget {
     return null;
+  }
+
+  /**
+   * Get the alignment for the item in its layout cell.
+   */
+  get alignment(): Alignment {
+    return 0;
   }
 
   /**
@@ -72,20 +80,6 @@ class SpacerItem implements ILayoutItem {
   }
 
   /**
-   * The horizontal stretch factor for the item.
-   */
-  get horizontalStretch(): number {
-    return this._stretch >> 16;
-  }
-
-  /**
-   * The vertical stretch factor for the item.
-   */
-  get verticalStretch(): number {
-    return this._stretch & 0xFFFF;
-  }
-
-  /**
    * Change the sizing of the spacer item.
    *
    * The owner layout must be invalidated to reflect the change.
@@ -93,16 +87,11 @@ class SpacerItem implements ILayoutItem {
   setSizing(
     width: number,
     height: number,
-    hStretch: number,
-    vStretch: number,
     hPolicy: SizePolicy,
     vPolicy: SizePolicy): void {
     var w = Math.max(0, width);
     var h = Math.max(0, height);
-    hStretch = Math.max(0, Math.min(hStretch, 0x7FFF));
-    vStretch = Math.max(0, Math.min(vStretch, 0x7FFF));
     this._size = new Size(w, h);
-    this._stretch = (hStretch << 16) | vStretch;
     this._sizePolicy = (hPolicy << 16) | vPolicy;
   }
 
@@ -111,12 +100,9 @@ class SpacerItem implements ILayoutItem {
    */
   transpose(): void {
     var size = this._size;
-    var hStretch = this._stretch >> 16;
-    var vStretch = this._stretch & 0xFFFF;
     var hPolicy = this._sizePolicy >> 16;
     var vPolicy = this._sizePolicy & 0xFFFF;
     this._size = new Size(size.height, size.width);
-    this._stretch = (vStretch << 16) | hStretch;
     this._sizePolicy = (vPolicy << 16) | hPolicy;
   }
 
@@ -157,13 +143,12 @@ class SpacerItem implements ILayoutItem {
   }
 
   /**
-   * Set the geometry of the item.
+   * Set the geometry of the item using the given values.
    */
   setGeometry(x: number, y: number, width: number, height: number): void { }
 
   private _size: Size;
-  private _stretch: number;
   private _sizePolicy: number;
 }
 
-} // module phosphor.panels
+} // module phosphor.widgets
