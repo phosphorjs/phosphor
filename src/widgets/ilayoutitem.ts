@@ -36,6 +36,11 @@ interface ILayoutItem {
   widget: Widget;
 
   /**
+   * The alignment for the item in its layout cell.
+   */
+  alignment: Alignment;
+
+  /**
    * Test whether the item should be expanded horizontally.
    *
    * If this is true, the item will get as much space as possible
