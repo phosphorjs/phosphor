@@ -5,7 +5,7 @@
 |
 | The full license is in the file LICENSE, distributed with this software.
 |----------------------------------------------------------------------------*/
-module phosphor.panels {
+module phosphor.widgets {
 
 /**
  * The class name added to BoxPanel instances.
@@ -14,10 +14,7 @@ var BOX_PANEL_CLASS = 'p-BoxPanel';
 
 
 /**
- * A panel which arranges its children in a row or column
- *
- * This panel delegates to a permanently installed box layout and
- * can be used as a more convenient interface to a box layout.
+ * A panel which arranges its children in a row or column.
  */
 export
 class BoxPanel extends Panel {
@@ -25,89 +22,62 @@ class BoxPanel extends Panel {
    * Construct a new box panel.
    */
   constructor(direction = Direction.TopToBottom, spacing = 8) {
-    super();
-    this.node.classList.add(BOX_PANEL_CLASS);
-    this.layout = new BoxLayout(direction, spacing);
-    this.setFlag(PanelFlag.DisallowLayoutChange);
+    super(new BoxLayout(direction, spacing));
+    this.addClass(BOX_PANEL_CLASS);
   }
 
   /**
-   * Get the layout direction for the box.
+   * Get the layout direction for the panel.
    */
   get direction(): Direction {
     return (<BoxLayout>this.layout).direction;
   }
 
   /**
-   * Set the layout direction for the box.
+   * Set the layout direction for the panel.
    */
   set direction(direction: Direction) {
     (<BoxLayout>this.layout).direction = direction;
   }
 
   /**
-   * Get the inter-element fixed spacing for the box.
+   * Get the inter-element fixed spacing for the panel.
    */
   get spacing(): number {
     return (<BoxLayout>this.layout).spacing;
   }
 
   /**
-   * Set the inter-element fixed spacing for the box.
+   * Set the inter-element fixed spacing for the panel.
    */
   set spacing(spacing: number) {
     (<BoxLayout>this.layout).spacing = spacing;
   }
 
   /**
-   * Get the number of items (panels + spacers) in the box.
+   * Add a child widget to the end of the panel.
+   *
+   * If the widget already exists, it will be moved.
+   *
+   * Returns the index of the added widget.
    */
-  get count(): number {
-    return (<BoxLayout>this.layout).count;
+  addWidget(widget: Widget, stretch = 0, alignment: Alignment = 0): number {
+    return (<BoxLayout>this.layout).addWidget(widget, stretch, alignment);
   }
 
   /**
-   * Get the index of the given panel.
+   * Insert a child widget into the panel at the given index.
    *
-   * Returns -1 if the panel is not found.
+   * If the widget already exists, it will be moved.
+   *
+   * Returns the index of the added widget.
    */
-  indexOf(panel: Panel): number {
-    return (<BoxLayout>this.layout).indexOf(panel);
+  insertWidget(index: number, widget: Widget, stretch = 0, alignment: Alignment = 0): number {
+    return (<BoxLayout>this.layout).insertWidget(index, widget, stretch, alignment);
   }
 
   /**
-   * Get the panel at the given index.
-   *
-   * Returns `undefined` if there is no panel at the given index.
-   */
-  panelAt(index: number): Panel {
-    return (<BoxLayout>this.layout).panelAt(index);
-  }
-
-  /**
-   * Add a child panel to the end of the split panel.
-   *
-   * If the panel already exists, it will be moved.
-   *
-   * Returns the index of the added panel.
-   */
-  addPanel(panel: Panel): number {
-    return (<BoxLayout>this.layout).addPanel(panel);
-  }
-
-  /**
-   * Insert a child panel into the split panel at the given index.
-   *
-   * If the panel already exists, it will be moved.
-   *
-   * Returns the index of the added panel.
-   */
-  insertPanel(index: number, panel: Panel): number {
-    return (<BoxLayout>this.layout).insertPanel(index, panel);
-  }
-
-  /**
-   * Add a fixed amount of spacing to the end of the box.
+   * Add a fixed amount of spacing to the end of the panel.
    *
    * Returns the index of the added space.
    */
@@ -125,7 +95,7 @@ class BoxPanel extends Panel {
   }
 
   /**
-   * Add stretchable space to the end of the box.
+   * Add stretchable space to the end of the panel.
    *
    * Returns the index of the added space.
    */
@@ -141,6 +111,24 @@ class BoxPanel extends Panel {
   insertStretch(index: number, stretch = 0): number {
     return (<BoxLayout>this.layout).insertStretch(index, stretch);
   }
+
+  /**
+   * Get the stretch factor for the given widget or item index.
+   *
+   * Returns -1 if no suitable layout item is found.
+   */
+  stretch(which: Widget | number): number {
+    return (<BoxLayout>this.layout).stretch(which);
+  }
+
+  /**
+   * Set the stretch factor for the given widget or item index.
+   *
+   * Returns true if the stretch was updated, false otherwise.
+   */
+  setStretch(which: Widget | number, stretch: number): boolean {
+    return (<BoxLayout>this.layout).setStretch(which, stretch);
+  }
 }
 
-} // module phosphor.panels
+} // module phosphor.widgets
