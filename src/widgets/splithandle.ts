@@ -5,7 +5,7 @@
 |
 | The full license is in the file LICENSE, distributed with this software.
 |----------------------------------------------------------------------------*/
-module phosphor.panels {
+module phosphor.widgets {
 
 /**
  * The class name assigned to a split handle.
@@ -116,4 +116,4 @@ class SplitHandle {
   private _orientation: Orientation;
 }
 
-} // modulephosphor.panels
+} // module phosphor.widgets
