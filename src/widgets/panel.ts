@@ -8,6 +8,12 @@
 module phosphor.widgets {
 
 /**
+ * The class name added to Panel instances.
+ */
+var PANEL_CLASS = 'p-Panel';
+
+
+/**
  * A widget which delegates to a permanently installed layout.
  *
  * This is typically used as a base class for other panel widgets.
@@ -19,6 +25,7 @@ class Panel extends Widget {
    */
   constructor(layout: Layout) {
     super();
+    this.addClass(PANEL_CLASS);
     this.layout = layout;
     this.setFlag(WidgetFlag.DisallowLayoutChange);
   }
