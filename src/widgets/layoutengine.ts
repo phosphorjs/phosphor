@@ -17,11 +17,11 @@ module phosphor.widgets {
 export
 class LayoutSizer {
   /**
-   * The size basis for the sizer.
+   * The size hint for the sizer.
    *
    * The sizer will be given this initial size subject to its bounds.
    */
-  basis = 0;
+  sizeHint = 0;
 
   /**
    * The minimum size of the sizer.
@@ -145,7 +145,7 @@ function layoutCalc(sizers: LayoutSizer[], space: number): void {
     var sizer = sizers[i];
     var minSize = sizer.minSize;
     var maxSize = sizer.maxSize;
-    var size = Math.max(minSize, Math.min(sizer.basis, maxSize));
+    var size = Math.max(minSize, Math.min(sizer.sizeHint, maxSize));
     sizer.done = false;
     sizer.size = size;
     totalSize += size;
