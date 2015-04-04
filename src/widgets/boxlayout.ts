@@ -174,15 +174,32 @@ class BoxLayout extends Layout {
   }
 
   /**
-   * Set the stretch factor for the item at the given index.
+   * Get the stretch factor for the given widget or item index.
+   *
    */
-  setStretch(index: number, stretch: number): void {
-    stretch = Math.max(0, stretch | 0);
+  stretch(which: Widget | number): number {
+    var index = typeof which === 'number' ? which : this.indexOf(which);
     var sizer = this._sizers[index];
-    if (sizer && sizer.stretch !== stretch) {
+    return sizer ? sizer.stretch : -1;
+  }
+
+  /**
+   * Set the stretch factor for the given widget or item index.
+   *
+   * Returns true if the stretch was updated, false otherwise.
+   */
+  setStretch(which: Widget | number, stretch: number): boolean {
+    var index = typeof which === 'number' ? which : this.indexOf(which);
+    var sizer = this._sizers[index];
+    if (!sizer) {
+      return false;
+    }
+    stretch = Math.max(0, stretch | 0);
+    if (sizer.stretch !== stretch) {
       sizer.stretch = stretch;
       this.invalidate();
     }
+    return true;
   }
 
   /**
