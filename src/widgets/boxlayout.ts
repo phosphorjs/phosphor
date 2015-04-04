@@ -176,6 +176,7 @@ class BoxLayout extends Layout {
   /**
    * Get the stretch factor for the given widget or item index.
    *
+   * Returns -1 if no suitable layout item is found.
    */
   stretch(which: Widget | number): number {
     var index = typeof which === 'number' ? which : this.indexOf(which);
