@@ -21,7 +21,8 @@ script:
   - if [[ $GROUP == docs ]]; then gulp examples; gulp docs; fi
   - true
 after_success: |
-  if [[ $TRAVIS_PULL_REQUEST == false && $TRAVIS_BRANCH == 'master']]; then
+  if [[ $TRAVIS_PULL_REQUEST == false && $TRAVIS_BRANCH == 'master']]
+  then
     echo "Will build Documentation"
     gulp examples
     echo 'Phosphor examples' > index.html
