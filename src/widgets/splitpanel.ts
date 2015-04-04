@@ -87,7 +87,7 @@ class SplitPanel extends Panel {
   /**
    * Add a child widget to the end of the split panel.
    *
-   * If the widget already exists, it will be moved.
+   * If the widget already exists in the panel, it will be moved.
    *
    * Returns the index of the added widget.
    */
@@ -98,7 +98,7 @@ class SplitPanel extends Panel {
   /**
    * Insert a child widget into the split panel at the given index.
    *
-   * If the widget already exists, it will be moved.
+   * If the widget already exists in the panel, it will be moved.
    *
    * Returns the index of the added widget.
    */
