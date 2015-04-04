@@ -5,10 +5,13 @@
 |
 | The full license is in the file LICENSE, distributed with this software.
 |----------------------------------------------------------------------------*/
-module phosphor.panels {
+module phosphor.widgets {
+
+import Size = utility.Size;
+
 
 /**
- * A layout which arranges panels in a row or column.
+ * A layout which arranges widgets in a row or column.
  */
 export
 class BoxLayout extends Layout {
@@ -101,27 +104,27 @@ class BoxLayout extends Layout {
   }
 
   /**
-   * Add a panel as the last item in the layout.
+   * Add a widget as the last item in the layout.
    *
-   * If the panel already exists in the layout, it will be moved.
+   * If the widget already exists in the layout, it will be moved.
    *
-   * Returns the index of the added panel.
+   * Returns the index of the added widget.
    */
-  addPanel(panel: Panel): number {
-    return this.insertPanel(this.count, panel);
+  addWidget(widget: Widget, stretch = 0, alignment: Alignment = 0): number {
+    return this.insertWidget(this.count, widget, stretch, alignment);
   }
 
   /**
-   * Insert a panel into the layout at the given index.
+   * Insert a widget into the layout at the given index.
    *
-   * If the panel already exists in the layout, it will be moved.
+   * If the widget already exists in the layout, it will be moved.
    *
-   * Returns the index of the added panel.
+   * Returns the index of the added widget.
    */
-  insertPanel(index: number, panel: Panel): number {
-    this.remove(panel);
-    this.ensureParent(panel);
-    return this._insert(index, new PanelItem(panel));
+  insertWidget(index: number, widget: Widget, stretch = 0, alignment: Alignment = 0): number {
+    this.remove(widget);
+    this.ensureParent(widget);
+    return this._insert(index, new WidgetItem(widget, alignment), stretch);
   }
 
   /**
@@ -139,15 +142,13 @@ class BoxLayout extends Layout {
    * Returns the index of the added space.
    */
   insertSpacing(index: number, size: number): number {
-    var item: ILayoutItem;
-    var fixed = SizePolicy.Fixed;
-    var minimum = SizePolicy.Minimum;
+    var spacer: SpacerItem;
     if (isHorizontal(this._direction)) {
-      item = new SpacerItem(size, 0, 0, 0, fixed, minimum);
+      spacer = new SpacerItem(size, 0, SizePolicy.Fixed, SizePolicy.Minimum);
     } else {
-      item = new SpacerItem(0, size, 0, 0, minimum, fixed);
+      spacer = new SpacerItem(0, size, SizePolicy.Minimum, SizePolicy.Fixed);
     }
-    return this._insert(index, item);
+    return this._insert(index, spacer, 0);
   }
 
   /**
@@ -163,15 +164,25 @@ class BoxLayout extends Layout {
    * Insert stretchable space at the given index.
    */
   insertStretch(index: number, stretch = 0): number {
-    var item: ILayoutItem;
-    var expanding = SizePolicy.Expanding;
-    var minimum = SizePolicy.Minimum;
+    var spacer: SpacerItem;
     if (isHorizontal(this._direction)) {
-      item = new SpacerItem(0, 0, stretch, stretch, expanding, minimum);
+      spacer = new SpacerItem(0, 0, SizePolicy.Expanding, SizePolicy.Minimum);
     } else {
-      item = new SpacerItem(0, 0, stretch, stretch, minimum, expanding);
+      spacer = new SpacerItem(0, 0, SizePolicy.Minimum, SizePolicy.Expanding);
     }
-    return this._insert(index, item);
+    return this._insert(index, spacer, stretch);
+  }
+
+  /**
+   * Set the stretch factor for the item at the given index.
+   */
+  setStretch(index: number, stretch: number): void {
+    stretch = Math.max(0, stretch | 0);
+    var sizer = this._sizers[index];
+    if (sizer && sizer.stretch !== stretch) {
+      sizer.stretch = stretch;
+      this.invalidate();
+    }
   }
 
   /**
@@ -215,11 +226,10 @@ class BoxLayout extends Layout {
   /**
    * Update the geometry of the child layout items.
    */
-  protected layout(): void {
+  protected layout(x: number, y: number, width: number, height: number): void {
     // Bail early when no work needs to be done.
-    var parent = this.parent;
     var items = this._items;
-    if (!parent || items.length === 0) {
+    if (items.length === 0) {
       return;
     }
 
@@ -228,10 +238,7 @@ class BoxLayout extends Layout {
       this._setupGeometry();
     }
 
-    // Setup commonly used variables.
-    var boxD = parent.boxData;
-    var width = parent.width - boxD.horizontalSum;
-    var height = parent.height - boxD.verticalSum;
+    // Commonly used variables.
     var dir = this._direction;
     var sizers = this._sizers;
     var lastSpaceIndex = this._lastSpaceIndex;
@@ -242,14 +249,12 @@ class BoxLayout extends Layout {
 
     // Update the geometry of the items according to the layout
     // direction. Fixed spacing is added before each item which
-    // immediately follows a non-hidden panel item. This has the
+    // immediately follows a non-hidden widget item. This has the
     // effect of of collapsing all sibling spacers and ensuring
     // that only one fixed spacing increment occurs between any
-    // two panels. It also prevents fixed spacing from being
+    // two widgets. It also prevents fixed spacing from being
     // added before the first item or after the last item.
-    var y = boxD.paddingTop;
-    var x = boxD.paddingLeft;
-    var lastWasPanel = false;
+    var lastWasWidget = false;
     var spacing = this._spacing;
     var count = items.length;
     if (dir === Direction.LeftToRight) {
@@ -258,12 +263,12 @@ class BoxLayout extends Layout {
         if (item.isHidden) {
           continue;
         }
-        if (lastWasPanel && i <= lastSpaceIndex) {
+        if (lastWasWidget && i <= lastSpaceIndex) {
           x += spacing;
         }
         var size = sizers[i].size;
         item.setGeometry(x, y, size, height);
-        lastWasPanel = item.isPanel;
+        lastWasWidget = item.isWidget;
         x += size;
       }
     } else if (dir === Direction.TopToBottom) {
@@ -272,12 +277,12 @@ class BoxLayout extends Layout {
         if (item.isHidden) {
           continue;
         }
-        if (lastWasPanel && i <= lastSpaceIndex) {
+        if (lastWasWidget && i <= lastSpaceIndex) {
           y += spacing;
         }
         var size = sizers[i].size;
         item.setGeometry(x, y, width, size);
-        lastWasPanel = item.isPanel;
+        lastWasWidget = item.isWidget;
         y += size;
       }
     } else if (dir === Direction.RightToLeft) {
@@ -287,12 +292,12 @@ class BoxLayout extends Layout {
         if (item.isHidden) {
           continue;
         }
-        if (lastWasPanel && i <= lastSpaceIndex) {
+        if (lastWasWidget && i <= lastSpaceIndex) {
           x -= spacing;
         }
         var size = sizers[i].size;
         item.setGeometry(x - size, y, size, height);
-        lastWasPanel = item.isPanel;
+        lastWasWidget = item.isWidget;
         x -= size;
       }
     } else {
@@ -302,12 +307,12 @@ class BoxLayout extends Layout {
         if (item.isHidden) {
           continue;
         }
-        if (lastWasPanel && i <= lastSpaceIndex) {
+        if (lastWasWidget && i <= lastSpaceIndex) {
           y -= spacing;
         }
         var size = sizers[i].size;
         item.setGeometry(x, y - size, width, size);
-        lastWasPanel = item.isPanel;
+        lastWasWidget = item.isWidget;
         y -= size;
       }
     }
@@ -326,10 +331,9 @@ class BoxLayout extends Layout {
     // No parent means the layout is not yet attached.
     var parent = this.parent;
     if (!parent) {
-      var zero = new Size(0, 0);
-      this._sizeHint = zero;
-      this._minSize = zero;
-      this._maxSize = zero;
+      this._sizeHint = Size.Zero;
+      this._minSize = Size.Zero;
+      this._maxSize = Size.Zero;
       this._fixedSpace = 0;
       return;
     }
@@ -337,14 +341,14 @@ class BoxLayout extends Layout {
     // Invalidate the layout items. This is done here instead of the
     // `invalidate` method as this method is invoked only when needed,
     // typically on a collapsed event. It also finds the last visible
-    // panel item index, which is needed for fixed spacing allocation.
+    // widget item index, which is needed for fixed spacing allocation.
     var lastSpaceIndex = -1;
     var items = this._items;
     var count = items.length;
     for (var i = 0; i < count; ++i) {
       var item = items[i];
       item.invalidate();
-      if (item.isPanel && !item.isHidden) {
+      if (item.isWidget && !item.isHidden) {
         lastSpaceIndex = i;
       }
     }
@@ -357,7 +361,7 @@ class BoxLayout extends Layout {
     var maxW: number;
     var maxH: number;
     var fixedSpace = 0;
-    var lastWasPanel = false;
+    var lastWasWidget = false;
     var dir = this._direction;
     var spacing = this._spacing;
     var sizers = this._sizers;
@@ -365,7 +369,7 @@ class BoxLayout extends Layout {
     // Compute the size bounds according to the layout orientation.
     // Empty layout items behave as if they don't exist and fixed
     // spacing is before items which immediately follow a non-hidden
-    // panel item. This prevents leading and trailing fixed spacing
+    // widget item. This prevents leading and trailing fixed spacing
     // as well as fixed spacing after spacers. Sizers are initialized
     // according to their corresponding layout item.
     if (isHorizontal(dir)) {
@@ -375,11 +379,10 @@ class BoxLayout extends Layout {
         var item = items[i];
         var sizer = sizers[i];
         if (item.isHidden) {
-          sizer.expansive = false;
-          sizer.stretch = 0;
           sizer.sizeHint = 0;
           sizer.minSize = 0;
           sizer.maxSize = 0;
+          sizer.expansive = false;
           continue;
         }
         var itemHint = item.sizeHint();
@@ -391,15 +394,14 @@ class BoxLayout extends Layout {
         hintW += itemHint.width;
         minW += itemMin.width;
         maxW += itemMax.width;
-        sizer.expansive = item.expandHorizontal;
-        sizer.stretch = item.horizontalStretch;
         sizer.sizeHint = itemHint.width;
         sizer.minSize = itemMin.width;
         sizer.maxSize = itemMax.width;
-        if (lastWasPanel && i <= lastSpaceIndex) {
+        sizer.expansive = item.expandHorizontal;
+        if (lastWasWidget && i <= lastSpaceIndex) {
           fixedSpace += spacing;
         }
-        lastWasPanel = item.isPanel;
+        lastWasWidget = item.isWidget;
       }
       hintW += fixedSpace;
       minW += fixedSpace;
@@ -411,11 +413,10 @@ class BoxLayout extends Layout {
         var item = items[i];
         var sizer = sizers[i];
         if (item.isHidden) {
-          sizer.expansive = false;
-          sizer.stretch = 0;
           sizer.sizeHint = 0;
           sizer.minSize = 0;
           sizer.maxSize = 0;
+          sizer.expansive = false;
           continue;
         }
         var itemHint = item.sizeHint();
@@ -427,15 +428,14 @@ class BoxLayout extends Layout {
         hintH += itemHint.height;
         minH += itemMin.height;
         maxH += itemMax.height;
-        sizer.expansive = item.expandVertical;
-        sizer.stretch = item.verticalStretch;
         sizer.sizeHint = itemHint.height;
         sizer.minSize = itemMin.height;
         sizer.maxSize = itemMax.height;
-        if (lastWasPanel && i <= lastSpaceIndex) {
+        sizer.expansive = item.expandVertical;
+        if (lastWasWidget && i <= lastSpaceIndex) {
           fixedSpace += spacing;
         }
-        lastWasPanel = item.isPanel;
+        lastWasWidget = item.isWidget;
       }
       hintH += fixedSpace;
       minH += fixedSpace;
@@ -443,9 +443,9 @@ class BoxLayout extends Layout {
     }
 
     // Account for padding and border on the parent.
-    var boxD = parent.boxData;
-    var boxW = boxD.horizontalSum;
-    var boxH = boxD.verticalSum;
+    var box = parent.boxSizing();
+    var boxW = box.horizontalSum;
+    var boxH = box.verticalSum;
     hintW += boxW;
     hintH += boxH;
     minW += boxW;
@@ -466,10 +466,12 @@ class BoxLayout extends Layout {
    *
    * Returns the index of the added item.
    */
-  private _insert(index: number, item: ILayoutItem): number {
+  private _insert(index: number, item: ILayoutItem, stretch: number): number {
+    var sizer = new LayoutSizer();
+    sizer.stretch = Math.max(0, stretch | 0);
     index = Math.max(0, Math.min(index, this._items.length));
     this._items.splice(index, 0, item);
-    this._sizers.splice(index, 0, new LayoutSizer());
+    this._sizers.splice(index, 0, sizer);
     this.invalidate();
     return index;
   }
@@ -494,4 +496,4 @@ function isHorizontal(dir: Direction): boolean {
   return dir === Direction.LeftToRight || dir === Direction.RightToLeft;
 }
 
-} // module phosphor.panels
+} // module phosphor.widgets
