@@ -5,12 +5,12 @@
 |
 | The full license is in the file LICENSE, distributed with this software.
 |----------------------------------------------------------------------------*/
-module phosphor.panels {
+module phosphor.widgets {
 
 import IMessage = core.IMessage;
 import IDisposable = core.IDisposable;
 
-import overrideCursor = domutil.overrideCursor;
+import overrideCursor = utility.overrideCursor;
 
 
 /**
@@ -20,10 +20,7 @@ var SPLIT_PANEL_CLASS = 'p-SplitPanel';
 
 
 /**
- * A panel which separates its children into resizable sections.
- *
- * This panel delegates to a permanently installed split layout and
- * can be used as a more convenient interface to a split layout.
+ * A panel which arranges its children into resizable sections.
  */
 export
 class SplitPanel extends Panel {
@@ -31,10 +28,8 @@ class SplitPanel extends Panel {
    * Construct a new split panel.
    */
   constructor(orientation = Orientation.Horizontal) {
-    super();
-    this.node.classList.add(SPLIT_PANEL_CLASS);
-    this.layout = new SplitLayout(orientation);
-    this.setFlag(PanelFlag.DisallowLayoutChange);
+    super(new SplitLayout(orientation));
+    this.addClass(SPLIT_PANEL_CLASS);
   }
 
   /**
@@ -74,21 +69,14 @@ class SplitPanel extends Panel {
   }
 
   /**
-   * Get the number of child panels in the split panel.
-   */
-  get count(): number {
-    return (<SplitLayout>this.layout).count;
-  }
-
-  /**
-   * Get the normalized sizes of the children in the split panel.
+   * Get the normalized sizes of the widgets in the split panel.
    */
   sizes(): number[] {
     return (<SplitLayout>this.layout).sizes();
   }
 
   /**
-   * Set the relative sizes for the split panel children.
+   * Set the relative sizes for the split panel widgets.
    *
    * Extra values are ignored, too few will yield an undefined layout.
    */
@@ -97,43 +85,43 @@ class SplitPanel extends Panel {
   }
 
   /**
-   * Get the index of the given panel.
+   * Add a child widget to the end of the split panel.
    *
-   * Returns -1 if the panel is not found.
+   * If the widget already exists, it will be moved.
+   *
+   * Returns the index of the added widget.
    */
-  indexOf(panel: Panel): number {
-    return (<SplitLayout>this.layout).indexOf(panel);
+  addWidget(widget: Widget, stretch = 0, alignment: Alignment = 0): number {
+    return (<SplitLayout>this.layout).addWidget(widget, stretch, alignment);
   }
 
   /**
-   * Get the panel at the given index.
+   * Insert a child widget into the split panel at the given index.
    *
-   * Returns `undefined` if there is no panel at the given index.
+   * If the widget already exists, it will be moved.
+   *
+   * Returns the index of the added widget.
    */
-  panelAt(index: number): Panel {
-    return (<SplitLayout>this.layout).panelAt(index);
+  insertWidget(index: number, widget: Widget, stretch = 0, alignment: Alignment = 0): number {
+    return (<SplitLayout>this.layout).insertWidget(index, widget, stretch, alignment);
   }
 
   /**
-   * Add a child panel to the end of the split panel.
+   * Get the stretch factor for the given widget or item index.
    *
-   * If the panel already exists, it will be moved.
-   *
-   * Returns the index of the added panel.
+   * Returns -1 if no suitable layout item is found.
    */
-  addPanel(panel: Panel): number {
-    return (<SplitLayout>this.layout).addPanel(panel);
+  stretch(which: Widget | number): number {
+    return (<SplitLayout>this.layout).stretch(which);
   }
 
   /**
-   * Insert a child panel into the split panel at the given index.
+   * Set the stretch factor for the given widget or item index.
    *
-   * If the panel already exists, it will be moved.
-   *
-   * Returns the index of the added panel.
+   * Returns true if the stretch was updated, false otherwise.
    */
-  insertPanel(index: number, panel: Panel): number {
-    return (<SplitLayout>this.layout).insertPanel(index, panel);
+  setStretch(which: Widget | number, stretch: number): boolean {
+    return (<SplitLayout>this.layout).setStretch(which, stretch);
   }
 
   /**
@@ -151,32 +139,30 @@ class SplitPanel extends Panel {
   }
 
   /**
-   * Handle the DOM events for the splitter.
+   * Handle the DOM events for the split panel.
    */
   protected handleEvent(event: Event): void {
     switch (event.type) {
-      case 'mousedown':
-        this.domEvent_mousedown(<MouseEvent>event);
-        break;
-      case 'mouseup':
-        this.domEvent_mouseup(<MouseEvent>event);
-        break;
-      case 'mousemove':
-        this.domEvent_mousemove(<MouseEvent>event);
-        break;
-      default:
-        break;
+    case 'mousedown':
+      this._evtMouseDown(<MouseEvent>event);
+      break;
+    case 'mouseup':
+      this._evtMouseUp(<MouseEvent>event);
+      break;
+    case 'mousemove':
+      this._evtMouseMove(<MouseEvent>event);
+      break;
     }
   }
 
   /**
-   * Handle the 'mousedown' event for the splitter.
+   * Handle the 'mousedown' event for the split panel.
    */
-  protected domEvent_mousedown(event: MouseEvent): void {
+  private _evtMouseDown(event: MouseEvent): void {
     if (event.button !== 0) {
       return;
     }
-    var data = this._findHandle(event.target);
+    var data = this._findHandle(<HTMLElement>event.target);
     if (!data) {
       return;
     }
@@ -192,14 +178,14 @@ class SplitPanel extends Panel {
     } else {
       delta = event.clientY - rect.top;
     }
-    var grab = overrideCursor(window.getComputedStyle(node).cursor);
-    this._pressData = { index: data.index, delta: delta, grab: grab };
+    var cursor = overrideCursor(window.getComputedStyle(node).cursor);
+    this._pressData = { index: data.index, delta: delta, cursor: cursor };
   }
 
   /**
-   * Handle the 'mouseup' event for the splitter.
+   * Handle the 'mouseup' event for the split panel.
    */
-  protected domEvent_mouseup(event: MouseEvent): void {
+  private _evtMouseUp(event: MouseEvent): void {
     if (event.button !== 0) {
       return;
     }
@@ -209,15 +195,15 @@ class SplitPanel extends Panel {
   }
 
   /**
-   * Handle the 'mousemove' event for the splitter.
+   * Handle the 'mousemove' event for the split panel.
    */
-  protected domEvent_mousemove(event: MouseEvent): void {
+  private _evtMouseMove(event: MouseEvent): void {
     event.preventDefault();
     event.stopPropagation();
     var pos: number;
     var data = this._pressData;
-    var rect = this.node.getBoundingClientRect();
     var layout = <SplitLayout>this.layout;
+    var rect = this.node.getBoundingClientRect();
     if (layout.orientation === Orientation.Horizontal) {
       pos = event.clientX - data.delta - rect.left;
     } else {
@@ -229,7 +215,7 @@ class SplitPanel extends Panel {
   /**
    * Find the index of the handle which contains a target element.
    */
-  private _findHandle(target: any): IHandleData {
+  private _findHandle(target: HTMLElement): IHandleData {
     var layout = <SplitLayout>this.layout;
     for (var i = 0, n = layout.count; i < n; ++i) {
       var handle = layout.handleAt(i);
@@ -241,13 +227,13 @@ class SplitPanel extends Panel {
   }
 
   /**
-   * Release the mouse grab for the splitter.
+   * Release the mouse grab for the split panel.
    */
   private _releaseMouse(): void {
     if (!this._pressData) {
       return;
     }
-    this._pressData.grab.dispose();
+    this._pressData.cursor.dispose();
     this._pressData = null;
     document.removeEventListener('mouseup', <any>this, true);
     document.removeEventListener('mousemove', <any>this, true);
@@ -290,7 +276,7 @@ interface IPressData {
   /**
    * The disposable which will clear the override cursor.
    */
-  grab: IDisposable;
+  cursor: IDisposable;
 }
 
-} // module phosphor.panels
+} // module phosphor.widgets
