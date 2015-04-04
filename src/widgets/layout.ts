@@ -155,6 +155,24 @@ class Layout implements IMessageFilter, IDisposable {
   }
 
   /**
+   * Set the alignment for the given widget.
+   *
+   * Returns true if the widget is in the layout, false otherwise.
+   */
+  setAlignment(widget: Widget, alignment: Alignment): boolean {
+    var index = this.indexOf(widget);
+    if (index === -1) {
+      return false;
+    }
+    var item = this.itemAt(index);
+    if (item.alignment !== alignment) {
+      item.alignment = alignment;
+      this.invalidate();
+    }
+    return true;
+  }
+
+  /**
    * Invalidate the cached layout data and enqueue an update.
    *
    * This should be reimplemented by a subclass as needed.
