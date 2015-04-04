@@ -155,9 +155,19 @@ class Layout implements IMessageFilter, IDisposable {
   }
 
   /**
+   * Get the alignment for the given widget.
+   *
+   * Returns 0 if the widget is not found in the layout.
+   */
+  alignment(widget: Widget): Alignment {
+    var index = this.indexOf(widget);
+    return index === -1 ? 0 : this.itemAt(index).alignment;
+  }
+
+  /**
    * Set the alignment for the given widget.
    *
-   * Returns true if the widget is in the layout, false otherwise.
+   * Returns true if the alignment was updated, false otherwise.
    */
   setAlignment(widget: Widget, alignment: Alignment): boolean {
     var index = this.indexOf(widget);
