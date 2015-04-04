@@ -107,16 +107,16 @@ class SplitPanel extends Panel {
   }
 
   /**
-   * Get the stretch factor for the given widget or item index.
+   * Get the stretch factor for the given widget or index.
    *
-   * Returns -1 if no suitable layout item is found.
+   * Returns -1 if the given widget or index is invalid.
    */
   stretch(which: Widget | number): number {
     return (<SplitLayout>this.layout).stretch(which);
   }
 
   /**
-   * Set the stretch factor for the given widget or item index.
+   * Set the stretch factor for the given widget or index.
    *
    * Returns true if the stretch was updated, false otherwise.
    */
