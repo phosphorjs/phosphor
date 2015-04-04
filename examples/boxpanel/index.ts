@@ -7,57 +7,56 @@
 |----------------------------------------------------------------------------*/
 module example {
 
-import BoxPanel = phosphor.panels.BoxPanel;
-import Direction = phosphor.panels.Direction;
-import Panel = phosphor.panels.Panel;
+import BoxPanel = phosphor.widgets.BoxPanel;
+import Direction = phosphor.widgets.Direction;
+import Widget = phosphor.widgets.Widget;
 
 
-function createContent(text: string): Panel {
-  var panel = new Panel();
-  panel.node.classList.add('content');
-  panel.node.innerHTML = '<span>' + text + '</span>';
-  panel.setMinMaxSize(60, 25, Infinity, 25);
-  return panel;
+function createContent(text: string): Widget {
+  var widget = new Widget();
+  widget.addClass('content');
+  widget.node.innerHTML = '<span>' + text + '</span>';
+  return widget;
 }
 
 
 function main(): void {
   var ttb = new BoxPanel(Direction.TopToBottom);
-  ttb.node.classList.add('red');
-  ttb.addPanel(createContent('Top'));
-  ttb.addPanel(createContent('To'));
-  ttb.addPanel(createContent('Bottom'));
+  ttb.addClass('red');
+  ttb.addWidget(createContent('Top'));
+  ttb.addWidget(createContent('To'));
+  ttb.addWidget(createContent('Bottom'));
   ttb.addStretch();
 
   var btt = new BoxPanel(Direction.BottomToTop);
-  btt.node.classList.add('green');
-  btt.addPanel(createContent('Top'));
-  btt.addPanel(createContent('To'));
-  btt.addPanel(createContent('Bottom'));
+  btt.addClass('green');
+  btt.addWidget(createContent('Top'));
+  btt.addWidget(createContent('To'));
+  btt.addWidget(createContent('Bottom'));
   btt.addStretch();
 
   var ltr = new BoxPanel(Direction.LeftToRight);
-  ltr.node.classList.add('yellow');
-  ltr.addPanel(createContent('Left'));
-  ltr.addPanel(createContent('To'));
-  ltr.addPanel(createContent('Right'));
+  ltr.addClass('yellow');
+  ltr.addWidget(createContent('Left'));
+  ltr.addWidget(createContent('To'));
+  ltr.addWidget(createContent('Right'));
   ltr.addStretch();
 
   var rtl = new BoxPanel(Direction.RightToLeft);
-  rtl.node.classList.add('blue');
-  rtl.addPanel(createContent('Left'));
-  rtl.addPanel(createContent('To'));
-  rtl.addPanel(createContent('Right'));
+  rtl.addClass('blue');
+  rtl.addWidget(createContent('Left'));
+  rtl.addWidget(createContent('To'));
+  rtl.addWidget(createContent('Right'));
   rtl.addStretch();
 
   var row = new BoxPanel(Direction.LeftToRight);
-  row.addPanel(ttb);
-  row.addPanel(btt);
+  row.addWidget(ttb);
+  row.addWidget(btt);
 
   var col = new BoxPanel(Direction.TopToBottom);
-  col.addPanel(row);
-  col.addPanel(ltr);
-  col.addPanel(rtl);
+  col.addWidget(row);
+  col.addWidget(ltr);
+  col.addWidget(rtl);
 
   col.attach(document.getElementById('main'));
   col.fit();
