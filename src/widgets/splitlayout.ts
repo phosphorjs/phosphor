@@ -5,10 +5,13 @@
 |
 | The full license is in the file LICENSE, distributed with this software.
 |----------------------------------------------------------------------------*/
-module phosphor.panels {
+module phosphor.widgets {
+
+import Size = utility.Size;
+
 
 /**
- * A layout which arranges its panels in resizable sections.
+ * A layout which arranges widgets in resizable sections.
  */
 export
 class SplitLayout extends Layout {
@@ -77,7 +80,7 @@ class SplitLayout extends Layout {
    * Get the normalized sizes of the items in the layout.
    */
   sizes(): number[] {
-    return normalize(this._sizers.map(it => it.size));
+    return normalize(this._sizers.map(sizer => sizer.size));
   }
 
   /**
@@ -91,11 +94,11 @@ class SplitLayout extends Layout {
       return;
     }
     var totalSize: number;
-    var boxD = parent.boxData;
+    var box = parent.boxSizing();
     if (this._orientation === Orientation.Horizontal) {
-      totalSize = parent.width - boxD.horizontalSum - this._fixedSpace;
+      totalSize = parent.width - box.horizontalSum - this._fixedSpace;
     } else {
-      totalSize = parent.height - boxD.verticalSum - this._fixedSpace;
+      totalSize = parent.height - box.verticalSum - this._fixedSpace;
     }
     var sizers = this._sizers;
     var normed = normalize(sizes);
@@ -104,7 +107,7 @@ class SplitLayout extends Layout {
       sizers[i].sizeHint = Math.round(normed[i] * totalSize);
     }
     if (parent.isVisible) {
-      this.layout();
+      this.update();
     }
   }
 
@@ -114,61 +117,6 @@ class SplitLayout extends Layout {
   handleAt(index: number): SplitHandle {
     var item = this._items[index];
     return item ? item.handle : void 0;
-  }
-
-  /**
-   * Get the layout item at the specified index.
-   */
-  itemAt(index: number): ILayoutItem {
-    return this._items[index];
-  }
-
-  /**
-   * Remove and return the layout item at the specified index.
-   */
-  takeAt(index: number): ILayoutItem {
-    index = index | 0;
-    if (index < 0 || index >= this._items.length) {
-      return void 0;
-    }
-    var item = this._items.splice(index, 1)[0];
-    this._sizers.splice(index, 1);
-    var hNode = item.handle.node;
-    var pNode = hNode.parentNode;
-    if (pNode) pNode.removeChild(hNode);
-    this.invalidate();
-    return item;
-  }
-
-  /**
-   * Add a panel as the last item in the layout.
-   *
-   * If the panel already exists in the layout, it will be moved.
-   *
-   * Returns the index of the added panel.
-   */
-  addPanel(panel: Panel): number {
-    return this.insertPanel(this.count, panel);
-  }
-
-  /**
-   * Insert a panel into the layout at the given index.
-   *
-   * If the panel already exists in the layout, it will be moved.
-   *
-   * Returns the index of the added panel.
-   */
-  insertPanel(index: number, panel: Panel): number {
-    this.remove(panel);
-    this.ensureParent(panel);
-    var handle = new SplitHandle(this._orientation);
-    var item = new SplitItem(panel, handle);
-    var sizer = new LayoutSizer();
-    index = Math.max(0, Math.min(index, this._items.length));
-    this._items.splice(index, 0, item);
-    this._sizers.splice(index, 0, sizer);
-    this.invalidate();
-    return index;
   }
 
   /**
@@ -199,7 +147,93 @@ class SplitLayout extends Layout {
       growSizer(sizers, sizers.length - (index + 2), -delta);
       sizers.reverse();
     }
-    this.layout();
+    this.update();
+  }
+
+  /**
+   * Get the layout item at the specified index.
+   */
+  itemAt(index: number): ILayoutItem {
+    return this._items[index];
+  }
+
+  /**
+   * Remove and return the layout item at the specified index.
+   */
+  takeAt(index: number): ILayoutItem {
+    index = index | 0;
+    if (index < 0 || index >= this._items.length) {
+      return void 0;
+    }
+    var item = this._items.splice(index, 1)[0];
+    this._sizers.splice(index, 1);
+    var hNode = item.handle.node;
+    var pNode = hNode.parentNode;
+    if (pNode) pNode.removeChild(hNode);
+    this.invalidate();
+    return item;
+  }
+
+  /**
+   * Add a widget as the last item in the layout.
+   *
+   * If the widget already exists in the layout, it will be moved.
+   *
+   * Returns the index of the added widget.
+   */
+  addWidget(widget: Widget, stretch = 0, alignment: Alignment = 0): number {
+    return this.insertWidget(this.count, widget, stretch, alignment);
+  }
+
+  /**
+   * Insert a widget into the layout at the given index.
+   *
+   * If the widget already exists in the layout, it will be moved.
+   *
+   * Returns the index of the added widget.
+   */
+  insertWidget(index: number, widget: Widget, stretch = 0, alignment: Alignment = 0): number {
+    this.remove(widget);
+    this.ensureParent(widget);
+    var handle = new SplitHandle(this._orientation);
+    var item = new SplitItem(handle, widget, alignment);
+    var sizer = new LayoutSizer();
+    sizer.stretch = Math.max(0, stretch | 0);
+    index = Math.max(0, Math.min(index, this._items.length));
+    this._items.splice(index, 0, item);
+    this._sizers.splice(index, 0, sizer);
+    this.invalidate();
+    return index;
+  }
+
+  /**
+   * Get the stretch factor for the given widget or item index.
+   *
+   * Returns -1 if no suitable layout item is found.
+   */
+  stretch(which: Widget | number): number {
+    var index = typeof which === 'number' ? which : this.indexOf(which);
+    var sizer = this._sizers[index];
+    return sizer ? sizer.stretch : -1;
+  }
+
+  /**
+   * Set the stretch factor for the given widget or item index.
+   *
+   * Returns true if the stretch was updated, false otherwise.
+   */
+  setStretch(which: Widget | number, stretch: number): boolean {
+    var index = typeof which === 'number' ? which : this.indexOf(which);
+    var sizer = this._sizers[index];
+    if (!sizer) {
+      return false;
+    }
+    stretch = Math.max(0, stretch | 0);
+    if (sizer.stretch !== stretch) {
+      sizer.stretch = stretch;
+      this.invalidate();
+    }
+    return true;
   }
 
   /**
@@ -243,11 +277,10 @@ class SplitLayout extends Layout {
   /**
    * Update the geometry of the child layout items.
    */
-  protected layout(): void {
+  protected layout(x: number, y: number, width: number, height: number): void {
     // Bail early when no work needs to be done.
-    var parent = this.parent;
     var items = this._items;
-    if (!parent || items.length === 0) {
+    if (items.length === 0) {
       return;
     }
 
@@ -256,10 +289,7 @@ class SplitLayout extends Layout {
       this._setupGeometry();
     }
 
-    // Setup commonly used variables.
-    var boxD = parent.boxData;
-    var width = parent.width - boxD.horizontalSum;
-    var height = parent.height - boxD.verticalSum;
+    // Commonly used variables.
     var orient = this._orientation;
     var sizers = this._sizers;
 
@@ -268,8 +298,6 @@ class SplitLayout extends Layout {
     layoutCalc(sizers, mainSpace - this._fixedSpace);
 
     // Update the geometry of the items according to the orientation.
-    var y = boxD.paddingTop;
-    var x = boxD.paddingLeft;
     var hSize = this._handleSize;
     var count = items.length;
     if (orient === Orientation.Horizontal) {
@@ -318,18 +346,17 @@ class SplitLayout extends Layout {
     // No parent means the layout is not yet attached.
     var parent = this.parent;
     if (!parent) {
-      var zero = new Size(0, 0);
-      this._sizeHint = zero;
-      this._minSize = zero;
-      this._maxSize = zero;
+      this._sizeHint = Size.Zero;
+      this._minSize = Size.Zero;
+      this._maxSize = Size.Zero;
       this._fixedSpace = 0;
       return;
     }
 
     // Invalidate the layout items and reset the handles for the current
     // orientation. Hide the handles associated with a hidden item and
-    // the handle node is attached to the parent node. Traverse the
-    // items backwards and hide the first visible item handle.
+    // ensure the handle node is attached to the parent node. Traverse
+    // the items backwards and hide the first visible item handle.
     var hidFirst = false;
     var pNode = parent.node;
     var orient = this._orientation;
@@ -364,10 +391,10 @@ class SplitLayout extends Layout {
 
     // Compute the size bounds according to the splitter orientation.
     // The size hints for the sizers are explicitly not updated. The
-    // size hint for a panel is only adjusted when the user moves a
-    // handle. This allows the panels to remain well-sized when their
-    // siblings panels are added of removed or when the panel is shown
-    // or hidden (see the growItem function).
+    // size hint for a widget is only adjusted when the user moves a
+    // handle. This allows a widgets to remain well-sized when its
+    // sibling widgets are added or removed or when the widget is
+    // shown or hidden (see the growItem function).
     if (orient === Orientation.Horizontal) {
       maxH = Infinity;
       maxW = count > 0 ? 0 : Infinity;
@@ -375,10 +402,9 @@ class SplitLayout extends Layout {
         var item = items[i];
         var sizer = sizers[i];
         if (item.isHidden) {
-          sizer.expansive = false;
-          sizer.stretch = 0;
           sizer.minSize = 0;
           sizer.maxSize = 0;
+          sizer.expansive = false;
           continue;
         }
         var itemHint = item.sizeHint();
@@ -390,10 +416,9 @@ class SplitLayout extends Layout {
         hintW += itemHint.width;
         minW += itemMin.width;
         maxW += itemMax.width;
-        sizer.expansive = item.expandHorizontal;
-        sizer.stretch = item.horizontalStretch;
         sizer.minSize = itemMin.width;
         sizer.maxSize = itemMax.width;
+        sizer.expansive = item.expandHorizontal;
         if (!item.handle.hidden) {
           fixedSpace += handleSize;
         }
@@ -408,10 +433,9 @@ class SplitLayout extends Layout {
         var item = items[i];
         var sizer = sizers[i];
         if (item.isHidden) {
-          sizer.expansive = false;
-          sizer.stretch = 0;
           sizer.minSize = 0;
           sizer.maxSize = 0;
+          sizer.expansive = false;
           continue;
         }
         var itemHint = item.sizeHint();
@@ -423,10 +447,9 @@ class SplitLayout extends Layout {
         hintH += itemHint.height;
         minH += itemMin.height;
         maxH += itemMax.height;
-        sizer.expansive = item.expandVertical;
-        sizer.stretch = item.verticalStretch;
         sizer.minSize = itemMin.height;
         sizer.maxSize = itemMax.height;
+        sizer.expansive = item.expandVertical;
         if (!item.handle.hidden) {
           fixedSpace += handleSize;
         }
@@ -437,9 +460,9 @@ class SplitLayout extends Layout {
     }
 
     // Account for padding and border on the parent.
-    var boxD = parent.boxData;
-    var boxW = boxD.horizontalSum;
-    var boxH = boxD.verticalSum;
+    var box = parent.boxSizing();
+    var boxW = box.horizontalSum;
+    var boxH = box.verticalSum;
     hintW += boxW;
     hintH += boxH;
     minW += boxW;
@@ -467,15 +490,15 @@ class SplitLayout extends Layout {
 
 
 /**
- * A custom panel item used by a split layout.
+ * A custom widget item used by a split layout.
  */
 export
-class SplitItem extends PanelItem {
+class SplitItem extends WidgetItem {
   /**
    * Construct a new split item.
    */
-  constructor(panel: Panel, handle: SplitHandle) {
-    super(panel);
+  constructor(handle: SplitHandle, widget: Widget, alignment: Alignment = 0) {
+    super(widget, alignment);
     this._handle = handle;
   }
 
@@ -570,4 +593,4 @@ function normalize(values: number[]): number[] {
   return result;
 }
 
-} // module phosphor.panels
+} // module phosphor.widgets

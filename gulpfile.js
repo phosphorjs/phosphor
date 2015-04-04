@@ -90,6 +90,7 @@ var tsSources = [
   'widgets/spaceritem',
   'widgets/widgetitem',
   'widgets/boxlayout',
+  'widgets/splitlayout',
   'widgets/widget',
   'widgets/panel',
   //'widgets/elementhost',
