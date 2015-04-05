@@ -20,6 +20,18 @@ function iter<T>(iterable: IIterable<T> | T[]): IIterator<T> {
 
 
 /**
+ * Create a reverse iterator for an reverse iterable or array.
+ */
+export
+function reversed<T>(iterable: IReverseIterable<T> | T[]): IIterator<T> {
+  if (iterable instanceof Array) {
+    return new ArrayReverseIterator(<T[]>iterable);
+  }
+  return (<IReverseIterable<T>>iterable).reverseIterator();
+}
+
+
+/**
  * Create an array from the values in an iterable.
  */
 export
