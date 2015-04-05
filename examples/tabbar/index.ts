@@ -12,7 +12,6 @@ import TabBar = phosphor.widgets.TabBar;
 
 function main(): void {
   var tb = new TabBar();
-  tb.minTabWidth = 50;
 
   tb.addTab('One');
   tb.addTab('Two');
