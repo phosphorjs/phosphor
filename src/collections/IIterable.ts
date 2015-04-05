@@ -20,4 +20,18 @@ interface IIterable<T> {
   iterator(): IIterator<T>;
 }
 
+
+/**
+ * An object which supports reverse iteration over its elements.
+ *
+ * In general, it is not safe to modify the iterable while iterating.
+ */
+export
+interface IReverseIterable<T> {
+  /**
+   * Get a reverse iterator for the elements in the iteratable.
+   */
+  reverseIterator(): IIterator<T>;
+}
+
 } // module phosphor.collections
