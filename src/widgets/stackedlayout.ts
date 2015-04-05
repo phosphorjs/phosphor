@@ -158,7 +158,7 @@ class StackedLayout extends Layout {
    * `insertWidget` for an already added widget. It will not remove
    * the widget before moving it and will not emit `widgetRemoved`.
    *
-   * Returns -1 if the from index is out of range.
+   * Returns -1 if `fromIndex` is out of range.
    */
   moveWidget(fromIndex: number, toIndex: number): number {
     fromIndex = fromIndex | 0;
