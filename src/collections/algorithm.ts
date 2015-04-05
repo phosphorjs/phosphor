@@ -153,6 +153,88 @@ function findIndex<T>(
 
 
 /**
+ * Find the index of the first array element which passes the test.
+ *
+ * The `from` parameter controls the starting index of the search. If
+ * the value is negative, it is offset from the end of the list. The
+ * default index is `0`.
+ *
+ * The `wrap` parameter controls the search wrap-around. If true, the
+ * search will wrap-around at the end of the list and continue until
+ * reaching one before the starting element.
+ *
+ * Returns -1 if no element passes the test.
+ */
+export
+function findFirstIndex<T>(
+  array: T[],
+  callback: (value: T, index: number) => boolean,
+  from = 0, wrap = false): number {
+  if (from < 0) {
+    from += array.length;
+    if (from < 0) from = 0;
+  }
+  if (wrap) {
+    for (var i = 0; i < array.length; ++i) {
+      var j = (i + from) % array.length;
+      if (callback(array[j], j)) {
+        return j;
+      }
+    }
+  } else {
+    for (var i = from; i < array.length; ++i) {
+      if (callback(array[i], i)) {
+        return i;
+      }
+    }
+  }
+  return -1;
+}
+
+
+/**
+ * Find the index of the last array element which passes the test.
+ *
+ * The `from` parameter controls the starting index of the search. If
+ * the value is negative, it is offset from the end of the list. The
+ * default index is `-1`.
+ *
+ * The `wrap` parameter controls the search wrap-around. If true, the
+ * search will wrap-around at the end of the list and continue until
+ * reaching one before the starting element.
+ *
+ * Returns -1 if no element passes the test.
+ */
+export
+function findLastIndex<T>(
+  array: T[],
+  callback: (value: T, index: number) => boolean,
+  from = -1, wrap = false): number {
+  if (from >= array.length) {
+    from = array.length - 1;
+  } else if (from < 0) {
+    from += array.length;
+    if (from < 0) return -1;
+  }
+  if (wrap) {
+    for (var i = array.length; i > 0 && i <= array.length; --i) {
+      var j = (i + from) % array.length;
+      if (callback(array[j], j)) {
+        return j;
+      }
+    }
+  } else {
+    for (var i = from; i >= 0 && i < array.length; --i) {
+      if (callback(array[i], i)) {
+        return i;
+      }
+    }
+  }
+  return -1;
+}
+
+
+/**
  * Find the index of the first element which compares `>=` to `value`.
  *
  * This uses a binary search algorithm which must be applied to a
