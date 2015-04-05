@@ -7,7 +7,6 @@
 |----------------------------------------------------------------------------*/
 module phosphor.widgets {
 
-import List = collections.List;
 import findFirstIndex = collections.findFirstIndex;
 import findLastIndex = collections.findLastIndex;
 
