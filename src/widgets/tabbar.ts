@@ -5,14 +5,16 @@
 |
 | The full license is in the file LICENSE, distributed with this software.
 |----------------------------------------------------------------------------*/
-module phosphor.panels {
+module phosphor.widgets {
 
-import IMessage = core.IMessage;
 import IDisposable = core.IDisposable;
+import IMessage = core.IMessage;
 import Signal = core.Signal;
 
-import hitTest = domutil.hitTest;
-import overrideCursor = domutil.overrideCursor;
+import Pair = utility.Pair;
+import Size = utility.Size;
+import hitTest = utility.hitTest;
+import overrideCursor = utility.overrideCursor;
 
 
 /**
@@ -60,11 +62,6 @@ var DETACH_THRESHOLD = 20;
  */
 var TRANSITION_DURATION = 150;
 
-/**
- * The stub size of an overlapped tab.
- */
-var TAB_STUB_SIZE = 5;
-
 
 /**
  * The arguments object for the `attachTab` method.
@@ -100,40 +97,6 @@ interface ITabAttachArgs {
    * The current mouse client Y position.
    */
   clientY: number;
-}
-
-
-/**
- * The arguments object for various tab bar signals.
- */
-export
-interface ITabIndexArgs {
-  /**
-   * The index of interest.
-   */
-  index: number;
-
-  /**
-   * The tab associated with the index.
-   */
-  tab: ITab;
-}
-
-
-/**
- * The arguments object for the `tabMoved` signal.
- */
-export
-interface ITabMoveArgs {
-  /**
-   * The original tab index.
-   */
-  fromIndex: number;
-
-  /**
-   * The new tab index.
-   */
-  toIndex: number;
 }
 
 
@@ -180,26 +143,24 @@ interface ITabDetachArgs {
 
 
 /**
- * A panel which displays a row of tabs.
- *
- * A tab bar should be treated as leaf content with no children.
+ * A leaf widget which displays a row of tabs.
  */
 export
-class TabBar extends Panel {
+class TabBar extends Widget {
   /**
    * A signal emitted when a tab is moved.
    */
-  tabMoved = new Signal<TabBar, ITabMoveArgs>();
+  tabMoved = new Signal<TabBar, Pair<number, number>>();
 
   /**
    * A signal emitted when the currently selected tab is changed.
    */
-  currentChanged = new Signal<TabBar, ITabIndexArgs>();
+  currentChanged = new Signal<TabBar, Pair<number, ITab>>();
 
   /**
    * A signal emitted when the user clicks a tab close icon.
    */
-  tabCloseRequested = new Signal<TabBar, ITabIndexArgs>();
+  tabCloseRequested = new Signal<TabBar, Pair<number, ITab>>();
 
   /**
    * A signal emitted when a tab is dragged beyond the detach threshold.
@@ -211,12 +172,12 @@ class TabBar extends Panel {
    */
   constructor() {
     super();
-    this.node.classList.add(TAB_BAR_CLASS);
+    this.addClass(TAB_BAR_CLASS);
     this.verticalSizePolicy = SizePolicy.Fixed;
   }
 
   /**
-   * Dispose of the resources held by the panel.
+   * Dispose of the resources held by the widget.
    */
   dispose(): void {
     this._releaseMouse();
@@ -250,7 +211,7 @@ class TabBar extends Panel {
     this._currentTab = next;
     this._previousTab = prev;
     this._updateTabZOrder();
-    this.currentChanged.emit(this, { index: index, tab: next });
+    this.currentChanged.emit(this, new Pair(index, next));
   }
 
   /**
@@ -371,7 +332,7 @@ class TabBar extends Panel {
   /**
    * Get the index of the given tab.
    */
-  tabIndex(tab: ITab): number {
+  indexOf(tab: ITab): number {
     return this._tabs.indexOf(tab);
   }
 
@@ -529,9 +490,7 @@ class TabBar extends Panel {
       var overlap = this._tabOverlap * (count - 1);
       width = this._tabWidth * count - overlap;
     }
-    var style = window.getComputedStyle(this.node);
-    var height = parseInt(style.minHeight, 10) || 0;
-    return new Size(width, height);
+    return new Size(width, this.boxSizing().minHeight);
   }
 
   /**
@@ -541,12 +500,10 @@ class TabBar extends Panel {
     var width = 0;
     var count = this._tabs.length;
     if (count > 0) {
-      var stub = TAB_STUB_SIZE * (count - 1);
-      width = this._minTabWidth + stub;
+      var overlap = this._tabOverlap * (count - 1);
+      width = this._minTabWidth * count - overlap;
     }
-    var style = window.getComputedStyle(this.node);
-    var height = parseInt(style.minHeight, 10) || 0;
-    return new Size(width, height);
+    return new Size(width, this.boxSizing().minHeight);
   }
 
   /**
@@ -590,27 +547,25 @@ class TabBar extends Panel {
    */
   protected handleEvent(event: Event): void {
     switch (event.type) {
-      case 'click':
-        this.domEvent_click(<MouseEvent>event);
-        break;
-      case 'mousedown':
-        this.domEvent_mousedown(<MouseEvent>event);
-        break;
-      case 'mousemove':
-        this.domEvent_mousemove(<MouseEvent>event);
-        break;
-      case 'mouseup':
-        this.domEvent_mouseup(<MouseEvent>event);
-        break;
-      default:
-        break;
+    case 'click':
+      this._evtClick(<MouseEvent>event);
+      break;
+    case 'mousedown':
+      this._evtMouseDown(<MouseEvent>event);
+      break;
+    case 'mousemove':
+      this._evtMouseMove(<MouseEvent>event);
+      break;
+    case 'mouseup':
+      this._evtMouseUp(<MouseEvent>event);
+      break;
     }
   }
 
   /**
-   * Handle the click event for the tab bar.
+   * Handle the 'click' event for the tab bar.
    */
-  protected domEvent_click(event: MouseEvent): void {
+  private _evtClick(event: MouseEvent): void {
     if (event.button !== 0) {
       return;
     }
@@ -625,14 +580,14 @@ class TabBar extends Panel {
     var tab = this._tabs[index];
     var icon = tab.closeIconNode;
     if (icon && icon === event.target && tab.closable) {
-      this.tabCloseRequested.emit(this, { index: index, tab: tab });
+      this.tabCloseRequested.emit(this, new Pair(index, tab));
     }
   }
 
   /**
-   * Handle the mousedown event for the tab bar.
+   * Handle the 'mousedown' event for the tab bar.
    */
-  protected domEvent_mousedown(event: MouseEvent): void {
+  private _evtMouseDown(event: MouseEvent): void {
     if (event.button !== 0) {
       return;
     }
@@ -670,9 +625,9 @@ class TabBar extends Panel {
   }
 
   /**
-   * Handle the mouse move event for the tab bar.
+   * Handle the 'mousemove' event for the tab bar.
    */
-  protected domEvent_mousemove(event: MouseEvent): void {
+  private _evtMouseMove(event: MouseEvent): void {
     event.preventDefault();
     event.stopPropagation();
     if (!this._movable || !this._dragData) {
@@ -732,9 +687,9 @@ class TabBar extends Panel {
   }
 
   /**
-   * Handle the mouse up event for the tab bar.
+   * Handle the 'mouseup' event for the tab bar.
    */
-  protected domEvent_mouseup(event: MouseEvent): void {
+  private _evtMouseUp(event: MouseEvent): void {
     if (event.button !== 0) {
       return;
     }
@@ -796,7 +751,7 @@ class TabBar extends Panel {
     var tab = this._tabs.splice(fromIndex, 1)[0];
     this._tabs.splice(toIndex, 0, tab);
     this._updateTabZOrder();
-    this.tabMoved.emit(this, { fromIndex: fromIndex, toIndex: toIndex });
+    this.tabMoved.emit(this, new Pair(fromIndex, toIndex));
     if (!this.isAttached) {
       return;
     }
@@ -819,7 +774,7 @@ class TabBar extends Panel {
       if (next) {
         this.currentTab = next;
       } else {
-        this.currentChanged.emit(this, { index: -1, tab: void 0 });
+        this.currentChanged.emit(this, new Pair(-1, void 0));
       }
     } else if (tab === this._previousTab) {
       this._previousTab =  null;
@@ -908,7 +863,6 @@ class TabBar extends Panel {
     var left = 0;
     var width = this.width;
     var tabs = this._tabs;
-    var stub = TAB_STUB_SIZE;
     var data = this._dragData;
     var overlap = this._tabOverlap;
     var tabWidth = this._tabLayoutWidth();
@@ -917,10 +871,6 @@ class TabBar extends Panel {
       var node = tabs[i].node;
       var style = node.style;
       if (node !== dragNode) {
-        var stubOffset = tabWidth + stub * (n - i - 1);
-        if (left + stubOffset > width) {
-          left = Math.max(0, width - stubOffset);
-        }
         style.left = left + 'px';
       }
       style.width = tabWidth + 'px';
@@ -1033,4 +983,4 @@ function inBounds(r: ClientRect, v: number, x: number, y: number) {
   return true;
 }
 
-} // module phosphor.panels
+} // module phosphor.widgets

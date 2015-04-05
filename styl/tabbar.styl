@@ -17,10 +17,10 @@
     position: absolute;
     bottom: 0px;
     &.p-mod-inserting {
-      animation: p-keyframes-inserting-tab 150ms ease
+      animation: p-kf-insert-tab 150ms ease
     }
     &.p-mod-removing {
-      animation: p-keyframes-removing-tab 150ms ease
+      animation: p-kf-remove-tab 150ms ease
     }
   }
   &.p-mod-transition > .p-Tab {
@@ -49,11 +49,10 @@
   flex: 1 1 auto;
   overflow: hidden;
   white-space: nowrap;
-  text-overflow: ellipsis;
 }
 
 
-@keyframes p-keyframes-inserting-tab {
+@keyframes p-kf-insert-tab {
   from {
     bottom: -100%;
   }
@@ -63,7 +62,7 @@
 }
 
 
-@keyframes p-keyframes-removing-tab {
+@keyframes p-kf-remove-tab {
   from {
     bottom: 0;
   }
