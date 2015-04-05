@@ -5,7 +5,7 @@
 |
 | The full license is in the file LICENSE, distributed with this software.
 |----------------------------------------------------------------------------*/
-module phosphor.panels {
+module phosphor.widgets {
 
 /**
  * The class name added to Tab instances.
@@ -136,4 +136,4 @@ class Tab implements ITab {
   private _node: HTMLElement;
 }
 
-} // module phosphor.panels
+} // module phosphor.widgets

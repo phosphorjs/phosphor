@@ -5,7 +5,7 @@
 |
 | The full license is in the file LICENSE, distributed with this software.
 |----------------------------------------------------------------------------*/
-module phosphor.panels {
+module phosphor.widgets {
 
 /**
  * An object which can be used as a tab in a tab bar.
@@ -38,4 +38,4 @@ interface ITab {
   closeIconNode: HTMLElement;
 }
 
-} // module phosphor.panels
+} // module phosphor.widgets

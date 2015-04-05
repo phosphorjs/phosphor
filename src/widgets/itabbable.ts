@@ -5,17 +5,17 @@
 |
 | The full license is in the file LICENSE, distributed with this software.
 |----------------------------------------------------------------------------*/
-module phosphor.panels {
+module phosphor.widgets {
 
 /**
- * A panel which owns and manages its own tab.
+ * A widget which owns and manages its own tab.
  */
 export
-interface ITabbable extends Panel {
+interface ITabbable extends Widget {
   /**
-   * The tab to associate with the panel.
+   * The tab associated with the widget.
    */
   tab: ITab;
 }
 
-} // module phosphor.panels
+} // module phosphor.widgets
