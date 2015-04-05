@@ -5,15 +5,19 @@
 |
 | The full license is in the file LICENSE, distributed with this software.
 |----------------------------------------------------------------------------*/
-module phosphor.panels {
+module phosphor.widgets {
+
+import findFirstIndex = collections.findFirstIndex;
+import findLastIndex = collections.findLastIndex;
 
 import IMessage = core.IMessage;
 
-import hitTest = domutil.hitTest;
+import Size = utility.Size;
+import hitTest = utility.hitTest;
 
 
 /**
- * The class name added to a menu bar panel.
+ * The class name added to a menu bar widget.
  */
 var MENU_BAR_CLASS = 'p-MenuBar';
 
@@ -59,16 +63,16 @@ var DISABLED_CLASS = 'p-mod-disabled';
 
 
 /**
- * A panel which displays menu items as a menu bar.
+ * A leaf widget which displays menu items as a menu bar.
  */
 export
-class MenuBar extends Panel {
+class MenuBar extends Widget {
   /**
    * Construct a new menu bar.
    */
   constructor(items?: MenuItem[]) {
     super();
-    this.node.classList.add(MENU_BAR_CLASS);
+    this.addClass(MENU_BAR_CLASS);
     this.verticalSizePolicy = SizePolicy.Fixed;
     if (items) items.forEach(it => this.addItem(it));
   }
@@ -92,7 +96,7 @@ class MenuBar extends Panel {
   }
 
   /**
-   * Get the index of the active (highlighted) item.
+   * Get the index of the active (highlighted) menu item.
    */
   get activeIndex(): number {
     return this._activeIndex;
@@ -109,14 +113,14 @@ class MenuBar extends Panel {
   }
 
   /**
-   * Get the active (highlighted) item.
+   * Get the active (highlighted) menu item.
    */
   get activeItem(): MenuItem {
     return this._items[this._activeIndex];
   }
 
   /**
-   * Set the active (highlighted) item.
+   * Set the active (highlighted) menu item.
    *
    * Only an enabled non-separator item can be set as the active item.
    */
@@ -141,7 +145,7 @@ class MenuBar extends Panel {
   /**
    * Get the index of the given menu item.
    */
-  itemIndex(item: MenuItem): number {
+  indexOf(item: MenuItem): number {
     return this._items.indexOf(item);
   }
 
@@ -160,34 +164,20 @@ class MenuBar extends Panel {
    * Returns the new index of the item.
    */
   insertItem(index: number, item: MenuItem): number {
-    var items = this._items;
-    index = Math.max(0, Math.min(index | 0, items.length));
-    if (index === items.length) {
-      items.push(item);
-    } else {
-      items.splice(index, 0, item);
-    }
+    index = Math.max(0, Math.min(index | 0, this._items.length));
+    this._items.splice(index, 0, item);
     this.itemInserted(index, item);
     return index;
   }
 
   /**
-   * Remove the menu item at the given index from the menu bar.
-   *
-   * Returns the removed item.
+   * Remove and return the menu item at the given index.
    */
-  takeItem(index: number): MenuItem {
-    index = index | 0;
-    var items = this._items;
-    if (index < 0 || index >= items.length) {
+  removeAt(index: number): MenuItem {
+    if (index < 0 || index >= this._items.length) {
       return void 0;
     }
-    var item: MenuItem;
-    if (index === items.length - 1) {
-      item = items.pop();
-    } else {
-      item = items.splice(index, 1)[0];
-    }
+    var item = this._items.splice(index, 1)[0];
     this.itemRemoved(index, item);
     return item;
   }
@@ -199,10 +189,7 @@ class MenuBar extends Panel {
    */
   removeItem(item: MenuItem): number {
     var index = this._items.indexOf(item);
-    if (index === -1) {
-      return -1;
-    }
-    this.takeItem(index);
+    if (index !== -1) this.removeAt(index);
     return index;
   }
 
@@ -225,7 +212,7 @@ class MenuBar extends Panel {
    */
   activateNextItem(): void {
     var from = this._activeIndex + 1;
-    var i = firstWrap(this._items, isSelectable, from);
+    var i = findFirstIndex(this._items, isSelectable, from, true);
     this._setActiveIndex(i);
     var menu = this._childMenu;
     if (menu) menu.activateNextItem();
@@ -238,7 +225,7 @@ class MenuBar extends Panel {
    */
   activatePreviousItem(): void {
     var from = this._activeIndex - 1;
-    var i = lastWrap(this._items, isSelectable, from);
+    var i = findLastIndex(this._items, isSelectable, from, true);
     this._setActiveIndex(i);
     var menu = this._childMenu;
     if (menu) menu.activateNextItem();
@@ -251,9 +238,9 @@ class MenuBar extends Panel {
    */
   activateMnemonicItem(key: string): void {
     key = key.toUpperCase();
-    var i = firstWrap(this._items, it => {
+    var i = findFirstIndex(this._items, it => {
       return isSelectable(it) && it.mnemonic.toUpperCase() === key;
-    }, this._activeIndex + 1);
+    }, this._activeIndex + 1, true);
     this._setActiveIndex(i);
     var menu = this._childMenu;
     if (menu) menu.activateNextItem();
@@ -290,9 +277,7 @@ class MenuBar extends Panel {
    * Compute the minimum size hint for the menu bar.
    */
   minSizeHint(): Size {
-    var style = window.getComputedStyle(this.node);
-    var height = parseInt(style.minHeight, 10) || 0;
-    return new Size(0, height);
+    return new Size(0, this.boxSizing().minHeight);
   }
 
   /**
@@ -353,37 +338,35 @@ class MenuBar extends Panel {
    */
   protected handleEvent(event: Event): void {
     switch (event.type) {
-      case 'mousedown':
-        this.domEvent_mousedown(<MouseEvent>event);
-        break;
-      case 'mousemove':
-        this.domEvent_mousemove(<MouseEvent>event);
-        break;
-      case 'mouseleave':
-        this.domEvent_mouseleave(<MouseEvent>event);
-        break;
-      case 'keydown':
-        this.domEvent_keydown(<KeyboardEvent>event);
-        break;
-      case 'keypress':
-        this.domEvent_keypress(<KeyboardEvent>event);
-        break;
-      default:
-        break;
+    case 'mousedown':
+      this._evtMouseDown(<MouseEvent>event);
+      break;
+    case 'mousemove':
+      this._evtMouseMove(<MouseEvent>event);
+      break;
+    case 'mouseleave':
+      this._evtMouseLeave(<MouseEvent>event);
+      break;
+    case 'keydown':
+      this._evtKeyDown(<KeyboardEvent>event);
+      break;
+    case 'keypress':
+      this._evtKeyPress(<KeyboardEvent>event);
+      break;
     }
   }
 
   /**
    * Handle the 'mousedown' event for the menu bar.
    */
-  protected domEvent_mousedown(event: MouseEvent): void {
+  private _evtMouseDown(event: MouseEvent): void {
     var x = event.clientX;
     var y = event.clientY;
     if (this._state === MBState.Inactive) {
       if (event.button !== 0) {
         return;
       }
-      var index = firstWrap(this._nodes, n => hitTest(n, x, y), 0);
+      var index = findFirstIndex(this._nodes, n => hitTest(n, x, y));
       if (!isSelectable(this._items[index])) {
         return;
       }
@@ -394,7 +377,7 @@ class MenuBar extends Panel {
         return;
       }
       this._setState(MBState.Inactive);
-      var index = firstWrap(this._nodes, n => hitTest(n, x, y), 0);
+      var index = findFirstIndex(this._nodes, n => hitTest(n, x, y));
       var ok = isSelectable(this._items[index]);
       this._setActiveIndex(ok ? index : -1);
     }
@@ -403,10 +386,10 @@ class MenuBar extends Panel {
   /**
    * Handle the 'mousemove' event for the menu bar.
    */
-  protected domEvent_mousemove(event: MouseEvent): void {
+  private _evtMouseMove(event: MouseEvent): void {
     var x = event.clientX;
     var y = event.clientY;
-    var index = firstWrap(this._nodes, n => hitTest(n, x, y), 0);
+    var index = findFirstIndex(this._nodes, n => hitTest(n, x, y));
     if (index === this._activeIndex) {
       return;
     }
@@ -420,7 +403,7 @@ class MenuBar extends Panel {
   /**
    * Handle the 'mouseleave' event for the menu bar.
    */
-  protected domEvent_mouseleave(event: MouseEvent): void {
+  private _evtMouseLeave(event: MouseEvent): void {
     if (this._state === MBState.Inactive) {
       this._setActiveIndex(-1);
     }
@@ -429,55 +412,53 @@ class MenuBar extends Panel {
   /**
    * Handle the 'keydown' event for the menu bar.
    */
-  protected domEvent_keydown(event: KeyboardEvent): void {
+  private _evtKeyDown(event: KeyboardEvent): void {
     event.stopPropagation();
     var menu = this._childMenu;
     var leaf = menu && Menu.leafMenu(menu);
     switch (event.keyCode) {
-      case 13:  // Enter
-        event.preventDefault();
-        if (leaf) leaf.triggerActiveItem();
-        break;
-      case 27:  // Escape
-        event.preventDefault();
-        if (leaf && leaf !== menu) {
-          leaf.close();
-        } else {
-          this._setState(MBState.Inactive);
-          this._setActiveIndex(-1);
-        }
-        break;
-      case 37:  // Left Arrow
-        event.preventDefault();
-        if (leaf && leaf !== menu) {
-          leaf.close();
-        } else {
-          this.activatePreviousItem();
-        }
-        break;
-      case 38:  // Up Arrow
-        event.preventDefault();
-        if (leaf) leaf.activatePreviousItem();
-        break;
-      case 39:  // Right Arrow
-        event.preventDefault();
-        if (!leaf || !leaf.openActiveItem()) {
-          this.activateNextItem();
-        }
-        break;
-      case 40:  // Down Arrow
-        event.preventDefault();
-        if (leaf) leaf.activateNextItem();
-        break;
-      default:
-        break;
+    case 13:  // Enter
+      event.preventDefault();
+      if (leaf) leaf.triggerActiveItem();
+      break;
+    case 27:  // Escape
+      event.preventDefault();
+      if (leaf && leaf !== menu) {
+        leaf.close();
+      } else {
+        this._setState(MBState.Inactive);
+        this._setActiveIndex(-1);
+      }
+      break;
+    case 37:  // Left Arrow
+      event.preventDefault();
+      if (leaf && leaf !== menu) {
+        leaf.close();
+      } else {
+        this.activatePreviousItem();
+      }
+      break;
+    case 38:  // Up Arrow
+      event.preventDefault();
+      if (leaf) leaf.activatePreviousItem();
+      break;
+    case 39:  // Right Arrow
+      event.preventDefault();
+      if (!leaf || !leaf.openActiveItem()) {
+        this.activateNextItem();
+      }
+      break;
+    case 40:  // Down Arrow
+      event.preventDefault();
+      if (leaf) leaf.activateNextItem();
+      break;
     }
   }
 
   /**
    * Handle the 'keypress' event for the menu bar.
    */
-  protected domEvent_keypress(event: KeyboardEvent): void {
+  private _evtKeyPress(event: KeyboardEvent): void {
     event.preventDefault();
     event.stopPropagation();
     var str = String.fromCharCode(event.charCode);
@@ -687,22 +668,4 @@ function initItemNode(item: MenuItem, node: HTMLElement): void {
   (<HTMLElement>node.children[1]).textContent = item.text;
 }
 
-
-function firstWrap<T>(items: T[], cb: (v: T) => boolean, s: number): number {
-  for (var i = 0, n = items.length; i < n; ++i) {
-    var j = (s + i) % n;
-    if (cb(items[j])) return j;
-  }
-  return -1;
-}
-
-
-function lastWrap<T>(items: T[], cb: (v: T) => boolean, s: number): number {
-  for (var i = 0, n = items.length; i < n; ++i) {
-    var j = (((s - i) % n) + n) % n;
-    if (cb(items[j])) return j;
-  }
-  return -1;
-}
-
-} // modulephosphor.panels
+} // module phosphor.widgets

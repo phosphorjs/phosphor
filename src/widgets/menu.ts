@@ -5,16 +5,20 @@
 |
 | The full license is in the file LICENSE, distributed with this software.
 |----------------------------------------------------------------------------*/
-module phosphor.panels {
+module phosphor.widgets {
 
-import IMessage = core.IMessage;
+import List = collections.List;
+import findFirstIndex = collections.findFirstIndex;
+import findLastIndex = collections.findLastIndex;
+
+import IDisposable = core.IDisposable;
 import Signal = core.Signal;
 
-import hitTest = domutil.hitTest;
+import hitTest = utility.hitTest;
 
 
 /**
- * The class name added to a menu panel.
+ * The class name added to menu instances.
  */
 var MENU_CLASS = 'p-Menu';
 
@@ -90,10 +94,10 @@ var SUBMENU_OVERLAP = 3;
 
 
 /**
- * A panel which displays an array of menu items as a menu.
+ * An object which displays menu items as a popup menu.
  */
 export
-class Menu extends Panel {
+class Menu implements IDisposable {
   /**
    * Find the root menu of a menu hierarchy.
    */
@@ -105,7 +109,7 @@ class Menu extends Panel {
   }
 
   /**
-   * Find the leaf menu of the menu hierarchy.
+   * Find the leaf menu of a menu hierarchy.
    */
   static leafMenu(menu: Menu): Menu {
     while (menu._childMenu) {
@@ -123,22 +127,27 @@ class Menu extends Panel {
    * Construct a new menu.
    */
   constructor(items?: MenuItem[]) {
-    super();
-    this.node.classList.add(MENU_CLASS);
+    this._node = this.createNode();
+    this._node.classList.add(MENU_CLASS);
     if (items) items.forEach(it => this.addItem(it));
   }
 
   /**
-   * Dispose of the resources held by the panel.
+   * Dispose of the resources held by the menu.
    */
   dispose(): void {
     this._reset();
-    this._removeFromParentMenu();
+    this._removeFromParent();
     this.closed.disconnect();
     this.clearItems();
-    super.dispose();
   }
 
+  /**
+   * Get the DOM node for the menu.
+   */
+  get node(): HTMLElement {
+    return this._node;
+  }
 
   /**
    * Get the parent menu of the menu.
@@ -159,7 +168,7 @@ class Menu extends Panel {
   }
 
   /**
-   * Get the index of the active (highlighted) item.
+   * Get the index of the active (highlighted) menu item.
    */
   get activeIndex(): number {
     return this._activeIndex;
@@ -177,14 +186,14 @@ class Menu extends Panel {
   }
 
   /**
-   * Get the active (highlighted) item.
+   * Get the active (highlighted) menu item.
    */
   get activeItem(): MenuItem {
     return this._items[this._activeIndex];
   }
 
   /**
-   * Set the active (highlighted) item.
+   * Set the active (highlighted) menu item.
    *
    * Only a non-separator item can be set as the active item.
    */
@@ -209,7 +218,7 @@ class Menu extends Panel {
   /**
    * Get the index of the given menu item.
    */
-  itemIndex(item: MenuItem): number {
+  indexOf(item: MenuItem): number {
     return this._items.indexOf(item);
   }
 
@@ -228,34 +237,20 @@ class Menu extends Panel {
    * Returns the new index of the item.
    */
   insertItem(index: number, item: MenuItem): number {
-    var items = this._items;
-    index = Math.max(0, Math.min(index | 0, items.length));
-    if (index === items.length) {
-      items.push(item);
-    } else {
-      items.splice(index, 0, item);
-    }
+    index = Math.max(0, Math.min(index | 0, this._items.length));
+    this._items.splice(index, 0, item);
     this.itemInserted(index, item);
     return index;
   }
 
   /**
-   * Remove the menu item at the given index from the menu.
-   *
-   * Returns the removed item.
+   * Remove and return the menu item at the given index.
    */
-  takeItem(index: number): MenuItem {
-    index = index | 0;
-    var items = this._items;
-    if (index < 0 || index >= items.length) {
+  removeAt(index: number): MenuItem {
+    if (index < 0 || index >= this._items.length) {
       return void 0;
     }
-    var item: MenuItem;
-    if (index === items.length - 1) {
-      item = items.pop();
-    } else {
-      item = items.splice(index, 1)[0];
-    }
+    var item = this._items.splice(index, 1)[0];
     this.itemRemoved(index, item);
     return item;
   }
@@ -266,11 +261,8 @@ class Menu extends Panel {
    * Returns the index of the removed item.
    */
   removeItem(item: MenuItem): number {
-    var index = this._items.indexOf(item);
-    if (index === -1) {
-      return -1;
-    }
-    this.takeItem(index);
+    var index = this.indexOf(item);
+    if (index !== -1) this.removeAt(index);
     return index;
   }
 
@@ -292,8 +284,9 @@ class Menu extends Panel {
    * This is equivalent to pressing the down arrow key.
    */
   activateNextItem(): void {
-    var k = this._activeIndex + 1;
-    var i = firstWrap(this._items, it => it.type !== 'separator', k);
+    var i = findFirstIndex(this._items, it => {
+      return it.type !== 'separator';
+    }, this._activeIndex + 1, true);
     this._setActiveIndex(i);
   }
 
@@ -303,8 +296,9 @@ class Menu extends Panel {
    * This is equivalent to pressing the up arrow key.
    */
   activatePreviousItem(): void {
-    var k = this._activeIndex - 1;
-    var i = lastWrap(this._items, it => it.type !== 'separator', k);
+    var i = findLastIndex(this._items, it => {
+      return it.type !== 'separator';
+    }, this._activeIndex - 1, true);
     this._setActiveIndex(i);
   }
 
@@ -315,12 +309,12 @@ class Menu extends Panel {
    */
   activateMnemonicItem(key: string): void {
     key = key.toUpperCase();
-    var i = firstWrap(this._items, it => {
+    var i = findFirstIndex(this._items, it => {
       if (it.type !== 'separator' && it.enabled) {
         return it.mnemonic.toUpperCase() === key;
       }
       return false;
-    }, this._activeIndex + 1);
+    }, this._activeIndex + 1, true);
     this._setActiveIndex(i);
   }
 
@@ -379,9 +373,13 @@ class Menu extends Panel {
    * prevent these actions, use the 'open' method instead.
    */
   popup(x: number, y: number, forceX = false, forceY = false): void {
-    if (this.isAttached) {
+    var node = this._node;
+    if (node.parentNode) {
       return;
     }
+    node.addEventListener('mouseup', <any>this);
+    node.addEventListener('mouseleave', <any>this);
+    node.addEventListener('contextmenu', <any>this);
     document.addEventListener('keydown', <any>this, true);
     document.addEventListener('keypress', <any>this, true);
     document.addEventListener('mousedown', <any>this, true);
@@ -403,24 +401,32 @@ class Menu extends Panel {
    * Use the `popup` method for the alternative behavior.
    */
   open(x: number, y: number, forceX = false, forceY = false): void {
-    if (!this.isAttached) openRootMenu(this, x, y, forceX, forceY);
+    var node = this._node;
+    if (node.parentNode) {
+      return;
+    }
+    node.addEventListener('mouseup', <any>this);
+    node.addEventListener('mouseleave', <any>this);
+    node.addEventListener('contextmenu', <any>this);
+    openRootMenu(this, x, y, forceX, forceY);
   }
 
   /**
-   * Handle the 'close' message for the menu.
-   *
-   * If the menu is currently attached, this will detach the menu
-   * and emit the `closed` signal. The super handler is not called.
+   * Close the menu and detach it's node from the DOM.
    */
-  protected onClose(msg: IMessage): void {
-    if (!this.isAttached) {
-      return;
-    }
-    this.hide();
+  close(): void {
+    var node = this._node;
+    var pnode = node.parentNode;
+    if (pnode) pnode.removeChild(node);
+    node.removeEventListener('mouseup', <any>this);
+    node.removeEventListener('mouseleave', <any>this);
+    node.removeEventListener('contextmenu', <any>this);
+    document.removeEventListener('keydown', <any>this, true);
+    document.removeEventListener('keypress', <any>this, true);
+    document.removeEventListener('mousedown', <any>this, true);
     this._reset();
-    this._removeFromParentMenu();
+    this._removeFromParent();
     this.closed.emit(this, void 0);
-    this.detach();
   }
 
   /**
@@ -459,56 +465,31 @@ class Menu extends Panel {
   }
 
   /**
-   * A method invoked on an 'after-attach' message.
-   */
-  protected onAfterAttach(msg: IMessage): void {
-    var node = this.node;
-    node.addEventListener('mouseup', <any>this);
-    node.addEventListener('mouseleave', <any>this);
-    node.addEventListener('contextmenu', <any>this);
-  }
-
-  /**
-   * A method invoked on an 'after-detach' message.
-   */
-  protected onAfterDetach(msg: IMessage): void {
-    var node = this.node;
-    node.removeEventListener('mouseup', <any>this);
-    node.removeEventListener('mouseleave', <any>this);
-    node.removeEventListener('contextmenu', <any>this);
-    document.removeEventListener('mousedown', <any>this, true);
-    document.removeEventListener('keydown', <any>this, true);
-    document.removeEventListener('keypress', <any>this, true);
-  }
-
-  /**
    * Handle the DOM events for the menu.
    */
   protected handleEvent(event: Event): void {
     switch (event.type) {
-      case 'mouseenter':
-        this.domEvent_mouseenter(<MouseEvent>event);
-        break;
-      case 'mouseleave':
-        this.domEvent_mouseleave(<MouseEvent>event);
-        break;
-      case 'mousedown':
-        this.domEvent_mousedown(<MouseEvent>event);
-        break;
-      case 'mouseup':
-        this.domEvent_mouseup(<MouseEvent>event);
-        break;
-      case 'contextmenu':
-        this.domEvent_contextmenu(event);
-        break;
-      case 'keydown':
-        this.domEvent_keydown(<KeyboardEvent>event);
-        break;
-      case 'keypress':
-        this.domEvent_keypress(<KeyboardEvent>event);
-        break;
-      default:
-        break;
+    case 'mouseenter':
+      this._evtMouseEnter(<MouseEvent>event);
+      break;
+    case 'mouseleave':
+      this._evtMouseLeave(<MouseEvent>event);
+      break;
+    case 'mousedown':
+      this._evtMouseDown(<MouseEvent>event);
+      break;
+    case 'mouseup':
+      this._evtMouseUp(<MouseEvent>event);
+      break;
+    case 'contextmenu':
+      this._evtContextMenu(event);
+      break;
+    case 'keydown':
+      this._evtKeyDown(<KeyboardEvent>event);
+      break;
+    case 'keypress':
+      this._evtKeyPress(<KeyboardEvent>event);
+      break;
     }
   }
 
@@ -517,7 +498,7 @@ class Menu extends Panel {
    *
    * This event listener is attached to the child item nodes.
    */
-  protected domEvent_mouseenter(event: MouseEvent): void {
+  private _evtMouseEnter(event: MouseEvent): void {
     this._syncAncestors();
     this._closeChildMenu();
     this._cancelPendingOpen();
@@ -547,7 +528,7 @@ class Menu extends Panel {
    *
    * The event listener is only attached to the menu node.
    */
-  protected domEvent_mouseleave(event: MouseEvent): void {
+  private _evtMouseLeave(event: MouseEvent): void {
     this._cancelPendingOpen();
     var x = event.clientX;
     var y = event.clientY;
@@ -563,7 +544,7 @@ class Menu extends Panel {
    *
    * This event listener is attached to the menu node.
    */
-  protected domEvent_mouseup(event: MouseEvent): void {
+  private _evtMouseUp(event: MouseEvent): void {
     event.preventDefault();
     event.stopPropagation();
     if (event.button === 0) {
@@ -576,7 +557,7 @@ class Menu extends Panel {
    *
    * This event listener is attached to the menu node.
    */
-  protected domEvent_contextmenu(event: Event): void {
+  private _evtContextMenu(event: Event): void {
     event.preventDefault();
     event.stopPropagation();
   }
@@ -587,7 +568,7 @@ class Menu extends Panel {
    * This event listener is attached to the document for the root
    * menu only when it is opened as a popup menu.
    */
-  protected domEvent_mousedown(event: MouseEvent): void {
+  private _evtMouseDown(event: MouseEvent): void {
     var menu = this;
     var hit = false;
     var x = event.clientX;
@@ -605,36 +586,34 @@ class Menu extends Panel {
    * This event listener is attached to the document for the root
    * menu only when it is opened as a popup menu.
    */
-  protected domEvent_keydown(event: KeyboardEvent): void {
+  private _evtKeyDown(event: KeyboardEvent): void {
     event.stopPropagation();
     var leaf = Menu.leafMenu(this);
     switch (event.keyCode) {
-      case 13:  // Enter
-        event.preventDefault();
-        leaf.triggerActiveItem();
-        break;
-      case 27:  // Escape
-        event.preventDefault();
-        leaf.close();
-        break;
-      case 37:  // Left Arrow
-        event.preventDefault();
-        if (leaf !== this) leaf.close();
-        break;
-      case 38:  // Up Arrow
-        event.preventDefault();
-        leaf.activatePreviousItem();
-        break;
-      case 39:  // Right Arrow
-        event.preventDefault();
-        leaf.openActiveItem();
-        break;
-      case 40:  // Down Arrow
-        event.preventDefault();
-        leaf.activateNextItem();
-        break;
-      default:
-        break;
+    case 13:  // Enter
+      event.preventDefault();
+      leaf.triggerActiveItem();
+      break;
+    case 27:  // Escape
+      event.preventDefault();
+      leaf.close();
+      break;
+    case 37:  // Left Arrow
+      event.preventDefault();
+      if (leaf !== this) leaf.close();
+      break;
+    case 38:  // Up Arrow
+      event.preventDefault();
+      leaf.activatePreviousItem();
+      break;
+    case 39:  // Right Arrow
+      event.preventDefault();
+      leaf.openActiveItem();
+      break;
+    case 40:  // Down Arrow
+      event.preventDefault();
+      leaf.activateNextItem();
+      break;
     }
   }
 
@@ -644,7 +623,7 @@ class Menu extends Panel {
    * This event listener is attached to the document for the root
    * menu only when it is opened as a popup menu.
    */
-  protected domEvent_keypress(event: KeyboardEvent): void {
+  private _evtKeyPress(event: KeyboardEvent): void {
     event.preventDefault();
     event.stopPropagation();
     var str = String.fromCharCode(event.charCode);
@@ -709,10 +688,7 @@ class Menu extends Panel {
    * Any pending open operation will be cancelled before opening
    * the menu or queueing the delayed task to open the menu.
    */
-  private _openChildMenu(
-      item: MenuItem,
-      node: HTMLElement,
-      delayed: boolean): void {
+  private _openChildMenu(item: MenuItem, node: HTMLElement, delayed: boolean): void {
     if (item === this._childItem) {
       return;
     }
@@ -724,15 +700,26 @@ class Menu extends Panel {
         this._childItem = item;
         this._childMenu = menu;
         menu._parentMenu = this;
-        openSubmenu(menu, node);
+        menu._openAsSubmenu(node);
       }, OPEN_DELAY);
     } else {
       var menu = item.submenu;
       this._childItem = item;
       this._childMenu = menu;
       menu._parentMenu = this;
-      openSubmenu(menu, node);
+      menu._openAsSubmenu(node);
     }
+  }
+
+  /**
+   * Open the menu as a child menu.
+   */
+  private _openAsSubmenu(item: HTMLElement): void {
+    var node = this._node;
+    node.addEventListener('mouseup', <any>this);
+    node.addEventListener('mouseleave', <any>this);
+    node.addEventListener('contextmenu', <any>this);
+    openSubmenu(this, item);
   }
 
   /**
@@ -773,7 +760,7 @@ class Menu extends Panel {
   /**
    * Remove the menu from its parent menu.
    */
-  private _removeFromParentMenu(): void {
+  private _removeFromParent(): void {
     var parent = this._parentMenu;
     if (!parent) {
       return;
@@ -822,9 +809,10 @@ class Menu extends Panel {
     }
   }
 
-  private _childItem: MenuItem = null;
-  private _childMenu: Menu = null;
+  private _node: HTMLElement;
   private _parentMenu: Menu = null;
+  private _childMenu: Menu = null;
+  private _childItem: MenuItem = null;
   private _items: MenuItem[] = [];
   private _nodes: HTMLElement[] = [];
   private _activeIndex = -1;
@@ -870,18 +858,12 @@ function lastItemOffset(node: HTMLElement): number {
 /**
  * Open the menu as a root menu at the target location.
  */
-function openRootMenu(
-    menu: Menu,
-    x: number,
-    y: number,
-    forceX: boolean,
-    forceY: boolean): void {
+function openRootMenu(menu: Menu, x: number, y: number, forceX: boolean, forceY: boolean): void {
   // mount far offscreen for measurement
   var node = menu.node;
   var style = node.style;
   style.visibility = 'hidden';
-  menu.attach(document.body);
-  menu.show();
+  document.body.appendChild(menu.node);
 
   // compute the adjusted coordinates
   var elem = document.documentElement;
@@ -914,8 +896,7 @@ function openSubmenu(menu: Menu, item: HTMLElement): void {
   var node = menu.node;
   var style = node.style;
   style.visibility = 'hidden';
-  menu.attach(document.body);
-  menu.show();
+  document.body.appendChild(menu.node);
 
   // compute the adjusted coordinates
   var elem = document.documentElement;
@@ -990,22 +971,4 @@ function initItemNode(item: MenuItem, node: HTMLElement): void {
   (<HTMLElement>node.children[2]).textContent = item.shortcut;
 }
 
-
-function firstWrap<T>(items: T[], cb: (v: T) => boolean, s: number): number {
-  for (var i = 0, n = items.length; i < n; ++i) {
-    var j = (s + i) % n;
-    if (cb(items[j])) return j;
-  }
-  return -1;
-}
-
-
-function lastWrap<T>(items: T[], cb: (v: T) => boolean, s: number): number {
-  for (var i = 0, n = items.length; i < n; ++i) {
-    var j = (((s - i) % n) + n) % n;
-    if (cb(items[j])) return j;
-  }
-  return -1;
-}
-
-} // module phosphor.panels
+} // module phosphor.widgets
