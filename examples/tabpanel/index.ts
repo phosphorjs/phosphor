@@ -7,13 +7,13 @@
 |----------------------------------------------------------------------------*/
 module example {
 
-import ITab = phosphor.panels.ITab;
-import Panel = phosphor.panels.Panel;
-import Tab = phosphor.panels.Tab;
-import TabPanel = phosphor.panels.TabPanel;
+import ITab = phosphor.widgets.ITab;
+import Tab = phosphor.widgets.Tab;
+import TabPanel = phosphor.widgets.TabPanel;
+import Widget = phosphor.widgets.Widget;
 
 
-class Content extends Panel {
+class Content extends Widget {
 
   constructor(title: string) {
     super();
@@ -33,10 +33,10 @@ class Content extends Panel {
 function main(): void {
   var tabs = new TabPanel();
 
-  tabs.addPanel(new Content('Red'));
-  tabs.addPanel(new Content('Yellow'));
-  tabs.addPanel(new Content('Blue'));
-  tabs.addPanel(new Content('Green'));
+  tabs.addWidget(new Content('Red'));
+  tabs.addWidget(new Content('Yellow'));
+  tabs.addWidget(new Content('Blue'));
+  tabs.addWidget(new Content('Green'));
 
   tabs.attach(document.getElementById('main'));
   tabs.fit();
