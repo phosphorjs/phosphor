@@ -104,7 +104,7 @@ class StackedLayout extends Layout {
   /**
    * Remove and return the layout item at the specified index.
    */
-  takeAt(index: number): ILayoutItem {
+  removeAt(index: number): ILayoutItem {
     index = index | 0;
     if (index < 0 || index >= this._items.length) {
       return void 0;

@@ -390,7 +390,7 @@ class TabBar extends Widget {
    *
    * Returns the removed tab.
    */
-  takeAt(index: number, animate = true): ITab {
+  removeAt(index: number, animate = true): ITab {
     index = index | 0;
     var tabs = this._tabs;
     if (index < 0 || index >= tabs.length) {
@@ -408,7 +408,7 @@ class TabBar extends Widget {
    */
   removeTab(tab: ITab, animate = true): number {
     var index = this._tabs.indexOf(tab);
-    this.takeAt(index, animate);
+    this.removeAt(index, animate);
     return index;
   }
 

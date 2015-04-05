@@ -194,7 +194,7 @@ class TabPanel extends Widget {
    * Handle the `widgetRemoved` signal from the stacked panel.
    */
   private _sw_widgetRemoved(sender: StackedPanel, args: Pair<number, Widget>): void {
-    this._tabBar.takeAt(args.first);
+    this._tabBar.removeAt(args.first);
   }
 
   private _tabBar: TabBar;

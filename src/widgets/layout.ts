@@ -90,7 +90,7 @@ class Layout implements IMessageFilter, IDisposable {
    *
    * This must be implemented by a subclass.
    */
-  takeAt(index: number): ILayoutItem {
+  removeAt(index: number): ILayoutItem {
     throw new Error('not implemented');
   }
 
@@ -151,7 +151,7 @@ class Layout implements IMessageFilter, IDisposable {
    */
   remove(value: Widget | ILayoutItem): void {
     var i = this.indexOf(value);
-    if (i !== -1) this.takeAt(i);
+    if (i !== -1) this.removeAt(i);
   }
 
   /**
