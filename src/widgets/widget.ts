@@ -10,7 +10,9 @@ module phosphor.widgets {
 import some = collections.some;
 import IIterable = collections.IIterable;
 import IIterator = collections.IIterator;
+import IList = collections.IList;
 import List = collections.List;
+import ReadOnlyList = collections.ReadOnlyList;
 
 import IDisposable = core.IDisposable;
 import IMessage = core.IMessage;
@@ -313,6 +315,13 @@ class Widget implements IMessageHandler, IDisposable {
       sendMessage(parent, new ChildMessage('child-added', this));
     }
     sendMessage(this, new Message('parent-changed'));
+  }
+
+  /**
+   * Get a read only list of the widget's children.
+   */
+  get childList(): IList<Widget> {
+    return new ReadOnlyList(this._children);
   }
 
   /**
