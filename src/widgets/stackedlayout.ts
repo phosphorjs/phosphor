@@ -5,42 +5,32 @@
 |
 | The full license is in the file LICENSE, distributed with this software.
 |----------------------------------------------------------------------------*/
-module phosphor.panels {
+module phosphor.widgets {
 
 import Signal = core.Signal;
 
-
-/**
- * The arguments object for stack layout signals.
- */
-export
-interface IStackIndexArgs {
-  /**
-   * The stack layout index of interest.
-   */
-  index: number;
-
-  /**
-   * The panel associated with the index.
-   */
-  panel: Panel;
-}
+import Pair = utility.Pair;
+import Size = utility.Size;
 
 
 /**
- * A layout in which only one child panel is visible at a time.
+ * A layout in which only one widget is visible at a time.
+ *
+ * User code is responsible for managing the current layout index. The
+ * index defaults to -1, which means no widget will be shown. The index
+ * must be set to a valid index in order for a widget to be displayed.
+ *
+ * If the current widget is removed, the current index is reset to -1.
+ *
+ * This layout will typically be used in conjunction with another
+ * widget, such as a tab bar, which manipulates the layout index.
  */
 export
-class StackLayout extends Layout {
+class StackedLayout extends Layout {
   /**
-   * A signal emitted when the current index is changed.
+   * A signal emitted when a widget is removed from the layout.
    */
-  currentChanged = new Signal<StackLayout, IStackIndexArgs>();
-
-  /**
-   * A signal emitted when a panel is removed from the layout.
-   */
-  panelRemoved = new Signal<StackLayout, IStackIndexArgs>();
+  widgetRemoved = new Signal<StackedLayout, Pair<number, Widget>>();
 
   /**
    * Construct a new stack layout.
@@ -52,24 +42,23 @@ class StackLayout extends Layout {
    */
   dispose(): void {
     this._items = null;
-    this.currentChanged.disconnect();
-    this.panelRemoved.disconnect();
+    this.widgetRemoved.disconnect();
     super.dispose();
   }
 
   /**
-   * Get the current index of the stack.
+   * Get the current index of the layout.
    */
   get currentIndex(): number {
     return this._currentIndex;
   }
 
   /**
-   * Set the current index of the stack.
+   * Set the current index of the layout.
    */
   set currentIndex(index: number) {
-    var prev = this.currentPanel;
-    var next = this.panelAt(index);
+    var prev = this.currentWidget;
+    var next = this.widgetAt(index);
     if (prev === next) {
       return;
     }
@@ -78,25 +67,24 @@ class StackLayout extends Layout {
     if (prev) prev.hide();
     if (next) next.show();
     // IE repaints before firing the animation frame which processes
-    // the layout event triggered by the show/hide calls above. This
-    // causes unsightly flicker when changing the visible panel. To
-    // avoid this, the layout is updated immediately.
-    this.layout();
-    this.currentChanged.emit(this, { index: index, panel: next });
+    // the layout update triggered by the show/hide calls above. This
+    // causes a double paint flicker when changing the visible widget.
+    // The workaround is to update the layout immediately.
+    this.update();
   }
 
   /**
-   * Get the current panel in the stack.
+   * Get the current widget in the layout.
    */
-  get currentPanel(): Panel {
-    return this.panelAt(this.currentIndex);
+  get currentWidget(): Widget {
+    return this.widgetAt(this.currentIndex);
   }
 
   /**
-   * Set the current panel in the stack.
+   * Set the current widget in the layout.
    */
-  set currentPanel(panel: Panel) {
-    this.currentIndex = this.indexOf(panel);
+  set currentWidget(widget: Widget) {
+    this.currentIndex = this.indexOf(widget);
   }
 
   /**
@@ -124,42 +112,39 @@ class StackLayout extends Layout {
     var item = this._items.splice(index, 1)[0];
     if (index === this._currentIndex) {
       this._currentIndex = -1;
+      item.widget.hide();
       this.invalidate();
-      this.currentChanged.emit(this, { index: -1, panel: void 0 });
     } else if (index < this._currentIndex) {
       this._currentIndex--;
     }
-    this.panelRemoved.emit(this, { index: index, panel: item.panel });
+    this.widgetRemoved.emit(this, new Pair(index, item.widget));
     return item;
   }
 
   /**
-   * Add a panel as the last item in the layout.
+   * Add a widget as the last item in the layout.
    *
-   * If the panel already exists in the layout, it will be moved.
+   * If the widget already exists in the layout, it will be moved.
    *
-   * Returns the index of the added panel.
+   * Returns the index of the added widget.
    */
-  addPanel(panel: Panel): number {
-    return this.insertPanel(this.count, panel);
+  addWidget(widget: Widget, alignment: Alignment = 0): number {
+    return this.insertWidget(this.count, widget, alignment);
   }
 
   /**
-   * Insert a panel into the layout at the given index.
+   * Insert a widget into the layout at the given index.
    *
-   * If the panel already exists in the layout, it will be moved.
+   * If the widget already exists in the layout, it will be moved.
    *
-   * Returns the index of the added panel.
+   * Returns the index of the added widget.
    */
-  insertPanel(index: number, panel: Panel): number {
-    var i = this.indexOf(panel);
-    if (i !== -1) {
-      return this.movePanel(i, index);
-    }
-    panel.hide();
-    this.ensureParent(panel);
+  insertWidget(index: number, widget: Widget, alignment: Alignment = 0): number {
+    widget.hide();
+    this.remove(widget);
+    this.ensureParent(widget);
     index = Math.max(0, Math.min(index, this._items.length));
-    this._items.splice(index, 0, new PanelItem(panel));
+    this._items.splice(index, 0, new WidgetItem(widget, alignment));
     if (index <= this._currentIndex) {
       this._currentIndex++;
     }
@@ -167,11 +152,15 @@ class StackLayout extends Layout {
   }
 
   /**
-   * Move a panel from one index to another.
+   * Move a widget from one index to another.
    *
-   * Returns the new index of the panel.
+   * This method is more efficient for moving a widget than calling
+   * `insertWidget` for an already added widget. It will not remove
+   * the widget before moving it and will not emit `widgetRemoved`.
+   *
+   * Returns -1 if the from index is out of range.
    */
-  movePanel(fromIndex: number, toIndex: number): number {
+  moveWidget(fromIndex: number, toIndex: number): number {
     fromIndex = fromIndex | 0;
     var n = this._items.length;
     if (fromIndex < 0 || fromIndex >= n) {
@@ -235,26 +224,15 @@ class StackLayout extends Layout {
   /**
    * Update the geometry of the child layout items.
    */
-  protected layout(): void {
-    // Bail early when no work needs to be done.
-    var parent = this.parent;
+  protected layout(x: number, y: number, width: number, height: number): void {
     var item = this._items[this._currentIndex];
-    if (!parent || !item) {
+    if (!item) {
       return;
     }
-
-    // Refresh the layout items if needed.
     if (this._dirty) {
       this._setupGeometry();
     }
-
-    // Update the geometry of the visible item.
-    var boxD = parent.boxData;
-    var x = boxD.paddingLeft;
-    var y = boxD.paddingTop;
-    var w = parent.width - boxD.horizontalSum;
-    var h = parent.height - boxD.verticalSum;
-    item.setGeometry(x, y, w, h);
+    item.setGeometry(x, y, width, height);
   }
 
   /**
@@ -270,10 +248,9 @@ class StackLayout extends Layout {
     // No parent means the layout is not yet attached.
     var parent = this.parent;
     if (!parent) {
-      var zero = new Size(0, 0);
-      this._sizeHint = zero;
-      this._minSize = zero;
-      this._maxSize = zero;
+      this._sizeHint = Size.Zero;
+      this._minSize = Size.Zero;
+      this._maxSize = Size.Zero;
       return;
     }
 
@@ -299,9 +276,9 @@ class StackLayout extends Layout {
     }
 
     // Account for padding and border on the parent.
-    var boxD = parent.boxData;
-    var boxW = boxD.horizontalSum;
-    var boxH = boxD.verticalSum;
+    var box = parent.boxSizing();
+    var boxW = box.horizontalSum;
+    var boxH = box.verticalSum;
     hintW += boxW;
     hintH += boxH;
     minW += boxW;
@@ -323,4 +300,4 @@ class StackLayout extends Layout {
   private _items: ILayoutItem[] = [];
 }
 
-} // module phosphor.panels
+} // module phosphor.widgets
