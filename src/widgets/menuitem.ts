@@ -5,7 +5,7 @@
 |
 | The full license is in the file LICENSE, distributed with this software.
 |----------------------------------------------------------------------------*/
-module phosphor.panels {
+module phosphor.widgets {
 
 import Signal = core.Signal;
 
@@ -68,7 +68,7 @@ interface IMenuItemOptions {
 
 
 /**
- * An object which can be added to a menu or menu bar.
+ * An item which can be added to a menu or menu bar.
  */
 export
 class MenuItem {
@@ -293,7 +293,7 @@ class MenuItem {
     }
   }
 
-  private _text: string;
+  private _text = '';
   private _mnemonic = '';
   private _shortcut = '';
   private _className = '';
@@ -303,4 +303,4 @@ class MenuItem {
   private _submenu: Menu = null;
 }
 
-} // module phosphor.panels
+} // module phosphor.widgets
