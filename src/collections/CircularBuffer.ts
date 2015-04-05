@@ -68,6 +68,13 @@ class CircularBuffer<T> implements IDeque<T>, IList<T>, IStack<T> {
   }
 
   /**
+   * Get a reverse iterator for the elements in the buffer.
+   */
+  reverseIterator(): IIterator<T> {
+    return new ListReverseIterator(this);
+  }
+
+  /**
    * Test whether the buffer contains the given value.
    */
   contains(value: T): boolean {

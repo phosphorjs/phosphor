@@ -11,7 +11,7 @@ module phosphor.collections {
  * A double ended queue with constant time access to both ends.
  */
 export
-interface IDeque<T> extends IQueue<T> {
+interface IDeque<T> extends IQueue<T>, IReverseIterable<T> {
   /**
    * Push a value onto the front of the queue.
    */

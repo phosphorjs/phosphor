@@ -11,7 +11,7 @@ module phosphor.collections {
  * A collection of elements which can be accessed by index.
  */
 export
-interface IList<T> extends ICollection<T> {
+interface IList<T> extends ICollection<T>, IReverseIterable<T> {
   /**
    * Get the index of the given value.
    *

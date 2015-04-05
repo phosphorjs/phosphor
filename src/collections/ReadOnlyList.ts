@@ -18,6 +18,13 @@ class ReadOnlyList<T> extends ReadOnlyCollection<T> implements IList<T> {
   constructor(list: IList<T>) { super(list); }
 
   /**
+   * Get a reverse iterator for the elements in the list.
+   */
+  reverseIterator(): IIterator<T> {
+    return (<IList<T>>this._collection).reverseIterator();
+  }
+
+  /**
    * Get the index of the given value.
    *
    * Returns -1 if the value is not in the list.

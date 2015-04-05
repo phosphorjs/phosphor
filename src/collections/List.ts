@@ -48,6 +48,13 @@ class List<T> implements IList<T>, IStack<T> {
   }
 
   /**
+   * Get a reverse iterator for the elements in the list.
+   */
+  reverseIterator(): IIterator<T> {
+    return new ArrayReverseIterator(this._array);
+  }
+
+  /**
    * Test whether the list contains the given value.
    */
   contains(value: T): boolean {
