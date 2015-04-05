@@ -5,9 +5,11 @@
 |
 | The full license is in the file LICENSE, distributed with this software.
 |----------------------------------------------------------------------------*/
-module phosphor.panels {
+module phosphor.widgets {
 
 import Signal = core.Signal;
+
+import Pair = utility.Pair;
 
 
 /**
@@ -17,38 +19,38 @@ var TAB_PANEL_CLASS = 'p-TabPanel';
 
 
 /**
- * A panel which provides a tabbed container for child panels.
+ * A panel which provides a tabbed container for child widgets.
  *
- * The TabPanel provides a convenient combination of a tab bar and
- * a stack panel which allows the user to toggle between panels by
- * selecting the tab associated with a tabbable panel.
+ * The TabPanel provides a convenient combination of a TabBar and a
+ * StackedPanel which allows the user to toggle between widgets by
+ * selecting the tab associated with a widget.
  */
 export
-class TabPanel extends Panel {
+class TabPanel extends Widget {
   /**
-   * A signal emitted when the current panel is changed.
+   * A signal emitted when the current widget is changed.
    */
-  currentChanged = new Signal<TabPanel, IStackIndexArgs>();
+  currentChanged = new Signal<TabPanel, Pair<number, Widget>>();
 
   /**
    * Construct a new tab panel.
    */
   constructor() {
     super();
-    this.node.classList.add(TAB_PANEL_CLASS);
+    this.addClass(TAB_PANEL_CLASS);
     this.layout = new BoxLayout(Direction.TopToBottom, 0);
-    this.setFlag(PanelFlag.DisallowLayoutChange);
+    this.setFlag(WidgetFlag.DisallowLayoutChange);
 
     var bar = this._tabBar = new TabBar();
     bar.tabMoved.connect(this._tb_tabMoved, this);
     bar.currentChanged.connect(this._tb_currentChanged, this);
     bar.tabCloseRequested.connect(this._tb_tabCloseRequested, this);
 
-    var stack = this._stackPanel = new StackPanel();
-    stack.panelRemoved.connect(this._sw_panelRemoved, this);
+    var stack = this._stackedPanel = new StackedPanel();
+    stack.widgetRemoved.connect(this._sw_widgetRemoved, this);
 
-    (<BoxLayout>this.layout).addPanel(bar);
-    (<BoxLayout>this.layout).addPanel(stack);
+    (<BoxLayout>this.layout).addWidget(bar);
+    (<BoxLayout>this.layout).addWidget(stack);
   }
 
   /**
@@ -56,44 +58,37 @@ class TabPanel extends Panel {
    */
   dispose(): void {
     this._tabBar = null;
-    this._stackPanel = null;
+    this._stackedPanel = null;
     this.currentChanged.disconnect();
     super.dispose();
   }
 
   /**
-   * Get the index of the currently selected panel.
+   * Get the index of the currently selected widget.
    */
   get currentIndex(): number {
-    return this._stackPanel.currentIndex;
+    return this._stackedPanel.currentIndex;
   }
 
   /**
-   * Set the index of the currently selected panel.
+   * Set the index of the currently selected widget.
    */
   set currentIndex(index: number) {
     this._tabBar.currentIndex = index;
   }
 
   /**
-   * Get the currently selected panel.
+   * Get the currently selected widget.
    */
-  get currentPanel(): Panel {
-    return this._stackPanel.currentPanel;
+  get currentWidget(): Widget {
+    return this._stackedPanel.currentWidget;
   }
 
   /**
-   * Set the currently selected panel.
+   * Set the currently selected widget.
    */
-  set currentPanel(panel: Panel) {
-    this._tabBar.currentIndex = this.indexOf(panel);
-  }
-
-  /**
-   * Get the number of panels in the tab panel.
-   */
-  get count(): number {
-    return this._stackPanel.count;
+  set currentWidget(widget: Widget) {
+    this._tabBar.currentIndex = this.indexOf(widget);
   }
 
   /**
@@ -111,94 +106,99 @@ class TabPanel extends Panel {
   }
 
   /**
-   * Get the tab bar used by the tab panel.
+   * Get the tab bar used by the panel.
    */
   get tabBar(): TabBar {
     return this._tabBar;
   }
 
   /**
-   * Get the stack panel used by the tab panel.
+   * Get the number of widgets in the panel.
    */
-  get stackPanel(): StackPanel {
-    return this._stackPanel;
+  get count(): number {
+    return this._stackedPanel.count;
   }
 
   /**
-   * Get the index of the given panel.
+   * Get the index of the given widget.
    */
-  indexOf(panel: Panel): number {
-    return this._stackPanel.indexOf(panel);
+  indexOf(widget: Widget): number {
+    return this._stackedPanel.indexOf(widget);
   }
 
   /**
-   * Add a panel to the end of the tab panel.
+   * Get the widget at the given index.
    *
-   * If the panel has already been added, it will be moved.
-   *
-   * Returns the new index of the panel.
+   * Returns `undefined` if there is no widget at the given index.
    */
-  addPanel(panel: ITabbable): number {
-    return this.insertPanel(this.count, panel);
+  widgetAt(index: number): Widget {
+    return this._stackedPanel.widgetAt(index);
   }
 
   /**
-   * Insert a panel into the tab panel at the given index.
+   * Add a tabbable widget to the end of the panel.
    *
-   * If the panel has already been added, it will be moved.
+   * If the widget already exists in the panel, it will be moved.
    *
-   * Returns the new index of the panel.
+   * Returns the index of the added widget.
    */
-  insertPanel(index: number, panel: ITabbable): number {
-    var i = this.indexOf(panel);
-    if (i >= 0) {
-      return this.movePanel(i, index);
-    }
-    index = this._stackPanel.insertPanel(index, panel);
-    return this._tabBar.insertTab(index, panel.tab);
+  addWidget(widget: ITabbable, alignment: Alignment = 0): number {
+    return this.insertWidget(this.count, widget, alignment);
   }
 
   /**
-   * Move a panel from one index to another.
+   * Insert a tabbable widget into the panel at the given index.
    *
-   * Returns the new index of the panel.
+   * If the widget already exists in the panel, it will be moved.
+   *
+   * Returns the index of the added widget.
    */
-  movePanel(fromIndex: number, toIndex: number): number {
+  insertWidget(index: number, widget: ITabbable, alignment: Alignment = 0): number {
+    index = this._stackedPanel.insertWidget(index, widget, alignment);
+    return this._tabBar.insertTab(index, widget.tab);
+  }
+
+  /**
+   * Move a widget from one index to another.
+   *
+   * Returns the new index of the widget.
+   */
+  moveWidget(fromIndex: number, toIndex: number): number {
     return this._tabBar.moveTab(fromIndex, toIndex);
   }
 
   /**
    * Handle the `tabMoved` signal from the tab bar.
    */
-  private _tb_tabMoved(sender: TabBar, args: ITabMoveArgs): void {
-    this._stackPanel.movePanel(args.fromIndex, args.toIndex);
+  private _tb_tabMoved(sender: TabBar, args: Pair<number, number>): void {
+    this._stackedPanel.moveWidget(args.first, args.second);
   }
 
   /**
    * Handle the `currentChanged` signal from the tab bar.
    */
-  private _tb_currentChanged(sender: TabBar, args: ITabIndexArgs): void {
-    this._stackPanel.currentIndex = args.index;
-    var panel = this._stackPanel.currentPanel;
-    this.currentChanged.emit(this, { index: args.index, panel: panel });
+  private _tb_currentChanged(sender: TabBar, args: Pair<number, ITab>): void {
+    this._stackedPanel.currentIndex = args.first;
+    var widget = this._stackedPanel.currentWidget;
+    this.currentChanged.emit(this, new Pair(args.first, widget));
   }
 
   /**
    * Handle the `tabCloseRequested` signal from the tab bar.
    */
-  private _tb_tabCloseRequested(sender: TabBar, args: ITabIndexArgs): void {
-    this._stackPanel.panelAt(args.index).close();
+  private _tb_tabCloseRequested(sender: TabBar, args: Pair<number, ITab>): void {
+    this._stackedPanel.widgetAt(args.first).close();
   }
 
   /**
-   * Handle the `panelRemoved` signal from the stack panel.
+   * Handle the `widgetRemoved` signal from the stacked panel.
    */
-  private _sw_panelRemoved(sender: StackPanel, args: IStackIndexArgs): void {
-    this._tabBar.takeAt(args.index);
+  private _sw_widgetRemoved(sender: StackedPanel, args: Pair<number, Widget>): void {
+    this._tabBar.takeAt(args.first);
   }
 
   private _tabBar: TabBar;
-  private _stackPanel: StackPanel;
+  private _stackedPanel: StackedPanel;
 }
 
-} // module phosphor.panels
+} // module phosphor.widgets

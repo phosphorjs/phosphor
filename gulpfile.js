@@ -99,6 +99,7 @@ var tsSources = [
   'widgets/boxpanel',
   'widgets/splitpanel',
   'widgets/stackedpanel',
+  'widgets/tabpanel',
   //'widgets/menuitem',
   //'widgets/menu',
   //'widgets/menubar',
