@@ -31,9 +31,6 @@ function findIndex<T>(array: T[], pred: IPredicate<T>, from = 0, wrap = false): 
     return -1;
   }
   from = from | 0;
-  if (from > len) {
-    from = len;
-  }
   if (from < 0) {
     from += len;
   }
@@ -79,16 +76,15 @@ function findLastIndex<T>(array: T[], pred: IPredicate<T>, from = -1, wrap = fal
     return -1;
   }
   from = from | 0;
-  if (from >= len) {
-    from = len - 1;
-  }
   if (from < 0) {
     from += len;
   }
+  if (from >= len) {
+    from = len - 1;
+  }
   if (wrap) {
-    if (from < 0) from = len - 1;
     for (var i = len; i > 0; --i) {
-      var j = (i + from) % len;
+      var j = (((i + from) % len) + len) % len;
       if (pred(array[j], j)) {
         return j;
       }
