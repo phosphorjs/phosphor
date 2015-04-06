@@ -17,8 +17,8 @@ class Content extends Widget {
 
   constructor(title: string) {
     super();
-    this.node.classList.add('content');
-    this.node.classList.add(title.toLowerCase());
+    this.addClass('content');
+    this.addClass(title.toLowerCase());
     this._tab = new Tab(title);
   }
 
