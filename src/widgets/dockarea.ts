@@ -52,10 +52,13 @@ class DockArea extends Widget {
   constructor() {
     super();
     this.addClass(DOCK_AREA_CLASS);
-    this.layout = new BoxLayout(Direction.TopToBottom, 0);
-    this.setFlag(WidgetFlag.DisallowLayoutChange);
     this._root = this._createSplitter(Orientation.Horizontal);
-    (<BoxLayout>this.layout).addWidget(this._root);
+
+    var layout = new BoxLayout(Direction.TopToBottom, 0);
+    layout.addWidget(this._root);
+
+    this.layout = layout;
+    this.setFlag(WidgetFlag.DisallowLayoutChange);
   }
 
   /**
