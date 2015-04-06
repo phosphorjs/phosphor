@@ -5,9 +5,11 @@
 |
 | The full license is in the file LICENSE, distributed with this software.
 |----------------------------------------------------------------------------*/
-module phosphor.panels {
+module phosphor.widgets {
 
 import IMessage = core.IMessage;
+
+import Size = utility.Size;
 
 import IElement = virtualdom.IElement;
 import render = virtualdom.render;
@@ -20,22 +22,22 @@ var ELEMENT_HOST_CLASS = 'p-ElementHost';
 
 
 /**
- * A panel which hosts a virtual element.
+ * A leaf widget which hosts a virtual element.
  *
- * This is used to embed a virtual element into a panel hierarchy. This
- * is a simple panel which disallows an external layout. The intent is
- * that the element will provide the content for the panel, typically
+ * This is used to embed a virtual element into a widget hierarchy. This
+ * is a simple widget which disallows an external layout. The intent is
+ * that the element will provide the content for the widget, typically
  * in the form of a component which manages its own updates.
  */
 export
-class ElementHost extends Panel {
+class ElementHost extends Widget {
   /**
    * Construct a new element host.
    */
   constructor(element: IElement = null, width = 0, height = 0) {
     super();
-    this.node.classList.add(ELEMENT_HOST_CLASS);
-    this.setFlag(PanelFlag.DisallowLayoutChange);
+    this.addClass(ELEMENT_HOST_CLASS);
+    this.setFlag(WidgetFlag.DisallowLayoutChange);
     this._size = new Size(Math.max(0, width), Math.max(0, height));
     this._element = element;
   }
@@ -97,4 +99,4 @@ class ElementHost extends Panel {
   private _element: IElement;
 }
 
-} // module phosphor.panels
+} // module phosphor.widgets
