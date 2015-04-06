@@ -16,13 +16,13 @@ module phosphor.collections {
  * size, newly added elements will overwrite existing elements.
  */
 export
-class CircularBuffer<T> implements IDeque<T>, IList<T>, IStack<T> {
+class CircularBuffer<T> {
   /**
    * Construct a new circular buffer.
    */
-  constructor(maxSize: number, items?: IIterable<T> | T[]) {
+  constructor(maxSize: number, items?: T[]) {
     this._array = new Array<T>(Math.max(1, maxSize));
-    if (items !== void 0) forEach(items, it => { this.pushBack(it) });
+    if (items) items.forEach(it => { this.pushBack(it) });
   }
 
   /**
@@ -33,17 +33,17 @@ class CircularBuffer<T> implements IDeque<T>, IList<T>, IStack<T> {
   }
 
   /**
-   * True if the buffer has elements, false otherwise.
-   */
-  get empty(): boolean {
-    return this._size === 0;
-  }
-
-  /**
    * The number of elements in the buffer.
    */
   get size(): number {
     return this._size;
+  }
+
+  /**
+   * True if the buffer has elements, false otherwise.
+   */
+  get empty(): boolean {
+    return this._size === 0;
   }
 
   /**
@@ -61,42 +61,7 @@ class CircularBuffer<T> implements IDeque<T>, IList<T>, IStack<T> {
   }
 
   /**
-   * Get an iterator for the elements in the buffer.
-   */
-  iterator(): IIterator<T> {
-    return new ListIterator(this);
-  }
-
-  /**
-   * Get a reverse iterator for the elements in the buffer.
-   */
-  reverseIterator(): IIterator<T> {
-    return new ListReverseIterator(this);
-  }
-
-  /**
-   * Test whether the buffer contains the given value.
-   */
-  contains(value: T): boolean {
-    return this.indexOf(value) !== -1;
-  }
-
-  /**
-   * Get the index of the given value.
-   *
-   * Returns -1 if the value is not in the buffer.
-   */
-  indexOf(value: T): number {
-    for (var i = 0, n = this._size; i < n; ++i) {
-      if (this._get(i) === value) {
-        return i;
-      }
-    }
-    return -1;
-  }
-
-  /**
-   * Get the element at the given index.
+   * Get the value at the given index.
    *
    * Returns `undefined` if the index is out of range.
    */
@@ -154,7 +119,7 @@ class CircularBuffer<T> implements IDeque<T>, IList<T>, IStack<T> {
     if (this._size === 0) {
       return void 0;
     }
-    return this._del(--this._size);
+    return this._rem(--this._size);
   }
 
   /**
@@ -164,81 +129,89 @@ class CircularBuffer<T> implements IDeque<T>, IList<T>, IStack<T> {
     if (this._size === 0) {
       return void 0;
     }
-    var value = this._del(0);
+    var value = this._rem(0);
     this._increment();
     this._size--;
     return value;
   }
 
   /**
-   * Add a value to the back of the buffer.
-   *
-   * This method always succeeds.
+   * Remove all values from the buffer.
    */
-  add(value: T): boolean {
-    this.pushBack(value);
-    return true;
+  clear(): void {
+    for (var i = 0, n = this._size; i < n; ++i) {
+      this._set(i, void 0);
+    }
+    this._size = 0;
+    this._offset = 0;
   }
 
   /**
-   * Insert a value at the given index.
-   *
-   * If the buffer is full, the first element will be overwritten.
-   *
-   * Returns false if the index is out of range.
+   * Create an array from the values in the buffer.
    */
-  insert(index: number, value: T): boolean {
-    if (index < 0 || index > this._size) {
-      return false;
+  toArray(): T[] {
+    var result = new Array<T>(this._size);
+    for (var i = 0, n = this._size; i < n; ++i) {
+      result[i] = this._get(i);
     }
-    this.pushBack(void 0);
-    for (var i = this._size - 1; i > index; --i) {
-      this._set(i, this._get(i - 1));
-    }
-    this._set(index, value);
-    return true;
+    return result;
   }
 
   /**
-   * Remove the first matching value from the buffer.
-   *
-   * Returns false if the value is not in the buffer.
+   * Returns true if any value in the buffer passes the given test.
    */
-  remove(value: T): boolean {
-    var index = this.indexOf(value);
-    if (index !== -1) {
-      this.removeAt(index);
-      return true;
+  some(pred: IPredicate<T>): boolean {
+    for (var i = 0; i < this._size; ++i) {
+      if (pred(this._get(i), i)) return true;
     }
     return false;
   }
 
   /**
-   * Remove and return the value at the given index.
-   *
-   * Returns `undefined` if the index is out of range.
+   * Returns true if all values in the buffer pass the given test.
    */
-  removeAt(index: number): T {
-    if (index < 0 || index >= this._size) {
-      return void 0;
+  every(pred: IPredicate<T>): boolean {
+    for (var i = 0; i < this._size; ++i) {
+      if (!pred(this._get(i), i)) return false;
     }
-    var value = this._get(index);
-    for (var i = index + 1, n = this._size; i < n; ++i) {
-      this._set(i - 1, this._get(i));
-    }
-    this.popBack();
-    return value;
+    return true;
   }
 
   /**
-   * Remove all elements from the buffer.
+   * Create an array of the values which pass the given test.
    */
-  clear(): void {
-    var max = this._array.length;
-    this._array.length = 0;
-    this._array.length = max;
-    this._size = 0;
-    this._offset = 0;
+  filter(pred: IPredicate<T>): T[] {
+    var result: T[];
+    for (var i = 0; i < this._size; ++i) {
+      var value = this._get(i);
+      if (pred(value, i)) result.push(value);
+    }
+    return result;
+  }
+
+  /**
+   * Create an array of callback results for each value in the buffer.
+   */
+  map<U>(callback: ICallback<T, U>): U[] {
+    var result = new Array<U>(this._size);
+    for (var i = 0; i < this._size; ++i) {
+      result[i] = callback(this._get(i), i);
+    }
+    return result;
+  }
+
+  /**
+   * Execute a callback for each element in buffer.
+   *
+   * Iteration will terminate if the callbacks returns a value other
+   * than `undefined`. That value will be returned from this method.
+   */
+  forEach<U>(callback: ICallback<T, U>): U {
+    for (var i = 0; i < this._size; ++i) {
+      var result = callback(this._get(i), i);
+      if (result !== void 0) return result;
+    }
+    return void 0;
   }
 
   /**
@@ -264,7 +237,7 @@ class CircularBuffer<T> implements IDeque<T>, IList<T>, IStack<T> {
    *
    * The index is assumed to be in-range.
    */
-  private _del(index: number): T {
+  private _rem(index: number): T {
     var i = (index + this._offset) % this._array.length;
     var value = this._array[i];
     this._array[i] = void 0;

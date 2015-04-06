@@ -93,11 +93,9 @@ class Queue<T> {
    * Create an array from the values in the queue.
    */
   toArray(): T[] {
-    var result: T[] = [];
-    var link = this._front;
-    while (link !== null) {
-      result.push(link.value);
-      link = link.next;
+    var result = new Array<T>(this._size);
+    for (var i = 0, link = this._front; link !== null; link = link.next, ++i) {
+      result[i] = link.value;
     }
     return result;
   }
@@ -106,11 +104,8 @@ class Queue<T> {
    * Returns true if any value in the queue passes the given test.
    */
   some(pred: IPredicate<T>): boolean {
-    var i = 0;
-    var link = this._front;
-    while (link !== null) {
-      if (pred(link.value, i++)) return true;
-      link = link.next;
+    for (var i = 0, link = this._front; link !== null; link = link.next, ++i) {
+      if (pred(link.value, i)) return true;
     }
     return false;
   }
@@ -119,11 +114,8 @@ class Queue<T> {
    * Returns true if all values in the queue pass the given test.
    */
   every(pred: IPredicate<T>): boolean {
-    var i = 0;
-    var link = this._front;
-    while (link !== null) {
-      if (!pred(link.value, i++)) return false;
-      link = link.next;
+    for (var i = 0, link = this._front; link !== null; link = link.next, ++i) {
+      if (!pred(link.value, i)) return false;
     }
     return true;
   }
@@ -132,13 +124,10 @@ class Queue<T> {
    * Create an array of the values which pass the given test.
    */
   filter(pred: IPredicate<T>): T[] {
-    var i = 0;
     var result: T[];
-    var link = this._front;
-    while (link !== null) {
+    for (var i = 0, link = this._front; link !== null; link = link.next, ++i) {
       var value = link.value;
-      if (pred(value, i++)) result.push(value);
-      link = link.next;
+      if (pred(value, i)) result.push(value);
     }
     return result;
   }
@@ -147,12 +136,9 @@ class Queue<T> {
    * Create an array of callback results for each value in the queue.
    */
   map<U>(callback: ICallback<T, U>): U[] {
-    var i = 0;
-    var result: U[];
-    var link = this._front;
-    while (link !== null) {
-      result.push(callback(link.value, i++));
-      link = link.next;
+    var result = new Array<U>(this._size);
+    for (var i = 0, link = this._front; link !== null; link = link.next, ++i) {
+      result[i] = callback(link.value, i);
     }
     return result;
   }
@@ -164,12 +150,9 @@ class Queue<T> {
    * than `undefined`. That value will be returned from this method.
    */
   forEach<U>(callback: ICallback<T, U>): U {
-    var i = 0;
-    var link = this._front;
-    while (link !== null) {
-      var result = callback(link.value, i++);
+    for (var i = 0, link = this._front; link !== null; link = link.next, ++i) {
+      var result = callback(link.value, i);
       if (result !== void 0) return result;
-      link = link.next;
     }
     return void 0;
   }
