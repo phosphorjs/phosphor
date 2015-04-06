@@ -7,10 +7,10 @@
 |----------------------------------------------------------------------------*/
 module phosphor.widgets {
 
-import IDisposable = core.IDisposable;
 import IMessage = core.IMessage;
 import Signal = core.Signal;
 
+import IDisposable = utility.IDisposable;
 import Pair = utility.Pair;
 import Size = utility.Size;
 import hitTest = utility.hitTest;

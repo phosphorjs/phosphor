@@ -5,12 +5,26 @@
 |
 | The full license is in the file LICENSE, distributed with this software.
 |----------------------------------------------------------------------------*/
-module phosphor.core {
+module phosphor.utility {
+
+/**
+ * An object which holds disposable resources.
+ */
+export
+interface IDisposable {
+  /**
+   * Dispose of the resources held by the object.
+   *
+   * It is not safe to use an object after it has been disposed.
+   */
+  dispose(): void;
+}
+
 
 /**
  * A concrete implementation of IDisposable.
  *
- * A Disposable invokes a user provided callback when disposed.
+ * This will invoke a user provided callback when it is disposed.
  */
 export
 class Disposable implements IDisposable {
@@ -33,4 +47,4 @@ class Disposable implements IDisposable {
   private _callback: () => void;
 }
 
-} // module phosphor.core
+} // module phosphor.utility

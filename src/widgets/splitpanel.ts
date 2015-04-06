@@ -8,8 +8,8 @@
 module phosphor.widgets {
 
 import IMessage = core.IMessage;
-import IDisposable = core.IDisposable;
 
+import IDisposable = utility.IDisposable;
 import overrideCursor = utility.overrideCursor;
 
 

@@ -7,13 +7,13 @@
 |----------------------------------------------------------------------------*/
 module phosphor.widgets {
 
-import IDisposable = core.IDisposable;
 import IMessage = core.IMessage;
 import IMessageHandler = core.IMessageHandler;
 import IMessageFilter = core.IMessageFilter;
 import Message = core.Message;
 import postMessage = core.postMessage;
 
+import IDisposable = utility.IDisposable;
 import Size = utility.Size;
 
 

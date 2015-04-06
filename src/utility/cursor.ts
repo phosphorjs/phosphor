@@ -7,10 +7,6 @@
 |----------------------------------------------------------------------------*/
 module phosphor.utility {
 
-import Disposable = core.Disposable;
-import IDisposable = core.IDisposable;
-
-
 /**
  * The class name added to the document body on cursor override.
  */

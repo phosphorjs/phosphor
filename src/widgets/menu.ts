@@ -9,9 +9,9 @@ module phosphor.widgets {
 
 import algo = collections.algorithm;
 
-import IDisposable = core.IDisposable;
 import Signal = core.Signal;
 
+import IDisposable = utility.IDisposable;
 import hitTest = utility.hitTest;
 
 

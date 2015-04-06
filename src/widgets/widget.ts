@@ -10,7 +10,6 @@ module phosphor.widgets {
 import Queue = collections.Queue;
 import algo = collections.algorithm;
 
-import IDisposable = core.IDisposable;
 import IMessage = core.IMessage;
 import IMessageHandler = core.IMessageHandler;
 import Message = core.Message;
@@ -22,6 +21,7 @@ import removeMessageFilter = core.removeMessageFilter;
 import sendMessage = core.sendMessage;
 
 import IBoxSizing = utility.IBoxSizing;
+import IDisposable = utility.IDisposable;
 import Size = utility.Size;
 import createBoxSizing = utility.createBoxSizing;
 

@@ -7,7 +7,7 @@
 |----------------------------------------------------------------------------*/
 module phosphor.virtualdom {
 
-import IDisposable = core.IDisposable;
+import IDisposable = utility.IDisposable;
 
 
 /**
