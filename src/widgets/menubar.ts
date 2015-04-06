@@ -7,8 +7,7 @@
 |----------------------------------------------------------------------------*/
 module phosphor.widgets {
 
-import findFirstIndex = collections.findFirstIndex;
-import findLastIndex = collections.findLastIndex;
+import algo = collections.algorithm;
 
 import IMessage = core.IMessage;
 
@@ -212,7 +211,7 @@ class MenuBar extends Widget {
    */
   activateNextItem(): void {
     var from = this._activeIndex + 1;
-    var i = findFirstIndex(this._items, isSelectable, from, true);
+    var i = algo.findIndex(this._items, isSelectable, from, true);
     this._setActiveIndex(i);
     var menu = this._childMenu;
     if (menu) menu.activateNextItem();
@@ -224,8 +223,8 @@ class MenuBar extends Widget {
    * This is equivalent to pressing the left arrow key.
    */
   activatePreviousItem(): void {
-    var from = this._activeIndex - 1;
-    var i = findLastIndex(this._items, isSelectable, from, true);
+    var from = Math.max(-1, this._activeIndex - 1);
+    var i = algo.findLastIndex(this._items, isSelectable, from, true);
     this._setActiveIndex(i);
     var menu = this._childMenu;
     if (menu) menu.activateNextItem();
@@ -238,7 +237,7 @@ class MenuBar extends Widget {
    */
   activateMnemonicItem(key: string): void {
     key = key.toUpperCase();
-    var i = findFirstIndex(this._items, it => {
+    var i = algo.findIndex(this._items, it => {
       return isSelectable(it) && it.mnemonic.toUpperCase() === key;
     }, this._activeIndex + 1, true);
     this._setActiveIndex(i);
@@ -366,7 +365,7 @@ class MenuBar extends Widget {
       if (event.button !== 0) {
         return;
       }
-      var index = findFirstIndex(this._nodes, n => hitTest(n, x, y));
+      var index = algo.findIndex(this._nodes, n => hitTest(n, x, y));
       if (!isSelectable(this._items[index])) {
         return;
       }
@@ -377,7 +376,7 @@ class MenuBar extends Widget {
         return;
       }
       this._setState(MBState.Inactive);
-      var index = findFirstIndex(this._nodes, n => hitTest(n, x, y));
+      var index = algo.findIndex(this._nodes, n => hitTest(n, x, y));
       var ok = isSelectable(this._items[index]);
       this._setActiveIndex(ok ? index : -1);
     }
@@ -389,7 +388,7 @@ class MenuBar extends Widget {
   private _evtMouseMove(event: MouseEvent): void {
     var x = event.clientX;
     var y = event.clientY;
-    var index = findFirstIndex(this._nodes, n => hitTest(n, x, y));
+    var index = algo.findIndex(this._nodes, n => hitTest(n, x, y));
     if (index === this._activeIndex) {
       return;
     }

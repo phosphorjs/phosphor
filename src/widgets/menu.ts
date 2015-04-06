@@ -7,8 +7,7 @@
 |----------------------------------------------------------------------------*/
 module phosphor.widgets {
 
-import findFirstIndex = collections.findFirstIndex;
-import findLastIndex = collections.findLastIndex;
+import algo = collections.algorithm;
 
 import IDisposable = core.IDisposable;
 import Signal = core.Signal;
@@ -283,9 +282,8 @@ class Menu implements IDisposable {
    * This is equivalent to pressing the down arrow key.
    */
   activateNextItem(): void {
-    var i = findFirstIndex(this._items, it => {
-      return it.type !== 'separator';
-    }, this._activeIndex + 1, true);
+    var from = this._activeIndex + 1;
+    var i = algo.findIndex(this._items, isSelectable, from, true);
     this._setActiveIndex(i);
   }
 
@@ -295,9 +293,8 @@ class Menu implements IDisposable {
    * This is equivalent to pressing the up arrow key.
    */
   activatePreviousItem(): void {
-    var i = findLastIndex(this._items, it => {
-      return it.type !== 'separator';
-    }, this._activeIndex - 1, true);
+    var from = Math.max(-1, this._activeIndex - 1);
+    var i = algo.findLastIndex(this._items, isSelectable, from, true);
     this._setActiveIndex(i);
   }
 
@@ -308,11 +305,8 @@ class Menu implements IDisposable {
    */
   activateMnemonicItem(key: string): void {
     key = key.toUpperCase();
-    var i = findFirstIndex(this._items, it => {
-      if (it.type !== 'separator' && it.enabled) {
-        return it.mnemonic.toUpperCase() === key;
-      }
-      return false;
+    var i = algo.findIndex(this._items, it => {
+      return isKeyable(it) && it.mnemonic.toUpperCase() === key;
     }, this._activeIndex + 1, true);
     this._setActiveIndex(i);
   }
@@ -817,6 +811,26 @@ class Menu implements IDisposable {
   private _activeIndex = -1;
   private _openTimer = 0;
   private _closeTimer = 0;
+}
+
+
+/**
+ * Test whether the menu item is selectable.
+ *
+ * Returns true if the item is not a separator.
+ */
+function isSelectable(item: MenuItem): boolean {
+  return item && item.type !== 'separator';
+}
+
+
+/**
+ * Test whether the menu item is keyable for a mnemonic.
+ *
+ * Returns true if the item is selectable and enabled.
+ */
+function isKeyable(item: MenuItem): boolean {
+  return isSelectable(item) && item.enabled;
 }
 
 
