@@ -23,21 +23,10 @@ var typings = ['./typings/tsd.d.ts'];
 
 
 var tsSources = [
-  'collections/IIterator',
-  'collections/IIterable',
-  'collections/ICollection',
-  'collections/IDeque',
-  'collections/IList',
-  'collections/IQueue',
-  'collections/IStack',
-  'collections/algorithm',
-  'collections/ReadOnlyCollection',
-  'collections/ReadOnlyList',
-  'collections/ArrayIterator',
-  'collections/List',
-  'collections/ListIterator',
-  'collections/CircularBuffer',
-  'collections/Queue',
+  'collections/arrays',
+  'collections/circularbuffer',
+  'collections/icallbacks',
+  'collections/queue',
 
   'core/disposable',
   'core/empty',
