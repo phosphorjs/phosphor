@@ -23,7 +23,7 @@ var typings = ['./typings/tsd.d.ts'];
 
 
 var tsSources = [
-  'collections/arrays',
+  'collections/algorithm',
   'collections/circularbuffer',
   'collections/icallbacks',
   'collections/queue',
