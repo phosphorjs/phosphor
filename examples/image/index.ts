@@ -9,17 +9,17 @@ module example {
 
 import Component = phosphor.components.Component;
 
-import BoxPanel = phosphor.panels.BoxPanel;
-import Direction = phosphor.panels.Direction;
-import ElementHost = phosphor.panels.ElementHost;
-import Panel = phosphor.panels.Panel;
-import Size = phosphor.panels.Size;
-import SizePolicy = phosphor.panels.SizePolicy;
+import Size = phosphor.utility.Size;
 
 import IData = phosphor.virtualdom.IData;
 import IElement = phosphor.virtualdom.IElement;
 import createFactory = phosphor.virtualdom.createFactory;
 import dom = phosphor.virtualdom.dom;
+
+import BoxPanel = phosphor.widgets.BoxPanel;
+import ElementHost = phosphor.widgets.ElementHost;
+import SizePolicy = phosphor.widgets.SizePolicy;
+import Widget = phosphor.widgets.Widget;
 
 
 /**
@@ -105,16 +105,16 @@ var Selector = createFactory(SelectorComponent);
 
 
 /**
- * A simple panel which displays an image.
+ * A simple widget which displays an image.
  *
  * This could just as easily be rendered as part of the component,
- * but for this example it demonstrates a simple custom panel.
+ * but for this example it demonstrates a simple custom widget.
  */
-class SimpleImagePanel extends Panel {
+class SimpleImageWidget extends Widget {
 
   constructor() {
     super();
-    this.node.classList.add('SimpleImagePanel');
+    this.addClass('SimpleImageWidget');
     this.node.onload = () => this.updateGeometry();
   }
 
@@ -143,8 +143,8 @@ class SimpleImagePanel extends Panel {
 class MainPanel extends BoxPanel {
 
   constructor() {
-    super(Direction.TopToBottom);
-    this.node.classList.add('MainPanel');
+    super();
+    this.addClass('MainPanel');
 
     var names = imageItems.map(item => item.name);
     var selector = Selector({ values: names, onSelected: this._onSelected });
@@ -152,12 +152,12 @@ class MainPanel extends BoxPanel {
     var host = new ElementHost(selector, 200, 24);
     host.setSizePolicy(SizePolicy.Expanding, SizePolicy.Fixed);
 
-    var image = this._image = new SimpleImagePanel();
+    var image = this._image = new SimpleImageWidget();
     image.setSizePolicy(SizePolicy.Fixed, SizePolicy.Fixed);
     image.src = imageItems[0].path;
 
-    this.addPanel(host);
-    this.addPanel(image);
+    this.addWidget(host);
+    this.addWidget(image);
   }
 
   private _onSelected = (value: string): void => {
@@ -171,7 +171,7 @@ class MainPanel extends BoxPanel {
     this._image.src = item.path;
   };
 
-  private _image: SimpleImagePanel;
+  private _image: SimpleImageWidget;
 }
 
 
