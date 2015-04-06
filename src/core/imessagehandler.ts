@@ -7,7 +7,7 @@
 |----------------------------------------------------------------------------*/
 module phosphor.core {
 
-import IIterable = collections.IIterable;
+import Queue = collections.Queue;
 
 
 /**
@@ -28,7 +28,7 @@ interface IMessageHandler {
    * the message was compressed and should be dropped, or false if the
    * message should be enqueued for delivery as normal.
    */
-  compressMessage?(msg: IMessage, pending: IIterable<IMessage>): boolean;
+  compressMessage?(msg: IMessage, pending: Queue<IMessage>): boolean;
 }
 
 } // module phosphor.core
