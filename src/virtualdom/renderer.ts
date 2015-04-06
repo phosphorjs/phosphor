@@ -7,6 +7,9 @@
 |----------------------------------------------------------------------------*/
 module phosphor.virtualdom {
 
+import algo = collections.algorithm;
+
+import Pair = utility.Pair;
 import emptyArray = utility.emptyArray;
 import emptyObject = utility.emptyObject;
 
@@ -49,19 +52,10 @@ const enum AttrMode { Property, Attribute, Event }
 
 
 /**
- * A pair of virtual element and rendered node.
- */
-interface IElemPair {
-  elem: IElement;
-  node: HTMLElement;
-}
-
-
-/**
  * A mapping of string key to pair of element and rendered node.
  */
 interface IKeyMap {
-  [key: string]: IElemPair;
+  [key: string]: Pair<IElement, HTMLElement>;
 }
 
 
@@ -90,7 +84,10 @@ function collectKeys(host: HTMLElement, content: IElement[]): IKeyMap {
   for (var i = 0, n = content.length; i < n; ++i) {
     var elem = content[i];
     var key = elem.data.key;
-    if (key) keyed[key] = { elem: elem, node: <HTMLElement>childNodes[i] };
+    if (key) {
+      var node = <HTMLElement>childNodes[i];
+      keyed[key] = new Pair(elem, node);
+    }
   }
   return keyed;
 }
@@ -247,13 +244,12 @@ function updateContent(
     var newKey = newElem.data.key;
     if (newKey && newKey in oldKeyed) {
       var pair = oldKeyed[newKey];
-      if (pair.elem !== oldElem) {
-        var k = oldCopy.indexOf(pair.elem);
-        if (k !== -1) oldCopy.splice(k, 1);
-        oldCopy.splice(i, 0, pair.elem);
-        moveNode(host, pair.node, currNode);
-        oldElem = pair.elem;
-        currNode = pair.node;
+      if (pair.first !== oldElem) {
+        algo.remove(oldCopy, pair.first);
+        algo.insert(oldCopy, i, pair.first);
+        moveNode(host, pair.second, currNode);
+        oldElem = pair.first;
+        currNode = pair.second;
       }
     }
 
@@ -268,14 +264,14 @@ function updateContent(
     // may be moved forward in the tree at a later point in the diff.
     var oldKey = oldElem.data.key;
     if (oldKey && oldKey !== newKey) {
-      oldCopy.splice(i, 0, newElem);
+      algo.insert(oldCopy, i, newElem);
       addNode(host, newElem, currNode);
       continue;
     }
 
     // If the elements have different types, create a new node.
     if (oldElem.type !== newElem.type) {
-      oldCopy.splice(i, 0, newElem);
+      algo.insert(oldCopy, i, newElem);
       addNode(host, newElem, currNode);
       continue;
     }
@@ -291,7 +287,7 @@ function updateContent(
     // At this point, the element is a Node or Component type.
     // If the element tags are different, create a new node.
     if (oldElem.tag !== newElem.tag) {
-      oldCopy.splice(i, 0, newElem);
+      algo.insert(oldCopy, i, newElem);
       addNode(host, newElem, currNode);
       continue;
     }
