@@ -293,9 +293,21 @@ class SplitLayout extends Layout {
     var orient = this._orientation;
     var sizers = this._sizers;
 
-    // Distribute the layout space to the sizers.
+    // Ensure each element has a minimally reasonable size hint.
     var mainSpace = orient === Orientation.Horizontal ? width : height;
-    layoutCalc(sizers, mainSpace - this._fixedSpace);
+    var layoutSpace = Math.max(0, mainSpace - this._fixedSpace);
+
+    // WIP
+    // var basis = (layoutSpace / sizers.length) | 0;
+    // for (var i = 0, n = sizers.length; i < n; ++i) {
+    //   var sizer = sizers[i];
+    //   if (sizer.sizeHint === 0) {
+    //     sizer.sizeHint = basis;
+    //   }
+    // }
+
+    // Distribute the layout space to the sizers.
+    layoutCalc(sizers, layoutSpace);
 
     // Update the geometry of the items according to the orientation.
     var hSize = this._handleSize;
@@ -416,6 +428,8 @@ class SplitLayout extends Layout {
         hintW += itemHint.width;
         minW += itemMin.width;
         maxW += itemMax.width;
+        // WIP
+        // sizer.sizeHint = sizer.size;
         sizer.minSize = itemMin.width;
         sizer.maxSize = itemMax.width;
         sizer.expansive = item.expandHorizontal;
@@ -447,6 +461,8 @@ class SplitLayout extends Layout {
         hintH += itemHint.height;
         minH += itemMin.height;
         maxH += itemMax.height;
+        // WIP
+        // sizer.sizeHint = sizer.size;
         sizer.minSize = itemMin.height;
         sizer.maxSize = itemMax.height;
         sizer.expansive = item.expandVertical;
@@ -518,14 +534,11 @@ class SplitItem extends WidgetItem {
  *
  * This will adjust the sizer's neighbors if required.
  *
- * Before adjusting the sizer, the size hints of all sizers will be
- * updated to their current size. This allows the sections to remain
- * well sized on the subsequent layout since the size hint is the
- * effective input to the `layoutCalc` function.
+ * Before adjusting the targer sizer, all size hints are updated to
+ * their current layout size. This ensures that neighboring sections
+ * will retain their current size on the next layout when possible.
  */
 function growSizer(sizers: LayoutSizer[], index: number, delta: number): void {
-  // TODO - the size hint of hidden sizers gets forced to zero here. It
-  // would be nice to preserve it so it's a reasonable size when shown.
   for (var i = 0, n = sizers.length; i < n; ++i) {
     var sizer = sizers[i];
     sizer.sizeHint = sizer.size;
