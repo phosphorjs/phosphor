@@ -28,7 +28,6 @@ var tsSources = [
   'collections/queue',
 
   'core/disposable',
-  'core/empty',
   'core/idisposable',
   'core/imessage',
   'core/imessagefilter',
@@ -44,6 +43,7 @@ var tsSources = [
 
   'utility/boxsizing',
   'utility/cursor',
+  'utility/empty',
   'utility/hittest',
   'utility/pair',
   'utility/point',

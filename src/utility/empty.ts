@@ -5,7 +5,7 @@
 |
 | The full license is in the file LICENSE, distributed with this software.
 |----------------------------------------------------------------------------*/
-module phosphor.core {
+module phosphor.utility {
 
 /**
  * A singleton frozen empty object.
@@ -27,4 +27,4 @@ var emptyArray: any[] = Object.freeze([]);
 export
 var emptyFunction = () => { };
 
-} // module phosphor.core
+} // module phosphor.utility

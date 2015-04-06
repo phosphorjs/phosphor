@@ -7,8 +7,8 @@
 |----------------------------------------------------------------------------*/
 module phosphor.virtualdom {
 
-import emptyArray = core.emptyArray;
-import emptyObject = core.emptyObject;
+import emptyArray = utility.emptyArray;
+import emptyObject = utility.emptyObject;
 
 
 /**
