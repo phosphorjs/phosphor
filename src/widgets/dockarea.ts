@@ -5,12 +5,14 @@
 |
 | The full license is in the file LICENSE, distributed with this software.
 |----------------------------------------------------------------------------*/
-module phosphor.panels {
+module phosphor.widgets {
 
-import IDisposable = core.IDisposable;
+import algo = collections.algorithm;
 
-import hitTest = domutil.hitTest;
-import overrideCursor = domutil.overrideCursor;
+import IDisposable = utility.IDisposable;
+import Pair = utility.Pair;
+import hitTest = utility.hitTest;
+import overrideCursor = utility.overrideCursor;
 
 
 /**
@@ -19,29 +21,45 @@ import overrideCursor = domutil.overrideCursor;
 var DOCK_AREA_CLASS = 'p-DockArea';
 
 /**
+ * The class name added to DockSplitter instances.
+ */
+var DOCK_SPLITTER_CLASS = 'p-DockSplitter';
+
+/**
+ * The class name added to DockPanel instances.
+ */
+var DOCK_PANEL_CLASS = 'p-DockPanel';
+
+/**
+ * The class name added to the DockPanel overlay div.
+ */
+var OVERLAY_CLASS = 'p-DockPanel-overlay';
+
+/**
  * The class name added to floating tabs.
  */
 var FLOATING_CLASS = 'p-mod-floating';
 
 
 /**
- * A panel which provides a flexible layout area for panels.
+ * A widget which provides a flexible docking layout area for widgets.
  */
 export
-class DockArea extends Panel {
+class DockArea extends Widget {
   /**
    * Construct a new dock area.
    */
   constructor() {
     super();
-    this.node.classList.add(DOCK_AREA_CLASS);
+    this.addClass(DOCK_AREA_CLASS);
+    this.layout = new BoxLayout(Direction.TopToBottom, 0);
+    this.setFlag(WidgetFlag.DisallowLayoutChange);
     this._root = this._createSplitter(Orientation.Horizontal);
-    this.layout = new SingleLayout(this._root);
-    this.setFlag(PanelFlag.DisallowLayoutChange);
+    (<BoxLayout>this.layout).addWidget(this._root);
   }
 
   /**
-   * Dispose of the resources held by the panel.
+   * Dispose of the resources held by the widget.
    */
   dispose(): void {
     this._abortDrag();
@@ -133,49 +151,49 @@ class DockArea extends Panel {
   }
 
   /**
-   * Add a panel to the dock area.
+   * Add a widget to the dock area.
    *
-   * The panel is positioned in the area according to the given dock
-   * mode and reference panel. If the dock panel is already added to
+   * The widget is positioned in the area according to the given dock
+   * mode and reference widget. If the dock widget is already added to
    * the area, it will be moved to the new location.
    *
-   * The default mode inserts the panel on the left side of the area.
+   * The default mode inserts the widget on the left side of the area.
    */
-  addPanel(panel: ITabbable, mode?: DockMode, ref?: ITabbable): void {
+  addWidget(widget: ITabbable, mode?: DockMode, ref?: ITabbable): void {
     switch (mode) {
-      case DockMode.Top:
-        this._addWidget(panel, Orientation.Vertical, false);
-        break;
-      case DockMode.Left:
-        this._addWidget(panel, Orientation.Horizontal, false);
-        break;
-      case DockMode.Right:
-        this._addWidget(panel, Orientation.Horizontal, true);
-        break;
-      case DockMode.Bottom:
-        this._addWidget(panel, Orientation.Vertical, true);
-        break;
-      case DockMode.SplitTop:
-        this._splitWidget(panel, ref, Orientation.Vertical, false);
-        break;
-      case DockMode.SplitLeft:
-        this._splitWidget(panel, ref, Orientation.Horizontal, false);
-        break;
-      case DockMode.SplitRight:
-        this._splitWidget(panel, ref, Orientation.Horizontal, true);
-        break;
-      case DockMode.SplitBottom:
-        this._splitWidget(panel, ref, Orientation.Vertical, true);
-        break;
-      case DockMode.TabBefore:
-        this._tabifyWidget(panel, ref, false);
-        break;
-      case DockMode.TabAfter:
-        this._tabifyWidget(panel, ref, true);
-        break;
-      default:
-        this._addWidget(panel, Orientation.Horizontal, false);
-        break;
+    case DockMode.Top:
+      this._addWidget(widget, Orientation.Vertical, false);
+      break;
+    case DockMode.Left:
+      this._addWidget(widget, Orientation.Horizontal, false);
+      break;
+    case DockMode.Right:
+      this._addWidget(widget, Orientation.Horizontal, true);
+      break;
+    case DockMode.Bottom:
+      this._addWidget(widget, Orientation.Vertical, true);
+      break;
+    case DockMode.SplitTop:
+      this._splitWidget(widget, ref, Orientation.Vertical, false);
+      break;
+    case DockMode.SplitLeft:
+      this._splitWidget(widget, ref, Orientation.Horizontal, false);
+      break;
+    case DockMode.SplitRight:
+      this._splitWidget(widget, ref, Orientation.Horizontal, true);
+      break;
+    case DockMode.SplitBottom:
+      this._splitWidget(widget, ref, Orientation.Vertical, true);
+      break;
+    case DockMode.TabBefore:
+      this._tabifyWidget(widget, ref, false);
+      break;
+    case DockMode.TabAfter:
+      this._tabifyWidget(widget, ref, true);
+      break;
+    default:
+      this._addWidget(widget, Orientation.Horizontal, false);
+      break;
     }
   }
 
@@ -212,18 +230,16 @@ class DockArea extends Panel {
    */
   protected handleEvent(event: Event): void {
     switch (event.type) {
-      case 'mousemove':
-        this.domEvent_mousemove(<MouseEvent>event);
-        break;
-      case 'mouseup':
-        this.domEvent_mouseup(<MouseEvent>event);
-        break;
-      case 'contextmenu':
-        event.preventDefault();
-        event.stopPropagation();
-        break;
-      default:
-        break;
+    case 'mousemove':
+      this._evtMouseMove(<MouseEvent>event);
+      break;
+    case 'mouseup':
+      this._evtMouseUp(<MouseEvent>event);
+      break;
+    case 'contextmenu':
+      event.preventDefault();
+      event.stopPropagation();
+      break;
     }
   }
 
@@ -232,7 +248,7 @@ class DockArea extends Panel {
    *
    * This is triggered on the document during a tab move operation.
    */
-  protected domEvent_mousemove(event: MouseEvent): void {
+  private _evtMouseMove(event: MouseEvent): void {
     event.preventDefault();
     event.stopPropagation();
     var dragData = this._dragData;
@@ -321,7 +337,7 @@ class DockArea extends Panel {
    *
    * This is triggered on the document during a tab move operation.
    */
-  protected domEvent_mouseup(event: MouseEvent): void {
+  protected _evtMouseUp(event: MouseEvent): void {
     if (event.button !== 0) {
       return;
     }
@@ -359,13 +375,13 @@ class DockArea extends Panel {
     if (dragData.tempPanel) {
       item.panel = dragData.tempPanel;
       this._ignoreRemoved = true;
-      item.panel.stackPanel.addPanel(item.widget);
+      item.panel.stackedPanel.addWidget(item.widget);
       this._ignoreRemoved = false;
-      item.panel.stackPanel.currentPanel = item.widget;
-      if (ownPanel.stackPanel.count === 0) {
+      item.panel.stackedPanel.currentWidget = item.widget;
+      if (ownPanel.stackedPanel.count === 0) {
         this._removePanel(ownPanel);
       } else {
-        var i = ownBar.tabIndex(dragData.prevTab);
+        var i = ownBar.indexOf(dragData.prevTab);
         if (i === -1) i = Math.min(dragData.index, ownCount - 1);
         ownBar.currentIndex = i;
       }
@@ -405,7 +421,7 @@ class DockArea extends Panel {
     var horiz = mode === SplitMode.Left || mode === SplitMode.Right;
     var orientation = horiz ? Orientation.Horizontal : Orientation.Vertical;
     this._splitPanel(hitPanel, item.widget, orientation, after);
-    var i = ownBar.tabIndex(dragData.prevTab);
+    var i = ownBar.indexOf(dragData.prevTab);
     if (i === -1) i = Math.min(dragData.index, ownCount - 1);
     ownBar.currentIndex = i;
   }
@@ -419,13 +435,13 @@ class DockArea extends Panel {
     widget.parent = null;
     var panel = this._createPanel();
     this._addItem(widget, panel);
-    panel.stackPanel.addPanel(widget);
+    panel.stackedPanel.addWidget(widget);
     panel.tabBar.addTab(widget.tab);
     this._ensureRoot(orientation);
     if (after) {
-      this._root.addPanel(panel);
+      this._root.addWidget(panel);
     } else {
-      this._root.insertPanel(0, panel);
+      this._root.insertWidget(0, panel);
     }
   }
 
@@ -440,7 +456,7 @@ class DockArea extends Panel {
     if (widget === ref) {
       return;
     }
-    var refItem = find(this._items, it => it.widget === ref);
+    var refItem = algo.find(this._items, it => it.widget === ref);
     if (!refItem) {
       return;
     }
@@ -456,29 +472,29 @@ class DockArea extends Panel {
     widget.parent = null;
     var newPanel = this._createPanel();
     this._addItem(widget, newPanel);
-    newPanel.stackPanel.addPanel(widget);
+    newPanel.stackedPanel.addWidget(widget);
     newPanel.tabBar.addTab(widget.tab);
     var splitter = <DockSplitter>panel.parent;
     if (splitter.orientation !== orientation) {
       if (splitter.count <= 1) {
         splitter.orientation = orientation;
-        splitter.insertPanel(after ? 1 : 0, newPanel);
+        splitter.insertWidget(after ? 1 : 0, newPanel);
         splitter.setSizes([1, 1]);
       } else {
         var sizes = splitter.sizes();
         var index = splitter.indexOf(panel);
         panel.parent = null;
         var newSplitter = this._createSplitter(orientation);
-        newSplitter.addPanel(panel);
-        newSplitter.insertPanel(after ? 1 : 0, newPanel);
-        splitter.insertPanel(index, newSplitter);
+        newSplitter.addWidget(panel);
+        newSplitter.insertWidget(after ? 1 : 0, newPanel);
+        splitter.insertWidget(index, newSplitter);
         splitter.setSizes(sizes);
         newSplitter.setSizes([1, 1]);
       }
     } else {
       var sizes = splitter.sizes();
       var index = splitter.indexOf(panel);
-      splitter.insertPanel(index + (after ? 1 : 0), newPanel);
+      splitter.insertWidget(index + (after ? 1 : 0), newPanel);
       sizes.splice(index, 0, 1 / sizes.length);
       splitter.setSizes(sizes);
     }
@@ -495,15 +511,15 @@ class DockArea extends Panel {
     if (widget === ref) {
       return;
     }
-    var refItem = find(this._items, it => it.widget === ref);
+    var refItem = algo.find(this._items, it => it.widget === ref);
     if (!refItem) {
       return;
     }
     widget.parent = null;
     var panel = refItem.panel;
-    var index = panel.tabBar.tabIndex(ref.tab) + (after ? 1 : 0);
+    var index = panel.tabBar.indexOf(ref.tab) + (after ? 1 : 0);
     this._addItem(widget, panel);
-    panel.stackPanel.addPanel(widget);
+    panel.stackedPanel.addWidget(widget);
     panel.tabBar.insertTab(index, widget.tab);
   }
 
@@ -526,8 +542,8 @@ class DockArea extends Panel {
       root.orientation = orientation;
     } else {
       this._root = this._createSplitter(orientation);
-      this._root.addPanel(root);
-      (<SingleLayout>this.layout).panel = this._root;
+      this._root.addWidget(root);
+      (<BoxLayout>this.layout).addWidget(this._root);
     }
   }
 
@@ -550,7 +566,7 @@ class DockArea extends Panel {
     tabBar.currentChanged.connect(this._tb_currentChanged, this);
     tabBar.tabCloseRequested.connect(this._tb_tabCloseRequested, this);
     tabBar.tabDetachRequested.connect(this._tb_tabDetachRequested, this);
-    panel.stackPanel.panelRemoved.connect(this._sw_widgetRemoved, this);
+    panel.stackedPanel.widgetRemoved.connect(this._sw_widgetRemoved, this);
     return panel;
   }
 
@@ -590,13 +606,13 @@ class DockArea extends Panel {
     // child which is a splitter, that child becomes the root.
     if (splitter === this._root) {
       if (splitter.count === 1) {
-        var child = splitter.panelAt(0);
+        var child = splitter.widgetAt(0);
         if (child instanceof DockSplitter) {
-          var layout = <SingleLayout>this.layout;
+          var layout = <BoxLayout>this.layout;
           var sizes = child.sizes();
           this._root = child;
           splitter.parent = null;
-          layout.panel = child;
+          layout.addWidget(child);
           child.setSizes(sizes);
           splitter.dispose();
         }
@@ -612,18 +628,18 @@ class DockArea extends Panel {
     // the children of the granchild can be merged into the grandparent.
     var gParent = <DockSplitter>splitter.parent;
     var gSizes = gParent.sizes();
-    var gChild = splitter.panelAt(0);
+    var gChild = splitter.widgetAt(0);
     var index = gParent.indexOf(splitter);
     splitter.parent = null;
     if (gChild instanceof DockPanel) {
-      gParent.insertPanel(index, gChild);
+      gParent.insertWidget(index, gChild);
     } else {
       var gcsp = <DockSplitter>gChild;
       var gcspSizes = gcsp.sizes();
-      var sizeShare = gSizes.splice(index, 1)[0];
+      var sizeShare = algo.removeAt(gSizes, index);
       for (var i = 0; gcsp.count !== 0; ++i) {
-        gParent.insertPanel(index + i, gcsp.panelAt(0));
-        gSizes.splice(index + i, 0, sizeShare * gcspSizes[i]);
+        gParent.insertWidget(index + i, gcsp.widgetAt(0));
+        algo.insert(gSizes, index + i, sizeShare * gcspSizes[i]);
       }
     }
     gParent.setSizes(gSizes);
@@ -655,7 +671,7 @@ class DockArea extends Panel {
     // that tab bar and restore that tab bar's previous tab.
     if (dragData.tempPanel) {
       var tabBar = dragData.tempPanel.tabBar;
-      tabBar.takeAt(tabBar.currentIndex, false);
+      tabBar.removeAt(tabBar.currentIndex, false);
       tabBar.currentTab = dragData.tempTab;
     }
 
@@ -676,18 +692,18 @@ class DockArea extends Panel {
   /**
    * Handle the `currentChanged` signal from a tab bar.
    */
-  private _tb_currentChanged(sender: TabBar, args: ITabIndexArgs): void {
-    var item = find(this._items, it => it.widget.tab === args.tab);
+  private _tb_currentChanged(sender: TabBar, args: Pair<number, ITab>): void {
+    var item = algo.find(this._items, it => it.widget.tab === args.second);
     if (item && item.panel.tabBar === sender) {
-      item.panel.stackPanel.currentPanel = item.widget;
+      item.panel.stackedPanel.currentWidget = item.widget;
     }
   }
 
   /**
    * Handle the `tabCloseRequested` signal from a tab bar.
    */
-  private _tb_tabCloseRequested(sender: TabBar, args: ITabIndexArgs): void {
-    var item = find(this._items, it => it.widget.tab === args.tab);
+  private _tb_tabCloseRequested(sender: TabBar, args: Pair<number, ITab>): void {
+    var item = algo.find(this._items, it => it.widget.tab === args.second);
     if (item) item.widget.close();
   }
 
@@ -697,7 +713,7 @@ class DockArea extends Panel {
   private _tb_tabDetachRequested(sender: TabBar, args: ITabDetachArgs): void {
     // Find the dock item for the detach operation.
     var tab = args.tab;
-    var item = find(this._items, it => it.widget.tab === tab);
+    var item = algo.find(this._items, it => it.widget.tab === tab);
     if (!item) {
       return;
     }
@@ -736,9 +752,9 @@ class DockArea extends Panel {
     //    the tab temporarily. Its previously selected tab is restored.
     if (item.panel.tabBar === sender) {
       sender.currentIndex = -1;
-      sender.takeAt(args.index, false);
+      sender.removeAt(args.index, false);
     } else {
-      sender.takeAt(args.index, false);
+      sender.removeAt(args.index, false);
       sender.currentTab = dragData.tempTab;
     }
 
@@ -766,17 +782,18 @@ class DockArea extends Panel {
   /**
    * Handle the `widgetRemoved` signal from a stack widget.
    */
-  private _sw_widgetRemoved(sender: StackPanel, args: IStackIndexArgs): void {
+  private _sw_widgetRemoved(sender: StackedPanel, args: Pair<number, Widget>): void {
     if (this._ignoreRemoved) {
       return;
     }
-    var item = remove(this._items, it => it.widget === args.panel);
-    if (!item) {
+    var i = algo.findIndex(this._items, it => it.widget === args.second);
+    if (i === -1) {
       return;
     }
     this._abortDrag();
+    var item = algo.removeAt(this._items, i);
     item.panel.tabBar.removeTab(item.widget.tab);
-    if (item.panel.stackPanel.count === 0) {
+    if (item.panel.stackedPanel.count === 0) {
       this._removePanel(item.panel);
     }
   }
@@ -838,7 +855,7 @@ function floatTab(tab: ITab, on: boolean): void {
 function iterPanels<T>(root: DockSplitter, cb: (panel: DockPanel) => T): T {
   for (var i = 0, n = root.count; i < n; ++i) {
     var result: T;
-    var panel = root.panelAt(i);
+    var panel = root.widgetAt(i);
     if (panel instanceof DockPanel) {
       result = cb(panel);
     } else {
@@ -863,7 +880,7 @@ function iterSplitters<T>(root: DockSplitter, cb: (panel: DockSplitter) => T): T
     return result;
   }
   for (var i = 0, n = root.count; i < n; ++i) {
-    var panel = root.panelAt(i);
+    var panel = root.widgetAt(i);
     if (panel instanceof DockSplitter) {
       result = iterSplitters(panel, cb);
       if (result !== void 0) {
@@ -873,38 +890,6 @@ function iterSplitters<T>(root: DockSplitter, cb: (panel: DockSplitter) => T): T
   }
   return void 0;
 }
-
-
-function find<T>(items: T[], cb: (v: T) => boolean): T {
-  for (var i = 0, n = items.length; i < n; ++i) {
-    var v = items[i];
-    if (cb(v)) return v;
-  }
-  return void 0;
-}
-
-
-function remove<T>(items: T[], cb: (v: T) => boolean): T {
-  for (var i = 0, n = items.length; i < n; ++i) {
-    var v = items[i];
-    if (cb(v)) {
-      items.splice(i, 1);
-      return v;
-    }
-  }
-  return void 0;
-}
-
-
-/**
- * The class name added to DockPanel instances.
- */
-var DOCK_PANEL_CLASS = 'p-DockPanel';
-
-/**
- * The class name added to the DockPanel overlay div.
- */
-var OVERLAY_CLASS = 'p-DockPanel-overlay';
 
 
 /**
@@ -929,23 +914,23 @@ enum SplitMode {
  *
  * This class is not part of the public Phosphor API.
  */
-class DockPanel extends Panel {
+class DockPanel extends Widget {
   /**
    * Construct a new dock panel.
    */
   constructor() {
     super();
-    this.node.classList.add(DOCK_PANEL_CLASS);
+    this.addClass(DOCK_PANEL_CLASS);
     this._tabBar = new TabBar();
-    this._stackPanel = new StackPanel();
+    this._stackedPanel = new StackedPanel();
     this._overlayNode = this.createOverlay();
 
     var layout = new BoxLayout(Direction.TopToBottom, 0);
-    layout.addPanel(this._tabBar);
-    layout.addPanel(this._stackPanel);
+    layout.addWidget(this._tabBar);
+    layout.addWidget(this._stackedPanel);
 
     this.layout = layout;
-    this.setFlag(PanelFlag.DisallowLayoutChange);
+    this.setFlag(WidgetFlag.DisallowLayoutChange);
     this.node.appendChild(this._overlayNode);
   }
 
@@ -959,8 +944,8 @@ class DockPanel extends Panel {
   /**
    * Get the stack panel child of the dock panel.
    */
-  get stackPanel(): StackPanel {
-    return this._stackPanel;
+  get stackedPanel(): StackedPanel {
+    return this._stackedPanel;
   }
 
   /**
@@ -969,7 +954,7 @@ class DockPanel extends Panel {
   dispose(): void {
     this._clearOverlayTimer();
     this._tabBar = null;
-    this._stackPanel = null;
+    this._stackedPanel = null;
     this._overlayNode = null;
     super.dispose();
   }
@@ -1002,7 +987,7 @@ class DockPanel extends Panel {
    */
   showOverlay(clientX: number, clientY: number): void {
     this._clearOverlayTimer();
-    var box = this.boxData;
+    var box = this.boxSizing();
     var top = box.paddingTop;
     var left = box.paddingLeft;
     var right = box.paddingRight;
@@ -1086,15 +1071,9 @@ class DockPanel extends Panel {
   private _tabBar: TabBar;
   private _overlayTimer = 0;
   private _overlayHidden = true;
-  private _stackPanel: StackPanel;
+  private _stackedPanel: StackedPanel;
   private _overlayNode: HTMLElement = null;
 }
-
-
-/**
- * The class name added to DockSplitter instances.
- */
-var DOCK_SPLITTER_CLASS = 'p-DockSplitter';
 
 
 /**
@@ -1108,8 +1087,8 @@ class DockSplitter extends SplitPanel {
    */
   constructor(orientation: Orientation) {
     super(orientation);
-    this.node.classList.add(DOCK_SPLITTER_CLASS);
+    this.addClass(DOCK_SPLITTER_CLASS);
   }
 }
 
-} // module phosphor.panels
+} // module phosphor.widgets

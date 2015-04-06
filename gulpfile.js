@@ -84,14 +84,14 @@ var tsSources = [
   'widgets/boxpanel',
   'widgets/splitpanel',
   'widgets/stackedpanel',
+  'widgets/dockarea',
   'widgets/elementhost',
   'widgets/menuitem',
   'widgets/menu',
   'widgets/menubar',
   'widgets/tab',
   'widgets/tabbar',
-  'widgets/tabpanel',
-  //'widgets/dockarea'
+  'widgets/tabpanel'
 
   // 'shell/IPlugin',
   // 'shell/IPluginList',

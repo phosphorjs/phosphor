@@ -81,13 +81,16 @@ body {
 }
 
 
-.p-Tab.p-mod-closable > .p-Tab-close-icon:before {
-  content: '\f00d';
-  font-family: FontAwesome;
+.p-Tab.p-mod-closable > .p-Tab-close-icon {
+  margin-left: 4px;
+  &:before {
+    content: '\f00d';
+    font-family: FontAwesome;
+  }
 }
 
 
-.p-DockPanel > .p-StackPanel {
+.p-DockPanel > .p-StackedPanel {
   padding: 10px;
   background: white;
   border: 1px solid #C0C0C0;
@@ -104,6 +107,8 @@ body {
 
 .content {
   border: 1px solid black;
+  min-width: 50px;
+  min-height: 50px;
 }
 
 
