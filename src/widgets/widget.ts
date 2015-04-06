@@ -7,12 +7,8 @@
 |----------------------------------------------------------------------------*/
 module phosphor.widgets {
 
-import some = collections.some;
-import IIterable = collections.IIterable;
-import IIterator = collections.IIterator;
-import IList = collections.IList;
-import List = collections.List;
-import ReadOnlyList = collections.ReadOnlyList;
+import Queue = collections.Queue;
+import algo = collections.algorithm;
 
 import IDisposable = core.IDisposable;
 import IMessage = core.IMessage;
@@ -86,20 +82,20 @@ class Widget implements IMessageHandler, IDisposable {
     var parent = this._parent;
     if (parent) {
       this._parent = null;
-      parent._children.remove(this);
+      algo.remove(parent._children, this);
       sendMessage(parent, new ChildMessage('child-removed', this));
     } else if (this.isAttached) {
       this.detach();
     }
 
     var children = this._children;
-    for (var i = 0; i < children.size; ++i) {
-      var child = children.get(i);
-      children.set(i, null);
+    for (var i = 0; i < children.length; ++i) {
+      var child = children[i];
+      children[i] = null;
       child._parent = null;
       child.dispose();
     }
-    children.clear();
+    children.length = 0;
 
     this._node = null;
   }
@@ -306,29 +302,22 @@ class Widget implements IMessageHandler, IDisposable {
     }
     if (oldParent) {
       this._parent = null;
-      oldParent._children.remove(this);
+      algo.remove(oldParent._children, this);
       sendMessage(oldParent, new ChildMessage('child-removed', this));
     }
     if (parent) {
       this._parent = parent;
-      parent._children.add(this);
+      parent._children.push(this);
       sendMessage(parent, new ChildMessage('child-added', this));
     }
     sendMessage(this, new Message('parent-changed'));
   }
 
   /**
-   * Get a read only list of the widget's children.
+   * Get an array of the widget's children.
    */
-  get childList(): IList<Widget> {
-    return new ReadOnlyList(this._children);
-  }
-
-  /**
-   * Get an iterator over the widget's children.
-   */
-  children(): IIterator<Widget> {
-    return this._children.iterator();
+  children(): Widget[] {
+    return this._children.slice();
   }
 
   /**
@@ -753,9 +742,9 @@ class Widget implements IMessageHandler, IDisposable {
    *
    * Subclasses may reimplement this method as needed.
    */
-  compressMessage(msg: IMessage, posted: IIterable<IMessage>): boolean {
+  compressMessage(msg: IMessage, pending: Queue<IMessage>): boolean {
     if (msg.type === 'layout-request') {
-      return some(posted, other => other.type === 'layout-request');
+      return pending.some(other => other.type === 'layout-request');
     }
     return false;
   }
@@ -885,7 +874,7 @@ class Widget implements IMessageHandler, IDisposable {
   private _node: HTMLElement;
   private _layout: Layout = null;
   private _parent: Widget = null;
-  private _children = new List<Widget>();
+  private _children: Widget[] = [];
   private _sizePolicy = defaultSizePolicy;
   private _boxSizing: IBoxSizing = null;
   private _x = 0;
@@ -903,21 +892,21 @@ var defaultSizePolicy = (SizePolicy.Preferred << 16) | SizePolicy.Preferred;
 
 
 /**
- * Send a message to all widgets in a list.
+ * Send a message to all widgets in an array.
  */
-function sendAll(list: List<Widget>, msg: IMessage): void {
-  for (var i = 0; i < list.size; ++i) {
-    sendMessage(list.get(i), msg);
+function sendAll(array: Widget[], msg: IMessage): void {
+  for (var i = 0; i < array.length; ++i) {
+    sendMessage(array[i], msg);
   }
 }
 
 
 /**
- * Send a message to all non-hidden widgets in a list.
+ * Send a message to all non-hidden widgets in an array.
  */
-function sendNonHidden(list: List<Widget>, msg: IMessage): void {
-  for (var i = 0; i < list.size; ++i) {
-    var widget = list.get(i);
+function sendNonHidden(array: Widget[], msg: IMessage): void {
+  for (var i = 0; i < array.length; ++i) {
+    var widget = array[i];
     if (!widget.isHidden) {
       sendMessage(widget, msg);
     }
