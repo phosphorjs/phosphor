@@ -35,8 +35,8 @@ var tsSources = [
   'core/signal',
 
   'di/token',
-  'di/icontainer',
   'di/container',
+  'di/icontainer',
 
   'utility/boxsizing',
   'utility/cursor',
@@ -48,11 +48,11 @@ var tsSources = [
   'utility/rect',
   'utility/size',
 
-  'virtualdom/IComponent',
-  'virtualdom/IData',
-  'virtualdom/IElement',
   'virtualdom/factory',
   'virtualdom/dom',
+  'virtualdom/icomponent',
+  'virtualdom/idata',
+  'virtualdom/ielement',
   'virtualdom/renderer',
 
   'components/basecomponent',

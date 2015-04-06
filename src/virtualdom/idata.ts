@@ -25,7 +25,7 @@ interface IData {
    * The ref id for the element.
    *
    * If an element is given a ref id, the generated node or component
-   * will be added to the ref mapping created by the virtual renderer.
+   * will be added to the ref mapping created by the renderer.
    */
   ref?: string;
 }

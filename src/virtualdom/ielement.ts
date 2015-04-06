@@ -38,7 +38,7 @@ enum ElementType {
  * the `createFactory` function.
  *
  * An element *must* be treated as immutable. Mutating element state
- * lead to undefined rendering behavior.
+ * will lead to undefined rendering behavior.
  */
 export
 interface IElement {
