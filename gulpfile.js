@@ -35,7 +35,6 @@ var tsSources = [
   'core/signal',
 
   'di/token',
-  'di/iinjectable',
   'di/icontainer',
   'di/container',
 

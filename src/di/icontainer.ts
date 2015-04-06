@@ -8,6 +8,23 @@
 module phosphor.di {
 
 /**
+ * A class type which declares its injection dependencies.
+ */
+export
+interface IInjectable<T> {
+  /**
+   * The constructor signature for the class.
+   */
+  new(...args: any[]): T;
+
+  /**
+   * The type ids of the dependencies needed to instantiate the type.
+   */
+  $inject?: IToken<any>[];
+}
+
+
+/**
  * An object which manages dependency injection.
  */
 export
