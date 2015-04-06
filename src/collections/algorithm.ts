@@ -11,6 +11,33 @@ export
 module algorithm {
 
 /**
+ * A generic index callback function.
+ */
+export
+interface ICallback<T, U> {
+  (value: T, index: number): U;
+}
+
+
+/**
+ * A boolean predicate function.
+ */
+export
+interface IPredicate<T> {
+  (value: T, index: number): boolean;
+}
+
+
+/**
+ * A three-way comparison function.
+ */
+export
+interface IComparator<T, U> {
+  (first: T, second: U): number;
+}
+
+
+/**
  * Find the index of the first element which passes the test.
  *
  * The `from` parameter controls the starting index of the search. If
