@@ -8,7 +8,7 @@
 module phosphor.collections {
 
 export
-module arrays {
+module algorithm {
 
 /**
  * Find the index of the first element which passes the test.
@@ -38,7 +38,7 @@ function findIndex<T>(array: T[], pred: IPredicate<T>, from = 0, wrap = false): 
     from += len;
   }
   if (from < 0) {
-    from = 0;
+    return -1;
   }
   if (wrap) {
     for (var i = 0; i < len; ++i) {
@@ -79,14 +79,14 @@ function findLastIndex<T>(array: T[], pred: IPredicate<T>, from = -1, wrap = fal
     return -1;
   }
   from = from | 0;
+  if (from >= len) {
+    return -1;
+  }
   if (from < 0) {
     from += len;
   }
   if (from < 0) {
     return -1;
-  }
-  if (from >= len) {
-    from = len - 1;
   }
   if (wrap) {
     for (var i = len; i > 0; --i) {
@@ -355,6 +355,6 @@ function remove<T>(array: T[], value: T): number {
   return index;
 }
 
-} // module arrays
+} // module algorithm
 
 } // module phosphor.collections
