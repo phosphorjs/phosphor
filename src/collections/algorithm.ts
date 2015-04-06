@@ -207,7 +207,7 @@ function upperBound<T, U>(array: T[], value: U, cmp: IComparator<T, U>): number 
  * Returns `-1` if no matching value is found.
  */
 export
-function lowerFindIndex<T, U>(array: T[], value: U, cmp: IComparator<T, U>): number {
+function findLowerIndex<T, U>(array: T[], value: U, cmp: IComparator<T, U>): number {
   var i = lowerBound(array, value, cmp);
   if (i === array.length) {
     return -1;
@@ -228,7 +228,7 @@ function lowerFindIndex<T, U>(array: T[], value: U, cmp: IComparator<T, U>): num
  * Returns `-1` if no matching value is found.
  */
 export
-function upperFindIndex<T, U>(array: T[], value: U, cmp: IComparator<T, U>): number {
+function findUpperIndex<T, U>(array: T[], value: U, cmp: IComparator<T, U>): number {
   var i = upperBound(array, value, cmp);
   if (i === 0) {
     return -1;
@@ -249,16 +249,9 @@ function upperFindIndex<T, U>(array: T[], value: U, cmp: IComparator<T, U>): num
  * Returns `undefined` if no matching value is found.
  */
 export
-function lowerFind<T, U>(array: T[], value: U, cmp: IComparator<T, U>): T {
-  var i = lowerBound(array, value, cmp);
-  if (i === array.length) {
-    return void 0;
-  }
-  var item = array[i];
-  if (cmp(item, value) === 0) {
-    return item;
-  }
-  return void 0;
+function findLower<T, U>(array: T[], value: U, cmp: IComparator<T, U>): T {
+  var i = findLowerIndex(array, value, cmp);
+  return i !== -1 ? array[i] : void 0;
 }
 
 
@@ -271,24 +264,14 @@ function lowerFind<T, U>(array: T[], value: U, cmp: IComparator<T, U>): T {
  * Returns `-1` if no matching value is found.
  */
 export
-function upperFind<T, U>(array: T[], value: U, cmp: IComparator<T, U>): T {
-  var i = upperBound(array, value, cmp);
-  if (i === 0) {
-    return void 0;
-  }
-  var item = array[i - 1];
-  if (cmp(item, value) === 0) {
-    return item;
-  }
-  return void 0;
+function findUpper<T, U>(array: T[], value: U, cmp: IComparator<T, U>): T {
+  var i = findUpperIndex(array, value, cmp);
+  return i !== -1 ? array[i] : void 0;
 }
 
 
 /**
  * Insert an element at the given index.
- *
- * This is faster than `Array#splice` for inserting a single element
- * since it does not allocate an array return value.
  *
  * Returns the clamped index of the inserted element.
  */
@@ -316,9 +299,6 @@ function insert<T>(array: T[], index: number, value: T): number {
 /**
  * Remove and return the element at the given index.
  *
- * This is faster than `Array#splice` for removing a single element
- * since it does not allocate an array return value.
- *
  * Returns `undefined` if the index is out of range.
  */
 export
@@ -338,9 +318,9 @@ function removeAt<T>(array: T[], index: number): T {
 
 
 /**
- * Remove the first matching element and return its index.
+ * Remove the first occurrence of the element and return its index.
  *
- * Returns the `-1` if there is no matching element.
+ * Returns the `-1` if the element is not in the array.
  */
 export
 function remove<T>(array: T[], value: T): number {
