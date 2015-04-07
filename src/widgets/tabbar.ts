@@ -69,29 +69,19 @@ var TAB_STUB_SIZE = 7;
 
 
 /**
- * The arguments object for the `attachTab` method.
+ * The arguments object for the `tabDetachRequested` signal.
  */
 export
-interface ITabAttachArgs {
+interface ITabDetachArgs {
   /**
-   * The tab to add to the tab bar.
+   * The tab of interest.
    */
   tab: ITab;
 
   /**
-   * The current width of the tab.
+   * The index of the tab.
    */
-  tabWidth: number;
-
-  /**
-   * The X press position in tab coordinates.
-   */
-  offsetX: number;
-
-  /**
-   * The Y press position in tab coordinates.
-   */
-  offsetY: number;
+  index: number;
 
   /**
    * The current mouse client X position.
@@ -100,48 +90,6 @@ interface ITabAttachArgs {
 
   /**
    * The current mouse client Y position.
-   */
-  clientY: number;
-}
-
-
-/**
- * The arguments object for the `tabDetachRequested` signal.
- */
-export
-interface ITabDetachArgs {
-  /**
-   * The index of the tab to detach.
-   */
-  index: number;
-
-  /**
-   * The tab to detach.
-   */
-  tab: ITab;
-
-  /**
-   * The current width of the tab.
-   */
-  tabWidth: number;
-
-  /**
-   * The X press position in tab coordinates.
-   */
-  offsetX: number;
-
-  /**
-   * The Y press position in tab coordinates.
-   */
-  offsetY: number;
-
-  /**
-   * The current client mouse X position.
-   */
-  clientX: number;
-
-  /**
-   * The current client mouse Y position.
    */
   clientY: number;
 }
@@ -437,21 +385,21 @@ class TabBar extends Widget {
   }
 
   /**
-   * Attach a tab to the tab bar.
+   * Add a tab to the tab bar at the given client X position.
    *
    * This will immediately insert the tab with no transition. It will
    * then grab the mouse to continue the tab drag. It assumes the left
    * mouse button is down.
    */
-  attachTab(args: ITabAttachArgs): void {
-    var curr = this._tabs.indexOf(args.tab);
+  attachTab(tab: ITab, clientX: number): void {
+    var curr = this._tabs.indexOf(tab);
     var inner = <HTMLElement>this.node.firstChild;
     var innerRect = inner.getBoundingClientRect();
-    var localLeft = args.clientX - args.offsetX - innerRect.left;
+    var localLeft = clientX - innerRect.left;
     var index = localLeft / (this._tabLayoutWidth() - this._tabOverlap);
     index = Math.max(0, Math.min(Math.round(index), this._tabs.length));
     if (curr === -1) {
-      this._insertTab(index, args.tab, false);
+      this._insertTab(index, tab, false);
     } else if (curr !== index) {
       this._moveTab(curr, index);
     }
@@ -461,19 +409,18 @@ class TabBar extends Widget {
     if (!this._movable) {
       return;
     }
-    var node = args.tab.node;
+    var node = tab.node;
     var tabWidth = this._tabLayoutWidth();
-    var offsetX = tabWidth * (args.offsetX / args.tabWidth);
-    var maxX = this.width - tabWidth;
-    var localX = args.clientX - innerRect.left - offsetX;
-    var targetX = Math.max(0, Math.min(localX, maxX));
+    var offsetX = (0.4 * tabWidth) | 0;
+    var localX = clientX - innerRect.left - offsetX;
+    var targetX = Math.max(0, Math.min(localX, innerRect.width - tabWidth));
+    var clientY = innerRect.top + (0.5 * innerRect.height) | 0;
     var grab = overrideCursor(window.getComputedStyle(node).cursor);
     this._dragData = {
       node: node,
-      pressX: args.clientX,
-      pressY: args.clientY,
+      pressX: clientX,
+      pressY: clientY,
       offsetX: offsetX,
-      offsetY: args.offsetY,
       innerRect: innerRect,
       cursorGrab: grab,
       dragActive: true,
@@ -617,7 +564,6 @@ class TabBar extends Widget {
         pressX: clientX,
         pressY: clientY,
         offsetX: clientX - rect.left,
-        offsetY: clientY - rect.top,
         innerRect: null,
         cursorGrab: null,
         dragActive: false,
@@ -661,17 +607,13 @@ class TabBar extends Widget {
     if (!data.emitted) {
       var innerRect = data.innerRect;
       if (!inBounds(innerRect, DETACH_THRESHOLD, clientX, clientY)) {
-        var args: ITabDetachArgs = {
-          index: this.currentIndex,
-          tab: this.currentTab,
-          tabWidth: tabWidth,
-          offsetX: data.offsetX,
-          offsetY: data.offsetY,
-          clientX: clientX,
-          clientY: clientY,
-        };
         data.emitted = true;
-        this.tabDetachRequested.emit(this, args);
+        this.tabDetachRequested.emit(this, {
+          tab: this.currentTab,
+          index: this.currentIndex,
+          clientX: event.clientX,
+          clientY: event.clientY,
+        });
         if (!this._dragData) { // tab detached
           return;
         }
@@ -946,11 +888,6 @@ interface IDragData {
    * The mouse X position in tab coordinates.
    */
   offsetX: number;
-
-  /**
-   * The mouse Y position in tab coordinates.
-   */
-  offsetY: number;
 
   /**
    * The client rect of the inner tab bar node.

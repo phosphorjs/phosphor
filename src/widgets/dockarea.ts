@@ -321,14 +321,7 @@ class DockArea extends Widget {
     tabStyle.width = '';
 
     // Attach the tab to the hit tab bar.
-    hitPanel.tabBar.attachTab({
-      tab: itemTab,
-      clientX: clientX,
-      clientY: clientY,
-      offsetX: dragData.offsetX,
-      offsetY: dragData.offsetY,
-      tabWidth: dragData.tabWidth,
-    });
+    hitPanel.tabBar.attachTab(itemTab, clientX);
 
     // The tab bar takes over movement of the tab. The dock area still
     // listens for the mouseup event in order to complete the move.
@@ -729,7 +722,6 @@ class DockArea extends Widget {
       this._dragData = {
         item: item,
         index: args.index,
-        tabWidth: 0,
         offsetX: 0,
         offsetY: 0,
         grab: grab,
@@ -742,9 +734,8 @@ class DockArea extends Widget {
 
     // Update the drag data with the current tab geometry.
     var dragData = this._dragData;
-    dragData.tabWidth = args.tabWidth;
-    dragData.offsetX = args.offsetX;
-    dragData.offsetY = args.offsetY;
+    dragData.offsetX = (0.4 * this._tabWidth) | 0;
+    dragData.offsetY = (0.6 * tab.node.offsetHeight) | 0;
 
     // The tab being detached will have one of two states:
     //
@@ -767,9 +758,9 @@ class DockArea extends Widget {
 
     // Setup the initial style and position for the floating tab.
     var style = tab.node.style;
-    style.left = args.clientX - args.offsetX + 'px';
-    style.top = args.clientY - args.offsetY + 'px';
-    style.width = args.tabWidth + 'px';
+    style.left = args.clientX - dragData.offsetX + 'px';
+    style.top = args.clientY - dragData.offsetY +  'px';
+    style.width = this._tabWidth + 'px';
     style.zIndex = '';
 
     // Add the floating tab to the document body.
@@ -827,7 +818,6 @@ interface IDockItem {
 interface IDragData {
   item: IDockItem;
   index: number;
-  tabWidth: number;
   offsetX: number;
   offsetY: number;
   grab: IDisposable;
@@ -1024,7 +1014,7 @@ class DockPanel extends Widget {
       style.right = rect.right - clientX + 'px';
       style.bottom = rect.bottom - clientY + 'px';
       style.display = '';
-      this._overlayNode.offsetWidth; // force restyle
+      this._overlayNode.offsetWidth; // force layout
     }
     style.opacity = '1';
     style.top = top + 'px';
