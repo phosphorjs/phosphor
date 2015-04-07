@@ -263,7 +263,7 @@ class BoxLayout extends Layout {
 
     // Distribute the layout space to the sizers.
     var mainSpace = isHorizontal(dir) ? width : height;
-    layoutCalc(sizers, mainSpace - this._fixedSpace);
+    layoutCalc(sizers, Math.max(0, mainSpace - this._fixedSpace));
 
     // Update the geometry of the items according to the layout
     // direction. Fixed spacing is added before each item which
