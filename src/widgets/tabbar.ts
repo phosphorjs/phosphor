@@ -62,6 +62,11 @@ var DETACH_THRESHOLD = 20;
  */
 var TRANSITION_DURATION = 150;
 
+/**
+ * The size of a collapsed tab stub.
+ */
+var TAB_STUB_SIZE = 7;
+
 
 /**
  * The arguments object for the `attachTab` method.
@@ -500,8 +505,8 @@ class TabBar extends Widget {
     var width = 0;
     var count = this._tabs.length;
     if (count > 0) {
-      var overlap = this._tabOverlap * (count - 1);
-      width = this._minTabWidth * count - overlap;
+      var stub = TAB_STUB_SIZE * (count - 1);
+      width = this._minTabWidth + stub;
     }
     return new Size(width, this.boxSizing().minHeight);
   }
@@ -863,6 +868,7 @@ class TabBar extends Widget {
     var left = 0;
     var width = this.width;
     var tabs = this._tabs;
+    var stub = TAB_STUB_SIZE;
     var data = this._dragData;
     var overlap = this._tabOverlap;
     var tabWidth = this._tabLayoutWidth();
@@ -871,6 +877,10 @@ class TabBar extends Widget {
       var node = tabs[i].node;
       var style = node.style;
       if (node !== dragNode) {
+        var offset = tabWidth + stub * (n - i - 1);
+        if (left + offset > width) {
+          left = Math.max(0, width - offset);
+        }
         style.left = left + 'px';
       }
       style.width = tabWidth + 'px';
