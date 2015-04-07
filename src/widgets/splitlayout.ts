@@ -392,6 +392,9 @@ class SplitLayout extends Layout {
     // Compute the size bounds according to the splitter orientation.
     //
     // TODO document size hint subtleties
+    //
+    // Potential solution is to freeze size hints for visible items
+    // with a zero size hint and a non-zero size.
     if (orient === Orientation.Horizontal) {
       maxH = Infinity;
       maxW = count > 0 ? 0 : Infinity;
