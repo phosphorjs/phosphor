@@ -293,21 +293,9 @@ class SplitLayout extends Layout {
     var orient = this._orientation;
     var sizers = this._sizers;
 
-    // Ensure each element has a minimally reasonable size hint.
-    var mainSpace = orient === Orientation.Horizontal ? width : height;
-    var layoutSpace = Math.max(0, mainSpace - this._fixedSpace);
-
-    // WIP
-    // var basis = (layoutSpace / sizers.length) | 0;
-    // for (var i = 0, n = sizers.length; i < n; ++i) {
-    //   var sizer = sizers[i];
-    //   if (sizer.sizeHint === 0) {
-    //     sizer.sizeHint = basis;
-    //   }
-    // }
-
     // Distribute the layout space to the sizers.
-    layoutCalc(sizers, layoutSpace);
+    var mainSpace = orient === Orientation.Horizontal ? width : height;
+    layoutCalc(sizers, Math.max(0, mainSpace - this._fixedSpace));
 
     // Update the geometry of the items according to the orientation.
     var hSize = this._handleSize;
@@ -428,8 +416,6 @@ class SplitLayout extends Layout {
         hintW += itemHint.width;
         minW += itemMin.width;
         maxW += itemMax.width;
-        // WIP
-        // sizer.sizeHint = sizer.size;
         sizer.minSize = itemMin.width;
         sizer.maxSize = itemMax.width;
         sizer.expansive = item.expandHorizontal;
@@ -461,8 +447,6 @@ class SplitLayout extends Layout {
         hintH += itemHint.height;
         minH += itemMin.height;
         maxH += itemMax.height;
-        // WIP
-        // sizer.sizeHint = sizer.size;
         sizer.minSize = itemMin.height;
         sizer.maxSize = itemMax.height;
         sizer.expansive = item.expandVertical;
