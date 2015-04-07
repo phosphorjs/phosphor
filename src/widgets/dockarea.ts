@@ -479,7 +479,6 @@ class DockArea extends Widget {
       } else {
         var sizes = splitter.sizes();
         var index = splitter.indexOf(panel);
-        panel.parent = null;
         var newSplitter = this._createSplitter(orientation);
         newSplitter.addWidget(panel);
         newSplitter.insertWidget(after ? 1 : 0, newPanel);
@@ -488,10 +487,12 @@ class DockArea extends Widget {
         newSplitter.setSizes([1, 1]);
       }
     } else {
-      var sizes = splitter.sizes();
       var index = splitter.indexOf(panel);
-      splitter.insertWidget(index + (after ? 1 : 0), newPanel);
-      sizes.splice(index, 0, 1 / sizes.length);
+      var i = after ? index + 1 : index;
+      var sizes = splitter.sizes();
+      var size = sizes[index] = sizes[index] / 2;
+      splitter.insertWidget(i, newPanel);
+      algo.insert(sizes, i, size);
       splitter.setSizes(sizes);
     }
   }
