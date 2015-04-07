@@ -140,6 +140,7 @@ class SplitLayout extends Layout {
       return;
     }
     var sizers = this._sizers;
+    storeSizes(sizers); // Prevent item resizing unless needed.
     if (delta > 0) {
       growSizer(sizers, index, delta);
     } else {
@@ -389,12 +390,13 @@ class SplitLayout extends Layout {
     var handleSize = this._handleSize;
     var sizers = this._sizers;
 
+    // Prevent item resizing unless needed.
+    storeSizes(sizers);
+
     // Compute the size bounds according to the splitter orientation.
     //
-    // TODO document size hint subtleties
-    //
-    // Potential solution is to freeze size hints for visible items
-    // with a zero size hint and a non-zero size.
+    // A visible item with a zero size hint indicates a newly added
+    // item. Its layout size hint is initialized to the item's hint.
     if (orient === Orientation.Horizontal) {
       maxH = Infinity;
       maxW = count > 0 ? 0 : Infinity;
@@ -419,6 +421,9 @@ class SplitLayout extends Layout {
         sizer.minSize = itemMin.width;
         sizer.maxSize = itemMax.width;
         sizer.expansive = item.expandHorizontal;
+        if (sizer.sizeHint === 0) {
+          sizer.sizeHint = itemHint.width;
+        }
         if (!item.handle.hidden) {
           fixedSpace += handleSize;
         }
@@ -450,6 +455,9 @@ class SplitLayout extends Layout {
         sizer.minSize = itemMin.height;
         sizer.maxSize = itemMax.height;
         sizer.expansive = item.expandVertical;
+        if (sizer.sizeHint === 0) {
+          sizer.sizeHint = itemHint.height;
+        }
         if (!item.handle.hidden) {
           fixedSpace += handleSize;
         }
@@ -514,19 +522,29 @@ class SplitItem extends WidgetItem {
 
 
 /**
+ * Store the current layout sizes of the sizers.
+ *
+ * This will set the layout size hint to the current layout size for
+ * every sizer with a current size greater than zero. This ensures
+ * that an item will not be resized on the next layout unless its
+ * size limits force a resize.
+ */
+function storeSizes(sizers: LayoutSizer[]): void {
+  for (var i = 0, n = sizers.length; i < n; ++i) {
+    var sizer = sizers[i];
+    if (sizer.size > 0) {
+      sizer.sizeHint = sizer.size;
+    }
+  }
+}
+
+
+/**
  * Grow a sizer to the right by a positive delta.
  *
  * This will adjust the sizer's neighbors if required.
- *
- * Before adjusting the targer sizer, all size hints are updated to
- * their current layout size. This ensures that neighboring sections
- * will retain their current size on the next layout when possible.
  */
 function growSizer(sizers: LayoutSizer[], index: number, delta: number): void {
-  for (var i = 0, n = sizers.length; i < n; ++i) {
-    var sizer = sizers[i];
-    sizer.sizeHint = sizer.size;
-  }
   var growLimit = 0;
   for (var i = 0; i <= index; ++i) {
     var sizer = sizers[i];
