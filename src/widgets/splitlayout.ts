@@ -104,7 +104,10 @@ class SplitLayout extends Layout {
     var normed = normalize(sizes);
     var n = Math.min(sizers.length, normed.length);
     for (var i = 0; i < n; ++i) {
-      sizers[i].sizeHint = Math.round(normed[i] * totalSize);
+      var hint = Math.round(normed[i] * totalSize);
+      var sizer = sizers[i];
+      sizer.size = hint;
+      sizer.sizeHint = hint;
     }
     if (parent.isVisible) {
       this.update();
