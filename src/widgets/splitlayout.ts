@@ -390,11 +390,8 @@ class SplitLayout extends Layout {
     var sizers = this._sizers;
 
     // Compute the size bounds according to the splitter orientation.
-    // The size hints for the sizers are explicitly not updated. The
-    // size hint for a widget is only adjusted when the user moves a
-    // handle. This allows a widgets to remain well-sized when its
-    // sibling widgets are added or removed or when the widget is
-    // shown or hidden (see the growItem function).
+    //
+    // TODO document size hint subtleties
     if (orient === Orientation.Horizontal) {
       maxH = Infinity;
       maxW = count > 0 ? 0 : Infinity;
