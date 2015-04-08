@@ -147,11 +147,14 @@ class Layout implements IMessageFilter, IDisposable {
   }
 
   /**
-   * Remove the given widget or layout item from the layout.
+   * Remove an item from the layout and return its index.
+   *
+   * Returns -1 if the item is not in the layout.
    */
-  remove(value: Widget | ILayoutItem): void {
+  remove(value: Widget | ILayoutItem): number {
     var i = this.indexOf(value);
     if (i !== -1) this.removeAt(i);
+    return i;
   }
 
   /**
