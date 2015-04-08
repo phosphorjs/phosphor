@@ -34,6 +34,7 @@ class Content extends Widget {
 
 function main(): void {
   var area = new DockArea();
+  area.tabOverlap = 1;
 
   var r1 = new Content('Red');
   var r2 = new Content('Red');

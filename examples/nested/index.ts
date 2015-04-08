@@ -34,6 +34,7 @@ class Content extends Widget {
 
 function createTabs(index: number): TabPanel {
   var tabs = new TabPanel();
+  tabs.tabBar.tabOverlap = 1;
   tabs.addWidget(new Content('Red'));
   tabs.addWidget(new Content('Yellow'));
   tabs.addWidget(new Content('Blue'));

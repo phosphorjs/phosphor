@@ -12,6 +12,7 @@ import TabBar = phosphor.widgets.TabBar;
 
 function main(): void {
   var tb = new TabBar();
+  tb.tabOverlap = 1;
 
   tb.addTab('One');
   tb.addTab('Two');

@@ -139,28 +139,28 @@ class TabBar extends Widget {
     this.verticalSizePolicy = SizePolicy.Fixed;
   }
 
-  /**
+  /*
    * Dispose of the resources held by the widget.
    */
   dispose(): void {
     this._releaseMouse();
-    this._tabs = null;
     this.tabMoved.disconnect();
     this.currentChanged.disconnect();
     this.tabCloseRequested.disconnect();
     this.tabDetachRequested.disconnect();
+    this._tabs = null;
     super.dispose();
   }
 
   /**
-   * Get the index of the current tab.
+   * Get the currently selected tab index.
    */
   get currentIndex(): number {
     return this._tabs.indexOf(this._currentTab);
   }
 
   /**
-   * Set the selected tab index.
+   * Set the currently selected tab index.
    */
   set currentIndex(index: number) {
     var prev = this._currentTab;
@@ -170,11 +170,10 @@ class TabBar extends Widget {
     }
     if (prev) prev.selected = false;
     if (next) next.selected = true;
-    index = next ? index : -1;
     this._currentTab = next;
     this._previousTab = prev;
-    this._updateTabZOrder();
-    this.currentChanged.emit(this, new Pair(index, next));
+    this._refreshTabZOrder();
+    this.currentChanged.emit(this, new Pair(next ? index : -1, next));
   }
 
   /**
@@ -214,14 +213,18 @@ class TabBar extends Widget {
   }
 
   /**
-   * Get the desired tab width in pixels.
+   * Get the preferred tab width.
+   *
+   * Tabs will be sized to this width if possible, but never larger.
    */
   get tabWidth(): number {
     return this._tabWidth;
   }
 
   /**
-   * Set the desired tab width in pixels.
+   * Set the preferred tab width.
+   *
+   * Tabs will be sized to this width if possible, but never larger.
    */
   set tabWidth(width: number) {
     width = Math.max(0, width);
@@ -236,7 +239,9 @@ class TabBar extends Widget {
   }
 
   /**
-   * Get the minimum tab width in pixels.
+   * Get the minimum tab width.
+   *
+   * Tabs will never be sized smaller than this amount.
    */
   get minTabWidth(): number {
     return this._minTabWidth;
@@ -244,6 +249,8 @@ class TabBar extends Widget {
 
   /**
    * Set the minimum tab width in pixels.
+   *
+   * Tabs will never be sized smaller than this amount.
    */
   set minTabWidth(width: number) {
     width = Math.max(0, width);
@@ -258,14 +265,20 @@ class TabBar extends Widget {
   }
 
   /**
-   * Get the tab overlap amount in pixels.
+   * Get the tab overlap amount.
+   *
+   * A positive value will cause neighboring tabs to overlap.
+   * A negative value will insert empty space between tabs.
    */
   get tabOverlap(): number {
     return this._tabOverlap;
   }
 
   /**
-   * Set the tab overlap amount in pixels.
+   * Set the tab overlap amount.
+   *
+   * A positive value will cause neighboring tabs to overlap.
+   * A negative value will insert empty space between tabs.
    */
   set tabOverlap(overlap: number) {
     if (overlap === this._tabOverlap) {
@@ -304,8 +317,8 @@ class TabBar extends Widget {
    *
    * Returns the index of the tab.
    */
-  addTab(tab: string | ITab): number {
-    return this.insertTab(this._tabs.length, tab);
+  addTab(tab: ITab): number {
+    return this.insertTab(this.count, tab);
   }
 
   /**
@@ -313,18 +326,13 @@ class TabBar extends Widget {
    *
    * Returns the index of the tab.
    */
-  insertTab(index: number, tab: string | ITab): number {
-    var tabs = this._tabs;
-    index = Math.max(0, Math.min(index | 0, tabs.length));
-    if (typeof tab === 'string') {
-      this._insertTab(index, new Tab(tab), true);
+  insertTab(index: number, tab: ITab): number {
+    index = Math.max(0, Math.min(index | 0, this.count));
+    var curr = this.indexOf(tab);
+    if (curr !== -1) {
+      index = this.moveTab(curr, index);
     } else {
-      var curr = tabs.indexOf(tab);
-      if (curr !== -1) {
-        index = this.moveTab(curr, index);
-      } else {
-        this._insertTab(index, tab, true);
-      }
+      this._insertWithAnimation(index, tab);
     }
     return index;
   }
@@ -336,7 +344,7 @@ class TabBar extends Widget {
    */
   moveTab(fromIndex: number, toIndex: number): number {
     fromIndex = fromIndex | 0;
-    var count = this._tabs.length;
+    var count = this.count;
     if (fromIndex < 0 || fromIndex >= count) {
       return -1;
     }
@@ -349,45 +357,41 @@ class TabBar extends Widget {
   }
 
   /**
-   * Remove a tab from the tab bar by index.
+   * Remove and return the tab at the given index.
    *
-   * Returns the removed tab.
+   * Returns `undefined` if the index is out of range.
    */
-  removeAt(index: number, animate = true): ITab {
-    index = index | 0;
-    var tabs = this._tabs;
-    if (index < 0 || index >= tabs.length) {
-      return void 0;
-    }
-    var tab = this._tabs[index];
-    this._removeTab(index, animate);
+  removeAt(index: number): ITab {
+    var tab = this.tabAt(index);
+    if (tab) this._removeTab(index, true);
     return tab;
   }
 
   /**
-   * Remove a tab from the tab bar by value.
+   * Remove a tab from the tab bar and return its index.
    *
-   * Returns the index of the removed item.
+   * Returns -1 if the tab is not in the tab bar.
    */
-  removeTab(tab: ITab, animate = true): number {
-    var index = this._tabs.indexOf(tab);
-    this.removeAt(index, animate);
-    return index;
+  removeTab(tab: ITab): number {
+    var i = this.indexOf(tab);
+    if (i !== -1) this._removeTab(i, true);
+    return i;
   }
 
   /**
    * Remove all of the tabs from the tab bar.
    */
   clearTabs(): void {
-    while (this.count) this.removeAt(this.count - 1, false);
+    while (this.count) {
+      this._removeTab(this.count - 1, false);
+    }
   }
 
   /**
    * Add a tab to the tab bar at the given client X position.
    *
-   * This will immediately insert the tab with no transition. It will
-   * then grab the mouse to continue the tab drag. It assumes the left
-   * mouse button is down.
+   * This will insert the tab and grab the mouse to continue the drag.
+   * It assumes that the left mouse button is currently pressed.
    */
   attachTab(tab: ITab, clientX: number): void {
     var curr = this._tabs.indexOf(tab);
@@ -397,7 +401,7 @@ class TabBar extends Widget {
     var index = localLeft / (this._tabLayoutWidth() - this._tabOverlap);
     index = Math.max(0, Math.min(Math.round(index), this._tabs.length));
     if (curr === -1) {
-      this._insertTab(index, tab, false);
+      this._insertWithoutAnimation(index, tab);
     } else if (curr !== index) {
       this._moveTab(curr, index);
     }
@@ -677,29 +681,41 @@ class TabBar extends Widget {
   /**
    * Insert a new tab into the tab bar at a valid index.
    */
-  private _insertTab(index: number, tab: ITab, animate: boolean): void {
+  private _insertWithAnimation(index: number, tab: ITab): void {
+    this._insertCommon(index, tab);
+    if (!this.isAttached) {
+      return;
+    }
+    this._withTransition(() => {
+      tab.node.classList.add(INSERTING_CLASS);
+      this._updateTabLayout();
+    }, () => {
+      tab.node.classList.remove(INSERTING_CLASS);
+    });
+    this.updateGeometry();
+  }
+
+  private _insertWithoutAnimation(index: number, tab: ITab): void {
+    this._insertCommon(index, tab);
+    if (!this.isAttached) {
+      return;
+    }
+    this._withTransition(() => this._updateTabLayout());
+    this.updateGeometry();
+  }
+
+  private _insertCommon(index: number, tab: ITab): void {
     tab.selected = false;
     this._tabs.splice(index, 0, tab);
     this.contentNode.appendChild(tab.node);
     if (!this._currentTab) {
       this.currentTab = tab;
     } else {
-      this._updateTabZOrder();
+      this._refreshTabZOrder();
     }
     if (!this.isAttached) {
       return;
     }
-    if (animate) {
-      this._withTransition(() => {
-        tab.node.classList.add(INSERTING_CLASS);
-        this._updateTabLayout();
-      }, () => {
-        tab.node.classList.remove(INSERTING_CLASS);
-      });
-    } else {
-      this._withTransition(() => this._updateTabLayout());
-    }
-    this.updateGeometry();
   }
 
   /**
@@ -708,12 +724,24 @@ class TabBar extends Widget {
   private _moveTab(fromIndex: number, toIndex: number): void {
     var tab = this._tabs.splice(fromIndex, 1)[0];
     this._tabs.splice(toIndex, 0, tab);
-    this._updateTabZOrder();
+    this._refreshTabZOrder();
     this.tabMoved.emit(this, new Pair(fromIndex, toIndex));
     if (!this.isAttached) {
       return;
     }
     this._withTransition(() => this._updateTabLayout());
+  }
+
+  private _removeWithAnimation(index: number): void {
+
+  }
+
+  private _removeWithoutAnimation(index: number): void {
+
+  }
+
+  private _removeCommon(index: number): void {
+
   }
 
   /**
@@ -736,9 +764,9 @@ class TabBar extends Widget {
       }
     } else if (tab === this._previousTab) {
       this._previousTab =  null;
-      this._updateTabZOrder();
+      this._refreshTabZOrder();
     } else {
-      this._updateTabZOrder();
+      this._refreshTabZOrder();
     }
     var content = this.contentNode;
     if (!this.isAttached) {
@@ -761,9 +789,9 @@ class TabBar extends Widget {
   }
 
   /**
-   * Update the Z order of the tab nodes in the tab bar.
+   * Refresh the Z indices of the tab nodes.
    */
-  private _updateTabZOrder(): void {
+  private _refreshTabZOrder(): void {
     var tabs = this._tabs;
     var index = tabs.length - 1;
     for (var i = 0, n = tabs.length; i < n; ++i) {
@@ -867,12 +895,12 @@ class TabBar extends Widget {
 
   private _movable = true;
   private _tabWidth = 175;
-  private _tabOverlap = 1;
+  private _tabOverlap = 0;
   private _minTabWidth = 45;
+  private _tabs: ITab[] = [];
   private _currentTab: ITab = null;
   private _previousTab: ITab = null;
   private _dragData: IDragData = null;
-  private _tabs: ITab[] = [];
 }
 
 

@@ -795,7 +795,7 @@ class DockArea extends Widget {
 
   private _handleSize = 3;
   private _tabWidth = 175;
-  private _tabOverlap = 1;
+  private _tabOverlap = 0;
   private _minTabWidth = 45;
   private _ignoreRemoved = false;
   private _root: DockSplitter = null;
