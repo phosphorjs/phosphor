@@ -282,8 +282,8 @@ class Menu implements IDisposable {
    * This is equivalent to pressing the down arrow key.
    */
   activateNextItem(): void {
-    var from = this._activeIndex + 1;
-    var i = algo.findIndex(this._items, isSelectable, from, true);
+    var fromIndex = this._activeIndex + 1;
+    var i = algo.findIndex(this._items, isSelectable, fromIndex, true);
     this._setActiveIndex(i);
   }
 
@@ -293,8 +293,8 @@ class Menu implements IDisposable {
    * This is equivalent to pressing the up arrow key.
    */
   activatePreviousItem(): void {
-    var from = Math.max(-1, this._activeIndex - 1);
-    var i = algo.findLastIndex(this._items, isSelectable, from, true);
+    var fromIndex = Math.max(-1, this._activeIndex - 1);
+    var i = algo.findLastIndex(this._items, isSelectable, fromIndex, true);
     this._setActiveIndex(i);
   }
 

@@ -210,8 +210,8 @@ class MenuBar extends Widget {
    * This is equivalent to pressing the right arrow key.
    */
   activateNextItem(): void {
-    var from = this._activeIndex + 1;
-    var i = algo.findIndex(this._items, isSelectable, from, true);
+    var fromIndex = this._activeIndex + 1;
+    var i = algo.findIndex(this._items, isSelectable, fromIndex, true);
     this._setActiveIndex(i);
     var menu = this._childMenu;
     if (menu) menu.activateNextItem();
@@ -223,8 +223,8 @@ class MenuBar extends Widget {
    * This is equivalent to pressing the left arrow key.
    */
   activatePreviousItem(): void {
-    var from = Math.max(-1, this._activeIndex - 1);
-    var i = algo.findLastIndex(this._items, isSelectable, from, true);
+    var fromIndex = Math.max(-1, this._activeIndex - 1);
+    var i = algo.findLastIndex(this._items, isSelectable, fromIndex, true);
     this._setActiveIndex(i);
     var menu = this._childMenu;
     if (menu) menu.activateNextItem();

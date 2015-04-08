@@ -40,9 +40,9 @@ interface IComparator<T, U> {
 /**
  * Find the index of the first element which passes the test.
  *
- * The `from` parameter controls the starting index of the search. If
- * the value is negative, it is offset from the end of the array. The
- * default index is `0`.
+ * The `fromIndex` parameter controls the starting index of the search.
+ * If the value is negative, it is offset from the end of the array.
+ * The default index is `0`.
  *
  * The `wrap` parameter controls the search wrap-around. If true, the
  * search will wrap-around at the end of the array and continue until
@@ -52,27 +52,27 @@ interface IComparator<T, U> {
  * Returns `-1` if no element passes the test.
  */
 export
-function findIndex<T>(array: T[], pred: IPredicate<T>, from = 0, wrap = false): number {
+function findIndex<T>(array: T[], pred: IPredicate<T>, fromIndex = 0, wrap = false): number {
   var len = array.length;
   if (len === 0) {
     return -1;
   }
-  from = from | 0;
-  if (from < 0) {
-    from += len;
+  fromIndex = fromIndex | 0;
+  if (fromIndex < 0) {
+    fromIndex += len;
   }
-  if (from < 0) {
-    from = 0;
+  if (fromIndex < 0) {
+    fromIndex = 0;
   }
   if (wrap) {
     for (var i = 0; i < len; ++i) {
-      var j = (i + from) % len;
+      var j = (i + fromIndex) % len;
       if (pred(array[j], j)) {
         return j;
       }
     }
   } else {
-    for (var i = from; i < len; ++i) {
+    for (var i = fromIndex; i < len; ++i) {
       if (pred(array[i], i)) {
         return i;
       }
@@ -85,9 +85,9 @@ function findIndex<T>(array: T[], pred: IPredicate<T>, from = 0, wrap = false): 
 /**
  * Find the index of the last element which passes the test.
  *
- * The `from` parameter controls the starting index of the search. If
- * the value is negative, it is offset from the end of the array. The
- * default index is `-1`.
+ * The `fromIndex` parameter controls the starting index of the search.
+ * If the value is negative, it is offset from the end of the array.
+ * The default index is `-1`.
  *
  * The `wrap` parameter controls the search wrap-around. If true, the
  * search will wrap-around at the front of the array and continue until
@@ -97,27 +97,27 @@ function findIndex<T>(array: T[], pred: IPredicate<T>, from = 0, wrap = false): 
  * Returns `-1` if no element passes the test.
  */
 export
-function findLastIndex<T>(array: T[], pred: IPredicate<T>, from = -1, wrap = false): number {
+function findLastIndex<T>(array: T[], pred: IPredicate<T>, fromIndex = -1, wrap = false): number {
   var len = array.length;
   if (len === 0) {
     return -1;
   }
-  from = from | 0;
-  if (from < 0) {
-    from += len;
+  fromIndex = fromIndex | 0;
+  if (fromIndex < 0) {
+    fromIndex += len;
   }
-  if (from >= len) {
-    from = len - 1;
+  if (fromIndex >= len) {
+    fromIndex = len - 1;
   }
   if (wrap) {
     for (var i = len; i > 0; --i) {
-      var j = (((i + from) % len) + len) % len;
+      var j = (((i + fromIndex) % len) + len) % len;
       if (pred(array[j], j)) {
         return j;
       }
     }
   } else {
-    for (var i = from; i >= 0; --i) {
+    for (var i = fromIndex; i >= 0; --i) {
       if (pred(array[i], i)) {
         return i;
       }
@@ -130,9 +130,9 @@ function findLastIndex<T>(array: T[], pred: IPredicate<T>, from = -1, wrap = fal
 /**
  * Find the first element in the array which passes the given test.
  *
- * The `from` parameter controls the starting index of the search. If
- * the value is negative, it is offset from the end of the array. The
- * default index is `0`.
+ * The `fromIndex` parameter controls the starting index of the search.
+ * If the value is negative, it is offset from the end of the array.
+ * The default index is `0`.
  *
  * The `wrap` parameter controls the search wrap-around. If true, the
  * search will wrap-around at the end of the array and continue until
@@ -142,8 +142,8 @@ function findLastIndex<T>(array: T[], pred: IPredicate<T>, from = -1, wrap = fal
  * Returns `undefined` if no element passes the test.
  */
 export
-function find<T>(array: T[], pred: IPredicate<T>, from?: number, wrap?: boolean): T {
-  var i = findIndex(array, pred, from, wrap);
+function find<T>(array: T[], pred: IPredicate<T>, fromIndex?: number, wrap?: boolean): T {
+  var i = findIndex(array, pred, fromIndex, wrap);
   return i !== -1 ? array[i] : void 0;
 }
 
@@ -151,9 +151,9 @@ function find<T>(array: T[], pred: IPredicate<T>, from?: number, wrap?: boolean)
 /**
  * Find the last element in the array which passes the given test.
  *
- * The `from` parameter controls the starting index of the search. If
- * the value is negative, it is offset from the end of the array. The
- * default index is `-1`.
+ * The `fromIndex` parameter controls the starting index of the search.
+ * If the value is negative, it is offset from the end of the array.
+ * The default index is `-1`.
  *
  * The `wrap` parameter controls the search wrap-around. If true, the
  * search will wrap-around at the front of the array and continue until
@@ -163,8 +163,8 @@ function find<T>(array: T[], pred: IPredicate<T>, from?: number, wrap?: boolean)
  * Returns `undefined` if no element passes the test.
  */
 export
-function findLast<T>(array: T[], pred: IPredicate<T>, from?: number, wrap?: boolean): T {
-  var i = findLastIndex(array, pred, from, wrap);
+function findLast<T>(array: T[], pred: IPredicate<T>, fromIndex?: number, wrap?: boolean): T {
+  var i = findLastIndex(array, pred, fromIndex, wrap);
   return i !== -1 ? array[i] : void 0;
 }
 
