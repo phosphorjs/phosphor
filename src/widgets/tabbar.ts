@@ -23,12 +23,22 @@ import overrideCursor = utility.overrideCursor;
 var TAB_BAR_CLASS = 'p-TabBar';
 
 /**
- * The class name added to the tab bar inner div.
+ * The class name added to the tab bar header div.
  */
-var INNER_CLASS = 'p-TabBar-inner';
+var HEADER_CLASS = 'p-TabBar-header';
 
 /**
- * The class name added to the inner div when transitioning tabs.
+ * The class name added to the tab bar content list.
+ */
+var CONTENT_CLASS = 'p-TabBar-content';
+
+/**
+ * The class name added to the tab bar footer div.
+ */
+var FOOTER_CLASS = 'p-TabBar-footer';
+
+/**
+ * The class name added to the content div when transitioning tabs.
  */
 var TRANSITION_CLASS = 'p-mod-transition';
 
@@ -367,21 +377,9 @@ class TabBar extends Widget {
 
   /**
    * Remove all of the tabs from the tab bar.
-   *
-   * This is more efficient than removing the tabs individually.
    */
   clearTabs(): void {
-    this._releaseMouse();
-    if (this._currentTab) {
-      this._currentTab.selected = false;
-      this._currentTab = null;
-    }
-    this._previousTab = null;
-    this._tabs.length = 0;
-    (<HTMLElement>this.node.firstChild).innerHTML = '';
-    if (this.isAttached) {
-      this.updateGeometry();
-    }
+    while (this.count) this.removeAt(this.count - 1, false);
   }
 
   /**
@@ -393,8 +391,8 @@ class TabBar extends Widget {
    */
   attachTab(tab: ITab, clientX: number): void {
     var curr = this._tabs.indexOf(tab);
-    var inner = <HTMLElement>this.node.firstChild;
-    var innerRect = inner.getBoundingClientRect();
+    var content = this.contentNode;
+    var innerRect = content.getBoundingClientRect();
     var localLeft = clientX - innerRect.left;
     var index = localLeft / (this._tabLayoutWidth() - this._tabOverlap);
     index = Math.max(0, Math.min(Math.round(index), this._tabs.length));
@@ -426,7 +424,7 @@ class TabBar extends Widget {
       dragActive: true,
       emitted: false,
     };
-    inner.classList.add(TRANSITION_CLASS);
+    content.classList.add(TRANSITION_CLASS);
     node.style.transition = 'none';
     this._updateTabLayout();
     node.style.left = targetX + 'px';
@@ -459,13 +457,26 @@ class TabBar extends Widget {
   }
 
   /**
+   * Get the content node for the tab bar.
+   */
+  protected get contentNode(): HTMLElement {
+    return <HTMLElement>this.node.firstChild.nextSibling;
+  }
+
+  /**
    * Create the DOM node for the tab bar.
    */
   protected createNode(): HTMLElement {
     var node = document.createElement('div');
-    var inner = document.createElement('ul');
-    inner.className = INNER_CLASS;
-    node.appendChild(inner);
+    var header = document.createElement('div');
+    var content = document.createElement('ul');
+    var footer = document.createElement('div');
+    header.className = HEADER_CLASS;
+    content.className = CONTENT_CLASS;
+    footer.className = FOOTER_CLASS;
+    node.appendChild(header);
+    node.appendChild(content);
+    node.appendChild(footer);
     return node;
   }
 
@@ -593,14 +604,14 @@ class TabBar extends Widget {
       if (dx < DRAG_THRESHOLD && dy < DRAG_THRESHOLD) {
         return;
       }
-      var inner = <HTMLElement>this.node.firstChild;
-      var innerRect = inner.getBoundingClientRect();
+      var content = this.contentNode;
+      var innerRect = content.getBoundingClientRect();
       var cursor = window.getComputedStyle(data.node).cursor;
       var grab = overrideCursor(cursor);
       data.innerRect = innerRect;
       data.cursorGrab = grab;
       data.dragActive = true;
-      inner.classList.add(TRANSITION_CLASS);
+      content.classList.add(TRANSITION_CLASS);
       data.node.style.transition = 'none';
     }
     var tabWidth = this._tabLayoutWidth();
@@ -669,7 +680,7 @@ class TabBar extends Widget {
   private _insertTab(index: number, tab: ITab, animate: boolean): void {
     tab.selected = false;
     this._tabs.splice(index, 0, tab);
-    (<HTMLElement>this.node.firstChild).appendChild(tab.node);
+    this.contentNode.appendChild(tab.node);
     if (!this._currentTab) {
       this.currentTab = tab;
     } else {
@@ -729,9 +740,9 @@ class TabBar extends Widget {
     } else {
       this._updateTabZOrder();
     }
-    var inner = <HTMLElement>this.node.firstChild;
+    var content = this.contentNode;
     if (!this.isAttached) {
-      inner.removeChild(tab.node);
+      content.removeChild(tab.node);
       return;
     }
     if (animate) {
@@ -740,10 +751,10 @@ class TabBar extends Widget {
         this._updateTabLayout();
       }, () => {
         tab.node.classList.remove(REMOVING_CLASS);
-        inner.removeChild(tab.node);
+        content.removeChild(tab.node);
       });
     } else {
-      inner.removeChild(tab.node);
+      content.removeChild(tab.node);
       this._withTransition(() => this._updateTabLayout());
     }
     this.updateGeometry();
@@ -842,13 +853,13 @@ class TabBar extends Widget {
    * will not be removed from the inner div on exit.
    */
   private _withTransition(enter?: () => void, exit?: () => void): void {
-    var inner = <HTMLElement>this.node.firstChild;
-    inner.classList.add(TRANSITION_CLASS);
+    var content = this.contentNode;
+    content.classList.add(TRANSITION_CLASS);
     if (enter) enter();
     setTimeout(() => {
       var data = this._dragData;
       if (!data || !data.dragActive) {
-        inner.classList.remove(TRANSITION_CLASS);
+        content.classList.remove(TRANSITION_CLASS);
       }
       if (exit) exit();
     }, TRANSITION_DURATION);

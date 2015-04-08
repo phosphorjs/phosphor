@@ -24,22 +24,11 @@ body {
 
 .p-TabBar {
   min-height: 24px;
-  &::after {
-    position: absolute;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    height: 1px;
-    content: '';
-    z-index: 0;
-    background: #C0C0C0;
-  }
 }
 
 
-.p-TabBar-inner {
+.p-TabBar-content {
   bottom: 1px;
-  z-index: 1;
   > .p-Tab {
     font: 12px Helvetica, Arial, sans-serif;
     height: 21px;
@@ -59,6 +48,13 @@ body {
       line-height: 21px;
     }
   }
+}
+
+
+.p-TabBar-footer {
+  display: block;
+  height: 1px;
+  background: #C0C0C0;
 }
 
 
