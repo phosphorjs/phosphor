@@ -167,16 +167,14 @@ class SplitLayout extends Layout {
    * Remove and return the layout item at the specified index.
    */
   removeAt(index: number): ILayoutItem {
-    index = index | 0;
-    if (index < 0 || index >= this._items.length) {
-      return void 0;
-    }
     var item = algo.removeAt(this._items, index);
     algo.removeAt(this._sizers, index);
-    var hNode = item.handle.node;
-    var pNode = hNode.parentNode;
-    if (pNode) pNode.removeChild(hNode);
-    this.invalidate();
+    if (item) {
+      var hNode = item.handle.node;
+      var pNode = hNode.parentNode;
+      if (pNode) pNode.removeChild(hNode);
+      this.invalidate();
+    }
     return item;
   }
 
@@ -205,7 +203,7 @@ class SplitLayout extends Layout {
     var item = new SplitItem(handle, widget, alignment);
     var sizer = new LayoutSizer();
     sizer.stretch = Math.max(0, stretch | 0);
-    index = Math.max(0, Math.min(index, this._items.length));
+    index = Math.max(0, Math.min(index | 0, this._items.length));
     algo.insert(this._items, index, item);
     algo.insert(this._sizers, index, sizer);
     this.invalidate();

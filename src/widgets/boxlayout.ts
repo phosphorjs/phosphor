@@ -95,13 +95,9 @@ class BoxLayout extends Layout {
    * Remove and return the layout item at the specified index.
    */
   removeAt(index: number): ILayoutItem {
-    index = index | 0;
-    if (index < 0 || index >= this._items.length) {
-      return void 0;
-    }
     var item = algo.removeAt(this._items, index);
     algo.removeAt(this._sizers, index);
-    this.invalidate();
+    if (item) this.invalidate();
     return item;
   }
 
@@ -489,7 +485,7 @@ class BoxLayout extends Layout {
   private _insert(index: number, item: ILayoutItem, stretch: number): number {
     var sizer = new LayoutSizer();
     sizer.stretch = Math.max(0, stretch | 0);
-    index = Math.max(0, Math.min(index, this._items.length));
+    index = Math.max(0, Math.min(index | 0, this._items.length));
     algo.insert(this._items, index, item);
     algo.insert(this._sizers, index, sizer);
     this.invalidate();

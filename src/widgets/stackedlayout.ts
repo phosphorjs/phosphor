@@ -108,10 +108,10 @@ class StackedLayout extends Layout {
    */
   removeAt(index: number): ILayoutItem {
     index = index | 0;
-    if (index < 0 || index >= this._items.length) {
+    var item = algo.removeAt(this._items, index);
+    if (!item) {
       return void 0;
     }
-    var item = algo.removeAt(this._items, index);
     if (index === this._currentIndex) {
       this._currentIndex = -1;
       item.widget.hide();
@@ -145,7 +145,7 @@ class StackedLayout extends Layout {
     widget.hide();
     this.remove(widget);
     this.ensureParent(widget);
-    index = Math.max(0, Math.min(index, this._items.length));
+    index = Math.max(0, Math.min(index | 0, this._items.length));
     algo.insert(this._items, index, new WidgetItem(widget, alignment));
     if (index <= this._currentIndex) {
       this._currentIndex++;

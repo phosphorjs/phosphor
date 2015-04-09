@@ -173,11 +173,9 @@ class MenuBar extends Widget {
    * Remove and return the menu item at the given index.
    */
   removeAt(index: number): MenuItem {
-    if (index < 0 || index >= this._items.length) {
-      return void 0;
-    }
+    index = index | 0;
     var item = algo.removeAt(this._items, index);
-    this.itemRemoved(index, item);
+    if (item) this.itemRemoved(index, item);
     return item;
   }
 
