@@ -10,10 +10,12 @@
     "gulp": "^3.8.9",
     "gulp-concat": "^2.5.2",
     "gulp-header": "^1.2.2",
+    "gulp-livereload": "^3.8.0",
     "gulp-rename": "^1.2.0",
     "gulp-stylus": "^2.0.1",
     "gulp-typedoc": "^1.1.0",
     "gulp-typescript": "^2.4.0",
+    "gulp-webserver": "^0.9.0",
     "mocha": "^2.0.1",
     "nib": "^1.1.0"
   },
