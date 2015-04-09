@@ -17,7 +17,6 @@ install:
   - tsd reinstall -so
 script:
   - gulp
-  - if [[ $GROUP == docs ]]; then gulp examples; fi
 after_success: |
   if [[ $TRAVIS_PULL_REQUEST == false && $TRAVIS_BRANCH == 'master' ]]
   then
@@ -37,6 +36,7 @@ after_success: |
 
     # build docs/api
     gulp docs
+    gulp examples
     
     # copy examples and dist
     cp -r examples build
