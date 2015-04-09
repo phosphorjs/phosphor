@@ -24,7 +24,6 @@ after_success: |
     echo "Will build Documentation"
     
     # setup git
-    git config credential.helper 'store --file=.git/credentials'
     git config --global user.email "travis@travis-ci.com"
     git config --global user.name "Travis Bot"
     
@@ -46,6 +45,7 @@ after_success: |
     # now get into docs dirs
     cd build
     echo "https://${GHTOKEN}:@github.com" > .git/credentials
+    git config credential.helper 'store --file=.git/credentials'
     git add -A docs
     git add -A examples
     git add -A dist
