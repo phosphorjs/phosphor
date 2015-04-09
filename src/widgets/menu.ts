@@ -11,7 +11,6 @@ import algo = collections.algorithm;
 
 import Signal = core.Signal;
 
-import IDisposable = utility.IDisposable;
 import hitTest = utility.hitTest;
 
 
@@ -95,7 +94,7 @@ var SUBMENU_OVERLAP = 3;
  * An object which displays menu items as a popup menu.
  */
 export
-class Menu implements IDisposable {
+class Menu {
   /**
    * Find the root menu of a menu hierarchy.
    */
@@ -128,16 +127,6 @@ class Menu implements IDisposable {
     this._node = this.createNode();
     this._node.classList.add(MENU_CLASS);
     if (items) items.forEach(it => this.addItem(it));
-  }
-
-  /**
-   * Dispose of the resources held by the menu.
-   */
-  dispose(): void {
-    this._reset();
-    this._removeFromParent();
-    this.closed.disconnect();
-    this.clearItems();
   }
 
   /**
@@ -226,7 +215,7 @@ class Menu implements IDisposable {
    * Returns the new index of the item.
    */
   addItem(item: MenuItem): number {
-    return this.insertItem(this._items.length, item);
+    return this.insertItem(this.count, item);
   }
 
   /**
@@ -235,9 +224,16 @@ class Menu implements IDisposable {
    * Returns the new index of the item.
    */
   insertItem(index: number, item: MenuItem): number {
-    index = Math.max(0, Math.min(index | 0, this._items.length));
+    if (this._activeIndex !== -1) {
+      this._reset();
+    }
+    var node = this.createItemNode(item);
+    index = Math.max(0, Math.min(index | 0, this.count));
     algo.insert(this._items, index, item);
-    this.itemInserted(index, item);
+    algo.insert(this._nodes, index, node);
+    item.changed.connect(this._mi_changed, this);
+    node.addEventListener('mouseenter', <any>this);
+    this.insertItemNode(index, node);
     return index;
   }
 
@@ -245,11 +241,19 @@ class Menu implements IDisposable {
    * Remove and return the menu item at the given index.
    */
   removeAt(index: number): MenuItem {
-    if (index < 0 || index >= this._items.length) {
-      return void 0;
+    if (this._activeIndex !== -1) {
+      this._reset();
     }
+    index = index | 0;
     var item = algo.removeAt(this._items, index);
-    this.itemRemoved(index, item);
+    var node = algo.removeAt(this._nodes, index);
+    if (item) {
+      item.changed.disconnect(this._mi_changed, this);
+    }
+    if (node) {
+      node.removeEventListener('mouseenter', <any>this);
+      this.removeItemNode(index, node);
+    }
     return item;
   }
 
@@ -268,11 +272,8 @@ class Menu implements IDisposable {
    * Remove all menu items from the menu.
    */
   clearItems(): void {
-    var items = this._items;
-    while (items.length) {
-      var item = items.pop();
-      var index = items.length;
-      this.itemRemoved(index, item);
+    while (this.count) {
+      this.removeAt(this.count - 1);
     }
   }
 
@@ -405,7 +406,7 @@ class Menu implements IDisposable {
   }
 
   /**
-   * Close the menu and detach it's node from the DOM.
+   * Close the menu and remove it's node from the DOM.
    */
   close(): void {
     var node = this._node;
@@ -423,38 +424,85 @@ class Menu implements IDisposable {
   }
 
   /**
-   * A method invoked when a menu item is inserted into the menu.
+   * Create the DOM node for the panel.
+   *
+   * This can be reimplemented to create a custom menu node.
    */
-  protected itemInserted(index: number, item: MenuItem): void {
-    if (this._activeIndex !== -1) {
-      this._reset();
+  protected createNode(): HTMLElement {
+    return document.createElement('ul');
+  }
+
+  /**
+   * Create a DOM node for the given MenuItem.
+   *
+   * This can be reimplemented to create custom menu item nodes.
+   */
+  protected createItemNode(item: MenuItem): HTMLElement {
+    var node = document.createElement('li');
+    var icon = document.createElement('span');
+    var text = document.createElement('span');
+    var shortcut = document.createElement('span');
+    var submenu = document.createElement('span');
+    icon.className = ICON_CLASS;
+    text.className = TEXT_CLASS;
+    shortcut.className = SHORTCUT_CLASS;
+    submenu.className = SUBMENU_ICON_CLASS;
+    node.appendChild(icon);
+    node.appendChild(text);
+    node.appendChild(shortcut);
+    node.appendChild(submenu);
+    this.initItemNode(item, node);
+    return node;
+  }
+
+  /**
+   * Initialize the item node for the given menu item.
+   *
+   * This should be reimplemented if a subclass uses custom item nodes.
+   */
+  protected initItemNode(item: MenuItem, node: HTMLElement): void {
+    var classParts = [MENU_ITEM_CLASS];
+    if (item.className) {
+      classParts.push(item.className);
     }
-    var node = createItemNode(item);
-    var next = this._nodes[index];
-    this.node.insertBefore(node, next);
-    algo.insert(this._nodes, index, node);
-    node.addEventListener('mouseenter', <any>this);
-    item.changed.connect(this._mi_changed, this);
+    if (item.type === 'check') {
+      classParts.push(CHECK_TYPE_CLASS);
+    } else if (item.type === 'separator') {
+      classParts.push(SEPARATOR_TYPE_CLASS);
+    }
+    if (item.checked) {
+      classParts.push(CHECKED_CLASS);
+    }
+    if (!item.enabled) {
+      classParts.push(DISABLED_CLASS);
+    }
+    if (item.submenu) {
+      classParts.push(HAS_SUBMENU_CLASS);
+    }
+    node.className = classParts.join(' ');
+    (<HTMLElement>node.children[1]).textContent = item.text;
+    (<HTMLElement>node.children[2]).textContent = item.shortcut;
+  }
+
+  /**
+   * A method invoked when a menu item is inserted into the menu.
+   *
+   * This should be reimplemented if a subclass creates a custom
+   * menu node and should insert the item node into the menu.
+   */
+  protected insertItemNode(index: number, node: HTMLElement): void {
+    var ref = this.node.childNodes[index];
+    this.node.insertBefore(node, ref);
   }
 
   /**
    * A method invoked when a menu item is removed from the menu.
+   *
+   * This should be reimplemented if a subclass creates a custom
+   * menu node and should remove the item node from the menu.
    */
-  protected itemRemoved(index: number, item: MenuItem): void {
-    if (this._activeIndex !== -1) {
-      this._reset();
-    }
-    var node = algo.removeAt(this._nodes, index);
+  protected removeItemNode(index: number, node: HTMLElement): void {
     this.node.removeChild(node);
-    node.removeEventListener('mouseenter', <any>this);
-    item.changed.disconnect(this._mi_changed, this);
-  }
-
-  /**
-   * Create the DOM node for the panel.
-   */
-  protected createNode(): HTMLElement {
-    return document.createElement('ul');
   }
 
   /**
@@ -485,6 +533,8 @@ class Menu implements IDisposable {
       break;
     }
   }
+
+  // TODO cleanup from this point downward
 
   /**
    * Handle the 'mouseenter' event for the menu.
@@ -798,7 +848,7 @@ class Menu implements IDisposable {
       if (i === this._activeIndex) {
         this._reset();
       }
-      initItemNode(sender, nodes[i]);
+      this.initItemNode(sender, nodes[i]);
     }
   }
 
@@ -930,58 +980,6 @@ function openSubmenu(menu: Menu, item: HTMLElement): void {
   style.top = Math.max(0, y) + 'px';
   style.left = Math.max(0, x) + 'px';
   style.visibility = '';
-}
-
-
-/**
- * Create an initialize the node for a menu item.
- */
-function createItemNode(item: MenuItem): HTMLElement {
-  var node = document.createElement('li');
-  var icon = document.createElement('span');
-  var text = document.createElement('span');
-  var shortcut = document.createElement('span');
-  var submenu = document.createElement('span');
-  icon.className = ICON_CLASS;
-  text.className = TEXT_CLASS;
-  shortcut.className = SHORTCUT_CLASS;
-  submenu.className = SUBMENU_ICON_CLASS;
-  node.appendChild(icon);
-  node.appendChild(text);
-  node.appendChild(shortcut);
-  node.appendChild(submenu);
-  initItemNode(item, node);
-  return node;
-}
-
-
-/**
- * Initialize the node for a menu item.
- *
- * This can be called again to update the node state.
- */
-function initItemNode(item: MenuItem, node: HTMLElement): void {
-  var classParts = [MENU_ITEM_CLASS];
-  if (item.className) {
-    classParts.push(item.className);
-  }
-  if (item.type === 'check') {
-    classParts.push(CHECK_TYPE_CLASS);
-  } else if (item.type === 'separator') {
-    classParts.push(SEPARATOR_TYPE_CLASS);
-  }
-  if (item.checked) {
-    classParts.push(CHECKED_CLASS);
-  }
-  if (!item.enabled) {
-    classParts.push(DISABLED_CLASS);
-  }
-  if (item.submenu) {
-    classParts.push(HAS_SUBMENU_CLASS);
-  }
-  node.className = classParts.join(' ');
-  (<HTMLElement>node.children[1]).textContent = item.text;
-  (<HTMLElement>node.children[2]).textContent = item.shortcut;
 }
 
 } // module phosphor.widgets
