@@ -25,7 +25,6 @@ after_success: |
     
     # setup git
     git config credential.helper 'store --file=.git/credentials'
-    echo "https://${GHTOKEN}:@github.com" > .git/credentials
     git config --global user.email "travis@travis-ci.com"
     git config --global user.name "Travis Bot"
     
@@ -46,9 +45,10 @@ after_success: |
 
     # now get into docs dirs
     cd build
-    git add docs
-    git add examples
-    git add dist
+    echo "https://${GHTOKEN}:@github.com" > .git/credentials
+    git add -A docs
+    git add -A examples
+    git add -A dist
     git commit -am'autocommit docs'
     git push origin master:master
   else
