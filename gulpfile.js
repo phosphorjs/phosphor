@@ -190,7 +190,7 @@ gulp.task('css', function() {
 gulp.task('docs', function() {
   return gulp.src(typings.concat(tsSources))
     .pipe(typedoc({
-      out: './build/api',
+      out: './build/docs',
       name: 'Phosphor',
       target: 'ES5',
       mode: 'file',

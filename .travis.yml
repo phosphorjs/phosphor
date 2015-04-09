@@ -35,7 +35,7 @@ after_success: |
     git clone https://github.com/phosphorjs/phosphorjs.github.io build
     
     #cleanup api and examples
-    rm -rf build/api/
+    rm -rf build/docs/
     rm -rf build/examples/
     rm -rf buid/dist/
 
@@ -48,7 +48,7 @@ after_success: |
 
     # now get into docs dirs
     cd build
-    git add api
+    git add docs
     git add examples
     git add dist
     git commit -am'autocommit docs'
