@@ -719,15 +719,14 @@ class DockArea extends Widget {
     // The drag data will be cleared on the mouse up event.
     if (!this._dragData) {
       var prevTab = sender.previousTab;
-      var cursorGrab = overrideCursor('default');
       this._dragData = {
         item: item,
         index: args.index,
         offsetX: 0,
         offsetY: 0,
-        cursorGrab: cursorGrab,
         prevTab: prevTab,
         lastHitPanel: null,
+        cursorGrab: null,
         tempPanel: null,
         tempTab: null,
       };
@@ -737,6 +736,9 @@ class DockArea extends Widget {
     var dragData = this._dragData;
     dragData.offsetX = (0.4 * this._tabWidth) | 0;
     dragData.offsetY = (0.6 * tab.node.offsetHeight) | 0;
+
+    // Grab the cursor for the drag operation.
+    dragData.cursorGrab = overrideCursor('default');
 
     // The tab being detached will have one of two states:
     //
