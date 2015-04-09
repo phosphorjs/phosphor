@@ -7,6 +7,8 @@
 |----------------------------------------------------------------------------*/
 module phosphor.widgets {
 
+import algo = collections.algorithm;
+
 import IMessage = core.IMessage;
 import Signal = core.Signal;
 
@@ -106,6 +108,40 @@ interface ITabDetachArgs {
 
 
 /**
+ * The options object for initializing a tab bar.
+ */
+export
+interface ITabBarOptions {
+  /**
+   * Wether the tabs are movable by the user.
+   */
+  tabsMovable?: boolean;
+
+  /**
+   * The preferred tab width.
+   *
+   * Tabs will be sized to this width if possible, but never larger.
+   */
+  tabWidth?: number;
+
+  /**
+   * The minimum tab width.
+   *
+   * Tabs will never be sized smaller than this amount.
+   */
+  minTabWidth?: number;
+
+  /**
+   * The tab overlap amount.
+   *
+   * A positive value will cause neighboring tabs to overlap.
+   * A negative value will insert empty space between tabs.
+   */
+  tabOverlap?: number;
+}
+
+
+/**
  * A leaf widget which displays a row of tabs.
  */
 export
@@ -133,21 +169,22 @@ class TabBar extends Widget {
   /**
    * Construct a new tab bar.
    */
-  constructor() {
+  constructor(options?: ITabBarOptions) {
     super();
     this.addClass(TAB_BAR_CLASS);
     this.verticalSizePolicy = SizePolicy.Fixed;
+    if (options) this._initFrom(options);
   }
 
   /*
    * Dispose of the resources held by the widget.
    */
   dispose(): void {
-    this._releaseMouse();
     this.tabMoved.disconnect();
     this.currentChanged.disconnect();
     this.tabCloseRequested.disconnect();
     this.tabDetachRequested.disconnect();
+    this._releaseMouse();
     this._tabs = null;
     super.dispose();
   }
@@ -156,7 +193,7 @@ class TabBar extends Widget {
    * Get the currently selected tab index.
    */
   get currentIndex(): number {
-    return this._tabs.indexOf(this._currentTab);
+    return this.indexOf(this.currentTab);
   }
 
   /**
@@ -164,7 +201,7 @@ class TabBar extends Widget {
    */
   set currentIndex(index: number) {
     var prev = this._currentTab;
-    var next = this._tabs[index] || null;
+    var next = this.tabAt(index) || null;
     if (prev === next) {
       return;
     }
@@ -172,7 +209,7 @@ class TabBar extends Widget {
     if (next) next.selected = true;
     this._currentTab = next;
     this._previousTab = prev;
-    this._refreshTabZOrder();
+    this._updateTabZOrder();
     this.currentChanged.emit(this, new Pair(next ? index : -1, next));
   }
 
@@ -187,7 +224,7 @@ class TabBar extends Widget {
    * Set the currently selected tab.
    */
   set currentTab(tab: ITab) {
-    this.currentIndex = this._tabs.indexOf(tab);
+    this.currentIndex = this.indexOf(tab);
   }
 
   /**
@@ -201,15 +238,20 @@ class TabBar extends Widget {
    * Get whether the tabs are movable by the user.
    */
   get tabsMovable(): boolean {
-    return this._movable;
+    return this._tabsMovable;
   }
 
   /**
    * Set whether the tabs are movable by the user.
    */
   set tabsMovable(movable: boolean) {
-    this._movable = movable;
-    if (!movable) this._releaseMouse();
+    if (movable === this._tabsMovable) {
+      return;
+    }
+    this._tabsMovable = movable;
+    if (!movable) {
+      this._releaseMouse();
+    }
   }
 
   /**
@@ -248,7 +290,7 @@ class TabBar extends Widget {
   }
 
   /**
-   * Set the minimum tab width in pixels.
+   * Set the minimum tab width.
    *
    * Tabs will never be sized smaller than this amount.
    */
@@ -332,7 +374,7 @@ class TabBar extends Widget {
     if (curr !== -1) {
       index = this.moveTab(curr, index);
     } else {
-      this._insertWithAnimation(index, tab);
+      this._insertTab(index, tab, true);
     }
     return index;
   }
@@ -390,48 +432,76 @@ class TabBar extends Widget {
   /**
    * Add a tab to the tab bar at the given client X position.
    *
-   * This will insert the tab and grab the mouse to continue the drag.
+   * This method is intended for use by code which supports tear-off
+   * tab interfaces. It will insert the tab at the specified location
+   * without a transition and grab the mouse to continue the tab drag.
    * It assumes that the left mouse button is currently pressed.
+   *
+   * This is a no-op if the tab is already added to the tab bar.
    */
   attachTab(tab: ITab, clientX: number): void {
-    var curr = this._tabs.indexOf(tab);
-    var content = this.contentNode;
-    var innerRect = content.getBoundingClientRect();
-    var localLeft = clientX - innerRect.left;
-    var index = localLeft / (this._tabLayoutWidth() - this._tabOverlap);
-    index = Math.max(0, Math.min(Math.round(index), this._tabs.length));
-    if (curr === -1) {
-      this._insertWithoutAnimation(index, tab);
-    } else if (curr !== index) {
-      this._moveTab(curr, index);
+    // Do nothing if the tab is already attached to the tab bar.
+    if (this.indexOf(tab) !== -1) {
+      return;
     }
+
+    // Compute the insert index for the given client position.
+    var contentNode = this.contentNode;
+    var contentRect = contentNode.getBoundingClientRect();
+    var localX = clientX - contentRect.left;
+    var index = localX / (this._tabLayoutWidth() - this._tabOverlap);
+    index = Math.max(0, Math.min(Math.round(index), this.count));
+
+    // Insert and select the tab and install the mouse listeners.
+    this._insertTab(index, tab, false);
     this.currentIndex = index;
     document.addEventListener('mouseup', <any>this, true);
     document.addEventListener('mousemove', <any>this, true);
-    if (!this._movable) {
+
+    // Bail early if the tabs are not movable.
+    if (!this._tabsMovable) {
       return;
     }
-    var node = tab.node;
-    var tabWidth = this._tabLayoutWidth();
-    var offsetX = (0.4 * tabWidth) | 0;
-    var localX = clientX - innerRect.left - offsetX;
-    var targetX = Math.max(0, Math.min(localX, innerRect.width - tabWidth));
-    var clientY = innerRect.top + (0.5 * innerRect.height) | 0;
-    var grab = overrideCursor(window.getComputedStyle(node).cursor);
+
+    // Setup the drag data object.
+    var tlw = this._tabLayoutWidth();
+    var offsetX = (0.4 * tlw) | 0;
+    var clientY = contentRect.top + (0.5 * contentRect.height) | 0;
+    var cursorGrab = overrideCursor('default');
     this._dragData = {
-      node: node,
+      node: tab.node,
       pressX: clientX,
       pressY: clientY,
       offsetX: offsetX,
-      innerRect: innerRect,
-      cursorGrab: grab,
+      contentRect: contentRect,
+      cursorGrab: cursorGrab,
       dragActive: true,
-      emitted: false,
+      detachRequested: false,
     };
-    content.classList.add(TRANSITION_CLASS);
-    node.style.transition = 'none';
+
+    // Move the tab to its target position.
+    var tgtLeft = localX - offsetX;
+    var maxLeft = contentRect.width - tlw;
+    var tabLeft = Math.max(0, Math.min(tgtLeft, maxLeft));
+    var tabStyle = tab.node.style;
+    contentNode.classList.add(TRANSITION_CLASS);
+    tabStyle.transition = 'none';
     this._updateTabLayout();
-    node.style.left = targetX + 'px';
+    tabStyle.left = tabLeft + 'px';
+  }
+
+  /**
+   * Detach the tab at the given index.
+   *
+   * This method is intended for use by code which supports tear-off
+   * tab interfaces. It will remove the tab at the specified index
+   * without a transition.
+   *
+   * This is a no-op if the index is out of range.
+   */
+  detachAt(index: number): void {
+    var tab = this.tabAt(index);
+    if (tab) this._removeTab(index, false);
   }
 
   /**
@@ -439,12 +509,11 @@ class TabBar extends Widget {
    */
   sizeHint(): Size {
     var width = 0;
-    var count = this._tabs.length;
+    var count = this.count;
     if (count > 0) {
-      var overlap = this._tabOverlap * (count - 1);
-      width = this._tabWidth * count - overlap;
+      width = this._tabWidth * count - this._tabOverlap * (count - 1);
     }
-    return new Size(width, this.boxSizing().minHeight);
+    return new Size(width, this.boxSizing.minHeight);
   }
 
   /**
@@ -452,12 +521,11 @@ class TabBar extends Widget {
    */
   minSizeHint(): Size {
     var width = 0;
-    var count = this._tabs.length;
+    var count = this.count;
     if (count > 0) {
-      var stub = TAB_STUB_SIZE * (count - 1);
-      width = this._minTabWidth + stub;
+      width = this._minTabWidth + TAB_STUB_SIZE * (count - 1);
     }
-    return new Size(width, this.boxSizing().minHeight);
+    return new Size(width, this.boxSizing.minHeight);
   }
 
   /**
@@ -533,20 +601,26 @@ class TabBar extends Widget {
    * Handle the 'click' event for the tab bar.
    */
   private _evtClick(event: MouseEvent): void {
+    // Do nothing if it's not a left click.
     if (event.button !== 0) {
       return;
     }
-    var clientX = event.clientX;
-    var clientY = event.clientY;
-    var index = this._indexAtPos(clientX, clientY);
+
+    // Do nothing if the click is not on a tab.
+    var index = this._hitTest(event.clientX, event.clientY);
     if (index < 0) {
       return;
     }
+
+    // Clicking on a tab stops the event propagation.
     event.preventDefault();
     event.stopPropagation();
+
+    // If the click was on the close icon of a closable tab,
+    // emit the `tabCloseRequested` signal.
     var tab = this._tabs[index];
-    var icon = tab.closeIconNode;
-    if (icon && icon === event.target && tab.closable) {
+    var iconNode = tab.closeIconNode;
+    if (iconNode && iconNode === event.target && tab.closable) {
       this.tabCloseRequested.emit(this, new Pair(index, tab));
     }
   }
@@ -555,36 +629,46 @@ class TabBar extends Widget {
    * Handle the 'mousedown' event for the tab bar.
    */
   private _evtMouseDown(event: MouseEvent): void {
+    // Do nothing if it's not a left mouse press.
     if (event.button !== 0) {
       return;
     }
+
+    // Do nothing of the press is not on a tab.
     var clientX = event.clientX;
     var clientY = event.clientY;
-    var index = this._indexAtPos(clientX, clientY);
+    var index = this._hitTest(clientX, clientY);
     if (index < 0) {
       return;
     }
+
+    // Pressing on a tab stops the event propagation.
     event.preventDefault();
     event.stopPropagation();
+
+    // Do nothing further if the press in on the tab close icon.
     var tab = this._tabs[index];
-    var icon = tab.closeIconNode;
-    if (icon && icon === event.target) {
+    var iconNode = tab.closeIconNode;
+    if (iconNode && iconNode === event.target) {
       return;
     }
-    if (this._movable) {
-      var node = tab.node;
-      var rect = node.getBoundingClientRect();
+
+    // Setup the drag data if the tabs are movable.
+    if (this._tabsMovable) {
+      var offsetX = clientX - tab.node.getBoundingClientRect().left;
       this._dragData = {
-        node: node,
+        node: tab.node,
         pressX: clientX,
         pressY: clientY,
-        offsetX: clientX - rect.left,
-        innerRect: null,
+        offsetX: offsetX,
+        contentRect: null,
         cursorGrab: null,
         dragActive: false,
-        emitted: false,
+        detachRequested: false,
       };
     }
+
+    // Select the tab and install the other mouse event listeners.
     this.currentIndex = index;
     document.addEventListener('mouseup', <any>this, true);
     document.addEventListener('mousemove', <any>this, true);
@@ -594,57 +678,84 @@ class TabBar extends Widget {
    * Handle the 'mousemove' event for the tab bar.
    */
   private _evtMouseMove(event: MouseEvent): void {
+    // Mouse move events are never propagated since this handler is
+    // only installed when during a left-mouse-drag operation. Bail
+    // early if the tabs are not movable or there is no drag data.
     event.preventDefault();
     event.stopPropagation();
-    if (!this._movable || !this._dragData) {
+    if (!this._tabsMovable || !this._dragData) {
       return;
     }
+
+    // Setup common variables
     var clientX = event.clientX;
     var clientY = event.clientY;
     var data = this._dragData;
+
+    // Check to see if the drag threshold has been exceeded, and
+    // start the tab drag operation the first time that occurrs.
     if (!data.dragActive) {
       var dx = Math.abs(clientX - data.pressX);
       var dy = Math.abs(clientY - data.pressY);
       if (dx < DRAG_THRESHOLD && dy < DRAG_THRESHOLD) {
         return;
       }
-      var content = this.contentNode;
-      var innerRect = content.getBoundingClientRect();
-      var cursor = window.getComputedStyle(data.node).cursor;
-      var grab = overrideCursor(cursor);
-      data.innerRect = innerRect;
-      data.cursorGrab = grab;
+
+      // Fill in the missing drag data.
+      var contentNode = this.contentNode;
+      data.contentRect = contentNode.getBoundingClientRect();
+      data.cursorGrab = overrideCursor('default');
       data.dragActive = true;
-      content.classList.add(TRANSITION_CLASS);
+
+      // Setup the styles for the drag.
+      contentNode.classList.add(TRANSITION_CLASS);
       data.node.style.transition = 'none';
     }
-    var tabWidth = this._tabLayoutWidth();
-    if (!data.emitted) {
-      var innerRect = data.innerRect;
-      if (!inBounds(innerRect, DETACH_THRESHOLD, clientX, clientY)) {
-        data.emitted = true;
+
+    // Check to see if the detach threshold has been exceeded, and
+    // emit the detach request signal the first time that occurrs.
+    if (!data.detachRequested) {
+      if (!inBounds(data.contentRect, DETACH_THRESHOLD, clientX, clientY)) {
+        // Update the data nad emit the `tabDetachRequested` signal.
+        data.detachRequested = true;
         this.tabDetachRequested.emit(this, {
           tab: this.currentTab,
           index: this.currentIndex,
-          clientX: event.clientX,
-          clientY: event.clientY,
+          clientX: clientX,
+          clientY: clientY,
         });
-        if (!this._dragData) { // tab detached
+
+        // If the drag data is null, it means the mouse was released due
+        // to the tab being detached and the move operation has ended.
+        if (!this._dragData) {
           return;
         }
       }
     }
+
+    // Compute the natural position of the current tab, absent any
+    // influence from the mouse drag.
     var index = this.currentIndex;
-    var naturalX = index * (tabWidth - this._tabOverlap);
-    var lowerBound = naturalX - tabWidth * OVERLAP_THRESHOLD;
-    var upperBound = naturalX + tabWidth * OVERLAP_THRESHOLD;
-    var localX = event.clientX - data.innerRect.left - data.offsetX;
-    var targetX = Math.max(0, Math.min(localX, this.width - tabWidth));
+    var tlw = this._tabLayoutWidth();
+    var naturalX = index * (tlw - this._tabOverlap);
+
+    // Compute the upper and lower bound on the natural tab position
+    // which would cause the tab to swap position with its neighbor.
+    var lowerBound = naturalX - tlw * OVERLAP_THRESHOLD;
+    var upperBound = naturalX + tlw * OVERLAP_THRESHOLD;
+
+    // Compute the actual target mouse position of the tab.
+    var localX = clientX - data.contentRect.left - data.offsetX;
+    var targetX = Math.max(0, Math.min(localX, data.contentRect.width - tlw));
+
+    // Swap the position of the tab if it exceeds a threshold.
     if (targetX < lowerBound) {
       this.moveTab(index, index - 1);
     } else if (targetX > upperBound) {
       this.moveTab(index, index + 1);
     }
+
+    // Move the tab to its target position.
     data.node.style.left = targetX + 'px';
   }
 
@@ -664,95 +775,114 @@ class TabBar extends Widget {
    * Release the current mouse grab for the tab bar.
    */
   private _releaseMouse(): void {
+    // Do nothing if the mouse has already been released.
     var data = this._dragData;
     if (!data) {
       return;
     }
+
+    // Clear the drag data and remove the extra listeners.
     this._dragData = null;
     document.removeEventListener('mouseup', <any>this, true);
     document.removeEventListener('mousemove', <any>this, true);
-    if (data && data.dragActive) {
+
+    // Reset the state and layout to the non-drag state.
+    if (data.dragActive) {
       data.cursorGrab.dispose();
       data.node.style.transition = '';
-      this._withTransition(() => this._updateTabLayout());
+      this._withTransition(() => { this._updateTabLayout() });
     }
   }
 
   /**
-   * Insert a new tab into the tab bar at a valid index.
+   * Insert a new tab into the tab bar at the given index.
+   *
+   * This method assumes the index is valid and that the tab has
+   * not already been added to the tab bar.
    */
-  private _insertWithAnimation(index: number, tab: ITab): void {
-    this._insertCommon(index, tab);
-    if (!this.isAttached) {
-      return;
-    }
-    this._withTransition(() => {
-      tab.node.classList.add(INSERTING_CLASS);
-      this._updateTabLayout();
-    }, () => {
-      tab.node.classList.remove(INSERTING_CLASS);
-    });
-    this.updateGeometry();
-  }
-
-  private _insertWithoutAnimation(index: number, tab: ITab): void {
-    this._insertCommon(index, tab);
-    if (!this.isAttached) {
-      return;
-    }
-    this._withTransition(() => this._updateTabLayout());
-    this.updateGeometry();
-  }
-
-  private _insertCommon(index: number, tab: ITab): void {
+  private _insertTab(index: number, tab: ITab, animate: boolean): void {
+    // Ensure the tab is deselected and add it to the list and DOM.
     tab.selected = false;
-    this._tabs.splice(index, 0, tab);
+    algo.insert(this._tabs, index, tab);
     this.contentNode.appendChild(tab.node);
+
+    // Select this tab if there are no selected tabs. Otherwise,
+    // update the tab Z-order to account for the new tab.
     if (!this._currentTab) {
       this.currentTab = tab;
     } else {
-      this._refreshTabZOrder();
+      this._updateTabZOrder();
     }
+
+    // If the tab bar is not attached, there is nothing left to do.
     if (!this.isAttached) {
       return;
     }
+
+    // Animate the tab insert and and layout as appropriate.
+    if (animate) {
+      this._withTransition(() => {
+        tab.node.classList.add(INSERTING_CLASS);
+        this._updateTabLayout();
+      }, () => {
+        tab.node.classList.remove(INSERTING_CLASS);
+      });
+    } else {
+      this._withTransition(() => { this._updateTabLayout() });
+    }
+
+    // Notify the layout system that the widget geometry is dirty.
+    this.updateGeometry();
   }
 
   /**
    * Move an item to a new index in the tab bar.
+   *
+   * This method assumes both indices are valid.
    */
   private _moveTab(fromIndex: number, toIndex: number): void {
-    var tab = this._tabs.splice(fromIndex, 1)[0];
-    this._tabs.splice(toIndex, 0, tab);
-    this._refreshTabZOrder();
+    // Move the tab to its new location.
+    var tab = algo.removeAt(this._tabs, fromIndex);
+    algo.insert(this._tabs, toIndex, tab);
+
+    // Update the tab Z-order to account for the new order.
+    this._updateTabZOrder();
+
+    // Emit the `tabMoved` signal.
     this.tabMoved.emit(this, new Pair(fromIndex, toIndex));
+
+    // If the tab bar is not attached, there is nothing left to do.
     if (!this.isAttached) {
       return;
     }
-    this._withTransition(() => this._updateTabLayout());
-  }
 
-  private _removeWithAnimation(index: number): void {
-
-  }
-
-  private _removeWithoutAnimation(index: number): void {
-
-  }
-
-  private _removeCommon(index: number): void {
-
+    // Animate the tab layout update.
+    this._withTransition(() => { this._updateTabLayout() });
   }
 
   /**
    * Remove the tab at the given index from the tab bar.
+   *
+   * This method assumes the index is valid.
    */
   private _removeTab(index: number, animate: boolean): void {
+    // The mouse is always released when removing a tab. Attempting
+    // to gracefully handle the rare case of removing a tab while
+    // a drag is in progress it is not worth the effort.
     this._releaseMouse();
+
+    // Remove the tab from the tabs array.
     var tabs = this._tabs;
-    var tab = tabs.splice(index, 1)[0];
+    var tab = algo.removeAt(tabs, index);
+
+    // Ensure the tab is deselected and at the bottom of the Z-order.
     tab.selected = false;
     tab.node.style.zIndex = '0';
+
+    // If the tab is the current tab, select the next best tab by
+    // starting with the previous tab, then the next sibling, and
+    // finally the previous sibling. Otherwise, update the state
+    // and tab Z-order as appropriate.
     if (tab === this._currentTab) {
       var next = this._previousTab || tabs[index] || tabs[index - 1];
       this._currentTab = null;
@@ -764,50 +894,53 @@ class TabBar extends Widget {
       }
     } else if (tab === this._previousTab) {
       this._previousTab =  null;
-      this._refreshTabZOrder();
+      this._updateTabZOrder();
     } else {
-      this._refreshTabZOrder();
+      this._updateTabZOrder();
     }
-    var content = this.contentNode;
+
+    // If the tab bar is not attached, remove the node immediately.
     if (!this.isAttached) {
-      content.removeChild(tab.node);
+      this._removeContentChild(tab.node);
       return;
     }
+
+    // Animate the tab remove as appropriate.
     if (animate) {
       this._withTransition(() => {
         tab.node.classList.add(REMOVING_CLASS);
         this._updateTabLayout();
       }, () => {
         tab.node.classList.remove(REMOVING_CLASS);
-        content.removeChild(tab.node);
+        this._removeContentChild(tab.node);
       });
     } else {
-      content.removeChild(tab.node);
-      this._withTransition(() => this._updateTabLayout());
+      this._removeContentChild(tab.node);
+      this._withTransition(() => { this._updateTabLayout() });
     }
+
+    // Notify the layout system that the widget geometry is dirty.
     this.updateGeometry();
   }
 
   /**
-   * Refresh the Z indices of the tab nodes.
+   * Remove a child node of the tab bar content node.
+   *
+   * This is a no-op if the node is not a child of the content node.
    */
-  private _refreshTabZOrder(): void {
-    var tabs = this._tabs;
-    var index = tabs.length - 1;
-    for (var i = 0, n = tabs.length; i < n; ++i) {
-      var tab = tabs[i];
-      if (tab === this._currentTab) {
-        tab.node.style.zIndex = tabs.length + '';
-      } else {
-        tab.node.style.zIndex = index-- + '';
-      }
+  private _removeContentChild(node: HTMLElement): void {
+    var content = this.contentNode;
+    if (content === node.parentNode) {
+      content.removeChild(node);
     }
   }
 
   /**
    * Get the index of the tab which covers the given client position.
+   *
+   * Returns -1 if the client position does not intersect a tab.
    */
-  private _indexAtPos(clientX: number, clientY: number): number {
+  private _hitTest(clientX: number, clientY: number): number {
     var tabs = this._tabs;
     for (var i = 0, n = tabs.length; i < n; ++i) {
       if (hitTest(tabs[i].node, clientX, clientY)) {
@@ -821,11 +954,11 @@ class TabBar extends Widget {
    * Compute the layout width of a tab.
    *
    * This computes a tab size as close as possible to the preferred
-   * tab size (but not less than the minimum), taking into account
-   * the current tab bar inner div width and tab overlap setting.
+   * tab size, taking into account the minimum tab width, the current
+   * tab bar width, and the tab overlap setting.
    */
   private _tabLayoutWidth(): number {
-    var count = this._tabs.length;
+    var count = this.count;
     if (count === 0) {
       return 0;
     }
@@ -834,70 +967,107 @@ class TabBar extends Widget {
     if (this.width >= totalWidth) {
       return this._tabWidth;
     }
-    var ideal = (this.width + totalOverlap) / count;
-    return Math.max(this._minTabWidth, ideal);
+    return Math.max(this._minTabWidth, (this.width + totalOverlap) / count);
   }
 
   /**
-   * Update the layout of the tabs in the tab bar.
+   * Update the Z-indices of the tabs for the current tab order.
+   */
+  private _updateTabZOrder(): void {
+    var tabs = this._tabs;
+    var k = tabs.length - 1;
+    var current = this._currentTab;
+    for (var i = 0, n = tabs.length; i < n; ++i) {
+      var tab = tabs[i];
+      if (tab === current) {
+        tab.node.style.zIndex = n + '';
+      } else {
+        tab.node.style.zIndex = k-- + '';
+      }
+    }
+  }
+
+  /**
+   * Update the position and size of the tabs in the tab bar.
    *
-   * This will update the position and size of the tabs according to
-   * the current inner width of the tab bar. The position of the drag
-   * tab will not be updated.
+   * The position of the drag tab will not be updated.
    */
   private _updateTabLayout(): void {
+    var dragNode: HTMLElement = null;
+    if (this._dragData && this._dragData.dragActive) {
+      dragNode = this._dragData.node;
+    }
     var left = 0;
-    var width = this.width;
     var tabs = this._tabs;
-    var stub = TAB_STUB_SIZE;
-    var data = this._dragData;
+    var width = this.width;
     var overlap = this._tabOverlap;
-    var tabWidth = this._tabLayoutWidth();
-    var dragNode = data && data.dragActive && data.node;
+    var tlw = this._tabLayoutWidth();
     for (var i = 0, n = tabs.length; i < n; ++i) {
       var node = tabs[i].node;
       var style = node.style;
       if (node !== dragNode) {
-        var offset = tabWidth + stub * (n - i - 1);
-        if (left + offset > width) {
+        var offset = tlw + TAB_STUB_SIZE * (n - i - 1);
+        if ((left + offset) > width) {
           left = Math.max(0, width - offset);
         }
         style.left = left + 'px';
       }
-      style.width = tabWidth + 'px';
-      left += tabWidth - overlap;
+      style.width = tlw + 'px';
+      left += tlw - overlap;
     }
   }
 
   /**
    * A helper function to execute an animated transition.
    *
-   * This will execute the enter after the transition class has been
-   * added to the tab bar, and execute the exit callback after the
-   * transition duration has expired and the transition class has
-   * been removed from the tab bar.
+   * This will add the transition class to the tab bar for the global
+   * transition duration. The optional `onEnter` callback is invoked
+   * immediately after the transition class is added. The optional
+   * `onExit` callback will be invoked after the transition duration
+   * has expired and the transition class is removed from the tab bar.
    *
    * If there is an active drag in progress, the transition class
-   * will not be removed from the inner div on exit.
+   * will not be removed from the on exit.
    */
-  private _withTransition(enter?: () => void, exit?: () => void): void {
-    var content = this.contentNode;
-    content.classList.add(TRANSITION_CLASS);
-    if (enter) enter();
+  private _withTransition(onEnter?: () => void, onExit?: () => void): void {
+    var node = this.contentNode;
+    node.classList.add(TRANSITION_CLASS);
+    if (onEnter) {
+      onEnter();
+    }
     setTimeout(() => {
-      var data = this._dragData;
-      if (!data || !data.dragActive) {
-        content.classList.remove(TRANSITION_CLASS);
+      if (!this._dragData || !this._dragData.dragActive) {
+        node.classList.remove(TRANSITION_CLASS);
       }
-      if (exit) exit();
+      if (onExit) {
+        onExit();
+      }
     }, TRANSITION_DURATION);
   }
 
-  private _movable = true;
+  /**
+   * Initialize the tab bar state from an options object.
+   */
+  private _initFrom(options: ITabBarOptions): void {
+    if (options.tabsMovable !== void 0) {
+      this.tabsMovable = options.tabsMovable;
+    }
+    if (options.tabWidth !== void 0) {
+      this.tabWidth = options.tabWidth;
+    }
+    if (options.minTabWidth !== void 0) {
+      this.minTabWidth = options.minTabWidth;
+    }
+    if (options.tabOverlap !== void 0) {
+      this.tabOverlap = options.tabOverlap;
+    }
+  }
+
   private _tabWidth = 175;
   private _tabOverlap = 0;
   private _minTabWidth = 45;
   private _tabs: ITab[] = [];
+  private _tabsMovable = true;
   private _currentTab: ITab = null;
   private _previousTab: ITab = null;
   private _dragData: IDragData = null;
@@ -929,9 +1099,9 @@ interface IDragData {
   offsetX: number;
 
   /**
-   * The client rect of the inner tab bar node.
+   * The client rect of the tab bar content node.
    */
-  innerRect: ClientRect;
+  contentRect: ClientRect;
 
   /**
    * The disposable to clean up the cursor override.
@@ -946,7 +1116,7 @@ interface IDragData {
   /**
    * Whether the detach request signal has been emitted.
    */
-  emitted: boolean;
+  detachRequested: boolean;
 }
 
 

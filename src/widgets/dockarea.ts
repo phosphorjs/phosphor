@@ -349,7 +349,7 @@ class DockArea extends Widget {
     this._dragData = null;
 
     // Restore the application cursor and hide the overlay.
-    dragData.grab.dispose();
+    dragData.cursorGrab.dispose();
     if (dragData.lastHitPanel) {
       dragData.lastHitPanel.hideOverlay();
     }
@@ -657,7 +657,7 @@ class DockArea extends Widget {
     document.removeEventListener('mouseup', <any>this, true);
     document.removeEventListener('mousemove', <any>this, true);
     document.removeEventListener('contextmenu', <any>this, true);
-    dragData.grab.dispose();
+    dragData.cursorGrab.dispose();
 
     // Hide the overlay for the last hit panel.
     if (dragData.lastHitPanel) {
@@ -668,7 +668,7 @@ class DockArea extends Widget {
     // that tab bar and restore that tab bar's previous tab.
     if (dragData.tempPanel) {
       var tabBar = dragData.tempPanel.tabBar;
-      tabBar.removeAt(tabBar.currentIndex, false);
+      tabBar.detachAt(tabBar.currentIndex);
       tabBar.currentTab = dragData.tempTab;
     }
 
@@ -719,13 +719,13 @@ class DockArea extends Widget {
     // The drag data will be cleared on the mouse up event.
     if (!this._dragData) {
       var prevTab = sender.previousTab;
-      var grab = overrideCursor(window.getComputedStyle(tab.node).cursor);
+      var cursorGrab = overrideCursor('default');
       this._dragData = {
         item: item,
         index: args.index,
         offsetX: 0,
         offsetY: 0,
-        grab: grab,
+        cursorGrab: cursorGrab,
         prevTab: prevTab,
         lastHitPanel: null,
         tempPanel: null,
@@ -747,9 +747,9 @@ class DockArea extends Widget {
     //    the tab temporarily. Its previously selected tab is restored.
     if (item.panel.tabBar === sender) {
       sender.currentIndex = -1;
-      sender.removeAt(args.index, false);
+      sender.detachAt(args.index);
     } else {
-      sender.removeAt(args.index, false);
+      sender.detachAt(args.index);
       sender.currentTab = dragData.tempTab;
     }
 
@@ -821,7 +821,7 @@ interface IDragData {
   index: number;
   offsetX: number;
   offsetY: number;
-  grab: IDisposable;
+  cursorGrab: IDisposable;
   prevTab: ITab;
   lastHitPanel: DockPanel;
   tempPanel: DockPanel;
@@ -981,7 +981,7 @@ class DockPanel extends Widget {
    */
   showOverlay(clientX: number, clientY: number): void {
     this._clearOverlayTimer();
-    var box = this.boxSizing();
+    var box = this.boxSizing;
     var top = box.paddingTop;
     var left = box.paddingLeft;
     var right = box.paddingRight;
