@@ -179,7 +179,7 @@ class WidgetItem implements ILayoutItem {
       this._maxSize = Size.Zero;
       return;
     }
-    var box = widget.boxSizing();
+    var box = widget.boxSizing;
     var sizeHint = widget.sizeHint();
     var minHint = widget.minSizeHint();
     var maxHint = widget.maxSizeHint();

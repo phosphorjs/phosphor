@@ -204,6 +204,19 @@ class Widget implements IMessageHandler, IDisposable {
   }
 
   /**
+   * Get the CSS box sizing for the widget.
+   *
+   * This method computes the data once, then caches it. The cached
+   * data can be cleared by calling the `invalidateBoxSizing` method.
+   */
+  get boxSizing(): IBoxSizing {
+    if (!this._boxSizing) {
+      this._boxSizing = createBoxSizing(this._node);
+    }
+    return this._boxSizing;
+  }
+
+  /**
    * Test whether the widget's node is attached to the DOM.
    */
   get isAttached(): boolean {
@@ -543,25 +556,12 @@ class Widget implements IMessageHandler, IDisposable {
   }
 
   /**
-   * Get the CSS box sizing for the widget.
-   *
-   * This method computes the data once, then caches it. The cached
-   * data can be cleared by calling the `invalidateBoxSizing` method.
-   */
-  boxSizing(): IBoxSizing {
-    if (!this._boxSizing) {
-      this._boxSizing = createBoxSizing(this._node);
-    }
-    return this._boxSizing;
-  }
-
-  /**
    * Invalidate the cached CSS box sizing for the widget.
    *
    * User code should invoke this method when it makes a change to the
    * node's style which changes its border, padding, or size limits.
    */
-  invalidateBoxData(): void {
+  invalidateBoxSizing(): void {
     this._boxSizing = null;
     if (this._layout) {
       this._layout.invalidate();
@@ -624,7 +624,7 @@ class Widget implements IMessageHandler, IDisposable {
     var oldY = this._y;
     var oldW = this._width;
     var oldH = this._height;
-    var box = this.boxSizing();
+    var box = this.boxSizing;
     var style = this._node.style;
     var w = Math.max(box.minWidth, Math.min(width, box.maxWidth));
     var h = Math.max(box.minHeight, Math.min(height, box.maxHeight));

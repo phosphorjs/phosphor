@@ -94,7 +94,7 @@ class SplitLayout extends Layout {
       return;
     }
     var totalSize: number;
-    var box = parent.boxSizing();
+    var box = parent.boxSizing;
     if (this._orientation === Orientation.Horizontal) {
       totalSize = parent.width - box.horizontalSum - this._fixedSpace;
     } else {
@@ -471,7 +471,7 @@ class SplitLayout extends Layout {
     }
 
     // Account for padding and border on the parent.
-    var box = parent.boxSizing();
+    var box = parent.boxSizing;
     var boxW = box.horizontalSum;
     var boxH = box.verticalSum;
     hintW += boxW;

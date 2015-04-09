@@ -461,7 +461,7 @@ class BoxLayout extends Layout {
     }
 
     // Account for padding and border on the parent.
-    var box = parent.boxSizing();
+    var box = parent.boxSizing;
     var boxW = box.horizontalSum;
     var boxH = box.verticalSum;
     hintW += boxW;

@@ -276,7 +276,7 @@ class MenuBar extends Widget {
    * Compute the minimum size hint for the menu bar.
    */
   minSizeHint(): Size {
-    return new Size(0, this.boxSizing().minHeight);
+    return new Size(0, this.boxSizing.minHeight);
   }
 
   /**
