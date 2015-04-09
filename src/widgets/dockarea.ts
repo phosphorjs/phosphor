@@ -987,20 +987,18 @@ class DockPanel extends Widget {
     var right = box.paddingRight;
     var bottom = box.paddingBottom;
     switch (this.splitModeAt(clientX, clientY)) {
-      case SplitMode.Left:
-        right = this.width / 2;
-        break;
-      case SplitMode.Right:
-        left = this.width / 2;
-        break;
-      case SplitMode.Top:
-        bottom = this.height / 2;
-        break;
-      case SplitMode.Bottom:
-        top = this.height / 2;
-        break;
-      default:
-        return;
+    case SplitMode.Left:
+      right = this.width / 2;
+      break;
+    case SplitMode.Right:
+      left = this.width / 2;
+      break;
+    case SplitMode.Top:
+      bottom = this.height / 2;
+      break;
+    case SplitMode.Bottom:
+      top = this.height / 2;
+      break;
     }
     // The first time the overlay is made visible, it is positioned at
     // the cursor with zero size before being displayed. This allows
