@@ -14,9 +14,9 @@ var CURSOR_CLASS = 'p-mod-cursor-override';
 
 
 /**
- * The current disposable which owns the override.
+ * The token object for the current override.
  */
-var current: IDisposable = null;
+var overrideToken: any = null;
 
 
 /**
@@ -26,22 +26,17 @@ var current: IDisposable = null;
  */
 export
 function overrideCursor(cursor: string): IDisposable {
-  if (current) current.dispose();
+  var token = overrideToken = <any>{};
   var body = document.body;
   body.style.cursor = cursor;
   body.classList.add(CURSOR_CLASS);
-  return current = new Disposable(clearOverride);
-}
-
-
-/**
- * Clear the cursor override.
- */
-function clearOverride(): void {
-  current = null;
-  var body = document.body;
-  body.style.cursor = '';
-  body.classList.remove(CURSOR_CLASS);
+  return new Disposable(() => {
+    if (token === overrideToken) {
+      overrideToken = null;
+      body.style.cursor = '';
+      body.classList.remove(CURSOR_CLASS);
+    }
+  });
 }
 
 } // module phosphor.utility
