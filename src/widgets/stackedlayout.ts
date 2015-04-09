@@ -7,6 +7,8 @@
 |----------------------------------------------------------------------------*/
 module phosphor.widgets {
 
+import algo = collections.algorithm;
+
 import Signal = core.Signal;
 
 import Pair = utility.Pair;
@@ -109,7 +111,7 @@ class StackedLayout extends Layout {
     if (index < 0 || index >= this._items.length) {
       return void 0;
     }
-    var item = this._items.splice(index, 1)[0];
+    var item = algo.removeAt(this._items, index);
     if (index === this._currentIndex) {
       this._currentIndex = -1;
       item.widget.hide();
@@ -144,7 +146,7 @@ class StackedLayout extends Layout {
     this.remove(widget);
     this.ensureParent(widget);
     index = Math.max(0, Math.min(index, this._items.length));
-    this._items.splice(index, 0, new WidgetItem(widget, alignment));
+    algo.insert(this._items, index, new WidgetItem(widget, alignment));
     if (index <= this._currentIndex) {
       this._currentIndex++;
     }
@@ -170,8 +172,8 @@ class StackedLayout extends Layout {
     if (fromIndex === toIndex) {
       return toIndex;
     }
-    var item = this._items.splice(fromIndex, 1)[0];
-    this._items.splice(toIndex, 0, item);
+    var item = algo.removeAt(this._items, fromIndex);
+    algo.insert(this._items, toIndex, item);
     var current = this._currentIndex;
     if (fromIndex === current) {
       current = toIndex;

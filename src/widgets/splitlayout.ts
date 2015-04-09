@@ -7,6 +7,8 @@
 |----------------------------------------------------------------------------*/
 module phosphor.widgets {
 
+import algo = collections.algorithm;
+
 import Size = utility.Size;
 
 
@@ -169,8 +171,8 @@ class SplitLayout extends Layout {
     if (index < 0 || index >= this._items.length) {
       return void 0;
     }
-    var item = this._items.splice(index, 1)[0];
-    this._sizers.splice(index, 1);
+    var item = algo.removeAt(this._items, index);
+    algo.removeAt(this._sizers, index);
     var hNode = item.handle.node;
     var pNode = hNode.parentNode;
     if (pNode) pNode.removeChild(hNode);
@@ -204,8 +206,8 @@ class SplitLayout extends Layout {
     var sizer = new LayoutSizer();
     sizer.stretch = Math.max(0, stretch | 0);
     index = Math.max(0, Math.min(index, this._items.length));
-    this._items.splice(index, 0, item);
-    this._sizers.splice(index, 0, sizer);
+    algo.insert(this._items, index, item);
+    algo.insert(this._sizers, index, sizer);
     this.invalidate();
     return index;
   }

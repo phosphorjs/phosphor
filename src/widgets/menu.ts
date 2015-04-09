@@ -236,7 +236,7 @@ class Menu implements IDisposable {
    */
   insertItem(index: number, item: MenuItem): number {
     index = Math.max(0, Math.min(index | 0, this._items.length));
-    this._items.splice(index, 0, item);
+    algo.insert(this._items, index, item);
     this.itemInserted(index, item);
     return index;
   }
@@ -248,7 +248,7 @@ class Menu implements IDisposable {
     if (index < 0 || index >= this._items.length) {
       return void 0;
     }
-    var item = this._items.splice(index, 1)[0];
+    var item = algo.removeAt(this._items, index);
     this.itemRemoved(index, item);
     return item;
   }
@@ -432,7 +432,7 @@ class Menu implements IDisposable {
     var node = createItemNode(item);
     var next = this._nodes[index];
     this.node.insertBefore(node, next);
-    this._nodes.splice(index, 0, node);
+    algo.insert(this._nodes, index, node);
     node.addEventListener('mouseenter', <any>this);
     item.changed.connect(this._mi_changed, this);
   }
@@ -444,7 +444,7 @@ class Menu implements IDisposable {
     if (this._activeIndex !== -1) {
       this._reset();
     }
-    var node = this._nodes.splice(index, 1)[0];
+    var node = algo.removeAt(this._nodes, index);
     this.node.removeChild(node);
     node.removeEventListener('mouseenter', <any>this);
     item.changed.disconnect(this._mi_changed, this);

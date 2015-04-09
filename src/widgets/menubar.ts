@@ -164,7 +164,7 @@ class MenuBar extends Widget {
    */
   insertItem(index: number, item: MenuItem): number {
     index = Math.max(0, Math.min(index | 0, this._items.length));
-    this._items.splice(index, 0, item);
+    algo.insert(this._items, index, item);
     this.itemInserted(index, item);
     return index;
   }
@@ -176,7 +176,7 @@ class MenuBar extends Widget {
     if (index < 0 || index >= this._items.length) {
       return void 0;
     }
-    var item = this._items.splice(index, 1)[0];
+    var item = algo.removeAt(this._items, index);
     this.itemRemoved(index, item);
     return item;
   }
@@ -290,7 +290,7 @@ class MenuBar extends Widget {
     var node = createItemNode(item);
     var next = this._nodes[index];
     this.node.insertBefore(node, next);
-    this._nodes.splice(index, 0, node);
+    algo.insert(this._nodes, index, node);
     item.changed.connect(this._mi_changed, this);
   }
 
@@ -302,7 +302,7 @@ class MenuBar extends Widget {
       this._setState(MBState.Inactive);
       this._setActiveIndex(-1);
     }
-    var node = this._nodes.splice(index, 1)[0];
+    var node = algo.removeAt(this._nodes, index);
     this.node.removeChild(node);
     item.changed.disconnect(this._mi_changed, this);
   }
