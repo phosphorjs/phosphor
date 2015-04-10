@@ -154,14 +154,14 @@ class BoxLayout extends Layout {
    *
    * Returns the index of the added space.
    */
-  addStretch(stretch = 0): number {
+  addStretch(stretch: number): number {
     return this.insertStretch(this.count, stretch);
   }
 
   /**
    * Insert stretchable space at the given index.
    */
-  insertStretch(index: number, stretch = 0): number {
+  insertStretch(index: number, stretch: number): number {
     var spacer: SpacerItem;
     if (isHorizontal(this._direction)) {
       spacer = new SpacerItem(0, 0, SizePolicy.Expanding, SizePolicy.Minimum);

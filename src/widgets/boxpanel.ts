@@ -99,7 +99,7 @@ class BoxPanel extends Panel {
    *
    * Returns the index of the added space.
    */
-  addStretch(stretch = 0): number {
+  addStretch(stretch: number): number {
     return (<BoxLayout>this.layout).addStretch(stretch);
   }
 
@@ -108,7 +108,7 @@ class BoxPanel extends Panel {
    *
    * Returns the index of the added space.
    */
-  insertStretch(index: number, stretch = 0): number {
+  insertStretch(index: number, stretch: number): number {
     return (<BoxLayout>this.layout).insertStretch(index, stretch);
   }
 

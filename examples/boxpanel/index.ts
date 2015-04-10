@@ -26,28 +26,28 @@ function main(): void {
   ttb.addWidget(createContent('Top'));
   ttb.addWidget(createContent('To'));
   ttb.addWidget(createContent('Bottom'));
-  ttb.addStretch();
+  ttb.addStretch(0);
 
   var btt = new BoxPanel(Direction.BottomToTop);
   btt.addClass('green');
   btt.addWidget(createContent('Top'));
   btt.addWidget(createContent('To'));
   btt.addWidget(createContent('Bottom'));
-  btt.addStretch();
+  btt.addStretch(0);
 
   var ltr = new BoxPanel(Direction.LeftToRight);
   ltr.addClass('yellow');
   ltr.addWidget(createContent('Left'));
   ltr.addWidget(createContent('To'));
   ltr.addWidget(createContent('Right'));
-  ltr.addStretch();
+  ltr.addStretch(0);
 
   var rtl = new BoxPanel(Direction.RightToLeft);
   rtl.addClass('blue');
   rtl.addWidget(createContent('Left'));
   rtl.addWidget(createContent('To'));
   rtl.addWidget(createContent('Right'));
-  rtl.addStretch();
+  rtl.addStretch(0);
 
   var row = new BoxPanel(Direction.LeftToRight);
   row.addWidget(ttb);
