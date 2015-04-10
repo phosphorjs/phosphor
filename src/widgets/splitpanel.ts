@@ -91,7 +91,7 @@ class SplitPanel extends Panel {
    *
    * Returns the index of the added widget.
    */
-  addWidget(widget: Widget, stretch = 0, alignment: Alignment = 0): number {
+  addWidget(widget: Widget, stretch?: number, alignment?: Alignment): number {
     return (<SplitLayout>this.layout).addWidget(widget, stretch, alignment);
   }
 
@@ -102,7 +102,7 @@ class SplitPanel extends Panel {
    *
    * Returns the index of the added widget.
    */
-  insertWidget(index: number, widget: Widget, stretch = 0, alignment: Alignment = 0): number {
+  insertWidget(index: number, widget: Widget, stretch?: number, alignment?: Alignment): number {
     return (<SplitLayout>this.layout).insertWidget(index, widget, stretch, alignment);
   }
 
