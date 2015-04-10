@@ -26,7 +26,7 @@ var MENU_CLASS = 'p-Menu';
 /**
  * The class name added to a menu content node.
  */
-var MENU_CONTENT_CLASS = 'p-Menu-content';
+var CONTENT_CLASS = 'p-Menu-content';
 
 /**
  * The class name assigned to a menu item.
@@ -441,7 +441,7 @@ class Menu {
   protected createNode(): HTMLElement {
     var node = document.createElement('div');
     var content = document.createElement('content');
-    content.className = MENU_CONTENT_CLASS;
+    content.className = CONTENT_CLASS;
     node.appendChild(content);
     return node;
   }
