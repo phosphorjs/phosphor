@@ -47,6 +47,7 @@ var tsSources = [
   'utility/point',
   'utility/rect',
   'utility/size',
+  'utility/viewport',
 
   'virtualdom/factory',
   'virtualdom/dom',
