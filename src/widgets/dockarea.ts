@@ -333,7 +333,7 @@ class DockArea extends Widget {
    *
    * This is triggered on the document during a tab move operation.
    */
-  protected _evtMouseUp(event: MouseEvent): void {
+  private _evtMouseUp(event: MouseEvent): void {
     if (event.button !== 0) {
       return;
     }
@@ -365,15 +365,14 @@ class DockArea extends Widget {
     // make that relationship permanent by moving the dock widget.
     // If the original owner panel becomes empty, it is removed.
     // Otherwise, its current index is updated to the next widget.
-    //
     // The ignoreRemoved flag is set during the widget swap since
     // the widget is not actually being removed from the area.
     if (dragData.tempPanel) {
-      item.panel = dragData.tempPanel;
       this._ignoreRemoved = true;
+      item.panel = dragData.tempPanel;
       item.panel.stackedPanel.addWidget(item.widget);
-      this._ignoreRemoved = false;
       item.panel.stackedPanel.currentWidget = item.widget;
+      this._ignoreRemoved = false;
       if (ownPanel.stackedPanel.count === 0) {
         this._removePanel(ownPanel);
       } else {
@@ -430,7 +429,7 @@ class DockArea extends Widget {
   private _addWidget(widget: ITabbable, orientation: Orientation, after: boolean): void {
     widget.parent = null;
     var panel = this._createPanel();
-    this._addItem(widget, panel);
+    this._items.push({ widget: widget, panel: panel });
     panel.stackedPanel.addWidget(widget);
     panel.tabBar.addTab(widget.tab);
     this._ensureRoot(orientation);
@@ -467,7 +466,7 @@ class DockArea extends Widget {
   private _splitPanel(panel: DockPanel, widget: ITabbable, orientation: Orientation, after: boolean): void {
     widget.parent = null;
     var newPanel = this._createPanel();
-    this._addItem(widget, newPanel);
+    this._items.push({ widget: widget, panel: newPanel });
     newPanel.stackedPanel.addWidget(widget);
     newPanel.tabBar.addTab(widget.tab);
     var splitter = <DockSplitter>panel.parent;
@@ -515,7 +514,7 @@ class DockArea extends Widget {
     widget.parent = null;
     var panel = refItem.panel;
     var index = panel.tabBar.indexOf(ref.tab) + (after ? 1 : 0);
-    this._addItem(widget, panel);
+    this._items.push({ widget: widget, panel: panel });
     panel.stackedPanel.addWidget(widget);
     panel.tabBar.insertTab(index, widget.tab);
   }
@@ -542,13 +541,6 @@ class DockArea extends Widget {
       this._root.addWidget(root);
       (<BoxLayout>this.layout).addWidget(this._root);
     }
-  }
-
-  /**
-   * Add a new item to the dock area and install its signal handlers.
-   */
-  private _addItem(widget: ITabbable, panel: DockPanel): void {
-    this._items.push({ widget: widget, panel: panel });
   }
 
   /**
@@ -836,8 +828,10 @@ interface IDragData {
  */
 function floatTab(tab: ITab, on: boolean): void {
   if (on) {
+    tab.node.style.position = 'absolute';
     tab.node.classList.add(FLOATING_CLASS);
   } else {
+    tab.node.style.position = '';
     tab.node.classList.remove(FLOATING_CLASS);
   }
 }
@@ -891,17 +885,11 @@ function iterSplitters<T>(root: DockSplitter, cb: (panel: DockSplitter) => T): T
 /**
  * The split modes used to indicate a dock panel split direction.
  */
-enum SplitMode {
-  Top,
-  Left,
-  Right,
-  Bottom,
-  Invalid,
-}
+enum SplitMode { Top, Left, Right, Bottom, Invalid }
 
 
 /**
- * An panel used by a DockArea.
+ * A panel used by a DockArea.
  *
  * A dock panel acts as a simple container for a tab bar and stack
  * panel, plus a bit of logic to manage a drop indicator overlay.
