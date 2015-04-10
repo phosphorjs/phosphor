@@ -7,20 +7,19 @@
 |----------------------------------------------------------------------------*/
 module example {
 
-import DockArea = phosphor.panels.DockArea;
-import DockMode = phosphor.panels.DockMode;
-import ITab = phosphor.panels.ITab;
-import Panel = phosphor.panels.Panel;
-import Tab = phosphor.panels.Tab;
+import DockArea = phosphor.widgets.DockArea;
+import DockMode = phosphor.widgets.DockMode;
+import ITab = phosphor.widgets.ITab;
+import Tab = phosphor.widgets.Tab;
+import Widget = phosphor.widgets.Widget;
 
 
-class Content extends Panel {
+class Content extends Widget {
 
   constructor(title: string) {
     super();
-    this.node.classList.add('content');
-    this.node.classList.add(title.toLowerCase());
-    this.setMinSize(50, 50);
+    this.addClass('content');
+    this.addClass(title.toLowerCase());
     this._tab = new Tab(title);
     this._tab.closable = true;
   }
@@ -35,6 +34,7 @@ class Content extends Panel {
 
 function main(): void {
   var area = new DockArea();
+  area.tabOverlap = 1;
 
   var r1 = new Content('Red');
   var r2 = new Content('Red');
@@ -52,21 +52,21 @@ function main(): void {
   var y2 = new Content('Yellow');
   var y3 = new Content('Yellow');
 
-  area.addPanel(r1);
+  area.addWidget(r1);
 
-  area.addPanel(b1, DockMode.SplitRight, r1);
-  area.addPanel(y1, DockMode.SplitBottom, b1);
-  area.addPanel(g1, DockMode.SplitLeft, y1);
+  area.addWidget(b1, DockMode.SplitRight, r1);
+  area.addWidget(y1, DockMode.SplitBottom, b1);
+  area.addWidget(g1, DockMode.SplitLeft, y1);
 
-  area.addPanel(b2, DockMode.Bottom);
+  area.addWidget(b2, DockMode.Bottom);
 
-  area.addPanel(y2, DockMode.TabBefore, r1);
-  area.addPanel(b3, DockMode.TabBefore, y2);
-  area.addPanel(g2, DockMode.TabBefore, b2);
-  area.addPanel(y3, DockMode.TabBefore, g2);
-  area.addPanel(g3, DockMode.TabBefore, y3);
-  area.addPanel(r2, DockMode.TabBefore, b1);
-  area.addPanel(r3, DockMode.TabBefore, y1);
+  area.addWidget(y2, DockMode.TabBefore, r1);
+  area.addWidget(b3, DockMode.TabBefore, y2);
+  area.addWidget(g2, DockMode.TabBefore, b2);
+  area.addWidget(y3, DockMode.TabBefore, g2);
+  area.addWidget(g3, DockMode.TabBefore, y3);
+  area.addWidget(r2, DockMode.TabBefore, b1);
+  area.addWidget(r3, DockMode.TabBefore, y1);
 
   area.attach(document.getElementById('main'));
   area.fit();

@@ -6,12 +6,22 @@
 | The full license is in the file LICENSE, distributed with this software.
 |----------------------------------------------------------------------------*/
 .p-Menu {
-  display: table;
+  box-sizing: border-box;
+  position: absolute;
+  top: 0;
+  left: 0;
   margin: 0;
   padding: 3px 0px;
-  width: auto;
-  height: auto;
+  overflow-x: hidden;
+  overflow-y: auto;
   z-index: 100000;
+  cursor: default;
+  user-select: none;
+}
+
+
+.p-Menu-content {
+  display: table;
   list-style: none;
   border-spacing: 0;
 }

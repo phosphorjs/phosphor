@@ -7,9 +7,9 @@
 |----------------------------------------------------------------------------*/
 module example {
 
-import Menu = phosphor.panels.Menu;
-import MenuBar = phosphor.panels.MenuBar;
-import MenuItem = phosphor.panels.MenuItem;
+import Menu = phosphor.widgets.Menu;
+import MenuBar = phosphor.widgets.MenuBar;
+import MenuItem = phosphor.widgets.MenuItem;
 
 
 var cutCmd = () => console.log('Cut');
@@ -95,7 +95,9 @@ function main(): void {
     onTriggered: closeCmd,
   });
 
-  var separator = new MenuItem({ type: 'separator' });
+  function separator(): MenuItem {
+    return new MenuItem({ type: 'separator' });
+  }
 
   var newFileItem = new MenuItem({
     text: 'New File',
@@ -122,7 +124,7 @@ function main(): void {
     shortcut: 'Ctrl+W',
   });
 
-  var closeAllItem = new MenuItem({ text: 'Close All File' });
+  var closeAllItem = new MenuItem({ text: 'Close All Files' });
 
   var exitItem = new MenuItem({ text: 'Exit' });
 
@@ -133,12 +135,12 @@ function main(): void {
       openFileItem,
       saveFileItem,
       saveAsItem,
-      separator,
+      separator(),
       closeFileItem,
       closeAllItem,
-      separator,
+      separator(),
       moreItem,
-      separator,
+      separator(),
       exitItem,
     ]),
   });
@@ -162,7 +164,7 @@ function main(): void {
     submenu: new Menu([
       undoItem,
       repeatItem,
-      separator,
+      separator(),
       copyItem,
       cutItem,
       pasteItem,
@@ -200,7 +202,7 @@ function main(): void {
       findItem,
       findNextItem,
       findPrevItem,
-      separator,
+      separator(),
       replaceItem,
       replaceNextItem,
     ]),
@@ -223,15 +225,15 @@ function main(): void {
     copyItem,
     cutItem,
     pasteItem,
-    separator,
+    separator(),
     newTabItem,
     closeTabItem,
     saveOnExitItem,
-    separator,
+    separator(),
     taskMgrItem,
-    separator,
+    separator(),
     moreItem,
-    separator,
+    separator(),
     closeItem,
   ]);
 
@@ -240,7 +242,7 @@ function main(): void {
     editItem,
     fmItem,
     viewItem,
-    separator,
+    separator(),
     helpItem,
   ]);
 

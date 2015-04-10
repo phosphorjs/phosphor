@@ -5,7 +5,17 @@
 |
 | The full license is in the file LICENSE, distributed with this software.
 |----------------------------------------------------------------------------*/
-.p-TabBar-inner {
+.p-TabBar-header {
+  display: none;
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 0;
+}
+
+
+.p-TabBar-content {
   position: absolute;
   top: 0;
   left: 0;
@@ -13,20 +23,31 @@
   bottom: 0;
   margin: 0;
   padding: 0;
+  z-index: 2;
   > .p-Tab {
     position: absolute;
     bottom: 0px;
     &.p-mod-inserting {
-      animation: p-keyframes-inserting-tab 150ms ease
+      animation: p-kf-insert-tab 150ms ease
     }
     &.p-mod-removing {
-      animation: p-keyframes-removing-tab 150ms ease
+      animation: p-kf-remove-tab 150ms ease
     }
   }
   &.p-mod-transition > .p-Tab {
     transition-property: left, width;
     transition-duration: 150ms;
   }
+}
+
+
+.p-TabBar-footer {
+  display: none;
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 1;
 }
 
 
@@ -49,11 +70,10 @@
   flex: 1 1 auto;
   overflow: hidden;
   white-space: nowrap;
-  text-overflow: ellipsis;
 }
 
 
-@keyframes p-keyframes-inserting-tab {
+@keyframes p-kf-insert-tab {
   from {
     bottom: -100%;
   }
@@ -63,7 +83,7 @@
 }
 
 
-@keyframes p-keyframes-removing-tab {
+@keyframes p-kf-remove-tab {
   from {
     bottom: 0;
   }

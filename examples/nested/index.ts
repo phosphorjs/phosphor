@@ -7,21 +7,20 @@
 |----------------------------------------------------------------------------*/
 module example {
 
-import ITab = phosphor.panels.ITab;
-import Orientation = phosphor.panels.Orientation;
-import Panel = phosphor.panels.Panel;
-import SplitPanel = phosphor.panels.SplitPanel;
-import Tab = phosphor.panels.Tab;
-import TabPanel = phosphor.panels.TabPanel;
+import ITab = phosphor.widgets.ITab;
+import Orientation = phosphor.widgets.Orientation;
+import SplitPanel = phosphor.widgets.SplitPanel;
+import Tab = phosphor.widgets.Tab;
+import TabPanel = phosphor.widgets.TabPanel;
+import Widget = phosphor.widgets.Widget;
 
 
-class Content extends Panel {
+class Content extends Widget {
 
   constructor(title: string) {
     super();
-    this.node.classList.add('content');
-    this.node.classList.add(title.toLowerCase());
-    this.setMinSize(50, 50);
+    this.addClass('content');
+    this.addClass(title.toLowerCase());
     this._tab = new Tab(title);
   }
 
@@ -35,10 +34,11 @@ class Content extends Panel {
 
 function createTabs(index: number): TabPanel {
   var tabs = new TabPanel();
-  tabs.addPanel(new Content('Red'));
-  tabs.addPanel(new Content('Yellow'));
-  tabs.addPanel(new Content('Blue'));
-  tabs.addPanel(new Content('Green'));
+  tabs.tabBar.tabOverlap = 1;
+  tabs.addWidget(new Content('Red'));
+  tabs.addWidget(new Content('Yellow'));
+  tabs.addWidget(new Content('Blue'));
+  tabs.addWidget(new Content('Green'));
   tabs.currentIndex = index;
   return tabs;
 }
@@ -49,14 +49,14 @@ function main(): void {
   var sp2 = new SplitPanel(Orientation.Vertical);
   var sp3 = new SplitPanel(Orientation.Vertical);
 
-  sp2.addPanel(createTabs(0));
-  sp2.addPanel(createTabs(1));
+  sp2.addWidget(createTabs(0));
+  sp2.addWidget(createTabs(1));
 
-  sp3.addPanel(createTabs(2));
-  sp3.addPanel(createTabs(3));
+  sp3.addWidget(createTabs(2));
+  sp3.addWidget(createTabs(3));
 
-  sp1.addPanel(sp2);
-  sp1.addPanel(sp3);
+  sp1.addWidget(sp2);
+  sp1.addWidget(sp3);
 
   sp1.attach(document.getElementById('main'));
   sp1.fit();

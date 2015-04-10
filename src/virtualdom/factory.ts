@@ -7,8 +7,8 @@
 |----------------------------------------------------------------------------*/
 module phosphor.virtualdom {
 
-import emptyArray = core.emptyArray;
-import emptyObject = core.emptyObject;
+import emptyArray = utility.emptyArray;
+import emptyObject = utility.emptyObject;
 
 
 /**
@@ -29,7 +29,7 @@ type FactoryChildArgType = FactoryChildType | FactoryChildType[];
  * A factory function which creates a virtual element.
  */
 export
-interface IElementFactory<T extends IData> {
+interface IFactory<T extends IData> {
   /**
    * Create a virtual element with the given children.
    */
@@ -50,8 +50,7 @@ interface IElementFactory<T extends IData> {
  * which contains factories for the standard DOM elements.
  */
 export
-function createFactory<T extends IData>(
-  tag: string | IComponentClass<T>): IElementFactory<T> {
+function createFactory<T extends IData>(tag: string | IComponentClass<T>): IFactory<T> {
   return factory.bind(void 0, tag);
 }
 
@@ -81,7 +80,7 @@ VirtualElement.prototype.__isElement = true;
 /**
  * Create a new virtual text element.
  */
-function createTextElement(text: string): IElement {
+function createTextElem(text: string): IElement {
   return new VirtualElement(ElementType.Text, text, emptyObject, emptyArray);
 }
 
@@ -89,10 +88,7 @@ function createTextElement(text: string): IElement {
 /**
  * Create a new virtual node element.
  */
-function createNodeElement(
-  tag: string,
-  data: IData,
-  children: IElement[]): IElement {
+function createNodeElem(tag: string, data: IData, children: IElement[]): IElement {
   data = data || emptyObject;
   children = children || emptyArray;
   return new VirtualElement(ElementType.Node, tag, data, children);
@@ -102,10 +98,7 @@ function createNodeElement(
 /**
  * Create a new virtual component element.
  */
-function createComponentElement(
-  tag: IComponentClass<any>,
-  data: IData,
-  children: IElement[]): IElement {
+function createCompElem(tag: IComponentClass<any>, data: IData, children: IElement[]): IElement {
   data = data || emptyObject;
   children = children || emptyArray;
   return new VirtualElement(ElementType.Component, tag, data, children);
@@ -128,7 +121,7 @@ function extend(first: any[], second: any[]): void {
 /**
  * The virtual element factory function implementation.
  *
- * When bound to a tag, this function implements IElementFactory.
+ * When bound to a tag, this function implements IFactory.
  */
 function factory(tag: string | IComponentClass<any>, first?: any): IElement {
   var data: any = null;
@@ -158,15 +151,15 @@ function factory(tag: string | IComponentClass<any>, first?: any): IElement {
     for (var i = 0, n = children.length; i < n; ++i) {
       var child = children[i];
       if (typeof child === 'string') {
-        children[i] = createTextElement(child);
+        children[i] = createTextElem(child);
       }
     }
   }
   var elem: IElement;
   if (typeof tag === 'string') {
-    elem = createNodeElement(tag, data, children);
+    elem = createNodeElem(tag, data, children);
   } else {
-    elem = createComponentElement(tag, data, children);
+    elem = createCompElem(tag, data, children);
   }
   return elem;
 }

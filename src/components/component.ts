@@ -7,7 +7,7 @@
 |----------------------------------------------------------------------------*/
 module phosphor.components {
 
-import emptyObject = core.emptyObject;
+import emptyObject = utility.emptyObject;
 
 import IElement = virtualdom.IElement;
 import IData = virtualdom.IData;

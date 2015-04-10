@@ -7,20 +7,20 @@
 |----------------------------------------------------------------------------*/
 module example {
 
-import TabBar = phosphor.panels.TabBar;
+import Tab = phosphor.widgets.Tab;
+import TabBar = phosphor.widgets.TabBar;
 
 
 function main(): void {
-  var tb = new TabBar();
-  tb.minTabWidth = 100;
+  var tb = new TabBar({ tabOverlap: 1 });
 
-  tb.addTab('One');
-  tb.addTab('Two');
-  tb.addTab('Three');
-  tb.addTab('Four');
-  tb.addTab('Five');
-  tb.addTab('Six');
-  tb.addTab('Seven');
+  tb.addTab(new Tab('One'));
+  tb.addTab(new Tab('Two'));
+  tb.addTab(new Tab('Three'));
+  tb.addTab(new Tab('Four'));
+  tb.addTab(new Tab('Five'));
+  tb.addTab(new Tab('Six'));
+  tb.addTab(new Tab('Seven'));
 
   tb.attach(document.getElementById('main'));
   tb.fit();
