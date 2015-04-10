@@ -8,15 +8,20 @@
 .p-Menu {
   box-sizing: border-box;
   position: absolute;
-  user-select: none;
-  overflow: hidden;
-  cursor: default;
-  top: 0px;
-  left: 0px;
-  display: table;
+  top: 0;
+  left: 0;
   margin: 0;
   padding: 3px 0px;
+  overflow-x: hidden;
+  overflow-y: auto;
   z-index: 100000;
+  cursor: default;
+  user-select: none;
+}
+
+
+.p-Menu-content {
+  display: table;
   list-style: none;
   border-spacing: 0;
 }

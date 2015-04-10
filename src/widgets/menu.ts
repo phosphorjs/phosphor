@@ -11,6 +11,10 @@ import algo = collections.algorithm;
 
 import Signal = core.Signal;
 
+import Size = utility.Size;
+import Rect = utility.Rect;
+import clientViewportRect = utility.clientViewportRect;
+import createBoxSizing = utility.createBoxSizing;
 import hitTest = utility.hitTest;
 
 
@@ -18,6 +22,11 @@ import hitTest = utility.hitTest;
  * The class name added to menu instances.
  */
 var MENU_CLASS = 'p-Menu';
+
+/**
+ * The class name added to a menu content node.
+ */
+var MENU_CONTENT_CLASS = 'p-Menu-content';
 
 /**
  * The class name assigned to a menu item.
@@ -224,6 +233,7 @@ class Menu {
    * Returns the new index of the item.
    */
   insertItem(index: number, item: MenuItem): number {
+    this.removeItem(item);
     if (this._activeIndex !== -1) {
       this._reset();
     }
@@ -429,7 +439,11 @@ class Menu {
    * This can be reimplemented to create a custom menu node.
    */
   protected createNode(): HTMLElement {
-    return document.createElement('ul');
+    var node = document.createElement('div');
+    var content = document.createElement('content');
+    content.className = MENU_CONTENT_CLASS;
+    node.appendChild(content);
+    return node;
   }
 
   /**
@@ -458,28 +472,30 @@ class Menu {
   /**
    * Initialize the item node for the given menu item.
    *
-   * This should be reimplemented if a subclass uses custom item nodes.
+   * This method should be reimplemented if a subclass reimplements the
+   * `createItemNode` method. It should initialize the node using the
+   * given menu item. It will be called any time the item changes.
    */
   protected initItemNode(item: MenuItem, node: HTMLElement): void {
-    var classParts = [MENU_ITEM_CLASS];
+    var parts = [MENU_ITEM_CLASS];
     if (item.className) {
-      classParts.push(item.className);
+      parts.push(item.className);
     }
     if (item.type === 'check') {
-      classParts.push(CHECK_TYPE_CLASS);
+      parts.push(CHECK_TYPE_CLASS);
     } else if (item.type === 'separator') {
-      classParts.push(SEPARATOR_TYPE_CLASS);
+      parts.push(SEPARATOR_TYPE_CLASS);
     }
     if (item.checked) {
-      classParts.push(CHECKED_CLASS);
+      parts.push(CHECKED_CLASS);
     }
     if (!item.enabled) {
-      classParts.push(DISABLED_CLASS);
+      parts.push(DISABLED_CLASS);
     }
     if (item.submenu) {
-      classParts.push(HAS_SUBMENU_CLASS);
+      parts.push(HAS_SUBMENU_CLASS);
     }
-    node.className = classParts.join(' ');
+    node.className = parts.join(' ');
     (<HTMLElement>node.children[1]).textContent = item.text;
     (<HTMLElement>node.children[2]).textContent = item.shortcut;
   }
@@ -487,22 +503,24 @@ class Menu {
   /**
    * A method invoked when a menu item is inserted into the menu.
    *
-   * This should be reimplemented if a subclass creates a custom
-   * menu node and should insert the item node into the menu.
+   * This method should be reimplemented if a subclass reimplements the
+   * `createNode` method. It should insert the item node into the menu
+   * at the specified location.
    */
   protected insertItemNode(index: number, node: HTMLElement): void {
-    var ref = this.node.childNodes[index];
-    this.node.insertBefore(node, ref);
+    var content = this.node.firstChild;
+    content.insertBefore(node, content.childNodes[index]);
   }
 
   /**
    * A method invoked when a menu item is removed from the menu.
    *
-   * This should be reimplemented if a subclass creates a custom
-   * menu node and should remove the item node from the menu.
+   * This method should be reimplemented if a subclass reimplements the
+   * `createNode` method. It should remove the item node from the menu.
    */
   protected removeItemNode(index: number, node: HTMLElement): void {
-    this.node.removeChild(node);
+    var content = this.node.firstChild;
+    content.removeChild(node);
   }
 
   /**
@@ -534,29 +552,44 @@ class Menu {
     }
   }
 
-  // TODO cleanup from this point downward
-
   /**
    * Handle the 'mouseenter' event for the menu.
    *
    * This event listener is attached to the child item nodes.
    */
   private _evtMouseEnter(event: MouseEvent): void {
+    // Ensure the ancestor chain is properly highlighted.
     this._syncAncestors();
+
+    // Schedule a close for the open child menu, if any.
     this._closeChildMenu();
+
+    // Cancel the previous open request, if any.
     this._cancelPendingOpen();
+
+    // Find the item index corresponding to the node.
     var node = <HTMLElement>event.currentTarget;
     var index = this._nodes.indexOf(node);
+
+    // Clear the active item if the node is not tracked.
     if (index === -1) {
       this._setActiveIndex(-1);
       return;
     }
+
+    // Clear the active item if the target item is a separator.
     var item = this._items[index];
     if (item.type === 'separator') {
       this._setActiveIndex(-1);
       return;
     }
+
+    // Otherwise, activate the new item.
     this._setActiveIndex(index);
+
+    // If the item has a submenu, it should be opened. If the item
+    // is already open, the close request from above is cancelled.
+    // Otherwise, the new item is scheduled to be opened.
     if (item.submenu && item.enabled) {
       if (item === this._childItem) {
         this._cancelPendingClose();
@@ -569,14 +602,12 @@ class Menu {
   /**
    * Handle the 'mouseleave' event for the menu.
    *
-   * The event listener is only attached to the menu node.
+   * This event listener is only attached to the menu node.
    */
   private _evtMouseLeave(event: MouseEvent): void {
     this._cancelPendingOpen();
-    var x = event.clientX;
-    var y = event.clientY;
     var child = this._childMenu;
-    if (!child || !hitTest(child.node, x, y)) {
+    if (!child || !hitTest(child.node, event.clientX, event.clientY)) {
       this._setActiveIndex(-1);
       this._closeChildMenu();
     }
@@ -590,7 +621,13 @@ class Menu {
   private _evtMouseUp(event: MouseEvent): void {
     event.preventDefault();
     event.stopPropagation();
-    if (event.button === 0) {
+    if (event.button !== 0) {
+      return;
+    }
+    var x = event.clientX;
+    var y = event.clientY;
+    var i = algo.findIndex(this._nodes, node => hitTest(node, x, y));
+    if (i === this._activeIndex) {
       this.triggerActiveItem();
     }
   }
@@ -598,7 +635,8 @@ class Menu {
   /**
    * Handle the 'contextmenu' event for the menu.
    *
-   * This event listener is attached to the menu node.
+   * This event listener is attached to the menu node and disables
+   * the default browser context menu.
    */
   private _evtContextMenu(event: Event): void {
     event.preventDefault();
@@ -608,8 +646,7 @@ class Menu {
   /**
    * Handle the 'mousedown' event for the menu.
    *
-   * This event listener is attached to the document for the root
-   * menu only when it is opened as a popup menu.
+   * This event listener is attached to the document for a popup menu.
    */
   private _evtMouseDown(event: MouseEvent): void {
     var menu = this;
@@ -626,8 +663,7 @@ class Menu {
   /**
    * Handle the key down event for the menu.
    *
-   * This event listener is attached to the document for the root
-   * menu only when it is opened as a popup menu.
+   * This event listener is attached to the document for a popup menu.
    */
   private _evtKeyDown(event: KeyboardEvent): void {
     event.stopPropagation();
@@ -663,8 +699,7 @@ class Menu {
   /**
    * Handle the 'keypress' event for the menu.
    *
-   * This event listener is attached to the document for the root
-   * menu only when it is opened as a popup menu.
+   * This event listener is attached to the document for a popup menu.
    */
   private _evtKeyPress(event: KeyboardEvent): void {
     event.preventDefault();
@@ -712,15 +747,10 @@ class Menu {
    * This ensures that the active item is the child menu item.
    */
   private _syncChildItem(): void {
-    var menu = this._childMenu;
-    if (!menu) {
-      return;
-    }
     var index = this._items.indexOf(this._childItem);
-    if (index === -1) {
-      return;
+    if (index !== -1) {
+      this._setActiveIndex(index);
     }
-    this._setActiveIndex(index);
   }
 
   /**
@@ -839,17 +869,14 @@ class Menu {
    * Handle the `changed` signal from a menu item.
    */
   private _mi_changed(sender: MenuItem): void {
-    var items = this._items;
-    var nodes = this._nodes;
-    for (var i = 0, n = items.length; i < n; ++i) {
-      if (items[i] !== sender) {
-        continue;
-      }
-      if (i === this._activeIndex) {
-        this._reset();
-      }
-      this.initItemNode(sender, nodes[i]);
+    var i = this._items.indexOf(sender);
+    if (i === -1) {
+      return;
     }
+    if (i === this._activeIndex) {
+      this._reset();
+    }
+    this.initItemNode(sender, this._nodes[i]);
   }
 
   private _node: HTMLElement;
@@ -885,36 +912,39 @@ function isKeyable(item: MenuItem): boolean {
 
 
 /**
- * Compute the offset of the first menu item.
- *
- * This returns the distance from the top of the menu to the top
- * of the first item in the menu.
+ * Mount the menu as hidden and compute its optimal size.
  */
-function firstItemOffset(node: HTMLElement): number {
-  var item = <HTMLElement>node.firstChild;
-  if (!item) {
-    return 0;
+function measureMenu(menu: Menu, vpRect: Rect, minY: number): Size {
+  var node = menu.node;
+  var style = node.style;
+  style.top = '';
+  style.left = '';
+  style.width = '';
+  style.height = '';
+  style.visibility = 'hidden';
+  document.body.appendChild(menu.node);
+  var rect = node.getBoundingClientRect();
+  var width = Math.ceil(rect.width);
+  var height = Math.ceil(rect.height);
+  var maxHeight = vpRect.height - minY;
+  if (height > maxHeight) {
+    height = maxHeight;
+    width += 17; // adjust for scrollbar
   }
-  var menuRect = node.getBoundingClientRect();
-  var itemRect = item.getBoundingClientRect();
-  return itemRect.top - menuRect.top;
+  return new Size(width, height);
 }
 
 
 /**
- * Compute the offset of the last menu item.
- *
- * This returns the distance from the bottom of the menu to the
- * bottom of the last item in the menu.
+ * Show the menu with the specified geometry.
  */
-function lastItemOffset(node: HTMLElement): number {
-  var item = <HTMLElement>node.lastChild;
-  if (!item) {
-    return 0;
-  }
-  var menuRect = node.getBoundingClientRect();
-  var itemRect = item.getBoundingClientRect();
-  return menuRect.bottom - itemRect.bottom;
+function showMenu(menu: Menu, x: number, y: number, w: number, h: number): void {
+  var style = menu.node.style;
+  style.top = Math.max(0, y) + 'px';
+  style.left = Math.max(0, x) + 'px';
+  style.width = w + 'px';
+  style.height = h + 'px';
+  style.visibility = '';
 }
 
 
@@ -922,32 +952,19 @@ function lastItemOffset(node: HTMLElement): number {
  * Open the menu as a root menu at the target location.
  */
 function openRootMenu(menu: Menu, x: number, y: number, forceX: boolean, forceY: boolean): void {
-  // mount far offscreen for measurement
-  var node = menu.node;
-  var style = node.style;
-  style.visibility = 'hidden';
-  document.body.appendChild(menu.node);
-
-  // compute the adjusted coordinates
-  var elem = document.documentElement;
-  var maxX = elem.clientWidth;
-  var maxY = elem.clientHeight;
-  var rect = node.getBoundingClientRect();
-  if (!forceX && x + rect.width > maxX) {
-    x = maxX - rect.width;
+  var vpRect = clientViewportRect();
+  var size = measureMenu(menu, vpRect, forceY ? y : 0);
+  if (!forceX && (x + size.width > vpRect.right)) {
+    x = vpRect.right - size.width;
   }
-  if (!forceY && y + rect.height > maxY) {
-    if (y > maxY) {
-      y = maxY - rect.height;
+  if (!forceY && (y + size.height > vpRect.bottom)) {
+    if (y > vpRect.bottom) {
+      y = vpRect.bottom - size.height;
     } else {
-      y = y - rect.height;
+      y = y - size.height;
     }
   }
-
-  // move to adjusted position
-  style.top = Math.max(0, y) + 'px';
-  style.left = Math.max(0, x) + 'px';
-  style.visibility = '';
+  showMenu(menu, x, y, size.width, size.height);
 }
 
 
@@ -955,31 +972,19 @@ function openRootMenu(menu: Menu, x: number, y: number, forceX: boolean, forceY:
  * Open a the menu as a submenu using the item node for positioning.
  */
 function openSubmenu(menu: Menu, item: HTMLElement): void {
-  // mount far offscreen for measurement
-  var node = menu.node;
-  var style = node.style;
-  style.visibility = 'hidden';
-  document.body.appendChild(menu.node);
-
-  // compute the adjusted coordinates
-  var elem = document.documentElement;
-  var maxX = elem.clientWidth;
-  var maxY = elem.clientHeight;
-  var menuRect = node.getBoundingClientRect();
+  var vpRect = clientViewportRect();
+  var size = measureMenu(menu, vpRect, 0);
+  var box = createBoxSizing(menu.node);
   var itemRect = item.getBoundingClientRect();
   var x = itemRect.right - SUBMENU_OVERLAP;
-  var y = itemRect.top - firstItemOffset(node);
-  if (x + menuRect.width > maxX) {
-    x = itemRect.left + SUBMENU_OVERLAP - menuRect.width;
+  var y = itemRect.top - box.borderTop - box.paddingTop;
+  if (x + size.width > vpRect.right) {
+    x = itemRect.left + SUBMENU_OVERLAP - size.width;
   }
-  if (y + menuRect.height > maxY) {
-    y = itemRect.bottom + lastItemOffset(node) - menuRect.height;
+  if (y + size.height > vpRect.bottom) {
+    y = itemRect.bottom + box.borderBottom + box.paddingBottom - size.height;
   }
-
-  // move to adjusted position
-  style.top = Math.max(0, y) + 'px';
-  style.left = Math.max(0, x) + 'px';
-  style.visibility = '';
+  showMenu(menu, x, y, size.width, size.height);
 }
 
 } // module phosphor.widgets
