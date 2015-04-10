@@ -21,6 +21,11 @@ import hitTest = utility.hitTest;
 var MENU_BAR_CLASS = 'p-MenuBar';
 
 /**
+ * The class name added to a menu bar content node.
+ */
+var CONTENT_CLASS = 'p-MenuBar-content';
+
+/**
  * The class name assigned to an open menu bar menu.
  */
 var MENU_CLASS = 'p-MenuBar-menu';
@@ -81,7 +86,8 @@ class MenuBar extends Widget {
    */
   dispose(): void {
     this._closeChildMenu();
-    this.clearItems();
+    this._items = null;
+    this._nodes = null;
     super.dispose();
   }
 
@@ -154,7 +160,7 @@ class MenuBar extends Widget {
    * Returns the new index of the item.
    */
   addItem(item: MenuItem): number {
-    return this.insertItem(this._items.length, item);
+    return this.insertItem(this.count, item);
   }
 
   /**
@@ -163,9 +169,17 @@ class MenuBar extends Widget {
    * Returns the new index of the item.
    */
   insertItem(index: number, item: MenuItem): number {
-    index = Math.max(0, Math.min(index | 0, this._items.length));
+    this.removeItem(item);
+    if (this._activeIndex !== -1) {
+      this._setState(MBState.Inactive);
+      this._setActiveIndex(-1);
+    }
+    var node = this.createItemNode(item);
+    index = Math.max(0, Math.min(index | 0, this.count));
     algo.insert(this._items, index, item);
-    this.itemInserted(index, item);
+    algo.insert(this._nodes, index, node);
+    item.changed.connect(this._mi_changed, this);
+    this.insertItemNode(index, node);
     return index;
   }
 
@@ -173,9 +187,19 @@ class MenuBar extends Widget {
    * Remove and return the menu item at the given index.
    */
   removeAt(index: number): MenuItem {
+    if (this._activeIndex !== -1) {
+      this._setState(MBState.Inactive);
+      this._setActiveIndex(-1);
+    }
     index = index | 0;
     var item = algo.removeAt(this._items, index);
-    if (item) this.itemRemoved(index, item);
+    var node = algo.removeAt(this._nodes, index);
+    if (item) {
+      item.changed.disconnect(this._mi_changed, this);
+    }
+    if (node) {
+      this.removeItemNode(index, node);
+    }
     return item;
   }
 
@@ -194,11 +218,8 @@ class MenuBar extends Widget {
    * Remove all menu items from the menu bar.
    */
   clearItems(): void {
-    var items = this._items;
-    while (items.length) {
-      var item = items.pop();
-      var index = items.length;
-      this.itemRemoved(index, item);
+    while (this.count) {
+      this.removeAt(this.count - 1);
     }
   }
 
@@ -278,42 +299,80 @@ class MenuBar extends Widget {
   }
 
   /**
-   * A method called when a menu item is inserted into the menu bar.
-   */
-  protected itemInserted(index: number, item: MenuItem): void {
-    if (this._activeIndex !== -1) {
-      this._setState(MBState.Inactive);
-      this._setActiveIndex(-1);
-    }
-    var node = createItemNode(item);
-    var next = this._nodes[index];
-    this.node.insertBefore(node, next);
-    algo.insert(this._nodes, index, node);
-    item.changed.connect(this._mi_changed, this);
-  }
-
-  /**
-   * A method called when a menu item is removed from the menu bar.
-   */
-  protected itemRemoved(index: number, item: MenuItem): void {
-    if (this._activeIndex !== -1) {
-      this._setState(MBState.Inactive);
-      this._setActiveIndex(-1);
-    }
-    var node = algo.removeAt(this._nodes, index);
-    this.node.removeChild(node);
-    item.changed.disconnect(this._mi_changed, this);
-  }
-
-  /**
-   * Create the DOM node for the panel.
+   * Create the DOM node for the widget.
    */
   protected createNode(): HTMLElement {
-    return document.createElement('ul');
+    var node = document.createElement('div');
+    var content = document.createElement('ul');
+    content.className = CONTENT_CLASS;
+    node.appendChild(content);
+    return node;
   }
 
   /**
-   * A method invoked on the 'after-attach' event.
+   * Create a DOM node for the given MenuItem.
+   *
+   * This can be reimplemented to create custom menu item nodes.
+   */
+  protected createItemNode(item: MenuItem): HTMLElement {
+    var node = document.createElement('li');
+    var icon = document.createElement('span');
+    var text = document.createElement('span');
+    icon.className = ICON_CLASS;
+    text.className = TEXT_CLASS;
+    node.appendChild(icon);
+    node.appendChild(text);
+    this.initItemNode(item, node);
+    return node;
+  }
+
+  /**
+   * Initialize the item node for the given menu item.
+   *
+   * This method should be reimplemented if a subclass reimplements the
+   * `createItemNode` method. It should initialize the node using the
+   * given menu item. It will be called any time the item changes.
+   */
+  protected initItemNode(item: MenuItem, node: HTMLElement): void {
+    var parts = [MENU_ITEM_CLASS];
+    if (item.className) {
+      parts.push(item.className);
+    }
+    if (item.type === 'separator') {
+      parts.push(SEPARATOR_TYPE_CLASS);
+    }
+    if (!item.enabled) {
+      parts.push(DISABLED_CLASS);
+    }
+    node.className = parts.join(' ');
+    (<HTMLElement>node.children[1]).textContent = item.text;
+  }
+
+  /**
+   * A method invoked when a menu item is inserted into the menu.
+   *
+   * This method should be reimplemented if a subclass reimplements the
+   * `createNode` method. It should insert the item node into the menu
+   * at the specified location.
+   */
+  protected insertItemNode(index: number, node: HTMLElement): void {
+    var content = this.node.firstChild;
+    content.insertBefore(node, content.childNodes[index]);
+  }
+
+  /**
+   * A method invoked when a menu item is removed from the menu.
+   *
+   * This method should be reimplemented if a subclass reimplements the
+   * `createNode` method. It should remove the item node from the menu.
+   */
+  protected removeItemNode(index: number, node: HTMLElement): void {
+    var content = this.node.firstChild;
+    content.removeChild(node);
+  }
+
+  /**
+   * A method invoked on the 'after-attach' message.
    */
   protected onAfterAttach(msg: IMessage): void {
     this.node.addEventListener('mousedown', <any>this);
@@ -322,7 +381,7 @@ class MenuBar extends Widget {
   }
 
   /**
-   * A method invoked on the 'after-detach' event.
+   * A method invoked on the 'after-detach' message.
    */
   protected onAfterDetach(msg: IMessage): void {
     this.node.removeEventListener('mousedown', <any>this);
@@ -577,18 +636,15 @@ class MenuBar extends Widget {
    * Handle the `changed` signal from a menu item.
    */
   private _mi_changed(sender: MenuItem): void {
-    var items = this._items;
-    var nodes = this._nodes;
-    for (var i = 0, n = items.length; i < n; ++i) {
-      if (items[i] !== sender) {
-        continue;
-      }
-      if (i === this._activeIndex) {
-        this._setState(MBState.Inactive);
-        this._setActiveIndex(-1);
-      }
-      initItemNode(sender, nodes[i]);
+    var i = this._items.indexOf(sender);
+    if (i === -1) {
+      return;
     }
+    if (i === this._activeIndex) {
+      this._setState(MBState.Inactive);
+      this._setActiveIndex(-1);
+    }
+    this.initItemNode(sender, this._nodes[i]);
   }
 
   private _childMenu: Menu = null;
@@ -626,43 +682,6 @@ function hitTestMenus(menu: Menu, x: number, y: number): boolean {
     menu = menu.childMenu;
   }
   return false;
-}
-
-
-/**
- * Create and initialize the node for a menu item.
- */
-function createItemNode(item: MenuItem): HTMLElement {
-  var node = document.createElement('li');
-  var icon = document.createElement('span');
-  var text = document.createElement('span');
-  icon.className = ICON_CLASS;
-  text.className = TEXT_CLASS;
-  node.appendChild(icon);
-  node.appendChild(text);
-  initItemNode(item, node);
-  return node;
-}
-
-
-/**
- * Initialize the node for a menu item.
- *
- * This can be called again to update the node state.
- */
-function initItemNode(item: MenuItem, node: HTMLElement): void {
-  var classParts = [MENU_ITEM_CLASS];
-  if (item.className) {
-    classParts.push(item.className);
-  }
-  if (item.type === 'separator') {
-    classParts.push(SEPARATOR_TYPE_CLASS);
-  }
-  if (!item.enabled) {
-    classParts.push(DISABLED_CLASS);
-  }
-  node.className = classParts.join(' ');
-  (<HTMLElement>node.children[1]).textContent = item.text;
 }
 
 } // module phosphor.widgets
