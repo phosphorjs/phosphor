@@ -90,8 +90,8 @@ class MenuItem {
   /**
    * Construct a new menu item.
    */
-  constructor(opts?: IMenuItemOptions) {
-    if (opts) this._initFrom(opts);
+  constructor(options?: IMenuItemOptions) {
+    if (options) this._initFrom(options);
   }
 
   /**
@@ -260,36 +260,36 @@ class MenuItem {
   /**
    * Initialize the menu item from the given options object.
    */
-  private _initFrom(opts: IMenuItemOptions): void {
-    if (opts.type !== void 0) {
-      this.type = opts.type;
+  private _initFrom(options: IMenuItemOptions): void {
+    if (options.type !== void 0) {
+      this.type = options.type;
     }
-    if (opts.text !== void 0) {
-      this._text = opts.text;
+    if (options.text !== void 0) {
+      this._text = options.text;
     }
-    if (opts.mnemonic !== void 0) {
-      this.mnemonic = opts.mnemonic;
+    if (options.mnemonic !== void 0) {
+      this.mnemonic = options.mnemonic;
     }
-    if (opts.shortcut !== void 0) {
-      this._shortcut = opts.shortcut;
+    if (options.shortcut !== void 0) {
+      this._shortcut = options.shortcut;
     }
-    if (opts.enabled !== void 0) {
-      this._enabled = opts.enabled;
+    if (options.enabled !== void 0) {
+      this._enabled = options.enabled;
     }
-    if (opts.checked !== void 0) {
-      this.checked = opts.checked;
+    if (options.checked !== void 0) {
+      this.checked = options.checked;
     }
-    if (opts.submenu !== void 0) {
-      this._submenu = opts.submenu;
+    if (options.submenu !== void 0) {
+      this._submenu = options.submenu;
     }
-    if (opts.className !== void 0) {
-      this._className = opts.className;
+    if (options.className !== void 0) {
+      this._className = options.className;
     }
-    if (opts.onTriggered !== void 0) {
-      this.triggered.connect(opts.onTriggered);
+    if (options.onTriggered !== void 0) {
+      this.triggered.connect(options.onTriggered);
     }
-    if (opts.onToggled !== void 0) {
-      this.toggled.connect(opts.onToggled);
+    if (options.onToggled !== void 0) {
+      this.toggled.connect(options.onToggled);
     }
   }
 
