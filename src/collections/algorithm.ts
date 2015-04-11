@@ -41,8 +41,9 @@ interface IComparator<T, U> {
  * Find the index of the first element which passes the test.
  *
  * The `fromIndex` parameter controls the starting index of the search.
- * If the value is negative, it is offset from the end of the array.
- * The default index is `0`.
+ * If the value is negative, it is offset from the end of the array. If
+ * the adjusted value is still negative, it will be clamped to `0`. The
+ * default index is `0`.
  *
  * The `wrap` parameter controls the search wrap-around. If true, the
  * search will wrap-around at the end of the array and continue until
@@ -86,8 +87,9 @@ function findIndex<T>(array: T[], pred: IPredicate<T>, fromIndex = 0, wrap = fal
  * Find the index of the last element which passes the test.
  *
  * The `fromIndex` parameter controls the starting index of the search.
- * If the value is negative, it is offset from the end of the array.
- * The default index is `-1`.
+ * If the value is negative, it is offset from the end of the array. If
+ * the value is greater than the last index, it will be clamped to the
+ * last index. The default index is `-1`.
  *
  * The `wrap` parameter controls the search wrap-around. If true, the
  * search will wrap-around at the front of the array and continue until
@@ -131,8 +133,9 @@ function findLastIndex<T>(array: T[], pred: IPredicate<T>, fromIndex = -1, wrap 
  * Find the first element in the array which passes the given test.
  *
  * The `fromIndex` parameter controls the starting index of the search.
- * If the value is negative, it is offset from the end of the array.
- * The default index is `0`.
+ * If the value is negative, it is offset from the end of the array. If
+ * the adjusted value is still negative, it will be clamped to `0`. The
+ * default index is `0`.
  *
  * The `wrap` parameter controls the search wrap-around. If true, the
  * search will wrap-around at the end of the array and continue until
@@ -152,8 +155,9 @@ function find<T>(array: T[], pred: IPredicate<T>, fromIndex?: number, wrap?: boo
  * Find the last element in the array which passes the given test.
  *
  * The `fromIndex` parameter controls the starting index of the search.
- * If the value is negative, it is offset from the end of the array.
- * The default index is `-1`.
+ * If the value is negative, it is offset from the end of the array. If
+ * the value is greater than the last index, it will be clamped to the
+ * last index. The default index is `-1`.
  *
  * The `wrap` parameter controls the search wrap-around. If true, the
  * search will wrap-around at the front of the array and continue until
@@ -300,7 +304,12 @@ function findUpper<T, U>(array: T[], value: U, cmp: IComparator<T, U>): T {
 /**
  * Insert an element at the given index.
  *
- * Returns the clamped index of the inserted element.
+ * If `index` is negative, it will be offset from the end of the array.
+ * If the adjusted value is still negative, it will be clamped to `0`.
+ * If `index` is greater than `array.length`, it will be clamped to
+ * `array.length`.
+ *
+ * Returns the index at which the element was inserted.
  */
 export
 function insert<T>(array: T[], index: number, value: T): number {
