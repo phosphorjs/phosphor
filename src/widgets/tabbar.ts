@@ -185,6 +185,8 @@ class TabBar extends Widget {
     this.tabCloseRequested.disconnect();
     this.tabDetachRequested.disconnect();
     this._releaseMouse();
+    this._previousTab = null;
+    this._currentTab = null;
     this._tabs = null;
     super.dispose();
   }
