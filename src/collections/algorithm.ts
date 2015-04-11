@@ -61,9 +61,9 @@ function findIndex<T>(array: T[], pred: IPredicate<T>, fromIndex = 0, wrap = fal
   fromIndex = fromIndex | 0;
   if (fromIndex < 0) {
     fromIndex += len;
-  }
-  if (fromIndex < 0) {
-    fromIndex = 0;
+    if (fromIndex < 0) {
+      fromIndex = 0;
+    }
   }
   if (wrap) {
     for (var i = 0; i < len; ++i) {
@@ -107,8 +107,7 @@ function findLastIndex<T>(array: T[], pred: IPredicate<T>, fromIndex = -1, wrap 
   fromIndex = fromIndex | 0;
   if (fromIndex < 0) {
     fromIndex += len;
-  }
-  if (fromIndex >= len) {
+  } else if (fromIndex >= len) {
     fromIndex = len - 1;
   }
   if (wrap) {
@@ -317,11 +316,10 @@ function insert<T>(array: T[], index: number, value: T): number {
   var len = array.length;
   if (index < 0) {
     index += len;
-  }
-  if (index < 0) {
-    index = 0;
-  }
-  if (index > len) {
+    if (index < 0) {
+      index = 0;
+    }
+  } else if (index > len) {
     index = len;
   }
   for (var i = len; i > index; --i) {
