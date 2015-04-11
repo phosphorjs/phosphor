@@ -43,8 +43,9 @@ class StackedLayout extends Layout {
    * Dispose of the resources held by the layout.
    */
   dispose(): void {
-    this._items = null;
     this.widgetRemoved.disconnect();
+    this._currentItem = null;
+    this._items = null;
     super.dispose();
   }
 
@@ -52,22 +53,21 @@ class StackedLayout extends Layout {
    * Get the current index of the layout.
    */
   get currentIndex(): number {
-    return this._currentIndex;
+    return this._items.indexOf(this._currentItem);
   }
 
   /**
    * Set the current index of the layout.
    */
   set currentIndex(index: number) {
-    var prev = this.currentWidget;
-    var next = this.widgetAt(index);
+    var prev = this._currentItem;
+    var next = this.itemAt(index) || null;
     if (prev === next) {
       return;
     }
-    index = next ? index : -1;
-    this._currentIndex = index;
-    if (prev) prev.hide();
-    if (next) next.show();
+    this._currentItem = next;
+    if (prev) prev.widget.hide();
+    if (next) next.widget.show();
     // IE repaints before firing the animation frame which processes
     // the layout update triggered by the show/hide calls above. This
     // causes a double paint flicker when changing the visible widget.
@@ -79,7 +79,7 @@ class StackedLayout extends Layout {
    * Get the current widget in the layout.
    */
   get currentWidget(): Widget {
-    return this.widgetAt(this.currentIndex);
+    return this._currentItem.widget;
   }
 
   /**
@@ -107,17 +107,13 @@ class StackedLayout extends Layout {
    * Remove and return the layout item at the specified index.
    */
   removeAt(index: number): ILayoutItem {
-    index = index | 0;
     var item = algo.removeAt(this._items, index);
     if (!item) {
       return void 0;
     }
-    if (index === this._currentIndex) {
-      this._currentIndex = -1;
+    if (item === this._currentItem) {
+      this._currentItem = null;
       item.widget.hide();
-      this.invalidate();
-    } else if (index < this._currentIndex) {
-      this._currentIndex--;
     }
     this.widgetRemoved.emit(this, new Pair(index, item.widget));
     return item;
@@ -145,12 +141,7 @@ class StackedLayout extends Layout {
     widget.hide();
     this.remove(widget);
     this.ensureParent(widget);
-    index = Math.max(0, Math.min(index | 0, this._items.length));
-    algo.insert(this._items, index, new WidgetItem(widget, alignment));
-    if (index <= this._currentIndex) {
-      this._currentIndex++;
-    }
-    return index;
+    return algo.insert(this._items, index, new WidgetItem(widget, alignment));
   }
 
   /**
@@ -163,26 +154,7 @@ class StackedLayout extends Layout {
    * Returns -1 if `fromIndex` is out of range.
    */
   moveWidget(fromIndex: number, toIndex: number): number {
-    fromIndex = fromIndex | 0;
-    var n = this._items.length;
-    if (fromIndex < 0 || fromIndex >= n) {
-      return -1;
-    }
-    toIndex = Math.max(0, Math.min(toIndex | 0, n - 1));
-    if (fromIndex === toIndex) {
-      return toIndex;
-    }
-    var item = algo.removeAt(this._items, fromIndex);
-    algo.insert(this._items, toIndex, item);
-    var current = this._currentIndex;
-    if (fromIndex === current) {
-      current = toIndex;
-    } else {
-      if (fromIndex < current) current--;
-      if (toIndex <= current) current++;
-    }
-    this._currentIndex = current;
-    return toIndex;
+    return algo.move(this._items, fromIndex, toIndex);
   }
 
   /**
@@ -227,14 +199,12 @@ class StackedLayout extends Layout {
    * Update the geometry of the child layout items.
    */
   protected layout(x: number, y: number, width: number, height: number): void {
-    var item = this._items[this._currentIndex];
-    if (!item) {
-      return;
-    }
     if (this._dirty) {
       this._setupGeometry();
     }
-    item.setGeometry(x, y, width, height);
+    if (this._currentItem !== null) {
+      this._currentItem.setGeometry(x, y, width, height);
+    }
   }
 
   /**
@@ -263,8 +233,8 @@ class StackedLayout extends Layout {
     var minH = 0;
     var maxW = Infinity;
     var maxH = Infinity;
-    var item = this._items[this._currentIndex];
-    if (item) {
+    var item = this._currentItem;
+    if (item !== null) {
       item.invalidate();
       var itemHint = item.sizeHint();
       var itemMin = item.minSize();
@@ -295,11 +265,11 @@ class StackedLayout extends Layout {
   }
 
   private _dirty = true;
-  private _currentIndex = -1;
   private _sizeHint: Size = null;
   private _minSize: Size = null;
   private _maxSize: Size = null;
   private _items: ILayoutItem[] = [];
+  private _currentItem: ILayoutItem = null;
 }
 
 } // module phosphor.widgets
