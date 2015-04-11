@@ -301,6 +301,22 @@ function findUpper<T, U>(array: T[], value: U, cmp: IComparator<T, U>): T {
 
 
 /**
+ * Create a shallow copy of the given array.
+ *
+ * This is faster than `Array#slice` for a simple copy.
+ */
+export
+function copy<T>(array: T[]): T[] {
+  var n = array.length;
+  var result = new Array<T>(n);
+  for (var i = 0; i < n; ++i) {
+    result[i] = array[i];
+  }
+  return result;
+}
+
+
+/**
  * Insert an element at the given index.
  *
  * If `index` is negative, it will be offset from the end of the array.
