@@ -347,6 +347,54 @@ function insert<T>(array: T[], index: number, value: T): number {
 
 
 /**
+ * Move an array element from one index to another.
+ *
+ * If `fromIndex` is negative, it will be offset from the end of the
+ * array. If the adjusted value is out of range, `-1` will be returned.
+ *
+ * If `toIndex` is negative, it will be offset from the end of the
+ * array. If the adjusted value is out of range, it will be clamped.
+ *
+ * Returns the final index of the moved element.
+ */
+export
+function move<T>(array: T[], fromIndex: number, toIndex: number): number {
+  fromIndex = fromIndex | 0;
+  var len = array.length;
+  if (fromIndex < 0) {
+    fromIndex += len;
+  }
+  if (fromIndex < 0 || fromIndex >= len) {
+    return -1;
+  }
+  toIndex = toIndex | 0;
+  if (toIndex < 0) {
+    toIndex += len;
+    if (toIndex < 0) {
+      toIndex = 0;
+    }
+  } else if (toIndex >= len) {
+    toIndex = len - 1;
+  }
+  if (fromIndex === toIndex) {
+    return toIndex;
+  }
+  var value = array[fromIndex];
+  if (fromIndex > toIndex) {
+    for (var i = fromIndex; i > toIndex; --i) {
+      array[i] = array[i - 1];
+    }
+  } else {
+    for (var i = fromIndex; i < toIndex; ++i) {
+      array[i] = array[i + 1];
+    }
+  }
+  array[toIndex] = value;
+  return toIndex;
+}
+
+
+/**
  * Remove and return the element at the given index.
  *
  * If `index` is negative, it will be offset from the end of the array.
