@@ -333,12 +333,17 @@ function insert<T>(array: T[], index: number, value: T): number {
 /**
  * Remove and return the element at the given index.
  *
+ * If `index` is negative, it will be offset from the end of the array.
+ *
  * Returns `undefined` if the index is out of range.
  */
 export
 function removeAt<T>(array: T[], index: number): T {
   index = index | 0;
   var len = array.length;
+  if (index < 0) {
+    index += len;
+  }
   if (index < 0 || index >= len) {
     return void 0;
   }
