@@ -219,13 +219,14 @@ function updateContent(host: HTMLElement, oldContent: IElement[], newContent: IE
     var oldElem = oldCopy[i];
 
     // If the new element is keyed, move a keyed old element to the
-    // proper location before proceeding with the diff.
+    // proper location before proceeding with the diff. The search for
+    // the old keyed elem starts at the current index, since unmatched
+    // old keyed elements are pushed forward in the old copy array.
     var newKey = newElem.data.key;
     if (newKey && newKey in oldKeyed) {
       var pair = oldKeyed[newKey];
       if (pair.first !== oldElem) {
-        algo.remove(oldCopy, pair.first);
-        algo.insert(oldCopy, i, pair.first);
+        algo.move(oldCopy, algo.indexOf(oldCopy, pair.first, i), i);
         host.insertBefore(pair.second, currNode);
         oldElem = pair.first;
         currNode = pair.second;
@@ -240,8 +241,8 @@ function updateContent(host: HTMLElement, oldContent: IElement[], newContent: IE
     }
 
     // If the old element is keyed and does not match the new element
-    // key, create a new node. This is necessary since the old element
-    // may be moved forward in the tree at a later point in the diff.
+    // key, create a new node. This is necessary since the old keyed
+    // element may be matched at a later point in the diff.
     var oldKey = oldElem.data.key;
     if (oldKey && oldKey !== newKey) {
       algo.insert(oldCopy, i, newElem);
