@@ -186,10 +186,7 @@ function addAttributes(node: HTMLElement, attrs: any): void {
 /**
  * Update a host node with the delta of the virtual content.
  */
-function updateContent(
-  host: HTMLElement,
-  oldContent: IElement[],
-  newContent: IElement[]): void {
+function updateContent(host: HTMLElement, oldContent: IElement[], newContent: IElement[]): void {
   // Bail early if the content is identical. This can occur when an
   // element has no children or if a component renders cached content.
   if (oldContent === newContent) {
