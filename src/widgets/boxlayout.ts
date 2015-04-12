@@ -485,8 +485,7 @@ class BoxLayout extends Layout {
   private _insert(index: number, item: ILayoutItem, stretch: number): number {
     var sizer = new LayoutSizer();
     sizer.stretch = Math.max(0, stretch | 0);
-    index = Math.max(0, Math.min(index | 0, this._items.length));
-    algo.insert(this._items, index, item);
+    index = algo.insert(this._items, index, item);
     algo.insert(this._sizers, index, sizer);
     this.invalidate();
     return index;

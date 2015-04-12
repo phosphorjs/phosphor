@@ -175,8 +175,7 @@ class MenuBar extends Widget {
       this._setActiveIndex(-1);
     }
     var node = this.createItemNode(item);
-    index = Math.max(0, Math.min(index | 0, this.count));
-    algo.insert(this._items, index, item);
+    index = algo.insert(this._items, index, item);
     algo.insert(this._nodes, index, node);
     item.changed.connect(this._mi_changed, this);
     this.insertItemNode(index, node);
@@ -191,7 +190,6 @@ class MenuBar extends Widget {
       this._setState(MBState.Inactive);
       this._setActiveIndex(-1);
     }
-    index = index | 0;
     var item = algo.removeAt(this._items, index);
     var node = algo.removeAt(this._nodes, index);
     if (item) {

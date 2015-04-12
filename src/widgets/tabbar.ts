@@ -371,12 +371,11 @@ class TabBar extends Widget {
    * Returns the index of the tab.
    */
   insertTab(index: number, tab: ITab): number {
-    index = Math.max(0, Math.min(index | 0, this.count));
-    var curr = this.indexOf(tab);
-    if (curr !== -1) {
-      index = this.moveTab(curr, index);
+    var fromIndex = this.indexOf(tab);
+    if (fromIndex !== -1) {
+      index = this.moveTab(fromIndex, index);
     } else {
-      this._insertTab(index, tab, true);
+      index = this._insertTab(index, tab, true);
     }
     return index;
   }
@@ -387,17 +386,7 @@ class TabBar extends Widget {
    * Returns the new tab index.
    */
   moveTab(fromIndex: number, toIndex: number): number {
-    fromIndex = fromIndex | 0;
-    var count = this.count;
-    if (fromIndex < 0 || fromIndex >= count) {
-      return -1;
-    }
-    toIndex = Math.max(0, Math.min(toIndex | 0, count - 1));
-    if (fromIndex === toIndex) {
-      return toIndex;
-    }
-    this._moveTab(fromIndex, toIndex);
-    return toIndex;
+    return this._moveTab(fromIndex, toIndex);
   }
 
   /**
@@ -799,13 +788,14 @@ class TabBar extends Widget {
   /**
    * Insert a new tab into the tab bar at the given index.
    *
-   * This method assumes the index is valid and that the tab has
-   * not already been added to the tab bar.
+   * This method assumes that the tab has not already been added.
    */
-  private _insertTab(index: number, tab: ITab, animate: boolean): void {
-    // Ensure the tab is deselected and add it to the list and DOM.
+  private _insertTab(index: number, tab: ITab, animate: boolean): number {
+    // Insert the tab into the array.
+    index = algo.insert(this._tabs, index, tab);
+
+    // Ensure the tab is deselected and add it to the DOM.
     tab.selected = false;
-    algo.insert(this._tabs, index, tab);
     this.contentNode.appendChild(tab.node);
 
     // Select this tab if there are no selected tabs. Otherwise,
@@ -818,7 +808,7 @@ class TabBar extends Widget {
 
     // If the tab bar is not attached, there is nothing left to do.
     if (!this.isAttached) {
-      return;
+      return index;
     }
 
     // Animate the tab insert and and layout as appropriate.
@@ -835,17 +825,23 @@ class TabBar extends Widget {
 
     // Notify the layout system that the widget geometry is dirty.
     this.updateGeometry();
+
+    return index;
   }
 
   /**
    * Move an item to a new index in the tab bar.
    *
-   * This method assumes both indices are valid.
+   * Returns the new index of the tab, or -1.
    */
-  private _moveTab(fromIndex: number, toIndex: number): void {
+  private _moveTab(fromIndex: number, toIndex: number): number {
     // Move the tab to its new location.
-    var tab = algo.removeAt(this._tabs, fromIndex);
-    algo.insert(this._tabs, toIndex, tab);
+    toIndex = algo.move(this._tabs, fromIndex, toIndex);
+
+    // Bail if the index is invalid.
+    if (toIndex === -1) {
+      return -1;
+    }
 
     // Update the tab Z-order to account for the new order.
     this._updateTabZOrder();
@@ -855,11 +851,13 @@ class TabBar extends Widget {
 
     // If the tab bar is not attached, there is nothing left to do.
     if (!this.isAttached) {
-      return;
+      return toIndex;
     }
 
     // Animate the tab layout update.
     this._withTransition(() => { this._updateTabLayout() });
+
+    return toIndex;
   }
 
   /**

@@ -238,8 +238,7 @@ class Menu {
       this._reset();
     }
     var node = this.createItemNode(item);
-    index = Math.max(0, Math.min(index | 0, this.count));
-    algo.insert(this._items, index, item);
+    index = algo.insert(this._items, index, item);
     algo.insert(this._nodes, index, node);
     item.changed.connect(this._mi_changed, this);
     node.addEventListener('mouseenter', <any>this);
@@ -254,7 +253,6 @@ class Menu {
     if (this._activeIndex !== -1) {
       this._reset();
     }
-    index = index | 0;
     var item = algo.removeAt(this._items, index);
     var node = algo.removeAt(this._nodes, index);
     if (item) {
