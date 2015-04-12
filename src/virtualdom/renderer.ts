@@ -197,7 +197,7 @@ function updateContent(host: HTMLElement, oldContent: IElement[], newContent: IE
   var oldKeyed = collectKeys(host, oldContent);
 
   // Create a copy of the old content which can be modified in-place.
-  var oldCopy = oldContent.slice();
+  var oldCopy = algo.copy(oldContent);
 
   // Store the child node list locally.
   var childNodes = host.childNodes;
