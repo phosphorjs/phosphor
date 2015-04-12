@@ -38,6 +38,97 @@ interface IComparator<T, U> {
 
 
 /**
+ * Find the index of the first occurrence of the given value.
+ *
+ * The `fromIndex` parameter controls the starting index of the search.
+ * If the value is negative, it is offset from the end of the array. If
+ * the adjusted value is still negative, it will be clamped to `0`. The
+ * default index is `0`.
+ *
+ * The `wrap` parameter controls the search wrap-around. If true, the
+ * search will wrap-around at the end of the array and continue until
+ * reaching the element just before the starting element. The default
+ * wrap value is `false`.
+ *
+ * Returns `-1` if no element passes the test.
+ */
+export
+function indexOf<T>(array: T[], value: T, fromIndex = 0, wrap = false): number {
+  var len = array.length;
+  if (len === 0) {
+    return -1;
+  }
+  fromIndex = fromIndex | 0;
+  if (fromIndex < 0) {
+    fromIndex += len;
+    if (fromIndex < 0) {
+      fromIndex = 0;
+    }
+  }
+  if (wrap) {
+    for (var i = 0; i < len; ++i) {
+      var j = (i + fromIndex) % len;
+      if (array[j] === value) {
+        return j;
+      }
+    }
+  } else {
+    for (var i = fromIndex; i < len; ++i) {
+      if (array[i] === value) {
+        return i;
+      }
+    }
+  }
+  return -1;
+}
+
+
+/**
+ * Find the index of the last occurrence of the given value.
+ *
+ * The `fromIndex` parameter controls the starting index of the search.
+ * If the value is negative, it is offset from the end of the array. If
+ * the value is greater than the last index, it will be clamped to the
+ * last index. The default index is `-1`.
+ *
+ * The `wrap` parameter controls the search wrap-around. If true, the
+ * search will wrap-around at the front of the array and continue until
+ * reaching the element just after the starting element. The default
+ * wrap value is `false`.
+ *
+ * Returns `-1` if no element passes the test.
+ */
+export
+function lastIndexOf<T>(array: T[], value: T, fromIndex = -1, wrap = false): number {
+  var len = array.length;
+  if (len === 0) {
+    return -1;
+  }
+  fromIndex = fromIndex | 0;
+  if (fromIndex < 0) {
+    fromIndex += len;
+  } else if (fromIndex >= len) {
+    fromIndex = len - 1;
+  }
+  if (wrap) {
+    for (var i = len; i > 0; --i) {
+      var j = (((i + fromIndex) % len) + len) % len;
+      if (array[j] === value) {
+        return j;
+      }
+    }
+  } else {
+    for (var i = fromIndex; i >= 0; --i) {
+      if (array[i] === value) {
+        return i;
+      }
+    }
+  }
+  return -1;
+}
+
+
+/**
  * Find the index of the first element which passes the test.
  *
  * The `fromIndex` parameter controls the starting index of the search.
@@ -311,22 +402,6 @@ function copy<T>(array: T[]): T[] {
     result[i] = array[i];
   }
   return result;
-}
-
-
-/**
- * Find the index of the first occurrence of the given value.
- *
- * Returns `-1` if the value does not exist in the array.
- */
-export
-function indexOf<T>(array: T[], value: T): number {
-  for (var i = 0, n = array.length; i < n; ++i) {
-    if (array[i] === value) {
-      return i;
-    }
-  }
-  return -1;
 }
 
 
