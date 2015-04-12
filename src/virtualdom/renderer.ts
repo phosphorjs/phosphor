@@ -199,14 +199,12 @@ function updateContent(host: HTMLElement, oldContent: IElement[], newContent: IE
   // Create a copy of the old content which can be modified in-place.
   var oldCopy = algo.copy(oldContent);
 
-  // Store the child node list locally.
-  var childNodes = host.childNodes;
-
   // Update the host with the new content. The diff algorithm always
   // proceeds forward and never modifies a previously visited index.
   // The `oldCopy` array is modified in-place to reflect the changes
   // made to the host. This causes the unused nodes to be pushed to
   // the end of the host node and removed at the end of the loop.
+  var currNode = host.firstChild;
   var newCount = newContent.length;
   for (var i = 0; i < newCount; ++i) {
     var newElem = newContent[i];
@@ -219,7 +217,6 @@ function updateContent(host: HTMLElement, oldContent: IElement[], newContent: IE
     }
 
     var oldElem = oldCopy[i];
-    var currNode = childNodes[i];
 
     // If the new element is keyed, move a keyed old element to the
     // proper location before proceeding with the diff.
@@ -238,6 +235,7 @@ function updateContent(host: HTMLElement, oldContent: IElement[], newContent: IE
     // If both elements are identical, there is nothing to do.
     // This can occur when a component renders cached content.
     if (oldElem === newElem) {
+      currNode = currNode.nextSibling;
       continue;
     }
 
@@ -263,6 +261,7 @@ function updateContent(host: HTMLElement, oldContent: IElement[], newContent: IE
       if (oldElem.tag !== newElem.tag) {
         currNode.textContent = <string>newElem.tag;
       }
+      currNode = currNode.nextSibling;
       continue;
     }
 
@@ -278,17 +277,19 @@ function updateContent(host: HTMLElement, oldContent: IElement[], newContent: IE
     if (newElem.type === ElementType.Node) {
       updateAttrs(<HTMLElement>currNode, oldElem.data, newElem.data);
       updateContent(<HTMLElement>currNode, oldElem.children, newElem.children);
+      currNode = currNode.nextSibling;
       continue;
     }
 
     // At this point, the node is a Component type; re-init it.
     var component = componentMap.get(<HTMLElement>currNode);
     component.init(newElem.data, newElem.children);
+    currNode = currNode.nextSibling;
   }
 
   // Dispose of the old content pushed to the end of the host.
   for (var i = oldCopy.length - 1; i >= newCount; --i) {
-    var oldNode = childNodes[i];
+    var oldNode = host.lastChild;
     host.removeChild(oldNode);
     disposeBranch(oldNode);
   }
