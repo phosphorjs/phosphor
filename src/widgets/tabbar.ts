@@ -395,9 +395,7 @@ class TabBar extends Widget {
    * Returns `undefined` if the index is out of range.
    */
   removeAt(index: number): ITab {
-    var tab = this.tabAt(index);
-    if (tab) this._removeTab(index, true);
-    return tab;
+    return this._removeTab(index, true);
   }
 
   /**
@@ -482,17 +480,16 @@ class TabBar extends Widget {
   }
 
   /**
-   * Detach the tab at the given index.
+   * Detach and return the tab at the given index.
    *
    * This method is intended for use by code which supports tear-off
    * tab interfaces. It will remove the tab at the specified index
    * without a transition.
    *
-   * This is a no-op if the index is out of range.
+   * Returns `undefined` if the index is invalid.
    */
-  detachAt(index: number): void {
-    var tab = this.tabAt(index);
-    if (tab) this._removeTab(index, false);
+  detachAt(index: number): ITab {
+    return this._removeTab(index, false);
   }
 
   /**
@@ -861,19 +858,24 @@ class TabBar extends Widget {
   }
 
   /**
-   * Remove the tab at the given index from the tab bar.
+   * Remove and return the tab at the given index.
    *
-   * This method assumes the index is valid.
+   * Returns `undefined` if the index is invalid.
    */
-  private _removeTab(index: number, animate: boolean): void {
+  private _removeTab(index: number, animate: boolean): ITab {
+    // Remove the tab from the tabs array.
+    var tabs = this._tabs;
+    var tab = algo.removeAt(tabs, index);
+
+    // Bail early if the index is invalid.
+    if (!tab) {
+      return void 0;
+    }
+
     // The mouse is always released when removing a tab. Attempting
     // to gracefully handle the rare case of removing a tab while
     // a drag is in progress it is not worth the effort.
     this._releaseMouse();
-
-    // Remove the tab from the tabs array.
-    var tabs = this._tabs;
-    var tab = algo.removeAt(tabs, index);
 
     // Ensure the tab is deselected and at the bottom of the Z-order.
     tab.selected = false;
@@ -902,7 +904,7 @@ class TabBar extends Widget {
     // If the tab bar is not attached, remove the node immediately.
     if (!this.isAttached) {
       this._removeContentChild(tab.node);
-      return;
+      return tab;
     }
 
     // Animate the tab remove as appropriate.
@@ -921,6 +923,8 @@ class TabBar extends Widget {
 
     // Notify the layout system that the widget geometry is dirty.
     this.updateGeometry();
+
+    return tab;
   }
 
   /**
