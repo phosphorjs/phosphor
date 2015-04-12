@@ -55,7 +55,7 @@ const enum AttrMode { Property, Attribute, Event }
  * A mapping of string key to pair of element and rendered node.
  */
 interface IKeyMap {
-  [key: string]: Pair<IElement, HTMLElement>;
+  [key: string]: Pair<IElement, Node>;
 }
 
 
@@ -79,15 +79,13 @@ function asElementArray(content: IElement | IElement[]): IElement[] {
  * Collect a mapping of keyed elements for the host content.
  */
 function collectKeys(host: HTMLElement, content: IElement[]): IKeyMap {
-  var childNodes = host.childNodes;
+  var node = host.firstChild;
   var keyed: IKeyMap = Object.create(null);
   for (var i = 0, n = content.length; i < n; ++i) {
     var elem = content[i];
     var key = elem.data.key;
-    if (key) {
-      var node = <HTMLElement>childNodes[i];
-      keyed[key] = new Pair(elem, node);
-    }
+    if (key) keyed[key] = new Pair(elem, node);
+    node = node.nextSibling;
   }
   return keyed;
 }
