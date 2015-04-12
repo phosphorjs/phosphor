@@ -122,19 +122,6 @@ function refsHelper(host: HTMLElement, content: IElement[], refs: any): void {
 
 
 /**
- * Move a node to a new location in a host element.
- *
- * This function will maintain focus on the node if applicable.
- */
-function moveNode(host: HTMLElement, node: HTMLElement, ref: Node): void {
-  // TODO - IE11 fails to set the focus properly
-  var wasActive = document.activeElement === node;
-  host.insertBefore(node, ref);
-  if (wasActive) node.focus();
-}
-
-
-/**
  * Create a node for a virtual element and add it to a host.
  */
 function addNode(host: HTMLElement, elem: IElement, ref?: Node): void {
@@ -245,7 +232,7 @@ function updateContent(
       if (pair.first !== oldElem) {
         algo.remove(oldCopy, pair.first);
         algo.insert(oldCopy, i, pair.first);
-        moveNode(host, pair.second, currNode);
+        host.insertBefore(pair.second, currNode);
         oldElem = pair.first;
         currNode = pair.second;
       }
