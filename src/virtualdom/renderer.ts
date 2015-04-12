@@ -107,18 +107,17 @@ function collectRefs(host: HTMLElement, content: IElement[]): any {
  * A recursive implementation helper for `collectRefs`.
  */
 function refsHelper(host: HTMLElement, content: IElement[], refs: any): void {
-  var childNodes = host.childNodes;
-  for (var i = 0, n = content.length; i < n; ++i) {
+  var node = host.firstChild;
+  for (var i = 0, n = content.length; i < n; ++i, node = node.nextSibling) {
     var elem = content[i];
     var type = elem.type;
     if (type === ElementType.Node) {
-      var node = <HTMLElement>childNodes[i];
       var ref = elem.data.ref;
-      if (ref) refs[ref] = node;
-      refsHelper(node, elem.children, refs);
+      if (ref) refs[ref] = <HTMLElement>node;
+      refsHelper(<HTMLElement>node, elem.children, refs);
     } else if (type === ElementType.Component) {
       var ref = elem.data.ref;
-      if (ref) refs[ref] = componentMap.get(<HTMLElement>childNodes[i]);
+      if (ref) refs[ref] = componentMap.get(<HTMLElement>node);
     }
   }
 }
