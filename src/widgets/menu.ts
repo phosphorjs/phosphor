@@ -260,7 +260,7 @@ class Menu {
     }
     if (node) {
       node.removeEventListener('mouseenter', <any>this);
-      this.removeItemNode(index, node);
+      this.removeItemNode(node);
     }
     return item;
   }
@@ -516,7 +516,7 @@ class Menu {
    * This method should be reimplemented if a subclass reimplements the
    * `createNode` method. It should remove the item node from the menu.
    */
-  protected removeItemNode(index: number, node: HTMLElement): void {
+  protected removeItemNode(node: HTMLElement): void {
     var content = this.node.firstChild;
     content.removeChild(node);
   }

@@ -196,7 +196,7 @@ class MenuBar extends Widget {
       item.changed.disconnect(this._mi_changed, this);
     }
     if (node) {
-      this.removeItemNode(index, node);
+      this.removeItemNode(node);
     }
     return item;
   }
@@ -364,7 +364,7 @@ class MenuBar extends Widget {
    * This method should be reimplemented if a subclass reimplements the
    * `createNode` method. It should remove the item node from the menu.
    */
-  protected removeItemNode(index: number, node: HTMLElement): void {
+  protected removeItemNode(node: HTMLElement): void {
     var content = this.node.firstChild;
     content.removeChild(node);
   }
