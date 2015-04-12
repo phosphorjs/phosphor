@@ -142,7 +142,8 @@ function moveNode(host: HTMLElement, node: HTMLElement, ref: Node): void {
 function addNode(host: HTMLElement, elem: IElement, ref?: Node): void {
   var type = elem.type;
   if (type === ElementType.Text) {
-    host.insertBefore(document.createTextNode(<string>elem.tag), ref);
+    var text = document.createTextNode(<string>elem.tag);
+    host.insertBefore(text, ref);
   } else if (type === ElementType.Node) {
     var node = document.createElement(<string>elem.tag);
     addAttributes(node, elem.data);
