@@ -50,7 +50,7 @@ interface IComparator<T, U> {
  * reaching the element just before the starting element. The default
  * wrap value is `false`.
  *
- * Returns `-1` if no element passes the test.
+ * Returns `-1` if the value is not found.
  */
 export
 function indexOf<T>(array: T[], value: T, fromIndex = 0, wrap = false): number {
@@ -96,7 +96,7 @@ function indexOf<T>(array: T[], value: T, fromIndex = 0, wrap = false): number {
  * reaching the element just after the starting element. The default
  * wrap value is `false`.
  *
- * Returns `-1` if no element passes the test.
+ * Returns `-1` if the value is not found.
  */
 export
 function lastIndexOf<T>(array: T[], value: T, fromIndex = -1, wrap = false): number {
