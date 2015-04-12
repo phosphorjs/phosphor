@@ -53,7 +53,7 @@ class StackedLayout extends Layout {
    * Get the current index of the layout.
    */
   get currentIndex(): number {
-    return this._items.indexOf(this._currentItem);
+    return algo.indexOf(this._items, this._currentItem);
   }
 
   /**

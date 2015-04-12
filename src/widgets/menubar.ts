@@ -130,7 +130,7 @@ class MenuBar extends Widget {
    * Only an enabled non-separator item can be set as the active item.
    */
   set activeItem(item: MenuItem) {
-    this.activeIndex = this._items.indexOf(item);
+    this.activeIndex = this.indexOf(item);
   }
 
   /**
@@ -151,7 +151,7 @@ class MenuBar extends Widget {
    * Get the index of the given menu item.
    */
   indexOf(item: MenuItem): number {
-    return this._items.indexOf(item);
+    return algo.indexOf(this._items, item);
   }
 
   /**
@@ -207,7 +207,7 @@ class MenuBar extends Widget {
    * Returns the index of the removed item.
    */
   removeItem(item: MenuItem): number {
-    var index = this._items.indexOf(item);
+    var index = this.indexOf(item);
     if (index !== -1) this.removeAt(index);
     return index;
   }
@@ -634,7 +634,7 @@ class MenuBar extends Widget {
    * Handle the `changed` signal from a menu item.
    */
   private _mi_changed(sender: MenuItem): void {
-    var i = this._items.indexOf(sender);
+    var i = this.indexOf(sender);
     if (i === -1) {
       return;
     }

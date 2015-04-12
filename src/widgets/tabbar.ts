@@ -353,7 +353,7 @@ class TabBar extends Widget {
    * Get the index of the given tab.
    */
   indexOf(tab: ITab): number {
-    return this._tabs.indexOf(tab);
+    return algo.indexOf(this._tabs, tab);
   }
 
   /**

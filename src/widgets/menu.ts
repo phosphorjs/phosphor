@@ -194,7 +194,7 @@ class Menu {
    * Only a non-separator item can be set as the active item.
    */
   set activeItem(item: MenuItem) {
-    this.activeIndex = this._items.indexOf(item);
+    this.activeIndex = this.indexOf(item);
   }
 
   /**
@@ -215,7 +215,7 @@ class Menu {
    * Get the index of the given menu item.
    */
   indexOf(item: MenuItem): number {
-    return this._items.indexOf(item);
+    return algo.indexOf(this._items, item);
   }
 
   /**
@@ -567,7 +567,7 @@ class Menu {
 
     // Find the item index corresponding to the node.
     var node = <HTMLElement>event.currentTarget;
-    var index = this._nodes.indexOf(node);
+    var index = algo.indexOf(this._nodes, node);
 
     // Clear the active item if the node is not tracked.
     if (index === -1) {
@@ -745,7 +745,7 @@ class Menu {
    * This ensures that the active item is the child menu item.
    */
   private _syncChildItem(): void {
-    var index = this._items.indexOf(this._childItem);
+    var index = this.indexOf(this._childItem);
     if (index !== -1) {
       this._setActiveIndex(index);
     }
@@ -867,7 +867,7 @@ class Menu {
    * Handle the `changed` signal from a menu item.
    */
   private _mi_changed(sender: MenuItem): void {
-    var i = this._items.indexOf(sender);
+    var i = this.indexOf(sender);
     if (i === -1) {
       return;
     }
