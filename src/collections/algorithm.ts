@@ -302,8 +302,6 @@ function findUpper<T, U>(array: T[], value: U, cmp: IComparator<T, U>): T {
 
 /**
  * Create a shallow copy of the given array.
- *
- * This is faster than `Array#slice` for a simple copy.
  */
 export
 function copy<T>(array: T[]): T[] {
@@ -313,6 +311,22 @@ function copy<T>(array: T[]): T[] {
     result[i] = array[i];
   }
   return result;
+}
+
+
+/**
+ * Find the index of the first occurrence of the given value.
+ *
+ * Returns `-1` if the value does not exist in the array.
+ */
+export
+function indexOf<T>(array: T[], value: T): number {
+  for (var i = 0, n = array.length; i < n; ++i) {
+    if (array[i] === value) {
+      return i;
+    }
+  }
+  return -1;
 }
 
 
@@ -427,9 +441,9 @@ function removeAt<T>(array: T[], index: number): T {
  */
 export
 function remove<T>(array: T[], value: T): number {
-  var index = array.indexOf(value);
-  if (index !== -1) removeAt(array, index);
-  return index;
+  var i = indexOf(array, value);
+  if (i !== -1) removeAt(array, i);
+  return i;
 }
 
 } // module algorithm
