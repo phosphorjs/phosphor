@@ -67,13 +67,11 @@ class Bootstrapper {
     this._container = this.createContainer();
     this.configureContainer();
 
-    this._pluginList = this.createPluginList();
-    var promise = this.configurePlugins();
-
     this._shell = this.createShell();
     this.configureShell();
 
-    promise.then(() => {
+    this._pluginList = this.createPluginList();
+    this.configurePlugins().then(() => {
       this.finalize();
     }).catch(ex => {
       console.error('plugin initialization failed', ex);
