@@ -8,8 +8,9 @@
 module phosphor.shell {
 
 import Container = di.Container;
+import IContainer = di.IContainer;
 
-import createBoxData = utility.createBoxData;
+import createBoxSizing = utility.createBoxSizing;
 
 import Widget = widgets.Widget;
 
@@ -32,7 +33,7 @@ class Bootstrapper {
    *
    * This is created by the `createContainer` method.
    */
-  get container(): Container {
+  get container(): IContainer {
     return this._container;
   }
 
@@ -63,20 +64,31 @@ class Bootstrapper {
    * This method should not be reimplemented.
    */
   run(): void {
-    this._container = new Container();
+    this._container = this.createContainer();
     this.configureContainer();
 
     this._pluginList = this.createPluginList();
-    this.configurePlugins();
+    var promise = this.configurePlugins();
 
     this._shell = this.createShell();
     this.configureShell();
 
-    this._pluginList.initialize().then(() => {
+    promise.then(() => {
       this.finalize();
     }).catch(ex => {
       console.error('plugin initialization failed', ex);
     });
+  }
+
+  /**
+   * Create the dependency injection container for the application.
+   *
+   * This can be reimplemented by subclasses as needed.
+   *
+   * The default implementation creates an instance of `Container`.
+   */
+  protected createContainer(): IContainer {
+    return new Container();
   }
 
   /**
@@ -87,7 +99,7 @@ class Bootstrapper {
    * The default implementation resolves an `IPluginList`.
    */
   protected createPluginList(): IPluginList {
-    return this.container.resolve('IPluginList');
+    return this.container.resolve(IPluginList);
   }
 
   /**
@@ -106,18 +118,14 @@ class Bootstrapper {
    *
    * This can be reimplemented by subclasses as needed.
    *
-   * The IContainer instance is registered automatically.
-   *
-   * IPluginList and IRegionManager are registered if missing.
+   * The `IContainer` instance is registered automatically. An
+   * implementation of `IPluginList` is registered if missing.
    */
   protected configureContainer(): void {
     var container = this.container;
-    container.registerInstance('IContainer', container);
-    if (!container.isRegistered('IPluginList')) {
-      container.registerType('IPluginList', PluginList);
-    }
-    if (!container.isRegistered('IRegionManager')) {
-      container.registerType('IRegionManager', RegionManager);
+    container.registerInstance(IContainer, container);
+    if (!container.isRegistered(IPluginList)) {
+      container.registerType(IPluginList, PluginList);
     }
   }
 
@@ -125,11 +133,14 @@ class Bootstrapper {
    * Configure the application plugins.
    *
    * Subclasses should reimplement this method to add the application
-   * plugins to the plugin list.
+   * plugins to the plugin list. The promise returned by the plugin
+   * list should be returned from this method.
    *
-   * The plugins will be initialized at the end of bootstrapping.
+   * The default implementation returns an empty resolved promise.
    */
-  protected configurePlugins(): void { }
+  protected configurePlugins(): Promise<void> {
+    return Promise.resolve<void>();
+  }
 
   /**
    * Configure the application shell widget.
@@ -153,20 +164,20 @@ class Bootstrapper {
    */
   protected finalize(): void {
     var shell = this.shell;
-    if (shell === null) {
+    if (!shell) {
       return;
     }
     var elem = document.getElementById('main') || document.body;
-    var box = createBoxData(elem);
-    var doResize = () => shell.fitToHost(void 0, void 0, box);
-    window.addEventListener('resize', doResize);
+    var box = createBoxSizing(elem);
+    var fit = () => shell.fit(void 0, void 0, box);
+    window.addEventListener('resize', fit);
     shell.attach(elem);
     shell.show();
-    doResize();
+    fit();
   }
 
   private _shell: Widget = null;
-  private _container: Container = null;
+  private _container: IContainer = null;
   private _pluginList: IPluginList = null;
 }
 
