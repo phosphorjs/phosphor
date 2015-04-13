@@ -327,10 +327,19 @@ class Widget implements IMessageHandler, IDisposable {
   }
 
   /**
-   * Get an array of the widget's children.
+   * Get the number of children in the widget.
    */
-  children(): Widget[] {
-    return this._children.slice();
+  get childCount(): number {
+    return this._children.length;
+  }
+
+  /**
+   * Get the child widget at the given index.
+   *
+   * Returns `undefined` if the index is out of range.
+   */
+  childAt(index: number): Widget {
+    return this._children[index];
   }
 
   /**
