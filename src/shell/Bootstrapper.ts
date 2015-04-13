@@ -9,7 +9,7 @@ module phosphor.shell {
 
 import Container = di.Container;
 
-import createBoxData = dom.createBoxData;
+import createBoxData = utility.createBoxData;
 
 import Widget = widgets.Widget;
 
