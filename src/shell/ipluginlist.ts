@@ -33,7 +33,7 @@ interface IPluginList {
 
 
 /**
- * The interface token for the IPluginList.
+ * The interface token for IPluginList.
  */
 export
 var IPluginList = createToken<IPluginList>('phosphor.shell.IPluginList');

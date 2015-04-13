@@ -150,7 +150,7 @@ class Bootstrapper {
   /**
    * Finalize the bootstrapping process.
    *
-   * This is called after all plugins are resolved an intialized.
+   * This is called after all plugins are resolved and intialized.
    *
    * It is the last method called in the bootstrapping process.
    *
