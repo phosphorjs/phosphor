@@ -7,7 +7,7 @@
 |----------------------------------------------------------------------------*/
 module phosphor.shell {
 
-import Container = di.Container;
+import IContainer = di.IContainer;
 
 
 /**
@@ -20,7 +20,7 @@ interface IPlugin {
   /**
    * Initialize the plugin and register its content with the container.
    */
-  initialize(container: Container): void;
+  initialize(container: IContainer): void;
 }
 
 } // module phosphor.shell
