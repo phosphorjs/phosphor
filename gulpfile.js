@@ -92,16 +92,13 @@ var tsSources = [
   'widgets/menubar',
   'widgets/tab',
   'widgets/tabbar',
-  'widgets/tabpanel'
+  'widgets/tabpanel',
 
-  // 'shell/IPlugin',
-  // 'shell/IPluginList',
-  // 'shell/IRegion',
-  // 'shell/IRegionManager',
-  // 'shell/AutoHidePanel',
-  // 'shell/PluginList',
-  // 'shell/RegionManager',
-  // 'shell/Bootstrapper'
+  'shell/iplugin',
+  'shell/ipluginlist',
+  'shell/autohide',
+  'shell/bootstrapper',
+  'shell/pluginlist'
 ].map(function(name) { return './src/' + name + '.ts'; });
 
 
