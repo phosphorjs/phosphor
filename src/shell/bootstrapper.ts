@@ -133,8 +133,8 @@ class Bootstrapper {
    * Configure the application plugins.
    *
    * Subclasses should reimplement this method to add the application
-   * plugins to the plugin list. The promise returned by the plugin
-   * list should be returned from this method.
+   * plugins to the plugin list. This should return a promise which
+   * resolves once all plugins are initialized.
    *
    * The default implementation returns an empty resolved promise.
    */
