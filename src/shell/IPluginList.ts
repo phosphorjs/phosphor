@@ -7,14 +7,14 @@
 |----------------------------------------------------------------------------*/
 module phosphor.shell {
 
-import IIterable = collections.IIterable;
+import createToken = di.createToken;
 
 
 /**
- * A collection which asynchronously resolves and initializes plugins.
+ * An object which asynchronously resolves and initializes plugins.
  */
 export
-interface IPluginList extends IIterable<IPlugin> {
+interface IPluginList {
   /**
    * Add a plugin or promise to the plugin list.
    *
@@ -28,9 +28,21 @@ interface IPluginList extends IIterable<IPlugin> {
   /**
    * Initialize the pending plugins in the list.
    *
-   * Returns a promise which resolves after all plugins are initialized.
+   * Returns a promise which resolves when all plugins are initialized.
    */
   initialize(): Promise<void>;
+
+  /**
+   * Invoke a callback for each resolved plugin in the list.
+   */
+  forEach(callback: (plugin: IPlugin) => void): void;
 }
+
+
+/**
+ * The interface token for the IPluginList.
+ */
+export
+var IPluginList = createToken<IPluginList>('phosphor.shell.IPluginList');
 
 } // module phosphor.shell
