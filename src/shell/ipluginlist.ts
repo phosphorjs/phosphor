@@ -16,21 +16,14 @@ import createToken = di.createToken;
 export
 interface IPluginList {
   /**
-   * Add a plugin or promise to the plugin list.
+   * Add an array of plugins or plugin promises to the plugin list.
    *
-   * A number of plugins can be added to the list to be resolved and
-   * initialized asynchronously. When the `initialize` method of the
-   * list is called, all pending plugins are first resolved and then
-   * initialized in the order they were added to the list.
-   */
-  add(plugin: IPlugin | Promise<IPlugin>): void;
-
-  /**
-   * Initialize the pending plugins in the list.
+   * When all plugins are resolved, the `initialize` method of each
+   * plugin is called and the plugin is added to the list.
    *
-   * Returns a promise which resolves when all plugins are initialized.
+   * Returns a promise which resolves when all plugins are added.
    */
-  initialize(): Promise<void>;
+  add(plugins: (IPlugin | Promise<IPlugin>)[]): Promise<void>;
 
   /**
    * Invoke a callback for each resolved plugin in the list.

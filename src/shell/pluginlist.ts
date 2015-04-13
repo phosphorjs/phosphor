@@ -7,10 +7,7 @@
 |----------------------------------------------------------------------------*/
 module phosphor.shell {
 
-import ArrayIterator = collections.ArrayIterator;
-import IIterator = collections.IIterator;
-
-import Container = di.Container;
+import IContainer = di.IContainer;
 
 
 /**
@@ -19,44 +16,28 @@ import Container = di.Container;
 export
 class PluginList implements IPluginList {
   /**
+   * The injection dependencies for the plugin list.
+   */
+  static $inject = [IContainer];
+
+  /**
    * Construct a new plugin list.
    */
-  constructor(container: Container) {
+  constructor(container: IContainer) {
     this._container = container;
   }
 
   /**
-   * Get an iterator over the loaded plugins.
-   */
-  iterator(): IIterator<IPlugin> {
-    return new ArrayIterator(this._plugins);
-  }
-
-  /**
-   * Add a plugin or promise to the plugin list.
+   * Add an array of plugins or plugin promises to the plugin list.
    *
-   * A number of plugins can be added to the list to be resolved and
-   * initialized asynchronously. When the `initialize` method of the
-   * list is called, all pending plugins are first resolved and then
-   * initialized in the order they were added to the list.
-   */
-  add(plugin: IPlugin | Promise<IPlugin>): void {
-    this._pending.push(plugin);
-  }
-
-  /**
-   * Initialize the pending plugins in the list.
+   * When all plugins are resolved, the `initialize` method of each
+   * plugin is called and the plugin is added to the list.
    *
-   * Returns a promise which resolves after all plugins are initialized.
+   * Returns a promise which resolves when all plugins are added.
    */
-  initialize(): Promise<void> {
-    var pending = this._pending;
-    if (pending.length === 0) {
-      return Promise.resolve<void>();
-    }
-    this._pending = [];
-    return Promise.all(pending).then(plugins => {
-      plugins.forEach(plugin => this._addPlugin(plugin));
+  add(plugins: (IPlugin | Promise<IPlugin>)[]): Promise<void> {
+    return Promise.all(plugins).then(resolved => {
+      resolved.forEach(plugin => this._addPlugin(plugin));
     });
   }
 
@@ -68,16 +49,15 @@ class PluginList implements IPluginList {
   }
 
   /**
-   * Initialize a plugin and append it to the plugins list.
+   * Initialize a plugin and add it to the plugins list.
    */
   private _addPlugin(plugin: IPlugin): void {
     plugin.initialize(this._container);
     this._plugins.push(plugin);
   }
 
-  private _container: Container;
+  private _container: IContainer;
   private _plugins: IPlugin[] = [];
-  private _pending: (IPlugin | Promise<IPlugin>)[] = [];
 }
 
 } // module phosphor.shell
