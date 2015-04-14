@@ -31,7 +31,7 @@ after_success: |
     
     #cleanup api and examples
     rm -rf build/docs/
-    rm -rf build/examples/
+    rm -rf build/_examples/
     rm -rf buid/dist/
 
     # build docs/api
@@ -39,7 +39,7 @@ after_success: |
     gulp examples
     
     # copy examples and dist
-    cp -r examples build
+    cp -r examples build/_examples
     cp -r dist build
 
     # now get into docs dirs
