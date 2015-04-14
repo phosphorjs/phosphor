@@ -18,6 +18,11 @@ var stylus = require('gulp-stylus');
 var typedoc = require('gulp-typedoc');
 var typescript = require('gulp-typescript');
 
+// livereload and server file for dev.
+var livereload = require('gulp-livereload');
+var webserver = require('gulp-webserver');
+
+
 
 var typings = ['./typings/tsd.d.ts'];
 
@@ -141,9 +146,33 @@ gulp.task('dist', function() {
 });
 
 
-gulp.task('watch', function() {
+var _watch = function() {
   gulp.watch(tsSources, ['dist']);
+  gulp.watch(
+    ['examples/**/*.ts', 'examples/**/index.html','examples/**/*.styl'],
+    ['examples']
+  )
+}
+
+gulp.task('watch', _watch);
+
+
+gulp.task('serve', function(){
+  livereload.listen();
+  _watch()
+  gulp.src('./')
+    .pipe(webserver({
+      root: 'examples',
+      livereload: true,
+      directoryListing: true,
+      fallback: 'index.html',
+      enable: true,
+      open: true
+  }))
+
 });
+
+
 
 
 gulp.task('examples', function() {
@@ -163,13 +192,15 @@ gulp.task('examples', function() {
     .pipe(rename(function (path) {
       path.dirname += '/build'; }))
     .pipe(header('"use strict";\n'))
-    .pipe(gulp.dest('examples'));
+    .pipe(gulp.dest('examples'))
+    .pipe(livereload());
 
   var css = gulp.src('examples/**/index.styl')
     .pipe(stylus({use: [nib()]}))
     .pipe(rename(function (path) {
       path.dirname += '/build'; }))
-    .pipe(gulp.dest('examples'));
+    .pipe(gulp.dest('examples'))
+    .pipe(livereload());
 
   return stream.merge(src, css);
 });
