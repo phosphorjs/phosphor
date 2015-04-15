@@ -47,11 +47,11 @@ class Bootstrapper {
   }
 
   /**
-   * Get the top-level shell widget for the application.
+   * Get the top-level shell view for the application.
    *
    * This is created by the `createShell` method.
    */
-  get shell(): Widget {
+  get shell(): IShellView {
     return this._shell;
   }
 
@@ -107,7 +107,7 @@ class Bootstrapper {
    *
    * The default implementation resolves an `IShellView`.
    */
-  protected createShell(): Widget {
+  protected createShell(): IShellView {
     return this.container.resolve(IShellView);
   }
 
@@ -173,7 +173,7 @@ class Bootstrapper {
     fit();
   }
 
-  private _shell: Widget = null;
+  private _shell: IShellView = null;
   private _container: IContainer = null;
   private _pluginList: IPluginList = null;
 }

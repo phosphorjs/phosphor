@@ -59,85 +59,78 @@ class ShellView extends Widget implements IShellView {
     super();
     this.addClass(SHELL_VIEW_CLASS);
 
-    var topPanel = new ShellPanel(Direction.TopToBottom);
-    var leftPanel = new ShellPanel(Direction.LeftToRight);
-    var rightPanel = new ShellPanel(Direction.RightToLeft);
-    var bottomPanel = new ShellPanel(Direction.BottomToTop);
-    var centerPanel = new ShellPanel(Direction.TopToBottom);
+    this._topPanel = new ShellPanel(Direction.TopToBottom);
+    this._leftPanel = new ShellPanel(Direction.LeftToRight);
+    this._rightPanel = new ShellPanel(Direction.RightToLeft);
+    this._bottomPanel = new ShellPanel(Direction.BottomToTop);
+    this._centerPanel = new ShellPanel(Direction.TopToBottom);
 
-    this._topPanel = topPanel;
-    this._leftPanel = leftPanel;
-    this._rightPanel = rightPanel;
-    this._bottomPanel = bottomPanel;
-    this._centerPanel = centerPanel;
+    this._topPanel.addClass(TOP_CLASS);
+    this._leftPanel.addClass(LEFT_CLASS);
+    this._rightPanel.addClass(RIGHT_CLASS);
+    this._bottomPanel.addClass(BOTTOM_CLASS);
+    this._centerPanel.addClass(CENTER_CLASS);
 
-    topPanel.addClass(TOP_CLASS);
-    leftPanel.addClass(LEFT_CLASS);
-    rightPanel.addClass(RIGHT_CLASS);
-    bottomPanel.addClass(BOTTOM_CLASS);
-    centerPanel.addClass(CENTER_CLASS);
+    this._topPanel.verticalSizePolicy = SizePolicy.Fixed;
 
-    topPanel.verticalSizePolicy = SizePolicy.Fixed;
+    enableAutoHide(this._topPanel);
+    enableAutoHide(this._leftPanel);
+    enableAutoHide(this._rightPanel);
+    enableAutoHide(this._bottomPanel);
 
-    enableAutoHide(topPanel);
-    enableAutoHide(leftPanel);
-    enableAutoHide(rightPanel);
-    enableAutoHide(bottomPanel);
+    var hSplitter = new SplitPanel(Orientation.Horizontal);
+    var vSplitter = new SplitPanel(Orientation.Vertical);
 
-    var hSplit = new SplitPanel(Orientation.Horizontal);
-    var vSplit = new SplitPanel(Orientation.Vertical);
+    hSplitter.handleSize = 0;
+    vSplitter.handleSize = 0;
 
-    hSplit.handleSize = 0;
-    vSplit.handleSize = 0;
+    hSplitter.addWidget(this._leftPanel);
+    hSplitter.addWidget(this._centerPanel, 1);
+    hSplitter.addWidget(this._rightPanel);
 
-    hSplit.addWidget(leftPanel);
-    hSplit.addWidget(centerPanel, 1);
-    hSplit.addWidget(rightPanel);
-
-    vSplit.addWidget(hSplit, 1);
-    vSplit.addWidget(bottomPanel);
+    vSplitter.addWidget(hSplitter, 1);
+    vSplitter.addWidget(this._bottomPanel);
 
     var layout = new BoxLayout(Direction.TopToBottom, 0);
-    layout.addWidget(topPanel);
-    layout.addWidget(vSplit, 1);
+    layout.addWidget(this._topPanel);
+    layout.addWidget(vSplitter, 1);
 
     this.layout = layout;
     this.setFlag(WidgetFlag.DisallowLayoutChange);
   }
 
   /**
-   * The top content panel.
+   * Get the content areas names supported by the shell view.
    */
-  get topPanel(): ShellPanel {
-    return this._topPanel;
+  areas(): string[] {
+    return ['top', 'left', 'right', 'bottom', 'center'];
   }
 
   /**
-   * The left content panel.
+   * Add a widget to the named content area.
+   *
+   * This method throws an exception if the named area is not supported.
    */
-  get leftPanel(): ShellPanel {
-    return this._leftPanel;
-  }
-
-  /**
-   * The right content panel.
-   */
-  get rightPanel(): ShellPanel {
-    return this._rightPanel;
-  }
-
-  /**
-   * The bottom content panel.
-   */
-  get bottomPanel(): ShellPanel {
-    return this._bottomPanel;
-  }
-
-  /**
-   * The center content panel.
-   */
-  get centerPanel(): ShellPanel {
-    return this._centerPanel;
+  addWidget(area: string, widget: Widget, options?: IWidgetOptions): void {
+    switch (area) {
+    case 'top':
+      this._topPanel.addWidget(widget, options);
+      break;
+    case 'left':
+      this._leftPanel.addWidget(widget, options);
+      break;
+    case 'right':
+      this._rightPanel.addWidget(widget, options);
+      break;
+    case 'bottom':
+      this._bottomPanel.addWidget(widget, options);
+      break;
+    case 'center':
+      this._centerPanel.addWidget(widget, options);
+      break;
+    default:
+      throw new Error('invalid content area: ' + area);
+    }
   }
 
   private _topPanel: ShellPanel;

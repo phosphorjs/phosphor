@@ -9,43 +9,59 @@ module phosphor.shell {
 
 import createToken = di.createToken;
 
+import Alignment = widgets.Alignment;
 import Widget = widgets.Widget;
+
+
+/**
+ * An options object for adding a widget to a shell view.
+ */
+export
+interface IWidgetOptions {
+  /**
+   * The layout rank for the widget.
+   *
+   * Widgets are arranged in ordered from lowest to highest rank
+   * along the direction of layout. The default rank is `100`.
+   */
+  rank?: number;
+
+  /**
+   * The layout stretch factor for the widget.
+   *
+   * The default stretch factor is determined by the layout.
+   */
+  stretch?: number;
+
+  /**
+   * The layout alignment for the widget.
+   *
+   * The default stretch factor is determined by the layout.
+   */
+  alignment?: Alignment;
+}
 
 
 /**
  * A widget which provides the top-level application shell.
  *
  * A shell view serves as the main UI container for an application. It
- * provides a number of panels into which plugins may contribute their
- * UI content. It also controls access to shared UI resources such the
- * menu bar and status bar.
+ * provides named areas to which plugins can add their content and it
+ * also controls access to shared UI resources such as the menu bar.
  */
 export
 interface IShellView extends Widget {
   /**
-   * The top content panel.
+   * Get the content areas names supported by the shell view.
    */
-  topPanel: ShellPanel;
+  areas(): string[];
 
   /**
-   * The left content panel.
+   * Add a widget to the named content area.
+   *
+   * This method throws an exception if the named area is not supported.
    */
-  leftPanel: ShellPanel;
-
-  /**
-   * The right content panel.
-   */
-  rightPanel: ShellPanel;
-
-  /**
-   * The bottom content panel.
-   */
-  bottomPanel: ShellPanel;
-
-  /**
-   * The center content panel.
-   */
-  centerPanel: ShellPanel;
+  addWidget(area: string, widget: Widget, options?: IWidgetOptions): void;
 }
 
 
