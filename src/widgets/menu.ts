@@ -79,6 +79,11 @@ var DISABLED_CLASS = 'p-mod-disabled';
 var HIDDEN_CLASS = 'p-mod-hidden';
 
 /**
+ * The class name added to a force hidden menu item.
+ */
+var FORCE_HIDDEN_CLASS = 'p-mod-force-hidden';
+
+/**
  * The class name added to a checked menu item.
  */
 var CHECKED_CLASS = 'p-mod-checked';
@@ -247,6 +252,7 @@ class Menu {
     item.changed.connect(this._mi_changed, this);
     node.addEventListener('mouseenter', <any>this);
     this.insertItemNode(index, node);
+    this._collapseSeparators();
     return index;
   }
 
@@ -266,6 +272,7 @@ class Menu {
       node.removeEventListener('mouseenter', <any>this);
       this.removeItemNode(node);
     }
+    this._collapseSeparators();
     return item;
   }
 
@@ -871,6 +878,33 @@ class Menu {
   }
 
   /**
+   * Collapse neighboring visible separators.
+   *
+   * This force-hides select separator nodes such that there are never
+   * multiple visible separator siblings. It also force-hides all any
+   * leading and trailing separator nodes.
+   */
+  private _collapseSeparators(): void {
+    var items = this._items;
+    var nodes = this._nodes;
+    var hideSeparator = true;
+    var lastIndex = algo.findLastIndex(items, isSelectable);
+    for (var i = 0, n = items.length; i < n; ++i) {
+      var item = items[i];
+      if (item.type === 'separator') {
+        if (hideSeparator || i > lastIndex) {
+          nodes[i].classList.add(FORCE_HIDDEN_CLASS);
+        } else if (item.visible) {
+          nodes[i].classList.remove(FORCE_HIDDEN_CLASS);
+          hideSeparator = true;
+        }
+      } else if (item.visible) {
+        hideSeparator = false;
+      }
+    }
+  }
+
+  /**
    * Handle the `changed` signal from a menu item.
    */
   private _mi_changed(sender: MenuItem): void {
@@ -882,6 +916,7 @@ class Menu {
       this._reset();
     }
     this.initItemNode(sender, this._nodes[i]);
+    this._collapseSeparators();
   }
 
   private _node: HTMLElement;
