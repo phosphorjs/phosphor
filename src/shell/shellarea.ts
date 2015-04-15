@@ -8,32 +8,32 @@
 module phosphor.shell {
 
 /**
- *
+ * An enum of layout areas for a shell view.
  */
 export
 enum ShellArea {
   /**
-   *
+   * The top shell area.
    */
   Top,
 
   /**
-   *
+   * The left shell area.
    */
   Left,
 
   /**
-   *
+   * The right shell area.
    */
   Right,
 
   /**
-   *
+   * The bottom shell area.
    */
   Bottom,
 
   /**
-   *
+   * The center shell area.
    */
   Center,
 }
