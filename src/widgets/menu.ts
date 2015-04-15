@@ -888,7 +888,7 @@ class Menu {
     var items = this._items;
     var nodes = this._nodes;
     var hideSeparator = true;
-    var lastIndex = algo.findLastIndex(items, isSelectable);
+    var lastIndex = algo.findLastIndex(items, isVisibleItem);
     for (var i = 0, n = items.length; i < n; ++i) {
       var item = items[i];
       if (item.type === 'separator') {
@@ -932,12 +932,20 @@ class Menu {
 
 
 /**
+ * Test whether the menu item is a visible non-separator item.
+ */
+function isVisibleItem(item: MenuItem): boolean {
+  return item && item.type !== 'separator' && item.visible;
+}
+
+
+/**
  * Test whether the menu item is selectable.
  *
- * Returns true if the item is not a separator.
+ * Returns true if the item is a visible non-separator item.
  */
 function isSelectable(item: MenuItem): boolean {
-  return item && item.type !== 'separator' && item.visible;
+  return isVisibleItem(item);
 }
 
 
