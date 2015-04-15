@@ -21,6 +21,11 @@ import WidgetFlag = widgets.WidgetFlag;
 var SHELL_VIEW_CLASS = 'p-ShellView';
 
 /**
+ * The class name added to the shell view splitters.
+ */
+var SPLITTER_CLASS = 'p-ShellView-splitter';
+
+/**
  * The class name added to the top shell panel.
  */
 var TOP_CLASS = 'p-mod-top';
@@ -83,7 +88,7 @@ class ShellView extends Widget implements IShellView {
   }
 
   /**
-   * Add a widget to a specified shell view widget area.
+   * Add a widget to the specified shell area.
    */
   addWidget(area: ShellArea, widget: Widget, options?: IWidgetOptions): void {
     switch(area) {
@@ -108,16 +113,9 @@ class ShellView extends Widget implements IShellView {
   }
 
   /**
+   * Create a shell panel for the given shell area.
    *
-   */
-  protected createSplitter(orientation: Orientation): Splitter {
-    var splitter = new Splitter(orientation);
-    splitter.handleSize = 0;
-    return splitter;
-  }
-
-  /**
-   *
+   * This can be reimplemented by a subclass as needed.
    */
   protected createPanel(area: ShellArea): ShellPanel {
     var panel: ShellPanel;
@@ -151,6 +149,18 @@ class ShellView extends Widget implements IShellView {
       throw new Error('invalid shell area');
     }
     return panel;
+  }
+
+  /**
+   * Create a splitter for the given orientation.
+   *
+   * This can be reimplemented by a subclass as needed.
+   */
+  protected createSplitter(orientation: Orientation): Splitter {
+    var splitter = new Splitter(orientation);
+    splitter.addClass(SPLITTER_CLASS);
+    splitter.handleSize = 0;
+    return splitter;
   }
 
   private _topPanel: ShellPanel;
