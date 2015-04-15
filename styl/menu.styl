@@ -29,6 +29,9 @@
 
 .p-Menu-item {
   display: table-row;
+  &.p-mod-hidden {
+    display: none;
+  }
   > span {
     display: table-cell;
     padding-top: 4px;
@@ -77,9 +80,5 @@
     display: block;
     position: relative;
     top: 4px;
-  }
-  &:first-child
-  &:last-child {
-    display: none;
   }
 }

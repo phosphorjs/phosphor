@@ -65,6 +65,11 @@ var SELECTED_CLASS = 'p-mod-selected';
  */
 var DISABLED_CLASS = 'p-mod-disabled';
 
+/**
+ * The class name added to a hidden menu item.
+ */
+var HIDDEN_CLASS = 'p-mod-hidden';
+
 
 /**
  * A leaf widget which displays menu items as a menu bar.
@@ -341,6 +346,9 @@ class MenuBar extends Widget {
     }
     if (!item.enabled) {
       parts.push(DISABLED_CLASS);
+    }
+    if (!item.visible) {
+      parts.push(HIDDEN_CLASS);
     }
     node.className = parts.join(' ');
     (<HTMLElement>node.children[1]).textContent = item.text;
@@ -665,7 +673,7 @@ enum MBState { Inactive, Active };
  * This returns true if the item is enabled and not a separator.
  */
 function isSelectable(item: MenuItem): boolean {
-  return item && item.type !== 'separator' && item.enabled;
+  return item && item.type !== 'separator' && item.enabled && item.visible;
 }
 
 

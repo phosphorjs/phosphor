@@ -74,6 +74,11 @@ var ACTIVE_CLASS = 'p-mod-active';
 var DISABLED_CLASS = 'p-mod-disabled';
 
 /**
+ * The class name added to a hidden menu item.
+ */
+var HIDDEN_CLASS = 'p-mod-hidden';
+
+/**
  * The class name added to a checked menu item.
  */
 var CHECKED_CLASS = 'p-mod-checked';
@@ -489,6 +494,9 @@ class Menu {
     if (!item.enabled) {
       parts.push(DISABLED_CLASS);
     }
+    if (!item.visible) {
+      parts.push(HIDDEN_CLASS);
+    }
     if (item.submenu) {
       parts.push(HAS_SUBMENU_CLASS);
     }
@@ -894,7 +902,7 @@ class Menu {
  * Returns true if the item is not a separator.
  */
 function isSelectable(item: MenuItem): boolean {
-  return item && item.type !== 'separator';
+  return item && item.type !== 'separator' && item.visible;
 }
 
 
