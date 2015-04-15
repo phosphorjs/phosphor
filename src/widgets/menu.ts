@@ -176,8 +176,7 @@ class Menu {
    * Only a non-separator item can be set as the active item.
    */
   set activeIndex(index: number) {
-    var item = this._items[index];
-    var ok = item && item.type !== 'separator';
+    var ok = isSelectable(this._items[index]);
     this._setActiveIndex(ok ? index : -1);
   }
 
