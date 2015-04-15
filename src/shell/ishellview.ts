@@ -35,12 +35,17 @@ interface IWidgetOptions {
 
 
 /**
- * An object which manages the top-level application layout.
+ * An object which provides a top-level application shell.
+ *
+ * A shell view serves as the main UI container for an application. It
+ * provides a number of predefined layout areas into which plugins may
+ * contribute their UI content. It also controls access to shared UI
+ * resources such the menu bar and status bar.
  */
 export
 interface IShellView {
   /**
-   * Add a widget to a specified shell view widget area.
+   * Add a widget to the specified shell area.
    */
   addWidget(area: ShellArea, widget: Widget, options?: IWidgetOptions): void;
 }
