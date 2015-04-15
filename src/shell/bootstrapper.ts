@@ -105,25 +105,27 @@ class Bootstrapper {
    *
    * This can be reimplemented by subclasses as needed.
    *
-   * The default implementation returns null.
+   * The default implementation resolves an `IShellView`.
    */
   protected createShell(): Widget {
-    return null;
+    return this.container.resolve(IShellView);
   }
 
   /**
    * Configure the application dependency injection container.
    *
    * This can be reimplemented by subclasses as needed.
-   *
-   * The `IContainer` instance is registered automatically. An
-   * implementation of `IPluginList` is registered if missing.
    */
   protected configureContainer(): void {
     var container = this.container;
-    container.registerInstance(IContainer, container);
+    if (!container.isRegistered(IContainer)) {
+      container.registerInstance(IContainer, container);
+    }
     if (!container.isRegistered(IPluginList)) {
       container.registerType(IPluginList, PluginList);
+    }
+    if (!container.isRegistered(IShellView)) {
+      container.registerType(IShellView, ShellView);
     }
   }
 
@@ -162,9 +164,6 @@ class Bootstrapper {
    */
   protected finalize(): void {
     var shell = this.shell;
-    if (!shell) {
-      return;
-    }
     var elem = document.getElementById('main') || document.body;
     var box = createBoxSizing(elem);
     var fit = () => shell.fit(void 0, void 0, box);
