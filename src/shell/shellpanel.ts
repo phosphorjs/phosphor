@@ -84,10 +84,9 @@ class ShellPanel extends Widget {
     var stretch = options.stretch;
     var alignment = options.alignment;
     var rank = options.rank !== void 0 ? options.rank : 100;
-    var i = algo.findIndex(this._pairs, pair => pair.second > rank);
-    if (i === -1) i = this._pairs.length;
-    algo.insert(this._pairs, i, new Pair(widget, rank));
-    (<BoxLayout>this.layout).insertWidget(i, widget, stretch, alignment);
+    var index = algo.upperBound(this._pairs, rank, rankCmp);
+    algo.insert(this._pairs, index, new Pair(widget, rank));
+    (<BoxLayout>this.layout).insertWidget(index, widget, stretch, alignment);
   }
 
   /**
@@ -95,12 +94,19 @@ class ShellPanel extends Widget {
    */
   protected onChildRemoved(msg: ChildMessage): void {
     super.onChildRemoved(msg);
-    var widget = msg.child;
-    var i = algo.findIndex(this._pairs, pair => pair.first === widget);
-    if (i !== -1) algo.removeAt(this._pairs, i);
+    var index = algo.findIndex(this._pairs, pair => pair.first === msg.child);
+    if (index !== -1) algo.removeAt(this._pairs, index);
   }
 
   private _pairs: Pair<Widget, number>[] = [];
+}
+
+
+/**
+ * A comparison function for a ranked pair.
+ */
+function rankCmp(pair: Pair<Widget, number>, rank: number): number {
+  return pair.second - rank;
 }
 
 } // module phosphor.shell
