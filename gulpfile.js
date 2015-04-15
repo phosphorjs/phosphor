@@ -99,6 +99,7 @@ var tsSources = [
   'shell/ishellview',
   'shell/autohide',
   'shell/bootstrapper',
+  'shell/menumanager',
   'shell/pluginlist',
   'shell/shellpanel',
   'shell/shellview'
