@@ -37,7 +37,7 @@ class MenuManager {
    */
   addItem(item: MenuItem, rank = 100): void {
     this.removeItem(item);
-    var index = algo.upperBound(this._ranks, rank, rankCmp);
+    var index = algo.upperBound(this._ranks, rank, cmp);
     algo.insert(this._ranks, index, rank);
     this._menu.insertItem(index, item);
   }
@@ -58,9 +58,9 @@ class MenuManager {
 
 
 /**
- * A comparison function for a ranked pair.
+ * A numeric comparator.
  */
-function rankCmp(a: number, b: number): number {
+function cmp(a: number, b: number): number {
   return a - b;
 }
 
