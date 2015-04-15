@@ -10,39 +10,25 @@ module phosphor.shell {
 import createToken = di.createToken;
 
 
-// /**
-//  * An options object for adding a menu to a shell view menu bar.
-//  */
-// export
-// interface IMenuOptions {
-//   /**
-//    * The rank of the menu.
-//    *
-//   * Menus are ordered from lowest to highest rank.
-//    */
-//  rank?: number;
-// }
-
-
 /**
  * An options object for adding a widget to a shell view.
  */
 export
 interface IWidgetOptions {
   /**
-   * The rank of the widget.
+   * The layout rank for the widget.
    *
-   * Widgets are ordered from lowest to highest rank.
+   * Widgets are added to the layout from lowest to highest rank.
    */
   rank?: number;
 
   /**
-   * The stretch factor to use for the widget in the layout.
+   * The stretch factor for the widget in the layout.
    */
   stretch?: number;
 
   /**
-   * The alignment to use for the widget in the layout.
+   * The alignment for the widget in the layout.
    */
   alignment?: Alignment;
 }
@@ -53,11 +39,6 @@ interface IWidgetOptions {
  */
 export
 interface IShellView {
-  /**
-   *
-   */
-  // addMenu(menu: Menu, options?: IMenuOptions): void;
-
   /**
    * Add a widget to a specified shell view widget area.
    */
