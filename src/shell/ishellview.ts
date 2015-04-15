@@ -9,9 +9,11 @@ module phosphor.shell {
 
 import createToken = di.createToken;
 
+import Widget = widgets.Widget;
+
 
 /**
- * An object which provides the top-level application shell.
+ * A widget which provides the top-level application shell.
  *
  * A shell view serves as the main UI container for an application. It
  * provides a number of panels into which plugins may contribute their
@@ -19,7 +21,7 @@ import createToken = di.createToken;
  * menu bar and status bar.
  */
 export
-interface IShellView {
+interface IShellView extends Widget {
   /**
    * The top content panel.
    */
