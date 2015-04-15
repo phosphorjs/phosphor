@@ -69,7 +69,7 @@ class ShellPanel extends Widget {
    * Dispose of the resources held by the widget.
    */
   dispose(): void {
-    this._pairs = null;
+    this._ranks = null;
     super.dispose();
   }
 
@@ -85,8 +85,8 @@ class ShellPanel extends Widget {
     var stretch = options.stretch;
     var alignment = options.alignment;
     var rank = options.rank !== void 0 ? options.rank : 100;
-    var index = algo.upperBound(this._pairs, rank, rankCmp);
-    algo.insert(this._pairs, index, new Pair(widget, rank));
+    var index = algo.upperBound(this._ranks, rank, rankCmp);
+    algo.insert(this._ranks, index, new Pair(widget, rank));
     (<BoxLayout>this.layout).insertWidget(index, widget, stretch, alignment);
   }
 
@@ -95,11 +95,11 @@ class ShellPanel extends Widget {
    */
   protected onChildRemoved(msg: ChildMessage): void {
     super.onChildRemoved(msg);
-    var index = algo.findIndex(this._pairs, pair => pair.first === msg.child);
-    if (index !== -1) algo.removeAt(this._pairs, index);
+    var index = algo.findIndex(this._ranks, pair => pair.first === msg.child);
+    if (index !== -1) algo.removeAt(this._ranks, index);
   }
 
-  private _pairs: Pair<Widget, number>[] = [];
+  private _ranks: Pair<Widget, number>[] = [];
 }
 
 
