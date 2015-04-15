@@ -77,7 +77,8 @@ class ShellPanel extends Widget {
    * Add a widget to the panel.
    *
    * Widgets are ordered from lowest to highest rank in the direction
-   * of the panel layout. The default rank for a widget is `100`.
+   * of the panel layout. The default rank is `100`. Before a widget
+   * is added to the panel, it is removed from its current parent.
    */
   addWidget(widget: Widget, options: IWidgetOptions = {}): void {
     widget.parent = null;
