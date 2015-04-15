@@ -100,7 +100,7 @@ class ShellPanel extends Widget {
     if (i !== -1) algo.removeAt(this._pairs, i);
   }
 
-  _pairs: Pair<Widget, number>[] = [];
+  private _pairs: Pair<Widget, number>[] = [];
 }
 
 } // module phosphor.shell
