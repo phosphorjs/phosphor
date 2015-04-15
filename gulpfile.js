@@ -96,9 +96,12 @@ var tsSources = [
 
   'shell/iplugin',
   'shell/ipluginlist',
+  'shell/ishellview',
   'shell/autohide',
   'shell/bootstrapper',
-  'shell/pluginlist'
+  'shell/pluginlist',
+  'shell/shellpanel',
+  'shell/shellview'
 ].map(function(name) { return './src/' + name + '.ts'; });
 
 

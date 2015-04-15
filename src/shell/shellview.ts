@@ -11,6 +11,7 @@ import BoxLayout = widgets.BoxLayout;
 import Direction = widgets.Direction;
 import Orientation = widgets.Orientation;
 import SizePolicy = widgets.SizePolicy;
+import SplitPanel = widgets.SplitPanel;
 import Widget = widgets.Widget;
 import WidgetFlag = widgets.WidgetFlag;
 
@@ -19,11 +20,6 @@ import WidgetFlag = widgets.WidgetFlag;
  * The class name added to shell view instances.
  */
 var SHELL_VIEW_CLASS = 'p-ShellView';
-
-/**
- * The class name added to the shell view splitters.
- */
-var SPLITTER_CLASS = 'p-ShellView-splitter';
 
 /**
  * The class name added to the top shell panel.
@@ -63,104 +59,85 @@ class ShellView extends Widget implements IShellView {
     super();
     this.addClass(SHELL_VIEW_CLASS);
 
-    var topPanel = this._topPanel = this.createPanel(ShellArea.Top);
-    var leftPanel = this._leftPanel = this.createPanel(ShellArea.Left);
-    var rightPanel = this._rightPanel = this.createPanel(ShellArea.Right);
-    var bottomPanel = this._bottomPanel = this.createPanel(ShellArea.Bottom);
-    var centerPanel = this._centerPanel = this.createPanel(ShellArea.Center);
+    var topPanel = new ShellPanel(Direction.TopToBottom);
+    var leftPanel = new ShellPanel(Direction.LeftToRight);
+    var rightPanel = new ShellPanel(Direction.RightToLeft);
+    var bottomPanel = new ShellPanel(Direction.BottomToTop);
+    var centerPanel = new ShellPanel(Direction.TopToBottom);
 
-    var hSplitter = this.createSplitter(Orientation.Horizontal);
-    var vSplitter = this.createSplitter(Orientation.Vertical);
+    this._topPanel = topPanel;
+    this._leftPanel = leftPanel;
+    this._rightPanel = rightPanel;
+    this._bottomPanel = bottomPanel;
+    this._centerPanel = centerPanel;
 
-    hSplitter.addWidget(leftPanel);
-    hSplitter.addWidget(centerPanel, 1);
-    hSplitter.addWidget(rightPanel);
+    topPanel.addClass(TOP_CLASS);
+    leftPanel.addClass(LEFT_CLASS);
+    rightPanel.addClass(RIGHT_CLASS);
+    bottomPanel.addClass(BOTTOM_CLASS);
+    centerPanel.addClass(CENTER_CLASS);
 
-    vSplitter.addWidget(hSplitter, 1);
-    vSplitter.addWidget(bottomPanel);
+    topPanel.verticalSizePolicy = SizePolicy.Fixed;
+
+    enableAutoHide(topPanel);
+    enableAutoHide(leftPanel);
+    enableAutoHide(rightPanel);
+    enableAutoHide(bottomPanel);
+
+    var hSplit = new SplitPanel(Orientation.Horizontal);
+    var vSplit = new SplitPanel(Orientation.Vertical);
+
+    hSplit.handleSize = 0;
+    vSplit.handleSize = 0;
+
+    hSplit.addWidget(leftPanel);
+    hSplit.addWidget(centerPanel, 1);
+    hSplit.addWidget(rightPanel);
+
+    vSplit.addWidget(hSplit, 1);
+    vSplit.addWidget(bottomPanel);
 
     var layout = new BoxLayout(Direction.TopToBottom, 0);
     layout.addWidget(topPanel);
-    layout.addWidget(vSplitter, 1);
+    layout.addWidget(vSplit, 1);
 
     this.layout = layout;
     this.setFlag(WidgetFlag.DisallowLayoutChange);
   }
 
   /**
-   * Add a widget to the specified shell area.
+   * The top content panel.
    */
-  addWidget(area: ShellArea, widget: Widget, options?: IWidgetOptions): void {
-    switch(area) {
-    case ShellArea.Top:
-      this._topPanel.addWidget(widget, options);
-      break;
-    case ShellArea.Left:
-      this._leftPanel.addWidget(widget, options);
-      break;
-    case ShellArea.Right:
-      this._rightPanel.addWidget(widget, options);
-      break;
-    case ShellArea.Bottom:
-      this._bottomPanel.addWidget(widget, options);
-      break;
-    case ShellArea.Center:
-      this._centerPanel.addWidget(widget, options);
-      break;
-    default:
-      throw new Error('invalid shell area');
-    }
+  get topPanel(): ShellPanel {
+    return this._topPanel;
   }
 
   /**
-   * Create a shell panel for the given shell area.
-   *
-   * This can be reimplemented by a subclass as needed.
+   * The left content panel.
    */
-  protected createPanel(area: ShellArea): ShellPanel {
-    var panel: ShellPanel;
-    switch (area) {
-    case ShellArea.Top:
-      panel = new ShellPanel(Direction.TopToBottom);
-      panel.addClass(TOP_CLASS);
-      panel.verticalSizePolicy = SizePolicy.Fixed;
-      enableAutoHide(panel);
-      break;
-    case ShellArea.Left:
-      panel = new ShellPanel(Direction.LeftToRight);
-      panel.addClass(LEFT_CLASS);
-      enableAutoHide(panel);
-      break;
-    case ShellArea.Right:
-      panel = new ShellPanel(Direction.RightToLeft);
-      panel.addClass(RIGHT_CLASS);
-      enableAutoHide(panel);
-      break;
-    case ShellArea.Bottom:
-      panel = new ShellPanel(Direction.BottomToTop);
-      panel.addClass(BOTTOM_CLASS);
-      enableAutoHide(panel);
-      break;
-    case ShellArea.Center:
-      panel = new ShellPanel(Direction.TopToBottom);
-      panel.addClass(CENTER_CLASS);
-      break;
-    default:
-      throw new Error('invalid shell area');
-    }
-    return panel;
+  get leftPanel(): ShellPanel {
+    return this._leftPanel;
   }
 
   /**
-   * Create a splitter for the given orientation.
-   *
-   * This can be reimplemented by a subclass as needed.
+   * The right content panel.
    */
-  protected createSplitter(orientation: Orientation): Splitter {
-    var splitter = new Splitter(orientation);
-    splitter.addClass(SPLITTER_CLASS);
-    splitter.handleSize = 0;
-    return splitter;
+  get rightPanel(): ShellPanel {
+    return this._rightPanel;
+  }
+
+  /**
+   * The bottom content panel.
+   */
+  get bottomPanel(): ShellPanel {
+    return this._bottomPanel;
+  }
+
+  /**
+   * The center content panel.
+   */
+  get centerPanel(): ShellPanel {
+    return this._centerPanel;
   }
 
   private _topPanel: ShellPanel;
