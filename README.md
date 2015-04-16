@@ -5,7 +5,7 @@ Package Install
 ---------------
 
 **Prerequisites**
-- [bower](http://bower.io/)
+- [bower](http://bower.io/) `npm install -g bower`
 
 ```
 bower install phosphor
