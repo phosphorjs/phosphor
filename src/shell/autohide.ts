@@ -46,11 +46,7 @@ function disableAutoHide(widget: Widget): void {
  * Refresh the auto-hide visible state for the given widget.
  */
 function refresh(widget: Widget): void {
-  if (hasVisibleChild(widget)) {
-    widget.show();
-  } else {
-    widget.hide();
-  }
+  widget.setVisible(hasVisibleChild(widget));
 }
 
 
