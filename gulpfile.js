@@ -156,7 +156,7 @@ gulp.task('examples', function() {
 
   var sources = typings.concat([
     'dist/phosphor.d.ts',
-    'examples/**/index.ts'
+    'examples/**/*.ts'
   ]);
 
   var src = gulp.src(sources)
