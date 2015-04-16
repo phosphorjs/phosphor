@@ -2,7 +2,6 @@
 *.user
 .DS_Store
 build
-dist
 docs
 node_modules
 typings
