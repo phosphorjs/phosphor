@@ -92,16 +92,17 @@ var tsSources = [
   'widgets/menubar',
   'widgets/tab',
   'widgets/tabbar',
-  'widgets/tabpanel'
+  'widgets/tabpanel',
 
-  // 'shell/IPlugin',
-  // 'shell/IPluginList',
-  // 'shell/IRegion',
-  // 'shell/IRegionManager',
-  // 'shell/AutoHidePanel',
-  // 'shell/PluginList',
-  // 'shell/RegionManager',
-  // 'shell/Bootstrapper'
+  'shell/iplugin',
+  'shell/ipluginlist',
+  'shell/ishellview',
+  'shell/autohide',
+  'shell/bootstrapper',
+  'shell/menumanager',
+  'shell/pluginlist',
+  'shell/shellpanel',
+  'shell/shellview'
 ].map(function(name) { return './src/' + name + '.ts'; });
 
 
@@ -155,7 +156,7 @@ gulp.task('examples', function() {
 
   var sources = typings.concat([
     'dist/phosphor.d.ts',
-    'examples/**/index.ts'
+    'examples/**/*.ts'
   ]);
 
   var src = gulp.src(sources)

@@ -8,8 +8,9 @@
 module phosphor.shell {
 
 import Container = di.Container;
+import IContainer = di.IContainer;
 
-import createBoxData = dom.createBoxData;
+import createBoxSizing = utility.createBoxSizing;
 
 import Widget = widgets.Widget;
 
@@ -32,7 +33,7 @@ class Bootstrapper {
    *
    * This is created by the `createContainer` method.
    */
-  get container(): Container {
+  get container(): IContainer {
     return this._container;
   }
 
@@ -46,11 +47,11 @@ class Bootstrapper {
   }
 
   /**
-   * Get the top-level shell widget for the application.
+   * Get the top-level shell view for the application.
    *
    * This is created by the `createShell` method.
    */
-  get shell(): Widget {
+  get shell(): IShellView {
     return this._shell;
   }
 
@@ -63,20 +64,29 @@ class Bootstrapper {
    * This method should not be reimplemented.
    */
   run(): void {
-    this._container = new Container();
+    this._container = this.createContainer();
     this.configureContainer();
-
-    this._pluginList = this.createPluginList();
-    this.configurePlugins();
 
     this._shell = this.createShell();
     this.configureShell();
 
-    this._pluginList.initialize().then(() => {
+    this._pluginList = this.createPluginList();
+    this.configurePlugins().then(() => {
       this.finalize();
     }).catch(ex => {
       console.error('plugin initialization failed', ex);
     });
+  }
+
+  /**
+   * Create the dependency injection container for the application.
+   *
+   * This can be reimplemented by subclasses as needed.
+   *
+   * The default implementation creates an instance of `Container`.
+   */
+  protected createContainer(): IContainer {
+    return new Container();
   }
 
   /**
@@ -87,7 +97,7 @@ class Bootstrapper {
    * The default implementation resolves an `IPluginList`.
    */
   protected createPluginList(): IPluginList {
-    return this.container.resolve('IPluginList');
+    return this.container.resolve(IPluginList);
   }
 
   /**
@@ -95,29 +105,27 @@ class Bootstrapper {
    *
    * This can be reimplemented by subclasses as needed.
    *
-   * The default implementation returns null.
+   * The default implementation resolves an `IShellView`.
    */
-  protected createShell(): Widget {
-    return null;
+  protected createShell(): IShellView {
+    return this.container.resolve(IShellView);
   }
 
   /**
    * Configure the application dependency injection container.
    *
    * This can be reimplemented by subclasses as needed.
-   *
-   * The IContainer instance is registered automatically.
-   *
-   * IPluginList and IRegionManager are registered if missing.
    */
   protected configureContainer(): void {
     var container = this.container;
-    container.registerInstance('IContainer', container);
-    if (!container.isRegistered('IPluginList')) {
-      container.registerType('IPluginList', PluginList);
+    if (!container.isRegistered(IContainer)) {
+      container.registerInstance(IContainer, container);
     }
-    if (!container.isRegistered('IRegionManager')) {
-      container.registerType('IRegionManager', RegionManager);
+    if (!container.isRegistered(IPluginList)) {
+      container.registerType(IPluginList, PluginList);
+    }
+    if (!container.isRegistered(IShellView)) {
+      container.registerType(IShellView, ShellView);
     }
   }
 
@@ -125,11 +133,14 @@ class Bootstrapper {
    * Configure the application plugins.
    *
    * Subclasses should reimplement this method to add the application
-   * plugins to the plugin list.
+   * plugins to the plugin list. This should return a promise which
+   * resolves once all plugins are initialized.
    *
-   * The plugins will be initialized at the end of bootstrapping.
+   * The default implementation returns an empty resolved promise.
    */
-  protected configurePlugins(): void { }
+  protected configurePlugins(): Promise<void> {
+    return Promise.resolve<void>();
+  }
 
   /**
    * Configure the application shell widget.
@@ -141,7 +152,7 @@ class Bootstrapper {
   /**
    * Finalize the bootstrapping process.
    *
-   * This is called after all plugins are resolved an intialized.
+   * This is called after all plugins are resolved and intialized.
    *
    * It is the last method called in the bootstrapping process.
    *
@@ -153,20 +164,17 @@ class Bootstrapper {
    */
   protected finalize(): void {
     var shell = this.shell;
-    if (shell === null) {
-      return;
-    }
     var elem = document.getElementById('main') || document.body;
-    var box = createBoxData(elem);
-    var doResize = () => shell.fitToHost(void 0, void 0, box);
-    window.addEventListener('resize', doResize);
+    var box = createBoxSizing(elem);
+    var fit = () => shell.fit(void 0, void 0, box);
+    window.addEventListener('resize', fit);
     shell.attach(elem);
     shell.show();
-    doResize();
+    fit();
   }
 
-  private _shell: Widget = null;
-  private _container: Container = null;
+  private _shell: IShellView = null;
+  private _container: IContainer = null;
   private _pluginList: IPluginList = null;
 }
 

@@ -5,26 +5,17 @@
 |
 | The full license is in the file LICENSE, distributed with this software.
 |----------------------------------------------------------------------------*/
-.p-MenuBar-content {
-  display: flex;
-  flex-direction: row;
-  margin: 0;
-  padding: 0;
-  list-style: none;
+module chat.serverplugin {
+
+import IContainer = phosphor.di.IContainer;
+
+
+/**
+ * Initialize the chat server plugin.
+ */
+export
+function initialize(container: IContainer): void {
+  // currently an empty stub
 }
 
-
-.p-MenuBar-item {
-  box-sizing: border-box;
-  &.p-mod-hidden
-  &.p-mod-force-hidden {
-    display: none;
-  }
-}
-
-
-.p-MenuBar-item.p-mod-separator-type {
-  margin: 2px;
-  padding: 0;
-  border: none;
-}
+} // module chat.serverplugin

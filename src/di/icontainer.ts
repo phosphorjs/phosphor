@@ -79,6 +79,9 @@ interface IContainer {
 }
 
 
+/**
+ * The interface token for IContainer.
+ */
 export
 var IContainer = createToken<IContainer>('phosphor.di.IContainer');
 

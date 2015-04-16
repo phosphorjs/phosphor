@@ -5,22 +5,24 @@
 |
 | The full license is in the file LICENSE, distributed with this software.
 |----------------------------------------------------------------------------*/
-module phosphor.shell {
+module chat {
 
-import Container = di.Container;
+import createToken = phosphor.di.createToken;
 
 
 /**
- * An object which represents an application plugin.
- *
- * A plugin is typically a module with an `initialize` function.
+ * A simple in-process chat server model.
  */
 export
-interface IPlugin {
-  /**
-   * Initialize the plugin and register its content with the container.
-   */
-  initialize(container: Container): void;
+interface IChatServer {
+  // currently an empty stub
 }
 
-} // module phosphor.shell
+
+/**
+ * The interface token for IChatServer.
+ */
+export
+var IChatServer = createToken<IChatServer>('chat.IChatServer');
+
+} // module chat

@@ -5,26 +5,24 @@
 |
 | The full license is in the file LICENSE, distributed with this software.
 |----------------------------------------------------------------------------*/
-.p-MenuBar-content {
-  display: flex;
-  flex-direction: row;
-  margin: 0;
-  padding: 0;
-  list-style: none;
+module chat {
+
+import createToken = phosphor.di.createToken;
+
+
+/**
+ * A simple in-process chat client model.
+ */
+export
+interface IChatClient {
+  // currently an empty stub
 }
 
 
-.p-MenuBar-item {
-  box-sizing: border-box;
-  &.p-mod-hidden
-  &.p-mod-force-hidden {
-    display: none;
-  }
-}
+/**
+ * The interface token for IChatClient.
+ */
+export
+var IChatClient = createToken<IChatClient>('chat.IChatClient');
 
-
-.p-MenuBar-item.p-mod-separator-type {
-  margin: 2px;
-  padding: 0;
-  border: none;
-}
+} // module chat

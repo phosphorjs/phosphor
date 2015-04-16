@@ -65,6 +65,16 @@ var SELECTED_CLASS = 'p-mod-selected';
  */
 var DISABLED_CLASS = 'p-mod-disabled';
 
+/**
+ * The class name added to a hidden menu item.
+ */
+var HIDDEN_CLASS = 'p-mod-hidden';
+
+/**
+ * The class name added to a force hidden menu item.
+ */
+var FORCE_HIDDEN_CLASS = 'p-mod-force-hidden';
+
 
 /**
  * A leaf widget which displays menu items as a menu bar.
@@ -179,6 +189,7 @@ class MenuBar extends Widget {
     algo.insert(this._nodes, index, node);
     item.changed.connect(this._mi_changed, this);
     this.insertItemNode(index, node);
+    this._collapseSeparators();
     return index;
   }
 
@@ -198,6 +209,7 @@ class MenuBar extends Widget {
     if (node) {
       this.removeItemNode(node);
     }
+    this._collapseSeparators();
     return item;
   }
 
@@ -341,6 +353,9 @@ class MenuBar extends Widget {
     }
     if (!item.enabled) {
       parts.push(DISABLED_CLASS);
+    }
+    if (!item.visible) {
+      parts.push(HIDDEN_CLASS);
     }
     node.className = parts.join(' ');
     (<HTMLElement>node.children[1]).textContent = item.text;
@@ -620,6 +635,33 @@ class MenuBar extends Widget {
   }
 
   /**
+   * Collapse neighboring visible separators.
+   *
+   * This force-hides select separator nodes such that there are never
+   * multiple visible separator siblings. It also force-hides all any
+   * leading and trailing separator nodes.
+   */
+  private _collapseSeparators(): void {
+    var items = this._items;
+    var nodes = this._nodes;
+    var hideSeparator = true;
+    var lastIndex = algo.findLastIndex(items, isVisibleItem);
+    for (var i = 0, n = items.length; i < n; ++i) {
+      var item = items[i];
+      if (item.type === 'separator') {
+        if (hideSeparator || i > lastIndex) {
+          nodes[i].classList.add(FORCE_HIDDEN_CLASS);
+        } else if (item.visible) {
+          nodes[i].classList.remove(FORCE_HIDDEN_CLASS);
+          hideSeparator = true;
+        }
+      } else if (item.visible) {
+        hideSeparator = false;
+      }
+    }
+  }
+
+  /**
    * Handle the `closed` signal from the child menu.
    */
   private _mn_closed(sender: Menu): void {
@@ -643,6 +685,7 @@ class MenuBar extends Widget {
       this._setActiveIndex(-1);
     }
     this.initItemNode(sender, this._nodes[i]);
+    this._collapseSeparators();
   }
 
   private _childMenu: Menu = null;
@@ -660,12 +703,20 @@ enum MBState { Inactive, Active };
 
 
 /**
+ * Test whether the menu item is a visible non-separator item.
+ */
+function isVisibleItem(item: MenuItem): boolean {
+  return item && item.type !== 'separator' && item.visible;
+}
+
+
+/**
  * Test whether the menu bar item is selectable.
  *
- * This returns true if the item is enabled and not a separator.
+ * Returns true if the item is a visible and enabled non-separator item.
  */
 function isSelectable(item: MenuItem): boolean {
-  return item && item.type !== 'separator' && item.enabled;
+  return isVisibleItem(item) && item.enabled;
 }
 
 

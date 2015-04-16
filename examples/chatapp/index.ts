@@ -5,26 +5,18 @@
 |
 | The full license is in the file LICENSE, distributed with this software.
 |----------------------------------------------------------------------------*/
-.p-MenuBar-content {
-  display: flex;
-  flex-direction: row;
-  margin: 0;
-  padding: 0;
-  list-style: none;
+module example {
+
+import ChatApplication = chat.ChatApplication;
+
+
+/**
+ * Create and start the chat application.
+ */
+export
+function main(): void {
+  var app = new ChatApplication();
+  app.run();
 }
 
-
-.p-MenuBar-item {
-  box-sizing: border-box;
-  &.p-mod-hidden
-  &.p-mod-force-hidden {
-    display: none;
-  }
-}
-
-
-.p-MenuBar-item.p-mod-separator-type {
-  margin: 2px;
-  padding: 0;
-  border: none;
-}
+} // module example

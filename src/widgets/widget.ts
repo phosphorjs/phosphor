@@ -435,6 +435,17 @@ class Widget implements IMessageHandler, IDisposable {
   }
 
   /**
+   * Show or hide the widget according to the given flag.
+   */
+  setVisible(visible: boolean): void {
+    if (visible) {
+      this.show();
+    } else {
+      this.hide();
+    }
+  }
+
+  /**
    * Close the widget by sending it a 'close' message.
    *
    * Subclasses should reimplement `onClose` to perform custom actions.

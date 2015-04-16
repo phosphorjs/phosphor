@@ -41,6 +41,11 @@ interface IMenuItemOptions {
   enabled?: boolean;
 
   /**
+   * Whether the menu item is visible.
+   */
+  visible?: boolean;
+
+  /**
    * Whether a 'check' type menu item is checked.
    */
   checked?: boolean;
@@ -189,6 +194,24 @@ class MenuItem {
   }
 
   /**
+   * Get whether the menu item is visible.
+   */
+  get visible(): boolean {
+    return this._visible;
+  }
+
+  /**
+   * Set whether the menu item is visible.
+   */
+  set visible(visible: boolean) {
+    if (visible === this._visible) {
+      return;
+    }
+    this._visible = visible;
+    this.changed.emit(this, void 0);
+  }
+
+  /**
    * Get whether the 'check' type menu item is checked.
    */
   get checked(): boolean {
@@ -276,6 +299,9 @@ class MenuItem {
     if (options.enabled !== void 0) {
       this._enabled = options.enabled;
     }
+    if (options.visible !== void 0) {
+      this._visible = options.visible;
+    }
     if (options.checked !== void 0) {
       this.checked = options.checked;
     }
@@ -298,6 +324,7 @@ class MenuItem {
   private _shortcut = '';
   private _className = '';
   private _enabled = true;
+  private _visible = true;
   private _type = 'normal';
   private _checked = false;
   private _submenu: Menu = null;
