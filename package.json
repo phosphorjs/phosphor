@@ -1,12 +1,11 @@
 {
   "name": "phosphor",
-  "version": "0.0.3",
-  "description": "The PhosphorJS library",
+  "version": "0.1.0",
+  "description": "The Phosphor UI library",
   "dependencies": {},
   "devDependencies": {
     "del": "^0.1.3",
     "event-stream": "^3.1.7",
-    "expect.js": "^0.3.1",
     "gulp": "^3.8.9",
     "gulp-concat": "^2.5.2",
     "gulp-header": "^1.2.2",
@@ -14,7 +13,6 @@
     "gulp-stylus": "^2.0.1",
     "gulp-typedoc": "^1.1.0",
     "gulp-typescript": "^2.4.0",
-    "mocha": "^2.0.1",
     "nib": "^1.1.0"
   },
   "scripts": {},
@@ -22,7 +20,10 @@
     "type": "git",
     "url": "https://github.com/phosphorjs/phosphor.git"
   },
-  "keywords": [],
+  "keywords": [
+    "ui",
+    "widgets"
+  ],
   "author": "S. Chris Colbert <sccolbert@gmail.com>",
   "license": "BSD-3-Clause",
   "bugs": {

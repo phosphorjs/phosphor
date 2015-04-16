@@ -1,0 +1,39 @@
+{
+  "name": "phosphor",
+  "version": "0.1.0",
+  "homepage": "https://github.com/phosphorjs/phosphor",
+  "authors": [
+    "S. Chris Colbert <sccolbert@gmail.com>"
+  ],
+  "description": "The Phosphor UI library",
+  "main": [
+    "dist/phosphor.js",
+    "dist/phosphor.css"
+  ],
+  "typescript": {
+    "definition": "dist/phosphor.d.ts"
+  },
+  "moduleType": [
+    "globals"
+  ],
+  "keywords": [
+    "ui",
+    "widgets"
+  ],
+  "license": "BSD-3-Clause",
+  "ignore": [
+    "**/.*",
+    "build",
+    "examples",
+    "node_modules",
+    "src",
+    "styl",
+    "typings",
+    "gulpfile.js",
+    "package.json",
+    "README.md",
+    "tsd.json"
+  ],
+  "dependencies": {},
+  "devDependencies": {}
+}
