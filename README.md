@@ -1,7 +1,18 @@
 Phosphor
 ========
 
-Build Source
+Package Install
+---------------
+
+**Prerequisites**
+- [bower](http://bower.io/)
+
+```
+bower install phosphor
+```
+
+
+Source Build
 ------------
 
 **Prerequisites**
