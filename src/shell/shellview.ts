@@ -9,6 +9,8 @@ module phosphor.shell {
 
 import BoxLayout = widgets.BoxLayout;
 import Direction = widgets.Direction;
+import MenuBar = widgets.MenuBar;
+import MenuItem = widgets.MenuItem;
 import Orientation = widgets.Orientation;
 import SizePolicy = widgets.SizePolicy;
 import SplitPanel = widgets.SplitPanel;
@@ -59,11 +61,13 @@ class ShellView extends Widget implements IShellView {
     super();
     this.addClass(SHELL_VIEW_CLASS);
 
+    this._menuBar = new MenuBar();
     this._topPanel = new ShellPanel(Direction.TopToBottom);
     this._leftPanel = new ShellPanel(Direction.LeftToRight);
     this._rightPanel = new ShellPanel(Direction.RightToLeft);
     this._bottomPanel = new ShellPanel(Direction.BottomToTop);
     this._centerPanel = new ShellPanel(Direction.TopToBottom);
+    this._menuManager = new MenuManager(this._menuBar);
 
     this._topPanel.addClass(TOP_CLASS);
     this._leftPanel.addClass(LEFT_CLASS);
@@ -71,6 +75,7 @@ class ShellView extends Widget implements IShellView {
     this._bottomPanel.addClass(BOTTOM_CLASS);
     this._centerPanel.addClass(CENTER_CLASS);
 
+    this._menuBar.hide();
     this._topPanel.verticalSizePolicy = SizePolicy.Fixed;
 
     enableAutoHide(this._topPanel);
@@ -92,6 +97,7 @@ class ShellView extends Widget implements IShellView {
     vSplitter.addWidget(this._bottomPanel);
 
     var layout = new BoxLayout(Direction.TopToBottom, 0);
+    layout.addWidget(this._menuBar);
     layout.addWidget(this._topPanel);
     layout.addWidget(vSplitter, 1);
 
@@ -133,11 +139,57 @@ class ShellView extends Widget implements IShellView {
     }
   }
 
+  /**
+   * Add a menu item to the menu bar.
+   *
+   * Items are ordered from lowest to highest rank.
+   *
+   * If the item already exists, its position will be updated.
+   */
+  addMenuItem(item: MenuItem, rank?: number): void {
+    this._menuManager.addItem(item, rank);
+    showHideMenuBar(this._menuBar);
+  }
+
+  /**
+   * Remove a menu item from the menu bar.
+   *
+   * If the item does not exist, this is a no-op.
+   */
+  removeMenuItem(item: MenuItem): void {
+    this._menuManager.removeItem(item);
+    showHideMenuBar(this._menuBar);
+  }
+
+  private _menuBar: MenuBar;
   private _topPanel: ShellPanel;
   private _leftPanel: ShellPanel;
   private _rightPanel: ShellPanel;
   private _bottomPanel: ShellPanel;
   private _centerPanel: ShellPanel;
+  private _menuManager: MenuManager;
+}
+
+
+/**
+ * Show the menu bar if it has a visible item, hide it otherwise.
+ */
+function showHideMenuBar(menuBar: MenuBar): void {
+  menuBar.setVisible(hasVisibleItem(menuBar));
+}
+
+
+/**
+ * Test whether the menu bar has a visible non-separator item.
+ */
+function hasVisibleItem(menuBar: MenuBar): boolean {
+  for (var i = 0, n = menuBar.count; i < n; ++i) {
+    var item = menuBar.itemAt(i);
+    if (item.type !== 'separator' && item.visible) {
+      return true;
+    }
+  }
+  return false;
 }
 
 } // module phosphor.shell

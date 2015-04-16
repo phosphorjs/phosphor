@@ -10,6 +10,7 @@ module phosphor.shell {
 import createToken = di.createToken;
 
 import Alignment = widgets.Alignment;
+import MenuItem = widgets.MenuItem;
 import Widget = widgets.Widget;
 
 
@@ -62,6 +63,22 @@ interface IShellView extends Widget {
    * This method throws an exception if the named area is not supported.
    */
   addWidget(area: string, widget: Widget, options?: IWidgetOptions): void;
+
+  /**
+   * Add a menu item to the menu bar.
+   *
+   * Items are ordered from lowest to highest rank.
+   *
+   * If the item already exists, its position will be updated.
+   */
+  addMenuItem(item: MenuItem, rank?: number): void;
+
+  /**
+   * Remove a menu item from the menu bar.
+   *
+   * If the item does not exist, this is a no-op.
+   */
+  removeMenuItem(item: MenuItem): void;
 }
 
 
