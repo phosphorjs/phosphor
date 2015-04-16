@@ -11,16 +11,16 @@ import createToken = phosphor.di.createToken;
 
 
 /**
- *
+ * A simple in-process chat client model.
  */
 export
 interface IChatClient {
-
+  // currently an empty stub
 }
 
 
 /**
- *
+ * The interface token for IChatClient.
  */
 export
 var IChatClient = createToken<IChatClient>('chat.IChatClient');

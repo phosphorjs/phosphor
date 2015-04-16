@@ -7,22 +7,25 @@
 |----------------------------------------------------------------------------*/
 module chat {
 
-import createToken = phosphor.di.createToken;
+import Bootstrapper = phosphor.shell.Bootstrapper;
 
 
 /**
- * A simple in-process chat server model.
+ * A simple chat application built entirely from plugins.
  */
 export
-interface IChatServer {
-  // currently an empty stub
+class ChatApplication extends Bootstrapper {
+  /**
+   * Configure the plugins for the application.
+   */
+  configurePlugins(): Promise<void> {
+    return this.pluginList.add([
+      serverplugin,
+      clientplugin,
+      roomsplugin,
+      feedplugin
+    ]);
+  }
 }
-
-
-/**
- * The interface token for IChatServer.
- */
-export
-var IChatServer = createToken<IChatServer>('chat.IChatServer');
 
 } // module chat

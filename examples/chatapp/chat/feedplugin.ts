@@ -22,7 +22,7 @@ import ElementHost = phosphor.widgets.ElementHost;
 
 
 /**
- *
+ * A simple placeholder component for the chat feed.
  */
 class FeedPlaceholder extends Component<IData> {
 
@@ -33,11 +33,15 @@ class FeedPlaceholder extends Component<IData> {
   }
 }
 
+
+/**
+ * The element factory for the chat feed component.
+ */
 var Feed = createFactory(FeedPlaceholder);
 
 
 /**
- *
+ * Initialize the chat feed plugin.
  */
 export
 function initialize(container: IContainer): void {

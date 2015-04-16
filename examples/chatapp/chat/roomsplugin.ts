@@ -22,7 +22,7 @@ import ElementHost = phosphor.widgets.ElementHost;
 
 
 /**
- *
+ * A simple placeholder component for the chat rooms list.
  */
 class RoomListPlaceholder extends Component<IData> {
 
@@ -33,11 +33,15 @@ class RoomListPlaceholder extends Component<IData> {
   }
 }
 
+
+/**
+ * The element factory for the rooms list component.
+ */
 var RoomList = createFactory(RoomListPlaceholder);
 
 
 /**
- *
+ * A simple placeholder component for the open chat rooms.
  */
 class OpenRoomsPlaceholder extends Component<IData> {
 
@@ -48,20 +52,24 @@ class OpenRoomsPlaceholder extends Component<IData> {
   }
 }
 
+
+/**
+ * The element factory for the open rooms component.
+ */
 var OpenRooms = createFactory(OpenRoomsPlaceholder);
 
 
 /**
- *
+ * Initialize the chat rooms plugin.
  */
 export
 function initialize(container: IContainer): void {
   var shell = container.resolve(IShellView);
 
   var list = new ElementHost(RoomList(), 250, 400);
-  var rooms = new ElementHost(OpenRooms(), 600, 400);
-
   list.addClass('chat-room-list-host');
+
+  var rooms = new ElementHost(OpenRooms(), 600, 400);
   rooms.addClass('chat-open-rooms-host');
 
   shell.addWidget('left', list);

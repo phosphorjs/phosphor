@@ -10,9 +10,12 @@ module chat.clientplugin {
 import IContainer = phosphor.di.IContainer;
 
 
+/**
+ * Initialize the chat client plugin.
+ */
 export
 function initialize(container: IContainer): void {
-
+  // currently an empty stub
 }
 
 } // module chat.clientplugin

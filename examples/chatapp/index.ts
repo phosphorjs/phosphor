@@ -7,36 +7,16 @@
 |----------------------------------------------------------------------------*/
 module example {
 
-import Bootstrapper = phosphor.shell.Bootstrapper;
-
-
-/**
- * A simple chat application built entirely from plugins.
- */
-class ChatApplication extends Bootstrapper {
-  /**
-   * Configure the plugins for the application.
-   */
-  configurePlugins(): Promise<void> {
-    return this.pluginList.add([
-      chat.serverplugin,
-      chat.clientplugin,
-      chat.roomsplugin,
-      chat.feedplugin
-    ]);
-  }
-}
+import ChatApplication = chat.ChatApplication;
 
 
 /**
  * Create and start the chat application.
  */
+export
 function main(): void {
   var app = new ChatApplication();
   app.run();
 }
-
-
-window.onload = main;
 
 } // module example
