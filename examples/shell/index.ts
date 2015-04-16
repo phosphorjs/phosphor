@@ -9,56 +9,34 @@ module example {
 
 import Bootstrapper = phosphor.shell.Bootstrapper;
 
-import Widget = phosphor.widgets.Widget;
-
 
 /**
- *
+ * A simple chat application built entirely from plugins.
  */
-function createContent(name: string): Widget {
-  var widget = new Widget();
-  widget.addClass('content');
-  widget.addClass(name);
-  return widget;
-}
-
-
-/**
- *
- */
-class ExampleBootstrapper extends Bootstrapper {
+class ChatApplication extends Bootstrapper {
   /**
-   *
+   * Configure the plugins for the application.
    */
   configurePlugins(): Promise<void> {
     return this.pluginList.add([
-
+      chat.serverplugin,
+      chat.clientplugin,
+      chat.roomsplugin,
+      chat.feedplugin
     ]);
-  }
-
-  /**
-   *
-   */
-  configureShell(): void {
-    var shell = this.shell;
-    shell.addWidget('top', createContent('red'));
-    shell.addWidget('left', createContent('yellow'));
-    shell.addWidget('right', createContent('green'));
-    shell.addWidget('bottom', createContent('red'));
-    shell.addWidget('center', createContent('blue'));
   }
 }
 
 
 /**
- *
+ * Create and start the chat application.
  */
 function main(): void {
-  var bootstrapper = new ExampleBootstrapper();
-  bootstrapper.run();
+  var app = new ChatApplication();
+  app.run();
 }
 
 
 window.onload = main;
 
-} // module examples
+} // module example
