@@ -17,6 +17,7 @@ var stream = require('event-stream');
 var stylus = require('gulp-stylus');
 var typedoc = require('gulp-typedoc');
 var typescript = require('gulp-typescript');
+var uglify = require('gulp-uglify');
 
 
 var typings = ['./typings/tsd.d.ts'];
@@ -114,16 +115,14 @@ gulp.task('clean', function(cb) {
 });
 
 
-gulp.task('dist', function() {
+gulp.task('src', function() {
   var project = typescript.createProject({
     declarationFiles: true,
     noImplicitAny: true,
     target: 'ES5',
   });
 
-  var sources = typings.concat(tsSources);
-
-  var src = gulp.src(sources)
+  var src = gulp.src(typings.concat(tsSources))
     .pipe(typescript(project));
 
   var dts = src.dts.pipe(concat('phosphor.d.ts'))
@@ -133,17 +132,31 @@ gulp.task('dist', function() {
     .pipe(header('"use strict";\n'))
     .pipe(gulp.dest('./dist'));
 
-  var css = gulp.src(stylSources)
+  return stream.merge(dts, js);
+});
+
+
+gulp.task('styl', function() {
+  return gulp.src(stylSources)
     .pipe(stylus({ use: [nib()] }))
     .pipe(rename('phosphor.css'))
     .pipe(gulp.dest('./dist'));
+});
 
-  return stream.merge(dts, js, css);
+
+gulp.task('build', ['src', 'styl']);
+
+
+gulp.task('dist', ['build'], function() {
+  return gulp.src('./dist/phosphor.js')
+    .pipe(uglify())
+    .pipe(rename('phosphor.min.js'))
+    .pipe(gulp.dest('./dist'));
 });
 
 
 gulp.task('watch', function() {
-  gulp.watch(tsSources, ['dist']);
+  gulp.watch(tsSources, ['src']);
 });
 
 
@@ -167,20 +180,12 @@ gulp.task('examples', function() {
     .pipe(gulp.dest('examples'));
 
   var css = gulp.src('examples/**/index.styl')
-    .pipe(stylus({use: [nib()]}))
+    .pipe(stylus({ use: [nib()] }))
     .pipe(rename(function (path) {
       path.dirname += '/build'; }))
     .pipe(gulp.dest('examples'));
 
   return stream.merge(src, css);
-});
-
-
-gulp.task('css', function() {
-  return gulp.src(stylSources)
-    .pipe(stylus({ use: [nib()] }))
-    .pipe(rename('phosphor.css'))
-    .pipe(gulp.dest('./dist'));
 });
 
 
@@ -193,5 +198,6 @@ gulp.task('docs', function() {
       mode: 'file',
       includeDeclarations: true }));
 });
+
 
 gulp.task('default', ['dist']);
