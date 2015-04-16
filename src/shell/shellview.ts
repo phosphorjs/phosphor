@@ -148,7 +148,7 @@ class ShellView extends Widget implements IShellView {
    */
   addMenuItem(item: MenuItem, rank?: number): void {
     this._menuManager.addItem(item, rank);
-    showHideMenuBar(this._menuBar);
+    this._menuBar.setVisible(this._menuBar.count > 0);
   }
 
   /**
@@ -158,7 +158,7 @@ class ShellView extends Widget implements IShellView {
    */
   removeMenuItem(item: MenuItem): void {
     this._menuManager.removeItem(item);
-    showHideMenuBar(this._menuBar);
+    this._menuBar.setVisible(this._menuBar.count > 0);
   }
 
   private _menuBar: MenuBar;
@@ -168,28 +168,6 @@ class ShellView extends Widget implements IShellView {
   private _bottomPanel: ShellPanel;
   private _centerPanel: ShellPanel;
   private _menuManager: MenuManager;
-}
-
-
-/**
- * Show the menu bar if it has a visible item, hide it otherwise.
- */
-function showHideMenuBar(menuBar: MenuBar): void {
-  menuBar.setVisible(hasVisibleItem(menuBar));
-}
-
-
-/**
- * Test whether the menu bar has a visible non-separator item.
- */
-function hasVisibleItem(menuBar: MenuBar): boolean {
-  for (var i = 0, n = menuBar.count; i < n; ++i) {
-    var item = menuBar.itemAt(i);
-    if (item.type !== 'separator' && item.visible) {
-      return true;
-    }
-  }
-  return false;
 }
 
 } // module phosphor.shell
