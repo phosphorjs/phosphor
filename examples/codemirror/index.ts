@@ -12,7 +12,6 @@ import CodeMirrorFactory = phosphor.lib.CodeMirrorFactory;
 import render = phosphor.virtualdom.render;
 
 
-export
 function main(): void {
   var cm = CodeMirrorFactory({
     config: {
@@ -24,5 +23,8 @@ function main(): void {
   });
   render(cm, document.getElementById('main'));
 }
+
+
+window.onload = main;
 
 } // module example

@@ -13,10 +13,12 @@ import ChatApplication = chat.ChatApplication;
 /**
  * Create and start the chat application.
  */
-export
 function main(): void {
   var app = new ChatApplication();
   app.run();
 }
+
+
+window.onload = main;
 
 } // module example
