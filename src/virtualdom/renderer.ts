@@ -131,13 +131,13 @@ function addNode(host: HTMLElement, elem: Elem, ref?: Node): void {
     host.insertBefore(text, ref);
   } else if (type === ElemType.Node) {
     var node = document.createElement(<string>elem.tag);
-    addAttributes(node, elem.data);
     host.insertBefore(node, ref);
+    addAttributes(node, elem.data);
     addContent(node, elem.children);
   } else if (type === ElemType.Component) {
     var component = new (<IComponentClass<any>>elem.tag)();
-    componentMap.set(component.node, component);
     host.insertBefore(component.node, ref);
+    componentMap.set(component.node, component);
     component.init(elem.data, elem.children);
   } else {
     throw new Error('invalid element type');
