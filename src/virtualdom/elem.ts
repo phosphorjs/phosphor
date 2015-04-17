@@ -37,7 +37,7 @@ type ElemTag = string | IComponentClass<any>;
 
 
 /**
- * A base data object for an elem.
+ * A data object for an elem.
  */
 export
 interface IElemData {
