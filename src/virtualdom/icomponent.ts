@@ -14,22 +14,20 @@ import IDisposable = utility.IDisposable;
  * An object which manages its own node in a virtual DOM tree.
  */
 export
-interface IComponent<T extends IData> extends IDisposable {
+interface IComponent<T extends IElemData> extends IDisposable {
   /**
    * The DOM node for the component.
-   *
-   * The component should render its content using this node as a host.
    */
   node: HTMLElement;
 
   /**
    * Initialize the component with new data and children.
    *
-   * This is called whenever the component is rendered by its parent.
+   * This is called every time the component is rendered by its parent.
    *
    * A component is resposible for updating the content of its node.
    */
-  init(data: T, children: IElement[]): void;
+  init(data: T, children: Elem[]): void;
 }
 
 
@@ -37,7 +35,7 @@ interface IComponent<T extends IData> extends IDisposable {
  * A component class type.
  */
 export
-interface IComponentClass<T extends IData> {
+interface IComponentClass<T extends IElemData> {
   /**
    * Construct a new component.
    */
