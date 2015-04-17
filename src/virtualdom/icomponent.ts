@@ -7,27 +7,40 @@
 |----------------------------------------------------------------------------*/
 module phosphor.virtualdom {
 
-import IDisposable = utility.IDisposable;
-
-
 /**
  * An object which manages its own node in a virtual DOM tree.
  */
 export
-interface IComponent<T extends IElemData> extends IDisposable {
+interface IComponent<T extends IElemData> {
   /**
-   * The DOM node for the component.
+   *
    */
-  node: HTMLElement;
+  init(data: T, children: Elem[]): boolean;
 
   /**
-   * Initialize the component with new data and children.
    *
-   * This is called every time the component is rendered by its parent.
-   *
-   * A component is resposible for updating the content of its node.
    */
-  init(data: T, children: Elem[]): void;
+  render(): Elem;
+
+  /**
+   *
+   */
+  beforeUpdate?(): void;
+
+  /**
+   *
+   */
+  afterUpdate?(): void;
+
+  /**
+   *
+   */
+  afterAttach?(node: HTMLElement): void;
+
+  /**
+   *
+   */
+  beforeDetach?(node: HTMLElement): void;
 }
 
 
