@@ -5,13 +5,9 @@
 |
 | The full license is in the file LICENSE, distributed with this software.
 |----------------------------------------------------------------------------*/
-module phosphor.components {
+module phosphor.virtualdom {
 
 import emptyObject = utility.emptyObject;
-
-import IElement = virtualdom.IElement;
-import IData = virtualdom.IData;
-import render = virtualdom.render;
 
 
 // cache frequently used globals
@@ -150,4 +146,4 @@ class Component<T extends IData> extends BaseComponent<T> {
   private _refs = emptyObject;
 }
 
-} // module phosphor.components
+} // module phosphor.virtualdom

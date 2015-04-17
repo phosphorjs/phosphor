@@ -50,16 +50,14 @@ var tsSources = [
   'utility/size',
   'utility/viewport',
 
+  'virtualdom/basecomponent',
+  'virtualdom/component',
   'virtualdom/factory',
   'virtualdom/dom',
   'virtualdom/icomponent',
   'virtualdom/idata',
   'virtualdom/ielement',
   'virtualdom/renderer',
-
-  'components/basecomponent',
-  'components/component',
-  'components/codemirror',
 
   'widgets/alignment',
   'widgets/childmessage',

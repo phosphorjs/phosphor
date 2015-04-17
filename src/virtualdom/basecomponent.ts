@@ -5,14 +5,10 @@
 |
 | The full license is in the file LICENSE, distributed with this software.
 |----------------------------------------------------------------------------*/
-module phosphor.components {
+module phosphor.virtualdom {
 
 import emptyArray = utility.emptyArray;
 import emptyObject = utility.emptyObject;
-
-import IComponent = virtualdom.IComponent;
-import IElement = virtualdom.IElement;
-import IData = virtualdom.IData;
 
 
 /**
@@ -92,4 +88,4 @@ class BaseComponent<T extends IData> implements IComponent<T> {
   private _children: IElement[] = emptyArray;
 }
 
-} // module phosphor.components
+} // module phosphor.virtualdom
