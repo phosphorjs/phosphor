@@ -7,12 +7,11 @@
 |----------------------------------------------------------------------------*/
 module chat.feedplugin {
 
-import Component = phosphor.components.Component;
-
 import IContainer = phosphor.di.IContainer;
 
 import IShellView = phosphor.shell.IShellView;
 
+import Component = phosphor.virtualdom.Component;
 import IData = phosphor.virtualdom.IData;
 import IElement = phosphor.virtualdom.IElement;
 import createFactory = phosphor.virtualdom.createFactory;

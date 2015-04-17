@@ -7,8 +7,7 @@
 |----------------------------------------------------------------------------*/
 module example {
 
-import Component = phosphor.components.Component;
-
+import Component = phosphor.virtualdom.Component;
 import IData = phosphor.virtualdom.IData;
 import IElement = phosphor.virtualdom.IElement;
 import createFactory = phosphor.virtualdom.createFactory;
