@@ -2440,6 +2440,261 @@ var phosphor;
         var emptyArray = phosphor.utility.emptyArray;
         var emptyObject = phosphor.utility.emptyObject;
         /**
+         * A concrete base implementation of IComponent.
+         *
+         * This class should be used by subclasses that want to manage their
+         * own DOM content outside the virtual DOM, but still be embeddable
+         * inside a virtual DOM hierarchy.
+         */
+        var BaseComponent = (function () {
+            /**
+             * Construct a new base component.
+             */
+            function BaseComponent() {
+                this._data = emptyObject;
+                this._children = emptyArray;
+                var ctor = this.constructor;
+                this._node = document.createElement(ctor.tagName);
+                this._node.className = ctor.className;
+            }
+            /**
+             * Dispose of the resources held by the component.
+             */
+            BaseComponent.prototype.dispose = function () {
+                this._node = null;
+                this._data = null;
+                this._children = null;
+            };
+            Object.defineProperty(BaseComponent.prototype, "node", {
+                /**
+                 * Get the DOM node for the component.
+                 */
+                get: function () {
+                    return this._node;
+                },
+                enumerable: true,
+                configurable: true
+            });
+            Object.defineProperty(BaseComponent.prototype, "data", {
+                /**
+                 * Get the current data object for the component.
+                 */
+                get: function () {
+                    return this._data;
+                },
+                enumerable: true,
+                configurable: true
+            });
+            Object.defineProperty(BaseComponent.prototype, "children", {
+                /**
+                 * Get the current children for the component.
+                 */
+                get: function () {
+                    return this._children;
+                },
+                enumerable: true,
+                configurable: true
+            });
+            /**
+             * Initialize the component with new data and children.
+             *
+             * This is called whenever the component is rendered by its parent.
+             */
+            BaseComponent.prototype.init = function (data, children) {
+                this._data = data;
+                this._children = children;
+            };
+            /**
+             * The tag name used to create the component's DOM node.
+             *
+             * A subclass may redefine this property.
+             */
+            BaseComponent.tagName = 'div';
+            /**
+             * The initial class name for the component's DOM node.
+             *
+             * A subclass may redefine this property.
+             */
+            BaseComponent.className = '';
+            return BaseComponent;
+        })();
+        virtualdom.BaseComponent = BaseComponent;
+    })(virtualdom = phosphor.virtualdom || (phosphor.virtualdom = {}));
+})(phosphor || (phosphor = {})); // module phosphor.virtualdom
+
+var __extends = this.__extends || function (d, b) {
+    for (var p in b) if (b.hasOwnProperty(p)) d[p] = b[p];
+    function __() { this.constructor = d; }
+    __.prototype = b.prototype;
+    d.prototype = new __();
+};
+/*-----------------------------------------------------------------------------
+| Copyright (c) 2014-2015, S. Chris Colbert
+|
+| Distributed under the terms of the BSD 3-Clause License.
+|
+| The full license is in the file LICENSE, distributed with this software.
+|----------------------------------------------------------------------------*/
+var phosphor;
+(function (phosphor) {
+    var virtualdom;
+    (function (virtualdom) {
+        var emptyObject = phosphor.utility.emptyObject;
+        // cache frequently used globals
+        var raf = requestAnimationFrame;
+        var caf = cancelAnimationFrame;
+        /**
+         * A concrete implementation of IComponent with virtual DOM rendering.
+         *
+         * User code should subclass this class to create a custom component.
+         * The subclasses should reimplement the `render` method to generate
+         * the virtual DOM content for the component.
+         */
+        var Component = (function (_super) {
+            __extends(Component, _super);
+            function Component() {
+                _super.apply(this, arguments);
+                this._frameId = 0;
+                this._refs = emptyObject;
+            }
+            /**
+             * Dispose of the resources held by the component.
+             */
+            Component.prototype.dispose = function () {
+                this._refs = null;
+                this._cancelFrame();
+                _super.prototype.dispose.call(this);
+            };
+            Object.defineProperty(Component.prototype, "refs", {
+                /**
+                 * Get the refs mapping for the component.
+                 *
+                 * This is an object which maps a ref name to the corresponding node
+                 * or component instance created for the most recent rendering pass.
+                 */
+                get: function () {
+                    return this._refs;
+                },
+                enumerable: true,
+                configurable: true
+            });
+            /**
+             * Initialize the component with new data and children.
+             *
+             * This is called whenever the component is rendered by its parent.
+             *
+             * The method will normally not be reimplemented by a subclass.
+             */
+            Component.prototype.init = function (data, children) {
+                var update = this.shouldUpdate(data, children);
+                _super.prototype.init.call(this, data, children);
+                if (update)
+                    this.update(true);
+            };
+            /**
+             * Create the virtual content for the component.
+             *
+             * The rendered content is used to populate the component's node.
+             *
+             * This should be reimplemented by a subclass.
+             */
+            Component.prototype.render = function () {
+                return null;
+            };
+            /**
+             * Schedule a rendering update for the component.
+             *
+             * This should be called whenever the internal state of the component
+             * has changed such that it requires the component to be re-rendered,
+             * or when external code requires the component to be refreshed.
+             *
+             * If the 'immediate' flag is false (the default) the update will be
+             * scheduled for the next cycle of the event loop. If the flag is set
+             * to true, the component will be updated immediately.
+             *
+             * Multiple pending requests are collapsed into a single update.
+             */
+            Component.prototype.update = function (immediate) {
+                var _this = this;
+                if (immediate === void 0) { immediate = false; }
+                if (immediate) {
+                    this._cancelFrame();
+                    this._render();
+                }
+                else if (this._frameId === 0) {
+                    this._frameId = raf(function () {
+                        _this._frameId = 0;
+                        _this._render();
+                    });
+                }
+            };
+            /**
+             * A method invoked immediately before the component is rendered.
+             *
+             * The default implementation is a no-op.
+             */
+            Component.prototype.beforeRender = function () {
+            };
+            /**
+             * A method invoked immediately after the component is rendered.
+             *
+             * The default implementation is a no-op.
+             */
+            Component.prototype.afterRender = function () {
+            };
+            /**
+             * Test whether the component should be updated.
+             *
+             * This method is invoked when the component is initialized with new
+             * data and children. It should return true if the component should
+             * be updated, or false if the values do not cause a visual change.
+             *
+             * Determining whether a component should update is error prone and
+             * can be just as expensive as performing the virtual DOM diff, so
+             * this should only be reimplemented if performance is a problem.
+             *
+             * The default implementation of this method always returns true.
+             */
+            Component.prototype.shouldUpdate = function (data, children) {
+                return true;
+            };
+            /**
+             * Perform an immediate rendering of the component.
+             */
+            Component.prototype._render = function () {
+                this.beforeRender();
+                this._refs = virtualdom.render(this.render(), this.node);
+                this.afterRender();
+            };
+            /**
+             * Clear the pending animation frame.
+             */
+            Component.prototype._cancelFrame = function () {
+                if (this._frameId !== 0) {
+                    caf(this._frameId);
+                    this._frameId = 0;
+                }
+            };
+            return Component;
+        })(virtualdom.BaseComponent);
+        virtualdom.Component = Component;
+    })(virtualdom = phosphor.virtualdom || (phosphor.virtualdom = {}));
+})(phosphor || (phosphor = {})); // module phosphor.virtualdom
+
+/*-----------------------------------------------------------------------------
+| Copyright (c) 2014-2015, S. Chris Colbert
+|
+| Distributed under the terms of the BSD 3-Clause License.
+|
+| The full license is in the file LICENSE, distributed with this software.
+|----------------------------------------------------------------------------*/
+var phosphor;
+(function (phosphor) {
+    var virtualdom;
+    (function (virtualdom) {
+        var emptyArray = phosphor.utility.emptyArray;
+        var emptyObject = phosphor.utility.emptyObject;
+        /**
          * Create a virtual element factory function for the given tag.
          *
          * This will typically be used to create an element factory for a user
@@ -3202,342 +3457,6 @@ var phosphor;
         };
     })(virtualdom = phosphor.virtualdom || (phosphor.virtualdom = {}));
 })(phosphor || (phosphor = {})); // module phosphor.virtualdom
-
-/*-----------------------------------------------------------------------------
-| Copyright (c) 2014-2015, S. Chris Colbert
-|
-| Distributed under the terms of the BSD 3-Clause License.
-|
-| The full license is in the file LICENSE, distributed with this software.
-|----------------------------------------------------------------------------*/
-var phosphor;
-(function (phosphor) {
-    var components;
-    (function (components) {
-        var emptyArray = phosphor.utility.emptyArray;
-        var emptyObject = phosphor.utility.emptyObject;
-        /**
-         * A concrete base implementation of IComponent.
-         *
-         * This class should be used by subclasses that want to manage their
-         * own DOM content outside the virtual DOM, but still be embeddable
-         * inside a virtual DOM hierarchy.
-         */
-        var BaseComponent = (function () {
-            /**
-             * Construct a new base component.
-             */
-            function BaseComponent() {
-                this._data = emptyObject;
-                this._children = emptyArray;
-                var ctor = this.constructor;
-                this._node = document.createElement(ctor.tagName);
-                this._node.className = ctor.className;
-            }
-            /**
-             * Dispose of the resources held by the component.
-             */
-            BaseComponent.prototype.dispose = function () {
-                this._node = null;
-                this._data = null;
-                this._children = null;
-            };
-            Object.defineProperty(BaseComponent.prototype, "node", {
-                /**
-                 * Get the DOM node for the component.
-                 */
-                get: function () {
-                    return this._node;
-                },
-                enumerable: true,
-                configurable: true
-            });
-            Object.defineProperty(BaseComponent.prototype, "data", {
-                /**
-                 * Get the current data object for the component.
-                 */
-                get: function () {
-                    return this._data;
-                },
-                enumerable: true,
-                configurable: true
-            });
-            Object.defineProperty(BaseComponent.prototype, "children", {
-                /**
-                 * Get the current children for the component.
-                 */
-                get: function () {
-                    return this._children;
-                },
-                enumerable: true,
-                configurable: true
-            });
-            /**
-             * Initialize the component with new data and children.
-             *
-             * This is called whenever the component is rendered by its parent.
-             */
-            BaseComponent.prototype.init = function (data, children) {
-                this._data = data;
-                this._children = children;
-            };
-            /**
-             * The tag name used to create the component's DOM node.
-             *
-             * A subclass may redefine this property.
-             */
-            BaseComponent.tagName = 'div';
-            /**
-             * The initial class name for the component's DOM node.
-             *
-             * A subclass may redefine this property.
-             */
-            BaseComponent.className = '';
-            return BaseComponent;
-        })();
-        components.BaseComponent = BaseComponent;
-    })(components = phosphor.components || (phosphor.components = {}));
-})(phosphor || (phosphor = {})); // module phosphor.components
-
-var __extends = this.__extends || function (d, b) {
-    for (var p in b) if (b.hasOwnProperty(p)) d[p] = b[p];
-    function __() { this.constructor = d; }
-    __.prototype = b.prototype;
-    d.prototype = new __();
-};
-/*-----------------------------------------------------------------------------
-| Copyright (c) 2014-2015, S. Chris Colbert
-|
-| Distributed under the terms of the BSD 3-Clause License.
-|
-| The full license is in the file LICENSE, distributed with this software.
-|----------------------------------------------------------------------------*/
-var phosphor;
-(function (phosphor) {
-    var components;
-    (function (components) {
-        var emptyObject = phosphor.utility.emptyObject;
-        var render = phosphor.virtualdom.render;
-        // cache frequently used globals
-        var raf = requestAnimationFrame;
-        var caf = cancelAnimationFrame;
-        /**
-         * A concrete implementation of IComponent with virtual DOM rendering.
-         *
-         * User code should subclass this class to create a custom component.
-         * The subclasses should reimplement the `render` method to generate
-         * the virtual DOM content for the component.
-         */
-        var Component = (function (_super) {
-            __extends(Component, _super);
-            function Component() {
-                _super.apply(this, arguments);
-                this._frameId = 0;
-                this._refs = emptyObject;
-            }
-            /**
-             * Dispose of the resources held by the component.
-             */
-            Component.prototype.dispose = function () {
-                this._refs = null;
-                this._cancelFrame();
-                _super.prototype.dispose.call(this);
-            };
-            Object.defineProperty(Component.prototype, "refs", {
-                /**
-                 * Get the refs mapping for the component.
-                 *
-                 * This is an object which maps a ref name to the corresponding node
-                 * or component instance created for the most recent rendering pass.
-                 */
-                get: function () {
-                    return this._refs;
-                },
-                enumerable: true,
-                configurable: true
-            });
-            /**
-             * Initialize the component with new data and children.
-             *
-             * This is called whenever the component is rendered by its parent.
-             *
-             * The method will normally not be reimplemented by a subclass.
-             */
-            Component.prototype.init = function (data, children) {
-                var update = this.shouldUpdate(data, children);
-                _super.prototype.init.call(this, data, children);
-                if (update)
-                    this.update(true);
-            };
-            /**
-             * Create the virtual content for the component.
-             *
-             * The rendered content is used to populate the component's node.
-             *
-             * This should be reimplemented by a subclass.
-             */
-            Component.prototype.render = function () {
-                return null;
-            };
-            /**
-             * Schedule a rendering update for the component.
-             *
-             * This should be called whenever the internal state of the component
-             * has changed such that it requires the component to be re-rendered,
-             * or when external code requires the component to be refreshed.
-             *
-             * If the 'immediate' flag is false (the default) the update will be
-             * scheduled for the next cycle of the event loop. If the flag is set
-             * to true, the component will be updated immediately.
-             *
-             * Multiple pending requests are collapsed into a single update.
-             */
-            Component.prototype.update = function (immediate) {
-                var _this = this;
-                if (immediate === void 0) { immediate = false; }
-                if (immediate) {
-                    this._cancelFrame();
-                    this._render();
-                }
-                else if (this._frameId === 0) {
-                    this._frameId = raf(function () {
-                        _this._frameId = 0;
-                        _this._render();
-                    });
-                }
-            };
-            /**
-             * A method invoked immediately before the component is rendered.
-             *
-             * The default implementation is a no-op.
-             */
-            Component.prototype.beforeRender = function () {
-            };
-            /**
-             * A method invoked immediately after the component is rendered.
-             *
-             * The default implementation is a no-op.
-             */
-            Component.prototype.afterRender = function () {
-            };
-            /**
-             * Test whether the component should be updated.
-             *
-             * This method is invoked when the component is initialized with new
-             * data and children. It should return true if the component should
-             * be updated, or false if the values do not cause a visual change.
-             *
-             * Determining whether a component should update is error prone and
-             * can be just as expensive as performing the virtual DOM diff, so
-             * this should only be reimplemented if performance is a problem.
-             *
-             * The default implementation of this method always returns true.
-             */
-            Component.prototype.shouldUpdate = function (data, children) {
-                return true;
-            };
-            /**
-             * Perform an immediate rendering of the component.
-             */
-            Component.prototype._render = function () {
-                this.beforeRender();
-                this._refs = render(this.render(), this.node);
-                this.afterRender();
-            };
-            /**
-             * Clear the pending animation frame.
-             */
-            Component.prototype._cancelFrame = function () {
-                if (this._frameId !== 0) {
-                    caf(this._frameId);
-                    this._frameId = 0;
-                }
-            };
-            return Component;
-        })(components.BaseComponent);
-        components.Component = Component;
-    })(components = phosphor.components || (phosphor.components = {}));
-})(phosphor || (phosphor = {})); // module phosphor.components
-
-var __extends = this.__extends || function (d, b) {
-    for (var p in b) if (b.hasOwnProperty(p)) d[p] = b[p];
-    function __() { this.constructor = d; }
-    __.prototype = b.prototype;
-    d.prototype = new __();
-};
-/*-----------------------------------------------------------------------------
-| Copyright (c) 2014-2015, S. Chris Colbert
-|
-| Distributed under the terms of the BSD 3-Clause License.
-|
-| The full license is in the file LICENSE, distributed with this software.
-|----------------------------------------------------------------------------*/
-var phosphor;
-(function (phosphor) {
-    var components;
-    (function (components) {
-        var createFactory = phosphor.virtualdom.createFactory;
-        /**
-         * A component which hosts a CodeMirror editor.
-         */
-        var CodeMirrorComponent = (function (_super) {
-            __extends(CodeMirrorComponent, _super);
-            function CodeMirrorComponent() {
-                _super.apply(this, arguments);
-                this._editor = null;
-            }
-            /**
-             * Dispose of the resources held by the component.
-             */
-            CodeMirrorComponent.prototype.dispose = function () {
-                this._editor = null;
-                _super.prototype.dispose.call(this);
-            };
-            /**
-             * Initialize the component with new data and children.
-             */
-            CodeMirrorComponent.prototype.init = function (data, children) {
-                _super.prototype.init.call(this, data, children);
-                if (this._editor === null) {
-                    this._editor = this.createEditor();
-                }
-            };
-            Object.defineProperty(CodeMirrorComponent.prototype, "editor", {
-                /**
-                 * Get the code mirror editor for the component.
-                 *
-                 * This component does not attempt to wrap the extensive code mirror
-                 * api. User code should interact with the editor object directly.
-                 */
-                get: function () {
-                    return this._editor;
-                },
-                enumerable: true,
-                configurable: true
-            });
-            /**
-             * Create the editor for the component.
-             *
-             * This can be reimplemented by subclasses which require custom
-             * creation of the editor instance. The default implementation
-             * assumes `CodeMirror` is available in the global scope.
-             */
-            CodeMirrorComponent.prototype.createEditor = function () {
-                return CodeMirror(this.node, this.data.config);
-            };
-            /**
-             * The default class name for a code mirror component.
-             */
-            CodeMirrorComponent.className = 'p-CodeMirrorComponent';
-            return CodeMirrorComponent;
-        })(components.BaseComponent);
-        components.CodeMirrorComponent = CodeMirrorComponent;
-        /**
-         * The default virtual element factory for the CodeMirrorComponent.
-         */
-        components.CodeMirrorFactory = createFactory(CodeMirrorComponent);
-    })(components = phosphor.components || (phosphor.components = {}));
-})(phosphor || (phosphor = {})); // module phosphor.components
 
 /*-----------------------------------------------------------------------------
 | Copyright (c) 2014-2015, S. Chris Colbert
@@ -8152,7 +8071,7 @@ var __extends = this.__extends || function (d, b) {
     d.prototype = new __();
 };
 /*-----------------------------------------------------------------------------
-| Copyright (c) 2014, S. Chris Colbert
+| Copyright (c) 2014-2015, S. Chris Colbert
 |
 | Distributed under the terms of the BSD 3-Clause License.
 |
@@ -13254,3 +13173,179 @@ var phosphor;
         shell.ShellView = ShellView;
     })(shell = phosphor.shell || (phosphor.shell = {}));
 })(phosphor || (phosphor = {})); // module phosphor.shell
+
+var __extends = this.__extends || function (d, b) {
+    for (var p in b) if (b.hasOwnProperty(p)) d[p] = b[p];
+    function __() { this.constructor = d; }
+    __.prototype = b.prototype;
+    d.prototype = new __();
+};
+/*-----------------------------------------------------------------------------
+| Copyright (c) 2014-2015, S. Chris Colbert
+|
+| Distributed under the terms of the BSD 3-Clause License.
+|
+| The full license is in the file LICENSE, distributed with this software.
+|----------------------------------------------------------------------------*/
+var phosphor;
+(function (phosphor) {
+    var lib;
+    (function (lib) {
+        var Point = phosphor.utility.Point;
+        var Size = phosphor.utility.Size;
+        var BaseComponent = phosphor.virtualdom.BaseComponent;
+        var createFactory = phosphor.virtualdom.createFactory;
+        var SizePolicy = phosphor.widgets.SizePolicy;
+        var Widget = phosphor.widgets.Widget;
+        /**
+         * The class name added to CodeMirrorWidget instances.
+         */
+        var CODE_MIRROR_WIDGET_CLASS = 'p-CodeMirrorWidget';
+        /**
+         * THe class name assigned to CodeMirrorComponent instances.
+         */
+        var CODE_MIRROR_COMPONENT_CLASS = 'p-CodeMirrorComponent';
+        /**
+         * A widget which hosts a CodeMirror editor.
+         */
+        var CodeMirrorWidget = (function (_super) {
+            __extends(CodeMirrorWidget, _super);
+            /**
+             * Construct a new code mirror widget.
+             */
+            function CodeMirrorWidget(config) {
+                _super.call(this);
+                this._scrollPos = null;
+                this.addClass(CODE_MIRROR_WIDGET_CLASS);
+                this._editor = this.createEditor(config);
+                this.setSizePolicy(SizePolicy.Expanding, SizePolicy.Expanding);
+            }
+            /**
+             * Dispose of the resources held by the widget.
+             */
+            CodeMirrorWidget.prototype.dispose = function () {
+                this._editor = null;
+                _super.prototype.dispose.call(this);
+            };
+            Object.defineProperty(CodeMirrorWidget.prototype, "editor", {
+                /**
+                 * Get the code mirror editor for the widget.
+                 *
+                 * This widget does not attempt to wrap the code mirror api.
+                 * User code should interact with the editor object directly.
+                 */
+                get: function () {
+                    return this._editor;
+                },
+                enumerable: true,
+                configurable: true
+            });
+            /**
+             * Calculate the preferred size for the widget.
+             */
+            CodeMirrorWidget.prototype.sizeHint = function () {
+                return new Size(500, 200);
+            };
+            /**
+             * Create the editor for the widget.
+             *
+             * This can be reimplemented by subclasses which require custom
+             * creation of the editor instance. The default implementation
+             * assumes `CodeMirror` is available in the global scope.
+             */
+            CodeMirrorWidget.prototype.createEditor = function (config) {
+                return CodeMirror(this.node, config);
+            };
+            /**
+             * A method invoked on an 'after-show' message.
+             */
+            CodeMirrorWidget.prototype.onAfterShow = function (msg) {
+                var pos = this._scrollPos;
+                if (pos)
+                    this._editor.scrollTo(pos.x, pos.y);
+            };
+            /**
+             * A method invoked on a 'before-hide' message.
+             */
+            CodeMirrorWidget.prototype.onBeforeHide = function (msg) {
+                var info = this._editor.getScrollInfo();
+                this._scrollPos = new Point(info.left, info.top);
+            };
+            /**
+             * A method invoked on an 'after-attach' message.
+             */
+            CodeMirrorWidget.prototype.onAfterAttach = function (msg) {
+                this._editor.refresh();
+            };
+            /**
+             * A method invoked on a 'resize' message.
+             */
+            CodeMirrorWidget.prototype.onResize = function (msg) {
+                if (this.isVisible) {
+                    this._editor.setSize(msg.width, msg.height);
+                }
+            };
+            return CodeMirrorWidget;
+        })(Widget);
+        lib.CodeMirrorWidget = CodeMirrorWidget;
+        /**
+         * A component which hosts a CodeMirror editor.
+         */
+        var CodeMirrorComponent = (function (_super) {
+            __extends(CodeMirrorComponent, _super);
+            function CodeMirrorComponent() {
+                _super.apply(this, arguments);
+                this._editor = null;
+            }
+            /**
+             * Dispose of the resources held by the component.
+             */
+            CodeMirrorComponent.prototype.dispose = function () {
+                this._editor = null;
+                _super.prototype.dispose.call(this);
+            };
+            /**
+             * Initialize the component with new data and children.
+             */
+            CodeMirrorComponent.prototype.init = function (data, children) {
+                _super.prototype.init.call(this, data, children);
+                if (!this._editor) {
+                    this._editor = this.createEditor();
+                }
+            };
+            Object.defineProperty(CodeMirrorComponent.prototype, "editor", {
+                /**
+                 * Get the code mirror editor for the component.
+                 *
+                 * This component does not attempt to wrap the extensive code mirror
+                 * api. User code should interact with the editor object directly.
+                 */
+                get: function () {
+                    return this._editor;
+                },
+                enumerable: true,
+                configurable: true
+            });
+            /**
+             * Create the editor for the component.
+             *
+             * This can be reimplemented by subclasses which require custom
+             * creation of the editor instance. The default implementation
+             * assumes `CodeMirror` is available in the global scope.
+             */
+            CodeMirrorComponent.prototype.createEditor = function () {
+                return CodeMirror(this.node, this.data.config);
+            };
+            /**
+             * The default class name for a code mirror component.
+             */
+            CodeMirrorComponent.className = CODE_MIRROR_COMPONENT_CLASS;
+            return CodeMirrorComponent;
+        })(BaseComponent);
+        lib.CodeMirrorComponent = CodeMirrorComponent;
+        /**
+         * The default virtual element factory for the CodeMirrorComponent.
+         */
+        lib.CodeMirrorFactory = createFactory(CodeMirrorComponent);
+    })(lib = phosphor.lib || (phosphor.lib = {}));
+})(phosphor || (phosphor = {})); // module phosphor.lib

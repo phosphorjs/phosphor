@@ -1046,6 +1046,148 @@ declare module phosphor.utility {
 
 declare module phosphor.virtualdom {
     /**
+     * A concrete base implementation of IComponent.
+     *
+     * This class should be used by subclasses that want to manage their
+     * own DOM content outside the virtual DOM, but still be embeddable
+     * inside a virtual DOM hierarchy.
+     */
+    class BaseComponent<T extends IData> implements IComponent<T> {
+        /**
+         * The tag name used to create the component's DOM node.
+         *
+         * A subclass may redefine this property.
+         */
+        static tagName: string;
+        /**
+         * The initial class name for the component's DOM node.
+         *
+         * A subclass may redefine this property.
+         */
+        static className: string;
+        /**
+         * Construct a new base component.
+         */
+        constructor();
+        /**
+         * Dispose of the resources held by the component.
+         */
+        dispose(): void;
+        /**
+         * Get the DOM node for the component.
+         */
+        node: HTMLElement;
+        /**
+         * Get the current data object for the component.
+         */
+        data: T;
+        /**
+         * Get the current children for the component.
+         */
+        children: IElement[];
+        /**
+         * Initialize the component with new data and children.
+         *
+         * This is called whenever the component is rendered by its parent.
+         */
+        init(data: T, children: IElement[]): void;
+        private _node;
+        private _data;
+        private _children;
+    }
+}
+
+declare module phosphor.virtualdom {
+    /**
+     * A concrete implementation of IComponent with virtual DOM rendering.
+     *
+     * User code should subclass this class to create a custom component.
+     * The subclasses should reimplement the `render` method to generate
+     * the virtual DOM content for the component.
+     */
+    class Component<T extends IData> extends BaseComponent<T> {
+        /**
+         * Dispose of the resources held by the component.
+         */
+        dispose(): void;
+        /**
+         * Get the refs mapping for the component.
+         *
+         * This is an object which maps a ref name to the corresponding node
+         * or component instance created for the most recent rendering pass.
+         */
+        refs: any;
+        /**
+         * Initialize the component with new data and children.
+         *
+         * This is called whenever the component is rendered by its parent.
+         *
+         * The method will normally not be reimplemented by a subclass.
+         */
+        init(data: T, children: IElement[]): void;
+        /**
+         * Create the virtual content for the component.
+         *
+         * The rendered content is used to populate the component's node.
+         *
+         * This should be reimplemented by a subclass.
+         */
+        render(): IElement | IElement[];
+        /**
+         * Schedule a rendering update for the component.
+         *
+         * This should be called whenever the internal state of the component
+         * has changed such that it requires the component to be re-rendered,
+         * or when external code requires the component to be refreshed.
+         *
+         * If the 'immediate' flag is false (the default) the update will be
+         * scheduled for the next cycle of the event loop. If the flag is set
+         * to true, the component will be updated immediately.
+         *
+         * Multiple pending requests are collapsed into a single update.
+         */
+        update(immediate?: boolean): void;
+        /**
+         * A method invoked immediately before the component is rendered.
+         *
+         * The default implementation is a no-op.
+         */
+        protected beforeRender(): void;
+        /**
+         * A method invoked immediately after the component is rendered.
+         *
+         * The default implementation is a no-op.
+         */
+        protected afterRender(): void;
+        /**
+         * Test whether the component should be updated.
+         *
+         * This method is invoked when the component is initialized with new
+         * data and children. It should return true if the component should
+         * be updated, or false if the values do not cause a visual change.
+         *
+         * Determining whether a component should update is error prone and
+         * can be just as expensive as performing the virtual DOM diff, so
+         * this should only be reimplemented if performance is a problem.
+         *
+         * The default implementation of this method always returns true.
+         */
+        protected shouldUpdate(data: T, children: IElement[]): boolean;
+        /**
+         * Perform an immediate rendering of the component.
+         */
+        private _render();
+        /**
+         * Clear the pending animation frame.
+         */
+        private _cancelFrame();
+        private _frameId;
+        private _refs;
+    }
+}
+
+declare module phosphor.virtualdom {
+    /**
      * A typedef of the child types for an element factory.
      */
     type FactoryChildType = string | IElement;
@@ -1745,201 +1887,6 @@ declare module phosphor.virtualdom {
      * Returns an object which maps ref names to nodes and components.
      */
     function render(content: IElement | IElement[], host: HTMLElement): any;
-}
-
-declare module phosphor.components {
-    import IComponent = virtualdom.IComponent;
-    import IElement = virtualdom.IElement;
-    import IData = virtualdom.IData;
-    /**
-     * A concrete base implementation of IComponent.
-     *
-     * This class should be used by subclasses that want to manage their
-     * own DOM content outside the virtual DOM, but still be embeddable
-     * inside a virtual DOM hierarchy.
-     */
-    class BaseComponent<T extends IData> implements IComponent<T> {
-        /**
-         * The tag name used to create the component's DOM node.
-         *
-         * A subclass may redefine this property.
-         */
-        static tagName: string;
-        /**
-         * The initial class name for the component's DOM node.
-         *
-         * A subclass may redefine this property.
-         */
-        static className: string;
-        /**
-         * Construct a new base component.
-         */
-        constructor();
-        /**
-         * Dispose of the resources held by the component.
-         */
-        dispose(): void;
-        /**
-         * Get the DOM node for the component.
-         */
-        node: HTMLElement;
-        /**
-         * Get the current data object for the component.
-         */
-        data: T;
-        /**
-         * Get the current children for the component.
-         */
-        children: IElement[];
-        /**
-         * Initialize the component with new data and children.
-         *
-         * This is called whenever the component is rendered by its parent.
-         */
-        init(data: T, children: IElement[]): void;
-        private _node;
-        private _data;
-        private _children;
-    }
-}
-
-declare module phosphor.components {
-    import IElement = virtualdom.IElement;
-    import IData = virtualdom.IData;
-    /**
-     * A concrete implementation of IComponent with virtual DOM rendering.
-     *
-     * User code should subclass this class to create a custom component.
-     * The subclasses should reimplement the `render` method to generate
-     * the virtual DOM content for the component.
-     */
-    class Component<T extends IData> extends BaseComponent<T> {
-        /**
-         * Dispose of the resources held by the component.
-         */
-        dispose(): void;
-        /**
-         * Get the refs mapping for the component.
-         *
-         * This is an object which maps a ref name to the corresponding node
-         * or component instance created for the most recent rendering pass.
-         */
-        refs: any;
-        /**
-         * Initialize the component with new data and children.
-         *
-         * This is called whenever the component is rendered by its parent.
-         *
-         * The method will normally not be reimplemented by a subclass.
-         */
-        init(data: T, children: IElement[]): void;
-        /**
-         * Create the virtual content for the component.
-         *
-         * The rendered content is used to populate the component's node.
-         *
-         * This should be reimplemented by a subclass.
-         */
-        render(): IElement | IElement[];
-        /**
-         * Schedule a rendering update for the component.
-         *
-         * This should be called whenever the internal state of the component
-         * has changed such that it requires the component to be re-rendered,
-         * or when external code requires the component to be refreshed.
-         *
-         * If the 'immediate' flag is false (the default) the update will be
-         * scheduled for the next cycle of the event loop. If the flag is set
-         * to true, the component will be updated immediately.
-         *
-         * Multiple pending requests are collapsed into a single update.
-         */
-        update(immediate?: boolean): void;
-        /**
-         * A method invoked immediately before the component is rendered.
-         *
-         * The default implementation is a no-op.
-         */
-        protected beforeRender(): void;
-        /**
-         * A method invoked immediately after the component is rendered.
-         *
-         * The default implementation is a no-op.
-         */
-        protected afterRender(): void;
-        /**
-         * Test whether the component should be updated.
-         *
-         * This method is invoked when the component is initialized with new
-         * data and children. It should return true if the component should
-         * be updated, or false if the values do not cause a visual change.
-         *
-         * Determining whether a component should update is error prone and
-         * can be just as expensive as performing the virtual DOM diff, so
-         * this should only be reimplemented if performance is a problem.
-         *
-         * The default implementation of this method always returns true.
-         */
-        protected shouldUpdate(data: T, children: IElement[]): boolean;
-        /**
-         * Perform an immediate rendering of the component.
-         */
-        private _render();
-        /**
-         * Clear the pending animation frame.
-         */
-        private _cancelFrame();
-        private _frameId;
-        private _refs;
-    }
-}
-
-declare module phosphor.components {
-    import IData = virtualdom.IData;
-    import IElement = virtualdom.IElement;
-    /**
-     * The data object for a code mirror component.
-     */
-    interface ICodeMirrorData extends IData {
-        config: CodeMirror.EditorConfiguration;
-    }
-    /**
-     * A component which hosts a CodeMirror editor.
-     */
-    class CodeMirrorComponent extends BaseComponent<ICodeMirrorData> {
-        /**
-         * The default class name for a code mirror component.
-         */
-        static className: string;
-        /**
-         * Dispose of the resources held by the component.
-         */
-        dispose(): void;
-        /**
-         * Initialize the component with new data and children.
-         */
-        init(data: ICodeMirrorData, children: IElement[]): void;
-        /**
-         * Get the code mirror editor for the component.
-         *
-         * This component does not attempt to wrap the extensive code mirror
-         * api. User code should interact with the editor object directly.
-         */
-        editor: CodeMirror.Editor;
-        /**
-         * Create the editor for the component.
-         *
-         * This can be reimplemented by subclasses which require custom
-         * creation of the editor instance. The default implementation
-         * assumes `CodeMirror` is available in the global scope.
-         */
-        protected createEditor(): CodeMirror.Editor;
-        private _editor;
-    }
-    /**
-     * The default virtual element factory for the CodeMirrorComponent.
-     */
-    var CodeMirrorFactory: virtualdom.IFactory<ICodeMirrorData>;
 }
 
 declare module phosphor.widgets {
@@ -5680,4 +5627,107 @@ declare module phosphor.shell {
         private _centerPanel;
         private _menuManager;
     }
+}
+
+declare module phosphor.lib {
+    import IMessage = core.IMessage;
+    import Size = utility.Size;
+    import BaseComponent = virtualdom.BaseComponent;
+    import IData = virtualdom.IData;
+    import IElement = virtualdom.IElement;
+    import ResizeMessage = widgets.ResizeMessage;
+    import Widget = widgets.Widget;
+    /**
+     * A widget which hosts a CodeMirror editor.
+     */
+    class CodeMirrorWidget extends Widget {
+        /**
+         * Construct a new code mirror widget.
+         */
+        constructor(config?: CodeMirror.EditorConfiguration);
+        /**
+         * Dispose of the resources held by the widget.
+         */
+        dispose(): void;
+        /**
+         * Get the code mirror editor for the widget.
+         *
+         * This widget does not attempt to wrap the code mirror api.
+         * User code should interact with the editor object directly.
+         */
+        editor: CodeMirror.Editor;
+        /**
+         * Calculate the preferred size for the widget.
+         */
+        sizeHint(): Size;
+        /**
+         * Create the editor for the widget.
+         *
+         * This can be reimplemented by subclasses which require custom
+         * creation of the editor instance. The default implementation
+         * assumes `CodeMirror` is available in the global scope.
+         */
+        protected createEditor(config?: CodeMirror.EditorConfiguration): CodeMirror.Editor;
+        /**
+         * A method invoked on an 'after-show' message.
+         */
+        protected onAfterShow(msg: IMessage): void;
+        /**
+         * A method invoked on a 'before-hide' message.
+         */
+        protected onBeforeHide(msg: IMessage): void;
+        /**
+         * A method invoked on an 'after-attach' message.
+         */
+        protected onAfterAttach(msg: IMessage): void;
+        /**
+         * A method invoked on a 'resize' message.
+         */
+        protected onResize(msg: ResizeMessage): void;
+        private _editor;
+        private _scrollPos;
+    }
+    /**
+     * The data object for a code mirror component.
+     */
+    interface ICodeMirrorData extends IData {
+        config: CodeMirror.EditorConfiguration;
+    }
+    /**
+     * A component which hosts a CodeMirror editor.
+     */
+    class CodeMirrorComponent extends BaseComponent<ICodeMirrorData> {
+        /**
+         * The default class name for a code mirror component.
+         */
+        static className: string;
+        /**
+         * Dispose of the resources held by the component.
+         */
+        dispose(): void;
+        /**
+         * Initialize the component with new data and children.
+         */
+        init(data: ICodeMirrorData, children: IElement[]): void;
+        /**
+         * Get the code mirror editor for the component.
+         *
+         * This component does not attempt to wrap the extensive code mirror
+         * api. User code should interact with the editor object directly.
+         */
+        editor: CodeMirror.Editor;
+        /**
+         * Create the editor for the component.
+         *
+         * This can be reimplemented by subclasses which require custom
+         * creation of the editor instance. The default implementation
+         * assumes `CodeMirror` is available in the global scope.
+         */
+        protected createEditor(): CodeMirror.Editor;
+        private _editor;
+    }
+    /**
+     * The default virtual element factory for the CodeMirrorComponent.
+     */
+    var CodeMirrorFactory: virtualdom.IFactory<ICodeMirrorData>;
 }
