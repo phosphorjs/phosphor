@@ -7,26 +7,22 @@
 |----------------------------------------------------------------------------*/
 module example {
 
-import CodeMirrorFactory = phosphor.components.CodeMirrorFactory;
+import CodeMirrorFactory = phosphor.lib.CodeMirrorFactory;
 
 import render = phosphor.virtualdom.render;
 
 
+export
 function main(): void {
   var cm = CodeMirrorFactory({
-    ref: 'cm',
     config: {
-      value: "var text = 'This is CodeMirror.';",
+      value: "var text = 'This is a CodeMirror component.';",
       mode: 'javascript',
       lineNumbers: true,
       tabSize: 2,
     }
   });
-
-  var refs = render(cm, document.getElementById('main'));
+  render(cm, document.getElementById('main'));
 }
-
-
-window.onload = main;
 
 } // module example
