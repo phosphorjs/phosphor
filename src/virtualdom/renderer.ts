@@ -24,7 +24,7 @@ import emptyObject = utility.emptyObject;
  * Returns an object which maps ref names to nodes and components.
  */
 export
-function render(content: IElement | IElement[], host: HTMLElement): any {
+function render(content: Elem | Elem[], host: HTMLElement): any {
   var oldContent = hostMap.get(host) || emptyArray;
   var newContent = asElementArray(content);
   hostMap.set(host, newContent);
@@ -36,7 +36,7 @@ function render(content: IElement | IElement[], host: HTMLElement): any {
 /**
  * A weak mapping of host node to rendered content.
  */
-var hostMap = new WeakMap<HTMLElement, IElement[]>();
+var hostMap = new WeakMap<HTMLElement, Elem[]>();
 
 
 /**
@@ -55,7 +55,7 @@ const enum AttrMode { Property, Attribute, Event }
  * A mapping of string key to pair of element and rendered node.
  */
 interface IKeyMap {
-  [key: string]: Pair<IElement, Node>;
+  [key: string]: Pair<Elem, Node>;
 }
 
 
@@ -64,12 +64,12 @@ interface IKeyMap {
  *
  * Null content will be coerced to an empty array.
  */
-function asElementArray(content: IElement | IElement[]): IElement[] {
+function asElementArray(content: Elem | Elem[]): Elem[] {
   if (content instanceof Array) {
-    return <IElement[]>content;
+    return <Elem[]>content;
   }
   if (content) {
-    return [<IElement>content];
+    return [<Elem>content];
   }
   return emptyArray;
 }
@@ -78,7 +78,7 @@ function asElementArray(content: IElement | IElement[]): IElement[] {
 /**
  * Collect a mapping of keyed elements for the host content.
  */
-function collectKeys(host: HTMLElement, content: IElement[]): IKeyMap {
+function collectKeys(host: HTMLElement, content: Elem[]): IKeyMap {
   var node = host.firstChild;
   var keyed: IKeyMap = Object.create(null);
   for (var i = 0, n = content.length; i < n; ++i) {
@@ -94,7 +94,7 @@ function collectKeys(host: HTMLElement, content: IElement[]): IKeyMap {
 /**
  * Walk the element tree and collect the refs into a new object.
  */
-function collectRefs(host: HTMLElement, content: IElement[]): any {
+function collectRefs(host: HTMLElement, content: Elem[]): any {
   var refs = Object.create(null);
   refsHelper(host, content, refs);
   return refs;
@@ -104,16 +104,16 @@ function collectRefs(host: HTMLElement, content: IElement[]): any {
 /**
  * A recursive implementation helper for `collectRefs`.
  */
-function refsHelper(host: HTMLElement, content: IElement[], refs: any): void {
+function refsHelper(host: HTMLElement, content: Elem[], refs: any): void {
   var node = host.firstChild;
   for (var i = 0, n = content.length; i < n; ++i, node = node.nextSibling) {
     var elem = content[i];
     var type = elem.type;
-    if (type === ElementType.Node) {
+    if (type === ElemType.Node) {
       var ref = elem.data.ref;
       if (ref) refs[ref] = <HTMLElement>node;
       refsHelper(<HTMLElement>node, elem.children, refs);
-    } else if (type === ElementType.Component) {
+    } else if (type === ElemType.Component) {
       var ref = elem.data.ref;
       if (ref) refs[ref] = componentMap.get(<HTMLElement>node);
     }
@@ -124,17 +124,17 @@ function refsHelper(host: HTMLElement, content: IElement[], refs: any): void {
 /**
  * Create a node for a virtual element and add it to a host.
  */
-function addNode(host: HTMLElement, elem: IElement, ref?: Node): void {
+function addNode(host: HTMLElement, elem: Elem, ref?: Node): void {
   var type = elem.type;
-  if (type === ElementType.Text) {
+  if (type === ElemType.Text) {
     var text = document.createTextNode(<string>elem.tag);
     host.insertBefore(text, ref);
-  } else if (type === ElementType.Node) {
+  } else if (type === ElemType.Node) {
     var node = document.createElement(<string>elem.tag);
     addAttributes(node, elem.data);
     host.insertBefore(node, ref);
     addContent(node, elem.children);
-  } else if (type === ElementType.Component) {
+  } else if (type === ElemType.Component) {
     var component = new (<IComponentClass<any>>elem.tag)();
     componentMap.set(component.node, component);
     host.insertBefore(component.node, ref);
@@ -148,7 +148,7 @@ function addNode(host: HTMLElement, elem: IElement, ref?: Node): void {
 /**
  * Add content to a newly created DOM node.
  */
-function addContent(host: HTMLElement, content: IElement[]): void {
+function addContent(host: HTMLElement, content: Elem[]): void {
   for (var i = 0, n = content.length; i < n; ++i) {
     addNode(host, content[i]);
   }
@@ -186,7 +186,7 @@ function addAttributes(node: HTMLElement, attrs: any): void {
 /**
  * Update a host node with the delta of the virtual content.
  */
-function updateContent(host: HTMLElement, oldContent: IElement[], newContent: IElement[]): void {
+function updateContent(host: HTMLElement, oldContent: Elem[], newContent: Elem[]): void {
   // Bail early if the content is identical. This can occur when an
   // element has no children or if a component renders cached content.
   if (oldContent === newContent) {
@@ -258,7 +258,7 @@ function updateContent(host: HTMLElement, oldContent: IElement[], newContent: IE
     }
 
     // If the element is a text node, update its text content.
-    if (newElem.type === ElementType.Text) {
+    if (newElem.type === ElemType.Text) {
       if (oldElem.tag !== newElem.tag) {
         currNode.textContent = <string>newElem.tag;
       }
@@ -275,7 +275,7 @@ function updateContent(host: HTMLElement, oldContent: IElement[], newContent: IE
     }
 
     // If the element is a Node type, update the node in place.
-    if (newElem.type === ElementType.Node) {
+    if (newElem.type === ElemType.Node) {
       updateAttrs(<HTMLElement>currNode, oldElem.data, newElem.data);
       updateContent(<HTMLElement>currNode, oldElem.children, newElem.children);
       currNode = currNode.nextSibling;
