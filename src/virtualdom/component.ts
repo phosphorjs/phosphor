@@ -7,12 +7,86 @@
 |----------------------------------------------------------------------------*/
 module phosphor.virtualdom {
 
+import emptyArray = utility.emptyArray;
 import emptyObject = utility.emptyObject;
 
 
-// cache frequently used globals
-var raf = requestAnimationFrame;
-var caf = cancelAnimationFrame;
+/**
+ * A concrete base implementation of IComponent.
+ *
+ * This class should be used by subclasses that want to manage their
+ * own DOM content outside the virtual DOM, but still be embeddable
+ * inside a virtual DOM hierarchy.
+ */
+export
+class BaseComponent<T extends IElemData> implements IComponent<T> {
+  /**
+   * The tag name used to create the component's DOM node.
+   *
+   * A subclass may redefine this property.
+   */
+  static tagName = 'div';
+
+  /**
+   * The initial class name for the component's DOM node.
+   *
+   * A subclass may redefine this property.
+   */
+  static className = '';
+
+  /**
+   * Construct a new base component.
+   */
+  constructor() {
+    var ctor = <any>this.constructor;
+    this._node = document.createElement(<string>ctor.tagName);
+    this._node.className = <string>ctor.className;
+  }
+
+  /**
+   * Dispose of the resources held by the component.
+   */
+  dispose(): void {
+    this._node = null;
+    this._data = null;
+    this._children = null;
+  }
+
+  /**
+   * Get the DOM node for the component.
+   */
+  get node(): HTMLElement {
+    return this._node;
+  }
+
+  /**
+   * Get the current data object for the component.
+   */
+  get data(): T {
+    return this._data;
+  }
+
+  /**
+   * Get the current children for the component.
+   */
+  get children(): Elem[] {
+    return this._children;
+  }
+
+  /**
+   * Initialize the component with new data and children.
+   *
+   * This is called whenever the component is rendered by its parent.
+   */
+  init(data: T, children: Elem[]): void {
+    this._data = data;
+    this._children = children;
+  }
+
+  private _node: HTMLElement;
+  private _data: T = emptyObject;
+  private _children: Elem[] = emptyArray;
+}
 
 
 /**
@@ -23,7 +97,7 @@ var caf = cancelAnimationFrame;
  * the virtual DOM content for the component.
  */
 export
-class Component<T extends IData> extends BaseComponent<T> {
+class Component<T extends IElemData> extends BaseComponent<T> {
   /**
    * Dispose of the resources held by the component.
    */
@@ -50,7 +124,7 @@ class Component<T extends IData> extends BaseComponent<T> {
    *
    * The method will normally not be reimplemented by a subclass.
    */
-  init(data: T, children: IElement[]): void {
+  init(data: T, children: Elem[]): void {
     var update = this.shouldUpdate(data, children);
     super.init(data, children);
     if (update) this.update(true);
@@ -63,8 +137,8 @@ class Component<T extends IData> extends BaseComponent<T> {
    *
    * This should be reimplemented by a subclass.
    */
-  render(): IElement | IElement[] {
-    return null;
+  render(): Elem[] {
+    return [];
   }
 
   /**
@@ -85,7 +159,7 @@ class Component<T extends IData> extends BaseComponent<T> {
       this._cancelFrame();
       this._render();
     } else if (this._frameId === 0) {
-      this._frameId = raf(() => {
+      this._frameId = requestAnimationFrame(() => {
         this._frameId = 0;
         this._render();
       });
@@ -119,7 +193,7 @@ class Component<T extends IData> extends BaseComponent<T> {
    *
    * The default implementation of this method always returns true.
    */
-  protected shouldUpdate(data: T, children: IElement[]): boolean {
+  protected shouldUpdate(data: T, children: Elem[]): boolean {
     return true;
   }
 
@@ -137,7 +211,7 @@ class Component<T extends IData> extends BaseComponent<T> {
    */
   private _cancelFrame(): void {
     if (this._frameId !== 0) {
-      caf(this._frameId);
+      cancelAnimationFrame(this._frameId);
       this._frameId = 0;
     }
   }
