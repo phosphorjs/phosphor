@@ -133,7 +133,7 @@ function addNode(host: HTMLElement, elem: Elem, ref?: Node): void {
     var node = document.createElement(<string>elem.tag);
     host.insertBefore(node, ref);
     addAttributes(node, elem.data);
-    addContent(node, elem.children);
+    addChildren(node, elem.children);
   } else if (type === ElemType.Component) {
     var component = new (<IComponentClass<any>>elem.tag)();
     host.insertBefore(component.node, ref);
@@ -146,11 +146,11 @@ function addNode(host: HTMLElement, elem: Elem, ref?: Node): void {
 
 
 /**
- * Add content to a newly created DOM node.
+ * Add children to a newly created DOM node.
  */
-function addContent(host: HTMLElement, content: Elem[]): void {
-  for (var i = 0, n = content.length; i < n; ++i) {
-    addNode(host, content[i]);
+function addChildren(host: HTMLElement, children: Elem[]): void {
+  for (var i = 0, n = children.length; i < n; ++i) {
+    addNode(host, children[i]);
   }
 }
 
