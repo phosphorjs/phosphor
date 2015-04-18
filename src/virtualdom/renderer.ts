@@ -259,9 +259,7 @@ function updateContent(host: HTMLElement, oldContent: Elem[], newContent: Elem[]
 
     // If the element is a text node, update its text content.
     if (newElem.type === ElemType.Text) {
-      if (oldElem.tag !== newElem.tag) {
-        currNode.textContent = <string>newElem.tag;
-      }
+      currNode.textContent = <string>newElem.tag;
       currNode = currNode.nextSibling;
       continue;
     }
