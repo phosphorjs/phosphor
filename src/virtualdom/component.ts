@@ -12,14 +12,13 @@ import emptyObject = utility.emptyObject;
 
 
 /**
- * A concrete base implementation of IComponent.
+ * An implementation of IComponent which renders with the virtual DOM.
  *
- * This class should be used by subclasses that want to manage their
- * own DOM content outside the virtual DOM, but still be embeddable
- * inside a virtual DOM hierarchy.
+ * User code should subclass this class and reimplement the `render`
+ * method to generate the virtual DOM content for the component.
  */
 export
-class BaseComponent<T extends IElemData> implements IComponent<T> {
+class Component<T extends IData> implements IComponent<T> {
   /**
    * The tag name used to create the component's DOM node.
    *
@@ -35,7 +34,7 @@ class BaseComponent<T extends IElemData> implements IComponent<T> {
   static className = '';
 
   /**
-   * Construct a new base component.
+   * Construct a new component.
    */
   constructor() {
     var ctor = <any>this.constructor;
@@ -49,7 +48,9 @@ class BaseComponent<T extends IElemData> implements IComponent<T> {
   dispose(): void {
     this._node = null;
     this._data = null;
+    this._refs = null;
     this._children = null;
+    this._cancelUpdate();
   }
 
   /**
@@ -67,6 +68,13 @@ class BaseComponent<T extends IElemData> implements IComponent<T> {
   }
 
   /**
+   * Get the current refs mapping for the component.
+   */
+  get refs(): any {
+    return this._refs;
+  }
+
+  /**
    * Get the current children for the component.
    */
   get children(): Elem[] {
@@ -77,78 +85,26 @@ class BaseComponent<T extends IElemData> implements IComponent<T> {
    * Initialize the component with new data and children.
    *
    * This is called whenever the component is rendered by its parent.
-   */
-  init(data: T, children: Elem[]): void {
-    this._data = data;
-    this._children = children;
-  }
-
-  private _node: HTMLElement;
-  private _data: T = emptyObject;
-  private _children: Elem[] = emptyArray;
-}
-
-
-/**
- * A concrete implementation of IComponent with virtual DOM rendering.
- *
- * User code should subclass this class to create a custom component.
- * The subclasses should reimplement the `render` method to generate
- * the virtual DOM content for the component.
- */
-export
-class Component<T extends IElemData> extends BaseComponent<T> {
-  /**
-   * Dispose of the resources held by the component.
-   */
-  dispose(): void {
-    this._refs = null;
-    this._cancelFrame();
-    super.dispose();
-  }
-
-  /**
-   * Get the refs mapping for the component.
    *
-   * This is an object which maps a ref name to the corresponding node
-   * or component instance created for the most recent rendering pass.
-   */
-  get refs(): any {
-    return this._refs;
-  }
-
-  /**
-   * Initialize the component with new data and children.
-   *
-   * This is called whenever the component is rendered by its parent.
-   *
-   * The method will normally not be reimplemented by a subclass.
+   * A subclass may reimplement this method if needed, but it should
+   * always call `super` so that the internal component state can be
+   * updated and the node content can be re-rendered if necessary.
    */
   init(data: T, children: Elem[]): void {
     var update = this.shouldUpdate(data, children);
-    super.init(data, children);
+    this._data = data;
+    this._children = children;
     if (update) this.update(true);
   }
 
   /**
-   * Create the virtual content for the component.
-   *
-   * The rendered content is used to populate the component's node.
-   *
-   * This should be reimplemented by a subclass.
-   */
-  render(): Elem[] {
-    return [];
-  }
-
-  /**
-   * Schedule a rendering update for the component.
+   * Schedule an update for the component.
    *
    * This should be called whenever the internal state of the component
    * has changed such that it requires the component to be re-rendered,
    * or when external code requires the component to be refreshed.
    *
-   * If the 'immediate' flag is false (the default) the update will be
+   * If the `immediate` flag is false (the default) the update will be
    * scheduled for the next cycle of the event loop. If the flag is set
    * to true, the component will be updated immediately.
    *
@@ -156,34 +112,20 @@ class Component<T extends IElemData> extends BaseComponent<T> {
    */
   update(immediate = false): void {
     if (immediate) {
-      this._cancelFrame();
+      this._cancelUpdate();
       this._render();
-    } else if (this._frameId === 0) {
-      this._frameId = requestAnimationFrame(() => {
-        this._frameId = 0;
+    } else if (this._requestId === 0) {
+      this._requestId = requestAnimationFrame(() => {
+        this._requestId = 0;
         this._render();
       });
     }
   }
 
   /**
-   * A method invoked immediately before the component is rendered.
-   *
-   * The default implementation is a no-op.
-   */
-  protected beforeRender(): void { }
-
-  /**
-   * A method invoked immediately after the component is rendered.
-   *
-   * The default implementation is a no-op.
-   */
-  protected afterRender(): void { }
-
-  /**
    * Test whether the component should be updated.
    *
-   * This method is invoked when the component is initialized with new
+   * This method is called when the component is initialized with new
    * data and children. It should return true if the component should
    * be updated, or false if the values do not cause a visual change.
    *
@@ -191,33 +133,61 @@ class Component<T extends IElemData> extends BaseComponent<T> {
    * can be just as expensive as performing the virtual DOM diff, so
    * this should only be reimplemented if performance is a problem.
    *
-   * The default implementation of this method always returns true.
+   * The default implementation returns `true`.
    */
-  protected shouldUpdate(data: T, children: Elem[]): boolean {
+  shouldUpdate(data: T, children: Elem[]): boolean {
     return true;
   }
+
+  /**
+   * Create the virtual DOM content for the component.
+   *
+   * The rendered content is used to populate the component's node.
+   *
+   * The default implementation returns `null`.
+   */
+  render(): Elem | Elem[] {
+    return null;
+  }
+
+  /**
+   * A method invoked immediately before the component is rendered.
+   *
+   * The default implementation is a no-op.
+   */
+  beforeRender(): void { }
+
+  /**
+   * A method invoked immediately after the component is rendered.
+   *
+   * The default implementation is a no-op.
+   */
+  afterRender(): void { }
 
   /**
    * Perform an immediate rendering of the component.
    */
   private _render(): void {
     this.beforeRender();
-    this._refs = render(this.render(), this.node);
+    this._refs = render(this.render(), this._node);
     this.afterRender();
   }
 
   /**
-   * Clear the pending animation frame.
+   * Cancel the pending update request.
    */
-  private _cancelFrame(): void {
-    if (this._frameId !== 0) {
-      cancelAnimationFrame(this._frameId);
-      this._frameId = 0;
+  private _cancelUpdate(): void {
+    if (this._requestId !== 0) {
+      cancelAnimationFrame(this._requestId);
+      this._requestId = 0;
     }
   }
 
-  private _frameId = 0;
-  private _refs = emptyObject;
+  private _requestId = 0;
+  private _node: HTMLElement;
+  private _data: T = emptyObject;
+  private _refs: any = emptyObject;
+  private _children: Elem[] = emptyArray;
 }
 
 } // module phosphor.virtualdom
