@@ -7,40 +7,47 @@
 |----------------------------------------------------------------------------*/
 module phosphor.virtualdom {
 
+import IDisposable = utility.IDisposable;
+
+
 /**
- * An object which manages its own node in a virtual DOM tree.
+ * An object which manages its own DOM node in a virtual DOM hierarchy.
  */
 export
-interface IComponent<T extends IElemData> {
+interface IComponent<T extends IData> extends IDisposable {
   /**
+   * The DOM node for the component.
    *
+   * This must remain constant for the lifetime of the component.
    */
-  init(data: T, children: Elem[]): boolean;
+  node: HTMLElement;
 
   /**
+   * Initialize the component with new data and children.
    *
+   * This is called whenever the component is rendered by its owner.
+   *
+   * The component is responsible for updating the content of its node.
    */
-  render(): Elem;
+  init(data: T, children: Elem[]): void;
 
   /**
+   * A method invoked after the component is attached to the DOM.
    *
+   * This will be called every time the node is attached to the DOM.
+   * It will be called more than once if the component is moved, since
+   * moving  a node requires a remove followed by an insert.
    */
-  beforeUpdate?(): void;
+  afterAttach?(): void;
 
   /**
+   * A method invoked before the component is detached from the DOM.
    *
+   * This will be called every time the node is detached from the DOM.
+   * It will be called more than once if the component is moved, since
+   * moving a node requires a remove followed by an insert.
    */
-  afterUpdate?(): void;
-
-  /**
-   *
-   */
-  afterAttach?(node: HTMLElement): void;
-
-  /**
-   *
-   */
-  beforeDetach?(node: HTMLElement): void;
+  beforeDetach?(): void;
 }
 
 
@@ -48,7 +55,7 @@ interface IComponent<T extends IElemData> {
  * A component class type.
  */
 export
-interface IComponentClass<T extends IElemData> {
+interface IComponentClass<T extends IData> {
   /**
    * Construct a new component.
    */
