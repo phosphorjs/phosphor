@@ -24,25 +24,47 @@ import emptyObject = utility.emptyObject;
  * Returns an object which maps ref names to nodes and components.
  */
 export
-function render(content: Elem | Elem[], host: HTMLElement): any {
-  var oldContent = hostMap.get(host) || emptyArray;
-  var newContent = asElementArray(content);
-  hostMap.set(host, newContent);
-  updateContent(host, oldContent, newContent);
-  return collectRefs(host, newContent);
+function render(content: Elem | Elem[], host: Node): any {
+  var refs: any;
+  stackLevel++;
+  try {
+    refs = renderImpl(content, host);
+  } finally {
+    stackLevel--;
+  }
+  if (stackLevel === 0) {
+    notifyAttached();
+  }
+  return refs;
 }
+
+
+/**
+ * The current stack level of recursive calls to `render`.
+ */
+var stackLevel = 0;
+
+
+/**
+ * Components which are pending attach notification.
+ *
+ * Components are pushed to this array when their node is added to the
+ * DOM. When the root `render` call exits, each component in the array
+ * will have its `afterAttach` method called.
+ */
+var needsAttachNotification: IComponent<any>[] = [];
 
 
 /**
  * A weak mapping of host node to rendered content.
  */
-var hostMap = new WeakMap<HTMLElement, Elem[]>();
+var hostMap = new WeakMap<Node, Elem[]>();
 
 
 /**
  * A weak mapping of component node to component.
  */
-var componentMap = new WeakMap<HTMLElement, IComponent<any>>();
+var componentMap = new WeakMap<Node, IComponent<any>>();
 
 
 /**
@@ -60,7 +82,23 @@ interface IKeyMap {
 
 
 /**
- * Coerce virtual content into a virtual element array.
+ * The internal render entry point.
+ *
+ * This function is separated from the `render` function so that it can
+ * be optimized by V8, which does not optimize functions which contain
+ * a `try-finally` block.
+ */
+function renderImpl(content: Elem | Elem[], host: Node): any {
+  var oldContent = hostMap.get(host) || emptyArray;
+  var newContent = asElementArray(content);
+  hostMap.set(host, newContent);
+  updateContent(host, oldContent, newContent);
+  return collectRefs(host, newContent);
+}
+
+
+/**
+ * Coerce content into an elem array.
  *
  * Null content will be coerced to an empty array.
  */
@@ -76,9 +114,55 @@ function asElementArray(content: Elem | Elem[]): Elem[] {
 
 
 /**
+ * Notify the components pending an `afterAttach` notification.
+ */
+function notifyAttached(): void {
+  while (needsAttachNotification.length > 0) {
+    var component = needsAttachNotification.pop();
+    if (component.afterAttach !== void 0) {
+      component.afterAttach();
+    }
+  }
+}
+
+
+/**
+ * Walk the element tree and collect the refs into a new object.
+ */
+function collectRefs(host: Node, content: Elem[]): any {
+  var refs = Object.create(null);
+  refsHelper(host, content, refs);
+  return refs;
+}
+
+
+/**
+ * A recursive implementation helper for `collectRefs`.
+ */
+function refsHelper(host: Node, content: Elem[], refs: any): void {
+  var node = host.firstChild;
+  for (var i = 0, n = content.length; i < n; ++i) {
+    var elem = content[i];
+    switch (elem.type) {
+    case ElemType.Node:
+      var ref = elem.data.ref;
+      if (ref) refs[ref] = node;
+      refsHelper(node, elem.children, refs);
+      break;
+    case ElemType.Component:
+      var ref = elem.data.ref;
+      if (ref) refs[ref] = componentMap.get(node);
+      break;
+    }
+    node = node.nextSibling;
+  }
+}
+
+
+/**
  * Collect a mapping of keyed elements for the host content.
  */
-function collectKeys(host: HTMLElement, content: Elem[]): IKeyMap {
+function collectKeys(host: Node, content: Elem[]): IKeyMap {
   var node = host.firstChild;
   var keyed: IKeyMap = Object.create(null);
   for (var i = 0, n = content.length; i < n; ++i) {
@@ -92,65 +176,212 @@ function collectKeys(host: HTMLElement, content: Elem[]): IKeyMap {
 
 
 /**
- * Walk the element tree and collect the refs into a new object.
+ * Create and return a new DOM node for a give elem.
  */
-function collectRefs(host: HTMLElement, content: Elem[]): any {
-  var refs = Object.create(null);
-  refsHelper(host, content, refs);
-  return refs;
+function createNode(elem: Elem): Node {
+  var node: Node;
+  switch (elem.type) {
+  case ElemType.Text:
+    node = document.createTextNode(<string>elem.tag);
+    break;
+  case ElemType.Node:
+    node = document.createElement(<string>elem.tag);
+    addAttributes(<HTMLElement>node, elem.data);
+    addContent(node, elem.children);
+    break;
+  case ElemType.Component:
+    var component = new (<IComponentClass<any>>elem.tag)();
+    componentMap.set(component.node, component);
+    needsAttachNotification.push(component);
+    component.init(elem.data, elem.children);
+    node = component.node;
+    break;
+  default:
+    throw new Error('invalid element type');
+  }
+  return node;
 }
 
 
 /**
- * A recursive implementation helper for `collectRefs`.
+ * Create and add child content to a newly created DOM node.
  */
-function refsHelper(host: HTMLElement, content: Elem[], refs: any): void {
-  var node = host.firstChild;
-  for (var i = 0, n = content.length; i < n; ++i, node = node.nextSibling) {
-    var elem = content[i];
-    var type = elem.type;
-    if (type === ElemType.Node) {
-      var ref = elem.data.ref;
-      if (ref) refs[ref] = <HTMLElement>node;
-      refsHelper(<HTMLElement>node, elem.children, refs);
-    } else if (type === ElemType.Component) {
-      var ref = elem.data.ref;
-      if (ref) refs[ref] = componentMap.get(<HTMLElement>node);
+function addContent(node: Node, content: Elem[]): void {
+  for (var i = 0, n = content.length; i < n; ++i) {
+    node.appendChild(createNode(content[i]));
+  }
+}
+
+
+/**
+ * Update a host node with the delta of the elem content.
+ *
+ * This is the core "diff" algorithm. There is no explicit "patch"
+ * phase. The host is patched at each step as the diff progresses.
+ */
+function updateContent(host: Node, oldContent: Elem[], newContent: Elem[]): void {
+  // Bail early if the content is identical. This can occur when an
+  // elem has no children or if a component renders cached content.
+  if (oldContent === newContent) {
+    return;
+  }
+
+  // Collect the old keyed elems into a mapping.
+  var oldKeyed = collectKeys(host, oldContent);
+
+  // Create a copy of the old content which can be modified in-place.
+  var oldCopy = algo.copy(oldContent);
+
+  // Update the host with the new content. The diff always proceeds
+  // forward and never modifies a previously visited index. The old
+  // copy array is modified in-place to reflect the changes made to
+  // the host children. This causes the stale nodes to be pushed to
+  // the end of the host node and removed at the end of the loop.
+  var currNode = host.firstChild;
+  var newCount = newContent.length;
+  for (var i = 0; i < newCount; ++i) {
+
+    // If the old elems are exhausted, create a new node.
+    if (i >= oldCopy.length) {
+      host.appendChild(createNode(newContent[i]));
+      continue;
+    }
+
+    // Cache a reference to the old and new elems.
+    var oldElem = oldCopy[i];
+    var newElem = newContent[i];
+
+    // If the new elem is keyed, move an old keyed elem to the proper
+    // location before proceeding with the diff. The search can start
+    // at the current index, since the unmatched old keyed elems are
+    // pushed forward in the old copy array.
+    var newKey = newElem.data.key;
+    if (newKey && newKey in oldKeyed) {
+      var pair = oldKeyed[newKey];
+      if (pair.first !== oldElem) {
+        algo.move(oldCopy, algo.indexOf(oldCopy, pair.first, i), i);
+        walkBranch(pair.second, beforeDetachNode);
+        host.insertBefore(pair.second, currNode);
+        walkBranch(pair.second, afterAttachNode);
+        oldElem = pair.first;
+        currNode = pair.second;
+      }
+    }
+
+    // If both elements are identical, there is nothing to do.
+    // This can occur when a component renders cached content.
+    if (oldElem === newElem) {
+      currNode = currNode.nextSibling;
+      continue;
+    }
+
+    // If the old elem is keyed and does not match the new elem key,
+    // create a new node. This is necessary since the old keyed elem
+    // may be matched at a later point in the diff.
+    var oldKey = oldElem.data.key;
+    if (oldKey && oldKey !== newKey) {
+      algo.insert(oldCopy, i, newElem);
+      host.insertBefore(createNode(newElem), currNode);
+      continue;
+    }
+
+    // If the elements have different types, create a new node.
+    if (oldElem.type !== newElem.type) {
+      algo.insert(oldCopy, i, newElem);
+      host.insertBefore(createNode(newElem), currNode);
+      continue;
+    }
+
+    // If the element is a text node, update its text content.
+    if (newElem.type === ElemType.Text) {
+      currNode.textContent = <string>newElem.tag;
+      currNode = currNode.nextSibling;
+      continue;
+    }
+
+    // At this point, the element is a Node or Component type.
+    // If the element tags are different, create a new node.
+    if (oldElem.tag !== newElem.tag) {
+      algo.insert(oldCopy, i, newElem);
+      host.insertBefore(createNode(newElem), currNode);
+      continue;
+    }
+
+    // If the element is a Node type, update the node in place.
+    if (newElem.type === ElemType.Node) {
+      updateAttributes(<HTMLElement>currNode, oldElem.data, newElem.data);
+      updateContent(currNode, oldElem.children, newElem.children);
+      currNode = currNode.nextSibling;
+      continue;
+    }
+
+    // At this point, the node is a Component type; re-init it.
+    var component = componentMap.get(currNode);
+    component.init(newElem.data, newElem.children);
+    currNode = currNode.nextSibling;
+  }
+
+  // Dispose of the old nodes pushed to the end of the host.
+  for (var i = oldCopy.length - 1; i >= newCount; --i) {
+    var oldNode = host.lastChild;
+    walkBranch(oldNode, beforeDetachNode);
+    host.removeChild(oldNode);
+    walkBranch(oldNode, disposeNode);
+  }
+}
+
+
+/**
+ * Invoke the given callback for each node the branch.
+ */
+function walkBranch(root: Node, callback: (node: Node) => void): void {
+  callback(root);
+  for (var node = root.firstChild; node; node = node.nextSibling) {
+    walkBranch(node, callback);
+  }
+}
+
+
+/**
+ * Invoke the `beforeDetach` method of the component mapped to the node.
+ *
+ * If the node does not map to a component, this is a no-op.
+ */
+function beforeDetachNode(node: Node): void {
+  if (node.nodeType === 1) {
+    var component = componentMap.get(node);
+    if (component && component.beforeDetach !== void 0) {
+      component.beforeDetach();
     }
   }
 }
 
 
 /**
- * Create a node for a virtual element and add it to a host.
+ * Invoke the `afterAttach` method of the component mapped to the node.
+ *
+ * If the node does not map to a component, this is a no-op.
  */
-function addNode(host: HTMLElement, elem: Elem, ref?: Node): void {
-  var type = elem.type;
-  if (type === ElemType.Text) {
-    var text = document.createTextNode(<string>elem.tag);
-    host.insertBefore(text, ref);
-  } else if (type === ElemType.Node) {
-    var node = document.createElement(<string>elem.tag);
-    host.insertBefore(node, ref);
-    addAttributes(node, elem.data);
-    addChildren(node, elem.children);
-  } else if (type === ElemType.Component) {
-    var component = new (<IComponentClass<any>>elem.tag)();
-    host.insertBefore(component.node, ref);
-    componentMap.set(component.node, component);
-    component.init(elem.data, elem.children);
-  } else {
-    throw new Error('invalid element type');
+function afterAttachNode(node: Node): void {
+  if (node.nodeType === 1) {
+    var component = componentMap.get(node);
+    if (component && component.afterAttach !== void 0) {
+      component.afterAttach();
+    }
   }
 }
 
 
 /**
- * Add children to a newly created DOM node.
+ * Dispose of the node which has been removed from the DOM.
+ *
+ * If the node maps to a component, the `dispose` component method
+ * will be called.
  */
-function addChildren(host: HTMLElement, children: Elem[]): void {
-  for (var i = 0, n = children.length; i < n; ++i) {
-    addNode(host, children[i]);
+function disposeNode(node: Node): void {
+  if (node.nodeType === 1) {
+    var component = componentMap.get(node);
+    if (component) component.dispose();
   }
 }
 
@@ -184,121 +415,9 @@ function addAttributes(node: HTMLElement, attrs: any): void {
 
 
 /**
- * Update a host node with the delta of the virtual content.
- */
-function updateContent(host: HTMLElement, oldContent: Elem[], newContent: Elem[]): void {
-  // Bail early if the content is identical. This can occur when an
-  // element has no children or if a component renders cached content.
-  if (oldContent === newContent) {
-    return;
-  }
-
-  // Collect the old keyed elements into a mapping.
-  var oldKeyed = collectKeys(host, oldContent);
-
-  // Create a copy of the old content which can be modified in-place.
-  var oldCopy = algo.copy(oldContent);
-
-  // Update the host with the new content. The diff algorithm always
-  // proceeds forward and never modifies a previously visited index.
-  // The `oldCopy` array is modified in-place to reflect the changes
-  // made to the host. This causes the unused nodes to be pushed to
-  // the end of the host node and removed at the end of the loop.
-  var currNode = host.firstChild;
-  var newCount = newContent.length;
-  for (var i = 0; i < newCount; ++i) {
-    var newElem = newContent[i];
-
-    // If the old elements are exhausted, create a new node.
-    if (i >= oldCopy.length) {
-      oldCopy.push(newElem);
-      addNode(host, newElem);
-      continue;
-    }
-
-    var oldElem = oldCopy[i];
-
-    // If the new element is keyed, move a keyed old element to the
-    // proper location before proceeding with the diff. The search for
-    // the old keyed elem starts at the current index, since unmatched
-    // old keyed elements are pushed forward in the old copy array.
-    var newKey = newElem.data.key;
-    if (newKey && newKey in oldKeyed) {
-      var pair = oldKeyed[newKey];
-      if (pair.first !== oldElem) {
-        algo.move(oldCopy, algo.indexOf(oldCopy, pair.first, i), i);
-        host.insertBefore(pair.second, currNode);
-        oldElem = pair.first;
-        currNode = pair.second;
-      }
-    }
-
-    // If both elements are identical, there is nothing to do.
-    // This can occur when a component renders cached content.
-    if (oldElem === newElem) {
-      currNode = currNode.nextSibling;
-      continue;
-    }
-
-    // If the old element is keyed and does not match the new element
-    // key, create a new node. This is necessary since the old keyed
-    // element may be matched at a later point in the diff.
-    var oldKey = oldElem.data.key;
-    if (oldKey && oldKey !== newKey) {
-      algo.insert(oldCopy, i, newElem);
-      addNode(host, newElem, currNode);
-      continue;
-    }
-
-    // If the elements have different types, create a new node.
-    if (oldElem.type !== newElem.type) {
-      algo.insert(oldCopy, i, newElem);
-      addNode(host, newElem, currNode);
-      continue;
-    }
-
-    // If the element is a text node, update its text content.
-    if (newElem.type === ElemType.Text) {
-      currNode.textContent = <string>newElem.tag;
-      currNode = currNode.nextSibling;
-      continue;
-    }
-
-    // At this point, the element is a Node or Component type.
-    // If the element tags are different, create a new node.
-    if (oldElem.tag !== newElem.tag) {
-      algo.insert(oldCopy, i, newElem);
-      addNode(host, newElem, currNode);
-      continue;
-    }
-
-    // If the element is a Node type, update the node in place.
-    if (newElem.type === ElemType.Node) {
-      updateAttrs(<HTMLElement>currNode, oldElem.data, newElem.data);
-      updateContent(<HTMLElement>currNode, oldElem.children, newElem.children);
-      currNode = currNode.nextSibling;
-      continue;
-    }
-
-    // At this point, the node is a Component type; re-init it.
-    var component = componentMap.get(<HTMLElement>currNode);
-    component.init(newElem.data, newElem.children);
-    currNode = currNode.nextSibling;
-  }
-
-  // Dispose of the old content pushed to the end of the host.
-  for (var i = oldCopy.length - 1; i >= newCount; --i) {
-    var oldNode = host.lastChild;
-    host.removeChild(oldNode);
-    disposeBranch(oldNode);
-  }
-}
-
-
-/**
  * Update the node attributes with the delta of attribute objects.
  */
-function updateAttrs(node: HTMLElement, oldAttrs: any, newAttrs: any): void {
+function updateAttributes(node: HTMLElement, oldAttrs: any, newAttrs: any): void {
   if (oldAttrs === newAttrs) {
     return;
   }
@@ -355,20 +474,6 @@ function updateAttrs(node: HTMLElement, oldAttrs: any, newAttrs: any): void {
         style[name] = value;
       }
     }
-  }
-}
-
-
-/**
- * Dispose of the components associated with the given branch.
- */
-function disposeBranch(root: Node): void {
-  if (root.nodeType === 1) {
-    var component = componentMap.get(<HTMLElement>root);
-    if (component) component.dispose();
-  }
-  for (var child = root.firstChild; child; child = child.nextSibling) {
-    disposeBranch(child);
   }
 }
 
