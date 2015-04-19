@@ -12,26 +12,26 @@ import emptyObject = utility.emptyObject;
 
 
 /**
- * A typedef for an elem factory child argument.
+ * A typedef for a factory child argument.
  */
 export
-type ElemChild = string | Elem;
+type FactoryChild = (string | Elem) | (string | Elem)[];
 
 
 /**
  * A factory function which creates an elem instance.
  */
 export
-interface IElemFactory<T extends IElemData> {
+interface IFactory<T extends IData> {
   /**
    * Create an elem instance with the given children.
    */
-  (...children: (ElemChild | ElemChild[])[]): Elem;
+  (...children: FactoryChild[]): Elem;
 
   /**
    * Create an elem instance with the given data and children.
    */
-  (data: T, ...children: (ElemChild | ElemChild[])[]): Elem;
+  (data: T, ...children: FactoryChild[]): Elem;
 }
 
 
@@ -43,8 +43,8 @@ interface IElemFactory<T extends IElemData> {
  * object which contains factories for the standard DOM elements.
  */
 export
-function createElemFactory<T extends IElemData>(tag: string | IComponentClass<T>): IElemFactory<T> {
-  return elemFactory.bind(void 0, tag);
+function createFactory<T extends IData>(tag: string | IComponentClass<T>): IFactory<T> {
+  return factory.bind(void 0, tag);
 }
 
 
@@ -64,9 +64,9 @@ function extend(first: any[], second: any[]): void {
 /**
  * The elem factory function implementation.
  *
- * When bound to a tag, this function implements IElemFactory.
+ * When bound to a tag, this function implements `IFactory`.
  */
-function elemFactory(tag: ElemTag, first?: any): Elem {
+function factory(tag: ElemTag, first?: any): Elem {
   var data: any = null;
   var children: any[] = null;
 

@@ -30,7 +30,7 @@ enum ElemType {
 
 
 /**
- * The type of an elem tag.
+ * A typedef for an elem tag.
  */
 export
 type ElemTag = string | IComponentClass<any>;
@@ -40,7 +40,7 @@ type ElemTag = string | IComponentClass<any>;
  * A data object for an elem.
  */
 export
-interface IElemData {
+interface IData {
   /**
    * The key id for the elem.
    *
@@ -97,7 +97,7 @@ class Elem {
    *   Node - the node attributes object
    *   Component - the component data object
    */
-  data: IElemData;
+  data: IData;
 
   /**
    * The array of child elements.
@@ -107,7 +107,7 @@ class Elem {
   /**
    * Construct a new virtual elem.
    */
-  constructor(type: ElemType, tag: ElemTag, data: IElemData, children: Elem[]) {
+  constructor(type: ElemType, tag: ElemTag, data: IData, children: Elem[]) {
     this.type = type;
     this.tag = tag;
     this.data = data;
