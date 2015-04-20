@@ -7,18 +7,12 @@
 |----------------------------------------------------------------------------*/
 module example {
 
-import Size = phosphor.utility.Size;
-
 import Component = phosphor.virtualdom.Component;
 import Elem = phosphor.virtualdom.Elem;
 import IData = phosphor.virtualdom.IData;
 import createFactory = phosphor.virtualdom.createFactory;
 import dom = phosphor.virtualdom.dom;
-
-import BoxPanel = phosphor.widgets.BoxPanel;
-import ElementHost = phosphor.widgets.ElementHost;
-import SizePolicy = phosphor.widgets.SizePolicy;
-import Widget = phosphor.widgets.Widget;
+import render = phosphor.virtualdom.render;
 
 
 /**
@@ -58,129 +52,44 @@ var imageItems: IImageItem[] = [
 
 
 /**
- * A data object for a selector component.
+ * A data object for an image viewer component.
  */
-interface ISelectorData extends IData {
-  values: string[];
-  onSelected: (value: string) => void;
+interface IImageViewerData extends IData {
+  items: IImageItem[];
 }
 
 
-/**
- * A simple component which renders a selector control.
- */
-class SelectorComponent extends Component<ISelectorData> {
+class ImageViewerComponent extends Component<IImageViewerData> {
 
-  static tagName = 'select';
-
-  static className = 'SelectorComponent';
-
-  constructor() {
-    super();
-    this.node.addEventListener('change', <any>this);
+  protected render(): Elem[] {
+    var items = this.data.items;
+    var target = items[this._index];
+    var path = target ? target.path : '';
+    var options = items.map(it => dom.option(it.name));
+    return [
+      dom.select({ onchange: this._onChange }, options),
+      dom.br(), dom.br(),
+      dom.img({ src: path })
+    ];
   }
 
-  dispose(): void {
-    this.node.removeEventListener('change', <any>this);
-    super.dispose();
-  }
-
-  render(): Elem[] {
-    return this.data.values.map(value => dom.option(value));
-  }
-
-  handleEvent(event: Event): void {
-    if (event.type === 'change') {
-      this.data.onSelected((<HTMLSelectElement>this.node).value);
-    }
-  }
-}
-
-
-/**
- * A factory function for a selector component.
- */
-var Selector = createFactory(SelectorComponent);
-
-
-/**
- * A simple widget which displays an image.
- *
- * This could just as easily be rendered as part of the component,
- * but for this example it demonstrates a simple custom widget.
- */
-class SimpleImageWidget extends Widget {
-
-  constructor() {
-    super();
-    this.addClass('SimpleImageWidget');
-    this.node.onload = () => this.updateGeometry();
-  }
-
-  get src(): string {
-    return (<HTMLImageElement>this.node).src;
-  }
-
-  set src(src: string) {
-    (<HTMLImageElement>this.node).src = src;
-  }
-
-  sizeHint(): Size {
-    var img = <HTMLImageElement>this.node;
-    return new Size(img.naturalWidth, img.naturalHeight);
-  }
-
-  protected createNode(): HTMLElement {
-    return document.createElement('img');
-  }
-}
-
-
-/**
- * A top level panel which combines a selector and image panel.
- */
-class MainPanel extends BoxPanel {
-
-  constructor() {
-    super();
-    this.addClass('MainPanel');
-
-    var names = imageItems.map(item => item.name);
-    var selector = Selector({ values: names, onSelected: this._onSelected });
-
-    var host = new ElementHost(selector, 200, 24);
-    host.setSizePolicy(SizePolicy.Expanding, SizePolicy.Fixed);
-
-    var image = this._image = new SimpleImageWidget();
-    image.setSizePolicy(SizePolicy.Fixed, SizePolicy.Fixed);
-    image.src = imageItems[0].path;
-
-    this.addWidget(host);
-    this.addWidget(image);
-  }
-
-  private _onSelected = (value: string): void => {
-    for (var i = 0; i < imageItems.length; ++i) {
-      var item = imageItems[i];
-      if (item.name === value) {
-        this._image.src = item.path;
-        return;
-      }
-    }
-    this._image.src = item.path;
+  private _onChange = (event: Event) => {
+    this._index = (<HTMLSelectElement>event.target).selectedIndex;
+    this.update();
   };
 
-  private _image: SimpleImageWidget;
+  private _index = 0;
 }
+
+
+/**
+ * A factory function for an image viewer component.
+ */
+var ImageViewer = createFactory(ImageViewerComponent);
 
 
 function main(): void {
-  var panel = new MainPanel();
-
-  panel.attach(document.getElementById('main'));
-  panel.fit();
-
-  window.onresize = () => panel.fit();
+  render(ImageViewer({ items: imageItems }), document.getElementById('main'));
 }
 
 
