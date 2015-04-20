@@ -83,7 +83,7 @@ var tsSources = [
   'widgets/splitpanel',
   'widgets/stackedpanel',
   'widgets/dockarea',
-  //'widgets/elementhost',
+  'widgets/elementhost',
   'widgets/menuitem',
   'widgets/menu',
   'widgets/menubar',

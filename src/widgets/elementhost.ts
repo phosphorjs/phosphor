@@ -11,7 +11,7 @@ import IMessage = core.IMessage;
 
 import Size = utility.Size;
 
-import IElement = virtualdom.IElement;
+import Elem = virtualdom.Elem;
 import render = virtualdom.render;
 
 
@@ -34,31 +34,31 @@ class ElementHost extends Widget {
   /**
    * Construct a new element host.
    */
-  constructor(element: IElement = null, width = 0, height = 0) {
+  constructor(elem: Elem = null, width = 0, height = 0) {
     super();
     this.addClass(ELEMENT_HOST_CLASS);
     this.setFlag(WidgetFlag.DisallowLayoutChange);
     this._size = new Size(Math.max(0, width), Math.max(0, height));
-    this._element = element;
+    this._elem = elem;
   }
 
   /**
-   * Get the virtual element hosted by the panel.
+   * Get the elem hosted by the widget.
    */
-  get element(): IElement {
-    return this._element;
+  get elem(): Elem {
+    return this._elem;
   }
 
   /**
-   * Set the virtual element hosted by the panel.
+   * Set the elem hosted by the widget.
    */
-  set element(element: IElement) {
-    element = element || null;
-    if (element === this._element) {
+  set elem(elem: Elem) {
+    elem = elem || null;
+    if (elem === this._elem) {
       return;
     }
-    this._element = element;
-    render(element, this.node);
+    this._elem = elem;
+    render(elem, this.node);
   }
 
   /**
@@ -85,7 +85,7 @@ class ElementHost extends Widget {
    * A method invoked on an 'after-attach' message.
    */
   protected onAfterAttach(msg: IMessage): void {
-    render(this._element, this.node);
+    render(this._elem, this.node);
   }
 
   /**
@@ -96,7 +96,7 @@ class ElementHost extends Widget {
   }
 
   private _size: Size;
-  private _element: IElement;
+  private _elem: Elem;
 }
 
 } // module phosphor.widgets
