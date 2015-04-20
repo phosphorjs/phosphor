@@ -25,9 +25,12 @@ import ElementHost = phosphor.widgets.ElementHost;
  */
 class FeedPlaceholder extends Component<IData> {
 
-  static className = 'chat-feed';
+  constructor(data: IData, children: Elem[]) {
+    super(data, children);
+    this.node.classList.add('chat-feed');
+  }
 
-  render(): Elem {
+  protected render(): Elem {
     return dom.h2('Chat Feed Placeholder');
   }
 }
