@@ -30,10 +30,6 @@ interface ITicksData extends IData {
 
 class TicksComponent extends Component<ITicksData> {
 
-  protected createNode(): HTMLElement {
-    return document.createElement('ul');
-  }
-
   protected render(): Elem[] {
     var data = this.data;
     var items = [li(data.title)];
@@ -41,6 +37,10 @@ class TicksComponent extends Component<ITicksData> {
       items.push(li(i +''));
     }
     return items;
+  }
+
+  protected createNode(): HTMLElement {
+    return document.createElement('ul');
   }
 }
 
