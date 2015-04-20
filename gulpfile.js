@@ -99,9 +99,10 @@ var tsSources = [
   'shell/menumanager',
   'shell/pluginlist',
   'shell/shellpanel',
-  'shell/shellview'
+  'shell/shellview',
 
-  //'lib/codemirror'
+  'lib/codemirrorcomponent',
+  'lib/codemirrorwidget'
 ].map(function(name) { return './src/' + name + '.ts'; });
 
 
