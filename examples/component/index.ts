@@ -8,8 +8,8 @@
 module example {
 
 import Component = phosphor.virtualdom.Component;
+import Elem = phosphor.virtualdom.Elem;
 import IData = phosphor.virtualdom.IData;
-import IElement = phosphor.virtualdom.IElement;
 import createFactory = phosphor.virtualdom.createFactory;
 import dom = phosphor.virtualdom.dom;
 import render = phosphor.virtualdom.render;
@@ -32,7 +32,7 @@ class TicksComponent extends Component<ITicksData> {
 
   static tagName = 'ul';
 
-  render(): IElement[] {
+  render(): Elem[] {
     var data = this.data;
     var items = [li(data.title)];
     for (var i = 0, n = data.count; i <= n; ++i) {
@@ -55,7 +55,7 @@ class TimeComponent extends Component<ITimeData> {
 
   static className = 'time-component';
 
-  render(): IElement[] {
+  render(): Elem[] {
     var data = this.data;
     var time = data.time;
     var now = data.now;
