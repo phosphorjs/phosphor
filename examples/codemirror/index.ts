@@ -7,21 +7,23 @@
 |----------------------------------------------------------------------------*/
 module example {
 
-import CodeMirrorFactory = phosphor.lib.CodeMirrorFactory;
+import CodeMirrorWidget = phosphor.lib.CodeMirrorWidget;
 
 import render = phosphor.virtualdom.render;
 
 
 function main(): void {
-  var cm = CodeMirrorFactory({
-    config: {
-      value: "var text = 'This is a CodeMirror component.';",
-      mode: 'javascript',
-      lineNumbers: true,
-      tabSize: 2,
-    }
+  var cm = new CodeMirrorWidget({
+    value: "var text = 'This is a CodeMirror widget.';",
+    mode: 'javascript',
+    lineNumbers: true,
+    tabSize: 2,
   });
-  render(cm, document.getElementById('main'));
+
+  cm.attach(document.getElementById('main'));
+  cm.fit();
+
+  window.onresize = () => cm.fit();
 }
 
 
