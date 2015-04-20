@@ -8,20 +8,35 @@
 module example {
 
 import CodeMirrorFactory = phosphor.lib.CodeMirrorFactory;
+import CodeMirrorWidget = phosphor.lib.CodeMirrorWidget;
 
 import render = phosphor.virtualdom.render;
 
 
 function main(): void {
-  var cm = CodeMirrorFactory({
+
+  var cm1 = new CodeMirrorWidget({
+    value: "var text = 'This is a CodeMirror widget.';",
+    mode: 'javascript',
+    lineNumbers: true,
+    tabSize: 2,
+  });
+
+  var cm2 = CodeMirrorFactory({
     config: {
       value: "var text = 'This is a CodeMirror component.';",
       mode: 'javascript',
       lineNumbers: true,
       tabSize: 2,
-    }
+    },
   });
-  render(cm, document.getElementById('main'));
+
+  cm1.attach(document.getElementById('col-1'));
+  cm1.fit();
+
+  window.onresize = () => cm1.fit();
+
+  render(cm2, document.getElementById('col-2'));
 }
 
 

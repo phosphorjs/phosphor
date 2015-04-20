@@ -609,6 +609,7 @@ var dom = {
   mark:       createFactory<IElementAttributes>('mark'),
   meter:      createFactory<IMeterAttributes>('meter'),
   nav:        createFactory<IElementAttributes>('nav'),
+  noscript:   createFactory<IElementAttributes>('noscript'),
   object:     createFactory<IObjectAttributes>('object'),
   ol:         createFactory<IOListAttributes>('ol'),
   optgroup:   createFactory<IOptGroupAttributes>('optgroup'),

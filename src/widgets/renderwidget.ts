@@ -5,7 +5,7 @@
 |
 | The full license is in the file LICENSE, distributed with this software.
 |----------------------------------------------------------------------------*/
-module phosphor.virtualdom {
+module phosphor.widgets {
 
 import Queue = collections.Queue;
 
@@ -16,6 +16,14 @@ import sendMessage = core.sendMessage;
 
 import emptyObject = utility.emptyObject;
 
+import Elem = virtualdom.Elem;
+import render = virtualdom.render;
+
+
+/**
+ * The class name added to RenderWidget instances.
+ */
+var RENDER_WIDGET_CLASS = 'p-RenderWidget';
 
 /**
  * A singleton 'update-request' message.
@@ -33,16 +41,28 @@ var MSG_BEFORE_RENDER = new Message('before-render');
 var MSG_AFTER_RENDER = new Message('after-render');
 
 
+// TODO - render null on detach to dispose vdom content?
 /**
- * A component which renders its content using the virtual DOM.
+ * A leaf widget which renders its content using the virtual DOM.
  *
- * User code should subclass this class and reimplement the `render`
- * method to generate the virtual DOM content for the component.
+ * This widget is used to embed virtual DOM content into a widget
+ * hierarchy. A subclass should reimplement the `render` method to
+ * generate the content for the widget. It should also reimplement
+ * the `sizeHint` method to return a reasonable natural size.
  */
 export
-class Component<T extends IData> extends BaseComponent<T> {
+class RenderWidget extends Widget {
   /**
-   * Dispose of the resources held by the component.
+   * Construct a new render widget.
+   */
+  constructor() {
+    super();
+    this.node.classList.add(RENDER_WIDGET_CLASS);
+    this.setFlag(WidgetFlag.DisallowLayoutChange);
+  }
+
+  /**
+   * Dispose of the resources held by the widget.
    */
   dispose(): void {
     this._refs = null;
@@ -50,22 +70,22 @@ class Component<T extends IData> extends BaseComponent<T> {
   }
 
   /**
-   * Get the current refs mapping for the component.
+   * Get the current refs mapping for the widget.
    */
   get refs(): any {
     return this._refs;
   }
 
   /**
-   * Schedule an update for the component.
+   * Schedule a rendering update for the widget.
    *
-   * This should be called whenever the internal state of the component
-   * has changed such that it requires the component to be re-rendered,
-   * or when external code determines the component should be refreshed.
+   * This should be called whenever the internal state of the widget
+   * has changed such that it requires the widget to be re-rendered,
+   * or when external code determines the widget should be refreshed.
    *
    * If the `immediate` flag is false (the default) the update will be
    * scheduled for the next cycle of the event loop. If `immediate` is
-   * true, the component will be updated immediately. Multiple pending
+   * true, the widget will be updated immediately. Multiple pending
    * requests are collapsed into a single update.
    */
   update(immediate = false): void {
@@ -77,10 +97,13 @@ class Component<T extends IData> extends BaseComponent<T> {
   }
 
   /**
-   * Process a message sent to the component.
+   * Process a message sent to the widget.
    */
   processMessage(msg: IMessage): void {
     switch (msg.type) {
+    case 'update-request':
+      this.onUpdateRequest(msg);
+      break;
     case 'before-render':
       this.onBeforeRender(msg);
       break;
@@ -93,19 +116,19 @@ class Component<T extends IData> extends BaseComponent<T> {
   }
 
   /**
-   * Compress a message posted to the component.
+   * Compress a message posted to the widget.
    */
   compressMessage(msg: IMessage, pending: Queue<IMessage>): boolean {
     if (msg.type === 'update-request') {
       return pending.some(other => other.type === 'update-request');
     }
-    return false;
+    return super.compressMessage(msg, pending);
   }
 
   /**
-   * Create the virtual DOM content for the component.
+   * Create the virtual DOM content for the widget.
    *
-   * The rendered content is used to populate the component's node.
+   * The rendered content is used to populate the widget's node.
    *
    * The default implementation returns `null`.
    */
@@ -116,12 +139,19 @@ class Component<T extends IData> extends BaseComponent<T> {
   /**
    * A method invoked on an 'update-request' message.
    *
-   * This renders the virtual DOM content into the component's node.
+   * This renders the virtual DOM content into the widget's node.
    */
   protected onUpdateRequest(msg: IMessage): void {
     sendMessage(this, MSG_BEFORE_RENDER);
     this._refs = render(this.render(), this.node);
     sendMessage(this, MSG_AFTER_RENDER);
+  }
+
+  /**
+   * A method invoked on an 'after-attach' message.
+   */
+  protected onAfterAttach(msg: IMessage): void {
+    this.update(true);
   }
 
   /**
@@ -141,4 +171,4 @@ class Component<T extends IData> extends BaseComponent<T> {
   private _refs: any = emptyObject;
 }
 
-} // module phosphor.virtualdom
+} // module phosphor.widgets

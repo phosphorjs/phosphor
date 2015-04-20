@@ -50,13 +50,12 @@ var tsSources = [
   'utility/size',
   'utility/viewport',
 
+  'virtualdom/factory',
   'virtualdom/basecomponent',
   'virtualdom/component',
-  'virtualdom/factory',
   'virtualdom/dom',
+  'virtualdom/elem',
   'virtualdom/icomponent',
-  'virtualdom/idata',
-  'virtualdom/ielement',
   'virtualdom/renderer',
 
   'widgets/alignment',
@@ -85,10 +84,10 @@ var tsSources = [
   'widgets/splitpanel',
   'widgets/stackedpanel',
   'widgets/dockarea',
-  'widgets/elementhost',
   'widgets/menuitem',
   'widgets/menu',
   'widgets/menubar',
+  'widgets/renderwidget',
   'widgets/tab',
   'widgets/tabbar',
   'widgets/tabpanel',
@@ -103,7 +102,8 @@ var tsSources = [
   'shell/shellpanel',
   'shell/shellview',
 
-  'lib/codemirror'
+  'lib/codemirrorcomponent',
+  'lib/codemirrorwidget'
 ].map(function(name) { return './src/' + name + '.ts'; });
 
 

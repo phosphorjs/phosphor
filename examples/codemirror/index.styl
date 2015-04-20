@@ -13,16 +13,33 @@ body {
 
 
 #main {
+  display: flex;
+  flex-direction: row;
   position: absolute;
   overflow: hidden;
   top: 10px;
   left: 10px;
   right: 10px;
   bottom: 10px;
+}
+
+
+#col-1, #col-2 {
+  flex: 1 1 50%;
+  position: relative;
   border: 1px solid #DDDDDD;
 }
 
 
+#col-1 {
+  margin-right: 10px;
+}
+
+
 .p-CodeMirrorComponent {
-  height: 100%;
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
 }

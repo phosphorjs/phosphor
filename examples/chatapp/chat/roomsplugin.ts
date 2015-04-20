@@ -11,13 +11,15 @@ import IContainer = phosphor.di.IContainer;
 
 import IShellView = phosphor.shell.IShellView;
 
+import Size = phosphor.utility.Size;
+
 import Component = phosphor.virtualdom.Component;
+import Elem = phosphor.virtualdom.Elem;
 import IData = phosphor.virtualdom.IData;
-import IElement = phosphor.virtualdom.IElement;
 import createFactory = phosphor.virtualdom.createFactory;
 import dom = phosphor.virtualdom.dom;
 
-import ElementHost = phosphor.widgets.ElementHost;
+import RenderWidget = phosphor.widgets.RenderWidget;
 
 
 /**
@@ -25,9 +27,12 @@ import ElementHost = phosphor.widgets.ElementHost;
  */
 class RoomListPlaceholder extends Component<IData> {
 
-  static className = 'chat-room-list';
+  constructor(data: IData, children: Elem[]) {
+    super(data, children);
+    this.node.classList.add('chat-room-list');
+  }
 
-  render(): IElement {
+  protected render(): Elem {
     return dom.h2('Room List Placeholder');
   }
 }
@@ -44,9 +49,12 @@ var RoomList = createFactory(RoomListPlaceholder);
  */
 class OpenRoomsPlaceholder extends Component<IData> {
 
-  static className = 'chat-open-rooms';
+  constructor(data: IData, children: Elem[]) {
+    super(data, children);
+    this.node.classList.add('chat-open-rooms');
+  }
 
-  render(): IElement {
+  protected render(): Elem {
     return dom.h2('Open Rooms Placeholder');
   }
 }
@@ -59,20 +67,53 @@ var OpenRooms = createFactory(OpenRoomsPlaceholder);
 
 
 /**
+ * A host widget for the room list component.
+ */
+class RoomListHost extends RenderWidget {
+
+  constructor() {
+    super();
+    this.node.classList.add('chat-room-list-host');
+  }
+
+  sizeHint(): Size {
+    return new Size(250, 400);
+  }
+
+  protected render(): Elem {
+    return RoomList();
+  }
+}
+
+
+/**
+ * A host widget for the open rooms component.
+ */
+class OpenRoomsHost extends RenderWidget {
+
+  constructor() {
+    super();
+    this.node.classList.add('chat-open-rooms-host');
+  }
+
+  sizeHint(): Size {
+    return new Size(600, 400);
+  }
+
+  protected render(): Elem {
+    return OpenRooms();
+  }
+}
+
+
+/**
  * Initialize the chat rooms plugin.
  */
 export
 function initialize(container: IContainer): void {
   var shell = container.resolve(IShellView);
-
-  var list = new ElementHost(RoomList(), 250, 400);
-  list.addClass('chat-room-list-host');
-
-  var rooms = new ElementHost(OpenRooms(), 600, 400);
-  rooms.addClass('chat-open-rooms-host');
-
-  shell.addWidget('left', list);
-  shell.addWidget('center', rooms);
+  shell.addWidget('left', new RoomListHost());
+  shell.addWidget('center', new OpenRoomsHost());
 }
 
 } // module chat.roomsplugin
