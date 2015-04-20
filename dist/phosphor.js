@@ -2440,309 +2440,16 @@ var phosphor;
         var emptyArray = phosphor.utility.emptyArray;
         var emptyObject = phosphor.utility.emptyObject;
         /**
-         * A concrete base implementation of IComponent.
+         * Create an elem factory function for the given tag.
          *
-         * This class should be used by subclasses that want to manage their
-         * own DOM content outside the virtual DOM, but still be embeddable
-         * inside a virtual DOM hierarchy.
-         */
-        var BaseComponent = (function () {
-            /**
-             * Construct a new base component.
-             */
-            function BaseComponent() {
-                this._data = emptyObject;
-                this._children = emptyArray;
-                var ctor = this.constructor;
-                this._node = document.createElement(ctor.tagName);
-                this._node.className = ctor.className;
-            }
-            /**
-             * Dispose of the resources held by the component.
-             */
-            BaseComponent.prototype.dispose = function () {
-                this._node = null;
-                this._data = null;
-                this._children = null;
-            };
-            Object.defineProperty(BaseComponent.prototype, "node", {
-                /**
-                 * Get the DOM node for the component.
-                 */
-                get: function () {
-                    return this._node;
-                },
-                enumerable: true,
-                configurable: true
-            });
-            Object.defineProperty(BaseComponent.prototype, "data", {
-                /**
-                 * Get the current data object for the component.
-                 */
-                get: function () {
-                    return this._data;
-                },
-                enumerable: true,
-                configurable: true
-            });
-            Object.defineProperty(BaseComponent.prototype, "children", {
-                /**
-                 * Get the current children for the component.
-                 */
-                get: function () {
-                    return this._children;
-                },
-                enumerable: true,
-                configurable: true
-            });
-            /**
-             * Initialize the component with new data and children.
-             *
-             * This is called whenever the component is rendered by its parent.
-             */
-            BaseComponent.prototype.init = function (data, children) {
-                this._data = data;
-                this._children = children;
-            };
-            /**
-             * The tag name used to create the component's DOM node.
-             *
-             * A subclass may redefine this property.
-             */
-            BaseComponent.tagName = 'div';
-            /**
-             * The initial class name for the component's DOM node.
-             *
-             * A subclass may redefine this property.
-             */
-            BaseComponent.className = '';
-            return BaseComponent;
-        })();
-        virtualdom.BaseComponent = BaseComponent;
-    })(virtualdom = phosphor.virtualdom || (phosphor.virtualdom = {}));
-})(phosphor || (phosphor = {})); // module phosphor.virtualdom
-
-var __extends = this.__extends || function (d, b) {
-    for (var p in b) if (b.hasOwnProperty(p)) d[p] = b[p];
-    function __() { this.constructor = d; }
-    __.prototype = b.prototype;
-    d.prototype = new __();
-};
-/*-----------------------------------------------------------------------------
-| Copyright (c) 2014-2015, S. Chris Colbert
-|
-| Distributed under the terms of the BSD 3-Clause License.
-|
-| The full license is in the file LICENSE, distributed with this software.
-|----------------------------------------------------------------------------*/
-var phosphor;
-(function (phosphor) {
-    var virtualdom;
-    (function (virtualdom) {
-        var emptyObject = phosphor.utility.emptyObject;
-        // cache frequently used globals
-        var raf = requestAnimationFrame;
-        var caf = cancelAnimationFrame;
-        /**
-         * A concrete implementation of IComponent with virtual DOM rendering.
-         *
-         * User code should subclass this class to create a custom component.
-         * The subclasses should reimplement the `render` method to generate
-         * the virtual DOM content for the component.
-         */
-        var Component = (function (_super) {
-            __extends(Component, _super);
-            function Component() {
-                _super.apply(this, arguments);
-                this._frameId = 0;
-                this._refs = emptyObject;
-            }
-            /**
-             * Dispose of the resources held by the component.
-             */
-            Component.prototype.dispose = function () {
-                this._refs = null;
-                this._cancelFrame();
-                _super.prototype.dispose.call(this);
-            };
-            Object.defineProperty(Component.prototype, "refs", {
-                /**
-                 * Get the refs mapping for the component.
-                 *
-                 * This is an object which maps a ref name to the corresponding node
-                 * or component instance created for the most recent rendering pass.
-                 */
-                get: function () {
-                    return this._refs;
-                },
-                enumerable: true,
-                configurable: true
-            });
-            /**
-             * Initialize the component with new data and children.
-             *
-             * This is called whenever the component is rendered by its parent.
-             *
-             * The method will normally not be reimplemented by a subclass.
-             */
-            Component.prototype.init = function (data, children) {
-                var update = this.shouldUpdate(data, children);
-                _super.prototype.init.call(this, data, children);
-                if (update)
-                    this.update(true);
-            };
-            /**
-             * Create the virtual content for the component.
-             *
-             * The rendered content is used to populate the component's node.
-             *
-             * This should be reimplemented by a subclass.
-             */
-            Component.prototype.render = function () {
-                return null;
-            };
-            /**
-             * Schedule a rendering update for the component.
-             *
-             * This should be called whenever the internal state of the component
-             * has changed such that it requires the component to be re-rendered,
-             * or when external code requires the component to be refreshed.
-             *
-             * If the 'immediate' flag is false (the default) the update will be
-             * scheduled for the next cycle of the event loop. If the flag is set
-             * to true, the component will be updated immediately.
-             *
-             * Multiple pending requests are collapsed into a single update.
-             */
-            Component.prototype.update = function (immediate) {
-                var _this = this;
-                if (immediate === void 0) { immediate = false; }
-                if (immediate) {
-                    this._cancelFrame();
-                    this._render();
-                }
-                else if (this._frameId === 0) {
-                    this._frameId = raf(function () {
-                        _this._frameId = 0;
-                        _this._render();
-                    });
-                }
-            };
-            /**
-             * A method invoked immediately before the component is rendered.
-             *
-             * The default implementation is a no-op.
-             */
-            Component.prototype.beforeRender = function () {
-            };
-            /**
-             * A method invoked immediately after the component is rendered.
-             *
-             * The default implementation is a no-op.
-             */
-            Component.prototype.afterRender = function () {
-            };
-            /**
-             * Test whether the component should be updated.
-             *
-             * This method is invoked when the component is initialized with new
-             * data and children. It should return true if the component should
-             * be updated, or false if the values do not cause a visual change.
-             *
-             * Determining whether a component should update is error prone and
-             * can be just as expensive as performing the virtual DOM diff, so
-             * this should only be reimplemented if performance is a problem.
-             *
-             * The default implementation of this method always returns true.
-             */
-            Component.prototype.shouldUpdate = function (data, children) {
-                return true;
-            };
-            /**
-             * Perform an immediate rendering of the component.
-             */
-            Component.prototype._render = function () {
-                this.beforeRender();
-                this._refs = virtualdom.render(this.render(), this.node);
-                this.afterRender();
-            };
-            /**
-             * Clear the pending animation frame.
-             */
-            Component.prototype._cancelFrame = function () {
-                if (this._frameId !== 0) {
-                    caf(this._frameId);
-                    this._frameId = 0;
-                }
-            };
-            return Component;
-        })(virtualdom.BaseComponent);
-        virtualdom.Component = Component;
-    })(virtualdom = phosphor.virtualdom || (phosphor.virtualdom = {}));
-})(phosphor || (phosphor = {})); // module phosphor.virtualdom
-
-/*-----------------------------------------------------------------------------
-| Copyright (c) 2014-2015, S. Chris Colbert
-|
-| Distributed under the terms of the BSD 3-Clause License.
-|
-| The full license is in the file LICENSE, distributed with this software.
-|----------------------------------------------------------------------------*/
-var phosphor;
-(function (phosphor) {
-    var virtualdom;
-    (function (virtualdom) {
-        var emptyArray = phosphor.utility.emptyArray;
-        var emptyObject = phosphor.utility.emptyObject;
-        /**
-         * Create a virtual element factory function for the given tag.
-         *
-         * This will typically be used to create an element factory for a user
-         * defined component. The `virtualdom` module exports a `dom` object
-         * which contains factories for the standard DOM elements.
+         * This will typically be used to create an elem factory function for
+         * a user defined component. The `virtualdom` module exports a `dom`
+         * object which contains factories for the standard DOM elements.
          */
         function createFactory(tag) {
             return factory.bind(void 0, tag);
         }
         virtualdom.createFactory = createFactory;
-        /**
-         * A concrete implementation of IElement.
-         */
-        var VirtualElement = (function () {
-            /**
-             * Construct a new element.
-             */
-            function VirtualElement(type, tag, data, children) {
-                this.type = type;
-                this.tag = tag;
-                this.data = data;
-                this.children = children;
-            }
-            return VirtualElement;
-        })();
-        VirtualElement.prototype.__isElement = true;
-        /**
-         * Create a new virtual text element.
-         */
-        function createTextElem(text) {
-            return new VirtualElement(0 /* Text */, text, emptyObject, emptyArray);
-        }
-        /**
-         * Create a new virtual node element.
-         */
-        function createNodeElem(tag, data, children) {
-            data = data || emptyObject;
-            children = children || emptyArray;
-            return new VirtualElement(1 /* Node */, tag, data, children);
-        }
-        /**
-         * Create a new virtual component element.
-         */
-        function createCompElem(tag, data, children) {
-            data = data || emptyObject;
-            children = children || emptyArray;
-            return new VirtualElement(2 /* Component */, tag, data, children);
-        }
         /**
          * Extend the first array with elements of the second.
          *
@@ -2756,15 +2463,18 @@ var phosphor;
             }
         }
         /**
-         * The virtual element factory function implementation.
+         * The elem factory function implementation.
          *
-         * When bound to a tag, this function implements IFactory.
+         * When bound to a tag, this function implements `IFactory`.
          */
         function factory(tag, first) {
             var data = null;
             var children = null;
             if (first) {
-                if (typeof first === 'string' || first.__isElement) {
+                if (typeof first === 'string') {
+                    children = [first];
+                }
+                else if (first instanceof virtualdom.Elem) {
                     children = [first];
                 }
                 else if (first instanceof Array) {
@@ -2791,19 +2501,322 @@ var phosphor;
                 for (var i = 0, n = children.length; i < n; ++i) {
                     var child = children[i];
                     if (typeof child === 'string') {
-                        children[i] = createTextElem(child);
+                        children[i] = new virtualdom.Elem(0 /* Text */, child, emptyObject, emptyArray);
                     }
                 }
             }
+            data = data || emptyObject;
+            children = children || emptyArray;
             var elem;
             if (typeof tag === 'string') {
-                elem = createNodeElem(tag, data, children);
+                elem = new virtualdom.Elem(1 /* Node */, tag, data, children);
             }
             else {
-                elem = createCompElem(tag, data, children);
+                elem = new virtualdom.Elem(2 /* Component */, tag, data, children);
             }
             return elem;
         }
+    })(virtualdom = phosphor.virtualdom || (phosphor.virtualdom = {}));
+})(phosphor || (phosphor = {})); // module phosphor.virtualdom
+
+/*-----------------------------------------------------------------------------
+| Copyright (c) 2014-2015, S. Chris Colbert
+|
+| Distributed under the terms of the BSD 3-Clause License.
+|
+| The full license is in the file LICENSE, distributed with this software.
+|----------------------------------------------------------------------------*/
+var phosphor;
+(function (phosphor) {
+    var virtualdom;
+    (function (virtualdom) {
+        var clearMessageData = phosphor.core.clearMessageData;
+        var emptyArray = phosphor.utility.emptyArray;
+        var emptyObject = phosphor.utility.emptyObject;
+        /**
+         * A concrete implementation of IComponent.
+         *
+         * This class serves as a convenient base class for components which
+         * manage the content of their node independent of the virtual DOM.
+         */
+        var BaseComponent = (function () {
+            /**
+             * Construct a new base component.
+             */
+            function BaseComponent(data, children) {
+                this._data = emptyObject;
+                this._children = emptyArray;
+                this._data = data;
+                this._children = children;
+                this._node = this.createNode();
+            }
+            /**
+             * Dispose of the resources held by the component.
+             */
+            BaseComponent.prototype.dispose = function () {
+                this._node = null;
+                this._data = null;
+                this._children = null;
+                clearMessageData(this);
+            };
+            Object.defineProperty(BaseComponent.prototype, "node", {
+                /**
+                 * Get the DOM node for the component.
+                 */
+                get: function () {
+                    return this._node;
+                },
+                enumerable: true,
+                configurable: true
+            });
+            Object.defineProperty(BaseComponent.prototype, "data", {
+                /**
+                 * Get the current data object for the component.
+                 */
+                get: function () {
+                    return this._data;
+                },
+                enumerable: true,
+                configurable: true
+            });
+            Object.defineProperty(BaseComponent.prototype, "children", {
+                /**
+                 * Get the current elem children for the component.
+                 */
+                get: function () {
+                    return this._children;
+                },
+                enumerable: true,
+                configurable: true
+            });
+            /**
+             * Initialize the component with new data and children.
+             *
+             * This is called whenever the component is re-rendered by its parent.
+             *
+             * It is *not* called when the component is first instantiated.
+             */
+            BaseComponent.prototype.init = function (data, children) {
+                this._data = data;
+                this._children = children;
+            };
+            /**
+             * Process a message sent to the component.
+             */
+            BaseComponent.prototype.processMessage = function (msg) {
+                switch (msg.type) {
+                    case 'update-request':
+                        this.onUpdateRequest(msg);
+                        break;
+                    case 'after-attach':
+                        this.onAfterAttach(msg);
+                        break;
+                    case 'before-detach':
+                        this.onBeforeDetach(msg);
+                        break;
+                    case 'before-move':
+                        this.onBeforeMove(msg);
+                        break;
+                    case 'after-move':
+                        this.onAfterMove(msg);
+                        break;
+                }
+            };
+            /**
+             * Create the DOM node for the component.
+             *
+             * This can be reimplemented by subclasses as needed.
+             *
+             * The default implementation creates an empty div.
+             */
+            BaseComponent.prototype.createNode = function () {
+                return document.createElement('div');
+            };
+            /**
+             * A method invoked on an 'update-request' message.
+             *
+             * The default implementation is a no-op.
+             */
+            BaseComponent.prototype.onUpdateRequest = function (msg) {
+            };
+            /**
+             * A method invoked on an 'after-attach' message.
+             *
+             * The default implementation is a no-op.
+             */
+            BaseComponent.prototype.onAfterAttach = function (msg) {
+            };
+            /**
+             * A method invoked on a 'before-detach' message.
+             *
+             * The default implementation is a no-op.
+             */
+            BaseComponent.prototype.onBeforeDetach = function (msg) {
+            };
+            /**
+             * A method invoked on a 'before-move' message.
+             *
+             * The default implementation is a no-op.
+             */
+            BaseComponent.prototype.onBeforeMove = function (msg) {
+            };
+            /**
+             * A method invoked on an 'after-move' message.
+             *
+             * The default implementation is a no-op.
+             */
+            BaseComponent.prototype.onAfterMove = function (msg) {
+            };
+            return BaseComponent;
+        })();
+        virtualdom.BaseComponent = BaseComponent;
+    })(virtualdom = phosphor.virtualdom || (phosphor.virtualdom = {}));
+})(phosphor || (phosphor = {})); // module phosphor.virtualdom
+
+var __extends = this.__extends || function (d, b) {
+    for (var p in b) if (b.hasOwnProperty(p)) d[p] = b[p];
+    function __() { this.constructor = d; }
+    __.prototype = b.prototype;
+    d.prototype = new __();
+};
+/*-----------------------------------------------------------------------------
+| Copyright (c) 2014-2015, S. Chris Colbert
+|
+| Distributed under the terms of the BSD 3-Clause License.
+|
+| The full license is in the file LICENSE, distributed with this software.
+|----------------------------------------------------------------------------*/
+var phosphor;
+(function (phosphor) {
+    var virtualdom;
+    (function (virtualdom) {
+        var Message = phosphor.core.Message;
+        var postMessage = phosphor.core.postMessage;
+        var sendMessage = phosphor.core.sendMessage;
+        var emptyObject = phosphor.utility.emptyObject;
+        /**
+         * A singleton 'update-request' message.
+         */
+        var MSG_UPDATE_REQUEST = new Message('update-request');
+        /**
+         * A singleton 'before-render' message.
+         */
+        var MSG_BEFORE_RENDER = new Message('before-render');
+        /**
+         * A singleton 'after-render' message.
+         */
+        var MSG_AFTER_RENDER = new Message('after-render');
+        /**
+         * A component which renders its content using the virtual DOM.
+         *
+         * User code should subclass this class and reimplement the `render`
+         * method to generate the virtual DOM content for the component.
+         */
+        var Component = (function (_super) {
+            __extends(Component, _super);
+            function Component() {
+                _super.apply(this, arguments);
+                this._refs = emptyObject;
+            }
+            /**
+             * Dispose of the resources held by the component.
+             */
+            Component.prototype.dispose = function () {
+                this._refs = null;
+                _super.prototype.dispose.call(this);
+            };
+            Object.defineProperty(Component.prototype, "refs", {
+                /**
+                 * Get the current refs mapping for the component.
+                 */
+                get: function () {
+                    return this._refs;
+                },
+                enumerable: true,
+                configurable: true
+            });
+            /**
+             * Schedule an update for the component.
+             *
+             * This should be called whenever the internal state of the component
+             * has changed such that it requires the component to be re-rendered,
+             * or when external code determines the component should be refreshed.
+             *
+             * If the `immediate` flag is false (the default) the update will be
+             * scheduled for the next cycle of the event loop. If `immediate` is
+             * true, the component will be updated immediately. Multiple pending
+             * requests are collapsed into a single update.
+             */
+            Component.prototype.update = function (immediate) {
+                if (immediate === void 0) { immediate = false; }
+                if (immediate) {
+                    sendMessage(this, MSG_UPDATE_REQUEST);
+                }
+                else {
+                    postMessage(this, MSG_UPDATE_REQUEST);
+                }
+            };
+            /**
+             * Process a message sent to the component.
+             */
+            Component.prototype.processMessage = function (msg) {
+                switch (msg.type) {
+                    case 'before-render':
+                        this.onBeforeRender(msg);
+                        break;
+                    case 'after-render':
+                        this.onAfterRender(msg);
+                        break;
+                    default:
+                        _super.prototype.processMessage.call(this, msg);
+                }
+            };
+            /**
+             * Compress a message posted to the component.
+             */
+            Component.prototype.compressMessage = function (msg, pending) {
+                if (msg.type === 'update-request') {
+                    return pending.some(function (other) { return other.type === 'update-request'; });
+                }
+                return false;
+            };
+            /**
+             * Create the virtual DOM content for the component.
+             *
+             * The rendered content is used to populate the component's node.
+             *
+             * The default implementation returns `null`.
+             */
+            Component.prototype.render = function () {
+                return null;
+            };
+            /**
+             * A method invoked on an 'update-request' message.
+             *
+             * This renders the virtual DOM content into the component's node.
+             */
+            Component.prototype.onUpdateRequest = function (msg) {
+                sendMessage(this, MSG_BEFORE_RENDER);
+                this._refs = virtualdom.render(this.render(), this.node);
+                sendMessage(this, MSG_AFTER_RENDER);
+            };
+            /**
+             * A method invoked on a 'before-render' message.
+             *
+             * The default implementation is a no-op.
+             */
+            Component.prototype.onBeforeRender = function (msg) {
+            };
+            /**
+             * A method invoked on an 'after-render' message.
+             *
+             * The default implementation is a no-op.
+             */
+            Component.prototype.onAfterRender = function (msg) {
+            };
+            return Component;
+        })(virtualdom.BaseComponent);
+        virtualdom.Component = Component;
     })(virtualdom = phosphor.virtualdom || (phosphor.virtualdom = {}));
 })(phosphor || (phosphor = {})); // module phosphor.virtualdom
 
@@ -2878,6 +2891,7 @@ var phosphor;
             mark: virtualdom.createFactory('mark'),
             meter: virtualdom.createFactory('meter'),
             nav: virtualdom.createFactory('nav'),
+            noscript: virtualdom.createFactory('noscript'),
             object: virtualdom.createFactory('object'),
             ol: virtualdom.createFactory('ol'),
             optgroup: virtualdom.createFactory('optgroup'),
@@ -2922,10 +2936,6 @@ var phosphor;
     })(virtualdom = phosphor.virtualdom || (phosphor.virtualdom = {}));
 })(phosphor || (phosphor = {})); // module phosphor.virtualdom
 
-
-
-
-
 /*-----------------------------------------------------------------------------
 | Copyright (c) 2014-2015, S. Chris Colbert
 |
@@ -2938,25 +2948,52 @@ var phosphor;
     var virtualdom;
     (function (virtualdom) {
         /**
-         * An enum of supported virtual element types.
+         * An enum of supported elem types.
          */
-        (function (ElementType) {
+        (function (ElemType) {
             /**
-             * The element represents a text node.
+             * The elem represents a text node.
              */
-            ElementType[ElementType["Text"] = 0] = "Text";
+            ElemType[ElemType["Text"] = 0] = "Text";
             /**
-             * The element represents an HTMLElement node.
+             * The elem represents an HTMLElement node.
              */
-            ElementType[ElementType["Node"] = 1] = "Node";
+            ElemType[ElemType["Node"] = 1] = "Node";
             /**
-             * The element represents a component.
+             * The elem represents a component.
              */
-            ElementType[ElementType["Component"] = 2] = "Component";
-        })(virtualdom.ElementType || (virtualdom.ElementType = {}));
-        var ElementType = virtualdom.ElementType;
+            ElemType[ElemType["Component"] = 2] = "Component";
+        })(virtualdom.ElemType || (virtualdom.ElemType = {}));
+        var ElemType = virtualdom.ElemType;
+        /**
+         * A node in a virtual DOM hierarchy.
+         *
+         * User code will not typically instantiate an elem directly. Instead,
+         * a factory function will be called to create the elem in a type-safe
+         * fashion. Factory functions for all standard DOM nodes are provided
+         * by the framework, and new factories may be created with the
+         * `createFactory` function.
+         *
+         * An elem *must* be treated as immutable. Mutating the elem state will
+         * result in undefined rendering behavior.
+         */
+        var Elem = (function () {
+            /**
+             * Construct a new virtual elem.
+             */
+            function Elem(type, tag, data, children) {
+                this.type = type;
+                this.tag = tag;
+                this.data = data;
+                this.children = children;
+            }
+            return Elem;
+        })();
+        virtualdom.Elem = Elem;
     })(virtualdom = phosphor.virtualdom || (phosphor.virtualdom = {}));
 })(phosphor || (phosphor = {})); // module phosphor.virtualdom
+
+
 
 /*-----------------------------------------------------------------------------
 | Copyright (c) 2014-2015, S. Chris Colbert
@@ -2970,6 +3007,8 @@ var phosphor;
     var virtualdom;
     (function (virtualdom) {
         var algo = phosphor.collections.algorithm;
+        var Message = phosphor.core.Message;
+        var sendMessage = phosphor.core.sendMessage;
         var Pair = phosphor.utility.Pair;
         var emptyArray = phosphor.utility.emptyArray;
         var emptyObject = phosphor.utility.emptyObject;
@@ -2983,13 +3022,32 @@ var phosphor;
          * Returns an object which maps ref names to nodes and components.
          */
         function render(content, host) {
-            var oldContent = hostMap.get(host) || emptyArray;
-            var newContent = asElementArray(content);
-            hostMap.set(host, newContent);
-            updateContent(host, oldContent, newContent);
-            return collectRefs(host, newContent);
+            var refs;
+            stackLevel++;
+            try {
+                refs = renderImpl(content, host);
+            }
+            finally {
+                stackLevel--;
+            }
+            if (stackLevel === 0) {
+                notifyAttached();
+            }
+            return refs;
         }
         virtualdom.render = render;
+        /**
+         * The current stack level of recursive calls to `render`.
+         */
+        var stackLevel = 0;
+        /**
+         * Components which are pending attach notification.
+         *
+         * Components are pushed to this array when their node is added to the
+         * DOM. When the root `render` call exits, each component in the array
+         * will have its `afterAttach` method called.
+         */
+        var needsAttachNotification = [];
         /**
          * A weak mapping of host node to rendered content.
          */
@@ -2999,7 +3057,41 @@ var phosphor;
          */
         var componentMap = new WeakMap();
         /**
-         * Coerce virtual content into a virtual element array.
+         * A singleton 'update-request' message.
+         */
+        var MSG_UPDATE_REQUEST = new Message('update-request');
+        /**
+         * A singleton 'after-attach' message.
+         */
+        var MSG_AFTER_ATTACH = new Message('after-attach');
+        /**
+         * A singleton 'before-detach' message.
+         */
+        var MSG_BEFORE_DETACH = new Message('before-detach');
+        /**
+         * A singleton 'before-move' message.
+         */
+        var MSG_BEFORE_MOVE = new Message('before-move');
+        /**
+         * A singleton 'after-move' message.
+         */
+        var MSG_AFTER_MOVE = new Message('after-move');
+        /**
+         * The internal render entry point.
+         *
+         * This function is separated from the `render` function so that it can
+         * be optimized by V8, which does not optimize functions which contain
+         * a `try-finally` block.
+         */
+        function renderImpl(content, host) {
+            var oldContent = hostMap.get(host) || emptyArray;
+            var newContent = asElementArray(content);
+            hostMap.set(host, newContent);
+            updateContent(host, oldContent, newContent);
+            return collectRefs(host, newContent);
+        }
+        /**
+         * Coerce content into an elem array.
          *
          * Null content will be coerced to an empty array.
          */
@@ -3011,6 +3103,46 @@ var phosphor;
                 return [content];
             }
             return emptyArray;
+        }
+        /**
+         * Notify the components pending an `afterAttach` notification.
+         */
+        function notifyAttached() {
+            while (needsAttachNotification.length > 0) {
+                var component = needsAttachNotification.pop();
+                sendMessage(component, MSG_AFTER_ATTACH);
+            }
+        }
+        /**
+         * Walk the element tree and collect the refs into a new object.
+         */
+        function collectRefs(host, content) {
+            var refs = Object.create(null);
+            refsHelper(host, content, refs);
+            return refs;
+        }
+        /**
+         * A recursive implementation helper for `collectRefs`.
+         */
+        function refsHelper(host, content, refs) {
+            var node = host.firstChild;
+            for (var i = 0, n = content.length; i < n; ++i) {
+                var elem = content[i];
+                switch (elem.type) {
+                    case 1 /* Node */:
+                        var ref = elem.data.ref;
+                        if (ref)
+                            refs[ref] = node;
+                        refsHelper(node, elem.children, refs);
+                        break;
+                    case 2 /* Component */:
+                        var ref = elem.data.ref;
+                        if (ref)
+                            refs[ref] = componentMap.get(node);
+                        break;
+                }
+                node = node.nextSibling;
+            }
         }
         /**
          * Collect a mapping of keyed elements for the host content.
@@ -3028,65 +3160,166 @@ var phosphor;
             return keyed;
         }
         /**
-         * Walk the element tree and collect the refs into a new object.
+         * Create and return a new DOM node for a give elem.
          */
-        function collectRefs(host, content) {
-            var refs = Object.create(null);
-            refsHelper(host, content, refs);
-            return refs;
+        function createNode(elem) {
+            var node;
+            switch (elem.type) {
+                case 0 /* Text */:
+                    node = document.createTextNode(elem.tag);
+                    break;
+                case 1 /* Node */:
+                    node = document.createElement(elem.tag);
+                    addAttributes(node, elem.data);
+                    addContent(node, elem.children);
+                    break;
+                case 2 /* Component */:
+                    var cls = elem.tag;
+                    var component = new cls(elem.data, elem.children);
+                    node = component.node;
+                    componentMap.set(node, component);
+                    needsAttachNotification.push(component);
+                    sendMessage(component, MSG_UPDATE_REQUEST);
+                    break;
+                default:
+                    throw new Error('invalid element type');
+            }
+            return node;
         }
         /**
-         * A recursive implementation helper for `collectRefs`.
+         * Create and add child content to a newly created DOM node.
          */
-        function refsHelper(host, content, refs) {
-            var node = host.firstChild;
-            for (var i = 0, n = content.length; i < n; ++i, node = node.nextSibling) {
-                var elem = content[i];
-                var type = elem.type;
-                if (type === 1 /* Node */) {
-                    var ref = elem.data.ref;
-                    if (ref)
-                        refs[ref] = node;
-                    refsHelper(node, elem.children, refs);
-                }
-                else if (type === 2 /* Component */) {
-                    var ref = elem.data.ref;
-                    if (ref)
-                        refs[ref] = componentMap.get(node);
-                }
-            }
-        }
-        /**
-         * Create a node for a virtual element and add it to a host.
-         */
-        function addNode(host, elem, ref) {
-            var type = elem.type;
-            if (type === 0 /* Text */) {
-                var text = document.createTextNode(elem.tag);
-                host.insertBefore(text, ref);
-            }
-            else if (type === 1 /* Node */) {
-                var node = document.createElement(elem.tag);
-                addAttributes(node, elem.data);
-                host.insertBefore(node, ref);
-                addContent(node, elem.children);
-            }
-            else if (type === 2 /* Component */) {
-                var component = new elem.tag();
-                componentMap.set(component.node, component);
-                host.insertBefore(component.node, ref);
-                component.init(elem.data, elem.children);
-            }
-            else {
-                throw new Error('invalid element type');
-            }
-        }
-        /**
-         * Add content to a newly created DOM node.
-         */
-        function addContent(host, content) {
+        function addContent(node, content) {
             for (var i = 0, n = content.length; i < n; ++i) {
-                addNode(host, content[i]);
+                node.appendChild(createNode(content[i]));
+            }
+        }
+        /**
+         * Update a host node with the delta of the elem content.
+         *
+         * This is the core "diff" algorithm. There is no explicit "patch"
+         * phase. The host is patched at each step as the diff progresses.
+         */
+        function updateContent(host, oldContent, newContent) {
+            // Bail early if the content is identical. This can occur when an
+            // elem has no children or if a component renders cached content.
+            if (oldContent === newContent) {
+                return;
+            }
+            // Collect the old keyed elems into a mapping.
+            var oldKeyed = collectKeys(host, oldContent);
+            // Create a copy of the old content which can be modified in-place.
+            var oldCopy = algo.copy(oldContent);
+            // Update the host with the new content. The diff always proceeds
+            // forward and never modifies a previously visited index. The old
+            // copy array is modified in-place to reflect the changes made to
+            // the host children. This causes the stale nodes to be pushed to
+            // the end of the host node and removed at the end of the loop.
+            var currNode = host.firstChild;
+            var newCount = newContent.length;
+            for (var i = 0; i < newCount; ++i) {
+                // If the old elems are exhausted, create a new node.
+                if (i >= oldCopy.length) {
+                    host.appendChild(createNode(newContent[i]));
+                    continue;
+                }
+                // Cache a reference to the old and new elems.
+                var oldElem = oldCopy[i];
+                var newElem = newContent[i];
+                // If the new elem is keyed, move an old keyed elem to the proper
+                // location before proceeding with the diff. The search can start
+                // at the current index, since the unmatched old keyed elems are
+                // pushed forward in the old copy array.
+                var newKey = newElem.data.key;
+                if (newKey && newKey in oldKeyed) {
+                    var pair = oldKeyed[newKey];
+                    if (pair.first !== oldElem) {
+                        algo.move(oldCopy, algo.indexOf(oldCopy, pair.first, i), i);
+                        sendBranch(pair.second, MSG_BEFORE_MOVE);
+                        host.insertBefore(pair.second, currNode);
+                        sendBranch(pair.second, MSG_AFTER_MOVE);
+                        oldElem = pair.first;
+                        currNode = pair.second;
+                    }
+                }
+                // If both elements are identical, there is nothing to do.
+                // This can occur when a component renders cached content.
+                if (oldElem === newElem) {
+                    currNode = currNode.nextSibling;
+                    continue;
+                }
+                // If the old elem is keyed and does not match the new elem key,
+                // create a new node. This is necessary since the old keyed elem
+                // may be matched at a later point in the diff.
+                var oldKey = oldElem.data.key;
+                if (oldKey && oldKey !== newKey) {
+                    algo.insert(oldCopy, i, newElem);
+                    host.insertBefore(createNode(newElem), currNode);
+                    continue;
+                }
+                // If the elements have different types, create a new node.
+                if (oldElem.type !== newElem.type) {
+                    algo.insert(oldCopy, i, newElem);
+                    host.insertBefore(createNode(newElem), currNode);
+                    continue;
+                }
+                // If the element is a text node, update its text content.
+                if (newElem.type === 0 /* Text */) {
+                    currNode.textContent = newElem.tag;
+                    currNode = currNode.nextSibling;
+                    continue;
+                }
+                // At this point, the element is a Node or Component type.
+                // If the element tags are different, create a new node.
+                if (oldElem.tag !== newElem.tag) {
+                    algo.insert(oldCopy, i, newElem);
+                    host.insertBefore(createNode(newElem), currNode);
+                    continue;
+                }
+                // If the element is a Node type, update the node in place.
+                if (newElem.type === 1 /* Node */) {
+                    updateAttributes(currNode, oldElem.data, newElem.data);
+                    updateContent(currNode, oldElem.children, newElem.children);
+                    currNode = currNode.nextSibling;
+                    continue;
+                }
+                // At this point, the node is a Component type; update it.
+                var component = componentMap.get(currNode);
+                component.init(newElem.data, newElem.children);
+                sendMessage(component, MSG_UPDATE_REQUEST);
+                currNode = currNode.nextSibling;
+            }
+            for (var i = oldCopy.length - 1; i >= newCount; --i) {
+                var oldNode = host.lastChild;
+                sendBranch(oldNode, MSG_BEFORE_DETACH);
+                host.removeChild(oldNode);
+                disposeBranch(oldNode);
+            }
+        }
+        /**
+         * Send a message to each component in the branch.
+         */
+        function sendBranch(root, msg) {
+            if (root.nodeType === 1) {
+                var component = componentMap.get(root);
+                if (component)
+                    sendMessage(component, msg);
+            }
+            for (var node = root.firstChild; node; node = node.nextSibling) {
+                sendBranch(node, msg);
+            }
+        }
+        /**
+         * Dispose of each component in the branch.
+         */
+        function disposeBranch(root) {
+            if (root.nodeType === 1) {
+                var component = componentMap.get(root);
+                if (component)
+                    component.dispose();
+            }
+            for (var node = root.firstChild; node; node = node.nextSibling) {
+                disposeBranch(node);
             }
         }
         /**
@@ -3117,106 +3350,9 @@ var phosphor;
             }
         }
         /**
-         * Update a host node with the delta of the virtual content.
-         */
-        function updateContent(host, oldContent, newContent) {
-            // Bail early if the content is identical. This can occur when an
-            // element has no children or if a component renders cached content.
-            if (oldContent === newContent) {
-                return;
-            }
-            // Collect the old keyed elements into a mapping.
-            var oldKeyed = collectKeys(host, oldContent);
-            // Create a copy of the old content which can be modified in-place.
-            var oldCopy = algo.copy(oldContent);
-            // Update the host with the new content. The diff algorithm always
-            // proceeds forward and never modifies a previously visited index.
-            // The `oldCopy` array is modified in-place to reflect the changes
-            // made to the host. This causes the unused nodes to be pushed to
-            // the end of the host node and removed at the end of the loop.
-            var currNode = host.firstChild;
-            var newCount = newContent.length;
-            for (var i = 0; i < newCount; ++i) {
-                var newElem = newContent[i];
-                // If the old elements are exhausted, create a new node.
-                if (i >= oldCopy.length) {
-                    oldCopy.push(newElem);
-                    addNode(host, newElem);
-                    continue;
-                }
-                var oldElem = oldCopy[i];
-                // If the new element is keyed, move a keyed old element to the
-                // proper location before proceeding with the diff. The search for
-                // the old keyed elem starts at the current index, since unmatched
-                // old keyed elements are pushed forward in the old copy array.
-                var newKey = newElem.data.key;
-                if (newKey && newKey in oldKeyed) {
-                    var pair = oldKeyed[newKey];
-                    if (pair.first !== oldElem) {
-                        algo.move(oldCopy, algo.indexOf(oldCopy, pair.first, i), i);
-                        host.insertBefore(pair.second, currNode);
-                        oldElem = pair.first;
-                        currNode = pair.second;
-                    }
-                }
-                // If both elements are identical, there is nothing to do.
-                // This can occur when a component renders cached content.
-                if (oldElem === newElem) {
-                    currNode = currNode.nextSibling;
-                    continue;
-                }
-                // If the old element is keyed and does not match the new element
-                // key, create a new node. This is necessary since the old keyed
-                // element may be matched at a later point in the diff.
-                var oldKey = oldElem.data.key;
-                if (oldKey && oldKey !== newKey) {
-                    algo.insert(oldCopy, i, newElem);
-                    addNode(host, newElem, currNode);
-                    continue;
-                }
-                // If the elements have different types, create a new node.
-                if (oldElem.type !== newElem.type) {
-                    algo.insert(oldCopy, i, newElem);
-                    addNode(host, newElem, currNode);
-                    continue;
-                }
-                // If the element is a text node, update its text content.
-                if (newElem.type === 0 /* Text */) {
-                    if (oldElem.tag !== newElem.tag) {
-                        currNode.textContent = newElem.tag;
-                    }
-                    currNode = currNode.nextSibling;
-                    continue;
-                }
-                // At this point, the element is a Node or Component type.
-                // If the element tags are different, create a new node.
-                if (oldElem.tag !== newElem.tag) {
-                    algo.insert(oldCopy, i, newElem);
-                    addNode(host, newElem, currNode);
-                    continue;
-                }
-                // If the element is a Node type, update the node in place.
-                if (newElem.type === 1 /* Node */) {
-                    updateAttrs(currNode, oldElem.data, newElem.data);
-                    updateContent(currNode, oldElem.children, newElem.children);
-                    currNode = currNode.nextSibling;
-                    continue;
-                }
-                // At this point, the node is a Component type; re-init it.
-                var component = componentMap.get(currNode);
-                component.init(newElem.data, newElem.children);
-                currNode = currNode.nextSibling;
-            }
-            for (var i = oldCopy.length - 1; i >= newCount; --i) {
-                var oldNode = host.lastChild;
-                host.removeChild(oldNode);
-                disposeBranch(oldNode);
-            }
-        }
-        /**
          * Update the node attributes with the delta of attribute objects.
          */
-        function updateAttrs(node, oldAttrs, newAttrs) {
+        function updateAttributes(node, oldAttrs, newAttrs) {
             if (oldAttrs === newAttrs) {
                 return;
             }
@@ -3276,19 +3412,6 @@ var phosphor;
                         style[name] = value;
                     }
                 }
-            }
-        }
-        /**
-         * Dispose of the components associated with the given branch.
-         */
-        function disposeBranch(root) {
-            if (root.nodeType === 1) {
-                var component = componentMap.get(root);
-                if (component)
-                    component.dispose();
-            }
-            for (var child = root.firstChild; child; child = child.nextSibling) {
-                disposeBranch(child);
             }
         }
         /**
@@ -6607,7 +6730,7 @@ var phosphor;
                 this._height = 0;
                 this._flags = 0;
                 this._node = this.createNode();
-                this.addClass(WIDGET_CLASS);
+                this._node.classList.add(WIDGET_CLASS);
             }
             /**
              * Dispose of the widget and its descendants.
@@ -6920,24 +7043,6 @@ var phosphor;
                 return this._children[index];
             };
             /**
-             * Test whether the widget's DOM node has the given class name.
-             */
-            Widget.prototype.hasClass = function (name) {
-                return this._node.classList.contains(name);
-            };
-            /**
-             * Add a class name to the widget's DOM node.
-             */
-            Widget.prototype.addClass = function (name) {
-                this._node.classList.add(name);
-            };
-            /**
-             * Remove a class name from the widget's DOM node.
-             */
-            Widget.prototype.removeClass = function (name) {
-                this._node.classList.remove(name);
-            };
-            /**
              * Test whether the given widget flag is set.
              */
             Widget.prototype.testFlag = function (flag) {
@@ -6967,12 +7072,12 @@ var phosphor;
                 var parent = this._parent;
                 if (this.isAttached && (!parent || parent.isVisible)) {
                     sendMessage(this, new Message('before-show'));
-                    this.removeClass(HIDDEN_CLASS);
+                    this._node.classList.remove(HIDDEN_CLASS);
                     this.clearFlag(2 /* IsHidden */);
                     sendMessage(this, new Message('after-show'));
                 }
                 else {
-                    this.removeClass(HIDDEN_CLASS);
+                    this._node.classList.remove(HIDDEN_CLASS);
                     this.clearFlag(2 /* IsHidden */);
                 }
                 if (parent) {
@@ -6992,12 +7097,12 @@ var phosphor;
                 var parent = this._parent;
                 if (this.isAttached && (!parent || parent.isVisible)) {
                     sendMessage(this, new Message('before-hide'));
-                    this.addClass(HIDDEN_CLASS);
+                    this._node.classList.add(HIDDEN_CLASS);
                     this.setFlag(2 /* IsHidden */);
                     sendMessage(this, new Message('after-hide'));
                 }
                 else {
-                    this.addClass(HIDDEN_CLASS);
+                    this._node.classList.add(HIDDEN_CLASS);
                     this.setFlag(2 /* IsHidden */);
                 }
                 if (parent) {
@@ -7591,7 +7696,7 @@ var phosphor;
                 if (direction === void 0) { direction = 2 /* TopToBottom */; }
                 if (spacing === void 0) { spacing = 8; }
                 _super.call(this, new widgets.BoxLayout(direction, spacing));
-                this.addClass(BOX_PANEL_CLASS);
+                this.node.classList.add(BOX_PANEL_CLASS);
             }
             Object.defineProperty(BoxPanel.prototype, "direction", {
                 /**
@@ -7733,7 +7838,7 @@ var phosphor;
                 if (orientation === void 0) { orientation = 0 /* Horizontal */; }
                 _super.call(this, new widgets.SplitLayout(orientation));
                 this._pressData = null;
-                this.addClass(SPLIT_PANEL_CLASS);
+                this.node.classList.add(SPLIT_PANEL_CLASS);
             }
             /**
              * Dispose of the resources held by the panel.
@@ -7975,7 +8080,7 @@ var phosphor;
                  * A signal emitted when a widget is removed from the panel.
                  */
                 this.widgetRemoved = new Signal();
-                this.addClass(STACKED_PANEL_CLASS);
+                this.node.classList.add(STACKED_PANEL_CLASS);
                 var layout = this.layout;
                 layout.widgetRemoved.connect(this._sl_widgetRemoved, this);
             }
@@ -8122,7 +8227,7 @@ var phosphor;
                 this._root = null;
                 this._dragData = null;
                 this._items = [];
-                this.addClass(DOCK_AREA_CLASS);
+                this.node.classList.add(DOCK_AREA_CLASS);
                 this._root = this._createSplitter(0 /* Horizontal */);
                 var layout = new widgets.BoxLayout(2 /* TopToBottom */, 0);
                 layout.addWidget(this._root);
@@ -8908,7 +9013,7 @@ var phosphor;
                 this._overlayTimer = 0;
                 this._overlayHidden = true;
                 this._overlayNode = null;
-                this.addClass(DOCK_PANEL_CLASS);
+                this.node.classList.add(DOCK_PANEL_CLASS);
                 this._tabBar = new widgets.TabBar();
                 this._stackedPanel = new widgets.StackedPanel();
                 this._overlayNode = this.createOverlay();
@@ -9067,113 +9172,10 @@ var phosphor;
              */
             function DockSplitter(orientation) {
                 _super.call(this, orientation);
-                this.addClass(DOCK_SPLITTER_CLASS);
+                this.node.classList.add(DOCK_SPLITTER_CLASS);
             }
             return DockSplitter;
         })(widgets.SplitPanel);
-    })(widgets = phosphor.widgets || (phosphor.widgets = {}));
-})(phosphor || (phosphor = {})); // module phosphor.widgets
-
-var __extends = this.__extends || function (d, b) {
-    for (var p in b) if (b.hasOwnProperty(p)) d[p] = b[p];
-    function __() { this.constructor = d; }
-    __.prototype = b.prototype;
-    d.prototype = new __();
-};
-/*-----------------------------------------------------------------------------
-| Copyright (c) 2014-2015, S. Chris Colbert
-|
-| Distributed under the terms of the BSD 3-Clause License.
-|
-| The full license is in the file LICENSE, distributed with this software.
-|----------------------------------------------------------------------------*/
-var phosphor;
-(function (phosphor) {
-    var widgets;
-    (function (widgets) {
-        var Size = phosphor.utility.Size;
-        var render = phosphor.virtualdom.render;
-        /**
-         * The class name added to element host panels.
-         */
-        var ELEMENT_HOST_CLASS = 'p-ElementHost';
-        /**
-         * A leaf widget which hosts a virtual element.
-         *
-         * This is used to embed a virtual element into a widget hierarchy. This
-         * is a simple widget which disallows an external layout. The intent is
-         * that the element will provide the content for the widget, typically
-         * in the form of a component which manages its own updates.
-         */
-        var ElementHost = (function (_super) {
-            __extends(ElementHost, _super);
-            /**
-             * Construct a new element host.
-             */
-            function ElementHost(element, width, height) {
-                if (element === void 0) { element = null; }
-                if (width === void 0) { width = 0; }
-                if (height === void 0) { height = 0; }
-                _super.call(this);
-                this.addClass(ELEMENT_HOST_CLASS);
-                this.setFlag(16 /* DisallowLayoutChange */);
-                this._size = new Size(Math.max(0, width), Math.max(0, height));
-                this._element = element;
-            }
-            Object.defineProperty(ElementHost.prototype, "element", {
-                /**
-                 * Get the virtual element hosted by the panel.
-                 */
-                get: function () {
-                    return this._element;
-                },
-                /**
-                 * Set the virtual element hosted by the panel.
-                 */
-                set: function (element) {
-                    element = element || null;
-                    if (element === this._element) {
-                        return;
-                    }
-                    this._element = element;
-                    render(element, this.node);
-                },
-                enumerable: true,
-                configurable: true
-            });
-            /**
-             * Calculate the preferred size of the panel.
-             */
-            ElementHost.prototype.sizeHint = function () {
-                return this._size;
-            };
-            /**
-             * Set the preferred size for the panel.
-             */
-            ElementHost.prototype.setSizeHint = function (width, height) {
-                width = Math.max(0, width);
-                height = Math.max(0, height);
-                if (width === this._size.width && height === this._size.height) {
-                    return;
-                }
-                this._size = new Size(width, height);
-                this.updateGeometry();
-            };
-            /**
-             * A method invoked on an 'after-attach' message.
-             */
-            ElementHost.prototype.onAfterAttach = function (msg) {
-                render(this._element, this.node);
-            };
-            /**
-             * A method invoked on an 'after-detach' message.
-             */
-            ElementHost.prototype.onAfterDetach = function (msg) {
-                render(null, this.node);
-            };
-            return ElementHost;
-        })(widgets.Widget);
-        widgets.ElementHost = ElementHost;
     })(widgets = phosphor.widgets || (phosphor.widgets = {}));
 })(phosphor || (phosphor = {})); // module phosphor.widgets
 
@@ -10536,7 +10538,7 @@ var phosphor;
                 this._nodes = [];
                 this._state = 0 /* Inactive */;
                 this._activeIndex = -1;
-                this.addClass(MENU_BAR_CLASS);
+                this.node.classList.add(MENU_BAR_CLASS);
                 this.verticalSizePolicy = 0 /* Fixed */;
                 if (items)
                     items.forEach(function (it) { return _this.addItem(it); });
@@ -11170,6 +11172,175 @@ var phosphor;
     })(widgets = phosphor.widgets || (phosphor.widgets = {}));
 })(phosphor || (phosphor = {})); // module phosphor.widgets
 
+var __extends = this.__extends || function (d, b) {
+    for (var p in b) if (b.hasOwnProperty(p)) d[p] = b[p];
+    function __() { this.constructor = d; }
+    __.prototype = b.prototype;
+    d.prototype = new __();
+};
+/*-----------------------------------------------------------------------------
+| Copyright (c) 2014-2015, S. Chris Colbert
+|
+| Distributed under the terms of the BSD 3-Clause License.
+|
+| The full license is in the file LICENSE, distributed with this software.
+|----------------------------------------------------------------------------*/
+var phosphor;
+(function (phosphor) {
+    var widgets;
+    (function (widgets) {
+        var Message = phosphor.core.Message;
+        var postMessage = phosphor.core.postMessage;
+        var sendMessage = phosphor.core.sendMessage;
+        var emptyObject = phosphor.utility.emptyObject;
+        var render = phosphor.virtualdom.render;
+        /**
+         * The class name added to RenderWidget instances.
+         */
+        var RENDER_WIDGET_CLASS = 'p-RenderWidget';
+        /**
+         * A singleton 'update-request' message.
+         */
+        var MSG_UPDATE_REQUEST = new Message('update-request');
+        /**
+         * A singleton 'before-render' message.
+         */
+        var MSG_BEFORE_RENDER = new Message('before-render');
+        /**
+         * A singleton 'after-render' message.
+         */
+        var MSG_AFTER_RENDER = new Message('after-render');
+        // TODO - render null on detach to dispose vdom content?
+        /**
+         * A leaf widget which renders its content using the virtual DOM.
+         *
+         * This widget is used to embed virtual DOM content into a widget
+         * hierarchy. A subclass should reimplement the `render` method to
+         * generate the content for the widget. It should also reimplement
+         * the `sizeHint` method to return a reasonable natural size.
+         */
+        var RenderWidget = (function (_super) {
+            __extends(RenderWidget, _super);
+            /**
+             * Construct a new render widget.
+             */
+            function RenderWidget() {
+                _super.call(this);
+                this._refs = emptyObject;
+                this.node.classList.add(RENDER_WIDGET_CLASS);
+                this.setFlag(16 /* DisallowLayoutChange */);
+            }
+            /**
+             * Dispose of the resources held by the widget.
+             */
+            RenderWidget.prototype.dispose = function () {
+                this._refs = null;
+                _super.prototype.dispose.call(this);
+            };
+            Object.defineProperty(RenderWidget.prototype, "refs", {
+                /**
+                 * Get the current refs mapping for the widget.
+                 */
+                get: function () {
+                    return this._refs;
+                },
+                enumerable: true,
+                configurable: true
+            });
+            /**
+             * Schedule a rendering update for the widget.
+             *
+             * This should be called whenever the internal state of the widget
+             * has changed such that it requires the widget to be re-rendered,
+             * or when external code determines the widget should be refreshed.
+             *
+             * If the `immediate` flag is false (the default) the update will be
+             * scheduled for the next cycle of the event loop. If `immediate` is
+             * true, the widget will be updated immediately. Multiple pending
+             * requests are collapsed into a single update.
+             */
+            RenderWidget.prototype.update = function (immediate) {
+                if (immediate === void 0) { immediate = false; }
+                if (immediate) {
+                    sendMessage(this, MSG_UPDATE_REQUEST);
+                }
+                else {
+                    postMessage(this, MSG_UPDATE_REQUEST);
+                }
+            };
+            /**
+             * Process a message sent to the widget.
+             */
+            RenderWidget.prototype.processMessage = function (msg) {
+                switch (msg.type) {
+                    case 'update-request':
+                        this.onUpdateRequest(msg);
+                        break;
+                    case 'before-render':
+                        this.onBeforeRender(msg);
+                        break;
+                    case 'after-render':
+                        this.onAfterRender(msg);
+                        break;
+                    default:
+                        _super.prototype.processMessage.call(this, msg);
+                }
+            };
+            /**
+             * Compress a message posted to the widget.
+             */
+            RenderWidget.prototype.compressMessage = function (msg, pending) {
+                if (msg.type === 'update-request') {
+                    return pending.some(function (other) { return other.type === 'update-request'; });
+                }
+                return _super.prototype.compressMessage.call(this, msg, pending);
+            };
+            /**
+             * Create the virtual DOM content for the widget.
+             *
+             * The rendered content is used to populate the widget's node.
+             *
+             * The default implementation returns `null`.
+             */
+            RenderWidget.prototype.render = function () {
+                return null;
+            };
+            /**
+             * A method invoked on an 'update-request' message.
+             *
+             * This renders the virtual DOM content into the widget's node.
+             */
+            RenderWidget.prototype.onUpdateRequest = function (msg) {
+                sendMessage(this, MSG_BEFORE_RENDER);
+                this._refs = render(this.render(), this.node);
+                sendMessage(this, MSG_AFTER_RENDER);
+            };
+            /**
+             * A method invoked on an 'after-attach' message.
+             */
+            RenderWidget.prototype.onAfterAttach = function (msg) {
+                this.update(true);
+            };
+            /**
+             * A method invoked on a 'before-render' message.
+             *
+             * The default implementation is a no-op.
+             */
+            RenderWidget.prototype.onBeforeRender = function (msg) {
+            };
+            /**
+             * A method invoked on an 'after-render' message.
+             *
+             * The default implementation is a no-op.
+             */
+            RenderWidget.prototype.onAfterRender = function (msg) {
+            };
+            return RenderWidget;
+        })(widgets.Widget);
+        widgets.RenderWidget = RenderWidget;
+    })(widgets = phosphor.widgets || (phosphor.widgets = {}));
+})(phosphor || (phosphor = {})); // module phosphor.widgets
+
 /*-----------------------------------------------------------------------------
 | Copyright (c) 2014-2015, S. Chris Colbert
 |
@@ -11423,7 +11594,7 @@ var phosphor;
                 this._currentTab = null;
                 this._previousTab = null;
                 this._dragData = null;
-                this.addClass(TAB_BAR_CLASS);
+                this.node.classList.add(TAB_BAR_CLASS);
                 this.verticalSizePolicy = 0 /* Fixed */;
                 if (options)
                     this._initFrom(options);
@@ -12351,7 +12522,7 @@ var phosphor;
                  * A signal emitted when the current widget is changed.
                  */
                 this.currentChanged = new Signal();
-                this.addClass(TAB_PANEL_CLASS);
+                this.node.classList.add(TAB_PANEL_CLASS);
                 this.layout = new widgets.BoxLayout(2 /* TopToBottom */, 0);
                 this.setFlag(16 /* DisallowLayoutChange */);
                 var bar = this._tabBar = new widgets.TabBar();
@@ -12977,7 +13148,7 @@ var phosphor;
             function ShellPanel(direction) {
                 _super.call(this);
                 this._pairs = [];
-                this.addClass(SHELL_PANEL_CLASS);
+                this.node.classList.add(SHELL_PANEL_CLASS);
                 this.layout = new BoxLayout(direction, 0);
                 this.setFlag(16 /* DisallowLayoutChange */);
             }
@@ -13081,7 +13252,7 @@ var phosphor;
              */
             function ShellView() {
                 _super.call(this);
-                this.addClass(SHELL_VIEW_CLASS);
+                this.node.classList.add(SHELL_VIEW_CLASS);
                 this._menuBar = new MenuBar();
                 this._topPanel = new shell.ShellPanel(2 /* TopToBottom */);
                 this._leftPanel = new shell.ShellPanel(0 /* LeftToRight */);
@@ -13089,11 +13260,11 @@ var phosphor;
                 this._bottomPanel = new shell.ShellPanel(3 /* BottomToTop */);
                 this._centerPanel = new shell.ShellPanel(2 /* TopToBottom */);
                 this._menuManager = new shell.MenuManager(this._menuBar);
-                this._topPanel.addClass(TOP_CLASS);
-                this._leftPanel.addClass(LEFT_CLASS);
-                this._rightPanel.addClass(RIGHT_CLASS);
-                this._bottomPanel.addClass(BOTTOM_CLASS);
-                this._centerPanel.addClass(CENTER_CLASS);
+                this._topPanel.node.classList.add(TOP_CLASS);
+                this._leftPanel.node.classList.add(LEFT_CLASS);
+                this._rightPanel.node.classList.add(RIGHT_CLASS);
+                this._bottomPanel.node.classList.add(BOTTOM_CLASS);
+                this._centerPanel.node.classList.add(CENTER_CLASS);
                 this._menuBar.hide();
                 this._topPanel.verticalSizePolicy = 0 /* Fixed */;
                 shell.enableAutoHide(this._topPanel);
@@ -13191,20 +13362,89 @@ var phosphor;
 (function (phosphor) {
     var lib;
     (function (lib) {
-        var Point = phosphor.utility.Point;
-        var Size = phosphor.utility.Size;
         var BaseComponent = phosphor.virtualdom.BaseComponent;
         var createFactory = phosphor.virtualdom.createFactory;
+        /**
+         * The class name added to CodeMirrorComponent instances.
+         */
+        var CODE_MIRROR_COMPONENT_CLASS = 'p-CodeMirrorComponent';
+        // TODO:
+        // - update editor config on re-render?
+        // - save/restore scroll position on move?
+        /**
+         * A component which hosts a CodeMirror editor.
+         */
+        var CodeMirrorComponent = (function (_super) {
+            __extends(CodeMirrorComponent, _super);
+            /**
+             * Construct a new code mirror component.
+             */
+            function CodeMirrorComponent(data, children) {
+                _super.call(this, data, children);
+                this.node.classList.add(CODE_MIRROR_COMPONENT_CLASS);
+                this._editor = CodeMirror(this.node, data.config);
+            }
+            /**
+             * Dispose of the resources held by the component.
+             */
+            CodeMirrorComponent.prototype.dispose = function () {
+                this._editor = null;
+                _super.prototype.dispose.call(this);
+            };
+            Object.defineProperty(CodeMirrorComponent.prototype, "editor", {
+                /**
+                 * Get the code mirror editor for the component.
+                 *
+                 * This component does not attempt to wrap the extensive code mirror
+                 * api. User code should interact with the editor object directly.
+                 */
+                get: function () {
+                    return this._editor;
+                },
+                enumerable: true,
+                configurable: true
+            });
+            /**
+             * A method invoked on an 'after-attach' message.
+             */
+            CodeMirrorComponent.prototype.onAfterAttach = function (msg) {
+                this._editor.refresh();
+            };
+            return CodeMirrorComponent;
+        })(BaseComponent);
+        lib.CodeMirrorComponent = CodeMirrorComponent;
+        /**
+         * The default element factory for the CodeMirrorComponent.
+         */
+        lib.CodeMirrorFactory = createFactory(CodeMirrorComponent);
+    })(lib = phosphor.lib || (phosphor.lib = {}));
+})(phosphor || (phosphor = {})); // module phosphor.lib
+
+var __extends = this.__extends || function (d, b) {
+    for (var p in b) if (b.hasOwnProperty(p)) d[p] = b[p];
+    function __() { this.constructor = d; }
+    __.prototype = b.prototype;
+    d.prototype = new __();
+};
+/*-----------------------------------------------------------------------------
+| Copyright (c) 2014-2015, S. Chris Colbert
+|
+| Distributed under the terms of the BSD 3-Clause License.
+|
+| The full license is in the file LICENSE, distributed with this software.
+|----------------------------------------------------------------------------*/
+var phosphor;
+(function (phosphor) {
+    var lib;
+    (function (lib) {
+        var Point = phosphor.utility.Point;
+        var Size = phosphor.utility.Size;
         var SizePolicy = phosphor.widgets.SizePolicy;
         var Widget = phosphor.widgets.Widget;
         /**
          * The class name added to CodeMirrorWidget instances.
          */
         var CODE_MIRROR_WIDGET_CLASS = 'p-CodeMirrorWidget';
-        /**
-         * THe class name assigned to CodeMirrorComponent instances.
-         */
-        var CODE_MIRROR_COMPONENT_CLASS = 'p-CodeMirrorComponent';
         /**
          * A widget which hosts a CodeMirror editor.
          */
@@ -13216,8 +13456,8 @@ var phosphor;
             function CodeMirrorWidget(config) {
                 _super.call(this);
                 this._scrollPos = null;
-                this.addClass(CODE_MIRROR_WIDGET_CLASS);
-                this._editor = this.createEditor(config);
+                this.node.classList.add(CODE_MIRROR_WIDGET_CLASS);
+                this._editor = CodeMirror(this.node, config);
                 this.setSizePolicy(SizePolicy.Expanding, SizePolicy.Expanding);
             }
             /**
@@ -13244,17 +13484,7 @@ var phosphor;
              * Calculate the preferred size for the widget.
              */
             CodeMirrorWidget.prototype.sizeHint = function () {
-                return new Size(500, 200);
-            };
-            /**
-             * Create the editor for the widget.
-             *
-             * This can be reimplemented by subclasses which require custom
-             * creation of the editor instance. The default implementation
-             * assumes `CodeMirror` is available in the global scope.
-             */
-            CodeMirrorWidget.prototype.createEditor = function (config) {
-                return CodeMirror(this.node, config);
+                return new Size(512, 256);
             };
             /**
              * A method invoked on an 'after-show' message.
@@ -13288,64 +13518,5 @@ var phosphor;
             return CodeMirrorWidget;
         })(Widget);
         lib.CodeMirrorWidget = CodeMirrorWidget;
-        /**
-         * A component which hosts a CodeMirror editor.
-         */
-        var CodeMirrorComponent = (function (_super) {
-            __extends(CodeMirrorComponent, _super);
-            function CodeMirrorComponent() {
-                _super.apply(this, arguments);
-                this._editor = null;
-            }
-            /**
-             * Dispose of the resources held by the component.
-             */
-            CodeMirrorComponent.prototype.dispose = function () {
-                this._editor = null;
-                _super.prototype.dispose.call(this);
-            };
-            /**
-             * Initialize the component with new data and children.
-             */
-            CodeMirrorComponent.prototype.init = function (data, children) {
-                _super.prototype.init.call(this, data, children);
-                if (!this._editor) {
-                    this._editor = this.createEditor();
-                }
-            };
-            Object.defineProperty(CodeMirrorComponent.prototype, "editor", {
-                /**
-                 * Get the code mirror editor for the component.
-                 *
-                 * This component does not attempt to wrap the extensive code mirror
-                 * api. User code should interact with the editor object directly.
-                 */
-                get: function () {
-                    return this._editor;
-                },
-                enumerable: true,
-                configurable: true
-            });
-            /**
-             * Create the editor for the component.
-             *
-             * This can be reimplemented by subclasses which require custom
-             * creation of the editor instance. The default implementation
-             * assumes `CodeMirror` is available in the global scope.
-             */
-            CodeMirrorComponent.prototype.createEditor = function () {
-                return CodeMirror(this.node, this.data.config);
-            };
-            /**
-             * The default class name for a code mirror component.
-             */
-            CodeMirrorComponent.className = CODE_MIRROR_COMPONENT_CLASS;
-            return CodeMirrorComponent;
-        })(BaseComponent);
-        lib.CodeMirrorComponent = CodeMirrorComponent;
-        /**
-         * The default virtual element factory for the CodeMirrorComponent.
-         */
-        lib.CodeMirrorFactory = createFactory(CodeMirrorComponent);
     })(lib = phosphor.lib || (phosphor.lib = {}));
 })(phosphor || (phosphor = {})); // module phosphor.lib
