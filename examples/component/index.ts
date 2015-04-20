@@ -30,9 +30,11 @@ interface ITicksData extends IData {
 
 class TicksComponent extends Component<ITicksData> {
 
-  static tagName = 'ul';
+  protected createNode(): HTMLElement {
+    return document.createElement('ul');
+  }
 
-  render(): Elem[] {
+  protected render(): Elem[] {
     var data = this.data;
     var items = [li(data.title)];
     for (var i = 0, n = data.count; i <= n; ++i) {
@@ -53,9 +55,12 @@ interface ITimeData extends IData {
 
 class TimeComponent extends Component<ITimeData> {
 
-  static className = 'time-component';
+  constructor(data: ITimeData, children: Elem[]) {
+    super(data, children);
+    this.node.classList.add('TimeComponent');
+  }
 
-  render(): Elem[] {
+  protected render(): Elem[] {
     var data = this.data;
     var time = data.time;
     var now = data.now;
