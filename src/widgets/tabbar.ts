@@ -171,7 +171,7 @@ class TabBar extends Widget {
    */
   constructor(options?: ITabBarOptions) {
     super();
-    this.addClass(TAB_BAR_CLASS);
+    this.node.classList.add(TAB_BAR_CLASS);
     this.verticalSizePolicy = SizePolicy.Fixed;
     if (options) this._initFrom(options);
   }

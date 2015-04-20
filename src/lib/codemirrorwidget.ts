@@ -33,7 +33,7 @@ class CodeMirrorWidget extends Widget {
    */
   constructor(config?: CodeMirror.EditorConfiguration) {
     super();
-    this.addClass(CODE_MIRROR_WIDGET_CLASS);
+    this.node.classList.add(CODE_MIRROR_WIDGET_CLASS);
     this._editor = CodeMirror(this.node, config);
     this.setSizePolicy(SizePolicy.Expanding, SizePolicy.Expanding);
   }

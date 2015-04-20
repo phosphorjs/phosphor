@@ -29,7 +29,7 @@ class SplitPanel extends Panel {
    */
   constructor(orientation = Orientation.Horizontal) {
     super(new SplitLayout(orientation));
-    this.addClass(SPLIT_PANEL_CLASS);
+    this.node.classList.add(SPLIT_PANEL_CLASS);
   }
 
   /**

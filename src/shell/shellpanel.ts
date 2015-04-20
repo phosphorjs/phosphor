@@ -34,7 +34,7 @@ class ShellPanel extends Widget {
    */
   constructor(direction: Direction) {
     super();
-    this.addClass(SHELL_PANEL_CLASS);
+    this.node.classList.add(SHELL_PANEL_CLASS);
     this.layout = new BoxLayout(direction, 0);
     this.setFlag(WidgetFlag.DisallowLayoutChange);
   }

@@ -14,7 +14,7 @@ import Widget = phosphor.widgets.Widget;
 
 function createContent(text: string): Widget {
   var widget = new Widget();
-  widget.addClass('content');
+  widget.node.classList.add('content');
   widget.node.innerHTML = '<span>' + text + '</span>';
   return widget;
 }
@@ -22,28 +22,28 @@ function createContent(text: string): Widget {
 
 function main(): void {
   var ttb = new BoxPanel(Direction.TopToBottom);
-  ttb.addClass('red');
+  ttb.node.classList.add('red');
   ttb.addWidget(createContent('Top'));
   ttb.addWidget(createContent('To'));
   ttb.addWidget(createContent('Bottom'));
   ttb.addStretch(0);
 
   var btt = new BoxPanel(Direction.BottomToTop);
-  btt.addClass('green');
+  btt.node.classList.add('green');
   btt.addWidget(createContent('Top'));
   btt.addWidget(createContent('To'));
   btt.addWidget(createContent('Bottom'));
   btt.addStretch(0);
 
   var ltr = new BoxPanel(Direction.LeftToRight);
-  ltr.addClass('yellow');
+  ltr.node.classList.add('yellow');
   ltr.addWidget(createContent('Left'));
   ltr.addWidget(createContent('To'));
   ltr.addWidget(createContent('Right'));
   ltr.addStretch(0);
 
   var rtl = new BoxPanel(Direction.RightToLeft);
-  rtl.addClass('blue');
+  rtl.node.classList.add('blue');
   rtl.addWidget(createContent('Left'));
   rtl.addWidget(createContent('To'));
   rtl.addWidget(createContent('Right'));

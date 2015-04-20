@@ -86,7 +86,7 @@ class MenuBar extends Widget {
    */
   constructor(items?: MenuItem[]) {
     super();
-    this.addClass(MENU_BAR_CLASS);
+    this.node.classList.add(MENU_BAR_CLASS);
     this.verticalSizePolicy = SizePolicy.Fixed;
     if (items) items.forEach(it => this.addItem(it));
   }

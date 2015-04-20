@@ -61,7 +61,7 @@ class Widget implements IMessageHandler, IDisposable {
    */
   constructor() {
     this._node = this.createNode();
-    this.addClass(WIDGET_CLASS);
+    this._node.classList.add(WIDGET_CLASS);
   }
 
   /**
@@ -343,27 +343,6 @@ class Widget implements IMessageHandler, IDisposable {
   }
 
   /**
-   * Test whether the widget's DOM node has the given class name.
-   */
-  hasClass(name: string): boolean {
-    return this._node.classList.contains(name);
-  }
-
-  /**
-   * Add a class name to the widget's DOM node.
-   */
-  addClass(name: string): void {
-    this._node.classList.add(name);
-  }
-
-  /**
-   * Remove a class name from the widget's DOM node.
-   */
-  removeClass(name: string): void {
-    this._node.classList.remove(name);
-  }
-
-  /**
    * Test whether the given widget flag is set.
    */
   testFlag(flag: WidgetFlag): boolean {
@@ -396,11 +375,11 @@ class Widget implements IMessageHandler, IDisposable {
     var parent = this._parent;
     if (this.isAttached && (!parent || parent.isVisible)) {
       sendMessage(this, new Message('before-show'));
-      this.removeClass(HIDDEN_CLASS);
+      this._node.classList.remove(HIDDEN_CLASS);
       this.clearFlag(WidgetFlag.IsHidden);
       sendMessage(this, new Message('after-show'));
     } else {
-      this.removeClass(HIDDEN_CLASS);
+      this._node.classList.remove(HIDDEN_CLASS);
       this.clearFlag(WidgetFlag.IsHidden);
     }
     if (parent) {
@@ -421,11 +400,11 @@ class Widget implements IMessageHandler, IDisposable {
     var parent = this._parent;
     if (this.isAttached && (!parent || parent.isVisible)) {
       sendMessage(this, new Message('before-hide'));
-      this.addClass(HIDDEN_CLASS);
+      this._node.classList.add(HIDDEN_CLASS);
       this.setFlag(WidgetFlag.IsHidden);
       sendMessage(this, new Message('after-hide'));
     } else {
-      this.addClass(HIDDEN_CLASS);
+      this._node.classList.add(HIDDEN_CLASS);
       this.setFlag(WidgetFlag.IsHidden);
     }
     if (parent) {
