@@ -9,6 +9,10 @@ module phosphor.virtualdom {
 
 import algo = collections.algorithm;
 
+import IMessage = core.IMessage;
+import Message = core.Message;
+import sendMessage = core.sendMessage;
+
 import Pair = utility.Pair;
 import emptyArray = utility.emptyArray;
 import emptyObject = utility.emptyObject;
@@ -44,7 +48,6 @@ function render(content: Elem | Elem[], host: Node): any {
  */
 var stackLevel = 0;
 
-
 /**
  * Components which are pending attach notification.
  *
@@ -54,17 +57,40 @@ var stackLevel = 0;
  */
 var needsAttachNotification: IComponent<any>[] = [];
 
-
 /**
  * A weak mapping of host node to rendered content.
  */
 var hostMap = new WeakMap<Node, Elem[]>();
 
-
 /**
  * A weak mapping of component node to component.
  */
 var componentMap = new WeakMap<Node, IComponent<any>>();
+
+/**
+ * A singleton 'update-request' message.
+ */
+var MSG_UPDATE_REQUEST = new Message('update-request');
+
+/**
+ * A singleton 'after-attach' message.
+ */
+var MSG_AFTER_ATTACH = new Message('after-attach');
+
+/**
+ * A singleton 'before-detach' message.
+ */
+var MSG_BEFORE_DETACH = new Message('before-detach');
+
+/**
+ * A singleton 'before-move' message.
+ */
+var MSG_BEFORE_MOVE = new Message('before-move');
+
+/**
+ * A singleton 'after-move' message.
+ */
+var MSG_AFTER_MOVE = new Message('after-move');
 
 
 /**
@@ -119,9 +145,7 @@ function asElementArray(content: Elem | Elem[]): Elem[] {
 function notifyAttached(): void {
   while (needsAttachNotification.length > 0) {
     var component = needsAttachNotification.pop();
-    if (component.afterAttach !== void 0) {
-      component.afterAttach();
-    }
+    sendMessage(component, MSG_AFTER_ATTACH);
   }
 }
 
@@ -190,11 +214,12 @@ function createNode(elem: Elem): Node {
     addContent(node, elem.children);
     break;
   case ElemType.Component:
-    var component = new (<IComponentClass<any>>elem.tag)();
-    componentMap.set(component.node, component);
-    needsAttachNotification.push(component);
-    component.init(elem.data, elem.children);
+    var cls = <IComponentClass<any>>elem.tag;
+    var component = new cls(elem.data, elem.children);
     node = component.node;
+    componentMap.set(node, component);
+    needsAttachNotification.push(component);
+    sendMessage(component, MSG_UPDATE_REQUEST);
     break;
   default:
     throw new Error('invalid element type');
@@ -260,9 +285,9 @@ function updateContent(host: Node, oldContent: Elem[], newContent: Elem[]): void
       var pair = oldKeyed[newKey];
       if (pair.first !== oldElem) {
         algo.move(oldCopy, algo.indexOf(oldCopy, pair.first, i), i);
-        walkBranch(pair.second, beforeDetachNode);
+        sendBranch(pair.second, MSG_BEFORE_MOVE);
         host.insertBefore(pair.second, currNode);
-        walkBranch(pair.second, afterAttachNode);
+        sendBranch(pair.second, MSG_AFTER_MOVE);
         oldElem = pair.first;
         currNode = pair.second;
       }
@@ -315,73 +340,47 @@ function updateContent(host: Node, oldContent: Elem[], newContent: Elem[]): void
       continue;
     }
 
-    // At this point, the node is a Component type; re-init it.
+    // At this point, the node is a Component type; update it.
     var component = componentMap.get(currNode);
     component.init(newElem.data, newElem.children);
+    sendMessage(component, MSG_UPDATE_REQUEST);
     currNode = currNode.nextSibling;
   }
 
   // Dispose of the old nodes pushed to the end of the host.
   for (var i = oldCopy.length - 1; i >= newCount; --i) {
     var oldNode = host.lastChild;
-    walkBranch(oldNode, beforeDetachNode);
+    sendBranch(oldNode, MSG_BEFORE_DETACH);
     host.removeChild(oldNode);
-    walkBranch(oldNode, disposeNode);
+    disposeBranch(oldNode);
   }
 }
 
 
 /**
- * Invoke the given callback for each node the branch.
+ * Send a message to each component in the branch.
  */
-function walkBranch(root: Node, callback: (node: Node) => void): void {
-  callback(root);
+function sendBranch(root: Node, msg: IMessage): void {
+  if (root.nodeType === 1) {
+    var component = componentMap.get(root);
+    if (component) sendMessage(component, msg);
+  }
   for (var node = root.firstChild; node; node = node.nextSibling) {
-    walkBranch(node, callback);
+    sendBranch(node, msg);
   }
 }
 
 
 /**
- * Invoke the `beforeDetach` method of the component mapped to the node.
- *
- * If the node does not map to a component, this is a no-op.
+ * Dispose of each component in the branch.
  */
-function beforeDetachNode(node: Node): void {
-  if (node.nodeType === 1) {
-    var component = componentMap.get(node);
-    if (component && component.beforeDetach !== void 0) {
-      component.beforeDetach();
-    }
-  }
-}
-
-
-/**
- * Invoke the `afterAttach` method of the component mapped to the node.
- *
- * If the node does not map to a component, this is a no-op.
- */
-function afterAttachNode(node: Node): void {
-  if (node.nodeType === 1) {
-    var component = componentMap.get(node);
-    if (component && component.afterAttach !== void 0) {
-      component.afterAttach();
-    }
-  }
-}
-
-
-/**
- * Dispose of the node which has been removed from the DOM.
- *
- * If the node maps to a component, the `dispose` component method
- * will be called.
- */
-function disposeNode(node: Node): void {
-  if (node.nodeType === 1) {
-    var component = componentMap.get(node);
+function disposeBranch(root: Node): void {
+  if (root.nodeType === 1) {
+    var component = componentMap.get(root);
     if (component) component.dispose();
+  }
+  for (var node = root.firstChild; node; node = node.nextSibling) {
+    disposeBranch(node);
   }
 }
 

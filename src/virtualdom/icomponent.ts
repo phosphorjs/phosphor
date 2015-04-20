@@ -7,14 +7,28 @@
 |----------------------------------------------------------------------------*/
 module phosphor.virtualdom {
 
+import IMessageHandler = core.IMessageHandler;
+
 import IDisposable = utility.IDisposable;
 
 
 /**
  * An object which manages its own DOM node in a virtual DOM hierarchy.
+ *
+ * The renderer will send a component the following messages:
+ *
+ *   'update-request' - Sent when the component should update.
+ *
+ *   'after-attach' - Sent after the node is attached to the DOM.
+ *
+ *   'before-detach' - Sent before the node is detached from the DOM.
+ *
+ *   'before-move' - Sent before the node is moved in the DOM.
+ *
+ *   'after-move' - Sent after the node is moved in the DOM.
  */
 export
-interface IComponent<T extends IData> extends IDisposable {
+interface IComponent<T extends IData> extends IMessageHandler, IDisposable {
   /**
    * The DOM node for the component.
    *
@@ -25,29 +39,11 @@ interface IComponent<T extends IData> extends IDisposable {
   /**
    * Initialize the component with new data and children.
    *
-   * This is called whenever the component is rendered by its owner.
+   * This is called whenever the component is re-rendered by its parent.
    *
-   * The component is responsible for updating the content of its node.
+   * It is *not* called when the component is first instantiated.
    */
   init(data: T, children: Elem[]): void;
-
-  /**
-   * A method invoked after the component is attached to the DOM.
-   *
-   * This will be called every time the node is attached to the DOM.
-   * It will be called more than once if the component is moved, since
-   * moving  a node requires a remove followed by an insert.
-   */
-  afterAttach?(): void;
-
-  /**
-   * A method invoked before the component is detached from the DOM.
-   *
-   * This will be called every time the node is detached from the DOM.
-   * It will be called more than once if the component is moved, since
-   * moving a node requires a remove followed by an insert.
-   */
-  beforeDetach?(): void;
 }
 
 
@@ -59,7 +55,7 @@ interface IComponentClass<T extends IData> {
   /**
    * Construct a new component.
    */
-  new(): IComponent<T>;
+  new(data: T, children: Elem[]): IComponent<T>;
 }
 
 } // module phosphor.virtualdom
