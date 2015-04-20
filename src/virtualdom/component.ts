@@ -7,64 +7,46 @@
 |----------------------------------------------------------------------------*/
 module phosphor.virtualdom {
 
-import emptyArray = utility.emptyArray;
+import Queue = collections.Queue;
+
+import IMessage = core.IMessage;
+import Message = core.Message;
+import postMessage = core.postMessage;
+import sendMessage = core.sendMessage;
+
 import emptyObject = utility.emptyObject;
 
 
 /**
- * An implementation of IComponent which renders with the virtual DOM.
+ * A singleton 'update-request' message.
+ */
+var MSG_UPDATE_REQUEST = new Message('update-request');
+
+/**
+ * A singleton 'before-render' message.
+ */
+var MSG_BEFORE_RENDER = new Message('before-render');
+
+/**
+ * A singleton 'after-render' message.
+ */
+var MSG_AFTER_RENDER = new Message('after-render');
+
+
+/**
+ * A component which renders its content using the virtual DOM.
  *
  * User code should subclass this class and reimplement the `render`
  * method to generate the virtual DOM content for the component.
  */
 export
-class Component<T extends IData> implements IComponent<T> {
-  /**
-   * The tag name used to create the component's DOM node.
-   *
-   * A subclass may redefine this property.
-   */
-  static tagName = 'div';
-
-  /**
-   * The initial class name for the component's DOM node.
-   *
-   * A subclass may redefine this property.
-   */
-  static className = '';
-
-  /**
-   * Construct a new component.
-   */
-  constructor() {
-    var ctor = <any>this.constructor;
-    this._node = document.createElement(<string>ctor.tagName);
-    this._node.className = <string>ctor.className;
-  }
-
+class Component<T extends IData> extends BaseComponent<T> {
   /**
    * Dispose of the resources held by the component.
    */
   dispose(): void {
-    this._node = null;
-    this._data = null;
     this._refs = null;
-    this._children = null;
-    this._cancelUpdate();
-  }
-
-  /**
-   * Get the DOM node for the component.
-   */
-  get node(): HTMLElement {
-    return this._node;
-  }
-
-  /**
-   * Get the current data object for the component.
-   */
-  get data(): T {
-    return this._data;
+    super.dispose();
   }
 
   /**
@@ -75,68 +57,49 @@ class Component<T extends IData> implements IComponent<T> {
   }
 
   /**
-   * Get the current children for the component.
-   */
-  get children(): Elem[] {
-    return this._children;
-  }
-
-  /**
-   * Initialize the component with new data and children.
-   *
-   * This is called whenever the component is rendered by its parent.
-   *
-   * A subclass may reimplement this method if needed, but it should
-   * always call `super` so that the internal component state can be
-   * updated and the node content can be re-rendered if necessary.
-   */
-  init(data: T, children: Elem[]): void {
-    var update = this.shouldUpdate(data, children);
-    this._data = data;
-    this._children = children;
-    if (update) this.update(true);
-  }
-
-  /**
    * Schedule an update for the component.
    *
    * This should be called whenever the internal state of the component
    * has changed such that it requires the component to be re-rendered,
-   * or when external code requires the component to be refreshed.
+   * or when external code determines the component should be refreshed.
    *
    * If the `immediate` flag is false (the default) the update will be
-   * scheduled for the next cycle of the event loop. If the flag is set
-   * to true, the component will be updated immediately.
-   *
-   * Multiple pending requests are collapsed into a single update.
+   * scheduled for the next cycle of the event loop. If `immediate` is
+   * true, the component will be updated immediately. Multiple pending
+   * requests are collapsed into a single update.
    */
   update(immediate = false): void {
     if (immediate) {
-      this._cancelUpdate();
-      this._render();
-    } else if (this._requestId === 0) {
-      this._requestId = requestAnimationFrame(() => {
-        this._requestId = 0;
-        this._render();
-      });
+      sendMessage(this, MSG_UPDATE_REQUEST);
+    } else {
+      postMessage(this, MSG_UPDATE_REQUEST);
     }
   }
 
   /**
-   * Test whether the component should be updated.
-   *
-   * This method is called when the component is initialized with new
-   * data and children. It should return true if the component should
-   * be updated, or false if the values do not cause a visual change.
-   *
-   * Determining whether a component should update is error prone and
-   * can be just as expensive as performing the virtual DOM diff, so
-   * this should only be reimplemented if performance is a problem.
-   *
-   * The default implementation returns `true`.
+   * Process a message sent to the component.
    */
-  shouldUpdate(data: T, children: Elem[]): boolean {
-    return true;
+  processMessage(msg: IMessage): void {
+    switch (msg.type) {
+    case 'before-render':
+      this.onBeforeRender(msg);
+      break;
+    case 'after-render':
+      this.onAfterRender(msg);
+      break;
+    default:
+      super.processMessage(msg);
+    }
+  }
+
+  /**
+   * Compress a message posted to the component.
+   */
+  compressMessage(msg: IMessage, pending: Queue<IMessage>): boolean {
+    if (msg.type === 'update-request') {
+      return pending.some(other => other.type === 'update-request');
+    }
+    return false;
   }
 
   /**
@@ -146,48 +109,36 @@ class Component<T extends IData> implements IComponent<T> {
    *
    * The default implementation returns `null`.
    */
-  render(): Elem | Elem[] {
+  protected render(): Elem | Elem[] {
     return null;
   }
 
   /**
-   * A method invoked immediately before the component is rendered.
+   * A method invoked on an 'update-request' message.
    *
-   * The default implementation is a no-op.
+   * This renders the virtual DOM content into the component's node.
    */
-  beforeRender(): void { }
-
-  /**
-   * A method invoked immediately after the component is rendered.
-   *
-   * The default implementation is a no-op.
-   */
-  afterRender(): void { }
-
-  /**
-   * Perform an immediate rendering of the component.
-   */
-  private _render(): void {
-    this.beforeRender();
-    this._refs = render(this.render(), this._node);
-    this.afterRender();
+  protected onUpdateRequest(msg: IMessage): void {
+    sendMessage(this, MSG_BEFORE_RENDER);
+    this._refs = render(this.render(), this.node);
+    sendMessage(this, MSG_AFTER_RENDER);
   }
 
   /**
-   * Cancel the pending update request.
+   * A method invoked on a 'before-render' message.
+   *
+   * The default implementation is a no-op.
    */
-  private _cancelUpdate(): void {
-    if (this._requestId !== 0) {
-      cancelAnimationFrame(this._requestId);
-      this._requestId = 0;
-    }
-  }
+  protected onBeforeRender(msg: IMessage): void { }
 
-  private _requestId = 0;
-  private _node: HTMLElement;
-  private _data: T = emptyObject;
+  /**
+   * A method invoked on an 'after-render' message.
+   *
+   * The default implementation is a no-op.
+   */
+  protected onAfterRender(msg: IMessage): void { }
+
   private _refs: any = emptyObject;
-  private _children: Elem[] = emptyArray;
 }
 
 } // module phosphor.virtualdom
