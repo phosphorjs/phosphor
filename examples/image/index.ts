@@ -10,8 +10,8 @@ module example {
 import Size = phosphor.utility.Size;
 
 import Component = phosphor.virtualdom.Component;
+import Elem = phosphor.virtualdom.Elem;
 import IData = phosphor.virtualdom.IData;
-import IElement = phosphor.virtualdom.IElement;
 import createFactory = phosphor.virtualdom.createFactory;
 import dom = phosphor.virtualdom.dom;
 
@@ -85,7 +85,7 @@ class SelectorComponent extends Component<ISelectorData> {
     super.dispose();
   }
 
-  render(): IElement[] {
+  render(): Elem[] {
     return this.data.values.map(value => dom.option(value));
   }
 

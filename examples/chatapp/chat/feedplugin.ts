@@ -12,8 +12,8 @@ import IContainer = phosphor.di.IContainer;
 import IShellView = phosphor.shell.IShellView;
 
 import Component = phosphor.virtualdom.Component;
+import Elem = phosphor.virtualdom.Elem;
 import IData = phosphor.virtualdom.IData;
-import IElement = phosphor.virtualdom.IElement;
 import createFactory = phosphor.virtualdom.createFactory;
 import dom = phosphor.virtualdom.dom;
 
@@ -27,7 +27,7 @@ class FeedPlaceholder extends Component<IData> {
 
   static className = 'chat-feed';
 
-  render(): IElement {
+  render(): Elem {
     return dom.h2('Chat Feed Placeholder');
   }
 }
