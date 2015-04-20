@@ -8,6 +8,7 @@
 module phosphor.virtualdom {
 
 import IMessage = core.IMessage;
+import clearMessageData = core.clearMessageData;
 
 import emptyArray = utility.emptyArray;
 import emptyObject = utility.emptyObject;
@@ -37,6 +38,7 @@ class BaseComponent<T extends IData> implements IComponent<T> {
     this._node = null;
     this._data = null;
     this._children = null;
+    clearMessageData(this);
   }
 
   /**
