@@ -7,8 +7,10 @@
 |----------------------------------------------------------------------------*/
 module phosphor.lib {
 
+import IMessage = core.IMessage;
+
+import BaseComponent = virtualdom.BaseComponent;
 import Elem = virtualdom.Elem;
-import IComponent = virtualdom.IComponent;
 import IData = virtualdom.IData;
 import createFactory = virtualdom.createFactory;
 
@@ -28,32 +30,29 @@ interface ICodeMirrorData extends IData {
 }
 
 
+// TODO:
+// - update editor config on re-render?
+// - save/restore scroll position on move?
 /**
  * A component which hosts a CodeMirror editor.
  */
 export
-class CodeMirrorComponent implements IComponent<ICodeMirrorData> {
+class CodeMirrorComponent extends BaseComponent<ICodeMirrorData> {
   /**
    * Construct a new code mirror component.
    */
-  constructor() {
-    this._node = document.createElement('div');
-    this._node.className = CODE_MIRROR_COMPONENT_CLASS;
+  constructor(data: ICodeMirrorData, children: Elem[]) {
+    super(data, children);
+    this.node.classList.add(CODE_MIRROR_COMPONENT_CLASS);
+    this._editor = CodeMirror(this.node, data.config);
   }
 
   /**
    * Dispose of the resources held by the component.
    */
   dispose(): void {
-    this._node = null;
     this._editor = null;
-  }
-
-  /**
-   * Get the DOM node associated with the component.
-   */
-  get node(): HTMLElement {
-    return this._node;
+    super.dispose();
   }
 
   /**
@@ -67,25 +66,13 @@ class CodeMirrorComponent implements IComponent<ICodeMirrorData> {
   }
 
   /**
-   * Initialize the component with new data and children.
+   * A method invoked on an 'after-attach' message.
    */
-  init(data: ICodeMirrorData, children: Elem[]): void {
-    if (this._editor === null) {
-      this._editor = CodeMirror(this._node, data.config);
-    } else {
-      // TODO update editor options?
-    }
-  }
-
-  /**
-   * A method invoked after the node is attached to the DOM.
-   */
-  afterAttach(): void {
+  protected onAfterAttach(msg: IMessage): void {
     this._editor.refresh();
   }
 
-  private _node: HTMLElement;
-  private _editor: CodeMirror.Editor = null;
+  private _editor: CodeMirror.Editor;
 }
 
 
