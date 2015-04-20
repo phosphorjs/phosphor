@@ -51,6 +51,7 @@ var tsSources = [
   'utility/viewport',
 
   'virtualdom/factory',
+  'virtualdom/basecomponent',
   'virtualdom/component',
   'virtualdom/dom',
   'virtualdom/elem',
