@@ -7,61 +7,46 @@
 |----------------------------------------------------------------------------*/
 module example {
 
+import clientViewportRect = phosphor.utility.clientViewportRect;
+
 import BoxPanel = phosphor.widgets.BoxPanel;
 import Direction = phosphor.widgets.Direction;
 import Widget = phosphor.widgets.Widget;
 
 
-function createContent(text: string): Widget {
+function createContent(name: string): Widget {
   var widget = new Widget();
   widget.node.classList.add('content');
-  widget.node.innerHTML = '<span>' + text + '</span>';
+  widget.node.classList.add(name);
   return widget;
 }
 
 
 function main(): void {
-  var ttb = new BoxPanel(Direction.TopToBottom);
-  ttb.node.classList.add('red');
-  ttb.addWidget(createContent('Top'));
-  ttb.addWidget(createContent('To'));
-  ttb.addWidget(createContent('Bottom'));
-  ttb.addStretch(0);
+  var red = createContent('red');
+  var green = createContent('green');
+  var blue = createContent('blue');
+  var yellow = createContent('yellow');
 
-  var btt = new BoxPanel(Direction.BottomToTop);
-  btt.node.classList.add('green');
-  btt.addWidget(createContent('Top'));
-  btt.addWidget(createContent('To'));
-  btt.addWidget(createContent('Bottom'));
-  btt.addStretch(0);
+  var panel = new BoxPanel();
+  panel.addWidget(red, 1);
+  panel.addWidget(green, 2);
+  panel.addWidget(blue, 3);
+  panel.addWidget(yellow, 1);
 
-  var ltr = new BoxPanel(Direction.LeftToRight);
-  ltr.node.classList.add('yellow');
-  ltr.addWidget(createContent('Left'));
-  ltr.addWidget(createContent('To'));
-  ltr.addWidget(createContent('Right'));
-  ltr.addStretch(0);
+  panel.attach(document.getElementById('main'));
 
-  var rtl = new BoxPanel(Direction.RightToLeft);
-  rtl.node.classList.add('blue');
-  rtl.addWidget(createContent('Left'));
-  rtl.addWidget(createContent('To'));
-  rtl.addWidget(createContent('Right'));
-  rtl.addStretch(0);
+  var refresh = () => {
+    if (clientViewportRect().width > 600) {
+      panel.direction = Direction.LeftToRight;
+    } else {
+      panel.direction = Direction.TopToBottom;
+    }
+    panel.fit();
+  };
 
-  var row = new BoxPanel(Direction.LeftToRight);
-  row.addWidget(ttb);
-  row.addWidget(btt);
-
-  var col = new BoxPanel(Direction.TopToBottom);
-  col.addWidget(row);
-  col.addWidget(ltr);
-  col.addWidget(rtl);
-
-  col.attach(document.getElementById('main'));
-  col.fit();
-
-  window.onresize = () => col.fit();
+  refresh();
+  window.onresize = refresh;
 }
 
 
