@@ -18,6 +18,12 @@ import Size = utility.Size;
 
 
 /**
+ * A singleton 'layout-request' message.
+ */
+var MSG_LAYOUT_REQUEST = new Message('layout-request');
+
+
+/**
  * The base class of phosphor layouts.
  *
  * The Layout class does not define an interface for adding widgets to
@@ -193,7 +199,7 @@ class Layout implements IMessageFilter, IDisposable {
   invalidate(): void {
     var parent = this._parent;
     if (parent) {
-      postMessage(parent, new Message('layout-request'));
+      postMessage(parent, MSG_LAYOUT_REQUEST);
       parent.updateGeometry();
     }
   }
