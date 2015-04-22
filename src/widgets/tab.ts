@@ -123,7 +123,7 @@ class Tab extends NodeBase {
   }
 
   /**
-   * The DOM node for the close icon, if available.
+   * Get the DOM node for the tab close icon.
    */
   get closeIconNode(): HTMLElement {
     return <HTMLElement>this.node.lastChild;
