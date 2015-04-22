@@ -42,6 +42,32 @@ var MSG_AFTER_RENDER = new Message('after-render');
 export
 class Component<T extends IData> extends BaseComponent<T> {
   /**
+   * The tag name to use when creating the component node.
+   *
+   * This may be reimplemented by a subclass.
+   */
+  static tagName = 'div';
+
+  /**
+   * The initial class name for the component node.
+   *
+   * This may be reimplemented by a subclass.
+   */
+  static className = '';
+
+  /**
+   * Create the DOM node for a component.
+   *
+   * This method creates the DOM node from the `className` and `tagName`
+   * properties. A subclass will not typically reimplement this method.
+   */
+  static createNode(): HTMLElement {
+    var node = document.createElement(this.tagName);
+    node.className = this.className;
+    return node;
+  }
+
+  /**
    * Dispose of the resources held by the component.
    */
   dispose(): void {
