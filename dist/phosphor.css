@@ -27,11 +27,11 @@ body.p-mod-cursor-override * {
 .p-Widget.p-mod-hidden {
   display: none;
 }
-.p-CodeMirrorWidget > .CodeMirror {
-  z-index: 0;
-}
 .p-CodeMirrorComponent > .CodeMirror {
   height: 100%;
+  z-index: 0;
+}
+.p-CodeMirrorWidget > .CodeMirror {
   z-index: 0;
 }
 .p-DockPanel-overlay {
@@ -49,6 +49,9 @@ body.p-mod-cursor-override * {
   -o-transition: all 150ms ease;
   -ms-transition: all 150ms ease;
   transition: all 150ms ease;
+}
+.p-Tab.p-mod-floating {
+  position: absolute;
 }
 .p-Menu {
   -webkit-box-sizing: border-box;
@@ -69,6 +72,8 @@ body.p-mod-cursor-override * {
   user-select: none;
 }
 .p-Menu-content {
+  margin: 0;
+  padding: 0;
   display: table;
   list-style: none;
   border-spacing: 0;

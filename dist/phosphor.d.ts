@@ -1,215 +1,213 @@
-declare module phosphor.collections {
-    module algorithm {
-        /**
-         * A generic index callback function.
-         */
-        interface ICallback<T, U> {
-            (value: T, index: number): U;
-        }
-        /**
-         * A boolean predicate function.
-         */
-        interface IPredicate<T> {
-            (value: T, index: number): boolean;
-        }
-        /**
-         * A three-way comparison function.
-         */
-        interface IComparator<T, U> {
-            (first: T, second: U): number;
-        }
-        /**
-         * Find the index of the first occurrence of the given value.
-         *
-         * The `fromIndex` parameter controls the starting index of the search.
-         * If the value is negative, it is offset from the end of the array. If
-         * the adjusted value is still negative, it will be clamped to `0`. The
-         * default index is `0`.
-         *
-         * The `wrap` parameter controls the search wrap-around. If true, the
-         * search will wrap-around at the end of the array and continue until
-         * reaching the element just before the starting element. The default
-         * wrap value is `false`.
-         *
-         * Returns `-1` if the value is not found.
-         */
-        function indexOf<T>(array: T[], value: T, fromIndex?: number, wrap?: boolean): number;
-        /**
-         * Find the index of the last occurrence of the given value.
-         *
-         * The `fromIndex` parameter controls the starting index of the search.
-         * If the value is negative, it is offset from the end of the array. If
-         * the value is greater than the last index, it will be clamped to the
-         * last index. The default index is `-1`.
-         *
-         * The `wrap` parameter controls the search wrap-around. If true, the
-         * search will wrap-around at the front of the array and continue until
-         * reaching the element just after the starting element. The default
-         * wrap value is `false`.
-         *
-         * Returns `-1` if the value is not found.
-         */
-        function lastIndexOf<T>(array: T[], value: T, fromIndex?: number, wrap?: boolean): number;
-        /**
-         * Find the index of the first element which passes the test.
-         *
-         * The `fromIndex` parameter controls the starting index of the search.
-         * If the value is negative, it is offset from the end of the array. If
-         * the adjusted value is still negative, it will be clamped to `0`. The
-         * default index is `0`.
-         *
-         * The `wrap` parameter controls the search wrap-around. If true, the
-         * search will wrap-around at the end of the array and continue until
-         * reaching the element just before the starting element. The default
-         * wrap value is `false`.
-         *
-         * Returns `-1` if no element passes the test.
-         */
-        function findIndex<T>(array: T[], pred: IPredicate<T>, fromIndex?: number, wrap?: boolean): number;
-        /**
-         * Find the index of the last element which passes the test.
-         *
-         * The `fromIndex` parameter controls the starting index of the search.
-         * If the value is negative, it is offset from the end of the array. If
-         * the value is greater than the last index, it will be clamped to the
-         * last index. The default index is `-1`.
-         *
-         * The `wrap` parameter controls the search wrap-around. If true, the
-         * search will wrap-around at the front of the array and continue until
-         * reaching the element just after the starting element. The default
-         * wrap value is `false`.
-         *
-         * Returns `-1` if no element passes the test.
-         */
-        function findLastIndex<T>(array: T[], pred: IPredicate<T>, fromIndex?: number, wrap?: boolean): number;
-        /**
-         * Find the first element in the array which passes the given test.
-         *
-         * The `fromIndex` parameter controls the starting index of the search.
-         * If the value is negative, it is offset from the end of the array. If
-         * the adjusted value is still negative, it will be clamped to `0`. The
-         * default index is `0`.
-         *
-         * The `wrap` parameter controls the search wrap-around. If true, the
-         * search will wrap-around at the end of the array and continue until
-         * reaching the element just before the starting element. The default
-         * wrap value is `false`.
-         *
-         * Returns `undefined` if no element passes the test.
-         */
-        function find<T>(array: T[], pred: IPredicate<T>, fromIndex?: number, wrap?: boolean): T;
-        /**
-         * Find the last element in the array which passes the given test.
-         *
-         * The `fromIndex` parameter controls the starting index of the search.
-         * If the value is negative, it is offset from the end of the array. If
-         * the value is greater than the last index, it will be clamped to the
-         * last index. The default index is `-1`.
-         *
-         * The `wrap` parameter controls the search wrap-around. If true, the
-         * search will wrap-around at the front of the array and continue until
-         * reaching the element just after the starting element. The default
-         * wrap value is `false`.
-         *
-         * Returns `undefined` if no element passes the test.
-         */
-        function findLast<T>(array: T[], pred: IPredicate<T>, fromIndex?: number, wrap?: boolean): T;
-        /**
-         * Find the index of the first element which is not less than `value`.
-         *
-         * This function uses a binary search. It must be applied to a sorted
-         * array in order for the results to be correct.
-         *
-         * Returns `array.length` if all elements are less than `value`.
-         */
-        function lowerBound<T, U>(array: T[], value: U, cmp: IComparator<T, U>): number;
-        /**
-         * Find the index of the first element which is greater than `value`.
-         *
-         * This function uses a binary search. It must be applied to a sorted
-         * array in order for the results to be correct.
-         *
-         * Returns `array.length` if no element is greater than `value`.
-         */
-        function upperBound<T, U>(array: T[], value: U, cmp: IComparator<T, U>): number;
-        /**
-         * Find the index of the first element which is equal to `value`.
-         *
-         * This function uses a binary search. It must be applied to a sorted
-         * array in order for the results to be correct.
-         *
-         * Returns `-1` if no matching value is found.
-         */
-        function findLowerIndex<T, U>(array: T[], value: U, cmp: IComparator<T, U>): number;
-        /**
-         * Find the index of the last element which is equal to `value`.
-         *
-         * This function uses a binary search. It must be applied to a sorted
-         * array in order for the results to be correct.
-         *
-         * Returns `-1` if no matching value is found.
-         */
-        function findUpperIndex<T, U>(array: T[], value: U, cmp: IComparator<T, U>): number;
-        /**
-         * Find the first element which is equal to `value`.
-         *
-         * This function uses a binary search. It must be applied to a sorted
-         * array in order for the results to be correct.
-         *
-         * Returns `undefined` if no matching value is found.
-         */
-        function findLower<T, U>(array: T[], value: U, cmp: IComparator<T, U>): T;
-        /**
-         * Find the index of the last element which is equal to `value`.
-         *
-         * This uses a binary search algorithm which must be applied to a
-         * sorted array in order for the results to be correct.
-         *
-         * Returns `-1` if no matching value is found.
-         */
-        function findUpper<T, U>(array: T[], value: U, cmp: IComparator<T, U>): T;
-        /**
-         * Create a shallow copy of the given array.
-         */
-        function copy<T>(array: T[]): T[];
-        /**
-         * Insert an element at the given index.
-         *
-         * If `index` is negative, it will be offset from the end of the array.
-         * If the adjusted value is still negative, it will be clamped to `0`.
-         * If `index` is greater than `array.length`, it will be clamped to
-         * `array.length`.
-         *
-         * Returns the index at which the element was inserted.
-         */
-        function insert<T>(array: T[], index: number, value: T): number;
-        /**
-         * Move an array element from one index to another.
-         *
-         * If `fromIndex` is negative, it will be offset from the end of the
-         * array. If the adjusted value is out of range, `-1` will be returned.
-         *
-         * If `toIndex` is negative, it will be offset from the end of the
-         * array. If the adjusted value is out of range, it will be clamped.
-         *
-         * Returns the final index of the moved element.
-         */
-        function move<T>(array: T[], fromIndex: number, toIndex: number): number;
-        /**
-         * Remove and return the element at the given index.
-         *
-         * If `index` is negative, it will be offset from the end of the array.
-         *
-         * Returns `undefined` if the index is out of range.
-         */
-        function removeAt<T>(array: T[], index: number): T;
-        /**
-         * Remove the first occurrence of the element and return its index.
-         *
-         * Returns the `-1` if the element is not in the array.
-         */
-        function remove<T>(array: T[], value: T): number;
+declare module phosphor.collections.algorithm {
+    /**
+     * A generic index callback function.
+     */
+    interface ICallback<T, U> {
+        (value: T, index: number): U;
     }
+    /**
+     * A boolean predicate function.
+     */
+    interface IPredicate<T> {
+        (value: T, index: number): boolean;
+    }
+    /**
+     * A three-way comparison function.
+     */
+    interface IComparator<T, U> {
+        (first: T, second: U): number;
+    }
+    /**
+     * Find the index of the first occurrence of the given value.
+     *
+     * The `fromIndex` parameter controls the starting index of the search.
+     * If the value is negative, it is offset from the end of the array. If
+     * the adjusted value is still negative, it will be clamped to `0`. The
+     * default index is `0`.
+     *
+     * The `wrap` parameter controls the search wrap-around. If true, the
+     * search will wrap-around at the end of the array and continue until
+     * reaching the element just before the starting element. The default
+     * wrap value is `false`.
+     *
+     * Returns `-1` if the value is not found.
+     */
+    function indexOf<T>(array: T[], value: T, fromIndex?: number, wrap?: boolean): number;
+    /**
+     * Find the index of the last occurrence of the given value.
+     *
+     * The `fromIndex` parameter controls the starting index of the search.
+     * If the value is negative, it is offset from the end of the array. If
+     * the value is greater than the last index, it will be clamped to the
+     * last index. The default index is `-1`.
+     *
+     * The `wrap` parameter controls the search wrap-around. If true, the
+     * search will wrap-around at the front of the array and continue until
+     * reaching the element just after the starting element. The default
+     * wrap value is `false`.
+     *
+     * Returns `-1` if the value is not found.
+     */
+    function lastIndexOf<T>(array: T[], value: T, fromIndex?: number, wrap?: boolean): number;
+    /**
+     * Find the index of the first element which passes the test.
+     *
+     * The `fromIndex` parameter controls the starting index of the search.
+     * If the value is negative, it is offset from the end of the array. If
+     * the adjusted value is still negative, it will be clamped to `0`. The
+     * default index is `0`.
+     *
+     * The `wrap` parameter controls the search wrap-around. If true, the
+     * search will wrap-around at the end of the array and continue until
+     * reaching the element just before the starting element. The default
+     * wrap value is `false`.
+     *
+     * Returns `-1` if no element passes the test.
+     */
+    function findIndex<T>(array: T[], pred: IPredicate<T>, fromIndex?: number, wrap?: boolean): number;
+    /**
+     * Find the index of the last element which passes the test.
+     *
+     * The `fromIndex` parameter controls the starting index of the search.
+     * If the value is negative, it is offset from the end of the array. If
+     * the value is greater than the last index, it will be clamped to the
+     * last index. The default index is `-1`.
+     *
+     * The `wrap` parameter controls the search wrap-around. If true, the
+     * search will wrap-around at the front of the array and continue until
+     * reaching the element just after the starting element. The default
+     * wrap value is `false`.
+     *
+     * Returns `-1` if no element passes the test.
+     */
+    function findLastIndex<T>(array: T[], pred: IPredicate<T>, fromIndex?: number, wrap?: boolean): number;
+    /**
+     * Find the first element in the array which passes the given test.
+     *
+     * The `fromIndex` parameter controls the starting index of the search.
+     * If the value is negative, it is offset from the end of the array. If
+     * the adjusted value is still negative, it will be clamped to `0`. The
+     * default index is `0`.
+     *
+     * The `wrap` parameter controls the search wrap-around. If true, the
+     * search will wrap-around at the end of the array and continue until
+     * reaching the element just before the starting element. The default
+     * wrap value is `false`.
+     *
+     * Returns `undefined` if no element passes the test.
+     */
+    function find<T>(array: T[], pred: IPredicate<T>, fromIndex?: number, wrap?: boolean): T;
+    /**
+     * Find the last element in the array which passes the given test.
+     *
+     * The `fromIndex` parameter controls the starting index of the search.
+     * If the value is negative, it is offset from the end of the array. If
+     * the value is greater than the last index, it will be clamped to the
+     * last index. The default index is `-1`.
+     *
+     * The `wrap` parameter controls the search wrap-around. If true, the
+     * search will wrap-around at the front of the array and continue until
+     * reaching the element just after the starting element. The default
+     * wrap value is `false`.
+     *
+     * Returns `undefined` if no element passes the test.
+     */
+    function findLast<T>(array: T[], pred: IPredicate<T>, fromIndex?: number, wrap?: boolean): T;
+    /**
+     * Find the index of the first element which is not less than `value`.
+     *
+     * This function uses a binary search. It must be applied to a sorted
+     * array in order for the results to be correct.
+     *
+     * Returns `array.length` if all elements are less than `value`.
+     */
+    function lowerBound<T, U>(array: T[], value: U, cmp: IComparator<T, U>): number;
+    /**
+     * Find the index of the first element which is greater than `value`.
+     *
+     * This function uses a binary search. It must be applied to a sorted
+     * array in order for the results to be correct.
+     *
+     * Returns `array.length` if no element is greater than `value`.
+     */
+    function upperBound<T, U>(array: T[], value: U, cmp: IComparator<T, U>): number;
+    /**
+     * Find the index of the first element which is equal to `value`.
+     *
+     * This function uses a binary search. It must be applied to a sorted
+     * array in order for the results to be correct.
+     *
+     * Returns `-1` if no matching value is found.
+     */
+    function findLowerIndex<T, U>(array: T[], value: U, cmp: IComparator<T, U>): number;
+    /**
+     * Find the index of the last element which is equal to `value`.
+     *
+     * This function uses a binary search. It must be applied to a sorted
+     * array in order for the results to be correct.
+     *
+     * Returns `-1` if no matching value is found.
+     */
+    function findUpperIndex<T, U>(array: T[], value: U, cmp: IComparator<T, U>): number;
+    /**
+     * Find the first element which is equal to `value`.
+     *
+     * This function uses a binary search. It must be applied to a sorted
+     * array in order for the results to be correct.
+     *
+     * Returns `undefined` if no matching value is found.
+     */
+    function findLower<T, U>(array: T[], value: U, cmp: IComparator<T, U>): T;
+    /**
+     * Find the index of the last element which is equal to `value`.
+     *
+     * This uses a binary search algorithm which must be applied to a
+     * sorted array in order for the results to be correct.
+     *
+     * Returns `-1` if no matching value is found.
+     */
+    function findUpper<T, U>(array: T[], value: U, cmp: IComparator<T, U>): T;
+    /**
+     * Create a shallow copy of the given array.
+     */
+    function copy<T>(array: T[]): T[];
+    /**
+     * Insert an element at the given index.
+     *
+     * If `index` is negative, it will be offset from the end of the array.
+     * If the adjusted value is still negative, it will be clamped to `0`.
+     * If `index` is greater than `array.length`, it will be clamped to
+     * `array.length`.
+     *
+     * Returns the index at which the element was inserted.
+     */
+    function insert<T>(array: T[], index: number, value: T): number;
+    /**
+     * Move an array element from one index to another.
+     *
+     * If `fromIndex` is negative, it will be offset from the end of the
+     * array. If the adjusted value is out of range, `-1` will be returned.
+     *
+     * If `toIndex` is negative, it will be offset from the end of the
+     * array. If the adjusted value is out of range, it will be clamped.
+     *
+     * Returns the final index of the moved element.
+     */
+    function move<T>(array: T[], fromIndex: number, toIndex: number): number;
+    /**
+     * Remove and return the element at the given index.
+     *
+     * If `index` is negative, it will be offset from the end of the array.
+     *
+     * Returns `undefined` if the index is out of range.
+     */
+    function removeAt<T>(array: T[], index: number): T;
+    /**
+     * Remove the first occurrence of the element and return its index.
+     *
+     * Returns the `-1` if the element is not in the array.
+     */
+    function remove<T>(array: T[], value: T): number;
 }
 
 declare module phosphor.collections {
@@ -413,323 +411,6 @@ declare module phosphor.collections {
         private _front;
         private _back;
     }
-}
-
-declare module phosphor.core {
-    /**
-     * The base message object which can be sent to a message handler.
-     */
-    interface IMessage {
-        /**
-         * The type of the message.
-         */
-        type: string;
-    }
-}
-
-declare module phosphor.core {
-    /**
-     * An object which filters messages sent to a message handler.
-     */
-    interface IMessageFilter {
-        /**
-         * Filter a message sent to a message handler.
-         *
-         * Returns true if the message should be filtered, false otherwise.
-         */
-        filterMessage(handler: IMessageHandler, msg: IMessage): boolean;
-    }
-}
-
-declare module phosphor.core {
-    import Queue = collections.Queue;
-    /**
-     * An object which processes messages.
-     */
-    interface IMessageHandler {
-        /**
-         * Process a message sent to the handler.
-         */
-        processMessage(msg: IMessage): void;
-        /**
-         * Compress a message posted to the handler.
-         *
-         * This optional method allows the handler to merge a posted message
-         * with a message which is already pending. It should return true if
-         * the message was compressed and should be dropped, or false if the
-         * message should be enqueued for delivery as normal.
-         */
-        compressMessage?(msg: IMessage, pending: Queue<IMessage>): boolean;
-    }
-}
-
-declare module phosphor.core {
-    /**
-     * A concrete implementation of IMessage.
-     *
-     * This may be subclassed to create complex message types.
-     */
-    class Message implements IMessage {
-        /**
-         * Construct a new message.
-         */
-        constructor(type: string);
-        /**
-         * The type of the message.
-         */
-        type: string;
-        private _type;
-    }
-}
-
-declare module phosphor.core {
-    /**
-     * Send a message to the message handler to process immediately.
-     */
-    function sendMessage(handler: IMessageHandler, msg: IMessage): void;
-    /**
-     * Post a message to the message handler to process in the future.
-     */
-    function postMessage(handler: IMessageHandler, msg: IMessage): void;
-    /**
-     * Test whether the message handler has pending messages.
-     */
-    function hasPendingMessages(handler: IMessageHandler): boolean;
-    /**
-     * Send the first pending message to the message handler.
-     */
-    function sendPendingMessage(handler: IMessageHandler): void;
-    /**
-     * Install a message filter for a message handler.
-     *
-     * A message filter is invoked before the message handler processes
-     * the message. If the filter returns true from its `filterMessage`
-     * method, processing of the message will stop immediately and no
-     * other filters or the message handler will be invoked.
-     *
-     * The most recently installed filter is executed first.
-     */
-    function installMessageFilter(handler: IMessageHandler, filter: IMessageFilter): void;
-    /**
-     * Remove a message filter added for a message handler.
-     *
-     * It is safe to call this function while the filter is executing.
-     *
-     * If the filter is not installed, this is a no-op.
-     */
-    function removeMessageFilter(handler: IMessageHandler, filter: IMessageFilter): void;
-    /**
-     * Clear all message data associated with the message handler.
-     *
-     * This removes all pending messages and filters for the handler.
-     */
-    function clearMessageData(handler: IMessageHandler): void;
-}
-
-declare module phosphor.core {
-    /**
-     * An object used for loosely coupled inter-object communication.
-     *
-     * A signal is emitted by an object in response to some event. User
-     * code may connect callback functions to the signal to be notified
-     * when that event occurs.
-     */
-    class Signal<T, U> {
-        /**
-         * Construct a new signal.
-         */
-        constructor();
-        /**
-         * Connect a callback to the signal.
-         *
-         * If the callback is connected to the signal multiple times, it
-         * will be invoked that many times when the signal is emitted.
-         *
-         * It is safe to connect the callback to the signal while the signal
-         * is being emitted. The callback will not be invoked until the next
-         * time the signal is emitted.
-         */
-        connect(callback: (sender: T, args: U) => void, thisArg?: any): void;
-        /**
-         * Disconnect a callback from the signal.
-         *
-         * This will remove all instances of the callback from the signal.
-         * If no callback is provided, all callbacks will be disconnected.
-         *
-         * It is safe to disconnect a callback from the signal while the
-         * signal is being emitted. The callback will not be invoked.
-         */
-        disconnect(callback?: (sender: T, args: U) => void, thisArg?: any): void;
-        /**
-         * Test whether a callback is connected to the signal.
-         */
-        isConnected(callback: (sender: T, args: U) => void, thisArg?: any): boolean;
-        /**
-         * Emit the signal and invoke its connected callbacks.
-         *
-         * Callbacks are invoked in the order in which they are connected.
-         */
-        emit(sender: T, args: U): void;
-        private _callbacks;
-    }
-}
-
-declare module phosphor.di {
-    /**
-     * A token object which holds compile-time type information.
-     */
-    interface IToken<T> {
-        /**
-         * A human readable name for the token.
-         */
-        name: string;
-        /**
-         * A hidden property which makes a token structurally unique.
-         */
-        __itoken_structural_property: any;
-    }
-    /**
-     * Create a token with the given name.
-     */
-    function createToken<T>(name: string): IToken<T>;
-}
-
-declare module phosphor.di {
-    /**
-     * A lightweight dependency injection container.
-     */
-    class Container implements IContainer {
-        /**
-         * Construct a new container.
-         */
-        constructor();
-        /**
-         * Test whether a type is registered with the container.
-         */
-        isRegistered<T>(token: IToken<T>): boolean;
-        /**
-         * Register a type mapping with the container.
-         *
-         * An exception will be thrown if the type is already registered.
-         *
-         * The allowed lifetimes are:
-         *
-         *   'singleton' - Only a single instance of the type is ever
-         *      created, and that instance is shared by all objects
-         *      which have a dependency on the given type id.
-         *
-         *   'transient' - A new instance of the type is created each
-         *      time the dependency is fullfilled for an object which
-         *      has a dependency on the given type id.
-         *
-         *   'perresolve' - A single instance of the type is created
-         *      each time the `resolve` method is called, and that
-         *      instance is shared by all objects which are created
-         *      during the same resolve pass and have a dependency
-         *      on the given type id.
-         *
-         * The default lifetime is 'singleton'.
-         */
-        registerType<T>(token: IToken<T>, type: IInjectable<T>, lifetime?: string): void;
-        /**
-         * Register an instance mapping with the container.
-         *
-         * This is the same as a 'singleton' type registration, except
-         * that the user creates the instance of the type beforehand.
-         *
-         * This will throw an exception if the token is already registered.
-         */
-        registerInstance<T>(token: IToken<T>, instance: T): void;
-        /**
-         * Resolve an instance for the given token or type.
-         *
-         * An error is thrown if no type mapping is registered for the
-         * token or if the injection dependencies cannot be fulfilled.
-         */
-        resolve<T>(token: IToken<T> | IInjectable<T>): T;
-        /**
-         * Resolve an instance for the given token.
-         *
-         * An error is thrown if the token is not registered.
-         */
-        private _resolveToken<T>(token, key);
-        /**
-         * Resolve an instance of the given type.
-         *
-         * An error is thrown if the type dependencies cannot be fulfilled.
-         */
-        private _resolveType<T>(type, key);
-        private _registry;
-    }
-}
-
-declare module phosphor.di {
-    /**
-     * A class type which declares its injection dependencies.
-     */
-    interface IInjectable<T> {
-        /**
-         * The constructor signature for the class.
-         */
-        new (...args: any[]): T;
-        /**
-         * The type ids of the dependencies needed to instantiate the type.
-         */
-        $inject?: IToken<any>[];
-    }
-    /**
-     * An object which manages dependency injection.
-     */
-    interface IContainer {
-        /**
-         * Test whether a type is registered with the container.
-         */
-        isRegistered<T>(token: IToken<T>): boolean;
-        /**
-         * Register a type mapping with the container.
-         *
-         * An exception will be thrown if the token is already registered.
-         *
-         * The allowed lifetimes are:
-         *
-         *   'singleton' - Only a single instance of the type is ever
-         *      created, and that instance is shared by all objects
-         *      which have a dependency on the given type id.
-         *
-         *   'transient' - A new instance of the type is created each
-         *      time the dependency is fullfilled for an object which
-         *      has a dependency on the given type id.
-         *
-         *   'perresolve' - A single instance of the type is created
-         *      each time the `resolve` method is called, and that
-         *      instance is shared by all objects which are created
-         *      during the same resolve pass and have a dependency
-         *      on the given type id.
-         *
-         * The default lifetime is 'singleton'.
-         */
-        registerType<T>(token: IToken<T>, type: IInjectable<T>, lifetime?: string): void;
-        /**
-         * Register an instance mapping with the container.
-         *
-         * This is the same as a 'singleton' type registration, except
-         * that the user creates the instance of the type beforehand.
-         *
-         * This will throw an exception if the token is already registered.
-         */
-        registerInstance<T>(token: IToken<T>, instance: T): void;
-        /**
-         * Resolve an instance for the given token or type.
-         *
-         * An error is thrown if no type mapping is registered for the
-         * token or if the injection dependencies cannot be fulfilled.
-         */
-        resolve<T>(token: IToken<T> | IInjectable<T>): T;
-    }
-    /**
-     * The interface token for IContainer.
-     */
-    var IContainer: IToken<IContainer>;
 }
 
 declare module phosphor.utility {
@@ -1044,6 +725,363 @@ declare module phosphor.utility {
     function clientViewportRect(): Rect;
 }
 
+declare module phosphor.core {
+    /**
+     * The base message object which can be sent to a message handler.
+     */
+    interface IMessage {
+        /**
+         * The type of the message.
+         */
+        type: string;
+    }
+}
+
+declare module phosphor.core {
+    /**
+     * An object which filters messages sent to a message handler.
+     */
+    interface IMessageFilter {
+        /**
+         * Filter a message sent to a message handler.
+         *
+         * Returns true if the message should be filtered, false otherwise.
+         */
+        filterMessage(handler: IMessageHandler, msg: IMessage): boolean;
+    }
+}
+
+declare module phosphor.core {
+    import Queue = collections.Queue;
+    /**
+     * An object which processes messages.
+     */
+    interface IMessageHandler {
+        /**
+         * Process a message sent to the handler.
+         */
+        processMessage(msg: IMessage): void;
+        /**
+         * Compress a message posted to the handler.
+         *
+         * This optional method allows the handler to merge a posted message
+         * with a message which is already pending. It should return true if
+         * the message was compressed and should be dropped, or false if the
+         * message should be enqueued for delivery as normal.
+         */
+        compressMessage?(msg: IMessage, pending: Queue<IMessage>): boolean;
+    }
+}
+
+declare module phosphor.core {
+    /**
+     * A concrete implementation of IMessage.
+     *
+     * This may be subclassed to create complex message types.
+     */
+    class Message implements IMessage {
+        /**
+         * Construct a new message.
+         */
+        constructor(type: string);
+        /**
+         * The type of the message.
+         */
+        type: string;
+        private _type;
+    }
+}
+
+declare module phosphor.core {
+    /**
+     * Send a message to the message handler to process immediately.
+     */
+    function sendMessage(handler: IMessageHandler, msg: IMessage): void;
+    /**
+     * Post a message to the message handler to process in the future.
+     */
+    function postMessage(handler: IMessageHandler, msg: IMessage): void;
+    /**
+     * Test whether the message handler has pending messages.
+     */
+    function hasPendingMessages(handler: IMessageHandler): boolean;
+    /**
+     * Send the first pending message to the message handler.
+     */
+    function sendPendingMessage(handler: IMessageHandler): void;
+    /**
+     * Install a message filter for a message handler.
+     *
+     * A message filter is invoked before the message handler processes
+     * the message. If the filter returns true from its `filterMessage`
+     * method, processing of the message will stop immediately and no
+     * other filters or the message handler will be invoked.
+     *
+     * The most recently installed filter is executed first.
+     */
+    function installMessageFilter(handler: IMessageHandler, filter: IMessageFilter): void;
+    /**
+     * Remove a message filter added for a message handler.
+     *
+     * It is safe to call this function while the filter is executing.
+     *
+     * If the filter is not installed, this is a no-op.
+     */
+    function removeMessageFilter(handler: IMessageHandler, filter: IMessageFilter): void;
+    /**
+     * Clear all message data associated with the message handler.
+     *
+     * This removes all pending messages and filters for the handler.
+     */
+    function clearMessageData(handler: IMessageHandler): void;
+}
+
+declare module phosphor.core {
+    import IDisposable = utility.IDisposable;
+    /**
+     * A base class for creating objects which manage a DOM node.
+     */
+    class NodeBase implements IDisposable {
+        /**
+         * Create the DOM node for a new object instance.
+         *
+         * This may be reimplemented to create a custom DOM node.
+         */
+        static createNode(): HTMLElement;
+        /**
+         * Construct a new node base.
+         */
+        constructor();
+        /**
+         * Dispose of the resources held by the object.
+         */
+        dispose(): void;
+        /**
+         * Get the DOM node managed by the object.
+         */
+        node: HTMLElement;
+        /**
+         * Test whether the object's DOM node has the given class name.
+         */
+        hasClass(name: string): boolean;
+        /**
+         * Add a class name to the object's DOM node.
+         */
+        addClass(name: string): void;
+        /**
+         * Remove a class name from the object's DOM node.
+         */
+        removeClass(name: string): void;
+        private _node;
+    }
+}
+
+declare module phosphor.core {
+    /**
+     * An object used for loosely coupled inter-object communication.
+     *
+     * A signal is emitted by an object in response to some event. User
+     * code may connect callback functions to the signal to be notified
+     * when that event occurs.
+     */
+    class Signal<T, U> {
+        /**
+         * Construct a new signal.
+         */
+        constructor();
+        /**
+         * Connect a callback to the signal.
+         *
+         * If the callback is connected to the signal multiple times, it
+         * will be invoked that many times when the signal is emitted.
+         *
+         * It is safe to connect the callback to the signal while the signal
+         * is being emitted. The callback will not be invoked until the next
+         * time the signal is emitted.
+         */
+        connect(callback: (sender: T, args: U) => void, thisArg?: any): void;
+        /**
+         * Disconnect a callback from the signal.
+         *
+         * This will remove all instances of the callback from the signal.
+         * If no callback is provided, all callbacks will be disconnected.
+         *
+         * It is safe to disconnect a callback from the signal while the
+         * signal is being emitted. The callback will not be invoked.
+         */
+        disconnect(callback?: (sender: T, args: U) => void, thisArg?: any): void;
+        /**
+         * Test whether a callback is connected to the signal.
+         */
+        isConnected(callback: (sender: T, args: U) => void, thisArg?: any): boolean;
+        /**
+         * Emit the signal and invoke its connected callbacks.
+         *
+         * Callbacks are invoked in the order in which they are connected.
+         */
+        emit(sender: T, args: U): void;
+        private _callbacks;
+    }
+}
+
+declare module phosphor.di {
+    /**
+     * A token object which holds compile-time type information.
+     */
+    interface IToken<T> {
+        /**
+         * A human readable name for the token.
+         */
+        name: string;
+        /**
+         * A hidden property which makes a token structurally unique.
+         */
+        __itoken_structural_property: any;
+    }
+    /**
+     * Create a token with the given name.
+     */
+    function createToken<T>(name: string): IToken<T>;
+}
+
+declare module phosphor.di {
+    /**
+     * A lightweight dependency injection container.
+     */
+    class Container implements IContainer {
+        /**
+         * Construct a new container.
+         */
+        constructor();
+        /**
+         * Test whether a type is registered with the container.
+         */
+        isRegistered<T>(token: IToken<T>): boolean;
+        /**
+         * Register a type mapping with the container.
+         *
+         * An exception will be thrown if the type is already registered.
+         *
+         * The allowed lifetimes are:
+         *
+         *   'singleton' - Only a single instance of the type is ever
+         *      created, and that instance is shared by all objects
+         *      which have a dependency on the given type id.
+         *
+         *   'transient' - A new instance of the type is created each
+         *      time the dependency is fullfilled for an object which
+         *      has a dependency on the given type id.
+         *
+         *   'perresolve' - A single instance of the type is created
+         *      each time the `resolve` method is called, and that
+         *      instance is shared by all objects which are created
+         *      during the same resolve pass and have a dependency
+         *      on the given type id.
+         *
+         * The default lifetime is 'singleton'.
+         */
+        registerType<T>(token: IToken<T>, type: IInjectable<T>, lifetime?: string): void;
+        /**
+         * Register an instance mapping with the container.
+         *
+         * This is the same as a 'singleton' type registration, except
+         * that the user creates the instance of the type beforehand.
+         *
+         * This will throw an exception if the token is already registered.
+         */
+        registerInstance<T>(token: IToken<T>, instance: T): void;
+        /**
+         * Resolve an instance for the given token or type.
+         *
+         * An error is thrown if no type mapping is registered for the
+         * token or if the injection dependencies cannot be fulfilled.
+         */
+        resolve<T>(token: IToken<T> | IInjectable<T>): T;
+        /**
+         * Resolve an instance for the given token.
+         *
+         * An error is thrown if the token is not registered.
+         */
+        private _resolveToken<T>(token, key);
+        /**
+         * Resolve an instance of the given type.
+         *
+         * An error is thrown if the type dependencies cannot be fulfilled.
+         */
+        private _resolveType<T>(type, key);
+        private _registry;
+    }
+}
+
+declare module phosphor.di {
+    /**
+     * A class type which declares its injection dependencies.
+     */
+    interface IInjectable<T> {
+        /**
+         * The constructor signature for the class.
+         */
+        new (...args: any[]): T;
+        /**
+         * The type ids of the dependencies needed to instantiate the type.
+         */
+        $inject?: IToken<any>[];
+    }
+    /**
+     * An object which manages dependency injection.
+     */
+    interface IContainer {
+        /**
+         * Test whether a type is registered with the container.
+         */
+        isRegistered<T>(token: IToken<T>): boolean;
+        /**
+         * Register a type mapping with the container.
+         *
+         * An exception will be thrown if the token is already registered.
+         *
+         * The allowed lifetimes are:
+         *
+         *   'singleton' - Only a single instance of the type is ever
+         *      created, and that instance is shared by all objects
+         *      which have a dependency on the given type id.
+         *
+         *   'transient' - A new instance of the type is created each
+         *      time the dependency is fullfilled for an object which
+         *      has a dependency on the given type id.
+         *
+         *   'perresolve' - A single instance of the type is created
+         *      each time the `resolve` method is called, and that
+         *      instance is shared by all objects which are created
+         *      during the same resolve pass and have a dependency
+         *      on the given type id.
+         *
+         * The default lifetime is 'singleton'.
+         */
+        registerType<T>(token: IToken<T>, type: IInjectable<T>, lifetime?: string): void;
+        /**
+         * Register an instance mapping with the container.
+         *
+         * This is the same as a 'singleton' type registration, except
+         * that the user creates the instance of the type beforehand.
+         *
+         * This will throw an exception if the token is already registered.
+         */
+        registerInstance<T>(token: IToken<T>, instance: T): void;
+        /**
+         * Resolve an instance for the given token or type.
+         *
+         * An error is thrown if no type mapping is registered for the
+         * token or if the injection dependencies cannot be fulfilled.
+         */
+        resolve<T>(token: IToken<T> | IInjectable<T>): T;
+    }
+    /**
+     * The interface token for IContainer.
+     */
+    var IContainer: IToken<IContainer>;
+}
+
 declare module phosphor.virtualdom {
     /**
      * A typedef for a factory child argument.
@@ -1074,13 +1112,14 @@ declare module phosphor.virtualdom {
 
 declare module phosphor.virtualdom {
     import IMessage = core.IMessage;
+    import NodeBase = core.NodeBase;
     /**
      * A concrete implementation of IComponent.
      *
      * This class serves as a convenient base class for components which
      * manage the content of their node independent of the virtual DOM.
      */
-    class BaseComponent<T extends IData> implements IComponent<T> {
+    class BaseComponent<T extends IData> extends NodeBase implements IComponent<T> {
         /**
          * Construct a new base component.
          */
@@ -1089,10 +1128,6 @@ declare module phosphor.virtualdom {
          * Dispose of the resources held by the component.
          */
         dispose(): void;
-        /**
-         * Get the DOM node for the component.
-         */
-        node: HTMLElement;
         /**
          * Get the current data object for the component.
          */
@@ -1113,14 +1148,6 @@ declare module phosphor.virtualdom {
          * Process a message sent to the component.
          */
         processMessage(msg: IMessage): void;
-        /**
-         * Create the DOM node for the component.
-         *
-         * This can be reimplemented by subclasses as needed.
-         *
-         * The default implementation creates an empty div.
-         */
-        protected createNode(): HTMLElement;
         /**
          * A method invoked on an 'update-request' message.
          *
@@ -1151,7 +1178,6 @@ declare module phosphor.virtualdom {
          * The default implementation is a no-op.
          */
         protected onAfterMove(msg: IMessage): void;
-        private _node;
         private _data;
         private _children;
     }
@@ -1167,6 +1193,25 @@ declare module phosphor.virtualdom {
      * method to generate the virtual DOM content for the component.
      */
     class Component<T extends IData> extends BaseComponent<T> {
+        /**
+         * The tag name to use when creating the component node.
+         *
+         * This may be reimplemented by a subclass.
+         */
+        static tagName: string;
+        /**
+         * The initial class name for the component node.
+         *
+         * This may be reimplemented by a subclass.
+         */
+        static className: string;
+        /**
+         * Create the DOM node for a component.
+         *
+         * This method creates the DOM node from the `className` and `tagName`
+         * properties. A subclass will not typically reimplement this method.
+         */
+        static createNode(): HTMLElement;
         /**
          * Dispose of the resources held by the component.
          */
@@ -1873,7 +1918,7 @@ declare module phosphor.virtualdom {
      *
      *   'after-move' - Sent after the node is moved in the DOM.
      */
-    interface IComponent<T extends IData> extends IMessageHandler, IDisposable {
+    interface IComponent<T extends IData> extends IDisposable, IMessageHandler {
         /**
          * The DOM node for the component.
          *
@@ -2048,34 +2093,6 @@ declare module phosphor.widgets {
 }
 
 declare module phosphor.widgets {
-    /**
-     * An object which can be used as a tab in a tab bar.
-     */
-    interface ITab {
-        /**
-         * The text for the tab.
-         */
-        text: string;
-        /**
-         * Whether the tab is currently selected.
-         */
-        selected: boolean;
-        /**
-         * Whether the tab is closable.
-         */
-        closable: boolean;
-        /**
-         * The DOM node for the tab.
-         */
-        node: HTMLElement;
-        /**
-         * The DOM node for the close icon, if available.
-         */
-        closeIconNode: HTMLElement;
-    }
-}
-
-declare module phosphor.widgets {
     import Size = utility.Size;
     /**
      * An object which manages an item in a layout.
@@ -2135,18 +2152,6 @@ declare module phosphor.widgets {
          * Set the geometry of the item using the given values.
          */
         setGeometry(x: number, y: number, width: number, height: number): void;
-    }
-}
-
-declare module phosphor.widgets {
-    /**
-     * A widget which owns and manages its own tab.
-     */
-    interface ITabbable extends Widget {
-        /**
-         * The tab associated with the widget.
-         */
-        tab: ITab;
     }
 }
 
@@ -2890,10 +2895,15 @@ declare module phosphor.widgets {
 }
 
 declare module phosphor.widgets {
+    import NodeBase = core.NodeBase;
     /**
      * A class which manages a handle node for a split panel.
      */
-    class SplitHandle {
+    class SplitHandle extends NodeBase {
+        /**
+         * Create the DOM node for a split handle.
+         */
+        static createNode(): HTMLElement;
         /**
          * Construct a new split handle.
          */
@@ -2912,16 +2922,7 @@ declare module phosphor.widgets {
          * Set the orientation of the handle.
          */
         orientation: Orientation;
-        /**
-         * Get the DOM node for the handle.
-         */
-        node: HTMLElement;
-        /**
-         * Create the DOM node for the handle.
-         */
-        protected createNode(): HTMLElement;
         private _hidden;
-        private _node;
         private _orientation;
     }
 }
@@ -3183,9 +3184,9 @@ declare module phosphor.widgets {
     import Queue = collections.Queue;
     import IMessage = core.IMessage;
     import IMessageHandler = core.IMessageHandler;
+    import NodeBase = core.NodeBase;
     import Signal = core.Signal;
     import IBoxSizing = utility.IBoxSizing;
-    import IDisposable = utility.IDisposable;
     import Size = utility.Size;
     /**
      * The base class of the Phosphor widget hierarchy.
@@ -3199,7 +3200,7 @@ declare module phosphor.widgets {
      * in the DOM by calling its `attach` method and passing the DOM
      * node which should be used as the parent of the widget's node.
      */
-    class Widget implements IMessageHandler, IDisposable {
+    class Widget extends NodeBase implements IMessageHandler {
         /**
          * A signal emitted when the widget is disposed.
          */
@@ -3212,10 +3213,6 @@ declare module phosphor.widgets {
          * Dispose of the widget and its descendants.
          */
         dispose(): void;
-        /**
-         * Get the DOM node managed by the widget.
-         */
-        node: HTMLElement;
         /**
          * Get the X position set for the widget.
          */
@@ -3486,14 +3483,6 @@ declare module phosphor.widgets {
          */
         compressMessage(msg: IMessage, pending: Queue<IMessage>): boolean;
         /**
-         * Create the DOM node for the widget.
-         *
-         * This can be reimplemented by subclasses as needed.
-         *
-         * The default implementation creates an empty div.
-         */
-        protected createNode(): HTMLElement;
-        /**
          * A method invoked when a 'close' message is received.
          *
          * The default implementation sets the parent to null.
@@ -3571,17 +3560,16 @@ declare module phosphor.widgets {
          * The default implementation is a no-op.
          */
         protected onAfterDetach(msg: IMessage): void;
-        private _node;
-        private _layout;
-        private _parent;
-        private _children;
-        private _sizePolicy;
-        private _boxSizing;
         private _x;
         private _y;
         private _width;
         private _height;
-        private _flags;
+        private _wflags;
+        private _layout;
+        private _parent;
+        private _children;
+        private _boxSizing;
+        private _sizePolicy;
     }
 }
 
@@ -3875,6 +3863,15 @@ declare module phosphor.widgets {
 
 declare module phosphor.widgets {
     /**
+     * A widget which can be added to a DockArea.
+     */
+    interface IDockWidget extends Widget {
+        /**
+         * The tab associated with the widget.
+         */
+        tab: Tab;
+    }
+    /**
      * A widget which provides a flexible docking layout area for widgets.
      */
     class DockArea extends Widget {
@@ -3923,7 +3920,7 @@ declare module phosphor.widgets {
          *
          * The default mode inserts the widget on the left side of the area.
          */
-        addWidget(widget: ITabbable, mode?: DockMode, ref?: ITabbable): void;
+        addWidget(widget: IDockWidget, mode?: DockMode, ref?: IDockWidget): void;
         /**
          * Handle the DOM events for the dock area.
          */
@@ -4184,11 +4181,16 @@ declare module phosphor.widgets {
 }
 
 declare module phosphor.widgets {
+    import NodeBase = core.NodeBase;
     import Signal = core.Signal;
     /**
      * An object which displays menu items as a popup menu.
      */
-    class Menu {
+    class Menu extends NodeBase {
+        /**
+         * Create the DOM node for a menu.
+         */
+        static createNode(): HTMLElement;
         /**
          * Find the root menu of a menu hierarchy.
          */
@@ -4206,9 +4208,9 @@ declare module phosphor.widgets {
          */
         constructor(items?: MenuItem[]);
         /**
-         * Get the DOM node for the menu.
+         * Dispose of the resources held by the menu.
          */
-        node: HTMLElement;
+        dispose(): void;
         /**
          * Get the parent menu of the menu.
          *
@@ -4345,19 +4347,13 @@ declare module phosphor.widgets {
          */
         close(): void;
         /**
-         * Create the DOM node for the panel.
-         *
-         * This can be reimplemented to create a custom menu node.
-         */
-        protected createNode(): HTMLElement;
-        /**
-         * Create a DOM node for the given MenuItem.
+         * Create the DOM node for a MenuItem.
          *
          * This can be reimplemented to create custom menu item nodes.
          */
         protected createItemNode(item: MenuItem): HTMLElement;
         /**
-         * Initialize the item node for the given menu item.
+         * Initialize the DOM node for the given menu item.
          *
          * This method should be reimplemented if a subclass reimplements the
          * `createItemNode` method. It should initialize the node using the
@@ -4495,15 +4491,14 @@ declare module phosphor.widgets {
          * Handle the `changed` signal from a menu item.
          */
         private _mi_changed(sender);
-        private _node;
+        private _openTimer;
+        private _closeTimer;
+        private _activeIndex;
         private _parentMenu;
         private _childMenu;
         private _childItem;
         private _items;
         private _nodes;
-        private _activeIndex;
-        private _openTimer;
-        private _closeTimer;
     }
 }
 
@@ -4514,6 +4509,10 @@ declare module phosphor.widgets {
      * A leaf widget which displays menu items as a menu bar.
      */
     class MenuBar extends Widget {
+        /**
+         * Create the DOM node for a menu bar.
+         */
+        static createNode(): HTMLElement;
         /**
          * Construct a new menu bar.
          */
@@ -4619,17 +4618,13 @@ declare module phosphor.widgets {
          */
         minSizeHint(): Size;
         /**
-         * Create the DOM node for the widget.
-         */
-        protected createNode(): HTMLElement;
-        /**
-         * Create a DOM node for the given MenuItem.
+         * Create the DOM node for a MenuItem.
          *
          * This can be reimplemented to create custom menu item nodes.
          */
         protected createItemNode(item: MenuItem): HTMLElement;
         /**
-         * Initialize the item node for the given menu item.
+         * Initialize the DOM node for the given menu item.
          *
          * This method should be reimplemented if a subclass reimplements the
          * `createItemNode` method. It should initialize the node using the
@@ -4729,11 +4724,11 @@ declare module phosphor.widgets {
          * Handle the `changed` signal from a menu item.
          */
         private _mi_changed(sender);
+        private _activeIndex;
         private _childMenu;
         private _items;
         private _nodes;
         private _state;
-        private _activeIndex;
     }
 }
 
@@ -4818,10 +4813,15 @@ declare module phosphor.widgets {
 }
 
 declare module phosphor.widgets {
+    import NodeBase = core.NodeBase;
     /**
-     * A concrete implementation of ITab.
+     * An object which manages a node for a tab bar.
      */
-    class Tab implements ITab {
+    class Tab extends NodeBase {
+        /**
+         * Create the DOM node for a tab.
+         */
+        static createNode(): HTMLElement;
         /**
          * Construct a new tab.
          */
@@ -4848,18 +4848,9 @@ declare module phosphor.widgets {
          */
         closable: boolean;
         /**
-         * The DOM node for the tab.
-         */
-        node: HTMLElement;
-        /**
-         * The DOM node for the close icon, if available.
+         * Get the DOM node for the tab close icon.
          */
         closeIconNode: HTMLElement;
-        /**
-         * Create the DOM node for the tab.
-         */
-        protected createNode(): HTMLElement;
-        private _node;
     }
 }
 
@@ -4875,7 +4866,7 @@ declare module phosphor.widgets {
         /**
          * The tab of interest.
          */
-        tab: ITab;
+        tab: Tab;
         /**
          * The index of the tab.
          */
@@ -4922,17 +4913,21 @@ declare module phosphor.widgets {
      */
     class TabBar extends Widget {
         /**
+         * Create the DOM node for a tab bar.
+         */
+        static createNode(): HTMLElement;
+        /**
          * A signal emitted when a tab is moved.
          */
         tabMoved: Signal<TabBar, Pair<number, number>>;
         /**
          * A signal emitted when the currently selected tab is changed.
          */
-        currentChanged: Signal<TabBar, Pair<number, ITab>>;
+        currentChanged: Signal<TabBar, Pair<number, Tab>>;
         /**
          * A signal emitted when the user clicks a tab close icon.
          */
-        tabCloseRequested: Signal<TabBar, Pair<number, ITab>>;
+        tabCloseRequested: Signal<TabBar, Pair<number, Tab>>;
         /**
          * A signal emitted when a tab is dragged beyond the detach threshold.
          */
@@ -4955,11 +4950,11 @@ declare module phosphor.widgets {
         /**
          * Set the currently selected tab.
          */
-        currentTab: ITab;
+        currentTab: Tab;
         /**
          * Get the previously selected tab.
          */
-        previousTab: ITab;
+        previousTab: Tab;
         /**
          * Get whether the tabs are movable by the user.
          */
@@ -5009,23 +5004,23 @@ declare module phosphor.widgets {
         /**
          * Get the tab at the given index.
          */
-        tabAt(index: number): ITab;
+        tabAt(index: number): Tab;
         /**
          * Get the index of the given tab.
          */
-        indexOf(tab: ITab): number;
+        indexOf(tab: Tab): number;
         /**
          * Add a tab to the end of the tab bar.
          *
          * Returns the index of the tab.
          */
-        addTab(tab: ITab): number;
+        addTab(tab: Tab): number;
         /**
          * Insert a tab into the tab bar at the given index.
          *
          * Returns the index of the tab.
          */
-        insertTab(index: number, tab: ITab): number;
+        insertTab(index: number, tab: Tab): number;
         /**
          * Move a tab from one index to another.
          *
@@ -5037,13 +5032,13 @@ declare module phosphor.widgets {
          *
          * Returns `undefined` if the index is out of range.
          */
-        removeAt(index: number): ITab;
+        removeAt(index: number): Tab;
         /**
          * Remove a tab from the tab bar and return its index.
          *
          * Returns -1 if the tab is not in the tab bar.
          */
-        removeTab(tab: ITab): number;
+        removeTab(tab: Tab): number;
         /**
          * Remove all of the tabs from the tab bar.
          */
@@ -5058,7 +5053,7 @@ declare module phosphor.widgets {
          *
          * This is a no-op if the tab is already added to the tab bar.
          */
-        attachTab(tab: ITab, clientX: number): void;
+        attachTab(tab: Tab, clientX: number): void;
         /**
          * Detach and return the tab at the given index.
          *
@@ -5068,7 +5063,7 @@ declare module phosphor.widgets {
          *
          * Returns `undefined` if the index is invalid.
          */
-        detachAt(index: number): ITab;
+        detachAt(index: number): Tab;
         /**
          * Compute the size hint for the tab bar.
          */
@@ -5081,10 +5076,6 @@ declare module phosphor.widgets {
          * Get the content node for the tab bar.
          */
         protected contentNode: HTMLElement;
-        /**
-         * Create the DOM node for the tab bar.
-         */
-        protected createNode(): HTMLElement;
         /**
          * A method invoked on an 'after-attach' message.
          */
@@ -5201,6 +5192,15 @@ declare module phosphor.widgets {
     import Signal = core.Signal;
     import Pair = utility.Pair;
     /**
+     * A widget which can be added to a TabPanel.
+     */
+    interface ITabWidget extends Widget {
+        /**
+         * The tab associated with the widget.
+         */
+        tab: Tab;
+    }
+    /**
      * A panel which provides a tabbed container for child widgets.
      *
      * The TabPanel provides a convenient combination of a TabBar and a
@@ -5266,7 +5266,7 @@ declare module phosphor.widgets {
          *
          * Returns the index of the added widget.
          */
-        addWidget(widget: ITabbable, alignment?: Alignment): number;
+        addWidget(widget: ITabWidget, alignment?: Alignment): number;
         /**
          * Insert a tabbable widget into the panel at the given index.
          *
@@ -5274,7 +5274,7 @@ declare module phosphor.widgets {
          *
          * Returns the index of the added widget.
          */
-        insertWidget(index: number, widget: ITabbable, alignment?: Alignment): number;
+        insertWidget(index: number, widget: ITabWidget, alignment?: Alignment): number;
         /**
          * Move a widget from one index to another.
          *
@@ -5676,11 +5676,14 @@ declare module phosphor.shell {
     }
 }
 
-declare module phosphor.lib {
+declare module phosphor.lib.codemirror {
     import IMessage = core.IMessage;
+    import Size = utility.Size;
     import BaseComponent = virtualdom.BaseComponent;
     import Elem = virtualdom.Elem;
     import IData = virtualdom.IData;
+    import ResizeMessage = widgets.ResizeMessage;
+    import Widget = widgets.Widget;
     /**
      * The data object for a code mirror component.
      */
@@ -5702,8 +5705,8 @@ declare module phosphor.lib {
         /**
          * Get the code mirror editor for the component.
          *
-         * This component does not attempt to wrap the extensive code mirror
-         * api. User code should interact with the editor object directly.
+         * This component does not attempt to wrap the code mirror api.
+         * User code should interact with the editor object directly.
          */
         editor: CodeMirror.Editor;
         /**
@@ -5716,13 +5719,6 @@ declare module phosphor.lib {
      * The default element factory for the CodeMirrorComponent.
      */
     var CodeMirrorFactory: virtualdom.IFactory<ICodeMirrorData>;
-}
-
-declare module phosphor.lib {
-    import IMessage = core.IMessage;
-    import Size = utility.Size;
-    import ResizeMessage = widgets.ResizeMessage;
-    import Widget = widgets.Widget;
     /**
      * A widget which hosts a CodeMirror editor.
      */

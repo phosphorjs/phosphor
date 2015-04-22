@@ -483,9 +483,9 @@ var phosphor;
                 return i;
             }
             algorithm.remove = remove;
-        })(algorithm = collections.algorithm || (collections.algorithm = {})); // module algorithm
+        })(algorithm = collections.algorithm || (collections.algorithm = {}));
     })(collections = phosphor.collections || (phosphor.collections = {}));
-})(phosphor || (phosphor = {})); // module phosphor.collections
+})(phosphor || (phosphor = {})); // module phosphor.collections.algorithm
 
 /*-----------------------------------------------------------------------------
 | Copyright (c) 2014-2015, S. Chris Colbert
@@ -951,861 +951,6 @@ var phosphor;
         collections.Queue = Queue;
     })(collections = phosphor.collections || (phosphor.collections = {}));
 })(phosphor || (phosphor = {})); // module phosphor.collections
-
-
-
-
-
-
-
-/*-----------------------------------------------------------------------------
-| Copyright (c) 2014-2015, S. Chris Colbert
-|
-| Distributed under the terms of the BSD 3-Clause License.
-|
-| The full license is in the file LICENSE, distributed with this software.
-|----------------------------------------------------------------------------*/
-var phosphor;
-(function (phosphor) {
-    var core;
-    (function (core) {
-        /**
-         * A concrete implementation of IMessage.
-         *
-         * This may be subclassed to create complex message types.
-         */
-        var Message = (function () {
-            /**
-             * Construct a new message.
-             */
-            function Message(type) {
-                this._type = type;
-            }
-            Object.defineProperty(Message.prototype, "type", {
-                /**
-                 * The type of the message.
-                 */
-                get: function () {
-                    return this._type;
-                },
-                enumerable: true,
-                configurable: true
-            });
-            return Message;
-        })();
-        core.Message = Message;
-    })(core = phosphor.core || (phosphor.core = {}));
-})(phosphor || (phosphor = {})); // module phosphor.core
-
-/*-----------------------------------------------------------------------------
-| Copyright (c) 2014-2015, S. Chris Colbert
-|
-| Distributed under the terms of the BSD 3-Clause License.
-|
-| The full license is in the file LICENSE, distributed with this software.
-|----------------------------------------------------------------------------*/
-var phosphor;
-(function (phosphor) {
-    var core;
-    (function (core) {
-        var Queue = phosphor.collections.Queue;
-        /**
-         * Send a message to the message handler to process immediately.
-         */
-        function sendMessage(handler, msg) {
-            getDispatcher(handler).sendMessage(msg);
-        }
-        core.sendMessage = sendMessage;
-        /**
-         * Post a message to the message handler to process in the future.
-         */
-        function postMessage(handler, msg) {
-            getDispatcher(handler).postMessage(msg);
-        }
-        core.postMessage = postMessage;
-        /**
-         * Test whether the message handler has pending messages.
-         */
-        function hasPendingMessages(handler) {
-            return getDispatcher(handler).hasPendingMessages();
-        }
-        core.hasPendingMessages = hasPendingMessages;
-        /**
-         * Send the first pending message to the message handler.
-         */
-        function sendPendingMessage(handler) {
-            getDispatcher(handler).sendPendingMessage();
-        }
-        core.sendPendingMessage = sendPendingMessage;
-        /**
-         * Install a message filter for a message handler.
-         *
-         * A message filter is invoked before the message handler processes
-         * the message. If the filter returns true from its `filterMessage`
-         * method, processing of the message will stop immediately and no
-         * other filters or the message handler will be invoked.
-         *
-         * The most recently installed filter is executed first.
-         */
-        function installMessageFilter(handler, filter) {
-            getDispatcher(handler).installMessageFilter(filter);
-        }
-        core.installMessageFilter = installMessageFilter;
-        /**
-         * Remove a message filter added for a message handler.
-         *
-         * It is safe to call this function while the filter is executing.
-         *
-         * If the filter is not installed, this is a no-op.
-         */
-        function removeMessageFilter(handler, filter) {
-            getDispatcher(handler).removeMessageFilter(filter);
-        }
-        core.removeMessageFilter = removeMessageFilter;
-        /**
-         * Clear all message data associated with the message handler.
-         *
-         * This removes all pending messages and filters for the handler.
-         */
-        function clearMessageData(handler) {
-            var dispatcher = dispatcherMap.get(handler);
-            if (dispatcher !== void 0) {
-                dispatcherMap.delete(handler);
-                dispatcher.clearPendingMessages();
-                dispatcher.clearMessageFilters();
-            }
-        }
-        core.clearMessageData = clearMessageData;
-        /**
-         * The internal mapping of message handler to message dispatcher.
-         */
-        var dispatcherMap = new WeakMap();
-        /**
-         * The internal queue of posted message dispatchers.
-         */
-        var dispatchQueue = new Queue();
-        /**
-         * The internal animation frame id for the message loop wake up call.
-         */
-        var frameId = 0;
-        /**
-         * A local reference to `requestAnimationFrame`.
-         */
-        var raf = requestAnimationFrame;
-        /**
-         * Get or create the message dispatcher for an message handler.
-         */
-        function getDispatcher(handler) {
-            var dispatcher = dispatcherMap.get(handler);
-            if (dispatcher === void 0) {
-                dispatcher = new MessageDispatcher(handler);
-                dispatcherMap.set(handler, dispatcher);
-            }
-            return dispatcher;
-        }
-        /**
-         * Wake up the message loop to process any pending dispatchers.
-         *
-         * This is a no-op if a wake up is not needed or is already pending.
-         */
-        function wakeUpMessageLoop() {
-            if (frameId === 0 && !dispatchQueue.empty) {
-                frameId = raf(runMessageLoop);
-            }
-        }
-        /**
-         * Run an iteration of the message loop.
-         *
-         * This will process all pending dispatchers in the queue. Dispatchers
-         * which are added to the queue while the message loop is running will
-         * be processed on the next message loop cycle.
-         */
-        function runMessageLoop() {
-            // Clear the frame id so the next wake up call can be scheduled.
-            frameId = 0;
-            // If the queue is empty, there is nothing else to do.
-            if (dispatchQueue.empty) {
-                return;
-            }
-            // Add a null sentinel value to the end of the queue. The queue
-            // will only be processed up to the first null value. This means
-            // that messages posted during this cycle will execute on the next
-            // cycle of the loop. If the last value in the array is null, it
-            // means that an exception was thrown by a message handler and the
-            // loop had to be restarted.
-            if (dispatchQueue.back !== null) {
-                dispatchQueue.pushBack(null);
-            }
-            while (!dispatchQueue.empty) {
-                var dispatcher = dispatchQueue.popFront();
-                if (dispatcher === null) {
-                    wakeUpMessageLoop();
-                    return;
-                }
-                dispatchMessage(dispatcher);
-            }
-        }
-        /**
-         * Safely process the pending handler message.
-         *
-         * If the message handler throws an exception, the message loop will
-         * be restarted and the exception will be rethrown.
-         */
-        function dispatchMessage(dispatcher) {
-            try {
-                dispatcher.sendPendingMessage();
-            }
-            catch (ex) {
-                wakeUpMessageLoop();
-                throw ex;
-            }
-        }
-        /**
-         * A thin wrapper around a message filter.
-         */
-        var FilterWrapper = (function () {
-            /**
-             * construct a new filter wrapper.
-             */
-            function FilterWrapper(filter) {
-                this._filter = filter;
-            }
-            /**
-             * Clear the contents of the wrapper.
-             */
-            FilterWrapper.prototype.clear = function () {
-                this._filter = null;
-            };
-            /**
-             * Test whether the wrapper is equivalent to the given filter.
-             */
-            FilterWrapper.prototype.equals = function (filter) {
-                return this._filter === filter;
-            };
-            /**
-             * Invoke the filter with the given handler and message.
-             *
-             * Returns true if the message should be filtered, false otherwise.
-             */
-            FilterWrapper.prototype.invoke = function (handler, msg) {
-                return this._filter ? this._filter.filterMessage(handler, msg) : false;
-            };
-            return FilterWrapper;
-        })();
-        /**
-         * An object which manages message dispatch for a message handler.
-         */
-        var MessageDispatcher = (function () {
-            /**
-             * Construct a new message dispatcher.
-             */
-            function MessageDispatcher(handler) {
-                this._messages = null;
-                this._filters = null;
-                this._handler = handler;
-            }
-            /**
-             * Send an message to the message handler to process immediately.
-             *
-             * The message will first be sent through the installed filters.
-             * If the message is filtered, it will not be sent to the handler.
-             */
-            MessageDispatcher.prototype.sendMessage = function (msg) {
-                if (!this._filterMessage(msg)) {
-                    this._handler.processMessage(msg);
-                }
-            };
-            /**
-             * Post a message to the message handler to process in the future.
-             *
-             * The message will first be compressed if possible. If the message
-             * cannot be compressed, it will be added to the message queue.
-             */
-            MessageDispatcher.prototype.postMessage = function (msg) {
-                if (!this._compressMessage(msg)) {
-                    this._enqueueMessage(msg);
-                }
-            };
-            /**
-             * Test whether the message handler has pending messages.
-             */
-            MessageDispatcher.prototype.hasPendingMessages = function () {
-                return this._messages !== null && !this._messages.empty;
-            };
-            /**
-             * Send the first pending message to the message handler.
-             */
-            MessageDispatcher.prototype.sendPendingMessage = function () {
-                if (this._messages !== null && !this._messages.empty) {
-                    this.sendMessage(this._messages.popFront());
-                }
-            };
-            /**
-             * Clear the pending messages for the message handler.
-             */
-            MessageDispatcher.prototype.clearPendingMessages = function () {
-                if (this._messages !== null) {
-                    this._messages.clear();
-                    this._messages = null;
-                }
-            };
-            /**
-             * Install an message filter for the message handler.
-             */
-            MessageDispatcher.prototype.installMessageFilter = function (filter) {
-                var wrapper = new FilterWrapper(filter);
-                var current = this._filters;
-                if (current === null) {
-                    this._filters = wrapper;
-                }
-                else if (current instanceof FilterWrapper) {
-                    this._filters = [current, wrapper];
-                }
-                else {
-                    current.push(wrapper);
-                }
-            };
-            /**
-             * Remove an message filter installed for the message handler.
-             */
-            MessageDispatcher.prototype.removeMessageFilter = function (filter) {
-                var current = this._filters;
-                if (current === null) {
-                    return;
-                }
-                if (current instanceof FilterWrapper) {
-                    if (current.equals(filter)) {
-                        current.clear();
-                        this._filters = null;
-                    }
-                }
-                else {
-                    var rest = [];
-                    var array = current;
-                    for (var i = 0, n = array.length; i < n; ++i) {
-                        var wrapper = array[i];
-                        if (wrapper.equals(filter)) {
-                            wrapper.clear();
-                        }
-                        else {
-                            rest.push(wrapper);
-                        }
-                    }
-                    if (rest.length === 0) {
-                        this._filters = null;
-                    }
-                    else if (rest.length === 1) {
-                        this._filters = rest[0];
-                    }
-                    else {
-                        this._filters = rest;
-                    }
-                }
-            };
-            /**
-             * Remove all message filters installed for the message handler.
-             */
-            MessageDispatcher.prototype.clearMessageFilters = function () {
-                var current = this._filters;
-                if (current === null) {
-                    return;
-                }
-                this._filters = null;
-                if (current instanceof FilterWrapper) {
-                    current.clear();
-                }
-                else {
-                    var array = current;
-                    for (var i = 0, n = array.length; i < n; ++i) {
-                        array[i].clear();
-                    }
-                }
-            };
-            /**
-             * Compress an message posted to the message handler, if possible.
-             *
-             * Returns true if the message was compressed, or false if the
-             * message should be posted to the message queue as normal.
-             */
-            MessageDispatcher.prototype._compressMessage = function (msg) {
-                if (this._handler.compressMessage === void 0) {
-                    return false;
-                }
-                if (this._messages === null || this._messages.empty) {
-                    return false;
-                }
-                return this._handler.compressMessage(msg, this._messages);
-            };
-            /**
-             * Send an message through the installed message filters.
-             *
-             * Returns true if the message should be filtered, false otherwise.
-             */
-            MessageDispatcher.prototype._filterMessage = function (msg) {
-                var current = this._filters;
-                if (current === null) {
-                    return false;
-                }
-                if (current instanceof FilterWrapper) {
-                    return current.invoke(this._handler, msg);
-                }
-                var handler = this._handler;
-                var array = current;
-                for (var i = array.length - 1; i >= 0; --i) {
-                    if (array[i].invoke(handler, msg)) {
-                        return true;
-                    }
-                }
-                return false;
-            };
-            /**
-             * Add a message to the message queue and wake up the message loop.
-             */
-            MessageDispatcher.prototype._enqueueMessage = function (msg) {
-                if (this._messages === null) {
-                    this._messages = new Queue();
-                }
-                this._messages.pushBack(msg);
-                dispatchQueue.pushBack(this);
-                wakeUpMessageLoop();
-            };
-            return MessageDispatcher;
-        })();
-    })(core = phosphor.core || (phosphor.core = {}));
-})(phosphor || (phosphor = {})); // module phosphor.core
-
-/*-----------------------------------------------------------------------------
-| Copyright (c) 2014-2015, S. Chris Colbert
-|
-| Distributed under the terms of the BSD 3-Clause License.
-|
-| The full license is in the file LICENSE, distributed with this software.
-|----------------------------------------------------------------------------*/
-var phosphor;
-(function (phosphor) {
-    var core;
-    (function (core) {
-        /**
-         * An object used for loosely coupled inter-object communication.
-         *
-         * A signal is emitted by an object in response to some event. User
-         * code may connect callback functions to the signal to be notified
-         * when that event occurs.
-         */
-        var Signal = (function () {
-            /**
-             * Construct a new signal.
-             */
-            function Signal() {
-                this._callbacks = null;
-            }
-            /**
-             * Connect a callback to the signal.
-             *
-             * If the callback is connected to the signal multiple times, it
-             * will be invoked that many times when the signal is emitted.
-             *
-             * It is safe to connect the callback to the signal while the signal
-             * is being emitted. The callback will not be invoked until the next
-             * time the signal is emitted.
-             */
-            Signal.prototype.connect = function (callback, thisArg) {
-                var wrapper = new CBWrapper(callback, thisArg);
-                var current = this._callbacks;
-                if (current === null) {
-                    this._callbacks = wrapper;
-                }
-                else if (current instanceof CBWrapper) {
-                    this._callbacks = [current, wrapper];
-                }
-                else {
-                    current.push(wrapper);
-                }
-            };
-            /**
-             * Disconnect a callback from the signal.
-             *
-             * This will remove all instances of the callback from the signal.
-             * If no callback is provided, all callbacks will be disconnected.
-             *
-             * It is safe to disconnect a callback from the signal while the
-             * signal is being emitted. The callback will not be invoked.
-             */
-            Signal.prototype.disconnect = function (callback, thisArg) {
-                var current = this._callbacks;
-                if (current === null) {
-                    return;
-                }
-                if (current instanceof CBWrapper) {
-                    if (!callback || current.equals(callback, thisArg)) {
-                        current.clear();
-                        this._callbacks = null;
-                    }
-                }
-                else if (!callback) {
-                    var array = current;
-                    for (var i = 0, n = array.length; i < n; ++i) {
-                        array[i].clear();
-                    }
-                    this._callbacks = null;
-                }
-                else {
-                    var rest = [];
-                    var array = current;
-                    for (var i = 0, n = array.length; i < n; ++i) {
-                        var wrapper = array[i];
-                        if (wrapper.equals(callback, thisArg)) {
-                            wrapper.clear();
-                        }
-                        else {
-                            rest.push(wrapper);
-                        }
-                    }
-                    if (rest.length === 0) {
-                        this._callbacks = null;
-                    }
-                    else if (rest.length === 1) {
-                        this._callbacks = rest[0];
-                    }
-                    else {
-                        this._callbacks = rest;
-                    }
-                }
-            };
-            /**
-             * Test whether a callback is connected to the signal.
-             */
-            Signal.prototype.isConnected = function (callback, thisArg) {
-                var current = this._callbacks;
-                if (current === null) {
-                    return false;
-                }
-                if (current instanceof CBWrapper) {
-                    return current.equals(callback, thisArg);
-                }
-                var array = current;
-                for (var i = 0, n = array.length; i < n; ++i) {
-                    if (array[i].equals(callback, thisArg)) {
-                        return true;
-                    }
-                }
-                return false;
-            };
-            /**
-             * Emit the signal and invoke its connected callbacks.
-             *
-             * Callbacks are invoked in the order in which they are connected.
-             */
-            Signal.prototype.emit = function (sender, args) {
-                var current = this._callbacks;
-                if (current === null) {
-                    return;
-                }
-                if (current instanceof CBWrapper) {
-                    current.invoke(sender, args);
-                }
-                else {
-                    var array = current;
-                    for (var i = 0, n = array.length; i < n; ++i) {
-                        array[i].invoke(sender, args);
-                    }
-                }
-            };
-            return Signal;
-        })();
-        core.Signal = Signal;
-        /**
-         * A thin wrapper around a callback function and context.
-         */
-        var CBWrapper = (function () {
-            /**
-             * Construct a new callback wrapper.
-             */
-            function CBWrapper(callback, thisArg) {
-                this._callback = callback;
-                this._thisArg = thisArg;
-            }
-            /**
-             * Clear the contents of the callback wrapper.
-             */
-            CBWrapper.prototype.clear = function () {
-                this._callback = null;
-                this._thisArg = null;
-            };
-            /**
-             * Test whether the wrapper equals a callback and context.
-             */
-            CBWrapper.prototype.equals = function (callback, thisArg) {
-                return this._callback === callback && this._thisArg === thisArg;
-            };
-            /**
-             * Invoke the wrapped callback with the given sender and args.
-             *
-             * This is a no-op if the wrapper has been cleared.
-             */
-            CBWrapper.prototype.invoke = function (sender, args) {
-                if (this._callback) {
-                    this._callback.call(this._thisArg, sender, args);
-                }
-            };
-            return CBWrapper;
-        })();
-    })(core = phosphor.core || (phosphor.core = {}));
-})(phosphor || (phosphor = {})); // module phosphor.core
-
-/*-----------------------------------------------------------------------------
-| Copyright (c) 2014-2015, S. Chris Colbert
-|
-| Distributed under the terms of the BSD 3-Clause License.
-|
-| The full license is in the file LICENSE, distributed with this software.
-|----------------------------------------------------------------------------*/
-var phosphor;
-(function (phosphor) {
-    var di;
-    (function (di) {
-        /**
-         * Create a token with the given name.
-         */
-        function createToken(name) {
-            return Object.freeze({ name: name });
-        }
-        di.createToken = createToken;
-    })(di = phosphor.di || (phosphor.di = {}));
-})(phosphor || (phosphor = {})); // module phosphor.di
-
-/*-----------------------------------------------------------------------------
-| Copyright (c) 2014-2015, S. Chris Colbert
-|
-| Distributed under the terms of the BSD 3-Clause License.
-|
-| The full license is in the file LICENSE, distributed with this software.
-|----------------------------------------------------------------------------*/
-var phosphor;
-(function (phosphor) {
-    var di;
-    (function (di) {
-        /**
-         * A lightweight dependency injection container.
-         */
-        var Container = (function () {
-            /**
-             * Construct a new container.
-             */
-            function Container() {
-                this._registry = new Map();
-            }
-            /**
-             * Test whether a type is registered with the container.
-             */
-            Container.prototype.isRegistered = function (token) {
-                return this._registry.has(token);
-            };
-            /**
-             * Register a type mapping with the container.
-             *
-             * An exception will be thrown if the type is already registered.
-             *
-             * The allowed lifetimes are:
-             *
-             *   'singleton' - Only a single instance of the type is ever
-             *      created, and that instance is shared by all objects
-             *      which have a dependency on the given type id.
-             *
-             *   'transient' - A new instance of the type is created each
-             *      time the dependency is fullfilled for an object which
-             *      has a dependency on the given type id.
-             *
-             *   'perresolve' - A single instance of the type is created
-             *      each time the `resolve` method is called, and that
-             *      instance is shared by all objects which are created
-             *      during the same resolve pass and have a dependency
-             *      on the given type id.
-             *
-             * The default lifetime is 'singleton'.
-             */
-            Container.prototype.registerType = function (token, type, lifetime) {
-                if (this._registry.has(token)) {
-                    throw new Error('token is already registered');
-                }
-                var lt = createLifetime(lifetime || 'singleton');
-                this._registry.set(token, { type: type, lifetime: lt });
-            };
-            /**
-             * Register an instance mapping with the container.
-             *
-             * This is the same as a 'singleton' type registration, except
-             * that the user creates the instance of the type beforehand.
-             *
-             * This will throw an exception if the token is already registered.
-             */
-            Container.prototype.registerInstance = function (token, instance) {
-                if (this._registry.has(token)) {
-                    throw new Error('token is already registered');
-                }
-                var lt = new SingletonLifetime(instance);
-                this._registry.set(token, { type: null, lifetime: lt });
-            };
-            /**
-             * Resolve an instance for the given token or type.
-             *
-             * An error is thrown if no type mapping is registered for the
-             * token or if the injection dependencies cannot be fulfilled.
-             */
-            Container.prototype.resolve = function (token) {
-                if (typeof token === 'function') {
-                    return this._resolveType(token, resolveKeyTick++);
-                }
-                return this._resolveToken(token, resolveKeyTick++);
-            };
-            /**
-             * Resolve an instance for the given token.
-             *
-             * An error is thrown if the token is not registered.
-             */
-            Container.prototype._resolveToken = function (token, key) {
-                var item = this._registry.get(token);
-                if (item === void 0) {
-                    throw new Error('`' + token.name + '` is not registered');
-                }
-                var instance = item.lifetime.get(key);
-                if (instance) {
-                    return instance;
-                }
-                instance = this._resolveType(item.type, key);
-                item.lifetime.set(key, instance);
-                return instance;
-            };
-            /**
-             * Resolve an instance of the given type.
-             *
-             * An error is thrown if the type dependencies cannot be fulfilled.
-             */
-            Container.prototype._resolveType = function (type, key) {
-                var instance = Object.create(type.prototype);
-                var deps = type.$inject;
-                if (!deps || deps.length === 0) {
-                    return type.call(instance) || instance;
-                }
-                var args = [];
-                for (var i = 0, n = deps.length; i < n; ++i) {
-                    args[i] = this._resolveToken(deps[i], key);
-                }
-                return type.apply(instance, args) || instance;
-            };
-            return Container;
-        })();
-        di.Container = Container;
-        /**
-         * An internal resolve key counter.
-         */
-        var resolveKeyTick = 0;
-        /**
-         * Create a lifetime object for the given string.
-         */
-        function createLifetime(lifetime) {
-            if (lifetime === 'transient') {
-                return transientInstance;
-            }
-            if (lifetime === 'singleton') {
-                return new SingletonLifetime();
-            }
-            if (lifetime === 'perresolve') {
-                return new PerResolveLifetime();
-            }
-            throw new Error('invalid lifetime: ' + lifetime);
-        }
-        /**
-         * A lifetime which never caches its object.
-         */
-        var TransientLifetime = (function () {
-            function TransientLifetime() {
-            }
-            /**
-             * Get the cached object for the lifetime.
-             */
-            TransientLifetime.prototype.get = function (key) {
-                return null;
-            };
-            /**
-             * Set the cached object for the lifetime.
-             */
-            TransientLifetime.prototype.set = function (key, val) {
-            };
-            return TransientLifetime;
-        })();
-        /**
-         * Only a single transient lifetime instance is ever needed.
-         */
-        var transientInstance = new TransientLifetime();
-        /**
-         * A lifetime which always caches its object.
-         */
-        var SingletonLifetime = (function () {
-            /**
-             * Construct a new singleton lifetime.
-             */
-            function SingletonLifetime(val) {
-                if (val === void 0) { val = null; }
-                this._val = val;
-            }
-            /**
-             * Get the cached object for the lifetime if one exists.
-             */
-            SingletonLifetime.prototype.get = function (key) {
-                return this._val;
-            };
-            /**
-             * Set the cached object for the lifetime if needed.
-             */
-            SingletonLifetime.prototype.set = function (key, val) {
-                this._val = val;
-            };
-            return SingletonLifetime;
-        })();
-        /**
-         * A lifetime which caches the instance on a per-resolve basis.
-         */
-        var PerResolveLifetime = (function () {
-            function PerResolveLifetime() {
-                this._key = 0;
-                this._val = null;
-            }
-            /**
-             * Get the cached object for the lifetime if one exists.
-             */
-            PerResolveLifetime.prototype.get = function (key) {
-                return this._key === key ? this._val : null;
-            };
-            /**
-             * Set the cached object for the lifetime if needed.
-             */
-            PerResolveLifetime.prototype.set = function (key, val) {
-                this._key = key;
-                this._val = val;
-            };
-            return PerResolveLifetime;
-        })();
-    })(di = phosphor.di || (phosphor.di = {}));
-})(phosphor || (phosphor = {})); // module phosphor.di
-
-/*-----------------------------------------------------------------------------
-| Copyright (c) 2014-2015, S. Chris Colbert
-|
-| Distributed under the terms of the BSD 3-Clause License.
-|
-| The full license is in the file LICENSE, distributed with this software.
-|----------------------------------------------------------------------------*/
-var phosphor;
-(function (phosphor) {
-    var di;
-    (function (di) {
-        /**
-         * The interface token for IContainer.
-         */
-        di.IContainer = di.createToken('phosphor.di.IContainer');
-    })(di = phosphor.di || (phosphor.di = {}));
-})(phosphor || (phosphor = {})); // module phosphor.di
 
 /*-----------------------------------------------------------------------------
 | Copyright (c) 2014-2015, S. Chris Colbert
@@ -2426,6 +1571,930 @@ var phosphor;
     })(utility = phosphor.utility || (phosphor.utility = {}));
 })(phosphor || (phosphor = {})); // module phosphor.utility
 
+
+
+
+
+
+
+/*-----------------------------------------------------------------------------
+| Copyright (c) 2014-2015, S. Chris Colbert
+|
+| Distributed under the terms of the BSD 3-Clause License.
+|
+| The full license is in the file LICENSE, distributed with this software.
+|----------------------------------------------------------------------------*/
+var phosphor;
+(function (phosphor) {
+    var core;
+    (function (core) {
+        /**
+         * A concrete implementation of IMessage.
+         *
+         * This may be subclassed to create complex message types.
+         */
+        var Message = (function () {
+            /**
+             * Construct a new message.
+             */
+            function Message(type) {
+                this._type = type;
+            }
+            Object.defineProperty(Message.prototype, "type", {
+                /**
+                 * The type of the message.
+                 */
+                get: function () {
+                    return this._type;
+                },
+                enumerable: true,
+                configurable: true
+            });
+            return Message;
+        })();
+        core.Message = Message;
+    })(core = phosphor.core || (phosphor.core = {}));
+})(phosphor || (phosphor = {})); // module phosphor.core
+
+/*-----------------------------------------------------------------------------
+| Copyright (c) 2014-2015, S. Chris Colbert
+|
+| Distributed under the terms of the BSD 3-Clause License.
+|
+| The full license is in the file LICENSE, distributed with this software.
+|----------------------------------------------------------------------------*/
+var phosphor;
+(function (phosphor) {
+    var core;
+    (function (core) {
+        var Queue = phosphor.collections.Queue;
+        /**
+         * Send a message to the message handler to process immediately.
+         */
+        function sendMessage(handler, msg) {
+            getDispatcher(handler).sendMessage(msg);
+        }
+        core.sendMessage = sendMessage;
+        /**
+         * Post a message to the message handler to process in the future.
+         */
+        function postMessage(handler, msg) {
+            getDispatcher(handler).postMessage(msg);
+        }
+        core.postMessage = postMessage;
+        /**
+         * Test whether the message handler has pending messages.
+         */
+        function hasPendingMessages(handler) {
+            return getDispatcher(handler).hasPendingMessages();
+        }
+        core.hasPendingMessages = hasPendingMessages;
+        /**
+         * Send the first pending message to the message handler.
+         */
+        function sendPendingMessage(handler) {
+            getDispatcher(handler).sendPendingMessage();
+        }
+        core.sendPendingMessage = sendPendingMessage;
+        /**
+         * Install a message filter for a message handler.
+         *
+         * A message filter is invoked before the message handler processes
+         * the message. If the filter returns true from its `filterMessage`
+         * method, processing of the message will stop immediately and no
+         * other filters or the message handler will be invoked.
+         *
+         * The most recently installed filter is executed first.
+         */
+        function installMessageFilter(handler, filter) {
+            getDispatcher(handler).installMessageFilter(filter);
+        }
+        core.installMessageFilter = installMessageFilter;
+        /**
+         * Remove a message filter added for a message handler.
+         *
+         * It is safe to call this function while the filter is executing.
+         *
+         * If the filter is not installed, this is a no-op.
+         */
+        function removeMessageFilter(handler, filter) {
+            getDispatcher(handler).removeMessageFilter(filter);
+        }
+        core.removeMessageFilter = removeMessageFilter;
+        /**
+         * Clear all message data associated with the message handler.
+         *
+         * This removes all pending messages and filters for the handler.
+         */
+        function clearMessageData(handler) {
+            var dispatcher = dispatcherMap.get(handler);
+            if (dispatcher !== void 0) {
+                dispatcherMap.delete(handler);
+                dispatcher.clearPendingMessages();
+                dispatcher.clearMessageFilters();
+            }
+        }
+        core.clearMessageData = clearMessageData;
+        /**
+         * The internal mapping of message handler to message dispatcher.
+         */
+        var dispatcherMap = new WeakMap();
+        /**
+         * The internal queue of posted message dispatchers.
+         */
+        var dispatchQueue = new Queue();
+        /**
+         * The internal animation frame id for the message loop wake up call.
+         */
+        var frameId = 0;
+        /**
+         * A local reference to `requestAnimationFrame`.
+         */
+        var raf = requestAnimationFrame;
+        /**
+         * Get or create the message dispatcher for an message handler.
+         */
+        function getDispatcher(handler) {
+            var dispatcher = dispatcherMap.get(handler);
+            if (dispatcher === void 0) {
+                dispatcher = new MessageDispatcher(handler);
+                dispatcherMap.set(handler, dispatcher);
+            }
+            return dispatcher;
+        }
+        /**
+         * Wake up the message loop to process any pending dispatchers.
+         *
+         * This is a no-op if a wake up is not needed or is already pending.
+         */
+        function wakeUpMessageLoop() {
+            if (frameId === 0 && !dispatchQueue.empty) {
+                frameId = raf(runMessageLoop);
+            }
+        }
+        /**
+         * Run an iteration of the message loop.
+         *
+         * This will process all pending dispatchers in the queue. Dispatchers
+         * which are added to the queue while the message loop is running will
+         * be processed on the next message loop cycle.
+         */
+        function runMessageLoop() {
+            // Clear the frame id so the next wake up call can be scheduled.
+            frameId = 0;
+            // If the queue is empty, there is nothing else to do.
+            if (dispatchQueue.empty) {
+                return;
+            }
+            // Add a null sentinel value to the end of the queue. The queue
+            // will only be processed up to the first null value. This means
+            // that messages posted during this cycle will execute on the next
+            // cycle of the loop. If the last value in the array is null, it
+            // means that an exception was thrown by a message handler and the
+            // loop had to be restarted.
+            if (dispatchQueue.back !== null) {
+                dispatchQueue.pushBack(null);
+            }
+            while (!dispatchQueue.empty) {
+                var dispatcher = dispatchQueue.popFront();
+                if (dispatcher === null) {
+                    wakeUpMessageLoop();
+                    return;
+                }
+                dispatchMessage(dispatcher);
+            }
+        }
+        /**
+         * Safely process the pending handler message.
+         *
+         * If the message handler throws an exception, the message loop will
+         * be restarted and the exception will be rethrown.
+         */
+        function dispatchMessage(dispatcher) {
+            try {
+                dispatcher.sendPendingMessage();
+            }
+            catch (ex) {
+                wakeUpMessageLoop();
+                throw ex;
+            }
+        }
+        /**
+         * A thin wrapper around a message filter.
+         */
+        var FilterWrapper = (function () {
+            /**
+             * construct a new filter wrapper.
+             */
+            function FilterWrapper(filter) {
+                this._filter = filter;
+            }
+            /**
+             * Clear the contents of the wrapper.
+             */
+            FilterWrapper.prototype.clear = function () {
+                this._filter = null;
+            };
+            /**
+             * Test whether the wrapper is equivalent to the given filter.
+             */
+            FilterWrapper.prototype.equals = function (filter) {
+                return this._filter === filter;
+            };
+            /**
+             * Invoke the filter with the given handler and message.
+             *
+             * Returns true if the message should be filtered, false otherwise.
+             */
+            FilterWrapper.prototype.invoke = function (handler, msg) {
+                return this._filter ? this._filter.filterMessage(handler, msg) : false;
+            };
+            return FilterWrapper;
+        })();
+        /**
+         * An object which manages message dispatch for a message handler.
+         */
+        var MessageDispatcher = (function () {
+            /**
+             * Construct a new message dispatcher.
+             */
+            function MessageDispatcher(handler) {
+                this._messages = null;
+                this._filters = null;
+                this._handler = handler;
+            }
+            /**
+             * Send an message to the message handler to process immediately.
+             *
+             * The message will first be sent through the installed filters.
+             * If the message is filtered, it will not be sent to the handler.
+             */
+            MessageDispatcher.prototype.sendMessage = function (msg) {
+                if (!this._filterMessage(msg)) {
+                    this._handler.processMessage(msg);
+                }
+            };
+            /**
+             * Post a message to the message handler to process in the future.
+             *
+             * The message will first be compressed if possible. If the message
+             * cannot be compressed, it will be added to the message queue.
+             */
+            MessageDispatcher.prototype.postMessage = function (msg) {
+                if (!this._compressMessage(msg)) {
+                    this._enqueueMessage(msg);
+                }
+            };
+            /**
+             * Test whether the message handler has pending messages.
+             */
+            MessageDispatcher.prototype.hasPendingMessages = function () {
+                return this._messages !== null && !this._messages.empty;
+            };
+            /**
+             * Send the first pending message to the message handler.
+             */
+            MessageDispatcher.prototype.sendPendingMessage = function () {
+                if (this._messages !== null && !this._messages.empty) {
+                    this.sendMessage(this._messages.popFront());
+                }
+            };
+            /**
+             * Clear the pending messages for the message handler.
+             */
+            MessageDispatcher.prototype.clearPendingMessages = function () {
+                if (this._messages !== null) {
+                    this._messages.clear();
+                    this._messages = null;
+                }
+            };
+            /**
+             * Install an message filter for the message handler.
+             */
+            MessageDispatcher.prototype.installMessageFilter = function (filter) {
+                var wrapper = new FilterWrapper(filter);
+                var current = this._filters;
+                if (current === null) {
+                    this._filters = wrapper;
+                }
+                else if (current instanceof FilterWrapper) {
+                    this._filters = [current, wrapper];
+                }
+                else {
+                    current.push(wrapper);
+                }
+            };
+            /**
+             * Remove an message filter installed for the message handler.
+             */
+            MessageDispatcher.prototype.removeMessageFilter = function (filter) {
+                var current = this._filters;
+                if (current === null) {
+                    return;
+                }
+                if (current instanceof FilterWrapper) {
+                    if (current.equals(filter)) {
+                        current.clear();
+                        this._filters = null;
+                    }
+                }
+                else {
+                    var rest = [];
+                    var array = current;
+                    for (var i = 0, n = array.length; i < n; ++i) {
+                        var wrapper = array[i];
+                        if (wrapper.equals(filter)) {
+                            wrapper.clear();
+                        }
+                        else {
+                            rest.push(wrapper);
+                        }
+                    }
+                    if (rest.length === 0) {
+                        this._filters = null;
+                    }
+                    else if (rest.length === 1) {
+                        this._filters = rest[0];
+                    }
+                    else {
+                        this._filters = rest;
+                    }
+                }
+            };
+            /**
+             * Remove all message filters installed for the message handler.
+             */
+            MessageDispatcher.prototype.clearMessageFilters = function () {
+                var current = this._filters;
+                if (current === null) {
+                    return;
+                }
+                this._filters = null;
+                if (current instanceof FilterWrapper) {
+                    current.clear();
+                }
+                else {
+                    var array = current;
+                    for (var i = 0, n = array.length; i < n; ++i) {
+                        array[i].clear();
+                    }
+                }
+            };
+            /**
+             * Compress an message posted to the message handler, if possible.
+             *
+             * Returns true if the message was compressed, or false if the
+             * message should be posted to the message queue as normal.
+             */
+            MessageDispatcher.prototype._compressMessage = function (msg) {
+                if (this._handler.compressMessage === void 0) {
+                    return false;
+                }
+                if (this._messages === null || this._messages.empty) {
+                    return false;
+                }
+                return this._handler.compressMessage(msg, this._messages);
+            };
+            /**
+             * Send an message through the installed message filters.
+             *
+             * Returns true if the message should be filtered, false otherwise.
+             */
+            MessageDispatcher.prototype._filterMessage = function (msg) {
+                var current = this._filters;
+                if (current === null) {
+                    return false;
+                }
+                if (current instanceof FilterWrapper) {
+                    return current.invoke(this._handler, msg);
+                }
+                var handler = this._handler;
+                var array = current;
+                for (var i = array.length - 1; i >= 0; --i) {
+                    if (array[i].invoke(handler, msg)) {
+                        return true;
+                    }
+                }
+                return false;
+            };
+            /**
+             * Add a message to the message queue and wake up the message loop.
+             */
+            MessageDispatcher.prototype._enqueueMessage = function (msg) {
+                if (this._messages === null) {
+                    this._messages = new Queue();
+                }
+                this._messages.pushBack(msg);
+                dispatchQueue.pushBack(this);
+                wakeUpMessageLoop();
+            };
+            return MessageDispatcher;
+        })();
+    })(core = phosphor.core || (phosphor.core = {}));
+})(phosphor || (phosphor = {})); // module phosphor.core
+
+/*-----------------------------------------------------------------------------
+| Copyright (c) 2014-2015, S. Chris Colbert
+|
+| Distributed under the terms of the BSD 3-Clause License.
+|
+| The full license is in the file LICENSE, distributed with this software.
+|----------------------------------------------------------------------------*/
+var phosphor;
+(function (phosphor) {
+    var core;
+    (function (core) {
+        /**
+         * A base class for creating objects which manage a DOM node.
+         */
+        var NodeBase = (function () {
+            /**
+             * Construct a new node base.
+             */
+            function NodeBase() {
+                this._node = this.constructor.createNode();
+            }
+            /**
+             * Create the DOM node for a new object instance.
+             *
+             * This may be reimplemented to create a custom DOM node.
+             */
+            NodeBase.createNode = function () {
+                return document.createElement('div');
+            };
+            /**
+             * Dispose of the resources held by the object.
+             */
+            NodeBase.prototype.dispose = function () {
+                this._node = null;
+            };
+            Object.defineProperty(NodeBase.prototype, "node", {
+                /**
+                 * Get the DOM node managed by the object.
+                 */
+                get: function () {
+                    return this._node;
+                },
+                enumerable: true,
+                configurable: true
+            });
+            /**
+             * Test whether the object's DOM node has the given class name.
+             */
+            NodeBase.prototype.hasClass = function (name) {
+                return this._node.classList.contains(name);
+            };
+            /**
+             * Add a class name to the object's DOM node.
+             */
+            NodeBase.prototype.addClass = function (name) {
+                this._node.classList.add(name);
+            };
+            /**
+             * Remove a class name from the object's DOM node.
+             */
+            NodeBase.prototype.removeClass = function (name) {
+                this._node.classList.remove(name);
+            };
+            return NodeBase;
+        })();
+        core.NodeBase = NodeBase;
+    })(core = phosphor.core || (phosphor.core = {}));
+})(phosphor || (phosphor = {})); // phosphor.core
+
+/*-----------------------------------------------------------------------------
+| Copyright (c) 2014-2015, S. Chris Colbert
+|
+| Distributed under the terms of the BSD 3-Clause License.
+|
+| The full license is in the file LICENSE, distributed with this software.
+|----------------------------------------------------------------------------*/
+var phosphor;
+(function (phosphor) {
+    var core;
+    (function (core) {
+        /**
+         * An object used for loosely coupled inter-object communication.
+         *
+         * A signal is emitted by an object in response to some event. User
+         * code may connect callback functions to the signal to be notified
+         * when that event occurs.
+         */
+        var Signal = (function () {
+            /**
+             * Construct a new signal.
+             */
+            function Signal() {
+                this._callbacks = null;
+            }
+            /**
+             * Connect a callback to the signal.
+             *
+             * If the callback is connected to the signal multiple times, it
+             * will be invoked that many times when the signal is emitted.
+             *
+             * It is safe to connect the callback to the signal while the signal
+             * is being emitted. The callback will not be invoked until the next
+             * time the signal is emitted.
+             */
+            Signal.prototype.connect = function (callback, thisArg) {
+                var wrapper = new CBWrapper(callback, thisArg);
+                var current = this._callbacks;
+                if (current === null) {
+                    this._callbacks = wrapper;
+                }
+                else if (current instanceof CBWrapper) {
+                    this._callbacks = [current, wrapper];
+                }
+                else {
+                    current.push(wrapper);
+                }
+            };
+            /**
+             * Disconnect a callback from the signal.
+             *
+             * This will remove all instances of the callback from the signal.
+             * If no callback is provided, all callbacks will be disconnected.
+             *
+             * It is safe to disconnect a callback from the signal while the
+             * signal is being emitted. The callback will not be invoked.
+             */
+            Signal.prototype.disconnect = function (callback, thisArg) {
+                var current = this._callbacks;
+                if (current === null) {
+                    return;
+                }
+                if (current instanceof CBWrapper) {
+                    if (!callback || current.equals(callback, thisArg)) {
+                        current.clear();
+                        this._callbacks = null;
+                    }
+                }
+                else if (!callback) {
+                    var array = current;
+                    for (var i = 0, n = array.length; i < n; ++i) {
+                        array[i].clear();
+                    }
+                    this._callbacks = null;
+                }
+                else {
+                    var rest = [];
+                    var array = current;
+                    for (var i = 0, n = array.length; i < n; ++i) {
+                        var wrapper = array[i];
+                        if (wrapper.equals(callback, thisArg)) {
+                            wrapper.clear();
+                        }
+                        else {
+                            rest.push(wrapper);
+                        }
+                    }
+                    if (rest.length === 0) {
+                        this._callbacks = null;
+                    }
+                    else if (rest.length === 1) {
+                        this._callbacks = rest[0];
+                    }
+                    else {
+                        this._callbacks = rest;
+                    }
+                }
+            };
+            /**
+             * Test whether a callback is connected to the signal.
+             */
+            Signal.prototype.isConnected = function (callback, thisArg) {
+                var current = this._callbacks;
+                if (current === null) {
+                    return false;
+                }
+                if (current instanceof CBWrapper) {
+                    return current.equals(callback, thisArg);
+                }
+                var array = current;
+                for (var i = 0, n = array.length; i < n; ++i) {
+                    if (array[i].equals(callback, thisArg)) {
+                        return true;
+                    }
+                }
+                return false;
+            };
+            /**
+             * Emit the signal and invoke its connected callbacks.
+             *
+             * Callbacks are invoked in the order in which they are connected.
+             */
+            Signal.prototype.emit = function (sender, args) {
+                var current = this._callbacks;
+                if (current === null) {
+                    return;
+                }
+                if (current instanceof CBWrapper) {
+                    current.invoke(sender, args);
+                }
+                else {
+                    var array = current;
+                    for (var i = 0, n = array.length; i < n; ++i) {
+                        array[i].invoke(sender, args);
+                    }
+                }
+            };
+            return Signal;
+        })();
+        core.Signal = Signal;
+        /**
+         * A thin wrapper around a callback function and context.
+         */
+        var CBWrapper = (function () {
+            /**
+             * Construct a new callback wrapper.
+             */
+            function CBWrapper(callback, thisArg) {
+                this._callback = callback;
+                this._thisArg = thisArg;
+            }
+            /**
+             * Clear the contents of the callback wrapper.
+             */
+            CBWrapper.prototype.clear = function () {
+                this._callback = null;
+                this._thisArg = null;
+            };
+            /**
+             * Test whether the wrapper equals a callback and context.
+             */
+            CBWrapper.prototype.equals = function (callback, thisArg) {
+                return this._callback === callback && this._thisArg === thisArg;
+            };
+            /**
+             * Invoke the wrapped callback with the given sender and args.
+             *
+             * This is a no-op if the wrapper has been cleared.
+             */
+            CBWrapper.prototype.invoke = function (sender, args) {
+                if (this._callback) {
+                    this._callback.call(this._thisArg, sender, args);
+                }
+            };
+            return CBWrapper;
+        })();
+    })(core = phosphor.core || (phosphor.core = {}));
+})(phosphor || (phosphor = {})); // module phosphor.core
+
+/*-----------------------------------------------------------------------------
+| Copyright (c) 2014-2015, S. Chris Colbert
+|
+| Distributed under the terms of the BSD 3-Clause License.
+|
+| The full license is in the file LICENSE, distributed with this software.
+|----------------------------------------------------------------------------*/
+var phosphor;
+(function (phosphor) {
+    var di;
+    (function (di) {
+        /**
+         * Create a token with the given name.
+         */
+        function createToken(name) {
+            return Object.freeze({ name: name });
+        }
+        di.createToken = createToken;
+    })(di = phosphor.di || (phosphor.di = {}));
+})(phosphor || (phosphor = {})); // module phosphor.di
+
+/*-----------------------------------------------------------------------------
+| Copyright (c) 2014-2015, S. Chris Colbert
+|
+| Distributed under the terms of the BSD 3-Clause License.
+|
+| The full license is in the file LICENSE, distributed with this software.
+|----------------------------------------------------------------------------*/
+var phosphor;
+(function (phosphor) {
+    var di;
+    (function (di) {
+        /**
+         * A lightweight dependency injection container.
+         */
+        var Container = (function () {
+            /**
+             * Construct a new container.
+             */
+            function Container() {
+                this._registry = new Map();
+            }
+            /**
+             * Test whether a type is registered with the container.
+             */
+            Container.prototype.isRegistered = function (token) {
+                return this._registry.has(token);
+            };
+            /**
+             * Register a type mapping with the container.
+             *
+             * An exception will be thrown if the type is already registered.
+             *
+             * The allowed lifetimes are:
+             *
+             *   'singleton' - Only a single instance of the type is ever
+             *      created, and that instance is shared by all objects
+             *      which have a dependency on the given type id.
+             *
+             *   'transient' - A new instance of the type is created each
+             *      time the dependency is fullfilled for an object which
+             *      has a dependency on the given type id.
+             *
+             *   'perresolve' - A single instance of the type is created
+             *      each time the `resolve` method is called, and that
+             *      instance is shared by all objects which are created
+             *      during the same resolve pass and have a dependency
+             *      on the given type id.
+             *
+             * The default lifetime is 'singleton'.
+             */
+            Container.prototype.registerType = function (token, type, lifetime) {
+                if (this._registry.has(token)) {
+                    throw new Error('token is already registered');
+                }
+                var lt = createLifetime(lifetime || 'singleton');
+                this._registry.set(token, { type: type, lifetime: lt });
+            };
+            /**
+             * Register an instance mapping with the container.
+             *
+             * This is the same as a 'singleton' type registration, except
+             * that the user creates the instance of the type beforehand.
+             *
+             * This will throw an exception if the token is already registered.
+             */
+            Container.prototype.registerInstance = function (token, instance) {
+                if (this._registry.has(token)) {
+                    throw new Error('token is already registered');
+                }
+                var lt = new SingletonLifetime(instance);
+                this._registry.set(token, { type: null, lifetime: lt });
+            };
+            /**
+             * Resolve an instance for the given token or type.
+             *
+             * An error is thrown if no type mapping is registered for the
+             * token or if the injection dependencies cannot be fulfilled.
+             */
+            Container.prototype.resolve = function (token) {
+                if (typeof token === 'function') {
+                    return this._resolveType(token, resolveKeyTick++);
+                }
+                return this._resolveToken(token, resolveKeyTick++);
+            };
+            /**
+             * Resolve an instance for the given token.
+             *
+             * An error is thrown if the token is not registered.
+             */
+            Container.prototype._resolveToken = function (token, key) {
+                var item = this._registry.get(token);
+                if (item === void 0) {
+                    throw new Error('`' + token.name + '` is not registered');
+                }
+                var instance = item.lifetime.get(key);
+                if (instance) {
+                    return instance;
+                }
+                instance = this._resolveType(item.type, key);
+                item.lifetime.set(key, instance);
+                return instance;
+            };
+            /**
+             * Resolve an instance of the given type.
+             *
+             * An error is thrown if the type dependencies cannot be fulfilled.
+             */
+            Container.prototype._resolveType = function (type, key) {
+                var instance = Object.create(type.prototype);
+                var deps = type.$inject;
+                if (!deps || deps.length === 0) {
+                    return type.call(instance) || instance;
+                }
+                var args = [];
+                for (var i = 0, n = deps.length; i < n; ++i) {
+                    args[i] = this._resolveToken(deps[i], key);
+                }
+                return type.apply(instance, args) || instance;
+            };
+            return Container;
+        })();
+        di.Container = Container;
+        /**
+         * An internal resolve key counter.
+         */
+        var resolveKeyTick = 0;
+        /**
+         * Create a lifetime object for the given string.
+         */
+        function createLifetime(lifetime) {
+            if (lifetime === 'transient') {
+                return transientInstance;
+            }
+            if (lifetime === 'singleton') {
+                return new SingletonLifetime();
+            }
+            if (lifetime === 'perresolve') {
+                return new PerResolveLifetime();
+            }
+            throw new Error('invalid lifetime: ' + lifetime);
+        }
+        /**
+         * A lifetime which never caches its object.
+         */
+        var TransientLifetime = (function () {
+            function TransientLifetime() {
+            }
+            /**
+             * Get the cached object for the lifetime.
+             */
+            TransientLifetime.prototype.get = function (key) {
+                return null;
+            };
+            /**
+             * Set the cached object for the lifetime.
+             */
+            TransientLifetime.prototype.set = function (key, val) {
+            };
+            return TransientLifetime;
+        })();
+        /**
+         * Only a single transient lifetime instance is ever needed.
+         */
+        var transientInstance = new TransientLifetime();
+        /**
+         * A lifetime which always caches its object.
+         */
+        var SingletonLifetime = (function () {
+            /**
+             * Construct a new singleton lifetime.
+             */
+            function SingletonLifetime(val) {
+                if (val === void 0) { val = null; }
+                this._val = val;
+            }
+            /**
+             * Get the cached object for the lifetime if one exists.
+             */
+            SingletonLifetime.prototype.get = function (key) {
+                return this._val;
+            };
+            /**
+             * Set the cached object for the lifetime if needed.
+             */
+            SingletonLifetime.prototype.set = function (key, val) {
+                this._val = val;
+            };
+            return SingletonLifetime;
+        })();
+        /**
+         * A lifetime which caches the instance on a per-resolve basis.
+         */
+        var PerResolveLifetime = (function () {
+            function PerResolveLifetime() {
+                this._key = 0;
+                this._val = null;
+            }
+            /**
+             * Get the cached object for the lifetime if one exists.
+             */
+            PerResolveLifetime.prototype.get = function (key) {
+                return this._key === key ? this._val : null;
+            };
+            /**
+             * Set the cached object for the lifetime if needed.
+             */
+            PerResolveLifetime.prototype.set = function (key, val) {
+                this._key = key;
+                this._val = val;
+            };
+            return PerResolveLifetime;
+        })();
+    })(di = phosphor.di || (phosphor.di = {}));
+})(phosphor || (phosphor = {})); // module phosphor.di
+
+/*-----------------------------------------------------------------------------
+| Copyright (c) 2014-2015, S. Chris Colbert
+|
+| Distributed under the terms of the BSD 3-Clause License.
+|
+| The full license is in the file LICENSE, distributed with this software.
+|----------------------------------------------------------------------------*/
+var phosphor;
+(function (phosphor) {
+    var di;
+    (function (di) {
+        /**
+         * The interface token for IContainer.
+         */
+        di.IContainer = di.createToken('phosphor.di.IContainer');
+    })(di = phosphor.di || (phosphor.di = {}));
+})(phosphor || (phosphor = {})); // module phosphor.di
+
 /*-----------------------------------------------------------------------------
 | Copyright (c) 2014-2015, S. Chris Colbert
 |
@@ -2519,6 +2588,12 @@ var phosphor;
     })(virtualdom = phosphor.virtualdom || (phosphor.virtualdom = {}));
 })(phosphor || (phosphor = {})); // module phosphor.virtualdom
 
+var __extends = this.__extends || function (d, b) {
+    for (var p in b) if (b.hasOwnProperty(p)) d[p] = b[p];
+    function __() { this.constructor = d; }
+    __.prototype = b.prototype;
+    d.prototype = new __();
+};
 /*-----------------------------------------------------------------------------
 | Copyright (c) 2014-2015, S. Chris Colbert
 |
@@ -2530,6 +2605,7 @@ var phosphor;
 (function (phosphor) {
     var virtualdom;
     (function (virtualdom) {
+        var NodeBase = phosphor.core.NodeBase;
         var clearMessageData = phosphor.core.clearMessageData;
         var emptyArray = phosphor.utility.emptyArray;
         var emptyObject = phosphor.utility.emptyObject;
@@ -2539,36 +2615,27 @@ var phosphor;
          * This class serves as a convenient base class for components which
          * manage the content of their node independent of the virtual DOM.
          */
-        var BaseComponent = (function () {
+        var BaseComponent = (function (_super) {
+            __extends(BaseComponent, _super);
             /**
              * Construct a new base component.
              */
             function BaseComponent(data, children) {
+                _super.call(this);
                 this._data = emptyObject;
                 this._children = emptyArray;
                 this._data = data;
                 this._children = children;
-                this._node = this.createNode();
             }
             /**
              * Dispose of the resources held by the component.
              */
             BaseComponent.prototype.dispose = function () {
-                this._node = null;
+                clearMessageData(this);
                 this._data = null;
                 this._children = null;
-                clearMessageData(this);
+                _super.prototype.dispose.call(this);
             };
-            Object.defineProperty(BaseComponent.prototype, "node", {
-                /**
-                 * Get the DOM node for the component.
-                 */
-                get: function () {
-                    return this._node;
-                },
-                enumerable: true,
-                configurable: true
-            });
             Object.defineProperty(BaseComponent.prototype, "data", {
                 /**
                  * Get the current data object for the component.
@@ -2623,16 +2690,6 @@ var phosphor;
                 }
             };
             /**
-             * Create the DOM node for the component.
-             *
-             * This can be reimplemented by subclasses as needed.
-             *
-             * The default implementation creates an empty div.
-             */
-            BaseComponent.prototype.createNode = function () {
-                return document.createElement('div');
-            };
-            /**
              * A method invoked on an 'update-request' message.
              *
              * The default implementation is a no-op.
@@ -2668,7 +2725,7 @@ var phosphor;
             BaseComponent.prototype.onAfterMove = function (msg) {
             };
             return BaseComponent;
-        })();
+        })(NodeBase);
         virtualdom.BaseComponent = BaseComponent;
     })(virtualdom = phosphor.virtualdom || (phosphor.virtualdom = {}));
 })(phosphor || (phosphor = {})); // module phosphor.virtualdom
@@ -2718,6 +2775,17 @@ var phosphor;
                 _super.apply(this, arguments);
                 this._refs = emptyObject;
             }
+            /**
+             * Create the DOM node for a component.
+             *
+             * This method creates the DOM node from the `className` and `tagName`
+             * properties. A subclass will not typically reimplement this method.
+             */
+            Component.createNode = function () {
+                var node = document.createElement(this.tagName);
+                node.className = this.className;
+                return node;
+            };
             /**
              * Dispose of the resources held by the component.
              */
@@ -2814,6 +2882,18 @@ var phosphor;
              */
             Component.prototype.onAfterRender = function (msg) {
             };
+            /**
+             * The tag name to use when creating the component node.
+             *
+             * This may be reimplemented by a subclass.
+             */
+            Component.tagName = 'div';
+            /**
+             * The initial class name for the component node.
+             *
+             * This may be reimplemented by a subclass.
+             */
+            Component.className = '';
             return Component;
         })(virtualdom.BaseComponent);
         virtualdom.Component = Component;
@@ -3781,10 +3861,6 @@ var phosphor;
 
 
 
-
-
-
-
 var __extends = this.__extends || function (d, b) {
     for (var p in b) if (b.hasOwnProperty(p)) d[p] = b[p];
     function __() { this.constructor = d; }
@@ -4143,6 +4219,10 @@ var phosphor;
         var Message = phosphor.core.Message;
         var postMessage = phosphor.core.postMessage;
         /**
+         * A singleton 'layout-request' message.
+         */
+        var MSG_LAYOUT_REQUEST = new Message('layout-request');
+        /**
          * The base class of phosphor layouts.
          *
          * The Layout class does not define an interface for adding widgets to
@@ -4313,7 +4393,7 @@ var phosphor;
             Layout.prototype.invalidate = function () {
                 var parent = this._parent;
                 if (parent) {
-                    postMessage(parent, new Message('layout-request'));
+                    postMessage(parent, MSG_LAYOUT_REQUEST);
                     parent.updateGeometry();
                 }
             };
@@ -5663,6 +5743,12 @@ var phosphor;
     })(widgets = phosphor.widgets || (phosphor.widgets = {}));
 })(phosphor || (phosphor = {})); // module phosphor.widgets
 
+var __extends = this.__extends || function (d, b) {
+    for (var p in b) if (b.hasOwnProperty(p)) d[p] = b[p];
+    function __() { this.constructor = d; }
+    __.prototype = b.prototype;
+    d.prototype = new __();
+};
 /*-----------------------------------------------------------------------------
 | Copyright (c) 2014-2015, S. Chris Colbert
 |
@@ -5674,6 +5760,7 @@ var phosphor;
 (function (phosphor) {
     var widgets;
     (function (widgets) {
+        var NodeBase = phosphor.core.NodeBase;
         /**
          * The class name assigned to a split handle.
          */
@@ -5697,15 +5784,27 @@ var phosphor;
         /**
          * A class which manages a handle node for a split panel.
          */
-        var SplitHandle = (function () {
+        var SplitHandle = (function (_super) {
+            __extends(SplitHandle, _super);
             /**
              * Construct a new split handle.
              */
             function SplitHandle(orientation) {
+                _super.call(this);
                 this._hidden = false;
-                this._node = this.createNode();
+                this.addClass(HANDLE_CLASS);
                 this.orientation = orientation;
             }
+            /**
+             * Create the DOM node for a split handle.
+             */
+            SplitHandle.createNode = function () {
+                var node = document.createElement('div');
+                var overlay = document.createElement('div');
+                overlay.className = OVERLAY_CLASS;
+                node.appendChild(overlay);
+                return node;
+            };
             Object.defineProperty(SplitHandle.prototype, "hidden", {
                 /**
                  * Get whether the handle is hidden.
@@ -5722,10 +5821,10 @@ var phosphor;
                     }
                     this._hidden = hidden;
                     if (hidden) {
-                        this._node.classList.add(HIDDEN_CLASS);
+                        this.addClass(HIDDEN_CLASS);
                     }
                     else {
-                        this._node.classList.remove(HIDDEN_CLASS);
+                        this.removeClass(HIDDEN_CLASS);
                     }
                 },
                 enumerable: true,
@@ -5747,40 +5846,19 @@ var phosphor;
                     }
                     this._orientation = value;
                     if (value === 0 /* Horizontal */) {
-                        this._node.classList.remove(VERTICAL_CLASS);
-                        this._node.classList.add(HORIZONTAL_CLASS);
+                        this.removeClass(VERTICAL_CLASS);
+                        this.addClass(HORIZONTAL_CLASS);
                     }
                     else {
-                        this._node.classList.remove(HORIZONTAL_CLASS);
-                        this._node.classList.add(VERTICAL_CLASS);
+                        this.removeClass(HORIZONTAL_CLASS);
+                        this.addClass(VERTICAL_CLASS);
                     }
                 },
                 enumerable: true,
                 configurable: true
             });
-            Object.defineProperty(SplitHandle.prototype, "node", {
-                /**
-                 * Get the DOM node for the handle.
-                 */
-                get: function () {
-                    return this._node;
-                },
-                enumerable: true,
-                configurable: true
-            });
-            /**
-             * Create the DOM node for the handle.
-             */
-            SplitHandle.prototype.createNode = function () {
-                var node = document.createElement('div');
-                var overlay = document.createElement('div');
-                node.className = HANDLE_CLASS;
-                overlay.className = OVERLAY_CLASS;
-                node.appendChild(overlay);
-                return node;
-            };
             return SplitHandle;
-        })();
+        })(NodeBase);
         widgets.SplitHandle = SplitHandle;
     })(widgets = phosphor.widgets || (phosphor.widgets = {}));
 })(phosphor || (phosphor = {})); // module phosphor.widgets
@@ -6669,6 +6747,12 @@ var phosphor;
     })(widgets = phosphor.widgets || (phosphor.widgets = {}));
 })(phosphor || (phosphor = {})); // module phosphor.widgets
 
+var __extends = this.__extends || function (d, b) {
+    for (var p in b) if (b.hasOwnProperty(p)) d[p] = b[p];
+    function __() { this.constructor = d; }
+    __.prototype = b.prototype;
+    d.prototype = new __();
+};
 /*-----------------------------------------------------------------------------
 | Copyright (c) 2014-2015, S. Chris Colbert
 |
@@ -6682,6 +6766,7 @@ var phosphor;
     (function (widgets) {
         var algo = phosphor.collections.algorithm;
         var Message = phosphor.core.Message;
+        var NodeBase = phosphor.core.NodeBase;
         var Signal = phosphor.core.Signal;
         var clearMessageData = phosphor.core.clearMessageData;
         var installMessageFilter = phosphor.core.installMessageFilter;
@@ -6699,6 +6784,54 @@ var phosphor;
          */
         var HIDDEN_CLASS = 'p-mod-hidden';
         /**
+         * A singleton 'layout-changed' message.
+         */
+        var MSG_LAYOUT_CHANGED = new Message('layout-changed');
+        /**
+         * A singleton 'layout-request' message.
+         */
+        var MSG_LAYOUT_REQUEST = new Message('layout-request');
+        /**
+         * A singleton 'parent-changed' message.
+         */
+        var MSG_PARENT_CHANGED = new Message('parent-changed');
+        /**
+         * A singleton 'before-show' message.
+         */
+        var MSG_BEFORE_SHOW = new Message('before-show');
+        /**
+         * A singleton 'after-show' message.
+         */
+        var MSG_AFTER_SHOW = new Message('after-show');
+        /**
+         * A singleton 'before-hide' message.
+         */
+        var MSG_BEFORE_HIDE = new Message('before-hide');
+        /**
+         * A singleton 'after-hide' message.
+         */
+        var MSG_AFTER_HIDE = new Message('after-hide');
+        /**
+         * A singleton 'before-attach' message.
+         */
+        var MSG_BEFORE_ATTACH = new Message('before-attach');
+        /**
+         * A singleton 'after-attach' message.
+         */
+        var MSG_AFTER_ATTACH = new Message('after-attach');
+        /**
+         * A singleton 'before-detach' message.
+         */
+        var MSG_BEFORE_DETACH = new Message('before-detach');
+        /**
+         * A singleton 'after-detach' message.
+         */
+        var MSG_AFTER_DETACH = new Message('after-detach');
+        /**
+         * A singleton 'close' message.
+         */
+        var MSG_CLOSE = new Message('close');
+        /**
          * The base class of the Phosphor widget hierarchy.
          *
          * A widget wraps an absolutely positioned DOM node. It can act as a
@@ -6710,27 +6843,28 @@ var phosphor;
          * in the DOM by calling its `attach` method and passing the DOM
          * node which should be used as the parent of the widget's node.
          */
-        var Widget = (function () {
+        var Widget = (function (_super) {
+            __extends(Widget, _super);
             /**
              * Construct a new widget.
              */
             function Widget() {
+                _super.call(this);
                 /**
                  * A signal emitted when the widget is disposed.
                  */
                 this.disposed = new Signal();
-                this._layout = null;
-                this._parent = null;
-                this._children = [];
-                this._sizePolicy = defaultSizePolicy;
-                this._boxSizing = null;
                 this._x = 0;
                 this._y = 0;
                 this._width = 0;
                 this._height = 0;
-                this._flags = 0;
-                this._node = this.createNode();
-                this._node.classList.add(WIDGET_CLASS);
+                this._wflags = 0;
+                this._layout = null;
+                this._parent = null;
+                this._children = [];
+                this._boxSizing = null;
+                this._sizePolicy = defaultSizePolicy;
+                this.addClass(WIDGET_CLASS);
             }
             /**
              * Dispose of the widget and its descendants.
@@ -6762,18 +6896,8 @@ var phosphor;
                     child.dispose();
                 }
                 children.length = 0;
-                this._node = null;
+                _super.prototype.dispose.call(this);
             };
-            Object.defineProperty(Widget.prototype, "node", {
-                /**
-                 * Get the DOM node managed by the widget.
-                 */
-                get: function () {
-                    return this._node;
-                },
-                enumerable: true,
-                configurable: true
-            });
             Object.defineProperty(Widget.prototype, "x", {
                 /**
                  * Get the X position set for the widget.
@@ -6891,7 +7015,7 @@ var phosphor;
                  */
                 get: function () {
                     if (!this._boxSizing) {
-                        this._boxSizing = createBoxSizing(this._node);
+                        this._boxSizing = createBoxSizing(this.node);
                     }
                     return this._boxSizing;
                 },
@@ -6983,7 +7107,7 @@ var phosphor;
                         installMessageFilter(this, layout);
                         layout.parent = this;
                     }
-                    sendMessage(this, new Message('layout-changed'));
+                    sendMessage(this, MSG_LAYOUT_CHANGED);
                 },
                 enumerable: true,
                 configurable: true
@@ -7019,7 +7143,7 @@ var phosphor;
                         parent._children.push(this);
                         sendMessage(parent, new widgets.ChildMessage('child-added', this));
                     }
-                    sendMessage(this, new Message('parent-changed'));
+                    sendMessage(this, MSG_PARENT_CHANGED);
                 },
                 enumerable: true,
                 configurable: true
@@ -7046,19 +7170,19 @@ var phosphor;
              * Test whether the given widget flag is set.
              */
             Widget.prototype.testFlag = function (flag) {
-                return (this._flags & flag) !== 0;
+                return (this._wflags & flag) !== 0;
             };
             /**
              * Set the given widget flag.
              */
             Widget.prototype.setFlag = function (flag) {
-                this._flags |= flag;
+                this._wflags |= flag;
             };
             /**
              * Clear the given widget flag.
              */
             Widget.prototype.clearFlag = function (flag) {
-                this._flags &= ~flag;
+                this._wflags &= ~flag;
             };
             /**
              * Make the widget visible to its parent.
@@ -7071,13 +7195,13 @@ var phosphor;
                 }
                 var parent = this._parent;
                 if (this.isAttached && (!parent || parent.isVisible)) {
-                    sendMessage(this, new Message('before-show'));
-                    this._node.classList.remove(HIDDEN_CLASS);
+                    beforeShowHelper(this);
+                    this.removeClass(HIDDEN_CLASS);
                     this.clearFlag(2 /* IsHidden */);
-                    sendMessage(this, new Message('after-show'));
+                    afterShowHelper(this);
                 }
                 else {
-                    this._node.classList.remove(HIDDEN_CLASS);
+                    this.removeClass(HIDDEN_CLASS);
                     this.clearFlag(2 /* IsHidden */);
                 }
                 if (parent) {
@@ -7096,13 +7220,13 @@ var phosphor;
                 }
                 var parent = this._parent;
                 if (this.isAttached && (!parent || parent.isVisible)) {
-                    sendMessage(this, new Message('before-hide'));
-                    this._node.classList.add(HIDDEN_CLASS);
+                    beforeHideHelper(this);
+                    this.addClass(HIDDEN_CLASS);
                     this.setFlag(2 /* IsHidden */);
-                    sendMessage(this, new Message('after-hide'));
+                    afterHideHelper(this);
                 }
                 else {
-                    this._node.classList.add(HIDDEN_CLASS);
+                    this.addClass(HIDDEN_CLASS);
                     this.setFlag(2 /* IsHidden */);
                 }
                 if (parent) {
@@ -7127,7 +7251,7 @@ var phosphor;
              * Subclasses should reimplement `onClose` to perform custom actions.
              */
             Widget.prototype.close = function () {
-                sendMessage(this, new Message('close'));
+                sendMessage(this, MSG_CLOSE);
             };
             /**
              * Attach the widget's node to a host DOM element.
@@ -7142,9 +7266,9 @@ var phosphor;
                 if (this._parent) {
                     throw new Error('cannot attach a non-root widget to the DOM');
                 }
-                sendMessage(this, new Message('before-attach'));
-                host.appendChild(this._node);
-                sendMessage(this, new Message('after-attach'));
+                beforeAttachHelper(this);
+                host.appendChild(this.node);
+                afterAttachHelper(this);
             };
             /**
              * Detach the widget's node from the DOM.
@@ -7155,13 +7279,13 @@ var phosphor;
                 if (this._parent) {
                     throw new Error('cannot dettach a non-root widget from the DOM');
                 }
-                var host = this._node.parentNode;
+                var host = this.node.parentNode;
                 if (!host) {
                     return;
                 }
-                sendMessage(this, new Message('before-detach'));
-                host.removeChild(this._node);
-                sendMessage(this, new Message('after-detach'));
+                beforeDetachHelper(this);
+                host.removeChild(this.node);
+                afterDetachHelper(this);
             };
             /**
              * Resize the widget so that it fills its host node.
@@ -7175,7 +7299,7 @@ var phosphor;
                 if (this._parent) {
                     throw new Error('cannot fit a non-root widget');
                 }
-                var host = this._node.parentNode;
+                var host = this.node.parentNode;
                 if (!host) {
                     return;
                 }
@@ -7256,7 +7380,7 @@ var phosphor;
                     this._layout.invalidate();
                 }
                 else {
-                    postMessage(this, new Message('layout-request'));
+                    postMessage(this, MSG_LAYOUT_REQUEST);
                 }
                 this.updateGeometry();
             };
@@ -7281,7 +7405,7 @@ var phosphor;
                     parent._layout.invalidate();
                 }
                 else {
-                    postMessage(parent, new Message('layout-request'));
+                    postMessage(parent, MSG_LAYOUT_REQUEST);
                     parent.updateGeometry();
                 }
             };
@@ -7313,7 +7437,7 @@ var phosphor;
                 var oldW = this._width;
                 var oldH = this._height;
                 var box = this.boxSizing;
-                var style = this._node.style;
+                var style = this.node.style;
                 var w = Math.max(box.minWidth, Math.min(width, box.maxWidth));
                 var h = Math.max(box.minHeight, Math.min(height, box.maxHeight));
                 if (oldX !== x) {
@@ -7376,45 +7500,28 @@ var phosphor;
                         break;
                     case 'before-show':
                         this.onBeforeShow(msg);
-                        sendNonHidden(this._children, msg);
                         break;
                     case 'after-show':
-                        this.setFlag(4 /* IsVisible */);
                         this.onAfterShow(msg);
-                        sendNonHidden(this._children, msg);
                         break;
                     case 'before-hide':
                         this.onBeforeHide(msg);
-                        sendNonHidden(this._children, msg);
                         break;
                     case 'after-hide':
-                        this.clearFlag(4 /* IsVisible */);
                         this.onAfterHide(msg);
-                        sendNonHidden(this._children, msg);
                         break;
                     case 'before-attach':
                         this._boxSizing = null;
                         this.onBeforeAttach(msg);
-                        sendAll(this._children, msg);
                         break;
                     case 'after-attach':
-                        var parent = this._parent;
-                        var visible = !this.isHidden && (!parent || parent.isVisible);
-                        if (visible)
-                            this.setFlag(4 /* IsVisible */);
-                        this.setFlag(1 /* IsAttached */);
                         this.onAfterAttach(msg);
-                        sendAll(this._children, msg);
                         break;
                     case 'before-detach':
                         this.onBeforeDetach(msg);
-                        sendAll(this._children, msg);
                         break;
                     case 'after-detach':
-                        this.clearFlag(4 /* IsVisible */);
-                        this.clearFlag(1 /* IsAttached */);
                         this.onAfterDetach(msg);
-                        sendAll(this._children, msg);
                         break;
                     case 'close':
                         this.onClose(msg);
@@ -7435,16 +7542,6 @@ var phosphor;
                 return false;
             };
             /**
-             * Create the DOM node for the widget.
-             *
-             * This can be reimplemented by subclasses as needed.
-             *
-             * The default implementation creates an empty div.
-             */
-            Widget.prototype.createNode = function () {
-                return document.createElement('div');
-            };
-            /**
              * A method invoked when a 'close' message is received.
              *
              * The default implementation sets the parent to null.
@@ -7460,12 +7557,12 @@ var phosphor;
             Widget.prototype.onChildAdded = function (msg) {
                 var child = msg.child;
                 if (this.isAttached) {
-                    sendMessage(child, new Message('before-attach'));
-                    this._node.appendChild(child._node);
-                    sendMessage(child, new Message('after-attach'));
+                    beforeAttachHelper(child);
+                    this.node.appendChild(child.node);
+                    afterAttachHelper(child);
                 }
                 else {
-                    this._node.appendChild(child._node);
+                    this.node.appendChild(child.node);
                 }
             };
             /**
@@ -7476,12 +7573,12 @@ var phosphor;
             Widget.prototype.onChildRemoved = function (msg) {
                 var child = msg.child;
                 if (this.isAttached) {
-                    sendMessage(child, new Message('before-detach'));
-                    this._node.removeChild(child._node);
-                    sendMessage(child, new Message('after-detach'));
+                    beforeDetachHelper(child);
+                    this.node.removeChild(child.node);
+                    afterDetachHelper(child);
                 }
                 else {
-                    this._node.removeChild(child._node);
+                    this.node.removeChild(child.node);
                 }
             };
             /**
@@ -7555,29 +7652,99 @@ var phosphor;
             Widget.prototype.onAfterDetach = function (msg) {
             };
             return Widget;
-        })();
+        })(NodeBase);
         widgets.Widget = Widget;
         /**
          * The default widget size policy.
          */
         var defaultSizePolicy = (widgets.SizePolicy.Preferred << 16) | widgets.SizePolicy.Preferred;
         /**
-         * Send a message to all widgets in an array.
+         * A recursive 'before-show' helper function.
          */
-        function sendAll(array, msg) {
-            for (var i = 0; i < array.length; ++i) {
-                sendMessage(array[i], msg);
+        function beforeShowHelper(widget) {
+            sendMessage(widget, MSG_BEFORE_SHOW);
+            for (var i = 0; i < widget.childCount; ++i) {
+                var child = widget.childAt(i);
+                if (!child.isHidden)
+                    beforeShowHelper(child);
             }
         }
         /**
-         * Send a message to all non-hidden widgets in an array.
+         * A recursive 'after-show' helper function.
          */
-        function sendNonHidden(array, msg) {
-            for (var i = 0; i < array.length; ++i) {
-                var widget = array[i];
-                if (!widget.isHidden) {
-                    sendMessage(widget, msg);
-                }
+        function afterShowHelper(widget) {
+            widget.setFlag(4 /* IsVisible */);
+            sendMessage(widget, MSG_AFTER_SHOW);
+            for (var i = 0; i < widget.childCount; ++i) {
+                var child = widget.childAt(i);
+                if (!child.isHidden)
+                    afterShowHelper(child);
+            }
+        }
+        /**
+         * A recursive 'before-hide' helper function.
+         */
+        function beforeHideHelper(widget) {
+            sendMessage(widget, MSG_BEFORE_HIDE);
+            for (var i = 0; i < widget.childCount; ++i) {
+                var child = widget.childAt(i);
+                if (!child.isHidden)
+                    beforeHideHelper(child);
+            }
+        }
+        /**
+         * A recursive 'after-hide' helper function.
+         */
+        function afterHideHelper(widget) {
+            widget.clearFlag(4 /* IsVisible */);
+            sendMessage(widget, MSG_AFTER_HIDE);
+            for (var i = 0; i < widget.childCount; ++i) {
+                var child = widget.childAt(i);
+                if (!child.isHidden)
+                    afterHideHelper(child);
+            }
+        }
+        /**
+         * A recursive 'before-attach' helper function.
+         */
+        function beforeAttachHelper(widget) {
+            sendMessage(widget, MSG_BEFORE_ATTACH);
+            for (var i = 0; i < widget.childCount; ++i) {
+                beforeAttachHelper(widget.childAt(i));
+            }
+        }
+        /**
+         * A recursive 'after-attach' helper function.
+         */
+        function afterAttachHelper(widget) {
+            var parent = widget.parent;
+            if (!widget.isHidden && (!parent || parent.isVisible)) {
+                widget.setFlag(4 /* IsVisible */);
+            }
+            widget.setFlag(1 /* IsAttached */);
+            sendMessage(widget, MSG_AFTER_ATTACH);
+            for (var i = 0; i < widget.childCount; ++i) {
+                afterAttachHelper(widget.childAt(i));
+            }
+        }
+        /**
+         * A recursive 'before-detach' helper function.
+         */
+        function beforeDetachHelper(widget) {
+            sendMessage(widget, MSG_BEFORE_DETACH);
+            for (var i = 0; i < widget.childCount; ++i) {
+                beforeDetachHelper(widget.childAt(i));
+            }
+        }
+        /**
+         * A recursive 'after-detach' helper function.
+         */
+        function afterDetachHelper(widget) {
+            widget.clearFlag(4 /* IsVisible */);
+            widget.clearFlag(1 /* IsAttached */);
+            sendMessage(widget, MSG_AFTER_DETACH);
+            for (var i = 0; i < widget.childCount; ++i) {
+                afterDetachHelper(widget.childAt(i));
             }
         }
     })(widgets = phosphor.widgets || (phosphor.widgets = {}));
@@ -7696,7 +7863,7 @@ var phosphor;
                 if (direction === void 0) { direction = 2 /* TopToBottom */; }
                 if (spacing === void 0) { spacing = 8; }
                 _super.call(this, new widgets.BoxLayout(direction, spacing));
-                this.node.classList.add(BOX_PANEL_CLASS);
+                this.addClass(BOX_PANEL_CLASS);
             }
             Object.defineProperty(BoxPanel.prototype, "direction", {
                 /**
@@ -7838,7 +8005,7 @@ var phosphor;
                 if (orientation === void 0) { orientation = 0 /* Horizontal */; }
                 _super.call(this, new widgets.SplitLayout(orientation));
                 this._pressData = null;
-                this.node.classList.add(SPLIT_PANEL_CLASS);
+                this.addClass(SPLIT_PANEL_CLASS);
             }
             /**
              * Dispose of the resources held by the panel.
@@ -8080,7 +8247,7 @@ var phosphor;
                  * A signal emitted when a widget is removed from the panel.
                  */
                 this.widgetRemoved = new Signal();
-                this.node.classList.add(STACKED_PANEL_CLASS);
+                this.addClass(STACKED_PANEL_CLASS);
                 var layout = this.layout;
                 layout.widgetRemoved.connect(this._sl_widgetRemoved, this);
             }
@@ -8227,7 +8394,7 @@ var phosphor;
                 this._root = null;
                 this._dragData = null;
                 this._items = [];
-                this.node.classList.add(DOCK_AREA_CLASS);
+                this.addClass(DOCK_AREA_CLASS);
                 this._root = this._createSplitter(0 /* Horizontal */);
                 var layout = new widgets.BoxLayout(2 /* TopToBottom */, 0);
                 layout.addWidget(this._root);
@@ -8932,12 +9099,10 @@ var phosphor;
          */
         function floatTab(tab, on) {
             if (on) {
-                tab.node.style.position = 'absolute';
-                tab.node.classList.add(FLOATING_CLASS);
+                tab.addClass(FLOATING_CLASS);
             }
             else {
-                tab.node.style.position = '';
-                tab.node.classList.remove(FLOATING_CLASS);
+                tab.removeClass(FLOATING_CLASS);
             }
         }
         /**
@@ -9013,7 +9178,7 @@ var phosphor;
                 this._overlayTimer = 0;
                 this._overlayHidden = true;
                 this._overlayNode = null;
-                this.node.classList.add(DOCK_PANEL_CLASS);
+                this.addClass(DOCK_PANEL_CLASS);
                 this._tabBar = new widgets.TabBar();
                 this._stackedPanel = new widgets.StackedPanel();
                 this._overlayNode = this.createOverlay();
@@ -9172,7 +9337,7 @@ var phosphor;
              */
             function DockSplitter(orientation) {
                 _super.call(this, orientation);
-                this.node.classList.add(DOCK_SPLITTER_CLASS);
+                this.addClass(DOCK_SPLITTER_CLASS);
             }
             return DockSplitter;
         })(widgets.SplitPanel);
@@ -9465,6 +9630,12 @@ var phosphor;
     })(widgets = phosphor.widgets || (phosphor.widgets = {}));
 })(phosphor || (phosphor = {})); // module phosphor.widgets
 
+var __extends = this.__extends || function (d, b) {
+    for (var p in b) if (b.hasOwnProperty(p)) d[p] = b[p];
+    function __() { this.constructor = d; }
+    __.prototype = b.prototype;
+    d.prototype = new __();
+};
 /*-----------------------------------------------------------------------------
 | Copyright (c) 2014-2015, S. Chris Colbert
 |
@@ -9477,6 +9648,7 @@ var phosphor;
     var widgets;
     (function (widgets) {
         var algo = phosphor.collections.algorithm;
+        var NodeBase = phosphor.core.NodeBase;
         var Signal = phosphor.core.Signal;
         var Size = phosphor.utility.Size;
         var clientViewportRect = phosphor.utility.clientViewportRect;
@@ -9557,29 +9729,40 @@ var phosphor;
         /**
          * An object which displays menu items as a popup menu.
          */
-        var Menu = (function () {
+        var Menu = (function (_super) {
+            __extends(Menu, _super);
             /**
              * Construct a new menu.
              */
             function Menu(items) {
                 var _this = this;
+                _super.call(this);
                 /**
                  * A signal emitted when the menu is closed.
                  */
                 this.closed = new Signal();
+                this._openTimer = 0;
+                this._closeTimer = 0;
+                this._activeIndex = -1;
                 this._parentMenu = null;
                 this._childMenu = null;
                 this._childItem = null;
                 this._items = [];
                 this._nodes = [];
-                this._activeIndex = -1;
-                this._openTimer = 0;
-                this._closeTimer = 0;
-                this._node = this.createNode();
-                this._node.classList.add(MENU_CLASS);
+                this.addClass(MENU_CLASS);
                 if (items)
                     items.forEach(function (it) { return _this.addItem(it); });
             }
+            /**
+             * Create the DOM node for a menu.
+             */
+            Menu.createNode = function () {
+                var node = document.createElement('div');
+                var content = document.createElement('ul');
+                content.className = CONTENT_CLASS;
+                node.appendChild(content);
+                return node;
+            };
             /**
              * Find the root menu of a menu hierarchy.
              */
@@ -9598,16 +9781,15 @@ var phosphor;
                 }
                 return menu;
             };
-            Object.defineProperty(Menu.prototype, "node", {
-                /**
-                 * Get the DOM node for the menu.
-                 */
-                get: function () {
-                    return this._node;
-                },
-                enumerable: true,
-                configurable: true
-            });
+            /**
+             * Dispose of the resources held by the menu.
+             */
+            Menu.prototype.dispose = function () {
+                this.close();
+                this._items = null;
+                this._nodes = null;
+                _super.prototype.dispose.call(this);
+            };
             Object.defineProperty(Menu.prototype, "parentMenu", {
                 /**
                  * Get the parent menu of the menu.
@@ -9844,7 +10026,7 @@ var phosphor;
             Menu.prototype.popup = function (x, y, forceX, forceY) {
                 if (forceX === void 0) { forceX = false; }
                 if (forceY === void 0) { forceY = false; }
-                var node = this._node;
+                var node = this.node;
                 if (node.parentNode) {
                     return;
                 }
@@ -9873,7 +10055,7 @@ var phosphor;
             Menu.prototype.open = function (x, y, forceX, forceY) {
                 if (forceX === void 0) { forceX = false; }
                 if (forceY === void 0) { forceY = false; }
-                var node = this._node;
+                var node = this.node;
                 if (node.parentNode) {
                     return;
                 }
@@ -9886,10 +10068,11 @@ var phosphor;
              * Close the menu and remove it's node from the DOM.
              */
             Menu.prototype.close = function () {
-                var node = this._node;
-                var pnode = node.parentNode;
-                if (pnode)
-                    pnode.removeChild(node);
+                var node = this.node;
+                if (!node.parentNode) {
+                    return;
+                }
+                node.parentNode.removeChild(node);
                 node.removeEventListener('mouseup', this);
                 node.removeEventListener('mouseleave', this);
                 node.removeEventListener('contextmenu', this);
@@ -9901,19 +10084,7 @@ var phosphor;
                 this.closed.emit(this, void 0);
             };
             /**
-             * Create the DOM node for the panel.
-             *
-             * This can be reimplemented to create a custom menu node.
-             */
-            Menu.prototype.createNode = function () {
-                var node = document.createElement('div');
-                var content = document.createElement('content');
-                content.className = CONTENT_CLASS;
-                node.appendChild(content);
-                return node;
-            };
-            /**
-             * Create a DOM node for the given MenuItem.
+             * Create the DOM node for a MenuItem.
              *
              * This can be reimplemented to create custom menu item nodes.
              */
@@ -9935,7 +10106,7 @@ var phosphor;
                 return node;
             };
             /**
-             * Initialize the item node for the given menu item.
+             * Initialize the DOM node for the given menu item.
              *
              * This method should be reimplemented if a subclass reimplements the
              * `createItemNode` method. It should initialize the node using the
@@ -10242,7 +10413,7 @@ var phosphor;
              * Open the menu as a child menu.
              */
             Menu.prototype._openAsSubmenu = function (item) {
-                var node = this._node;
+                var node = this.node;
                 node.addEventListener('mouseup', this);
                 node.addEventListener('mouseleave', this);
                 node.addEventListener('contextmenu', this);
@@ -10357,7 +10528,7 @@ var phosphor;
                 this._collapseSeparators();
             };
             return Menu;
-        })();
+        })(NodeBase);
         widgets.Menu = Menu;
         /**
          * Test whether the menu item is a visible non-separator item.
@@ -10533,16 +10704,26 @@ var phosphor;
             function MenuBar(items) {
                 var _this = this;
                 _super.call(this);
+                this._activeIndex = -1;
                 this._childMenu = null;
                 this._items = [];
                 this._nodes = [];
                 this._state = 0 /* Inactive */;
-                this._activeIndex = -1;
-                this.node.classList.add(MENU_BAR_CLASS);
+                this.addClass(MENU_BAR_CLASS);
                 this.verticalSizePolicy = 0 /* Fixed */;
                 if (items)
                     items.forEach(function (it) { return _this.addItem(it); });
             }
+            /**
+             * Create the DOM node for a menu bar.
+             */
+            MenuBar.createNode = function () {
+                var node = document.createElement('div');
+                var content = document.createElement('ul');
+                content.className = CONTENT_CLASS;
+                node.appendChild(content);
+                return node;
+            };
             /**
              * Dispose of the resources held by the panel.
              */
@@ -10762,17 +10943,7 @@ var phosphor;
                 return new Size(0, this.boxSizing.minHeight);
             };
             /**
-             * Create the DOM node for the widget.
-             */
-            MenuBar.prototype.createNode = function () {
-                var node = document.createElement('div');
-                var content = document.createElement('ul');
-                content.className = CONTENT_CLASS;
-                node.appendChild(content);
-                return node;
-            };
-            /**
-             * Create a DOM node for the given MenuItem.
+             * Create the DOM node for a MenuItem.
              *
              * This can be reimplemented to create custom menu item nodes.
              */
@@ -10788,7 +10959,7 @@ var phosphor;
                 return node;
             };
             /**
-             * Initialize the item node for the given menu item.
+             * Initialize the DOM node for the given menu item.
              *
              * This method should be reimplemented if a subclass reimplements the
              * `createItemNode` method. It should initialize the node using the
@@ -11022,7 +11193,7 @@ var phosphor;
             MenuBar.prototype._openChildMenu = function (menu, node) {
                 var rect = node.getBoundingClientRect();
                 this._childMenu = menu;
-                menu.node.classList.add(MENU_CLASS);
+                menu.addClass(MENU_CLASS);
                 menu.closed.connect(this._mn_closed, this);
                 menu.open(rect.left, rect.bottom, false, true);
             };
@@ -11031,7 +11202,7 @@ var phosphor;
              */
             MenuBar.prototype._closeChildMenu = function () {
                 if (this._childMenu) {
-                    this._childMenu.node.classList.remove(MENU_CLASS);
+                    this._childMenu.removeClass(MENU_CLASS);
                     this._childMenu.closed.disconnect(this._mn_closed, this);
                     this._childMenu.close();
                     this._childMenu = null;
@@ -11111,7 +11282,7 @@ var phosphor;
              */
             MenuBar.prototype._mn_closed = function (sender) {
                 sender.closed.disconnect(this._mn_closed, this);
-                sender.node.classList.remove(MENU_CLASS);
+                sender.removeClass(MENU_CLASS);
                 this._childMenu = null;
                 this._setState(0 /* Inactive */);
                 this._setActiveIndex(-1);
@@ -11227,7 +11398,7 @@ var phosphor;
             function RenderWidget() {
                 _super.call(this);
                 this._refs = emptyObject;
-                this.node.classList.add(RENDER_WIDGET_CLASS);
+                this.addClass(RENDER_WIDGET_CLASS);
                 this.setFlag(16 /* DisallowLayoutChange */);
             }
             /**
@@ -11341,6 +11512,12 @@ var phosphor;
     })(widgets = phosphor.widgets || (phosphor.widgets = {}));
 })(phosphor || (phosphor = {})); // module phosphor.widgets
 
+var __extends = this.__extends || function (d, b) {
+    for (var p in b) if (b.hasOwnProperty(p)) d[p] = b[p];
+    function __() { this.constructor = d; }
+    __.prototype = b.prototype;
+    d.prototype = new __();
+};
 /*-----------------------------------------------------------------------------
 | Copyright (c) 2014-2015, S. Chris Colbert
 |
@@ -11352,6 +11529,7 @@ var phosphor;
 (function (phosphor) {
     var widgets;
     (function (widgets) {
+        var NodeBase = phosphor.core.NodeBase;
         /**
          * The class name added to Tab instances.
          */
@@ -11377,29 +11555,47 @@ var phosphor;
          */
         var CLOSABLE_CLASS = 'p-mod-closable';
         /**
-         * A concrete implementation of ITab.
+         * An object which manages a node for a tab bar.
          */
-        var Tab = (function () {
+        var Tab = (function (_super) {
+            __extends(Tab, _super);
             /**
              * Construct a new tab.
              */
             function Tab(text) {
-                this._node = this.createNode();
+                _super.call(this);
+                this.addClass(TAB_CLASS);
                 if (text)
                     this.text = text;
             }
+            /**
+             * Create the DOM node for a tab.
+             */
+            Tab.createNode = function () {
+                var node = document.createElement('li');
+                var icon = document.createElement('span');
+                var text = document.createElement('span');
+                var closeIcon = document.createElement('span');
+                icon.className = ICON_CLASS;
+                text.className = TEXT_CLASS;
+                closeIcon.className = CLOSE_ICON_CLASS;
+                node.appendChild(icon);
+                node.appendChild(text);
+                node.appendChild(closeIcon);
+                return node;
+            };
             Object.defineProperty(Tab.prototype, "text", {
                 /**
                  * Get the text for the tab.
                  */
                 get: function () {
-                    return this._node.children[1].textContent;
+                    return this.node.children[1].textContent;
                 },
                 /**
                  * Set the text for the tab.
                  */
                 set: function (text) {
-                    this._node.children[1].textContent = text;
+                    this.node.children[1].textContent = text;
                 },
                 enumerable: true,
                 configurable: true
@@ -11409,17 +11605,17 @@ var phosphor;
                  * Get whether the tab is selected.
                  */
                 get: function () {
-                    return this._node.classList.contains(SELECTED_CLASS);
+                    return this.hasClass(SELECTED_CLASS);
                 },
                 /**
                  * Set whether the tab is selected.
                  */
                 set: function (selected) {
                     if (selected) {
-                        this._node.classList.add(SELECTED_CLASS);
+                        this.addClass(SELECTED_CLASS);
                     }
                     else {
-                        this._node.classList.remove(SELECTED_CLASS);
+                        this.removeClass(SELECTED_CLASS);
                     }
                 },
                 enumerable: true,
@@ -11430,61 +11626,34 @@ var phosphor;
                  * Get whether the tab is closable.
                  */
                 get: function () {
-                    return this._node.classList.contains(CLOSABLE_CLASS);
+                    return this.hasClass(CLOSABLE_CLASS);
                 },
                 /**
                  * Set whether the tab is closable.
                  */
                 set: function (closable) {
                     if (closable) {
-                        this._node.classList.add(CLOSABLE_CLASS);
+                        this.addClass(CLOSABLE_CLASS);
                     }
                     else {
-                        this._node.classList.remove(CLOSABLE_CLASS);
+                        this.removeClass(CLOSABLE_CLASS);
                     }
-                },
-                enumerable: true,
-                configurable: true
-            });
-            Object.defineProperty(Tab.prototype, "node", {
-                /**
-                 * The DOM node for the tab.
-                 */
-                get: function () {
-                    return this._node;
                 },
                 enumerable: true,
                 configurable: true
             });
             Object.defineProperty(Tab.prototype, "closeIconNode", {
                 /**
-                 * The DOM node for the close icon, if available.
+                 * Get the DOM node for the tab close icon.
                  */
                 get: function () {
-                    return this._node.lastChild;
+                    return this.node.lastChild;
                 },
                 enumerable: true,
                 configurable: true
             });
-            /**
-             * Create the DOM node for the tab.
-             */
-            Tab.prototype.createNode = function () {
-                var node = document.createElement('li');
-                var icon = document.createElement('span');
-                var text = document.createElement('span');
-                var closeIcon = document.createElement('span');
-                node.className = TAB_CLASS;
-                icon.className = ICON_CLASS;
-                text.className = TEXT_CLASS;
-                closeIcon.className = CLOSE_ICON_CLASS;
-                node.appendChild(icon);
-                node.appendChild(text);
-                node.appendChild(closeIcon);
-                return node;
-            };
             return Tab;
-        })();
+        })(NodeBase);
         widgets.Tab = Tab;
     })(widgets = phosphor.widgets || (phosphor.widgets = {}));
 })(phosphor || (phosphor = {})); // module phosphor.widgets
@@ -11594,11 +11763,27 @@ var phosphor;
                 this._currentTab = null;
                 this._previousTab = null;
                 this._dragData = null;
-                this.node.classList.add(TAB_BAR_CLASS);
+                this.addClass(TAB_BAR_CLASS);
                 this.verticalSizePolicy = 0 /* Fixed */;
                 if (options)
                     this._initFrom(options);
             }
+            /**
+             * Create the DOM node for a tab bar.
+             */
+            TabBar.createNode = function () {
+                var node = document.createElement('div');
+                var header = document.createElement('div');
+                var content = document.createElement('ul');
+                var footer = document.createElement('div');
+                header.className = HEADER_CLASS;
+                content.className = CONTENT_CLASS;
+                footer.className = FOOTER_CLASS;
+                node.appendChild(header);
+                node.appendChild(content);
+                node.appendChild(footer);
+                return node;
+            };
             /*
              * Dispose of the resources held by the widget.
              */
@@ -11954,22 +12139,6 @@ var phosphor;
                 configurable: true
             });
             /**
-             * Create the DOM node for the tab bar.
-             */
-            TabBar.prototype.createNode = function () {
-                var node = document.createElement('div');
-                var header = document.createElement('div');
-                var content = document.createElement('ul');
-                var footer = document.createElement('div');
-                header.className = HEADER_CLASS;
-                content.className = CONTENT_CLASS;
-                footer.className = FOOTER_CLASS;
-                node.appendChild(header);
-                node.appendChild(content);
-                node.appendChild(footer);
-                return node;
-            };
-            /**
              * A method invoked on an 'after-attach' message.
              */
             TabBar.prototype.onAfterAttach = function (msg) {
@@ -12029,8 +12198,7 @@ var phosphor;
                 // If the click was on the close icon of a closable tab,
                 // emit the `tabCloseRequested` signal.
                 var tab = this._tabs[index];
-                var iconNode = tab.closeIconNode;
-                if (iconNode && iconNode === event.target && tab.closable) {
+                if (tab.closable && tab.closeIconNode === event.target) {
                     this.tabCloseRequested.emit(this, new Pair(index, tab));
                 }
             };
@@ -12052,10 +12220,9 @@ var phosphor;
                 // Pressing on a tab stops the event propagation.
                 event.preventDefault();
                 event.stopPropagation();
-                // Do nothing further if the press in on the tab close icon.
+                // Do nothing further if the press was on the tab close icon.
                 var tab = this._tabs[index];
-                var iconNode = tab.closeIconNode;
-                if (iconNode && iconNode === event.target) {
+                if (tab.closeIconNode === event.target) {
                     return;
                 }
                 // Setup the drag data if the tabs are movable.
@@ -12212,10 +12379,10 @@ var phosphor;
                 // Animate the tab insert and and layout as appropriate.
                 if (animate) {
                     this._withTransition(function () {
-                        tab.node.classList.add(INSERTING_CLASS);
+                        tab.addClass(INSERTING_CLASS);
                         _this._updateTabLayout();
                     }, function () {
-                        tab.node.classList.remove(INSERTING_CLASS);
+                        tab.removeClass(INSERTING_CLASS);
                     });
                 }
                 else {
@@ -12305,10 +12472,10 @@ var phosphor;
                 // Animate the tab remove as appropriate.
                 if (animate) {
                     this._withTransition(function () {
-                        tab.node.classList.add(REMOVING_CLASS);
+                        tab.addClass(REMOVING_CLASS);
                         _this._updateTabLayout();
                     }, function () {
-                        tab.node.classList.remove(REMOVING_CLASS);
+                        tab.removeClass(REMOVING_CLASS);
                         _this._removeContentChild(tab.node);
                     });
                 }
@@ -12522,7 +12689,7 @@ var phosphor;
                  * A signal emitted when the current widget is changed.
                  */
                 this.currentChanged = new Signal();
-                this.node.classList.add(TAB_PANEL_CLASS);
+                this.addClass(TAB_PANEL_CLASS);
                 this.layout = new widgets.BoxLayout(2 /* TopToBottom */, 0);
                 this.setFlag(16 /* DisallowLayoutChange */);
                 var bar = this._tabBar = new widgets.TabBar();
@@ -13148,7 +13315,7 @@ var phosphor;
             function ShellPanel(direction) {
                 _super.call(this);
                 this._pairs = [];
-                this.node.classList.add(SHELL_PANEL_CLASS);
+                this.addClass(SHELL_PANEL_CLASS);
                 this.layout = new BoxLayout(direction, 0);
                 this.setFlag(16 /* DisallowLayoutChange */);
             }
@@ -13252,7 +13419,7 @@ var phosphor;
              */
             function ShellView() {
                 _super.call(this);
-                this.node.classList.add(SHELL_VIEW_CLASS);
+                this.addClass(SHELL_VIEW_CLASS);
                 this._menuBar = new MenuBar();
                 this._topPanel = new shell.ShellPanel(2 /* TopToBottom */);
                 this._leftPanel = new shell.ShellPanel(0 /* LeftToRight */);
@@ -13260,11 +13427,11 @@ var phosphor;
                 this._bottomPanel = new shell.ShellPanel(3 /* BottomToTop */);
                 this._centerPanel = new shell.ShellPanel(2 /* TopToBottom */);
                 this._menuManager = new shell.MenuManager(this._menuBar);
-                this._topPanel.node.classList.add(TOP_CLASS);
-                this._leftPanel.node.classList.add(LEFT_CLASS);
-                this._rightPanel.node.classList.add(RIGHT_CLASS);
-                this._bottomPanel.node.classList.add(BOTTOM_CLASS);
-                this._centerPanel.node.classList.add(CENTER_CLASS);
+                this._topPanel.addClass(TOP_CLASS);
+                this._leftPanel.addClass(LEFT_CLASS);
+                this._rightPanel.addClass(RIGHT_CLASS);
+                this._bottomPanel.addClass(BOTTOM_CLASS);
+                this._centerPanel.addClass(CENTER_CLASS);
                 this._menuBar.hide();
                 this._topPanel.verticalSizePolicy = 0 /* Fixed */;
                 shell.enableAutoHide(this._topPanel);
@@ -13362,161 +13529,144 @@ var phosphor;
 (function (phosphor) {
     var lib;
     (function (lib) {
-        var BaseComponent = phosphor.virtualdom.BaseComponent;
-        var createFactory = phosphor.virtualdom.createFactory;
-        /**
-         * The class name added to CodeMirrorComponent instances.
-         */
-        var CODE_MIRROR_COMPONENT_CLASS = 'p-CodeMirrorComponent';
-        // TODO:
-        // - update editor config on re-render?
-        // - save/restore scroll position on move?
-        /**
-         * A component which hosts a CodeMirror editor.
-         */
-        var CodeMirrorComponent = (function (_super) {
-            __extends(CodeMirrorComponent, _super);
+        var codemirror;
+        (function (codemirror) {
+            var Point = phosphor.utility.Point;
+            var Size = phosphor.utility.Size;
+            var BaseComponent = phosphor.virtualdom.BaseComponent;
+            var createFactory = phosphor.virtualdom.createFactory;
+            var SizePolicy = phosphor.widgets.SizePolicy;
+            var Widget = phosphor.widgets.Widget;
             /**
-             * Construct a new code mirror component.
+             * The class name added to CodeMirrorComponent instances.
              */
-            function CodeMirrorComponent(data, children) {
-                _super.call(this, data, children);
-                this.node.classList.add(CODE_MIRROR_COMPONENT_CLASS);
-                this._editor = CodeMirror(this.node, data.config);
-            }
+            var CODE_MIRROR_COMPONENT_CLASS = 'p-CodeMirrorComponent';
             /**
-             * Dispose of the resources held by the component.
+             * The class name added to CodeMirrorWidget instances.
              */
-            CodeMirrorComponent.prototype.dispose = function () {
-                this._editor = null;
-                _super.prototype.dispose.call(this);
-            };
-            Object.defineProperty(CodeMirrorComponent.prototype, "editor", {
+            var CODE_MIRROR_WIDGET_CLASS = 'p-CodeMirrorWidget';
+            // TODO:
+            // - update editor config on re-render?
+            // - save/restore scroll position on move?
+            /**
+             * A component which hosts a CodeMirror editor.
+             */
+            var CodeMirrorComponent = (function (_super) {
+                __extends(CodeMirrorComponent, _super);
                 /**
-                 * Get the code mirror editor for the component.
-                 *
-                 * This component does not attempt to wrap the extensive code mirror
-                 * api. User code should interact with the editor object directly.
+                 * Construct a new code mirror component.
                  */
-                get: function () {
-                    return this._editor;
-                },
-                enumerable: true,
-                configurable: true
-            });
-            /**
-             * A method invoked on an 'after-attach' message.
-             */
-            CodeMirrorComponent.prototype.onAfterAttach = function (msg) {
-                this._editor.refresh();
-            };
-            return CodeMirrorComponent;
-        })(BaseComponent);
-        lib.CodeMirrorComponent = CodeMirrorComponent;
-        /**
-         * The default element factory for the CodeMirrorComponent.
-         */
-        lib.CodeMirrorFactory = createFactory(CodeMirrorComponent);
-    })(lib = phosphor.lib || (phosphor.lib = {}));
-})(phosphor || (phosphor = {})); // module phosphor.lib
-
-var __extends = this.__extends || function (d, b) {
-    for (var p in b) if (b.hasOwnProperty(p)) d[p] = b[p];
-    function __() { this.constructor = d; }
-    __.prototype = b.prototype;
-    d.prototype = new __();
-};
-/*-----------------------------------------------------------------------------
-| Copyright (c) 2014-2015, S. Chris Colbert
-|
-| Distributed under the terms of the BSD 3-Clause License.
-|
-| The full license is in the file LICENSE, distributed with this software.
-|----------------------------------------------------------------------------*/
-var phosphor;
-(function (phosphor) {
-    var lib;
-    (function (lib) {
-        var Point = phosphor.utility.Point;
-        var Size = phosphor.utility.Size;
-        var SizePolicy = phosphor.widgets.SizePolicy;
-        var Widget = phosphor.widgets.Widget;
-        /**
-         * The class name added to CodeMirrorWidget instances.
-         */
-        var CODE_MIRROR_WIDGET_CLASS = 'p-CodeMirrorWidget';
-        /**
-         * A widget which hosts a CodeMirror editor.
-         */
-        var CodeMirrorWidget = (function (_super) {
-            __extends(CodeMirrorWidget, _super);
-            /**
-             * Construct a new code mirror widget.
-             */
-            function CodeMirrorWidget(config) {
-                _super.call(this);
-                this._scrollPos = null;
-                this.node.classList.add(CODE_MIRROR_WIDGET_CLASS);
-                this._editor = CodeMirror(this.node, config);
-                this.setSizePolicy(SizePolicy.Expanding, SizePolicy.Expanding);
-            }
-            /**
-             * Dispose of the resources held by the widget.
-             */
-            CodeMirrorWidget.prototype.dispose = function () {
-                this._editor = null;
-                _super.prototype.dispose.call(this);
-            };
-            Object.defineProperty(CodeMirrorWidget.prototype, "editor", {
-                /**
-                 * Get the code mirror editor for the widget.
-                 *
-                 * This widget does not attempt to wrap the code mirror api.
-                 * User code should interact with the editor object directly.
-                 */
-                get: function () {
-                    return this._editor;
-                },
-                enumerable: true,
-                configurable: true
-            });
-            /**
-             * Calculate the preferred size for the widget.
-             */
-            CodeMirrorWidget.prototype.sizeHint = function () {
-                return new Size(512, 256);
-            };
-            /**
-             * A method invoked on an 'after-show' message.
-             */
-            CodeMirrorWidget.prototype.onAfterShow = function (msg) {
-                var pos = this._scrollPos;
-                if (pos)
-                    this._editor.scrollTo(pos.x, pos.y);
-            };
-            /**
-             * A method invoked on a 'before-hide' message.
-             */
-            CodeMirrorWidget.prototype.onBeforeHide = function (msg) {
-                var info = this._editor.getScrollInfo();
-                this._scrollPos = new Point(info.left, info.top);
-            };
-            /**
-             * A method invoked on an 'after-attach' message.
-             */
-            CodeMirrorWidget.prototype.onAfterAttach = function (msg) {
-                this._editor.refresh();
-            };
-            /**
-             * A method invoked on a 'resize' message.
-             */
-            CodeMirrorWidget.prototype.onResize = function (msg) {
-                if (this.isVisible) {
-                    this._editor.setSize(msg.width, msg.height);
+                function CodeMirrorComponent(data, children) {
+                    _super.call(this, data, children);
+                    this.addClass(CODE_MIRROR_COMPONENT_CLASS);
+                    this._editor = CodeMirror(this.node, data.config);
                 }
-            };
-            return CodeMirrorWidget;
-        })(Widget);
-        lib.CodeMirrorWidget = CodeMirrorWidget;
+                /**
+                 * Dispose of the resources held by the component.
+                 */
+                CodeMirrorComponent.prototype.dispose = function () {
+                    this._editor = null;
+                    _super.prototype.dispose.call(this);
+                };
+                Object.defineProperty(CodeMirrorComponent.prototype, "editor", {
+                    /**
+                     * Get the code mirror editor for the component.
+                     *
+                     * This component does not attempt to wrap the code mirror api.
+                     * User code should interact with the editor object directly.
+                     */
+                    get: function () {
+                        return this._editor;
+                    },
+                    enumerable: true,
+                    configurable: true
+                });
+                /**
+                 * A method invoked on an 'after-attach' message.
+                 */
+                CodeMirrorComponent.prototype.onAfterAttach = function (msg) {
+                    this._editor.refresh();
+                };
+                return CodeMirrorComponent;
+            })(BaseComponent);
+            codemirror.CodeMirrorComponent = CodeMirrorComponent;
+            /**
+             * The default element factory for the CodeMirrorComponent.
+             */
+            codemirror.CodeMirrorFactory = createFactory(CodeMirrorComponent);
+            /**
+             * A widget which hosts a CodeMirror editor.
+             */
+            var CodeMirrorWidget = (function (_super) {
+                __extends(CodeMirrorWidget, _super);
+                /**
+                 * Construct a new code mirror widget.
+                 */
+                function CodeMirrorWidget(config) {
+                    _super.call(this);
+                    this._scrollPos = null;
+                    this.addClass(CODE_MIRROR_WIDGET_CLASS);
+                    this._editor = CodeMirror(this.node, config);
+                    this.setSizePolicy(SizePolicy.Expanding, SizePolicy.Expanding);
+                }
+                /**
+                 * Dispose of the resources held by the widget.
+                 */
+                CodeMirrorWidget.prototype.dispose = function () {
+                    this._editor = null;
+                    _super.prototype.dispose.call(this);
+                };
+                Object.defineProperty(CodeMirrorWidget.prototype, "editor", {
+                    /**
+                     * Get the code mirror editor for the widget.
+                     *
+                     * This widget does not attempt to wrap the code mirror api.
+                     * User code should interact with the editor object directly.
+                     */
+                    get: function () {
+                        return this._editor;
+                    },
+                    enumerable: true,
+                    configurable: true
+                });
+                /**
+                 * Calculate the preferred size for the widget.
+                 */
+                CodeMirrorWidget.prototype.sizeHint = function () {
+                    return new Size(512, 256);
+                };
+                /**
+                 * A method invoked on an 'after-show' message.
+                 */
+                CodeMirrorWidget.prototype.onAfterShow = function (msg) {
+                    var pos = this._scrollPos;
+                    if (pos)
+                        this._editor.scrollTo(pos.x, pos.y);
+                };
+                /**
+                 * A method invoked on a 'before-hide' message.
+                 */
+                CodeMirrorWidget.prototype.onBeforeHide = function (msg) {
+                    var info = this._editor.getScrollInfo();
+                    this._scrollPos = new Point(info.left, info.top);
+                };
+                /**
+                 * A method invoked on an 'after-attach' message.
+                 */
+                CodeMirrorWidget.prototype.onAfterAttach = function (msg) {
+                    this._editor.refresh();
+                };
+                /**
+                 * A method invoked on a 'resize' message.
+                 */
+                CodeMirrorWidget.prototype.onResize = function (msg) {
+                    if (this.isVisible) {
+                        this._editor.setSize(msg.width, msg.height);
+                    }
+                };
+                return CodeMirrorWidget;
+            })(Widget);
+            codemirror.CodeMirrorWidget = CodeMirrorWidget;
+        })(codemirror = lib.codemirror || (lib.codemirror = {}));
     })(lib = phosphor.lib || (phosphor.lib = {}));
-})(phosphor || (phosphor = {})); // module phosphor.lib
+})(phosphor || (phosphor = {})); // module phosphor.lib.codemirror
