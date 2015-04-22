@@ -7,6 +7,9 @@
 |----------------------------------------------------------------------------*/
 module phosphor.widgets {
 
+import NodeBase = core.NodeBase;
+
+
 /**
  * The class name added to Tab instances.
  */
@@ -42,88 +45,15 @@ var CLOSABLE_CLASS = 'p-mod-closable';
  * A concrete implementation of ITab.
  */
 export
-class Tab implements ITab {
+class Tab extends NodeBase implements ITab {
   /**
-   * Construct a new tab.
+   * Create the DOM node for a tab.
    */
-  constructor(text?: string) {
-    this._node = this.createNode();
-    if (text) this.text = text;
-  }
-
-  /**
-   * Get the text for the tab.
-   */
-  get text(): string {
-    return (<HTMLElement>this._node.children[1]).textContent;
-  }
-
-  /**
-   * Set the text for the tab.
-   */
-  set text(text: string) {
-    (<HTMLElement>this._node.children[1]).textContent = text;
-  }
-
-  /**
-   * Get whether the tab is selected.
-   */
-  get selected(): boolean {
-    return this._node.classList.contains(SELECTED_CLASS);
-  }
-
-  /**
-   * Set whether the tab is selected.
-   */
-  set selected(selected: boolean) {
-    if (selected) {
-      this._node.classList.add(SELECTED_CLASS);
-    } else {
-      this._node.classList.remove(SELECTED_CLASS);
-    }
-  }
-
-  /**
-   * Get whether the tab is closable.
-   */
-  get closable(): boolean {
-    return this._node.classList.contains(CLOSABLE_CLASS);
-  }
-
-  /**
-   * Set whether the tab is closable.
-   */
-  set closable(closable: boolean) {
-    if (closable) {
-      this._node.classList.add(CLOSABLE_CLASS);
-    } else {
-      this._node.classList.remove(CLOSABLE_CLASS);
-    }
-  }
-
-  /**
-   * The DOM node for the tab.
-   */
-  get node(): HTMLElement {
-    return this._node;
-  }
-
-  /**
-   * The DOM node for the close icon, if available.
-   */
-  get closeIconNode(): HTMLElement {
-    return <HTMLElement>this._node.lastChild;
-  }
-
-  /**
-   * Create the DOM node for the tab.
-   */
-  protected createNode(): HTMLElement {
+  static createNode(): HTMLElement {
     var node = document.createElement('li');
     var icon = document.createElement('span');
     var text = document.createElement('span');
     var closeIcon = document.createElement('span');
-    node.className = TAB_CLASS;
     icon.className = ICON_CLASS;
     text.className = TEXT_CLASS;
     closeIcon.className = CLOSE_ICON_CLASS;
@@ -133,7 +63,71 @@ class Tab implements ITab {
     return node;
   }
 
-  private _node: HTMLElement;
+  /**
+   * Construct a new tab.
+   */
+  constructor(text?: string) {
+    super();
+    this.addClass(TAB_CLASS);
+    if (text) this.text = text;
+  }
+
+  /**
+   * Get the text for the tab.
+   */
+  get text(): string {
+    return (<HTMLElement>this.node.children[1]).textContent;
+  }
+
+  /**
+   * Set the text for the tab.
+   */
+  set text(text: string) {
+    (<HTMLElement>this.node.children[1]).textContent = text;
+  }
+
+  /**
+   * Get whether the tab is selected.
+   */
+  get selected(): boolean {
+    return this.hasClass(SELECTED_CLASS);
+  }
+
+  /**
+   * Set whether the tab is selected.
+   */
+  set selected(selected: boolean) {
+    if (selected) {
+      this.addClass(SELECTED_CLASS);
+    } else {
+      this.removeClass(SELECTED_CLASS);
+    }
+  }
+
+  /**
+   * Get whether the tab is closable.
+   */
+  get closable(): boolean {
+    return this.hasClass(CLOSABLE_CLASS);
+  }
+
+  /**
+   * Set whether the tab is closable.
+   */
+  set closable(closable: boolean) {
+    if (closable) {
+      this.addClass(CLOSABLE_CLASS);
+    } else {
+      this.removeClass(CLOSABLE_CLASS);
+    }
+  }
+
+  /**
+   * The DOM node for the close icon, if available.
+   */
+  get closeIconNode(): HTMLElement {
+    return <HTMLElement>this.node.lastChild;
+  }
 }
 
 } // module phosphor.widgets
