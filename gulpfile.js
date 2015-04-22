@@ -28,17 +28,6 @@ var tsSources = [
   'collections/circularbuffer',
   'collections/queue',
 
-  'core/imessage',
-  'core/imessagefilter',
-  'core/imessagehandler',
-  'core/message',
-  'core/messageloop',
-  'core/signal',
-
-  'di/token',
-  'di/container',
-  'di/icontainer',
-
   'utility/boxsizing',
   'utility/cursor',
   'utility/disposable',
@@ -49,6 +38,18 @@ var tsSources = [
   'utility/rect',
   'utility/size',
   'utility/viewport',
+
+  'core/imessage',
+  'core/imessagefilter',
+  'core/imessagehandler',
+  'core/message',
+  'core/messageloop',
+  'core/nodebase',
+  'core/signal',
+
+  'di/token',
+  'di/container',
+  'di/icontainer',
 
   'virtualdom/factory',
   'virtualdom/basecomponent',
