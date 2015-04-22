@@ -8,6 +8,7 @@
 module phosphor.virtualdom {
 
 import IMessage = core.IMessage;
+import NodeBase = core.NodeBase;
 import clearMessageData = core.clearMessageData;
 
 import emptyArray = utility.emptyArray;
@@ -21,31 +22,24 @@ import emptyObject = utility.emptyObject;
  * manage the content of their node independent of the virtual DOM.
  */
 export
-class BaseComponent<T extends IData> implements IComponent<T> {
+class BaseComponent<T extends IData> extends NodeBase implements IComponent<T> {
   /**
    * Construct a new base component.
    */
   constructor(data: T, children: Elem[]) {
+    super();
     this._data = data;
     this._children = children;
-    this._node = this.createNode();
   }
 
   /**
    * Dispose of the resources held by the component.
    */
   dispose(): void {
-    this._node = null;
+    clearMessageData(this);
     this._data = null;
     this._children = null;
-    clearMessageData(this);
-  }
-
-  /**
-   * Get the DOM node for the component.
-   */
-  get node(): HTMLElement {
-    return this._node;
+    super.dispose();
   }
 
   /**
@@ -98,17 +92,6 @@ class BaseComponent<T extends IData> implements IComponent<T> {
   }
 
   /**
-   * Create the DOM node for the component.
-   *
-   * This can be reimplemented by subclasses as needed.
-   *
-   * The default implementation creates an empty div.
-   */
-  protected createNode(): HTMLElement {
-    return document.createElement('div');
-  }
-
-  /**
    * A method invoked on an 'update-request' message.
    *
    * The default implementation is a no-op.
@@ -143,7 +126,6 @@ class BaseComponent<T extends IData> implements IComponent<T> {
    */
   protected onAfterMove(msg: IMessage): void { }
 
-  private _node: HTMLElement;
   private _data: T = emptyObject;
   private _children: Elem[] = emptyArray;
 }
