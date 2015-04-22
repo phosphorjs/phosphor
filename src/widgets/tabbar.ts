@@ -607,8 +607,7 @@ class TabBar extends Widget {
     // If the click was on the close icon of a closable tab,
     // emit the `tabCloseRequested` signal.
     var tab = this._tabs[index];
-    var iconNode = tab.closeIconNode;
-    if (iconNode && iconNode === event.target && tab.closable) {
+    if (tab.closable && tab.closeIconNode === event.target) {
       this.tabCloseRequested.emit(this, new Pair(index, tab));
     }
   }
@@ -634,10 +633,9 @@ class TabBar extends Widget {
     event.preventDefault();
     event.stopPropagation();
 
-    // Do nothing further if the press in on the tab close icon.
+    // Do nothing further if the press was on the tab close icon.
     var tab = this._tabs[index];
-    var iconNode = tab.closeIconNode;
-    if (iconNode && iconNode === event.target) {
+    if (tab.closeIconNode === event.target) {
       return;
     }
 
