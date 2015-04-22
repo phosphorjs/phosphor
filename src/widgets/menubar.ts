@@ -93,48 +93,6 @@ class MenuBar extends Widget {
   }
 
   /**
-   * Create the DOM node for a MenuItem.
-   *
-   * This can be reimplemented to create custom menu item nodes.
-   */
-  static createItemNode(item: MenuItem): HTMLElement {
-    var node = document.createElement('li');
-    var icon = document.createElement('span');
-    var text = document.createElement('span');
-    icon.className = ICON_CLASS;
-    text.className = TEXT_CLASS;
-    node.appendChild(icon);
-    node.appendChild(text);
-    this.initItemNode(item, node);
-    return node;
-  }
-
-  /**
-   * Initialize the DOM node for the given menu item.
-   *
-   * This method should be reimplemented if a subclass reimplements the
-   * `createItemNode` method. It should initialize the node using the
-   * given menu item. It will be called any time the item changes.
-   */
-  static initItemNode(item: MenuItem, node: HTMLElement): void {
-    var parts = [MENU_ITEM_CLASS];
-    if (item.className) {
-      parts.push(item.className);
-    }
-    if (item.type === 'separator') {
-      parts.push(SEPARATOR_TYPE_CLASS);
-    }
-    if (!item.enabled) {
-      parts.push(DISABLED_CLASS);
-    }
-    if (!item.visible) {
-      parts.push(HIDDEN_CLASS);
-    }
-    node.className = parts.join(' ');
-    (<HTMLElement>node.children[1]).textContent = item.text;
-  }
-
-  /**
    * Construct a new menu bar.
    */
   constructor(items?: MenuItem[]) {
@@ -237,7 +195,7 @@ class MenuBar extends Widget {
       this._setState(MBState.Inactive);
       this._setActiveIndex(-1);
     }
-    var node = (<any>this.constructor).createItemNode(item);
+    var node = this.createItemNode(item);
     index = algo.insert(this._items, index, item);
     algo.insert(this._nodes, index, node);
     item.changed.connect(this._mi_changed, this);
@@ -359,6 +317,48 @@ class MenuBar extends Widget {
    */
   minSizeHint(): Size {
     return new Size(0, this.boxSizing.minHeight);
+  }
+
+  /**
+   * Create the DOM node for a MenuItem.
+   *
+   * This can be reimplemented to create custom menu item nodes.
+   */
+  protected createItemNode(item: MenuItem): HTMLElement {
+    var node = document.createElement('li');
+    var icon = document.createElement('span');
+    var text = document.createElement('span');
+    icon.className = ICON_CLASS;
+    text.className = TEXT_CLASS;
+    node.appendChild(icon);
+    node.appendChild(text);
+    this.initItemNode(item, node);
+    return node;
+  }
+
+  /**
+   * Initialize the DOM node for the given menu item.
+   *
+   * This method should be reimplemented if a subclass reimplements the
+   * `createItemNode` method. It should initialize the node using the
+   * given menu item. It will be called any time the item changes.
+   */
+  protected initItemNode(item: MenuItem, node: HTMLElement): void {
+    var parts = [MENU_ITEM_CLASS];
+    if (item.className) {
+      parts.push(item.className);
+    }
+    if (item.type === 'separator') {
+      parts.push(SEPARATOR_TYPE_CLASS);
+    }
+    if (!item.enabled) {
+      parts.push(DISABLED_CLASS);
+    }
+    if (!item.visible) {
+      parts.push(HIDDEN_CLASS);
+    }
+    node.className = parts.join(' ');
+    (<HTMLElement>node.children[1]).textContent = item.text;
   }
 
   /**
@@ -684,7 +684,7 @@ class MenuBar extends Widget {
       this._setState(MBState.Inactive);
       this._setActiveIndex(-1);
     }
-    (<any>this.constructor).initItemNode(sender, this._nodes[i]);
+    this.initItemNode(sender, this._nodes[i]);
     this._collapseSeparators();
   }
 

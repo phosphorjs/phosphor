@@ -127,63 +127,6 @@ class Menu extends NodeBase {
   }
 
   /**
-   * Create the DOM node for a MenuItem.
-   *
-   * This can be reimplemented to create custom menu item nodes.
-   */
-  static createItemNode(item: MenuItem): HTMLElement {
-    var node = document.createElement('li');
-    var icon = document.createElement('span');
-    var text = document.createElement('span');
-    var shortcut = document.createElement('span');
-    var submenu = document.createElement('span');
-    icon.className = ICON_CLASS;
-    text.className = TEXT_CLASS;
-    shortcut.className = SHORTCUT_CLASS;
-    submenu.className = SUBMENU_ICON_CLASS;
-    node.appendChild(icon);
-    node.appendChild(text);
-    node.appendChild(shortcut);
-    node.appendChild(submenu);
-    this.initItemNode(item, node);
-    return node;
-  }
-
-  /**
-   * Initialize the DOM node for the given menu item.
-   *
-   * This method should be reimplemented if a subclass reimplements the
-   * `createItemNode` method. It should initialize the node using the
-   * given menu item. It will be called any time the item changes.
-   */
-  static initItemNode(item: MenuItem, node: HTMLElement): void {
-    var parts = [MENU_ITEM_CLASS];
-    if (item.className) {
-      parts.push(item.className);
-    }
-    if (item.type === 'check') {
-      parts.push(CHECK_TYPE_CLASS);
-    } else if (item.type === 'separator') {
-      parts.push(SEPARATOR_TYPE_CLASS);
-    }
-    if (item.checked) {
-      parts.push(CHECKED_CLASS);
-    }
-    if (!item.enabled) {
-      parts.push(DISABLED_CLASS);
-    }
-    if (!item.visible) {
-      parts.push(HIDDEN_CLASS);
-    }
-    if (item.submenu) {
-      parts.push(HAS_SUBMENU_CLASS);
-    }
-    node.className = parts.join(' ');
-    (<HTMLElement>node.children[1]).textContent = item.text;
-    (<HTMLElement>node.children[2]).textContent = item.shortcut;
-  }
-
-  /**
    * Find the root menu of a menu hierarchy.
    */
   static rootMenu(menu: Menu): Menu {
@@ -318,7 +261,7 @@ class Menu extends NodeBase {
     if (this._activeIndex !== -1) {
       this._reset();
     }
-    var node = (<any>this.constructor).createItemNode(item);
+    var node = this.createItemNode(item);
     index = algo.insert(this._items, index, item);
     algo.insert(this._nodes, index, node);
     item.changed.connect(this._mi_changed, this);
@@ -514,6 +457,63 @@ class Menu extends NodeBase {
     this._reset();
     this._removeFromParent();
     this.closed.emit(this, void 0);
+  }
+
+  /**
+   * Create the DOM node for a MenuItem.
+   *
+   * This can be reimplemented to create custom menu item nodes.
+   */
+  protected createItemNode(item: MenuItem): HTMLElement {
+    var node = document.createElement('li');
+    var icon = document.createElement('span');
+    var text = document.createElement('span');
+    var shortcut = document.createElement('span');
+    var submenu = document.createElement('span');
+    icon.className = ICON_CLASS;
+    text.className = TEXT_CLASS;
+    shortcut.className = SHORTCUT_CLASS;
+    submenu.className = SUBMENU_ICON_CLASS;
+    node.appendChild(icon);
+    node.appendChild(text);
+    node.appendChild(shortcut);
+    node.appendChild(submenu);
+    this.initItemNode(item, node);
+    return node;
+  }
+
+  /**
+   * Initialize the DOM node for the given menu item.
+   *
+   * This method should be reimplemented if a subclass reimplements the
+   * `createItemNode` method. It should initialize the node using the
+   * given menu item. It will be called any time the item changes.
+   */
+  protected initItemNode(item: MenuItem, node: HTMLElement): void {
+    var parts = [MENU_ITEM_CLASS];
+    if (item.className) {
+      parts.push(item.className);
+    }
+    if (item.type === 'check') {
+      parts.push(CHECK_TYPE_CLASS);
+    } else if (item.type === 'separator') {
+      parts.push(SEPARATOR_TYPE_CLASS);
+    }
+    if (item.checked) {
+      parts.push(CHECKED_CLASS);
+    }
+    if (!item.enabled) {
+      parts.push(DISABLED_CLASS);
+    }
+    if (!item.visible) {
+      parts.push(HIDDEN_CLASS);
+    }
+    if (item.submenu) {
+      parts.push(HAS_SUBMENU_CLASS);
+    }
+    node.className = parts.join(' ');
+    (<HTMLElement>node.children[1]).textContent = item.text;
+    (<HTMLElement>node.children[2]).textContent = item.shortcut;
   }
 
   /**
@@ -919,7 +919,7 @@ class Menu extends NodeBase {
     if (i === this._activeIndex) {
       this._reset();
     }
-    (<any>this.constructor).initItemNode(sender, this._nodes[i]);
+    this.initItemNode(sender, this._nodes[i]);
     this._collapseSeparators();
   }
 
