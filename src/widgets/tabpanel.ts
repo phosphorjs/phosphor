@@ -19,6 +19,18 @@ var TAB_PANEL_CLASS = 'p-TabPanel';
 
 
 /**
+ * A widget which can be added to a TabPanel.
+ */
+export
+interface ITabWidget extends Widget {
+  /**
+   * The tab associated with the widget.
+   */
+  tab: Tab;
+}
+
+
+/**
  * A panel which provides a tabbed container for child widgets.
  *
  * The TabPanel provides a convenient combination of a TabBar and a
@@ -142,7 +154,7 @@ class TabPanel extends Widget {
    *
    * Returns the index of the added widget.
    */
-  addWidget(widget: ITabbable, alignment: Alignment = 0): number {
+  addWidget(widget: ITabWidget, alignment: Alignment = 0): number {
     return this.insertWidget(this.count, widget, alignment);
   }
 
@@ -153,7 +165,7 @@ class TabPanel extends Widget {
    *
    * Returns the index of the added widget.
    */
-  insertWidget(index: number, widget: ITabbable, alignment: Alignment = 0): number {
+  insertWidget(index: number, widget: ITabWidget, alignment: Alignment = 0): number {
     index = this._stackedPanel.insertWidget(index, widget, alignment);
     return this._tabBar.insertTab(index, widget.tab);
   }

@@ -64,7 +64,6 @@ var tsSources = [
   'widgets/direction',
   'widgets/dockmode',
   'widgets/ilayoutitem',
-  'widgets/itabbable',
   'widgets/movemessage',
   'widgets/orientation',
   'widgets/resizemessage',

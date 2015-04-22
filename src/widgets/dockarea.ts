@@ -42,6 +42,18 @@ var FLOATING_CLASS = 'p-mod-floating';
 
 
 /**
+ * A widget which can be added to a DockArea.
+ */
+export
+interface IDockWidget extends Widget {
+  /**
+   * The tab associated with the widget.
+   */
+  tab: Tab;
+}
+
+
+/**
  * A widget which provides a flexible docking layout area for widgets.
  */
 export
@@ -162,7 +174,7 @@ class DockArea extends Widget {
    *
    * The default mode inserts the widget on the left side of the area.
    */
-  addWidget(widget: ITabbable, mode?: DockMode, ref?: ITabbable): void {
+  addWidget(widget: IDockWidget, mode?: DockMode, ref?: IDockWidget): void {
     switch (mode) {
     case DockMode.Top:
       this._addWidget(widget, Orientation.Vertical, false);
@@ -426,7 +438,7 @@ class DockArea extends Widget {
    *
    * If the widget already exists in the area, it will be removed.
    */
-  private _addWidget(widget: ITabbable, orientation: Orientation, after: boolean): void {
+  private _addWidget(widget: IDockWidget, orientation: Orientation, after: boolean): void {
     widget.parent = null;
     var panel = this._createPanel();
     this._items.push({ widget: widget, panel: panel });
@@ -447,7 +459,7 @@ class DockArea extends Widget {
    *
    * If the dock widget already exists in the area, it will be moved.
    */
-  private _splitWidget(widget: ITabbable, ref: ITabbable, orientation: Orientation, after: boolean): void {
+  private _splitWidget(widget: IDockWidget, ref: IDockWidget, orientation: Orientation, after: boolean): void {
     if (widget === ref) {
       return;
     }
@@ -463,7 +475,7 @@ class DockArea extends Widget {
    *
    * If the widget already exists in the area, it will be moved.
    */
-  private _splitPanel(panel: DockPanel, widget: ITabbable, orientation: Orientation, after: boolean): void {
+  private _splitPanel(panel: DockPanel, widget: IDockWidget, orientation: Orientation, after: boolean): void {
     widget.parent = null;
     var newPanel = this._createPanel();
     this._items.push({ widget: widget, panel: newPanel });
@@ -503,7 +515,7 @@ class DockArea extends Widget {
    *
    * If the dock widget already exists in the area, it will be moved.
    */
-  private _tabifyWidget(widget: ITabbable, ref: ITabbable, after: boolean): void {
+  private _tabifyWidget(widget: IDockWidget, ref: IDockWidget, after: boolean): void {
     if (widget === ref) {
       return;
     }
@@ -802,7 +814,7 @@ class DockArea extends Widget {
  * An object which holds item data for a dock widget.
  */
 interface IDockItem {
-  widget: ITabbable;
+  widget: IDockWidget;
   panel: DockPanel;
 }
 
