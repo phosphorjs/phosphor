@@ -16,8 +16,8 @@ import Widget = phosphor.widgets.Widget;
 
 function createContent(name: string): Widget {
   var widget = new Widget();
-  widget.node.classList.add('content');
-  widget.node.classList.add(name);
+  widget.addClass('content');
+  widget.addClass(name);
   return widget;
 }
 
