@@ -11,7 +11,7 @@ module phosphor.utility {
  * A singleton frozen empty object.
  */
 export
-var emptyObject = Object.freeze({});
+var emptyObject: any = Object.freeze({});
 
 
 /**

@@ -29,7 +29,7 @@ interface IToken<T> {
  */
 export
 function createToken<T>(name: string): IToken<T> {
-  return Object.freeze({ name: name });
+  return <any>Object.freeze({ name: name });
 }
 
 } // module phosphor.di
