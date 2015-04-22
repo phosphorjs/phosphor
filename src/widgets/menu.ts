@@ -9,6 +9,7 @@ module phosphor.widgets {
 
 import algo = collections.algorithm;
 
+import NodeBase = core.NodeBase;
 import Signal = core.Signal;
 
 import Size = utility.Size;
@@ -113,7 +114,75 @@ var SUBMENU_OVERLAP = 3;
  * An object which displays menu items as a popup menu.
  */
 export
-class Menu {
+class Menu extends NodeBase {
+  /**
+   * Create the DOM node for a menu.
+   */
+  static createNode(): HTMLElement {
+    var node = document.createElement('div');
+    var content = document.createElement('ul');
+    content.className = CONTENT_CLASS;
+    node.appendChild(content);
+    return node;
+  }
+
+  /**
+   * Create the DOM node for a MenuItem.
+   *
+   * This can be reimplemented to create a custom menu item node.
+   */
+  static createItemNode(item: MenuItem): HTMLElement {
+    var node = document.createElement('li');
+    var icon = document.createElement('span');
+    var text = document.createElement('span');
+    var shortcut = document.createElement('span');
+    var submenu = document.createElement('span');
+    icon.className = ICON_CLASS;
+    text.className = TEXT_CLASS;
+    shortcut.className = SHORTCUT_CLASS;
+    submenu.className = SUBMENU_ICON_CLASS;
+    node.appendChild(icon);
+    node.appendChild(text);
+    node.appendChild(shortcut);
+    node.appendChild(submenu);
+    this.initItemNode(item, node);
+    return node;
+  }
+
+  /**
+   * Initialize the DOM node for the given menu item.
+   *
+   * This method should be reimplemented if a subclass reimplements the
+   * `createItemNode` method. It should initialize the node using the
+   * given menu item. It will be called any time the item changes.
+   */
+  static initItemNode(item: MenuItem, node: HTMLElement): void {
+    var parts = [MENU_ITEM_CLASS];
+    if (item.className) {
+      parts.push(item.className);
+    }
+    if (item.type === 'check') {
+      parts.push(CHECK_TYPE_CLASS);
+    } else if (item.type === 'separator') {
+      parts.push(SEPARATOR_TYPE_CLASS);
+    }
+    if (item.checked) {
+      parts.push(CHECKED_CLASS);
+    }
+    if (!item.enabled) {
+      parts.push(DISABLED_CLASS);
+    }
+    if (!item.visible) {
+      parts.push(HIDDEN_CLASS);
+    }
+    if (item.submenu) {
+      parts.push(HAS_SUBMENU_CLASS);
+    }
+    node.className = parts.join(' ');
+    (<HTMLElement>node.children[1]).textContent = item.text;
+    (<HTMLElement>node.children[2]).textContent = item.shortcut;
+  }
+
   /**
    * Find the root menu of a menu hierarchy.
    */
@@ -143,16 +212,19 @@ class Menu {
    * Construct a new menu.
    */
   constructor(items?: MenuItem[]) {
-    this._node = this.createNode();
-    this._node.classList.add(MENU_CLASS);
+    super();
+    this.addClass(MENU_CLASS);
     if (items) items.forEach(it => this.addItem(it));
   }
 
   /**
-   * Get the DOM node for the menu.
+   * Dispose of the resources held by the menu.
    */
-  get node(): HTMLElement {
-    return this._node;
+  dispose(): void {
+    this.close();
+    this._items = null;
+    this._nodes = null;
+    super.dispose();
   }
 
   /**
@@ -246,7 +318,7 @@ class Menu {
     if (this._activeIndex !== -1) {
       this._reset();
     }
-    var node = this.createItemNode(item);
+    var node = (<any>this.constructor).createItemNode(item);
     index = algo.insert(this._items, index, item);
     algo.insert(this._nodes, index, node);
     item.changed.connect(this._mi_changed, this);
@@ -386,7 +458,7 @@ class Menu {
    * prevent these actions, use the 'open' method instead.
    */
   popup(x: number, y: number, forceX = false, forceY = false): void {
-    var node = this._node;
+    var node = this.node;
     if (node.parentNode) {
       return;
     }
@@ -414,7 +486,7 @@ class Menu {
    * Use the `popup` method for the alternative behavior.
    */
   open(x: number, y: number, forceX = false, forceY = false): void {
-    var node = this._node;
+    var node = this.node;
     if (node.parentNode) {
       return;
     }
@@ -428,9 +500,11 @@ class Menu {
    * Close the menu and remove it's node from the DOM.
    */
   close(): void {
-    var node = this._node;
-    var pnode = node.parentNode;
-    if (pnode) pnode.removeChild(node);
+    var node = this.node;
+    if (!node.parentNode) {
+      return;
+    }
+    node.parentNode.removeChild(node);
     node.removeEventListener('mouseup', <any>this);
     node.removeEventListener('mouseleave', <any>this);
     node.removeEventListener('contextmenu', <any>this);
@@ -440,76 +514,6 @@ class Menu {
     this._reset();
     this._removeFromParent();
     this.closed.emit(this, void 0);
-  }
-
-  /**
-   * Create the DOM node for the panel.
-   *
-   * This can be reimplemented to create a custom menu node.
-   */
-  protected createNode(): HTMLElement {
-    var node = document.createElement('div');
-    var content = document.createElement('content');
-    content.className = CONTENT_CLASS;
-    node.appendChild(content);
-    return node;
-  }
-
-  /**
-   * Create a DOM node for the given MenuItem.
-   *
-   * This can be reimplemented to create custom menu item nodes.
-   */
-  protected createItemNode(item: MenuItem): HTMLElement {
-    var node = document.createElement('li');
-    var icon = document.createElement('span');
-    var text = document.createElement('span');
-    var shortcut = document.createElement('span');
-    var submenu = document.createElement('span');
-    icon.className = ICON_CLASS;
-    text.className = TEXT_CLASS;
-    shortcut.className = SHORTCUT_CLASS;
-    submenu.className = SUBMENU_ICON_CLASS;
-    node.appendChild(icon);
-    node.appendChild(text);
-    node.appendChild(shortcut);
-    node.appendChild(submenu);
-    this.initItemNode(item, node);
-    return node;
-  }
-
-  /**
-   * Initialize the item node for the given menu item.
-   *
-   * This method should be reimplemented if a subclass reimplements the
-   * `createItemNode` method. It should initialize the node using the
-   * given menu item. It will be called any time the item changes.
-   */
-  protected initItemNode(item: MenuItem, node: HTMLElement): void {
-    var parts = [MENU_ITEM_CLASS];
-    if (item.className) {
-      parts.push(item.className);
-    }
-    if (item.type === 'check') {
-      parts.push(CHECK_TYPE_CLASS);
-    } else if (item.type === 'separator') {
-      parts.push(SEPARATOR_TYPE_CLASS);
-    }
-    if (item.checked) {
-      parts.push(CHECKED_CLASS);
-    }
-    if (!item.enabled) {
-      parts.push(DISABLED_CLASS);
-    }
-    if (!item.visible) {
-      parts.push(HIDDEN_CLASS);
-    }
-    if (item.submenu) {
-      parts.push(HAS_SUBMENU_CLASS);
-    }
-    node.className = parts.join(' ');
-    (<HTMLElement>node.children[1]).textContent = item.text;
-    (<HTMLElement>node.children[2]).textContent = item.shortcut;
   }
 
   /**
@@ -800,7 +804,7 @@ class Menu {
    * Open the menu as a child menu.
    */
   private _openAsSubmenu(item: HTMLElement): void {
-    var node = this._node;
+    var node = this.node;
     node.addEventListener('mouseup', <any>this);
     node.addEventListener('mouseleave', <any>this);
     node.addEventListener('contextmenu', <any>this);
@@ -915,19 +919,18 @@ class Menu {
     if (i === this._activeIndex) {
       this._reset();
     }
-    this.initItemNode(sender, this._nodes[i]);
+    (<any>this.constructor).initItemNode(sender, this._nodes[i]);
     this._collapseSeparators();
   }
 
-  private _node: HTMLElement;
+  private _openTimer = 0;
+  private _closeTimer = 0;
+  private _activeIndex = -1;
   private _parentMenu: Menu = null;
   private _childMenu: Menu = null;
   private _childItem: MenuItem = null;
   private _items: MenuItem[] = [];
   private _nodes: HTMLElement[] = [];
-  private _activeIndex = -1;
-  private _openTimer = 0;
-  private _closeTimer = 0;
 }
 
 
