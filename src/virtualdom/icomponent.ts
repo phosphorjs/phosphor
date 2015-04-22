@@ -28,7 +28,7 @@ import IDisposable = utility.IDisposable;
  *   'after-move' - Sent after the node is moved in the DOM.
  */
 export
-interface IComponent<T extends IData> extends IMessageHandler, IDisposable {
+interface IComponent<T extends IData> extends IDisposable, IMessageHandler {
   /**
    * The DOM node for the component.
    *
