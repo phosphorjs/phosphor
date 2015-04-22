@@ -147,6 +147,23 @@ interface ITabBarOptions {
 export
 class TabBar extends Widget {
   /**
+   * Create the DOM node for a tab bar.
+   */
+  static createNode(): HTMLElement {
+    var node = document.createElement('div');
+    var header = document.createElement('div');
+    var content = document.createElement('ul');
+    var footer = document.createElement('div');
+    header.className = HEADER_CLASS;
+    content.className = CONTENT_CLASS;
+    footer.className = FOOTER_CLASS;
+    node.appendChild(header);
+    node.appendChild(content);
+    node.appendChild(footer);
+    return node;
+  }
+
+  /**
    * A signal emitted when a tab is moved.
    */
   tabMoved = new Signal<TabBar, Pair<number, number>>();
@@ -171,7 +188,7 @@ class TabBar extends Widget {
    */
   constructor(options?: ITabBarOptions) {
     super();
-    this.node.classList.add(TAB_BAR_CLASS);
+    this.addClass(TAB_BAR_CLASS);
     this.verticalSizePolicy = SizePolicy.Fixed;
     if (options) this._initFrom(options);
   }
@@ -521,23 +538,6 @@ class TabBar extends Widget {
    */
   protected get contentNode(): HTMLElement {
     return <HTMLElement>this.node.firstChild.nextSibling;
-  }
-
-  /**
-   * Create the DOM node for the tab bar.
-   */
-  protected createNode(): HTMLElement {
-    var node = document.createElement('div');
-    var header = document.createElement('div');
-    var content = document.createElement('ul');
-    var footer = document.createElement('div');
-    header.className = HEADER_CLASS;
-    content.className = CONTENT_CLASS;
-    footer.className = FOOTER_CLASS;
-    node.appendChild(header);
-    node.appendChild(content);
-    node.appendChild(footer);
-    return node;
   }
 
   /**
