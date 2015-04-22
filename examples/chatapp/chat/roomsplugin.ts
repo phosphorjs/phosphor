@@ -27,10 +27,7 @@ import RenderWidget = phosphor.widgets.RenderWidget;
  */
 class RoomListPlaceholder extends Component<IData> {
 
-  constructor(data: IData, children: Elem[]) {
-    super(data, children);
-    this.node.classList.add('chat-room-list');
-  }
+  static className = 'chat-room-list';
 
   protected render(): Elem {
     return dom.h2('Room List Placeholder');
@@ -49,10 +46,7 @@ var RoomList = createFactory(RoomListPlaceholder);
  */
 class OpenRoomsPlaceholder extends Component<IData> {
 
-  constructor(data: IData, children: Elem[]) {
-    super(data, children);
-    this.node.classList.add('chat-open-rooms');
-  }
+  static className = 'chat-open-rooms';
 
   protected render(): Elem {
     return dom.h2('Open Rooms Placeholder');
@@ -73,7 +67,7 @@ class RoomListHost extends RenderWidget {
 
   constructor() {
     super();
-    this.node.classList.add('chat-room-list-host');
+    this.addClass('chat-room-list-host');
   }
 
   sizeHint(): Size {
@@ -93,7 +87,7 @@ class OpenRoomsHost extends RenderWidget {
 
   constructor() {
     super();
-    this.node.classList.add('chat-open-rooms-host');
+    this.addClass('chat-open-rooms-host');
   }
 
   sizeHint(): Size {

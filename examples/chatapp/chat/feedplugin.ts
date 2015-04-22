@@ -27,10 +27,7 @@ import RenderWidget = phosphor.widgets.RenderWidget;
  */
 class FeedPlaceholder extends Component<IData> {
 
-  constructor(data: IData, children: Elem[]) {
-    super(data, children);
-    this.node.classList.add('chat-feed');
-  }
+  static className = 'chat-feed';
 
   protected render(): Elem {
     return dom.h2('Chat Feed Placeholder');
@@ -51,7 +48,7 @@ class FeedHost extends RenderWidget {
 
   constructor() {
     super();
-    this.node.classList.add('chat-feed-host');
+    this.addClass('chat-feed-host');
   }
 
   sizeHint(): Size {

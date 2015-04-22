@@ -30,6 +30,8 @@ interface ITicksData extends IData {
 
 class TicksComponent extends Component<ITicksData> {
 
+  static tagName = 'ul';
+
   protected render(): Elem[] {
     var data = this.data;
     var items = [li(data.title)];
@@ -37,10 +39,6 @@ class TicksComponent extends Component<ITicksData> {
       items.push(li(i +''));
     }
     return items;
-  }
-
-  protected createNode(): HTMLElement {
-    return document.createElement('ul');
   }
 }
 
@@ -55,10 +53,7 @@ interface ITimeData extends IData {
 
 class TimeComponent extends Component<ITimeData> {
 
-  constructor(data: ITimeData, children: Elem[]) {
-    super(data, children);
-    this.node.classList.add('TimeComponent');
-  }
+  static className = 'TimeComponent';
 
   protected render(): Elem[] {
     var data = this.data;
