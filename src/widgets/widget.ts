@@ -13,6 +13,7 @@ import algo = collections.algorithm;
 import IMessage = core.IMessage;
 import IMessageHandler = core.IMessageHandler;
 import Message = core.Message;
+import NodeBase = core.NodeBase;
 import Signal = core.Signal;
 import clearMessageData = core.clearMessageData;
 import installMessageFilter = core.installMessageFilter;
@@ -21,7 +22,6 @@ import removeMessageFilter = core.removeMessageFilter;
 import sendMessage = core.sendMessage;
 
 import IBoxSizing = utility.IBoxSizing;
-import IDisposable = utility.IDisposable;
 import Size = utility.Size;
 import createBoxSizing = utility.createBoxSizing;
 
@@ -110,7 +110,7 @@ var MSG_CLOSE = new Message('close');
  * node which should be used as the parent of the widget's node.
  */
 export
-class Widget implements IMessageHandler, IDisposable {
+class Widget extends NodeBase implements IMessageHandler {
   /**
    * A signal emitted when the widget is disposed.
    */
@@ -120,8 +120,8 @@ class Widget implements IMessageHandler, IDisposable {
    * Construct a new widget.
    */
   constructor() {
-    this._node = this.createNode();
-    this._node.classList.add(WIDGET_CLASS);
+    super();
+    this.addClass(WIDGET_CLASS);
   }
 
   /**
@@ -157,14 +157,7 @@ class Widget implements IMessageHandler, IDisposable {
     }
     children.length = 0;
 
-    this._node = null;
-  }
-
-  /**
-   * Get the DOM node managed by the widget.
-   */
-  get node(): HTMLElement {
-    return this._node;
+    super.dispose();
   }
 
   /**
@@ -271,7 +264,7 @@ class Widget implements IMessageHandler, IDisposable {
    */
   get boxSizing(): IBoxSizing {
     if (!this._boxSizing) {
-      this._boxSizing = createBoxSizing(this._node);
+      this._boxSizing = createBoxSizing(this.node);
     }
     return this._boxSizing;
   }
@@ -406,21 +399,21 @@ class Widget implements IMessageHandler, IDisposable {
    * Test whether the given widget flag is set.
    */
   testFlag(flag: WidgetFlag): boolean {
-    return (this._flags & flag) !== 0;
+    return (this._wflags & flag) !== 0;
   }
 
   /**
    * Set the given widget flag.
    */
   setFlag(flag: WidgetFlag): void {
-    this._flags |= flag;
+    this._wflags |= flag;
   }
 
   /**
    * Clear the given widget flag.
    */
   clearFlag(flag: WidgetFlag): void {
-    this._flags &= ~flag;
+    this._wflags &= ~flag;
   }
 
   /**
@@ -435,11 +428,11 @@ class Widget implements IMessageHandler, IDisposable {
     var parent = this._parent;
     if (this.isAttached && (!parent || parent.isVisible)) {
       beforeShowHelper(this);
-      this._node.classList.remove(HIDDEN_CLASS);
+      this.removeClass(HIDDEN_CLASS);
       this.clearFlag(WidgetFlag.IsHidden);
       afterShowHelper(this);
     } else {
-      this._node.classList.remove(HIDDEN_CLASS);
+      this.removeClass(HIDDEN_CLASS);
       this.clearFlag(WidgetFlag.IsHidden);
     }
     if (parent) {
@@ -460,11 +453,11 @@ class Widget implements IMessageHandler, IDisposable {
     var parent = this._parent;
     if (this.isAttached && (!parent || parent.isVisible)) {
       beforeHideHelper(this);
-      this._node.classList.add(HIDDEN_CLASS);
+      this.addClass(HIDDEN_CLASS);
       this.setFlag(WidgetFlag.IsHidden);
       afterHideHelper(this);
     } else {
-      this._node.classList.add(HIDDEN_CLASS);
+      this.addClass(HIDDEN_CLASS);
       this.setFlag(WidgetFlag.IsHidden);
     }
     if (parent) {
@@ -507,7 +500,7 @@ class Widget implements IMessageHandler, IDisposable {
       throw new Error('cannot attach a non-root widget to the DOM');
     }
     beforeAttachHelper(this);
-    host.appendChild(this._node);
+    host.appendChild(this.node);
     afterAttachHelper(this);
   }
 
@@ -520,12 +513,12 @@ class Widget implements IMessageHandler, IDisposable {
     if (this._parent) {
       throw new Error('cannot dettach a non-root widget from the DOM');
     }
-    var host = this._node.parentNode;
+    var host = this.node.parentNode;
     if (!host) {
       return;
     }
     beforeDetachHelper(this);
-    host.removeChild(this._node);
+    host.removeChild(this.node);
     afterDetachHelper(this);
   }
 
@@ -541,7 +534,7 @@ class Widget implements IMessageHandler, IDisposable {
     if (this._parent) {
       throw new Error('cannot fit a non-root widget');
     }
-    var host = <HTMLElement>this._node.parentNode;
+    var host = <HTMLElement>this.node.parentNode;
     if (!host) {
       return;
     }
@@ -684,7 +677,7 @@ class Widget implements IMessageHandler, IDisposable {
     var oldW = this._width;
     var oldH = this._height;
     var box = this.boxSizing;
-    var style = this._node.style;
+    var style = this.node.style;
     var w = Math.max(box.minWidth, Math.min(width, box.maxWidth));
     var h = Math.max(box.minHeight, Math.min(height, box.maxHeight));
     if (oldX !== x) {
@@ -793,17 +786,6 @@ class Widget implements IMessageHandler, IDisposable {
   }
 
   /**
-   * Create the DOM node for the widget.
-   *
-   * This can be reimplemented by subclasses as needed.
-   *
-   * The default implementation creates an empty div.
-   */
-  protected createNode(): HTMLElement {
-    return document.createElement('div');
-  }
-
-  /**
    * A method invoked when a 'close' message is received.
    *
    * The default implementation sets the parent to null.
@@ -821,10 +803,10 @@ class Widget implements IMessageHandler, IDisposable {
     var child = msg.child;
     if (this.isAttached) {
       beforeAttachHelper(child);
-      this._node.appendChild(child._node);
+      this.node.appendChild(child.node);
       afterAttachHelper(child);
     } else {
-      this._node.appendChild(child._node);
+      this.node.appendChild(child.node);
     }
   }
 
@@ -837,10 +819,10 @@ class Widget implements IMessageHandler, IDisposable {
     var child = msg.child;
     if (this.isAttached) {
       beforeDetachHelper(child);
-      this._node.removeChild(child._node);
+      this.node.removeChild(child.node);
       afterDetachHelper(child);
     } else {
-      this._node.removeChild(child._node);
+      this.node.removeChild(child.node);
     }
   }
 
@@ -914,17 +896,16 @@ class Widget implements IMessageHandler, IDisposable {
    */
   protected onAfterDetach(msg: IMessage): void { }
 
-  private _node: HTMLElement;
-  private _layout: Layout = null;
-  private _parent: Widget = null;
-  private _children: Widget[] = [];
-  private _sizePolicy = defaultSizePolicy;
-  private _boxSizing: IBoxSizing = null;
   private _x = 0;
   private _y = 0;
   private _width = 0;
   private _height = 0;
-  private _flags = 0;
+  private _wflags = 0;
+  private _layout: Layout = null;
+  private _parent: Widget = null;
+  private _children: Widget[] = [];
+  private _boxSizing: IBoxSizing = null;
+  private _sizePolicy = defaultSizePolicy;
 }
 
 
