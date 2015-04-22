@@ -7,7 +7,6 @@
 |----------------------------------------------------------------------------*/
 module example {
 
-import ITab = phosphor.widgets.ITab;
 import Tab = phosphor.widgets.Tab;
 import TabPanel = phosphor.widgets.TabPanel;
 import Widget = phosphor.widgets.Widget;
@@ -22,7 +21,7 @@ class Content extends Widget {
     this._tab = new Tab(title);
   }
 
-  get tab(): ITab {
+  get tab(): Tab {
     return this._tab;
   }
 

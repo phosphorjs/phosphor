@@ -63,7 +63,6 @@ var tsSources = [
   'widgets/childmessage',
   'widgets/direction',
   'widgets/dockmode',
-  'widgets/itab',
   'widgets/ilayoutitem',
   'widgets/itabbable',
   'widgets/movemessage',

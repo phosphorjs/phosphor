@@ -681,7 +681,7 @@ class DockArea extends Widget {
   /**
    * Handle the `currentChanged` signal from a tab bar.
    */
-  private _tb_currentChanged(sender: TabBar, args: Pair<number, ITab>): void {
+  private _tb_currentChanged(sender: TabBar, args: Pair<number, Tab>): void {
     var item = algo.find(this._items, it => it.widget.tab === args.second);
     if (item && item.panel.tabBar === sender) {
       item.panel.stackedPanel.currentWidget = item.widget;
@@ -691,7 +691,7 @@ class DockArea extends Widget {
   /**
    * Handle the `tabCloseRequested` signal from a tab bar.
    */
-  private _tb_tabCloseRequested(sender: TabBar, args: Pair<number, ITab>): void {
+  private _tb_tabCloseRequested(sender: TabBar, args: Pair<number, Tab>): void {
     var item = algo.find(this._items, it => it.widget.tab === args.second);
     if (item) item.widget.close();
   }
@@ -816,23 +816,21 @@ interface IDragData {
   offsetX: number;
   offsetY: number;
   cursorGrab: IDisposable;
-  prevTab: ITab;
   lastHitPanel: DockPanel;
   tempPanel: DockPanel;
-  tempTab: ITab;
+  tempTab: Tab;
+  prevTab: Tab;
 }
 
 
 /**
  * Set or remove the floating class on the given tab.
  */
-function floatTab(tab: ITab, on: boolean): void {
+function floatTab(tab: Tab, on: boolean): void {
   if (on) {
-    tab.node.style.position = 'absolute';
-    tab.node.classList.add(FLOATING_CLASS);
+    tab.addClass(FLOATING_CLASS);
   } else {
-    tab.node.style.position = '';
-    tab.node.classList.remove(FLOATING_CLASS);
+    tab.removeClass(FLOATING_CLASS);
   }
 }
 

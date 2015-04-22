@@ -177,7 +177,7 @@ class TabPanel extends Widget {
   /**
    * Handle the `currentChanged` signal from the tab bar.
    */
-  private _tb_currentChanged(sender: TabBar, args: Pair<number, ITab>): void {
+  private _tb_currentChanged(sender: TabBar, args: Pair<number, Tab>): void {
     this._stackedPanel.currentIndex = args.first;
     var widget = this._stackedPanel.currentWidget;
     this.currentChanged.emit(this, new Pair(args.first, widget));
@@ -186,7 +186,7 @@ class TabPanel extends Widget {
   /**
    * Handle the `tabCloseRequested` signal from the tab bar.
    */
-  private _tb_tabCloseRequested(sender: TabBar, args: Pair<number, ITab>): void {
+  private _tb_tabCloseRequested(sender: TabBar, args: Pair<number, Tab>): void {
     this._stackedPanel.widgetAt(args.first).close();
   }
 

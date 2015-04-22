@@ -15,7 +15,7 @@ interface ITabbable extends Widget {
   /**
    * The tab associated with the widget.
    */
-  tab: ITab;
+  tab: Tab;
 }
 
 } // module phosphor.widgets

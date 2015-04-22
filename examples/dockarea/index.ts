@@ -9,7 +9,6 @@ module example {
 
 import DockArea = phosphor.widgets.DockArea;
 import DockMode = phosphor.widgets.DockMode;
-import ITab = phosphor.widgets.ITab;
 import Tab = phosphor.widgets.Tab;
 import Widget = phosphor.widgets.Widget;
 
@@ -24,7 +23,7 @@ class Content extends Widget {
     this._tab.closable = true;
   }
 
-  get tab(): ITab {
+  get tab(): Tab {
     return this._tab;
   }
 

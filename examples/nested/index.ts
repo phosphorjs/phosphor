@@ -7,7 +7,6 @@
 |----------------------------------------------------------------------------*/
 module example {
 
-import ITab = phosphor.widgets.ITab;
 import Orientation = phosphor.widgets.Orientation;
 import SplitPanel = phosphor.widgets.SplitPanel;
 import Tab = phosphor.widgets.Tab;
@@ -24,7 +23,7 @@ class Content extends Widget {
     this._tab = new Tab(title);
   }
 
-  get tab(): ITab {
+  get tab(): Tab {
     return this._tab;
   }
 

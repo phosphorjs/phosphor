@@ -88,7 +88,7 @@ interface ITabDetachArgs {
   /**
    * The tab of interest.
    */
-  tab: ITab;
+  tab: Tab;
 
   /**
    * The index of the tab.
@@ -171,12 +171,12 @@ class TabBar extends Widget {
   /**
    * A signal emitted when the currently selected tab is changed.
    */
-  currentChanged = new Signal<TabBar, Pair<number, ITab>>();
+  currentChanged = new Signal<TabBar, Pair<number, Tab>>();
 
   /**
    * A signal emitted when the user clicks a tab close icon.
    */
-  tabCloseRequested = new Signal<TabBar, Pair<number, ITab>>();
+  tabCloseRequested = new Signal<TabBar, Pair<number, Tab>>();
 
   /**
    * A signal emitted when a tab is dragged beyond the detach threshold.
@@ -235,21 +235,21 @@ class TabBar extends Widget {
   /**
    * Get the currently selected tab.
    */
-  get currentTab(): ITab {
+  get currentTab(): Tab {
     return this._currentTab;
   }
 
   /**
    * Set the currently selected tab.
    */
-  set currentTab(tab: ITab) {
+  set currentTab(tab: Tab) {
     this.currentIndex = this.indexOf(tab);
   }
 
   /**
    * Get the previously selected tab.
    */
-  get previousTab(): ITab {
+  get previousTab(): Tab {
     return this._previousTab;
   }
 
@@ -362,14 +362,14 @@ class TabBar extends Widget {
   /**
    * Get the tab at the given index.
    */
-  tabAt(index: number): ITab {
+  tabAt(index: number): Tab {
     return this._tabs[index];
   }
 
   /**
    * Get the index of the given tab.
    */
-  indexOf(tab: ITab): number {
+  indexOf(tab: Tab): number {
     return algo.indexOf(this._tabs, tab);
   }
 
@@ -378,7 +378,7 @@ class TabBar extends Widget {
    *
    * Returns the index of the tab.
    */
-  addTab(tab: ITab): number {
+  addTab(tab: Tab): number {
     return this.insertTab(this.count, tab);
   }
 
@@ -387,7 +387,7 @@ class TabBar extends Widget {
    *
    * Returns the index of the tab.
    */
-  insertTab(index: number, tab: ITab): number {
+  insertTab(index: number, tab: Tab): number {
     var fromIndex = this.indexOf(tab);
     if (fromIndex !== -1) {
       index = this.moveTab(fromIndex, index);
@@ -411,7 +411,7 @@ class TabBar extends Widget {
    *
    * Returns `undefined` if the index is out of range.
    */
-  removeAt(index: number): ITab {
+  removeAt(index: number): Tab {
     return this._removeTab(index, true);
   }
 
@@ -420,7 +420,7 @@ class TabBar extends Widget {
    *
    * Returns -1 if the tab is not in the tab bar.
    */
-  removeTab(tab: ITab): number {
+  removeTab(tab: Tab): number {
     var i = this.indexOf(tab);
     if (i !== -1) this._removeTab(i, true);
     return i;
@@ -445,7 +445,7 @@ class TabBar extends Widget {
    *
    * This is a no-op if the tab is already added to the tab bar.
    */
-  attachTab(tab: ITab, clientX: number): void {
+  attachTab(tab: Tab, clientX: number): void {
     // Do nothing if the tab is already attached to the tab bar.
     if (this.indexOf(tab) !== -1) {
       return;
@@ -505,7 +505,7 @@ class TabBar extends Widget {
    *
    * Returns `undefined` if the index is invalid.
    */
-  detachAt(index: number): ITab {
+  detachAt(index: number): Tab {
     return this._removeTab(index, false);
   }
 
@@ -787,7 +787,7 @@ class TabBar extends Widget {
    *
    * This method assumes that the tab has not already been added.
    */
-  private _insertTab(index: number, tab: ITab, animate: boolean): number {
+  private _insertTab(index: number, tab: Tab, animate: boolean): number {
     // Insert the tab into the array.
     index = algo.insert(this._tabs, index, tab);
 
@@ -811,10 +811,10 @@ class TabBar extends Widget {
     // Animate the tab insert and and layout as appropriate.
     if (animate) {
       this._withTransition(() => {
-        tab.node.classList.add(INSERTING_CLASS);
+        tab.addClass(INSERTING_CLASS);
         this._updateTabLayout();
       }, () => {
-        tab.node.classList.remove(INSERTING_CLASS);
+        tab.removeClass(INSERTING_CLASS);
       });
     } else {
       this._withTransition(() => { this._updateTabLayout() });
@@ -862,7 +862,7 @@ class TabBar extends Widget {
    *
    * Returns `undefined` if the index is invalid.
    */
-  private _removeTab(index: number, animate: boolean): ITab {
+  private _removeTab(index: number, animate: boolean): Tab {
     // Remove the tab from the tabs array.
     var tabs = this._tabs;
     var tab = algo.removeAt(tabs, index);
@@ -910,10 +910,10 @@ class TabBar extends Widget {
     // Animate the tab remove as appropriate.
     if (animate) {
       this._withTransition(() => {
-        tab.node.classList.add(REMOVING_CLASS);
+        tab.addClass(REMOVING_CLASS);
         this._updateTabLayout();
       }, () => {
-        tab.node.classList.remove(REMOVING_CLASS);
+        tab.removeClass(REMOVING_CLASS);
         this._removeContentChild(tab.node);
       });
     } else {
@@ -1070,10 +1070,10 @@ class TabBar extends Widget {
   private _tabWidth = 175;
   private _tabOverlap = 0;
   private _minTabWidth = 45;
-  private _tabs: ITab[] = [];
+  private _tabs: Tab[] = [];
   private _tabsMovable = true;
-  private _currentTab: ITab = null;
-  private _previousTab: ITab = null;
+  private _currentTab: Tab = null;
+  private _previousTab: Tab = null;
   private _dragData: IDragData = null;
 }
 

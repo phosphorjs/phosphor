@@ -42,10 +42,10 @@ var CLOSABLE_CLASS = 'p-mod-closable';
 
 
 /**
- * A concrete implementation of ITab.
+ * An object which manages a node for a tab bar.
  */
 export
-class Tab extends NodeBase implements ITab {
+class Tab extends NodeBase {
   /**
    * Create the DOM node for a tab.
    */
