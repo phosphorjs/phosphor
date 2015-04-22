@@ -129,7 +129,7 @@ class Menu extends NodeBase {
   /**
    * Create the DOM node for a MenuItem.
    *
-   * This can be reimplemented to create a custom menu item node.
+   * This can be reimplemented to create custom menu item nodes.
    */
   static createItemNode(item: MenuItem): HTMLElement {
     var node = document.createElement('li');
