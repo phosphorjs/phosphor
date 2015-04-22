@@ -5,10 +5,7 @@
 |
 | The full license is in the file LICENSE, distributed with this software.
 |----------------------------------------------------------------------------*/
-module phosphor.collections {
-
-export
-module algorithm {
+module phosphor.collections.algorithm {
 
 /**
  * A generic index callback function.
@@ -521,6 +518,4 @@ function remove<T>(array: T[], value: T): number {
   return i;
 }
 
-} // module algorithm
-
-} // module phosphor.collections
+} // module phosphor.collections.algorithm
