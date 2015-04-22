@@ -59,7 +59,7 @@ class ShellView extends Widget implements IShellView {
    */
   constructor() {
     super();
-    this.node.classList.add(SHELL_VIEW_CLASS);
+    this.addClass(SHELL_VIEW_CLASS);
 
     this._menuBar = new MenuBar();
     this._topPanel = new ShellPanel(Direction.TopToBottom);
@@ -69,11 +69,11 @@ class ShellView extends Widget implements IShellView {
     this._centerPanel = new ShellPanel(Direction.TopToBottom);
     this._menuManager = new MenuManager(this._menuBar);
 
-    this._topPanel.node.classList.add(TOP_CLASS);
-    this._leftPanel.node.classList.add(LEFT_CLASS);
-    this._rightPanel.node.classList.add(RIGHT_CLASS);
-    this._bottomPanel.node.classList.add(BOTTOM_CLASS);
-    this._centerPanel.node.classList.add(CENTER_CLASS);
+    this._topPanel.addClass(TOP_CLASS);
+    this._leftPanel.addClass(LEFT_CLASS);
+    this._rightPanel.addClass(RIGHT_CLASS);
+    this._bottomPanel.addClass(BOTTOM_CLASS);
+    this._centerPanel.addClass(CENTER_CLASS);
 
     this._menuBar.hide();
     this._topPanel.verticalSizePolicy = SizePolicy.Fixed;

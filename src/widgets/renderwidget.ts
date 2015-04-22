@@ -57,7 +57,7 @@ class RenderWidget extends Widget {
    */
   constructor() {
     super();
-    this.node.classList.add(RENDER_WIDGET_CLASS);
+    this.addClass(RENDER_WIDGET_CLASS);
     this.setFlag(WidgetFlag.DisallowLayoutChange);
   }
 

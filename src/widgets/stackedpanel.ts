@@ -33,7 +33,7 @@ class StackedPanel extends Panel {
    */
   constructor() {
     super(new StackedLayout());
-    this.node.classList.add(STACKED_PANEL_CLASS);
+    this.addClass(STACKED_PANEL_CLASS);
     var layout = <StackedLayout>this.layout;
     layout.widgetRemoved.connect(this._sl_widgetRemoved, this);
   }

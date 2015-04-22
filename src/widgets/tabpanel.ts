@@ -37,7 +37,7 @@ class TabPanel extends Widget {
    */
   constructor() {
     super();
-    this.node.classList.add(TAB_PANEL_CLASS);
+    this.addClass(TAB_PANEL_CLASS);
     this.layout = new BoxLayout(Direction.TopToBottom, 0);
     this.setFlag(WidgetFlag.DisallowLayoutChange);
 

@@ -51,7 +51,7 @@ class DockArea extends Widget {
    */
   constructor() {
     super();
-    this.node.classList.add(DOCK_AREA_CLASS);
+    this.addClass(DOCK_AREA_CLASS);
     this._root = this._createSplitter(Orientation.Horizontal);
 
     var layout = new BoxLayout(Direction.TopToBottom, 0);
@@ -904,7 +904,7 @@ class DockPanel extends Widget {
    */
   constructor() {
     super();
-    this.node.classList.add(DOCK_PANEL_CLASS);
+    this.addClass(DOCK_PANEL_CLASS);
     this._tabBar = new TabBar();
     this._stackedPanel = new StackedPanel();
     this._overlayNode = this.createOverlay();
@@ -1069,7 +1069,7 @@ class DockSplitter extends SplitPanel {
    */
   constructor(orientation: Orientation) {
     super(orientation);
-    this.node.classList.add(DOCK_SPLITTER_CLASS);
+    this.addClass(DOCK_SPLITTER_CLASS);
   }
 }
 

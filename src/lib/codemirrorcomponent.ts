@@ -43,7 +43,7 @@ class CodeMirrorComponent extends BaseComponent<ICodeMirrorData> {
    */
   constructor(data: ICodeMirrorData, children: Elem[]) {
     super(data, children);
-    this.node.classList.add(CODE_MIRROR_COMPONENT_CLASS);
+    this.addClass(CODE_MIRROR_COMPONENT_CLASS);
     this._editor = CodeMirror(this.node, data.config);
   }
 

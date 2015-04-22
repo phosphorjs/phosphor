@@ -576,7 +576,7 @@ class MenuBar extends Widget {
   private _openChildMenu(menu: Menu, node: HTMLElement): void {
     var rect = node.getBoundingClientRect();
     this._childMenu = menu;
-    menu.node.classList.add(MENU_CLASS);
+    menu.addClass(MENU_CLASS);
     menu.closed.connect(this._mn_closed, this);
     menu.open(rect.left, rect.bottom, false, true);
   }
@@ -586,7 +586,7 @@ class MenuBar extends Widget {
    */
   private _closeChildMenu(): void  {
     if (this._childMenu) {
-      this._childMenu.node.classList.remove(MENU_CLASS);
+      this._childMenu.removeClass(MENU_CLASS);
       this._childMenu.closed.disconnect(this._mn_closed, this);
       this._childMenu.close();
       this._childMenu = null;
@@ -666,7 +666,7 @@ class MenuBar extends Widget {
    */
   private _mn_closed(sender: Menu): void {
     sender.closed.disconnect(this._mn_closed, this);
-    sender.node.classList.remove(MENU_CLASS);
+    sender.removeClass(MENU_CLASS);
     this._childMenu = null;
     this._setState(MBState.Inactive);
     this._setActiveIndex(-1);
