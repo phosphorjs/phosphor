@@ -5,12 +5,17 @@
 |
 | The full license is in the file LICENSE, distributed with this software.
 |----------------------------------------------------------------------------*/
-module phosphor.lib {
+module phosphor.lib.codemirror {
 
 import IMessage = core.IMessage;
 
 import Point = utility.Point;
 import Size = utility.Size;
+
+import BaseComponent = virtualdom.BaseComponent;
+import Elem = virtualdom.Elem;
+import IData = virtualdom.IData;
+import createFactory = virtualdom.createFactory;
 
 import ResizeMessage = widgets.ResizeMessage;
 import SizePolicy = widgets.SizePolicy;
@@ -18,9 +23,76 @@ import Widget = widgets.Widget;
 
 
 /**
+ * The class name added to CodeMirrorComponent instances.
+ */
+var CODE_MIRROR_COMPONENT_CLASS = 'p-CodeMirrorComponent';
+
+/**
  * The class name added to CodeMirrorWidget instances.
  */
 var CODE_MIRROR_WIDGET_CLASS = 'p-CodeMirrorWidget';
+
+
+/**
+ * The data object for a code mirror component.
+ */
+export
+interface ICodeMirrorData extends IData {
+  config: CodeMirror.EditorConfiguration;
+}
+
+
+// TODO:
+// - update editor config on re-render?
+// - save/restore scroll position on move?
+/**
+ * A component which hosts a CodeMirror editor.
+ */
+export
+class CodeMirrorComponent extends BaseComponent<ICodeMirrorData> {
+  /**
+   * Construct a new code mirror component.
+   */
+  constructor(data: ICodeMirrorData, children: Elem[]) {
+    super(data, children);
+    this.addClass(CODE_MIRROR_COMPONENT_CLASS);
+    this._editor = CodeMirror(this.node, data.config);
+  }
+
+  /**
+   * Dispose of the resources held by the component.
+   */
+  dispose(): void {
+    this._editor = null;
+    super.dispose();
+  }
+
+  /**
+   * Get the code mirror editor for the component.
+   *
+   * This component does not attempt to wrap the code mirror api.
+   * User code should interact with the editor object directly.
+   */
+  get editor(): CodeMirror.Editor {
+    return this._editor;
+  }
+
+  /**
+   * A method invoked on an 'after-attach' message.
+   */
+  protected onAfterAttach(msg: IMessage): void {
+    this._editor.refresh();
+  }
+
+  private _editor: CodeMirror.Editor;
+}
+
+
+/**
+ * The default element factory for the CodeMirrorComponent.
+ */
+export
+var CodeMirrorFactory = createFactory(CodeMirrorComponent);
 
 
 /**
@@ -99,4 +171,4 @@ class CodeMirrorWidget extends Widget {
   private _scrollPos: Point = null;
 }
 
-} // module phosphor.lib
+} // module phosphor.lib.codemirror

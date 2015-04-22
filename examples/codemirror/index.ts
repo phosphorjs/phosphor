@@ -7,8 +7,8 @@
 |----------------------------------------------------------------------------*/
 module example {
 
-import CodeMirrorFactory = phosphor.lib.CodeMirrorFactory;
-import CodeMirrorWidget = phosphor.lib.CodeMirrorWidget;
+import CodeMirrorFactory = phosphor.lib.codemirror.CodeMirrorFactory;
+import CodeMirrorWidget = phosphor.lib.codemirror.CodeMirrorWidget;
 
 import render = phosphor.virtualdom.render;
 
