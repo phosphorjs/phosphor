@@ -7,6 +7,9 @@
 |----------------------------------------------------------------------------*/
 module phosphor.widgets {
 
+import NodeBase = core.NodeBase;
+
+
 /**
  * The class name assigned to a split handle.
  */
@@ -37,12 +40,24 @@ var HIDDEN_CLASS = 'p-mod-hidden';
  * A class which manages a handle node for a split panel.
  */
 export
-class SplitHandle {
+class SplitHandle extends NodeBase {
+  /**
+   * Create the DOM node for a split handle.
+   */
+  static createNode(): HTMLElement {
+    var node = document.createElement('div');
+    var overlay = document.createElement('div');
+    overlay.className = OVERLAY_CLASS;
+    node.appendChild(overlay);
+    return node;
+  }
+
   /**
    * Construct a new split handle.
    */
   constructor(orientation: Orientation) {
-    this._node = this.createNode();
+    super();
+    this.addClass(HANDLE_CLASS);
     this.orientation = orientation;
   }
 
@@ -62,9 +77,9 @@ class SplitHandle {
     }
     this._hidden = hidden;
     if (hidden) {
-      this._node.classList.add(HIDDEN_CLASS);
+      this.addClass(HIDDEN_CLASS);
     } else {
-      this._node.classList.remove(HIDDEN_CLASS);
+      this.removeClass(HIDDEN_CLASS);
     }
   }
 
@@ -84,35 +99,15 @@ class SplitHandle {
     }
     this._orientation = value;
     if (value === Orientation.Horizontal) {
-      this._node.classList.remove(VERTICAL_CLASS);
-      this._node.classList.add(HORIZONTAL_CLASS);
+      this.removeClass(VERTICAL_CLASS);
+      this.addClass(HORIZONTAL_CLASS);
     } else {
-      this._node.classList.remove(HORIZONTAL_CLASS);
-      this._node.classList.add(VERTICAL_CLASS);
+      this.removeClass(HORIZONTAL_CLASS);
+      this.addClass(VERTICAL_CLASS);
     }
   }
 
-  /**
-   * Get the DOM node for the handle.
-   */
-  get node(): HTMLElement {
-    return this._node;
-  }
-
-  /**
-   * Create the DOM node for the handle.
-   */
-  protected createNode(): HTMLElement {
-    var node = document.createElement('div');
-    var overlay = document.createElement('div');
-    node.className = HANDLE_CLASS;
-    overlay.className = OVERLAY_CLASS;
-    node.appendChild(overlay);
-    return node;
-  }
-
   private _hidden = false;
-  private _node: HTMLElement;
   private _orientation: Orientation;
 }
 
