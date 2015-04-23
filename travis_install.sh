@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/bash
 npm install -g gulp
 npm install -g typedoc
 npm install -g tsd@next
