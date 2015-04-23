@@ -108,7 +108,7 @@ class BoxLayout extends Layout {
    *
    * Returns the index of the added widget.
    */
-  addWidget(widget: Widget, stretch = 0, alignment: Alignment = 0): number {
+  addWidget(widget: Widget, stretch?: number, alignment?: Alignment): number {
     return this.insertWidget(this.count, widget, stretch, alignment);
   }
 

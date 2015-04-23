@@ -154,7 +154,7 @@ class TabPanel extends Widget {
    *
    * Returns the index of the added widget.
    */
-  addWidget(widget: ITabWidget, alignment: Alignment = 0): number {
+  addWidget(widget: ITabWidget, alignment?: Alignment): number {
     return this.insertWidget(this.count, widget, alignment);
   }
 
@@ -165,7 +165,7 @@ class TabPanel extends Widget {
    *
    * Returns the index of the added widget.
    */
-  insertWidget(index: number, widget: ITabWidget, alignment: Alignment = 0): number {
+  insertWidget(index: number, widget: ITabWidget, alignment?: Alignment): number {
     index = this._stackedPanel.insertWidget(index, widget, alignment);
     return this._tabBar.insertTab(index, widget.tab);
   }

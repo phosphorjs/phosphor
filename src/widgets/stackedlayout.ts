@@ -126,7 +126,7 @@ class StackedLayout extends Layout {
    *
    * Returns the index of the added widget.
    */
-  addWidget(widget: Widget, alignment: Alignment = 0): number {
+  addWidget(widget: Widget, alignment?: Alignment): number {
     return this.insertWidget(this.count, widget, alignment);
   }
 
