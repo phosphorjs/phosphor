@@ -2,6 +2,5 @@
 *.user
 .DS_Store
 build
-docs
 node_modules
 typings
