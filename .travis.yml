@@ -7,6 +7,10 @@ env:
     - GROUP=
   global:
     - secure: Zv6POtOhi0kIMgvGnt3dGouLc+hXeajKuoBMUPLdYdkeD/JLhNHyZyZkF7SKKeKcVSCUj8Y20hcWH2rErRckvGO3jUdeupUZN5DnwKnFZ2QXF4/s7+xzSR5jbS5IUbL9YVPoxSXMyK7VtkcGa1M4H/1cZYOdSUIz51pkfXipgus=
+before_install:
+  - chmod +x ./travis_install.sh
+  - chmod +x ./travis_script.sh
+  - chmod +x ./travis_after_success.sh
 install:
   - ./travis_install.sh
 script:
