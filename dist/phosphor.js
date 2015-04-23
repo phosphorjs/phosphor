@@ -5364,8 +5364,6 @@ var phosphor;
              * Returns the index of the added widget.
              */
             BoxLayout.prototype.addWidget = function (widget, stretch, alignment) {
-                if (stretch === void 0) { stretch = 0; }
-                if (alignment === void 0) { alignment = 0; }
                 return this.insertWidget(this.count, widget, stretch, alignment);
             };
             /**
@@ -6067,8 +6065,6 @@ var phosphor;
              * Returns the index of the added widget.
              */
             SplitLayout.prototype.addWidget = function (widget, stretch, alignment) {
-                if (stretch === void 0) { stretch = 0; }
-                if (alignment === void 0) { alignment = 0; }
                 return this.insertWidget(this.count, widget, stretch, alignment);
             };
             /**
@@ -6365,7 +6361,6 @@ var phosphor;
              * Construct a new split item.
              */
             function SplitItem(handle, widget, alignment) {
-                if (alignment === void 0) { alignment = 0; }
                 _super.call(this, widget, alignment);
                 this._handle = handle;
             }
@@ -6615,7 +6610,6 @@ var phosphor;
              * Returns the index of the added widget.
              */
             StackedLayout.prototype.addWidget = function (widget, alignment) {
-                if (alignment === void 0) { alignment = 0; }
                 return this.insertWidget(this.count, widget, alignment);
             };
             /**
@@ -8298,7 +8292,6 @@ var phosphor;
              * Returns the index of the added widget.
              */
             StackedPanel.prototype.addWidget = function (widget, alignment) {
-                if (alignment === void 0) { alignment = 0; }
                 return this.layout.addWidget(widget, alignment);
             };
             /**
@@ -8309,7 +8302,6 @@ var phosphor;
              * Returns the index of the added widget.
              */
             StackedPanel.prototype.insertWidget = function (index, widget, alignment) {
-                if (alignment === void 0) { alignment = 0; }
                 return this.layout.insertWidget(index, widget, alignment);
             };
             /**
@@ -12800,7 +12792,6 @@ var phosphor;
              * Returns the index of the added widget.
              */
             TabPanel.prototype.addWidget = function (widget, alignment) {
-                if (alignment === void 0) { alignment = 0; }
                 return this.insertWidget(this.count, widget, alignment);
             };
             /**
@@ -12811,7 +12802,6 @@ var phosphor;
              * Returns the index of the added widget.
              */
             TabPanel.prototype.insertWidget = function (index, widget, alignment) {
-                if (alignment === void 0) { alignment = 0; }
                 index = this._stackedPanel.insertWidget(index, widget, alignment);
                 return this._tabBar.insertTab(index, widget.tab);
             };
