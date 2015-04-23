@@ -7,51 +7,13 @@ env:
     - GROUP=
   global:
     - secure: Zv6POtOhi0kIMgvGnt3dGouLc+hXeajKuoBMUPLdYdkeD/JLhNHyZyZkF7SKKeKcVSCUj8Y20hcWH2rErRckvGO3jUdeupUZN5DnwKnFZ2QXF4/s7+xzSR5jbS5IUbL9YVPoxSXMyK7VtkcGa1M4H/1cZYOdSUIz51pkfXipgus=
+before_install:
+  - chmod +x ./scripts/travis_install.sh
+  - chmod +x ./scripts/travis_script.sh
+  - chmod +x ./scripts/travis_after_success.sh
 install:
-  - npm install -g tsd@next
-  - npm install -g typedoc
-  - npm install -g gulp
-  - npm install
-  - 'echo "{\"token\": \"$GHTOKEN\"}" > ~/.tsdrc'
-  - tsd rate
-  - tsd reinstall -so
+  - ./scripts/travis_install.sh
 script:
-  - gulp
-after_success: |
-  if [[ $TRAVIS_PULL_REQUEST == false && $TRAVIS_BRANCH == 'master' ]]
-  then
-    echo "Will build Documentation"
-    
-    # setup git
-    git config --global user.email "travis@travis-ci.com"
-    git config --global user.name "Travis Bot"
-    
-    # clone gh-pages
-    git clone https://github.com/phosphorjs/phosphorjs.github.io build
-    
-    #cleanup api and examples
-    rm -rf build/docs/
-    rm -rf build/examples/
-    rm -rf buid/dist/
-
-    # build docs/api
-    gulp docs
-    gulp examples
-    
-    # copy examples and dist
-    cp -r examples build
-    cp -r dist build
-
-    # now get into docs dirs
-    cd build
-    echo "https://${GHTOKEN}:@github.com" > .git/credentials
-    git config credential.helper 'store --file=.git/credentials'
-    git add -A docs
-    git add -A examples
-    git add -A dist
-    git commit -am'autocommit docs'
-    git push origin master:master
-  else
-    echo "Will only deploy docs build from phosphor master branch"
-  fi
-
+  - ./scripts/travis_script.sh
+after_success:
+  - ./scripts/travis_after_success.sh
