@@ -350,12 +350,22 @@ function findLast<T>(array: T[], pred: IPredicate<T>, fromIndex?: number, wrap?:
 
 
 /**
- * Find the index of the first element which is not less than `value`.
+ * Binary search for the first element which compares `<=` to `value`.
  *
- * This function uses a binary search. It must be applied to a sorted
- * array in order for the results to be correct.
+ * The `array` must be sorted in ascending order.
  *
- * Returns `array.length` if all elements are less than `value`.
+ * @param array The array of values to be searched.
+ * @param value The value to locate in the array.
+ * @param cmp The comparator function to apply to the values.
+ * @returns The index of the matching element or `array.length` if
+ *   there is no match.
+ *
+ * #### Example
+ * ```typescript
+ * // TODO
+ * ```
+ *
+ * **See also** [[upperBound]], [[findLowerIndex]], and [[findLower]].
  */
 export
 function lowerBound<T, U>(array: T[], value: U, cmp: IComparator<T, U>): number {
@@ -378,12 +388,22 @@ function lowerBound<T, U>(array: T[], value: U, cmp: IComparator<T, U>): number 
 
 
 /**
- * Find the index of the first element which is greater than `value`.
+ * Binary search for the first element which compares `>` than `value`.
  *
- * This function uses a binary search. It must be applied to a sorted
- * array in order for the results to be correct.
+ * The `array` must be sorted in ascending order.
  *
- * Returns `array.length` if no element is greater than `value`.
+ * @param array The array of values to be searched.
+ * @param value The value to locate in the array.
+ * @param cmp The comparator function to apply to the values.
+ * @returns The index of the matching element or `array.length` if
+ *   there is no match.
+ *
+ * #### Example
+ * ```typescript
+ * // TODO
+ * ```
+ *
+ * **See also** [[lowerBound]], [[findUpperIndex]], and [[findUpper]].
  */
 export
 function upperBound<T, U>(array: T[], value: U, cmp: IComparator<T, U>): number {
