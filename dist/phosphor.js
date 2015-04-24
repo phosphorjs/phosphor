@@ -26,7 +26,7 @@ var phosphor;
              * @param wrap - Whether the search wraps around at the end of the array.
              *   If `true` and the end of the array is reached without finding the
              *   value, the search will wrap to the front of the array and continue
-             *   until `fromIndex - 1`.
+             *   until one before `fromIndex`.
              *
              * @returns The index of the value or `-1` if the value is not found.
              *
@@ -93,7 +93,7 @@ var phosphor;
              * @param wrap - Whether the search wraps around at the front of the
              *   array. If `true` and the front of the array is reached without
              *   finding the value, the search will wrap to the end of the array
-             *   and continue until `fromIndex + 1`.
+             *   and continue until one after `fromIndex`.
              *
              * @returns The index of the value or `-1` if the value is not found.
              *
@@ -160,7 +160,7 @@ var phosphor;
              * @param wrap - Whether the search wraps around at the end of the array.
              *   If `true` and the end of the array is reached without finding the
              *   value, the search will wrap to the front of the array and continue
-             *   until `fromIndex - 1`.
+             *   until one before `fromIndex`.
              *
              * @returns The match index or `-1` if no match is found.
              *
@@ -232,7 +232,7 @@ var phosphor;
              * @param wrap - Whether the search wraps around at the front of the
              *   array. If `true` and the front of the array is reached without
              *   finding the value, the search will wrap to the end of the array
-             *   and continue until `fromIndex + 1`.
+             *   and continue until one after `fromIndex`.
              *
              * @returns The match index or `-1` if no match is found.
              *
@@ -304,7 +304,7 @@ var phosphor;
              * @param wrap - Whether the search wraps around at the end of the array.
              *   If `true` and the end of the array is reached without finding the
              *   value, the search will wrap to the front of the array and continue
-             *   until `fromIndex - 1`.
+             *   until one before `fromIndex`.
              *
              * @returns The match value or `undefined` if no match is found.
              *
@@ -349,7 +349,7 @@ var phosphor;
              * @param wrap - Whether the search wraps around at the front of the
              *   array. If `true` and the front of the array is reached without
              *   finding the value, the search will wrap to the end of the array
-             *   and continue until `fromIndex + 1`.
+             *   and continue until one after `fromIndex`.
              *
              * @returns The match value or `undefined` if no match is found.
              *
