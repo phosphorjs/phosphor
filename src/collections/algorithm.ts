@@ -21,32 +21,22 @@ module phosphor.collections.algorithm {
  *   until `fromIndex - 1`.
  * @returns The index of the value or `-1` if the value is not found.
  *
+ * #### Notes
+ * Values are compared using the strict equality `===` operator.
+ *
  * #### Example
  * ```typescript
  * import algo = phosphor.collections.algorithm;
  *
  * var data = ['zero', 'one', 'two', 'three', 'two', 'one', 'zero'];
- * var a = algo.indexOf(data, 'two');
- * var b = algo.indexOf(data, 'two', 3);
- * var c = algo.indexOf(data, 'two', -4);
- * var d = algo.indexOf(data, 'two', 5);
- * var e = algo.indexOf(data, 'two', 5, true);
- *
- * console.log('a:', a);
- * console.log('b:', b);
- * console.log('c:', c);
- * console.log('d:', d);
- * console.log('e:', e);
+ * algo.indexOf(data, 'two');           // 2
+ * algo.indexOf(data, 'two', 3);        // 4
+ * algo.indexOf(data, 'two', -4);       // 4
+ * algo.indexOf(data, 'two', 5);        // -1
+ * algo.indexOf(data, 'two', 5, true);  // 2
  * ```
  *
- * #### Output
- * ```
- * a: 2
- * b: 4
- * c: 4
- * d: -1
- * e: 2
- * ```
+ * **See also** [[lastIndexOf]], [[findIndex]], and [[find]].
  */
 export
 function indexOf<T>(array: T[], value: T, fromIndex = 0, wrap = false): number {
@@ -86,39 +76,29 @@ function indexOf<T>(array: T[], value: T, fromIndex = 0, wrap = false): number {
  * @param value The value to locate in the array.
  * @param fromIndex The starting index of the search. If this value is
  *   negative, it is taken as an offset from the end of the array. If
- *   the adjusted value is still negative, it is clamped to `length - 1`.
+ *   this value is positive, it is clamped to `array.length - 1`.
  * @param wrap Whether the search wraps around at the front of the array.
  *   If `true` and the front of the array is reached without finding the
  *   value, the search will wrap to the end of the array and continue
  *   until `fromIndex + 1`.
  * @returns The index of the value or `-1` if the value is not found.
  *
+ * #### Notes
+ * Values are compared using the strict equality `===` operator.
+ *
  * #### Example
  * ```typescript
  * import algo = phosphor.collections.algorithm;
  *
  * var data = ['zero', 'one', 'two', 'three', 'two', 'one', 'zero'];
- * var a = algo.lastIndexOf(data, 'two');
- * var b = algo.lastIndexOf(data, 'two', 3);
- * var c = algo.lastIndexOf(data, 'two', -4);
- * var d = algo.lastIndexOf(data, 'two', 1);
- * var e = algo.lastIndexOf(data, 'two', 1, true);
- *
- * console.log('a:', a);
- * console.log('b:', b);
- * console.log('c:', c);
- * console.log('d:', d);
- * console.log('e:', e);
+ * algo.lastIndexOf(data, 'two');           // 4
+ * algo.lastIndexOf(data, 'two', 3);        // 2
+ * algo.lastIndexOf(data, 'two', -4);       // 2
+ * algo.lastIndexOf(data, 'two', 1);        // -1
+ * algo.lastIndexOf(data, 'two', 1, true);  // 4
  * ```
  *
- * #### Output
- * ```
- * a: 4
- * b: 2
- * c: 2
- * d: -1
- * e: 4
- * ```
+ * **See also** [[indexOf]], [[findLastIndex]], and [[findLast]].
  */
 export
 function lastIndexOf<T>(array: T[], value: T, fromIndex = -1, wrap = false): number {
@@ -151,19 +131,40 @@ function lastIndexOf<T>(array: T[], value: T, fromIndex = -1, wrap = false): num
 
 
 /**
- * Find the index of the first element which passes the test.
+ * Find the index of the first value which matches a predicate.
  *
- * The `fromIndex` parameter controls the starting index of the search.
- * If the value is negative, it is offset from the end of the array. If
- * the adjusted value is still negative, it will be clamped to `0`. The
- * default index is `0`.
+ * @param array The array of values to be searched.
+ * @param pred The predicate function to apply to the values.
+ * @param fromIndex The starting index of the search. If this value is
+ *   negative, it is taken as an offset from the end of the array. If
+ *   the adjusted value is still negative, it is clamped to `0`.
+ * @param wrap Whether the search wraps around at the end of the array.
+ *   If `true` and the end of the array is reached without finding the
+ *   value, the search will wrap to the front of the array and continue
+ *   until `fromIndex - 1`.
+ * @returns The index of the matching value or `-1` if there is no match.
  *
- * The `wrap` parameter controls the search wrap-around. If true, the
- * search will wrap-around at the end of the array and continue until
- * reaching the element just before the starting element. The default
- * wrap value is `false`.
+ * #### Notes
+ * The range of visited indices is set before the first invocation of
+ * `pred`. It is not safe for `pred` to change the length of `array`.
  *
- * Returns `-1` if no element passes the test.
+ * #### Example
+ * ```typescript
+ * import algo = phosphor.collections.algorithm;
+ *
+ * function isEven(value: number): boolean {
+ *   return value % 2 === 0;
+ * }
+ *
+ * var data = [1, 2, 3, 4, 3, 2, 1];
+ * algo.findIndex(data, isEven);           // 1
+ * algo.findIndex(data, isEven, 4);        // 5
+ * algo.findIndex(data, isEven, -4);       // 3
+ * algo.findIndex(data, isEven, 6);        // -1
+ * algo.findIndex(data, isEven, 6, true);  // 1
+ * ```
+ *
+ * **See also** [[findLastIndex]], [[find]], and [[indexOf]].
  */
 export
 function findIndex<T>(array: T[], pred: IPredicate<T>, fromIndex = 0, wrap = false): number {
@@ -197,19 +198,40 @@ function findIndex<T>(array: T[], pred: IPredicate<T>, fromIndex = 0, wrap = fal
 
 
 /**
- * Find the index of the last element which passes the test.
+ * Find the index of the last value which matches a predicate.
  *
- * The `fromIndex` parameter controls the starting index of the search.
- * If the value is negative, it is offset from the end of the array. If
- * the value is greater than the last index, it will be clamped to the
- * last index. The default index is `-1`.
+ * @param array The array of values to be searched.
+ * @param value The predicate function to apply to the values.
+ * @param fromIndex The starting index of the search. If this value is
+ *   negative, it is taken as an offset from the end of the array. If
+ *   this value is positive, it is clamped to `array.length - 1`.
+ * @param wrap Whether the search wraps around at the front of the array.
+ *   If `true` and the front of the array is reached without finding the
+ *   value, the search will wrap to the end of the array and continue
+ *   until `fromIndex + 1`.
+ * @returns The index of the matching value or `-1` if there is no match.
  *
- * The `wrap` parameter controls the search wrap-around. If true, the
- * search will wrap-around at the front of the array and continue until
- * reaching the element just after the starting element. The default
- * wrap value is `false`.
+ * #### Notes
+ * The range of visited indices is set before the first invocation of
+ * `pred`. It is not safe for `pred` to change the length of `array`.
  *
- * Returns `-1` if no element passes the test.
+ * #### Example
+ * ```typescript
+ * import algo = phosphor.collections.algorithm;
+ *
+ * function isEven(value: number): boolean {
+ *   return value % 2 === 0;
+ * }
+ *
+ * var data = [1, 2, 3, 4, 3, 2, 1];
+ * algo.findLastIndex(data, isEven);           // 5
+ * algo.findLastIndex(data, isEven, 4);        // 3
+ * algo.findLastIndex(data, isEven, -5);       // 1
+ * algo.findLastIndex(data, isEven, 0);        // -1
+ * algo.findLastIndex(data, isEven, 0, true);  // 5
+ * ```
+ *
+ * **See also** [[findIndex]], [[findLast]], and [[lastIndexOf]].
  */
 export
 function findLastIndex<T>(array: T[], pred: IPredicate<T>, fromIndex = -1, wrap = false): number {
@@ -242,19 +264,40 @@ function findLastIndex<T>(array: T[], pred: IPredicate<T>, fromIndex = -1, wrap 
 
 
 /**
- * Find the first element in the array which passes the given test.
+ * Find the first value in an array which matches a predicate.
  *
- * The `fromIndex` parameter controls the starting index of the search.
- * If the value is negative, it is offset from the end of the array. If
- * the adjusted value is still negative, it will be clamped to `0`. The
- * default index is `0`.
+ * @param array The array of values to be searched.
+ * @param pred The predicate function to apply to the values.
+ * @param fromIndex The starting index of the search. If this value is
+ *   negative, it is taken as an offset from the end of the array. If
+ *   the adjusted value is still negative, it is clamped to `0`.
+ * @param wrap Whether the search wraps around at the end of the array.
+ *   If `true` and the end of the array is reached without finding the
+ *   value, the search will wrap to the front of the array and continue
+ *   until `fromIndex - 1`.
+ * @returns The matching value or `undefined` if there is no match.
  *
- * The `wrap` parameter controls the search wrap-around. If true, the
- * search will wrap-around at the end of the array and continue until
- * reaching the element just before the starting element. The default
- * wrap value is `false`.
+ * #### Notes
+ * The range of visited indices is set before the first invocation of
+ * `pred`. It is not safe for `pred` to change the length of `array`.
  *
- * Returns `undefined` if no element passes the test.
+ * #### Example
+ * ```typescript
+ * import algo = phosphor.collections.algorithm;
+ *
+ * function isEven(value: number): boolean {
+ *   return value % 2 === 0;
+ * }
+ *
+ * var data = [1, 2, 3, 4, 3, 2, 1];
+ * algo.find(data, isEven);           // 2
+ * algo.find(data, isEven, 4);        // 2
+ * algo.find(data, isEven, -5);       // 4
+ * algo.find(data, isEven, 6);        // undefined
+ * algo.find(data, isEven, 6, true);  // 2
+ * ```
+ *
+ * **See also** [[findLast]], [[findIndex]], and [[indexOf]].
  */
 export
 function find<T>(array: T[], pred: IPredicate<T>, fromIndex?: number, wrap?: boolean): T {
@@ -264,19 +307,40 @@ function find<T>(array: T[], pred: IPredicate<T>, fromIndex?: number, wrap?: boo
 
 
 /**
- * Find the last element in the array which passes the given test.
+ * Find the last value in an array which matches a predicate.
  *
- * The `fromIndex` parameter controls the starting index of the search.
- * If the value is negative, it is offset from the end of the array. If
- * the value is greater than the last index, it will be clamped to the
- * last index. The default index is `-1`.
+ * @param array The array of values to be searched.
+ * @param value The predicate function to apply to the values.
+ * @param fromIndex The starting index of the search. If this value is
+ *   negative, it is taken as an offset from the end of the array. If
+ *   this value is positive, it is clamped to `array.length - 1`.
+ * @param wrap Whether the search wraps around at the front of the array.
+ *   If `true` and the front of the array is reached without finding the
+ *   value, the search will wrap to the end of the array and continue
+ *   until `fromIndex + 1`.
+ * @returns The matching value or `undefined` if there is no match.
  *
- * The `wrap` parameter controls the search wrap-around. If true, the
- * search will wrap-around at the front of the array and continue until
- * reaching the element just after the starting element. The default
- * wrap value is `false`.
+ * #### Notes
+ * The range of visited indices is set before the first invocation of
+ * `pred`. It is not safe for `pred` to change the length of `array`.
  *
- * Returns `undefined` if no element passes the test.
+ * #### Example
+ * ```typescript
+ * import algo = phosphor.collections.algorithm;
+ *
+ * function isEven(value: number): boolean {
+ *   return value % 2 === 0;
+ * }
+ *
+ * var data = [1, 2, 3, 4, 3, 2, 1];
+ * algo.findLast(data, isEven);           // 2
+ * algo.findLast(data, isEven, 4);        // 4
+ * algo.findLast(data, isEven, -1);       // 2
+ * algo.findLast(data, isEven, 0);        // undefined
+ * algo.findLast(data, isEven, 0, true);  // 2
+ * ```
+ *
+ * **See also** [[find]], [[findLastIndex]], and [[lastIndexOf]].
  */
 export
 function findLast<T>(array: T[], pred: IPredicate<T>, fromIndex?: number, wrap?: boolean): T {
