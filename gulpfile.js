@@ -189,7 +189,12 @@ gulp.task('examples', function() {
 
 
 gulp.task('docs', function() {
-  return gulp.src(typings.concat(tsSources))
+  // FIXME order of concat is important here because typedoc link tag
+  // resolving seems to have a bug in scope resolution order. As an
+  // example using the [[find]] tag inside the `algorithm` module
+  // will resolve to `CodeMirror#find` instead of the `find` function
+  // defined in `algorithm`.
+  return gulp.src(tsSources.concat(typings))
     .pipe(typedoc({
       out: './build/docs',
       name: 'Phosphor',
