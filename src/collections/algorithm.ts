@@ -201,7 +201,7 @@ function findIndex<T>(array: T[], pred: IPredicate<T>, fromIndex = 0, wrap = fal
  * Find the index of the last value which matches a predicate.
  *
  * @param array The array of values to be searched.
- * @param value The predicate function to apply to the values.
+ * @param pred The predicate function to apply to the values.
  * @param fromIndex The starting index of the search. If this value is
  *   negative, it is taken as an offset from the end of the array. If
  *   this value is positive, it is clamped to `array.length - 1`.
@@ -310,7 +310,7 @@ function find<T>(array: T[], pred: IPredicate<T>, fromIndex?: number, wrap?: boo
  * Find the last value in an array which matches a predicate.
  *
  * @param array The array of values to be searched.
- * @param value The predicate function to apply to the values.
+ * @param pred The predicate function to apply to the values.
  * @param fromIndex The starting index of the search. If this value is
  *   negative, it is taken as an offset from the end of the array. If
  *   this value is positive, it is clamped to `array.length - 1`.
