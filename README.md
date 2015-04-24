@@ -7,7 +7,7 @@ Package Install
 **Prerequisites**
 - [bower](http://bower.io/) `npm install -g bower`
 
-```
+```bash
 bower install phosphor
 ```
 
@@ -21,7 +21,7 @@ Source Build
 - [gulp](http://gulpjs.com/) `npm install -g gulp`
 - [tsd](https://github.com/DefinitelyTyped/tsd) `npm install -g tsd@next`
 
-```
+```bash
 git clone https://github.com/phosphorjs/phosphor.git
 cd phosphor
 npm install
@@ -37,7 +37,7 @@ Build Examples
 
 Follow the source build instructions first.
 
-```
+```bash
 gulp examples
 ```
 
