@@ -26,6 +26,7 @@ var typings = ['./typings/tsd.d.ts'];
 var tsSources = [
   'collections/algorithm',
   'collections/circularbuffer',
+  'collections/common',
   'collections/queue',
 
   'utility/boxsizing',

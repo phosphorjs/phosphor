@@ -7,10 +7,6 @@
 |----------------------------------------------------------------------------*/
 module phosphor.collections {
 
-import ICallback = algorithm.ICallback;
-import IPredicate = algorithm.IPredicate;
-
-
 /**
  * A canonical singly linked FIFO queue.
  */

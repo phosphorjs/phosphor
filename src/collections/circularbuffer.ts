@@ -7,10 +7,6 @@
 |----------------------------------------------------------------------------*/
 module phosphor.collections {
 
-import ICallback = algorithm.ICallback;
-import IPredicate = algorithm.IPredicate;
-
-
 /**
  * A circular buffer with a fixed maximum size.
  *
