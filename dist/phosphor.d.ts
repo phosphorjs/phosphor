@@ -1,6 +1,6 @@
 declare module phosphor.collections.algorithm {
     /**
-     * Find the index of the first occurrence of a value in an array.
+     * Find the index of the first occurrence of a value.
      *
      * @param array - The array of values to be searched.
      *
@@ -36,7 +36,7 @@ declare module phosphor.collections.algorithm {
      */
     function indexOf<T>(array: T[], value: T, fromIndex?: number, wrap?: boolean): number;
     /**
-     * Find the index of the last occurrence of a value in an array.
+     * Find the index of the last occurrence of a value.
      *
      * @param array - The array of values to be searched.
      *
@@ -154,7 +154,7 @@ declare module phosphor.collections.algorithm {
      */
     function findLastIndex<T>(array: T[], pred: IPredicate<T>, fromIndex?: number, wrap?: boolean): number;
     /**
-     * Find the first value in an array which matches a predicate.
+     * Find the first value which matches a predicate.
      *
      * @param array - The array of values to be searched.
      *
@@ -191,11 +191,11 @@ declare module phosphor.collections.algorithm {
      * algo.find(data, isEven, 6, true);  // 2
      * ```
      *
-     * **See also** [[findLast]].
+     * **See also** [[findLast]] and [[binaryFind]].
      */
     function find<T>(array: T[], pred: IPredicate<T>, fromIndex?: number, wrap?: boolean): T;
     /**
-     * Find the last value in an array which matches a predicate.
+     * Find the last value which matches a predicate.
      *
      * @param array - The array of values to be searched.
      *
@@ -232,21 +232,20 @@ declare module phosphor.collections.algorithm {
      * algo.findLast(data, isEven, 0, true);  // 2
      * ```
      *
-     * **See also** [[find]].
+     * **See also** [[find]] and [[binaryFindLast]].
      */
     function findLast<T>(array: T[], pred: IPredicate<T>, fromIndex?: number, wrap?: boolean): T;
     /**
-     * Binary search for the first element which compares `<=` to `value`.
+     * Binary find the index of the first element which is `<=` to `value`.
      *
-     * The `array` must be sorted in ascending order.
-     *
-     * @param array - The array of values to be searched.
+     * @param array - The array of values to be searched. It must be sorted
+     *   in ascending order.
      *
      * @param value - The value to locate in the array.
      *
      * @param cmp - The comparator function to apply to the values.
      *
-     * @returns The match index or `array.length` if no match is found.
+     * @returns The element index or `array.length` if no element is found.
      *
      * #### Example
      * ```typescript
@@ -268,17 +267,16 @@ declare module phosphor.collections.algorithm {
      */
     function lowerBound<T, U>(array: T[], value: U, cmp: IComparator<T, U>): number;
     /**
-     * Binary search for the first element which compares `>` than `value`.
+     * Binary find the index of the first element which is `>` than `value`.
      *
-     * The `array` must be sorted in ascending order.
-     *
-     * @param array - The array of values to be searched.
+     * @param array - The array of values to be searched. It must be sorted
+     *   in ascending order.
      *
      * @param value - The value to locate in the array.
      *
      * @param cmp - The comparator function to apply to the values.
      *
-     * @returns The match index or `array.length` if no match is found.
+     * @returns The element index or `array.length` if no element is found.
      *
      * #### Example
      * ```typescript
@@ -300,17 +298,16 @@ declare module phosphor.collections.algorithm {
      */
     function upperBound<T, U>(array: T[], value: U, cmp: IComparator<T, U>): number;
     /**
-     * Binary search for the first element which compares `==` to `value`.
+     * Binary find the index of the first element which is `==` to `value`.
      *
-     * The `array` must be sorted in ascending order.
-     *
-     * @param array - The array of values to be searched.
+     * @param array - The array of values to be searched. It must be sorted
+     *   in ascending order.
      *
      * @param value - The value to locate in the array.
      *
      * @param cmp - The comparator function to apply to the values.
      *
-     * @returns The match index or `-1` if no match is found.
+     * @returns The element index or `-1` if no element is found.
      *
      * #### Example
      * ```typescript
@@ -329,12 +326,31 @@ declare module phosphor.collections.algorithm {
      */
     function binaryFindIndex<T, U>(array: T[], value: U, cmp: IComparator<T, U>): number;
     /**
-     * Find the index of the last element which is equal to `value`.
+     * Binary find the index of the last element which is `==` to `value`.
      *
-     * This function uses a binary search. It must be applied to a sorted
-     * array in order for the results to be correct.
+     * @param array - The array of values to be searched. It must be sorted
+     *   in ascending order.
      *
-     * Returns `-1` if no matching value is found.
+     * @param value - The value to locate in the array.
+     *
+     * @param cmp - The comparator function to apply to the values.
+     *
+     * @returns The element index or `-1` if no element is found.
+     *
+     * #### Example
+     * ```typescript
+     * import algo = phosphor.collections.algorithm;
+     *
+     * function numberCmp(a: number, b: number): number {
+     *   return a - b;
+     * }
+     *
+     * var data = [0, 3, 4, 7, 7, 9];
+     * algo.binaryFindLastIndex(data, 7, numberCmp);  // 4
+     * algo.binaryFindLastIndex(data, 6, numberCmp);  // -1
+     * ```
+     *
+     * **See also** [[binaryFindIndex]] and [[upperBound]].
      */
     function binaryFindLastIndex<T, U>(array: T[], value: U, cmp: IComparator<T, U>): number;
     /**
