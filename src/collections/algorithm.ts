@@ -10,15 +10,19 @@ module phosphor.collections.algorithm {
 /**
  * Find the index of the first occurrence of a value in an array.
  *
- * @param array The array of values to be searched.
- * @param value The value to locate in the array.
- * @param fromIndex The starting index of the search. If this value is
- *   negative, it is taken as an offset from the end of the array. If
- *   the adjusted value is still negative, it is clamped to `0`.
- * @param wrap Whether the search wraps around at the end of the array.
+ * @param array - The array of values to be searched.
+ *
+ * @param value - The value to locate in the array.
+ *
+ * @param fromIndex - The starting index of the search. If this value
+ *   is negative, it is taken as an offset from the end of the array.
+ *   If the adjusted value is still negative, it is clamped to `0`.
+ *
+ * @param wrap - Whether the search wraps around at the end of the array.
  *   If `true` and the end of the array is reached without finding the
  *   value, the search will wrap to the front of the array and continue
  *   until `fromIndex - 1`.
+ *
  * @returns The index of the value or `-1` if the value is not found.
  *
  * #### Notes
@@ -36,7 +40,7 @@ module phosphor.collections.algorithm {
  * algo.indexOf(data, 'two', 5, true);  // 2
  * ```
  *
- * **See also** [[lastIndexOf]], [[findIndex]], and [[find]].
+ * **See also** [[lastIndexOf]] and [[findIndex]].
  */
 export
 function indexOf<T>(array: T[], value: T, fromIndex = 0, wrap = false): number {
@@ -72,15 +76,19 @@ function indexOf<T>(array: T[], value: T, fromIndex = 0, wrap = false): number {
 /**
  * Find the index of the last occurrence of a value in an array.
  *
- * @param array The array of values to be searched.
- * @param value The value to locate in the array.
- * @param fromIndex The starting index of the search. If this value is
- *   negative, it is taken as an offset from the end of the array. If
- *   this value is positive, it is clamped to `array.length - 1`.
- * @param wrap Whether the search wraps around at the front of the array.
- *   If `true` and the front of the array is reached without finding the
- *   value, the search will wrap to the end of the array and continue
- *   until `fromIndex + 1`.
+ * @param array - The array of values to be searched.
+ *
+ * @param value - The value to locate in the array.
+ *
+ * @param fromIndex - The starting index of the search. If this value
+ *   is negative, it is taken as an offset from the end of the array.
+ *   If this value is positive, it is clamped to `array.length - 1`.
+ *
+ * @param wrap - Whether the search wraps around at the front of the
+ *   array. If `true` and the front of the array is reached without
+ *   finding the value, the search will wrap to the end of the array
+ *   and continue until `fromIndex + 1`.
+ *
  * @returns The index of the value or `-1` if the value is not found.
  *
  * #### Notes
@@ -98,7 +106,7 @@ function indexOf<T>(array: T[], value: T, fromIndex = 0, wrap = false): number {
  * algo.lastIndexOf(data, 'two', 1, true);  // 4
  * ```
  *
- * **See also** [[indexOf]], [[findLastIndex]], and [[findLast]].
+ * **See also** [[indexOf]] and [[findLastIndex]].
  */
 export
 function lastIndexOf<T>(array: T[], value: T, fromIndex = -1, wrap = false): number {
@@ -133,16 +141,20 @@ function lastIndexOf<T>(array: T[], value: T, fromIndex = -1, wrap = false): num
 /**
  * Find the index of the first value which matches a predicate.
  *
- * @param array The array of values to be searched.
- * @param pred The predicate function to apply to the values.
- * @param fromIndex The starting index of the search. If this value is
- *   negative, it is taken as an offset from the end of the array. If
- *   the adjusted value is still negative, it is clamped to `0`.
- * @param wrap Whether the search wraps around at the end of the array.
+ * @param array - The array of values to be searched.
+ *
+ * @param pred - The predicate function to apply to the values.
+ *
+ * @param fromIndex - The starting index of the search. If this value
+ *   is negative, it is taken as an offset from the end of the array.
+ *   If the adjusted value is still negative, it is clamped to `0`.
+ *
+ * @param wrap - Whether the search wraps around at the end of the array.
  *   If `true` and the end of the array is reached without finding the
  *   value, the search will wrap to the front of the array and continue
  *   until `fromIndex - 1`.
- * @returns The index of the matching value or `-1` if there is no match.
+ *
+ * @returns The match index or `-1` if no match is found.
  *
  * #### Notes
  * The range of visited indices is set before the first invocation of
@@ -164,7 +176,7 @@ function lastIndexOf<T>(array: T[], value: T, fromIndex = -1, wrap = false): num
  * algo.findIndex(data, isEven, 6, true);  // 1
  * ```
  *
- * **See also** [[findLastIndex]], [[find]], and [[indexOf]].
+ * **See also** [[findLastIndex]] and [[indexOf]].
  */
 export
 function findIndex<T>(array: T[], pred: IPredicate<T>, fromIndex = 0, wrap = false): number {
@@ -200,16 +212,20 @@ function findIndex<T>(array: T[], pred: IPredicate<T>, fromIndex = 0, wrap = fal
 /**
  * Find the index of the last value which matches a predicate.
  *
- * @param array The array of values to be searched.
- * @param pred The predicate function to apply to the values.
- * @param fromIndex The starting index of the search. If this value is
- *   negative, it is taken as an offset from the end of the array. If
- *   this value is positive, it is clamped to `array.length - 1`.
- * @param wrap Whether the search wraps around at the front of the array.
- *   If `true` and the front of the array is reached without finding the
- *   value, the search will wrap to the end of the array and continue
- *   until `fromIndex + 1`.
- * @returns The index of the matching value or `-1` if there is no match.
+ * @param array - The array of values to be searched.
+ *
+ * @param pred - The predicate function to apply to the values.
+ *
+ * @param fromIndex - The starting index of the search. If this value
+ *   is negative, it is taken as an offset from the end of the array.
+ *   If this value is positive, it is clamped to `array.length - 1`.
+ *
+ * @param wrap - Whether the search wraps around at the front of the
+ *   array. If `true` and the front of the array is reached without
+ *   finding the value, the search will wrap to the end of the array
+ *   and continue until `fromIndex + 1`.
+ *
+ * @returns The match index or `-1` if no match is found.
  *
  * #### Notes
  * The range of visited indices is set before the first invocation of
@@ -231,7 +247,7 @@ function findIndex<T>(array: T[], pred: IPredicate<T>, fromIndex = 0, wrap = fal
  * algo.findLastIndex(data, isEven, 0, true);  // 5
  * ```
  *
- * **See also** [[findIndex]], [[findLast]], and [[lastIndexOf]].
+ * **See also** [[findIndex]] and [[lastIndexOf]].
  */
 export
 function findLastIndex<T>(array: T[], pred: IPredicate<T>, fromIndex = -1, wrap = false): number {
@@ -266,16 +282,20 @@ function findLastIndex<T>(array: T[], pred: IPredicate<T>, fromIndex = -1, wrap 
 /**
  * Find the first value in an array which matches a predicate.
  *
- * @param array The array of values to be searched.
- * @param pred The predicate function to apply to the values.
- * @param fromIndex The starting index of the search. If this value is
- *   negative, it is taken as an offset from the end of the array. If
- *   the adjusted value is still negative, it is clamped to `0`.
- * @param wrap Whether the search wraps around at the end of the array.
+ * @param array - The array of values to be searched.
+ *
+ * @param pred - The predicate function to apply to the values.
+ *
+ * @param fromIndex - The starting index of the search. If this value
+ *   is negative, it is taken as an offset from the end of the array.
+ *   If the adjusted value is still negative, it is clamped to `0`.
+ *
+ * @param wrap - Whether the search wraps around at the end of the array.
  *   If `true` and the end of the array is reached without finding the
  *   value, the search will wrap to the front of the array and continue
  *   until `fromIndex - 1`.
- * @returns The matching value or `undefined` if there is no match.
+ *
+ * @returns The match value or `undefined` if no match is found.
  *
  * #### Notes
  * The range of visited indices is set before the first invocation of
@@ -297,7 +317,7 @@ function findLastIndex<T>(array: T[], pred: IPredicate<T>, fromIndex = -1, wrap 
  * algo.find(data, isEven, 6, true);  // 2
  * ```
  *
- * **See also** [[findLast]], [[findIndex]], and [[indexOf]].
+ * **See also** [[findLast]].
  */
 export
 function find<T>(array: T[], pred: IPredicate<T>, fromIndex?: number, wrap?: boolean): T {
@@ -309,16 +329,20 @@ function find<T>(array: T[], pred: IPredicate<T>, fromIndex?: number, wrap?: boo
 /**
  * Find the last value in an array which matches a predicate.
  *
- * @param array The array of values to be searched.
- * @param pred The predicate function to apply to the values.
- * @param fromIndex The starting index of the search. If this value is
- *   negative, it is taken as an offset from the end of the array. If
- *   this value is positive, it is clamped to `array.length - 1`.
- * @param wrap Whether the search wraps around at the front of the array.
- *   If `true` and the front of the array is reached without finding the
- *   value, the search will wrap to the end of the array and continue
- *   until `fromIndex + 1`.
- * @returns The matching value or `undefined` if there is no match.
+ * @param array - The array of values to be searched.
+ *
+ * @param pred - The predicate function to apply to the values.
+ *
+ * @param fromIndex - The starting index of the search. If this value
+ *   is negative, it is taken as an offset from the end of the array.
+ *   If this value is positive, it is clamped to `array.length - 1`.
+ *
+ * @param wrap - Whether the search wraps around at the front of the
+ *   array. If `true` and the front of the array is reached without
+ *   finding the value, the search will wrap to the end of the array
+ *   and continue until `fromIndex + 1`.
+ *
+ * @returns The match value or `undefined` if no match is found.
  *
  * #### Notes
  * The range of visited indices is set before the first invocation of
@@ -340,7 +364,7 @@ function find<T>(array: T[], pred: IPredicate<T>, fromIndex?: number, wrap?: boo
  * algo.findLast(data, isEven, 0, true);  // 2
  * ```
  *
- * **See also** [[find]], [[findLastIndex]], and [[lastIndexOf]].
+ * **See also** [[find]].
  */
 export
 function findLast<T>(array: T[], pred: IPredicate<T>, fromIndex?: number, wrap?: boolean): T {
@@ -354,18 +378,31 @@ function findLast<T>(array: T[], pred: IPredicate<T>, fromIndex?: number, wrap?:
  *
  * The `array` must be sorted in ascending order.
  *
- * @param array The array of values to be searched.
- * @param value The value to locate in the array.
- * @param cmp The comparator function to apply to the values.
- * @returns The index of the matching element or `array.length` if
- *   there is no match.
+ * @param array - The array of values to be searched.
+ *
+ * @param value - The value to locate in the array.
+ *
+ * @param cmp - The comparator function to apply to the values.
+ *
+ * @returns The match index or `array.length` if no match is found.
  *
  * #### Example
  * ```typescript
- * // TODO
+ * import algo = phosphor.collections.algorithm;
+ *
+ * function numberCmp(a: number, b: number): number {
+ *   return a - b;
+ * }
+ *
+ * var data = [0, 3, 4, 7, 7, 9];
+ * algo.lowerBound(data, 0, numberCmp);   // 0
+ * algo.lowerBound(data, 6, numberCmp);   // 3
+ * algo.lowerBound(data, 7, numberCmp);   // 3
+ * algo.lowerBound(data, -1, numberCmp);  // 0
+ * algo.lowerBound(data, 10, numberCmp);  // 6
  * ```
  *
- * **See also** [[upperBound]], [[findLowerIndex]], and [[findLower]].
+ * **See also** [[upperBound]] and [[binaryFindIndex]].
  */
 export
 function lowerBound<T, U>(array: T[], value: U, cmp: IComparator<T, U>): number {
@@ -392,18 +429,31 @@ function lowerBound<T, U>(array: T[], value: U, cmp: IComparator<T, U>): number 
  *
  * The `array` must be sorted in ascending order.
  *
- * @param array The array of values to be searched.
- * @param value The value to locate in the array.
- * @param cmp The comparator function to apply to the values.
- * @returns The index of the matching element or `array.length` if
- *   there is no match.
+ * @param array - The array of values to be searched.
+ *
+ * @param value - The value to locate in the array.
+ *
+ * @param cmp - The comparator function to apply to the values.
+ *
+ * @returns The match index or `array.length` if no match is found.
  *
  * #### Example
  * ```typescript
- * // TODO
+ * import algo = phosphor.collections.algorithm;
+ *
+ * function numberCmp(a: number, b: number): number {
+ *   return a - b;
+ * }
+ *
+ * var data = [0, 3, 4, 7, 7, 9];
+ * algo.upperBound(data, 0, numberCmp);   // 1
+ * algo.upperBound(data, 6, numberCmp);   // 3
+ * algo.upperBound(data, 7, numberCmp);   // 5
+ * algo.upperBound(data, -1, numberCmp);  // 0
+ * algo.upperBound(data, 10, numberCmp);  // 6
  * ```
  *
- * **See also** [[lowerBound]], [[findUpperIndex]], and [[findUpper]].
+ * **See also** [[lowerBound]] and [[binaryFindLastIndex]].
  */
 export
 function upperBound<T, U>(array: T[], value: U, cmp: IComparator<T, U>): number {
@@ -426,15 +476,35 @@ function upperBound<T, U>(array: T[], value: U, cmp: IComparator<T, U>): number 
 
 
 /**
- * Find the index of the first element which is equal to `value`.
+ * Binary search for the first element which compares `==` to `value`.
  *
- * This function uses a binary search. It must be applied to a sorted
- * array in order for the results to be correct.
+ * The `array` must be sorted in ascending order.
  *
- * Returns `-1` if no matching value is found.
+ * @param array - The array of values to be searched.
+ *
+ * @param value - The value to locate in the array.
+ *
+ * @param cmp - The comparator function to apply to the values.
+ *
+ * @returns The match index or `-1` if no match is found.
+ *
+ * #### Example
+ * ```typescript
+ * import algo = phosphor.collections.algorithm;
+ *
+ * function numberCmp(a: number, b: number): number {
+ *   return a - b;
+ * }
+ *
+ * var data = [0, 3, 4, 7, 7, 9];
+ * algo.binaryFindIndex(data, 7, numberCmp);  // 3
+ * algo.binaryFindIndex(data, 6, numberCmp);  // -1
+ * ```
+ *
+ * **See also** [[binaryFindLastIndex]] and [[lowerBound]].
  */
 export
-function findLowerIndex<T, U>(array: T[], value: U, cmp: IComparator<T, U>): number {
+function binaryFindIndex<T, U>(array: T[], value: U, cmp: IComparator<T, U>): number {
   var i = lowerBound(array, value, cmp);
   if (i === array.length) {
     return -1;
@@ -455,7 +525,7 @@ function findLowerIndex<T, U>(array: T[], value: U, cmp: IComparator<T, U>): num
  * Returns `-1` if no matching value is found.
  */
 export
-function findUpperIndex<T, U>(array: T[], value: U, cmp: IComparator<T, U>): number {
+function binaryFindLastIndex<T, U>(array: T[], value: U, cmp: IComparator<T, U>): number {
   var i = upperBound(array, value, cmp);
   if (i === 0) {
     return -1;
@@ -476,8 +546,8 @@ function findUpperIndex<T, U>(array: T[], value: U, cmp: IComparator<T, U>): num
  * Returns `undefined` if no matching value is found.
  */
 export
-function findLower<T, U>(array: T[], value: U, cmp: IComparator<T, U>): T {
-  var i = findLowerIndex(array, value, cmp);
+function binaryFind<T, U>(array: T[], value: U, cmp: IComparator<T, U>): T {
+  var i = binaryFindIndex(array, value, cmp);
   return i !== -1 ? array[i] : void 0;
 }
 
@@ -491,8 +561,8 @@ function findLower<T, U>(array: T[], value: U, cmp: IComparator<T, U>): T {
  * Returns `-1` if no matching value is found.
  */
 export
-function findUpper<T, U>(array: T[], value: U, cmp: IComparator<T, U>): T {
-  var i = findUpperIndex(array, value, cmp);
+function binaryFindLast<T, U>(array: T[], value: U, cmp: IComparator<T, U>): T {
+  var i = binaryFindLastIndex(array, value, cmp);
   return i !== -1 ? array[i] : void 0;
 }
 
