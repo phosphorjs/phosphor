@@ -15,43 +15,37 @@ var phosphor;
             /**
              * Find the index of the first occurrence of a value in an array.
              *
-             * @param array The array of values to be searched.
-             * @param value The value to locate in the array.
-             * @param fromIndex The starting index of the search. If this value is
-             *   negative, it is taken as an offset from the end of the array. If
-             *   the adjusted value is still negative, it is clamped to `0`.
-             * @param wrap Whether the search wraps around at the end of the array.
+             * @param array - The array of values to be searched.
+             *
+             * @param value - The value to locate in the array.
+             *
+             * @param fromIndex - The starting index of the search. If this value
+             *   is negative, it is taken as an offset from the end of the array.
+             *   If the adjusted value is still negative, it is clamped to `0`.
+             *
+             * @param wrap - Whether the search wraps around at the end of the array.
              *   If `true` and the end of the array is reached without finding the
              *   value, the search will wrap to the front of the array and continue
              *   until `fromIndex - 1`.
+             *
              * @returns The index of the value or `-1` if the value is not found.
+             *
+             * #### Notes
+             * Values are compared using the strict equality `===` operator.
              *
              * #### Example
              * ```typescript
              * import algo = phosphor.collections.algorithm;
              *
              * var data = ['zero', 'one', 'two', 'three', 'two', 'one', 'zero'];
-             * var a = algo.indexOf(data, 'two');
-             * var b = algo.indexOf(data, 'two', 3);
-             * var c = algo.indexOf(data, 'two', -4);
-             * var d = algo.indexOf(data, 'two', 5);
-             * var e = algo.indexOf(data, 'two', 5, true);
-             *
-             * console.log('a:', a);
-             * console.log('b:', b);
-             * console.log('c:', c);
-             * console.log('d:', d);
-             * console.log('e:', e);
+             * algo.indexOf(data, 'two');           // 2
+             * algo.indexOf(data, 'two', 3);        // 4
+             * algo.indexOf(data, 'two', -4);       // 4
+             * algo.indexOf(data, 'two', 5);        // -1
+             * algo.indexOf(data, 'two', 5, true);  // 2
              * ```
              *
-             * #### Output
-             * ```
-             * a: 2
-             * b: 4
-             * c: 4
-             * d: -1
-             * e: 2
-             * ```
+             * **See also** [[lastIndexOf]] and [[findIndex]].
              */
             function indexOf(array, value, fromIndex, wrap) {
                 if (fromIndex === void 0) { fromIndex = 0; }
@@ -88,43 +82,37 @@ var phosphor;
             /**
              * Find the index of the last occurrence of a value in an array.
              *
-             * @param array The array of values to be searched.
-             * @param value The value to locate in the array.
-             * @param fromIndex The starting index of the search. If this value is
-             *   negative, it is taken as an offset from the end of the array. If
-             *   the adjusted value is still negative, it is clamped to `length - 1`.
-             * @param wrap Whether the search wraps around at the front of the array.
-             *   If `true` and the front of the array is reached without finding the
-             *   value, the search will wrap to the end of the array and continue
-             *   until `fromIndex + 1`.
+             * @param array - The array of values to be searched.
+             *
+             * @param value - The value to locate in the array.
+             *
+             * @param fromIndex - The starting index of the search. If this value
+             *   is negative, it is taken as an offset from the end of the array.
+             *   If this value is positive, it is clamped to `array.length - 1`.
+             *
+             * @param wrap - Whether the search wraps around at the front of the
+             *   array. If `true` and the front of the array is reached without
+             *   finding the value, the search will wrap to the end of the array
+             *   and continue until `fromIndex + 1`.
+             *
              * @returns The index of the value or `-1` if the value is not found.
+             *
+             * #### Notes
+             * Values are compared using the strict equality `===` operator.
              *
              * #### Example
              * ```typescript
              * import algo = phosphor.collections.algorithm;
              *
              * var data = ['zero', 'one', 'two', 'three', 'two', 'one', 'zero'];
-             * var a = algo.lastIndexOf(data, 'two');
-             * var b = algo.lastIndexOf(data, 'two', 3);
-             * var c = algo.lastIndexOf(data, 'two', -4);
-             * var d = algo.lastIndexOf(data, 'two', 1);
-             * var e = algo.lastIndexOf(data, 'two', 1, true);
-             *
-             * console.log('a:', a);
-             * console.log('b:', b);
-             * console.log('c:', c);
-             * console.log('d:', d);
-             * console.log('e:', e);
+             * algo.lastIndexOf(data, 'two');           // 4
+             * algo.lastIndexOf(data, 'two', 3);        // 2
+             * algo.lastIndexOf(data, 'two', -4);       // 2
+             * algo.lastIndexOf(data, 'two', 1);        // -1
+             * algo.lastIndexOf(data, 'two', 1, true);  // 4
              * ```
              *
-             * #### Output
-             * ```
-             * a: 4
-             * b: 2
-             * c: 2
-             * d: -1
-             * e: 4
-             * ```
+             * **See also** [[indexOf]] and [[findLastIndex]].
              */
             function lastIndexOf(array, value, fromIndex, wrap) {
                 if (fromIndex === void 0) { fromIndex = -1; }
@@ -159,19 +147,44 @@ var phosphor;
             }
             algorithm.lastIndexOf = lastIndexOf;
             /**
-             * Find the index of the first element which passes the test.
+             * Find the index of the first value which matches a predicate.
              *
-             * The `fromIndex` parameter controls the starting index of the search.
-             * If the value is negative, it is offset from the end of the array. If
-             * the adjusted value is still negative, it will be clamped to `0`. The
-             * default index is `0`.
+             * @param array - The array of values to be searched.
              *
-             * The `wrap` parameter controls the search wrap-around. If true, the
-             * search will wrap-around at the end of the array and continue until
-             * reaching the element just before the starting element. The default
-             * wrap value is `false`.
+             * @param pred - The predicate function to apply to the values.
              *
-             * Returns `-1` if no element passes the test.
+             * @param fromIndex - The starting index of the search. If this value
+             *   is negative, it is taken as an offset from the end of the array.
+             *   If the adjusted value is still negative, it is clamped to `0`.
+             *
+             * @param wrap - Whether the search wraps around at the end of the array.
+             *   If `true` and the end of the array is reached without finding the
+             *   value, the search will wrap to the front of the array and continue
+             *   until `fromIndex - 1`.
+             *
+             * @returns The match index or `-1` if no match is found.
+             *
+             * #### Notes
+             * The range of visited indices is set before the first invocation of
+             * `pred`. It is not safe for `pred` to change the length of `array`.
+             *
+             * #### Example
+             * ```typescript
+             * import algo = phosphor.collections.algorithm;
+             *
+             * function isEven(value: number): boolean {
+             *   return value % 2 === 0;
+             * }
+             *
+             * var data = [1, 2, 3, 4, 3, 2, 1];
+             * algo.findIndex(data, isEven);           // 1
+             * algo.findIndex(data, isEven, 4);        // 5
+             * algo.findIndex(data, isEven, -4);       // 3
+             * algo.findIndex(data, isEven, 6);        // -1
+             * algo.findIndex(data, isEven, 6, true);  // 1
+             * ```
+             *
+             * **See also** [[findLastIndex]] and [[indexOf]].
              */
             function findIndex(array, pred, fromIndex, wrap) {
                 if (fromIndex === void 0) { fromIndex = 0; }
@@ -206,19 +219,44 @@ var phosphor;
             }
             algorithm.findIndex = findIndex;
             /**
-             * Find the index of the last element which passes the test.
+             * Find the index of the last value which matches a predicate.
              *
-             * The `fromIndex` parameter controls the starting index of the search.
-             * If the value is negative, it is offset from the end of the array. If
-             * the value is greater than the last index, it will be clamped to the
-             * last index. The default index is `-1`.
+             * @param array - The array of values to be searched.
              *
-             * The `wrap` parameter controls the search wrap-around. If true, the
-             * search will wrap-around at the front of the array and continue until
-             * reaching the element just after the starting element. The default
-             * wrap value is `false`.
+             * @param pred - The predicate function to apply to the values.
              *
-             * Returns `-1` if no element passes the test.
+             * @param fromIndex - The starting index of the search. If this value
+             *   is negative, it is taken as an offset from the end of the array.
+             *   If this value is positive, it is clamped to `array.length - 1`.
+             *
+             * @param wrap - Whether the search wraps around at the front of the
+             *   array. If `true` and the front of the array is reached without
+             *   finding the value, the search will wrap to the end of the array
+             *   and continue until `fromIndex + 1`.
+             *
+             * @returns The match index or `-1` if no match is found.
+             *
+             * #### Notes
+             * The range of visited indices is set before the first invocation of
+             * `pred`. It is not safe for `pred` to change the length of `array`.
+             *
+             * #### Example
+             * ```typescript
+             * import algo = phosphor.collections.algorithm;
+             *
+             * function isEven(value: number): boolean {
+             *   return value % 2 === 0;
+             * }
+             *
+             * var data = [1, 2, 3, 4, 3, 2, 1];
+             * algo.findLastIndex(data, isEven);           // 5
+             * algo.findLastIndex(data, isEven, 4);        // 3
+             * algo.findLastIndex(data, isEven, -5);       // 1
+             * algo.findLastIndex(data, isEven, 0);        // -1
+             * algo.findLastIndex(data, isEven, 0, true);  // 5
+             * ```
+             *
+             * **See also** [[findIndex]] and [[lastIndexOf]].
              */
             function findLastIndex(array, pred, fromIndex, wrap) {
                 if (fromIndex === void 0) { fromIndex = -1; }
@@ -253,19 +291,44 @@ var phosphor;
             }
             algorithm.findLastIndex = findLastIndex;
             /**
-             * Find the first element in the array which passes the given test.
+             * Find the first value in an array which matches a predicate.
              *
-             * The `fromIndex` parameter controls the starting index of the search.
-             * If the value is negative, it is offset from the end of the array. If
-             * the adjusted value is still negative, it will be clamped to `0`. The
-             * default index is `0`.
+             * @param array - The array of values to be searched.
              *
-             * The `wrap` parameter controls the search wrap-around. If true, the
-             * search will wrap-around at the end of the array and continue until
-             * reaching the element just before the starting element. The default
-             * wrap value is `false`.
+             * @param pred - The predicate function to apply to the values.
              *
-             * Returns `undefined` if no element passes the test.
+             * @param fromIndex - The starting index of the search. If this value
+             *   is negative, it is taken as an offset from the end of the array.
+             *   If the adjusted value is still negative, it is clamped to `0`.
+             *
+             * @param wrap - Whether the search wraps around at the end of the array.
+             *   If `true` and the end of the array is reached without finding the
+             *   value, the search will wrap to the front of the array and continue
+             *   until `fromIndex - 1`.
+             *
+             * @returns The match value or `undefined` if no match is found.
+             *
+             * #### Notes
+             * The range of visited indices is set before the first invocation of
+             * `pred`. It is not safe for `pred` to change the length of `array`.
+             *
+             * #### Example
+             * ```typescript
+             * import algo = phosphor.collections.algorithm;
+             *
+             * function isEven(value: number): boolean {
+             *   return value % 2 === 0;
+             * }
+             *
+             * var data = [1, 2, 3, 4, 3, 2, 1];
+             * algo.find(data, isEven);           // 2
+             * algo.find(data, isEven, 4);        // 2
+             * algo.find(data, isEven, -5);       // 4
+             * algo.find(data, isEven, 6);        // undefined
+             * algo.find(data, isEven, 6, true);  // 2
+             * ```
+             *
+             * **See also** [[findLast]].
              */
             function find(array, pred, fromIndex, wrap) {
                 var i = findIndex(array, pred, fromIndex, wrap);
@@ -273,19 +336,44 @@ var phosphor;
             }
             algorithm.find = find;
             /**
-             * Find the last element in the array which passes the given test.
+             * Find the last value in an array which matches a predicate.
              *
-             * The `fromIndex` parameter controls the starting index of the search.
-             * If the value is negative, it is offset from the end of the array. If
-             * the value is greater than the last index, it will be clamped to the
-             * last index. The default index is `-1`.
+             * @param array - The array of values to be searched.
              *
-             * The `wrap` parameter controls the search wrap-around. If true, the
-             * search will wrap-around at the front of the array and continue until
-             * reaching the element just after the starting element. The default
-             * wrap value is `false`.
+             * @param pred - The predicate function to apply to the values.
              *
-             * Returns `undefined` if no element passes the test.
+             * @param fromIndex - The starting index of the search. If this value
+             *   is negative, it is taken as an offset from the end of the array.
+             *   If this value is positive, it is clamped to `array.length - 1`.
+             *
+             * @param wrap - Whether the search wraps around at the front of the
+             *   array. If `true` and the front of the array is reached without
+             *   finding the value, the search will wrap to the end of the array
+             *   and continue until `fromIndex + 1`.
+             *
+             * @returns The match value or `undefined` if no match is found.
+             *
+             * #### Notes
+             * The range of visited indices is set before the first invocation of
+             * `pred`. It is not safe for `pred` to change the length of `array`.
+             *
+             * #### Example
+             * ```typescript
+             * import algo = phosphor.collections.algorithm;
+             *
+             * function isEven(value: number): boolean {
+             *   return value % 2 === 0;
+             * }
+             *
+             * var data = [1, 2, 3, 4, 3, 2, 1];
+             * algo.findLast(data, isEven);           // 2
+             * algo.findLast(data, isEven, 4);        // 4
+             * algo.findLast(data, isEven, -1);       // 2
+             * algo.findLast(data, isEven, 0);        // undefined
+             * algo.findLast(data, isEven, 0, true);  // 2
+             * ```
+             *
+             * **See also** [[find]].
              */
             function findLast(array, pred, fromIndex, wrap) {
                 var i = findLastIndex(array, pred, fromIndex, wrap);
@@ -293,12 +381,35 @@ var phosphor;
             }
             algorithm.findLast = findLast;
             /**
-             * Find the index of the first element which is not less than `value`.
+             * Binary search for the first element which compares `<=` to `value`.
              *
-             * This function uses a binary search. It must be applied to a sorted
-             * array in order for the results to be correct.
+             * The `array` must be sorted in ascending order.
              *
-             * Returns `array.length` if all elements are less than `value`.
+             * @param array - The array of values to be searched.
+             *
+             * @param value - The value to locate in the array.
+             *
+             * @param cmp - The comparator function to apply to the values.
+             *
+             * @returns The match index or `array.length` if no match is found.
+             *
+             * #### Example
+             * ```typescript
+             * import algo = phosphor.collections.algorithm;
+             *
+             * function numberCmp(a: number, b: number): number {
+             *   return a - b;
+             * }
+             *
+             * var data = [0, 3, 4, 7, 7, 9];
+             * algo.lowerBound(data, 0, numberCmp);   // 0
+             * algo.lowerBound(data, 6, numberCmp);   // 3
+             * algo.lowerBound(data, 7, numberCmp);   // 3
+             * algo.lowerBound(data, -1, numberCmp);  // 0
+             * algo.lowerBound(data, 10, numberCmp);  // 6
+             * ```
+             *
+             * **See also** [[upperBound]] and [[binaryFindIndex]].
              */
             function lowerBound(array, value, cmp) {
                 var begin = 0;
@@ -320,12 +431,35 @@ var phosphor;
             }
             algorithm.lowerBound = lowerBound;
             /**
-             * Find the index of the first element which is greater than `value`.
+             * Binary search for the first element which compares `>` than `value`.
              *
-             * This function uses a binary search. It must be applied to a sorted
-             * array in order for the results to be correct.
+             * The `array` must be sorted in ascending order.
              *
-             * Returns `array.length` if no element is greater than `value`.
+             * @param array - The array of values to be searched.
+             *
+             * @param value - The value to locate in the array.
+             *
+             * @param cmp - The comparator function to apply to the values.
+             *
+             * @returns The match index or `array.length` if no match is found.
+             *
+             * #### Example
+             * ```typescript
+             * import algo = phosphor.collections.algorithm;
+             *
+             * function numberCmp(a: number, b: number): number {
+             *   return a - b;
+             * }
+             *
+             * var data = [0, 3, 4, 7, 7, 9];
+             * algo.upperBound(data, 0, numberCmp);   // 1
+             * algo.upperBound(data, 6, numberCmp);   // 3
+             * algo.upperBound(data, 7, numberCmp);   // 5
+             * algo.upperBound(data, -1, numberCmp);  // 0
+             * algo.upperBound(data, 10, numberCmp);  // 6
+             * ```
+             *
+             * **See also** [[lowerBound]] and [[binaryFindLastIndex]].
              */
             function upperBound(array, value, cmp) {
                 var begin = 0;
@@ -347,14 +481,34 @@ var phosphor;
             }
             algorithm.upperBound = upperBound;
             /**
-             * Find the index of the first element which is equal to `value`.
+             * Binary search for the first element which compares `==` to `value`.
              *
-             * This function uses a binary search. It must be applied to a sorted
-             * array in order for the results to be correct.
+             * The `array` must be sorted in ascending order.
              *
-             * Returns `-1` if no matching value is found.
+             * @param array - The array of values to be searched.
+             *
+             * @param value - The value to locate in the array.
+             *
+             * @param cmp - The comparator function to apply to the values.
+             *
+             * @returns The match index or `-1` if no match is found.
+             *
+             * #### Example
+             * ```typescript
+             * import algo = phosphor.collections.algorithm;
+             *
+             * function numberCmp(a: number, b: number): number {
+             *   return a - b;
+             * }
+             *
+             * var data = [0, 3, 4, 7, 7, 9];
+             * algo.binaryFindIndex(data, 7, numberCmp);  // 3
+             * algo.binaryFindIndex(data, 6, numberCmp);  // -1
+             * ```
+             *
+             * **See also** [[binaryFindLastIndex]] and [[lowerBound]].
              */
-            function findLowerIndex(array, value, cmp) {
+            function binaryFindIndex(array, value, cmp) {
                 var i = lowerBound(array, value, cmp);
                 if (i === array.length) {
                     return -1;
@@ -364,7 +518,7 @@ var phosphor;
                 }
                 return -1;
             }
-            algorithm.findLowerIndex = findLowerIndex;
+            algorithm.binaryFindIndex = binaryFindIndex;
             /**
              * Find the index of the last element which is equal to `value`.
              *
@@ -373,7 +527,7 @@ var phosphor;
              *
              * Returns `-1` if no matching value is found.
              */
-            function findUpperIndex(array, value, cmp) {
+            function binaryFindLastIndex(array, value, cmp) {
                 var i = upperBound(array, value, cmp);
                 if (i === 0) {
                     return -1;
@@ -383,7 +537,7 @@ var phosphor;
                 }
                 return -1;
             }
-            algorithm.findUpperIndex = findUpperIndex;
+            algorithm.binaryFindLastIndex = binaryFindLastIndex;
             /**
              * Find the first element which is equal to `value`.
              *
@@ -392,11 +546,11 @@ var phosphor;
              *
              * Returns `undefined` if no matching value is found.
              */
-            function findLower(array, value, cmp) {
-                var i = findLowerIndex(array, value, cmp);
+            function binaryFind(array, value, cmp) {
+                var i = binaryFindIndex(array, value, cmp);
                 return i !== -1 ? array[i] : void 0;
             }
-            algorithm.findLower = findLower;
+            algorithm.binaryFind = binaryFind;
             /**
              * Find the index of the last element which is equal to `value`.
              *
@@ -405,11 +559,11 @@ var phosphor;
              *
              * Returns `-1` if no matching value is found.
              */
-            function findUpper(array, value, cmp) {
-                var i = findUpperIndex(array, value, cmp);
+            function binaryFindLast(array, value, cmp) {
+                var i = binaryFindLastIndex(array, value, cmp);
                 return i !== -1 ? array[i] : void 0;
             }
-            algorithm.findUpper = findUpper;
+            algorithm.binaryFindLast = binaryFindLast;
             /**
              * Create a shallow copy of the given array.
              */
