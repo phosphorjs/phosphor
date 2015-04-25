@@ -8,7 +8,7 @@
 module phosphor.collections.algorithm {
 
 /**
- * Find the index of the first occurrence of a value.
+ * Find the index of the first occurrence of a value in an array.
  *
  * @param array - The array of values to be searched.
  *
@@ -23,7 +23,8 @@ module phosphor.collections.algorithm {
  *   value, the search will wrap to the front of the array and continue
  *   until one before `fromIndex`.
  *
- * @returns The index of the value or `-1` if the value is not found.
+ * @returns The index of the first occurrence of `value` in `array`,
+ *   or `-1` if `value` is not in `array`.
  *
  * #### Notes
  * Values are compared using the strict equality `===` operator.
@@ -74,7 +75,7 @@ function indexOf<T>(array: T[], value: T, fromIndex = 0, wrap = false): number {
 
 
 /**
- * Find the index of the last occurrence of a value.
+ * Find the index of the last occurrence of a value in an array.
  *
  * @param array - The array of values to be searched.
  *
@@ -89,7 +90,8 @@ function indexOf<T>(array: T[], value: T, fromIndex = 0, wrap = false): number {
  *   finding the value, the search will wrap to the end of the array
  *   and continue until one after `fromIndex`.
  *
- * @returns The index of the value or `-1` if the value is not found.
+ * @returns The index of the last occurrence of `value` in `array`,
+ *   or `-1` if `value` is not in `array`.
  *
  * #### Notes
  * Values are compared using the strict equality `===` operator.
@@ -139,7 +141,7 @@ function lastIndexOf<T>(array: T[], value: T, fromIndex = -1, wrap = false): num
 
 
 /**
- * Find the index of the first value which matches a predicate.
+ * Find the index of the first value in an array which matches a predicate.
  *
  * @param array - The array of values to be searched.
  *
@@ -154,7 +156,8 @@ function lastIndexOf<T>(array: T[], value: T, fromIndex = -1, wrap = false): num
  *   value, the search will wrap to the front of the array and continue
  *   until one before `fromIndex`.
  *
- * @returns The match index or `-1` if no match is found.
+ * @returns The index of the first matching value, or `-1` if no value
+ *   matches the predicate.
  *
  * #### Notes
  * The range of visited indices is set before the first invocation of
@@ -210,7 +213,7 @@ function findIndex<T>(array: T[], pred: IPredicate<T>, fromIndex = 0, wrap = fal
 
 
 /**
- * Find the index of the last value which matches a predicate.
+ * Find the index of the last value in an array which matches a predicate.
  *
  * @param array - The array of values to be searched.
  *
@@ -225,7 +228,8 @@ function findIndex<T>(array: T[], pred: IPredicate<T>, fromIndex = 0, wrap = fal
  *   finding the value, the search will wrap to the end of the array
  *   and continue until one after `fromIndex`.
  *
- * @returns The match index or `-1` if no match is found.
+ * @returns The index of the last matching value, or `-1` if no value
+ *   matches the predicate.
  *
  * #### Notes
  * The range of visited indices is set before the first invocation of
@@ -280,7 +284,7 @@ function findLastIndex<T>(array: T[], pred: IPredicate<T>, fromIndex = -1, wrap 
 
 
 /**
- * Find the first value which matches a predicate.
+ * Find the first value in an array which matches a predicate.
  *
  * @param array - The array of values to be searched.
  *
@@ -295,7 +299,8 @@ function findLastIndex<T>(array: T[], pred: IPredicate<T>, fromIndex = -1, wrap 
  *   value, the search will wrap to the front of the array and continue
  *   until one before `fromIndex`.
  *
- * @returns The match value or `undefined` if no match is found.
+ * @returns The first matching value, or `undefined` if no value matches
+ *   the predicate.
  *
  * #### Notes
  * The range of visited indices is set before the first invocation of
@@ -327,7 +332,7 @@ function find<T>(array: T[], pred: IPredicate<T>, fromIndex?: number, wrap?: boo
 
 
 /**
- * Find the last value which matches a predicate.
+ * Find the last value in an array which matches a predicate.
  *
  * @param array - The array of values to be searched.
  *
@@ -342,7 +347,8 @@ function find<T>(array: T[], pred: IPredicate<T>, fromIndex?: number, wrap?: boo
  *   finding the value, the search will wrap to the end of the array
  *   and continue until one after `fromIndex`.
  *
- * @returns The match value or `undefined` if no match is found.
+ * @returns The last matching value, or `undefined` if no value matches
+ *   the predicate.
  *
  * #### Notes
  * The range of visited indices is set before the first invocation of
@@ -374,7 +380,8 @@ function findLast<T>(array: T[], pred: IPredicate<T>, fromIndex?: number, wrap?:
 
 
 /**
- * Binary find the index of the first element which is `<=` to `value`.
+ * Using a binary search, find the index of the first element in an
+ * array which compares `<=` to a value.
  *
  * @param array - The array of values to be searched. It must be sorted
  *   in ascending order.
@@ -383,7 +390,8 @@ function findLast<T>(array: T[], pred: IPredicate<T>, fromIndex?: number, wrap?:
  *
  * @param cmp - The comparator function to apply to the values.
  *
- * @returns The element index or `array.length` if no element is found.
+ * @returns The index of the first element which compares `<=` to
+ *   `value`, or `array.length` if `array` has no such element.
  *
  * #### Example
  * ```typescript
@@ -424,7 +432,8 @@ function lowerBound<T, U>(array: T[], value: U, cmp: IComparator<T, U>): number 
 
 
 /**
- * Binary find the index of the first element which is `>` than `value`.
+ * Using a binary search, find the index of the first element in an
+ * array which compares `>` than a value.
  *
  * @param array - The array of values to be searched. It must be sorted
  *   in ascending order.
@@ -433,7 +442,8 @@ function lowerBound<T, U>(array: T[], value: U, cmp: IComparator<T, U>): number 
  *
  * @param cmp - The comparator function to apply to the values.
  *
- * @returns The element index or `array.length` if no element is found.
+ * @returns The index of the first element which compares `>` than
+ *   `value`, or `array.length` if `array` has no such element.
  *
  * #### Example
  * ```typescript
@@ -474,7 +484,8 @@ function upperBound<T, U>(array: T[], value: U, cmp: IComparator<T, U>): number 
 
 
 /**
- * Binary find the index of the first element which is `==` to `value`.
+ * Using a binary search, find the index of the first element in an
+ * array which compares `==` to a value.
  *
  * @param array - The array of values to be searched. It must be sorted
  *   in ascending order.
@@ -483,7 +494,8 @@ function upperBound<T, U>(array: T[], value: U, cmp: IComparator<T, U>): number 
  *
  * @param cmp - The comparator function to apply to the values.
  *
- * @returns The element index or `-1` if no element is found.
+ * @returns The index of the first element which compares `==` to
+ *   `value`, or `array.length` if `array` has no such element.
  *
  * #### Example
  * ```typescript
@@ -514,7 +526,8 @@ function binaryFindIndex<T, U>(array: T[], value: U, cmp: IComparator<T, U>): nu
 
 
 /**
- * Binary find the index of the last element which is `==` to `value`.
+ * Using a binary search, find the index of the last element in an
+ * array which compares `==` to a value.
  *
  * @param array - The array of values to be searched. It must be sorted
  *   in ascending order.
@@ -523,7 +536,8 @@ function binaryFindIndex<T, U>(array: T[], value: U, cmp: IComparator<T, U>): nu
  *
  * @param cmp - The comparator function to apply to the values.
  *
- * @returns The element index or `-1` if no element is found.
+ * @returns The index of the last element which compares `==` to
+ *   `value`, or `array.length` if `array` has no such element.
  *
  * #### Example
  * ```typescript
@@ -554,12 +568,45 @@ function binaryFindLastIndex<T, U>(array: T[], value: U, cmp: IComparator<T, U>)
 
 
 /**
- * Find the first element which is equal to `value`.
+ * Using a binary search, find the first element in an array which
+ * compares `==` to a value.
  *
- * This function uses a binary search. It must be applied to a sorted
- * array in order for the results to be correct.
+ * @param array - The array of values to be searched. It must be sorted
+ *   in ascending order.
  *
- * Returns `undefined` if no matching value is found.
+ * @param value - The value to locate in the array.
+ *
+ * @param cmp - The comparator function to apply to the values.
+ *
+ * @returns The first element which compares `==` to `value`, or
+ *   `undefined` if `array` has no such element.
+ *
+ * #### Example
+ * ```typescript
+ * import algo = phosphor.collections.algorithm;
+ *
+ * interface IPair {
+ *   rank: number;
+ *   value: string;
+ * }
+ *
+ * var data: IPair[] = [
+ *   { rank: 0, value: 'zero' },
+ *   { rank: 3, value: 'three' },
+ *   { rank: 7, value: 'seven-A' },
+ *   { rank: 7, value: 'seven-B' },
+ *   { rank: 9, value: 'nine' },
+ * ];
+ *
+ * function rankCmp(pair: IPair, rank: number): number {
+ *   return pair.rank - rank;
+ * }
+ *
+ * algo.binaryFind(data, 7, rankCmp);  // { rank: 7, value: 'seven-A' }
+ * algo.binaryFind(data, 8, rankCmp);  // undefined
+ * ```
+ *
+ * **See also** [[binaryFindLast]] and [[find]].
  */
 export
 function binaryFind<T, U>(array: T[], value: U, cmp: IComparator<T, U>): T {
@@ -569,12 +616,45 @@ function binaryFind<T, U>(array: T[], value: U, cmp: IComparator<T, U>): T {
 
 
 /**
- * Find the index of the last element which is equal to `value`.
+ * Using a binary search, find the last element in an array which
+ * compares `==` to a value.
  *
- * This uses a binary search algorithm which must be applied to a
- * sorted array in order for the results to be correct.
+ * @param array - The array of values to be searched. It must be sorted
+ *   in ascending order.
  *
- * Returns `-1` if no matching value is found.
+ * @param value - The value to locate in the array.
+ *
+ * @param cmp - The comparator function to apply to the values.
+ *
+ * @returns The last element which compares `==` to `value`, or
+ *   `undefined` if `array` has no such element.
+ *
+ * #### Example
+ * ```typescript
+ * import algo = phosphor.collections.algorithm;
+ *
+ * interface IPair {
+ *   rank: number;
+ *   value: string;
+ * }
+ *
+ * var data: IPair[] = [
+ *   { rank: 0, value: 'zero' },
+ *   { rank: 3, value: 'three' },
+ *   { rank: 7, value: 'seven-A' },
+ *   { rank: 7, value: 'seven-B' },
+ *   { rank: 9, value: 'nine' },
+ * ];
+ *
+ * function rankCmp(pair: IPair, rank: number): number {
+ *   return pair.rank - rank;
+ * }
+ *
+ * algo.binaryFindLast(data, 7, rankCmp);  // { rank: 7, value: 'seven-B' }
+ * algo.binaryFindLast(data, 8, rankCmp);  // undefined
+ * ```
+ *
+ * **See also** [[binaryFind]] and [[findLast]].
  */
 export
 function binaryFindLast<T, U>(array: T[], value: U, cmp: IComparator<T, U>): T {
