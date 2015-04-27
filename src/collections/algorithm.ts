@@ -664,7 +664,26 @@ function binaryFindLast<T, U>(array: T[], value: U, cmp: IComparator<T, U>): T {
 
 
 /**
- * Create a shallow copy of the given array.
+ * Create a shallow copy of an array.
+ *
+ * @param array - The array of values to copy.
+ *
+ * @returns A shallow copy of `array`.
+ *
+ * #### Notes
+ * This function assumes that `array` does not have holes.
+ *
+ * The result array is pre-allocated, which is typically the fastest
+ * option for arrays `<` 100k elements. Use this function when copy
+ * performance of small arrays is critical.
+ *
+ * #### Example
+ * ```typescript
+ * import algo = phosphor.collections.algorithm;
+ *
+ * var data = [0, 1, 2, 3, 4];
+ * algo.copy(data);  // [0, 1, 2, 3, 4];
+ * ```
  */
 export
 function copy<T>(array: T[]): T[] {
@@ -678,14 +697,34 @@ function copy<T>(array: T[]): T[] {
 
 
 /**
- * Insert an element at the given index.
+ * Insert an element into an array at a specified index.
  *
- * If `index` is negative, it will be offset from the end of the array.
- * If the adjusted value is still negative, it will be clamped to `0`.
- * If `index` is greater than `array.length`, it will be clamped to
- * `array.length`.
+ * @param array - The array of values to modify.
  *
- * Returns the index at which the element was inserted.
+ * @param index - The index at which to insert the value. If this value
+ *   is negative, it is taken as an offset from the end of the array. If
+ *   the adjusted value is still negative, it is clamped to `0`. If this
+ *   value is positive, it is clamped to `array.length`.
+ *
+ * @param value - The value to insert into the array.
+ *
+ * @returns The index at which the value was inserted.
+ *
+ * #### Notes
+ * This function assumes that `array` does not have holes.
+ *
+ * #### Example
+ * ```typescript
+ * import algo = phosphor.collections.algorithm;
+ *
+ * var data = [0, 1, 2, 3, 4];
+ * algo.insert(data, 0, 12);  // 0
+ * algo.insert(data, 3, 42);  // 3
+ * algo.insert(data, 9, 19);  // 7
+ * algo.insert(data, -9, 9);  // 0
+ * algo.insert(data, -2, 8);  // 7
+ * console.log(data);         // [9, 12, 0, 1, 42, 2, 3, 8, 4, 19]
+ * ```
  */
 export
 function insert<T>(array: T[], index: number, value: T): number {
@@ -708,15 +747,27 @@ function insert<T>(array: T[], index: number, value: T): number {
 
 
 /**
- * Move an array element from one index to another.
+ * Move an element in an array from one index to another.
  *
- * If `fromIndex` is negative, it will be offset from the end of the
- * array. If the adjusted value is out of range, `-1` will be returned.
+ * @param array - The array of values to modify.
  *
- * If `toIndex` is negative, it will be offset from the end of the
- * array. If the adjusted value is out of range, it will be clamped.
+ * @param fromIndex - The index of the element to move. If this value
+ *   is negative, it is taken as an offset from the end of the array.
+ *   If the adjusted value is not a valid index, the array will not
+ *   be modified and `-1` will be returned.
  *
- * Returns the final index of the moved element.
+ * @param toIndex - The target index of the element. If this value is
+ *   negative, it is taken as an offset from the end of the array. If
+ *   the adjusted value is still negative, it is clamped to `0`. If
+ *   this value is positive, it is clamped to `array.length - 1`.
+ *
+ * @returns The index to which the element was moved, or `-1` if
+ *   `fromIndex` is invalid.
+ *
+ * #### Example
+ * ```typescript
+ * // TODO
+ * ```
  */
 export
 function move<T>(array: T[], fromIndex: number, toIndex: number): number {
