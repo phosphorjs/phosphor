@@ -390,8 +390,8 @@ function findLast<T>(array: T[], pred: IPredicate<T>, fromIndex?: number, wrap?:
  *
  * @param cmp - The comparator function to apply to the values.
  *
- * @returns The index of the first element which compares `<=` to
- *   `value`, or `array.length` if `array` has no such element.
+ * @returns The index of the first element in `array` which compares
+ *   `<=` to `value`, or `array.length` if there is no such element.
  *
  * #### Example
  * ```typescript
@@ -442,8 +442,8 @@ function lowerBound<T, U>(array: T[], value: U, cmp: IComparator<T, U>): number 
  *
  * @param cmp - The comparator function to apply to the values.
  *
- * @returns The index of the first element which compares `>` than
- *   `value`, or `array.length` if `array` has no such element.
+ * @returns The index of the first element in `array` which compares
+ *   `>` than `value`, or `array.length` if there is no such element.
  *
  * #### Example
  * ```typescript
@@ -494,8 +494,8 @@ function upperBound<T, U>(array: T[], value: U, cmp: IComparator<T, U>): number 
  *
  * @param cmp - The comparator function to apply to the values.
  *
- * @returns The index of the first element which compares `==` to
- *   `value`, or `array.length` if `array` has no such element.
+ * @returns The index of the first element in `array` which compares
+ *   `==` to `value`, or `-1` if there is no such element.
  *
  * #### Example
  * ```typescript
@@ -536,8 +536,8 @@ function binaryFindIndex<T, U>(array: T[], value: U, cmp: IComparator<T, U>): nu
  *
  * @param cmp - The comparator function to apply to the values.
  *
- * @returns The index of the last element which compares `==` to
- *   `value`, or `array.length` if `array` has no such element.
+ * @returns The index of the last element in `array` which compares
+ *   `==` to `value`, or `-1` if there is no such element.
  *
  * #### Example
  * ```typescript
@@ -578,8 +578,8 @@ function binaryFindLastIndex<T, U>(array: T[], value: U, cmp: IComparator<T, U>)
  *
  * @param cmp - The comparator function to apply to the values.
  *
- * @returns The first element which compares `==` to `value`, or
- *   `undefined` if `array` has no such element.
+ * @returns The first element in `array` which compares `==` to
+ *   `value`, or `undefined` if there is no such element.
  *
  * #### Example
  * ```typescript
@@ -626,8 +626,8 @@ function binaryFind<T, U>(array: T[], value: U, cmp: IComparator<T, U>): T {
  *
  * @param cmp - The comparator function to apply to the values.
  *
- * @returns The last element which compares `==` to `value`, or
- *   `undefined` if `array` has no such element.
+ * @returns The last element in `array` which compares `==` to
+ *   `value`, or `undefined` if there is no such element.
  *
  * #### Example
  * ```typescript
