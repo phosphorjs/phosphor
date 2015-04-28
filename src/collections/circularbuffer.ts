@@ -93,7 +93,7 @@ class CircularBuffer<T> {
   pushBack(value: T): void {
     this._set(this._size, value);
     if (this._size === this._array.length) {
-      this._increment();
+      this._incr();
     } else {
       this._size++;
     }
@@ -105,7 +105,7 @@ class CircularBuffer<T> {
    * If the buffer is full, the back element will be overwritten.
    */
   pushFront(value: T): void {
-    this._decrement();
+    this._decr();
     this._set(0, value);
     if (this._size < this._array.length) {
       this._size++;
@@ -130,7 +130,7 @@ class CircularBuffer<T> {
       return void 0;
     }
     var value = this._rem(0);
-    this._increment();
+    this._incr();
     this._size--;
     return value;
   }
@@ -247,7 +247,7 @@ class CircularBuffer<T> {
   /**
    * Increment the offset by one.
    */
-  private _increment(): void {
+  private _incr(): void {
     if (this._offset === this._array.length - 1) {
       this._offset = 0;
     } else {
@@ -258,7 +258,7 @@ class CircularBuffer<T> {
   /**
    * Decrement the offset by one.
    */
-  private _decrement(): void {
+  private _decr(): void {
     if (this._offset === 0) {
       this._offset = this._array.length - 1;
     } else {
