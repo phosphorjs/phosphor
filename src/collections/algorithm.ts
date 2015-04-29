@@ -671,8 +671,6 @@ function binaryFindLast<T, U>(array: T[], value: U, cmp: IComparator<T, U>): T {
  * @returns A shallow copy of `array`.
  *
  * #### Notes
- * This function assumes that `array` does not have holes.
- *
  * The result array is pre-allocated, which is typically the fastest
  * option for arrays `<` 100k elements. Use this function when copy
  * performance of small arrays is critical.
@@ -710,9 +708,6 @@ function copy<T>(array: T[]): T[] {
  *
  * @returns The index at which the value was inserted.
  *
- * #### Notes
- * This function assumes that `array` does not have holes.
- *
  * #### Example
  * ```typescript
  * import algo = phosphor.collections.algorithm;
@@ -725,6 +720,8 @@ function copy<T>(array: T[]): T[] {
  * algo.insert(data, -2, 8);  // 7
  * console.log(data);         // [9, 12, 0, 1, 42, 2, 3, 8, 4, 19]
  * ```
+ *
+ * **See also** [[removeAt]] and [[remove]].
  */
 export
 function insert<T>(array: T[], index: number, value: T): number {
@@ -766,7 +763,14 @@ function insert<T>(array: T[], index: number, value: T): number {
  *
  * #### Example
  * ```typescript
- * // TODO
+ * import algo = phosphor.collections.algorithm;
+ *
+ * var data = [0, 1, 2, 3, 4];
+ * algo.move(data, 1, 2);   // 2
+ * algo.move(data, -1, 0);  // 0
+ * algo.move(data, 3, -4);  // 1
+ * algo.move(data, 10, 0);  // -1
+ * console.log(data);       // [4, 1, 0, 2, 3]
  * ```
  */
 export
@@ -807,11 +811,30 @@ function move<T>(array: T[], fromIndex: number, toIndex: number): number {
 
 
 /**
- * Remove and return the element at the given index.
+ * Remove an element from an array at a specified index.
  *
- * If `index` is negative, it will be offset from the end of the array.
+ * @param array - The array of values to modify.
  *
- * Returns `undefined` if the index is out of range.
+ * @param index - The index of the element to remove. If this value
+ *   is negative, it is taken as an offset from the end of the array.
+ *   If the adjusted value is not a valid index, the array will not
+ *   be modified and `undefined` will be returned.
+ *
+ * @returns The element which was removed from `array`, or `undefined`
+ *   if `index` is invalid.
+ *
+ * #### Example
+ * ```typescript
+ * import algo = phosphor.collections.algorithm;
+ *
+ * var data = [0, 1, 2, 3, 4];
+ * algo.removeAt(data, 1);   // 1
+ * algo.removeAt(data, -2);  // 3
+ * algo.removeAt(data, 10);  // undefined
+ * console.log(data);        // [0, 2, 4]
+ * ```
+ *
+ * **See also** [[remove]] and [[insert]].
  */
 export
 function removeAt<T>(array: T[], index: number): T {
@@ -833,9 +856,27 @@ function removeAt<T>(array: T[], index: number): T {
 
 
 /**
- * Remove the first occurrence of the element and return its index.
+ * Remove the first occurrence of a value from an array.
  *
- * Returns the `-1` if the element is not in the array.
+ * @param array - The array of values to modify.
+ *
+ * @param value - The value to remove from the array.
+ *
+ * @returns The index where `value` was located, or `-1` if `value`
+ *   is not in `array`.
+ *
+ * #### Example
+ * ```typescript
+ * import algo = phosphor.collections.algorithm;
+ *
+ * var data = [0, 1, 2, 3, 4];
+ * algo.remove(data, 1);  // 1
+ * algo.remove(data, 3);  // 2
+ * algo.remove(data, 7);  // -1
+ * console.log(data);     // [0, 2, 4]
+ * ```
+ *
+ * **See also** [[removeAt]] and [[insert]].
  */
 export
 function remove<T>(array: T[], value: T): number {
