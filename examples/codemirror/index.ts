@@ -7,36 +7,54 @@
 |----------------------------------------------------------------------------*/
 module example {
 
-import CodeMirrorFactory = phosphor.lib.codemirror.CodeMirrorFactory;
-import CodeMirrorWidget = phosphor.lib.codemirror.CodeMirrorWidget;
+import IMessage = phosphor.core.IMessage;
 
-import render = phosphor.virtualdom.render;
+import ResizeMessage = phosphor.widgets.ResizeMessage;
+import Widget = phosphor.widgets.Widget;
+
+
+class CodeMirrorWidget extends Widget {
+
+  constructor(config?: CodeMirror.EditorConfiguration) {
+    super();
+    this.addClass('CodeMirrorWidget');
+    this._editor = CodeMirror(this.node, config);
+  }
+
+  dispose(): void {
+    this._editor = null;
+    super.dispose();
+  }
+
+  get editor(): CodeMirror.Editor {
+    return this._editor;
+  }
+
+  protected onAfterAttach(msg: IMessage): void {
+    this._editor.refresh();
+  }
+
+  protected onResize(msg: ResizeMessage): void {
+    this._editor.setSize(msg.width, msg.height);
+  }
+
+  private _editor: CodeMirror.Editor;
+}
 
 
 function main(): void {
 
-  var cm1 = new CodeMirrorWidget({
+  var cm = new CodeMirrorWidget({
     value: "var text = 'This is a CodeMirror widget.';",
     mode: 'javascript',
     lineNumbers: true,
     tabSize: 2,
   });
 
-  var cm2 = CodeMirrorFactory({
-    config: {
-      value: "var text = 'This is a CodeMirror component.';",
-      mode: 'javascript',
-      lineNumbers: true,
-      tabSize: 2,
-    },
-  });
+  cm.attach(document.getElementById('main'));
+  cm.fit();
 
-  cm1.attach(document.getElementById('col-1'));
-  cm1.fit();
-
-  window.onresize = () => cm1.fit();
-
-  render(cm2, document.getElementById('col-2'));
+  window.onresize = () => cm.fit();
 }
 
 

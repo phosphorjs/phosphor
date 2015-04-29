@@ -100,9 +100,7 @@ var tsSources = [
   'shell/menumanager',
   'shell/pluginlist',
   'shell/shellpanel',
-  'shell/shellview',
-
-  'lib/codemirror'
+  'shell/shellview'
 ].map(function(name) { return './src/' + name + '.ts'; });
 
 
