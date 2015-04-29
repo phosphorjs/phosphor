@@ -27,13 +27,6 @@ body.p-mod-cursor-override * {
 .p-Widget.p-mod-hidden {
   display: none;
 }
-.p-CodeMirrorComponent > .CodeMirror {
-  height: 100%;
-  z-index: 0;
-}
-.p-CodeMirrorWidget > .CodeMirror {
-  z-index: 0;
-}
 .p-DockPanel-overlay {
   -webkit-box-sizing: border-box;
   -moz-box-sizing: border-box;

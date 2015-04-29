@@ -252,8 +252,8 @@ declare module phosphor.collections.algorithm {
      *
      * @param cmp - The comparator function to apply to the values.
      *
-     * @returns The index of the first element which compares `<=` to
-     *   `value`, or `array.length` if `array` has no such element.
+     * @returns The index of the first element in `array` which compares
+     *   `<=` to `value`, or `array.length` if there is no such element.
      *
      * #### Example
      * ```typescript
@@ -285,8 +285,8 @@ declare module phosphor.collections.algorithm {
      *
      * @param cmp - The comparator function to apply to the values.
      *
-     * @returns The index of the first element which compares `>` than
-     *   `value`, or `array.length` if `array` has no such element.
+     * @returns The index of the first element in `array` which compares
+     *   `>` than `value`, or `array.length` if there is no such element.
      *
      * #### Example
      * ```typescript
@@ -318,8 +318,8 @@ declare module phosphor.collections.algorithm {
      *
      * @param cmp - The comparator function to apply to the values.
      *
-     * @returns The index of the first element which compares `==` to
-     *   `value`, or `array.length` if `array` has no such element.
+     * @returns The index of the first element in `array` which compares
+     *   `==` to `value`, or `-1` if there is no such element.
      *
      * #### Example
      * ```typescript
@@ -348,8 +348,8 @@ declare module phosphor.collections.algorithm {
      *
      * @param cmp - The comparator function to apply to the values.
      *
-     * @returns The index of the last element which compares `==` to
-     *   `value`, or `array.length` if `array` has no such element.
+     * @returns The index of the last element in `array` which compares
+     *   `==` to `value`, or `-1` if there is no such element.
      *
      * #### Example
      * ```typescript
@@ -378,8 +378,35 @@ declare module phosphor.collections.algorithm {
      *
      * @param cmp - The comparator function to apply to the values.
      *
-     * @returns The first element which compares `==` to `value`, or
-     *   `undefined` if `array` has no such element.
+     * @returns The first element in `array` which compares `==` to
+     *   `value`, or `undefined` if there is no such element.
+     *
+     * #### Example
+     * ```typescript
+     * import algo = phosphor.collections.algorithm;
+     *
+     * interface IPair {
+     *   rank: number;
+     *   value: string;
+     * }
+     *
+     * var data: IPair[] = [
+     *   { rank: 0, value: 'zero' },
+     *   { rank: 3, value: 'three' },
+     *   { rank: 7, value: 'seven-A' },
+     *   { rank: 7, value: 'seven-B' },
+     *   { rank: 9, value: 'nine' },
+     * ];
+     *
+     * function rankCmp(pair: IPair, rank: number): number {
+     *   return pair.rank - rank;
+     * }
+     *
+     * algo.binaryFind(data, 7, rankCmp);  // { rank: 7, value: 'seven-A' }
+     * algo.binaryFind(data, 8, rankCmp);  // undefined
+     * ```
+     *
+     * **See also** [[binaryFindLast]] and [[find]].
      */
     function binaryFind<T, U>(array: T[], value: U, cmp: IComparator<T, U>): T;
     /**
@@ -393,35 +420,113 @@ declare module phosphor.collections.algorithm {
      *
      * @param cmp - The comparator function to apply to the values.
      *
-     * @returns The last element which compares `==` to `value`, or
-     *   `undefined` if `array` has no such element.
+     * @returns The last element in `array` which compares `==` to
+     *   `value`, or `undefined` if there is no such element.
+     *
+     * #### Example
+     * ```typescript
+     * import algo = phosphor.collections.algorithm;
+     *
+     * interface IPair {
+     *   rank: number;
+     *   value: string;
+     * }
+     *
+     * var data: IPair[] = [
+     *   { rank: 0, value: 'zero' },
+     *   { rank: 3, value: 'three' },
+     *   { rank: 7, value: 'seven-A' },
+     *   { rank: 7, value: 'seven-B' },
+     *   { rank: 9, value: 'nine' },
+     * ];
+     *
+     * function rankCmp(pair: IPair, rank: number): number {
+     *   return pair.rank - rank;
+     * }
+     *
+     * algo.binaryFindLast(data, 7, rankCmp);  // { rank: 7, value: 'seven-B' }
+     * algo.binaryFindLast(data, 8, rankCmp);  // undefined
+     * ```
+     *
+     * **See also** [[binaryFind]] and [[findLast]].
      */
     function binaryFindLast<T, U>(array: T[], value: U, cmp: IComparator<T, U>): T;
     /**
-     * Create a shallow copy of the given array.
+     * Create a shallow copy of an array.
+     *
+     * @param array - The array of values to copy.
+     *
+     * @returns A shallow copy of `array`.
+     *
+     * #### Notes
+     * This function assumes that `array` does not have holes.
+     *
+     * The result array is pre-allocated, which is typically the fastest
+     * option for arrays `<` 100k elements. Use this function when copy
+     * performance of small arrays is critical.
+     *
+     * #### Example
+     * ```typescript
+     * import algo = phosphor.collections.algorithm;
+     *
+     * var data = [0, 1, 2, 3, 4];
+     * algo.copy(data);  // [0, 1, 2, 3, 4];
+     * ```
      */
     function copy<T>(array: T[]): T[];
     /**
-     * Insert an element at the given index.
+     * Insert an element into an array at a specified index.
      *
-     * If `index` is negative, it will be offset from the end of the array.
-     * If the adjusted value is still negative, it will be clamped to `0`.
-     * If `index` is greater than `array.length`, it will be clamped to
-     * `array.length`.
+     * @param array - The array of values to modify.
      *
-     * Returns the index at which the element was inserted.
+     * @param index - The index at which to insert the value. If this value
+     *   is negative, it is taken as an offset from the end of the array. If
+     *   the adjusted value is still negative, it is clamped to `0`. If this
+     *   value is positive, it is clamped to `array.length`.
+     *
+     * @param value - The value to insert into the array.
+     *
+     * @returns The index at which the value was inserted.
+     *
+     * #### Notes
+     * This function assumes that `array` does not have holes.
+     *
+     * #### Example
+     * ```typescript
+     * import algo = phosphor.collections.algorithm;
+     *
+     * var data = [0, 1, 2, 3, 4];
+     * algo.insert(data, 0, 12);  // 0
+     * algo.insert(data, 3, 42);  // 3
+     * algo.insert(data, 9, 19);  // 7
+     * algo.insert(data, -9, 9);  // 0
+     * algo.insert(data, -2, 8);  // 7
+     * console.log(data);         // [9, 12, 0, 1, 42, 2, 3, 8, 4, 19]
+     * ```
      */
     function insert<T>(array: T[], index: number, value: T): number;
     /**
-     * Move an array element from one index to another.
+     * Move an element in an array from one index to another.
      *
-     * If `fromIndex` is negative, it will be offset from the end of the
-     * array. If the adjusted value is out of range, `-1` will be returned.
+     * @param array - The array of values to modify.
      *
-     * If `toIndex` is negative, it will be offset from the end of the
-     * array. If the adjusted value is out of range, it will be clamped.
+     * @param fromIndex - The index of the element to move. If this value
+     *   is negative, it is taken as an offset from the end of the array.
+     *   If the adjusted value is not a valid index, the array will not
+     *   be modified and `-1` will be returned.
      *
-     * Returns the final index of the moved element.
+     * @param toIndex - The target index of the element. If this value is
+     *   negative, it is taken as an offset from the end of the array. If
+     *   the adjusted value is still negative, it is clamped to `0`. If
+     *   this value is positive, it is clamped to `array.length - 1`.
+     *
+     * @returns The index to which the element was moved, or `-1` if
+     *   `fromIndex` is invalid.
+     *
+     * #### Example
+     * ```typescript
+     * // TODO
+     * ```
      */
     function move<T>(array: T[], fromIndex: number, toIndex: number): number;
     /**
@@ -558,11 +663,11 @@ declare module phosphor.collections {
         /**
          * Increment the offset by one.
          */
-        private _increment();
+        private _incr();
         /**
          * Decrement the offset by one.
          */
-        private _decrement();
+        private _decr();
         private _size;
         private _offset;
         private _array;
@@ -5938,92 +6043,5 @@ declare module phosphor.shell {
         private _bottomPanel;
         private _centerPanel;
         private _menuManager;
-    }
-}
-
-declare module phosphor.lib.codemirror {
-    import IMessage = core.IMessage;
-    import Size = utility.Size;
-    import BaseComponent = virtualdom.BaseComponent;
-    import Elem = virtualdom.Elem;
-    import IData = virtualdom.IData;
-    import ResizeMessage = widgets.ResizeMessage;
-    import Widget = widgets.Widget;
-    /**
-     * The data object for a code mirror component.
-     */
-    interface ICodeMirrorData extends IData {
-        config: CodeMirror.EditorConfiguration;
-    }
-    /**
-     * A component which hosts a CodeMirror editor.
-     */
-    class CodeMirrorComponent extends BaseComponent<ICodeMirrorData> {
-        /**
-         * Construct a new code mirror component.
-         */
-        constructor(data: ICodeMirrorData, children: Elem[]);
-        /**
-         * Dispose of the resources held by the component.
-         */
-        dispose(): void;
-        /**
-         * Get the code mirror editor for the component.
-         *
-         * This component does not attempt to wrap the code mirror api.
-         * User code should interact with the editor object directly.
-         */
-        editor: CodeMirror.Editor;
-        /**
-         * A method invoked on an 'after-attach' message.
-         */
-        protected onAfterAttach(msg: IMessage): void;
-        private _editor;
-    }
-    /**
-     * The default element factory for the CodeMirrorComponent.
-     */
-    var CodeMirrorFactory: virtualdom.IFactory<ICodeMirrorData>;
-    /**
-     * A widget which hosts a CodeMirror editor.
-     */
-    class CodeMirrorWidget extends Widget {
-        /**
-         * Construct a new code mirror widget.
-         */
-        constructor(config?: CodeMirror.EditorConfiguration);
-        /**
-         * Dispose of the resources held by the widget.
-         */
-        dispose(): void;
-        /**
-         * Get the code mirror editor for the widget.
-         *
-         * This widget does not attempt to wrap the code mirror api.
-         * User code should interact with the editor object directly.
-         */
-        editor: CodeMirror.Editor;
-        /**
-         * Calculate the preferred size for the widget.
-         */
-        sizeHint(): Size;
-        /**
-         * A method invoked on an 'after-show' message.
-         */
-        protected onAfterShow(msg: IMessage): void;
-        /**
-         * A method invoked on a 'before-hide' message.
-         */
-        protected onBeforeHide(msg: IMessage): void;
-        /**
-         * A method invoked on an 'after-attach' message.
-         */
-        protected onAfterAttach(msg: IMessage): void;
-        /**
-         * A method invoked on a 'resize' message.
-         */
-        protected onResize(msg: ResizeMessage): void;
-        private _editor;
-        private _scrollPos;
     }
 }

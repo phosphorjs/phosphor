@@ -397,8 +397,8 @@ var phosphor;
              *
              * @param cmp - The comparator function to apply to the values.
              *
-             * @returns The index of the first element which compares `<=` to
-             *   `value`, or `array.length` if `array` has no such element.
+             * @returns The index of the first element in `array` which compares
+             *   `<=` to `value`, or `array.length` if there is no such element.
              *
              * #### Example
              * ```typescript
@@ -448,8 +448,8 @@ var phosphor;
              *
              * @param cmp - The comparator function to apply to the values.
              *
-             * @returns The index of the first element which compares `>` than
-             *   `value`, or `array.length` if `array` has no such element.
+             * @returns The index of the first element in `array` which compares
+             *   `>` than `value`, or `array.length` if there is no such element.
              *
              * #### Example
              * ```typescript
@@ -499,8 +499,8 @@ var phosphor;
              *
              * @param cmp - The comparator function to apply to the values.
              *
-             * @returns The index of the first element which compares `==` to
-             *   `value`, or `array.length` if `array` has no such element.
+             * @returns The index of the first element in `array` which compares
+             *   `==` to `value`, or `-1` if there is no such element.
              *
              * #### Example
              * ```typescript
@@ -539,8 +539,8 @@ var phosphor;
              *
              * @param cmp - The comparator function to apply to the values.
              *
-             * @returns The index of the last element which compares `==` to
-             *   `value`, or `array.length` if `array` has no such element.
+             * @returns The index of the last element in `array` which compares
+             *   `==` to `value`, or `-1` if there is no such element.
              *
              * #### Example
              * ```typescript
@@ -579,8 +579,35 @@ var phosphor;
              *
              * @param cmp - The comparator function to apply to the values.
              *
-             * @returns The first element which compares `==` to `value`, or
-             *   `undefined` if `array` has no such element.
+             * @returns The first element in `array` which compares `==` to
+             *   `value`, or `undefined` if there is no such element.
+             *
+             * #### Example
+             * ```typescript
+             * import algo = phosphor.collections.algorithm;
+             *
+             * interface IPair {
+             *   rank: number;
+             *   value: string;
+             * }
+             *
+             * var data: IPair[] = [
+             *   { rank: 0, value: 'zero' },
+             *   { rank: 3, value: 'three' },
+             *   { rank: 7, value: 'seven-A' },
+             *   { rank: 7, value: 'seven-B' },
+             *   { rank: 9, value: 'nine' },
+             * ];
+             *
+             * function rankCmp(pair: IPair, rank: number): number {
+             *   return pair.rank - rank;
+             * }
+             *
+             * algo.binaryFind(data, 7, rankCmp);  // { rank: 7, value: 'seven-A' }
+             * algo.binaryFind(data, 8, rankCmp);  // undefined
+             * ```
+             *
+             * **See also** [[binaryFindLast]] and [[find]].
              */
             function binaryFind(array, value, cmp) {
                 var i = binaryFindIndex(array, value, cmp);
@@ -598,8 +625,35 @@ var phosphor;
              *
              * @param cmp - The comparator function to apply to the values.
              *
-             * @returns The last element which compares `==` to `value`, or
-             *   `undefined` if `array` has no such element.
+             * @returns The last element in `array` which compares `==` to
+             *   `value`, or `undefined` if there is no such element.
+             *
+             * #### Example
+             * ```typescript
+             * import algo = phosphor.collections.algorithm;
+             *
+             * interface IPair {
+             *   rank: number;
+             *   value: string;
+             * }
+             *
+             * var data: IPair[] = [
+             *   { rank: 0, value: 'zero' },
+             *   { rank: 3, value: 'three' },
+             *   { rank: 7, value: 'seven-A' },
+             *   { rank: 7, value: 'seven-B' },
+             *   { rank: 9, value: 'nine' },
+             * ];
+             *
+             * function rankCmp(pair: IPair, rank: number): number {
+             *   return pair.rank - rank;
+             * }
+             *
+             * algo.binaryFindLast(data, 7, rankCmp);  // { rank: 7, value: 'seven-B' }
+             * algo.binaryFindLast(data, 8, rankCmp);  // undefined
+             * ```
+             *
+             * **See also** [[binaryFind]] and [[findLast]].
              */
             function binaryFindLast(array, value, cmp) {
                 var i = binaryFindLastIndex(array, value, cmp);
@@ -607,7 +661,26 @@ var phosphor;
             }
             algorithm.binaryFindLast = binaryFindLast;
             /**
-             * Create a shallow copy of the given array.
+             * Create a shallow copy of an array.
+             *
+             * @param array - The array of values to copy.
+             *
+             * @returns A shallow copy of `array`.
+             *
+             * #### Notes
+             * This function assumes that `array` does not have holes.
+             *
+             * The result array is pre-allocated, which is typically the fastest
+             * option for arrays `<` 100k elements. Use this function when copy
+             * performance of small arrays is critical.
+             *
+             * #### Example
+             * ```typescript
+             * import algo = phosphor.collections.algorithm;
+             *
+             * var data = [0, 1, 2, 3, 4];
+             * algo.copy(data);  // [0, 1, 2, 3, 4];
+             * ```
              */
             function copy(array) {
                 var n = array.length;
@@ -619,14 +692,34 @@ var phosphor;
             }
             algorithm.copy = copy;
             /**
-             * Insert an element at the given index.
+             * Insert an element into an array at a specified index.
              *
-             * If `index` is negative, it will be offset from the end of the array.
-             * If the adjusted value is still negative, it will be clamped to `0`.
-             * If `index` is greater than `array.length`, it will be clamped to
-             * `array.length`.
+             * @param array - The array of values to modify.
              *
-             * Returns the index at which the element was inserted.
+             * @param index - The index at which to insert the value. If this value
+             *   is negative, it is taken as an offset from the end of the array. If
+             *   the adjusted value is still negative, it is clamped to `0`. If this
+             *   value is positive, it is clamped to `array.length`.
+             *
+             * @param value - The value to insert into the array.
+             *
+             * @returns The index at which the value was inserted.
+             *
+             * #### Notes
+             * This function assumes that `array` does not have holes.
+             *
+             * #### Example
+             * ```typescript
+             * import algo = phosphor.collections.algorithm;
+             *
+             * var data = [0, 1, 2, 3, 4];
+             * algo.insert(data, 0, 12);  // 0
+             * algo.insert(data, 3, 42);  // 3
+             * algo.insert(data, 9, 19);  // 7
+             * algo.insert(data, -9, 9);  // 0
+             * algo.insert(data, -2, 8);  // 7
+             * console.log(data);         // [9, 12, 0, 1, 42, 2, 3, 8, 4, 19]
+             * ```
              */
             function insert(array, index, value) {
                 index = index | 0;
@@ -648,15 +741,27 @@ var phosphor;
             }
             algorithm.insert = insert;
             /**
-             * Move an array element from one index to another.
+             * Move an element in an array from one index to another.
              *
-             * If `fromIndex` is negative, it will be offset from the end of the
-             * array. If the adjusted value is out of range, `-1` will be returned.
+             * @param array - The array of values to modify.
              *
-             * If `toIndex` is negative, it will be offset from the end of the
-             * array. If the adjusted value is out of range, it will be clamped.
+             * @param fromIndex - The index of the element to move. If this value
+             *   is negative, it is taken as an offset from the end of the array.
+             *   If the adjusted value is not a valid index, the array will not
+             *   be modified and `-1` will be returned.
              *
-             * Returns the final index of the moved element.
+             * @param toIndex - The target index of the element. If this value is
+             *   negative, it is taken as an offset from the end of the array. If
+             *   the adjusted value is still negative, it is clamped to `0`. If
+             *   this value is positive, it is clamped to `array.length - 1`.
+             *
+             * @returns The index to which the element was moved, or `-1` if
+             *   `fromIndex` is invalid.
+             *
+             * #### Example
+             * ```typescript
+             * // TODO
+             * ```
              */
             function move(array, fromIndex, toIndex) {
                 fromIndex = fromIndex | 0;
@@ -849,7 +954,7 @@ var phosphor;
             CircularBuffer.prototype.pushBack = function (value) {
                 this._set(this._size, value);
                 if (this._size === this._array.length) {
-                    this._increment();
+                    this._incr();
                 }
                 else {
                     this._size++;
@@ -861,7 +966,7 @@ var phosphor;
              * If the buffer is full, the back element will be overwritten.
              */
             CircularBuffer.prototype.pushFront = function (value) {
-                this._decrement();
+                this._decr();
                 this._set(0, value);
                 if (this._size < this._array.length) {
                     this._size++;
@@ -884,7 +989,7 @@ var phosphor;
                     return void 0;
                 }
                 var value = this._rem(0);
-                this._increment();
+                this._incr();
                 this._size--;
                 return value;
             };
@@ -994,7 +1099,7 @@ var phosphor;
             /**
              * Increment the offset by one.
              */
-            CircularBuffer.prototype._increment = function () {
+            CircularBuffer.prototype._incr = function () {
                 if (this._offset === this._array.length - 1) {
                     this._offset = 0;
                 }
@@ -1005,7 +1110,7 @@ var phosphor;
             /**
              * Decrement the offset by one.
              */
-            CircularBuffer.prototype._decrement = function () {
+            CircularBuffer.prototype._decr = function () {
                 if (this._offset === 0) {
                     this._offset = this._array.length - 1;
                 }
@@ -13751,162 +13856,3 @@ var phosphor;
         shell.ShellView = ShellView;
     })(shell = phosphor.shell || (phosphor.shell = {}));
 })(phosphor || (phosphor = {})); // module phosphor.shell
-
-var __extends = this.__extends || function (d, b) {
-    for (var p in b) if (b.hasOwnProperty(p)) d[p] = b[p];
-    function __() { this.constructor = d; }
-    __.prototype = b.prototype;
-    d.prototype = new __();
-};
-/*-----------------------------------------------------------------------------
-| Copyright (c) 2014-2015, S. Chris Colbert
-|
-| Distributed under the terms of the BSD 3-Clause License.
-|
-| The full license is in the file LICENSE, distributed with this software.
-|----------------------------------------------------------------------------*/
-var phosphor;
-(function (phosphor) {
-    var lib;
-    (function (lib) {
-        var codemirror;
-        (function (codemirror) {
-            var Point = phosphor.utility.Point;
-            var Size = phosphor.utility.Size;
-            var BaseComponent = phosphor.virtualdom.BaseComponent;
-            var createFactory = phosphor.virtualdom.createFactory;
-            var SizePolicy = phosphor.widgets.SizePolicy;
-            var Widget = phosphor.widgets.Widget;
-            /**
-             * The class name added to CodeMirrorComponent instances.
-             */
-            var CODE_MIRROR_COMPONENT_CLASS = 'p-CodeMirrorComponent';
-            /**
-             * The class name added to CodeMirrorWidget instances.
-             */
-            var CODE_MIRROR_WIDGET_CLASS = 'p-CodeMirrorWidget';
-            // TODO:
-            // - update editor config on re-render?
-            // - save/restore scroll position on move?
-            /**
-             * A component which hosts a CodeMirror editor.
-             */
-            var CodeMirrorComponent = (function (_super) {
-                __extends(CodeMirrorComponent, _super);
-                /**
-                 * Construct a new code mirror component.
-                 */
-                function CodeMirrorComponent(data, children) {
-                    _super.call(this, data, children);
-                    this.addClass(CODE_MIRROR_COMPONENT_CLASS);
-                    this._editor = CodeMirror(this.node, data.config);
-                }
-                /**
-                 * Dispose of the resources held by the component.
-                 */
-                CodeMirrorComponent.prototype.dispose = function () {
-                    this._editor = null;
-                    _super.prototype.dispose.call(this);
-                };
-                Object.defineProperty(CodeMirrorComponent.prototype, "editor", {
-                    /**
-                     * Get the code mirror editor for the component.
-                     *
-                     * This component does not attempt to wrap the code mirror api.
-                     * User code should interact with the editor object directly.
-                     */
-                    get: function () {
-                        return this._editor;
-                    },
-                    enumerable: true,
-                    configurable: true
-                });
-                /**
-                 * A method invoked on an 'after-attach' message.
-                 */
-                CodeMirrorComponent.prototype.onAfterAttach = function (msg) {
-                    this._editor.refresh();
-                };
-                return CodeMirrorComponent;
-            })(BaseComponent);
-            codemirror.CodeMirrorComponent = CodeMirrorComponent;
-            /**
-             * The default element factory for the CodeMirrorComponent.
-             */
-            codemirror.CodeMirrorFactory = createFactory(CodeMirrorComponent);
-            /**
-             * A widget which hosts a CodeMirror editor.
-             */
-            var CodeMirrorWidget = (function (_super) {
-                __extends(CodeMirrorWidget, _super);
-                /**
-                 * Construct a new code mirror widget.
-                 */
-                function CodeMirrorWidget(config) {
-                    _super.call(this);
-                    this._scrollPos = null;
-                    this.addClass(CODE_MIRROR_WIDGET_CLASS);
-                    this._editor = CodeMirror(this.node, config);
-                    this.setSizePolicy(SizePolicy.Expanding, SizePolicy.Expanding);
-                }
-                /**
-                 * Dispose of the resources held by the widget.
-                 */
-                CodeMirrorWidget.prototype.dispose = function () {
-                    this._editor = null;
-                    _super.prototype.dispose.call(this);
-                };
-                Object.defineProperty(CodeMirrorWidget.prototype, "editor", {
-                    /**
-                     * Get the code mirror editor for the widget.
-                     *
-                     * This widget does not attempt to wrap the code mirror api.
-                     * User code should interact with the editor object directly.
-                     */
-                    get: function () {
-                        return this._editor;
-                    },
-                    enumerable: true,
-                    configurable: true
-                });
-                /**
-                 * Calculate the preferred size for the widget.
-                 */
-                CodeMirrorWidget.prototype.sizeHint = function () {
-                    return new Size(512, 256);
-                };
-                /**
-                 * A method invoked on an 'after-show' message.
-                 */
-                CodeMirrorWidget.prototype.onAfterShow = function (msg) {
-                    var pos = this._scrollPos;
-                    if (pos)
-                        this._editor.scrollTo(pos.x, pos.y);
-                };
-                /**
-                 * A method invoked on a 'before-hide' message.
-                 */
-                CodeMirrorWidget.prototype.onBeforeHide = function (msg) {
-                    var info = this._editor.getScrollInfo();
-                    this._scrollPos = new Point(info.left, info.top);
-                };
-                /**
-                 * A method invoked on an 'after-attach' message.
-                 */
-                CodeMirrorWidget.prototype.onAfterAttach = function (msg) {
-                    this._editor.refresh();
-                };
-                /**
-                 * A method invoked on a 'resize' message.
-                 */
-                CodeMirrorWidget.prototype.onResize = function (msg) {
-                    if (this.isVisible) {
-                        this._editor.setSize(msg.width, msg.height);
-                    }
-                };
-                return CodeMirrorWidget;
-            })(Widget);
-            codemirror.CodeMirrorWidget = CodeMirrorWidget;
-        })(codemirror = lib.codemirror || (lib.codemirror = {}));
-    })(lib = phosphor.lib || (phosphor.lib = {}));
-})(phosphor || (phosphor = {})); // module phosphor.lib.codemirror
