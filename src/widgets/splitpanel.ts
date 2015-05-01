@@ -125,23 +125,9 @@ class SplitPanel extends Panel {
   }
 
   /**
-   * A method invoked after the node is attached to the DOM.
-   */
-  protected onAfterAttach(msg: IMessage): void {
-    this.node.addEventListener('mousedown', <any>this);
-  }
-
-  /**
-   * A method invoked after the node is detached from the DOM.
-   */
-  protected onAfterDetach(msg: IMessage): void {
-    this.node.removeEventListener('mousedown', <any>this);
-  }
-
-  /**
    * Handle the DOM events for the split panel.
    */
-  protected handleEvent(event: Event): void {
+  handleEvent(event: Event): void {
     switch (event.type) {
     case 'mousedown':
       this._evtMouseDown(<MouseEvent>event);
@@ -153,6 +139,20 @@ class SplitPanel extends Panel {
       this._evtMouseMove(<MouseEvent>event);
       break;
     }
+  }
+
+  /**
+   * A method invoked after the node is attached to the DOM.
+   */
+  protected onAfterAttach(msg: IMessage): void {
+    this.node.addEventListener('mousedown', <any>this);
+  }
+
+  /**
+   * A method invoked after the node is detached from the DOM.
+   */
+  protected onAfterDetach(msg: IMessage): void {
+    this.node.removeEventListener('mousedown', <any>this);
   }
 
   /**

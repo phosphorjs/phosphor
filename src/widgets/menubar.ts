@@ -320,6 +320,29 @@ class MenuBar extends Widget {
   }
 
   /**
+   * Handle the DOM events for the menu bar.
+   */
+  handleEvent(event: Event): void {
+    switch (event.type) {
+    case 'mousedown':
+      this._evtMouseDown(<MouseEvent>event);
+      break;
+    case 'mousemove':
+      this._evtMouseMove(<MouseEvent>event);
+      break;
+    case 'mouseleave':
+      this._evtMouseLeave(<MouseEvent>event);
+      break;
+    case 'keydown':
+      this._evtKeyDown(<KeyboardEvent>event);
+      break;
+    case 'keypress':
+      this._evtKeyPress(<KeyboardEvent>event);
+      break;
+    }
+  }
+
+  /**
    * Create the DOM node for a MenuItem.
    *
    * This can be reimplemented to create custom menu item nodes.
@@ -400,29 +423,6 @@ class MenuBar extends Widget {
     this.node.removeEventListener('mousedown', <any>this);
     this.node.removeEventListener('mousemove', <any>this);
     this.node.removeEventListener('mouseleave', <any>this);
-  }
-
-  /**
-   * Handle the DOM events for the menu bar.
-   */
-  protected handleEvent(event: Event): void {
-    switch (event.type) {
-    case 'mousedown':
-      this._evtMouseDown(<MouseEvent>event);
-      break;
-    case 'mousemove':
-      this._evtMouseMove(<MouseEvent>event);
-      break;
-    case 'mouseleave':
-      this._evtMouseLeave(<MouseEvent>event);
-      break;
-    case 'keydown':
-      this._evtKeyDown(<KeyboardEvent>event);
-      break;
-    case 'keypress':
-      this._evtKeyPress(<KeyboardEvent>event);
-      break;
-    }
   }
 
   /**

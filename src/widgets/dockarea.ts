@@ -243,7 +243,7 @@ class DockArea extends Widget {
   /**
    * Handle the DOM events for the dock area.
    */
-  protected handleEvent(event: Event): void {
+  handleEvent(event: Event): void {
     switch (event.type) {
     case 'mousemove':
       this._evtMouseMove(<MouseEvent>event);

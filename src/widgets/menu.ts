@@ -460,6 +460,35 @@ class Menu extends NodeBase {
   }
 
   /**
+   * Handle the DOM events for the menu.
+   */
+  handleEvent(event: Event): void {
+    switch (event.type) {
+    case 'mouseenter':
+      this._evtMouseEnter(<MouseEvent>event);
+      break;
+    case 'mouseleave':
+      this._evtMouseLeave(<MouseEvent>event);
+      break;
+    case 'mousedown':
+      this._evtMouseDown(<MouseEvent>event);
+      break;
+    case 'mouseup':
+      this._evtMouseUp(<MouseEvent>event);
+      break;
+    case 'contextmenu':
+      this._evtContextMenu(event);
+      break;
+    case 'keydown':
+      this._evtKeyDown(<KeyboardEvent>event);
+      break;
+    case 'keypress':
+      this._evtKeyPress(<KeyboardEvent>event);
+      break;
+    }
+  }
+
+  /**
    * Create the DOM node for a MenuItem.
    *
    * This can be reimplemented to create custom menu item nodes.
@@ -537,35 +566,6 @@ class Menu extends NodeBase {
   protected removeItemNode(node: HTMLElement): void {
     var content = this.node.firstChild;
     content.removeChild(node);
-  }
-
-  /**
-   * Handle the DOM events for the menu.
-   */
-  protected handleEvent(event: Event): void {
-    switch (event.type) {
-    case 'mouseenter':
-      this._evtMouseEnter(<MouseEvent>event);
-      break;
-    case 'mouseleave':
-      this._evtMouseLeave(<MouseEvent>event);
-      break;
-    case 'mousedown':
-      this._evtMouseDown(<MouseEvent>event);
-      break;
-    case 'mouseup':
-      this._evtMouseUp(<MouseEvent>event);
-      break;
-    case 'contextmenu':
-      this._evtContextMenu(event);
-      break;
-    case 'keydown':
-      this._evtKeyDown(<KeyboardEvent>event);
-      break;
-    case 'keypress':
-      this._evtKeyPress(<KeyboardEvent>event);
-      break;
-    }
   }
 
   /**
