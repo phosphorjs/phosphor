@@ -7,7 +7,10 @@
 |----------------------------------------------------------------------------*/
 module phosphor.widgets {
 
+import IMessage = core.IMessage;
 import Signal = core.Signal;
+
+import Size = utility.Size;
 
 
 /**
@@ -16,9 +19,9 @@ import Signal = core.Signal;
 var SCROLLBAR_CLASS = 'p-ScrollBar';
 
 /**
- * The class name assigned to a scroll bar thumb.
+ * The class name assigned to a scroll bar slider.
  */
-var THUMB_CLASS = 'p-ScrollBar-thumb';
+var SLIDER_CLASS = 'p-ScrollBar-slider';
 
 /**
  * The class name added to horizontal scroll bars.
@@ -41,18 +44,18 @@ class ScrollBar extends Widget {
    */
   static createNode(): HTMLElement {
     var node = document.createElement('div');
-    var thumb = document.createElement('div');
-    thumb.className = THUMB_CLASS;
-    node.appendChild(thumb);
+    var slider = document.createElement('div');
+    slider.className = SLIDER_CLASS;
+    node.appendChild(slider);
     return node;
   }
 
   /**
-   * A signal emitted when a user moves the scroll bar thumb.
+   * A signal emitted when the user moves the scroll bar slider.
    *
    * It is not emitted when changing the scroll position from code.
    */
-  scrolled = new Signal<number>();
+  sliderMoved = new Signal<ScrollBar, number>();
 
   /**
    * Construct a new scroll bar.
@@ -79,15 +82,16 @@ class ScrollBar extends Widget {
     if (value === this._orientation) {
       return;
     }
+    this._sliderMinSize = null;
     this._orientation = value;
-    if (value === Orientation.Horizontal) {
-      this.removeClass(VERTICAL_CLASS);
-      this.addClass(HORIZONTAL_CLASS);
-    } else {
+    if (value === Orientation.Vertical) {
       this.removeClass(HORIZONTAL_CLASS);
       this.addClass(VERTICAL_CLASS);
+    } else {
+      this.removeClass(VERTICAL_CLASS);
+      this.addClass(HORIZONTAL_CLASS);
     }
-    this.updateThumb();
+    this.updateSlider();
   }
 
   /**
@@ -100,14 +104,14 @@ class ScrollBar extends Widget {
   /**
    * Set the content size of the scroll bar.
    */
-  set contentSize(size: number): number {
+  set contentSize(size: number) {
     size = Math.max(0, size);
     if (size === this._contentSize) {
       return;
     }
+    this._scrollPosition = Math.min(this._scrollPosition, size);
     this._contentSize = size;
-    this._clampPosition();
-    this.updateThumb();
+    this.updateSlider();
   }
 
   /**
@@ -126,7 +130,7 @@ class ScrollBar extends Widget {
       return;
     }
     this._viewportSize = size;
-    this.updateThumb();
+    this.updateSlider();
   }
 
   /**
@@ -140,13 +144,29 @@ class ScrollBar extends Widget {
    * Set the scroll position of the scroll bar.
    */
   set scrollPosition(position: number) {
-    position = Math.max(0, position);
+    position = Math.max(0, Math.min(position, this._contentSize));
     if (position === this._scrollPosition) {
       return;
     }
     this._scrollPosition = position;
-    this._clampPosition();
-    this.updateThumb();
+    this.updateSlider();
+  }
+
+  /**
+   *
+   */
+  handleEvent(event: Event): void {
+    switch (event.type) {
+    case 'mousedown':
+      this._evtMouseDown(<MouseEvent>event);
+      break;
+    case 'mousemove':
+      this._evtMouseMove(<MouseEvent>event);
+      break;
+    case 'mouseup':
+      this._evtMouseUp(<MouseEvent>event);
+      break;
+    }
   }
 
   /**
@@ -154,14 +174,34 @@ class ScrollBar extends Widget {
    *
    * This may be reimplemented by subclasses as needed.
    */
-  protected get thumbNode(): HTMLElement {
+  protected get sliderNode(): HTMLElement {
     return <HTMLElement>this.node.firstChild;
+  }
+
+  /**
+   *
+   */
+  protected get sliderMinSize(): Size {
+    if (this._sliderMinSize === null) {
+      var style = window.getComputedStyle(this.thumbNode);
+      var width = parseInt(style.minWidth, 10) || 0;
+      var height = parseInt(style.minHeight, 10) || 0;
+      this._sliderMinSize = new Size(width, height);
+    }
+    return this._sliderMinSize;
+  }
+
+  /**
+   *
+   */
+  protected sliderLayoutSize(): number {
+
   }
 
   /**
    * Refresh the current position and size of the scroll bar thumb.
    */
-  protected updateThumb(): void {
+  protected updateSlider(): void {
     var thumb = this.thumbNode;
     var style = thumb.style;
     if (this._contentSize === 0) {
@@ -171,19 +211,22 @@ class ScrollBar extends Widget {
 
     var minThumb: number;
     var scrollSize: number;
+    var box = this.boxSizing;
     var cstyle = window.getComputedStyle(thumb);
-    if (this._orientation === Orientation.Horizontal) {
-      minThumb = parseInt(cstyle.minWidth, 10) || 0;
-      scrollSize = this.width - this.boxSizing.horizontalSum;
-    } else {
+    if (this._orientation === Orientation.Vertical) {
       minThumb = parseInt(cstyle.minHeight, 10) || 0;
-      scrollSize = this.height - this.boxSizing.verticalSum;
+      scrollSize = this.height - box.verticalSum;
+    } else {
+      minThumb = parseInt(cstyle.minWidth, 10) || 0;
+      scrollSize = this.width - box.horizontalSum;
     }
 
     var percentSize = Math.min(this._viewportSize / this._contentSize, 1.0);
-    var percentPos = Math.min(this._scrollPosition / this._contentSize, 1.0);
     var thumbSize = percentSize * scrollSize;
+
+    var percentPos = this._scrollPosition / this._contentSize;
     var thumbPos = percentPos * (scrollSize - thumbSize);
+
     if (minThumb > thumbSize) {
       thumbSize = minThumb;
       if (thumbSize + thumbPos > scrollSize) {
@@ -195,18 +238,18 @@ class ScrollBar extends Widget {
       }
     }
 
-    if (this._orientation === Orientation.Horizontal) {
-      style.display = ''
-      style.top = '';
-      style.height = '';
-      style.left = thumbPos + 'px';
-      style.width = thumbSize + 'px';
-    } else {
-      style.display = ''
+    if (this._orientation === Orientation.Vertical) {
+      style.display = '';
       style.left = '';
       style.width = '';
-      style.top = thumbPos + 'px';
+      style.top = box.paddingTop + thumbPos + 'px';
       style.height = thumbSize + 'px';
+    } else {
+      style.display = '';
+      style.top = '';
+      style.height = '';
+      style.left = box.paddingLeft + thumbPos + 'px';
+      style.width = thumbSize + 'px';
     }
   }
 
@@ -214,20 +257,73 @@ class ScrollBar extends Widget {
    *
    */
   protected onResize(msg: ResizeMessage): void {
-    this.updateThumb();
+    this.updateSlider();
   }
 
   /**
    *
    */
-  private _clampPosition(): void {
-    this._scrollPosition = Math.min(this._scrollPosition, this._contentSize);
+  protected onAfterAttach(msg: IMessage): void {
+    this._sliderMinSize = null;
+    this.node.addEventListener('mousedown', <any>this);
   }
 
-  private _contentSize = 0;
-  private _viewportSize = 0;
-  private _scrollPosition = 0;
+  /**
+   *
+   */
+  protected onAfterDetach(msg: IMessage): void {
+    this.node.removeEventListener('mousedown', <any>this);
+  }
+
+  /**
+   *
+   */
+  private _evtMouseDown(event: MouseEvent): void {
+    if (event.button !== 0) {
+      return;
+    }
+
+    var clientX = event.clientX;
+    var clientY = event.clientY;
+    if (!hitTest(this.thumbNode, clientX, clientY)) {
+      var position: number;
+      var rect = this.node.getBoundingClientRect();
+      if (this._orientation === Orientation.Vertical) {
+
+        position = this._mapToScrollPosition(clientY);
+      } else {
+        position = this._mapToScrollPosition(clientX);
+      }
+      this.scrollPosition = position;
+      this.sliderMoved.emit(this, this.scrollPosition);
+    }
+
+    document.addEventListener('mousemove', <any>this, true);
+    document.addEventListener('mouseup', <any>this, true);
+  }
+
+  /**
+   *
+   */
+  private _evtMouseMouse(event: MouseEvent): void {
+
+  }
+
+  /**
+   *
+   */
+  private _evtMouseUp(event: MouseEvent): void {
+
+    document.removeEventListener('mousemove', <any>this, true);
+    document.removeEventListener('mouseup', <any>this, true);
+  }
+
+
   private _orientation: Orientation;
+  private _sliderMinSize: Size = null;
+  private _scrollPosition = 0;
+  private _viewportSize = 0;
+  private _contentSize = 0;
 }
 
 } // module phosphor.widgets
