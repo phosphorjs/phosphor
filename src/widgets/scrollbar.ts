@@ -10,8 +10,6 @@ module phosphor.widgets {
 import IMessage = core.IMessage;
 import Signal = core.Signal;
 
-import Size = utility.Size;
-
 
 /**
  * The class name added to a scroll bar widget.
@@ -24,21 +22,21 @@ var SCROLLBAR_CLASS = 'p-ScrollBar';
 var SLIDER_CLASS = 'p-ScrollBar-slider';
 
 /**
- * The class name added to horizontal scroll bars.
+ * The class name added to a horizontal scroll bar.
  */
 var HORIZONTAL_CLASS = 'p-mod-horizontal';
 
 /**
- * The class name added to vertical scroll bars.
+ * The class name added to a vertical scroll bar.
  */
 var VERTICAL_CLASS = 'p-mod-vertical';
 
 
 /**
- * A widget which provides a vertical or horizontal scroll bar.
+ * A concrete implementation of IScrollBar.
  */
 export
-class ScrollBar extends Widget {
+class ScrollBar extends Widget implements IScrollBar {
   /**
    * Create the DOM node for a scroll bar.
    */
@@ -53,7 +51,8 @@ class ScrollBar extends Widget {
   /**
    * A signal emitted when the user moves the scroll bar slider.
    *
-   * It is not emitted when changing the scroll position from code.
+   * The parameter is the current scroll position. The signal is
+   * not emitted when the scroll position is changed from code.
    */
   sliderMoved = new Signal<ScrollBar, number>();
 
@@ -82,27 +81,31 @@ class ScrollBar extends Widget {
     if (value === this._orientation) {
       return;
     }
-    this._sliderMinSize = null;
     this._orientation = value;
-    if (value === Orientation.Vertical) {
-      this.removeClass(HORIZONTAL_CLASS);
-      this.addClass(VERTICAL_CLASS);
-    } else {
+    if (value === Orientation.Horizontal) {
       this.removeClass(VERTICAL_CLASS);
       this.addClass(HORIZONTAL_CLASS);
+    } else {
+      this.removeClass(HORIZONTAL_CLASS);
+      this.addClass(VERTICAL_CLASS);
     }
-    this.updateSlider();
+    this._updateSlider();
   }
 
   /**
-   * Get the content size of the scroll bar.
+   * Get the size of the scrolled content.
    */
   get contentSize(): number {
     return this._contentSize;
   }
 
   /**
-   * Set the content size of the scroll bar.
+   * Set the size of the scrolled content.
+   *
+   * This should be set to the size required to display the entirety of
+   * the content. It is used in conjunction with `viewportSize` to set
+   * the size of the scrollbar slider. The units are irrelevant, but
+   * must be consistent with `viewportSize` and `scrollPosition`.
    */
   set contentSize(size: number) {
     size = Math.max(0, size);
@@ -111,18 +114,23 @@ class ScrollBar extends Widget {
     }
     this._scrollPosition = Math.min(this._scrollPosition, size);
     this._contentSize = size;
-    this.updateSlider();
+    this._updateSlider();
   }
 
   /**
-   * Get the viewport size of the scroll bar.
+   * Get the size of the visible portion of the scrolled content.
    */
   get viewportSize(): number {
     return this._viewportSize;
   }
 
   /**
-   * Set the viewport size of the scroll bar.
+   * Set the size of the visible portion of the scrolled content.
+   *
+   * This should be set to the size of the currently visible portion of
+   * the content. It is used in conjunction with `contentSize` to set
+   * the size of the scrollbar slider. The units are irrelevant, but
+   * must be consistent with `contentSize` and `scrollPosition`.
    */
   set viewportSize(size: number) {
     size = Math.max(0, size);
@@ -130,18 +138,23 @@ class ScrollBar extends Widget {
       return;
     }
     this._viewportSize = size;
-    this.updateSlider();
+    this._updateSlider();
   }
 
   /**
-   * Get the scroll position of the scroll bar.
+   * Get the position of the scrollbar slider.
    */
   get scrollPosition(): number {
     return this._scrollPosition;
   }
 
   /**
-   * Set the scroll position of the scroll bar.
+   * Set the position of the scrollbar slider.
+   *
+   * This should be set to reflect the position of the viewport relative
+   * to the content. It is updated automatically when the user interacts
+   * with the slider. The units are irrelevant, but must be consistent
+   * with `viewportSize` and `contentSize`.
    */
   set scrollPosition(position: number) {
     position = Math.max(0, Math.min(position, this._contentSize));
@@ -149,11 +162,11 @@ class ScrollBar extends Widget {
       return;
     }
     this._scrollPosition = position;
-    this.updateSlider();
+    this._updateSlider();
   }
 
   /**
-   *
+   * Handle the DOM events for the scroll bar.
    */
   handleEvent(event: Event): void {
     switch (event.type) {
@@ -170,160 +183,58 @@ class ScrollBar extends Widget {
   }
 
   /**
-   * Get the DOM node for the scrollbar thumb.
-   *
-   * This may be reimplemented by subclasses as needed.
-   */
-  protected get sliderNode(): HTMLElement {
-    return <HTMLElement>this.node.firstChild;
-  }
-
-  /**
-   *
-   */
-  protected get sliderMinSize(): Size {
-    if (this._sliderMinSize === null) {
-      var style = window.getComputedStyle(this.thumbNode);
-      var width = parseInt(style.minWidth, 10) || 0;
-      var height = parseInt(style.minHeight, 10) || 0;
-      this._sliderMinSize = new Size(width, height);
-    }
-    return this._sliderMinSize;
-  }
-
-  /**
-   *
-   */
-  protected sliderLayoutSize(): number {
-
-  }
-
-  /**
-   * Refresh the current position and size of the scroll bar thumb.
-   */
-  protected updateSlider(): void {
-    var thumb = this.thumbNode;
-    var style = thumb.style;
-    if (this._contentSize === 0) {
-      style.display = 'none';
-      return;
-    }
-
-    var minThumb: number;
-    var scrollSize: number;
-    var box = this.boxSizing;
-    var cstyle = window.getComputedStyle(thumb);
-    if (this._orientation === Orientation.Vertical) {
-      minThumb = parseInt(cstyle.minHeight, 10) || 0;
-      scrollSize = this.height - box.verticalSum;
-    } else {
-      minThumb = parseInt(cstyle.minWidth, 10) || 0;
-      scrollSize = this.width - box.horizontalSum;
-    }
-
-    var percentSize = Math.min(this._viewportSize / this._contentSize, 1.0);
-    var thumbSize = percentSize * scrollSize;
-
-    var percentPos = this._scrollPosition / this._contentSize;
-    var thumbPos = percentPos * (scrollSize - thumbSize);
-
-    if (minThumb > thumbSize) {
-      thumbSize = minThumb;
-      if (thumbSize + thumbPos > scrollSize) {
-        thumbPos = scrollSize - thumbSize;
-        if (thumbPos < 0) {
-          style.display = 'none';
-          return;
-        }
-      }
-    }
-
-    if (this._orientation === Orientation.Vertical) {
-      style.display = '';
-      style.left = '';
-      style.width = '';
-      style.top = box.paddingTop + thumbPos + 'px';
-      style.height = thumbSize + 'px';
-    } else {
-      style.display = '';
-      style.top = '';
-      style.height = '';
-      style.left = box.paddingLeft + thumbPos + 'px';
-      style.width = thumbSize + 'px';
-    }
-  }
-
-  /**
-   *
+   * A method invoked on a 'resize' message.
    */
   protected onResize(msg: ResizeMessage): void {
-    this.updateSlider();
+    this._updateSlider();
   }
 
   /**
-   *
+   * A method invoked on an 'after-attach' message.
    */
   protected onAfterAttach(msg: IMessage): void {
-    this._sliderMinSize = null;
     this.node.addEventListener('mousedown', <any>this);
   }
 
   /**
-   *
+   * A method invoked on an 'after-detach' message.
    */
   protected onAfterDetach(msg: IMessage): void {
     this.node.removeEventListener('mousedown', <any>this);
   }
 
   /**
-   *
+   * Handle the 'mousedown' event for the scroll bar.
    */
   private _evtMouseDown(event: MouseEvent): void {
-    if (event.button !== 0) {
-      return;
-    }
 
-    var clientX = event.clientX;
-    var clientY = event.clientY;
-    if (!hitTest(this.thumbNode, clientX, clientY)) {
-      var position: number;
-      var rect = this.node.getBoundingClientRect();
-      if (this._orientation === Orientation.Vertical) {
-
-        position = this._mapToScrollPosition(clientY);
-      } else {
-        position = this._mapToScrollPosition(clientX);
-      }
-      this.scrollPosition = position;
-      this.sliderMoved.emit(this, this.scrollPosition);
-    }
-
-    document.addEventListener('mousemove', <any>this, true);
-    document.addEventListener('mouseup', <any>this, true);
   }
 
   /**
-   *
+   * Handle the 'mousemove' event for the scroll bar.
    */
-  private _evtMouseMouse(event: MouseEvent): void {
+  private _evtMouseMove(event: MouseEvent): void {
 
   }
 
   /**
-   *
+   * Handle the 'mouseup' event for the scroll bar.
    */
   private _evtMouseUp(event: MouseEvent): void {
 
-    document.removeEventListener('mousemove', <any>this, true);
-    document.removeEventListener('mouseup', <any>this, true);
   }
 
+  /**
+   * Update the position and size of the slider.
+   */
+  private _updateSlider(): void {
 
-  private _orientation: Orientation;
-  private _sliderMinSize: Size = null;
-  private _scrollPosition = 0;
-  private _viewportSize = 0;
+  }
+
   private _contentSize = 0;
+  private _viewportSize = 0;
+  private _scrollPosition = 0;
+  private _orientation: Orientation;
 }
 
 } // module phosphor.widgets
