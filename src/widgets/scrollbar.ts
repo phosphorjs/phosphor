@@ -10,6 +10,8 @@ module phosphor.widgets {
 import IMessage = core.IMessage;
 import Signal = core.Signal;
 
+import Size = utility.Size;
+
 
 /**
  * The class name added to a scroll bar widget.
@@ -85,10 +87,13 @@ class ScrollBar extends Widget implements IScrollBar {
     if (value === Orientation.Horizontal) {
       this.removeClass(VERTICAL_CLASS);
       this.addClass(HORIZONTAL_CLASS);
+      this.setSizePolicy(SizePolicy.Preferred, SizePolicy.Fixed);
     } else {
       this.removeClass(HORIZONTAL_CLASS);
       this.addClass(VERTICAL_CLASS);
+      this.setSizePolicy(SizePolicy.Fixed, SizePolicy.Preferred);
     }
+    this._invalidateSliderMin();
     this._updateSlider();
   }
 
@@ -166,6 +171,19 @@ class ScrollBar extends Widget implements IScrollBar {
   }
 
   /**
+   * Calculate the preferred size for the scroll bar.
+   */
+  sizeHint(): Size {
+    var size: Size;
+    if (this._orientation === Orientation.Horizontal) {
+      size = new Size(0, this.boxSizing.minHeight);
+    } else {
+      size = new Size(this.boxSizing.minWidth, 0);
+    }
+    return size;
+  }
+
+  /**
    * Handle the DOM events for the scroll bar.
    */
   handleEvent(event: Event): void {
@@ -194,6 +212,7 @@ class ScrollBar extends Widget implements IScrollBar {
    */
   protected onAfterAttach(msg: IMessage): void {
     this.node.addEventListener('mousedown', <any>this);
+    this._invalidateSliderMin();
   }
 
   /**
@@ -228,13 +247,124 @@ class ScrollBar extends Widget implements IScrollBar {
    * Update the position and size of the slider.
    */
   private _updateSlider(): void {
+    var geo = this._sliderGeometry();
+    var style = (<HTMLElement>this.node.firstChild).style;
+    if (geo === void 0) {
+      style.display = 'none';
+      style.top = '';
+      style.left = '';
+      style.width = '';
+      style.height = '';
+    } else if (this._orientation === Orientation.Horizontal) {
+      style.display = '';
+      style.top = '';
+      style.left = geo.pos + 'px';
+      style.width = geo.size + 'px';
+      style.height = '';
+    } else {
+      style.display = '';
+      style.top = geo.pos + 'px';
+      style.left = '';
+      style.width = '';
+      style.height = geo.size + 'px';
+    }
+  }
 
+  /**
+   * Invalidate the cached minimum size of the scroll bar slider.
+   */
+  private _invalidateSliderMin(): void {
+    this._sliderMinSize = -1;
+  }
+
+  /**
+   * Get the minimum size of the scroll bar slider.
+   *
+   * The minimum size is computed once and then cached. The cached
+   * value can be cleared by calling `_invalidateSliderMin`.
+   */
+  private _ensureSliderMin(): number {
+    if (this._sliderMinSize === -1) {
+      var slider = <HTMLElement>this.node.firstChild;
+      var style = window.getComputedStyle(slider);
+      if (this._orientation === Orientation.Horizontal) {
+        this._sliderMinSize = parseInt(style.minWidth, 10) || 0;
+      } else {
+        this._sliderMinSize = parseInt(style.minHeight, 10) || 0;
+      }
+    }
+    return this._sliderMinSize;
+  }
+
+  /**
+   * Compute the position and size of the scroll bar slider.
+   *
+   * The computation takes into account the scroll bar padding.
+   */
+  private _sliderGeometry(): ISliderGeometry {
+    // Hide the slider if the viewport is larger than the content.
+    var contentSize = this._contentSize;
+    var viewportSize = this._viewportSize;
+    if (viewportSize >= contentSize) {
+      return void 0;
+    }
+
+    // Compute the effective size of the scroll bar track.
+    var padding: number;
+    var trackSize: number;
+    var box = this.boxSizing;
+    if (this._orientation === Orientation.Horizontal) {
+      padding = box.paddingLeft;
+      trackSize = this.width - box.horizontalSum;
+    } else {
+      padding = box.paddingTop;
+      trackSize = this.height - box.verticalSum;
+    }
+
+    // Compute the ideal position and size of the slider.
+    var size = (viewportSize / contentSize) * trackSize;
+    var pos = (this._scrollPosition / contentSize) * (trackSize - size);
+
+    // Ensure the size is at least the minimum slider size.
+    var minSize = this._ensureSliderMin();
+    if (size < minSize) {
+      size = minSize;
+    }
+
+    // Ensure the slider does not extend past the track limit.
+    if (size + pos > trackSize) {
+      pos = trackSize - size;
+    }
+
+    // Hide the slider if it cannot fit the available space.
+    if (pos < 0) {
+      return void 0;
+    }
+
+    return { pos: padding + pos, size: size };
   }
 
   private _contentSize = 0;
   private _viewportSize = 0;
   private _scrollPosition = 0;
+  private _sliderMinSize = -1;
   private _orientation: Orientation;
+}
+
+
+/**
+ * An object which holds the computed geometry of a scroll bar slider.
+ */
+interface ISliderGeometry {
+  /**
+   * The position of the slider along the scroll bar orientation.
+   */
+  pos: number;
+
+  /**
+   * The size of the slider along the scroll bar orientation.
+   */
+  size: number;
 }
 
 } // module phosphor.widgets
