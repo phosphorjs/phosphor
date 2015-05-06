@@ -10,6 +10,7 @@ module phosphor.widgets {
 import IMessage = core.IMessage;
 import Signal = core.Signal;
 
+import IDisposable = utility.IDisposable;
 import Size = utility.Size;
 
 
@@ -35,10 +36,10 @@ var VERTICAL_CLASS = 'p-mod-vertical';
 
 
 /**
- * A concrete implementation of IScrollBar.
+ * A widget which provides a horizontal or vertical scroll bar.
  */
 export
-class ScrollBar extends Widget implements IScrollBar {
+class ScrollBar extends Widget {
   /**
    * Create the DOM node for a scroll bar.
    */
@@ -52,21 +53,16 @@ class ScrollBar extends Widget implements IScrollBar {
 
   /**
    * A signal emitted when the user moves the scroll bar slider.
-   *
-   * The parameter is the current scroll position. The signal is
-   * not emitted when the scroll position is changed from code.
    */
   sliderMoved = new Signal<ScrollBar, number>();
 
   /**
    * Construct a new scroll bar.
-   *
-   * @param orientation - The orientation of the scroll bar.
    */
-  constructor(orientation: Orientation) {
+  constructor(orientation = Orientation.Vertical) {
     super();
     this.addClass(SCROLLBAR_CLASS);
-    this.orientation = orientation;
+    this._setOrientation(orientation);
   }
 
   /**
@@ -79,95 +75,166 @@ class ScrollBar extends Widget implements IScrollBar {
   /**
    * Set the orientation of the scroll bar.
    */
-  set orientation(value: Orientation) {
-    if (value === this._orientation) {
+  set orientation(orientation: Orientation) {
+    if (orientation === this._orientation) {
       return;
     }
-    this._orientation = value;
-    if (value === Orientation.Horizontal) {
-      this.removeClass(VERTICAL_CLASS);
-      this.addClass(HORIZONTAL_CLASS);
-      this.setSizePolicy(SizePolicy.Preferred, SizePolicy.Fixed);
-    } else {
-      this.removeClass(HORIZONTAL_CLASS);
-      this.addClass(VERTICAL_CLASS);
-      this.setSizePolicy(SizePolicy.Fixed, SizePolicy.Preferred);
-    }
-    this._invalidateSliderMin();
-    this._updateSlider();
+    this._sliderMinSize = -1;
+    this._setOrientation(orientation);
+    this.invalidateBoxSizing();
+    this.update();
   }
 
   /**
-   * Get the size of the scrolled content.
+   * Get the minimum value of the scroll bar.
    */
-  get contentSize(): number {
-    return this._contentSize;
+  get minimum(): number {
+    return this._minimum;
   }
 
   /**
-   * Set the size of the scrolled content.
+   * Set the minimum value of the scroll bar.
+   */
+  set minimum(minimum: number) {
+    if (minimum === this._minimum) {
+      return;
+    }
+    this._minimum = minimum;
+    this._maximum = Math.max(minimum, this._maximum);
+    this._value = Math.max(minimum, Math.min(this._value, this._maximum));
+    this.update();
+  }
+
+  /**
+   * Get the maximum value of the scroll bar.
+   */
+  get maximum(): number {
+    return this._maximum;
+  }
+
+  /**
+   * Set the maximum value of the scroll bar.
+   */
+  set maximum(maximum: number) {
+    if (maximum === this._maximum) {
+      return;
+    }
+    this._maximum = maximum;
+    this._minimum = Math.min(this._minimum, maximum);
+    this._value = Math.max(this._minimum, Math.min(this._value, maximum));
+    this.update();
+  }
+
+  /**
+   * Get the current value of the scroll bar.
+   */
+  get value(): number {
+    return this._value;
+  }
+
+  /**
+   * Set the current value of the scroll bar.
+   */
+  set value(value: number) {
+    value = Math.max(this._minimum, Math.min(value, this._maximum));
+    if (value === this._value) {
+      return;
+    }
+    this._value = value;
+    this.update();
+  }
+
+  /**
+   * Get the page step of the scroll bar.
+   */
+  get pageStep(): number {
+    return this._pageStep;
+  }
+
+  /**
+   * Set the page step of the scroll bar.
+   */
+  set pageStep(step: number) {
+    step = Math.max(0, step);
+    if (step === this._pageStep) {
+      return;
+    }
+    this._pageStep = step;
+    this.update();
+  }
+
+  /**
+   * Get the single step of the scroll bar.
+   */
+  get singleStep(): number {
+    return this._singleStep;
+  }
+
+  /**
+   * Set the single step of the scroll bar.
+   */
+  set singleStep(step: number) {
+    step = Math.max(0, step);
+    if (step === this._singleStep) {
+      return;
+    }
+    this._singleStep = step;
+  }
+
+  /**
+   * Scroll up by a page step.
    *
-   * This should be set to the size required to display the entirety of
-   * the content. It is used in conjunction with `viewportSize` to set
-   * the size of the scrollbar slider. The units are irrelevant, but
-   * must be consistent with `viewportSize` and `scrollPosition`.
+   * This can be called to implement the behavior for a user action.
+   * The `sliderMoved` signal is emitted if the `value` changes.
    */
-  set contentSize(size: number) {
-    size = Math.max(0, size);
-    if (size === this._contentSize) {
-      return;
-    }
-    this._scrollPosition = Math.min(this._scrollPosition, size);
-    this._contentSize = size;
-    this._updateSlider();
+  pageUp(): void {
+    this.scrollTo(this._value - this._pageStep);
   }
 
   /**
-   * Get the size of the visible portion of the scrolled content.
-   */
-  get viewportSize(): number {
-    return this._viewportSize;
-  }
-
-  /**
-   * Set the size of the visible portion of the scrolled content.
+   * Scroll down by a page step.
    *
-   * This should be set to the size of the currently visible portion of
-   * the content. It is used in conjunction with `contentSize` to set
-   * the size of the scrollbar slider. The units are irrelevant, but
-   * must be consistent with `contentSize` and `scrollPosition`.
+   * This can be called to implement the behavior for a user action.
+   * The `sliderMoved` signal is emitted if the `value` changes.
    */
-  set viewportSize(size: number) {
-    size = Math.max(0, size);
-    if (size === this._viewportSize) {
-      return;
-    }
-    this._viewportSize = size;
-    this._updateSlider();
+  pageDown(): void {
+    this.scrollTo(this._value + this._pageStep);
   }
 
   /**
-   * Get the position of the scrollbar slider.
-   */
-  get scrollPosition(): number {
-    return this._scrollPosition;
-  }
-
-  /**
-   * Set the position of the scrollbar slider.
+   * Scroll up by a single step.
    *
-   * This should be set to reflect the position of the viewport relative
-   * to the content. It is updated automatically when the user interacts
-   * with the slider. The units are irrelevant, but must be consistent
-   * with `viewportSize` and `contentSize`.
+   * This can be called to implement the behavior for a user action.
+   * The `sliderMoved` signal is emitted if the `value` changes.
    */
-  set scrollPosition(position: number) {
-    position = Math.max(0, Math.min(position, this._contentSize));
-    if (position === this._scrollPosition) {
+  stepUp(): void {
+    this.scrollTo(this._value - this._singleStep);
+  }
+
+  /**
+   * Scroll down by a single step.
+   *
+   * This can be called to implement the behavior for a user action.
+   * The `sliderMoved` signal is emitted if the `value` changes.
+   */
+  stepDown(): void {
+    this.scrollTo(this._value + this._singleStep);
+  }
+
+  /**
+   * Scroll to the given value.
+   *
+   * This can be called to implement the behavior for a user action.
+   * The `sliderMoved` signal is emitted if the `value` changes.
+   */
+  scrollTo(value: number): void {
+    value = Math.max(this._minimum, Math.min(value, this._maximum));
+    if (value === this._value) {
       return;
     }
-    this._scrollPosition = position;
-    this._updateSlider();
+    this._value = value;
+    this.update();
+    this.sliderMoved.emit(this, value);
   }
 
   /**
@@ -201,18 +268,11 @@ class ScrollBar extends Widget implements IScrollBar {
   }
 
   /**
-   * A method invoked on a 'resize' message.
-   */
-  protected onResize(msg: ResizeMessage): void {
-    this._updateSlider();
-  }
-
-  /**
    * A method invoked on an 'after-attach' message.
    */
   protected onAfterAttach(msg: IMessage): void {
     this.node.addEventListener('mousedown', <any>this);
-    this._invalidateSliderMin();
+    this._sliderMinSize = -1;
   }
 
   /**
@@ -223,110 +283,43 @@ class ScrollBar extends Widget implements IScrollBar {
   }
 
   /**
-   * Handle the 'mousedown' event for the scroll bar.
+   * A method invoked on a 'resize' message.
    */
-  private _evtMouseDown(event: MouseEvent): void {
-
+  protected onResize(msg: ResizeMessage): void {
+    this.update(true);
   }
 
   /**
-   * Handle the 'mousemove' event for the scroll bar.
+   * A method invoked on an 'update-request' message.
    */
-  private _evtMouseMove(event: MouseEvent): void {
-
-  }
-
-  /**
-   * Handle the 'mouseup' event for the scroll bar.
-   */
-  private _evtMouseUp(event: MouseEvent): void {
-
-  }
-
-  /**
-   * Update the position and size of the slider.
-   */
-  private _updateSlider(): void {
-    var geo = this._sliderGeometry();
+  protected onUpdateRequest(msg: IMessage): void {
+    // Hide the slider if there is no room to scroll.
     var style = (<HTMLElement>this.node.firstChild).style;
-    if (geo === void 0) {
+    if (this._minimum === this._maximum) {
       style.display = 'none';
-      style.top = '';
-      style.left = '';
-      style.width = '';
-      style.height = '';
-    } else if (this._orientation === Orientation.Horizontal) {
-      style.display = '';
-      style.top = '';
-      style.left = geo.pos + 'px';
-      style.width = geo.size + 'px';
-      style.height = '';
-    } else {
-      style.display = '';
-      style.top = geo.pos + 'px';
-      style.left = '';
-      style.width = '';
-      style.height = geo.size + 'px';
-    }
-  }
-
-  /**
-   * Invalidate the cached minimum size of the scroll bar slider.
-   */
-  private _invalidateSliderMin(): void {
-    this._sliderMinSize = -1;
-  }
-
-  /**
-   * Get the minimum size of the scroll bar slider.
-   *
-   * The minimum size is computed once and then cached. The cached
-   * value can be cleared by calling `_invalidateSliderMin`.
-   */
-  private _ensureSliderMin(): number {
-    if (this._sliderMinSize === -1) {
-      var slider = <HTMLElement>this.node.firstChild;
-      var style = window.getComputedStyle(slider);
-      if (this._orientation === Orientation.Horizontal) {
-        this._sliderMinSize = parseInt(style.minWidth, 10) || 0;
-      } else {
-        this._sliderMinSize = parseInt(style.minHeight, 10) || 0;
-      }
-    }
-    return this._sliderMinSize;
-  }
-
-  /**
-   * Compute the position and size of the scroll bar slider.
-   *
-   * The computation takes into account the scroll bar padding.
-   */
-  private _sliderGeometry(): ISliderGeometry {
-    // Hide the slider if the viewport is larger than the content.
-    var contentSize = this._contentSize;
-    var viewportSize = this._viewportSize;
-    if (viewportSize >= contentSize) {
-      return void 0;
+      return;
     }
 
-    // Compute the effective size of the scroll bar track.
-    var padding: number;
+    // Compute the effective geometry of the scroll bar track.
+    var trackPos: number;
     var trackSize: number;
     var box = this.boxSizing;
     if (this._orientation === Orientation.Horizontal) {
-      padding = box.paddingLeft;
+      trackPos = box.paddingLeft;
       trackSize = this.width - box.horizontalSum;
     } else {
-      padding = box.paddingTop;
+      trackPos = box.paddingTop;
       trackSize = this.height - box.verticalSum;
     }
 
-    // Compute the ideal position and size of the slider.
-    var size = (viewportSize / contentSize) * trackSize;
-    var pos = (this._scrollPosition / contentSize) * (trackSize - size);
+    // Compute the ideal track position and size of the slider.
+    var span = this._maximum - this._minimum;
+    var size = (this._pageStep / span) * trackSize;
+    var pos = (this._value / span) * (trackSize - size);
 
     // Ensure the size is at least the minimum slider size.
-    var minSize = this._ensureSliderMin();
+    //var minSize = this._ensureSliderMinSize();
+    var minSize = 20;
     if (size < minSize) {
       size = minSize;
     }
@@ -338,33 +331,140 @@ class ScrollBar extends Widget implements IScrollBar {
 
     // Hide the slider if it cannot fit the available space.
     if (pos < 0) {
-      return void 0;
+      style.display = 'none';
+      return;
     }
 
-    return { pos: padding + pos, size: size };
+    // Update the position and size of the slider.
+    style.display = '';
+    if (this._orientation === Orientation.Horizontal) {
+      style.top = '';
+      style.left = trackPos + pos + 'px';
+      style.width = size + 'px';
+      style.height = '';
+    } else {
+      style.display = '';
+      style.top = trackPos + pos + 'px';
+      style.left = '';
+      style.width = '';
+      style.height = size + 'px';
+    }
   }
 
-  private _contentSize = 0;
-  private _viewportSize = 0;
-  private _scrollPosition = 0;
+  /**
+   * Handle the 'mousedown' event for the scroll bar.
+   */
+  private _evtMouseDown(event: MouseEvent): void {
+    // if (event.button !== 0) {
+    //   return;
+    // }
+
+    // var geo = this._sliderGeometry();
+    // if (!geo) {
+    //   return;
+    // }
+
+    // var localPos: number;
+    // var trackSize: number;
+    // var box = this.boxSizing;
+    // var rect = this.node.getBoundingClientRect();
+    // if (this._orientation === Orientation.Horizontal) {
+    //   localPos = event.clientX - rect.left - box.borderLeft;
+    //   trackSize = this.width - box.horizontalSum;
+    // } else {
+    //   localPos = event.clientY - rect.top - box.borderTop;
+    //   trackSize = this.height - box.verticalSum;
+    // }
+
+    // if (localPos < geo.pos) {
+    //   if (event.shiftKey) {
+    //     var spread = trackSize - geo.size;
+    //     var leading = Math.max(0, localPos - geo.size / 2);
+    //     var pos = this._contentSize * leading / spread;
+    //     if (pos !== this._scrollPosition) {
+    //       this._scrollPosition = pos;
+    //       this._updateSlider();
+    //       this.sliderMoved.emit(this, pos);
+    //     }
+    //   } else {
+    //     this._pageUp();
+    //   }
+    // } else if (localPos > geo.pos + geo.size) {
+    //   if (event.shiftKey) {
+    //     var spread = trackSize - geo.size;
+    //     var leading = Math.min(spread, localPos - geo.size / 2);
+    //     var pos = this._contentSize * leading / spread;
+    //     if (pos !== this._scrollPosition) {
+    //       this._scrollPosition = pos;
+    //       this._updateSlider();
+    //       this.sliderMoved.emit(this, pos);
+    //     }
+    //   } else {
+    //     this._pageDown();
+    //   }
+    // } else {
+    //   //document.addEventListener('mousemove', <any>this, true);
+    //   //document.addEventListener('mouseup', <any>this, true);
+    // }
+  }
+
+  /**
+   * Handle the 'mousemove' event for the scroll bar.
+   */
+  private _evtMouseMove(event: MouseEvent): void { }
+
+  /**
+   * Handle the 'mouseup' event for the scroll bar.
+   */
+  private _evtMouseUp(event: MouseEvent): void {
+    // if (event.button !== 0) {
+    //   return;
+    // }
+    // event.preventDefault();
+    // event.stopPropagation();
+    // document.removeEventListener('mousemove', <any>this, true);
+    // document.removeEventListener('mouseup', <any>this, true);
+    // if (this._dragData) {
+    //   this._dragData.cursorGrab.dispose();
+    //   this._dragData = null;
+    // }
+  }
+
+  /**
+   * Set the orientation of the scroll bar.
+   */
+  private _setOrientation(orientation: Orientation): void {
+    this._orientation = orientation;
+    if (orientation === Orientation.Horizontal) {
+      this.removeClass(VERTICAL_CLASS);
+      this.addClass(HORIZONTAL_CLASS);
+      this.setSizePolicy(SizePolicy.Preferred, SizePolicy.Fixed);
+    } else {
+      this.removeClass(HORIZONTAL_CLASS);
+      this.addClass(VERTICAL_CLASS);
+      this.setSizePolicy(SizePolicy.Fixed, SizePolicy.Preferred);
+    }
+  }
+
+  private _value = 0;
+  private _minimum = 0;
+  private _maximum = 99;
+  private _pageStep = 1;
+  private _singleStep = 10;
   private _sliderMinSize = -1;
   private _orientation: Orientation;
+  private _dragData: IDragData = null;
 }
 
 
 /**
- * An object which holds the computed geometry of a scroll bar slider.
+ *
  */
-interface ISliderGeometry {
+interface IDragData {
   /**
-   * The position of the slider along the scroll bar orientation.
+   *
    */
-  pos: number;
-
-  /**
-   * The size of the slider along the scroll bar orientation.
-   */
-  size: number;
+  cursorGrab: IDisposable;
 }
 
 } // module phosphor.widgets
