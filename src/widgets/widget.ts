@@ -653,15 +653,15 @@ class Widget extends NodeBase implements IMessageHandler {
   }
 
   /**
-   * Dispatch an 'update-request' message to the widget.
+   * Schedule an update for the widget.
    *
    * If the `immediate` flag is false (the default) the update will be
    * scheduled for the next cycle of the event loop. If `immediate` is
    * true, the widget will be updated immediately. Multiple pending
    * requests are collapsed into a single update.
    *
-   * Not all widgets will responsd to an 'update-request' message, and
-   * the semantics of an 'update' are defined by the supporting widget.
+   * #### Notes
+   * The semantics of an update are defined by a supporting widget.
    */
   update(immediate = false): void {
     if (immediate) {
