@@ -7,12 +7,23 @@
 |----------------------------------------------------------------------------*/
 module phosphor.virtualdom {
 
+import Queue = collections.Queue;
+
 import IMessage = core.IMessage;
+import Message = core.Message;
 import NodeBase = core.NodeBase;
 import clearMessageData = core.clearMessageData;
+import postMessage = core.postMessage;
+import sendMessage = core.sendMessage;
 
 import emptyArray = utility.emptyArray;
 import emptyObject = utility.emptyObject;
+
+
+/**
+ * A singleton 'update-request' message.
+ */
+var MSG_UPDATE_REQUEST = new Message('update-request');
 
 
 /**
@@ -69,6 +80,25 @@ class BaseComponent<T extends IData> extends NodeBase implements IComponent<T> {
   }
 
   /**
+   * Schedule an update for the component.
+   *
+   * If the `immediate` flag is false (the default) the update will be
+   * scheduled for the next cycle of the event loop. If `immediate` is
+   * true, the component will be updated immediately. Multiple pending
+   * requests are collapsed into a single update.
+   *
+   * #### Notes
+   * The semantics of an update are defined by a supporting component.
+   */
+  update(immediate = false): void {
+    if (immediate) {
+      sendMessage(this, MSG_UPDATE_REQUEST);
+    } else {
+      postMessage(this, MSG_UPDATE_REQUEST);
+    }
+  }
+
+  /**
    * Process a message sent to the component.
    */
   processMessage(msg: IMessage): void {
@@ -89,6 +119,16 @@ class BaseComponent<T extends IData> extends NodeBase implements IComponent<T> {
       this.onAfterMove(msg);
       break;
     }
+  }
+
+  /**
+   * Compress a message posted to the component.
+   */
+  compressMessage(msg: IMessage, pending: Queue<IMessage>): boolean {
+    if (msg.type === 'update-request') {
+      return pending.some(other => other.type === msg.type);
+    }
+    return false;
   }
 
   /**
