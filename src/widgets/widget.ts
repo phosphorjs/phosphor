@@ -47,6 +47,11 @@ var MSG_LAYOUT_CHANGED = new Message('layout-changed');
 var MSG_LAYOUT_REQUEST = new Message('layout-request');
 
 /**
+ * A singleton 'update-request' message.
+ */
+var MSG_UPDATE_REQUEST = new Message('update-request');
+
+/**
  * A singleton 'parent-changed' message.
  */
 var MSG_PARENT_CHANGED = new Message('parent-changed');
@@ -648,6 +653,25 @@ class Widget extends NodeBase implements IMessageHandler {
   }
 
   /**
+   * Dispatch an 'update-request' message to the widget.
+   *
+   * If the `immediate` flag is false (the default) the update will be
+   * scheduled for the next cycle of the event loop. If `immediate` is
+   * true, the widget will be updated immediately. Multiple pending
+   * requests are collapsed into a single update.
+   *
+   * Not all widgets will responsd to an 'update-request' message, and
+   * the semantics of an 'update' are defined by the supporting widget.
+   */
+  update(immediate = false): void {
+    if (immediate) {
+      sendMessage(this, MSG_UPDATE_REQUEST);
+    } else {
+      postMessage(this, MSG_UPDATE_REQUEST);
+    }
+  }
+
+  /**
    * Move the widget to the specified X-Y coordinate.
    */
   move(x: number, y: number): void {
@@ -734,6 +758,9 @@ class Widget extends NodeBase implements IMessageHandler {
     case 'resize':
       this.onResize(<ResizeMessage>msg);
       break;
+    case 'update-request':
+      this.onUpdateRequest(msg);
+      break;
     case 'child-added':
       this.onChildAdded(<ChildMessage>msg);
       break;
@@ -779,8 +806,8 @@ class Widget extends NodeBase implements IMessageHandler {
    * Subclasses may reimplement this method as needed.
    */
   compressMessage(msg: IMessage, pending: Queue<IMessage>): boolean {
-    if (msg.type === 'layout-request') {
-      return pending.some(other => other.type === 'layout-request');
+    if (msg.type === 'layout-request' || msg.type === 'update-request') {
+      return pending.some(other => other.type === msg.type);
     }
     return false;
   }
@@ -839,6 +866,13 @@ class Widget extends NodeBase implements IMessageHandler {
    * The default implementation is a no-op.
    */
   protected onResize(msg: ResizeMessage): void { }
+
+  /**
+   * A method invoked on an 'update-request' message.
+   *
+   * The default implementation is a no-op.
+   */
+  protected onUpdateRequest(msg: IMessage): void { }
 
   /**
    * A method invoked when a 'before-show' message is received.
