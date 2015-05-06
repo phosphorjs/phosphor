@@ -111,9 +111,7 @@ class SplitLayout extends Layout {
       sizer.size = hint;
       sizer.sizeHint = hint;
     }
-    if (parent.isVisible) {
-      this.update();
-    }
+    this.refresh();
   }
 
   /**
@@ -153,7 +151,7 @@ class SplitLayout extends Layout {
       growSizer(sizers, sizers.length - (index + 2), -delta);
       sizers.reverse();
     }
-    this.update();
+    this.refresh();
   }
 
   /**

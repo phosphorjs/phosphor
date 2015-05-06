@@ -205,13 +205,13 @@ class Layout implements IMessageFilter, IDisposable {
   }
 
   /**
-   * Update the layout for the parent widget immediately.
+   * Refresh the layout for the parent widget immediately.
    *
    * This is typically called automatically at the appropriate times.
    */
-  update(): void {
+  refresh(): void {
     var parent = this._parent;
-    if (parent.isVisible) {
+    if (parent && parent.isVisible) {
       var box = parent.boxSizing;
       var x = box.paddingLeft;
       var y = box.paddingTop;
@@ -242,7 +242,7 @@ class Layout implements IMessageFilter, IDisposable {
     switch (msg.type) {
     case 'resize':
     case 'layout-request':
-      this.update();
+      this.refresh();
       break;
     case 'child-removed':
       this.remove((<ChildMessage>msg).child);

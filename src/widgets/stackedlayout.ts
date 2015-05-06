@@ -71,8 +71,8 @@ class StackedLayout extends Layout {
     // IE repaints before firing the animation frame which processes
     // the layout update triggered by the show/hide calls above. This
     // causes a double paint flicker when changing the visible widget.
-    // The workaround is to update the layout immediately.
-    this.update();
+    // The workaround is to refresh the layout immediately.
+    this.refresh();
   }
 
   /**
