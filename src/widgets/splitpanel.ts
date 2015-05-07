@@ -50,8 +50,8 @@ class SplitPanel extends Panel {
   /**
    * Set the orientation of the split panel.
    */
-  set orientation(orient: Orientation) {
-    (<SplitLayout>this.layout).orientation = orient;
+  set orientation(orientation: Orientation) {
+    (<SplitLayout>this.layout).orientation = orientation;
   }
 
   /**
