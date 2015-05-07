@@ -16,7 +16,7 @@ import overrideCursor = utility.overrideCursor;
 
 
 /**
- * The class name added to a scroll bar widget.
+ * The class name added to ScrollBar instances.
  */
 var SCROLLBAR_CLASS = 'p-ScrollBar';
 
@@ -26,7 +26,7 @@ var SCROLLBAR_CLASS = 'p-ScrollBar';
 var SLIDER_CLASS = 'p-ScrollBar-slider';
 
 /**
- * The class name added to an active slider.
+ * The class name added to an active scroll bar.
  */
 var ACTIVE_CLASS = 'p-mod-active';
 
@@ -59,11 +59,18 @@ class ScrollBar extends Widget {
 
   /**
    * A signal emitted when the user moves the scroll bar slider.
+   *
+   * The signal parameter is the current `value` of the scroll bar.
+   *
+   * #### Notes
+   * This signal is not emitted when `value` is changed from code.
    */
   sliderMoved = new Signal<ScrollBar, number>();
 
   /**
    * Construct a new scroll bar.
+   *
+   * @param orientation - The orientation of the scroll bar.
    */
   constructor(orientation = Orientation.Vertical) {
     super();
@@ -175,6 +182,11 @@ class ScrollBar extends Widget {
 
   /**
    * Set the page size of the scroll bar.
+   *
+   * The page size controls the size of the slider control in relation
+   * to the current scroll bar range. It should be set to a value which
+   * represents a single "page" of content. This is the amount that the
+   * slider will move when the user clicks inside the scroll bar track.
    */
   set pageSize(size: number) {
     size = Math.max(0, size);
@@ -407,7 +419,7 @@ class ScrollBar extends Widget {
   }
 
   /**
-   * Scroll to the given value and emit the `sliderMoved`.
+   * Scroll to the given value expressed in scroll coordinates.
    *
    * The given value will be clamped to the scroll bar range. If the
    * adjusted value is different from the current value, the scroll
@@ -427,7 +439,7 @@ class ScrollBar extends Widget {
    * Get the minimum size of the slider for the current orientation.
    *
    * This computes the value once and caches it, which ensures that
-   * multiple calls to this method are cheap. The cached value can
+   * multiple calls to this method are quick. The cached value can
    * be cleared by setting the `_sliderMinSize` property to `-1`.
    */
   private _getSliderMinSize(): number {
