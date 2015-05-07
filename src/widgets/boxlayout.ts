@@ -493,14 +493,14 @@ class BoxLayout extends Layout {
 
   private _dirty = true;
   private _fixedSpace = 0;
-  private _spacing: number;
   private _lastSpaceIndex = -1;
-  private _direction: Direction;
-  private _sizeHint: Size = null;
   private _minSize: Size = null;
   private _maxSize: Size = null;
+  private _sizeHint: Size = null;
   private _items: ILayoutItem[] = [];
   private _sizers: LayoutSizer[] = [];
+  private _direction: Direction;
+  private _spacing: number;
 }
 
 
