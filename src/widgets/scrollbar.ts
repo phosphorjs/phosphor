@@ -12,6 +12,7 @@ import Signal = core.Signal;
 
 import IDisposable = utility.IDisposable;
 import Size = utility.Size;
+import overrideCursor = utility.overrideCursor;
 
 
 /**
@@ -23,6 +24,11 @@ var SCROLLBAR_CLASS = 'p-ScrollBar';
  * The class name assigned to a scroll bar slider.
  */
 var SLIDER_CLASS = 'p-ScrollBar-slider';
+
+/**
+ * The class name added to an active slider.
+ */
+var ACTIVE_CLASS = 'p-mod-active';
 
 /**
  * The class name added to a horizontal scroll bar.
@@ -62,7 +68,14 @@ class ScrollBar extends Widget {
   constructor(orientation = Orientation.Vertical) {
     super();
     this.addClass(SCROLLBAR_CLASS);
-    this._setOrientation(orientation);
+    this._orientation = orientation;
+    if (orientation === Orientation.Horizontal) {
+      this.addClass(HORIZONTAL_CLASS);
+      this.setSizePolicy(SizePolicy.Expanding, SizePolicy.Fixed);
+    } else {
+      this.addClass(VERTICAL_CLASS);
+      this.setSizePolicy(SizePolicy.Fixed, SizePolicy.Expanding);
+    }
   }
 
   /**
@@ -80,7 +93,16 @@ class ScrollBar extends Widget {
       return;
     }
     this._sliderMinSize = -1;
-    this._setOrientation(orientation);
+    this._orientation = orientation;
+    if (orientation === Orientation.Horizontal) {
+      this.removeClass(VERTICAL_CLASS);
+      this.addClass(HORIZONTAL_CLASS);
+      this.setSizePolicy(SizePolicy.Expanding, SizePolicy.Fixed);
+    } else {
+      this.removeClass(HORIZONTAL_CLASS);
+      this.addClass(VERTICAL_CLASS);
+      this.setSizePolicy(SizePolicy.Fixed, SizePolicy.Expanding);
+    }
     this.invalidateBoxSizing();
     this.update();
   }
@@ -145,96 +167,22 @@ class ScrollBar extends Widget {
   }
 
   /**
-   * Get the page step of the scroll bar.
+   * Get the page size of the scroll bar.
    */
-  get pageStep(): number {
-    return this._pageStep;
+  get pageSize(): number {
+    return this._pageSize;
   }
 
   /**
-   * Set the page step of the scroll bar.
+   * Set the page size of the scroll bar.
    */
-  set pageStep(step: number) {
-    step = Math.max(0, step);
-    if (step === this._pageStep) {
+  set pageSize(size: number) {
+    size = Math.max(0, size);
+    if (size === this._pageSize) {
       return;
     }
-    this._pageStep = step;
+    this._pageSize = size;
     this.update();
-  }
-
-  /**
-   * Get the single step of the scroll bar.
-   */
-  get singleStep(): number {
-    return this._singleStep;
-  }
-
-  /**
-   * Set the single step of the scroll bar.
-   */
-  set singleStep(step: number) {
-    step = Math.max(0, step);
-    if (step === this._singleStep) {
-      return;
-    }
-    this._singleStep = step;
-  }
-
-  /**
-   * Scroll up by a page step.
-   *
-   * This can be called to implement the behavior for a user action.
-   * The `sliderMoved` signal is emitted if the `value` changes.
-   */
-  pageUp(): void {
-    this.scrollTo(this._value - this._pageStep);
-  }
-
-  /**
-   * Scroll down by a page step.
-   *
-   * This can be called to implement the behavior for a user action.
-   * The `sliderMoved` signal is emitted if the `value` changes.
-   */
-  pageDown(): void {
-    this.scrollTo(this._value + this._pageStep);
-  }
-
-  /**
-   * Scroll up by a single step.
-   *
-   * This can be called to implement the behavior for a user action.
-   * The `sliderMoved` signal is emitted if the `value` changes.
-   */
-  stepUp(): void {
-    this.scrollTo(this._value - this._singleStep);
-  }
-
-  /**
-   * Scroll down by a single step.
-   *
-   * This can be called to implement the behavior for a user action.
-   * The `sliderMoved` signal is emitted if the `value` changes.
-   */
-  stepDown(): void {
-    this.scrollTo(this._value + this._singleStep);
-  }
-
-  /**
-   * Scroll to the given value.
-   *
-   * This can be called to implement the behavior for a user action.
-   * The `sliderMoved` signal is emitted if the `value` changes.
-   */
-  scrollTo(value: number): void {
-    value = Math.max(this._minimum, Math.min(value, this._maximum));
-    if (value === this._value) {
-      return;
-    }
-    this._value = value;
-    this.update();
-    this.sliderMoved.emit(this, value);
   }
 
   /**
@@ -314,12 +262,11 @@ class ScrollBar extends Widget {
 
     // Compute the ideal track position and size of the slider.
     var span = this._maximum - this._minimum;
-    var size = (this._pageStep / span) * trackSize;
+    var size = (this._pageSize / span) * trackSize;
     var pos = (this._value / span) * (trackSize - size);
 
     // Ensure the size is at least the minimum slider size.
-    //var minSize = this._ensureSliderMinSize();
-    var minSize = 20;
+    var minSize = this._getSliderMinSize();
     if (size < minSize) {
       size = minSize;
     }
@@ -343,7 +290,6 @@ class ScrollBar extends Widget {
       style.width = size + 'px';
       style.height = '';
     } else {
-      style.display = '';
       style.top = trackPos + pos + 'px';
       style.left = '';
       style.width = '';
@@ -355,114 +301,168 @@ class ScrollBar extends Widget {
    * Handle the 'mousedown' event for the scroll bar.
    */
   private _evtMouseDown(event: MouseEvent): void {
-    // if (event.button !== 0) {
-    //   return;
-    // }
+    if (event.button !== 0) {
+      return;
+    }
+    event.preventDefault();
+    event.stopPropagation();
 
-    // var geo = this._sliderGeometry();
-    // if (!geo) {
-    //   return;
-    // }
+    // Compute the geometry of the slider track and slider. The mouse
+    // and slider positions are normalized to local track coordinates.
+    var mousePos: number;
+    var trackSize: number;
+    var sliderPos: number;
+    var sliderEnd: number;
+    var sliderSize: number;
+    var box = this.boxSizing;
+    var rect = this.node.getBoundingClientRect();
+    var slider = <HTMLElement>this.node.firstChild;
+    var sliderRect = slider.getBoundingClientRect();
+    if (this._orientation === Orientation.Horizontal) {
+      mousePos = event.clientX - rect.left - box.paddingLeft;
+      trackSize = this.width - box.horizontalSum;
+      sliderPos = sliderRect.left - rect.left - box.paddingLeft;
+      sliderEnd = sliderRect.right - rect.left - box.paddingLeft;
+      sliderSize = sliderRect.width;
+    } else {
+      mousePos = event.clientY - rect.top - box.paddingTop;
+      trackSize = this.height - box.verticalSum;
+      sliderPos = sliderRect.top - rect.top - box.paddingTop;
+      sliderEnd = sliderRect.bottom - rect.top - box.paddingTop;
+      sliderSize = sliderRect.height;
+    }
 
-    // var localPos: number;
-    // var trackSize: number;
-    // var box = this.boxSizing;
-    // var rect = this.node.getBoundingClientRect();
-    // if (this._orientation === Orientation.Horizontal) {
-    //   localPos = event.clientX - rect.left - box.borderLeft;
-    //   trackSize = this.width - box.horizontalSum;
-    // } else {
-    //   localPos = event.clientY - rect.top - box.borderTop;
-    //   trackSize = this.height - box.verticalSum;
-    // }
+    // If the shift key is pressed and the position of the mouse does
+    // not not intersect the slider, scroll directly to the indicated
+    // position such that the middle of the slider is located at the
+    // mouse position.
+    if (event.shiftKey && (mousePos < sliderPos || mousePos >= sliderEnd)) {
+      var perc = (mousePos - sliderSize / 2) / (trackSize - sliderSize);
+      this._scrollTo(perc * (this._maximum - this._minimum));
+      return;
+    }
 
-    // if (localPos < geo.pos) {
-    //   if (event.shiftKey) {
-    //     var spread = trackSize - geo.size;
-    //     var leading = Math.max(0, localPos - geo.size / 2);
-    //     var pos = this._contentSize * leading / spread;
-    //     if (pos !== this._scrollPosition) {
-    //       this._scrollPosition = pos;
-    //       this._updateSlider();
-    //       this.sliderMoved.emit(this, pos);
-    //     }
-    //   } else {
-    //     this._pageUp();
-    //   }
-    // } else if (localPos > geo.pos + geo.size) {
-    //   if (event.shiftKey) {
-    //     var spread = trackSize - geo.size;
-    //     var leading = Math.min(spread, localPos - geo.size / 2);
-    //     var pos = this._contentSize * leading / spread;
-    //     if (pos !== this._scrollPosition) {
-    //       this._scrollPosition = pos;
-    //       this._updateSlider();
-    //       this.sliderMoved.emit(this, pos);
-    //     }
-    //   } else {
-    //     this._pageDown();
-    //   }
-    // } else {
-    //   //document.addEventListener('mousemove', <any>this, true);
-    //   //document.addEventListener('mouseup', <any>this, true);
-    // }
+    // If the mouse position is less than the slider, page down.
+    if (mousePos < sliderPos) {
+      this._scrollTo(this._value - this._pageSize);
+      return;
+    }
+
+    // If the mouse position is greater than the slider, page up.
+    if (mousePos >= sliderEnd) {
+      this._scrollTo(this._value + this._pageSize);
+      return;
+    }
+
+    // Otherwise, the mouse is over the slider and the drag is started.
+    this.addClass(ACTIVE_CLASS);
+    var pressOffset = mousePos - sliderPos;
+    var cursorGrab = overrideCursor('default');
+    this._dragData = { pressOffset: pressOffset, cursorGrab: cursorGrab };
+    document.addEventListener('mousemove', <any>this, true);
+    document.addEventListener('mouseup', <any>this, true);
   }
 
   /**
    * Handle the 'mousemove' event for the scroll bar.
    */
-  private _evtMouseMove(event: MouseEvent): void { }
+  private _evtMouseMove(event: MouseEvent): void {
+    var mousePos: number;
+    var trackSize: number;
+    var sliderSize: number;
+    var box = this.boxSizing;
+    var rect = this.node.getBoundingClientRect();
+    var slider = <HTMLElement>this.node.firstChild;
+    var sliderRect = slider.getBoundingClientRect();
+    if (this._orientation === Orientation.Horizontal) {
+      mousePos = event.clientX - rect.left - box.paddingLeft;
+      trackSize = this.width - box.horizontalSum;
+      sliderSize = sliderRect.width;
+    } else {
+      mousePos = event.clientY - rect.top - box.paddingTop;
+      trackSize = this.height - box.verticalSum;
+      sliderSize = sliderRect.height;
+    }
+    var pressOffset = this._dragData.pressOffset;
+    var perc = (mousePos - pressOffset) / (trackSize - sliderSize);
+    this._scrollTo(perc * (this._maximum - this._minimum));
+  }
 
   /**
    * Handle the 'mouseup' event for the scroll bar.
    */
   private _evtMouseUp(event: MouseEvent): void {
-    // if (event.button !== 0) {
-    //   return;
-    // }
-    // event.preventDefault();
-    // event.stopPropagation();
-    // document.removeEventListener('mousemove', <any>this, true);
-    // document.removeEventListener('mouseup', <any>this, true);
-    // if (this._dragData) {
-    //   this._dragData.cursorGrab.dispose();
-    //   this._dragData = null;
-    // }
+    if (event.button !== 0) {
+      return;
+    }
+    event.preventDefault();
+    event.stopPropagation();
+    document.removeEventListener('mousemove', <any>this, true);
+    document.removeEventListener('mouseup', <any>this, true);
+    this.removeClass(ACTIVE_CLASS);
+    if (this._dragData) {
+      this._dragData.cursorGrab.dispose();
+      this._dragData = null;
+    }
   }
 
   /**
-   * Set the orientation of the scroll bar.
+   * Scroll to the given value and emit the `sliderMoved`.
+   *
+   * The given value will be clamped to the scroll bar range. If the
+   * adjusted value is different from the current value, the scroll
+   * bar will be updated and the `sliderMoved` signal will be emitted.
    */
-  private _setOrientation(orientation: Orientation): void {
-    this._orientation = orientation;
-    if (orientation === Orientation.Horizontal) {
-      this.removeClass(VERTICAL_CLASS);
-      this.addClass(HORIZONTAL_CLASS);
-      this.setSizePolicy(SizePolicy.Preferred, SizePolicy.Fixed);
-    } else {
-      this.removeClass(HORIZONTAL_CLASS);
-      this.addClass(VERTICAL_CLASS);
-      this.setSizePolicy(SizePolicy.Fixed, SizePolicy.Preferred);
+  private _scrollTo(value: number): void {
+    value = Math.max(this._minimum, Math.min(value, this._maximum));
+    if (value === this._value) {
+      return;
     }
+    this._value = value;
+    this.update(true);
+    this.sliderMoved.emit(this, value);
+  }
+
+  /**
+   * Get the minimum size of the slider for the current orientation.
+   *
+   * This computes the value once and caches it, which ensures that
+   * multiple calls to this method are cheap. The cached value can
+   * be cleared by setting the `_sliderMinSize` property to `-1`.
+   */
+  private _getSliderMinSize(): number {
+    if (this._sliderMinSize === -1) {
+      var style = window.getComputedStyle(<HTMLElement>this.node.firstChild);
+      if (this._orientation === Orientation.Horizontal) {
+        this._sliderMinSize = parseInt(style.minWidth, 10) || 0;
+      } else {
+        this._sliderMinSize = parseInt(style.minHeight, 10) || 0;
+      }
+    }
+    return this._sliderMinSize;
   }
 
   private _value = 0;
   private _minimum = 0;
   private _maximum = 99;
-  private _pageStep = 1;
-  private _singleStep = 10;
+  private _pageSize = 1;
   private _sliderMinSize = -1;
-  private _orientation: Orientation;
   private _dragData: IDragData = null;
+  private _orientation: Orientation;
 }
 
 
 /**
- *
+ * An object which holds the drag data for a scroll bar.
  */
 interface IDragData {
   /**
-   *
+   * The offset of the mouse press from the leading edge of the slider.
+   */
+  pressOffset: number;
+
+  /**
+   * The disposable to clean up the cursor override.
    */
   cursorGrab: IDisposable;
 }
