@@ -272,23 +272,18 @@ class ScrollBar extends Widget {
       trackSize = this.height - box.verticalSum;
     }
 
-    // Compute the ideal track position and size of the slider.
-    var span = this._maximum - this._minimum;
-    var size = (this._pageSize / span) * trackSize;
-    var pos = (this._value / span) * (trackSize - size);
-
-    // Ensure the size is at least the minimum slider size.
+    // Compute the size of the slider bounded by its minimum.
     var minSize = this._getSliderMinSize();
-    if (size < minSize) {
-      size = minSize;
-    }
+    var span = this._maximum - this._minimum;
+    var size = Math.max(minSize, (this._pageSize / span) * trackSize);
 
-    // Ensure the slider does not extend past the track limit.
+    // Compute the position of slider bounded by the track limit.
+    var pos = (this._value / span) * (trackSize - size);
     if (size + pos > trackSize) {
       pos = trackSize - size;
     }
 
-    // Hide the slider if it cannot fit the available space.
+    // Hide the slider if it cannot fit in the available space.
     if (pos < 0) {
       style.display = 'none';
       return;
