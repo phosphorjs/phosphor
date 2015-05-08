@@ -58,7 +58,12 @@ class SplitHandle extends NodeBase {
   constructor(orientation: Orientation) {
     super();
     this.addClass(HANDLE_CLASS);
-    this.orientation = orientation;
+    this._orientation = orientation;
+    if (orientation === Orientation.Horizontal) {
+      this.addClass(HORIZONTAL_CLASS);
+    } else {
+      this.addClass(VERTICAL_CLASS);
+    }
   }
 
   /**

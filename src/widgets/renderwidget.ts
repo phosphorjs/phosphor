@@ -7,11 +7,8 @@
 |----------------------------------------------------------------------------*/
 module phosphor.widgets {
 
-import Queue = collections.Queue;
-
 import IMessage = core.IMessage;
 import Message = core.Message;
-import postMessage = core.postMessage;
 import sendMessage = core.sendMessage;
 
 import emptyObject = utility.emptyObject;
@@ -24,11 +21,6 @@ import render = virtualdom.render;
  * The class name added to RenderWidget instances.
  */
 var RENDER_WIDGET_CLASS = 'p-RenderWidget';
-
-/**
- * A singleton 'update-request' message.
- */
-var MSG_UPDATE_REQUEST = new Message('update-request');
 
 /**
  * A singleton 'before-render' message.
@@ -77,33 +69,10 @@ class RenderWidget extends Widget {
   }
 
   /**
-   * Schedule a rendering update for the widget.
-   *
-   * This should be called whenever the internal state of the widget
-   * has changed such that it requires the widget to be re-rendered,
-   * or when external code determines the widget should be refreshed.
-   *
-   * If the `immediate` flag is false (the default) the update will be
-   * scheduled for the next cycle of the event loop. If `immediate` is
-   * true, the widget will be updated immediately. Multiple pending
-   * requests are collapsed into a single update.
-   */
-  update(immediate = false): void {
-    if (immediate) {
-      sendMessage(this, MSG_UPDATE_REQUEST);
-    } else {
-      postMessage(this, MSG_UPDATE_REQUEST);
-    }
-  }
-
-  /**
    * Process a message sent to the widget.
    */
   processMessage(msg: IMessage): void {
     switch (msg.type) {
-    case 'update-request':
-      this.onUpdateRequest(msg);
-      break;
     case 'before-render':
       this.onBeforeRender(msg);
       break;
@@ -113,16 +82,6 @@ class RenderWidget extends Widget {
     default:
       super.processMessage(msg);
     }
-  }
-
-  /**
-   * Compress a message posted to the widget.
-   */
-  compressMessage(msg: IMessage, pending: Queue<IMessage>): boolean {
-    if (msg.type === 'update-request') {
-      return pending.some(other => other.type === 'update-request');
-    }
-    return super.compressMessage(msg, pending);
   }
 
   /**

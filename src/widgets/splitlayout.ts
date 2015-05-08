@@ -44,11 +44,11 @@ class SplitLayout extends Layout {
   /**
    * Set the orientation of the split layout.
    */
-  set orientation(orient: Orientation) {
-    if (orient === this._orientation) {
+  set orientation(orientation: Orientation) {
+    if (orientation === this._orientation) {
       return;
     }
-    this._orientation = orient;
+    this._orientation = orientation;
     this.invalidate();
   }
 
@@ -111,9 +111,7 @@ class SplitLayout extends Layout {
       sizer.size = hint;
       sizer.sizeHint = hint;
     }
-    if (parent.isVisible) {
-      this.update();
-    }
+    this.refresh();
   }
 
   /**
@@ -153,7 +151,7 @@ class SplitLayout extends Layout {
       growSizer(sizers, sizers.length - (index + 2), -delta);
       sizers.reverse();
     }
-    this.update();
+    this.refresh();
   }
 
   /**
@@ -490,12 +488,12 @@ class SplitLayout extends Layout {
   private _dirty = true;
   private _handleSize = 3;
   private _fixedSpace = 0;
-  private _sizeHint: Size = null;
   private _minSize: Size = null;
   private _maxSize: Size = null;
-  private _orientation: Orientation;
+  private _sizeHint: Size = null;
   private _items: SplitItem[] = [];
   private _sizers: LayoutSizer[] = [];
+  private _orientation: Orientation;
 }
 
 

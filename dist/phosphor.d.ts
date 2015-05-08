@@ -1522,6 +1522,7 @@ declare module phosphor.virtualdom {
 }
 
 declare module phosphor.virtualdom {
+    import Queue = collections.Queue;
     import IMessage = core.IMessage;
     import NodeBase = core.NodeBase;
     /**
@@ -1556,9 +1557,25 @@ declare module phosphor.virtualdom {
          */
         init(data: T, children: Elem[]): void;
         /**
+         * Schedule an update for the component.
+         *
+         * If the `immediate` flag is false (the default) the update will be
+         * scheduled for the next cycle of the event loop. If `immediate` is
+         * true, the component will be updated immediately. Multiple pending
+         * requests are collapsed into a single update.
+         *
+         * #### Notes
+         * The semantics of an update are defined by a supporting component.
+         */
+        update(immediate?: boolean): void;
+        /**
          * Process a message sent to the component.
          */
         processMessage(msg: IMessage): void;
+        /**
+         * Compress a message posted to the component.
+         */
+        compressMessage(msg: IMessage, pending: Queue<IMessage>): boolean;
         /**
          * A method invoked on an 'update-request' message.
          *
@@ -1595,7 +1612,6 @@ declare module phosphor.virtualdom {
 }
 
 declare module phosphor.virtualdom {
-    import Queue = collections.Queue;
     import IMessage = core.IMessage;
     /**
      * A component which renders its content using the virtual DOM.
@@ -1632,26 +1648,9 @@ declare module phosphor.virtualdom {
          */
         refs: any;
         /**
-         * Schedule an update for the component.
-         *
-         * This should be called whenever the internal state of the component
-         * has changed such that it requires the component to be re-rendered,
-         * or when external code determines the component should be refreshed.
-         *
-         * If the `immediate` flag is false (the default) the update will be
-         * scheduled for the next cycle of the event loop. If `immediate` is
-         * true, the component will be updated immediately. Multiple pending
-         * requests are collapsed into a single update.
-         */
-        update(immediate?: boolean): void;
-        /**
          * Process a message sent to the component.
          */
         processMessage(msg: IMessage): void;
-        /**
-         * Compress a message posted to the component.
-         */
-        compressMessage(msg: IMessage, pending: Queue<IMessage>): boolean;
         /**
          * Create the virtual DOM content for the component.
          *
@@ -2864,11 +2863,11 @@ declare module phosphor.widgets {
          */
         invalidate(): void;
         /**
-         * Update the layout for the parent widget immediately.
+         * Refresh the layout for the parent widget immediately.
          *
          * This is typically called automatically at the appropriate times.
          */
-        update(): void;
+        refresh(): void;
         /**
          * Filter a message sent to a message handler.
          *
@@ -3294,14 +3293,14 @@ declare module phosphor.widgets {
         private _insert(index, item, stretch);
         private _dirty;
         private _fixedSpace;
-        private _spacing;
         private _lastSpaceIndex;
-        private _direction;
-        private _sizeHint;
         private _minSize;
         private _maxSize;
+        private _sizeHint;
         private _items;
         private _sizers;
+        private _direction;
+        private _spacing;
     }
 }
 
@@ -3454,12 +3453,12 @@ declare module phosphor.widgets {
         private _dirty;
         private _handleSize;
         private _fixedSpace;
-        private _sizeHint;
         private _minSize;
         private _maxSize;
-        private _orientation;
+        private _sizeHint;
         private _items;
         private _sizers;
+        private _orientation;
     }
     /**
      * A custom widget item used by a split layout.
@@ -3857,6 +3856,18 @@ declare module phosphor.widgets {
          */
         updateGeometry(force?: boolean): void;
         /**
+         * Schedule an update for the widget.
+         *
+         * If the `immediate` flag is false (the default) the update will be
+         * scheduled for the next cycle of the event loop. If `immediate` is
+         * true, the widget will be updated immediately. Multiple pending
+         * requests are collapsed into a single update.
+         *
+         * #### Notes
+         * The semantics of an update are defined by a supporting widget.
+         */
+        update(immediate?: boolean): void;
+        /**
          * Move the widget to the specified X-Y coordinate.
          */
         move(x: number, y: number): void;
@@ -3923,6 +3934,12 @@ declare module phosphor.widgets {
          * The default implementation is a no-op.
          */
         protected onResize(msg: ResizeMessage): void;
+        /**
+         * A method invoked on an 'update-request' message.
+         *
+         * The default implementation is a no-op.
+         */
+        protected onUpdateRequest(msg: IMessage): void;
         /**
          * A method invoked when a 'before-show' message is received.
          *
@@ -4171,6 +4188,10 @@ declare module phosphor.widgets {
          */
         setStretch(which: Widget | number, stretch: number): boolean;
         /**
+         * Handle the DOM events for the split panel.
+         */
+        handleEvent(event: Event): void;
+        /**
          * A method invoked after the node is attached to the DOM.
          */
         protected onAfterAttach(msg: IMessage): void;
@@ -4178,10 +4199,6 @@ declare module phosphor.widgets {
          * A method invoked after the node is detached from the DOM.
          */
         protected onAfterDetach(msg: IMessage): void;
-        /**
-         * Handle the DOM events for the split panel.
-         */
-        protected handleEvent(event: Event): void;
         /**
          * Handle the 'mousedown' event for the split panel.
          */
@@ -4335,7 +4352,7 @@ declare module phosphor.widgets {
         /**
          * Handle the DOM events for the dock area.
          */
-        protected handleEvent(event: Event): void;
+        handleEvent(event: Event): void;
         /**
          * Handle the 'mousemove' event for the dock area.
          *
@@ -4758,6 +4775,10 @@ declare module phosphor.widgets {
          */
         close(): void;
         /**
+         * Handle the DOM events for the menu.
+         */
+        handleEvent(event: Event): void;
+        /**
          * Create the DOM node for a MenuItem.
          *
          * This can be reimplemented to create custom menu item nodes.
@@ -4786,10 +4807,6 @@ declare module phosphor.widgets {
          * `createNode` method. It should remove the item node from the menu.
          */
         protected removeItemNode(node: HTMLElement): void;
-        /**
-         * Handle the DOM events for the menu.
-         */
-        protected handleEvent(event: Event): void;
         /**
          * Handle the 'mouseenter' event for the menu.
          *
@@ -5029,6 +5046,10 @@ declare module phosphor.widgets {
          */
         minSizeHint(): Size;
         /**
+         * Handle the DOM events for the menu bar.
+         */
+        handleEvent(event: Event): void;
+        /**
          * Create the DOM node for a MenuItem.
          *
          * This can be reimplemented to create custom menu item nodes.
@@ -5065,10 +5086,6 @@ declare module phosphor.widgets {
          * A method invoked on the 'after-detach' message.
          */
         protected onAfterDetach(msg: IMessage): void;
-        /**
-         * Handle the DOM events for the menu bar.
-         */
-        protected handleEvent(event: Event): void;
         /**
          * Handle the 'mousedown' event for the menu bar.
          */
@@ -5144,7 +5161,6 @@ declare module phosphor.widgets {
 }
 
 declare module phosphor.widgets {
-    import Queue = collections.Queue;
     import IMessage = core.IMessage;
     import Elem = virtualdom.Elem;
     /**
@@ -5169,26 +5185,9 @@ declare module phosphor.widgets {
          */
         refs: any;
         /**
-         * Schedule a rendering update for the widget.
-         *
-         * This should be called whenever the internal state of the widget
-         * has changed such that it requires the widget to be re-rendered,
-         * or when external code determines the widget should be refreshed.
-         *
-         * If the `immediate` flag is false (the default) the update will be
-         * scheduled for the next cycle of the event loop. If `immediate` is
-         * true, the widget will be updated immediately. Multiple pending
-         * requests are collapsed into a single update.
-         */
-        update(immediate?: boolean): void;
-        /**
          * Process a message sent to the widget.
          */
         processMessage(msg: IMessage): void;
-        /**
-         * Compress a message posted to the widget.
-         */
-        compressMessage(msg: IMessage, pending: Queue<IMessage>): boolean;
         /**
          * Create the virtual DOM content for the widget.
          *
@@ -5220,6 +5219,135 @@ declare module phosphor.widgets {
          */
         protected onAfterRender(msg: IMessage): void;
         private _refs;
+    }
+}
+
+declare module phosphor.widgets {
+    import IMessage = core.IMessage;
+    import Signal = core.Signal;
+    import Size = utility.Size;
+    /**
+     * A widget which provides a horizontal or vertical scroll bar.
+     */
+    class ScrollBar extends Widget {
+        /**
+         * Create the DOM node for a scroll bar.
+         */
+        static createNode(): HTMLElement;
+        /**
+         * A signal emitted when the user moves the scroll bar slider.
+         *
+         * The signal parameter is the current `value` of the scroll bar.
+         *
+         * #### Notes
+         * This signal is not emitted when `value` is changed from code.
+         */
+        sliderMoved: Signal<ScrollBar, number>;
+        /**
+         * Construct a new scroll bar.
+         *
+         * @param orientation - The orientation of the scroll bar.
+         */
+        constructor(orientation?: Orientation);
+        /**
+         * Get the orientation of the scroll bar.
+         */
+        /**
+         * Set the orientation of the scroll bar.
+         */
+        orientation: Orientation;
+        /**
+         * Get the minimum value of the scroll bar.
+         */
+        /**
+         * Set the minimum value of the scroll bar.
+         */
+        minimum: number;
+        /**
+         * Get the maximum value of the scroll bar.
+         */
+        /**
+         * Set the maximum value of the scroll bar.
+         */
+        maximum: number;
+        /**
+         * Get the current value of the scroll bar.
+         */
+        /**
+         * Set the current value of the scroll bar.
+         */
+        value: number;
+        /**
+         * Get the page size of the scroll bar.
+         */
+        /**
+         * Set the page size of the scroll bar.
+         *
+         * The page size controls the size of the slider control in relation
+         * to the current scroll bar range. It should be set to a value which
+         * represents a single "page" of content. This is the amount that the
+         * slider will move when the user clicks inside the scroll bar track.
+         */
+        pageSize: number;
+        /**
+         * Calculate the preferred size for the scroll bar.
+         */
+        sizeHint(): Size;
+        /**
+         * Handle the DOM events for the scroll bar.
+         */
+        handleEvent(event: Event): void;
+        /**
+         * A method invoked on an 'after-attach' message.
+         */
+        protected onAfterAttach(msg: IMessage): void;
+        /**
+         * A method invoked on an 'after-detach' message.
+         */
+        protected onAfterDetach(msg: IMessage): void;
+        /**
+         * A method invoked on a 'resize' message.
+         */
+        protected onResize(msg: ResizeMessage): void;
+        /**
+         * A method invoked on an 'update-request' message.
+         */
+        protected onUpdateRequest(msg: IMessage): void;
+        /**
+         * Handle the 'mousedown' event for the scroll bar.
+         */
+        private _evtMouseDown(event);
+        /**
+         * Handle the 'mousemove' event for the scroll bar.
+         */
+        private _evtMouseMove(event);
+        /**
+         * Handle the 'mouseup' event for the scroll bar.
+         */
+        private _evtMouseUp(event);
+        /**
+         * Scroll to the given value expressed in scroll coordinates.
+         *
+         * The given value will be clamped to the scroll bar range. If the
+         * adjusted value is different from the current value, the scroll
+         * bar will be updated and the `sliderMoved` signal will be emitted.
+         */
+        private _scrollTo(value);
+        /**
+         * Get the minimum size of the slider for the current orientation.
+         *
+         * This computes the value once and caches it, which ensures that
+         * multiple calls to this method are quick. The cached value can
+         * be cleared by setting the `_sliderMinSize` property to `-1`.
+         */
+        private _getSliderMinSize();
+        private _value;
+        private _minimum;
+        private _maximum;
+        private _pageSize;
+        private _sliderMinSize;
+        private _dragData;
+        private _orientation;
     }
 }
 
@@ -5484,6 +5612,10 @@ declare module phosphor.widgets {
          */
         minSizeHint(): Size;
         /**
+         * Handle the DOM events for the tab bar.
+         */
+        handleEvent(event: Event): void;
+        /**
          * Get the content node for the tab bar.
          */
         protected contentNode: HTMLElement;
@@ -5499,10 +5631,6 @@ declare module phosphor.widgets {
          * A method invoked on a 'resize' message.
          */
         protected onResize(msg: ResizeMessage): void;
-        /**
-         * Handle the DOM events for the tab bar.
-         */
-        protected handleEvent(event: Event): void;
         /**
          * Handle the 'click' event for the tab bar.
          */

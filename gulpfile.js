@@ -88,6 +88,7 @@ var tsSources = [
   'widgets/menu',
   'widgets/menubar',
   'widgets/renderwidget',
+  'widgets/scrollbar',
   'widgets/tab',
   'widgets/tabbar',
   'widgets/tabpanel',

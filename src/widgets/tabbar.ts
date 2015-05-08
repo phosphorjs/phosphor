@@ -534,6 +534,26 @@ class TabBar extends Widget {
   }
 
   /**
+   * Handle the DOM events for the tab bar.
+   */
+  handleEvent(event: Event): void {
+    switch (event.type) {
+    case 'click':
+      this._evtClick(<MouseEvent>event);
+      break;
+    case 'mousedown':
+      this._evtMouseDown(<MouseEvent>event);
+      break;
+    case 'mousemove':
+      this._evtMouseMove(<MouseEvent>event);
+      break;
+    case 'mouseup':
+      this._evtMouseUp(<MouseEvent>event);
+      break;
+    }
+  }
+
+  /**
    * Get the content node for the tab bar.
    */
   protected get contentNode(): HTMLElement {
@@ -563,26 +583,6 @@ class TabBar extends Widget {
    */
   protected onResize(msg: ResizeMessage): void {
     this._updateTabLayout();
-  }
-
-  /**
-   * Handle the DOM events for the tab bar.
-   */
-  protected handleEvent(event: Event): void {
-    switch (event.type) {
-    case 'click':
-      this._evtClick(<MouseEvent>event);
-      break;
-    case 'mousedown':
-      this._evtMouseDown(<MouseEvent>event);
-      break;
-    case 'mousemove':
-      this._evtMouseMove(<MouseEvent>event);
-      break;
-    case 'mouseup':
-      this._evtMouseUp(<MouseEvent>event);
-      break;
-    }
   }
 
   /**

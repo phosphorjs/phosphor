@@ -3001,10 +3001,17 @@ var phosphor;
 (function (phosphor) {
     var virtualdom;
     (function (virtualdom) {
+        var Message = phosphor.core.Message;
         var NodeBase = phosphor.core.NodeBase;
         var clearMessageData = phosphor.core.clearMessageData;
+        var postMessage = phosphor.core.postMessage;
+        var sendMessage = phosphor.core.sendMessage;
         var emptyArray = phosphor.utility.emptyArray;
         var emptyObject = phosphor.utility.emptyObject;
+        /**
+         * A singleton 'update-request' message.
+         */
+        var MSG_UPDATE_REQUEST = new Message('update-request');
         /**
          * A concrete implementation of IComponent.
          *
@@ -3064,6 +3071,26 @@ var phosphor;
                 this._children = children;
             };
             /**
+             * Schedule an update for the component.
+             *
+             * If the `immediate` flag is false (the default) the update will be
+             * scheduled for the next cycle of the event loop. If `immediate` is
+             * true, the component will be updated immediately. Multiple pending
+             * requests are collapsed into a single update.
+             *
+             * #### Notes
+             * The semantics of an update are defined by a supporting component.
+             */
+            BaseComponent.prototype.update = function (immediate) {
+                if (immediate === void 0) { immediate = false; }
+                if (immediate) {
+                    sendMessage(this, MSG_UPDATE_REQUEST);
+                }
+                else {
+                    postMessage(this, MSG_UPDATE_REQUEST);
+                }
+            };
+            /**
              * Process a message sent to the component.
              */
             BaseComponent.prototype.processMessage = function (msg) {
@@ -3084,6 +3111,15 @@ var phosphor;
                         this.onAfterMove(msg);
                         break;
                 }
+            };
+            /**
+             * Compress a message posted to the component.
+             */
+            BaseComponent.prototype.compressMessage = function (msg, pending) {
+                if (msg.type === 'update-request') {
+                    return pending.some(function (other) { return other.type === msg.type; });
+                }
+                return false;
             };
             /**
              * A method invoked on an 'update-request' message.
@@ -3144,13 +3180,8 @@ var phosphor;
     var virtualdom;
     (function (virtualdom) {
         var Message = phosphor.core.Message;
-        var postMessage = phosphor.core.postMessage;
         var sendMessage = phosphor.core.sendMessage;
         var emptyObject = phosphor.utility.emptyObject;
-        /**
-         * A singleton 'update-request' message.
-         */
-        var MSG_UPDATE_REQUEST = new Message('update-request');
         /**
          * A singleton 'before-render' message.
          */
@@ -3200,27 +3231,6 @@ var phosphor;
                 configurable: true
             });
             /**
-             * Schedule an update for the component.
-             *
-             * This should be called whenever the internal state of the component
-             * has changed such that it requires the component to be re-rendered,
-             * or when external code determines the component should be refreshed.
-             *
-             * If the `immediate` flag is false (the default) the update will be
-             * scheduled for the next cycle of the event loop. If `immediate` is
-             * true, the component will be updated immediately. Multiple pending
-             * requests are collapsed into a single update.
-             */
-            Component.prototype.update = function (immediate) {
-                if (immediate === void 0) { immediate = false; }
-                if (immediate) {
-                    sendMessage(this, MSG_UPDATE_REQUEST);
-                }
-                else {
-                    postMessage(this, MSG_UPDATE_REQUEST);
-                }
-            };
-            /**
              * Process a message sent to the component.
              */
             Component.prototype.processMessage = function (msg) {
@@ -3234,15 +3244,6 @@ var phosphor;
                     default:
                         _super.prototype.processMessage.call(this, msg);
                 }
-            };
-            /**
-             * Compress a message posted to the component.
-             */
-            Component.prototype.compressMessage = function (msg, pending) {
-                if (msg.type === 'update-request') {
-                    return pending.some(function (other) { return other.type === 'update-request'; });
-                }
-                return false;
             };
             /**
              * Create the virtual DOM content for the component.
@@ -4794,13 +4795,13 @@ var phosphor;
                 }
             };
             /**
-             * Update the layout for the parent widget immediately.
+             * Refresh the layout for the parent widget immediately.
              *
              * This is typically called automatically at the appropriate times.
              */
-            Layout.prototype.update = function () {
+            Layout.prototype.refresh = function () {
                 var parent = this._parent;
-                if (parent.isVisible) {
+                if (parent && parent.isVisible) {
                     var box = parent.boxSizing;
                     var x = box.paddingLeft;
                     var y = box.paddingTop;
@@ -4829,7 +4830,7 @@ var phosphor;
                 switch (msg.type) {
                     case 'resize':
                     case 'layout-request':
-                        this.update();
+                        this.refresh();
                         break;
                     case 'child-removed':
                         this.remove(msg.child);
@@ -5663,9 +5664,9 @@ var phosphor;
                 this._dirty = true;
                 this._fixedSpace = 0;
                 this._lastSpaceIndex = -1;
-                this._sizeHint = null;
                 this._minSize = null;
                 this._maxSize = null;
+                this._sizeHint = null;
                 this._items = [];
                 this._sizers = [];
                 this._direction = direction;
@@ -6187,7 +6188,13 @@ var phosphor;
                 _super.call(this);
                 this._hidden = false;
                 this.addClass(HANDLE_CLASS);
-                this.orientation = orientation;
+                this._orientation = orientation;
+                if (orientation === 0 /* Horizontal */) {
+                    this.addClass(HORIZONTAL_CLASS);
+                }
+                else {
+                    this.addClass(VERTICAL_CLASS);
+                }
             }
             /**
              * Create the DOM node for a split handle.
@@ -6289,9 +6296,9 @@ var phosphor;
                 this._dirty = true;
                 this._handleSize = 3;
                 this._fixedSpace = 0;
-                this._sizeHint = null;
                 this._minSize = null;
                 this._maxSize = null;
+                this._sizeHint = null;
                 this._items = [];
                 this._sizers = [];
                 this._orientation = orientation;
@@ -6314,11 +6321,11 @@ var phosphor;
                 /**
                  * Set the orientation of the split layout.
                  */
-                set: function (orient) {
-                    if (orient === this._orientation) {
+                set: function (orientation) {
+                    if (orientation === this._orientation) {
                         return;
                     }
-                    this._orientation = orient;
+                    this._orientation = orientation;
                     this.invalidate();
                 },
                 enumerable: true,
@@ -6388,9 +6395,7 @@ var phosphor;
                     sizer.size = hint;
                     sizer.sizeHint = hint;
                 }
-                if (parent.isVisible) {
-                    this.update();
-                }
+                this.refresh();
             };
             /**
              * Get the splitter handle at the given index.
@@ -6430,7 +6435,7 @@ var phosphor;
                     growSizer(sizers, sizers.length - (index + 2), -delta);
                     sizers.reverse();
                 }
-                this.update();
+                this.refresh();
             };
             /**
              * Get the layout item at the specified index.
@@ -6945,8 +6950,8 @@ var phosphor;
                     // IE repaints before firing the animation frame which processes
                     // the layout update triggered by the show/hide calls above. This
                     // causes a double paint flicker when changing the visible widget.
-                    // The workaround is to update the layout immediately.
-                    this.update();
+                    // The workaround is to refresh the layout immediately.
+                    this.refresh();
                 },
                 enumerable: true,
                 configurable: true
@@ -7181,6 +7186,10 @@ var phosphor;
          * A singleton 'layout-request' message.
          */
         var MSG_LAYOUT_REQUEST = new Message('layout-request');
+        /**
+         * A singleton 'update-request' message.
+         */
+        var MSG_UPDATE_REQUEST = new Message('update-request');
         /**
          * A singleton 'parent-changed' message.
          */
@@ -7800,6 +7809,26 @@ var phosphor;
                 }
             };
             /**
+             * Schedule an update for the widget.
+             *
+             * If the `immediate` flag is false (the default) the update will be
+             * scheduled for the next cycle of the event loop. If `immediate` is
+             * true, the widget will be updated immediately. Multiple pending
+             * requests are collapsed into a single update.
+             *
+             * #### Notes
+             * The semantics of an update are defined by a supporting widget.
+             */
+            Widget.prototype.update = function (immediate) {
+                if (immediate === void 0) { immediate = false; }
+                if (immediate) {
+                    sendMessage(this, MSG_UPDATE_REQUEST);
+                }
+                else {
+                    postMessage(this, MSG_UPDATE_REQUEST);
+                }
+            };
+            /**
              * Move the widget to the specified X-Y coordinate.
              */
             Widget.prototype.move = function (x, y) {
@@ -7882,6 +7911,9 @@ var phosphor;
                     case 'resize':
                         this.onResize(msg);
                         break;
+                    case 'update-request':
+                        this.onUpdateRequest(msg);
+                        break;
                     case 'child-added':
                         this.onChildAdded(msg);
                         break;
@@ -7926,8 +7958,8 @@ var phosphor;
              * Subclasses may reimplement this method as needed.
              */
             Widget.prototype.compressMessage = function (msg, pending) {
-                if (msg.type === 'layout-request') {
-                    return pending.some(function (other) { return other.type === 'layout-request'; });
+                if (msg.type === 'layout-request' || msg.type === 'update-request') {
+                    return pending.some(function (other) { return other.type === msg.type; });
                 }
                 return false;
             };
@@ -7984,6 +8016,13 @@ var phosphor;
              * The default implementation is a no-op.
              */
             Widget.prototype.onResize = function (msg) {
+            };
+            /**
+             * A method invoked on an 'update-request' message.
+             *
+             * The default implementation is a no-op.
+             */
+            Widget.prototype.onUpdateRequest = function (msg) {
             };
             /**
              * A method invoked when a 'before-show' message is received.
@@ -8414,8 +8453,8 @@ var phosphor;
                 /**
                  * Set the orientation of the split panel.
                  */
-                set: function (orient) {
-                    this.layout.orientation = orient;
+                set: function (orientation) {
+                    this.layout.orientation = orientation;
                 },
                 enumerable: true,
                 configurable: true
@@ -8487,18 +8526,6 @@ var phosphor;
                 return this.layout.setStretch(which, stretch);
             };
             /**
-             * A method invoked after the node is attached to the DOM.
-             */
-            SplitPanel.prototype.onAfterAttach = function (msg) {
-                this.node.addEventListener('mousedown', this);
-            };
-            /**
-             * A method invoked after the node is detached from the DOM.
-             */
-            SplitPanel.prototype.onAfterDetach = function (msg) {
-                this.node.removeEventListener('mousedown', this);
-            };
-            /**
              * Handle the DOM events for the split panel.
              */
             SplitPanel.prototype.handleEvent = function (event) {
@@ -8513,6 +8540,18 @@ var phosphor;
                         this._evtMouseMove(event);
                         break;
                 }
+            };
+            /**
+             * A method invoked after the node is attached to the DOM.
+             */
+            SplitPanel.prototype.onAfterAttach = function (msg) {
+                this.node.addEventListener('mousedown', this);
+            };
+            /**
+             * A method invoked after the node is detached from the DOM.
+             */
+            SplitPanel.prototype.onAfterDetach = function (msg) {
+                this.node.removeEventListener('mousedown', this);
             };
             /**
              * Handle the 'mousedown' event for the split panel.
@@ -10472,6 +10511,34 @@ var phosphor;
                 this.closed.emit(this, void 0);
             };
             /**
+             * Handle the DOM events for the menu.
+             */
+            Menu.prototype.handleEvent = function (event) {
+                switch (event.type) {
+                    case 'mouseenter':
+                        this._evtMouseEnter(event);
+                        break;
+                    case 'mouseleave':
+                        this._evtMouseLeave(event);
+                        break;
+                    case 'mousedown':
+                        this._evtMouseDown(event);
+                        break;
+                    case 'mouseup':
+                        this._evtMouseUp(event);
+                        break;
+                    case 'contextmenu':
+                        this._evtContextMenu(event);
+                        break;
+                    case 'keydown':
+                        this._evtKeyDown(event);
+                        break;
+                    case 'keypress':
+                        this._evtKeyPress(event);
+                        break;
+                }
+            };
+            /**
              * Create the DOM node for a MenuItem.
              *
              * This can be reimplemented to create custom menu item nodes.
@@ -10547,34 +10614,6 @@ var phosphor;
             Menu.prototype.removeItemNode = function (node) {
                 var content = this.node.firstChild;
                 content.removeChild(node);
-            };
-            /**
-             * Handle the DOM events for the menu.
-             */
-            Menu.prototype.handleEvent = function (event) {
-                switch (event.type) {
-                    case 'mouseenter':
-                        this._evtMouseEnter(event);
-                        break;
-                    case 'mouseleave':
-                        this._evtMouseLeave(event);
-                        break;
-                    case 'mousedown':
-                        this._evtMouseDown(event);
-                        break;
-                    case 'mouseup':
-                        this._evtMouseUp(event);
-                        break;
-                    case 'contextmenu':
-                        this._evtContextMenu(event);
-                        break;
-                    case 'keydown':
-                        this._evtKeyDown(event);
-                        break;
-                    case 'keypress':
-                        this._evtKeyPress(event);
-                        break;
-                }
             };
             /**
              * Handle the 'mouseenter' event for the menu.
@@ -11331,6 +11370,28 @@ var phosphor;
                 return new Size(0, this.boxSizing.minHeight);
             };
             /**
+             * Handle the DOM events for the menu bar.
+             */
+            MenuBar.prototype.handleEvent = function (event) {
+                switch (event.type) {
+                    case 'mousedown':
+                        this._evtMouseDown(event);
+                        break;
+                    case 'mousemove':
+                        this._evtMouseMove(event);
+                        break;
+                    case 'mouseleave':
+                        this._evtMouseLeave(event);
+                        break;
+                    case 'keydown':
+                        this._evtKeyDown(event);
+                        break;
+                    case 'keypress':
+                        this._evtKeyPress(event);
+                        break;
+                }
+            };
+            /**
              * Create the DOM node for a MenuItem.
              *
              * This can be reimplemented to create custom menu item nodes.
@@ -11406,28 +11467,6 @@ var phosphor;
                 this.node.removeEventListener('mousedown', this);
                 this.node.removeEventListener('mousemove', this);
                 this.node.removeEventListener('mouseleave', this);
-            };
-            /**
-             * Handle the DOM events for the menu bar.
-             */
-            MenuBar.prototype.handleEvent = function (event) {
-                switch (event.type) {
-                    case 'mousedown':
-                        this._evtMouseDown(event);
-                        break;
-                    case 'mousemove':
-                        this._evtMouseMove(event);
-                        break;
-                    case 'mouseleave':
-                        this._evtMouseLeave(event);
-                        break;
-                    case 'keydown':
-                        this._evtKeyDown(event);
-                        break;
-                    case 'keypress':
-                        this._evtKeyPress(event);
-                        break;
-                }
             };
             /**
              * Handle the 'mousedown' event for the menu bar.
@@ -11749,7 +11788,6 @@ var phosphor;
     var widgets;
     (function (widgets) {
         var Message = phosphor.core.Message;
-        var postMessage = phosphor.core.postMessage;
         var sendMessage = phosphor.core.sendMessage;
         var emptyObject = phosphor.utility.emptyObject;
         var render = phosphor.virtualdom.render;
@@ -11757,10 +11795,6 @@ var phosphor;
          * The class name added to RenderWidget instances.
          */
         var RENDER_WIDGET_CLASS = 'p-RenderWidget';
-        /**
-         * A singleton 'update-request' message.
-         */
-        var MSG_UPDATE_REQUEST = new Message('update-request');
         /**
          * A singleton 'before-render' message.
          */
@@ -11807,34 +11841,10 @@ var phosphor;
                 configurable: true
             });
             /**
-             * Schedule a rendering update for the widget.
-             *
-             * This should be called whenever the internal state of the widget
-             * has changed such that it requires the widget to be re-rendered,
-             * or when external code determines the widget should be refreshed.
-             *
-             * If the `immediate` flag is false (the default) the update will be
-             * scheduled for the next cycle of the event loop. If `immediate` is
-             * true, the widget will be updated immediately. Multiple pending
-             * requests are collapsed into a single update.
-             */
-            RenderWidget.prototype.update = function (immediate) {
-                if (immediate === void 0) { immediate = false; }
-                if (immediate) {
-                    sendMessage(this, MSG_UPDATE_REQUEST);
-                }
-                else {
-                    postMessage(this, MSG_UPDATE_REQUEST);
-                }
-            };
-            /**
              * Process a message sent to the widget.
              */
             RenderWidget.prototype.processMessage = function (msg) {
                 switch (msg.type) {
-                    case 'update-request':
-                        this.onUpdateRequest(msg);
-                        break;
                     case 'before-render':
                         this.onBeforeRender(msg);
                         break;
@@ -11844,15 +11854,6 @@ var phosphor;
                     default:
                         _super.prototype.processMessage.call(this, msg);
                 }
-            };
-            /**
-             * Compress a message posted to the widget.
-             */
-            RenderWidget.prototype.compressMessage = function (msg, pending) {
-                if (msg.type === 'update-request') {
-                    return pending.some(function (other) { return other.type === 'update-request'; });
-                }
-                return _super.prototype.compressMessage.call(this, msg, pending);
             };
             /**
              * Create the virtual DOM content for the widget.
@@ -11897,6 +11898,461 @@ var phosphor;
             return RenderWidget;
         })(widgets.Widget);
         widgets.RenderWidget = RenderWidget;
+    })(widgets = phosphor.widgets || (phosphor.widgets = {}));
+})(phosphor || (phosphor = {})); // module phosphor.widgets
+
+var __extends = this.__extends || function (d, b) {
+    for (var p in b) if (b.hasOwnProperty(p)) d[p] = b[p];
+    function __() { this.constructor = d; }
+    __.prototype = b.prototype;
+    d.prototype = new __();
+};
+/*-----------------------------------------------------------------------------
+| Copyright (c) 2014-2015, S. Chris Colbert
+|
+| Distributed under the terms of the BSD 3-Clause License.
+|
+| The full license is in the file LICENSE, distributed with this software.
+|----------------------------------------------------------------------------*/
+var phosphor;
+(function (phosphor) {
+    var widgets;
+    (function (widgets) {
+        var Signal = phosphor.core.Signal;
+        var Size = phosphor.utility.Size;
+        var overrideCursor = phosphor.utility.overrideCursor;
+        /**
+         * The class name added to ScrollBar instances.
+         */
+        var SCROLLBAR_CLASS = 'p-ScrollBar';
+        /**
+         * The class name assigned to a scroll bar slider.
+         */
+        var SLIDER_CLASS = 'p-ScrollBar-slider';
+        /**
+         * The class name added to an active scroll bar.
+         */
+        var ACTIVE_CLASS = 'p-mod-active';
+        /**
+         * The class name added to a horizontal scroll bar.
+         */
+        var HORIZONTAL_CLASS = 'p-mod-horizontal';
+        /**
+         * The class name added to a vertical scroll bar.
+         */
+        var VERTICAL_CLASS = 'p-mod-vertical';
+        /**
+         * A widget which provides a horizontal or vertical scroll bar.
+         */
+        var ScrollBar = (function (_super) {
+            __extends(ScrollBar, _super);
+            /**
+             * Construct a new scroll bar.
+             *
+             * @param orientation - The orientation of the scroll bar.
+             */
+            function ScrollBar(orientation) {
+                if (orientation === void 0) { orientation = 1 /* Vertical */; }
+                _super.call(this);
+                /**
+                 * A signal emitted when the user moves the scroll bar slider.
+                 *
+                 * The signal parameter is the current `value` of the scroll bar.
+                 *
+                 * #### Notes
+                 * This signal is not emitted when `value` is changed from code.
+                 */
+                this.sliderMoved = new Signal();
+                this._value = 0;
+                this._minimum = 0;
+                this._maximum = 99;
+                this._pageSize = 1;
+                this._sliderMinSize = -1;
+                this._dragData = null;
+                this.addClass(SCROLLBAR_CLASS);
+                this._orientation = orientation;
+                if (orientation === 0 /* Horizontal */) {
+                    this.addClass(HORIZONTAL_CLASS);
+                    this.setSizePolicy(widgets.SizePolicy.Expanding, 0 /* Fixed */);
+                }
+                else {
+                    this.addClass(VERTICAL_CLASS);
+                    this.setSizePolicy(0 /* Fixed */, widgets.SizePolicy.Expanding);
+                }
+            }
+            /**
+             * Create the DOM node for a scroll bar.
+             */
+            ScrollBar.createNode = function () {
+                var node = document.createElement('div');
+                var slider = document.createElement('div');
+                slider.className = SLIDER_CLASS;
+                node.appendChild(slider);
+                return node;
+            };
+            Object.defineProperty(ScrollBar.prototype, "orientation", {
+                /**
+                 * Get the orientation of the scroll bar.
+                 */
+                get: function () {
+                    return this._orientation;
+                },
+                /**
+                 * Set the orientation of the scroll bar.
+                 */
+                set: function (orientation) {
+                    if (orientation === this._orientation) {
+                        return;
+                    }
+                    this._sliderMinSize = -1;
+                    this._orientation = orientation;
+                    if (orientation === 0 /* Horizontal */) {
+                        this.removeClass(VERTICAL_CLASS);
+                        this.addClass(HORIZONTAL_CLASS);
+                        this.setSizePolicy(widgets.SizePolicy.Expanding, 0 /* Fixed */);
+                    }
+                    else {
+                        this.removeClass(HORIZONTAL_CLASS);
+                        this.addClass(VERTICAL_CLASS);
+                        this.setSizePolicy(0 /* Fixed */, widgets.SizePolicy.Expanding);
+                    }
+                    this.invalidateBoxSizing();
+                    this.update();
+                },
+                enumerable: true,
+                configurable: true
+            });
+            Object.defineProperty(ScrollBar.prototype, "minimum", {
+                /**
+                 * Get the minimum value of the scroll bar.
+                 */
+                get: function () {
+                    return this._minimum;
+                },
+                /**
+                 * Set the minimum value of the scroll bar.
+                 */
+                set: function (minimum) {
+                    if (minimum === this._minimum) {
+                        return;
+                    }
+                    this._minimum = minimum;
+                    this._maximum = Math.max(minimum, this._maximum);
+                    this._value = Math.max(minimum, Math.min(this._value, this._maximum));
+                    this.update();
+                },
+                enumerable: true,
+                configurable: true
+            });
+            Object.defineProperty(ScrollBar.prototype, "maximum", {
+                /**
+                 * Get the maximum value of the scroll bar.
+                 */
+                get: function () {
+                    return this._maximum;
+                },
+                /**
+                 * Set the maximum value of the scroll bar.
+                 */
+                set: function (maximum) {
+                    if (maximum === this._maximum) {
+                        return;
+                    }
+                    this._maximum = maximum;
+                    this._minimum = Math.min(this._minimum, maximum);
+                    this._value = Math.max(this._minimum, Math.min(this._value, maximum));
+                    this.update();
+                },
+                enumerable: true,
+                configurable: true
+            });
+            Object.defineProperty(ScrollBar.prototype, "value", {
+                /**
+                 * Get the current value of the scroll bar.
+                 */
+                get: function () {
+                    return this._value;
+                },
+                /**
+                 * Set the current value of the scroll bar.
+                 */
+                set: function (value) {
+                    value = Math.max(this._minimum, Math.min(value, this._maximum));
+                    if (value === this._value) {
+                        return;
+                    }
+                    this._value = value;
+                    this.update();
+                },
+                enumerable: true,
+                configurable: true
+            });
+            Object.defineProperty(ScrollBar.prototype, "pageSize", {
+                /**
+                 * Get the page size of the scroll bar.
+                 */
+                get: function () {
+                    return this._pageSize;
+                },
+                /**
+                 * Set the page size of the scroll bar.
+                 *
+                 * The page size controls the size of the slider control in relation
+                 * to the current scroll bar range. It should be set to a value which
+                 * represents a single "page" of content. This is the amount that the
+                 * slider will move when the user clicks inside the scroll bar track.
+                 */
+                set: function (size) {
+                    size = Math.max(0, size);
+                    if (size === this._pageSize) {
+                        return;
+                    }
+                    this._pageSize = size;
+                    this.update();
+                },
+                enumerable: true,
+                configurable: true
+            });
+            /**
+             * Calculate the preferred size for the scroll bar.
+             */
+            ScrollBar.prototype.sizeHint = function () {
+                var size;
+                if (this._orientation === 0 /* Horizontal */) {
+                    size = new Size(0, this.boxSizing.minHeight);
+                }
+                else {
+                    size = new Size(this.boxSizing.minWidth, 0);
+                }
+                return size;
+            };
+            /**
+             * Handle the DOM events for the scroll bar.
+             */
+            ScrollBar.prototype.handleEvent = function (event) {
+                switch (event.type) {
+                    case 'mousedown':
+                        this._evtMouseDown(event);
+                        break;
+                    case 'mousemove':
+                        this._evtMouseMove(event);
+                        break;
+                    case 'mouseup':
+                        this._evtMouseUp(event);
+                        break;
+                }
+            };
+            /**
+             * A method invoked on an 'after-attach' message.
+             */
+            ScrollBar.prototype.onAfterAttach = function (msg) {
+                this.node.addEventListener('mousedown', this);
+                this._sliderMinSize = -1;
+            };
+            /**
+             * A method invoked on an 'after-detach' message.
+             */
+            ScrollBar.prototype.onAfterDetach = function (msg) {
+                this.node.removeEventListener('mousedown', this);
+            };
+            /**
+             * A method invoked on a 'resize' message.
+             */
+            ScrollBar.prototype.onResize = function (msg) {
+                this.update(true);
+            };
+            /**
+             * A method invoked on an 'update-request' message.
+             */
+            ScrollBar.prototype.onUpdateRequest = function (msg) {
+                // Hide the slider if there is no room to scroll.
+                var style = this.node.firstChild.style;
+                if (this._minimum === this._maximum) {
+                    style.display = 'none';
+                    return;
+                }
+                // Compute the effective geometry of the scroll bar track.
+                var trackPos;
+                var trackSize;
+                var box = this.boxSizing;
+                if (this._orientation === 0 /* Horizontal */) {
+                    trackPos = box.paddingLeft;
+                    trackSize = this.width - box.horizontalSum;
+                }
+                else {
+                    trackPos = box.paddingTop;
+                    trackSize = this.height - box.verticalSum;
+                }
+                // Compute the size of the slider bounded by its minimum.
+                var minSize = this._getSliderMinSize();
+                var span = this._maximum - this._minimum;
+                var size = Math.max(minSize, (this._pageSize / span) * trackSize);
+                // Compute the position of slider bounded by the track limit.
+                var pos = (this._value / span) * (trackSize - size);
+                if (size + pos > trackSize) {
+                    pos = trackSize - size;
+                }
+                // Hide the slider if it cannot fit in the available space.
+                if (pos < 0) {
+                    style.display = 'none';
+                    return;
+                }
+                // Update the position and size of the slider.
+                style.display = '';
+                if (this._orientation === 0 /* Horizontal */) {
+                    style.top = '';
+                    style.left = trackPos + pos + 'px';
+                    style.width = size + 'px';
+                    style.height = '';
+                }
+                else {
+                    style.top = trackPos + pos + 'px';
+                    style.left = '';
+                    style.width = '';
+                    style.height = size + 'px';
+                }
+            };
+            /**
+             * Handle the 'mousedown' event for the scroll bar.
+             */
+            ScrollBar.prototype._evtMouseDown = function (event) {
+                if (event.button !== 0) {
+                    return;
+                }
+                event.preventDefault();
+                event.stopPropagation();
+                // Compute the geometry of the slider track and slider. The mouse
+                // and slider positions are normalized to local track coordinates.
+                var mousePos;
+                var trackSize;
+                var sliderPos;
+                var sliderEnd;
+                var sliderSize;
+                var box = this.boxSizing;
+                var rect = this.node.getBoundingClientRect();
+                var slider = this.node.firstChild;
+                var sliderRect = slider.getBoundingClientRect();
+                if (this._orientation === 0 /* Horizontal */) {
+                    mousePos = event.clientX - rect.left - box.paddingLeft;
+                    trackSize = this.width - box.horizontalSum;
+                    sliderPos = sliderRect.left - rect.left - box.paddingLeft;
+                    sliderEnd = sliderRect.right - rect.left - box.paddingLeft;
+                    sliderSize = sliderRect.width;
+                }
+                else {
+                    mousePos = event.clientY - rect.top - box.paddingTop;
+                    trackSize = this.height - box.verticalSum;
+                    sliderPos = sliderRect.top - rect.top - box.paddingTop;
+                    sliderEnd = sliderRect.bottom - rect.top - box.paddingTop;
+                    sliderSize = sliderRect.height;
+                }
+                // If the shift key is pressed and the position of the mouse does
+                // not not intersect the slider, scroll directly to the indicated
+                // position such that the middle of the slider is located at the
+                // mouse position.
+                if (event.shiftKey && (mousePos < sliderPos || mousePos >= sliderEnd)) {
+                    var perc = (mousePos - sliderSize / 2) / (trackSize - sliderSize);
+                    this._scrollTo(perc * (this._maximum - this._minimum));
+                    return;
+                }
+                // If the mouse position is less than the slider, page down.
+                if (mousePos < sliderPos) {
+                    this._scrollTo(this._value - this._pageSize);
+                    return;
+                }
+                // If the mouse position is greater than the slider, page up.
+                if (mousePos >= sliderEnd) {
+                    this._scrollTo(this._value + this._pageSize);
+                    return;
+                }
+                // Otherwise, the mouse is over the slider and the drag is started.
+                this.addClass(ACTIVE_CLASS);
+                var pressOffset = mousePos - sliderPos;
+                var cursorGrab = overrideCursor('default');
+                this._dragData = { pressOffset: pressOffset, cursorGrab: cursorGrab };
+                document.addEventListener('mousemove', this, true);
+                document.addEventListener('mouseup', this, true);
+            };
+            /**
+             * Handle the 'mousemove' event for the scroll bar.
+             */
+            ScrollBar.prototype._evtMouseMove = function (event) {
+                var mousePos;
+                var trackSize;
+                var sliderSize;
+                var box = this.boxSizing;
+                var rect = this.node.getBoundingClientRect();
+                var slider = this.node.firstChild;
+                var sliderRect = slider.getBoundingClientRect();
+                if (this._orientation === 0 /* Horizontal */) {
+                    mousePos = event.clientX - rect.left - box.paddingLeft;
+                    trackSize = this.width - box.horizontalSum;
+                    sliderSize = sliderRect.width;
+                }
+                else {
+                    mousePos = event.clientY - rect.top - box.paddingTop;
+                    trackSize = this.height - box.verticalSum;
+                    sliderSize = sliderRect.height;
+                }
+                var pressOffset = this._dragData.pressOffset;
+                var perc = (mousePos - pressOffset) / (trackSize - sliderSize);
+                this._scrollTo(perc * (this._maximum - this._minimum));
+            };
+            /**
+             * Handle the 'mouseup' event for the scroll bar.
+             */
+            ScrollBar.prototype._evtMouseUp = function (event) {
+                if (event.button !== 0) {
+                    return;
+                }
+                event.preventDefault();
+                event.stopPropagation();
+                document.removeEventListener('mousemove', this, true);
+                document.removeEventListener('mouseup', this, true);
+                this.removeClass(ACTIVE_CLASS);
+                if (this._dragData) {
+                    this._dragData.cursorGrab.dispose();
+                    this._dragData = null;
+                }
+            };
+            /**
+             * Scroll to the given value expressed in scroll coordinates.
+             *
+             * The given value will be clamped to the scroll bar range. If the
+             * adjusted value is different from the current value, the scroll
+             * bar will be updated and the `sliderMoved` signal will be emitted.
+             */
+            ScrollBar.prototype._scrollTo = function (value) {
+                value = Math.max(this._minimum, Math.min(value, this._maximum));
+                if (value === this._value) {
+                    return;
+                }
+                this._value = value;
+                this.update(true);
+                this.sliderMoved.emit(this, value);
+            };
+            /**
+             * Get the minimum size of the slider for the current orientation.
+             *
+             * This computes the value once and caches it, which ensures that
+             * multiple calls to this method are quick. The cached value can
+             * be cleared by setting the `_sliderMinSize` property to `-1`.
+             */
+            ScrollBar.prototype._getSliderMinSize = function () {
+                if (this._sliderMinSize === -1) {
+                    var style = window.getComputedStyle(this.node.firstChild);
+                    if (this._orientation === 0 /* Horizontal */) {
+                        this._sliderMinSize = parseInt(style.minWidth, 10) || 0;
+                    }
+                    else {
+                        this._sliderMinSize = parseInt(style.minHeight, 10) || 0;
+                    }
+                }
+                return this._sliderMinSize;
+            };
+            return ScrollBar;
+        })(widgets.Widget);
+        widgets.ScrollBar = ScrollBar;
     })(widgets = phosphor.widgets || (phosphor.widgets = {}));
 })(phosphor || (phosphor = {})); // module phosphor.widgets
 
@@ -12516,6 +12972,25 @@ var phosphor;
                 }
                 return new Size(width, this.boxSizing.minHeight);
             };
+            /**
+             * Handle the DOM events for the tab bar.
+             */
+            TabBar.prototype.handleEvent = function (event) {
+                switch (event.type) {
+                    case 'click':
+                        this._evtClick(event);
+                        break;
+                    case 'mousedown':
+                        this._evtMouseDown(event);
+                        break;
+                    case 'mousemove':
+                        this._evtMouseMove(event);
+                        break;
+                    case 'mouseup':
+                        this._evtMouseUp(event);
+                        break;
+                }
+            };
             Object.defineProperty(TabBar.prototype, "contentNode", {
                 /**
                  * Get the content node for the tab bar.
@@ -12547,25 +13022,6 @@ var phosphor;
              */
             TabBar.prototype.onResize = function (msg) {
                 this._updateTabLayout();
-            };
-            /**
-             * Handle the DOM events for the tab bar.
-             */
-            TabBar.prototype.handleEvent = function (event) {
-                switch (event.type) {
-                    case 'click':
-                        this._evtClick(event);
-                        break;
-                    case 'mousedown':
-                        this._evtMouseDown(event);
-                        break;
-                    case 'mousemove':
-                        this._evtMouseMove(event);
-                        break;
-                    case 'mouseup':
-                        this._evtMouseUp(event);
-                        break;
-                }
             };
             /**
              * Handle the 'click' event for the tab bar.
