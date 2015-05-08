@@ -295,8 +295,8 @@ class TabBar extends Widget {
     }
     this._tabWidth = width;
     if (this.isAttached) {
-      this._updateTabLayout();
       this.updateGeometry();
+      this.update();
     }
   }
 
@@ -321,8 +321,8 @@ class TabBar extends Widget {
     }
     this._minTabWidth = width;
     if (this.isAttached) {
-      this._updateTabLayout();
       this.updateGeometry();
+      this.update();
     }
   }
 
@@ -348,8 +348,8 @@ class TabBar extends Widget {
     }
     this._tabOverlap = overlap;
     if (this.isAttached) {
-      this._updateTabLayout();
       this.updateGeometry();
+      this.update();
     }
   }
 
@@ -391,7 +391,7 @@ class TabBar extends Widget {
   insertTab(index: number, tab: Tab): number {
     var fromIndex = this.indexOf(tab);
     if (fromIndex !== -1) {
-      index = this.moveTab(fromIndex, index);
+      index = this._moveTab(fromIndex, index);
     } else {
       index = this._insertTab(index, tab, true);
     }
@@ -493,8 +493,8 @@ class TabBar extends Widget {
     var tabStyle = tab.node.style;
     contentNode.classList.add(TRANSITION_CLASS);
     tabStyle.transition = 'none';
-    this._updateTabLayout();
     tabStyle.left = tabLeft + 'px';
+    this.update(true);
   }
 
   /**
@@ -583,7 +583,35 @@ class TabBar extends Widget {
    * A method invoked on a 'resize' message.
    */
   protected onResize(msg: ResizeMessage): void {
-    this._updateTabLayout();
+    this.update(true);
+  }
+
+  /**
+   * A method invoked on an 'update-request' message.
+   */
+  protected onUpdateRequest(msg: IMessage): void {
+    var dragNode: HTMLElement = null;
+    if (this._dragData && this._dragData.dragActive) {
+      dragNode = this._dragData.node;
+    }
+    var left = 0;
+    var tabs = this._tabs;
+    var width = this.width;
+    var overlap = this._tabOverlap;
+    var tlw = this._tabLayoutWidth();
+    for (var i = 0, n = tabs.length; i < n; ++i) {
+      var node = tabs[i].node;
+      var style = node.style;
+      if (node !== dragNode) {
+        var offset = tlw + TAB_STUB_SIZE * (n - i - 1);
+        if ((left + offset) > width) {
+          left = Math.max(0, width - offset);
+        }
+        style.left = left + 'px';
+      }
+      style.width = tlw + 'px';
+      left += tlw - overlap;
+    }
   }
 
   /**
@@ -737,9 +765,9 @@ class TabBar extends Widget {
 
     // Swap the position of the tab if it exceeds a threshold.
     if (targetX < lowerBound) {
-      this.moveTab(index, index - 1);
+      this._moveTab(index, index - 1);
     } else if (targetX > upperBound) {
-      this.moveTab(index, index + 1);
+      this._moveTab(index, index + 1);
     }
 
     // Move the tab to its target position.
@@ -777,7 +805,7 @@ class TabBar extends Widget {
     if (data.dragActive) {
       data.cursorGrab.dispose();
       data.node.style.transition = '';
-      this._withTransition(() => { this._updateTabLayout() });
+      this._withTransition(() => this.update(true));
     }
   }
 
@@ -811,12 +839,12 @@ class TabBar extends Widget {
     if (animate) {
       this._withTransition(() => {
         tab.addClass(INSERTING_CLASS);
-        this._updateTabLayout();
+        this.update(true);
       }, () => {
         tab.removeClass(INSERTING_CLASS);
       });
     } else {
-      this._withTransition(() => { this._updateTabLayout() });
+      this._withTransition(() => this.update(true));
     }
 
     // Notify the layout system that the widget geometry is dirty.
@@ -851,7 +879,7 @@ class TabBar extends Widget {
     }
 
     // Animate the tab layout update.
-    this._withTransition(() => { this._updateTabLayout() });
+    this._withTransition(() => this.update(true));
 
     return toIndex;
   }
@@ -910,14 +938,14 @@ class TabBar extends Widget {
     if (animate) {
       this._withTransition(() => {
         tab.addClass(REMOVING_CLASS);
-        this._updateTabLayout();
+        this.update(true);
       }, () => {
         tab.removeClass(REMOVING_CLASS);
         this._removeContentChild(tab.node);
       });
     } else {
       this._removeContentChild(tab.node);
-      this._withTransition(() => { this._updateTabLayout() });
+      this._withTransition(() => this.update(true));
     }
 
     // Notify the layout system that the widget geometry is dirty.
@@ -987,36 +1015,6 @@ class TabBar extends Widget {
       } else {
         tab.node.style.zIndex = k-- + '';
       }
-    }
-  }
-
-  /**
-   * Update the position and size of the tabs in the tab bar.
-   *
-   * The position of the drag tab will not be updated.
-   */
-  private _updateTabLayout(): void {
-    var dragNode: HTMLElement = null;
-    if (this._dragData && this._dragData.dragActive) {
-      dragNode = this._dragData.node;
-    }
-    var left = 0;
-    var tabs = this._tabs;
-    var width = this.width;
-    var overlap = this._tabOverlap;
-    var tlw = this._tabLayoutWidth();
-    for (var i = 0, n = tabs.length; i < n; ++i) {
-      var node = tabs[i].node;
-      var style = node.style;
-      if (node !== dragNode) {
-        var offset = tlw + TAB_STUB_SIZE * (n - i - 1);
-        if ((left + offset) > width) {
-          left = Math.max(0, width - offset);
-        }
-        style.left = left + 'px';
-      }
-      style.width = tlw + 'px';
-      left += tlw - overlap;
     }
   }
 
