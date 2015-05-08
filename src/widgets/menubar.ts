@@ -99,6 +99,7 @@ class MenuBar extends Widget {
     super();
     this.addClass(MENU_BAR_CLASS);
     this.verticalSizePolicy = SizePolicy.Fixed;
+    this.setFlag(WidgetFlag.DisallowLayoutChange);
     if (items) items.forEach(it => this.addItem(it));
   }
 

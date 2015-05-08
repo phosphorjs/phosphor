@@ -76,6 +76,7 @@ class ScrollBar extends Widget {
     super();
     this.addClass(SCROLLBAR_CLASS);
     this._orientation = orientation;
+    this.setFlag(WidgetFlag.DisallowLayoutChange);
     if (orientation === Orientation.Horizontal) {
       this.addClass(HORIZONTAL_CLASS);
       this.setSizePolicy(SizePolicy.Expanding, SizePolicy.Fixed);

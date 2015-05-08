@@ -190,6 +190,7 @@ class TabBar extends Widget {
     super();
     this.addClass(TAB_BAR_CLASS);
     this.verticalSizePolicy = SizePolicy.Fixed;
+    this.setFlag(WidgetFlag.DisallowLayoutChange);
     if (options) this._initFrom(options);
   }
 
