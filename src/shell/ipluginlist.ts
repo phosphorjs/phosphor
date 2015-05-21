@@ -7,7 +7,7 @@
 |----------------------------------------------------------------------------*/
 module phosphor.shell {
 
-import createToken = di.createToken;
+import Token = di.Token;
 
 
 /**
@@ -36,6 +36,6 @@ interface IPluginList {
  * The interface token for IPluginList.
  */
 export
-var IPluginList = createToken<IPluginList>('phosphor.shell.IPluginList');
+var IPluginList = new Token<IPluginList>('phosphor.shell.IPluginList');
 
 } // module phosphor.shell
