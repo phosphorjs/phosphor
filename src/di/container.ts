@@ -20,7 +20,7 @@ class Container implements IContainer {
   /**
    * Test whether a type is registered with the container.
    */
-  isRegistered<T>(token: IToken<T>): boolean {
+  isRegistered<T>(token: Token<T>): boolean {
     return this._registry.has(token);
   }
 
@@ -47,7 +47,7 @@ class Container implements IContainer {
    *
    * The default lifetime is 'singleton'.
    */
-  registerType<T>(token: IToken<T>, type: IInjectable<T>, lifetime?: string): void {
+  registerType<T>(token: Token<T>, type: IInjectable<T>, lifetime?: string): void {
     if (this._registry.has(token)) {
       throw new Error('token is already registered');
     }
@@ -63,7 +63,7 @@ class Container implements IContainer {
    *
    * This will throw an exception if the token is already registered.
    */
-  registerInstance<T>(token: IToken<T>, instance: T): void {
+  registerInstance<T>(token: Token<T>, instance: T): void {
     if (this._registry.has(token)) {
       throw new Error('token is already registered');
     }
@@ -77,11 +77,11 @@ class Container implements IContainer {
    * An error is thrown if no type mapping is registered for the
    * token or if the injection dependencies cannot be fulfilled.
    */
-  resolve<T>(token: IToken<T> | IInjectable<T>): T {
+  resolve<T>(token: Token<T> | IInjectable<T>): T {
     if (typeof token === 'function') {
       return this._resolveType(<IInjectable<T>>token, resolveKeyTick++);
     }
-    return this._resolveToken(<IToken<T>>token, resolveKeyTick++);
+    return this._resolveToken(<Token<T>>token, resolveKeyTick++);
   }
 
   /**
@@ -89,7 +89,7 @@ class Container implements IContainer {
    *
    * An error is thrown if the token is not registered.
    */
-  private _resolveToken<T>(token: IToken<T>, key: number): T {
+  private _resolveToken<T>(token: Token<T>, key: number): T {
     var item: IRegistryItem<T> = this._registry.get(token);
     if (item === void 0) {
       throw new Error('`' + token.name + '` is not registered');
@@ -121,7 +121,7 @@ class Container implements IContainer {
     return type.apply(instance, args) || instance;
   }
 
-  private _registry = new Map<IToken<any>, IRegistryItem<any>>();
+  private _registry = new Map<Token<any>, IRegistryItem<any>>();
 }
 
 

@@ -7,7 +7,7 @@
 |----------------------------------------------------------------------------*/
 module phosphor.shell {
 
-import createToken = di.createToken;
+import Token = di.Token;
 
 import Alignment = widgets.Alignment;
 import MenuItem = widgets.MenuItem;
@@ -86,6 +86,6 @@ interface IShellView extends Widget {
  * The interface token for IShellView.
  */
 export
-var IShellView = createToken<IShellView>('phosphor.shell.IShellView');
+var IShellView = new Token<IShellView>('phosphor.shell.IShellView');
 
 } // module phosphor.shell

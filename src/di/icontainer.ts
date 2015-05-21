@@ -20,7 +20,7 @@ interface IInjectable<T> {
   /**
    * The type ids of the dependencies needed to instantiate the type.
    */
-  $inject?: IToken<any>[];
+  $inject?: Token<any>[];
 }
 
 
@@ -32,7 +32,7 @@ interface IContainer {
   /**
    * Test whether a type is registered with the container.
    */
-  isRegistered<T>(token: IToken<T>): boolean;
+  isRegistered<T>(token: Token<T>): boolean;
 
   /**
    * Register a type mapping with the container.
@@ -57,7 +57,7 @@ interface IContainer {
    *
    * The default lifetime is 'singleton'.
    */
-  registerType<T>(token: IToken<T>, type: IInjectable<T>, lifetime?: string): void;
+  registerType<T>(token: Token<T>, type: IInjectable<T>, lifetime?: string): void;
 
   /**
    * Register an instance mapping with the container.
@@ -67,7 +67,7 @@ interface IContainer {
    *
    * This will throw an exception if the token is already registered.
    */
-  registerInstance<T>(token: IToken<T>, instance: T): void;
+  registerInstance<T>(token: Token<T>, instance: T): void;
 
   /**
    * Resolve an instance for the given token or type.
@@ -75,7 +75,7 @@ interface IContainer {
    * An error is thrown if no type mapping is registered for the
    * token or if the injection dependencies cannot be fulfilled.
    */
-  resolve<T>(token: IToken<T> | IInjectable<T>): T;
+  resolve<T>(token: Token<T> | IInjectable<T>): T;
 }
 
 
@@ -83,6 +83,6 @@ interface IContainer {
  * The interface token for IContainer.
  */
 export
-var IContainer = createToken<IContainer>('phosphor.di.IContainer');
+var IContainer = new Token<IContainer>('phosphor.di.IContainer');
 
 } // module phosphor.di

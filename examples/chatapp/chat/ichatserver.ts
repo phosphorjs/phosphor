@@ -7,7 +7,7 @@
 |----------------------------------------------------------------------------*/
 module chat {
 
-import createToken = phosphor.di.createToken;
+import Token = phosphor.di.Token;
 
 
 /**
@@ -23,6 +23,6 @@ interface IChatServer {
  * The interface token for IChatServer.
  */
 export
-var IChatServer = createToken<IChatServer>('chat.IChatServer');
+var IChatServer = new Token<IChatServer>('chat.IChatServer');
 
 } // module chat

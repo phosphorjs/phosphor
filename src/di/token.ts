@@ -11,25 +11,25 @@ module phosphor.di {
  * A token object which holds compile-time type information.
  */
 export
-interface IToken<T> {
+class Token<T> {
   /**
-   * A human readable name for the token.
+   * Construct a new token.
+   *
+   * @param name - A human readable name for the token.
    */
-  name: string;
+  constructor(name: string) {
+    this._name = name;
+  }
 
   /**
-   * A hidden property which makes a token structurally unique.
+   * Get the human readable name for the token.
    */
-  __itoken_structural_property: any;
-}
+  get name(): string {
+    return this._name;
+  }
 
-
-/**
- * Create a token with the given name.
- */
-export
-function createToken<T>(name: string): IToken<T> {
-  return <any>Object.freeze({ name: name });
+  private _name: string;
+  private _token_structural_property: any;
 }
 
 } // module phosphor.di
