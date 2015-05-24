@@ -593,7 +593,7 @@ class DockArea extends Widget {
     // Dispose the panel. It is possible that this method is executing
     // on the path of the panel's child stack widget event handler, so
     // the panel is disposed in a deferred fashion to avoid disposing
-    // the child stack widget while its processing events.
+    // the child stack widget while it's processing events.
     panel.parent = null;
     setTimeout(() => panel.dispose(), 0);
 
@@ -625,8 +625,8 @@ class DockArea extends Widget {
     // created with 2 children, so the splitter is guaranteed to have
     // a single child at this point. Furthermore, splitters always have
     // an orthogonal orientation to their parent, so a grandparent and
-    // a grandhild splitter will have the same orientation. This means
-    // the children of the granchild can be merged into the grandparent.
+    // a grandchild splitter will have the same orientation. This means
+    // the children of the grandchild can be merged into the grandparent.
     var gParent = <DockSplitter>splitter.parent;
     var gSizes = gParent.sizes();
     var gChild = splitter.widgetAt(0);

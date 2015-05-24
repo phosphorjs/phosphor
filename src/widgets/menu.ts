@@ -440,7 +440,7 @@ class Menu extends NodeBase {
   }
 
   /**
-   * Close the menu and remove it's node from the DOM.
+   * Close the menu and remove its node from the DOM.
    */
   close(): void {
     var node = this.node;
@@ -885,7 +885,7 @@ class Menu extends NodeBase {
    * Collapse neighboring visible separators.
    *
    * This force-hides select separator nodes such that there are never
-   * multiple visible separator siblings. It also force-hides all any
+   * multiple visible separator siblings. It also force-hides all
    * leading and trailing separator nodes.
    */
   private _collapseSeparators(): void {
