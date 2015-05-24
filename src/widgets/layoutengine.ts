@@ -302,7 +302,7 @@ function layoutCalc(sizers: LayoutSizer[], space: number): void {
       }
     }
     // 6c) Distribute any remaining space evenly among the sizers
-    // with zero stretch factors. This progesses in phases in the
+    // with zero stretch factors. This progresses in phases in the
     // same manner as step (6a).
     while (notDoneCount > 0 && freeSpace > nearZero) {
       var amt = freeSpace / notDoneCount;
