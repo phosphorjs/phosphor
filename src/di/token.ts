@@ -29,7 +29,7 @@ class Token<T> {
   }
 
   private _name: string;
-  private _token_structural_property: any;
+  private _tokenStructuralPropertyT: T;
 }
 
 } // module phosphor.di
