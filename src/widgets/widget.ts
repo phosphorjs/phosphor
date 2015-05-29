@@ -16,6 +16,8 @@ import Message = core.Message;
 import NodeBase = core.NodeBase;
 import Signal = core.Signal;
 import clearMessageData = core.clearMessageData;
+import disconnect = core.disconnect;
+import emit = core.emit;
 import installMessageFilter = core.installMessageFilter;
 import postMessage = core.postMessage;
 import removeMessageFilter = core.removeMessageFilter;
@@ -119,7 +121,7 @@ class Widget extends NodeBase implements IMessageHandler {
   /**
    * A signal emitted when the widget is disposed.
    */
-  disposed = new Signal<Widget, void>();
+  static disposed = new Signal<Widget, void>();
 
   /**
    * Construct a new widget.
@@ -133,10 +135,12 @@ class Widget extends NodeBase implements IMessageHandler {
    * Dispose of the widget and its descendants.
    */
   dispose(): void {
-    clearMessageData(this);
     this.setFlag(WidgetFlag.IsDisposed);
-    this.disposed.emit(this, void 0);
-    this.disposed.disconnect();
+    emit(this, Widget.disposed, void 0);
+
+    disconnect(this, null, null, null);
+    disconnect(null, null, this, null);
+    clearMessageData(this);
 
     var layout = this._layout;
     if (layout) {

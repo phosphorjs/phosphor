@@ -9,6 +9,8 @@ module phosphor.widgets {
 
 import algo = collections.algorithm;
 
+import connect = core.connect;
+
 import IDisposable = utility.IDisposable;
 import Pair = utility.Pair;
 import hitTest = utility.hitTest;
@@ -560,14 +562,15 @@ class DockArea extends Widget {
    */
   private _createPanel(): DockPanel {
     var panel = new DockPanel();
-    var tabBar = panel.tabBar;
-    tabBar.tabWidth = this._tabWidth;
-    tabBar.tabOverlap = this._tabOverlap;
-    tabBar.minTabWidth = this._minTabWidth;
-    tabBar.currentChanged.connect(this._tb_currentChanged, this);
-    tabBar.tabCloseRequested.connect(this._tb_tabCloseRequested, this);
-    tabBar.tabDetachRequested.connect(this._tb_tabDetachRequested, this);
-    panel.stackedPanel.widgetRemoved.connect(this._sw_widgetRemoved, this);
+    var bar = panel.tabBar;
+    var stack = panel.stackedPanel;
+    bar.tabWidth = this._tabWidth;
+    bar.tabOverlap = this._tabOverlap;
+    bar.minTabWidth = this._minTabWidth;
+    connect(bar, TabBar.currentChanged, this, this._tb_currentChanged);
+    connect(bar, TabBar.tabCloseRequested, this, this._tb_tabCloseRequested);
+    connect(bar, TabBar.tabDetachRequested, this, this._tb_tabDetachRequested);
+    connect(stack, StackedPanel.widgetRemoved, this, this._sw_widgetRemoved);
     return panel;
   }
 

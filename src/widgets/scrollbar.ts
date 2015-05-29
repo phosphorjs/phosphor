@@ -9,6 +9,7 @@ module phosphor.widgets {
 
 import IMessage = core.IMessage;
 import Signal = core.Signal;
+import emit = core.emit;
 
 import IDisposable = utility.IDisposable;
 import Size = utility.Size;
@@ -65,7 +66,7 @@ class ScrollBar extends Widget {
    * #### Notes
    * This signal is not emitted when `value` is changed from code.
    */
-  sliderMoved = new Signal<ScrollBar, number>();
+  static sliderMoved = new Signal<ScrollBar, number>();
 
   /**
    * Construct a new scroll bar.
@@ -428,7 +429,7 @@ class ScrollBar extends Widget {
     }
     this._value = value;
     this.update(true);
-    this.sliderMoved.emit(this, value);
+    emit(this, ScrollBar.sliderMoved, value);
   }
 
   /**
