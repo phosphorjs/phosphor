@@ -76,12 +76,12 @@ class MenuItem {
   /**
    * A signal emitted when a `check` type menu item is toggled.
    */
-  static toggled = new Signal<MenuItem, void>();
+  static toggled = new Signal<MenuItem, boolean>();
 
   /**
    * A signal emitted when the menu item is triggered.
    */
-  static triggered = new Signal<MenuItem, void>();
+  static triggered = new Signal<MenuItem, boolean>();
 
   /**
    * Construct a new menu item.
@@ -218,7 +218,7 @@ class MenuItem {
     }
     this._checked = checked;
     emit(this, MenuItem.changed, void 0);
-    emit(this, MenuItem.toggled, void 0);
+    emit(this, MenuItem.toggled, checked);
   }
 
   /**
@@ -268,7 +268,7 @@ class MenuItem {
     if (this._type === 'check') {
       this.checked = !this.checked;
     }
-    emit(this, MenuItem.triggered, void 0);
+    emit(this, MenuItem.triggered, this.checked);
   }
 
   /**
