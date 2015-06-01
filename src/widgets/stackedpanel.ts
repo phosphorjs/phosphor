@@ -37,7 +37,7 @@ class StackedPanel extends Panel {
     super(new StackedLayout());
     this.addClass(STACKED_PANEL_CLASS);
     var layout = <StackedLayout>this.layout;
-    connect(layout, StackedLayout.widgetRemoved, this, this._sl_widgetRemoved);
+    connect(layout, StackedLayout.widgetRemoved, this, this._p_widgetRemoved);
   }
 
   /**
@@ -106,7 +106,7 @@ class StackedPanel extends Panel {
   /**
    * Handle the `widgetRemoved` signal for the stacked layout.
    */
-  private _sl_widgetRemoved(sender: StackedLayout, args: Pair<number, Widget>): void {
+  private _p_widgetRemoved(sender: StackedLayout, args: Pair<number, Widget>): void {
     emit(this, StackedPanel.widgetRemoved, args);
   }
 }

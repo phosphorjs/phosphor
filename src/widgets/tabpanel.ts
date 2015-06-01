@@ -56,12 +56,12 @@ class TabPanel extends Widget {
     this.setFlag(WidgetFlag.DisallowLayoutChange);
 
     var bar = this._tabBar = new TabBar();
-    connect(bar, TabBar.tabMoved, this, this._tb_tabMoved);
-    connect(bar, TabBar.currentChanged, this, this._tb_currentChanged);
-    connect(bar, TabBar.tabCloseRequested, this, this._tb_tabCloseRequested);
+    connect(bar, TabBar.tabMoved, this, this._p_tabMoved);
+    connect(bar, TabBar.currentChanged, this, this._p_currentChanged);
+    connect(bar, TabBar.tabCloseRequested, this, this._p_tabCloseRequested);
 
     var stack = this._stackedPanel = new StackedPanel();
-    connect(stack, StackedPanel.widgetRemoved, this, this._sw_widgetRemoved);
+    connect(stack, StackedPanel.widgetRemoved, this, this._p_widgetRemoved);
 
     (<BoxLayout>this.layout).addWidget(bar);
     (<BoxLayout>this.layout).addWidget(stack);
@@ -183,14 +183,14 @@ class TabPanel extends Widget {
   /**
    * Handle the `tabMoved` signal from the tab bar.
    */
-  private _tb_tabMoved(sender: TabBar, args: Pair<number, number>): void {
+  private _p_tabMoved(sender: TabBar, args: Pair<number, number>): void {
     this._stackedPanel.moveWidget(args.first, args.second);
   }
 
   /**
    * Handle the `currentChanged` signal from the tab bar.
    */
-  private _tb_currentChanged(sender: TabBar, args: Pair<number, Tab>): void {
+  private _p_currentChanged(sender: TabBar, args: Pair<number, Tab>): void {
     this._stackedPanel.currentIndex = args.first;
     var widget = this._stackedPanel.currentWidget;
     emit(this, TabPanel.currentChanged, new Pair(args.first, widget));
@@ -199,14 +199,14 @@ class TabPanel extends Widget {
   /**
    * Handle the `tabCloseRequested` signal from the tab bar.
    */
-  private _tb_tabCloseRequested(sender: TabBar, args: Pair<number, Tab>): void {
+  private _p_tabCloseRequested(sender: TabBar, args: Pair<number, Tab>): void {
     this._stackedPanel.widgetAt(args.first).close();
   }
 
   /**
    * Handle the `widgetRemoved` signal from the stacked panel.
    */
-  private _sw_widgetRemoved(sender: StackedPanel, args: Pair<number, Widget>): void {
+  private _p_widgetRemoved(sender: StackedPanel, args: Pair<number, Widget>): void {
     this._tabBar.removeAt(args.first);
   }
 
