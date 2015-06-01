@@ -7,26 +7,24 @@
 |----------------------------------------------------------------------------*/
 module example {
 
+import connect = phosphor.core.connect;
+
 import Menu = phosphor.widgets.Menu;
 import MenuBar = phosphor.widgets.MenuBar;
 import MenuItem = phosphor.widgets.MenuItem;
 
 
-var cutCmd = () => console.log('Cut');
-
-var copyCmd = () => console.log('Copy');
-
-var pasteCmd = () => console.log('Paste');
-
-var newTabCmd = () => console.log('New Tab');
-
-var closeCmd = () => console.log('Close');
-
-var closeTabCmd = () => console.log('Close Tab');
-
-var undoCmd = () => console.log('Undo');
-
-var repeatCmd = () => console.log('Repeat');
+var handler = {
+  cut: () => console.log('Cut'),
+  copy: () => console.log('Copy'),
+  paste: () => console.log('Paste'),
+  newTab: () => console.log('New Tab'),
+  close: () => console.log('Close'),
+  closeTab: () => console.log('Close Tab'),
+  undo: () => console.log('Undo'),
+  repeat: () => console.log('Repeat'),
+  toggleSave: (sender: MenuItem, checked: boolean) => console.log('Save on exit:', checked),
+};
 
 
 function main(): void {
@@ -35,7 +33,6 @@ function main(): void {
     mnemonic: 'c',
     shortcut: 'Ctrl+C',
     className: 'copy',
-    onTriggered: copyCmd,
   });
 
   var cutItem = new MenuItem({
@@ -43,7 +40,6 @@ function main(): void {
     mnemonic: 'x',
     shortcut: 'Ctrl+X',
     className: 'cut',
-    onTriggered: cutCmd,
   });
 
   var pasteItem = new MenuItem({
@@ -51,20 +47,23 @@ function main(): void {
     mnemonic: 'v',
     shortcut: 'Ctrl+V',
     className: 'paste',
-    onTriggered: pasteCmd,
   });
 
   var newTabItem = new MenuItem({
     text: 'New Tab',
     mnemonic: 'n',
-    onTriggered: newTabCmd,
   });
 
   var closeTabItem = new MenuItem({
     text: 'Close Tab',
     mnemonic: 'c',
-    onTriggered: closeTabCmd,
   });
+
+  connect(copyItem, MenuItem.triggered, handler, handler.copy);
+  connect(cutItem, MenuItem.triggered, handler, handler.cut);
+  connect(pasteItem, MenuItem.triggered, handler, handler.paste);
+  connect(newTabItem, MenuItem.triggered, handler, handler.newTab);
+  connect(closeTabItem, MenuItem.triggered, handler, handler.closeTab);
 
   var saveOnExitItem = new MenuItem({
     text: 'Save On Exit',
@@ -72,6 +71,8 @@ function main(): void {
     checked: true,
     mnemonic: 's',
   });
+
+  connect(saveOnExitItem, MenuItem.toggled, handler, handler.toggleSave);
 
   var taskMgrItem = new MenuItem({
     text: 'Task Manager',
@@ -92,8 +93,9 @@ function main(): void {
   var closeItem = new MenuItem({
     text: 'Close',
     className: 'close',
-    onTriggered: closeCmd,
   });
+
+  connect(closeItem, MenuItem.triggered, handler, handler.close);
 
   function separator(): MenuItem {
     return new MenuItem({ type: 'separator' });
@@ -149,15 +151,16 @@ function main(): void {
     text: 'Undo',
     shortcut: 'Ctrl+Z',
     className: 'undo',
-    onTriggered: undoCmd,
   });
 
   var repeatItem = new MenuItem({
     text: 'Repeat',
     shortcut: 'Ctrl+Y',
     className: 'repeat',
-    onTriggered: repeatCmd,
   });
+
+  connect(undoItem, MenuItem.triggered, handler, handler.undo);
+  connect(repeatItem, MenuItem.triggered, handler, handler.repeat);
 
   var editItem = new MenuItem({
     text: 'Edit',
