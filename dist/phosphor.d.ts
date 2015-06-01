@@ -1265,6 +1265,10 @@ declare module phosphor.core {
         constructor();
         /**
          * Dispose of the resources held by the object.
+         *
+         * This method only clears the reference to the DOM node, it does not
+         * remove it from the DOM. Subclasses should reimplement this method
+         * to perform custom cleanup.
          */
         dispose(): void;
         /**
@@ -1289,70 +1293,139 @@ declare module phosphor.core {
 
 declare module phosphor.core {
     /**
-     * An object used for loosely coupled inter-object communication.
+     * An object used for type-safe inter-object communication.
      *
-     * A signal is emitted by an object in response to some event. User
-     * code may connect callback functions to the signal to be notified
-     * when that event occurs.
+     * #### Example
+     * ```typescript
+     * class SomeClass {
+     *
+     *   static valueChanged = new Signal<SomeClass, number>();
+     *
+     *   // ...
+     * }
+     * ```
      */
     class Signal<T, U> {
-        /**
-         * Construct a new signal.
-         */
-        constructor();
-        /**
-         * Connect a callback to the signal.
-         *
-         * If the callback is connected to the signal multiple times, it
-         * will be invoked that many times when the signal is emitted.
-         *
-         * It is safe to connect the callback to the signal while the signal
-         * is being emitted. The callback will not be invoked until the next
-         * time the signal is emitted.
-         */
-        connect(callback: (sender: T, args: U) => void, thisArg?: any): void;
-        /**
-         * Disconnect a callback from the signal.
-         *
-         * This will remove all instances of the callback from the signal.
-         * If no callback is provided, all callbacks will be disconnected.
-         *
-         * It is safe to disconnect a callback from the signal while the
-         * signal is being emitted. The callback will not be invoked.
-         */
-        disconnect(callback?: (sender: T, args: U) => void, thisArg?: any): void;
-        /**
-         * Test whether a callback is connected to the signal.
-         */
-        isConnected(callback: (sender: T, args: U) => void, thisArg?: any): boolean;
-        /**
-         * Emit the signal and invoke its connected callbacks.
-         *
-         * Callbacks are invoked in the order in which they are connected.
-         */
-        emit(sender: T, args: U): void;
-        private _callbacks;
+        private _signalStructuralPropertyT;
+        private _signalStructuralPropertyU;
     }
+    /**
+     * Connect the signal of a sender to the method of a receiver.
+     *
+     * @param sender - The object which will emit the signal. This will
+     *   be passed as the first argument to the receiver method when the
+     *   signal is emitted. This must be a non-primitive object.
+     *
+     * @param signal - The signal which will be emitted by the sender.
+     *
+     * @param receiver - The object to connect to the signal. This will
+     *   become the `this` context in the receiver method. This must be
+     *   a non-primitive object.
+     *
+     * @param method - The receiver method to invoke when the signal is
+     *   emitted. The sender is passed as the first argument followed by
+     *   the args object emitted with the signal.
+     *
+     * #### Notes
+     * Receiver methods are invoked synchronously, in the order in which
+     * they are connected.
+     *
+     * Signal connections are unique. If a connection already exists for
+     * the given combination of arguments, this function is a no-op.
+     *
+     * A newly connected receiver method will not be invoked until the next
+     * emission of the signal, even if it is connected during an emission.
+     *
+     * #### Example
+     * ```typescript
+     * connect(someObject, SomeClass.valueChanged, myObject, myObject.onValueChanged);
+     * ```
+     */
+    function connect<T, U>(sender: T, signal: Signal<T, U>, receiver: any, method: (sender: T, args: U) => void): void;
+    /**
+     * Disconnect the signal of a sender from the method of a receiver.
+     *
+     * @param sender - The object which emits the signal.
+     *
+     * @param signal - The signal emitted by the sender.
+     *
+     * @param receiver - The object connected to the signal.
+     *
+     * @param method - The receiver method connected to the signal.
+     *
+     * #### Notes
+     * Any argument to this function may be null, and it will be treated
+     * as a wildcard when matching the connection. However, `sender` and
+     * `receiver` cannot both be null; one or both must be provided.
+     *
+     * A disconnected receiver method will no longer be invoked, even if
+     * it is disconnected during signal emission.
+     *
+     * If no connection exists for the given combination of arguments,
+     * this function is a no-op.
+     *
+     * #### Example
+     * ```typescript
+     * // disconnect a specific signal from a specific handler
+     * disconnect(someObject, SomeClass.valueChanged, myObject, myObject.onValueChanged);
+     *
+     * // disconnect all receivers from a specific sender
+     * disconnect(someObject, null, null, null);
+     *
+     * // disconnect all receivers from a specific signal
+     * disconnect(someObject, SomeClass.valueChanged, null, null);
+     *
+     * // disconnect a specific receiver from all senders
+     * disconnect(null, null, myObject, null);
+     *
+     * // disconnect a specific handler from all senders
+     * disconnect(null, null, myObject, myObject.onValueChanged);
+     * ```
+     */
+    function disconnect<T, U>(sender: T, signal: Signal<T, U>, receiver: any, method: (sender: T, args: U) => void): void;
+    /**
+     * Emit the signal of a sender and invoke the connected receivers.
+     *
+     * @param sender - The object which is emitting the signal. This will
+     *   be passed as the first argument to all connected receivers. This
+     *   must be a non-primitive object.
+     *
+     * @param signal - The signal to be emitted by the sender.
+     *
+     * @param args - The args object for the signal. This will be passed
+     *   as the second argument to all connected receivers.
+     *
+     * #### Notes
+     * If a receiver throws an exception, dispatching of the signal will
+     * terminate immediately and the exception will be propagated to the
+     * call site of this function.
+     *
+     * #### Example
+     * ```typescript
+     * emit(someObject, SomeClass.valueChanged, 42);
+     * ```
+     */
+    function emit<T, U>(sender: T, signal: Signal<T, U>, args: U): void;
 }
 
 declare module phosphor.di {
     /**
      * A token object which holds compile-time type information.
      */
-    interface IToken<T> {
+    class Token<T> {
         /**
-         * A human readable name for the token.
+         * Construct a new token.
+         *
+         * @param name - A human readable name for the token.
+         */
+        constructor(name: string);
+        /**
+         * Get the human readable name for the token.
          */
         name: string;
-        /**
-         * A hidden property which makes a token structurally unique.
-         */
-        __itoken_structural_property: any;
+        private _name;
+        private _tokenStructuralPropertyT;
     }
-    /**
-     * Create a token with the given name.
-     */
-    function createToken<T>(name: string): IToken<T>;
 }
 
 declare module phosphor.di {
@@ -1367,7 +1440,7 @@ declare module phosphor.di {
         /**
          * Test whether a type is registered with the container.
          */
-        isRegistered<T>(token: IToken<T>): boolean;
+        isRegistered<T>(token: Token<T>): boolean;
         /**
          * Register a type mapping with the container.
          *
@@ -1391,7 +1464,7 @@ declare module phosphor.di {
          *
          * The default lifetime is 'singleton'.
          */
-        registerType<T>(token: IToken<T>, type: IInjectable<T>, lifetime?: string): void;
+        registerType<T>(token: Token<T>, type: IInjectable<T>, lifetime?: string): void;
         /**
          * Register an instance mapping with the container.
          *
@@ -1400,14 +1473,14 @@ declare module phosphor.di {
          *
          * This will throw an exception if the token is already registered.
          */
-        registerInstance<T>(token: IToken<T>, instance: T): void;
+        registerInstance<T>(token: Token<T>, instance: T): void;
         /**
          * Resolve an instance for the given token or type.
          *
          * An error is thrown if no type mapping is registered for the
          * token or if the injection dependencies cannot be fulfilled.
          */
-        resolve<T>(token: IToken<T> | IInjectable<T>): T;
+        resolve<T>(token: Token<T> | IInjectable<T>): T;
         /**
          * Resolve an instance for the given token.
          *
@@ -1436,7 +1509,7 @@ declare module phosphor.di {
         /**
          * The type ids of the dependencies needed to instantiate the type.
          */
-        $inject?: IToken<any>[];
+        $inject?: Token<any>[];
     }
     /**
      * An object which manages dependency injection.
@@ -1445,7 +1518,7 @@ declare module phosphor.di {
         /**
          * Test whether a type is registered with the container.
          */
-        isRegistered<T>(token: IToken<T>): boolean;
+        isRegistered<T>(token: Token<T>): boolean;
         /**
          * Register a type mapping with the container.
          *
@@ -1469,7 +1542,7 @@ declare module phosphor.di {
          *
          * The default lifetime is 'singleton'.
          */
-        registerType<T>(token: IToken<T>, type: IInjectable<T>, lifetime?: string): void;
+        registerType<T>(token: Token<T>, type: IInjectable<T>, lifetime?: string): void;
         /**
          * Register an instance mapping with the container.
          *
@@ -1478,19 +1551,19 @@ declare module phosphor.di {
          *
          * This will throw an exception if the token is already registered.
          */
-        registerInstance<T>(token: IToken<T>, instance: T): void;
+        registerInstance<T>(token: Token<T>, instance: T): void;
         /**
          * Resolve an instance for the given token or type.
          *
          * An error is thrown if no type mapping is registered for the
          * token or if the injection dependencies cannot be fulfilled.
          */
-        resolve<T>(token: IToken<T> | IInjectable<T>): T;
+        resolve<T>(token: Token<T> | IInjectable<T>): T;
     }
     /**
      * The interface token for IContainer.
      */
-    var IContainer: IToken<IContainer>;
+    var IContainer: Token<IContainer>;
 }
 
 declare module phosphor.virtualdom {
@@ -2923,7 +2996,7 @@ declare module phosphor.widgets {
         /**
          * The minimum size of the sizer.
          *
-         * The sizer will never sized less than this value.
+         * The sizer will never be sized less than this value.
          *
          * Limits: [0, Infinity) && <= maxSize
          */
@@ -2969,7 +3042,7 @@ declare module phosphor.widgets {
      * Distribute space among the given sizers.
      *
      * This distributes the given layout spacing among the sizers
-     * according the following algorithm:
+     * according to the following algorithm:
      *
      *   1) Initialize the sizers's size to its size hint and compute
      *      the sums for each of size hint, min size, and max size.
@@ -3496,7 +3569,7 @@ declare module phosphor.widgets {
         /**
          * A signal emitted when a widget is removed from the layout.
          */
-        widgetRemoved: Signal<StackedLayout, Pair<number, Widget>>;
+        static widgetRemoved: Signal<StackedLayout, Pair<number, Widget>>;
         /**
          * Construct a new stack layout.
          */
@@ -3614,7 +3687,7 @@ declare module phosphor.widgets {
         /**
          * A signal emitted when the widget is disposed.
          */
-        disposed: Signal<Widget, void>;
+        static disposed: Signal<Widget, void>;
         /**
          * Construct a new widget.
          */
@@ -4233,15 +4306,11 @@ declare module phosphor.widgets {
         /**
          * A signal emitted when a widget is removed from the panel.
          */
-        widgetRemoved: Signal<StackedPanel, Pair<number, Widget>>;
+        static widgetRemoved: Signal<StackedPanel, Pair<number, Widget>>;
         /**
          * Construct a new stacked panel.
          */
         constructor();
-        /**
-         * Dispose of the resources held by the panel.
-         */
-        dispose(): void;
         /**
          * Get the current index of the panel.
          */
@@ -4285,7 +4354,7 @@ declare module phosphor.widgets {
         /**
          * Handle the `widgetRemoved` signal for the stacked layout.
          */
-        private _sl_widgetRemoved(sender, args);
+        private _p_widgetRemoved(sender, args);
     }
 }
 
@@ -4426,19 +4495,19 @@ declare module phosphor.widgets {
         /**
          * Handle the `currentChanged` signal from a tab bar.
          */
-        private _tb_currentChanged(sender, args);
+        private _p_currentChanged(sender, args);
         /**
          * Handle the `tabCloseRequested` signal from a tab bar.
          */
-        private _tb_tabCloseRequested(sender, args);
+        private _p_tabCloseRequested(sender, args);
         /**
          * Handle the `tabDetachRequested` signal from the tab bar.
          */
-        private _tb_tabDetachRequested(sender, args);
+        private _p_tabDetachRequested(sender, args);
         /**
          * Handle the `widgetRemoved` signal from a stack widget.
          */
-        private _sw_widgetRemoved(sender, args);
+        private _p_widgetRemoved(sender, args);
         private _handleSize;
         private _tabWidth;
         private _tabOverlap;
@@ -4492,14 +4561,6 @@ declare module phosphor.widgets {
          * The extra class name to associate with the menu item.
          */
         className?: string;
-        /**
-         * A callback to invoke when the menu item is toggled.
-         */
-        onToggled?: (item: MenuItem) => void;
-        /**
-         * A callback to invoke when the menu item is triggered.
-         */
-        onTriggered?: (item: MenuItem) => void;
     }
     /**
      * An item which can be added to a menu or menu bar.
@@ -4508,15 +4569,15 @@ declare module phosphor.widgets {
         /**
          * A signal emitted when the state of the menu item is changed.
          */
-        changed: Signal<MenuItem, void>;
+        static changed: Signal<MenuItem, void>;
         /**
          * A signal emitted when a `check` type menu item is toggled.
          */
-        toggled: Signal<MenuItem, void>;
+        static toggled: Signal<MenuItem, boolean>;
         /**
          * A signal emitted when the menu item is triggered.
          */
-        triggered: Signal<MenuItem, void>;
+        static triggered: Signal<MenuItem, boolean>;
         /**
          * Construct a new menu item.
          */
@@ -4630,7 +4691,7 @@ declare module phosphor.widgets {
         /**
          * A signal emitted when the menu is closed.
          */
-        closed: Signal<Menu, void>;
+        static closed: Signal<Menu, void>;
         /**
          * Construct a new menu.
          */
@@ -4771,7 +4832,7 @@ declare module phosphor.widgets {
          */
         open(x: number, y: number, forceX?: boolean, forceY?: boolean): void;
         /**
-         * Close the menu and remove it's node from the DOM.
+         * Close the menu and remove its node from the DOM.
          */
         close(): void;
         /**
@@ -4911,14 +4972,14 @@ declare module phosphor.widgets {
          * Collapse neighboring visible separators.
          *
          * This force-hides select separator nodes such that there are never
-         * multiple visible separator siblings. It also force-hides all any
+         * multiple visible separator siblings. It also force-hides all
          * leading and trailing separator nodes.
          */
         private _collapseSeparators();
         /**
          * Handle the `changed` signal from a menu item.
          */
-        private _mi_changed(sender);
+        private _p_changed(sender);
         private _openTimer;
         private _closeTimer;
         private _activeIndex;
@@ -5147,11 +5208,11 @@ declare module phosphor.widgets {
         /**
          * Handle the `closed` signal from the child menu.
          */
-        private _mn_closed(sender);
+        private _p_closed(sender);
         /**
          * Handle the `changed` signal from a menu item.
          */
-        private _mi_changed(sender);
+        private _p_changed(sender);
         private _activeIndex;
         private _childMenu;
         private _items;
@@ -5242,7 +5303,7 @@ declare module phosphor.widgets {
          * #### Notes
          * This signal is not emitted when `value` is changed from code.
          */
-        sliderMoved: Signal<ScrollBar, number>;
+        static sliderMoved: Signal<ScrollBar, number>;
         /**
          * Construct a new scroll bar.
          *
@@ -5458,19 +5519,19 @@ declare module phosphor.widgets {
         /**
          * A signal emitted when a tab is moved.
          */
-        tabMoved: Signal<TabBar, Pair<number, number>>;
+        static tabMoved: Signal<TabBar, Pair<number, number>>;
         /**
          * A signal emitted when the currently selected tab is changed.
          */
-        currentChanged: Signal<TabBar, Pair<number, Tab>>;
+        static currentChanged: Signal<TabBar, Pair<number, Tab>>;
         /**
          * A signal emitted when the user clicks a tab close icon.
          */
-        tabCloseRequested: Signal<TabBar, Pair<number, Tab>>;
+        static tabCloseRequested: Signal<TabBar, Pair<number, Tab>>;
         /**
          * A signal emitted when a tab is dragged beyond the detach threshold.
          */
-        tabDetachRequested: Signal<TabBar, ITabDetachArgs>;
+        static tabDetachRequested: Signal<TabBar, ITabDetachArgs>;
         /**
          * Construct a new tab bar.
          */
@@ -5632,6 +5693,10 @@ declare module phosphor.widgets {
          */
         protected onResize(msg: ResizeMessage): void;
         /**
+         * A method invoked on an 'update-request' message.
+         */
+        protected onUpdateRequest(msg: IMessage): void;
+        /**
          * Handle the 'click' event for the tab bar.
          */
         private _evtClick(event);
@@ -5694,12 +5759,6 @@ declare module phosphor.widgets {
          */
         private _updateTabZOrder();
         /**
-         * Update the position and size of the tabs in the tab bar.
-         *
-         * The position of the drag tab will not be updated.
-         */
-        private _updateTabLayout();
-        /**
          * A helper function to execute an animated transition.
          *
          * This will add the transition class to the tab bar for the global
@@ -5750,7 +5809,7 @@ declare module phosphor.widgets {
         /**
          * A signal emitted when the current widget is changed.
          */
-        currentChanged: Signal<TabPanel, Pair<number, Widget>>;
+        static currentChanged: Signal<TabPanel, Pair<number, Widget>>;
         /**
          * Construct a new tab panel.
          */
@@ -5823,19 +5882,19 @@ declare module phosphor.widgets {
         /**
          * Handle the `tabMoved` signal from the tab bar.
          */
-        private _tb_tabMoved(sender, args);
+        private _p_tabMoved(sender, args);
         /**
          * Handle the `currentChanged` signal from the tab bar.
          */
-        private _tb_currentChanged(sender, args);
+        private _p_currentChanged(sender, args);
         /**
          * Handle the `tabCloseRequested` signal from the tab bar.
          */
-        private _tb_tabCloseRequested(sender, args);
+        private _p_tabCloseRequested(sender, args);
         /**
          * Handle the `widgetRemoved` signal from the stacked panel.
          */
-        private _sw_widgetRemoved(sender, args);
+        private _p_widgetRemoved(sender, args);
         private _tabBar;
         private _stackedPanel;
     }
@@ -5857,6 +5916,7 @@ declare module phosphor.shell {
 }
 
 declare module phosphor.shell {
+    import Token = di.Token;
     /**
      * An object which asynchronously resolves and initializes plugins.
      */
@@ -5878,10 +5938,11 @@ declare module phosphor.shell {
     /**
      * The interface token for IPluginList.
      */
-    var IPluginList: di.IToken<IPluginList>;
+    var IPluginList: Token<IPluginList>;
 }
 
 declare module phosphor.shell {
+    import Token = di.Token;
     import Alignment = widgets.Alignment;
     import MenuItem = widgets.MenuItem;
     import Widget = widgets.Widget;
@@ -5945,7 +6006,7 @@ declare module phosphor.shell {
     /**
      * The interface token for IShellView.
      */
-    var IShellView: di.IToken<IShellView>;
+    var IShellView: Token<IShellView>;
 }
 
 declare module phosphor.shell {
@@ -6115,7 +6176,7 @@ declare module phosphor.shell {
         /**
          * The injection dependencies for the plugin list.
          */
-        static $inject: di.IToken<IContainer>[];
+        static $inject: di.Token<IContainer>[];
         /**
          * Construct a new plugin list.
          */

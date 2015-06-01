@@ -2420,6 +2420,10 @@ var phosphor;
             };
             /**
              * Dispose of the resources held by the object.
+             *
+             * This method only clears the reference to the DOM node, it does not
+             * remove it from the DOM. Subclasses should reimplement this method
+             * to perform custom cleanup.
              */
             NodeBase.prototype.dispose = function () {
                 this._node = null;
@@ -2470,170 +2474,379 @@ var phosphor;
     var core;
     (function (core) {
         /**
-         * An object used for loosely coupled inter-object communication.
+         * An object used for type-safe inter-object communication.
          *
-         * A signal is emitted by an object in response to some event. User
-         * code may connect callback functions to the signal to be notified
-         * when that event occurs.
+         * #### Example
+         * ```typescript
+         * class SomeClass {
+         *
+         *   static valueChanged = new Signal<SomeClass, number>();
+         *
+         *   // ...
+         * }
+         * ```
          */
         var Signal = (function () {
-            /**
-             * Construct a new signal.
-             */
             function Signal() {
-                this._callbacks = null;
             }
-            /**
-             * Connect a callback to the signal.
-             *
-             * If the callback is connected to the signal multiple times, it
-             * will be invoked that many times when the signal is emitted.
-             *
-             * It is safe to connect the callback to the signal while the signal
-             * is being emitted. The callback will not be invoked until the next
-             * time the signal is emitted.
-             */
-            Signal.prototype.connect = function (callback, thisArg) {
-                var wrapper = new CBWrapper(callback, thisArg);
-                var current = this._callbacks;
-                if (current === null) {
-                    this._callbacks = wrapper;
-                }
-                else if (current instanceof CBWrapper) {
-                    this._callbacks = [current, wrapper];
-                }
-                else {
-                    current.push(wrapper);
-                }
-            };
-            /**
-             * Disconnect a callback from the signal.
-             *
-             * This will remove all instances of the callback from the signal.
-             * If no callback is provided, all callbacks will be disconnected.
-             *
-             * It is safe to disconnect a callback from the signal while the
-             * signal is being emitted. The callback will not be invoked.
-             */
-            Signal.prototype.disconnect = function (callback, thisArg) {
-                var current = this._callbacks;
-                if (current === null) {
-                    return;
-                }
-                if (current instanceof CBWrapper) {
-                    if (!callback || current.equals(callback, thisArg)) {
-                        current.clear();
-                        this._callbacks = null;
-                    }
-                }
-                else if (!callback) {
-                    var array = current;
-                    for (var i = 0, n = array.length; i < n; ++i) {
-                        array[i].clear();
-                    }
-                    this._callbacks = null;
-                }
-                else {
-                    var rest = [];
-                    var array = current;
-                    for (var i = 0, n = array.length; i < n; ++i) {
-                        var wrapper = array[i];
-                        if (wrapper.equals(callback, thisArg)) {
-                            wrapper.clear();
-                        }
-                        else {
-                            rest.push(wrapper);
-                        }
-                    }
-                    if (rest.length === 0) {
-                        this._callbacks = null;
-                    }
-                    else if (rest.length === 1) {
-                        this._callbacks = rest[0];
-                    }
-                    else {
-                        this._callbacks = rest;
-                    }
-                }
-            };
-            /**
-             * Test whether a callback is connected to the signal.
-             */
-            Signal.prototype.isConnected = function (callback, thisArg) {
-                var current = this._callbacks;
-                if (current === null) {
-                    return false;
-                }
-                if (current instanceof CBWrapper) {
-                    return current.equals(callback, thisArg);
-                }
-                var array = current;
-                for (var i = 0, n = array.length; i < n; ++i) {
-                    if (array[i].equals(callback, thisArg)) {
-                        return true;
-                    }
-                }
-                return false;
-            };
-            /**
-             * Emit the signal and invoke its connected callbacks.
-             *
-             * Callbacks are invoked in the order in which they are connected.
-             */
-            Signal.prototype.emit = function (sender, args) {
-                var current = this._callbacks;
-                if (current === null) {
-                    return;
-                }
-                if (current instanceof CBWrapper) {
-                    current.invoke(sender, args);
-                }
-                else {
-                    var array = current;
-                    for (var i = 0, n = array.length; i < n; ++i) {
-                        array[i].invoke(sender, args);
-                    }
-                }
-            };
             return Signal;
         })();
         core.Signal = Signal;
         /**
-         * A thin wrapper around a callback function and context.
+         * Connect the signal of a sender to the method of a receiver.
+         *
+         * @param sender - The object which will emit the signal. This will
+         *   be passed as the first argument to the receiver method when the
+         *   signal is emitted. This must be a non-primitive object.
+         *
+         * @param signal - The signal which will be emitted by the sender.
+         *
+         * @param receiver - The object to connect to the signal. This will
+         *   become the `this` context in the receiver method. This must be
+         *   a non-primitive object.
+         *
+         * @param method - The receiver method to invoke when the signal is
+         *   emitted. The sender is passed as the first argument followed by
+         *   the args object emitted with the signal.
+         *
+         * #### Notes
+         * Receiver methods are invoked synchronously, in the order in which
+         * they are connected.
+         *
+         * Signal connections are unique. If a connection already exists for
+         * the given combination of arguments, this function is a no-op.
+         *
+         * A newly connected receiver method will not be invoked until the next
+         * emission of the signal, even if it is connected during an emission.
+         *
+         * #### Example
+         * ```typescript
+         * connect(someObject, SomeClass.valueChanged, myObject, myObject.onValueChanged);
+         * ```
          */
-        var CBWrapper = (function () {
-            /**
-             * Construct a new callback wrapper.
-             */
-            function CBWrapper(callback, thisArg) {
-                this._callback = callback;
-                this._thisArg = thisArg;
+        function connect(sender, signal, receiver, method) {
+            // All arguments must be provided; warn if they are not.
+            if (!sender || !signal || !receiver || !method) {
+                console.warn('null argument passed to `connect()`');
+                return;
             }
-            /**
-             * Clear the contents of the callback wrapper.
-             */
-            CBWrapper.prototype.clear = function () {
-                this._callback = null;
-                this._thisArg = null;
-            };
-            /**
-             * Test whether the wrapper equals a callback and context.
-             */
-            CBWrapper.prototype.equals = function (callback, thisArg) {
-                return this._callback === callback && this._thisArg === thisArg;
-            };
-            /**
-             * Invoke the wrapped callback with the given sender and args.
-             *
-             * This is a no-op if the wrapper has been cleared.
-             */
-            CBWrapper.prototype.invoke = function (sender, args) {
-                if (this._callback) {
-                    this._callback.call(this._thisArg, sender, args);
+            // Get the connection list for the sender or create one if necessary.
+            var list = senderMap.get(sender);
+            if (list === void 0) {
+                list = new ConnectionList();
+                senderMap.set(sender, list);
+            }
+            // Search for a matching connection and bail if one is found.
+            var conn = list.first;
+            while (conn !== null) {
+                if (isMatch(conn, sender, signal, receiver, method)) {
+                    return;
                 }
-            };
-            return CBWrapper;
+                conn = conn.nextReceiver;
+            }
+            // Create and initialize a new connection.
+            conn = new Connection();
+            conn.sender = sender;
+            conn.signal = signal;
+            conn.receiver = receiver;
+            conn.method = method;
+            // Add the connection to the list of receivers.
+            if (list.last === null) {
+                list.first = conn;
+                list.last = conn;
+            }
+            else {
+                list.last.nextReceiver = conn;
+                list.last = conn;
+            }
+            // Add the connection to the list of senders.
+            var head = receiverMap.get(receiver);
+            if (head !== void 0) {
+                head.prevSender = conn;
+                conn.nextSender = head;
+            }
+            receiverMap.set(receiver, conn);
+        }
+        core.connect = connect;
+        /**
+         * Disconnect the signal of a sender from the method of a receiver.
+         *
+         * @param sender - The object which emits the signal.
+         *
+         * @param signal - The signal emitted by the sender.
+         *
+         * @param receiver - The object connected to the signal.
+         *
+         * @param method - The receiver method connected to the signal.
+         *
+         * #### Notes
+         * Any argument to this function may be null, and it will be treated
+         * as a wildcard when matching the connection. However, `sender` and
+         * `receiver` cannot both be null; one or both must be provided.
+         *
+         * A disconnected receiver method will no longer be invoked, even if
+         * it is disconnected during signal emission.
+         *
+         * If no connection exists for the given combination of arguments,
+         * this function is a no-op.
+         *
+         * #### Example
+         * ```typescript
+         * // disconnect a specific signal from a specific handler
+         * disconnect(someObject, SomeClass.valueChanged, myObject, myObject.onValueChanged);
+         *
+         * // disconnect all receivers from a specific sender
+         * disconnect(someObject, null, null, null);
+         *
+         * // disconnect all receivers from a specific signal
+         * disconnect(someObject, SomeClass.valueChanged, null, null);
+         *
+         * // disconnect a specific receiver from all senders
+         * disconnect(null, null, myObject, null);
+         *
+         * // disconnect a specific handler from all senders
+         * disconnect(null, null, myObject, myObject.onValueChanged);
+         * ```
+         */
+        function disconnect(sender, signal, receiver, method) {
+            // If a sender is provided, the list of connected receivers is walked
+            // and any matching connection is removed from *the list of senders*.
+            // The receivers list is marked dirty and will be cleaned at the end
+            // of the next signal emission.
+            if (sender) {
+                var list = senderMap.get(sender);
+                if (list === void 0) {
+                    return;
+                }
+                var conn = list.first;
+                while (conn !== null) {
+                    if (isMatch(conn, sender, signal, receiver, method)) {
+                        list.dirty = true;
+                        removeFromSendersList(conn);
+                    }
+                    conn = conn.nextReceiver;
+                }
+                return;
+            }
+            // If only the receiver is provided, the list of connected senders
+            // is walked and any matching connection is removed *from the list
+            // of senders*. The receivers list for each sender is marked dirty
+            // and will be cleaned at the end of the next signal emission.
+            if (receiver) {
+                var conn = receiverMap.get(receiver);
+                if (conn === void 0) {
+                    return;
+                }
+                while (conn !== null) {
+                    var next = conn.nextSender; // store before removing conn
+                    if (isMatch(conn, sender, signal, receiver, method)) {
+                        senderMap.get(conn.sender).dirty = true;
+                        removeFromSendersList(conn);
+                    }
+                    conn = next;
+                }
+                return;
+            }
+            // If the sender and receiver are both null, finding all matching
+            // connections would require a full scan of all connection lists.
+            // That would be expensive and is explicitly not supported.
+            console.warn('null sender and receiver passed to `disconnect()`');
+        }
+        core.disconnect = disconnect;
+        /**
+         * Emit the signal of a sender and invoke the connected receivers.
+         *
+         * @param sender - The object which is emitting the signal. This will
+         *   be passed as the first argument to all connected receivers. This
+         *   must be a non-primitive object.
+         *
+         * @param signal - The signal to be emitted by the sender.
+         *
+         * @param args - The args object for the signal. This will be passed
+         *   as the second argument to all connected receivers.
+         *
+         * #### Notes
+         * If a receiver throws an exception, dispatching of the signal will
+         * terminate immediately and the exception will be propagated to the
+         * call site of this function.
+         *
+         * #### Example
+         * ```typescript
+         * emit(someObject, SomeClass.valueChanged, 42);
+         * ```
+         */
+        function emit(sender, signal, args) {
+            var list = senderMap.get(sender);
+            if (list === void 0) {
+                return;
+            }
+            list.refs++;
+            try {
+                invokeReceivers(list, signal, args);
+            }
+            finally {
+                list.refs--;
+            }
+            if (list.dirty && list.refs === 0) {
+                cleanReceiversList(list);
+                list.dirty = false;
+            }
+        }
+        core.emit = emit;
+        /**
+         * An object which holds data for a list of connected receivers.
+         */
+        var ConnectionList = (function () {
+            function ConnectionList() {
+                /**
+                 * The ref count for the connection list.
+                 */
+                this.refs = 0;
+                /**
+                 * Whether or not the connection list has broken connections.
+                 */
+                this.dirty = false;
+                /**
+                 * The first link in the singly linked list of receivers.
+                 */
+                this.first = null;
+                /**
+                 * The last link in the singly linked list of receivers.
+                 */
+                this.last = null;
+            }
+            return ConnectionList;
         })();
+        /**
+         * An object which holds data for a signal connection.
+         */
+        var Connection = (function () {
+            function Connection() {
+                /**
+                 * The sender object for the connection.
+                 */
+                this.sender = null;
+                /**
+                 * The signal object for the connection.
+                 */
+                this.signal = null;
+                /**
+                 * The receiver object for the connection.
+                 */
+                this.receiver = null;
+                /**
+                 * The receiver method for the connection.
+                 */
+                this.method = null;
+                /**
+                 * The next connection in the singly linked receivers list.
+                 */
+                this.nextReceiver = null;
+                /**
+                 * The next connection in the doubly linked senders list.
+                 */
+                this.nextSender = null;
+                /**
+                 * The previous connection in the doubly linked senders list.
+                 */
+                this.prevSender = null;
+            }
+            return Connection;
+        })();
+        /**
+         * A mapping of sender object to its connection list.
+         */
+        var senderMap = new WeakMap();
+        /**
+         * A mapping of receiver object to its first connected sender.
+         */
+        var receiverMap = new WeakMap();
+        /**
+         * Invoke the receiver connections which match a specific signal.
+         *
+         * This walks the provided connection list and invokes each receiver
+         * connection which has a matching signal. A connection added during
+         * dispatch will not be invoked.
+         */
+        function invokeReceivers(list, signal, args) {
+            var last = list.last;
+            var conn = list.first;
+            while (conn !== null) {
+                if (conn.receiver !== null && conn.signal === signal) {
+                    conn.method.call(conn.receiver, conn.sender, args);
+                }
+                if (conn === last) {
+                    break;
+                }
+                conn = conn.nextReceiver;
+            }
+        }
+        /**
+         * Test whether a connection matches the given arguments.
+         *
+         * Null arguments are treated as wildcards which will match the
+         * corresponding property of the connection.
+         */
+        function isMatch(conn, sender, signal, receiver, method) {
+            return ((!sender || conn.sender === sender) && (!signal || conn.signal === signal) && (!receiver || conn.receiver === receiver) && (!method || conn.method === method));
+        }
+        /**
+         * Remove a live connection from the doubly linked list of senders.
+         */
+        function removeFromSendersList(conn) {
+            var prev = conn.prevSender;
+            var next = conn.nextSender;
+            if (prev === null) {
+                if (next === null) {
+                    receiverMap.delete(conn.receiver);
+                }
+                else {
+                    receiverMap.set(conn.receiver, next);
+                    next.prevSender = null;
+                }
+            }
+            else if (next === null) {
+                prev.nextSender = null;
+            }
+            else {
+                prev.nextSender = next;
+                next.prevSender = prev;
+            }
+            conn.sender = null;
+            conn.receiver = null;
+            conn.prevSender = null;
+            conn.nextSender = null;
+        }
+        /**
+         * Cleanup the receivers list by removing dead connections.
+         */
+        function cleanReceiversList(list) {
+            var prev = null;
+            var conn = list.first;
+            while (conn !== null) {
+                var next = conn.nextReceiver;
+                if (conn.receiver === null) {
+                    conn.nextReceiver = null;
+                }
+                else if (prev === null) {
+                    list.first = conn;
+                    prev = conn;
+                }
+                else {
+                    prev.nextReceiver = conn;
+                    prev = conn;
+                }
+                conn = next;
+            }
+            if (prev === null) {
+                list.first = null;
+                list.last = null;
+            }
+            else {
+                prev.nextReceiver = null;
+                list.last = prev;
+            }
+        }
     })(core = phosphor.core || (phosphor.core = {}));
 })(phosphor || (phosphor = {})); // module phosphor.core
 
@@ -2649,12 +2862,30 @@ var phosphor;
     var di;
     (function (di) {
         /**
-         * Create a token with the given name.
+         * A token object which holds compile-time type information.
          */
-        function createToken(name) {
-            return Object.freeze({ name: name });
-        }
-        di.createToken = createToken;
+        var Token = (function () {
+            /**
+             * Construct a new token.
+             *
+             * @param name - A human readable name for the token.
+             */
+            function Token(name) {
+                this._name = name;
+            }
+            Object.defineProperty(Token.prototype, "name", {
+                /**
+                 * Get the human readable name for the token.
+                 */
+                get: function () {
+                    return this._name;
+                },
+                enumerable: true,
+                configurable: true
+            });
+            return Token;
+        })();
+        di.Token = Token;
     })(di = phosphor.di || (phosphor.di = {}));
 })(phosphor || (phosphor = {})); // module phosphor.di
 
@@ -2887,7 +3118,7 @@ var phosphor;
         /**
          * The interface token for IContainer.
          */
-        di.IContainer = di.createToken('phosphor.di.IContainer');
+        di.IContainer = new di.Token('phosphor.di.IContainer');
     })(di = phosphor.di || (phosphor.di = {}));
 })(phosphor || (phosphor = {})); // module phosphor.di
 
@@ -4614,6 +4845,7 @@ var phosphor;
     var widgets;
     (function (widgets) {
         var Message = phosphor.core.Message;
+        var disconnect = phosphor.core.disconnect;
         var postMessage = phosphor.core.postMessage;
         /**
          * A singleton 'layout-request' message.
@@ -4637,6 +4869,8 @@ var phosphor;
              * Dispose of the resources held by the layout.
              */
             Layout.prototype.dispose = function () {
+                disconnect(this, null, null, null);
+                disconnect(null, null, this, null);
                 this._parent = null;
             };
             Object.defineProperty(Layout.prototype, "parent", {
@@ -4910,7 +5144,7 @@ var phosphor;
                 /**
                  * The minimum size of the sizer.
                  *
-                 * The sizer will never sized less than this value.
+                 * The sizer will never be sized less than this value.
                  *
                  * Limits: [0, Infinity) && <= maxSize
                  */
@@ -4959,7 +5193,7 @@ var phosphor;
          * Distribute space among the given sizers.
          *
          * This distributes the given layout spacing among the sizers
-         * according the following algorithm:
+         * according to the following algorithm:
          *
          *   1) Initialize the sizers's size to its size hint and compute
          *      the sums for each of size hint, min size, and max size.
@@ -5059,7 +5293,7 @@ var phosphor;
             // value is used for compares instead of zero to ensure that the
             // loop terminates when the subdivided space is reasonably small.
             var nearZero = 0.01;
-            // A counter which decreaes monotonically each time an sizer is
+            // A counter which decreaes monotonically each time a sizer is
             // resized to its limit. This ensure the loops terminate even
             // if there is space remaining to distribute.
             var notDoneCount = count;
@@ -5068,7 +5302,7 @@ var phosphor;
                 // 5a) Shrink each stretch sizer by an amount proportional to its
                 // stretch factor. If it reaches its limit it's marked as done.
                 // The loop progresses in phases where each sizer gets a chance to
-                // consume its fair share for the phase, regardless of whether an
+                // consume its fair share for the phase, regardless of whether a
                 // sizer before it reached its limit. This continues until the
                 // stretch sizers or the free space is exhausted.
                 var freeSpace = totalSize - space;
@@ -6885,6 +7119,7 @@ var phosphor;
     (function (widgets) {
         var algo = phosphor.collections.algorithm;
         var Signal = phosphor.core.Signal;
+        var emit = phosphor.core.emit;
         var Pair = phosphor.utility.Pair;
         var Size = phosphor.utility.Size;
         /**
@@ -6906,10 +7141,6 @@ var phosphor;
              */
             function StackedLayout() {
                 _super.call(this);
-                /**
-                 * A signal emitted when a widget is removed from the layout.
-                 */
-                this.widgetRemoved = new Signal();
                 this._dirty = true;
                 this._sizeHint = null;
                 this._minSize = null;
@@ -6921,7 +7152,6 @@ var phosphor;
              * Dispose of the resources held by the layout.
              */
             StackedLayout.prototype.dispose = function () {
-                this.widgetRemoved.disconnect();
                 this._currentItem = null;
                 this._items = null;
                 _super.prototype.dispose.call(this);
@@ -7000,7 +7230,7 @@ var phosphor;
                     this._currentItem = null;
                     item.widget.hide();
                 }
-                this.widgetRemoved.emit(this, new Pair(index, item.widget));
+                emit(this, StackedLayout.widgetRemoved, new Pair(index, item.widget));
                 return item;
             };
             /**
@@ -7136,6 +7366,10 @@ var phosphor;
                 this._minSize = new Size(minW, minH);
                 this._maxSize = new Size(maxW, maxH);
             };
+            /**
+             * A signal emitted when a widget is removed from the layout.
+             */
+            StackedLayout.widgetRemoved = new Signal();
             return StackedLayout;
         })(widgets.Layout);
         widgets.StackedLayout = StackedLayout;
@@ -7164,6 +7398,8 @@ var phosphor;
         var NodeBase = phosphor.core.NodeBase;
         var Signal = phosphor.core.Signal;
         var clearMessageData = phosphor.core.clearMessageData;
+        var disconnect = phosphor.core.disconnect;
+        var emit = phosphor.core.emit;
         var installMessageFilter = phosphor.core.installMessageFilter;
         var postMessage = phosphor.core.postMessage;
         var removeMessageFilter = phosphor.core.removeMessageFilter;
@@ -7249,10 +7485,6 @@ var phosphor;
              */
             function Widget() {
                 _super.call(this);
-                /**
-                 * A signal emitted when the widget is disposed.
-                 */
-                this.disposed = new Signal();
                 this._x = 0;
                 this._y = 0;
                 this._width = 0;
@@ -7269,10 +7501,11 @@ var phosphor;
              * Dispose of the widget and its descendants.
              */
             Widget.prototype.dispose = function () {
-                clearMessageData(this);
                 this.setFlag(8 /* IsDisposed */);
-                this.disposed.emit(this, void 0);
-                this.disposed.disconnect();
+                emit(this, Widget.disposed, void 0);
+                disconnect(this, null, null, null);
+                disconnect(null, null, this, null);
+                clearMessageData(this);
                 var layout = this._layout;
                 if (layout) {
                     this._layout = null;
@@ -8080,6 +8313,10 @@ var phosphor;
              */
             Widget.prototype.onAfterDetach = function (msg) {
             };
+            /**
+             * A signal emitted when the widget is disposed.
+             */
+            Widget.disposed = new Signal();
             return Widget;
         })(NodeBase);
         widgets.Widget = Widget;
@@ -8658,6 +8895,8 @@ var phosphor;
     var widgets;
     (function (widgets) {
         var Signal = phosphor.core.Signal;
+        var connect = phosphor.core.connect;
+        var emit = phosphor.core.emit;
         /**
          * The class name added to StackedPanel instances.
          */
@@ -8672,21 +8911,10 @@ var phosphor;
              */
             function StackedPanel() {
                 _super.call(this, new widgets.StackedLayout());
-                /**
-                 * A signal emitted when a widget is removed from the panel.
-                 */
-                this.widgetRemoved = new Signal();
                 this.addClass(STACKED_PANEL_CLASS);
                 var layout = this.layout;
-                layout.widgetRemoved.connect(this._sl_widgetRemoved, this);
+                connect(layout, widgets.StackedLayout.widgetRemoved, this, this._p_widgetRemoved);
             }
-            /**
-             * Dispose of the resources held by the panel.
-             */
-            StackedPanel.prototype.dispose = function () {
-                this.widgetRemoved.disconnect();
-                _super.prototype.dispose.call(this);
-            };
             Object.defineProperty(StackedPanel.prototype, "currentIndex", {
                 /**
                  * Get the current index of the panel.
@@ -8754,9 +8982,13 @@ var phosphor;
             /**
              * Handle the `widgetRemoved` signal for the stacked layout.
              */
-            StackedPanel.prototype._sl_widgetRemoved = function (sender, args) {
-                this.widgetRemoved.emit(this, args);
+            StackedPanel.prototype._p_widgetRemoved = function (sender, args) {
+                emit(this, StackedPanel.widgetRemoved, args);
             };
+            /**
+             * A signal emitted when a widget is removed from the panel.
+             */
+            StackedPanel.widgetRemoved = new Signal();
             return StackedPanel;
         })(widgets.Panel);
         widgets.StackedPanel = StackedPanel;
@@ -8781,6 +9013,7 @@ var phosphor;
     var widgets;
     (function (widgets) {
         var algo = phosphor.collections.algorithm;
+        var connect = phosphor.core.connect;
         var hitTest = phosphor.utility.hitTest;
         var overrideCursor = phosphor.utility.overrideCursor;
         /**
@@ -9300,14 +9533,15 @@ var phosphor;
              */
             DockArea.prototype._createPanel = function () {
                 var panel = new DockPanel();
-                var tabBar = panel.tabBar;
-                tabBar.tabWidth = this._tabWidth;
-                tabBar.tabOverlap = this._tabOverlap;
-                tabBar.minTabWidth = this._minTabWidth;
-                tabBar.currentChanged.connect(this._tb_currentChanged, this);
-                tabBar.tabCloseRequested.connect(this._tb_tabCloseRequested, this);
-                tabBar.tabDetachRequested.connect(this._tb_tabDetachRequested, this);
-                panel.stackedPanel.widgetRemoved.connect(this._sw_widgetRemoved, this);
+                var bar = panel.tabBar;
+                var stack = panel.stackedPanel;
+                bar.tabWidth = this._tabWidth;
+                bar.tabOverlap = this._tabOverlap;
+                bar.minTabWidth = this._minTabWidth;
+                connect(bar, widgets.TabBar.currentChanged, this, this._p_currentChanged);
+                connect(bar, widgets.TabBar.tabCloseRequested, this, this._p_tabCloseRequested);
+                connect(bar, widgets.TabBar.tabDetachRequested, this, this._p_tabDetachRequested);
+                connect(stack, widgets.StackedPanel.widgetRemoved, this, this._p_widgetRemoved);
                 return panel;
             };
             /**
@@ -9330,7 +9564,7 @@ var phosphor;
                 // Dispose the panel. It is possible that this method is executing
                 // on the path of the panel's child stack widget event handler, so
                 // the panel is disposed in a deferred fashion to avoid disposing
-                // the child stack widget while its processing events.
+                // the child stack widget while it's processing events.
                 panel.parent = null;
                 setTimeout(function () { return panel.dispose(); }, 0);
                 // If the splitter still has multiple children after removing
@@ -9359,8 +9593,8 @@ var phosphor;
                 // created with 2 children, so the splitter is guaranteed to have
                 // a single child at this point. Furthermore, splitters always have
                 // an orthogonal orientation to their parent, so a grandparent and
-                // a grandhild splitter will have the same orientation. This means
-                // the children of the granchild can be merged into the grandparent.
+                // a grandchild splitter will have the same orientation. This means
+                // the children of the grandchild can be merged into the grandparent.
                 var gParent = splitter.parent;
                 var gSizes = gParent.sizes();
                 var gChild = splitter.widgetAt(0);
@@ -9422,7 +9656,7 @@ var phosphor;
             /**
              * Handle the `currentChanged` signal from a tab bar.
              */
-            DockArea.prototype._tb_currentChanged = function (sender, args) {
+            DockArea.prototype._p_currentChanged = function (sender, args) {
                 var item = algo.find(this._items, function (it) { return it.widget.tab === args.second; });
                 if (item && item.panel.tabBar === sender) {
                     item.panel.stackedPanel.currentWidget = item.widget;
@@ -9431,7 +9665,7 @@ var phosphor;
             /**
              * Handle the `tabCloseRequested` signal from a tab bar.
              */
-            DockArea.prototype._tb_tabCloseRequested = function (sender, args) {
+            DockArea.prototype._p_tabCloseRequested = function (sender, args) {
                 var item = algo.find(this._items, function (it) { return it.widget.tab === args.second; });
                 if (item)
                     item.widget.close();
@@ -9439,7 +9673,7 @@ var phosphor;
             /**
              * Handle the `tabDetachRequested` signal from the tab bar.
              */
-            DockArea.prototype._tb_tabDetachRequested = function (sender, args) {
+            DockArea.prototype._p_tabDetachRequested = function (sender, args) {
                 // Find the dock item for the detach operation.
                 var tab = args.tab;
                 var item = algo.find(this._items, function (it) { return it.widget.tab === tab; });
@@ -9503,7 +9737,7 @@ var phosphor;
             /**
              * Handle the `widgetRemoved` signal from a stack widget.
              */
-            DockArea.prototype._sw_widgetRemoved = function (sender, args) {
+            DockArea.prototype._p_widgetRemoved = function (sender, args) {
                 if (this._ignoreRemoved) {
                     return;
                 }
@@ -9783,6 +10017,7 @@ var phosphor;
     var widgets;
     (function (widgets) {
         var Signal = phosphor.core.Signal;
+        var emit = phosphor.core.emit;
         /**
          * An item which can be added to a menu or menu bar.
          */
@@ -9791,18 +10026,6 @@ var phosphor;
              * Construct a new menu item.
              */
             function MenuItem(options) {
-                /**
-                 * A signal emitted when the state of the menu item is changed.
-                 */
-                this.changed = new Signal();
-                /**
-                 * A signal emitted when a `check` type menu item is toggled.
-                 */
-                this.toggled = new Signal();
-                /**
-                 * A signal emitted when the menu item is triggered.
-                 */
-                this.triggered = new Signal();
                 this._text = '';
                 this._mnemonic = '';
                 this._shortcut = '';
@@ -9834,7 +10057,7 @@ var phosphor;
                     }
                     this._type = type;
                     this._checked = false;
-                    this.changed.emit(this, void 0);
+                    emit(this, MenuItem.changed, void 0);
                 },
                 enumerable: true,
                 configurable: true
@@ -9854,7 +10077,7 @@ var phosphor;
                         return;
                     }
                     this._text = text;
-                    this.changed.emit(this, void 0);
+                    emit(this, MenuItem.changed, void 0);
                 },
                 enumerable: true,
                 configurable: true
@@ -9874,7 +10097,7 @@ var phosphor;
                         return;
                     }
                     this._mnemonic = mnemonic;
-                    this.changed.emit(this, void 0);
+                    emit(this, MenuItem.changed, void 0);
                 },
                 enumerable: true,
                 configurable: true
@@ -9894,7 +10117,7 @@ var phosphor;
                         return;
                     }
                     this._shortcut = shortcut;
-                    this.changed.emit(this, void 0);
+                    emit(this, MenuItem.changed, void 0);
                 },
                 enumerable: true,
                 configurable: true
@@ -9914,7 +10137,7 @@ var phosphor;
                         return;
                     }
                     this._enabled = enabled;
-                    this.changed.emit(this, void 0);
+                    emit(this, MenuItem.changed, void 0);
                 },
                 enumerable: true,
                 configurable: true
@@ -9934,7 +10157,7 @@ var phosphor;
                         return;
                     }
                     this._visible = visible;
-                    this.changed.emit(this, void 0);
+                    emit(this, MenuItem.changed, void 0);
                 },
                 enumerable: true,
                 configurable: true
@@ -9954,8 +10177,8 @@ var phosphor;
                         return;
                     }
                     this._checked = checked;
-                    this.changed.emit(this, void 0);
-                    this.toggled.emit(this, void 0);
+                    emit(this, MenuItem.changed, void 0);
+                    emit(this, MenuItem.toggled, checked);
                 },
                 enumerable: true,
                 configurable: true
@@ -9975,7 +10198,7 @@ var phosphor;
                         return;
                     }
                     this._submenu = submenu;
-                    this.changed.emit(this, void 0);
+                    emit(this, MenuItem.changed, void 0);
                 },
                 enumerable: true,
                 configurable: true
@@ -9995,7 +10218,7 @@ var phosphor;
                         return;
                     }
                     this._className = name;
-                    this.changed.emit(this, void 0);
+                    emit(this, MenuItem.changed, void 0);
                 },
                 enumerable: true,
                 configurable: true
@@ -10011,7 +10234,7 @@ var phosphor;
                 if (this._type === 'check') {
                     this.checked = !this.checked;
                 }
-                this.triggered.emit(this, void 0);
+                emit(this, MenuItem.triggered, this.checked);
             };
             /**
              * Initialize the menu item from the given options object.
@@ -10044,13 +10267,19 @@ var phosphor;
                 if (options.className !== void 0) {
                     this._className = options.className;
                 }
-                if (options.onTriggered !== void 0) {
-                    this.triggered.connect(options.onTriggered);
-                }
-                if (options.onToggled !== void 0) {
-                    this.toggled.connect(options.onToggled);
-                }
             };
+            /**
+             * A signal emitted when the state of the menu item is changed.
+             */
+            MenuItem.changed = new Signal();
+            /**
+             * A signal emitted when a `check` type menu item is toggled.
+             */
+            MenuItem.toggled = new Signal();
+            /**
+             * A signal emitted when the menu item is triggered.
+             */
+            MenuItem.triggered = new Signal();
             return MenuItem;
         })();
         widgets.MenuItem = MenuItem;
@@ -10077,6 +10306,9 @@ var phosphor;
         var algo = phosphor.collections.algorithm;
         var NodeBase = phosphor.core.NodeBase;
         var Signal = phosphor.core.Signal;
+        var connect = phosphor.core.connect;
+        var disconnect = phosphor.core.disconnect;
+        var emit = phosphor.core.emit;
         var Size = phosphor.utility.Size;
         var clientViewportRect = phosphor.utility.clientViewportRect;
         var createBoxSizing = phosphor.utility.createBoxSizing;
@@ -10164,10 +10396,6 @@ var phosphor;
             function Menu(items) {
                 var _this = this;
                 _super.call(this);
-                /**
-                 * A signal emitted when the menu is closed.
-                 */
-                this.closed = new Signal();
                 this._openTimer = 0;
                 this._closeTimer = 0;
                 this._activeIndex = -1;
@@ -10213,6 +10441,8 @@ var phosphor;
              */
             Menu.prototype.dispose = function () {
                 this.close();
+                disconnect(this, null, null, null);
+                disconnect(null, null, this, null);
                 this._items = null;
                 this._nodes = null;
                 _super.prototype.dispose.call(this);
@@ -10321,7 +10551,7 @@ var phosphor;
                 var node = this.createItemNode(item);
                 index = algo.insert(this._items, index, item);
                 algo.insert(this._nodes, index, node);
-                item.changed.connect(this._mi_changed, this);
+                connect(item, widgets.MenuItem.changed, this, this._p_changed);
                 node.addEventListener('mouseenter', this);
                 this.insertItemNode(index, node);
                 this._collapseSeparators();
@@ -10337,7 +10567,7 @@ var phosphor;
                 var item = algo.removeAt(this._items, index);
                 var node = algo.removeAt(this._nodes, index);
                 if (item) {
-                    item.changed.disconnect(this._mi_changed, this);
+                    disconnect(item, widgets.MenuItem.changed, this, this._p_changed);
                 }
                 if (node) {
                     node.removeEventListener('mouseenter', this);
@@ -10492,7 +10722,7 @@ var phosphor;
                 openRootMenu(this, x, y, forceX, forceY);
             };
             /**
-             * Close the menu and remove it's node from the DOM.
+             * Close the menu and remove its node from the DOM.
              */
             Menu.prototype.close = function () {
                 var node = this.node;
@@ -10508,7 +10738,7 @@ var phosphor;
                 document.removeEventListener('mousedown', this, true);
                 this._reset();
                 this._removeFromParent();
-                this.closed.emit(this, void 0);
+                emit(this, Menu.closed, void 0);
             };
             /**
              * Handle the DOM events for the menu.
@@ -10916,7 +11146,7 @@ var phosphor;
              * Collapse neighboring visible separators.
              *
              * This force-hides select separator nodes such that there are never
-             * multiple visible separator siblings. It also force-hides all any
+             * multiple visible separator siblings. It also force-hides all
              * leading and trailing separator nodes.
              */
             Menu.prototype._collapseSeparators = function () {
@@ -10943,7 +11173,7 @@ var phosphor;
             /**
              * Handle the `changed` signal from a menu item.
              */
-            Menu.prototype._mi_changed = function (sender) {
+            Menu.prototype._p_changed = function (sender) {
                 var i = this.indexOf(sender);
                 if (i === -1) {
                     return;
@@ -10954,6 +11184,10 @@ var phosphor;
                 this.initItemNode(sender, this._nodes[i]);
                 this._collapseSeparators();
             };
+            /**
+             * A signal emitted when the menu is closed.
+             */
+            Menu.closed = new Signal();
             return Menu;
         })(NodeBase);
         widgets.Menu = Menu;
@@ -11070,6 +11304,8 @@ var phosphor;
     var widgets;
     (function (widgets) {
         var algo = phosphor.collections.algorithm;
+        var connect = phosphor.core.connect;
+        var disconnect = phosphor.core.disconnect;
         var Size = phosphor.utility.Size;
         var hitTest = phosphor.utility.hitTest;
         /**
@@ -11138,6 +11374,7 @@ var phosphor;
                 this._state = 0 /* Inactive */;
                 this.addClass(MENU_BAR_CLASS);
                 this.verticalSizePolicy = 0 /* Fixed */;
+                this.setFlag(16 /* DisallowLayoutChange */);
                 if (items)
                     items.forEach(function (it) { return _this.addItem(it); });
             }
@@ -11253,7 +11490,7 @@ var phosphor;
                 var node = this.createItemNode(item);
                 index = algo.insert(this._items, index, item);
                 algo.insert(this._nodes, index, node);
-                item.changed.connect(this._mi_changed, this);
+                connect(item, widgets.MenuItem.changed, this, this._p_changed);
                 this.insertItemNode(index, node);
                 this._collapseSeparators();
                 return index;
@@ -11269,7 +11506,7 @@ var phosphor;
                 var item = algo.removeAt(this._items, index);
                 var node = algo.removeAt(this._nodes, index);
                 if (item) {
-                    item.changed.disconnect(this._mi_changed, this);
+                    disconnect(item, widgets.MenuItem.changed, this, this._p_changed);
                 }
                 if (node) {
                     this.removeItemNode(node);
@@ -11621,16 +11858,16 @@ var phosphor;
                 var rect = node.getBoundingClientRect();
                 this._childMenu = menu;
                 menu.addClass(MENU_CLASS);
-                menu.closed.connect(this._mn_closed, this);
                 menu.open(rect.left, rect.bottom, false, true);
+                connect(menu, widgets.Menu.closed, this, this._p_closed);
             };
             /**
              * Close the current child menu, if one exists.
              */
             MenuBar.prototype._closeChildMenu = function () {
                 if (this._childMenu) {
+                    disconnect(this._childMenu, widgets.Menu.closed, this, this._p_closed);
                     this._childMenu.removeClass(MENU_CLASS);
-                    this._childMenu.closed.disconnect(this._mn_closed, this);
                     this._childMenu.close();
                     this._childMenu = null;
                 }
@@ -11707,8 +11944,8 @@ var phosphor;
             /**
              * Handle the `closed` signal from the child menu.
              */
-            MenuBar.prototype._mn_closed = function (sender) {
-                sender.closed.disconnect(this._mn_closed, this);
+            MenuBar.prototype._p_closed = function (sender) {
+                disconnect(sender, widgets.Menu.closed, this, this._p_closed);
                 sender.removeClass(MENU_CLASS);
                 this._childMenu = null;
                 this._setState(0 /* Inactive */);
@@ -11717,7 +11954,7 @@ var phosphor;
             /**
              * Handle the `changed` signal from a menu item.
              */
-            MenuBar.prototype._mi_changed = function (sender) {
+            MenuBar.prototype._p_changed = function (sender) {
                 var i = this.indexOf(sender);
                 if (i === -1) {
                     return;
@@ -11919,6 +12156,7 @@ var phosphor;
     var widgets;
     (function (widgets) {
         var Signal = phosphor.core.Signal;
+        var emit = phosphor.core.emit;
         var Size = phosphor.utility.Size;
         var overrideCursor = phosphor.utility.overrideCursor;
         /**
@@ -11954,15 +12192,6 @@ var phosphor;
             function ScrollBar(orientation) {
                 if (orientation === void 0) { orientation = 1 /* Vertical */; }
                 _super.call(this);
-                /**
-                 * A signal emitted when the user moves the scroll bar slider.
-                 *
-                 * The signal parameter is the current `value` of the scroll bar.
-                 *
-                 * #### Notes
-                 * This signal is not emitted when `value` is changed from code.
-                 */
-                this.sliderMoved = new Signal();
                 this._value = 0;
                 this._minimum = 0;
                 this._maximum = 99;
@@ -11971,6 +12200,7 @@ var phosphor;
                 this._dragData = null;
                 this.addClass(SCROLLBAR_CLASS);
                 this._orientation = orientation;
+                this.setFlag(16 /* DisallowLayoutChange */);
                 if (orientation === 0 /* Horizontal */) {
                     this.addClass(HORIZONTAL_CLASS);
                     this.setSizePolicy(widgets.SizePolicy.Expanding, 0 /* Fixed */);
@@ -12329,7 +12559,7 @@ var phosphor;
                 }
                 this._value = value;
                 this.update(true);
-                this.sliderMoved.emit(this, value);
+                emit(this, ScrollBar.sliderMoved, value);
             };
             /**
              * Get the minimum size of the slider for the current orientation.
@@ -12350,6 +12580,15 @@ var phosphor;
                 }
                 return this._sliderMinSize;
             };
+            /**
+             * A signal emitted when the user moves the scroll bar slider.
+             *
+             * The signal parameter is the current `value` of the scroll bar.
+             *
+             * #### Notes
+             * This signal is not emitted when `value` is changed from code.
+             */
+            ScrollBar.sliderMoved = new Signal();
             return ScrollBar;
         })(widgets.Widget);
         widgets.ScrollBar = ScrollBar;
@@ -12521,6 +12760,7 @@ var phosphor;
     (function (widgets) {
         var algo = phosphor.collections.algorithm;
         var Signal = phosphor.core.Signal;
+        var emit = phosphor.core.emit;
         var Pair = phosphor.utility.Pair;
         var Size = phosphor.utility.Size;
         var hitTest = phosphor.utility.hitTest;
@@ -12583,22 +12823,6 @@ var phosphor;
              */
             function TabBar(options) {
                 _super.call(this);
-                /**
-                 * A signal emitted when a tab is moved.
-                 */
-                this.tabMoved = new Signal();
-                /**
-                 * A signal emitted when the currently selected tab is changed.
-                 */
-                this.currentChanged = new Signal();
-                /**
-                 * A signal emitted when the user clicks a tab close icon.
-                 */
-                this.tabCloseRequested = new Signal();
-                /**
-                 * A signal emitted when a tab is dragged beyond the detach threshold.
-                 */
-                this.tabDetachRequested = new Signal();
                 this._tabWidth = 175;
                 this._tabOverlap = 0;
                 this._minTabWidth = 45;
@@ -12609,6 +12833,7 @@ var phosphor;
                 this._dragData = null;
                 this.addClass(TAB_BAR_CLASS);
                 this.verticalSizePolicy = 0 /* Fixed */;
+                this.setFlag(16 /* DisallowLayoutChange */);
                 if (options)
                     this._initFrom(options);
             }
@@ -12632,10 +12857,6 @@ var phosphor;
              * Dispose of the resources held by the widget.
              */
             TabBar.prototype.dispose = function () {
-                this.tabMoved.disconnect();
-                this.currentChanged.disconnect();
-                this.tabCloseRequested.disconnect();
-                this.tabDetachRequested.disconnect();
                 this._releaseMouse();
                 this._previousTab = null;
                 this._currentTab = null;
@@ -12665,7 +12886,7 @@ var phosphor;
                     this._currentTab = next;
                     this._previousTab = prev;
                     this._updateTabZOrder();
-                    this.currentChanged.emit(this, new Pair(next ? index : -1, next));
+                    emit(this, TabBar.currentChanged, new Pair(next ? index : -1, next));
                 },
                 enumerable: true,
                 configurable: true
@@ -12739,8 +12960,8 @@ var phosphor;
                     }
                     this._tabWidth = width;
                     if (this.isAttached) {
-                        this._updateTabLayout();
                         this.updateGeometry();
+                        this.update();
                     }
                 },
                 enumerable: true,
@@ -12767,8 +12988,8 @@ var phosphor;
                     }
                     this._minTabWidth = width;
                     if (this.isAttached) {
-                        this._updateTabLayout();
                         this.updateGeometry();
+                        this.update();
                     }
                 },
                 enumerable: true,
@@ -12796,8 +13017,8 @@ var phosphor;
                     }
                     this._tabOverlap = overlap;
                     if (this.isAttached) {
-                        this._updateTabLayout();
                         this.updateGeometry();
+                        this.update();
                     }
                 },
                 enumerable: true,
@@ -12841,7 +13062,7 @@ var phosphor;
             TabBar.prototype.insertTab = function (index, tab) {
                 var fromIndex = this.indexOf(tab);
                 if (fromIndex !== -1) {
-                    index = this.moveTab(fromIndex, index);
+                    index = this._moveTab(fromIndex, index);
                 }
                 else {
                     index = this._insertTab(index, tab, true);
@@ -12935,8 +13156,8 @@ var phosphor;
                 var tabStyle = tab.node.style;
                 contentNode.classList.add(TRANSITION_CLASS);
                 tabStyle.transition = 'none';
-                this._updateTabLayout();
                 tabStyle.left = tabLeft + 'px';
+                this.update(true);
             };
             /**
              * Detach and return the tab at the given index.
@@ -13021,7 +13242,34 @@ var phosphor;
              * A method invoked on a 'resize' message.
              */
             TabBar.prototype.onResize = function (msg) {
-                this._updateTabLayout();
+                this.update(true);
+            };
+            /**
+             * A method invoked on an 'update-request' message.
+             */
+            TabBar.prototype.onUpdateRequest = function (msg) {
+                var dragNode = null;
+                if (this._dragData && this._dragData.dragActive) {
+                    dragNode = this._dragData.node;
+                }
+                var left = 0;
+                var tabs = this._tabs;
+                var width = this.width;
+                var overlap = this._tabOverlap;
+                var tlw = this._tabLayoutWidth();
+                for (var i = 0, n = tabs.length; i < n; ++i) {
+                    var node = tabs[i].node;
+                    var style = node.style;
+                    if (node !== dragNode) {
+                        var offset = tlw + TAB_STUB_SIZE * (n - i - 1);
+                        if ((left + offset) > width) {
+                            left = Math.max(0, width - offset);
+                        }
+                        style.left = left + 'px';
+                    }
+                    style.width = tlw + 'px';
+                    left += tlw - overlap;
+                }
             };
             /**
              * Handle the 'click' event for the tab bar.
@@ -13043,7 +13291,7 @@ var phosphor;
                 // emit the `tabCloseRequested` signal.
                 var tab = this._tabs[index];
                 if (tab.closable && tab.closeIconNode === event.target) {
-                    this.tabCloseRequested.emit(this, new Pair(index, tab));
+                    emit(this, TabBar.tabCloseRequested, new Pair(index, tab));
                 }
             };
             /**
@@ -13127,7 +13375,7 @@ var phosphor;
                     if (!inBounds(data.contentRect, DETACH_THRESHOLD, clientX, clientY)) {
                         // Update the data nad emit the `tabDetachRequested` signal.
                         data.detachRequested = true;
-                        this.tabDetachRequested.emit(this, {
+                        emit(this, TabBar.tabDetachRequested, {
                             tab: this.currentTab,
                             index: this.currentIndex,
                             clientX: clientX,
@@ -13154,10 +13402,10 @@ var phosphor;
                 var targetX = Math.max(0, Math.min(localX, data.contentRect.width - tlw));
                 // Swap the position of the tab if it exceeds a threshold.
                 if (targetX < lowerBound) {
-                    this.moveTab(index, index - 1);
+                    this._moveTab(index, index - 1);
                 }
                 else if (targetX > upperBound) {
-                    this.moveTab(index, index + 1);
+                    this._moveTab(index, index + 1);
                 }
                 // Move the tab to its target position.
                 data.node.style.left = targetX + 'px';
@@ -13191,9 +13439,7 @@ var phosphor;
                 if (data.dragActive) {
                     data.cursorGrab.dispose();
                     data.node.style.transition = '';
-                    this._withTransition(function () {
-                        _this._updateTabLayout();
-                    });
+                    this._withTransition(function () { return _this.update(true); });
                 }
             };
             /**
@@ -13224,15 +13470,13 @@ var phosphor;
                 if (animate) {
                     this._withTransition(function () {
                         tab.addClass(INSERTING_CLASS);
-                        _this._updateTabLayout();
+                        _this.update(true);
                     }, function () {
                         tab.removeClass(INSERTING_CLASS);
                     });
                 }
                 else {
-                    this._withTransition(function () {
-                        _this._updateTabLayout();
-                    });
+                    this._withTransition(function () { return _this.update(true); });
                 }
                 // Notify the layout system that the widget geometry is dirty.
                 this.updateGeometry();
@@ -13254,15 +13498,13 @@ var phosphor;
                 // Update the tab Z-order to account for the new order.
                 this._updateTabZOrder();
                 // Emit the `tabMoved` signal.
-                this.tabMoved.emit(this, new Pair(fromIndex, toIndex));
+                emit(this, TabBar.tabMoved, new Pair(fromIndex, toIndex));
                 // If the tab bar is not attached, there is nothing left to do.
                 if (!this.isAttached) {
                     return toIndex;
                 }
                 // Animate the tab layout update.
-                this._withTransition(function () {
-                    _this._updateTabLayout();
-                });
+                this._withTransition(function () { return _this.update(true); });
                 return toIndex;
             };
             /**
@@ -13298,7 +13540,7 @@ var phosphor;
                         this.currentTab = next;
                     }
                     else {
-                        this.currentChanged.emit(this, new Pair(-1, void 0));
+                        emit(this, TabBar.currentChanged, new Pair(-1, void 0));
                     }
                 }
                 else if (tab === this._previousTab) {
@@ -13317,7 +13559,7 @@ var phosphor;
                 if (animate) {
                     this._withTransition(function () {
                         tab.addClass(REMOVING_CLASS);
-                        _this._updateTabLayout();
+                        _this.update(true);
                     }, function () {
                         tab.removeClass(REMOVING_CLASS);
                         _this._removeContentChild(tab.node);
@@ -13325,9 +13567,7 @@ var phosphor;
                 }
                 else {
                     this._removeContentChild(tab.node);
-                    this._withTransition(function () {
-                        _this._updateTabLayout();
-                    });
+                    this._withTransition(function () { return _this.update(true); });
                 }
                 // Notify the layout system that the widget geometry is dirty.
                 this.updateGeometry();
@@ -13395,35 +13635,6 @@ var phosphor;
                 }
             };
             /**
-             * Update the position and size of the tabs in the tab bar.
-             *
-             * The position of the drag tab will not be updated.
-             */
-            TabBar.prototype._updateTabLayout = function () {
-                var dragNode = null;
-                if (this._dragData && this._dragData.dragActive) {
-                    dragNode = this._dragData.node;
-                }
-                var left = 0;
-                var tabs = this._tabs;
-                var width = this.width;
-                var overlap = this._tabOverlap;
-                var tlw = this._tabLayoutWidth();
-                for (var i = 0, n = tabs.length; i < n; ++i) {
-                    var node = tabs[i].node;
-                    var style = node.style;
-                    if (node !== dragNode) {
-                        var offset = tlw + TAB_STUB_SIZE * (n - i - 1);
-                        if ((left + offset) > width) {
-                            left = Math.max(0, width - offset);
-                        }
-                        style.left = left + 'px';
-                    }
-                    style.width = tlw + 'px';
-                    left += tlw - overlap;
-                }
-            };
-            /**
              * A helper function to execute an animated transition.
              *
              * This will add the transition class to the tab bar for the global
@@ -13468,6 +13679,22 @@ var phosphor;
                     this.tabOverlap = options.tabOverlap;
                 }
             };
+            /**
+             * A signal emitted when a tab is moved.
+             */
+            TabBar.tabMoved = new Signal();
+            /**
+             * A signal emitted when the currently selected tab is changed.
+             */
+            TabBar.currentChanged = new Signal();
+            /**
+             * A signal emitted when the user clicks a tab close icon.
+             */
+            TabBar.tabCloseRequested = new Signal();
+            /**
+             * A signal emitted when a tab is dragged beyond the detach threshold.
+             */
+            TabBar.tabDetachRequested = new Signal();
             return TabBar;
         })(widgets.Widget);
         widgets.TabBar = TabBar;
@@ -13510,6 +13737,8 @@ var phosphor;
     var widgets;
     (function (widgets) {
         var Signal = phosphor.core.Signal;
+        var connect = phosphor.core.connect;
+        var emit = phosphor.core.emit;
         var Pair = phosphor.utility.Pair;
         /**
          * The class name added to tab panel instances.
@@ -13529,19 +13758,15 @@ var phosphor;
              */
             function TabPanel() {
                 _super.call(this);
-                /**
-                 * A signal emitted when the current widget is changed.
-                 */
-                this.currentChanged = new Signal();
                 this.addClass(TAB_PANEL_CLASS);
                 this.layout = new widgets.BoxLayout(2 /* TopToBottom */, 0);
                 this.setFlag(16 /* DisallowLayoutChange */);
                 var bar = this._tabBar = new widgets.TabBar();
-                bar.tabMoved.connect(this._tb_tabMoved, this);
-                bar.currentChanged.connect(this._tb_currentChanged, this);
-                bar.tabCloseRequested.connect(this._tb_tabCloseRequested, this);
+                connect(bar, widgets.TabBar.tabMoved, this, this._p_tabMoved);
+                connect(bar, widgets.TabBar.currentChanged, this, this._p_currentChanged);
+                connect(bar, widgets.TabBar.tabCloseRequested, this, this._p_tabCloseRequested);
                 var stack = this._stackedPanel = new widgets.StackedPanel();
-                stack.widgetRemoved.connect(this._sw_widgetRemoved, this);
+                connect(stack, widgets.StackedPanel.widgetRemoved, this, this._p_widgetRemoved);
                 this.layout.addWidget(bar);
                 this.layout.addWidget(stack);
             }
@@ -13551,7 +13776,6 @@ var phosphor;
             TabPanel.prototype.dispose = function () {
                 this._tabBar = null;
                 this._stackedPanel = null;
-                this.currentChanged.disconnect();
                 _super.prototype.dispose.call(this);
             };
             Object.defineProperty(TabPanel.prototype, "currentIndex", {
@@ -13668,29 +13892,33 @@ var phosphor;
             /**
              * Handle the `tabMoved` signal from the tab bar.
              */
-            TabPanel.prototype._tb_tabMoved = function (sender, args) {
+            TabPanel.prototype._p_tabMoved = function (sender, args) {
                 this._stackedPanel.moveWidget(args.first, args.second);
             };
             /**
              * Handle the `currentChanged` signal from the tab bar.
              */
-            TabPanel.prototype._tb_currentChanged = function (sender, args) {
+            TabPanel.prototype._p_currentChanged = function (sender, args) {
                 this._stackedPanel.currentIndex = args.first;
                 var widget = this._stackedPanel.currentWidget;
-                this.currentChanged.emit(this, new Pair(args.first, widget));
+                emit(this, TabPanel.currentChanged, new Pair(args.first, widget));
             };
             /**
              * Handle the `tabCloseRequested` signal from the tab bar.
              */
-            TabPanel.prototype._tb_tabCloseRequested = function (sender, args) {
+            TabPanel.prototype._p_tabCloseRequested = function (sender, args) {
                 this._stackedPanel.widgetAt(args.first).close();
             };
             /**
              * Handle the `widgetRemoved` signal from the stacked panel.
              */
-            TabPanel.prototype._sw_widgetRemoved = function (sender, args) {
+            TabPanel.prototype._p_widgetRemoved = function (sender, args) {
                 this._tabBar.removeAt(args.first);
             };
+            /**
+             * A signal emitted when the current widget is changed.
+             */
+            TabPanel.currentChanged = new Signal();
             return TabPanel;
         })(widgets.Widget);
         widgets.TabPanel = TabPanel;
@@ -13710,11 +13938,11 @@ var phosphor;
 (function (phosphor) {
     var shell;
     (function (shell) {
-        var createToken = phosphor.di.createToken;
+        var Token = phosphor.di.Token;
         /**
          * The interface token for IPluginList.
          */
-        shell.IPluginList = createToken('phosphor.shell.IPluginList');
+        shell.IPluginList = new Token('phosphor.shell.IPluginList');
     })(shell = phosphor.shell || (phosphor.shell = {}));
 })(phosphor || (phosphor = {})); // module phosphor.shell
 
@@ -13729,11 +13957,11 @@ var phosphor;
 (function (phosphor) {
     var shell;
     (function (shell) {
-        var createToken = phosphor.di.createToken;
+        var Token = phosphor.di.Token;
         /**
          * The interface token for IShellView.
          */
-        shell.IShellView = createToken('phosphor.shell.IShellView');
+        shell.IShellView = new Token('phosphor.shell.IShellView');
     })(shell = phosphor.shell || (phosphor.shell = {}));
 })(phosphor || (phosphor = {})); // module phosphor.shell
 
