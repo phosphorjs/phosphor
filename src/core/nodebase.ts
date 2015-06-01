@@ -33,6 +33,10 @@ class NodeBase implements IDisposable {
 
   /**
    * Dispose of the resources held by the object.
+   *
+   * This method only clears the reference to the DOM node, it does not
+   * remove it from the DOM. Subclasses should reimplement this method
+   * to perform custom cleanup.
    */
   dispose(): void {
     this._node = null;

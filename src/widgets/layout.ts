@@ -11,6 +11,7 @@ import IMessage = core.IMessage;
 import IMessageHandler = core.IMessageHandler;
 import IMessageFilter = core.IMessageFilter;
 import Message = core.Message;
+import disconnect = core.disconnect;
 import postMessage = core.postMessage;
 
 import IDisposable = utility.IDisposable;
@@ -41,6 +42,8 @@ class Layout implements IMessageFilter, IDisposable {
    * Dispose of the resources held by the layout.
    */
   dispose(): void {
+    disconnect(this, null, null, null);
+    disconnect(null, null, this, null);
     this._parent = null;
   }
 

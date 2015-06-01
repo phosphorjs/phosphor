@@ -11,6 +11,9 @@ import algo = collections.algorithm;
 
 import NodeBase = core.NodeBase;
 import Signal = core.Signal;
+import connect = core.connect;
+import disconnect = core.disconnect;
+import emit = core.emit;
 
 import Size = utility.Size;
 import Rect = utility.Rect;
@@ -149,7 +152,7 @@ class Menu extends NodeBase {
   /**
    * A signal emitted when the menu is closed.
    */
-  closed = new Signal<Menu, void>();
+  static closed = new Signal<Menu, void>();
 
   /**
    * Construct a new menu.
@@ -165,6 +168,8 @@ class Menu extends NodeBase {
    */
   dispose(): void {
     this.close();
+    disconnect(this, null, null, null);
+    disconnect(null, null, this, null);
     this._items = null;
     this._nodes = null;
     super.dispose();
@@ -264,7 +269,7 @@ class Menu extends NodeBase {
     var node = this.createItemNode(item);
     index = algo.insert(this._items, index, item);
     algo.insert(this._nodes, index, node);
-    item.changed.connect(this._mi_changed, this);
+    connect(item, MenuItem.changed, this, this._p_changed);
     node.addEventListener('mouseenter', <any>this);
     this.insertItemNode(index, node);
     this._collapseSeparators();
@@ -281,7 +286,7 @@ class Menu extends NodeBase {
     var item = algo.removeAt(this._items, index);
     var node = algo.removeAt(this._nodes, index);
     if (item) {
-      item.changed.disconnect(this._mi_changed, this);
+      disconnect(item, MenuItem.changed, this, this._p_changed);
     }
     if (node) {
       node.removeEventListener('mouseenter', <any>this);
@@ -456,7 +461,7 @@ class Menu extends NodeBase {
     document.removeEventListener('mousedown', <any>this, true);
     this._reset();
     this._removeFromParent();
-    this.closed.emit(this, void 0);
+    emit(this, Menu.closed, void 0);
   }
 
   /**
@@ -911,7 +916,7 @@ class Menu extends NodeBase {
   /**
    * Handle the `changed` signal from a menu item.
    */
-  private _mi_changed(sender: MenuItem): void {
+  private _p_changed(sender: MenuItem): void {
     var i = this.indexOf(sender);
     if (i === -1) {
       return;

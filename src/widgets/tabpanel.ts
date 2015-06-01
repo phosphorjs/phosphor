@@ -8,6 +8,8 @@
 module phosphor.widgets {
 
 import Signal = core.Signal;
+import connect = core.connect;
+import emit = core.emit;
 
 import Pair = utility.Pair;
 
@@ -42,7 +44,7 @@ class TabPanel extends Widget {
   /**
    * A signal emitted when the current widget is changed.
    */
-  currentChanged = new Signal<TabPanel, Pair<number, Widget>>();
+  static currentChanged = new Signal<TabPanel, Pair<number, Widget>>();
 
   /**
    * Construct a new tab panel.
@@ -54,12 +56,12 @@ class TabPanel extends Widget {
     this.setFlag(WidgetFlag.DisallowLayoutChange);
 
     var bar = this._tabBar = new TabBar();
-    bar.tabMoved.connect(this._tb_tabMoved, this);
-    bar.currentChanged.connect(this._tb_currentChanged, this);
-    bar.tabCloseRequested.connect(this._tb_tabCloseRequested, this);
+    connect(bar, TabBar.tabMoved, this, this._p_tabMoved);
+    connect(bar, TabBar.currentChanged, this, this._p_currentChanged);
+    connect(bar, TabBar.tabCloseRequested, this, this._p_tabCloseRequested);
 
     var stack = this._stackedPanel = new StackedPanel();
-    stack.widgetRemoved.connect(this._sw_widgetRemoved, this);
+    connect(stack, StackedPanel.widgetRemoved, this, this._p_widgetRemoved);
 
     (<BoxLayout>this.layout).addWidget(bar);
     (<BoxLayout>this.layout).addWidget(stack);
@@ -71,7 +73,6 @@ class TabPanel extends Widget {
   dispose(): void {
     this._tabBar = null;
     this._stackedPanel = null;
-    this.currentChanged.disconnect();
     super.dispose();
   }
 
@@ -182,30 +183,30 @@ class TabPanel extends Widget {
   /**
    * Handle the `tabMoved` signal from the tab bar.
    */
-  private _tb_tabMoved(sender: TabBar, args: Pair<number, number>): void {
+  private _p_tabMoved(sender: TabBar, args: Pair<number, number>): void {
     this._stackedPanel.moveWidget(args.first, args.second);
   }
 
   /**
    * Handle the `currentChanged` signal from the tab bar.
    */
-  private _tb_currentChanged(sender: TabBar, args: Pair<number, Tab>): void {
+  private _p_currentChanged(sender: TabBar, args: Pair<number, Tab>): void {
     this._stackedPanel.currentIndex = args.first;
     var widget = this._stackedPanel.currentWidget;
-    this.currentChanged.emit(this, new Pair(args.first, widget));
+    emit(this, TabPanel.currentChanged, new Pair(args.first, widget));
   }
 
   /**
    * Handle the `tabCloseRequested` signal from the tab bar.
    */
-  private _tb_tabCloseRequested(sender: TabBar, args: Pair<number, Tab>): void {
+  private _p_tabCloseRequested(sender: TabBar, args: Pair<number, Tab>): void {
     this._stackedPanel.widgetAt(args.first).close();
   }
 
   /**
    * Handle the `widgetRemoved` signal from the stacked panel.
    */
-  private _sw_widgetRemoved(sender: StackedPanel, args: Pair<number, Widget>): void {
+  private _p_widgetRemoved(sender: StackedPanel, args: Pair<number, Widget>): void {
     this._tabBar.removeAt(args.first);
   }
 

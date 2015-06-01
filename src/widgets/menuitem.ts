@@ -8,6 +8,7 @@
 module phosphor.widgets {
 
 import Signal = core.Signal;
+import emit = core.emit;
 
 
 /**
@@ -59,16 +60,6 @@ interface IMenuItemOptions {
    * The extra class name to associate with the menu item.
    */
   className?: string;
-
-  /**
-   * A callback to invoke when the menu item is toggled.
-   */
-  onToggled?: (item: MenuItem) => void;
-
-  /**
-   * A callback to invoke when the menu item is triggered.
-   */
-  onTriggered?: (item: MenuItem) => void;
 }
 
 
@@ -80,17 +71,17 @@ class MenuItem {
   /**
    * A signal emitted when the state of the menu item is changed.
    */
-  changed = new Signal<MenuItem, void>();
+  static changed = new Signal<MenuItem, void>();
 
   /**
    * A signal emitted when a `check` type menu item is toggled.
    */
-  toggled = new Signal<MenuItem, void>();
+  static toggled = new Signal<MenuItem, boolean>();
 
   /**
    * A signal emitted when the menu item is triggered.
    */
-  triggered = new Signal<MenuItem, void>();
+  static triggered = new Signal<MenuItem, boolean>();
 
   /**
    * Construct a new menu item.
@@ -118,7 +109,7 @@ class MenuItem {
     }
     this._type = type;
     this._checked = false;
-    this.changed.emit(this, void 0);
+    emit(this, MenuItem.changed, void 0);
   }
 
   /**
@@ -136,7 +127,7 @@ class MenuItem {
       return;
     }
     this._text = text;
-    this.changed.emit(this, void 0);
+    emit(this, MenuItem.changed, void 0);
   }
 
   /**
@@ -154,7 +145,7 @@ class MenuItem {
       return;
     }
     this._mnemonic = mnemonic;
-    this.changed.emit(this, void 0);
+    emit(this, MenuItem.changed, void 0);
   }
 
   /**
@@ -172,7 +163,7 @@ class MenuItem {
       return;
     }
     this._shortcut = shortcut;
-    this.changed.emit(this, void 0);
+    emit(this, MenuItem.changed, void 0);
   }
 
   /**
@@ -190,7 +181,7 @@ class MenuItem {
       return;
     }
     this._enabled = enabled;
-    this.changed.emit(this, void 0);
+    emit(this, MenuItem.changed, void 0);
   }
 
   /**
@@ -208,7 +199,7 @@ class MenuItem {
       return;
     }
     this._visible = visible;
-    this.changed.emit(this, void 0);
+    emit(this, MenuItem.changed, void 0);
   }
 
   /**
@@ -226,8 +217,8 @@ class MenuItem {
       return;
     }
     this._checked = checked;
-    this.changed.emit(this, void 0);
-    this.toggled.emit(this, void 0);
+    emit(this, MenuItem.changed, void 0);
+    emit(this, MenuItem.toggled, checked);
   }
 
   /**
@@ -245,7 +236,7 @@ class MenuItem {
       return;
     }
     this._submenu = submenu;
-    this.changed.emit(this, void 0);
+    emit(this, MenuItem.changed, void 0);
   }
 
   /**
@@ -263,7 +254,7 @@ class MenuItem {
       return;
     }
     this._className = name;
-    this.changed.emit(this, void 0);
+    emit(this, MenuItem.changed, void 0);
   }
 
   /**
@@ -277,7 +268,7 @@ class MenuItem {
     if (this._type === 'check') {
       this.checked = !this.checked;
     }
-    this.triggered.emit(this, void 0);
+    emit(this, MenuItem.triggered, this.checked);
   }
 
   /**
@@ -310,12 +301,6 @@ class MenuItem {
     }
     if (options.className !== void 0) {
       this._className = options.className;
-    }
-    if (options.onTriggered !== void 0) {
-      this.triggered.connect(options.onTriggered);
-    }
-    if (options.onToggled !== void 0) {
-      this.toggled.connect(options.onToggled);
     }
   }
 

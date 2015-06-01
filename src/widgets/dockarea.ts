@@ -9,6 +9,8 @@ module phosphor.widgets {
 
 import algo = collections.algorithm;
 
+import connect = core.connect;
+
 import IDisposable = utility.IDisposable;
 import Pair = utility.Pair;
 import hitTest = utility.hitTest;
@@ -560,14 +562,15 @@ class DockArea extends Widget {
    */
   private _createPanel(): DockPanel {
     var panel = new DockPanel();
-    var tabBar = panel.tabBar;
-    tabBar.tabWidth = this._tabWidth;
-    tabBar.tabOverlap = this._tabOverlap;
-    tabBar.minTabWidth = this._minTabWidth;
-    tabBar.currentChanged.connect(this._tb_currentChanged, this);
-    tabBar.tabCloseRequested.connect(this._tb_tabCloseRequested, this);
-    tabBar.tabDetachRequested.connect(this._tb_tabDetachRequested, this);
-    panel.stackedPanel.widgetRemoved.connect(this._sw_widgetRemoved, this);
+    var bar = panel.tabBar;
+    var stack = panel.stackedPanel;
+    bar.tabWidth = this._tabWidth;
+    bar.tabOverlap = this._tabOverlap;
+    bar.minTabWidth = this._minTabWidth;
+    connect(bar, TabBar.currentChanged, this, this._p_currentChanged);
+    connect(bar, TabBar.tabCloseRequested, this, this._p_tabCloseRequested);
+    connect(bar, TabBar.tabDetachRequested, this, this._p_tabDetachRequested);
+    connect(stack, StackedPanel.widgetRemoved, this, this._p_widgetRemoved);
     return panel;
   }
 
@@ -693,7 +696,7 @@ class DockArea extends Widget {
   /**
    * Handle the `currentChanged` signal from a tab bar.
    */
-  private _tb_currentChanged(sender: TabBar, args: Pair<number, Tab>): void {
+  private _p_currentChanged(sender: TabBar, args: Pair<number, Tab>): void {
     var item = algo.find(this._items, it => it.widget.tab === args.second);
     if (item && item.panel.tabBar === sender) {
       item.panel.stackedPanel.currentWidget = item.widget;
@@ -703,7 +706,7 @@ class DockArea extends Widget {
   /**
    * Handle the `tabCloseRequested` signal from a tab bar.
    */
-  private _tb_tabCloseRequested(sender: TabBar, args: Pair<number, Tab>): void {
+  private _p_tabCloseRequested(sender: TabBar, args: Pair<number, Tab>): void {
     var item = algo.find(this._items, it => it.widget.tab === args.second);
     if (item) item.widget.close();
   }
@@ -711,7 +714,7 @@ class DockArea extends Widget {
   /**
    * Handle the `tabDetachRequested` signal from the tab bar.
    */
-  private _tb_tabDetachRequested(sender: TabBar, args: ITabDetachArgs): void {
+  private _p_tabDetachRequested(sender: TabBar, args: ITabDetachArgs): void {
     // Find the dock item for the detach operation.
     var tab = args.tab;
     var item = algo.find(this._items, it => it.widget.tab === tab);
@@ -783,7 +786,7 @@ class DockArea extends Widget {
   /**
    * Handle the `widgetRemoved` signal from a stack widget.
    */
-  private _sw_widgetRemoved(sender: StackedPanel, args: Pair<number, Widget>): void {
+  private _p_widgetRemoved(sender: StackedPanel, args: Pair<number, Widget>): void {
     if (this._ignoreRemoved) {
       return;
     }
