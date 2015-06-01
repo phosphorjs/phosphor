@@ -56,7 +56,7 @@ class Signal<T, U> {
  *
  * #### Example
  * ```typescript
- * connect(someObject, SomeClass.valueChanged, this, this.onValueChanged);
+ * connect(someObject, SomeClass.valueChanged, myObject, myObject.onValueChanged);
  * ```
  */
 export
@@ -134,7 +134,7 @@ function connect<T, U>(sender: T, signal: Signal<T, U>, receiver: any, method: (
  * #### Example
  * ```typescript
  * // disconnect a specific signal from a specific handler
- * disconnect(someObject, SomeClass.valueChanged, this, this.onValueChanged);
+ * disconnect(someObject, SomeClass.valueChanged, myObject, myObject.onValueChanged);
  *
  * // disconnect all receivers from a specific sender
  * disconnect(someObject, null, null, null);
@@ -143,10 +143,10 @@ function connect<T, U>(sender: T, signal: Signal<T, U>, receiver: any, method: (
  * disconnect(someObject, SomeClass.valueChanged, null, null);
  *
  * // disconnect a specific receiver from all senders
- * disconnect(null, null, this, null);
+ * disconnect(null, null, myObject, null);
  *
  * // disconnect a specific handler from all senders
- * disconnect(null, null, this, this.onChange);
+ * disconnect(null, null, myObject, myObject.onValueChanged);
  * ```
  */
 export
@@ -163,9 +163,8 @@ function disconnect<T, U>(sender: T, signal: Signal<T, U>, receiver: any, method
     var conn = list.first;
     while (conn !== null) {
       if (isMatch(conn, sender, signal, receiver, method)) {
-        removeFromSendersList(conn);
-        conn.receiver = null;
         list.dirty = true;
+        removeFromSendersList(conn);
       }
       conn = conn.nextReceiver;
     }
@@ -182,12 +181,10 @@ function disconnect<T, U>(sender: T, signal: Signal<T, U>, receiver: any, method
       return;
     }
     while (conn !== null) {
-      var next = conn.nextSender;
+      var next = conn.nextSender; // store before removing conn
       if (isMatch(conn, sender, signal, receiver, method)) {
-        var list = senderMap.get(conn.sender);
+        senderMap.get(conn.sender).dirty = true;
         removeFromSendersList(conn);
-        conn.receiver = null;
-        list.dirty = true;
       }
       conn = next;
     }
@@ -202,7 +199,7 @@ function disconnect<T, U>(sender: T, signal: Signal<T, U>, receiver: any, method
 
 
 /**
- * Emit the signal of a sender and invoke its connected receivers.
+ * Emit the signal of a sender and invoke the connected receivers.
  *
  * @param sender - The object which is emitting the signal. This will
  *   be passed as the first argument to all connected receivers. This
@@ -360,15 +357,11 @@ function isMatch(conn: Connection, sender: any, signal: Signal<any, any>, receiv
 
 
 /**
- * Remove a connection from the doubly linked list of senders.
- *
- * The `receiver` property of the connection must not be null.
+ * Remove a live connection from the doubly linked list of senders.
  */
 function removeFromSendersList(conn: Connection): void {
   var prev = conn.prevSender;
   var next = conn.nextSender;
-  conn.prevSender = null;
-  conn.nextSender = null;
   if (prev === null) {
     if (next === null) {
       receiverMap.delete(conn.receiver);
@@ -382,6 +375,10 @@ function removeFromSendersList(conn: Connection): void {
     prev.nextSender = next;
     next.prevSender = prev;
   }
+  conn.sender = null;
+  conn.receiver = null;
+  conn.prevSender = null;
+  conn.nextSender = null;
 }
 
 
