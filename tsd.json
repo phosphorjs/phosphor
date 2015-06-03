@@ -10,6 +10,12 @@
     },
     "es6-promise/es6-promise.d.ts": {
       "commit": "95d860879fb90c405aeb13eea7b8564f9c0df2bf"
+    },
+    "mocha/mocha.d.ts": {
+      "commit": "c50b111ded0a3a18b87b5abffea3150d6aca94da"
+    },
+    "expect.js/expect.js.d.ts": {
+      "commit": "c50b111ded0a3a18b87b5abffea3150d6aca94da"
     }
   }
 }

@@ -20,7 +20,18 @@ var typescript = require('gulp-typescript');
 var uglify = require('gulp-uglify');
 
 
-var typings = ['./typings/tsd.d.ts'];
+var buildTypings = [
+  './typings/es6-promise/es6-promise.d.ts'
+];
+
+var examplesTypings = buildTypings.concat([
+  './typings/codemirror/codemirror.d.ts'
+]);
+
+var testsTypings = buildTypings.concat([
+  './typings/expect.js/expect.js.d.ts',
+  './typings/mocha/mocha.d.ts'
+]);
 
 
 var tsSources = [
@@ -120,7 +131,7 @@ gulp.task('src', function() {
     target: 'ES5',
   });
 
-  var src = gulp.src(typings.concat(tsSources))
+  var src = gulp.src(buildTypings.concat(tsSources))
     .pipe(typescript(project));
 
   var dts = src.dts.pipe(concat('phosphor.d.ts'))
@@ -165,7 +176,7 @@ gulp.task('examples', function() {
     target: 'ES5',
   });
 
-  var sources = typings.concat([
+  var sources = examplesTypings.concat([
     'dist/phosphor.d.ts',
     'examples/**/*.ts'
   ]);
@@ -193,7 +204,7 @@ gulp.task('docs', function() {
   // example using the [[find]] tag inside the `algorithm` module
   // will resolve to `CodeMirror#find` instead of the `find` function
   // defined in `algorithm`.
-  return gulp.src(tsSources.concat(typings))
+  return gulp.src(buildTypings.concat(tsSources))
     .pipe(typedoc({
       out: './build/docs',
       name: 'Phosphor',
