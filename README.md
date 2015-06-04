@@ -44,8 +44,8 @@ gulp examples
 Navigate to `index.html` of the example of interest.
 
 
-Run the Tests
--------------
+Run Tests
+---------
 
 Follow the source build instructions first.
 
