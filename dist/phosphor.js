@@ -2509,6 +2509,8 @@ var phosphor;
          *   emitted. The sender is passed as the first argument followed by
          *   the args object emitted with the signal.
          *
+         * @returns `true` if the connection succeeds, `false` otherwise.
+         *
          * #### Notes
          * Receiver methods are invoked synchronously, in the order in which
          * they are connected.
@@ -2528,7 +2530,7 @@ var phosphor;
             // All arguments must be provided; warn if they are not.
             if (!sender || !signal || !receiver || !method) {
                 console.warn('null argument passed to `connect()`');
-                return;
+                return false;
             }
             // Get the connection list for the sender or create one if necessary.
             var list = senderMap.get(sender);
@@ -2540,7 +2542,7 @@ var phosphor;
             var conn = list.first;
             while (conn !== null) {
                 if (isMatch(conn, sender, signal, receiver, method)) {
-                    return;
+                    return false;
                 }
                 conn = conn.nextReceiver;
             }
@@ -2566,6 +2568,7 @@ var phosphor;
                 conn.nextSender = head;
             }
             receiverMap.set(receiver, conn);
+            return true;
         }
         core.connect = connect;
         /**
@@ -2578,6 +2581,8 @@ var phosphor;
          * @param receiver - The object connected to the signal.
          *
          * @param method - The receiver method connected to the signal.
+         *
+         * @returns `true` if the connection is broken, `false` otherwise.
          *
          * #### Notes
          * Any argument to this function may be null, and it will be treated
@@ -2616,17 +2621,19 @@ var phosphor;
             if (sender) {
                 var list = senderMap.get(sender);
                 if (list === void 0) {
-                    return;
+                    return false;
                 }
+                var success = false;
                 var conn = list.first;
                 while (conn !== null) {
                     if (isMatch(conn, sender, signal, receiver, method)) {
                         list.dirty = true;
                         removeFromSendersList(conn);
+                        success = true;
                     }
                     conn = conn.nextReceiver;
                 }
-                return;
+                return success;
             }
             // If only the receiver is provided, the list of connected senders
             // is walked and any matching connection is removed *from the list
@@ -2635,22 +2642,25 @@ var phosphor;
             if (receiver) {
                 var conn = receiverMap.get(receiver);
                 if (conn === void 0) {
-                    return;
+                    return false;
                 }
+                var success = false;
                 while (conn !== null) {
                     var next = conn.nextSender; // store before removing conn
                     if (isMatch(conn, sender, signal, receiver, method)) {
                         senderMap.get(conn.sender).dirty = true;
                         removeFromSendersList(conn);
+                        success = true;
                     }
                     conn = next;
                 }
-                return;
+                return success;
             }
             // If the sender and receiver are both null, finding all matching
             // connections would require a full scan of all connection lists.
             // That would be expensive and is explicitly not supported.
             console.warn('null sender and receiver passed to `disconnect()`');
+            return false;
         }
         core.disconnect = disconnect;
         /**
@@ -13551,8 +13561,9 @@ var phosphor;
                     this._updateTabZOrder();
                 }
                 // If the tab bar is not attached, remove the node immediately.
+                var content = this.contentNode;
                 if (!this.isAttached) {
-                    this._removeContentChild(tab.node);
+                    safeRemove(content, tab.node);
                     return tab;
                 }
                 // Animate the tab remove as appropriate.
@@ -13562,27 +13573,16 @@ var phosphor;
                         _this.update(true);
                     }, function () {
                         tab.removeClass(REMOVING_CLASS);
-                        _this._removeContentChild(tab.node);
+                        safeRemove(content, tab.node);
                     });
                 }
                 else {
-                    this._removeContentChild(tab.node);
+                    safeRemove(content, tab.node);
                     this._withTransition(function () { return _this.update(true); });
                 }
                 // Notify the layout system that the widget geometry is dirty.
                 this.updateGeometry();
                 return tab;
-            };
-            /**
-             * Remove a child node of the tab bar content node.
-             *
-             * This is a no-op if the node is not a child of the content node.
-             */
-            TabBar.prototype._removeContentChild = function (node) {
-                var content = this.contentNode;
-                if (content === node.parentNode) {
-                    content.removeChild(node);
-                }
             };
             /**
              * Get the index of the tab which covers the given client position.
@@ -13648,14 +13648,14 @@ var phosphor;
              */
             TabBar.prototype._withTransition = function (onEnter, onExit) {
                 var _this = this;
-                var node = this.contentNode;
-                node.classList.add(TRANSITION_CLASS);
+                var content = this.contentNode;
+                content.classList.add(TRANSITION_CLASS);
                 if (onEnter) {
                     onEnter();
                 }
                 setTimeout(function () {
                     if (!_this._dragData || !_this._dragData.dragActive) {
-                        node.classList.remove(TRANSITION_CLASS);
+                        content.classList.remove(TRANSITION_CLASS);
                     }
                     if (onExit) {
                         onExit();
@@ -13715,6 +13715,17 @@ var phosphor;
                 return false;
             }
             return true;
+        }
+        /**
+         * Safely remove a child node from its parent.
+         *
+         * This is a no-op if either node is null or if the given parent
+         * node does not match the child node true parent.
+         */
+        function safeRemove(parent, child) {
+            if (parent && child && child.parentNode === parent) {
+                parent.removeChild(child);
+            }
         }
     })(widgets = phosphor.widgets || (phosphor.widgets = {}));
 })(phosphor || (phosphor = {})); // module phosphor.widgets

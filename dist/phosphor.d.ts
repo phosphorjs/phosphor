@@ -1326,6 +1326,8 @@ declare module phosphor.core {
      *   emitted. The sender is passed as the first argument followed by
      *   the args object emitted with the signal.
      *
+     * @returns `true` if the connection succeeds, `false` otherwise.
+     *
      * #### Notes
      * Receiver methods are invoked synchronously, in the order in which
      * they are connected.
@@ -1341,7 +1343,7 @@ declare module phosphor.core {
      * connect(someObject, SomeClass.valueChanged, myObject, myObject.onValueChanged);
      * ```
      */
-    function connect<T, U>(sender: T, signal: Signal<T, U>, receiver: any, method: (sender: T, args: U) => void): void;
+    function connect<T, U>(sender: T, signal: Signal<T, U>, receiver: any, method: (sender: T, args: U) => void): boolean;
     /**
      * Disconnect the signal of a sender from the method of a receiver.
      *
@@ -1352,6 +1354,8 @@ declare module phosphor.core {
      * @param receiver - The object connected to the signal.
      *
      * @param method - The receiver method connected to the signal.
+     *
+     * @returns `true` if the connection is broken, `false` otherwise.
      *
      * #### Notes
      * Any argument to this function may be null, and it will be treated
@@ -1382,7 +1386,7 @@ declare module phosphor.core {
      * disconnect(null, null, myObject, myObject.onValueChanged);
      * ```
      */
-    function disconnect<T, U>(sender: T, signal: Signal<T, U>, receiver: any, method: (sender: T, args: U) => void): void;
+    function disconnect<T, U>(sender: T, signal: Signal<T, U>, receiver: any, method: (sender: T, args: U) => void): boolean;
     /**
      * Emit the signal of a sender and invoke the connected receivers.
      *
@@ -5734,12 +5738,6 @@ declare module phosphor.widgets {
          * Returns `undefined` if the index is invalid.
          */
         private _removeTab(index, animate);
-        /**
-         * Remove a child node of the tab bar content node.
-         *
-         * This is a no-op if the node is not a child of the content node.
-         */
-        private _removeContentChild(node);
         /**
          * Get the index of the tab which covers the given client position.
          *
