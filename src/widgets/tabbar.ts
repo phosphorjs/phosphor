@@ -926,8 +926,9 @@ class TabBar extends Widget {
     }
 
     // If the tab bar is not attached, remove the node immediately.
+    var content = this.contentNode;
     if (!this.isAttached) {
-      this._removeContentChild(tab.node);
+      safeRemove(content, tab.node);
       return tab;
     }
 
@@ -938,10 +939,10 @@ class TabBar extends Widget {
         this.update(true);
       }, () => {
         tab.removeClass(REMOVING_CLASS);
-        this._removeContentChild(tab.node);
+        safeRemove(content, tab.node);
       });
     } else {
-      this._removeContentChild(tab.node);
+      safeRemove(content, tab.node);
       this._withTransition(() => this.update(true));
     }
 
@@ -949,18 +950,6 @@ class TabBar extends Widget {
     this.updateGeometry();
 
     return tab;
-  }
-
-  /**
-   * Remove a child node of the tab bar content node.
-   *
-   * This is a no-op if the node is not a child of the content node.
-   */
-  private _removeContentChild(node: HTMLElement): void {
-    var content = this.contentNode;
-    if (content === node.parentNode) {
-      content.removeChild(node);
-    }
   }
 
   /**
@@ -1028,14 +1017,14 @@ class TabBar extends Widget {
    * will not be removed from the on exit.
    */
   private _withTransition(onEnter?: () => void, onExit?: () => void): void {
-    var node = this.contentNode;
-    node.classList.add(TRANSITION_CLASS);
+    var content = this.contentNode;
+    content.classList.add(TRANSITION_CLASS);
     if (onEnter) {
       onEnter();
     }
     setTimeout(() => {
       if (!this._dragData || !this._dragData.dragActive) {
-        node.classList.remove(TRANSITION_CLASS);
+        content.classList.remove(TRANSITION_CLASS);
       }
       if (onExit) {
         onExit();
@@ -1135,6 +1124,19 @@ function inBounds(r: ClientRect, v: number, x: number, y: number) {
     return false;
   }
   return true;
+}
+
+
+/**
+ * Safely remove a child node from its parent.
+ *
+ * This is a no-op if either node is null or if the given parent
+ * node does not match the child node true parent.
+ */
+function safeRemove(parent: Node, child: Node): void {
+  if (parent && child && child.parentNode === parent) {
+    parent.removeChild(child);
+  }
 }
 
 } // module phosphor.widgets
