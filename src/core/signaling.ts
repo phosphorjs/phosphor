@@ -44,6 +44,8 @@ class Signal<T, U> {
  *   emitted. The sender is passed as the first argument followed by
  *   the args object emitted with the signal.
  *
+ * @returns `true` if the connection succeeds, `false` otherwise.
+ *
  * #### Notes
  * Receiver methods are invoked synchronously, in the order in which
  * they are connected.
@@ -60,11 +62,11 @@ class Signal<T, U> {
  * ```
  */
 export
-function connect<T, U>(sender: T, signal: Signal<T, U>, receiver: any, method: (sender: T, args: U) => void): void {
+function connect<T, U>(sender: T, signal: Signal<T, U>, receiver: any, method: (sender: T, args: U) => void): boolean {
   // All arguments must be provided; warn if they are not.
   if (!sender || !signal || !receiver || !method) {
     console.warn('null argument passed to `connect()`');
-    return;
+    return false;
   }
 
   // Get the connection list for the sender or create one if necessary.
@@ -78,7 +80,7 @@ function connect<T, U>(sender: T, signal: Signal<T, U>, receiver: any, method: (
   var conn = list.first;
   while (conn !== null) {
     if (isMatch(conn, sender, signal, receiver, method)) {
-      return;
+      return false;
     }
     conn = conn.nextReceiver;
   }
@@ -106,6 +108,8 @@ function connect<T, U>(sender: T, signal: Signal<T, U>, receiver: any, method: (
     conn.nextSender = head;
   }
   receiverMap.set(receiver, conn);
+
+  return true;
 }
 
 
@@ -119,6 +123,8 @@ function connect<T, U>(sender: T, signal: Signal<T, U>, receiver: any, method: (
  * @param receiver - The object connected to the signal.
  *
  * @param method - The receiver method connected to the signal.
+ *
+ * @returns `true` if the connection is broken, `false` otherwise.
  *
  * #### Notes
  * Any argument to this function may be null, and it will be treated
@@ -150,7 +156,7 @@ function connect<T, U>(sender: T, signal: Signal<T, U>, receiver: any, method: (
  * ```
  */
 export
-function disconnect<T, U>(sender: T, signal: Signal<T, U>, receiver: any, method: (sender: T, args: U) => void): void {
+function disconnect<T, U>(sender: T, signal: Signal<T, U>, receiver: any, method: (sender: T, args: U) => void): boolean {
   // If a sender is provided, the list of connected receivers is walked
   // and any matching connection is removed from *the list of senders*.
   // The receivers list is marked dirty and will be cleaned at the end
@@ -158,17 +164,19 @@ function disconnect<T, U>(sender: T, signal: Signal<T, U>, receiver: any, method
   if (sender) {
     var list = senderMap.get(sender);
     if (list === void 0) {
-      return;
+      return false;
     }
+    var success = false;
     var conn = list.first;
     while (conn !== null) {
       if (isMatch(conn, sender, signal, receiver, method)) {
         list.dirty = true;
         removeFromSendersList(conn);
+        success = true;
       }
       conn = conn.nextReceiver;
     }
-    return;
+    return success;
   }
 
   // If only the receiver is provided, the list of connected senders
@@ -178,23 +186,26 @@ function disconnect<T, U>(sender: T, signal: Signal<T, U>, receiver: any, method
   if (receiver) {
     var conn = receiverMap.get(receiver);
     if (conn === void 0) {
-      return;
+      return false;
     }
+    var success = false;
     while (conn !== null) {
       var next = conn.nextSender; // store before removing conn
       if (isMatch(conn, sender, signal, receiver, method)) {
         senderMap.get(conn.sender).dirty = true;
         removeFromSendersList(conn);
+        success = true;
       }
       conn = next;
     }
-    return;
+    return success;
   }
 
   // If the sender and receiver are both null, finding all matching
   // connections would require a full scan of all connection lists.
   // That would be expensive and is explicitly not supported.
   console.warn('null sender and receiver passed to `disconnect()`');
+  return false;
 }
 
 
