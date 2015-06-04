@@ -214,4 +214,24 @@ gulp.task('docs', function() {
 });
 
 
+gulp.task('tests', function() {
+  var project = typescript.createProject({
+    declarationFiles: false,
+    noImplicitAny: true,
+    target: 'ES5',
+  });
+
+  var sources = testsTypings.concat([
+    'dist/phosphor.d.ts',
+    'tests/**/*.ts'
+  ]);
+
+  return gulp.src(sources)
+    .pipe(typescript(project))
+    .pipe(concat('index.js'))
+    .pipe(header('"use strict";\n'))
+    .pipe(gulp.dest('tests/'));
+});
+
+
 gulp.task('default', ['dist']);
