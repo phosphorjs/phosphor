@@ -230,7 +230,7 @@ gulp.task('tests', function() {
     .pipe(typescript(project))
     .pipe(concat('index.js'))
     .pipe(header('"use strict";\n'))
-    .pipe(gulp.dest('tests/'));
+    .pipe(gulp.dest('tests/build'));
 });
 
 
