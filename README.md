@@ -44,6 +44,18 @@ gulp examples
 Navigate to `index.html` of the example of interest.
 
 
+Run the Tests
+-------------
+
+Follow the source build instructions first.
+
+```bash
+gulp tests
+```
+
+Navigate to `tests/index.html` to run the tests.
+
+
 Supported Browsers
 ------------------
 The browser versions which are currently *known to work* are listed below.
