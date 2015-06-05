@@ -381,7 +381,7 @@ function findLast<T>(array: T[], pred: IPredicate<T>, fromIndex?: number, wrap?:
 
 /**
  * Using a binary search, find the index of the first element in an
- * array which compares `<=` to a value.
+ * array which compares `>=` to a value.
  *
  * @param array - The array of values to be searched. It must be sorted
  *   in ascending order.
@@ -391,7 +391,7 @@ function findLast<T>(array: T[], pred: IPredicate<T>, fromIndex?: number, wrap?:
  * @param cmp - The comparator function to apply to the values.
  *
  * @returns The index of the first element in `array` which compares
- *   `<=` to `value`, or `array.length` if there is no such element.
+ *   `>=` to `value`, or `array.length` if there is no such element.
  *
  * #### Example
  * ```typescript
