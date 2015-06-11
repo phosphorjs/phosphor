@@ -20,23 +20,23 @@ module phosphor.utility {
 export
 class SectionList {
   /**
-   * Get the total size of all sections in the list.
-   *
-   * #### Notes
-   * This operation has `O(1)` complexity.
-   */
-  get size(): number {
-    return this._root.size;
-  }
-
-  /**
    * Get the total number of sections in the list.
    *
    * #### Notes
    * This operation has `O(1)` complexity.
    */
   get count(): number {
-    return this._root.count;
+    return this._root !== null ? this._root.count : 0;
+  }
+
+  /**
+   * Get the total size of all sections in the list.
+   *
+   * #### Notes
+   * This operation has `O(1)` complexity.
+   */
+  get size(): number {
+    return this._root !== null ? this._root.size : 0;
   }
 
   /**
@@ -61,14 +61,18 @@ class SectionList {
     if (count <= 0) {
       return;
     }
+    size = Math.max(0, size);
+    if (this._root === null) {
+      this._root = makeLeaf(count, size);
+      return;
+    }
     index = Math.floor(index);
     if (index < 0) {
       index = Math.max(0, index + this._root.count);
     } else {
       index = Math.min(index, this._root.count);
     }
-    size = Math.max(0, size);
-    // TODO do the insert
+    this._root = insert(this._root, index, count, size);
   }
 
   /**
@@ -87,17 +91,17 @@ class SectionList {
    * This operation has `O(log(n))` complexity.
    */
   remove(index: number, count: number): void {
-    count = Math.floor(count);
-    if (count <= 0) {
-      return;
-    }
-    index = Math.floor(index);
-    if (index < 0) {
-      index = Math.max(0, index + this._root.count);
-    }
-    if (index >= this._root.count) {
-      return;
-    }
+    // count = Math.floor(count);
+    // if (count <= 0) {
+    //   return;
+    // }
+    // index = Math.floor(index);
+    // if (index < 0) {
+    //   index = Math.max(0, index + this._root.count);
+    // }
+    // if (index >= this._root.count) {
+    //   return;
+    // }
     // TODO do the remove
   }
 
@@ -113,24 +117,13 @@ class SectionList {
    * This operation has `O(log(n))` complexity.
    */
   indexAt(offset: number): number {
-    var span = this._root;
-    if (offset < 0 || offset >= span.size) {
+    if (this._root === null) {
       return -1;
     }
-    var index = 0;
-    outer: while (span.children !== null) {
-      var children = span.children;
-      for (var i = 0, n = children.length; i < n; ++i) {
-        span = children[i];
-        if (offset < span.size) {
-          continue outer;
-        }
-        index += span.count;
-        offset -= span.size;
-      }
-      return -1; // should never be reached
+    if (offset < 0 || offset >= this._root.size) {
+      return -1;
     }
-    return index + Math.floor(offset * span.count / span.size);
+    return indexAt(this._root, offset);
   }
 
   /**
@@ -146,28 +139,17 @@ class SectionList {
    * This operation has `O(log(n))` complexity.
    */
   offsetOf(index: number): number {
-    index = Math.floor(index);
-    var span = this._root;
-    if (index < 0) {
-      index += span.count;
-    }
-    if (index < 0 || index >= span.count) {
+    if (this._root === null) {
       return -1;
     }
-    var offset = 0;
-    outer: while (span.children !== null) {
-      var children = span.children;
-      for (var i = 0, n = children.length; i < n; ++i) {
-        span = children[i];
-        if (index < span.count) {
-          continue outer;
-        }
-        index -= span.count;
-        offset += span.size;
-      }
-      return -1; // should never be reached
+    index = Math.floor(index);
+    if (index < 0) {
+      index += this._root.count;
     }
-    return offset + index * span.size / span.count;
+    if (index < 0 || index >= this._root.count) {
+      return -1;
+    }
+    return offsetOf(this._root, index);
   }
 
   /**
@@ -183,36 +165,35 @@ class SectionList {
    * This operation has `O(log(n))` complexity.
    */
   sizeOf(index: number): number {
-    index = Math.floor(index);
-    var span = this._root;
-    if (index < 0) {
-      index += span.count;
-    }
-    if (index < 0 || index >= span.count) {
+    if (this._root === null) {
       return -1;
     }
-    outer: while (span.children !== null) {
-      var children = span.children;
-      for (var i = 0, n = children.length; i < n; ++i) {
-        span = children[i];
-        if (index < span.count) {
-          continue outer;
-        }
-        index -= span.count;
-      }
-      return -1; // should never be reached
+    index = Math.floor(index);
+    if (index < 0) {
+      index += this._root.count;
     }
-    return span.size / span.count;
+    if (index < 0 || index >= this._root.count) {
+      return -1;
+    }
+    return sizeOf(this._root, index);
   }
 
-  private _root = new Span();
+  private _root: ISpan = null;
 }
 
 
 /**
- * The node type used in the SectionList b-tree.
+ * The node type used in the SectionList AVL tree.
  */
-class Span {
+interface ISpan {
+  /**
+   * The total number of sections contained by the subtree.
+   *
+   * If the span is a leaf, this is the number of equal sized
+   * sections covered by the span. This is always `> 0`.
+   */
+  count: number;
+
   /**
    * The total size of all sections contained by the subtree.
    *
@@ -220,25 +201,197 @@ class Span {
    * sections covered by the span and the individual section size can
    * be computed via `size / count`.
    */
-  size = 0;
+  size: number;
 
   /**
-   * The total number of sections contained by the subtree.
+   * The level of the span in the tree.
    *
-   * If the span is a leaf, this is the number of equal sized
-   * sections covered by the span.
-   *
-   * This must only be `0` for the root span of an empty list.
+   * A `0` level indicates the span is a leaf. This is always `>= 0`.
    */
-  count = 0;
+  level: number;
 
   /**
-   * The child spans of this span.
+   * The left subtree of the span.
    *
-   * If this is `null`, the span is a leaf. Except for the root span,
-   * this array must be null or be filled from 50 - 100% capacity.
+   * This will be null IFF the span is a leaf.
    */
-  children: Span[] = null;
+  left: ISpan;
+
+  /**
+   * The right subtree of the span.
+   *
+   * This will be null IFF the span is a leaf.
+   */
+  right: ISpan;
+}
+
+
+/**
+ *
+ */
+function makeLeaf(count: number, size: number): ISpan {
+  return {
+    count: count,
+    size: count * size,
+    level: 0,
+    left: null,
+    right: null,
+  };
+}
+
+
+/**
+ *
+ */
+function makeBranch(left: ISpan, right: ISpan): ISpan {
+  return {
+    count: left.count + right.count,
+    size: left.size + right.size,
+    level: Math.max(left.level, right.level) + 1,
+    left: left,
+    right: right,
+  };
+}
+
+
+/**
+ *
+ */
+function setBranch(span: ISpan, left: ISpan, right: ISpan): ISpan {
+  span.count = left.count + right.count;
+  span.size = left.size + right.size;
+  span.level = Math.max(left.level, right.level) + 1;
+  span.left = left;
+  span.right = right;
+  return span;
+}
+
+
+/**
+ *
+ */
+function insert(span: ISpan, index: number, count: number, size: number): ISpan {
+  if (span.level === 0) {
+    if (size === span.size / span.count) {
+      span.count += count;
+      return span;
+    }
+    if (index === 0) {
+      var left = makeLeaf(count, size);
+      return makeBranch(left, span);
+    }
+    if (index >= span.count) {
+      var right = makeLeaf(count, size);
+      return makeBranch(span, right);
+    }
+    var rest = span.count - index;
+    var each = span.size / span.count;
+    var subLeft = makeLeaf(count, size);
+    var subRight = makeLeaf(rest, each);
+    var left = makeLeaf(index, each);
+    var right = makeBranch(subLeft, subRight);
+    return setBranch(span, left, right);
+  }
+  var left = span.left;
+  if (index < left.count) {
+    span.left = insert(left, index, count, size);
+  } else {
+    span.right = insert(right, index - left.count, count, size);
+  }
+  return rebalance(span);
+}
+
+
+/**
+ *
+ */
+function rebalance(span: ISpan): ISpan {
+  var left = span.left;
+  var right = span.right;
+  var d = left.level - right.level;
+  if (d > 1) {
+    var subLeft = left.left;
+    var subRight = left.right;
+    if (subLeft.level > subRight.level) {
+      span.left = subLeft;
+      span.right = setBranch(left, subRight, right);
+    } else {
+      span.left = setBranch(left, subLeft, subRight.left);
+      span.right = setBranch(subRight, subRight.right, right);
+    }
+  } else if (d < -1) {
+    var subLeft = right.left;
+    var subRight = right.right;
+    if (subLeft.level < subRight.level) {
+      span.left = setBranch(right, left, subLeft);
+      span.right = subRight;
+    } else {
+      span.left = setBranch(subLeft, left, subLeft.left);
+      span.right = setBranch(right, subLeft.right, subRight);
+    }
+  }
+  return setBranch(span, span.left, span.right);
+}
+
+
+/**
+ * Find the index of the section which covers the given offset.
+ *
+ * The offset must be within range of the given span.
+ */
+function indexAt(span: ISpan, offset: number): number {
+  var index = 0;
+  while (span.level !== 0) {
+    var left = span.left;
+    if (offset < left.size) {
+      span = left;
+    } else {
+      span = span.right;
+      index += left.count;
+      offset -= left.size;
+    }
+  }
+  return index + Math.floor(offset * span.count / span.size);
+}
+
+
+/**
+ * Find the offset of the section at the given index.
+ *
+ * The index must be an integer and with range of the given span.
+ */
+function offsetOf(span: ISpan, index: number): number {
+  var offset = 0;
+  while (span.level !== 0) {
+    var left = span.left;
+    if (index < left.count) {
+      span = left;
+    } else {
+      span = span.right;
+      index -= left.count;
+      offset += left.size;
+    }
+  }
+  return offset + index * span.size / span.count;
+}
+
+
+/**
+ * Find the size of the section at the given index.
+ *
+ * The index must be an integer and with range of the given span.
+ */
+function sizeOf(span: ISpan, index: number): number {
+  while (span.level !== 0) {
+    var left = span.left;
+    if (index < left.count) {
+      span = left;
+    } else {
+      span = span.right;
+      index -= left.count;
+    }
+  }
+  return span.size / span.count;
 }
 
 } // module phosphor.utility
