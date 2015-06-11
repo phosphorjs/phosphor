@@ -48,6 +48,7 @@ var tsSources = [
   'utility/pair',
   'utility/point',
   'utility/rect',
+  'utility/sectionlist',
   'utility/size',
   'utility/viewport',
 
