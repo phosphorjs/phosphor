@@ -2,4 +2,4 @@
 set -ex
 gulp
 gulp tests
-./node_modules/.bin/karma start --single-run --browsers Firefox
+./node_modules/.bin/karma start
