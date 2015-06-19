@@ -11,6 +11,7 @@ cache:
   directories:
     - $HOME/typings
 before_install:
+  - ls $HOME/typings; true
   - chmod +x ./scripts/travis_install.sh
   - chmod +x ./scripts/travis_script.sh
   - chmod +x ./scripts/travis_after_success.sh
