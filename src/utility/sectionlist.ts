@@ -12,7 +12,7 @@ module phosphor.utility {
  *
  * A section list is commonly used to manage row heights in virtually
  * scrolling list controls. In such a control, most rows are uniform
- * height while a handful are variable sized.
+ * height while a handful of rows are variable sized.
  *
  * A section list has guaranteed `O(log(n))` worst-case performance for
  * most operations, where `n` is the number of variable sized sections.
@@ -37,72 +37,6 @@ class SectionList {
    */
   get size(): number {
     return this._root !== null ? this._root.size : 0;
-  }
-
-  /**
-   * Insert new sections into the list.
-   *
-   * @param index - The index at which to insert the first section. If
-   *   this value is negative, it is taken as an offset from the end of
-   *   the list. If the resulting value is still negative, it is clamped
-   *   to `0`. The value is also clamped to a maximum of `list.count`.
-   *
-   * @param count - The number of sections to insert. If this value is
-   *   `<= 0`, this method is a no-op.
-   *
-   * @param size - The size of each section. This value is clamped to
-   *   the range `[0, Infinity]`.
-   *
-   * #### Notes
-   * This operation has `O(log(n))` complexity.
-   */
-  insert(index: number, count: number, size: number): void {
-    count = Math.floor(count);
-    if (count <= 0) {
-      return;
-    }
-    size = Math.max(0, size);
-    if (this._root === null) {
-      this._root = makeLeaf(count, size);
-      return;
-    }
-    index = Math.floor(index);
-    if (index < 0) {
-      index = Math.max(0, index + this._root.count);
-    } else {
-      index = Math.min(index, this._root.count);
-    }
-    this._root = insert(this._root, index, count, size);
-  }
-
-  /**
-   * Remove existing sections from the list.
-   *
-   * @param index - The index of the first section to remove. If this
-   *   value is negative, it is taken as an offset from the end of the
-   *   list. If the resulting value is still negative, it is clamped to
-   *   `0`. If this value is `>= list.count`, this method is a no-op.
-   *
-   * @param count - The number of sections to remove. If this value is
-   *   `<= 0`, this method is a no-op. If this value is more than the
-   *   the availble number of sections, the extra count is ignored.
-   *
-   * #### Notes
-   * This operation has `O(log(n))` complexity.
-   */
-  remove(index: number, count: number): void {
-    // count = Math.floor(count);
-    // if (count <= 0) {
-    //   return;
-    // }
-    // index = Math.floor(index);
-    // if (index < 0) {
-    //   index = Math.max(0, index + this._root.count);
-    // }
-    // if (index >= this._root.count) {
-    //   return;
-    // }
-    // TODO do the remove
   }
 
   /**
@@ -178,6 +112,72 @@ class SectionList {
     return sizeOf(this._root, index);
   }
 
+  /**
+   * Insert new sections into the list.
+   *
+   * @param index - The index at which to insert the first section. If
+   *   this value is negative, it is taken as an offset from the end of
+   *   the list. If the resulting value is still negative, it is clamped
+   *   to `0`. The value is also clamped to a maximum of `list.count`.
+   *
+   * @param count - The number of sections to insert. If this value is
+   *   `<= 0`, this method is a no-op.
+   *
+   * @param size - The size of each section. This value is clamped to
+   *   the range `[0, Infinity]`.
+   *
+   * #### Notes
+   * This operation has `O(log(n))` complexity.
+   */
+  insert(index: number, count: number, size: number): void {
+    count = Math.floor(count);
+    if (count <= 0) {
+      return;
+    }
+    size = Math.max(0, size);
+    if (this._root === null) {
+      this._root = createLeaf(count, count * size);
+      return;
+    }
+    index = Math.floor(index);
+    if (index < 0) {
+      index = Math.max(0, index + this._root.count);
+    } else {
+      index = Math.min(index, this._root.count);
+    }
+    this._root = insert(this._root, index, count, size);
+  }
+
+  /**
+   * Remove existing sections from the list.
+   *
+   * @param index - The index of the first section to remove. If this
+   *   value is negative, it is taken as an offset from the end of the
+   *   list. If the resulting value is still negative, it is clamped to
+   *   `0`. If this value is `>= list.count`, this method is a no-op.
+   *
+   * @param count - The number of sections to remove. If this value is
+   *   `<= 0`, this method is a no-op. If this value is more than the
+   *   the availble number of sections, the extra count is ignored.
+   *
+   * #### Notes
+   * This operation has `O(log(n))` complexity.
+   */
+  remove(index: number, count: number): void {
+    count = Math.floor(count);
+    if (count <= 0) {
+      return;
+    }
+    index = Math.floor(index);
+    if (index < 0) {
+      index = Math.max(0, index + this._root.count);
+    }
+    if (index >= this._root.count) {
+      return;
+    }
+    this._root = remove(this._root, index, count);
+  }
+
   private _root: ISpan = null;
 }
 
@@ -227,115 +227,36 @@ interface ISpan {
 
 
 /**
- *
+ * Create a new leaf span with the given count and total size.
  */
-function makeLeaf(count: number, size: number): ISpan {
-  return {
-    count: count,
-    size: count * size,
-    level: 0,
-    left: null,
-    right: null,
-  };
+function createLeaf(count: number, size: number): ISpan {
+  return { count: count, size: size, level: 0, left: null, right: null };
 }
 
 
 /**
- *
+ * Create a new branch span from the given left and right children.
  */
-function makeBranch(left: ISpan, right: ISpan): ISpan {
-  return {
-    count: left.count + right.count,
-    size: left.size + right.size,
-    level: Math.max(left.level, right.level) + 1,
-    left: left,
-    right: right,
-  };
+function createBranch(left: ISpan, right: ISpan): ISpan {
+  var count = left.count + right.count;
+  var size = left.size + right.size;
+  var level = Math.max(left.level, right.level) + 1;
+  return { count: count, size: size, level: level, left: left, right: right };
 }
 
 
 /**
+ * Update a span to be branch with the given left and right children.
  *
+ * This returns the updated span as a convenience.
  */
-function setBranch(span: ISpan, left: ISpan, right: ISpan): ISpan {
+function updateBranch(span: ISpan, left: ISpan, right: ISpan): ISpan {
   span.count = left.count + right.count;
   span.size = left.size + right.size;
   span.level = Math.max(left.level, right.level) + 1;
   span.left = left;
   span.right = right;
   return span;
-}
-
-
-/**
- *
- */
-function insert(span: ISpan, index: number, count: number, size: number): ISpan {
-  if (span.level === 0) {
-    if (size === span.size / span.count) {
-      span.count += count;
-      span.size += count * size;
-      return span;
-    }
-    if (index === 0) {
-      var left = makeLeaf(count, size);
-      return makeBranch(left, span);
-    }
-    if (index >= span.count) {
-      var right = makeLeaf(count, size);
-      return makeBranch(span, right);
-    }
-    var rest = span.count - index;
-    var each = span.size / span.count;
-    var subLeft = makeLeaf(count, size);
-    var subRight = makeLeaf(rest, each);
-    var left = makeLeaf(index, each);
-    var right = makeBranch(subLeft, subRight);
-    return setBranch(span, left, right);
-  }
-  var left = span.left;
-  if (index < left.count) {
-    span.left = insert(left, index, count, size);
-  } else {
-    span.right = insert(span.right, index - left.count, count, size);
-  }
-  return rebalance(span);
-}
-
-
-/**
- *
- */
-function rebalance(span: ISpan): ISpan {
-  var left = span.left;
-  var right = span.right;
-  var d = left.level - right.level;
-  if (d > 1) {
-    var subLeft = left.left;
-    var subRight = left.right;
-    if (subLeft.level > subRight.level) {
-      // left left case
-      span.left = subLeft;
-      span.right = setBranch(left, subRight, right);
-    } else {
-      // left right case
-      span.left = setBranch(left, subLeft, subRight.left);
-      span.right = setBranch(subRight, subRight.right, right);
-    }
-  } else if (d < -1) {
-    var subLeft = right.left;
-    var subRight = right.right;
-    if (subRight.level > subLeft.level) {
-      // right right case
-      span.right = subRight;
-      span.left = setBranch(right, left, subLeft);
-    } else {
-      // right left case
-      span.right = setBranch(right, subLeft.right, subRight);
-      span.left = setBranch(subLeft, left, subLeft.left);
-    }
-  }
-  return setBranch(span, span.left, span.right);
 }
 
 
@@ -363,7 +284,7 @@ function indexAt(span: ISpan, offset: number): number {
 /**
  * Find the offset of the section at the given index.
  *
- * The index must be an integer and with range of the given span.
+ * The index must be an integer and within range of the given span.
  */
 function offsetOf(span: ISpan, index: number): number {
   var offset = 0;
@@ -384,7 +305,7 @@ function offsetOf(span: ISpan, index: number): number {
 /**
  * Find the size of the section at the given index.
  *
- * The index must be an integer and with range of the given span.
+ * The index must be an integer and within range of the given span.
  */
 function sizeOf(span: ISpan, index: number): number {
   while (span.level !== 0) {
@@ -397,6 +318,167 @@ function sizeOf(span: ISpan, index: number): number {
     }
   }
   return span.size / span.count;
+}
+
+
+/**
+ * Insert new sections into the given subtree.
+ *
+ * The index must be an integer within range of the span, and the
+ * count must be an integer greater than zero.
+ *
+ * The return value is the span which should take the place of the
+ * original span in the tree. Due to tree rebalancing, this may or
+ * may not be the same as the original span.
+ */
+function insert(span: ISpan, index: number, count: number, size: number): ISpan {
+  // If the span is a leaf, the insert target has been found. There are
+  // four possibilities for the insert: extend, before, after, and split.
+  if (span.level === 0) {
+    // If the size of each new section is the same as the current size,
+    // the existing span can be extended by simply adding the sections.
+    if (size === span.size / span.count) {
+      span.count += count;
+      span.size += count * size;
+      return span;
+    }
+    // If the index is zero, the new span goes before the current span,
+    // which requires a new branch node to be added to the tree.
+    if (index === 0) {
+      return createBranch(createLeaf(count, count * size), span);
+    }
+    // If the index is greater than the span count, the new span goes
+    // after the current span, and requires a new branch node.
+    if (index >= span.count) {
+      return createBranch(span, createLeaf(count, count * size));
+    }
+    // Otherwise, the current span must be split and the new span
+    // added to the middle of the new branch.
+    var rest = span.count - index;
+    var each = span.size / span.count;
+    var subLeft = createLeaf(count, count * size);
+    var subRight = createLeaf(rest, rest * each);
+    var newLeft = createLeaf(index, index * each);
+    var newRight = createBranch(subLeft, subRight);
+    return updateBranch(span, newLeft, newRight);
+  }
+  // Otherwise, recurse down the appropriate branch.
+  if (index < span.left.count) {
+    span.left = insert(span.left, index, count, size);
+  } else {
+    span.right = insert(span.right, index - span.left.count, count, size);
+  }
+  // Always rebalance the branch after an insert.
+  return rebalance(span);
+}
+
+
+/**
+ * Remove sections from the given subtree.
+ *
+ * The index must be an integer within range of the span, and the
+ * count must be an integer greater than zero.
+ */
+function remove(span: ISpan, index: number, count: number): ISpan {
+  // TODO do the remove
+  return span;
+}
+
+
+/**
+ * Rebalance a span so that it maintains the AVL balance invariant.
+ *
+ * The given span must be a branch. If the span is already balanced,
+ * no rotations will be made. The branch data is always updated to
+ * be current based on the current children.
+ *
+ * This assumes the balance factor for the span will never be outside
+ * the range of [-2, 2], which means that a branch should be rebalanced
+ * after each modification.
+ *
+ * The return value is the span which should take the place of the
+ * original span in the tree, and may or may not be a different span.
+ *
+ * Four unbalanced conditions are possible:
+ *
+ * Left-Left
+ * -------------------------------------
+ *        span                span
+ *        /  \                /  \
+ *       /    \              /    \
+ *      1      D            2      1
+ *     / \          =>     / \    / \
+ *    /   \               A   B  C   D
+ *   2     C
+ *  / \
+ * A   B
+ *
+ * Left-Right
+ * -------------------------------------
+ *     span                span
+ *     /  \                /  \
+ *    /    \              /    \
+ *   1      D            1      2
+ *  / \          =>     / \    / \
+ * A   \               A   B  C   D
+ *      2
+ *     / \
+ *    B   C
+ *
+ * Right-Right
+ * -------------------------------------
+ *   span                     span
+ *   /  \                     /  \
+ *  /    \                   /    \
+ * A      1                 1      2
+ *       / \        =>     / \    / \
+ *      /   \             A   B  C   D
+ *     B     2
+ *          / \
+ *         C   D
+ *
+ * Right-Left
+ * -------------------------------------
+ *   span                   span
+ *   /  \                   /  \
+ *  /    \                 /    \
+ * A      1               2      1
+ *       / \      =>     / \    / \
+ *      /   \           A   B  C   D
+ *     2     D
+ *    / \
+ *   B   C
+ */
+function rebalance(span: ISpan): ISpan {
+  var left = span.left;
+  var right = span.right;
+  var balance = left.level - right.level;
+  if (balance > 1) {
+    var subLeft = left.left;
+    var subRight = left.right;
+    if (subLeft.level > subRight.level) {
+      // Left-Left
+      span.left = subLeft;
+      span.right = updateBranch(left, subRight, right);
+    } else {
+      // Left-Right
+      span.left = updateBranch(left, subLeft, subRight.left);
+      span.right = updateBranch(subRight, subRight.right, right);
+    }
+  } else if (balance < -1) {
+    var subLeft = right.left;
+    var subRight = right.right;
+    if (subRight.level > subLeft.level) {
+      // Right-Right
+      span.right = subRight;
+      span.left = updateBranch(right, left, subLeft);
+    } else {
+      // Right-Left
+      span.right = updateBranch(right, subLeft.right, subRight);
+      span.left = updateBranch(subLeft, left, subLeft.left);
+    }
+  }
+  return updateBranch(span, span.left, span.right);
 }
 
 } // module phosphor.utility
