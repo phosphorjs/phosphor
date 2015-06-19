@@ -1,12 +1,16 @@
 module.exports = function (config) {
+  'use strict';
   config.set({
     // base path, that will be used to resolve files and exclude
-    basePath: 'tests',
+    basePath: '',
 
     frameworks: ['mocha'],
 
     // list of files / patterns to load in the browser
     files: [
+      "node_modules/expect.js/index.js",
+      "dist/phosphor.js",
+      "tests/build/index.js"
     ],
 
     // list of files to exclude
@@ -19,12 +23,7 @@ module.exports = function (config) {
     // use dots reporter, as travis terminal does not support escaping sequences
     // possible values: 'dots', 'progress'
     // CLI --reporters progress
-    reporters: ['progress', 'junit'],
-
-    junitReporter: {
-      // will be resolved to basePath (in the same way as files/exclude patterns)
-      outputFile: 'test-results.xml'
-    },
+    reporters: ['progress'],
 
     // web server port
     // CLI --port 9876
@@ -61,8 +60,5 @@ module.exports = function (config) {
     // report which specs are slower than 500ms
     // CLI --report-slower-than 500
     reportSlowerThan: 500,
-
-    plugins: [
-    ]
   })
 }
