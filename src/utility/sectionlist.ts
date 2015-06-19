@@ -274,6 +274,7 @@ function insert(span: ISpan, index: number, count: number, size: number): ISpan 
   if (span.level === 0) {
     if (size === span.size / span.count) {
       span.count += count;
+      span.size += count * size;
       return span;
     }
     if (index === 0) {
