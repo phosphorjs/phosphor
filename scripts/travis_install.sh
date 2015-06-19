@@ -7,7 +7,7 @@ npm install
 
 echo "{\"token\": \"$GHTOKEN\"}" > ~/.tsdrc
 
-cp -r typings $HOME
+cp -r $HOME/typings .
 
 
 npm install karma
