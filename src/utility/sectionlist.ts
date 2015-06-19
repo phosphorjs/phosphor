@@ -296,7 +296,7 @@ function insert(span: ISpan, index: number, count: number, size: number): ISpan 
   if (index < left.count) {
     span.left = insert(left, index, count, size);
   } else {
-    span.right = insert(right, index - left.count, count, size);
+    span.right = insert(span.right, index - left.count, count, size);
   }
   return rebalance(span);
 }
