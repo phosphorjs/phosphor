@@ -50,14 +50,14 @@ class SectionList {
    * #### Notes
    * This operation has `O(log(n))` complexity.
    */
-  indexAt(offset: number): number {
+  indexOf(offset: number): number {
     if (this._root === null) {
       return -1;
     }
     if (offset < 0 || offset >= this._root.size) {
       return -1;
     }
-    return indexAt(this._root, offset);
+    return indexOf(this._root, offset);
   }
 
   /**
@@ -265,7 +265,7 @@ function updateBranch(span: ISpan, left: ISpan, right: ISpan): ISpan {
  *
  * The offset must be within range of the given span.
  */
-function indexAt(span: ISpan, offset: number): number {
+function indexOf(span: ISpan, offset: number): number {
   var index = 0;
   while (span.level !== 0) {
     var left = span.left;
