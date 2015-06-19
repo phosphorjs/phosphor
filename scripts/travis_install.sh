@@ -5,4 +5,11 @@ npm install -g tsd@next
 npm install
 
 echo "{\"token\": \"$GHTOKEN\"}" > ~/.tsdrc
-tsd reinstall -so
+
+if [ -d "$HOME/typings" ]; then
+    cp -r $HOME/typings .
+else:
+    tsd reinstall -so
+fi
+
+cp -r typings $HOME
