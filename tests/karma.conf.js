@@ -7,7 +7,7 @@ module.exports = function (config) {
         frameworks: ['mocha'],
 
         files: [
-            'dist/*.js',
+            'dist/phosphor.js',
             'node_modules/expect.js/index.js',
             'tests/build/*.js'
         ],
