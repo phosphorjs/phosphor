@@ -18,7 +18,7 @@
     "mocha": "^2.2.5",
     "nib": "^1.1.0",
     "karma": "^0.12",
-    "karma-mocha": "~0.1",
+    "karma-mocha": "~0.1"
   },
   "scripts": {
    "test": "./node_modules/.bin/karma start --single-run --browsers Firefox"
