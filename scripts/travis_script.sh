@@ -1,4 +1,4 @@
 #!/bin/bash
 gulp
-gulp test
+gulp tests
 npm test
