@@ -61,7 +61,7 @@ class SectionList {
   }
 
   /**
-   * Find the offset of the section at the given index.
+   * Find the offset position of the section at the given index.
    *
    * @param index - The index of the section of interest. If this value
    *   is negative, it is taken as an offset from the end of the list.
