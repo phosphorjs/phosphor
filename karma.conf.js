@@ -8,7 +8,7 @@ module.exports = function (config) {
 
         files: [
             'dist/*.js',
-            'node_modules/expect.js/index.js'
+            'node_modules/expect.js/index.js',
             'tests/build/*.js'
         ],
 
