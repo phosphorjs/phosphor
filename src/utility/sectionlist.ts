@@ -314,19 +314,23 @@ function rebalance(span: ISpan): ISpan {
     var subLeft = left.left;
     var subRight = left.right;
     if (subLeft.level > subRight.level) {
+      // left left case
       span.left = subLeft;
       span.right = setBranch(left, subRight, right);
     } else {
+      // left right case
       span.left = setBranch(left, subLeft, subRight.left);
       span.right = setBranch(subRight, subRight.right, right);
     }
   } else if (d < -1) {
     var subLeft = right.left;
     var subRight = right.right;
-    if (subLeft.level < subRight.level) {
+    if (subRight.level > subLeft.level) {
+      // right right case
       span.right = subRight;
       span.left = setBranch(right, left, subLeft);
     } else {
+      // right left case
       span.right = setBranch(right, subLeft.right, subRight);
       span.left = setBranch(subLeft, left, subLeft.left);
     }
