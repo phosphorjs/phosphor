@@ -1,4 +1,5 @@
 #!/bin/bash
+set -ex
 gulp
 gulp tests
-npm test
+./node_modules/.bin/karma start --single-run --browsers Firefox
