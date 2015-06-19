@@ -324,11 +324,11 @@ function rebalance(span: ISpan): ISpan {
     var subLeft = right.left;
     var subRight = right.right;
     if (subLeft.level < subRight.level) {
-      span.left = setBranch(right, left, subLeft);
       span.right = subRight;
+      span.left = setBranch(right, left, subLeft);
     } else {
-      span.left = setBranch(subLeft, left, subLeft.left);
       span.right = setBranch(right, subLeft.right, subRight);
+      span.left = setBranch(subLeft, left, subLeft.left);
     }
   }
   return setBranch(span, span.left, span.right);
