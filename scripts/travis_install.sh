@@ -6,11 +6,4 @@ npm install
 
 echo "{\"token\": \"$GHTOKEN\"}" > ~/.tsdrc
 
-if [ -d "$HOME/typings" ]; then
-    #cp -r $HOME/typings .
-    tsd reinstall -so
-else:
-    tsd reinstall -so
-fi
-
 cp -r typings $HOME
