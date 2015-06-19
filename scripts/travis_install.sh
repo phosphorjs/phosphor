@@ -8,7 +8,7 @@ npm install
 echo "{\"token\": \"$GHTOKEN\"}" > ~/.tsdrc
 
 cp -r $HOME/typings .
-
+tsd reinstall -so; true
 
 npm install karma
 npm install karma-mocha
