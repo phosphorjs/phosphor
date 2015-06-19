@@ -325,6 +325,7 @@ describe('phosphor.core - signaling', () => {
       var names: string[] = [];
       emit(obj1, TestObject.three, names);
       expect(names).to.eql(['foo', 'bar']);
+      expect(false).to.be(true);
     });
 
   });
