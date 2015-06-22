@@ -1,3 +1,4 @@
 #!/bin/bash
 gulp
-gulp karma
+gulp tests
+./node_modules/.bin/karma start --browsers=Firefox
