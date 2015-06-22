@@ -18,7 +18,7 @@ var stylus = require('gulp-stylus');
 var typedoc = require('gulp-typedoc');
 var typescript = require('gulp-typescript');
 var uglify = require('gulp-uglify');
-var karma = require('gulp-karma');
+var karma = require('karma').server;
 
 
 var buildTypings = [
@@ -230,17 +230,10 @@ gulp.task('tests', function() {
 });
 
 
-gulp.task('karma', ['tests'], function() {
-
-  return gulp.src('')
-    .pipe(karma({
-      configFile: 'tests/karma.conf.js',
-      action: 'run'
-    }))
-    .on('error', function(err) {
-      // Make sure failed tests cause gulp to exit non-zero 
-      throw err;
-    });
+gulp.task('karma', function () {
+  karma.start({
+    configFile: __dirname + '/tests/karma.conf.js',
+  });
 });
 
 
