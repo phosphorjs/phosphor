@@ -51,10 +51,7 @@ class SectionList {
    * This operation has `O(log(n))` complexity.
    */
   indexOf(offset: number): number {
-    if (this._root === null) {
-      return -1;
-    }
-    if (offset < 0 || offset >= this._root.size) {
+    if (this._root === null || offset < 0 || offset >= this._root.size) {
       return -1;
     }
     return indexOf(this._root, offset);
