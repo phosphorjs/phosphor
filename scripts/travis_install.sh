@@ -8,4 +8,5 @@ echo "{\"token\": \"$GHTOKEN\"}" > ~/.tsdrc
 
 # Pull typings from the cache and attempt to get latest
 cp -r $HOME/typings .
-tsd reinstall -so; true
+# make three attempts to get the typings
+tsd reinstall -so || tsd reinstall -so || tsd reinstall -so || true
