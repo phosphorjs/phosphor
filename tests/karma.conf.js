@@ -4,7 +4,7 @@ module.exports = function (config) {
 
         basePath: '..',
 
-        frameworks: ['mocha', 'detectBrowsers'],
+        frameworks: ['mocha'],
 
         files: [
             'dist/phosphor.js',
@@ -21,6 +21,8 @@ module.exports = function (config) {
         // level of logging
         // possible values: config.LOG_DISABLE || config.LOG_ERROR || config.LOG_WARN || config.LOG_INFO || config.LOG_DEBUG
         logLevel: config.LOG_INFO,
+
+        browsers: ['IE', 'Firefox', 'Chrome', 'Safari']
 
     });
 };
