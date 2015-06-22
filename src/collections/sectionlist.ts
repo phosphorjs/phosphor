@@ -42,7 +42,7 @@ class SectionList {
   /**
    * Find the index of the section which covers the given offset.
    *
-   * @param offset - The positive offset of interest.
+   * @param offset - The positive offset position of interest.
    *
    * @returns The index of the section which covers the given offset,
    *   or `-1` if the offset is out of range.
@@ -63,8 +63,8 @@ class SectionList {
    * @param index - The index of the section of interest. If this value
    *   is negative, it is taken as an offset from the end of the list.
    *
-   * @returns The offset of the section at the given index, or `-1` if
-   *   the index is out of range.
+   * @returns The offset position of the section at the given index, or
+   *   `-1` if the index is out of range.
    *
    * #### Notes
    * This operation has `O(log(n))` complexity.
@@ -114,8 +114,7 @@ class SectionList {
    *
    * @param index - The index at which to insert the first section. If
    *   this value is negative, it is taken as an offset from the end of
-   *   the list. If the resulting value is still negative, it is clamped
-   *   to `0`. The value is also clamped to a maximum of `list.count`.
+   *   the list. The value is clamped to the range `[0, list.count]`.
    *
    * @param count - The number of sections to insert. If this value is
    *   `<= 0`, this method is a no-op.
@@ -150,8 +149,8 @@ class SectionList {
    *
    * @param index - The index of the first section to remove. If this
    *   value is negative, it is taken as an offset from the end of the
-   *   list. If the resulting value is still negative, it is clamped to
-   *   `0`. If this value is `>= list.count`, this method is a no-op.
+   *   list. The value is clamped to the range `[0, Infinity]`. If
+   *   the value is `>= list.count` this method is a no-op.
    *
    * @param count - The number of sections to remove. If this value is
    *   `<= 0`, this method is a no-op. If this value is more than the
@@ -345,12 +344,12 @@ function insert(span: ISpan, index: number, count: number, size: number): ISpan 
       return createBranch(createLeaf(count, count * size), span);
     }
     // If the index is greater than the span count, the new span goes
-    // after the current span, and requires a new branch node.
+    // after the current span, which also requires a new branch node.
     if (index >= span.count) {
       return createBranch(span, createLeaf(count, count * size));
     }
     // Otherwise, the current span must be split and the new span
-    // added to the middle of the new branch.
+    // added to the middle. This requires several new nodes.
     var rest = span.count - index;
     var each = span.size / span.count;
     var subLeft = createLeaf(count, count * size);
