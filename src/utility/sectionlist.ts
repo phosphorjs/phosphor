@@ -374,13 +374,62 @@ function insert(span: ISpan, index: number, count: number, size: number): ISpan 
 
 
 /**
- * Remove sections from the given subtree.
+ * Remove a number of sections from the given subtree.
  *
  * The index must be an integer within range of the span, and the
- * count must be an integer greater than zero.
+ * count must be an integer greater than zero. If the count is more
+ * than the availble number of sections, the extra count is ignored.
+ *
+ * The return value is the span which should take the place of the
+ * original span in the tree. Due to tree rebalancing, this may or
+ * may not be the same as the original span. It may also be null.
  */
 function remove(span: ISpan, index: number, count: number): ISpan {
-  // TODO do the remove
+  // If the range covers the entire span, there is no need to do
+  // any extra checking, since the whole subtree can be removed.
+  if (index === 0 && count >= span.count) {
+    return null;
+  }
+  // If the span is a leaf, then sections are removed starting at
+  // the index. Any extra count is ignored and the span's size is
+  // updated to reflect its new count. The clause above ensures
+  // that the count is always greater than zero.
+  if (span.level === 0) {
+    var rest = span.count - Math.min(span.count - index, count);
+    span.size = (span.size / span.count) * rest;
+    span.count = rest;
+    return span;
+  }
+  // Otherwise, remove the sections from the children of the branch
+  // recursively. The range will either cross both of the children
+  // or be contained completely by one of them.
+  if (index < span.left.count && index + count > span.left.count) {
+    var extra = index + count - span.left.count;
+    span.left = remove(span.left, index, count);
+    span.right = remove(span.right, 0, extra);
+  } else if (index < span.left.count) {
+    span.left = remove(span.left, index, count);
+  } else {
+    span.right = remove(span.right, index - span.left.count, count);
+  }
+  // After the remove, either child may be null, but not both. The
+  // first clause of this function handles the case where the range
+  // covers the entire span. If one child was deleted, the remaining
+  // child is hoisted to become the current span.
+  if (span.left === null) {
+    span = span.right;
+  } else if (span.right === null) {
+    span = span.left;
+  }
+  // If the span is still a branch, it must be rebalanced. If the
+  // removed range was large, it's possible that the span's balance
+  // factor exceeds the [-2, 2] threshold, in which case it must be
+  // rebalanced multiple times.
+  if (span.level > 0) {
+    do {
+      span = rebalance(span);
+    } while (Math.abs(span.left.level - span.right.level) > 1);
+  }
   return span;
 }
 
