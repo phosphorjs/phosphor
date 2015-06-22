@@ -5,7 +5,7 @@
 |
 | The full license is in the file LICENSE, distributed with this software.
 |----------------------------------------------------------------------------*/
-module phosphor.utility {
+module phosphor.collections {
 
 /**
  * An object which manages a collection of variable sized sections.
@@ -531,4 +531,4 @@ function rebalance(span: ISpan): ISpan {
   return updateBranch(span, span.left, span.right);
 }
 
-} // module phosphor.utility
+} // module phosphor.collections
