@@ -392,9 +392,10 @@ function remove(span: ISpan, index: number, count: number): ISpan {
  * no rotations will be made. The branch data is always updated to
  * be current based on the current children.
  *
- * This assumes the balance factor for the span will never be outside
- * the range of [-2, 2], which means that a branch should be rebalanced
- * after each modification.
+ * This assumes the balance factor for the span will be within the
+ * range of [-2, 2]. If the balance factor is outside this range,
+ * the branch will need to be rebalanced multiple times in order
+ * to maintain the AVL balance invariant.
  *
  * The return value is the span which should take the place of the
  * original span in the tree, and may or may not be a different span.
