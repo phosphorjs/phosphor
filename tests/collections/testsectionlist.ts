@@ -24,6 +24,12 @@ describe('phosphor.collections - sectionlist', () => {
       expect(obj.sizeOf(50)).to.be(10);
       expect(obj.offsetOf(50)).to.be(500);
       expect(obj.indexOf(50)).to.be(5);
+      obj.insert(0, 100, 0);  // add empty sections
+      expect(obj.size).to.be(1000);
+      expect(obj.count).to.be(200);
+      obj.insert(0, 0, 1000);  // no-oop
+      expect(obj.size).to.be(1000);
+      expect(obj.count).to.be(200);
     });
 
     it('should create list with variable sized sections', () => {
@@ -69,7 +75,7 @@ describe('phosphor.collections - sectionlist', () => {
       expect(obj.offsetOf(150)).to.be(-1);
     });
 
-    it('should near the end of the list', () => {
+    it('should insert near the end of the list', () => {
       var obj = new SectionList();
       obj.insert(0, 50, 20);
       obj.insert(-10, 75, 10);
@@ -117,6 +123,8 @@ describe('phosphor.collections - sectionlist', () => {
       obj.remove(125, 50);
       obj.remove(75, 50);
       obj.remove(25, 50);
+      obj.remove(25, 50);  // no-op
+      obj.remove(0, 0);  // no-op
       obj.remove(0, 50);
       expect(obj.count).to.be(0);
     });
