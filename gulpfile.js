@@ -39,6 +39,7 @@ var tsSources = [
   'collections/circularbuffer',
   'collections/common',
   'collections/queue',
+  'collections/sectionlist',
 
   'utility/boxsizing',
   'utility/cursor',
@@ -48,7 +49,6 @@ var tsSources = [
   'utility/pair',
   'utility/point',
   'utility/rect',
-  'utility/sectionlist',
   'utility/size',
   'utility/viewport',
 
