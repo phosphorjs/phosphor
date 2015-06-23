@@ -172,7 +172,7 @@ describe('phosphor.collections - sectionlist', () => {
     it('should resize the end of the list', () => {
       var obj = new SectionList();
       obj.insert(0, 100, 10);
-      obj.resize(90, 20, 20);  // extends past the end of th list
+      obj.resize(90, 20, 20);  // extends past the end of the list
       expect(obj.size).to.be(1100);
       expect(obj.sizeOf(89)).to.be(10);
       expect(obj.sizeOf(99)).to.be(20);
