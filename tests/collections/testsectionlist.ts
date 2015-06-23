@@ -177,6 +177,102 @@ describe('phosphor.collections - sectionlist', () => {
       expect(obj.sizeOf(89)).to.be(10);
       expect(obj.sizeOf(99)).to.be(20);
     });
+
+  });
+
+
+  describe('count', () => {
+
+    it('should follow inserts and removes', () => {
+      var obj = new SectionList();
+      expect(obj.count).to.be(0);
+      obj.insert(0, 100, 10);
+      expect(obj.count).to.be(100);
+      obj.remove(10, 10);
+      expect(obj.count).to.be(90);
+      obj.insert(100, 100, 20);
+      expect(obj.count).to.be(190);
+      obj.remove(0, 1000);
+      expect(obj.count).to.be(0);
+    });
+
+  });
+
+  describe('size', () => {
+
+    it('should scale with inserts and removes', () => {
+      var obj = new SectionList();
+      expect(obj.size).to.be(0);
+      obj.insert(0, 100, 10);
+      expect(obj.size).to.be(1000);
+      obj.remove(10, 10);
+      expect(obj.size).to.be(900);
+      obj.insert(100, 100, 20);
+      expect(obj.size).to.be(2900);
+      obj.remove(0, 1000);
+      expect(obj.size).to.be(0);
+    });
+
+  });
+
+
+  describe('indexOf()', () => {
+
+    it('should follow function API', () => {
+      var obj = new SectionList();
+      expect(obj.indexOf(0)).to.be(-1);
+      obj.insert(0, 100, 10);
+      expect(obj.indexOf(999)).to.be(99);
+      expect(obj.indexOf(1000)).to.be(-1);
+      obj.remove(10, 10);
+      expect(obj.indexOf(11)).to.be(1);
+      obj.insert(100, 100, 20);
+      expect(obj.indexOf(189)).to.be(18);
+      expect(obj.indexOf(500)).to.be(50);
+      expect(obj.indexOf(-10)).to.be(-1);
+      obj.remove(0, 1000);
+      expect(obj.indexOf(0)).to.be(-1);
+    });
+
+  });
+
+
+  describe('offsetOf()', () => {
+
+    it('should follow function API', () => {
+      var obj = new SectionList();
+      expect(obj.offsetOf(0)).to.be(-1);
+      obj.insert(0, 100, 10);
+      expect(obj.offsetOf(11)).to.be(110);
+      obj.remove(10, 10);
+      expect(obj.offsetOf(11)).to.be(110);
+      obj.insert(100, 100, 20);
+      expect(obj.offsetOf(189)).to.be(2880);
+      expect(obj.offsetOf(-10)).to.be(2700);
+      obj.remove(0, 1000);
+      expect(obj.offsetOf(0)).to.be(-1);
+    });
+
+  });
+
+
+  describe('sizeOf()', () => {
+
+    it('should follow function API', () => {
+      var obj = new SectionList();
+      expect(obj.sizeOf(0)).to.be(-1);
+      obj.insert(0, 100, 10);
+      expect(obj.sizeOf(11)).to.be(10);
+      expect(obj.sizeOf(100)).to.be(-1);
+      obj.remove(10, 10);
+      expect(obj.sizeOf(89)).to.be(10);
+      obj.insert(100, 100, 20);
+      expect(obj.sizeOf(189)).to.be(20);
+      expect(obj.sizeOf(-10)).to.be(20);
+      obj.remove(0, 1000);
+      expect(obj.sizeOf(0)).to.be(-1);
+    });
+
   });
 
 });
