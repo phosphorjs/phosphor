@@ -9,6 +9,7 @@ echo "{\"token\": \"$GHTOKEN\"}" > ~/.tsdrc
 # Pull typings from the cache and attempt to get latest
 cp -r $HOME/typings .
 tsd reinstall -so; true
+cp -r typings $HOME
 
 # install Karma test suite and modules
 npm install karma
