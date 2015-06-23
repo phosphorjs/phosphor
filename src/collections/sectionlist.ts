@@ -154,12 +154,11 @@ class SectionList {
    *
    * @param index - The index of the first section to remove. If this
    *   value is negative, it is taken as an offset from the end of the
-   *   list. The value is clamped to the range `[0, Infinity]`. If
-   *   the value is `>= list.count` this method is a no-op.
+   *   list.
    *
    * @param count - The number of sections to remove. If this value is
-   *   `<= 0`, this method is a no-op. If this value is more than the
-   *   the availble number of sections, the extra count is ignored.
+   *   `<= 0`, this method is a no-op. If any of the sections are out
+   *   of range, they will be ignored.
    *
    * #### Notes
    * This operation has `O(log(n))` complexity.
@@ -173,12 +172,20 @@ class SectionList {
       return;
     }
     index = Math.floor(index);
-    if (index < 0) {
-      index = Math.max(0, index + this._root.count);
-    }
     if (index >= this._root.count) {
       return;
     }
+    if (index < 0) {
+      index += this._root.count;
+      if (index < 0) {
+        count += index;
+        if (count <= 0) {
+          return;
+        }
+        index = 0;
+      }
+    }
+    count = Math.min(count, this._root.count - index);
     this._root = remove(this._root, index, count);
   }
 
@@ -187,12 +194,11 @@ class SectionList {
    *
    * @param index - The index of the first section to resize. If this
    *   value is negative, it is taken as an offset from the end of the
-   *   list. The value is clamped to the range `[0, Infinity]`. If
-   *   the value is `>= list.count` this method is a no-op.
+   *   list.
    *
    * @param count - The number of sections to resize. If this value is
-   *   `<= 0`, this method is a no-op. If this value is more than the
-   *   the availble number of sections, the extra count is ignored.
+   *   `<= 0`, this method is a no-op. If any of the sections are out
+   *   of range, they will be ignored.
    *
    * @param size - The new size of each section. This value is clamped
    *   to the range `[0, Infinity]`.
@@ -206,11 +212,18 @@ class SectionList {
       return;
     }
     index = Math.floor(index);
-    if (index < 0) {
-      index = Math.max(0, index + this._root.count);
-    }
     if (index >= this._root.count) {
       return;
+    }
+    if (index < 0) {
+      index += this._root.count;
+      if (index < 0) {
+        count += index;
+        if (count <= 0) {
+          return;
+        }
+        index = 0;
+      }
     }
     count = Math.min(count, this._root.count - index);
     this._root = remove(this._root, index, count);
