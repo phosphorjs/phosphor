@@ -168,7 +168,6 @@ describe('phosphor.collections - sectionlist', () => {
       expect(obj.sizeOf(60)).to.be(10);
     });
 
-
     it('should resize the end of the list', () => {
       var obj = new SectionList();
       obj.insert(0, 100, 10);
