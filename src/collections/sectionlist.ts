@@ -130,9 +130,8 @@ class SectionList {
     if (count <= 0) {
       return;
     }
-    size = Math.max(0, size);
     if (this._root === null) {
-      this._root = createLeaf(count, count * size);
+      this._root = createLeaf(count, count * Math.max(0, size));
       return;
     }
     index = Math.floor(index);
@@ -141,7 +140,7 @@ class SectionList {
     } else {
       index = Math.min(index, this._root.count);
     }
-    this._root = insert(this._root, index, count, size);
+    this._root = insert(this._root, index, count, Math.max(0, size));
   }
 
   /**
