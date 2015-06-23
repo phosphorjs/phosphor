@@ -218,17 +218,25 @@ describe('phosphor.collections - sectionlist', () => {
 
   describe('indexOf()', () => {
 
-    it('should follow function API', () => {
+    it('should find the index of section which covers a given offset', () => {
       var obj = new SectionList();
-      expect(obj.indexOf(0)).to.be(-1);
       obj.insert(0, 100, 10);
       expect(obj.indexOf(999)).to.be(99);
-      expect(obj.indexOf(1000)).to.be(-1);
       obj.remove(10, 10);
       expect(obj.indexOf(11)).to.be(1);
       obj.insert(100, 100, 20);
       expect(obj.indexOf(189)).to.be(18);
       expect(obj.indexOf(500)).to.be(50);
+    });
+
+    it('should should return -1 if out of range', () => {
+      var obj = new SectionList();
+      expect(obj.indexOf(0)).to.be(-1);
+      obj.insert(0, 100, 10);
+      expect(obj.indexOf(1000)).to.be(-1);
+      obj.remove(10, 10);
+      expect(obj.indexOf(11)).to.be(1);
+      obj.insert(100, 100, 20);
       expect(obj.indexOf(-10)).to.be(-1);
       obj.remove(0, 1000);
       expect(obj.indexOf(0)).to.be(-1);
@@ -239,7 +247,7 @@ describe('phosphor.collections - sectionlist', () => {
 
   describe('offsetOf()', () => {
 
-    it('should follow function API', () => {
+    it('should find the offset position of the section at the given index', () => {
       var obj = new SectionList();
       expect(obj.offsetOf(0)).to.be(-1);
       obj.insert(0, 100, 10);
@@ -253,22 +261,49 @@ describe('phosphor.collections - sectionlist', () => {
       expect(obj.offsetOf(0)).to.be(-1);
     });
 
+    it('should be taken as an offset from the end of the list', () => {
+      var obj = new SectionList();
+      expect(obj.offsetOf(0)).to.be(-1);
+      obj.insert(0, 100, 10);
+      expect(obj.offsetOf(-10)).to.be(900);
+    });
+
+    it('should return -1 if the index is out of range', () => {
+      var obj = new SectionList();
+      expect(obj.offsetOf(0)).to.be(-1);
+      obj.insert(0, 100, 10);
+      expect(obj.offsetOf(100)).to.be(-1);
+      obj.remove(0, 1000);
+      expect(obj.offsetOf(0)).to.be(-1);
+    });
+
   });
 
 
   describe('sizeOf()', () => {
 
-    it('should follow function API', () => {
+    it('should find the size of the section at the given index', () => {
       var obj = new SectionList();
-      expect(obj.sizeOf(0)).to.be(-1);
       obj.insert(0, 100, 10);
       expect(obj.sizeOf(11)).to.be(10);
-      expect(obj.sizeOf(100)).to.be(-1);
       obj.remove(10, 10);
       expect(obj.sizeOf(89)).to.be(10);
       obj.insert(100, 100, 20);
       expect(obj.sizeOf(189)).to.be(20);
+    });
+
+    it('should be taken as an offset from the end of the list', () => {
+      var obj = new SectionList();
+      obj.insert(0, 100, 10);
+      obj.insert(100, 100, 20);
       expect(obj.sizeOf(-10)).to.be(20);
+    });
+
+    it('should return -1 if the index is out of range', () => {
+      var obj = new SectionList();
+      expect(obj.sizeOf(0)).to.be(-1);
+      obj.insert(0, 100, 10);
+      expect(obj.sizeOf(100)).to.be(-1);
       obj.remove(0, 1000);
       expect(obj.sizeOf(0)).to.be(-1);
     });
