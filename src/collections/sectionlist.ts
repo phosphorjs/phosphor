@@ -176,6 +176,45 @@ class SectionList {
     this._root = remove(this._root, index, count);
   }
 
+  /**
+   * Resize existing sections in the list.
+   *
+   * @param index - The index of the first section to resize. If this
+   *   value is negative, it is taken as an offset from the end of the
+   *   list. The value is clamped to the range `[0, Infinity]`. If
+   *   the value is `>= list.count` this method is a no-op.
+   *
+   * @param count - The number of sections to resize. If this value is
+   *   `<= 0`, this method is a no-op. If this value is more than the
+   *   the availble number of sections, the extra count is ignored.
+   *
+   * @param size - The new size of each section. This value is clamped
+   *   to the range `[0, Infinity]`.
+   */
+  resize(index: number, count: number, size: number): void {
+    if (this._root === null) {
+      return;
+    }
+    count = Math.floor(count);
+    if (count <= 0) {
+      return;
+    }
+    index = Math.floor(index);
+    if (index < 0) {
+      index = Math.max(0, index + this._root.count);
+    }
+    if (index >= this._root.count) {
+      return;
+    }
+    count = Math.min(count, this._root.count - index);
+    this._root = remove(this._root, index, count);
+    if (this._root === null) {
+      this._root = createLeaf(count, count * Math.max(0, size));
+    } else {
+      this._root = insert(this._root, index, count, Math.max(0, size));
+    }
+  }
+
   private _root: ISpan = null;
 }
 
