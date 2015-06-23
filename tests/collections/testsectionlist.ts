@@ -21,6 +21,9 @@ describe('phosphor.collections - sectionlist', () => {
       obj.insert(0, 100, 10);
       expect(obj.size).to.be(1000);
       expect(obj.count).to.be(100);
+      expect(obj.sizeOf(50)).to.be(10);
+      expect(obj.offsetOf(50)).to.be(500);
+      expect(obj.indexOf(50)).to.be(5);
     });
 
     it('should create list with variable sized sections', () => {
@@ -53,16 +56,30 @@ describe('phosphor.collections - sectionlist', () => {
       expect(obj.sizeOf(475)).to.be(10);
     });
 
-    it('should insert at 0', () => {
+    it('should insert at end of list', () => {
       var obj = new SectionList();
+      obj.insert(0, 50, 20);
       obj.insert(100, 75, 10);
-      expect(obj.size).to.be(750);
-      expect(obj.count).to.be(75);
-      expect(obj.sizeOf(0)).to.be(10);
-      expect(obj.sizeOf(74)).to.be(10);
-      expect(obj.sizeOf(100)).to.be(-1);
-      expect(obj.offsetOf(100)).to.be(-1);
+      expect(obj.size).to.be(1750);
+      expect(obj.count).to.be(125);
+      expect(obj.sizeOf(0)).to.be(20);
+      expect(obj.sizeOf(49)).to.be(20);
+      expect(obj.sizeOf(100)).to.be(10);
+      expect(obj.sizeOf(150)).to.be(-1);
+      expect(obj.offsetOf(150)).to.be(-1);
     });
+
+    it('should near the end of the list', () => {
+      var obj = new SectionList();
+      obj.insert(0, 50, 20);
+      obj.insert(-10, 75, 10);
+      expect(obj.size).to.be(1750);
+      expect(obj.count).to.be(125);
+      expect(obj.sizeOf(0)).to.be(20);
+      expect(obj.sizeOf(39)).to.be(20);
+      expect(obj.sizeOf(40)).to.be(10);
+    });
+
 
   });
 
@@ -76,6 +93,9 @@ describe('phosphor.collections - sectionlist', () => {
       obj.remove(0, 100);
       expect(obj.size).to.be(0);
       expect(obj.count).to.be(0);
+      expect(obj.sizeOf(0)).to.be(-1);
+      expect(obj.offsetOf(0)).to.be(-1);
+      expect(obj.indexOf(0)).to.be(-1); 
     });
 
     it('should create list with variable sized sections', () => {
@@ -99,6 +119,18 @@ describe('phosphor.collections - sectionlist', () => {
       obj.remove(25, 50);
       obj.remove(0, 50);
       expect(obj.count).to.be(0);
+    });
+
+    it('should index from end of list', () => {
+      var obj = new SectionList();
+      obj.insert(0, 100, 10);
+      obj.insert(100, 30, 20);
+      obj.remove(-20, 10);
+      expect(obj.count).to.be(120);
+      expect(obj.sizeOf(119)).to.be(20);
+      obj.remove(-30, 10);
+      expect(obj.count).to.be(110);
+      expect(obj.sizeOf(109)).to.be(20);
     });
 
 
