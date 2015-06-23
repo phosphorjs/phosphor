@@ -61,6 +61,8 @@ describe('phosphor.collections - sectionlist', () => {
       expect(obj.count).to.be(75);
       expect(obj.sizeOf(0)).to.be(10);
       expect(obj.sizeOf(74)).to.be(10);
+      expect(obj.sizeOf(100)).to.be(-1);
+      expect(obj.offsetOf(100)).to.be(-1);
     });
 
   });
