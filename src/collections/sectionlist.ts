@@ -74,11 +74,14 @@ class SectionList {
       return -1;
     }
     index = Math.floor(index);
+    if (index >= this._root.count) {
+      return -1;
+    }
     if (index < 0) {
       index += this._root.count;
-    }
-    if (index < 0 || index >= this._root.count) {
-      return -1;
+      if (index < 0) {
+        return -1;
+      }
     }
     return offsetOf(this._root, index);
   }
@@ -100,11 +103,14 @@ class SectionList {
       return -1;
     }
     index = Math.floor(index);
+    if (index >= this._root.count) {
+      return -1;
+    }
     if (index < 0) {
       index += this._root.count;
-    }
-    if (index < 0 || index >= this._root.count) {
-      return -1;
+      if (index < 0) {
+        return -1;
+      }
     }
     return sizeOf(this._root, index);
   }
