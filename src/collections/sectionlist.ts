@@ -160,6 +160,9 @@ class SectionList {
    * This operation has `O(log(n))` complexity.
    */
   remove(index: number, count: number): void {
+    if (this._root === null) {
+      return;
+    }
     count = Math.floor(count);
     if (count <= 0) {
       return;
