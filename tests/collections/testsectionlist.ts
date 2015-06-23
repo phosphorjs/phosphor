@@ -7,15 +7,14 @@
 |----------------------------------------------------------------------------*/
 module tests {
 
-  import SectionList = phosphor.collections.SectionList;
-
+import SectionList = phosphor.collections.SectionList;
 
 
 describe('phosphor.collections - sectionlist', () => {
 
   describe('insert()', () => {
 
-    it('should return true on success', () => {
+    it('should create a simple list', () => {
       var obj = new SectionList();
       expect(obj.size).to.be(0);
       expect(obj.count).to.be(0);
@@ -24,7 +23,7 @@ describe('phosphor.collections - sectionlist', () => {
       expect(obj.count).to.be(100);
     });
 
-    it('should create heterogenous list', () => {
+    it('should create list with variable sized sections', () => {
       var obj = new SectionList();
       obj.insert(0, 100, 10);
       obj.insert(10, 100, 20);
@@ -36,7 +35,7 @@ describe('phosphor.collections - sectionlist', () => {
       expect(obj.offsetOf(20)).to.be(300);
     });
 
-    it('should create another heterogenous list', () => {
+    it('should create another list with variable sized sections', () => {
       var obj = new SectionList();
       obj.insert(0, 75, 10);
       obj.insert(10, 75, 20);
@@ -79,7 +78,7 @@ describe('phosphor.collections - sectionlist', () => {
       expect(obj.count).to.be(0);
     });
 
-    it('should create heterogenous list', () => {
+    it('should create list with variable sized sections', () => {
       var obj = new SectionList();
       obj.insert(0, 100, 10);
       obj.insert(10, 100, 20);
@@ -91,7 +90,7 @@ describe('phosphor.collections - sectionlist', () => {
       expect(obj.sizeOf(50)).to.be(20);
     });
 
-    it('also end up empty', () => {
+    it('should also end up empty', () => {
       var obj = new SectionList();
       obj.insert(0, 100, 10);
       obj.insert(10, 100, 20);
