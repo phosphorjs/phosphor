@@ -86,8 +86,8 @@ describe('phosphor.collections - sectionlist', () => {
       expect(obj.sizeOf(40)).to.be(10);
     });
 
-
   });
+
 
   describe('remove()', () => {
 
@@ -141,8 +141,8 @@ describe('phosphor.collections - sectionlist', () => {
       expect(obj.sizeOf(109)).to.be(20);
     });
 
-
   });
+
 
   describe('resize()', () => {
 
