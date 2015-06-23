@@ -16,7 +16,14 @@
     "gulp-typescript": "2.4.2",
     "gulp-uglify": "^1.2.0",
     "mocha": "^2.2.5",
-    "nib": "^1.1.0"
+    "nib": "^1.1.0",
+    "karma": "^0.12.36",
+    "karma-chrome-launcher": "^0.1.12",
+    "karma-firefox-launcher": "^0.1.6",
+    "karma-ie-launcher": "^0.2.0",
+    "karma-safari-launcher": "^0.1.1",
+    "karma-mocha": "^0.2.0",
+    "karma-mocha-reporter": "^1.0.2"
   },
   "scripts": {},
   "repository": {
