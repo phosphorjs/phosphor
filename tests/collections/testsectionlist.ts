@@ -144,6 +144,41 @@ describe('phosphor.collections - sectionlist', () => {
 
   });
 
+  describe('resize()', () => {
+
+    it('should resize the middle of the list', () => {
+      var obj = new SectionList();
+      obj.insert(0, 100, 10);
+      obj.resize(50, 10, 20);
+      obj.resize(110, 10, 30);  // no-op
+      expect(obj.size).to.be(1100);
+      expect(obj.sizeOf(50)).to.be(20);
+      expect(obj.sizeOf(40)).to.be(10);
+      expect(obj.sizeOf(60)).to.be(10);
+    });
+
+    it('should also resize the middle of the list', () => {
+      var obj = new SectionList();
+      obj.insert(0, 100, 10);
+      obj.resize(-50, 10, 20);
+      obj.resize(-50, 0, 30);  // no-op
+      expect(obj.size).to.be(1100);
+      expect(obj.sizeOf(50)).to.be(20);
+      expect(obj.sizeOf(40)).to.be(10);
+      expect(obj.sizeOf(60)).to.be(10);
+    });
+
+
+    it('should resize the end of the list', () => {
+      var obj = new SectionList();
+      obj.insert(0, 100, 10);
+      obj.resize(90, 20, 20);  // extends past the end of th list
+      expect(obj.size).to.be(1100);
+      expect(obj.sizeOf(89)).to.be(10);
+      expect(obj.sizeOf(99)).to.be(20);
+    });
+  });
+
 });
 
 } // module tests
