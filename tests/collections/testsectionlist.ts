@@ -14,7 +14,7 @@ describe('phosphor.collections - sectionlist', () => {
 
   describe('insert()', () => {
 
-    it('should create a simple list', () => {
+    it('should insert new sections into the list', () => {
       var obj = new SectionList();
       expect(obj.size).to.be(0);
       expect(obj.count).to.be(0);
@@ -27,9 +27,47 @@ describe('phosphor.collections - sectionlist', () => {
       obj.insert(0, 100, 0);  // add empty sections
       expect(obj.size).to.be(1000);
       expect(obj.count).to.be(200);
-      obj.insert(0, 0, 1000);  // no-oop
-      expect(obj.size).to.be(1000);
-      expect(obj.count).to.be(200);
+    });
+
+    it('should offset from the end of the list', () => {
+      var obj = new SectionList();
+      obj.insert(0, 50, 20);
+      obj.insert(-10, 75, 10);
+      expect(obj.size).to.be(1750);
+      expect(obj.count).to.be(125);
+      expect(obj.sizeOf(0)).to.be(20);
+      expect(obj.sizeOf(39)).to.be(20);
+      expect(obj.sizeOf(40)).to.be(10);
+    });
+
+    it('should be clamped to the range `[0, list.count]`', () => {
+      var obj = new SectionList();
+      obj.insert(0, 50, 20);
+      obj.insert(100, 75, 10);
+      expect(obj.size).to.be(1750);
+      expect(obj.count).to.be(125);
+      expect(obj.sizeOf(0)).to.be(20);
+      expect(obj.sizeOf(49)).to.be(20);
+      expect(obj.sizeOf(100)).to.be(10);
+      expect(obj.sizeOf(150)).to.be(-1);
+      expect(obj.offsetOf(150)).to.be(-1);
+    });
+
+    it('should be a no-nop for count <= 0', () => {
+      var obj = new SectionList();
+      obj.insert(0, 0, 1000);
+      expect(obj.size).to.be(0);
+      expect(obj.count).to.be(0);
+    });
+
+    it('should clamp the size to the range `[0, Infinity]`', () => {
+      var obj = new SectionList();
+      obj.insert(0, 10, -10);
+      expect(obj.size).to.be(0);
+      expect(obj.count).to.be(10);
+      obj.insert(0, 10, Infinity);
+      expect(obj.count).to.be(20);
+      expect(obj.size).to.be(Infinity);
     });
 
     it('should create list with variable sized sections', () => {
@@ -60,30 +98,6 @@ describe('phosphor.collections - sectionlist', () => {
       expect(obj.sizeOf(225)).to.be(30);
       expect(obj.sizeOf(300)).to.be(40);
       expect(obj.sizeOf(475)).to.be(10);
-    });
-
-    it('should insert at end of list', () => {
-      var obj = new SectionList();
-      obj.insert(0, 50, 20);
-      obj.insert(100, 75, 10);
-      expect(obj.size).to.be(1750);
-      expect(obj.count).to.be(125);
-      expect(obj.sizeOf(0)).to.be(20);
-      expect(obj.sizeOf(49)).to.be(20);
-      expect(obj.sizeOf(100)).to.be(10);
-      expect(obj.sizeOf(150)).to.be(-1);
-      expect(obj.offsetOf(150)).to.be(-1);
-    });
-
-    it('should insert near the end of the list', () => {
-      var obj = new SectionList();
-      obj.insert(0, 50, 20);
-      obj.insert(-10, 75, 10);
-      expect(obj.size).to.be(1750);
-      expect(obj.count).to.be(125);
-      expect(obj.sizeOf(0)).to.be(20);
-      expect(obj.sizeOf(39)).to.be(20);
-      expect(obj.sizeOf(40)).to.be(10);
     });
 
   });
@@ -183,7 +197,7 @@ describe('phosphor.collections - sectionlist', () => {
 
   describe('count', () => {
 
-    it('should follow inserts and removes', () => {
+    it('should get the total number of sections in the list', () => {
       var obj = new SectionList();
       expect(obj.count).to.be(0);
       obj.insert(0, 100, 10);
@@ -198,9 +212,10 @@ describe('phosphor.collections - sectionlist', () => {
 
   });
 
+
   describe('size', () => {
 
-    it('should scale with inserts and removes', () => {
+    it('should get the total size of all sections in the list.', () => {
       var obj = new SectionList();
       expect(obj.size).to.be(0);
       obj.insert(0, 100, 10);
