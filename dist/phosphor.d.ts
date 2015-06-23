@@ -243,7 +243,7 @@ declare module phosphor.collections.algorithm {
     function findLast<T>(array: T[], pred: IPredicate<T>, fromIndex?: number, wrap?: boolean): T;
     /**
      * Using a binary search, find the index of the first element in an
-     * array which compares `<=` to a value.
+     * array which compares `>=` to a value.
      *
      * @param array - The array of values to be searched. It must be sorted
      *   in ascending order.
@@ -253,7 +253,7 @@ declare module phosphor.collections.algorithm {
      * @param cmp - The comparator function to apply to the values.
      *
      * @returns The index of the first element in `array` which compares
-     *   `<=` to `value`, or `array.length` if there is no such element.
+     *   `>=` to `value`, or `array.length` if there is no such element.
      *
      * #### Example
      * ```typescript
@@ -821,6 +821,123 @@ declare module phosphor.collections {
         private _size;
         private _front;
         private _back;
+    }
+}
+
+declare module phosphor.collections {
+    /**
+     * An object which manages a collection of variable sized sections.
+     *
+     * A section list is commonly used to manage row heights in virtually
+     * scrolling list controls. In such a control, most rows are uniform
+     * height while a handful of rows are variable sized.
+     *
+     * A section list has guaranteed `O(log(n))` worst-case performance for
+     * most operations, where `n` is the number of variable sized sections.
+     */
+    class SectionList {
+        /**
+         * Get the total number of sections in the list.
+         *
+         * #### Notes
+         * This operation has `O(1)` complexity.
+         */
+        count: number;
+        /**
+         * Get the total size of all sections in the list.
+         *
+         * #### Notes
+         * This operation has `O(1)` complexity.
+         */
+        size: number;
+        /**
+         * Find the index of the section which covers the given offset.
+         *
+         * @param offset - The positive offset position of interest.
+         *
+         * @returns The index of the section which covers the given offset,
+         *   or `-1` if the offset is out of range.
+         *
+         * #### Notes
+         * This operation has `O(log(n))` complexity.
+         */
+        indexOf(offset: number): number;
+        /**
+         * Find the offset position of the section at the given index.
+         *
+         * @param index - The index of the section of interest. If this value
+         *   is negative, it is taken as an offset from the end of the list.
+         *
+         * @returns The offset position of the section at the given index, or
+         *   `-1` if the index is out of range.
+         *
+         * #### Notes
+         * This operation has `O(log(n))` complexity.
+         */
+        offsetOf(index: number): number;
+        /**
+         * Find the size of the section at the given index.
+         *
+         * @param index - The index of the section of interest. If this value
+         *   is negative, it is taken as an offset from the end of the list.
+         *
+         * @returns The size of the section at the given index, or `-1` if
+         *   the index is out of range.
+         *
+         * #### Notes
+         * This operation has `O(log(n))` complexity.
+         */
+        sizeOf(index: number): number;
+        /**
+         * Insert new sections into the list.
+         *
+         * @param index - The index at which to insert the first section. If
+         *   this value is negative, it is taken as an offset from the end of
+         *   the list. The value is clamped to the range `[0, list.count]`.
+         *
+         * @param count - The number of sections to insert. If this value is
+         *   `<= 0`, this method is a no-op.
+         *
+         * @param size - The size of each section. This value is clamped to
+         *   the range `[0, Infinity]`.
+         *
+         * #### Notes
+         * This operation has `O(log(n))` complexity.
+         */
+        insert(index: number, count: number, size: number): void;
+        /**
+         * Remove existing sections from the list.
+         *
+         * @param index - The index of the first section to remove. If this
+         *   value is negative, it is taken as an offset from the end of the
+         *   list. The value is clamped to the range `[0, Infinity]`. If
+         *   the value is `>= list.count` this method is a no-op.
+         *
+         * @param count - The number of sections to remove. If this value is
+         *   `<= 0`, this method is a no-op. If this value is more than the
+         *   the availble number of sections, the extra count is ignored.
+         *
+         * #### Notes
+         * This operation has `O(log(n))` complexity.
+         */
+        remove(index: number, count: number): void;
+        /**
+         * Resize existing sections in the list.
+         *
+         * @param index - The index of the first section to resize. If this
+         *   value is negative, it is taken as an offset from the end of the
+         *   list. The value is clamped to the range `[0, Infinity]`. If
+         *   the value is `>= list.count` this method is a no-op.
+         *
+         * @param count - The number of sections to resize. If this value is
+         *   `<= 0`, this method is a no-op. If this value is more than the
+         *   the availble number of sections, the extra count is ignored.
+         *
+         * @param size - The new size of each section. This value is clamped
+         *   to the range `[0, Infinity]`.
+         */
+        resize(index: number, count: number, size: number): void;
+        private _root;
     }
 }
 

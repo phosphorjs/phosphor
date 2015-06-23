@@ -173,6 +173,7 @@ describe('phosphor.collections - sectionlist', () => {
       obj.insert(0, 100, 10);
       obj.resize(90, 20, 20);  // extends past the end of the list
       expect(obj.size).to.be(1100);
+      expect(obj.count).to.be(100);
       expect(obj.sizeOf(89)).to.be(10);
       expect(obj.sizeOf(99)).to.be(20);
     });
