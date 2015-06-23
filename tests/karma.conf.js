@@ -12,7 +12,7 @@ module.exports = function (config) {
             'tests/build/*.js'
         ],
 
-        reporters: ['progress'],
+        reporters: ['mocha'],
 
         port: 9876,
         colors: true,
