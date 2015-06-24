@@ -18,6 +18,7 @@ var stylus = require('gulp-stylus');
 var typedoc = require('gulp-typedoc');
 var typescript = require('gulp-typescript');
 var uglify = require('gulp-uglify');
+var karma = require('karma').server;
 
 
 var buildTypings = [
@@ -227,6 +228,13 @@ gulp.task('tests', function() {
     .pipe(concat('index.js'))
     .pipe(header('"use strict";\n'))
     .pipe(gulp.dest('tests/build'));
+});
+
+
+gulp.task('karma', function () {
+  karma.start({
+    configFile: __dirname + '/tests/karma.conf.js',
+  });
 });
 
 

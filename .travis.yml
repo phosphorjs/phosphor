@@ -7,12 +7,20 @@ env:
     - GROUP=
   global:
     - secure: Zv6POtOhi0kIMgvGnt3dGouLc+hXeajKuoBMUPLdYdkeD/JLhNHyZyZkF7SKKeKcVSCUj8Y20hcWH2rErRckvGO3jUdeupUZN5DnwKnFZ2QXF4/s7+xzSR5jbS5IUbL9YVPoxSXMyK7VtkcGa1M4H/1cZYOdSUIz51pkfXipgus=
+cache:
+  directories:
+    - $HOME/typings
 before_install:
+  - ls $HOME/typings; true
   - chmod +x ./scripts/travis_install.sh
   - chmod +x ./scripts/travis_script.sh
   - chmod +x ./scripts/travis_after_success.sh
 install:
   - ./scripts/travis_install.sh
+before_script:
+  # start a virtual screen for Firefox
+  - export DISPLAY=:99.0
+  - sh -e /etc/init.d/xvfb start
 script:
   - ./scripts/travis_script.sh
 after_success:

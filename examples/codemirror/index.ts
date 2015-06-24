@@ -49,6 +49,7 @@ function main(): void {
     mode: 'javascript',
     lineNumbers: true,
     tabSize: 2,
+    extraKeys: {"Ctrl-Space": "autocomplete"},
   });
 
   cm.attach(document.getElementById('main'));
