@@ -70,18 +70,9 @@ class SectionList {
    * This operation has `O(log(n))` complexity.
    */
   offsetOf(index: number): number {
-    if (this._root === null) {
-      return -1;
-    }
-    index = Math.floor(index);
-    if (index >= this._root.count) {
-      return -1;
-    }
+    index = toQueryIndex(this._root, index);
     if (index < 0) {
-      index += this._root.count;
-      if (index < 0) {
-        return -1;
-      }
+      return -1;
     }
     return offsetOf(this._root, index);
   }
@@ -99,18 +90,9 @@ class SectionList {
    * This operation has `O(log(n))` complexity.
    */
   sizeOf(index: number): number {
-    if (this._root === null) {
-      return -1;
-    }
-    index = Math.floor(index);
-    if (index >= this._root.count) {
-      return -1;
-    }
+    index = toQueryIndex(this._root, index);
     if (index < 0) {
-      index += this._root.count;
-      if (index < 0) {
-        return -1;
-      }
+      return -1;
     }
     return sizeOf(this._root, index);
   }
@@ -132,21 +114,15 @@ class SectionList {
    * This operation has `O(log(n))` complexity.
    */
   insert(index: number, count: number, size: number): void {
-    count = Math.floor(count);
-    if (count <= 0) {
+    var d = toInsertData(this._root, index, count);
+    if (d === null) {
       return;
     }
-    if (this._root === null) {
-      this._root = createLeaf(count, count * Math.max(0, size));
-      return;
-    }
-    index = Math.floor(index);
-    if (index < 0) {
-      index = Math.max(0, index + this._root.count);
+    if (d.index < 0) {
+      this._root = createLeaf(d.count, d.count * Math.max(0, size));
     } else {
-      index = Math.min(index, this._root.count);
+      this._root = insert(this._root, d.index, d.count, Math.max(0, size));
     }
-    this._root = insert(this._root, index, count, Math.max(0, size));
   }
 
   /**
@@ -164,29 +140,11 @@ class SectionList {
    * This operation has `O(log(n))` complexity.
    */
   remove(index: number, count: number): void {
-    if (this._root === null) {
+    var d = toRemoveData(this._root, index, count);
+    if (d === null) {
       return;
     }
-    count = Math.floor(count);
-    if (count <= 0) {
-      return;
-    }
-    index = Math.floor(index);
-    if (index >= this._root.count) {
-      return;
-    }
-    if (index < 0) {
-      index += this._root.count;
-      if (index < 0) {
-        count += index;
-        if (count <= 0) {
-          return;
-        }
-        index = 0;
-      }
-    }
-    count = Math.min(count, this._root.count - index);
-    this._root = remove(this._root, index, count);
+    this._root = remove(this._root, d.index, d.count);
   }
 
   /**
@@ -204,33 +162,15 @@ class SectionList {
    *   to the range `[0, Infinity]`.
    */
   resize(index: number, count: number, size: number): void {
+    var d = toRemoveData(this._root, index, count);
+    if (d === null) {
+      return;
+    }
+    this._root = remove(this._root, d.index, d.count);
     if (this._root === null) {
-      return;
-    }
-    count = Math.floor(count);
-    if (count <= 0) {
-      return;
-    }
-    index = Math.floor(index);
-    if (index >= this._root.count) {
-      return;
-    }
-    if (index < 0) {
-      index += this._root.count;
-      if (index < 0) {
-        count += index;
-        if (count <= 0) {
-          return;
-        }
-        index = 0;
-      }
-    }
-    count = Math.min(count, this._root.count - index);
-    this._root = remove(this._root, index, count);
-    if (this._root === null) {
-      this._root = createLeaf(count, count * Math.max(0, size));
+      this._root = createLeaf(d.count, d.count * Math.max(0, size));
     } else {
-      this._root = insert(this._root, index, count, Math.max(0, size));
+      this._root = insert(this._root, d.index, d.count, Math.max(0, size));
     }
   }
 
@@ -279,6 +219,90 @@ interface ISpan {
    * This will be null IFF the span is a leaf.
    */
   right: ISpan;
+}
+
+
+/**
+ * Compute the adjusted query index for the given span and index.
+ *
+ * If the span is `null`, this returns `-1`. If the index is negative,
+ * it is offset from the end of the span. If the adjusted index is out
+ * of range, this returns `-1`.
+ */
+function toQueryIndex(span: ISpan, index: number): number {
+  if (span === null) {
+    return -1;
+  }
+  index = Math.floor(index);
+  if (index >= span.count) {
+    return -1;
+  }
+  if (index < 0) {
+    index += span.count;
+    if (index < 0) {
+      return -1;
+    }
+  }
+  return index;
+}
+
+
+/**
+ * Compute the adjusted insert parameters for the given span.
+ *
+ * If the count is `<= 0`, this returns `null`. If the span is `null`,
+ * the adjusted index will be `-1`. Otherwise, the index is clamped to
+ * the range `[0, span.count]`.
+ */
+function toInsertData(span: ISpan, index: number, count: number): { index: number; count: number } {
+  count = Math.floor(count);
+  if (count <= 0) {
+    return null;
+  }
+  if (span === null) {
+    return { index: -1, count: count };
+  }
+  index = Math.floor(index);
+  if (index < 0) {
+    index = Math.max(0, index + span.count);
+  } else {
+    index = Math.min(index, span.count);
+  }
+  return { index: index, count: count };
+}
+
+
+/**
+ * Compute the adjusted remove parameters for the given span.
+ *
+ * If the span is `null` or the count is `<= 0`, this returns `null`. If
+ * the index is negative, it is offset from the end of the span. If the
+ * adjusted index and count are fully out of range, this returns `null`.
+ * Otherwise, the index and count are clipped to be fully in range.
+ */
+function toRemoveData(span: ISpan, index: number, count: number): { index: number; count: number } {
+  if (span === null) {
+    return null;
+  }
+  count = Math.floor(count);
+  if (count <= 0) {
+    return null;
+  }
+  index = Math.floor(index);
+  if (index >= span.count) {
+    return null;
+  }
+  if (index < 0) {
+    index += span.count;
+    if (index < 0) {
+      count += index;
+      if (count <= 0) {
+        return null;
+      }
+      index = 0;
+    }
+  }
+  return { index: index, count: Math.min(count, span.count - index) };
 }
 
 
