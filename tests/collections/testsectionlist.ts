@@ -130,24 +130,24 @@ describe('phosphor.collections - sectionlist', () => {
       expect(obj.sizeOf(109)).to.be(20);
     });
 
-    it('should clamp the index range to `[0, Infinity]`', () => {
+    it('should clamp sections to valid range', () => {
       var obj = new SectionList();
       obj.insert(0, 100, 10);
-      obj.remove(-110, 10);
-      expect(obj.count).to.be(100);
+      obj.remove(-120, 30);
+      expect(obj.count).to.be(90);
+      obj.remove(80, 100);
+      expect(obj.count).to.be(80);
+      obj.remove(80, 100);
+      expect(obj.count).to.be(80);
     });
 
-    it('should be a no-op if index >= list.count', () => {
+    it('should be a no-op if count `<= 0`', () => {
       var obj = new SectionList();
       obj.insert(0, 100, 10);
-      obj.remove(-100, 10);
+      obj.remove(0, 0);
       expect(obj.count).to.be(100);
-      obj.remove(100, 10);
+      obj.remove(0, -100);
       expect(obj.count).to.be(100);
-      obj.remove(-99, 10);
-      expect(obj.count).to.be(90);
-      obj.remove(89, 10);
-      expect(obj.count).to.be(80);
     });
 
     it('should create list with variable sized sections', () => {
@@ -169,13 +169,9 @@ describe('phosphor.collections - sectionlist', () => {
       obj.remove(125, 50);
       obj.remove(75, 50);
       obj.remove(25, 50);
-      obj.remove(25, 50);  // no-op
-      obj.remove(0, 0);  // no-op
       obj.remove(0, 50);
       expect(obj.count).to.be(0);
     });
-
-
 
   });
 
