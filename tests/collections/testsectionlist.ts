@@ -219,6 +219,16 @@ describe('phosphor.collections - sectionlist', () => {
       expect(obj.sizeOf(0)).to.be(10);
     });
 
+    it('should clamp the size to `[0, Infinity]', () => {
+      var obj = new SectionList();
+      obj.insert(0, 100, 10);
+      obj.resize(0, 10, -10);
+      expect(obj.sizeOf(0)).to.be(0);
+      obj.resize(0, 10, Infinity);
+      expect(obj.sizeOf(0)).to.be(Infinity);
+      expect(obj.sizeOf(-1)).to.be(10);
+    });
+
   });
 
 
