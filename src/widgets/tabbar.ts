@@ -473,8 +473,8 @@ class TabBar extends Widget {
 
     // Setup the drag data object.
     var tlw = this._tabLayoutWidth();
-    var offsetX = (0.4 * tlw) | 0;
-    var clientY = contentRect.top + (0.5 * contentRect.height) | 0;
+    var offsetX = Math.floor(0.4 * tlw);
+    var clientY = contentRect.top + Math.floor(0.5 * contentRect.height);
     var cursorGrab = overrideCursor('default');
     this._dragData = {
       node: tab.node,
