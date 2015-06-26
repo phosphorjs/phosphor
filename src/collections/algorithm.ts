@@ -51,10 +51,7 @@ function indexOf<T>(array: T[], value: T, fromIndex = 0, wrap = false): number {
   }
   fromIndex = Math.floor(fromIndex);
   if (fromIndex < 0) {
-    fromIndex += len;
-    if (fromIndex < 0) {
-      fromIndex = 0;
-    }
+    fromIndex = Math.max(0, fromIndex + len);
   }
   if (wrap) {
     for (var i = 0; i < len; ++i) {
@@ -189,10 +186,7 @@ function findIndex<T>(array: T[], pred: IPredicate<T>, fromIndex = 0, wrap = fal
   }
   fromIndex = Math.floor(fromIndex);
   if (fromIndex < 0) {
-    fromIndex += len;
-    if (fromIndex < 0) {
-      fromIndex = 0;
-    }
+    fromIndex = Math.max(0, fromIndex + len);
   }
   if (wrap) {
     for (var i = 0; i < len; ++i) {
@@ -728,10 +722,7 @@ function insert<T>(array: T[], index: number, value: T): number {
   index = Math.floor(index);
   var len = array.length;
   if (index < 0) {
-    index += len;
-    if (index < 0) {
-      index = 0;
-    }
+    index = Math.max(0, index + len);
   } else if (index > len) {
     index = len;
   }
@@ -785,10 +776,7 @@ function move<T>(array: T[], fromIndex: number, toIndex: number): number {
   }
   toIndex = Math.floor(toIndex);
   if (toIndex < 0) {
-    toIndex += len;
-    if (toIndex < 0) {
-      toIndex = 0;
-    }
+    toIndex = Math.max(0, toIndex + len);
   } else if (toIndex >= len) {
     toIndex = len - 1;
   }
