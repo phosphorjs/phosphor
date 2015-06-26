@@ -907,7 +907,7 @@ export
 function reverse<T>(array: T[], fromIndex = 0, toIndex = array.length): T[] {
   var len = array.length;
   if (len <= 1) {
-    return;
+    return array;
   }
   fromIndex = Math.floor(fromIndex);
   if (fromIndex < 0) {
