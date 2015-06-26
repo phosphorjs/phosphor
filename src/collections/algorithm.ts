@@ -49,7 +49,7 @@ function indexOf<T>(array: T[], value: T, fromIndex = 0, wrap = false): number {
   if (len === 0) {
     return -1;
   }
-  fromIndex = fromIndex | 0;
+  fromIndex = Math.floor(fromIndex);
   if (fromIndex < 0) {
     fromIndex += len;
     if (fromIndex < 0) {
@@ -116,7 +116,7 @@ function lastIndexOf<T>(array: T[], value: T, fromIndex = -1, wrap = false): num
   if (len === 0) {
     return -1;
   }
-  fromIndex = fromIndex | 0;
+  fromIndex = Math.floor(fromIndex);
   if (fromIndex < 0) {
     fromIndex += len;
   } else if (fromIndex >= len) {
@@ -187,7 +187,7 @@ function findIndex<T>(array: T[], pred: IPredicate<T>, fromIndex = 0, wrap = fal
   if (len === 0) {
     return -1;
   }
-  fromIndex = fromIndex | 0;
+  fromIndex = Math.floor(fromIndex);
   if (fromIndex < 0) {
     fromIndex += len;
     if (fromIndex < 0) {
@@ -259,7 +259,7 @@ function findLastIndex<T>(array: T[], pred: IPredicate<T>, fromIndex = -1, wrap 
   if (len === 0) {
     return -1;
   }
-  fromIndex = fromIndex | 0;
+  fromIndex = Math.floor(fromIndex);
   if (fromIndex < 0) {
     fromIndex += len;
   } else if (fromIndex >= len) {
@@ -725,7 +725,7 @@ function copy<T>(array: T[]): T[] {
  */
 export
 function insert<T>(array: T[], index: number, value: T): number {
-  index = index | 0;
+  index = Math.floor(index);
   var len = array.length;
   if (index < 0) {
     index += len;
@@ -775,7 +775,7 @@ function insert<T>(array: T[], index: number, value: T): number {
  */
 export
 function move<T>(array: T[], fromIndex: number, toIndex: number): number {
-  fromIndex = fromIndex | 0;
+  fromIndex = Math.floor(fromIndex);
   var len = array.length;
   if (fromIndex < 0) {
     fromIndex += len;
@@ -783,7 +783,7 @@ function move<T>(array: T[], fromIndex: number, toIndex: number): number {
   if (fromIndex < 0 || fromIndex >= len) {
     return -1;
   }
-  toIndex = toIndex | 0;
+  toIndex = Math.floor(toIndex);
   if (toIndex < 0) {
     toIndex += len;
     if (toIndex < 0) {
@@ -838,7 +838,7 @@ function move<T>(array: T[], fromIndex: number, toIndex: number): number {
  */
 export
 function removeAt<T>(array: T[], index: number): T {
-  index = index | 0;
+  index = Math.floor(index);
   var len = array.length;
   if (index < 0) {
     index += len;
