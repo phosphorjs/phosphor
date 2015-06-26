@@ -873,4 +873,62 @@ function remove<T>(array: T[], value: T): number {
   return i;
 }
 
+
+/**
+ * Reverse an array in-place subject to an optional range.
+ *
+ * @param array - The array to reverse.
+ *
+ * @param fromIndex - The index of the first element of the range. If
+ *   this value is negative, it is taken as an offset from the end of
+ *   the array. The value is clamped to the range `[0, length - 1]`.
+ *   The default is `0`.
+ *
+ * @param fromIndex - The index of the last element of the range. If
+ *   this value is negative, it is taken as an offset from the end of
+ *   the array. The value is clamped to the range `[0, length - 1]`.
+ *   The default is `length`.
+ *
+ * @returns A reference to the original array.
+ *
+ * #### Example
+ * ```typescript
+ * import algo = phosphor.collections.algorithm;
+ *
+ * var data = [0, 1, 2, 3, 4];
+ * algo.reverse(data, 1, 3);    // [0, 3, 2, 1, 4]
+ * algo.reverse(data, 3);       // [0, 3, 2, 4, 1]
+ * algo.reverse(data);          // [1, 4, 2, 3, 0]
+ * algo.reverse(data, -3);      // [1, 4, 0, 3, 2]
+ * algo.reverse(data, -5, -2);  // [3, 0, 4, 1, 2]
+ * ```
+ */
+export
+function reverse<T>(array: T[], fromIndex = 0, toIndex = array.length): T[] {
+  var len = array.length;
+  if (len <= 1) {
+    return;
+  }
+  fromIndex = Math.floor(fromIndex);
+  if (fromIndex < 0) {
+    fromIndex = Math.max(0, fromIndex + len);
+  } else if (fromIndex >= len) {
+    fromIndex = len - 1;
+  }
+  toIndex = Math.floor(toIndex);
+  if (toIndex < 0) {
+    toIndex = Math.max(0, toIndex + len);
+  } else if (toIndex >= len) {
+    toIndex = len - 1;
+  }
+  while (fromIndex < toIndex) {
+    var temp = array[fromIndex];
+    array[fromIndex] = array[toIndex];
+    array[toIndex] = temp;
+    fromIndex++;
+    toIndex--;
+  }
+  return array;
+}
+
 } // module phosphor.collections.algorithm
