@@ -931,4 +931,51 @@ function reverse<T>(array: T[], fromIndex = 0, toIndex = array.length): T[] {
   return array;
 }
 
+
+/**
+ * Rotate the elements an array by a positive or negative delta.
+ *
+ * @param array - The array to rotate.
+ *
+ * @param delta - The amount of rotation to apply to the elements. A
+ *   positive delta will shift elements to the left. A negative delta
+ *   will shift elements to the right.
+ *
+ * @returns A reference to the original array.
+ *
+ * #### Notes
+ * This executes in `O(n)` time and `O(1)` space.
+ *
+ * #### Example
+ * ```typescript
+ * import algo = phosphor.collections.algorithm;
+ *
+ * var data = [0, 1, 2, 3, 4];
+ * algo.rotate(data, 2);    // [2, 3, 4, 0, 1]
+ * algo.rotate(data, -2);   // [0, 1, 2, 3, 4]
+ * algo.rotate(data, 10);   // [0, 1, 2, 3, 4]
+ * algo.rotate(data, 9);    // [4, 0, 1, 2, 3]
+ * ```
+ */
+export
+function rotate<T>(array: T[], delta: number): T[] {
+  var len = array.length;
+  if (len <= 1) {
+    return array;
+  }
+  delta = Math.floor(delta);
+  if (delta > 0) {
+    delta = delta % len;
+  } else if (delta < 0) {
+    delta = ((delta % len) + len) % len;
+  }
+  if (delta === 0) {
+    return array;
+  }
+  reverse(array, 0, delta - 1);
+  reverse(array, delta, len - 1);
+  reverse(array, 0, len - 1);
+  return array;
+}
+
 } // module phosphor.collections.algorithm
