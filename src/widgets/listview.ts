@@ -321,14 +321,16 @@ class ListView extends Widget {
     var left = box.paddingLeft;
     var width = this.width - box.horizontalSum;
     var height = this.height - box.verticalSum;
+
+    this._vScrollBar.maximum = Math.max(0, this._sections.size - height);
+    this._vScrollBar.pageSize = height;
+
     if (height >= this._sections.size) {
       this._vScrollBar.hide();
     } else {
       var vsh = this._vScrollBar.sizeHint();
       var sbl = left + width - vsh.width;
       this._vScrollBar.setGeometry(sbl, top, vsh.width, height);
-      this._vScrollBar.maximum = Math.max(0, this._sections.size - height);
-      this._vScrollBar.pageSize = height;
       this._vScrollBar.show();
     }
   }
