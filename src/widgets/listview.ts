@@ -137,7 +137,7 @@ class ListView extends Widget {
   insertRows(index: number, count:number, height: number): void {
     // TODO save/restore scroll position
     this._sections.insert(index, count, height);
-    this._updateScrollBars();
+    this._layoutContent();
     this.update();
   }
 
@@ -154,7 +154,7 @@ class ListView extends Widget {
   removeRows(index: number, count: number): void {
     // TODO save/restore scroll position
     this._sections.remove(index, count);
-    this._updateScrollBars();
+    this._layoutContent();
     this.update();
   }
 
@@ -174,7 +174,7 @@ class ListView extends Widget {
   resizeRows(index: number, count: number, height: number): void {
     // TODO save/restore scroll position
     this._sections.resize(index, count, height);
-    this._updateScrollBars();
+    this._layoutContent();
     this.update();
   }
 
@@ -224,13 +224,7 @@ class ListView extends Widget {
    * A method invoked on a 'resize' message.
    */
   protected onResize(msg: ResizeMessage): void {
-    var box = this.boxSizing;
-    var top = box.paddingTop;
-    var left = box.paddingLeft;
-    var width = msg.width - box.horizontalSum;
-    var height = msg.height - box.verticalSum;
-    this._canvas.setGeometry(left, top, width, height);
-    this._updateScrollBars();
+    this._layoutContent();
     this.update();
   }
 
@@ -312,33 +306,59 @@ class ListView extends Widget {
   }
 
   /**
-   * Update the range and positions of the scrollbars.
+   *
    */
-  private _updateScrollBars(): void {
-    // TODO handle horizontal scrollbar
+  private _layoutContent(): void {
     var box = this.boxSizing;
-    var top = box.paddingTop;
-    var left = box.paddingLeft;
-    var width = this.width - box.horizontalSum;
-    var height = this.height - box.verticalSum;
+    var top = box.borderTop;
+    var left = box.borderLeft;
+    var width = this.width - left - box.borderRight;
+    var height = this.height - top - box.borderTop;
 
-    this._vScrollBar.maximum = Math.max(0, this._sections.size - height);
-    this._vScrollBar.pageSize = height;
+    var vsb = this._vScrollBar;
+    var vsbW = vsb.sizeHint().width;
 
-    if (height >= this._sections.size) {
-      this._vScrollBar.hide();
-    } else {
-      var vsh = this._vScrollBar.sizeHint();
-      var sbl = left + width - vsh.width;
-      this._vScrollBar.setGeometry(sbl, top, vsh.width, height);
-      this._vScrollBar.show();
+    var hsb = this._hScrollBar;
+    var hsbH = hsb.sizeHint().height;
+
+    var vScroll = height < this._sections.size;
+    var hScroll = width < this._scrollWidth;
+
+    if (vScroll !== hScroll) {
+      if (vScroll) {
+        hScroll = (width - vsbW) < this._scrollWidth;
+      } else {
+        vScroll = (height - hsbH) < this._sections.size;
+      }
     }
+
+    var viewportW = width - (vScroll ? vsbW : 0);
+    var viewportH = height - (hScroll ? hsbH : 0);
+
+    vsb.pageSize = viewportH;
+    vsb.maximum = Math.max(0, this._sections.size - viewportH);
+    vsb.setGeometry(left + viewportW, top, vsbW, viewportH);
+    vsb.setVisible(vScroll);
+
+    hsb.pageSize = viewportW;
+    hsb.maximum = Math.max(0, this._scrollWidth - viewportW);
+    hsb.setGeometry(left, top + viewportH, viewportW, hsbH);
+    hsb.setVisible(hScroll);
+
+    var corner = this._corner;
+    corner.setGeometry(left + viewportW, top + viewportH, vsbW, hsbH);
+    corner.setVisible(vScroll && hScroll);
+
+    var canvasL = left - hsb.value;
+    var canvasW = Math.max(viewportW, this._scrollWidth);
+    this._canvas.setGeometry(canvasL, top, canvasW, viewportH);
   }
 
   /**
    * Handle the `sliderMoved` signal from the horizontal scroll bar.
    */
   private _hsb_sliderMoved(sender: ScrollBar, value: number): void {
+    this._layoutContent();
     // TODO scroll horizontally
   }
 
@@ -351,6 +371,7 @@ class ListView extends Widget {
 
   private _canvas: Widget;
   private _corner: Widget;
+  private _scrollWidth = 350;
   private _hScrollBar: ScrollBar;
   private _vScrollBar: ScrollBar;
   private _visibleRows: Row[] = [];
