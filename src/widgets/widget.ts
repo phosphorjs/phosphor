@@ -12,16 +12,16 @@ import algo = collections.algorithm;
 
 import IMessage = core.IMessage;
 import IMessageHandler = core.IMessageHandler;
+import ISignal = core.ISignal;
 import Message = core.Message;
 import NodeBase = core.NodeBase;
-import Signal = core.Signal;
 import clearMessageData = core.clearMessageData;
-import disconnect = core.disconnect;
-import emit = core.emit;
+import clearSignalData = core.clearSignalData;
 import installMessageFilter = core.installMessageFilter;
 import postMessage = core.postMessage;
 import removeMessageFilter = core.removeMessageFilter;
 import sendMessage = core.sendMessage;
+import signal = core.signal;
 
 import IBoxSizing = utility.IBoxSizing;
 import Size = utility.Size;
@@ -121,7 +121,8 @@ class Widget extends NodeBase implements IMessageHandler {
   /**
    * A signal emitted when the widget is disposed.
    */
-  static disposed = new Signal<Widget, void>();
+  @signal
+  disposed: ISignal<void>;
 
   /**
    * Construct a new widget.
@@ -136,10 +137,9 @@ class Widget extends NodeBase implements IMessageHandler {
    */
   dispose(): void {
     this.setFlag(WidgetFlag.IsDisposed);
-    emit(this, Widget.disposed, void 0);
+    this.disposed.emit(void 0);
 
-    disconnect(this, null, null, null);
-    disconnect(null, null, this, null);
+    clearSignalData(this);
     clearMessageData(this);
 
     var layout = this._layout;
