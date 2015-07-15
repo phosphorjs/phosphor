@@ -32,8 +32,7 @@
     "typings",
     "gulpfile.js",
     "package.json",
-    "README.md",
-    "tsd.json"
+    "README.md"
   ],
   "dependencies": {},
   "devDependencies": {}
