@@ -22,7 +22,8 @@ var karma = require('karma').server;
 
 
 var buildTypings = [
-  './typings/es6-promise/es6-promise.d.ts'
+  './typings/es6-container-shim/es6-container-shim.d.ts',
+  './typings/es6-promise/es6-promise.d.ts',
 ];
 
 var examplesTypings = buildTypings.concat([
@@ -127,6 +128,8 @@ gulp.task('clean', function(cb) {
 
 gulp.task('src', function() {
   var project = typescript.createProject({
+    typescript: require('typescript'),
+    experimentalDecorators: true,
     declarationFiles: true,
     noImplicitAny: true,
     target: 'ES5',
@@ -172,6 +175,8 @@ gulp.task('watch', function() {
 
 gulp.task('examples', function() {
   var project = typescript.createProject({
+    typescript: require('typescript'),
+    experimentalDecorators: true,
     declarationFiles: false,
     noImplicitAny: true,
     target: 'ES5',
@@ -212,6 +217,8 @@ gulp.task('docs', function() {
 
 gulp.task('tests', function() {
   var project = typescript.createProject({
+    typescript: require('typescript'),
+    experimentalDecorators: true,
     declarationFiles: false,
     noImplicitAny: true,
     target: 'ES5',
