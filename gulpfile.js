@@ -16,7 +16,8 @@ var rename = require('gulp-rename');
 var stream = require('event-stream');
 var stylus = require('gulp-stylus');
 var typedoc = require('gulp-typedoc');
-var typescript = require('gulp-typescript');
+var typescript = require('typescript');
+var gulpTypescript = require('gulp-typescript');
 var uglify = require('gulp-uglify');
 var karma = require('karma').server;
 
@@ -127,8 +128,8 @@ gulp.task('clean', function(cb) {
 
 
 gulp.task('src', function() {
-  var project = typescript.createProject({
-    typescript: require('typescript'),
+  var project = gulpTypescript.createProject({
+    typescript: typescript,
     experimentalDecorators: true,
     declarationFiles: true,
     noImplicitAny: true,
@@ -136,7 +137,7 @@ gulp.task('src', function() {
   });
 
   var src = gulp.src(buildTypings.concat(tsSources))
-    .pipe(typescript(project));
+    .pipe(gulpTypescript(project));
 
   var dts = src.dts.pipe(concat('phosphor.d.ts'))
     .pipe(gulp.dest('./dist'));
@@ -174,8 +175,8 @@ gulp.task('watch', function() {
 
 
 gulp.task('examples', function() {
-  var project = typescript.createProject({
-    typescript: require('typescript'),
+  var project = gulpTypescript.createProject({
+    typescript: typescript,
     experimentalDecorators: true,
     declarationFiles: false,
     noImplicitAny: true,
@@ -188,7 +189,7 @@ gulp.task('examples', function() {
   ]);
 
   var src = gulp.src(sources)
-    .pipe(typescript(project))
+    .pipe(gulpTypescript(project))
     .pipe(rename(function (path) {
       path.dirname += '/build'; }))
     .pipe(header('"use strict";\n'))
@@ -216,8 +217,8 @@ gulp.task('docs', function() {
 
 
 gulp.task('tests', function() {
-  var project = typescript.createProject({
-    typescript: require('typescript'),
+  var project = gulpTypescript.createProject({
+    typescript: typescript,
     experimentalDecorators: true,
     declarationFiles: false,
     noImplicitAny: true,
@@ -230,7 +231,7 @@ gulp.task('tests', function() {
   ]);
 
   return gulp.src(sources)
-    .pipe(typescript(project))
+    .pipe(gulpTypescript(project))
     .pipe(concat('index.js'))
     .pipe(header('"use strict";\n'))
     .pipe(gulp.dest('tests/build'));
