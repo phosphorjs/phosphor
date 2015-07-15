@@ -108,6 +108,26 @@ interface ISignal<T> {
  * @param obj - The object on which to define the signal.
  *
  * @param name - The name of the signal to define.
+ *
+ * #### Notes
+ * This function can also be used as a non-decorator by invoking it
+ * directly on the target object.
+ *
+ * #### Example
+ * ```typescript
+ * class SomeClass {
+ *
+ *   @signal
+ *   valueChanged: ISignal<number>;
+ *
+ * }
+ *
+ * // define a signal directly on a prototype
+ * signal(SomeClass.prototype, 'valueChanged');
+ *
+ * // define a signal directly on an object
+ * signal(someObject, 'someSignal');
+ * ```
  */
 export
 function signal(obj: any, name: string): void {
@@ -120,7 +140,19 @@ function signal(obj: any, name: string): void {
 /**
  * Get the object which is emitting the curent signal.
  *
+ * #### Notes
  * If a signal is not currently being emitted, this returns `null`.
+ *
+ * #### Example
+ * ```typescript
+ * someObject.valueChanged.connect(myCallback);
+ *
+ * someObject.valueChanged.emit(42);
+ *
+ * function myCallback(value: number): void {
+ *   console.log(sender() === someObject); // true
+ * }
+ * ```
  */
 export
 function sender(): any {
@@ -130,6 +162,13 @@ function sender(): any {
 
 /**
  * Remove all signal connections where the given object is the sender.
+ *
+ * @param obj - The sender object of interest.
+ *
+ * #### Example
+ * ```typescript
+ * disconnectSender(someObject);
+ * ```
  */
 export
 function disconnectSender(obj: any): void {
@@ -152,6 +191,22 @@ function disconnectSender(obj: any): void {
 
 /**
  * Remove all signal connections where the given object is the receiver.
+ *
+ * @param obj - The receiver object of interest.
+ *
+ * #### Notes
+ * If a `thisArg` is provided when connecting a signal, that object
+ * is considered the receiver. Otherwise, the `callback` is used as
+ * the receiver.
+ *
+ * #### Example
+ * ```typescript
+ * // disconnect a regular object receiver
+ * disconnectReceiver(myObject);
+ *
+ * // disconnect a plain callback receiver
+ * disconnectReceiver(myCallback);
+ * ```
  */
 export
 function disconnectReceiver(obj: any): void {
@@ -174,7 +229,14 @@ function disconnectReceiver(obj: any): void {
 /**
  * Clear all signal data associated with the given object.
  *
- * This removes all signal connections associated with the object.
+ * #### Notes
+ * This removes all signal connections where the object is used as
+ * either the sender or the receiver.
+ *
+ * #### Example
+ * ```typescript
+ * clearSignalData(someObject);
+ * ```
  */
 export
 function clearSignalData(obj: any): void {
@@ -222,7 +284,7 @@ class BoundSignal<T> implements ISignal<T> {
 
 
 /**
- * A simple struct which holds connection data.
+ * A struct which holds connection data.
  */
 class Connection {
   /**
@@ -253,7 +315,7 @@ class Connection {
 
 
 /**
- * The list of connections for a signal of a sender.
+ * The list of receiver connections for a specific signal.
  */
 class ConnectionList {
   /**
@@ -280,12 +342,6 @@ type ConnectionMap = { [signal: string]: ConnectionList };
 
 
 /**
- * The object emitting the current signal.
- */
-var currentSender: any = null;
-
-
-/**
  * A mapping of sender object to its connection map.
  */
 var senderMap = new WeakMap<any, ConnectionMap>();
@@ -295,6 +351,12 @@ var senderMap = new WeakMap<any, ConnectionMap>();
  * A mapping of receiver object to its connection array.
  */
 var receiverMap = new WeakMap<any, Connection>();
+
+
+/**
+ * The object emitting the current signal.
+ */
+var currentSender: any = null;
 
 
 /**
