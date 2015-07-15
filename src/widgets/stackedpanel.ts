@@ -7,9 +7,8 @@
 |----------------------------------------------------------------------------*/
 module phosphor.widgets {
 
-import Signal = core.Signal;
-import connect = core.connect;
-import emit = core.emit;
+import ISignal = core.ISignal;
+import signal = core.signal;
 
 import Pair = utility.Pair;
 
@@ -28,7 +27,8 @@ class StackedPanel extends Panel {
   /**
    * A signal emitted when a widget is removed from the panel.
    */
-  static widgetRemoved = new Signal<StackedPanel, Pair<number, Widget>>();
+  @signal
+  widgetRemoved: ISignal<Pair<number, Widget>>;
 
   /**
    * Construct a new stacked panel.
@@ -37,7 +37,7 @@ class StackedPanel extends Panel {
     super(new StackedLayout());
     this.addClass(STACKED_PANEL_CLASS);
     var layout = <StackedLayout>this.layout;
-    connect(layout, StackedLayout.widgetRemoved, this, this._p_widgetRemoved);
+    layout.widgetRemoved.connect(this._p_widgetRemoved, this);
   }
 
   /**
@@ -106,8 +106,8 @@ class StackedPanel extends Panel {
   /**
    * Handle the `widgetRemoved` signal for the stacked layout.
    */
-  private _p_widgetRemoved(sender: StackedLayout, args: Pair<number, Widget>): void {
-    emit(this, StackedPanel.widgetRemoved, args);
+  private _p_widgetRemoved(args: Pair<number, Widget>): void {
+    this.widgetRemoved.emit(args);
   }
 }
 

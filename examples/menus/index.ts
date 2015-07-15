@@ -7,8 +7,6 @@
 |----------------------------------------------------------------------------*/
 module example {
 
-import connect = phosphor.core.connect;
-
 import Menu = phosphor.widgets.Menu;
 import MenuBar = phosphor.widgets.MenuBar;
 import MenuItem = phosphor.widgets.MenuItem;
@@ -23,7 +21,7 @@ var handler = {
   closeTab: () => console.log('Close Tab'),
   undo: () => console.log('Undo'),
   repeat: () => console.log('Repeat'),
-  toggleSave: (sender: MenuItem, checked: boolean) => console.log('Save on exit:', checked),
+  toggleSave: (checked: boolean) => console.log('Save on exit:', checked),
 };
 
 
@@ -59,11 +57,11 @@ function main(): void {
     mnemonic: 'c',
   });
 
-  connect(copyItem, MenuItem.triggered, handler, handler.copy);
-  connect(cutItem, MenuItem.triggered, handler, handler.cut);
-  connect(pasteItem, MenuItem.triggered, handler, handler.paste);
-  connect(newTabItem, MenuItem.triggered, handler, handler.newTab);
-  connect(closeTabItem, MenuItem.triggered, handler, handler.closeTab);
+  copyItem.triggered.connect(handler.copy);
+  cutItem.triggered.connect(handler.cut);
+  pasteItem.triggered.connect(handler.paste);
+  newTabItem.triggered.connect(handler.newTab);
+  closeTabItem.triggered.connect(handler.closeTab);
 
   var saveOnExitItem = new MenuItem({
     text: 'Save On Exit',
@@ -72,7 +70,7 @@ function main(): void {
     mnemonic: 's',
   });
 
-  connect(saveOnExitItem, MenuItem.toggled, handler, handler.toggleSave);
+  saveOnExitItem.toggled.connect(handler.toggleSave);
 
   var taskMgrItem = new MenuItem({
     text: 'Task Manager',
@@ -95,7 +93,7 @@ function main(): void {
     className: 'close',
   });
 
-  connect(closeItem, MenuItem.triggered, handler, handler.close);
+  closeItem.triggered.connect(handler.close);
 
   function separator(): MenuItem {
     return new MenuItem({ type: 'separator' });
@@ -159,8 +157,8 @@ function main(): void {
     className: 'repeat',
   });
 
-  connect(undoItem, MenuItem.triggered, handler, handler.undo);
-  connect(repeatItem, MenuItem.triggered, handler, handler.repeat);
+  undoItem.triggered.connect(handler.undo);
+  repeatItem.triggered.connect(handler.repeat);
 
   var editItem = new MenuItem({
     text: 'Edit',

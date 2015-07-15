@@ -9,8 +9,8 @@ module phosphor.widgets {
 
 import algo = collections.algorithm;
 
-import Signal = core.Signal;
-import emit = core.emit;
+import ISignal = core.ISignal;
+import signal = core.signal;
 
 import Pair = utility.Pair;
 import Size = utility.Size;
@@ -33,7 +33,8 @@ class StackedLayout extends Layout {
   /**
    * A signal emitted when a widget is removed from the layout.
    */
-  static widgetRemoved = new Signal<StackedLayout, Pair<number, Widget>>();
+  @signal
+  widgetRemoved: ISignal<Pair<number, Widget>>;
 
   /**
    * Construct a new stack layout.
@@ -115,7 +116,7 @@ class StackedLayout extends Layout {
       this._currentItem = null;
       item.widget.hide();
     }
-    emit(this, StackedLayout.widgetRemoved, new Pair(index, item.widget));
+    this.widgetRemoved.emit(new Pair(index, item.widget));
     return item;
   }
 

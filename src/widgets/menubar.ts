@@ -10,8 +10,7 @@ module phosphor.widgets {
 import algo = collections.algorithm;
 
 import IMessage = core.IMessage;
-import connect = core.connect;
-import disconnect = core.disconnect;
+import sender = core.sender;
 
 import Size = utility.Size;
 import hitTest = utility.hitTest;
@@ -201,7 +200,7 @@ class MenuBar extends Widget {
     var node = this.createItemNode(item);
     index = algo.insert(this._items, index, item);
     algo.insert(this._nodes, index, node);
-    connect(item, MenuItem.changed, this, this._p_changed);
+    item.changed.connect(this._p_changed, this);
     this.insertItemNode(index, node);
     this._collapseSeparators();
     return index;
@@ -218,7 +217,7 @@ class MenuBar extends Widget {
     var item = algo.removeAt(this._items, index);
     var node = algo.removeAt(this._nodes, index);
     if (item) {
-      disconnect(item, MenuItem.changed, this, this._p_changed);
+      item.changed.disconnect(this._p_changed, this);
     }
     if (node) {
       this.removeItemNode(node);
@@ -581,7 +580,7 @@ class MenuBar extends Widget {
     this._childMenu = menu;
     menu.addClass(MENU_CLASS);
     menu.open(rect.left, rect.bottom, false, true);
-    connect(menu, Menu.closed, this, this._p_closed);
+    menu.closed.connect(this._p_closed, this);
   }
 
   /**
@@ -589,7 +588,7 @@ class MenuBar extends Widget {
    */
   private _closeChildMenu(): void  {
     if (this._childMenu) {
-      disconnect(this._childMenu, Menu.closed, this, this._p_closed);
+      this._childMenu.closed.disconnect(this._p_closed, this);
       this._childMenu.removeClass(MENU_CLASS);
       this._childMenu.close();
       this._childMenu = null;
@@ -667,9 +666,10 @@ class MenuBar extends Widget {
   /**
    * Handle the `closed` signal from the child menu.
    */
-  private _p_closed(sender: Menu): void {
-    disconnect(sender, Menu.closed, this, this._p_closed);
-    sender.removeClass(MENU_CLASS);
+  private _p_closed(): void {
+    var menu = <Menu>sender();
+    menu.closed.disconnect(this._p_closed, this);
+    menu.removeClass(MENU_CLASS);
     this._childMenu = null;
     this._setState(MBState.Inactive);
     this._setActiveIndex(-1);
@@ -678,8 +678,9 @@ class MenuBar extends Widget {
   /**
    * Handle the `changed` signal from a menu item.
    */
-  private _p_changed(sender: MenuItem): void {
-    var i = this.indexOf(sender);
+  private _p_changed(): void {
+    var item = <MenuItem>sender();
+    var i = this.indexOf(item);
     if (i === -1) {
       return;
     }
@@ -687,7 +688,7 @@ class MenuBar extends Widget {
       this._setState(MBState.Inactive);
       this._setActiveIndex(-1);
     }
-    this.initItemNode(sender, this._nodes[i]);
+    this.initItemNode(item, this._nodes[i]);
     this._collapseSeparators();
   }
 
