@@ -1,3 +1,9 @@
+// Derived from the TypeScript ES6 container definitions:
+// https://github.com/Microsoft/TypeScript/blob/master/src/lib/es6.d.ts
+//
+// Released under the Apache 2.0 License:
+// https://github.com/Microsoft/TypeScript/blob/master/LICENSE.txt
+
 interface Map<K, V> {
     clear(): void;
     delete(key: K): boolean;
