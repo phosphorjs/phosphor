@@ -278,7 +278,8 @@ class ScrollBar extends Widget {
     // Compute the size of the slider bounded by its minimum.
     var minSize = this._getSliderMinSize();
     var span = this._maximum - this._minimum;
-    var size = Math.max(minSize, (this._pageSize / span) * trackSize);
+    var size = (this._pageSize * trackSize) / (span + this._pageSize);
+    size = Math.max(minSize, size);
 
     // Compute the position of slider bounded by the track limit.
     var pos = (this._value / span) * (trackSize - size);

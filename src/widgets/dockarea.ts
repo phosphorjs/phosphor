@@ -743,8 +743,8 @@ class DockArea extends Widget {
 
     // Update the drag data with the current tab geometry.
     var dragData = this._dragData;
-    dragData.offsetX = (0.4 * this._tabWidth) | 0;
-    dragData.offsetY = (0.6 * tab.node.offsetHeight) | 0;
+    dragData.offsetX = Math.floor(0.4 * this._tabWidth);
+    dragData.offsetY = Math.floor(0.6 * tab.node.offsetHeight);
 
     // Grab the cursor for the drag operation.
     dragData.cursorGrab = overrideCursor('default');

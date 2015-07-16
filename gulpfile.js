@@ -42,6 +42,7 @@ var tsSources = [
   'collections/circularbuffer',
   'collections/common',
   'collections/queue',
+  'collections/sectionlist',
 
   'utility/boxsizing',
   'utility/cursor',

@@ -49,12 +49,9 @@ function indexOf<T>(array: T[], value: T, fromIndex = 0, wrap = false): number {
   if (len === 0) {
     return -1;
   }
-  fromIndex = fromIndex | 0;
+  fromIndex = Math.floor(fromIndex);
   if (fromIndex < 0) {
-    fromIndex += len;
-    if (fromIndex < 0) {
-      fromIndex = 0;
-    }
+    fromIndex = Math.max(0, fromIndex + len);
   }
   if (wrap) {
     for (var i = 0; i < len; ++i) {
@@ -116,7 +113,7 @@ function lastIndexOf<T>(array: T[], value: T, fromIndex = -1, wrap = false): num
   if (len === 0) {
     return -1;
   }
-  fromIndex = fromIndex | 0;
+  fromIndex = Math.floor(fromIndex);
   if (fromIndex < 0) {
     fromIndex += len;
   } else if (fromIndex >= len) {
@@ -187,12 +184,9 @@ function findIndex<T>(array: T[], pred: IPredicate<T>, fromIndex = 0, wrap = fal
   if (len === 0) {
     return -1;
   }
-  fromIndex = fromIndex | 0;
+  fromIndex = Math.floor(fromIndex);
   if (fromIndex < 0) {
-    fromIndex += len;
-    if (fromIndex < 0) {
-      fromIndex = 0;
-    }
+    fromIndex = Math.max(0, fromIndex + len);
   }
   if (wrap) {
     for (var i = 0; i < len; ++i) {
@@ -259,7 +253,7 @@ function findLastIndex<T>(array: T[], pred: IPredicate<T>, fromIndex = -1, wrap 
   if (len === 0) {
     return -1;
   }
-  fromIndex = fromIndex | 0;
+  fromIndex = Math.floor(fromIndex);
   if (fromIndex < 0) {
     fromIndex += len;
   } else if (fromIndex >= len) {
@@ -725,13 +719,10 @@ function copy<T>(array: T[]): T[] {
  */
 export
 function insert<T>(array: T[], index: number, value: T): number {
-  index = index | 0;
+  index = Math.floor(index);
   var len = array.length;
   if (index < 0) {
-    index += len;
-    if (index < 0) {
-      index = 0;
-    }
+    index = Math.max(0, index + len);
   } else if (index > len) {
     index = len;
   }
@@ -775,7 +766,7 @@ function insert<T>(array: T[], index: number, value: T): number {
  */
 export
 function move<T>(array: T[], fromIndex: number, toIndex: number): number {
-  fromIndex = fromIndex | 0;
+  fromIndex = Math.floor(fromIndex);
   var len = array.length;
   if (fromIndex < 0) {
     fromIndex += len;
@@ -783,12 +774,9 @@ function move<T>(array: T[], fromIndex: number, toIndex: number): number {
   if (fromIndex < 0 || fromIndex >= len) {
     return -1;
   }
-  toIndex = toIndex | 0;
+  toIndex = Math.floor(toIndex);
   if (toIndex < 0) {
-    toIndex += len;
-    if (toIndex < 0) {
-      toIndex = 0;
-    }
+    toIndex = Math.max(0, toIndex + len);
   } else if (toIndex >= len) {
     toIndex = len - 1;
   }
@@ -838,7 +826,7 @@ function move<T>(array: T[], fromIndex: number, toIndex: number): number {
  */
 export
 function removeAt<T>(array: T[], index: number): T {
-  index = index | 0;
+  index = Math.floor(index);
   var len = array.length;
   if (index < 0) {
     index += len;
@@ -883,6 +871,111 @@ function remove<T>(array: T[], value: T): number {
   var i = indexOf(array, value);
   if (i !== -1) removeAt(array, i);
   return i;
+}
+
+
+/**
+ * Reverse an array in-place subject to an optional range.
+ *
+ * @param array - The array to reverse.
+ *
+ * @param fromIndex - The index of the first element of the range. If
+ *   this value is negative, it is taken as an offset from the end of
+ *   the array. The value is clamped to the range `[0, length - 1]`.
+ *   The default is `0`.
+ *
+ * @param fromIndex - The index of the last element of the range. If
+ *   this value is negative, it is taken as an offset from the end of
+ *   the array. The value is clamped to the range `[0, length - 1]`.
+ *   The default is `length`.
+ *
+ * @returns A reference to the original array.
+ *
+ * #### Example
+ * ```typescript
+ * import algo = phosphor.collections.algorithm;
+ *
+ * var data = [0, 1, 2, 3, 4];
+ * algo.reverse(data, 1, 3);    // [0, 3, 2, 1, 4]
+ * algo.reverse(data, 3);       // [0, 3, 2, 4, 1]
+ * algo.reverse(data);          // [1, 4, 2, 3, 0]
+ * algo.reverse(data, -3);      // [1, 4, 0, 3, 2]
+ * algo.reverse(data, -5, -2);  // [3, 0, 4, 1, 2]
+ * ```
+ */
+export
+function reverse<T>(array: T[], fromIndex = 0, toIndex = array.length): T[] {
+  var len = array.length;
+  if (len <= 1) {
+    return array;
+  }
+  fromIndex = Math.floor(fromIndex);
+  if (fromIndex < 0) {
+    fromIndex = Math.max(0, fromIndex + len);
+  } else if (fromIndex >= len) {
+    fromIndex = len - 1;
+  }
+  toIndex = Math.floor(toIndex);
+  if (toIndex < 0) {
+    toIndex = Math.max(0, toIndex + len);
+  } else if (toIndex >= len) {
+    toIndex = len - 1;
+  }
+  while (fromIndex < toIndex) {
+    var temp = array[fromIndex];
+    array[fromIndex] = array[toIndex];
+    array[toIndex] = temp;
+    fromIndex++;
+    toIndex--;
+  }
+  return array;
+}
+
+
+/**
+ * Rotate the elements an array by a positive or negative delta.
+ *
+ * @param array - The array to rotate.
+ *
+ * @param delta - The amount of rotation to apply to the elements. A
+ *   positive delta will shift elements to the left. A negative delta
+ *   will shift elements to the right.
+ *
+ * @returns A reference to the original array.
+ *
+ * #### Notes
+ * This executes in `O(n)` time and `O(1)` space.
+ *
+ * #### Example
+ * ```typescript
+ * import algo = phosphor.collections.algorithm;
+ *
+ * var data = [0, 1, 2, 3, 4];
+ * algo.rotate(data, 2);    // [2, 3, 4, 0, 1]
+ * algo.rotate(data, -2);   // [0, 1, 2, 3, 4]
+ * algo.rotate(data, 10);   // [0, 1, 2, 3, 4]
+ * algo.rotate(data, 9);    // [4, 0, 1, 2, 3]
+ * ```
+ */
+export
+function rotate<T>(array: T[], delta: number): T[] {
+  var len = array.length;
+  if (len <= 1) {
+    return array;
+  }
+  delta = Math.floor(delta);
+  if (delta > 0) {
+    delta = delta % len;
+  } else if (delta < 0) {
+    delta = ((delta % len) + len) % len;
+  }
+  if (delta === 0) {
+    return array;
+  }
+  reverse(array, 0, delta - 1);
+  reverse(array, delta, len - 1);
+  reverse(array, 0, len - 1);
+  return array;
 }
 
 } // module phosphor.collections.algorithm
