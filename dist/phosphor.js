@@ -55,12 +55,9 @@ var phosphor;
                 if (len === 0) {
                     return -1;
                 }
-                fromIndex = fromIndex | 0;
+                fromIndex = Math.floor(fromIndex);
                 if (fromIndex < 0) {
-                    fromIndex += len;
-                    if (fromIndex < 0) {
-                        fromIndex = 0;
-                    }
+                    fromIndex = Math.max(0, fromIndex + len);
                 }
                 if (wrap) {
                     for (var i = 0; i < len; ++i) {
@@ -123,7 +120,7 @@ var phosphor;
                 if (len === 0) {
                     return -1;
                 }
-                fromIndex = fromIndex | 0;
+                fromIndex = Math.floor(fromIndex);
                 if (fromIndex < 0) {
                     fromIndex += len;
                 }
@@ -196,12 +193,9 @@ var phosphor;
                 if (len === 0) {
                     return -1;
                 }
-                fromIndex = fromIndex | 0;
+                fromIndex = Math.floor(fromIndex);
                 if (fromIndex < 0) {
-                    fromIndex += len;
-                    if (fromIndex < 0) {
-                        fromIndex = 0;
-                    }
+                    fromIndex = Math.max(0, fromIndex + len);
                 }
                 if (wrap) {
                     for (var i = 0; i < len; ++i) {
@@ -269,7 +263,7 @@ var phosphor;
                 if (len === 0) {
                     return -1;
                 }
-                fromIndex = fromIndex | 0;
+                fromIndex = Math.floor(fromIndex);
                 if (fromIndex < 0) {
                     fromIndex += len;
                 }
@@ -388,7 +382,7 @@ var phosphor;
             algorithm.findLast = findLast;
             /**
              * Using a binary search, find the index of the first element in an
-             * array which compares `<=` to a value.
+             * array which compares `>=` to a value.
              *
              * @param array - The array of values to be searched. It must be sorted
              *   in ascending order.
@@ -398,7 +392,7 @@ var phosphor;
              * @param cmp - The comparator function to apply to the values.
              *
              * @returns The index of the first element in `array` which compares
-             *   `<=` to `value`, or `array.length` if there is no such element.
+             *   `>=` to `value`, or `array.length` if there is no such element.
              *
              * #### Example
              * ```typescript
@@ -719,13 +713,10 @@ var phosphor;
              * **See also** [[removeAt]] and [[remove]].
              */
             function insert(array, index, value) {
-                index = index | 0;
+                index = Math.floor(index);
                 var len = array.length;
                 if (index < 0) {
-                    index += len;
-                    if (index < 0) {
-                        index = 0;
-                    }
+                    index = Math.max(0, index + len);
                 }
                 else if (index > len) {
                     index = len;
@@ -768,7 +759,7 @@ var phosphor;
              * ```
              */
             function move(array, fromIndex, toIndex) {
-                fromIndex = fromIndex | 0;
+                fromIndex = Math.floor(fromIndex);
                 var len = array.length;
                 if (fromIndex < 0) {
                     fromIndex += len;
@@ -776,12 +767,9 @@ var phosphor;
                 if (fromIndex < 0 || fromIndex >= len) {
                     return -1;
                 }
-                toIndex = toIndex | 0;
+                toIndex = Math.floor(toIndex);
                 if (toIndex < 0) {
-                    toIndex += len;
-                    if (toIndex < 0) {
-                        toIndex = 0;
-                    }
+                    toIndex = Math.max(0, toIndex + len);
                 }
                 else if (toIndex >= len) {
                     toIndex = len - 1;
@@ -831,7 +819,7 @@ var phosphor;
              * **See also** [[remove]] and [[insert]].
              */
             function removeAt(array, index) {
-                index = index | 0;
+                index = Math.floor(index);
                 var len = array.length;
                 if (index < 0) {
                     index += len;
@@ -877,6 +865,112 @@ var phosphor;
                 return i;
             }
             algorithm.remove = remove;
+            /**
+             * Reverse an array in-place subject to an optional range.
+             *
+             * @param array - The array to reverse.
+             *
+             * @param fromIndex - The index of the first element of the range. If
+             *   this value is negative, it is taken as an offset from the end of
+             *   the array. The value is clamped to the range `[0, length - 1]`.
+             *   The default is `0`.
+             *
+             * @param fromIndex - The index of the last element of the range. If
+             *   this value is negative, it is taken as an offset from the end of
+             *   the array. The value is clamped to the range `[0, length - 1]`.
+             *   The default is `length`.
+             *
+             * @returns A reference to the original array.
+             *
+             * #### Example
+             * ```typescript
+             * import algo = phosphor.collections.algorithm;
+             *
+             * var data = [0, 1, 2, 3, 4];
+             * algo.reverse(data, 1, 3);    // [0, 3, 2, 1, 4]
+             * algo.reverse(data, 3);       // [0, 3, 2, 4, 1]
+             * algo.reverse(data);          // [1, 4, 2, 3, 0]
+             * algo.reverse(data, -3);      // [1, 4, 0, 3, 2]
+             * algo.reverse(data, -5, -2);  // [3, 0, 4, 1, 2]
+             * ```
+             */
+            function reverse(array, fromIndex, toIndex) {
+                if (fromIndex === void 0) { fromIndex = 0; }
+                if (toIndex === void 0) { toIndex = array.length; }
+                var len = array.length;
+                if (len <= 1) {
+                    return array;
+                }
+                fromIndex = Math.floor(fromIndex);
+                if (fromIndex < 0) {
+                    fromIndex = Math.max(0, fromIndex + len);
+                }
+                else if (fromIndex >= len) {
+                    fromIndex = len - 1;
+                }
+                toIndex = Math.floor(toIndex);
+                if (toIndex < 0) {
+                    toIndex = Math.max(0, toIndex + len);
+                }
+                else if (toIndex >= len) {
+                    toIndex = len - 1;
+                }
+                while (fromIndex < toIndex) {
+                    var temp = array[fromIndex];
+                    array[fromIndex] = array[toIndex];
+                    array[toIndex] = temp;
+                    fromIndex++;
+                    toIndex--;
+                }
+                return array;
+            }
+            algorithm.reverse = reverse;
+            /**
+             * Rotate the elements an array by a positive or negative delta.
+             *
+             * @param array - The array to rotate.
+             *
+             * @param delta - The amount of rotation to apply to the elements. A
+             *   positive delta will shift elements to the left. A negative delta
+             *   will shift elements to the right.
+             *
+             * @returns A reference to the original array.
+             *
+             * #### Notes
+             * This executes in `O(n)` time and `O(1)` space.
+             *
+             * #### Example
+             * ```typescript
+             * import algo = phosphor.collections.algorithm;
+             *
+             * var data = [0, 1, 2, 3, 4];
+             * algo.rotate(data, 2);    // [2, 3, 4, 0, 1]
+             * algo.rotate(data, -2);   // [0, 1, 2, 3, 4]
+             * algo.rotate(data, 10);   // [0, 1, 2, 3, 4]
+             * algo.rotate(data, 9);    // [4, 0, 1, 2, 3]
+             * ```
+             */
+            function rotate(array, delta) {
+                var len = array.length;
+                if (len <= 1) {
+                    return array;
+                }
+                delta = Math.floor(delta);
+                if (delta > 0) {
+                    delta = delta % len;
+                }
+                else if (delta < 0) {
+                    delta = ((delta % len) + len) % len;
+                }
+                if (delta === 0) {
+                    return array;
+                }
+                reverse(array, 0, delta - 1);
+                reverse(array, delta, len - 1);
+                reverse(array, 0, len - 1);
+                return array;
+            }
+            algorithm.rotate = rotate;
         })(algorithm = collections.algorithm || (collections.algorithm = {}));
     })(collections = phosphor.collections || (phosphor.collections = {}));
 })(phosphor || (phosphor = {})); // module phosphor.collections.algorithm
@@ -910,9 +1004,7 @@ var phosphor;
                 this._offset = 0;
                 this._array = new Array(Math.max(1, maxSize));
                 if (items)
-                    items.forEach(function (it) {
-                        _this.pushBack(it);
-                    });
+                    items.forEach(function (it) { _this.pushBack(it); });
             }
             Object.defineProperty(CircularBuffer.prototype, "maxSize", {
                 /**
@@ -1191,9 +1283,7 @@ var phosphor;
                 this._front = null;
                 this._back = null;
                 if (items)
-                    items.forEach(function (it) {
-                        _this.pushBack(it);
-                    });
+                    items.forEach(function (it) { _this.pushBack(it); });
             }
             Object.defineProperty(Queue.prototype, "size", {
                 /**
@@ -1357,6 +1447,569 @@ var phosphor;
 |----------------------------------------------------------------------------*/
 var phosphor;
 (function (phosphor) {
+    var collections;
+    (function (collections) {
+        /**
+         * An object which manages a collection of variable sized sections.
+         *
+         * A section list is commonly used to manage row heights in virtually
+         * scrolling list controls. In such a control, most rows are uniform
+         * height while a handful of rows are variable sized.
+         *
+         * A section list has guaranteed `O(log(n))` worst-case performance for
+         * most operations, where `n` is the number of variable sized sections.
+         */
+        var SectionList = (function () {
+            function SectionList() {
+                this._root = null;
+            }
+            Object.defineProperty(SectionList.prototype, "count", {
+                /**
+                 * Get the total number of sections in the list.
+                 *
+                 * #### Notes
+                 * This operation has `O(1)` complexity.
+                 */
+                get: function () {
+                    return this._root !== null ? this._root.count : 0;
+                },
+                enumerable: true,
+                configurable: true
+            });
+            Object.defineProperty(SectionList.prototype, "size", {
+                /**
+                 * Get the total size of all sections in the list.
+                 *
+                 * #### Notes
+                 * This operation has `O(1)` complexity.
+                 */
+                get: function () {
+                    return this._root !== null ? this._root.size : 0;
+                },
+                enumerable: true,
+                configurable: true
+            });
+            /**
+             * Find the index of the section which covers the given offset.
+             *
+             * @param offset - The positive offset position of interest.
+             *
+             * @returns The index of the section which covers the given offset,
+             *   or `-1` if the offset is out of range.
+             *
+             * #### Notes
+             * This operation has `O(log(n))` complexity.
+             */
+            SectionList.prototype.indexOf = function (offset) {
+                if (this._root === null || offset < 0 || offset >= this._root.size) {
+                    return -1;
+                }
+                return indexOf(this._root, offset);
+            };
+            /**
+             * Find the offset position of the section at the given index.
+             *
+             * @param index - The index of the section of interest. If this value
+             *   is negative, it is taken as an offset from the end of the list.
+             *
+             * @returns The offset position of the section at the given index, or
+             *   `-1` if the index is out of range.
+             *
+             * #### Notes
+             * This operation has `O(log(n))` complexity.
+             */
+            SectionList.prototype.offsetOf = function (index) {
+                index = toQueryIndex(this._root, index);
+                if (index < 0) {
+                    return -1;
+                }
+                return offsetOf(this._root, index);
+            };
+            /**
+             * Find the size of the section at the given index.
+             *
+             * @param index - The index of the section of interest. If this value
+             *   is negative, it is taken as an offset from the end of the list.
+             *
+             * @returns The size of the section at the given index, or `-1` if
+             *   the index is out of range.
+             *
+             * #### Notes
+             * This operation has `O(log(n))` complexity.
+             */
+            SectionList.prototype.sizeOf = function (index) {
+                index = toQueryIndex(this._root, index);
+                if (index < 0) {
+                    return -1;
+                }
+                return sizeOf(this._root, index);
+            };
+            /**
+             * Insert new sections into the list.
+             *
+             * @param index - The index at which to insert the first section. If
+             *   this value is negative, it is taken as an offset from the end of
+             *   the list. The value is clamped to the range `[0, list.count]`.
+             *
+             * @param count - The number of sections to insert. If this value is
+             *   `<= 0`, this method is a no-op.
+             *
+             * @param size - The size of each section. This value is clamped to
+             *   the range `[0, Infinity]`.
+             *
+             * #### Notes
+             * This operation has `O(log(n))` complexity.
+             */
+            SectionList.prototype.insert = function (index, count, size) {
+                var d = toInsertData(this._root, index, count);
+                if (d === null) {
+                    return;
+                }
+                if (d.index < 0) {
+                    this._root = createLeaf(d.count, d.count * Math.max(0, size));
+                }
+                else {
+                    this._root = insert(this._root, d.index, d.count, Math.max(0, size));
+                }
+            };
+            /**
+             * Remove existing sections from the list.
+             *
+             * @param index - The index of the first section to remove. If this
+             *   value is negative, it is taken as an offset from the end of the
+             *   list.
+             *
+             * @param count - The number of sections to remove. If this value is
+             *   `<= 0`, this method is a no-op. If any of the sections are out
+             *   of range, they will be ignored.
+             *
+             * #### Notes
+             * This operation has `O(log(n))` complexity.
+             */
+            SectionList.prototype.remove = function (index, count) {
+                var d = toRemoveData(this._root, index, count);
+                if (d === null) {
+                    return;
+                }
+                this._root = remove(this._root, d.index, d.count);
+            };
+            /**
+             * Resize existing sections in the list.
+             *
+             * @param index - The index of the first section to resize. If this
+             *   value is negative, it is taken as an offset from the end of the
+             *   list.
+             *
+             * @param count - The number of sections to resize. If this value is
+             *   `<= 0`, this method is a no-op. If any of the sections are out
+             *   of range, they will be ignored.
+             *
+             * @param size - The new size of each section. This value is clamped
+             *   to the range `[0, Infinity]`.
+             */
+            SectionList.prototype.resize = function (index, count, size) {
+                var d = toRemoveData(this._root, index, count);
+                if (d === null) {
+                    return;
+                }
+                this._root = remove(this._root, d.index, d.count);
+                if (this._root === null) {
+                    this._root = createLeaf(d.count, d.count * Math.max(0, size));
+                }
+                else {
+                    this._root = insert(this._root, d.index, d.count, Math.max(0, size));
+                }
+            };
+            return SectionList;
+        })();
+        collections.SectionList = SectionList;
+        /**
+         * Compute the adjusted query index for the given span and index.
+         *
+         * If the span is `null`, this returns `-1`. If the index is negative,
+         * it is offset from the end of the span. If the adjusted index is out
+         * of range, this returns `-1`.
+         */
+        function toQueryIndex(span, index) {
+            if (span === null) {
+                return -1;
+            }
+            index = Math.floor(index);
+            if (index >= span.count) {
+                return -1;
+            }
+            if (index < 0) {
+                index += span.count;
+                if (index < 0) {
+                    return -1;
+                }
+            }
+            return index;
+        }
+        /**
+         * Compute the adjusted insert parameters for the given span.
+         *
+         * If the count is `<= 0`, this returns `null`. If the span is `null`,
+         * the adjusted index will be `-1`. Otherwise, the index is clamped to
+         * the range `[0, span.count]`.
+         */
+        function toInsertData(span, index, count) {
+            count = Math.floor(count);
+            if (count <= 0) {
+                return null;
+            }
+            if (span === null) {
+                return { index: -1, count: count };
+            }
+            index = Math.floor(index);
+            if (index < 0) {
+                index = Math.max(0, index + span.count);
+            }
+            else {
+                index = Math.min(index, span.count);
+            }
+            return { index: index, count: count };
+        }
+        /**
+         * Compute the adjusted remove parameters for the given span.
+         *
+         * If the span is `null` or the count is `<= 0`, this returns `null`. If
+         * the index is negative, it is offset from the end of the span. If the
+         * adjusted index and count are fully out of range, this returns `null`.
+         * Otherwise, the index and count are clipped to be fully in range.
+         */
+        function toRemoveData(span, index, count) {
+            if (span === null) {
+                return null;
+            }
+            count = Math.floor(count);
+            if (count <= 0) {
+                return null;
+            }
+            index = Math.floor(index);
+            if (index >= span.count) {
+                return null;
+            }
+            if (index < 0) {
+                index += span.count;
+                if (index < 0) {
+                    count += index;
+                    if (count <= 0) {
+                        return null;
+                    }
+                    index = 0;
+                }
+            }
+            return { index: index, count: Math.min(count, span.count - index) };
+        }
+        /**
+         * Create a new leaf span with the given count and total size.
+         */
+        function createLeaf(count, size) {
+            return { count: count, size: size, level: 0, left: null, right: null };
+        }
+        /**
+         * Create a new branch span from the given left and right children.
+         */
+        function createBranch(left, right) {
+            var count = left.count + right.count;
+            var size = left.size + right.size;
+            var level = Math.max(left.level, right.level) + 1;
+            return { count: count, size: size, level: level, left: left, right: right };
+        }
+        /**
+         * Update a span to be branch with the given left and right children.
+         *
+         * This returns the updated span as a convenience.
+         */
+        function updateBranch(span, left, right) {
+            span.count = left.count + right.count;
+            span.size = left.size + right.size;
+            span.level = Math.max(left.level, right.level) + 1;
+            span.left = left;
+            span.right = right;
+            return span;
+        }
+        /**
+         * Find the index of the section which covers the given offset.
+         *
+         * The offset must be within range of the given span.
+         */
+        function indexOf(span, offset) {
+            var index = 0;
+            while (span.level !== 0) {
+                var left = span.left;
+                if (offset < left.size) {
+                    span = left;
+                }
+                else {
+                    span = span.right;
+                    index += left.count;
+                    offset -= left.size;
+                }
+            }
+            return index + Math.floor(offset * span.count / span.size);
+        }
+        /**
+         * Find the offset of the section at the given index.
+         *
+         * The index must be an integer and within range of the given span.
+         */
+        function offsetOf(span, index) {
+            var offset = 0;
+            while (span.level !== 0) {
+                var left = span.left;
+                if (index < left.count) {
+                    span = left;
+                }
+                else {
+                    span = span.right;
+                    index -= left.count;
+                    offset += left.size;
+                }
+            }
+            return offset + index * span.size / span.count;
+        }
+        /**
+         * Find the size of the section at the given index.
+         *
+         * The index must be an integer and within range of the given span.
+         */
+        function sizeOf(span, index) {
+            while (span.level !== 0) {
+                var left = span.left;
+                if (index < left.count) {
+                    span = left;
+                }
+                else {
+                    span = span.right;
+                    index -= left.count;
+                }
+            }
+            return span.size / span.count;
+        }
+        /**
+         * Insert new sections into the given subtree.
+         *
+         * The index must be an integer within range of the span, and the
+         * count must be an integer greater than zero.
+         *
+         * The return value is the span which should take the place of the
+         * original span in the tree. Due to tree rebalancing, this may or
+         * may not be the same as the original span.
+         */
+        function insert(span, index, count, size) {
+            // If the span is a leaf, the insert target has been found. There are
+            // four possibilities for the insert: extend, before, after, and split.
+            if (span.level === 0) {
+                // If the size of each new section is the same as the current size,
+                // the existing span can be extended by simply adding the sections.
+                if (size === span.size / span.count) {
+                    span.count += count;
+                    span.size += count * size;
+                    return span;
+                }
+                // If the index is zero, the new span goes before the current span,
+                // which requires a new branch node to be added to the tree.
+                if (index === 0) {
+                    return createBranch(createLeaf(count, count * size), span);
+                }
+                // If the index is greater than the span count, the new span goes
+                // after the current span, which also requires a new branch node.
+                if (index >= span.count) {
+                    return createBranch(span, createLeaf(count, count * size));
+                }
+                // Otherwise, the current span must be split and the new span
+                // added to the middle. This requires several new nodes.
+                var rest = span.count - index;
+                var each = span.size / span.count;
+                var subLeft = createLeaf(count, count * size);
+                var subRight = createLeaf(rest, rest * each);
+                var newLeft = createLeaf(index, index * each);
+                var newRight = createBranch(subLeft, subRight);
+                return updateBranch(span, newLeft, newRight);
+            }
+            // Otherwise, recurse down the appropriate branch.
+            if (index < span.left.count) {
+                span.left = insert(span.left, index, count, size);
+            }
+            else {
+                span.right = insert(span.right, index - span.left.count, count, size);
+            }
+            // Always rebalance the branch after an insert.
+            return rebalance(span);
+        }
+        /**
+         * Remove a number of sections from the given subtree.
+         *
+         * The index must be an integer within range of the span, the
+         * count must be an integer greater than zero, and the relation
+         * `index + count <= span.count` must hold.
+         *
+         * The return value is the span which should take the place of the
+         * original span in the tree. Due to tree rebalancing, this may or
+         * may not be the same as the original span. It may also be null.
+         */
+        function remove(span, index, count) {
+            // If the range covers the entire span, there is no need to do
+            // any extra checking, since the whole subtree can be removed.
+            if (count === span.count) {
+                return null;
+            }
+            // If the span is a leaf, then sections are removed starting at
+            // the index. The span's size is updated to reflect its new count.
+            if (span.level === 0) {
+                var rest = span.count - count;
+                var each = span.size / span.count;
+                span.size = rest * each;
+                span.count = rest;
+                return span;
+            }
+            // Otherwise, remove the sections from the children of the branch
+            // recursively. The range will either cross both of the children
+            // or be contained completely by one of them.
+            if (index < span.left.count && index + count > span.left.count) {
+                var tail = span.left.count - index;
+                span.left = remove(span.left, index, tail);
+                span.right = remove(span.right, 0, count - tail);
+            }
+            else if (index < span.left.count) {
+                span.left = remove(span.left, index, count);
+            }
+            else {
+                span.right = remove(span.right, index - span.left.count, count);
+            }
+            // After the remove, either child may be null, but not both, since
+            // the first clause of this method handles the case where the range
+            // covers the entire span. If one child was deleted, the remaining
+            // child is hoisted to become the current span.
+            if (span.left === null) {
+                span = span.right;
+            }
+            else if (span.right === null) {
+                span = span.left;
+            }
+            // If the span is still a branch, it must be rebalanced. If the range
+            // was large, it's possible that the span's balance factor exceeds the
+            // [-2, 2] threshold, and will require multiple passes to rebalance.
+            if (span.level > 0) {
+                do {
+                    span = rebalance(span);
+                } while (Math.abs(span.left.level - span.right.level) > 1);
+            }
+            return span;
+        }
+        /**
+         * Rebalance a span so that it maintains the AVL balance invariant.
+         *
+         * The given span must be a branch. If the span is already balanced,
+         * no rotations will be made. The branch data is always updated to
+         * be current based on the current children.
+         *
+         * This assumes the balance factor for the span will be within the
+         * range of [-2, 2]. If the balance factor is outside this range,
+         * the branch will need to be rebalanced multiple times in order
+         * to maintain the AVL balance invariant.
+         *
+         * The return value is the span which should take the place of the
+         * original span in the tree, and may or may not be a different span.
+         *
+         * Four unbalanced conditions are possible:
+         *
+         * Left-Left
+         * -------------------------------------
+         *        span                span
+         *        /  \                /  \
+         *       /    \              /    \
+         *      1      D            2      1
+         *     / \          =>     / \    / \
+         *    /   \               A   B  C   D
+         *   2     C
+         *  / \
+         * A   B
+         *
+         * Left-Right
+         * -------------------------------------
+         *     span                span
+         *     /  \                /  \
+         *    /    \              /    \
+         *   1      D            1      2
+         *  / \          =>     / \    / \
+         * A   \               A   B  C   D
+         *      2
+         *     / \
+         *    B   C
+         *
+         * Right-Right
+         * -------------------------------------
+         *   span                     span
+         *   /  \                     /  \
+         *  /    \                   /    \
+         * A      1                 1      2
+         *       / \        =>     / \    / \
+         *      /   \             A   B  C   D
+         *     B     2
+         *          / \
+         *         C   D
+         *
+         * Right-Left
+         * -------------------------------------
+         *   span                   span
+         *   /  \                   /  \
+         *  /    \                 /    \
+         * A      1               2      1
+         *       / \      =>     / \    / \
+         *      /   \           A   B  C   D
+         *     2     D
+         *    / \
+         *   B   C
+         */
+        function rebalance(span) {
+            var left = span.left;
+            var right = span.right;
+            var balance = left.level - right.level;
+            if (balance > 1) {
+                var subLeft = left.left;
+                var subRight = left.right;
+                if (subLeft.level > subRight.level) {
+                    // Left-Left
+                    span.left = subLeft;
+                    span.right = updateBranch(left, subRight, right);
+                }
+                else {
+                    // Left-Right
+                    span.left = updateBranch(left, subLeft, subRight.left);
+                    span.right = updateBranch(subRight, subRight.right, right);
+                }
+            }
+            else if (balance < -1) {
+                var subLeft = right.left;
+                var subRight = right.right;
+                if (subRight.level > subLeft.level) {
+                    // Right-Right
+                    span.right = subRight;
+                    span.left = updateBranch(right, left, subLeft);
+                }
+                else {
+                    // Right-Left
+                    span.right = updateBranch(right, subLeft.right, subRight);
+                    span.left = updateBranch(subLeft, left, subLeft.left);
+                }
+            }
+            return updateBranch(span, span.left, span.right);
+        }
+    })(collections = phosphor.collections || (phosphor.collections = {}));
+})(phosphor || (phosphor = {})); // module phosphor.collections
+
+/*-----------------------------------------------------------------------------
+| Copyright (c) 2014-2015, S. Chris Colbert
+|
+| Distributed under the terms of the BSD 3-Clause License.
+|
+| The full license is in the file LICENSE, distributed with this software.
+|----------------------------------------------------------------------------*/
+var phosphor;
+(function (phosphor) {
     var utility;
     (function (utility) {
         /**
@@ -1411,60 +2064,23 @@ var phosphor;
          * The box sizing prototype object used by `createBoxSizing`.
          */
         var boxSizingProto = {
-            get minWidth() {
-                return this._mw;
-            },
-            get minHeight() {
-                return this._mh;
-            },
-            get maxWidth() {
-                return this._xw;
-            },
-            get maxHeight() {
-                return this._xh;
-            },
-            get borderTop() {
-                return this._bt;
-            },
-            get borderLeft() {
-                return this._bl;
-            },
-            get borderRight() {
-                return this._br;
-            },
-            get borderBottom() {
-                return this._bb;
-            },
-            get paddingTop() {
-                return this._pt;
-            },
-            get paddingLeft() {
-                return this._pl;
-            },
-            get paddingRight() {
-                return this._pr;
-            },
-            get paddingBottom() {
-                return this._pb;
-            },
-            get verticalSum() {
-                return this._bt + this._bb + this._pt + this._pb;
-            },
-            get horizontalSum() {
-                return this._bl + this._br + this._pl + this._pr;
-            },
-            _mw: 0,
-            _mh: 0,
-            _xw: Infinity,
-            _xh: Infinity,
-            _bt: 0,
-            _bl: 0,
-            _br: 0,
-            _bb: 0,
-            _pt: 0,
-            _pl: 0,
-            _pr: 0,
-            _pb: 0,
+            get minWidth() { return this._mw; },
+            get minHeight() { return this._mh; },
+            get maxWidth() { return this._xw; },
+            get maxHeight() { return this._xh; },
+            get borderTop() { return this._bt; },
+            get borderLeft() { return this._bl; },
+            get borderRight() { return this._br; },
+            get borderBottom() { return this._bb; },
+            get paddingTop() { return this._pt; },
+            get paddingLeft() { return this._pl; },
+            get paddingRight() { return this._pr; },
+            get paddingBottom() { return this._pb; },
+            get verticalSum() { return this._bt + this._bb + this._pt + this._pb; },
+            get horizontalSum() { return this._bl + this._br + this._pl + this._pr; },
+            _mw: 0, _mh: 0, _xw: Infinity, _xh: Infinity,
+            _bt: 0, _bl: 0, _br: 0, _bb: 0,
+            _pt: 0, _pl: 0, _pr: 0, _pb: 0,
         };
     })(utility = phosphor.utility || (phosphor.utility = {}));
 })(phosphor || (phosphor = {})); // module phosphor.utility
@@ -1570,8 +2186,7 @@ var phosphor;
         /**
          * A singleton empty no-op function.
          */
-        utility.emptyFunction = function () {
-        };
+        utility.emptyFunction = function () { };
     })(utility = phosphor.utility || (phosphor.utility = {}));
 })(phosphor || (phosphor = {})); // module phosphor.utility
 
@@ -1871,7 +2486,10 @@ var phosphor;
              * Test whether the rect is equivalent to another.
              */
             Rect.prototype.equals = function (other) {
-                return (this._x === other._x && this._y === other._y && this._width === other._width && this._height === other._height);
+                return (this._x === other._x &&
+                    this._y === other._y &&
+                    this._width === other._width &&
+                    this._height === other._height);
             };
             return Rect;
         })();
@@ -2151,6 +2769,10 @@ var phosphor;
             if (dispatchQueue.back !== null) {
                 dispatchQueue.pushBack(null);
             }
+            // The message dispatch loop. If the dispatcher is the null sentinel,
+            // the processing of the current block of messages is complete and
+            // another loop is scheduled. Otherwise, the pending message is
+            // dispatched to the message handler.
             while (!dispatchQueue.empty) {
                 var dispatcher = dispatchQueue.popFront();
                 if (dispatcher === null) {
@@ -2474,280 +3096,182 @@ var phosphor;
     var core;
     (function (core) {
         /**
-         * An object used for type-safe inter-object communication.
+         * A decorator which defines a signal for an object.
+         *
+         * @param obj - The object on which to define the signal.
+         *
+         * @param name - The name of the signal to define.
+         *
+         * #### Notes
+         * This function can also be used as a non-decorator by invoking it
+         * directly on the target object.
          *
          * #### Example
          * ```typescript
          * class SomeClass {
          *
-         *   static valueChanged = new Signal<SomeClass, number>();
+         *   @signal
+         *   valueChanged: ISignal<number>;
          *
-         *   // ...
+         * }
+         *
+         * // define a signal directly on a prototype
+         * signal(SomeClass.prototype, 'valueChanged');
+         *
+         * // define a signal directly on an object
+         * signal(someObject, 'someSignal');
+         * ```
+         */
+        function signal(obj, name) {
+            Object.defineProperty(obj, name, {
+                get: function () { return new BoundSignal(this, name); },
+            });
+        }
+        core.signal = signal;
+        /**
+         * Get the object which is emitting the curent signal.
+         *
+         * #### Notes
+         * If a signal is not currently being emitted, this returns `null`.
+         *
+         * #### Example
+         * ```typescript
+         * someObject.valueChanged.connect(myCallback);
+         *
+         * someObject.valueChanged.emit(42);
+         *
+         * function myCallback(value: number): void {
+         *   console.log(sender() === someObject); // true
          * }
          * ```
          */
-        var Signal = (function () {
-            function Signal() {
-            }
-            return Signal;
-        })();
-        core.Signal = Signal;
-        /**
-         * Connect the signal of a sender to the method of a receiver.
-         *
-         * @param sender - The object which will emit the signal. This will
-         *   be passed as the first argument to the receiver method when the
-         *   signal is emitted. This must be a non-primitive object.
-         *
-         * @param signal - The signal which will be emitted by the sender.
-         *
-         * @param receiver - The object to connect to the signal. This will
-         *   become the `this` context in the receiver method. This must be
-         *   a non-primitive object.
-         *
-         * @param method - The receiver method to invoke when the signal is
-         *   emitted. The sender is passed as the first argument followed by
-         *   the args object emitted with the signal.
-         *
-         * @returns `true` if the connection succeeds, `false` otherwise.
-         *
-         * #### Notes
-         * Receiver methods are invoked synchronously, in the order in which
-         * they are connected.
-         *
-         * Signal connections are unique. If a connection already exists for
-         * the given combination of arguments, this function is a no-op.
-         *
-         * A newly connected receiver method will not be invoked until the next
-         * emission of the signal, even if it is connected during an emission.
-         *
-         * #### Example
-         * ```typescript
-         * connect(someObject, SomeClass.valueChanged, myObject, myObject.onValueChanged);
-         * ```
-         */
-        function connect(sender, signal, receiver, method) {
-            // All arguments must be provided; warn if they are not.
-            if (!sender || !signal || !receiver || !method) {
-                console.warn('null argument passed to `connect()`');
-                return false;
-            }
-            // Get the connection list for the sender or create one if necessary.
-            var list = senderMap.get(sender);
-            if (list === void 0) {
-                list = new ConnectionList();
-                senderMap.set(sender, list);
-            }
-            // Search for a matching connection and bail if one is found.
-            var conn = list.first;
-            while (conn !== null) {
-                if (isMatch(conn, sender, signal, receiver, method)) {
-                    return false;
-                }
-                conn = conn.nextReceiver;
-            }
-            // Create and initialize a new connection.
-            conn = new Connection();
-            conn.sender = sender;
-            conn.signal = signal;
-            conn.receiver = receiver;
-            conn.method = method;
-            // Add the connection to the list of receivers.
-            if (list.last === null) {
-                list.first = conn;
-                list.last = conn;
-            }
-            else {
-                list.last.nextReceiver = conn;
-                list.last = conn;
-            }
-            // Add the connection to the list of senders.
-            var head = receiverMap.get(receiver);
-            if (head !== void 0) {
-                head.prevSender = conn;
-                conn.nextSender = head;
-            }
-            receiverMap.set(receiver, conn);
-            return true;
+        function sender() {
+            return currentSender;
         }
-        core.connect = connect;
+        core.sender = sender;
         /**
-         * Disconnect the signal of a sender from the method of a receiver.
+         * Remove all signal connections where the given object is the sender.
          *
-         * @param sender - The object which emits the signal.
-         *
-         * @param signal - The signal emitted by the sender.
-         *
-         * @param receiver - The object connected to the signal.
-         *
-         * @param method - The receiver method connected to the signal.
-         *
-         * @returns `true` if the connection is broken, `false` otherwise.
-         *
-         * #### Notes
-         * Any argument to this function may be null, and it will be treated
-         * as a wildcard when matching the connection. However, `sender` and
-         * `receiver` cannot both be null; one or both must be provided.
-         *
-         * A disconnected receiver method will no longer be invoked, even if
-         * it is disconnected during signal emission.
-         *
-         * If no connection exists for the given combination of arguments,
-         * this function is a no-op.
+         * @param obj - The sender object of interest.
          *
          * #### Example
          * ```typescript
-         * // disconnect a specific signal from a specific handler
-         * disconnect(someObject, SomeClass.valueChanged, myObject, myObject.onValueChanged);
-         *
-         * // disconnect all receivers from a specific sender
-         * disconnect(someObject, null, null, null);
-         *
-         * // disconnect all receivers from a specific signal
-         * disconnect(someObject, SomeClass.valueChanged, null, null);
-         *
-         * // disconnect a specific receiver from all senders
-         * disconnect(null, null, myObject, null);
-         *
-         * // disconnect a specific handler from all senders
-         * disconnect(null, null, myObject, myObject.onValueChanged);
+         * disconnectSender(someObject);
          * ```
          */
-        function disconnect(sender, signal, receiver, method) {
-            // If a sender is provided, the list of connected receivers is walked
-            // and any matching connection is removed from *the list of senders*.
-            // The receivers list is marked dirty and will be cleaned at the end
-            // of the next signal emission.
-            if (sender) {
-                var list = senderMap.get(sender);
-                if (list === void 0) {
-                    return false;
-                }
-                var success = false;
-                var conn = list.first;
-                while (conn !== null) {
-                    if (isMatch(conn, sender, signal, receiver, method)) {
-                        list.dirty = true;
-                        removeFromSendersList(conn);
-                        success = true;
-                    }
-                    conn = conn.nextReceiver;
-                }
-                return success;
-            }
-            // If only the receiver is provided, the list of connected senders
-            // is walked and any matching connection is removed *from the list
-            // of senders*. The receivers list for each sender is marked dirty
-            // and will be cleaned at the end of the next signal emission.
-            if (receiver) {
-                var conn = receiverMap.get(receiver);
-                if (conn === void 0) {
-                    return false;
-                }
-                var success = false;
-                while (conn !== null) {
-                    var next = conn.nextSender; // store before removing conn
-                    if (isMatch(conn, sender, signal, receiver, method)) {
-                        senderMap.get(conn.sender).dirty = true;
-                        removeFromSendersList(conn);
-                        success = true;
-                    }
-                    conn = next;
-                }
-                return success;
-            }
-            // If the sender and receiver are both null, finding all matching
-            // connections would require a full scan of all connection lists.
-            // That would be expensive and is explicitly not supported.
-            console.warn('null sender and receiver passed to `disconnect()`');
-            return false;
-        }
-        core.disconnect = disconnect;
-        /**
-         * Emit the signal of a sender and invoke the connected receivers.
-         *
-         * @param sender - The object which is emitting the signal. This will
-         *   be passed as the first argument to all connected receivers. This
-         *   must be a non-primitive object.
-         *
-         * @param signal - The signal to be emitted by the sender.
-         *
-         * @param args - The args object for the signal. This will be passed
-         *   as the second argument to all connected receivers.
-         *
-         * #### Notes
-         * If a receiver throws an exception, dispatching of the signal will
-         * terminate immediately and the exception will be propagated to the
-         * call site of this function.
-         *
-         * #### Example
-         * ```typescript
-         * emit(someObject, SomeClass.valueChanged, 42);
-         * ```
-         */
-        function emit(sender, signal, args) {
-            var list = senderMap.get(sender);
-            if (list === void 0) {
+        function disconnectSender(obj) {
+            var hash = senderMap.get(obj);
+            if (!hash) {
                 return;
             }
-            list.refs++;
-            try {
-                invokeReceivers(list, signal, args);
+            for (var name in hash) {
+                var conn = hash[name].first;
+                while (conn !== null) {
+                    removeFromSendersList(conn);
+                    conn.callback = null;
+                    conn.thisArg = null;
+                    conn = conn.nextReceiver;
+                }
             }
-            finally {
-                list.refs--;
-            }
-            if (list.dirty && list.refs === 0) {
-                cleanReceiversList(list);
-                list.dirty = false;
-            }
+            senderMap.delete(obj);
         }
-        core.emit = emit;
+        core.disconnectSender = disconnectSender;
         /**
-         * An object which holds data for a list of connected receivers.
+         * Remove all signal connections where the given object is the receiver.
+         *
+         * @param obj - The receiver object of interest.
+         *
+         * #### Notes
+         * If a `thisArg` is provided when connecting a signal, that object
+         * is considered the receiver. Otherwise, the `callback` is used as
+         * the receiver.
+         *
+         * #### Example
+         * ```typescript
+         * // disconnect a regular object receiver
+         * disconnectReceiver(myObject);
+         *
+         * // disconnect a plain callback receiver
+         * disconnectReceiver(myCallback);
+         * ```
          */
-        var ConnectionList = (function () {
-            function ConnectionList() {
-                /**
-                 * The ref count for the connection list.
-                 */
-                this.refs = 0;
-                /**
-                 * Whether or not the connection list has broken connections.
-                 */
-                this.dirty = false;
-                /**
-                 * The first link in the singly linked list of receivers.
-                 */
-                this.first = null;
-                /**
-                 * The last link in the singly linked list of receivers.
-                 */
-                this.last = null;
+        function disconnectReceiver(obj) {
+            var conn = receiverMap.get(obj);
+            if (!conn) {
+                return;
             }
-            return ConnectionList;
+            while (conn !== null) {
+                var temp = conn.nextSender;
+                conn.callback = null;
+                conn.thisArg = null;
+                conn.prevSender = null;
+                conn.nextSender = null;
+                conn = temp;
+            }
+            receiverMap.delete(obj);
+        }
+        core.disconnectReceiver = disconnectReceiver;
+        /**
+         * Clear all signal data associated with the given object.
+         *
+         * #### Notes
+         * This removes all signal connections where the object is used as
+         * either the sender or the receiver.
+         *
+         * #### Example
+         * ```typescript
+         * clearSignalData(someObject);
+         * ```
+         */
+        function clearSignalData(obj) {
+            disconnectSender(obj);
+            disconnectReceiver(obj);
+        }
+        core.clearSignalData = clearSignalData;
+        /**
+         * A concrete implementation of ISignal.
+         */
+        var BoundSignal = (function () {
+            /**
+             * Construct a new bound signal.
+             */
+            function BoundSignal(sender, name) {
+                this._sender = sender;
+                this._name = name;
+            }
+            /**
+             * Connect a callback to the signal.
+             */
+            BoundSignal.prototype.connect = function (callback, thisArg) {
+                return connect(this._sender, this._name, callback, thisArg);
+            };
+            /**
+             * Disconnect a callback from the signal.
+             */
+            BoundSignal.prototype.disconnect = function (callback, thisArg) {
+                return disconnect(this._sender, this._name, callback, thisArg);
+            };
+            /**
+             * Emit the signal and invoke the connected callbacks.
+             */
+            BoundSignal.prototype.emit = function (args) {
+                emit(this._sender, this._name, args);
+            };
+            return BoundSignal;
         })();
         /**
-         * An object which holds data for a signal connection.
+         * A struct which holds connection data.
          */
         var Connection = (function () {
             function Connection() {
                 /**
-                 * The sender object for the connection.
+                 * The callback connected to the signal.
                  */
-                this.sender = null;
+                this.callback = null;
                 /**
-                 * The signal object for the connection.
+                 * The `this` context for the callback.
                  */
-                this.signal = null;
-                /**
-                 * The receiver object for the connection.
-                 */
-                this.receiver = null;
-                /**
-                 * The receiver method for the connection.
-                 */
-                this.method = null;
+                this.thisArg = null;
                 /**
                  * The next connection in the singly linked receivers list.
                  */
@@ -2764,81 +3288,193 @@ var phosphor;
             return Connection;
         })();
         /**
-         * A mapping of sender object to its connection list.
+         * The list of receiver connections for a specific signal.
+         */
+        var ConnectionList = (function () {
+            function ConnectionList() {
+                /**
+                 * The ref count for the list.
+                 */
+                this.refs = 0;
+                /**
+                 * The first connection in the list.
+                 */
+                this.first = null;
+                /**
+                 * The last connection in the list.
+                 */
+                this.last = null;
+            }
+            return ConnectionList;
+        })();
+        /**
+         * A mapping of sender object to its connection map.
          */
         var senderMap = new WeakMap();
         /**
-         * A mapping of receiver object to its first connected sender.
+         * A mapping of receiver object to its connection array.
          */
         var receiverMap = new WeakMap();
         /**
-         * Invoke the receiver connections which match a specific signal.
-         *
-         * This walks the provided connection list and invokes each receiver
-         * connection which has a matching signal. A connection added during
-         * dispatch will not be invoked.
+         * The object emitting the current signal.
          */
-        function invokeReceivers(list, signal, args) {
+        var currentSender = null;
+        /**
+         * Connect a signal to a callback.
+         */
+        function connect(sender, name, callback, thisArg) {
+            // Warn and bail if a required argument is null.
+            if (!sender || !name || !callback) {
+                console.warn('null argument passed to `connect()`');
+                return false;
+            }
+            // Coerce a `null` thisArg to `undefined`.
+            thisArg = thisArg || void 0;
+            // Get the connection map for the sender or create one if necessary.
+            var hash = senderMap.get(sender);
+            if (!hash) {
+                hash = Object.create(null);
+                senderMap.set(sender, hash);
+            }
+            // Search for an equivalent connection and bail if one is found.
+            var list = hash[name];
+            if (list && findConnection(list, callback, thisArg)) {
+                return false;
+            }
+            // Create a new connection.
+            var conn = new Connection();
+            conn.callback = callback;
+            conn.thisArg = thisArg;
+            // Add the connection to the senders list.
+            if (!list) {
+                list = new ConnectionList();
+                list.first = conn;
+                list.last = conn;
+                hash[name] = list;
+            }
+            else {
+                list.last.nextReceiver = conn;
+                list.last = conn;
+            }
+            // Add the connection to the receivers list.
+            var receiver = thisArg || callback;
+            var front = receiverMap.get(receiver);
+            if (front) {
+                front.prevSender = conn;
+                conn.nextSender = front;
+            }
+            receiverMap.set(receiver, conn);
+            return true;
+        }
+        /**
+         * Disconnect a signal from a callback.
+         */
+        function disconnect(sender, name, callback, thisArg) {
+            // Warn and bail if a required argument is null.
+            if (!sender || !name || !callback) {
+                console.warn('null argument passed to `disconnect()`');
+                return false;
+            }
+            // Coerce a `null` thisArg to `undefined`.
+            thisArg = thisArg || void 0;
+            // Bail early if there is no equivalent connection.
+            var hash = senderMap.get(sender);
+            if (!hash) {
+                return false;
+            }
+            var list = hash[name];
+            if (!list) {
+                return false;
+            }
+            var conn = findConnection(list, callback, thisArg);
+            if (!conn) {
+                return false;
+            }
+            // Remove the connection from the senders list. It will be removed
+            // from the receivers list the next time the signal is emitted.
+            removeFromSendersList(conn);
+            // Clear the connection data so it becomes a dead connection.
+            conn.callback = null;
+            conn.thisArg = null;
+            return true;
+        }
+        /**
+         * Emit a signal and invoke its connected callbacks.
+         */
+        function emit(sender, name, args) {
+            var hash = senderMap.get(sender);
+            if (!hash) {
+                return;
+            }
+            var list = hash[name];
+            if (!list) {
+                return;
+            }
+            var temp = currentSender;
+            currentSender = sender;
+            list.refs++;
+            try {
+                var dirty = invokeList(list, args);
+            }
+            finally {
+                currentSender = temp;
+                list.refs--;
+            }
+            if (dirty && list.refs === 0) {
+                cleanList(list);
+            }
+        }
+        /**
+         * Find a matching connection in the given connection list.
+         *
+         * Returns undefined if a match is not found.
+         */
+        function findConnection(list, callback, thisArg) {
+            var conn = list.first;
+            while (conn !== null) {
+                if (conn.callback === callback && conn.thisArg === thisArg) {
+                    return conn;
+                }
+                conn = conn.nextReceiver;
+            }
+            return void 0;
+        }
+        /**
+         * Invoke the callbacks in the given connection list.
+         *
+         * Connections added during dispatch will not be invoked. This returns
+         * `true` if there are dead connections in the list, `false` otherwise.
+         */
+        function invokeList(list, args) {
+            var dirty = false;
             var last = list.last;
             var conn = list.first;
             while (conn !== null) {
-                if (conn.receiver !== null && conn.signal === signal) {
-                    conn.method.call(conn.receiver, conn.sender, args);
+                if (conn.callback) {
+                    conn.callback.call(conn.thisArg, args);
+                }
+                else {
+                    dirty = true;
                 }
                 if (conn === last) {
                     break;
                 }
                 conn = conn.nextReceiver;
             }
+            return dirty;
         }
         /**
-         * Test whether a connection matches the given arguments.
-         *
-         * Null arguments are treated as wildcards which will match the
-         * corresponding property of the connection.
+         * Remove the dead connections from the given connection list.
          */
-        function isMatch(conn, sender, signal, receiver, method) {
-            return ((!sender || conn.sender === sender) && (!signal || conn.signal === signal) && (!receiver || conn.receiver === receiver) && (!method || conn.method === method));
-        }
-        /**
-         * Remove a live connection from the doubly linked list of senders.
-         */
-        function removeFromSendersList(conn) {
-            var prev = conn.prevSender;
-            var next = conn.nextSender;
-            if (prev === null) {
-                if (next === null) {
-                    receiverMap.delete(conn.receiver);
-                }
-                else {
-                    receiverMap.set(conn.receiver, next);
-                    next.prevSender = null;
-                }
-            }
-            else if (next === null) {
-                prev.nextSender = null;
-            }
-            else {
-                prev.nextSender = next;
-                next.prevSender = prev;
-            }
-            conn.sender = null;
-            conn.receiver = null;
-            conn.prevSender = null;
-            conn.nextSender = null;
-        }
-        /**
-         * Cleanup the receivers list by removing dead connections.
-         */
-        function cleanReceiversList(list) {
-            var prev = null;
+        function cleanList(list) {
+            var prev;
             var conn = list.first;
             while (conn !== null) {
                 var next = conn.nextReceiver;
-                if (conn.receiver === null) {
+                if (!conn.callback) {
                     conn.nextReceiver = null;
                 }
-                else if (prev === null) {
+                else if (!prev) {
                     list.first = conn;
                     prev = conn;
                 }
@@ -2848,7 +3484,7 @@ var phosphor;
                 }
                 conn = next;
             }
-            if (prev === null) {
+            if (!prev) {
                 list.first = null;
                 list.last = null;
             }
@@ -2856,6 +3492,30 @@ var phosphor;
                 prev.nextReceiver = null;
                 list.last = prev;
             }
+        }
+        /**
+         * Remove a connection from the doubly linked list of senders.
+         */
+        function removeFromSendersList(conn) {
+            var receiver = conn.thisArg || conn.callback;
+            var prev = conn.prevSender;
+            var next = conn.nextSender;
+            if (prev === null && next === null) {
+                receiverMap.delete(receiver);
+            }
+            else if (prev === null) {
+                receiverMap.set(receiver, next);
+                next.prevSender = null;
+            }
+            else if (next === null) {
+                prev.nextSender = null;
+            }
+            else {
+                prev.nextSender = next;
+                next.prevSender = prev;
+            }
+            conn.prevSender = null;
+            conn.nextSender = null;
         }
     })(core = phosphor.core || (phosphor.core = {}));
 })(phosphor || (phosphor = {})); // module phosphor.core
@@ -3049,14 +3709,11 @@ var phosphor;
             /**
              * Get the cached object for the lifetime.
              */
-            TransientLifetime.prototype.get = function (key) {
-                return null;
-            };
+            TransientLifetime.prototype.get = function (key) { return null; };
             /**
              * Set the cached object for the lifetime.
              */
-            TransientLifetime.prototype.set = function (key, val) {
-            };
+            TransientLifetime.prototype.set = function (key, val) { };
             return TransientLifetime;
         })();
         /**
@@ -3077,15 +3734,11 @@ var phosphor;
             /**
              * Get the cached object for the lifetime if one exists.
              */
-            SingletonLifetime.prototype.get = function (key) {
-                return this._val;
-            };
+            SingletonLifetime.prototype.get = function (key) { return this._val; };
             /**
              * Set the cached object for the lifetime if needed.
              */
-            SingletonLifetime.prototype.set = function (key, val) {
-                this._val = val;
-            };
+            SingletonLifetime.prototype.set = function (key, val) { this._val = val; };
             return SingletonLifetime;
         })();
         /**
@@ -3099,16 +3752,11 @@ var phosphor;
             /**
              * Get the cached object for the lifetime if one exists.
              */
-            PerResolveLifetime.prototype.get = function (key) {
-                return this._key === key ? this._val : null;
-            };
+            PerResolveLifetime.prototype.get = function (key) { return this._key === key ? this._val : null; };
             /**
              * Set the cached object for the lifetime if needed.
              */
-            PerResolveLifetime.prototype.set = function (key, val) {
-                this._key = key;
-                this._val = val;
-            };
+            PerResolveLifetime.prototype.set = function (key, val) { this._key = key; this._val = val; };
             return PerResolveLifetime;
         })();
     })(di = phosphor.di || (phosphor.di = {}));
@@ -3207,7 +3855,7 @@ var phosphor;
                 for (var i = 0, n = children.length; i < n; ++i) {
                     var child = children[i];
                     if (typeof child === 'string') {
-                        children[i] = new virtualdom.Elem(0 /* Text */, child, emptyObject, emptyArray);
+                        children[i] = new virtualdom.Elem(virtualdom.ElemType.Text, child, emptyObject, emptyArray);
                     }
                 }
             }
@@ -3215,17 +3863,17 @@ var phosphor;
             children = children || emptyArray;
             var elem;
             if (typeof tag === 'string') {
-                elem = new virtualdom.Elem(1 /* Node */, tag, data, children);
+                elem = new virtualdom.Elem(virtualdom.ElemType.Node, tag, data, children);
             }
             else {
-                elem = new virtualdom.Elem(2 /* Component */, tag, data, children);
+                elem = new virtualdom.Elem(virtualdom.ElemType.Component, tag, data, children);
             }
             return elem;
         }
     })(virtualdom = phosphor.virtualdom || (phosphor.virtualdom = {}));
 })(phosphor || (phosphor = {})); // module phosphor.virtualdom
 
-var __extends = this.__extends || function (d, b) {
+var __extends = (this && this.__extends) || function (d, b) {
     for (var p in b) if (b.hasOwnProperty(p)) d[p] = b[p];
     function __() { this.constructor = d; }
     __.prototype = b.prototype;
@@ -3367,43 +4015,38 @@ var phosphor;
              *
              * The default implementation is a no-op.
              */
-            BaseComponent.prototype.onUpdateRequest = function (msg) {
-            };
+            BaseComponent.prototype.onUpdateRequest = function (msg) { };
             /**
              * A method invoked on an 'after-attach' message.
              *
              * The default implementation is a no-op.
              */
-            BaseComponent.prototype.onAfterAttach = function (msg) {
-            };
+            BaseComponent.prototype.onAfterAttach = function (msg) { };
             /**
              * A method invoked on a 'before-detach' message.
              *
              * The default implementation is a no-op.
              */
-            BaseComponent.prototype.onBeforeDetach = function (msg) {
-            };
+            BaseComponent.prototype.onBeforeDetach = function (msg) { };
             /**
              * A method invoked on a 'before-move' message.
              *
              * The default implementation is a no-op.
              */
-            BaseComponent.prototype.onBeforeMove = function (msg) {
-            };
+            BaseComponent.prototype.onBeforeMove = function (msg) { };
             /**
              * A method invoked on an 'after-move' message.
              *
              * The default implementation is a no-op.
              */
-            BaseComponent.prototype.onAfterMove = function (msg) {
-            };
+            BaseComponent.prototype.onAfterMove = function (msg) { };
             return BaseComponent;
         })(NodeBase);
         virtualdom.BaseComponent = BaseComponent;
     })(virtualdom = phosphor.virtualdom || (phosphor.virtualdom = {}));
 })(phosphor || (phosphor = {})); // module phosphor.virtualdom
 
-var __extends = this.__extends || function (d, b) {
+var __extends = (this && this.__extends) || function (d, b) {
     for (var p in b) if (b.hasOwnProperty(p)) d[p] = b[p];
     function __() { this.constructor = d; }
     __.prototype = b.prototype;
@@ -3511,15 +4154,13 @@ var phosphor;
              *
              * The default implementation is a no-op.
              */
-            Component.prototype.onBeforeRender = function (msg) {
-            };
+            Component.prototype.onBeforeRender = function (msg) { };
             /**
              * A method invoked on an 'after-render' message.
              *
              * The default implementation is a no-op.
              */
-            Component.prototype.onAfterRender = function (msg) {
-            };
+            Component.prototype.onAfterRender = function (msg) { };
             /**
              * The tag name to use when creating the component node.
              *
@@ -3847,13 +4488,13 @@ var phosphor;
             for (var i = 0, n = content.length; i < n; ++i) {
                 var elem = content[i];
                 switch (elem.type) {
-                    case 1 /* Node */:
+                    case virtualdom.ElemType.Node:
                         var ref = elem.data.ref;
                         if (ref)
                             refs[ref] = node;
                         refsHelper(node, elem.children, refs);
                         break;
-                    case 2 /* Component */:
+                    case virtualdom.ElemType.Component:
                         var ref = elem.data.ref;
                         if (ref)
                             refs[ref] = componentMap.get(node);
@@ -3883,15 +4524,15 @@ var phosphor;
         function createNode(elem) {
             var node;
             switch (elem.type) {
-                case 0 /* Text */:
+                case virtualdom.ElemType.Text:
                     node = document.createTextNode(elem.tag);
                     break;
-                case 1 /* Node */:
+                case virtualdom.ElemType.Node:
                     node = document.createElement(elem.tag);
                     addAttributes(node, elem.data);
                     addContent(node, elem.children);
                     break;
-                case 2 /* Component */:
+                case virtualdom.ElemType.Component:
                     var cls = elem.tag;
                     var component = new cls(elem.data, elem.children);
                     node = component.node;
@@ -3982,7 +4623,7 @@ var phosphor;
                     continue;
                 }
                 // If the element is a text node, update its text content.
-                if (newElem.type === 0 /* Text */) {
+                if (newElem.type === virtualdom.ElemType.Text) {
                     currNode.textContent = newElem.tag;
                     currNode = currNode.nextSibling;
                     continue;
@@ -3995,7 +4636,7 @@ var phosphor;
                     continue;
                 }
                 // If the element is a Node type, update the node in place.
-                if (newElem.type === 1 /* Node */) {
+                if (newElem.type === virtualdom.ElemType.Node) {
                     updateAttributes(currNode, oldElem.data, newElem.data);
                     updateContent(currNode, oldElem.children, newElem.children);
                     currNode = currNode.nextSibling;
@@ -4007,6 +4648,7 @@ var phosphor;
                 sendMessage(component, MSG_UPDATE_REQUEST);
                 currNode = currNode.nextSibling;
             }
+            // Dispose of the old nodes pushed to the end of the host.
             for (var i = oldCopy.length - 1; i >= newCount; --i) {
                 var oldNode = host.lastChild;
                 sendBranch(oldNode, MSG_BEFORE_DETACH);
@@ -4317,45 +4959,45 @@ var phosphor;
             /**
              * Align with the left edge.
              */
-            Alignment[Alignment["Left"] = 0x1] = "Left";
+            Alignment[Alignment["Left"] = 1] = "Left";
             /**
              * Align with the right edge.
              */
-            Alignment[Alignment["Right"] = 0x2] = "Right";
+            Alignment[Alignment["Right"] = 2] = "Right";
             /**
              * Align with the horizontal center.
              */
-            Alignment[Alignment["HorizontalCenter"] = 0x4] = "HorizontalCenter";
+            Alignment[Alignment["HorizontalCenter"] = 4] = "HorizontalCenter";
             /**
              * Align with the top edge.
              */
-            Alignment[Alignment["Top"] = 0x10] = "Top";
+            Alignment[Alignment["Top"] = 16] = "Top";
             /**
              * Align with the bottom edge.
              */
-            Alignment[Alignment["Bottom"] = 0x20] = "Bottom";
+            Alignment[Alignment["Bottom"] = 32] = "Bottom";
             /**
              * Align with the vertical center.
              */
-            Alignment[Alignment["VerticalCenter"] = 0x40] = "VerticalCenter";
+            Alignment[Alignment["VerticalCenter"] = 64] = "VerticalCenter";
             /**
              * Align with the horizontal and vertical center.
              */
-            Alignment[Alignment["Center"] = Alignment.HorizontalCenter | Alignment.VerticalCenter] = "Center";
+            Alignment[Alignment["Center"] = 68] = "Center";
             /**
              * A mask of horizontal alignment values.
              */
-            Alignment[Alignment["Horizontal_Mask"] = Alignment.Left | Alignment.Right | Alignment.HorizontalCenter] = "Horizontal_Mask";
+            Alignment[Alignment["Horizontal_Mask"] = 7] = "Horizontal_Mask";
             /**
              * A mask of vertical alignment values.
              */
-            Alignment[Alignment["Vertical_Mask"] = Alignment.Top | Alignment.Bottom | Alignment.VerticalCenter] = "Vertical_Mask";
+            Alignment[Alignment["Vertical_Mask"] = 112] = "Vertical_Mask";
         })(widgets.Alignment || (widgets.Alignment = {}));
         var Alignment = widgets.Alignment;
     })(widgets = phosphor.widgets || (phosphor.widgets = {}));
 })(phosphor || (phosphor = {})); // module phosphor.widgets
 
-var __extends = this.__extends || function (d, b) {
+var __extends = (this && this.__extends) || function (d, b) {
     for (var p in b) if (b.hasOwnProperty(p)) d[p] = b[p];
     function __() { this.constructor = d; }
     __.prototype = b.prototype;
@@ -4499,7 +5141,7 @@ var phosphor;
 
 
 
-var __extends = this.__extends || function (d, b) {
+var __extends = (this && this.__extends) || function (d, b) {
     for (var p in b) if (b.hasOwnProperty(p)) d[p] = b[p];
     function __() { this.constructor = d; }
     __.prototype = b.prototype;
@@ -4626,7 +5268,7 @@ var phosphor;
     })(widgets = phosphor.widgets || (phosphor.widgets = {}));
 })(phosphor || (phosphor = {})); // module phosphor.widgets
 
-var __extends = this.__extends || function (d, b) {
+var __extends = (this && this.__extends) || function (d, b) {
     for (var p in b) if (b.hasOwnProperty(p)) d[p] = b[p];
     function __() { this.constructor = d; }
     __.prototype = b.prototype;
@@ -4750,51 +5392,51 @@ var phosphor;
             /**
              * A bit flag indicating the widget can grow beyond `sizeHint`.
              */
-            SizePolicy[SizePolicy["GrowFlag"] = 0x1] = "GrowFlag";
+            SizePolicy[SizePolicy["GrowFlag"] = 1] = "GrowFlag";
             /**
              * A bit flag indicating the widget can shrink below `sizeHint`.
              */
-            SizePolicy[SizePolicy["ShrinkFlag"] = 0x2] = "ShrinkFlag";
+            SizePolicy[SizePolicy["ShrinkFlag"] = 2] = "ShrinkFlag";
             /**
              * A bit flag indicating the widget should expand beyond `sizeHint`.
              */
-            SizePolicy[SizePolicy["ExpandFlag"] = 0x4] = "ExpandFlag";
+            SizePolicy[SizePolicy["ExpandFlag"] = 4] = "ExpandFlag";
             /**
              * A bit flag indicating the `sizeHint` is ignored.
              */
-            SizePolicy[SizePolicy["IgnoreFlag"] = 0x8] = "IgnoreFlag";
+            SizePolicy[SizePolicy["IgnoreFlag"] = 8] = "IgnoreFlag";
             /**
              * A policy indicating that the `sizeHint` is a minimum, but the
              * widget can be expanded if needed and still be useful.
              */
-            SizePolicy[SizePolicy["Minimum"] = SizePolicy.GrowFlag] = "Minimum";
+            SizePolicy[SizePolicy["Minimum"] = 1] = "Minimum";
             /**
              * A policy indicating that the `sizeHint` is a maximum, but the
              * widget can be shrunk if needed and still be useful.
              */
-            SizePolicy[SizePolicy["Maximum"] = SizePolicy.ShrinkFlag] = "Maximum";
+            SizePolicy[SizePolicy["Maximum"] = 2] = "Maximum";
             /**
              * A policy indicating that the `sizeHint` is preferred, but the
              * widget can grow or shrink if needed and still be useful.
              *
              * This is the default size policy.
              */
-            SizePolicy[SizePolicy["Preferred"] = SizePolicy.GrowFlag | SizePolicy.ShrinkFlag] = "Preferred";
+            SizePolicy[SizePolicy["Preferred"] = 3] = "Preferred";
             /**
              * A policy indicating that `sizeHint` is reasonable, but the widget
              * can shrink if needed and still be useful. It can also make use of
              * extra space and should expand as much as possible.
              */
-            SizePolicy[SizePolicy["Expanding"] = SizePolicy.GrowFlag | SizePolicy.ShrinkFlag | SizePolicy.ExpandFlag] = "Expanding";
+            SizePolicy[SizePolicy["Expanding"] = 7] = "Expanding";
             /**
              * A policy indicating that `sizeHint` is a minimum. The widget can
              * make use of extra space and should expand as much as possible.
              */
-            SizePolicy[SizePolicy["MinimumExpanding"] = SizePolicy.GrowFlag | SizePolicy.ExpandFlag] = "MinimumExpanding";
+            SizePolicy[SizePolicy["MinimumExpanding"] = 5] = "MinimumExpanding";
             /**
              * A policy indicating the `sizeHint` is ignored.
              */
-            SizePolicy[SizePolicy["Ignored"] = SizePolicy.GrowFlag | SizePolicy.ShrinkFlag | SizePolicy.IgnoreFlag] = "Ignored";
+            SizePolicy[SizePolicy["Ignored"] = 11] = "Ignored";
         })(widgets.SizePolicy || (widgets.SizePolicy = {}));
         var SizePolicy = widgets.SizePolicy;
     })(widgets = phosphor.widgets || (phosphor.widgets = {}));
@@ -4821,23 +5463,23 @@ var phosphor;
             /**
              * The widget is attached to the DOM.
              */
-            WidgetFlag[WidgetFlag["IsAttached"] = 0x1] = "IsAttached";
+            WidgetFlag[WidgetFlag["IsAttached"] = 1] = "IsAttached";
             /**
              * The widget is explicitly hidden.
              */
-            WidgetFlag[WidgetFlag["IsHidden"] = 0x2] = "IsHidden";
+            WidgetFlag[WidgetFlag["IsHidden"] = 2] = "IsHidden";
             /**
              * The widget is visible.
              */
-            WidgetFlag[WidgetFlag["IsVisible"] = 0x4] = "IsVisible";
+            WidgetFlag[WidgetFlag["IsVisible"] = 4] = "IsVisible";
             /**
              * The widget has been disposed.
              */
-            WidgetFlag[WidgetFlag["IsDisposed"] = 0x8] = "IsDisposed";
+            WidgetFlag[WidgetFlag["IsDisposed"] = 8] = "IsDisposed";
             /**
              * Changing the widget layout is disallowed.
              */
-            WidgetFlag[WidgetFlag["DisallowLayoutChange"] = 0x10] = "DisallowLayoutChange";
+            WidgetFlag[WidgetFlag["DisallowLayoutChange"] = 16] = "DisallowLayoutChange";
         })(widgets.WidgetFlag || (widgets.WidgetFlag = {}));
         var WidgetFlag = widgets.WidgetFlag;
     })(widgets = phosphor.widgets || (phosphor.widgets = {}));
@@ -4855,7 +5497,7 @@ var phosphor;
     var widgets;
     (function (widgets) {
         var Message = phosphor.core.Message;
-        var disconnect = phosphor.core.disconnect;
+        var clearSignalData = phosphor.core.clearSignalData;
         var postMessage = phosphor.core.postMessage;
         /**
          * A singleton 'layout-request' message.
@@ -4879,8 +5521,7 @@ var phosphor;
              * Dispose of the resources held by the layout.
              */
             Layout.prototype.dispose = function () {
-                disconnect(this, null, null, null);
-                disconnect(null, null, this, null);
+                clearSignalData(this);
                 this._parent = null;
             };
             Object.defineProperty(Layout.prototype, "parent", {
@@ -5092,8 +5733,7 @@ var phosphor;
              *
              * The default implementation of this method is a no-op.
              */
-            Layout.prototype.layout = function (x, y, width, height) {
-            };
+            Layout.prototype.layout = function (x, y, width, height) { };
             /**
              * Ensure a child widget is parented to the layout's parent.
              *
@@ -5261,6 +5901,7 @@ var phosphor;
             var totalStretch = 0;
             var stretchCount = 0;
             var expansiveCount = 0;
+            // Setup the sizers and calculate the totals.
             for (var i = 0; i < count; ++i) {
                 var sizer = sizers[i];
                 var minSize = sizer.minSize;
@@ -5339,6 +5980,9 @@ var phosphor;
                         }
                     }
                 }
+                // 5b) Distribute any remaining space evenly among the sizers
+                // with zero stretch factors. This progresses in phases in the
+                // same manner as step (5a).
                 while (notDoneCount > 0 && freeSpace > nearZero) {
                     var amt = freeSpace / notDoneCount;
                     for (var i = 0; i < count; ++i) {
@@ -5393,6 +6037,8 @@ var phosphor;
                         }
                     }
                 }
+                // 6b) Distribute remaining space equally among expansive sizers.
+                // This progresses in phases in the same manner as step (6a).
                 while (expansiveCount > 0 && freeSpace > nearZero) {
                     var amt = freeSpace / expansiveCount;
                     for (var i = 0; i < count; ++i) {
@@ -5413,6 +6059,9 @@ var phosphor;
                         }
                     }
                 }
+                // 6c) Distribute any remaining space evenly among the sizers
+                // with zero stretch factors. This progresses in phases in the
+                // same manner as step (6a).
                 while (notDoneCount > 0 && freeSpace > nearZero) {
                     var amt = freeSpace / notDoneCount;
                     for (var i = 0; i < count; ++i) {
@@ -5518,7 +6167,7 @@ var phosphor;
                  */
                 get: function () {
                     var hPolicy = this._sizePolicy >> 16;
-                    return (hPolicy & 4 /* ExpandFlag */) !== 0;
+                    return (hPolicy & widgets.SizePolicy.ExpandFlag) !== 0;
                 },
                 enumerable: true,
                 configurable: true
@@ -5529,7 +6178,7 @@ var phosphor;
                  */
                 get: function () {
                     var vPolicy = this._sizePolicy & 0xFFFF;
-                    return (vPolicy & 4 /* ExpandFlag */) !== 0;
+                    return (vPolicy & widgets.SizePolicy.ExpandFlag) !== 0;
                 },
                 enumerable: true,
                 configurable: true
@@ -5558,8 +6207,7 @@ var phosphor;
             /**
              * Invalidate the cached data for the item.
              */
-            SpacerItem.prototype.invalidate = function () {
-            };
+            SpacerItem.prototype.invalidate = function () { };
             /**
              * Compute the preferred size of the item.
              */
@@ -5573,8 +6221,8 @@ var phosphor;
                 var size = this._size;
                 var hPolicy = this._sizePolicy >> 16;
                 var vPolicy = this._sizePolicy & 0xFFFF;
-                var w = hPolicy & 2 /* ShrinkFlag */ ? 0 : size.width;
-                var h = vPolicy & 2 /* ShrinkFlag */ ? 0 : size.height;
+                var w = hPolicy & widgets.SizePolicy.ShrinkFlag ? 0 : size.width;
+                var h = vPolicy & widgets.SizePolicy.ShrinkFlag ? 0 : size.height;
                 return new Size(w, h);
             };
             /**
@@ -5584,15 +6232,14 @@ var phosphor;
                 var size = this._size;
                 var hPolicy = this._sizePolicy >> 16;
                 var vPolicy = this._sizePolicy & 0xFFFF;
-                var w = hPolicy & 1 /* GrowFlag */ ? Infinity : size.width;
-                var h = vPolicy & 1 /* GrowFlag */ ? Infinity : size.height;
+                var w = hPolicy & widgets.SizePolicy.GrowFlag ? Infinity : size.width;
+                var h = vPolicy & widgets.SizePolicy.GrowFlag ? Infinity : size.height;
                 return new Size(w, h);
             };
             /**
              * Set the geometry of the item using the given values.
              */
-            SpacerItem.prototype.setGeometry = function (x, y, width, height) {
-            };
+            SpacerItem.prototype.setGeometry = function (x, y, width, height) { };
             return SpacerItem;
         })();
         widgets.SpacerItem = SpacerItem;
@@ -5696,7 +6343,7 @@ var phosphor;
                         return false;
                     }
                     var horizontalPolicy = this._widget.horizontalSizePolicy;
-                    return (horizontalPolicy & 4 /* ExpandFlag */) !== 0;
+                    return (horizontalPolicy & widgets.SizePolicy.ExpandFlag) !== 0;
                 },
                 enumerable: true,
                 configurable: true
@@ -5710,7 +6357,7 @@ var phosphor;
                         return false;
                     }
                     var verticalPolicy = this._widget.verticalSizePolicy;
-                    return (verticalPolicy & 4 /* ExpandFlag */) !== 0;
+                    return (verticalPolicy & widgets.SizePolicy.ExpandFlag) !== 0;
                 },
                 enumerable: true,
                 configurable: true
@@ -5774,16 +6421,16 @@ var phosphor;
                 var maxSize = this._maxSize;
                 w = Math.max(minSize.width, Math.min(w, maxSize.width));
                 h = Math.max(minSize.height, Math.min(h, maxSize.height));
-                if (alignment & 2 /* Right */) {
+                if (alignment & widgets.Alignment.Right) {
                     x += width - w;
                 }
-                else if (alignment & 4 /* HorizontalCenter */) {
+                else if (alignment & widgets.Alignment.HorizontalCenter) {
                     x += (width - w) / 2;
                 }
-                if (alignment & 32 /* Bottom */) {
+                if (alignment & widgets.Alignment.Bottom) {
                     y += height - h;
                 }
-                else if (alignment & 64 /* VerticalCenter */) {
+                else if (alignment & widgets.Alignment.VerticalCenter) {
                     y += (height - h) / 2;
                 }
                 widget.setGeometry(x, y, w, h);
@@ -5821,7 +6468,7 @@ var phosphor;
                 var minW = 0;
                 var minH = 0;
                 if (horizontalPolicy !== widgets.SizePolicy.Ignored) {
-                    if (horizontalPolicy & 2 /* ShrinkFlag */) {
+                    if (horizontalPolicy & widgets.SizePolicy.ShrinkFlag) {
                         minW = minHint.width;
                     }
                     else {
@@ -5829,7 +6476,7 @@ var phosphor;
                     }
                 }
                 if (verticalPolicy !== widgets.SizePolicy.Ignored) {
-                    if (verticalPolicy & 2 /* ShrinkFlag */) {
+                    if (verticalPolicy & widgets.SizePolicy.ShrinkFlag) {
                         minH = minHint.height;
                     }
                     else {
@@ -5844,7 +6491,7 @@ var phosphor;
                 var alignment = this._alignment;
                 if (!(alignment & widgets.Alignment.Horizontal_Mask)) {
                     if (horizontalPolicy !== widgets.SizePolicy.Ignored) {
-                        if (horizontalPolicy & 1 /* GrowFlag */) {
+                        if (horizontalPolicy & widgets.SizePolicy.GrowFlag) {
                             maxW = Math.max(minHint.width, maxHint.width);
                         }
                         else {
@@ -5855,7 +6502,7 @@ var phosphor;
                 }
                 if (!(alignment & widgets.Alignment.Vertical_Mask)) {
                     if (verticalPolicy !== widgets.SizePolicy.Ignored) {
-                        if (verticalPolicy & 1 /* GrowFlag */) {
+                        if (verticalPolicy & widgets.SizePolicy.GrowFlag) {
                             maxH = Math.max(minHint.height, maxHint.height);
                         }
                         else {
@@ -5875,7 +6522,7 @@ var phosphor;
     })(widgets = phosphor.widgets || (phosphor.widgets = {}));
 })(phosphor || (phosphor = {})); // module phosphor.widgets
 
-var __extends = this.__extends || function (d, b) {
+var __extends = (this && this.__extends) || function (d, b) {
     for (var p in b) if (b.hasOwnProperty(p)) d[p] = b[p];
     function __() { this.constructor = d; }
     __.prototype = b.prototype;
@@ -6037,10 +6684,10 @@ var phosphor;
             BoxLayout.prototype.insertSpacing = function (index, size) {
                 var spacer;
                 if (isHorizontal(this._direction)) {
-                    spacer = new widgets.SpacerItem(size, 0, 0 /* Fixed */, widgets.SizePolicy.Minimum);
+                    spacer = new widgets.SpacerItem(size, 0, widgets.SizePolicy.Fixed, widgets.SizePolicy.Minimum);
                 }
                 else {
-                    spacer = new widgets.SpacerItem(0, size, widgets.SizePolicy.Minimum, 0 /* Fixed */);
+                    spacer = new widgets.SpacerItem(0, size, widgets.SizePolicy.Minimum, widgets.SizePolicy.Fixed);
                 }
                 return this._insert(index, spacer, 0);
             };
@@ -6086,7 +6733,7 @@ var phosphor;
                 if (!sizer) {
                     return false;
                 }
-                stretch = Math.max(0, stretch | 0);
+                stretch = Math.max(0, Math.floor(stretch));
                 if (sizer.stretch !== stretch) {
                     sizer.stretch = stretch;
                     this.invalidate();
@@ -6157,7 +6804,7 @@ var phosphor;
                 var lastWasWidget = false;
                 var spacing = this._spacing;
                 var count = items.length;
-                if (dir === 0 /* LeftToRight */) {
+                if (dir === widgets.Direction.LeftToRight) {
                     for (var i = 0; i < count; ++i) {
                         var item = items[i];
                         if (item.isHidden) {
@@ -6172,7 +6819,7 @@ var phosphor;
                         x += size;
                     }
                 }
-                else if (dir === 2 /* TopToBottom */) {
+                else if (dir === widgets.Direction.TopToBottom) {
                     for (var i = 0; i < count; ++i) {
                         var item = items[i];
                         if (item.isHidden) {
@@ -6187,7 +6834,7 @@ var phosphor;
                         y += size;
                     }
                 }
-                else if (dir === 1 /* RightToLeft */) {
+                else if (dir === widgets.Direction.RightToLeft) {
                     x += width;
                     for (var i = 0; i < count; ++i) {
                         var item = items[i];
@@ -6364,7 +7011,7 @@ var phosphor;
              */
             BoxLayout.prototype._insert = function (index, item, stretch) {
                 var sizer = new widgets.LayoutSizer();
-                sizer.stretch = Math.max(0, stretch | 0);
+                sizer.stretch = Math.max(0, Math.floor(stretch));
                 index = algo.insert(this._items, index, item);
                 algo.insert(this._sizers, index, sizer);
                 this.invalidate();
@@ -6377,12 +7024,12 @@ var phosphor;
          * Test whether the given direction is horizontal.
          */
         function isHorizontal(dir) {
-            return dir === 0 /* LeftToRight */ || dir === 1 /* RightToLeft */;
+            return dir === widgets.Direction.LeftToRight || dir === widgets.Direction.RightToLeft;
         }
     })(widgets = phosphor.widgets || (phosphor.widgets = {}));
 })(phosphor || (phosphor = {})); // module phosphor.widgets
 
-var __extends = this.__extends || function (d, b) {
+var __extends = (this && this.__extends) || function (d, b) {
     for (var p in b) if (b.hasOwnProperty(p)) d[p] = b[p];
     function __() { this.constructor = d; }
     __.prototype = b.prototype;
@@ -6433,7 +7080,7 @@ var phosphor;
                 this._hidden = false;
                 this.addClass(HANDLE_CLASS);
                 this._orientation = orientation;
-                if (orientation === 0 /* Horizontal */) {
+                if (orientation === widgets.Orientation.Horizontal) {
                     this.addClass(HORIZONTAL_CLASS);
                 }
                 else {
@@ -6490,7 +7137,7 @@ var phosphor;
                         return;
                     }
                     this._orientation = value;
-                    if (value === 0 /* Horizontal */) {
+                    if (value === widgets.Orientation.Horizontal) {
                         this.removeClass(VERTICAL_CLASS);
                         this.addClass(HORIZONTAL_CLASS);
                     }
@@ -6508,7 +7155,7 @@ var phosphor;
     })(widgets = phosphor.widgets || (phosphor.widgets = {}));
 })(phosphor || (phosphor = {})); // module phosphor.widgets
 
-var __extends = this.__extends || function (d, b) {
+var __extends = (this && this.__extends) || function (d, b) {
     for (var p in b) if (b.hasOwnProperty(p)) d[p] = b[p];
     function __() { this.constructor = d; }
     __.prototype = b.prototype;
@@ -6586,7 +7233,7 @@ var phosphor;
                  * Set the the size of the split handles.
                  */
                 set: function (size) {
-                    size = Math.max(0, size | 0);
+                    size = Math.max(0, Math.floor(size));
                     if (size === this._handleSize) {
                         return;
                     }
@@ -6624,7 +7271,7 @@ var phosphor;
                 }
                 var totalSize;
                 var box = parent.boxSizing;
-                if (this._orientation === 0 /* Horizontal */) {
+                if (this._orientation === widgets.Orientation.Horizontal) {
                     totalSize = parent.width - box.horizontalSum - this._fixedSpace;
                 }
                 else {
@@ -6660,7 +7307,7 @@ var phosphor;
                     return;
                 }
                 var delta;
-                if (this._orientation === 0 /* Horizontal */) {
+                if (this._orientation === widgets.Orientation.Horizontal) {
                     delta = pos - item.handle.node.offsetLeft;
                 }
                 else {
@@ -6727,7 +7374,7 @@ var phosphor;
                 var handle = new widgets.SplitHandle(this._orientation);
                 var item = new SplitItem(handle, widget, alignment);
                 var sizer = new widgets.LayoutSizer();
-                sizer.stretch = Math.max(0, stretch | 0);
+                sizer.stretch = Math.max(0, Math.floor(stretch));
                 index = algo.insert(this._items, index, item);
                 algo.insert(this._sizers, index, sizer);
                 this.invalidate();
@@ -6754,7 +7401,7 @@ var phosphor;
                 if (!sizer) {
                     return false;
                 }
-                stretch = Math.max(0, stretch | 0);
+                stretch = Math.max(0, Math.floor(stretch));
                 if (sizer.stretch !== stretch) {
                     sizer.stretch = stretch;
                     this.invalidate();
@@ -6812,12 +7459,12 @@ var phosphor;
                 var orient = this._orientation;
                 var sizers = this._sizers;
                 // Distribute the layout space to the sizers.
-                var mainSpace = orient === 0 /* Horizontal */ ? width : height;
+                var mainSpace = orient === widgets.Orientation.Horizontal ? width : height;
                 widgets.layoutCalc(sizers, Math.max(0, mainSpace - this._fixedSpace));
                 // Update the geometry of the items according to the orientation.
                 var hSize = this._handleSize;
                 var count = items.length;
-                if (orient === 0 /* Horizontal */) {
+                if (orient === widgets.Orientation.Horizontal) {
                     for (var i = 0; i < count; ++i) {
                         var item = items[i];
                         if (item.isHidden) {
@@ -6908,7 +7555,7 @@ var phosphor;
                 //
                 // A visible item with a zero size hint indicates a newly added
                 // item. Its layout size hint is initialized to the item's hint.
-                if (orient === 0 /* Horizontal */) {
+                if (orient === widgets.Orientation.Horizontal) {
                     maxH = Infinity;
                     maxW = count > 0 ? 0 : Infinity;
                     for (var i = 0; i < count; ++i) {
@@ -7110,11 +7757,19 @@ var phosphor;
     })(widgets = phosphor.widgets || (phosphor.widgets = {}));
 })(phosphor || (phosphor = {})); // module phosphor.widgets
 
-var __extends = this.__extends || function (d, b) {
+var __extends = (this && this.__extends) || function (d, b) {
     for (var p in b) if (b.hasOwnProperty(p)) d[p] = b[p];
     function __() { this.constructor = d; }
     __.prototype = b.prototype;
     d.prototype = new __();
+};
+var __decorate = (this && this.__decorate) || function (decorators, target, key, desc) {
+    if (typeof Reflect === "object" && typeof Reflect.decorate === "function") return Reflect.decorate(decorators, target, key, desc);
+    switch (arguments.length) {
+        case 2: return decorators.reduceRight(function(o, d) { return (d && d(o)) || o; }, target);
+        case 3: return decorators.reduceRight(function(o, d) { return (d && d(target, key)), void 0; }, void 0);
+        case 4: return decorators.reduceRight(function(o, d) { return (d && d(target, key, o)) || o; }, desc);
+    }
 };
 /*-----------------------------------------------------------------------------
 | Copyright (c) 2014-2015, S. Chris Colbert
@@ -7128,8 +7783,7 @@ var phosphor;
     var widgets;
     (function (widgets) {
         var algo = phosphor.collections.algorithm;
-        var Signal = phosphor.core.Signal;
-        var emit = phosphor.core.emit;
+        var signal = phosphor.core.signal;
         var Pair = phosphor.utility.Pair;
         var Size = phosphor.utility.Size;
         /**
@@ -7240,7 +7894,7 @@ var phosphor;
                     this._currentItem = null;
                     item.widget.hide();
                 }
-                emit(this, StackedLayout.widgetRemoved, new Pair(index, item.widget));
+                this.widgetRemoved.emit(new Pair(index, item.widget));
                 return item;
             };
             /**
@@ -7376,21 +8030,28 @@ var phosphor;
                 this._minSize = new Size(minW, minH);
                 this._maxSize = new Size(maxW, maxH);
             };
-            /**
-             * A signal emitted when a widget is removed from the layout.
-             */
-            StackedLayout.widgetRemoved = new Signal();
+            __decorate([
+                signal
+            ], StackedLayout.prototype, "widgetRemoved");
             return StackedLayout;
         })(widgets.Layout);
         widgets.StackedLayout = StackedLayout;
     })(widgets = phosphor.widgets || (phosphor.widgets = {}));
 })(phosphor || (phosphor = {})); // module phosphor.widgets
 
-var __extends = this.__extends || function (d, b) {
+var __extends = (this && this.__extends) || function (d, b) {
     for (var p in b) if (b.hasOwnProperty(p)) d[p] = b[p];
     function __() { this.constructor = d; }
     __.prototype = b.prototype;
     d.prototype = new __();
+};
+var __decorate = (this && this.__decorate) || function (decorators, target, key, desc) {
+    if (typeof Reflect === "object" && typeof Reflect.decorate === "function") return Reflect.decorate(decorators, target, key, desc);
+    switch (arguments.length) {
+        case 2: return decorators.reduceRight(function(o, d) { return (d && d(o)) || o; }, target);
+        case 3: return decorators.reduceRight(function(o, d) { return (d && d(target, key)), void 0; }, void 0);
+        case 4: return decorators.reduceRight(function(o, d) { return (d && d(target, key, o)) || o; }, desc);
+    }
 };
 /*-----------------------------------------------------------------------------
 | Copyright (c) 2014-2015, S. Chris Colbert
@@ -7406,14 +8067,13 @@ var phosphor;
         var algo = phosphor.collections.algorithm;
         var Message = phosphor.core.Message;
         var NodeBase = phosphor.core.NodeBase;
-        var Signal = phosphor.core.Signal;
         var clearMessageData = phosphor.core.clearMessageData;
-        var disconnect = phosphor.core.disconnect;
-        var emit = phosphor.core.emit;
+        var clearSignalData = phosphor.core.clearSignalData;
         var installMessageFilter = phosphor.core.installMessageFilter;
         var postMessage = phosphor.core.postMessage;
         var removeMessageFilter = phosphor.core.removeMessageFilter;
         var sendMessage = phosphor.core.sendMessage;
+        var signal = phosphor.core.signal;
         var Size = phosphor.utility.Size;
         var createBoxSizing = phosphor.utility.createBoxSizing;
         /**
@@ -7511,10 +8171,9 @@ var phosphor;
              * Dispose of the widget and its descendants.
              */
             Widget.prototype.dispose = function () {
-                this.setFlag(8 /* IsDisposed */);
-                emit(this, Widget.disposed, void 0);
-                disconnect(this, null, null, null);
-                disconnect(null, null, this, null);
+                this.setFlag(widgets.WidgetFlag.IsDisposed);
+                this.disposed.emit(void 0);
+                clearSignalData(this);
                 clearMessageData(this);
                 var layout = this._layout;
                 if (layout) {
@@ -7669,7 +8328,7 @@ var phosphor;
                  * Test whether the widget's node is attached to the DOM.
                  */
                 get: function () {
-                    return this.testFlag(1 /* IsAttached */);
+                    return this.testFlag(widgets.WidgetFlag.IsAttached);
                 },
                 enumerable: true,
                 configurable: true
@@ -7679,7 +8338,7 @@ var phosphor;
                  * Test whether the widget has been disposed.
                  */
                 get: function () {
-                    return this.testFlag(8 /* IsDisposed */);
+                    return this.testFlag(widgets.WidgetFlag.IsDisposed);
                 },
                 enumerable: true,
                 configurable: true
@@ -7689,7 +8348,7 @@ var phosphor;
                  * Test whether the widget is explicitly hidden.
                  */
                 get: function () {
-                    return this.testFlag(2 /* IsHidden */);
+                    return this.testFlag(widgets.WidgetFlag.IsHidden);
                 },
                 enumerable: true,
                 configurable: true
@@ -7704,7 +8363,7 @@ var phosphor;
                  *   - it has no explicitly hidden ancestors
                  */
                 get: function () {
-                    return this.testFlag(4 /* IsVisible */);
+                    return this.testFlag(widgets.WidgetFlag.IsVisible);
                 },
                 enumerable: true,
                 configurable: true
@@ -7733,7 +8392,7 @@ var phosphor;
                     if (oldLayout === layout) {
                         return;
                     }
-                    if (this.testFlag(16 /* DisallowLayoutChange */)) {
+                    if (this.testFlag(widgets.WidgetFlag.DisallowLayoutChange)) {
                         throw new Error('cannot change widget layout');
                     }
                     if (layout && layout.parent) {
@@ -7839,12 +8498,12 @@ var phosphor;
                 if (this.isAttached && (!parent || parent.isVisible)) {
                     beforeShowHelper(this);
                     this.removeClass(HIDDEN_CLASS);
-                    this.clearFlag(2 /* IsHidden */);
+                    this.clearFlag(widgets.WidgetFlag.IsHidden);
                     afterShowHelper(this);
                 }
                 else {
                     this.removeClass(HIDDEN_CLASS);
-                    this.clearFlag(2 /* IsHidden */);
+                    this.clearFlag(widgets.WidgetFlag.IsHidden);
                 }
                 if (parent) {
                     sendMessage(parent, new widgets.ChildMessage('child-shown', this));
@@ -7864,12 +8523,12 @@ var phosphor;
                 if (this.isAttached && (!parent || parent.isVisible)) {
                     beforeHideHelper(this);
                     this.addClass(HIDDEN_CLASS);
-                    this.setFlag(2 /* IsHidden */);
+                    this.setFlag(widgets.WidgetFlag.IsHidden);
                     afterHideHelper(this);
                 }
                 else {
                     this.addClass(HIDDEN_CLASS);
-                    this.setFlag(2 /* IsHidden */);
+                    this.setFlag(widgets.WidgetFlag.IsHidden);
                 }
                 if (parent) {
                     sendMessage(parent, new widgets.ChildMessage('child-hidden', this));
@@ -8251,82 +8910,70 @@ var phosphor;
              *
              * The default implementation is a no-op.
              */
-            Widget.prototype.onMove = function (msg) {
-            };
+            Widget.prototype.onMove = function (msg) { };
             /**
              * A method invoked when a 'resize' message is received.
              *
              * The default implementation is a no-op.
              */
-            Widget.prototype.onResize = function (msg) {
-            };
+            Widget.prototype.onResize = function (msg) { };
             /**
              * A method invoked on an 'update-request' message.
              *
              * The default implementation is a no-op.
              */
-            Widget.prototype.onUpdateRequest = function (msg) {
-            };
+            Widget.prototype.onUpdateRequest = function (msg) { };
             /**
              * A method invoked when a 'before-show' message is received.
              *
              * The default implementation is a no-op.
              */
-            Widget.prototype.onBeforeShow = function (msg) {
-            };
+            Widget.prototype.onBeforeShow = function (msg) { };
             /**
              * A method invoked when an 'after-show' message is received.
              *
              * The default implementation is a no-op.
              */
-            Widget.prototype.onAfterShow = function (msg) {
-            };
+            Widget.prototype.onAfterShow = function (msg) { };
             /**
              * A method invoked when a 'before-hide' message is received.
              *
              * The default implementation is a no-op.
              */
-            Widget.prototype.onBeforeHide = function (msg) {
-            };
+            Widget.prototype.onBeforeHide = function (msg) { };
             /**
              * A method invoked when an 'after-hide' message is received.
              *
              * The default implementation is a no-op.
              */
-            Widget.prototype.onAfterHide = function (msg) {
-            };
+            Widget.prototype.onAfterHide = function (msg) { };
             /**
              * A method invoked when a 'before-attach' message is received.
              *
              * The default implementation is a no-op.
              */
-            Widget.prototype.onBeforeAttach = function (msg) {
-            };
+            Widget.prototype.onBeforeAttach = function (msg) { };
             /**
              * A method invoked when an 'after-attach' message is received.
              *
              * The default implementation is a no-op.
              */
-            Widget.prototype.onAfterAttach = function (msg) {
-            };
+            Widget.prototype.onAfterAttach = function (msg) { };
             /**
              * A method invoked when a 'before-detach' message is received.
              *
              * The default implementation is a no-op.
              */
-            Widget.prototype.onBeforeDetach = function (msg) {
-            };
+            Widget.prototype.onBeforeDetach = function (msg) { };
             /**
              * A method invoked when an 'after-detach' message is received.
              *
              * The default implementation is a no-op.
              */
-            Widget.prototype.onAfterDetach = function (msg) {
-            };
-            /**
-             * A signal emitted when the widget is disposed.
-             */
-            Widget.disposed = new Signal();
+            Widget.prototype.onAfterDetach = function (msg) { };
+            __decorate([
+                signal
+            ], Widget.prototype, "disposed");
             return Widget;
         })(NodeBase);
         widgets.Widget = Widget;
@@ -8349,7 +8996,7 @@ var phosphor;
          * A recursive 'after-show' helper function.
          */
         function afterShowHelper(widget) {
-            widget.setFlag(4 /* IsVisible */);
+            widget.setFlag(widgets.WidgetFlag.IsVisible);
             sendMessage(widget, MSG_AFTER_SHOW);
             for (var i = 0; i < widget.childCount; ++i) {
                 var child = widget.childAt(i);
@@ -8372,7 +9019,7 @@ var phosphor;
          * A recursive 'after-hide' helper function.
          */
         function afterHideHelper(widget) {
-            widget.clearFlag(4 /* IsVisible */);
+            widget.clearFlag(widgets.WidgetFlag.IsVisible);
             sendMessage(widget, MSG_AFTER_HIDE);
             for (var i = 0; i < widget.childCount; ++i) {
                 var child = widget.childAt(i);
@@ -8395,9 +9042,9 @@ var phosphor;
         function afterAttachHelper(widget) {
             var parent = widget.parent;
             if (!widget.isHidden && (!parent || parent.isVisible)) {
-                widget.setFlag(4 /* IsVisible */);
+                widget.setFlag(widgets.WidgetFlag.IsVisible);
             }
-            widget.setFlag(1 /* IsAttached */);
+            widget.setFlag(widgets.WidgetFlag.IsAttached);
             sendMessage(widget, MSG_AFTER_ATTACH);
             for (var i = 0; i < widget.childCount; ++i) {
                 afterAttachHelper(widget.childAt(i));
@@ -8416,8 +9063,8 @@ var phosphor;
          * A recursive 'after-detach' helper function.
          */
         function afterDetachHelper(widget) {
-            widget.clearFlag(4 /* IsVisible */);
-            widget.clearFlag(1 /* IsAttached */);
+            widget.clearFlag(widgets.WidgetFlag.IsVisible);
+            widget.clearFlag(widgets.WidgetFlag.IsAttached);
             sendMessage(widget, MSG_AFTER_DETACH);
             for (var i = 0; i < widget.childCount; ++i) {
                 afterDetachHelper(widget.childAt(i));
@@ -8426,7 +9073,7 @@ var phosphor;
     })(widgets = phosphor.widgets || (phosphor.widgets = {}));
 })(phosphor || (phosphor = {})); // module phosphor.widgets
 
-var __extends = this.__extends || function (d, b) {
+var __extends = (this && this.__extends) || function (d, b) {
     for (var p in b) if (b.hasOwnProperty(p)) d[p] = b[p];
     function __() { this.constructor = d; }
     __.prototype = b.prototype;
@@ -8456,7 +9103,7 @@ var phosphor;
             function Panel(layout) {
                 _super.call(this);
                 this.layout = layout;
-                this.setFlag(16 /* DisallowLayoutChange */);
+                this.setFlag(widgets.WidgetFlag.DisallowLayoutChange);
             }
             Object.defineProperty(Panel.prototype, "count", {
                 /**
@@ -8506,7 +9153,7 @@ var phosphor;
     })(widgets = phosphor.widgets || (phosphor.widgets = {}));
 })(phosphor || (phosphor = {})); // module phosphor.widgets
 
-var __extends = this.__extends || function (d, b) {
+var __extends = (this && this.__extends) || function (d, b) {
     for (var p in b) if (b.hasOwnProperty(p)) d[p] = b[p];
     function __() { this.constructor = d; }
     __.prototype = b.prototype;
@@ -8536,7 +9183,7 @@ var phosphor;
              * Construct a new box panel.
              */
             function BoxPanel(direction, spacing) {
-                if (direction === void 0) { direction = 2 /* TopToBottom */; }
+                if (direction === void 0) { direction = widgets.Direction.TopToBottom; }
                 if (spacing === void 0) { spacing = 8; }
                 _super.call(this, new widgets.BoxLayout(direction, spacing));
                 this.addClass(BOX_PANEL_CLASS);
@@ -8647,7 +9294,7 @@ var phosphor;
     })(widgets = phosphor.widgets || (phosphor.widgets = {}));
 })(phosphor || (phosphor = {})); // module phosphor.widgets
 
-var __extends = this.__extends || function (d, b) {
+var __extends = (this && this.__extends) || function (d, b) {
     for (var p in b) if (b.hasOwnProperty(p)) d[p] = b[p];
     function __() { this.constructor = d; }
     __.prototype = b.prototype;
@@ -8678,7 +9325,7 @@ var phosphor;
              * Construct a new split panel.
              */
             function SplitPanel(orientation) {
-                if (orientation === void 0) { orientation = 0 /* Horizontal */; }
+                if (orientation === void 0) { orientation = widgets.Orientation.Horizontal; }
                 _super.call(this, new widgets.SplitLayout(orientation));
                 this._pressData = null;
                 this.addClass(SPLIT_PANEL_CLASS);
@@ -8818,7 +9465,7 @@ var phosphor;
                 var delta;
                 var node = data.handle.node;
                 var rect = node.getBoundingClientRect();
-                if (this.orientation === 0 /* Horizontal */) {
+                if (this.orientation === widgets.Orientation.Horizontal) {
                     delta = event.clientX - rect.left;
                 }
                 else {
@@ -8848,7 +9495,7 @@ var phosphor;
                 var data = this._pressData;
                 var layout = this.layout;
                 var rect = this.node.getBoundingClientRect();
-                if (layout.orientation === 0 /* Horizontal */) {
+                if (layout.orientation === widgets.Orientation.Horizontal) {
                     pos = event.clientX - data.delta - rect.left;
                 }
                 else {
@@ -8887,11 +9534,19 @@ var phosphor;
     })(widgets = phosphor.widgets || (phosphor.widgets = {}));
 })(phosphor || (phosphor = {})); // module phosphor.widgets
 
-var __extends = this.__extends || function (d, b) {
+var __extends = (this && this.__extends) || function (d, b) {
     for (var p in b) if (b.hasOwnProperty(p)) d[p] = b[p];
     function __() { this.constructor = d; }
     __.prototype = b.prototype;
     d.prototype = new __();
+};
+var __decorate = (this && this.__decorate) || function (decorators, target, key, desc) {
+    if (typeof Reflect === "object" && typeof Reflect.decorate === "function") return Reflect.decorate(decorators, target, key, desc);
+    switch (arguments.length) {
+        case 2: return decorators.reduceRight(function(o, d) { return (d && d(o)) || o; }, target);
+        case 3: return decorators.reduceRight(function(o, d) { return (d && d(target, key)), void 0; }, void 0);
+        case 4: return decorators.reduceRight(function(o, d) { return (d && d(target, key, o)) || o; }, desc);
+    }
 };
 /*-----------------------------------------------------------------------------
 | Copyright (c) 2014-2015, S. Chris Colbert
@@ -8904,9 +9559,7 @@ var phosphor;
 (function (phosphor) {
     var widgets;
     (function (widgets) {
-        var Signal = phosphor.core.Signal;
-        var connect = phosphor.core.connect;
-        var emit = phosphor.core.emit;
+        var signal = phosphor.core.signal;
         /**
          * The class name added to StackedPanel instances.
          */
@@ -8923,7 +9576,7 @@ var phosphor;
                 _super.call(this, new widgets.StackedLayout());
                 this.addClass(STACKED_PANEL_CLASS);
                 var layout = this.layout;
-                connect(layout, widgets.StackedLayout.widgetRemoved, this, this._p_widgetRemoved);
+                layout.widgetRemoved.connect(this._p_widgetRemoved, this);
             }
             Object.defineProperty(StackedPanel.prototype, "currentIndex", {
                 /**
@@ -8992,20 +9645,19 @@ var phosphor;
             /**
              * Handle the `widgetRemoved` signal for the stacked layout.
              */
-            StackedPanel.prototype._p_widgetRemoved = function (sender, args) {
-                emit(this, StackedPanel.widgetRemoved, args);
+            StackedPanel.prototype._p_widgetRemoved = function (args) {
+                this.widgetRemoved.emit(args);
             };
-            /**
-             * A signal emitted when a widget is removed from the panel.
-             */
-            StackedPanel.widgetRemoved = new Signal();
+            __decorate([
+                signal
+            ], StackedPanel.prototype, "widgetRemoved");
             return StackedPanel;
         })(widgets.Panel);
         widgets.StackedPanel = StackedPanel;
     })(widgets = phosphor.widgets || (phosphor.widgets = {}));
 })(phosphor || (phosphor = {})); // module phosphor.widgets
 
-var __extends = this.__extends || function (d, b) {
+var __extends = (this && this.__extends) || function (d, b) {
     for (var p in b) if (b.hasOwnProperty(p)) d[p] = b[p];
     function __() { this.constructor = d; }
     __.prototype = b.prototype;
@@ -9023,7 +9675,7 @@ var phosphor;
     var widgets;
     (function (widgets) {
         var algo = phosphor.collections.algorithm;
-        var connect = phosphor.core.connect;
+        var sender = phosphor.core.sender;
         var hitTest = phosphor.utility.hitTest;
         var overrideCursor = phosphor.utility.overrideCursor;
         /**
@@ -9065,11 +9717,11 @@ var phosphor;
                 this._dragData = null;
                 this._items = [];
                 this.addClass(DOCK_AREA_CLASS);
-                this._root = this._createSplitter(0 /* Horizontal */);
-                var layout = new widgets.BoxLayout(2 /* TopToBottom */, 0);
+                this._root = this._createSplitter(widgets.Orientation.Horizontal);
+                var layout = new widgets.BoxLayout(widgets.Direction.TopToBottom, 0);
                 layout.addWidget(this._root);
                 this.layout = layout;
-                this.setFlag(16 /* DisallowLayoutChange */);
+                this.setFlag(widgets.WidgetFlag.DisallowLayoutChange);
             }
             /**
              * Dispose of the resources held by the widget.
@@ -9181,38 +9833,38 @@ var phosphor;
              */
             DockArea.prototype.addWidget = function (widget, mode, ref) {
                 switch (mode) {
-                    case 0 /* Top */:
-                        this._addWidget(widget, 1 /* Vertical */, false);
+                    case widgets.DockMode.Top:
+                        this._addWidget(widget, widgets.Orientation.Vertical, false);
                         break;
-                    case 1 /* Left */:
-                        this._addWidget(widget, 0 /* Horizontal */, false);
+                    case widgets.DockMode.Left:
+                        this._addWidget(widget, widgets.Orientation.Horizontal, false);
                         break;
-                    case 2 /* Right */:
-                        this._addWidget(widget, 0 /* Horizontal */, true);
+                    case widgets.DockMode.Right:
+                        this._addWidget(widget, widgets.Orientation.Horizontal, true);
                         break;
-                    case 3 /* Bottom */:
-                        this._addWidget(widget, 1 /* Vertical */, true);
+                    case widgets.DockMode.Bottom:
+                        this._addWidget(widget, widgets.Orientation.Vertical, true);
                         break;
-                    case 4 /* SplitTop */:
-                        this._splitWidget(widget, ref, 1 /* Vertical */, false);
+                    case widgets.DockMode.SplitTop:
+                        this._splitWidget(widget, ref, widgets.Orientation.Vertical, false);
                         break;
-                    case 5 /* SplitLeft */:
-                        this._splitWidget(widget, ref, 0 /* Horizontal */, false);
+                    case widgets.DockMode.SplitLeft:
+                        this._splitWidget(widget, ref, widgets.Orientation.Horizontal, false);
                         break;
-                    case 6 /* SplitRight */:
-                        this._splitWidget(widget, ref, 0 /* Horizontal */, true);
+                    case widgets.DockMode.SplitRight:
+                        this._splitWidget(widget, ref, widgets.Orientation.Horizontal, true);
                         break;
-                    case 7 /* SplitBottom */:
-                        this._splitWidget(widget, ref, 1 /* Vertical */, true);
+                    case widgets.DockMode.SplitBottom:
+                        this._splitWidget(widget, ref, widgets.Orientation.Vertical, true);
                         break;
-                    case 8 /* TabBefore */:
+                    case widgets.DockMode.TabBefore:
                         this._tabifyWidget(widget, ref, false);
                         break;
-                    case 9 /* TabAfter */:
+                    case widgets.DockMode.TabAfter:
                         this._tabifyWidget(widget, ref, true);
                         break;
                     default:
-                        this._addWidget(widget, 0 /* Horizontal */, false);
+                        this._addWidget(widget, widgets.Orientation.Horizontal, false);
                         break;
                 }
             };
@@ -9383,7 +10035,7 @@ var phosphor;
                     return;
                 }
                 // Snap the split mode before modifying the DOM with the tab insert.
-                var mode = 4 /* Invalid */;
+                var mode = SplitMode.Invalid;
                 var hitPanel = dragData.lastHitPanel;
                 if (hitPanel && (hitPanel !== ownPanel || ownCount !== 0)) {
                     mode = hitPanel.splitModeAt(event.clientX, event.clientY);
@@ -9391,7 +10043,7 @@ var phosphor;
                 // If the mouse was not released over a panel, or if the hit panel
                 // is the empty owner panel, restore the tab to its position.
                 var tabStyle = itemTab.node.style;
-                if (mode === 4 /* Invalid */) {
+                if (mode === SplitMode.Invalid) {
                     if (ownBar.currentTab !== itemTab) {
                         floatTab(itemTab, false);
                         tabStyle.top = '';
@@ -9408,9 +10060,9 @@ var phosphor;
                 tabStyle.left = '';
                 tabStyle.width = '';
                 // Split the target panel with the dock widget.
-                var after = mode === 2 /* Right */ || mode === 3 /* Bottom */;
-                var horiz = mode === 1 /* Left */ || mode === 2 /* Right */;
-                var orientation = horiz ? 0 /* Horizontal */ : 1 /* Vertical */;
+                var after = mode === SplitMode.Right || mode === SplitMode.Bottom;
+                var horiz = mode === SplitMode.Left || mode === SplitMode.Right;
+                var orientation = horiz ? widgets.Orientation.Horizontal : widgets.Orientation.Vertical;
                 this._splitPanel(hitPanel, item.widget, orientation, after);
                 var i = ownBar.indexOf(dragData.prevTab);
                 if (i === -1)
@@ -9548,10 +10200,10 @@ var phosphor;
                 bar.tabWidth = this._tabWidth;
                 bar.tabOverlap = this._tabOverlap;
                 bar.minTabWidth = this._minTabWidth;
-                connect(bar, widgets.TabBar.currentChanged, this, this._p_currentChanged);
-                connect(bar, widgets.TabBar.tabCloseRequested, this, this._p_tabCloseRequested);
-                connect(bar, widgets.TabBar.tabDetachRequested, this, this._p_tabDetachRequested);
-                connect(stack, widgets.StackedPanel.widgetRemoved, this, this._p_widgetRemoved);
+                bar.currentChanged.connect(this._p_currentChanged, this);
+                bar.tabCloseRequested.connect(this._p_tabCloseRequested, this);
+                bar.tabDetachRequested.connect(this._p_tabDetachRequested, this);
+                stack.widgetRemoved.connect(this._p_widgetRemoved, this);
                 return panel;
             };
             /**
@@ -9666,16 +10318,17 @@ var phosphor;
             /**
              * Handle the `currentChanged` signal from a tab bar.
              */
-            DockArea.prototype._p_currentChanged = function (sender, args) {
+            DockArea.prototype._p_currentChanged = function (args) {
+                var tabBar = sender();
                 var item = algo.find(this._items, function (it) { return it.widget.tab === args.second; });
-                if (item && item.panel.tabBar === sender) {
+                if (item && item.panel.tabBar === tabBar) {
                     item.panel.stackedPanel.currentWidget = item.widget;
                 }
             };
             /**
              * Handle the `tabCloseRequested` signal from a tab bar.
              */
-            DockArea.prototype._p_tabCloseRequested = function (sender, args) {
+            DockArea.prototype._p_tabCloseRequested = function (args) {
                 var item = algo.find(this._items, function (it) { return it.widget.tab === args.second; });
                 if (item)
                     item.widget.close();
@@ -9683,7 +10336,7 @@ var phosphor;
             /**
              * Handle the `tabDetachRequested` signal from the tab bar.
              */
-            DockArea.prototype._p_tabDetachRequested = function (sender, args) {
+            DockArea.prototype._p_tabDetachRequested = function (args) {
                 // Find the dock item for the detach operation.
                 var tab = args.tab;
                 var item = algo.find(this._items, function (it) { return it.widget.tab === tab; });
@@ -9692,8 +10345,9 @@ var phosphor;
                 }
                 // Create the drag data the first time a tab is detached.
                 // The drag data will be cleared on the mouse up event.
+                var tabBar = sender();
                 if (!this._dragData) {
-                    var prevTab = sender.previousTab;
+                    var prevTab = tabBar.previousTab;
                     this._dragData = {
                         item: item,
                         index: args.index,
@@ -9708,8 +10362,8 @@ var phosphor;
                 }
                 // Update the drag data with the current tab geometry.
                 var dragData = this._dragData;
-                dragData.offsetX = (0.4 * this._tabWidth) | 0;
-                dragData.offsetY = (0.6 * tab.node.offsetHeight) | 0;
+                dragData.offsetX = Math.floor(0.4 * this._tabWidth);
+                dragData.offsetY = Math.floor(0.6 * tab.node.offsetHeight);
                 // Grab the cursor for the drag operation.
                 dragData.cursorGrab = overrideCursor('default');
                 // The tab being detached will have one of two states:
@@ -9719,13 +10373,13 @@ var phosphor;
                 //    widget does not change during the drag operation.
                 // 2) The tab is being detached from a tab bar which was borrowing
                 //    the tab temporarily. Its previously selected tab is restored.
-                if (item.panel.tabBar === sender) {
-                    sender.currentIndex = -1;
-                    sender.detachAt(args.index);
+                if (item.panel.tabBar === tabBar) {
+                    tabBar.currentIndex = -1;
+                    tabBar.detachAt(args.index);
                 }
                 else {
-                    sender.detachAt(args.index);
-                    sender.currentTab = dragData.tempTab;
+                    tabBar.detachAt(args.index);
+                    tabBar.currentTab = dragData.tempTab;
                 }
                 // Clear the temp panel and tab
                 dragData.tempPanel = null;
@@ -9747,7 +10401,7 @@ var phosphor;
             /**
              * Handle the `widgetRemoved` signal from a stack widget.
              */
-            DockArea.prototype._p_widgetRemoved = function (sender, args) {
+            DockArea.prototype._p_widgetRemoved = function (args) {
                 if (this._ignoreRemoved) {
                     return;
                 }
@@ -9853,11 +10507,11 @@ var phosphor;
                 this._tabBar = new widgets.TabBar();
                 this._stackedPanel = new widgets.StackedPanel();
                 this._overlayNode = this.createOverlay();
-                var layout = new widgets.BoxLayout(2 /* TopToBottom */, 0);
+                var layout = new widgets.BoxLayout(widgets.Direction.TopToBottom, 0);
                 layout.addWidget(this._tabBar);
                 layout.addWidget(this._stackedPanel);
                 this.layout = layout;
-                this.setFlag(16 /* DisallowLayoutChange */);
+                this.setFlag(widgets.WidgetFlag.DisallowLayoutChange);
                 this.node.appendChild(this._overlayNode);
             }
             Object.defineProperty(DockPanel.prototype, "tabBar", {
@@ -9898,16 +10552,16 @@ var phosphor;
                 var fracX = (clientX - rect.left) / rect.width;
                 var fracY = (clientY - rect.top) / rect.height;
                 if (fracX < 0.0 || fracX > 1.0 || fracY < 0.0 || fracY > 1.0) {
-                    return 4 /* Invalid */;
+                    return SplitMode.Invalid;
                 }
                 var mode;
                 var normX = fracX > 0.5 ? 1 - fracX : fracX;
                 var normY = fracY > 0.5 ? 1 - fracY : fracY;
                 if (normX < normY) {
-                    mode = fracX <= 0.5 ? 1 /* Left */ : 2 /* Right */;
+                    mode = fracX <= 0.5 ? SplitMode.Left : SplitMode.Right;
                 }
                 else {
-                    mode = fracY <= 0.5 ? 0 /* Top */ : 3 /* Bottom */;
+                    mode = fracY <= 0.5 ? SplitMode.Top : SplitMode.Bottom;
                 }
                 return mode;
             };
@@ -9924,16 +10578,16 @@ var phosphor;
                 var right = box.paddingRight;
                 var bottom = box.paddingBottom;
                 switch (this.splitModeAt(clientX, clientY)) {
-                    case 1 /* Left */:
+                    case SplitMode.Left:
                         right = this.width / 2;
                         break;
-                    case 2 /* Right */:
+                    case SplitMode.Right:
                         left = this.width / 2;
                         break;
-                    case 0 /* Top */:
+                    case SplitMode.Top:
                         bottom = this.height / 2;
                         break;
-                    case 3 /* Bottom */:
+                    case SplitMode.Bottom:
                         top = this.height / 2;
                         break;
                 }
@@ -10015,6 +10669,14 @@ var phosphor;
     })(widgets = phosphor.widgets || (phosphor.widgets = {}));
 })(phosphor || (phosphor = {})); // module phosphor.widgets
 
+var __decorate = (this && this.__decorate) || function (decorators, target, key, desc) {
+    if (typeof Reflect === "object" && typeof Reflect.decorate === "function") return Reflect.decorate(decorators, target, key, desc);
+    switch (arguments.length) {
+        case 2: return decorators.reduceRight(function(o, d) { return (d && d(o)) || o; }, target);
+        case 3: return decorators.reduceRight(function(o, d) { return (d && d(target, key)), void 0; }, void 0);
+        case 4: return decorators.reduceRight(function(o, d) { return (d && d(target, key, o)) || o; }, desc);
+    }
+};
 /*-----------------------------------------------------------------------------
 | Copyright (c) 2014-2015, S. Chris Colbert
 |
@@ -10026,8 +10688,7 @@ var phosphor;
 (function (phosphor) {
     var widgets;
     (function (widgets) {
-        var Signal = phosphor.core.Signal;
-        var emit = phosphor.core.emit;
+        var signal = phosphor.core.signal;
         /**
          * An item which can be added to a menu or menu bar.
          */
@@ -10067,7 +10728,7 @@ var phosphor;
                     }
                     this._type = type;
                     this._checked = false;
-                    emit(this, MenuItem.changed, void 0);
+                    this.changed.emit(void 0);
                 },
                 enumerable: true,
                 configurable: true
@@ -10087,7 +10748,7 @@ var phosphor;
                         return;
                     }
                     this._text = text;
-                    emit(this, MenuItem.changed, void 0);
+                    this.changed.emit(void 0);
                 },
                 enumerable: true,
                 configurable: true
@@ -10107,7 +10768,7 @@ var phosphor;
                         return;
                     }
                     this._mnemonic = mnemonic;
-                    emit(this, MenuItem.changed, void 0);
+                    this.changed.emit(void 0);
                 },
                 enumerable: true,
                 configurable: true
@@ -10127,7 +10788,7 @@ var phosphor;
                         return;
                     }
                     this._shortcut = shortcut;
-                    emit(this, MenuItem.changed, void 0);
+                    this.changed.emit(void 0);
                 },
                 enumerable: true,
                 configurable: true
@@ -10147,7 +10808,7 @@ var phosphor;
                         return;
                     }
                     this._enabled = enabled;
-                    emit(this, MenuItem.changed, void 0);
+                    this.changed.emit(void 0);
                 },
                 enumerable: true,
                 configurable: true
@@ -10167,7 +10828,7 @@ var phosphor;
                         return;
                     }
                     this._visible = visible;
-                    emit(this, MenuItem.changed, void 0);
+                    this.changed.emit(void 0);
                 },
                 enumerable: true,
                 configurable: true
@@ -10187,8 +10848,8 @@ var phosphor;
                         return;
                     }
                     this._checked = checked;
-                    emit(this, MenuItem.changed, void 0);
-                    emit(this, MenuItem.toggled, checked);
+                    this.changed.emit(void 0);
+                    this.toggled.emit(checked);
                 },
                 enumerable: true,
                 configurable: true
@@ -10208,7 +10869,7 @@ var phosphor;
                         return;
                     }
                     this._submenu = submenu;
-                    emit(this, MenuItem.changed, void 0);
+                    this.changed.emit(void 0);
                 },
                 enumerable: true,
                 configurable: true
@@ -10228,7 +10889,7 @@ var phosphor;
                         return;
                     }
                     this._className = name;
-                    emit(this, MenuItem.changed, void 0);
+                    this.changed.emit(void 0);
                 },
                 enumerable: true,
                 configurable: true
@@ -10244,7 +10905,7 @@ var phosphor;
                 if (this._type === 'check') {
                     this.checked = !this.checked;
                 }
-                emit(this, MenuItem.triggered, this.checked);
+                this.triggered.emit(this.checked);
             };
             /**
              * Initialize the menu item from the given options object.
@@ -10278,29 +10939,34 @@ var phosphor;
                     this._className = options.className;
                 }
             };
-            /**
-             * A signal emitted when the state of the menu item is changed.
-             */
-            MenuItem.changed = new Signal();
-            /**
-             * A signal emitted when a `check` type menu item is toggled.
-             */
-            MenuItem.toggled = new Signal();
-            /**
-             * A signal emitted when the menu item is triggered.
-             */
-            MenuItem.triggered = new Signal();
+            __decorate([
+                signal
+            ], MenuItem.prototype, "changed");
+            __decorate([
+                signal
+            ], MenuItem.prototype, "toggled");
+            __decorate([
+                signal
+            ], MenuItem.prototype, "triggered");
             return MenuItem;
         })();
         widgets.MenuItem = MenuItem;
     })(widgets = phosphor.widgets || (phosphor.widgets = {}));
 })(phosphor || (phosphor = {})); // module phosphor.widgets
 
-var __extends = this.__extends || function (d, b) {
+var __extends = (this && this.__extends) || function (d, b) {
     for (var p in b) if (b.hasOwnProperty(p)) d[p] = b[p];
     function __() { this.constructor = d; }
     __.prototype = b.prototype;
     d.prototype = new __();
+};
+var __decorate = (this && this.__decorate) || function (decorators, target, key, desc) {
+    if (typeof Reflect === "object" && typeof Reflect.decorate === "function") return Reflect.decorate(decorators, target, key, desc);
+    switch (arguments.length) {
+        case 2: return decorators.reduceRight(function(o, d) { return (d && d(o)) || o; }, target);
+        case 3: return decorators.reduceRight(function(o, d) { return (d && d(target, key)), void 0; }, void 0);
+        case 4: return decorators.reduceRight(function(o, d) { return (d && d(target, key, o)) || o; }, desc);
+    }
 };
 /*-----------------------------------------------------------------------------
 | Copyright (c) 2014-2015, S. Chris Colbert
@@ -10315,10 +10981,9 @@ var phosphor;
     (function (widgets) {
         var algo = phosphor.collections.algorithm;
         var NodeBase = phosphor.core.NodeBase;
-        var Signal = phosphor.core.Signal;
-        var connect = phosphor.core.connect;
-        var disconnect = phosphor.core.disconnect;
-        var emit = phosphor.core.emit;
+        var clearSignalData = phosphor.core.clearSignalData;
+        var sender = phosphor.core.sender;
+        var signal = phosphor.core.signal;
         var Size = phosphor.utility.Size;
         var clientViewportRect = phosphor.utility.clientViewportRect;
         var createBoxSizing = phosphor.utility.createBoxSizing;
@@ -10451,8 +11116,7 @@ var phosphor;
              */
             Menu.prototype.dispose = function () {
                 this.close();
-                disconnect(this, null, null, null);
-                disconnect(null, null, this, null);
+                clearSignalData(this);
                 this._items = null;
                 this._nodes = null;
                 _super.prototype.dispose.call(this);
@@ -10561,7 +11225,7 @@ var phosphor;
                 var node = this.createItemNode(item);
                 index = algo.insert(this._items, index, item);
                 algo.insert(this._nodes, index, node);
-                connect(item, widgets.MenuItem.changed, this, this._p_changed);
+                item.changed.connect(this._p_changed, this);
                 node.addEventListener('mouseenter', this);
                 this.insertItemNode(index, node);
                 this._collapseSeparators();
@@ -10577,7 +11241,7 @@ var phosphor;
                 var item = algo.removeAt(this._items, index);
                 var node = algo.removeAt(this._nodes, index);
                 if (item) {
-                    disconnect(item, widgets.MenuItem.changed, this, this._p_changed);
+                    item.changed.disconnect(this._p_changed, this);
                 }
                 if (node) {
                     node.removeEventListener('mouseenter', this);
@@ -10748,7 +11412,7 @@ var phosphor;
                 document.removeEventListener('mousedown', this, true);
                 this._reset();
                 this._removeFromParent();
-                emit(this, Menu.closed, void 0);
+                this.closed.emit(void 0);
             };
             /**
              * Handle the DOM events for the menu.
@@ -11183,21 +11847,21 @@ var phosphor;
             /**
              * Handle the `changed` signal from a menu item.
              */
-            Menu.prototype._p_changed = function (sender) {
-                var i = this.indexOf(sender);
+            Menu.prototype._p_changed = function () {
+                var item = sender();
+                var i = this.indexOf(item);
                 if (i === -1) {
                     return;
                 }
                 if (i === this._activeIndex) {
                     this._reset();
                 }
-                this.initItemNode(sender, this._nodes[i]);
+                this.initItemNode(item, this._nodes[i]);
                 this._collapseSeparators();
             };
-            /**
-             * A signal emitted when the menu is closed.
-             */
-            Menu.closed = new Signal();
+            __decorate([
+                signal
+            ], Menu.prototype, "closed");
             return Menu;
         })(NodeBase);
         widgets.Menu = Menu;
@@ -11296,7 +11960,7 @@ var phosphor;
     })(widgets = phosphor.widgets || (phosphor.widgets = {}));
 })(phosphor || (phosphor = {})); // module phosphor.widgets
 
-var __extends = this.__extends || function (d, b) {
+var __extends = (this && this.__extends) || function (d, b) {
     for (var p in b) if (b.hasOwnProperty(p)) d[p] = b[p];
     function __() { this.constructor = d; }
     __.prototype = b.prototype;
@@ -11314,8 +11978,7 @@ var phosphor;
     var widgets;
     (function (widgets) {
         var algo = phosphor.collections.algorithm;
-        var connect = phosphor.core.connect;
-        var disconnect = phosphor.core.disconnect;
+        var sender = phosphor.core.sender;
         var Size = phosphor.utility.Size;
         var hitTest = phosphor.utility.hitTest;
         /**
@@ -11381,10 +12044,10 @@ var phosphor;
                 this._childMenu = null;
                 this._items = [];
                 this._nodes = [];
-                this._state = 0 /* Inactive */;
+                this._state = MBState.Inactive;
                 this.addClass(MENU_BAR_CLASS);
-                this.verticalSizePolicy = 0 /* Fixed */;
-                this.setFlag(16 /* DisallowLayoutChange */);
+                this.verticalSizePolicy = widgets.SizePolicy.Fixed;
+                this.setFlag(widgets.WidgetFlag.DisallowLayoutChange);
                 if (items)
                     items.forEach(function (it) { return _this.addItem(it); });
             }
@@ -11494,13 +12157,13 @@ var phosphor;
             MenuBar.prototype.insertItem = function (index, item) {
                 this.removeItem(item);
                 if (this._activeIndex !== -1) {
-                    this._setState(0 /* Inactive */);
+                    this._setState(MBState.Inactive);
                     this._setActiveIndex(-1);
                 }
                 var node = this.createItemNode(item);
                 index = algo.insert(this._items, index, item);
                 algo.insert(this._nodes, index, node);
-                connect(item, widgets.MenuItem.changed, this, this._p_changed);
+                item.changed.connect(this._p_changed, this);
                 this.insertItemNode(index, node);
                 this._collapseSeparators();
                 return index;
@@ -11510,13 +12173,13 @@ var phosphor;
              */
             MenuBar.prototype.removeAt = function (index) {
                 if (this._activeIndex !== -1) {
-                    this._setState(0 /* Inactive */);
+                    this._setState(MBState.Inactive);
                     this._setActiveIndex(-1);
                 }
                 var item = algo.removeAt(this._items, index);
                 var node = algo.removeAt(this._nodes, index);
                 if (item) {
-                    disconnect(item, widgets.MenuItem.changed, this, this._p_changed);
+                    item.changed.disconnect(this._p_changed, this);
                 }
                 if (node) {
                     this.removeItemNode(node);
@@ -11597,7 +12260,7 @@ var phosphor;
                 if (!item) {
                     return false;
                 }
-                this._setState(1 /* Active */);
+                this._setState(MBState.Active);
                 this._setActiveIndex(index);
                 var menu = this._childMenu;
                 if (menu)
@@ -11721,7 +12384,7 @@ var phosphor;
             MenuBar.prototype._evtMouseDown = function (event) {
                 var x = event.clientX;
                 var y = event.clientY;
-                if (this._state === 0 /* Inactive */) {
+                if (this._state === MBState.Inactive) {
                     if (event.button !== 0) {
                         return;
                     }
@@ -11729,14 +12392,14 @@ var phosphor;
                     if (!isSelectable(this._items[index])) {
                         return;
                     }
-                    this._setState(1 /* Active */);
+                    this._setState(MBState.Active);
                     this._setActiveIndex(index);
                 }
                 else {
                     if (hitTestMenus(this._childMenu, x, y)) {
                         return;
                     }
-                    this._setState(0 /* Inactive */);
+                    this._setState(MBState.Inactive);
                     var index = algo.findIndex(this._nodes, function (n) { return hitTest(n, x, y); });
                     var ok = isSelectable(this._items[index]);
                     this._setActiveIndex(ok ? index : -1);
@@ -11752,7 +12415,7 @@ var phosphor;
                 if (index === this._activeIndex) {
                     return;
                 }
-                if (index === -1 && this._state === 1 /* Active */) {
+                if (index === -1 && this._state === MBState.Active) {
                     return;
                 }
                 var ok = isSelectable(this._items[index]);
@@ -11762,7 +12425,7 @@ var phosphor;
              * Handle the 'mouseleave' event for the menu bar.
              */
             MenuBar.prototype._evtMouseLeave = function (event) {
-                if (this._state === 0 /* Inactive */) {
+                if (this._state === MBState.Inactive) {
                     this._setActiveIndex(-1);
                 }
             };
@@ -11785,7 +12448,7 @@ var phosphor;
                             leaf.close();
                         }
                         else {
-                            this._setState(0 /* Inactive */);
+                            this._setState(MBState.Inactive);
                             this._setActiveIndex(-1);
                         }
                         break;
@@ -11848,11 +12511,11 @@ var phosphor;
                 if (next) {
                     next.classList.add(ACTIVE_CLASS);
                 }
-                if (next && this._state !== 0 /* Inactive */) {
+                if (next && this._state !== MBState.Inactive) {
                     next.classList.add(SELECTED_CLASS);
                 }
                 this._closeChildMenu();
-                if (!next || this._state !== 1 /* Active */) {
+                if (!next || this._state !== MBState.Active) {
                     return;
                 }
                 var item = this._items[index];
@@ -11869,14 +12532,14 @@ var phosphor;
                 this._childMenu = menu;
                 menu.addClass(MENU_CLASS);
                 menu.open(rect.left, rect.bottom, false, true);
-                connect(menu, widgets.Menu.closed, this, this._p_closed);
+                menu.closed.connect(this._p_closed, this);
             };
             /**
              * Close the current child menu, if one exists.
              */
             MenuBar.prototype._closeChildMenu = function () {
                 if (this._childMenu) {
-                    disconnect(this._childMenu, widgets.Menu.closed, this, this._p_closed);
+                    this._childMenu.closed.disconnect(this._p_closed, this);
                     this._childMenu.removeClass(MENU_CLASS);
                     this._childMenu.close();
                     this._childMenu = null;
@@ -11891,7 +12554,7 @@ var phosphor;
                 if (state === this._state) {
                     return;
                 }
-                if (state === 0 /* Inactive */) {
+                if (state === MBState.Inactive) {
                     this._useInactiveListeners();
                 }
                 else {
@@ -11954,26 +12617,28 @@ var phosphor;
             /**
              * Handle the `closed` signal from the child menu.
              */
-            MenuBar.prototype._p_closed = function (sender) {
-                disconnect(sender, widgets.Menu.closed, this, this._p_closed);
-                sender.removeClass(MENU_CLASS);
+            MenuBar.prototype._p_closed = function () {
+                var menu = sender();
+                menu.closed.disconnect(this._p_closed, this);
+                menu.removeClass(MENU_CLASS);
                 this._childMenu = null;
-                this._setState(0 /* Inactive */);
+                this._setState(MBState.Inactive);
                 this._setActiveIndex(-1);
             };
             /**
              * Handle the `changed` signal from a menu item.
              */
-            MenuBar.prototype._p_changed = function (sender) {
-                var i = this.indexOf(sender);
+            MenuBar.prototype._p_changed = function () {
+                var item = sender();
+                var i = this.indexOf(item);
                 if (i === -1) {
                     return;
                 }
                 if (i === this._activeIndex) {
-                    this._setState(0 /* Inactive */);
+                    this._setState(MBState.Inactive);
                     this._setActiveIndex(-1);
                 }
-                this.initItemNode(sender, this._nodes[i]);
+                this.initItemNode(item, this._nodes[i]);
                 this._collapseSeparators();
             };
             return MenuBar;
@@ -12017,7 +12682,7 @@ var phosphor;
     })(widgets = phosphor.widgets || (phosphor.widgets = {}));
 })(phosphor || (phosphor = {})); // module phosphor.widgets
 
-var __extends = this.__extends || function (d, b) {
+var __extends = (this && this.__extends) || function (d, b) {
     for (var p in b) if (b.hasOwnProperty(p)) d[p] = b[p];
     function __() { this.constructor = d; }
     __.prototype = b.prototype;
@@ -12068,7 +12733,7 @@ var phosphor;
                 _super.call(this);
                 this._refs = emptyObject;
                 this.addClass(RENDER_WIDGET_CLASS);
-                this.setFlag(16 /* DisallowLayoutChange */);
+                this.setFlag(widgets.WidgetFlag.DisallowLayoutChange);
             }
             /**
              * Dispose of the resources held by the widget.
@@ -12133,26 +12798,32 @@ var phosphor;
              *
              * The default implementation is a no-op.
              */
-            RenderWidget.prototype.onBeforeRender = function (msg) {
-            };
+            RenderWidget.prototype.onBeforeRender = function (msg) { };
             /**
              * A method invoked on an 'after-render' message.
              *
              * The default implementation is a no-op.
              */
-            RenderWidget.prototype.onAfterRender = function (msg) {
-            };
+            RenderWidget.prototype.onAfterRender = function (msg) { };
             return RenderWidget;
         })(widgets.Widget);
         widgets.RenderWidget = RenderWidget;
     })(widgets = phosphor.widgets || (phosphor.widgets = {}));
 })(phosphor || (phosphor = {})); // module phosphor.widgets
 
-var __extends = this.__extends || function (d, b) {
+var __extends = (this && this.__extends) || function (d, b) {
     for (var p in b) if (b.hasOwnProperty(p)) d[p] = b[p];
     function __() { this.constructor = d; }
     __.prototype = b.prototype;
     d.prototype = new __();
+};
+var __decorate = (this && this.__decorate) || function (decorators, target, key, desc) {
+    if (typeof Reflect === "object" && typeof Reflect.decorate === "function") return Reflect.decorate(decorators, target, key, desc);
+    switch (arguments.length) {
+        case 2: return decorators.reduceRight(function(o, d) { return (d && d(o)) || o; }, target);
+        case 3: return decorators.reduceRight(function(o, d) { return (d && d(target, key)), void 0; }, void 0);
+        case 4: return decorators.reduceRight(function(o, d) { return (d && d(target, key, o)) || o; }, desc);
+    }
 };
 /*-----------------------------------------------------------------------------
 | Copyright (c) 2014-2015, S. Chris Colbert
@@ -12165,8 +12836,7 @@ var phosphor;
 (function (phosphor) {
     var widgets;
     (function (widgets) {
-        var Signal = phosphor.core.Signal;
-        var emit = phosphor.core.emit;
+        var signal = phosphor.core.signal;
         var Size = phosphor.utility.Size;
         var overrideCursor = phosphor.utility.overrideCursor;
         /**
@@ -12200,7 +12870,7 @@ var phosphor;
              * @param orientation - The orientation of the scroll bar.
              */
             function ScrollBar(orientation) {
-                if (orientation === void 0) { orientation = 1 /* Vertical */; }
+                if (orientation === void 0) { orientation = widgets.Orientation.Vertical; }
                 _super.call(this);
                 this._value = 0;
                 this._minimum = 0;
@@ -12210,14 +12880,14 @@ var phosphor;
                 this._dragData = null;
                 this.addClass(SCROLLBAR_CLASS);
                 this._orientation = orientation;
-                this.setFlag(16 /* DisallowLayoutChange */);
-                if (orientation === 0 /* Horizontal */) {
+                this.setFlag(widgets.WidgetFlag.DisallowLayoutChange);
+                if (orientation === widgets.Orientation.Horizontal) {
                     this.addClass(HORIZONTAL_CLASS);
-                    this.setSizePolicy(widgets.SizePolicy.Expanding, 0 /* Fixed */);
+                    this.setSizePolicy(widgets.SizePolicy.Expanding, widgets.SizePolicy.Fixed);
                 }
                 else {
                     this.addClass(VERTICAL_CLASS);
-                    this.setSizePolicy(0 /* Fixed */, widgets.SizePolicy.Expanding);
+                    this.setSizePolicy(widgets.SizePolicy.Fixed, widgets.SizePolicy.Expanding);
                 }
             }
             /**
@@ -12246,15 +12916,15 @@ var phosphor;
                     }
                     this._sliderMinSize = -1;
                     this._orientation = orientation;
-                    if (orientation === 0 /* Horizontal */) {
+                    if (orientation === widgets.Orientation.Horizontal) {
                         this.removeClass(VERTICAL_CLASS);
                         this.addClass(HORIZONTAL_CLASS);
-                        this.setSizePolicy(widgets.SizePolicy.Expanding, 0 /* Fixed */);
+                        this.setSizePolicy(widgets.SizePolicy.Expanding, widgets.SizePolicy.Fixed);
                     }
                     else {
                         this.removeClass(HORIZONTAL_CLASS);
                         this.addClass(VERTICAL_CLASS);
-                        this.setSizePolicy(0 /* Fixed */, widgets.SizePolicy.Expanding);
+                        this.setSizePolicy(widgets.SizePolicy.Fixed, widgets.SizePolicy.Expanding);
                     }
                     this.invalidateBoxSizing();
                     this.update();
@@ -12358,7 +13028,7 @@ var phosphor;
              */
             ScrollBar.prototype.sizeHint = function () {
                 var size;
-                if (this._orientation === 0 /* Horizontal */) {
+                if (this._orientation === widgets.Orientation.Horizontal) {
                     size = new Size(0, this.boxSizing.minHeight);
                 }
                 else {
@@ -12415,7 +13085,7 @@ var phosphor;
                 var trackPos;
                 var trackSize;
                 var box = this.boxSizing;
-                if (this._orientation === 0 /* Horizontal */) {
+                if (this._orientation === widgets.Orientation.Horizontal) {
                     trackPos = box.paddingLeft;
                     trackSize = this.width - box.horizontalSum;
                 }
@@ -12426,7 +13096,8 @@ var phosphor;
                 // Compute the size of the slider bounded by its minimum.
                 var minSize = this._getSliderMinSize();
                 var span = this._maximum - this._minimum;
-                var size = Math.max(minSize, (this._pageSize / span) * trackSize);
+                var size = (this._pageSize * trackSize) / (span + this._pageSize);
+                size = Math.max(minSize, size);
                 // Compute the position of slider bounded by the track limit.
                 var pos = (this._value / span) * (trackSize - size);
                 if (size + pos > trackSize) {
@@ -12439,7 +13110,7 @@ var phosphor;
                 }
                 // Update the position and size of the slider.
                 style.display = '';
-                if (this._orientation === 0 /* Horizontal */) {
+                if (this._orientation === widgets.Orientation.Horizontal) {
                     style.top = '';
                     style.left = trackPos + pos + 'px';
                     style.width = size + 'px';
@@ -12472,7 +13143,7 @@ var phosphor;
                 var rect = this.node.getBoundingClientRect();
                 var slider = this.node.firstChild;
                 var sliderRect = slider.getBoundingClientRect();
-                if (this._orientation === 0 /* Horizontal */) {
+                if (this._orientation === widgets.Orientation.Horizontal) {
                     mousePos = event.clientX - rect.left - box.paddingLeft;
                     trackSize = this.width - box.horizontalSum;
                     sliderPos = sliderRect.left - rect.left - box.paddingLeft;
@@ -12524,7 +13195,7 @@ var phosphor;
                 var rect = this.node.getBoundingClientRect();
                 var slider = this.node.firstChild;
                 var sliderRect = slider.getBoundingClientRect();
-                if (this._orientation === 0 /* Horizontal */) {
+                if (this._orientation === widgets.Orientation.Horizontal) {
                     mousePos = event.clientX - rect.left - box.paddingLeft;
                     trackSize = this.width - box.horizontalSum;
                     sliderSize = sliderRect.width;
@@ -12569,7 +13240,7 @@ var phosphor;
                 }
                 this._value = value;
                 this.update(true);
-                emit(this, ScrollBar.sliderMoved, value);
+                this.sliderMoved.emit(value);
             };
             /**
              * Get the minimum size of the slider for the current orientation.
@@ -12581,7 +13252,7 @@ var phosphor;
             ScrollBar.prototype._getSliderMinSize = function () {
                 if (this._sliderMinSize === -1) {
                     var style = window.getComputedStyle(this.node.firstChild);
-                    if (this._orientation === 0 /* Horizontal */) {
+                    if (this._orientation === widgets.Orientation.Horizontal) {
                         this._sliderMinSize = parseInt(style.minWidth, 10) || 0;
                     }
                     else {
@@ -12590,22 +13261,16 @@ var phosphor;
                 }
                 return this._sliderMinSize;
             };
-            /**
-             * A signal emitted when the user moves the scroll bar slider.
-             *
-             * The signal parameter is the current `value` of the scroll bar.
-             *
-             * #### Notes
-             * This signal is not emitted when `value` is changed from code.
-             */
-            ScrollBar.sliderMoved = new Signal();
+            __decorate([
+                signal
+            ], ScrollBar.prototype, "sliderMoved");
             return ScrollBar;
         })(widgets.Widget);
         widgets.ScrollBar = ScrollBar;
     })(widgets = phosphor.widgets || (phosphor.widgets = {}));
 })(phosphor || (phosphor = {})); // module phosphor.widgets
 
-var __extends = this.__extends || function (d, b) {
+var __extends = (this && this.__extends) || function (d, b) {
     for (var p in b) if (b.hasOwnProperty(p)) d[p] = b[p];
     function __() { this.constructor = d; }
     __.prototype = b.prototype;
@@ -12751,11 +13416,19 @@ var phosphor;
     })(widgets = phosphor.widgets || (phosphor.widgets = {}));
 })(phosphor || (phosphor = {})); // module phosphor.widgets
 
-var __extends = this.__extends || function (d, b) {
+var __extends = (this && this.__extends) || function (d, b) {
     for (var p in b) if (b.hasOwnProperty(p)) d[p] = b[p];
     function __() { this.constructor = d; }
     __.prototype = b.prototype;
     d.prototype = new __();
+};
+var __decorate = (this && this.__decorate) || function (decorators, target, key, desc) {
+    if (typeof Reflect === "object" && typeof Reflect.decorate === "function") return Reflect.decorate(decorators, target, key, desc);
+    switch (arguments.length) {
+        case 2: return decorators.reduceRight(function(o, d) { return (d && d(o)) || o; }, target);
+        case 3: return decorators.reduceRight(function(o, d) { return (d && d(target, key)), void 0; }, void 0);
+        case 4: return decorators.reduceRight(function(o, d) { return (d && d(target, key, o)) || o; }, desc);
+    }
 };
 /*-----------------------------------------------------------------------------
 | Copyright (c) 2014-2015, S. Chris Colbert
@@ -12769,8 +13442,7 @@ var phosphor;
     var widgets;
     (function (widgets) {
         var algo = phosphor.collections.algorithm;
-        var Signal = phosphor.core.Signal;
-        var emit = phosphor.core.emit;
+        var signal = phosphor.core.signal;
         var Pair = phosphor.utility.Pair;
         var Size = phosphor.utility.Size;
         var hitTest = phosphor.utility.hitTest;
@@ -12842,8 +13514,8 @@ var phosphor;
                 this._previousTab = null;
                 this._dragData = null;
                 this.addClass(TAB_BAR_CLASS);
-                this.verticalSizePolicy = 0 /* Fixed */;
-                this.setFlag(16 /* DisallowLayoutChange */);
+                this.verticalSizePolicy = widgets.SizePolicy.Fixed;
+                this.setFlag(widgets.WidgetFlag.DisallowLayoutChange);
                 if (options)
                     this._initFrom(options);
             }
@@ -12896,7 +13568,7 @@ var phosphor;
                     this._currentTab = next;
                     this._previousTab = prev;
                     this._updateTabZOrder();
-                    emit(this, TabBar.currentChanged, new Pair(next ? index : -1, next));
+                    this.currentChanged.emit(new Pair(next ? index : -1, next));
                 },
                 enumerable: true,
                 configurable: true
@@ -13146,8 +13818,8 @@ var phosphor;
                 }
                 // Setup the drag data object.
                 var tlw = this._tabLayoutWidth();
-                var offsetX = (0.4 * tlw) | 0;
-                var clientY = contentRect.top + (0.5 * contentRect.height) | 0;
+                var offsetX = Math.floor(0.4 * tlw);
+                var clientY = contentRect.top + Math.floor(0.5 * contentRect.height);
                 var cursorGrab = overrideCursor('default');
                 this._dragData = {
                     node: tab.node,
@@ -13301,7 +13973,7 @@ var phosphor;
                 // emit the `tabCloseRequested` signal.
                 var tab = this._tabs[index];
                 if (tab.closable && tab.closeIconNode === event.target) {
-                    emit(this, TabBar.tabCloseRequested, new Pair(index, tab));
+                    this.tabCloseRequested.emit(new Pair(index, tab));
                 }
             };
             /**
@@ -13385,7 +14057,7 @@ var phosphor;
                     if (!inBounds(data.contentRect, DETACH_THRESHOLD, clientX, clientY)) {
                         // Update the data nad emit the `tabDetachRequested` signal.
                         data.detachRequested = true;
-                        emit(this, TabBar.tabDetachRequested, {
+                        this.tabDetachRequested.emit({
                             tab: this.currentTab,
                             index: this.currentIndex,
                             clientX: clientX,
@@ -13508,7 +14180,7 @@ var phosphor;
                 // Update the tab Z-order to account for the new order.
                 this._updateTabZOrder();
                 // Emit the `tabMoved` signal.
-                emit(this, TabBar.tabMoved, new Pair(fromIndex, toIndex));
+                this.tabMoved.emit(new Pair(fromIndex, toIndex));
                 // If the tab bar is not attached, there is nothing left to do.
                 if (!this.isAttached) {
                     return toIndex;
@@ -13550,7 +14222,7 @@ var phosphor;
                         this.currentTab = next;
                     }
                     else {
-                        emit(this, TabBar.currentChanged, new Pair(-1, void 0));
+                        this.currentChanged.emit(new Pair(-1, void 0));
                     }
                 }
                 else if (tab === this._previousTab) {
@@ -13679,22 +14351,18 @@ var phosphor;
                     this.tabOverlap = options.tabOverlap;
                 }
             };
-            /**
-             * A signal emitted when a tab is moved.
-             */
-            TabBar.tabMoved = new Signal();
-            /**
-             * A signal emitted when the currently selected tab is changed.
-             */
-            TabBar.currentChanged = new Signal();
-            /**
-             * A signal emitted when the user clicks a tab close icon.
-             */
-            TabBar.tabCloseRequested = new Signal();
-            /**
-             * A signal emitted when a tab is dragged beyond the detach threshold.
-             */
-            TabBar.tabDetachRequested = new Signal();
+            __decorate([
+                signal
+            ], TabBar.prototype, "tabMoved");
+            __decorate([
+                signal
+            ], TabBar.prototype, "currentChanged");
+            __decorate([
+                signal
+            ], TabBar.prototype, "tabCloseRequested");
+            __decorate([
+                signal
+            ], TabBar.prototype, "tabDetachRequested");
             return TabBar;
         })(widgets.Widget);
         widgets.TabBar = TabBar;
@@ -13730,11 +14398,19 @@ var phosphor;
     })(widgets = phosphor.widgets || (phosphor.widgets = {}));
 })(phosphor || (phosphor = {})); // module phosphor.widgets
 
-var __extends = this.__extends || function (d, b) {
+var __extends = (this && this.__extends) || function (d, b) {
     for (var p in b) if (b.hasOwnProperty(p)) d[p] = b[p];
     function __() { this.constructor = d; }
     __.prototype = b.prototype;
     d.prototype = new __();
+};
+var __decorate = (this && this.__decorate) || function (decorators, target, key, desc) {
+    if (typeof Reflect === "object" && typeof Reflect.decorate === "function") return Reflect.decorate(decorators, target, key, desc);
+    switch (arguments.length) {
+        case 2: return decorators.reduceRight(function(o, d) { return (d && d(o)) || o; }, target);
+        case 3: return decorators.reduceRight(function(o, d) { return (d && d(target, key)), void 0; }, void 0);
+        case 4: return decorators.reduceRight(function(o, d) { return (d && d(target, key, o)) || o; }, desc);
+    }
 };
 /*-----------------------------------------------------------------------------
 | Copyright (c) 2014-2015, S. Chris Colbert
@@ -13747,9 +14423,7 @@ var phosphor;
 (function (phosphor) {
     var widgets;
     (function (widgets) {
-        var Signal = phosphor.core.Signal;
-        var connect = phosphor.core.connect;
-        var emit = phosphor.core.emit;
+        var signal = phosphor.core.signal;
         var Pair = phosphor.utility.Pair;
         /**
          * The class name added to tab panel instances.
@@ -13770,14 +14444,14 @@ var phosphor;
             function TabPanel() {
                 _super.call(this);
                 this.addClass(TAB_PANEL_CLASS);
-                this.layout = new widgets.BoxLayout(2 /* TopToBottom */, 0);
-                this.setFlag(16 /* DisallowLayoutChange */);
+                this.layout = new widgets.BoxLayout(widgets.Direction.TopToBottom, 0);
+                this.setFlag(widgets.WidgetFlag.DisallowLayoutChange);
                 var bar = this._tabBar = new widgets.TabBar();
-                connect(bar, widgets.TabBar.tabMoved, this, this._p_tabMoved);
-                connect(bar, widgets.TabBar.currentChanged, this, this._p_currentChanged);
-                connect(bar, widgets.TabBar.tabCloseRequested, this, this._p_tabCloseRequested);
+                bar.tabMoved.connect(this._p_tabMoved, this);
+                bar.currentChanged.connect(this._p_currentChanged, this);
+                bar.tabCloseRequested.connect(this._p_tabCloseRequested, this);
                 var stack = this._stackedPanel = new widgets.StackedPanel();
-                connect(stack, widgets.StackedPanel.widgetRemoved, this, this._p_widgetRemoved);
+                stack.widgetRemoved.connect(this._p_widgetRemoved, this);
                 this.layout.addWidget(bar);
                 this.layout.addWidget(stack);
             }
@@ -13903,33 +14577,32 @@ var phosphor;
             /**
              * Handle the `tabMoved` signal from the tab bar.
              */
-            TabPanel.prototype._p_tabMoved = function (sender, args) {
+            TabPanel.prototype._p_tabMoved = function (args) {
                 this._stackedPanel.moveWidget(args.first, args.second);
             };
             /**
              * Handle the `currentChanged` signal from the tab bar.
              */
-            TabPanel.prototype._p_currentChanged = function (sender, args) {
+            TabPanel.prototype._p_currentChanged = function (args) {
                 this._stackedPanel.currentIndex = args.first;
                 var widget = this._stackedPanel.currentWidget;
-                emit(this, TabPanel.currentChanged, new Pair(args.first, widget));
+                this.currentChanged.emit(new Pair(args.first, widget));
             };
             /**
              * Handle the `tabCloseRequested` signal from the tab bar.
              */
-            TabPanel.prototype._p_tabCloseRequested = function (sender, args) {
+            TabPanel.prototype._p_tabCloseRequested = function (args) {
                 this._stackedPanel.widgetAt(args.first).close();
             };
             /**
              * Handle the `widgetRemoved` signal from the stacked panel.
              */
-            TabPanel.prototype._p_widgetRemoved = function (sender, args) {
+            TabPanel.prototype._p_widgetRemoved = function (args) {
                 this._tabBar.removeAt(args.first);
             };
-            /**
-             * A signal emitted when the current widget is changed.
-             */
-            TabPanel.currentChanged = new Signal();
+            __decorate([
+                signal
+            ], TabPanel.prototype, "currentChanged");
             return TabPanel;
         })(widgets.Widget);
         widgets.TabPanel = TabPanel;
@@ -14067,7 +14740,7 @@ var phosphor;
 var phosphor;
 (function (phosphor) {
     var shell;
-    (function (_shell) {
+    (function (shell_1) {
         var Container = phosphor.di.Container;
         var IContainer = phosphor.di.IContainer;
         var createBoxSizing = phosphor.utility.createBoxSizing;
@@ -14161,7 +14834,7 @@ var phosphor;
              * The default implementation resolves an `IPluginList`.
              */
             Bootstrapper.prototype.createPluginList = function () {
-                return this.container.resolve(_shell.IPluginList);
+                return this.container.resolve(shell_1.IPluginList);
             };
             /**
              * Create the application shell widget.
@@ -14171,7 +14844,7 @@ var phosphor;
              * The default implementation resolves an `IShellView`.
              */
             Bootstrapper.prototype.createShell = function () {
-                return this.container.resolve(_shell.IShellView);
+                return this.container.resolve(shell_1.IShellView);
             };
             /**
              * Configure the application dependency injection container.
@@ -14183,11 +14856,11 @@ var phosphor;
                 if (!container.isRegistered(IContainer)) {
                     container.registerInstance(IContainer, container);
                 }
-                if (!container.isRegistered(_shell.IPluginList)) {
-                    container.registerType(_shell.IPluginList, _shell.PluginList);
+                if (!container.isRegistered(shell_1.IPluginList)) {
+                    container.registerType(shell_1.IPluginList, shell_1.PluginList);
                 }
-                if (!container.isRegistered(_shell.IShellView)) {
-                    container.registerType(_shell.IShellView, _shell.ShellView);
+                if (!container.isRegistered(shell_1.IShellView)) {
+                    container.registerType(shell_1.IShellView, shell_1.ShellView);
                 }
             };
             /**
@@ -14207,8 +14880,7 @@ var phosphor;
              *
              * This can be reimplemented by subclasses as needed.
              */
-            Bootstrapper.prototype.configureShell = function () {
-            };
+            Bootstrapper.prototype.configureShell = function () { };
             /**
              * Finalize the bootstrapping process.
              *
@@ -14234,7 +14906,7 @@ var phosphor;
             };
             return Bootstrapper;
         })();
-        _shell.Bootstrapper = Bootstrapper;
+        shell_1.Bootstrapper = Bootstrapper;
     })(shell = phosphor.shell || (phosphor.shell = {}));
 })(phosphor || (phosphor = {})); // module phosphor.shell
 
@@ -14359,7 +15031,7 @@ var phosphor;
     })(shell = phosphor.shell || (phosphor.shell = {}));
 })(phosphor || (phosphor = {})); // module phosphor.shell
 
-var __extends = this.__extends || function (d, b) {
+var __extends = (this && this.__extends) || function (d, b) {
     for (var p in b) if (b.hasOwnProperty(p)) d[p] = b[p];
     function __() { this.constructor = d; }
     __.prototype = b.prototype;
@@ -14398,7 +15070,7 @@ var phosphor;
                 this._pairs = [];
                 this.addClass(SHELL_PANEL_CLASS);
                 this.layout = new BoxLayout(direction, 0);
-                this.setFlag(16 /* DisallowLayoutChange */);
+                this.setFlag(WidgetFlag.DisallowLayoutChange);
             }
             /**
              * Dispose of the resources held by the widget.
@@ -14441,7 +15113,7 @@ var phosphor;
     })(shell = phosphor.shell || (phosphor.shell = {}));
 })(phosphor || (phosphor = {})); // module phosphor.shell
 
-var __extends = this.__extends || function (d, b) {
+var __extends = (this && this.__extends) || function (d, b) {
     for (var p in b) if (b.hasOwnProperty(p)) d[p] = b[p];
     function __() { this.constructor = d; }
     __.prototype = b.prototype;
@@ -14502,11 +15174,11 @@ var phosphor;
                 _super.call(this);
                 this.addClass(SHELL_VIEW_CLASS);
                 this._menuBar = new MenuBar();
-                this._topPanel = new shell.ShellPanel(2 /* TopToBottom */);
-                this._leftPanel = new shell.ShellPanel(0 /* LeftToRight */);
-                this._rightPanel = new shell.ShellPanel(1 /* RightToLeft */);
-                this._bottomPanel = new shell.ShellPanel(3 /* BottomToTop */);
-                this._centerPanel = new shell.ShellPanel(2 /* TopToBottom */);
+                this._topPanel = new shell.ShellPanel(Direction.TopToBottom);
+                this._leftPanel = new shell.ShellPanel(Direction.LeftToRight);
+                this._rightPanel = new shell.ShellPanel(Direction.RightToLeft);
+                this._bottomPanel = new shell.ShellPanel(Direction.BottomToTop);
+                this._centerPanel = new shell.ShellPanel(Direction.TopToBottom);
                 this._menuManager = new shell.MenuManager(this._menuBar);
                 this._topPanel.addClass(TOP_CLASS);
                 this._leftPanel.addClass(LEFT_CLASS);
@@ -14514,13 +15186,13 @@ var phosphor;
                 this._bottomPanel.addClass(BOTTOM_CLASS);
                 this._centerPanel.addClass(CENTER_CLASS);
                 this._menuBar.hide();
-                this._topPanel.verticalSizePolicy = 0 /* Fixed */;
+                this._topPanel.verticalSizePolicy = SizePolicy.Fixed;
                 shell.enableAutoHide(this._topPanel);
                 shell.enableAutoHide(this._leftPanel);
                 shell.enableAutoHide(this._rightPanel);
                 shell.enableAutoHide(this._bottomPanel);
-                var hSplitter = new SplitPanel(0 /* Horizontal */);
-                var vSplitter = new SplitPanel(1 /* Vertical */);
+                var hSplitter = new SplitPanel(Orientation.Horizontal);
+                var vSplitter = new SplitPanel(Orientation.Vertical);
                 hSplitter.handleSize = 0;
                 vSplitter.handleSize = 0;
                 hSplitter.addWidget(this._leftPanel);
@@ -14528,12 +15200,12 @@ var phosphor;
                 hSplitter.addWidget(this._rightPanel);
                 vSplitter.addWidget(hSplitter, 1);
                 vSplitter.addWidget(this._bottomPanel);
-                var layout = new BoxLayout(2 /* TopToBottom */, 0);
+                var layout = new BoxLayout(Direction.TopToBottom, 0);
                 layout.addWidget(this._menuBar);
                 layout.addWidget(this._topPanel);
                 layout.addWidget(vSplitter, 1);
                 this.layout = layout;
-                this.setFlag(16 /* DisallowLayoutChange */);
+                this.setFlag(WidgetFlag.DisallowLayoutChange);
             }
             /**
              * Get the content areas names supported by the shell view.
