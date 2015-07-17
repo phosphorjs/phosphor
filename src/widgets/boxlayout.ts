@@ -193,7 +193,7 @@ class BoxLayout extends Layout {
     if (!sizer) {
       return false;
     }
-    stretch = Math.max(0, stretch | 0);
+    stretch = Math.max(0, Math.floor(stretch));
     if (sizer.stretch !== stretch) {
       sizer.stretch = stretch;
       this.invalidate();
@@ -484,7 +484,7 @@ class BoxLayout extends Layout {
    */
   private _insert(index: number, item: ILayoutItem, stretch: number): number {
     var sizer = new LayoutSizer();
-    sizer.stretch = Math.max(0, stretch | 0);
+    sizer.stretch = Math.max(0, Math.floor(stretch));
     index = algo.insert(this._items, index, item);
     algo.insert(this._sizers, index, sizer);
     this.invalidate();

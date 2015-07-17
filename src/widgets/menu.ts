@@ -9,11 +9,11 @@ module phosphor.widgets {
 
 import algo = collections.algorithm;
 
+import ISignal = core.ISignal;
 import NodeBase = core.NodeBase;
-import Signal = core.Signal;
-import connect = core.connect;
-import disconnect = core.disconnect;
-import emit = core.emit;
+import clearSignalData = core.clearSignalData;
+import sender = core.sender;
+import signal = core.signal;
 
 import Size = utility.Size;
 import Rect = utility.Rect;
@@ -152,7 +152,8 @@ class Menu extends NodeBase {
   /**
    * A signal emitted when the menu is closed.
    */
-  static closed = new Signal<Menu, void>();
+  @signal
+  closed: ISignal<void>;
 
   /**
    * Construct a new menu.
@@ -168,8 +169,7 @@ class Menu extends NodeBase {
    */
   dispose(): void {
     this.close();
-    disconnect(this, null, null, null);
-    disconnect(null, null, this, null);
+    clearSignalData(this);
     this._items = null;
     this._nodes = null;
     super.dispose();
@@ -269,7 +269,7 @@ class Menu extends NodeBase {
     var node = this.createItemNode(item);
     index = algo.insert(this._items, index, item);
     algo.insert(this._nodes, index, node);
-    connect(item, MenuItem.changed, this, this._p_changed);
+    item.changed.connect(this._p_changed, this);
     node.addEventListener('mouseenter', <any>this);
     this.insertItemNode(index, node);
     this._collapseSeparators();
@@ -286,7 +286,7 @@ class Menu extends NodeBase {
     var item = algo.removeAt(this._items, index);
     var node = algo.removeAt(this._nodes, index);
     if (item) {
-      disconnect(item, MenuItem.changed, this, this._p_changed);
+      item.changed.disconnect(this._p_changed, this);
     }
     if (node) {
       node.removeEventListener('mouseenter', <any>this);
@@ -461,7 +461,7 @@ class Menu extends NodeBase {
     document.removeEventListener('mousedown', <any>this, true);
     this._reset();
     this._removeFromParent();
-    emit(this, Menu.closed, void 0);
+    this.closed.emit(void 0);
   }
 
   /**
@@ -916,15 +916,16 @@ class Menu extends NodeBase {
   /**
    * Handle the `changed` signal from a menu item.
    */
-  private _p_changed(sender: MenuItem): void {
-    var i = this.indexOf(sender);
+  private _p_changed(): void {
+    var item = <MenuItem>sender();
+    var i = this.indexOf(item);
     if (i === -1) {
       return;
     }
     if (i === this._activeIndex) {
       this._reset();
     }
-    this.initItemNode(sender, this._nodes[i]);
+    this.initItemNode(item, this._nodes[i]);
     this._collapseSeparators();
   }
 

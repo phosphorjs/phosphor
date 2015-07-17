@@ -14,291 +14,288 @@ module phosphor.core {
  * ```typescript
  * class SomeClass {
  *
- *   static valueChanged = new Signal<SomeClass, number>();
+ *   @signal
+ *   valueChanged: ISignal<number>;
  *
- *   // ...
  * }
  * ```
  */
 export
-class Signal<T, U> {
-  private _signalStructuralPropertyT: T;
-  private _signalStructuralPropertyU: U;
+interface ISignal<T> {
+  /**
+   * Connect a callback to the signal.
+   *
+   * @param callback - The function to invoke when the signal is
+   *   emitted. The args object emitted with the signal is passed
+   *   as the first and only argument to the function.
+   *
+   * @param thisArg - The object to use as the `this` context in the
+   *   callback. If provided, this must be a non-primitive object.
+   *
+   * @returns `true` if the connection succeeds, `false` otherwise.
+   *
+   * #### Notes
+   * Connected callbacks are invoked synchronously, in the order in
+   * which they are connected.
+   *
+   * Signal connections are unique. If a connection already exists for
+   * the given `callback` and `thisArg`, this function returns `false`.
+   *
+   * A newly connected callback will not be invoked until the next time
+   * the signal is emitted, even if it is connected while the signal is
+   * being emitted.
+   *
+   * #### Example
+   * ```typescript
+   * // connect a method
+   * someObject.valueChanged.connect(myObject.onValueChanged, myObject);
+   *
+   * // connect a plain function
+   * someObject.valueChanged.connect(myCallback);
+   * ```
+   */
+  connect(callback: (args: T) => void, thisArg?: any): boolean;
+
+  /**
+   * Disconnect a callback from the signal.
+   *
+   * @param callback - The callback connected to the signal.
+   *
+   * @param thisArg - The `this` context for the callback.
+   *
+   * @returns `true` if the connection is broken, `false` otherwise.
+   *
+   * #### Notes
+   * A disconnected callback will no longer be invoked, even if it
+   * is disconnected while the signal is being emitted.
+   *
+   * If no connection exists for the given `callback` and `thisArg`,
+   * this function returns `false`.
+   *
+   * #### Example
+   * ```typescript
+   * // disconnect a method
+   * someObject.valueChanged.disconnect(myObject.onValueChanged, myObject);
+   *
+   * // disconnect a plain function
+   * someObject.valueChanged.disconnect(myCallback);
+   * ```
+   */
+  disconnect(callback: (args: T) => void, thisArg?: any): boolean;
+
+  /**
+   * Emit the signal and invoke the connected callbacks.
+   *
+   * @param args - The args object to pass to the callbacks.
+   *
+   * #### Notes
+   * If a connected callback throws an exception, dispatching of the
+   * signal will terminate immediately and the exception will be
+   * propagated to the call site of this function.
+   *
+   * #### Example
+   * ```typescript
+   * someObject.valueChanged.emit(42);
+   * ```
+   */
+  emit(args: T): void;
 }
 
 
 /**
- * Connect the signal of a sender to the method of a receiver.
+ * A decorator which defines a signal for an object.
  *
- * @param sender - The object which will emit the signal. This will
- *   be passed as the first argument to the receiver method when the
- *   signal is emitted. This must be a non-primitive object.
+ * @param obj - The object on which to define the signal.
  *
- * @param signal - The signal which will be emitted by the sender.
- *
- * @param receiver - The object to connect to the signal. This will
- *   become the `this` context in the receiver method. This must be
- *   a non-primitive object.
- *
- * @param method - The receiver method to invoke when the signal is
- *   emitted. The sender is passed as the first argument followed by
- *   the args object emitted with the signal.
- *
- * @returns `true` if the connection succeeds, `false` otherwise.
+ * @param name - The name of the signal to define.
  *
  * #### Notes
- * Receiver methods are invoked synchronously, in the order in which
- * they are connected.
- *
- * Signal connections are unique. If a connection already exists for
- * the given combination of arguments, this function is a no-op.
- *
- * A newly connected receiver method will not be invoked until the next
- * emission of the signal, even if it is connected during an emission.
+ * This function can also be used as a non-decorator by invoking it
+ * directly on the target object.
  *
  * #### Example
  * ```typescript
- * connect(someObject, SomeClass.valueChanged, myObject, myObject.onValueChanged);
+ * class SomeClass {
+ *
+ *   @signal
+ *   valueChanged: ISignal<number>;
+ *
+ * }
+ *
+ * // define a signal directly on a prototype
+ * signal(SomeClass.prototype, 'valueChanged');
+ *
+ * // define a signal directly on an object
+ * signal(someObject, 'someSignal');
  * ```
  */
 export
-function connect<T, U>(sender: T, signal: Signal<T, U>, receiver: any, method: (sender: T, args: U) => void): boolean {
-  // All arguments must be provided; warn if they are not.
-  if (!sender || !signal || !receiver || !method) {
-    console.warn('null argument passed to `connect()`');
-    return false;
-  }
-
-  // Get the connection list for the sender or create one if necessary.
-  var list = senderMap.get(sender);
-  if (list === void 0) {
-    list = new ConnectionList();
-    senderMap.set(sender, list);
-  }
-
-  // Search for a matching connection and bail if one is found.
-  var conn = list.first;
-  while (conn !== null) {
-    if (isMatch(conn, sender, signal, receiver, method)) {
-      return false;
-    }
-    conn = conn.nextReceiver;
-  }
-
-  // Create and initialize a new connection.
-  conn = new Connection();
-  conn.sender = sender;
-  conn.signal = signal;
-  conn.receiver = receiver;
-  conn.method = method;
-
-  // Add the connection to the list of receivers.
-  if (list.last === null) {
-    list.first = conn;
-    list.last = conn;
-  } else {
-    list.last.nextReceiver = conn;
-    list.last = conn;
-  }
-
-  // Add the connection to the list of senders.
-  var head = receiverMap.get(receiver);
-  if (head !== void 0) {
-    head.prevSender = conn;
-    conn.nextSender = head;
-  }
-  receiverMap.set(receiver, conn);
-
-  return true;
+function signal(obj: any, name: string): void {
+  Object.defineProperty(obj, name, {
+    get: function() { return new BoundSignal<any>(this, name); },
+  });
 }
 
 
 /**
- * Disconnect the signal of a sender from the method of a receiver.
- *
- * @param sender - The object which emits the signal.
- *
- * @param signal - The signal emitted by the sender.
- *
- * @param receiver - The object connected to the signal.
- *
- * @param method - The receiver method connected to the signal.
- *
- * @returns `true` if the connection is broken, `false` otherwise.
+ * Get the object which is emitting the curent signal.
  *
  * #### Notes
- * Any argument to this function may be null, and it will be treated
- * as a wildcard when matching the connection. However, `sender` and
- * `receiver` cannot both be null; one or both must be provided.
- *
- * A disconnected receiver method will no longer be invoked, even if
- * it is disconnected during signal emission.
- *
- * If no connection exists for the given combination of arguments,
- * this function is a no-op.
+ * If a signal is not currently being emitted, this returns `null`.
  *
  * #### Example
  * ```typescript
- * // disconnect a specific signal from a specific handler
- * disconnect(someObject, SomeClass.valueChanged, myObject, myObject.onValueChanged);
+ * someObject.valueChanged.connect(myCallback);
  *
- * // disconnect all receivers from a specific sender
- * disconnect(someObject, null, null, null);
+ * someObject.valueChanged.emit(42);
  *
- * // disconnect all receivers from a specific signal
- * disconnect(someObject, SomeClass.valueChanged, null, null);
- *
- * // disconnect a specific receiver from all senders
- * disconnect(null, null, myObject, null);
- *
- * // disconnect a specific handler from all senders
- * disconnect(null, null, myObject, myObject.onValueChanged);
+ * function myCallback(value: number): void {
+ *   console.log(sender() === someObject); // true
+ * }
  * ```
  */
 export
-function disconnect<T, U>(sender: T, signal: Signal<T, U>, receiver: any, method: (sender: T, args: U) => void): boolean {
-  // If a sender is provided, the list of connected receivers is walked
-  // and any matching connection is removed from *the list of senders*.
-  // The receivers list is marked dirty and will be cleaned at the end
-  // of the next signal emission.
-  if (sender) {
-    var list = senderMap.get(sender);
-    if (list === void 0) {
-      return false;
-    }
-    var success = false;
-    var conn = list.first;
-    while (conn !== null) {
-      if (isMatch(conn, sender, signal, receiver, method)) {
-        list.dirty = true;
-        removeFromSendersList(conn);
-        success = true;
-      }
-      conn = conn.nextReceiver;
-    }
-    return success;
-  }
-
-  // If only the receiver is provided, the list of connected senders
-  // is walked and any matching connection is removed *from the list
-  // of senders*. The receivers list for each sender is marked dirty
-  // and will be cleaned at the end of the next signal emission.
-  if (receiver) {
-    var conn = receiverMap.get(receiver);
-    if (conn === void 0) {
-      return false;
-    }
-    var success = false;
-    while (conn !== null) {
-      var next = conn.nextSender; // store before removing conn
-      if (isMatch(conn, sender, signal, receiver, method)) {
-        senderMap.get(conn.sender).dirty = true;
-        removeFromSendersList(conn);
-        success = true;
-      }
-      conn = next;
-    }
-    return success;
-  }
-
-  // If the sender and receiver are both null, finding all matching
-  // connections would require a full scan of all connection lists.
-  // That would be expensive and is explicitly not supported.
-  console.warn('null sender and receiver passed to `disconnect()`');
-  return false;
+function sender(): any {
+  return currentSender;
 }
 
 
 /**
- * Emit the signal of a sender and invoke the connected receivers.
+ * Remove all signal connections where the given object is the sender.
  *
- * @param sender - The object which is emitting the signal. This will
- *   be passed as the first argument to all connected receivers. This
- *   must be a non-primitive object.
- *
- * @param signal - The signal to be emitted by the sender.
- *
- * @param args - The args object for the signal. This will be passed
- *   as the second argument to all connected receivers.
- *
- * #### Notes
- * If a receiver throws an exception, dispatching of the signal will
- * terminate immediately and the exception will be propagated to the
- * call site of this function.
+ * @param obj - The sender object of interest.
  *
  * #### Example
  * ```typescript
- * emit(someObject, SomeClass.valueChanged, 42);
+ * disconnectSender(someObject);
  * ```
  */
 export
-function emit<T, U>(sender: T, signal: Signal<T, U>, args: U): void {
-  var list = senderMap.get(sender);
-  if (list === void 0) {
+function disconnectSender(obj: any): void {
+  var hash = senderMap.get(obj);
+  if (!hash) {
     return;
   }
-  list.refs++;
-  try {
-    invokeReceivers(list, signal, args);
-  } finally {
-    list.refs--;
+  for (var name in hash) {
+    var conn = hash[name].first;
+    while (conn !== null) {
+      removeFromSendersList(conn);
+      conn.callback = null;
+      conn.thisArg = null;
+      conn = conn.nextReceiver;
+    }
   }
-  if (list.dirty && list.refs === 0) {
-    cleanReceiversList(list);
-    list.dirty = false;
-  }
+  senderMap.delete(obj);
 }
 
 
 /**
- * An object which holds data for a list of connected receivers.
+ * Remove all signal connections where the given object is the receiver.
+ *
+ * @param obj - The receiver object of interest.
+ *
+ * #### Notes
+ * If a `thisArg` is provided when connecting a signal, that object
+ * is considered the receiver. Otherwise, the `callback` is used as
+ * the receiver.
+ *
+ * #### Example
+ * ```typescript
+ * // disconnect a regular object receiver
+ * disconnectReceiver(myObject);
+ *
+ * // disconnect a plain callback receiver
+ * disconnectReceiver(myCallback);
+ * ```
  */
-class ConnectionList {
-  /**
-   * The ref count for the connection list.
-   */
-  refs = 0;
-
-  /**
-   * Whether or not the connection list has broken connections.
-   */
-  dirty = false;
-
-  /**
-   * The first link in the singly linked list of receivers.
-   */
-  first: Connection = null;
-
-  /**
-   * The last link in the singly linked list of receivers.
-   */
-  last: Connection = null;
+export
+function disconnectReceiver(obj: any): void {
+  var conn = receiverMap.get(obj);
+  if (!conn) {
+    return;
+  }
+  while (conn !== null) {
+    var temp = conn.nextSender;
+    conn.callback = null;
+    conn.thisArg = null;
+    conn.prevSender = null;
+    conn.nextSender = null;
+    conn = temp;
+  }
+  receiverMap.delete(obj);
 }
 
 
 /**
- * An object which holds data for a signal connection.
+ * Clear all signal data associated with the given object.
+ *
+ * #### Notes
+ * This removes all signal connections where the object is used as
+ * either the sender or the receiver.
+ *
+ * #### Example
+ * ```typescript
+ * clearSignalData(someObject);
+ * ```
+ */
+export
+function clearSignalData(obj: any): void {
+  disconnectSender(obj);
+  disconnectReceiver(obj);
+}
+
+
+/**
+ * A concrete implementation of ISignal.
+ */
+class BoundSignal<T> implements ISignal<T> {
+  /**
+   * Construct a new bound signal.
+   */
+  constructor(sender: any, name: string) {
+    this._sender = sender;
+    this._name = name;
+  }
+
+  /**
+   * Connect a callback to the signal.
+   */
+  connect(callback: (args: T) => void, thisArg?: any): boolean {
+    return connect(this._sender, this._name, callback, thisArg);
+  }
+
+  /**
+   * Disconnect a callback from the signal.
+   */
+  disconnect(callback: (args: T) => void, thisArg?: any): boolean {
+    return disconnect(this._sender, this._name, callback, thisArg);
+  }
+
+  /**
+   * Emit the signal and invoke the connected callbacks.
+   */
+  emit(args: T): void {
+    emit(this._sender, this._name, args);
+  }
+
+  private _sender: any;
+  private _name: string;
+}
+
+
+/**
+ * A struct which holds connection data.
  */
 class Connection {
   /**
-   * The sender object for the connection.
+   * The callback connected to the signal.
    */
-  sender: any = null;
+  callback: Function = null;
 
   /**
-   * The signal object for the connection.
+   * The `this` context for the callback.
    */
-  signal: Signal<any, any> = null;
-
-  /**
-   * The receiver object for the connection.
-   */
-  receiver: any = null;
-
-  /**
-   * The receiver method for the connection.
-   */
-  method: Function = null;
+  thisArg: any = null;
 
   /**
    * The next connection in the singly linked receivers list.
@@ -318,92 +315,224 @@ class Connection {
 
 
 /**
- * A mapping of sender object to its connection list.
+ * The list of receiver connections for a specific signal.
  */
-var senderMap = new WeakMap<any, ConnectionList>();
+class ConnectionList {
+  /**
+   * The ref count for the list.
+   */
+  refs = 0;
+
+  /**
+   * The first connection in the list.
+   */
+  first: Connection = null;
+
+  /**
+   * The last connection in the list.
+   */
+  last: Connection = null;
+}
 
 
 /**
- * A mapping of receiver object to its first connected sender.
+ * The type alias for a sender connection map.
+ */
+type ConnectionMap = { [signal: string]: ConnectionList };
+
+
+/**
+ * A mapping of sender object to its connection map.
+ */
+var senderMap = new WeakMap<any, ConnectionMap>();
+
+
+/**
+ * A mapping of receiver object to its connection array.
  */
 var receiverMap = new WeakMap<any, Connection>();
 
 
 /**
- * Invoke the receiver connections which match a specific signal.
- *
- * This walks the provided connection list and invokes each receiver
- * connection which has a matching signal. A connection added during
- * dispatch will not be invoked.
+ * The object emitting the current signal.
  */
-function invokeReceivers(list: ConnectionList, signal: Signal<any, any>, args: any): void {
+var currentSender: any = null;
+
+
+/**
+ * Connect a signal to a callback.
+ */
+function connect(sender: any, name: string, callback: Function, thisArg: any): boolean {
+  // Warn and bail if a required argument is null.
+  if (!sender || !name || !callback) {
+    console.warn('null argument passed to `connect()`');
+    return false;
+  }
+
+  // Coerce a `null` thisArg to `undefined`.
+  thisArg = thisArg || void 0;
+
+  // Get the connection map for the sender or create one if necessary.
+  var hash = senderMap.get(sender);
+  if (!hash) {
+    hash = Object.create(null);
+    senderMap.set(sender, hash);
+  }
+
+  // Search for an equivalent connection and bail if one is found.
+  var list = hash[name];
+  if (list && findConnection(list, callback, thisArg)) {
+    return false;
+  }
+
+  // Create a new connection.
+  var conn = new Connection();
+  conn.callback = callback;
+  conn.thisArg = thisArg;
+
+  // Add the connection to the senders list.
+  if (!list) {
+    list = new ConnectionList();
+    list.first = conn;
+    list.last = conn;
+    hash[name] = list;
+  } else {
+    list.last.nextReceiver = conn;
+    list.last = conn;
+  }
+
+  // Add the connection to the receivers list.
+  var receiver = thisArg || callback;
+  var front = receiverMap.get(receiver);
+  if (front) {
+    front.prevSender = conn;
+    conn.nextSender = front;
+  }
+  receiverMap.set(receiver, conn);
+
+  return true;
+}
+
+
+/**
+ * Disconnect a signal from a callback.
+ */
+function disconnect(sender: any, name: string, callback: Function, thisArg: any): boolean {
+  // Warn and bail if a required argument is null.
+  if (!sender || !name || !callback) {
+    console.warn('null argument passed to `disconnect()`');
+    return false;
+  }
+
+  // Coerce a `null` thisArg to `undefined`.
+  thisArg = thisArg || void 0;
+
+  // Bail early if there is no equivalent connection.
+  var hash = senderMap.get(sender);
+  if (!hash) {
+    return false;
+  }
+  var list = hash[name];
+  if (!list) {
+    return false;
+  }
+  var conn = findConnection(list, callback, thisArg);
+  if (!conn) {
+    return false;
+  }
+
+  // Remove the connection from the senders list. It will be removed
+  // from the receivers list the next time the signal is emitted.
+  removeFromSendersList(conn);
+
+  // Clear the connection data so it becomes a dead connection.
+  conn.callback = null;
+  conn.thisArg = null;
+
+  return true;
+}
+
+
+/**
+ * Emit a signal and invoke its connected callbacks.
+ */
+function emit(sender: any, name: string, args: any): void {
+  var hash = senderMap.get(sender);
+  if (!hash) {
+    return;
+  }
+  var list = hash[name];
+  if (!list) {
+    return;
+  }
+  var temp = currentSender;
+  currentSender = sender;
+  list.refs++;
+  try {
+    var dirty = invokeList(list, args);
+  } finally {
+    currentSender = temp;
+    list.refs--;
+  }
+  if (dirty && list.refs === 0) {
+    cleanList(list);
+  }
+}
+
+
+/**
+ * Find a matching connection in the given connection list.
+ *
+ * Returns undefined if a match is not found.
+ */
+function findConnection(list: ConnectionList, callback: Function, thisArg: any): Connection {
+  var conn = list.first;
+  while (conn !== null) {
+    if (conn.callback === callback && conn.thisArg === thisArg) {
+      return conn;
+    }
+    conn = conn.nextReceiver;
+  }
+  return void 0;
+}
+
+
+/**
+ * Invoke the callbacks in the given connection list.
+ *
+ * Connections added during dispatch will not be invoked. This returns
+ * `true` if there are dead connections in the list, `false` otherwise.
+ */
+function invokeList(list: ConnectionList, args: any): boolean {
+  var dirty = false;
   var last = list.last;
   var conn = list.first;
   while (conn !== null) {
-    if (conn.receiver !== null && conn.signal === signal) {
-      conn.method.call(conn.receiver, conn.sender, args);
+    if (conn.callback) {
+      conn.callback.call(conn.thisArg, args);
+    } else {
+      dirty = true;
     }
     if (conn === last) {
       break;
     }
     conn = conn.nextReceiver;
   }
+  return dirty;
 }
 
 
 /**
- * Test whether a connection matches the given arguments.
- *
- * Null arguments are treated as wildcards which will match the
- * corresponding property of the connection.
+ * Remove the dead connections from the given connection list.
  */
-function isMatch(conn: Connection, sender: any, signal: Signal<any, any>, receiver: any, method: Function): boolean {
-  return (
-    (!sender || conn.sender === sender) &&
-    (!signal || conn.signal === signal) &&
-    (!receiver || conn.receiver === receiver) &&
-    (!method || conn.method === method)
-  );
-}
-
-
-/**
- * Remove a live connection from the doubly linked list of senders.
- */
-function removeFromSendersList(conn: Connection): void {
-  var prev = conn.prevSender;
-  var next = conn.nextSender;
-  if (prev === null) {
-    if (next === null) {
-      receiverMap.delete(conn.receiver);
-    } else {
-      receiverMap.set(conn.receiver, next);
-      next.prevSender = null;
-    }
-  } else if (next === null) {
-    prev.nextSender = null;
-  } else {
-    prev.nextSender = next;
-    next.prevSender = prev;
-  }
-  conn.sender = null;
-  conn.receiver = null;
-  conn.prevSender = null;
-  conn.nextSender = null;
-}
-
-
-/**
- * Cleanup the receivers list by removing dead connections.
- */
-function cleanReceiversList(list: ConnectionList): void {
-  var prev: Connection = null;
+function cleanList(list: ConnectionList): void {
+  var prev: Connection;
   var conn = list.first;
   while (conn !== null) {
     var next = conn.nextReceiver;
-    if (conn.receiver === null) {
+    if (!conn.callback) {
       conn.nextReceiver = null;
-    } else if (prev === null) {
+    } else if (!prev) {
       list.first = conn;
       prev = conn;
     } else {
@@ -412,13 +541,36 @@ function cleanReceiversList(list: ConnectionList): void {
     }
     conn = next;
   }
-  if (prev === null) {
+  if (!prev) {
     list.first = null;
     list.last = null;
   } else {
     prev.nextReceiver = null;
     list.last = prev;
   }
+}
+
+
+/**
+ * Remove a connection from the doubly linked list of senders.
+ */
+function removeFromSendersList(conn: Connection): void {
+  var receiver = conn.thisArg || conn.callback;
+  var prev = conn.prevSender;
+  var next = conn.nextSender;
+  if (prev === null && next === null) {
+    receiverMap.delete(receiver);
+  } else if (prev === null) {
+    receiverMap.set(receiver, next);
+    next.prevSender = null;
+  } else if (next === null) {
+    prev.nextSender = null;
+  } else {
+    prev.nextSender = next;
+    next.prevSender = prev;
+  }
+  conn.prevSender = null;
+  conn.nextSender = null;
 }
 
 } // module phosphor.core

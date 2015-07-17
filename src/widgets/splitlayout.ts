@@ -63,7 +63,7 @@ class SplitLayout extends Layout {
    * Set the the size of the split handles.
    */
   set handleSize(size: number) {
-    size = Math.max(0, size | 0);
+    size = Math.max(0, Math.floor(size));
     if (size === this._handleSize) {
       return;
     }
@@ -200,7 +200,7 @@ class SplitLayout extends Layout {
     var handle = new SplitHandle(this._orientation);
     var item = new SplitItem(handle, widget, alignment);
     var sizer = new LayoutSizer();
-    sizer.stretch = Math.max(0, stretch | 0);
+    sizer.stretch = Math.max(0, Math.floor(stretch));
     index = algo.insert(this._items, index, item);
     algo.insert(this._sizers, index, sizer);
     this.invalidate();
@@ -229,7 +229,7 @@ class SplitLayout extends Layout {
     if (!sizer) {
       return false;
     }
-    stretch = Math.max(0, stretch | 0);
+    stretch = Math.max(0, Math.floor(stretch));
     if (sizer.stretch !== stretch) {
       sizer.stretch = stretch;
       this.invalidate();

@@ -9,7 +9,7 @@ module phosphor.widgets {
 
 import algo = collections.algorithm;
 
-import connect = core.connect;
+import sender = core.sender;
 
 import IDisposable = utility.IDisposable;
 import Pair = utility.Pair;
@@ -567,10 +567,10 @@ class DockArea extends Widget {
     bar.tabWidth = this._tabWidth;
     bar.tabOverlap = this._tabOverlap;
     bar.minTabWidth = this._minTabWidth;
-    connect(bar, TabBar.currentChanged, this, this._p_currentChanged);
-    connect(bar, TabBar.tabCloseRequested, this, this._p_tabCloseRequested);
-    connect(bar, TabBar.tabDetachRequested, this, this._p_tabDetachRequested);
-    connect(stack, StackedPanel.widgetRemoved, this, this._p_widgetRemoved);
+    bar.currentChanged.connect(this._p_currentChanged, this);
+    bar.tabCloseRequested.connect(this._p_tabCloseRequested, this);
+    bar.tabDetachRequested.connect(this._p_tabDetachRequested, this);
+    stack.widgetRemoved.connect(this._p_widgetRemoved, this);
     return panel;
   }
 
@@ -696,9 +696,10 @@ class DockArea extends Widget {
   /**
    * Handle the `currentChanged` signal from a tab bar.
    */
-  private _p_currentChanged(sender: TabBar, args: Pair<number, Tab>): void {
+  private _p_currentChanged(args: Pair<number, Tab>): void {
+    var tabBar = <TabBar>sender();
     var item = algo.find(this._items, it => it.widget.tab === args.second);
-    if (item && item.panel.tabBar === sender) {
+    if (item && item.panel.tabBar === tabBar) {
       item.panel.stackedPanel.currentWidget = item.widget;
     }
   }
@@ -706,7 +707,7 @@ class DockArea extends Widget {
   /**
    * Handle the `tabCloseRequested` signal from a tab bar.
    */
-  private _p_tabCloseRequested(sender: TabBar, args: Pair<number, Tab>): void {
+  private _p_tabCloseRequested(args: Pair<number, Tab>): void {
     var item = algo.find(this._items, it => it.widget.tab === args.second);
     if (item) item.widget.close();
   }
@@ -714,7 +715,7 @@ class DockArea extends Widget {
   /**
    * Handle the `tabDetachRequested` signal from the tab bar.
    */
-  private _p_tabDetachRequested(sender: TabBar, args: ITabDetachArgs): void {
+  private _p_tabDetachRequested(args: ITabDetachArgs): void {
     // Find the dock item for the detach operation.
     var tab = args.tab;
     var item = algo.find(this._items, it => it.widget.tab === tab);
@@ -724,8 +725,9 @@ class DockArea extends Widget {
 
     // Create the drag data the first time a tab is detached.
     // The drag data will be cleared on the mouse up event.
+    var tabBar = <TabBar>sender();
     if (!this._dragData) {
-      var prevTab = sender.previousTab;
+      var prevTab = tabBar.previousTab;
       this._dragData = {
         item: item,
         index: args.index,
@@ -741,8 +743,8 @@ class DockArea extends Widget {
 
     // Update the drag data with the current tab geometry.
     var dragData = this._dragData;
-    dragData.offsetX = (0.4 * this._tabWidth) | 0;
-    dragData.offsetY = (0.6 * tab.node.offsetHeight) | 0;
+    dragData.offsetX = Math.floor(0.4 * this._tabWidth);
+    dragData.offsetY = Math.floor(0.6 * tab.node.offsetHeight);
 
     // Grab the cursor for the drag operation.
     dragData.cursorGrab = overrideCursor('default');
@@ -754,12 +756,12 @@ class DockArea extends Widget {
     //    widget does not change during the drag operation.
     // 2) The tab is being detached from a tab bar which was borrowing
     //    the tab temporarily. Its previously selected tab is restored.
-    if (item.panel.tabBar === sender) {
-      sender.currentIndex = -1;
-      sender.detachAt(args.index);
+    if (item.panel.tabBar === tabBar) {
+      tabBar.currentIndex = -1;
+      tabBar.detachAt(args.index);
     } else {
-      sender.detachAt(args.index);
-      sender.currentTab = dragData.tempTab;
+      tabBar.detachAt(args.index);
+      tabBar.currentTab = dragData.tempTab;
     }
 
     // Clear the temp panel and tab
@@ -786,7 +788,7 @@ class DockArea extends Widget {
   /**
    * Handle the `widgetRemoved` signal from a stack widget.
    */
-  private _p_widgetRemoved(sender: StackedPanel, args: Pair<number, Widget>): void {
+  private _p_widgetRemoved(args: Pair<number, Widget>): void {
     if (this._ignoreRemoved) {
       return;
     }

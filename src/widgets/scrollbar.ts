@@ -8,8 +8,8 @@
 module phosphor.widgets {
 
 import IMessage = core.IMessage;
-import Signal = core.Signal;
-import emit = core.emit;
+import ISignal = core.ISignal;
+import signal = core.signal;
 
 import IDisposable = utility.IDisposable;
 import Size = utility.Size;
@@ -66,7 +66,8 @@ class ScrollBar extends Widget {
    * #### Notes
    * This signal is not emitted when `value` is changed from code.
    */
-  static sliderMoved = new Signal<ScrollBar, number>();
+  @signal
+  sliderMoved: ISignal<number>;
 
   /**
    * Construct a new scroll bar.
@@ -277,7 +278,8 @@ class ScrollBar extends Widget {
     // Compute the size of the slider bounded by its minimum.
     var minSize = this._getSliderMinSize();
     var span = this._maximum - this._minimum;
-    var size = Math.max(minSize, (this._pageSize / span) * trackSize);
+    var size = (this._pageSize * trackSize) / (span + this._pageSize);
+    size = Math.max(minSize, size);
 
     // Compute the position of slider bounded by the track limit.
     var pos = (this._value / span) * (trackSize - size);
@@ -429,7 +431,7 @@ class ScrollBar extends Widget {
     }
     this._value = value;
     this.update(true);
-    emit(this, ScrollBar.sliderMoved, value);
+    this.sliderMoved.emit(value);
   }
 
   /**
