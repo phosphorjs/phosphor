@@ -243,7 +243,7 @@ declare module phosphor.collections.algorithm {
     function findLast<T>(array: T[], pred: IPredicate<T>, fromIndex?: number, wrap?: boolean): T;
     /**
      * Using a binary search, find the index of the first element in an
-     * array which compares `<=` to a value.
+     * array which compares `>=` to a value.
      *
      * @param array - The array of values to be searched. It must be sorted
      *   in ascending order.
@@ -253,7 +253,7 @@ declare module phosphor.collections.algorithm {
      * @param cmp - The comparator function to apply to the values.
      *
      * @returns The index of the first element in `array` which compares
-     *   `<=` to `value`, or `array.length` if there is no such element.
+     *   `>=` to `value`, or `array.length` if there is no such element.
      *
      * #### Example
      * ```typescript
@@ -584,6 +584,62 @@ declare module phosphor.collections.algorithm {
      * **See also** [[removeAt]] and [[insert]].
      */
     function remove<T>(array: T[], value: T): number;
+    /**
+     * Reverse an array in-place subject to an optional range.
+     *
+     * @param array - The array to reverse.
+     *
+     * @param fromIndex - The index of the first element of the range. If
+     *   this value is negative, it is taken as an offset from the end of
+     *   the array. The value is clamped to the range `[0, length - 1]`.
+     *   The default is `0`.
+     *
+     * @param fromIndex - The index of the last element of the range. If
+     *   this value is negative, it is taken as an offset from the end of
+     *   the array. The value is clamped to the range `[0, length - 1]`.
+     *   The default is `length`.
+     *
+     * @returns A reference to the original array.
+     *
+     * #### Example
+     * ```typescript
+     * import algo = phosphor.collections.algorithm;
+     *
+     * var data = [0, 1, 2, 3, 4];
+     * algo.reverse(data, 1, 3);    // [0, 3, 2, 1, 4]
+     * algo.reverse(data, 3);       // [0, 3, 2, 4, 1]
+     * algo.reverse(data);          // [1, 4, 2, 3, 0]
+     * algo.reverse(data, -3);      // [1, 4, 0, 3, 2]
+     * algo.reverse(data, -5, -2);  // [3, 0, 4, 1, 2]
+     * ```
+     */
+    function reverse<T>(array: T[], fromIndex?: number, toIndex?: number): T[];
+    /**
+     * Rotate the elements an array by a positive or negative delta.
+     *
+     * @param array - The array to rotate.
+     *
+     * @param delta - The amount of rotation to apply to the elements. A
+     *   positive delta will shift elements to the left. A negative delta
+     *   will shift elements to the right.
+     *
+     * @returns A reference to the original array.
+     *
+     * #### Notes
+     * This executes in `O(n)` time and `O(1)` space.
+     *
+     * #### Example
+     * ```typescript
+     * import algo = phosphor.collections.algorithm;
+     *
+     * var data = [0, 1, 2, 3, 4];
+     * algo.rotate(data, 2);    // [2, 3, 4, 0, 1]
+     * algo.rotate(data, -2);   // [0, 1, 2, 3, 4]
+     * algo.rotate(data, 10);   // [0, 1, 2, 3, 4]
+     * algo.rotate(data, 9);    // [4, 0, 1, 2, 3]
+     * ```
+     */
+    function rotate<T>(array: T[], delta: number): T[];
 }
 
 declare module phosphor.collections {
@@ -821,6 +877,121 @@ declare module phosphor.collections {
         private _size;
         private _front;
         private _back;
+    }
+}
+
+declare module phosphor.collections {
+    /**
+     * An object which manages a collection of variable sized sections.
+     *
+     * A section list is commonly used to manage row heights in virtually
+     * scrolling list controls. In such a control, most rows are uniform
+     * height while a handful of rows are variable sized.
+     *
+     * A section list has guaranteed `O(log(n))` worst-case performance for
+     * most operations, where `n` is the number of variable sized sections.
+     */
+    class SectionList {
+        /**
+         * Get the total number of sections in the list.
+         *
+         * #### Notes
+         * This operation has `O(1)` complexity.
+         */
+        count: number;
+        /**
+         * Get the total size of all sections in the list.
+         *
+         * #### Notes
+         * This operation has `O(1)` complexity.
+         */
+        size: number;
+        /**
+         * Find the index of the section which covers the given offset.
+         *
+         * @param offset - The positive offset position of interest.
+         *
+         * @returns The index of the section which covers the given offset,
+         *   or `-1` if the offset is out of range.
+         *
+         * #### Notes
+         * This operation has `O(log(n))` complexity.
+         */
+        indexOf(offset: number): number;
+        /**
+         * Find the offset position of the section at the given index.
+         *
+         * @param index - The index of the section of interest. If this value
+         *   is negative, it is taken as an offset from the end of the list.
+         *
+         * @returns The offset position of the section at the given index, or
+         *   `-1` if the index is out of range.
+         *
+         * #### Notes
+         * This operation has `O(log(n))` complexity.
+         */
+        offsetOf(index: number): number;
+        /**
+         * Find the size of the section at the given index.
+         *
+         * @param index - The index of the section of interest. If this value
+         *   is negative, it is taken as an offset from the end of the list.
+         *
+         * @returns The size of the section at the given index, or `-1` if
+         *   the index is out of range.
+         *
+         * #### Notes
+         * This operation has `O(log(n))` complexity.
+         */
+        sizeOf(index: number): number;
+        /**
+         * Insert new sections into the list.
+         *
+         * @param index - The index at which to insert the first section. If
+         *   this value is negative, it is taken as an offset from the end of
+         *   the list. The value is clamped to the range `[0, list.count]`.
+         *
+         * @param count - The number of sections to insert. If this value is
+         *   `<= 0`, this method is a no-op.
+         *
+         * @param size - The size of each section. This value is clamped to
+         *   the range `[0, Infinity]`.
+         *
+         * #### Notes
+         * This operation has `O(log(n))` complexity.
+         */
+        insert(index: number, count: number, size: number): void;
+        /**
+         * Remove existing sections from the list.
+         *
+         * @param index - The index of the first section to remove. If this
+         *   value is negative, it is taken as an offset from the end of the
+         *   list.
+         *
+         * @param count - The number of sections to remove. If this value is
+         *   `<= 0`, this method is a no-op. If any of the sections are out
+         *   of range, they will be ignored.
+         *
+         * #### Notes
+         * This operation has `O(log(n))` complexity.
+         */
+        remove(index: number, count: number): void;
+        /**
+         * Resize existing sections in the list.
+         *
+         * @param index - The index of the first section to resize. If this
+         *   value is negative, it is taken as an offset from the end of the
+         *   list.
+         *
+         * @param count - The number of sections to resize. If this value is
+         *   `<= 0`, this method is a no-op. If any of the sections are out
+         *   of range, they will be ignored.
+         *
+         * @param size - The new size of each section. This value is clamped
+         *   to the range `[0, Infinity]`.
+         */
+        resize(index: number, count: number, size: number): void;
+        private _root;
     }
 }
 
@@ -1299,117 +1470,179 @@ declare module phosphor.core {
      * ```typescript
      * class SomeClass {
      *
-     *   static valueChanged = new Signal<SomeClass, number>();
+     *   @signal
+     *   valueChanged: ISignal<number>;
      *
-     *   // ...
      * }
      * ```
      */
-    class Signal<T, U> {
-        private _signalStructuralPropertyT;
-        private _signalStructuralPropertyU;
+    interface ISignal<T> {
+        /**
+         * Connect a callback to the signal.
+         *
+         * @param callback - The function to invoke when the signal is
+         *   emitted. The args object emitted with the signal is passed
+         *   as the first and only argument to the function.
+         *
+         * @param thisArg - The object to use as the `this` context in the
+         *   callback. If provided, this must be a non-primitive object.
+         *
+         * @returns `true` if the connection succeeds, `false` otherwise.
+         *
+         * #### Notes
+         * Connected callbacks are invoked synchronously, in the order in
+         * which they are connected.
+         *
+         * Signal connections are unique. If a connection already exists for
+         * the given `callback` and `thisArg`, this function returns `false`.
+         *
+         * A newly connected callback will not be invoked until the next time
+         * the signal is emitted, even if it is connected while the signal is
+         * being emitted.
+         *
+         * #### Example
+         * ```typescript
+         * // connect a method
+         * someObject.valueChanged.connect(myObject.onValueChanged, myObject);
+         *
+         * // connect a plain function
+         * someObject.valueChanged.connect(myCallback);
+         * ```
+         */
+        connect(callback: (args: T) => void, thisArg?: any): boolean;
+        /**
+         * Disconnect a callback from the signal.
+         *
+         * @param callback - The callback connected to the signal.
+         *
+         * @param thisArg - The `this` context for the callback.
+         *
+         * @returns `true` if the connection is broken, `false` otherwise.
+         *
+         * #### Notes
+         * A disconnected callback will no longer be invoked, even if it
+         * is disconnected while the signal is being emitted.
+         *
+         * If no connection exists for the given `callback` and `thisArg`,
+         * this function returns `false`.
+         *
+         * #### Example
+         * ```typescript
+         * // disconnect a method
+         * someObject.valueChanged.disconnect(myObject.onValueChanged, myObject);
+         *
+         * // disconnect a plain function
+         * someObject.valueChanged.disconnect(myCallback);
+         * ```
+         */
+        disconnect(callback: (args: T) => void, thisArg?: any): boolean;
+        /**
+         * Emit the signal and invoke the connected callbacks.
+         *
+         * @param args - The args object to pass to the callbacks.
+         *
+         * #### Notes
+         * If a connected callback throws an exception, dispatching of the
+         * signal will terminate immediately and the exception will be
+         * propagated to the call site of this function.
+         *
+         * #### Example
+         * ```typescript
+         * someObject.valueChanged.emit(42);
+         * ```
+         */
+        emit(args: T): void;
     }
     /**
-     * Connect the signal of a sender to the method of a receiver.
+     * A decorator which defines a signal for an object.
      *
-     * @param sender - The object which will emit the signal. This will
-     *   be passed as the first argument to the receiver method when the
-     *   signal is emitted. This must be a non-primitive object.
+     * @param obj - The object on which to define the signal.
      *
-     * @param signal - The signal which will be emitted by the sender.
-     *
-     * @param receiver - The object to connect to the signal. This will
-     *   become the `this` context in the receiver method. This must be
-     *   a non-primitive object.
-     *
-     * @param method - The receiver method to invoke when the signal is
-     *   emitted. The sender is passed as the first argument followed by
-     *   the args object emitted with the signal.
-     *
-     * @returns `true` if the connection succeeds, `false` otherwise.
+     * @param name - The name of the signal to define.
      *
      * #### Notes
-     * Receiver methods are invoked synchronously, in the order in which
-     * they are connected.
-     *
-     * Signal connections are unique. If a connection already exists for
-     * the given combination of arguments, this function is a no-op.
-     *
-     * A newly connected receiver method will not be invoked until the next
-     * emission of the signal, even if it is connected during an emission.
+     * This function can also be used as a non-decorator by invoking it
+     * directly on the target object.
      *
      * #### Example
      * ```typescript
-     * connect(someObject, SomeClass.valueChanged, myObject, myObject.onValueChanged);
+     * class SomeClass {
+     *
+     *   @signal
+     *   valueChanged: ISignal<number>;
+     *
+     * }
+     *
+     * // define a signal directly on a prototype
+     * signal(SomeClass.prototype, 'valueChanged');
+     *
+     * // define a signal directly on an object
+     * signal(someObject, 'someSignal');
      * ```
      */
-    function connect<T, U>(sender: T, signal: Signal<T, U>, receiver: any, method: (sender: T, args: U) => void): boolean;
+    function signal(obj: any, name: string): void;
     /**
-     * Disconnect the signal of a sender from the method of a receiver.
-     *
-     * @param sender - The object which emits the signal.
-     *
-     * @param signal - The signal emitted by the sender.
-     *
-     * @param receiver - The object connected to the signal.
-     *
-     * @param method - The receiver method connected to the signal.
-     *
-     * @returns `true` if the connection is broken, `false` otherwise.
+     * Get the object which is emitting the curent signal.
      *
      * #### Notes
-     * Any argument to this function may be null, and it will be treated
-     * as a wildcard when matching the connection. However, `sender` and
-     * `receiver` cannot both be null; one or both must be provided.
-     *
-     * A disconnected receiver method will no longer be invoked, even if
-     * it is disconnected during signal emission.
-     *
-     * If no connection exists for the given combination of arguments,
-     * this function is a no-op.
+     * If a signal is not currently being emitted, this returns `null`.
      *
      * #### Example
      * ```typescript
-     * // disconnect a specific signal from a specific handler
-     * disconnect(someObject, SomeClass.valueChanged, myObject, myObject.onValueChanged);
+     * someObject.valueChanged.connect(myCallback);
      *
-     * // disconnect all receivers from a specific sender
-     * disconnect(someObject, null, null, null);
+     * someObject.valueChanged.emit(42);
      *
-     * // disconnect all receivers from a specific signal
-     * disconnect(someObject, SomeClass.valueChanged, null, null);
-     *
-     * // disconnect a specific receiver from all senders
-     * disconnect(null, null, myObject, null);
-     *
-     * // disconnect a specific handler from all senders
-     * disconnect(null, null, myObject, myObject.onValueChanged);
+     * function myCallback(value: number): void {
+     *   console.log(sender() === someObject); // true
+     * }
      * ```
      */
-    function disconnect<T, U>(sender: T, signal: Signal<T, U>, receiver: any, method: (sender: T, args: U) => void): boolean;
+    function sender(): any;
     /**
-     * Emit the signal of a sender and invoke the connected receivers.
+     * Remove all signal connections where the given object is the sender.
      *
-     * @param sender - The object which is emitting the signal. This will
-     *   be passed as the first argument to all connected receivers. This
-     *   must be a non-primitive object.
-     *
-     * @param signal - The signal to be emitted by the sender.
-     *
-     * @param args - The args object for the signal. This will be passed
-     *   as the second argument to all connected receivers.
-     *
-     * #### Notes
-     * If a receiver throws an exception, dispatching of the signal will
-     * terminate immediately and the exception will be propagated to the
-     * call site of this function.
+     * @param obj - The sender object of interest.
      *
      * #### Example
      * ```typescript
-     * emit(someObject, SomeClass.valueChanged, 42);
+     * disconnectSender(someObject);
      * ```
      */
-    function emit<T, U>(sender: T, signal: Signal<T, U>, args: U): void;
+    function disconnectSender(obj: any): void;
+    /**
+     * Remove all signal connections where the given object is the receiver.
+     *
+     * @param obj - The receiver object of interest.
+     *
+     * #### Notes
+     * If a `thisArg` is provided when connecting a signal, that object
+     * is considered the receiver. Otherwise, the `callback` is used as
+     * the receiver.
+     *
+     * #### Example
+     * ```typescript
+     * // disconnect a regular object receiver
+     * disconnectReceiver(myObject);
+     *
+     * // disconnect a plain callback receiver
+     * disconnectReceiver(myCallback);
+     * ```
+     */
+    function disconnectReceiver(obj: any): void;
+    /**
+     * Clear all signal data associated with the given object.
+     *
+     * #### Notes
+     * This removes all signal connections where the object is used as
+     * either the sender or the receiver.
+     *
+     * #### Example
+     * ```typescript
+     * clearSignalData(someObject);
+     * ```
+     */
+    function clearSignalData(obj: any): void;
 }
 
 declare module phosphor.di {
@@ -2477,15 +2710,15 @@ declare module phosphor.widgets {
         /**
          * Align with the horizontal and vertical center.
          */
-        Center,
+        Center = 68,
         /**
          * A mask of horizontal alignment values.
          */
-        Horizontal_Mask,
+        Horizontal_Mask = 7,
         /**
          * A mask of vertical alignment values.
          */
-        Vertical_Mask,
+        Vertical_Mask = 112,
     }
 }
 
@@ -2772,34 +3005,34 @@ declare module phosphor.widgets {
          * A policy indicating that the `sizeHint` is a minimum, but the
          * widget can be expanded if needed and still be useful.
          */
-        Minimum,
+        Minimum = 1,
         /**
          * A policy indicating that the `sizeHint` is a maximum, but the
          * widget can be shrunk if needed and still be useful.
          */
-        Maximum,
+        Maximum = 2,
         /**
          * A policy indicating that the `sizeHint` is preferred, but the
          * widget can grow or shrink if needed and still be useful.
          *
          * This is the default size policy.
          */
-        Preferred,
+        Preferred = 3,
         /**
          * A policy indicating that `sizeHint` is reasonable, but the widget
          * can shrink if needed and still be useful. It can also make use of
          * extra space and should expand as much as possible.
          */
-        Expanding,
+        Expanding = 7,
         /**
          * A policy indicating that `sizeHint` is a minimum. The widget can
          * make use of extra space and should expand as much as possible.
          */
-        MinimumExpanding,
+        MinimumExpanding = 5,
         /**
          * A policy indicating the `sizeHint` is ignored.
          */
-        Ignored,
+        Ignored = 11,
     }
 }
 
@@ -3554,7 +3787,7 @@ declare module phosphor.widgets {
 }
 
 declare module phosphor.widgets {
-    import Signal = core.Signal;
+    import ISignal = core.ISignal;
     import Pair = utility.Pair;
     import Size = utility.Size;
     /**
@@ -3573,7 +3806,7 @@ declare module phosphor.widgets {
         /**
          * A signal emitted when a widget is removed from the layout.
          */
-        static widgetRemoved: Signal<StackedLayout, Pair<number, Widget>>;
+        widgetRemoved: ISignal<Pair<number, Widget>>;
         /**
          * Construct a new stack layout.
          */
@@ -3671,8 +3904,8 @@ declare module phosphor.widgets {
     import Queue = collections.Queue;
     import IMessage = core.IMessage;
     import IMessageHandler = core.IMessageHandler;
+    import ISignal = core.ISignal;
     import NodeBase = core.NodeBase;
-    import Signal = core.Signal;
     import IBoxSizing = utility.IBoxSizing;
     import Size = utility.Size;
     /**
@@ -3691,7 +3924,7 @@ declare module phosphor.widgets {
         /**
          * A signal emitted when the widget is disposed.
          */
-        static disposed: Signal<Widget, void>;
+        disposed: ISignal<void>;
         /**
          * Construct a new widget.
          */
@@ -4301,7 +4534,7 @@ declare module phosphor.widgets {
 }
 
 declare module phosphor.widgets {
-    import Signal = core.Signal;
+    import ISignal = core.ISignal;
     import Pair = utility.Pair;
     /**
      * A panel where only one child widget is visible at a time.
@@ -4310,7 +4543,7 @@ declare module phosphor.widgets {
         /**
          * A signal emitted when a widget is removed from the panel.
          */
-        static widgetRemoved: Signal<StackedPanel, Pair<number, Widget>>;
+        widgetRemoved: ISignal<Pair<number, Widget>>;
         /**
          * Construct a new stacked panel.
          */
@@ -4358,7 +4591,7 @@ declare module phosphor.widgets {
         /**
          * Handle the `widgetRemoved` signal for the stacked layout.
          */
-        private _p_widgetRemoved(sender, args);
+        private _p_widgetRemoved(args);
     }
 }
 
@@ -4499,19 +4732,19 @@ declare module phosphor.widgets {
         /**
          * Handle the `currentChanged` signal from a tab bar.
          */
-        private _p_currentChanged(sender, args);
+        private _p_currentChanged(args);
         /**
          * Handle the `tabCloseRequested` signal from a tab bar.
          */
-        private _p_tabCloseRequested(sender, args);
+        private _p_tabCloseRequested(args);
         /**
          * Handle the `tabDetachRequested` signal from the tab bar.
          */
-        private _p_tabDetachRequested(sender, args);
+        private _p_tabDetachRequested(args);
         /**
          * Handle the `widgetRemoved` signal from a stack widget.
          */
-        private _p_widgetRemoved(sender, args);
+        private _p_widgetRemoved(args);
         private _handleSize;
         private _tabWidth;
         private _tabOverlap;
@@ -4524,7 +4757,7 @@ declare module phosphor.widgets {
 }
 
 declare module phosphor.widgets {
-    import Signal = core.Signal;
+    import ISignal = core.ISignal;
     /**
      * An options object for initializing a menu item.
      */
@@ -4573,15 +4806,15 @@ declare module phosphor.widgets {
         /**
          * A signal emitted when the state of the menu item is changed.
          */
-        static changed: Signal<MenuItem, void>;
+        changed: ISignal<void>;
         /**
          * A signal emitted when a `check` type menu item is toggled.
          */
-        static toggled: Signal<MenuItem, boolean>;
+        toggled: ISignal<boolean>;
         /**
          * A signal emitted when the menu item is triggered.
          */
-        static triggered: Signal<MenuItem, boolean>;
+        triggered: ISignal<boolean>;
         /**
          * Construct a new menu item.
          */
@@ -4674,8 +4907,8 @@ declare module phosphor.widgets {
 }
 
 declare module phosphor.widgets {
+    import ISignal = core.ISignal;
     import NodeBase = core.NodeBase;
-    import Signal = core.Signal;
     /**
      * An object which displays menu items as a popup menu.
      */
@@ -4695,7 +4928,7 @@ declare module phosphor.widgets {
         /**
          * A signal emitted when the menu is closed.
          */
-        static closed: Signal<Menu, void>;
+        closed: ISignal<void>;
         /**
          * Construct a new menu.
          */
@@ -4983,7 +5216,7 @@ declare module phosphor.widgets {
         /**
          * Handle the `changed` signal from a menu item.
          */
-        private _p_changed(sender);
+        private _p_changed();
         private _openTimer;
         private _closeTimer;
         private _activeIndex;
@@ -5212,11 +5445,11 @@ declare module phosphor.widgets {
         /**
          * Handle the `closed` signal from the child menu.
          */
-        private _p_closed(sender);
+        private _p_closed();
         /**
          * Handle the `changed` signal from a menu item.
          */
-        private _p_changed(sender);
+        private _p_changed();
         private _activeIndex;
         private _childMenu;
         private _items;
@@ -5289,7 +5522,7 @@ declare module phosphor.widgets {
 
 declare module phosphor.widgets {
     import IMessage = core.IMessage;
-    import Signal = core.Signal;
+    import ISignal = core.ISignal;
     import Size = utility.Size;
     /**
      * A widget which provides a horizontal or vertical scroll bar.
@@ -5307,7 +5540,7 @@ declare module phosphor.widgets {
          * #### Notes
          * This signal is not emitted when `value` is changed from code.
          */
-        static sliderMoved: Signal<ScrollBar, number>;
+        sliderMoved: ISignal<number>;
         /**
          * Construct a new scroll bar.
          *
@@ -5460,7 +5693,7 @@ declare module phosphor.widgets {
 
 declare module phosphor.widgets {
     import IMessage = core.IMessage;
-    import Signal = core.Signal;
+    import ISignal = core.ISignal;
     import Pair = utility.Pair;
     import Size = utility.Size;
     /**
@@ -5523,19 +5756,19 @@ declare module phosphor.widgets {
         /**
          * A signal emitted when a tab is moved.
          */
-        static tabMoved: Signal<TabBar, Pair<number, number>>;
+        tabMoved: ISignal<Pair<number, number>>;
         /**
          * A signal emitted when the currently selected tab is changed.
          */
-        static currentChanged: Signal<TabBar, Pair<number, Tab>>;
+        currentChanged: ISignal<Pair<number, Tab>>;
         /**
          * A signal emitted when the user clicks a tab close icon.
          */
-        static tabCloseRequested: Signal<TabBar, Pair<number, Tab>>;
+        tabCloseRequested: ISignal<Pair<number, Tab>>;
         /**
          * A signal emitted when a tab is dragged beyond the detach threshold.
          */
-        static tabDetachRequested: Signal<TabBar, ITabDetachArgs>;
+        tabDetachRequested: ISignal<ITabDetachArgs>;
         /**
          * Construct a new tab bar.
          */
@@ -5785,7 +6018,7 @@ declare module phosphor.widgets {
 }
 
 declare module phosphor.widgets {
-    import Signal = core.Signal;
+    import ISignal = core.ISignal;
     import Pair = utility.Pair;
     /**
      * A widget which can be added to a TabPanel.
@@ -5807,7 +6040,7 @@ declare module phosphor.widgets {
         /**
          * A signal emitted when the current widget is changed.
          */
-        static currentChanged: Signal<TabPanel, Pair<number, Widget>>;
+        currentChanged: ISignal<Pair<number, Widget>>;
         /**
          * Construct a new tab panel.
          */
@@ -5880,19 +6113,19 @@ declare module phosphor.widgets {
         /**
          * Handle the `tabMoved` signal from the tab bar.
          */
-        private _p_tabMoved(sender, args);
+        private _p_tabMoved(args);
         /**
          * Handle the `currentChanged` signal from the tab bar.
          */
-        private _p_currentChanged(sender, args);
+        private _p_currentChanged(args);
         /**
          * Handle the `tabCloseRequested` signal from the tab bar.
          */
-        private _p_tabCloseRequested(sender, args);
+        private _p_tabCloseRequested(args);
         /**
          * Handle the `widgetRemoved` signal from the stacked panel.
          */
-        private _p_widgetRemoved(sender, args);
+        private _p_widgetRemoved(args);
         private _tabBar;
         private _stackedPanel;
     }
