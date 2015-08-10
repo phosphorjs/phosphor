@@ -213,6 +213,7 @@ gulp.task('docs', function() {
       name: 'Phosphor',
       target: 'ES5',
       mode: 'file',
+      experimentalDecorators: true,
       includeDeclarations: false }));
 });
 
