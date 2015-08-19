@@ -151,7 +151,7 @@ class SplitLayout extends Layout {
       growSizer(sizers, sizers.length - (index + 2), -delta);
       sizers.reverse();
     }
-    this.refresh();
+    requestAnimationFrame(() => this.refresh());
   }
 
   /**
