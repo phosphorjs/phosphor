@@ -1,4 +1,4 @@
 Phosphor
 ========
 
-The Phosphor libary.
+The PhosphorJS libary.

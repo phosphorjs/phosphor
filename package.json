@@ -1,7 +1,7 @@
 {
   "name": "phosphor",
   "version": "0.4.0",
-  "description": "The Phosphor libary.",
+  "description": "The PhosphorJS libary.",
   "dependencies": {},
   "devDependencies": {
     "coveralls": "^2.11.9",
@@ -30,12 +30,8 @@
     "build:src": "tsc --project src",
     "build:test": "tsc --project test/src",
     "build": "npm run build:src && npm run build:test",
-    "test:chrome": "echo 'no tests defined'",
-    "test:coverage": "echo 'no tests defined'",
-    "test:firefox": "echo 'no tests defined'",
-    "test:ie": "echo 'no tests defined'",
-    "test:debug": "echo 'no tests defined'",
-    "test": "echo 'no tests defined'",
+    "test": "mocha test/build/**/*.spec.js",
+    "test:coverage": "istanbul cover --dir test/coverage node_modules/mocha/bin/_mocha -- test/build/**/*.spec.js",
     "prepublish": "npm run build"
   },
   "repository": {
