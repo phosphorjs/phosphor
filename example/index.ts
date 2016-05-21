@@ -166,21 +166,21 @@ function main(): void {
   let commands = new CommandRegistry();
 
   commands.add('example:cut', {
-    text: 'Cut',
+    label: 'Cut',
     execute: () => {
       console.log('Cut');
     }
   });
 
   commands.add('example:copy', {
-    text: 'Copy',
+    label: 'Copy',
     execute: () => {
       console.log('Copy');
     }
   });
 
   commands.add('example:paste', {
-    text: 'Paste',
+    label: 'Paste',
     execute: () => {
       console.log('Paste');
     }
