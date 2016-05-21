@@ -6,6 +6,14 @@
 | The full license is in the file LICENSE, distributed with this software.
 |----------------------------------------------------------------------------*/
 import {
+  CommandRegistry
+} from '../lib/ui/command';
+
+import {
+  IKeyBinding, Keymap
+} from '../lib/ui/keymap';
+
+import {
   Menu, MenuItem
 } from '../lib/ui/menu';
 
@@ -123,6 +131,28 @@ const MENU_TEMPLATE: Menu.Template = [
 ];
 
 
+const KEY_BINDINGS: IKeyBinding[] = [
+  {
+    keys: 'Accel+X',
+    selector: 'body',
+    command: 'example:cut',
+    args: null
+  },
+  {
+    keys: 'Accel+C',
+    selector: 'body',
+    command: 'example:copy',
+    args: null
+  },
+  {
+    keys: 'Accel+V',
+    selector: 'body',
+    command: 'example:paste',
+    args: null
+  }
+];
+
+
 function onTriggered(sender: MenuBar | Menu, item: MenuItem): void {
   if (item.command === 'save-on-exit') {
     item.checked = !item.checked;
@@ -132,6 +162,32 @@ function onTriggered(sender: MenuBar | Menu, item: MenuItem): void {
 
 
 function main(): void {
+
+  let commands = new CommandRegistry();
+
+  commands.add('example:cut', {
+    label: 'Cut',
+    execute: () => {
+      console.log('Cut');
+    }
+  });
+
+  commands.add('example:copy', {
+    label: 'Copy',
+    execute: () => {
+      console.log('Copy');
+    }
+  });
+
+  commands.add('example:paste', {
+    label: 'Paste',
+    execute: () => {
+      console.log('Paste');
+    }
+  });
+
+  let keymap = new Keymap(commands);
+  keymap.add(KEY_BINDINGS);
 
   let menu1 = Menu.fromTemplate(MENU_TEMPLATE);
   menu1.title.text = 'File';
@@ -159,18 +215,7 @@ function main(): void {
   });
 
   document.addEventListener('keydown', (event: KeyboardEvent) => {
-    if (event.keyCode === 18) { // Alt
-      if (bar.childMenu) {
-        bar.childMenu.close();
-      } else if (bar.activeIndex >= 0) {
-        bar.activeIndex = -1;
-        bar.blur();
-      } else {
-        bar.activeIndex = 0;
-        bar.focus();
-      }
-      event.preventDefault();
-    }
+    keymap.processKeydownEvent(event);
   });
 
   Widget.attach(bar, document.body);

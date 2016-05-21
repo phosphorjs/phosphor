@@ -75,15 +75,15 @@ interface ICommand {
   execute: ExecFunc;
 
   /**
-   * The display text for the command.
+   * The display label for the command.
    *
    * #### Notes
    * This can be a string literal, or a function which returns the
-   * text based on the provided command arguments.
+   * label based on the provided command arguments.
    *
    * The default value is an empty string.
    */
-  text?: string | StringFunc;
+  label?: string | StringFunc;
 
   /**
    * The icon class for the command.
@@ -345,20 +345,20 @@ class CommandRegistry {
   }
 
   /**
-   * Get the display text for a specific command.
+   * Get the display label for a specific command.
    *
    * @param id - The id of the command of interest.
    *
    * @param args - The arguments for the command.
    *
-   * @returns The display text for the command.
+   * @returns The display label for the command.
    *
    * #### Notes
    * Returns an empty string if the command is not registered.
    */
-  text(id: string, args: any): string {
+  label(id: string, args: any): string {
     let cmd = this._commands[id];
-    return cmd ? cmd.text.call(void 0, args) : '';
+    return cmd ? cmd.label.call(void 0, args) : '';
   }
 
   /**
@@ -518,6 +518,7 @@ class CommandRegistry {
       return Promise.reject(`Command '${id}' not registered.`);
     }
 
+    // TODO - really want this check?
     // Reject if the command is not enabled.
     if (!cmd.isEnabled.call(void 0, args)) {
       return Promise.reject(`Command '${id}' not enabled.`);
@@ -609,7 +610,7 @@ namespace Private {
   export
   interface INormalizedCommand {
     execute: ExecFunc;
-    text: StringFunc;
+    label: StringFunc;
     icon: StringFunc;
     caption: StringFunc;
     description: StringFunc;
@@ -641,7 +642,7 @@ namespace Private {
   function normalizeCommand(cmd: ICommand): INormalizedCommand {
     return {
       execute: cmd.execute,
-      text: asStringFunc(cmd.text),
+      label: asStringFunc(cmd.label),
       icon: asStringFunc(cmd.icon),
       caption: asStringFunc(cmd.caption),
       description: asStringFunc(cmd.description),
@@ -671,13 +672,13 @@ namespace Private {
   /**
    * Coerce an optional string or string func to a string func.
    */
-  function asStringFunc(text?: string | StringFunc): StringFunc {
-    if (text === void 0) {
+  function asStringFunc(value?: string | StringFunc): StringFunc {
+    if (value === void 0) {
       return emptyStringFunc;
     }
-    if (typeof text === 'function') {
-      return text;
+    if (typeof value === 'function') {
+      return value;
     }
-    return (args: any) => text as string;
+    return (args: any) => value as string;
   }
 }
