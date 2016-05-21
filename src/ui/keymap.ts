@@ -251,7 +251,7 @@ class Keymap {
     // can be dispatched immediately. The pending state is cleared so
     // the next key press starts from the default state.
     if (!partial) {
-      this._invokeBinding(exact);
+      this._executeBinding(exact);
       this._clearPendingState();
       return;
     }
@@ -317,7 +317,7 @@ class Keymap {
   private _onPendingTimeout(): void {
     this._timerID = 0;
     if (this._exact) {
-      this._invokeBinding(this._exact);
+      this._executeBinding(this._exact);
     } else {
       this._replayEvents();
     }
@@ -325,16 +325,17 @@ class Keymap {
   }
 
   /**
-   * Invoke the given key binding.
+   * Execute the command for given key binding.
    *
    * If the command is disabled, this is a no-op.
    */
-  private _invokeBinding(binding: IKeyBinding): void {
-    // TODO - If this is invoked on a timeout, the command *may* have
-    // been disabled in the meantime, which will cause the promise to
-    // have an unhandled rejection. This will be rare, but letting
-    // the promise error propagate will make it easier to debug.
-    this._commands.execute(binding.command, binding.args);
+  private _executeBinding(binding: IKeyBinding): void {
+    let { command, args } = binding;
+    if (this._commands.isEnabled(command, args)) {
+      this._commands.execute(command, args);
+    } else {
+      // TODO - notify if the command is disabled?
+    }
   }
 
   private _keys = '';
