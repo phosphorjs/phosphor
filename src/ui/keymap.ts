@@ -590,16 +590,16 @@ namespace Private {
       let binding = bindings[i];
 
       // Check whether the key binding sequence is a match.
-      let match = matchSequence(binding.keys, keys);
+      let sqm = matchSequence(binding.keys, keys);
 
       // If there is no match, the binding is ignored.
-      if (match === SequenceMatch.None) {
+      if (sqm === SequenceMatch.None) {
         continue;
       }
 
       // If it is a partial match and no other partial match has been
       // found, ensure the selector matches and set the partial flag.
-      if (match === SequenceMatch.Partial) {
+      if (sqm === SequenceMatch.Partial) {
         if (!partial && targetDistance(binding.selector, event) !== -1) {
           partial = true;
         }
