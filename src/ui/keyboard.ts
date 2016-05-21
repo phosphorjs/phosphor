@@ -52,152 +52,6 @@ interface IKeyboardLayout {
 
 
 /**
- * Create a normalized keystroke for a `'keydown'` event.
- *
- * @param event - The event object for a `'keydown'` event.
- *
- * @param layout - The keyboard layout for computing the keycap.
- *
- * @returns A normalized keystroke, or an empty string if the event
- *   does not represent a valid shortcut keystroke.
- */
-export
-function keystrokeForKeydownEvent(event: KeyboardEvent, layout: IKeyboardLayout): string {
-  let keycap = layout.keycapForKeydownEvent(event);
-  if (!keycap) {
-    return '';
-  }
-  let mods = '';
-  if (event.metaKey && Private.IS_MAC) {
-    mods += 'Cmd ';
-  }
-  if (event.ctrlKey) {
-    mods += 'Ctrl ';
-  }
-  if (event.altKey) {
-    mods += 'Alt ';
-  }
-  if (event.shiftKey) {
-    mods += 'Shift ';
-  }
-  return mods + keycap;
-}
-
-
-/**
- * Normalize and validate a keystroke.
- *
- * @param keystroke - The keystroke to normalize.
- *
- * @param layout - The keyboard layout for validating the keycap.
- *
- * @returns The normalized keystroke.
- *
- * @throws An error if the keystroke is invalid.
- *
- * #### Notes
- * The keystroke must adhere to the format:
- *
- *   `[<modifier 1> [<modifier 2> [<modifier N]]] <primary key>`
- *
- * The supported modifiers are: `Accel`, `Alt`, `Cmd`, `Ctrl`, and
- * `Shift`. The `Accel` modifier is translated to `Cmd` on Mac and
- * `Ctrl` on all other platforms.
- *
- * The keystroke must conform to the following:
- *   - Modifiers and the primary key are case senstive.
- *   - The primary key must be a valid key for the layout.
- *   - Whitespace is used to separate modifiers and primary key.
- *   - Modifiers may appear in any order before the primary key.
- *   - Modifiers cannot appear in duplicate.
- *   - The `Cmd` modifier is only valid on Mac.
- *
- * If a keystroke is nonconforming, an error will be thrown.
- */
-export
-function normalizeKeystroke(keystroke: string, layout: IKeyboardLayout): string {
-  let keycap = '';
-  let alt = false;
-  let cmd = false;
-  let ctrl = false;
-  let shift = false;
-  for (let token of keystroke.trim().split(/\s+/)) {
-    if (token === 'Accel') {
-      token = Private.IS_MAC ? 'Cmd' : 'Ctrl';
-    }
-    if (token === 'Alt') {
-      if (alt) {
-        Private.throwError(keystroke, '`Alt` appears in duplicate');
-      }
-      if (keycap) {
-        Private.throwError(keystroke, '`Alt` follows primary key');
-      }
-      alt = true;
-    } else if (token === 'Cmd') {
-      if (cmd) {
-        Private.throwError(keystroke, '`Cmd` appears in duplicate');
-      }
-      if (keycap) {
-        Private.throwError(keystroke, '`Cmd` follows primary key');
-      }
-      if (!Private.IS_MAC) {
-        Private.throwError(keystroke, '`Cmd` used on non-Mac platform');
-      }
-      cmd = true;
-    } else if (token === 'Ctrl') {
-      if (ctrl) {
-        Private.throwError(keystroke, '`Ctrl` appears in duplicate');
-      }
-      if (keycap) {
-        Private.throwError(keystroke, '`Ctrl` follows primary key');
-      }
-      ctrl = true;
-    } else if (token === 'Shift') {
-      if (shift) {
-        Private.throwError(keystroke, '`Shift` appears in duplicate');
-      }
-      if (keycap) {
-        Private.throwError(keystroke, '`Shift` follows primary key');
-      }
-      shift = true;
-    } else {
-      if (keycap) {
-        Private.throwError(keystroke, 'primary key appears in duplicate');
-      }
-      if (!layout.isValidKeycap(token)) {
-        Private.throwError(keystroke, 'primary key invalid for layout');
-      }
-      keycap = token;
-    }
-  }
-  if (!keycap) {
-    Private.throwError(keystroke, 'primary key not specified');
-  }
-  let mods = '';
-  if (cmd) {
-    mods += 'Cmd ';
-  }
-  if (ctrl) {
-    mods += 'Ctrl ';
-  }
-  if (alt) {
-    mods += 'Alt ';
-  }
-  if (shift) {
-    mods += 'Shift ';
-  }
-  return mods + keycap;
-}
-
-
-/**
- * A type alias for a keycode map.
- */
-export
-type CodeMap = { [code: number]: string };
-
-
-/**
  * A concrete implementation of [[IKeyboardLayout]] based on keycodes.
  *
  * The `.keyCode` property of a `'keydown'` event is a browser and OS
@@ -205,8 +59,8 @@ type CodeMap = { [code: number]: string };
  * was pressed on a keyboard. While not the most convenient API, it
  * is currently the only one which works reliably on all browsers.
  *
- * This class accepts a user-defined mapping of keycodes to keycaps
- * (the letter(s) printed on a physical keyboard key) which allows
+ * This class accepts a user-defined mapping of keycode to keycap
+ * (the letter printed on the physical keyboard key) which allows
  * for reliable keyboard shortcuts tailored to the user's system.
  */
 export
@@ -218,21 +72,24 @@ class KeycodeLayout implements IKeyboardLayout {
    *
    * @param codes - A mapping of keycode to keycap value.
    */
-  constructor(name: string, codes: CodeMap) {
+  constructor(name: string, codes: KeycodeLayout.CodeMap) {
     this._name = name;
     this._codes = codes;
-    this._keys = Private.extractKeys(codes);
+    this._keys = KeycodeLayout.extractKeys(codes);
   }
 
   /**
-   * The human readable read-only name of the layout.
+   * The human readable name of the layout.
+   *
+   * #### Notes
+   * This is a read-only property.
    */
   get name(): string {
     return this._name;
   }
 
   /**
-   * Get an array of all keycap values supported by the layout.
+   * Get an array of the keycap values supported by the layout.
    *
    * @returns A new array of the supported keycap values.
    */
@@ -264,8 +121,43 @@ class KeycodeLayout implements IKeyboardLayout {
   }
 
   private _name: string;
-  private _codes: CodeMap;
-  private _keys: Private.KeySet;
+  private _keys: KeycodeLayout.KeySet;
+  private _codes: KeycodeLayout.CodeMap;
+}
+
+
+/**
+ * The namespace for the `KeycodeLayout` class statics.
+ */
+export
+namespace KeycodeLayout {
+  /**
+   * A type alias for a keycode map.
+   */
+  export
+  type CodeMap = { [code: number]: string };
+
+  /**
+   * A type alias for a key set.
+   */
+  export
+  type KeySet = { [key: string]: boolean };
+
+  /**
+   * Extract the key set from a code map.
+   *
+   * @param code - The code map of interest.
+   *
+   * @returns A set of the key caps in the code map.
+   */
+  export
+  function extractKeys(codes: CodeMap): KeySet {
+    let keys: KeySet = Object.create(null);
+    for (let c in codes) {
+      keys[codes[c]] = true;
+    }
+    return keys;
+  }
 }
 
 
@@ -385,43 +277,5 @@ const EN_US: IKeyboardLayout = new KeycodeLayout('en-us', {
   219: '[',
   220: '\\',
   221: ']',
-  222: '\'',
+  222: '\''
 });
-
-
-/**
- * The namespace for the private module data.
- */
-namespace Private {
-  /**
-   * A flag indicating whether the platform is Mac.
-   */
-  export
-  const IS_MAC = !!navigator.platform.match(/Mac/i);
-
-  /**
-   * A type alias for a key set.
-   */
-  export
-  type KeySet = { [key: string]: boolean };
-
-  /**
-   * Throw an error with the give invalid keystroke.
-   */
-  export
-  function throwError(keystroke: string, message: string): void {
-    throw new Error(`invalid keystroke: ${keystroke} (${message})`);
-  }
-
-  /**
-   * Extract the key set from a code map.
-   */
-  export
-  function extractKeys(codes: CodeMap): KeySet {
-    let keys: KeySet = Object.create(null);
-    for (let c in codes) {
-      keys[codes[c]] = true;
-    }
-    return keys;
-  }
-}

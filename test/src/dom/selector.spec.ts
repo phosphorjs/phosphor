@@ -9,10 +9,10 @@ import expect = require('expect.js');
 
 import {
   calculateSpecificity, isValidSelector
-} from '../../../lib/dom/specificity';
+} from '../../../lib/dom/selector';
 
 
-describe('dom/specificity', () => {
+describe('dom/selector', () => {
 
   describe('calculateSpecificity()', () => {
 

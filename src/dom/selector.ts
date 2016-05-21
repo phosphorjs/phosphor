@@ -193,6 +193,6 @@ namespace Private {
     c = Math.min(c, 0xFF);
 
     // Combine the components into a single result.
-    return (a << 16) + (b << 8) + c;
+    return (a << 16) | (b << 8) | c;
   }
 }
