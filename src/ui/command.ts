@@ -518,6 +518,7 @@ class CommandRegistry {
       return Promise.reject(`Command '${id}' not registered.`);
     }
 
+    // TODO - really want this check?
     // Reject if the command is not enabled.
     if (!cmd.isEnabled.call(void 0, args)) {
       return Promise.reject(`Command '${id}' not enabled.`);
