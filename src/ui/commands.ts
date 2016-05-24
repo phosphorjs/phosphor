@@ -225,7 +225,7 @@ class CommandRegistry {
    *
    * @returns A new array of the registered command ids.
    */
-  list(): string[] {
+  listCommands(): string[] {
     return Object.keys(this._commands);
   }
 
@@ -236,7 +236,7 @@ class CommandRegistry {
    *
    * @returns `true` if the command is registered, `false` otherwise.
    */
-  has(id: string): boolean {
+  hasCommand(id: string): boolean {
     return id in this._commands;
   }
 
@@ -254,7 +254,7 @@ class CommandRegistry {
    *
    * If the command is not registered, this is a no-op.
    */
-  update(id: string): void {
+  refreshCommand(id: string): void {
     if (id in this._commands) this.commandChanged.emit(id);
   }
 
@@ -274,7 +274,7 @@ class CommandRegistry {
    * In-place changes to the given command will have no effect after
    * the command is registered.
    */
-  add(id: string, cmd: ICommand): IDisposable {
+  addCommand(id: string, cmd: ICommand): IDisposable {
     // Throw an error if the id is already registered.
     if (id in this._commands) {
       throw new Error(`Command '${id}' already registered.`);
