@@ -59,10 +59,8 @@ type BoolFunc = (args: any) => boolean;
  * registry will always invoke the command functions with a `thisArg`
  * which is `undefined`.
  *
- * The metadata functions for the command should be well behaved in the
- * presence of `null` args. Visual representations of a command registry
- * will pass `null` for args when displaying the registered commands for
- * an application.
+ * The metadata functions for the command should be well behaved in
+ * the presence of `null` args by returning a default value.
  */
 export
 interface ICommand {
@@ -70,12 +68,13 @@ interface ICommand {
    * The function to invoke when the command is executed.
    *
    * #### Notes
-   * This function will only be invoked if `isEnabled` returns `true`.
+   * This function may be invoked manually by the user even when the
+   * `isEnabled` function returns `false`.
    */
   execute: ExecFunc;
 
   /**
-   * The display label for the command.
+   * The label text for the command.
    *
    * #### Notes
    * This can be a string literal, or a function which returns the
@@ -102,12 +101,12 @@ interface ICommand {
   icon?: string | StringFunc;
 
   /**
-   * The short form caption for the command.
+   * The caption for the command.
    *
    * #### Notes
    * This should be a simple one line description of the command. It
-   * is used by some visual represenations (like the command palette)
-   * to show a short description of the command.
+   * is used by some visual representations to show quick info about
+   * the command.
    *
    * This can be a string literal, or a function which returns the
    * caption based on the provided command arguments.
@@ -117,27 +116,28 @@ interface ICommand {
   caption?: string | StringFunc;
 
   /**
-   * The long form description for the command.
+   * The usage text for the command.
    *
    * #### Notes
-   * This should be a long form description of the command, including
-   * its args spec. It is used by some visual represenations to show
-   * help text for the command.
+   * This should be a full description of the command, which includes
+   * information about the structure of the arguments and the type of
+   * the return value. It is used by some visual representations when
+   * displaying complete help info about the command.
    *
    * This can be a string literal, or a function which returns the
-   * description based on the provided command arguments.
+   * usage text based on the provided command arguments.
    *
    * The default value is an empty string.
    */
-  description?: string | StringFunc;
+  usage?: string | StringFunc;
 
   /**
    * The category name for the command.
    *
    * #### Notes
    * This is should be a generic category header name. It is used by
-   * some visual representations (like the command palette) to group
-   * multiple commands with the same category.
+   * some visual representations to group multiple commands with the
+   * same category.
    *
    * This can be a string literal, or a function which returns the
    * category based on the provided command arguments.
@@ -166,13 +166,8 @@ interface ICommand {
    * A function which indicates whether the command is enabled.
    *
    * #### Notes
-   * This `execute` function will only be invoked if this function
-   * returns `true`.
-   *
    * Visual representations may use this value to display a disabled
-   * command as grayed-out and non-interactive.
-   *
-   * This function may be called often, and so should be efficient.
+   * command as grayed-out or in some other non-interactive fashion.
    *
    * The default value is `true`.
    */
@@ -183,8 +178,8 @@ interface ICommand {
    *
    * #### Notes
    * Visual representations may use this value to display a toggled
-   * command in a different form, such as a check mark for a menu
-   * item or depressed toggle button.
+   * command in a different form, such as a check mark icon for a
+   * menu item or a depressed state for a toggle button.
    *
    * The default value is `false`.
    */
@@ -204,56 +199,12 @@ interface ICommand {
 
 
 /**
- * A disposable object which represents a registered command.
+ * A registry which holds user-defined commands.
  *
  * #### Notes
- * A command handle should be kept private to the code which registers
- * the command. It provides the only mechanism for unregistering and
- * refreshing the command.
- *
- * Objects of this type are created and returned by a command registry
- * when a command is registered. They will not be created directly by
- * user code.
- *
- * Disposing of the handle will unregister the command.
+ * A singleton instance of this class is all that is necessary for an
+ * application, and one is exported from this modules as `commands`.
  */
-export
-interface ICommandHandle extends IDisposable {
-  /**
-   * The id of the registered command.
-   *
-   * #### Notes
-   * This is a read-only property.
-   */
-  id: string;
-
-  /**
-   * The command registry which owns the command.
-   *
-   * #### Notes
-   * This is a read-only property.
-   */
-  registry: CommandRegistry;
-
-  /**
-   * Refresh the state of the command.
-   *
-   * #### Notes
-   * This should be called by the creator of the command whenever the
-   * return values of the command functions may have changed.
-   *
-   * This will cause the `commandChanged` signal of the registry to be
-   * emitted, so that the visual representation of the command can be
-   * updated to reflect the new command state.
-   */
-  refresh(): void;
-}
-
-
-/**
- * A registry which holds user-defined commands.
- */
-export
 class CommandRegistry {
   /**
    * Construct a new command registry.
@@ -287,7 +238,7 @@ class CommandRegistry {
   /**
    * List the ids of the registered commands.
    *
-   * @returns A new array of the currently registered command ids.
+   * @returns A new array of the registered command ids.
    */
   list(): string[] {
     return Object.keys(this._commands);
@@ -305,37 +256,53 @@ class CommandRegistry {
   }
 
   /**
+   * Refresh the state of a specific command.
+   *
+   * @param id - The id of the command of interest.
+   *
+   * #### Notes
+   * This method should be called by the command author whenever the
+   * application state changes such that the results of the command
+   * metadata functions may have changed.
+   *
+   * This will cause the `commandChanged` signal to be emitted.
+   *
+   * If the command is not registered, this is a no-op.
+   */
+  update(id: string): void {
+    if (id in this._commands) this.commandChanged.emit(id);
+  }
+
+  /**
    * Add a command to the registry.
    *
    * @param id - The unique id of the command.
    *
    * @param cmd - The command object to register.
    *
-   * @returns A command handle which can be used to unregister and
-   *   refresh the registered command.
+   * @returns A disposable which will unregister the command.
    *
    * @throws An error if the given `id` is already registered.
    *
    * #### Notes
-   * The given commmand object is cloned internally when added to
-   * the registry. In place changes to the given command will have
-   * no effect after the command is registered. For this reason, a
-   * command will typically be added as an inline object literal.
+   * The command object is cloned before being added to the registry.
+   * In-place changes to the given command will have no effect after
+   * the command is registered.
    */
-  add(id: string, cmd: ICommand): ICommandHandle {
+  add(id: string, cmd: ICommand): IDisposable {
     // Throw an error if the id is already registered.
     if (id in this._commands) {
       throw new Error(`Command '${id}' already registered.`);
     }
 
-    // Normalize and add the command to the registry.
+    // Normalize the command and add it to the registry.
     this._commands[id] = Private.normalizeCommand(cmd);
 
     // Emit the `commandAdded` signal.
     this.commandAdded.emit(id);
 
-    // Return a new handle for the command.
-    return new Private.CommandHandle(id, this, () => {
+    // Return a disposable which will remove the command.
+    return new DisposableDelegate(() => {
       // Remove the command from the registry.
       delete this._commands[id];
 
@@ -396,20 +363,20 @@ class CommandRegistry {
   }
 
   /**
-   * Get the long form description for a specific command.
+   * Get the usage help text for a specific command.
    *
    * @param id - The id of the command of interest.
    *
    * @param args - The arguments for the command.
    *
-   * @returns The description for the command.
+   * @returns The usage text for the command.
    *
    * #### Notes
    * Returns an empty string if the command is not registered.
    */
-  description(id: string, args: any): string {
+  usage(id: string, args: any): string {
     let cmd = this._commands[id];
-    return cmd ? cmd.description.call(void 0, args) : '';
+    return cmd ? cmd.usage.call(void 0, args) : '';
   }
 
   /**
@@ -507,29 +474,21 @@ class CommandRegistry {
    * @returns A promise which resolves to the result of the command.
    *
    * #### Notes
-   * The returned promise will reject if the command is not registered,
-   * is not enabled, throws an exception during execution, or otherwise
-   * rejects its own returned promise.
+   * The promise will reject if the command is not registered.
    */
   execute(id: string, args: any): Promise<any> {
     // Reject if the command is not registered.
     let cmd = this._commands[id];
     if (!cmd) {
-      return Promise.reject(`Command '${id}' not registered.`);
-    }
-
-    // TODO - really want this check?
-    // Reject if the command is not enabled.
-    if (!cmd.isEnabled.call(void 0, args)) {
-      return Promise.reject(`Command '${id}' not enabled.`);
+      return Promise.reject(new Error(`Command '${id}' not registered.`));
     }
 
     // Execute the command and reject if an exception is thrown.
     let result: any;
     try {
       result = cmd.execute.call(void 0, args);
-    } catch (e) {
-      result = Promise.reject(e);
+    } catch (err) {
+      result = Promise.reject(err);
     }
 
     // Return a promise which resolves to the command result.
@@ -551,60 +510,6 @@ defineSignal(CommandRegistry.prototype, 'commandChanged');
  */
 namespace Private {
   /**
-   * The concrete implementation of `ICommandHandle`.
-   */
-  export
-  class CommandHandle extends DisposableDelegate implements ICommandHandle {
-    /**
-     * Construct a new command handle.
-     *
-     * @param id - The id of the command.
-     *
-     * @param registry - The command registry which owns the command.
-     *
-     * @param callback - A dispose callback which removes the command.
-     */
-    constructor(id: string, registry: CommandRegistry, callback: () => void) {
-      super(callback);
-      this._id = id;
-      this._registry = registry;
-    }
-
-    /**
-     * Dispose of the handle and unregister the command.
-     */
-    dispose(): void {
-      this._id = '';
-      this._registry = null;
-      super.dispose();
-    }
-
-    /**
-     * The id of the registered command.
-     */
-    get id(): string {
-      return this._id;
-    }
-
-    /**
-     * The command registry which owns the command.
-     */
-    get registry(): CommandRegistry {
-      return this._registry;
-    }
-
-    /**
-     * Refresh the state of the command.
-     */
-    refresh(): void {
-      this._registry.commandChanged.emit(this._id);
-    }
-
-    private _id: string;
-    private _registry: CommandRegistry;
-  }
-
-  /**
    * A normalized command object.
    */
   export
@@ -613,7 +518,7 @@ namespace Private {
     label: StringFunc;
     icon: StringFunc;
     caption: StringFunc;
-    description: StringFunc;
+    usage: StringFunc;
     category: StringFunc;
     className: StringFunc;
     isEnabled: BoolFunc;
@@ -645,7 +550,7 @@ namespace Private {
       label: asStringFunc(cmd.label),
       icon: asStringFunc(cmd.icon),
       caption: asStringFunc(cmd.caption),
-      description: asStringFunc(cmd.description),
+      usage: asStringFunc(cmd.usage),
       category: asStringFunc(cmd.category),
       className: asStringFunc(cmd.className),
       isEnabled: cmd.isEnabled || trueFunc,
@@ -670,7 +575,7 @@ namespace Private {
   const falseFunc: BoolFunc = (args: any) => false;
 
   /**
-   * Coerce an optional string or string func to a string func.
+   * Coerce a value to a string function.
    */
   function asStringFunc(value?: string | StringFunc): StringFunc {
     if (value === void 0) {
