@@ -506,6 +506,19 @@ defineSignal(CommandRegistry.prototype, 'commandChanged');
 
 
 /**
+ * A singleton instance of a `CommandRegistry`.
+ *
+ * #### Notes
+ * This singleton instance is all that is necessary for an application.
+ * Other widgets such as `Menu` and `CommandPalette` use this registry
+ * instance as part of the application data model. User code will not
+ * typically create a new registry instance.
+ */
+export
+const commands = new CommandRegistry();
+
+
+/**
  * The namespace for the private module data.
  */
 namespace Private {
