@@ -76,9 +76,9 @@ interface IKeyBinding {
   command: string;
 
   /**
-   * The arguments for the command.
+   * The arguments for the command, if necessary.
    */
-  args: any;
+  args?: any;
 }
 
 
@@ -165,7 +165,7 @@ class KeymapManager {
         keys: KeymapManager.normalizeKeys(binding.keys),
         selector: binding.selector,
         command: binding.command,
-        args: binding.args
+        args: binding.args || null
       });
 
       // Add the binding to the internal bindings array.
