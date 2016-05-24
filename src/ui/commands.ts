@@ -132,21 +132,6 @@ interface ICommand {
   usage?: string | StringFunc;
 
   /**
-   * The category name for the command.
-   *
-   * #### Notes
-   * This is should be a generic category header name. It is used by
-   * some visual representations to group multiple commands with the
-   * same category.
-   *
-   * This can be a string literal, or a function which returns the
-   * category based on the provided command arguments.
-   *
-   * The default value is an empty string.
-   */
-  category?: string | StringFunc;
-
-  /**
    * The general class name for the command.
    *
    * #### Notes
@@ -380,23 +365,6 @@ class CommandRegistry {
   }
 
   /**
-   * Get the category name for a specific command.
-   *
-   * @param id - The id of the command of interest.
-   *
-   * @param args - The arguments for the command.
-   *
-   * @returns The category for the command.
-   *
-   * #### Notes
-   * Returns an empty string if the command is not registered.
-   */
-  category(id: string, args: any): string {
-    let cmd = this._commands[id];
-    return cmd ? cmd.category.call(void 0, args) : '';
-  }
-
-  /**
    * Get the extra class name for a specific command.
    *
    * @param id - The id of the command of interest.
@@ -510,9 +478,7 @@ defineSignal(CommandRegistry.prototype, 'commandChanged');
  *
  * #### Notes
  * This singleton instance is all that is necessary for an application.
- * Other widgets such as `Menu` and `CommandPalette` use this registry
- * instance as part of the application data model. User code will not
- * typically create a new registry instance.
+ * User code will not typically create a new registry instance.
  */
 export
 const commands = new CommandRegistry();
@@ -532,7 +498,6 @@ namespace Private {
     icon: StringFunc;
     caption: StringFunc;
     usage: StringFunc;
-    category: StringFunc;
     className: StringFunc;
     isEnabled: BoolFunc;
     isToggled: BoolFunc;
@@ -564,7 +529,6 @@ namespace Private {
       icon: asStringFunc(cmd.icon),
       caption: asStringFunc(cmd.caption),
       usage: asStringFunc(cmd.usage),
-      category: asStringFunc(cmd.category),
       className: asStringFunc(cmd.className),
       isEnabled: cmd.isEnabled || trueFunc,
       isToggled: cmd.isToggled || falseFunc,
