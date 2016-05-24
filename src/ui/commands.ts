@@ -203,7 +203,7 @@ interface ICommand {
  *
  * #### Notes
  * A singleton instance of this class is all that is necessary for an
- * application, and one is exported from this modules as `commands`.
+ * application, and one is exported from this module as `commands`.
  */
 class CommandRegistry {
   /**
