@@ -77,6 +77,8 @@ interface IKeyBinding {
 
   /**
    * The arguments for the command, if necessary.
+   *
+   * The default value is `null`.
    */
   args?: any;
 }
