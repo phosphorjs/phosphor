@@ -69,6 +69,25 @@ function isValidSelector(selector: string): boolean {
 
 
 /**
+ * Test whether an element matches a CSS selector.
+ *
+ * @param elem - The element of interest.
+ *
+ * @param selector - The valid CSS selector of interest.
+ *
+ * @returns `true` if the element is a match, `false` otherwise.
+ *
+ * #### Notes
+ * This function uses the builtin browser capabilities when possible,
+ * falling back onto a document query otherwise.
+ */
+export
+function matchesSelector(elem: Element, selector: string): boolean {
+  return Private.protoMatchFunc.call(elem, selector);
+}
+
+
+/**
  * The namespace for the private module data.
  */
 namespace Private {
@@ -129,6 +148,27 @@ namespace Private {
    */
   export
   const testElem = document.createElement('div');
+
+  /**
+   * A cross-browser CSS selector matching prototype function.
+   */
+  export
+  const protoMatchFunc: Function = (() => {
+    let proto = Element.prototype as any;
+    return (
+      proto.matches ||
+      proto.matchesSelector ||
+      proto.mozMatchesSelector ||
+      proto.msMatchesSelector ||
+      proto.oMatchesSelector ||
+      proto.webkitMatchesSelector ||
+      (function(selector: string) {
+        let elem = this as Element;
+        let matches = elem.ownerDocument.querySelectorAll(selector);
+        return Array.prototype.indexOf.call(matches, elem) !== -1;
+      })
+    );
+  })();
 
   /**
    * Calculate the specificity of a single selector.
