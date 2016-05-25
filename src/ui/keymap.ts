@@ -48,14 +48,14 @@ interface IKeyBinding {
    * and are useful for implementing modal input (ala Vim).
    *
    * Each keystroke in the sequence should be of the form:
-   *   `[<modifier 1>+[<modifier 2>+[<modifier N>+]]]<primary key>`
+   *   `[<modifier 1>-[<modifier 2>-[<modifier N>-]]]<primary key>`
    *
    * The supported modifiers are: `Accel`, `Alt`, `Cmd`, `Ctrl`, and
    * `Shift`. The `Accel` modifier is translated to `Cmd` on Mac and
    * `Ctrl` on all other platforms. The `Cmd` modifier is ignored on
    * non-Mac platforms.
    *
-   * **Examples:** `'Ctrl+C'`, `'Shift+F11'`, `'D D'`, `'Cmd+K Cmd+P'`
+   * **Examples:** `'Ctrl-C'`, `'Shift-F11'`, `'D D'`, `'Cmd-K Cmd-P'`
    */
   keys: string;
 
@@ -143,10 +143,10 @@ class KeymapManager {
    *
    * Ambiguous key bindings are resolved with a timeout. As an example,
    * suppose two key bindings are registered: one with the key sequence
-   * `Ctrl+D`, and another with the key sequence `Ctrl+D Ctrl+W`. When
-   * the user presses `Ctrl+D`, the first binding cannot be immediately
+   * `Ctrl-D`, and another with the key sequence `Ctrl-D Ctrl-W`. When
+   * the user presses `Ctrl-D`, the first binding cannot be immediately
    * executed, since the user may intend to complete the chord from the
-   * second binding by pressing `Ctrl+W`. For such cases, a timeout is
+   * second binding by pressing `Ctrl-W`. For such cases, a timeout is
    * used to allow the user to complete the chord. If the chord is not
    * completed before the timeout, the first binding is executed.
    */
@@ -372,7 +372,7 @@ namespace KeymapManager {
    *
    * #### Notes
    * The keystroke should be of the form:
-   *   `[<modifier 1>+[<modifier 2>+[<modifier N>+]]]<primary key>`
+   *   `[<modifier 1>-[<modifier 2>-[<modifier N>-]]]<primary key>`
    *
    * The supported modifiers are: `Accel`, `Alt`, `Cmd`, `Ctrl`, and
    * `Shift`. The `Accel` modifier is translated to `Cmd` on Mac and
@@ -392,7 +392,7 @@ namespace KeymapManager {
     let cmd = false;
     let ctrl = false;
     let shift = false;
-    for (let token of keystroke.split('+')) {
+    for (let token of keystroke.split('-')) {
       if (token === 'Accel') {
         if (Private.IS_MAC) {
           cmd = true;
@@ -408,7 +408,7 @@ namespace KeymapManager {
       } else if (token === 'Shift') {
         shift = true;
       } else {
-        key = token || '+';
+        key = token || '-';
       }
     }
     return { cmd, ctrl, alt, shift, key };
@@ -430,16 +430,16 @@ namespace KeymapManager {
     let mods = '';
     let parts = parseKeystroke(keystroke);
     if (parts.cmd && Private.IS_MAC) {
-      mods += 'Cmd+';
+      mods += 'Cmd-';
     }
     if (parts.ctrl) {
-      mods += 'Ctrl+';
+      mods += 'Ctrl-';
     }
     if (parts.alt) {
-      mods += 'Alt+';
+      mods += 'Alt-';
     }
     if (parts.shift) {
-      mods += 'Shift+';
+      mods += 'Shift-';
     }
     return mods + parts.key;
   }
@@ -481,16 +481,16 @@ namespace KeymapManager {
     }
     let mods = '';
     if (event.metaKey && Private.IS_MAC) {
-      mods += 'Cmd+';
+      mods += 'Cmd-';
     }
     if (event.ctrlKey) {
-      mods += 'Ctrl+';
+      mods += 'Ctrl-';
     }
     if (event.altKey) {
-      mods += 'Alt+';
+      mods += 'Alt-';
     }
     if (event.shiftKey) {
-      mods += 'Shift+';
+      mods += 'Shift-';
     }
     return mods + key;
   }
