@@ -6,6 +6,10 @@
 | The full license is in the file LICENSE, distributed with this software.
 |----------------------------------------------------------------------------*/
 import {
+  JSONValue
+} from '../algorithm/json';
+
+import {
   IDisposable, DisposableDelegate
 } from '../core/disposable';
 
@@ -22,7 +26,7 @@ import {
  * @returns The command result, a promise to the result, or void.
  */
 export
-type ExecFunc = (args: any) => any;
+type ExecFunc = (args: JSONValue) => any;
 
 
 /**
@@ -33,7 +37,7 @@ type ExecFunc = (args: any) => any;
  * @returns The relevant string result.
  */
 export
-type StringFunc = (args: any) => string;
+type StringFunc = (args: JSONValue) => string;
 
 
 /**
@@ -44,7 +48,7 @@ type StringFunc = (args: any) => string;
  * @returns The relevant boolean result.
  */
 export
-type BoolFunc = (args: any) => boolean;
+type BoolFunc = (args: JSONValue) => boolean;
 
 
 /**
@@ -68,8 +72,8 @@ interface ICommand {
    * The function to invoke when the command is executed.
    *
    * #### Notes
-   * This function may be invoked manually by the user even when the
-   * `isEnabled` function returns `false`.
+   * This function may be invoked manually by the user, even when
+   * the `isEnabled` function returns `false`.
    */
   execute: ExecFunc;
 
@@ -190,6 +194,7 @@ interface ICommand {
  * A singleton instance of this class is all that is necessary for an
  * application, and one is exported from this module as `commands`.
  */
+export
 class CommandRegistry {
   /**
    * Construct a new command registry.
@@ -270,9 +275,7 @@ class CommandRegistry {
    * @throws An error if the given `id` is already registered.
    *
    * #### Notes
-   * The command object is cloned before being added to the registry.
-   * In-place changes to the given command will have no effect after
-   * the command is registered.
+   * The given `cmd` is cloned before being added to the registry.
    */
   addCommand(id: string, cmd: ICommand): IDisposable {
     // Throw an error if the id is already registered.
@@ -308,7 +311,7 @@ class CommandRegistry {
    * #### Notes
    * Returns an empty string if the command is not registered.
    */
-  label(id: string, args: any): string {
+  label(id: string, args: JSONValue): string {
     let cmd = this._commands[id];
     return cmd ? cmd.label.call(void 0, args) : '';
   }
@@ -325,7 +328,7 @@ class CommandRegistry {
    * #### Notes
    * Returns an empty string if the command is not registered.
    */
-  icon(id: string, args: any): string {
+  icon(id: string, args: JSONValue): string {
     let cmd = this._commands[id];
     return cmd ? cmd.icon.call(void 0, args) : '';
   }
@@ -342,7 +345,7 @@ class CommandRegistry {
    * #### Notes
    * Returns an empty string if the command is not registered.
    */
-  caption(id: string, args: any): string {
+  caption(id: string, args: JSONValue): string {
     let cmd = this._commands[id];
     return cmd ? cmd.caption.call(void 0, args) : '';
   }
@@ -359,7 +362,7 @@ class CommandRegistry {
    * #### Notes
    * Returns an empty string if the command is not registered.
    */
-  usage(id: string, args: any): string {
+  usage(id: string, args: JSONValue): string {
     let cmd = this._commands[id];
     return cmd ? cmd.usage.call(void 0, args) : '';
   }
@@ -376,7 +379,7 @@ class CommandRegistry {
    * #### Notes
    * Returns an empty string if the command is not registered.
    */
-  className(id: string, args: any): string {
+  className(id: string, args: JSONValue): string {
     let cmd = this._commands[id];
     return cmd ? cmd.className.call(void 0, args) : '';
   }
@@ -393,7 +396,7 @@ class CommandRegistry {
    * #### Notes
    * Returns `false` if the command is not registered.
    */
-  isEnabled(id: string, args: any): boolean {
+  isEnabled(id: string, args: JSONValue): boolean {
     let cmd = this._commands[id];
     return cmd ? cmd.isEnabled.call(void 0, args) : false;
   }
@@ -410,7 +413,7 @@ class CommandRegistry {
    * #### Notes
    * Returns `false` if the command is not registered.
    */
-  isToggled(id: string, args: any): boolean {
+  isToggled(id: string, args: JSONValue): boolean {
     let cmd = this._commands[id];
     return cmd ? cmd.isToggled.call(void 0, args) : false;
   }
@@ -427,7 +430,7 @@ class CommandRegistry {
    * #### Notes
    * Returns `false` if the command is not registered.
    */
-  isVisible(id: string, args: any): boolean {
+  isVisible(id: string, args: JSONValue): boolean {
     let cmd = this._commands[id];
     return cmd ? cmd.isVisible.call(void 0, args) : false;
   }
@@ -444,7 +447,7 @@ class CommandRegistry {
    * #### Notes
    * The promise will reject if the command is not registered.
    */
-  execute(id: string, args: any): Promise<any> {
+  execute(id: string, args: JSONValue): Promise<any> {
     // Reject if the command is not registered.
     let cmd = this._commands[id];
     if (!cmd) {
@@ -539,17 +542,17 @@ namespace Private {
   /**
    * A singleton empty string function.
    */
-  const emptyStringFunc: StringFunc = (args: any) => '';
+  const emptyStringFunc: StringFunc = (args: JSONValue) => '';
 
   /**
    * A singleton true boolean function.
    */
-  const trueFunc: BoolFunc = (args: any) => true;
+  const trueFunc: BoolFunc = (args: JSONValue) => true;
 
   /**
    * A singleton false boolean function.
    */
-  const falseFunc: BoolFunc = (args: any) => false;
+  const falseFunc: BoolFunc = (args: JSONValue) => false;
 
   /**
    * Coerce a value to a string function.
@@ -561,6 +564,6 @@ namespace Private {
     if (typeof value === 'function') {
       return value;
     }
-    return (args: any) => value as string;
+    return (args: JSONValue) => value as string;
   }
 }
