@@ -15,7 +15,7 @@
  * @returns The specificity of the selector.
  *
  * #### Undefined Behavior
- * The selector is invalid or has multiple comma-separated selectors.
+ * The selector is invalid.
  *
  * #### Notes
  * This is based on https://www.w3.org/TR/css3-selectors/#specificity
@@ -26,6 +26,8 @@
  *
  * The result is represented as a hex number `0x<aa><bb><cc>` where
  * each component is the count of the respective selector clause.
+ *
+ * If the selector contains commas, only the first clause is used.
  *
  * The computed result is cached, so subsequent calculations for the
  * same selector are extremely fast.
@@ -173,11 +175,13 @@ namespace Private {
   /**
    * Calculate the specificity of a single selector.
    *
-   * The behavior is undefined if the selector is invalid or has
-   * multiple comma-separated selectors.
+   * The behavior is undefined if the selector is invalid.
    */
   export
   function calculateSingle(selector: string): number {
+    // Ignore anything after the first comma.
+    selector = selector.split(',', 1)[0];
+
     // Setup the aggregate counters.
     let a = 0;
     let b = 0;
