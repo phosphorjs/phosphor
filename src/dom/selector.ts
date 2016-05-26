@@ -71,6 +71,24 @@ function isValidSelector(selector: string): boolean {
 
 
 /**
+ * Validate a CSS selector.
+ *
+ * @param selector - The CSS selector of interest.
+ *
+ * @returns The provided selector.
+ *
+ * @throws An error if the selector is invalid.
+ */
+export
+function validateSelector(selector: string): string {
+  if (!isValidSelector(selector)) {
+    throw new Error(`Invalid selector: ${selector}`);
+  }
+  return selector;
+}
+
+
+/**
  * Test whether an element matches a CSS selector.
  *
  * @param elem - The element of interest.
