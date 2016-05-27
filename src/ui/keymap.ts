@@ -10,7 +10,7 @@ import {
 } from '../algorithm/iteration';
 
 import {
-  JSONValue
+  JSONObject
 } from '../algorithm/json';
 
 import {
@@ -295,14 +295,14 @@ class KeyBinding {
   /**
    * The arguments for the command.
    */
-  get args(): JSONValue {
+  get args(): JSONObject {
     return this._args;
   }
 
   private _keys: string;
   private _selector: string;
   private _command: string;
-  private _args: JSONValue;
+  private _args: JSONObject;
 }
 
 
@@ -334,7 +334,7 @@ namespace KeyBinding {
     /**
      * The arguments for the command, if necessary.
      */
-    args?: JSONValue;
+    args?: JSONObject;
 
     /**
      * The key sequence to use when running on Windows.

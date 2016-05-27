@@ -6,7 +6,7 @@
 | The full license is in the file LICENSE, distributed with this software.
 |----------------------------------------------------------------------------*/
 import {
-  JSONValue
+  JSONObject
 } from '../algorithm/json';
 
 import {
@@ -26,7 +26,7 @@ import {
  * @returns The command result, a promise to the result, or void.
  */
 export
-type ExecFunc = (args: JSONValue) => any;
+type ExecFunc = (args: JSONObject) => any;
 
 
 /**
@@ -37,7 +37,7 @@ type ExecFunc = (args: JSONValue) => any;
  * @returns The relevant string result.
  */
 export
-type StringFunc = (args: JSONValue) => string;
+type StringFunc = (args: JSONObject) => string;
 
 
 /**
@@ -48,7 +48,7 @@ type StringFunc = (args: JSONValue) => string;
  * @returns The relevant boolean result.
  */
 export
-type BoolFunc = (args: JSONValue) => boolean;
+type BoolFunc = (args: JSONObject) => boolean;
 
 
 /**
@@ -311,7 +311,7 @@ class CommandRegistry {
    * #### Notes
    * Returns an empty string if the command is not registered.
    */
-  label(id: string, args: JSONValue): string {
+  label(id: string, args: JSONObject): string {
     let cmd = this._commands[id];
     return cmd ? cmd.label.call(void 0, args) : '';
   }
@@ -328,7 +328,7 @@ class CommandRegistry {
    * #### Notes
    * Returns an empty string if the command is not registered.
    */
-  icon(id: string, args: JSONValue): string {
+  icon(id: string, args: JSONObject): string {
     let cmd = this._commands[id];
     return cmd ? cmd.icon.call(void 0, args) : '';
   }
@@ -345,7 +345,7 @@ class CommandRegistry {
    * #### Notes
    * Returns an empty string if the command is not registered.
    */
-  caption(id: string, args: JSONValue): string {
+  caption(id: string, args: JSONObject): string {
     let cmd = this._commands[id];
     return cmd ? cmd.caption.call(void 0, args) : '';
   }
@@ -362,7 +362,7 @@ class CommandRegistry {
    * #### Notes
    * Returns an empty string if the command is not registered.
    */
-  usage(id: string, args: JSONValue): string {
+  usage(id: string, args: JSONObject): string {
     let cmd = this._commands[id];
     return cmd ? cmd.usage.call(void 0, args) : '';
   }
@@ -379,7 +379,7 @@ class CommandRegistry {
    * #### Notes
    * Returns an empty string if the command is not registered.
    */
-  className(id: string, args: JSONValue): string {
+  className(id: string, args: JSONObject): string {
     let cmd = this._commands[id];
     return cmd ? cmd.className.call(void 0, args) : '';
   }
@@ -396,7 +396,7 @@ class CommandRegistry {
    * #### Notes
    * Returns `false` if the command is not registered.
    */
-  isEnabled(id: string, args: JSONValue): boolean {
+  isEnabled(id: string, args: JSONObject): boolean {
     let cmd = this._commands[id];
     return cmd ? cmd.isEnabled.call(void 0, args) : false;
   }
@@ -413,7 +413,7 @@ class CommandRegistry {
    * #### Notes
    * Returns `false` if the command is not registered.
    */
-  isToggled(id: string, args: JSONValue): boolean {
+  isToggled(id: string, args: JSONObject): boolean {
     let cmd = this._commands[id];
     return cmd ? cmd.isToggled.call(void 0, args) : false;
   }
@@ -430,7 +430,7 @@ class CommandRegistry {
    * #### Notes
    * Returns `false` if the command is not registered.
    */
-  isVisible(id: string, args: JSONValue): boolean {
+  isVisible(id: string, args: JSONObject): boolean {
     let cmd = this._commands[id];
     return cmd ? cmd.isVisible.call(void 0, args) : false;
   }
@@ -447,7 +447,7 @@ class CommandRegistry {
    * #### Notes
    * The promise will reject if the command is not registered.
    */
-  execute(id: string, args: JSONValue): Promise<any> {
+  execute(id: string, args: JSONObject): Promise<any> {
     // Reject if the command is not registered.
     let cmd = this._commands[id];
     if (!cmd) {
@@ -542,17 +542,17 @@ namespace Private {
   /**
    * A singleton empty string function.
    */
-  const emptyStringFunc: StringFunc = (args: JSONValue) => '';
+  const emptyStringFunc: StringFunc = (args: JSONObject) => '';
 
   /**
    * A singleton true boolean function.
    */
-  const trueFunc: BoolFunc = (args: JSONValue) => true;
+  const trueFunc: BoolFunc = (args: JSONObject) => true;
 
   /**
    * A singleton false boolean function.
    */
-  const falseFunc: BoolFunc = (args: JSONValue) => false;
+  const falseFunc: BoolFunc = (args: JSONObject) => false;
 
   /**
    * Coerce a value to a string function.
@@ -564,6 +564,6 @@ namespace Private {
     if (typeof value === 'function') {
       return value;
     }
-    return (args: JSONValue) => value as string;
+    return (args: JSONObject) => value as string;
   }
 }
