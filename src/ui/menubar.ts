@@ -234,7 +234,6 @@ class MenuBar extends Widget {
       return;
     }
     this._openChildMenu();
-    this._childMenu.activeIndex = 0; // TODO first selectable instead of 0?
   }
 
   /**
