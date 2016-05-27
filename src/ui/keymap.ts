@@ -232,7 +232,7 @@ class KeyBinding {
   /**
    * Construct a new key binding.
    *
-   * @options - The options for initializing the key binding.
+   * @param options - The options for initializing the key binding.
    *
    * @throws An error if the key binding selector is invalid.
    *
