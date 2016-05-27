@@ -30,15 +30,11 @@ import {
 } from '../core/messaging';
 
 import {
-  ISignal, defineSignal
-} from '../core/signaling';
-
-import {
   hitTest
 } from '../dom/query';
 
 import {
-  Menu, MenuItem
+  Menu
 } from './menu';
 
 import {
@@ -125,18 +121,6 @@ class MenuBar extends Widget {
     this._renderer = null;
     super.dispose();
   }
-
-  /**
-   * A signal emitted when a menu item in the hierarchy is triggered.
-   *
-   * #### Notes
-   * This signal is emitted when a descendant menu item in any menu in
-   * the hierarchy is triggered, so consumers only need to to connect
-   * to the triggered signal of the menu bar.
-   *
-   * The argument for the signal is the menu item which was triggered.
-   */
-  triggered: ISignal<MenuBar, MenuItem>;
 
   /**
    * Get the menu bar content node.
@@ -307,7 +291,6 @@ class MenuBar extends Widget {
       this.contentNode.insertBefore(node, ref);
 
       // Connect to the menu signals.
-      menu.triggered.connect(this._onMenuTriggered, this);
       menu.aboutToClose.connect(this._onMenuAboutToClose, this);
       menu.menuRequested.connect(this._onMenuMenuRequested, this);
       menu.title.changed.connect(this._onTitleChanged, this);
@@ -362,7 +345,6 @@ class MenuBar extends Widget {
     this._menus.remove(i);
 
     // Disconnect from the menu signals.
-    menu.triggered.disconnect(this._onMenuTriggered, this);
     menu.aboutToClose.disconnect(this._onMenuAboutToClose, this);
     menu.menuRequested.disconnect(this._onMenuMenuRequested, this);
     menu.title.changed.disconnect(this._onTitleChanged, this);
@@ -388,7 +370,6 @@ class MenuBar extends Widget {
 
     // Disconnect from the menu signals and remove the styling class.
     each(this._menus, menu => {
-      menu.triggered.disconnect(this._onMenuTriggered, this);
       menu.aboutToClose.disconnect(this._onMenuAboutToClose, this);
       menu.menuRequested.disconnect(this._onMenuMenuRequested, this);
       menu.title.changed.disconnect(this._onTitleChanged, this);
@@ -663,13 +644,6 @@ class MenuBar extends Widget {
   }
 
   /**
-   * Handle the `triggered` signal of a menu.
-   */
-  private _onMenuTriggered(sender: Menu, item: MenuItem): void {
-    this.triggered.emit(item);
-  }
-
-  /**
    * Handle the `aboutToClose` signal of a menu.
    */
   private _onMenuAboutToClose(sender: Menu): void {
@@ -731,10 +705,6 @@ class MenuBar extends Widget {
   private _nodes = new Vector<HTMLElement>();
   private _renderer: MenuBar.IContentRenderer;
 }
-
-
-// Define the signals for the `MenuBar` class.
-defineSignal(MenuBar.prototype, 'triggered');
 
 
 /**
