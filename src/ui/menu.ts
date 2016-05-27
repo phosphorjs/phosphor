@@ -255,21 +255,6 @@ class Menu extends Widget {
   }
 
   /**
-   * Create a menu from a static template.
-   *
-   * @param template - A menu template to convert into a menu.
-   *
-   * @returns A new menu widget populated from the template.
-   *
-   * #### Notes
-   * This method operates recursively, constructing the full menu
-   * hierarchy using the default `Menu` constructor.
-   */
-  static fromTemplate(template: Menu.Template): Menu {
-    return Private.asMenu(template);
-  }
-
-  /**
    * Construct a new menu.
    *
    * @param options - The options for initializing the menu.
@@ -1186,12 +1171,6 @@ defineSignal(Menu.prototype, 'menuRequested');
 export
 namespace Menu {
   /**
-   * A type alias for a object which can be converted to a menu.
-   */
-  export
-  type Template = IterableOrArrayLike<MenuItem | MenuItem.IOptions>;
-
-  /**
    * An options object for creating a menu.
    */
   export
@@ -1523,21 +1502,6 @@ namespace Private {
   export
   function asMenuItem(value: MenuItem | MenuItem.IOptions): MenuItem {
     return value instanceof MenuItem ? value : new MenuItem(value);
-  }
-
-  /**
-   * Coerce a menu or menu template into a real menu.
-   */
-  export
-  function asMenu(value: Menu | Menu.Template): Menu {
-    let result: Menu;
-    if (value instanceof Menu) {
-      result = value;
-    } else {
-      result = new Menu();
-      each(value, item => { result.addItem(item); });
-    }
-    return result;
   }
 
   /**
