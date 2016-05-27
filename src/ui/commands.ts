@@ -466,7 +466,7 @@ class CommandRegistry {
     return Promise.resolve(result);
   }
 
-  private _commands = Private.createCommandMap();
+  private _commands: Private.CommandMap = Object.create(null);
 }
 
 
@@ -512,14 +512,6 @@ namespace Private {
    */
   export
   type CommandMap = { [id: string]: INormalizedCommand };
-
-  /**
-   * Create a new command map.
-   */
-  export
-  function createCommandMap(): CommandMap {
-    return Object.create(null);
-  }
 
   /**
    * Normalize a user-defined command.
