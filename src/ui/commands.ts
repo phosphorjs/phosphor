@@ -254,24 +254,6 @@ class CommandRegistry {
   }
 
   /**
-   * Refresh the state of a specific command.
-   *
-   * @param id - The id of the command of interest.
-   *
-   * #### Notes
-   * This method should be called by the command author whenever the
-   * application state changes such that the results of the command
-   * metadata functions may have changed.
-   *
-   * This will cause the `commandChanged` signal to be emitted.
-   *
-   * If the command is not registered, this is a no-op.
-   */
-  refreshCommand(id: string): void {
-    if (id in this._commands) this.commandChanged.emit(id);
-  }
-
-  /**
    * Add a command to the registry.
    *
    * @param id - The unique id of the command.
@@ -305,6 +287,24 @@ class CommandRegistry {
       // Emit the `commandRemoved` signal.
       this.commandRemoved.emit(id);
     });
+  }
+
+  /**
+   * Notify listeners that the state of a command has changed.
+   *
+   * @param id - The id of the command which has changed.
+   *
+   * #### Notes
+   * This method should be called by the command author whenever the
+   * application state changes such that the results of the command
+   * metadata functions may have changed.
+   *
+   * This will cause the `commandChanged` signal to be emitted.
+   *
+   * If the command is not registered, this is a no-op.
+   */
+  notifyCommandChanged(id: string): void {
+    if (id in this._commands) this.commandChanged.emit(id);
   }
 
   /**
