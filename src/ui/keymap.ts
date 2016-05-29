@@ -34,6 +34,10 @@ import {
 } from '../core/signaling';
 
 import {
+  IS_MAC, IS_WIN
+} from '../dom/platform';
+
+import {
   calculateSpecificity, matchesSelector, validateSelector
 } from '../dom/selector';
 
@@ -93,7 +97,7 @@ interface IKeystrokeParts {
  *
  * #### Notes
  * The keystroke should be of the form:
- *   `[<modifier 1>-[<modifier 2>-[<modifier N>-]]]<primary key>`
+ *   `[<modifier 1>+[<modifier 2>+[<modifier N>+]]]<primary key>`
  *
  * The supported modifiers are: `Accel`, `Alt`, `Cmd`, `Ctrl`, and
  * `Shift`. The `Accel` modifier is translated to `Cmd` on Mac and
@@ -112,9 +116,9 @@ function parseKeystroke(keystroke: string): IKeystrokeParts {
   let cmd = false;
   let ctrl = false;
   let shift = false;
-  for (let token of keystroke.split('-')) {
+  for (let token of keystroke.split('+')) {
     if (token === 'Accel') {
-      if (Private.IS_MAC) {
+      if (IS_MAC) {
         cmd = true;
       } else {
         ctrl = true;
@@ -128,7 +132,7 @@ function parseKeystroke(keystroke: string): IKeystrokeParts {
     } else if (token === 'Shift') {
       shift = true;
     } else {
-      key = token || '-';
+      key = token || '+';
     }
   }
   return { cmd, ctrl, alt, shift, key };
@@ -153,16 +157,16 @@ function normalizeKeystroke(keystroke: string): string {
   let mods = '';
   let parts = parseKeystroke(keystroke);
   if (parts.ctrl) {
-    mods += 'Ctrl-';
+    mods += 'Ctrl+';
   }
   if (parts.alt) {
-    mods += 'Alt-';
+    mods += 'Alt+';
   }
   if (parts.shift) {
-    mods += 'Shift-';
+    mods += 'Shift+';
   }
-  if (parts.cmd && Private.IS_MAC) {
-    mods += 'Cmd-';
+  if (parts.cmd && IS_MAC) {
+    mods += 'Cmd+';
   }
   return mods + parts.key;
 }
@@ -206,16 +210,16 @@ function keystrokeForKeydownEvent(event: KeyboardEvent, layout: IKeyboardLayout)
   }
   let mods = '';
   if (event.ctrlKey) {
-    mods += 'Ctrl-';
+    mods += 'Ctrl+';
   }
   if (event.altKey) {
-    mods += 'Alt-';
+    mods += 'Alt+';
   }
   if (event.shiftKey) {
-    mods += 'Shift-';
+    mods += 'Shift+';
   }
-  if (event.metaKey && Private.IS_MAC) {
-    mods += 'Cmd-';
+  if (event.metaKey && IS_MAC) {
+    mods += 'Cmd+';
   }
   return mods + key;
 }
@@ -229,8 +233,7 @@ function keystrokeForKeydownEvent(event: KeyboardEvent, layout: IKeyboardLayout)
  * @returns The keystroke formatted for display on a mac.
  *
  * #### Notes
- * This replaces modifiers with Mac-specific unicode characters,
- * and removes the '-' separator in the keystroke.
+ * This replaces the modifiers with Mac-specific unicode characters.
  */
 export
 function formatMacKeystroke(keystroke: string): string {
@@ -248,7 +251,6 @@ function formatMacKeystroke(keystroke: string): string {
   if (parts.cmd) {
     mods += '\u2318';
   }
-  console.log('formatted', keystroke, mods + parts.key);
   return mods + parts.key;
 }
 
@@ -308,16 +310,16 @@ class KeyBinding {
    * and are useful for implementing modal input (ala Vim).
    *
    * Each keystroke in the sequence should be of the form:
-   *   `[<modifier 1>-[<modifier 2>-[<modifier N>-]]]<primary key>`
+   *   `[<modifier 1>+[<modifier 2>+[<modifier N>+]]]<primary key>`
    *
    * The supported modifiers are: `Accel`, `Alt`, `Cmd`, `Ctrl`, and
    * `Shift`. The `Accel` modifier is translated to `Cmd` on Mac and
    * `Ctrl` on all other platforms. The `Cmd` modifier is ignored on
    * non-Mac platforms.
    *
-   * The key sequence is case-sensitive.
+   * The key sequence is case sensitive.
    *
-   * **Examples:** `Accel-C`, `Shift-F11`, `D D`, `Cmd-K Cmd-P`
+   * **Examples:** `Accel+C`, `Shift+F11`, `D D`, `Cmd+K Cmd+P`
    */
   get keys(): string {
     return this._keys;
@@ -498,10 +500,10 @@ class KeymapManager {
    *
    * Ambiguous key bindings are resolved with a timeout. As an example,
    * suppose two key bindings are registered: one with the key sequence
-   * `Ctrl-D`, and another with the key sequence `Ctrl-D Ctrl-W`. When
-   * the user presses `Ctrl-D`, the first binding cannot be immediately
+   * `Ctrl+D`, and another with the key sequence `Ctrl+D Ctrl+W`. When
+   * the user presses `Ctrl+D`, the first binding cannot be immediately
    * executed, since the user may intend to complete the chord from the
-   * second binding by pressing `Ctrl-W`. For such cases, a timeout is
+   * second binding by pressing `Ctrl+W`. For such cases, a timeout is
    * used to allow the user to complete the chord. If the chord is not
    * completed before the timeout, the first binding is executed.
    */
@@ -687,18 +689,6 @@ const keymap = new KeymapManager();
  * The namespace for the private module data.
  */
 namespace Private {
-  /**
-   * A flag indicating whether the platform is Mac.
-   */
-  export
-  const IS_MAC = !!navigator.platform.match(/Mac/i);
-
-  /**
-   * A flag indicating whether the platform is Windows.
-   */
-  export
-  const IS_WIN = !!navigator.platform.match(/Win/i);
-
   /**
    * Get the platform-specific key sequence for an options object.
    */
