@@ -10,11 +10,11 @@ import {
 } from '../algorithm/iteration';
 
 import {
-  JSONObject
+  JSONObject, deepEqual
 } from '../algorithm/json';
 
 import {
-  indexOf
+  findLastIndex, indexOf
 } from '../algorithm/searching';
 
 import {
@@ -483,6 +483,27 @@ class KeymapManager {
     }
     this._layout = value;
     this.layoutChanged.emit(value);
+  }
+
+  /**
+   * Find a key binding which matches the given command and args.
+   *
+   * @param command - The id of the command of interest.
+   *
+   * @param args - The arguments for the command.
+   *
+   * @returns The most recently added key binding which matches the
+   *   specified command and args, or `null` if no match is found.
+   *
+   * #### Notes
+   * This is a convenience method which searches through the public
+   * sequence of key bindings.
+   */
+  findKeyBinding(command: string, args: JSONObject): KeyBinding {
+    let i = findLastIndex(this._bindings, kb => {
+      return kb.command === command && deepEqual(kb.args, args);
+    });
+    return i !== -1 ? this._bindings.at(i) : null;
   }
 
   /**
