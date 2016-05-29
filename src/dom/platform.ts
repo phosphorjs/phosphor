@@ -19,3 +19,10 @@ const IS_MAC = !!navigator.platform.match(/Mac/i);
  */
 export
 const IS_WIN = !!navigator.platform.match(/Win/i);
+
+
+/**
+ * A flag indicating whether the browser is IE.
+ */
+export
+const IS_IE = /Trident/.test(navigator.userAgent);
