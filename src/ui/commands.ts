@@ -226,6 +226,14 @@ class CommandRegistry {
   commandChanged: ISignal<CommandRegistry, string>;
 
   /**
+   * A signal emitted when a command is executed.
+   *
+   * #### Notes
+   * The signal argument is the id and args for the executed command.
+   */
+  commandExecuted: ISignal<CommandRegistry, { id: string, args: JSONObject }>;
+
+  /**
    * List the ids of the registered commands.
    *
    * @returns A new array of the registered command ids.
@@ -462,8 +470,14 @@ class CommandRegistry {
       result = Promise.reject(err);
     }
 
-    // Return a promise which resolves to the command result.
-    return Promise.resolve(result);
+    // Create the return promise which resolves the result.
+    let promise = Promise.resolve(result);
+
+    // Emit the command executed signal.
+    this.commandExecuted.emit({ id, args });
+
+    // Return the result promise to the caller.
+    return promise;
   }
 
   private _commands: Private.CommandMap = Object.create(null);
@@ -474,6 +488,7 @@ class CommandRegistry {
 defineSignal(CommandRegistry.prototype, 'commandAdded');
 defineSignal(CommandRegistry.prototype, 'commandRemoved');
 defineSignal(CommandRegistry.prototype, 'commandChanged');
+defineSignal(CommandRegistry.prototype, 'commandExecuted');
 
 
 /**
