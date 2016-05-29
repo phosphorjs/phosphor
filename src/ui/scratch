@@ -1,0 +1,380 @@
+export
+class MenuItem {
+  /**
+   * Construct a new menu item.
+   *
+   * @param options - The options for initializing the menu item.
+   */
+  constructor(options?: MenuItem.IOptions) {
+    if (options === void 0) {
+      return;
+    }
+    if (options.type !== void 0) {
+      this.type = options.type;
+    }
+    if (options.text !== void 0) {
+      this.text = options.text;
+    }
+    if (options.icon !== void 0) {
+      this.icon = options.icon;
+    }
+    if (options.shortcut !== void 0) {
+      this.shortcut = options.shortcut;
+    }
+    if (options.checked !== void 0) {
+      this.checked = options.checked;
+    }
+    if (options.disabled !== void 0) {
+      this.disabled = options.disabled;
+    }
+    if (options.hidden !== void 0) {
+      this.hidden = options.hidden;
+    }
+    if (options.className !== void 0) {
+      this.className = options.className;
+    }
+    if (options.command !== void 0) {
+      this.command = options.command;
+    }
+    if (options.args !== void 0) {
+      this.args = options.args;
+    }
+    if (options.submenu !== void 0) {
+      this.submenu = Private.asMenu(options.submenu);
+    }
+  }
+
+  /**
+   * The type of the menu item.
+   *
+   * #### Notes
+   * This controls how the rest of the item properties are interpreted.
+   *
+   * The default value is `'normal'`.
+   */
+  type: MenuItem.Type = 'normal';
+
+  /**
+   * The text for the menu item.
+   *
+   * #### Notes
+   * A `'&&'` sequence before a character denotes the item mnemonic.
+   *
+   * This value is ignored for `'separator'` type items.
+   *
+   * The default value is an empty string.
+   */
+  text = '';
+
+  /**
+   * The icon class for the menu item.
+   *
+   * #### Notes
+   * This class name is added to the menu item icon node.
+   *
+   * Multiple class names can be separated by whitespace.
+   *
+   * This value is ignored for `'separator'` type items.
+   *
+   * The default value is an empty string.
+   */
+  icon = '';
+
+  /**
+   * The keyboard shortcut decoration for the menu item.
+   *
+   * #### Notes
+   * This value is for decoration purposes only. Management of keyboard
+   * shortcut bindings is left to other library code.
+   *
+   * This value is ignored for `'separator'` and `'submenu'` type items.
+   *
+   * The default value is an empty string.
+   */
+  shortcut = '';
+
+  /**
+   * The checked state for the menu item.
+   *
+   * #### Notes
+   * This value is only used for `'check'` and `'radio'` type items.
+   *
+   * The default value is `false`.
+   */
+  checked = false;
+
+  /**
+   * The disabled state for the menu item.
+   *
+   * #### Notes
+   * This value is ignored for `'separator'` type items.
+   *
+   * The default value is `false`.
+   */
+  disabled = false;
+
+  /**
+   * The hidden state for the menu item.
+   *
+   * #### Notes
+   * The default value is `false`.
+   */
+  hidden = false;
+
+  /**
+   * The extra class name to associate with the menu item.
+   *
+   * #### Notes
+   * Multiple class names can be separated by whitespace.
+   *
+   * The default value is an empty string.
+   */
+  className = '';
+
+  /**
+   * The command id to associate with the menu item.
+   *
+   * #### Notes
+   * The default value is an empty string.
+   */
+  command = '';
+
+  /**
+   * The command args to associate with the menu item.
+   *
+   * #### Notes
+   * This should be a simple JSON-compatible value.
+   *
+   * The default value is `null`.
+   */
+  args: any = null;
+
+  /**
+   * The submenu for the menu item.
+   *
+   * #### Notes
+   * This value is only used for `'submenu'` type items.
+   *
+   * The default value is `null`.
+   */
+  submenu: Menu = null;
+}
+
+
+/**
+ * The namespace for the `MenuItem` class statics.
+ */
+export
+namespace MenuItem {
+  /**
+   * A type alias for a menu item type.
+   */
+  export
+  type Type = 'normal' | 'check' | 'radio' | 'submenu' | 'separator';
+
+  /**
+   * An options object for initializing a menu item.
+   */
+  export
+  interface IOptions {
+    /**
+     * The type of the menu item.
+     */
+    type?: Type;
+
+    /**
+     * The text for the menu item.
+     */
+    text?: string;
+
+    /**
+     * The icon class for the menu item.
+     */
+    icon?: string;
+
+    /**
+     * The keyboard shortcut decoration for the menu item.
+     */
+    shortcut?: string;
+
+    /**
+     * The checked state for the menu item.
+     */
+    checked?: boolean;
+
+    /**
+     * The disabled state for the menu item.
+     */
+    disabled?: boolean;
+
+    /**
+     * The hidden state for the menu item.
+     */
+    hidden?: boolean;
+
+    /**
+     * The extra class name for the menu item.
+     */
+    className?: string;
+
+    /**
+     * The command id for the menu item.
+     */
+    command?: string;
+
+    /**
+     * The command args for the menu item.
+     */
+    args?: any;
+
+    /**
+     * The submenu or submenu template for the menu item.
+     */
+    submenu?: Menu | Menu.Template;
+  }
+}
+
+
+
+/**
+ * A type alias for a object which can be converted to a menu.
+ */
+export
+type Template = IterableOrArrayLike<MenuItem | MenuItem.IOptions>;
+/**
+ * Create a menu from a static template.
+ *
+ * @param template - A menu template to convert into a menu.
+ *
+ * @returns A new menu widget populated from the template.
+ *
+ * #### Notes
+ * This method operates recursively, constructing the full menu
+ * hierarchy using the default `Menu` and `MenuItem` constructors.
+ *
+ * If custom menus or menu items are required, this method should
+ * not be used. Instead, the custom objects should be instantiated
+ * and assembled manually.
+ */
+static fromTemplate(template: Menu.Template): Menu {
+  return Private.asMenu(template);
+}
+
+
+
+
+  /**
+   * Coerce a menu or menu template into a real menu.
+   */
+  export
+  function asMenu(value: Menu | Menu.Template): Menu {
+    let result: Menu;
+    if (value instanceof Menu) {
+      result = value;
+    } else {
+      result = new Menu();
+      each(value, item => { result.addItem(item); });
+    }
+    return result;
+  }
+
+
+
+  /**
+   * A signal emitted when the keyboard layout is changed.
+   */
+  keyboardLayoutChanged: ISignal<CommandRegistry, void>;
+
+  /**
+   * A signal emitted when key bindings are added or removed.
+   */
+  keyBindingsChanged: ISignal<CommandRegistry, void>;
+
+  /**
+   * Get the keyboard layout used by the command registry.
+   */
+  get keyboardLayout(): IKeyboardLayout {
+    return this._keyboardLayout;
+  }
+
+  /**
+   * Set the keyboard layout used by the command registry.
+   *
+   * #### Notes
+   * The registry requires a keyboard layout, so setting this value to
+   * `null` will revert the layout to the default US English layout.
+   */
+  set keyboardLayout(value: IKeyboardLayout) {
+    value = value || EN_US;
+    if (this._keyboardLayout === value) {
+      return;
+    }
+    this._keyboardLayout = value;
+    this.keyboardLayoutChanged.emit(void 0);
+  }
+  /**
+   * Get the shortcut sequence for a specific command.
+   *
+   * @param id - The id of the command of interest.
+   *
+   * @param args - The arguments for the command.
+   *
+   * @returns The shortcut sequence for the command.
+   *
+   * #### Notes
+   * This returns the key sequence for the first key binding which
+   * matches the given command id and args. Arguments are compared
+   * using deep equality. If no matching key binding is found, an
+   * empty string is returned.
+   */
+  shortcut(id: string, args: any): string {
+    return '';
+  }
+
+  /**
+   * List the key bindings added to the registry.
+   *
+   * @returns A new array of the registered key bindings.
+   */
+  listKeyBindings(): IKeyBinding[] { return null; }
+
+  /**
+   * Add key bindings to the registry.
+   *
+   * @param bindings - The key bindings to add to the registry.
+   *
+   * @returns A disposable which removes the added key bindings.
+   *
+   * #### Notes
+   * If a key binding has an invalid selector, a warning will be logged
+   * to the console and the key binding will be ignored.
+   *
+   * If multiple key bindings are registered for the same sequence, the
+   * binding with the highest selector specificity is executed first. A
+   * tie is broken by using the more recently added key binding.
+   *
+   * Ambiguous key bindings are resolved with a timeout. For example,
+   * suppose two key bindings are registered: one with the key sequence
+   * `Ctrl+D`, and another with the key sequence `Ctrl+D Ctrl+W`. When
+   * the user presses `Ctrl+D`, the first binding cannot be immediately
+   * executed, since the user may intend to complete the chord from the
+   * second binding by pressing `Ctrl+W`. For such cases, a timeout is
+   * used to allow the user to complete the chord. If the chord is not
+   * completed before the timeout, the first binding is executed.
+   */
+  addKeyBindings(bindings: IKeyBinding[]): IDisposable { return null; }
+
+  /**
+   * Process a `'keydown'` event and invoke a matching key binding.
+   *
+   * @param event - The event object for a `'keydown'` event.
+   *
+   * #### Notes
+   * This should be called in response to a `'keydown'` event in order
+   * to invoke the command for the best matching key binding.
+   *
+   * The registry **does not** install its own key event listeners. This
+   * allows user code full control over the nodes for which the registry
+   * processes `'keydown'` events.
+   */
+  processKeydownEvent(event: KeyboardEvent): void { }

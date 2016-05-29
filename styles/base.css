@@ -72,7 +72,7 @@ body.p-mod-override-cursor * {
 }
 
 
-.p-Menu-itemText {
+.p-Menu-itemLabel {
   display: table-cell;
   text-align: left;
 }

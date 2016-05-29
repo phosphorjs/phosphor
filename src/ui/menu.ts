@@ -46,7 +46,7 @@ import {
 } from './commands';
 
 import {
-  keymap
+  formatMacKeys, keymap
 } from './keymap';
 
 import {
@@ -144,7 +144,7 @@ const SUBMENU_OVERLAP = 3;
 export
 class MenuItem {
   /**
-   * Construct a new menu item.
+   * Constructbb a new menu item.
    *
    * @param options - The options for initializing the menu item.
    */
@@ -181,6 +181,101 @@ class MenuItem {
    */
   get menu(): Menu {
     return this._menu;
+  }
+
+  /**
+   *
+   */
+  get label(): string {
+    if (this._type === 'command') {
+      return commands.label(this._command, this._args);
+    }
+    if (this._type === 'submenu' && this._menu) {
+      return this._menu.title.text;
+    }
+    return '';
+  }
+
+  /**
+   *
+   */
+  get mnemonic(): string {
+    // TODO
+    return '';
+  }
+
+  /**
+   *
+   */
+  get icon(): string {
+    if (this._type === 'command') {
+      return commands.icon(this._command, this._args);
+    }
+    if (this._type === 'submenu' && this._menu) {
+      return this._menu.title.icon;
+    }
+    return '';
+  }
+
+  /**
+   *
+   */
+  get shortcut(): string {
+    if (this._type === 'command') {
+      let kb = find(keymap.bindings, b => b.command === this._command && deepEqual(b.args, this._args));
+      if (kb) console.log('keys', kb.keys);
+      return kb ? kb.keys : '';
+    }
+    return '';
+  }
+
+  /**
+   *
+   */
+  get className(): string {
+    if (this._type === 'command') {
+      return commands.className(this._command, this._args);
+    }
+    if (this._type === 'submenu' && this._menu) {
+      return this._menu.title.className;
+    }
+    return '';
+  }
+
+  /**
+   *
+   */
+  get isEnabled(): boolean {
+    if (this._type === 'command') {
+      return commands.isEnabled(this._command, this._args);
+    }
+    if (this._type === 'submenu') {
+      return this._menu !== null;
+    }
+    return true;
+  }
+
+  /**
+   *
+   */
+  get isToggled(): boolean {
+    if (this._type === 'command') {
+      return commands.isToggled(this._command, this._args);
+    }
+    return false;
+  }
+
+  /**
+   *
+   */
+  get isVisible(): boolean {
+    if (this._type === 'command') {
+      return commands.isVisible(this._command, this._args);
+    }
+    if (this._type === 'submenu') {
+      return this._menu !== null;
+    }
+    return true;
   }
 
   private _type: MenuItem.Type;
@@ -263,7 +358,7 @@ class Menu extends Widget {
     super();
     this.addClass(MENU_CLASS);
     this.setFlag(WidgetFlag.DisallowLayout);
-    this._renderer = options.renderer || Menu.ContentRenderer.instance;
+    this._renderer = options.renderer || Menu.defaultRenderer;
   }
 
   /**
@@ -822,7 +917,7 @@ class Menu extends Widget {
     }
 
     // Hide the extra separator nodes.
-    renderer.hideExtraSeparators(nodes, items);
+    //renderer.hideExtraSeparators(nodes, items);
   }
 
   /**
@@ -1240,21 +1335,6 @@ namespace Menu {
      * reflect the data for the menu item.
      */
     updateItemNode(node: HTMLElement, item: MenuItem): void;
-
-    /**
-     * Hide the extra and redundant separator nodes.
-     *
-     * @param nodes - A read only sequence of item nodes.
-     *
-     * @param items - A read only sequence of menu items.
-     *
-     * #### Notes
-     * This method is called at the end of an update pass, after the
-     * state of all item nodes has been updated. It should hide any
-     * extra or redundant separator nodes, such as leading, trailing,
-     * and consecutive separators.
-     */
-    hideExtraSeparators(nodes: ISequence<HTMLElement>, items: ISequence<MenuItem>): void;
   }
 
   /**
@@ -1302,102 +1382,51 @@ namespace Menu {
     }
 
     /**
-     * Hide the extra and redundant separator nodes.
-     *
-     * @param nodes - A read only sequence of item nodes.
-     *
-     * @param items - A read only sequence of corresponding items.
-     *
-     * #### Notes
-     * This method hides leading, trailing, and consecutive separators.
-     */
-    hideExtraSeparators(nodes: ISequence<HTMLElement>, items: ISequence<MenuItem>): void {
-      // Hide the leading separators.
-      let k1 = 0;
-      let n = items.length;
-      for (; k1 < n; ++k1) {
-        let item = items.at(k1);
-        if (this.isHidden(item)) {
-          continue;
-        }
-        if (item.type !== 'separator') {
-          break;
-        }
-        nodes.at(k1).classList.add(HIDDEN_CLASS);
-      }
-
-      // Hide the trailing separators.
-      let k2 = n - 1;
-      for (; k2 >= 0; --k2) {
-        let item = items.at(k2);
-        if (this.isHidden(item)) {
-          continue;
-        }
-        if (item.type !== 'separator') {
-          break;
-        }
-        nodes.at(k2).classList.add(HIDDEN_CLASS);
-      }
-
-      // Hide the remaining consecutive separators.
-      let hide = false;
-      while (++k1 < k2) {
-        let item = items.at(k1);
-        if (this.isHidden(item)) {
-          continue;
-        }
-        if (item.type !== 'separator') {
-          hide = false;
-        } else if (hide) {
-          nodes.at(k1).classList.add(HIDDEN_CLASS);
-        } else {
-          hide = true;
-        }
-      }
-    }
-
-    /**
      * Create the full class name for a menu item node.
      *
      * @param item - The menu item of interest.
      *
      * @returns The full class name for the menu item node.
-     *
-     * #### Notes
-     * This method will create the full class name for the item, taking
-     * into account its type and other relevant state based on the type.
      */
     createItemClassName(item: MenuItem): string {
-      let extra = '';
+      //
       let name = ITEM_CLASS;
+
+      //
       switch (item.type) {
       case 'command':
-        let { command, args } = item;
         name += ` ${COMMAND_TYPE_CLASS}`;
-        if (!commands.isEnabled(command, args)) {
-          name += ` ${DISABLED_CLASS}`;
-        }
-        if (commands.isToggled(command, args)) {
-          name += ` ${TOGGLED_CLASS}`;
-        }
-        extra = commands.className(command, args);
         break;
       case 'submenu':
         name += ` ${SUBMENU_TYPE_CLASS}`;
-        if (item.menu) {
-          extra = item.menu.title.className;
-        }
         break;
       case 'separator':
         name += ` ${SEPARATOR_TYPE_CLASS}`;
         break;
       }
-      if (this.isHidden(item)) {
+
+      //
+      if (!item.isEnabled) {
+        name += ` ${DISABLED_CLASS}`;
+      }
+
+      //
+      if (item.isToggled) {
+        name += ` ${TOGGLED_CLASS}`;
+      }
+
+      //
+      if (!item.isVisible) {
         name += ` ${HIDDEN_CLASS}`;
       }
-      if (extra) {
-        name += ` ${extra}`;
+
+      //
+      let className = item.className;
+      if (className) {
+        name += ` ${className}`;
       }
+
+      //
       return name;
     }
 
@@ -1413,16 +1442,16 @@ namespace Menu {
      * into account its type and other relevant state based on the type.
      */
     createIconClassName(item: MenuItem): string {
-      let icon = '';
+      //
       let name = ICON_CLASS;
-      if (item.type === 'command') {
-        icon = commands.icon(item.command, item.args);
-      } else if (item.type === 'submenu' && item.menu) {
-        icon = item.menu.title.icon;
-      }
+
+      //
+      let icon = item.icon;
       if (icon) {
         name += ` ${icon}`;
       }
+
+      //
       return name;
     }
 
@@ -1434,13 +1463,7 @@ namespace Menu {
      * @returns The text for the menu item label node.
      */
     createLabelText(item: MenuItem): string {
-      let text = '';
-      if (item.type === 'command') {
-        text = commands.label(item.command, item.args);
-      } else if (item.type === 'submenu' && item.menu) {
-        text = item.menu.title.text;
-      }
-      return text.replace(/&&/g, '');
+      return item.label.replace(/&&/g, '');
     }
 
     /**
@@ -1451,44 +1474,19 @@ namespace Menu {
      * @returns The text for the menu item shortcut node.
      */
     createShortcutText(item: MenuItem): string {
-      if (item.type === 'separator' || item.type === 'submenu') {
-        return '';
+      let shortcut = item.shortcut;
+      if (shortcut && Private.IS_MAC) {
+        shortcut = formatMacKeys(shortcut);
       }
-      let kb = find(keymap.bindings, kb => {
-        return kb.command === item.command && deepEqual(kb.args, item.args);
-      });
-      return kb ? kb.keys : '';
-    }
-
-    /**
-     * Test whether a menu item should be treated as hidden.
-     *
-     * @param item - The menu item of interest.
-     *
-     * @returns `true` if the item should be hidden, `false` otherwise.
-     */
-    isHidden(item: MenuItem): boolean {
-      if (item.type === 'command') {
-        return !commands.isVisible(item.command, item.args);
-      }
-      if (item.type === 'submenu') {
-        return item.menu === null;
-      }
-      return false;
+      return shortcut;
     }
   }
 
   /**
-   * The namespace for the `ContentRenderer` class statics.
+   * A default instance of the `ContentRenderer` class.
    */
   export
-  namespace ContentRenderer {
-    /**
-     * A default instance of the `ContentRenderer` class.
-     */
-    export
-    const instance = new ContentRenderer();
-  }
+  const defaultRenderer = new ContentRenderer();
 }
 
 
@@ -1496,6 +1494,12 @@ namespace Menu {
  * The namespace for the private module data.
  */
 namespace Private {
+  /**
+   * A flag indicating whether the platform is Mac.
+   */
+  export
+  const IS_MAC = !!navigator.platform.match(/Mac/i);
+
   /**
    * A coerce a menu item or options into a real menu item.
    */
@@ -1515,22 +1519,80 @@ namespace Private {
     return false;
   }
 
+    /**
+     * Hide the extra and redundant separator nodes.
+     *
+     * @param nodes - A read only sequence of item nodes.
+     *
+     * @param items - A read only sequence of corresponding items.
+     *
+     * #### Notes
+     * This method hides leading, trailing, and consecutive separators.
+     */
+    // export
+    // function hideExtraSeparators(nodes: ISequence<HTMLElement>, items: ISequence<MenuItem>): void {
+    //   // Hide the leading separators.
+    //   let k1 = 0;
+    //   let n = items.length;
+    //   for (; k1 < n; ++k1) {
+    //     let item = items.at(k1);
+    //     if (this.isHidden(item)) {
+    //       continue;
+    //     }
+    //     if (item.type !== 'separator') {
+    //       break;
+    //     }
+    //     nodes.at(k1).classList.add(HIDDEN_CLASS);
+    //   }
+
+    //   // Hide the trailing separators.
+    //   let k2 = n - 1;
+    //   for (; k2 >= 0; --k2) {
+    //     let item = items.at(k2);
+    //     if (this.isHidden(item)) {
+    //       continue;
+    //     }
+    //     if (item.type !== 'separator') {
+    //       break;
+    //     }
+    //     nodes.at(k2).classList.add(HIDDEN_CLASS);
+    //   }
+
+    //   // Hide the remaining consecutive separators.
+    //   let hide = false;
+    //   while (++k1 < k2) {
+    //     let item = items.at(k1);
+    //     if (this.isHidden(item)) {
+    //       continue;
+    //     }
+    //     if (item.type !== 'separator') {
+    //       hide = false;
+    //     } else if (hide) {
+    //       nodes.at(k1).classList.add(HIDDEN_CLASS);
+    //     } else {
+    //       hide = true;
+    //     }
+    //   }
+    // }
+
+
   /**
    * Get the mnemonic for the given menu item.
    */
   export
   function getMnemonic(item: MenuItem): string {
-    if (item.type === 'separator') {
-      return '';
-    }
-    let label: string;
-    if (item.type === 'submenu') {
-      label = item.menu ? item.menu.title.text : '';
-    } else {
-      label = commands.label(item.command, item.args);
-    }
-    let match = label.match(/&&\w/);
-    return match ? match[0][2].toLowerCase() : '';
+    return '';
+    // if (item.type === 'separator') {
+    //   return '';
+    // }
+    // let label: string;
+    // if (item.type === 'submenu') {
+    //   label = item.menu ? item.menu.title.text : '';
+    // } else {
+    //   label = commands.label(item.command, item.args);
+    // }
+    // let match = label.match(/&&\w/);
+    // return match ? match[0][2].toLowerCase() : '';
   }
 
   /**

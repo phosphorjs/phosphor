@@ -38,7 +38,7 @@ body {
 }
 
 
-.p-Menu-itemText {
+.p-Menu-itemLabel {
   padding: 4px 35px 4px 2px;
 }
 
@@ -75,7 +75,7 @@ body {
 }
 
 
-.p-Menu-item.p-type-check.p-mod-checked > .p-Menu-itemIcon::before {
+.p-Menu-item.p-mod-toggled > .p-Menu-itemIcon::before {
   content: '\f00c';
 }
 

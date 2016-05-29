@@ -152,9 +152,6 @@ export
 function normalizeKeystroke(keystroke: string): string {
   let mods = '';
   let parts = parseKeystroke(keystroke);
-  if (parts.cmd && Private.IS_MAC) {
-    mods += 'Cmd-';
-  }
   if (parts.ctrl) {
     mods += 'Ctrl-';
   }
@@ -163,6 +160,9 @@ function normalizeKeystroke(keystroke: string): string {
   }
   if (parts.shift) {
     mods += 'Shift-';
+  }
+  if (parts.cmd && Private.IS_MAC) {
+    mods += 'Cmd-';
   }
   return mods + parts.key;
 }
@@ -205,9 +205,6 @@ function keystrokeForKeydownEvent(event: KeyboardEvent, layout: IKeyboardLayout)
     return '';
   }
   let mods = '';
-  if (event.metaKey && Private.IS_MAC) {
-    mods += 'Cmd-';
-  }
   if (event.ctrlKey) {
     mods += 'Ctrl-';
   }
@@ -217,7 +214,59 @@ function keystrokeForKeydownEvent(event: KeyboardEvent, layout: IKeyboardLayout)
   if (event.shiftKey) {
     mods += 'Shift-';
   }
+  if (event.metaKey && Private.IS_MAC) {
+    mods += 'Cmd-';
+  }
   return mods + key;
+}
+
+
+/**
+ * Format a keystroke for display on a Mac system.
+ *
+ * @param keystroke - The keystroke of interest.
+ *
+ * @returns The keystroke formatted for display on a mac.
+ *
+ * #### Notes
+ * This replaces modifiers with Mac-specific unicode characters,
+ * and removes the '-' separator in the keystroke.
+ */
+export
+function formatMacKeystroke(keystroke: string): string {
+  let mods = '';
+  let parts = parseKeystroke(keystroke);
+  if (parts.ctrl) {
+    mods += '\u2303';
+  }
+  if (parts.alt) {
+    mods += '\u2325';
+  }
+  if (parts.shift) {
+    mods += '\u21E7';
+  }
+  if (parts.cmd) {
+    mods += '\u2318';
+  }
+  console.log('formatted', keystroke, mods + parts.key);
+  return mods + parts.key;
+}
+
+
+/**
+ * Format a key sequence for display on a Mac system.
+ *
+ * @param keys - The key sequence of interest.
+ *
+ * @returns The key sequence formatted for display on a mac.
+ *
+ * #### Notes
+ * This replaces modifiers with Mac-specific unicode characters,
+ * and removes the '-' separator in the keystrokes.
+ */
+export
+function formatMacKeys(keys: string): string {
+  return keys.split(/\s+/).map(formatMacKeystroke).join(' ');
 }
 
 
