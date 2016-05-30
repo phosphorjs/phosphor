@@ -823,6 +823,7 @@ namespace Private {
     if (commands.isEnabled(command, args)) {
       commands.execute(command, args);
     } else {
+      // TODO - right way to handle disabled command?
       console.log(`'Command '${command}' is disabled (${binding.keys})`);
     }
   }
