@@ -35,6 +35,9 @@ class Title {
     if (options.text !== void 0) {
       this._text = options.text;
     }
+    if (options.mnemonic !== void 0) {
+      this._mnemonic = options.mnemonic;
+    }
     if (options.icon !== void 0) {
       this._icon = options.icon;
     }
@@ -84,6 +87,27 @@ class Title {
       return;
     }
     this._text = value;
+    this.changed.emit(void 0);
+  }
+
+  /**
+   * Get the mnemonic for the title.
+   *
+   * #### Notes
+   * The default value is an empty string.
+   */
+  get mnemonic(): string {
+    return this._text;
+  }
+
+  /**
+   * Set the mnemonic for the title.
+   */
+  set mnemonic(value: string) {
+    if (this._mnemonic === value) {
+      return;
+    }
+    this._mnemonic = value;
     this.changed.emit(void 0);
   }
 
@@ -183,6 +207,7 @@ class Title {
   private _text = '';
   private _icon = '';
   private _tooltip = '';
+  private _mnemonic = '';
   private _className = '';
   private _closable = false;
   private _owner: any = null;
@@ -212,6 +237,11 @@ namespace Title {
      * The text for the title.
      */
     text?: string;
+
+    /**
+     * The mnemonic for the title.
+     */
+    mnemonic?: string;
 
     /**
      * The icon class for the title.
