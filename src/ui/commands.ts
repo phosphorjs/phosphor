@@ -89,6 +89,17 @@ interface ICommand {
   label?: string | StringFunc;
 
   /**
+   * The mnemonic character for the command.
+   *
+   * #### Notes
+   * This can be a string literal, or a function which returns the
+   * mnemonic based on the provided command arguments.
+   *
+   * The default value is an empty string.
+   */
+  mnemonic?: string | StringFunc;
+
+  /**
    * The icon class for the command.
    *
    * #### Notes
@@ -325,6 +336,23 @@ class CommandRegistry {
   }
 
   /**
+   * Get the mnemonic character for a specific command.
+   *
+   * @param id - The id of the command of interest.
+   *
+   * @param args - The arguments for the command.
+   *
+   * @returns The mnemonic character for the command.
+   *
+   * #### Notes
+   * Returns an empty string if the command is not registered.
+   */
+  mnemonic(id: string, args: JSONObject): string {
+    let cmd = this._commands[id];
+    return cmd ? cmd.mnemonic.call(void 0, args) : '';
+  }
+
+  /**
    * Get the icon class for a specific command.
    *
    * @param id - The id of the command of interest.
@@ -513,6 +541,7 @@ namespace Private {
   interface INormalizedCommand {
     execute: ExecFunc;
     label: StringFunc;
+    mnemonic: StringFunc;
     icon: StringFunc;
     caption: StringFunc;
     usage: StringFunc;
@@ -536,6 +565,7 @@ namespace Private {
     return {
       execute: cmd.execute,
       label: asStringFunc(cmd.label),
+      mnemonic: asStringFunc(cmd.mnemonic),
       icon: asStringFunc(cmd.icon),
       caption: asStringFunc(cmd.caption),
       usage: asStringFunc(cmd.usage),
