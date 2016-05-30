@@ -6,10 +6,6 @@
 | The full license is in the file LICENSE, distributed with this software.
 |----------------------------------------------------------------------------*/
 import {
-  each
-} from '../algorithm/iteration';
-
-import {
   JSONObject, deepEqual
 } from '../algorithm/json';
 
@@ -97,7 +93,7 @@ interface IKeystrokeParts {
  *
  * #### Notes
  * The keystroke should be of the form:
- *   `[<modifier 1>+[<modifier 2>+[<modifier N>+]]]<primary key>`
+ *   `[<modifier 1> [<modifier 2> [<modifier N> ]]]<primary key>`
  *
  * The supported modifiers are: `Accel`, `Alt`, `Cmd`, `Ctrl`, and
  * `Shift`. The `Accel` modifier is translated to `Cmd` on Mac and
@@ -107,7 +103,8 @@ interface IKeystrokeParts {
  *   - Duplicate modifiers are ignored.
  *   - Extra primary keys are ignored.
  *   - The order of modifiers and primary key is irrelevant.
- *   - The keystroke should not contain whitespace.
+ *   - The keystroke parts should be separated by whitespace.
+ *   - The keystroke is case sensitive.
  */
 export
 function parseKeystroke(keystroke: string): IKeystrokeParts {
@@ -116,7 +113,7 @@ function parseKeystroke(keystroke: string): IKeystrokeParts {
   let cmd = false;
   let ctrl = false;
   let shift = false;
-  for (let token of keystroke.split('+')) {
+  for (let token of keystroke.split(/\s+/)) {
     if (token === 'Accel') {
       if (IS_MAC) {
         cmd = true;
@@ -131,8 +128,8 @@ function parseKeystroke(keystroke: string): IKeystrokeParts {
       ctrl = true;
     } else if (token === 'Shift') {
       shift = true;
-    } else {
-      key = token || '+';
+    } else if (token.length > 0) {
+      key = token;
     }
   }
   return { cmd, ctrl, alt, shift, key };
@@ -157,38 +154,61 @@ function normalizeKeystroke(keystroke: string): string {
   let mods = '';
   let parts = parseKeystroke(keystroke);
   if (parts.ctrl) {
-    mods += 'Ctrl+';
+    mods += 'Ctrl ';
   }
   if (parts.alt) {
-    mods += 'Alt+';
+    mods += 'Alt ';
   }
   if (parts.shift) {
-    mods += 'Shift+';
+    mods += 'Shift ';
   }
   if (parts.cmd && IS_MAC) {
-    mods += 'Cmd+';
+    mods += 'Cmd ';
   }
   return mods + parts.key;
 }
 
 
 /**
- * Normalize a key sequence into a canonical representation.
+ * Format a keystroke for display on the local system.
  *
- * @param keys - The whitespace-separated sequence of keystrokes.
+ * @param keystroke - The keystroke of interest.
  *
- * @returns The normalized representation of the key sequence.
+ * @returns The keystroke formatted for display on the local system.
  *
  * #### Notes
- * This normalizes the key sequence by normalizing each keystroke
- * and reassembling them with a single space character.
- *
- * The normalized key sequence is used by the keymap for matching.
+ * On Mac, this replaces the modifiers with the Mac-specific unicode
+ * characters. On other systems, this joins the modifiers with `+`.
  */
 export
-function normalizeKeys(keys: string): string {
-  let keystrokes = keys.split(/\s+/).filter(s => !!s);
-  return keystrokes.map(normalizeKeystroke).join(' ');
+function formatKeystroke(keystroke: string): string {
+  let mods = '';
+  let parts = parseKeystroke(keystroke);
+  if (IS_MAC) {
+    if (parts.ctrl) {
+      mods += '\u2303';
+    }
+    if (parts.alt) {
+      mods += '\u2325';
+    }
+    if (parts.shift) {
+      mods += '\u21E7';
+    }
+    if (parts.cmd) {
+      mods += '\u2318';
+    }
+  } else {
+    if (parts.ctrl) {
+      mods += 'Ctrl+';
+    }
+    if (parts.alt) {
+      mods += 'Alt+';
+    }
+    if (parts.shift) {
+      mods += 'Shift+';
+    }
+  }
+  return mods + parts.key;
 }
 
 
@@ -197,7 +217,7 @@ function normalizeKeys(keys: string): string {
  *
  * @param event - The event object for a `'keydown'` event.
  *
- * @param layout - The keyboard layout for looking up the key.
+ * @param layout - The keyboard layout for looking up the primary key.
  *
  * @returns A normalized keystroke, or an empty string if the event
  *   does not represent a valid keystroke for the given layout.
@@ -210,65 +230,18 @@ function keystrokeForKeydownEvent(event: KeyboardEvent, layout: IKeyboardLayout)
   }
   let mods = '';
   if (event.ctrlKey) {
-    mods += 'Ctrl+';
+    mods += 'Ctrl ';
   }
   if (event.altKey) {
-    mods += 'Alt+';
+    mods += 'Alt ';
   }
   if (event.shiftKey) {
-    mods += 'Shift+';
+    mods += 'Shift ';
   }
   if (event.metaKey && IS_MAC) {
-    mods += 'Cmd+';
+    mods += 'Cmd ';
   }
   return mods + key;
-}
-
-
-/**
- * Format a keystroke for display on a Mac system.
- *
- * @param keystroke - The keystroke of interest.
- *
- * @returns The keystroke formatted for display on a mac.
- *
- * #### Notes
- * This replaces the modifiers with Mac-specific unicode characters.
- */
-export
-function formatMacKeystroke(keystroke: string): string {
-  let mods = '';
-  let parts = parseKeystroke(keystroke);
-  if (parts.ctrl) {
-    mods += '\u2303';
-  }
-  if (parts.alt) {
-    mods += '\u2325';
-  }
-  if (parts.shift) {
-    mods += '\u21E7';
-  }
-  if (parts.cmd) {
-    mods += '\u2318';
-  }
-  return mods + parts.key;
-}
-
-
-/**
- * Format a key sequence for display on a Mac system.
- *
- * @param keys - The key sequence of interest.
- *
- * @returns The key sequence formatted for display on a mac.
- *
- * #### Notes
- * This replaces modifiers with Mac-specific unicode characters,
- * and removes the '-' separator in the keystrokes.
- */
-export
-function formatMacKeys(keys: string): string {
-  return keys.split(/\s+/).map(formatMacKeystroke).join(' ');
 }
 
 
@@ -293,8 +266,8 @@ class KeyBinding {
    * If the selector has a comma, only the first clause is used.
    */
   constructor(options: KeyBinding.IOptions) {
-    this._keys = normalizeKeys(Private.platformKeys(options));
-    this._selector = validateSelector(options.selector.split(',', 1)[0]);
+    this._keys = Private.normalizeKeys(options);
+    this._selector = Private.normalizeSelector(options);
     this._command = options.command;
     this._args = options.args || null;
   }
@@ -305,23 +278,23 @@ class KeyBinding {
    * A key sequence is composed of one or more keystrokes, where each
    * keystroke is a combination of modifiers and a primary key.
    *
-   * Most key sequences will contain a single keystroke. Sequences with
-   * multiple keystrokes separated by whitespace are called "chords",
-   * and are useful for implementing modal input (ala Vim).
+   * Most key sequences will contain a single keystroke. Key sequences
+   * with multiple keystrokes are called "chords", and are useful for
+   * implementing modal input (ala Vim).
    *
    * Each keystroke in the sequence should be of the form:
-   *   `[<modifier 1>+[<modifier 2>+[<modifier N>+]]]<primary key>`
+   *   `[<modifier 1> [<modifier 2> [<modifier N> ]]]<primary key>`
    *
    * The supported modifiers are: `Accel`, `Alt`, `Cmd`, `Ctrl`, and
    * `Shift`. The `Accel` modifier is translated to `Cmd` on Mac and
    * `Ctrl` on all other platforms. The `Cmd` modifier is ignored on
    * non-Mac platforms.
    *
-   * The key sequence is case sensitive.
+   * Keystrokes are case sensitive.
    *
-   * **Examples:** `Accel+C`, `Shift+F11`, `D D`, `Cmd+K Cmd+P`
+   * **Examples:** `['Accel C']`, `['Shift F11']`, `['D', 'D']`
    */
-  get keys(): string {
+  get keys(): string[] {
     return this._keys;
   }
 
@@ -350,7 +323,7 @@ class KeyBinding {
     return this._args;
   }
 
-  private _keys: string;
+  private _keys: string[];
   private _selector: string;
   private _command: string;
   private _args: JSONObject;
@@ -368,9 +341,9 @@ namespace KeyBinding {
   export
   interface IOptions {
     /**
-     * The key sequence for the key binding.
+     * The default key sequence for the key binding.
      */
-    keys: string;
+    keys: string[];
 
     /**
      * The CSS selector for the key binding.
@@ -392,21 +365,21 @@ namespace KeyBinding {
      *
      * If provided, this will override `keys` on Windows platforms.
      */
-    winKeys?: string;
+    winKeys?: string[];
 
     /**
      * The key sequence to use when running on Mac.
      *
      * If provided, this will override `keys` on Mac platforms.
      */
-    macKeys?: string;
+    macKeys?: string[];
 
     /**
      * The key sequence to use when running on Linux.
      *
      * If provided, this will override `keys` on Linux platforms.
      */
-    linuxKeys?: string;
+    linuxKeys?: string[];
   }
 }
 
@@ -497,7 +470,8 @@ class KeymapManager {
    *
    * #### Notes
    * This is a convenience method which searches through the public
-   * sequence of key bindings.
+   * sequence of key `bindings`. If custom search behavior is needed,
+   * user code may search that sequence manually.
    */
   findKeyBinding(command: string, args: JSONObject): KeyBinding {
     let i = findLastIndex(this._bindings, kb => {
@@ -521,12 +495,12 @@ class KeymapManager {
    *
    * Ambiguous key bindings are resolved with a timeout. As an example,
    * suppose two key bindings are registered: one with the key sequence
-   * `Ctrl+D`, and another with the key sequence `Ctrl+D Ctrl+W`. When
-   * the user presses `Ctrl+D`, the first binding cannot be immediately
-   * executed, since the user may intend to complete the chord from the
-   * second binding by pressing `Ctrl+W`. For such cases, a timeout is
-   * used to allow the user to complete the chord. If the chord is not
-   * completed before the timeout, the first binding is executed.
+   * `['Ctrl D']`, and another with `['Ctrl D', 'Ctrl W']`. If the user
+   * presses `Ctrl D`, the first binding cannot be immediately executed
+   * since the user may intend to complete the chord with `Ctrl W`. For
+   * such cases, a timer is used to allow the chord to be completed. If
+   * the chord is not completed before the timeout, the first binding
+   * is executed.
    */
   addBinding(binding: KeyBinding | KeyBinding.IOptions): IDisposable {
     // Coerce the binding to an actual `KeyBinding` instance.
@@ -580,11 +554,7 @@ class KeymapManager {
     }
 
     // Add the keystroke to the current key sequence.
-    if (this._keys) {
-      this._keys += ` ${keystroke}`;
-    } else {
-      this._keys = keystroke;
-    }
+    this._keys.push(keystroke);
 
     // Find the exact and partial matches for the key sequence.
     let { exact, partial } = Private.match(this._bindings, this._keys, event);
@@ -617,7 +587,7 @@ class KeymapManager {
     if (exact) this._exact = exact;
 
     // Store the event for possible playback in the future.
-    this._events.pushBack(event);
+    this._events.push(event);
 
     // (Re)start the timer to dispatch the most recent exact match
     // in case the partial match fails to result in an exact match.
@@ -649,20 +619,20 @@ class KeymapManager {
    */
   private _clearPendingState(): void {
     this._clearTimer();
-    this._keys = '';
     this._exact = null;
-    this._events.clear();
+    this._keys.length = 0;
+    this._events.length = 0;
   }
 
   /**
    * Replay the events which were suppressed.
    */
   private _replayEvents(): void {
-    if (this._events.isEmpty) {
+    if (this._events.length === 0) {
       return;
     }
     this._replaying = true;
-    each(this._events, Private.replayEvent);
+    this._events.forEach(Private.replayEvent);
     this._replaying = false;
   }
 
@@ -679,13 +649,13 @@ class KeymapManager {
     this._clearPendingState();
   }
 
-  private _keys = '';
   private _timerID = 0;
   private _layout = EN_US;
   private _replaying = false;
+  private _keys: string[] = [];
   private _exact: KeyBinding = null;
+  private _events: KeyboardEvent[] = [];
   private _bindings = new Vector<KeyBinding>();
-  private _events = new Vector<KeyboardEvent>();
 }
 
 
@@ -711,17 +681,31 @@ const keymap = new KeymapManager();
  */
 namespace Private {
   /**
-   * Get the platform-specific key sequence for an options object.
+   * Get the platform-specific normalized keys for an options object.
+   *
+   * The normalized keys are frozen to prevent further modification.
    */
   export
-  function platformKeys(options: KeyBinding.IOptions): string {
+  function normalizeKeys(options: KeyBinding.IOptions): string[] {
+    let keys: string[];
     if (IS_WIN) {
-      return options.winKeys || options.keys;
+      keys = options.winKeys || options.keys;
+    } else if (IS_MAC) {
+      keys = options.macKeys || options.keys;
+    } else {
+      keys = options.linuxKeys || options.keys;
     }
-    if (IS_MAC) {
-      return options.macKeys || options.keys;
-    }
-    return options.linuxKeys || options.keys;
+    return Object.freeze(keys.map(normalizeKeystroke));
+  }
+
+  /**
+   * Normalize the selector for an options object.
+   *
+   * This returns the validated first clause of the selector.
+   */
+  export
+  function normalizeSelector(options: KeyBinding.IOptions): string {
+    return validateSelector(options.selector.split(',', 1)[0]);
   }
 
   /**
@@ -755,7 +739,7 @@ namespace Private {
    * binding, and a flag which indicates if there are partial matches.
    */
   export
-  function match(bindings: ISequence<KeyBinding>, keys: string, event: KeyboardEvent): IMatchResult {
+  function match(bindings: ISequence<KeyBinding>, keys: string[], event: KeyboardEvent): IMatchResult {
     // Whether a partial match has been found.
     let partial = false;
 
@@ -824,7 +808,8 @@ namespace Private {
       commands.execute(command, args);
     } else {
       // TODO - right way to handle disabled command?
-      console.log(`'Command '${command}' is disabled (${binding.keys})`);
+      let formatted = binding.keys.map(formatKeystroke).join(' ');
+      console.log(`'Command '${command}' is disabled (${formatted})`);
     }
   }
 
@@ -848,17 +833,19 @@ namespace Private {
    *
    * Returns a `SequenceMatch` value indicating the type of match.
    */
-  function matchSequence(bindKeys: string, userKeys: string): SequenceMatch {
+  function matchSequence(bindKeys: string[], userKeys: string[]): SequenceMatch {
     if (bindKeys.length < userKeys.length) {
       return SequenceMatch.None;
     }
-    if (bindKeys === userKeys) {
-      return SequenceMatch.Exact;
+    for (let i = 0, n = userKeys.length; i < n; ++i) {
+      if (bindKeys[i] !== userKeys[i]) {
+        return SequenceMatch.None;
+      }
     }
-    if (bindKeys.slice(0, userKeys.length) === userKeys) {
+    if (bindKeys.length > userKeys.length) {
       return SequenceMatch.Partial;
     }
-    return SequenceMatch.None;
+    return SequenceMatch.Exact;
   }
 
   /**
