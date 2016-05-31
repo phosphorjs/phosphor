@@ -1,6 +1,0 @@
-- rename contentrendere.isntance =-> defailtrendere
-- rename text => label
-- dirty flag on menu to only render if commands have changed?
-- command id in data attribute
-- closing menu on command execute focus issue
-- menu mnemonic
