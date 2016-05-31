@@ -34,6 +34,10 @@ import {
 } from '../dom/query';
 
 import {
+  keymap
+} from './keymap';
+
+import {
   Menu
 } from './menu';
 
@@ -466,35 +470,102 @@ class MenuBar extends Widget {
    * Handle the `'keydown'` event for the menu bar.
    */
   private _evtKeyDown(event: KeyboardEvent): void {
-    switch (event.keyCode) {
-    case 13: // Enter
-    case 38: // Up Arrow
-    case 40: // Down Arrow
-      event.preventDefault();
-      event.stopPropagation();
+    // A menu bar handles all keydown events.
+    event.preventDefault();
+    event.stopPropagation();
+
+    // Fetch the key code for the event.
+    let kc = event.keyCode;
+
+    // Enter, Up Arrow, Down Arrow
+    if (kc === 13 || kc === 38 || kc === 40) {
       this.openActiveMenu();
-      break;
-    case 27: // Escape
-      event.preventDefault();
-      event.stopPropagation();
+      return;
+    }
+
+    // Escape
+    if (kc === 27) {
       this._closeChildMenu();
       this.activeIndex = -1;
       this.blur();
-      break;
-    case 37: // Left Arrow
-      event.preventDefault();
-      event.stopPropagation();
-      let i1 = this._activeIndex;
-      let n1 = this._menus.length;
-      this.activeIndex = i1 === 0 ? n1 - 1 : i1 - 1;
-      break;
-    case 39: // Right Arrow
-      event.preventDefault();
-      event.stopPropagation();
-      let i2 = this._activeIndex;
-      let n2 = this._menus.length;
-      this.activeIndex = i2 === n2 - 1 ? 0 : i2 + 1;
-      break;
+      return;
+    }
+
+    // Left Arrow
+    if (kc === 37) {
+      let i = this._activeIndex;
+      let n = this._menus.length;
+      this.activeIndex = i === 0 ? n - 1 : i - 1;
+      return;
+    }
+
+    // Right Arrow
+    if (kc === 39) {
+      let i = this._activeIndex;
+      let n = this._menus.length;
+      this.activeIndex = i === n - 1 ? 0 : i + 1;
+      return;
+    }
+
+    // The following code activates an item by mnemonic.
+
+    // Get the pressed key character for the current layout.
+    let key = keymap.layout.keyForKeydownEvent(event);
+
+    // Bail if the key is not valid for the current layout.
+    if (!key) {
+      return;
+    }
+
+    // Normalize the case of the key.
+    key = key.toUpperCase();
+
+    // Setup the storage for the search results.
+    let mnIndex = -1;
+    let autoIndex = -1;
+    let mnMultiple = false;
+
+    // Search for the best mnemonic menu. This searches the menus
+    // starting at the active index and finds the following:
+    //   - the index of the first matching mnemonic menu
+    //   - whether there are multiple matching mnemonic menus
+    //   - the index of the first menu with no mnemonic, but
+    //     which has a matching first character.
+    let n = this._menus.length;
+    let j = this._activeIndex + 1;
+    for (let i = 0; i < n; ++i) {
+      let k = (i + j) % n;
+      let title = this._menus.at(k).title;
+      if (title.label.length === 0) {
+        continue;
+      }
+      let mn = title.mnemonic;
+      if (mn >= 0 && mn < title.label.length) {
+        if (title.label[mn].toUpperCase() === key) {
+          if (mnIndex === -1) {
+            mnIndex = k;
+          } else {
+            mnMultiple = true;
+          }
+        }
+      } else if (autoIndex === -1) {
+        if (title.label[0].toUpperCase() === key) {
+          autoIndex = k;
+        }
+      }
+    }
+
+    // Handle the requested mnemonic based on the search results.
+    // If exactly one mnemonic is matched, that menu is opened.
+    // Otherwise, the next mnemonic is activated if available,
+    // follwed by the auto mnemonic if available.
+    if (mnIndex !== -1 && !mnMultiple) {
+      this.activeIndex = mnIndex;
+      this.openActiveMenu();
+    } else if (mnIndex !== -1) {
+      this.activeIndex = mnIndex;
+    } else if (autoIndex !== -1) {
+      this.activeIndex = autoIndex;
     }
   }
 
