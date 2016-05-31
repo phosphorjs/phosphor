@@ -1452,7 +1452,14 @@ namespace Menu {
       let label = icon.nextSibling as HTMLElement;
       let shortcut = label.nextSibling as HTMLElement;
 
-      // Update the state of the nodes.
+      // Set the command id in the data set.
+      if (item.type === 'command') {
+        node.dataset['command'] = item.command;
+      } else {
+        delete node.dataset['command'];
+      }
+
+      // Update the rest of the node state.
       node.title = item.caption;
       node.className = itemClass;
       icon.className = iconClass;
