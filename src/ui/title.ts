@@ -91,19 +91,19 @@ class Title {
   }
 
   /**
-   * Get the mnemonic for the title.
+   * Get the mnemonic index for the title.
    *
    * #### Notes
-   * The default value is an empty string.
+   * The default value is `-1`.
    */
-  get mnemonic(): string {
-    return this._text;
+  get mnemonic(): number {
+    return this._mnemonic;
   }
 
   /**
-   * Set the mnemonic for the title.
+   * Set the mnemonic index for the title.
    */
-  set mnemonic(value: string) {
+  set mnemonic(value: number) {
     if (this._mnemonic === value) {
       return;
     }
@@ -207,7 +207,7 @@ class Title {
   private _text = '';
   private _icon = '';
   private _tooltip = '';
-  private _mnemonic = '';
+  private _mnemonic = -1;
   private _className = '';
   private _closable = false;
   private _owner: any = null;
@@ -239,9 +239,9 @@ namespace Title {
     text?: string;
 
     /**
-     * The mnemonic for the title.
+     * The mnemonic index for the title.
      */
-    mnemonic?: string;
+    mnemonic?: number;
 
     /**
      * The icon class for the title.
