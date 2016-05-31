@@ -857,6 +857,12 @@ class Menu extends Widget {
    * A message handler invoked on an `'update-request'` message.
    */
   protected onUpdateRequest(msg: Message): void {
+    // TODO - currently, an 'update-request' message is sent to a menu
+    // just before it is opened. This ensures it is current when shown
+    // without needing to subscribe to any commands or keymap signals.
+    // Often, the update will be unnecessary. If it becomes an issue
+    // for performance, the menu can maintain a dirty flag.
+
     // Fetch common variables.
     let items = this._items;
     let nodes = this._nodes;
