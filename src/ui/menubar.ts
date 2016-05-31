@@ -558,7 +558,7 @@ class MenuBar extends Widget {
     // Handle the requested mnemonic based on the search results.
     // If exactly one mnemonic is matched, that menu is opened.
     // Otherwise, the next mnemonic is activated if available,
-    // follwed by the auto mnemonic if available.
+    // followed by the auto mnemonic if available.
     if (mnIndex !== -1 && !mnMultiple) {
       this.activeIndex = mnIndex;
       this.openActiveMenu();
