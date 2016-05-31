@@ -929,20 +929,23 @@ class Menu extends Widget {
     event.preventDefault();
     event.stopPropagation();
 
+    // Fetch the key code for the event.
+    let kc = event.keyCode;
+
     // Enter
-    if (event.keyCode === 13) {
+    if (kc === 13) {
       this.triggerActiveItem();
       return;
     }
 
     // Escape
-    if (event.keyCode === 27) {
+    if (kc === 27) {
       this.close();
       return;
     }
 
     // Left Arrow
-    if (event.keyCode === 37) {
+    if (kc === 37) {
       if (this._parentMenu) {
         this.close();
       } else {
@@ -952,13 +955,13 @@ class Menu extends Widget {
     }
 
     // Up Arrow
-    if (event.keyCode === 38) {
+    if (kc === 38) {
       this.activatePreviousItem();
       return;
     }
 
     // Right Arrow
-    if (event.keyCode === 39) {
+    if (kc === 39) {
       let item = this.activeItem;
       if (item && item.type === 'submenu') {
         this.triggerActiveItem();
@@ -969,7 +972,7 @@ class Menu extends Widget {
     }
 
     // Down Arrow
-    if (event.keyCode === 40) {
+    if (kc === 40) {
       this.activateNextItem();
       return;
     }
@@ -992,11 +995,12 @@ class Menu extends Widget {
     let autoIndex = -1;
     let mnMultiple = false;
 
-    // Search for the best mnemonic item. This searches the current key
-    // bindings starting at the active index and finds the index of the
-    // first matching mnemonic item, whether or not there is more than
-    // one matching mnemonic, and the index of the first non-mnemonic
-    // item with a first character match.
+    // Search for the best mnemonic item. This searches the menu items
+    // starting at the active index and finds the following:
+    //   - the index of the first matching mnemonic item
+    //   - whether there are multiple matching mnemonic items
+    //   - the index of the first item with no mnemonic, but
+    //     which has a matching first character
     let n = this._items.length;
     let j = this._activeIndex + 1;
     for (let i = 0; i < n; ++i) {
@@ -1025,10 +1029,10 @@ class Menu extends Widget {
       }
     }
 
-    // Handle the requested mnemonic based on the search results. If
-    // exactly one mnemonic item is matched, that item is triggered.
-    // Otherwise, the next mnemonic item is activated if available,
-    // follwed by the auto mnemonic item if available.
+    // Handle the requested mnemonic based on the search results.
+    // If exactly one mnemonic is matched, that item is triggered.
+    // Otherwise, the next mnemonic is activated if available,
+    // follwed by the auto mnemonic if available.
     if (mnIndex !== -1 && !mnMultiple) {
       this.activeIndex = mnIndex;
       this.triggerActiveItem();
