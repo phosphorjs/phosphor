@@ -1,6 +1,10 @@
 #!/bin/bash
+
+export DISPLAY=:99.0
+sh -e /etc/init.d/xvfb start
 set -e
-gulp
-gulp examples
-gulp tests
-./node_modules/.bin/karma start --browsers=Firefox tests/karma.conf.js
+npm run clean
+npm run build
+npm test
+npm run test:coverage
+#npm run docs

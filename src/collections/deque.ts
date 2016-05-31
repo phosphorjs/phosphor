@@ -11,23 +11,23 @@ import {
 
 
 /**
- * A generic FIFO queue data structure.
+ * A generic double ended queue data structure.
  */
 export
-class Queue<T> implements IIterable<T> {
+class Deque<T> implements IIterable<T> {
   /**
-   * Construct a new queue.
+   * Construct a new deque.
    *
-   * @param values - The initial values for the queue.
+   * @param values - The initial values for the deque.
    */
   constructor(values?: IterableOrArrayLike<T>) {
     if (values) each(values, value => { this.pushBack(value); });
   }
 
   /**
-   * Test whether the queue is empty.
+   * Test whether the deque is empty.
    *
-   * @returns `true` if the queue is empty, `false` otherwise.
+   * @returns `true` if the deque is empty, `false` otherwise.
    *
    * #### Notes
    * This is a read-only property.
@@ -43,9 +43,9 @@ class Queue<T> implements IIterable<T> {
   }
 
   /**
-   * Get the length of the queue.
+   * Get the length of the deque.
    *
-   * @return The number of values in the queue.
+   * @return The number of values in the deque.
    *
    * #### Notes
    * This is a read-only property.
@@ -61,10 +61,10 @@ class Queue<T> implements IIterable<T> {
   }
 
   /**
-   * Get the value at the front of the queue.
+   * Get the value at the front of the deque.
    *
-   * @returns The value at the front of the queue, or `undefined` if
-   *   the queue is empty.
+   * @returns The value at the front of the deque, or `undefined` if
+   *   the deque is empty.
    *
    * #### Notes
    * This is a read-only property.
@@ -80,10 +80,10 @@ class Queue<T> implements IIterable<T> {
   }
 
   /**
-   * Get the value at the back of the queue.
+   * Get the value at the back of the deque.
    *
-   * @returns The value at the back of the queue, or `undefined` if
-   *   the queue is empty.
+   * @returns The value at the back of the deque, or `undefined` if
+   *   the deque is empty.
    *
    * #### Notes
    * This is a read-only property.
@@ -99,9 +99,9 @@ class Queue<T> implements IIterable<T> {
   }
 
   /**
-   * Create an iterator over the values in the queue.
+   * Create an iterator over the values in the deque.
    *
-   * @returns A new iterator starting at the front of the queue.
+   * @returns A new iterator starting at the front of the deque.
    *
    * #### Complexity
    * Constant.
@@ -110,13 +110,37 @@ class Queue<T> implements IIterable<T> {
    * No changes.
    */
   iter(): IIterator<T> {
-    return new QueueIterator<T>(this._front);
+    return new DequeIterator<T>(this._front);
   }
 
   /**
-   * Add a value to the back of the queue.
+   * Add a value to the front of the deque.
    *
-   * @param value - The value to add to the back of the queue.
+   * @param value - The value to add to the front of the deque.
+   *
+   * #### Complexity
+   * Constant.
+   *
+   * #### Iterator Validity
+   * No changes.
+   */
+  pushFront(value: T): void {
+    let node = new DequeNode(value);
+    if (this._length === 0) {
+      this._front = node;
+      this._back = node;
+    } else {
+      node.next = this._front;
+      this._front.prev = node;
+      this._front = node;
+    }
+    this._length++;
+  }
+
+  /**
+   * Add a value to the back of the deque.
+   *
+   * @param value - The value to add to the back of the deque.
    *
    * #### Complexity
    * Constant.
@@ -125,11 +149,12 @@ class Queue<T> implements IIterable<T> {
    * No changes.
    */
   pushBack(value: T): void {
-    let node = new QueueNode(value);
+    let node = new DequeNode(value);
     if (this._length === 0) {
       this._front = node;
       this._back = node;
     } else {
+      node.prev = this._back;
       this._back.next = node;
       this._back = node;
     }
@@ -137,10 +162,10 @@ class Queue<T> implements IIterable<T> {
   }
 
   /**
-   * Remove and return the value at the front of the queue.
+   * Remove and return the value at the front of the deque.
    *
-   * @returns The value at the front of the queue, or `undefined` if
-   *   the queue is empty.
+   * @returns The value at the front of the deque, or `undefined` if
+   *   the deque is empty.
    *
    * #### Complexity
    * Constant.
@@ -158,6 +183,7 @@ class Queue<T> implements IIterable<T> {
       this._back = null;
     } else {
       this._front = node.next;
+      this._front.prev = null;
       node.next = null;
     }
     this._length--;
@@ -165,7 +191,36 @@ class Queue<T> implements IIterable<T> {
   }
 
   /**
-   * Remove all values from the queue.
+   * Remove and return the value at the back of the deque.
+   *
+   * @returns The value at the back of the deque, or `undefined` if
+   *   the deque is empty.
+   *
+   * #### Complexity
+   * Constant.
+   *
+   * #### Iterator Validity
+   * Iterators pointing at the removed value are invalidated.
+   */
+  popBack(): T {
+    if (this._length === 0) {
+      return void 0;
+    }
+    let node = this._back;
+    if (this._length === 1) {
+      this._front = null;
+      this._back = null;
+    } else {
+      this._back = node.prev;
+      this._back.next = null;
+      node.prev = null;
+    }
+    this._length--;
+    return node.value;
+  }
+
+  /**
+   * Remove all values from the deque.
    *
    * #### Complexity
    * Linear.
@@ -177,6 +232,7 @@ class Queue<T> implements IIterable<T> {
     let node = this._front;
     while (node) {
       let next = node.next;
+      node.prev = null;
       node.next = null;
       node = next;
     }
@@ -186,18 +242,18 @@ class Queue<T> implements IIterable<T> {
   }
 
   /**
-   * Swap the contents of the queue with the contents of another.
+   * Swap the contents of the deque with the contents of another.
    *
-   * @param other - The other queue holding the contents to swap.
+   * @param other - The other deque holding the contents to swap.
    *
    * #### Complexity
    * Constant.
    *
    * #### Iterator Validity
    * All current iterators remain valid, but will now point to the
-   * contents of the other queue involved in the swap.
+   * contents of the other deque involved in the swap.
    */
-  swap(other: Queue<T>): void {
+  swap(other: Deque<T>): void {
     let length = other._length;
     let front = other._front;
     let back = other._back;
@@ -210,21 +266,21 @@ class Queue<T> implements IIterable<T> {
   }
 
   private _length = 0;
-  private _front: QueueNode<T> = null;
-  private _back: QueueNode<T> = null;
+  private _front: DequeNode<T> = null;
+  private _back: DequeNode<T> = null;
 }
 
 
 /**
- * An iterator for a queue.
+ * An iterator for a deque.
  */
-class QueueIterator<T> implements IIterator<T> {
+class DequeIterator<T> implements IIterator<T> {
   /**
-   * Construct a new queue iterator.
+   * Construct a new deque iterator.
    *
    * @param node - The node at the front of range.
    */
-  constructor(node: QueueNode<T>) {
+  constructor(node: DequeNode<T>) {
     this._node = node;
   }
 
@@ -238,18 +294,18 @@ class QueueIterator<T> implements IIterator<T> {
   }
 
   /**
-   * Create an independent clone of the queue iterator.
+   * Create an independent clone of the deque iterator.
    *
    * @returns A new iterator starting with the current value.
    */
-  clone(): QueueIterator<T> {
-    return new QueueIterator<T>(this._node);
+  clone(): DequeIterator<T> {
+    return new DequeIterator<T>(this._node);
   }
 
   /**
-   * Get the next value from the queue.
+   * Get the next value from the deque.
    *
-   * @returns The next value from the queue, or `undefined` if the
+   * @returns The next value from the deque, or `undefined` if the
    *   iterator is exhausted.
    */
   next(): T {
@@ -261,18 +317,23 @@ class QueueIterator<T> implements IIterator<T> {
     return value;
   }
 
-  private _node: QueueNode<T>;
+  private _node: DequeNode<T>;
 }
 
 
 /**
- * The node type for a queue.
+ * The node type for a deque.
  */
-class QueueNode<T> {
+class DequeNode<T> {
   /**
-   * The next node the queue.
+   * The next node the deque.
    */
-  next: QueueNode<T> = null;
+  next: DequeNode<T> = null;
+
+  /**
+   * The previous node in the deque.
+   */
+  prev: DequeNode<T> = null;
 
   /**
    * The value for the node.
@@ -280,7 +341,7 @@ class QueueNode<T> {
   value: T;
 
   /**
-   * Construct a new queue node.
+   * Construct a new deque node.
    *
    * @param value - The value for the node.
    */
