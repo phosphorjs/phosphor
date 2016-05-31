@@ -108,7 +108,7 @@ class MenuBar extends Widget {
     super();
     this.addClass(MENU_BAR_CLASS);
     this.setFlag(WidgetFlag.DisallowLayout);
-    this._renderer = options.renderer || MenuBar.ContentRenderer.instance;
+    this._renderer = options.renderer || MenuBar.defaultRenderer;
   }
 
   /**
@@ -800,14 +800,8 @@ namespace MenuBar {
   }
 
   /**
-   * The namespace for the `ContentRenderer` class statics.
+   * A default instance of the `ContentRenderer` class.
    */
   export
-  namespace ContentRenderer {
-    /**
-     * A default instance of the `ContentRenderer` class.
-     */
-    export
-    const instance = new ContentRenderer();
-  }
+  const defaultRenderer = new ContentRenderer();
 }

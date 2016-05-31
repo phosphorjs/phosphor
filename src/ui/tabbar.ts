@@ -164,7 +164,7 @@ class TabBar extends Widget {
     super();
     this.addClass(TAB_BAR_CLASS);
     this.setFlag(WidgetFlag.DisallowLayout);
-    this._renderer = options.renderer || TabBar.ContentRenderer.instance;
+    this._renderer = options.renderer || TabBar.defaultRenderer;
   }
 
   /**
@@ -1197,16 +1197,10 @@ namespace TabBar {
   }
 
   /**
-   * The namespace for the `ContentRenderer` class statics.
+   * A default instance of the `ContentRenderer` class.
    */
   export
-  namespace ContentRenderer {
-    /**
-     * A default instance of the `ContentRenderer` class.
-     */
-    export
-    const instance = new ContentRenderer();
-  }
+  const defaultRenderer = new ContentRenderer();
 }
 
 
