@@ -41,8 +41,8 @@ class Title {
     if (options.icon !== void 0) {
       this._icon = options.icon;
     }
-    if (options.tooltip !== void 0) {
-      this._tooltip = options.tooltip;
+    if (options.caption !== void 0) {
+      this._caption = options.caption;
     }
     if (options.closable !== void 0) {
       this._closable = options.closable;
@@ -136,23 +136,23 @@ class Title {
   }
 
   /**
-   * Get the tooltip for the title.
+   * Get the caption for the title.
    *
    * #### Notes
    * The default value is an empty string.
    */
-  get tooltip(): string {
-    return this._tooltip;
+  get caption(): string {
+    return this._caption;
   }
 
   /**
-   * Set the tooltip for the title.
+   * Set the caption for the title.
    */
-  set tooltip(value: string) {
-    if (this._tooltip === value) {
+  set caption(value: string) {
+    if (this._caption === value) {
       return;
     }
-    this._tooltip = value;
+    this._caption = value;
     this.changed.emit(void 0);
   }
 
@@ -206,7 +206,7 @@ class Title {
 
   private _label = '';
   private _icon = '';
-  private _tooltip = '';
+  private _caption = '';
   private _mnemonic = -1;
   private _className = '';
   private _closable = false;
@@ -249,9 +249,9 @@ namespace Title {
     icon?: string;
 
     /**
-     * The tooltip for the title.
+     * The caption for the title.
      */
-    tooltip?: string;
+    caption?: string;
 
     /**
      * The extra class name for the title.

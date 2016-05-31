@@ -1181,7 +1181,7 @@ namespace TabBar {
       node.className = `${TAB_CLASS} ${tabInfix} ${tabSuffix}`;
       icon.className = `${ICON_CLASS} ${iconSuffix}`;
       text.textContent = title.label;
-      text.title = title.tooltip;
+      text.title = title.caption;
     }
 
     /**

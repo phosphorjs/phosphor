@@ -231,7 +231,7 @@ class MenuItem {
       return commands.caption(this._command, this._args);
     }
     if (this._type === 'submenu' && this._menu) {
-      return this._menu.title.tooltip;
+      return this._menu.title.caption;
     }
     return '';
   }
