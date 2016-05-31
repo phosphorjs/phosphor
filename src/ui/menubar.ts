@@ -77,6 +77,11 @@ const ICON_CLASS = 'p-MenuBar-itemIcon';
 const LABEL_CLASS = 'p-MenuBar-itemLabel';
 
 /**
+ * The class name added to a menu bar item mnemonic node.
+ */
+const MNEMONIC_CLASS = 'p-MenuBar-itemMnemonic';
+
+/**
  * The class name added to an active menu bar and item.
  */
 const ACTIVE_CLASS = 'p-mod-active';
@@ -795,7 +800,31 @@ namespace MenuBar {
       if (title.icon) iconClass += ` ${title.icon}`;
       node.className = itemClass;
       icon.className = iconClass;
-      text.textContent = title.label;
+      text.innerHTML = this.formatLabel(title.label, title.mnemonic);
+    }
+
+    /**
+     * Format a label into HTML for display.
+     *
+     * @param label - The label text of interest.
+     *
+     * @param mnemonic - The index of the mnemonic character.
+     *
+     * @return The formatted label HTML for display.
+     */
+    formatLabel(label: string, mnemonic: number): string {
+      // If the index is out of range, do not modify the label.
+      if (mnemonic < 0 || mnemonic >= label.length) {
+        return label;
+      }
+
+      // Split the label into parts.
+      let pref = label.slice(0, mnemonic);
+      let suff = label.slice(mnemonic + 1);
+      let char = label[mnemonic];
+
+      // Join the label with the mnemonic span.
+      return `${pref}<span class="${MNEMONIC_CLASS}">${char}</span>${suff}`;
     }
   }
 
