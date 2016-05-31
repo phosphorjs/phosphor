@@ -1452,7 +1452,7 @@ namespace Menu {
       let label = icon.nextSibling as HTMLElement;
       let shortcut = label.nextSibling as HTMLElement;
 
-      // Set the command id in the data set.
+      // Set the command ID in the data set.
       if (item.type === 'command') {
         node.dataset['command'] = item.command;
       } else {
