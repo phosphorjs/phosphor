@@ -41,6 +41,17 @@ type StringFunc = (args: JSONObject) => string;
 
 
 /**
+ * A type alias for a command number function.
+ *
+ * @param args - The arguments for the command.
+ *
+ * @returns The relevant number result.
+ */
+export
+type NumberFunc = (args: JSONObject) => number;
+
+
+/**
  * A type alias for a command boolean function.
  *
  * @param args - The arguments for the command.
@@ -89,15 +100,15 @@ interface ICommand {
   label?: string | StringFunc;
 
   /**
-   * The mnemonic character for the command.
+   * The index of the mnemonic character for the command.
    *
    * #### Notes
-   * This can be a string literal, or a function which returns the
-   * mnemonic based on the provided command arguments.
+   * This can be an index literal, or a function which returns the
+   * mnemonic index based on the provided command arguments.
    *
-   * The default value is an empty string.
+   * The default value is `-1`.
    */
-  mnemonic?: string | StringFunc;
+  mnemonic?: number | NumberFunc;
 
   /**
    * The icon class for the command.
@@ -336,20 +347,20 @@ class CommandRegistry {
   }
 
   /**
-   * Get the mnemonic character for a specific command.
+   * Get the mnemonic index for a specific command.
    *
    * @param id - The id of the command of interest.
    *
    * @param args - The arguments for the command.
    *
-   * @returns The mnemonic character for the command.
+   * @returns The mnemonic index for the command.
    *
    * #### Notes
-   * Returns an empty string if the command is not registered.
+   * Returns `-1` if the command is not registered.
    */
-  mnemonic(id: string, args: JSONObject): string {
+  mnemonic(id: string, args: JSONObject): number {
     let cmd = this._commands[id];
-    return cmd ? cmd.mnemonic.call(void 0, args) : '';
+    return cmd ? cmd.mnemonic.call(void 0, args) : -1;
   }
 
   /**
@@ -541,7 +552,7 @@ namespace Private {
   interface INormalizedCommand {
     execute: ExecFunc;
     label: StringFunc;
-    mnemonic: StringFunc;
+    mnemonic: NumberFunc;
     icon: StringFunc;
     caption: StringFunc;
     usage: StringFunc;
@@ -565,7 +576,7 @@ namespace Private {
     return {
       execute: cmd.execute,
       label: asStringFunc(cmd.label),
-      mnemonic: asStringFunc(cmd.mnemonic),
+      mnemonic: asNumberFunc(cmd.mnemonic),
       icon: asStringFunc(cmd.icon),
       caption: asStringFunc(cmd.caption),
       usage: asStringFunc(cmd.usage),
@@ -580,6 +591,11 @@ namespace Private {
    * A singleton empty string function.
    */
   const emptyStringFunc: StringFunc = (args: JSONObject) => '';
+
+  /**
+   * A singleton `-1` number function
+   */
+  const negativeOneFunc: NumberFunc = (args: JSONObject) => -1;
 
   /**
    * A singleton true boolean function.
@@ -602,5 +618,18 @@ namespace Private {
       return value;
     }
     return (args: JSONObject) => value as string;
+  }
+
+  /**
+   * Coerce a value to a number function.
+   */
+  function asNumberFunc(value?: number | NumberFunc): NumberFunc {
+    if (value === void 0) {
+      return negativeOneFunc;
+    }
+    if (typeof value === 'function') {
+      return value;
+    }
+    return (args: JSONObject) => value as number;
   }
 }
