@@ -32,8 +32,8 @@ class Title {
     if (options.owner !== void 0) {
       this._owner = options.owner;
     }
-    if (options.text !== void 0) {
-      this._text = options.text;
+    if (options.label !== void 0) {
+      this._label = options.label;
     }
     if (options.mnemonic !== void 0) {
       this._mnemonic = options.mnemonic;
@@ -70,23 +70,23 @@ class Title {
   }
 
   /**
-   * Get the text for the title.
+   * Get the label for the title.
    *
    * #### Notes
    * The default value is an empty string.
    */
-  get text(): string {
-    return this._text;
+  get label(): string {
+    return this._label;
   }
 
   /**
-   * Set the text for the title.
+   * Set the label for the title.
    */
-  set text(value: string) {
-    if (this._text === value) {
+  set label(value: string) {
+    if (this._label === value) {
       return;
     }
-    this._text = value;
+    this._label = value;
     this.changed.emit(void 0);
   }
 
@@ -204,7 +204,7 @@ class Title {
     this.changed.emit(void 0);
   }
 
-  private _text = '';
+  private _label = '';
   private _icon = '';
   private _tooltip = '';
   private _mnemonic = -1;
@@ -234,9 +234,9 @@ namespace Title {
     owner?: any;
 
     /**
-     * The text for the title.
+     * The label for the title.
      */
-    text?: string;
+    label?: string;
 
     /**
      * The mnemonic index for the title.

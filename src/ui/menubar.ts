@@ -67,14 +67,14 @@ const MENU_CLASS = 'p-MenuBar-menu';
 const ITEM_CLASS = 'p-MenuBar-item';
 
 /**
- * The class name added to a menu bar item icon cell.
+ * The class name added to a menu bar item icon node.
  */
 const ICON_CLASS = 'p-MenuBar-itemIcon';
 
 /**
- * The class name added to a menu bar item text cell.
+ * The class name added to a menu bar item label node.
  */
-const TEXT_CLASS = 'p-MenuBar-itemText';
+const LABEL_CLASS = 'p-MenuBar-itemLabel';
 
 /**
  * The class name added to an active menu bar and item.
@@ -773,7 +773,7 @@ namespace MenuBar {
       let text = document.createElement('span');
       node.className = ITEM_CLASS;
       icon.className = ICON_CLASS;
-      text.className = TEXT_CLASS;
+      text.className = LABEL_CLASS;
       node.appendChild(icon);
       node.appendChild(text);
       return node;
@@ -795,7 +795,7 @@ namespace MenuBar {
       if (title.icon) iconClass += ` ${title.icon}`;
       node.className = itemClass;
       icon.className = iconClass;
-      text.textContent = title.text;
+      text.textContent = title.label;
     }
   }
 

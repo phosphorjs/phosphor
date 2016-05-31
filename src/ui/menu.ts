@@ -192,7 +192,7 @@ class MenuItem {
       return commands.label(this._command, this._args);
     }
     if (this._type === 'submenu' && this._menu) {
-      return this._menu.title.text;
+      return this._menu.title.label;
     }
     return '';
   }

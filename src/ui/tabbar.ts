@@ -85,9 +85,9 @@ const FOOTER_CLASS = 'p-TabBar-footer';
 const TAB_CLASS = 'p-TabBar-tab';
 
 /**
- * The class name added to a tab text node.
+ * The class name added to a tab label node.
  */
-const TEXT_CLASS = 'p-TabBar-tabText';
+const LABEL_CLASS = 'p-TabBar-tabLabel';
 
 /**
  * The class name added to a tab icon node.
@@ -1157,7 +1157,7 @@ namespace TabBar {
       let close = document.createElement('span');
       node.className = TAB_CLASS;
       icon.className = ICON_CLASS;
-      text.className = TEXT_CLASS;
+      text.className = LABEL_CLASS;
       close.className = CLOSE_ICON_CLASS;
       node.appendChild(icon);
       node.appendChild(text);
@@ -1180,7 +1180,7 @@ namespace TabBar {
       let text = icon.nextSibling as HTMLElement;
       node.className = `${TAB_CLASS} ${tabInfix} ${tabSuffix}`;
       icon.className = `${ICON_CLASS} ${iconSuffix}`;
-      text.textContent = title.text;
+      text.textContent = title.label;
       text.title = title.tooltip;
     }
 

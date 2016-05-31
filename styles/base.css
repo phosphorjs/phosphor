@@ -212,7 +212,7 @@ body.p-mod-override-cursor * {
 }
 
 
-.p-TabBar-tabText {
+.p-TabBar-tabLabel {
   flex: 1 1 auto;
   overflow: hidden;
   white-space: nowrap;
