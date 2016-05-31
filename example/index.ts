@@ -14,7 +14,7 @@ import {
 } from '../lib/ui/keymap';
 
 import {
-  Menu, MenuItem
+  Menu
 } from '../lib/ui/menu';
 
 import {
@@ -32,14 +32,16 @@ import './index.css';
 
 function createMenu(): Menu {
   let sub1 = new Menu();
-  sub1.title.text = 'More...';
+  sub1.title.label = 'More...';
+  sub1.title.mnemonic = 0;
   sub1.addItem({ command: 'example:one' });
   sub1.addItem({ command: 'example:two' });
   sub1.addItem({ command: 'example:three' });
   sub1.addItem({ command: 'example:four' });
 
   let sub2 = new Menu();
-  sub2.title.text = 'More...';
+  sub2.title.label = 'More...';
+  sub2.title.mnemonic = 0;
   sub2.addItem({ command: 'example:one' });
   sub2.addItem({ command: 'example:two' });
   sub2.addItem({ command: 'example:three' });
@@ -55,7 +57,7 @@ function createMenu(): Menu {
   root.addItem({ command: 'example:close-tab' });
   root.addItem({ command: 'example:save-on-exit' });
   root.addItem({ type: 'separator' });
-  root.addItem({ command: 'example: open-task-manager' });
+  root.addItem({ command: 'example:open-task-manager' });
   root.addItem({ type: 'separator' });
   root.addItem({ type: 'submenu', menu: sub2 });
   root.addItem({ type: 'separator' });
@@ -69,6 +71,7 @@ function main(): void {
 
   commands.addCommand('example:cut', {
     label: 'Cut',
+    mnemonic: 1,
     icon: 'fa fa-cut',
     execute: () => {
       console.log('Cut');
@@ -77,6 +80,7 @@ function main(): void {
 
   commands.addCommand('example:copy', {
     label: 'Copy',
+    mnemonic: 0,
     icon: 'fa fa-copy',
     execute: () => {
       console.log('Copy');
@@ -85,6 +89,7 @@ function main(): void {
 
   commands.addCommand('example:paste', {
     label: 'Paste',
+    mnemonic: 0,
     icon: 'fa fa-paste',
     execute: () => {
       console.log('Paste');
@@ -93,6 +98,8 @@ function main(): void {
 
   commands.addCommand('example:new-tab', {
     label: 'New Tab',
+    mnemonic: 0,
+    caption: 'Open a new tab',
     execute: () => {
       console.log('New Tab');
     }
@@ -100,6 +107,8 @@ function main(): void {
 
   commands.addCommand('example:close-tab', {
     label: 'Close Tab',
+    mnemonic: 2,
+    caption: 'Close the current tab',
     execute: () => {
       console.log('Close Tab');
     }
@@ -107,6 +116,8 @@ function main(): void {
 
   commands.addCommand('example:save-on-exit', {
     label: 'Save on Exit',
+    mnemonic: 0,
+    caption: 'Toggle the save on exit flag',
     execute: () => {
       console.log('Save on Exit');
     }
@@ -114,12 +125,14 @@ function main(): void {
 
   commands.addCommand('example:open-task-manager', {
     label: 'Task Manager',
+    mnemonic: 5,
     isEnabled: () => false,
     execute: () => { }
   });
 
   commands.addCommand('example:close', {
     label: 'Close',
+    mnemonic: 0,
     icon: 'fa fa-close',
     execute: () => {
       console.log('Close');
@@ -155,37 +168,46 @@ function main(): void {
   });
 
   keymap.addBinding({
-    keys: 'Accel-X',
+    keys: ['Accel X'],
     selector: 'body',
     command: 'example:cut'
   });
 
   keymap.addBinding({
-    keys: 'Accel-C',
+    keys: ['Accel C'],
     selector: 'body',
     command: 'example:copy'
   });
 
   keymap.addBinding({
-    keys: 'Accel-V',
+    keys: ['Accel V'],
     selector: 'body',
     command: 'example:paste'
   });
 
   keymap.addBinding({
-    keys: 'Ctrl-Shift-N',
+    keys: ['Accel J', 'Accel J'],
     selector: 'body',
     command: 'example:new-tab'
   });
 
+  keymap.addBinding({
+    keys: ['Accel M'],
+    selector: 'body',
+    command: 'example:open-task-manager'
+  });
+
   let menu1 = createMenu();
-  menu1.title.text = 'File';
+  menu1.title.label = 'File';
+  menu1.title.mnemonic = 0;
 
   let menu2 = createMenu();
-  menu2.title.text = 'Edit';
+  menu2.title.label = 'Edit';
+  menu2.title.mnemonic = 0;
 
   let menu3 = createMenu();
-  menu3.title.text = 'View';
+  menu3.title.label = 'View';
+  menu3.title.mnemonic = 0;
 
   let ctxt = createMenu();
 
@@ -197,10 +219,18 @@ function main(): void {
   document.addEventListener('contextmenu', (event: MouseEvent) => {
     event.preventDefault();
     ctxt.open(event.clientX, event.clientY);
+    console.log('ctxt menu');
   });
 
   document.addEventListener('keydown', (event: KeyboardEvent) => {
-    keymap.processKeydownEvent(event);
+    if (!event.ctrlKey && !event.shiftKey && !event.metaKey && event.keyCode === 18) {
+      event.preventDefault();
+      event.stopPropagation();
+      bar.activeIndex = 0;
+      bar.focus();
+    } else {
+      keymap.processKeydownEvent(event);
+    }
   });
 
   Widget.attach(bar, document.body);

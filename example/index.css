@@ -43,6 +43,11 @@ body {
 }
 
 
+.p-Menu-itemMnemonic {
+  text-decoration: underline;
+}
+
+
 .p-Menu-itemShortcut {
   padding: 4px 0px;
 }
@@ -117,4 +122,9 @@ body {
   border-left: 1px solid #C0C0C0;
   border-right: 1px solid #C0C0C0;
   box-shadow: 0px 0px 6px rgba(0, 0, 0, 0.2);
+}
+
+
+.p-MenuBar-itemMnemonic {
+  text-decoration: underline;
 }
