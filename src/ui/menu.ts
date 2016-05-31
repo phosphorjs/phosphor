@@ -640,7 +640,10 @@ class Menu extends Widget {
       return;
     }
 
-    // Otherwise, execute the command for the item.
+    // Close the menu before executing the command.
+    this.close();
+
+    // Execute the command for the item.
     let { command, args } = item;
     if (commands.isEnabled(command, args)) {
       commands.execute(command, args);
@@ -798,9 +801,6 @@ class Menu extends Widget {
     case 'keydown':
       this._evtKeyDown(event as KeyboardEvent);
       break;
-    case 'keypress':
-      this._evtKeyPress(event as KeyboardEvent);
-      break;
     case 'mouseup':
       this._evtMouseUp(event as MouseEvent);
       break;
@@ -828,14 +828,12 @@ class Menu extends Widget {
    */
   protected onAfterAttach(msg: Message): void {
     this.node.addEventListener('keydown', this);
-    this.node.addEventListener('keypress', this);
     this.node.addEventListener('mouseup', this);
     this.node.addEventListener('mousemove', this);
     this.node.addEventListener('mouseenter', this);
     this.node.addEventListener('mouseleave', this);
     this.node.addEventListener('contextmenu', this);
     document.addEventListener('mousedown', this, true);
-    commands.commandExecuted.connect(this._onCommandExecuted, this);
   }
 
   /**
@@ -843,14 +841,12 @@ class Menu extends Widget {
    */
   protected onBeforeDetach(msg: Message): void {
     this.node.removeEventListener('keydown', this);
-    this.node.removeEventListener('keypress', this);
     this.node.removeEventListener('mouseup', this);
     this.node.removeEventListener('mousemove', this);
     this.node.removeEventListener('mouseenter', this);
     this.node.removeEventListener('mouseleave', this);
     this.node.removeEventListener('contextmenu', this);
     document.removeEventListener('mousedown', this, true);
-    commands.commandExecuted.disconnect(this._onCommandExecuted, this);
   }
 
   /**
@@ -929,62 +925,67 @@ class Menu extends Widget {
    * This listener is attached to the menu node.
    */
   private _evtKeyDown(event: KeyboardEvent): void {
-    switch (event.keyCode) {
-    case 13: // Enter
-      event.preventDefault();
-      event.stopPropagation();
+    // A menu handles all keydown events.
+    event.preventDefault();
+    event.stopPropagation();
+
+    // Enter
+    if (event.keyCode === 13) {
       this.triggerActiveItem();
-      break;
-    case 27: // Escape
-      event.preventDefault();
-      event.stopPropagation();
+      return;
+    }
+
+    // Escape
+    if (event.keyCode === 27) {
       this.close();
-      break;
-    case 37: // Left Arrow
-      event.preventDefault();
-      event.stopPropagation();
+      return;
+    }
+
+    // Left Arrow
+    if (event.keyCode === 37) {
       if (this._parentMenu) {
         this.close();
       } else {
         this.menuRequested.emit('previous');
       }
-      break;
-    case 38: // Up Arrow
-      event.preventDefault();
-      event.stopPropagation();
+      return;
+    }
+
+    // Up Arrow
+    if (event.keyCode === 38) {
       this.activatePreviousItem();
-      break;
-    case 39: // Right Arrow
-      event.preventDefault();
-      event.stopPropagation();
+      return;
+    }
+
+    // Right Arrow
+    if (event.keyCode === 39) {
       let item = this.activeItem;
       if (item && item.type === 'submenu') {
         this.triggerActiveItem();
       } else {
         this.rootMenu.menuRequested.emit('next');
       }
-      break;
-    case 40: // Down Arrow
-      event.preventDefault();
-      event.stopPropagation();
-      this.activateNextItem();
-      break;
+      return;
     }
-  }
 
-  /**
-   * Handle the `'keypress'` event for the menu.
-   *
-   * #### Notes
-   * This listener is attached to the menu node.
-   */
-  private _evtKeyPress(event: KeyboardEvent): void {
-    // A menu absorbs all key press events.
-    event.preventDefault();
-    event.stopPropagation();
+    // Down Arrow
+    if (event.keyCode === 40) {
+      this.activateNextItem();
+      return;
+    }
 
-    // Get the upper case version of the pressed character.
-    let key = String.fromCharCode(event.charCode).toUpperCase();
+    // The following code activates an item by mnemonic.
+
+    // Get the pressed key character for the current layout.
+    let key = keymap.layout.keyForKeydownEvent(event);
+
+    // Bail if the key is not valid for the current layout.
+    if (!key) {
+      return;
+    }
+
+    // Normalize the case of the key.
+    key = key.toUpperCase();
 
     // Setup the storage for the search results.
     let mnIndex = -1;
@@ -1261,13 +1262,6 @@ class Menu extends Widget {
       clearTimeout(this._closeTimerID);
       this._closeTimerID = 0;
     }
-  }
-
-  /**
-   * Handle the `commandExecuted` signal from the command registry.
-   */
-  private _onCommandExecuted(): void {
-    if (!this._parentMenu) this.close();
   }
 
   private _childIndex = -1;
