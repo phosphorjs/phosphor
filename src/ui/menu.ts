@@ -6,8 +6,8 @@
 | The full license is in the file LICENSE, distributed with this software.
 |----------------------------------------------------------------------------*/
 import {
-  IterableOrArrayLike, each
-} from '../algorithm/iteration';
+  JSONObject
+} from '../algorithm/json';
 
 import {
   findIndex, indexOf
@@ -38,6 +38,14 @@ import {
 } from '../dom/sizing';
 
 import {
+  commands
+} from './commands';
+
+import {
+  KeyBinding, formatKeystroke, keymap
+} from './keymap';
+
+import {
   Widget, WidgetFlag, WidgetMessage
 } from './widget';
 
@@ -63,9 +71,14 @@ const ITEM_CLASS = 'p-Menu-item';
 const ICON_CLASS = 'p-Menu-itemIcon';
 
 /**
- * The class name added to a menu item text node.
+ * The class name added to a menu item label node.
  */
-const TEXT_CLASS = 'p-Menu-itemText';
+const LABEL_CLASS = 'p-Menu-itemLabel';
+
+/**
+ * The class name added to a menu item mnemonic node.
+ */
+const MNEMONIC_CLASS = 'p-Menu-itemMnemonic';
 
 /**
  * The class name added to a menu item shortcut node.
@@ -75,22 +88,12 @@ const SHORTCUT_CLASS = 'p-Menu-itemShortcut';
 /**
  * The class name added to a menu item submenu icon node.
  */
-const SUBMENU_CLASS = 'p-Menu-itemSubmenuIcon';
+const SUBMENU_ICON_CLASS = 'p-Menu-itemSubmenuIcon';
 
 /**
- * The class name added to a `'normal'` type menu item.
+ * The class name added to a `'command'` type menu item.
  */
-const NORMAL_TYPE_CLASS = 'p-type-normal';
-
-/**
- * The class name added to a `'check'` type menu item.
- */
-const CHECK_TYPE_CLASS = 'p-type-check';
-
-/**
- * The class name added to a `'radio'` type menu item.
- */
-const RADIO_TYPE_CLASS = 'p-type-radio';
+const COMMAND_TYPE_CLASS = 'p-type-command';
 
 /**
  * The class name added to a `'separator'` type menu item.
@@ -113,9 +116,9 @@ const ACTIVE_CLASS = 'p-mod-active';
 const DISABLED_CLASS = 'p-mod-disabled';
 
 /**
- * The class name added to a checked menu item.
+ * The class name added to a toggled menu item.
  */
-const CHECKED_CLASS = 'p-mod-checked';
+const TOGGLED_CLASS = 'p-mod-toggled';
 
 /**
  * The class name added to a hidden menu item.
@@ -134,12 +137,10 @@ const SUBMENU_OVERLAP = 3;
 
 
 /**
- * An object which holds the data for an item in a menu.
+ * An object which represents a menu item.
  *
  * #### Notes
- * A menu item is a simple data struct. If the data in a menu item is
- * changed, the changes will be reflected in a menu the next time the
- * menu is opened.
+ * Once created, a menu item is immutable.
  */
 export
 class MenuItem {
@@ -148,159 +149,156 @@ class MenuItem {
    *
    * @param options - The options for initializing the menu item.
    */
-  constructor(options?: MenuItem.IOptions) {
-    if (options === void 0) {
-      return;
-    }
-    if (options.type !== void 0) {
-      this.type = options.type;
-    }
-    if (options.text !== void 0) {
-      this.text = options.text;
-    }
-    if (options.icon !== void 0) {
-      this.icon = options.icon;
-    }
-    if (options.shortcut !== void 0) {
-      this.shortcut = options.shortcut;
-    }
-    if (options.checked !== void 0) {
-      this.checked = options.checked;
-    }
-    if (options.disabled !== void 0) {
-      this.disabled = options.disabled;
-    }
-    if (options.hidden !== void 0) {
-      this.hidden = options.hidden;
-    }
-    if (options.className !== void 0) {
-      this.className = options.className;
-    }
-    if (options.command !== void 0) {
-      this.command = options.command;
-    }
-    if (options.args !== void 0) {
-      this.args = options.args;
-    }
-    if (options.submenu !== void 0) {
-      this.submenu = Private.asMenu(options.submenu);
-    }
+  constructor(options: MenuItem.IOptions) {
+    this._type = options.type || 'command';
+    this._command = options.command || '';
+    this._args = options.args || null;
+    this._menu = options.menu || null;
   }
 
   /**
    * The type of the menu item.
-   *
-   * #### Notes
-   * This controls how the rest of the item properties are interpreted.
-   *
-   * The default value is `'normal'`.
    */
-  type: MenuItem.Type = 'normal';
+  get type(): MenuItem.Type {
+    return this._type;
+  }
 
   /**
-   * The text for the menu item.
-   *
-   * #### Notes
-   * A `'&&'` sequence before a character denotes the item mnemonic.
-   *
-   * This value is ignored for `'separator'` type items.
-   *
-   * The default value is an empty string.
+   * The command to execute when the item is triggered.
    */
-  text = '';
+  get command(): string {
+    return this._command;
+  }
+
+  /**
+   * The arguments for the command.
+   */
+  get args(): JSONObject {
+    return this._args;
+  }
+
+  /**
+   * The menu for a `'submenu'` type item.
+   */
+  get menu(): Menu {
+    return this._menu;
+  }
+
+  /**
+   * The display label for the menu item.
+   */
+  get label(): string {
+    if (this._type === 'command') {
+      return commands.label(this._command, this._args);
+    }
+    if (this._type === 'submenu' && this._menu) {
+      return this._menu.title.label;
+    }
+    return '';
+  }
+
+  /**
+   * The mnemonic index for the menu item.
+   */
+  get mnemonic(): number {
+    if (this._type === 'command') {
+      return commands.mnemonic(this._command, this._args);
+    }
+    if (this._type === 'submenu' && this._menu) {
+      return this._menu.title.mnemonic;
+    }
+    return -1;
+  }
 
   /**
    * The icon class for the menu item.
-   *
-   * #### Notes
-   * This class name is added to the menu item icon node.
-   *
-   * Multiple class names can be separated by whitespace.
-   *
-   * This value is ignored for `'separator'` type items.
-   *
-   * The default value is an empty string.
    */
-  icon = '';
+  get icon(): string {
+    if (this._type === 'command') {
+      return commands.icon(this._command, this._args);
+    }
+    if (this._type === 'submenu' && this._menu) {
+      return this._menu.title.icon;
+    }
+    return '';
+  }
 
   /**
-   * The keyboard shortcut decoration for the menu item.
-   *
-   * #### Notes
-   * This value is for decoration purposes only. Management of keyboard
-   * shortcut bindings is left to other library code.
-   *
-   * This value is ignored for `'separator'` and `'submenu'` type items.
-   *
-   * The default value is an empty string.
+   * The display caption for the menu item.
    */
-  shortcut = '';
+  get caption(): string {
+    if (this._type === 'command') {
+      return commands.caption(this._command, this._args);
+    }
+    if (this._type === 'submenu' && this._menu) {
+      return this._menu.title.caption;
+    }
+    return '';
+  }
 
   /**
-   * The checked state for the menu item.
-   *
-   * #### Notes
-   * This value is only used for `'check'` and `'radio'` type items.
-   *
-   * The default value is `false`.
+   * The extra class name for the menu item.
    */
-  checked = false;
+  get className(): string {
+    if (this._type === 'command') {
+      return commands.className(this._command, this._args);
+    }
+    if (this._type === 'submenu' && this._menu) {
+      return this._menu.title.className;
+    }
+    return '';
+  }
 
   /**
-   * The disabled state for the menu item.
-   *
-   * #### Notes
-   * This value is ignored for `'separator'` type items.
-   *
-   * The default value is `false`.
+   * Whether the menu item is enabled.
    */
-  disabled = false;
+  get isEnabled(): boolean {
+    if (this._type === 'command') {
+      return commands.isEnabled(this._command, this._args);
+    }
+    if (this._type === 'submenu') {
+      return this._menu !== null;
+    }
+    return true;
+  }
 
   /**
-   * The hidden state for the menu item.
-   *
-   * #### Notes
-   * The default value is `false`.
+   * Whether the menu item is toggled.
    */
-  hidden = false;
+  get isToggled(): boolean {
+    if (this._type === 'command') {
+      return commands.isToggled(this._command, this._args);
+    }
+    return false;
+  }
 
   /**
-   * The extra class name to associate with the menu item.
-   *
-   * #### Notes
-   * Multiple class names can be separated by whitespace.
-   *
-   * The default value is an empty string.
+   * Whether the menu item is visible.
    */
-  className = '';
+  get isVisible(): boolean {
+    if (this._type === 'command') {
+      return commands.isVisible(this._command, this._args);
+    }
+    if (this._type === 'submenu') {
+      return this._menu !== null;
+    }
+    return true;
+  }
 
   /**
-   * The command id to associate with the menu item.
-   *
-   * #### Notes
-   * The default value is an empty string.
+   * The key binding for the menu item.
    */
-  command = '';
+  get keyBinding(): KeyBinding {
+    if (this._type === 'command') {
+      return keymap.findKeyBinding(this._command, this._args);
+    }
+    return null;
+  }
 
-  /**
-   * The command args to associate with the menu item.
-   *
-   * #### Notes
-   * This should be a simple JSON-compatible value.
-   *
-   * The default value is `null`.
-   */
-  args: any = null;
-
-  /**
-   * The submenu for the menu item.
-   *
-   * #### Notes
-   * This value is only used for `'submenu'` type items.
-   *
-   * The default value is `null`.
-   */
-  submenu: Menu = null;
+  private _type: MenuItem.Type;
+  private _command: string;
+  private _args: JSONObject;
+  private _menu: Menu;
 }
 
 
@@ -313,7 +311,7 @@ namespace MenuItem {
    * A type alias for a menu item type.
    */
   export
-  type Type = 'normal' | 'check' | 'radio' | 'submenu' | 'separator';
+  type Type = 'command' | 'submenu' | 'separator';
 
   /**
    * An options object for initializing a menu item.
@@ -322,58 +320,31 @@ namespace MenuItem {
   interface IOptions {
     /**
      * The type of the menu item.
+     *
+     * The default value is `'command'`.
      */
     type?: Type;
 
     /**
-     * The text for the menu item.
-     */
-    text?: string;
-
-    /**
-     * The icon class for the menu item.
-     */
-    icon?: string;
-
-    /**
-     * The keyboard shortcut decoration for the menu item.
-     */
-    shortcut?: string;
-
-    /**
-     * The checked state for the menu item.
-     */
-    checked?: boolean;
-
-    /**
-     * The disabled state for the menu item.
-     */
-    disabled?: boolean;
-
-    /**
-     * The hidden state for the menu item.
-     */
-    hidden?: boolean;
-
-    /**
-     * The extra class name for the menu item.
-     */
-    className?: string;
-
-    /**
-     * The command id for the menu item.
+     * The command to execute when the item is triggered.
+     *
+     * The default value is an empty string.
      */
     command?: string;
 
     /**
-     * The command args for the menu item.
+     * The arguments for the command.
+     *
+     * The default value is `null`.
      */
-    args?: any;
+    args?: JSONObject;
 
     /**
-     * The submenu or submenu template for the menu item.
+     * The menu for a `'submenu'` type item.
+     *
+     * The default value is `null`.
      */
-    submenu?: Menu | Menu.Template;
+    menu?: Menu;
   }
 }
 
@@ -396,25 +367,6 @@ class Menu extends Widget {
   }
 
   /**
-   * Create a menu from a static template.
-   *
-   * @param template - A menu template to convert into a menu.
-   *
-   * @returns A new menu widget populated from the template.
-   *
-   * #### Notes
-   * This method operates recursively, constructing the full menu
-   * hierarchy using the default `Menu` and `MenuItem` constructors.
-   *
-   * If custom menus or menu items are required, this method should
-   * not be used. Instead, the custom objects should be instantiated
-   * and assembled manually.
-   */
-  static fromTemplate(template: Menu.Template): Menu {
-    return Private.asMenu(template);
-  }
-
-  /**
    * Construct a new menu.
    *
    * @param options - The options for initializing the menu.
@@ -423,7 +375,7 @@ class Menu extends Widget {
     super();
     this.addClass(MENU_CLASS);
     this.setFlag(WidgetFlag.DisallowLayout);
-    this._renderer = options.renderer || Menu.ContentRenderer.instance;
+    this._renderer = options.renderer || Menu.defaultRenderer;
   }
 
   /**
@@ -438,23 +390,14 @@ class Menu extends Widget {
   }
 
   /**
-   * A signal emitted when a menu item in the hierarchy is triggered.
-   *
-   * #### Notes
-   * This signal is emitted when a descendant menu item in the menu
-   * hierarchy is triggered, so consumers only need to to connect to
-   * the triggered signal of the root menu.
-   *
-   * The argument for the signal is the menu item which was triggered.
-   */
-  triggered: ISignal<Menu, MenuItem>;
-
-  /**
    * A signal emitted just before the menu is closed.
    *
    * #### Notes
    * This signal is emitted when the menu receives a `'close-request'`
-   * message, provided it is attached to the DOM.
+   * message, just before it removes itself from the DOM.
+   *
+   * This signal is not emitted if the menu is already detached from
+   * the DOM when it receives the `'close-request'` message.
    */
   aboutToClose: ISignal<Menu, void>;
 
@@ -563,7 +506,7 @@ class Menu extends Widget {
    * Set the currently active menu item.
    *
    * #### Notes
-   * If the item does not exist, the menu item will be set to `null`.
+   * If the item cannot be activated, the item will be set to `null`.
    */
   set activeItem(value: MenuItem) {
     this.activeIndex = indexOf(this._items, value);
@@ -583,8 +526,7 @@ class Menu extends Widget {
    * Set the index of the currently active menu item.
    *
    * #### Notes
-   * If the index is out of range, or points to a `disabled`, `hidden`,
-   * or `'separator'` type item, the index will be set to `-1`.
+   * If the item cannot be activated, the index will be set to `-1`.
    */
   set activeIndex(value: number) {
     // Coerce the value to an index.
@@ -593,9 +535,12 @@ class Menu extends Widget {
       i = -1;
     }
 
-    // Ensure the item is selectable.
-    if (i !== -1 && !Private.isSelectable(this._items.at(i))) {
-      i = -1;
+    // Ensure the item can be activated.
+    if (i !== -1) {
+      let item = this._items.at(i);
+      if (item.type === 'separator' || !item.isEnabled || !item.isVisible) {
+        i = -1;
+      }
     }
 
     // Bail early if the index will not change.
@@ -620,12 +565,54 @@ class Menu extends Widget {
   }
 
   /**
-   * Trigger the active item.
+   * Activate the next selectable item in the menu.
+   *
+   * #### Notes
+   * If no item is selectable, the index will be set to `-1`.
+   */
+  activateNextItem(): void {
+    let n = this._items.length;
+    let j = this._activeIndex + 1;
+    for (let i = 0; i < n; ++i) {
+      let k = (i + j) % n;
+      let item = this._items.at(k);
+      if (item.type !== 'separator' && item.isEnabled && item.isVisible) {
+        this.activeIndex = k;
+        return;
+      }
+    }
+    this.activeIndex = -1;
+  }
+
+  /**
+   * Activate the previous selectable item in the menu.
+   *
+   * #### Notes
+   * If no item is selectable, the index will be set to `-1`.
+   */
+  activatePreviousItem(): void {
+    let n = this._items.length;
+    let ai = this._activeIndex;
+    let j = ai <= 0 ? n - 1 : ai - 1;
+    for (let i = 0; i < n; ++i) {
+      let k = (j - i + n) % n;
+      let item = this._items.at(k);
+      if (item.type !== 'separator' && item.isEnabled && item.isVisible) {
+        this.activeIndex = k;
+        return;
+      }
+    }
+    this.activeIndex = -1;
+  }
+
+  /**
+   * Trigger the active menu item.
    *
    * #### Notes
    * If the active item is a submenu, it will be opened and the first
-   * item will be activated. Otherwise, the `triggered` signal will be
-   * emitted for the menu hierarchy.
+   * item will be activated.
+   *
+   * If the active item is a command, the command will be executed.
    *
    * If the menu is not attached, this is a no-op.
    *
@@ -653,17 +640,16 @@ class Menu extends Widget {
       return;
     }
 
-    // Otherwise, emit the triggered signal for the ancestors.
-    let root: Menu;
-    let menu: Menu = this;
-    while (menu) {
-      root = menu;
-      menu.triggered.emit(item);
-      menu = menu._parentMenu;
-    }
+    // Close the root menu before executing the command.
+    this.rootMenu.close();
 
-    // Close the root menu.
-    root.close();
+    // Execute the command for the item.
+    let { command, args } = item;
+    if (commands.isEnabled(command, args)) {
+      commands.execute(command, args);
+    } else {
+      // TODO log something here?
+    }
   }
 
   /**
@@ -671,10 +657,6 @@ class Menu extends Widget {
    *
    * @param item - The menu item to add to the menu, or an options
    *   object to be converted into a menu item.
-   *
-   * #### Notes
-   * Menu item options will be converted into a menu item using the
-   * default `MenuItem` constructor.
    */
   addItem(item: MenuItem | MenuItem.IOptions): void {
     this.insertItem(this._items.length, item);
@@ -690,9 +672,6 @@ class Menu extends Widget {
    *
    * #### Notes
    * The index will be clamped to the bounds of the items.
-   *
-   * Menu item options will be converted into a menu item using the
-   * default `MenuItem` constructor.
    */
   insertItem(index: number, item: MenuItem | MenuItem.IOptions): void {
     // Close the menu if it's attached.
@@ -803,9 +782,6 @@ class Menu extends Widget {
     // Open the menu as a root menu.
     Private.openRootMenu(this, x, y, forceX, forceY);
 
-    // Attach the extra root menu listeners.
-    document.addEventListener('mousedown', this, true);
-
     // Focus the menu to accept keyboard input.
     this.focus();
   }
@@ -824,9 +800,6 @@ class Menu extends Widget {
     switch (event.type) {
     case 'keydown':
       this._evtKeyDown(event as KeyboardEvent);
-      break;
-    case 'keypress':
-      this._evtKeyPress(event as KeyboardEvent);
       break;
     case 'mouseup':
       this._evtMouseUp(event as MouseEvent);
@@ -855,12 +828,12 @@ class Menu extends Widget {
    */
   protected onAfterAttach(msg: Message): void {
     this.node.addEventListener('keydown', this);
-    this.node.addEventListener('keypress', this);
     this.node.addEventListener('mouseup', this);
     this.node.addEventListener('mousemove', this);
     this.node.addEventListener('mouseenter', this);
     this.node.addEventListener('mouseleave', this);
     this.node.addEventListener('contextmenu', this);
+    document.addEventListener('mousedown', this, true);
   }
 
   /**
@@ -868,7 +841,6 @@ class Menu extends Widget {
    */
   protected onBeforeDetach(msg: Message): void {
     this.node.removeEventListener('keydown', this);
-    this.node.removeEventListener('keypress', this);
     this.node.removeEventListener('mouseup', this);
     this.node.removeEventListener('mousemove', this);
     this.node.removeEventListener('mouseenter', this);
@@ -881,6 +853,12 @@ class Menu extends Widget {
    * A message handler invoked on an `'update-request'` message.
    */
   protected onUpdateRequest(msg: Message): void {
+    // TODO - currently, an 'update-request' message is sent to a menu
+    // just before it is opened. This ensures it is current when shown
+    // without needing to subscribe to any commands or keymap signals.
+    // Often, the update will be unnecessary. If it becomes an issue
+    // for performance, the menu can maintain a dirty flag.
+
     // Fetch common variables.
     let items = this._items;
     let nodes = this._nodes;
@@ -897,7 +875,7 @@ class Menu extends Widget {
     }
 
     // Hide the extra separator nodes.
-    Private.hideExtraSeparators(items, nodes);
+    Private.hideExtraSeparators(nodes, items);
   }
 
   /**
@@ -947,59 +925,122 @@ class Menu extends Widget {
    * This listener is attached to the menu node.
    */
   private _evtKeyDown(event: KeyboardEvent): void {
-    switch (event.keyCode) {
-    case 13: // Enter
-      event.preventDefault();
-      event.stopPropagation();
+    // A menu handles all keydown events.
+    event.preventDefault();
+    event.stopPropagation();
+
+    // Fetch the key code for the event.
+    let kc = event.keyCode;
+
+    // Enter
+    if (kc === 13) {
       this.triggerActiveItem();
-      break;
-    case 27: // Escape
-      event.preventDefault();
-      event.stopPropagation();
+      return;
+    }
+
+    // Escape
+    if (kc === 27) {
       this.close();
-      break;
-    case 37: // Left Arrow
-      event.preventDefault();
-      event.stopPropagation();
+      return;
+    }
+
+    // Left Arrow
+    if (kc === 37) {
       if (this._parentMenu) {
         this.close();
       } else {
         this.menuRequested.emit('previous');
       }
-      break;
-    case 38: // Up Arrow
-      event.preventDefault();
-      event.stopPropagation();
-      Private.activatePrev(this);
-      break;
-    case 39: // Right Arrow
-      event.preventDefault();
-      event.stopPropagation();
+      return;
+    }
+
+    // Up Arrow
+    if (kc === 38) {
+      this.activatePreviousItem();
+      return;
+    }
+
+    // Right Arrow
+    if (kc === 39) {
       let item = this.activeItem;
       if (item && item.type === 'submenu') {
         this.triggerActiveItem();
       } else {
         this.rootMenu.menuRequested.emit('next');
       }
-      break;
-    case 40: // Down Arrow
-      event.preventDefault();
-      event.stopPropagation();
-      Private.activateNext(this);
-      break;
+      return;
     }
-  }
 
-  /**
-   * Handle the `'keypress'` event for the menu.
-   *
-   * #### Notes
-   * This listener is attached to the menu node.
-   */
-  private _evtKeyPress(event: KeyboardEvent): void {
-    event.preventDefault();
-    event.stopPropagation();
-    Private.activateMnemonic(this, String.fromCharCode(event.charCode));
+    // Down Arrow
+    if (kc === 40) {
+      this.activateNextItem();
+      return;
+    }
+
+    // The following code activates an item by mnemonic.
+
+    // Get the pressed key character for the current layout.
+    let key = keymap.layout.keyForKeydownEvent(event);
+
+    // Bail if the key is not valid for the current layout.
+    if (!key) {
+      return;
+    }
+
+    // Normalize the case of the key.
+    key = key.toUpperCase();
+
+    // Setup the storage for the search results.
+    let mnIndex = -1;
+    let autoIndex = -1;
+    let mnMultiple = false;
+
+    // Search for the best mnemonic item. This searches the menu items
+    // starting at the active index and finds the following:
+    //   - the index of the first matching mnemonic item
+    //   - whether there are multiple matching mnemonic items
+    //   - the index of the first item with no mnemonic, but
+    //     which has a matching first character
+    let n = this._items.length;
+    let j = this._activeIndex + 1;
+    for (let i = 0; i < n; ++i) {
+      let k = (i + j) % n;
+      let item = this._items.at(k);
+      if (item.type === 'separator' || !item.isEnabled || !item.isVisible) {
+        continue;
+      }
+      let label = item.label;
+      if (label.length === 0) {
+        continue;
+      }
+      let mn = item.mnemonic;
+      if (mn >= 0 && mn < label.length) {
+        if (label[mn].toUpperCase() === key) {
+          if (mnIndex === -1) {
+            mnIndex = k;
+          } else {
+            mnMultiple = true;
+          }
+        }
+      } else if (autoIndex === -1) {
+        if (label[0].toUpperCase() === key) {
+          autoIndex = k;
+        }
+      }
+    }
+
+    // Handle the requested mnemonic based on the search results.
+    // If exactly one mnemonic is matched, that item is triggered.
+    // Otherwise, the next mnemonic is activated if available,
+    // followed by the auto mnemonic if available.
+    if (mnIndex !== -1 && !mnMultiple) {
+      this.activeIndex = mnIndex;
+      this.triggerActiveItem();
+    } else if (mnIndex !== -1) {
+      this.activeIndex = mnIndex;
+    } else if (autoIndex !== -1) {
+      this.activeIndex = autoIndex;
+    }
   }
 
   /**
@@ -1055,7 +1096,7 @@ class Menu extends Widget {
 
     // Bail if the active item is not a valid submenu item.
     let item = this.activeItem;
-    if (!item || item.type !== 'submenu' || !item.submenu) {
+    if (!item || item.type !== 'submenu' || !item.menu) {
       return;
     }
 
@@ -1112,10 +1153,14 @@ class Menu extends Widget {
    * This listener is attached to the document node.
    */
   private _evtMouseDown(event: MouseEvent): void {
-    // This handler is only invoked for the root menu. The mouse
-    // button which is pressed is irrelevant. If the press is not
-    // on a menu, the entire hierarchy is closed and the event is
-    // allowed to propagate. This allows other code to act on the
+    // Bail if the menu is not a root menu.
+    if (this._parentMenu) {
+      return;
+    }
+
+    // The mouse button which is pressed is irrelevant. If the press
+    // is not on a menu, the entire hierarchy is closed and the event
+    // is allowed to propagate. This allows other code to act on the
     // event, such as focusing the clicked element.
     if (Private.hitTestMenus(this, event.clientX, event.clientY)) {
       event.preventDefault();
@@ -1134,13 +1179,13 @@ class Menu extends Widget {
   private _openChildMenu(activateFirst = false): void {
     // If the item is not a valid submenu, close the child menu.
     let item = this.activeItem;
-    if (!item || item.type !== 'submenu' || !item.submenu) {
+    if (!item || item.type !== 'submenu' || !item.menu) {
       this._closeChildMenu();
       return;
     }
 
     // Do nothing if the child menu will not change.
-    let menu = item.submenu;
+    let menu = item.menu;
     if (menu === this._childMenu) {
       return;
     }
@@ -1159,7 +1204,10 @@ class Menu extends Widget {
     Private.openSubmenu(menu, this._nodes.at(this._activeIndex));
 
     // Activate the first item if desired.
-    if (activateFirst) Private.activateFirst(menu);
+    if (activateFirst) {
+      menu.activeIndex = -1;
+      menu.activateNextItem();
+    }
 
     // Set focus to the child menu.
     menu.focus();
@@ -1233,7 +1281,6 @@ class Menu extends Widget {
 
 
 // Define the signals for the `Menu` class.
-defineSignal(Menu.prototype, 'triggered');
 defineSignal(Menu.prototype, 'aboutToClose');
 defineSignal(Menu.prototype, 'menuRequested');
 
@@ -1243,12 +1290,6 @@ defineSignal(Menu.prototype, 'menuRequested');
  */
 export
 namespace Menu {
-  /**
-   * A type alias for a object which can be converted to a menu.
-   */
-  export
-  type Template = IterableOrArrayLike<MenuItem | MenuItem.IOptions>;
-
   /**
    * An options object for creating a menu.
    */
@@ -1316,13 +1357,13 @@ namespace Menu {
      *
      * #### Notes
      * This method should completely reset the state of the node to
-     * reflect the data in the menu item.
+     * reflect the data for the menu item.
      */
     updateItemNode(node: HTMLElement, item: MenuItem): void;
   }
 
   /**
-   * The default concrete implementation of [[IContentRenderer]].
+   * The default implementation of [[IContentRenderer]].
    */
   export
   class ContentRenderer implements IContentRenderer {
@@ -1334,15 +1375,15 @@ namespace Menu {
     createItemNode(): HTMLElement {
       let node = document.createElement('li');
       let icon = document.createElement('span');
-      let text = document.createElement('span');
+      let label = document.createElement('span');
       let shortcut = document.createElement('span');
       let submenu = document.createElement('span');
       node.className = ITEM_CLASS;
-      text.className = TEXT_CLASS;
+      label.className = LABEL_CLASS;
       shortcut.className = SHORTCUT_CLASS;
-      submenu.className = SUBMENU_CLASS;
+      submenu.className = SUBMENU_ICON_CLASS;
       node.appendChild(icon);
-      node.appendChild(text);
+      node.appendChild(label);
       node.appendChild(shortcut);
       node.appendChild(submenu);
       return node;
@@ -1356,101 +1397,115 @@ namespace Menu {
      * @param item - The menu item holding the data for the node.
      */
     updateItemNode(node: HTMLElement, item: MenuItem): void {
-      let sub = item.type === 'submenu';
-      let sep = item.type === 'separator';
-      let icon = node.firstChild as HTMLElement;
-      let text = icon.nextSibling as HTMLElement;
-      let shortcut = text.nextSibling as HTMLElement;
-      node.className = this.createItemClassName(item);
-      icon.className = this.createIconClassName(item);
-      text.textContent = sep ? '' : item.text.replace(/&&/g, '');
-      shortcut.textContent = (sep || sub) ? '' : item.shortcut;
-    }
+      // Setup the initial item class.
+      let itemClass = ITEM_CLASS;
 
-    /**
-     * Create the full class name for a menu item node.
-     *
-     * @param item - The menu item of interest.
-     *
-     * #### Notes
-     * This method will create the full class name for the item, taking
-     * into account its type and other relevant state based on the type.
-     */
-    createItemClassName(item: MenuItem): string {
-      let name = ITEM_CLASS;
+      // Add the item type to the item class.
       switch (item.type) {
-      case 'normal':
-        name += ` ${NORMAL_TYPE_CLASS}`;
-        if (item.disabled) {
-          name += ` ${DISABLED_CLASS}`;
-        }
-        break;
-      case 'check':
-        name += ` ${CHECK_TYPE_CLASS}`;
-        if (item.checked) {
-          name += ` ${CHECKED_CLASS}`;
-        }
-        if (item.disabled) {
-          name += ` ${DISABLED_CLASS}`;
-        }
-        break;
-      case 'radio':
-        name += ` ${RADIO_TYPE_CLASS}`;
-        if (item.checked) {
-          name += ` ${CHECKED_CLASS}`;
-        }
-        if (item.disabled) {
-          name += ` ${DISABLED_CLASS}`;
-        }
+      case 'command':
+        itemClass += ` ${COMMAND_TYPE_CLASS}`;
         break;
       case 'submenu':
-        name += ` ${SUBMENU_TYPE_CLASS}`;
-        if (item.disabled) {
-          name += ` ${DISABLED_CLASS}`;
-        }
+        itemClass += ` ${SUBMENU_TYPE_CLASS}`;
         break;
       case 'separator':
-        name += ` ${SEPARATOR_TYPE_CLASS}`;
+        itemClass += ` ${SEPARATOR_TYPE_CLASS}`;
         break;
       }
-      if (item.hidden) {
-        name += ` ${HIDDEN_CLASS}`;
+
+      // Add the boolean states to the item class.
+      if (!item.isEnabled) {
+        itemClass += ` ${DISABLED_CLASS}`;
       }
-      if (item.className) {
-        name += ` ${item.className}`;
+      if (item.isToggled) {
+        itemClass += ` ${TOGGLED_CLASS}`;
       }
-      return name;
+      if (!item.isVisible) {
+        itemClass += ` ${HIDDEN_CLASS}`;
+      }
+
+      // Add the extra class name(s) to the item class.
+      let extraItemClass = item.className;
+      if (extraItemClass) {
+        itemClass += ` ${extraItemClass}`;
+      }
+
+      // Setup the initial icon class.
+      let iconClass = ICON_CLASS;
+
+      // Add the extra class name(s) to the icon class.
+      let extraIconClass = item.icon;
+      if (extraIconClass) {
+        iconClass +=  ` ${extraIconClass}`;
+      }
+
+      // Generate the formatted label HTML.
+      let labelHTML = this.formatLabel(item.label, item.mnemonic);
+
+      // Generate the formatted shortcut text.
+      let shortcutText = this.formatShortcut(item.keyBinding);
+
+      // Extract the relevant child nodes.
+      let icon = node.firstChild as HTMLElement;
+      let label = icon.nextSibling as HTMLElement;
+      let shortcut = label.nextSibling as HTMLElement;
+
+      // Set the command ID in the data set.
+      if (item.type === 'command') {
+        node.dataset['command'] = item.command;
+      } else {
+        delete node.dataset['command'];
+      }
+
+      // Update the rest of the node state.
+      node.title = item.caption;
+      node.className = itemClass;
+      icon.className = iconClass;
+      label.innerHTML = labelHTML;
+      shortcut.textContent = shortcutText;
     }
 
     /**
-     * Create the full class name for a menu item icon node.
+     * Format a label into HTML for display.
      *
-     * @param item - The menu item of interest.
+     * @param label - The label text of interest.
      *
-     * #### Notes
-     * This method will create the class name for the item icon, taking
-     * into account its type and other relevant state based on the type.
+     * @param mnemonic - The index of the mnemonic character.
+     *
+     * @return The formatted label HTML for display.
      */
-    createIconClassName(item: MenuItem): string {
-      let name = ICON_CLASS;
-      if (item.type !== 'separator' && item.icon) {
-        name += ` ${item.icon}`;
+    formatLabel(label: string, mnemonic: number): string {
+      // If the index is out of range, do not modify the label.
+      if (mnemonic < 0 || mnemonic >= label.length) {
+        return label;
       }
-      return name;
+
+      // Split the label into parts.
+      let pref = label.slice(0, mnemonic);
+      let suff = label.slice(mnemonic + 1);
+      let char = label[mnemonic];
+
+      // Join the label with the mnemonic span.
+      return `${pref}<span class="${MNEMONIC_CLASS}">${char}</span>${suff}`;
+    }
+
+    /**
+     * Format a key binding into shortcut text for display.
+     *
+     * @param binding - The key binding to format. This may be `null`.
+     *
+     * @returns The formatted shortcut text for display.
+     */
+    formatShortcut(binding: KeyBinding): string {
+      return binding ? binding.keys.map(formatKeystroke).join(' ') : '';
     }
   }
 
   /**
-   * The namespace for the `ContentRenderer` class statics.
+   * A default instance of the `ContentRenderer` class.
    */
   export
-  namespace ContentRenderer {
-    /**
-     * A default instance of the `ContentRenderer` class.
-     */
-    export
-    const instance = new ContentRenderer();
-  }
+  const defaultRenderer = new ContentRenderer();
 }
 
 
@@ -1467,39 +1522,27 @@ namespace Private {
   }
 
   /**
-   * Coerce a menu or menu template into a real menu.
+   * Hit test a menu hierarchy starting at the given root.
    */
   export
-  function asMenu(value: Menu | Menu.Template): Menu {
-    let result: Menu;
-    if (value instanceof Menu) {
-      result = value;
-    } else {
-      result = new Menu();
-      each(value, item => { result.addItem(item); });
+  function hitTestMenus(menu: Menu, x: number, y: number): boolean {
+    for (; menu; menu = menu.childMenu) {
+      if (hitTest(menu.node, x, y)) return true;
     }
-    return result;
+    return false;
   }
 
   /**
-   * Test whether a menu item is selectable.
+   * Hide the extra and redundant separator nodes.
    */
   export
-  function isSelectable(item: MenuItem): boolean {
-    return !(item.type === 'separator' || item.disabled || item.hidden);
-  }
-
-  /**
-   * Hide leading, trailing, and consecutive separator nodes.
-   */
-  export
-  function hideExtraSeparators(items: Vector<MenuItem>, nodes: Vector<HTMLElement>): void {
+  function hideExtraSeparators(nodes: ISequence<HTMLElement>, items: ISequence<MenuItem>): void {
     // Hide the leading separators.
     let k1 = 0;
     let n = items.length;
     for (; k1 < n; ++k1) {
       let item = items.at(k1);
-      if (item.hidden) {
+      if (!item.isVisible) {
         continue;
       }
       if (item.type !== 'separator') {
@@ -1512,7 +1555,7 @@ namespace Private {
     let k2 = n - 1;
     for (; k2 >= 0; --k2) {
       let item = items.at(k2);
-      if (item.hidden) {
+      if (!item.isVisible) {
         continue;
       }
       if (item.type !== 'separator') {
@@ -1525,7 +1568,7 @@ namespace Private {
     let hide = false;
     while (++k1 < k2) {
       let item = items.at(k1);
-      if (item.hidden) {
+      if (!item.isVisible) {
         continue;
       }
       if (item.type !== 'separator') {
@@ -1536,99 +1579,6 @@ namespace Private {
         hide = true;
       }
     }
-  }
-
-  /**
-   * Activate the first selectable menu item in a menu.
-   *
-   * If no item is selectable, the index will be set to `-1`.
-   */
-  export
-  function activateFirst(menu: Menu): void {
-    let items = menu.items;
-    for (let i = 0, n = items.length; i < n; ++i) {
-      if (isSelectable(items.at(i))) {
-        menu.activeIndex = i;
-        return;
-      }
-    }
-    menu.activeIndex = -1;
-  }
-
-  /**
-   * Activate the next selectable menu item in a menu.
-   *
-   * If no item is selectable, the index will be set to `-1`.
-   */
-  export
-  function activateNext(menu: Menu): void {
-    let items = menu.items;
-    let j = menu.activeIndex + 1;
-    for (let i = 0, n = items.length; i < n; ++i) {
-      let k = (i + j) % n;
-      if (isSelectable(items.at(k))) {
-        menu.activeIndex = k;
-        return;
-      }
-    }
-    menu.activeIndex = -1;
-  }
-
-  /**
-   * Activate the previous selectable menu item in a menu.
-   *
-   * If no item is selectable, the index will be set to `-1`.
-   */
-  export
-  function activatePrev(menu: Menu): void {
-    let items = menu.items;
-    let ai = menu.activeIndex;
-    let j = ai <= 0 ? items.length - 1 : ai - 1;
-    for (let i = 0, n = items.length; i < n; ++i) {
-      let k = (j - i + n) % n;
-      if (isSelectable(items.at(k))) {
-        menu.activeIndex = k;
-        return;
-      }
-    }
-    menu.activeIndex = -1;
-  }
-
-  /**
-   * Activate the next mnemonic menu item in a menu.
-   *
-   * If no mnemonic is found, the index will be set to `-1`.
-   */
-  export
-  function activateMnemonic(menu: Menu, char: string): void {
-    let items = menu.items;
-    let c = char.toUpperCase();
-    let j = menu.activeIndex + 1;
-    for (let i = 0, n = items.length; i < n; ++i) {
-      let k = (i + j) % n;
-      let item = items.at(k);
-      if (!isSelectable(item)) {
-        continue;
-      }
-      let match = item.text.match(/&&\w/);
-      if (!match || match[0][2].toUpperCase() !== c) {
-        continue;
-      }
-      menu.activeIndex = k;
-      return;
-    }
-    menu.activeIndex = -1;
-  }
-
-  /**
-   * Hit test a menu hierarchy starting at the given root.
-   */
-  export
-  function hitTestMenus(menu: Menu, x: number, y: number): boolean {
-    for (; menu; menu = menu.childMenu) {
-      if (hitTest(menu.node, x, y)) return true;
-    }
-    return false;
   }
 
   /**

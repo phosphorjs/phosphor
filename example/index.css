@@ -38,8 +38,13 @@ body {
 }
 
 
-.p-Menu-itemText {
+.p-Menu-itemLabel {
   padding: 4px 35px 4px 2px;
+}
+
+
+.p-Menu-itemMnemonic {
+  text-decoration: underline;
 }
 
 
@@ -75,7 +80,7 @@ body {
 }
 
 
-.p-Menu-item.p-type-check.p-mod-checked > .p-Menu-itemIcon::before {
+.p-Menu-item.p-mod-toggled > .p-Menu-itemIcon::before {
   content: '\f00c';
 }
 
@@ -117,4 +122,9 @@ body {
   border-left: 1px solid #C0C0C0;
   border-right: 1px solid #C0C0C0;
   box-shadow: 0px 0px 6px rgba(0, 0, 0, 0.2);
+}
+
+
+.p-MenuBar-itemMnemonic {
+  text-decoration: underline;
 }

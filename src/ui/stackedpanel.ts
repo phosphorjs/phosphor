@@ -14,6 +14,10 @@ import {
 } from '../core/signaling';
 
 import {
+  IS_IE
+} from '../dom/platform';
+
+import {
   IBoxSizing, boxSizing, sizeLimits
 } from '../dom/sizing';
 
@@ -182,7 +186,7 @@ class StackedLayout extends PanelLayout {
    * A message handler invoked on a `'child-shown'` message.
    */
   protected onChildShown(msg: ChildMessage): void {
-    if (Private.IsIE) { // prevent flicker on IE
+    if (IS_IE) { // prevent flicker on IE
       sendMessage(this.parent, WidgetMessage.FitRequest);
     } else {
       this.parent.fit();
@@ -193,7 +197,7 @@ class StackedLayout extends PanelLayout {
    * A message handler invoked on a `'child-hidden'` message.
    */
   protected onChildHidden(msg: ChildMessage): void {
-    if (Private.IsIE) { // prevent flicker on IE
+    if (IS_IE) { // prevent flicker on IE
       sendMessage(this.parent, WidgetMessage.FitRequest);
     } else {
       this.parent.fit();
@@ -327,16 +331,4 @@ class StackedLayout extends PanelLayout {
 
   private _dirty = false;
   private _box: IBoxSizing = null;
-}
-
-
-/**
- * The namespace for the private module data.
- */
-namespace Private {
-  /**
-   * A flag indicating whether the browser is IE.
-   */
-  export
-  const IsIE = /Trident/.test(navigator.userAgent);
 }
