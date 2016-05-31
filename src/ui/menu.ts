@@ -640,8 +640,8 @@ class Menu extends Widget {
       return;
     }
 
-    // Close the menu before executing the command.
-    this.close();
+    // Close the root menu before executing the command.
+    this.rootMenu.close();
 
     // Execute the command for the item.
     let { command, args } = item;
