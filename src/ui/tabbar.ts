@@ -1137,7 +1137,7 @@ namespace TabBar {
     /**
      * Update a tab node to reflect the state of a title.
      *
-     * @param node - A tab node created by a call to `createTabNode`.
+     * @param node - A node created by a call to `createTabNode`.
      *
      * @param title - The title object holding the data for the tab.
      *
@@ -1150,7 +1150,7 @@ namespace TabBar {
     /**
      * Look up the close icon descendant node for a tab node.
      *
-     * @param node - A tab node created by a call to `createTabNode`.
+     * @param node - A node created by a call to `createTabNode`.
      *
      * @returns The close icon node, or `null` if none exists.
      *
@@ -1188,7 +1188,7 @@ namespace TabBar {
     /**
      * Update a tab node to reflect the state of a title.
      *
-     * @param node - A tab node created by a call to `createTabNode`.
+     * @param node - A node created by a call to `createTabNode`.
      *
      * @param title - The title object holding the data for the tab.
      */
@@ -1207,7 +1207,7 @@ namespace TabBar {
     /**
      * Look up the close icon descendant node for a tab node.
      *
-     * @param node - A tab node created by a call to `createTabNode`.
+     * @param node - A node created by a call to `createTabNode`.
      *
      * @returns The close icon node, or `null` if none exists.
      */

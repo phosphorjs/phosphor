@@ -1369,7 +1369,7 @@ namespace Menu {
     /**
      * Update an item node to reflect the state of a menu item.
      *
-     * @param node - An item node created by a call to `createItemNode`.
+     * @param node - A node created by a call to `createItemNode`.
      *
      * @param item - The menu item holding the data for the node.
      *
@@ -1410,7 +1410,7 @@ namespace Menu {
     /**
      * Update an item node to reflect the state of a menu item.
      *
-     * @param node - An item node created by a call to `createItemNode`.
+     * @param node - A node created by a call to `createItemNode`.
      *
      * @param item - The menu item holding the data for the node.
      */

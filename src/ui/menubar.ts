@@ -830,7 +830,7 @@ namespace MenuBar {
     /**
      * Update an item node to reflect the state of a menu title.
      *
-     * @param node - An item node created by a call to `createItemNode`.
+     * @param node - A node created by a call to `createItemNode`.
      *
      * @param title - The menu title holding the data for the node.
      *
@@ -866,7 +866,7 @@ namespace MenuBar {
     /**
      * Update an item node to reflect the state of a menu title.
      *
-     * @param node - An item node created by a call to `createItemNode`.
+     * @param node - A node created by a call to `createItemNode`.
      *
      * @param title - The menu title holding the data for the node.
      */
