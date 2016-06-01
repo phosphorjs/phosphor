@@ -329,12 +329,20 @@ class MenuBar extends Widget {
   /**
    * Remove a menu from the menu bar.
    *
-   * @param index - The index of the menu to remove.
+   * @param value - The menu to remove or the index thereof.
    *
    * #### Notes
-   * This is a no-op if the index is out of range.
+   * This is a no-op if the menu is not contained in the menu bar.
    */
-  removeMenu(index: number): void {
+  removeMenu(value: Menu | number): void {
+    // Coerce the value to an index.
+    let index: number;
+    if (typeof value === 'number') {
+      index = value;
+    } else {
+      index = indexOf(this._menus, value);
+    }
+
     // Bail if the index is out of range.
     let i = Math.floor(index);
     if (i < 0 || i >= this._menus.length) {

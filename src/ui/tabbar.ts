@@ -377,13 +377,16 @@ class TabBar extends Widget {
   /**
    * Add a tab to the end of the tab bar.
    *
-   * @param title - The title which holds the data for the tab.
+   * @param value - The title which holds the data for the tab,
+   *   or an options object to convert to a title.
+   *
+   * @returns The title object added to the tab bar.
    *
    * #### Notes
    * If the title is already added to the tab bar, it will be moved.
    */
-  addTab(title: Title): void {
-    this.insertTab(this._titles.length, title);
+  addTab(value: Title | Title.IOptions): Title {
+    return this.insertTab(this._titles.length, value);
   }
 
   /**
@@ -391,16 +394,22 @@ class TabBar extends Widget {
    *
    * @param index - The index at which to insert the tab.
    *
-   * @param title - The title which holds the data for the tab.
+   * @param value - The title which holds the data for the tab,
+   *   or an options object to convert to a title.
+   *
+   * @returns The title object added to the tab bar.
    *
    * #### Notes
    * The index will be clamped to the bounds of the tabs.
    *
    * If the title is already added to the tab bar, it will be moved.
    */
-  insertTab(index: number, title: Title): void {
+  insertTab(index: number, value: Title | Title.IOptions): Title {
     // Release the mouse before making any changes.
     this._releaseMouse();
+
+    // Coerce the value to a title.
+    let title = Private.asTitle(value);
 
     // Look up the index of the title.
     let i = indexOf(this._titles, title);
@@ -441,8 +450,8 @@ class TabBar extends Widget {
       // Schedule an update of the tabs.
       this.update();
 
-      // There is nothing more to do.
-      return;
+      // Return the title added to the tab bar.
+      return title;
     }
 
     // Otherwise, the title exists in the vector and should be moved.
@@ -451,7 +460,7 @@ class TabBar extends Widget {
     if (j === this._titles.length) j--;
 
     // Bail if there is no effective move.
-    if (i === j) return;
+    if (i === j) return title;
 
     // Move the tab and title to the new locations.
     move(this._tabs, i, j);
@@ -475,17 +484,28 @@ class TabBar extends Widget {
 
     // Schedule an update of the tabs.
     this.update();
+
+    // Return the title added to the tab bar.
+    return title;
   }
 
   /**
    * Remove a tab from the tab bar.
    *
-   * @param index - The index of the tab to remove.
+   * @param value - The title to remove or the index thereof.
    *
    * #### Notes
-   * This is a no-op if the index is out of range.
+   * This is a no-op if the title is not contained in the tab bar.
    */
-  removeTab(index: number): void {
+  removeTab(value: Title | number): void {
+    // Coerce the value to an index.
+    let index: number;
+    if (typeof value === 'number') {
+      index = value;
+    } else {
+      index = indexOf(this._titles, value);
+    }
+
     // Bail if the index is out of range.
     let i = Math.floor(index);
     if (i < 0 || i >= this._titles.length) {
@@ -1303,6 +1323,14 @@ namespace Private {
      * The offset width of the tab.
      */
     width: number;
+  }
+
+  /**
+   * Coerce a title or options into a real title.
+   */
+  export
+  function asTitle(value: Title | Title.IOptions): Title {
+    return value instanceof Title ? value : new Title(value);
   }
 
   /**

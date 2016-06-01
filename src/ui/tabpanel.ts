@@ -6,10 +6,6 @@
 | The full license is in the file LICENSE, distributed with this software.
 |----------------------------------------------------------------------------*/
 import {
-  indexOf
-} from '../algorithm/searching';
-
-import {
   ISequence
 } from '../algorithm/sequence';
 
@@ -289,7 +285,7 @@ class TabPanel extends Widget {
    * Handle the `widgetRemoved` signal from the stacked panel.
    */
   private _onWidgetRemoved(sender: StackedPanel, widget: Widget): void {
-    this._tabBar.removeTab(indexOf(this._tabBar.titles, widget.title));
+    this._tabBar.removeTab(widget.title);
   }
 
   private _tabBar: TabBar;
