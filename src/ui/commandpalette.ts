@@ -51,7 +51,7 @@ const SEARCH_CLASS = 'p-CommandPalette-search';
 /**
  * The class name added to the input wrapper in the search section.
  */
-const WRAPPER_CLASS = 'p-CommandPalette-inputWrapper';
+const WRAPPER_CLASS = 'p-CommandPalette-wrapper';
 
 /**
  * The class name added to the input node in the search section.
@@ -76,17 +76,17 @@ const ITEM_CLASS = 'p-CommandPalette-item';
 /**
  * The class name added to a item label node.
  */
-const ITEM_LABEL_CLASS = 'p-CommandPalette-itemLabel';
+const LABEL_CLASS = 'p-CommandPalette-itemLabel';
 
 /**
  * The class name added to a item shortcut node.
  */
-const ITEM_SHORTCUT_CLASS = 'p-CommandPalette-itemShortcut';
+const SHORTCUT_CLASS = 'p-CommandPalette-itemShortcut';
 
 /**
  * The class name added to a item caption node.
  */
-const ITEM_CAPTION_CLASS = 'p-CommandPalette-itemCaption';
+const CAPTION_CLASS = 'p-CommandPalette-itemCaption';
 
 /**
  * The class name added to the active palette header or item.
@@ -406,10 +406,10 @@ class CommandPalette extends Widget {
     let { category, text } = CommandPalette.splitQuery(this.inputNode.value);
 
     // Search the command items for query matches.
-    let results = Private.search(this._items, category, text);
+    let result = Private.search(this._items, category, text);
 
-    // If the results are empty, there is nothing left to do.
-    if (results.itemCount === 0) {
+    // If the result is empty, there is nothing left to do.
+    if (result.itemCount === 0) {
       return;
     }
 
@@ -419,12 +419,12 @@ class CommandPalette extends Widget {
     let headerNodes = this._headerNodes;
 
     // Ensure there are enough header nodes.
-    while (headerNodes.length < results.headerCount) {
+    while (headerNodes.length < result.headerCount) {
       headerNodes.pushBack(renderer.createHeaderNode());
     }
 
     // Ensure there are enough item nodes.
-    while (itemNodes.length < results.itemCount) {
+    while (itemNodes.length < result.itemCount) {
       itemNodes.pushBack(renderer.createItemNode());
     }
 
@@ -433,8 +433,8 @@ class CommandPalette extends Widget {
     let headerIndex = 0;
     let fragment = document.createDocumentFragment();
 
-    // Render the search results into the fragment.
-    for (let part of results.parts) {
+    // Render the search result into the fragment.
+    for (let part of result.parts) {
       let node: HTMLElement;
       if (part.item === null) {
         node = headerNodes.at(headerIndex++);
@@ -451,11 +451,11 @@ class CommandPalette extends Widget {
 
     // If there is query text, highlight the first command item.
     // Otherwise, reset the content scroll position to the top.
-    // if (category || text) {
-    //   this.activateFirst(ActivationTarget.Command);
-    // } else {
-    //   requestAnimationFrame(() => { content.scrollTop = 0; });
-    // }
+    if (category || text) {
+      // this.activateFirst(ActivationTarget.Command);
+    } else {
+      requestAnimationFrame(() => { this.contentNode.scrollTop = 0; });
+    }
   }
 
   private _items = new Vector<CommandItem>();
@@ -574,10 +574,10 @@ namespace CommandPalette {
       let caption = document.createElement('div');
       let shortcut = document.createElement('div');
       node.className = ITEM_CLASS;
-      label.className = ITEM_LABEL_CLASS;
-      caption.className = ITEM_CAPTION_CLASS;
-      shortcut.className = ITEM_SHORTCUT_CLASS;
-      node.appendChild(shortcut);
+      label.className = LABEL_CLASS;
+      caption.className = CAPTION_CLASS;
+      shortcut.className = SHORTCUT_CLASS;
+      node.appendChild(shortcut); // will float: right
       node.appendChild(label);
       node.appendChild(caption);
       return node;
@@ -719,7 +719,7 @@ namespace CommandPalette {
  */
 namespace Private {
   /**
-   * An object which represents a single search result part.
+   * An object which represents a part of a search result.
    */
   export
   interface IResultPart {
@@ -744,7 +744,7 @@ namespace Private {
    * An object which represents search results.
    */
   export
-  interface ISearchResults {
+  interface ISearchResult {
     /**
      * The number of header parts in the results.
      */
@@ -794,17 +794,17 @@ namespace Private {
    * @param text - The text to match against the command items.
    *   If this is an empty string, all items will be matched.
    *
-   * @returns A new array of sections which match the query.
+   * @returns The result of the search.
    */
   export
-  function search(items: ISequence<CommandItem>, category: string, text: string): ISearchResults {
+  function search(items: ISequence<CommandItem>, category: string, text: string): ISearchResult {
     // Collect a mapping of the matching categories. The mapping will
     // only contain categories which match the provided query text.
     // If the category is an empty string, all categories will be
     // matched with a score of `0` and a `null` indices array.
     let catmap = matchCategory(items, category);
 
-    // Filter the items for matching label. Only items which have a
+    // Filter the items for matching labels. Only items which have a
     // category in the given map are considered. The category score
     // is added to the label score to create the final item score.
     // If the text is an empty string, all items will be matched
@@ -812,18 +812,18 @@ namespace Private {
     let scores = matchLabel(items, text, catmap);
 
     // Sort the items based on their total item score. Ties are
-    // broken by locale ordering the category followed by the label.
+    // broken by locale order of the category followed by label.
     scores.sort(scoreCmp);
 
     // Group the item scores by category. The categories are added
     // to the map in the order they appear in the scores array.
     let groups = groupScores(scores);
 
-    // Return the results for the search. The headers are created in
-    // the order of key iteration of the map. On major browsers, this
-    // is insertion order. This means that headers are created in the
-    // order of first appearance in the sorted scores array.
-    return createSearchResults(groups, catmap);
+    // Return the result for the search. The headers are created in
+    // the order of key iteration of the map. On all major browsers,
+    // this is insertion order. This means that headers are created
+    // in the order of first appearance in the sorted scores array.
+    return createSearchResult(groups, catmap);
   }
 
   /**
@@ -857,9 +857,9 @@ namespace Private {
   }
 
   /**
-   * Normalize the query text for a palette item.
+   * Normalize the query text for a command item.
    *
-   * @param text - The category or text portion of a palette query.
+   * @param text - The category or text portion of a query.
    *
    * @returns The normalized query text.
    *
@@ -884,6 +884,8 @@ namespace Private {
    * The query string will be normalized by lower casing and removing
    * all whitespace. If the normalized query is an empty string, all
    * categories will be matched with a `0` score and `null` indices.
+   *
+   * Non-visible items will be ignored.
    */
   function matchCategory(items: ISequence<CommandItem>, query: string): StringMap<IScore> {
     // Normalize the query text to lower case with no whitespace.
@@ -949,10 +951,10 @@ namespace Private {
    * Items which have a category which is not present in the category
    * map will be ignored.
    *
+   * Non-visible items will be ignored.
+   *
    * The final item score is the sum of the item label score and the
    * relevant category score.
-   *
-   * This function does not sort the results.
    */
   function matchLabel(items: ISequence<CommandItem>, query: string, categories: StringMap<IScore>): IItemScore[] {
     // Normalize the query text to lower case with no whitespace.
@@ -1049,7 +1051,7 @@ namespace Private {
    * This function renders the groups in iteration order, which on
    * major browsers is order of insertion (a de facto standard).
    */
-  function createSearchResults(groups: StringMap<IItemScore[]>, categories: StringMap<IScore>): ISearchResults {
+  function createSearchResult(groups: StringMap<IItemScore[]>, categories: StringMap<IScore>): ISearchResult {
     let itemCount = 0;
     let headerCount = 0;
     let parts: IResultPart[] = [];
