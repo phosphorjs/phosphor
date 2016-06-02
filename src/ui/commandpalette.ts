@@ -10,7 +10,7 @@ import {
 } from '../algorithm/json';
 
 import {
-  StringSearch, indexOf
+  StringSearch, findIndex, indexOf
 } from '../algorithm/searching';
 
 import {
@@ -510,17 +510,42 @@ class CommandPalette extends Widget {
    * Handle the `'click'` event for the command palette.
    */
   private _evtClick(event: MouseEvent): void {
-    // if (event.button !== 0) {
-    //   return;
-    // }
-    // event.preventDefault();
-    // event.stopPropagation();
-    // let content = this.contentNode
-    // let children = this.contentNode.children;
-    // let index = findIndex(children, child => child.contains(event.target));
-    // let index = Array.prototype.indexOf.call(content.children, target);
-    // this._activate(index);
-    // this.triggerActive();
+    // Bail if the click is not the left button.
+    if (event.button !== 0) {
+      return;
+    }
+
+    // Bail if the click was not on a content item.
+    let target = event.target as HTMLElement;
+    let children = this.contentNode.children;
+    let i = findIndex(children, child => child.contains(target));
+    if (i === -1) {
+      return;
+    }
+
+    // Kill the event when a content item is clicked.
+    event.preventDefault();
+    event.stopPropagation();
+
+    // Bail if there is no search result.
+    if (!this._result) {
+      return;
+    }
+
+    // Bail if the index is out of range.
+    let part = this._result.parts[i];
+    if (!part) {
+      return;
+    }
+
+    // Bail if the part has a disabled item.
+    if (part.item && !part.item.isEnabled) {
+      return;
+    }
+
+    // Activate the index and trigger the part.
+    this._activate(i);
+    this._triggerActive();
   }
 
   /**
@@ -534,7 +559,7 @@ class CommandPalette extends Widget {
     case 13:  // Enter
       event.preventDefault();
       event.stopPropagation();
-      //this._triggerActive();
+      this._triggerActive();
       break;
     case 38:  // Up Arrow
       event.preventDefault();
@@ -570,7 +595,7 @@ class CommandPalette extends Widget {
       return;
     }
 
-    // Lookup the relvenant nodes.
+    // Lookup the relevant nodes.
     let oldNode = children[this._activeIndex] as HTMLElement;
     let newNode = children[index] as HTMLElement;
 
@@ -664,6 +689,61 @@ class CommandPalette extends Widget {
 
     // Otherwise, deactivate the current item.
     this._activate(-1);
+  }
+
+  /**
+   * Trigger the result part at the active index.
+   *
+   * If the part is an enabled command it will be executed. If the
+   * part is a header, the category search term will be toggled.
+   */
+  private _triggerActive(): void {
+    // Bail if there is no search result.
+    if (!this._result) {
+      return;
+    }
+
+    // Bail if the active index is out of range.
+    let part = this._result.parts[this._activeIndex];
+    if (!part) {
+      return;
+    }
+
+    // Bail if the part has a disabled item.
+    if (part.item && !part.item.isEnabled) {
+      return;
+    }
+
+    // Lookup the input node.
+    let input = this.inputNode;
+
+    // If the part has an item, focus the input field, select the
+    // text, and execute the command.
+    if (part.item) {
+      input.focus();
+      input.select();
+      commands.execute(part.item.command, part.item.args);
+      return;
+    }
+
+    // Otherwise, toggle the category text...
+
+    // Parse the current input value.
+    let { category, text } = CommandPalette.splitQuery(input.value);
+
+    // Extract the raw category text.
+    let desired = part.markup.replace(/<mark>|<\/mark>/g, '');
+
+    // Create a new query with the toggled category.
+    let computed = desired === category ? '' : desired;
+    let query = CommandPalette.joinQuery(computed, text);
+
+    // Update the input text and refocus the field.
+    input.value = query;
+    input.focus();
+
+    // Schedule an update to render the new search results.
+    this.update();
   }
 
   private _activeIndex = 1;
