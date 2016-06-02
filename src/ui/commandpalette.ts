@@ -886,14 +886,11 @@ namespace CommandPalette {
   export
   function splitQuery(query: string): { category: string, text: string } {
     query = query.trim();
-    if (query[0] !== ':') {
+    let i = query.indexOf(':');
+    if (i === -1) {
       return { category: '', text: query };
     }
-    let i = query.indexOf(':', 1);
-    if (i === -1) {
-      return { category: query.slice(1).trim(), text: '' };
-    }
-    let category = query.slice(1, i).trim();
+    let category = query.slice(0, i).trim();
     let text = query.slice(i + 1).trim();
     return { category, text };
   }
@@ -911,9 +908,9 @@ namespace CommandPalette {
   function joinQuery(category: string, text: string): string {
     let query: string;
     if (category && text) {
-      query = `:${category.trim()}: ${text.trim()}`;
+      query = `${category.trim()}: ${text.trim()}`;
     } else if (category) {
-      query = `:${category.trim()}: `;
+      query = `${category.trim()}: `;
     } else if (text) {
       query = text.trim();
     } else {
