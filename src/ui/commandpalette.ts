@@ -26,6 +26,10 @@ import {
 } from '../core/messaging';
 
 import {
+  scrollIfNeeded
+} from '../dom/query';
+
+import {
   commands
 } from './commands';
 
@@ -275,6 +279,7 @@ class CommandPalette extends Widget {
     this._itemNodes.clear();
     this._headerNodes.clear();
     this._renderer = null;
+    this._result = null;
     super.dispose();
   }
 
@@ -388,14 +393,57 @@ class CommandPalette extends Widget {
   }
 
   /**
+   * Handle the DOM events for the command palette.
+   *
+   * @param event - The DOM event sent to the command palette.
+   *
+   * #### Notes
+   * This method implements the DOM `EventListener` interface and is
+   * called in response to events on the command palette's DOM node.
+   * It should not be called directly by user code.
+   */
+  handleEvent(event: Event): void {
+    switch (event.type) {
+    case 'click':
+      this._evtClick(event as MouseEvent);
+      break;
+    case 'keydown':
+      this._evtKeyDown(event as KeyboardEvent);
+      break;
+    case 'input':
+      this.update();
+      break;
+    }
+  }
+
+  /**
+   * A message handler invoked on a `'after-attach'` message.
+   */
+  protected onAfterAttach(msg: Message): void {
+    this.node.addEventListener('click', this);
+    this.node.addEventListener('keydown', this);
+    this.node.addEventListener('input', this);
+  }
+
+  /**
+   * A message handler invoked on a `'before-detach'` message.
+   */
+  protected onBeforeDetach(msg: Message): void {
+    this.node.removeEventListener('click', this);
+    this.node.removeEventListener('keydown', this);
+    this.node.removeEventListener('input', this);
+  }
+
+  /**
    * A message handler invoked on an `'update-request'` message.
    */
   protected onUpdateRequest(msg: Message): void {
     // Clear the current content.
     this.contentNode.textContent = '';
 
-    // Reset the active index.
-    // this._activeIndex = -1;
+    // Reset the active index and search result.
+    this._activeIndex = -1;
+    this._result = null;
 
     // Bail early if there are no command items.
     if (this._items.isEmpty) {
@@ -406,10 +454,10 @@ class CommandPalette extends Widget {
     let { category, text } = CommandPalette.splitQuery(this.inputNode.value);
 
     // Search the command items for query matches.
-    let result = Private.search(this._items, category, text);
+    let result = this._result = Private.search(this._items, category, text);
 
     // If the result is empty, there is nothing left to do.
-    if (result.itemCount === 0) {
+    if (result.parts.length === 0) {
       return;
     }
 
@@ -449,19 +497,181 @@ class CommandPalette extends Widget {
     // Add the fragment to the content node.
     this.contentNode.appendChild(fragment);
 
-    // If there is query text, highlight the first command item.
+    // If there is query text, activate the first command item.
     // Otherwise, reset the content scroll position to the top.
     if (category || text) {
-      // this.activateFirst(ActivationTarget.Command);
+      this._activateNext('item');
     } else {
       requestAnimationFrame(() => { this.contentNode.scrollTop = 0; });
     }
   }
 
+  /**
+   * Handle the `'click'` event for the command palette.
+   */
+  private _evtClick(event: MouseEvent): void {
+    // if (event.button !== 0) {
+    //   return;
+    // }
+    // event.preventDefault();
+    // event.stopPropagation();
+    // let content = this.contentNode
+    // let children = this.contentNode.children;
+    // let index = findIndex(children, child => child.contains(event.target));
+    // let index = Array.prototype.indexOf.call(content.children, target);
+    // this._activate(index);
+    // this.triggerActive();
+  }
+
+  /**
+   * Handle the `'keydown'` event for the command palette.
+   */
+  private _evtKeyDown(event: KeyboardEvent): void {
+    if (event.altKey || event.ctrlKey || event.metaKey || event.shiftKey) {
+      return;
+    }
+    switch (event.keyCode) {
+    case 13:  // Enter
+      event.preventDefault();
+      event.stopPropagation();
+      //this._triggerActive();
+      break;
+    case 38:  // Up Arrow
+      event.preventDefault();
+      event.stopPropagation();
+      this._activatePrev('any');
+      break;
+    case 40:  // Down Arrow
+      event.preventDefault();
+      event.stopPropagation();
+      this._activateNext('any');
+      break;
+    }
+  }
+
+  /**
+   * Activate the node at the given render index.
+   *
+   * If the node is scrolled out of view, it will be scrolled into
+   * view and aligned according to the `alignTop` parameter.
+   */
+  private _activate(index: number): void {
+    // Fetch common variables.
+    let content = this.contentNode;
+    let children = content.children;
+
+    // Ensure the index is valid.
+    if (index < 0 || index >= children.length) {
+      index = -1;
+    }
+
+    // Bail if there is no effective change.
+    if (this._activeIndex === index) {
+      return;
+    }
+
+    // Lookup the relvenant nodes.
+    let oldNode = children[this._activeIndex] as HTMLElement;
+    let newNode = children[index] as HTMLElement;
+
+    // Update the internal active index.
+    this._activeIndex = index;
+
+    // Deactivate the old node.
+    if (oldNode) {
+      oldNode.classList.remove(ACTIVE_CLASS);
+    }
+
+    // Activate the new node and scroll it into view.
+    if (newNode) {
+      newNode.classList.add(ACTIVE_CLASS);
+      requestAnimationFrame(() => { scrollIfNeeded(content, newNode); });
+    }
+  }
+
+  /**
+   * Activate the next enabled index of the given kind.
+   */
+  private _activateNext(kind: 'item' | 'header' | 'any'): void {
+    // Bail if there are no current search results.
+    if (!this._result) {
+      return;
+    }
+
+    // Bail if the search results are empty.
+    let parts = this._result.parts;
+    if (parts.length === 0) {
+      return;
+    }
+
+    // Activate the next enabled index of the specified kind.
+    let start = this._activeIndex + 1;
+    for (let i = 0, n = parts.length; i < n; ++i) {
+      let k = (start + i) % n;
+      let item = parts[k].item;
+      if (kind === 'item' && item && item.isEnabled) {
+        this._activate(k);
+        return;
+      }
+      if (kind === 'header' && !item) {
+        this._activate(k);
+        return;
+      }
+      if (kind === 'any' && (!item || item.isEnabled)) {
+        this._activate(k);
+        return;
+      }
+    }
+
+    // Otherwise, deactivate the current item.
+    this._activate(-1);
+  }
+
+  /**
+   * Activate the previous enabled index of the given kind.
+   */
+  private _activatePrev(kind: 'item' | 'header' | 'any'): void {
+    // Bail if there are no current search results.
+    if (!this._result) {
+      return;
+    }
+
+    // Bail if the search results are empty.
+    let parts = this._result.parts;
+    if (parts.length === 0) {
+      return;
+    }
+
+    // Activate the previous enabled index of the specified kind.
+    let ai = this._activeIndex;
+    let start = ai <= 0 ? parts.length - 1 : ai - 1;
+    for (let i = 0, n = parts.length; i < n; ++i) {
+      let k = (start - i + n) % n;
+      let item = parts[k].item;
+      if (kind === 'item' && item && item.isEnabled) {
+        this._activate(k);
+        return;
+      }
+      if (kind === 'header' && !item) {
+        this._activate(k);
+        return;
+      }
+      if (kind === 'any' && (!item || item.isEnabled)) {
+        this._activate(k);
+        return;
+      }
+    }
+
+    // Otherwise, deactivate the current item.
+    this._activate(-1);
+  }
+
+  private _activeIndex = 1;
   private _items = new Vector<CommandItem>();
   private _itemNodes = new Vector<HTMLElement>();
   private _headerNodes = new Vector<HTMLElement>();
   private _renderer: CommandPalette.IContentRenderer;
+  private _result: Private.ISearchResult = null;
 }
 
 
