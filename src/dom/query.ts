@@ -20,7 +20,7 @@
  *
  * #### Example
  * ```typescript
- * import { hitTest } from 'phosphor-ui/lib/dom-util';
+ * import { hitTest } from 'phosphor/lib/dom/query';
  *
  * let div = document.createElement('div');
  * div.style.position = 'absolute';
@@ -43,4 +43,55 @@ function hitTest(node: Element, clientX: number, clientY: number): boolean {
     clientY >= rect.top &&
     clientY < rect.bottom
   );
+}
+
+
+/**
+ * Scroll an element into view if needed.
+ *
+ * @param area - The scroll area element.
+ *
+ * @param elem - The element of interest.
+ *
+ * @param threshold - The overflow threshold, in pixels, required
+ *   before adjusting the scroll position. The default is zero.
+ *
+ * #### Example
+ * ```typescript
+ * import { scrollIfNeeded } from 'phosphor/lib/dom/query';
+ *
+ * let area = document.createElement('div');
+ * let elem = document.createElement('div');
+ *
+ * // Style the scrollable area with a small height and a black border.
+ * area.style.height = '100px';
+ * area.style.overflow = 'auto';
+ * area.style.border = '1px solid black';
+ *
+ * // Style the element of interest with a red border and some content.
+ * elem.style.border = '1px solid red';
+ * elem.textContent = 'visible content';
+ *
+ * // Add enough whitespace to to guarantee scrolling.
+ * for (let i = 0; i < 50; i++) {
+ *   area.appendChild(document.createElement('br'));
+ * }
+ *
+ * // Attach the nodes to the DOM.
+ * area.appendChild(elem);
+ * document.body.appendChild(area);
+ *
+ * // Scroll to the element of interest.
+ * scrollIfNeeded(area, elem);
+ * ```
+ */
+export
+function scrollIfNeeded(area: HTMLElement, elem: HTMLElement, threshold = 0): void {
+  let ar = area.getBoundingClientRect();
+  let er = elem.getBoundingClientRect();
+  if (er.top < (ar.top - threshold)) {
+    area.scrollTop -= ar.top - er.top + threshold;
+  } else if (er.bottom > (ar.bottom + threshold)) {
+    area.scrollTop += er.bottom - ar.bottom + threshold;
+  }
 }
