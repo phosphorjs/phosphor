@@ -10,7 +10,7 @@ import {
 } from '../algorithm/json';
 
 import {
-  indexOf
+  StringSearch, indexOf
 } from '../algorithm/searching';
 
 import {
@@ -74,16 +74,6 @@ const HEADER_CLASS = 'p-CommandPalette-header';
 const ITEM_CLASS = 'p-CommandPalette-item';
 
 /**
- * The class name added to the item content node.
- */
-const ITEM_CONTENT_CLASS = 'p-CommandPalette-itemContent';
-
-/**
- * The class name added to a item icon node.
- */
-const ITEM_ICON_CLASS = 'p-CommandPalette-itemIcon';
-
-/**
  * The class name added to a item label node.
  */
 const ITEM_LABEL_CLASS = 'p-CommandPalette-itemLabel';
@@ -130,7 +120,7 @@ class CommandItem {
   constructor(options: CommandItem.IOptions) {
     this._command = options.command;
     this._args = options.args || null;
-    this._category = options.category || '';
+    this._category = Private.normalizeCategory(options.category || 'general');
   }
 
   /**
@@ -152,13 +142,6 @@ class CommandItem {
    */
   get label(): string {
     return commands.label(this._command, this._args);
-  }
-
-  /**
-   * The icon class for the command item.
-   */
-  get icon(): string {
-    return commands.icon(this._command, this._args);
   }
 
   /**
@@ -241,7 +224,7 @@ namespace CommandItem {
     /**
      * The category for the item.
      *
-     * The default value is an empty string.
+     * The default value is `'general'`.
      */
     category?: string;
   }
@@ -423,10 +406,10 @@ class CommandPalette extends Widget {
     let { category, text } = CommandPalette.splitQuery(this.inputNode.value);
 
     // Search the command items for query matches.
-    let sections = Private.search(this._items, category, text);
+    let results = Private.search(this._items, category, text);
 
-    // If the sections are empty, there is nothing left to do.
-    if (sections.length === 0) {
+    // If the results are empty, there is nothing left to do.
+    if (results.itemCount === 0) {
       return;
     }
 
@@ -435,19 +418,13 @@ class CommandPalette extends Widget {
     let itemNodes = this._itemNodes;
     let headerNodes = this._headerNodes;
 
-    // Count the total number of items.
-    let itemCount = 0;
-    for (let section of sections) {
-      itemCount += section.items.length;
-    }
-
     // Ensure there are enough header nodes.
-    while (headerNodes.length < sections.length) {
+    while (headerNodes.length < results.headerCount) {
       headerNodes.pushBack(renderer.createHeaderNode());
     }
 
     // Ensure there are enough item nodes.
-    while (itemNodes.length < itemCount) {
+    while (itemNodes.length < results.itemCount) {
       itemNodes.pushBack(renderer.createItemNode());
     }
 
@@ -456,16 +433,17 @@ class CommandPalette extends Widget {
     let headerIndex = 0;
     let fragment = document.createDocumentFragment();
 
-    //
-    for (let section of sections) {
-      let headerNode = headerNodes.at(headerIndex++);
-      renderer.updateHeaderNode(headerNode, section.markup);
-      fragment.appendChild(headerNode);
-      for (let { markup, item } of section.items) {
-        let itemNode = itemNodes.at(itemIndex++);
-        renderer.updateItemNode(itemNode, item, markup);
-        fragment.appendChild(itemNode);
+    // Render the search results into the fragment.
+    for (let part of results.parts) {
+      let node: HTMLElement;
+      if (part.item === null) {
+        node = headerNodes.at(headerIndex++);
+        renderer.updateHeaderNode(node, part.markup);
+      } else {
+        node = itemNodes.at(itemIndex++);
+        renderer.updateItemNode(node, part.item, part.markup);
       }
+      fragment.appendChild(node);
     }
 
     // Add the fragment to the content node.
@@ -592,22 +570,16 @@ namespace CommandPalette {
      */
     createItemNode(): HTMLElement {
       let node = document.createElement('li');
-      let content = document.createElement('div');
-      let icon = document.createElement('span');
-      let label = document.createElement('span');
-      let caption = document.createElement('span');
-      let shortcut = document.createElement('span');
+      let label = document.createElement('div');
+      let caption = document.createElement('div');
+      let shortcut = document.createElement('div');
       node.className = ITEM_CLASS;
-      content.className = ITEM_CONTENT_CLASS;
-      icon.className = ITEM_ICON_CLASS;
       label.className = ITEM_LABEL_CLASS;
       caption.className = ITEM_CAPTION_CLASS;
       shortcut.className = ITEM_SHORTCUT_CLASS;
-      content.appendChild(shortcut);
-      content.appendChild(label);
-      content.appendChild(caption);
-      node.appendChild(icon);
-      node.appendChild(content);
+      node.appendChild(shortcut);
+      node.appendChild(label);
+      node.appendChild(caption);
       return node;
     }
 
@@ -657,22 +629,11 @@ namespace CommandPalette {
         itemClass += ` ${extraItemClass}`;
       }
 
-      // Setup the initial icon class.
-      let iconClass = ITEM_ICON_CLASS;
-
-      // Add the extra class name(s) to the icon class.
-      let extraIconClass = item.icon;
-      if (extraIconClass) {
-        iconClass +=  ` ${extraIconClass}`;
-      }
-
       // Generate the formatted shortcut text.
       let shortcutText = this.formatShortcut(item.keyBinding);
 
       // Extract the relevant child nodes.
-      let icon = node.firstChild as HTMLElement;
-      let content = icon.nextSibling as HTMLElement;
-      let shortcut = content.firstChild as HTMLElement;
+      let shortcut = node.firstChild as HTMLElement;
       let label = shortcut.nextSibling as HTMLElement;
       let caption = label.nextSibling as HTMLElement;
 
@@ -681,7 +642,6 @@ namespace CommandPalette {
 
       // Update the rest of the node state.
       node.className = itemClass;
-      icon.className = iconClass;
       label.innerHTML = markup;
       caption.textContent = item.caption;
       shortcut.textContent = shortcutText;
@@ -759,19 +719,46 @@ namespace CommandPalette {
  */
 namespace Private {
   /**
-   *
+   * An object which represents a single search result part.
    */
   export
-  interface ISection {
+  interface IResultPart {
     /**
+     * The markup for the matching characters.
      *
+     * For a header part, this is the marked category text.
+     *
+     * For an item part, this is the marked command label.
      */
     markup: string;
 
     /**
+     * The command item for the part.
      *
+     * This is `null` for a header part.
      */
-    items: Array<{ markup: string, item: CommandItem }>;
+    item: CommandItem;
+  }
+
+  /**
+   * An object which represents search results.
+   */
+  export
+  interface ISearchResults {
+    /**
+     * The number of header parts in the results.
+     */
+    headerCount: number;
+
+    /**
+     * The number of item parts in the results.
+     */
+    itemCount: number;
+
+    /**
+     * The flat ordered array of result parts.
+     */
+    parts: IResultPart[];
   }
 
   /**
@@ -783,10 +770,336 @@ namespace Private {
   }
 
   /**
+   * Normalize a category for a command item.
    *
+   * @param category - The item category to normalize.
+   *
+   * @returns The normalized category text.
+   *
+   * #### Notes
+   * This converts the category to lower case and removes any
+   * extraneous whitespace.
    */
   export
-  function search(items: ISequence<CommandItem>, category: string, text: string): ISection[] {
-    return [];
+  function normalizeCategory(category: string): string {
+    return category.trim().replace(/\s+/g, ' ').toLowerCase();
+  }
+
+  /**
+   * Search the a sequence of command items for fuzzy matches.
+   *
+   * @param category - The category to match against the command items.
+   *   If this is an empty string, all item categories will be matched.
+   *
+   * @param text - The text to match against the command items.
+   *   If this is an empty string, all items will be matched.
+   *
+   * @returns A new array of sections which match the query.
+   */
+  export
+  function search(items: ISequence<CommandItem>, category: string, text: string): ISearchResults {
+    // Collect a mapping of the matching categories. The mapping will
+    // only contain categories which match the provided query text.
+    // If the category is an empty string, all categories will be
+    // matched with a score of `0` and a `null` indices array.
+    let catmap = matchCategory(items, category);
+
+    // Filter the items for matching label. Only items which have a
+    // category in the given map are considered. The category score
+    // is added to the label score to create the final item score.
+    // If the text is an empty string, all items will be matched
+    // with a label score of `0` and `null` indices array.
+    let scores = matchLabel(items, text, catmap);
+
+    // Sort the items based on their total item score. Ties are
+    // broken by locale ordering the category followed by the label.
+    scores.sort(scoreCmp);
+
+    // Group the item scores by category. The categories are added
+    // to the map in the order they appear in the scores array.
+    let groups = groupScores(scores);
+
+    // Return the results for the search. The headers are created in
+    // the order of key iteration of the map. On major browsers, this
+    // is insertion order. This means that headers are created in the
+    // order of first appearance in the sorted scores array.
+    return createSearchResults(groups, catmap);
+  }
+
+  /**
+   * A type alias for a string map object.
+   */
+  type StringMap<T> = { [key: string]: T };
+
+  /**
+   * An object which represents a text match score.
+   */
+  interface IScore {
+    /**
+     * The numerical score for the text match.
+     */
+    score: number;
+
+    /**
+     * The indices of the matched characters.
+     */
+    indices: number[];
+  }
+
+  /**
+   * A text match score with associated command item.
+   */
+  interface IItemScore extends IScore {
+    /**
+     * The command item associated with the match.
+     */
+    item: CommandItem;
+  }
+
+  /**
+   * Normalize the query text for a palette item.
+   *
+   * @param text - The category or text portion of a palette query.
+   *
+   * @returns The normalized query text.
+   *
+   * #### Notes
+   * The text is normalized by converting to lower case and removing
+   * all whitespace.
+   */
+  function normalizeQueryText(text: string): string {
+    return text.replace(/\s+/g, '').toLowerCase();
+  }
+
+  /**
+   * Collect a mapping of the categories which match the given query.
+   *
+   * @param items - The command items to search.
+   *
+   * @param query - The category portion of the query.
+   *
+   * @returns A mapping of matched category to match score.
+   *
+   * #### Notes
+   * The query string will be normalized by lower casing and removing
+   * all whitespace. If the normalized query is an empty string, all
+   * categories will be matched with a `0` score and `null` indices.
+   */
+  function matchCategory(items: ISequence<CommandItem>, query: string): StringMap<IScore> {
+    // Normalize the query text to lower case with no whitespace.
+    query = normalizeQueryText(query);
+
+    // Create the maps needed to track the match state.
+    let seen: StringMap<boolean> = Object.create(null);
+    let matched: StringMap<IScore> = Object.create(null);
+
+    // Iterate over the items and match the categories.
+    for (let i = 0, n = items.length; i < n; ++i) {
+      // Ignore items which are not visible.
+      let item = items.at(i);
+      if (!item.isVisible) {
+        continue;
+      }
+
+      // If a category has already been seen, no more work is needed.
+      let category = item.category;
+      if (category in seen) {
+        continue;
+      }
+
+      // Mark the category as seen so it is only processed once.
+      seen[category] = true;
+
+      // If the query is empty, all categories match by default.
+      if (!query) {
+        matched[category] = { score: 0, indices: null };
+        continue;
+      }
+
+      // Run the matcher for the query and skip if no match.
+      let match = StringSearch.sumOfSquares(category, query);
+      if (!match) {
+        continue;
+      }
+
+      // Store the match score in the results.
+      matched[category] = match;
+    }
+
+    // Return the final mapping of matched categories.
+    return matched;
+  }
+
+  /**
+   * Filter command items for those with matching label and category.
+   *
+   * @param items - The command items to search.
+   *
+   * @param query - The text portion of the query.
+   *
+   * @param categories - A mapping of the valid item categories.
+   *
+   * @returns An array of item scores for the matching items.
+   *
+   * #### Notes
+   * The query string will be normalized by lower casing and removing
+   * all whitespace. If the normalized query is an empty string, all
+   * items will be matched with a `0` label score and `null` indices.
+   *
+   * Items which have a category which is not present in the category
+   * map will be ignored.
+   *
+   * The final item score is the sum of the item label score and the
+   * relevant category score.
+   *
+   * This function does not sort the results.
+   */
+  function matchLabel(items: ISequence<CommandItem>, query: string, categories: StringMap<IScore>): IItemScore[] {
+    // Normalize the query text to lower case with no whitespace.
+    query = normalizeQueryText(query);
+
+    // Create the array to hold the resulting scores.
+    let scores: IItemScore[] = [];
+
+    // Iterate over the items and match the text with the query.
+    for (let i = 0, n = items.length; i < n; ++i) {
+      // Ignore items which are not visible.
+      let item = items.at(i);
+      if (!item.isVisible) {
+        continue;
+      }
+
+      // Lookup the category score for the item category.
+      let cs = categories[item.category];
+
+      // If the category was not matched, the item is skipped.
+      if (!cs) {
+        continue;
+      }
+
+      // If the query is empty, all items are matched by default.
+      if (!query) {
+        scores.push({ score: cs.score, indices: null, item });
+        continue;
+      }
+
+      // Run the matcher for the query and skip if no match.
+      let match = StringSearch.sumOfSquares(item.label.toLowerCase(), query);
+      if (!match) {
+        continue;
+      }
+
+      // Create the match score for the item.
+      let score = cs.score + match.score;
+      scores.push({ score, indices: match.indices, item });
+    }
+
+    // Return the final array of matched item scores.
+    return scores;
+  }
+
+  /**
+   * A sort comparison function for a command item match score.
+   *
+   * This orders the items first based on score (lower is better), then
+   * by locale order of the item category followed by the item text.
+   */
+  function scoreCmp(a: IItemScore, b: IItemScore): number {
+    let d1 = a.score - b.score;
+    if (d1 !== 0) {
+      return d1;
+    }
+    let d2 = a.item.category.localeCompare(b.item.category);
+    if (d2 !== 0) {
+      return d2;
+    }
+    return a.item.label.localeCompare(b.item.label);
+  }
+
+  /**
+   * Group item scores by item category.
+   *
+   * @param scores - The items to group by category.
+   *
+   * @returns A mapping of category name to group of items.
+   *
+   * #### Notes
+   * The categories are added to the map in the order of first
+   * appearance in the `scores` array.
+   */
+  function groupScores(scores: IItemScore[]): StringMap<IItemScore[]> {
+    let result: StringMap<IItemScore[]> = Object.create(null);
+    for (let score of scores) {
+      let cat = score.item.category;
+      (result[cat] || (result[cat] = [])).push(score);
+    }
+    return result;
+  }
+
+  /**
+   * Create the search results for a collection of item scores.
+   *
+   * @param groups - The item scores, grouped by category.
+   *
+   * @param categories - A mapping of category scores.
+   *
+   * @returns New search results for the given scores.
+   *
+   * #### Notes
+   * This function renders the groups in iteration order, which on
+   * major browsers is order of insertion (a de facto standard).
+   */
+  function createSearchResults(groups: StringMap<IItemScore[]>, categories: StringMap<IScore>): ISearchResults {
+    let itemCount = 0;
+    let headerCount = 0;
+    let parts: IResultPart[] = [];
+    for (let cat in groups) {
+      headerCount++;
+      parts.push(createHeaderPart(cat, categories[cat]));
+      for (let score of groups[cat]) {
+        itemCount++;
+        parts.push(createItemPart(score));
+      }
+    }
+    return { itemCount, headerCount, parts };
+  }
+
+  /**
+   * Create a header result part for the given data.
+   *
+   * @param category - The category name for the header.
+   *
+   * @param score - The score for the category match.
+   *
+   * @returns A header result part for the given data.
+   */
+  function createHeaderPart(category: string, score: IScore): IResultPart {
+    let markup = highlightText(category, score.indices);
+    return { markup, item: null };
+  }
+
+  /**
+   * Create an item result part for the given data.
+   *
+   * @param score - The score for the item match.
+   *
+   * @returns An item result part for the given data.
+   */
+  function createItemPart(score: IItemScore): IResultPart {
+    let markup = highlightText(score.item.label, score.indices);
+    return { markup, item: score.item };
+  }
+
+  /**
+   * Highlight the matching character of the given text.
+   *
+   * @param text - The text to highlight.
+   *
+   * @param indices - The character indices to highlight, or `null`.
+   *
+   * @returns The text interpolated with `<mark>` tags as needed.
+   */
+  function highlightText(text: string, indices: number[]): string {
+    return indices ? StringSearch.highlight(text, indices) : text;
   }
 }
