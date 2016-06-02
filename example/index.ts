@@ -6,6 +6,10 @@
 | The full license is in the file LICENSE, distributed with this software.
 |----------------------------------------------------------------------------*/
 import {
+  CommandPalette
+} from '../lib/ui/commandpalette';
+
+import {
   commands
 } from '../lib/ui/commands';
 
@@ -216,6 +220,20 @@ function main(): void {
   bar.addMenu(menu2);
   bar.addMenu(menu3);
 
+  let palette = new CommandPalette();
+  palette.addItem({ command: 'example:cut', category: 'edit' });
+  palette.addItem({ command: 'example:copy', category: 'edit' });
+  palette.addItem({ command: 'example:paste', category: 'edit' });
+  palette.addItem({ command: 'example:one', category: 'number' });
+  palette.addItem({ command: 'example:two', category: 'number' });
+  palette.addItem({ command: 'example:three', category: 'number' });
+  palette.addItem({ command: 'example:four', category: 'number' });
+  palette.addItem({ command: 'example:new-tab' });
+  palette.addItem({ command: 'example:close-tab' });
+  palette.addItem({ command: 'example:save-on-exit' });
+  palette.addItem({ command: 'example:open-task-manager' });
+  palette.addItem({ command: 'example:close' });
+
   document.addEventListener('contextmenu', (event: MouseEvent) => {
     event.preventDefault();
     ctxt.open(event.clientX, event.clientY);
@@ -234,6 +252,7 @@ function main(): void {
   });
 
   Widget.attach(bar, document.body);
+  Widget.attach(palette, document.body);
 }
 
 
