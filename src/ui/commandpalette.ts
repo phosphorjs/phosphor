@@ -345,7 +345,7 @@ class CommandPalette extends Widget {
     this._items.pushBack(item);
 
     // Schedule an update of the content.
-    this.update();
+    if (this.isAttached) this.update();
 
     // Return the item added to the palette.
     return item;
@@ -378,7 +378,7 @@ class CommandPalette extends Widget {
     this._items.remove(i);
 
     // Schedule an update of the content.
-    this.update();
+    if (this.isAttached) this.update();
   }
 
   /**
@@ -389,7 +389,7 @@ class CommandPalette extends Widget {
     this._items.clear();
 
     // Schedule an update of the content.
-    this.update();
+    if (this.isAttached) this.update();
   }
 
   /**
@@ -420,15 +420,20 @@ class CommandPalette extends Widget {
    * A message handler invoked on a `'after-attach'` message.
    */
   protected onAfterAttach(msg: Message): void {
+    commands.commandChanged.connect(this._onGenericChange, this);
+    keymap.bindingChanged.connect(this._onGenericChange, this);
     this.node.addEventListener('click', this);
     this.node.addEventListener('keydown', this);
     this.node.addEventListener('input', this);
+    this.update();
   }
 
   /**
    * A message handler invoked on a `'before-detach'` message.
    */
   protected onBeforeDetach(msg: Message): void {
+    commands.commandChanged.disconnect(this._onGenericChange, this);
+    keymap.bindingChanged.disconnect(this._onGenericChange, this);
     this.node.removeEventListener('click', this);
     this.node.removeEventListener('keydown', this);
     this.node.removeEventListener('input', this);
@@ -743,6 +748,16 @@ class CommandPalette extends Widget {
     input.focus();
 
     // Schedule an update to render the new search results.
+    this.update();
+  }
+
+  /**
+   * A signal handler for commands and keymap changes.
+   *
+   * #### Notes
+   * This is only connected when the palette is attached.
+   */
+  private _onGenericChange(): void {
     this.update();
   }
 
@@ -1336,7 +1351,7 @@ namespace Private {
    *
    * #### Notes
    * This function renders the groups in iteration order, which on
-   * major browsers is order of insertion (a de facto standard).
+   * all major browsers is the order of insertion (by convention).
    */
   function createSearchResult(groups: StringMap<IItemScore[]>, categories: StringMap<IScore>): ISearchResult {
     let itemCount = 0;
