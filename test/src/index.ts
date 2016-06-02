@@ -6,6 +6,7 @@
 | The full license is in the file LICENSE, distributed with this software.
 |----------------------------------------------------------------------------*/
 import './algorithm/iteration.spec';
+import './algorithm/json.spec';
 import './algorithm/mutation.spec';
 import './algorithm/range.spec';
 import './algorithm/searching.spec';
