@@ -659,7 +659,7 @@ namespace KeymapManager {
    * An arguments object for the `bindingChanged` signal.
    */
   export
-  interface ICommandChangedArgs {
+  interface IBindingChangedArgs {
     /**
      * The keybinding which was changed.
      */
