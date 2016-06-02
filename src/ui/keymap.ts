@@ -399,28 +399,14 @@ class KeymapManager {
   constructor() { }
 
   /**
-   * A signal emitted when a key binding is added.
-   *
-   * #### Notes
-   * The signal argument is the added key binding.
+   * A signal emitted when a key binding is changed.
    */
-  bindingAdded: ISignal<KeymapManager, KeyBinding>;
+  bindingChanged: ISignal<KeymapManager, KeymapManager.IBindingChangedArgs>;
 
   /**
-   * A signal emitted when a key binding is removed.
-   *
-   * #### Notes
-   * The signal argument is the removed key binding.
+   * A signal emitted when the keyboard layout has changed.
    */
-  bindingRemoved: ISignal<KeymapManager, KeyBinding>;
-
-  /**
-   * A signal emitted when the keyboard layout is changed.
-   *
-   * #### Notes
-   * The signal argument is the new keyboard layout.
-   */
-  layoutChanged: ISignal<KeymapManager, IKeyboardLayout>;
+  layoutChanged: ISignal<KeymapManager, void>;
 
   /**
    * A read-only sequence of the key bindings in the keymap.
@@ -455,7 +441,7 @@ class KeymapManager {
       return;
     }
     this._layout = value;
-    this.layoutChanged.emit(value);
+    this.layoutChanged.emit(void 0);
   }
 
   /**
@@ -509,8 +495,8 @@ class KeymapManager {
     // Add the key binding to the internal vector.
     this._bindings.pushBack(kb);
 
-    // Emit the binding added signal.
-    this.bindingAdded.emit(kb);
+    // Emit the `bindingChanged` signal.
+    this.bindingChanged.emit({ binding: kb, type: 'added' });
 
     // Return a disposable which will remove the binding.
     return new DisposableDelegate(() => {
@@ -518,8 +504,8 @@ class KeymapManager {
       let i = indexOf(this._bindings, kb);
       if (i !== -1) this._bindings.remove(i);
 
-      // Emit the binding removed signal.
-      this.bindingRemoved.emit(kb);
+      // Emit the `bindingChanged` signal.
+      this.bindingChanged.emit({ binding: kb, type: 'removed' });
     });
   }
 
@@ -660,9 +646,31 @@ class KeymapManager {
 
 
 // Define the signals for the `KeymapManager` class.
-defineSignal(KeymapManager.prototype, 'bindingAdded');
-defineSignal(KeymapManager.prototype, 'bindingRemoved');
+defineSignal(KeymapManager.prototype, 'bindingChanged');
 defineSignal(KeymapManager.prototype, 'layoutChanged');
+
+
+/**
+ * The namespace for the `KeymapManager` class statics.
+ */
+export
+namespace KeymapManager {
+  /**
+   * An arguments object for the `bindingChanged` signal.
+   */
+  export
+  interface ICommandChangedArgs {
+    /**
+     * The keybinding which was changed.
+     */
+    binding: KeyBinding;
+
+    /**
+     * Whether the binding was added or removed.
+     */
+    type: 'added' | 'removed';
+  }
+}
 
 
 /**
