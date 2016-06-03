@@ -16,22 +16,69 @@ describe('dom/cursor', () => {
 
   describe('overrideCursor()', () => {
 
-    it('should override the body cursor style', () => {
-      let body = document.body;
-      let item = overrideCursor('crosshair');
-      expect(body.style.cursor).to.be('crosshair');
-      item.dispose();
-      expect(body.style.cursor).to.be('');
+    it('should update the body `cursor` style', () => {
+      expect(document.body.style.cursor).to.be('');
+      let override = overrideCursor('wait');
+      expect(document.body.style.cursor).to.be('wait');
+      override.dispose();
     });
 
-    it('should support multiple adds without contention', () => {
-      let body = document.body;
-      let item1 = overrideCursor('crosshair');
-      let item2 = overrideCursor('wait');
-      expect(body.style.cursor).to.be('wait');
-      item1.dispose();
-      expect(body.style.cursor).to.be('wait');
-      item2.dispose();
+    it('should add the `p-mod-override-cursor` class to the body', () => {
+      expect(document.body.classList.contains('p-mod-override-cursor')).to.be(false);
+      let override = overrideCursor('wait');
+      expect(document.body.classList.contains('p-mod-override-cursor')).to.be(true);
+      override.dispose();
+    });
+
+    it('should clear the override when disposed', () => {
+      expect(document.body.style.cursor).to.be('');
+      let override = overrideCursor('wait');
+      expect(document.body.style.cursor).to.be('wait');
+      override.dispose();
+      expect(document.body.style.cursor).to.be('');
+    });
+
+    it('should remove the `p-mod-override-cursor` class when disposed', () => {
+      expect(document.body.classList.contains('p-mod-override-cursor')).to.be(false);
+      let override = overrideCursor('wait');
+      expect(document.body.classList.contains('p-mod-override-cursor')).to.be(true);
+      override.dispose();
+      expect(document.body.classList.contains('p-mod-override-cursor')).to.be(false);
+    });
+
+    it('should respect the most recent override', () => {
+      expect(document.body.style.cursor).to.be('');
+      expect(document.body.classList.contains('p-mod-override-cursor')).to.be(false);
+      let one = overrideCursor('wait');
+      expect(document.body.style.cursor).to.be('wait');
+      expect(document.body.classList.contains('p-mod-override-cursor')).to.be(true);
+      let two = overrideCursor('default');
+      expect(document.body.style.cursor).to.be('default');
+      expect(document.body.classList.contains('p-mod-override-cursor')).to.be(true);
+      let three = overrideCursor('cell')
+      expect(document.body.style.cursor).to.be('cell');
+      expect(document.body.classList.contains('p-mod-override-cursor')).to.be(true);
+      two.dispose();
+      expect(document.body.style.cursor).to.be('cell');
+      expect(document.body.classList.contains('p-mod-override-cursor')).to.be(true);
+      one.dispose();
+      expect(document.body.style.cursor).to.be('cell');
+      expect(document.body.classList.contains('p-mod-override-cursor')).to.be(true);
+      three.dispose();
+      expect(document.body.style.cursor).to.be('');
+      expect(document.body.classList.contains('p-mod-override-cursor')).to.be(false);
+    });
+
+    it('should override the computed cursor for a node', () => {
+      let div = document.createElement('div');
+      div.className = 'cell-cursor';
+      document.body.appendChild(div);
+      expect(window.getComputedStyle(div).cursor).to.be('auto');
+      let override = overrideCursor('wait');
+      expect(window.getComputedStyle(div).cursor).to.be('wait');
+      override.dispose();
+      expect(window.getComputedStyle(div).cursor).to.be('auto');
+      document.body.removeChild(div);
     });
 
   });
