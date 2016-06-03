@@ -655,11 +655,13 @@ class Menu extends Widget {
   /**
    * Add a menu item to the end of the menu.
    *
-   * @param item - The menu item to add to the menu, or an options
+   * @param value - The menu item to add to the menu, or an options
    *   object to be converted into a menu item.
+   *
+   * @returns The menu item added to the menu.
    */
-  addItem(item: MenuItem | MenuItem.IOptions): void {
-    this.insertItem(this._items.length, item);
+  addItem(value: MenuItem | MenuItem.IOptions): MenuItem {
+    return this.insertItem(this._items.length, value);
   }
 
   /**
@@ -667,13 +669,15 @@ class Menu extends Widget {
    *
    * @param index - The index at which to insert the item.
    *
-   * @param item - The menu item to insert into the menu, or an options
+   * @param value - The menu item to insert into the menu, or an options
    *   object to be converted into a menu item.
+   *
+   * @returns The menu item added to the menu.
    *
    * #### Notes
    * The index will be clamped to the bounds of the items.
    */
-  insertItem(index: number, item: MenuItem | MenuItem.IOptions): void {
+  insertItem(index: number, value: MenuItem | MenuItem.IOptions): MenuItem {
     // Close the menu if it's attached.
     if (this.isAttached) {
       this.close();
@@ -685,11 +689,14 @@ class Menu extends Widget {
     // Clamp the insert index to the vector bounds.
     let i = Math.max(0, Math.min(Math.floor(index), this._items.length));
 
+    // Coerce the value to a menu item.
+    let item = Private.asMenuItem(value);
+
     // Create the node for the item. It will be initialized on open.
     let node = this._renderer.createItemNode();
 
     // Insert the item and node into the vectors.
-    this._items.insert(i, Private.asMenuItem(item));
+    this._items.insert(i, item);
     this._nodes.insert(i, node);
 
     // Look up the next sibling node.
@@ -697,17 +704,28 @@ class Menu extends Widget {
 
     // Insert the node into the content node.
     this.contentNode.insertBefore(node, ref);
+
+    // Return the item added to the menu.
+    return item;
   }
 
   /**
    * Remove a menu item from the menu.
    *
-   * @param index - The index of the item to remove.
+   * @param value - The item to remove or the index thereof.
    *
    * #### Notes
-   * This is a no-op if the index is out of range.
+   * This is a no-op if the item is not contained in the menu.
    */
-  removeItem(index: number): void {
+  removeItem(value: MenuItem | number): void {
+    // Coerce the value to an index.
+    let index: number;
+    if (typeof value === 'number') {
+      index = value;
+    } else {
+      index = indexOf(this._items, value);
+    }
+
     // Bail if the index is out of range.
     let i = Math.floor(index);
     if (i < 0 || i >= this._items.length) {
@@ -1351,7 +1369,7 @@ namespace Menu {
     /**
      * Update an item node to reflect the state of a menu item.
      *
-     * @param node - An item node created by a call to `createItemNode`.
+     * @param node - A node created by a call to `createItemNode`.
      *
      * @param item - The menu item holding the data for the node.
      *
@@ -1392,7 +1410,7 @@ namespace Menu {
     /**
      * Update an item node to reflect the state of a menu item.
      *
-     * @param node - An item node created by a call to `createItemNode`.
+     * @param node - A node created by a call to `createItemNode`.
      *
      * @param item - The menu item holding the data for the node.
      */
@@ -1514,7 +1532,7 @@ namespace Menu {
  */
 namespace Private {
   /**
-   * A coerce a menu item or options into a real menu item.
+   * Coerce a menu item or options into a real menu item.
    */
   export
   function asMenuItem(value: MenuItem | MenuItem.IOptions): MenuItem {

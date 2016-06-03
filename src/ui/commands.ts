@@ -224,36 +224,14 @@ class CommandRegistry {
   constructor() { }
 
   /**
-   * A signal emitted when a command is added to the registry.
-   *
-   * #### Notes
-   * The signal argument is the id of the added command.
+   * A signal emmitted when a command is changed.
    */
-  commandAdded: ISignal<CommandRegistry, string>;
-
-  /**
-   * A signal emitted when a command is removed from the registry.
-   *
-   * #### Notes
-   * The signal argument is the id of the removed command.
-   */
-  commandRemoved: ISignal<CommandRegistry, string>;
-
-  /**
-   * A signal emitted when the state of a command is changed.
-   *
-   * #### Notes
-   * The signal argument is the id of the command which changed.
-   */
-  commandChanged: ISignal<CommandRegistry, string>;
+  commandChanged: ISignal<CommandRegistry, CommandRegistry.ICommandChangedArgs>;
 
   /**
    * A signal emitted when a command is executed.
-   *
-   * #### Notes
-   * The signal argument is the id and args for the executed command.
    */
-  commandExecuted: ISignal<CommandRegistry, { id: string, args: JSONObject }>;
+  commandExecuted: ISignal<CommandRegistry, CommandRegistry.ICommandExecutedArgs>;
 
   /**
    * List the ids of the registered commands.
@@ -298,16 +276,16 @@ class CommandRegistry {
     // Normalize the command and add it to the registry.
     this._commands[id] = Private.normalizeCommand(cmd);
 
-    // Emit the `commandAdded` signal.
-    this.commandAdded.emit(id);
+    // Emit the `commandChanged` signal.
+    this.commandChanged.emit({ id, type: 'added' });
 
     // Return a disposable which will remove the command.
     return new DisposableDelegate(() => {
       // Remove the command from the registry.
       delete this._commands[id];
 
-      // Emit the `commandRemoved` signal.
-      this.commandRemoved.emit(id);
+      // Emit the `commandChanged` signal.
+      this.commandChanged.emit({ id, type: 'removed' });
     });
   }
 
@@ -326,7 +304,9 @@ class CommandRegistry {
    * If the command is not registered, this is a no-op.
    */
   notifyCommandChanged(id: string): void {
-    if (id in this._commands) this.commandChanged.emit(id);
+    if (id in this._commands) {
+      this.commandChanged.emit({ id, type: 'changed' });
+    }
   }
 
   /**
@@ -524,10 +504,47 @@ class CommandRegistry {
 
 
 // Define the signals for the `CommandRegistry` class.
-defineSignal(CommandRegistry.prototype, 'commandAdded');
-defineSignal(CommandRegistry.prototype, 'commandRemoved');
 defineSignal(CommandRegistry.prototype, 'commandChanged');
 defineSignal(CommandRegistry.prototype, 'commandExecuted');
+
+
+/**
+ * The namespace for the `CommandRegistry` class statics.
+ */
+export
+namespace CommandRegistry {
+  /**
+   * An arguments object for the `commandChanged` signal.
+   */
+  export
+  interface ICommandChangedArgs {
+    /**
+     * The id of the associated command.
+     */
+    id: string;
+
+    /**
+     * Whether the command was added, removed, or changed.
+     */
+    type: 'added' | 'removed' | 'changed';
+  }
+
+  /**
+   * An arguments object for the `commandExecuted` signal.
+   */
+  export
+  interface ICommandExecutedArgs {
+    /**
+     * The id of the associated command.
+     */
+    id: string;
+
+    /**
+     * The arguments object passed to the command.
+     */
+    args: JSONObject;
+  }
+}
 
 
 /**

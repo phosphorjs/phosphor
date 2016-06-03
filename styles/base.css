@@ -32,6 +32,54 @@ body.p-mod-override-cursor * {
 
 
 /*-----------------------------------------------------------------------------
+| ui/commandpalette
+|----------------------------------------------------------------------------*/
+.p-CommandPalette {
+  display: flex;
+  flex-direction: column;
+  -webkit-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
+  user-select: none;
+}
+
+
+.p-CommandPalette-search {
+  flex: 0 0 auto;
+}
+
+
+.p-CommandPalette-content {
+  flex: 1 1 auto;
+  margin: 0;
+  padding: 0;
+  min-height: 0;
+  overflow: auto;
+  list-style-type: none;
+}
+
+
+.p-CommandPalette-header {
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  text-transform: capitalize;
+}
+
+
+.p-CommandPalette-itemShortcut {
+  float: right;
+}
+
+
+.p-CommandPalette-itemLabel {
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+
+/*-----------------------------------------------------------------------------
 | ui/menu
 |----------------------------------------------------------------------------*/
 .p-Menu {
