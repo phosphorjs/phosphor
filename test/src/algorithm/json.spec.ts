@@ -8,7 +8,7 @@
 import expect = require('expect.js');
 
 import {
-  isPrimitive, isArray, isObject, deepEqual
+  deepEqual, isArray, isObject, isPrimitive
 } from '../../../lib/algorithm/json';
 
 
