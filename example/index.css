@@ -161,13 +161,13 @@ body {
 }
 
 
-.p-Menu-item.p-type-separator > span {
+.p-Menu-item.p-type-separator > div {
   padding: 0;
   height: 9px;
 }
 
 
-.p-Menu-item.p-type-separator > span::after {
+.p-Menu-item.p-type-separator > div::after {
   content: '';
   display: block;
   position: relative;

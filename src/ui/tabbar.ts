@@ -1172,15 +1172,15 @@ namespace TabBar {
      */
     createTabNode(): HTMLElement {
       let node = document.createElement('li');
-      let icon = document.createElement('span');
-      let text = document.createElement('span');
-      let close = document.createElement('span');
+      let icon = document.createElement('div');
+      let label = document.createElement('div');
+      let close = document.createElement('div');
       node.className = TAB_CLASS;
       icon.className = ICON_CLASS;
-      text.className = LABEL_CLASS;
+      label.className = LABEL_CLASS;
       close.className = CLOSE_ICON_CLASS;
       node.appendChild(icon);
-      node.appendChild(text);
+      node.appendChild(label);
       node.appendChild(close);
       return node;
     }
@@ -1197,11 +1197,11 @@ namespace TabBar {
       let tabSuffix = title.closable ? ` ${CLOSABLE_CLASS}` : '';
       let iconSuffix = title.icon ? ` ${title.icon}` : '';
       let icon = node.firstChild as HTMLElement;
-      let text = icon.nextSibling as HTMLElement;
+      let label = icon.nextSibling as HTMLElement;
       node.className = `${TAB_CLASS} ${tabInfix} ${tabSuffix}`;
       icon.className = `${ICON_CLASS} ${iconSuffix}`;
-      text.textContent = title.label;
-      text.title = title.caption;
+      label.textContent = title.label;
+      label.title = title.caption;
     }
 
     /**

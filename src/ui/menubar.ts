@@ -853,13 +853,13 @@ namespace MenuBar {
      */
     createItemNode(): HTMLElement {
       let node = document.createElement('li');
-      let icon = document.createElement('span');
-      let text = document.createElement('span');
+      let icon = document.createElement('div');
+      let label = document.createElement('div');
       node.className = ITEM_CLASS;
       icon.className = ICON_CLASS;
-      text.className = LABEL_CLASS;
+      label.className = LABEL_CLASS;
       node.appendChild(icon);
-      node.appendChild(text);
+      node.appendChild(label);
       return node;
     }
 
@@ -872,14 +872,14 @@ namespace MenuBar {
      */
     updateItemNode(node: HTMLElement, title: Title): void {
       let icon = node.firstChild as HTMLElement;
-      let text = node.lastChild as HTMLElement;
+      let label = node.lastChild as HTMLElement;
       let itemClass = ITEM_CLASS;
       let iconClass = ICON_CLASS;
       if (title.className) itemClass += ` ${title.className}`;
       if (title.icon) iconClass += ` ${title.icon}`;
       node.className = itemClass;
       icon.className = iconClass;
-      text.innerHTML = this.formatLabel(title.label, title.mnemonic);
+      label.innerHTML = this.formatLabel(title.label, title.mnemonic);
     }
 
     /**

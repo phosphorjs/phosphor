@@ -1392,10 +1392,10 @@ namespace Menu {
      */
     createItemNode(): HTMLElement {
       let node = document.createElement('li');
-      let icon = document.createElement('span');
-      let label = document.createElement('span');
-      let shortcut = document.createElement('span');
-      let submenu = document.createElement('span');
+      let icon = document.createElement('div');
+      let label = document.createElement('div');
+      let shortcut = document.createElement('div');
+      let submenu = document.createElement('div');
       node.className = ITEM_CLASS;
       label.className = LABEL_CLASS;
       shortcut.className = SHORTCUT_CLASS;
