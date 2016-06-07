@@ -8,6 +8,10 @@
 import expect = require('expect.js');
 
 import {
+  JSONObject
+} from '../../../lib/algorithm/json';
+
+import {
   commands
 } from '../../../lib/ui/commands';
 
@@ -75,6 +79,15 @@ describe('ui/keymap', () => {
 
     });
 
+    describe('#constructor()', () => {
+
+      it('should accept no arguments', () => {
+        let keymap = new KeymapManager();
+        expect(keymap).to.be.a(KeymapManager);
+      })
+
+    });
+
     describe('#layout', () => {
 
       it('should be a keycode layout', () => {
@@ -83,6 +96,17 @@ describe('ui/keymap', () => {
 
       it('should default to `EN_US` layout', () => {
         expect(keymap.layout).to.be(EN_US);
+      });
+
+      it('should emit a layout changed signal', () => {
+        let called = 0;
+        let handler = () => { called++; };
+        keymap.layoutChanged.connect(handler);
+        keymap.layout = new KeycodeLayout('ab-cd', {});
+        expect(called).to.be(1);
+        keymap.layout = null;
+        expect(called).to.be(2);
+        keymap.layoutChanged.disconnect(handler);
       });
 
       it('should reset to `EN_US` if set to `null`', () => {
@@ -166,6 +190,108 @@ describe('ui/keymap', () => {
         keymap.bindingChanged.disconnect(handler);
         command.dispose();
         document.body.removeChild(node);
+      });
+
+      it('should throw an error if binding has an invalid selector', () => {
+        let command = commands.addCommand('test', { execute: () => {  } });
+        let options = { keys: ['Ctrl ;'], selector: '..', command: 'test' };
+        expect(() => { keymap.addBinding(options); }).to.throwError();
+        command.dispose();
+      });
+
+    });
+
+    describe('#findBinding()', () => {
+
+      it('should find a key binding based on command and args', () => {
+        let c1 = commands.addCommand('c1', { execute: () => { } });
+        let c2 = commands.addCommand('c2', { execute: () => { } });
+        let a1: JSONObject = { 'foo': 'bar' };
+        let b1 = keymap.addBinding({
+          keys: ['Ctrl ;'],
+          selector: '.b1',
+          command: 'c1',
+          args: a1
+        });
+        console.log('\n\n', keymap.findKeyBinding('c1', a1), '\n\n');
+        expect(keymap.findKeyBinding('c1', a1).selector).to.be('.b1');
+        let a2: JSONObject = { 'bar': 'baz' };
+        let b2 = keymap.addBinding({
+          keys: ['Ctrl ;'],
+          selector: '.b2',
+          command: 'c1',
+          args: a2
+        });
+        expect(keymap.findKeyBinding('c1', a2).selector).to.be('.b2');
+        let a3: JSONObject = { 'baz': 'qux' };
+        let b3 = keymap.addBinding({
+          keys: ['Ctrl ;'],
+          selector: '.b3',
+          command: 'c1',
+          args: a3
+        });
+        expect(keymap.findKeyBinding('c1', a3).selector).to.be('.b3');
+        let b4 = keymap.addBinding({
+          keys: ['Ctrl ;'],
+          selector: '.b4',
+          command: 'c2',
+          args: null
+        });
+        expect(keymap.findKeyBinding('c2', null).selector).to.be('.b4');
+        b1.dispose();
+        b2.dispose();
+        b3.dispose();
+        b4.dispose();
+        c1.dispose();
+        c2.dispose();
+      });
+
+      it('should remove a binding when disposed', () => {
+        let node = createElement();
+        let called = false;
+        let command = commands.addCommand('test', {
+          execute: () => { called = true; }
+        });
+        node.addEventListener('keydown', event => {
+          keymap.processKeydownEvent(event);
+        });
+        let binding = keymap.addBinding({
+          keys: ['Ctrl ;'],
+          selector: `#${node.id}`,
+          command: 'test'
+        });
+        binding.dispose();
+        expect(called).to.be(false);
+        command.dispose();
+        document.body.removeChild(node);
+      });
+
+      it('should emit a binding changed signal when added and removed', () => {
+        let node = createElement();
+        let added = false;
+        let command = commands.addCommand('test', { execute: () => { } });
+        let handler = (sender: any, args: any) => {
+          added = (args as KeymapManager.IBindingChangedArgs).type === 'added';
+        };
+        keymap.bindingChanged.connect(handler);
+        let binding = keymap.addBinding({
+          keys: ['Ctrl ;'],
+          selector: `#${node.id}`,
+          command: 'test'
+        });
+        expect(added).to.be(true);
+        binding.dispose();
+        expect(added).to.be(false);
+        keymap.bindingChanged.disconnect(handler);
+        command.dispose();
+        document.body.removeChild(node);
+      });
+
+      it('should throw an error if binding has an invalid selector', () => {
+        let command = commands.addCommand('test', { execute: () => { } });
+        let options = { keys: ['Ctrl ;'], selector: '..', command: 'test' };
+        expect(() => { keymap.addBinding(options); }).to.throwError();
+        command.dispose();
       });
 
     });
