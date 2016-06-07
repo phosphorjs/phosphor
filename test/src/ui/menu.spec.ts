@@ -44,6 +44,9 @@ const DEFAULT_CMD = 'defaultCmd';
 commands.addCommand(DEFAULT_CMD, {
   execute: (args: JSONObject) => { return args; },
   label: 'LABEL',
+  icon: 'foo',
+  className: 'bar',
+  isToggled: (args: JSONObject) => { return true; },
   mnemonic: 1
 });
 
@@ -198,6 +201,9 @@ describe('ui/menu', () => {
       it('should default to an empty string', () => {
         let item = new MenuItem({});
         expect(item.label).to.be('');
+
+        item = new MenuItem({ type: 'separator' });
+        expect(item.label).to.be('');
       });
 
     });
@@ -228,6 +234,9 @@ describe('ui/menu', () => {
 
       it('should default to `-1`', () => {
         let item = new MenuItem({});
+        expect(item.mnemonic).to.be(-1);
+
+        item = new MenuItem({ type: 'separator' });
         expect(item.mnemonic).to.be(-1);
       });
 
@@ -260,6 +269,9 @@ describe('ui/menu', () => {
       it('should default to an empty string', () => {
         let item = new MenuItem({});
         expect(item.icon).to.be('');
+
+        item = new MenuItem({ type: 'separator' });
+        expect(item.icon).to.be('');
       });
 
     });
@@ -291,6 +303,9 @@ describe('ui/menu', () => {
       it('should default to an empty string', () => {
         let item = new MenuItem({});
         expect(item.caption).to.be('');
+
+        item = new MenuItem({ type: 'separator' });
+        expect(item.caption).to.be('');
       });
 
     });
@@ -321,6 +336,9 @@ describe('ui/menu', () => {
 
       it('should default to an empty string', () => {
         let item = new MenuItem({});
+        expect(item.className).to.be('');
+
+        item = new MenuItem({ type: 'separator' });
         expect(item.className).to.be('');
       });
 
@@ -985,6 +1003,16 @@ describe('ui/menu', () => {
         expect(menu.items.at(0)).to.be(item);
       });
 
+      it('should close the menu if attached', () => {
+        let menu = new Menu();
+        menu.open(0, 0);
+        let called = false;
+        menu.aboutToClose.connect(() => { called = true; });
+        menu.insertItem(0, {});
+        expect(called).to.be(true);
+        menu.dispose();
+      });
+
     });
 
     describe('#removeItem()', () => {
@@ -1017,6 +1045,18 @@ describe('ui/menu', () => {
 
         menu.removeItem(-1);
         expect(menu.items.length).to.be(1);
+      });
+
+      it('should close the menu if it is attached', () => {
+        let menu = new Menu();
+        let item = new MenuItem({});
+        menu.addItem(item);
+        menu.open(0, 0);
+        let called = false;
+        menu.aboutToClose.connect(() => { called = true; });
+        menu.removeItem(item);
+        expect(called).to.be(true);
+        menu.dispose();
       });
 
     });
@@ -1067,9 +1107,9 @@ describe('ui/menu', () => {
       it('should be adjusted to fit naturally on the screen', () => {
         let menu = new Menu();
         menu.addItem({ command: DEFAULT_CMD });
-        menu.open(-1000, -1000);
+        menu.open(-10, 10000);
         expect(menu.node.style.left).to.be('0px');
-        expect(menu.node.style.top).to.be('0px');
+        expect(menu.node.style.top).to.not.be('10000px');
         menu.dispose();
       });
 
@@ -1079,6 +1119,16 @@ describe('ui/menu', () => {
         menu.open(10000, 10000, { forceX: true, forceY: true });
         expect(menu.node.style.left).to.be('10000px');
         expect(menu.node.style.top).to.be('10000px');
+        menu.dispose();
+      });
+
+      it('should bail if already attached', () => {
+        let menu = new Menu();
+        menu.addItem({ command: DEFAULT_CMD });
+        menu.open(10, 10);
+        menu.open(100, 100);
+        expect(menu.node.style.left).to.be('10px');
+        expect(menu.node.style.top).to.be('10px');
         menu.dispose();
       });
 
@@ -1187,7 +1237,9 @@ describe('ui/menu', () => {
 
           let menu = new Menu();
           menu.addItem({ type: 'submenu', menu: sub0 });
+          menu.addItem({ type: 'separator' });
           menu.addItem({ type: 'submenu', menu: sub1 });
+          menu.addItem({ type: 'submenu', menu: new Menu() });
 
           menu.open(0, 0);
           simulate(menu.node, 'keydown', { keyCode: 70 });
@@ -1253,6 +1305,21 @@ describe('ui/menu', () => {
           disposable.dispose();
         });
 
+        it('should bail if not a left mouse button', () => {
+          let menu = new Menu();
+          let called = false;
+          let disposable = commands.addCommand('test', {
+            execute: (args: JSONObject) => { called = true; },
+          });
+          menu.addItem({ command: 'test' });
+          menu.activeIndex = 0;
+          menu.open(0, 0);
+          simulate(menu.node, 'mouseup', { button: 1 });
+          expect(called).to.be(false);
+          menu.dispose();
+          disposable.dispose();
+        });
+
       });
 
       context('mousemove', () => {
@@ -1282,6 +1349,28 @@ describe('ui/menu', () => {
           expect(sub.isAttached).to.be(false);
           setTimeout(() => {
             expect(sub.isAttached).to.be(true);
+            menu.dispose();
+            done();
+          }, 500);
+        });
+
+        it('should close an open sub menu', (done) => {
+          let sub = new Menu();
+          sub.addItem({ command: DEFAULT_CMD });
+          sub.title.label = 'LABEL';
+          let menu = new Menu();
+          menu.addItem({ command: DEFAULT_CMD });
+          menu.addItem({ type: 'submenu', menu: sub });
+          menu.open(0, 0);
+          menu.activeIndex = 1;
+          menu.triggerActiveItem();
+          let node = menu.node.getElementsByClassName('p-Menu-item')[0];
+          let rect = node.getBoundingClientRect();
+          simulate(menu.node, 'mousemove', { clientX: rect.left, clientY: rect.top });
+          expect(menu.activeIndex).to.be(0);
+          expect(sub.isAttached).to.be(true);
+          setTimeout(() => {
+            expect(sub.isAttached).to.be(false);
             menu.dispose();
             done();
           }, 500);
@@ -1317,8 +1406,9 @@ describe('ui/menu', () => {
           menu.open(0, 0);
           let called = false;
           menu.aboutToClose.connect(() => { called = true; });
-          simulate(menu.node, 'mousedown');
-          expect(called).to.be(true);
+          let rect = menu.node.getBoundingClientRect();
+          simulate(menu.node, 'mousedown', { clientX: rect.left, clientY: rect.top });
+          expect(called).to.be(false);
           menu.dispose();
         });
 
