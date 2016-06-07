@@ -43,7 +43,8 @@ import {
 const DEFAULT_CMD = 'defaultCmd';
 commands.addCommand(DEFAULT_CMD, {
   execute: (args: JSONObject) => { return args; },
-  label: 'LABEL'
+  label: 'LABEL',
+  mnemonic: 1
 });
 
 
@@ -1079,6 +1080,259 @@ describe('ui/menu', () => {
         expect(menu.node.style.left).to.be('10000px');
         expect(menu.node.style.top).to.be('10000px');
         menu.dispose();
+      });
+
+    });
+
+    describe('#handleEvent()', () => {
+
+      context('keydown', () => {
+
+        it('should trigger the active item on enter', () => {
+          let called = false;
+          let disposable = commands.addCommand('test', {
+            execute: (args: JSONObject) => { called = true; }
+          });
+          let menu = new Menu();
+          menu.addItem(new MenuItem({ command: 'test' }));
+          menu.activeIndex = 0;
+          menu.open(0, 0);
+          simulate(menu.node, 'keydown', { keyCode: 13 });
+          expect(called).to.be(true);
+          menu.dispose();
+          disposable.dispose();
+        });
+
+        it('should close the menu on escape', () => {
+          let menu = new Menu();
+          let called = false;
+          menu.aboutToClose.connect(() => { called = true; });
+          menu.open(0, 0);
+          simulate(menu.node, 'keydown', { keyCode: 27 });
+          expect(called).to.be(true);
+          menu.dispose();
+        });
+
+        it('should close the menu on left arrow if there is a parent menu', () => {
+          let sub = new Menu();
+          let called = false;
+          sub.addItem({ command: DEFAULT_CMD });
+          let menu = new Menu();
+          menu.addItem({ type: 'submenu', menu: sub });
+          menu.open(0, 0);
+          menu.activateNextItem();
+          menu.triggerActiveItem();
+          sub.aboutToClose.connect(() => { called = true; });
+          simulate(sub.node, 'keydown', { keyCode: 37 });
+          expect(called).to.be(true);
+          menu.dispose();
+        });
+
+        it('should activate the previous item on up arrow', () => {
+          let menu = new Menu();
+          menu.addItem({ command: DEFAULT_CMD });
+          let disposable = commands.addCommand('test', {
+            execute: (args: JSONObject) => { return args; }
+          });
+          menu.addItem({ command: 'test' });
+          menu.open(0, 0);
+          simulate(menu.node, 'keydown', { keyCode: 38 });
+          expect(menu.activeIndex).to.be(1);
+          menu.dispose();
+          disposable.dispose();
+        });
+
+        it('should trigger the active item on right arrow if the item is a submenu', () => {
+          let sub = new Menu();
+          sub.addItem({ command: DEFAULT_CMD });
+          let menu = new Menu();
+          menu.addItem({ type: 'submenu', menu: sub });
+          menu.open(0, 0);
+          menu.activateNextItem();
+          simulate(menu.node, 'keydown', { keyCode: 39 });
+          expect(menu.childMenu).to.be(sub);
+          menu.dispose();
+        });
+
+        it('should activate the next itom on down arrow', () => {
+          let menu = new Menu();
+          menu.addItem({ command: DEFAULT_CMD });
+          let disposable = commands.addCommand('test', {
+            execute: (args: JSONObject) => { return args; }
+          });
+          menu.addItem({ command: 'test' });
+          menu.open(0, 0);
+          simulate(menu.node, 'keydown', { keyCode: 40 });
+          expect(menu.activeIndex).to.be(0);
+          menu.dispose();
+          disposable.dispose();
+        });
+
+        it('should activate the first matching mnemonic', () => {
+          let sub0 = new Menu();
+          sub0.title.label = 'foo';
+          sub0.title.mnemonic = 0;
+          let disposable0 = commands.addCommand('test0', {
+            execute: (args: JSONObject) => { return args; }
+          });
+          sub0.addItem({ command: 'test0' });
+
+          let sub1 = new Menu();
+          sub1.title.label = 'oof';
+          sub1.title.mnemonic = 2;
+          let disposable1 = commands.addCommand('test1', {
+            execute: (args: JSONObject) => { return args; }
+          });
+          sub1.addItem({ command: 'test1' });
+
+          let menu = new Menu();
+          menu.addItem({ type: 'submenu', menu: sub0 });
+          menu.addItem({ type: 'submenu', menu: sub1 });
+
+          menu.open(0, 0);
+          simulate(menu.node, 'keydown', { keyCode: 70 });
+          expect(menu.activeIndex).to.be(0);
+
+          menu.dispose();
+          disposable0.dispose();
+          disposable1.dispose();
+        });
+
+        it('should trigger a lone matching mnemonic', () => {
+          let menu = new Menu();
+          let called = false;
+          let disposable = commands.addCommand('test', {
+            execute: (args: JSONObject) => { called = true; },
+            label: 'foo',
+            mnemonic: 1
+          });
+          menu.addItem({ command: 'test' });
+
+          menu.open(0, 0);
+          simulate(menu.node, 'keydown', { keyCode: 79 });  // O
+          expect(called).to.be(true);
+
+          menu.dispose();
+          disposable.dispose();
+        });
+
+        it('should activate an item with no matching mnemonic, but matching first character', () => {
+          let menu = new Menu();
+          let called = false;
+          let disposable = commands.addCommand('test', {
+            execute: (args: JSONObject) => { called = true; },
+            label: 'foo'
+          });
+          menu.addItem({ command: 'test' });
+
+          menu.open(0, 0);
+          simulate(menu.node, 'keydown', { keyCode: 70 });  // F
+          expect(menu.activeIndex).to.be(0);
+          expect(called).to.be(false);
+
+          menu.dispose();
+          disposable.dispose();
+        });
+
+      });
+
+      context('mouseup', () => {
+
+        it('should trigger the active item', () => {
+          let menu = new Menu();
+          let called = false;
+          let disposable = commands.addCommand('test', {
+            execute: (args: JSONObject) => { called = true; },
+          });
+          menu.addItem({ command: 'test' });
+          menu.activeIndex = 0;
+          menu.open(0, 0);
+          simulate(menu.node, 'mouseup');
+          expect(called).to.be(true);
+          menu.dispose();
+          disposable.dispose();
+        });
+
+      });
+
+      context('mousemove', () => {
+
+        it('should set the active index', () => {
+          let menu = new Menu();
+          menu.addItem({ command: DEFAULT_CMD });
+          menu.open(0, 0);
+          let node = menu.node.getElementsByClassName('p-Menu-item')[0];
+          let rect = node.getBoundingClientRect();
+          simulate(menu.node, 'mousemove', { clientX: rect.left, clientY: rect.top });
+          expect(menu.activeIndex).to.be(0);
+          menu.dispose();
+        });
+
+        it('should open a child menu after a timeout', (done) => {
+          let sub = new Menu();
+          sub.addItem({ command: DEFAULT_CMD });
+          sub.title.label = 'LABEL';
+          let menu = new Menu();
+          menu.addItem({ type: 'submenu', menu: sub });
+          menu.open(0, 0);
+          let node = menu.node.getElementsByClassName('p-Menu-item')[0];
+          let rect = node.getBoundingClientRect();
+          simulate(menu.node, 'mousemove', { clientX: rect.left, clientY: rect.top });
+          expect(menu.activeIndex).to.be(0);
+          expect(sub.isAttached).to.be(false);
+          setTimeout(() => {
+            expect(sub.isAttached).to.be(true);
+            menu.dispose();
+            done();
+          }, 500);
+        });
+
+      });
+
+      context('mouseleave', () => {
+
+        it('should reset the active index', () => {
+          let sub = new Menu();
+          sub.addItem({ command: DEFAULT_CMD });
+          sub.title.label = 'LABEL';
+          let menu = new Menu();
+          menu.addItem({ type: 'submenu', menu: sub });
+          menu.open(0, 0);
+          let node = menu.node.getElementsByClassName('p-Menu-item')[0];
+          let rect = node.getBoundingClientRect();
+          simulate(menu.node, 'mousemove', { clientX: rect.left, clientY: rect.top });
+          expect(menu.activeIndex).to.be(0);
+          simulate(menu.node, 'mouseleave', { clientX: rect.left, clientY: rect.top });
+          expect(menu.activeIndex).to.be(-1);
+          menu.dispose();
+        });
+
+      });
+
+      context('mousedown', () => {
+
+        it('should not close the menu if on a child node', () => {
+          let menu = new Menu();
+          menu.addItem({ command: DEFAULT_CMD });
+          menu.open(0, 0);
+          let called = false;
+          menu.aboutToClose.connect(() => { called = true; });
+          simulate(menu.node, 'mousedown');
+          expect(called).to.be(true);
+          menu.dispose();
+        });
+
+        it('should close the menu if not on a child node', () => {
+          let menu = new Menu();
+          menu.addItem({ command: DEFAULT_CMD });
+          menu.open(0, 0);
+          let called = false;
+          menu.aboutToClose.connect(() => { called = true; });
+          simulate(menu.node, 'mousedown', { clientX: -10 });
+          expect(called).to.be(true);
+          menu.dispose();
+        });
+
       });
 
     });
