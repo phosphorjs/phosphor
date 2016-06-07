@@ -139,7 +139,7 @@ describe('ui/keymap', () => {
         node.addEventListener('keydown', event => {
           keymap.processKeydownEvent(event);
         });
-        keymap.addBinding({
+        let binding = keymap.addBinding({
           keys: ['Ctrl ;'],
           selector: `#${node.id}`,
           command: 'test'
@@ -147,6 +147,7 @@ describe('ui/keymap', () => {
         let keyEvent = genKeyboardEvent({ keyCode: 59, ctrlKey: true });
         node.dispatchEvent(keyEvent);
         expect(called).to.be(true);
+        binding.dispose();
         command.dispose();
         document.body.removeChild(node);
       });
@@ -207,37 +208,37 @@ describe('ui/keymap', () => {
         let c1 = commands.addCommand('c1', { execute: () => { } });
         let c2 = commands.addCommand('c2', { execute: () => { } });
         let a1: JSONObject = { 'foo': 'bar' };
+        let a2: JSONObject = { 'bar': 'baz' };
+        let a3: JSONObject = { 'baz': 'qux' };
+        let a4: JSONObject = null;
         let b1 = keymap.addBinding({
           keys: ['Ctrl ;'],
           selector: '.b1',
           command: 'c1',
           args: a1
         });
-        console.log('\n\n', keymap.findKeyBinding('c1', a1), '\n\n');
-        expect(keymap.findKeyBinding('c1', a1).selector).to.be('.b1');
-        let a2: JSONObject = { 'bar': 'baz' };
         let b2 = keymap.addBinding({
           keys: ['Ctrl ;'],
           selector: '.b2',
           command: 'c1',
           args: a2
         });
-        expect(keymap.findKeyBinding('c1', a2).selector).to.be('.b2');
-        let a3: JSONObject = { 'baz': 'qux' };
         let b3 = keymap.addBinding({
           keys: ['Ctrl ;'],
           selector: '.b3',
           command: 'c1',
           args: a3
         });
-        expect(keymap.findKeyBinding('c1', a3).selector).to.be('.b3');
         let b4 = keymap.addBinding({
           keys: ['Ctrl ;'],
           selector: '.b4',
           command: 'c2',
-          args: null
+          args: a4
         });
-        expect(keymap.findKeyBinding('c2', null).selector).to.be('.b4');
+        expect(keymap.findKeyBinding('c1', a1).selector).to.be('.b1');
+        expect(keymap.findKeyBinding('c1', a2).selector).to.be('.b2');
+        expect(keymap.findKeyBinding('c1', a3).selector).to.be('.b3');
+        expect(keymap.findKeyBinding('c2', a4).selector).to.be('.b4');
         b1.dispose();
         b2.dispose();
         b3.dispose();
