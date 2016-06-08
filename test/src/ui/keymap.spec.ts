@@ -455,11 +455,11 @@ describe('ui/keymap', () => {
         expect(count).to.be(0);
         node.dispatchEvent(eventL);
         expect(count).to.be(1);
-        node.dispatchEvent(eventL);
+        node.dispatchEvent(generate('keydown', eventL)); // Don't reuse; clone.
         expect(count).to.be(1);
-        node.dispatchEvent(eventK);
+        node.dispatchEvent(generate('keydown', eventK)); // Don't reuse; clone.
         expect(count).to.be(1);
-        node.dispatchEvent(eventL);
+        node.dispatchEvent(generate('keydown', eventL)); // Don't reuse; clone.
         expect(count).to.be(2);
 
         binding.dispose();
@@ -469,8 +469,8 @@ describe('ui/keymap', () => {
 
       it('should not execute handler without matching selector', () => {
         let node = createElement();
-        node.addEventListener('keydown', (event) => {
-          keymap.processKeydownEvent(event)
+        node.addEventListener('keydown', event => {
+          keymap.processKeydownEvent(event);
         });
 
         let count = 0;
@@ -564,8 +564,8 @@ describe('ui/keymap', () => {
 
       it('should recognize permutations of modifiers', () => {
         let node = createElement();
-        node.addEventListener('keydown', (event) => {
-          keymap.processKeydownEvent(event)
+        node.addEventListener('keydown', event => {
+          keymap.processKeydownEvent(event);
         });
 
         let count1 = 0;
@@ -615,7 +615,7 @@ describe('ui/keymap', () => {
 
       it('should play back a partial match that was not completed', () => {
         let node = createElement();
-        node.addEventListener('keydown', (event: KeyboardEvent) => {
+        node.addEventListener('keydown', event => {
           keymap.processKeydownEvent(event);
         });
 
@@ -625,7 +625,7 @@ describe('ui/keymap', () => {
 
         let called = false;
         let command = commands.addCommand('test', {
-          execute: () => { called = true }
+          execute: () => { called = true; }
         });
         let binding = keymap.addBinding({
           keys: ['D', 'D'],
@@ -651,7 +651,7 @@ describe('ui/keymap', () => {
 
       it('should play back a partial match that times out', (done) => {
         let node = createElement();
-        node.addEventListener('keydown', (event: KeyboardEvent) => {
+        node.addEventListener('keydown', event => {
           keymap.processKeydownEvent(event);
         });
 
@@ -661,7 +661,7 @@ describe('ui/keymap', () => {
 
         let called = false;
         let command = commands.addCommand('test', {
-          execute: () => { called = true }
+          execute: () => { called = true; }
         });
         let binding = keymap.addBinding({
           keys: ['D', 'D'],
@@ -687,8 +687,8 @@ describe('ui/keymap', () => {
 
       it('should resolve an exact match of partial match time out', (done) => {
         let node = createElement();
-        node.addEventListener('keydown', (event) => {
-          keymap.processKeydownEvent(event)
+        node.addEventListener('keydown', event => {
+          keymap.processKeydownEvent(event);
         });
 
         let called1 = false;
@@ -731,7 +731,7 @@ describe('ui/keymap', () => {
       it('should safely process when an error occurs', () => {
         let node = createElement();
         let called = false;
-        node.addEventListener('keydown', (event) => {
+        node.addEventListener('keydown', event => {
           keymap.processKeydownEvent(event);
           called = true;
         });
@@ -757,8 +757,8 @@ describe('ui/keymap', () => {
       it('should pick the selector with greater specificity', () => {
         let node = createElement();
         node.classList.add('test');
-        node.addEventListener('keydown', (event) => {
-          keymap.processKeydownEvent(event)
+        node.addEventListener('keydown', event => {
+          keymap.processKeydownEvent(event);
         });
 
         let called1 = false;
@@ -790,6 +790,78 @@ describe('ui/keymap', () => {
         binding1.dispose();
         binding2.dispose();
         document.body.removeChild(node);
+      });
+
+      it('should propagate if partial binding selector does not match', () => {
+        let node = createElement();
+        node.addEventListener('keydown', event => {
+          keymap.processKeydownEvent(event);
+        });
+
+        let codes: number[] = [];
+        let keydown = (event: KeyboardEvent) => {
+          codes.push(event.keyCode);
+        };
+        document.body.addEventListener('keydown', keydown);
+
+
+        let called = false;
+        let command = commands.addCommand('test', {
+          execute: () => { called = true; }
+        });
+        let binding = keymap.addBinding({
+          keys: ['D', 'D'],
+          selector: '#baz',
+          command: 'test'
+        });
+        // The bubbles value needs to be set explicitly, see:
+        // https://github.com/blakeembrey/simulate-event/pull/12
+        let event = generate('keydown', { keyCode: 68, bubbles: true });
+
+        node.dispatchEvent(event);
+        expect(codes).to.eql([68]);
+        expect(called).to.be(false);
+
+        binding.dispose();
+        command.dispose();
+        document.body.removeChild(node);
+        document.body.removeEventListener('keydown', keydown);
+      });
+
+      it('should propagate if exact binding selector does not match', () => {
+        let node = createElement();
+        node.addEventListener('keydown', event => {
+          keymap.processKeydownEvent(event);
+        });
+
+        let codes: number[] = [];
+        let keydown = (event: KeyboardEvent) => {
+          codes.push(event.keyCode);
+        };
+        document.body.addEventListener('keydown', keydown);
+
+
+        let called = false;
+        let command = commands.addCommand('test', {
+          execute: () => { called = true; }
+        });
+        let binding = keymap.addBinding({
+          keys: ['D'],
+          selector: '#baz',
+          command: 'test'
+        });
+        // The bubbles value needs to be set explicitly, see:
+        // https://github.com/blakeembrey/simulate-event/pull/12
+        let event = generate('keydown', { keyCode: 68, bubbles: true });
+
+        node.dispatchEvent(event);
+        expect(codes).to.eql([68]);
+        expect(called).to.be(false);
+
+        binding.dispose();
+        command.dispose();
+        document.body.removeChild(node);
+        document.body.removeEventListener('keydown', keydown);
       });
 
     });
