@@ -131,7 +131,7 @@ describe('ui/keymap', () => {
     describe('#layout', () => {
 
       it('should be a keycode layout', () => {
-        expect(keymap.layout instanceof KeycodeLayout).to.be(true);
+        expect(keymap.layout).to.be.a(KeycodeLayout);
       });
 
       it('should default to `EN_US` layout', () => {
@@ -159,7 +159,7 @@ describe('ui/keymap', () => {
     describe('#bindings', () => {
 
       it('should be a vector', () => {
-        expect(keymap.bindings instanceof Vector).to.be(true);
+        expect(keymap.bindings).to.be.a(Vector);
       });
 
       it('should be read only', () => {
