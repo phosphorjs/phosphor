@@ -40,6 +40,7 @@ import {
 } from '../../../lib/ui/widget';
 
 
+// Set up a default command and its keybinding.
 const DEFAULT_CMD = 'defaultCmd';
 commands.addCommand(DEFAULT_CMD, {
   execute: (args: JSONObject) => { return args; },
@@ -48,6 +49,11 @@ commands.addCommand(DEFAULT_CMD, {
   className: 'bar',
   isToggled: (args: JSONObject) => { return true; },
   mnemonic: 1
+});
+keymap.addBinding({
+  keys: ['A'],
+  selector: '*',
+  command: DEFAULT_CMD
 });
 
 
@@ -1132,6 +1138,52 @@ describe('ui/menu', () => {
         menu.dispose();
       });
 
+      context('separators', () => {
+
+        it('should hide leading separators', () => {
+          let menu = new Menu();
+          menu.addItem({ type: 'separator' });
+          menu.addItem({ command: DEFAULT_CMD });
+          menu.addItem({ type: 'separator' });
+          menu.addItem({ type: 'submenu', menu: new Menu() });
+          menu.open(0, 0);
+          let seps = menu.node.getElementsByClassName('p-type-separator');
+          expect(seps.length).to.be(2);
+          expect(seps[0].classList.contains('p-mod-hidden')).to.be(true);
+          expect(seps[1].classList.contains('p-mod-hidden')).to.be(false);
+          menu.dispose();
+        });
+
+        it('should hide trailing separators', () => {
+          let menu = new Menu();
+          menu.addItem({ command: DEFAULT_CMD });
+          menu.addItem({ type: 'separator' });
+          menu.addItem({ type: 'submenu', menu: new Menu() });
+          menu.addItem({ type: 'separator' });
+          menu.open(0, 0);
+          let seps = menu.node.getElementsByClassName('p-type-separator');
+          expect(seps.length).to.be(2);
+          expect(seps[0].classList.contains('p-mod-hidden')).to.be(false);
+          expect(seps[1].classList.contains('p-mod-hidden')).to.be(true);
+          menu.dispose();
+        });
+
+        it('should hide consecutive separators', () => {
+          let menu = new Menu();
+          menu.addItem({ command: DEFAULT_CMD });
+          menu.addItem({ type: 'separator' });
+          menu.addItem({ type: 'separator' });
+          menu.addItem({ type: 'submenu', menu: new Menu() });
+          menu.open(0, 0);
+          let seps = menu.node.getElementsByClassName('p-type-separator');
+          expect(seps.length).to.be(2);
+          expect(seps[0].classList.contains('p-mod-hidden')).to.be(false);
+          expect(seps[1].classList.contains('p-mod-hidden')).to.be(true);
+          menu.dispose();
+        });
+
+      });
+
     });
 
     describe('#handleEvent()', () => {
@@ -1555,6 +1607,96 @@ describe('ui/menu', () => {
         expect(menu.methods.indexOf('onCloseRequest')).to.not.be(-1);
         expect(called).to.be(true);
         menu.dispose();
+      });
+
+    });
+
+  });
+
+  describe('Menu.ContentRenderer', () => {
+
+    describe('#createItemNode()', () => {
+
+      it('should create a node for a menu item', () => {
+        let renderer = new Menu.ContentRenderer();
+        let node = renderer.createItemNode();
+        expect(node.classList.contains('p-Menu-item')).to.be(true);
+        expect(node.getElementsByClassName('p-Menu-itemIcon').length).to.be(1);
+        expect(node.getElementsByClassName('p-Menu-itemLabel').length).to.be(1);
+        expect(node.getElementsByClassName('p-Menu-itemShortcut').length).to.be(1);
+        expect(node.getElementsByClassName('p-Menu-itemSubmenuIcon').length).to.be(1);
+      });
+
+    });
+
+    describe('#updateItemNode()', () => {
+
+      it('should update an item node to reflect the state of a menu item', () => {
+        let renderer = new Menu.ContentRenderer();
+        let node = renderer.createItemNode();
+        let item = new MenuItem({ command: DEFAULT_CMD });
+        renderer.updateItemNode(node, item);
+        expect(node.classList.contains('p-type-command')).to.be(true);
+        expect(node.classList.contains(item.className)).to.be(true);
+        expect(node.classList.contains('p-mod-toggled')).to.be(true);
+        let icon = node.getElementsByClassName('p-Menu-itemIcon')[0];
+        expect(icon.classList.contains(item.icon)).to.be(true);
+        let label = node.getElementsByClassName('p-Menu-itemLabel')[0];
+        let labelText = renderer.formatLabel(item.label, item.mnemonic);
+        expect((label as HTMLElement).innerHTML).to.be(labelText);
+        let shortcutText = renderer.formatShortcut(item.keyBinding);
+        let shortcut = node.getElementsByClassName('p-Menu-itemShortcut')[0];
+        expect((shortcut as HTMLElement).textContent).to.be(shortcutText);
+      });
+
+      it('should handle submenu items', () => {
+        let renderer = new Menu.ContentRenderer();
+        let node = renderer.createItemNode();
+        let item = new MenuItem({ type: 'submenu', menu: null });
+        renderer.updateItemNode(node, item);
+        expect(node.classList.contains('p-type-submenu')).to.be(true);
+        expect(node.classList.contains('p-mod-hidden')).to.be(true);
+      });
+
+      it('should handle separator items', () => {
+        let renderer = new Menu.ContentRenderer();
+        let node = renderer.createItemNode();
+        let item = new MenuItem({ type: 'separator' });
+        renderer.updateItemNode(node, item);
+        expect(node.classList.contains('p-type-separator')).to.be(true);
+      });
+
+    });
+
+    describe('#formatLabel()', () => {
+
+      it('should format a label into HTML for display', () => {
+        let renderer = new Menu.ContentRenderer();
+        let label = renderer.formatLabel('foo', 0);
+        expect(label).to.be('<span class="p-Menu-itemMnemonic">f</span>oo');
+      });
+
+      it('should not add a mnemonic if the index is out of range', () => {
+        let renderer = new Menu.ContentRenderer();
+        let label = renderer.formatLabel('foo', -1);
+        expect(label).to.be('foo');
+      });
+
+    });
+
+    describe('#formatShortcut()', () => {
+
+      it('should format a key binding into a shortcut text for display', () => {
+        let binding = keymap.findKeyBinding(DEFAULT_CMD, null);
+        let renderer = new Menu.ContentRenderer();
+        let shortcut = renderer.formatShortcut(binding);
+        expect(shortcut).to.be('A');
+      });
+
+      it('should accept a `null` keyBinding', () => {
+        let renderer = new Menu.ContentRenderer();
+        let shortcut = renderer.formatShortcut(null);
+        expect(shortcut).to.be('');
       });
 
     });
