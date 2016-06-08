@@ -25,5 +25,7 @@ import './core/signaling.spec';
 
 import './dom/selector.spec';
 
+import './ui/boxpanel.spec';
+
 import '../index.css';
 import '../../styles/base.css';
