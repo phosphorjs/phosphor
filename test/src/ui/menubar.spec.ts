@@ -385,6 +385,17 @@ describe('ui/menubar', () => {
         bar.dispose();
       });
 
+      it('should be a no-op if there is no effective move', () => {
+        let bar = new MenuBar();
+        let menu = new Menu();
+        bar.addMenu(new Menu());
+        bar.insertMenu(0, menu);
+        bar.insertMenu(0, menu);
+        expect(bar.menus.length).to.be(2);
+        expect(bar.menus.at(0)).to.be(menu);
+        bar.dispose();
+      });
+
     });
 
     describe('#removeMenu()', () => {
@@ -455,83 +466,73 @@ describe('ui/menubar', () => {
 
     describe('#handleEvent()', () => {
 
+      let bar: MenuBar = null;
+
+      beforeEach(() => { bar = createMenuBar(); });
+
+      afterEach(() => bar.dispose());
+
       context('keydown', () => {
 
         it('should open the active menu on Enter', () => {
-          let bar = createMenuBar();
           let menu = bar.activeMenu;
           simulate(bar.node, 'keydown', { keyCode: 13 });
           expect(menu.isAttached).to.be(true);
-          bar.dispose();
         });
 
         it('should open the active menu on Up Arrow', () => {
-          let bar = createMenuBar();
           let menu = bar.activeMenu;
           simulate(bar.node, 'keydown', { keyCode: 38 });
           expect(menu.isAttached).to.be(true);
-          bar.dispose();
         });
 
         it('should open the active menu on Down Arrow', () => {
-          let bar = createMenuBar();
           let menu = bar.activeMenu;
           simulate(bar.node, 'keydown', { keyCode: 40 });
           expect(menu.isAttached).to.be(true);
-          bar.dispose();
         });
 
         it('should close the active menu on Escape', () => {
-          let bar = createMenuBar();
           let menu = bar.activeMenu;
           bar.openActiveMenu();
           simulate(bar.node, 'keydown', { keyCode: 27 });
           expect(menu.isAttached).to.be(false);
           expect(menu.activeIndex).to.be(-1);
           expect(menu.node.contains(document.activeElement)).to.be(false);
-          bar.dispose();
         });
 
         it('should activate the previous menu on Left Arrow', () => {
-          let bar = createMenuBar();
           simulate(bar.node, 'keydown', { keyCode: 37 });
           expect(bar.activeIndex).to.be(2);
           simulate(bar.node, 'keydown', { keyCode: 37 });
           expect(bar.activeIndex).to.be(1);
-          bar.dispose();
         });
 
         it('should activate the next menu on Right Arrow', () => {
-          let bar = createMenuBar();
           simulate(bar.node, 'keydown', { keyCode: 39 });
           expect(bar.activeIndex).to.be(1);
           simulate(bar.node, 'keydown', { keyCode: 39 });
           expect(bar.activeIndex).to.be(2);
           simulate(bar.node, 'keydown', { keyCode: 39 });
           expect(bar.activeIndex).to.be(0);
-          bar.dispose();
         });
 
         it('should open the menu matching a mnemonic', () => {
-          let bar = createMenuBar();
           simulate(bar.node, 'keydown', { keyCode: 97 });  // '1';
           expect(bar.activeIndex).to.be(1);
           let menu = bar.activeMenu;
           expect(menu.isAttached).to.be(true);
-          bar.dispose();
         });
 
-        it('should select the first menu matching by first letter', () => {
-          let bar = createMenuBar();
+        it('should select the next menu matching by first letter', () => {
+          bar.activeIndex = 1;
           simulate(bar.node, 'keydown', { keyCode: 77 });  // 'M';
-          expect(bar.activeIndex).to.be(0);
+          expect(bar.activeIndex).to.be(1);
           let menu = bar.activeMenu;
           expect(menu.isAttached).to.be(false);
-          bar.dispose();
         });
 
         it('should select the first menu matching the mnemonic', () => {
-          let bar = createMenuBar();
           let menu = new Menu();
           menu.title.label = 'Test1';
           menu.title.mnemonic = 4;
@@ -540,7 +541,17 @@ describe('ui/menubar', () => {
           expect(bar.activeIndex).to.be(1);
           menu = bar.activeMenu;
           expect(menu.isAttached).to.be(false);
-          bar.dispose();
+        });
+
+        it('should select the only menu matching the first letter', () => {
+          let menu = new Menu();
+          menu.title.label = 'Test1';
+          bar.addMenu(menu);
+          bar.addMenu(new Menu());
+          simulate(bar.node, 'keydown', { keyCode: 84 });  // 'T';
+          expect(bar.activeIndex).to.be(3);
+          menu = bar.activeMenu;
+          expect(menu.isAttached).to.be(false);
         });
 
       });
@@ -548,25 +559,20 @@ describe('ui/menubar', () => {
       context('mousedown', () => {
 
         it('should bail if the mouse press was not on the menu bar', () => {
-          let bar = createMenuBar();
           let evt = generate('mousedown', { clientX: -10 });
           bar.node.dispatchEvent(evt);
           expect(evt.defaultPrevented).to.be(false);
-          bar.dispose();
         });
 
         it('should close an open menu if the press was not on an item', () => {
-          let bar = createMenuBar();
           bar.openActiveMenu();
           let menu = bar.activeMenu;
           simulate(bar.node, 'mousedown');
           expect(bar.activeIndex).to.be(-1);
           expect(menu.isAttached).to.be(false);
-          bar.dispose();
         });
 
         it('should close an active menu', () => {
-          let bar = createMenuBar();
           bar.openActiveMenu();
           let menu = bar.activeMenu;
           let node = bar.node.getElementsByClassName('p-MenuBar-item')[0] as HTMLElement;
@@ -574,22 +580,18 @@ describe('ui/menubar', () => {
           simulate(bar.node, 'mousedown', { clientX: rect.left, clientY: rect.top });
           expect(bar.activeIndex).to.be(0);
           expect(menu.isAttached).to.be(false);
-          bar.dispose();
         });
 
         it('should open an active menu', () => {
-          let bar = createMenuBar();
           let menu = bar.activeMenu;
           let node = bar.node.getElementsByClassName('p-MenuBar-item')[0] as HTMLElement;
           let rect = node.getBoundingClientRect();
           simulate(bar.node, 'mousedown', { clientX: rect.left, clientY: rect.top });
           expect(bar.activeIndex).to.be(0);
           expect(menu.isAttached).to.be(true);
-          bar.dispose();
         });
 
         it('should not close an active menu if not a left mouse press', () => {
-          let bar = createMenuBar();
           bar.openActiveMenu();
           let menu = bar.activeMenu;
           let node = bar.node.getElementsByClassName('p-MenuBar-item')[0] as HTMLElement;
@@ -597,7 +599,6 @@ describe('ui/menubar', () => {
           simulate(bar.node, 'mousedown', { button: 1, clientX: rect.left, clientY: rect.top });
           expect(bar.activeIndex).to.be(0);
           expect(menu.isAttached).to.be(true);
-          bar.dispose();
         });
 
       });
@@ -605,7 +606,6 @@ describe('ui/menubar', () => {
       context('mousemove', () => {
 
         it('should open a new menu if a menu is already open', () => {
-          let bar = createMenuBar();
           bar.openActiveMenu();
           let menu = bar.activeMenu;
           let node = bar.node.getElementsByClassName('p-MenuBar-item')[1] as HTMLElement;
@@ -614,11 +614,9 @@ describe('ui/menubar', () => {
           expect(bar.activeIndex).to.be(1);
           expect(menu.isAttached).to.be(false);
           expect(bar.activeMenu.isAttached).to.be(true);
-          bar.dispose();
         });
 
         it('should be a no-op if the active index will not change', () => {
-          let bar = createMenuBar();
           bar.openActiveMenu();
           let menu = bar.activeMenu;
           let node = bar.node.getElementsByClassName('p-MenuBar-item')[0] as HTMLElement;
@@ -626,17 +624,14 @@ describe('ui/menubar', () => {
           simulate(bar.node, 'mousemove', { clientX: rect.left, clientY: rect.top + 1 });
           expect(bar.activeIndex).to.be(0);
           expect(menu.isAttached).to.be(true);
-          bar.dispose();
         });
 
         it('should be a no-op if the mouse is not over an item and there is a menu open', () => {
-          let bar = createMenuBar();
           bar.openActiveMenu();
           let menu = bar.activeMenu;
           simulate(bar.node, 'mousemove');
           expect(bar.activeIndex).to.be(0);
           expect(menu.isAttached).to.be(true);
-          bar.dispose();
         });
 
       });
@@ -644,20 +639,16 @@ describe('ui/menubar', () => {
       context('mouseleave', () => {
 
         it('should reset the active index if there is no open menu', () => {
-          let bar = createMenuBar();
           simulate(bar.node, 'mouseleave');
           expect(bar.activeIndex).to.be(-1);
-          bar.dispose();
         });
 
         it('should be a no-op if there is an open menu', () => {
-          let bar = createMenuBar();
           bar.openActiveMenu();
           let menu = bar.activeMenu;
           simulate(bar.node, 'mouseleave');
           expect(bar.activeIndex).to.be(0);
           expect(menu.isAttached).to.be(true);
-          bar.dispose();
         });
 
       });
@@ -715,6 +706,7 @@ describe('ui/menubar', () => {
         let bar = new LogMenuBar();
         let menu = new Menu();
         bar.addMenu(menu);
+        bar.activeIndex = 0;
         expect(bar.methods.indexOf('onUpdateRequest')).to.be(-1);
         menu.title.label = 'foo';
         expect(bar.methods.indexOf('onUpdateRequest')).to.be(-1);
@@ -723,6 +715,33 @@ describe('ui/menubar', () => {
           done();
         });
 
+      });
+
+    });
+
+    context('Menu.menuRequested', () => {
+
+      it('should activate the next menu', () => {
+        let bar = createMenuBar();
+        bar.openActiveMenu();
+        bar.activeMenu.menuRequested.emit('next');
+        expect(bar.activeIndex).to.be(1);
+        bar.dispose();
+      });
+
+      it('should activate the previous menu', () => {
+        let bar = createMenuBar();
+        bar.openActiveMenu();
+        bar.activeMenu.menuRequested.emit('previous');
+        expect(bar.activeIndex).to.be(2);
+        bar.dispose();
+      });
+
+      it('should be a no-op if the sender is not the open menu', () => {
+        let bar = createMenuBar();
+        bar.activeMenu.menuRequested.emit('next');
+        expect(bar.activeIndex).to.be(0);
+        bar.dispose();
       });
 
     });
