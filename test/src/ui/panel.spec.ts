@@ -12,12 +12,72 @@ import {
 } from '../../../lib/algorithm/iteration';
 
 import {
+  Message
+} from '../../../lib/core/messaging';
+
+import {
   Panel, PanelLayout
 } from '../../../lib/ui/panel';
 
 import {
-  Widget
+  ChildMessage, Widget
 } from '../../../lib/ui/widget';
+
+
+class LogPanelLayout extends PanelLayout {
+
+  methods: string[] = [];
+
+  protected attachWidget(index: number, widget: Widget): void {
+    super.attachWidget(index, widget);
+    this.methods.push('attachWidget');
+  }
+
+  protected moveWidget(fromIndex: number, toIndex: number, widget: Widget): void {
+    super.moveWidget(fromIndex, toIndex, widget);
+    this.methods.push('moveWidget');
+  }
+
+  protected detachWidget(index: number, widget: Widget): void {
+    super.detachWidget(index, widget);
+    this.methods.push('detachWidget');
+  }
+
+  protected onLayoutChanged(msg: Message): void {
+    super.onLayoutChanged(msg);
+    this.methods.push('onLayoutChanged');
+  }
+
+  protected onChildRemoved(msg: ChildMessage): void {
+    super.onChildRemoved(msg);
+    this.methods.push('onChildRemoved');
+  }
+
+}
+
+
+class LogPanel extends Panel {
+
+  static createLayout(): LogPanelLayout {
+    return new LogPanelLayout();
+  }
+}
+
+
+class LogWidget extends Widget {
+
+  methods: string[] = [];
+
+  protected onAfterAttach(msg: Message): void {
+    super.onAfterAttach(msg);
+    this.methods.push('onAfterAttach');
+  }
+
+  protected onBeforeDetach(msg: Message): void {
+    super.onAfterAttach(msg);
+    this.methods.push('onBeforeDetach');
+  }
+}
 
 
 describe('ui/panel', () => {
@@ -203,6 +263,15 @@ describe('ui/panel', () => {
         expect(layout.widgets.at(1)).to.be(widget);
       });
 
+
+      it('should be a no-op if the index does not change', () => {
+        let layout = new PanelLayout();
+        let widget = new LogWidget();
+        layout.addWidget(widget);
+        layout.addWidget(new Widget());
+        layout.insertWidget(0, widget);
+      });
+
     });
 
     describe('#removeWidget()', () => {
@@ -240,6 +309,140 @@ describe('ui/panel', () => {
         expect(layout.widgets.length).to.be(1);
         layout.removeWidget(1);
         expect(layout.widgets.length).to.be(1);
+      });
+
+    });
+
+    describe('#attachWidget()', () => {
+
+      it("should attach a widget to the parent's DOM node", () => {
+        let panel = new LogPanel();
+        let layout = panel.layout as LogPanelLayout;
+        let widget = new LogWidget();
+        layout.insertWidget(0, widget);
+        expect(layout.methods.indexOf('attachWidget')).to.not.be(-1);
+        expect(panel.node.children.item(0)).to.be(widget.node);
+        panel.dispose();
+      });
+
+      it("should send an `'after-attach'` message if the parent is attached", () => {
+        let panel = new LogPanel();
+        Widget.attach(panel, document.body);
+        let layout = panel.layout as LogPanelLayout;
+        let widget = new LogWidget();
+        layout.insertWidget(0, widget);
+        expect(layout.methods.indexOf('attachWidget')).to.not.be(-1);
+        expect(widget.methods.indexOf('onAfterAttach')).to.not.be(-1);
+        panel.dispose();
+      });
+
+    });
+
+    describe('#moveWidget()', () => {
+
+      it("should move a widget in the parent's DOM node", () => {
+        let panel = new LogPanel();
+        let layout = panel.layout as LogPanelLayout;
+        let widget = new LogWidget();
+        layout.addWidget(widget);
+        layout.addWidget(new Widget());
+        layout.insertWidget(1, widget);
+        expect(layout.methods.indexOf('moveWidget')).to.not.be(-1);
+        expect(panel.node.children.item(1)).to.be(widget.node);
+        panel.dispose();
+      });
+
+      it("should send `'before-detach'` and `'after-attach'` messages if the parent is attached", () => {
+        let panel = new LogPanel();
+        let layout = panel.layout as LogPanelLayout;
+        let widget = new LogWidget();
+        Widget.attach(panel, document.body);
+        layout.addWidget(widget);
+        layout.addWidget(new Widget());
+        widget.methods = [];
+        layout.insertWidget(1, widget);
+        expect(layout.methods.indexOf('moveWidget')).to.not.be(-1);
+        expect(widget.methods.indexOf('onBeforeDetach')).to.not.be(-1);
+        expect(widget.methods.indexOf('onAfterAttach')).to.not.be(-1);
+        panel.dispose();
+      });
+
+    });
+
+    describe('#detachWidget()', () => {
+
+      it("should detach a widget from the parent's DOM node", () => {
+        let panel = new LogPanel();
+        let layout = panel.layout as LogPanelLayout;
+        let widget = new LogWidget();
+        layout.insertWidget(0, widget);
+        expect(panel.node.children.item(0)).to.be(widget.node);
+        layout.removeWidget(widget);
+        expect(layout.methods.indexOf('detachWidget')).to.not.be(-1);
+        panel.dispose();
+      });
+
+      it("should send an `'before-detach'` message if the parent is attached", () => {
+        let panel = new LogPanel();
+        let layout = panel.layout as LogPanelLayout;
+        let widget = new LogWidget();
+        Widget.attach(panel, document.body);
+        layout.insertWidget(0, widget);
+        expect(panel.node.children.item(0)).to.be(widget.node);
+        layout.removeWidget(widget);
+        expect(layout.methods.indexOf('detachWidget')).to.not.be(-1);
+        expect(widget.methods.indexOf('onBeforeDetach')).to.not.be(-1);
+        panel.dispose();
+      });
+
+    });
+
+    describe('#onLayoutChanged()', () => {
+
+      it('should be invoked when the layout is installed on its parent', () => {
+        let widget = new Widget();
+        let layout = new LogPanelLayout();
+        widget.layout = layout;
+        expect(layout.methods.indexOf('onLayoutChanged')).to.not.be(-1);
+      });
+
+      it('should attach all widgets to the DOM', () => {
+        let parent = new Widget();
+        Widget.attach(parent, document.body);
+        let layout = new LogPanelLayout();
+        let widgets = [new LogWidget(), new LogWidget(), new LogWidget()];
+        each(widgets, w => layout.addWidget(w));
+        parent.layout = layout;
+        expect(layout.methods.indexOf('onLayoutChanged')).to.not.be(-1);
+        expect(every(widgets, w => { return w.parent === parent; })).to.be(true);
+        let predicate = (w: LogWidget) => {
+          return w.methods.indexOf('onAfterAttach') !== -1;
+        };
+        expect(every(widgets, predicate)).to.be(true);
+        parent.dispose();
+      });
+
+    });
+
+    describe('#onChildRemoved()', () => {
+
+      it('should be called when a widget is removed from its parent', () => {
+        let panel = new LogPanel();
+        let layout = panel.layout as LogPanelLayout;
+        let widget = new Widget();
+        layout.addWidget(widget);
+        widget.parent = null;
+        expect(layout.methods.indexOf('onChildRemoved')).to.not.be(-1);
+      });
+
+      it('should remove the widget from the layout', () => {
+        let panel = new LogPanel();
+        let layout = panel.layout as LogPanelLayout;
+        let widget = new Widget();
+        layout.addWidget(widget);
+        widget.parent = null;
+        expect(layout.methods.indexOf('onChildRemoved')).to.not.be(-1);
+        expect(layout.widgets.length).to.be(0);
       });
 
     });
