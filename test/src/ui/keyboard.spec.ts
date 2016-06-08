@@ -41,7 +41,7 @@ describe('KeyCodeLayout', () => {
 
   });
 
-  describe('#keycaps()', () => {
+  describe('#keys()', () => {
 
     it('should get an array of all key values supported by the layout', () => {
       let layout = new KeycodeLayout('ab-cd', { 100: 'F' });
@@ -52,7 +52,7 @@ describe('KeyCodeLayout', () => {
 
   });
 
-  describe('#isValidKeycap()', () => {
+  describe('#isValidKey()', () => {
 
     it('should test whether the key is valid for the layout', () => {
       let layout = new KeycodeLayout('foo', { 100: 'F' });
@@ -62,9 +62,9 @@ describe('KeyCodeLayout', () => {
 
   });
 
-  describe('#keycapForKeydownEvent()', () => {
+  describe('#keyForKeydownEvent()', () => {
 
-    it('should get the keycap for a `keydown` event', () => {
+    it('should get the key for a `keydown` event', () => {
       let layout = new KeycodeLayout('foo', { 100: 'F' });
       let event = generate('keydown', { keyCode: 100 });
       let key = layout.keyForKeydownEvent(event as KeyboardEvent);
