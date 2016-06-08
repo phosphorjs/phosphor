@@ -8,6 +8,10 @@
 import expect = require('expect.js');
 
 import {
+  generate
+} from 'simulate-event';
+
+import {
   JSONObject
 } from '../../../lib/algorithm/json';
 
@@ -28,6 +32,9 @@ import {
 } from '../../../lib/collections/vector';
 
 
+let id = 0;
+
+
 /**
  * Helper function to generate keyboard events for unit-tests.
  */
@@ -46,8 +53,6 @@ function genKeyboardEvent(options: any): KeyboardEvent {
   event.view = options.view || window;
   return event;
 }
-
-let id = 0;
 
 
 /**
@@ -198,8 +203,8 @@ describe('ui/keymap', () => {
           selector: `#${node.id}`,
           command: 'test'
         });
-        let keyEvent = genKeyboardEvent({ keyCode: 59, ctrlKey: true });
-        node.dispatchEvent(keyEvent);
+        let event = generate('keydown', { keyCode: 59, ctrlKey: true });
+        node.dispatchEvent(event);
         expect(called).to.be(true);
         binding.dispose();
         command.dispose();
@@ -365,9 +370,9 @@ describe('ui/keymap', () => {
           selector: `#${node.id}`,
           command: 'test'
         });
-        let keyEvent = genKeyboardEvent({ keyCode: 59, ctrlKey: true });
+        let event = generate('keydown', { keyCode: 59, ctrlKey: true });
 
-        node.dispatchEvent(keyEvent);
+        node.dispatchEvent(event);
         expect(called).to.be(true);
 
         binding.dispose();
@@ -390,9 +395,9 @@ describe('ui/keymap', () => {
           selector: `#${node.id}`,
           command: 'test'
         });
-        let keyEvent = genKeyboardEvent({ keyCode: 45, ctrlKey: true });
+        let event = generate('keydown', { keyCode: 45, ctrlKey: true });
 
-        node.dispatchEvent(keyEvent);
+        node.dispatchEvent(event);
         expect(called).to.be(false);
 
         binding.dispose();
@@ -415,12 +420,12 @@ describe('ui/keymap', () => {
           selector: `#${node.id}`,
           command: 'test'
         });
-        let keyEventAlt = genKeyboardEvent({ keyCode: 83, altKey: true });
-        let keyEventShift = genKeyboardEvent({ keyCode: 83, shiftKey: true });
+        let eventAlt = generate('keydown', { keyCode: 83, altKey: true });
+        let eventShift = generate('keydown', { keyCode: 83, shiftKey: true });
 
-        node.dispatchEvent(keyEventAlt);
+        node.dispatchEvent(eventAlt);
         expect(count).to.be(0);
-        node.dispatchEvent(keyEventShift);
+        node.dispatchEvent(eventShift);
         expect(count).to.be(0);
 
         binding.dispose();
@@ -443,18 +448,18 @@ describe('ui/keymap', () => {
           selector: `#${node.id}`,
           command: 'test'
         });
-        let keyEventK = genKeyboardEvent({ keyCode: 75, ctrlKey: true });
-        let keyEventL = genKeyboardEvent({ keyCode: 76, ctrlKey: true });
+        let eventK = generate('keydown', { keyCode: 75, ctrlKey: true });
+        let eventL = generate('keydown', { keyCode: 76, ctrlKey: true });
 
-        node.dispatchEvent(keyEventK);
+        node.dispatchEvent(eventK);
         expect(count).to.be(0);
-        node.dispatchEvent(keyEventL);
+        node.dispatchEvent(eventL);
         expect(count).to.be(1);
-        node.dispatchEvent(keyEventL);
+        node.dispatchEvent(eventL);
         expect(count).to.be(1);
-        node.dispatchEvent(keyEventK);
+        node.dispatchEvent(eventK);
         expect(count).to.be(1);
-        node.dispatchEvent(keyEventL);
+        node.dispatchEvent(eventL);
         expect(count).to.be(2);
 
         binding.dispose();
@@ -477,10 +482,10 @@ describe('ui/keymap', () => {
           selector: '.inaccessible-scope',
           command: 'test'
         });
-        let keyEvent = genKeyboardEvent({ keyCode: 80, shiftKey: true });
+        let event = generate('keydown', { keyCode: 80, shiftKey: true });
 
         expect(count).to.be(0);
-        node.dispatchEvent(keyEvent);
+        node.dispatchEvent(event);
         expect(count).to.be(0);
 
         binding.dispose();
@@ -503,10 +508,10 @@ describe('ui/keymap', () => {
           selector: `#${node.id}`,
           command: 'test'
         });
-        let keyEvent = genKeyboardEvent({ keyCode: 17 });
+        let event = generate('keydown', { keyCode: 17 });
 
         expect(count).to.be(0);
-        node.dispatchEvent(keyEvent);
+        node.dispatchEvent(event);
         expect(count).to.be(0);
 
         binding.dispose();
@@ -538,8 +543,8 @@ describe('ui/keymap', () => {
           selector: `#${node.id}`,
           command: 'test2'
         });
-        let event1 = genKeyboardEvent({ keyCode: 83, ctrlKey: true });
-        let event2 = genKeyboardEvent({ keyCode: 68, ctrlKey: true });
+        let event1 = generate('keydown', { keyCode: 83, ctrlKey: true });
+        let event2 = generate('keydown', { keyCode: 68, ctrlKey: true });
 
         expect(count1).to.be(0);
         expect(count2).to.be(0);
@@ -581,13 +586,13 @@ describe('ui/keymap', () => {
           selector: `#${node.id}`,
           command: 'test2'
         });
-        let event1 = genKeyboardEvent({
+        let event1 = generate('keydown', {
           keyCode: 84,
           ctrlKey: true,
           altKey: true,
           shiftKey: true
         });
-        let event2 = genKeyboardEvent({
+        let event2 = generate('keydown', {
           keyCode: 81,
           ctrlKey: true,
           altKey: true,
@@ -627,8 +632,10 @@ describe('ui/keymap', () => {
           selector: `#${node.id}`,
           command: 'test'
         });
-        let event1 = genKeyboardEvent({ keyCode: 68 });
-        let event2 = genKeyboardEvent({ keyCode: 69 });
+        // The bubbles value needs to be set explicitly, see:
+        // https://github.com/blakeembrey/simulate-event/pull/12
+        let event1 = generate('keydown', { keyCode: 68, bubbles: true });
+        let event2 = generate('keydown', { keyCode: 69, bubbles: true });
 
         node.dispatchEvent(event1);
         expect(codes.length).to.be(0);
@@ -661,7 +668,7 @@ describe('ui/keymap', () => {
           selector: `#${node.id}`,
           command: 'test'
         });
-        let event = genKeyboardEvent({ keyCode: 68 });
+        let event = generate('keydown', { keyCode: 68 });
 
         node.dispatchEvent(event);
         expect(codes.length).to.be(0);
@@ -702,7 +709,7 @@ describe('ui/keymap', () => {
           selector: `#${node.id}`,
           command: 'test2'
         });
-        let event = genKeyboardEvent({ keyCode: 68 });
+        let event = generate('keydown', { keyCode: 68 });
 
         node.dispatchEvent(event);
         expect(called1).to.be(false);
@@ -737,7 +744,7 @@ describe('ui/keymap', () => {
           selector: `#${node.id}`,
           command: 'test'
         });
-        let event = genKeyboardEvent({ keyCode: 59, ctrlKey: true });
+        let event = generate('keydown', { keyCode: 59, ctrlKey: true });
 
         node.dispatchEvent(event);
         expect(called).to.be(true);
@@ -772,7 +779,7 @@ describe('ui/keymap', () => {
           selector: `#${node.id}`,
           command: 'test2'
         });
-        let event = genKeyboardEvent({ keyCode: 59, ctrlKey: true });
+        let event = generate('keydown', { keyCode: 59, ctrlKey: true });
 
         node.dispatchEvent(event);
         expect(called1).to.be(false);
