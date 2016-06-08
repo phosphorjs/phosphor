@@ -690,6 +690,10 @@ class MenuBar extends Widget {
       document.addEventListener('mousedown', this, true);
     }
 
+    // Activate the first item in the child menu.
+    newMenu.activeIndex = -1;
+    newMenu.activateNextItem();
+
     // Get the positioning data for the new menu.
     let node = this._nodes.at(this._activeIndex);
     let { left, bottom } = node.getBoundingClientRect();
