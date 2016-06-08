@@ -24,3 +24,6 @@ import './core/properties.spec';
 import './core/signaling.spec';
 
 import './dom/selector.spec';
+
+import '../index.css';
+import '../../styles/base.css';
