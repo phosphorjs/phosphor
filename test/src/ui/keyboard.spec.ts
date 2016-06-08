@@ -36,7 +36,7 @@ describe('KeyCodeLayout', () => {
 
     it('should be read-only', () => {
       let layout = new KeycodeLayout('ab-cd', {});
-      expect(() => { layout.name = 'ab-cd'; }).to.throwError();
+      expect(() => { layout.name = 'ef-gh'; }).to.throwError();
     });
 
   });
