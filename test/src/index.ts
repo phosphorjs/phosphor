@@ -5,25 +5,25 @@
 |
 | The full license is in the file LICENSE, distributed with this software.
 |----------------------------------------------------------------------------*/
-import './algorithm/iteration.spec';
-import './algorithm/json.spec';
-import './algorithm/mutation.spec';
-import './algorithm/range.spec';
-import './algorithm/searching.spec';
-import './algorithm/sequence.spec';
-import './algorithm/sorting.spec';
+// import './algorithm/iteration.spec';
+// import './algorithm/json.spec';
+// import './algorithm/mutation.spec';
+// import './algorithm/range.spec';
+// import './algorithm/searching.spec';
+// import './algorithm/sequence.spec';
+// import './algorithm/sorting.spec';
 
-import './collections/deque.spec';
-import './collections/queue.spec';
-import './collections/stack.spec';
-import './collections/vector.spec';
+// import './collections/deque.spec';
+// import './collections/queue.spec';
+// import './collections/stack.spec';
+// import './collections/vector.spec';
 
-import './core/disposable.spec';
-import './core/messaging.spec';
-import './core/properties.spec';
-import './core/signaling.spec';
+// import './core/disposable.spec';
+// import './core/messaging.spec';
+// import './core/properties.spec';
+// import './core/signaling.spec';
 
-import './dom/selector.spec';
+// import './dom/selector.spec';
 
 import '../index.css';
 import '../../styles/base.css';

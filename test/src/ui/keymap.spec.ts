@@ -20,7 +20,8 @@ import {
 } from '../../../lib/ui/commands';
 
 import {
-  keymap, KeymapManager, KeyBinding, keystrokeForKeydownEvent
+  KeyBinding, keymap, KeymapManager, keystrokeForKeydownEvent,
+  normalizeKeystroke
 } from '../../../lib/ui/keymap';
 
 import {
@@ -871,6 +872,34 @@ describe('ui/keymap', () => {
       let event = generate('keydown', { keyCode: -1 });
       let keystroke = keystrokeForKeydownEvent(event as KeyboardEvent, EN_US);
       expect(keystroke).to.be('');
+    });
+
+  });
+
+  describe('normalizeKeystroke()', () => {
+
+    it('should normalize and validate a keystroke', () => {
+      let stroke = normalizeKeystroke('Ctrl S');
+      expect(stroke).to.be('Ctrl S');
+    });
+
+    it('should handle multiple modifiers', () => {
+      let stroke = normalizeKeystroke('Ctrl Shift Alt S');
+      expect(stroke).to.be('Ctrl Alt Shift S');
+    });
+
+    it('should handle platform specific modifiers', () => {
+      let stroke = '';
+      if (IS_MAC) {
+        stroke = normalizeKeystroke('Cmd S');
+        expect(stroke).to.be('Cmd S');
+        stroke = normalizeKeystroke('Accel S');
+        expect(stroke).to.be('Cmd S');
+      } else {
+        expect(() => normalizeKeystroke('Cmd S')).to.throwError();
+        stroke = normalizeKeystroke('Accel S');
+        expect(stroke).to.be('Ctrl S');
+      }
     });
 
   });
