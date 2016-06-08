@@ -263,7 +263,6 @@ describe('ui/panel', () => {
         expect(layout.widgets.at(1)).to.be(widget);
       });
 
-
       it('should be a no-op if the index does not change', () => {
         let layout = new PanelLayout();
         let widget = new LogWidget();
