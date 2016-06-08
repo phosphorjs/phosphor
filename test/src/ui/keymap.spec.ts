@@ -20,7 +20,7 @@ import {
 } from '../../../lib/ui/commands';
 
 import {
-  keymap, KeymapManager, KeyBinding
+  keymap, KeymapManager, KeyBinding, keystrokeForKeydownEvent
 } from '../../../lib/ui/keymap';
 
 import {
@@ -33,26 +33,6 @@ import {
 
 
 let id = 0;
-
-
-/**
- * Helper function to generate keyboard events for unit-tests.
- */
-function genKeyboardEvent(options: any): KeyboardEvent {
-  let event = document.createEvent('Events') as KeyboardEvent;
-  let bubbles = options.bubbles || true;
-  let cancelable = options.cancelable || true;
-  event.initEvent(options.type || 'keydown', bubbles, cancelable);
-  event.keyCode = options.keyCode || 0;
-  event.key = options.key || '';
-  event.which = event.keyCode;
-  event.ctrlKey = options.ctrlKey || false;
-  event.altKey = options.altKey || false;
-  event.shiftKey = options.shiftKey || false;
-  event.metaKey = options.metaKey || false;
-  event.view = options.view || window;
-  return event;
-}
 
 
 /**
@@ -864,6 +844,33 @@ describe('ui/keymap', () => {
         document.body.removeEventListener('keydown', keydown);
       });
 
+    });
+
+  });
+
+  describe('keystrokeForKeydownEvent()', () => {
+
+    it('should create a normalized keystroke', () => {
+      let event = generate('keydown', { ctrlKey: true, keyCode: 83 });
+      let keystroke = keystrokeForKeydownEvent(event as KeyboardEvent, EN_US);
+      expect(keystroke).to.be('Ctrl S');
+    });
+
+    it('should handle multiple modifiers', () => {
+      let event = generate('keydown', {
+        ctrlKey: true,
+        altKey: true,
+        shiftKey: true,
+        keyCode: 83
+      });
+      let keystroke = keystrokeForKeydownEvent(event as KeyboardEvent, EN_US);
+      expect(keystroke).to.be('Ctrl Alt Shift S');
+    });
+
+    it('should fail on an invalid shortcut', () => {
+      let event = generate('keydown', { keyCode: -1 });
+      let keystroke = keystrokeForKeydownEvent(event as KeyboardEvent, EN_US);
+      expect(keystroke).to.be('');
     });
 
   });
