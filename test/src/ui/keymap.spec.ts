@@ -186,12 +186,12 @@ describe('ui/keymap', () => {
 
       it('should add key bindings to the keymap manager', () => {
         let node = createElement();
+        node.addEventListener('keydown', event => {
+          keymap.processKeydownEvent(event);
+        });
         let called = false;
         let command = commands.addCommand('test', {
           execute: () => { called = true; }
-        });
-        node.addEventListener('keydown', event => {
-          keymap.processKeydownEvent(event);
         });
         let binding = keymap.addBinding({
           keys: ['Ctrl ;'],
@@ -211,9 +211,6 @@ describe('ui/keymap', () => {
         let called = false;
         let command = commands.addCommand('test', {
           execute: () => { called = true; }
-        });
-        node.addEventListener('keydown', event => {
-          keymap.processKeydownEvent(event);
         });
         let binding = keymap.addBinding({
           keys: ['Ctrl ;'],
@@ -355,12 +352,13 @@ describe('ui/keymap', () => {
 
       it('should dispatch on a correct keyboard event', () => {
         let node = createElement();
+        node.addEventListener('keydown', event => {
+          keymap.processKeydownEvent(event);
+        });
+
         let called = false;
         let command = commands.addCommand('test', {
           execute: () => { called = true; }
-        });
-        node.addEventListener('keydown', event => {
-          keymap.processKeydownEvent(event);
         });
         let binding = keymap.addBinding({
           keys: ['Ctrl ;'],
@@ -368,8 +366,10 @@ describe('ui/keymap', () => {
           command: 'test'
         });
         let keyEvent = genKeyboardEvent({ keyCode: 59, ctrlKey: true });
+
         node.dispatchEvent(keyEvent);
         expect(called).to.be(true);
+
         binding.dispose();
         command.dispose();
         document.body.removeChild(node);
@@ -377,12 +377,13 @@ describe('ui/keymap', () => {
 
       it('should not dispatch on a non-matching keyboard event', () => {
         let node = createElement();
+        node.addEventListener('keydown', event => {
+          keymap.processKeydownEvent(event);
+        });
+
         let called = false;
         let command = commands.addCommand('test', {
           execute: () => { called = true; }
-        });
-        node.addEventListener('keydown', event => {
-          keymap.processKeydownEvent(event);
         });
         let binding = keymap.addBinding({
           keys: ['Ctrl ;'],
@@ -390,8 +391,10 @@ describe('ui/keymap', () => {
           command: 'test'
         });
         let keyEvent = genKeyboardEvent({ keyCode: 45, ctrlKey: true });
+
         node.dispatchEvent(keyEvent);
         expect(called).to.be(false);
+
         binding.dispose();
         command.dispose();
         document.body.removeChild(node);
@@ -399,12 +402,13 @@ describe('ui/keymap', () => {
 
       it('should not dispatch with non-matching modifiers', () => {
         let node = createElement();
+        node.addEventListener('keydown', event => {
+          keymap.processKeydownEvent(event);
+        });
+
         let count = 0;
         let command = commands.addCommand('test', {
           execute: () => { count++; }
-        });
-        node.addEventListener('keydown', event => {
-          keymap.processKeydownEvent(event);
         });
         let binding = keymap.addBinding({
           keys: ['Ctrl S'],
@@ -412,13 +416,144 @@ describe('ui/keymap', () => {
           command: 'test'
         });
         let keyEventAlt = genKeyboardEvent({ keyCode: 83, altKey: true });
+        let keyEventShift = genKeyboardEvent({ keyCode: 83, shiftKey: true });
+
         node.dispatchEvent(keyEventAlt);
         expect(count).to.be(0);
-        let keyEventShift = genKeyboardEvent({ keyCode: 83, shiftKey: true });
         node.dispatchEvent(keyEventShift);
         expect(count).to.be(0);
+
         binding.dispose();
         command.dispose();
+        document.body.removeChild(node);
+      });
+
+      it('should dispatch with multiple chords in a key sequence', () => {
+        let node = createElement();
+        node.addEventListener('keydown', event => {
+          keymap.processKeydownEvent(event);
+        });
+
+        let count = 0;
+        let command = commands.addCommand('test', {
+          execute: () => { count++; }
+        });
+        let binding = keymap.addBinding({
+          keys: ['Ctrl K', 'Ctrl L'],
+          selector: `#${node.id}`,
+          command: 'test'
+        });
+        let keyEventK = genKeyboardEvent({ keyCode: 75, ctrlKey: true });
+        let keyEventL = genKeyboardEvent({ keyCode: 76, ctrlKey: true });
+
+        node.dispatchEvent(keyEventK);
+        expect(count).to.be(0);
+        node.dispatchEvent(keyEventL);
+        expect(count).to.be(1);
+        node.dispatchEvent(keyEventL);
+        expect(count).to.be(1);
+        node.dispatchEvent(keyEventK);
+        expect(count).to.be(1);
+        node.dispatchEvent(keyEventL);
+        expect(count).to.be(2);
+
+        binding.dispose();
+        command.dispose();
+        document.body.removeChild(node);
+      });
+
+      it('should not execute handler without matching selector', () => {
+        let node = createElement();
+        node.addEventListener('keydown', (event) => {
+          keymap.processKeydownEvent(event)
+        });
+
+        let count = 0;
+        let command = commands.addCommand('test', {
+          execute: () => { count++; }
+        });
+        let binding = keymap.addBinding({
+          keys: ['Shift P'],
+          selector: '.inaccessible-scope',
+          command: 'test'
+        });
+        let keyEvent = genKeyboardEvent({ keyCode: 80, shiftKey: true });
+
+        expect(count).to.be(0);
+        node.dispatchEvent(keyEvent);
+        expect(count).to.be(0);
+
+        binding.dispose();
+        command.dispose();
+        document.body.removeChild(node);
+      });
+
+      it('should not execute a handler when missing a modifier', () => {
+        let node = createElement();
+        node.addEventListener('keydown', event => {
+          keymap.processKeydownEvent(event);
+        });
+
+        let count = 0;
+        let command = commands.addCommand('test', {
+          execute: () => { count++; }
+        });
+        let binding = keymap.addBinding({
+          keys: ['Ctrl P'],
+          selector: `#${node.id}`,
+          command: 'test'
+        });
+        let keyEvent = genKeyboardEvent({ keyCode: 17 });
+
+        expect(count).to.be(0);
+        node.dispatchEvent(keyEvent);
+        expect(count).to.be(0);
+
+        binding.dispose();
+        command.dispose();
+        document.body.removeChild(node);
+      });
+
+      it('should register partial and exact matches', () => {
+        let node = createElement();
+        node.addEventListener('keydown', event => {
+          keymap.processKeydownEvent(event);
+        });
+
+        let count1 = 0;
+        let count2 = 0;
+        let command1 = commands.addCommand('test1', {
+          execute: () => { count1++; }
+        });
+        let command2 = commands.addCommand('test2', {
+          execute: () => { count2++; }
+        });
+        let binding1 = keymap.addBinding({
+          keys: ['Ctrl S'],
+          selector: `#${node.id}`,
+          command: 'test1'
+        });
+        let binding2 = keymap.addBinding({
+          keys: ['Ctrl S', 'Ctrl D'],
+          selector: `#${node.id}`,
+          command: 'test2'
+        });
+        let event1 = genKeyboardEvent({ keyCode: 83, ctrlKey: true });
+        let event2 = genKeyboardEvent({ keyCode: 68, ctrlKey: true });
+
+        expect(count1).to.be(0);
+        expect(count2).to.be(0);
+        node.dispatchEvent(event1);
+        expect(count1).to.be(0);
+        expect(count2).to.be(0);
+        node.dispatchEvent(event2);
+        expect(count1).to.be(0);
+        expect(count2).to.be(1);
+
+        binding1.dispose();
+        binding2.dispose();
+        command1.dispose();
+        command2.dispose();
         document.body.removeChild(node);
       });
 
