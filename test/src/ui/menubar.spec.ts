@@ -8,7 +8,7 @@
 import expect = require('expect.js');
 
 import {
-  simulate
+  generate, simulate
 } from 'simulate-event';
 
 import {
@@ -96,6 +96,8 @@ function createMenuBar(): MenuBar {
     let menu = new Menu();
     let item = new MenuItem({ command: DEFAULT_CMD });
     menu.addItem(item);
+    menu.title.label = `Menu${i}`;
+    menu.title.mnemonic = 4;
     bar.addMenu(menu);
   }
   bar.activeIndex = 0;
@@ -503,6 +505,154 @@ describe('ui/menubar', () => {
           expect(bar.activeIndex).to.be(2);
           simulate(bar.node, 'keydown', { keyCode: 39 });
           expect(bar.activeIndex).to.be(0);
+          bar.dispose();
+        });
+
+        it('should open the menu matching a mnemonic', () => {
+          let bar = createMenuBar();
+          simulate(bar.node, 'keydown', { keyCode: 97 });  // '1';
+          expect(bar.activeIndex).to.be(1);
+          let menu = bar.activeMenu;
+          expect(menu.isAttached).to.be(true);
+          bar.dispose();
+        });
+
+        it('should select the first menu matching by first letter', () => {
+          let bar = createMenuBar();
+          simulate(bar.node, 'keydown', { keyCode: 77 });  // 'M';
+          expect(bar.activeIndex).to.be(0);
+          let menu = bar.activeMenu;
+          expect(menu.isAttached).to.be(false);
+          bar.dispose();
+        });
+
+        it('should select the first menu matching the mnemonic', () => {
+          let bar = createMenuBar();
+          let menu = new Menu();
+          menu.title.label = 'Test1';
+          menu.title.mnemonic = 4;
+          bar.addMenu(menu);
+          simulate(bar.node, 'keydown', { keyCode: 97 });  // '1';
+          expect(bar.activeIndex).to.be(1);
+          menu = bar.activeMenu;
+          expect(menu.isAttached).to.be(false);
+          bar.dispose();
+        });
+
+      });
+
+      context('mousedown', () => {
+
+        it('should bail if the mouse press was not on the menu bar', () => {
+          let bar = createMenuBar();
+          let evt = generate('mousedown', { clientX: -10 });
+          bar.node.dispatchEvent(evt);
+          expect(evt.defaultPrevented).to.be(false);
+          bar.dispose();
+        });
+
+        it('should close an open menu if the press was not on an item', () => {
+          let bar = createMenuBar();
+          bar.openActiveMenu();
+          let menu = bar.activeMenu;
+          simulate(bar.node, 'mousedown');
+          expect(bar.activeIndex).to.be(-1);
+          expect(menu.isAttached).to.be(false);
+          bar.dispose();
+        });
+
+        it('should close an active menu', () => {
+          let bar = createMenuBar();
+          bar.openActiveMenu();
+          let menu = bar.activeMenu;
+          let node = bar.node.getElementsByClassName('p-MenuBar-item')[0] as HTMLElement;
+          let rect = node.getBoundingClientRect();
+          simulate(bar.node, 'mousedown', { clientX: rect.left, clientY: rect.top });
+          expect(bar.activeIndex).to.be(0);
+          expect(menu.isAttached).to.be(false);
+          bar.dispose();
+        });
+
+        it('should open an active menu', () => {
+          let bar = createMenuBar();
+          let menu = bar.activeMenu;
+          let node = bar.node.getElementsByClassName('p-MenuBar-item')[0] as HTMLElement;
+          let rect = node.getBoundingClientRect();
+          simulate(bar.node, 'mousedown', { clientX: rect.left, clientY: rect.top });
+          expect(bar.activeIndex).to.be(0);
+          expect(menu.isAttached).to.be(true);
+          bar.dispose();
+        });
+
+        it('should not close an active menu if not a left mouse press', () => {
+          let bar = createMenuBar();
+          bar.openActiveMenu();
+          let menu = bar.activeMenu;
+          let node = bar.node.getElementsByClassName('p-MenuBar-item')[0] as HTMLElement;
+          let rect = node.getBoundingClientRect();
+          simulate(bar.node, 'mousedown', { button: 1, clientX: rect.left, clientY: rect.top });
+          expect(bar.activeIndex).to.be(0);
+          expect(menu.isAttached).to.be(true);
+          bar.dispose();
+        });
+
+      });
+
+      context('mousemove', () => {
+
+        it('should open a new menu if a menu is already open', () => {
+          let bar = createMenuBar();
+          bar.openActiveMenu();
+          let menu = bar.activeMenu;
+          let node = bar.node.getElementsByClassName('p-MenuBar-item')[1] as HTMLElement;
+          let rect = node.getBoundingClientRect();
+          simulate(bar.node, 'mousemove', { clientX: rect.left, clientY: rect.top + 1 });
+          expect(bar.activeIndex).to.be(1);
+          expect(menu.isAttached).to.be(false);
+          expect(bar.activeMenu.isAttached).to.be(true);
+          bar.dispose();
+        });
+
+        it('should be a no-op if the active index will not change', () => {
+          let bar = createMenuBar();
+          bar.openActiveMenu();
+          let menu = bar.activeMenu;
+          let node = bar.node.getElementsByClassName('p-MenuBar-item')[0] as HTMLElement;
+          let rect = node.getBoundingClientRect();
+          simulate(bar.node, 'mousemove', { clientX: rect.left, clientY: rect.top + 1 });
+          expect(bar.activeIndex).to.be(0);
+          expect(menu.isAttached).to.be(true);
+          bar.dispose();
+        });
+
+        it('should be a no-op if the mouse is not over an item and there is a menu open', () => {
+          let bar = createMenuBar();
+          bar.openActiveMenu();
+          let menu = bar.activeMenu;
+          simulate(bar.node, 'mousemove');
+          expect(bar.activeIndex).to.be(0);
+          expect(menu.isAttached).to.be(true);
+          bar.dispose();
+        });
+
+      });
+
+      context('mouseleave', () => {
+
+        it('should reset the active index if there is no open menu', () => {
+          let bar = createMenuBar();
+          simulate(bar.node, 'mouseleave');
+          expect(bar.activeIndex).to.be(-1);
+          bar.dispose();
+        });
+
+        it('should be a no-op if there is an open menu', () => {
+          let bar = createMenuBar();
+          bar.openActiveMenu();
+          let menu = bar.activeMenu;
+          simulate(bar.node, 'mouseleave');
+          expect(bar.activeIndex).to.be(0);
+          expect(menu.isAttached).to.be(true);
           bar.dispose();
         });
 
