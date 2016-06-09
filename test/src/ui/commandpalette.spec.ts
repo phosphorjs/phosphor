@@ -271,6 +271,36 @@ describe('ui/commandpalette', () => {
 
   });
 
-  describe('CommandPalette', () => { });
+  describe('CommandPalette', () => {
+
+    describe('.createNode()', () => {
+
+      it('should create node for a command palette', () => {
+        let node = CommandPalette.createNode();
+        expect(!!node.querySelector('.p-CommandPalette-search')).to.be(true);
+        expect(!!node.querySelector('.p-CommandPalette-input')).to.be(true);
+        expect(!!node.querySelector('.p-CommandPalette-content')).to.be(true);
+      });
+
+    });
+
+    describe('#constructor()', () => {
+
+      it('should accept no arguments', () => {
+        let palette = new CommandPalette();
+        expect(palette).to.be.a(CommandPalette);
+        expect(palette.node.classList.contains('p-CommandPalette')).to.be(true);
+      });
+
+      it('should accept command palette instantiation options', () => {
+        let options: CommandPalette.IOptions = {};
+        let palette = new CommandPalette(options);
+        expect(palette).to.be.a(CommandPalette);
+        expect(palette.node.classList.contains('p-CommandPalette')).to.be(true);
+      });
+
+    });
+
+  });
 
 });
