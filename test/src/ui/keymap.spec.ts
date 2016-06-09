@@ -53,7 +53,7 @@ describe('ui/keymap', () => {
 
   describe('KeyBinding', () => {
 
-    describe('#constructor', () => {
+    describe('#constructor()', () => {
 
       it('should accept a keybinding options argument', () => {
         let options = { keys: ['Ctrl A'], selector: 'body', command: 'test' };
