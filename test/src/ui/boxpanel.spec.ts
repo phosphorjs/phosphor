@@ -219,7 +219,6 @@ describe('ui/boxpanel', () => {
         panel.direction = 'left-to-right';
         expect(panel.direction).to.be('left-to-right');
       });
-
     });
 
     describe('#spacing', () => {
@@ -283,6 +282,19 @@ describe('ui/boxpanel', () => {
         expect(BoxLayout.getStretch(widget)).to.be(8);
       });
 
+      it("should post a fit request to the widget's parent", (done) => {
+        let parent = new LogWidget();
+        let widget = new Widget();
+        let layout = new LogBoxLayout();
+        parent.layout = layout;
+        layout.addWidget(widget);
+        BoxLayout.setStretch(widget, 8);
+        requestAnimationFrame(() => {
+          expect(layout.methods.indexOf('onFitRequest')).to.not.be(-1);
+          done();
+        });
+      });
+
     });
 
     describe('.getSizeBasis()', () => {
@@ -302,6 +314,19 @@ describe('ui/boxpanel', () => {
         expect(BoxLayout.getSizeBasis(widget)).to.be(8);
       });
 
+      it("should post a fit request to the widget's parent", (done) => {
+        let parent = new LogWidget();
+        let widget = new Widget();
+        let layout = new LogBoxLayout();
+        parent.layout = layout;
+        layout.addWidget(widget);
+        BoxLayout.setSizeBasis(widget, 8);
+        requestAnimationFrame(() => {
+          expect(layout.methods.indexOf('onFitRequest')).to.not.be(-1);
+          done();
+        });
+      });
+
     });
 
     describe('#direction', () => {
@@ -317,6 +342,28 @@ describe('ui/boxpanel', () => {
         expect(layout.direction).to.be('left-to-right');
       });
 
+      it('should post a fit request to the parent widget', (done) => {
+        let parent = new Widget();
+        let layout = new LogBoxLayout();
+        parent.layout = layout;
+        layout.direction = 'right-to-left';
+        requestAnimationFrame(() => {
+          expect(layout.methods.indexOf('onFitRequest')).to.not.be(-1);
+          done();
+        });
+      });
+
+      it('should be a no-op if the value does not change', (done) => {
+        let parent = new Widget();
+        let layout = new LogBoxLayout();
+        parent.layout = layout;
+        layout.direction = 'top-to-bottom';
+        requestAnimationFrame(() => {
+          expect(layout.methods.indexOf('onFitRequest')).to.be(-1);
+          done();
+        });
+      });
+
     });
 
     describe('#spacing', () => {
@@ -330,6 +377,28 @@ describe('ui/boxpanel', () => {
         let layout = new BoxLayout();
         layout.spacing = 4;
         expect(layout.spacing).to.be(4);
+      });
+
+      it('should post a fit request to the parent widget', (done) => {
+        let parent = new Widget();
+        let layout = new LogBoxLayout();
+        parent.layout = layout;
+        layout.spacing = 4;
+        requestAnimationFrame(() => {
+          expect(layout.methods.indexOf('onFitRequest')).to.not.be(-1);
+          done();
+        });
+      });
+
+      it('should be a no-op if the value does not change', (done) => {
+        let parent = new Widget();
+        let layout = new LogBoxLayout();
+        parent.layout = layout;
+        layout.spacing = 8;
+        requestAnimationFrame(() => {
+          expect(layout.methods.indexOf('onFitRequest')).to.be(-1);
+          done();
+        });
       });
 
     });
@@ -581,8 +650,11 @@ describe('ui/boxpanel', () => {
         let parent = new LogWidget();
         let layout = new LogBoxLayout();
         parent.layout = layout;
+        let widgets = [new LogWidget(), new LogWidget(), new LogWidget()];
+        each(widgets, w => layout.addWidget(w));
         Widget.attach(parent, document.body);
-        sendMessage(parent, ResizeMessage.UnknownSize);
+        let msg = new ResizeMessage(10, 10);
+        sendMessage(parent, msg);
         expect(layout.methods.indexOf('onResize')).to.not.be(-1);
         parent.dispose();
       });
@@ -690,6 +762,19 @@ describe('ui/boxpanel', () => {
         parent.hide();
         sendMessage(parent, WidgetMessage.FitRequest);
         expect(layout.methods.indexOf('onFitRequest')).to.not.be(-1);
+      });
+
+      it('should send a fit request to an ancestor widget', () => {
+        Widget.detach(parent);
+        let ancestor = new LogWidget();
+        let ancestorLayout = new LogBoxLayout();
+        ancestor.layout = ancestorLayout;
+        ancestorLayout.addWidget(parent);
+        parent.layout = layout;
+        Widget.attach(ancestor, document.body);
+        sendMessage(parent, WidgetMessage.FitRequest);
+        expect(ancestorLayout.methods.indexOf('onFitRequest')).to.not.be(-1);
+        parent.dispose();
       });
 
     });
