@@ -438,7 +438,7 @@ class TabBar extends Widget {
 
       // Update the current index.
       if (this._currentIndex === -1) {
-        this._currentIndex = j
+        this._currentIndex = j;
         this.currentChanged.emit({
           previousIndex: -1, previousTitle: null,
           currentIndex: j, currentTitle: title
