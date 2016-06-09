@@ -8,15 +8,23 @@
 import expect = require('expect.js');
 
 import {
-  Message
+  each, every
+} from  '../../../lib/algorithm/iteration';
+
+import {
+  Message, sendMessage
 } from '../../../lib/core/messaging';
+
+import {
+  IS_IE
+} from '../../../lib/dom/platform';
 
 import {
   BoxLayout, BoxPanel
 } from '../../../lib/ui/boxpanel';
 
 import {
-  ChildMessage, ResizeMessage, Widget
+  ChildMessage, ResizeMessage, Widget, WidgetMessage
 } from '../../../lib/ui/widget';
 
 
@@ -119,6 +127,16 @@ class LogWidget extends Widget {
   protected onBeforeDetach(msg: Message): void {
     super.onBeforeDetach(msg);
     this.methods.push('onBeforeDetach');
+  }
+
+  protected onAfterShow(msg: Message): void {
+    super.onAfterShow(msg);
+    this.methods.push('onAfterShow');
+  }
+
+  protected onUpdateRequest(msg: Message): void {
+    super.onUpdateRequest(msg);
+    this.methods.push('onUpdateRequest');
   }
 }
 
@@ -325,6 +343,7 @@ describe('ui/boxpanel', () => {
         panel.addWidget(widget);
         expect(layout.methods.indexOf('attachWidget')).to.not.be(-1);
         expect(panel.node.contains(widget.node)).to.be(true);
+        panel.dispose();
       });
 
       it("should send an `'after-attach'` message if the parent is attached", () => {
@@ -344,6 +363,7 @@ describe('ui/boxpanel', () => {
         panel.addWidget(new Widget());
         requestAnimationFrame(() => {
           expect(layout.methods.indexOf('onFitRequest')).to.not.be(-1);
+          panel.dispose();
           done();
         });
       });
@@ -362,6 +382,7 @@ describe('ui/boxpanel', () => {
         expect(layout.methods.indexOf('moveWidget')).to.not.be(-1);
         requestAnimationFrame(() => {
           expect(panel.methods.indexOf('onUpdateRequest')).to.not.be(-1);
+          panel.dispose();
           done();
         });
       });
@@ -378,6 +399,7 @@ describe('ui/boxpanel', () => {
         layout.removeWidget(widget);
         expect(layout.methods.indexOf('detachWidget')).to.not.be(-1);
         expect(panel.node.contains(widget.node)).to.be(false);
+        panel.dispose();
       });
 
       it("should send a `'before-detach'` message if the parent is attached", () => {
@@ -402,9 +424,272 @@ describe('ui/boxpanel', () => {
           layout.methods = [];
           requestAnimationFrame(() => {
             expect(layout.methods.indexOf('onFitRequest')).to.not.be(-1);
+            panel.dispose();
             done();
           });
         });
+      });
+
+    });
+
+    describe('#onLayoutChanged()', () => {
+
+      it('should set the direction class on the parent widget', () => {
+        let parent = new Widget();
+        let layout = new LogBoxLayout();
+        parent.layout = layout;
+        expect(parent.hasClass('p-mod-top-to-bottom')).to.be(true);
+        expect(layout.methods.indexOf('onLayoutChanged')).to.not.be(-1);
+        parent.dispose();
+      });
+
+      it('should attach the child widgets', () => {
+        let parent = new Widget();
+        let layout = new LogBoxLayout();
+        let widgets = [new Widget(), new Widget(), new Widget()];
+        each(widgets, w => layout.addWidget(w));
+        Widget.attach(parent, document.body);
+        parent.layout = layout;
+        expect(every(widgets, w => w.parent === parent));
+        expect(layout.methods.indexOf('attachWidget')).to.not.be(-1);
+        parent.dispose();
+      });
+
+    });
+
+    describe('#onAfterShow()', () => {
+
+      it('should post an update request to the parent', (done) => {
+        let parent = new LogWidget();
+        let layout = new LogBoxLayout();
+        parent.layout = layout;
+        Widget.attach(parent, document.body);
+        parent.hide();
+        parent.show();
+        expect(parent.methods.indexOf('onAfterShow')).to.not.be(-1);
+        expect(layout.methods.indexOf('onAfterShow')).to.not.be(-1);
+        requestAnimationFrame(() => {
+          expect(parent.methods.indexOf('onUpdateRequest')).to.not.be(-1);
+          parent.dispose();
+          done();
+        });
+      });
+
+      it('should send an `after-show` message to non-hidden child widgets', () => {
+        let parent = new LogWidget();
+        let layout = new LogBoxLayout();
+        parent.layout = layout;
+        let widgets = [new LogWidget(), new LogWidget(), new LogWidget()];
+        let hiddenWidgets = [new LogWidget(), new LogWidget()];
+        each(widgets, w => layout.addWidget(w));
+        each(hiddenWidgets, w => layout.addWidget(w));
+        each(hiddenWidgets, w => w.hide());
+        Widget.attach(parent, document.body);
+        parent.layout = layout;
+        parent.hide();
+        parent.show();
+        expect(every(widgets, w => w.methods.indexOf('after-show') !== -1));
+        expect(every(hiddenWidgets, w => w.methods.indexOf('after-show') === -1));
+        expect(parent.methods.indexOf('onAfterShow')).to.not.be(-1);
+        expect(layout.methods.indexOf('onAfterShow')).to.not.be(-1);
+        parent.dispose();
+      });
+
+    });
+
+    describe('#onAfterAttach()', () => {
+
+      it('should post a fit request to the parent', (done) => {
+        let parent = new LogWidget();
+        let layout = new LogBoxLayout();
+        parent.layout = layout;
+        Widget.attach(parent, document.body);
+        expect(parent.methods.indexOf('onAfterAttach')).to.not.be(-1);
+        expect(layout.methods.indexOf('onAfterAttach')).to.not.be(-1);
+        requestAnimationFrame(() => {
+          expect(layout.methods.indexOf('onFitRequest')).to.not.be(-1);
+          parent.dispose();
+          done();
+        });
+      });
+
+      it('should send `after-attach` to all child widgets', () => {
+        let parent = new LogWidget();
+        let layout = new LogBoxLayout();
+        parent.layout = layout;
+        let widgets = [new LogWidget(), new LogWidget(), new LogWidget()];
+        each(widgets, w => layout.addWidget(w));
+        Widget.attach(parent, document.body);
+        expect(parent.methods.indexOf('onAfterAttach')).to.not.be(-1);
+        expect(layout.methods.indexOf('onAfterAttach')).to.not.be(-1);
+        expect(every(widgets, w => w.methods.indexOf('onAfterAttach') !== -1));
+        parent.dispose();
+      });
+
+    });
+
+    describe('#onChildShown()', () => {
+
+      it('should post or send a fit request to the parent', (done) => {
+        let parent = new LogWidget();
+        let layout = new LogBoxLayout();
+        parent.layout = layout;
+        let widgets = [new LogWidget(), new LogWidget(), new LogWidget()];
+        widgets[0].hide();
+        each(widgets, w => layout.addWidget(w));
+        Widget.attach(parent, document.body);
+        widgets[0].show();
+        expect(layout.methods.indexOf('onChildShown')).to.not.be(-1);
+        if (IS_IE) {
+          expect(layout.methods.indexOf('onFitRequest')).to.not.be(-1);
+        }
+        requestAnimationFrame(() => {
+          expect(layout.methods.indexOf('onFitRequest')).to.not.be(-1);
+          parent.dispose();
+          done();
+        });
+      });
+
+    });
+
+    describe('#onChildHidden()', () => {
+
+      it('should post or send a fit request to the parent', (done) => {
+        let parent = new LogWidget();
+        let layout = new LogBoxLayout();
+        parent.layout = layout;
+        let widgets = [new LogWidget(), new LogWidget(), new LogWidget()];
+        each(widgets, w => layout.addWidget(w));
+        Widget.attach(parent, document.body);
+        widgets[0].hide();
+        expect(layout.methods.indexOf('onChildHidden')).to.not.be(-1);
+        if (IS_IE) {
+          expect(layout.methods.indexOf('onFitRequest')).to.not.be(-1);
+        }
+        requestAnimationFrame(() => {
+          expect(layout.methods.indexOf('onFitRequest')).to.not.be(-1);
+          parent.dispose();
+          done();
+        });
+      });
+
+    });
+
+    describe('#onResize', () => {
+
+      it('should be called when a resize event is sent to the parent', () => {
+        let parent = new LogWidget();
+        let layout = new LogBoxLayout();
+        parent.layout = layout;
+        Widget.attach(parent, document.body);
+        sendMessage(parent, ResizeMessage.UnknownSize);
+        expect(layout.methods.indexOf('onResize')).to.not.be(-1);
+        parent.dispose();
+      });
+
+      it('should be a no-op if the parent is hidden', () => {
+        let parent = new LogWidget();
+        let layout = new LogBoxLayout();
+        parent.layout = layout;
+        Widget.attach(parent, document.body);
+        parent.hide();
+        sendMessage(parent, ResizeMessage.UnknownSize);
+        expect(layout.methods.indexOf('onResize')).to.not.be(-1);
+        parent.dispose();
+      });
+
+    });
+
+    describe('#onUpdateRequest()', () => {
+
+      let parent: LogWidget;
+      let layout: LogBoxLayout;
+
+      beforeEach(() => {
+        parent = new LogWidget();
+        layout = new LogBoxLayout();
+        parent.layout = layout;
+        Widget.attach(parent, document.body);
+        let widgets = [new LogWidget(), new LogWidget(), new LogWidget()];
+        each(widgets, w => layout.addWidget(w));
+      });
+
+      afterEach(() => parent.dispose());
+
+      it('should be called when the parent is updated', () => {
+        sendMessage(parent, WidgetMessage.UpdateRequest);
+        expect(layout.methods.indexOf('onUpdateRequest')).to.not.be(-1);
+      });
+
+      it('should handle `bottom-to-top`', () => {
+        layout.direction = 'bottom-to-top';
+        sendMessage(parent, WidgetMessage.UpdateRequest);
+        expect(layout.methods.indexOf('onUpdateRequest')).to.not.be(-1);
+      });
+
+      it('should handle `left-to-right`', () => {
+        layout.direction = 'left-to-right';
+        sendMessage(parent, WidgetMessage.UpdateRequest);
+        expect(layout.methods.indexOf('onUpdateRequest')).to.not.be(-1);
+      });
+
+      it('should handle `right-to-left`', () => {
+        layout.direction = 'right-to-left';
+        sendMessage(parent, WidgetMessage.UpdateRequest);
+        expect(layout.methods.indexOf('onUpdateRequest')).to.not.be(-1);
+      });
+
+      it('should be a no-op if the parent is hidden', () => {
+        parent.hide();
+        sendMessage(parent, WidgetMessage.UpdateRequest);
+        expect(layout.methods.indexOf('onUpdateRequest')).to.not.be(-1);
+      });
+
+    });
+
+    describe('#onFitRequest()', () => {
+
+      let parent: LogWidget;
+      let layout: LogBoxLayout;
+
+      beforeEach(() => {
+        parent = new LogWidget();
+        layout = new LogBoxLayout();
+        parent.layout = layout;
+        Widget.attach(parent, document.body);
+        let widgets = [new LogWidget(), new LogWidget(), new LogWidget()];
+        each(widgets, w => layout.addWidget(w));
+      });
+
+      afterEach(() => parent.dispose());
+
+      it('should be called when the parent fit is requested', () => {
+        sendMessage(parent, WidgetMessage.FitRequest);
+        expect(layout.methods.indexOf('onFitRequest')).to.not.be(-1);
+      });
+
+      it('should fit `bottom-to-top`', () => {
+        layout.direction = 'bottom-to-top';
+        sendMessage(parent, WidgetMessage.FitRequest);
+        expect(layout.methods.indexOf('onFitRequest')).to.not.be(-1);
+      });
+
+      it('should fit `left-to-right`', () => {
+        layout.direction = 'left-to-right';
+        sendMessage(parent, WidgetMessage.FitRequest);
+        expect(layout.methods.indexOf('onFitRequest')).to.not.be(-1);
+      });
+
+      it('should fit `right-to-left`', () => {
+        layout.direction = 'right-to-left';
+        sendMessage(parent, WidgetMessage.FitRequest);
+        expect(layout.methods.indexOf('onFitRequest')).to.not.be(-1);
+      });
+
+      it('should be a no-op if the parent is hidden', () => {
+        parent.hide();
+        sendMessage(parent, WidgetMessage.FitRequest);
+        expect(layout.methods.indexOf('onFitRequest')).to.not.be(-1);
       });
 
     });
