@@ -27,3 +27,4 @@ import './dom/selector.spec';
 
 import '../index.css';
 import '../../styles/base.css';
+import './ui/commandpalette.spec';
