@@ -28,10 +28,6 @@ import {
   EN_US, KeycodeLayout
 } from '../../../lib/ui/keyboard';
 
-import {
-  Vector
-} from '../../../lib/collections/vector';
-
 
 let id = 0;
 
@@ -69,6 +65,19 @@ describe('ui/keymap', () => {
 
     describe('#keys', () => {
 
+      it('should be set from instantiation options', () => {
+        let options = { keys: ['Ctrl A'], selector: 'body', command: 'test' };
+        let binding = new KeyBinding(options);
+        expect(binding.keys).to.eql(['Ctrl A']);
+      });
+
+      it('should make an immutable copy of instantiation keys', () => {
+        let options = { keys: ['Ctrl A'], selector: 'body', command: 'test' };
+        let binding = new KeyBinding(options);
+        options.keys.push('Alt Z');
+        expect(binding.keys).to.eql(['Ctrl A']);
+      });
+
       it('should be read only', () => {
         let options = { keys: ['Ctrl A'], selector: 'body', command: 'test' };
         let binding = new KeyBinding(options);
@@ -78,6 +87,12 @@ describe('ui/keymap', () => {
     });
 
     describe('#selector', () => {
+
+      it('should be set from instantiation options', () => {
+        let options = { keys: ['Ctrl A'], selector: 'body', command: 'test' };
+        let binding = new KeyBinding(options);
+        expect(binding.selector).to.be('body');
+      });
 
       it('should be read only', () => {
         let options = { keys: ['Ctrl A'], selector: 'body', command: 'test' };
@@ -89,6 +104,12 @@ describe('ui/keymap', () => {
 
     describe('#command', () => {
 
+      it('should be set from instantiation options', () => {
+        let options = { keys: ['Ctrl A'], selector: 'body', command: 'test' };
+        let binding = new KeyBinding(options);
+        expect(binding.command).to.be('test');
+      });
+
       it('should be read only', () => {
         let options = { keys: ['Ctrl A'], selector: 'body', command: 'test' };
         let binding = new KeyBinding(options);
@@ -98,6 +119,17 @@ describe('ui/keymap', () => {
     });
 
     describe('#args', () => {
+
+      it('should be set from instantiation options', () => {
+        let options = {
+          keys: ['Ctrl A'],
+          selector: 'body',
+          command: 'test',
+          args: { foo: 'bar', baz: 'qux' } as JSONObject
+        };
+        let binding = new KeyBinding(options);
+        expect(binding.args).to.eql(options.args);
+      });
 
       it('should be read only', () => {
         let options = { keys: ['Ctrl A'], selector: 'body', command: 'test' };
@@ -158,8 +190,17 @@ describe('ui/keymap', () => {
 
     describe('#bindings', () => {
 
-      it('should be a vector', () => {
-        expect(keymap.bindings).to.be.a(Vector);
+      it('should return the bindings as a sequence', () => {
+        let command = commands.addCommand('test', { execute: () => { } });
+        let binding = keymap.addBinding({
+          keys: ['Ctrl ;'],
+          selector: `body`,
+          command: 'test'
+        });
+        expect(keymap.bindings.length).to.be(1);
+        expect(keymap.bindings.at(0).command).to.be('test');
+        binding.dispose();
+        command.dispose();
       });
 
       it('should be read only', () => {
@@ -908,9 +949,9 @@ describe('ui/keymap', () => {
   describe('formatKeystroke()', () => {
 
     it('should format a keystroke', () => {
-      let stroke = formatKeystroke('Accel Alt Shift S');
+      let stroke = formatKeystroke('Accel Ctrl Alt Shift S');
       if (IS_MAC) {
-        expect(stroke).to.be('\u2325\u21E7\u2318S');
+        expect(stroke).to.be('\u2303\u2325\u21E7\u2318S');
       } else {
         expect(stroke).to.be('Ctrl+Alt+Shift+S');
       }
