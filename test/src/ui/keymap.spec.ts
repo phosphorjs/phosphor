@@ -21,7 +21,7 @@ import {
 
 import {
   KeyBinding, keymap, KeymapManager, keystrokeForKeydownEvent,
-  normalizeKeystroke
+  normalizeKeystroke, formatKeystroke
 } from '../../../lib/ui/keymap';
 
 import {
@@ -899,6 +899,19 @@ describe('ui/keymap', () => {
         expect(() => normalizeKeystroke('Cmd S')).to.throwError();
         stroke = normalizeKeystroke('Accel S');
         expect(stroke).to.be('Ctrl S');
+      }
+    });
+
+  });
+
+  describe('formatKeystroke()', () => {
+
+    it('should format a keystroke', () => {
+      let stroke = formatKeystroke('Accel Alt Shift S');
+      if (IS_MAC) {
+        expect(stroke).to.be('\u2325\u21E7\u2318S');
+      } else {
+        expect(stroke).to.be('Ctrl+Alt+Shift+S');
       }
     });
 
