@@ -896,7 +896,8 @@ describe('ui/keymap', () => {
         stroke = normalizeKeystroke('Accel S');
         expect(stroke).to.be('Cmd S');
       } else {
-        expect(() => normalizeKeystroke('Cmd S')).to.throwError();
+        stroke = normalizeKeystroke('Cmd S')
+        expect(stroke).to.be('S');
         stroke = normalizeKeystroke('Accel S');
         expect(stroke).to.be('Ctrl S');
       }
