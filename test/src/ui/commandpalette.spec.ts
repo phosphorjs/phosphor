@@ -716,7 +716,7 @@ describe('ui/commandpalette', () => {
           each(disposables, disposable => disposable.dispose());
         });
 
-        it('should filter by category', () => {
+        it('should filter by both text and category', () => {
           let palette = new CommandPalette();
           let alpha = ['A', 'B', 'C', 'D', 'E'].map(name => {
             let options: ICommand = { execute: () => { }, label: name };
@@ -742,6 +742,14 @@ describe('ui/commandpalette', () => {
           sendMessage(palette, WidgetMessage.UpdateRequest);
           items = content.querySelectorAll('.p-CommandPalette-item');
           expect(items).to.have.length(5);
+          palette.inputNode.value = 'B: B';
+          sendMessage(palette, WidgetMessage.UpdateRequest);
+          items = content.querySelectorAll('.p-CommandPalette-item');
+          expect(items).to.have.length(0);
+          palette.inputNode.value = 'B: I';
+          sendMessage(palette, WidgetMessage.UpdateRequest);
+          items = content.querySelectorAll('.p-CommandPalette-item');
+          expect(items).to.have.length(1);
 
           palette.dispose();
           each(alpha, disposable => disposable.dispose());
