@@ -623,18 +623,13 @@ describe('ui/commandpalette', () => {
           let node = content.querySelector('.p-mod-active');
 
           expect(node).to.not.be.ok();
-          simulate(palette.node, 'keydown', { keyCode: 38, altKey: true });
-          node = content.querySelector('.p-CommandPalette-item.p-mod-active');
-          expect(node).to.not.be.ok();
-          simulate(palette.node, 'keydown', { keyCode: 38, ctrlKey: true });
-          node = content.querySelector('.p-CommandPalette-item.p-mod-active');
-          expect(node).to.not.be.ok();
-          simulate(palette.node, 'keydown', { keyCode: 38, shiftKey: true });
-          node = content.querySelector('.p-CommandPalette-item.p-mod-active');
-          expect(node).to.not.be.ok();
-          simulate(palette.node, 'keydown', { keyCode: 38, metaKey: true });
-          node = content.querySelector('.p-CommandPalette-item.p-mod-active');
-          expect(node).to.not.be.ok();
+          each(['altKey', 'ctrlKey', 'shiftKey', 'metaKey'], key => {
+            let options: any = { keyCode: 38 };
+            options[key] = true;
+            simulate(palette.node, 'keydown', options);
+            node = content.querySelector('.p-CommandPalette-item.p-mod-active');
+            expect(node).to.not.be.ok();
+          });
 
           palette.dispose();
           command.dispose();
@@ -659,6 +654,50 @@ describe('ui/commandpalette', () => {
 
           palette.dispose();
           command.dispose();
+        });
+
+      });
+
+      context('input', () => {
+
+        it('should filter the list of visible items', () => {
+          let options1: ICommand = { execute: () => { }, label: 'A' };
+          let options2: ICommand = { execute: () => { }, label: 'B' };
+          let options3: ICommand = { execute: () => { }, label: 'C' };
+          let options4: ICommand = { execute: () => { }, label: 'D' };
+          let command1 = commands.addCommand('test1', options1);
+          let command2 = commands.addCommand('test2', options2);
+          let command3 = commands.addCommand('test3', options3);
+          let command4 = commands.addCommand('test4', options4);
+          let palette = new CommandPalette();
+          let content = palette.contentNode;
+
+          palette.addItem(new CommandItem({ command: 'test1' }));
+          palette.addItem(new CommandItem({ command: 'test2' }));
+          palette.addItem(new CommandItem({ command: 'test3' }));
+          palette.addItem(new CommandItem({ command: 'test4' }));
+          sendMessage(palette, WidgetMessage.UpdateRequest);
+          Widget.attach(palette, document.body);
+
+          let items = content.querySelectorAll('.p-CommandPalette-item');
+
+          expect(items).to.have.length(4);
+
+          palette.inputNode.value = 'A';
+          sendMessage(palette, WidgetMessage.UpdateRequest);
+          items = content.querySelectorAll('.p-CommandPalette-item');
+          expect(items).to.have.length(1);
+
+          palette.inputNode.value = '';
+          sendMessage(palette, WidgetMessage.UpdateRequest);
+          items = content.querySelectorAll('.p-CommandPalette-item');
+          expect(items).to.have.length(4);
+
+          palette.dispose();
+          command1.dispose();
+          command2.dispose();
+          command3.dispose();
+          command4.dispose();
         });
 
       });
