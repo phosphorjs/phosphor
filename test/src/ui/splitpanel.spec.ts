@@ -236,7 +236,7 @@ describe('ui/splitpanel', () => {
         let widgets = [new Widget(), new Widget(), new Widget()];
         each(widgets, w => panel.addWidget(w));
         Widget.attach(panel, document.body);
-        simulate(layout.handles.at(0), 'mousedown', { bubbles: true });
+        simulate(layout.handles.at(0), 'mousedown');
         expect(panel.events.indexOf('mousedown')).to.not.be(-1);
         simulate(panel.node, 'keydown');
         expect(panel.events.indexOf('keydown')).to.not.be(-1);
@@ -350,7 +350,7 @@ describe('ui/splitpanel', () => {
       context('mousedown', () => {
 
         it('should attach other event listeners', () => {
-          simulate(layout.handles.at(0), 'mousedown', { bubbles: true });
+          simulate(layout.handles.at(0), 'mousedown');
           expect(panel.events.indexOf('mousedown')).to.not.be(-1);
           simulate(document.body, 'mousemove');
           expect(panel.events.indexOf('mousemove')).to.not.be(-1);
@@ -368,7 +368,7 @@ describe('ui/splitpanel', () => {
         });
 
         it('should be a no-op if it is not the left button', () => {
-          simulate(layout.handles.at(0), 'mousedown', { button: 1, bubbles: true });
+          simulate(layout.handles.at(0), 'mousedown', { button: 1 });
           expect(panel.events.indexOf('mousedown')).to.not.be(-1);
           simulate(document.body, 'mousemove');
           expect(panel.events.indexOf('mousemove')).to.be(-1);
@@ -381,7 +381,7 @@ describe('ui/splitpanel', () => {
         it('should move the handle right', (done) => {
           let handle = layout.handles.at(1);
           let rect = handle.getBoundingClientRect();
-          simulate(handle, 'mousedown', { bubbles: true });
+          simulate(handle, 'mousedown');
           simulate(document.body, 'mousemove', { clientX: rect.left + 10, clientY: rect.top });
           requestAnimationFrame(() => {
             let newRect = handle.getBoundingClientRect();
@@ -396,7 +396,7 @@ describe('ui/splitpanel', () => {
           sendMessage(panel, WidgetMessage.UpdateRequest);
           let handle = layout.handles.at(1);
           let rect = handle.getBoundingClientRect();
-          simulate(handle, 'mousedown', { bubbles: true });
+          simulate(handle, 'mousedown');
           simulate(document.body, 'mousemove', { clientX: rect.left, clientY: rect.top - 2 });
           requestAnimationFrame(() => {
             let newRect = handle.getBoundingClientRect();
@@ -410,7 +410,7 @@ describe('ui/splitpanel', () => {
       context('mouseup', () => {
 
         it('should remove the event listeners', () => {
-          simulate(layout.handles.at(0), 'mousedown', { bubbles: true });
+          simulate(layout.handles.at(0), 'mousedown');
           expect(panel.events.indexOf('mousedown')).to.not.be(-1);
           simulate(document.body, 'mouseup');
           expect(panel.events.indexOf('mouseup')).to.not.be(-1);
@@ -427,7 +427,7 @@ describe('ui/splitpanel', () => {
         });
 
         it('should be a no-op if not the left button', () => {
-          simulate(layout.handles.at(0), 'mousedown', { bubbles: true });
+          simulate(layout.handles.at(0), 'mousedown');
           expect(panel.events.indexOf('mousedown')).to.not.be(-1);
           simulate(document.body, 'mouseup', { button: 1 });
           expect(panel.events.indexOf('mouseup')).to.not.be(-1);
@@ -440,7 +440,7 @@ describe('ui/splitpanel', () => {
       context('keydown', () => {
 
         it('should release the mouse if `Escape` is pressed', () => {
-          simulate(layout.handles.at(0), 'mousedown', { bubbles: true });
+          simulate(layout.handles.at(0), 'mousedown');
           simulate(panel.node, 'keydown', { keyCode: 27 });
           expect(panel.events.indexOf('keydown')).to.not.be(-1);
           simulate(panel.node, 'mousemove');
@@ -452,8 +452,8 @@ describe('ui/splitpanel', () => {
       context('keyup', () => {
 
         it('should prevent events during drag', () => {
-          simulate(layout.handles.at(0), 'mousedown', { bubbles: true });
-          let evt = generate('keyup', { cancelable: true });
+          simulate(layout.handles.at(0), 'mousedown');
+          let evt = generate('keyup');
           document.body.dispatchEvent(evt);
           expect(evt.defaultPrevented).to.be(true);
           expect(panel.events.indexOf('keyup')).to.not.be(-1);
@@ -464,8 +464,8 @@ describe('ui/splitpanel', () => {
       context('keypress', () => {
 
         it('should prevent events during drag', () => {
-          simulate(layout.handles.at(0), 'mousedown', { bubbles: true });
-          let evt = generate('keypress', { cancelable: true });
+          simulate(layout.handles.at(0), 'mousedown');
+          let evt = generate('keypress');
           document.body.dispatchEvent(evt);
           expect(evt.defaultPrevented).to.be(true);
           expect(panel.events.indexOf('keypress')).to.not.be(-1);
@@ -476,8 +476,8 @@ describe('ui/splitpanel', () => {
       context('contextmenu', () => {
 
         it('should prevent events during drag', () => {
-          simulate(layout.handles.at(0), 'mousedown', { bubbles: true });
-          let evt = generate('contextmenu', { cancelable: true });
+          simulate(layout.handles.at(0), 'mousedown');
+          let evt = generate('contextmenu');
           document.body.dispatchEvent(evt);
           expect(evt.defaultPrevented).to.be(true);
           expect(panel.events.indexOf('contextmenu')).to.not.be(-1);
