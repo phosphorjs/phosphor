@@ -70,17 +70,35 @@ function createBar(): LogTabBar {
 }
 
 
-function startDrag(bar: LogTabBar): void {
-  let tab = bar.contentNode.firstChild as HTMLElement;
-  let label = tab.getElementsByClassName('p-TabBar-tabLabel')[0] as HTMLElement;
-  let rect = label.getBoundingClientRect();
-  simulate(tab, 'mousedown', { clientX: rect.left, clientY: rect.top });
+type Direction = 'left' | 'right' | 'up' | 'down';
+
+
+function startDrag(bar: LogTabBar, index = 0, direction: Direction = 'right'): void {
+  bar.tabsMovable = true;
+  let tab = bar.contentNode.children[index] as HTMLElement;
+  let rect = tab.getBoundingClientRect();
+  simulate(tab, 'mousedown', { clientX: rect.left + 1, clientY: rect.top });
   let called = true;
   bar.tabDetachRequested.connect((sender, args) => {
     called = true;
   });
   rect = bar.contentNode.getBoundingClientRect();
-  simulate(document.body, 'mousemove', { clientX: rect.right + 200, clientY: rect.top });
+  let args: any;
+  switch (direction) {
+  case 'left':
+    args = { clientX: rect.left - 200, clientY: rect.top };
+    break;
+  case 'up':
+    args = { clientX: rect.left, clientY: rect.top - 200 };
+    break;
+  case 'down':
+    args = { clientX: rect.left, clientY: rect.bottom + 200 };
+    break;
+  default:
+    args = { clientX: rect.right + 200, clientY: rect.top };
+    break;
+  }
+  simulate(document.body, 'mousemove', args);
   expect(called).to.be(true);
   bar.events = [];
 }
@@ -180,8 +198,40 @@ describe('ui/tabbar', () => {
 
     describe('#tabMoved', () => {
 
-      it('should be emitted when a tab is moved by the user', () => {
+      it('should be emitted when a tab is moved right by the user', (done) => {
+        let bar = createBar();
+        Widget.attach(bar, document.body);
+        requestAnimationFrame(() => {
+          startDrag(bar);
+          let titles = toArray(bar.titles);
+          simulate(document.body, 'mouseup');
+          bar.tabMoved.connect((sender, args) => {
+            expect(sender).to.be(bar);
+            expect(args.fromIndex).to.be(0);
+            expect(args.toIndex).to.be(2);
+            expect(args.title).to.be(titles[0]);
+            bar.dispose();
+            done();
+          });
+        });
+      });
 
+      it('should be emitted when a tab is moved left by the user', (done) => {
+        let bar = createBar();
+        Widget.attach(bar, document.body);
+        requestAnimationFrame(() => {
+          startDrag(bar, 2, 'left');
+          let titles = toArray(bar.titles);
+          simulate(document.body, 'mouseup');
+          bar.tabMoved.connect((sender, args) => {
+            expect(sender).to.be(bar);
+            expect(args.fromIndex).to.be(2);
+            expect(args.toIndex).to.be(0);
+            expect(args.title).to.be(titles[2]);
+            bar.dispose();
+            done();
+          });
+        });
       });
 
       it('should not be emitted when a tab is moved programmatically', () => {
@@ -672,7 +722,7 @@ describe('ui/tabbar', () => {
 
       it('should release the mouse and restore the non-dragged tab positions', () => {
         let bar = createBar();
-        startDrag(bar);
+        startDrag(bar, 0, 'left');
         bar.releaseMouse();
         simulate(document.body, 'mousemove');
         expect(bar.events.indexOf('mousemove')).to.be(-1);
@@ -727,7 +777,7 @@ describe('ui/tabbar', () => {
         });
 
         it('should do nothing if a drag is in progress', () => {
-          startDrag(bar);
+          startDrag(bar, 1, 'up');
           let rect = closeIcon.getBoundingClientRect();
           let called = false;
           bar.tabCloseRequested.connect((sender, args) => {
@@ -809,7 +859,7 @@ describe('ui/tabbar', () => {
         });
 
         it('should do nothing if there is a drag in progress', () => {
-          startDrag(bar);
+          startDrag(bar, 2, 'down');
           let rect = label.getBoundingClientRect();
           let evt = generate('mousedown', { clientX: rect.left, clientY: rect.top });
           tab.dispatchEvent(evt);
@@ -899,6 +949,42 @@ describe('ui/tabbar', () => {
 
       context('mouseup', () => {
 
+        it('should emit the `tabMoved` signal', (done) => {
+          startDrag(bar);
+          simulate(document.body, 'mouseup');
+          bar.tabMoved.connect(() => { done(); });
+        });
+
+        it('should move the tab to its final position', (done) => {
+          startDrag(bar);
+          simulate(document.body, 'mouseup');
+          let title = bar.titles.at(0);
+          bar.tabMoved.connect(() => {
+            expect(bar.titles.at(2)).to.be(title);
+            done();
+          });
+        });
+
+        it('should bail if it is not a left mouse release', () => {
+          startDrag(bar);
+          let evt = generate('mouseup', { button: 1 });
+          document.body.dispatchEvent(evt);
+          expect(evt.defaultPrevented).to.be(false);
+        });
+
+        it('should bail if the drag is not active', (done) => {
+          let rect = label.getBoundingClientRect();
+          simulate(tab, 'mousedown', { clientX: rect.left, clientY: rect.top });
+          simulate(document.body, 'mouseup');
+          let title = bar.titles.at(0);
+          bar.methods = [];
+          setTimeout(() => {
+            expect(bar.titles.at(0)).to.be(title);
+            expect(bar.methods.indexOf('onUpdateRequest')).to.be(-1);
+            done();
+          }, 200);
+        });
+
       });
 
       context('keydown', () => {
@@ -966,6 +1052,20 @@ describe('ui/tabbar', () => {
     });
 
     describe('#onUpdateRequest()', () => {
+
+      it('should render tabs and set styles', (done) => {
+        let bar = createBar();
+        let tab = bar.contentNode.firstChild as HTMLElement;
+        let title = bar.titles.at(0);
+        let label = tab.getElementsByClassName('p-TabBar-tabLabel')[0] as HTMLElement;
+        Widget.attach(bar, document.body);
+        requestAnimationFrame(() => {
+          expect(bar.methods.indexOf('onUpdateRequest')).to.not.be(-1);
+          expect(label.textContent).to.be(title.label);
+          expect(tab.classList.contains('p-mod-current')).to.be(true);
+          done();
+        });
+      });
 
     });
 
