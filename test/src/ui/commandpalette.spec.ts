@@ -290,6 +290,7 @@ describe('ui/commandpalette', () => {
         let palette = new CommandPalette();
         expect(palette).to.be.a(CommandPalette);
         expect(palette.node.classList.contains('p-CommandPalette')).to.be(true);
+        palette.dispose();
       });
 
       it('should accept command palette instantiation options', () => {
@@ -297,6 +298,22 @@ describe('ui/commandpalette', () => {
         let palette = new CommandPalette(options);
         expect(palette).to.be.a(CommandPalette);
         expect(palette.node.classList.contains('p-CommandPalette')).to.be(true);
+        palette.dispose();
+      });
+
+    });
+
+    describe('#dispose()', () => {
+
+      it('should dispose of the resources held by the command palette', () => {
+        let options: ICommand = { execute: () => { } };
+        let command = commands.addCommand('test', options);
+        let item = new CommandItem({ command: 'test' });
+        let palette = new CommandPalette();
+        palette.addItem(item);
+        palette.dispose();
+        expect(palette.items.length).to.be(0);
+        command.dispose();
       });
 
     });
