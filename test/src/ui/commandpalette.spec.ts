@@ -277,9 +277,9 @@ describe('ui/commandpalette', () => {
 
       it('should create node for a command palette', () => {
         let node = CommandPalette.createNode();
-        expect(!!node.querySelector('.p-CommandPalette-search')).to.be(true);
-        expect(!!node.querySelector('.p-CommandPalette-input')).to.be(true);
-        expect(!!node.querySelector('.p-CommandPalette-content')).to.be(true);
+        expect(node.querySelector('.p-CommandPalette-search')).to.be.ok();
+        expect(node.querySelector('.p-CommandPalette-input')).to.be.ok();
+        expect(node.querySelector('.p-CommandPalette-content')).to.be.ok();
       });
 
     });
@@ -312,7 +312,134 @@ describe('ui/commandpalette', () => {
         let palette = new CommandPalette();
         palette.addItem(item);
         palette.dispose();
-        expect(palette.items.length).to.be(0);
+        expect(palette.items).to.be.empty();
+        expect(palette.isDisposed).to.be(true);
+        command.dispose();
+      });
+
+    });
+
+    describe('#searchNode', () => {
+
+      it('should return the search node of a command palette', () => {
+        let palette = new CommandPalette();
+        let node = palette.searchNode;
+        expect(node).to.be.ok();
+        expect(node.classList.contains('p-CommandPalette-search')).to.be(true);
+        palette.dispose();
+      });
+
+      it('should be read-only', () => {
+        let palette = new CommandPalette();
+        expect(() => { palette.searchNode = null; }).to.throwError();
+        palette.dispose();
+      });
+
+    });
+
+    describe('#inputNode', () => {
+
+      it('should return the input node of a command palette', () => {
+        let palette = new CommandPalette();
+        let node = palette.inputNode;
+        expect(node).to.be.ok();
+        expect(node.classList.contains('p-CommandPalette-input')).to.be(true);
+        palette.dispose();
+      });
+
+      it('should be read-only', () => {
+        let palette = new CommandPalette();
+        expect(() => { palette.inputNode = null; }).to.throwError();
+        palette.dispose();
+      });
+
+    });
+
+    describe('#contentNode', () => {
+
+      it('should return the content node of a command palette', () => {
+        let palette = new CommandPalette();
+        let node = palette.contentNode;
+        expect(node).to.be.ok();
+        expect(node.classList.contains('p-CommandPalette-content')).to.be(true);
+        palette.dispose();
+      });
+
+      it('should be read-only', () => {
+        let palette = new CommandPalette();
+        expect(() => { palette.contentNode = null; }).to.throwError();
+        palette.dispose();
+      });
+
+    });
+
+    describe('#items', () => {
+
+      it('should return the items in a command palette', () => {
+        let options: ICommand = { execute: () => { } };
+        let command = commands.addCommand('test', options);
+        let item = new CommandItem({ command: 'test' });
+        let palette = new CommandPalette();
+        expect(palette.items).to.be.empty();
+        palette.addItem(item);
+        expect(palette.items).to.have.length(1);
+        expect(palette.items.at(0).command).to.be('test');
+        palette.dispose();
+        command.dispose();
+      });
+
+      it('should be read-only', () => {
+        let palette = new CommandPalette();
+        expect(() => { palette.items = null; }).to.throwError();
+        palette.dispose();
+      });
+
+    });
+
+    describe('#addItem()', () => {
+
+      it('should add an item to a command palette', () => {
+        let options: ICommand = { execute: () => { } };
+        let command = commands.addCommand('test', options);
+        let item = new CommandItem({ command: 'test' });
+        let palette = new CommandPalette();
+        expect(palette.items).to.be.empty();
+        expect(palette.addItem(item).command).to.be('test');
+        expect(palette.items).to.have.length(1);
+        expect(palette.items.at(0).command).to.be('test');
+        palette.dispose();
+        command.dispose();
+      });
+
+    });
+
+    describe('#removeItem()', () => {
+
+      it('should remove an item from a command palette by item', () => {
+        let options: ICommand = { execute: () => { } };
+        let command = commands.addCommand('test', options);
+        let item = new CommandItem({ command: 'test' });
+        let palette = new CommandPalette();
+        expect(palette.items).to.be.empty();
+        palette.addItem(item);
+        expect(palette.items).to.have.length(1);
+        palette.removeItem(item);
+        expect(palette.items).to.have.length(0);
+        palette.dispose();
+        command.dispose();
+      });
+
+      it('should remove an item from a command palette by index', () => {
+        let options: ICommand = { execute: () => { } };
+        let command = commands.addCommand('test', options);
+        let item = new CommandItem({ command: 'test' });
+        let palette = new CommandPalette();
+        expect(palette.items).to.be.empty();
+        palette.addItem(item);
+        expect(palette.items).to.have.length(1);
+        palette.removeItem(0);
+        expect(palette.items).to.have.length(0);
+        palette.dispose();
         command.dispose();
       });
 
