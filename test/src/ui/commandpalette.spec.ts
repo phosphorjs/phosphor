@@ -442,6 +442,37 @@ describe('ui/commandpalette', () => {
         command.dispose();
       });
 
+      it('should add the shortcut for an item to a command palette', () => {
+        let options: ICommand = { execute: () => { } };
+        let command = commands.addCommand('test', options);
+        let binding = keymap.addBinding({
+          keys: ['Ctrl A'],
+          selector: 'body',
+          command: 'test'
+        });
+        let item = new CommandItem({ command: 'test' });
+        let palette = new CommandPalette();
+        let content = palette.contentNode;
+
+        Widget.attach(palette, document.body);
+        expect(palette.items).to.be.empty();
+        expect(palette.addItem(item).command).to.be('test');
+        sendMessage(palette, WidgetMessage.UpdateRequest);
+
+        let node = content.querySelector('.p-CommandPalette-item');
+        let shortcut = node.querySelector('.p-CommandPalette-itemShortcut');
+
+        expect(node).to.be.ok();
+        expect(shortcut).to.be.ok();
+        expect(shortcut.textContent.length).to.be.greaterThan(0);
+        expect(palette.items).to.have.length(1);
+        expect(palette.items.at(0).command).to.be('test');
+
+        palette.dispose();
+        binding.dispose();
+        command.dispose();
+      });
+
     });
 
     describe('#removeItem()', () => {
@@ -661,39 +692,60 @@ describe('ui/commandpalette', () => {
       context('input', () => {
 
         it('should filter the list of visible items', () => {
-          let options1: ICommand = { execute: () => { }, label: 'A' };
-          let options2: ICommand = { execute: () => { }, label: 'B' };
-          let options3: ICommand = { execute: () => { }, label: 'C' };
-          let options4: ICommand = { execute: () => { }, label: 'D' };
-          let command1 = commands.addCommand('test1', options1);
-          let command2 = commands.addCommand('test2', options2);
-          let command3 = commands.addCommand('test3', options3);
-          let command4 = commands.addCommand('test4', options4);
           let palette = new CommandPalette();
-          let content = palette.contentNode;
-
-          each(['test1', 'test2', 'test3', 'test4'], command => {
-            palette.addItem(new CommandItem({ command }));
+          let disposables = ['A', 'B', 'C', 'D', 'E'].map(name => {
+            let options: ICommand = { execute: () => { }, label: name };
+            let command = commands.addCommand(name, options);
+            palette.addItem(new CommandItem({ command: name }));
+            return command;
           });
+
           sendMessage(palette, WidgetMessage.UpdateRequest);
           Widget.attach(palette, document.body);
 
+          let content = palette.contentNode;
           let items = content.querySelectorAll('.p-CommandPalette-item');
 
-          expect(items).to.have.length(4);
-
+          expect(items).to.have.length(5);
           palette.inputNode.value = 'A';
           sendMessage(palette, WidgetMessage.UpdateRequest);
           items = content.querySelectorAll('.p-CommandPalette-item');
           expect(items).to.have.length(1);
 
-          palette.inputNode.value = '';
+          palette.dispose();
+          each(disposables, disposable => disposable.dispose());
+        });
+
+        it('should filter by category', () => {
+          let palette = new CommandPalette();
+          let alpha = ['A', 'B', 'C', 'D', 'E'].map(name => {
+            let options: ICommand = { execute: () => { }, label: name };
+            let command = commands.addCommand(name, options);
+            palette.addItem(new CommandItem({ category: 'A', command: name }));
+            return command;
+          });
+          let beta = ['F', 'G', 'H', 'I', 'J'].map(name => {
+            let options: ICommand = { execute: () => { }, label: name };
+            let command = commands.addCommand(name, options);
+            palette.addItem(new CommandItem({ category: 'B', command: name }));
+            return command;
+          });
+
+          sendMessage(palette, WidgetMessage.UpdateRequest);
+          Widget.attach(palette, document.body);
+
+          let content = palette.contentNode;
+          let items = content.querySelectorAll('.p-CommandPalette-item');
+
+          expect(items).to.have.length(10);
+          palette.inputNode.value = 'B:';
           sendMessage(palette, WidgetMessage.UpdateRequest);
           items = content.querySelectorAll('.p-CommandPalette-item');
-          expect(items).to.have.length(4);
+          expect(items).to.have.length(5);
 
           palette.dispose();
-          each([command1, command2, command3, command4], c => c.dispose());
+          each(alpha, disposable => disposable.dispose());
+          each(beta, disposable => disposable.dispose());
         });
 
       });
