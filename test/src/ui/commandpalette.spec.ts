@@ -672,10 +672,9 @@ describe('ui/commandpalette', () => {
           let palette = new CommandPalette();
           let content = palette.contentNode;
 
-          palette.addItem(new CommandItem({ command: 'test1' }));
-          palette.addItem(new CommandItem({ command: 'test2' }));
-          palette.addItem(new CommandItem({ command: 'test3' }));
-          palette.addItem(new CommandItem({ command: 'test4' }));
+          each(['test1', 'test2', 'test3', 'test4'], command => {
+            palette.addItem(new CommandItem({ command }));
+          });
           sendMessage(palette, WidgetMessage.UpdateRequest);
           Widget.attach(palette, document.body);
 
@@ -694,10 +693,7 @@ describe('ui/commandpalette', () => {
           expect(items).to.have.length(4);
 
           palette.dispose();
-          command1.dispose();
-          command2.dispose();
-          command3.dispose();
-          command4.dispose();
+          each([command1, command2, command3, command4], c => c.dispose());
         });
 
       });
