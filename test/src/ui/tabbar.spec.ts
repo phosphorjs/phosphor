@@ -619,11 +619,32 @@ describe('ui/tabbar', () => {
 
     describe('#handleEvent()', () => {
 
+      let bar: LogTabBar;
+
+      beforeEach((done) => {
+        bar = new LogTabBar();
+        let titles = [new Title(), new Title(), new Title()];
+        each(titles, t => bar.addTab(t));
+        each(titles, t => t.label = 'Test');
+        bar.tabsMovable = true;
+        requestAnimationFrame(() => done());
+      });
+
       context('click', () => {
+
 
       });
 
       context('mousedown', () => {
+
+        it('should add event listeners if the tabs are movable', () => {
+          let content = bar.contentNode;
+          let tab = content.firstChild as HTMLElement;
+          let rect = tab.getBoundingClientRect();
+          simulate(tab, 'mousedown', { clientX: rect.left, clientY: rect.top });
+          simulate(document.body, 'mousemove');
+          expect(bar.events.indexOf('mousemove')).to.not.be(-1);
+        });
 
       });
 
