@@ -8,6 +8,10 @@
 import expect = require('expect.js');
 
 import {
+   each
+} from '../../../lib/algorithm/iteration';
+
+import {
   JSONObject
 } from '../../../lib/algorithm/json';
 
@@ -22,6 +26,29 @@ import {
 import {
   keymap, KeyBinding
 } from '../../../lib/ui/keymap';
+
+import {
+  Widget
+} from '../../../lib/ui/widget';
+
+import {
+  simulate
+} from 'simulate-event';
+
+
+class LogPalette extends CommandPalette {
+  events: string[] = [];
+
+  dispose(): void {
+    super.dispose();
+    this.events.length = 0;
+  }
+
+  handleEvent(event: Event): void {
+    super.handleEvent(event);
+    this.events.push(event.type);
+  }
+}
 
 
 describe('ui/commandpalette', () => {
@@ -424,7 +451,7 @@ describe('ui/commandpalette', () => {
         palette.addItem(item);
         expect(palette.items).to.have.length(1);
         palette.removeItem(item);
-        expect(palette.items).to.have.length(0);
+        expect(palette.items).to.be.empty();
         palette.dispose();
         command.dispose();
       });
@@ -438,9 +465,53 @@ describe('ui/commandpalette', () => {
         palette.addItem(item);
         expect(palette.items).to.have.length(1);
         palette.removeItem(0);
-        expect(palette.items).to.have.length(0);
+        expect(palette.items).to.be.empty();
         palette.dispose();
         command.dispose();
+      });
+
+      it('should do nothing if the item is not contained in a palette', () => {
+        let options: ICommand = { execute: () => { } };
+        let command = commands.addCommand('test', options);
+        let item = new CommandItem({ command: 'test' });
+        let palette = new CommandPalette();
+        expect(palette.items).to.be.empty();
+        palette.removeItem(0);
+        expect(palette.items).to.be.empty();
+        palette.dispose();
+        command.dispose();
+      });
+
+    });
+
+    describe('#clearItems()', () => {
+
+      it('should remove all items from a command palette', () => {
+        let options: ICommand = { execute: () => { } };
+        let command = commands.addCommand('test', options);
+        let palette = new CommandPalette();
+        expect(palette.items).to.be.empty();
+        palette.addItem(new CommandItem({ command: 'test', category: 'one' }));
+        palette.addItem(new CommandItem({ command: 'test', category: 'two' }));
+        expect(palette.items).to.have.length(2);
+        palette.clearItems();
+        expect(palette.items).to.be.empty();
+        palette.dispose();
+        command.dispose();
+      });
+
+    });
+
+    describe('#handleEvent()', () => {
+
+      it('should handle click, keydown, and input events', () => {
+        let palette = new LogPalette();
+        Widget.attach(palette, document.body);
+        each(['click', 'keydown', 'input'], type => {
+          simulate(palette.node, type);
+          expect(palette.events).to.contain(type);
+        });
+        palette.dispose();
       });
 
     });
