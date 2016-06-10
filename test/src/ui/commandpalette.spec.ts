@@ -16,6 +16,10 @@ import {
 } from '../../../lib/algorithm/json';
 
 import {
+  sendMessage
+} from '../../../lib/core/messaging';
+
+import {
   CommandItem, CommandPalette
 } from '../../../lib/ui/commandpalette';
 
@@ -28,7 +32,7 @@ import {
 } from '../../../lib/ui/keymap';
 
 import {
-  Widget
+  Widget, WidgetMessage
 } from '../../../lib/ui/widget';
 
 import {
@@ -512,6 +516,52 @@ describe('ui/commandpalette', () => {
           expect(palette.events).to.contain(type);
         });
         palette.dispose();
+      });
+
+      context('click', () => {
+
+        it('should trigger a command when its item is clicked', () => {
+          let called = false;
+          let options: ICommand = { execute: () => called = true };
+          let command = commands.addCommand('test', options);
+          let palette = new CommandPalette();
+          let content = palette.contentNode;
+
+          palette.addItem(new CommandItem({ command: 'test' }));
+          sendMessage(palette, WidgetMessage.UpdateRequest);
+          Widget.attach(palette, document.body);
+
+          let node = content.querySelector('.p-CommandPalette-item');
+
+          expect(node).to.be.ok();
+          simulate(node, 'click');
+          expect(called).to.be(true);
+
+          palette.dispose();
+          command.dispose();
+        });
+
+        it('should ignore if it is not a left click', () => {
+          let called = false;
+          let options: ICommand = { execute: () => called = true };
+          let command = commands.addCommand('test', options);
+          let palette = new CommandPalette();
+          let content = palette.contentNode;
+
+          palette.addItem(new CommandItem({ command: 'test' }));
+          sendMessage(palette, WidgetMessage.UpdateRequest);
+          Widget.attach(palette, document.body);
+
+          let node = content.querySelector('.p-CommandPalette-item');
+
+          expect(node).to.be.ok();
+          simulate(node, 'click', { button: 1 });
+          expect(called).to.be(false);
+
+          palette.dispose();
+          command.dispose();
+        });
+
       });
 
     });

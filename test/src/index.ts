@@ -25,6 +25,7 @@ import './core/signaling.spec';
 
 import './dom/selector.spec';
 
+import './ui/commandpalette.spec';
+
 import '../index.css';
 import '../../styles/base.css';
-import './ui/commandpalette.spec';
