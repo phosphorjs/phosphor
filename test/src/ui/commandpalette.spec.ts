@@ -173,7 +173,7 @@ describe('ui/commandpalette', () => {
         let called = false;
         let options: ICommand = {
           execute: () => { },
-          isEnabled: () => called = !called
+          isEnabled: () => called = true
         };
         let command = commands.addCommand('test', options);
         let item = new CommandItem({ command: 'test' });
@@ -196,16 +196,16 @@ describe('ui/commandpalette', () => {
     describe('#isToggled', () => {
 
       it('should return whether a command item is toggled', () => {
-        let called = false;
+        let toggled = false;
         let options: ICommand = {
           execute: () => { },
-          isToggled: () => called = !called
+          isToggled: () => toggled = !toggled
         };
         let command = commands.addCommand('test', options);
         let item = new CommandItem({ command: 'test' });
-        expect(called).to.be(false);
         expect(item.isToggled).to.be(true);
-        expect(called).to.be(true);
+        expect(item.isToggled).to.be(false);
+        expect(item.isToggled).to.be(true);
         command.dispose();
       });
 
@@ -225,7 +225,7 @@ describe('ui/commandpalette', () => {
         let called = false;
         let options: ICommand = {
           execute: () => { },
-          isVisible: () => called = !called
+          isVisible: () => called = true
         };
         let command = commands.addCommand('test', options);
         let item = new CommandItem({ command: 'test' });
@@ -557,6 +557,74 @@ describe('ui/commandpalette', () => {
           expect(node).to.be.ok();
           simulate(node, 'click', { button: 1 });
           expect(called).to.be(false);
+
+          palette.dispose();
+          command.dispose();
+        });
+
+      });
+
+      context('keydown', () => {
+
+        it('should navigate down if down arrow is pressed', () => {
+          let options: ICommand = { execute: () => { } };
+          let command = commands.addCommand('test', options);
+          let palette = new CommandPalette();
+          let content = palette.contentNode;
+
+          palette.addItem(new CommandItem({ command: 'test' }));
+          sendMessage(palette, WidgetMessage.UpdateRequest);
+          Widget.attach(palette, document.body);
+
+          let node = content.querySelector('.p-mod-active');
+
+          expect(node).to.not.be.ok();
+          simulate(palette.node, 'keydown', { keyCode: 40 }); // Pick category.
+          simulate(palette.node, 'keydown', { keyCode: 40 }); // Pick 1st item.
+          node = content.querySelector('.p-CommandPalette-item.p-mod-active');
+          expect(node).to.be.ok();
+
+          palette.dispose();
+          command.dispose();
+        });
+
+        it('should navigate up if up arrow is pressed', () => {
+          let options: ICommand = { execute: () => { } };
+          let command = commands.addCommand('test', options);
+          let palette = new CommandPalette();
+          let content = palette.contentNode;
+
+          palette.addItem(new CommandItem({ command: 'test' }));
+          sendMessage(palette, WidgetMessage.UpdateRequest);
+          Widget.attach(palette, document.body);
+
+          let node = content.querySelector('.p-mod-active');
+
+          expect(node).to.not.be.ok();
+          simulate(palette.node, 'keydown', { keyCode: 38 }); // Pick last item.
+          node = content.querySelector('.p-CommandPalette-item.p-mod-active');
+          expect(node).to.be.ok();
+
+          palette.dispose();
+          command.dispose();
+        });
+
+        it('should trigger active item if enter is pressed', () => {
+          let called = false;
+          let options: ICommand = { execute: () => called = true };
+          let command = commands.addCommand('test', options);
+          let palette = new CommandPalette();
+          let content = palette.contentNode;
+
+          palette.addItem(new CommandItem({ command: 'test' }));
+          sendMessage(palette, WidgetMessage.UpdateRequest);
+          Widget.attach(palette, document.body);
+
+          expect(content.querySelector('.p-mod-active')).to.not.be.ok();
+          simulate(palette.node, 'keydown', { keyCode: 40 }); // Pick category.
+          simulate(palette.node, 'keydown', { keyCode: 40 }); // Pick 1st item.
+          simulate(palette.node, 'keydown', { keyCode: 13 });
+          expect(called).to.be(true);
 
           palette.dispose();
           command.dispose();
