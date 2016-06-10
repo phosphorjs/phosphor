@@ -620,6 +620,37 @@ describe('ui/commandpalette', () => {
           sendMessage(palette, WidgetMessage.UpdateRequest);
           Widget.attach(palette, document.body);
 
+          let node = content.querySelector('.p-mod-active');
+
+          expect(node).to.not.be.ok();
+          simulate(palette.node, 'keydown', { keyCode: 38, altKey: true });
+          node = content.querySelector('.p-CommandPalette-item.p-mod-active');
+          expect(node).to.not.be.ok();
+          simulate(palette.node, 'keydown', { keyCode: 38, ctrlKey: true });
+          node = content.querySelector('.p-CommandPalette-item.p-mod-active');
+          expect(node).to.not.be.ok();
+          simulate(palette.node, 'keydown', { keyCode: 38, shiftKey: true });
+          node = content.querySelector('.p-CommandPalette-item.p-mod-active');
+          expect(node).to.not.be.ok();
+          simulate(palette.node, 'keydown', { keyCode: 38, metaKey: true });
+          node = content.querySelector('.p-CommandPalette-item.p-mod-active');
+          expect(node).to.not.be.ok();
+
+          palette.dispose();
+          command.dispose();
+        });
+
+        it('should ignore if modifier keys are pressed', () => {
+          let called = false;
+          let options: ICommand = { execute: () => called = true };
+          let command = commands.addCommand('test', options);
+          let palette = new CommandPalette();
+          let content = palette.contentNode;
+
+          palette.addItem(new CommandItem({ command: 'test' }));
+          sendMessage(palette, WidgetMessage.UpdateRequest);
+          Widget.attach(palette, document.body);
+
           expect(content.querySelector('.p-mod-active')).to.not.be.ok();
           simulate(palette.node, 'keydown', { keyCode: 40 }); // Pick category.
           simulate(palette.node, 'keydown', { keyCode: 40 }); // Pick 1st item.
