@@ -627,8 +627,11 @@ describe('ui/tabbar', () => {
         each(titles, t => bar.addTab(t));
         each(titles, t => t.label = 'Test');
         bar.tabsMovable = true;
+        Widget.attach(bar, document.body);
         requestAnimationFrame(() => done());
       });
+
+      afterEach(() => bar.dispose());
 
       context('click', () => {
 
@@ -640,7 +643,8 @@ describe('ui/tabbar', () => {
         it('should add event listeners if the tabs are movable', () => {
           let content = bar.contentNode;
           let tab = content.firstChild as HTMLElement;
-          let rect = tab.getBoundingClientRect();
+          let label = tab.getElementsByClassName('p-TabBar-tabLabel')[0] as HTMLElement;
+          let rect = label.getBoundingClientRect();
           simulate(tab, 'mousedown', { clientX: rect.left, clientY: rect.top });
           simulate(document.body, 'mousemove');
           expect(bar.events.indexOf('mousemove')).to.not.be(-1);
