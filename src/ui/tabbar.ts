@@ -847,7 +847,7 @@ class TabBar extends Widget {
       }
     }
 
-    // Update the positions of the tab.
+    // Update the positions of the tabs.
     Private.layoutTabs(this._tabs, data, event);
   }
 
