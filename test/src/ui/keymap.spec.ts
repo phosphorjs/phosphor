@@ -654,10 +654,8 @@ describe('ui/keymap', () => {
           selector: `#${node.id}`,
           command: 'test'
         });
-        // The bubbles value needs to be set explicitly, see:
-        // https://github.com/blakeembrey/simulate-event/pull/12
-        let event1 = generate('keydown', { keyCode: 68, bubbles: true });
-        let event2 = generate('keydown', { keyCode: 69, bubbles: true });
+        let event1 = generate('keydown', { keyCode: 68 });
+        let event2 = generate('keydown', { keyCode: 69 });
 
         node.dispatchEvent(event1);
         expect(codes.length).to.be(0);
@@ -836,9 +834,7 @@ describe('ui/keymap', () => {
           selector: '#baz',
           command: 'test'
         });
-        // The bubbles value needs to be set explicitly, see:
-        // https://github.com/blakeembrey/simulate-event/pull/12
-        let event = generate('keydown', { keyCode: 68, bubbles: true });
+        let event = generate('keydown', { keyCode: 68 });
 
         node.dispatchEvent(event);
         expect(codes).to.eql([68]);
@@ -872,9 +868,7 @@ describe('ui/keymap', () => {
           selector: '#baz',
           command: 'test'
         });
-        // The bubbles value needs to be set explicitly, see:
-        // https://github.com/blakeembrey/simulate-event/pull/12
-        let event = generate('keydown', { keyCode: 68, bubbles: true });
+        let event = generate('keydown', { keyCode: 68 });
 
         node.dispatchEvent(event);
         expect(codes).to.eql([68]);
