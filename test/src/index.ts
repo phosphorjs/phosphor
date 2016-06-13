@@ -40,5 +40,7 @@ import './ui/keymap.spec';
 
 import './ui/panel.spec';
 
+import './ui/menubar.spec';
+
 import '../index.css';
 import '../../styles/base.css';
