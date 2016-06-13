@@ -33,5 +33,5 @@ import './ui/commands.spec';
 import './ui/title.spec';
 import './ui/widget.spec';
 
-import '../../styles/base.css';
 import '../index.css';
+import '../../styles/base.css';
