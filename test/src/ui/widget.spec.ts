@@ -190,7 +190,7 @@ describe('phosphor-widget', () => {
 
       it('should create an empty `<div>`', () => {
         let div = Widget.createNode();
-        expect(div instanceof HTMLElement).to.be(true);
+        expect(div).to.be.a(HTMLElement);
         expect(div.tagName).to.be('DIV');
       });
 
@@ -325,7 +325,7 @@ describe('phosphor-widget', () => {
 
       it('should accept no arguments', () => {
         let widget = new Widget();
-        expect(widget instanceof Widget).to.be(true);
+        expect(widget).to.be.a(Widget);
       });
 
       it('should accept a node to wrap', () => {
@@ -537,7 +537,7 @@ describe('phosphor-widget', () => {
 
       it('should get the title data object for the widget', () => {
         let widget = new Widget();
-        expect(widget.title instanceof Title).to.be(true);
+        expect(widget.title).to.be.a(Title);
       });
 
       it('should be read-only', () => {
@@ -649,7 +649,7 @@ describe('phosphor-widget', () => {
         let widget = new Widget();
         widget.layout = new LogLayout();
         let child = widget.children().next();
-        expect(child instanceof LogWidget).to.be(true);
+        expect(child).to.be.a(LogWidget);
       });
 
       it('should return an empty iterator if there is no layout', () => {
@@ -893,6 +893,14 @@ describe('phosphor-widget', () => {
         expect(widget.isHidden).to.be(false);
       });
 
+      it('should remove the "p-mod-hidden" class', () => {
+        let widget = new Widget();
+        widget.hide();
+        expect(widget.hasClass('p-mod-hidden')).to.be(true);
+        widget.show();
+        expect(widget.hasClass('p-mod-hidden')).to.be(false);
+      });
+
       it('should send an `after-show` message if applicable', () => {
         let widget = new LogWidget();
         widget.hide();
@@ -927,6 +935,12 @@ describe('phosphor-widget', () => {
         let widget = new Widget();
         widget.hide();
         expect(widget.isHidden).to.be(true);
+      });
+
+      it('should add the `p-mod-hidden` class', () => {
+        let widget = new Widget();
+        widget.hide();
+        expect(widget.hasClass('p-mod-hidden')).to.be(true);
       });
 
       it('should send a `before-hide` message if applicable', () => {
@@ -1372,7 +1386,7 @@ describe('phosphor-widget', () => {
           let child = new Widget();
           let parent = new LogWidget();
           child.parent = parent;
-          expect(parent.raw[0] instanceof ChildMessage).to.be(true);
+          expect(parent.raw[0]).to.be.a(ChildMessage);
         });
 
         it('should have a `type` of `child-added`', () => {
@@ -1420,7 +1434,7 @@ describe('phosphor-widget', () => {
           child.parent = parent;
           parent.raw = [];
           child.parent = null;
-          expect(parent.raw[0] instanceof ChildMessage).to.be(true);
+          expect(parent.raw[0]).to.be.a(ChildMessage);
         });
 
         it('should have a `type` of `child-removed`', () => {
@@ -1453,7 +1467,7 @@ describe('phosphor-widget', () => {
 
       it('should accept the message type and child widget', () => {
         let msg = new ChildMessage('test', new Widget());
-        expect(msg instanceof ChildMessage).to.be(true);
+        expect(msg).to.be.a(ChildMessage);
       });
 
     });
@@ -1483,7 +1497,7 @@ describe('phosphor-widget', () => {
 
       it('should be a `ResizeMessage`', () => {
         let msg = ResizeMessage.UnknownSize;
-        expect(msg instanceof ResizeMessage).to.be(true);
+        expect(msg).to.be.a(ResizeMessage);
       });
 
       it('should have a `width` of `-1`', () => {
@@ -1502,7 +1516,7 @@ describe('phosphor-widget', () => {
 
       it('should accept a width and height', () => {
         let msg = new ResizeMessage(100, 100);
-        expect(msg instanceof ResizeMessage).to.be(true);
+        expect(msg).to.be.a(ResizeMessage);
       });
 
     });
