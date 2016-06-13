@@ -98,7 +98,7 @@ describe('ui/menu', () => {
 
       it('should accept options for initializing the menu item', () => {
         let item = new MenuItem({});
-        expect(item instanceof MenuItem).to.be(true);
+        expect(item).to.be.a(MenuItem);
       });
 
     });
@@ -503,13 +503,18 @@ describe('ui/menu', () => {
 
       it('should take no arguments', () => {
         let menu = new Menu();
-        expect(menu instanceof Menu).to.be(true);
+        expect(menu).to.be.a(Menu);
       });
 
       it('should take options for initializing the menu', () => {
         let renderer = new Menu.ContentRenderer();
         let menu = new Menu({ renderer });
-        expect(menu instanceof Menu).to.be(true);
+        expect(menu).to.be.a(Menu);
+      });
+
+      it('should add the `p-Menu` class', () => {
+        let menu = new Menu();
+        expect(menu.hasClass('p-Menu')).to.be(true);
       });
 
     });
@@ -829,6 +834,15 @@ describe('ui/menu', () => {
         expect(menu.activeIndex).to.be(0);
       });
 
+      it('should add `p-mod-active` to the item', () => {
+        let menu = new Menu();
+        let item = new MenuItem({ command: DEFAULT_CMD });
+        menu.addItem(item);
+        menu.activeItem = item;
+        let tab = menu.contentNode.children[0] as HTMLElement;
+        expect(tab.classList.contains('p-mod-active')).to.be(true);
+      });
+
       it('should be `-1` if no menu item is active', () => {
         let menu = new Menu();
         expect(menu.activeIndex).to.be(-1);
@@ -979,7 +993,7 @@ describe('ui/menu', () => {
       it('should accept menu options and convert them into a menu item', () => {
         let menu = new Menu();
         let item = menu.addItem({});
-        expect(item instanceof MenuItem).to.be(true);
+        expect(item).to.be.a(MenuItem);
       });
 
     });
@@ -997,7 +1011,7 @@ describe('ui/menu', () => {
       it('should accept an options object to be converted into a menu item', () => {
         let menu = new Menu();
         let item = menu.insertItem(0, {});
-        expect(item instanceof MenuItem).to.be(true);
+        expect(item).to.be.a(MenuItem);
       });
 
       it('should clamp the index to the bounds of the items', () => {
@@ -1664,6 +1678,32 @@ describe('ui/menu', () => {
         let item = new MenuItem({ type: 'separator' });
         renderer.updateItemNode(node, item);
         expect(node.classList.contains('p-type-separator')).to.be(true);
+      });
+
+      it('should add `p-mod-disabled` to disabled items', () => {
+        let disposable = commands.addCommand('test', {
+          execute: (args: JSONObject) => { return args; },
+          isEnabled: (args: JSONObject) => { return false; },
+        });
+        let item = new MenuItem({ command: 'test' });
+        let renderer = new Menu.ContentRenderer();
+        let node = renderer.createItemNode();
+        renderer.updateItemNode(node, item);
+        expect(node.classList.contains('p-mod-disabled')).to.be(true);
+        disposable.dispose();
+      });
+
+      it('should add `p-mod-toggled` to toggled items', () => {
+        let disposable = commands.addCommand('test', {
+          execute: (args: JSONObject) => { return args; },
+          isToggled: (args: JSONObject) => { return true; },
+        });
+        let item = new MenuItem({ command: 'test' });
+        let renderer = new Menu.ContentRenderer();
+        let node = renderer.createItemNode();
+        renderer.updateItemNode(node, item);
+        expect(node.classList.contains('p-mod-toggled')).to.be(true);
+        disposable.dispose();
       });
 
     });
