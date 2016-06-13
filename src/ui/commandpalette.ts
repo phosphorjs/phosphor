@@ -600,7 +600,7 @@ class CommandPalette extends Widget {
       return;
     }
 
-    // Lookup the relevant nodes.
+    // Look up the relevant nodes.
     let oldNode = children[this._activeIndex] as HTMLElement;
     let newNode = children[index] as HTMLElement;
 
@@ -719,7 +719,7 @@ class CommandPalette extends Widget {
       return;
     }
 
-    // Lookup the input node.
+    // Look up the input node.
     let input = this.inputNode;
 
     // If the part has an item, focus the input field, select the
@@ -1273,7 +1273,7 @@ namespace Private {
         continue;
       }
 
-      // Lookup the category score for the item category.
+      // Look up the category score for the item category.
       let cs = categories[item.category];
 
       // If the category was not matched, the item is skipped.
