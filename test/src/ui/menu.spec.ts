@@ -41,7 +41,8 @@ import {
 
 
 // Set up a default command and its keybinding.
-const DEFAULT_CMD = 'defaultCmd';
+const DEFAULT_CMD = 'menu.spec.ts:defaultCmd';
+
 commands.addCommand(DEFAULT_CMD, {
   execute: (args: JSONObject) => { return args; },
   label: 'LABEL',
@@ -50,6 +51,7 @@ commands.addCommand(DEFAULT_CMD, {
   isToggled: (args: JSONObject) => { return true; },
   mnemonic: 1
 });
+
 keymap.addBinding({
   keys: ['A'],
   selector: '*',
@@ -92,7 +94,7 @@ class LogMenu extends Menu {
 
 describe('ui/menu', () => {
 
-  describe('MenuItem(', () => {
+  describe('MenuItem', () => {
 
     describe('#constructor()', () => {
 
@@ -409,7 +411,7 @@ describe('ui/menu', () => {
         expect(item.isToggled).to.be(false);
       });
 
-      it('should be `false` for a other item types', () => {
+      it('should be `false` for other item types', () => {
         let item = new MenuItem({ type: 'separator' });
         expect(item.isToggled).to.be(false);
         item = new MenuItem({ type: 'submenu' });
@@ -487,7 +489,7 @@ describe('ui/menu', () => {
 
   });
 
-  describe('Menu(', () => {
+  describe('Menu', () => {
 
     describe('.createNode()', () => {
 
@@ -1625,118 +1627,126 @@ describe('ui/menu', () => {
 
     });
 
-  });
+    describe('.ContentRenderer', () => {
 
-  describe('Menu.ContentRenderer', () => {
+      describe('#createItemNode()', () => {
 
-    describe('#createItemNode()', () => {
-
-      it('should create a node for a menu item', () => {
-        let renderer = new Menu.ContentRenderer();
-        let node = renderer.createItemNode();
-        expect(node.classList.contains('p-Menu-item')).to.be(true);
-        expect(node.getElementsByClassName('p-Menu-itemIcon').length).to.be(1);
-        expect(node.getElementsByClassName('p-Menu-itemLabel').length).to.be(1);
-        expect(node.getElementsByClassName('p-Menu-itemShortcut').length).to.be(1);
-        expect(node.getElementsByClassName('p-Menu-itemSubmenuIcon').length).to.be(1);
-      });
-
-    });
-
-    describe('#updateItemNode()', () => {
-
-      it('should update an item node to reflect the state of a menu item', () => {
-        let renderer = new Menu.ContentRenderer();
-        let node = renderer.createItemNode();
-        let item = new MenuItem({ command: DEFAULT_CMD });
-        renderer.updateItemNode(node, item);
-        expect(node.classList.contains('p-type-command')).to.be(true);
-        expect(node.classList.contains(item.className)).to.be(true);
-        expect(node.classList.contains('p-mod-toggled')).to.be(true);
-        let icon = node.getElementsByClassName('p-Menu-itemIcon')[0];
-        expect(icon.classList.contains(item.icon)).to.be(true);
-        let label = node.getElementsByClassName('p-Menu-itemLabel')[0];
-        let labelText = renderer.formatLabel(item.label, item.mnemonic);
-        expect((label as HTMLElement).innerHTML).to.be(labelText);
-        let shortcutText = renderer.formatShortcut(item.keyBinding);
-        let shortcut = node.getElementsByClassName('p-Menu-itemShortcut')[0];
-        expect((shortcut as HTMLElement).textContent).to.be(shortcutText);
-      });
-
-      it('should handle submenu items', () => {
-        let renderer = new Menu.ContentRenderer();
-        let node = renderer.createItemNode();
-        let item = new MenuItem({ type: 'submenu', menu: null });
-        renderer.updateItemNode(node, item);
-        expect(node.classList.contains('p-type-submenu')).to.be(true);
-        expect(node.classList.contains('p-mod-hidden')).to.be(true);
-      });
-
-      it('should handle separator items', () => {
-        let renderer = new Menu.ContentRenderer();
-        let node = renderer.createItemNode();
-        let item = new MenuItem({ type: 'separator' });
-        renderer.updateItemNode(node, item);
-        expect(node.classList.contains('p-type-separator')).to.be(true);
-      });
-
-      it('should add `p-mod-disabled` to disabled items', () => {
-        let disposable = commands.addCommand('test', {
-          execute: (args: JSONObject) => { return args; },
-          isEnabled: (args: JSONObject) => { return false; },
+        it('should create a node for a menu item', () => {
+          let renderer = new Menu.ContentRenderer();
+          let node = renderer.createItemNode();
+          expect(node.classList.contains('p-Menu-item')).to.be(true);
+          expect(node.getElementsByClassName('p-Menu-itemIcon').length).to.be(1);
+          expect(node.getElementsByClassName('p-Menu-itemLabel').length).to.be(1);
+          expect(node.getElementsByClassName('p-Menu-itemShortcut').length).to.be(1);
+          expect(node.getElementsByClassName('p-Menu-itemSubmenuIcon').length).to.be(1);
         });
-        let item = new MenuItem({ command: 'test' });
-        let renderer = new Menu.ContentRenderer();
-        let node = renderer.createItemNode();
-        renderer.updateItemNode(node, item);
-        expect(node.classList.contains('p-mod-disabled')).to.be(true);
-        disposable.dispose();
+
       });
 
-      it('should add `p-mod-toggled` to toggled items', () => {
-        let disposable = commands.addCommand('test', {
-          execute: (args: JSONObject) => { return args; },
-          isToggled: (args: JSONObject) => { return true; },
+      describe('#updateItemNode()', () => {
+
+        it('should update an item node to reflect the state of a menu item', () => {
+          let renderer = new Menu.ContentRenderer();
+          let node = renderer.createItemNode();
+          let item = new MenuItem({ command: DEFAULT_CMD });
+          renderer.updateItemNode(node, item);
+          expect(node.classList.contains('p-type-command')).to.be(true);
+          expect(node.classList.contains(item.className)).to.be(true);
+          expect(node.classList.contains('p-mod-toggled')).to.be(true);
+          let icon = node.getElementsByClassName('p-Menu-itemIcon')[0];
+          expect(icon.classList.contains(item.icon)).to.be(true);
+          let label = node.getElementsByClassName('p-Menu-itemLabel')[0];
+          let labelText = renderer.formatLabel(item.label, item.mnemonic);
+          expect((label as HTMLElement).innerHTML).to.be(labelText);
+          let shortcutText = renderer.formatShortcut(item.keyBinding);
+          let shortcut = node.getElementsByClassName('p-Menu-itemShortcut')[0];
+          expect((shortcut as HTMLElement).textContent).to.be(shortcutText);
         });
-        let item = new MenuItem({ command: 'test' });
-        let renderer = new Menu.ContentRenderer();
-        let node = renderer.createItemNode();
-        renderer.updateItemNode(node, item);
-        expect(node.classList.contains('p-mod-toggled')).to.be(true);
-        disposable.dispose();
+
+        it('should handle submenu items', () => {
+          let renderer = new Menu.ContentRenderer();
+          let node = renderer.createItemNode();
+          let item = new MenuItem({ type: 'submenu', menu: null });
+          renderer.updateItemNode(node, item);
+          expect(node.classList.contains('p-type-submenu')).to.be(true);
+          expect(node.classList.contains('p-mod-hidden')).to.be(true);
+        });
+
+        it('should handle separator items', () => {
+          let renderer = new Menu.ContentRenderer();
+          let node = renderer.createItemNode();
+          let item = new MenuItem({ type: 'separator' });
+          renderer.updateItemNode(node, item);
+          expect(node.classList.contains('p-type-separator')).to.be(true);
+        });
+
+        it('should add `p-mod-disabled` to disabled items', () => {
+          let disposable = commands.addCommand('test', {
+            execute: (args: JSONObject) => { return args; },
+            isEnabled: (args: JSONObject) => { return false; },
+          });
+          let item = new MenuItem({ command: 'test' });
+          let renderer = new Menu.ContentRenderer();
+          let node = renderer.createItemNode();
+          renderer.updateItemNode(node, item);
+          expect(node.classList.contains('p-mod-disabled')).to.be(true);
+          disposable.dispose();
+        });
+
+        it('should add `p-mod-toggled` to toggled items', () => {
+          let disposable = commands.addCommand('test', {
+            execute: (args: JSONObject) => { return args; },
+            isToggled: (args: JSONObject) => { return true; },
+          });
+          let item = new MenuItem({ command: 'test' });
+          let renderer = new Menu.ContentRenderer();
+          let node = renderer.createItemNode();
+          renderer.updateItemNode(node, item);
+          expect(node.classList.contains('p-mod-toggled')).to.be(true);
+          disposable.dispose();
+        });
+
+      });
+
+      describe('#formatLabel()', () => {
+
+        it('should format a label into HTML for display', () => {
+          let renderer = new Menu.ContentRenderer();
+          let label = renderer.formatLabel('foo', 0);
+          expect(label).to.be('<span class="p-Menu-itemMnemonic">f</span>oo');
+        });
+
+        it('should not add a mnemonic if the index is out of range', () => {
+          let renderer = new Menu.ContentRenderer();
+          let label = renderer.formatLabel('foo', -1);
+          expect(label).to.be('foo');
+        });
+
+      });
+
+      describe('#formatShortcut()', () => {
+
+        it('should format a key binding into a shortcut text for display', () => {
+          let binding = keymap.findKeyBinding(DEFAULT_CMD, null);
+          let renderer = new Menu.ContentRenderer();
+          let shortcut = renderer.formatShortcut(binding);
+          expect(shortcut).to.be('A');
+        });
+
+        it('should accept a `null` keyBinding', () => {
+          let renderer = new Menu.ContentRenderer();
+          let shortcut = renderer.formatShortcut(null);
+          expect(shortcut).to.be('');
+        });
+
       });
 
     });
 
-    describe('#formatLabel()', () => {
+    describe('.defaultRenderer', () => {
 
-      it('should format a label into HTML for display', () => {
-        let renderer = new Menu.ContentRenderer();
-        let label = renderer.formatLabel('foo', 0);
-        expect(label).to.be('<span class="p-Menu-itemMnemonic">f</span>oo');
-      });
-
-      it('should not add a mnemonic if the index is out of range', () => {
-        let renderer = new Menu.ContentRenderer();
-        let label = renderer.formatLabel('foo', -1);
-        expect(label).to.be('foo');
-      });
-
-    });
-
-    describe('#formatShortcut()', () => {
-
-      it('should format a key binding into a shortcut text for display', () => {
-        let binding = keymap.findKeyBinding(DEFAULT_CMD, null);
-        let renderer = new Menu.ContentRenderer();
-        let shortcut = renderer.formatShortcut(binding);
-        expect(shortcut).to.be('A');
-      });
-
-      it('should accept a `null` keyBinding', () => {
-        let renderer = new Menu.ContentRenderer();
-        let shortcut = renderer.formatShortcut(null);
-        expect(shortcut).to.be('');
+      it('should be an instance of `ContentRenderer`', () => {
+        expect(Menu.defaultRenderer).to.be.a(Menu.ContentRenderer);
       });
 
     });
