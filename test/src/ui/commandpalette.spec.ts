@@ -640,7 +640,7 @@ describe('ui/commandpalette', () => {
           command.dispose();
         });
 
-        it('should trigger active item if enter is pressed', () => {
+        it('should ignore if modifier keys are pressed', () => {
           let called = false;
           let options: ICommand = { execute: () => called = true };
           let command = commands.addCommand('test', options);
@@ -666,7 +666,7 @@ describe('ui/commandpalette', () => {
           command.dispose();
         });
 
-        it('should ignore if modifier keys are pressed', () => {
+        it('should trigger active item if enter is pressed', () => {
           let called = false;
           let options: ICommand = { execute: () => called = true };
           let command = commands.addCommand('test', options);
@@ -685,6 +685,40 @@ describe('ui/commandpalette', () => {
 
           palette.dispose();
           command.dispose();
+        });
+
+        it('should trigger active category if enter is pressed', () => {
+          let palette = new CommandPalette();
+          let alpha = ['A', 'B', 'C', 'D', 'E'].map(name => {
+            let options: ICommand = { execute: () => { }, label: name };
+            let command = commands.addCommand(name, options);
+            palette.addItem(new CommandItem({ category: 'A', command: name }));
+            return command;
+          });
+          let beta = ['F', 'G', 'H', 'I', 'J'].map(name => {
+            let options: ICommand = { execute: () => { }, label: name };
+            let command = commands.addCommand(name, options);
+            palette.addItem(new CommandItem({ category: 'B', command: name }));
+            return command;
+          });
+
+          sendMessage(palette, WidgetMessage.UpdateRequest);
+          Widget.attach(palette, document.body);
+
+          let content = palette.contentNode;
+          let items = content.querySelectorAll('.p-CommandPalette-item');
+
+          expect(items).to.have.length(10);
+          expect(content.querySelector('.p-mod-active')).to.not.be.ok();
+          simulate(palette.node, 'keydown', { keyCode: 40 }); // Pick category.
+          simulate(palette.node, 'keydown', { keyCode: 13 });
+          sendMessage(palette, WidgetMessage.UpdateRequest);
+          items = content.querySelectorAll('.p-CommandPalette-item');
+          expect(items).to.have.length(5);
+
+          palette.dispose();
+          each(alpha, disposable => disposable.dispose());
+          each(beta, disposable => disposable.dispose());
         });
 
       });
