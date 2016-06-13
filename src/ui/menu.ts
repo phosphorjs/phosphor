@@ -1397,6 +1397,7 @@ namespace Menu {
       let shortcut = document.createElement('div');
       let submenu = document.createElement('div');
       node.className = ITEM_CLASS;
+      icon.className = ICON_CLASS;
       label.className = LABEL_CLASS;
       shortcut.className = SHORTCUT_CLASS;
       submenu.className = SUBMENU_ICON_CLASS;
