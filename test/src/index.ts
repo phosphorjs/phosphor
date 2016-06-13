@@ -42,5 +42,7 @@ import './ui/panel.spec';
 
 import './ui/menubar.spec';
 
+import './ui/boxpanel.spec';
+
 import '../index.css';
 import '../../styles/base.css';
