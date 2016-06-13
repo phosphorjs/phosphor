@@ -139,7 +139,7 @@ describe('ui/stackedpanel', () => {
 
       it('should create a stacked layout for a stacked panel', () => {
         let layout = StackedPanel.createLayout();
-        expect(layout instanceof StackedLayout).to.be(true);
+        expect(layout).to.be.a(StackedLayout);
       });
 
     });
@@ -148,7 +148,12 @@ describe('ui/stackedpanel', () => {
 
       it('should take no arguments', () => {
         let panel = new StackedPanel();
-        expect(panel instanceof StackedPanel).to.be(true);
+        expect(panel).to.be.a(StackedPanel);
+      });
+
+      it('should add the `p-StackedPanel` class', () => {
+        let panel = new StackedPanel();
+        expect(panel.hasClass('p-StackedPanel')).to.be(true);
       });
 
     });
