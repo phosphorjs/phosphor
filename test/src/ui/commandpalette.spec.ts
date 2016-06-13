@@ -482,6 +482,7 @@ describe('ui/commandpalette', () => {
         let command = commands.addCommand('test', options);
         let item = new CommandItem({ command: 'test' });
         let palette = new CommandPalette();
+        Widget.attach(palette, document.body);
         expect(palette.items).to.be.empty();
         palette.addItem(item);
         expect(palette.items).to.have.length(1);
@@ -496,6 +497,7 @@ describe('ui/commandpalette', () => {
         let command = commands.addCommand('test', options);
         let item = new CommandItem({ command: 'test' });
         let palette = new CommandPalette();
+        Widget.attach(palette, document.body);
         expect(palette.items).to.be.empty();
         palette.addItem(item);
         expect(palette.items).to.have.length(1);
@@ -510,6 +512,7 @@ describe('ui/commandpalette', () => {
         let command = commands.addCommand('test', options);
         let item = new CommandItem({ command: 'test' });
         let palette = new CommandPalette();
+        Widget.attach(palette, document.body);
         expect(palette.items).to.be.empty();
         palette.removeItem(0);
         expect(palette.items).to.be.empty();
@@ -525,6 +528,7 @@ describe('ui/commandpalette', () => {
         let options: ICommand = { execute: () => { } };
         let command = commands.addCommand('test', options);
         let palette = new CommandPalette();
+        Widget.attach(palette, document.body);
         expect(palette.items).to.be.empty();
         palette.addItem(new CommandItem({ command: 'test', category: 'one' }));
         palette.addItem(new CommandItem({ command: 'test', category: 'two' }));
