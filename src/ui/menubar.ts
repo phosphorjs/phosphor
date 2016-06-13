@@ -239,10 +239,19 @@ class MenuBar extends Widget {
    * If there is no active menu, this is a no-op.
    */
   openActiveMenu(): void {
+    // Bail early if there is no active item.
     if (this._activeIndex === -1) {
       return;
     }
+
+    // Open the child menu.
     this._openChildMenu();
+
+    // Activate the first item in the child menu.
+    if (this._childMenu) {
+      this._childMenu.activeIndex = -1;
+      this._childMenu.activateNextItem();
+    }
   }
 
   /**
@@ -689,10 +698,6 @@ class MenuBar extends Widget {
       this.addClass(ACTIVE_CLASS);
       document.addEventListener('mousedown', this, true);
     }
-
-    // Activate the first item in the child menu.
-    newMenu.activeIndex = -1;
-    newMenu.activateNextItem();
 
     // Get the positioning data for the new menu.
     let node = this._nodes.at(this._activeIndex);
