@@ -35,5 +35,8 @@ import './ui/widget.spec';
 
 import './ui/menu.spec';
 
+import './ui/keyboard.spec';
+import './ui/keymap.spec';
+
 import '../index.css';
 import '../../styles/base.css';
