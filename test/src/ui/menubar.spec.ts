@@ -626,7 +626,7 @@ describe('ui/menubar', () => {
           let menu = bar.activeMenu;
           let node = bar.node.getElementsByClassName('p-MenuBar-item')[1] as HTMLElement;
           let rect = node.getBoundingClientRect();
-          simulate(bar.node, 'mousemove', { clientX: rect.left, clientY: rect.top + 1 });
+          simulate(node, 'mousemove', { clientX: rect.left + 1, clientY: rect.top });
           expect(bar.activeIndex).to.be(1);
           expect(menu.isAttached).to.be(false);
           expect(bar.activeMenu.isAttached).to.be(true);
