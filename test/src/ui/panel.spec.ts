@@ -52,7 +52,6 @@ class LogPanelLayout extends PanelLayout {
     super.onChildRemoved(msg);
     this.methods.push('onChildRemoved');
   }
-
 }
 
 
@@ -176,9 +175,9 @@ describe('ui/panel', () => {
       it('should dispose of the resources held by the widget', () => {
         let layout = new PanelLayout();
         let widgets = [new Widget(), new Widget()];
-        each(widgets, w => layout.addWidget(w));
+        each(widgets, w => { layout.addWidget(w); });
         layout.dispose();
-        expect(every(widgets, w => { return w.isDisposed; })).to.be(true);
+        expect(every(widgets, w => w.isDisposed)).to.be(true);
       });
 
     });
@@ -206,15 +205,14 @@ describe('ui/panel', () => {
       it('should create an iterator over the widgets in the layout', () => {
         let layout = new PanelLayout();
         let widgets = [new Widget(), new Widget()];
-        each(widgets, w => layout.addWidget(w));
-        each(widgets, w => w.title.label = 'foo');
+        each(widgets, w => { layout.addWidget(w); });
+        each(widgets, w => { w.title.label = 'foo'; });
         let iter = layout.iter();
-        expect(every(iter, w => { return w.title.label === 'foo'; })).to.be(true);
+        expect(every(iter, w => w.title.label === 'foo')).to.be(true);
         expect(layout.iter()).to.not.be(iter);
       });
 
     });
-
 
     describe('#addWidget()', () => {
 
@@ -263,7 +261,6 @@ describe('ui/panel', () => {
         let widget = new Widget();
         layout.insertWidget(-2, widget);
         expect(layout.widgets.at(0)).to.be(widget);
-
         layout.insertWidget(10, widget);
         expect(layout.widgets.at(1)).to.be(widget);
       });
@@ -415,14 +412,11 @@ describe('ui/panel', () => {
         Widget.attach(parent, document.body);
         let layout = new LogPanelLayout();
         let widgets = [new LogWidget(), new LogWidget(), new LogWidget()];
-        each(widgets, w => layout.addWidget(w));
+        each(widgets, w => { layout.addWidget(w); });
         parent.layout = layout;
         expect(layout.methods.indexOf('onLayoutChanged')).to.not.be(-1);
-        expect(every(widgets, w => { return w.parent === parent; })).to.be(true);
-        let predicate = (w: LogWidget) => {
-          return w.methods.indexOf('onAfterAttach') !== -1;
-        };
-        expect(every(widgets, predicate)).to.be(true);
+        expect(every(widgets, w => w.parent === parent)).to.be(true);
+        expect(every(widgets, w => w.methods.indexOf('onAfterAttach') !== -1)).to.be(true);
         parent.dispose();
       });
 
