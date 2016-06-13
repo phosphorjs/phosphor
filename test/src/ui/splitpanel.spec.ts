@@ -179,7 +179,7 @@ describe('ui/splitpanel', () => {
 
       it('should create a split layout for a split panel', () => {
         let layout = SplitPanel.createLayout();
-        expect(layout instanceof SplitLayout).to.be(true);
+        expect(layout).to.be.a(SplitLayout);
       });
 
     });
@@ -216,14 +216,19 @@ describe('ui/splitpanel', () => {
 
       it('should accept no arguments', () => {
         let panel = new SplitPanel();
-        expect(panel instanceof SplitPanel).to.be(true);
+        expect(panel).to.be.a(SplitPanel);
       });
 
       it('should accept options for initializing the split panel', () => {
         let panel = new SplitPanel({ orientation: 'vertical', spacing: 5 });
         expect(panel.orientation).to.be('vertical');
         expect(panel.spacing).to.be(5);
-        expect(panel instanceof SplitPanel).to.be(true);
+        expect(panel).to.be.a(SplitPanel);
+      });
+
+      it('should add the `p-SplitPanel` class', () => {
+        let panel = new SplitPanel();
+        expect(panel.hasClass('p-SplitPanel')).to.be(true);
       });
 
     });
@@ -606,7 +611,7 @@ describe('ui/splitpanel', () => {
 
       it('should accept a handle renderer', () => {
         let layout = new SplitLayout(new HandleRenderer());
-        expect(layout instanceof SplitLayout).to.be(true);
+        expect(layout).to.be.a(SplitLayout);
       });
 
     });
