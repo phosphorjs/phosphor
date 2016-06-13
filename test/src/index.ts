@@ -31,5 +31,7 @@ import './dom/sizing.spec';
 import './ui/boxengine.spec';
 import './ui/title.spec';
 
+import './ui/widget.spec';
+
 import '../index.css';
 import '../../styles/base.css';
