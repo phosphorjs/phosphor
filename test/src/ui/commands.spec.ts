@@ -12,7 +12,7 @@ import {
 } from '../../../lib/algorithm/json';
 
 import {
-  commands, CommandRegistry
+  CommandRegistry, commands
 } from '../../../lib/ui/commands';
 
 
