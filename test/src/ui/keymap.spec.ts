@@ -42,8 +42,8 @@ var IS_MAC = !!navigator.platform.match(/Mac/i);
  * Create an element with a unique id and add to the document.
  */
 function createElement(): HTMLElement {
-  let el = document.createElement('div');
-  (el as any).id = `test${id++}`;
+  let el = document.createElement('div') as HTMLElement;
+  el.id = `test${id++}`;
   document.body.appendChild(el);
   return el;
 }
@@ -81,7 +81,7 @@ describe('ui/keymap', () => {
       it('should be read only', () => {
         let options = { keys: ['Ctrl A'], selector: 'body', command: 'test' };
         let binding = new KeyBinding(options);
-        expect(() => { binding.keys = null }).to.throwError();
+        expect(() => { binding.keys = null; }).to.throwError();
       });
 
     });
@@ -97,7 +97,7 @@ describe('ui/keymap', () => {
       it('should be read only', () => {
         let options = { keys: ['Ctrl A'], selector: 'body', command: 'test' };
         let binding = new KeyBinding(options);
-        expect(() => { binding.selector = null }).to.throwError();
+        expect(() => { binding.selector = null; }).to.throwError();
       });
 
     });
@@ -113,7 +113,7 @@ describe('ui/keymap', () => {
       it('should be read only', () => {
         let options = { keys: ['Ctrl A'], selector: 'body', command: 'test' };
         let binding = new KeyBinding(options);
-        expect(() => { binding.command = null }).to.throwError();
+        expect(() => { binding.command = null; }).to.throwError();
       });
 
     });
@@ -134,7 +134,7 @@ describe('ui/keymap', () => {
       it('should be read only', () => {
         let options = { keys: ['Ctrl A'], selector: 'body', command: 'test' };
         let binding = new KeyBinding(options);
-        expect(() => { binding.args = null }).to.throwError();
+        expect(() => { binding.args = null; }).to.throwError();
       });
 
     });
@@ -204,7 +204,7 @@ describe('ui/keymap', () => {
       });
 
       it('should be read only', () => {
-        expect(() => { keymap.bindings = null }).to.throwError();
+        expect(() => { keymap.bindings = null; }).to.throwError();
       });
 
     });
