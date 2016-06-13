@@ -16,6 +16,10 @@ import {
 } from '../../../lib/algorithm/json';
 
 import {
+  IS_MAC
+} from '../../../lib/dom/platform';
+
+import {
   commands
 } from '../../../lib/ui/commands';
 
@@ -29,13 +33,10 @@ import {
 } from '../../../lib/ui/keyboard';
 
 
-let id = 0;
-
-
 /**
- * A flag indicating whether the platform is Mac.
+ * A monotonically increasing id number.
  */
-var IS_MAC = !!navigator.platform.match(/Mac/i);
+let elemID = 0;
 
 
 /**
@@ -43,7 +44,7 @@ var IS_MAC = !!navigator.platform.match(/Mac/i);
  */
 function createElement(): HTMLElement {
   let el = document.createElement('div') as HTMLElement;
-  el.id = `test${id++}`;
+  el.id = `test${elemID++}`;
   document.body.appendChild(el);
   return el;
 }
@@ -142,14 +143,6 @@ describe('ui/keymap', () => {
   });
 
   describe('KeymapManager', () => {
-
-    describe('static instance', () => {
-
-      it('should be a keymap manager', () => {
-        expect(keymap).to.be.a(KeymapManager);
-      })
-
-    });
 
     describe('#constructor()', () => {
 
@@ -881,6 +874,14 @@ describe('ui/keymap', () => {
       });
 
     });
+
+  });
+
+  describe('keymap', () => {
+
+    it('should be a keymap manager', () => {
+      expect(keymap).to.be.a(KeymapManager);
+    })
 
   });
 
