@@ -18,7 +18,7 @@ import {
 
 describe('ui/keyboard', () => {
 
-  describe('KeyCodeLayout', () => {
+  describe('KeycodeLayout', () => {
 
     describe('#constructor()', () => {
 
@@ -78,6 +78,16 @@ describe('ui/keyboard', () => {
         let event = generate('keydown', { keyCode: 101 });
         let key = layout.keyForKeydownEvent(event as KeyboardEvent);
         expect(key).to.be('');
+      });
+
+    });
+
+    describe('.extractKeys()', () => {
+
+      it('should extract the keys from a code map', () => {
+        let keys: KeycodeLayout.CodeMap = { 70: 'F', 71: 'G', 72: 'H' };
+        let trgt: KeycodeLayout.KeySet = { 'F': true, 'G': true, 'H': true };
+        expect(KeycodeLayout.extractKeys(keys)).to.eql(trgt);
       });
 
     });
