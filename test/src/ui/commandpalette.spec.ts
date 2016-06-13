@@ -28,6 +28,10 @@ import {
 } from '../../../lib/ui/commands';
 
 import {
+  DisposableSet
+} from '../../../lib/core/disposable'
+
+import {
   keymap, KeyBinding
 } from '../../../lib/ui/keymap';
 
@@ -698,12 +702,14 @@ describe('ui/commandpalette', () => {
             ['A', 'B', 'C', 'D', 'E'],
             ['F', 'G', 'H', 'I', 'J']
           ];
-          let disposables = names.map((values, index) => {
+          let disposables = new DisposableSet();
+          disposables.add(palette);
+          names.forEach((values, index) => {
             let category = categories[index];
-            return values.map(command => {
+            values.forEach(command => {
               let options: ICommand = { execute: () => { }, label: command };
               palette.addItem(new CommandItem({ category, command }));
-              return commands.addCommand(command, options);;
+              disposables.add(commands.addCommand(command, options));
             });
           });
 
@@ -720,8 +726,7 @@ describe('ui/commandpalette', () => {
           sendMessage(palette, WidgetMessage.UpdateRequest);
           expect(items()).to.have.length(5);
 
-          palette.dispose();
-          each(disposables, list => each(list, item => item.dispose()))
+          disposables.dispose();
         });
 
       });
@@ -730,11 +735,13 @@ describe('ui/commandpalette', () => {
 
         it('should filter the list of visible items', () => {
           let palette = new CommandPalette();
-          let disposables = ['A', 'B', 'C', 'D', 'E'].map(name => {
+          let disposables = new DisposableSet();
+          disposables.add(palette);
+          ['A', 'B', 'C', 'D', 'E'].forEach(name => {
             let options: ICommand = { execute: () => { }, label: name };
             let command = commands.addCommand(name, options);
             palette.addItem(new CommandItem({ command: name }));
-            return command;
+            disposables.add(command);
           });
 
           sendMessage(palette, WidgetMessage.UpdateRequest);
@@ -749,8 +756,7 @@ describe('ui/commandpalette', () => {
           sendMessage(palette, WidgetMessage.UpdateRequest);
           expect(items()).to.have.length(1);
 
-          palette.dispose();
-          each(disposables, disposable => disposable.dispose());
+          disposables.dispose();
         });
 
         it('should filter by both text and category', () => {
@@ -760,12 +766,14 @@ describe('ui/commandpalette', () => {
             ['A1', 'B2', 'C3', 'D4', 'E5'],
             ['F1', 'G2', 'H3', 'I4', 'J5']
           ];
-          let disposables = names.map((values, index) => {
+          let disposables = new DisposableSet();
+          disposables.add(palette);
+          names.forEach((values, index) => {
             let category = categories[index];
-            return values.map(command => {
+            values.forEach(command => {
               let options: ICommand = { execute: () => { }, label: command };
               palette.addItem(new CommandItem({ category, command }));
-              return commands.addCommand(command, options);;
+              disposables.add(commands.addCommand(command, options));
             });
           });
 
@@ -796,8 +804,7 @@ describe('ui/commandpalette', () => {
           let cat = categories.sort().map(cat => cat.toLowerCase())[0];
           expect(palette.inputNode.value).to.be(`${cat}: 1`);
 
-          palette.dispose();
-          each(disposables, list => each(list, item => item.dispose()))
+          disposables.dispose();
         });
 
       });
