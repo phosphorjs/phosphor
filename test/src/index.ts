@@ -23,7 +23,10 @@ import './core/messaging.spec';
 import './core/properties.spec';
 import './core/signaling.spec';
 
+import './dom/cursor.spec';
+import './dom/query.spec';
 import './dom/selector.spec';
+import './dom/sizing.spec';
 
 import '../index.css';
 import '../../styles/base.css';
