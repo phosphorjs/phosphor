@@ -149,7 +149,7 @@ describe('ui/boxpanel', () => {
 
       it('should create a box layout for a box panel', () => {
         let layout = BoxPanel.createLayout();
-        expect(layout instanceof BoxLayout).to.be(true);
+        expect(layout).to.be.a(BoxLayout);
       });
 
     });
@@ -196,13 +196,18 @@ describe('ui/boxpanel', () => {
 
       it('should take no arguments', () => {
         let panel = new BoxPanel();
-        expect(panel instanceof BoxPanel).to.be(true);
+        expect(panel).to.be.a(BoxPanel);
       });
 
       it('should accept options', () => {
         let panel = new BoxPanel({ direction: 'bottom-to-top', spacing: 10 });
         expect(panel.direction).to.be('bottom-to-top');
         expect(panel.spacing).to.be(10);
+      });
+
+      it('should add the `p-BoxPanel` class', () => {
+        let panel = new BoxPanel();
+        expect(panel.hasClass('p-BoxPanel')).to.be(true);
       });
 
     });
