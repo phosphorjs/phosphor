@@ -132,6 +132,11 @@ describe('ui/tabbar', () => {
         expect(bar).to.be.a(TabBar);
       });
 
+      it('should add the `p-TabBar` class', () => {
+        let bar = new TabBar();
+        expect(bar.hasClass('p-TabBar')).to.be(true);
+      });
+
     });
 
     describe('#dispose()', () => {
@@ -352,6 +357,20 @@ describe('ui/tabbar', () => {
         expect(called).to.be(1);
         simulate(document.body, 'mousemove', { clientX: rect.right + 201, clientY: rect.top });
         expect(called).to.be(1);
+      });
+
+      it('should add the `p-mod-dragging` class to the tab and the bar', () => {
+        let rect = tab.getBoundingClientRect();
+        simulate(tab, 'mousedown', { clientX: rect.left, clientY: rect.top });
+        let called = false;
+        bar.tabDetachRequested.connect((sender, args) => {
+          expect(tab.classList.contains('p-mod-dragging')).to.be(true);
+          expect(bar.hasClass('p-mod-dragging')).to.be(true);
+          called = true;
+        });
+        rect = bar.contentNode.getBoundingClientRect();
+        simulate(document.body, 'mousemove', { clientX: rect.right + 200, clientY: rect.top });
+        expect(called).to.be(true);
       });
 
     });
