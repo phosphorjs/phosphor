@@ -610,8 +610,8 @@ describe('ui/commandpalette', () => {
           let node = content.querySelector('.p-mod-active');
 
           expect(node).to.not.be.ok();
-          simulate(palette.node, 'keydown', { keyCode: 40 }); // Pick category.
-          simulate(palette.node, 'keydown', { keyCode: 40 }); // Pick 1st item.
+          simulate(palette.node, 'keydown', { keyCode: 40 }); // Down arrow
+          simulate(palette.node, 'keydown', { keyCode: 40 }); // Down arrow
           node = content.querySelector('.p-CommandPalette-item.p-mod-active');
           expect(node).to.be.ok();
 
@@ -632,7 +632,7 @@ describe('ui/commandpalette', () => {
           let node = content.querySelector('.p-mod-active');
 
           expect(node).to.not.be.ok();
-          simulate(palette.node, 'keydown', { keyCode: 38 }); // Pick last item.
+          simulate(palette.node, 'keydown', { keyCode: 38 }); // Up arrow
           node = content.querySelector('.p-CommandPalette-item.p-mod-active');
           expect(node).to.be.ok();
 
@@ -678,9 +678,9 @@ describe('ui/commandpalette', () => {
           Widget.attach(palette, document.body);
 
           expect(content.querySelector('.p-mod-active')).to.not.be.ok();
-          simulate(palette.node, 'keydown', { keyCode: 40 }); // Pick category.
-          simulate(palette.node, 'keydown', { keyCode: 40 }); // Pick 1st item.
-          simulate(palette.node, 'keydown', { keyCode: 13 });
+          simulate(palette.node, 'keydown', { keyCode: 40 }); // Down arrow
+          simulate(palette.node, 'keydown', { keyCode: 40 }); // Down arrow
+          simulate(palette.node, 'keydown', { keyCode: 13 }); // Enter
           expect(called).to.be(true);
 
           palette.dispose();
@@ -689,36 +689,35 @@ describe('ui/commandpalette', () => {
 
         it('should trigger active category if enter is pressed', () => {
           let palette = new CommandPalette();
-          let alpha = ['A', 'B', 'C', 'D', 'E'].map(name => {
-            let options: ICommand = { execute: () => { }, label: name };
-            let command = commands.addCommand(name, options);
-            palette.addItem(new CommandItem({ category: 'A', command: name }));
-            return command;
-          });
-          let beta = ['F', 'G', 'H', 'I', 'J'].map(name => {
-            let options: ICommand = { execute: () => { }, label: name };
-            let command = commands.addCommand(name, options);
-            palette.addItem(new CommandItem({ category: 'B', command: name }));
-            return command;
+          let categories = ['A', 'B'];
+          let names = [
+            ['A', 'B', 'C', 'D', 'E'],
+            ['F', 'G', 'H', 'I', 'J']
+          ];
+          let disposables = names.map((values, index) => {
+            let category = categories[index];
+            return values.map(command => {
+              let options: ICommand = { execute: () => { }, label: command };
+              palette.addItem(new CommandItem({ category, command }));
+              return commands.addCommand(command, options);;
+            });
           });
 
           sendMessage(palette, WidgetMessage.UpdateRequest);
           Widget.attach(palette, document.body);
 
           let content = palette.contentNode;
-          let items = content.querySelectorAll('.p-CommandPalette-item');
+          let items = () => content.querySelectorAll('.p-CommandPalette-item');
 
-          expect(items).to.have.length(10);
+          expect(items()).to.have.length(10);
           expect(content.querySelector('.p-mod-active')).to.not.be.ok();
-          simulate(palette.node, 'keydown', { keyCode: 40 }); // Pick category.
-          simulate(palette.node, 'keydown', { keyCode: 13 });
+          simulate(palette.node, 'keydown', { keyCode: 40 }); // Down arrow
+          simulate(palette.node, 'keydown', { keyCode: 13 }); // Enter
           sendMessage(palette, WidgetMessage.UpdateRequest);
-          items = content.querySelectorAll('.p-CommandPalette-item');
-          expect(items).to.have.length(5);
+          expect(items()).to.have.length(5);
 
           palette.dispose();
-          each(alpha, disposable => disposable.dispose());
-          each(beta, disposable => disposable.dispose());
+          each(disposables, list => each(list, item => item.dispose()))
         });
 
       });
@@ -738,13 +737,13 @@ describe('ui/commandpalette', () => {
           Widget.attach(palette, document.body);
 
           let content = palette.contentNode;
-          let items = content.querySelectorAll('.p-CommandPalette-item');
+          let itemClass = '.p-CommandPalette-item';
+          let items = () => content.querySelectorAll(itemClass);
 
-          expect(items).to.have.length(5);
+          expect(items()).to.have.length(5);
           palette.inputNode.value = 'A';
           sendMessage(palette, WidgetMessage.UpdateRequest);
-          items = content.querySelectorAll('.p-CommandPalette-item');
-          expect(items).to.have.length(1);
+          expect(items()).to.have.length(1);
 
           palette.dispose();
           each(disposables, disposable => disposable.dispose());
@@ -752,42 +751,49 @@ describe('ui/commandpalette', () => {
 
         it('should filter by both text and category', () => {
           let palette = new CommandPalette();
-          let alpha = ['A', 'B', 'C', 'D', 'E'].map(name => {
-            let options: ICommand = { execute: () => { }, label: name };
-            let command = commands.addCommand(name, options);
-            palette.addItem(new CommandItem({ category: 'A', command: name }));
-            return command;
-          });
-          let beta = ['F', 'G', 'H', 'I', 'J'].map(name => {
-            let options: ICommand = { execute: () => { }, label: name };
-            let command = commands.addCommand(name, options);
-            palette.addItem(new CommandItem({ category: 'B', command: name }));
-            return command;
+          let categories = ['Z', 'Y'];
+          let names = [
+            ['A1', 'B2', 'C3', 'D4', 'E5'],
+            ['F1', 'G2', 'H3', 'I4', 'J5']
+          ];
+          let disposables = names.map((values, index) => {
+            let category = categories[index];
+            return values.map(command => {
+              let options: ICommand = { execute: () => { }, label: command };
+              palette.addItem(new CommandItem({ category, command }));
+              return commands.addCommand(command, options);;
+            });
           });
 
           sendMessage(palette, WidgetMessage.UpdateRequest);
           Widget.attach(palette, document.body);
 
           let content = palette.contentNode;
-          let items = content.querySelectorAll('.p-CommandPalette-item');
+          let catSelector = '.p-CommandPalette-header';
+          let items = () => content.querySelectorAll('.p-CommandPalette-item');
+          let input = (value: string) => {
+            palette.inputNode.value = value;
+            sendMessage(palette, WidgetMessage.UpdateRequest);
+          };
 
-          expect(items).to.have.length(10);
-          palette.inputNode.value = 'B:';
-          sendMessage(palette, WidgetMessage.UpdateRequest);
-          items = content.querySelectorAll('.p-CommandPalette-item');
-          expect(items).to.have.length(5);
-          palette.inputNode.value = 'B: B';
-          sendMessage(palette, WidgetMessage.UpdateRequest);
-          items = content.querySelectorAll('.p-CommandPalette-item');
-          expect(items).to.have.length(0);
-          palette.inputNode.value = 'B: I';
-          sendMessage(palette, WidgetMessage.UpdateRequest);
-          items = content.querySelectorAll('.p-CommandPalette-item');
-          expect(items).to.have.length(1);
+          expect(items()).to.have.length(10);
+          input(`${categories[1]}:`); // Category match
+          expect(items()).to.have.length(5);
+          input(`${categories[1]}: B`); // No match
+          expect(items()).to.have.length(0);
+          input(`${categories[1]}: I`); // Category and text match
+          expect(items()).to.have.length(1);
+
+          input('1'); // Multi-category match
+          expect(palette.node.querySelectorAll(catSelector)).to.have.length(2);
+          expect(items()).to.have.length(2);
+          simulate(palette.node, 'keydown', { keyCode: 38 }); // Up arrow
+          simulate(palette.node, 'keydown', { keyCode: 13 }); // Enter
+          let cat = categories.sort().map(cat => cat.toLowerCase())[0];
+          expect(palette.inputNode.value).to.be(`${cat}: 1`);
 
           palette.dispose();
-          each(alpha, disposable => disposable.dispose());
-          each(beta, disposable => disposable.dispose());
+          each(disposables, list => each(list, item => item.dispose()))
         });
 
       });
