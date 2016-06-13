@@ -182,7 +182,7 @@ class LogLayout extends Layout {
 }
 
 
-describe('phosphor-widget', () => {
+describe('ui/widget', () => {
 
   describe('Widget', () => {
 
@@ -972,7 +972,7 @@ describe('phosphor-widget', () => {
 
     describe('#setHidden()', () => {
 
-      it('should call hide if `hidden = True`', () => {
+      it('should call hide if `hidden = true`', () => {
         let widget = new LogWidget();
         Widget.attach(widget, document.body);
         widget.setHidden(true);
@@ -981,7 +981,7 @@ describe('phosphor-widget', () => {
         widget.dispose();
       });
 
-      it('should call show if `hidden = False`', () => {
+      it('should call show if `hidden = false`', () => {
         let widget = new LogWidget();
         widget.hide();
         Widget.attach(widget, document.body);
@@ -1593,10 +1593,10 @@ describe('phosphor-widget', () => {
         let widget = new Widget();
         let layout = new LogLayout();
         widget.layout = layout;
-        let iter = layout.iter();
+        let children = toArray(layout);
         layout.dispose();
         expect(layout.parent).to.be(null);
-        expect(every(iter, w => w.isDisposed)).to.be(true);
+        expect(every(children, w => w.isDisposed)).to.be(true);
       });
 
       it('should be called automatically when the parent is disposed', () => {
