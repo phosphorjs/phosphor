@@ -128,13 +128,18 @@ describe('ui/menubar', () => {
 
       it('should take no arguments', () => {
         let bar = new MenuBar();
-        expect(bar instanceof MenuBar).to.be(true);
+        expect(bar).to.be.a(MenuBar);
       });
 
       it('should take options for initializing the menu bar', () => {
         let renderer = new MenuBar.ContentRenderer();
         let bar = new MenuBar({ renderer });
-        expect(bar instanceof MenuBar).to.be(true);
+        expect(bar).to.be.a(MenuBar);
+      });
+
+      it('should add the `p-MenuBar` class', () => {
+        let bar = new MenuBar();
+        expect(bar.hasClass('p-MenuBar')).to.be(true);
       });
 
     });
@@ -284,6 +289,17 @@ describe('ui/menubar', () => {
         expect(bar.activeIndex).to.be(-1);
         bar.activeIndex = 1;
         expect(bar.activeIndex).to.be(-1);
+        bar.dispose();
+      });
+
+      it('should add `p-mod-active` to the active node', () => {
+        let bar = new MenuBar();
+        let menu = new Menu();
+        bar.addMenu(menu);
+        bar.activeMenu = menu;
+        let node = bar.contentNode.firstChild as HTMLElement;
+        expect(node.classList.contains('p-mod-active')).to.be(true);
+        expect(bar.activeIndex).to.be(0);
         bar.dispose();
       });
 
