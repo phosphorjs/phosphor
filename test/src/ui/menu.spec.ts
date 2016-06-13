@@ -20,6 +20,10 @@ import {
 } from '../../../lib/algorithm/json';
 
 import {
+  DisposableSet
+} from '../../../lib/core/disposable';
+
+import {
   Message
 } from '../../../lib/core/messaging';
 
@@ -38,25 +42,6 @@ import {
 import {
   Widget
 } from '../../../lib/ui/widget';
-
-
-// Set up a default command and its keybinding.
-const DEFAULT_CMD = 'menu.spec.ts:defaultCmd';
-
-commands.addCommand(DEFAULT_CMD, {
-  execute: (args: JSONObject) => { return args; },
-  label: 'LABEL',
-  icon: 'foo',
-  className: 'bar',
-  isToggled: (args: JSONObject) => { return true; },
-  mnemonic: 1
-});
-
-keymap.addBinding({
-  keys: ['A'],
-  selector: '*',
-  command: DEFAULT_CMD
-});
 
 
 class LogMenu extends Menu {
@@ -93,6 +78,32 @@ class LogMenu extends Menu {
 
 
 describe('ui/menu', () => {
+
+  const DEFAULT_CMD = 'menu.spec.ts:defaultCmd';
+
+  const disposables = new DisposableSet();
+
+  before(() => {
+    let cmd = commands.addCommand(DEFAULT_CMD, {
+      execute: (args: JSONObject) => { return args; },
+      label: 'LABEL',
+      icon: 'foo',
+      className: 'bar',
+      isToggled: (args: JSONObject) => { return true; },
+      mnemonic: 1
+    });
+    let kbd = keymap.addBinding({
+      keys: ['A'],
+      selector: '*',
+      command: DEFAULT_CMD
+    });
+    disposables.add(cmd);
+    disposables.add(kbd);
+  });
+
+  after(() => {
+    disposables.dispose();
+  });
 
   describe('MenuItem', () => {
 
