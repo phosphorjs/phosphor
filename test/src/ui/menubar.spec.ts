@@ -20,6 +20,10 @@ import {
 } from '../../../lib/algorithm/json';
 
 import {
+  DisposableSet
+} from '../../../lib/core/disposable';
+
+import {
   Message
 } from '../../../lib/core/messaging';
 
@@ -46,23 +50,6 @@ import {
 import {
   Widget
 } from '../../../lib/ui/widget';
-
-
-// Set up a default command and its keybinding.
-const DEFAULT_CMD = 'defaultCmd';
-commands.addCommand(DEFAULT_CMD, {
-  execute: (args: JSONObject) => { return args; },
-  label: 'LABEL',
-  icon: 'foo',
-  className: 'bar',
-  isToggled: (args: JSONObject) => { return true; },
-  mnemonic: 1
-});
-keymap.addBinding({
-  keys: ['A'],
-  selector: '*',
-  command: DEFAULT_CMD
-});
 
 
 class LogMenuBar extends MenuBar {
@@ -93,26 +80,50 @@ class LogMenuBar extends MenuBar {
 }
 
 
-function createMenuBar(): MenuBar {
-  let bar = new MenuBar();
-  // Add a few menus to the bar.
-  for (let i = 0; i < 3; i++) {
-    let menu = new Menu();
-    let item = new MenuItem({ command: DEFAULT_CMD });
-    menu.addItem(item);
-    menu.title.label = `Menu${i}`;
-    menu.title.mnemonic = 4;
-    bar.addMenu(menu);
-  }
-  bar.activeIndex = 0;
-  Widget.attach(bar, document.body);
-  return bar;
-}
-
-
 describe('ui/menubar', () => {
 
-  describe('MenuBar(', () => {
+  const DEFAULT_CMD = 'menubar.spec.ts:defaultCmd';
+
+  const disposables = new DisposableSet();
+
+  function createMenuBar(): MenuBar {
+    let bar = new MenuBar();
+    for (let i = 0; i < 3; i++) {
+      let menu = new Menu();
+      let item = new MenuItem({ command: DEFAULT_CMD });
+      menu.addItem(item);
+      menu.title.label = `Menu${i}`;
+      menu.title.mnemonic = 4;
+      bar.addMenu(menu);
+    }
+    bar.activeIndex = 0;
+    Widget.attach(bar, document.body);
+    return bar;
+  }
+
+  before(() => {
+    let cmd = commands.addCommand(DEFAULT_CMD, {
+      execute: (args: JSONObject) => { return args; },
+      label: 'LABEL',
+      icon: 'foo',
+      className: 'bar',
+      isToggled: (args: JSONObject) => { return true; },
+      mnemonic: 1
+    });
+    let kbd = keymap.addBinding({
+      keys: ['A'],
+      selector: '*',
+      command: DEFAULT_CMD
+    });
+    disposables.add(cmd);
+    disposables.add(kbd);
+  });
+
+  after(() => {
+    disposables.dispose();
+  });
+
+  describe('MenuBar', () => {
 
     describe('.createNode()', () => {
 
@@ -484,9 +495,13 @@ describe('ui/menubar', () => {
 
       let bar: MenuBar = null;
 
-      beforeEach(() => { bar = createMenuBar(); });
+      beforeEach(() => {
+        bar = createMenuBar();
+      });
 
-      afterEach(() => bar.dispose());
+      afterEach(() => {
+        bar.dispose();
+      });
 
       context('keydown', () => {
 
@@ -735,7 +750,7 @@ describe('ui/menubar', () => {
 
     });
 
-    context('Menu.menuRequested', () => {
+    context('`menuRequested` signal', () => {
 
       it('should activate the next menu', () => {
         let bar = createMenuBar();
@@ -762,54 +777,54 @@ describe('ui/menubar', () => {
 
     });
 
-  });
+    describe('.ContentRenderer', () => {
 
-  describe('MenuBar.ContentRenderer', () => {
+      describe('#createItemNode()', () => {
 
-    describe('#createItemNode()', () => {
+        it('should create a node for a menu bar item', () => {
+          let renderer = new MenuBar.ContentRenderer();
+          let node = renderer.createItemNode();
+          expect(node.classList.contains('p-MenuBar-item')).to.be(true);
+          expect(node.getElementsByClassName('p-MenuBar-itemIcon').length).to.be(1);
+          expect(node.getElementsByClassName('p-MenuBar-itemLabel').length).to.be(1);
+        });
 
-      it('should create a node for a menu bar item', () => {
-        let renderer = new MenuBar.ContentRenderer();
-        let node = renderer.createItemNode();
-        expect(node.classList.contains('p-MenuBar-item')).to.be(true);
-        expect(node.getElementsByClassName('p-MenuBar-itemIcon').length).to.be(1);
-        expect(node.getElementsByClassName('p-MenuBar-itemLabel').length).to.be(1);
       });
 
-    });
+      describe('#updateItemNode()', () => {
 
-    describe('#updateItemNode()', () => {
+        it('should update an item node to reflect the state of a menu title', () => {
+          let renderer = new MenuBar.ContentRenderer();
+          let node = renderer.createItemNode();
+          let title = new Title();
+          title.className = 'foo';
+          title.icon = 'bar';
+          title.label = 'fizz';
+          title.mnemonic = 1;
+          renderer.updateItemNode(node, title);
+          expect(node.classList.contains(title.className)).to.be(true);
+          let icon = node.getElementsByClassName('p-MenuBar-itemIcon')[0] as HTMLElement;
+          expect(icon.classList.contains(title.icon)).to.be(true);
+          let label = node.getElementsByClassName('p-MenuBar-itemLabel')[0] as HTMLElement;
+          expect(label.innerHTML).to.be('f<span class="p-MenuBar-itemMnemonic">i</span>zz');
+        });
 
-      it('should update an item node to reflect the state of a menu title', () => {
-        let renderer = new MenuBar.ContentRenderer();
-        let node = renderer.createItemNode();
-        let title = new Title();
-        title.className = 'foo';
-        title.icon = 'bar';
-        title.label = 'fizz';
-        title.mnemonic = 1;
-        renderer.updateItemNode(node, title);
-        expect(node.classList.contains(title.className)).to.be(true);
-        let icon = node.getElementsByClassName('p-MenuBar-itemIcon')[0] as HTMLElement;
-        expect(icon.classList.contains(title.icon)).to.be(true);
-        let label = node.getElementsByClassName('p-MenuBar-itemLabel')[0] as HTMLElement;
-        expect(label.innerHTML).to.be('f<span class="p-MenuBar-itemMnemonic">i</span>zz');
       });
 
-    });
+      describe('#formatLabel()', () => {
 
-    describe('#formatLabel()', () => {
+        it('should format a label into HTML for display', () => {
+          let renderer = new MenuBar.ContentRenderer();
+          let label = renderer.formatLabel('foo', 0);
+          expect(label).to.be('<span class="p-MenuBar-itemMnemonic">f</span>oo');
+        });
 
-      it('should format a label into HTML for display', () => {
-        let renderer = new MenuBar.ContentRenderer();
-        let label = renderer.formatLabel('foo', 0);
-        expect(label).to.be('<span class="p-MenuBar-itemMnemonic">f</span>oo');
-      });
+        it('should not add a mnemonic if the index is out of range', () => {
+          let renderer = new MenuBar.ContentRenderer();
+          let label = renderer.formatLabel('foo', -1);
+          expect(label).to.be('foo');
+        });
 
-      it('should not add a mnemonic if the index is out of range', () => {
-        let renderer = new MenuBar.ContentRenderer();
-        let label = renderer.formatLabel('foo', -1);
-        expect(label).to.be('foo');
       });
 
     });
