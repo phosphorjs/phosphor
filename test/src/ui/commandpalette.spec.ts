@@ -80,7 +80,7 @@ describe('ui/commandpalette', () => {
       it('should be read-only', () => {
         let options: CommandItem.IOptions = { command: 'test' };
         let item = new CommandItem(options);
-        expect(() => { item.command = 'test-1' }).to.throwError();
+        expect(() => { item.command = 'test-1'; }).to.throwError();
       });
 
     });
@@ -102,7 +102,7 @@ describe('ui/commandpalette', () => {
           command: 'test'
         };
         let item = new CommandItem(options);
-        expect(() => { item.args = null }).to.throwError();
+        expect(() => { item.args = null; }).to.throwError();
       });
 
     });
@@ -121,7 +121,7 @@ describe('ui/commandpalette', () => {
         let options: ICommand = { execute: () => { } };
         let command = commands.addCommand('test', options);
         let item = new CommandItem({ command: 'test' });
-        expect(() => { item.label = 'test label' }).to.throwError();
+        expect(() => { item.label = 'test label'; }).to.throwError();
         command.dispose();
       });
 
@@ -141,7 +141,7 @@ describe('ui/commandpalette', () => {
         let options: ICommand = { execute: () => { } };
         let command = commands.addCommand('test', options);
         let item = new CommandItem({ command: 'test' });
-        expect(() => { item.caption = 'test caption' }).to.throwError();
+        expect(() => { item.caption = 'test caption'; }).to.throwError();
         command.dispose();
       });
 
@@ -161,7 +161,7 @@ describe('ui/commandpalette', () => {
         let options: ICommand = { execute: () => { } };
         let command = commands.addCommand('test', options);
         let item = new CommandItem({ command: 'test' });
-        expect(() => { item.className = 'testClass' }).to.throwError();
+        expect(() => { item.className = 'testClass'; }).to.throwError();
         command.dispose();
       });
 
@@ -187,7 +187,7 @@ describe('ui/commandpalette', () => {
         let options: ICommand = { execute: () => { } };
         let command = commands.addCommand('test', options);
         let item = new CommandItem({ command: 'test' });
-        expect(() => { item.isEnabled = false }).to.throwError();
+        expect(() => { item.isEnabled = false; }).to.throwError();
         command.dispose();
       });
 
@@ -213,7 +213,7 @@ describe('ui/commandpalette', () => {
         let options: ICommand = { execute: () => { } };
         let command = commands.addCommand('test', options);
         let item = new CommandItem({ command: 'test' });
-        expect(() => { item.isToggled = false }).to.throwError();
+        expect(() => { item.isToggled = false; }).to.throwError();
         command.dispose();
       });
 
@@ -239,7 +239,7 @@ describe('ui/commandpalette', () => {
         let options: ICommand = { execute: () => { } };
         let command = commands.addCommand('test', options);
         let item = new CommandItem({ command: 'test' });
-        expect(() => { item.isVisible = false }).to.throwError();
+        expect(() => { item.isVisible = false; }).to.throwError();
         command.dispose();
       });
 
@@ -266,7 +266,7 @@ describe('ui/commandpalette', () => {
         let options: ICommand = { execute: () => { } };
         let command = commands.addCommand('test', options);
         let item = new CommandItem({ command: 'test' });
-        expect(() => { item.keyBinding = null }).to.throwError();
+        expect(() => { item.keyBinding = null; }).to.throwError();
         command.dispose();
       });
 
@@ -294,7 +294,7 @@ describe('ui/commandpalette', () => {
         let options: ICommand = { execute: () => { } };
         let command = commands.addCommand('test', options);
         let item = new CommandItem({ command: 'test' });
-        expect(() => { item.category = 'random' }).to.throwError();
+        expect(() => { item.category = 'random'; }).to.throwError();
         command.dispose();
       });
 
