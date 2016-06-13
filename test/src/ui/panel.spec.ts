@@ -88,7 +88,7 @@ describe('ui/panel', () => {
 
       it('should create a panel layout to use with a new panel', () => {
         let layout = Panel.createLayout();
-        expect(layout instanceof PanelLayout).to.be(true);
+        expect(layout).to.be.a(PanelLayout);
       });
 
     });
@@ -97,7 +97,12 @@ describe('ui/panel', () => {
 
       it('should take no arguments', () => {
         let panel = new Panel();
-        expect(panel.layout instanceof PanelLayout).to.be(true);
+        expect(panel.layout).to.be.a(PanelLayout);
+      });
+
+      it('should add the `p-Panel` class', () => {
+        let panel = new Panel();
+        expect(panel.hasClass('p-Panel')).to.be(true);
       });
 
     });
