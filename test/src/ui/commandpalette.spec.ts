@@ -8,12 +8,20 @@
 import expect = require('expect.js');
 
 import {
-   each
+  simulate
+} from 'simulate-event';
+
+import {
+  each
 } from '../../../lib/algorithm/iteration';
 
 import {
   JSONObject
 } from '../../../lib/algorithm/json';
+
+import {
+  DisposableSet
+} from '../../../lib/core/disposable'
 
 import {
   sendMessage
@@ -28,10 +36,6 @@ import {
 } from '../../../lib/ui/commands';
 
 import {
-  DisposableSet
-} from '../../../lib/core/disposable'
-
-import {
   keymap, KeyBinding
 } from '../../../lib/ui/keymap';
 
@@ -39,12 +43,9 @@ import {
   Widget, WidgetMessage
 } from '../../../lib/ui/widget';
 
-import {
-  simulate
-} from 'simulate-event';
-
 
 class LogPalette extends CommandPalette {
+
   events: string[] = [];
 
   dispose(): void {
@@ -66,8 +67,7 @@ describe('ui/commandpalette', () => {
     describe('#constructor()', () => {
 
       it('should accept a command item options argument', () => {
-        let options: CommandItem.IOptions = { command: 'test' };
-        let item = new CommandItem(options);
+        let item = new CommandItem({ command: 'test' });
         expect(item).to.be.a(CommandItem);
       });
 
@@ -76,14 +76,12 @@ describe('ui/commandpalette', () => {
     describe('#command', () => {
 
       it('should return the command name of a command item', () => {
-        let options: CommandItem.IOptions = { command: 'test' };
-        let item = new CommandItem(options);
+        let item = new CommandItem({ command: 'test' });
         expect(item.command).to.be('test');
       });
 
       it('should be read-only', () => {
-        let options: CommandItem.IOptions = { command: 'test' };
-        let item = new CommandItem(options);
+        let item = new CommandItem({ command: 'test' });
         expect(() => { item.command = 'test-1'; }).to.throwError();
       });
 
@@ -566,7 +564,7 @@ describe('ui/commandpalette', () => {
           let palette = new CommandPalette();
           let content = palette.contentNode;
 
-          palette.addItem(new CommandItem({ command: 'test' }));
+          palette.addItem({ command: 'test' });
           sendMessage(palette, WidgetMessage.UpdateRequest);
           Widget.attach(palette, document.body);
 
@@ -587,7 +585,7 @@ describe('ui/commandpalette', () => {
           let palette = new CommandPalette();
           let content = palette.contentNode;
 
-          palette.addItem(new CommandItem({ command: 'test' }));
+          palette.addItem({ command: 'test' });
           sendMessage(palette, WidgetMessage.UpdateRequest);
           Widget.attach(palette, document.body);
 
@@ -611,7 +609,7 @@ describe('ui/commandpalette', () => {
           let palette = new CommandPalette();
           let content = palette.contentNode;
 
-          palette.addItem(new CommandItem({ command: 'test' }));
+          palette.addItem({ command: 'test' });
           sendMessage(palette, WidgetMessage.UpdateRequest);
           Widget.attach(palette, document.body);
 
@@ -633,7 +631,7 @@ describe('ui/commandpalette', () => {
           let palette = new CommandPalette();
           let content = palette.contentNode;
 
-          palette.addItem(new CommandItem({ command: 'test' }));
+          palette.addItem({ command: 'test' });
           sendMessage(palette, WidgetMessage.UpdateRequest);
           Widget.attach(palette, document.body);
 
@@ -655,7 +653,7 @@ describe('ui/commandpalette', () => {
           let palette = new CommandPalette();
           let content = palette.contentNode;
 
-          palette.addItem(new CommandItem({ command: 'test' }));
+          palette.addItem({ command: 'test' });
           sendMessage(palette, WidgetMessage.UpdateRequest);
           Widget.attach(palette, document.body);
 
@@ -681,7 +679,7 @@ describe('ui/commandpalette', () => {
           let palette = new CommandPalette();
           let content = palette.contentNode;
 
-          palette.addItem(new CommandItem({ command: 'test' }));
+          palette.addItem({ command: 'test' });
           sendMessage(palette, WidgetMessage.UpdateRequest);
           Widget.attach(palette, document.body);
 
@@ -708,7 +706,7 @@ describe('ui/commandpalette', () => {
             let category = categories[index];
             values.forEach(command => {
               let options: ICommand = { execute: () => { }, label: command };
-              palette.addItem(new CommandItem({ category, command }));
+              palette.addItem({ category, command });
               disposables.add(commands.addCommand(command, options));
             });
           });
@@ -740,7 +738,7 @@ describe('ui/commandpalette', () => {
           ['A', 'B', 'C', 'D', 'E'].forEach(name => {
             let options: ICommand = { execute: () => { }, label: name };
             let command = commands.addCommand(name, options);
-            palette.addItem(new CommandItem({ command: name }));
+            palette.addItem({ command: name });
             disposables.add(command);
           });
 
@@ -772,7 +770,7 @@ describe('ui/commandpalette', () => {
             let category = categories[index];
             values.forEach(command => {
               let options: ICommand = { execute: () => { }, label: command };
-              palette.addItem(new CommandItem({ category, command }));
+              palette.addItem({ category, command });
               disposables.add(commands.addCommand(command, options));
             });
           });
