@@ -239,7 +239,7 @@ describe('ui/splitpanel', () => {
         let panel = new LogSplitPanel();
         let layout = panel.layout as SplitLayout;
         let widgets = [new Widget(), new Widget(), new Widget()];
-        each(widgets, w => panel.addWidget(w));
+        each(widgets, w => { panel.addWidget(w); });
         Widget.attach(panel, document.body);
         simulate(layout.handles.at(0), 'mousedown');
         expect(panel.events.indexOf('mousedown')).to.not.be(-1);
@@ -247,7 +247,7 @@ describe('ui/splitpanel', () => {
         expect(panel.events.indexOf('keydown')).to.not.be(-1);
         let node = panel.node;
         panel.dispose();
-        expect(every(widgets, w => w.isDisposed ));
+        expect(every(widgets, w => w.isDisposed));
         simulate(node, 'contextmenu');
         expect(panel.events.indexOf('contextmenu')).to.be(-1);
       });
@@ -289,7 +289,7 @@ describe('ui/splitpanel', () => {
       it('should get the read-only sequence of the split handles in the panel', () => {
         let panel = new SplitPanel();
         let widgets = [new Widget(), new Widget(), new Widget()];
-        each(widgets, w => panel.addWidget(w));
+        each(widgets, w => { panel.addWidget(w); });
         let handles = panel.handles;
         expect(handles.length).to.be(3);
       });
@@ -306,7 +306,7 @@ describe('ui/splitpanel', () => {
       it('should get the current sizes of the widgets in the panel', () => {
         let panel = new SplitPanel();
         let widgets = [new Widget(), new Widget(), new Widget()];
-        each(widgets, w => panel.addWidget(w));
+        each(widgets, w => { panel.addWidget(w); });
         let sizes = panel.sizes();
         expect(sizes).to.eql([0, 0, 0]);
       });
@@ -318,7 +318,7 @@ describe('ui/splitpanel', () => {
       it('should set the desired sizes for the widgets in the panel', () => {
         let panel = new SplitPanel();
         let widgets = [new Widget(), new Widget(), new Widget()];
-        each(widgets, w => panel.addWidget(w));
+        each(widgets, w => { panel.addWidget(w); });
         panel.setSizes([10, 10, 10]);
         let sizes = panel.sizes();
         expect(sizes).to.eql([10, 10, 10]);
@@ -327,7 +327,7 @@ describe('ui/splitpanel', () => {
       it('should ignore extra values', () => {
         let panel = new SplitPanel();
         let widgets = [new Widget(), new Widget(), new Widget()];
-        each(widgets, w => panel.addWidget(w));
+        each(widgets, w => { panel.addWidget(w); });
         panel.setSizes([10, 10, 10, 20]);
         let sizes = panel.sizes();
         expect(sizes).to.eql([10, 10, 10]);
@@ -344,13 +344,15 @@ describe('ui/splitpanel', () => {
         panel = new LogSplitPanel();
         layout = panel.layout as LogSplitLayout;
         let widgets = [new Widget(), new Widget(), new Widget()];
-        each(widgets, w => panel.addWidget(w));
+        each(widgets, w => { panel.addWidget(w); });
         panel.setSizes([10, 10, 10, 20]);
         Widget.attach(panel, document.body);
         sendMessage(panel, WidgetMessage.UpdateRequest);
       });
 
-      afterEach(() => { panel.dispose(); });
+      afterEach(() => {
+        panel.dispose();
+      });
 
       context('mousedown', () => {
 
@@ -397,7 +399,7 @@ describe('ui/splitpanel', () => {
 
         it('should move the handle down', (done) => {
           panel.orientation = 'vertical';
-          each(panel.widgets, w => w.node.style.minHeight = '20px');
+          each(panel.widgets, w => { w.node.style.minHeight = '20px'; });
           sendMessage(panel, WidgetMessage.UpdateRequest);
           let handle = layout.handles.at(1);
           let rect = handle.getBoundingClientRect();
@@ -705,7 +707,7 @@ describe('ui/splitpanel', () => {
       it('should be a read-only sequence of the split handles in the layout', () => {
         let layout = new SplitLayout(new HandleRenderer());
         let widgets = [new Widget(), new Widget(), new Widget()];
-        each(widgets, w => layout.addWidget(w));
+        each(widgets, w => { layout.addWidget(w); });
         let handles = layout.handles;
         expect(every(handles, h => h.classList.contains('p-SplitPanel-handle')));
       });
@@ -724,7 +726,7 @@ describe('ui/splitpanel', () => {
         let widgets = [new Widget(), new Widget(), new Widget()];
         let parent = new Widget();
         parent.layout = layout;
-        each(widgets, w => layout.addWidget(w));
+        each(widgets, w => { layout.addWidget(w); });
         Widget.attach(parent, document.body);
         let sizes = layout.sizes();
         expect(sizes).to.eql([0, 0, 0]);
@@ -740,7 +742,7 @@ describe('ui/splitpanel', () => {
         let widgets = [new Widget(), new Widget(), new Widget()];
         let parent = new Widget();
         parent.layout = layout;
-        each(widgets, w => layout.addWidget(w));
+        each(widgets, w => { layout.addWidget(w); });
         Widget.attach(parent, document.body);
         layout.setSizes([10, 10, 10]);
         let sizes = layout.sizes();
@@ -753,7 +755,7 @@ describe('ui/splitpanel', () => {
         let widgets = [new Widget(), new Widget(), new Widget()];
         let parent = new Widget();
         parent.layout = layout;
-        each(widgets, w => layout.addWidget(w));
+        each(widgets, w => { layout.addWidget(w); });
         Widget.attach(parent, document.body);
         layout.setSizes([10, 10, 10, 20]);
         let sizes = layout.sizes();
@@ -773,14 +775,16 @@ describe('ui/splitpanel', () => {
         let widgets = [new Widget(), new Widget(), new Widget()];
         parent = new LogWidget();
         parent.layout = layout;
-        each(widgets, w => layout.addWidget(w));
-        each(widgets, w => w.node.style.minHeight = '100px');
-        each(widgets, w => w.node.style.minWidth = '100px');
+        each(widgets, w => { layout.addWidget(w); });
+        each(widgets, w => { w.node.style.minHeight = '100px'; });
+        each(widgets, w => { w.node.style.minWidth = '100px'; });
         Widget.attach(parent, document.body);
         requestAnimationFrame(() => done());
       });
 
-      afterEach(() => parent.dispose());
+      afterEach(() => {
+        parent.dispose();
+      });
 
       it('should set the offset position of a split handle', (done) => {
         let handle = layout.handles.at(1);
@@ -876,7 +880,7 @@ describe('ui/splitpanel', () => {
         let widgets = [new Widget(), new Widget(), new Widget()];
         let parent = new Widget();
         parent.layout = layout;
-        each(widgets, w => layout.addWidget(w));
+        each(widgets, w => { layout.addWidget(w); });
         let widget = widgets[0];
         let handle = layout.handles.at(0);
         layout.insertWidget(2, widget);
@@ -890,7 +894,7 @@ describe('ui/splitpanel', () => {
         let widgets = [new Widget(), new Widget(), new Widget()];
         let parent = new Widget();
         parent.layout = layout;
-        each(widgets, w => layout.addWidget(w));
+        each(widgets, w => { layout.addWidget(w); });
         let widget = widgets[0];
         layout.insertWidget(2, widget);
         requestAnimationFrame(() => {
@@ -962,7 +966,7 @@ describe('ui/splitpanel', () => {
         Widget.attach(parent, document.body);
         let layout = new LogSplitLayout(new HandleRenderer());
         let widgets = [new LogWidget(), new LogWidget(), new LogWidget()];
-        each(widgets, w => layout.addWidget(w));
+        each(widgets, w => { layout.addWidget(w); });
         parent.layout = layout;
         expect(layout.methods.indexOf('onLayoutChanged')).to.not.be(-1);
         expect(every(widgets, w => w.parent === parent)).to.be(true);
@@ -997,9 +1001,9 @@ describe('ui/splitpanel', () => {
         parent.layout = layout;
         let children = [new LogWidget(), new LogWidget(), new LogWidget()];
         let hidden = [new LogWidget(), new LogWidget(), new LogWidget()];
-        each(children, w => layout.addWidget(w));
-        each(hidden, w => layout.addWidget(w));
-        each(hidden, w => w.hide());
+        each(children, w => { layout.addWidget(w); });
+        each(hidden, w => { layout.addWidget(w); });
+        each(hidden, w => { w.hide(); });
         parent.hide();
         Widget.attach(parent, document.body);
         parent.show();
@@ -1028,7 +1032,7 @@ describe('ui/splitpanel', () => {
         let layout = new LogSplitLayout(new HandleRenderer());
         let parent = new Widget();
         let children = [new LogWidget(), new LogWidget(), new LogWidget()];
-        each(children, w => layout.addWidget(w));
+        each(children, w => { layout.addWidget(w); });
         parent.layout = layout;
         sendMessage(parent, WidgetMessage.AfterAttach);
         expect(layout.methods.indexOf('onAfterAttach')).to.not.be(-1);
@@ -1047,7 +1051,7 @@ describe('ui/splitpanel', () => {
         parent.layout = layout;
         let widgets = [new LogWidget(), new LogWidget(), new LogWidget()];
         widgets[0].hide();
-        each(widgets, w => layout.addWidget(w));
+        each(widgets, w => { layout.addWidget(w); });
         Widget.attach(parent, document.body);
         widgets[0].show();
         expect(layout.methods.indexOf('onChildShown')).to.not.be(-1);
@@ -1070,7 +1074,7 @@ describe('ui/splitpanel', () => {
         let layout = new LogSplitLayout(new HandleRenderer());
         parent.layout = layout;
         let widgets = [new LogWidget(), new LogWidget(), new LogWidget()];
-        each(widgets, w => layout.addWidget(w));
+        each(widgets, w => { layout.addWidget(w); });
         Widget.attach(parent, document.body);
         widgets[0].hide();
         expect(layout.methods.indexOf('onChildHidden')).to.not.be(-1);
@@ -1093,7 +1097,7 @@ describe('ui/splitpanel', () => {
         let layout = new LogSplitLayout(new HandleRenderer());
         parent.layout = layout;
         let widgets = [new LogWidget(), new LogWidget(), new LogWidget()];
-        each(widgets, w => layout.addWidget(w));
+        each(widgets, w => { layout.addWidget(w); });
         Widget.attach(parent, document.body);
         let msg = new ResizeMessage(10, 10);
         sendMessage(parent, msg);
@@ -1125,10 +1129,12 @@ describe('ui/splitpanel', () => {
         parent.layout = layout;
         Widget.attach(parent, document.body);
         let widgets = [new LogWidget(), new LogWidget(), new LogWidget()];
-        each(widgets, w => layout.addWidget(w));
+        each(widgets, w => { layout.addWidget(w); });
       });
 
-      afterEach(() => parent.dispose());
+      afterEach(() => {
+        parent.dispose();
+      });
 
       it('should be called when the parent is updated', () => {
         sendMessage(parent, WidgetMessage.UpdateRequest);
@@ -1160,10 +1166,12 @@ describe('ui/splitpanel', () => {
         parent.layout = layout;
         Widget.attach(parent, document.body);
         let widgets = [new LogWidget(), new LogWidget(), new LogWidget()];
-        each(widgets, w => layout.addWidget(w));
+        each(widgets, w => { layout.addWidget(w); });
       });
 
-      afterEach(() => parent.dispose());
+      afterEach(() => {
+        parent.dispose();
+      });
 
       it('should be called when the parent fit is requested', () => {
         sendMessage(parent, WidgetMessage.FitRequest);
