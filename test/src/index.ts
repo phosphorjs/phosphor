@@ -46,5 +46,7 @@ import './ui/boxpanel.spec';
 
 import './ui/splitpanel.spec';
 
+import './ui/stackedpanel.spec';
+
 import '../index.css';
 import '../../styles/base.css';
