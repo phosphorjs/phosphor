@@ -246,7 +246,7 @@ describe('ui/stackedpanel', () => {
         let widgets = [new Widget(), new Widget(), new Widget()];
         let parent = new Widget();
         parent.layout = layout;
-        each(widgets, w => layout.addWidget(w));
+        each(widgets, w => { layout.addWidget(w); });
         let widget = widgets[0];
         layout.insertWidget(2, widget);
         expect(layout.methods.indexOf('moveWidget')).to.not.be(-1);
@@ -258,7 +258,7 @@ describe('ui/stackedpanel', () => {
         let widgets = [new Widget(), new Widget(), new Widget()];
         let parent = new Widget();
         parent.layout = layout;
-        each(widgets, w => layout.addWidget(w));
+        each(widgets, w => { layout.addWidget(w); });
         let widget = widgets[0];
         layout.insertWidget(2, widget);
         requestAnimationFrame(() => {
@@ -352,9 +352,9 @@ describe('ui/stackedpanel', () => {
         parent.layout = layout;
         let children = [new LogWidget(), new LogWidget(), new LogWidget()];
         let hidden = [new LogWidget(), new LogWidget(), new LogWidget()];
-        each(children, w => layout.addWidget(w));
-        each(hidden, w => layout.addWidget(w));
-        each(hidden, w => w.hide());
+        each(children, w => { layout.addWidget(w); });
+        each(hidden, w => { layout.addWidget(w); });
+        each(hidden, w => { w.hide(); });
         parent.hide();
         Widget.attach(parent, document.body);
         parent.show();
@@ -383,7 +383,7 @@ describe('ui/stackedpanel', () => {
         let layout = new LogStackedLayout();
         let parent = new Widget();
         let children = [new LogWidget(), new LogWidget(), new LogWidget()];
-        each(children, w => layout.addWidget(w));
+        each(children, w => { layout.addWidget(w); });
         parent.layout = layout;
         sendMessage(parent, WidgetMessage.AfterAttach);
         expect(layout.methods.indexOf('onAfterAttach')).to.not.be(-1);
@@ -402,7 +402,7 @@ describe('ui/stackedpanel', () => {
         parent.layout = layout;
         let widgets = [new LogWidget(), new LogWidget(), new LogWidget()];
         widgets[0].hide();
-        each(widgets, w => layout.addWidget(w));
+        each(widgets, w => { layout.addWidget(w); });
         Widget.attach(parent, document.body);
         widgets[0].show();
         expect(layout.methods.indexOf('onChildShown')).to.not.be(-1);
@@ -425,7 +425,7 @@ describe('ui/stackedpanel', () => {
         let layout = new LogStackedLayout();
         parent.layout = layout;
         let widgets = [new LogWidget(), new LogWidget(), new LogWidget()];
-        each(widgets, w => layout.addWidget(w));
+        each(widgets, w => { layout.addWidget(w); });
         Widget.attach(parent, document.body);
         widgets[0].hide();
         expect(layout.methods.indexOf('onChildHidden')).to.not.be(-1);
@@ -448,7 +448,7 @@ describe('ui/stackedpanel', () => {
         let layout = new LogStackedLayout();
         parent.layout = layout;
         let widgets = [new LogWidget(), new LogWidget(), new LogWidget()];
-        each(widgets, w => layout.addWidget(w));
+        each(widgets, w => { layout.addWidget(w); });
         Widget.attach(parent, document.body);
         let msg = new ResizeMessage(10, 10);
         sendMessage(parent, msg);
@@ -469,7 +469,6 @@ describe('ui/stackedpanel', () => {
 
     });
 
-
     describe('#onUpdateRequest()', () => {
 
       let parent: LogWidget;
@@ -481,10 +480,12 @@ describe('ui/stackedpanel', () => {
         parent.layout = layout;
         Widget.attach(parent, document.body);
         let widgets = [new LogWidget(), new LogWidget(), new LogWidget()];
-        each(widgets, w => layout.addWidget(w));
+        each(widgets, w => { layout.addWidget(w); });
       });
 
-      afterEach(() => parent.dispose());
+      afterEach(() => {
+        parent.dispose();
+      });
 
       it('should be called when the parent is updated', () => {
         sendMessage(parent, WidgetMessage.UpdateRequest);
@@ -510,10 +511,12 @@ describe('ui/stackedpanel', () => {
         parent.layout = layout;
         Widget.attach(parent, document.body);
         let widgets = [new LogWidget(), new LogWidget(), new LogWidget()];
-        each(widgets, w => layout.addWidget(w));
+        each(widgets, w => { layout.addWidget(w); });
       });
 
-      afterEach(() => parent.dispose());
+      afterEach(() => {
+        parent.dispose();
+      });
 
       it('should be called when the parent fit is requested', () => {
         sendMessage(parent, WidgetMessage.FitRequest);
