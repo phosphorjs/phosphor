@@ -113,7 +113,7 @@ describe('dom/query', () => {
       area.scrollTop = er.bottom - ar.bottom - threshold;
       top = area.scrollTop;
       scrollIfNeeded(area, elem, threshold);
-      expect(area.scrollTop).to.be(goal);
+      expect(Math.abs(area.scrollTop - goal) <= 1).to.be(true);
       document.body.removeChild(area);
     });
 
