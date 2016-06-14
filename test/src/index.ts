@@ -48,5 +48,7 @@ import './ui/splitpanel.spec';
 
 import './ui/stackedpanel.spec';
 
+import './ui/tabbar.spec';
+
 import '../index.css';
 import '../../styles/base.css';

@@ -438,7 +438,7 @@ class TabBar extends Widget {
 
       // Update the current index.
       if (this._currentIndex === -1) {
-        this._currentIndex = j
+        this._currentIndex = j;
         this.currentChanged.emit({
           previousIndex: -1, previousTitle: null,
           currentIndex: j, currentTitle: title
@@ -847,7 +847,7 @@ class TabBar extends Widget {
       }
     }
 
-    // Update the positions of the tab.
+    // Update the positions of the tabs.
     Private.layoutTabs(this._tabs, data, event);
   }
 
