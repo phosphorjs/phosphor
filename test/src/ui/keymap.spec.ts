@@ -265,7 +265,7 @@ describe('ui/keymap', () => {
       });
 
       it('should throw an error if binding has an invalid selector', () => {
-        let command = commands.addCommand('test', { execute: () => {  } });
+        let command = commands.addCommand('test', { execute: () => { } });
         let options = { keys: ['Ctrl ;'], selector: '..', command: 'test' };
         expect(() => { keymap.addBinding(options); }).to.throwError();
         command.dispose();
