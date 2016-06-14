@@ -50,5 +50,7 @@ import './ui/stackedpanel.spec';
 
 import './ui/tabbar.spec';
 
+import './ui/tabpanel.spec';
+
 import '../index.css';
 import '../../styles/base.css';
