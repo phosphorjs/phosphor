@@ -52,5 +52,7 @@ import './ui/tabbar.spec';
 
 import './ui/tabpanel.spec';
 
+import './ui/commandpalette.spec';
+
 import '../index.css';
 import '../../styles/base.css';
