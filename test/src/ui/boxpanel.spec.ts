@@ -521,7 +521,7 @@ describe('ui/boxpanel', () => {
         let parent = new Widget();
         let layout = new LogBoxLayout();
         let widgets = [new Widget(), new Widget(), new Widget()];
-        each(widgets, w => layout.addWidget(w));
+        each(widgets, w => { layout.addWidget(w); });
         Widget.attach(parent, document.body);
         parent.layout = layout;
         expect(every(widgets, w => w.parent === parent));
@@ -555,9 +555,9 @@ describe('ui/boxpanel', () => {
         parent.layout = layout;
         let widgets = [new LogWidget(), new LogWidget(), new LogWidget()];
         let hiddenWidgets = [new LogWidget(), new LogWidget()];
-        each(widgets, w => layout.addWidget(w));
-        each(hiddenWidgets, w => layout.addWidget(w));
-        each(hiddenWidgets, w => w.hide());
+        each(widgets, w => { layout.addWidget(w); });
+        each(hiddenWidgets, w => { layout.addWidget(w); });
+        each(hiddenWidgets, w => { w.hide(); });
         Widget.attach(parent, document.body);
         parent.layout = layout;
         parent.hide();
@@ -592,7 +592,7 @@ describe('ui/boxpanel', () => {
         let layout = new LogBoxLayout();
         parent.layout = layout;
         let widgets = [new LogWidget(), new LogWidget(), new LogWidget()];
-        each(widgets, w => layout.addWidget(w));
+        each(widgets, w => { layout.addWidget(w); });
         Widget.attach(parent, document.body);
         expect(parent.methods.indexOf('onAfterAttach')).to.not.be(-1);
         expect(layout.methods.indexOf('onAfterAttach')).to.not.be(-1);
@@ -610,7 +610,7 @@ describe('ui/boxpanel', () => {
         parent.layout = layout;
         let widgets = [new LogWidget(), new LogWidget(), new LogWidget()];
         widgets[0].hide();
-        each(widgets, w => layout.addWidget(w));
+        each(widgets, w => { layout.addWidget(w); });
         Widget.attach(parent, document.body);
         widgets[0].show();
         expect(layout.methods.indexOf('onChildShown')).to.not.be(-1);
@@ -633,7 +633,7 @@ describe('ui/boxpanel', () => {
         let layout = new LogBoxLayout();
         parent.layout = layout;
         let widgets = [new LogWidget(), new LogWidget(), new LogWidget()];
-        each(widgets, w => layout.addWidget(w));
+        each(widgets, w => { layout.addWidget(w); });
         Widget.attach(parent, document.body);
         widgets[0].hide();
         expect(layout.methods.indexOf('onChildHidden')).to.not.be(-1);
@@ -656,7 +656,7 @@ describe('ui/boxpanel', () => {
         let layout = new LogBoxLayout();
         parent.layout = layout;
         let widgets = [new LogWidget(), new LogWidget(), new LogWidget()];
-        each(widgets, w => layout.addWidget(w));
+        each(widgets, w => { layout.addWidget(w); });
         Widget.attach(parent, document.body);
         let msg = new ResizeMessage(10, 10);
         sendMessage(parent, msg);
@@ -688,10 +688,12 @@ describe('ui/boxpanel', () => {
         parent.layout = layout;
         Widget.attach(parent, document.body);
         let widgets = [new LogWidget(), new LogWidget(), new LogWidget()];
-        each(widgets, w => layout.addWidget(w));
+        each(widgets, w => { layout.addWidget(w); });
       });
 
-      afterEach(() => parent.dispose());
+      afterEach(() => {
+        parent.dispose();
+      });
 
       it('should be called when the parent is updated', () => {
         sendMessage(parent, WidgetMessage.UpdateRequest);
@@ -735,10 +737,12 @@ describe('ui/boxpanel', () => {
         parent.layout = layout;
         Widget.attach(parent, document.body);
         let widgets = [new LogWidget(), new LogWidget(), new LogWidget()];
-        each(widgets, w => layout.addWidget(w));
+        each(widgets, w => { layout.addWidget(w); });
       });
 
-      afterEach(() => parent.dispose());
+      afterEach(() => {
+        parent.dispose();
+      });
 
       it('should be called when the parent fit is requested', () => {
         sendMessage(parent, WidgetMessage.FitRequest);
