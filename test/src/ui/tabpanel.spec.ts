@@ -190,7 +190,7 @@ describe('ui/tabpanel', () => {
       it('should move the widget in the stacked panel when a tab is moved', () => {
         let panel = new TabPanel();
         let widgets = [new LogWidget(), new LogWidget()];
-        each(widgets, w => panel.addWidget(w));
+        each(widgets, w => { panel.addWidget(w); });
         Widget.attach(panel, document.body);
         let bar = panel.tabBar;
         let called = false;
@@ -211,8 +211,8 @@ describe('ui/tabpanel', () => {
       it('should show and focus the new widget when the current tab changes', () => {
         let panel = new TabPanel();
         let widgets = [new Widget(), new Widget(), new Widget()];
-        each(widgets, w => panel.addWidget(w));
-        each(widgets, w => w.node.tabIndex = -1);
+        each(widgets, w => { panel.addWidget(w); });
+        each(widgets, w => { w.node.tabIndex = -1; });
         Widget.attach(panel, document.body);
         let bar = panel.tabBar;
         let called = false;
@@ -282,7 +282,7 @@ describe('ui/tabpanel', () => {
       it('should get a read-only sequence of the widgets in the panel', () => {
         let panel = new TabPanel();
         let widgets = [new Widget(), new Widget(), new Widget()];
-        each(widgets, w => panel.addWidget(w));
+        each(widgets, w => { panel.addWidget(w); });
         expect(toArray(panel.widgets)).to.eql(widgets);
       });
 
@@ -298,7 +298,7 @@ describe('ui/tabpanel', () => {
       it('should add a widget to the end of the tab panel', () => {
         let panel = new TabPanel();
         let widgets = [new Widget(), new Widget(), new Widget()];
-        each(widgets, w => panel.addWidget(w));
+        each(widgets, w => { panel.addWidget(w); });
         let widget = new Widget();
         panel.addWidget(widget);
         expect(panel.widgets.at(3)).to.be(widget);
@@ -307,7 +307,7 @@ describe('ui/tabpanel', () => {
       it('should move an existing widget', () => {
         let panel = new TabPanel();
         let widgets = [new Widget(), new Widget(), new Widget()];
-        each(widgets, w => panel.addWidget(w));
+        each(widgets, w => { panel.addWidget(w); });
         panel.addWidget(widgets[0]);
         expect(panel.widgets.at(2)).to.be(widgets[0]);
       });
@@ -319,7 +319,7 @@ describe('ui/tabpanel', () => {
       it('should insert a widget into the tab panel at a specified index', () => {
         let panel = new TabPanel();
         let widgets = [new Widget(), new Widget(), new Widget()];
-        each(widgets, w => panel.addWidget(w));
+        each(widgets, w => { panel.addWidget(w); });
         let widget = new Widget();
         panel.insertWidget(1, widget);
         expect(panel.widgets.at(1)).to.be(widget);
@@ -328,7 +328,7 @@ describe('ui/tabpanel', () => {
       it('should move an existing widget', () => {
         let panel = new TabPanel();
         let widgets = [new Widget(), new Widget(), new Widget()];
-        each(widgets, w => panel.addWidget(w));
+        each(widgets, w => { panel.addWidget(w); });
         panel.insertWidget(0, widgets[2]);
         expect(panel.widgets.at(0)).to.be(widgets[2]);
       });
