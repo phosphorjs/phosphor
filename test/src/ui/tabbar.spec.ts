@@ -16,6 +16,10 @@ import {
 } from '../../../lib/algorithm/iteration';
 
 import {
+  range
+} from '../../../lib/algorithm/range';
+
+import {
   Message
 } from '../../../lib/core/messaging';
 
@@ -62,10 +66,9 @@ class LogTabBar extends TabBar {
 
 function createBar(): LogTabBar {
   let bar = new LogTabBar();
-  let titles = [new Title(), new Title(), new Title()];
-  each(titles, t => bar.addTab(t));
-  each(titles, t => t.label = 'Test');
-  each(titles, t => t.closable = true );
+  each(range(3), i => {
+    bar.addTab({ label: `Test - ${i}`, closable: true });
+  });
   return bar;
 }
 
@@ -79,9 +82,7 @@ function startDrag(bar: LogTabBar, index = 0, direction: Direction = 'right'): v
   let rect = tab.getBoundingClientRect();
   simulate(tab, 'mousedown', { clientX: rect.left + 1, clientY: rect.top });
   let called = true;
-  bar.tabDetachRequested.connect((sender, args) => {
-    called = true;
-  });
+  bar.tabDetachRequested.connect((sender, args) => { called = true; });
   rect = bar.contentNode.getBoundingClientRect();
   let args: any;
   switch (direction) {
@@ -171,9 +172,7 @@ describe('ui/tabbar', () => {
       it('should not be emitted when another tab is inserted', () => {
         let bar = createBar();
         let called = false;
-        bar.currentChanged.connect((sender, args) => {
-          called = true;
-        });
+        bar.currentChanged.connect((sender, args) => { called = true; });
         bar.insertTab(0, new Title());
         expect(called).to.be(false);
       });
@@ -182,9 +181,7 @@ describe('ui/tabbar', () => {
         let bar = createBar();
         let called = false;
         bar.currentIndex = 1;
-        bar.currentChanged.connect((sender, args) => {
-          called = true;
-        });
+        bar.currentChanged.connect((sender, args) => { called = true; });
         bar.removeTab(bar.titles.at(0));
         expect(called).to.be(false);
       });
@@ -192,9 +189,7 @@ describe('ui/tabbar', () => {
       it('should not be emitted when the current tab is moved', () => {
         let bar = createBar();
         let called = false;
-        bar.currentChanged.connect((sender, args) => {
-          called = true;
-        });
+        bar.currentChanged.connect((sender, args) => { called = true; });
         bar.insertTab(2, bar.titles.at(0));
         expect(called).to.be(false);
       });
@@ -207,9 +202,7 @@ describe('ui/tabbar', () => {
         let bar = createBar();
         Widget.attach(bar, document.body);
         requestAnimationFrame(() => {
-          startDrag(bar);
           let titles = toArray(bar.titles);
-          simulate(document.body, 'mouseup');
           bar.tabMoved.connect((sender, args) => {
             expect(sender).to.be(bar);
             expect(args.fromIndex).to.be(0);
@@ -218,6 +211,8 @@ describe('ui/tabbar', () => {
             bar.dispose();
             done();
           });
+          startDrag(bar);
+          simulate(document.body, 'mouseup');
         });
       });
 
@@ -225,9 +220,7 @@ describe('ui/tabbar', () => {
         let bar = createBar();
         Widget.attach(bar, document.body);
         requestAnimationFrame(() => {
-          startDrag(bar, 2, 'left');
           let titles = toArray(bar.titles);
-          simulate(document.body, 'mouseup');
           bar.tabMoved.connect((sender, args) => {
             expect(sender).to.be(bar);
             expect(args.fromIndex).to.be(2);
@@ -236,15 +229,15 @@ describe('ui/tabbar', () => {
             bar.dispose();
             done();
           });
+          startDrag(bar, 2, 'left');
+          simulate(document.body, 'mouseup');
         });
       });
 
       it('should not be emitted when a tab is moved programmatically', () => {
         let bar = createBar();
         let called = false;
-        bar.tabMoved.connect((sender, args) => {
-          called = true;
-        });
+        bar.tabMoved.connect((sender, args) => { called = true; });
         bar.insertTab(2, bar.titles.at(0));
         expect(called).to.be(false);
       });
@@ -262,10 +255,12 @@ describe('ui/tabbar', () => {
         closeIcon = tab.getElementsByClassName('p-TabBar-tabCloseIcon')[0] as HTMLElement;
         closeIcon.textContent = 'X';
         Widget.attach(bar, document.body);
-        requestAnimationFrame(() => done());
+        requestAnimationFrame(() => { done(); });
       });
 
-      afterEach(() => bar.dispose());
+      afterEach(() => {
+        bar.dispose();
+      });
 
       it('should be emitted when a tab close icon is clicked', () => {
         let rect = closeIcon.getBoundingClientRect();
@@ -307,10 +302,12 @@ describe('ui/tabbar', () => {
         bar.tabsMovable = true;
         tab = bar.contentNode.firstChild as HTMLElement;
         Widget.attach(bar, document.body);
-        requestAnimationFrame(() => done());
+        requestAnimationFrame(() => { done(); });
       });
 
-      afterEach(() => bar.dispose());
+      afterEach(() => {
+        bar.dispose();
+      });
 
       it('should be emitted when a tab is dragged beyond the detach threshold', () => {
         let rect = tab.getBoundingClientRect();
@@ -436,7 +433,7 @@ describe('ui/tabbar', () => {
       it('should get the read-only sequence of titles in the tab bar', () => {
         let bar = new TabBar();
         let titles = [new Title(), new Title(), new Title()];
-        each(titles, t => bar.addTab(t));
+        each(titles, t => { bar.addTab(t); });
         expect(toArray(bar.titles)).to.eql(titles);
       });
 
@@ -681,7 +678,6 @@ describe('ui/tabbar', () => {
       it('should schedule an update of the tabs', (done) => {
         let bar = new LogTabBar();
         bar.insertTab(0, new Title());
-
         requestAnimationFrame(() => {
           bar.removeTab(0);
           bar.methods = [];
@@ -728,9 +724,7 @@ describe('ui/tabbar', () => {
         let bar = createBar();
         let called = false;
         bar.currentIndex = -1;
-        bar.currentChanged.connect((sender, args) => {
-          called = true;
-        });
+        bar.currentChanged.connect((sender, args) => { called = true; });
         bar.clearTabs();
         expect(called).to.be(false);
       });
@@ -765,10 +759,12 @@ describe('ui/tabbar', () => {
         closeIcon = tab.getElementsByClassName('p-TabBar-tabCloseIcon')[0] as HTMLElement;
         closeIcon.textContent = 'X';
         Widget.attach(bar, document.body);
-        requestAnimationFrame(() => done());
+        requestAnimationFrame(() => { done(); });
       });
 
-      afterEach(() => bar.dispose());
+      afterEach(() => {
+        bar.dispose();
+      });
 
       context('click', () => {
 
@@ -788,9 +784,7 @@ describe('ui/tabbar', () => {
         it('should do nothing if it is not a left click', () => {
           let rect = closeIcon.getBoundingClientRect();
           let called = false;
-          bar.tabCloseRequested.connect((sender, args) => {
-            called = true;
-          });
+          bar.tabCloseRequested.connect((sender, args) => { called = true; });
           simulate(closeIcon, 'click', { clientX: rect.left, clientY: rect.top, button: 1 });
           expect(called).to.be(false);
         });
@@ -799,9 +793,7 @@ describe('ui/tabbar', () => {
           startDrag(bar, 1, 'up');
           let rect = closeIcon.getBoundingClientRect();
           let called = false;
-          bar.tabCloseRequested.connect((sender, args) => {
-            called = true;
-          });
+          bar.tabCloseRequested.connect((sender, args) => { called = true; });
           simulate(closeIcon, 'click', { clientX: rect.left, clientY: rect.top });
           expect(called).to.be(false);
         });
@@ -809,9 +801,7 @@ describe('ui/tabbar', () => {
         it('should do nothing if the click is not on a tab', () => {
           let rect = closeIcon.getBoundingClientRect();
           let called = false;
-          bar.tabCloseRequested.connect((sender, args) => {
-            called = true;
-          });
+          bar.tabCloseRequested.connect((sender, args) => { called = true; });
           simulate(tab, 'click', { clientX: rect.left, clientY: rect.top });
           expect(called).to.be(false);
         });
@@ -821,9 +811,7 @@ describe('ui/tabbar', () => {
           let called = false;
           let title = bar.titles.at(0);
           title.closable = false;
-          bar.tabCloseRequested.connect((sender, args) => {
-            called = true;
-          });
+          bar.tabCloseRequested.connect((sender, args) => { called = true; });
           simulate(closeIcon, 'click', { clientX: rect.left, clientY: rect.top });
           expect(called).to.be(false);
         });
@@ -831,9 +819,7 @@ describe('ui/tabbar', () => {
         it('should do nothing if the click is not on a close icon', () => {
           let rect = label.getBoundingClientRect();
           let called = false;
-          bar.tabCloseRequested.connect((sender, args) => {
-            called = true;
-          });
+          bar.tabCloseRequested.connect((sender, args) => { called = true; });
           simulate(label, 'click', { clientX: rect.left, clientY: rect.top });
           expect(called).to.be(false);
         });
@@ -893,9 +879,7 @@ describe('ui/tabbar', () => {
           let rect = label.getBoundingClientRect();
           simulate(tab, 'mousedown', { clientX: rect.left, clientY: rect.top });
           let called = 0;
-          bar.tabDetachRequested.connect((sender, args) => {
-            called++;
-          });
+          bar.tabDetachRequested.connect((sender, args) => { called++; });
           rect = bar.contentNode.getBoundingClientRect();
           simulate(document.body, 'mousemove', { clientX: rect.right + 200, clientY: rect.top });
           expect(called).to.be(1);
@@ -953,9 +937,7 @@ describe('ui/tabbar', () => {
           let rect = label.getBoundingClientRect();
           simulate(tab, 'mousedown', { clientX: rect.left, clientY: rect.top });
           let called = false;
-          bar.tabDetachRequested.connect((sender, args) => {
-            called = true;
-          });
+          bar.tabDetachRequested.connect((sender, args) => { called = true; });
           rect = bar.contentNode.getBoundingClientRect();
           simulate(document.body, 'mousemove', { clientX: rect.right + 200, clientY: rect.top });
           expect(called).to.be(true);
@@ -1088,54 +1070,62 @@ describe('ui/tabbar', () => {
 
     });
 
-  });
+    describe('.ContentRenderer', () => {
 
-  describe('TabBar.ContentRenderer', () => {
+      describe('#createTabNode()', () => {
 
-    describe('#createTabNode()', () => {
-
-      it('should create a node for a tab', () => {
-        let renderer = new TabBar.ContentRenderer();
-        let node = renderer.createTabNode();
-        expect(node.classList.contains('p-TabBar-tab')).to.be(true);
-        expect(node.getElementsByClassName('p-TabBar-tabIcon').length).to.be(1);
-        expect(node.getElementsByClassName('p-TabBar-tabLabel').length).to.be(1);
-        expect(node.getElementsByClassName('p-TabBar-tabCloseIcon').length).to.be(1);
-      });
-
-    });
-
-    describe('#updateTabNode()', () => {
-
-      it('should update a tab node to reflect the state of a title', () => {
-        let title = new Title({
-          label: 'foo',
-          closable: true,
-          icon: 'bar',
-          className: 'fizz',
-          caption: 'this is a caption'
+        it('should create a node for a tab', () => {
+          let renderer = new TabBar.ContentRenderer();
+          let node = renderer.createTabNode();
+          expect(node.classList.contains('p-TabBar-tab')).to.be(true);
+          expect(node.getElementsByClassName('p-TabBar-tabIcon').length).to.be(1);
+          expect(node.getElementsByClassName('p-TabBar-tabLabel').length).to.be(1);
+          expect(node.getElementsByClassName('p-TabBar-tabCloseIcon').length).to.be(1);
         });
-        let renderer = new TabBar.ContentRenderer();
-        let node = renderer.createTabNode();
-        renderer.updateTabNode(node, title);
-        expect(node.classList.contains(title.className)).to.be(true);
-        expect(node.classList.contains('p-mod-closable')).to.be(true);
-        let icon = node.getElementsByClassName('p-TabBar-tabIcon')[0] as HTMLElement;
-        expect(icon.classList.contains(title.icon)).to.be(true);
-        let label = node.getElementsByClassName('p-TabBar-tabLabel')[0] as HTMLElement;
-        expect(label.textContent).to.be(title.label);
-        expect(label.title).to.be(title.caption);
+
+      });
+
+      describe('#updateTabNode()', () => {
+
+        it('should update a tab node to reflect the state of a title', () => {
+          let title = new Title({
+            label: 'foo',
+            closable: true,
+            icon: 'bar',
+            className: 'fizz',
+            caption: 'this is a caption'
+          });
+          let renderer = new TabBar.ContentRenderer();
+          let node = renderer.createTabNode();
+          renderer.updateTabNode(node, title);
+          expect(node.classList.contains(title.className)).to.be(true);
+          expect(node.classList.contains('p-mod-closable')).to.be(true);
+          let icon = node.getElementsByClassName('p-TabBar-tabIcon')[0] as HTMLElement;
+          expect(icon.classList.contains(title.icon)).to.be(true);
+          let label = node.getElementsByClassName('p-TabBar-tabLabel')[0] as HTMLElement;
+          expect(label.textContent).to.be(title.label);
+          expect(label.title).to.be(title.caption);
+        });
+
+      });
+
+      describe('#closeIconNode()', () => {
+
+        it('should look up the close icon descendant node for a tab node', () => {
+          let renderer = new TabBar.ContentRenderer();
+          let node = renderer.createTabNode();
+          let closeNode = renderer.closeIconNode(node);
+          expect(closeNode.classList.contains('p-TabBar-tabCloseIcon')).to.be(true);
+        });
+
       });
 
     });
 
-    describe('#closeIconNode()', () => {
+    describe('.defaultRenderer', () => {
 
-      it('should look up the close icon descendant node for a tab node', () => {
-        let renderer = new TabBar.ContentRenderer();
-        let node = renderer.createTabNode();
-        let closeNode = renderer.closeIconNode(node);
-        expect(closeNode.classList.contains('p-TabBar-tabCloseIcon')).to.be(true);
+      it('should be a `ContentRenderer`', () => {
+        expect(TabBar.defaultRenderer).to.be.a(TabBar.ContentRenderer);
       });
 
     });
