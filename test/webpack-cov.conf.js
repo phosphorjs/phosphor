@@ -5,6 +5,8 @@ module.exports = {
   output: {
     filename: './test/build/coverage.js'
   },
+  debug: true,
+  devtool: 'source-map',
   bail: true,
   module: {
     preLoaders: [
@@ -14,6 +16,9 @@ module.exports = {
         include: path.resolve('lib/'),
         loader: 'istanbul-instrumenter'
       }
-    ]
+    ],
+    loaders: [
+      { test: /\.css$/, loader: 'style-loader!css-loader' },
+    ],
   }
 }

@@ -18,8 +18,10 @@
     "karma-webpack": "^1.7.0",
     "mocha": "^2.4.5",
     "rimraf": "^2.5.2",
+    "simulate-event": "^1.1.0",
     "style-loader": "^0.13.1",
     "typescript": "^1.8.0",
+    "watch": "^0.18.0",
     "webpack": "^1.12.14"
   },
   "scripts": {
@@ -36,7 +38,9 @@
     "test:firefox": "karma start --browsers=Firefox test/karma.conf.js",
     "test:ie": "karma start --browsers=IE test/karma.conf.js",
     "test:debug": "karma start --browsers=Chrome --singleRun=false --debug=true test/karma.conf.js",
-    "test": "npm run test:firefox"
+    "test": "npm run test:firefox",
+    "watch": "watch 'npm run build' src",
+    "watch:test": "watch 'npm run build && npm test' src test/src"
   },
   "repository": {
     "type": "git",

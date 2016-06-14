@@ -6,15 +6,19 @@
 | The full license is in the file LICENSE, distributed with this software.
 |----------------------------------------------------------------------------*/
 import {
-  CommandRegistry
-} from '../lib/ui/command';
+  CommandPalette
+} from '../lib/ui/commandpalette';
 
 import {
-  IKeyBinding, Keymap
+  commands
+} from '../lib/ui/commands';
+
+import {
+  keymap
 } from '../lib/ui/keymap';
 
 import {
-  Menu, MenuItem
+  Menu
 } from '../lib/ui/menu';
 
 import {
@@ -30,195 +34,225 @@ import '../styles/base.css';
 import './index.css';
 
 
-const MENU_TEMPLATE: Menu.Template = [
-  {
-    text: '&&Copy',
-    icon: 'fa fa-copy',
-    shortcut: 'Ctrl+C',
-    command: 'copy'
-  },
-  {
-    text: 'Cu&&t',
-    icon: 'fa fa-cut',
-    shortcut: 'Ctrl+X',
-    command: 'cut'
-  },
-  {
-    text: '&&Paste',
-    icon: 'fa fa-paste',
-    shortcut: 'Ctrl+V',
-    command: 'paste'
-  },
-  {
-    type: 'separator'
-  },
-  {
-    text: '&&New Tab',
-    command: 'new-tab'
-  },
-  {
-    text: '&&Close Tab',
-    command: 'close-tab'
-  },
-  {
-    type: 'check',
-    checked: true,
-    text: '&&Save On Exit',
-    command: 'save-on-exit'
-  },
-  {
-    type: 'separator'
-  },
-  {
-    text: 'Task Manager',
-    disabled: true
-  },
-  {
-    type: 'separator'
-  },
-  {
-    type: 'submenu',
-    text: 'More...',
-    submenu: [
-      {
-        text: 'One',
-        command: 'one'
-      },
-      {
-        text: 'Two',
-        command: 'two'
-      },
-      {
-        text: 'Three',
-        command: 'three'
-      },
-      {
-        text: 'Four',
-        command: 'four'
-      },
-      {
-        text: 'Again...',
-        type: 'submenu',
-        submenu: [
-          {
-            text: 'One',
-            command: 'one'
-          },
-          {
-            text: 'Two',
-            command: 'two'
-          },
-          {
-            text: 'Three',
-            command: 'three'
-          },
-          {
-            text: 'Four',
-            command: 'four'
-          }
-        ]
-      }
-    ]
-  },
-  {
-    type: 'separator'
-  },
-  {
-    text: 'Close',
-    icon: 'fa fa-close',
-    command: 'close'
-  }
-];
+function createMenu(): Menu {
+  let sub1 = new Menu();
+  sub1.title.label = 'More...';
+  sub1.title.mnemonic = 0;
+  sub1.addItem({ command: 'example:one' });
+  sub1.addItem({ command: 'example:two' });
+  sub1.addItem({ command: 'example:three' });
+  sub1.addItem({ command: 'example:four' });
 
+  let sub2 = new Menu();
+  sub2.title.label = 'More...';
+  sub2.title.mnemonic = 0;
+  sub2.addItem({ command: 'example:one' });
+  sub2.addItem({ command: 'example:two' });
+  sub2.addItem({ command: 'example:three' });
+  sub2.addItem({ command: 'example:four' });
+  sub2.addItem({ type: 'submenu', menu: sub1 });
 
-const KEY_BINDINGS: IKeyBinding[] = [
-  {
-    keys: 'Accel+X',
-    selector: 'body',
-    command: 'example:cut',
-    args: null
-  },
-  {
-    keys: 'Accel+C',
-    selector: 'body',
-    command: 'example:copy',
-    args: null
-  },
-  {
-    keys: 'Accel+V',
-    selector: 'body',
-    command: 'example:paste',
-    args: null
-  }
-];
+  let root = new Menu();
+  root.addItem({ command: 'example:copy' });
+  root.addItem({ command: 'example:cut' });
+  root.addItem({ command: 'example:paste' });
+  root.addItem({ type: 'separator' });
+  root.addItem({ command: 'example:new-tab' });
+  root.addItem({ command: 'example:close-tab' });
+  root.addItem({ command: 'example:save-on-exit' });
+  root.addItem({ type: 'separator' });
+  root.addItem({ command: 'example:open-task-manager' });
+  root.addItem({ type: 'separator' });
+  root.addItem({ type: 'submenu', menu: sub2 });
+  root.addItem({ type: 'separator' });
+  root.addItem({ command: 'example:close' });
 
-
-function onTriggered(sender: MenuBar | Menu, item: MenuItem): void {
-  if (item.command === 'save-on-exit') {
-    item.checked = !item.checked;
-  }
-  console.log('triggered:', item.command);
+  return root;
 }
 
 
 function main(): void {
 
-  let commands = new CommandRegistry();
-
-  commands.add('example:cut', {
+  commands.addCommand('example:cut', {
     label: 'Cut',
+    mnemonic: 1,
+    icon: 'fa fa-cut',
     execute: () => {
       console.log('Cut');
     }
   });
 
-  commands.add('example:copy', {
+  commands.addCommand('example:copy', {
     label: 'Copy',
+    mnemonic: 0,
+    icon: 'fa fa-copy',
     execute: () => {
       console.log('Copy');
     }
   });
 
-  commands.add('example:paste', {
+  commands.addCommand('example:paste', {
     label: 'Paste',
+    mnemonic: 0,
+    icon: 'fa fa-paste',
     execute: () => {
       console.log('Paste');
     }
   });
 
-  let keymap = new Keymap(commands);
-  keymap.add(KEY_BINDINGS);
+  commands.addCommand('example:new-tab', {
+    label: 'New Tab',
+    mnemonic: 0,
+    caption: 'Open a new tab',
+    execute: () => {
+      console.log('New Tab');
+    }
+  });
 
-  let menu1 = Menu.fromTemplate(MENU_TEMPLATE);
-  menu1.title.text = 'File';
+  commands.addCommand('example:close-tab', {
+    label: 'Close Tab',
+    mnemonic: 2,
+    caption: 'Close the current tab',
+    execute: () => {
+      console.log('Close Tab');
+    }
+  });
 
-  let menu2 = Menu.fromTemplate(MENU_TEMPLATE);
-  menu2.title.text = 'Edit';
+  commands.addCommand('example:save-on-exit', {
+    label: 'Save on Exit',
+    mnemonic: 0,
+    caption: 'Toggle the save on exit flag',
+    execute: () => {
+      console.log('Save on Exit');
+    }
+  });
 
-  let menu3 = Menu.fromTemplate(MENU_TEMPLATE);
-  menu3.title.text = 'View';
+  commands.addCommand('example:open-task-manager', {
+    label: 'Task Manager',
+    mnemonic: 5,
+    isEnabled: () => false,
+    execute: () => { }
+  });
 
-  let ctxt = Menu.fromTemplate(MENU_TEMPLATE);
+  commands.addCommand('example:close', {
+    label: 'Close',
+    mnemonic: 0,
+    icon: 'fa fa-close',
+    execute: () => {
+      console.log('Close');
+    }
+  });
+
+  commands.addCommand('example:one', {
+    label: 'One',
+    execute: () => {
+      console.log('One');
+    }
+  });
+
+  commands.addCommand('example:two', {
+    label: 'Two',
+    execute: () => {
+      console.log('Two');
+    }
+  });
+
+  commands.addCommand('example:three', {
+    label: 'Three',
+    execute: () => {
+      console.log('Three');
+    }
+  });
+
+  commands.addCommand('example:four', {
+    label: 'Four',
+    execute: () => {
+      console.log('Four');
+    }
+  });
+
+  keymap.addBinding({
+    keys: ['Accel X'],
+    selector: 'body',
+    command: 'example:cut'
+  });
+
+  keymap.addBinding({
+    keys: ['Accel C'],
+    selector: 'body',
+    command: 'example:copy'
+  });
+
+  keymap.addBinding({
+    keys: ['Accel V'],
+    selector: 'body',
+    command: 'example:paste'
+  });
+
+  keymap.addBinding({
+    keys: ['Accel J', 'Accel J'],
+    selector: 'body',
+    command: 'example:new-tab'
+  });
+
+  keymap.addBinding({
+    keys: ['Accel M'],
+    selector: 'body',
+    command: 'example:open-task-manager'
+  });
+
+  let menu1 = createMenu();
+  menu1.title.label = 'File';
+  menu1.title.mnemonic = 0;
+
+  let menu2 = createMenu();
+  menu2.title.label = 'Edit';
+  menu2.title.mnemonic = 0;
+
+  let menu3 = createMenu();
+  menu3.title.label = 'View';
+  menu3.title.mnemonic = 0;
+
+  let ctxt = createMenu();
 
   let bar = new MenuBar();
   bar.addMenu(menu1);
   bar.addMenu(menu2);
   bar.addMenu(menu3);
 
-  bar.triggered.connect(onTriggered);
-
-  ctxt.triggered.connect(onTriggered);
+  let palette = new CommandPalette();
+  palette.addItem({ command: 'example:cut', category: 'edit' });
+  palette.addItem({ command: 'example:copy', category: 'edit' });
+  palette.addItem({ command: 'example:paste', category: 'edit' });
+  palette.addItem({ command: 'example:one', category: 'number' });
+  palette.addItem({ command: 'example:two', category: 'number' });
+  palette.addItem({ command: 'example:three', category: 'number' });
+  palette.addItem({ command: 'example:four', category: 'number' });
+  palette.addItem({ command: 'example:new-tab' });
+  palette.addItem({ command: 'example:close-tab' });
+  palette.addItem({ command: 'example:save-on-exit' });
+  palette.addItem({ command: 'example:open-task-manager' });
+  palette.addItem({ command: 'example:close' });
 
   document.addEventListener('contextmenu', (event: MouseEvent) => {
     event.preventDefault();
     ctxt.open(event.clientX, event.clientY);
+    console.log('ctxt menu');
   });
 
   document.addEventListener('keydown', (event: KeyboardEvent) => {
-    keymap.processKeydownEvent(event);
+    if (!event.ctrlKey && !event.shiftKey && !event.metaKey && event.keyCode === 18) {
+      event.preventDefault();
+      event.stopPropagation();
+      bar.activeIndex = 0;
+      bar.focus();
+    } else {
+      keymap.processKeydownEvent(event);
+    }
   });
 
   Widget.attach(bar, document.body);
+  Widget.attach(palette, document.body);
 }
 
 

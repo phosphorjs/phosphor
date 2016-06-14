@@ -60,5 +60,6 @@ namespace Private {
   /**
    * The id for the active cursor override.
    */
-  export let cursorID = 0;
+  export
+  let cursorID = 0;
 }

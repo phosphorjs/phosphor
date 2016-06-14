@@ -8,7 +8,7 @@
 import expect = require('expect.js');
 
 import {
-  calculateSpecificity, isValidSelector
+  calculateSpecificity, isValidSelector, matchesSelector, validateSelector
 } from '../../../lib/dom/selector';
 
 
@@ -83,6 +83,61 @@ describe('dom/selector', () => {
       expect(isValidSelector('.thing<')).to.be(false);
       expect(isValidSelector('4#foo')).to.be(false);
       expect(isValidSelector('(#bar .thing[foo] > li')).to.be(false);
+    });
+
+  });
+
+  describe('validateSelector()', () => {
+
+    it('should throw an error if the selector is invalid', () => {
+      expect(() => { validateSelector('body {'); }).to.throwError();
+      expect(() => { validateSelector('.thing<'); }).to.throwError();
+      expect(() => { validateSelector('4#foo'); }).to.throwError();
+      expect(() => { validateSelector('(#bar .thing[foo] > li'); }).to.throwError();
+    });
+
+    it('should return the original selector if valid', () => {
+      expect(validateSelector('body')).to.be('body');
+      expect(validateSelector('.thing')).to.be('.thing');
+      expect(validateSelector('#foo')).to.be('#foo');
+      expect(validateSelector('#bar .thing[foo] > li')).to.be('#bar .thing[foo] > li');
+    });
+
+  });
+
+  describe('matchesSelector()', () => {
+
+    let div = document.createElement('div');
+    div.innerHTML = `
+      <ul class="list">
+        <li class="item">
+          <div class="content">
+            <span class="icon">Foo </span>
+            <span class="text">Bar</span>
+          </div>
+        </li>
+      </ul>
+    `;
+    let list = div.firstElementChild;
+    let item = list.firstElementChild;
+    let content = item.firstElementChild;
+    let icon = content.firstElementChild;
+    let text = icon.nextElementSibling;
+
+    it('should return `true` if an element matches a selector', () => {
+      expect(matchesSelector(div, 'div')).to.be(true);
+      expect(matchesSelector(list, '.list')).to.be(true);
+      expect(matchesSelector(item, '.list > .item')).to.be(true);
+      expect(matchesSelector(icon, '.content .icon')).to.be(true);
+      expect(matchesSelector(text, 'div span + .text')).to.be(true);
+    });
+
+    it('should return `false` if an element does not match a selector', () => {
+      expect(matchesSelector(div, 'li')).to.be(false);
+      expect(matchesSelector(list, '.content')).to.be(false);
+      expect(matchesSelector(item, '.content > .item')).to.be(false);
+      expect(matchesSelector(icon, '.foo .icon')).to.be(false);
+      expect(matchesSelector(text, 'ol div + .text')).to.be(false);
     });
 
   });

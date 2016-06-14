@@ -42,6 +42,10 @@ import {
 } from '../dom/cursor';
 
 import {
+  IS_IE
+} from '../dom/platform';
+
+import {
   IBoxSizing, boxSizing, sizeLimits
 } from '../dom/sizing';
 
@@ -730,7 +734,7 @@ class SplitLayout extends PanelLayout {
    * A message handler invoked on a `'child-shown'` message.
    */
   protected onChildShown(msg: ChildMessage): void {
-    if (Private.IsIE) { // prevent flicker on IE
+    if (IS_IE) { // prevent flicker on IE
       sendMessage(this.parent, WidgetMessage.FitRequest);
     } else {
       this.parent.fit();
@@ -741,7 +745,7 @@ class SplitLayout extends PanelLayout {
    * A message handler invoked on a `'child-hidden'` message.
    */
   protected onChildHidden(msg: ChildMessage): void {
-    if (Private.IsIE) { // prevent flicker on IE
+    if (IS_IE) { // prevent flicker on IE
       sendMessage(this.parent, WidgetMessage.FitRequest);
     } else {
       this.parent.fit();
@@ -1030,12 +1034,6 @@ namespace Private {
      */
     override: IDisposable;
   }
-
-  /**
-   * A flag indicating whether the browser is IE.
-   */
-  export
-  const IsIE = /Trident/.test(navigator.userAgent);
 
   /**
    * The property descriptor for a widget stretch factor.

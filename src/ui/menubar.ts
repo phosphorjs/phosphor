@@ -30,15 +30,15 @@ import {
 } from '../core/messaging';
 
 import {
-  ISignal, defineSignal
-} from '../core/signaling';
-
-import {
   hitTest
 } from '../dom/query';
 
 import {
-  Menu, MenuItem
+  keymap
+} from './keymap';
+
+import {
+  Menu
 } from './menu';
 
 import {
@@ -71,14 +71,19 @@ const MENU_CLASS = 'p-MenuBar-menu';
 const ITEM_CLASS = 'p-MenuBar-item';
 
 /**
- * The class name added to a menu bar item icon cell.
+ * The class name added to a menu bar item icon node.
  */
 const ICON_CLASS = 'p-MenuBar-itemIcon';
 
 /**
- * The class name added to a menu bar item text cell.
+ * The class name added to a menu bar item label node.
  */
-const TEXT_CLASS = 'p-MenuBar-itemText';
+const LABEL_CLASS = 'p-MenuBar-itemLabel';
+
+/**
+ * The class name added to a menu bar item mnemonic node.
+ */
+const MNEMONIC_CLASS = 'p-MenuBar-itemMnemonic';
 
 /**
  * The class name added to an active menu bar and item.
@@ -112,7 +117,7 @@ class MenuBar extends Widget {
     super();
     this.addClass(MENU_BAR_CLASS);
     this.setFlag(WidgetFlag.DisallowLayout);
-    this._renderer = options.renderer || MenuBar.ContentRenderer.instance;
+    this._renderer = options.renderer || MenuBar.defaultRenderer;
   }
 
   /**
@@ -125,18 +130,6 @@ class MenuBar extends Widget {
     this._renderer = null;
     super.dispose();
   }
-
-  /**
-   * A signal emitted when a menu item in the hierarchy is triggered.
-   *
-   * #### Notes
-   * This signal is emitted when a descendant menu item in any menu in
-   * the hierarchy is triggered, so consumers only need to to connect
-   * to the triggered signal of the menu bar.
-   *
-   * The argument for the signal is the menu item which was triggered.
-   */
-  triggered: ISignal<MenuBar, MenuItem>;
 
   /**
    * Get the menu bar content node.
@@ -246,11 +239,19 @@ class MenuBar extends Widget {
    * If there is no active menu, this is a no-op.
    */
   openActiveMenu(): void {
+    // Bail early if there is no active item.
     if (this._activeIndex === -1) {
       return;
     }
+
+    // Open the child menu.
     this._openChildMenu();
-    this._childMenu.activeIndex = 0; // TODO first selectable instead of 0?
+
+    // Activate the first item in the child menu.
+    if (this._childMenu) {
+      this._childMenu.activeIndex = -1;
+      this._childMenu.activateNextItem();
+    }
   }
 
   /**
@@ -307,7 +308,6 @@ class MenuBar extends Widget {
       this.contentNode.insertBefore(node, ref);
 
       // Connect to the menu signals.
-      menu.triggered.connect(this._onMenuTriggered, this);
       menu.aboutToClose.connect(this._onMenuAboutToClose, this);
       menu.menuRequested.connect(this._onMenuMenuRequested, this);
       menu.title.changed.connect(this._onTitleChanged, this);
@@ -338,12 +338,20 @@ class MenuBar extends Widget {
   /**
    * Remove a menu from the menu bar.
    *
-   * @param index - The index of the menu to remove.
+   * @param value - The menu to remove or the index thereof.
    *
    * #### Notes
-   * This is a no-op if the index is out of range.
+   * This is a no-op if the menu is not contained in the menu bar.
    */
-  removeMenu(index: number): void {
+  removeMenu(value: Menu | number): void {
+    // Coerce the value to an index.
+    let index: number;
+    if (typeof value === 'number') {
+      index = value;
+    } else {
+      index = indexOf(this._menus, value);
+    }
+
     // Bail if the index is out of range.
     let i = Math.floor(index);
     if (i < 0 || i >= this._menus.length) {
@@ -362,7 +370,6 @@ class MenuBar extends Widget {
     this._menus.remove(i);
 
     // Disconnect from the menu signals.
-    menu.triggered.disconnect(this._onMenuTriggered, this);
     menu.aboutToClose.disconnect(this._onMenuAboutToClose, this);
     menu.menuRequested.disconnect(this._onMenuMenuRequested, this);
     menu.title.changed.disconnect(this._onTitleChanged, this);
@@ -388,7 +395,6 @@ class MenuBar extends Widget {
 
     // Disconnect from the menu signals and remove the styling class.
     each(this._menus, menu => {
-      menu.triggered.disconnect(this._onMenuTriggered, this);
       menu.aboutToClose.disconnect(this._onMenuAboutToClose, this);
       menu.menuRequested.disconnect(this._onMenuMenuRequested, this);
       menu.title.changed.disconnect(this._onTitleChanged, this);
@@ -481,35 +487,102 @@ class MenuBar extends Widget {
    * Handle the `'keydown'` event for the menu bar.
    */
   private _evtKeyDown(event: KeyboardEvent): void {
-    switch (event.keyCode) {
-    case 13: // Enter
-    case 38: // Up Arrow
-    case 40: // Down Arrow
-      event.preventDefault();
-      event.stopPropagation();
+    // A menu bar handles all keydown events.
+    event.preventDefault();
+    event.stopPropagation();
+
+    // Fetch the key code for the event.
+    let kc = event.keyCode;
+
+    // Enter, Up Arrow, Down Arrow
+    if (kc === 13 || kc === 38 || kc === 40) {
       this.openActiveMenu();
-      break;
-    case 27: // Escape
-      event.preventDefault();
-      event.stopPropagation();
+      return;
+    }
+
+    // Escape
+    if (kc === 27) {
       this._closeChildMenu();
       this.activeIndex = -1;
       this.blur();
-      break;
-    case 37: // Left Arrow
-      event.preventDefault();
-      event.stopPropagation();
-      let i1 = this._activeIndex;
-      let n1 = this._menus.length;
-      this.activeIndex = i1 === 0 ? n1 - 1 : i1 - 1;
-      break;
-    case 39: // Right Arrow
-      event.preventDefault();
-      event.stopPropagation();
-      let i2 = this._activeIndex;
-      let n2 = this._menus.length;
-      this.activeIndex = i2 === n2 - 1 ? 0 : i2 + 1;
-      break;
+      return;
+    }
+
+    // Left Arrow
+    if (kc === 37) {
+      let i = this._activeIndex;
+      let n = this._menus.length;
+      this.activeIndex = i === 0 ? n - 1 : i - 1;
+      return;
+    }
+
+    // Right Arrow
+    if (kc === 39) {
+      let i = this._activeIndex;
+      let n = this._menus.length;
+      this.activeIndex = i === n - 1 ? 0 : i + 1;
+      return;
+    }
+
+    // The following code activates an item by mnemonic.
+
+    // Get the pressed key character for the current layout.
+    let key = keymap.layout.keyForKeydownEvent(event);
+
+    // Bail if the key is not valid for the current layout.
+    if (!key) {
+      return;
+    }
+
+    // Normalize the case of the key.
+    key = key.toUpperCase();
+
+    // Setup the storage for the search results.
+    let mnIndex = -1;
+    let autoIndex = -1;
+    let mnMultiple = false;
+
+    // Search for the best mnemonic menu. This searches the menus
+    // starting at the active index and finds the following:
+    //   - the index of the first matching mnemonic menu
+    //   - whether there are multiple matching mnemonic menus
+    //   - the index of the first menu with no mnemonic, but
+    //     which has a matching first character.
+    let n = this._menus.length;
+    let j = this._activeIndex + 1;
+    for (let i = 0; i < n; ++i) {
+      let k = (i + j) % n;
+      let title = this._menus.at(k).title;
+      if (title.label.length === 0) {
+        continue;
+      }
+      let mn = title.mnemonic;
+      if (mn >= 0 && mn < title.label.length) {
+        if (title.label[mn].toUpperCase() === key) {
+          if (mnIndex === -1) {
+            mnIndex = k;
+          } else {
+            mnMultiple = true;
+          }
+        }
+      } else if (autoIndex === -1) {
+        if (title.label[0].toUpperCase() === key) {
+          autoIndex = k;
+        }
+      }
+    }
+
+    // Handle the requested mnemonic based on the search results.
+    // If exactly one mnemonic is matched, that menu is opened.
+    // Otherwise, the next mnemonic is activated if available,
+    // followed by the auto mnemonic if available.
+    if (mnIndex !== -1 && !mnMultiple) {
+      this.activeIndex = mnIndex;
+      this.openActiveMenu();
+    } else if (mnIndex !== -1) {
+      this.activeIndex = mnIndex;
+    } else if (autoIndex !== -1) {
+      this.activeIndex = autoIndex;
     }
   }
 
@@ -663,13 +736,6 @@ class MenuBar extends Widget {
   }
 
   /**
-   * Handle the `triggered` signal of a menu.
-   */
-  private _onMenuTriggered(sender: Menu, item: MenuItem): void {
-    this.triggered.emit(item);
-  }
-
-  /**
    * Handle the `aboutToClose` signal of a menu.
    */
   private _onMenuAboutToClose(sender: Menu): void {
@@ -733,10 +799,6 @@ class MenuBar extends Widget {
 }
 
 
-// Define the signals for the `MenuBar` class.
-defineSignal(MenuBar.prototype, 'triggered');
-
-
 /**
  * The namespaces for the `MenuBar` class statics.
  */
@@ -777,7 +839,7 @@ namespace MenuBar {
     /**
      * Update an item node to reflect the state of a menu title.
      *
-     * @param node - An item node created by a call to `createItemNode`.
+     * @param node - A node created by a call to `createItemNode`.
      *
      * @param title - The menu title holding the data for the node.
      *
@@ -800,45 +862,63 @@ namespace MenuBar {
      */
     createItemNode(): HTMLElement {
       let node = document.createElement('li');
-      let icon = document.createElement('span');
-      let text = document.createElement('span');
+      let icon = document.createElement('div');
+      let label = document.createElement('div');
       node.className = ITEM_CLASS;
       icon.className = ICON_CLASS;
-      text.className = TEXT_CLASS;
+      label.className = LABEL_CLASS;
       node.appendChild(icon);
-      node.appendChild(text);
+      node.appendChild(label);
       return node;
     }
 
     /**
      * Update an item node to reflect the state of a menu title.
      *
-     * @param node - An item node created by a call to `createItemNode`.
+     * @param node - A node created by a call to `createItemNode`.
      *
      * @param title - The menu title holding the data for the node.
      */
     updateItemNode(node: HTMLElement, title: Title): void {
       let icon = node.firstChild as HTMLElement;
-      let text = node.lastChild as HTMLElement;
+      let label = node.lastChild as HTMLElement;
       let itemClass = ITEM_CLASS;
       let iconClass = ICON_CLASS;
       if (title.className) itemClass += ` ${title.className}`;
       if (title.icon) iconClass += ` ${title.icon}`;
       node.className = itemClass;
       icon.className = iconClass;
-      text.textContent = title.text;
+      label.innerHTML = this.formatLabel(title.label, title.mnemonic);
+    }
+
+    /**
+     * Format a label into HTML for display.
+     *
+     * @param label - The label text of interest.
+     *
+     * @param mnemonic - The index of the mnemonic character.
+     *
+     * @return The formatted label HTML for display.
+     */
+    formatLabel(label: string, mnemonic: number): string {
+      // If the index is out of range, do not modify the label.
+      if (mnemonic < 0 || mnemonic >= label.length) {
+        return label;
+      }
+
+      // Split the label into parts.
+      let pref = label.slice(0, mnemonic);
+      let suff = label.slice(mnemonic + 1);
+      let char = label[mnemonic];
+
+      // Join the label with the mnemonic span.
+      return `${pref}<span class="${MNEMONIC_CLASS}">${char}</span>${suff}`;
     }
   }
 
   /**
-   * The namespace for the `ContentRenderer` class statics.
+   * A default instance of the `ContentRenderer` class.
    */
   export
-  namespace ContentRenderer {
-    /**
-     * A default instance of the `ContentRenderer` class.
-     */
-    export
-    const instance = new ContentRenderer();
-  }
+  const defaultRenderer = new ContentRenderer();
 }

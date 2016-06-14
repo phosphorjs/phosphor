@@ -5,5 +5,12 @@ module.exports = {
   output: {
     filename: './test/build/bundle.js'
   },
+  debug: true,
+  devtool: 'source-map',
   bail: true,
+  module: {
+    loaders: [
+      { test: /\.css$/, loader: 'style-loader!css-loader' },
+    ]
+  }
 }

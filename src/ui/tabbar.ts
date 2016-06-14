@@ -85,9 +85,9 @@ const FOOTER_CLASS = 'p-TabBar-footer';
 const TAB_CLASS = 'p-TabBar-tab';
 
 /**
- * The class name added to a tab text node.
+ * The class name added to a tab label node.
  */
-const TEXT_CLASS = 'p-TabBar-tabText';
+const LABEL_CLASS = 'p-TabBar-tabLabel';
 
 /**
  * The class name added to a tab icon node.
@@ -164,7 +164,7 @@ class TabBar extends Widget {
     super();
     this.addClass(TAB_BAR_CLASS);
     this.setFlag(WidgetFlag.DisallowLayout);
-    this._renderer = options.renderer || TabBar.ContentRenderer.instance;
+    this._renderer = options.renderer || TabBar.defaultRenderer;
   }
 
   /**
@@ -377,13 +377,16 @@ class TabBar extends Widget {
   /**
    * Add a tab to the end of the tab bar.
    *
-   * @param title - The title which holds the data for the tab.
+   * @param value - The title which holds the data for the tab,
+   *   or an options object to convert to a title.
+   *
+   * @returns The title object added to the tab bar.
    *
    * #### Notes
    * If the title is already added to the tab bar, it will be moved.
    */
-  addTab(title: Title): void {
-    this.insertTab(this._titles.length, title);
+  addTab(value: Title | Title.IOptions): Title {
+    return this.insertTab(this._titles.length, value);
   }
 
   /**
@@ -391,16 +394,22 @@ class TabBar extends Widget {
    *
    * @param index - The index at which to insert the tab.
    *
-   * @param title - The title which holds the data for the tab.
+   * @param value - The title which holds the data for the tab,
+   *   or an options object to convert to a title.
+   *
+   * @returns The title object added to the tab bar.
    *
    * #### Notes
    * The index will be clamped to the bounds of the tabs.
    *
    * If the title is already added to the tab bar, it will be moved.
    */
-  insertTab(index: number, title: Title): void {
+  insertTab(index: number, value: Title | Title.IOptions): Title {
     // Release the mouse before making any changes.
     this._releaseMouse();
+
+    // Coerce the value to a title.
+    let title = Private.asTitle(value);
 
     // Look up the index of the title.
     let i = indexOf(this._titles, title);
@@ -441,8 +450,8 @@ class TabBar extends Widget {
       // Schedule an update of the tabs.
       this.update();
 
-      // There is nothing more to do.
-      return;
+      // Return the title added to the tab bar.
+      return title;
     }
 
     // Otherwise, the title exists in the vector and should be moved.
@@ -451,7 +460,7 @@ class TabBar extends Widget {
     if (j === this._titles.length) j--;
 
     // Bail if there is no effective move.
-    if (i === j) return;
+    if (i === j) return title;
 
     // Move the tab and title to the new locations.
     move(this._tabs, i, j);
@@ -475,17 +484,28 @@ class TabBar extends Widget {
 
     // Schedule an update of the tabs.
     this.update();
+
+    // Return the title added to the tab bar.
+    return title;
   }
 
   /**
    * Remove a tab from the tab bar.
    *
-   * @param index - The index of the tab to remove.
+   * @param value - The title to remove or the index thereof.
    *
    * #### Notes
-   * This is a no-op if the index is out of range.
+   * This is a no-op if the title is not contained in the tab bar.
    */
-  removeTab(index: number): void {
+  removeTab(value: Title | number): void {
+    // Coerce the value to an index.
+    let index: number;
+    if (typeof value === 'number') {
+      index = value;
+    } else {
+      index = indexOf(this._titles, value);
+    }
+
     // Bail if the index is out of range.
     let i = Math.floor(index);
     if (i < 0 || i >= this._titles.length) {
@@ -1117,7 +1137,7 @@ namespace TabBar {
     /**
      * Update a tab node to reflect the state of a title.
      *
-     * @param node - A tab node created by a call to `createTabNode`.
+     * @param node - A node created by a call to `createTabNode`.
      *
      * @param title - The title object holding the data for the tab.
      *
@@ -1130,7 +1150,7 @@ namespace TabBar {
     /**
      * Look up the close icon descendant node for a tab node.
      *
-     * @param node - A tab node created by a call to `createTabNode`.
+     * @param node - A node created by a call to `createTabNode`.
      *
      * @returns The close icon node, or `null` if none exists.
      *
@@ -1152,15 +1172,15 @@ namespace TabBar {
      */
     createTabNode(): HTMLElement {
       let node = document.createElement('li');
-      let icon = document.createElement('span');
-      let text = document.createElement('span');
-      let close = document.createElement('span');
+      let icon = document.createElement('div');
+      let label = document.createElement('div');
+      let close = document.createElement('div');
       node.className = TAB_CLASS;
       icon.className = ICON_CLASS;
-      text.className = TEXT_CLASS;
+      label.className = LABEL_CLASS;
       close.className = CLOSE_ICON_CLASS;
       node.appendChild(icon);
-      node.appendChild(text);
+      node.appendChild(label);
       node.appendChild(close);
       return node;
     }
@@ -1168,7 +1188,7 @@ namespace TabBar {
     /**
      * Update a tab node to reflect the state of a title.
      *
-     * @param node - A tab node created by a call to `createTabNode`.
+     * @param node - A node created by a call to `createTabNode`.
      *
      * @param title - The title object holding the data for the tab.
      */
@@ -1177,17 +1197,17 @@ namespace TabBar {
       let tabSuffix = title.closable ? ` ${CLOSABLE_CLASS}` : '';
       let iconSuffix = title.icon ? ` ${title.icon}` : '';
       let icon = node.firstChild as HTMLElement;
-      let text = icon.nextSibling as HTMLElement;
+      let label = icon.nextSibling as HTMLElement;
       node.className = `${TAB_CLASS} ${tabInfix} ${tabSuffix}`;
       icon.className = `${ICON_CLASS} ${iconSuffix}`;
-      text.textContent = title.text;
-      text.title = title.tooltip;
+      label.textContent = title.label;
+      label.title = title.caption;
     }
 
     /**
      * Look up the close icon descendant node for a tab node.
      *
-     * @param node - A tab node created by a call to `createTabNode`.
+     * @param node - A node created by a call to `createTabNode`.
      *
      * @returns The close icon node, or `null` if none exists.
      */
@@ -1197,16 +1217,10 @@ namespace TabBar {
   }
 
   /**
-   * The namespace for the `ContentRenderer` class statics.
+   * A default instance of the `ContentRenderer` class.
    */
   export
-  namespace ContentRenderer {
-    /**
-     * A default instance of the `ContentRenderer` class.
-     */
-    export
-    const instance = new ContentRenderer();
-  }
+  const defaultRenderer = new ContentRenderer();
 }
 
 
@@ -1309,6 +1323,14 @@ namespace Private {
      * The offset width of the tab.
      */
     width: number;
+  }
+
+  /**
+   * Coerce a title or options into a real title.
+   */
+  export
+  function asTitle(value: Title | Title.IOptions): Title {
+    return value instanceof Title ? value : new Title(value);
   }
 
   /**
