@@ -612,7 +612,7 @@ class Widget implements IDisposable, IMessageHandler {
    * The default implementation focuses the widget's node.
    */
   protected onFocusRequest(msg: Message): void {
-    this.node.focus();
+    if (this.isAttached) this.node.focus();
   }
 
   /**
@@ -622,7 +622,7 @@ class Widget implements IDisposable, IMessageHandler {
    * The default implementation blurs the widget's node.
    */
   protected onBlurRequest(msg: Message): void {
-    this.node.blur();
+    if (this.isAttached) this.node.blur();
   }
 
   /**
