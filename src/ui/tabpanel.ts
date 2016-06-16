@@ -68,7 +68,7 @@ class TabPanel extends Widget {
     let tabsMovable = options.tabsMovable || false;
     this._renderer = options.renderer || TabPanel.defaultRenderer;
     this._tabBar = this._renderer.createTabBar({ tabsMovable });
-    this._stackedPanel = this._renderer.createStackedPanel({ });
+    this._stackedPanel = this._renderer.createStackedPanel();
 
     // Connect the tab bar signal handlers.
     this._tabBar.tabMoved.connect(this._onTabMoved, this);
@@ -314,7 +314,7 @@ namespace TabPanel {
      *
      * @returns A new tab bar to use with a tab panel.
      */
-    createTabBar(options: TabBar.IOptions): TabBar;
+    createTabBar(options?: TabBar.IOptions): TabBar;
 
     /**
      * Create a `StackedPanel` for a tab panel.
@@ -323,7 +323,7 @@ namespace TabPanel {
      *
      * @returns A new stacked panel to use with a tab panel.
      */
-    createStackedPanel(options: StackedPanel.IOptions): StackedPanel;
+    createStackedPanel(options?: StackedPanel.IOptions): StackedPanel;
   }
 
   /**
@@ -338,7 +338,7 @@ namespace TabPanel {
      *
      * @returns A new tab bar to use with a tab panel.
      */
-    createTabBar: (options: TabBar.IOptions) => {
+    createTabBar: (options: TabBar.IOptions = {}) => {
       let tabBar = new TabBar(options);
       tabBar.addClass(TAB_BAR_CLASS);
       return tabBar;
@@ -351,7 +351,7 @@ namespace TabPanel {
      *
      * @returns A new stacked panel to use with a tab panel.
      */
-    createStackedPanel: (options: StackedPanel.IOptions) => {
+    createStackedPanel: (options: StackedPanel.IOptions = {}) => {
       let stackedPanel = new StackedPanel(options);
       stackedPanel.addClass(STACKED_PANEL_CLASS);
       return stackedPanel;
