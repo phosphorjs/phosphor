@@ -66,9 +66,9 @@ class TabPanel extends Widget {
 
     // Create the tab bar and stacked panel.
     let tabsMovable = options.tabsMovable || false;
-    let renderer = options.renderer || TabPanel.defaultRenderer;
-    this._tabBar = renderer.createTabBar({ tabsMovable });
-    this._stackedPanel = renderer.createStackedPanel({ });
+    this._renderer = options.renderer || TabPanel.defaultRenderer;
+    this._tabBar = this._renderer.createTabBar({ tabsMovable });
+    this._stackedPanel = this._renderer.createStackedPanel({ });
 
     // Connect the tab bar signal handlers.
     this._tabBar.tabMoved.connect(this._onTabMoved, this);
@@ -161,6 +161,16 @@ class TabPanel extends Widget {
    */
   set tabsMovable(value: boolean) {
     this._tabBar.tabsMovable = value;
+  }
+
+  /**
+   * The content renderer used by the tab panel.
+   *
+   * #### Notes
+   * This is a read-only property.
+   */
+  get renderer(): TabPanel.IContentRenderer {
+    return this._renderer;
   }
 
   /**
@@ -263,6 +273,7 @@ class TabPanel extends Widget {
 
   private _tabBar: TabBar;
   private _stackedPanel: StackedPanel;
+  private _renderer: TabPanel.IContentRenderer;
 }
 
 

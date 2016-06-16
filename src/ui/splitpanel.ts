@@ -148,6 +148,16 @@ class SplitPanel extends Panel {
   }
 
   /**
+   * The handle renderer used by the split panel.
+   *
+   * #### Notes
+   * This is a read-only property.
+   */
+  get renderer(): SplitPanel.IHandleRenderer {
+    return (this.layout as SplitLayout).renderer;
+  }
+
+  /**
    * A read-only sequence of the split handles in the panel.
    *
    * #### Notes
@@ -388,6 +398,12 @@ namespace SplitPanel {
   type Orientation = SplitLayout.Orientation;
 
   /**
+   * A type alias for a split handler renderer;
+   */
+  export
+  type IHandleRenderer = SplitLayout.IHandleRenderer;
+
+  /**
    * An options object for initializing a split panel.
    */
   export
@@ -397,7 +413,7 @@ namespace SplitPanel {
      *
      * The default is a shared renderer instance.
      */
-    renderer?: SplitLayout.IHandleRenderer;
+    renderer?: IHandleRenderer;
 
     /**
      * The layout orientation of the panel.
@@ -427,7 +443,7 @@ namespace SplitPanel {
    * The default `IHandleRenderer` instance.
    */
   export
-  const defaultRenderer: SplitLayout.IHandleRenderer = {
+  const defaultRenderer: IHandleRenderer = {
     /**
      * Create a new handle node for use with a split layout.
      *
@@ -529,6 +545,16 @@ class SplitLayout extends PanelLayout {
       return;
     }
     this.parent.fit();
+  }
+
+  /**
+   * The handle renderer used by the split layout.
+   *
+   * #### Notes
+   * This is a read-only property.
+   */
+  get renderer(): SplitLayout.IHandleRenderer {
+    return this._renderer;
   }
 
   /**
