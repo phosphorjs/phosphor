@@ -65,10 +65,10 @@ class TabPanel extends Widget {
     this.addClass(TAB_PANEL_CLASS);
 
     // Create the tab bar and stacked panel.
-    let tabsMovable = options.tabsMovable || false;
-    this._renderer = options.renderer || TabPanel.defaultRenderer;
-    this._tabBar = this._renderer.createTabBar({ tabsMovable });
-    this._stackedPanel = this._renderer.createStackedPanel();
+    this._tabBar = new TabBar(options);
+    this._tabBar.addClass(TAB_BAR_CLASS);
+    this._stackedPanel = new StackedPanel();
+    this._stackedPanel.addClass(STACKED_PANEL_CLASS);
 
     // Connect the tab bar signal handlers.
     this._tabBar.tabMoved.connect(this._onTabMoved, this);
@@ -161,16 +161,6 @@ class TabPanel extends Widget {
    */
   set tabsMovable(value: boolean) {
     this._tabBar.tabsMovable = value;
-  }
-
-  /**
-   * The content renderer used by the tab panel.
-   *
-   * #### Notes
-   * This is a read-only property.
-   */
-  get renderer(): TabPanel.IContentRenderer {
-    return this._renderer;
   }
 
   /**
@@ -273,7 +263,6 @@ class TabPanel extends Widget {
 
   private _tabBar: TabBar;
   private _stackedPanel: StackedPanel;
-  private _renderer: TabPanel.IContentRenderer;
 }
 
 
@@ -295,66 +284,10 @@ namespace TabPanel {
     tabsMovable?: boolean;
 
     /**
-     * The content renderer for the tab panel.
+     * The content renderer for the panel's tab bar.
      *
      * The default is shared renderer instance.
      */
-    renderer?: IContentRenderer;
+    renderer?: TabBar.IContentRenderer;
   }
-
-  /**
-   * An object which renders the content for a tab panel.
-   */
-  export
-  interface IContentRenderer {
-    /**
-     * Create a `TabBar` for a tab panel.
-     *
-     * @param options - The options for the tab bar.
-     *
-     * @returns A new tab bar to use with a tab panel.
-     */
-    createTabBar(options?: TabBar.IOptions): TabBar;
-
-    /**
-     * Create a `StackedPanel` for a tab panel.
-     *
-     * @param options - The options for the stacked panel.
-     *
-     * @returns A new stacked panel to use with a tab panel.
-     */
-    createStackedPanel(options?: StackedPanel.IOptions): StackedPanel;
-  }
-
-  /**
-   * The default `IContentRenderer` instance.
-   */
-  export
-  const defaultRenderer: IContentRenderer = {
-    /**
-     * Create a `TabBar` for a tab panel.
-     *
-     * @param options - The options for the tab bar.
-     *
-     * @returns A new tab bar to use with a tab panel.
-     */
-    createTabBar: (options: TabBar.IOptions = {}) => {
-      let tabBar = new TabBar(options);
-      tabBar.addClass(TAB_BAR_CLASS);
-      return tabBar;
-    },
-
-    /**
-     * Create a `StackedPanel` for a tab panel.
-     *
-     * @param options - The options for the stacked panel.
-     *
-     * @returns A new stacked panel to use with a tab panel.
-     */
-    createStackedPanel: (options: StackedPanel.IOptions = {}) => {
-      let stackedPanel = new StackedPanel(options);
-      stackedPanel.addClass(STACKED_PANEL_CLASS);
-      return stackedPanel;
-    }
-  };
 }

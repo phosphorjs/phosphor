@@ -376,6 +376,16 @@ class TabBar extends Widget {
   }
 
   /**
+   * The tab renderer used by the tab bar
+   *
+   * #### Notes
+   * This is a read-only property.
+   */
+  get renderer(): TabBar.IContentRenderer {
+    return this._renderer;
+  }
+
+  /**
    * Add a tab to the end of the tab bar.
    *
    * @param value - The title which holds the data for the tab,

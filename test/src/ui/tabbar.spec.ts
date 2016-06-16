@@ -129,8 +129,11 @@ describe('ui/tabbar', () => {
       });
 
       it('should take an options argument', () => {
-        let bar = new TabBar({ renderer: new TabBar.ContentRenderer() });
+        let renderer = Object.create(TabBar.defaultRenderer);
+        let bar = new TabBar({ tabsMovable: true, renderer });
         expect(bar).to.be.a(TabBar);
+        expect(bar.tabsMovable).to.be(true);
+        expect(bar.renderer).to.be(renderer);
       });
 
       it('should add the `p-TabBar` class', () => {
@@ -557,6 +560,26 @@ describe('ui/tabbar', () => {
         let titles = toArray(bar.titles);
         bar.insertTab(2, titles[0]);
         expect(bar.titles.at(2)).to.be(titles[0]);
+      });
+
+    });
+
+    describe('#renderer', () => {
+
+      it('should be the tab bar renderer', () => {
+        let renderer = Object.create(TabBar.defaultRenderer);
+        let bar = new TabBar({ renderer });
+        expect(bar.renderer).to.be(renderer);
+      });
+
+      it('should default to the default renderer', () => {
+        let bar = new TabBar();
+        expect(bar.renderer).to.be(TabBar.defaultRenderer);
+      });
+
+      it('should be read-only', () => {
+        let bar = new TabBar();
+        expect(() => { bar.renderer = null; }).to.throwError();
       });
 
     });

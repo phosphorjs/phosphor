@@ -43,20 +43,6 @@ class LogWidget extends Widget {
 }
 
 
-const customRenderer: TabPanel.IContentRenderer = {
-  createTabBar: (options: TabBar.IOptions) => {
-    let bar = new TabBar(options);
-    bar.addClass('customRenderer');
-    return bar;
-  },
-  createStackedPanel: (options: StackedPanel.IOptions) => {
-    let stack = new StackedPanel(options);
-    stack.addClass('customRenderer');
-    return stack;
-  }
-};
-
-
 describe('ui/tabpanel', () => {
 
   describe('TabPanel', () => {
@@ -69,13 +55,10 @@ describe('ui/tabpanel', () => {
       });
 
       it('should accept options', () => {
-        let panel = new TabPanel({
-          tabsMovable: true, renderer: customRenderer
-        });
+        let renderer = Object.create(TabBar.defaultRenderer);
+        let panel = new TabPanel({ tabsMovable: true, renderer });
         expect(panel.tabsMovable).to.be(true);
-        expect(panel.renderer).to.be(customRenderer);
-        expect(panel.tabBar.hasClass('customRenderer')).to.be(true);
-        expect(panel.stackedPanel.hasClass('customRenderer')).to.be(true);
+        expect(panel.tabBar.renderer).to.be(renderer);
       });
 
       it('should add a `p-TabPanel` class', () => {
@@ -187,6 +170,12 @@ describe('ui/tabpanel', () => {
         expect(bar).to.be.a(TabBar);
       });
 
+      it('should have the "p-TabPanel-tabBar" class', () => {
+        let panel = new TabPanel();
+        let bar = panel.tabBar;
+        expect(bar.hasClass('p-TabPanel-tabBar')).to.be(true);
+      });
+
       it('should be read-only', () => {
         let panel = new TabPanel();
         expect(() => { panel.tabBar = null; }).to.throwError();
@@ -257,6 +246,12 @@ describe('ui/tabpanel', () => {
         let panel = new TabPanel();
         let stack = panel.stackedPanel;
         expect(stack).to.be.a(StackedPanel);
+      });
+
+      it('should have the "p-TabPanel-stackedPanel" class', () => {
+        let panel = new TabPanel();
+        let stack = panel.stackedPanel;
+        expect(stack.hasClass('p-TabPanel-stackedPanel')).to.be(true);
       });
 
       it('should be read-only', () => {
@@ -335,55 +330,6 @@ describe('ui/tabpanel', () => {
         each(widgets, w => { panel.addWidget(w); });
         panel.insertWidget(0, widgets[2]);
         expect(panel.widgets.at(0)).to.be(widgets[2]);
-      });
-
-    });
-
-    describe('.defaultRenderer', () => {
-
-      describe('#createTabBar()', () => {
-
-        it('should create a new tab bar', () => {
-          let bar1 = TabPanel.defaultRenderer.createTabBar();
-          let bar2 = TabPanel.defaultRenderer.createTabBar();
-          expect(bar1).to.be.a(TabBar);
-          expect(bar2).to.be.a(TabBar);
-          expect(bar1).to.not.be(bar2);
-        });
-
-        it('should accept options', () => {
-          let bar = TabPanel.defaultRenderer.createTabBar({ tabsMovable: true });
-          expect(bar.tabsMovable).to.be(true);
-        });
-
-        it('should add the "p-TabPanel-tabBar" class', () => {
-          let bar = TabPanel.defaultRenderer.createTabBar();
-          expect(bar.hasClass('p-TabPanel-tabBar')).to.be(true);
-        });
-
-      });
-
-      describe('#createStackedPanel()', () => {
-
-        it('should create a new stacked panel', () => {
-          let stack1 = TabPanel.defaultRenderer.createStackedPanel();
-          let stack2 = TabPanel.defaultRenderer.createStackedPanel();
-          expect(stack1).to.be.a(StackedPanel);
-          expect(stack2).to.be.a(StackedPanel);
-          expect(stack1).to.not.be(stack2);
-        });
-
-        it('should accept options', () => {
-          let layout = new StackedLayout();
-          let stack = TabPanel.defaultRenderer.createStackedPanel({ layout });
-          expect(stack.layout).to.be(layout);
-        });
-
-        it('should add the "p-TabPanel-stackedPanel" class', () => {
-          let stack = TabPanel.defaultRenderer.createStackedPanel();
-          expect(stack.hasClass('p-TabPanel-stackedPanel')).to.be(true);
-        });
-
       });
 
     });
