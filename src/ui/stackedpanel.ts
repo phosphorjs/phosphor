@@ -50,17 +50,12 @@ const CHILD_CLASS = 'p-StackedPanel-child';
 export
 class StackedPanel extends Panel {
   /**
-   * Create a stacked layout for a stacked panel.
-   */
-  static createLayout(): StackedLayout {
-    return new StackedLayout();
-  }
-
-  /**
    * Construct a new stacked panel.
+   *
+   * @param options - The options for initializing the panel.
    */
-  constructor() {
-    super();
+  constructor(options: StackedPanel.IOptions = {}) {
+    super({ layout: Private.createLayout(options) });
     this.addClass(STACKED_PANEL_CLASS);
   }
 
@@ -88,6 +83,26 @@ class StackedPanel extends Panel {
 
 // Define the signals for the `StackedPanel` class.
 defineSignal(StackedPanel.prototype, 'widgetRemoved');
+
+
+/**
+ * The namespace for the `StackedPanel` class statics.
+ */
+export
+namespace StackedPanel {
+  /**
+   * An options object for creating a stacked panel.
+   */
+  export
+  interface IOptions {
+    /**
+     * The layout to use for the stacked panel.
+     *
+     * The default is a new `StackedLayout`.
+     */
+    layout?: StackedLayout;
+  }
+}
 
 
 /**
@@ -331,4 +346,18 @@ class StackedLayout extends PanelLayout {
 
   private _dirty = false;
   private _box: IBoxSizing = null;
+}
+
+
+/**
+ * The namespace for the private module data.
+ */
+namespace Private {
+  /**
+   * Create a stacked layout for the given panel options.
+   */
+  export
+  function createLayout(options: StackedPanel.IOptions): StackedLayout {
+    return options.layout || new StackedLayout();
+  }
 }

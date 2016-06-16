@@ -25,10 +25,7 @@ class Title {
    *
    * @param options - The options for initializing the title.
    */
-  constructor(options?: Title.IOptions) {
-    if (options === void 0) {
-      return;
-    }
+  constructor(options: Title.IOptions = {}) {
     if (options.owner !== void 0) {
       this._owner = options.owner;
     }

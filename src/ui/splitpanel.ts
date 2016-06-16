@@ -102,38 +102,13 @@ const VERTICAL_CLASS = 'p-mod-vertical';
 export
 class SplitPanel extends Panel {
   /**
-   * Create a split layout for a split panel.
-   */
-  static createLayout(): SplitLayout {
-    return new SplitLayout(this);
-  }
-
-  /**
-   * Create a handle node for use in a split panel.
-   *
-   * #### Notes
-   * This may be reimplemented to create custom handles.
-   */
-  static createHandleNode(): HTMLElement {
-    let node = document.createElement('div');
-    node.className = HANDLE_CLASS;
-    return node;
-  }
-
-  /**
    * Construct a new split panel.
    *
    * @param options - The options for initializing the split panel.
    */
   constructor(options: SplitPanel.IOptions = {}) {
-    super();
+    super({ layout: Private.createLayout(options) });
     this.addClass(SPLIT_PANEL_CLASS);
-    if (options.orientation !== void 0) {
-      this.orientation = options.orientation;
-    }
-    if (options.spacing !== void 0) {
-      this.spacing = options.spacing;
-    }
   }
 
   /**
@@ -418,6 +393,13 @@ namespace SplitPanel {
   export
   interface IOptions {
     /**
+     * The renderer to use for creating split handles.
+     *
+     * The default is a shared renderer instance.
+     */
+    renderer?: SplitLayout.IHandleRenderer;
+
+    /**
      * The layout orientation of the panel.
      *
      * The default is `'horizontal'`.
@@ -427,10 +409,36 @@ namespace SplitPanel {
     /**
      * The spacing between items in the panel.
      *
-     * The default is `3`.
+     * The default is `4`.
      */
     spacing?: number;
+
+    /**
+     * The layout to use for the split panel.
+     *
+     * If this is provided, the other options are ignored.
+     *
+     * The default is a new `SplitLayout`.
+     */
+    layout?: SplitLayout;
   }
+
+  /**
+   * The default `IHandleRenderer` instance.
+   */
+  export
+  const defaultRenderer: SplitLayout.IHandleRenderer = {
+    /**
+     * Create a new handle node for use with a split layout.
+     *
+     * @returns A new handle node.
+     */
+    createHandleNode: () => {
+      let node = document.createElement('div');
+      node.className = HANDLE_CLASS;
+      return node;
+    }
+  };
 
   /**
    * Get the split panel stretch factor for the given widget.
@@ -466,11 +474,17 @@ class SplitLayout extends PanelLayout {
   /**
    * Construct a new split layout.
    *
-   * @param renderer - The handle renderer for creating split handles.
+   * @param options - The options for initializing the layout.
    */
-  constructor(renderer: SplitLayout.IHandleRenderer) {
+  constructor(options: SplitLayout.IOptions) {
     super();
-    this._renderer = renderer;
+    this._renderer = options.renderer;
+    if (options.orientation !== void 0) {
+      this._orientation = options.orientation;
+    }
+    if (options.spacing !== void 0) {
+      this._spacing = options.spacing;
+    }
   }
 
   /**
@@ -950,7 +964,7 @@ class SplitLayout extends PanelLayout {
   }
 
   private _fixed = 0;
-  private _spacing = 3;
+  private _spacing = 4;
   private _dirty = false;
   private _box: IBoxSizing = null;
   private _sizers = new Vector<BoxSizer>();
@@ -970,6 +984,31 @@ namespace SplitLayout {
    */
   export
   type Orientation = 'horizontal' | 'vertical';
+
+  /**
+   * An options object for initializing a split layout.
+   */
+  export
+  interface IOptions {
+    /**
+     * The renderer to use for creating split handles.
+     */
+    renderer: IHandleRenderer;
+
+    /**
+     * The orientation of the layout.
+     *
+     * The default is `'horizontal'`.
+     */
+    orientation?: Orientation;
+
+    /**
+     * The spacing between items in the layout.
+     *
+     * The default is `4`.
+     */
+    spacing?: number;
+  }
 
   /**
    * A renderer which creates handles for a split layout.
@@ -1045,6 +1084,18 @@ namespace Private {
     coerce: (owner, value) => Math.max(0, Math.floor(value)),
     changed: onChildPropertyChanged
   });
+
+  /**
+   * Create a split layout for the given panel options.
+   */
+  export
+  function createLayout(options: SplitPanel.IOptions): SplitLayout {
+    return options.layout || new SplitLayout({
+      renderer: options.renderer || SplitPanel.defaultRenderer,
+      orientation: options.orientation,
+      spacing: options.spacing
+    });
+  }
 
   /**
    * Create a new box sizer with the given size hint.

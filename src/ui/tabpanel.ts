@@ -56,44 +56,19 @@ const STACKED_PANEL_CLASS = 'p-TabPanel-stackedPanel';
 export
 class TabPanel extends Widget {
   /**
-   * Create a `TabBar` for a tab panel.
-   *
-   * @returns A new tab bar to use with a tab panel.
-   *
-   * #### Notes
-   * This may be reimplemented to create custom tab bars.
-   */
-  static createTabBar(): TabBar {
-    let tabBar = new TabBar();
-    tabBar.addClass(TAB_BAR_CLASS);
-    return tabBar;
-  }
-
-  /**
-   * Create a `StackedPanel` for a tab panel.
-   *
-   * @returns A new stacked panel to use with a tab panel.
-   *
-   * #### Notes
-   * This may be reimplemented to create custom stacked panels.
-   */
-  static createStackedPanel(): StackedPanel {
-    let stackedPanel = new StackedPanel();
-    stackedPanel.addClass(STACKED_PANEL_CLASS);
-    return stackedPanel;
-  }
-
-  /**
    * Construct a new tab panel.
+   *
+   * @param options - The options for initializing the tab panel.
    */
-  constructor() {
+  constructor(options: TabPanel.IOptions = {}) {
     super();
     this.addClass(TAB_PANEL_CLASS);
 
     // Create the tab bar and stacked panel.
-    let ctor = this.constructor as typeof TabPanel;
-    this._tabBar = ctor.createTabBar();
-    this._stackedPanel = ctor.createStackedPanel();
+    let tabsMovable = options.tabsMovable || false;
+    let renderer = options.renderer || TabPanel.defaultRenderer;
+    this._tabBar = renderer.createTabBar({ tabsMovable });
+    this._stackedPanel = renderer.createStackedPanel({ });
 
     // Connect the tab bar signal handlers.
     this._tabBar.tabMoved.connect(this._onTabMoved, this);
@@ -103,10 +78,8 @@ class TabPanel extends Widget {
     // Connect the stacked panel signal handlers.
     this._stackedPanel.widgetRemoved.connect(this._onWidgetRemoved, this);
 
-    // Setup the box layout.
-    let layout = new BoxLayout();
-    layout.direction = 'top-to-bottom';
-    layout.spacing = 0;
+    // Create the box layout.
+    let layout = new BoxLayout({ direction: 'top-to-bottom', spacing: 0 });
 
     // Set the stretch factors for the child widgets.
     BoxLayout.setStretch(this._tabBar, 0);
@@ -290,4 +263,87 @@ class TabPanel extends Widget {
 
   private _tabBar: TabBar;
   private _stackedPanel: StackedPanel;
+}
+
+
+/**
+ * The namespace for the `TabPanel` class statics.
+ */
+export
+namespace TabPanel {
+  /**
+   * An options object for initializing a tab panel.
+   */
+  export
+  interface IOptions {
+    /**
+     * Whether the tabs are movable by the user.
+     *
+     * The default is `false`.
+     */
+    tabsMovable?: boolean;
+
+    /**
+     * The content renderer for the tab panel.
+     *
+     * The default is shared renderer instance.
+     */
+    renderer?: IContentRenderer;
+  }
+
+  /**
+   * An object which renders the content for a tab panel.
+   */
+  export
+  interface IContentRenderer {
+    /**
+     * Create a `TabBar` for a tab panel.
+     *
+     * @param options - The options for the tab bar.
+     *
+     * @returns A new tab bar to use with a tab panel.
+     */
+    createTabBar(options: TabBar.IOptions): TabBar;
+
+    /**
+     * Create a `StackedPanel` for a tab panel.
+     *
+     * @param options - The options for the stacked panel.
+     *
+     * @returns A new stacked panel to use with a tab panel.
+     */
+    createStackedPanel(options: StackedPanel.IOptions): StackedPanel;
+  }
+
+  /**
+   * The default `IContentRenderer` instance.
+   */
+  export
+  const defaultRenderer: IContentRenderer = {
+    /**
+     * Create a `TabBar` for a tab panel.
+     *
+     * @param options - The options for the tab bar.
+     *
+     * @returns A new tab bar to use with a tab panel.
+     */
+    createTabBar: (options: TabBar.IOptions) => {
+      let tabBar = new TabBar(options);
+      tabBar.addClass(TAB_BAR_CLASS);
+      return tabBar;
+    },
+
+    /**
+     * Create a `StackedPanel` for a tab panel.
+     *
+     * @param options - The options for the stacked panel.
+     *
+     * @returns A new stacked panel to use with a tab panel.
+     */
+    createStackedPanel: (options: StackedPanel.IOptions) => {
+      let stackedPanel = new StackedPanel(options);
+      stackedPanel.addClass(STACKED_PANEL_CLASS);
+      return stackedPanel;
+    }
+  };
 }
