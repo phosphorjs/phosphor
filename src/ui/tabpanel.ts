@@ -164,6 +164,16 @@ class TabPanel extends Widget {
   }
 
   /**
+   * The content renderer for the panel's tab bar.
+   *
+   * #### Notes
+   * This is a read-only property.
+   */
+  get renderer(): TabBar.IContentRenderer {
+    return this._tabBar.renderer;
+  }
+
+  /**
    * The tab bar associated with the tab panel.
    *
    * #### Notes

@@ -162,6 +162,21 @@ describe('ui/tabpanel', () => {
 
     });
 
+    describe('#renderer', () => {
+
+      it('should be the content renderer for the panel', () => {
+        let renderer = Object.create(TabBar.defaultRenderer);
+        let panel = new TabPanel({ renderer });
+        expect(panel.renderer).to.be(renderer);
+      });
+
+      it('should be read-only', () => {
+        let panel = new TabPanel();
+        expect(() => { panel.renderer = null; }).to.throwError();
+      });
+
+    });
+
     describe('#tabBar', () => {
 
       it('should get the tab bar associated with the tab panel', () => {

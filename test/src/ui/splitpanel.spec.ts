@@ -32,7 +32,7 @@ import {
 } from '../../../lib/ui/widget';
 
 
-const customRenderer: SplitPanel.IHandleRenderer = {
+const customRenderer: SplitPanel.IRenderer = {
   createHandleNode: () => {
     let node = document.createElement('div');
     node.className = 'p-SplitPanel-handle customRenderer';
