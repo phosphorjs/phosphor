@@ -135,20 +135,17 @@ describe('ui/stackedpanel', () => {
 
   describe('StackedPanel', () => {
 
-    describe('.createLayout()', () => {
-
-      it('should create a stacked layout for a stacked panel', () => {
-        let layout = StackedPanel.createLayout();
-        expect(layout).to.be.a(StackedLayout);
-      });
-
-    });
-
     describe('#constructor()', () => {
 
       it('should take no arguments', () => {
         let panel = new StackedPanel();
         expect(panel).to.be.a(StackedPanel);
+      });
+
+      it('should take options', () => {
+        let layout = new StackedLayout();
+        let panel = new StackedPanel({ layout });
+        expect(panel.layout).to.be(layout);
       });
 
       it('should add the `p-StackedPanel` class', () => {

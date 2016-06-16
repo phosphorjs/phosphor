@@ -32,46 +32,13 @@ import {
 } from '../../../lib/ui/widget';
 
 
-class LogSplitPanel extends SplitPanel {
-
-  events: string[] = [];
-
-  methods: string[] = [];
-
-  static createLayout(): LogSplitLayout {
-    return new LogSplitLayout(this);
+const customRenderer: SplitPanel.IHandleRenderer = {
+  createHandleNode: () => {
+    let node = document.createElement('div');
+    node.className = 'p-SplitPanel-handle customRenderer';
+    return node;
   }
-
-  handleEvent(event: Event): void {
-    super.handleEvent(event);
-    this.events.push(event.type);
-  }
-
-  protected onAfterAttach(msg: Message): void {
-    super.onAfterAttach(msg);
-    this.methods.push('onAfterAttach');
-  }
-
-  protected onBeforeDetach(msg: Message): void {
-    super.onBeforeDetach(msg);
-    this.methods.push('onBeforeDetach');
-  }
-
-  protected onUpdateRequest(msg: Message): void {
-    super.onUpdateRequest(msg);
-    this.methods.push('onUpdateRequest');
-  }
-
-  protected onChildAdded(msg: ChildMessage): void {
-    super.onChildAdded(msg);
-    this.methods.push('onChildAdded');
-  }
-
-  protected onChildRemoved(msg: ChildMessage): void {
-    super.onChildRemoved(msg);
-    this.methods.push('onChildRemoved');
-  }
-}
+};
 
 
 class LogSplitLayout extends SplitLayout {
@@ -135,6 +102,48 @@ class LogSplitLayout extends SplitLayout {
 }
 
 
+class LogSplitPanel extends SplitPanel {
+
+  events: string[] = [];
+
+  methods: string[] = [];
+
+  constructor() {
+    super({ layout: new LogSplitLayout({ renderer: customRenderer }) });
+  }
+
+  handleEvent(event: Event): void {
+    super.handleEvent(event);
+    this.events.push(event.type);
+  }
+
+  protected onAfterAttach(msg: Message): void {
+    super.onAfterAttach(msg);
+    this.methods.push('onAfterAttach');
+  }
+
+  protected onBeforeDetach(msg: Message): void {
+    super.onBeforeDetach(msg);
+    this.methods.push('onBeforeDetach');
+  }
+
+  protected onUpdateRequest(msg: Message): void {
+    super.onUpdateRequest(msg);
+    this.methods.push('onUpdateRequest');
+  }
+
+  protected onChildAdded(msg: ChildMessage): void {
+    super.onChildAdded(msg);
+    this.methods.push('onChildAdded');
+  }
+
+  protected onChildRemoved(msg: ChildMessage): void {
+    super.onChildRemoved(msg);
+    this.methods.push('onChildRemoved');
+  }
+}
+
+
 class LogWidget extends Widget {
 
   methods: string[] = [];
@@ -161,56 +170,9 @@ class LogWidget extends Widget {
 }
 
 
-class HandleRenderer implements SplitLayout.IHandleRenderer {
-
-  createHandleNode(): HTMLElement {
-    let node = document.createElement('div');
-    node.className = 'p-SplitPanel-handle';
-    return node;
-  }
-}
-
-
 describe('ui/splitpanel', () => {
 
   describe('SplitPanel', () => {
-
-    describe('.createLayout()', () => {
-
-      it('should create a split layout for a split panel', () => {
-        let layout = SplitPanel.createLayout();
-        expect(layout).to.be.a(SplitLayout);
-      });
-
-    });
-
-    describe('.createHandleNode()', () => {
-
-      it('should create a handle node for use in a split panel', () => {
-        let node = SplitPanel.createHandleNode();
-        expect(node.classList.contains('p-SplitPanel-handle')).to.be(true);
-      });
-
-    });
-
-    describe('.getStretch()', () => {
-
-      it('should get the split panel stretch factor for the given widget', () => {
-        let widget = new Widget();
-        expect(SplitPanel.getStretch(widget)).to.be(0);
-      });
-
-    });
-
-    describe('.setStretch()', () => {
-
-      it('should set the split panel stretch factor for the given widget', () => {
-        let widget = new Widget();
-        SplitPanel.setStretch(widget, 10);
-        expect(SplitPanel.getStretch(widget)).to.be(10);
-      });
-
-    });
 
     describe('#constructor()', () => {
 
@@ -219,11 +181,30 @@ describe('ui/splitpanel', () => {
         expect(panel).to.be.a(SplitPanel);
       });
 
-      it('should accept options for initializing the split panel', () => {
-        let panel = new SplitPanel({ orientation: 'vertical', spacing: 5 });
+      it('should accept options', () => {
+        let panel = new SplitPanel({
+          orientation: 'vertical', spacing: 5, renderer: customRenderer
+        });
         expect(panel.orientation).to.be('vertical');
         expect(panel.spacing).to.be(5);
-        expect(panel).to.be.a(SplitPanel);
+        expect(panel.renderer).to.be(customRenderer);
+      });
+
+      it('should accept a layout option', () => {
+        let layout = new SplitLayout({ renderer: SplitPanel.defaultRenderer });
+        let panel = new SplitPanel({ layout });
+        expect(panel.layout).to.be(layout);
+      });
+
+      it('should ignore other options if a layout is given', () => {
+        let layout = new SplitLayout({ renderer: SplitPanel.defaultRenderer });
+        let panel = new SplitPanel({
+          layout, orientation: 'vertical', spacing: 5, renderer: customRenderer
+        });
+        expect(panel.layout).to.be(layout);
+        expect(panel.orientation).to.be('horizontal');
+        expect(panel.spacing).to.be(4);
+        expect(panel.renderer).to.be(SplitPanel.defaultRenderer);
       });
 
       it('should add the `p-SplitPanel` class', () => {
@@ -271,15 +252,29 @@ describe('ui/splitpanel', () => {
 
     describe('#spacing', () => {
 
-      it('should get the inter-element spacing for the split panel', () => {
+      it('should default to `4`', () => {
         let panel = new SplitPanel();
-        expect(panel.spacing).to.be(3);
+        expect(panel.spacing).to.be(4);
       });
 
-      it('should set the inter-element spacing for the split panel', () => {
+      it('should set the spacing for the panel', () => {
         let panel = new SplitPanel();
         panel.spacing = 10;
         expect(panel.spacing).to.be(10);
+      });
+
+    });
+
+    describe('#renderer', () => {
+
+      it('should get the handle renderer for the panel', () => {
+        let panel = new SplitPanel({ renderer: customRenderer });
+        expect(panel.renderer).to.be(customRenderer);
+      });
+
+      it('should be read-only', () => {
+        let panel = new SplitPanel();
+        expect(() => { panel.renderer = null; }).to.throwError();
       });
 
     });
@@ -573,46 +568,54 @@ describe('ui/splitpanel', () => {
 
     });
 
-  });
+    describe('.defaultRenderer()', () => {
 
-  describe('SplitLayout', () => {
+      describe('#createHandleNode()', () => {
+
+        it('should create a new handle node', () => {
+          let node1 = SplitPanel.defaultRenderer.createHandleNode();
+          let node2 = SplitPanel.defaultRenderer.createHandleNode();
+          expect(node1).to.be.a(HTMLElement);
+          expect(node2).to.be.a(HTMLElement);
+          expect(node1).to.not.be(node2);
+        });
+
+        it('should add the "p-SplitPanel-handle" class', () => {
+          let node =SplitPanel.defaultRenderer.createHandleNode();
+          expect(node.classList.contains('p-SplitPanel-handle')).to.be(true);
+        });
+
+      });
+
+    });
 
     describe('.getStretch()', () => {
 
-      it('should get the split layout stretch factor for the given widget', () => {
+      it('should get the split panel stretch factor for the given widget', () => {
         let widget = new Widget();
-        expect(SplitLayout.getStretch(widget)).to.be(0);
+        expect(SplitPanel.getStretch(widget)).to.be(0);
       });
 
     });
 
     describe('.setStretch()', () => {
 
-      it('should set the split layout stretch factor for the given widget', () => {
+      it('should set the split panel stretch factor for the given widget', () => {
         let widget = new Widget();
-        SplitLayout.setStretch(widget, 10);
-        expect(SplitLayout.getStretch(widget)).to.be(10);
-      });
-
-      it('should post a fit request to the parent', (done) => {
-        let parent = new Widget();
-        let layout = new LogSplitLayout(new HandleRenderer());
-        parent.layout = layout;
-        let widget = new Widget();
-        widget.parent = parent;
-        SplitLayout.setStretch(widget, 10);
-        requestAnimationFrame(() => {
-          expect(layout.methods.indexOf('onFitRequest')).to.not.be(-1);
-          done();
-        });
+        SplitPanel.setStretch(widget, 10);
+        expect(SplitPanel.getStretch(widget)).to.be(10);
       });
 
     });
 
+  });
+
+  describe('SplitLayout', () => {
+
     describe('#constructor()', () => {
 
       it('should accept a handle renderer', () => {
-        let layout = new SplitLayout(new HandleRenderer());
+        let layout = new SplitLayout({ renderer: customRenderer });
         expect(layout).to.be.a(SplitLayout);
       });
 
@@ -621,19 +624,19 @@ describe('ui/splitpanel', () => {
     describe('#orientation', () => {
 
       it('should get the layout orientation for the split layout', () => {
-        let layout = new SplitLayout(new HandleRenderer());
+        let layout = new SplitLayout({ renderer: customRenderer });
         expect(layout.orientation).to.be('horizontal');
       });
 
       it('should set the layout orientation for the split layout', () => {
-        let layout = new SplitLayout(new HandleRenderer());
+        let layout = new SplitLayout({ renderer: customRenderer });
         layout.orientation = 'vertical';
         expect(layout.orientation).to.be('vertical');
       });
 
       it('should set the orientation class of the parent widget', () => {
         let parent = new Widget();
-        let layout = new SplitLayout(new HandleRenderer());
+        let layout = new SplitLayout({ renderer: customRenderer });
         parent.layout = layout;
         layout.orientation = 'vertical';
         expect(parent.hasClass('p-mod-vertical')).to.be(true);
@@ -642,7 +645,7 @@ describe('ui/splitpanel', () => {
       });
 
       it('should post a fit request to the parent widget', (done) => {
-        let layout = new LogSplitLayout(new HandleRenderer());
+        let layout = new LogSplitLayout({ renderer: customRenderer });
         let parent = new Widget();
         parent.layout = layout;
         layout.orientation = 'vertical';
@@ -653,7 +656,7 @@ describe('ui/splitpanel', () => {
       });
 
       it('should be a no-op if the value does not change', (done) => {
-        let layout = new LogSplitLayout(new HandleRenderer());
+        let layout = new LogSplitLayout({ renderer: customRenderer });
         let parent = new Widget();
         parent.layout = layout;
         layout.orientation = 'horizontal';
@@ -668,18 +671,18 @@ describe('ui/splitpanel', () => {
     describe('#spacing', () => {
 
       it('should get the inter-element spacing for the split layout', () => {
-        let layout = new SplitLayout(new HandleRenderer());
-        expect(layout.spacing).to.be(3);
+        let layout = new SplitLayout({ renderer: customRenderer });
+        expect(layout.spacing).to.be(4);
       });
 
       it('should set the inter-element spacing for the split layout', () => {
-        let layout = new SplitLayout(new HandleRenderer());
+        let layout = new SplitLayout({ renderer: customRenderer });
         layout.spacing = 10;
         expect(layout.spacing).to.be(10);
       });
 
       it('should post a fit rquest to the parent widget', (done) => {
-        let layout = new LogSplitLayout(new HandleRenderer());
+        let layout = new LogSplitLayout({ renderer: customRenderer });
         let parent = new Widget();
         parent.layout = layout;
         layout.spacing = 10;
@@ -690,10 +693,10 @@ describe('ui/splitpanel', () => {
       });
 
       it('should be a no-op if the value does not change', (done) => {
-        let layout = new LogSplitLayout(new HandleRenderer());
+        let layout = new LogSplitLayout({ renderer: customRenderer });
         let parent = new Widget();
         parent.layout = layout;
-        layout.spacing = 3;
+        layout.spacing = 4;
         requestAnimationFrame(() => {
           expect(layout.methods.indexOf('onFitRequest')).to.be(-1);
           done();
@@ -702,18 +705,31 @@ describe('ui/splitpanel', () => {
 
     });
 
-    describe('#handles', () => {
+    describe('#renderer', () => {
 
-      it('should be a read-only sequence of the split handles in the layout', () => {
-        let layout = new SplitLayout(new HandleRenderer());
-        let widgets = [new Widget(), new Widget(), new Widget()];
-        each(widgets, w => { layout.addWidget(w); });
-        let handles = layout.handles;
-        expect(every(handles, h => h.classList.contains('p-SplitPanel-handle')));
+      it('should get the handle renderer for the layout', () => {
+        let layout = new SplitPanel({ renderer: customRenderer });
+        expect(layout.renderer).to.be(customRenderer);
       });
 
       it('should be read-only', () => {
-        let layout = new SplitLayout(new HandleRenderer());
+        let layout = new SplitPanel({ renderer: customRenderer });
+        expect(() => { layout.renderer = null; }).to.throwError();
+      });
+
+    });
+
+    describe('#handles', () => {
+
+      it('should be a read-only sequence of the split handles in the layout', () => {
+        let layout = new SplitLayout({ renderer: customRenderer });
+        let widgets = [new Widget(), new Widget(), new Widget()];
+        each(widgets, w => { layout.addWidget(w); });
+        expect(every(layout.handles, h => h instanceof HTMLElement));
+      });
+
+      it('should be read-only', () => {
+        let layout = new SplitLayout({ renderer: customRenderer });
         expect(() => { layout.handles = null; }).to.throwError();
       });
 
@@ -722,7 +738,7 @@ describe('ui/splitpanel', () => {
     describe('#sizes()', () => {
 
       it('should get the current sizes of the widgets in the layout', () => {
-        let layout = new SplitLayout(new HandleRenderer());
+        let layout = new SplitLayout({ renderer: customRenderer });
         let widgets = [new Widget(), new Widget(), new Widget()];
         let parent = new Widget();
         parent.layout = layout;
@@ -738,7 +754,7 @@ describe('ui/splitpanel', () => {
     describe('#setSizes()', () => {
 
       it('should set the desired sizes for the widgets in the panel', () => {
-        let layout = new SplitLayout(new HandleRenderer());
+        let layout = new SplitLayout({ renderer: customRenderer });
         let widgets = [new Widget(), new Widget(), new Widget()];
         let parent = new Widget();
         parent.layout = layout;
@@ -751,7 +767,7 @@ describe('ui/splitpanel', () => {
       });
 
       it('should ignore extra values', () => {
-        let layout = new SplitLayout(new HandleRenderer());
+        let layout = new SplitLayout({ renderer: customRenderer });
         let widgets = [new Widget(), new Widget(), new Widget()];
         let parent = new Widget();
         parent.layout = layout;
@@ -771,7 +787,7 @@ describe('ui/splitpanel', () => {
       let parent: LogWidget;
 
       beforeEach((done) => {
-        layout = new LogSplitLayout(new HandleRenderer());
+        layout = new LogSplitLayout({ renderer: customRenderer });
         let widgets = [new Widget(), new Widget(), new Widget()];
         parent = new LogWidget();
         parent.layout = layout;
@@ -838,7 +854,7 @@ describe('ui/splitpanel', () => {
     describe('#attachWidget()', () => {
 
       it("should attach a widget to the parent's DOM node", () => {
-        let layout = new LogSplitLayout(new HandleRenderer());
+        let layout = new LogSplitLayout({ renderer: customRenderer });
         let parent = new Widget();
         parent.layout = layout;
         let widget = new Widget();
@@ -849,7 +865,7 @@ describe('ui/splitpanel', () => {
       });
 
       it("should send an `'after-attach'` message if the parent is attached", () => {
-        let layout = new LogSplitLayout(new HandleRenderer());
+        let layout = new LogSplitLayout({ renderer: customRenderer });
         let parent = new Widget();
         parent.layout = layout;
         let widget = new LogWidget();
@@ -859,7 +875,7 @@ describe('ui/splitpanel', () => {
       });
 
       it('should post a layout request for the parent widget', (done) => {
-        let layout = new LogSplitLayout(new HandleRenderer());
+        let layout = new LogSplitLayout({ renderer: customRenderer });
         let parent = new Widget();
         parent.layout = layout;
         let widget = new Widget();
@@ -876,7 +892,7 @@ describe('ui/splitpanel', () => {
     describe('#moveWidget()', () => {
 
       it("should move a widget in the parent's DOM node", () => {
-        let layout = new LogSplitLayout(new HandleRenderer());
+        let layout = new LogSplitLayout({ renderer: customRenderer });
         let widgets = [new Widget(), new Widget(), new Widget()];
         let parent = new Widget();
         parent.layout = layout;
@@ -890,7 +906,7 @@ describe('ui/splitpanel', () => {
       });
 
       it('should post a a layout request to the parent', (done) => {
-        let layout = new LogSplitLayout(new HandleRenderer());
+        let layout = new LogSplitLayout({ renderer: customRenderer });
         let widgets = [new Widget(), new Widget(), new Widget()];
         let parent = new Widget();
         parent.layout = layout;
@@ -908,7 +924,7 @@ describe('ui/splitpanel', () => {
     describe('#detachWidget()', () => {
 
       it("should detach a widget from the parent's DOM node", () => {
-        let layout = new LogSplitLayout(new HandleRenderer());
+        let layout = new LogSplitLayout({ renderer: customRenderer });
         let widget = new Widget();
         let parent = new Widget();
         parent.layout = layout;
@@ -920,7 +936,7 @@ describe('ui/splitpanel', () => {
       });
 
       it("should send a `'before-detach'` message if the parent is attached", (done) => {
-        let layout = new LogSplitLayout(new HandleRenderer());
+        let layout = new LogSplitLayout({ renderer: customRenderer });
         let widget = new LogWidget();
         let parent = new Widget();
         parent.layout = layout;
@@ -936,7 +952,7 @@ describe('ui/splitpanel', () => {
       });
 
       it('should post a a layout request to the parent', (done) => {
-        let layout = new LogSplitLayout(new HandleRenderer());
+        let layout = new LogSplitLayout({ renderer: customRenderer });
         let widget = new LogWidget();
         let parent = new Widget();
         parent.layout = layout;
@@ -955,7 +971,7 @@ describe('ui/splitpanel', () => {
 
       it('should set the orientation class of the parent widget', () => {
         let parent = new Widget();
-        let layout = new LogSplitLayout(new HandleRenderer());
+        let layout = new LogSplitLayout({ renderer: customRenderer });
         parent.layout = layout;
         expect(layout.methods.indexOf('onLayoutChanged')).to.not.be(-1);
         expect(parent.hasClass('p-mod-horizontal')).to.be(true);
@@ -964,7 +980,7 @@ describe('ui/splitpanel', () => {
       it('should attach all widgets to the DOM', () => {
         let parent = new Widget();
         Widget.attach(parent, document.body);
-        let layout = new LogSplitLayout(new HandleRenderer());
+        let layout = new LogSplitLayout({ renderer: customRenderer });
         let widgets = [new LogWidget(), new LogWidget(), new LogWidget()];
         each(widgets, w => { layout.addWidget(w); });
         parent.layout = layout;
@@ -982,7 +998,7 @@ describe('ui/splitpanel', () => {
     describe('#onAfterShow()', () => {
 
       it('should post an update to the parent', (done) => {
-        let layout = new LogSplitLayout(new HandleRenderer());
+        let layout = new LogSplitLayout({ renderer: customRenderer });
         let parent = new LogWidget();
         parent.layout = layout;
         parent.hide();
@@ -996,7 +1012,7 @@ describe('ui/splitpanel', () => {
       });
 
       it('should send an `after-show` message to non hidden widgets in the layout', () => {
-        let layout = new LogSplitLayout(new HandleRenderer());
+        let layout = new LogSplitLayout({ renderer: customRenderer });
         let parent = new Widget();
         parent.layout = layout;
         let children = [new LogWidget(), new LogWidget(), new LogWidget()];
@@ -1017,7 +1033,7 @@ describe('ui/splitpanel', () => {
     describe('#onAfterAttach()', () => {
 
       it('should post a layout request to the parent', (done) => {
-        let layout = new LogSplitLayout(new HandleRenderer());
+        let layout = new LogSplitLayout({ renderer: customRenderer });
         let parent = new LogWidget();
         parent.layout = layout;
         Widget.attach(parent, document.body);
@@ -1029,7 +1045,7 @@ describe('ui/splitpanel', () => {
       });
 
       it('should send an `after-attach` message to each of the widgets in the layout', () => {
-        let layout = new LogSplitLayout(new HandleRenderer());
+        let layout = new LogSplitLayout({ renderer: customRenderer });
         let parent = new Widget();
         let children = [new LogWidget(), new LogWidget(), new LogWidget()];
         each(children, w => { layout.addWidget(w); });
@@ -1047,7 +1063,7 @@ describe('ui/splitpanel', () => {
 
       it('should post or send a fit request to the parent', (done) => {
         let parent = new LogWidget();
-        let layout = new LogSplitLayout(new HandleRenderer());
+        let layout = new LogSplitLayout({ renderer: customRenderer });
         parent.layout = layout;
         let widgets = [new LogWidget(), new LogWidget(), new LogWidget()];
         widgets[0].hide();
@@ -1071,7 +1087,7 @@ describe('ui/splitpanel', () => {
 
       it('should post or send a fit request to the parent', (done) => {
         let parent = new LogWidget();
-        let layout = new LogSplitLayout(new HandleRenderer());
+        let layout = new LogSplitLayout({ renderer: customRenderer });
         parent.layout = layout;
         let widgets = [new LogWidget(), new LogWidget(), new LogWidget()];
         each(widgets, w => { layout.addWidget(w); });
@@ -1094,7 +1110,7 @@ describe('ui/splitpanel', () => {
 
       it('should be called when a resize event is sent to the parent', () => {
         let parent = new LogWidget();
-        let layout = new LogSplitLayout(new HandleRenderer());
+        let layout = new LogSplitLayout({ renderer: customRenderer });
         parent.layout = layout;
         let widgets = [new LogWidget(), new LogWidget(), new LogWidget()];
         each(widgets, w => { layout.addWidget(w); });
@@ -1107,7 +1123,7 @@ describe('ui/splitpanel', () => {
 
       it('should be a no-op if the parent is hidden', () => {
         let parent = new LogWidget();
-        let layout = new LogSplitLayout(new HandleRenderer());
+        let layout = new LogSplitLayout({ renderer: customRenderer });
         parent.layout = layout;
         Widget.attach(parent, document.body);
         parent.hide();
@@ -1125,7 +1141,7 @@ describe('ui/splitpanel', () => {
 
       beforeEach(() => {
         parent = new LogWidget();
-        layout = new LogSplitLayout(new HandleRenderer());
+        layout = new LogSplitLayout({ renderer: customRenderer });
         parent.layout = layout;
         Widget.attach(parent, document.body);
         let widgets = [new LogWidget(), new LogWidget(), new LogWidget()];
@@ -1162,7 +1178,7 @@ describe('ui/splitpanel', () => {
 
       beforeEach(() => {
         parent = new LogWidget();
-        layout = new LogSplitLayout(new HandleRenderer());
+        layout = new LogSplitLayout({ renderer: customRenderer });
         parent.layout = layout;
         Widget.attach(parent, document.body);
         let widgets = [new LogWidget(), new LogWidget(), new LogWidget()];
@@ -1187,7 +1203,7 @@ describe('ui/splitpanel', () => {
       it('should send a fit request to an ancestor widget', () => {
         Widget.detach(parent);
         let ancestor = new LogWidget();
-        let ancestorLayout = new LogSplitLayout(new HandleRenderer());
+        let ancestorLayout = new LogSplitLayout({ renderer: customRenderer });
         ancestor.layout = ancestorLayout;
         ancestorLayout.addWidget(parent);
         parent.layout = layout;
@@ -1195,6 +1211,38 @@ describe('ui/splitpanel', () => {
         sendMessage(parent, WidgetMessage.FitRequest);
         expect(ancestorLayout.methods.indexOf('onFitRequest')).to.not.be(-1);
         parent.dispose();
+      });
+
+    });
+
+    describe('.getStretch()', () => {
+
+      it('should get the split layout stretch factor for the given widget', () => {
+        let widget = new Widget();
+        expect(SplitLayout.getStretch(widget)).to.be(0);
+      });
+
+    });
+
+    describe('.setStretch()', () => {
+
+      it('should set the split layout stretch factor for the given widget', () => {
+        let widget = new Widget();
+        SplitLayout.setStretch(widget, 10);
+        expect(SplitLayout.getStretch(widget)).to.be(10);
+      });
+
+      it('should post a fit request to the parent', (done) => {
+        let parent = new Widget();
+        let layout = new LogSplitLayout({ renderer: customRenderer });
+        parent.layout = layout;
+        let widget = new Widget();
+        widget.parent = parent;
+        SplitLayout.setStretch(widget, 10);
+        requestAnimationFrame(() => {
+          expect(layout.methods.indexOf('onFitRequest')).to.not.be(-1);
+          done();
+        });
       });
 
     });

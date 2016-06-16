@@ -28,32 +28,6 @@ import {
 } from '../../../lib/ui/widget';
 
 
-
-class LogBoxPanel extends BoxPanel {
-
-  methods: string[] = [];
-
-  static createLayout(): LogBoxLayout {
-    return new LogBoxLayout();
-  }
-
-  protected onUpdateRequest(msg: Message): void {
-    super.onUpdateRequest(msg);
-    this.methods.push('onUpdateRequest');
-  }
-
-  protected onChildAdded(msg: ChildMessage): void {
-    super.onChildAdded(msg);
-    this.methods.push('onChildAdded');
-  }
-
-  protected onChildRemoved(msg: ChildMessage): void {
-    super.onChildRemoved(msg);
-    this.methods.push('onChildRemoved');
-  }
-}
-
-
 class LogBoxLayout extends BoxLayout {
 
   methods: string[] = [];
@@ -115,6 +89,31 @@ class LogBoxLayout extends BoxLayout {
 }
 
 
+class LogBoxPanel extends BoxPanel {
+
+  methods: string[] = [];
+
+  constructor() {
+    super({ layout: new LogBoxLayout() });
+  }
+
+  protected onUpdateRequest(msg: Message): void {
+    super.onUpdateRequest(msg);
+    this.methods.push('onUpdateRequest');
+  }
+
+  protected onChildAdded(msg: ChildMessage): void {
+    super.onChildAdded(msg);
+    this.methods.push('onChildAdded');
+  }
+
+  protected onChildRemoved(msg: ChildMessage): void {
+    super.onChildRemoved(msg);
+    this.methods.push('onChildRemoved');
+  }
+}
+
+
 class LogWidget extends Widget {
 
   methods: string[] = [];
@@ -145,11 +144,93 @@ describe('ui/boxpanel', () => {
 
   describe('BoxPanel', () => {
 
-    describe('.createLayout()', () => {
+    describe('#constructor()', () => {
 
-      it('should create a box layout for a box panel', () => {
-        let layout = BoxPanel.createLayout();
-        expect(layout).to.be.a(BoxLayout);
+      it('should take no arguments', () => {
+        let panel = new BoxPanel();
+        expect(panel).to.be.a(BoxPanel);
+      });
+
+      it('should accept options', () => {
+        let panel = new BoxPanel({ direction: 'bottom-to-top', spacing: 10 });
+        expect(panel.direction).to.be('bottom-to-top');
+        expect(panel.spacing).to.be(10);
+      });
+
+      it('should accept a layout option', () => {
+        let layout = new BoxLayout();
+        let panel = new BoxPanel({ layout });
+        expect(panel.layout).to.be(layout);
+      });
+
+      it('should ignore other options if a layout is given', () => {
+        let layout = new BoxLayout();
+        let panel = new BoxPanel({
+          layout, direction: 'bottom-to-top', spacing: 10
+        });
+        expect(panel.layout).to.be(layout);
+        expect(panel.direction).to.be('top-to-bottom');
+        expect(panel.spacing).to.be(4);
+      });
+
+      it('should add the `p-BoxPanel` class', () => {
+        let panel = new BoxPanel();
+        expect(panel.hasClass('p-BoxPanel')).to.be(true);
+      });
+
+    });
+
+    describe('#direction', () => {
+
+      it('should default to `"top-to-bottom"`', () => {
+        let panel = new BoxPanel();
+        expect(panel.direction).to.be('top-to-bottom');
+      });
+
+      it('should set the layout direction for the box panel', () => {
+        let panel = new BoxPanel();
+        panel.direction = 'left-to-right';
+        expect(panel.direction).to.be('left-to-right');
+      });
+
+    });
+
+    describe('#spacing', () => {
+
+      it('should default to `4`', () => {
+        let panel = new BoxPanel();
+        expect(panel.spacing).to.be(4);
+      });
+
+      it('should set the inter-element spacing for the box panel', () => {
+        let panel = new BoxPanel();
+        panel.spacing = 8;
+        expect(panel.spacing).to.be(8);
+      });
+
+    });
+
+    describe('#onChildAdded()', () => {
+
+      it('should add the child class to a child added to the panel', () => {
+        let panel = new LogBoxPanel();
+        let widget = new Widget();
+        panel.addWidget(widget);
+        expect(panel.methods.indexOf('onChildAdded')).to.not.be(-1);
+        expect(widget.hasClass('p-BoxPanel-child')).to.be(true);
+      });
+
+    });
+
+    describe('#onChildRemoved()', () => {
+
+      it('should remove the child class from a child removed from the panel', () => {
+        let panel = new LogBoxPanel();
+        let widget = new Widget();
+        panel.addWidget(widget);
+        widget.parent = null;
+        expect(panel.methods.indexOf('onChildRemoved')).to.not.be(-1);
+        expect(widget.hasClass('p-BoxPanel-child')).to.be(false);
       });
 
     });
@@ -192,144 +273,21 @@ describe('ui/boxpanel', () => {
 
     });
 
-    describe('#constructor()', () => {
-
-      it('should take no arguments', () => {
-        let panel = new BoxPanel();
-        expect(panel).to.be.a(BoxPanel);
-      });
-
-      it('should accept options', () => {
-        let panel = new BoxPanel({ direction: 'bottom-to-top', spacing: 10 });
-        expect(panel.direction).to.be('bottom-to-top');
-        expect(panel.spacing).to.be(10);
-      });
-
-      it('should add the `p-BoxPanel` class', () => {
-        let panel = new BoxPanel();
-        expect(panel.hasClass('p-BoxPanel')).to.be(true);
-      });
-
-    });
-
-    describe('#direction', () => {
-
-      it('should default to `"top-to-bottom"`', () => {
-        let panel = new BoxPanel();
-        expect(panel.direction).to.be('top-to-bottom');
-      });
-
-      it('should set the layout direction for the box panel', () => {
-        let panel = new BoxPanel();
-        panel.direction = 'left-to-right';
-        expect(panel.direction).to.be('left-to-right');
-      });
-    });
-
-    describe('#spacing', () => {
-
-      it('should default to `8`', () => {
-        let panel = new BoxPanel();
-        expect(panel.spacing).to.be(8);
-      });
-
-      it('should set the inter-element spacing for the box panel', () => {
-        let panel = new BoxPanel();
-        panel.spacing = 4;
-        expect(panel.spacing).to.be(4);
-      });
-
-    });
-
-    describe('#onChildAdded()', () => {
-
-      it('should add the child class to a child added to the panel', () => {
-        let panel = new LogBoxPanel();
-        let widget = new Widget();
-        panel.addWidget(widget);
-        expect(panel.methods.indexOf('onChildAdded')).to.not.be(-1);
-        expect(widget.hasClass('p-BoxPanel-child')).to.be(true);
-      });
-
-    });
-
-    describe('#onChildRemoved()', () => {
-
-      it('should remove the child class from a child removed from the panel', () => {
-        let panel = new LogBoxPanel();
-        let widget = new Widget();
-        panel.addWidget(widget);
-        widget.parent = null;
-        expect(panel.methods.indexOf('onChildRemoved')).to.not.be(-1);
-        expect(widget.hasClass('p-BoxPanel-child')).to.be(false);
-      });
-
-    });
-
   });
 
   describe('BoxLayout', () => {
 
-    describe('.getStretch()', () => {
+    describe('constructor()', () => {
 
-      it('should get the box panel stretch factor for the given widget', () => {
-        let widget = new Widget();
-        expect(BoxLayout.getStretch(widget)).to.be(0);
+      it('should take no arguments', () => {
+        let layout = new BoxLayout();
+        expect(layout).to.be.a(BoxLayout);
       });
 
-    });
-
-    describe('.setStretch()', () => {
-
-      it('should set the box panel stretch factor for the given widget', () => {
-        let widget = new Widget();
-        BoxLayout.setStretch(widget, 8);
-        expect(BoxLayout.getStretch(widget)).to.be(8);
-      });
-
-      it("should post a fit request to the widget's parent", (done) => {
-        let parent = new LogWidget();
-        let widget = new Widget();
-        let layout = new LogBoxLayout();
-        parent.layout = layout;
-        layout.addWidget(widget);
-        BoxLayout.setStretch(widget, 8);
-        requestAnimationFrame(() => {
-          expect(layout.methods.indexOf('onFitRequest')).to.not.be(-1);
-          done();
-        });
-      });
-
-    });
-
-    describe('.getSizeBasis()', () => {
-
-      it('should get the box panel size basis for the given widget', () => {
-        let widget = new Widget();
-        expect(BoxLayout.getSizeBasis(widget)).to.be(0);
-      });
-
-    });
-
-    describe('.setSizeBasis()', () => {
-
-      it('should set the box panel size basis for the given widget', () => {
-        let widget = new Widget();
-        BoxLayout.setSizeBasis(widget, 8);
-        expect(BoxLayout.getSizeBasis(widget)).to.be(8);
-      });
-
-      it("should post a fit request to the widget's parent", (done) => {
-        let parent = new LogWidget();
-        let widget = new Widget();
-        let layout = new LogBoxLayout();
-        parent.layout = layout;
-        layout.addWidget(widget);
-        BoxLayout.setSizeBasis(widget, 8);
-        requestAnimationFrame(() => {
-          expect(layout.methods.indexOf('onFitRequest')).to.not.be(-1);
-          done();
-        });
+      it('should accept options', () => {
+        let layout = new BoxLayout({ direction: 'bottom-to-top', spacing: 10 });
+        expect(layout.direction).to.be('bottom-to-top');
+        expect(layout.spacing).to.be(10);
       });
 
     });
@@ -373,22 +331,22 @@ describe('ui/boxpanel', () => {
 
     describe('#spacing', () => {
 
-      it('should default to `8`', () => {
+      it('should default to `4`', () => {
         let layout = new BoxLayout();
-        expect(layout.spacing).to.be(8);
+        expect(layout.spacing).to.be(4);
       });
 
       it('should set the inter-element spacing for the box panel', () => {
         let layout = new BoxLayout();
-        layout.spacing = 4;
-        expect(layout.spacing).to.be(4);
+        layout.spacing = 8;
+        expect(layout.spacing).to.be(8);
       });
 
       it('should post a fit request to the parent widget', (done) => {
         let parent = new Widget();
         let layout = new LogBoxLayout();
         parent.layout = layout;
-        layout.spacing = 4;
+        layout.spacing = 8;
         requestAnimationFrame(() => {
           expect(layout.methods.indexOf('onFitRequest')).to.not.be(-1);
           done();
@@ -399,7 +357,7 @@ describe('ui/boxpanel', () => {
         let parent = new Widget();
         let layout = new LogBoxLayout();
         parent.layout = layout;
-        layout.spacing = 8;
+        layout.spacing = 4;
         requestAnimationFrame(() => {
           expect(layout.methods.indexOf('onFitRequest')).to.be(-1);
           done();
@@ -649,7 +607,7 @@ describe('ui/boxpanel', () => {
 
     });
 
-    describe('#onResize', () => {
+    describe('#onResize()', () => {
 
       it('should be called when a resize event is sent to the parent', () => {
         let parent = new LogWidget();
@@ -784,6 +742,70 @@ describe('ui/boxpanel', () => {
         sendMessage(parent, WidgetMessage.FitRequest);
         expect(ancestorLayout.methods.indexOf('onFitRequest')).to.not.be(-1);
         parent.dispose();
+      });
+
+    });
+
+    describe('.getStretch()', () => {
+
+      it('should get the box panel stretch factor for the given widget', () => {
+        let widget = new Widget();
+        expect(BoxLayout.getStretch(widget)).to.be(0);
+      });
+
+    });
+
+    describe('.setStretch()', () => {
+
+      it('should set the box panel stretch factor for the given widget', () => {
+        let widget = new Widget();
+        BoxLayout.setStretch(widget, 8);
+        expect(BoxLayout.getStretch(widget)).to.be(8);
+      });
+
+      it("should post a fit request to the widget's parent", (done) => {
+        let parent = new LogWidget();
+        let widget = new Widget();
+        let layout = new LogBoxLayout();
+        parent.layout = layout;
+        layout.addWidget(widget);
+        BoxLayout.setStretch(widget, 8);
+        requestAnimationFrame(() => {
+          expect(layout.methods.indexOf('onFitRequest')).to.not.be(-1);
+          done();
+        });
+      });
+
+    });
+
+    describe('.getSizeBasis()', () => {
+
+      it('should get the box panel size basis for the given widget', () => {
+        let widget = new Widget();
+        expect(BoxLayout.getSizeBasis(widget)).to.be(0);
+      });
+
+    });
+
+    describe('.setSizeBasis()', () => {
+
+      it('should set the box panel size basis for the given widget', () => {
+        let widget = new Widget();
+        BoxLayout.setSizeBasis(widget, 8);
+        expect(BoxLayout.getSizeBasis(widget)).to.be(8);
+      });
+
+      it("should post a fit request to the widget's parent", (done) => {
+        let parent = new LogWidget();
+        let widget = new Widget();
+        let layout = new LogBoxLayout();
+        parent.layout = layout;
+        layout.addWidget(widget);
+        BoxLayout.setSizeBasis(widget, 8);
+        requestAnimationFrame(() => {
+          expect(layout.methods.indexOf('onFitRequest')).to.not.be(-1);
+          done();
+        });
       });
 
     });
