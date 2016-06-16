@@ -182,12 +182,13 @@ describe('ui/splitpanel', () => {
       });
 
       it('should accept options', () => {
+        let renderer = Object.create(SplitPanel.defaultRenderer);
         let panel = new SplitPanel({
-          orientation: 'vertical', spacing: 5, renderer: customRenderer
+          orientation: 'vertical', spacing: 5, renderer
         });
         expect(panel.orientation).to.be('vertical');
         expect(panel.spacing).to.be(5);
-        expect(panel.renderer).to.be(customRenderer);
+        expect(panel.renderer).to.be(renderer);
       });
 
       it('should accept a layout option', () => {
@@ -197,9 +198,10 @@ describe('ui/splitpanel', () => {
       });
 
       it('should ignore other options if a layout is given', () => {
+        let renderer = Object.create(SplitPanel.defaultRenderer);
         let layout = new SplitLayout({ renderer: SplitPanel.defaultRenderer });
         let panel = new SplitPanel({
-          layout, orientation: 'vertical', spacing: 5, renderer: customRenderer
+          layout, orientation: 'vertical', spacing: 5, renderer
         });
         expect(panel.layout).to.be(layout);
         expect(panel.orientation).to.be('horizontal');
@@ -268,8 +270,9 @@ describe('ui/splitpanel', () => {
     describe('#renderer', () => {
 
       it('should get the handle renderer for the panel', () => {
-        let panel = new SplitPanel({ renderer: customRenderer });
-        expect(panel.renderer).to.be(customRenderer);
+        let renderer = Object.create(SplitPanel.defaultRenderer);
+        let panel = new SplitPanel({ renderer });
+        expect(panel.renderer).to.be(renderer);
       });
 
       it('should be read-only', () => {
@@ -614,7 +617,7 @@ describe('ui/splitpanel', () => {
 
     describe('#constructor()', () => {
 
-      it('should accept a handle renderer', () => {
+      it('should accept a renderer', () => {
         let layout = new SplitLayout({ renderer: customRenderer });
         expect(layout).to.be.a(SplitLayout);
       });
