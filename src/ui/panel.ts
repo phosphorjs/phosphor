@@ -112,7 +112,7 @@ namespace Panel {
   export
   interface IOptions {
     /**
-     * The layout to use for the panel.
+     * The panel layout to use for the panel.
      *
      * The default is a new `PanelLayout`.
      */

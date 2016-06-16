@@ -166,7 +166,7 @@ namespace BoxPanel {
     spacing?: number;
 
     /**
-     * The layout to use for the box panel.
+     * The box layout to use for the box panel.
      *
      * If this is provided, the other options are ignored.
      *
@@ -724,10 +724,7 @@ namespace Private {
    */
   export
   function createLayout(options: BoxPanel.IOptions): BoxLayout {
-    return options.layout || new BoxLayout({
-      direction: options.direction,
-      spacing: options.spacing
-    });
+    return options.layout || new BoxLayout(options);
   }
 
   /**
