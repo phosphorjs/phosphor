@@ -32,13 +32,7 @@ import {
 } from '../../../lib/ui/widget';
 
 
-const customRenderer: SplitPanel.IRenderer = {
-  createHandleNode: () => {
-    let node = document.createElement('div');
-    node.className = 'p-SplitPanel-handle customRenderer';
-    return node;
-  }
-};
+const customRenderer = Object.create(SplitPanel.defaultRenderer);
 
 
 class LogSplitLayout extends SplitLayout {
@@ -182,31 +176,30 @@ describe('ui/splitpanel', () => {
       });
 
       it('should accept options', () => {
-        let renderer = Object.create(SplitPanel.defaultRenderer);
         let panel = new SplitPanel({
-          orientation: 'vertical', spacing: 5, renderer
+          orientation: 'vertical', spacing: 5, renderer: customRenderer
         });
         expect(panel.orientation).to.be('vertical');
         expect(panel.spacing).to.be(5);
-        expect(panel.renderer).to.be(renderer);
+        expect(panel.renderer).to.be(customRenderer);
       });
 
       it('should accept a layout option', () => {
-        let layout = new SplitLayout({ renderer: SplitPanel.defaultRenderer });
+        let layout = new SplitLayout({ renderer: customRenderer });
         let panel = new SplitPanel({ layout });
         expect(panel.layout).to.be(layout);
       });
 
       it('should ignore other options if a layout is given', () => {
         let renderer = Object.create(SplitPanel.defaultRenderer);
-        let layout = new SplitLayout({ renderer: SplitPanel.defaultRenderer });
+        let layout = new SplitLayout({ renderer: customRenderer });
         let panel = new SplitPanel({
           layout, orientation: 'vertical', spacing: 5, renderer
         });
         expect(panel.layout).to.be(layout);
         expect(panel.orientation).to.be('horizontal');
         expect(panel.spacing).to.be(4);
-        expect(panel.renderer).to.be(SplitPanel.defaultRenderer);
+        expect(panel.renderer).to.be(customRenderer);
       });
 
       it('should add the `p-SplitPanel` class', () => {
@@ -269,10 +262,9 @@ describe('ui/splitpanel', () => {
 
     describe('#renderer', () => {
 
-      it('should get the handle renderer for the panel', () => {
-        let renderer = Object.create(SplitPanel.defaultRenderer);
-        let panel = new SplitPanel({ renderer });
-        expect(panel.renderer).to.be(renderer);
+      it('should get the renderer for the panel', () => {
+        let panel = new SplitPanel({ renderer: customRenderer });
+        expect(panel.renderer).to.be(customRenderer);
       });
 
       it('should be read-only', () => {
@@ -571,23 +563,33 @@ describe('ui/splitpanel', () => {
 
     });
 
-    describe('.defaultRenderer()', () => {
+    describe('.Renderer()', () => {
 
       describe('#createHandleNode()', () => {
 
         it('should create a new handle node', () => {
-          let node1 = SplitPanel.defaultRenderer.createHandleNode();
-          let node2 = SplitPanel.defaultRenderer.createHandleNode();
+          let renderer = new SplitPanel.Renderer();
+          let node1 = renderer.createHandleNode();
+          let node2 = renderer.createHandleNode();
           expect(node1).to.be.a(HTMLElement);
           expect(node2).to.be.a(HTMLElement);
           expect(node1).to.not.be(node2);
         });
 
         it('should add the "p-SplitPanel-handle" class', () => {
-          let node =SplitPanel.defaultRenderer.createHandleNode();
+          let renderer = new SplitPanel.Renderer();
+          let node = renderer.createHandleNode();
           expect(node.classList.contains('p-SplitPanel-handle')).to.be(true);
         });
 
+      });
+
+    });
+
+    describe('.defaultRenderer', () => {
+
+      it('should be an instance of `Renderer`', () => {
+        expect(SplitPanel.defaultRenderer).to.be.a(SplitPanel.Renderer);
       });
 
     });
@@ -710,13 +712,13 @@ describe('ui/splitpanel', () => {
 
     describe('#renderer', () => {
 
-      it('should get the handle renderer for the layout', () => {
-        let layout = new SplitPanel({ renderer: customRenderer });
+      it('should get the renderer for the layout', () => {
+        let layout = new SplitLayout({ renderer: customRenderer });
         expect(layout.renderer).to.be(customRenderer);
       });
 
       it('should be read-only', () => {
-        let layout = new SplitPanel({ renderer: customRenderer });
+        let layout = new SplitLayout({ renderer: customRenderer });
         expect(() => { layout.renderer = null; }).to.throwError();
       });
 

@@ -482,6 +482,16 @@ class Menu extends Widget {
   }
 
   /**
+   * The renderer used by the menu.
+   *
+   * #### Notes
+   * This is a read-only property.
+   */
+  get renderer(): Menu.IRenderer {
+    return this._renderer;
+  }
+
+  /**
    * A read-only sequence of the menu items in the menu.
    *
    * #### Notes
@@ -1292,8 +1302,8 @@ class Menu extends Widget {
   private _activeIndex = -1;
   private _childMenu: Menu = null;
   private _parentMenu: Menu = null;
+  private _renderer: Menu.IRenderer;
   private _items = new Vector<MenuItem>();
-  private _renderer: Menu.IContentRenderer;
   private _nodes = new Vector<HTMLElement>();
 }
 
@@ -1314,9 +1324,11 @@ namespace Menu {
   export
   interface IOptions {
     /**
-     * A custom renderer for creating menu content.
+     * A custom renderer for use with the menu.
+     *
+     * The default is a shared renderer instance.
      */
-    renderer?: IContentRenderer;
+    renderer?: IRenderer;
   }
 
   /**
@@ -1346,14 +1358,10 @@ namespace Menu {
   }
 
   /**
-   * An object which renders the content for a menu.
-   *
-   * #### Notes
-   * User code can implement a custom renderer when the default
-   * content created by the menu is insufficient.
+   * A renderer for use with a menu.
    */
   export
-  interface IContentRenderer {
+  interface IRenderer {
     /**
      * Create a node for a menu item.
      *
@@ -1381,10 +1389,10 @@ namespace Menu {
   }
 
   /**
-   * The default implementation of [[IContentRenderer]].
+   * The default implementation of `IRenderer`.
    */
   export
-  class ContentRenderer implements IContentRenderer {
+  class Renderer implements IRenderer {
     /**
      * Create a node for a menu item.
      *
@@ -1521,10 +1529,10 @@ namespace Menu {
   }
 
   /**
-   * A default instance of the `ContentRenderer` class.
+   * The default `Renderer` instance.
    */
   export
-  const defaultRenderer = new ContentRenderer();
+  const defaultRenderer = new Renderer();
 }
 
 

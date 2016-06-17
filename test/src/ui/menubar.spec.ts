@@ -143,7 +143,7 @@ describe('ui/menubar', () => {
       });
 
       it('should take options for initializing the menu bar', () => {
-        let renderer = new MenuBar.ContentRenderer();
+        let renderer = new MenuBar.Renderer();
         let bar = new MenuBar({ renderer });
         expect(bar).to.be.a(MenuBar);
       });
@@ -173,6 +173,21 @@ describe('ui/menubar', () => {
         let bar = new MenuBar();
         let content = bar.contentNode;
         expect(content.classList.contains('p-MenuBar-content')).to.be(true);
+      });
+
+    });
+
+    describe('#renderer', () => {
+
+      it('should get the renderer for the menu bar', () => {
+        let renderer = Object.create(MenuBar.defaultRenderer);
+        let bar = new MenuBar({ renderer });
+        expect(bar.renderer).to.be(renderer);
+      });
+
+      it('should be read-only', () => {
+        let bar = new MenuBar();
+        expect(() => { bar.renderer = null; }).to.throwError();
       });
 
     });
@@ -777,12 +792,12 @@ describe('ui/menubar', () => {
 
     });
 
-    describe('.ContentRenderer', () => {
+    describe('.Renderer', () => {
 
       describe('#createItemNode()', () => {
 
         it('should create a node for a menu bar item', () => {
-          let renderer = new MenuBar.ContentRenderer();
+          let renderer = new MenuBar.Renderer();
           let node = renderer.createItemNode();
           expect(node.classList.contains('p-MenuBar-item')).to.be(true);
           expect(node.getElementsByClassName('p-MenuBar-itemIcon').length).to.be(1);
@@ -794,7 +809,7 @@ describe('ui/menubar', () => {
       describe('#updateItemNode()', () => {
 
         it('should update an item node to reflect the state of a menu title', () => {
-          let renderer = new MenuBar.ContentRenderer();
+          let renderer = new MenuBar.Renderer();
           let node = renderer.createItemNode();
           let title = new Title();
           title.className = 'foo';
@@ -814,17 +829,25 @@ describe('ui/menubar', () => {
       describe('#formatLabel()', () => {
 
         it('should format a label into HTML for display', () => {
-          let renderer = new MenuBar.ContentRenderer();
+          let renderer = new MenuBar.Renderer();
           let label = renderer.formatLabel('foo', 0);
           expect(label).to.be('<span class="p-MenuBar-itemMnemonic">f</span>oo');
         });
 
         it('should not add a mnemonic if the index is out of range', () => {
-          let renderer = new MenuBar.ContentRenderer();
+          let renderer = new MenuBar.Renderer();
           let label = renderer.formatLabel('foo', -1);
           expect(label).to.be('foo');
         });
 
+      });
+
+    });
+
+    describe('.defaultRenderer', () => {
+
+      it('should be an instance of `Renderer`', () => {
+        expect(MenuBar.defaultRenderer).to.be.a(MenuBar.Renderer);
       });
 
     });

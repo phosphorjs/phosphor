@@ -376,12 +376,12 @@ class TabBar extends Widget {
   }
 
   /**
-   * The tab renderer used by the tab bar
+   * The renderer used by the tab bar
    *
    * #### Notes
    * This is a read-only property.
    */
-  get renderer(): TabBar.IContentRenderer {
+  get renderer(): TabBar.IRenderer {
     return this._renderer;
   }
 
@@ -1004,11 +1004,11 @@ class TabBar extends Widget {
 
   private _currentIndex = -1;
   private _tabsMovable: boolean;
+  private _renderer: TabBar.IRenderer;
   private _titles = new Vector<Title>();
   private _dirtyTitles= new Set<Title>();
   private _tabs = new Vector<HTMLElement>();
   private _dragData: Private.DragData = null;
-  private _renderer: TabBar.IContentRenderer;
 }
 
 
@@ -1037,11 +1037,11 @@ namespace TabBar {
     tabsMovable?: boolean;
 
     /**
-     * A custom renderer for creating tab bar content.
+     * A renderer to use with the tab bar.
      *
      * The default is a shared renderer instance.
      */
-    renderer?: IContentRenderer;
+    renderer?: IRenderer;
   }
 
   /**
@@ -1134,14 +1134,10 @@ namespace TabBar {
   }
 
   /**
-   * An object which renders content for a tab bar.
-   *
-   * #### Notes
-   * User code can implement a custom renderer when the default
-   * content created by the tab bar is insufficient.
+   * A renderer for use with a tab bar.
    */
   export
-  interface IContentRenderer {
+  interface IRenderer {
     /**
      * Create a node for a tab.
      *
@@ -1181,10 +1177,10 @@ namespace TabBar {
   }
 
   /**
-   * The default concrete implementation of [[IContentRenderer]].
+   * The default implementation of `IRenderer`.
    */
   export
-  class ContentRenderer implements IContentRenderer {
+  class Renderer implements IRenderer {
     /**
      * Create a node for a tab.
      *
@@ -1237,10 +1233,10 @@ namespace TabBar {
   }
 
   /**
-   * A default instance of the `ContentRenderer` class.
+   * The default `Renderer` instance.
    */
   export
-  const defaultRenderer = new ContentRenderer();
+  const defaultRenderer = new Renderer();
 }
 
 
