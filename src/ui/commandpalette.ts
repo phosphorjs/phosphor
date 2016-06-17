@@ -330,6 +330,16 @@ class CommandPalette extends Widget {
   }
 
   /**
+   * The renderer used by the command palette.
+   *
+   * #### Notes
+   * This is a read-only property.
+   */
+  get renderer(): CommandPalette.IRenderer {
+    return this._renderer;
+  }
+
+  /**
    * Add a command item to the command palette.
    *
    * @param value - The command item to add to the palette, or an
@@ -765,8 +775,8 @@ class CommandPalette extends Widget {
   private _items = new Vector<CommandItem>();
   private _itemNodes = new Vector<HTMLElement>();
   private _headerNodes = new Vector<HTMLElement>();
-  private _renderer: CommandPalette.IContentRenderer;
   private _result: Private.ISearchResult = null;
+  private _renderer: CommandPalette.IRenderer;
 }
 
 
@@ -781,20 +791,18 @@ namespace CommandPalette {
   export
   interface IOptions {
     /**
-     * A custom renderer for creating palette content.
+     * A custom renderer for use with the command palette.
+     *
+     * The default is a shared renderer instance.
      */
-    renderer?: IContentRenderer;
+    renderer?: IRenderer;
   }
 
   /**
-   * An object which renders the content for a command palette.
-   *
-   * #### Notes
-   * User code can implement a custom renderer when the default
-   * content created by the command palette is insufficient.
+   * A renderer for use with a command palette.
    */
   export
-  interface IContentRenderer {
+  interface IRenderer {
     /**
      * Create a node for a section header.
      *
@@ -853,10 +861,10 @@ namespace CommandPalette {
   }
 
   /**
-   * The default implementation of [[IContentRenderer]].
+   * The default implementation of `IRenderer`.
    */
   export
-  class ContentRenderer implements IContentRenderer {
+  class Renderer implements IRenderer {
     /**
      * Create a node for a section header.
      *
@@ -965,10 +973,10 @@ namespace CommandPalette {
   }
 
   /**
-   * A default instance of the `ContentRenderer` class.
+   * The default `Renderer` instance.
    */
   export
-  const defaultRenderer = new ContentRenderer();
+  const defaultRenderer = new Renderer();
 
   /**
    * Split a query string into its category and text components.

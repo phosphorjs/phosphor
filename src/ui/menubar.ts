@@ -146,6 +146,16 @@ class MenuBar extends Widget {
   }
 
   /**
+   * The renderer used by the menu bar.
+   *
+   * #### Notes
+   * This is a read-only property.
+   */
+  get renderer(): MenuBar.IRenderer {
+    return this._renderer;
+  }
+
+  /**
    * A read-only sequence of the menus in the menu bar.
    *
    * #### Notes
@@ -795,7 +805,7 @@ class MenuBar extends Widget {
   private _childMenu: Menu = null;
   private _menus = new Vector<Menu>();
   private _nodes = new Vector<HTMLElement>();
-  private _renderer: MenuBar.IContentRenderer;
+  private _renderer: MenuBar.IRenderer;
 }
 
 
@@ -811,19 +821,17 @@ namespace MenuBar {
   interface IOptions {
     /**
      * A custom renderer for creating menu bar content.
+     *
+     * The default is a shared renderer instance.
      */
-    renderer?: IContentRenderer;
+    renderer?: IRenderer;
   }
 
   /**
-   * An object which renders the content for a menu bar.
-   *
-   * #### Notes
-   * User code can implement a custom renderer when the default
-   * content created by the menu bar is insufficient.
+   * A renderer for use with a menu bar.
    */
   export
-  interface IContentRenderer {
+  interface IRenderer {
     /**
      * Create a node for a menu bar item.
      *
@@ -851,10 +859,10 @@ namespace MenuBar {
   }
 
   /**
-   * The default concrete implementation of [[IContentRenderer]].
+   * The default implementation of `IRenderer`.
    */
   export
-  class ContentRenderer implements IContentRenderer {
+  class Renderer implements IRenderer {
     /**
      * Create a node for a menu bar item.
      *
@@ -917,8 +925,8 @@ namespace MenuBar {
   }
 
   /**
-   * A default instance of the `ContentRenderer` class.
+   * The default `Renderer` instance.
    */
   export
-  const defaultRenderer = new ContentRenderer();
+  const defaultRenderer = new Renderer();
 }

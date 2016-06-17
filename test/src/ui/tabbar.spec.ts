@@ -1093,12 +1093,12 @@ describe('ui/tabbar', () => {
 
     });
 
-    describe('.ContentRenderer', () => {
+    describe('.Renderer', () => {
 
       describe('#createTabNode()', () => {
 
         it('should create a node for a tab', () => {
-          let renderer = new TabBar.ContentRenderer();
+          let renderer = new TabBar.Renderer();
           let node = renderer.createTabNode();
           expect(node.classList.contains('p-TabBar-tab')).to.be(true);
           expect(node.getElementsByClassName('p-TabBar-tabIcon').length).to.be(1);
@@ -1118,7 +1118,7 @@ describe('ui/tabbar', () => {
             className: 'fizz',
             caption: 'this is a caption'
           });
-          let renderer = new TabBar.ContentRenderer();
+          let renderer = new TabBar.Renderer();
           let node = renderer.createTabNode();
           renderer.updateTabNode(node, title);
           expect(node.classList.contains(title.className)).to.be(true);
@@ -1135,7 +1135,7 @@ describe('ui/tabbar', () => {
       describe('#closeIconNode()', () => {
 
         it('should look up the close icon descendant node for a tab node', () => {
-          let renderer = new TabBar.ContentRenderer();
+          let renderer = new TabBar.Renderer();
           let node = renderer.createTabNode();
           let closeNode = renderer.closeIconNode(node);
           expect(closeNode.classList.contains('p-TabBar-tabCloseIcon')).to.be(true);
@@ -1147,8 +1147,8 @@ describe('ui/tabbar', () => {
 
     describe('.defaultRenderer', () => {
 
-      it('should be a `ContentRenderer`', () => {
-        expect(TabBar.defaultRenderer).to.be.a(TabBar.ContentRenderer);
+      it('should be an instance of `Renderer`', () => {
+        expect(TabBar.defaultRenderer).to.be.a(TabBar.Renderer);
       });
 
     });

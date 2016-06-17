@@ -440,21 +440,27 @@ namespace SplitPanel {
   }
 
   /**
-   * The default `IRenderer` instance.
+   * The default implementation of `IRenderer`.
    */
   export
-  const defaultRenderer: IRenderer = {
+  class Renderer implements IRenderer {
     /**
      * Create a new handle node for use with a split panel.
      *
      * @returns A new handle node for a split panel.
      */
-    createHandleNode: () => {
+    createHandleNode(): HTMLElement {
       let node = document.createElement('div');
       node.className = HANDLE_CLASS;
       return node;
     }
-  };
+  }
+
+  /**
+   * The default `Renderer` instance.
+   */
+  export
+  const defaultRenderer = new Renderer();
 
   /**
    * Get the split panel stretch factor for the given widget.

@@ -520,7 +520,7 @@ describe('ui/menu', () => {
       });
 
       it('should take options for initializing the menu', () => {
-        let renderer = new Menu.ContentRenderer();
+        let renderer = new Menu.Renderer();
         let menu = new Menu({ renderer });
         expect(menu).to.be.a(Menu);
       });
@@ -776,6 +776,26 @@ describe('ui/menu', () => {
         let menu = new Menu();
         let content = menu.contentNode;
         expect(content.classList.contains('p-Menu-content')).to.be(true);
+      });
+
+      it('should be read-only', () => {
+        let menu = new Menu();
+        expect(() => { menu.contentNode = null; }).to.throwError();
+      });
+
+    });
+
+    describe('#renderer', () => {
+
+      it('should get the renderer for the menu', () => {
+        let renderer = Object.create(Menu.defaultRenderer);
+        let menu = new Menu({ renderer });
+        expect(menu.renderer).to.be(renderer);
+      });
+
+      it('should be read-only', () => {
+        let menu = new Menu();
+        expect(() => { menu.renderer = null; }).to.throwError();
       });
 
     });
@@ -1638,12 +1658,12 @@ describe('ui/menu', () => {
 
     });
 
-    describe('.ContentRenderer', () => {
+    describe('.Renderer', () => {
 
       describe('#createItemNode()', () => {
 
         it('should create a node for a menu item', () => {
-          let renderer = new Menu.ContentRenderer();
+          let renderer = new Menu.Renderer();
           let node = renderer.createItemNode();
           expect(node.classList.contains('p-Menu-item')).to.be(true);
           expect(node.getElementsByClassName('p-Menu-itemIcon').length).to.be(1);
@@ -1657,7 +1677,7 @@ describe('ui/menu', () => {
       describe('#updateItemNode()', () => {
 
         it('should update an item node to reflect the state of a menu item', () => {
-          let renderer = new Menu.ContentRenderer();
+          let renderer = new Menu.Renderer();
           let node = renderer.createItemNode();
           let item = new MenuItem({ command: DEFAULT_CMD });
           renderer.updateItemNode(node, item);
@@ -1675,7 +1695,7 @@ describe('ui/menu', () => {
         });
 
         it('should handle submenu items', () => {
-          let renderer = new Menu.ContentRenderer();
+          let renderer = new Menu.Renderer();
           let node = renderer.createItemNode();
           let item = new MenuItem({ type: 'submenu', menu: null });
           renderer.updateItemNode(node, item);
@@ -1684,7 +1704,7 @@ describe('ui/menu', () => {
         });
 
         it('should handle separator items', () => {
-          let renderer = new Menu.ContentRenderer();
+          let renderer = new Menu.Renderer();
           let node = renderer.createItemNode();
           let item = new MenuItem({ type: 'separator' });
           renderer.updateItemNode(node, item);
@@ -1697,7 +1717,7 @@ describe('ui/menu', () => {
             isEnabled: (args: JSONObject) => { return false; },
           });
           let item = new MenuItem({ command: 'test' });
-          let renderer = new Menu.ContentRenderer();
+          let renderer = new Menu.Renderer();
           let node = renderer.createItemNode();
           renderer.updateItemNode(node, item);
           expect(node.classList.contains('p-mod-disabled')).to.be(true);
@@ -1710,7 +1730,7 @@ describe('ui/menu', () => {
             isToggled: (args: JSONObject) => { return true; },
           });
           let item = new MenuItem({ command: 'test' });
-          let renderer = new Menu.ContentRenderer();
+          let renderer = new Menu.Renderer();
           let node = renderer.createItemNode();
           renderer.updateItemNode(node, item);
           expect(node.classList.contains('p-mod-toggled')).to.be(true);
@@ -1722,13 +1742,13 @@ describe('ui/menu', () => {
       describe('#formatLabel()', () => {
 
         it('should format a label into HTML for display', () => {
-          let renderer = new Menu.ContentRenderer();
+          let renderer = new Menu.Renderer();
           let label = renderer.formatLabel('foo', 0);
           expect(label).to.be('<span class="p-Menu-itemMnemonic">f</span>oo');
         });
 
         it('should not add a mnemonic if the index is out of range', () => {
-          let renderer = new Menu.ContentRenderer();
+          let renderer = new Menu.Renderer();
           let label = renderer.formatLabel('foo', -1);
           expect(label).to.be('foo');
         });
@@ -1739,13 +1759,13 @@ describe('ui/menu', () => {
 
         it('should format a key binding into a shortcut text for display', () => {
           let binding = keymap.findKeyBinding(DEFAULT_CMD, null);
-          let renderer = new Menu.ContentRenderer();
+          let renderer = new Menu.Renderer();
           let shortcut = renderer.formatShortcut(binding);
           expect(shortcut).to.be('A');
         });
 
         it('should accept a `null` keyBinding', () => {
-          let renderer = new Menu.ContentRenderer();
+          let renderer = new Menu.Renderer();
           let shortcut = renderer.formatShortcut(null);
           expect(shortcut).to.be('');
         });
@@ -1756,8 +1776,8 @@ describe('ui/menu', () => {
 
     describe('.defaultRenderer', () => {
 
-      it('should be an instance of `ContentRenderer`', () => {
-        expect(Menu.defaultRenderer).to.be.a(Menu.ContentRenderer);
+      it('should be an instance of `Renderer`', () => {
+        expect(Menu.defaultRenderer).to.be.a(Menu.Renderer);
       });
 
     });

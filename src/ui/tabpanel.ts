@@ -264,10 +264,10 @@ namespace TabPanel {
     tabsMovable?: boolean;
 
     /**
-     * The content renderer for the panel's tab bar.
+     * The renderer for the panel's tab bar.
      *
      * The default is shared renderer instance.
      */
-    renderer?: TabBar.IContentRenderer;
+    renderer?: TabBar.IRenderer;
   }
 }

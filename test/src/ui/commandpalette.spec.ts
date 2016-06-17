@@ -429,6 +429,21 @@ describe('ui/commandpalette', () => {
 
     });
 
+    describe('#renderer', () => {
+
+      it('should get the renderer for the command palette', () => {
+        let renderer = Object.create(CommandPalette.defaultRenderer);
+        let palette = new CommandPalette({ renderer });
+        expect(palette.renderer).to.be(renderer);
+      });
+
+      it('should be read-only', () => {
+        let palette = new CommandPalette();
+        expect(() => { palette.renderer = null; }).to.throwError();
+      });
+
+    });
+
     describe('#addItem()', () => {
 
       it('should add an item to a command palette', () => {
