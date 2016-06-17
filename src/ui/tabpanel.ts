@@ -10,6 +10,10 @@ import {
 } from '../algorithm/sequence';
 
 import {
+  ISignal, defineSignal
+} from '../core/signaling';
+
+import {
   BoxLayout
 } from './boxpanel';
 
@@ -101,6 +105,19 @@ class TabPanel extends Widget {
     this._stackedPanel = null;
     super.dispose();
   }
+
+  /**
+   * A signal emitted when the current tab is changed.
+   *
+   * #### Notes
+   * This signal is emitted when the currently selected tab is changed
+   * either through user or programmatic interaction.
+   *
+   * Notably, this signal is not emitted when the index of the current
+   * tab changes due to tabs being inserted, removed, or moved. It is
+   * only emitted when the actual current tab node is changed.
+   */
+  currentChanged: ISignal<TabPanel, TabPanel.ICurrentChangedArgs>;
 
   /**
    * Get the index of the currently selected tab.
@@ -213,11 +230,15 @@ class TabPanel extends Widget {
    * Handle the `currentChanged` signal from the tab bar.
    */
   private _onCurrentChanged(sender: TabBar, args: TabBar.ICurrentChangedArgs): void {
-    let prev = args.previousTitle;
-    let curr = args.currentTitle;
-    if (prev) (prev.owner as Widget).hide();
-    if (curr) (curr.owner as Widget).show();
-    if (curr) (curr.owner as Widget).focus();
+    let { previousIndex, previousTitle, currentIndex, currentTitle } = args;
+    let previousWidget = previousTitle ? previousTitle.owner as Widget : null;
+    let currentWidget = currentTitle ? currentTitle.owner as Widget : null;
+    if (previousWidget) previousWidget.hide();
+    if (currentWidget) currentWidget.show();
+    if (currentWidget) currentWidget.focus();
+    this.currentChanged.emit({
+      previousIndex, previousWidget, currentIndex, currentWidget
+    });
   }
 
   /**
@@ -246,6 +267,10 @@ class TabPanel extends Widget {
 }
 
 
+// Define the signals for the `TabPanel` class.
+defineSignal(TabPanel.prototype, 'currentChanged');
+
+
 /**
  * The namespace for the `TabPanel` class statics.
  */
@@ -269,5 +294,31 @@ namespace TabPanel {
      * The default is shared renderer instance.
      */
     renderer?: TabBar.IRenderer;
+  }
+
+  /**
+   * The arguments object for the `currentChanged` signal.
+   */
+  export
+  interface ICurrentChangedArgs {
+    /**
+     * The previously selected index.
+     */
+    previousIndex: number;
+
+    /**
+     * The previously selected widget.
+     */
+    previousWidget: Widget;
+
+    /**
+     * The currently selected index.
+     */
+    currentIndex: number;
+
+    /**
+     * The currently selected widget.
+     */
+    currentWidget: Widget;
   }
 }

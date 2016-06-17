@@ -81,6 +81,59 @@ describe('ui/tabpanel', () => {
 
     });
 
+    describe('#currentChanged', () => {
+
+      it('should be emitted when the current tab is changed', () => {
+        let panel = new TabPanel();
+        panel.addWidget(new Widget());
+        panel.addWidget(new Widget());
+        let called = false;
+        let widgets = panel.widgets;
+        panel.currentChanged.connect((sender, args) => {
+          expect(sender).to.be(panel);
+          expect(args.previousIndex).to.be(0);
+          expect(args.previousWidget).to.be(widgets.at(0));
+          expect(args.currentIndex).to.be(1);
+          expect(args.currentWidget).to.be(widgets.at(1));
+          called = true;
+        });
+        panel.currentIndex = 1;
+        expect(called).to.be(true);
+      });
+
+      it('should not be emitted when another tab is inserted', () => {
+        let panel = new TabPanel();
+        panel.addWidget(new Widget());
+        panel.addWidget(new Widget());
+        let called = false;
+        panel.currentChanged.connect((sender, args) => { called = true; });
+        panel.insertWidget(0, new Widget());
+        expect(called).to.be(false);
+      });
+
+      it('should not be emitted when another tab is removed', () => {
+        let panel = new TabPanel();
+        panel.addWidget(new Widget());
+        panel.addWidget(new Widget());
+        let called = false;
+        panel.currentIndex = 1;
+        panel.currentChanged.connect((sender, args) => { called = true; });
+        panel.widgets.at(0).parent = null;
+        expect(called).to.be(false);
+      });
+
+      it('should not be emitted when the current tab is moved', () => {
+        let panel = new TabPanel();
+        panel.addWidget(new Widget());
+        panel.addWidget(new Widget());
+        let called = false;
+        panel.currentChanged.connect((sender, args) => { called = true; });
+        panel.insertWidget(2, panel.widgets.at(0));
+        expect(called).to.be(false);
+      });
+
+    });
+
     describe('#currentIndex', () => {
 
       it('should get the index of the currently selected tab', () => {
