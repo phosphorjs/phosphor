@@ -355,24 +355,12 @@ namespace MenuItem {
 export
 class Menu extends Widget {
   /**
-   * Create the DOM node for a menu.
-   */
-  static createNode(): HTMLElement {
-    let node = document.createElement('div');
-    let content = document.createElement('ul');
-    content.className = CONTENT_CLASS;
-    node.appendChild(content);
-    node.tabIndex = -1;
-    return node;
-  }
-
-  /**
    * Construct a new menu.
    *
    * @param options - The options for initializing the menu.
    */
   constructor(options: Menu.IOptions = {}) {
-    super();
+    super({ node: Private.createNode() });
     this.addClass(MENU_CLASS);
     this.setFlag(WidgetFlag.DisallowLayout);
     this._renderer = options.renderer || Menu.defaultRenderer;
@@ -1540,6 +1528,19 @@ namespace Menu {
  * The namespace for the private module data.
  */
 namespace Private {
+  /**
+   * Create the DOM node for a menu.
+   */
+  export
+  function createNode(): HTMLElement {
+    let node = document.createElement('div');
+    let content = document.createElement('ul');
+    content.className = CONTENT_CLASS;
+    node.appendChild(content);
+    node.tabIndex = -1;
+    return node;
+  }
+
   /**
    * Coerce a menu item or options into a real menu item.
    */

@@ -97,24 +97,12 @@ const ACTIVE_CLASS = 'p-mod-active';
 export
 class MenuBar extends Widget {
   /**
-   * Create the DOM node for a menu bar.
-   */
-  static createNode(): HTMLElement {
-    let node = document.createElement('div');
-    let content = document.createElement('ul');
-    content.className = CONTENT_CLASS;
-    node.appendChild(content);
-    node.tabIndex = -1;
-    return node;
-  }
-
-  /**
    * Construct a new menu bar.
    *
    * @param options - The options for initializing the menu bar.
    */
   constructor(options: MenuBar.IOptions = {}) {
-    super();
+    super({ node: Private.createNode() });
     this.addClass(MENU_BAR_CLASS);
     this.setFlag(WidgetFlag.DisallowLayout);
     this._renderer = options.renderer || MenuBar.defaultRenderer;
@@ -929,4 +917,23 @@ namespace MenuBar {
    */
   export
   const defaultRenderer = new Renderer();
+}
+
+
+/**
+ * The namespace for the private module data.
+ */
+namespace Private {
+  /**
+   * Create the DOM node for a menu bar.
+   */
+  export
+  function createNode(): HTMLElement {
+    let node = document.createElement('div');
+    let content = document.createElement('ul');
+    content.className = CONTENT_CLASS;
+    node.appendChild(content);
+    node.tabIndex = -1;
+    return node;
+  }
 }

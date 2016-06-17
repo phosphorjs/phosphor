@@ -241,31 +241,10 @@ namespace CommandItem {
 export
 class CommandPalette extends Widget {
   /**
-   * Create the DOM node for a command palette.
-   */
-  static createNode(): HTMLElement {
-    let node = document.createElement('div');
-    let search = document.createElement('div');
-    let wrapper = document.createElement('div');
-    let input = document.createElement('input');
-    let content = document.createElement('ul');
-    search.className = SEARCH_CLASS;
-    wrapper.className = WRAPPER_CLASS;
-    input.className = INPUT_CLASS;
-    content.className = CONTENT_CLASS;
-    input.spellcheck = false;
-    wrapper.appendChild(input);
-    search.appendChild(wrapper);
-    node.appendChild(search);
-    node.appendChild(content);
-    return node;
-  }
-
-  /**
    * Construct a new command palette.
    */
   constructor(options: CommandPalette.IOptions = {}) {
-    super();
+    super({ node: Private.createNode() });
     this.addClass(PALETTE_CLASS);
     this.setFlag(WidgetFlag.DisallowLayout);
     this._renderer = options.renderer || CommandPalette.defaultRenderer;
@@ -1069,6 +1048,28 @@ namespace Private {
      * The flat ordered array of result parts.
      */
     parts: IResultPart[];
+  }
+
+  /**
+   * Create the DOM node for a command palette.
+   */
+  export
+  function createNode(): HTMLElement {
+    let node = document.createElement('div');
+    let search = document.createElement('div');
+    let wrapper = document.createElement('div');
+    let input = document.createElement('input');
+    let content = document.createElement('ul');
+    search.className = SEARCH_CLASS;
+    wrapper.className = WRAPPER_CLASS;
+    input.className = INPUT_CLASS;
+    content.className = CONTENT_CLASS;
+    input.spellcheck = false;
+    wrapper.appendChild(input);
+    search.appendChild(wrapper);
+    node.appendChild(search);
+    node.appendChild(content);
+    return node;
   }
 
   /**

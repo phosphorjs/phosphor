@@ -125,16 +125,6 @@ describe('ui/menubar', () => {
 
   describe('MenuBar', () => {
 
-    describe('.createNode()', () => {
-
-      it('should create the DOM node for a menu bar', () => {
-        let node = MenuBar.createNode();
-        expect(node.getElementsByClassName('p-MenuBar-content').length).to.be(1);
-        expect(node.tabIndex).to.be(-1);
-      });
-
-    });
-
     describe('#constructor()', () => {
 
       it('should take no arguments', () => {

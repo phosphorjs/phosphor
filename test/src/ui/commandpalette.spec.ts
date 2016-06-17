@@ -306,17 +306,6 @@ describe('ui/commandpalette', () => {
 
   describe('CommandPalette', () => {
 
-    describe('.createNode()', () => {
-
-      it('should create node for a command palette', () => {
-        let node = CommandPalette.createNode();
-        expect(node.querySelector('.p-CommandPalette-search')).to.be.ok();
-        expect(node.querySelector('.p-CommandPalette-input')).to.be.ok();
-        expect(node.querySelector('.p-CommandPalette-content')).to.be.ok();
-      });
-
-    });
-
     describe('#constructor()', () => {
 
       it('should accept no arguments', () => {
