@@ -82,26 +82,13 @@ const BOTTOM_TO_TOP_CLASS = 'p-mod-bottom-to-top';
 export
 class BoxPanel extends Panel {
   /**
-   * Create a box layout for a box panel.
-   */
-  static createLayout(): BoxLayout {
-    return new BoxLayout();
-  }
-
-  /**
    * Construct a new box panel.
    *
    * @param options - The options for initializing the box panel.
    */
   constructor(options: BoxPanel.IOptions = {}) {
-    super();
+    super({ layout: Private.createLayout(options) });
     this.addClass(BOX_PANEL_CLASS);
-    if (options.direction !== void 0) {
-      this.direction = options.direction;
-    }
-    if (options.spacing !== void 0) {
-      this.spacing = options.spacing;
-    }
   }
 
   /**
@@ -174,9 +161,18 @@ namespace BoxPanel {
     /**
      * The spacing between items in the panel.
      *
-     * The default is `8`.
+     * The default is `4`.
      */
     spacing?: number;
+
+    /**
+     * The box layout to use for the box panel.
+     *
+     * If this is provided, the other options are ignored.
+     *
+     * The default is a new `BoxLayout`.
+     */
+    layout?: BoxLayout;
   }
 
   /**
@@ -234,6 +230,21 @@ namespace BoxPanel {
  */
 export
 class BoxLayout extends PanelLayout {
+  /**
+   * Construct a new box layout.
+   *
+   * @param options - The options for initializing the layout.
+   */
+  constructor(options: BoxLayout.IOptions = {}) {
+    super();
+    if (options.direction !== void 0) {
+      this._direction = options.direction;
+    }
+    if (options.spacing !== void 0) {
+      this._spacing = options.spacing;
+    }
+  }
+
   /**
    * Get the layout direction for the box layout.
    */
@@ -591,7 +602,7 @@ class BoxLayout extends PanelLayout {
   }
 
   private _fixed = 0;
-  private _spacing = 8;
+  private _spacing = 4;
   private _dirty = false;
   private _box: IBoxSizing = null;
   private _sizers = new Vector<BoxSizer>();
@@ -611,6 +622,26 @@ namespace BoxLayout {
   type Direction = (
     'left-to-right' | 'right-to-left' | 'top-to-bottom' | 'bottom-to-top'
   );
+
+  /**
+   * An options object for initializing a box layout.
+   */
+  export
+  interface IOptions {
+    /**
+     * The direction of the layout.
+     *
+     * The default is `'top-to-bottom'`.
+     */
+    direction?: Direction;
+
+    /**
+     * The spacing between items in the layout.
+     *
+     * The default is `4`.
+     */
+    spacing?: number;
+  }
 
   /**
    * Get the box layout stretch factor for the given widget.
@@ -687,6 +718,14 @@ namespace Private {
     coerce: (owner, value) => Math.max(0, Math.floor(value)),
     changed: onChildPropertyChanged
   });
+
+  /**
+   * Create a box layout for the given panel options.
+   */
+  export
+  function createLayout(options: BoxPanel.IOptions): BoxLayout {
+    return options.layout || new BoxLayout(options);
+  }
 
   /**
    * Test whether a direction has horizontal orientation.

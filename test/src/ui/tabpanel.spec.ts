@@ -16,7 +16,7 @@ import {
 } from '../../../lib/core/messaging';
 
 import {
-  StackedPanel
+  StackedLayout, StackedPanel
 } from '../../../lib/ui/stackedpanel';
 
 import {
@@ -47,29 +47,18 @@ describe('ui/tabpanel', () => {
 
   describe('TabPanel', () => {
 
-    describe('.createTabBar()', () => {
-
-      it('should crate a `TabBar` for a tab panel', () => {
-        let bar = TabPanel.createTabBar();
-        expect(bar).to.be.a(TabBar);
-      });
-
-    });
-
-    describe('.createStackedPanel()', () => {
-
-      it('should create a `StackedPanel` for a tab panel', () => {
-        let panel = TabPanel.createStackedPanel();
-        expect(panel).to.be.a(StackedPanel);
-      });
-
-    });
-
     describe('#constructor()', () => {
 
       it('should construct a new tab panel and take no arguments', () => {
         let panel = new TabPanel();
         expect(panel).to.be.a(TabPanel);
+      });
+
+      it('should accept options', () => {
+        let renderer = Object.create(TabBar.defaultRenderer);
+        let panel = new TabPanel({ tabsMovable: true, renderer });
+        expect(panel.tabBar.tabsMovable).to.be(true);
+        expect(panel.tabBar.renderer).to.be(renderer);
       });
 
       it('should add a `p-TabPanel` class', () => {
@@ -158,27 +147,17 @@ describe('ui/tabpanel', () => {
 
     });
 
-    describe('#tabsMovable', () => {
-
-      it('should get whether the tabs are movable by the user', () => {
-        let panel = new TabPanel();
-        expect(panel.tabsMovable).to.be(false);
-      });
-
-      it('should set whether the tabs are movable by the user', () => {
-        let panel = new TabPanel();
-        panel.tabsMovable = true;
-        expect(panel.tabsMovable).to.be(true);
-      });
-
-    });
-
     describe('#tabBar', () => {
 
       it('should get the tab bar associated with the tab panel', () => {
         let panel = new TabPanel();
         let bar = panel.tabBar;
         expect(bar).to.be.a(TabBar);
+      });
+
+      it('should have the "p-TabPanel-tabBar" class', () => {
+        let panel = new TabPanel();
+        let bar = panel.tabBar;
         expect(bar.hasClass('p-TabPanel-tabBar')).to.be(true);
       });
 
@@ -252,6 +231,11 @@ describe('ui/tabpanel', () => {
         let panel = new TabPanel();
         let stack = panel.stackedPanel;
         expect(stack).to.be.a(StackedPanel);
+      });
+
+      it('should have the "p-TabPanel-stackedPanel" class', () => {
+        let panel = new TabPanel();
+        let stack = panel.stackedPanel;
         expect(stack.hasClass('p-TabPanel-stackedPanel')).to.be(true);
       });
 

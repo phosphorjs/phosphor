@@ -53,24 +53,14 @@ const PANEL_CLASS = 'p-Panel';
 export
 class Panel extends Widget {
   /**
-   * Create a panel layout to use with a new panel.
-   *
-   * @returns A new panel layout to use with a panel.
-   *
-   * #### Notes
-   * This may be reimplemented by a subclass to create custom layouts.
-   */
-  static createLayout(): PanelLayout {
-    return new PanelLayout();
-  }
-
-  /**
    * Construct a new panel.
+   *
+   * @param options - The options for initializing the panel.
    */
-  constructor() {
+  constructor(options: Panel.IOptions = {}) {
     super();
     this.addClass(PANEL_CLASS);
-    this.layout = (this.constructor as typeof Panel).createLayout();
+    this.layout = Private.createLayout(options);
   }
 
   /**
@@ -107,6 +97,26 @@ class Panel extends Widget {
    */
   insertWidget(index: number, widget: Widget): void {
     (this.layout as PanelLayout).insertWidget(index, widget);
+  }
+}
+
+
+/**
+ * The namespace for the `Panel` class statics.
+ */
+export
+namespace Panel {
+  /**
+   * An options object for creating a panel.
+   */
+  export
+  interface IOptions {
+    /**
+     * The panel layout to use for the panel.
+     *
+     * The default is a new `PanelLayout`.
+     */
+    layout?: PanelLayout;
   }
 }
 
@@ -389,4 +399,18 @@ class PanelLayout extends Layout {
   }
 
   private _widgets = new Vector<Widget>();
+}
+
+
+/**
+ * The namespace for the private module data.
+ */
+namespace Private {
+  /**
+   * Create a panel layout for the given panel options.
+   */
+  export
+  function createLayout(options: Panel.IOptions): PanelLayout {
+    return options.layout || new PanelLayout();
+  }
 }

@@ -164,6 +164,7 @@ class TabBar extends Widget {
     super();
     this.addClass(TAB_BAR_CLASS);
     this.setFlag(WidgetFlag.DisallowLayout);
+    this._tabsMovable = options.tabsMovable || false;
     this._renderer = options.renderer || TabBar.defaultRenderer;
   }
 
@@ -372,6 +373,16 @@ class TabBar extends Widget {
    */
   set tabsMovable(value: boolean) {
     this._tabsMovable = value;
+  }
+
+  /**
+   * The tab renderer used by the tab bar
+   *
+   * #### Notes
+   * This is a read-only property.
+   */
+  get renderer(): TabBar.IContentRenderer {
+    return this._renderer;
   }
 
   /**
@@ -992,7 +1003,7 @@ class TabBar extends Widget {
   }
 
   private _currentIndex = -1;
-  private _tabsMovable = false;
+  private _tabsMovable: boolean;
   private _titles = new Vector<Title>();
   private _dirtyTitles= new Set<Title>();
   private _tabs = new Vector<HTMLElement>();
@@ -1019,7 +1030,16 @@ namespace TabBar {
   export
   interface IOptions {
     /**
+     * Whether the tabs are movable by the user.
+     *
+     * The default is `false`.
+     */
+    tabsMovable?: boolean;
+
+    /**
      * A custom renderer for creating tab bar content.
+     *
+     * The default is a shared renderer instance.
      */
     renderer?: IContentRenderer;
   }
