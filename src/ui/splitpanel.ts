@@ -430,7 +430,7 @@ namespace SplitPanel {
     spacing?: number;
 
     /**
-     * The layout to use for the split panel.
+     * The split layout to use for the split panel.
      *
      * If this is provided, the other options are ignored.
      *

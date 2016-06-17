@@ -144,36 +144,6 @@ class TabPanel extends Widget {
   }
 
   /**
-   * Get whether the tabs are movable by the user.
-   *
-   * #### Notes
-   * Tabs can be moved programmatically, irrespective of this value.
-   */
-  get tabsMovable(): boolean {
-    return this._tabBar.tabsMovable;
-  }
-
-  /**
-   * Set whether the tabs are movable by the user.
-   *
-   * #### Notes
-   * Tabs can be moved programmatically, irrespective of this value.
-   */
-  set tabsMovable(value: boolean) {
-    this._tabBar.tabsMovable = value;
-  }
-
-  /**
-   * The content renderer for the panel's tab bar.
-   *
-   * #### Notes
-   * This is a read-only property.
-   */
-  get renderer(): TabBar.IContentRenderer {
-    return this._tabBar.renderer;
-  }
-
-  /**
    * The tab bar associated with the tab panel.
    *
    * #### Notes

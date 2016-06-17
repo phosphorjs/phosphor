@@ -57,7 +57,7 @@ describe('ui/tabpanel', () => {
       it('should accept options', () => {
         let renderer = Object.create(TabBar.defaultRenderer);
         let panel = new TabPanel({ tabsMovable: true, renderer });
-        expect(panel.tabsMovable).to.be(true);
+        expect(panel.tabBar.tabsMovable).to.be(true);
         expect(panel.tabBar.renderer).to.be(renderer);
       });
 
@@ -143,36 +143,6 @@ describe('ui/tabpanel', () => {
         panel.addWidget(new Widget());
         panel.currentWidget = new Widget();
         expect(panel.currentWidget).to.be(null);
-      });
-
-    });
-
-    describe('#tabsMovable', () => {
-
-      it('should get whether the tabs are movable by the user', () => {
-        let panel = new TabPanel();
-        expect(panel.tabsMovable).to.be(false);
-      });
-
-      it('should set whether the tabs are movable by the user', () => {
-        let panel = new TabPanel();
-        panel.tabsMovable = true;
-        expect(panel.tabsMovable).to.be(true);
-      });
-
-    });
-
-    describe('#renderer', () => {
-
-      it('should be the content renderer for the panel', () => {
-        let renderer = Object.create(TabBar.defaultRenderer);
-        let panel = new TabPanel({ renderer });
-        expect(panel.renderer).to.be(renderer);
-      });
-
-      it('should be read-only', () => {
-        let panel = new TabPanel();
-        expect(() => { panel.renderer = null; }).to.throwError();
       });
 
     });

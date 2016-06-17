@@ -96,7 +96,7 @@ namespace StackedPanel {
   export
   interface IOptions {
     /**
-     * The layout to use for the stacked panel.
+     * The stacked layout to use for the stacked panel.
      *
      * The default is a new `StackedLayout`.
      */
