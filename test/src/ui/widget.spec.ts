@@ -186,16 +186,6 @@ describe('ui/widget', () => {
 
   describe('Widget', () => {
 
-    describe('.createNode()', () => {
-
-      it('should create an empty `<div>`', () => {
-        let div = Widget.createNode();
-        expect(div).to.be.a(HTMLElement);
-        expect(div.tagName).to.be('DIV');
-      });
-
-    });
-
     describe('#constructor()', () => {
 
       it('should accept no arguments', () => {
@@ -203,10 +193,10 @@ describe('ui/widget', () => {
         expect(widget).to.be.a(Widget);
       });
 
-      it('should accept a node to wrap', () => {
-        let div = document.createElement('div');
-        let widget = new Widget(div);
-        expect(widget.node).to.be(div);
+      it('should accept options', () => {
+        let span = document.createElement('span');
+        let widget = new Widget({ node: span });
+        expect(widget.node).to.be(span);
       });
 
       it('should add the `p-Widget` class', () => {

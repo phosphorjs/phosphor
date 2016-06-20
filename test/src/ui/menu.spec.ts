@@ -502,16 +502,6 @@ describe('ui/menu', () => {
 
   describe('Menu', () => {
 
-    describe('.createNode()', () => {
-
-      it('should create the DOM node for a menu', () => {
-        let node = Menu.createNode();
-        expect(node.getElementsByClassName('p-Menu-content').length).to.be(1);
-        expect(node.tabIndex).to.be(-1);
-      });
-
-    });
-
     describe('#constructor()', () => {
 
       it('should take no arguments', () => {

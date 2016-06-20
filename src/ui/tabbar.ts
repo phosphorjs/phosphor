@@ -136,32 +136,12 @@ const TRANSITION_DURATION = 150;  // Keep in sync with CSS.
 export
 class TabBar extends Widget {
   /**
-   * Create the DOM node for a tab bar.
-   */
-  static createNode(): HTMLElement {
-    let node = document.createElement('div');
-    let header = document.createElement('div');
-    let body = document.createElement('div');
-    let footer = document.createElement('div');
-    let content = document.createElement('ul');
-    header.className = HEADER_CLASS;
-    body.className = BODY_CLASS;
-    footer.className = FOOTER_CLASS;
-    content.className = CONTENT_CLASS;
-    body.appendChild(content);
-    node.appendChild(header);
-    node.appendChild(body);
-    node.appendChild(footer);
-    return node;
-  }
-
-  /**
    * Construct a new tab bar.
    *
    * @param options - The options for initializing the tab bar.
    */
   constructor(options: TabBar.IOptions = {}) {
-    super();
+    super({ node: Private.createNode() });
     this.addClass(TAB_BAR_CLASS);
     this.setFlag(WidgetFlag.DisallowLayout);
     this._tabsMovable = options.tabsMovable || false;
@@ -1339,6 +1319,27 @@ namespace Private {
      * The offset width of the tab.
      */
     width: number;
+  }
+
+  /**
+   * Create the DOM node for a tab bar.
+   */
+  export
+  function createNode(): HTMLElement {
+    let node = document.createElement('div');
+    let header = document.createElement('div');
+    let body = document.createElement('div');
+    let footer = document.createElement('div');
+    let content = document.createElement('ul');
+    header.className = HEADER_CLASS;
+    body.className = BODY_CLASS;
+    footer.className = FOOTER_CLASS;
+    content.className = CONTENT_CLASS;
+    body.appendChild(content);
+    node.appendChild(header);
+    node.appendChild(body);
+    node.appendChild(footer);
+    return node;
   }
 
   /**

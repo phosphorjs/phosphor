@@ -109,18 +109,6 @@ describe('ui/tabbar', () => {
 
   describe('TabBar', () => {
 
-    describe('.createNode()', () => {
-
-      it('should create the DOM node for a tab bar', () => {
-        let node = TabBar.createNode();
-        expect(node.getElementsByClassName('p-TabBar-header').length).to.be(1);
-        expect(node.getElementsByClassName('p-TabBar-footer').length).to.be(1);
-        expect(node.getElementsByClassName('p-TabBar-body').length).to.be(1);
-        expect(node.getElementsByClassName('p-TabBar-content').length).to.be(1);
-      });
-
-    });
-
     describe('#constructor()', () => {
 
       it('should take no arguments', () => {
