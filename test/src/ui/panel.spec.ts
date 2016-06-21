@@ -57,8 +57,8 @@ class LogPanelLayout extends PanelLayout {
 
 class LogPanel extends Panel {
 
-  static createLayout(): LogPanelLayout {
-    return new LogPanelLayout();
+  constructor() {
+    super({ layout: new LogPanelLayout() });
   }
 }
 
@@ -83,20 +83,17 @@ describe('ui/panel', () => {
 
   describe('Panel', () => {
 
-    describe('.createLayout', () => {
-
-      it('should create a panel layout to use with a new panel', () => {
-        let layout = Panel.createLayout();
-        expect(layout).to.be.a(PanelLayout);
-      });
-
-    });
-
     describe('#constructor()', () => {
 
       it('should take no arguments', () => {
         let panel = new Panel();
         expect(panel.layout).to.be.a(PanelLayout);
+      });
+
+      it('should accept options', () => {
+        let layout = new PanelLayout();
+        let panel = new Panel({ layout });
+        expect(panel.layout).to.be(layout);
       });
 
       it('should add the `p-Panel` class', () => {

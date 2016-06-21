@@ -241,31 +241,10 @@ namespace CommandItem {
 export
 class CommandPalette extends Widget {
   /**
-   * Create the DOM node for a command palette.
-   */
-  static createNode(): HTMLElement {
-    let node = document.createElement('div');
-    let search = document.createElement('div');
-    let wrapper = document.createElement('div');
-    let input = document.createElement('input');
-    let content = document.createElement('ul');
-    search.className = SEARCH_CLASS;
-    wrapper.className = WRAPPER_CLASS;
-    input.className = INPUT_CLASS;
-    content.className = CONTENT_CLASS;
-    input.spellcheck = false;
-    wrapper.appendChild(input);
-    search.appendChild(wrapper);
-    node.appendChild(search);
-    node.appendChild(content);
-    return node;
-  }
-
-  /**
    * Construct a new command palette.
    */
   constructor(options: CommandPalette.IOptions = {}) {
-    super();
+    super({ node: Private.createNode() });
     this.addClass(PALETTE_CLASS);
     this.setFlag(WidgetFlag.DisallowLayout);
     this._renderer = options.renderer || CommandPalette.defaultRenderer;
@@ -327,6 +306,16 @@ class CommandPalette extends Widget {
    */
   get items(): ISequence<CommandItem> {
     return this._items;
+  }
+
+  /**
+   * The renderer used by the command palette.
+   *
+   * #### Notes
+   * This is a read-only property.
+   */
+  get renderer(): CommandPalette.IRenderer {
+    return this._renderer;
   }
 
   /**
@@ -600,7 +589,7 @@ class CommandPalette extends Widget {
       return;
     }
 
-    // Lookup the relevant nodes.
+    // Look up the relevant nodes.
     let oldNode = children[this._activeIndex] as HTMLElement;
     let newNode = children[index] as HTMLElement;
 
@@ -719,7 +708,7 @@ class CommandPalette extends Widget {
       return;
     }
 
-    // Lookup the input node.
+    // Look up the input node.
     let input = this.inputNode;
 
     // If the part has an item, focus the input field, select the
@@ -765,8 +754,8 @@ class CommandPalette extends Widget {
   private _items = new Vector<CommandItem>();
   private _itemNodes = new Vector<HTMLElement>();
   private _headerNodes = new Vector<HTMLElement>();
-  private _renderer: CommandPalette.IContentRenderer;
   private _result: Private.ISearchResult = null;
+  private _renderer: CommandPalette.IRenderer;
 }
 
 
@@ -781,20 +770,18 @@ namespace CommandPalette {
   export
   interface IOptions {
     /**
-     * A custom renderer for creating palette content.
+     * A custom renderer for use with the command palette.
+     *
+     * The default is a shared renderer instance.
      */
-    renderer?: IContentRenderer;
+    renderer?: IRenderer;
   }
 
   /**
-   * An object which renders the content for a command palette.
-   *
-   * #### Notes
-   * User code can implement a custom renderer when the default
-   * content created by the command palette is insufficient.
+   * A renderer for use with a command palette.
    */
   export
-  interface IContentRenderer {
+  interface IRenderer {
     /**
      * Create a node for a section header.
      *
@@ -853,10 +840,10 @@ namespace CommandPalette {
   }
 
   /**
-   * The default implementation of [[IContentRenderer]].
+   * The default implementation of `IRenderer`.
    */
   export
-  class ContentRenderer implements IContentRenderer {
+  class Renderer implements IRenderer {
     /**
      * Create a node for a section header.
      *
@@ -965,10 +952,10 @@ namespace CommandPalette {
   }
 
   /**
-   * A default instance of the `ContentRenderer` class.
+   * The default `Renderer` instance.
    */
   export
-  const defaultRenderer = new ContentRenderer();
+  const defaultRenderer = new Renderer();
 
   /**
    * Split a query string into its category and text components.
@@ -1061,6 +1048,28 @@ namespace Private {
      * The flat ordered array of result parts.
      */
     parts: IResultPart[];
+  }
+
+  /**
+   * Create the DOM node for a command palette.
+   */
+  export
+  function createNode(): HTMLElement {
+    let node = document.createElement('div');
+    let search = document.createElement('div');
+    let wrapper = document.createElement('div');
+    let input = document.createElement('input');
+    let content = document.createElement('ul');
+    search.className = SEARCH_CLASS;
+    wrapper.className = WRAPPER_CLASS;
+    input.className = INPUT_CLASS;
+    content.className = CONTENT_CLASS;
+    input.spellcheck = false;
+    wrapper.appendChild(input);
+    search.appendChild(wrapper);
+    node.appendChild(search);
+    node.appendChild(content);
+    return node;
   }
 
   /**
@@ -1273,7 +1282,7 @@ namespace Private {
         continue;
       }
 
-      // Lookup the category score for the item category.
+      // Look up the category score for the item category.
       let cs = categories[item.category];
 
       // If the category was not matched, the item is skipped.

@@ -136,34 +136,15 @@ const TRANSITION_DURATION = 150;  // Keep in sync with CSS.
 export
 class TabBar extends Widget {
   /**
-   * Create the DOM node for a tab bar.
-   */
-  static createNode(): HTMLElement {
-    let node = document.createElement('div');
-    let header = document.createElement('div');
-    let body = document.createElement('div');
-    let footer = document.createElement('div');
-    let content = document.createElement('ul');
-    header.className = HEADER_CLASS;
-    body.className = BODY_CLASS;
-    footer.className = FOOTER_CLASS;
-    content.className = CONTENT_CLASS;
-    body.appendChild(content);
-    node.appendChild(header);
-    node.appendChild(body);
-    node.appendChild(footer);
-    return node;
-  }
-
-  /**
    * Construct a new tab bar.
    *
    * @param options - The options for initializing the tab bar.
    */
   constructor(options: TabBar.IOptions = {}) {
-    super();
+    super({ node: Private.createNode() });
     this.addClass(TAB_BAR_CLASS);
     this.setFlag(WidgetFlag.DisallowLayout);
+    this._tabsMovable = options.tabsMovable || false;
     this._renderer = options.renderer || TabBar.defaultRenderer;
   }
 
@@ -375,6 +356,16 @@ class TabBar extends Widget {
   }
 
   /**
+   * The renderer used by the tab bar
+   *
+   * #### Notes
+   * This is a read-only property.
+   */
+  get renderer(): TabBar.IRenderer {
+    return this._renderer;
+  }
+
+  /**
    * Add a tab to the end of the tab bar.
    *
    * @param value - The title which holds the data for the tab,
@@ -438,7 +429,7 @@ class TabBar extends Widget {
 
       // Update the current index.
       if (this._currentIndex === -1) {
-        this._currentIndex = j
+        this._currentIndex = j;
         this.currentChanged.emit({
           previousIndex: -1, previousTitle: null,
           currentIndex: j, currentTitle: title
@@ -847,7 +838,7 @@ class TabBar extends Widget {
       }
     }
 
-    // Update the positions of the tab.
+    // Update the positions of the tabs.
     Private.layoutTabs(this._tabs, data, event);
   }
 
@@ -992,12 +983,12 @@ class TabBar extends Widget {
   }
 
   private _currentIndex = -1;
-  private _tabsMovable = false;
+  private _tabsMovable: boolean;
+  private _renderer: TabBar.IRenderer;
   private _titles = new Vector<Title>();
   private _dirtyTitles= new Set<Title>();
   private _tabs = new Vector<HTMLElement>();
   private _dragData: Private.DragData = null;
-  private _renderer: TabBar.IContentRenderer;
 }
 
 
@@ -1019,9 +1010,18 @@ namespace TabBar {
   export
   interface IOptions {
     /**
-     * A custom renderer for creating tab bar content.
+     * Whether the tabs are movable by the user.
+     *
+     * The default is `false`.
      */
-    renderer?: IContentRenderer;
+    tabsMovable?: boolean;
+
+    /**
+     * A renderer to use with the tab bar.
+     *
+     * The default is a shared renderer instance.
+     */
+    renderer?: IRenderer;
   }
 
   /**
@@ -1114,14 +1114,10 @@ namespace TabBar {
   }
 
   /**
-   * An object which renders content for a tab bar.
-   *
-   * #### Notes
-   * User code can implement a custom renderer when the default
-   * content created by the tab bar is insufficient.
+   * A renderer for use with a tab bar.
    */
   export
-  interface IContentRenderer {
+  interface IRenderer {
     /**
      * Create a node for a tab.
      *
@@ -1161,10 +1157,10 @@ namespace TabBar {
   }
 
   /**
-   * The default concrete implementation of [[IContentRenderer]].
+   * The default implementation of `IRenderer`.
    */
   export
-  class ContentRenderer implements IContentRenderer {
+  class Renderer implements IRenderer {
     /**
      * Create a node for a tab.
      *
@@ -1217,10 +1213,10 @@ namespace TabBar {
   }
 
   /**
-   * A default instance of the `ContentRenderer` class.
+   * The default `Renderer` instance.
    */
   export
-  const defaultRenderer = new ContentRenderer();
+  const defaultRenderer = new Renderer();
 }
 
 
@@ -1323,6 +1319,27 @@ namespace Private {
      * The offset width of the tab.
      */
     width: number;
+  }
+
+  /**
+   * Create the DOM node for a tab bar.
+   */
+  export
+  function createNode(): HTMLElement {
+    let node = document.createElement('div');
+    let header = document.createElement('div');
+    let body = document.createElement('div');
+    let footer = document.createElement('div');
+    let content = document.createElement('ul');
+    header.className = HEADER_CLASS;
+    body.className = BODY_CLASS;
+    footer.className = FOOTER_CLASS;
+    content.className = CONTENT_CLASS;
+    body.appendChild(content);
+    node.appendChild(header);
+    node.appendChild(body);
+    node.appendChild(footer);
+    return node;
   }
 
   /**

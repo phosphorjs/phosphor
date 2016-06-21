@@ -97,24 +97,12 @@ const ACTIVE_CLASS = 'p-mod-active';
 export
 class MenuBar extends Widget {
   /**
-   * Create the DOM node for a menu bar.
-   */
-  static createNode(): HTMLElement {
-    let node = document.createElement('div');
-    let content = document.createElement('ul');
-    content.className = CONTENT_CLASS;
-    node.appendChild(content);
-    node.tabIndex = -1;
-    return node;
-  }
-
-  /**
    * Construct a new menu bar.
    *
    * @param options - The options for initializing the menu bar.
    */
   constructor(options: MenuBar.IOptions = {}) {
-    super();
+    super({ node: Private.createNode() });
     this.addClass(MENU_BAR_CLASS);
     this.setFlag(WidgetFlag.DisallowLayout);
     this._renderer = options.renderer || MenuBar.defaultRenderer;
@@ -143,6 +131,16 @@ class MenuBar extends Widget {
    */
   get contentNode(): HTMLElement {
     return this.node.getElementsByClassName(CONTENT_CLASS)[0] as HTMLElement;
+  }
+
+  /**
+   * The renderer used by the menu bar.
+   *
+   * #### Notes
+   * This is a read-only property.
+   */
+  get renderer(): MenuBar.IRenderer {
+    return this._renderer;
   }
 
   /**
@@ -795,7 +793,7 @@ class MenuBar extends Widget {
   private _childMenu: Menu = null;
   private _menus = new Vector<Menu>();
   private _nodes = new Vector<HTMLElement>();
-  private _renderer: MenuBar.IContentRenderer;
+  private _renderer: MenuBar.IRenderer;
 }
 
 
@@ -811,19 +809,17 @@ namespace MenuBar {
   interface IOptions {
     /**
      * A custom renderer for creating menu bar content.
+     *
+     * The default is a shared renderer instance.
      */
-    renderer?: IContentRenderer;
+    renderer?: IRenderer;
   }
 
   /**
-   * An object which renders the content for a menu bar.
-   *
-   * #### Notes
-   * User code can implement a custom renderer when the default
-   * content created by the menu bar is insufficient.
+   * A renderer for use with a menu bar.
    */
   export
-  interface IContentRenderer {
+  interface IRenderer {
     /**
      * Create a node for a menu bar item.
      *
@@ -851,10 +847,10 @@ namespace MenuBar {
   }
 
   /**
-   * The default concrete implementation of [[IContentRenderer]].
+   * The default implementation of `IRenderer`.
    */
   export
-  class ContentRenderer implements IContentRenderer {
+  class Renderer implements IRenderer {
     /**
      * Create a node for a menu bar item.
      *
@@ -917,8 +913,27 @@ namespace MenuBar {
   }
 
   /**
-   * A default instance of the `ContentRenderer` class.
+   * The default `Renderer` instance.
    */
   export
-  const defaultRenderer = new ContentRenderer();
+  const defaultRenderer = new Renderer();
+}
+
+
+/**
+ * The namespace for the private module data.
+ */
+namespace Private {
+  /**
+   * Create the DOM node for a menu bar.
+   */
+  export
+  function createNode(): HTMLElement {
+    let node = document.createElement('div');
+    let content = document.createElement('ul');
+    content.className = CONTENT_CLASS;
+    node.appendChild(content);
+    node.tabIndex = -1;
+    return node;
+  }
 }

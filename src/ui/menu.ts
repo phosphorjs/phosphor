@@ -355,24 +355,12 @@ namespace MenuItem {
 export
 class Menu extends Widget {
   /**
-   * Create the DOM node for a menu.
-   */
-  static createNode(): HTMLElement {
-    let node = document.createElement('div');
-    let content = document.createElement('ul');
-    content.className = CONTENT_CLASS;
-    node.appendChild(content);
-    node.tabIndex = -1;
-    return node;
-  }
-
-  /**
    * Construct a new menu.
    *
    * @param options - The options for initializing the menu.
    */
   constructor(options: Menu.IOptions = {}) {
-    super();
+    super({ node: Private.createNode() });
     this.addClass(MENU_CLASS);
     this.setFlag(WidgetFlag.DisallowLayout);
     this._renderer = options.renderer || Menu.defaultRenderer;
@@ -479,6 +467,16 @@ class Menu extends Widget {
    */
   get contentNode(): HTMLElement {
     return this.node.getElementsByClassName(CONTENT_CLASS)[0] as HTMLElement;
+  }
+
+  /**
+   * The renderer used by the menu.
+   *
+   * #### Notes
+   * This is a read-only property.
+   */
+  get renderer(): Menu.IRenderer {
+    return this._renderer;
   }
 
   /**
@@ -1292,8 +1290,8 @@ class Menu extends Widget {
   private _activeIndex = -1;
   private _childMenu: Menu = null;
   private _parentMenu: Menu = null;
+  private _renderer: Menu.IRenderer;
   private _items = new Vector<MenuItem>();
-  private _renderer: Menu.IContentRenderer;
   private _nodes = new Vector<HTMLElement>();
 }
 
@@ -1314,9 +1312,11 @@ namespace Menu {
   export
   interface IOptions {
     /**
-     * A custom renderer for creating menu content.
+     * A custom renderer for use with the menu.
+     *
+     * The default is a shared renderer instance.
      */
-    renderer?: IContentRenderer;
+    renderer?: IRenderer;
   }
 
   /**
@@ -1346,14 +1346,10 @@ namespace Menu {
   }
 
   /**
-   * An object which renders the content for a menu.
-   *
-   * #### Notes
-   * User code can implement a custom renderer when the default
-   * content created by the menu is insufficient.
+   * A renderer for use with a menu.
    */
   export
-  interface IContentRenderer {
+  interface IRenderer {
     /**
      * Create a node for a menu item.
      *
@@ -1381,10 +1377,10 @@ namespace Menu {
   }
 
   /**
-   * The default implementation of [[IContentRenderer]].
+   * The default implementation of `IRenderer`.
    */
   export
-  class ContentRenderer implements IContentRenderer {
+  class Renderer implements IRenderer {
     /**
      * Create a node for a menu item.
      *
@@ -1521,10 +1517,10 @@ namespace Menu {
   }
 
   /**
-   * A default instance of the `ContentRenderer` class.
+   * The default `Renderer` instance.
    */
   export
-  const defaultRenderer = new ContentRenderer();
+  const defaultRenderer = new Renderer();
 }
 
 
@@ -1532,6 +1528,19 @@ namespace Menu {
  * The namespace for the private module data.
  */
 namespace Private {
+  /**
+   * Create the DOM node for a menu.
+   */
+  export
+  function createNode(): HTMLElement {
+    let node = document.createElement('div');
+    let content = document.createElement('ul');
+    content.className = CONTENT_CLASS;
+    node.appendChild(content);
+    node.tabIndex = -1;
+    return node;
+  }
+
   /**
    * Coerce a menu item or options into a real menu item.
    */

@@ -186,141 +186,6 @@ describe('ui/widget', () => {
 
   describe('Widget', () => {
 
-    describe('.createNode()', () => {
-
-      it('should create an empty `<div>`', () => {
-        let div = Widget.createNode();
-        expect(div).to.be.a(HTMLElement);
-        expect(div.tagName).to.be('DIV');
-      });
-
-    });
-
-    describe('.attach()', () => {
-
-      it('should attach a root widget to a host', () => {
-        let widget = new Widget();
-        expect(widget.isAttached).to.be(false);
-        Widget.attach(widget, document.body);
-        expect(widget.isAttached).to.be(true);
-        widget.dispose();
-      });
-
-      it('should throw if the widget is not a root', () => {
-        let parent = new Widget();
-        let child = new Widget();
-        child.parent = parent;
-        expect(() => { Widget.attach(child, document.body); }).to.throwError();
-      });
-
-      it('should throw if the widget is already attached', () => {
-        let widget = new Widget();
-        Widget.attach(widget, document.body);
-        expect(() => { Widget.attach(widget, document.body); }).to.throwError();
-        widget.dispose();
-      });
-
-      it('should throw if the host is not attached to the DOM', () => {
-        let widget = new Widget();
-        let host = document.createElement('div');
-        expect(() => { Widget.attach(widget, host); }).to.throwError();
-      });
-
-      it('should dispatch an `after-attach` message', () => {
-        let widget = new LogWidget();
-        expect(widget.isAttached).to.be(false);
-        expect(widget.messages.indexOf('after-attach')).to.be(-1);
-        Widget.attach(widget, document.body);
-        expect(widget.isAttached).to.be(true);
-        expect(widget.messages.indexOf('after-attach')).to.not.be(-1);
-        widget.dispose();
-      });
-
-    });
-
-    describe('.detach()', () => {
-
-      it('should detach a root widget from its host', () => {
-        let widget = new Widget();
-        Widget.attach(widget, document.body);
-        expect(widget.isAttached).to.be(true);
-        Widget.detach(widget);
-        expect(widget.isAttached).to.be(false);
-        widget.dispose();
-      });
-
-      it('should throw if the widget is not a root', () => {
-        let parent = new Widget();
-        let child = new Widget();
-        child.parent = parent;
-        Widget.attach(parent, document.body);
-        expect(() => { Widget.detach(child); }).to.throwError();
-        parent.dispose();
-      });
-
-      it('should throw if the widget is not attached', () => {
-        let widget = new Widget();
-        expect(() => { Widget.detach(widget); }).to.throwError();
-      });
-
-      it('should dispatch a `before-detach` message', () => {
-        let widget = new LogWidget();
-        Widget.attach(widget, document.body);
-        widget.messages = [];
-        Widget.detach(widget);
-        expect(widget.messages[0]).to.be('before-detach');
-        widget.dispose();
-      });
-
-    });
-
-    describe('.prepareGeometry()', () => {
-
-      it('should set the inline style position of the widget to `absolute`', () => {
-        let widget = new Widget();
-        widget.node.style.position = 'relative';
-        Widget.prepareGeometry(widget);
-        expect(widget.node.style.position).to.be('absolute');
-      });
-
-    });
-
-    describe('.resetGeometry()', () => {
-
-      it('should clear the inline style position and geometry of the widget', () => {
-        let widget = new Widget();
-        Widget.setGeometry(widget, 10, 10, 10, 10);
-        Widget.resetGeometry(widget);
-        let style = widget.node.style;
-        expect(style.position).to.be('');
-        expect(style.top).to.be('');
-        expect(style.left).to.be('');
-        expect(style.width).to.be('');
-        expect(style.height).to.be('');
-      });
-
-    });
-
-    describe('.setGeometry()', () => {
-
-      it('should set the absolute layout geometry of the widget', () => {
-        let widget = new Widget();
-        Widget.setGeometry(widget, 10, 10, 10, 10);
-        let style = widget.node.style;
-        expect(style.top).to.be('10px');
-        expect(style.left).to.be('10px');
-        expect(style.width).to.be('10px');
-        expect(style.height).to.be('10px');
-      });
-
-      it('should send a `ResizeMessage` if the size has changed', () => {
-        let widget = new LogWidget();
-        Widget.setGeometry(widget, 10, 10, 10, 10);
-        expect(widget.messages.indexOf('resize')).to.not.be(-1);
-      });
-
-    });
-
     describe('#constructor()', () => {
 
       it('should accept no arguments', () => {
@@ -328,10 +193,10 @@ describe('ui/widget', () => {
         expect(widget).to.be.a(Widget);
       });
 
-      it('should accept a node to wrap', () => {
-        let div = document.createElement('div');
-        let widget = new Widget(div);
-        expect(widget.node).to.be(div);
+      it('should accept options', () => {
+        let span = document.createElement('span');
+        let widget = new Widget({ node: span });
+        expect(widget.node).to.be(span);
       });
 
       it('should add the `p-Widget` class', () => {
@@ -1455,6 +1320,131 @@ describe('ui/widget', () => {
           expect((parent.raw[0] as ChildMessage).child).to.be(child);
         });
 
+      });
+
+    });
+
+    describe('.attach()', () => {
+
+      it('should attach a root widget to a host', () => {
+        let widget = new Widget();
+        expect(widget.isAttached).to.be(false);
+        Widget.attach(widget, document.body);
+        expect(widget.isAttached).to.be(true);
+        widget.dispose();
+      });
+
+      it('should throw if the widget is not a root', () => {
+        let parent = new Widget();
+        let child = new Widget();
+        child.parent = parent;
+        expect(() => { Widget.attach(child, document.body); }).to.throwError();
+      });
+
+      it('should throw if the widget is already attached', () => {
+        let widget = new Widget();
+        Widget.attach(widget, document.body);
+        expect(() => { Widget.attach(widget, document.body); }).to.throwError();
+        widget.dispose();
+      });
+
+      it('should throw if the host is not attached to the DOM', () => {
+        let widget = new Widget();
+        let host = document.createElement('div');
+        expect(() => { Widget.attach(widget, host); }).to.throwError();
+      });
+
+      it('should dispatch an `after-attach` message', () => {
+        let widget = new LogWidget();
+        expect(widget.isAttached).to.be(false);
+        expect(widget.messages.indexOf('after-attach')).to.be(-1);
+        Widget.attach(widget, document.body);
+        expect(widget.isAttached).to.be(true);
+        expect(widget.messages.indexOf('after-attach')).to.not.be(-1);
+        widget.dispose();
+      });
+
+    });
+
+    describe('.detach()', () => {
+
+      it('should detach a root widget from its host', () => {
+        let widget = new Widget();
+        Widget.attach(widget, document.body);
+        expect(widget.isAttached).to.be(true);
+        Widget.detach(widget);
+        expect(widget.isAttached).to.be(false);
+        widget.dispose();
+      });
+
+      it('should throw if the widget is not a root', () => {
+        let parent = new Widget();
+        let child = new Widget();
+        child.parent = parent;
+        Widget.attach(parent, document.body);
+        expect(() => { Widget.detach(child); }).to.throwError();
+        parent.dispose();
+      });
+
+      it('should throw if the widget is not attached', () => {
+        let widget = new Widget();
+        expect(() => { Widget.detach(widget); }).to.throwError();
+      });
+
+      it('should dispatch a `before-detach` message', () => {
+        let widget = new LogWidget();
+        Widget.attach(widget, document.body);
+        widget.messages = [];
+        Widget.detach(widget);
+        expect(widget.messages[0]).to.be('before-detach');
+        widget.dispose();
+      });
+
+    });
+
+    describe('.prepareGeometry()', () => {
+
+      it('should set the inline style position of the widget to `absolute`', () => {
+        let widget = new Widget();
+        widget.node.style.position = 'relative';
+        Widget.prepareGeometry(widget);
+        expect(widget.node.style.position).to.be('absolute');
+      });
+
+    });
+
+    describe('.resetGeometry()', () => {
+
+      it('should clear the inline style position and geometry of the widget', () => {
+        let widget = new Widget();
+        Widget.setGeometry(widget, 10, 10, 10, 10);
+        Widget.resetGeometry(widget);
+        let style = widget.node.style;
+        expect(style.position).to.be('');
+        expect(style.top).to.be('');
+        expect(style.left).to.be('');
+        expect(style.width).to.be('');
+        expect(style.height).to.be('');
+      });
+
+    });
+
+    describe('.setGeometry()', () => {
+
+      it('should set the absolute layout geometry of the widget', () => {
+        let widget = new Widget();
+        Widget.setGeometry(widget, 10, 10, 10, 10);
+        let style = widget.node.style;
+        expect(style.top).to.be('10px');
+        expect(style.left).to.be('10px');
+        expect(style.width).to.be('10px');
+        expect(style.height).to.be('10px');
+      });
+
+      it('should send a `ResizeMessage` if the size has changed', () => {
+        let widget = new LogWidget();
+        Widget.setGeometry(widget, 10, 10, 10, 10);
+        expect(widget.messages.indexOf('resize')).to.not.be(-1);
       });
 
     });
