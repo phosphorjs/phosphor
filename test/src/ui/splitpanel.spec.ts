@@ -451,8 +451,8 @@ describe('ui/splitpanel', () => {
         it('should prevent events during drag', () => {
           simulate(layout.handles.at(0), 'mousedown');
           let evt = generate('keyup');
-          document.body.dispatchEvent(evt);
-          expect(evt.defaultPrevented).to.be(true);
+          let cancelled = !document.body.dispatchEvent(evt);
+          expect(cancelled).to.be(true);
           expect(panel.events.indexOf('keyup')).to.not.be(-1);
         });
 
@@ -463,8 +463,8 @@ describe('ui/splitpanel', () => {
         it('should prevent events during drag', () => {
           simulate(layout.handles.at(0), 'mousedown');
           let evt = generate('keypress');
-          document.body.dispatchEvent(evt);
-          expect(evt.defaultPrevented).to.be(true);
+          let cancelled = !document.body.dispatchEvent(evt);
+          expect(cancelled).to.be(true);
           expect(panel.events.indexOf('keypress')).to.not.be(-1);
         });
 
@@ -475,8 +475,8 @@ describe('ui/splitpanel', () => {
         it('should prevent events during drag', () => {
           simulate(layout.handles.at(0), 'mousedown');
           let evt = generate('contextmenu');
-          document.body.dispatchEvent(evt);
-          expect(evt.defaultPrevented).to.be(true);
+          let cancelled = !document.body.dispatchEvent(evt);
+          expect(cancelled).to.be(true);
           expect(panel.events.indexOf('contextmenu')).to.not.be(-1);
         });
 
