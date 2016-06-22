@@ -19,7 +19,7 @@
 export
 class MimeData {
   /**
-   * Get an array of the MIME types contains within the dataset.
+   * Get an array of the MIME types contained within the dataset.
    *
    * @returns A new array of the MIME types, in order of insertion.
    */
