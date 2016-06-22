@@ -318,7 +318,7 @@ describe('ui/stackedpanel', () => {
         layout.addWidget(widget);
         Widget.attach(parent, document.body);
         requestAnimationFrame(() => {
-          expect(widget.node.style.zIndex).to.be('0');
+          expect(`${widget.node.style.zIndex}`).to.be('0');
           layout.removeWidget(widget);
           expect(widget.node.style.zIndex).to.be('');
           done();
