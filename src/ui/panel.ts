@@ -53,24 +53,14 @@ const PANEL_CLASS = 'p-Panel';
 export
 class Panel extends Widget {
   /**
-   * Create a panel layout to use with a new panel.
-   *
-   * @returns A new panel layout to use with a panel.
-   *
-   * #### Notes
-   * This may be reimplemented by a subclass to create custom layouts.
-   */
-  static createLayout(): PanelLayout {
-    return new PanelLayout();
-  }
-
-  /**
    * Construct a new panel.
+   *
+   * @param options - The options for initializing the panel.
    */
-  constructor() {
+  constructor(options: Panel.IOptions = {}) {
     super();
     this.addClass(PANEL_CLASS);
-    this.layout = (this.constructor as typeof Panel).createLayout();
+    this.layout = Private.createLayout(options);
   }
 
   /**
@@ -107,6 +97,26 @@ class Panel extends Widget {
    */
   insertWidget(index: number, widget: Widget): void {
     (this.layout as PanelLayout).insertWidget(index, widget);
+  }
+}
+
+
+/**
+ * The namespace for the `Panel` class statics.
+ */
+export
+namespace Panel {
+  /**
+   * An options object for creating a panel.
+   */
+  export
+  interface IOptions {
+    /**
+     * The panel layout to use for the panel.
+     *
+     * The default is a new `PanelLayout`.
+     */
+    layout?: PanelLayout;
   }
 }
 
@@ -222,7 +232,7 @@ class PanelLayout extends Layout {
   /**
    * Remove a widget from the layout.
    *
-   * @param index - The index of the widget to remove.
+   * @param value - The widget to remove or the index thereof.
    *
    * #### Notes
    * A widget is automatically removed from the layout when its `parent`
@@ -232,9 +242,17 @@ class PanelLayout extends Layout {
    *
    * This method does *not* modify the widget's `parent`.
    *
-   * If the index is out of range, this is a no-op.
+   * This is a no-op if the widget is not contained in the panel.
    */
-  removeWidget(index: number): void {
+  removeWidget(value: Widget | number): void {
+    // Coerce the value to an index.
+    let index: number;
+    if (typeof value === 'number') {
+      index = value;
+    } else {
+      index = indexOf(this._widgets, value);
+    }
+
     // Bail if the index is out of range.
     let i = Math.floor(index);
     if (i < 0 || i >= this._widgets.length) {
@@ -377,8 +395,22 @@ class PanelLayout extends Layout {
    * Subclasses should **not** typically reimplement this method.
    */
   protected onChildRemoved(msg: ChildMessage): void {
-    this.removeWidget(indexOf(this._widgets, msg.child));
+    this.removeWidget(msg.child);
   }
 
   private _widgets = new Vector<Widget>();
+}
+
+
+/**
+ * The namespace for the private module data.
+ */
+namespace Private {
+  /**
+   * Create a panel layout for the given panel options.
+   */
+  export
+  function createLayout(options: Panel.IOptions): PanelLayout {
+    return options.layout || new PanelLayout();
+  }
 }

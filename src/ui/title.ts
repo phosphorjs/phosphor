@@ -25,21 +25,21 @@ class Title {
    *
    * @param options - The options for initializing the title.
    */
-  constructor(options?: Title.IOptions) {
-    if (options === void 0) {
-      return;
-    }
+  constructor(options: Title.IOptions = {}) {
     if (options.owner !== void 0) {
       this._owner = options.owner;
     }
-    if (options.text !== void 0) {
-      this._text = options.text;
+    if (options.label !== void 0) {
+      this._label = options.label;
+    }
+    if (options.mnemonic !== void 0) {
+      this._mnemonic = options.mnemonic;
     }
     if (options.icon !== void 0) {
       this._icon = options.icon;
     }
-    if (options.tooltip !== void 0) {
-      this._tooltip = options.tooltip;
+    if (options.caption !== void 0) {
+      this._caption = options.caption;
     }
     if (options.closable !== void 0) {
       this._closable = options.closable;
@@ -67,23 +67,44 @@ class Title {
   }
 
   /**
-   * Get the text for the title.
+   * Get the label for the title.
    *
    * #### Notes
    * The default value is an empty string.
    */
-  get text(): string {
-    return this._text;
+  get label(): string {
+    return this._label;
   }
 
   /**
-   * Set the text for the title.
+   * Set the label for the title.
    */
-  set text(value: string) {
-    if (this._text === value) {
+  set label(value: string) {
+    if (this._label === value) {
       return;
     }
-    this._text = value;
+    this._label = value;
+    this.changed.emit(void 0);
+  }
+
+  /**
+   * Get the mnemonic index for the title.
+   *
+   * #### Notes
+   * The default value is `-1`.
+   */
+  get mnemonic(): number {
+    return this._mnemonic;
+  }
+
+  /**
+   * Set the mnemonic index for the title.
+   */
+  set mnemonic(value: number) {
+    if (this._mnemonic === value) {
+      return;
+    }
+    this._mnemonic = value;
     this.changed.emit(void 0);
   }
 
@@ -112,23 +133,23 @@ class Title {
   }
 
   /**
-   * Get the tooltip for the title.
+   * Get the caption for the title.
    *
    * #### Notes
    * The default value is an empty string.
    */
-  get tooltip(): string {
-    return this._tooltip;
+  get caption(): string {
+    return this._caption;
   }
 
   /**
-   * Set the tooltip for the title.
+   * Set the caption for the title.
    */
-  set tooltip(value: string) {
-    if (this._tooltip === value) {
+  set caption(value: string) {
+    if (this._caption === value) {
       return;
     }
-    this._tooltip = value;
+    this._caption = value;
     this.changed.emit(void 0);
   }
 
@@ -180,9 +201,10 @@ class Title {
     this.changed.emit(void 0);
   }
 
-  private _text = '';
+  private _label = '';
   private _icon = '';
-  private _tooltip = '';
+  private _caption = '';
+  private _mnemonic = -1;
   private _className = '';
   private _closable = false;
   private _owner: any = null;
@@ -209,9 +231,14 @@ namespace Title {
     owner?: any;
 
     /**
-     * The text for the title.
+     * The label for the title.
      */
-    text?: string;
+    label?: string;
+
+    /**
+     * The mnemonic index for the title.
+     */
+    mnemonic?: number;
 
     /**
      * The icon class for the title.
@@ -219,9 +246,9 @@ namespace Title {
     icon?: string;
 
     /**
-     * The tooltip for the title.
+     * The caption for the title.
      */
-    tooltip?: string;
+    caption?: string;
 
     /**
      * The extra class name for the title.

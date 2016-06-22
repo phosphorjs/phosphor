@@ -15,7 +15,7 @@
  * @returns The specificity of the selector.
  *
  * #### Undefined Behavior
- * The selector is invalid or has multiple comma-separated selectors.
+ * The selector is invalid.
  *
  * #### Notes
  * This is based on https://www.w3.org/TR/css3-selectors/#specificity
@@ -26,6 +26,8 @@
  *
  * The result is represented as a hex number `0x<aa><bb><cc>` where
  * each component is the count of the respective selector clause.
+ *
+ * If the selector contains commas, only the first clause is used.
  *
  * The computed result is cached, so subsequent calculations for the
  * same selector are extremely fast.
@@ -65,6 +67,43 @@ function isValidSelector(selector: string): boolean {
     Private.validityCache[selector] = result;
   }
   return result;
+}
+
+
+/**
+ * Validate a CSS selector.
+ *
+ * @param selector - The CSS selector of interest.
+ *
+ * @returns The provided selector.
+ *
+ * @throws An error if the selector is invalid.
+ */
+export
+function validateSelector(selector: string): string {
+  if (!isValidSelector(selector)) {
+    throw new Error(`Invalid selector: ${selector}`);
+  }
+  return selector;
+}
+
+
+/**
+ * Test whether an element matches a CSS selector.
+ *
+ * @param elem - The element of interest.
+ *
+ * @param selector - The valid CSS selector of interest.
+ *
+ * @returns `true` if the element is a match, `false` otherwise.
+ *
+ * #### Notes
+ * This function uses the builtin browser capabilities when possible,
+ * falling back onto a document query otherwise.
+ */
+export
+function matchesSelector(elem: Element, selector: string): boolean {
+  return Private.protoMatchFunc.call(elem, selector);
 }
 
 
@@ -131,13 +170,36 @@ namespace Private {
   const testElem = document.createElement('div');
 
   /**
+   * A cross-browser CSS selector matching prototype function.
+   */
+  export
+  const protoMatchFunc: Function = (() => {
+    let proto = Element.prototype as any;
+    return (
+      proto.matches ||
+      proto.matchesSelector ||
+      proto.mozMatchesSelector ||
+      proto.msMatchesSelector ||
+      proto.oMatchesSelector ||
+      proto.webkitMatchesSelector ||
+      (function(selector: string) {
+        let elem = this as Element;
+        let matches = elem.ownerDocument.querySelectorAll(selector);
+        return Array.prototype.indexOf.call(matches, elem) !== -1;
+      })
+    );
+  })();
+
+  /**
    * Calculate the specificity of a single selector.
    *
-   * The behavior is undefined if the selector is invalid or has
-   * multiple comma-separated selectors.
+   * The behavior is undefined if the selector is invalid.
    */
   export
   function calculateSingle(selector: string): number {
+    // Ignore anything after the first comma.
+    selector = selector.split(',', 1)[0];
+
     // Setup the aggregate counters.
     let a = 0;
     let b = 0;

@@ -20,34 +20,34 @@ interface IKeyboardLayout {
   name: string;
 
   /**
-   * Get an array of all keycap values supported by the layout.
+   * Get an array of all key values supported by the layout.
    *
-   * @returns A new array of the supported keycap values.
+   * @returns A new array of the supported key values.
    *
    * #### Notes
    * This can be useful for authoring tools and debugging, when it's
    * necessary to know which keys are available for shortcut use.
    */
-  keycaps(): string[];
+  keys(): string[];
 
   /**
-   * Test whether the given keycap is a valid value for the layout.
+   * Test whether the given key is a valid value for the layout.
    *
-   * @param keycap - The user provided keycap to test for validity.
+   * @param key - The user provided key to test for validity.
    *
-   * @returns `true` if the keycap is valid, `false` otherwise.
+   * @returns `true` if the key is valid, `false` otherwise.
    */
-  isValidKeycap(keycap: string): boolean;
+  isValidKey(key: string): boolean;
 
   /**
-   * Get the keycap for a `'keydown'` event.
+   * Get the key for a `'keydown'` event.
    *
    * @param event - The event object for a `'keydown'` event.
    *
-   * @returns The associated keycap value, or an empty string if
-   *   the event does not represent a valid primary shortcut key.
+   * @returns The associated key value, or an empty string if
+   *   the event does not represent a valid primary key.
    */
-  keycapForKeydownEvent(event: KeyboardEvent): string;
+  keyForKeydownEvent(event: KeyboardEvent): string;
 }
 
 
@@ -59,9 +59,8 @@ interface IKeyboardLayout {
  * was pressed on a keyboard. While not the most convenient API, it
  * is currently the only one which works reliably on all browsers.
  *
- * This class accepts a user-defined mapping of keycode to keycap
- * (the letter printed on the physical keyboard key) which allows
- * for reliable keyboard shortcuts tailored to the user's system.
+ * This class accepts a user-defined mapping of keycode to key, which
+ * allows for reliable shortcuts tailored to the user's system.
  */
 export
 class KeycodeLayout implements IKeyboardLayout {
@@ -70,7 +69,7 @@ class KeycodeLayout implements IKeyboardLayout {
    *
    * @param name - The human readable name for the layout.
    *
-   * @param codes - A mapping of keycode to keycap value.
+   * @param codes - A mapping of keycode to key value.
    */
   constructor(name: string, codes: KeycodeLayout.CodeMap) {
     this._name = name;
@@ -89,34 +88,34 @@ class KeycodeLayout implements IKeyboardLayout {
   }
 
   /**
-   * Get an array of the keycap values supported by the layout.
+   * Get an array of the key values supported by the layout.
    *
-   * @returns A new array of the supported keycap values.
+   * @returns A new array of the supported key values.
    */
-  keycaps(): string[] {
+  keys(): string[] {
     return Object.keys(this._keys);
   }
 
   /**
-   * Test whether the given keycap is a valid value for the layout.
+   * Test whether the given key is a valid value for the layout.
    *
-   * @param keycap - The user provided keycap to test for validity.
+   * @param key - The user provided key to test for validity.
    *
-   * @returns `true` if the keycap is valid, `false` otherwise.
+   * @returns `true` if the key is valid, `false` otherwise.
    */
-  isValidKeycap(keycap: string): boolean {
-    return keycap in this._keys;
+  isValidKey(key: string): boolean {
+    return key in this._keys;
   }
 
   /**
-   * Get the keycap for a `'keydown'` event.
+   * Get the key for a `'keydown'` event.
    *
    * @param event - The event object for a `'keydown'` event.
    *
-   * @returns The associated keycap value, or an empty string if
-   *   the event does not represent a valid primary shortcut key.
+   * @returns The associated key value, or an empty string if
+   *   the event does not represent a valid primary key.
    */
-  keycapForKeydownEvent(event: KeyboardEvent): string {
+  keyForKeydownEvent(event: KeyboardEvent): string {
     return this._codes[event.keyCode] || '';
   }
 
@@ -144,18 +143,16 @@ namespace KeycodeLayout {
   type KeySet = { [key: string]: boolean };
 
   /**
-   * Extract the key set from a code map.
+   * Extract the set of keys from a code map.
    *
    * @param code - The code map of interest.
    *
-   * @returns A set of the key caps in the code map.
+   * @returns A set of the keys in the code map.
    */
   export
   function extractKeys(codes: CodeMap): KeySet {
     let keys: KeySet = Object.create(null);
-    for (let c in codes) {
-      keys[codes[c]] = true;
-    }
+    for (let c in codes) keys[codes[c]] = true;
     return keys;
   }
 }

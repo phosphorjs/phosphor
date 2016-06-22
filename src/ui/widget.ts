@@ -53,35 +53,12 @@ const HIDDEN_CLASS = 'p-mod-hidden';
 export
 class Widget implements IDisposable, IMessageHandler {
   /**
-   * Create the DOM node for a new widget instance.
-   *
-   * @returns The DOM node to use for the new widget.
-   *
-   * #### Notes
-   * The default implementation creates an empty `<div>`.
-   *
-   * This may be reimplemented by a subclass to create a custom node.
-   */
-  static createNode(): HTMLElement {
-    return document.createElement('div');
-  }
-
-  /**
    * Construct a new widget.
    *
-   * @param node - The optional node to use for the widget.
-   *
-   * #### Notes
-   * If a node is not provided, a new node will be created by calling
-   * the static `createNode()` method. This is the typical use case.
-   *
-   * If a node *is* provided, the widget will assume full ownership and
-   * control of the node, as if it had created the node itself. This is
-   * less common, but is useful when wrapping foreign nodes as widgets.
+   * @param options - The options for initializing the widget.
    */
-  constructor(node?: HTMLElement) {
-    // TODO still not sure if we should accept a node here?
-    this._node = node || (this.constructor as typeof Widget).createNode();
+  constructor(options: Widget.IOptions = {}) {
+    this._node = Private.createNode(options);
     this.addClass(WIDGET_CLASS);
   }
 
@@ -612,7 +589,7 @@ class Widget implements IDisposable, IMessageHandler {
    * The default implementation focuses the widget's node.
    */
   protected onFocusRequest(msg: Message): void {
-    this.node.focus();
+    if (this.isAttached) this.node.focus();
   }
 
   /**
@@ -622,7 +599,7 @@ class Widget implements IDisposable, IMessageHandler {
    * The default implementation blurs the widget's node.
    */
   protected onBlurRequest(msg: Message): void {
-    this.node.blur();
+    if (this.isAttached) this.node.blur();
   }
 
   /**
@@ -719,6 +696,22 @@ defineSignal(Widget.prototype, 'disposed');
  */
 export
 namespace Widget {
+  /**
+   * An options object for initializing a widget.
+   */
+  export
+  interface IOptions {
+    /**
+     * The optional node to use for the widget.
+     *
+     * If a node is provided, the widget will assume full ownership
+     * and control of the node, as if it had created the node itself.
+     *
+     * The default is a new `<div>`.
+     */
+    node?: HTMLElement;
+  }
+
   // TODO - should this be an instance method?
   /**
    * Attach a widget to a host DOM node.
@@ -1428,4 +1421,12 @@ namespace Private {
     name: 'title',
     create: owner => new Title({ owner }),
   });
+
+  /**
+   * Create a DOM node for the given widget options.
+   */
+  export
+  function createNode(options: Widget.IOptions): HTMLElement {
+    return options.node || document.createElement('div');
+  }
 }

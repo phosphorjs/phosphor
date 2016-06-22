@@ -6,12 +6,12 @@
 | The full license is in the file LICENSE, distributed with this software.
 |----------------------------------------------------------------------------*/
 import {
-  indexOf
-} from '../algorithm/searching';
-
-import {
   ISequence
 } from '../algorithm/sequence';
+
+import {
+  ISignal, defineSignal
+} from '../core/signaling';
 
 import {
   BoxLayout
@@ -60,44 +60,19 @@ const STACKED_PANEL_CLASS = 'p-TabPanel-stackedPanel';
 export
 class TabPanel extends Widget {
   /**
-   * Create a `TabBar` for a tab panel.
-   *
-   * @returns A new tab bar to use with a tab panel.
-   *
-   * #### Notes
-   * This may be reimplemented to create custom tab bars.
-   */
-  static createTabBar(): TabBar {
-    let tabBar = new TabBar();
-    tabBar.addClass(TAB_BAR_CLASS);
-    return tabBar;
-  }
-
-  /**
-   * Create a `StackedPanel` for a tab panel.
-   *
-   * @returns A new stacked panel to use with a tab panel.
-   *
-   * #### Notes
-   * This may be reimplemented to create custom stacked panels.
-   */
-  static createStackedPanel(): StackedPanel {
-    let stackedPanel = new StackedPanel();
-    stackedPanel.addClass(STACKED_PANEL_CLASS);
-    return stackedPanel;
-  }
-
-  /**
    * Construct a new tab panel.
+   *
+   * @param options - The options for initializing the tab panel.
    */
-  constructor() {
+  constructor(options: TabPanel.IOptions = {}) {
     super();
     this.addClass(TAB_PANEL_CLASS);
 
     // Create the tab bar and stacked panel.
-    let ctor = this.constructor as typeof TabPanel;
-    this._tabBar = ctor.createTabBar();
-    this._stackedPanel = ctor.createStackedPanel();
+    this._tabBar = new TabBar(options);
+    this._tabBar.addClass(TAB_BAR_CLASS);
+    this._stackedPanel = new StackedPanel();
+    this._stackedPanel.addClass(STACKED_PANEL_CLASS);
 
     // Connect the tab bar signal handlers.
     this._tabBar.tabMoved.connect(this._onTabMoved, this);
@@ -107,10 +82,8 @@ class TabPanel extends Widget {
     // Connect the stacked panel signal handlers.
     this._stackedPanel.widgetRemoved.connect(this._onWidgetRemoved, this);
 
-    // Setup the box layout.
-    let layout = new BoxLayout();
-    layout.direction = 'top-to-bottom';
-    layout.spacing = 0;
+    // Create the box layout.
+    let layout = new BoxLayout({ direction: 'top-to-bottom', spacing: 0 });
 
     // Set the stretch factors for the child widgets.
     BoxLayout.setStretch(this._tabBar, 0);
@@ -132,6 +105,19 @@ class TabPanel extends Widget {
     this._stackedPanel = null;
     super.dispose();
   }
+
+  /**
+   * A signal emitted when the current tab is changed.
+   *
+   * #### Notes
+   * This signal is emitted when the currently selected tab is changed
+   * either through user or programmatic interaction.
+   *
+   * Notably, this signal is not emitted when the index of the current
+   * tab changes due to tabs being inserted, removed, or moved. It is
+   * only emitted when the actual current tab node is changed.
+   */
+  currentChanged: ISignal<TabPanel, TabPanel.ICurrentChangedArgs>;
 
   /**
    * Get the index of the currently selected tab.
@@ -172,26 +158,6 @@ class TabPanel extends Widget {
    */
   set currentWidget(value: Widget) {
     this._tabBar.currentTitle = value ? value.title : null;
-  }
-
-  /**
-   * Get whether the tabs are movable by the user.
-   *
-   * #### Notes
-   * Tabs can be moved programmatically, irrespective of this value.
-   */
-  get tabsMovable(): boolean {
-    return this._tabBar.tabsMovable;
-  }
-
-  /**
-   * Set whether the tabs are movable by the user.
-   *
-   * #### Notes
-   * Tabs can be moved programmatically, irrespective of this value.
-   */
-  set tabsMovable(value: boolean) {
-    this._tabBar.tabsMovable = value;
   }
 
   /**
@@ -264,11 +230,15 @@ class TabPanel extends Widget {
    * Handle the `currentChanged` signal from the tab bar.
    */
   private _onCurrentChanged(sender: TabBar, args: TabBar.ICurrentChangedArgs): void {
-    let prev = args.previousTitle;
-    let curr = args.currentTitle;
-    if (prev) (prev.owner as Widget).hide();
-    if (curr) (curr.owner as Widget).show();
-    if (curr) (curr.owner as Widget).focus();
+    let { previousIndex, previousTitle, currentIndex, currentTitle } = args;
+    let previousWidget = previousTitle ? previousTitle.owner as Widget : null;
+    let currentWidget = currentTitle ? currentTitle.owner as Widget : null;
+    if (previousWidget) previousWidget.hide();
+    if (currentWidget) currentWidget.show();
+    if (currentWidget) currentWidget.focus();
+    this.currentChanged.emit({
+      previousIndex, previousWidget, currentIndex, currentWidget
+    });
   }
 
   /**
@@ -289,9 +259,66 @@ class TabPanel extends Widget {
    * Handle the `widgetRemoved` signal from the stacked panel.
    */
   private _onWidgetRemoved(sender: StackedPanel, widget: Widget): void {
-    this._tabBar.removeTab(indexOf(this._tabBar.titles, widget.title));
+    this._tabBar.removeTab(widget.title);
   }
 
   private _tabBar: TabBar;
   private _stackedPanel: StackedPanel;
+}
+
+
+// Define the signals for the `TabPanel` class.
+defineSignal(TabPanel.prototype, 'currentChanged');
+
+
+/**
+ * The namespace for the `TabPanel` class statics.
+ */
+export
+namespace TabPanel {
+  /**
+   * An options object for initializing a tab panel.
+   */
+  export
+  interface IOptions {
+    /**
+     * Whether the tabs are movable by the user.
+     *
+     * The default is `false`.
+     */
+    tabsMovable?: boolean;
+
+    /**
+     * The renderer for the panel's tab bar.
+     *
+     * The default is shared renderer instance.
+     */
+    renderer?: TabBar.IRenderer;
+  }
+
+  /**
+   * The arguments object for the `currentChanged` signal.
+   */
+  export
+  interface ICurrentChangedArgs {
+    /**
+     * The previously selected index.
+     */
+    previousIndex: number;
+
+    /**
+     * The previously selected widget.
+     */
+    previousWidget: Widget;
+
+    /**
+     * The currently selected index.
+     */
+    currentIndex: number;
+
+    /**
+     * The currently selected widget.
+     */
+    currentWidget: Widget;
+  }
 }

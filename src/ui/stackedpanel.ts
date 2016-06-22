@@ -14,6 +14,10 @@ import {
 } from '../core/signaling';
 
 import {
+  IS_IE
+} from '../dom/platform';
+
+import {
   IBoxSizing, boxSizing, sizeLimits
 } from '../dom/sizing';
 
@@ -46,17 +50,12 @@ const CHILD_CLASS = 'p-StackedPanel-child';
 export
 class StackedPanel extends Panel {
   /**
-   * Create a stacked layout for a stacked panel.
-   */
-  static createLayout(): StackedLayout {
-    return new StackedLayout();
-  }
-
-  /**
    * Construct a new stacked panel.
+   *
+   * @param options - The options for initializing the panel.
    */
-  constructor() {
-    super();
+  constructor(options: StackedPanel.IOptions = {}) {
+    super({ layout: Private.createLayout(options) });
     this.addClass(STACKED_PANEL_CLASS);
   }
 
@@ -84,6 +83,26 @@ class StackedPanel extends Panel {
 
 // Define the signals for the `StackedPanel` class.
 defineSignal(StackedPanel.prototype, 'widgetRemoved');
+
+
+/**
+ * The namespace for the `StackedPanel` class statics.
+ */
+export
+namespace StackedPanel {
+  /**
+   * An options object for creating a stacked panel.
+   */
+  export
+  interface IOptions {
+    /**
+     * The stacked layout to use for the stacked panel.
+     *
+     * The default is a new `StackedLayout`.
+     */
+    layout?: StackedLayout;
+  }
+}
 
 
 /**
@@ -182,7 +201,7 @@ class StackedLayout extends PanelLayout {
    * A message handler invoked on a `'child-shown'` message.
    */
   protected onChildShown(msg: ChildMessage): void {
-    if (Private.IsIE) { // prevent flicker on IE
+    if (IS_IE) { // prevent flicker on IE
       sendMessage(this.parent, WidgetMessage.FitRequest);
     } else {
       this.parent.fit();
@@ -193,7 +212,7 @@ class StackedLayout extends PanelLayout {
    * A message handler invoked on a `'child-hidden'` message.
    */
   protected onChildHidden(msg: ChildMessage): void {
-    if (Private.IsIE) { // prevent flicker on IE
+    if (IS_IE) { // prevent flicker on IE
       sendMessage(this.parent, WidgetMessage.FitRequest);
     } else {
       this.parent.fit();
@@ -335,8 +354,10 @@ class StackedLayout extends PanelLayout {
  */
 namespace Private {
   /**
-   * A flag indicating whether the browser is IE.
+   * Create a stacked layout for the given panel options.
    */
   export
-  const IsIE = /Trident/.test(navigator.userAgent);
+  function createLayout(options: StackedPanel.IOptions): StackedLayout {
+    return options.layout || new StackedLayout();
+  }
 }
