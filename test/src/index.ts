@@ -24,6 +24,7 @@ import './core/properties.spec';
 import './core/signaling.spec';
 
 import './dom/cursor.spec';
+import './dom/dragdrop.spec';
 import './dom/query.spec';
 import './dom/selector.spec';
 import './dom/sizing.spec';
