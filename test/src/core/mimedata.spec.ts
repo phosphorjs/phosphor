@@ -26,6 +26,16 @@ describe('core/mimedata', () => {
         expect(data.types()).to.eql(['foo', 'bar', 'baz']);
       });
 
+      it('should be in order of insertion', () => {
+        let data = new MimeData();
+        data.setData('a', 1);
+        data.setData('b', '1');
+        data.setData('c', { foo: 1, bar: 2 });
+        expect(data.types()).to.eql(['a', 'b', 'c']);
+        data.setData('d', null);
+        expect(data.types()).to.eql(['a', 'b', 'c', 'd']);
+      });
+
     });
 
     describe('#hasData()', () => {
