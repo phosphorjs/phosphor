@@ -878,8 +878,8 @@ describe('ui/tabbar', () => {
           startDrag(bar, 2, 'down');
           let rect = label.getBoundingClientRect();
           let evt = generate('mousedown', { clientX: rect.left, clientY: rect.top });
-          tab.dispatchEvent(evt);
-          expect(evt.defaultPrevented).to.be(false);
+          let cancelled = !tab.dispatchEvent(evt);
+          expect(cancelled).to.be(false);
         });
 
       });
@@ -980,8 +980,8 @@ describe('ui/tabbar', () => {
         it('should bail if it is not a left mouse release', () => {
           startDrag(bar);
           let evt = generate('mouseup', { button: 1 });
-          document.body.dispatchEvent(evt);
-          expect(evt.defaultPrevented).to.be(false);
+          let cancelled = !document.body.dispatchEvent(evt);
+          expect(cancelled).to.be(false);
         });
 
         it('should bail if the drag is not active', (done) => {
@@ -1004,8 +1004,8 @@ describe('ui/tabbar', () => {
         it('should prevent default', () => {
           startDrag(bar);
           let evt = generate('keydown');
-          document.body.dispatchEvent(evt);
-          expect(evt.defaultPrevented).to.be(true);
+          let cancelled = !document.body.dispatchEvent(evt);
+          expect(cancelled).to.be(true);
         });
 
         it('should release the mouse if `Escape` is pressed', () => {
@@ -1023,8 +1023,8 @@ describe('ui/tabbar', () => {
         it('should prevent default', () => {
           startDrag(bar);
           let evt = generate('contextmenu');
-          document.body.dispatchEvent(evt);
-          expect(evt.defaultPrevented).to.be(true);
+          let cancelled = !document.body.dispatchEvent(evt);
+          expect(cancelled).to.be(true);
         });
 
       });
