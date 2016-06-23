@@ -20,6 +20,7 @@ import './collections/vector.spec';
 
 import './core/disposable.spec';
 import './core/messaging.spec';
+import './core/mimedata.spec';
 import './core/properties.spec';
 import './core/signaling.spec';
 
