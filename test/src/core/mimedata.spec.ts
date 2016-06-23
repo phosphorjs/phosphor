@@ -34,7 +34,7 @@ describe('core/mimedata', () => {
         data.setData('a', 4);
         expect(data.types()).to.eql(['b', 'c', 'a']);
         data.setData('d', null);
-        expect(data.types()).to.eql(['b', 'c', 'a' 'd']);
+        expect(data.types()).to.eql(['b', 'c', 'a', 'd']);
       });
 
     });
