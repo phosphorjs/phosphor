@@ -241,7 +241,7 @@ class BoxLayout extends PanelLayout {
       this._direction = options.direction;
     }
     if (options.spacing !== void 0) {
-      this._spacing = options.spacing;
+      this._spacing = Private.clampSpacing(options.spacing);
     }
   }
 
@@ -278,7 +278,7 @@ class BoxLayout extends PanelLayout {
    * Set the inter-element spacing for the box layout.
    */
   set spacing(value: number) {
-    value = Math.max(0, Math.floor(value));
+    value = Private.clampSpacing(value);
     if (this._spacing === value) {
       return;
     }
@@ -744,6 +744,14 @@ namespace Private {
     widget.toggleClass(RIGHT_TO_LEFT_CLASS, dir === 'right-to-left');
     widget.toggleClass(TOP_TO_BOTTOM_CLASS, dir === 'top-to-bottom');
     widget.toggleClass(BOTTOM_TO_TOP_CLASS, dir === 'bottom-to-top');
+  }
+
+  /**
+   * Clamp a spacing value to an integer >= 0.
+   */
+  export
+  function clampSpacing(value: number): number {
+    return Math.max(0, Math.floor(value));
   }
 
   /**

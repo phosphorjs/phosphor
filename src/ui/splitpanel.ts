@@ -505,7 +505,7 @@ class SplitLayout extends PanelLayout {
       this._orientation = options.orientation;
     }
     if (options.spacing !== void 0) {
-      this._spacing = options.spacing;
+      this._spacing = Private.clampSpacing(options.spacing);
     }
   }
 
@@ -542,7 +542,7 @@ class SplitLayout extends PanelLayout {
    * Set the inter-element spacing for the split layout.
    */
   set spacing(value: number) {
-    value = Math.max(0, Math.floor(value));
+    value = Private.clampSpacing(value);
     if (this._spacing === value) {
       return;
     }
@@ -1156,6 +1156,14 @@ namespace Private {
   function toggleOrientation(widget: Widget, orient: SplitLayout.Orientation): void {
     widget.toggleClass(HORIZONTAL_CLASS, orient === 'horizontal');
     widget.toggleClass(VERTICAL_CLASS, orient === 'vertical');
+  }
+
+  /**
+   * Clamp a spacing value to an integer >= 0.
+   */
+  export
+  function clampSpacing(value: number): number {
+    return Math.max(0, Math.floor(value));
   }
 
   /**
