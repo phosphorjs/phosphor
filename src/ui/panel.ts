@@ -58,7 +58,7 @@ class Panel extends Widget {
    * @param options - The options for initializing the panel.
    */
   constructor(options: Panel.IOptions = {}) {
-    super();
+    super(options);
     this.addClass(PANEL_CLASS);
     this.layout = Private.createLayout(options);
   }
@@ -110,7 +110,7 @@ namespace Panel {
    * An options object for creating a panel.
    */
   export
-  interface IOptions {
+  interface IOptions extends Widget.IOptions {
     /**
      * The panel layout to use for the panel.
      *
