@@ -10,12 +10,28 @@ import {
 } from '../core/messaging';
 
 import {
-  IDragEvent
+  Drag, IDragEvent
 } from '../dom/dragdrop';
+
+import {
+  hitTest
+} from '../dom/query';
+
+import {
+  boxSizing
+} from '../dom/sizing';
 
 import {
   StackedLayout
 } from './stackedpanel';
+
+import {
+  SplitPanel
+} from './splitpanel';
+
+import {
+  TabPanel
+} from './tabpanel';
 
 import {
   Widget
@@ -389,7 +405,8 @@ class DockPanel extends Widget {
   }
 
   private _spacing = 4;
-  private _root: Thing;
+  private _drag: Drag = null;
+  private _root: Private.DockPanelChild;
   private _overlay: Private.DockPanelOverlay;
 }
 
@@ -638,6 +655,60 @@ namespace Private {
   }
 
   /**
+   * A custom tab panel used by a DockPanel.
+   */
+  export
+  class DockTabPanel extends TabPanel {
+    /**
+     * Construct a new dock tab panel.
+     */
+    constructor(options: TabPanel.IOptions = {}) {
+      super(options);
+      this.addClass(TAB_PANEL_CLASS);
+    }
+  }
+
+  /**
+   * A custom split panel used by a DockPanel.
+   */
+  export
+  class DockSplitPanel extends SplitPanel {
+    /**
+     * Construct a new dock split panel.
+     */
+    constructor(options: SplitPanel.IOptions = {}) {
+      super(options);
+      this.addClass(SPLIT_PANEL_CLASS);
+    }
+  }
+
+  /**
+   * A type alias for a dock panel child.
+   */
+  export
+  type DockPanelChild = DockTabPanel | DockSplitPanel;
+
+  /**
+   * The result object for a dock target hit test.
+   */
+  export
+  interface IDockTarget {
+    /**
+     * The dock zone at the specified position.
+     *
+     * This will be `Invalid` if the position is not over a dock zone.
+     */
+    zone: DockZone;
+
+    /**
+     * The dock tab panel for the panel dock zone.
+     *
+     * This will be `null` if the dock zone is not a panel zone.
+     */
+    panel: DockTabPanel;
+  }
+
+  /**
    * Clamp a spacing value to an integer >= 0.
    */
   export
@@ -649,7 +720,140 @@ namespace Private {
    * Synchronize the spacing value for the dock split panels.
    */
   export
-  function syncSpacing(root: Thing, value: number): void {
+  function syncSpacing(root: DockPanelChild, value: number): void {
+    // Bail if the child is a tab panel.
+    if (root instanceof DockTabPanel) {
+      return;
+    }
 
+    // Update the spacing for the split panel.
+    (root as DockSplitPanel).spacing = value;
+
+    // Recursively update the split panel children.
+    let widgets = root.widgets;
+    for (let i = 0, n = widgets.length; i < n; ++i) {
+      syncSpacing(widgets.at(i) as DockPanelChild, value);
+    }
+  }
+
+  /**
+   * Find the dock target for the given client position.
+   */
+  export
+  function findDockTarget(root: DockPanelChild, clientX: number, clientY: number): IDockTarget {
+    if (!hitTest(root.node, clientX, clientY)) {
+      return { zone: DockZone.Invalid, panel: null };
+    }
+    let rootZone = getRootZone(root.node, clientX, clientY);
+    if (rootZone !== DockZone.Invalid) {
+      return { zone: rootZone, panel: null };
+    }
+    let hitPanel = iterTabPanels(root, panel => {
+      return hitTest(panel.node, clientX, clientY) ? panel : void 0;
+    });
+    if (!hitPanel) {
+      return { zone: DockZone.Invalid, panel: null };
+    }
+    let panelZone = getPanelZone(hitPanel.node, clientX, clientY);
+    return { zone: panelZone, panel: hitPanel };
+  }
+
+  /**
+   * Get the root zone for the given node and client position.
+   *
+   * This assumes the position lies within the node's client rect.
+   *
+   * Returns the `Invalid` zone if the position is not within an edge.
+   */
+  function getRootZone(node: HTMLElement, x: number, y: number): DockZone {
+    let zone: DockZone;
+    let rect = node.getBoundingClientRect();
+    if (x < rect.left + EDGE_SIZE) {
+      if (y - rect.top < x - rect.left) {
+        zone = DockZone.RootTop;
+      } else if (rect.bottom - y < x - rect.left) {
+        zone = DockZone.RootBottom;
+      } else {
+        zone = DockZone.RootLeft;
+      }
+    } else if (x >= rect.right - EDGE_SIZE) {
+      if (y - rect.top < rect.right - x) {
+        zone = DockZone.RootTop;
+      } else if (rect.bottom - y < rect.right - x) {
+        zone = DockZone.RootBottom;
+      } else {
+        zone = DockZone.RootRight;
+      }
+    } else if (y < rect.top + EDGE_SIZE) {
+      zone = DockZone.RootTop;
+    } else if (y >= rect.bottom - EDGE_SIZE) {
+      zone = DockZone.RootBottom;
+    } else {
+      zone = DockZone.Invalid;
+    }
+    return zone;
+  }
+
+  /**
+   * Get the panel zone for the given node and position.
+   *
+   * This assumes the position lies within the node's client rect.
+   *
+   * This always returns a valid zone.
+   */
+  function getPanelZone(node: HTMLElement, x: number, y: number): DockZone {
+    let zone: DockZone;
+    let rect = node.getBoundingClientRect();
+    let fracX = (x - rect.left) / rect.width;
+    let fracY = (y - rect.top) / rect.height;
+    if (fracX < 1 / 3) {
+      if (fracY < fracX) {
+        zone = DockZone.PanelTop;
+      } else if (1 - fracY < fracX) {
+        zone = DockZone.PanelBottom;
+      } else {
+        zone = DockZone.PanelLeft;
+      }
+    } else if (fracX < 2 / 3) {
+      if (fracY < 1 / 3) {
+        zone = DockZone.PanelTop;
+      } else if (fracY < 2 / 3) {
+        zone = DockZone.PanelCenter;
+      } else {
+        zone = DockZone.PanelBottom;
+      }
+    } else {
+      if (fracY < 1 - fracX) {
+        zone = DockZone.PanelTop;
+      } else if (fracY > fracX) {
+        zone = DockZone.PanelBottom;
+      } else {
+        zone = DockZone.PanelRight;
+      }
+    }
+    return zone;
+  }
+
+  /**
+   * Recursively iterate over the tab panels of a root panel.
+   *
+   * Iteration stops if the callback returns anything but `undefined`.
+   */
+  function iterTabPanels<T>(root: DockPanelChild, callback: (tabs: DockTabPanel) => T): T {
+    // If the root is a tab panel, just invoke the callback.
+    if (root instanceof DockTabPanel) {
+      return callback(root);
+    }
+
+    // Otherwise, recursively invoke for the split panel children.
+    let widgets = root.widgets;
+    for (let i = 0, n = widgets.length; i < n; ++i) {
+      let panel = widgets.at(i) as DockPanelChild;
+      let result = iterTabPanels(panel, callback);
+      if (result !== void 0) return result;
+    }
+
+    // Otherwise, iteration has ended.
+    return void 0;
   }
 }
