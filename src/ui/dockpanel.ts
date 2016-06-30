@@ -115,6 +115,8 @@ export
 class DockPanel extends Widget {
   /**
    * Construct a new dock panel.
+   *
+   * @param options - The options for initializing the panel.
    */
   constructor(options: DockPanel.IOptions = {}) {
     super();
@@ -238,7 +240,7 @@ class DockPanel extends Widget {
     event.preventDefault();
     event.stopPropagation();
     let zone = this._showOverlay(event.clientX, event.clientY);
-    if (zone === DockZone.Invalid) {
+    if (zone === Private.DockZone.Invalid) {
       event.dropAction = 'none';
     } else {
       event.dropAction = event.proposedAction;
@@ -258,8 +260,8 @@ class DockPanel extends Widget {
     }
     let x = event.clientX;
     let y = event.clientY;
-    let target = DockPanelPrivate.findDockTarget(this, x, y);
-    if (target.zone === DockZone.Invalid) {
+    let target = Private.findDockTarget(this._root, x, y);
+    if (target.zone === Private.DockZone.Invalid) {
       event.dropAction = 'none';
       return;
     }
@@ -273,12 +275,122 @@ class DockPanel extends Widget {
       event.dropAction = 'none';
       return;
     }
-    DockPanelPrivate.handleDrop(this, widget, target);
+    this._handleDrop(widget, target);
     event.dropAction = event.proposedAction;
   }
 
-  private _spacing = 3;
-  private _overlay: Thing;
+  /**
+   * Show the dock panel overlay at the given client position.
+   *
+   * If the position is not over a dock zone, the overlay is hidden.
+   *
+   * This returns the dock zone used to display the overlay.
+   */
+  private _showOverlay(clientX: number, clientY: number): Private.DockZone {
+    // Find the dock target for the given client position.
+    let target = Private.findDockTarget(this._root, clientX, clientY);
+
+    // If the dock zone is invalid, hide the overlay and bail.
+    if (target.zone === Private.DockZone.Invalid) {
+      this._overlay.hide();
+      return target.zone;
+    }
+
+    // Setup the variables needed to compute the overlay geometry.
+    let top: number;
+    let left: number;
+    let width: number;
+    let height: number;
+    let cr: ClientRect;
+    let box = boxSizing(this.node); // TODO cache this?
+    let rect = this.node.getBoundingClientRect();
+
+    // Compute the overlay geometry based on the dock zone.
+    switch (target.zone) {
+    case Private.DockZone.RootTop:
+      top = box.paddingTop;
+      left = box.paddingLeft;
+      width = rect.width - box.horizontalSum;
+      height = (rect.height - box.verticalSum) / 3;
+      break;
+    case Private.DockZone.RootLeft:
+      top = box.paddingTop;
+      left = box.paddingLeft;
+      width = (rect.width - box.horizontalSum) / 3;
+      height = rect.height - box.verticalSum;
+      break;
+    case Private.DockZone.RootRight:
+      top = box.paddingTop;
+      width = (rect.width - box.horizontalSum) / 3;
+      left = box.paddingLeft + 2 * width;
+      height = rect.height - box.verticalSum;
+      break;
+    case Private.DockZone.RootBottom:
+      height = (rect.height - box.verticalSum) / 3;
+      top = box.paddingTop + 2 * height;
+      left = box.paddingLeft;
+      width = rect.width - box.horizontalSum;
+      break;
+    case Private.DockZone.RootCenter:
+      top = box.paddingTop;
+      left = box.paddingLeft;
+      width = rect.width - box.horizontalSum;
+      height = rect.height - box.verticalSum;
+      break;
+    case Private.DockZone.PanelTop:
+      cr = target.panel.node.getBoundingClientRect();
+      top = cr.top - rect.top - box.borderTop;
+      left = cr.left - rect.left - box.borderLeft;
+      width = cr.width;
+      height = cr.height / 2;
+      break;
+    case Private.DockZone.PanelLeft:
+      cr = target.panel.node.getBoundingClientRect();
+      top = cr.top - rect.top - box.borderTop;
+      left = cr.left - rect.left - box.borderLeft;
+      width = cr.width / 2;
+      height = cr.height;
+      break;
+    case Private.DockZone.PanelRight:
+      cr = target.panel.node.getBoundingClientRect();
+      top = cr.top - rect.top - box.borderTop;
+      left = cr.left - rect.left - box.borderLeft + cr.width / 2;
+      width = cr.width / 2;
+      height = cr.height;
+      break;
+    case Private.DockZone.PanelBottom:
+      cr = target.panel.node.getBoundingClientRect();
+      top = cr.top - rect.top - box.borderTop + cr.height / 2;
+      left = cr.left - rect.left - box.borderLeft;
+      width = cr.width;
+      height = cr.height / 2;
+      break;
+    case Private.DockZone.PanelCenter:
+      cr = target.panel.node.getBoundingClientRect();
+      top = cr.top - rect.top - box.borderTop;
+      left = cr.left - rect.left - box.borderLeft;
+      width = cr.width;
+      height = cr.height;
+      break;
+    }
+
+    // Show the overlay at the computed position.
+    this._overlay.show(target.zone, left, top, width, height);
+
+    // Finally, return the dock zone used for the overlay.
+    return target.zone;
+  }
+
+  /**
+   *
+   */
+  private _handleDrop(widget: Widget, target: Private.IDockTarget): void {
+
+  }
+
+  private _spacing = 4;
+  private _root: Thing;
+  private _overlay: Private.DockPanelOverlay;
 }
 
 
@@ -295,63 +407,88 @@ namespace DockPanel {
     /**
      * The spacing between items in the panel.
      *
-     * The default is `3`.
+     * The default is `4`.
      */
     spacing?: number;
   }
 
   /**
+   * A type alias for the supported dock panel locations.
    *
+   * A location is used to specify *how* a widget should be added to
+   * a dock panel when calling `insertWidget()`. Some locations must
+   * be paired with a reference widget which has *already* been added
+   * to the dock panel.
    */
   export
   type Location = (
     /**
+     * The top-most area of the dock panel.
      *
+     * The widget will span horizontally above all other widgets.
      */
     'top' |
 
     /**
+     * The left-most area of the dock panel.
      *
+     * The widget will span vertically to the left all other widgets.
      */
     'left' |
 
     /**
+     * The right-most area of the dock panel.
      *
+     * The widget will span vertically to the right all other widgets.
      */
     'right' |
 
     /**
+     * The bottom-most area of the dock panel.
      *
+     * The widget will span horizontally below all other widgets.
      */
     'bottom' |
 
     /**
+     * The area to the top of the reference widget.
      *
+     * The widget will be inserted just above the reference widget.
      */
     'split-top' |
 
     /**
+     * The area to the left of the reference widget.
      *
+     * The widget will be inserted just left of the reference widget.
      */
     'split-left' |
 
     /**
+     * The area to the right of the reference widget.
      *
+     * The widget will be inserted just right of the reference widget.
      */
     'split-right' |
 
     /**
+     * The area to the bottom of the reference widget.
      *
+     * The widget will be inserted just below the reference widget.
      */
     'split-bottom' |
 
     /**
+     * The tab position before the reference widget.
      *
+     * The widget will be added as a tab before the reference widget.
      */
     'tab-before' |
 
     /**
+     * The tab position after the reference widget.
      *
+     * The widget will be added as a tab after the reference widget.
      */
     'tab-after'
   );
@@ -362,6 +499,144 @@ namespace DockPanel {
  * The namespace for the module private data.
  */
 namespace Private {
+  /**
+   * An enum of the dock zones for a dock panel.
+   */
+  export
+  const enum DockZone {
+    /**
+     * The dock zone at the top of the root panel.
+     */
+    RootTop,
+
+    /**
+     * The dock zone at the left of the root panel.
+     */
+    RootLeft,
+
+    /**
+     * The dock zone at the right of the root panel.
+     */
+    RootRight,
+
+    /**
+     * The dock zone at the bottom of the root panel.
+     */
+    RootBottom,
+
+    /**
+     * The dock zone at the center of the root panel.
+     */
+    RootCenter,
+
+    /**
+     * The dock zone at the top third of a tab panel.
+     */
+    PanelTop,
+
+    /**
+     * The dock zone at the left third of a tab panel.
+     */
+    PanelLeft,
+
+    /**
+     * The dock zone at the right third of a tab panel.
+     */
+    PanelRight,
+
+    /**
+     * The dock zone at the bottom third of a tab panel.
+     */
+    PanelBottom,
+
+    /**
+     * The dock zone at the center of a tab panel.
+     */
+    PanelCenter,
+
+    /**
+     * An invalid dock zone.
+     */
+    Invalid
+  }
+
+  /**
+   * A class which manages an overlay node for a dock panel.
+   */
+  export
+  class DockPanelOverlay {
+    /**
+     * A mapping of dock zone enum value to modifier class.
+     */
+    static ZoneClasses = [  // keep in-sync with the DockZone enum
+      ROOT_TOP_CLASS,
+      ROOT_LEFT_CLASS,
+      ROOT_RIGHT_CLASS,
+      ROOT_BOTTOM_CLASS,
+      ROOT_CENTER_CLASS,
+      PANEL_TOP_CLASS,
+      PANEL_LEFT_CLASS,
+      PANEL_RIGHT_CLASS,
+      PANEL_BOTTOM_CLASS,
+      PANEL_CENTER_CLASS
+    ];
+
+    /**
+     * Construct a new dock panel overlay.
+     */
+    constructor() {
+      this._node = document.createElement('div');
+      this._node.classList.add(OVERLAY_CLASS);
+      this._node.classList.add(HIDDEN_CLASS);
+      this._node.style.position = 'absolute';
+    }
+
+    /**
+     * The DOM node for the overlay.
+     */
+    get node(): HTMLElement {
+      return this._node;
+    }
+
+    /**
+     * Show the overlay with the given zone and geometry
+     */
+    show(zone: DockZone, left: number, top: number, width: number, height: number): void {
+      let style = this._node.style;
+      style.top = `${top}px`;
+      style.left = `${left}px`;
+      style.width = `${width}px`;
+      style.height = `${height}px`;
+      this._node.classList.remove(HIDDEN_CLASS);
+      this._setZone(zone);
+    }
+
+    /**
+     * Hide the overlay and reset its zone.
+     */
+    hide(): void {
+      this._node.classList.add(HIDDEN_CLASS);
+      this._setZone(DockZone.Invalid);
+    }
+
+    /**
+     * Set the dock zone for the overlay.
+     */
+    private _setZone(zone: DockZone): void {
+      if (zone === this._zone) {
+        return;
+      }
+      let oldClass = DockPanelOverlay.ZoneClasses[this._zone];
+      let newClass = DockPanelOverlay.ZoneClasses[zone];
+      if (oldClass) this._node.classList.remove(oldClass);
+      if (newClass) this._node.classList.add(newClass);
+      this._zone = zone;
+    }
+
+    private _node: HTMLElement;
+    private _zone = DockZone.Invalid;
+  }
+
   /**
    * Clamp a spacing value to an integer >= 0.
    */
