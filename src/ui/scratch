@@ -318,34 +318,7 @@
 //     throw new Error('Internal DockPanel Error.');
 //   }
 
-//   /**
-//    * Test whether a dock panel contains the given widget.
-//    *
-//    * For this condition to be `true`, the widget must be a logical child
-//    * of a `DockTabPanel`, which itself must be a proper descendant of the
-//    * given dock panel.
-//    */
-//   function dockPanelContains(owner: DockPanel, widget: Widget): boolean {
-//     let stack = widget.parent;
-//     if (!stack) {
-//       return false;
-//     }
-//     let tabs = stack.parent;
-//     if (!(tabs instanceof DockTabPanel)) {
-//       return false;
-//     }
-//     let parent = tabs.parent;
-//     while (parent) {
-//       if (parent === owner) {
-//         return true;
-//       }
-//       if (!(parent instanceof DockSplitPanel)) {
-//         return false;
-//       }
-//       parent = parent.parent;
-//     }
-//     return false;
-//   }
+
 
 //   /**
 //    * Find the ancestor dock tab panel for the given widget.
@@ -427,20 +400,7 @@
 //     return newRoot;
 //   }
 
-//   /**
-//    * Validate the insert arguments for a dock panel.
-//    *
-//    * This will throw an error if the target widget is null, or if the
-//    * reference widget is not null and not contained by the dock panel.
-//    */
-//   function validateInsertArgs(owner: DockPanel, widget: Widget, ref: Widget): void {
-//     if (!widget) {
-//       throw new Error('Target widget is null.');
-//     }
-//     if (ref && !dockPanelContains(owner, ref)) {
-//       throw new Error('Reference widget not contained by the dock panel.');
-//     }
-//   }
+
 
 
 

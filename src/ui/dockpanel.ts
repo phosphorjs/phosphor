@@ -187,7 +187,8 @@ class DockPanel extends Widget {
    * @param ref -
    */
   insertWidget(location: DockPanel.Location, widget: Widget, ref: Widget = null): void {
-
+    // Ensure the arguments are valid.
+    Private.validateInsertArgs(this._root, widget, ref);
   }
 
   /**
@@ -812,6 +813,22 @@ namespace Private {
   }
 
   /**
+   * Validate the insert arguments for a dock panel.
+   */
+  export
+  function validateInsertArgs(root: DockPanelChild, widget: Widget, ref: Widget): void {
+    if (!widget) {
+      throw new Error('Insert widget is null.');
+    }
+    if (widget === ref) {
+      throw new Error('Insert widget is reference widget.');
+    }
+    if (ref && !dockRootContains(root, ref)) {
+      throw new Error('Reference widget not contained by dock panel.');
+    }
+  }
+
+  /**
    * Get the root zone for the given node and client position.
    *
    * This assumes the position lies within the node's client rect.
@@ -908,5 +925,37 @@ namespace Private {
 
     // Otherwise, iteration has ended.
     return void 0;
+  }
+
+  /**
+   * Test whether a dock panel contains the given widget.
+   *
+   * For this condition to be `true`, the widget must be a logical child
+   * of a `DockTabPanel`, which itself must be a proper descendant of the
+   * given dock panel root.
+   */
+  function dockRootContains(root: DockPanelChild, widget: Widget): boolean {
+    let stackedPanel = widget.parent;
+    if (!stackedPanel) {
+      return false;
+    }
+    let tabPanel = stackedPanel.parent;
+    if (!(tabPanel instanceof DockTabPanel)) {
+      return false;
+    }
+    if (tabPanel === root) {
+      return true;
+    }
+    let parent = tabPanel.parent;
+    while (parent) {
+      if (parent === root) {
+        return true;
+      }
+      if (!(parent instanceof DockSplitPanel)) {
+        return false;
+      }
+      parent = parent.parent;
+    }
+    return false;
   }
 }
