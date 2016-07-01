@@ -188,7 +188,42 @@ class DockPanel extends Widget {
    */
   insertWidget(location: DockPanel.Location, widget: Widget, ref: Widget = null): void {
     // Ensure the arguments are valid.
-    Private.validateInsertArgs(this._root, widget, ref);
+    if (!widget) {
+      throw new Error('Target widget is null.');
+    }
+    if (widget === ref) {
+      throw new Error('Target widget cannot be the reference widget.');
+    }
+    if (ref && !Private.dockRootContains(this._root, ref)) {
+      throw new Error('Reference widget is not contained by the dock panel.');
+    }
+
+    // Unparent the widget before performing the insert. This ensures
+    // that structural changes to the dock panel occur before searching
+    // for the insert location.
+    widget.parent = null;
+
+    // Insert the widget based on the specified location.
+    switch (location) {
+    case 'split-top':
+      this._insertSplit(widget, ref, 'vertical', false);
+      break;
+    case 'split-left':
+      this._insertSplit(widget, ref, 'horizontal', false);
+      break;
+    case 'split-right':
+      this._insertSplit(widget, ref, 'horizontal', true);
+      break;
+    case 'split-bottom':
+      this._insertSplit(widget, ref, 'vertical', true);
+      break;
+    case 'tab-before':
+      this._insertTab(widget, ref, false);
+      break;
+    case 'tab-after':
+      this._insertTab(widget, ref, true);
+      break;
+    }
   }
 
   /**
@@ -465,31 +500,201 @@ class DockPanel extends Widget {
     switch(target.zone) {
     case Private.DockZone.PanelTop:
       this.insertWidget('split-top', widget, ref);
-      // TODO focus
+      // TODO focus?
       return;
     case Private.DockZone.PanelLeft:
       this.insertWidget('split-left', widget, ref);
-      // TODO focus
+      // TODO focus?
       return;
     case Private.DockZone.PanelRight:
       this.insertWidget('split-right', widget, ref);
-      // TODO focus
+      // TODO focus?
       return;
     case Private.DockZone.PanelBottom:
       this.insertWidget('split-bottom', widget, ref);
-      // TODO focus
+      // TODO focus?
       return;
     case Private.DockZone.PanelCenter:
       this.insertWidget('tab-after', widget, ref);
-      // TODO select & focus
+      // TODO select & focus?
       return;
     }
   }
 
+  /**
+   * Insert a widget as a new split panel in a dock panel.
+   *
+   * assumptions:
+   *   - widget is not null and has no parent
+   *   - widget is not the reference widget
+   *   - ref (if given) is a valid content widget
+   */
+  private _insertSplit(widget: Widget, ref: Widget, orientation: SplitPanel.Orientation, after: boolean): void {
+    // Setup the new tab panel to host the widget.
+    let tabPanel = this._createTabPanel();
+    tabPanel.addWidget(widget);
+
+    // If there is no root, add the new tab panel as the root.
+    if (!this._root) {
+      this._setRoot(tabPanel);
+      // TODO focus?
+      return;
+    }
+
+    // If the ref widget is null, split the root panel.
+    if (!ref) {
+      let splitPanel = this._ensureSplitRoot(orientation);
+      let sizes = splitPanel.sizes();
+      let index = after ? sizes.length : 0;
+      sizes.splice(index, 0, 0.5);
+      splitPanel.insertWidget(index, tabPanel);
+      splitPanel.setSizes(sizes);
+      // TODO focus?
+      return;
+    }
+
+    // Lookup the tab panel for the ref widget.
+    let refTabPanel = ref.parent.parent as Private.DockTabPanel;
+
+    // If the ref tab panel is the root, split the root.
+    if (this._root === refTabPanel) {
+      let splitPanel = this._ensureSplitRoot(orientation);
+      splitPanel.insertWidget(after ? 1 : 0, tabPanel);
+      splitPanel.setSizes([1, 1]);
+      // TODO focus?
+      return;
+    }
+
+    // Otherwise, the ref tab panel parent is a dock split panel.
+    let splitPanel = refTabPanel.parent as Private.DockSplitPanel;
+
+    // If the split panel is the correct orientation, the widget
+    // can be inserted directly and sized to 0.5 of the ref space.
+    if (splitPanel.orientation === orientation) {
+      let i = indexOf(splitPanel.widgets, refTabPanel);
+      let index = after ? i + 1 : i;
+      let sizes = splitPanel.sizes();
+      sizes.splice(index, 0, (sizes[i] = sizes[i] / 2));
+      splitPanel.insertWidget(index, tabPanel);
+      splitPanel.setSizes(sizes);
+      // TODO focus?
+      return;
+    }
+
+    // If the split panel only has a single child, its orientation
+    // can be changed directly and its sizes set to a 1:1 ratio.
+    if (splitPanel.widgets.length === 1) {
+      splitPanel.orientation = orientation;
+      splitPanel.insertWidget(after ? 1 : 0, tabPanel);
+      splitPanel.setSizes([1, 1]);
+      // TODO focus?
+      return;
+    }
+
+    // Otherwise, a new split panel with the correct orientation needs
+    // to be created to hold the ref panel and tab panel, and inserted
+    // at the previous location of the ref panel.
+    let sizes = splitPanel.sizes();
+    let i = indexOf(splitPanel.widgets, refTabPanel);
+    let childSplit = this._createSplitPanel(orientation);
+    childSplit.addWidget(refTabPanel);
+    childSplit.insertWidget(after ? 1 : 0, tabPanel);
+    splitPanel.insertWidget(i, childSplit);
+    splitPanel.setSizes(sizes);
+    childSplit.setSizes([1, 1]);
+    // TODO focus?
+  }
+
+  /**
+   * Insert a widget as a sibling tab in a dock panel.
+   *
+   * assumptions:
+   *   - widget is not null and has no parent
+   *   - widget is not the reference widget
+   *   - ref (if given) is a valid content widget
+   */
+  private _insertTab(widget: Widget, ref: Widget, after: boolean): void {
+    // Find the index and tab panel for the insert operation.
+    let index: number;
+    let tabPanel: Private.DockTabPanel;
+    if (ref) {
+      tabPanel = ref.parent.parent as Private.DockTabPanel;
+      index = indexOf(tabPanel.widgets, ref) + (after ? 1 : 0);
+    } else {
+      // tabPanel = ensureFirstTabPanel(owner);
+      // index = after ? tabPanel.widgets.length : 0;
+    }
+
+    // Insert the widget into the tab panel at the proper location.
+    tabPanel.insertWidget(index, widget);
+  }
+
+  /**
+   *
+   */
+  private _createTabPanel(): Private.DockTabPanel {
+    let panel = new Private.DockTabPanel();
+    return panel;
+  }
+
+  /**
+   *
+   */
+  private _createSplitPanel(orientation: SplitPanel.Orientation): Private.DockSplitPanel {
+    let panel = new Private.DockSplitPanel({ orientation });
+    return panel;
+  }
+  /**
+   *
+   */
+  private _ensureSplitRoot(orientation: SplitPanel.Orientation): Private.DockSplitPanel {
+    //
+    if (!this._root) {
+      let root = this._createSplitPanel(orientation);
+      this._setRoot(root);
+      return root;
+    }
+
+    //
+    if (this._root instanceof Private.DockTabPanel) {
+      let root = this._createSplitPanel(orientation);
+      root.addWidget(this._root);
+      this._setRoot(root);
+      return root;
+    }
+
+    //
+    let oldRoot = this._root as Private.DockSplitPanel;
+    if (oldRoot.orientation === orientation) {
+      return oldRoot;
+    }
+
+    //
+    if (oldRoot.widgets.length <= 1) {
+      oldRoot.orientation = orientation;
+      return oldRoot;
+    }
+
+    //
+    let newRoot = this._createSplitPanel(orientation);
+    newRoot.addWidget(oldRoot);
+    this._setRoot(newRoot);
+    return newRoot;
+  }
+
+  /**
+   *
+   */
+  private _setRoot(root: Private.DockPanelChild): void {
+    this._root = root;
+    (this.layout as StackedLayout).addWidget(root);
+    root.show();
+  }
+
   private _spacing = 4;
   private _drag: Drag = null;
-  private _root: Private.DockPanelChild;
   private _overlay: Private.DockPanelOverlay;
+  private _root: Private.DockPanelChild = null;
 }
 
 
@@ -813,19 +1018,36 @@ namespace Private {
   }
 
   /**
-   * Validate the insert arguments for a dock panel.
+   * Test whether a dock panel contains the given widget.
+   *
+   * For this condition to be `true`, the widget must be a logical child
+   * of a `DockTabPanel`, which itself must be a proper descendant of the
+   * given dock panel root.
    */
   export
-  function validateInsertArgs(root: DockPanelChild, widget: Widget, ref: Widget): void {
-    if (!widget) {
-      throw new Error('Insert widget is null.');
+  function dockRootContains(root: DockPanelChild, widget: Widget): boolean {
+    let stack = widget.parent;
+    if (!stack) {
+      return false;
     }
-    if (widget === ref) {
-      throw new Error('Insert widget is reference widget.');
+    let tabs = stack.parent;
+    if (!(tabs instanceof DockTabPanel)) {
+      return false;
     }
-    if (ref && !dockRootContains(root, ref)) {
-      throw new Error('Reference widget not contained by dock panel.');
+    if (tabs === root) {
+      return true;
     }
+    let parent = tabs.parent;
+    while (parent) {
+      if (!(parent instanceof DockSplitPanel)) {
+        return false;
+      }
+      if (parent === root) {
+        return true;
+      }
+      parent = parent.parent;
+    }
+    return false;
   }
 
   /**
@@ -925,37 +1147,5 @@ namespace Private {
 
     // Otherwise, iteration has ended.
     return void 0;
-  }
-
-  /**
-   * Test whether a dock panel contains the given widget.
-   *
-   * For this condition to be `true`, the widget must be a logical child
-   * of a `DockTabPanel`, which itself must be a proper descendant of the
-   * given dock panel root.
-   */
-  function dockRootContains(root: DockPanelChild, widget: Widget): boolean {
-    let stackedPanel = widget.parent;
-    if (!stackedPanel) {
-      return false;
-    }
-    let tabPanel = stackedPanel.parent;
-    if (!(tabPanel instanceof DockTabPanel)) {
-      return false;
-    }
-    if (tabPanel === root) {
-      return true;
-    }
-    let parent = tabPanel.parent;
-    while (parent) {
-      if (parent === root) {
-        return true;
-      }
-      if (!(parent instanceof DockSplitPanel)) {
-        return false;
-      }
-      parent = parent.parent;
-    }
-    return false;
   }
 }
