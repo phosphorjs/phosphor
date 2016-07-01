@@ -6,6 +6,10 @@
 | The full license is in the file LICENSE, distributed with this software.
 |----------------------------------------------------------------------------*/
 import {
+  indexOf
+} from '../algorithm/searching';
+
+import {
   Message
 } from '../core/messaging';
 
@@ -162,19 +166,27 @@ class DockPanel extends Widget {
     Private.syncSpacing(this._root, value);
   }
 
-  /**
+  /*
    * Add a widget to the dock panel.
+   *
+   * @param widget - The widget to add into the dock panel.
+   *
+   * @param ref -
+   */
+  addWidget(widget: Widget, ref?: Widget): void {
+    this.insertWidget('tab-after', widget, ref);
+  }
+
+  /**
+   * Insert a widget into the dock panel.
    *
    * @param location - The location to add the widget.
    *
    * @param widget - The widget to insert into the dock panel.
    *
-   * @param ref - The reference widget, if needed for the location.
-   *
-   * @throws An error if the combination of location, widget, and
-   *   reference is invalid.
+   * @param ref -
    */
-  addWidget(location: DockPanel.Location, widget: Widget, ref?: Widget): void {
+  insertWidget(location: DockPanel.Location, widget: Widget, ref: Widget = null): void {
 
   }
 
@@ -398,10 +410,79 @@ class DockPanel extends Widget {
   }
 
   /**
-   *
+   * Drop a widget onto the dock panel using the given dock target.
    */
   private _handleDrop(widget: Widget, target: Private.IDockTarget): void {
+    // Do nothing if the dock zone is invalid.
+    if (target.zone === Private.DockZone.Invalid) {
+      return;
+    }
 
+    // Handle the simple case of root drops first.
+    switch(target.zone) {
+    case Private.DockZone.RootTop:
+      this.insertWidget('split-top', widget);
+      return;
+    case Private.DockZone.RootLeft:
+      this.insertWidget('split-left', widget);
+      return;
+    case Private.DockZone.RootRight:
+      this.insertWidget('split-right', widget);
+      return;
+    case Private.DockZone.RootBottom:
+      this.insertWidget('split-bottom', widget);
+      return;
+    case Private.DockZone.RootCenter:
+      this.insertWidget('split-left', widget);
+      return;
+    }
+
+    // Otherwise, it's a panel drop, and that requires more checks.
+
+    // Fetch the children of the target panel.
+    let children = target.panel.widgets;
+
+    // Do nothing if the widget is dropped as a tab on its own panel.
+    if (target.zone === Private.DockZone.PanelCenter) {
+      if (indexOf(children, widget) !== -1) {
+        return;
+      }
+    }
+
+    // Do nothing if the panel only contains the drop widget.
+    if (children.length === 1 && children.at(0) === widget) {
+      return;
+    }
+
+    // Find a suitable reference widget for the drop.
+    let ref = children.at(children.length - 1);
+    if (ref === widget) {
+      ref = children.at(children.length - 2);
+    }
+
+    // Insert the widget based on the panel zone.
+    switch(target.zone) {
+    case Private.DockZone.PanelTop:
+      this.insertWidget('split-top', widget, ref);
+      // TODO focus
+      return;
+    case Private.DockZone.PanelLeft:
+      this.insertWidget('split-left', widget, ref);
+      // TODO focus
+      return;
+    case Private.DockZone.PanelRight:
+      this.insertWidget('split-right', widget, ref);
+      // TODO focus
+      return;
+    case Private.DockZone.PanelBottom:
+      this.insertWidget('split-bottom', widget, ref);
+      // TODO focus
+      return;
+    case Private.DockZone.PanelCenter:
+      this.insertWidget('tab-after', widget, ref);
+      // TODO select & focus
+      return;
+    }
   }
 
   private _spacing = 4;
@@ -439,34 +520,6 @@ namespace DockPanel {
    */
   export
   type Location = (
-    /**
-     * The top-most area of the dock panel.
-     *
-     * The widget will span horizontally above all other widgets.
-     */
-    'top' |
-
-    /**
-     * The left-most area of the dock panel.
-     *
-     * The widget will span vertically to the left all other widgets.
-     */
-    'left' |
-
-    /**
-     * The right-most area of the dock panel.
-     *
-     * The widget will span vertically to the right all other widgets.
-     */
-    'right' |
-
-    /**
-     * The bottom-most area of the dock panel.
-     *
-     * The widget will span horizontally below all other widgets.
-     */
-    'bottom' |
-
     /**
      * The area to the top of the reference widget.
      *
