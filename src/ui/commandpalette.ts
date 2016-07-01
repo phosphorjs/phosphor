@@ -220,7 +220,7 @@ class CommandItem implements IDisposable {
    * All calls made after the first call to this method are a no-op.
    */
   dispose(): void {
-    // Do nothing if the drag object is already disposed.
+    // Do nothing if the command item is already disposed.
     if (this._disposed) {
       return;
     }
