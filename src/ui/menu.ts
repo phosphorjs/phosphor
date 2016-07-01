@@ -22,6 +22,10 @@ import {
 } from '../collections/vector';
 
 import {
+  IDisposable
+} from '../core/disposable';
+
+import {
   Message, sendMessage
 } from '../core/messaging';
 
@@ -38,11 +42,11 @@ import {
 } from '../dom/sizing';
 
 import {
-  commands
+  CommandRegistry, commands
 } from './commands';
 
 import {
-  KeyBinding, formatKeystroke, keymap
+  KeyBinding, KeymapManager, formatKeystroke, keymap
 } from './keymap';
 
 import {
@@ -143,7 +147,7 @@ const SUBMENU_OVERLAP = 3;
  * Once created, a menu item is immutable.
  */
 export
-class MenuItem {
+class MenuItem implements IDisposable {
   /**
    * Construct a new menu item.
    *
@@ -154,6 +158,34 @@ class MenuItem {
     this._command = options.command || '';
     this._args = options.args || null;
     this._menu = options.menu || null;
+    this._commands = options.commands || commands;
+    this._keymap = options.keymap || keymap;
+  }
+
+  /**
+   * Dispose of the resources held by the menu item.
+   *
+   * #### Notes
+   * All calls made after the first call to this method are a no-op.
+   */
+  dispose(): void {
+    // Do nothing if the drag object is already disposed.
+    if (this._disposed) {
+      return;
+    }
+    this._disposed = true;
+    this._commands = null;
+    this._keymap = null;
+  }
+
+  /**
+   * Test whether the drag object is disposed.
+   *
+   * #### Notes
+   * This is a read-only property.
+   */
+  get isDisposed(): boolean {
+    return this._disposed;
   }
 
   /**
@@ -189,7 +221,7 @@ class MenuItem {
    */
   get label(): string {
     if (this._type === 'command') {
-      return commands.label(this._command, this._args);
+      return this._commands.label(this._command, this._args);
     }
     if (this._type === 'submenu' && this._menu) {
       return this._menu.title.label;
@@ -202,7 +234,7 @@ class MenuItem {
    */
   get mnemonic(): number {
     if (this._type === 'command') {
-      return commands.mnemonic(this._command, this._args);
+      return this._commands.mnemonic(this._command, this._args);
     }
     if (this._type === 'submenu' && this._menu) {
       return this._menu.title.mnemonic;
@@ -215,7 +247,7 @@ class MenuItem {
    */
   get icon(): string {
     if (this._type === 'command') {
-      return commands.icon(this._command, this._args);
+      return this._commands.icon(this._command, this._args);
     }
     if (this._type === 'submenu' && this._menu) {
       return this._menu.title.icon;
@@ -228,7 +260,7 @@ class MenuItem {
    */
   get caption(): string {
     if (this._type === 'command') {
-      return commands.caption(this._command, this._args);
+      return this._commands.caption(this._command, this._args);
     }
     if (this._type === 'submenu' && this._menu) {
       return this._menu.title.caption;
@@ -241,7 +273,7 @@ class MenuItem {
    */
   get className(): string {
     if (this._type === 'command') {
-      return commands.className(this._command, this._args);
+      return this._commands.className(this._command, this._args);
     }
     if (this._type === 'submenu' && this._menu) {
       return this._menu.title.className;
@@ -254,7 +286,7 @@ class MenuItem {
    */
   get isEnabled(): boolean {
     if (this._type === 'command') {
-      return commands.isEnabled(this._command, this._args);
+      return this._commands.isEnabled(this._command, this._args);
     }
     if (this._type === 'submenu') {
       return this._menu !== null;
@@ -267,7 +299,7 @@ class MenuItem {
    */
   get isToggled(): boolean {
     if (this._type === 'command') {
-      return commands.isToggled(this._command, this._args);
+      return this._commands.isToggled(this._command, this._args);
     }
     return false;
   }
@@ -277,7 +309,7 @@ class MenuItem {
    */
   get isVisible(): boolean {
     if (this._type === 'command') {
-      return commands.isVisible(this._command, this._args);
+      return this._commands.isVisible(this._command, this._args);
     }
     if (this._type === 'submenu') {
       return this._menu !== null;
@@ -290,7 +322,7 @@ class MenuItem {
    */
   get keyBinding(): KeyBinding {
     if (this._type === 'command') {
-      return keymap.findKeyBinding(this._command, this._args);
+      return this._keymap.findKeyBinding(this._command, this._args);
     }
     return null;
   }
@@ -299,6 +331,9 @@ class MenuItem {
   private _command: string;
   private _args: JSONObject;
   private _menu: Menu;
+  private _disposed = false;
+  private _keymap: KeymapManager = null;
+  private _commands: CommandRegistry = null;
 }
 
 
@@ -345,6 +380,20 @@ namespace MenuItem {
      * The default value is `null`.
      */
     menu?: Menu;
+
+    /**
+     * The command registry for use with the command item.
+     *
+     * The default is the shared `commands` singleton.
+     */
+    commands?: CommandRegistry;
+
+    /**
+     * The keymap manager for use with the command item.
+     *
+     * The default is the shared `keymap` singleton.
+     */
+    keymap?: KeymapManager;
   }
 }
 
@@ -364,6 +413,8 @@ class Menu extends Widget {
     this.addClass(MENU_CLASS);
     this.setFlag(WidgetFlag.DisallowLayout);
     this._renderer = options.renderer || Menu.defaultRenderer;
+    this._commands = options.commands || commands;
+    this._keymap = options.keymap || keymap;
   }
 
   /**
@@ -374,6 +425,8 @@ class Menu extends Widget {
     this._items.clear();
     this._nodes.clear();
     this._renderer = null;
+    this._keymap = null;
+    this._commands = null;
     super.dispose();
   }
 
@@ -643,8 +696,8 @@ class Menu extends Widget {
 
     // Execute the command for the item.
     let { command, args } = item;
-    if (commands.isEnabled(command, args)) {
-      commands.execute(command, args);
+    if (this._commands.isEnabled(command, args)) {
+      this._commands.execute(command, args);
     } else {
       // TODO log something here?
     }
@@ -688,7 +741,7 @@ class Menu extends Widget {
     let i = Math.max(0, Math.min(Math.floor(index), this._items.length));
 
     // Coerce the value to a menu item.
-    let item = Private.asMenuItem(value);
+    let item = Private.asMenuItem(value, this._keymap, this._commands);
 
     // Create the node for the item. It will be initialized on open.
     let node = this._renderer.createItemNode();
@@ -995,7 +1048,7 @@ class Menu extends Widget {
     // The following code activates an item by mnemonic.
 
     // Get the pressed key character for the current layout.
-    let key = keymap.layout.keyForKeydownEvent(event);
+    let key = this._keymap.layout.keyForKeydownEvent(event);
 
     // Bail if the key is not valid for the current layout.
     if (!key) {
@@ -1292,6 +1345,8 @@ class Menu extends Widget {
   private _renderer: Menu.IRenderer;
   private _items = new Vector<MenuItem>();
   private _nodes = new Vector<HTMLElement>();
+  private _keymap: KeymapManager = null;
+  private _commands: CommandRegistry = null;
 }
 
 
@@ -1316,6 +1371,20 @@ namespace Menu {
      * The default is a shared renderer instance.
      */
     renderer?: IRenderer;
+
+    /**
+     * The command registry for use with the command item.
+     *
+     * The default is the shared `commands` singleton.
+     */
+    commands?: CommandRegistry;
+
+    /**
+     * The keymap manager for use with the command item.
+     *
+     * The default is the shared `keymap` singleton.
+     */
+    keymap?: KeymapManager;
   }
 
   /**
@@ -1544,8 +1613,20 @@ namespace Private {
    * Coerce a menu item or options into a real menu item.
    */
   export
-  function asMenuItem(value: MenuItem | MenuItem.IOptions): MenuItem {
-    return value instanceof MenuItem ? value : new MenuItem(value);
+  function asMenuItem(value: MenuItem | MenuItem.IOptions, keymapManager: KeymapManager, commandRegistry: CommandRegistry): MenuItem {
+    if (value instanceof MenuItem) {
+      return value;
+    }
+    let options = value as MenuItem.IOptions;
+    if (options.keymap && options.keymap !== keymapManager) {
+      throw new Error('Conflicting keymap manager for item');
+    }
+    if (options.commands && options.commands !== commandRegistry) {
+      throw new Error('Conflicting command registry for item');
+    }
+    options.keymap = keymapManager;
+    options.commands = commandRegistry;
+    return new MenuItem(options);
   }
 
   /**
