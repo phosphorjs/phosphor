@@ -29,7 +29,7 @@ import {
  *
  * #### Example
  * ```typescript
- * import { find } from 'phosphor-core/lib/searching';
+ * import { find } from 'phosphor/lib/algorithm/searching';
  *
  * interface IAnimal { species: string, name: string };
  *
@@ -81,7 +81,7 @@ function find<T>(object: IterableOrArrayLike<T>, fn: (value: T) => boolean): T {
  *
  * #### Example
  * ```typescript
- * import { indexOf } from 'phosphor-core/lib/searching';
+ * import { indexOf } from 'phosphor/lib/algorithm/searching';
  *
  * let data = ['one', 'two', 'three', 'four', 'one'];
  * indexOf(data, 'red');     // -1
@@ -134,7 +134,7 @@ function indexOf<T>(object: SequenceOrArrayLike<T>, value: T, fromIndex?: number
  *
  * #### Example
  * ```typescript
- * import { lastIndexOf } from 'phosphor-core/lib/searching';
+ * import { lastIndexOf } from 'phosphor/lib/algorithm/searching';
  *
  * let data = ['one', 'two', 'three', 'four', 'one'];
  * lastIndexOf(data, 'red');     // -1
@@ -188,7 +188,7 @@ function lastIndexOf<T>(object: SequenceOrArrayLike<T>, value: T, fromIndex?: nu
  *
  * #### Example
  * ```typescript
- * import { findIndex } from 'phosphor-core/lib/searching';
+ * import { findIndex } from 'phosphor/lib/algorithm/searching';
  *
  * function isEven(value: number): boolean {
  *   return value % 2 === 0;
@@ -245,7 +245,7 @@ function findIndex<T>(object: SequenceOrArrayLike<T>, fn: (value: T, index: numb
  *
  * #### Example
  * ```typescript
- * import { findLastIndex } from 'phosphor-core/lib/searching';
+ * import { findLastIndex } from 'phosphor/lib/algorithm/searching';
  *
  * function isEven(value: number): boolean {
  *   return value % 2 === 0;
@@ -305,7 +305,7 @@ function findLastIndex<T>(object: SequenceOrArrayLike<T>, fn: (value: T, index: 
  *
  * #### Example
  * ```typescript
- * import { lowerBound } from 'phosphor-core/lib/searching';
+ * import { lowerBound } from 'phosphor/lib/algorithm/searching';
  *
  * function numberCmp(a: number, b: number): number {
  *   return a - b;
@@ -369,7 +369,7 @@ function lowerBound<T, U>(object: SequenceOrArrayLike<T>, value: U, fn: (element
  *
  * #### Example
  * ```typescript
- * import { upperBound } from 'phosphor-core/lib/searching';
+ * import { upperBound } from 'phosphor/lib/algorithm/searching';
  *
  * function numberCmp(a: number, b: number): number {
  *   return a - b;

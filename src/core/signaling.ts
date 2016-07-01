@@ -32,7 +32,7 @@ type Slot<T, U> = (sender: T, args: U) => void;
  *
  * #### Example
  * ```typescript
- * import { ISignal, defineSignal } from 'phosphor-core/lib/signaling';
+ * import { ISignal, defineSignal } from 'phosphor/lib/core/signaling';
  *
  * class SomeClass {
  *

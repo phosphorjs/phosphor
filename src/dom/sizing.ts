@@ -73,7 +73,7 @@ interface IBoxSizing {
  *
  * #### Example
  * ```typescript
- * import { boxSizing } from 'phosphor-ui/lib/dom-util';
+ * import { boxSizing } from 'phosphor/lib/dom/sizing';
  *
  * let div = document.createElement('div');
  * div.style.borderTop = 'solid 10px black';
@@ -149,7 +149,7 @@ interface ISizeLimits {
  *
  * #### Example
  * ```typescript
- * import { sizeLimits } from 'phosphor-ui/lib/dom-util';
+ * import { sizeLimits } from 'phosphor/lib/dom/sizing';
  *
  * let div = document.createElement('div');
  * div.style.minWidth = '90px';

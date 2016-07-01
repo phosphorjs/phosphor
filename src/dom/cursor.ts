@@ -29,7 +29,7 @@ const OVERRIDE_CURSOR_CLASS = 'p-mod-override-cursor';
  *
  * #### Example
  * ```typescript
- * import { overrideCursor } from 'phosphor-ui/lib/css-util';
+ * import { overrideCursor } from 'phosphor/lib/dom/cursor';
  *
  * // force the cursor to be 'wait' for the entire document
  * let override = overrideCursor('wait');
