@@ -12,12 +12,93 @@ import {
 } from 'simulate-event';
 
 import {
+  Message
+} from '../../../lib/core/messaging';
+
+import {
   MimeData
 } from '../../../lib/core/mimedata';
 
 import {
-  Drag
+  Drag, IDragEvent
 } from '../../../lib/dom/dragdrop';
+
+import {
+  BoxPanel
+} from '../../../lib/ui/boxpanel';
+
+import {
+  Widget
+} from '../../../lib/ui/widget';
+
+
+
+class DropTarget extends Widget {
+
+  constructor() {
+    super();
+    this.node.style.minWidth = '100px';
+    this.node.style.minHeight = '100px';
+  }
+
+  handleEvent(event: Event): void {
+    switch (event.type) {
+    case 'p-dragenter':
+      this._evtDragEnter(event as IDragEvent);
+      break;
+    case 'p-dragleave':
+      this._evtDragLeave(event as IDragEvent);
+      break;
+    case 'p-dragover':
+      this._evtDragOver(event as IDragEvent);
+      break;
+    case 'p-drop':
+      this._evtDrop(event as IDragEvent);
+      break;
+    }
+  }
+
+  onAfterAttach(msg: Message): void {
+    this.node.addEventListener('p-dragenter', this);
+    this.node.addEventListener('p-dragover', this);
+    this.node.addEventListener('p-dragleave', this);
+    this.node.addEventListener('p-drop', this);
+  }
+
+  onBeforeDetach(msg: Message): void {
+    this.node.removeEventListener('p-dragenter', this);
+    this.node.removeEventListener('p-dragover', this);
+    this.node.removeEventListener('p-dragleave', this);
+    this.node.removeEventListener('p-drop', this);
+  }
+
+  private _evtDragEnter(event: IDragEvent): void {
+    event.preventDefault();
+    event.stopPropagation();
+  }
+
+  private _evtDragLeave(event: IDragEvent): void {
+    event.preventDefault();
+    event.stopPropagation();
+  }
+
+  private _evtDragOver(event: IDragEvent): void {
+    event.preventDefault();
+    event.stopPropagation();
+    event.dropAction = event.proposedAction;
+  }
+
+  private _evtDrop(event: IDragEvent): void {
+    event.preventDefault();
+    event.stopPropagation();
+    if (event.proposedAction === 'none') {
+      event.dropAction = 'none';
+      return;
+    }
+    event.dropAction = event.proposedAction;
+  }
+}
+
 
 
 describe('dom/dragdrop', () => {
@@ -224,26 +305,27 @@ describe('dom/dragdrop', () => {
     describe('#handleEvent()', () => {
 
       let drag: Drag;
+      let panel: BoxPanel;
 
       beforeEach(() => {
+        panel = new BoxPanel();
+        panel.addWidget(new DropTarget());
+        panel.addWidget(new DropTarget());
         drag = new Drag({ mimeData: new MimeData() });
         drag.start(0, 0);
       });
 
       afterEach(() => {
+        panel.dispose();
         drag.dispose();
       });
 
       context('mousemove', () => {
 
         it('should be prevented during a drag event', () => {
-          let evt = generate('mousemove');
+          let evt = generate('mousemove', { cancelable: true });
           let canceled = !document.body.dispatchEvent(evt);
           expect(canceled).to.be(true);
-        });
-
-        it('should update the current target node', () => {
-
         });
 
         it('should dispatch enter and leave events', () => {
