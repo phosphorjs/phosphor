@@ -20,7 +20,7 @@ import {
 } from '../../../lib/core/mimedata';
 
 import {
-  Drag, IDragEvent
+  Drag, DropAction, IDragEvent
 } from '../../../lib/dom/dragdrop';
 
 import {
@@ -32,8 +32,9 @@ import {
 } from '../../../lib/ui/widget';
 
 
-
 class DropTarget extends Widget {
+
+  events: string[] = [];
 
   constructor() {
     super();
@@ -42,6 +43,7 @@ class DropTarget extends Widget {
   }
 
   handleEvent(event: Event): void {
+    this.events.push(event.type);
     switch (event.type) {
     case 'p-dragenter':
       this._evtDragEnter(event as IDragEvent);
@@ -142,8 +144,13 @@ describe('dom/dragdrop', () => {
         expect(drag.isDisposed).to.be(true);
       });
 
-      it('should cancel the drag operation if it is active', () => {
-
+      it('should cancel the drag operation if it is active', (done) => {
+        let drag = new Drag({ mimeData: new MimeData() });
+        drag.dispose();
+        drag.start(0, 0).then(action => {
+          expect(action).to.be('none');
+          done();
+        });
       });
 
       it('should be a no-op if already disposed', () => {
@@ -273,18 +280,29 @@ describe('dom/dragdrop', () => {
     describe('#start()', () => {
 
       it('should start the drag operation at the specified client position', () => {
-
+        let dragImage = document.createElement('span');
+        dragImage.style.minHeight = '10px';
+        dragImage.style.minWidth = '10px';
+        let drag = new Drag({ mimeData: new MimeData(), dragImage });
+        expect(drag.start(10, 20)).to.be.a(Promise);
+        expect(dragImage.style.top).to.be('20px');
+        expect(dragImage.style.left).to.be('10px');
       });
 
-      it('should return return a previous call to start if a drag has already been started', () => {
+      it('should return a previous promise if a drag has already been started', () => {
         let drag = new Drag({ mimeData: new MimeData() });
         let promise = drag.start(0, 0);
         expect(drag.start(10, 10)).to.be(promise);
         drag.dispose();
       });
 
-      it("should resolve to `'none'` if the drag operation has ended", () => {
-
+      it("should resolve to `'none'` if the drag operation has been disposed", (done) => {
+        let drag = new Drag({ mimeData: new MimeData() });
+        drag.dispose();
+        drag.start(0, 0).then(action => {
+          expect(action).to.be('none');
+          done();
+        });
       });
 
       it("should resolve to `'none'` if the drag object has been disposed", (done) => {
@@ -296,23 +314,29 @@ describe('dom/dragdrop', () => {
         });
       });
 
-      it('should be disposed when the drag operation completes', () => {
-
-      });
-
     });
 
     describe('#handleEvent()', () => {
 
       let drag: Drag;
       let panel: BoxPanel;
+      let dragPromise: Promise<DropAction>;
 
-      beforeEach(() => {
+      beforeEach((done) => {
         panel = new BoxPanel();
         panel.addWidget(new DropTarget());
         panel.addWidget(new DropTarget());
-        drag = new Drag({ mimeData: new MimeData() });
-        drag.start(0, 0);
+        Widget.attach(panel, document.body);
+
+        let dragImage = document.createElement('span');
+        dragImage.style.minHeight = '10px';
+        dragImage.style.minWidth = '10px';
+
+        requestAnimationFrame(() => {
+          drag = new Drag({ mimeData: new MimeData(), dragImage });
+          dragPromise = drag.start(0, 0);
+          done();
+        });
       });
 
       afterEach(() => {
@@ -323,17 +347,38 @@ describe('dom/dragdrop', () => {
       context('mousemove', () => {
 
         it('should be prevented during a drag event', () => {
-          let evt = generate('mousemove', { cancelable: true });
+          let evt = generate('mousemove');
           let canceled = !document.body.dispatchEvent(evt);
           expect(canceled).to.be(true);
         });
 
-        it('should dispatch enter and leave events', () => {
+        it('should dispatch an enter and leave events', () => {
+          let child0 = panel.widgets.at(0) as DropTarget;
+          let rect = child0.node.getBoundingClientRect();
+          simulate(child0.node, 'mousemove', { clientX: rect.left + 1, clientY: rect.top + 1 } );
+          expect(child0.events).to.contain('p-dragenter');
+          child0.events = [];
+          let child1 = panel.widgets.at(1) as DropTarget;
+          rect = child1.node.getBoundingClientRect();
+          simulate(child1.node, 'mousemove', { clientX: rect.left + 1, clientY: rect.top + 1 } );
+          expect(child0.events).to.contain('p-dragleave');
+          expect(child1.events).to.contain('p-dragenter');
+        });
 
+        it('should dispatch drag over event', () => {
+          let child0 = panel.widgets.at(0) as DropTarget;
+          let rect = child0.node.getBoundingClientRect();
+          simulate(child0.node, 'mousemove', { clientX: rect.left + 1, clientY: rect.top + 1 } );
+          expect(child0.events).to.contain('p-dragover');
         });
 
         it('should move the drag image to the client location', () => {
-
+          let child0 = panel.widgets.at(0) as DropTarget;
+          let rect = child0.node.getBoundingClientRect();
+          simulate(child0.node, 'mousemove', { clientX: rect.left + 1, clientY: rect.top + 1 } );
+          let image = drag.dragImage;
+          expect(image.style.top).to.be(`${rect.top + 1}px`);
+          expect(image.style.left).to.be(`${rect.left + 1}px`);
         });
 
       });
@@ -347,47 +392,102 @@ describe('dom/dragdrop', () => {
         });
 
         it('should do nothing if the left button is not released', () => {
-
-        });
-
-        it('should update the current target node', () => {
-
+          let child0 = panel.widgets.at(0) as DropTarget;
+          let rect = child0.node.getBoundingClientRect();
+          simulate(child0.node, 'mouseup', { clientX: rect.left + 1, clientY: rect.top + 1, button: 1 } );
+          expect(child0.events).to.not.contain('p-dragenter');
         });
 
         it('should dispatch enter and leave events', () => {
-
-        });
-
-        it("should finalize with `'none'` if there is no current target", () => {
-
+          let child0 = panel.widgets.at(0) as DropTarget;
+          let rect = child0.node.getBoundingClientRect();
+          simulate(child0.node, 'mousemove', { clientX: rect.left + 1, clientY: rect.top + 1 } );
+          expect(child0.events).to.contain('p-dragenter');
+          child0.events = [];
+          let child1 = panel.widgets.at(1) as DropTarget;
+          rect = child1.node.getBoundingClientRect();
+          simulate(child1.node, 'mouseup', { clientX: rect.left + 1, clientY: rect.top + 1 } );
+          expect(child0.events).to.contain('p-dragleave');
+          expect(child1.events).to.contain('p-dragenter');
         });
 
         it("should dispatch a leave event if the last drop action was `'none'", () => {
-
+          drag.dispose();
+          drag = new Drag({ mimeData: new MimeData(), supportedActions: 'none' });
+          drag.start(0, 0);
+          let child0 = panel.widgets.at(0) as DropTarget;
+          let rect = child0.node.getBoundingClientRect();
+          simulate(child0.node, 'mouseup', { clientX: rect.left + 1, clientY: rect.top + 1 } );
+          expect(child0.events).to.contain('p-dragleave');
         });
 
-        it("should finalize the drag with `'none' if the last drop action was `'none`", () => {
-
+        it("should finalize the drag with `'none' if the last drop action was `'none`", (done) => {
+          drag.dispose();
+          drag = new Drag({ mimeData: new MimeData(), supportedActions: 'none' });
+          drag.start(0, 0).then(action => {
+            expect(action).to.be('none');
+            done();
+          });
+          let child0 = panel.widgets.at(0) as DropTarget;
+          let rect = child0.node.getBoundingClientRect();
+          simulate(child0.node, 'mouseup', { clientX: rect.left + 1, clientY: rect.top + 1 } );
         });
 
         it('should dispatch the drop event at the current target', () => {
-
+          let child0 = panel.widgets.at(0) as DropTarget;
+          let rect = child0.node.getBoundingClientRect();
+          simulate(child0.node, 'mouseup', { clientX: rect.left + 1, clientY: rect.top + 1 } );
+          expect(child0.events).to.contain('p-drop');
         });
 
-        it('should resolve with the drop action', () => {
+        it('should resolve with the drop action', (done) => {
+          drag.dispose();
+          drag = new Drag({ mimeData: new MimeData(), proposedAction: 'link', supportedActions: 'link' });
+          drag.start(0, 0).then(action => {
+            expect(action).to.be('link');
+            done();
+          });
+          let child0 = panel.widgets.at(0) as DropTarget;
+          let rect = child0.node.getBoundingClientRect();
+          simulate(child0.node, 'mouseup', { clientX: rect.left + 1, clientY: rect.top + 1 } );
+        });
 
+        it('should handle a `move` action', (done) => {
+          drag.dispose();
+          drag = new Drag({ mimeData: new MimeData(), proposedAction: 'move', supportedActions: 'copy-move' });
+          drag.start(0, 0).then(action => {
+            expect(action).to.be('move');
+            done();
+          });
+          let child0 = panel.widgets.at(0) as DropTarget;
+          let rect = child0.node.getBoundingClientRect();
+          simulate(child0.node, 'mouseup', { clientX: rect.left + 1, clientY: rect.top + 1 } );
         });
 
         it('should dispose of the drop', () => {
-
+          let child0 = panel.widgets.at(0) as DropTarget;
+          let rect = child0.node.getBoundingClientRect();
+          simulate(child0.node, 'mouseup', { clientX: rect.left + 1, clientY: rect.top + 1 } );
+          expect(drag.isDisposed).to.be(true);
         });
 
         it('should detach the drag image', () => {
-
+          let image = drag.dragImage;
+          let child0 = panel.widgets.at(0) as DropTarget;
+          let rect = child0.node.getBoundingClientRect();
+          simulate(child0.node, 'mouseup', { clientX: rect.left + 1, clientY: rect.top + 1 } );
+          expect(document.contains(image)).to.be(false);
         });
 
         it('should remove event listeners', () => {
-
+          let child0 = panel.widgets.at(0) as DropTarget;
+          let rect = child0.node.getBoundingClientRect();
+          simulate(child0.node, 'mouseup', { clientX: rect.left + 1, clientY: rect.top + 1 } );
+          ['mousemove', 'keydown', 'contextmenu'].forEach(name => {
+            let evt = generate(name);
+            let canceled = !document.body.dispatchEvent(evt);
+            expect(canceled).to.be(false);
+          });
         });
 
       });
@@ -410,7 +510,7 @@ describe('dom/dragdrop', () => {
       context('mouseenter', () => {
 
         it('should be prevented during a drag event', () => {
-          let evt = generate('mouseenter');
+          let evt = generate('mouseenter', { cancelable: true });
           let canceled = !document.body.dispatchEvent(evt);
           expect(canceled).to.be(true);
         });
@@ -420,7 +520,7 @@ describe('dom/dragdrop', () => {
       context('mouseleave', () => {
 
         it('should be prevented during a drag event', () => {
-          let evt = generate('mouseleave');
+          let evt = generate('mouseleave', { cancelable: true });
           let canceled = !document.body.dispatchEvent(evt);
           expect(canceled).to.be(true);
         });
