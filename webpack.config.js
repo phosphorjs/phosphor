@@ -7,7 +7,7 @@ module.exports = {
         path: './dist',
         library: 'phosphor',
         libraryTarget: 'umd',
-        publicPath: 'https://npmcdn.com/phosphors@' + version + '/dist/'
+        publicPath: 'https://npmcdn.com/phosphor@' + version + '/dist/'
     },
     devtool: 'source-map'
 };
