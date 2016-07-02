@@ -10,15 +10,10 @@ module.exports = {
     ]
   },
   externals: [
-        // Every non-relative module is external
-        // abc -> require("abc")
-        /$[a-z\-0-9]+$/,
-        function(context, request, callback) {
-            // Every module prefixed with "global-" becomes external
-            // "global-abc" -> abc
-            if(/^phosphor\//.test(request))
-                return callback(null, "phosphor");
-            callback();
-        },
+    function(context, request, callback) {
+        if(/^phosphor\//.test(request))
+            return callback(null, "phosphor");
+        callback();
+    },
   ]
 };
