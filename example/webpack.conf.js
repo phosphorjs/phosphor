@@ -12,7 +12,7 @@ module.exports = {
   externals: [
         // Every non-relative module is external
         // abc -> require("abc")
-        /^phosphor\/[a-z\-0-9]+$/,
+        /$[a-z\-0-9]+$/,
         function(context, request, callback) {
             // Every module prefixed with "global-" becomes external
             // "global-abc" -> abc
