@@ -1,9 +1,7 @@
 var version = require('./package.json').version;
 
 module.exports = {
-    entry: {
-        main: ['./lib/algorithm']
-    },
+    entry: './lib/api.js',
     output: {
         filename: 'index.js',
         path: './dist',
