@@ -1,8 +1,8 @@
 module.exports = {
-  entry: './index.js',
+  entry: './example/index.js',
   output: {
     libaryTarget: 'umd',
-    filename: './bundle.js'
+    filename: './example/bundle.js'
   },
   module: {
     loaders: [
@@ -11,7 +11,7 @@ module.exports = {
   },
   externals: [
     function(context, request, callback) {
-        if(/^phosphor\//.test(request))
+        if(/^..\/lib\//.test(request))
             return callback(null, "phosphor");
         callback();
     },
