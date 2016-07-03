@@ -1,87 +1,4 @@
 
-//   /**
-//    * Insert a widget as a new panel above a reference widget.
-//    *
-//    * @param widget - The widget to insert into the dock panel.
-//    *
-//    * @param ref - The reference widget. If this is not provided, the
-//    *   widget will be inserted at the top edge of the dock panel.
-//    *
-//    * @throws An error if either `widget` or `ref` is invalid.
-//    */
-//   insertTop(widget: Widget, ref?: Widget): void {
-//     DockPanelPrivate.insertSplit(this, widget, ref, Orientation.Vertical, false);
-//   }
-
-//   /**
-//    * Insert a widget as a new panel to the left of a reference widget.
-//    *
-//    * @param widget - The widget to insert into the dock panel.
-//    *
-//    * @param ref - The reference widget. If this is not provided, the
-//    *   widget will be inserted at the left edge of the dock panel.
-//    *
-//    * @throws An error if either `widget` or `ref` is invalid.
-//    */
-//   insertLeft(widget: Widget, ref?: Widget): void {
-//     DockPanelPrivate.insertSplit(this, widget, ref, Orientation.Horizontal, false);
-//   }
-
-//   /**
-//    * Insert a widget as a new panel to the right of a reference widget.
-//    *
-//    * @param widget - The widget to insert into the dock panel.
-//    *
-//    * @param ref - The reference widget. If this is not provided, the
-//    *   widget will be inserted at the right edge of the dock panel.
-//    *
-//    * @throws An error if either `widget` or `ref` is invalid.
-//    */
-//   insertRight(widget: Widget, ref?: Widget): void {
-//     DockPanelPrivate.insertSplit(this, widget, ref, Orientation.Horizontal, true);
-//   }
-
-//   /**
-//    * Insert a widget as a new panel below a reference widget.
-//    *
-//    * @param widget - The widget to insert into the dock panel.
-//    *
-//    * @param ref - The reference widget. If this is not provided, the
-//    *   widget will be inserted at the bottom edge of the dock panel.
-//    *
-//    * @throws An error if either `widget` or `ref` is invalid.
-//    */
-//   insertBottom(widget: Widget, ref?: Widget): void {
-//     DockPanelPrivate.insertSplit(this, widget, ref, Orientation.Vertical, true);
-//   }
-
-//   /**
-//    * Insert a widget as a sibling tab before a reference widget.
-//    *
-//    * @param widget - The widget to insert into the dock panel.
-//    *
-//    * @param ref - The reference widget. If this is not provided, the
-//    *   widget will be inserted as the first tab in the top-left panel.
-//    *
-//    * @throws An error if either `widget` or `ref` is invalid.
-//    */
-//   insertTabBefore(widget: Widget, ref?: Widget): void {
-//     DockPanelPrivate.insertTab(this, widget, ref, false);
-//   }
-
-//   /**
-//    * Insert a widget as a sibling tab after a reference widget.
-//    *
-//    * @param widget - The widget to insert into the dock panel.
-//    *
-//    * @param ref - The reference widget. If this is not provided, the
-//    *   widget will be inserted as the last tab in the top-left panel.
-//    *
-//    * @throws An error if either `widget` or `ref` is invalid.
-//    */
-//   insertTabAfter(widget: Widget, ref?: Widget): void {
-//     DockPanelPrivate.insertTab(this, widget, ref, true);
-//   }
 
 //   *
 //    * Ensure the tab for the specified content widget is selected.
@@ -100,24 +17,6 @@
 
 
 
-
-
-
-
-
-
-/**
- * The namespace for the module private data.
- */
-// namespace Private {
-
-
-
-
-
-
-
-
 //   /**
 //    * Ensure the given widget is the current widget in its tab panel.
 //    *
@@ -130,16 +29,6 @@
 //   }
 
 
-//   /**
-//    * The creation handler for the dock panel `overlayProperty`.
-//    *
-//    * This will create and install the overlay for the panel.
-//    */
-//   function createOverlay(owner: DockPanel): DockPanelOverlay {
-//     let overlay = new DockPanelOverlay();
-//     owner.node.appendChild(overlay.node);
-//     return overlay;
-//   }
 
 //   /**
 //    * Throw an internal dock panel error.
@@ -168,41 +57,8 @@
 //     return tabs as DockTabPanel;
 //   }
 
-//   /**
-//    * Find the first dock tab panel for the given dock panel.
-//    *
-//    * This returns `null` if the dock panel has no content. It will throw
-//    * an error if the structure of the dock panel is found to be invalid.
-//    */
-//   function findFirstTabPanel(owner: DockPanel): DockTabPanel {
-//     let root = getRoot(owner);
-//     while (root) {
-//       if (root instanceof DockTabPanel) {
-//         return root;
-//       }
-//       if (!(root instanceof DockSplitPanel) || root.childCount() === 0) {
-//         internalError();
-//       }
-//       root = root.childAt(0) as RootPanel;
-//     }
-//     return null;
-//   }
 
-//   /**
-//    * Get or create the first dock tab panel for the given dock panel.
-//    *
-//    * If dock panel has no root, a new tab panel will be created and
-//    * added as the root. An error will be thrown if the structure of
-//    * the dock panel is found to be invalid.
-//    */
-//   function ensureFirstTabPanel(owner: DockPanel): DockTabPanel {
-//     let tabs = findFirstTabPanel(owner);
-//     if (!tabs) {
-//       tabs = createTabPanel();
-//       setRoot(owner, tabs);
-//     }
-//     return tabs;
-//   }
+
 
 
 //   /**
@@ -371,3 +227,21 @@
 //     }
 //   }
 // }
+
+
+  /**
+   * Find the first dock tab panel for the given dock panel.
+   *
+   * This returns `null` if the dock panel has no content. It will throw
+   * an error if the structure of the dock panel is found to be invalid.
+   */
+  export
+  function findFirstTabPanel(root: DockPanelChild): DockTabPanel {
+    while (root) {
+      if (root instanceof DockTabPanel) {
+        return root;
+      }
+      root = root.widgets.at(0) as DockPanelChild;
+    }
+    return null;
+  }
