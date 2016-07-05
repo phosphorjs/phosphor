@@ -50,6 +50,7 @@
     "url": "https://github.com/phosphorjs/phosphor.git"
   },
   "files": [
+    "dist/*.js",
     "lib/*.d.ts",
     "lib/*.js",
     "lib/**/*.d.ts",
