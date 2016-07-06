@@ -6,12 +6,24 @@
 | The full license is in the file LICENSE, distributed with this software.
 |----------------------------------------------------------------------------*/
 import {
-  indexOf
+  each
+} from '../algorithm/iteration';
+
+import {
+  find, indexOf, max
 } from '../algorithm/searching';
+
+import {
+  Vector
+} from '../collections/vector';
 
 import {
   Message
 } from '../core/messaging';
+
+import {
+  AttachedProperty
+} from '../core/properties';
 
 import {
   Drag, IDragEvent
@@ -24,6 +36,10 @@ import {
 import {
   boxSizing
 } from '../dom/sizing';
+
+import {
+  FocusTracker
+} from './focustracker';
 
 import {
   StackedLayout
@@ -172,27 +188,13 @@ class DockPanel extends Widget {
     // changes to the panel occur before searching for the insert location.
     widget.parent = null;
 
+    // Add the widget to the focus tracker.
+    this._tracker.add(widget);
+
     // Insert the widget based on the specified location.
-    switch (location) {
-    case 'split-top':
-      this._insertSplit(widget, ref, 'vertical', false);
-      break;
-    case 'split-left':
-      this._insertSplit(widget, ref, 'horizontal', false);
-      break;
-    case 'split-right':
-      this._insertSplit(widget, ref, 'horizontal', true);
-      break;
-    case 'split-bottom':
-      this._insertSplit(widget, ref, 'vertical', true);
-      break;
-    case 'tab-before':
-      this._insertTab(widget, ref, false);
-      break;
-    case 'tab-after':
-      this._insertTab(widget, ref, true);
-      break;
-    }
+    this._insertWidget(location, widget, ref);
+
+    // TODO focus the insert widget?
   }
 
   /**
@@ -221,13 +223,17 @@ class DockPanel extends Widget {
       return { zone, panel: null };
     }
 
-    // Find the panel at the client position, or null.
+    // Find the panel at the client position.
     let panel = find(this._tabPanels, panel => {
       return hitTest(panel.node, clientX, clientY);
     }) || null;
 
     // Compute the zone for the hit panel, if any.
-    zone = panel ? getPanelZone(panel.node, clientX, clientY) : 'invalid';
+    if (panel) {
+      zone = Private.getPanelZone(panel.node, clientX, clientY);
+    } else {
+      zone = 'invalid';
+    }
 
     // Return the final drop target.
     return { zone, panel };
@@ -395,6 +401,8 @@ class DockPanel extends Widget {
    * Handle the `'p-dragenter'` event for the dock panel.
    */
   private _evtDragEnter(event: IDragEvent): void {
+    // If the factory mime type is present, mark the event as
+    // handled in order to get the rest of the drag events.
     if (event.mimeData.hasData(FACTORY_MIME)) {
       event.preventDefault();
       event.stopPropagation();
@@ -405,9 +413,14 @@ class DockPanel extends Widget {
    * Handle the `'p-dragleave'` event for the dock panel.
    */
   private _evtDragLeave(event: IDragEvent): void {
+    // Always mark the event as handled.
     event.preventDefault();
     event.stopPropagation();
+
+    // Get the node into which the drag is entering.
     let related = event.relatedTarget as HTMLElement;
+
+    // Hide the overlay if the drag is leaving the dock panel.
     if (!related || !this.node.contains(related)) {
       this._overlay.hide();
     }
@@ -417,8 +430,12 @@ class DockPanel extends Widget {
    * Handle the `'p-dragover'` event for the dock panel.
    */
   private _evtDragOver(event: IDragEvent): void {
+    // Always mark the event as handled.
     event.preventDefault();
     event.stopPropagation();
+
+    // Show the drop indicator overlay and update the drop
+    // action based on the drop target zone under the mouse.
     if (this.showOverlay(event.clientX, event.clientY) === 'invalid') {
       event.dropAction = 'none';
     } else {
@@ -430,31 +447,46 @@ class DockPanel extends Widget {
    * Handle the `'p-drop'` event for the dock panel.
    */
   private _evtDrop(event: IDragEvent): void {
+    // Always mark the event as handled.
     event.preventDefault();
     event.stopPropagation();
+
+    // Hide the drop indicator overlay.
     this._overlay.hide();
+
+    // Bail if the proposed action is to do nothing.
     if (event.proposedAction === 'none') {
       event.dropAction = 'none';
       return;
     }
-    let x = event.clientX;
-    let y = event.clientY;
-    let target = this.findDropTarget(x, y);
+
+    // Find the drop target under the mouse.
+    let target = this.findDropTarget(event.clientX, event.clientY);
+
+    // Bail if the drop zone is invalid.
     if (target.zone === 'invalid') {
       event.dropAction = 'none';
       return;
     }
+
+    // Bail if the factory mime type has invalid data.
     let factory = event.mimeData.getData(FACTORY_MIME);
     if (typeof factory !== 'function') {
       event.dropAction = 'none';
       return;
     }
+
+    // Bail if the factory does not produce a widget.
     let widget = factory();
     if (!(widget instanceof Widget)) {
       event.dropAction = 'none';
       return;
     }
+
+    // Handle the drop using the generated widget.
     this._handleDrop(widget, target);
+
+    // Accept the proposed drop action.
     event.dropAction = event.proposedAction;
   }
 
@@ -511,36 +543,58 @@ class DockPanel extends Widget {
     switch(target.zone) {
     case 'panel-top':
       this.insertWidget('split-top', widget, ref);
-      // TODO focus?
       return;
     case 'panel-left':
       this.insertWidget('split-left', widget, ref);
-      // TODO focus?
       return;
     case 'panel-right':
       this.insertWidget('split-right', widget, ref);
-      // TODO focus?
       return;
     case 'panel-bottom':
       this.insertWidget('split-bottom', widget, ref);
-      // TODO focus?
       return;
     case 'panel-center':
       this.insertWidget('tab-after', widget, ref);
-      // TODO select & focus?
       return;
     }
   }
 
   /**
-   * Insert a widget as a new split panel in a dock panel.
+   * Insert a widget into the dock panel using the given location.
    *
-   * assumptions:
-   *   - widget is not null and has no parent
-   *   - widget is not the reference widget
-   *   - ref (if given) is a valid content widget
+   * The target widget should have no parent, and the reference widget
+   * should either be null or a widget contained in the dock panel.
    */
-  private _insertSplit(widget: Widget, ref: Widget, orientation: SplitPanel.Orientation, after: boolean): void {
+  private _insertWidget(location: DockPanel.Location, widget: Widget, ref: Widget): void {
+    // Determine whether the insert is before or after the ref.
+    let after = (
+      location === 'tab-after' ||
+      location === 'split-right' ||
+      location === 'split-bottom'
+    );
+
+    // Handle the simple case of adding to a tab panel.
+    if (location === 'tab-before' || location === 'tab-after') {
+      if (ref) {
+        let tabPanel = ref.parent.parent as TabPanel;
+        let index = indexOf(tabPanel.widgets, ref) + (after ? 1 : 0);
+        tabPanel.insertWidget(index, widget);
+      } else {
+        let tabPanel = this._ensureTabPanel();
+        let index = after ? tabPanel.widgets.length : 0;
+        tabPanel.insertWidget(index, widget);
+      }
+      return;
+    }
+
+    // Otherwise, determine the orientation of the new split.
+    let orientation: SplitPanel.Orientation;
+    if (location === 'split-top' || location === 'split-bottom') {
+      orientation = 'vertical';
+    } else {
+      orientation = 'horizontal';
+    }
+
     // Setup the new tab panel to host the widget.
     let tabPanel = this._createTabPanel();
     tabPanel.addWidget(widget);
@@ -548,7 +602,6 @@ class DockPanel extends Widget {
     // If there is no root, add the new tab panel as the root.
     if (!this._root) {
       this._setRoot(tabPanel);
-      // TODO focus?
       return;
     }
 
@@ -560,24 +613,22 @@ class DockPanel extends Widget {
       sizes.splice(index, 0, 0.5);
       splitPanel.insertWidget(index, tabPanel);
       splitPanel.setSizes(sizes);
-      // TODO focus?
       return;
     }
 
     // Lookup the tab panel for the ref widget.
-    let refTabPanel = ref.parent.parent as DockTabPanel;
+    let refTabPanel = ref.parent.parent as TabPanel;
 
     // If the ref tab panel is the root, split the root.
     if (this._root === refTabPanel) {
       let splitPanel = this._ensureSplitRoot(orientation);
       splitPanel.insertWidget(after ? 1 : 0, tabPanel);
       splitPanel.setSizes([1, 1]);
-      // TODO focus?
       return;
     }
 
-    // Otherwise, the ref tab panel parent is a dock split panel.
-    let splitPanel = refTabPanel.parent as Private.DockSplitPanel;
+    // Otherwise, the ref tab panel parent is a split panel.
+    let splitPanel = refTabPanel.parent as SplitPanel;
 
     // If the split panel is the correct orientation, the widget
     // can be inserted directly and sized to 0.5 of the ref space.
@@ -585,10 +636,10 @@ class DockPanel extends Widget {
       let i = indexOf(splitPanel.widgets, refTabPanel);
       let index = after ? i + 1 : i;
       let sizes = splitPanel.sizes();
-      sizes.splice(index, 0, (sizes[i] = sizes[i] / 2));
+      let size = sizes[i] = sizes[i] / 2;
+      sizes.splice(index, 0, size);
       splitPanel.insertWidget(index, tabPanel);
       splitPanel.setSizes(sizes);
-      // TODO focus?
       return;
     }
 
@@ -598,7 +649,6 @@ class DockPanel extends Widget {
       splitPanel.orientation = orientation;
       splitPanel.insertWidget(after ? 1 : 0, tabPanel);
       splitPanel.setSizes([1, 1]);
-      // TODO focus?
       return;
     }
 
@@ -608,98 +658,86 @@ class DockPanel extends Widget {
     let sizes = splitPanel.sizes();
     let i = indexOf(splitPanel.widgets, refTabPanel);
     let childSplit = this._createSplitPanel(orientation);
-    childSplit.addWidget(refTabPanel);
+    childSplit.insertWidget(0, refTabPanel);
     childSplit.insertWidget(after ? 1 : 0, tabPanel);
     splitPanel.insertWidget(i, childSplit);
     splitPanel.setSizes(sizes);
     childSplit.setSizes([1, 1]);
-    // TODO focus?
   }
 
   /**
-   * Insert a widget as a sibling tab in a dock panel.
-   *
-   * assumptions:
-   *   - widget is not null and has no parent
-   *   - widget is not the reference widget
-   *   - ref (if given) is a valid content widget
+   * Create a new tab panel for adding to the dock panel.
    */
-  private _insertTab(widget: Widget, ref: Widget, after: boolean): void {
-    let index: number;
-    let tabPanel: DockTabPanel;
-    if (ref) {
-      tabPanel = ref.parent.parent as DockTabPanel;
-      index = indexOf(tabPanel.widgets, ref) + (after ? 1 : 0);
-    } else {
-      tabPanel = this._ensureFirstTabPanel();
-      index = after ? tabPanel.widgets.length : 0;
-    }
-    tabPanel.insertWidget(index, widget);
-  }
-
-  /**
-   *
-   */
-  private _createTabPanel(): DockTabPanel {
-    let panel = new DockTabPanel({ tabsMovable: true });
+  private _createTabPanel(): TabPanel {
+    let panel = new TabPanel({ tabsMovable: true });
     return panel;
   }
 
   /**
-   *
+   * Create a new split panel for adding to the dock panel.
    */
-  private _createSplitPanel(orientation: SplitPanel.Orientation): Private.DockSplitPanel {
-    let panel = new Private.DockSplitPanel({ orientation });
+  private _createSplitPanel(orientation: SplitPanel.Orientation): SplitPanel {
+    let panel = new SplitPanel({ orientation, spacing: this._spacing });
     return panel;
   }
 
   /**
+   * Ensure a tab panel is available in the dock panel.
    *
+   * TODO...
    */
-  private _ensureFirstTabPanel(): DockTabPanel {
-    //
-    if (this._root) {
-      return Private.findFirstTabPanel(this._root);
+  private _ensureTabPanel(): TabPanel {
+    // If there is no root panel, create a new root tab panel.
+    if (!this._root) {
+      let panel = this._createTabPanel();
+      this._setRoot(panel);
+      return panel;
     }
 
+    // Otherwise, use the tab panel of the active widget. Since
+    // the
+    return null;
     //
-    let panel = this._createTabPanel();
-    this._setRoot(panel);
-    return panel;
+    // let target = max(this._widgets, Private.cmpSemanticFocusNumber);
+
+    // //
+    // return target.parent.parent as TabPanel;
   }
 
   /**
+   * Ensure the root panel is a split panel with the given orientation.
    *
+   * This returns split panel so that casting the root is not needed.
    */
-  private _ensureSplitRoot(orientation: SplitPanel.Orientation): Private.DockSplitPanel {
-    //
+  private _ensureSplitRoot(orientation: SplitPanel.Orientation): SplitPanel {
+    // If there is no root panel, create a new root split panel.
     if (!this._root) {
       let root = this._createSplitPanel(orientation);
       this._setRoot(root);
       return root;
     }
 
-    //
-    if (this._root instanceof DockTabPanel) {
+    // If the root is a tab panel, add it to a new split root.
+    if (this._root instanceof TabPanel) {
       let root = this._createSplitPanel(orientation);
       root.addWidget(this._root);
       this._setRoot(root);
       return root;
     }
 
-    //
-    let oldRoot = this._root as Private.DockSplitPanel;
+    // Otherwise, do nothing if the split root orientation is okay.
+    let oldRoot = this._root as SplitPanel;
     if (oldRoot.orientation === orientation) {
       return oldRoot;
     }
 
-    //
+    // Correct the orientation of the split root, if feasible.
     if (oldRoot.widgets.length <= 1) {
       oldRoot.orientation = orientation;
       return oldRoot;
     }
 
-    //
+    // Otherwise, create a new split root.
     let newRoot = this._createSplitPanel(orientation);
     newRoot.addWidget(oldRoot);
     this._setRoot(newRoot);
@@ -707,9 +745,9 @@ class DockPanel extends Widget {
   }
 
   /**
-   *
+   * Set the root widget for the dock panel.
    */
-  private _setRoot(root: Private.DockPanelChild): void {
+  private _setRoot(root: TabPanel | SplitPanel): void {
     this._root = root;
     (this.layout as StackedLayout).addWidget(root);
     root.show();
@@ -719,8 +757,9 @@ class DockPanel extends Widget {
   private _drag: Drag = null;
   private _overlay: DockOverlay;
   private _widgets = new Vector<Widget>();
-  private _tabPanels = new Vecotor<TabPanel>();
-  private _splitPanels = new Vecotor<SplitPanel>();
+  private _tabPanels = new Vector<TabPanel>();
+  private _splitPanels = new Vector<SplitPanel>();
+  private _tracker = new FocusTracker<Widget>();
   private _root: TabPanel | SplitPanel = null;
 }
 
