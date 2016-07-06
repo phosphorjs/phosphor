@@ -241,10 +241,10 @@ class FocusTracker<T extends Widget> implements IDisposable {
       let a = this._numbers.get(first);
       let b = this._numbers.get(second);
       return a - b;
-    });
+    }) || null;
 
     // Finally, update the active widget.
-    this._setActiveWidget(previous || null);
+    this._setActiveWidget(previous);
   }
 
   /**
