@@ -6,7 +6,7 @@
 | The full license is in the file LICENSE, distributed with this software.
 |----------------------------------------------------------------------------*/
 import {
-  each
+  each, filter
 } from '../algorithm/iteration';
 
 import {
@@ -131,7 +131,7 @@ class FocusTracker<T extends Widget> implements IDisposable {
    * @param widget - The widget of interest.
    *
    * @returns The focus number for the given widget, or `-1` if the
-   *   widget is not contained in the tracker.
+   *   widget has not had focus since being added to the tracker.
    *
    * #### Notes
    * The focus number indicates the relative order in which the widgets
@@ -140,12 +140,14 @@ class FocusTracker<T extends Widget> implements IDisposable {
    *
    * The `activeWidget` will always have the largest focus number.
    *
-   * All widgets start with a focus number of `0`, which indicates that
+   * All widgets start with a focus number of `-1`, which indicates that
    * the widget has not been focused since being added to the tracker.
+   *
+   * #### Undefined Behavior
+   * A `widget` which is not contained in the tracker.
    */
   focusNumber(widget: T): number {
-    let n = this._numbers.get(widget);
-    return n !== void 0 ? n : -1;
+    return this._numbers.get(widget);
   }
 
   /**
@@ -183,7 +185,7 @@ class FocusTracker<T extends Widget> implements IDisposable {
     let focused = widget.node.contains(document.activeElement);
 
     // Setup the initial focus number.
-    let n = focused ? ++this._counter : 0;
+    let n = focused ? this._counter++ : -1;
 
     // Add the widget to the internal data structures.
     this._numbers.set(widget, n);
@@ -236,8 +238,11 @@ class FocusTracker<T extends Widget> implements IDisposable {
       return;
     }
 
-    // Otherwise, find the widget with the max focus number.
-    let previous = max(this._widgets, (first, second) => {
+    // Otherwise, filter the widgets for those which have had focus.
+    let valid = filter(this._widgets, w => this._numbers.get(w) !== -1);
+
+    // Get the valid widget with the max focus number.
+    let previous = max(valid, (first, second) => {
       let a = this._numbers.get(first);
       let b = this._numbers.get(second);
       return a - b;
@@ -288,7 +293,7 @@ class FocusTracker<T extends Widget> implements IDisposable {
     let widget = this._nodes.get(event.currentTarget as HTMLElement);
 
     // Update the focus number for the widget.
-    this._numbers.set(widget, ++this._counter);
+    this._numbers.set(widget, this._counter++);
 
     // Update the active widget.
     this._setActiveWidget(widget);
