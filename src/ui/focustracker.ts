@@ -6,6 +6,10 @@
 | The full license is in the file LICENSE, distributed with this software.
 |----------------------------------------------------------------------------*/
 import {
+  each
+} from '../algorithm/iteration';
+
+import {
   indexOf, max
 } from '../algorithm/searching';
 
@@ -18,7 +22,11 @@ import {
 } from '../collections/vector';
 
 import {
-  ISignal, defineSignal
+  IDisposable
+} from '../core/disposable';
+
+import {
+  ISignal, clearSignalData, defineSignal
 } from '../core/signaling';
 
 import {
@@ -33,16 +41,53 @@ import {
  * recently focused widget(s) among a set of related widgets.
  */
 export
-class FocusTracker<T extends Widget> {
+class FocusTracker<T extends Widget> implements IDisposable {
   /**
    * Construct a new focus tracker.
    */
   constructor() { }
 
   /**
+   * Dispose of the resources held by the tracker.
+   */
+  dispose(): void {
+    // Do nothing if the tracker is already disposed.
+    if (this._counter < 0) {
+      return;
+    }
+
+    // Mark the tracker as disposed.
+    this._counter = -1;
+
+    // Clear the connections for the tracker.
+    clearSignalData(this);
+
+    // Remove all event listeners.
+    each(this._widgets, widget => {
+      widget.node.removeEventListener('focus', this, true);
+    });
+
+    // Clear the internal data structures.
+    this._activeWidget = null;
+    this._nodes.clear();
+    this._numbers.clear();
+    this._widgets.clear();
+  }
+
+  /**
    * A signal emitted when the active widget has changed.
    */
   activeWidgetChanged: ISignal<FocusTracker<T>, FocusTracker.IActiveWidgetChangedArgs<T>>;
+
+  /**
+   * A flag indicated whether the tracker is disposed.
+   *
+   * #### Notes
+   * This is a read-only property.
+   */
+  get isDisposed(): boolean {
+    return this._counter < 0;
+  }
 
   /**
    * The currently active widget.
@@ -71,7 +116,7 @@ class FocusTracker<T extends Widget> {
   }
 
   /**
-   * A read only sequence of the widgets added to the tracker.
+   * A read only sequence of the widgets being tracked.
    *
    * #### Notes
    * This is a read-only property.
@@ -181,7 +226,7 @@ class FocusTracker<T extends Widget> {
     // Remove the focus event listener.
     widget.node.removeEventListener('focus', this, true);
 
-    // Remove the widget from the data structures.
+    // Remove the widget from the internal data structures.
     this._widgets.remove(indexOf(this._widgets, widget));
     this._nodes.delete(widget.node);
     this._numbers.delete(widget);
