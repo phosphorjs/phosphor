@@ -9,7 +9,7 @@ import expect = require('expect.js');
 
 import {
   StringSearch, find, findIndex, findLastIndex, indexOf, lastIndexOf,
-  lowerBound, upperBound
+  lowerBound, min, max, upperBound
 } from '../../../lib/algorithm/searching';
 
 
@@ -39,6 +39,52 @@ describe('algorithm/searching', () => {
       ];
       let value = find(data, isRacoon);
       expect(value).to.be(void 0);
+    });
+
+  });
+
+  describe('min()', () => {
+
+    it('should return the minimum value in an iterable', () => {
+      interface IScore { value: number };
+      let data: IScore[] = [
+        { value: 19 },
+        { value: -2 },
+        { value: 0 },
+        { value: 42 }
+      ];
+      let score = min(data, (a, b) => a.value - b.value);
+      expect(score).to.be(data[1]);
+    });
+
+    it('should return undefined if the iterable is empty', () => {
+      interface IScore { value: number };
+      let data: IScore[] = [];
+      let score = min(data, (a, b) => a.value - b.value);
+      expect(score).to.be(void 0);
+    });
+
+  });
+
+  describe('max()', () => {
+
+    it('should return the maximum value in an iterable', () => {
+      interface IScore { value: number };
+      let data: IScore[] = [
+        { value: 19 },
+        { value: -2 },
+        { value: 0 },
+        { value: 42 }
+      ];
+      let score = max(data, (a, b) => a.value - b.value);
+      expect(score).to.be(data[3]);
+    });
+
+    it('should return undefined if the iterable is empty', () => {
+      interface IScore { value: number };
+      let data: IScore[] = [];
+      let score = max(data, (a, b) => a.value - b.value);
+      expect(score).to.be(void 0);
     });
 
   });
