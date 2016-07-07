@@ -256,6 +256,16 @@ class TabBar extends Widget {
   }
 
   /**
+   * Get a read-only sequence of the tab bar tab nodes.
+   *
+   * #### Notes
+   * This is a read-only property.
+   */
+  get tabNodes(): ISequence<HTMLElement> {
+    return this._tabs;
+  }
+
+  /**
    * A read-only sequence of the titles in the tab bar.
    *
    * #### Notes
