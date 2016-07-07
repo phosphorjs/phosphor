@@ -22,6 +22,10 @@ import {
 } from '../core/messaging';
 
 import {
+  MimeData
+} from '../core/mimedata';
+
+import {
   AttachedProperty
 } from '../core/properties';
 
@@ -48,6 +52,10 @@ import {
 import {
   SplitPanel
 } from './splitpanel';
+
+import {
+  TabBar
+} from './tabbar';
 
 import {
   TabPanel
@@ -108,6 +116,8 @@ class DockPanel extends Widget {
     super();
     this.addClass(DOCK_PANEL_CLASS);
     this.layout = new StackedLayout();
+    this._overlay = new DockOverlay();
+    this.node.appendChild(this._overlay.node);
     if (options.spacing !== void 0) {
       this._spacing = Private.clampSpacing(options.spacing);
     }
@@ -190,6 +200,9 @@ class DockPanel extends Widget {
 
     // Add the widget to the focus tracker.
     this._tracker.add(widget);
+
+    // Add the widget to the widgets vector.
+    this._widgets.pushBack(widget);
 
     // Insert the widget based on the specified location.
     this._insertWidget(location, widget, ref);
@@ -670,6 +683,10 @@ class DockPanel extends Widget {
    */
   private _createTabPanel(): TabPanel {
     let panel = new TabPanel({ tabsMovable: true });
+    panel.addClass(TAB_PANEL_CLASS);
+    panel.tabBar.tabDetachRequested.connect(this._onTabDetachRequested, this);
+    panel.stackedPanel.widgetRemoved.connect(this._onWidgetRemoved, this);
+    this._tabPanels.pushBack(panel);
     return panel;
   }
 
@@ -678,13 +695,18 @@ class DockPanel extends Widget {
    */
   private _createSplitPanel(orientation: SplitPanel.Orientation): SplitPanel {
     let panel = new SplitPanel({ orientation, spacing: this._spacing });
+    panel.addClass(SPLIT_PANEL_CLASS);
+    this._splitPanels.pushBack(panel);
     return panel;
   }
 
   /**
    * Ensure a tab panel is available in the dock panel.
    *
-   * TODO...
+   * If there is no root panel, a new root tab panel will be created.
+   * Otherwise, if there is an active widget, the tab panel for that
+   * widget will be returned. Otherwise, the top-left tab panel will
+   * be returned.
    */
   private _ensureTabPanel(): TabPanel {
     // If there is no root panel, create a new root tab panel.
@@ -694,14 +716,20 @@ class DockPanel extends Widget {
       return panel;
     }
 
-    // Otherwise, use the tab panel of the active widget. Since
-    // the
-    return null;
-    //
-    // let target = max(this._widgets, Private.cmpSemanticFocusNumber);
+    // Otherwise, use the tab panel of the active widget if possible.
+    let activeWidget = this._tracker.activeWidget;
+    if (activeWidget) {
+      return activeWidget.parent.parent as TabPanel;
+    }
 
-    // //
-    // return target.parent.parent as TabPanel;
+    // Otherwise, fallback on using the top-left tab panel.
+    let panel = this._root;
+    while (panel instanceof SplitPanel) {
+      panel = panel.widgets.at(0) as (SplitPanel | TabPanel);
+    }
+
+    // Return the top-left tab panel.
+    return panel as TabPanel;
   }
 
   /**
@@ -747,10 +775,59 @@ class DockPanel extends Widget {
   /**
    * Set the root widget for the dock panel.
    */
-  private _setRoot(root: TabPanel | SplitPanel): void {
+  private _setRoot(root: SplitPanel | TabPanel): void {
     this._root = root;
     (this.layout as StackedLayout).addWidget(root);
     root.show();
+  }
+
+  /**
+   * Handle the `tabDetachRequested` signal from a tab bar.
+   */
+  private _onTabDetachRequested(sender: TabBar, args: TabBar.ITabDetachRequestedArgs): void {
+    // Do nothing if a drag is already in progress.
+    if (this._drag) {
+      return;
+    }
+
+    // Release the tab bar's hold on the mouse.
+    sender.releaseMouse();
+
+    // Setup the mime data for the drag operation.
+    let mimeData = new MimeData();
+    let widget = args.title.owner as Widget;
+    mimeData.setData(FACTORY_MIME, () => widget);
+
+    // Create the drag image for the drag operation.
+    let tabNode = sender.tabNodes.at(args.index);
+    let dragImage = tabNode.cloneNode(true) as HTMLElement;
+
+    // Create the drag object to manage the drag-drop operation.
+    this._drag = new Drag({
+      mimeData: mimeData,
+      dragImage: dragImage,
+      proposedAction: 'move',
+      supportedActions: 'move',
+    });
+
+    // Hide the tab node in the original tab.
+    tabNode.classList.add(HIDDEN_CLASS);
+
+    // Create the cleanup callback.
+    let cleanup = (() => {
+      this._drag = null;
+      tabNode.classList.remove(HIDDEN_CLASS);
+    });
+
+    // Start the drag operation and cleanup when done.
+    this._drag.start(args.clientX, args.clientY).then(cleanup);
+  }
+
+  /**
+   *
+   */
+  private _onWidgetRemoved(): void {
+
   }
 
   private _spacing = 4;
@@ -760,7 +837,7 @@ class DockPanel extends Widget {
   private _tabPanels = new Vector<TabPanel>();
   private _splitPanels = new Vector<SplitPanel>();
   private _tracker = new FocusTracker<Widget>();
-  private _root: TabPanel | SplitPanel = null;
+  private _root: SplitPanel | TabPanel = null;
 }
 
 

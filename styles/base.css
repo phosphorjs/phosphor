@@ -301,26 +301,20 @@ body.p-mod-override-cursor * {
 /*-----------------------------------------------------------------------------
 | ui/dockpanel
 |----------------------------------------------------------------------------*/
-/*.p-DockPanel {
-  position: relative;
+.p-DockPanel {
   z-index: 0;
 }
 
 
-.p-DockPanel > .p-Widget {
-  position: absolute;
+.p-DockPanel-splitPanel,
+.p-DockPanel-tabPanel {
   z-index: 0;
 }
 
 
 .p-DockPanel-overlay {
-  box-sizing: border-box;
-  position: absolute;
-  top: 0;
-  left: 0;
-  width: 0;
-  height: 0;
   z-index: 1;
+  box-sizing: border-box;
   pointer-events: none;
 }
 
@@ -328,4 +322,4 @@ body.p-mod-override-cursor * {
 .p-TabBar-tab.p-mod-hidden,
 .p-DockPanel-overlay.p-mod-hidden {
   display: none;
-}*/
+}
