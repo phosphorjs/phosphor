@@ -57,7 +57,21 @@ describe('algorithm/searching', () => {
       expect(score).to.be(data[1]);
     });
 
-    it('should return undefined if the iterable is empty', () => {
+    it('should not invoke the comparator for only one value', () => {
+      interface IScore { value: number };
+      let data: IScore[] = [
+        { value: 19 },
+      ];
+      let called = false;
+      let score = min(data, (a, b) => {
+        called = true;
+        return a.value - b.value;
+      });
+      expect(score).to.be(data[0]);
+      expect(called).to.be(false);
+    });
+
+    it('should return `undefined` if the iterable is empty', () => {
       interface IScore { value: number };
       let data: IScore[] = [];
       let score = min(data, (a, b) => a.value - b.value);
@@ -80,7 +94,21 @@ describe('algorithm/searching', () => {
       expect(score).to.be(data[3]);
     });
 
-    it('should return undefined if the iterable is empty', () => {
+    it('should not invoke the comparator for only one value', () => {
+      interface IScore { value: number };
+      let data: IScore[] = [
+        { value: 19 },
+      ];
+      let called = false;
+      let score = max(data, (a, b) => {
+        called = true;
+        return a.value - b.value;
+      });
+      expect(score).to.be(data[0]);
+      expect(called).to.be(false);
+    });
+
+    it('should return `undefined` if the iterable is empty', () => {
       interface IScore { value: number };
       let data: IScore[] = [];
       let score = max(data, (a, b) => a.value - b.value);
