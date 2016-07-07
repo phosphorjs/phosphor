@@ -173,8 +173,8 @@ class SplitPanel extends Panel {
    * @returns A new array of the current sizes of the widgets.
    *
    * #### Notes
-   * The returned sizes reflect the internal cached sizes as of the
-   * most recent update, or the most recent call to [[setSizes]].
+   * The returned sizes reflect the widget sizes as of the most recent
+   * update, or the most recent call to `setSizes`.
    *
    * This method **does not** measure the DOM nodes.
    */
@@ -197,6 +197,38 @@ class SplitPanel extends Panel {
    */
   setSizes(sizes: number[]): void {
     (this.layout as SplitLayout).setSizes(sizes);
+  }
+
+  /**
+   * Get the relative sizes of the widgets in the panel.
+   *
+   * @returns A new array of the relative sizes of the widgets.
+   *
+   * #### Notes
+   * The returned sizes reflect the relative sizes as of the most
+   * recent update, or the most recent call to `setRelativeSizes`.
+   *
+   * This method **does not** measure the DOM nodes.
+   */
+  relativeSizes(): number[] {
+    return (this.layout as SplitLayout).relativeSizes();
+  }
+
+  /**
+   * Set the relative sizes for the widgets in the panel.
+   *
+   * @param sizes - The relative sizes for the widgets in the panel.
+   *
+   * #### Notes
+   * Extra values are ignored, too few will yield an undefined layout.
+   *
+   * The widgets will be sized to consume the specified proportion
+   * of space relative to their siblings.
+   *
+   * The actual geometry of the DOM nodes is updated asynchronously.
+   */
+  setRelativeSizes(sizes: number[]): void {
+    (this.layout as SplitLayout).setRelativeSizes(sizes);
   }
 
   /**
@@ -579,19 +611,20 @@ class SplitLayout extends PanelLayout {
    * @returns A new array of the current sizes of the widgets.
    *
    * #### Notes
-   * The returned sizes reflect the internal cached sizes as of the
-   * most recent update, or the most recent call to [[setSizes]].
+   * The returned sizes reflect the widget sizes as of the most recent
+   * update, or the most recent call to `setSizes`.
    *
    * This method **does not** measure the DOM nodes.
    */
   sizes(): number[] {
+    if (this._pxSizes) return this._pxSizes.slice();
     return toArray(map(this._sizers, sizer => sizer.size));
   }
 
   /**
-   * Set the desired sizes for the widgets in the panel.
+   * Set the desired sizes for the widgets in the layout.
    *
-   * @param sizes - The desired sizes for the widgets in the panel.
+   * @param sizes - The desired sizes for the widgets in the layout.
    *
    * #### Notes
    * Extra values are ignored, too few will yield an undefined layout.
@@ -602,13 +635,43 @@ class SplitLayout extends PanelLayout {
    * The actual geometry of the DOM nodes is updated asynchronously.
    */
   setSizes(sizes: number[]): void {
-    let n = Math.min(this._sizers.length, sizes.length);
-    for (let i = 0; i < n; ++i) {
-      let hint = Math.max(0, sizes[i]);
-      let sizer = this._sizers.at(i);
-      sizer.sizeHint = hint;
-      sizer.size = hint;
-    }
+    this._nmSizes = null;
+    this._pxSizes = sizes.map(s => Math.max(0, s));
+    if (this.parent) this.parent.update();
+  }
+
+  /**
+   * Get the relative sizes of the widgets in the layout.
+   *
+   * @returns A new array of the relative sizes of the widgets.
+   *
+   * #### Notes
+   * The returned sizes reflect the relative sizes as of the most
+   * recent update, or the most recent call to `setRelativeSizes`.
+   *
+   * This method **does not** measure the DOM nodes.
+   */
+  relativeSizes(): number[] {
+    if (this._nmSizes) return this._nmSizes.slice();
+    return Private.normalize(toArray(map(this._sizers, sizer => sizer.size)));
+  }
+
+  /**
+   * Set the relative sizes for the widgets in the layout.
+   *
+   * @param sizes - The relative sizes for the widgets in the layout.
+   *
+   * #### Notes
+   * Extra values are ignored, too few will yield an undefined layout.
+   *
+   * The widgets will be sized so that consume the specified proportion
+   * of space relative to their siblings.
+   *
+   * The actual geometry of the DOM nodes is updated asynchronously.
+   */
+  setRelativeSizes(sizes: number[]): void {
+    this._pxSizes = null;
+    this._nmSizes = Private.normalize(sizes);
     if (this.parent) this.parent.update();
   }
 
@@ -963,6 +1026,23 @@ class SplitLayout extends PanelLayout {
       space = Math.max(0, height - this._fixed);
     }
 
+    // Apply the requested sizes, if they exist.
+    if (this._pxSizes) {
+      let n = Math.min(this._sizers.length, this._pxSizes.length);
+      for (let i = 0; i < n; ++i) {
+        this._sizers.at(i).sizeHint = this._pxSizes[i];
+      }
+    } else if (this._nmSizes) {
+      let n = Math.min(this._sizers.length, this._nmSizes.length);
+      for (let i = 0; i < n; ++i) {
+        this._sizers.at(i).sizeHint = space * this._nmSizes[i];
+      }
+    }
+
+    // Clear the requested sizes.
+    this._pxSizes = null;
+    this._nmSizes = null;
+
     // Distribute the layout space to the box sizers.
     boxCalc(this._sizers, space);
 
@@ -999,6 +1079,8 @@ class SplitLayout extends PanelLayout {
   private _spacing = 4;
   private _dirty = false;
   private _box: IBoxSizing = null;
+  private _pxSizes: number[] = null;
+  private _nmSizes: number[] = null;
   private _renderer: SplitLayout.IRenderer;
   private _sizers = new Vector<BoxSizer>();
   private _handles = new Vector<HTMLElement>();
@@ -1172,6 +1254,17 @@ namespace Private {
   export
   function averageSize(sizers: Vector<BoxSizer>): number {
     return reduce(sizers, (v, s) => v + s.size, 0) / sizers.length || 0;
+  }
+
+  /**
+   * Normalize an array of values.
+   */
+  export
+  function normalize(values: number[]): number[] {
+    let n = values.length;
+    if (n === 0) return [];
+    let sum = values.reduce((a, b) => a + Math.abs(b), 0);
+    return sum === 0 ? values.map(v => 1 / n) : values.map(v => v / sum);
   }
 
   /**
