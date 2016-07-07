@@ -46,7 +46,7 @@ import {
 } from './focustracker';
 
 import {
-  StackedLayout
+  StackedLayout, StackedPanel
 } from './stackedpanel';
 
 import {
@@ -116,11 +116,33 @@ class DockPanel extends Widget {
     super();
     this.addClass(DOCK_PANEL_CLASS);
     this.layout = new StackedLayout();
-    this._overlay = new DockOverlay();
     this.node.appendChild(this._overlay.node);
     if (options.spacing !== void 0) {
       this._spacing = Private.clampSpacing(options.spacing);
     }
+  }
+
+  /**
+   * Dispose of the resources held by the panel.
+   */
+  dispose(): void {
+    // Hide the overlay.
+    this._overlay.hide();
+
+    // Cancel a drag if one is in progress.
+    if (this._drag) this._drag.dispose();
+
+    // Clear the data structures.
+    this._root = null;
+    this._widgets.clear();
+    this._tabPanels.clear();
+    this._splitPanels.clear();
+
+    // Dispose of the focus tracker.
+    this._tracker.dispose();
+
+    // Dispose of the base class.
+    super.dispose();
   }
 
   /**
@@ -621,11 +643,11 @@ class DockPanel extends Widget {
     // If the ref widget is null, split the root panel.
     if (!ref) {
       let splitPanel = this._ensureSplitRoot(orientation);
-      let sizes = splitPanel.sizes();
+      let sizes = splitPanel.relativeSizes();
       let index = after ? sizes.length : 0;
       sizes.splice(index, 0, 0.5);
       splitPanel.insertWidget(index, tabPanel);
-      splitPanel.setSizes(sizes);
+      splitPanel.setRelativeSizes(sizes);
       return;
     }
 
@@ -636,7 +658,7 @@ class DockPanel extends Widget {
     if (this._root === refTabPanel) {
       let splitPanel = this._ensureSplitRoot(orientation);
       splitPanel.insertWidget(after ? 1 : 0, tabPanel);
-      splitPanel.setSizes([1, 1]);
+      splitPanel.setRelativeSizes([1, 1]);
       return;
     }
 
@@ -648,11 +670,11 @@ class DockPanel extends Widget {
     if (splitPanel.orientation === orientation) {
       let i = indexOf(splitPanel.widgets, refTabPanel);
       let index = after ? i + 1 : i;
-      let sizes = splitPanel.sizes();
+      let sizes = splitPanel.relativeSizes();
       let size = sizes[i] = sizes[i] / 2;
       sizes.splice(index, 0, size);
       splitPanel.insertWidget(index, tabPanel);
-      splitPanel.setSizes(sizes);
+      splitPanel.setRelativeSizes(sizes);
       return;
     }
 
@@ -661,21 +683,21 @@ class DockPanel extends Widget {
     if (splitPanel.widgets.length === 1) {
       splitPanel.orientation = orientation;
       splitPanel.insertWidget(after ? 1 : 0, tabPanel);
-      splitPanel.setSizes([1, 1]);
+      splitPanel.setRelativeSizes([1, 1]);
       return;
     }
 
     // Otherwise, a new split panel with the correct orientation needs
     // to be created to hold the ref panel and tab panel, and inserted
     // at the previous location of the ref panel.
-    let sizes = splitPanel.sizes();
+    let sizes = splitPanel.relativeSizes();
     let i = indexOf(splitPanel.widgets, refTabPanel);
     let childSplit = this._createSplitPanel(orientation);
     childSplit.insertWidget(0, refTabPanel);
     childSplit.insertWidget(after ? 1 : 0, tabPanel);
     splitPanel.insertWidget(i, childSplit);
-    splitPanel.setSizes(sizes);
-    childSplit.setSizes([1, 1]);
+    splitPanel.setRelativeSizes(sizes);
+    childSplit.setRelativeSizes([1, 1]);
   }
 
   /**
@@ -698,6 +720,24 @@ class DockPanel extends Widget {
     panel.addClass(SPLIT_PANEL_CLASS);
     this._splitPanels.pushBack(panel);
     return panel;
+  }
+
+  /**
+   * Dispose of a tab panel created for the dock panel.
+   */
+  private _disposeTabPanel(panel: TabPanel): void {
+    let i = indexOf(this._tabPanels, panel);
+    if (i !== -1) this._tabPanels.remove(i);
+    panel.dispose();
+  }
+
+  /**
+   * Dispose of a split panel created for the dock panel.
+   */
+  private _disposeSplitPanel(panel: SplitPanel): void {
+    let i = indexOf(this._splitPanels, panel);
+    if (i !== -1) this._splitPanels.remove(i);
+    panel.dispose();
   }
 
   /**
@@ -773,12 +813,91 @@ class DockPanel extends Widget {
   }
 
   /**
-   * Set the root widget for the dock panel.
+   * Set the non-null root widget for the dock panel.
    */
   private _setRoot(root: SplitPanel | TabPanel): void {
     this._root = root;
     (this.layout as StackedLayout).addWidget(root);
     root.show();
+  }
+
+  /**
+   * Remove an empty dock tab panel from the hierarchy.
+   *
+   * This ensures that the hierarchy is kept consistent by merging an
+   * ancestor split panel when it contains only a single child widget.
+   */
+  private _removeTabPanel(tabPanel: TabPanel): void {
+    // If the parent of the tab panel is the root, just remove it.
+    if (this._root === tabPanel) {
+      this._disposeTabPanel(tabPanel);
+      this._root = null;
+      return;
+    }
+
+    // Cast the tab panel parent to a split panel.
+    // It's guaranteed to have at least 2 children.
+    let splitPanel = tabPanel.parent as SplitPanel;
+
+    // Release the tab panel.
+    this._disposeTabPanel(tabPanel);
+
+    // Do nothing more if the split panel still has multiple children.
+    if (splitPanel.widgets.length > 1) {
+      return;
+    }
+
+    // Extract the remaining child from the split panel.
+    let child = splitPanel.widgets.at(0) as (SplitPanel | TabPanel);
+
+    // If the split panel is the root, replace it.
+    if (this._root === splitPanel) {
+      this._setRoot(child);
+      this._disposeSplitPanel(splitPanel);
+      return;
+    }
+
+    // Cast the split panel parent to a split panel and lookup
+    // the index of the split panel. The grand panel will have
+    // at least 2 children.
+    let grandPanel = splitPanel.parent as SplitPanel;
+    let index = indexOf(grandPanel.widgets, splitPanel);
+
+    // If the child is a tab panel, replace the split panel.
+    if (child instanceof TabPanel) {
+      let sizes = grandPanel.relativeSizes();
+      splitPanel.parent = null;
+      grandPanel.insertWidget(index, child);
+      grandPanel.setRelativeSizes(sizes);
+      this._disposeSplitPanel(splitPanel);
+      return;
+    }
+
+    // Cast the child to a split panel.
+    let childSplit = child as SplitPanel;
+
+    // Child splitters have an orthogonal orientation to their parent.
+    // The grand children can now be merged with their grand parent.
+
+    // Start by fetching the relevant current sizes.
+    let childSizes = childSplit.relativeSizes();
+    let grandSizes = grandPanel.relativeSizes();
+
+    // Remove the split panel and store its share of the size.
+    splitPanel.parent = null;
+    let sizeShare = grandSizes.splice(index, 1)[0];
+
+    // Merge the grand children and maintain their relative size.
+    for (let i = 0; childSplit.widgets.length !== 0; ++i) {
+      grandPanel.insertWidget(index + i, childSplit.widgets.at(0));
+      grandSizes.splice(index + i, 0, sizeShare * childSizes[i]);
+    }
+
+    // Update the grand parent sizes.
+    grandPanel.setRelativeSizes(grandSizes);
+
+    // Dispose the removed split panel.
+    this._disposeSplitPanel(splitPanel);
   }
 
   /**
@@ -824,15 +943,17 @@ class DockPanel extends Widget {
   }
 
   /**
-   *
+   * Handle the `widgetRemoved` signal from a stacked panel.
    */
-  private _onWidgetRemoved(): void {
-
+  private _onWidgetRemoved(sender: StackedPanel, widget: Widget): void {
+    if (sender.widgets.length === 0) {
+      this._removeTabPanel(sender.parent as TabPanel);
+    }
   }
 
   private _spacing = 4;
   private _drag: Drag = null;
-  private _overlay: DockOverlay;
+  private _overlay = new DockOverlay();
   private _widgets = new Vector<Widget>();
   private _tabPanels = new Vector<TabPanel>();
   private _splitPanels = new Vector<SplitPanel>();
