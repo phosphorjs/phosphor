@@ -946,6 +946,10 @@ class DockPanel extends Widget {
    * Handle the `widgetRemoved` signal from a stacked panel.
    */
   private _onWidgetRemoved(sender: StackedPanel, widget: Widget): void {
+    let i = indexOf(this._widgets, widget);
+    if (i !== -1) {
+      this._widgets.remove(i);
+    }
     if (sender.widgets.length === 0) {
       this._removeTabPanel(sender.parent as TabPanel);
     }
