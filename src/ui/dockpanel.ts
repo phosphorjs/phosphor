@@ -14,6 +14,10 @@ import {
 } from '../algorithm/searching';
 
 import {
+  ISequence
+} from '../algorithm/sequence';
+
+import {
   Vector
 } from '../collections/vector';
 
@@ -170,6 +174,18 @@ class DockPanel extends Widget {
     }
     this._spacing = value;
     each(this._splitPanels, panel => { panel.spacing = value; });
+  }
+
+  /**
+   * A read-only sequence of the widgets in the dock panel.
+   *
+   * #### Notes
+   * The order of the widgets in the sequence has no meaning.
+   *
+   * This is a read-only property.
+   */
+  get widgets(): ISequence<Widget> {
+    return this._widgets;
   }
 
   /**
