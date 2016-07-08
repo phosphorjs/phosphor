@@ -115,18 +115,23 @@ class DockPanel extends Widget {
   constructor(options: DockPanel.IOptions = {}) {
     super();
     this.addClass(DOCK_PANEL_CLASS);
+
+    // Install the layout on the panel.
     this.layout = new StackedLayout();
 
+    // Parse the spacing option.
     if (options.spacing !== void 0) {
       this._spacing = Private.clampSpacing(options.spacing);
     }
 
+    // Setup the overlay indicator.
     if (options.overlay !== void 0) {
       this._overlay = options.overlay;
     } else {
       this._overlay = new DockPanel.Overlay();
     }
 
+    // Add the overlay node to the panel.
     this.node.appendChild(this._overlay.node);
   }
 
