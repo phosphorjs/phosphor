@@ -168,45 +168,13 @@ class SplitPanel extends Panel {
   }
 
   /**
-   * Get the current sizes of the widgets in the panel.
-   *
-   * @returns A new array of the current sizes of the widgets.
-   *
-   * #### Notes
-   * The returned sizes reflect the widget sizes as of the most recent
-   * update, or the most recent call to `setSizes`.
-   *
-   * This method **does not** measure the DOM nodes.
-   */
-  sizes(): number[] {
-    return (this.layout as SplitLayout).sizes();
-  }
-
-  /**
-   * Set the desired sizes for the widgets in the panel.
-   *
-   * @param sizes - The desired sizes for the widgets in the panel.
-   *
-   * #### Notes
-   * Extra values are ignored, too few will yield an undefined layout.
-   *
-   * The widgets will be sized as close as possible to the desired size
-   * without violating the widget size constraints.
-   *
-   * The actual geometry of the DOM nodes is updated asynchronously.
-   */
-  setSizes(sizes: number[]): void {
-    (this.layout as SplitLayout).setSizes(sizes);
-  }
-
-  /**
    * Get the relative sizes of the widgets in the panel.
    *
    * @returns A new array of the relative sizes of the widgets.
    *
    * #### Notes
-   * The returned sizes reflect the relative sizes as of the most
-   * recent update, or the most recent call to `setRelativeSizes`.
+   * The returned sizes reflect the sizes of the widgets normalized
+   * relative to their siblings.
    *
    * This method **does not** measure the DOM nodes.
    */
@@ -221,9 +189,6 @@ class SplitPanel extends Panel {
    *
    * #### Notes
    * Extra values are ignored, too few will yield an undefined layout.
-   *
-   * The widgets will be sized to consume the specified proportion
-   * of space relative to their siblings.
    *
    * The actual geometry of the DOM nodes is updated asynchronously.
    */
@@ -606,72 +571,49 @@ class SplitLayout extends PanelLayout {
   }
 
   /**
-   * Get the current sizes of the widgets in the layout.
-   *
-   * @returns A new array of the current sizes of the widgets.
-   *
-   * #### Notes
-   * The returned sizes reflect the widget sizes as of the most recent
-   * update, or the most recent call to `setSizes`.
-   *
-   * This method **does not** measure the DOM nodes.
-   */
-  sizes(): number[] {
-    if (this._pxSizes) return this._pxSizes.slice();
-    return toArray(map(this._sizers, sizer => sizer.size));
-  }
-
-  /**
-   * Set the desired sizes for the widgets in the layout.
-   *
-   * @param sizes - The desired sizes for the widgets in the layout.
-   *
-   * #### Notes
-   * Extra values are ignored, too few will yield an undefined layout.
-   *
-   * The widgets will be sized as close as possible to the desired size
-   * without violating the widget size constraints.
-   *
-   * The actual geometry of the DOM nodes is updated asynchronously.
-   */
-  setSizes(sizes: number[]): void {
-    this._nmSizes = null;
-    this._pxSizes = sizes.map(s => Math.max(0, s));
-    if (this.parent) this.parent.update();
-  }
-
-  /**
    * Get the relative sizes of the widgets in the layout.
    *
    * @returns A new array of the relative sizes of the widgets.
    *
    * #### Notes
-   * The returned sizes reflect the relative sizes as of the most
-   * recent update, or the most recent call to `setRelativeSizes`.
+   * The returned sizes reflect the sizes of the widgets normalized
+   * relative to their siblings.
    *
    * This method **does not** measure the DOM nodes.
    */
   relativeSizes(): number[] {
-    if (this._nmSizes) return this._nmSizes.slice();
     return Private.normalize(toArray(map(this._sizers, sizer => sizer.size)));
   }
 
   /**
    * Set the relative sizes for the widgets in the layout.
    *
-   * @param sizes - The relative sizes for the widgets in the layout.
+   * @param sizes - The relative sizes for the widgets in the panel.
    *
    * #### Notes
    * Extra values are ignored, too few will yield an undefined layout.
    *
-   * The widgets will be sized so that consume the specified proportion
-   * of space relative to their siblings.
-   *
    * The actual geometry of the DOM nodes is updated asynchronously.
    */
   setRelativeSizes(sizes: number[]): void {
-    this._pxSizes = null;
-    this._nmSizes = Private.normalize(sizes);
+    // Copy the sizes and pad with zeros as needed.
+    let n = this._sizers.length;
+    let temp = sizes.slice(0, n);
+    while (temp.length < n) temp.push(0);
+
+    // Normalize the padded sizes.
+    let normed = Private.normalize(temp);
+
+    // Apply the normalized sizes to the sizers.
+    for (let i = 0; i < n; ++i) {
+      let sizer = this._sizers.at(i);
+      sizer.sizeHint = sizer.size = normed[i];
+    }
+
+    // Set the flag indicating the sizes are normalized.
+    this._hasNormedSizes = true;
+
+    // Trigger an update of the parent widget.
     if (this.parent) this.parent.update();
   }
 
@@ -1026,22 +968,11 @@ class SplitLayout extends PanelLayout {
       space = Math.max(0, height - this._fixed);
     }
 
-    // Apply the requested sizes, if they exist.
-    if (this._pxSizes) {
-      let n = Math.min(this._sizers.length, this._pxSizes.length);
-      for (let i = 0; i < n; ++i) {
-        this._sizers.at(i).sizeHint = this._pxSizes[i];
-      }
-    } else if (this._nmSizes) {
-      let n = Math.min(this._sizers.length, this._nmSizes.length);
-      for (let i = 0; i < n; ++i) {
-        this._sizers.at(i).sizeHint = space * this._nmSizes[i];
-      }
+    // Scale the size hints if they are normalized.
+    if (this._hasNormedSizes) {
+      each(this._sizers, sizer => { sizer.sizeHint *= space; });
+      this._hasNormedSizes = false;
     }
-
-    // Clear the requested sizes.
-    this._pxSizes = null;
-    this._nmSizes = null;
 
     // Distribute the layout space to the box sizers.
     boxCalc(this._sizers, space);
@@ -1078,9 +1009,8 @@ class SplitLayout extends PanelLayout {
   private _fixed = 0;
   private _spacing = 4;
   private _dirty = false;
+  private _hasNormedSizes = false;
   private _box: IBoxSizing = null;
-  private _pxSizes: number[] = null;
-  private _nmSizes: number[] = null;
   private _renderer: SplitLayout.IRenderer;
   private _sizers = new Vector<BoxSizer>();
   private _handles = new Vector<HTMLElement>();
