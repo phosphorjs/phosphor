@@ -116,10 +116,9 @@ class DockPanel extends Widget {
     super();
     this.addClass(DOCK_PANEL_CLASS);
     this.layout = new StackedLayout();
+    this._spacing = Private.optSpacing(options);
+    this._overlay = Private.optOverlay(options);
     this.node.appendChild(this._overlay.node);
-    if (options.spacing !== void 0) {
-      this._spacing = Private.clampSpacing(options.spacing);
-    }
   }
 
   /**
@@ -146,14 +145,12 @@ class DockPanel extends Widget {
   }
 
   /**
-   * The dock indicator overlay.
+   * The overlay used by the dock panel.
    *
    * #### Notes
-   * User code may customize the overlay node as needed.
-   *
    * This is a read-only property.
    */
-  get overlay(): DockOverlay {
+  get overlay(): DockPanel.IOverlay {
     return this._overlay;
   }
 
@@ -971,9 +968,9 @@ class DockPanel extends Widget {
     }
   }
 
-  private _spacing = 4;
+  private _spacing: number;
   private _drag: Drag = null;
-  private _overlay = new DockOverlay();
+  private _overlay: DockPanel.IOverlay;
   private _widgets = new Vector<Widget>();
   private _tabPanels = new Vector<TabPanel>();
   private _splitPanels = new Vector<SplitPanel>();
@@ -998,6 +995,13 @@ namespace DockPanel {
      * The default is `4`.
      */
     spacing?: number;
+
+    /**
+     * The overlay to use with the dock panel.
+     *
+     * The default is a new `Overlay` instance.
+     */
+    overlay?: IOverlay;
   }
 
   /**
@@ -1150,120 +1154,147 @@ namespace DockPanel {
      */
     panel: TabPanel;
   }
-}
-
-
-/**
- * A class which manages an overlay node for a dock panel.
- */
-export
-class DockOverlay {
-  /**
-   * Construct a new dock overlay.
-   */
-  constructor() {
-    this._node = document.createElement('div');
-    this._node.classList.add(OVERLAY_CLASS);
-    this._node.classList.add(HIDDEN_CLASS);
-    this._node.style.position = 'absolute';
-  }
 
   /**
-   * The DOM node for the overlay.
-   *
-   * #### Notes
-   * This is a read-only property.
-   */
-  get node(): HTMLElement {
-    return this._node;
-  }
-
-  /**
-   * Show the overlay with the given zone and geometry
-   *
-   * @param zone - The dock zone for the overlay.
-   *
-   * @param left - The offset left position for the overlay.
-   *
-   * @param top - The offset top position for the overlay.
-   *
-   * @param width - The offset width for the overlay.
-   *
-   * @param height - The offset height for the overlay.
-   */
-  show(zone: DockPanel.Zone, left: number, top: number, width: number, height: number): void {
-    let style = this._node.style;
-    style.top = `${top}px`;
-    style.left = `${left}px`;
-    style.width = `${width}px`;
-    style.height = `${height}px`;
-    this._setZone(zone);
-    this._showIfHidden();
-  }
-
-  /**
-   * Hide the overlay.
-   */
-  hide(): void {
-    this._hideIfVisible();
-    this._setZone('invalid');
-  }
-
-  /**
-   * Show the underlying node, if hidden.
-   */
-  private _showIfHidden(): void {
-    if (this._hidden) {
-      this._hidden = false;
-      this._node.classList.remove(HIDDEN_CLASS);
-    }
-  }
-
-  /**
-   * Hide the underlying node, if visible.
-   */
-  private _hideIfVisible(): void {
-    if (!this._hidden) {
-      this._hidden = true;
-      this._node.classList.add(HIDDEN_CLASS);
-    }
-  }
-
-  /**
-   * Set the dock zone for the overlay.
-   */
-  private _setZone(zone: DockPanel.Zone): void {
-    if (zone === this._zone) {
-      return;
-    }
-    let oldClass = DockOverlay.createZoneClass(this._zone);
-    let newClass = DockOverlay.createZoneClass(zone);
-    if (oldClass) this._node.classList.remove(oldClass);
-    if (newClass) this._node.classList.add(newClass);
-    this._zone = zone;
-  }
-
-  private _hidden = true;
-  private _node: HTMLElement;
-  private _zone: DockPanel.Zone = 'invalid';
-}
-
-
-/**
- * The namespace for the `DockOverlay` class statics.
- */
-export
-namespace DockOverlay {
-  /**
-   * Create the modifier class name for an overlay zone.
-   *
-   * @param zone - The dock zone of interest.
-   *
-   * @returns A modifier class name for the overlay zone.
+   * An object which manages the overlay node for a dock panel.
    */
   export
-  function createZoneClass(zone: DockPanel.Zone): string {
-    return zone !== 'invalid' ? `p-mod-${zone}` : '';
+  interface IOverlay {
+    /**
+     * The DOM node for the overlay.
+     *
+     * #### Notes
+     * This should be a read-only property.
+     */
+    node: HTMLElement;
+
+    /**
+     * Show the overlay using the given zone and offset geometry.
+     *
+     * @param zone - The dock zone for the overlay.
+     *
+     * @param left - The offset left position for the overlay.
+     *
+     * @param top - The offset top position for the overlay.
+     *
+     * @param width - The offset width for the overlay.
+     *
+     * @param height - The offset height for the overlay.
+     *
+     * #### Notes
+     * The given geometry values assume the node will use absolute
+     * positioning.
+     *
+     * This is called on every mouse move event during a drag in order
+     * to update the position of the overlay. It should be efficient.
+     */
+    show(zone: Zone, left: number, top: number, width: number, height: number): void;
+
+    /**
+     * Hide the overlay node.
+     *
+     * #### Notes
+     * This is called whenever the overlay node should been hidden.
+     */
+    hide(): void;
+  }
+
+  /**
+   * A concrete implementation of `IOverlay`.
+   *
+   * This is the default overlay implementation for a dock panel.
+   */
+  export
+  class Overlay implements IOverlay {
+    /**
+     * Construct a new overlay.
+     */
+    constructor() {
+      this._node = document.createElement('div');
+      this._node.classList.add(OVERLAY_CLASS);
+      this._node.classList.add(HIDDEN_CLASS);
+      this._node.style.position = 'absolute';
+    }
+
+    /**
+     * The DOM node for the overlay.
+     *
+     * #### Notes
+     * This is a read-only property.
+     */
+    get node(): HTMLElement {
+      return this._node;
+    }
+
+    /**
+     * Show the overlay using the given zone and offset geometry.
+     *
+     * @param zone - The dock zone for the overlay.
+     *
+     * @param left - The offset left position for the overlay.
+     *
+     * @param top - The offset top position for the overlay.
+     *
+     * @param width - The offset width for the overlay.
+     *
+     * @param height - The offset height for the overlay.
+     */
+    show(zone: Zone, left: number, top: number, width: number, height: number): void {
+      let style = this._node.style;
+      style.top = `${top}px`;
+      style.left = `${left}px`;
+      style.width = `${width}px`;
+      style.height = `${height}px`;
+      this._setZone(zone);
+      this._showIfHidden();
+    }
+
+    /**
+     * Hide the overlay node.
+     */
+    hide(): void {
+      this._hideIfVisible();
+      this._setZone('invalid');
+    }
+
+    /**
+     * Show the underlying node, if hidden.
+     */
+    private _showIfHidden(): void {
+      if (this._hidden) {
+        this._hidden = false;
+        this._node.classList.remove(HIDDEN_CLASS);
+      }
+    }
+
+    /**
+     * Hide the underlying node, if visible.
+     */
+    private _hideIfVisible(): void {
+      if (!this._hidden) {
+        this._hidden = true;
+        this._node.classList.add(HIDDEN_CLASS);
+      }
+    }
+
+    /**
+     * Set the dock zone for the overlay.
+     */
+    private _setZone(newZone: DockPanel.Zone): void {
+      let oldZone = this._zone;
+      if (oldZone === newZone) {
+        return;
+      }
+      let oldClass = oldZone !== 'invalid' ? `p-mod-${oldZone}` : '';
+      let newClass = newZone !== 'invalid' ? `p-mod-${newZone}` : '';
+      if (oldClass) this._node.classList.remove(oldClass);
+      if (newClass) this._node.classList.add(newClass);
+      this._zone = newZone;
+    }
+
+    private _hidden = true;
+    private _node: HTMLElement;
+    private _zone: Zone = 'invalid';
   }
 }
 
@@ -1278,6 +1309,22 @@ namespace Private {
   export
   function clampSpacing(value: number): number {
     return Math.max(0, Math.floor(value));
+  }
+
+  /**
+   * Extract the initial spacing value from an options object.
+   */
+  export
+  function optSpacing(options: DockPanel.IOptions): number {
+    return clampSpacing(options.spacing !== void 0 ? options.spacing : 4);
+  }
+
+  /**
+   * Extract the initial overlay value from an options object.
+   */
+  export
+  function optOverlay(options: DockPanel.IOptions): DockPanel.IOverlay {
+    return options.overlay || new DockPanel.Overlay();
   }
 
   /**
