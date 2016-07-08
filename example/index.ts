@@ -85,6 +85,7 @@ function createContent(title: string): Widget {
   widget.addClass(title.toLowerCase());
   widget.title.label = title;
   widget.title.closable = true;
+  widget.node.tabIndex = -1;
   return widget;
 }
 
@@ -276,9 +277,11 @@ function main(): void {
 
   let dock = new DockPanel();
   dock.addWidget(r1);
-  dock.insertWidget('split-right', b1, r1);
-  dock.insertWidget('split-bottom', y1, b1);
-  dock.insertWidget('split-left', g1, y1);
+  dock.addWidget(b1, { mode: 'split-right', ref: r1 });
+  dock.addWidget(y1, { mode: 'split-bottom', ref: b1 });
+  dock.addWidget(g1, { mode: 'split-left', ref: y1 });
+
+  dock.activeWidgetChanged.connect((s, a) => {console.log(a);});
 
   BoxPanel.setStretch(dock, 1);
 
