@@ -30,6 +30,10 @@ import {
 } from '../core/mimedata';
 
 import {
+  ISignal, defineSignal
+} from '../core/signaling';
+
+import {
   Drag, IDragEvent
 } from '../dom/dragdrop';
 
@@ -131,6 +135,9 @@ class DockPanel extends Widget {
       this._overlay = new DockPanel.Overlay();
     }
 
+    // Connect the focus tracker changed signal.
+    this._tracker.activeWidgetChanged.connect(this._onActivateWidgetChanged, this);
+
     // Add the overlay node to the panel.
     this.node.appendChild(this._overlay.node);
   }
@@ -157,6 +164,11 @@ class DockPanel extends Widget {
     // Dispose of the base class.
     super.dispose();
   }
+
+  /**
+   * A signal emitted when the active widget has changed.
+   */
+  activeWidgetChanged: ISignal<DockPanel, DockPanel.IActiveWidgetChangedArgs>;
 
   /**
    * The overlay used by the dock panel.
@@ -200,34 +212,69 @@ class DockPanel extends Widget {
   }
 
   /**
+   * The currently active widget.
+   *
+   * #### Notes
+   * The active widget is the widget among the added widgets which
+   * has the *descendant node* which has most recently been focused.
+   *
+   * This is the `activeWidget` of the internal `FocusTracker` which
+   * tracks all widgets in the dock panel.
+   *
+   * This will be `null` if there is no active widget.
+   *
+   * This is a read-only property.
+   */
+  get activeWidget(): Widget {
+    return this._tracker.activeWidget;
+  }
+
+  /**
+   * Activate the specified widget in the dock panel.
+   *
+   * @param widget - The widget of interest.
+   *
+   * #### Notes
+   * This will ensure that the widget is the current visible widget in
+   * its host tab panel, and will send a focus request to the widget.
+   */
+  activateWidget(widget: Widget): void {
+    // Ensure the widget is contained by the panel.
+    if (indexOf(this._widgets, widget) === -1) {
+      throw new Error('Widget is not contained by the dock panel.');
+    }
+
+    // Ensure the widget is the current widget.
+    (widget.parent.parent as TabPanel).currentWidget = widget;
+
+    // Send a focus request to the widget.
+    widget.focus();
+  }
+
+  /**
    * Add a widget to the dock panel.
    *
    * @param widget - The widget to add into the dock panel.
    *
-   * @param ref - The reference widget specifying the insert point.
-   *
-   * #### Notes
-   * This will add the widget as a tab after the reference widget.
-   *
-   * If the reference widget is `null`, a sensible default is used.
+   * @param options - The additional options for adding the widget.
    */
-  addWidget(widget: Widget, ref?: Widget): void {
-    this.insertWidget('tab-after', widget, ref);
-  }
+  addWidget(widget: Widget, options: DockPanel.IAddOptions = {}): void {
+    // Setup the option defaults.
+    let activate = true;
+    let ref: Widget = null;
+    let mode: DockPanel.Mode = 'tab-after';
 
-  /**
-   * Insert a widget into the dock panel.
-   *
-   * @param location - The location to add the widget.
-   *
-   * @param widget - The widget to insert into the dock panel.
-   *
-   * @param ref - The reference widget specifying the insert point.
-   *
-   * #### Notes
-   * If the reference widget is `null`, a sensible default is used.
-   */
-  insertWidget(location: DockPanel.Location, widget: Widget, ref: Widget = null): void {
+    // Extract the options.
+    if (options.activate !== void 0) {
+      activate = options.activate;
+    }
+    if (options.ref !== void 0) {
+      ref = options.ref;
+    }
+    if (options.mode !== void 0) {
+      mode = options.mode;
+    }
+
     // Ensure the arguments are valid.
     if (!widget) {
       throw new Error('Target widget is null.');
@@ -249,10 +296,11 @@ class DockPanel extends Widget {
     // Add the widget to the widgets vector.
     this._widgets.pushBack(widget);
 
-    // Insert the widget based on the specified location.
-    this._insertWidget(location, widget, ref);
+    // Insert the widget based on the specified mode.
+    this._insertWidget(widget, mode, ref);
 
-    // TODO focus the insert widget?
+    // Activate the widget if requested.
+    if (activate) this.activateWidget(widget);
   }
 
   /**
@@ -560,19 +608,19 @@ class DockPanel extends Widget {
     // Handle the simple case of root drops first.
     switch(target.zone) {
     case 'root-top':
-      this.insertWidget('split-top', widget);
+      this.addWidget(widget, { mode: 'split-top' });
       return;
     case 'root-left':
-      this.insertWidget('split-left', widget);
+      this.addWidget(widget, { mode: 'split-left' });
       return;
     case 'root-right':
-      this.insertWidget('split-right', widget);
+      this.addWidget(widget, { mode: 'split-right' });
       return;
     case 'root-bottom':
-      this.insertWidget('split-bottom', widget);
+      this.addWidget(widget, { mode: 'split-bottom' });
       return;
     case 'root-center':
-      this.insertWidget('split-left', widget);
+      this.addWidget(widget, { mode: 'split-left' });
       return;
     }
 
@@ -600,39 +648,39 @@ class DockPanel extends Widget {
     // Insert the widget based on the panel zone.
     switch(target.zone) {
     case 'panel-top':
-      this.insertWidget('split-top', widget, ref);
+      this.addWidget(widget, { mode: 'split-top', ref });
       return;
     case 'panel-left':
-      this.insertWidget('split-left', widget, ref);
+      this.addWidget(widget, { mode: 'split-left', ref });
       return;
     case 'panel-right':
-      this.insertWidget('split-right', widget, ref);
+      this.addWidget(widget, { mode: 'split-right', ref });
       return;
     case 'panel-bottom':
-      this.insertWidget('split-bottom', widget, ref);
+      this.addWidget(widget, { mode: 'split-bottom', ref });
       return;
     case 'panel-center':
-      this.insertWidget('tab-after', widget, ref);
+      this.addWidget(widget, { mode: 'tab-after', ref });
       return;
     }
   }
 
   /**
-   * Insert a widget into the dock panel using the given location.
+   * Insert a widget into the dock panel using the given mode.
    *
    * The target widget should have no parent, and the reference widget
    * should either be null or a widget contained in the dock panel.
    */
-  private _insertWidget(location: DockPanel.Location, widget: Widget, ref: Widget): void {
+  private _insertWidget(widget: Widget, mode: DockPanel.Mode, ref: Widget): void {
     // Determine whether the insert is before or after the ref.
     let after = (
-      location === 'tab-after' ||
-      location === 'split-right' ||
-      location === 'split-bottom'
+      mode === 'tab-after' ||
+      mode === 'split-right' ||
+      mode === 'split-bottom'
     );
 
     // Handle the simple case of adding to a tab panel.
-    if (location === 'tab-before' || location === 'tab-after') {
+    if (mode === 'tab-before' || mode === 'tab-after') {
       if (ref) {
         let tabPanel = ref.parent.parent as TabPanel;
         let index = indexOf(tabPanel.widgets, ref) + (after ? 1 : 0);
@@ -647,7 +695,7 @@ class DockPanel extends Widget {
 
     // Otherwise, determine the orientation of the new split.
     let orientation: SplitPanel.Orientation;
-    if (location === 'split-top' || location === 'split-bottom') {
+    if (mode === 'split-top' || mode === 'split-bottom') {
       orientation = 'vertical';
     } else {
       orientation = 'horizontal';
@@ -982,6 +1030,13 @@ class DockPanel extends Widget {
     }
   }
 
+  /**
+   * Handle the `activeWidgetChanged` signal from the focus tracker.
+   */
+  private _onActivateWidgetChanged(sender: FocusTracker<Widget>, args: FocusTracker.IActiveWidgetChangedArgs<Widget>): void {
+    this.activeWidgetChanged.emit(args);
+  }
+
   private _spacing: number;
   private _drag: Drag = null;
   private _overlay: DockPanel.IOverlay;
@@ -993,11 +1048,31 @@ class DockPanel extends Widget {
 }
 
 
+// Define the signals for the `FocusTracker` class.
+defineSignal(DockPanel.prototype, 'activeWidgetChanged');
+
+
 /**
  * The namespace for the `DockPanel` class statics.
  */
 export
 namespace DockPanel {
+  /**
+   * An arguments object for the `activeWidgetChanged` signal.
+   */
+  export
+  interface IActiveWidgetChangedArgs {
+    /**
+     * The old value for the `activeWidget`, or `null`.
+     */
+    oldValue: Widget;
+
+    /**
+     * The new value for the `activeWidget`, or `null`.
+     */
+    newValue: Widget;
+  }
+
   /**
    * An options object for creating a dock panel.
    */
@@ -1019,13 +1094,40 @@ namespace DockPanel {
   }
 
   /**
-   * A type alias for the supported dock panel locations.
+   * An options object for adding a widget to the dock panel.
+   */
+  export
+  interface IAddOptions {
+    /**
+     * The insertion mode for adding the widget.
+     *
+     * The default is `'tab-after'`.
+     */
+    mode?: Mode;
+
+    /**
+     * The reference widget for the insert location.
+     *
+     * The default is `null`.
+     */
+    ref?: Widget;
+
+    /**
+     * Whether to activate the new widget.
+     *
+     * The default is `true`.
+     */
+    activate?: boolean;
+  }
+
+  /**
+   * A type alias for the supported insertion modes.
    *
-   * A dock location is used to specify how a widget should be added
+   * A dock mode is used to specify how a widget should be added
    * to the dock panel relative to a reference widget.
    */
   export
-  type Location = (
+  type Mode = (
     /**
      * The area to the top of the reference widget.
      *
