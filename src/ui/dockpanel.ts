@@ -116,8 +116,17 @@ class DockPanel extends Widget {
     super();
     this.addClass(DOCK_PANEL_CLASS);
     this.layout = new StackedLayout();
-    this._spacing = Private.optSpacing(options);
-    this._overlay = Private.optOverlay(options);
+
+    if (options.spacing !== void 0) {
+      this._spacing = Private.clampSpacing(options.spacing);
+    }
+
+    if (options.overlay !== void 0) {
+      this._overlay = options.overlay;
+    } else {
+      this._overlay = new DockPanel.Overlay();
+    }
+
     this.node.appendChild(this._overlay.node);
   }
 
@@ -1309,22 +1318,6 @@ namespace Private {
   export
   function clampSpacing(value: number): number {
     return Math.max(0, Math.floor(value));
-  }
-
-  /**
-   * Extract the initial spacing value from an options object.
-   */
-  export
-  function optSpacing(options: DockPanel.IOptions): number {
-    return clampSpacing(options.spacing !== void 0 ? options.spacing : 4);
-  }
-
-  /**
-   * Extract the initial overlay value from an options object.
-   */
-  export
-  function optOverlay(options: DockPanel.IOptions): DockPanel.IOverlay {
-    return options.overlay || new DockPanel.Overlay();
   }
 
   /**
