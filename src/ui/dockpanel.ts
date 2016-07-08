@@ -26,10 +26,6 @@ import {
 } from '../core/mimedata';
 
 import {
-  AttachedProperty
-} from '../core/properties';
-
-import {
   Drag, IDragEvent
 } from '../dom/dragdrop';
 
@@ -46,12 +42,12 @@ import {
 } from './focustracker';
 
 import {
-  StackedLayout, StackedPanel
-} from './stackedpanel';
-
-import {
   SplitPanel
 } from './splitpanel';
+
+import {
+  StackedLayout, StackedPanel
+} from './stackedpanel';
 
 import {
   TabBar
