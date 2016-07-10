@@ -798,8 +798,8 @@ class Menu extends Widget {
     // Open the menu as a root menu.
     Private.openRootMenu(this, x, y, forceX, forceY);
 
-    // Focus the menu to accept keyboard input.
-    this.focus();
+    // Activate the menu to accept keyboard input.
+    this.activate();
   }
 
   /**
@@ -922,7 +922,7 @@ class Menu extends Widget {
       parentMenu._cancelCloseTimer();
       parentMenu._childIndex = -1;
       parentMenu._childMenu = null;
-      parentMenu.focus();
+      parentMenu.activate();
     }
 
     // Emit the `aboutToClose` signal if the menu is attached.
@@ -1225,8 +1225,8 @@ class Menu extends Widget {
       menu.activateNextItem();
     }
 
-    // Set focus to the child menu.
-    menu.focus();
+    // Activate the child menu.
+    menu.activate();
   }
 
   /**
