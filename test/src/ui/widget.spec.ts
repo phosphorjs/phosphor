@@ -51,6 +51,11 @@ class LogWidget extends Widget {
     this.methods.push('onActivateRequest');
   }
 
+  protected onDeactivateRequest(msg: Message): void {
+    super.onDeactivateRequest(msg);
+    this.methods.push('onDeactivateRequest');
+  }
+
   protected onCloseRequest(msg: Message): void {
     super.onCloseRequest(msg);
     this.methods.push('onCloseRequest');
@@ -726,6 +731,20 @@ describe('ui/widget', () => {
 
     });
 
+    describe('#deactivate()', () => {
+
+      it('should post a `deactivate-request` message', (done) => {
+        let widget = new LogWidget();
+        widget.deactivate();
+        expect(widget.messages).to.eql([]);
+        requestAnimationFrame(() => {
+          expect(widget.messages).to.eql(['deactivate-request']);
+          done();
+        });
+      });
+
+    });
+
     describe('#close()', () => {
 
       it('should send a `close-request` message', () => {
@@ -911,6 +930,33 @@ describe('ui/widget', () => {
         Widget.attach(widget, document.body);
         sendMessage(widget, WidgetMessage.ActivateRequest);
         expect(document.activeElement).to.be(widget.node);
+        widget.dispose();
+      });
+
+    });
+
+    describe('#onDeactivateRequest()', () => {
+
+      it('should be invoked on a `deactivate-request', () => {
+        let widget = new LogWidget();
+        sendMessage(widget, WidgetMessage.DeactivateRequest);
+        expect(widget.methods.indexOf('onDeactivateRequest')).to.not.be(-1);
+      });
+
+      it('should notify the layout', () => {
+        let widget = new LogWidget();
+        sendMessage(widget, WidgetMessage.DeactivateRequest);
+        expect(widget.methods.indexOf('notifyLayout')).to.not.be(-1);
+      });
+
+      it('should blur the widget node', () => {
+        let widget = new Widget();
+        widget.node.tabIndex = -1;
+        Widget.attach(widget, document.body);
+        widget.node.focus();
+        expect(document.activeElement).to.be(widget.node);
+        sendMessage(widget, WidgetMessage.DeactivateRequest);
+        expect(document.activeElement).to.not.be(widget.node);
         widget.dispose();
       });
 
