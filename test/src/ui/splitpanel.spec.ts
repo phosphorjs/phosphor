@@ -291,36 +291,36 @@ describe('ui/splitpanel', () => {
 
     });
 
-    describe('#sizes()', () => {
+    describe('#relativeSizes()', () => {
 
       it('should get the current sizes of the widgets in the panel', () => {
         let panel = new SplitPanel();
         let widgets = [new Widget(), new Widget(), new Widget()];
         each(widgets, w => { panel.addWidget(w); });
-        let sizes = panel.sizes();
-        expect(sizes).to.eql([0, 0, 0]);
+        let sizes = panel.relativeSizes();
+        expect(sizes).to.eql([1/3, 1/3, 1/3]);
       });
 
     });
 
-    describe('#setSizes()', () => {
+    describe('#setRelativeSizes()', () => {
 
       it('should set the desired sizes for the widgets in the panel', () => {
         let panel = new SplitPanel();
         let widgets = [new Widget(), new Widget(), new Widget()];
         each(widgets, w => { panel.addWidget(w); });
-        panel.setSizes([10, 10, 10]);
-        let sizes = panel.sizes();
-        expect(sizes).to.eql([10, 10, 10]);
+        panel.setRelativeSizes([10, 20, 30]);
+        let sizes = panel.relativeSizes();
+        expect(sizes).to.eql([10/60, 20/60, 30/60]);
       });
 
       it('should ignore extra values', () => {
         let panel = new SplitPanel();
         let widgets = [new Widget(), new Widget(), new Widget()];
         each(widgets, w => { panel.addWidget(w); });
-        panel.setSizes([10, 10, 10, 20]);
-        let sizes = panel.sizes();
-        expect(sizes).to.eql([10, 10, 10]);
+        panel.setRelativeSizes([10, 30, 40, 20]);
+        let sizes = panel.relativeSizes();
+        expect(sizes).to.eql([10/80, 30/80, 40/80]);
       });
 
     });
@@ -335,7 +335,7 @@ describe('ui/splitpanel', () => {
         layout = panel.layout as LogSplitLayout;
         let widgets = [new Widget(), new Widget(), new Widget()];
         each(widgets, w => { panel.addWidget(w); });
-        panel.setSizes([10, 10, 10, 20]);
+        panel.setRelativeSizes([10, 10, 10, 20]);
         Widget.attach(panel, document.body);
         sendMessage(panel, WidgetMessage.UpdateRequest);
       });
@@ -740,7 +740,7 @@ describe('ui/splitpanel', () => {
 
     });
 
-    describe('#sizes()', () => {
+    describe('#relativeSizes()', () => {
 
       it('should get the current sizes of the widgets in the layout', () => {
         let layout = new SplitLayout({ renderer: customRenderer });
@@ -749,14 +749,14 @@ describe('ui/splitpanel', () => {
         parent.layout = layout;
         each(widgets, w => { layout.addWidget(w); });
         Widget.attach(parent, document.body);
-        let sizes = layout.sizes();
-        expect(sizes).to.eql([0, 0, 0]);
+        let sizes = layout.relativeSizes();
+        expect(sizes).to.eql([1/3, 1/3, 1/3]);
         parent.dispose();
       });
 
     });
 
-    describe('#setSizes()', () => {
+    describe('#setRelativeSizes()', () => {
 
       it('should set the desired sizes for the widgets in the panel', () => {
         let layout = new SplitLayout({ renderer: customRenderer });
@@ -765,9 +765,9 @@ describe('ui/splitpanel', () => {
         parent.layout = layout;
         each(widgets, w => { layout.addWidget(w); });
         Widget.attach(parent, document.body);
-        layout.setSizes([10, 10, 10]);
-        let sizes = layout.sizes();
-        expect(sizes).to.eql([10, 10, 10]);
+        layout.setRelativeSizes([10, 10, 10]);
+        let sizes = layout.relativeSizes();
+        expect(sizes).to.eql([10/30, 10/30, 10/30]);
         parent.dispose();
       });
 
@@ -778,9 +778,9 @@ describe('ui/splitpanel', () => {
         parent.layout = layout;
         each(widgets, w => { layout.addWidget(w); });
         Widget.attach(parent, document.body);
-        layout.setSizes([10, 10, 10, 20]);
-        let sizes = layout.sizes();
-        expect(sizes).to.eql([10, 10, 10]);
+        layout.setRelativeSizes([10, 15, 20, 20]);
+        let sizes = layout.relativeSizes();
+        expect(sizes).to.eql([10/45, 15/45, 20/45]);
         parent.dispose();
       });
 

@@ -60,6 +60,96 @@ function find<T>(object: IterableOrArrayLike<T>, fn: (value: T) => boolean): T {
 
 
 /**
+ * Find the minimum value in an iterable.
+ *
+ * @param object - The iterable or array-like object to search.
+ *
+ * @param fn - The 3-way comparison function to apply to the values.
+ *   It should return `< 0` if the first value is less than the second.
+ *   `0` if the values are equivalent, or `> 0` if the first value is
+ *   greater than the second.
+ *
+ * @returns The minimum value in the iterable. If multiple values are
+ *   equivalent to the minimum, the left-most value is returned. If
+ *   the iterable is empty, this returns `undefined`.
+ *
+ * #### Complexity
+ * Linear.
+ *
+ * #### Example
+ * ```typescript
+ * import { min } from 'phosphor/lib/algorithm/searching';
+ *
+ * function numberCmp(a: number, b: number): number {
+ *   return a - b;
+ * }
+ *
+ * min([7, 4, 0, 3, 9, 4], numberCmp);  // 0
+ * ```
+ */
+export
+function min<T>(object: IterableOrArrayLike<T>, fn: (first: T, second: T) => number): T {
+  let it = iter(object);
+  let result = it.next();
+  if (result === void 0) {
+    return void 0;
+  }
+  let value: T;
+  while ((value = it.next()) !== void 0) {
+    if (fn(value, result) < 0) {
+      result = value;
+    }
+  }
+  return result;
+}
+
+
+/**
+ * Find the maximum value in an iterable.
+ *
+ * @param object - The iterable or array-like object to search.
+ *
+ * @param fn - The 3-way comparison function to apply to the values.
+ *   It should return `< 0` if the first value is less than the second.
+ *   `0` if the values are equivalent, or `> 0` if the first value is
+ *   greater than the second.
+ *
+ * @returns The maximum value in the iterable. If multiple values are
+ *   equivalent to the maximum, the left-most value is returned. If
+ *   the iterable is empty, this returns `undefined`.
+ *
+ * #### Complexity
+ * Linear.
+ *
+ * #### Example
+ * ```typescript
+ * import { max } from 'phosphor/lib/algorithm/searching';
+ *
+ * function numberCmp(a: number, b: number): number {
+ *   return a - b;
+ * }
+ *
+ * max([7, 4, 0, 3, 9, 4], numberCmp);  // 9
+ * ```
+ */
+export
+function max<T>(object: IterableOrArrayLike<T>, fn: (first: T, second: T) => number): T {
+  let it = iter(object);
+  let result = it.next();
+  if (result === void 0) {
+    return void 0;
+  }
+  let value: T;
+  while ((value = it.next()) !== void 0) {
+    if (fn(value, result) > 0) {
+      result = value;
+    }
+  }
+  return result;
+}
+
+
+/**
  * Find the index of the first occurrence of a value in a sequence.
  *
  * @param object - The sequence or array-like object to search.

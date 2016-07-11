@@ -6,12 +6,20 @@
 | The full license is in the file LICENSE, distributed with this software.
 |----------------------------------------------------------------------------*/
 import {
+  BoxPanel
+} from '../lib/ui/boxpanel';
+
+import {
   CommandPalette
 } from '../lib/ui/commandpalette';
 
 import {
   commands
 } from '../lib/ui/commands';
+
+import {
+  DockPanel
+} from '../lib/ui/dockpanel';
 
 import {
   keymap
@@ -68,6 +76,17 @@ function createMenu(): Menu {
   root.addItem({ command: 'example:close' });
 
   return root;
+}
+
+
+function createContent(title: string): Widget {
+  let widget = new Widget();
+  widget.addClass('content');
+  widget.addClass(title.toLowerCase());
+  widget.title.label = title;
+  widget.title.closable = true;
+  widget.node.tabIndex = -1;
+  return widget;
 }
 
 
@@ -251,8 +270,30 @@ function main(): void {
     }
   });
 
+  let r1 = createContent('Red');
+  let b1 = createContent('Blue');
+  let g1 = createContent('Green');
+  let y1 = createContent('Yellow');
+
+  let dock = new DockPanel();
+  dock.addWidget(r1);
+  dock.addWidget(b1, { mode: 'split-right', ref: r1 });
+  dock.addWidget(y1, { mode: 'split-bottom', ref: b1 });
+  dock.addWidget(g1, { mode: 'split-left', ref: y1 });
+
+  dock.activeWidgetChanged.connect((s, a) => {console.log(a);});
+
+  BoxPanel.setStretch(dock, 1);
+
+  let main = new BoxPanel({ direction: 'left-to-right' });
+  main.id = 'main';
+  main.addWidget(palette);
+  main.addWidget(dock);
+
+  window.onresize = () => { main.update(); };
+
   Widget.attach(bar, document.body);
-  Widget.attach(palette, document.body);
+  Widget.attach(main, document.body);
 }
 
 
