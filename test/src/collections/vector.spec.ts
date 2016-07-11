@@ -141,7 +141,7 @@ describe('collections/vector', () => {
       });
 
       it('should add a value to an empty vector', () => {
-        let vector = new Vector();
+        let vector = new Vector<number>();
 
         expect(vector.isEmpty).to.be(true);
         expect(vector.length).to.be(0);
@@ -152,6 +152,13 @@ describe('collections/vector', () => {
         expect(vector.isEmpty).to.be(false);
         expect(vector.length).to.be(1);
         expect(vector.back).to.be(99);
+      });
+
+      it('should return the new length of the vector', () => {
+        let vector = new Vector<number>();
+        expect(vector.pushBack(1)).to.be(vector.length);
+        expect(vector.pushBack(1)).to.be(vector.length);
+        expect(vector.pushBack(1)).to.be(vector.length);
       });
 
     });
@@ -194,6 +201,27 @@ describe('collections/vector', () => {
         expect(toArray(vector)).to.eql([7, 4, 8, 5, 9, 6]);
       });
 
+      it('should return the new length of the vector', () => {
+        let vector = new Vector();
+        expect(vector.insert(0, 1)).to.be(vector.length);
+        expect(vector.insert(0, 1)).to.be(vector.length);
+        expect(vector.insert(0, 1)).to.be(vector.length);
+      });
+
+      it('should clamp the index to the bounds of the vector', () => {
+        let vector = new Vector();
+        vector.insert(-10, 9);
+        expect(toArray(vector)).to.eql([9]);
+        vector.insert(-5, 8);
+        expect(toArray(vector)).to.eql([8, 9]);
+        vector.insert(-1, 7);
+        expect(toArray(vector)).to.eql([7, 8, 9]);
+        vector.insert(13, 6);
+        expect(toArray(vector)).to.eql([7, 8, 9, 6]);
+        vector.insert(8, 4);
+        expect(toArray(vector)).to.eql([7, 8, 9, 6, 4]);
+      });
+
     });
 
     describe('#popAt()', () => {
@@ -212,6 +240,14 @@ describe('collections/vector', () => {
         expect(toArray(vector)).to.eql([9]);
         expect(vector.popAt(0)).to.be(9);
         expect(toArray(vector)).to.eql([]);
+      });
+
+      it('should return `undefined` if the index is out of range', () => {
+        let vector = new Vector([7, 4, 8, 5, 9, 6]);
+        expect(vector.popAt(10)).to.be(void 0);
+        expect(toArray(vector)).to.eql([7, 4, 8, 5, 9, 6]);
+        expect(vector.popAt(-2)).to.be(void 0);
+        expect(toArray(vector)).to.eql([7, 4, 8, 5, 9, 6]);
       });
 
     });
