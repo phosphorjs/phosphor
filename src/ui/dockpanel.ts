@@ -136,7 +136,7 @@ class DockPanel extends Widget {
     }
 
     // Connect the focus tracker changed signal.
-    this._tracker.activeWidgetChanged.connect(this._onActivateWidgetChanged, this);
+    this._tracker.currentChanged.connect(this._onCurrentChanged, this);
 
     // Add the overlay node to the panel.
     this.node.appendChild(this._overlay.node);
@@ -166,9 +166,9 @@ class DockPanel extends Widget {
   }
 
   /**
-   * A signal emitted when the active widget has changed.
+   * A signal emitted when the current widget has changed.
    */
-  activeWidgetChanged: ISignal<DockPanel, DockPanel.IActiveWidgetChangedArgs>;
+  currentChanged: ISignal<DockPanel, DockPanel.ICurrentChangedArgs>;
 
   /**
    * The overlay used by the dock panel.
@@ -212,21 +212,21 @@ class DockPanel extends Widget {
   }
 
   /**
-   * The currently active widget.
+   * The current widget in the dock panel.
    *
    * #### Notes
-   * The active widget is the widget among the added widgets which
+   * The current widget is the widget among the added widgets which
    * has the *descendant node* which has most recently been focused.
    *
-   * This is the `activeWidget` of the internal `FocusTracker` which
+   * This is the `currentWidget` of the internal `FocusTracker` which
    * tracks all widgets in the dock panel.
    *
-   * This will be `null` if there is no active widget.
+   * This will be `null` if there is no current widget.
    *
    * This is a read-only property.
    */
-  get activeWidget(): Widget {
-    return this._tracker.activeWidget;
+  get currentWidget(): Widget {
+    return this._tracker.currentWidget;
   }
 
   /**
@@ -235,8 +235,8 @@ class DockPanel extends Widget {
    * @param widget - The widget of interest.
    *
    * #### Notes
-   * This will ensure that the widget is the current visible widget in
-   * its host tab panel, and will send a focus request to the widget.
+   * This will ensure that the widget is the current visible widget
+   * in its host tab panel and post the widget an activate request.
    */
   activateWidget(widget: Widget): void {
     // Ensure the widget is contained by the panel.
@@ -825,10 +825,10 @@ class DockPanel extends Widget {
       return panel;
     }
 
-    // Otherwise, use the tab panel of the active widget if possible.
-    let activeWidget = this._tracker.activeWidget;
-    if (activeWidget) {
-      return activeWidget.parent.parent as TabPanel;
+    // Otherwise, use the tab panel of the current widget if possible.
+    let current = this._tracker.currentWidget;
+    if (current) {
+      return current.parent.parent as TabPanel;
     }
 
     // Otherwise, fallback on using the top-left tab panel.
@@ -1023,10 +1023,10 @@ class DockPanel extends Widget {
   }
 
   /**
-   * Handle the `activeWidgetChanged` signal from the focus tracker.
+   * Handle the `currentChanged` signal from the focus tracker.
    */
-  private _onActivateWidgetChanged(sender: FocusTracker<Widget>, args: FocusTracker.IActiveWidgetChangedArgs<Widget>): void {
-    this.activeWidgetChanged.emit(args);
+  private _onCurrentChanged(sender: FocusTracker<Widget>, args: FocusTracker.ICurrentChangedArgs<Widget>): void {
+    this.currentChanged.emit(args);
   }
 
   private _spacing: number;
@@ -1041,7 +1041,7 @@ class DockPanel extends Widget {
 
 
 // Define the signals for the `FocusTracker` class.
-defineSignal(DockPanel.prototype, 'activeWidgetChanged');
+defineSignal(DockPanel.prototype, 'currentChanged');
 
 
 /**
@@ -1050,17 +1050,17 @@ defineSignal(DockPanel.prototype, 'activeWidgetChanged');
 export
 namespace DockPanel {
   /**
-   * An arguments object for the `activeWidgetChanged` signal.
+   * An arguments object for the `currentChanged` signal.
    */
   export
-  interface IActiveWidgetChangedArgs {
+  interface ICurrentChangedArgs {
     /**
-     * The old value for the `activeWidget`, or `null`.
+     * The old value for the `currentWidget`, or `null`.
      */
     oldValue: Widget;
 
     /**
-     * The new value for the `activeWidget`, or `null`.
+     * The new value for the `currentWidget`, or `null`.
      */
     newValue: Widget;
   }
