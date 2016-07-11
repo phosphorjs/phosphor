@@ -236,7 +236,7 @@ class DockPanel extends Widget {
    *
    * #### Notes
    * This will ensure that the widget is the current visible widget
-   * in its host tab panel and send the widget an activate request.
+   * in its host tab panel and post the widget an activate request.
    */
   activateWidget(widget: Widget): void {
     // Ensure the widget is contained by the panel.
