@@ -68,16 +68,16 @@ class FocusTracker<T extends Widget> implements IDisposable {
     });
 
     // Clear the internal data structures.
-    this._activeWidget = null;
+    this._currentWidget = null;
     this._nodes.clear();
     this._numbers.clear();
     this._widgets.clear();
   }
 
   /**
-   * A signal emitted when the active widget has changed.
+   * A signal emitted when the current widget has changed.
    */
-  activeWidgetChanged: ISignal<FocusTracker<T>, FocusTracker.IActiveWidgetChangedArgs<T>>;
+  currentChanged: ISignal<FocusTracker<T>, FocusTracker.ICurrentChangedArgs<T>>;
 
   /**
    * A flag indicated whether the tracker is disposed.
@@ -90,29 +90,29 @@ class FocusTracker<T extends Widget> implements IDisposable {
   }
 
   /**
-   * The currently active widget.
+   * The current widget in the tracker.
    *
    * #### Notes
-   * The active widget is the widget among the tracked widgets which
+   * The current widget is the widget among the tracked widgets which
    * has the *descendant node* which has most recently been focused.
    *
-   * The active widget will not be updated if the node loses focus. It
+   * The current widget will not be updated if the node loses focus. It
    * will only be updated when a different tracked widget gains focus.
    *
-   * If the active widget is removed from the tracker, the previously
-   * active widget will be restored.
+   * If the current widget is removed from the tracker, the previous
+   * current widget will be restored.
    *
    * This behavior is intended to follow a user's conceptual model of
    * a semantically "active" widget, where the "last thing of type X"
    * to be interacted with is the "active instance of X", regardless
    * of whether that instance still has focus.
    *
-   * This will be `null` if there is no active widget.
+   * This will be `null` if there is no current widget.
    *
    * This is a read-only property.
    */
-  get activeWidget(): T {
-    return this._activeWidget;
+  get currentWidget(): T {
+    return this._currentWidget;
   }
 
   /**
@@ -138,7 +138,7 @@ class FocusTracker<T extends Widget> implements IDisposable {
    * have gained focus. A widget with a larger number has gained focus
    * more recently than a widget with a smaller number.
    *
-   * The `activeWidget` will always have the largest focus number.
+   * The `currentWidget` will always have the largest focus number.
    *
    * All widgets start with a focus number of `-1`, which indicates that
    * the widget has not been focused since being added to the tracker.
@@ -168,7 +168,7 @@ class FocusTracker<T extends Widget> implements IDisposable {
    *
    * #### Notes
    * If the widget is currently focused, it will automatically become
-   * the new `activeWidget`.
+   * the new `currentWidget`.
    *
    * A widget will be automatically removed from the tracker if it
    * is disposed after being added.
@@ -200,16 +200,16 @@ class FocusTracker<T extends Widget> implements IDisposable {
     // Connect the disposed signal handler.
     widget.disposed.connect(this._onWidgetDisposed, this);
 
-    // Update the active widget if the new widget has focus.
-    if (focused) this._setActiveWidget(widget);
+    // Update the current widget if the new widget has focus.
+    if (focused) this._setCurrentWidget(widget);
   }
 
   /**
    * Remove a widget from the focus tracker.
    *
    * #### Notes
-   * If the widget is the `activeWidget`, the previously active widget
-   * will become the new `activeWidget`.
+   * If the widget is the `currentWidget`, the previous current widget
+   * will become the new `currentWidget`.
    *
    * A widget will be automatically removed from the tracker if it
    * is disposed after being added.
@@ -233,8 +233,8 @@ class FocusTracker<T extends Widget> implements IDisposable {
     this._nodes.delete(widget.node);
     this._numbers.delete(widget);
 
-    // If the widget is not the active widget, we're done.
-    if (this._activeWidget !== widget) {
+    // If the widget is not the current widget, we're done.
+    if (this._currentWidget !== widget) {
       return;
     }
 
@@ -248,8 +248,8 @@ class FocusTracker<T extends Widget> implements IDisposable {
       return a - b;
     }) || null;
 
-    // Finally, update the active widget.
-    this._setActiveWidget(previous);
+    // Finally, update the current widget.
+    this._setCurrentWidget(previous);
   }
 
   /**
@@ -269,20 +269,20 @@ class FocusTracker<T extends Widget> implements IDisposable {
   }
 
   /**
-   * Set the active widget for the tracker.
+   * Set the current widget for the tracker.
    */
-  private _setActiveWidget(widget: T): void {
+  private _setCurrentWidget(widget: T): void {
     // Do nothing if there is no change.
-    if (this._activeWidget === widget) {
+    if (this._currentWidget === widget) {
       return;
     }
 
-    // Swap the active widget.
-    let old = this._activeWidget;
-    this._activeWidget = widget;
+    // Swap the current widget.
+    let old = this._currentWidget;
+    this._currentWidget = widget;
 
     // Emit the changed signal.
-    this.activeWidgetChanged.emit({ oldValue: old, newValue: widget });
+    this.currentChanged.emit({ oldValue: old, newValue: widget });
   }
 
   /**
@@ -295,8 +295,8 @@ class FocusTracker<T extends Widget> implements IDisposable {
     // Update the focus number for the widget.
     this._numbers.set(widget, this._counter++);
 
-    // Update the active widget.
-    this._setActiveWidget(widget);
+    // Update the current widget.
+    this._setCurrentWidget(widget);
   }
 
   /**
@@ -307,7 +307,7 @@ class FocusTracker<T extends Widget> implements IDisposable {
   }
 
   private _counter = 0;
-  private _activeWidget: T = null;
+  private _currentWidget: T = null;
   private _widgets = new Vector<T>();
   private _numbers = new Map<T, number>();
   private _nodes = new Map<HTMLElement, T>();
@@ -315,7 +315,7 @@ class FocusTracker<T extends Widget> implements IDisposable {
 
 
 // Define the signals for the `FocusTracker` class.
-defineSignal(FocusTracker.prototype, 'activeWidgetChanged');
+defineSignal(FocusTracker.prototype, 'currentChanged');
 
 
 /**
@@ -324,17 +324,17 @@ defineSignal(FocusTracker.prototype, 'activeWidgetChanged');
 export
 namespace FocusTracker {
   /**
-   * An arguments object for the `activeWidgetChanged` signal.
+   * An arguments object for the `currentChanged` signal.
    */
   export
-  interface IActiveWidgetChangedArgs<T extends Widget> {
+  interface ICurrentChangedArgs<T extends Widget> {
     /**
-     * The old value for the `activeWidget`, or `null`.
+     * The old value for the `currentWidget`, or `null`.
      */
     oldValue: T;
 
     /**
-     * The new value for the `activeWidget`, or `null`.
+     * The new value for the `currentWidget`, or `null`.
      */
     newValue: T;
   }
