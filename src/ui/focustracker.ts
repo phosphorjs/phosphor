@@ -10,7 +10,7 @@ import {
 } from '../algorithm/iteration';
 
 import {
-  indexOf, max
+  max
 } from '../algorithm/searching';
 
 import {
@@ -229,7 +229,7 @@ class FocusTracker<T extends Widget> implements IDisposable {
     widget.node.removeEventListener('focus', this, true);
 
     // Remove the widget from the internal data structures.
-    this._widgets.remove(indexOf(this._widgets, widget));
+    this._widgets.remove(widget);
     this._nodes.delete(widget.node);
     this._numbers.delete(widget);
 
