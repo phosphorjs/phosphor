@@ -129,8 +129,8 @@ class CommandItem implements IDisposable {
     this._command = options.command;
     this._args = options.args || null;
     this._category = Private.normalizeCategory(options.category || 'general');
-    this._commands = options.commands || commands;
-    this._keymap = options.keymap || keymap;
+    this._commands = options.commandRegistry || commands;
+    this._keymap = options.keymapManager || keymap;
   }
 
   /**
@@ -271,14 +271,14 @@ namespace CommandItem {
      *
      * The default is the shared `commands` singleton.
      */
-    commands?: CommandRegistry;
+    commandRegistry?: CommandRegistry;
 
     /**
      * The keymap manager for use with the command item.
      *
      * The default is the shared `keymap` singleton.
      */
-    keymap?: KeymapManager;
+    keymapManager?: KeymapManager;
   }
 }
 
@@ -296,8 +296,8 @@ class CommandPalette extends Widget {
     this.addClass(PALETTE_CLASS);
     this.setFlag(WidgetFlag.DisallowLayout);
     this._renderer = options.renderer || CommandPalette.defaultRenderer;
-    this._commands = options.commands || commands;
-    this._keymap = options.keymap || keymap;
+    this._commands = options.commandRegistry || commands;
+    this._keymap = options.keymapManager || keymap;
   }
 
   /**
@@ -373,14 +373,19 @@ class CommandPalette extends Widget {
   /**
    * Add a command item to the command palette.
    *
-   * @param value - The command item to add to the palette, or an
-   *   options object to be converted into a command item.
+   * @param options - An options object to be converted into a command item.
    *
    * @returns The command item added to the palette.
    */
-  addItem(value: CommandItem | CommandItem.IOptions): CommandItem {
-    // Coerce the value to a command item.
-    let item = Private.asCommandItem(value, this._keymap, this._commands);
+  addItem(options: CommandItem.IOptions): CommandItem {
+    // Create a new command item from the options.
+    let item = new CommandItem({
+      command: options.command,
+      args: options.args,
+      category: options.category,
+      commandRegistry: this._commands,
+      keymapManager: this._keymap
+    });
 
     // Add the item to the vector.
     this._items.pushBack(item);
@@ -835,14 +840,14 @@ namespace CommandPalette {
      *
      * The default is the shared `commands` singleton.
      */
-    commands?: CommandRegistry;
+    commandRegistry?: CommandRegistry;
 
     /**
      * The keymap manager for use with the command palette.
      *
      * The default is the shared `keymap` singleton.
      */
-    keymap?: KeymapManager;
+    keymapManager?: KeymapManager;
   }
 
   /**
@@ -1138,26 +1143,6 @@ namespace Private {
     node.appendChild(search);
     node.appendChild(content);
     return node;
-  }
-
-  /**
-   * Coerce a command item or options into a real command item.
-   */
-  export
-  function asCommandItem(value: CommandItem | CommandItem.IOptions, defaultKeymap: KeymapManager, defaultCommands: CommandRegistry): CommandItem {
-    if (value instanceof CommandItem) {
-      return value;
-    }
-    let options = value as CommandItem.IOptions;
-    if (options.keymap && options.keymap !== defaultKeymap) {
-      throw new Error('Conflicting keymap manager for item');
-    }
-    if (options.commands && options.commands !== defaultCommands) {
-      throw new Error('Conflicting command registry for item');
-    }
-    options.keymap = defaultKeymap;
-    options.commands = defaultCommands;
-    return new CommandItem(options);
   }
 
   /**
