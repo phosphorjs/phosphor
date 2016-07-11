@@ -1615,7 +1615,7 @@ describe('ui/menu', () => {
         menu.dispose();
       });
 
-      it('should remove the menu from its parent and focus the parent', () => {
+      it('should remove the menu from its parent and activate the parent', (done) => {
         let sub = new LogMenu();
         sub.addItem({ command: DEFAULT_CMD });
         let menu = new LogMenu();
@@ -1627,8 +1627,11 @@ describe('ui/menu', () => {
         sub.close();
         expect(sub.methods.indexOf('onCloseRequest')).to.not.be(-1);
         expect(menu.childMenu).to.be(null);
-        expect(document.activeElement).to.be(menu.node);
-        menu.dispose();
+        requestAnimationFrame(() => {
+          expect(document.activeElement).to.be(menu.node);
+          menu.dispose();
+          done();
+        });
       });
 
       it('should emit the `aboutToClose` signal if attached', () => {

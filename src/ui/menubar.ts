@@ -502,7 +502,7 @@ class MenuBar extends Widget {
     if (kc === 27) {
       this._closeChildMenu();
       this.activeIndex = -1;
-      this.blur();
+      this.deactivate();
       return;
     }
 

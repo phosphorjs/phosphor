@@ -382,23 +382,23 @@ class Widget implements IDisposable, IMessageHandler {
   }
 
   /**
-   * Send a `'focus-request'` message to the widget.
+   * Post an `'activate-request'` message to the widget.
    *
    * #### Notes
-   * This is a simple convenience method for sending the message.
+   * This is a simple convenience method for posting the message.
    */
-  focus(): void {
-    sendMessage(this, WidgetMessage.FocusRequest);
+  activate(): void {
+    postMessage(this, WidgetMessage.ActivateRequest);
   }
 
   /**
-   * Send a `'blur-request'` message to the widget.
+   * Post an `'deactivate-request'` message to the widget.
    *
    * #### Notes
-   * This is a simple convenience method for sending the message.
+   * This is a simple convenience method for posting the message.
    */
-  blur(): void {
-    sendMessage(this, WidgetMessage.BlurRequest);
+  deactivate(): void {
+    postMessage(this, WidgetMessage.DeactivateRequest);
   }
 
   /**
@@ -542,13 +542,13 @@ class Widget implements IDisposable, IMessageHandler {
       this.clearFlag(WidgetFlag.IsVisible);
       this.clearFlag(WidgetFlag.IsAttached);
       break;
-    case 'focus-request':
+    case 'activate-request':
       this.notifyLayout(msg);
-      this.onFocusRequest(msg);
+      this.onActivateRequest(msg);
       break;
-    case 'blur-request':
+    case 'deactivate-request':
       this.notifyLayout(msg);
-      this.onBlurRequest(msg);
+      this.onDeactivateRequest(msg);
       break;
     case 'close-request':
       this.notifyLayout(msg);
@@ -583,22 +583,22 @@ class Widget implements IDisposable, IMessageHandler {
   }
 
   /**
-   * A message handler invoked on a `'focus-request'` message.
+   * A message handler invoked on an `'activate-request'` message.
    *
    * #### Notes
    * The default implementation focuses the widget's node.
    */
-  protected onFocusRequest(msg: Message): void {
+  protected onActivateRequest(msg: Message): void {
     if (this.isAttached) this.node.focus();
   }
 
   /**
-   * A message handler invoked on a `'blur-request'` message.
+   * A message handler invoked on an `'deactivate-request'` message.
    *
    * #### Notes
    * The default implementation blurs the widget's node.
    */
-  protected onBlurRequest(msg: Message): void {
+  protected onDeactivateRequest(msg: Message): void {
     if (this.isAttached) this.node.blur();
   }
 
@@ -1248,24 +1248,26 @@ namespace WidgetMessage {
   const FitRequest = new ConflatableMessage('fit-request');
 
   /**
-   * A singleton conflatable `'focus-request'` message.
+   * A singleton conflatable `'activate-request'` message.
    *
    * #### Notes
    * This message should be dispatched to a widget when it should
-   * set input focus to its node or focus delegate.
+   * perform the actions necessary to activate the widget, which
+   * may include focusing its node or descendant node.
    */
   export
-  const FocusRequest = new ConflatableMessage('focus-request');
+  const ActivateRequest = new ConflatableMessage('activate-request');
 
   /**
-   * A singleton conflatable `'blur-request'` message.
+   * A singleton conflatable `'deactivate-request'` message.
    *
    * #### Notes
    * This message should be dispatched to a widget when it should
-   * remove input focus from its node or focus delegate.
+   * perform the actions necessary to decactivate the widget, which
+   * may include blurring its node or descendant node.
    */
   export
-  const BlurRequest = new ConflatableMessage('blur-request');
+  const DeactivateRequest = new ConflatableMessage('deactivate-request');
 
   /**
    * A singleton conflatable `'close-request'` message.

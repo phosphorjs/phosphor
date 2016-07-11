@@ -46,14 +46,14 @@ class LogWidget extends Widget {
     this.methods.push('notifyLayout');
   }
 
-  protected onFocusRequest(msg: Message): void {
-    super.onFocusRequest(msg);
-    this.methods.push('onFocusRequest');
+  protected onActivateRequest(msg: Message): void {
+    super.onActivateRequest(msg);
+    this.methods.push('onActivateRequest');
   }
 
-  protected onBlurRequest(msg: Message): void {
-    super.onBlurRequest(msg);
-    this.methods.push('onBlurRequest');
+  protected onDeactivateRequest(msg: Message): void {
+    super.onDeactivateRequest(msg);
+    this.methods.push('onDeactivateRequest');
   }
 
   protected onCloseRequest(msg: Message): void {
@@ -715,24 +715,32 @@ describe('ui/widget', () => {
 
     });
 
-    describe('#focus()', () => {
+    describe('#activate()', () => {
 
-      it('should send a `focus-request` message', () => {
+      it('should post an `activate-request` message', (done) => {
         let widget = new LogWidget();
         expect(widget.messages).to.eql([]);
-        widget.focus();
-        expect(widget.messages).to.eql(['focus-request']);
+        widget.activate();
+        expect(widget.messages).to.eql([]);
+        requestAnimationFrame(() => {
+          expect(widget.messages).to.eql(['activate-request']);
+          done();
+        });
+
       });
 
     });
 
-    describe('#blur()', () => {
+    describe('#deactivate()', () => {
 
-      it('should send a `blur-request` message', () => {
+      it('should post a `deactivate-request` message', (done) => {
         let widget = new LogWidget();
+        widget.deactivate();
         expect(widget.messages).to.eql([]);
-        widget.blur();
-        expect(widget.messages).to.eql(['blur-request']);
+        requestAnimationFrame(() => {
+          expect(widget.messages).to.eql(['deactivate-request']);
+          done();
+        });
       });
 
     });
@@ -902,17 +910,17 @@ describe('ui/widget', () => {
 
     });
 
-    describe('#onFocusRequest()', () => {
+    describe('#onActivateRequest()', () => {
 
-      it('should be invoked on a `focus-request', () => {
+      it('should be invoked on an `activate-request', () => {
         let widget = new LogWidget();
-        sendMessage(widget, WidgetMessage.FocusRequest);
-        expect(widget.methods.indexOf('onFocusRequest')).to.not.be(-1);
+        sendMessage(widget, WidgetMessage.ActivateRequest);
+        expect(widget.methods.indexOf('onActivateRequest')).to.not.be(-1);
       });
 
       it('should notify the layout', () => {
         let widget = new LogWidget();
-        sendMessage(widget, WidgetMessage.FocusRequest);
+        sendMessage(widget, WidgetMessage.ActivateRequest);
         expect(widget.methods.indexOf('notifyLayout')).to.not.be(-1);
       });
 
@@ -920,24 +928,24 @@ describe('ui/widget', () => {
         let widget = new Widget();
         widget.node.tabIndex = -1;
         Widget.attach(widget, document.body);
-        sendMessage(widget, WidgetMessage.FocusRequest);
+        sendMessage(widget, WidgetMessage.ActivateRequest);
         expect(document.activeElement).to.be(widget.node);
         widget.dispose();
       });
 
     });
 
-    describe('#onBlurRequest()', () => {
+    describe('#onDeactivateRequest()', () => {
 
-      it('should be invoked on a `blur-request', () => {
+      it('should be invoked on a `deactivate-request', () => {
         let widget = new LogWidget();
-        sendMessage(widget, WidgetMessage.BlurRequest);
-        expect(widget.methods.indexOf('onBlurRequest')).to.not.be(-1);
+        sendMessage(widget, WidgetMessage.DeactivateRequest);
+        expect(widget.methods.indexOf('onDeactivateRequest')).to.not.be(-1);
       });
 
       it('should notify the layout', () => {
         let widget = new LogWidget();
-        sendMessage(widget, WidgetMessage.BlurRequest);
+        sendMessage(widget, WidgetMessage.DeactivateRequest);
         expect(widget.methods.indexOf('notifyLayout')).to.not.be(-1);
       });
 
@@ -947,7 +955,7 @@ describe('ui/widget', () => {
         Widget.attach(widget, document.body);
         widget.node.focus();
         expect(document.activeElement).to.be(widget.node);
-        sendMessage(widget, WidgetMessage.BlurRequest);
+        sendMessage(widget, WidgetMessage.DeactivateRequest);
         expect(document.activeElement).to.not.be(widget.node);
         widget.dispose();
       });
