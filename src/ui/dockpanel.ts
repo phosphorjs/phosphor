@@ -247,8 +247,8 @@ class DockPanel extends Widget {
     // Ensure the widget is the current widget.
     (widget.parent.parent as TabPanel).currentWidget = widget;
 
-    // Send a focus request to the widget.
-    widget.focus();
+    // Activate the widget.
+    widget.activate();
   }
 
   /**
@@ -797,8 +797,7 @@ class DockPanel extends Widget {
    * Dispose of a tab panel created for the dock panel.
    */
   private _disposeTabPanel(panel: TabPanel): void {
-    let i = indexOf(this._tabPanels, panel);
-    if (i !== -1) this._tabPanels.remove(i);
+    this._tabPanels.remove(panel);
     panel.dispose();
   }
 
@@ -806,8 +805,7 @@ class DockPanel extends Widget {
    * Dispose of a split panel created for the dock panel.
    */
   private _disposeSplitPanel(panel: SplitPanel): void {
-    let i = indexOf(this._splitPanels, panel);
-    if (i !== -1) this._splitPanels.remove(i);
+    this._splitPanels.remove(panel);
     panel.dispose();
   }
 
@@ -1017,14 +1015,8 @@ class DockPanel extends Widget {
    * Handle the `widgetRemoved` signal from a stacked panel.
    */
   private _onWidgetRemoved(sender: StackedPanel, widget: Widget): void {
-    // Remove the widget from the sequence.
-    let i = indexOf(this._widgets, widget);
-    if (i !== -1) this._widgets.remove(i);
-
-    // Remove the widget from the focus tracker
+    this._widgets.remove(widget);
     this._tracker.remove(widget);
-
-    // Remove the tab panel host if it's empty.
     if (sender.widgets.length === 0) {
       this._removeTabPanel(sender.parent as TabPanel);
     }

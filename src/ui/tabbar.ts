@@ -516,13 +516,9 @@ class TabBar extends Widget {
     // Release the mouse before making any changes.
     this._releaseMouse();
 
-    // Look up the tab and title.
-    let tab = this._tabs.at(i);
-    let title = this._titles.at(i);
-
     // Remove the tab and title from the vectors.
-    this._tabs.popAt(i);
-    this._titles.popAt(i);
+    let tab = this._tabs.popAt(i);
+    let title = this._titles.popAt(i);
 
     // Remove the title from the dirty set.
     this._dirtyTitles.delete(title);

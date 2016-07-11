@@ -738,12 +738,11 @@ class Menu extends Widget {
     // Reset the active index.
     this.activeIndex = -1;
 
-    // Look up the item node.
-    let node = this._nodes.at(i);
-
-    // Remove the item and node from the vectors.
+    // Remove the item from the vector.
     this._items.popAt(i);
-    this._nodes.popAt(i);
+
+    // Remove the node from the vector.
+    let node = this._nodes.popAt(i);
 
     // Remove the node from the content node.
     this.contentNode.removeChild(node);
