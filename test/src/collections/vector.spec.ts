@@ -196,22 +196,42 @@ describe('collections/vector', () => {
 
     });
 
-    describe('#remove()', () => {
+    describe('#popAt()', () => {
 
       it('should remove the value at a specified index', () => {
         let vector = new Vector([7, 4, 8, 5, 9, 6]);
-        vector.remove(1);
+        expect(vector.popAt(1)).to.be(4);
         expect(toArray(vector)).to.eql([7, 8, 5, 9, 6]);
-        vector.remove(2);
+        expect(vector.popAt(2)).to.be(5);
         expect(toArray(vector)).to.eql([7, 8, 9, 6]);
-        vector.remove(3);
+        expect(vector.popAt(3)).to.be(6);
         expect(toArray(vector)).to.eql([7, 8, 9]);
-        vector.remove(0);
+        expect(vector.popAt(0)).to.be(7);
         expect(toArray(vector)).to.eql([8, 9]);
-        vector.remove(0);
+        expect(vector.popAt(0)).to.be(8);
         expect(toArray(vector)).to.eql([9]);
-        vector.remove(0);
+        expect(vector.popAt(0)).to.be(9);
         expect(toArray(vector)).to.eql([]);
+      });
+
+    });
+
+    describe('#remove()', () => {
+
+      it('should remove the first instance of the value', () => {
+        let vector = new Vector([7, 4, 8, 5, 9, 6, 7, 4]);
+        expect(vector.remove(4)).to.be(1);
+        expect(toArray(vector)).to.eql([7, 8, 5, 9, 6, 7, 4]);
+        expect(vector.remove(5)).to.be(2);
+        expect(toArray(vector)).to.eql([7, 8, 9, 6, 7, 4]);
+        expect(vector.remove(6)).to.be(3);
+        expect(toArray(vector)).to.eql([7, 8, 9, 7, 4]);
+        expect(vector.remove(7)).to.be(0);
+        expect(toArray(vector)).to.eql([8, 9, 7, 4]);
+        expect(vector.remove(8)).to.be(0);
+        expect(toArray(vector)).to.eql([9, 7, 4]);
+        expect(vector.remove(7)).to.be(1);
+        expect(toArray(vector)).to.eql([9, 4]);
       });
 
     });

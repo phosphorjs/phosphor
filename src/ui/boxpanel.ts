@@ -348,7 +348,7 @@ class BoxLayout extends PanelLayout {
    */
   protected detachWidget(index: number, widget: Widget): void {
     // Remove the sizer for the widget.
-    this._sizers.remove(index);
+    this._sizers.popAt(index);
 
     // Send a `'before-detach'` message if the parent is attached.
     if (this.parent.isAttached) sendMessage(widget, WidgetMessage.BeforeDetach);

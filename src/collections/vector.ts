@@ -10,6 +10,10 @@ import {
 } from '../algorithm/iteration';
 
 import {
+  indexOf
+} from '../algorithm/searching';
+
+import {
   IMutableSequence
 } from '../algorithm/sequence';
 
@@ -189,6 +193,31 @@ class Vector<T> implements IMutableSequence<T> {
   }
 
   /**
+   * Remove and return the value at the given index.
+   *
+   * @returns The item at the index.
+   *
+   * #### Complexity
+   * Constant.
+   *
+   * #### Iterator Validity
+   * Iterators pointing at the removed value and beyond are invalidated.
+   *
+   * #### Undefined Behavior
+   * An `index` which is non-integral or out of range.
+   */
+  popAt(index: number): T {
+    let array = this._array;
+    let item = array[index];
+    let n = array.length;
+    for (let i = index + 1; i < n; ++i) {
+      array[i - 1] = array[i];
+    }
+    array.length = n - 1;
+    return item;
+  }
+
+  /**
    * Insert a value into the vector at a specific index.
    *
    * @param index - The positive integer index of interest.
@@ -214,26 +243,21 @@ class Vector<T> implements IMutableSequence<T> {
   }
 
   /**
-   * Remove the value at a specific index from the vector.
+   * Remove the first incidence of the specified value from the vector.
    *
-   * @param index - The positive integer index of interest.
+   * @returns The index of the item that was removed, or `-1` if the
+   *  value is not contained in the vector.
    *
    * #### Complexity
    * Linear.
    *
    * #### Iterator Validity
    * Iterators pointing at the removed value and beyond are invalidated.
-   *
-   * #### Undefined Behavior
-   * An `index` which is non-integral or out of range.
    */
-  remove(index: number): void {
-    let array = this._array;
-    let n = array.length;
-    for (let i = index + 1; i < n; ++i) {
-      array[i - 1] = array[i];
-    }
-    array.length = n - 1;
+  remove(item: T): number {
+    let index = indexOf(this._array, item);
+    this.popAt(index);
+    return index;
   }
 
   /**

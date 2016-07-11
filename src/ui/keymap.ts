@@ -10,7 +10,7 @@ import {
 } from '../algorithm/json';
 
 import {
-  findLastIndex, indexOf
+  findLastIndex
 } from '../algorithm/searching';
 
 import {
@@ -501,8 +501,7 @@ class KeymapManager {
     // Return a disposable which will remove the binding.
     return new DisposableDelegate(() => {
       // Remove the binding from the vector.
-      let i = indexOf(this._bindings, kb);
-      if (i !== -1) this._bindings.remove(i);
+      this._bindings.remove(kb);
 
       // Emit the `bindingChanged` signal.
       this.bindingChanged.emit({ binding: kb, type: 'removed' });
