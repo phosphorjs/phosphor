@@ -29,7 +29,7 @@ import {
  *
  * #### Example
  * ```typescript
- * import { move } from 'phosphor-core/lib/mutation';
+ * import { move } from 'phosphor/lib/algorithm/mutation';
  *
  * let data = [0, 1, 2, 3, 4];
  * move(data, 1, 2);  // [0, 2, 1, 3, 4]
@@ -72,7 +72,7 @@ function move<T>(object: MutableSequenceOrArrayLike<T>, fromIndex: number, toInd
  *
  * #### Example
  * ```typescript
- * import { reverse } from 'phosphor-core/lib/mutation';
+ * import { reverse } from 'phosphor/lib/algorithm/mutation';
  *
  * let data = [0, 1, 2, 3, 4];
  * reverse(data, 1, 3);  // [0, 3, 2, 1, 4]
@@ -122,7 +122,7 @@ function reverse<T>(object: MutableSequenceOrArrayLike<T>, first?: number, last?
  *
  * #### Example
  * ```typescript
- * import { rotate } from 'phosphor-core/lib/mutation';
+ * import { rotate } from 'phosphor/lib/algorithm/mutation';
  *
  * let data = [0, 1, 2, 3, 4];
  * rotate(data, 2);   // [2, 3, 4, 0, 1]
