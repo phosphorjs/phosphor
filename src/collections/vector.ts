@@ -10,10 +10,6 @@ import {
 } from '../algorithm/iteration';
 
 import {
-  indexOf
-} from '../algorithm/searching';
-
-import {
   IMutableSequence
 } from '../algorithm/sequence';
 
@@ -166,14 +162,16 @@ class Vector<T> implements IMutableSequence<T> {
    *
    * @param value - The value to add to the back of the vector.
    *
+   * @returns The new length of the vector.
+   *
    * #### Complexity
    * Constant.
    *
    * #### Iterator Validity
    * No changes.
    */
-  pushBack(value: T): void {
-    this._array.push(value);
+  pushBack(value: T): number {
+    return this._array.push(value);
   }
 
   /**
@@ -193,9 +191,12 @@ class Vector<T> implements IMutableSequence<T> {
   }
 
   /**
-   * Remove and return the value at the given index.
+   * Remove and return the value at a specific index.
    *
-   * @returns The item at the index.
+   * @param index - The index of the value of interest.
+   *
+   * @returns The value at the specified index, or `undefined` if the
+   *   index is out of range.
    *
    * #### Complexity
    * Constant.
@@ -204,25 +205,30 @@ class Vector<T> implements IMutableSequence<T> {
    * Iterators pointing at the removed value and beyond are invalidated.
    *
    * #### Undefined Behavior
-   * An `index` which is non-integral or out of range.
+   * An `index` which is non-integral.
    */
   popAt(index: number): T {
     let array = this._array;
-    let item = array[index];
     let n = array.length;
+    if (index < 0 || index >= n) {
+      return void 0;
+    }
+    let value = array[index];
     for (let i = index + 1; i < n; ++i) {
       array[i - 1] = array[i];
     }
     array.length = n - 1;
-    return item;
+    return value;
   }
 
   /**
    * Insert a value into the vector at a specific index.
    *
-   * @param index - The positive integer index of interest.
+   * @param index - The index at which to insert the value.
    *
    * @param value - The value to set at the specified index.
+   *
+   * @returns The new length of the vector.
    *
    * #### Complexity
    * Linear.
@@ -230,33 +236,43 @@ class Vector<T> implements IMutableSequence<T> {
    * #### Iterator Validity
    * No changes.
    *
+   * #### Notes
+   * The `index` will be clamped to the bounds of the vector.
+   *
    * #### Undefined Behavior
-   * An `index` which is non-integral or out of range.
+   * An `index` which is non-integral.
    */
-  insert(index: number, value: T): void {
+  insert(index: number, value: T): number {
     let array = this._array;
-    let i = array.length;
-    for (; i > index; --i) {
+    let n = array.length;
+    index = Math.max(0, Math.min(index, n));
+    for (let i = n; i > index; --i) {
       array[i] = array[i - 1];
     }
-    array[i] = value;
+    array[index] = value;
+    return n + 1;
   }
 
   /**
-   * Remove the first incidence of the specified value from the vector.
+   * Remove the first occurrence of a value from the vector.
    *
-   * @returns The index of the item that was removed, or `-1` if the
-   *  value is not contained in the vector.
+   * @param value - The value of interest.
+   *
+   * @returns The index of the removed value, or `-1` if the value
+   *   is not contained in the vector.
    *
    * #### Complexity
    * Linear.
    *
    * #### Iterator Validity
    * Iterators pointing at the removed value and beyond are invalidated.
+   *
+   * #### Notes
+   * Comparison is performed using strict `===` equality.
    */
-  remove(item: T): number {
-    let index = indexOf(this._array, item);
-    this.popAt(index);
+  remove(value: T): number {
+    let index = this._array.indexOf(value);
+    if (index !== -1) this.popAt(index);
     return index;
   }
 
