@@ -28,11 +28,11 @@ import {
 } from '../../../lib/core/messaging';
 
 import {
-  commands
+  CommandRegistry, commands
 } from '../../../lib/ui/commands';
 
 import {
-  keymap
+  KeymapManager, keymap
 } from '../../../lib/ui/keymap';
 
 import {
@@ -110,7 +110,14 @@ describe('ui/menu', () => {
     describe('#constructor()', () => {
 
       it('should accept options for initializing the menu item', () => {
-        let item = new MenuItem({});
+        let item = new MenuItem({
+          type: 'separator',
+          command: 'foo',
+          args: null,
+          menu: new Menu(),
+          commandRegistry: new CommandRegistry(),
+          keymapManager: new KeymapManager()
+        });
         expect(item).to.be.a(MenuItem);
       });
 
@@ -511,7 +518,11 @@ describe('ui/menu', () => {
 
       it('should take options for initializing the menu', () => {
         let renderer = new Menu.Renderer();
-        let menu = new Menu({ renderer });
+        let menu = new Menu({
+          renderer,
+          commandRegistry: new CommandRegistry(),
+          keymapManager: new KeymapManager()
+        });
         expect(menu).to.be.a(Menu);
       });
 
@@ -526,7 +537,7 @@ describe('ui/menu', () => {
 
       it('should dispose of the resources held by the menu', () => {
         let menu = new Menu();
-        menu.addItem(new MenuItem({}));
+        menu.addItem({});
         menu.dispose();
         expect(toArray(menu.items)).to.eql([]);
         expect(menu.isDisposed).to.be(true);
@@ -595,9 +606,8 @@ describe('ui/menu', () => {
 
       it('should only be emitted for the root menu in a hierarchy', () => {
         let sub = new Menu();
-        let item = new MenuItem({ type: 'submenu', menu: sub });
         let menu = new Menu();
-        menu.addItem(item);
+        let item = menu.addItem({ type: 'submenu', menu: sub });
         Widget.attach(menu, document.body);
         menu.activeItem = item;
         menu.triggerActiveItem();
@@ -621,9 +631,8 @@ describe('ui/menu', () => {
 
       it('should get the parent menu of the menu', () => {
         let sub = new Menu();
-        let item = new MenuItem({ type: 'submenu', menu: sub });
         let menu = new Menu();
-        menu.addItem(item);
+        let item = menu.addItem({ type: 'submenu', menu: sub });
         Widget.attach(menu, document.body);
         menu.activeItem = item;
         menu.triggerActiveItem();
@@ -633,9 +642,8 @@ describe('ui/menu', () => {
 
       it('should be `null` if the menu is not an open submenu', () => {
         let sub = new Menu();
-        let item = new MenuItem({ type: 'submenu', menu: sub });
         let menu = new Menu();
-        menu.addItem(item);
+        menu.addItem({ type: 'submenu', menu: sub });
         Widget.attach(menu, document.body);
         expect(sub.parentMenu).to.be(null);
         expect(menu.parentMenu).to.be(null);
@@ -653,9 +661,8 @@ describe('ui/menu', () => {
 
       it('should get the child menu of the menu', () => {
         let sub = new Menu();
-        let item = new MenuItem({ type: 'submenu', menu: sub });
         let menu = new Menu();
-        menu.addItem(item);
+        let item = menu.addItem({ type: 'submenu', menu: sub });
         Widget.attach(menu, document.body);
         menu.activeItem = item;
         menu.triggerActiveItem();
@@ -665,9 +672,8 @@ describe('ui/menu', () => {
 
       it('should be `null` if the menu does not have an open submenu', () => {
         let sub = new Menu();
-        let item = new MenuItem({ type: 'submenu', menu: sub });
         let menu = new Menu();
-        menu.addItem(item);
+        menu.addItem({ type: 'submenu', menu: sub });
         Widget.attach(menu, document.body);
         expect(menu.childMenu).to.be(null);
         menu.dispose();
@@ -684,12 +690,10 @@ describe('ui/menu', () => {
 
       it('should get the root menu of the menu hierarchy', () => {
         let subSub = new Menu();
-        let subItem = new MenuItem({ type: 'submenu', menu: subSub });
         let sub = new Menu();
-        sub.addItem(subItem);
-        let item = new MenuItem({ type: 'submenu', menu: sub });
+        let subItem =  sub.addItem({ type: 'submenu', menu: subSub });
         let menu = new Menu();
-        menu.addItem(item);
+        let item = menu.addItem({ type: 'submenu', menu: sub });
         Widget.attach(menu, document.body);
         menu.activeItem = item;
         menu.triggerActiveItem();
@@ -701,12 +705,10 @@ describe('ui/menu', () => {
 
       it('should be itself if the menu is not an open submenu', () => {
         let subSub = new Menu();
-        let subItem = new MenuItem({ type: 'submenu', menu: subSub });
         let sub = new Menu();
-        sub.addItem(subItem);
-        let item = new MenuItem({ type: 'submenu', menu: sub });
+        sub.addItem({ type: 'submenu', menu: subSub });
         let menu = new Menu();
-        menu.addItem(item);
+        menu.addItem({ type: 'submenu', menu: sub });
         Widget.attach(menu, document.body);
         expect(sub.rootMenu).to.be(sub);
         expect(subSub.rootMenu).to.be(subSub);
@@ -724,12 +726,10 @@ describe('ui/menu', () => {
 
       it('should get the leaf menu of the menu hierarchy', () => {
         let subSub = new Menu();
-        let subItem = new MenuItem({ type: 'submenu', menu: subSub });
         let sub = new Menu();
-        sub.addItem(subItem);
-        let item = new MenuItem({ type: 'submenu', menu: sub });
+        let subItem = sub.addItem({ type: 'submenu', menu: subSub });
         let menu = new Menu();
-        menu.addItem(item);
+        let item = menu.addItem({ type: 'submenu', menu: sub });
         Widget.attach(menu, document.body);
         menu.activeItem = item;
         menu.triggerActiveItem();
@@ -741,12 +741,10 @@ describe('ui/menu', () => {
 
       it('should be itself if the menu does not have an open submenu', () => {
         let subSub = new Menu();
-        let subItem = new MenuItem({ type: 'submenu', menu: subSub });
         let sub = new Menu();
-        sub.addItem(subItem);
-        let item = new MenuItem({ type: 'submenu', menu: sub });
+        sub.addItem({ type: 'submenu', menu: subSub });
         let menu = new Menu();
-        menu.addItem(item);
+        menu.addItem({ type: 'submenu', menu: sub });
         Widget.attach(menu, document.body);
         expect(menu.leafMenu).to.be(menu);
         expect(sub.leafMenu).to.be(sub);
@@ -794,8 +792,8 @@ describe('ui/menu', () => {
 
       it('should get a read-only sequence of the menu items in the menu', () => {
         let menu = new Menu();
-        menu.addItem(new MenuItem({ command: 'foo' }));
-        menu.addItem(new MenuItem({ command: 'bar' }));
+        menu.addItem({ command: 'foo' });
+        menu.addItem({ command: 'bar' });
         let items = menu.items;
         expect(items.length).to.be(2);
         expect(items.at(0).command).to.be('foo');
@@ -813,8 +811,7 @@ describe('ui/menu', () => {
 
       it('should get the currently active menu item', () => {
         let menu = new Menu();
-        let item = new MenuItem({ command: DEFAULT_CMD });
-        menu.addItem(item);
+        let item = menu.addItem({ command: DEFAULT_CMD });
         menu.activeIndex = 0;
         expect(menu.activeItem).to.be(item);
       });
@@ -822,16 +819,14 @@ describe('ui/menu', () => {
       it('should be `null` if no menu item is active', () => {
         let menu = new Menu();
         expect(menu.activeItem).to.be(null);
-        let item = new MenuItem({ command: DEFAULT_CMD });
-        menu.addItem(item);
+        menu.addItem({ command: DEFAULT_CMD });
         expect(menu.activeItem).to.be(null);
       });
 
       it('should set the currently active menu item', () => {
         let menu = new Menu();
         expect(menu.activeItem).to.be(null);
-        let item = new MenuItem({ command: DEFAULT_CMD});
-        menu.addItem(item);
+        let item = menu.addItem({ command: DEFAULT_CMD});
         menu.activeItem = item;
         expect(menu.activeItem).to.be(item);
       });
@@ -839,8 +834,7 @@ describe('ui/menu', () => {
       it('should set to `null` if the item cannot be activated', () => {
         let menu = new Menu();
         expect(menu.activeItem).to.be(null);
-        let item = new MenuItem({ type: 'separator' });
-        menu.addItem(item);
+        let item = menu.addItem({ type: 'separator' });
         menu.activeItem = item;
         expect(menu.activeItem).to.be(null);
       });
@@ -851,16 +845,14 @@ describe('ui/menu', () => {
 
       it('should get the index of the currently active menu item', () => {
         let menu = new Menu();
-        let item = new MenuItem({ command: DEFAULT_CMD });
-        menu.addItem(item);
+        let item =  menu.addItem({ command: DEFAULT_CMD });
         menu.activeItem = item;
         expect(menu.activeIndex).to.be(0);
       });
 
       it('should add `p-mod-active` to the item', () => {
         let menu = new Menu();
-        let item = new MenuItem({ command: DEFAULT_CMD });
-        menu.addItem(item);
+        let item = menu.addItem({ command: DEFAULT_CMD });
         menu.activeItem = item;
         let tab = menu.contentNode.children[0] as HTMLElement;
         expect(tab.classList.contains('p-mod-active')).to.be(true);
@@ -869,16 +861,14 @@ describe('ui/menu', () => {
       it('should be `-1` if no menu item is active', () => {
         let menu = new Menu();
         expect(menu.activeIndex).to.be(-1);
-        let item = new MenuItem({ command: DEFAULT_CMD });
-        menu.addItem(item);
+        menu.addItem({ command: DEFAULT_CMD });
         expect(menu.activeIndex).to.be(-1);
       });
 
       it('should set the currently active menu item index', () => {
         let menu = new Menu();
         expect(menu.activeIndex).to.be(-1);
-        let item = new MenuItem({ command: DEFAULT_CMD });
-        menu.addItem(item);
+        menu.addItem({ command: DEFAULT_CMD });
         menu.activeIndex = 0;
         expect(menu.activeIndex).to.be(0);
       });
@@ -889,8 +879,7 @@ describe('ui/menu', () => {
           execute: (args: JSONObject) => { return args; },
           isEnabled: (args: JSONObject) => { return false; },
         });
-        let item = new MenuItem({ command: 'test' });
-        menu.addItem(item);
+        menu.addItem({ command: 'test' });
         menu.activeIndex = 0;
         expect(menu.activeIndex).to.be(-1);
         disposable.dispose();
@@ -906,8 +895,8 @@ describe('ui/menu', () => {
           isVisible: (args: JSONObject) => { return false; },
         });
         let menu = new Menu();
-        menu.addItem(new MenuItem({ command: 'test' }));
-        menu.addItem(new MenuItem({ command: DEFAULT_CMD }));
+        menu.addItem({ command: 'test' });
+        menu.addItem({ command: DEFAULT_CMD });
         menu.activateNextItem();
         expect(menu.activeIndex).to.be(1);
         disposable.dispose();
@@ -915,8 +904,8 @@ describe('ui/menu', () => {
 
       it('should set the index to `-1` if no item is selectable', () => {
         let menu = new Menu();
-        menu.addItem(new MenuItem({ type: 'separator' }));
-        menu.addItem(new MenuItem({ type: 'separator' }));
+        menu.addItem({ type: 'separator' });
+        menu.addItem({ type: 'separator' });
         menu.activateNextItem();
         expect(menu.activeIndex).to.be(-1);
       });
@@ -931,8 +920,8 @@ describe('ui/menu', () => {
           isVisible: (args: JSONObject) => { return false; },
         });
         let menu = new Menu();
-        menu.addItem(new MenuItem({ command: 'test' }));
-        menu.addItem(new MenuItem({ command: DEFAULT_CMD }));
+        menu.addItem({ command: 'test' });
+        menu.addItem({ command: DEFAULT_CMD });
         menu.activatePreviousItem();
         expect(menu.activeIndex).to.be(1);
         disposable.dispose();
@@ -940,8 +929,8 @@ describe('ui/menu', () => {
 
       it('should set the index to `-1` if no item is selectable', () => {
         let menu = new Menu();
-        menu.addItem(new MenuItem({ type: 'separator' }));
-        menu.addItem(new MenuItem({ type: 'separator' }));
+        menu.addItem({ type: 'separator' });
+        menu.addItem({ type: 'separator' });
         menu.activatePreviousItem();
         expect(menu.activeIndex).to.be(-1);
       });
@@ -956,7 +945,7 @@ describe('ui/menu', () => {
           execute: (args: JSONObject) => { called = true; }
         });
         let menu = new Menu();
-        menu.addItem(new MenuItem({ command: 'test' }));
+        menu.addItem({ command: 'test' });
         Widget.attach(menu, document.body);
         menu.activeIndex = 0;
         menu.triggerActiveItem();
@@ -967,9 +956,9 @@ describe('ui/menu', () => {
 
       it('should open a submenu and activate the first item', () => {
         let sub = new Menu();
-        sub.addItem(new MenuItem({ command: DEFAULT_CMD }));
+        sub.addItem({ command: DEFAULT_CMD });
         let menu = new Menu();
-        menu.addItem(new MenuItem({ type: 'submenu', menu: sub }));
+        menu.addItem({ type: 'submenu', menu: sub });
         Widget.attach(menu, document.body);
         menu.activeIndex = 0;
         menu.triggerActiveItem();
@@ -980,9 +969,9 @@ describe('ui/menu', () => {
 
       it('should be a no-op if the menu is not attached', () => {
         let sub = new Menu();
-        sub.addItem(new MenuItem({ command: DEFAULT_CMD }));
+        sub.addItem({ command: DEFAULT_CMD });
         let menu = new Menu();
-        menu.addItem(new MenuItem({ type: 'submenu', menu: sub }));
+        menu.addItem({ type: 'submenu', menu: sub });
         menu.activeIndex = 0;
         menu.triggerActiveItem();
         expect(sub.parentMenu).to.be(null);
@@ -991,9 +980,9 @@ describe('ui/menu', () => {
 
       it('should be a no-op if there is no active item', () => {
         let sub = new Menu();
-        sub.addItem(new MenuItem({ command: DEFAULT_CMD }));
+        sub.addItem({ command: DEFAULT_CMD });
         let menu = new Menu();
-        menu.addItem(new MenuItem({ type: 'submenu', menu: sub }));
+        menu.addItem({ type: 'submenu', menu: sub });
         Widget.attach(menu, document.body);
         menu.triggerActiveItem();
         expect(sub.parentMenu).to.be(null);
@@ -1007,15 +996,18 @@ describe('ui/menu', () => {
 
       it('should add a menu item to the end of the menu', () => {
         let menu = new Menu();
-        menu.addItem(new MenuItem({}));
-        let item = new MenuItem({});
-        expect(menu.addItem(item)).to.be(item);
+        menu.addItem({});
+        let item = menu.addItem({ command: 'test'});
+        expect(item.command).to.be('test');
         expect(menu.items.at(1)).to.be(item);
       });
 
-      it('should accept menu options and convert them into a menu item', () => {
+      it('should accept an existing menu item and convert them into a new menu item', () => {
         let menu = new Menu();
-        let item = menu.addItem({});
+        let item = new MenuItem({ command: 'test' });
+        let newItem = menu.addItem(item);
+        expect(newItem).to.not.be(item);
+        expect(newItem.command).to.be('test');
         expect(item).to.be.a(MenuItem);
       });
 
@@ -1025,9 +1017,8 @@ describe('ui/menu', () => {
 
       it('should insert a menu item into the menu at the specified index', () => {
         let menu = new Menu();
-        menu.addItem(new MenuItem({}));
-        let item = new MenuItem({});
-        expect(menu.insertItem(0, item)).to.be(item);
+        menu.addItem({});
+        let item = menu.insertItem(0, { command: 'test' });
         expect(menu.items.at(0)).to.be(item);
       });
 
@@ -1092,8 +1083,7 @@ describe('ui/menu', () => {
 
       it('should close the menu if it is attached', () => {
         let menu = new Menu();
-        let item = new MenuItem({});
-        menu.addItem(item);
+        let item = menu.addItem({});
         menu.open(0, 0);
         let called = false;
         menu.aboutToClose.connect(() => { called = true; });
@@ -1233,7 +1223,7 @@ describe('ui/menu', () => {
             execute: (args: JSONObject) => { called = true; }
           });
           let menu = new Menu();
-          menu.addItem(new MenuItem({ command: 'test' }));
+          menu.addItem({ command: 'test' });
           menu.activeIndex = 0;
           menu.open(0, 0);
           simulate(menu.node, 'keydown', { keyCode: 13 });
@@ -1672,7 +1662,7 @@ describe('ui/menu', () => {
         it('should update an item node to reflect the state of a menu item', () => {
           let renderer = new Menu.Renderer();
           let node = renderer.createItemNode();
-          let item = new MenuItem({ command: DEFAULT_CMD });
+          let item = new MenuItem({ command: DEFAULT_CMD })
           renderer.updateItemNode(node, item);
           expect(node.classList.contains('p-type-command')).to.be(true);
           expect(node.classList.contains(item.className)).to.be(true);
@@ -1709,9 +1699,9 @@ describe('ui/menu', () => {
             execute: (args: JSONObject) => { return args; },
             isEnabled: (args: JSONObject) => { return false; },
           });
-          let item = new MenuItem({ command: 'test' });
           let renderer = new Menu.Renderer();
           let node = renderer.createItemNode();
+          let item = new MenuItem({ command: 'test' });
           renderer.updateItemNode(node, item);
           expect(node.classList.contains('p-mod-disabled')).to.be(true);
           disposable.dispose();
@@ -1722,9 +1712,9 @@ describe('ui/menu', () => {
             execute: (args: JSONObject) => { return args; },
             isToggled: (args: JSONObject) => { return true; },
           });
-          let item = new MenuItem({ command: 'test' });
           let renderer = new Menu.Renderer();
           let node = renderer.createItemNode();
+          let item = new MenuItem({ command: 'test' });
           renderer.updateItemNode(node, item);
           expect(node.classList.contains('p-mod-toggled')).to.be(true);
           disposable.dispose();

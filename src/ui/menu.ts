@@ -158,8 +158,8 @@ class MenuItem implements IDisposable {
     this._command = options.command || '';
     this._args = options.args || null;
     this._menu = options.menu || null;
-    this._commands = options.commands || commands;
-    this._keymap = options.keymap || keymap;
+    this._commands = options.commandRegistry || commands;
+    this._keymap = options.keymapManager || keymap;
   }
 
   /**
@@ -386,14 +386,14 @@ namespace MenuItem {
      *
      * The default is the shared `commands` singleton.
      */
-    commands?: CommandRegistry;
+    commandRegistry?: CommandRegistry;
 
     /**
      * The keymap manager for use with the command item.
      *
      * The default is the shared `keymap` singleton.
      */
-    keymap?: KeymapManager;
+    keymapManager?: KeymapManager;
   }
 }
 
@@ -413,8 +413,8 @@ class Menu extends Widget {
     this.addClass(MENU_CLASS);
     this.setFlag(WidgetFlag.DisallowLayout);
     this._renderer = options.renderer || Menu.defaultRenderer;
-    this._commands = options.commands || commands;
-    this._keymap = options.keymap || keymap;
+    this._commands = options.commandRegistry || commands;
+    this._keymap = options.keymapManager || keymap;
   }
 
   /**
@@ -720,15 +720,14 @@ class Menu extends Widget {
    *
    * @param index - The index at which to insert the item.
    *
-   * @param value - The menu item to insert into the menu, or an options
-   *   object to be converted into a menu item.
+   * @param options - An options object to be converted into a menu item.
    *
    * @returns The menu item added to the menu.
    *
    * #### Notes
    * The index will be clamped to the bounds of the items.
    */
-  insertItem(index: number, value: MenuItem | MenuItem.IOptions): MenuItem {
+  insertItem(index: number, options: MenuItem.IOptions): MenuItem {
     // Close the menu if it's attached.
     if (this.isAttached) {
       this.close();
@@ -741,7 +740,14 @@ class Menu extends Widget {
     let i = Math.max(0, Math.min(Math.floor(index), this._items.length));
 
     // Coerce the value to a menu item.
-    let item = Private.asMenuItem(value, this._keymap, this._commands);
+    let item = new MenuItem({
+      type: options.type,
+      command: options.command,
+      args: options.args,
+      menu: options.menu,
+      commandRegistry: this._commands,
+      keymapManager: this._keymap
+    });
 
     // Create the node for the item. It will be initialized on open.
     let node = this._renderer.createItemNode();
@@ -1377,14 +1383,14 @@ namespace Menu {
      *
      * The default is the shared `commands` singleton.
      */
-    commands?: CommandRegistry;
+    commandRegistry?: CommandRegistry;
 
     /**
      * The keymap manager for use with the command item.
      *
      * The default is the shared `keymap` singleton.
      */
-    keymap?: KeymapManager;
+    keymapManager?: KeymapManager;
   }
 
   /**
@@ -1607,26 +1613,6 @@ namespace Private {
     node.appendChild(content);
     node.tabIndex = -1;
     return node;
-  }
-
-  /**
-   * Coerce a menu item or options into a real menu item.
-   */
-  export
-  function asMenuItem(value: MenuItem | MenuItem.IOptions, keymapManager: KeymapManager, commandRegistry: CommandRegistry): MenuItem {
-    if (value instanceof MenuItem) {
-      return value;
-    }
-    let options = value as MenuItem.IOptions;
-    if (options.keymap && options.keymap !== keymapManager) {
-      throw new Error('Conflicting keymap manager for item');
-    }
-    if (options.commands && options.commands !== commandRegistry) {
-      throw new Error('Conflicting command registry for item');
-    }
-    options.keymap = keymapManager;
-    options.commands = commandRegistry;
-    return new MenuItem(options);
   }
 
   /**
