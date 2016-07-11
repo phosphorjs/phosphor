@@ -359,13 +359,9 @@ class MenuBar extends Widget {
     // Close the child menu before making changes.
     this._closeChildMenu();
 
-    // Look up the node and menu.
-    let node = this._nodes.at(i);
-    let menu = this._menus.at(i);
-
     // Remove the node and menu from the vectors.
-    this._nodes.popAt(i);
-    this._menus.popAt(i);
+    let node = this._nodes.popAt(i);
+    let menu = this._menus.popAt(i);
 
     // Disconnect from the menu signals.
     menu.aboutToClose.disconnect(this._onMenuAboutToClose, this);
