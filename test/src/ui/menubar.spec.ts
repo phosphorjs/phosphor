@@ -36,7 +36,7 @@ import {
 } from '../../../lib/ui/keymap';
 
 import {
-  Menu, MenuItem
+  Menu, IMenuItem
 } from '../../../lib/ui/menu';
 
 import {
@@ -90,7 +90,7 @@ describe('ui/menubar', () => {
     let bar = new MenuBar();
     for (let i = 0; i < 3; i++) {
       let menu = new Menu();
-      let item = new MenuItem({ command: DEFAULT_CMD });
+      let item = menu.addItem({ command: DEFAULT_CMD });
       menu.addItem(item);
       menu.title.label = `Menu${i}`;
       menu.title.mnemonic = 4;
@@ -326,7 +326,7 @@ describe('ui/menubar', () => {
       it('should open the active menu and activate its first menu item', () => {
         let bar = new MenuBar();
         let menu = new Menu();
-        let item = new MenuItem({ command: DEFAULT_CMD });
+        let item = menu.addItem({ command: DEFAULT_CMD });
         menu.addItem(item);
         bar.addMenu(menu);
         bar.activeMenu = menu;
@@ -339,7 +339,7 @@ describe('ui/menubar', () => {
       it('should be a no-op if there is no active menu', () => {
         let bar = new MenuBar();
         let menu = new Menu();
-        let item = new MenuItem({ command: DEFAULT_CMD });
+        let item = menu.addItem({ command: DEFAULT_CMD });
         menu.addItem(item);
         bar.addMenu(menu);
         bar.openActiveMenu();
@@ -354,7 +354,7 @@ describe('ui/menubar', () => {
       it('should add a menu to the end of the menu bar', () => {
         let bar = new MenuBar();
         let menu = new Menu();
-        let item = new MenuItem({ command: DEFAULT_CMD });
+        let item = menu.addItem({ command: DEFAULT_CMD });
         menu.addItem(item);
         bar.addMenu(new Menu());
         bar.addMenu(menu);
@@ -366,7 +366,7 @@ describe('ui/menubar', () => {
       it('should move an existing menu to the end', () => {
         let bar = new MenuBar();
         let menu = new Menu();
-        let item = new MenuItem({ command: DEFAULT_CMD });
+        let item = menu.addItem({ command: DEFAULT_CMD });
         menu.addItem(item);
         bar.addMenu(menu);
         bar.addMenu(new Menu());

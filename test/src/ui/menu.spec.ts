@@ -36,7 +36,7 @@ import {
 } from '../../../lib/ui/keymap';
 
 import {
-  Menu, MenuItem
+  Menu, IMenuItem
 } from '../../../lib/ui/menu';
 
 import {
@@ -105,38 +105,28 @@ describe('ui/menu', () => {
     disposables.dispose();
   });
 
-  describe('MenuItem', () => {
+  describe('IMenuItem', () => {
 
-    describe('#constructor()', () => {
+    let menu: Menu;
 
-      it('should accept options for initializing the menu item', () => {
-        let item = new MenuItem({
-          type: 'separator',
-          command: 'foo',
-          args: null,
-          menu: new Menu(),
-          commandRegistry: new CommandRegistry(),
-          keymapManager: new KeymapManager()
-        });
-        expect(item).to.be.a(MenuItem);
-      });
-
+    beforeEach(() => {
+      menu = new Menu();
     });
 
     describe('#type', () => {
 
       it('should get the type of the menu item', () => {
-        let item = new MenuItem({ type: 'separator' });
+        let item = menu.addItem({ type: 'separator' });
         expect(item.type).to.be('separator');
       });
 
       it('should be read-only', () => {
-        let item = new MenuItem({});
+        let item = menu.addItem({});
         expect(() => { item.type = 'separator'; }).to.throwError();
       });
 
       it("should default to `'command'`", () => {
-        let item = new MenuItem({});
+        let item = menu.addItem({});
         expect(item.type).to.be('command');
       });
 
@@ -145,17 +135,17 @@ describe('ui/menu', () => {
     describe('#command', () => {
 
       it('should get the command to execute when the item is triggered', () => {
-        let item = new MenuItem({ command: 'foo' });
+        let item = menu.addItem({ command: 'foo' });
         expect(item.command).to.be('foo');
       });
 
       it('should be read-only', () => {
-        let item = new MenuItem({});
+        let item = menu.addItem({});
         expect(() => { item.command = 'bar'; }).to.throwError();
       });
 
       it('should default to an empty string', () => {
-        let item = new MenuItem({});
+        let item = menu.addItem({});
         expect(item.command).to.be('');
       });
 
@@ -164,17 +154,17 @@ describe('ui/menu', () => {
     describe('#args', () => {
 
       it('should get the arguments for the command', () => {
-        let item = new MenuItem({ args: { foo: 1 } });
+        let item = menu.addItem({ args: { foo: 1 } });
         expect(item.args).to.eql({ foo: 1 });
       });
 
       it('should be read-only', () => {
-        let item = new MenuItem({});
+        let item = menu.addItem({});
         expect(() => { item.args = null; }).to.throwError();
       });
 
       it('should default to `null`', () => {
-        let item = new MenuItem({});
+        let item = menu.addItem({});
         expect(item.args).to.be(null);
       });
 
@@ -183,18 +173,18 @@ describe('ui/menu', () => {
     describe('#menu', () => {
 
       it('should get the menu for the item', () => {
-        let menu = new Menu();
-        let item = new MenuItem({ menu });
-        expect(item.menu).to.be(menu);
+        let submenu = new Menu();
+        let item = menu.addItem({ menu: submenu });
+        expect(item.menu).to.be(submenu);
       });
 
       it('should be read-only', () => {
-        let item = new MenuItem({});
+        let item = menu.addItem({});
         expect(() => { item.menu = null; }).to.throwError();
       });
 
       it('should default to `null`', () => {
-        let item = new MenuItem({});
+        let item = menu.addItem({});
         expect(item.menu).to.be(null);
       });
 
@@ -207,28 +197,28 @@ describe('ui/menu', () => {
           execute: (args: JSONObject) => { return args; },
           label: 'foo'
         });
-        let item = new MenuItem({ command: 'test' });
+        let item = menu.addItem({ command: 'test' });
         expect(item.label).to.be('foo');
         disposable.dispose();
       });
 
       it('should get the title label of a submenu item for a `submenu` type', () => {
-        let menu = new Menu();
-        menu.title.label = 'foo';
-        let item = new MenuItem({ type: 'submenu', menu });
+        let submenu = new Menu();
+        submenu.title.label = 'foo';
+        let item = menu.addItem({ type: 'submenu', menu: submenu });
         expect(item.label).to.be('foo');
       });
 
       it('should be read-only', () => {
-        let item = new MenuItem({});
+        let item = menu.addItem({});
         expect(() => { item.label = ''; }).to.throwError();
       });
 
       it('should default to an empty string', () => {
-        let item = new MenuItem({});
+        let item = menu.addItem({});
         expect(item.label).to.be('');
 
-        item = new MenuItem({ type: 'separator' });
+        item = menu.addItem({ type: 'separator' });
         expect(item.label).to.be('');
       });
 
@@ -241,28 +231,28 @@ describe('ui/menu', () => {
           execute: (args: JSONObject) => { return args; },
           mnemonic: 1
         });
-        let item = new MenuItem({ command: 'test' });
+        let item = menu.addItem({ command: 'test' });
         expect(item.mnemonic).to.be(1);
         disposable.dispose();
       });
 
       it('should get the title mnemonic of a submenu item for a `submenu` type', () => {
-        let menu = new Menu();
-        menu.title.mnemonic = 1;
-        let item = new MenuItem({ type: 'submenu', menu });
+        let submenu = new Menu();
+        submenu.title.mnemonic = 1;
+        let item = menu.addItem({ type: 'submenu', menu: submenu });
         expect(item.mnemonic).to.be(1);
       });
 
       it('should be read-only', () => {
-        let item = new MenuItem({});
+        let item = menu.addItem({});
         expect(() => { item.mnemonic = 0; }).to.throwError();
       });
 
       it('should default to `-1`', () => {
-        let item = new MenuItem({});
+        let item = menu.addItem({});
         expect(item.mnemonic).to.be(-1);
 
-        item = new MenuItem({ type: 'separator' });
+        item = menu.addItem({ type: 'separator' });
         expect(item.mnemonic).to.be(-1);
       });
 
@@ -275,28 +265,28 @@ describe('ui/menu', () => {
           execute: (args: JSONObject) => { return args; },
           icon: 'foo'
         });
-        let item = new MenuItem({ command: 'test' });
+        let item = menu.addItem({ command: 'test' });
         expect(item.icon).to.be('foo');
         disposable.dispose();
       });
 
       it('should get the title icon of a submenu item for a `submenu` type', () => {
-        let menu = new Menu();
-        menu.title.icon = 'foo';
-        let item = new MenuItem({ type: 'submenu', menu });
+        let submenu = new Menu();
+        submenu.title.icon = 'foo';
+        let item = menu.addItem({ type: 'submenu', menu: submenu });
         expect(item.icon).to.be('foo');
       });
 
       it('should be read-only', () => {
-        let item = new MenuItem({});
+        let item = menu.addItem({});
         expect(() => { item.icon = ''; }).to.throwError();
       });
 
       it('should default to an empty string', () => {
-        let item = new MenuItem({});
+        let item = menu.addItem({});
         expect(item.icon).to.be('');
 
-        item = new MenuItem({ type: 'separator' });
+        item = menu.addItem({ type: 'separator' });
         expect(item.icon).to.be('');
       });
 
@@ -309,28 +299,28 @@ describe('ui/menu', () => {
           execute: (args: JSONObject) => { return args; },
           caption: 'foo'
         });
-        let item = new MenuItem({ command: 'test' });
+        let item = menu.addItem({ command: 'test' });
         expect(item.caption).to.be('foo');
         disposable.dispose();
       });
 
       it('should get the title caption of a submenu item for a `submenu` type', () => {
-        let menu = new Menu();
-        menu.title.caption = 'foo';
-        let item = new MenuItem({ type: 'submenu', menu });
+        let submenu = new Menu();
+        submenu.title.caption = 'foo';
+        let item = menu.addItem({ type: 'submenu', menu: submenu });
         expect(item.caption).to.be('foo');
       });
 
       it('should be read-only', () => {
-        let item = new MenuItem({});
+        let item = menu.addItem({});
         expect(() => { item.caption = ''; }).to.throwError();
       });
 
       it('should default to an empty string', () => {
-        let item = new MenuItem({});
+        let item = menu.addItem({});
         expect(item.caption).to.be('');
 
-        item = new MenuItem({ type: 'separator' });
+        item = menu.addItem({ type: 'separator' });
         expect(item.caption).to.be('');
       });
 
@@ -343,28 +333,28 @@ describe('ui/menu', () => {
           execute: (args: JSONObject) => { return args; },
           className: 'foo'
         });
-        let item = new MenuItem({ command: 'test' });
+        let item = menu.addItem({ command: 'test' });
         expect(item.className).to.be('foo');
         disposable.dispose();
       });
 
       it('should get the title extra class name of a submenu item for a `submenu` type', () => {
-        let menu = new Menu();
-        menu.title.className = 'foo';
-        let item = new MenuItem({ type: 'submenu', menu });
+        let submenu = new Menu();
+        submenu.title.className = 'foo';
+        let item = menu.addItem({ type: 'submenu', menu: submenu });
         expect(item.className).to.be('foo');
       });
 
       it('should be read-only', () => {
-        let item = new MenuItem({});
+        let item = menu.addItem({});
         expect(() => { item.className = ''; }).to.throwError();
       });
 
       it('should default to an empty string', () => {
-        let item = new MenuItem({});
+        let item = menu.addItem({});
         expect(item.className).to.be('');
 
-        item = new MenuItem({ type: 'separator' });
+        item = menu.addItem({ type: 'separator' });
         expect(item.className).to.be('');
       });
 
@@ -377,31 +367,31 @@ describe('ui/menu', () => {
           execute: (args: JSONObject) => { return args; },
           isEnabled: (args: JSONObject) => { return false; },
         });
-        let item = new MenuItem({ command: 'test' });
+        let item = menu.addItem({ command: 'test' });
         expect(item.isEnabled).to.be(false);
         disposable.dispose();
       });
 
       it('should get whether there is a submenu for a `submenu` type', () => {
-        let menu = new Menu();
-        let item = new MenuItem({ type: 'submenu', menu });
+        let submenu = new Menu();
+        let item = menu.addItem({ type: 'submenu', menu: submenu });
         expect(item.isEnabled).to.be(true);
-        item = new MenuItem({ type: 'submenu'});
+        item = menu.addItem({ type: 'submenu'});
         expect(item.isEnabled).to.be(false);
       });
 
       it('should be read-only', () => {
-        let item = new MenuItem({});
+        let item = menu.addItem({});
         expect(() => { item.isEnabled = false; }).to.throwError();
       });
 
       it('should default to `false` for a command item', () => {
-        let item = new MenuItem({});
+        let item = menu.addItem({});
         expect(item.isEnabled).to.be(false);
       });
 
       it('should be `true` for a separator item', () => {
-        let item = new MenuItem({ type: 'separator' });
+        let item = menu.addItem({ type: 'separator' });
         expect(item.isEnabled).to.be(true);
       });
 
@@ -414,25 +404,25 @@ describe('ui/menu', () => {
           execute: (args: JSONObject) => { return args; },
           isToggled: (args: JSONObject) => { return false; },
         });
-        let item = new MenuItem({ command: 'test' });
+        let item = menu.addItem({ command: 'test' });
         expect(item.isToggled).to.be(false);
         disposable.dispose();
       });
 
       it('should be read-only', () => {
-        let item = new MenuItem({});
+        let item = menu.addItem({});
         expect(() => { item.isToggled = false; }).to.throwError();
       });
 
       it('should default to `false` for a command item', () => {
-        let item = new MenuItem({});
+        let item = menu.addItem({});
         expect(item.isToggled).to.be(false);
       });
 
       it('should be `false` for other item types', () => {
-        let item = new MenuItem({ type: 'separator' });
+        let item = menu.addItem({ type: 'separator' });
         expect(item.isToggled).to.be(false);
-        item = new MenuItem({ type: 'submenu' });
+        item = menu.addItem({ type: 'submenu' });
         expect(item.isToggled).to.be(false);
       });
 
@@ -445,31 +435,31 @@ describe('ui/menu', () => {
           execute: (args: JSONObject) => { return args; },
           isVisible: (args: JSONObject) => { return false; },
         });
-        let item = new MenuItem({ command: 'test' });
+        let item = menu.addItem({ command: 'test' });
         expect(item.isVisible).to.be(false);
         disposable.dispose();
       });
 
       it('should get whether there is a submenu for a `submenu` type', () => {
-        let menu = new Menu();
-        let item = new MenuItem({ type: 'submenu', menu });
+        let submenu = new Menu();
+        let item = menu.addItem({ type: 'submenu', menu: submenu });
         expect(item.isVisible).to.be(true);
-        item = new MenuItem({ type: 'submenu'});
+        item = menu.addItem({ type: 'submenu'});
         expect(item.isVisible).to.be(false);
       });
 
       it('should be read-only', () => {
-        let item = new MenuItem({});
+        let item = menu.addItem({});
         expect(() => { item.isVisible = false; }).to.throwError();
       });
 
       it('should default to `false` for a command item', () => {
-        let item = new MenuItem({});
+        let item = menu.addItem({});
         expect(item.isVisible).to.be(false);
       });
 
       it('should be `true` for a separator item', () => {
-        let item = new MenuItem({ type: 'separator' });
+        let item = menu.addItem({ type: 'separator' });
         expect(item.isVisible).to.be(true);
       });
 
@@ -484,22 +474,22 @@ describe('ui/menu', () => {
           command: 'test'
         };
         let disposable = keymap.addBinding(binding);
-        let item = new MenuItem({ command: 'test' });
+        let item = menu.addItem({ command: 'test' });
         expect(item.keyBinding.keys).to.eql(['A']);
         disposable.dispose();
       });
 
       it('should be read-only', () => {
-        let item = new MenuItem({});
+        let item = menu.addItem({});
         expect(() => { item.keyBinding = null; }).to.throwError();
       });
 
       it('should default to `null`', () => {
-        let item = new MenuItem({ command: 'test' });
+        let item = menu.addItem({ command: 'test' });
         expect(item.keyBinding).to.be(null);
-        item = new MenuItem({ type: 'separator' });
+        item = menu.addItem({ type: 'separator' });
         expect(item.keyBinding).to.be(null);
-        item = new MenuItem({ type: 'submenu' });
+        item = menu.addItem({ type: 'submenu' });
         expect(item.keyBinding).to.be(null);
       });
 
@@ -1004,11 +994,10 @@ describe('ui/menu', () => {
 
       it('should accept an existing menu item and convert them into a new menu item', () => {
         let menu = new Menu();
-        let item = new MenuItem({ command: 'test' });
+        let item = menu.addItem({ command: 'test' });
         let newItem = menu.addItem(item);
         expect(newItem).to.not.be(item);
         expect(newItem.command).to.be('test');
-        expect(item).to.be.a(MenuItem);
       });
 
     });
@@ -1025,7 +1014,6 @@ describe('ui/menu', () => {
       it('should accept an options object to be converted into a menu item', () => {
         let menu = new Menu();
         let item = menu.insertItem(0, {});
-        expect(item).to.be.a(MenuItem);
       });
 
       it('should clamp the index to the bounds of the items', () => {
@@ -1070,7 +1058,7 @@ describe('ui/menu', () => {
       it('should be a no-op if the item is not contained in the menu', () => {
         let menu = new Menu();
         menu.addItem({});
-        let item = new MenuItem({});
+        let item = menu.addItem({});
         menu.removeItem(item);
         expect(menu.items.length).to.be(1);
 
@@ -1662,7 +1650,8 @@ describe('ui/menu', () => {
         it('should update an item node to reflect the state of a menu item', () => {
           let renderer = new Menu.Renderer();
           let node = renderer.createItemNode();
-          let item = new MenuItem({ command: DEFAULT_CMD })
+          let menu = new Menu();
+          let item = menu.addItem({ command: DEFAULT_CMD });
           renderer.updateItemNode(node, item);
           expect(node.classList.contains('p-type-command')).to.be(true);
           expect(node.classList.contains(item.className)).to.be(true);
@@ -1680,7 +1669,8 @@ describe('ui/menu', () => {
         it('should handle submenu items', () => {
           let renderer = new Menu.Renderer();
           let node = renderer.createItemNode();
-          let item = new MenuItem({ type: 'submenu', menu: null });
+          let menu = new Menu();
+          let item = menu.addItem({ type: 'submenu', menu: null });
           renderer.updateItemNode(node, item);
           expect(node.classList.contains('p-type-submenu')).to.be(true);
           expect(node.classList.contains('p-mod-hidden')).to.be(true);
@@ -1689,7 +1679,8 @@ describe('ui/menu', () => {
         it('should handle separator items', () => {
           let renderer = new Menu.Renderer();
           let node = renderer.createItemNode();
-          let item = new MenuItem({ type: 'separator' });
+          let menu = new Menu();
+          let item = menu.addItem({ type: 'separator' });
           renderer.updateItemNode(node, item);
           expect(node.classList.contains('p-type-separator')).to.be(true);
         });
@@ -1701,7 +1692,8 @@ describe('ui/menu', () => {
           });
           let renderer = new Menu.Renderer();
           let node = renderer.createItemNode();
-          let item = new MenuItem({ command: 'test' });
+          let menu = new Menu();
+          let item = menu.addItem({ command: 'test' });
           renderer.updateItemNode(node, item);
           expect(node.classList.contains('p-mod-disabled')).to.be(true);
           disposable.dispose();
@@ -1714,7 +1706,8 @@ describe('ui/menu', () => {
           });
           let renderer = new Menu.Renderer();
           let node = renderer.createItemNode();
-          let item = new MenuItem({ command: 'test' });
+          let menu = new Menu();
+          let item = menu.addItem({ command: 'test' });
           renderer.updateItemNode(node, item);
           expect(node.classList.contains('p-mod-toggled')).to.be(true);
           disposable.dispose();
