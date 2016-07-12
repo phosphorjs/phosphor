@@ -38,11 +38,11 @@ import {
 } from '../dom/sizing';
 
 import {
-  CommandRegistry, commands
+  CommandRegistry
 } from './commands';
 
 import {
-  KeyBinding, KeymapManager, formatKeystroke, keymap
+  KeyBinding, KeymapManager, formatKeystroke
 } from './keymap';
 
 import {
@@ -146,13 +146,13 @@ class Menu extends Widget {
    *
    * @param options - The options for initializing the menu.
    */
-  constructor(options: Menu.IOptions = {}) {
+  constructor(options: Menu.IOptions) {
     super({ node: Private.createNode() });
     this.addClass(MENU_CLASS);
     this.setFlag(WidgetFlag.DisallowLayout);
     this._renderer = options.renderer || Menu.defaultRenderer;
-    this._commands = options.commandRegistry || commands;
-    this._keymap = options.keymapManager || keymap;
+    this._commands = options.commands;
+    this._keymap = options.keymap;
   }
 
   /**
@@ -1108,25 +1108,21 @@ namespace Menu {
   export
   interface IOptions {
     /**
+     * The command registry for use with the command item.
+     */
+    commands: CommandRegistry;
+
+    /**
+     * The keymap manager for use with the command item.
+     */
+    keymap: KeymapManager;
+
+    /**
      * A custom renderer for use with the menu.
      *
      * The default is a shared renderer instance.
      */
     renderer?: IRenderer;
-
-    /**
-     * The command registry for use with the command item.
-     *
-     * The default is the shared `commands` singleton.
-     */
-    commandRegistry?: CommandRegistry;
-
-    /**
-     * The keymap manager for use with the command item.
-     *
-     * The default is the shared `keymap` singleton.
-     */
-    keymapManager?: KeymapManager;
   }
 
   /**
