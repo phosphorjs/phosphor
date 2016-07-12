@@ -22,10 +22,6 @@ import {
 } from '../collections/vector';
 
 import {
-  IDisposable
-} from '../core/disposable';
-
-import {
   Message, sendMessage
 } from '../core/messaging';
 
@@ -147,7 +143,7 @@ const SUBMENU_OVERLAP = 3;
  * Once created, a menu item is immutable.
  */
 export
-class MenuItem implements IDisposable {
+class MenuItem {
   /**
    * Construct a new menu item.
    *
@@ -160,32 +156,6 @@ class MenuItem implements IDisposable {
     this._menu = options.menu || null;
     this._commands = options.commandRegistry || commands;
     this._keymap = options.keymapManager || keymap;
-  }
-
-  /**
-   * Dispose of the resources held by the menu item.
-   *
-   * #### Notes
-   * All calls made after the first call to this method are a no-op.
-   */
-  dispose(): void {
-    // Do nothing if the drag object is already disposed.
-    if (this._disposed) {
-      return;
-    }
-    this._disposed = true;
-    this._commands = null;
-    this._keymap = null;
-  }
-
-  /**
-   * Test whether the drag object is disposed.
-   *
-   * #### Notes
-   * This is a read-only property.
-   */
-  get isDisposed(): boolean {
-    return this._disposed;
   }
 
   /**
@@ -331,7 +301,6 @@ class MenuItem implements IDisposable {
   private _command: string;
   private _args: JSONObject;
   private _menu: Menu;
-  private _disposed = false;
   private _keymap: KeymapManager = null;
   private _commands: CommandRegistry = null;
 }
