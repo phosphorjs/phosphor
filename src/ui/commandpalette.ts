@@ -34,7 +34,7 @@ import {
 } from './commands';
 
 import {
-  KeyBinding, KeymapManager, formatKeystroke, keymap
+  KeyBinding, KeymapManager, formatKeystroke
 } from './keymap';
 
 import {
