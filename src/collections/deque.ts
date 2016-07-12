@@ -118,13 +118,15 @@ class Deque<T> implements IIterable<T> {
    *
    * @param value - The value to add to the front of the deque.
    *
+   * @returns The new length of the deque.
+   *
    * #### Complexity
    * Constant.
    *
    * #### Iterator Validity
    * No changes.
    */
-  pushFront(value: T): void {
+  pushFront(value: T): number {
     let node = new DequeNode(value);
     if (this._length === 0) {
       this._front = node;
@@ -134,7 +136,7 @@ class Deque<T> implements IIterable<T> {
       this._front.prev = node;
       this._front = node;
     }
-    this._length++;
+    return ++this._length;
   }
 
   /**
@@ -142,13 +144,15 @@ class Deque<T> implements IIterable<T> {
    *
    * @param value - The value to add to the back of the deque.
    *
+   * @returns The new length of the deque.
+   *
    * #### Complexity
    * Constant.
    *
    * #### Iterator Validity
    * No changes.
    */
-  pushBack(value: T): void {
+  pushBack(value: T): number {
     let node = new DequeNode(value);
     if (this._length === 0) {
       this._front = node;
@@ -158,7 +162,7 @@ class Deque<T> implements IIterable<T> {
       this._back.next = node;
       this._back = node;
     }
-    this._length++;
+    return ++this._length;
   }
 
   /**

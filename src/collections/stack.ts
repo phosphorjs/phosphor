@@ -99,14 +99,16 @@ class Stack<T> implements IIterable<T> {
    *
    * @param value - The value to add to the back of the stack.
    *
+   * @returns The new length of the stack.
+   *
    * #### Complexity
    * Constant.
    *
    * #### Iterator Validity
    * No changes.
    */
-  pushBack(value: T): void {
-    this._array.push(value);
+  pushBack(value: T): number {
+    return this._array.push(value);
   }
 
   /**

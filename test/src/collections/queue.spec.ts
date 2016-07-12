@@ -130,6 +130,13 @@ describe('collections/queue', () => {
         expect(queue.back).to.be(99);
       });
 
+      it('should return the new length of the queue', () => {
+        let queue = new Queue<number>();
+        expect(queue.pushBack(1)).to.be(queue.length);
+        expect(queue.pushBack(1)).to.be(queue.length);
+        expect(queue.pushBack(1)).to.be(queue.length);
+      });
+
     });
 
     describe('#popFront()', () => {

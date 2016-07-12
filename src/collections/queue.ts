@@ -118,13 +118,15 @@ class Queue<T> implements IIterable<T> {
    *
    * @param value - The value to add to the back of the queue.
    *
+   * @returns The new length of the queue.
+   *
    * #### Complexity
    * Constant.
    *
    * #### Iterator Validity
    * No changes.
    */
-  pushBack(value: T): void {
+  pushBack(value: T): number {
     let node = new QueueNode(value);
     if (this._length === 0) {
       this._front = node;
@@ -133,7 +135,7 @@ class Queue<T> implements IIterable<T> {
       this._back.next = node;
       this._back = node;
     }
-    this._length++;
+    return ++this._length;
   }
 
   /**
