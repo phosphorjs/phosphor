@@ -21,7 +21,7 @@ import {
 
 import {
   DisposableSet
-} from '../../../lib/core/disposable'
+} from '../../../lib/core/disposable';
 
 import {
   sendMessage
@@ -32,11 +32,11 @@ import {
 } from '../../../lib/ui/commandpalette';
 
 import {
-  commands, ICommand
+  commands, CommandRegistry, ICommand
 } from '../../../lib/ui/commands';
 
 import {
-  keymap, KeyBinding
+  keymap, KeyBinding, KeymapManager
 } from '../../../lib/ui/keymap';
 
 import {
@@ -316,7 +316,11 @@ describe('ui/commandpalette', () => {
       });
 
       it('should accept command palette instantiation options', () => {
-        let options: CommandPalette.IOptions = {};
+        let options: CommandPalette.IOptions = {
+          renderer: new CommandPalette.Renderer(),
+          commandRegistry: new CommandRegistry(),
+          keymapManager: new KeymapManager()
+        };
         let palette = new CommandPalette(options);
         expect(palette).to.be.a(CommandPalette);
         expect(palette.node.classList.contains('p-CommandPalette')).to.be(true);
@@ -435,9 +439,16 @@ describe('ui/commandpalette', () => {
 
     describe('#addItem()', () => {
 
-      it('should add an item to a command palette', () => {
-        let options: ICommand = { execute: () => { } };
-        let command = commands.addCommand('test', options);
+      it('should add an item to a command palette using options', () => {
+        let palette = new CommandPalette();
+        expect(palette.items).to.be.empty();
+        expect(palette.addItem({ command: 'test' }).command).to.be('test');
+        expect(palette.items).to.have.length(1);
+        expect(palette.items.at(0).command).to.be('test');
+        palette.dispose();
+      });
+
+      it('should add an item to a command palette using a command item', () => {
         let item = new CommandItem({ command: 'test' });
         let palette = new CommandPalette();
         expect(palette.items).to.be.empty();
@@ -445,7 +456,6 @@ describe('ui/commandpalette', () => {
         expect(palette.items).to.have.length(1);
         expect(palette.items.at(0).command).to.be('test');
         palette.dispose();
-        command.dispose();
       });
 
       it('should add the shortcut for an item to a command palette', () => {
@@ -490,7 +500,7 @@ describe('ui/commandpalette', () => {
         let palette = new CommandPalette();
         Widget.attach(palette, document.body);
         expect(palette.items).to.be.empty();
-        palette.addItem(item);
+        item = palette.addItem(item);
         expect(palette.items).to.have.length(1);
         palette.removeItem(item);
         expect(palette.items).to.be.empty();
@@ -514,16 +524,12 @@ describe('ui/commandpalette', () => {
       });
 
       it('should do nothing if the item is not contained in a palette', () => {
-        let options: ICommand = { execute: () => { } };
-        let command = commands.addCommand('test', options);
-        let item = new CommandItem({ command: 'test' });
         let palette = new CommandPalette();
         Widget.attach(palette, document.body);
         expect(palette.items).to.be.empty();
         palette.removeItem(0);
         expect(palette.items).to.be.empty();
         palette.dispose();
-        command.dispose();
       });
 
     });
@@ -569,6 +575,29 @@ describe('ui/commandpalette', () => {
           let content = palette.contentNode;
 
           palette.addItem({ command: 'test' });
+          sendMessage(palette, WidgetMessage.UpdateRequest);
+          Widget.attach(palette, document.body);
+
+          let node = content.querySelector('.p-CommandPalette-item');
+
+          expect(node).to.be.ok();
+          simulate(node, 'click');
+          expect(called).to.be(true);
+
+          palette.dispose();
+          command.dispose();
+        });
+
+        it('should work with a custom command registry', () => {
+          let called = false;
+          let options: ICommand = { execute: () => { called = true; } };
+          let registry = new CommandRegistry();
+          let command = registry.addCommand('test', options);
+          let item = new CommandItem({ command: 'test' });
+          let palette = new CommandPalette({ commandRegistry: registry });
+          let content = palette.contentNode;
+
+          palette.addItem(item);
           sendMessage(palette, WidgetMessage.UpdateRequest);
           Widget.attach(palette, document.body);
 

@@ -22,6 +22,10 @@ import {
 } from '../collections/vector';
 
 import {
+  IDisposable
+} from '../core/disposable';
+
+import {
   Message
 } from '../core/messaging';
 
@@ -30,11 +34,11 @@ import {
 } from '../dom/query';
 
 import {
-  commands
+  CommandRegistry, commands
 } from './commands';
 
 import {
-  KeyBinding, formatKeystroke, keymap
+  KeyBinding, KeymapManager, formatKeystroke, keymap
 } from './keymap';
 
 import {
@@ -115,7 +119,7 @@ const TOGGLED_CLASS = 'p-mod-toggled';
  * Once created, a command item is immutable.
  */
 export
-class CommandItem {
+class CommandItem implements IDisposable {
   /**
    * Construct a new command item.
    *
@@ -125,6 +129,18 @@ class CommandItem {
     this._command = options.command;
     this._args = options.args || null;
     this._category = Private.normalizeCategory(options.category || 'general');
+    this._commands = options.commandRegistry || commands;
+    this._keymap = options.keymapManager || keymap;
+  }
+
+  /**
+   * Test whether the command item is disposed.
+   *
+   * #### Notes
+   * This is a read-only property.
+   */
+  get isDisposed(): boolean {
+    return this._disposed;
   }
 
   /**
@@ -145,49 +161,49 @@ class CommandItem {
    * The display label for the command item.
    */
   get label(): string {
-    return commands.label(this._command, this._args);
+    return this._commands.label(this._command, this._args);
   }
 
   /**
    * The display caption for the command item.
    */
   get caption(): string {
-    return commands.caption(this._command, this._args);
+    return this._commands.caption(this._command, this._args);
   }
 
   /**
    * The extra class name for the command item.
    */
   get className(): string {
-    return commands.className(this._command, this._args);
+    return this._commands.className(this._command, this._args);
   }
 
   /**
    * Whether the command item is enabled.
    */
   get isEnabled(): boolean {
-    return commands.isEnabled(this._command, this._args);
+    return this._commands.isEnabled(this._command, this._args);
   }
 
   /**
    * Whether the command item is toggled.
    */
   get isToggled(): boolean {
-    return commands.isToggled(this._command, this._args);
+    return this._commands.isToggled(this._command, this._args);
   }
 
   /**
    * Whether the command item is visible.
    */
   get isVisible(): boolean {
-    return commands.isVisible(this._command, this._args);
+    return this._commands.isVisible(this._command, this._args);
   }
 
   /**
    * The key binding for the command item.
    */
   get keyBinding(): KeyBinding {
-    return keymap.findKeyBinding(this._command, this._args);
+    return this._keymap.findKeyBinding(this._command, this._args);
   }
 
   /**
@@ -197,9 +213,27 @@ class CommandItem {
     return this._category;
   }
 
+  /**
+   * Dispose of the resources held by the command item.
+   *
+   * #### Notes
+   * All calls made after the first call to this method are a no-op.
+   */
+  dispose(): void {
+    // Do nothing if the command item is already disposed.
+    if (this._disposed) {
+      return;
+    }
+    this._commands = null;
+    this._keymap = null;
+  }
+
   private _command: string;
   private _args: JSONObject;
   private _category: string;
+  private _disposed = false;
+  private _commands: CommandRegistry = null;
+  private _keymap: KeymapManager = null;
 }
 
 
@@ -231,6 +265,20 @@ namespace CommandItem {
      * The default value is `'general'`.
      */
     category?: string;
+
+    /**
+     * The command registry for use with the command item.
+     *
+     * The default is the shared `commands` singleton.
+     */
+    commandRegistry?: CommandRegistry;
+
+    /**
+     * The keymap manager for use with the command item.
+     *
+     * The default is the shared `keymap` singleton.
+     */
+    keymapManager?: KeymapManager;
   }
 }
 
@@ -248,6 +296,8 @@ class CommandPalette extends Widget {
     this.addClass(PALETTE_CLASS);
     this.setFlag(WidgetFlag.DisallowLayout);
     this._renderer = options.renderer || CommandPalette.defaultRenderer;
+    this._commands = options.commandRegistry || commands;
+    this._keymap = options.keymapManager || keymap;
   }
 
   /**
@@ -259,6 +309,8 @@ class CommandPalette extends Widget {
     this._headerNodes.clear();
     this._renderer = null;
     this._result = null;
+    this._commands = null;
+    this._keymap = null;
     super.dispose();
   }
 
@@ -321,14 +373,19 @@ class CommandPalette extends Widget {
   /**
    * Add a command item to the command palette.
    *
-   * @param value - The command item to add to the palette, or an
-   *   options object to be converted into a command item.
+   * @param options - An options object to be converted into a command item.
    *
    * @returns The command item added to the palette.
    */
-  addItem(value: CommandItem | CommandItem.IOptions): CommandItem {
-    // Coerce the value to a command item.
-    let item = Private.asCommandItem(value);
+  addItem(options: CommandItem.IOptions): CommandItem {
+    // Create a new command item from the options.
+    let item = new CommandItem({
+      command: options.command,
+      args: options.args,
+      category: options.category,
+      commandRegistry: this._commands,
+      keymapManager: this._keymap
+    });
 
     // Add the item to the vector.
     this._items.pushBack(item);
@@ -409,8 +466,8 @@ class CommandPalette extends Widget {
    * A message handler invoked on a `'after-attach'` message.
    */
   protected onAfterAttach(msg: Message): void {
-    commands.commandChanged.connect(this._onGenericChange, this);
-    keymap.bindingChanged.connect(this._onGenericChange, this);
+    this._commands.commandChanged.connect(this._onGenericChange, this);
+    this._keymap.bindingChanged.connect(this._onGenericChange, this);
     this.node.addEventListener('click', this);
     this.node.addEventListener('keydown', this);
     this.node.addEventListener('input', this);
@@ -421,8 +478,8 @@ class CommandPalette extends Widget {
    * A message handler invoked on a `'before-detach'` message.
    */
   protected onBeforeDetach(msg: Message): void {
-    commands.commandChanged.disconnect(this._onGenericChange, this);
-    keymap.bindingChanged.disconnect(this._onGenericChange, this);
+    this._commands.commandChanged.disconnect(this._onGenericChange, this);
+    this._keymap.bindingChanged.disconnect(this._onGenericChange, this);
     this.node.removeEventListener('click', this);
     this.node.removeEventListener('keydown', this);
     this.node.removeEventListener('input', this);
@@ -716,7 +773,7 @@ class CommandPalette extends Widget {
     if (part.item) {
       input.focus();
       input.select();
-      commands.execute(part.item.command, part.item.args);
+      this._commands.execute(part.item.command, part.item.args);
       return;
     }
 
@@ -755,7 +812,9 @@ class CommandPalette extends Widget {
   private _itemNodes = new Vector<HTMLElement>();
   private _headerNodes = new Vector<HTMLElement>();
   private _result: Private.ISearchResult = null;
-  private _renderer: CommandPalette.IRenderer;
+  private _renderer: CommandPalette.IRenderer = null;
+  private _commands: CommandRegistry = null;
+  private _keymap: KeymapManager = null;
 }
 
 
@@ -775,6 +834,20 @@ namespace CommandPalette {
      * The default is a shared renderer instance.
      */
     renderer?: IRenderer;
+
+    /**
+     * The command registry for use with the command palette.
+     *
+     * The default is the shared `commands` singleton.
+     */
+    commandRegistry?: CommandRegistry;
+
+    /**
+     * The keymap manager for use with the command palette.
+     *
+     * The default is the shared `keymap` singleton.
+     */
+    keymapManager?: KeymapManager;
   }
 
   /**
@@ -1070,14 +1143,6 @@ namespace Private {
     node.appendChild(search);
     node.appendChild(content);
     return node;
-  }
-
-  /**
-   * Coerce a command item or options into a real command item.
-   */
-  export
-  function asCommandItem(value: CommandItem | CommandItem.IOptions): CommandItem {
-    return value instanceof CommandItem ? value : new CommandItem(value);
   }
 
   /**
