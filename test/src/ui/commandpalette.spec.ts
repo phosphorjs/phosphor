@@ -12,16 +12,8 @@ import {
 } from 'simulate-event';
 
 import {
-  each
-} from '../../../lib/algorithm/iteration';
-
-import {
   JSONObject
 } from '../../../lib/algorithm/json';
-
-import {
-  DisposableSet
-} from '../../../lib/core/disposable';
 
 import {
   sendMessage
@@ -32,11 +24,11 @@ import {
 } from '../../../lib/ui/commandpalette';
 
 import {
-  commands, CommandRegistry, ICommand
+  CommandRegistry, ICommand
 } from '../../../lib/ui/commands';
 
 import {
-  keymap, KeyBinding, KeymapManager
+  KeyBinding, KeymapManager
 } from '../../../lib/ui/keymap';
 
 import {
@@ -62,12 +54,20 @@ class LogPalette extends CommandPalette {
 
 describe('ui/commandpalette', () => {
 
+  let commands: CommandRegistry;
+  let keymap: KeymapManager;
+
+  beforeEach(() => {
+    commands = new CommandRegistry();
+    keymap = new KeymapManager();
+  });
+
   describe('CommandItem', () => {
 
     describe('#constructor()', () => {
 
       it('should accept a command item options argument', () => {
-        let item = new CommandItem({ command: 'test' });
+        let item = new CommandItem(commands, keymap, { command: 'test' });
         expect(item).to.be.a(CommandItem);
       });
 
@@ -76,12 +76,12 @@ describe('ui/commandpalette', () => {
     describe('#command', () => {
 
       it('should return the command name of a command item', () => {
-        let item = new CommandItem({ command: 'test' });
+        let item = new CommandItem(commands, keymap, { command: 'test' });
         expect(item.command).to.be('test');
       });
 
       it('should be read-only', () => {
-        let item = new CommandItem({ command: 'test' });
+        let item = new CommandItem(commands, keymap, { command: 'test' });
         expect(() => { item.command = 'test-1'; }).to.throwError();
       });
 
@@ -94,7 +94,7 @@ describe('ui/commandpalette', () => {
           args: { foo: 'bar', baz: 'qux' } as JSONObject,
           command: 'test'
         };
-        let item = new CommandItem(options);
+        let item = new CommandItem(commands, keymap, options);
         expect(item.args).to.eql(options.args);
       });
 
@@ -103,7 +103,7 @@ describe('ui/commandpalette', () => {
           args: { foo: 'bar', baz: 'qux' } as JSONObject,
           command: 'test'
         };
-        let item = new CommandItem(options);
+        let item = new CommandItem(commands, keymap, options);
         expect(() => { item.args = null; }).to.throwError();
       });
 
@@ -113,18 +113,16 @@ describe('ui/commandpalette', () => {
 
       it('should return the label of a command item', () => {
         let options: ICommand = { execute: () => { }, label: 'test label' };
-        let command = commands.addCommand('test', options);
-        let item = new CommandItem({ command: 'test' });
+        commands.addCommand('test', options);
+        let item = new CommandItem(commands, keymap, { command: 'test' });
         expect(item.label).to.be(options.label);
-        command.dispose();
       });
 
       it('should be read-only', () => {
         let options: ICommand = { execute: () => { } };
-        let command = commands.addCommand('test', options);
-        let item = new CommandItem({ command: 'test' });
+        commands.addCommand('test', options);
+        let item = new CommandItem(commands, keymap, { command: 'test' });
         expect(() => { item.label = 'test label'; }).to.throwError();
-        command.dispose();
       });
 
     });
@@ -133,18 +131,16 @@ describe('ui/commandpalette', () => {
 
       it('should return the caption of a command item', () => {
         let options: ICommand = { execute: () => { }, caption: 'test caption' };
-        let command = commands.addCommand('test', options);
-        let item = new CommandItem({ command: 'test' });
+        commands.addCommand('test', options);
+        let item = new CommandItem(commands, keymap, { command: 'test' });
         expect(item.caption).to.be(options.caption);
-        command.dispose();
       });
 
       it('should be read-only', () => {
         let options: ICommand = { execute: () => { } };
-        let command = commands.addCommand('test', options);
-        let item = new CommandItem({ command: 'test' });
+        commands.addCommand('test', options);
+        let item = new CommandItem(commands, keymap, { command: 'test' });
         expect(() => { item.caption = 'test caption'; }).to.throwError();
-        command.dispose();
       });
 
     });
@@ -153,18 +149,16 @@ describe('ui/commandpalette', () => {
 
       it('should return the class name of a command item', () => {
         let options: ICommand = { execute: () => { }, className: 'testClass' };
-        let command = commands.addCommand('test', options);
-        let item = new CommandItem({ command: 'test' });
+        commands.addCommand('test', options);
+        let item = new CommandItem(commands, keymap, { command: 'test' });
         expect(item.className).to.be(options.className);
-        command.dispose();
       });
 
       it('should be read-only', () => {
         let options: ICommand = { execute: () => { } };
-        let command = commands.addCommand('test', options);
-        let item = new CommandItem({ command: 'test' });
+        commands.addCommand('test', options);
+        let item = new CommandItem(commands, keymap, { command: 'test' });
         expect(() => { item.className = 'testClass'; }).to.throwError();
-        command.dispose();
       });
 
     });
@@ -177,20 +171,18 @@ describe('ui/commandpalette', () => {
           execute: () => { },
           isEnabled: () => called = true
         };
-        let command = commands.addCommand('test', options);
-        let item = new CommandItem({ command: 'test' });
+        commands.addCommand('test', options);
+        let item = new CommandItem(commands, keymap, { command: 'test' });
         expect(called).to.be(false);
         expect(item.isEnabled).to.be(true);
         expect(called).to.be(true);
-        command.dispose();
       });
 
       it('should be read-only', () => {
         let options: ICommand = { execute: () => { } };
-        let command = commands.addCommand('test', options);
-        let item = new CommandItem({ command: 'test' });
+        commands.addCommand('test', options);
+        let item = new CommandItem(commands, keymap, { command: 'test' });
         expect(() => { item.isEnabled = false; }).to.throwError();
-        command.dispose();
       });
 
     });
@@ -203,20 +195,18 @@ describe('ui/commandpalette', () => {
           execute: () => { },
           isToggled: () => toggled = !toggled
         };
-        let command = commands.addCommand('test', options);
-        let item = new CommandItem({ command: 'test' });
+        commands.addCommand('test', options);
+        let item = new CommandItem(commands, keymap, { command: 'test' });
         expect(item.isToggled).to.be(true);
         expect(item.isToggled).to.be(false);
         expect(item.isToggled).to.be(true);
-        command.dispose();
       });
 
       it('should be read-only', () => {
         let options: ICommand = { execute: () => { } };
-        let command = commands.addCommand('test', options);
-        let item = new CommandItem({ command: 'test' });
+        commands.addCommand('test', options);
+        let item = new CommandItem(commands, keymap, { command: 'test' });
         expect(() => { item.isToggled = false; }).to.throwError();
-        command.dispose();
       });
 
     });
@@ -229,20 +219,18 @@ describe('ui/commandpalette', () => {
           execute: () => { },
           isVisible: () => called = true
         };
-        let command = commands.addCommand('test', options);
-        let item = new CommandItem({ command: 'test' });
+        commands.addCommand('test', options);
+        let item = new CommandItem(commands, keymap, { command: 'test' });
         expect(called).to.be(false);
         expect(item.isVisible).to.be(true);
         expect(called).to.be(true);
-        command.dispose();
       });
 
       it('should be read-only', () => {
         let options: ICommand = { execute: () => { } };
-        let command = commands.addCommand('test', options);
-        let item = new CommandItem({ command: 'test' });
+        commands.addCommand('test', options);
+        let item = new CommandItem(commands, keymap, { command: 'test' });
         expect(() => { item.isVisible = false; }).to.throwError();
-        command.dispose();
       });
 
     });
@@ -250,26 +238,21 @@ describe('ui/commandpalette', () => {
     describe('#keyBinding', () => {
 
       it('should return the key binding of a command item', () => {
-        let options: ICommand = { execute: () => { } };
-        let command = commands.addCommand('test', options);
-        let binding = keymap.addBinding({
+        commands.addCommand('test', { execute: () => { } });
+        keymap.addBinding({
           keys: ['Ctrl A'],
           selector: 'body',
           command: 'test'
         });
-        let item = new CommandItem({ command: 'test' });
+        let item = new CommandItem(commands, keymap, { command: 'test' });
         expect(item.keyBinding).to.be.a(KeyBinding);
         expect(item.keyBinding.keys).to.eql(['Ctrl A']);
-        binding.dispose();
-        command.dispose();
       });
 
       it('should be read-only', () => {
-        let options: ICommand = { execute: () => { } };
-        let command = commands.addCommand('test', options);
-        let item = new CommandItem({ command: 'test' });
+        commands.addCommand('test', { execute: () => { } });
+        let item = new CommandItem(commands, keymap, { command: 'test' });
         expect(() => { item.keyBinding = null; }).to.throwError();
-        command.dispose();
       });
 
     });
@@ -277,27 +260,36 @@ describe('ui/commandpalette', () => {
     describe('#category', () => {
 
       it('should return the category of a command item', () => {
-        let options: ICommand = { execute: () => { } };
-        let command = commands.addCommand('test', options);
-        let item = new CommandItem({ command: 'test', category: 'random' });
+        commands.addCommand('test', { execute: () => { } });
+        let item = new CommandItem(commands, keymap, { command: 'test', category: 'random' });
         expect(item.category).to.be('random');
-        command.dispose();
       });
 
       it('should default the category to `"general"`', () => {
-        let options: ICommand = { execute: () => { } };
-        let command = commands.addCommand('test', options);
-        let item = new CommandItem({ command: 'test' });
+        commands.addCommand('test', { execute: () => { } });
+        let item = new CommandItem(commands, keymap, { command: 'test' });
         expect(item.category).to.be('general');
-        command.dispose();
       });
 
       it('should be read-only', () => {
-        let options: ICommand = { execute: () => { } };
-        let command = commands.addCommand('test', options);
-        let item = new CommandItem({ command: 'test' });
+        commands.addCommand('test', { execute: () => { } });
+        let item = new CommandItem(commands, keymap, { command: 'test' });
         expect(() => { item.category = 'random'; }).to.throwError();
-        command.dispose();
+      });
+
+    });
+
+    describe('#execute()', () => {
+
+      it('should execute the underlying command', () => {
+        let called = false;
+        let args: any = { };
+        let callArgs: any = null;
+        commands.addCommand('test', { execute: a => { called = true; callArgs = a; } });
+        let item = new CommandItem(commands, keymap, { command: 'test', args });
+        item.execute();
+        expect(called).to.be(true);
+        expect(callArgs).to.be(args);
       });
 
     });
@@ -308,20 +300,8 @@ describe('ui/commandpalette', () => {
 
     describe('#constructor()', () => {
 
-      it('should accept no arguments', () => {
-        let palette = new CommandPalette();
-        expect(palette).to.be.a(CommandPalette);
-        expect(palette.node.classList.contains('p-CommandPalette')).to.be(true);
-        palette.dispose();
-      });
-
       it('should accept command palette instantiation options', () => {
-        let options: CommandPalette.IOptions = {
-          renderer: new CommandPalette.Renderer(),
-          commandRegistry: new CommandRegistry(),
-          keymapManager: new KeymapManager()
-        };
-        let palette = new CommandPalette(options);
+        let palette = new CommandPalette({ commands, keymap });
         expect(palette).to.be.a(CommandPalette);
         expect(palette.node.classList.contains('p-CommandPalette')).to.be(true);
         palette.dispose();
@@ -332,15 +312,11 @@ describe('ui/commandpalette', () => {
     describe('#dispose()', () => {
 
       it('should dispose of the resources held by the command palette', () => {
-        let options: ICommand = { execute: () => { } };
-        let command = commands.addCommand('test', options);
-        let item = new CommandItem({ command: 'test' });
-        let palette = new CommandPalette();
-        palette.addItem(item);
+        commands.addCommand('test', { execute: () => { } });
+        let palette = new CommandPalette({ commands, keymap });
+        palette.addItem({ command: 'test' });
         palette.dispose();
-        expect(palette.items).to.be.empty();
         expect(palette.isDisposed).to.be(true);
-        command.dispose();
       });
 
     });
@@ -348,7 +324,7 @@ describe('ui/commandpalette', () => {
     describe('#searchNode', () => {
 
       it('should return the search node of a command palette', () => {
-        let palette = new CommandPalette();
+        let palette = new CommandPalette({ commands, keymap });
         let node = palette.searchNode;
         expect(node).to.be.ok();
         expect(node.classList.contains('p-CommandPalette-search')).to.be(true);
@@ -356,7 +332,7 @@ describe('ui/commandpalette', () => {
       });
 
       it('should be read-only', () => {
-        let palette = new CommandPalette();
+        let palette = new CommandPalette({ commands, keymap });
         expect(() => { palette.searchNode = null; }).to.throwError();
         palette.dispose();
       });
@@ -366,7 +342,7 @@ describe('ui/commandpalette', () => {
     describe('#inputNode', () => {
 
       it('should return the input node of a command palette', () => {
-        let palette = new CommandPalette();
+        let palette = new CommandPalette({ commands, keymap });
         let node = palette.inputNode;
         expect(node).to.be.ok();
         expect(node.classList.contains('p-CommandPalette-input')).to.be(true);
@@ -374,7 +350,7 @@ describe('ui/commandpalette', () => {
       });
 
       it('should be read-only', () => {
-        let palette = new CommandPalette();
+        let palette = new CommandPalette({ commands, keymap });
         expect(() => { palette.inputNode = null; }).to.throwError();
         palette.dispose();
       });
@@ -384,7 +360,7 @@ describe('ui/commandpalette', () => {
     describe('#contentNode', () => {
 
       it('should return the content node of a command palette', () => {
-        let palette = new CommandPalette();
+        let palette = new CommandPalette({ commands, keymap });
         let node = palette.contentNode;
         expect(node).to.be.ok();
         expect(node.classList.contains('p-CommandPalette-content')).to.be(true);
@@ -392,7 +368,7 @@ describe('ui/commandpalette', () => {
       });
 
       it('should be read-only', () => {
-        let palette = new CommandPalette();
+        let palette = new CommandPalette({ commands, keymap });
         expect(() => { palette.contentNode = null; }).to.throwError();
         palette.dispose();
       });
@@ -402,22 +378,47 @@ describe('ui/commandpalette', () => {
     describe('#items', () => {
 
       it('should return the items in a command palette', () => {
-        let options: ICommand = { execute: () => { } };
-        let command = commands.addCommand('test', options);
-        let item = new CommandItem({ command: 'test' });
-        let palette = new CommandPalette();
-        expect(palette.items).to.be.empty();
-        palette.addItem(item);
-        expect(palette.items).to.have.length(1);
+        commands.addCommand('test', { execute: () => { } });
+        let palette = new CommandPalette({ commands, keymap });
+        expect(palette.items.length).to.be(0);
+        palette.addItem({ command: 'test' });
+        expect(palette.items.length).to.be(1);
         expect(palette.items.at(0).command).to.be('test');
         palette.dispose();
-        command.dispose();
       });
 
       it('should be read-only', () => {
-        let palette = new CommandPalette();
+        let palette = new CommandPalette({ commands, keymap });
         expect(() => { palette.items = null; }).to.throwError();
         palette.dispose();
+      });
+
+    });
+
+    describe('#commands', () => {
+
+      it('should get the command registry for the command palette', () => {
+        let palette = new CommandPalette({ commands, keymap });
+        expect(palette.commands).to.be(commands);
+      });
+
+      it('should be read-only', () => {
+        let palette = new CommandPalette({ commands, keymap });
+        expect(() => { palette.commands = null; }).to.throwError();
+      });
+
+    });
+
+    describe('#keymap', () => {
+
+      it('should get the keymap manager for the command palette', () => {
+        let palette = new CommandPalette({ commands, keymap });
+        expect(palette.keymap).to.be(keymap);
+      });
+
+      it('should be read-only', () => {
+        let palette = new CommandPalette({ commands, keymap });
+        expect(() => { palette.keymap = null; }).to.throwError();
       });
 
     });
@@ -426,12 +427,12 @@ describe('ui/commandpalette', () => {
 
       it('should get the renderer for the command palette', () => {
         let renderer = Object.create(CommandPalette.defaultRenderer);
-        let palette = new CommandPalette({ renderer });
+        let palette = new CommandPalette({ commands, keymap, renderer });
         expect(palette.renderer).to.be(renderer);
       });
 
       it('should be read-only', () => {
-        let palette = new CommandPalette();
+        let palette = new CommandPalette({ commands, keymap });
         expect(() => { palette.renderer = null; }).to.throwError();
       });
 
@@ -440,53 +441,40 @@ describe('ui/commandpalette', () => {
     describe('#addItem()', () => {
 
       it('should add an item to a command palette using options', () => {
-        let palette = new CommandPalette();
-        expect(palette.items).to.be.empty();
+        let palette = new CommandPalette({ commands, keymap });
+        expect(palette.items.length).to.be(0);
         expect(palette.addItem({ command: 'test' }).command).to.be('test');
         expect(palette.items).to.have.length(1);
         expect(palette.items.at(0).command).to.be('test');
         palette.dispose();
       });
 
-      it('should add an item to a command palette using a command item', () => {
-        let item = new CommandItem({ command: 'test' });
-        let palette = new CommandPalette();
-        expect(palette.items).to.be.empty();
-        expect(palette.addItem(item).command).to.be('test');
-        expect(palette.items).to.have.length(1);
-        expect(palette.items.at(0).command).to.be('test');
-        palette.dispose();
-      });
-
       it('should add the shortcut for an item to a command palette', () => {
-        let options: ICommand = { execute: () => { } };
-        let command = commands.addCommand('test', options);
-        let binding = keymap.addBinding({
+        commands.addCommand('test', { execute: () => { } });
+        keymap.addBinding({
           keys: ['Ctrl A'],
           selector: 'body',
           command: 'test'
         });
-        let item = new CommandItem({ command: 'test' });
-        let palette = new CommandPalette();
+
+        let palette = new CommandPalette({ commands, keymap });
         let content = palette.contentNode;
 
         Widget.attach(palette, document.body);
-        expect(palette.items).to.be.empty();
-        expect(palette.addItem(item).command).to.be('test');
+        expect(palette.items.length).to.be(0);
+        expect(palette.addItem({ command: 'test' }).command).to.be('test');
         sendMessage(palette, WidgetMessage.UpdateRequest);
 
-        let node = content.querySelector('.p-CommandPalette-item');
+        let node = palette.contentNode.querySelector('.p-CommandPalette-item');
         let shortcut = node.querySelector('.p-CommandPalette-itemShortcut');
 
         expect(node).to.be.ok();
         expect(shortcut).to.be.ok();
         expect(shortcut.textContent.length).to.be.greaterThan(0);
-        expect(palette.items).to.have.length(1);
+        expect(palette.items.length).to.be(1);
         expect(palette.items.at(0).command).to.be('test');
 
         palette.dispose();
-        binding.dispose();
-        command.dispose();
       });
 
     });
@@ -494,37 +482,31 @@ describe('ui/commandpalette', () => {
     describe('#removeItem()', () => {
 
       it('should remove an item from a command palette by item', () => {
-        let options: ICommand = { execute: () => { } };
-        let command = commands.addCommand('test', options);
-        let item = new CommandItem({ command: 'test' });
-        let palette = new CommandPalette();
+        commands.addCommand('test', { execute: () => { } });
+        let palette = new CommandPalette({ commands, keymap });
         Widget.attach(palette, document.body);
         expect(palette.items).to.be.empty();
-        item = palette.addItem(item);
+        let item = palette.addItem({ command: 'test' });
         expect(palette.items).to.have.length(1);
         palette.removeItem(item);
         expect(palette.items).to.be.empty();
         palette.dispose();
-        command.dispose();
       });
 
       it('should remove an item from a command palette by index', () => {
-        let options: ICommand = { execute: () => { } };
-        let command = commands.addCommand('test', options);
-        let item = new CommandItem({ command: 'test' });
-        let palette = new CommandPalette();
+        commands.addCommand('test', { execute: () => { } });
+        let palette = new CommandPalette({ commands, keymap });
         Widget.attach(palette, document.body);
         expect(palette.items).to.be.empty();
-        palette.addItem(item);
+        palette.addItem({ command: 'test' });
         expect(palette.items).to.have.length(1);
         palette.removeItem(0);
         expect(palette.items).to.be.empty();
         palette.dispose();
-        command.dispose();
       });
 
       it('should do nothing if the item is not contained in a palette', () => {
-        let palette = new CommandPalette();
+        let palette = new CommandPalette({ commands, keymap });
         Widget.attach(palette, document.body);
         expect(palette.items).to.be.empty();
         palette.removeItem(0);
@@ -537,18 +519,16 @@ describe('ui/commandpalette', () => {
     describe('#clearItems()', () => {
 
       it('should remove all items from a command palette', () => {
-        let options: ICommand = { execute: () => { } };
-        let command = commands.addCommand('test', options);
-        let palette = new CommandPalette();
+        commands.addCommand('test', { execute: () => { } });
+        let palette = new CommandPalette({ commands, keymap });
         Widget.attach(palette, document.body);
         expect(palette.items).to.be.empty();
-        palette.addItem(new CommandItem({ command: 'test', category: 'one' }));
-        palette.addItem(new CommandItem({ command: 'test', category: 'two' }));
+        palette.addItem({ command: 'test', category: 'one' });
+        palette.addItem({ command: 'test', category: 'two' });
         expect(palette.items).to.have.length(2);
         palette.clearItems();
         expect(palette.items).to.be.empty();
         palette.dispose();
-        command.dispose();
       });
 
     });
@@ -556,9 +536,9 @@ describe('ui/commandpalette', () => {
     describe('#handleEvent()', () => {
 
       it('should handle click, keydown, and input events', () => {
-        let palette = new LogPalette();
+        let palette = new LogPalette({ commands, keymap });
         Widget.attach(palette, document.body);
-        each(['click', 'keydown', 'input'], type => {
+        ['click', 'keydown', 'input'].forEach(type => {
           simulate(palette.node, type);
           expect(palette.events).to.contain(type);
         });
@@ -569,9 +549,8 @@ describe('ui/commandpalette', () => {
 
         it('should trigger a command when its item is clicked', () => {
           let called = false;
-          let options: ICommand = { execute: () => called = true };
-          let command = commands.addCommand('test', options);
-          let palette = new CommandPalette();
+          commands.addCommand('test', { execute: () => called = true });
+          let palette = new CommandPalette({ commands, keymap });
           let content = palette.contentNode;
 
           palette.addItem({ command: 'test' });
@@ -585,37 +564,12 @@ describe('ui/commandpalette', () => {
           expect(called).to.be(true);
 
           palette.dispose();
-          command.dispose();
-        });
-
-        it('should work with a custom command registry', () => {
-          let called = false;
-          let options: ICommand = { execute: () => { called = true; } };
-          let registry = new CommandRegistry();
-          let command = registry.addCommand('test', options);
-          let item = new CommandItem({ command: 'test' });
-          let palette = new CommandPalette({ commandRegistry: registry });
-          let content = palette.contentNode;
-
-          palette.addItem(item);
-          sendMessage(palette, WidgetMessage.UpdateRequest);
-          Widget.attach(palette, document.body);
-
-          let node = content.querySelector('.p-CommandPalette-item');
-
-          expect(node).to.be.ok();
-          simulate(node, 'click');
-          expect(called).to.be(true);
-
-          palette.dispose();
-          command.dispose();
         });
 
         it('should ignore if it is not a left click', () => {
           let called = false;
-          let options: ICommand = { execute: () => called = true };
-          let command = commands.addCommand('test', options);
-          let palette = new CommandPalette();
+          commands.addCommand('test', { execute: () => called = true });
+          let palette = new CommandPalette({ commands, keymap });
           let content = palette.contentNode;
 
           palette.addItem({ command: 'test' });
@@ -629,7 +583,6 @@ describe('ui/commandpalette', () => {
           expect(called).to.be(false);
 
           palette.dispose();
-          command.dispose();
         });
 
       });
@@ -637,9 +590,8 @@ describe('ui/commandpalette', () => {
       context('keydown', () => {
 
         it('should navigate down if down arrow is pressed', () => {
-          let options: ICommand = { execute: () => { } };
-          let command = commands.addCommand('test', options);
-          let palette = new CommandPalette();
+          commands.addCommand('test', { execute: () => { } });
+          let palette = new CommandPalette({ commands, keymap });
           let content = palette.contentNode;
 
           palette.addItem({ command: 'test' });
@@ -655,13 +607,11 @@ describe('ui/commandpalette', () => {
           expect(node).to.be.ok();
 
           palette.dispose();
-          command.dispose();
         });
 
         it('should navigate up if up arrow is pressed', () => {
-          let options: ICommand = { execute: () => { } };
-          let command = commands.addCommand('test', options);
-          let palette = new CommandPalette();
+          commands.addCommand('test', { execute: () => { } });
+          let palette = new CommandPalette({ commands, keymap });
           let content = palette.contentNode;
 
           palette.addItem({ command: 'test' });
@@ -676,14 +626,12 @@ describe('ui/commandpalette', () => {
           expect(node).to.be.ok();
 
           palette.dispose();
-          command.dispose();
         });
 
         it('should ignore if modifier keys are pressed', () => {
           let called = false;
-          let options: ICommand = { execute: () => called = true };
-          let command = commands.addCommand('test', options);
-          let palette = new CommandPalette();
+          commands.addCommand('test', { execute: () => called = true });
+          let palette = new CommandPalette({ commands, keymap });
           let content = palette.contentNode;
 
           palette.addItem({ command: 'test' });
@@ -693,7 +641,7 @@ describe('ui/commandpalette', () => {
           let node = content.querySelector('.p-mod-active');
 
           expect(node).to.not.be.ok();
-          each(['altKey', 'ctrlKey', 'shiftKey', 'metaKey'], key => {
+          ['altKey', 'ctrlKey', 'shiftKey', 'metaKey'].forEach(key => {
             let options: any = { keyCode: 38 };
             options[key] = true;
             simulate(palette.node, 'keydown', options);
@@ -702,14 +650,12 @@ describe('ui/commandpalette', () => {
           });
 
           palette.dispose();
-          command.dispose();
         });
 
         it('should trigger active item if enter is pressed', () => {
           let called = false;
-          let options: ICommand = { execute: () => called = true };
-          let command = commands.addCommand('test', options);
-          let palette = new CommandPalette();
+          let command = commands.addCommand('test', { execute: () => called = true });
+          let palette = new CommandPalette({ commands, keymap });
           let content = palette.contentNode;
 
           palette.addItem({ command: 'test' });
@@ -723,24 +669,19 @@ describe('ui/commandpalette', () => {
           expect(called).to.be(true);
 
           palette.dispose();
-          command.dispose();
         });
 
         it('should trigger active category if enter is pressed', () => {
-          let palette = new CommandPalette();
+          let palette = new CommandPalette({ commands, keymap });
           let categories = ['A', 'B'];
           let names = [
             ['A', 'B', 'C', 'D', 'E'],
             ['F', 'G', 'H', 'I', 'J']
           ];
-          let disposables = new DisposableSet();
-          disposables.add(palette);
           names.forEach((values, index) => {
-            let category = categories[index];
             values.forEach(command => {
-              let options: ICommand = { execute: () => { }, label: command };
-              palette.addItem({ category, command });
-              disposables.add(commands.addCommand(command, options));
+              palette.addItem({ category: categories[index], command });
+              commands.addCommand(command, { execute: () => { }, label: command });
             });
           });
 
@@ -757,7 +698,7 @@ describe('ui/commandpalette', () => {
           sendMessage(palette, WidgetMessage.UpdateRequest);
           expect(items()).to.have.length(5);
 
-          disposables.dispose();
+          palette.dispose();
         });
 
       });
@@ -765,14 +706,10 @@ describe('ui/commandpalette', () => {
       context('input', () => {
 
         it('should filter the list of visible items', () => {
-          let palette = new CommandPalette();
-          let disposables = new DisposableSet();
-          disposables.add(palette);
+          let palette = new CommandPalette({ commands, keymap });
           ['A', 'B', 'C', 'D', 'E'].forEach(name => {
-            let options: ICommand = { execute: () => { }, label: name };
-            let command = commands.addCommand(name, options);
+            commands.addCommand(name, { execute: () => { }, label: name });
             palette.addItem({ command: name });
-            disposables.add(command);
           });
 
           sendMessage(palette, WidgetMessage.UpdateRequest);
@@ -787,24 +724,20 @@ describe('ui/commandpalette', () => {
           sendMessage(palette, WidgetMessage.UpdateRequest);
           expect(items()).to.have.length(1);
 
-          disposables.dispose();
+          palette.dispose();
         });
 
         it('should filter by both text and category', () => {
-          let palette = new CommandPalette();
+          let palette = new CommandPalette({ commands, keymap });
           let categories = ['Z', 'Y'];
           let names = [
             ['A1', 'B2', 'C3', 'D4', 'E5'],
             ['F1', 'G2', 'H3', 'I4', 'J5']
           ];
-          let disposables = new DisposableSet();
-          disposables.add(palette);
           names.forEach((values, index) => {
-            let category = categories[index];
             values.forEach(command => {
-              let options: ICommand = { execute: () => { }, label: command };
-              palette.addItem({ category, command });
-              disposables.add(commands.addCommand(command, options));
+              palette.addItem({ category: categories[index], command });
+              commands.addCommand(command, { execute: () => { }, label: command });
             });
           });
 
@@ -835,7 +768,7 @@ describe('ui/commandpalette', () => {
           let cat = categories.sort().map(cat => cat.toLowerCase())[0];
           expect(palette.inputNode.value).to.be(`${cat}: 1`);
 
-          disposables.dispose();
+          palette.dispose();
         });
 
       });
