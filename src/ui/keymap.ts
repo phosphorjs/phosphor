@@ -38,7 +38,7 @@ import {
 } from '../dom/selector';
 
 import {
-  commands
+  CommandRegistry, commands
 } from './commands';
 
 import {
@@ -392,11 +392,13 @@ namespace KeyBinding {
  * application, and one is exported from this module as `keymap`.
  */
 export
-class KeymapManager {
+class KeymapManager implements IDisposable {
   /**
    * Construct a new keymap manager.
    */
-  constructor() { }
+  constructor(options: KeymapManager.IOptions = {}) {
+    this._commands = options.commands || commands;
+  }
 
   /**
    * A signal emitted when a key binding is changed.
@@ -407,6 +409,31 @@ class KeymapManager {
    * A signal emitted when the keyboard layout has changed.
    */
   layoutChanged: ISignal<KeymapManager, void>;
+
+  /**
+   * Dispose of the resources held by the keymap manager.
+   *
+   * #### Notes
+   * All calls made after the first call to this method are a no-op.
+   */
+  dispose(): void {
+    // Do nothing if the keymap manager is already disposed.
+    if (this._disposed) {
+      return;
+    }
+    this._disposed = true;
+    this._commands = null;
+  }
+
+  /**
+   * Test whether the keymap manager is disposed.
+   *
+   * #### Notes
+   * This is a read-only property.
+   */
+  get isDisposed(): boolean {
+    return this._disposed;
+  }
 
   /**
    * A read-only sequence of the key bindings in the keymap.
@@ -442,6 +469,16 @@ class KeymapManager {
     }
     this._layout = value;
     this.layoutChanged.emit(void 0);
+  }
+
+  /**
+   * Get the command registry used by the keymap manager.
+   *
+   * #### Notes
+   * This is a read-only property.
+   */
+  get commandRegistry(): CommandRegistry {
+    return this._commands;
   }
 
   /**
@@ -561,7 +598,7 @@ class KeymapManager {
     // can be dispatched immediately. The pending state is cleared so
     // the next key press starts from the default state.
     if (!partial) {
-      Private.execute(exact);
+      Private.execute(exact, this._commands);
       this._clearPendingState();
       return;
     }
@@ -627,7 +664,7 @@ class KeymapManager {
   private _onPendingTimeout(): void {
     this._timerID = 0;
     if (this._exact) {
-      Private.execute(this._exact);
+      Private.execute(this._exact, this._commands);
     } else {
       this._replayEvents();
     }
@@ -641,6 +678,8 @@ class KeymapManager {
   private _exact: KeyBinding = null;
   private _events: KeyboardEvent[] = [];
   private _bindings = new Vector<KeyBinding>();
+  private _commands: CommandRegistry = null;
+  private _disposed = false;
 }
 
 
@@ -654,6 +693,19 @@ defineSignal(KeymapManager.prototype, 'layoutChanged');
  */
 export
 namespace KeymapManager {
+  /**
+   * An options object for initializing a keymap manager.
+   */
+  export
+  interface IOptions {
+    /**
+     * The command registry for use with the keymap manager.
+     *
+     * The default is the shared `commands` singleton.
+     */
+    commands?: CommandRegistry;
+  }
+
   /**
    * An arguments object for the `bindingChanged` signal.
    */
@@ -809,10 +861,10 @@ namespace Private {
    * If the command is disabled, a message will be logged.
    */
   export
-  function execute(binding: KeyBinding): void {
+  function execute(binding: KeyBinding, registry: CommandRegistry): void {
     let { command, args } = binding;
-    if (commands.isEnabled(command, args)) {
-      commands.execute(command, args);
+    if (registry.isEnabled(command, args)) {
+      registry.execute(command, args);
     } else {
       // TODO - right way to handle disabled command?
       let formatted = binding.keys.map(formatKeystroke).join(' ');

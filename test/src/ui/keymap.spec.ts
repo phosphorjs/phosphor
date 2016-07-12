@@ -20,7 +20,7 @@ import {
 } from '../../../lib/dom/platform';
 
 import {
-  commands
+  CommandRegistry, commands
 } from '../../../lib/ui/commands';
 
 import {
@@ -149,7 +149,47 @@ describe('ui/keymap', () => {
       it('should accept no arguments', () => {
         let keymap = new KeymapManager();
         expect(keymap).to.be.a(KeymapManager);
-      })
+      });
+
+      it('should accept an options object', () => {
+        let registry = new CommandRegistry();
+        let keymap = new KeymapManager({ commands: registry });
+        expect(keymap.commandRegistry).to.be(registry);
+      });
+
+    });
+
+    describe('#dispose()', () => {
+
+      it('should dispose of the resources held by the keymap manager', () => {
+        let keymap = new KeymapManager();
+        keymap.dispose();
+        expect(keymap.isDisposed).to.be(true);
+        expect(keymap.commandRegistry).to.be(null);
+      });
+
+      it('should be a no-op after the first call', () => {
+        let keymap = new KeymapManager();
+        keymap.dispose();
+        keymap.dispose();
+        expect(keymap.isDisposed).to.be(true);
+      });
+
+    });
+
+    describe('#isDisposed', () => {
+
+      it('should test whether the keymap manager has been disposed', () => {
+        let keymap = new KeymapManager();
+        expect(keymap.isDisposed).to.be(false);
+        keymap.dispose();
+        expect(keymap.isDisposed).to.be(true);
+      });
+
+      it('should be read-only', () => {
+        let keymap = new KeymapManager();
+        expect(() => { keymap.isDisposed = true; }).to.throwError();
+      });
 
     });
 
@@ -177,6 +217,26 @@ describe('ui/keymap', () => {
       it('should reset to `EN_US` if set to `null`', () => {
         keymap.layout = null;
         expect(keymap.layout).to.be(EN_US);
+      });
+
+    });
+
+    describe('#commandRegistry', () => {
+
+      it('should be the command registry used by the keymap', () => {
+        let registry = new CommandRegistry();
+        let keymap = new KeymapManager({ commands: registry });
+        expect(keymap.commandRegistry).to.be(registry);
+      });
+
+      it('should default to `commands`', () => {
+        let keymap = new KeymapManager();
+        expect(keymap.commandRegistry).to.be(commands);
+      });
+
+      it('should be read-only', () => {
+        let keymap = new KeymapManager();
+        expect(() => { keymap.commandRegistry = null; }).to.throwError();
       });
 
     });
