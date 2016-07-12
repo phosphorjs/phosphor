@@ -31,7 +31,7 @@ import {
 
 import {
   CommandRegistry
-} from './commands';
+} from './commandregistry';
 
 import {
   KeyBinding, KeymapManager, formatKeystroke
