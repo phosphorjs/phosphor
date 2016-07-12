@@ -137,77 +137,6 @@ const SUBMENU_OVERLAP = 3;
 
 
 /**
- * An object which represents a menu item.
- */
-export
-interface IMenuItem {
-  /**
-   * The type of the menu item.
-   */
-  type: Menu.ItemType;
-
-  /**
-   * The command to execute when the item is triggered.
-   */
-  command: string;
-
-  /**
-   * The arguments for the command.
-   */
-  args: JSONObject;
-
-  /**
-   * The menu for a `'submenu'` type item.
-   */
-  menu: Menu;
-
-  /**
-   * The display label for the menu item.
-   */
-  label: string;
-
-  /**
-   * The mnemonic index for the menu item.
-   */
-  mnemonic: number;
-
-  /**
-   * The icon class for the menu item.
-   */
-  icon: string;
-
-  /**
-   * The display caption for the menu item.
-   */
-  caption: string;
-
-  /**
-   * The extra class name for the menu item.
-   */
-  className: string;
-
-  /**
-   * Whether the menu item is enabled.
-   */
-  isEnabled: boolean;
-
-  /**
-   * Whether the menu item is toggled.
-   */
-  isToggled: boolean;
-
-  /**
-   * Whether the menu item is visible.
-   */
-  isVisible: boolean;
-  /**
-   * The key binding for the menu item.
-   */
-  keyBinding: KeyBinding;
-}
-
-
-/**
  * A widget which displays menu items as a canonical menu.
  */
 export
@@ -347,7 +276,7 @@ class Menu extends Widget {
    * #### Notes
    * This is a read-only property.
    */
-  get items(): ISequence<IMenuItem> {
+  get items(): ISequence<Menu.IItem> {
     return this._items;
   }
 
@@ -357,7 +286,7 @@ class Menu extends Widget {
    * #### Notes
    * This will be `null` if no menu item is active.
    */
-  get activeItem(): IMenuItem {
+  get activeItem(): Menu.IItem {
     let i = this._activeIndex;
     return i !== -1 ? this._items.at(i) : null;
   }
@@ -368,7 +297,7 @@ class Menu extends Widget {
    * #### Notes
    * If the item cannot be activated, the item will be set to `null`.
    */
-  set activeItem(value: IMenuItem) {
+  set activeItem(value: Menu.IItem) {
     this.activeIndex = indexOf(this._items, value);
   }
 
@@ -520,7 +449,7 @@ class Menu extends Widget {
    *
    * @returns The menu item added to the menu.
    */
-  addItem(value: Menu.IItemOptions): IMenuItem {
+  addItem(value: Menu.IItemOptions): Menu.IItem {
     return this.insertItem(this._items.length, value);
   }
 
@@ -536,7 +465,7 @@ class Menu extends Widget {
    * #### Notes
    * The index will be clamped to the bounds of the items.
    */
-  insertItem(index: number, options: Menu.IItemOptions): IMenuItem {
+  insertItem(index: number, options: Menu.IItemOptions): Menu.IItem {
     // Close the menu if it's attached.
     if (this.isAttached) {
       this.close();
@@ -581,7 +510,7 @@ class Menu extends Widget {
    * #### Notes
    * This is a no-op if the item is not contained in the menu.
    */
-  removeItem(value: IMenuItem | number): void {
+  removeItem(value: Menu.IItem | number): void {
     // Coerce the value to an index.
     let index: number;
     if (typeof value === 'number') {
@@ -1201,6 +1130,76 @@ namespace Menu {
   }
 
   /**
+   * An object which represents a menu item.
+   */
+  export
+  interface IItem {
+    /**
+     * The type of the menu item.
+     */
+    type: ItemType;
+
+    /**
+     * The command to execute when the item is triggered.
+     */
+    command: string;
+
+    /**
+     * The arguments for the command.
+     */
+    args: JSONObject;
+
+    /**
+     * The menu for a `'submenu'` type item.
+     */
+    menu: Menu;
+
+    /**
+     * The display label for the menu item.
+     */
+    label: string;
+
+    /**
+     * The mnemonic index for the menu item.
+     */
+    mnemonic: number;
+
+    /**
+     * The icon class for the menu item.
+     */
+    icon: string;
+
+    /**
+     * The display caption for the menu item.
+     */
+    caption: string;
+
+    /**
+     * The extra class name for the menu item.
+     */
+    className: string;
+
+    /**
+     * Whether the menu item is enabled.
+     */
+    isEnabled: boolean;
+
+    /**
+     * Whether the menu item is toggled.
+     */
+    isToggled: boolean;
+
+    /**
+     * Whether the menu item is visible.
+     */
+    isVisible: boolean;
+    /**
+     * The key binding for the menu item.
+     */
+    keyBinding: KeyBinding;
+  }
+
+  /**
    * A type alias for a menu item type.
    */
   export
@@ -1294,7 +1293,7 @@ namespace Menu {
      * This method should completely reset the state of the node to
      * reflect the data for the menu item.
      */
-    updateItemNode(node: HTMLElement, item: IMenuItem): void;
+    updateItemNode(node: HTMLElement, item: Menu.IItem): void;
   }
 
   /**
@@ -1332,7 +1331,7 @@ namespace Menu {
      *
      * @param item - The menu item holding the data for the node.
      */
-    updateItemNode(node: HTMLElement, item: IMenuItem): void {
+    updateItemNode(node: HTMLElement, item: Menu.IItem): void {
       // Setup the initial item class.
       let itemClass = ITEM_CLASS;
 
@@ -1477,7 +1476,7 @@ namespace Private {
    * Hide the extra and redundant separator nodes.
    */
   export
-  function hideExtraSeparators(nodes: ISequence<HTMLElement>, items: ISequence<IMenuItem>): void {
+  function hideExtraSeparators(nodes: ISequence<HTMLElement>, items: ISequence<Menu.IItem>): void {
     // Hide the leading separators.
     let k1 = 0;
     let n = items.length;
@@ -1661,7 +1660,7 @@ namespace Private {
    * Once created, a menu item is immutable.
    */
   export
-  class MenuItem implements IMenuItem {
+  class MenuItem implements Menu.IItem {
     /**
      * Construct a new menu item.
      *

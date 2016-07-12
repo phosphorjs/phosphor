@@ -36,7 +36,7 @@ import {
 } from '../../../lib/ui/keymap';
 
 import {
-  Menu, IMenuItem
+  Menu
 } from '../../../lib/ui/menu';
 
 import {
