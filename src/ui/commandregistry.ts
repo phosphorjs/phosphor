@@ -211,10 +211,6 @@ interface ICommand {
 
 /**
  * A registry which holds user-defined commands.
- *
- * #### Notes
- * A singleton instance of this class is all that is necessary for an
- * application, and one is exported from this module as `commands`.
  */
 export
 class CommandRegistry {
@@ -545,17 +541,6 @@ namespace CommandRegistry {
     args: JSONObject;
   }
 }
-
-
-/**
- * A singleton instance of a `CommandRegistry`.
- *
- * #### Notes
- * This singleton instance is all that is necessary for an application.
- * User code will not typically create a new registry instance.
- */
-export
-const commands = new CommandRegistry();
 
 
 /**
