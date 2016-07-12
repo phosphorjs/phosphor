@@ -22,10 +22,6 @@ import {
 } from '../collections/vector';
 
 import {
-  IDisposable
-} from '../core/disposable';
-
-import {
   Message
 } from '../core/messaging';
 
@@ -34,7 +30,7 @@ import {
 } from '../dom/query';
 
 import {
-  CommandRegistry, commands
+  CommandRegistry
 } from './commands';
 
 import {
@@ -113,34 +109,31 @@ const TOGGLED_CLASS = 'p-mod-toggled';
 
 
 /**
- * An object which represents a command item.
+ * An object which represents an item in a command palette.
  *
  * #### Notes
+ * A command item is created automatically by the command palette.
+ * It will not typically be instantiated directly by user code.
+ *
  * Once created, a command item is immutable.
  */
 export
-class CommandItem implements IDisposable {
+class CommandItem {
   /**
    * Construct a new command item.
    *
-   * @param options - The options for initializing the command item.
+   * @param commands - The command registry to use for the item.
+   *
+   * @param keymap - The keymap manager to use for the item.
+   *
+   * @param options - The other initialization options for the item.
    */
-  constructor(options: CommandItem.IOptions) {
+  constructor(commands: CommandRegistry, keymap: KeymapManager, options: CommandItem.IOptions) {
+    this._commands = commands;
+    this._keymap = keymap;
     this._command = options.command;
     this._args = options.args || null;
     this._category = Private.normalizeCategory(options.category || 'general');
-    this._commands = options.commandRegistry || commands;
-    this._keymap = options.keymapManager || keymap;
-  }
-
-  /**
-   * Test whether the command item is disposed.
-   *
-   * #### Notes
-   * This is a read-only property.
-   */
-  get isDisposed(): boolean {
-    return this._disposed;
   }
 
   /**
@@ -214,26 +207,19 @@ class CommandItem implements IDisposable {
   }
 
   /**
-   * Dispose of the resources held by the command item.
+   * Execute the underlying command.
    *
-   * #### Notes
-   * All calls made after the first call to this method are a no-op.
+   * @returns The command execution promise.
    */
-  dispose(): void {
-    // Do nothing if the command item is already disposed.
-    if (this._disposed) {
-      return;
-    }
-    this._commands = null;
-    this._keymap = null;
+  execute(): Promise<any> {
+    return this._commands.execute(this._command, this._args);
   }
 
+  private _commands: CommandRegistry;
+  private _keymap: KeymapManager;
   private _command: string;
   private _args: JSONObject;
   private _category: string;
-  private _disposed = false;
-  private _commands: CommandRegistry = null;
-  private _keymap: KeymapManager = null;
 }
 
 
@@ -265,20 +251,6 @@ namespace CommandItem {
      * The default value is `'general'`.
      */
     category?: string;
-
-    /**
-     * The command registry for use with the command item.
-     *
-     * The default is the shared `commands` singleton.
-     */
-    commandRegistry?: CommandRegistry;
-
-    /**
-     * The keymap manager for use with the command item.
-     *
-     * The default is the shared `keymap` singleton.
-     */
-    keymapManager?: KeymapManager;
   }
 }
 
@@ -290,14 +262,18 @@ export
 class CommandPalette extends Widget {
   /**
    * Construct a new command palette.
+   *
+   * @param options - The options for initializing the palette.
    */
-  constructor(options: CommandPalette.IOptions = {}) {
+  constructor(options: CommandPalette.IOptions) {
     super({ node: Private.createNode() });
     this.addClass(PALETTE_CLASS);
     this.setFlag(WidgetFlag.DisallowLayout);
+    this._keymap = options.keymap;
+    this._commands = options.commands;
     this._renderer = options.renderer || CommandPalette.defaultRenderer;
-    this._commands = options.commandRegistry || commands;
-    this._keymap = options.keymapManager || keymap;
+    this._commands.commandChanged.connect(this._onGenericChange, this);
+    this._keymap.bindingChanged.connect(this._onGenericChange, this);
   }
 
   /**
@@ -309,8 +285,8 @@ class CommandPalette extends Widget {
     this._headerNodes.clear();
     this._renderer = null;
     this._result = null;
-    this._commands = null;
     this._keymap = null;
+    this._commands = null;
     super.dispose();
   }
 
@@ -361,6 +337,26 @@ class CommandPalette extends Widget {
   }
 
   /**
+   * The command registry used by the command palette.
+   *
+   * #### Notes
+   * This is a read-only property.
+   */
+  get commands(): CommandRegistry {
+    return this._commands;
+  }
+
+  /**
+   * The keymap manager used by the command palette.
+   *
+   * #### Notes
+   * This is a read-only property.
+   */
+  get keymap(): KeymapManager {
+    return this._keymap;
+  }
+
+  /**
    * The renderer used by the command palette.
    *
    * #### Notes
@@ -373,19 +369,13 @@ class CommandPalette extends Widget {
   /**
    * Add a command item to the command palette.
    *
-   * @param options - An options object to be converted into a command item.
+   * @param options - The options for creating the command item.
    *
    * @returns The command item added to the palette.
    */
   addItem(options: CommandItem.IOptions): CommandItem {
-    // Create a new command item from the options.
-    let item = new CommandItem({
-      command: options.command,
-      args: options.args,
-      category: options.category,
-      commandRegistry: this._commands,
-      keymapManager: this._keymap
-    });
+    // Create a new command item for the options.
+    let item = new CommandItem(this._commands, this._keymap, options);
 
     // Add the item to the vector.
     this._items.pushBack(item);
@@ -466,8 +456,6 @@ class CommandPalette extends Widget {
    * A message handler invoked on a `'after-attach'` message.
    */
   protected onAfterAttach(msg: Message): void {
-    this._commands.commandChanged.connect(this._onGenericChange, this);
-    this._keymap.bindingChanged.connect(this._onGenericChange, this);
     this.node.addEventListener('click', this);
     this.node.addEventListener('keydown', this);
     this.node.addEventListener('input', this);
@@ -478,8 +466,6 @@ class CommandPalette extends Widget {
    * A message handler invoked on a `'before-detach'` message.
    */
   protected onBeforeDetach(msg: Message): void {
-    this._commands.commandChanged.disconnect(this._onGenericChange, this);
-    this._keymap.bindingChanged.disconnect(this._onGenericChange, this);
     this.node.removeEventListener('click', this);
     this.node.removeEventListener('keydown', this);
     this.node.removeEventListener('input', this);
@@ -773,7 +759,7 @@ class CommandPalette extends Widget {
     if (part.item) {
       input.focus();
       input.select();
-      this._commands.execute(part.item.command, part.item.args);
+      part.item.execute();
       return;
     }
 
@@ -799,22 +785,19 @@ class CommandPalette extends Widget {
 
   /**
    * A signal handler for commands and keymap changes.
-   *
-   * #### Notes
-   * This is only connected when the palette is attached.
    */
   private _onGenericChange(): void {
-    this.update();
+    if (this.isAttached) this.update();
   }
 
   private _activeIndex = 1;
+  private _keymap: KeymapManager;
+  private _commands: CommandRegistry;
+  private _renderer: CommandPalette.IRenderer;
   private _items = new Vector<CommandItem>();
   private _itemNodes = new Vector<HTMLElement>();
   private _headerNodes = new Vector<HTMLElement>();
   private _result: Private.ISearchResult = null;
-  private _renderer: CommandPalette.IRenderer = null;
-  private _commands: CommandRegistry = null;
-  private _keymap: KeymapManager = null;
 }
 
 
@@ -829,25 +812,21 @@ namespace CommandPalette {
   export
   interface IOptions {
     /**
+     * The command registry for use with the command palette.
+     */
+    commands: CommandRegistry;
+
+    /**
+     * The keymap manager for use with the command palette.
+     */
+    keymap: KeymapManager;
+
+    /**
      * A custom renderer for use with the command palette.
      *
      * The default is a shared renderer instance.
      */
     renderer?: IRenderer;
-
-    /**
-     * The command registry for use with the command palette.
-     *
-     * The default is the shared `commands` singleton.
-     */
-    commandRegistry?: CommandRegistry;
-
-    /**
-     * The keymap manager for use with the command palette.
-     *
-     * The default is the shared `keymap` singleton.
-     */
-    keymapManager?: KeymapManager;
   }
 
   /**
