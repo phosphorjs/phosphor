@@ -110,15 +110,79 @@ const TOGGLED_CLASS = 'p-mod-toggled';
 
 /**
  * An object which represents an item in a command palette.
+ */
+export
+interface ICommandItem {
+  /**
+   * The command to execute when the item is triggered.
+   */
+  command: string;
+
+  /**
+   * The arguments for the command.
+   */
+  args: JSONObject;
+
+  /**
+   * The display label for the command item.
+   */
+  label: string;
+
+  /**
+   * The display caption for the command item.
+   */
+  caption: string;
+
+  /**
+   * The extra class name for the command item.
+   */
+  className: string;
+
+  /**
+   * Whether the command item is enabled.
+   */
+  isEnabled: boolean;
+
+  /**
+   * Whether the command item is toggled.
+   */
+  isToggled: boolean;
+
+  /**
+   * Whether the command item is visible.
+   */
+  isVisible: boolean;
+
+  /**
+   * The key binding for the command item.
+   */
+  keyBinding: KeyBinding;
+
+  /**
+   * The category for the command item.
+   */
+  category: string;
+
+  /**
+   * Execute the underlying command.
+   *
+   * @returns The command execution promise.
+   */
+  execute(): Promise<any>;
+}
+
+
+/**
+ * An object which represents an item in a command palette.
  *
  * #### Notes
  * A command item is created automatically by the command palette.
- * It will not typically be instantiated directly by user code.
+ * It is not exported because it should not be instantiated directly by user
+ * code.
  *
  * Once created, a command item is immutable.
  */
-export
-class CommandItem {
+class CommandItem implements ICommandItem {
   /**
    * Construct a new command item.
    *
@@ -128,7 +192,7 @@ class CommandItem {
    *
    * @param options - The other initialization options for the item.
    */
-  constructor(commands: CommandRegistry, keymap: KeymapManager, options: CommandItem.IOptions) {
+  constructor(commands: CommandRegistry, keymap: KeymapManager, options: CommandPalette.IItemOptions) {
     this._commands = commands;
     this._keymap = keymap;
     this._command = options.command;
@@ -224,38 +288,6 @@ class CommandItem {
 
 
 /**
- * The namespace for the `CommandItem` class statics.
- */
-export
-namespace CommandItem {
-  /**
-   * An options object for initializing a command item.
-   */
-  export
-  interface IOptions {
-    /**
-     * The command to execute when the item is triggered.
-     */
-    command: string;
-
-    /**
-     * The arguments for the command.
-     *
-     * The default value is `null`.
-     */
-    args?: JSONObject;
-
-    /**
-     * The category for the item.
-     *
-     * The default value is `'general'`.
-     */
-    category?: string;
-  }
-}
-
-
-/**
  * A widget which displays command items as a searchable palette.
  */
 export
@@ -332,7 +364,7 @@ class CommandPalette extends Widget {
    * #### Notes
    * This is a read-only property.
    */
-  get items(): ISequence<CommandItem> {
+  get items(): ISequence<ICommandItem> {
     return this._items;
   }
 
@@ -373,7 +405,7 @@ class CommandPalette extends Widget {
    *
    * @returns The command item added to the palette.
    */
-  addItem(options: CommandItem.IOptions): CommandItem {
+  addItem(options: CommandPalette.IItemOptions): ICommandItem {
     // Create a new command item for the options.
     let item = new CommandItem(this._commands, this._keymap, options);
 
@@ -395,7 +427,7 @@ class CommandPalette extends Widget {
    * #### Notes
    * This is a no-op if the item is not contained in the palette.
    */
-  removeItem(value: CommandItem | number): void {
+  removeItem(value: ICommandItem | number): void {
     // Coerce the value to an index.
     let index: number;
     if (typeof value === 'number') {
@@ -830,6 +862,31 @@ namespace CommandPalette {
   }
 
   /**
+   * An options object for initializing a command item.
+   */
+  export
+  interface IItemOptions {
+    /**
+     * The command to execute when the item is triggered.
+     */
+    command: string;
+
+    /**
+     * The arguments for the command.
+     *
+     * The default value is `null`.
+     */
+    args?: JSONObject;
+
+    /**
+     * The category for the item.
+     *
+     * The default value is `'general'`.
+     */
+    category?: string;
+  }
+
+  /**
    * A renderer for use with a command palette.
    */
   export
@@ -888,7 +945,7 @@ namespace CommandPalette {
      * This method should completely reset the state of the node to
      * reflect the data for the command item.
      */
-    updateItemNode(node: HTMLElement, item: CommandItem, markup: string): void;
+    updateItemNode(node: HTMLElement, item: ICommandItem, markup: string): void;
   }
 
   /**
@@ -952,7 +1009,7 @@ namespace CommandPalette {
      *   item label text interpolated with `<mark>` tags for the
      *   matching search characters.
      */
-    updateItemNode(node: HTMLElement, item: CommandItem, markup: string): void {
+    updateItemNode(node: HTMLElement, item: ICommandItem, markup: string): void {
       // Setup the initial item class.
       let itemClass = ITEM_CLASS;
 
