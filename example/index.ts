@@ -14,15 +14,15 @@ import {
 } from '../lib/ui/commandpalette';
 
 import {
-  commands
-} from '../lib/ui/commands';
+  CommandRegistry
+} from '../lib/ui/commandregistry';
 
 import {
   DockPanel
 } from '../lib/ui/dockpanel';
 
 import {
-  keymap
+  Keymap
 } from '../lib/ui/keymap';
 
 import {
@@ -42,8 +42,12 @@ import '../styles/base.css';
 import './index.css';
 
 
+const commands = new CommandRegistry();
+const keymap = new Keymap({ commands });
+
+
 function createMenu(): Menu {
-  let sub1 = new Menu();
+  let sub1 = new Menu({ commands, keymap });
   sub1.title.label = 'More...';
   sub1.title.mnemonic = 0;
   sub1.addItem({ command: 'example:one' });
@@ -51,7 +55,7 @@ function createMenu(): Menu {
   sub1.addItem({ command: 'example:three' });
   sub1.addItem({ command: 'example:four' });
 
-  let sub2 = new Menu();
+  let sub2 = new Menu({ commands, keymap });
   sub2.title.label = 'More...';
   sub2.title.mnemonic = 0;
   sub2.addItem({ command: 'example:one' });
@@ -60,7 +64,7 @@ function createMenu(): Menu {
   sub2.addItem({ command: 'example:four' });
   sub2.addItem({ type: 'submenu', menu: sub1 });
 
-  let root = new Menu();
+  let root = new Menu({ commands, keymap });
   root.addItem({ command: 'example:copy' });
   root.addItem({ command: 'example:cut' });
   root.addItem({ command: 'example:paste' });
@@ -234,12 +238,12 @@ function main(): void {
 
   let ctxt = createMenu();
 
-  let bar = new MenuBar();
+  let bar = new MenuBar({ keymap });
   bar.addMenu(menu1);
   bar.addMenu(menu2);
   bar.addMenu(menu3);
 
-  let palette = new CommandPalette();
+  let palette = new CommandPalette({ commands, keymap });
   palette.addItem({ command: 'example:cut', category: 'edit' });
   palette.addItem({ command: 'example:copy', category: 'edit' });
   palette.addItem({ command: 'example:paste', category: 'edit' });
@@ -264,7 +268,7 @@ function main(): void {
       event.preventDefault();
       event.stopPropagation();
       bar.activeIndex = 0;
-      bar.focus();
+      bar.activate();
     } else {
       keymap.processKeydownEvent(event);
     }
@@ -281,7 +285,7 @@ function main(): void {
   dock.addWidget(y1, { mode: 'split-bottom', ref: b1 });
   dock.addWidget(g1, { mode: 'split-left', ref: y1 });
 
-  dock.activeWidgetChanged.connect((s, a) => {console.log(a);});
+  dock.currentChanged.connect((s, a) => { console.log(a); });
 
   BoxPanel.setStretch(dock, 1);
 
