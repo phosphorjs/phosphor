@@ -34,7 +34,7 @@ import {
 } from './commandregistry';
 
 import {
-  KeyBinding, KeymapManager, formatKeystroke
+  Keymap
 } from './keymap';
 
 import {
@@ -124,11 +124,11 @@ class CommandItem implements CommandPalette.IItem {
    *
    * @param commands - The command registry to use for the item.
    *
-   * @param keymap - The keymap manager to use for the item.
+   * @param keymap - The keymap to use for the item.
    *
    * @param options - The other initialization options for the item.
    */
-  constructor(commands: CommandRegistry, keymap: KeymapManager, options: CommandPalette.IItemOptions) {
+  constructor(commands: CommandRegistry, keymap: Keymap, options: CommandPalette.IItemOptions) {
     this._commands = commands;
     this._keymap = keymap;
     this._command = options.command;
@@ -195,8 +195,8 @@ class CommandItem implements CommandPalette.IItem {
   /**
    * The key binding for the command item.
    */
-  get keyBinding(): KeyBinding {
-    return this._keymap.findKeyBinding(this._command, this._args);
+  get keyBinding(): Keymap.IBinding {
+    return this._keymap.findBinding(this._command, this._args);
   }
 
   /**
@@ -216,7 +216,7 @@ class CommandItem implements CommandPalette.IItem {
   }
 
   private _commands: CommandRegistry;
-  private _keymap: KeymapManager;
+  private _keymap: Keymap;
   private _command: string;
   private _args: JSONObject;
   private _category: string;
@@ -315,12 +315,12 @@ class CommandPalette extends Widget {
   }
 
   /**
-   * The keymap manager used by the command palette.
+   * The keymap used by the command palette.
    *
    * #### Notes
    * This is a read-only property.
    */
-  get keymap(): KeymapManager {
+  get keymap(): Keymap {
     return this._keymap;
   }
 
@@ -759,7 +759,7 @@ class CommandPalette extends Widget {
   }
 
   private _activeIndex = 1;
-  private _keymap: KeymapManager;
+  private _keymap: Keymap;
   private _commands: CommandRegistry;
   private _renderer: CommandPalette.IRenderer;
   private _items = new Vector<CommandItem>();
@@ -822,7 +822,7 @@ namespace CommandPalette {
     /**
      * The key binding for the command item.
      */
-    keyBinding: KeyBinding;
+    keyBinding: Keymap.IBinding;
 
     /**
      * The category for the command item.
@@ -849,9 +849,9 @@ namespace CommandPalette {
     commands: CommandRegistry;
 
     /**
-     * The keymap manager for use with the command palette.
+     * The keymap for use with the command palette.
      */
-    keymap: KeymapManager;
+    keymap: Keymap;
 
     /**
      * A custom renderer for use with the command palette.
@@ -1055,8 +1055,8 @@ namespace CommandPalette {
      *
      * @returns The formatted shortcut text for display.
      */
-    formatShortcut(binding: KeyBinding): string {
-      return binding ? binding.keys.map(formatKeystroke).join(' ') : '';
+    formatShortcut(binding: Keymap.IBinding): string {
+      return binding ? binding.keys.map(Keymap.formatKeystroke).join(' ') : '';
     }
   }
 

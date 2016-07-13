@@ -24,11 +24,11 @@ import {
 } from '../../../lib/ui/commandpalette';
 
 import {
-  CommandRegistry, ICommand
-} from '../../../lib/ui/commands';
+  CommandRegistry
+} from '../../../lib/ui/commandregistry';
 
 import {
-  KeyBinding, KeymapManager
+  Keymap
 } from '../../../lib/ui/keymap';
 
 import {
@@ -55,12 +55,12 @@ class LogPalette extends CommandPalette {
 describe('ui/commandpalette', () => {
 
   let commands: CommandRegistry;
-  let keymap: KeymapManager;
+  let keymap: Keymap;
   let palette: CommandPalette;
 
   beforeEach(() => {
     commands = new CommandRegistry();
-    keymap = new KeymapManager();
+    keymap = new Keymap({ commands });
     palette = new CommandPalette({ commands, keymap });
   });
 
@@ -272,14 +272,19 @@ describe('ui/commandpalette', () => {
         describe('#label', () => {
 
           it('should return the label of a command item', () => {
-            let options: ICommand = { execute: () => { }, label: 'test label' };
+            let options: CommandRegistry.ICommandOptions = {
+              execute: () => { },
+              label: 'test label'
+            };
             commands.addCommand('test', options);
             let item = palette.addItem({ command: 'test' });
             expect(item.label).to.be(options.label);
           });
 
           it('should be read-only', () => {
-            let options: ICommand = { execute: () => { } };
+            let options: CommandRegistry.ICommandOptions = {
+              execute: () => { }
+            };
             commands.addCommand('test', options);
             let item = palette.addItem({ command: 'test' });
             expect(() => { item.label = 'test label'; }).to.throwError();
@@ -290,7 +295,7 @@ describe('ui/commandpalette', () => {
         describe('#caption', () => {
 
           it('should return the caption of a command item', () => {
-            let options: ICommand = {
+            let options: CommandRegistry.ICommandOptions = {
               execute: () => { },
               caption: 'test caption'
             };
@@ -300,7 +305,9 @@ describe('ui/commandpalette', () => {
           });
 
           it('should be read-only', () => {
-            let options: ICommand = { execute: () => { } };
+            let options: CommandRegistry.ICommandOptions = {
+              execute: () => { }
+            };
             commands.addCommand('test', options);
             let item = palette.addItem({ command: 'test' });
             expect(() => { item.caption = 'test caption'; }).to.throwError();
@@ -311,7 +318,7 @@ describe('ui/commandpalette', () => {
         describe('#className', () => {
 
           it('should return the class name of a command item', () => {
-            let options: ICommand = {
+            let options: CommandRegistry.ICommandOptions = {
               execute: () => { },
               className: 'testClass'
             };
@@ -321,7 +328,9 @@ describe('ui/commandpalette', () => {
           });
 
           it('should be read-only', () => {
-            let options: ICommand = { execute: () => { } };
+            let options: CommandRegistry.ICommandOptions = {
+              execute: () => { }
+            };
             commands.addCommand('test', options);
             let item = palette.addItem({ command: 'test' });
             expect(() => { item.className = 'testClass'; }).to.throwError();
@@ -333,7 +342,7 @@ describe('ui/commandpalette', () => {
 
           it('should return whether a command item is enabled', () => {
             let called = false;
-            let options: ICommand = {
+            let options: CommandRegistry.ICommandOptions = {
               execute: () => { },
               isEnabled: () => called = true
             };
@@ -345,7 +354,9 @@ describe('ui/commandpalette', () => {
           });
 
           it('should be read-only', () => {
-            let options: ICommand = { execute: () => { } };
+            let options: CommandRegistry.ICommandOptions = {
+              execute: () => { }
+            };
             commands.addCommand('test', options);
             let item = palette.addItem({ command: 'test' });
             expect(() => { item.isEnabled = false; }).to.throwError();
@@ -357,7 +368,7 @@ describe('ui/commandpalette', () => {
 
           it('should return whether a command item is toggled', () => {
             let toggled = false;
-            let options: ICommand = {
+            let options: CommandRegistry.ICommandOptions = {
               execute: () => { },
               isToggled: () => toggled = !toggled
             };
@@ -369,7 +380,9 @@ describe('ui/commandpalette', () => {
           });
 
           it('should be read-only', () => {
-            let options: ICommand = { execute: () => { } };
+            let options: CommandRegistry.ICommandOptions = {
+              execute: () => { }
+            };
             commands.addCommand('test', options);
             let item = palette.addItem({ command: 'test' });
             expect(() => { item.isToggled = false; }).to.throwError();
@@ -381,7 +394,7 @@ describe('ui/commandpalette', () => {
 
           it('should return whether a command item is visible', () => {
             let called = false;
-            let options: ICommand = {
+            let options: CommandRegistry.ICommandOptions = {
               execute: () => { },
               isVisible: () => called = true
             };
@@ -393,7 +406,9 @@ describe('ui/commandpalette', () => {
           });
 
           it('should be read-only', () => {
-            let options: ICommand = { execute: () => { } };
+            let options: CommandRegistry.ICommandOptions = {
+              execute: () => { }
+            };
             commands.addCommand('test', options);
             let item = palette.addItem({ command: 'test' });
             expect(() => { item.isVisible = false; }).to.throwError();
@@ -411,7 +426,6 @@ describe('ui/commandpalette', () => {
               command: 'test'
             });
             let item = palette.addItem({ command: 'test' });
-            expect(item.keyBinding).to.be.a(KeyBinding);
             expect(item.keyBinding.keys).to.eql(['Ctrl A']);
           });
 
