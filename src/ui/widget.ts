@@ -583,26 +583,6 @@ class Widget implements IDisposable, IMessageHandler {
   }
 
   /**
-   * A message handler invoked on an `'activate-request'` message.
-   *
-   * #### Notes
-   * The default implementation focuses the widget's node.
-   */
-  protected onActivateRequest(msg: Message): void {
-    if (this.isAttached) this.node.focus();
-  }
-
-  /**
-   * A message handler invoked on an `'deactivate-request'` message.
-   *
-   * #### Notes
-   * The default implementation blurs the widget's node.
-   */
-  protected onDeactivateRequest(msg: Message): void {
-    if (this.isAttached) this.node.blur();
-  }
-
-  /**
    * A message handler invoked on a `'close-request'` message.
    *
    * #### Notes
@@ -631,6 +611,22 @@ class Widget implements IDisposable, IMessageHandler {
    * The default implementation of this handler is a no-op.
    */
   protected onUpdateRequest(msg: Message): void { }
+
+  /**
+   * A message handler invoked on an `'activate-request'` message.
+   *
+   * #### Notes
+   * The default implementation of this handler is a no-op.
+   */
+  protected onActivateRequest(msg: Message): void { }
+
+  /**
+   * A message handler invoked on an `'deactivate-request'` message.
+   *
+   * #### Notes
+   * The default implementation of this handler is a no-op.
+   */
+  protected onDeactivateRequest(msg: Message): void { }
 
   /**
    * A message handler invoked on an `'after-show'` message.

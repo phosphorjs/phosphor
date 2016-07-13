@@ -675,6 +675,20 @@ class Menu extends Widget {
   }
 
   /**
+   * A message handler invoked on an `'activate-request'` message.
+   */
+  protected onActivateRequest(msg: Message): void {
+    if (this.isAttached) this.node.focus();
+  }
+
+  /**
+   * A message handler invoked on an `'deactivate-request'` message.
+   */
+  protected onDeactivateRequest(msg: Message): void {
+    if (this.isAttached) this.node.blur();
+  }
+
+  /**
    * A message handler invoked on an `'update-request'` message.
    */
   protected onUpdateRequest(msg: Message): void {
@@ -723,7 +737,7 @@ class Menu extends Widget {
       childMenu.close();
     }
 
-    // Remove this menu from its parent and focus the parent.
+    // Remove this menu from its parent and activate the parent.
     let parentMenu = this._parentMenu;
     if (parentMenu) {
       this._parentMenu = null;

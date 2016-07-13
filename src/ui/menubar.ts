@@ -470,6 +470,20 @@ class MenuBar extends Widget {
   }
 
   /**
+   * A message handler invoked on an `'activate-request'` message.
+   */
+  protected onActivateRequest(msg: Message): void {
+    if (this.isAttached) this.node.focus();
+  }
+
+  /**
+   * A message handler invoked on an `'deactivate-request'` message.
+   */
+  protected onDeactivateRequest(msg: Message): void {
+    if (this.isAttached) this.node.blur();
+  }
+
+  /**
    * A message handler invoked on an `'update-request'` message.
    */
   protected onUpdateRequest(msg: Message): void {

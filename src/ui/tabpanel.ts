@@ -233,9 +233,14 @@ class TabPanel extends Widget {
     let { previousIndex, previousTitle, currentIndex, currentTitle } = args;
     let previousWidget = previousTitle ? previousTitle.owner as Widget : null;
     let currentWidget = currentTitle ? currentTitle.owner as Widget : null;
-    if (previousWidget) previousWidget.hide();
-    if (currentWidget) currentWidget.show();
-    if (currentWidget) currentWidget.activate();
+    if (previousWidget) {
+      previousWidget.hide();
+      previousWidget.deactivate();
+    }
+    if (currentWidget) {
+      currentWidget.show();
+      currentWidget.activate();
+    }
     this.currentChanged.emit({
       previousIndex, previousWidget, currentIndex, currentWidget
     });
