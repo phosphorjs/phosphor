@@ -34,7 +34,7 @@ import {
 } from '../dom/query';
 
 import {
-  keymap
+  Keymap
 } from './keymap';
 
 import {
@@ -101,10 +101,11 @@ class MenuBar extends Widget {
    *
    * @param options - The options for initializing the menu bar.
    */
-  constructor(options: MenuBar.IOptions = {}) {
+  constructor(options: MenuBar.IOptions) {
     super({ node: Private.createNode() });
     this.addClass(MENU_BAR_CLASS);
     this.setFlag(WidgetFlag.DisallowLayout);
+    this._keymap = options.keymap;
     this._renderer = options.renderer || MenuBar.defaultRenderer;
   }
 
@@ -115,6 +116,7 @@ class MenuBar extends Widget {
     this._closeChildMenu();
     this._menus.clear();
     this._nodes.clear();
+    this._keymap = null;
     this._renderer = null;
     super.dispose();
   }
@@ -131,6 +133,16 @@ class MenuBar extends Widget {
    */
   get contentNode(): HTMLElement {
     return this.node.getElementsByClassName(CONTENT_CLASS)[0] as HTMLElement;
+  }
+
+  /**
+   * The keymap used by the menu bar.
+   *
+   * #### Notes
+   * This is a read-only property.
+   */
+  get keymap(): Keymap {
+    return this._keymap;
   }
 
   /**
@@ -521,7 +533,7 @@ class MenuBar extends Widget {
     // The following code activates an item by mnemonic.
 
     // Get the pressed key character for the current layout.
-    let key = keymap.layout.keyForKeydownEvent(event);
+    let key = this._keymap.layout.keyForKeydownEvent(event);
 
     // Bail if the key is not valid for the current layout.
     if (!key) {
@@ -785,6 +797,7 @@ class MenuBar extends Widget {
     this.update();
   }
 
+  private _keymap: Keymap;
   private _activeIndex = -1;
   private _childMenu: Menu = null;
   private _menus = new Vector<Menu>();
@@ -803,6 +816,14 @@ namespace MenuBar {
    */
   export
   interface IOptions {
+    /**
+     * The keymap to use for the menu bar.
+     *
+     * The layout installed on the keymap is used to translate a
+     * `'keydown'` event into a mnemonic for navigation purposes.
+     */
+    keymap: Keymap;
+
     /**
      * A custom renderer for creating menu bar content.
      *
