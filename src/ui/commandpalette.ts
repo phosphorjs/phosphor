@@ -109,121 +109,6 @@ const TOGGLED_CLASS = 'p-mod-toggled';
 
 
 /**
- * An object which represents an item in a command palette.
- *
- * #### Notes
- * A command item is created automatically by the command palette.
- * It is not exported because it should not be instantiated directly by user
- * code.
- *
- * Once created, a command item is immutable.
- */
-class CommandItem implements CommandPalette.IItem {
-  /**
-   * Construct a new command item.
-   *
-   * @param commands - The command registry to use for the item.
-   *
-   * @param keymap - The keymap to use for the item.
-   *
-   * @param options - The other initialization options for the item.
-   */
-  constructor(commands: CommandRegistry, keymap: Keymap, options: CommandPalette.IItemOptions) {
-    this._commands = commands;
-    this._keymap = keymap;
-    this._command = options.command;
-    this._args = options.args || null;
-    this._category = Private.normalizeCategory(options.category || 'general');
-  }
-
-  /**
-   * The command to execute when the item is triggered.
-   */
-  get command(): string {
-    return this._command;
-  }
-
-  /**
-   * The arguments for the command.
-   */
-  get args(): JSONObject {
-    return this._args;
-  }
-
-  /**
-   * The display label for the command item.
-   */
-  get label(): string {
-    return this._commands.label(this._command, this._args);
-  }
-
-  /**
-   * The display caption for the command item.
-   */
-  get caption(): string {
-    return this._commands.caption(this._command, this._args);
-  }
-
-  /**
-   * The extra class name for the command item.
-   */
-  get className(): string {
-    return this._commands.className(this._command, this._args);
-  }
-
-  /**
-   * Whether the command item is enabled.
-   */
-  get isEnabled(): boolean {
-    return this._commands.isEnabled(this._command, this._args);
-  }
-
-  /**
-   * Whether the command item is toggled.
-   */
-  get isToggled(): boolean {
-    return this._commands.isToggled(this._command, this._args);
-  }
-
-  /**
-   * Whether the command item is visible.
-   */
-  get isVisible(): boolean {
-    return this._commands.isVisible(this._command, this._args);
-  }
-
-  /**
-   * The key binding for the command item.
-   */
-  get keyBinding(): Keymap.IBinding {
-    return this._keymap.findBinding(this._command, this._args);
-  }
-
-  /**
-   * The category for the command item.
-   */
-  get category(): string {
-    return this._category;
-  }
-
-  /**
-   * Execute the underlying command.
-   *
-   * @returns The command execution promise.
-   */
-  execute(): Promise<any> {
-    return this._commands.execute(this._command, this._args);
-  }
-
-  private _commands: CommandRegistry;
-  private _keymap: Keymap;
-  private _command: string;
-  private _args: JSONObject;
-  private _category: string;
-}
-
-
-/**
  * A widget which displays command items as a searchable palette.
  */
 export
@@ -251,10 +136,10 @@ class CommandPalette extends Widget {
     this._items.clear();
     this._itemNodes.clear();
     this._headerNodes.clear();
-    this._renderer = null;
     this._result = null;
     this._keymap = null;
     this._commands = null;
+    this._renderer = null;
     super.dispose();
   }
 
@@ -343,7 +228,7 @@ class CommandPalette extends Widget {
    */
   addItem(options: CommandPalette.IItemOptions): CommandPalette.IItem {
     // Create a new command item for the options.
-    let item = new CommandItem(this._commands, this._keymap, options);
+    let item = Private.createItem(this._commands, this._keymap, options);
 
     // Add the item to the vector.
     this._items.pushBack(item);
@@ -490,10 +375,10 @@ class CommandPalette extends Widget {
     for (let part of result.parts) {
       let node: HTMLLIElement;
       if (part.item === null) {
-        node = headerNodes.at(headerIndex++) as HTMLLIElement;
+        node = headerNodes.at(headerIndex++);
         renderer.updateHeaderNode(node, part.markup);
       } else {
-        node = itemNodes.at(itemIndex++) as HTMLLIElement;
+        node = itemNodes.at(itemIndex++);
         renderer.updateItemNode(node, part.item, part.markup);
       }
       fragment.appendChild(node);
@@ -727,7 +612,7 @@ class CommandPalette extends Widget {
     if (part.item) {
       input.focus();
       input.select();
-      part.item.execute();
+      this._commands.execute(part.item.command, part.item.args);
       return;
     }
 
@@ -762,9 +647,9 @@ class CommandPalette extends Widget {
   private _keymap: Keymap;
   private _commands: CommandRegistry;
   private _renderer: CommandPalette.IRenderer;
-  private _items = new Vector<CommandItem>();
-  private _itemNodes = new Vector<HTMLElement>();
-  private _headerNodes = new Vector<HTMLElement>();
+  private _itemNodes = new Vector<HTMLLIElement>();
+  private _headerNodes = new Vector<HTMLLIElement>();
+  private _items = new Vector<CommandPalette.IItem>();
   private _result: Private.ISearchResult = null;
 }
 
@@ -775,7 +660,58 @@ class CommandPalette extends Widget {
 export
 namespace CommandPalette {
   /**
+   * An options object for creating a command palette.
+   */
+  export
+  interface IOptions {
+    /**
+     * The command registry for use with the command palette.
+     */
+    commands: CommandRegistry;
+
+    /**
+     * The keymap for use with the command palette.
+     */
+    keymap: Keymap;
+
+    /**
+     * A custom renderer for use with the command palette.
+     *
+     * The default is a shared renderer instance.
+     */
+    renderer?: IRenderer;
+  }
+
+  /**
+   * An options object for creating a command item.
+   */
+  export
+  interface IItemOptions {
+    /**
+     * The command to execute when the item is triggered.
+     */
+    command: string;
+
+    /**
+     * The arguments for the command.
+     *
+     * The default value is `null`.
+     */
+    args?: JSONObject;
+
+    /**
+     * The category for the item.
+     *
+     * The default value is `'general'`.
+     */
+    category?: string;
+  }
+
+  /**
    * An object which represents an item in a command palette.
+   *
+   * #### Notes
+   * An item is an immutable object created by a command palette.
    */
   export
   interface IItem {
@@ -788,6 +724,11 @@ namespace CommandPalette {
      * The arguments for the command.
      */
     args: JSONObject;
+
+    /**
+     * The category for the command item.
+     */
+    category: string;
 
     /**
      * The display label for the command item.
@@ -823,67 +764,6 @@ namespace CommandPalette {
      * The key binding for the command item.
      */
     keyBinding: Keymap.IBinding;
-
-    /**
-     * The category for the command item.
-     */
-    category: string;
-
-    /**
-     * Execute the underlying command.
-     *
-     * @returns The command execution promise.
-     */
-    execute(): Promise<any>;
-  }
-
-
-  /**
-   * An options object for creating a command palette.
-   */
-  export
-  interface IOptions {
-    /**
-     * The command registry for use with the command palette.
-     */
-    commands: CommandRegistry;
-
-    /**
-     * The keymap for use with the command palette.
-     */
-    keymap: Keymap;
-
-    /**
-     * A custom renderer for use with the command palette.
-     *
-     * The default is a shared renderer instance.
-     */
-    renderer?: IRenderer;
-  }
-
-  /**
-   * An options object for initializing a command item.
-   */
-  export
-  interface IItemOptions {
-    /**
-     * The command to execute when the item is triggered.
-     */
-    command: string;
-
-    /**
-     * The arguments for the command.
-     *
-     * The default value is `null`.
-     */
-    args?: JSONObject;
-
-    /**
-     * The category for the item.
-     *
-     * The default value is `'general'`.
-     */
-    category?: string;
   }
 
   /**
@@ -1135,7 +1015,7 @@ namespace Private {
      *
      * This is `null` for a header part.
      */
-    item: CommandItem;
+    item: CommandPalette.IItem;
   }
 
   /**
@@ -1182,19 +1062,11 @@ namespace Private {
   }
 
   /**
-   * Normalize a category for a command item.
-   *
-   * @param category - The item category to normalize.
-   *
-   * @returns The normalized category text.
-   *
-   * #### Notes
-   * This converts the category to lower case and removes any
-   * extraneous whitespace.
+   * Create a new command item from a keymap, commands, and options.
    */
   export
-  function normalizeCategory(category: string): string {
-    return category.trim().replace(/\s+/g, ' ').toLowerCase();
+  function createItem(commands: CommandRegistry, keymap: Keymap, options: CommandPalette.IItemOptions): CommandPalette.IItem {
+    return new CommandItem(commands, keymap, options);
   }
 
   /**
@@ -1209,7 +1081,7 @@ namespace Private {
    * @returns The result of the search.
    */
   export
-  function search(items: ISequence<CommandItem>, category: string, text: string): ISearchResult {
+  function search(items: ISequence<CommandPalette.IItem>, category: string, text: string): ISearchResult {
     // Collect a mapping of the matching categories. The mapping will
     // only contain categories which match the provided query text.
     // If the category is an empty string, all categories will be
@@ -1239,6 +1111,98 @@ namespace Private {
   }
 
   /**
+   * A concrete implementation of `CommandPalette.IItem`.
+   */
+  class CommandItem implements CommandPalette.IItem {
+    /**
+     * Construct a new command item.
+     */
+    constructor(commands: CommandRegistry, keymap: Keymap, options: CommandPalette.IItemOptions) {
+      this._commands = commands;
+      this._keymap = keymap;
+      this._command = options.command;
+      this._args = options.args || null;
+      this._category = normalizeCategory(options.category || 'general');
+    }
+
+    /**
+     * The command to execute when the item is triggered.
+     */
+    get command(): string {
+      return this._command;
+    }
+
+    /**
+     * The arguments for the command.
+     */
+    get args(): JSONObject {
+      return this._args;
+    }
+
+    /**
+     * The category for the command item.
+     */
+    get category(): string {
+      return this._category;
+    }
+
+    /**
+     * The display label for the command item.
+     */
+    get label(): string {
+      return this._commands.label(this._command, this._args);
+    }
+
+    /**
+     * The display caption for the command item.
+     */
+    get caption(): string {
+      return this._commands.caption(this._command, this._args);
+    }
+
+    /**
+     * The extra class name for the command item.
+     */
+    get className(): string {
+      return this._commands.className(this._command, this._args);
+    }
+
+    /**
+     * Whether the command item is enabled.
+     */
+    get isEnabled(): boolean {
+      return this._commands.isEnabled(this._command, this._args);
+    }
+
+    /**
+     * Whether the command item is toggled.
+     */
+    get isToggled(): boolean {
+      return this._commands.isToggled(this._command, this._args);
+    }
+
+    /**
+     * Whether the command item is visible.
+     */
+    get isVisible(): boolean {
+      return this._commands.isVisible(this._command, this._args);
+    }
+
+    /**
+     * The key binding for the command item.
+     */
+    get keyBinding(): Keymap.IBinding {
+      return this._keymap.findBinding(this._command, this._args);
+    }
+
+    private _commands: CommandRegistry;
+    private _keymap: Keymap;
+    private _command: string;
+    private _args: JSONObject;
+    private _category: string;
+  }
+
+  /**
    * A type alias for a string map object.
    */
   type StringMap<T> = { [key: string]: T };
@@ -1265,7 +1229,14 @@ namespace Private {
     /**
      * The command item associated with the match.
      */
-    item: CommandItem;
+    item: CommandPalette.IItem;
+  }
+
+  /**
+   * Normalize a category for a command item.
+   */
+  function normalizeCategory(category: string): string {
+    return category.trim().replace(/\s+/g, ' ').toLowerCase();
   }
 
   /**
@@ -1299,7 +1270,7 @@ namespace Private {
    *
    * Non-visible items will be ignored.
    */
-  function matchCategory(items: ISequence<CommandItem>, query: string): StringMap<IScore> {
+  function matchCategory(items: ISequence<CommandPalette.IItem>, query: string): StringMap<IScore> {
     // Normalize the query text to lower case with no whitespace.
     query = normalizeQueryText(query);
 
@@ -1368,7 +1339,7 @@ namespace Private {
    * The final item score is the sum of the item label score and the
    * relevant category score.
    */
-  function matchLabel(items: ISequence<CommandItem>, query: string, categories: StringMap<IScore>): IItemScore[] {
+  function matchLabel(items: ISequence<CommandPalette.IItem>, query: string, categories: StringMap<IScore>): IItemScore[] {
     // Normalize the query text to lower case with no whitespace.
     query = normalizeQueryText(query);
 
