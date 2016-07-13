@@ -312,7 +312,7 @@ class Keymap {
     } else {
       // TODO - right way to handle disabled command?
       let formatted = binding.keys.map(Keymap.formatKeystroke).join(' ');
-      console.log(`'Command '${command}' is disabled (${formatted})`);
+      console.log(`Command '${command}' is disabled (${formatted}).`);
     }
   }
 
@@ -442,39 +442,27 @@ namespace Keymap {
    * An object which represents a key binding.
    *
    * #### Notes
-   * A binding is an immutable object created by the keymap.
+   * A binding is an immutable object created by a keymap.
    */
   export
   interface IBinding {
     /**
      * The key sequence for the binding.
-     *
-     * #### Notes
-     * This is a read-only property.
      */
     keys: string[];
 
     /**
      * The CSS selector for the binding.
-     *
-     * #### Notes
-     * This is a read-only property.
      */
     selector: string;
 
     /**
      * The command executed when the binding is matched.
-     *
-     * #### Notes
-     * This is a read-only property.
      */
     command: string;
 
     /**
      * The arguments for the command.
-     *
-     * #### Notes
-     * This is a read-only property.
      */
     args: JSONObject;
   }
@@ -710,7 +698,7 @@ namespace Private {
    */
   export
   function createBinding(options: Keymap.IBindingOptions): Keymap.IBinding {
-    return new Binding(options);
+    return new KeyBinding(options);
   }
 
   /**
@@ -806,7 +794,7 @@ namespace Private {
   /**
    * A concrete implementation of `Keymap.IBinding`.
    */
-  class Binding implements Keymap.IBinding {
+  class KeyBinding implements Keymap.IBinding {
     /**
      * Construct a new binding.
      */

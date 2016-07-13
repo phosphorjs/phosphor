@@ -39,10 +39,10 @@ import {
 
 import {
   CommandRegistry
-} from './commands';
+} from './commandregistry';
 
 import {
-  KeyBinding, KeymapManager, formatKeystroke
+  Keymap
 } from './keymap';
 
 import {
@@ -150,9 +150,9 @@ class Menu extends Widget {
     super({ node: Private.createNode() });
     this.addClass(MENU_CLASS);
     this.setFlag(WidgetFlag.DisallowLayout);
-    this._renderer = options.renderer || Menu.defaultRenderer;
-    this._commands = options.commands;
     this._keymap = options.keymap;
+    this._commands = options.commands;
+    this._renderer = options.renderer || Menu.defaultRenderer;
   }
 
   /**
@@ -162,9 +162,9 @@ class Menu extends Widget {
     this.close();
     this._items.clear();
     this._nodes.clear();
-    this._renderer = null;
     this._keymap = null;
     this._commands = null;
+    this._renderer = null;
     super.dispose();
   }
 
@@ -258,6 +258,26 @@ class Menu extends Widget {
    */
   get contentNode(): HTMLElement {
     return this.node.getElementsByClassName(CONTENT_CLASS)[0] as HTMLElement;
+  }
+
+  /**
+   * The command registry used by the menu.
+   *
+   * #### Notes
+   * This is a read-only property.
+   */
+  get commands(): CommandRegistry {
+    return this._commands;
+  }
+
+  /**
+   * The keymap used by the menu.
+   *
+   * #### Notes
+   * This is a read-only property.
+   */
+  get keymap(): Keymap {
+    return this._keymap;
   }
 
   /**
@@ -437,20 +457,20 @@ class Menu extends Widget {
     if (this._commands.isEnabled(command, args)) {
       this._commands.execute(command, args);
     } else {
-      // TODO log something here?
+      // TODO - is this the right logging here?
+      console.log(`Command '${command}' is disabled.`);
     }
   }
 
   /**
    * Add a menu item to the end of the menu.
    *
-   * @param value - The menu item to add to the menu, or an options
-   *   object to be converted into a menu item.
+   * @param options - The options for creating the menu item.
    *
    * @returns The menu item added to the menu.
    */
-  addItem(value: Menu.IItemOptions): Menu.IItem {
-    return this.insertItem(this._items.length, value);
+  addItem(options: Menu.IItemOptions): Menu.IItem {
+    return this.insertItem(this._items.length, options);
   }
 
   /**
@@ -458,7 +478,7 @@ class Menu extends Widget {
    *
    * @param index - The index at which to insert the item.
    *
-   * @param options - An options object to be converted into a menu item.
+   * @param options - The options for creating the menu item.
    *
    * @returns The menu item added to the menu.
    *
@@ -477,13 +497,8 @@ class Menu extends Widget {
     // Clamp the insert index to the vector bounds.
     let i = Math.max(0, Math.min(Math.floor(index), this._items.length));
 
-    // Coerce the value to a menu item.
-    let item = new Private.MenuItem(this._commands, this._keymap, {
-      type: options.type,
-      command: options.command,
-      args: options.args,
-      menu: options.menu
-    });
+    // Create the item for the options.
+    let item = Private.createItem(this._commands, this._keymap, options);
 
     // Create the node for the item. It will be initialized on open.
     let node = this._renderer.createItemNode();
@@ -505,7 +520,7 @@ class Menu extends Widget {
   /**
    * Remove a menu item from the menu.
    *
-   * @param value - The item to remove or the index thereof.
+   * @param value - The item or index of the item to remove.
    *
    * #### Notes
    * This is a no-op if the item is not contained in the menu.
@@ -1078,6 +1093,7 @@ class Menu extends Widget {
     }
   }
 
+  private _keymap: Keymap;
   private _childIndex = -1;
   private _openTimerID = 0;
   private _closeTimerID = 0;
@@ -1085,10 +1101,9 @@ class Menu extends Widget {
   private _childMenu: Menu = null;
   private _parentMenu: Menu = null;
   private _renderer: Menu.IRenderer;
-  private _items = new Vector<Private.MenuItem>();
+  private _commands: CommandRegistry;
+  private _items = new Vector<Menu.IItem>();
   private _nodes = new Vector<HTMLElement>();
-  private _keymap: KeymapManager = null;
-  private _commands: CommandRegistry = null;
 }
 
 
@@ -1108,14 +1123,14 @@ namespace Menu {
   export
   interface IOptions {
     /**
-     * The command registry for use with the command item.
+     * The command registry for use with the menu.
      */
     commands: CommandRegistry;
 
     /**
-     * The keymap manager for use with the command item.
+     * The keymap for use with the menu.
      */
-    keymap: KeymapManager;
+    keymap: Keymap;
 
     /**
      * A custom renderer for use with the menu.
@@ -1126,7 +1141,50 @@ namespace Menu {
   }
 
   /**
+   * A type alias for a menu item type.
+   */
+  export
+  type ItemType = 'command' | 'submenu' | 'separator';
+
+  /**
+   * An options object for creating a menu item.
+   */
+  export
+  interface IItemOptions {
+    /**
+     * The type of the menu item.
+     *
+     * The default value is `'command'`.
+     */
+    type?: ItemType;
+
+    /**
+     * The command to execute when the item is triggered.
+     *
+     * The default value is an empty string.
+     */
+    command?: string;
+
+    /**
+     * The arguments for the command.
+     *
+     * The default value is `null`.
+     */
+    args?: JSONObject;
+
+    /**
+     * The menu for a `'submenu'` type item.
+     *
+     * The default value is `null`.
+     */
+    menu?: Menu;
+  }
+
+  /**
    * An object which represents a menu item.
+   *
+   * #### Notes
+   * An item is an immutable object created by a menu.
    */
   export
   interface IItem {
@@ -1189,54 +1247,15 @@ namespace Menu {
      * Whether the menu item is visible.
      */
     isVisible: boolean;
+
     /**
      * The key binding for the menu item.
      */
-    keyBinding: KeyBinding;
+    keyBinding: Keymap.IBinding;
   }
 
   /**
-   * A type alias for a menu item type.
-   */
-  export
-  type ItemType = 'command' | 'submenu' | 'separator';
-
-  /**
-   * An options object for initializing a menu item.
-   */
-  export
-  interface IItemOptions {
-    /**
-     * The type of the menu item.
-     *
-     * The default value is `'command'`.
-     */
-    type?: ItemType;
-
-    /**
-     * The command to execute when the item is triggered.
-     *
-     * The default value is an empty string.
-     */
-    command?: string;
-
-    /**
-     * The arguments for the command.
-     *
-     * The default value is `null`.
-     */
-    args?: JSONObject;
-
-    /**
-     * The menu for a `'submenu'` type item.
-     *
-     * The default value is `null`.
-     */
-    menu?: Menu;
-  }
-
-  /**
-   * An options object for the `open` method on a [[Menu]].
+   * An options object for the `open` method on a menu.
    */
   export
   interface IOpenOptions {
@@ -1289,7 +1308,7 @@ namespace Menu {
      * This method should completely reset the state of the node to
      * reflect the data for the menu item.
      */
-    updateItemNode(node: HTMLElement, item: Menu.IItem): void;
+    updateItemNode(node: HTMLElement, item: IItem): void;
   }
 
   /**
@@ -1327,7 +1346,7 @@ namespace Menu {
      *
      * @param item - The menu item holding the data for the node.
      */
-    updateItemNode(node: HTMLElement, item: Menu.IItem): void {
+    updateItemNode(node: HTMLElement, item: IItem): void {
       // Setup the initial item class.
       let itemClass = ITEM_CLASS;
 
@@ -1427,8 +1446,8 @@ namespace Menu {
      *
      * @returns The formatted shortcut text for display.
      */
-    formatShortcut(binding: KeyBinding): string {
-      return binding ? binding.keys.map(formatKeystroke).join(' ') : '';
+    formatShortcut(binding: Keymap.IBinding): string {
+      return binding ? binding.keys.map(Keymap.formatKeystroke).join(' ') : '';
     }
   }
 
@@ -1455,6 +1474,14 @@ namespace Private {
     node.appendChild(content);
     node.tabIndex = -1;
     return node;
+  }
+
+  /**
+   * Create a new menu item from a keymap, commands, and options.
+   */
+  export
+  function createItem(commands: CommandRegistry, keymap: Keymap, options: Menu.IItemOptions): Menu.IItem {
+    return new MenuItem(commands, keymap, options);
   }
 
   /**
@@ -1650,25 +1677,19 @@ namespace Private {
   }
 
   /**
-   * An object which represents a menu item.
-   *
-   * #### Notes
-   * Once created, a menu item is immutable.
+   * A concrete implementation of `Menu.IItem`.
    */
-  export
   class MenuItem implements Menu.IItem {
     /**
      * Construct a new menu item.
-     *
-     * @param options - The options for initializing the menu item.
      */
-    constructor(commands: CommandRegistry, keymap: KeymapManager, options: Menu.IItemOptions) {
+    constructor(commands: CommandRegistry, keymap: Keymap, options: Menu.IItemOptions) {
+      this._commands = commands;
+      this._keymap = keymap;
       this._type = options.type || 'command';
       this._command = options.command || '';
       this._args = options.args || null;
       this._menu = options.menu || null;
-      this._commands = commands;
-      this._keymap = keymap;
     }
 
     /**
@@ -1803,18 +1824,18 @@ namespace Private {
     /**
      * The key binding for the menu item.
      */
-    get keyBinding(): KeyBinding {
+    get keyBinding(): Keymap.IBinding {
       if (this._type === 'command') {
-        return this._keymap.findKeyBinding(this._command, this._args);
+        return this._keymap.findBinding(this._command, this._args);
       }
       return null;
     }
 
+    private _commands: CommandRegistry;
+    private _keymap: Keymap;
     private _type: Menu.ItemType;
     private _command: string;
     private _args: JSONObject;
     private _menu: Menu;
-    private _keymap: KeymapManager = null;
-    private _commands: CommandRegistry = null;
   }
 }
