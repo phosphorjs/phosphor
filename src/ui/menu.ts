@@ -682,7 +682,7 @@ class Menu extends Widget {
   }
 
   /**
-   * A message handler invoked on an `'deactivate-request'` message.
+   * A message handler invoked on a `'deactivate-request'` message.
    */
   protected onDeactivateRequest(msg: Message): void {
     if (this.isAttached) this.node.blur();

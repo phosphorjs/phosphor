@@ -392,7 +392,7 @@ class Widget implements IDisposable, IMessageHandler {
   }
 
   /**
-   * Post an `'deactivate-request'` message to the widget.
+   * Post a `'deactivate-request'` message to the widget.
    *
    * #### Notes
    * This is a simple convenience method for posting the message.
@@ -621,7 +621,7 @@ class Widget implements IDisposable, IMessageHandler {
   protected onActivateRequest(msg: Message): void { }
 
   /**
-   * A message handler invoked on an `'deactivate-request'` message.
+   * A message handler invoked on a `'deactivate-request'` message.
    *
    * #### Notes
    * The default implementation of this handler is a no-op.
