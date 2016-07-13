@@ -29,10 +29,10 @@ import {
 
 import {
   CommandRegistry
-} from '../../../lib/ui/commands';
+} from '../../../lib/ui/commandregistry';
 
 import {
-  KeymapManager
+  Keymap
 } from '../../../lib/ui/keymap';
 
 import {
@@ -87,10 +87,10 @@ describe('ui/menubar', () => {
   const disposables = new DisposableSet();
 
   let commands: CommandRegistry;
-  let keymap: KeymapManager;
+  let keymap: Keymap;
 
   function createMenuBar(): MenuBar {
-    let bar = new MenuBar();
+    let bar = new MenuBar({ keymap });
     for (let i = 0; i < 3; i++) {
       let menu = new Menu({ commands, keymap });
       let item = menu.addItem({ command: DEFAULT_CMD });
@@ -106,7 +106,7 @@ describe('ui/menubar', () => {
 
   before(() => {
     commands = new CommandRegistry();
-    keymap = new KeymapManager();
+    keymap = new Keymap({ commands });
     let cmd = commands.addCommand(DEFAULT_CMD, {
       execute: (args: JSONObject) => { return args; },
       label: 'LABEL',
@@ -133,18 +133,18 @@ describe('ui/menubar', () => {
     describe('#constructor()', () => {
 
       it('should take no arguments', () => {
-        let bar = new MenuBar();
+        let bar = new MenuBar({ keymap });
         expect(bar).to.be.a(MenuBar);
       });
 
       it('should take options for initializing the menu bar', () => {
         let renderer = new MenuBar.Renderer();
-        let bar = new MenuBar({ renderer });
+        let bar = new MenuBar({ renderer, keymap });
         expect(bar).to.be.a(MenuBar);
       });
 
       it('should add the `p-MenuBar` class', () => {
-        let bar = new MenuBar();
+        let bar = new MenuBar({ keymap });
         expect(bar.hasClass('p-MenuBar')).to.be(true);
       });
 
@@ -153,7 +153,7 @@ describe('ui/menubar', () => {
     describe('#dispose()', () => {
 
       it('should dispose of the resources held by the menu bar', () => {
-        let bar = new MenuBar();
+        let bar = new MenuBar({ keymap });
         bar.addMenu(new Menu({ commands, keymap }));
         bar.dispose();
         expect(toArray(bar.menus)).to.eql([]);
@@ -165,7 +165,7 @@ describe('ui/menubar', () => {
     describe('#contentNode', () => {
 
       it('should get the menu content node', () => {
-        let bar = new MenuBar();
+        let bar = new MenuBar({ keymap });
         let content = bar.contentNode;
         expect(content.classList.contains('p-MenuBar-content')).to.be(true);
       });
@@ -176,12 +176,12 @@ describe('ui/menubar', () => {
 
       it('should get the renderer for the menu bar', () => {
         let renderer = Object.create(MenuBar.defaultRenderer);
-        let bar = new MenuBar({ renderer });
+        let bar = new MenuBar({ renderer, keymap });
         expect(bar.renderer).to.be(renderer);
       });
 
       it('should be read-only', () => {
-        let bar = new MenuBar();
+        let bar = new MenuBar({ keymap });
         expect(() => { bar.renderer = null; }).to.throwError();
       });
 
@@ -190,7 +190,7 @@ describe('ui/menubar', () => {
     describe('#menus', () => {
 
       it('should get a read-only sequence of the menus in the menu bar', () => {
-        let bar = new MenuBar();
+        let bar = new MenuBar({ keymap });
         let menu0 = new Menu({ commands, keymap });
         let menu1 = new Menu({ commands, keymap });
         bar.addMenu(menu0);
@@ -202,7 +202,7 @@ describe('ui/menubar', () => {
       });
 
       it('should be read-only', () => {
-        let bar = new MenuBar();
+        let bar = new MenuBar({ keymap });
         expect(() => { bar.menus = null; }).to.throwError();
       });
 
@@ -211,7 +211,7 @@ describe('ui/menubar', () => {
     describe('#childMenu', () => {
 
       it('should get the child menu of the menu bar', () => {
-        let bar = new MenuBar();
+        let bar = new MenuBar({ keymap });
         let menu = new Menu({ commands, keymap });
         bar.addMenu(menu);
         bar.activeIndex = 0;
@@ -221,7 +221,7 @@ describe('ui/menubar', () => {
       });
 
       it('should be `null` if there is no open menu', () => {
-        let bar = new MenuBar();
+        let bar = new MenuBar({ keymap });
         let menu = new Menu({ commands, keymap });
         bar.addMenu(menu);
         bar.activeIndex = 0;
@@ -230,7 +230,7 @@ describe('ui/menubar', () => {
       });
 
       it('should be read-only', () => {
-        let bar = new MenuBar();
+        let bar = new MenuBar({ keymap });
         expect(() => { bar.childMenu = new Menu({ commands, keymap }); }).to.throwError();
       });
 
@@ -239,7 +239,7 @@ describe('ui/menubar', () => {
     describe('#activeMenu', () => {
 
       it('should get the active menu of the menu bar', () => {
-        let bar = new MenuBar();
+        let bar = new MenuBar({ keymap });
         let menu = new Menu({ commands, keymap });
         bar.addMenu(menu);
         bar.activeIndex = 0;
@@ -248,7 +248,7 @@ describe('ui/menubar', () => {
       });
 
       it('should be `null` if there is no active menu', () => {
-        let bar = new MenuBar();
+        let bar = new MenuBar({ keymap });
         let menu = new Menu({ commands, keymap });
         bar.addMenu(menu);
         expect(bar.activeMenu).to.be(null);
@@ -256,7 +256,7 @@ describe('ui/menubar', () => {
       });
 
       it('should set the currently active menu', () => {
-        let bar = new MenuBar();
+        let bar = new MenuBar({ keymap });
         let menu = new Menu({ commands, keymap });
         bar.addMenu(menu);
         bar.activeMenu = menu;
@@ -265,7 +265,7 @@ describe('ui/menubar', () => {
       });
 
       it('should set to `null` if the menu is not in the menu bar', () => {
-        let bar = new MenuBar();
+        let bar = new MenuBar({ keymap });
         let menu = new Menu({ commands, keymap });
         bar.activeMenu = menu;
         expect(bar.activeMenu).to.be(null);
@@ -277,7 +277,7 @@ describe('ui/menubar', () => {
     describe('#activeIndex', () => {
 
       it('should get the index of the currently active menu', () => {
-        let bar = new MenuBar();
+        let bar = new MenuBar({ keymap });
         let menu = new Menu({ commands, keymap });
         bar.addMenu(menu);
         bar.activeMenu = menu;
@@ -286,7 +286,7 @@ describe('ui/menubar', () => {
       });
 
       it('should be `-1` if no menu is active', () => {
-        let bar = new MenuBar();
+        let bar = new MenuBar({ keymap });
         let menu = new Menu({ commands, keymap });
         bar.addMenu(menu);
         expect(bar.activeIndex).to.be(-1);
@@ -294,7 +294,7 @@ describe('ui/menubar', () => {
       });
 
       it('should set the index of the currently active menu', () => {
-        let bar = new MenuBar();
+        let bar = new MenuBar({ keymap });
         let menu = new Menu({ commands, keymap });
         bar.addMenu(menu);
         bar.activeIndex = 0;
@@ -303,7 +303,7 @@ describe('ui/menubar', () => {
       });
 
       it('should set to `-1` if the index is out of range', () => {
-        let bar = new MenuBar();
+        let bar = new MenuBar({ keymap });
         let menu = new Menu({ commands, keymap });
         bar.addMenu(menu);
         bar.activeIndex = -2;
@@ -314,7 +314,7 @@ describe('ui/menubar', () => {
       });
 
       it('should add `p-mod-active` to the active node', () => {
-        let bar = new MenuBar();
+        let bar = new MenuBar({ keymap });
         let menu = new Menu({ commands, keymap });
         bar.addMenu(menu);
         bar.activeMenu = menu;
@@ -329,7 +329,7 @@ describe('ui/menubar', () => {
     describe('#openActiveMenu()', () => {
 
       it('should open the active menu and activate its first menu item', () => {
-        let bar = new MenuBar();
+        let bar = new MenuBar({ keymap });
         let menu = new Menu({ commands, keymap });
         let item = menu.addItem({ command: DEFAULT_CMD });
         menu.addItem(item);
@@ -342,7 +342,7 @@ describe('ui/menubar', () => {
       });
 
       it('should be a no-op if there is no active menu', () => {
-        let bar = new MenuBar();
+        let bar = new MenuBar({ keymap });
         let menu = new Menu({ commands, keymap });
         let item = menu.addItem({ command: DEFAULT_CMD });
         menu.addItem(item);
@@ -357,7 +357,7 @@ describe('ui/menubar', () => {
     describe('#addMenu()', () => {
 
       it('should add a menu to the end of the menu bar', () => {
-        let bar = new MenuBar();
+        let bar = new MenuBar({ keymap });
         let menu = new Menu({ commands, keymap });
         let item = menu.addItem({ command: DEFAULT_CMD });
         menu.addItem(item);
@@ -369,7 +369,7 @@ describe('ui/menubar', () => {
       });
 
       it('should move an existing menu to the end', () => {
-        let bar = new MenuBar();
+        let bar = new MenuBar({ keymap });
         let menu = new Menu({ commands, keymap });
         let item = menu.addItem({ command: DEFAULT_CMD });
         menu.addItem(item);
@@ -386,7 +386,7 @@ describe('ui/menubar', () => {
     describe('#insertMenu()', () => {
 
       it('should insert a menu into the menu bar at the specified index', () => {
-        let bar = new MenuBar();
+        let bar = new MenuBar({ keymap });
         let menu = new Menu({ commands, keymap });
         bar.addMenu(new Menu({ commands, keymap }));
         bar.insertMenu(0, menu);
@@ -396,7 +396,7 @@ describe('ui/menubar', () => {
       });
 
       it('should clamp the index to the bounds of the menus', () => {
-        let bar = new MenuBar();
+        let bar = new MenuBar({ keymap });
         let menu = new Menu({ commands, keymap });
         bar.addMenu(new Menu({ commands, keymap }));
         bar.insertMenu(-1, menu);
@@ -412,7 +412,7 @@ describe('ui/menubar', () => {
       });
 
       it('should move an existing menu', () => {
-        let bar = new MenuBar();
+        let bar = new MenuBar({ keymap });
         let menu = new Menu({ commands, keymap });
         bar.addMenu(new Menu({ commands, keymap }));
         bar.insertMenu(0, menu);
@@ -423,7 +423,7 @@ describe('ui/menubar', () => {
       });
 
       it('should be a no-op if there is no effective move', () => {
-        let bar = new MenuBar();
+        let bar = new MenuBar({ keymap });
         let menu = new Menu({ commands, keymap });
         bar.addMenu(new Menu({ commands, keymap }));
         bar.insertMenu(0, menu);
@@ -438,7 +438,7 @@ describe('ui/menubar', () => {
     describe('#removeMenu()', () => {
 
       it('should remove a menu from the menu bar by value', () => {
-        let bar = new MenuBar();
+        let bar = new MenuBar({ keymap });
         let menu = new Menu({ commands, keymap });
         bar.addMenu(new Menu({ commands, keymap }));
         bar.addMenu(menu);
@@ -449,7 +449,7 @@ describe('ui/menubar', () => {
       });
 
       it('should remove a menu from the menu bar by index', () => {
-        let bar = new MenuBar();
+        let bar = new MenuBar({ keymap });
         let menu = new Menu({ commands, keymap });
         bar.addMenu(new Menu({ commands, keymap }));
         bar.addMenu(menu);
@@ -460,7 +460,7 @@ describe('ui/menubar', () => {
       });
 
       it('should be a no-op if the menu is not contained in the menu bar', () => {
-        let bar = new MenuBar();
+        let bar = new MenuBar({ keymap });
         let menu = new Menu({ commands, keymap });
         bar.addMenu(new Menu({ commands, keymap }));
         bar.removeMenu(menu);
@@ -470,7 +470,7 @@ describe('ui/menubar', () => {
       });
 
       it('should be a no-op if the index is out of range', () => {
-        let bar = new MenuBar();
+        let bar = new MenuBar({ keymap });
         let menu = new Menu({ commands, keymap });
         bar.addMenu(menu);
         bar.removeMenu(-1);
@@ -486,7 +486,7 @@ describe('ui/menubar', () => {
     describe('#clearMenus()', () => {
 
       it('should remove all menus from the menu bar', () => {
-        let bar = new MenuBar();
+        let bar = new MenuBar({ keymap });
         bar.addMenu(new Menu({ commands, keymap }));
         bar.addMenu(new Menu({ commands, keymap }));
         bar.clearMenus();
@@ -494,7 +494,7 @@ describe('ui/menubar', () => {
       });
 
       it('should be a no-op if there are no menus', () => {
-        let bar = new MenuBar();
+        let bar = new MenuBar({ keymap });
         bar.clearMenus();
         expect(toArray(bar.menus)).to.eql([]);
       });
@@ -699,7 +699,7 @@ describe('ui/menubar', () => {
     describe('#onAfterAttach()', () => {
 
       it('should add event listeners', () => {
-        let bar = new LogMenuBar();
+        let bar = new LogMenuBar({ keymap });
         let node = bar.node;
         Widget.attach(bar, document.body);
         expect(bar.methods.indexOf('onAfterAttach')).to.not.be(-1);
@@ -721,7 +721,7 @@ describe('ui/menubar', () => {
     describe('#onBeforeDetach()', () => {
 
       it('should remove event listeners', () => {
-        let bar = new LogMenuBar();
+        let bar = new LogMenuBar({ keymap });
         let node = bar.node;
         Widget.attach(bar, document.body);
         Widget.detach(bar);
@@ -744,7 +744,7 @@ describe('ui/menubar', () => {
     describe('#onUpdateRequest()', () => {
 
       it('should be called when the title of a menu changes', (done) => {
-        let bar = new LogMenuBar();
+        let bar = new LogMenuBar({ keymap });
         let menu = new Menu({ commands, keymap });
         bar.addMenu(menu);
         bar.activeIndex = 0;

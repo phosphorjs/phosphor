@@ -29,10 +29,10 @@ import {
 
 import {
   CommandRegistry
-} from '../../../lib/ui/commands';
+} from '../../../lib/ui/commandregistry';
 
 import {
-  KeymapManager
+  Keymap
 } from '../../../lib/ui/keymap';
 
 import {
@@ -84,10 +84,10 @@ describe('ui/menu', () => {
   const disposables = new DisposableSet();
 
   let commands: CommandRegistry;
-  let keymap: KeymapManager;
+  let keymap: Keymap;
 
   before(() => {
-    keymap = new KeymapManager();
+    keymap = new Keymap({ commands });
     commands = new CommandRegistry();
     let cmd = commands.addCommand(DEFAULT_CMD, {
       execute: (args: JSONObject) => { return args; },
@@ -516,7 +516,7 @@ describe('ui/menu', () => {
         let menu = new Menu({
           renderer,
           commands: new CommandRegistry(),
-          keymap: new KeymapManager()
+          keymap: new Keymap({ commands })
         });
         expect(menu).to.be.a(Menu);
       });
@@ -1732,7 +1732,7 @@ describe('ui/menu', () => {
       describe('#formatShortcut()', () => {
 
         it('should format a key binding into a shortcut text for display', () => {
-          let binding = keymap.findKeyBinding(DEFAULT_CMD, null);
+          let binding = keymap.findBinding(DEFAULT_CMD, null);
           let renderer = new Menu.Renderer();
           let shortcut = renderer.formatShortcut(binding);
           expect(shortcut).to.be('A');

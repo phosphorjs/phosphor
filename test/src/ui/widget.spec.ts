@@ -924,15 +924,6 @@ describe('ui/widget', () => {
         expect(widget.methods.indexOf('notifyLayout')).to.not.be(-1);
       });
 
-      it('should focus the widget node', () => {
-        let widget = new Widget();
-        widget.node.tabIndex = -1;
-        Widget.attach(widget, document.body);
-        sendMessage(widget, WidgetMessage.ActivateRequest);
-        expect(document.activeElement).to.be(widget.node);
-        widget.dispose();
-      });
-
     });
 
     describe('#onDeactivateRequest()', () => {
@@ -947,17 +938,6 @@ describe('ui/widget', () => {
         let widget = new LogWidget();
         sendMessage(widget, WidgetMessage.DeactivateRequest);
         expect(widget.methods.indexOf('notifyLayout')).to.not.be(-1);
-      });
-
-      it('should blur the widget node', () => {
-        let widget = new Widget();
-        widget.node.tabIndex = -1;
-        Widget.attach(widget, document.body);
-        widget.node.focus();
-        expect(document.activeElement).to.be(widget.node);
-        sendMessage(widget, WidgetMessage.DeactivateRequest);
-        expect(document.activeElement).to.not.be(widget.node);
-        widget.dispose();
       });
 
     });
