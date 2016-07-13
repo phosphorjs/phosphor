@@ -38,11 +38,11 @@ import {
 } from '../dom/sizing';
 
 import {
-  commands
+  CommandRegistry
 } from './commands';
 
 import {
-  KeyBinding, formatKeystroke, keymap
+  KeyBinding, KeymapManager, formatKeystroke
 } from './keymap';
 
 import {
@@ -137,219 +137,6 @@ const SUBMENU_OVERLAP = 3;
 
 
 /**
- * An object which represents a menu item.
- *
- * #### Notes
- * Once created, a menu item is immutable.
- */
-export
-class MenuItem {
-  /**
-   * Construct a new menu item.
-   *
-   * @param options - The options for initializing the menu item.
-   */
-  constructor(options: MenuItem.IOptions) {
-    this._type = options.type || 'command';
-    this._command = options.command || '';
-    this._args = options.args || null;
-    this._menu = options.menu || null;
-  }
-
-  /**
-   * The type of the menu item.
-   */
-  get type(): MenuItem.Type {
-    return this._type;
-  }
-
-  /**
-   * The command to execute when the item is triggered.
-   */
-  get command(): string {
-    return this._command;
-  }
-
-  /**
-   * The arguments for the command.
-   */
-  get args(): JSONObject {
-    return this._args;
-  }
-
-  /**
-   * The menu for a `'submenu'` type item.
-   */
-  get menu(): Menu {
-    return this._menu;
-  }
-
-  /**
-   * The display label for the menu item.
-   */
-  get label(): string {
-    if (this._type === 'command') {
-      return commands.label(this._command, this._args);
-    }
-    if (this._type === 'submenu' && this._menu) {
-      return this._menu.title.label;
-    }
-    return '';
-  }
-
-  /**
-   * The mnemonic index for the menu item.
-   */
-  get mnemonic(): number {
-    if (this._type === 'command') {
-      return commands.mnemonic(this._command, this._args);
-    }
-    if (this._type === 'submenu' && this._menu) {
-      return this._menu.title.mnemonic;
-    }
-    return -1;
-  }
-
-  /**
-   * The icon class for the menu item.
-   */
-  get icon(): string {
-    if (this._type === 'command') {
-      return commands.icon(this._command, this._args);
-    }
-    if (this._type === 'submenu' && this._menu) {
-      return this._menu.title.icon;
-    }
-    return '';
-  }
-
-  /**
-   * The display caption for the menu item.
-   */
-  get caption(): string {
-    if (this._type === 'command') {
-      return commands.caption(this._command, this._args);
-    }
-    if (this._type === 'submenu' && this._menu) {
-      return this._menu.title.caption;
-    }
-    return '';
-  }
-
-  /**
-   * The extra class name for the menu item.
-   */
-  get className(): string {
-    if (this._type === 'command') {
-      return commands.className(this._command, this._args);
-    }
-    if (this._type === 'submenu' && this._menu) {
-      return this._menu.title.className;
-    }
-    return '';
-  }
-
-  /**
-   * Whether the menu item is enabled.
-   */
-  get isEnabled(): boolean {
-    if (this._type === 'command') {
-      return commands.isEnabled(this._command, this._args);
-    }
-    if (this._type === 'submenu') {
-      return this._menu !== null;
-    }
-    return true;
-  }
-
-  /**
-   * Whether the menu item is toggled.
-   */
-  get isToggled(): boolean {
-    if (this._type === 'command') {
-      return commands.isToggled(this._command, this._args);
-    }
-    return false;
-  }
-
-  /**
-   * Whether the menu item is visible.
-   */
-  get isVisible(): boolean {
-    if (this._type === 'command') {
-      return commands.isVisible(this._command, this._args);
-    }
-    if (this._type === 'submenu') {
-      return this._menu !== null;
-    }
-    return true;
-  }
-
-  /**
-   * The key binding for the menu item.
-   */
-  get keyBinding(): KeyBinding {
-    if (this._type === 'command') {
-      return keymap.findKeyBinding(this._command, this._args);
-    }
-    return null;
-  }
-
-  private _type: MenuItem.Type;
-  private _command: string;
-  private _args: JSONObject;
-  private _menu: Menu;
-}
-
-
-/**
- * The namespace for the `MenuItem` class statics.
- */
-export
-namespace MenuItem {
-  /**
-   * A type alias for a menu item type.
-   */
-  export
-  type Type = 'command' | 'submenu' | 'separator';
-
-  /**
-   * An options object for initializing a menu item.
-   */
-  export
-  interface IOptions {
-    /**
-     * The type of the menu item.
-     *
-     * The default value is `'command'`.
-     */
-    type?: Type;
-
-    /**
-     * The command to execute when the item is triggered.
-     *
-     * The default value is an empty string.
-     */
-    command?: string;
-
-    /**
-     * The arguments for the command.
-     *
-     * The default value is `null`.
-     */
-    args?: JSONObject;
-
-    /**
-     * The menu for a `'submenu'` type item.
-     *
-     * The default value is `null`.
-     */
-    menu?: Menu;
-  }
-}
-
-
-/**
  * A widget which displays menu items as a canonical menu.
  */
 export
@@ -359,11 +146,13 @@ class Menu extends Widget {
    *
    * @param options - The options for initializing the menu.
    */
-  constructor(options: Menu.IOptions = {}) {
+  constructor(options: Menu.IOptions) {
     super({ node: Private.createNode() });
     this.addClass(MENU_CLASS);
     this.setFlag(WidgetFlag.DisallowLayout);
     this._renderer = options.renderer || Menu.defaultRenderer;
+    this._commands = options.commands;
+    this._keymap = options.keymap;
   }
 
   /**
@@ -374,6 +163,8 @@ class Menu extends Widget {
     this._items.clear();
     this._nodes.clear();
     this._renderer = null;
+    this._keymap = null;
+    this._commands = null;
     super.dispose();
   }
 
@@ -485,7 +276,7 @@ class Menu extends Widget {
    * #### Notes
    * This is a read-only property.
    */
-  get items(): ISequence<MenuItem> {
+  get items(): ISequence<Menu.IItem> {
     return this._items;
   }
 
@@ -495,7 +286,7 @@ class Menu extends Widget {
    * #### Notes
    * This will be `null` if no menu item is active.
    */
-  get activeItem(): MenuItem {
+  get activeItem(): Menu.IItem {
     let i = this._activeIndex;
     return i !== -1 ? this._items.at(i) : null;
   }
@@ -506,7 +297,7 @@ class Menu extends Widget {
    * #### Notes
    * If the item cannot be activated, the item will be set to `null`.
    */
-  set activeItem(value: MenuItem) {
+  set activeItem(value: Menu.IItem) {
     this.activeIndex = indexOf(this._items, value);
   }
 
@@ -643,8 +434,8 @@ class Menu extends Widget {
 
     // Execute the command for the item.
     let { command, args } = item;
-    if (commands.isEnabled(command, args)) {
-      commands.execute(command, args);
+    if (this._commands.isEnabled(command, args)) {
+      this._commands.execute(command, args);
     } else {
       // TODO log something here?
     }
@@ -658,7 +449,7 @@ class Menu extends Widget {
    *
    * @returns The menu item added to the menu.
    */
-  addItem(value: MenuItem | MenuItem.IOptions): MenuItem {
+  addItem(value: Menu.IItemOptions): Menu.IItem {
     return this.insertItem(this._items.length, value);
   }
 
@@ -667,15 +458,14 @@ class Menu extends Widget {
    *
    * @param index - The index at which to insert the item.
    *
-   * @param value - The menu item to insert into the menu, or an options
-   *   object to be converted into a menu item.
+   * @param options - An options object to be converted into a menu item.
    *
    * @returns The menu item added to the menu.
    *
    * #### Notes
    * The index will be clamped to the bounds of the items.
    */
-  insertItem(index: number, value: MenuItem | MenuItem.IOptions): MenuItem {
+  insertItem(index: number, options: Menu.IItemOptions): Menu.IItem {
     // Close the menu if it's attached.
     if (this.isAttached) {
       this.close();
@@ -688,7 +478,12 @@ class Menu extends Widget {
     let i = Math.max(0, Math.min(Math.floor(index), this._items.length));
 
     // Coerce the value to a menu item.
-    let item = Private.asMenuItem(value);
+    let item = new Private.MenuItem(this._commands, this._keymap, {
+      type: options.type,
+      command: options.command,
+      args: options.args,
+      menu: options.menu
+    });
 
     // Create the node for the item. It will be initialized on open.
     let node = this._renderer.createItemNode();
@@ -715,7 +510,7 @@ class Menu extends Widget {
    * #### Notes
    * This is a no-op if the item is not contained in the menu.
    */
-  removeItem(value: MenuItem | number): void {
+  removeItem(value: Menu.IItem | number): void {
     // Coerce the value to an index.
     let index: number;
     if (typeof value === 'number') {
@@ -995,7 +790,7 @@ class Menu extends Widget {
     // The following code activates an item by mnemonic.
 
     // Get the pressed key character for the current layout.
-    let key = keymap.layout.keyForKeydownEvent(event);
+    let key = this._keymap.layout.keyForKeydownEvent(event);
 
     // Bail if the key is not valid for the current layout.
     if (!key) {
@@ -1290,8 +1085,10 @@ class Menu extends Widget {
   private _childMenu: Menu = null;
   private _parentMenu: Menu = null;
   private _renderer: Menu.IRenderer;
-  private _items = new Vector<MenuItem>();
+  private _items = new Vector<Private.MenuItem>();
   private _nodes = new Vector<HTMLElement>();
+  private _keymap: KeymapManager = null;
+  private _commands: CommandRegistry = null;
 }
 
 
@@ -1311,11 +1108,131 @@ namespace Menu {
   export
   interface IOptions {
     /**
+     * The command registry for use with the command item.
+     */
+    commands: CommandRegistry;
+
+    /**
+     * The keymap manager for use with the command item.
+     */
+    keymap: KeymapManager;
+
+    /**
      * A custom renderer for use with the menu.
      *
      * The default is a shared renderer instance.
      */
     renderer?: IRenderer;
+  }
+
+  /**
+   * An object which represents a menu item.
+   */
+  export
+  interface IItem {
+    /**
+     * The type of the menu item.
+     */
+    type: ItemType;
+
+    /**
+     * The command to execute when the item is triggered.
+     */
+    command: string;
+
+    /**
+     * The arguments for the command.
+     */
+    args: JSONObject;
+
+    /**
+     * The menu for a `'submenu'` type item.
+     */
+    menu: Menu;
+
+    /**
+     * The display label for the menu item.
+     */
+    label: string;
+
+    /**
+     * The mnemonic index for the menu item.
+     */
+    mnemonic: number;
+
+    /**
+     * The icon class for the menu item.
+     */
+    icon: string;
+
+    /**
+     * The display caption for the menu item.
+     */
+    caption: string;
+
+    /**
+     * The extra class name for the menu item.
+     */
+    className: string;
+
+    /**
+     * Whether the menu item is enabled.
+     */
+    isEnabled: boolean;
+
+    /**
+     * Whether the menu item is toggled.
+     */
+    isToggled: boolean;
+
+    /**
+     * Whether the menu item is visible.
+     */
+    isVisible: boolean;
+    /**
+     * The key binding for the menu item.
+     */
+    keyBinding: KeyBinding;
+  }
+
+  /**
+   * A type alias for a menu item type.
+   */
+  export
+  type ItemType = 'command' | 'submenu' | 'separator';
+
+  /**
+   * An options object for initializing a menu item.
+   */
+  export
+  interface IItemOptions {
+    /**
+     * The type of the menu item.
+     *
+     * The default value is `'command'`.
+     */
+    type?: ItemType;
+
+    /**
+     * The command to execute when the item is triggered.
+     *
+     * The default value is an empty string.
+     */
+    command?: string;
+
+    /**
+     * The arguments for the command.
+     *
+     * The default value is `null`.
+     */
+    args?: JSONObject;
+
+    /**
+     * The menu for a `'submenu'` type item.
+     *
+     * The default value is `null`.
+     */
+    menu?: Menu;
   }
 
   /**
@@ -1372,7 +1289,7 @@ namespace Menu {
      * This method should completely reset the state of the node to
      * reflect the data for the menu item.
      */
-    updateItemNode(node: HTMLElement, item: MenuItem): void;
+    updateItemNode(node: HTMLElement, item: Menu.IItem): void;
   }
 
   /**
@@ -1410,7 +1327,7 @@ namespace Menu {
      *
      * @param item - The menu item holding the data for the node.
      */
-    updateItemNode(node: HTMLElement, item: MenuItem): void {
+    updateItemNode(node: HTMLElement, item: Menu.IItem): void {
       // Setup the initial item class.
       let itemClass = ITEM_CLASS;
 
@@ -1541,14 +1458,6 @@ namespace Private {
   }
 
   /**
-   * Coerce a menu item or options into a real menu item.
-   */
-  export
-  function asMenuItem(value: MenuItem | MenuItem.IOptions): MenuItem {
-    return value instanceof MenuItem ? value : new MenuItem(value);
-  }
-
-  /**
    * Hit test a menu hierarchy starting at the given root.
    */
   export
@@ -1563,7 +1472,7 @@ namespace Private {
    * Hide the extra and redundant separator nodes.
    */
   export
-  function hideExtraSeparators(nodes: ISequence<HTMLElement>, items: ISequence<MenuItem>): void {
+  function hideExtraSeparators(nodes: ISequence<HTMLElement>, items: ISequence<Menu.IItem>): void {
     // Hide the leading separators.
     let k1 = 0;
     let n = items.length;
@@ -1738,5 +1647,174 @@ namespace Private {
 
     // Finally, make the menu visible on the screen.
     style.visibility = '';
+  }
+
+  /**
+   * An object which represents a menu item.
+   *
+   * #### Notes
+   * Once created, a menu item is immutable.
+   */
+  export
+  class MenuItem implements Menu.IItem {
+    /**
+     * Construct a new menu item.
+     *
+     * @param options - The options for initializing the menu item.
+     */
+    constructor(commands: CommandRegistry, keymap: KeymapManager, options: Menu.IItemOptions) {
+      this._type = options.type || 'command';
+      this._command = options.command || '';
+      this._args = options.args || null;
+      this._menu = options.menu || null;
+      this._commands = commands;
+      this._keymap = keymap;
+    }
+
+    /**
+     * The type of the menu item.
+     */
+    get type(): Menu.ItemType {
+      return this._type;
+    }
+
+    /**
+     * The command to execute when the item is triggered.
+     */
+    get command(): string {
+      return this._command;
+    }
+
+    /**
+     * The arguments for the command.
+     */
+    get args(): JSONObject {
+      return this._args;
+    }
+
+    /**
+     * The menu for a `'submenu'` type item.
+     */
+    get menu(): Menu {
+      return this._menu;
+    }
+
+    /**
+     * The display label for the menu item.
+     */
+    get label(): string {
+      if (this._type === 'command') {
+        return this._commands.label(this._command, this._args);
+      }
+      if (this._type === 'submenu' && this._menu) {
+        return this._menu.title.label;
+      }
+      return '';
+    }
+
+    /**
+     * The mnemonic index for the menu item.
+     */
+    get mnemonic(): number {
+      if (this._type === 'command') {
+        return this._commands.mnemonic(this._command, this._args);
+      }
+      if (this._type === 'submenu' && this._menu) {
+        return this._menu.title.mnemonic;
+      }
+      return -1;
+    }
+
+    /**
+     * The icon class for the menu item.
+     */
+    get icon(): string {
+      if (this._type === 'command') {
+        return this._commands.icon(this._command, this._args);
+      }
+      if (this._type === 'submenu' && this._menu) {
+        return this._menu.title.icon;
+      }
+      return '';
+    }
+
+    /**
+     * The display caption for the menu item.
+     */
+    get caption(): string {
+      if (this._type === 'command') {
+        return this._commands.caption(this._command, this._args);
+      }
+      if (this._type === 'submenu' && this._menu) {
+        return this._menu.title.caption;
+      }
+      return '';
+    }
+
+    /**
+     * The extra class name for the menu item.
+     */
+    get className(): string {
+      if (this._type === 'command') {
+        return this._commands.className(this._command, this._args);
+      }
+      if (this._type === 'submenu' && this._menu) {
+        return this._menu.title.className;
+      }
+      return '';
+    }
+
+    /**
+     * Whether the menu item is enabled.
+     */
+    get isEnabled(): boolean {
+      if (this._type === 'command') {
+        return this._commands.isEnabled(this._command, this._args);
+      }
+      if (this._type === 'submenu') {
+        return this._menu !== null;
+      }
+      return true;
+    }
+
+    /**
+     * Whether the menu item is toggled.
+     */
+    get isToggled(): boolean {
+      if (this._type === 'command') {
+        return this._commands.isToggled(this._command, this._args);
+      }
+      return false;
+    }
+
+    /**
+     * Whether the menu item is visible.
+     */
+    get isVisible(): boolean {
+      if (this._type === 'command') {
+        return this._commands.isVisible(this._command, this._args);
+      }
+      if (this._type === 'submenu') {
+        return this._menu !== null;
+      }
+      return true;
+    }
+
+    /**
+     * The key binding for the menu item.
+     */
+    get keyBinding(): KeyBinding {
+      if (this._type === 'command') {
+        return this._keymap.findKeyBinding(this._command, this._args);
+      }
+      return null;
+    }
+
+    private _type: Menu.ItemType;
+    private _command: string;
+    private _args: JSONObject;
+    private _menu: Menu;
+    private _keymap: KeymapManager = null;
+    private _commands: CommandRegistry = null;
   }
 }
