@@ -110,70 +110,6 @@ const TOGGLED_CLASS = 'p-mod-toggled';
 
 /**
  * An object which represents an item in a command palette.
- */
-export
-interface ICommandItem {
-  /**
-   * The command to execute when the item is triggered.
-   */
-  command: string;
-
-  /**
-   * The arguments for the command.
-   */
-  args: JSONObject;
-
-  /**
-   * The display label for the command item.
-   */
-  label: string;
-
-  /**
-   * The display caption for the command item.
-   */
-  caption: string;
-
-  /**
-   * The extra class name for the command item.
-   */
-  className: string;
-
-  /**
-   * Whether the command item is enabled.
-   */
-  isEnabled: boolean;
-
-  /**
-   * Whether the command item is toggled.
-   */
-  isToggled: boolean;
-
-  /**
-   * Whether the command item is visible.
-   */
-  isVisible: boolean;
-
-  /**
-   * The key binding for the command item.
-   */
-  keyBinding: KeyBinding;
-
-  /**
-   * The category for the command item.
-   */
-  category: string;
-
-  /**
-   * Execute the underlying command.
-   *
-   * @returns The command execution promise.
-   */
-  execute(): Promise<any>;
-}
-
-
-/**
- * An object which represents an item in a command palette.
  *
  * #### Notes
  * A command item is created automatically by the command palette.
@@ -182,7 +118,7 @@ interface ICommandItem {
  *
  * Once created, a command item is immutable.
  */
-class CommandItem implements ICommandItem {
+class CommandItem implements CommandPalette.IItem {
   /**
    * Construct a new command item.
    *
@@ -364,7 +300,7 @@ class CommandPalette extends Widget {
    * #### Notes
    * This is a read-only property.
    */
-  get items(): ISequence<ICommandItem> {
+  get items(): ISequence<CommandPalette.IItem> {
     return this._items;
   }
 
@@ -405,7 +341,7 @@ class CommandPalette extends Widget {
    *
    * @returns The command item added to the palette.
    */
-  addItem(options: CommandPalette.IItemOptions): ICommandItem {
+  addItem(options: CommandPalette.IItemOptions): CommandPalette.IItem {
     // Create a new command item for the options.
     let item = new CommandItem(this._commands, this._keymap, options);
 
@@ -427,7 +363,7 @@ class CommandPalette extends Widget {
    * #### Notes
    * This is a no-op if the item is not contained in the palette.
    */
-  removeItem(value: ICommandItem | number): void {
+  removeItem(value: CommandPalette.IItem | number): void {
     // Coerce the value to an index.
     let index: number;
     if (typeof value === 'number') {
@@ -552,12 +488,12 @@ class CommandPalette extends Widget {
 
     // Render the search result into the fragment.
     for (let part of result.parts) {
-      let node: HTMLElement;
+      let node: HTMLLIElement;
       if (part.item === null) {
-        node = headerNodes.at(headerIndex++);
+        node = headerNodes.at(headerIndex++) as HTMLLIElement;
         renderer.updateHeaderNode(node, part.markup);
       } else {
-        node = itemNodes.at(itemIndex++);
+        node = itemNodes.at(itemIndex++) as HTMLLIElement;
         renderer.updateItemNode(node, part.item, part.markup);
       }
       fragment.appendChild(node);
@@ -839,6 +775,70 @@ class CommandPalette extends Widget {
 export
 namespace CommandPalette {
   /**
+   * An object which represents an item in a command palette.
+   */
+  export
+  interface IItem {
+    /**
+     * The command to execute when the item is triggered.
+     */
+    command: string;
+
+    /**
+     * The arguments for the command.
+     */
+    args: JSONObject;
+
+    /**
+     * The display label for the command item.
+     */
+    label: string;
+
+    /**
+     * The display caption for the command item.
+     */
+    caption: string;
+
+    /**
+     * The extra class name for the command item.
+     */
+    className: string;
+
+    /**
+     * Whether the command item is enabled.
+     */
+    isEnabled: boolean;
+
+    /**
+     * Whether the command item is toggled.
+     */
+    isToggled: boolean;
+
+    /**
+     * Whether the command item is visible.
+     */
+    isVisible: boolean;
+
+    /**
+     * The key binding for the command item.
+     */
+    keyBinding: KeyBinding;
+
+    /**
+     * The category for the command item.
+     */
+    category: string;
+
+    /**
+     * Execute the underlying command.
+     *
+     * @returns The command execution promise.
+     */
+    execute(): Promise<any>;
+  }
+
+
+  /**
    * An options object for creating a command palette.
    */
   export
@@ -901,7 +901,7 @@ namespace CommandPalette {
      *
      * The `updateHeaderNode` method will be called for initialization.
      */
-    createHeaderNode(): HTMLElement;
+    createHeaderNode(): HTMLLIElement;
 
     /**
      * Create a node for a command item.
@@ -913,7 +913,7 @@ namespace CommandPalette {
      *
      * The `updateItemNode` method will be called for initialization.
      */
-    createItemNode(): HTMLElement;
+    createItemNode(): HTMLLIElement;
 
     /**
      * Update a header node to reflect the given data..
@@ -928,7 +928,7 @@ namespace CommandPalette {
      * This method should completely reset the state of the node to
      * reflect the data for the header.
      */
-    updateHeaderNode(node: HTMLElement, markup: string): void;
+    updateHeaderNode(node: HTMLLIElement, markup: string): void;
 
     /**
      * Update an item node to reflect the state of a command item.
@@ -945,7 +945,7 @@ namespace CommandPalette {
      * This method should completely reset the state of the node to
      * reflect the data for the command item.
      */
-    updateItemNode(node: HTMLElement, item: ICommandItem, markup: string): void;
+    updateItemNode(node: HTMLLIElement, item: CommandPalette.IItem, markup: string): void;
   }
 
   /**
@@ -958,7 +958,7 @@ namespace CommandPalette {
      *
      * @returns A new node for a section header.
      */
-    createHeaderNode(): HTMLElement {
+    createHeaderNode(): HTMLLIElement {
       let node = document.createElement('li');
       node.className = HEADER_CLASS;
       return node;
@@ -969,7 +969,7 @@ namespace CommandPalette {
      *
      * @returns A new node for a command item.
      */
-    createItemNode(): HTMLElement {
+    createItemNode(): HTMLLIElement {
       let node = document.createElement('li');
       let label = document.createElement('div');
       let caption = document.createElement('div');
@@ -993,7 +993,7 @@ namespace CommandPalette {
      *   section category text interpolated with `<mark>` tags for
      *   the matching search characters.
      */
-    updateHeaderNode(node: HTMLElement, markup: string): void {
+    updateHeaderNode(node: HTMLLIElement, markup: string): void {
       node.className = HEADER_CLASS;
       node.innerHTML = markup;
     }
@@ -1009,7 +1009,7 @@ namespace CommandPalette {
      *   item label text interpolated with `<mark>` tags for the
      *   matching search characters.
      */
-    updateItemNode(node: HTMLElement, item: ICommandItem, markup: string): void {
+    updateItemNode(node: HTMLLIElement, item: CommandPalette.IItem, markup: string): void {
       // Setup the initial item class.
       let itemClass = ITEM_CLASS;
 
