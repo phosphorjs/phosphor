@@ -325,6 +325,28 @@ class CommandPalette extends Widget {
   }
 
   /**
+   * A message handler invoked on an `'activate-request'` message.
+   */
+  protected onActivateRequest(msg: Message): void {
+    if (this.isAttached) {
+      let input = this.inputNode;
+      input.focus();
+      input.select();
+    }
+  }
+
+  /**
+   * A message handler invoked on a `'deactivate-request'` message.
+   */
+  protected onDeactivateRequest(msg: Message): void {
+    if (this.isAttached) {
+      let input = this.inputNode;
+      input.blur();
+      input.setSelectionRange(0, 0);
+    }
+  }
+
+  /**
    * A message handler invoked on an `'update-request'` message.
    */
   protected onUpdateRequest(msg: Message): void {
