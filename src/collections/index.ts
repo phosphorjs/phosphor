@@ -5,7 +5,9 @@
 |
 | The full license is in the file LICENSE, distributed with this software.
 |----------------------------------------------------------------------------*/
-export * from './deque';
-export * from './queue';
-export * from './stack';
-export * from './vector';
+import * as deque from './deque';
+import * as queue from './queue';
+import * as stack from './stack';
+import * as vector from './vector';
+
+export { deque, queue, stack, vector };

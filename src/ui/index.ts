@@ -5,18 +5,24 @@
 |
 | The full license is in the file LICENSE, distributed with this software.
 |----------------------------------------------------------------------------*/
-export * from './boxengine';
-export * from './boxpanel';
-export * from './commandpalette';
-export * from './commands';
-export * from './keyboard';
-export * from './keymap';
-export * from './menu';
-export * from './menubar';
-export * from './panel';
-export * from './splitpanel';
-export * from './stackedpanel';
-export * from './tabbar';
-export * from './tabpanel';
-export * from './title';
-export * from './widget';
+import * as boxengine from './boxengine';
+import * as boxpanel from './boxpanel';
+import * as commandpalette from './commandpalette';
+import * as commands from './commands';
+import * as keyboard from './keyboard';
+import * as keymap from './keymap';
+import * as menu from './menu';
+import * as menubar from './menubar';
+import * as panel from './panel';
+import * as splitpanel from './splitpanel';
+import * as stackedpanel from './stackedpanel';
+import * as tabbar from './tabbar';
+import * as tabpanel from './tabpanel';
+import * as title from './title';
+import * as widget from './widget';
+
+export {
+  boxengine, boxpanel, commandpalette, commands, keyboard, keymap,
+  menu, menubar, panel, splitpanel, stackedpanel, tabbar, tabpanel,
+  title, widget
+};

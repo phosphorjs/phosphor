@@ -69,6 +69,7 @@
     "ui",
     "widget"
   ],
+  "main": "lib/index.js",
   "author": "S. Chris Colbert <sccolbert@gmail.com>",
   "contributors": [
     "A. Darian <git@darian.af>",

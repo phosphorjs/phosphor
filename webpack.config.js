@@ -1,19 +1,11 @@
 var version = require('./package.json').version;
 
 module.exports = {
-    entry: {
-        algorithm: './lib/algorithm',
-        collections: './lib/collections',
-        core: './lib/core',
-        dom: './lib/dom',
-        ui: './lib/ui'
-    },
+    entry: './lib',
     output: {
-        filename: '[name].js',
+        filename: 'index.js',
         path: './dist',
-        library: 'phosphor/lib/[name]',
-        libraryTarget: 'umd',
-        umdNamedDefine: true,
+        libraryTarget: 'this',
         publicPath: 'https://npmcdn.com/phosphor@' + version + '/dist/'
     },
     bail: true,

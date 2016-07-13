@@ -5,10 +5,12 @@
 |
 | The full license is in the file LICENSE, distributed with this software.
 |----------------------------------------------------------------------------*/
-export * from './iteration';
-export * from './json';
-export * from './mutation';
-export * from './range';
-export * from './searching';
-export * from './sequence';
-export * from './sorting';
+import * as iteration from './iteration';
+import * as json from './json';
+import * as mutation from './mutation';
+import * as range from './range';
+import * as searching from './searching';
+import * as sequence from './sequence';
+import * as sorting from './sorting';
+
+export { iteration, json, mutation, range, searching, sequence, sorting };

@@ -5,8 +5,10 @@
 |
 | The full license is in the file LICENSE, distributed with this software.
 |----------------------------------------------------------------------------*/
-  export * from './disposable';
-  export * from './messaging';
-  export * from './mimedata';
-  export * from './properties';
-  export * from './signaling';
+import * as disposable from './disposable';
+import * as messaging from './messaging';
+import * as mimedata from './mimedata';
+import * as properties from './properties';
+import * as signaling from './signaling';
+
+export { disposable, messaging, mimedata, properties, signaling };
