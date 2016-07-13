@@ -19,202 +19,7 @@ import {
 
 
 /**
- * A type alias for a command execute function.
- *
- * @param args - The arguments for the command.
- *
- * @returns The command result, a promise to the result, or void.
- */
-export
-type ExecFunc = (args: JSONObject) => any;
-
-
-/**
- * A type alias for a command string function.
- *
- * @param args - The arguments for the command.
- *
- * @returns The relevant string result.
- */
-export
-type StringFunc = (args: JSONObject) => string;
-
-
-/**
- * A type alias for a command number function.
- *
- * @param args - The arguments for the command.
- *
- * @returns The relevant number result.
- */
-export
-type NumberFunc = (args: JSONObject) => number;
-
-
-/**
- * A type alias for a command boolean function.
- *
- * @param args - The arguments for the command.
- *
- * @returns The relevant boolean result.
- */
-export
-type BoolFunc = (args: JSONObject) => boolean;
-
-
-/**
- * An object which represents code to be executed.
- *
- * #### Notes
- * A command is an abstract representation of code to be executed along
- * with metadata for describing how the command should be displayed in
- * a visual representation.
- *
- * A command is a collection of functions, *not* methods. The command
- * registry will always invoke the command functions with a `thisArg`
- * which is `undefined`.
- *
- * The metadata functions for the command should be well behaved in
- * the presence of `null` args by returning a default value.
- */
-export
-interface ICommand {
-  /**
-   * The function to invoke when the command is executed.
-   *
-   * #### Notes
-   * This function may be invoked manually by the user, even when
-   * the `isEnabled` function returns `false`.
-   */
-  execute: ExecFunc;
-
-  /**
-   * The label text for the command.
-   *
-   * #### Notes
-   * This can be a string literal, or a function which returns the
-   * label based on the provided command arguments.
-   *
-   * The default value is an empty string.
-   */
-  label?: string | StringFunc;
-
-  /**
-   * The index of the mnemonic character for the command.
-   *
-   * #### Notes
-   * This can be an index literal, or a function which returns the
-   * mnemonic index based on the provided command arguments.
-   *
-   * The default value is `-1`.
-   */
-  mnemonic?: number | NumberFunc;
-
-  /**
-   * The icon class for the command.
-   *
-   * #### Notes
-   * This class name will be added to the icon node for the visual
-   * representation of the command.
-   *
-   * Multiple class names can be separated with white space.
-   *
-   * This can be a string literal, or a function which returns the
-   * icon based on the provided command arguments.
-   *
-   * The default value is an empty string.
-   */
-  icon?: string | StringFunc;
-
-  /**
-   * The caption for the command.
-   *
-   * #### Notes
-   * This should be a simple one line description of the command. It
-   * is used by some visual representations to show quick info about
-   * the command.
-   *
-   * This can be a string literal, or a function which returns the
-   * caption based on the provided command arguments.
-   *
-   * The default value is an empty string.
-   */
-  caption?: string | StringFunc;
-
-  /**
-   * The usage text for the command.
-   *
-   * #### Notes
-   * This should be a full description of the command, which includes
-   * information about the structure of the arguments and the type of
-   * the return value. It is used by some visual representations when
-   * displaying complete help info about the command.
-   *
-   * This can be a string literal, or a function which returns the
-   * usage text based on the provided command arguments.
-   *
-   * The default value is an empty string.
-   */
-  usage?: string | StringFunc;
-
-  /**
-   * The general class name for the command.
-   *
-   * #### Notes
-   * This class name will be added to the primary node for the visual
-   * representation of the command.
-   *
-   * Multiple class names can be separated with white space.
-   *
-   * This can be a string literal, or a function which returns the
-   * class name based on the provided command arguments.
-   *
-   * The default value is an empty string.
-   */
-  className?: string | StringFunc;
-
-  /**
-   * A function which indicates whether the command is enabled.
-   *
-   * #### Notes
-   * Visual representations may use this value to display a disabled
-   * command as grayed-out or in some other non-interactive fashion.
-   *
-   * The default value is `true`.
-   */
-  isEnabled?: BoolFunc;
-
-  /**
-   * A function which indicates whether the command is toggled.
-   *
-   * #### Notes
-   * Visual representations may use this value to display a toggled
-   * command in a different form, such as a check mark icon for a
-   * menu item or a depressed state for a toggle button.
-   *
-   * The default value is `false`.
-   */
-  isToggled?: BoolFunc;
-
-  /**
-   * A function which indicates whether the command is visible.
-   *
-   * #### Notes
-   * Visual representations may use this value to hide or otherwise
-   * not display a non-visible command.
-   *
-   * The default value is `true`.
-   */
-  isVisible?: BoolFunc;
-}
-
-
-/**
  * A registry which holds user-defined commands.
- *
- * #### Notes
- * A singleton instance of this class is all that is necessary for an
- * application, and one is exported from this module as `commands`.
  */
 export
 class CommandRegistry {
@@ -258,23 +63,20 @@ class CommandRegistry {
    *
    * @param id - The unique id of the command.
    *
-   * @param cmd - The command object to register.
+   * @param options - The options for the command.
    *
    * @returns A disposable which will unregister the command.
    *
    * @throws An error if the given `id` is already registered.
-   *
-   * #### Notes
-   * The given `cmd` is cloned before being added to the registry.
    */
-  addCommand(id: string, cmd: ICommand): IDisposable {
+  addCommand(id: string, options: CommandRegistry.ICommandOptions): IDisposable {
     // Throw an error if the id is already registered.
     if (id in this._commands) {
       throw new Error(`Command '${id}' already registered.`);
     }
 
-    // Normalize the command and add it to the registry.
-    this._commands[id] = Private.normalizeCommand(cmd);
+    // Create the command and add it to the registry.
+    this._commands[id] = Private.createCommand(options);
 
     // Emit the `commandChanged` signal.
     this.commandChanged.emit({ id, type: 'added' });
@@ -544,29 +346,210 @@ namespace CommandRegistry {
      */
     args: JSONObject;
   }
+
+  /**
+   * A type alias for a command execute function.
+   *
+   * @param args - The arguments for the command.
+   *
+   * @returns The command result, a promise to the result, or void.
+   */
+  export
+  type ExecFunc = (args: JSONObject) => any;
+
+  /**
+   * A type alias for a command string function.
+   *
+   * @param args - The arguments for the command.
+   *
+   * @returns The relevant string result.
+   */
+  export
+  type StringFunc = (args: JSONObject) => string;
+
+  /**
+   * A type alias for a command number function.
+   *
+   * @param args - The arguments for the command.
+   *
+   * @returns The relevant number result.
+   */
+  export
+  type NumberFunc = (args: JSONObject) => number;
+
+  /**
+   * A type alias for a command boolean function.
+   *
+   * @param args - The arguments for the command.
+   *
+   * @returns The relevant boolean result.
+   */
+  export
+  type BoolFunc = (args: JSONObject) => boolean;
+
+  /**
+   * An options object for creating a command.
+   *
+   * #### Notes
+   * A command is an abstract representation of code to be executed along
+   * with metadata for describing how the command should be displayed in
+   * a visual representation.
+   *
+   * A command is a collection of functions, *not* methods. The command
+   * registry will always invoke the command functions with a `thisArg`
+   * which is `undefined`.
+   *
+   * The metadata functions for the command should be well behaved in
+   * the presence of `null` args by returning a default value.
+   */
+  export
+  interface ICommandOptions {
+    /**
+     * The function to invoke when the command is executed.
+     *
+     * #### Notes
+     * This function may be invoked manually by the user, even when
+     * the `isEnabled` function returns `false`.
+     */
+    execute: ExecFunc;
+
+    /**
+     * The label text for the command.
+     *
+     * #### Notes
+     * This can be a string literal, or a function which returns the
+     * label based on the provided command arguments.
+     *
+     * The default value is an empty string.
+     */
+    label?: string | StringFunc;
+
+    /**
+     * The index of the mnemonic character for the command.
+     *
+     * #### Notes
+     * This can be an index literal, or a function which returns the
+     * mnemonic index based on the provided command arguments.
+     *
+     * The default value is `-1`.
+     */
+    mnemonic?: number | NumberFunc;
+
+    /**
+     * The icon class for the command.
+     *
+     * #### Notes
+     * This class name will be added to the icon node for the visual
+     * representation of the command.
+     *
+     * Multiple class names can be separated with white space.
+     *
+     * This can be a string literal, or a function which returns the
+     * icon based on the provided command arguments.
+     *
+     * The default value is an empty string.
+     */
+    icon?: string | StringFunc;
+
+    /**
+     * The caption for the command.
+     *
+     * #### Notes
+     * This should be a simple one line description of the command. It
+     * is used by some visual representations to show quick info about
+     * the command.
+     *
+     * This can be a string literal, or a function which returns the
+     * caption based on the provided command arguments.
+     *
+     * The default value is an empty string.
+     */
+    caption?: string | StringFunc;
+
+    /**
+     * The usage text for the command.
+     *
+     * #### Notes
+     * This should be a full description of the command, which includes
+     * information about the structure of the arguments and the type of
+     * the return value. It is used by some visual representations when
+     * displaying complete help info about the command.
+     *
+     * This can be a string literal, or a function which returns the
+     * usage text based on the provided command arguments.
+     *
+     * The default value is an empty string.
+     */
+    usage?: string | StringFunc;
+
+    /**
+     * The general class name for the command.
+     *
+     * #### Notes
+     * This class name will be added to the primary node for the visual
+     * representation of the command.
+     *
+     * Multiple class names can be separated with white space.
+     *
+     * This can be a string literal, or a function which returns the
+     * class name based on the provided command arguments.
+     *
+     * The default value is an empty string.
+     */
+    className?: string | StringFunc;
+
+    /**
+     * A function which indicates whether the command is enabled.
+     *
+     * #### Notes
+     * Visual representations may use this value to display a disabled
+     * command as grayed-out or in some other non-interactive fashion.
+     *
+     * The default value is `true`.
+     */
+    isEnabled?: BoolFunc;
+
+    /**
+     * A function which indicates whether the command is toggled.
+     *
+     * #### Notes
+     * Visual representations may use this value to display a toggled
+     * command in a different form, such as a check mark icon for a
+     * menu item or a depressed state for a toggle button.
+     *
+     * The default value is `false`.
+     */
+    isToggled?: BoolFunc;
+
+    /**
+     * A function which indicates whether the command is visible.
+     *
+     * #### Notes
+     * Visual representations may use this value to hide or otherwise
+     * not display a non-visible command.
+     *
+     * The default value is `true`.
+     */
+    isVisible?: BoolFunc;
+  }
 }
-
-
-/**
- * A singleton instance of a `CommandRegistry`.
- *
- * #### Notes
- * This singleton instance is all that is necessary for an application.
- * User code will not typically create a new registry instance.
- */
-export
-const commands = new CommandRegistry();
 
 
 /**
  * The namespace for the private module data.
  */
 namespace Private {
+  // Convenience type aliases
+  type ExecFunc = CommandRegistry.ExecFunc;
+  type StringFunc = CommandRegistry.StringFunc;
+  type NumberFunc = CommandRegistry.NumberFunc;
+  type BoolFunc = CommandRegistry.BoolFunc;
+
   /**
    * A normalized command object.
    */
   export
-  interface INormalizedCommand {
+  interface ICommand {
     execute: ExecFunc;
     label: StringFunc;
     mnemonic: NumberFunc;
@@ -583,24 +566,24 @@ namespace Private {
    * A type alias for a map of id to normalized command.
    */
   export
-  type CommandMap = { [id: string]: INormalizedCommand };
+  type CommandMap = { [id: string]: ICommand };
 
   /**
-   * Normalize a user-defined command.
+   * Create a normalized command object from options.
    */
   export
-  function normalizeCommand(cmd: ICommand): INormalizedCommand {
+  function createCommand(options: CommandRegistry.ICommandOptions): ICommand {
     return {
-      execute: cmd.execute,
-      label: asStringFunc(cmd.label),
-      mnemonic: asNumberFunc(cmd.mnemonic),
-      icon: asStringFunc(cmd.icon),
-      caption: asStringFunc(cmd.caption),
-      usage: asStringFunc(cmd.usage),
-      className: asStringFunc(cmd.className),
-      isEnabled: cmd.isEnabled || trueFunc,
-      isToggled: cmd.isToggled || falseFunc,
-      isVisible: cmd.isVisible || trueFunc
+      execute: options.execute,
+      label: asStringFunc(options.label),
+      mnemonic: asNumberFunc(options.mnemonic),
+      icon: asStringFunc(options.icon),
+      caption: asStringFunc(options.caption),
+      usage: asStringFunc(options.usage),
+      className: asStringFunc(options.className),
+      isEnabled: options.isEnabled || trueFunc,
+      isToggled: options.isToggled || falseFunc,
+      isVisible: options.isVisible || trueFunc
     };
   }
 
