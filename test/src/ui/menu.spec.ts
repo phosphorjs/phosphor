@@ -1495,7 +1495,7 @@ describe('ui/menu', () => {
     describe('#onAfterAttach()', () => {
 
       it('should add event listeners', () => {
-        let menu = new LogMenu({ commands, keymap })
+        let menu = new LogMenu({ commands, keymap });
         let node = menu.node;
         Widget.attach(menu, document.body);
         expect(menu.methods.indexOf('onAfterAttach')).to.not.be(-1);
@@ -1521,7 +1521,7 @@ describe('ui/menu', () => {
     describe('#onBeforeDetach()', () => {
 
       it('should remove event listeners', () => {
-        let menu = new LogMenu({ commands, keymap })
+        let menu = new LogMenu({ commands, keymap });
         let node = menu.node;
         Widget.attach(menu, document.body);
         Widget.detach(menu);
@@ -1547,7 +1547,7 @@ describe('ui/menu', () => {
     describe('#onUpdateRequest()', () => {
 
       it('should be called prior to opening', () => {
-        let menu = new LogMenu({ commands, keymap })
+        let menu = new LogMenu({ commands, keymap });
         menu.open(0, 0);
         expect(menu.methods.indexOf('onUpdateRequest')).to.not.be(-1);
         menu.dispose();
@@ -1558,7 +1558,7 @@ describe('ui/menu', () => {
     describe('#onCloseRequest()', () => {
 
       it('should be called when the menu is closed', () => {
-        let menu = new LogMenu({ commands, keymap })
+        let menu = new LogMenu({ commands, keymap });
         menu.open(0, 0);
         menu.close();
         expect(menu.methods.indexOf('onCloseRequest')).to.not.be(-1);
@@ -1566,7 +1566,7 @@ describe('ui/menu', () => {
       });
 
       it('should reset the active index', () => {
-        let menu = new LogMenu({ commands, keymap })
+        let menu = new LogMenu({ commands, keymap });
         menu.addItem({ command: DEFAULT_CMD });
         menu.activeIndex = 0;
         menu.open(0, 0);
@@ -1579,7 +1579,7 @@ describe('ui/menu', () => {
       it('should close any open child menu', () => {
         let sub = new Menu({ commands, keymap });
         sub.addItem({ command: DEFAULT_CMD });
-        let menu = new LogMenu({ commands, keymap })
+        let menu = new LogMenu({ commands, keymap });
         menu.addItem({ type: 'submenu', menu: sub });
         menu.open(0, 0);
         menu.activateNextItem();
@@ -1591,10 +1591,10 @@ describe('ui/menu', () => {
         menu.dispose();
       });
 
-      it('should remove the menu from its parent and activate the parent', () => {
-        let sub = new LogMenu({ commands, keymap })
+      it('should remove the menu from its parent and activate the parent', (done) => {
+        let sub = new LogMenu({ commands, keymap });
         sub.addItem({ command: DEFAULT_CMD });
-        let menu = new LogMenu({ commands, keymap })
+        let menu = new LogMenu({ commands, keymap });
         menu.addItem({ type: 'submenu', menu: sub });
         menu.open(0, 0);
         menu.activateNextItem();
@@ -1611,7 +1611,7 @@ describe('ui/menu', () => {
       });
 
       it('should emit the `aboutToClose` signal if attached', () => {
-        let menu = new LogMenu({ commands, keymap })
+        let menu = new LogMenu({ commands, keymap });
         let called = false;
         menu.open(0, 0);
         menu.aboutToClose.connect((sender, args) => {
