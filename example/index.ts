@@ -6,6 +6,10 @@
 | The full license is in the file LICENSE, distributed with this software.
 |----------------------------------------------------------------------------*/
 import {
+  Message
+} from '../lib/core/messaging';
+
+import {
   BoxPanel
 } from '../lib/ui/boxpanel';
 
@@ -34,7 +38,7 @@ import {
 } from '../lib/ui/menubar';
 
 import {
-  Widget
+  Widget, WidgetFlag
 } from '../lib/ui/widget';
 
 import '../styles/base.css';
@@ -83,14 +87,32 @@ function createMenu(): Menu {
 }
 
 
-function createContent(title: string): Widget {
-  let widget = new Widget();
-  widget.addClass('content');
-  widget.addClass(title.toLowerCase());
-  widget.title.label = title;
-  widget.title.closable = true;
-  widget.node.tabIndex = -1;
-  return widget;
+class ContentWidget extends Widget {
+
+  static createNode(): HTMLElement {
+    let node = document.createElement('div');
+    let input = document.createElement('input');
+    input.placeholder = 'Placeholder...';
+    node.appendChild(input);
+    return node;
+  }
+
+  constructor(name: string) {
+    super({ node: ContentWidget.createNode() });
+    this.setFlag(WidgetFlag.DisallowLayout);
+    this.addClass('content');
+    this.addClass(name.toLowerCase());
+    this.title.label = name;
+    this.title.closable = true;
+  }
+
+  get inputNode(): HTMLInputElement {
+    return this.node.firstChild as HTMLInputElement;
+  }
+
+  protected onActivateRequest(msg: Message): void {
+    if (this.isAttached) this.inputNode.focus();
+  }
 }
 
 
@@ -274,10 +296,10 @@ function main(): void {
     }
   });
 
-  let r1 = createContent('Red');
-  let b1 = createContent('Blue');
-  let g1 = createContent('Green');
-  let y1 = createContent('Yellow');
+  let r1 = new ContentWidget('Red');
+  let b1 = new ContentWidget('Blue');
+  let g1 = new ContentWidget('Green');
+  let y1 = new ContentWidget('Yellow');
 
   let dock = new DockPanel();
   dock.addWidget(r1);
