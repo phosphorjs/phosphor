@@ -34,7 +34,7 @@ import {
 } from './commandregistry';
 
 import {
-  KeyBinding, KeymapManager, formatKeystroke
+  Keymap
 } from './keymap';
 
 import {
@@ -113,22 +113,22 @@ const TOGGLED_CLASS = 'p-mod-toggled';
  *
  * #### Notes
  * A command item is created automatically by the command palette.
- * It will not typically be instantiated directly by user code.
+ * It is not exported because it should not be instantiated directly by user
+ * code.
  *
  * Once created, a command item is immutable.
  */
-export
-class CommandItem {
+class CommandItem implements CommandPalette.IItem {
   /**
    * Construct a new command item.
    *
    * @param commands - The command registry to use for the item.
    *
-   * @param keymap - The keymap manager to use for the item.
+   * @param keymap - The keymap to use for the item.
    *
    * @param options - The other initialization options for the item.
    */
-  constructor(commands: CommandRegistry, keymap: KeymapManager, options: CommandItem.IOptions) {
+  constructor(commands: CommandRegistry, keymap: Keymap, options: CommandPalette.IItemOptions) {
     this._commands = commands;
     this._keymap = keymap;
     this._command = options.command;
@@ -195,8 +195,8 @@ class CommandItem {
   /**
    * The key binding for the command item.
    */
-  get keyBinding(): KeyBinding {
-    return this._keymap.findKeyBinding(this._command, this._args);
+  get keyBinding(): Keymap.IBinding {
+    return this._keymap.findBinding(this._command, this._args);
   }
 
   /**
@@ -216,42 +216,10 @@ class CommandItem {
   }
 
   private _commands: CommandRegistry;
-  private _keymap: KeymapManager;
+  private _keymap: Keymap;
   private _command: string;
   private _args: JSONObject;
   private _category: string;
-}
-
-
-/**
- * The namespace for the `CommandItem` class statics.
- */
-export
-namespace CommandItem {
-  /**
-   * An options object for initializing a command item.
-   */
-  export
-  interface IOptions {
-    /**
-     * The command to execute when the item is triggered.
-     */
-    command: string;
-
-    /**
-     * The arguments for the command.
-     *
-     * The default value is `null`.
-     */
-    args?: JSONObject;
-
-    /**
-     * The category for the item.
-     *
-     * The default value is `'general'`.
-     */
-    category?: string;
-  }
 }
 
 
@@ -332,7 +300,7 @@ class CommandPalette extends Widget {
    * #### Notes
    * This is a read-only property.
    */
-  get items(): ISequence<CommandItem> {
+  get items(): ISequence<CommandPalette.IItem> {
     return this._items;
   }
 
@@ -347,12 +315,12 @@ class CommandPalette extends Widget {
   }
 
   /**
-   * The keymap manager used by the command palette.
+   * The keymap used by the command palette.
    *
    * #### Notes
    * This is a read-only property.
    */
-  get keymap(): KeymapManager {
+  get keymap(): Keymap {
     return this._keymap;
   }
 
@@ -373,7 +341,7 @@ class CommandPalette extends Widget {
    *
    * @returns The command item added to the palette.
    */
-  addItem(options: CommandItem.IOptions): CommandItem {
+  addItem(options: CommandPalette.IItemOptions): CommandPalette.IItem {
     // Create a new command item for the options.
     let item = new CommandItem(this._commands, this._keymap, options);
 
@@ -395,7 +363,7 @@ class CommandPalette extends Widget {
    * #### Notes
    * This is a no-op if the item is not contained in the palette.
    */
-  removeItem(value: CommandItem | number): void {
+  removeItem(value: CommandPalette.IItem | number): void {
     // Coerce the value to an index.
     let index: number;
     if (typeof value === 'number') {
@@ -520,12 +488,12 @@ class CommandPalette extends Widget {
 
     // Render the search result into the fragment.
     for (let part of result.parts) {
-      let node: HTMLElement;
+      let node: HTMLLIElement;
       if (part.item === null) {
-        node = headerNodes.at(headerIndex++);
+        node = headerNodes.at(headerIndex++) as HTMLLIElement;
         renderer.updateHeaderNode(node, part.markup);
       } else {
-        node = itemNodes.at(itemIndex++);
+        node = itemNodes.at(itemIndex++) as HTMLLIElement;
         renderer.updateItemNode(node, part.item, part.markup);
       }
       fragment.appendChild(node);
@@ -791,7 +759,7 @@ class CommandPalette extends Widget {
   }
 
   private _activeIndex = 1;
-  private _keymap: KeymapManager;
+  private _keymap: Keymap;
   private _commands: CommandRegistry;
   private _renderer: CommandPalette.IRenderer;
   private _items = new Vector<CommandItem>();
@@ -807,6 +775,70 @@ class CommandPalette extends Widget {
 export
 namespace CommandPalette {
   /**
+   * An object which represents an item in a command palette.
+   */
+  export
+  interface IItem {
+    /**
+     * The command to execute when the item is triggered.
+     */
+    command: string;
+
+    /**
+     * The arguments for the command.
+     */
+    args: JSONObject;
+
+    /**
+     * The display label for the command item.
+     */
+    label: string;
+
+    /**
+     * The display caption for the command item.
+     */
+    caption: string;
+
+    /**
+     * The extra class name for the command item.
+     */
+    className: string;
+
+    /**
+     * Whether the command item is enabled.
+     */
+    isEnabled: boolean;
+
+    /**
+     * Whether the command item is toggled.
+     */
+    isToggled: boolean;
+
+    /**
+     * Whether the command item is visible.
+     */
+    isVisible: boolean;
+
+    /**
+     * The key binding for the command item.
+     */
+    keyBinding: Keymap.IBinding;
+
+    /**
+     * The category for the command item.
+     */
+    category: string;
+
+    /**
+     * Execute the underlying command.
+     *
+     * @returns The command execution promise.
+     */
+    execute(): Promise<any>;
+  }
+
+
+  /**
    * An options object for creating a command palette.
    */
   export
@@ -817,9 +849,9 @@ namespace CommandPalette {
     commands: CommandRegistry;
 
     /**
-     * The keymap manager for use with the command palette.
+     * The keymap for use with the command palette.
      */
-    keymap: KeymapManager;
+    keymap: Keymap;
 
     /**
      * A custom renderer for use with the command palette.
@@ -827,6 +859,31 @@ namespace CommandPalette {
      * The default is a shared renderer instance.
      */
     renderer?: IRenderer;
+  }
+
+  /**
+   * An options object for initializing a command item.
+   */
+  export
+  interface IItemOptions {
+    /**
+     * The command to execute when the item is triggered.
+     */
+    command: string;
+
+    /**
+     * The arguments for the command.
+     *
+     * The default value is `null`.
+     */
+    args?: JSONObject;
+
+    /**
+     * The category for the item.
+     *
+     * The default value is `'general'`.
+     */
+    category?: string;
   }
 
   /**
@@ -844,7 +901,7 @@ namespace CommandPalette {
      *
      * The `updateHeaderNode` method will be called for initialization.
      */
-    createHeaderNode(): HTMLElement;
+    createHeaderNode(): HTMLLIElement;
 
     /**
      * Create a node for a command item.
@@ -856,7 +913,7 @@ namespace CommandPalette {
      *
      * The `updateItemNode` method will be called for initialization.
      */
-    createItemNode(): HTMLElement;
+    createItemNode(): HTMLLIElement;
 
     /**
      * Update a header node to reflect the given data..
@@ -871,7 +928,7 @@ namespace CommandPalette {
      * This method should completely reset the state of the node to
      * reflect the data for the header.
      */
-    updateHeaderNode(node: HTMLElement, markup: string): void;
+    updateHeaderNode(node: HTMLLIElement, markup: string): void;
 
     /**
      * Update an item node to reflect the state of a command item.
@@ -888,7 +945,7 @@ namespace CommandPalette {
      * This method should completely reset the state of the node to
      * reflect the data for the command item.
      */
-    updateItemNode(node: HTMLElement, item: CommandItem, markup: string): void;
+    updateItemNode(node: HTMLLIElement, item: CommandPalette.IItem, markup: string): void;
   }
 
   /**
@@ -901,7 +958,7 @@ namespace CommandPalette {
      *
      * @returns A new node for a section header.
      */
-    createHeaderNode(): HTMLElement {
+    createHeaderNode(): HTMLLIElement {
       let node = document.createElement('li');
       node.className = HEADER_CLASS;
       return node;
@@ -912,7 +969,7 @@ namespace CommandPalette {
      *
      * @returns A new node for a command item.
      */
-    createItemNode(): HTMLElement {
+    createItemNode(): HTMLLIElement {
       let node = document.createElement('li');
       let label = document.createElement('div');
       let caption = document.createElement('div');
@@ -936,7 +993,7 @@ namespace CommandPalette {
      *   section category text interpolated with `<mark>` tags for
      *   the matching search characters.
      */
-    updateHeaderNode(node: HTMLElement, markup: string): void {
+    updateHeaderNode(node: HTMLLIElement, markup: string): void {
       node.className = HEADER_CLASS;
       node.innerHTML = markup;
     }
@@ -952,7 +1009,7 @@ namespace CommandPalette {
      *   item label text interpolated with `<mark>` tags for the
      *   matching search characters.
      */
-    updateItemNode(node: HTMLElement, item: CommandItem, markup: string): void {
+    updateItemNode(node: HTMLLIElement, item: CommandPalette.IItem, markup: string): void {
       // Setup the initial item class.
       let itemClass = ITEM_CLASS;
 
@@ -998,8 +1055,8 @@ namespace CommandPalette {
      *
      * @returns The formatted shortcut text for display.
      */
-    formatShortcut(binding: KeyBinding): string {
-      return binding ? binding.keys.map(formatKeystroke).join(' ') : '';
+    formatShortcut(binding: Keymap.IBinding): string {
+      return binding ? binding.keys.map(Keymap.formatKeystroke).join(' ') : '';
     }
   }
 
