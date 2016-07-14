@@ -275,8 +275,7 @@ describe('ui/panel', () => {
     describe('#removeWidget()', () => {
 
       it('should remove a widget by value', () => {
-        let panel = new Panel();
-        let layout = panel.layout as PanelLayout;
+        let layout = new PanelLayout();
         let widget = new Widget();
         layout.addWidget(widget);
         layout.addWidget(new Widget());
@@ -285,28 +284,52 @@ describe('ui/panel', () => {
         expect(layout.widgets.at(0)).to.not.be(widget);
       });
 
-      it('should remove a widget by index', () => {
-        let panel = new Panel();
-        let layout = panel.layout as PanelLayout;
+      it('should return the index of the removed widget', () => {
+        let layout = new PanelLayout();
         let widget = new Widget();
         layout.addWidget(widget);
         layout.addWidget(new Widget());
-        layout.removeWidget(0);
+        expect(layout.removeWidget(widget)).to.be(0);
+      });
+
+      it('should return `-1` if the widget is not in the layout', () => {
+        let layout = new PanelLayout();
+        let widget = new Widget();
+        layout.addWidget(widget);
+        layout.addWidget(new Widget());
+        expect(layout.removeWidget(widget)).to.be(0);
+        expect(layout.removeWidget(widget)).to.be(-1);
+      });
+
+    });
+
+    describe('#removeWidgetAt()', () => {
+
+      it('should remove a widget at a given index', () => {
+        let layout = new PanelLayout();
+        let widget = new Widget();
+        layout.addWidget(widget);
+        layout.addWidget(new Widget());
+        layout.removeWidgetAt(0);
         expect(layout.widgets.length).to.be(1);
         expect(layout.widgets.at(0)).to.not.be(widget);
       });
 
-      it('should be a no-op if the widget is not in the panel', () => {
-        let panel = new Panel();
-        let layout = panel.layout as PanelLayout;
+      it('should return the removed widget', () => {
+        let layout = new PanelLayout();
         let widget = new Widget();
+        layout.addWidget(widget);
         layout.addWidget(new Widget());
-        layout.removeWidget(widget);
-        expect(layout.widgets.length).to.be(1);
-        layout.removeWidget(-1);
-        expect(layout.widgets.length).to.be(1);
-        layout.removeWidget(1);
-        expect(layout.widgets.length).to.be(1);
+        expect(layout.removeWidgetAt(0)).to.be(widget);
+      });
+
+      it('should return `null` if the index is out of range', () => {
+        let layout = new PanelLayout();
+        let widget = new Widget();
+        layout.addWidget(widget);
+        layout.addWidget(new Widget());
+        expect(layout.removeWidgetAt(0)).to.be(widget);
+        expect(layout.removeWidgetAt(1)).to.be(null);
       });
 
     });

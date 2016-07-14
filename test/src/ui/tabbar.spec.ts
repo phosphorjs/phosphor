@@ -323,7 +323,7 @@ describe('ui/tabbar', () => {
         let called = false;
         bar.tabDetachRequested.connect((sender, args) => {
           bar.releaseMouse();
-          bar.removeTab(args.index);
+          bar.removeTabAt(args.index);
           called = true;
         });
         rect = bar.contentNode.getBoundingClientRect();
@@ -337,7 +337,7 @@ describe('ui/tabbar', () => {
         let called = 0;
         bar.tabDetachRequested.connect((sender, args) => {
           bar.releaseMouse();
-          bar.removeTab(args.index);
+          bar.removeTabAt(args.index);
           called++;
         });
         rect = bar.contentNode.getBoundingClientRect();
@@ -665,32 +665,57 @@ describe('ui/tabbar', () => {
         expect(bar.titles.at(0)).to.be(titles[1]);
       });
 
-      it('should remove a tab from the tab bar by index', () => {
+      it('should return the index of the removed tab', () => {
         let bar = createBar();
         let titles = toArray(bar.titles);
-        bar.removeTab(1);
-        expect(bar.titles.at(1)).to.be(titles[2]);
+        expect(bar.removeTab(titles[0])).to.be(0);
       });
 
-      it('should bail if the title is not in the tab bar', () => {
+      it('should return `-1` if the title is not in the tab bar', () => {
         let bar = createBar();
-        bar.removeTab(new Title());
-        expect(bar.titles.length).to.be(3);
-      });
-
-      it('should bail if the index is out of range', () => {
-        let bar = createBar();
-        bar.removeTab(-1);
-        expect(bar.titles.length).to.be(3);
-        bar.removeTab(3);
-        expect(bar.titles.length).to.be(3);
+        expect(bar.removeTab(new Title())).to.be(-1);
       });
 
       it('should schedule an update of the tabs', (done) => {
         let bar = new LogTabBar();
         bar.insertTab(0, new Title());
         requestAnimationFrame(() => {
-          bar.removeTab(0);
+          bar.removeTab(bar.titles.at(0));
+          bar.methods = [];
+          requestAnimationFrame(() => {
+            expect(bar.methods.indexOf('onUpdateRequest')).to.not.be(-1);
+            done();
+          });
+        });
+      });
+
+    });
+
+    describe('#removeTabAt()', () => {
+
+      it('should remove a tab at a specific index', () => {
+        let bar = createBar();
+        let titles = toArray(bar.titles);
+        bar.removeTabAt(0);
+        expect(bar.titles.at(0)).to.be(titles[1]);
+      });
+
+      it('should return the removed title', () => {
+        let bar = createBar();
+        let titles = toArray(bar.titles);
+        expect(bar.removeTabAt(0)).to.be(titles[0]);
+      });
+
+      it('should return `null` if the index is out of range', () => {
+        let bar = createBar();
+        expect(bar.removeTabAt(9)).to.be(null);
+      });
+
+      it('should schedule an update of the tabs', (done) => {
+        let bar = new LogTabBar();
+        bar.insertTab(0, new Title());
+        requestAnimationFrame(() => {
+          bar.removeTabAt(0);
           bar.methods = [];
           requestAnimationFrame(() => {
             expect(bar.methods.indexOf('onUpdateRequest')).to.not.be(-1);
