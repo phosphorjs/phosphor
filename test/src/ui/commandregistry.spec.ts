@@ -12,8 +12,8 @@ import {
 } from '../../../lib/algorithm/json';
 
 import {
-  CommandRegistry, commands
-} from '../../../lib/ui/commands';
+  CommandRegistry
+} from '../../../lib/ui/commandregistry';
 
 
 const NULL_COMMAND = {
@@ -550,14 +550,6 @@ describe('ui/commands', () => {
         });
       });
 
-    });
-
-  });
-
-  describe('commands', () => {
-
-    it('should be an instance of `CommandRegistry`', () => {
-      expect(commands instanceof CommandRegistry).to.be(true);
     });
 
   });
