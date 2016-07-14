@@ -163,7 +163,7 @@ class SplitPanel extends Panel {
    * #### Notes
    * This is a read-only property.
    */
-  get handles(): ISequence<HTMLElement> {
+  get handles(): ISequence<HTMLDivElement> {
     return (this.layout as SplitLayout).handles;
   }
 
@@ -446,7 +446,7 @@ namespace SplitPanel {
      *
      * @returns A new handle node for a split panel.
      */
-    createHandleNode(): HTMLElement {
+    createHandleNode(): HTMLDivElement {
       let node = document.createElement('div');
       node.className = HANDLE_CLASS;
       return node;
@@ -566,7 +566,7 @@ class SplitLayout extends PanelLayout {
    * #### Notes
    * This is a read-only property.
    */
-  get handles(): ISequence<HTMLElement> {
+  get handles(): ISequence<HTMLDivElement> {
     return this._handles;
   }
 
@@ -836,7 +836,7 @@ class SplitLayout extends PanelLayout {
     // Update the handles and track the visible widget count.
     let nVisible = 0;
     let widgets = this.widgets;
-    let lastHandle: HTMLElement = null;
+    let lastHandle: HTMLDivElement = null;
     for (let i = 0, n = widgets.length; i < n; ++i) {
       let handle = this._handles.at(i);
       if (widgets.at(i).isHidden) {
@@ -1012,7 +1012,7 @@ class SplitLayout extends PanelLayout {
   private _box: IBoxSizing = null;
   private _renderer: SplitLayout.IRenderer;
   private _sizers = new Vector<BoxSizer>();
-  private _handles = new Vector<HTMLElement>();
+  private _handles = new Vector<HTMLDivElement>();
   private _orientation: SplitLayout.Orientation = 'horizontal';
 }
 
@@ -1063,7 +1063,7 @@ namespace SplitLayout {
      *
      * @returns A new handle node.
      */
-    createHandleNode(): HTMLElement;
+    createHandleNode(): HTMLDivElement;
   }
 
   /**
@@ -1154,7 +1154,7 @@ namespace Private {
    * Create a new split handle node using the given renderer.
    */
   export
-  function createHandle(renderer: SplitLayout.IRenderer): HTMLElement {
+  function createHandle(renderer: SplitLayout.IRenderer): HTMLDivElement {
     let node = renderer.createHandleNode();
     node.style.position = 'absolute';
     return node;

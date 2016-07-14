@@ -1513,7 +1513,7 @@ namespace Private {
    * Hide the extra and redundant separator nodes.
    */
   export
-  function hideExtraSeparators(nodes: ISequence<HTMLElement>, items: ISequence<Menu.IItem>): void {
+  function hideExtraSeparators(nodes: ISequence<HTMLLIElement>, items: ISequence<Menu.IItem>): void {
     // Hide the leading separators.
     let k1 = 0;
     let n = items.length;
@@ -1624,7 +1624,7 @@ namespace Private {
    * Open a menu as a submenu using an item node for positioning.
    */
   export
-  function openSubmenu(menu: Menu, itemNode: HTMLElement): void {
+  function openSubmenu(menu: Menu, itemNode: HTMLLIElement): void {
     // Ensure the menu is updated before opening.
     sendMessage(menu, WidgetMessage.UpdateRequest);
 
