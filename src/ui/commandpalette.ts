@@ -151,8 +151,8 @@ class CommandPalette extends Widget {
    *
    * This is a read-only property.
    */
-  get searchNode(): HTMLElement {
-    return this.node.getElementsByClassName(SEARCH_CLASS)[0] as HTMLElement;
+  get searchNode(): HTMLDivElement {
+    return this.node.getElementsByClassName(SEARCH_CLASS)[0] as HTMLDivElement;
   }
 
   /**
@@ -175,8 +175,8 @@ class CommandPalette extends Widget {
    *
    * This is a read-only property.
    */
-  get contentNode(): HTMLElement {
-    return this.node.getElementsByClassName(CONTENT_CLASS)[0] as HTMLElement;
+  get contentNode(): HTMLUListElement {
+    return this.node.getElementsByClassName(CONTENT_CLASS)[0] as HTMLUListElement;
   }
 
   /**
@@ -1065,7 +1065,7 @@ namespace Private {
    * Create the DOM node for a command palette.
    */
   export
-  function createNode(): HTMLElement {
+  function createNode(): HTMLDivElement {
     let node = document.createElement('div');
     let search = document.createElement('div');
     let wrapper = document.createElement('div');

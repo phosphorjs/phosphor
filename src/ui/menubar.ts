@@ -131,8 +131,8 @@ class MenuBar extends Widget {
    *
    * This is a read-only property.
    */
-  get contentNode(): HTMLElement {
-    return this.node.getElementsByClassName(CONTENT_CLASS)[0] as HTMLElement;
+  get contentNode(): HTMLUListElement {
+    return this.node.getElementsByClassName(CONTENT_CLASS)[0] as HTMLUListElement;
   }
 
   /**
@@ -815,7 +815,7 @@ class MenuBar extends Widget {
   private _activeIndex = -1;
   private _childMenu: Menu = null;
   private _menus = new Vector<Menu>();
-  private _nodes = new Vector<HTMLElement>();
+  private _nodes = new Vector<HTMLLIElement>();
   private _renderer: MenuBar.IRenderer;
 }
 
@@ -861,7 +861,7 @@ namespace MenuBar {
      *
      * The `updateItemNode` method will be called for initialization.
      */
-    createItemNode(): HTMLElement;
+    createItemNode(): HTMLLIElement;
 
     /**
      * Update an item node to reflect the state of a menu title.
@@ -874,7 +874,7 @@ namespace MenuBar {
      * This method should completely reset the state of the node to
      * reflect the data in the menu title.
      */
-    updateItemNode(node: HTMLElement, title: Title): void;
+    updateItemNode(node: HTMLLIElement, title: Title): void;
   }
 
   /**
@@ -887,7 +887,7 @@ namespace MenuBar {
      *
      * @returns A new node for a menu bar item.
      */
-    createItemNode(): HTMLElement {
+    createItemNode(): HTMLLIElement {
       let node = document.createElement('li');
       let icon = document.createElement('div');
       let label = document.createElement('div');
@@ -906,7 +906,7 @@ namespace MenuBar {
      *
      * @param title - The menu title holding the data for the node.
      */
-    updateItemNode(node: HTMLElement, title: Title): void {
+    updateItemNode(node: HTMLLIElement, title: Title): void {
       let icon = node.firstChild as HTMLElement;
       let label = node.lastChild as HTMLElement;
       let itemClass = ITEM_CLASS;
@@ -959,7 +959,7 @@ namespace Private {
    * Create the DOM node for a menu bar.
    */
   export
-  function createNode(): HTMLElement {
+  function createNode(): HTMLDivElement {
     let node = document.createElement('div');
     let content = document.createElement('ul');
     content.className = CONTENT_CLASS;

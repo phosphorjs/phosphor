@@ -213,8 +213,8 @@ class TabBar extends Widget {
    *
    * This is a read-only property.
    */
-  get headerNode(): HTMLElement {
-    return this.node.getElementsByClassName(HEADER_CLASS)[0] as HTMLElement;
+  get headerNode(): HTMLDivElement {
+    return this.node.getElementsByClassName(HEADER_CLASS)[0] as HTMLDivElement;
   }
 
   /**
@@ -225,8 +225,8 @@ class TabBar extends Widget {
    *
    * This is a read-only property.
    */
-  get bodyNode(): HTMLElement {
-    return this.node.getElementsByClassName(BODY_CLASS)[0] as HTMLElement;
+  get bodyNode(): HTMLDivElement {
+    return this.node.getElementsByClassName(BODY_CLASS)[0] as HTMLDivElement;
   }
 
   /**
@@ -237,8 +237,8 @@ class TabBar extends Widget {
    *
    * This is a read-only property.
    */
-  get footerNode(): HTMLElement {
-    return this.node.getElementsByClassName(FOOTER_CLASS)[0] as HTMLElement;
+  get footerNode(): HTMLDivElement {
+    return this.node.getElementsByClassName(FOOTER_CLASS)[0] as HTMLDivElement;
   }
 
   /**
@@ -251,8 +251,8 @@ class TabBar extends Widget {
    *
    * This is a read-only property.
    */
-  get contentNode(): HTMLElement {
-    return this.node.getElementsByClassName(CONTENT_CLASS)[0] as HTMLElement;
+  get contentNode(): HTMLUListElement {
+    return this.node.getElementsByClassName(CONTENT_CLASS)[0] as HTMLUListElement;
   }
 
   /**
@@ -261,7 +261,7 @@ class TabBar extends Widget {
    * #### Notes
    * This is a read-only property.
    */
-  get tabNodes(): ISequence<HTMLElement> {
+  get tabNodes(): ISequence<HTMLLIElement> {
     return this._tabs;
   }
 
@@ -993,8 +993,8 @@ class TabBar extends Widget {
   private _renderer: TabBar.IRenderer;
   private _titles = new Vector<Title>();
   private _dirtyTitles= new Set<Title>();
-  private _tabs = new Vector<HTMLElement>();
   private _dragData: Private.DragData = null;
+  private _tabs = new Vector<HTMLLIElement>();
 }
 
 
@@ -1134,7 +1134,7 @@ namespace TabBar {
      *
      * The `updateTabNode` method will be called for initialization.
      */
-    createTabNode(): HTMLElement;
+    createTabNode(): HTMLLIElement;
 
     /**
      * Update a tab node to reflect the state of a title.
@@ -1147,7 +1147,7 @@ namespace TabBar {
      * This method should completely reset the state of the node to
      * reflect the data in the title.
      */
-    updateTabNode(node: HTMLElement, title: Title): void;
+    updateTabNode(node: HTMLLIElement, title: Title): void;
 
     /**
      * Look up the close icon descendant node for a tab node.
@@ -1159,7 +1159,7 @@ namespace TabBar {
      * #### Notes
      * This is used by the tab bar to detect clicks on the close icon.
      */
-    closeIconNode(node: HTMLElement): HTMLElement;
+    closeIconNode(node: HTMLLIElement): HTMLElement;
   }
 
   /**
@@ -1172,7 +1172,7 @@ namespace TabBar {
      *
      * @returns A new node for a tab.
      */
-    createTabNode(): HTMLElement {
+    createTabNode(): HTMLLIElement {
       let node = document.createElement('li');
       let icon = document.createElement('div');
       let label = document.createElement('div');
@@ -1194,7 +1194,7 @@ namespace TabBar {
      *
      * @param title - The title object holding the data for the tab.
      */
-    updateTabNode(node: HTMLElement, title: Title): void {
+    updateTabNode(node: HTMLLIElement, title: Title): void {
       let tabInfix = title.className ? ` ${title.className}` : '';
       let tabSuffix = title.closable ? ` ${CLOSABLE_CLASS}` : '';
       let iconSuffix = title.icon ? ` ${title.icon}` : '';
@@ -1213,7 +1213,7 @@ namespace TabBar {
      *
      * @returns The close icon node, or `null` if none exists.
      */
-    closeIconNode(node: HTMLElement): HTMLElement {
+    closeIconNode(node: HTMLLIElement): HTMLElement {
       return node.lastChild as HTMLElement;
     }
   }
@@ -1238,7 +1238,7 @@ namespace Private {
     /**
      * The tab node being dragged.
      */
-    tab: HTMLElement = null;
+    tab: HTMLLIElement = null;
 
     /**
      * The index of the tab being dragged.
@@ -1331,7 +1331,7 @@ namespace Private {
    * Create the DOM node for a tab bar.
    */
   export
-  function createNode(): HTMLElement {
+  function createNode(): HTMLDivElement {
     let node = document.createElement('div');
     let header = document.createElement('div');
     let body = document.createElement('div');
@@ -1360,7 +1360,7 @@ namespace Private {
    * Get a snapshot of the current tab layout values.
    */
   export
-  function snapTabLayout(tabs: Vector<HTMLElement>): ITabLayout[] {
+  function snapTabLayout(tabs: ISequence<HTMLLIElement>): ITabLayout[] {
     let layout = new Array<ITabLayout>(tabs.length);
     for (let i = 0, n = tabs.length; i < n; ++i) {
       let node = tabs.at(i);
@@ -1391,7 +1391,7 @@ namespace Private {
    * Update the relative tab positions and computed target index.
    */
   export
-  function layoutTabs(tabs: Vector<HTMLElement>, data: DragData, event: MouseEvent): void {
+  function layoutTabs(tabs: ISequence<HTMLLIElement>, data: DragData, event: MouseEvent): void {
     let targetIndex = data.index;
     let targetLeft = event.clientX - data.contentRect.left - data.tabPressX;
     let targetRight = targetLeft + data.tabWidth;
@@ -1440,7 +1440,7 @@ namespace Private {
    * Reset the relative positions of the given tabs.
    */
   export
-  function resetTabPositions(tabs: Vector<HTMLElement>): void {
+  function resetTabPositions(tabs: ISequence<HTMLLIElement>): void {
     each(tabs, tab => { tab.style.left = ''; });
   }
 }

@@ -256,8 +256,8 @@ class Menu extends Widget {
    *
    * This is a read-only property.
    */
-  get contentNode(): HTMLElement {
-    return this.node.getElementsByClassName(CONTENT_CLASS)[0] as HTMLElement;
+  get contentNode(): HTMLUListElement {
+    return this.node.getElementsByClassName(CONTENT_CLASS)[0] as HTMLUListElement;
   }
 
   /**
@@ -1117,7 +1117,7 @@ class Menu extends Widget {
   private _renderer: Menu.IRenderer;
   private _commands: CommandRegistry;
   private _items = new Vector<Menu.IItem>();
-  private _nodes = new Vector<HTMLElement>();
+  private _nodes = new Vector<HTMLLIElement>();
 }
 
 
@@ -1309,7 +1309,7 @@ namespace Menu {
      *
      * The `updateItemNode` method will be called for initialization.
      */
-    createItemNode(): HTMLElement;
+    createItemNode(): HTMLLIElement;
 
     /**
      * Update an item node to reflect the state of a menu item.
@@ -1322,7 +1322,7 @@ namespace Menu {
      * This method should completely reset the state of the node to
      * reflect the data for the menu item.
      */
-    updateItemNode(node: HTMLElement, item: IItem): void;
+    updateItemNode(node: HTMLLIElement, item: IItem): void;
   }
 
   /**
@@ -1335,7 +1335,7 @@ namespace Menu {
      *
      * @returns A new node for a menu item.
      */
-    createItemNode(): HTMLElement {
+    createItemNode(): HTMLLIElement {
       let node = document.createElement('li');
       let icon = document.createElement('div');
       let label = document.createElement('div');
@@ -1360,7 +1360,7 @@ namespace Menu {
      *
      * @param item - The menu item holding the data for the node.
      */
-    updateItemNode(node: HTMLElement, item: IItem): void {
+    updateItemNode(node: HTMLLIElement, item: IItem): void {
       // Setup the initial item class.
       let itemClass = ITEM_CLASS;
 
@@ -1481,7 +1481,7 @@ namespace Private {
    * Create the DOM node for a menu.
    */
   export
-  function createNode(): HTMLElement {
+  function createNode(): HTMLDivElement {
     let node = document.createElement('div');
     let content = document.createElement('ul');
     content.className = CONTENT_CLASS;
@@ -1513,7 +1513,7 @@ namespace Private {
    * Hide the extra and redundant separator nodes.
    */
   export
-  function hideExtraSeparators(nodes: ISequence<HTMLElement>, items: ISequence<Menu.IItem>): void {
+  function hideExtraSeparators(nodes: ISequence<HTMLLIElement>, items: ISequence<Menu.IItem>): void {
     // Hide the leading separators.
     let k1 = 0;
     let n = items.length;
@@ -1624,7 +1624,7 @@ namespace Private {
    * Open a menu as a submenu using an item node for positioning.
    */
   export
-  function openSubmenu(menu: Menu, itemNode: HTMLElement): void {
+  function openSubmenu(menu: Menu, itemNode: HTMLLIElement): void {
     // Ensure the menu is updated before opening.
     sendMessage(menu, WidgetMessage.UpdateRequest);
 

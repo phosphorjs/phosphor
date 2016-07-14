@@ -1274,7 +1274,7 @@ namespace DockPanel {
      * #### Notes
      * This should be a read-only property.
      */
-    node: HTMLElement;
+    node: HTMLDivElement;
 
     /**
      * Show the overlay using the given zone and offset geometry.
@@ -1330,7 +1330,7 @@ namespace DockPanel {
      * #### Notes
      * This is a read-only property.
      */
-    get node(): HTMLElement {
+    get node(): HTMLDivElement {
       return this._node;
     }
 
@@ -1401,7 +1401,7 @@ namespace DockPanel {
     }
 
     private _hidden = true;
-    private _node: HTMLElement;
+    private _node: HTMLDivElement;
     private _zone: Zone = 'invalid';
   }
 }
