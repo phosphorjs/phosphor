@@ -448,36 +448,56 @@ describe('ui/menubar', () => {
         bar.dispose();
       });
 
+      it('should return the index of the removed menu', () => {
+        let bar = new MenuBar({ keymap });
+        let menu = new Menu({ commands, keymap });
+        bar.addMenu(new Menu({ commands, keymap }));
+        bar.addMenu(menu);
+        expect(bar.removeMenu(menu)).to.be(1);
+        bar.dispose();
+      });
+
+      it('should return `-1` if the menu is not in the menu bar', () => {
+        let bar = new MenuBar({ keymap });
+        let menu = new Menu({ commands, keymap });
+        bar.addMenu(new Menu({ commands, keymap }));
+        bar.addMenu(menu);
+        expect(bar.removeMenu(menu)).to.be(1);
+        expect(bar.removeMenu(menu)).to.be(-1);
+        bar.dispose();
+      });
+
+    });
+
+    describe('#removeMenuAt()', () => {
+
       it('should remove a menu from the menu bar by index', () => {
         let bar = new MenuBar({ keymap });
         let menu = new Menu({ commands, keymap });
         bar.addMenu(new Menu({ commands, keymap }));
         bar.addMenu(menu);
-        bar.removeMenu(1);
+        bar.removeMenuAt(1);
         expect(bar.menus.length).to.be(1);
         expect(bar.menus.at(0)).to.not.be(menu);
         bar.dispose();
       });
 
-      it('should be a no-op if the menu is not contained in the menu bar', () => {
+      it('should return the menu that was removed', () => {
         let bar = new MenuBar({ keymap });
         let menu = new Menu({ commands, keymap });
         bar.addMenu(new Menu({ commands, keymap }));
-        bar.removeMenu(menu);
-        expect(bar.menus.length).to.be(1);
-        expect(bar.menus.at(0)).to.not.be(menu);
+        bar.addMenu(menu);
+        expect(bar.removeMenuAt(1)).to.be(menu);
         bar.dispose();
       });
 
-      it('should be a no-op if the index is out of range', () => {
+      it('should return `null` if the index is out of range', () => {
         let bar = new MenuBar({ keymap });
         let menu = new Menu({ commands, keymap });
+        bar.addMenu(new Menu({ commands, keymap }));
         bar.addMenu(menu);
-        bar.removeMenu(-1);
-        expect(bar.menus.length).to.be(1);
-        bar.removeMenu(1);
-        expect(bar.menus.length).to.be(1);
-        expect(bar.menus.at(0)).to.be(menu);
+        expect(bar.removeMenuAt(1)).to.be(menu);
+        expect(bar.removeMenuAt(1)).to.be(null);
         bar.dispose();
       });
 

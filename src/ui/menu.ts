@@ -518,26 +518,32 @@ class Menu extends Widget {
   }
 
   /**
-   * Remove a menu item from the menu.
+   * Remove an item from the menu.
    *
-   * @param value - The item or index of the item to remove.
+   * @param item - The item to remove from the menu.
    *
-   * #### Notes
-   * This is a no-op if the item is not contained in the menu.
+   * @returns The index occupied by the item, or `-1` if the item
+   *   was not contained in the menu.
    */
-  removeItem(value: Menu.IItem | number): void {
-    // Coerce the value to an index.
-    let index: number;
-    if (typeof value === 'number') {
-      index = value;
-    } else {
-      index = indexOf(this._items, value);
-    }
+  removeItem(item: Menu.IItem): number {
+    let index = indexOf(this._items, item);
+    if (index !== -1) this.removeItemAt(index);
+    return index;
+  }
 
+  /**
+   * Remove the item at a given index from the menu.
+   *
+   * @param index - The index of the item to remove.
+   *
+   * @returns The item occupying the index, or `null` if the index
+   *   is out of range.
+   */
+  removeItemAt(index: number): Menu.IItem {
     // Bail if the index is out of range.
     let i = Math.floor(index);
     if (i < 0 || i >= this._items.length) {
-      return;
+      return null;
     }
 
     // Close the menu if it's attached.
@@ -548,14 +554,15 @@ class Menu extends Widget {
     // Reset the active index.
     this.activeIndex = -1;
 
-    // Remove the item from the vector.
-    this._items.popAt(i);
-
-    // Remove the node from the vector.
-    let node = this._nodes.popAt(i);
+    // Remove the node and items from the vectors.
+    let node = this._nodes.removeAt(i);
+    let item = this._items.removeAt(i);
 
     // Remove the node from the content node.
     this.contentNode.removeChild(node);
+
+    // Return the removed item.
+    return item;
   }
 
   /**

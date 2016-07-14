@@ -467,7 +467,6 @@ describe('ui/commandpalette', () => {
 
       it('should remove an item from a command palette by item', () => {
         commands.addCommand('test', { execute: () => { } });
-        Widget.attach(palette, document.body);
         expect(palette.items).to.be.empty();
         let item = palette.addItem({ command: 'test' });
         expect(palette.items).to.have.length(1);
@@ -475,21 +474,46 @@ describe('ui/commandpalette', () => {
         expect(palette.items).to.be.empty();
       });
 
+      it('should return the index of the removed item', () => {
+        commands.addCommand('test', { execute: () => { } });
+        expect(palette.items).to.be.empty();
+        let item = palette.addItem({ command: 'test' });
+        expect(palette.removeItem(item)).to.be(0);
+      });
+
+      it('should return `-1` if the item is not in the palette', () => {
+        commands.addCommand('test', { execute: () => { } });
+        expect(palette.items).to.be.empty();
+        let item = palette.addItem({ command: 'test' });
+        expect(palette.removeItem(item)).to.be(0);
+        expect(palette.removeItem(item)).to.be(-1);
+      });
+
+    });
+
+    describe('#removeItemAt()', () => {
+
       it('should remove an item from a command palette by index', () => {
         commands.addCommand('test', { execute: () => { } });
-        Widget.attach(palette, document.body);
         expect(palette.items).to.be.empty();
-        palette.addItem({ command: 'test' });
+        let item = palette.addItem({ command: 'test' });
         expect(palette.items).to.have.length(1);
-        palette.removeItem(0);
+        palette.removeItemAt(0);
         expect(palette.items).to.be.empty();
       });
 
-      it('should do nothing if the item is not contained in a palette', () => {
-        Widget.attach(palette, document.body);
+      it('should return the removed item', () => {
+        commands.addCommand('test', { execute: () => { } });
         expect(palette.items).to.be.empty();
-        palette.removeItem(0);
+        let item = palette.addItem({ command: 'test' });
+        expect(palette.removeItemAt(0)).to.be(item);
+      });
+
+      it('should return `null` if the index is out of range', () => {
+        commands.addCommand('test', { execute: () => { } });
         expect(palette.items).to.be.empty();
+        let item = palette.addItem({ command: 'test' });
+        expect(palette.removeItemAt(9)).to.be(null);
       });
 
     });
@@ -498,7 +522,6 @@ describe('ui/commandpalette', () => {
 
       it('should remove all items from a command palette', () => {
         commands.addCommand('test', { execute: () => { } });
-        Widget.attach(palette, document.body);
         expect(palette.items).to.be.empty();
         palette.addItem({ command: 'test', category: 'one' });
         palette.addItem({ command: 'test', category: 'two' });

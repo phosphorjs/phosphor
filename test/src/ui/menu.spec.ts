@@ -1051,27 +1051,17 @@ describe('ui/menu', () => {
         expect(menu.items.length).to.be(0);
       });
 
-      it('should remove a menu item from the menu by index', () => {
+      it('should return the index of the removed item', () => {
         let menu = new Menu({ commands, keymap });
-        menu.addItem({});
         let item = menu.addItem({});
-        menu.removeItem(0);
-        expect(menu.items.length).to.be(1);
-        expect(menu.items.at(0)).to.be(item);
+        expect(menu.removeItem(item)).to.be(0);
       });
 
-      it('should be a no-op if the item is not contained in the menu', () => {
+      it('should return `-1` if the item is not in the menu', () => {
         let menu = new Menu({ commands, keymap });
-        menu.addItem({});
         let item = menu.addItem({});
-        menu.removeItem(item);
-        expect(menu.items.length).to.be(1);
-
-        menu.removeItem(1);
-        expect(menu.items.length).to.be(1);
-
-        menu.removeItem(-1);
-        expect(menu.items.length).to.be(1);
+        expect(menu.removeItem(item)).to.be(0);
+        expect(menu.removeItem(item)).to.be(-1);
       });
 
       it('should close the menu if it is attached', () => {
@@ -1081,6 +1071,41 @@ describe('ui/menu', () => {
         let called = false;
         menu.aboutToClose.connect(() => { called = true; });
         menu.removeItem(item);
+        expect(called).to.be(true);
+        menu.dispose();
+      });
+
+    });
+
+    describe('#removeItemAt()', () => {
+
+      it('should remove a menu item from the menu by index', () => {
+        let menu = new Menu({ commands, keymap });
+        let item = menu.addItem({});
+        menu.removeItemAt(0);
+        expect(menu.items.length).to.be(0);
+      });
+
+      it('should return the item which was removed', () => {
+        let menu = new Menu({ commands, keymap });
+        let item = menu.addItem({});
+        expect(menu.removeItemAt(0)).to.be(item);
+      });
+
+      it('should return `null` if the index is out of range', () => {
+        let menu = new Menu({ commands, keymap });
+        let item = menu.addItem({});
+        expect(menu.removeItemAt(0)).to.be(item);
+        expect(menu.removeItemAt(0)).to.be(null);
+      });
+
+      it('should close the menu if it is attached', () => {
+        let menu = new Menu({ commands, keymap });
+        let item = menu.addItem({});
+        menu.open(0, 0);
+        let called = false;
+        menu.aboutToClose.connect(() => { called = true; });
+        menu.removeItemAt(0);
         expect(called).to.be(true);
         menu.dispose();
       });

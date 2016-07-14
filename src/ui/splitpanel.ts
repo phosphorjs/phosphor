@@ -734,10 +734,10 @@ class SplitLayout extends PanelLayout {
    */
   protected detachWidget(index: number, widget: Widget): void {
     // Remove the handle for the widget.
-    let handle = this._handles.popAt(index);
+    let handle = this._handles.removeAt(index);
 
     // Remove the sizer for the widget.
-    this._sizers.popAt(index);
+    this._sizers.removeAt(index);
 
     // Send a `'before-detach'` message if the parent is attached.
     if (this.parent.isAttached) sendMessage(widget, WidgetMessage.BeforeDetach);

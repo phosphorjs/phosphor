@@ -241,33 +241,42 @@ class CommandPalette extends Widget {
   }
 
   /**
-   * Remove a command item from the command palette.
+   * Remove an item from the command palette.
    *
-   * @param value - The item to remove or the index thereof.
+   * @param item - The item to remove from the palette.
    *
-   * #### Notes
-   * This is a no-op if the item is not contained in the palette.
+   * @returns The index occupied by the item, or `-1` if the item
+   *   was not contained in the menu.
    */
-  removeItem(value: CommandPalette.IItem | number): void {
-    // Coerce the value to an index.
-    let index: number;
-    if (typeof value === 'number') {
-      index = value;
-    } else {
-      index = indexOf(this._items, value);
-    }
+  removeItem(item: CommandPalette.IItem): number {
+    let index = indexOf(this._items, item);
+    if (index !== -1) this.removeItemAt(index);
+    return index;
+  }
 
+  /**
+   * Remove the item at a given index from the command palette.
+   *
+   * @param index - The index of the item to remove.
+   *
+   * @returns The item occupying the index, or `null` if the index
+   *   is out of range.
+   */
+  removeItemAt(index: number): CommandPalette.IItem {
     // Bail if the index is out of range.
     let i = Math.floor(index);
     if (i < 0 || i >= this._items.length) {
-      return;
+      return null;
     }
 
     // Remove the item from the vector.
-    this._items.popAt(index);
+    let item = this._items.removeAt(index);
 
     // Schedule an update of the content.
     if (this.isAttached) this.update();
+
+    // Return the removed item.
+    return item;
   }
 
   /**

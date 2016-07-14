@@ -224,34 +224,6 @@ describe('collections/vector', () => {
 
     });
 
-    describe('#popAt()', () => {
-
-      it('should remove the value at a specified index', () => {
-        let vector = new Vector([7, 4, 8, 5, 9, 6]);
-        expect(vector.popAt(1)).to.be(4);
-        expect(toArray(vector)).to.eql([7, 8, 5, 9, 6]);
-        expect(vector.popAt(2)).to.be(5);
-        expect(toArray(vector)).to.eql([7, 8, 9, 6]);
-        expect(vector.popAt(3)).to.be(6);
-        expect(toArray(vector)).to.eql([7, 8, 9]);
-        expect(vector.popAt(0)).to.be(7);
-        expect(toArray(vector)).to.eql([8, 9]);
-        expect(vector.popAt(0)).to.be(8);
-        expect(toArray(vector)).to.eql([9]);
-        expect(vector.popAt(0)).to.be(9);
-        expect(toArray(vector)).to.eql([]);
-      });
-
-      it('should return `undefined` if the index is out of range', () => {
-        let vector = new Vector([7, 4, 8, 5, 9, 6]);
-        expect(vector.popAt(10)).to.be(void 0);
-        expect(toArray(vector)).to.eql([7, 4, 8, 5, 9, 6]);
-        expect(vector.popAt(-2)).to.be(void 0);
-        expect(toArray(vector)).to.eql([7, 4, 8, 5, 9, 6]);
-      });
-
-    });
-
     describe('#remove()', () => {
 
       it('should remove the first instance of the value', () => {
@@ -268,6 +240,34 @@ describe('collections/vector', () => {
         expect(toArray(vector)).to.eql([9, 7, 4]);
         expect(vector.remove(7)).to.be(1);
         expect(toArray(vector)).to.eql([9, 4]);
+      });
+
+    });
+
+    describe('#removeAt()', () => {
+
+      it('should remove the value at a specified index', () => {
+        let vector = new Vector([7, 4, 8, 5, 9, 6]);
+        expect(vector.removeAt(1)).to.be(4);
+        expect(toArray(vector)).to.eql([7, 8, 5, 9, 6]);
+        expect(vector.removeAt(2)).to.be(5);
+        expect(toArray(vector)).to.eql([7, 8, 9, 6]);
+        expect(vector.removeAt(3)).to.be(6);
+        expect(toArray(vector)).to.eql([7, 8, 9]);
+        expect(vector.removeAt(0)).to.be(7);
+        expect(toArray(vector)).to.eql([8, 9]);
+        expect(vector.removeAt(0)).to.be(8);
+        expect(toArray(vector)).to.eql([9]);
+        expect(vector.removeAt(0)).to.be(9);
+        expect(toArray(vector)).to.eql([]);
+      });
+
+      it('should return `undefined` if the index is out of range', () => {
+        let vector = new Vector([7, 4, 8, 5, 9, 6]);
+        expect(vector.removeAt(10)).to.be(void 0);
+        expect(toArray(vector)).to.eql([7, 4, 8, 5, 9, 6]);
+        expect(vector.removeAt(-2)).to.be(void 0);
+        expect(toArray(vector)).to.eql([7, 4, 8, 5, 9, 6]);
       });
 
     });

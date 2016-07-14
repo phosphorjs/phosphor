@@ -232,7 +232,10 @@ class PanelLayout extends Layout {
   /**
    * Remove a widget from the layout.
    *
-   * @param value - The widget to remove or the index thereof.
+   * @param widget - The widget to remove from the layout.
+   *
+   * @returns The index occupied by the widget, or `-1` if the widget
+   *   was not contained in the layout.
    *
    * #### Notes
    * A widget is automatically removed from the layout when its `parent`
@@ -241,29 +244,44 @@ class PanelLayout extends Layout {
    * parent widget.
    *
    * This method does *not* modify the widget's `parent`.
-   *
-   * This is a no-op if the widget is not contained in the panel.
    */
-  removeWidget(value: Widget | number): void {
-    // Coerce the value to an index.
-    let index: number;
-    if (typeof value === 'number') {
-      index = value;
-    } else {
-      index = indexOf(this._widgets, value);
-    }
+  removeWidget(widget: Widget): number {
+    let index = indexOf(this._widgets, widget);
+    if (index !== -1) this.removeWidgetAt(index);
+    return index;
+  }
 
+  /**
+   * Remove the widget at a given index from the layout.
+   *
+   * @param index - The index of the widget to remove.
+   *
+   * @returns The widget occupying the index, or `null` if the index
+   *   is out of range.
+   *
+   * #### Notes
+   * A widget is automatically removed from the layout when its `parent`
+   * is set to `null`. This method should only be invoked directly when
+   * removing a widget from a layout which has yet to be installed on a
+   * parent widget.
+   *
+   * This method does *not* modify the widget's `parent`.
+   */
+  removeWidgetAt(index: number): Widget {
     // Bail if the index is out of range.
     let i = Math.floor(index);
     if (i < 0 || i >= this._widgets.length) {
-      return;
+      return null;
     }
 
     // Remove the widget from the vector.
-    let widget = this._widgets.popAt(i);
+    let widget = this._widgets.removeAt(i);
 
     // If the layout is parented, detach the widget from the DOM.
     if (this.parent) this.detachWidget(i, widget);
+
+    // Return the removed widget.
+    return widget;
   }
 
   /**
