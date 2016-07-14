@@ -459,26 +459,6 @@ describe('ui/commandpalette', () => {
 
         });
 
-        describe('#execute()', () => {
-
-          it('should execute the underlying command', () => {
-            let called = false;
-            let args: any = { };
-            let callArgs: any = null;
-            commands.addCommand('test', {
-              execute: a => {
-                called = true;
-                callArgs = a;
-              }
-            });
-            let item = palette.addItem({ command: 'test', args });
-            item.execute();
-            expect(called).to.be(true);
-            expect(callArgs).to.be(args);
-          });
-
-        });
-
       });
 
     });

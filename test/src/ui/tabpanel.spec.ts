@@ -16,7 +16,7 @@ import {
 } from '../../../lib/core/messaging';
 
 import {
-  StackedLayout, StackedPanel
+  StackedPanel
 } from '../../../lib/ui/stackedpanel';
 
 import {
@@ -35,6 +35,11 @@ import {
 class LogWidget extends Widget {
 
   methods: string[] = [];
+
+  protected onActivateRequest(msg: Message): void {
+    super.onActivateRequest(msg);
+    this.methods.push('onActivateRequest');
+  }
 
   protected onCloseRequest(msg: Message): void {
     super.onCloseRequest(msg);
@@ -242,7 +247,7 @@ describe('ui/tabpanel', () => {
 
       it('should show and activate the new widget when the current tab changes', (done) => {
         let panel = new TabPanel();
-        let widgets = [new Widget(), new Widget(), new Widget()];
+        let widgets = [new LogWidget(), new LogWidget(), new LogWidget()];
         each(widgets, w => { panel.addWidget(w); });
         each(widgets, w => { w.node.tabIndex = -1; });
         Widget.attach(panel, document.body);
@@ -252,7 +257,7 @@ describe('ui/tabpanel', () => {
           let widget = widgets[args.currentIndex];
           expect(widget.isVisible).to.be(true);
           requestAnimationFrame(() => {
-            expect(widget.node.contains(document.activeElement)).to.be(true);
+            expect(widget.methods).to.contain('onActivateRequest');
             panel.dispose();
             done();
           });

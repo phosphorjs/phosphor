@@ -32,7 +32,7 @@ import './dom/sizing.spec';
 import './ui/boxengine.spec';
 import './ui/boxpanel.spec';
 import './ui/commandpalette.spec';
-import './ui/commands.spec';
+import './ui/commandregistry.spec';
 import './ui/keyboard.spec';
 import './ui/keymap.spec';
 import './ui/menu.spec';
