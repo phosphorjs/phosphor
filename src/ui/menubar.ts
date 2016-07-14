@@ -959,7 +959,7 @@ namespace Private {
    * Create the DOM node for a menu bar.
    */
   export
-  function createNode(): HTMLElement {
+  function createNode(): HTMLDivElement {
     let node = document.createElement('div');
     let content = document.createElement('ul');
     content.className = CONTENT_CLASS;

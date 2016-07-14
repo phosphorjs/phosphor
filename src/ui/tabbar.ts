@@ -1331,7 +1331,7 @@ namespace Private {
    * Create the DOM node for a tab bar.
    */
   export
-  function createNode(): HTMLElement {
+  function createNode(): HTMLDivElement {
     let node = document.createElement('div');
     let header = document.createElement('div');
     let body = document.createElement('div');
