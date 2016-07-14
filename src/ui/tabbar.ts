@@ -523,8 +523,8 @@ class TabBar extends Widget {
     this._releaseMouse();
 
     // Remove the tab and title from the vectors.
-    let tab = this._tabs.popAt(i);
-    let title = this._titles.popAt(i);
+    let tab = this._tabs.removeAt(i);
+    let title = this._titles.removeAt(i);
 
     // Remove the title from the dirty set.
     this._dirtyTitles.delete(title);

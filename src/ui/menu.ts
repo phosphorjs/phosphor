@@ -555,8 +555,8 @@ class Menu extends Widget {
     this.activeIndex = -1;
 
     // Remove the node and items from the vectors.
-    let node = this._nodes.popAt(i);
-    let item = this._items.popAt(i);
+    let node = this._nodes.removeAt(i);
+    let item = this._items.removeAt(i);
 
     // Remove the node from the content node.
     this.contentNode.removeChild(node);

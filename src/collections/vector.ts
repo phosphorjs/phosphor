@@ -191,37 +191,6 @@ class Vector<T> implements IMutableSequence<T> {
   }
 
   /**
-   * Remove and return the value at a specific index.
-   *
-   * @param index - The index of the value of interest.
-   *
-   * @returns The value at the specified index, or `undefined` if the
-   *   index is out of range.
-   *
-   * #### Complexity
-   * Constant.
-   *
-   * #### Iterator Validity
-   * Iterators pointing at the removed value and beyond are invalidated.
-   *
-   * #### Undefined Behavior
-   * An `index` which is non-integral.
-   */
-  popAt(index: number): T {
-    let array = this._array;
-    let n = array.length;
-    if (index < 0 || index >= n) {
-      return void 0;
-    }
-    let value = array[index];
-    for (let i = index + 1; i < n; ++i) {
-      array[i - 1] = array[i];
-    }
-    array.length = n - 1;
-    return value;
-  }
-
-  /**
    * Insert a value into the vector at a specific index.
    *
    * @param index - The index at which to insert the value.
@@ -272,8 +241,39 @@ class Vector<T> implements IMutableSequence<T> {
    */
   remove(value: T): number {
     let index = this._array.indexOf(value);
-    if (index !== -1) this.popAt(index);
+    if (index !== -1) this.removeAt(index);
     return index;
+  }
+
+  /**
+   * Remove and return the value at a specific index.
+   *
+   * @param index - The index of the value of interest.
+   *
+   * @returns The value at the specified index, or `undefined` if the
+   *   index is out of range.
+   *
+   * #### Complexity
+   * Constant.
+   *
+   * #### Iterator Validity
+   * Iterators pointing at the removed value and beyond are invalidated.
+   *
+   * #### Undefined Behavior
+   * An `index` which is non-integral.
+   */
+  removeAt(index: number): T {
+    let array = this._array;
+    let n = array.length;
+    if (index < 0 || index >= n) {
+      return void 0;
+    }
+    let value = array[index];
+    for (let i = index + 1; i < n; ++i) {
+      array[i - 1] = array[i];
+    }
+    array.length = n - 1;
+    return value;
   }
 
   /**

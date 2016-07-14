@@ -275,7 +275,7 @@ class PanelLayout extends Layout {
     }
 
     // Remove the widget from the vector.
-    let widget = this._widgets.popAt(i);
+    let widget = this._widgets.removeAt(i);
 
     // If the layout is parented, detach the widget from the DOM.
     if (this.parent) this.detachWidget(i, widget);

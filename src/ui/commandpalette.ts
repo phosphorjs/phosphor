@@ -270,7 +270,7 @@ class CommandPalette extends Widget {
     }
 
     // Remove the item from the vector.
-    let item = this._items.popAt(index);
+    let item = this._items.removeAt(index);
 
     // Schedule an update of the content.
     if (this.isAttached) this.update();
