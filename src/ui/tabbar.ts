@@ -493,24 +493,30 @@ class TabBar extends Widget {
   /**
    * Remove a tab from the tab bar.
    *
-   * @param value - The title to remove or the index thereof.
+   * @param title - The title for the tab to remove.
    *
-   * #### Notes
-   * This is a no-op if the title is not contained in the tab bar.
+   * @returns The index occupied by the tab, or `-1` if the tab
+   *   was not contained in the tab bar.
    */
-  removeTab(value: Title | number): void {
-    // Coerce the value to an index.
-    let index: number;
-    if (typeof value === 'number') {
-      index = value;
-    } else {
-      index = indexOf(this._titles, value);
-    }
+  removeTab(title: Title): number {
+    let index = indexOf(this._titles, title);
+    if (index !== -1) this.removeTabAt(index);
+    return index;
+  }
 
+  /**
+   * Remove the tab at a given index from the tab bar.
+   *
+   * @param index - The index of the tab to remove.
+   *
+   * @returns The title occupying the index, or `null` if the index
+   *   is out of range.
+   */
+  removeTabAt(index: number): Title {
     // Bail if the index is out of range.
     let i = Math.floor(index);
     if (i < 0 || i >= this._titles.length) {
-      return;
+      return null;
     }
 
     // Release the mouse before making any changes.
@@ -544,6 +550,9 @@ class TabBar extends Widget {
 
     // Schedule an update of the tabs.
     this.update();
+
+    // Return the removed title.
+    return title;
   }
 
   /**

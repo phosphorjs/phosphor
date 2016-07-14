@@ -348,24 +348,30 @@ class MenuBar extends Widget {
   /**
    * Remove a menu from the menu bar.
    *
-   * @param value - The menu to remove or the index thereof.
+   * @param menu - The menu to remove from the menu bar.
    *
-   * #### Notes
-   * This is a no-op if the menu is not contained in the menu bar.
+   * @returns The index occupied by the menu, or `-1` if the menu
+   *   was not contained in the menu bar.
    */
-  removeMenu(value: Menu | number): void {
-    // Coerce the value to an index.
-    let index: number;
-    if (typeof value === 'number') {
-      index = value;
-    } else {
-      index = indexOf(this._menus, value);
-    }
+  removeMenu(menu: Menu): number {
+    let index = indexOf(this._menus, menu);
+    if (index !== -1) this.removeMenuAt(index);
+    return index;
+  }
 
+  /**
+   * Remove the menu at a given index from the menu bar.
+   *
+   * @param index - The index of the menu to remove.
+   *
+   * @returns The menu occupying the index, or `null` if the index
+   *   is out of range.
+   */
+  removeMenuAt(index: number): Menu {
     // Bail if the index is out of range.
     let i = Math.floor(index);
     if (i < 0 || i >= this._menus.length) {
-      return;
+      return null;
     }
 
     // Close the child menu before making changes.
@@ -385,6 +391,9 @@ class MenuBar extends Widget {
 
     // Remove the styling class from the menu.
     menu.removeClass(MENU_CLASS);
+
+    // Return the removed menu.
+    return menu;
   }
 
   /**
