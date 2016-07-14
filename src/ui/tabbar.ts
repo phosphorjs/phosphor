@@ -256,16 +256,6 @@ class TabBar extends Widget {
   }
 
   /**
-   * Get a read-only sequence of the tab bar tab nodes.
-   *
-   * #### Notes
-   * This is a read-only property.
-   */
-  get tabNodes(): ISequence<HTMLLIElement> {
-    return this._tabs;
-  }
-
-  /**
    * A read-only sequence of the titles in the tab bar.
    *
    * #### Notes
@@ -842,10 +832,11 @@ class TabBar extends Widget {
       let index = data.index;
       let clientX = event.clientX;
       let clientY = event.clientY;
+      let tab = this._tabs.at(index);
       let title = this._titles.at(index);
 
       // Emit the tab detach requested signal.
-      this.tabDetachRequested.emit({ index, title, clientX, clientY });
+      this.tabDetachRequested.emit({ index, title, tab, clientX, clientY });
 
       // Bail if the signal handler aborted the drag.
       if (data.dragAborted) {
@@ -1116,6 +1107,11 @@ namespace TabBar {
      * The title for the tab.
      */
     title: Title;
+
+    /**
+     * The node representing the tab.
+     */
+    tab: HTMLLIElement;
 
     /**
      * The current client X position of the mouse.

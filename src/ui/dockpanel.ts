@@ -981,14 +981,16 @@ class DockPanel extends Widget {
     // Release the tab bar's hold on the mouse.
     sender.releaseMouse();
 
+    // Extract the data from the args.
+    let { index, title, tab, clientX, clientY } = args;
+
     // Setup the mime data for the drag operation.
     let mimeData = new MimeData();
-    let widget = args.title.owner as Widget;
+    let widget = title.owner as Widget;
     mimeData.setData(FACTORY_MIME, () => widget);
 
     // Create the drag image for the drag operation.
-    let tabNode = sender.tabNodes.at(args.index);
-    let dragImage = tabNode.cloneNode(true) as HTMLElement;
+    let dragImage = tab.cloneNode(true) as HTMLElement;
 
     // Create the drag object to manage the drag-drop operation.
     this._drag = new Drag({
@@ -999,16 +1001,16 @@ class DockPanel extends Widget {
     });
 
     // Hide the tab node in the original tab.
-    tabNode.classList.add(HIDDEN_CLASS);
+    tab.classList.add(HIDDEN_CLASS);
 
     // Create the cleanup callback.
     let cleanup = (() => {
       this._drag = null;
-      tabNode.classList.remove(HIDDEN_CLASS);
+      tab.classList.remove(HIDDEN_CLASS);
     });
 
     // Start the drag operation and cleanup when done.
-    this._drag.start(args.clientX, args.clientY).then(cleanup);
+    this._drag.start(clientX, clientY).then(cleanup);
   }
 
   /**
