@@ -451,16 +451,14 @@ class DockPanel extends Widget {
     let width = rect.width - right - left - box.borderLeft - box.borderRight;
     let height = rect.height - bottom - top - box.borderTop - box.borderBottom;
 
-    // Create the overlay geometry.
-    let geo: DockPanel.IOverlayGeometry = {
+    // Show the overlay with the computed geometry.
+    this._overlay.show({
+      zone: target.zone,
       mouseX: clientX,
       mouseY: clientY,
       parentRect: rect,
       top, left, right, bottom, width, height
-    };
-
-    // Show the overlay with the computed geometry.
-    this._overlay.show(target.zone, geo);
+    });
 
     // Finally, return the dock zone used for the overlay.
     return target.zone;
@@ -1283,6 +1281,11 @@ namespace DockPanel {
   export
   interface IOverlayGeometry {
     /**
+     * The zone associated with the geometry.
+     */
+    zone: Zone;
+
+    /**
      * The client X position of the mouse.
      */
     mouseX: number;
@@ -1342,7 +1345,7 @@ namespace DockPanel {
     node: HTMLDivElement;
 
     /**
-     * Show the overlay using the given zone and offset geometry.
+     * Show the overlay using the given overlay geometry.
      *
      * @param geo - The desired geometry for the overlay.
      *
@@ -1353,7 +1356,7 @@ namespace DockPanel {
      * This is called on every mouse move event during a drag in order
      * to update the position of the overlay. It should be efficient.
      */
-    show(zone: Zone, geo: IOverlayGeometry): void;
+    show(geo: IOverlayGeometry): void;
 
     /**
      * Hide the overlay node.
@@ -1392,19 +1395,17 @@ namespace DockPanel {
     }
 
     /**
-     * Show the overlay using the given zone and offset geometry.
-     *
-     * @param zone - The dock zone for the overlay.
+     * Show the overlay using the given overlay geometry.
      *
      * @param geo - The desired geometry for the overlay.
      */
-    show(zone: Zone, geo: IOverlayGeometry): void {
+    show(geo: IOverlayGeometry): void {
       let style = this._node.style;
       style.top = `${geo.top}px`;
       style.left = `${geo.left}px`;
       style.right = `${geo.right}px`;
       style.bottom = `${geo.bottom}px`;
-      this._setZone(zone);
+      this._setZone(geo.zone);
       this._showIfHidden();
     }
 
