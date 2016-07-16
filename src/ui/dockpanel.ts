@@ -372,8 +372,8 @@ class DockPanel extends Widget {
     // Setup the variables needed to compute the overlay geometry.
     let top: number;
     let left: number;
-    let width: number;
-    let height: number;
+    let right: number;
+    let bottom: number;
     let cr: ClientRect;
     let box = boxSizing(this.node); // TODO cache this?
     let rect = this.node.getBoundingClientRect();
@@ -383,72 +383,84 @@ class DockPanel extends Widget {
     case 'root-top':
       top = box.paddingTop;
       left = box.paddingLeft;
-      width = rect.width - box.horizontalSum;
-      height = (rect.height - box.verticalSum) / 3;
+      right = box.paddingRight;
+      bottom = (rect.height - box.verticalSum) * 2 / 3;
       break;
     case 'root-left':
       top = box.paddingTop;
       left = box.paddingLeft;
-      width = (rect.width - box.horizontalSum) / 3;
-      height = rect.height - box.verticalSum;
+      right = (rect.width - box.horizontalSum) * 2 / 3;
+      bottom = box.paddingBottom;
       break;
     case 'root-right':
       top = box.paddingTop;
-      width = (rect.width - box.horizontalSum) / 3;
-      left = box.paddingLeft + 2 * width;
-      height = rect.height - box.verticalSum;
+      left = (rect.width - box.horizontalSum) * 2 / 3;
+      right = box.paddingRight;
+      bottom = box.paddingBottom;
       break;
     case 'root-bottom':
-      height = (rect.height - box.verticalSum) / 3;
-      top = box.paddingTop + 2 * height;
+      top = (rect.height - box.verticalSum) * 2 / 3;
       left = box.paddingLeft;
-      width = rect.width - box.horizontalSum;
+      right = box.paddingRight;
+      bottom = box.paddingBottom;
       break;
     case 'root-center':
       top = box.paddingTop;
       left = box.paddingLeft;
-      width = rect.width - box.horizontalSum;
-      height = rect.height - box.verticalSum;
+      right = box.paddingRight;
+      bottom = box.paddingBottom;
       break;
     case 'panel-top':
       cr = target.panel.node.getBoundingClientRect();
       top = cr.top - rect.top - box.borderTop;
       left = cr.left - rect.left - box.borderLeft;
-      width = cr.width;
-      height = cr.height / 2;
+      right = rect.right - cr.right - box.borderRight;
+      bottom = rect.bottom - cr.bottom + cr.height / 2 - box.borderBottom;
       break;
     case 'panel-left':
       cr = target.panel.node.getBoundingClientRect();
       top = cr.top - rect.top - box.borderTop;
       left = cr.left - rect.left - box.borderLeft;
-      width = cr.width / 2;
-      height = cr.height;
+      right = rect.right - cr.right + cr.width / 2 - box.borderRight;
+      bottom = rect.bottom - cr.bottom - box.borderBottom;
       break;
     case 'panel-right':
       cr = target.panel.node.getBoundingClientRect();
       top = cr.top - rect.top - box.borderTop;
-      left = cr.left - rect.left - box.borderLeft + cr.width / 2;
-      width = cr.width / 2;
-      height = cr.height;
+      left = cr.left - rect.left + cr.width / 2 - box.borderLeft;
+      right = rect.right - cr.right - box.borderRight;
+      bottom = rect.bottom - cr.bottom - box.borderBottom;
       break;
     case 'panel-bottom':
       cr = target.panel.node.getBoundingClientRect();
-      top = cr.top - rect.top - box.borderTop + cr.height / 2;
+      top = cr.top - rect.top + cr.height / 2 - box.borderTop;
       left = cr.left - rect.left - box.borderLeft;
-      width = cr.width;
-      height = cr.height / 2;
+      right = rect.right - cr.right - box.borderRight;
+      bottom = rect.bottom - cr.bottom - box.borderBottom;
       break;
     case 'panel-center':
       cr = target.panel.node.getBoundingClientRect();
       top = cr.top - rect.top - box.borderTop;
       left = cr.left - rect.left - box.borderLeft;
-      width = cr.width;
-      height = cr.height;
+      right = rect.right - cr.right - box.borderRight;
+      bottom = rect.bottom - cr.bottom - box.borderBottom;
       break;
     }
 
-    // Show the overlay at the computed position.
-    this._overlay.show(target.zone, left, top, width, height);
+    // Derive the width and height from the other dimensions.
+    let width = rect.width - right - left - box.borderLeft - box.borderRight;
+    let height = rect.height - bottom - top - box.borderTop - box.borderBottom;
+
+    // Create the overlay geometry.
+    let geo: DockPanel.IOverlayGeometry = {
+      mouseX: clientX,
+      mouseY: clientY,
+      parentRect: rect,
+      top, left, right, bottom, width, height
+    };
+
+    // Show the overlay with the computed geometry.
+    this._overlay.show(target.zone, geo);
 
     // Finally, return the dock zone used for the overlay.
     return target.zone;
@@ -1266,6 +1278,57 @@ namespace DockPanel {
   }
 
   /**
+   * An object which holds the geometry for overlay positioning.
+   */
+  export
+  interface IOverlayGeometry {
+    /**
+     * The client X position of the mouse.
+     */
+    mouseX: number;
+
+    /**
+     * The client Y position of the mouse.
+     */
+    mouseY: number;
+
+    /**
+     * The client rect of the overlay parent node.
+     */
+    parentRect: ClientRect;
+
+    /**
+     * The distance between the overlay and parent top edges.
+     */
+    top: number;
+
+    /**
+     * The distance between the overlay and parent left edges.
+     */
+    left: number;
+
+    /**
+     * The distance between the overlay and parent right edges.
+     */
+    right: number;
+
+    /**
+     * The distance between the overlay and parent bottom edges.
+     */
+    bottom: number;
+
+    /**
+     * The width of the overlay.
+     */
+    width: number;
+
+    /**
+     * The height of the overlay.
+     */
+    height: number;
+  }
+
+  /**
    * An object which manages the overlay node for a dock panel.
    */
   export
@@ -1281,15 +1344,7 @@ namespace DockPanel {
     /**
      * Show the overlay using the given zone and offset geometry.
      *
-     * @param zone - The dock zone for the overlay.
-     *
-     * @param left - The offset left position for the overlay.
-     *
-     * @param top - The offset top position for the overlay.
-     *
-     * @param width - The offset width for the overlay.
-     *
-     * @param height - The offset height for the overlay.
+     * @param geo - The desired geometry for the overlay.
      *
      * #### Notes
      * The given geometry values assume the node will use absolute
@@ -1298,7 +1353,7 @@ namespace DockPanel {
      * This is called on every mouse move event during a drag in order
      * to update the position of the overlay. It should be efficient.
      */
-    show(zone: Zone, left: number, top: number, width: number, height: number): void;
+    show(zone: Zone, geo: IOverlayGeometry): void;
 
     /**
      * Hide the overlay node.
@@ -1341,20 +1396,14 @@ namespace DockPanel {
      *
      * @param zone - The dock zone for the overlay.
      *
-     * @param left - The offset left position for the overlay.
-     *
-     * @param top - The offset top position for the overlay.
-     *
-     * @param width - The offset width for the overlay.
-     *
-     * @param height - The offset height for the overlay.
+     * @param geo - The desired geometry for the overlay.
      */
-    show(zone: Zone, left: number, top: number, width: number, height: number): void {
+    show(zone: Zone, geo: IOverlayGeometry): void {
       let style = this._node.style;
-      style.top = `${top}px`;
-      style.left = `${left}px`;
-      style.width = `${width}px`;
-      style.height = `${height}px`;
+      style.top = `${geo.top}px`;
+      style.left = `${geo.left}px`;
+      style.right = `${geo.right}px`;
+      style.bottom = `${geo.bottom}px`;
       this._setZone(zone);
       this._showIfHidden();
     }
