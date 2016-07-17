@@ -147,7 +147,7 @@ class DockPanel extends Widget {
    */
   dispose(): void {
     // Hide the overlay.
-    this._overlay.hide();
+    this._overlay.hide(0);
 
     // Cancel a drag if one is in progress.
     if (this._drag) this._drag.dispose();
@@ -365,7 +365,7 @@ class DockPanel extends Widget {
 
     // If the dock zone is invalid, hide the overlay and bail.
     if (target.zone === 'invalid') {
-      this._overlay.hide();
+      this._overlay.hide(100);
       return target.zone;
     }
 
@@ -538,7 +538,7 @@ class DockPanel extends Widget {
 
     // Hide the overlay if the drag is leaving the dock panel.
     if (!related || !this.node.contains(related)) {
-      this._overlay.hide();
+      this._overlay.hide(0);
     }
   }
 
@@ -568,7 +568,7 @@ class DockPanel extends Widget {
     event.stopPropagation();
 
     // Hide the drop indicator overlay.
-    this._overlay.hide();
+    this._overlay.hide(0);
 
     // Bail if the proposed action is to do nothing.
     if (event.proposedAction === 'none') {
@@ -1361,10 +1361,13 @@ namespace DockPanel {
     /**
      * Hide the overlay node.
      *
+     * @param delay - The delay (in ms) before hiding the overlay.
+     *   A delay value <= 0 should hide the overlay immediately.
+     *
      * #### Notes
      * This is called whenever the overlay node should been hidden.
      */
-    hide(): void;
+    hide(delay: number): void;
   }
 
   /**
@@ -1400,41 +1403,64 @@ namespace DockPanel {
      * @param geo - The desired geometry for the overlay.
      */
     show(geo: IOverlayGeometry): void {
+      // Update the position of the overlay.
       let style = this._node.style;
       style.top = `${geo.top}px`;
       style.left = `${geo.left}px`;
       style.right = `${geo.right}px`;
       style.bottom = `${geo.bottom}px`;
+
+      // Update the class name for the zone.
       this._setZone(geo.zone);
-      this._showIfHidden();
+
+      // Clear any pending hide timer.
+      clearTimeout(this._timer);
+      this._timer = -1;
+
+      // If the overlay is already visible, we're done.
+      if (!this._hidden) {
+        return;
+      }
+
+      // Clear the hidden flag.
+      this._hidden = false;
+
+      // Finally, show the overlay.
+      this._node.classList.remove(HIDDEN_CLASS);
     }
 
     /**
      * Hide the overlay node.
+     *
+     * @param delay - The delay (in ms) before hiding the overlay.
+     *   A delay value <= 0 will hide the overlay immediately.
      */
-    hide(): void {
-      this._hideIfVisible();
-      this._setZone('invalid');
-    }
-
-    /**
-     * Show the underlying node, if hidden.
-     */
-    private _showIfHidden(): void {
+    hide(delay: number): void {
+      // Do nothing if the overlay is already hidden.
       if (this._hidden) {
-        this._hidden = false;
-        this._node.classList.remove(HIDDEN_CLASS);
+        return;
       }
-    }
 
-    /**
-     * Hide the underlying node, if visible.
-     */
-    private _hideIfVisible(): void {
-      if (!this._hidden) {
+      // Hide immediately if the delay is <= 0.
+      if (delay <= 0) {
+        clearTimeout(this._timer);
+        this._timer = -1;
         this._hidden = true;
         this._node.classList.add(HIDDEN_CLASS);
+        return;
       }
+
+      // Do nothing if a hide is already pending.
+      if (this._timer !== -1) {
+        return;
+      }
+
+      // Otherwise setup the hide timer.
+      this._timer = setTimeout(() => {
+        this._timer = -1;
+        this._hidden = true;
+        this._node.classList.add(HIDDEN_CLASS);
+      }, delay);
     }
 
     /**
@@ -1452,6 +1478,7 @@ namespace DockPanel {
       this._zone = newZone;
     }
 
+    private _timer = -1;
     private _hidden = true;
     private _node: HTMLDivElement;
     private _zone: Zone = 'invalid';
