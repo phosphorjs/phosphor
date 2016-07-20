@@ -476,7 +476,7 @@ describe('dom/dragdrop', () => {
           let child0 = panel.widgets.at(0) as DropTarget;
           let rect = child0.node.getBoundingClientRect();
           simulate(child0.node, 'mouseup', { clientX: rect.left + 1, clientY: rect.top + 1 } );
-          expect(document.contains(image)).to.be(false);
+          expect(document.body.contains(image)).to.be(false);
         });
 
         it('should remove event listeners', () => {
