@@ -8,7 +8,7 @@
 import expect = require('expect.js');
 
 import {
-  hitTest, scrollIfNeeded
+  hitTest, scrollIntoViewIfNeeded
 } from '../../../lib/dom/query';
 
 
@@ -48,7 +48,7 @@ describe('dom/query', () => {
 
   });
 
-  describe('scrollIfNeeded()', () => {
+  describe('scrollIntoViewIfNeeded()', () => {
 
     let area: HTMLElement;
     let elemA: HTMLElement;
@@ -93,20 +93,20 @@ describe('dom/query', () => {
     it('should do nothing if the element covers the viewport', () => {
       elemB.style.top = '1000px';
       area.scrollTop = 75;
-      scrollIfNeeded(area, elemA);
+      scrollIntoViewIfNeeded(area, elemA);
       expect(area.scrollTop).to.be(75);
     });
 
     it('should do nothing if the element fits within the viewport', () => {
       area.scrollTop = 25;
-      scrollIfNeeded(area, elemB);
+      scrollIntoViewIfNeeded(area, elemB);
       expect(area.scrollTop).to.be(25);
     });
 
     it('should align the top edge for smaller size elements overlapping the top', () => {
       elemA.style.top = '1000px';
       area.scrollTop = 90;
-      scrollIfNeeded(area, elemB);
+      scrollIntoViewIfNeeded(area, elemB);
       expect(area.scrollTop).to.be(70);
     });
 
@@ -114,34 +114,34 @@ describe('dom/query', () => {
       elemA.style.height = '600px';
       elemB.style.top = '1000px';
       area.scrollTop = 90;
-      scrollIfNeeded(area, elemA);
+      scrollIntoViewIfNeeded(area, elemA);
       expect(area.scrollTop).to.be(50);
     });
 
     it('should align the top edge for larger size elements overlapping the bottom', () => {
       elemB.style.top = '1000px';
-      scrollIfNeeded(area, elemA);
+      scrollIntoViewIfNeeded(area, elemA);
       expect(area.scrollTop).to.be(50);
     });
 
     it('should align the top edge for equal size elements overlapping the bottom', () => {
       elemA.style.height = '600px';
       elemB.style.top = '1000px';
-      scrollIfNeeded(area, elemA);
+      scrollIntoViewIfNeeded(area, elemA);
       expect(area.scrollTop).to.be(50);
     });
 
     it('should align the bottom edge for larger size elements overlapping the top', () => {
       elemB.style.top = '1000px';
       area.scrollTop = 200;
-      scrollIfNeeded(area, elemA);
+      scrollIntoViewIfNeeded(area, elemA);
       expect(area.scrollTop).to.be(150);
     });
 
     it('should align the bottom edge for smaller size elements overlapping the bottom', () => {
       elemB.style.top = '600px';
       area.scrollTop = 50;
-      scrollIfNeeded(area, elemB);
+      scrollIntoViewIfNeeded(area, elemB);
       expect(area.scrollTop).to.be(100);
     });
 

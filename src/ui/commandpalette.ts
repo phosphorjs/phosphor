@@ -26,7 +26,7 @@ import {
 } from '../core/messaging';
 
 import {
-  scrollIfNeeded
+  scrollIntoViewIfNeeded
 } from '../dom/query';
 
 import {
@@ -531,7 +531,9 @@ class CommandPalette extends Widget {
     // Activate the new node and scroll it into view.
     if (newNode) {
       newNode.classList.add(ACTIVE_CLASS);
-      requestAnimationFrame(() => { scrollIfNeeded(content, newNode); });
+      requestAnimationFrame(() => {
+        scrollIntoViewIfNeeded(content, newNode);
+      });
     }
   }
 
