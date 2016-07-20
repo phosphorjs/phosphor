@@ -47,14 +47,16 @@ function hitTest(node: Element, clientX: number, clientY: number): boolean {
 
 
 /**
- * Scroll an element into view if needed.
+ * Vertically scroll an element into view if needed.
  *
  * @param area - The scroll area element.
  *
  * @param elem - The element of interest.
  *
- * @param threshold - The overflow threshold, in pixels, required
- *   before adjusting the scroll position. The default is zero.
+ * #### Notes
+ * This follows the "nearest" behavior of the native `scrollIntoView`
+ * method, which is not supported by all browsers.
+ * https://drafts.csswg.org/cssom-view/#element-scrolling-members
  *
  * #### Example
  * ```typescript
@@ -86,12 +88,26 @@ function hitTest(node: Element, clientX: number, clientY: number): boolean {
  * ```
  */
 export
-function scrollIfNeeded(area: HTMLElement, elem: HTMLElement, threshold = 0): void {
+function scrollIfNeeded(area: HTMLElement, elem: HTMLElement): void {
   let ar = area.getBoundingClientRect();
   let er = elem.getBoundingClientRect();
-  if (er.top < (ar.top - threshold)) {
-    area.scrollTop -= ar.top - er.top + threshold;
-  } else if (er.bottom > (ar.bottom + threshold)) {
-    area.scrollTop += er.bottom - ar.bottom + threshold;
+  if (er.top <= ar.top && er.bottom >= ar.bottom) {
+    return;
+  }
+  if (er.top < ar.top && er.height <= ar.height) {
+    area.scrollTop -= ar.top - er.top;
+    return;
+  }
+  if (er.bottom > ar.bottom && er.height >= ar.height) {
+    area.scrollTop -= ar.top - er.top;
+    return;
+  }
+  if (er.top < ar.top && er.height > ar.height) {
+    area.scrollTop -= ar.bottom - er.bottom;
+    return;
+  }
+  if (er.bottom > ar.bottom && er.height < ar.height) {
+    area.scrollTop -= ar.bottom - er.bottom;
+    return;
   }
 }

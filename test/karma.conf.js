@@ -10,6 +10,7 @@ module.exports = function (config) {
     port: 9876,
     colors: true,
     singleRun: true,
+    browserNoActivityTimeout: 30000,
     logLevel: config.LOG_INFO
   });
 };
