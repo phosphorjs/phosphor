@@ -53,9 +53,6 @@ function hitTest(node: Element, clientX: number, clientY: number): boolean {
  *
  * @param elem - The element of interest.
  *
- * @param threshold - The overflow threshold, in pixels, required
- *   before adjusting the scroll position. The default is zero.
- *
  * #### Example
  * ```typescript
  * import { scrollIfNeeded } from 'phosphor/lib/dom/query';
@@ -86,12 +83,29 @@ function hitTest(node: Element, clientX: number, clientY: number): boolean {
  * ```
  */
 export
-function scrollIfNeeded(area: HTMLElement, elem: HTMLElement, threshold = 0): void {
+function scrollIfNeeded(area: HTMLElement, elem: HTMLElement): void {
   let ar = area.getBoundingClientRect();
   let er = elem.getBoundingClientRect();
-  if (er.top < (ar.top - threshold)) {
-    area.scrollTop -= ar.top - er.top + threshold;
-  } else if (er.bottom > (ar.bottom + threshold)) {
-    area.scrollTop += er.bottom - ar.bottom + threshold;
+  if (er.top < ar.top && er.bottom > ar.bottom) {
+    return;
+  }
+  if (er.top > ar.top && er.bottom < ar.bottom) {
+    return;
+  }
+  if (er.top < ar.top && er.width < ar.width) {
+    area.scrollTop -= ar.top - er.top;
+    return;
+  }
+  if (er.bottom > ar.bottom && er.width > ar.width) {
+    area.scrollTop -= ar.top - er.top;
+    return;
+  }
+  if (er.top < ar.top && er.width > ar.width) {
+    area.scrollTop += er.bottom - ar.bottom;
+    return;
+  }
+  if (er.bottom > ar.bottom && er.width < ar.width) {
+    area.scrollTop += er.bottom - ar.bottom;
+    return;
   }
 }
