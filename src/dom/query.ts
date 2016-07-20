@@ -60,7 +60,7 @@ function hitTest(node: Element, clientX: number, clientY: number): boolean {
  *
  * #### Example
  * ```typescript
- * import { scrollIfNeeded } from 'phosphor/lib/dom/query';
+ * import { scrollIntoViewIfNeeded } from 'phosphor/lib/dom/query';
  *
  * let area = document.createElement('div');
  * let elem = document.createElement('div');
@@ -84,11 +84,11 @@ function hitTest(node: Element, clientX: number, clientY: number): boolean {
  * document.body.appendChild(area);
  *
  * // Scroll to the element of interest.
- * scrollIfNeeded(area, elem);
+ * scrollIntoViewIfNeeded(area, elem);
  * ```
  */
 export
-function scrollIfNeeded(area: HTMLElement, elem: HTMLElement): void {
+function scrollIntoViewIfNeeded(area: HTMLElement, elem: HTMLElement): void {
   let ar = area.getBoundingClientRect();
   let er = elem.getBoundingClientRect();
   if (er.top <= ar.top && er.bottom >= ar.bottom) {
