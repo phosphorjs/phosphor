@@ -58,6 +58,10 @@ function hitTest(node: Element, clientX: number, clientY: number): boolean {
  * method, which is not supported by all browsers.
  * https://drafts.csswg.org/cssom-view/#element-scrolling-members
  *
+ * If the element fully covers the visible area or is fully contained
+ * within the visible area, no scrolling will take place. Otherwise,
+ * the nearest edges of the area and element are aligned.
+ *
  * #### Example
  * ```typescript
  * import { scrollIntoViewIfNeeded } from 'phosphor/lib/dom/query';
