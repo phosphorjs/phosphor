@@ -287,13 +287,6 @@ namespace TabPanel {
   export
   interface IOptions {
     /**
-     * Whether the tabs are movable by the user.
-     *
-     * The default is `false`.
-     */
-    tabsMovable?: boolean;
-
-    /**
      * The renderer for the panel's tab bar.
      *
      * The default is shared renderer instance.

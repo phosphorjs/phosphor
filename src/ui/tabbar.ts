@@ -131,7 +131,12 @@ const TRANSITION_DURATION = 150;  // Keep in sync with CSS.
 
 
 /**
- * A widget which displays titles as a row of tabs.
+ * A widget which displays titles as a horizontal row of tabs.
+ *
+ * #### Notes
+ * Unlike a `SideBar`, a `TabBar` supports dragging and reordering of
+ * its tabs. It also has a more complex DOM structure which supports
+ * advanced styling and customization use cases.
  */
 export
 class TabBar extends Widget {
@@ -144,7 +149,6 @@ class TabBar extends Widget {
     super({ node: Private.createNode() });
     this.addClass(TAB_BAR_CLASS);
     this.setFlag(WidgetFlag.DisallowLayout);
-    this._tabsMovable = options.tabsMovable || false;
     this._renderer = options.renderer || TabBar.defaultRenderer;
   }
 
@@ -336,27 +340,7 @@ class TabBar extends Widget {
   }
 
   /**
-   * Get whether the tabs are movable by the user.
-   *
-   * #### Notes
-   * Tabs can be moved programmatically, irrespective of this value.
-   */
-  get tabsMovable(): boolean {
-    return this._tabsMovable;
-  }
-
-  /**
-   * Set whether the tabs are movable by the user.
-   *
-   * #### Notes
-   * Tabs can be moved programmatically, irrespective of this value.
-   */
-  set tabsMovable(value: boolean) {
-    this._tabsMovable = value;
-  }
-
-  /**
-   * The renderer used by the tab bar
+   * The renderer used by the tab bar.
    *
    * #### Notes
    * This is a read-only property.
@@ -766,18 +750,16 @@ class TabBar extends Widget {
       return;
     }
 
-    // Setup the drag data if the tabs are movable.
-    if (this._tabsMovable) {
-      this._dragData = new Private.DragData();
-      this._dragData.index = i;
-      this._dragData.tab = this._tabs.at(i);
-      this._dragData.pressX = event.clientX;
-      this._dragData.pressY = event.clientY;
-      document.addEventListener('mousemove', this, true);
-      document.addEventListener('mouseup', this, true);
-      document.addEventListener('keydown', this, true);
-      document.addEventListener('contextmenu', this, true);
-    }
+    // Setup the drag data.
+    this._dragData = new Private.DragData();
+    this._dragData.index = i;
+    this._dragData.tab = this._tabs.at(i);
+    this._dragData.pressX = event.clientX;
+    this._dragData.pressY = event.clientY;
+    document.addEventListener('mousemove', this, true);
+    document.addEventListener('mouseup', this, true);
+    document.addEventListener('keydown', this, true);
+    document.addEventListener('contextmenu', this, true);
 
     // Update the current index.
     this.currentIndex = i;
@@ -989,7 +971,6 @@ class TabBar extends Widget {
   }
 
   private _currentIndex = -1;
-  private _tabsMovable: boolean;
   private _renderer: TabBar.IRenderer;
   private _titles = new Vector<Title>();
   private _dirtyTitles= new Set<Title>();
@@ -1015,13 +996,6 @@ namespace TabBar {
    */
   export
   interface IOptions {
-    /**
-     * Whether the tabs are movable by the user.
-     *
-     * The default is `false`.
-     */
-    tabsMovable?: boolean;
-
     /**
      * A renderer to use with the tab bar.
      *
