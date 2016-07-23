@@ -823,7 +823,7 @@ export function h(tag: string, first?: any): VNode {
  * This creates a brand new *real* DOM node with a structure which
  * matches the given virtual DOM node.
  *
- * If virtual diffing is desired, using the `render` function instead.
+ * If virtual diffing is desired, use the `render` function instead.
  */
 export
 function realize(content: VNode): HTMLElement {
