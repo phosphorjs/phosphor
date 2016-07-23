@@ -50,7 +50,7 @@ import {
 } from './title';
 
 import {
-  VNode, h, render
+  VNode, h, realize, render
 } from './vdom';
 
 import {
@@ -133,6 +133,17 @@ const DETACH_THRESHOLD = 20;
  */
 const TRANSITION_DURATION = 150;  // Keep in sync with CSS.
 
+/**
+ *
+ */
+const NODE_TEMPLATE = (
+  h('div',
+    h('div', { className: HEADER_CLASS }),
+    h('div', { className: BODY_CLASS },
+      h('ul', { className: CONTENT_CLASS })),
+    h('div', { className: FOOTER_CLASS }))
+);
+
 
 /**
  * A widget which displays titles as a horizontal row of tabs.
@@ -150,7 +161,7 @@ class TabBar extends Widget {
    * @param options - The options for initializing the tab bar.
    */
   constructor(options: TabBar.IOptions = {}) {
-    super({ node: Private.createNode() });
+    super({ node: realize(NODE_TEMPLATE) });
     this.addClass(TAB_BAR_CLASS);
     this.setFlag(WidgetFlag.DisallowLayout);
     this._renderer = options.renderer || TabBar.defaultRenderer;
@@ -615,7 +626,6 @@ class TabBar extends Widget {
    * A message handler invoked on an `'update-request'` message.
    */
   protected onUpdateRequest(msg: Message): void {
-    let t1 = performance.now();
     let content: VNode[] = [];
     let titles = this._titles;
     let renderer = this._renderer;
@@ -627,8 +637,6 @@ class TabBar extends Widget {
       content.push(renderer.renderTab({ title, current, zIndex }));
     }
     render(content, this.contentNode);
-    let t2 = performance.now();
-    console.log(t2 - t1);
   }
 
   /**
@@ -1303,27 +1311,6 @@ namespace Private {
      * The offset width of the tab.
      */
     width: number;
-  }
-
-  /**
-   * Create the DOM node for a tab bar.
-   */
-  export
-  function createNode(): HTMLDivElement {
-    let node = document.createElement('div');
-    let header = document.createElement('div');
-    let body = document.createElement('div');
-    let footer = document.createElement('div');
-    let content = document.createElement('ul');
-    header.className = HEADER_CLASS;
-    body.className = BODY_CLASS;
-    footer.className = FOOTER_CLASS;
-    content.className = CONTENT_CLASS;
-    body.appendChild(content);
-    node.appendChild(header);
-    node.appendChild(body);
-    node.appendChild(footer);
-    return node;
   }
 
   /**

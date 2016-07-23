@@ -811,6 +811,27 @@ export function h(tag: string, first?: any): VNode {
 
 
 /**
+ * Create a real DOM node from a virtual DOM node.
+ *
+ * @param content - The virtual DOM content to realize.
+ *
+ * @returns A new DOM node for the given virtual DOM tree.
+ *
+ * #### Notes
+ * The content node is assumed to be of the `'element'` type.
+ *
+ * This creates a brand new *real* DOM node with a structure which
+ * matches the given virtual DOM node.
+ *
+ * If virtual diffing is desired, using the `render` function instead.
+ */
+export
+function realize(content: VNode): HTMLElement {
+  return Private.realizeImpl(content);
+}
+
+
+/**
  * Render virtual DOM content into a host element.
  *
  * @param content - The virtual DOM content to render.
@@ -855,7 +876,15 @@ namespace Private {
   }
 
   /**
-   * The internal render entry point.
+   * The internal `realize` entry point.
+   */
+  export
+  function realizeImpl(content: VNode): HTMLElement {
+    return createDOMNode(content) as HTMLElement;
+  }
+
+  /**
+   * The internal `render` entry point.
    */
   export
   function renderImpl(content: VNode | VNode[], host: HTMLElement): void {
