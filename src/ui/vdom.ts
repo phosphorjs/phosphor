@@ -640,13 +640,6 @@ class VNode {
 
 
 /**
- * A type alias for an `h()` factory child argument.
- */
-export
-type FactoryChild = (string | VNode) | Array<string | VNode>;
-
-
-/**
  * Create a new virtual DOM node.
  *
  * @param tag - The tag name for the node.
@@ -663,105 +656,109 @@ type FactoryChild = (string | VNode) | Array<string | VNode>;
  * text nodes, and arrays are inlined as if their contents were given
  * as positional arguments. This makes it easy to build up an array of
  * children by any desired means.
+ *
+ * A strongly typed bound function for each tag name is aslo available
+ * as a static attached to the `h()` function. E.g. `h('div', ...)` is
+ * equivalent to `h.div(...)`.
  */
-export function h(tag: 'a', attrs?: IAnchorAttrs, ...children: FactoryChild[]): VNode;
-export function h(tag: 'abbr', attrs?: IElementAttrs, ...children: FactoryChild[]): VNode;
-export function h(tag: 'address', attrs?: IElementAttrs, ...children: FactoryChild[]): VNode;
-export function h(tag: 'area', attrs?: IAreaAttrs, ...children: FactoryChild[]): VNode;
-export function h(tag: 'article', attrs?: IElementAttrs, ...children: FactoryChild[]): VNode;
-export function h(tag: 'aside', attrs?: IElementAttrs, ...children: FactoryChild[]): VNode;
-export function h(tag: 'audio', attrs?: IMediaAttrs, ...children: FactoryChild[]): VNode;
-export function h(tag: 'b', attrs?: IElementAttrs, ...children: FactoryChild[]): VNode;
-export function h(tag: 'bdi', attrs?: IElementAttrs, ...children: FactoryChild[]): VNode;
-export function h(tag: 'bdo', attrs?: IElementAttrs, ...children: FactoryChild[]): VNode;
-export function h(tag: 'blockquote', attrs?: IQuoteAttrs, ...children: FactoryChild[]): VNode;
-export function h(tag: 'br', attrs?: IElementAttrs, ...children: FactoryChild[]): VNode;
-export function h(tag: 'button', attrs?: IButtonAttrs, ...children: FactoryChild[]): VNode;
-export function h(tag: 'canvas', attrs?: ICanvasAttrs, ...children: FactoryChild[]): VNode;
-export function h(tag: 'caption', attrs?: IElementAttrs, ...children: FactoryChild[]): VNode;
-export function h(tag: 'cite', attrs?: IElementAttrs, ...children: FactoryChild[]): VNode;
-export function h(tag: 'code', attrs?: IElementAttrs, ...children: FactoryChild[]): VNode;
-export function h(tag: 'col', attrs?: ITableColAttrs, ...children: FactoryChild[]): VNode;
-export function h(tag: 'colgroup', attrs?: ITableColAttrs, ...children: FactoryChild[]): VNode;
-export function h(tag: 'data', attrs?: IDataAttrs, ...children: FactoryChild[]): VNode;
-export function h(tag: 'datalist', attrs?: IElementAttrs, ...children: FactoryChild[]): VNode;
-export function h(tag: 'dd', attrs?: IElementAttrs, ...children: FactoryChild[]): VNode;
-export function h(tag: 'del', attrs?: IModAttrs, ...children: FactoryChild[]): VNode;
-export function h(tag: 'dfn', attrs?: IElementAttrs, ...children: FactoryChild[]): VNode;
-export function h(tag: 'div', attrs?: IElementAttrs, ...children: FactoryChild[]): VNode;
-export function h(tag: 'dl', attrs?: IElementAttrs, ...children: FactoryChild[]): VNode;
-export function h(tag: 'dt', attrs?: IElementAttrs, ...children: FactoryChild[]): VNode;
-export function h(tag: 'em', attrs?: IElementAttrs, ...children: FactoryChild[]): VNode;
-export function h(tag: 'embed', attrs?: IEmbedAttrs, ...children: FactoryChild[]): VNode;
-export function h(tag: 'fieldset', attrs?: IFieldSetAttrs, ...children: FactoryChild[]): VNode;
-export function h(tag: 'figcaption', attrs?: IElementAttrs, ...children: FactoryChild[]): VNode;
-export function h(tag: 'figure', attrs?: IElementAttrs, ...children: FactoryChild[]): VNode;
-export function h(tag: 'footer', attrs?: IElementAttrs, ...children: FactoryChild[]): VNode;
-export function h(tag: 'form', attrs?: IFormAttrs, ...children: FactoryChild[]): VNode;
-export function h(tag: 'h1', attrs?: IElementAttrs, ...children: FactoryChild[]): VNode;
-export function h(tag: 'h2', attrs?: IElementAttrs, ...children: FactoryChild[]): VNode;
-export function h(tag: 'h3', attrs?: IElementAttrs, ...children: FactoryChild[]): VNode;
-export function h(tag: 'h4', attrs?: IElementAttrs, ...children: FactoryChild[]): VNode;
-export function h(tag: 'h5', attrs?: IElementAttrs, ...children: FactoryChild[]): VNode;
-export function h(tag: 'h6', attrs?: IElementAttrs, ...children: FactoryChild[]): VNode;
-export function h(tag: 'header', attrs?: IElementAttrs, ...children: FactoryChild[]): VNode;
-export function h(tag: 'hr', attrs?: IElementAttrs, ...children: FactoryChild[]): VNode;
-export function h(tag: 'i', attrs?: IElementAttrs, ...children: FactoryChild[]): VNode;
-export function h(tag: 'iframe', attrs?: IIFrameAttrs, ...children: FactoryChild[]): VNode;
-export function h(tag: 'img', attrs?: IImageAttrs, ...children: FactoryChild[]): VNode;
-export function h(tag: 'input', attrs?: IInputAttrs, ...children: FactoryChild[]): VNode;
-export function h(tag: 'ins', attrs?: IModAttrs, ...children: FactoryChild[]): VNode;
-export function h(tag: 'kbd', attrs?: IElementAttrs, ...children: FactoryChild[]): VNode;
-export function h(tag: 'label', attrs?: ILabelAttrs, ...children: FactoryChild[]): VNode;
-export function h(tag: 'legend', attrs?: IElementAttrs, ...children: FactoryChild[]): VNode;
-export function h(tag: 'li', attrs?: ILIAttrs, ...children: FactoryChild[]): VNode;
-export function h(tag: 'main', attrs?: IElementAttrs, ...children: FactoryChild[]): VNode;
-export function h(tag: 'map', attrs?: IMapAttrs, ...children: FactoryChild[]): VNode;
-export function h(tag: 'mark', attrs?: IElementAttrs, ...children: FactoryChild[]): VNode;
-export function h(tag: 'meter', attrs?: IMeterAttrs, ...children: FactoryChild[]): VNode;
-export function h(tag: 'nav', attrs?: IElementAttrs, ...children: FactoryChild[]): VNode;
-export function h(tag: 'noscript', attrs?: IElementAttrs, ...children: FactoryChild[]): VNode;
-export function h(tag: 'object', attrs?: IObjectAttrs, ...children: FactoryChild[]): VNode;
-export function h(tag: 'ol', attrs?: IOListAttrs, ...children: FactoryChild[]): VNode;
-export function h(tag: 'optgroup', attrs?: IOptGroupAttrs, ...children: FactoryChild[]): VNode;
-export function h(tag: 'option', attrs?: IOptionAttrs, ...children: FactoryChild[]): VNode;
-export function h(tag: 'output', attrs?: IOutputAttrs, ...children: FactoryChild[]): VNode;
-export function h(tag: 'p', attrs?: IElementAttrs, ...children: FactoryChild[]): VNode;
-export function h(tag: 'param', attrs?: IElementAttrs, ...children: FactoryChild[]): VNode;
-export function h(tag: 'pre', attrs?: IElementAttrs, ...children: FactoryChild[]): VNode;
-export function h(tag: 'progress', attrs?: IProgressAttrs, ...children: FactoryChild[]): VNode;
-export function h(tag: 'q', attrs?: IElementAttrs, ...children: FactoryChild[]): VNode;
-export function h(tag: 'rp', attrs?: IElementAttrs, ...children: FactoryChild[]): VNode;
-export function h(tag: 'rt', attrs?: IElementAttrs, ...children: FactoryChild[]): VNode;
-export function h(tag: 'ruby', attrs?: IElementAttrs, ...children: FactoryChild[]): VNode;
-export function h(tag: 's', attrs?: IElementAttrs, ...children: FactoryChild[]): VNode;
-export function h(tag: 'samp', attrs?: IElementAttrs, ...children: FactoryChild[]): VNode;
-export function h(tag: 'section', attrs?: IElementAttrs, ...children: FactoryChild[]): VNode;
-export function h(tag: 'select', attrs?: ISelectAttrs, ...children: FactoryChild[]): VNode;
-export function h(tag: 'small', attrs?: IElementAttrs, ...children: FactoryChild[]): VNode;
-export function h(tag: 'source', attrs?: ISourceAttrs, ...children: FactoryChild[]): VNode;
-export function h(tag: 'span', attrs?: IElementAttrs, ...children: FactoryChild[]): VNode;
-export function h(tag: 'strong', attrs?: IElementAttrs, ...children: FactoryChild[]): VNode;
-export function h(tag: 'sub', attrs?: IElementAttrs, ...children: FactoryChild[]): VNode;
-export function h(tag: 'summary', attrs?: IElementAttrs, ...children: FactoryChild[]): VNode;
-export function h(tag: 'sup', attrs?: IElementAttrs, ...children: FactoryChild[]): VNode;
-export function h(tag: 'table', attrs?: IElementAttrs, ...children: FactoryChild[]): VNode;
-export function h(tag: 'tbody', attrs?: IElementAttrs, ...children: FactoryChild[]): VNode;
-export function h(tag: 'td', attrs?: ITableDataCellAttrs, ...children: FactoryChild[]): VNode;
-export function h(tag: 'textarea', attrs?: ITextAreaAttrs, ...children: FactoryChild[]): VNode;
-export function h(tag: 'tfoot', attrs?: IElementAttrs, ...children: FactoryChild[]): VNode;
-export function h(tag: 'th', attrs?: ITableHeaderCellAttrs, ...children: FactoryChild[]): VNode;
-export function h(tag: 'thead', attrs?: IElementAttrs, ...children: FactoryChild[]): VNode;
-export function h(tag: 'time', attrs?: ITimeAttrs, ...children: FactoryChild[]): VNode;
-export function h(tag: 'title', attrs?: IElementAttrs, ...children: FactoryChild[]): VNode;
-export function h(tag: 'tr', attrs?: IElementAttrs, ...children: FactoryChild[]): VNode;
-export function h(tag: 'track', attrs?: ITrackAttrs, ...children: FactoryChild[]): VNode;
-export function h(tag: 'u', attrs?: IElementAttrs, ...children: FactoryChild[]): VNode;
-export function h(tag: 'ul', attrs?: IElementAttrs, ...children: FactoryChild[]): VNode;
-export function h(tag: 'var', attrs?: IElementAttrs, ...children: FactoryChild[]): VNode;
-export function h(tag: 'video', attrs?: IVideoAttrs, ...children: FactoryChild[]): VNode;
-export function h(tag: 'wbr', attrs?: IElementAttrs, ...children: FactoryChild[]): VNode;
-export function h(tag: string, attrs?: IElementAttrs, ...children: FactoryChild[]): VNode;
+export function h(tag: 'a', attrs?: IAnchorAttrs, ...children: h.FactoryChild[]): VNode;
+export function h(tag: 'abbr', attrs?: IElementAttrs, ...children: h.FactoryChild[]): VNode;
+export function h(tag: 'address', attrs?: IElementAttrs, ...children: h.FactoryChild[]): VNode;
+export function h(tag: 'area', attrs?: IAreaAttrs, ...children: h.FactoryChild[]): VNode;
+export function h(tag: 'article', attrs?: IElementAttrs, ...children: h.FactoryChild[]): VNode;
+export function h(tag: 'aside', attrs?: IElementAttrs, ...children: h.FactoryChild[]): VNode;
+export function h(tag: 'audio', attrs?: IMediaAttrs, ...children: h.FactoryChild[]): VNode;
+export function h(tag: 'b', attrs?: IElementAttrs, ...children: h.FactoryChild[]): VNode;
+export function h(tag: 'bdi', attrs?: IElementAttrs, ...children: h.FactoryChild[]): VNode;
+export function h(tag: 'bdo', attrs?: IElementAttrs, ...children: h.FactoryChild[]): VNode;
+export function h(tag: 'blockquote', attrs?: IQuoteAttrs, ...children: h.FactoryChild[]): VNode;
+export function h(tag: 'br', attrs?: IElementAttrs, ...children: h.FactoryChild[]): VNode;
+export function h(tag: 'button', attrs?: IButtonAttrs, ...children: h.FactoryChild[]): VNode;
+export function h(tag: 'canvas', attrs?: ICanvasAttrs, ...children: h.FactoryChild[]): VNode;
+export function h(tag: 'caption', attrs?: IElementAttrs, ...children: h.FactoryChild[]): VNode;
+export function h(tag: 'cite', attrs?: IElementAttrs, ...children: h.FactoryChild[]): VNode;
+export function h(tag: 'code', attrs?: IElementAttrs, ...children: h.FactoryChild[]): VNode;
+export function h(tag: 'col', attrs?: ITableColAttrs, ...children: h.FactoryChild[]): VNode;
+export function h(tag: 'colgroup', attrs?: ITableColAttrs, ...children: h.FactoryChild[]): VNode;
+export function h(tag: 'data', attrs?: IDataAttrs, ...children: h.FactoryChild[]): VNode;
+export function h(tag: 'datalist', attrs?: IElementAttrs, ...children: h.FactoryChild[]): VNode;
+export function h(tag: 'dd', attrs?: IElementAttrs, ...children: h.FactoryChild[]): VNode;
+export function h(tag: 'del', attrs?: IModAttrs, ...children: h.FactoryChild[]): VNode;
+export function h(tag: 'dfn', attrs?: IElementAttrs, ...children: h.FactoryChild[]): VNode;
+export function h(tag: 'div', attrs?: IElementAttrs, ...children: h.FactoryChild[]): VNode;
+export function h(tag: 'dl', attrs?: IElementAttrs, ...children: h.FactoryChild[]): VNode;
+export function h(tag: 'dt', attrs?: IElementAttrs, ...children: h.FactoryChild[]): VNode;
+export function h(tag: 'em', attrs?: IElementAttrs, ...children: h.FactoryChild[]): VNode;
+export function h(tag: 'embed', attrs?: IEmbedAttrs, ...children: h.FactoryChild[]): VNode;
+export function h(tag: 'fieldset', attrs?: IFieldSetAttrs, ...children: h.FactoryChild[]): VNode;
+export function h(tag: 'figcaption', attrs?: IElementAttrs, ...children: h.FactoryChild[]): VNode;
+export function h(tag: 'figure', attrs?: IElementAttrs, ...children: h.FactoryChild[]): VNode;
+export function h(tag: 'footer', attrs?: IElementAttrs, ...children: h.FactoryChild[]): VNode;
+export function h(tag: 'form', attrs?: IFormAttrs, ...children: h.FactoryChild[]): VNode;
+export function h(tag: 'h1', attrs?: IElementAttrs, ...children: h.FactoryChild[]): VNode;
+export function h(tag: 'h2', attrs?: IElementAttrs, ...children: h.FactoryChild[]): VNode;
+export function h(tag: 'h3', attrs?: IElementAttrs, ...children: h.FactoryChild[]): VNode;
+export function h(tag: 'h4', attrs?: IElementAttrs, ...children: h.FactoryChild[]): VNode;
+export function h(tag: 'h5', attrs?: IElementAttrs, ...children: h.FactoryChild[]): VNode;
+export function h(tag: 'h6', attrs?: IElementAttrs, ...children: h.FactoryChild[]): VNode;
+export function h(tag: 'header', attrs?: IElementAttrs, ...children: h.FactoryChild[]): VNode;
+export function h(tag: 'hr', attrs?: IElementAttrs, ...children: h.FactoryChild[]): VNode;
+export function h(tag: 'i', attrs?: IElementAttrs, ...children: h.FactoryChild[]): VNode;
+export function h(tag: 'iframe', attrs?: IIFrameAttrs, ...children: h.FactoryChild[]): VNode;
+export function h(tag: 'img', attrs?: IImageAttrs, ...children: h.FactoryChild[]): VNode;
+export function h(tag: 'input', attrs?: IInputAttrs, ...children: h.FactoryChild[]): VNode;
+export function h(tag: 'ins', attrs?: IModAttrs, ...children: h.FactoryChild[]): VNode;
+export function h(tag: 'kbd', attrs?: IElementAttrs, ...children: h.FactoryChild[]): VNode;
+export function h(tag: 'label', attrs?: ILabelAttrs, ...children: h.FactoryChild[]): VNode;
+export function h(tag: 'legend', attrs?: IElementAttrs, ...children: h.FactoryChild[]): VNode;
+export function h(tag: 'li', attrs?: ILIAttrs, ...children: h.FactoryChild[]): VNode;
+export function h(tag: 'main', attrs?: IElementAttrs, ...children: h.FactoryChild[]): VNode;
+export function h(tag: 'map', attrs?: IMapAttrs, ...children: h.FactoryChild[]): VNode;
+export function h(tag: 'mark', attrs?: IElementAttrs, ...children: h.FactoryChild[]): VNode;
+export function h(tag: 'meter', attrs?: IMeterAttrs, ...children: h.FactoryChild[]): VNode;
+export function h(tag: 'nav', attrs?: IElementAttrs, ...children: h.FactoryChild[]): VNode;
+export function h(tag: 'noscript', attrs?: IElementAttrs, ...children: h.FactoryChild[]): VNode;
+export function h(tag: 'object', attrs?: IObjectAttrs, ...children: h.FactoryChild[]): VNode;
+export function h(tag: 'ol', attrs?: IOListAttrs, ...children: h.FactoryChild[]): VNode;
+export function h(tag: 'optgroup', attrs?: IOptGroupAttrs, ...children: h.FactoryChild[]): VNode;
+export function h(tag: 'option', attrs?: IOptionAttrs, ...children: h.FactoryChild[]): VNode;
+export function h(tag: 'output', attrs?: IOutputAttrs, ...children: h.FactoryChild[]): VNode;
+export function h(tag: 'p', attrs?: IElementAttrs, ...children: h.FactoryChild[]): VNode;
+export function h(tag: 'param', attrs?: IElementAttrs, ...children: h.FactoryChild[]): VNode;
+export function h(tag: 'pre', attrs?: IElementAttrs, ...children: h.FactoryChild[]): VNode;
+export function h(tag: 'progress', attrs?: IProgressAttrs, ...children: h.FactoryChild[]): VNode;
+export function h(tag: 'q', attrs?: IElementAttrs, ...children: h.FactoryChild[]): VNode;
+export function h(tag: 'rp', attrs?: IElementAttrs, ...children: h.FactoryChild[]): VNode;
+export function h(tag: 'rt', attrs?: IElementAttrs, ...children: h.FactoryChild[]): VNode;
+export function h(tag: 'ruby', attrs?: IElementAttrs, ...children: h.FactoryChild[]): VNode;
+export function h(tag: 's', attrs?: IElementAttrs, ...children: h.FactoryChild[]): VNode;
+export function h(tag: 'samp', attrs?: IElementAttrs, ...children: h.FactoryChild[]): VNode;
+export function h(tag: 'section', attrs?: IElementAttrs, ...children: h.FactoryChild[]): VNode;
+export function h(tag: 'select', attrs?: ISelectAttrs, ...children: h.FactoryChild[]): VNode;
+export function h(tag: 'small', attrs?: IElementAttrs, ...children: h.FactoryChild[]): VNode;
+export function h(tag: 'source', attrs?: ISourceAttrs, ...children: h.FactoryChild[]): VNode;
+export function h(tag: 'span', attrs?: IElementAttrs, ...children: h.FactoryChild[]): VNode;
+export function h(tag: 'strong', attrs?: IElementAttrs, ...children: h.FactoryChild[]): VNode;
+export function h(tag: 'sub', attrs?: IElementAttrs, ...children: h.FactoryChild[]): VNode;
+export function h(tag: 'summary', attrs?: IElementAttrs, ...children: h.FactoryChild[]): VNode;
+export function h(tag: 'sup', attrs?: IElementAttrs, ...children: h.FactoryChild[]): VNode;
+export function h(tag: 'table', attrs?: IElementAttrs, ...children: h.FactoryChild[]): VNode;
+export function h(tag: 'tbody', attrs?: IElementAttrs, ...children: h.FactoryChild[]): VNode;
+export function h(tag: 'td', attrs?: ITableDataCellAttrs, ...children: h.FactoryChild[]): VNode;
+export function h(tag: 'textarea', attrs?: ITextAreaAttrs, ...children: h.FactoryChild[]): VNode;
+export function h(tag: 'tfoot', attrs?: IElementAttrs, ...children: h.FactoryChild[]): VNode;
+export function h(tag: 'th', attrs?: ITableHeaderCellAttrs, ...children: h.FactoryChild[]): VNode;
+export function h(tag: 'thead', attrs?: IElementAttrs, ...children: h.FactoryChild[]): VNode;
+export function h(tag: 'time', attrs?: ITimeAttrs, ...children: h.FactoryChild[]): VNode;
+export function h(tag: 'title', attrs?: IElementAttrs, ...children: h.FactoryChild[]): VNode;
+export function h(tag: 'tr', attrs?: IElementAttrs, ...children: h.FactoryChild[]): VNode;
+export function h(tag: 'track', attrs?: ITrackAttrs, ...children: h.FactoryChild[]): VNode;
+export function h(tag: 'u', attrs?: IElementAttrs, ...children: h.FactoryChild[]): VNode;
+export function h(tag: 'ul', attrs?: IElementAttrs, ...children: h.FactoryChild[]): VNode;
+export function h(tag: 'var', attrs?: IElementAttrs, ...children: h.FactoryChild[]): VNode;
+export function h(tag: 'video', attrs?: IVideoAttrs, ...children: h.FactoryChild[]): VNode;
+export function h(tag: 'wbr', attrs?: IElementAttrs, ...children: h.FactoryChild[]): VNode;
+export function h(tag: string, attrs?: IElementAttrs, ...children: h.FactoryChild[]): VNode;
 export function h(tag: string, first?: any): VNode {
   // Setup the variables to hold the parsed data.
   let attrs: any;
@@ -807,6 +804,113 @@ export function h(tag: string, first?: any): VNode {
 
   // Return a new virtual DOM node.
   return Private.createElementVNode(tag, attrs, children);
+}
+
+
+/**
+ * The namespace for the `h()` function statics.
+ */
+export
+namespace h {
+  export type FactoryChild = (string | VNode) | Array<string | VNode>;
+  export type Factory<T extends IVNodeAttrs> = (attrs?: T, ...children: FactoryChild[]) => VNode;
+  export const a: Factory<IAnchorAttrs> = h.bind(void 0, 'a');
+  export const abbr: Factory<IElementAttrs> = h.bind(void 0, 'abbr');
+  export const address: Factory<IElementAttrs> = h.bind(void 0, 'address');
+  export const area: Factory<IAreaAttrs> = h.bind(void 0, 'area');
+  export const article: Factory<IElementAttrs> = h.bind(void 0, 'article');
+  export const aside: Factory<IElementAttrs> = h.bind(void 0, 'aside');
+  export const audio: Factory<IMediaAttrs> = h.bind(void 0, 'audio');
+  export const b: Factory<IElementAttrs> = h.bind(void 0, 'b');
+  export const bdi: Factory<IElementAttrs> = h.bind(void 0, 'bdi');
+  export const bdo: Factory<IElementAttrs> = h.bind(void 0, 'bdo');
+  export const blockquote: Factory<IQuoteAttrs> = h.bind(void 0, 'blockquote');
+  export const br: Factory<IElementAttrs> = h.bind(void 0, 'br');
+  export const button: Factory<IButtonAttrs> = h.bind(void 0, 'button');
+  export const canvas: Factory<ICanvasAttrs> = h.bind(void 0, 'canvas');
+  export const caption: Factory<IElementAttrs> = h.bind(void 0, 'caption');
+  export const cite: Factory<IElementAttrs> = h.bind(void 0, 'cite');
+  export const code: Factory<IElementAttrs> = h.bind(void 0, 'code');
+  export const col: Factory<ITableColAttrs> = h.bind(void 0, 'col');
+  export const colgroup: Factory<ITableColAttrs> = h.bind(void 0, 'colgroup');
+  export const data: Factory<IDataAttrs> = h.bind(void 0, 'data');
+  export const datalist: Factory<IElementAttrs> = h.bind(void 0, 'datalist');
+  export const dd: Factory<IElementAttrs> = h.bind(void 0, 'dd');
+  export const del: Factory<IModAttrs> = h.bind(void 0, 'del');
+  export const dfn: Factory<IElementAttrs> = h.bind(void 0, 'dfn');
+  export const div: Factory<IElementAttrs> = h.bind(void 0, 'div');
+  export const dl: Factory<IElementAttrs> = h.bind(void 0, 'dl');
+  export const dt: Factory<IElementAttrs> = h.bind(void 0, 'dt');
+  export const em: Factory<IElementAttrs> = h.bind(void 0, 'em');
+  export const embed: Factory<IEmbedAttrs> = h.bind(void 0, 'embed');
+  export const fieldset: Factory<IFieldSetAttrs> = h.bind(void 0, 'fieldset');
+  export const figcaption: Factory<IElementAttrs> = h.bind(void 0, 'figcaption');
+  export const figure: Factory<IElementAttrs> = h.bind(void 0, 'figure');
+  export const footer: Factory<IElementAttrs> = h.bind(void 0, 'footer');
+  export const form: Factory<IFormAttrs> = h.bind(void 0, 'form');
+  export const h1: Factory<IElementAttrs> = h.bind(void 0, 'h1');
+  export const h2: Factory<IElementAttrs> = h.bind(void 0, 'h2');
+  export const h3: Factory<IElementAttrs> = h.bind(void 0, 'h3');
+  export const h4: Factory<IElementAttrs> = h.bind(void 0, 'h4');
+  export const h5: Factory<IElementAttrs> = h.bind(void 0, 'h5');
+  export const h6: Factory<IElementAttrs> = h.bind(void 0, 'h6');
+  export const header: Factory<IElementAttrs> = h.bind(void 0, 'header');
+  export const hr: Factory<IElementAttrs> = h.bind(void 0, 'hr');
+  export const i: Factory<IElementAttrs> = h.bind(void 0, 'i');
+  export const iframe: Factory<IIFrameAttrs> = h.bind(void 0, 'iframe');
+  export const img: Factory<IImageAttrs> = h.bind(void 0, 'img');
+  export const input: Factory<IInputAttrs> = h.bind(void 0, 'input');
+  export const ins: Factory<IModAttrs> = h.bind(void 0, 'ins');
+  export const kbd: Factory<IElementAttrs> = h.bind(void 0, 'kbd');
+  export const label: Factory<ILabelAttrs> = h.bind(void 0, 'label');
+  export const legend: Factory<IElementAttrs> = h.bind(void 0, 'legend');
+  export const li: Factory<ILIAttrs> = h.bind(void 0, 'li');
+  export const main: Factory<IElementAttrs> = h.bind(void 0, 'main');
+  export const map: Factory<IMapAttrs> = h.bind(void 0, 'map');
+  export const mark: Factory<IElementAttrs> = h.bind(void 0, 'mark');
+  export const meter: Factory<IMeterAttrs> = h.bind(void 0, 'meter');
+  export const nav: Factory<IElementAttrs> = h.bind(void 0, 'nav');
+  export const noscript: Factory<IElementAttrs> = h.bind(void 0, 'noscript');
+  export const object: Factory<IObjectAttrs> = h.bind(void 0, 'object');
+  export const ol: Factory<IOListAttrs> = h.bind(void 0, 'ol');
+  export const optgroup: Factory<IOptGroupAttrs> = h.bind(void 0, 'optgroup');
+  export const option: Factory<IOptionAttrs> = h.bind(void 0, 'option');
+  export const output: Factory<IOutputAttrs> = h.bind(void 0, 'output');
+  export const p: Factory<IElementAttrs> = h.bind(void 0, 'p');
+  export const param: Factory<IElementAttrs> = h.bind(void 0, 'param');
+  export const pre: Factory<IElementAttrs> = h.bind(void 0, 'pre');
+  export const progress: Factory<IProgressAttrs> = h.bind(void 0, 'progress');
+  export const q: Factory<IElementAttrs> = h.bind(void 0, 'q');
+  export const rp: Factory<IElementAttrs> = h.bind(void 0, 'rp');
+  export const rt: Factory<IElementAttrs> = h.bind(void 0, 'rt');
+  export const ruby: Factory<IElementAttrs> = h.bind(void 0, 'ruby');
+  export const s: Factory<IElementAttrs> = h.bind(void 0, 's');
+  export const samp: Factory<IElementAttrs> = h.bind(void 0, 'samp');
+  export const section: Factory<IElementAttrs> = h.bind(void 0, 'section');
+  export const select: Factory<ISelectAttrs> = h.bind(void 0, 'select');
+  export const small: Factory<IElementAttrs> = h.bind(void 0, 'small');
+  export const source: Factory<ISourceAttrs> = h.bind(void 0, 'source');
+  export const span: Factory<IElementAttrs> = h.bind(void 0, 'span');
+  export const strong: Factory<IElementAttrs> = h.bind(void 0, 'strong');
+  export const sub: Factory<IElementAttrs> = h.bind(void 0, 'sub');
+  export const summary: Factory<IElementAttrs> = h.bind(void 0, 'summary');
+  export const sup: Factory<IElementAttrs> = h.bind(void 0, 'sup');
+  export const table: Factory<IElementAttrs> = h.bind(void 0, 'table');
+  export const tbody: Factory<IElementAttrs> = h.bind(void 0, 'tbody');
+  export const td: Factory<ITableDataCellAttrs> = h.bind(void 0, 'td');
+  export const textarea: Factory<ITextAreaAttrs> = h.bind(void 0, 'textarea');
+  export const tfoot: Factory<IElementAttrs> = h.bind(void 0, 'tfoot');
+  export const th: Factory<ITableHeaderCellAttrs> = h.bind(void 0, 'th');
+  export const thead: Factory<IElementAttrs> = h.bind(void 0, 'thead');
+  export const time: Factory<ITimeAttrs> = h.bind(void 0, 'time');
+  export const title: Factory<IElementAttrs> = h.bind(void 0, 'title');
+  export const tr: Factory<IElementAttrs> = h.bind(void 0, 'tr');
+  export const track: Factory<ITrackAttrs> = h.bind(void 0, 'track');
+  export const u: Factory<IElementAttrs> = h.bind(void 0, 'u');
+  export const ul: Factory<IElementAttrs> = h.bind(void 0, 'ul');
+  export const var_: Factory<IElementAttrs> = h.bind(void 0, 'var');
+  export const video: Factory<IVideoAttrs> = h.bind(void 0, 'video');
+  export const wbr: Factory<IElementAttrs> = h.bind(void 0, 'wbr');
 }
 
 
