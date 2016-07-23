@@ -148,7 +148,7 @@ const TAB_BAR_NODE = (
 
 
 /**
- * A widget which displays titles as a row or column of tabs.
+ * A widget which displays titles as a single row or column of tabs.
  */
 export
 class TabBar extends Widget {
@@ -162,7 +162,9 @@ class TabBar extends Widget {
     this.addClass(TAB_BAR_CLASS);
     this.setFlag(WidgetFlag.DisallowLayout);
     this._tabsMovable = options.tabsMovable || false;
+    this._orientation = options.orientation || 'vertical';
     this._renderer = options.renderer || TabBar.defaultRenderer;
+    this.addClass(`p-mod-${this._orientation}`);
   }
 
   /**
@@ -348,6 +350,40 @@ class TabBar extends Widget {
 
     // Schedule an update of the tabs.
     this.update();
+  }
+
+  /**
+   * Get the orientation of the tab bar.
+   *
+   * #### Notes
+   * This controls whether the tabs are arranged in a row or column.
+   */
+  get orientation(): TabBar.Orientation {
+    return this._orientation;
+  }
+
+  /**
+   * Set the orientation of the tab bar.
+   *
+   * #### Notes
+   * This controls whether the tabs are arranged in a row or column.
+   */
+  set orientation(value: TabBar.Orientation) {
+    // Do nothing if the orientation does not change.
+    if (this._orientation === value) {
+      return;
+    }
+
+    // Release the mouse before making any changes.
+    this._releaseMouse();
+
+    // Swap the orientation values.
+    let old = this._orientation;
+    this._orientation = value;
+
+    // Toggle the orientation classes.
+    this.removeClass(`p-mod-${old}`);
+    this.addClass(`p-mod-${value}`);
   }
 
   /**
@@ -970,6 +1006,7 @@ class TabBar extends Widget {
   private _tabsMovable: boolean;
   private _renderer: TabBar.IRenderer;
   private _titles = new Vector<Title>();
+  private _orientation: TabBar.Orientation;
   private _dragData: Private.DragData = null;
 }
 
@@ -987,10 +1024,23 @@ defineSignal(TabBar.prototype, 'tabDetachRequested');
 export
 namespace TabBar {
   /**
+   * A type alias for a tab bar orientation.
+   */
+  export
+  type Orientation = 'horizontal' | 'vertical';
+
+  /**
    * An options object for creating a tab bar.
    */
   export
   interface IOptions {
+    /**
+     * The layout orientation of the tab bar.
+     *
+     * The default is `horizontal`.
+     */
+    orientation?: TabBar.Orientation;
+
     /**
      * Whether the tabs are movable by the user.
      *
