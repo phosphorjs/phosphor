@@ -1145,7 +1145,7 @@ namespace Private {
   function collectKeys(host: HTMLElement, content: VNode[]): IKeyMap {
     let node = host.firstChild;
     let keyed: IKeyMap = Object.create(null);
-    for (var i = 0, n = content.length; i < n; ++i) {
+    for (let i = 0, n = content.length; i < n; ++i) {
       let vNode = content[i];
       if (vNode.type === 'element') {
         let key = vNode.attrs.key;
@@ -1175,7 +1175,7 @@ namespace Private {
    * Create and add child content to a newly created DOM node.
    */
   function addContent(node: HTMLElement, content: VNode[]): void {
-    for (var i = 0, n = content.length; i < n; ++i) {
+    for (let i = 0, n = content.length; i < n; ++i) {
       node.appendChild(createDOMNode(content[i]));
     }
   }
