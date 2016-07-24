@@ -121,6 +121,11 @@ const TRANSITION_DURATION = 150;  // Keep in sync with CSS.
 
 /**
  * A widget which displays titles as a single row or column of tabs.
+ *
+ * #### Notes
+ * If CSS transforms are used to rotate nodes for vertically oriented
+ * text, then tab dragging will not work correctly. The `tabsMovable`
+ * property should be set to `false` when rotating nodes from CSS.
  */
 export
 class TabBar extends Widget {
@@ -963,7 +968,21 @@ namespace TabBar {
    * A type alias for a tab bar orientation.
    */
   export
-  type Orientation = 'horizontal' | 'vertical';
+  type Orientation = (
+    /**
+     * The tabs are arranged in a single row, left-to-right.
+     *
+     * The tab text orientation is horizontal.
+     */
+    'horizontal' |
+
+    /**
+     * The tabs are arranged in a single column, top-to-bottom.
+     *
+     * The tab text orientation is horizontal.
+     */
+    'vertical'
+  );
 
   /**
    * An options object for creating a tab bar.
