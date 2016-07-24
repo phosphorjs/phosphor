@@ -785,7 +785,7 @@ class DockPanel extends Widget {
    * Create a new tab panel for adding to the dock panel.
    */
   private _createTabPanel(): TabPanel {
-    let panel = new TabPanel();
+    let panel = new TabPanel({ tabsMovable: true });
     panel.addClass(TAB_PANEL_CLASS);
     panel.tabBar.tabDetachRequested.connect(this._onTabDetachRequested, this);
     panel.stackedPanel.widgetRemoved.connect(this._onWidgetRemoved, this);
