@@ -221,7 +221,6 @@ body.p-mod-override-cursor * {
 |----------------------------------------------------------------------------*/
 .p-TabBar {
   display: flex;
-  flex-direction: column;
   -webkit-user-select: none;
   -moz-user-select: none;
   -ms-user-select: none;
@@ -229,26 +228,32 @@ body.p-mod-override-cursor * {
 }
 
 
-.p-TabBar-header,
-.p-TabBar-footer {
-  flex: 0 0 auto;
+.p-TabBar.p-mod-horizontal {
+  flex-direction: row;
 }
 
 
-.p-TabBar-body {
-  display: flex;
-  flex-direction: row;
-  flex: 1 1 auto;
+.p-TabBar.p-mod-vertical {
+  flex-direction: column;
 }
 
 
 .p-TabBar-content {
   display: flex;
-  flex-direction: row;
   flex: 1 1 auto;
   margin: 0;
   padding: 0;
   list-style-type: none;
+}
+
+
+.p-TabBar.p-mod-horizontal > .p-TabBar-content {
+  flex-direction: row;
+}
+
+
+.p-TabBar.p-mod-vertical > .p-TabBar-content {
+  flex-direction: column;
 }
 
 
@@ -273,10 +278,25 @@ body.p-mod-override-cursor * {
 }
 
 
+.p-TabBar-tab.p-mod-hidden {
+  display: none;
+}
+
+
 .p-TabBar.p-mod-dragging .p-TabBar-tab {
   position: relative;
+}
+
+
+.p-TabBar.p-mod-horizontal.p-mod-dragging .p-TabBar-tab {
   left: 0;
   transition: left 150ms ease; /* keep in sync with JS */
+}
+
+
+.p-TabBar.p-mod-vertical.p-mod-dragging .p-TabBar-tab {
+  top: 0;
+  transition: top 150ms ease; /* keep in sync with JS */
 }
 
 
@@ -319,7 +339,6 @@ body.p-mod-override-cursor * {
 }
 
 
-.p-TabBar-tab.p-mod-hidden,
 .p-DockPanel-overlay.p-mod-hidden {
   display: none;
 }

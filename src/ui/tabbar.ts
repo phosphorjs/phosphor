@@ -64,24 +64,9 @@ import {
 const TAB_BAR_CLASS = 'p-TabBar';
 
 /**
- * The class name added to a tab bar body node.
- */
-const BODY_CLASS = 'p-TabBar-body';
-
-/**
- * The class name added to a tab bar header node.
- */
-const HEADER_CLASS = 'p-TabBar-header';
-
-/**
  * The class name added to a tab bar content node.
  */
 const CONTENT_CLASS = 'p-TabBar-content';
-
-/**
- * The class name added to a tab bar footer node.
- */
-const FOOTER_CLASS = 'p-TabBar-footer';
 
 /**
  * The class name added to a tab bar tab.
@@ -138,11 +123,7 @@ const TRANSITION_DURATION = 150;  // Keep in sync with CSS.
  */
 const TAB_BAR_NODE = (
   h.div(
-    h.div({ className: HEADER_CLASS }),
-    h.div({ className: BODY_CLASS },
-      h.ul({ className: CONTENT_CLASS })
-    ),
-    h.div({ className: FOOTER_CLASS })
+    h.ul({ className: CONTENT_CLASS })
   )
 );
 
@@ -221,42 +202,6 @@ class TabBar extends Widget {
    * This signal is only emitted once per drag cycle.
    */
   tabDetachRequested: ISignal<TabBar, TabBar.ITabDetachRequestedArgs>;
-
-  /**
-   * Get the tab bar header node.
-   *
-   * #### Notes
-   * This node can be used to add extra content to the tab bar header.
-   *
-   * This is a read-only property.
-   */
-  get headerNode(): HTMLDivElement {
-    return this.node.getElementsByClassName(HEADER_CLASS)[0] as HTMLDivElement;
-  }
-
-  /**
-   * Get the tab bar body node.
-   *
-   * #### Notes
-   * This node can be used to add extra content to the tab bar.
-   *
-   * This is a read-only property.
-   */
-  get bodyNode(): HTMLDivElement {
-    return this.node.getElementsByClassName(BODY_CLASS)[0] as HTMLDivElement;
-  }
-
-  /**
-   * Get the tab bar footer node.
-   *
-   * #### Notes
-   * This node can be used to add extra content to the tab bar footer.
-   *
-   * This is a read-only property.
-   */
-  get footerNode(): HTMLDivElement {
-    return this.node.getElementsByClassName(FOOTER_CLASS)[0] as HTMLDivElement;
-  }
 
   /**
    * Get the tab bar content node.
