@@ -30,7 +30,7 @@ import {
 } from '../core/disposable';
 
 import {
-  Message
+  Message, sendMessage
 } from '../core/messaging';
 
 import {
@@ -54,7 +54,7 @@ import {
 } from './vdom';
 
 import {
-  Widget, WidgetFlag
+  Widget, WidgetFlag, WidgetMessage
 } from './widget';
 
 
@@ -946,13 +946,13 @@ class TabBar extends Widget {
         this._currentIndex--;
       }
 
+      // Update the tabs immediately.
+      sendMessage(this, WidgetMessage.UpdateRequest);
+
       // Emit the tab moved signal.
       this.tabMoved.emit({
         fromIndex: i, toIndex: j, title: this._titles.at(j)
       });
-
-      // Schedule an update of the tabs.
-      this.update();
     }, TRANSITION_DURATION);
   }
 
