@@ -148,8 +148,11 @@ class TabBar extends Widget {
     this.addClass(TAB_BAR_CLASS);
     this.setFlag(WidgetFlag.DisallowLayout);
     this._tabsMovable = options.tabsMovable || false;
+    this._allowDeselect = options.allowDeselect || false;
     this._orientation = options.orientation || 'horizontal';
     this._renderer = options.renderer || TabBar.defaultRenderer;
+    this._insertBehavior = options.insertBehavior || 'select-tab-if-needed';
+    this._removeBehavior = options.removeBehavior || 'select-previous-tab';
     this.addClass(`p-mod-${this._orientation}`);
   }
 
@@ -340,7 +343,7 @@ class TabBar extends Widget {
    * Get whether the tabs are movable by the user.
    *
    * #### Notes
-   * Tabs can be moved programmatically, irrespective of this value.
+   * Tabs can always be moved programmatically.
    */
   get tabsMovable(): boolean {
     return this._tabsMovable;
@@ -350,10 +353,58 @@ class TabBar extends Widget {
    * Set whether the tabs are movable by the user.
    *
    * #### Notes
-   * Tabs can be moved programmatically, irrespective of this value.
+   * Tabs can always be moved programmatically.
    */
   set tabsMovable(value: boolean) {
     this._tabsMovable = value;
+  }
+
+  /**
+   * Get whether a tab can be deselected by the user.
+   *
+   * #### Notes
+   * Tabs can be always be deselected programmatically.
+   */
+  get allowDeselect(): boolean {
+    return this._allowDeselect;
+  }
+
+  /**
+   * Set whether a tab can be deselected by the user.
+   *
+   * #### Notes
+   * Tabs can be always be deselected programmatically.
+   */
+  set allowDeselect(value: boolean) {
+    this._allowDeselect = value;
+  }
+
+  /**
+   * Get the selection behavior when inserting a tab.
+   */
+  get insertBehavior(): TabBar.InsertBehavior {
+    return this._insertBehavior;
+  }
+
+  /**
+   * Set the selection behavior when inserting a tab.
+   */
+  set insertBehavior(value: TabBar.InsertBehavior) {
+    this._insertBehavior = value;
+  }
+
+  /**
+   * Get the selection behavior when removing a tab.
+   */
+  get selectionBehaviorOnRemove(): TabBar.RemoveBehavior {
+    return this._removeBehavior;
+  }
+
+  /**
+   * Set the selection behavior when removing a tab.
+   */
+  set selectionBehaviorOnRemove(value: TabBar.RemoveBehavior) {
+    this._removeBehavior = value;
   }
 
   /**
@@ -954,10 +1005,13 @@ class TabBar extends Widget {
 
   private _currentIndex = -1;
   private _tabsMovable: boolean;
+  private _allowDeselect: boolean;
   private _renderer: TabBar.IRenderer;
   private _titles = new Vector<Title>();
   private _orientation: TabBar.Orientation;
   private _dragData: Private.DragData = null;
+  private _insertBehavior: TabBar.InsertBehavior;
+  private _removeBehavior: TabBar.RemoveBehavior;
 }
 
 
@@ -994,6 +1048,53 @@ namespace TabBar {
   );
 
   /**
+   * A type alias for the selection behavior on tab insert.
+   */
+  export
+  type InsertBehavior = (
+    /**
+     * The selected tab will not be changed.
+     */
+    'none' |
+
+    /**
+     * The inserted tab will be selected.
+     */
+    'select-tab' |
+
+    /**
+     * The inserted tab will be selected if the current tab is null.
+     */
+    'select-tab-if-needed'
+  );
+
+  /**
+   * A type alias for the selection behavior on tab remove.
+   */
+  export
+  type RemoveBehavior = (
+    /**
+     * No tab will be selected.
+     */
+    'none' |
+
+    /**
+     * The tab after the removed tab will be selected if possible.
+     */
+    'select-tab-after' |
+
+    /**
+     * The tab before the removed tab will be selected if possible.
+     */
+    'select-tab-before' |
+
+    /**
+     * The previously selected tab will be selected if possible.
+     */
+    'select-previous-tab'
+  );
+
+  /**
    * An options object for creating a tab bar.
    */
   export
@@ -1011,6 +1112,27 @@ namespace TabBar {
      * The default is `false`.
      */
     tabsMovable?: boolean;
+
+    /**
+     * Whether a tab can be deselected by the user.
+     *
+     * The default is `false`.
+     */
+    allowDeselect?: boolean;
+
+    /**
+     * The selection behavior when inserting a tab.
+     *
+     * The default is `'select-tab-if-needed'`.
+     */
+    insertBehavior?: TabBar.InsertBehavior;
+
+    /**
+     * The selection behavior when removing a tab.
+     *
+     * The default is `'select-previous-tab'`.
+     */
+    removeBehavior?: TabBar.RemoveBehavior;
 
     /**
      * A renderer to use with the tab bar.
