@@ -162,7 +162,7 @@ class TabBar extends Widget {
     this.addClass(TAB_BAR_CLASS);
     this.setFlag(WidgetFlag.DisallowLayout);
     this._tabsMovable = options.tabsMovable || false;
-    this._orientation = options.orientation || 'vertical';
+    this._orientation = options.orientation || 'horizontal';
     this._renderer = options.renderer || TabBar.defaultRenderer;
     this.addClass(`p-mod-${this._orientation}`);
   }
