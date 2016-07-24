@@ -799,8 +799,12 @@ class TabBar extends Widget {
       document.addEventListener('contextmenu', this, true);
     }
 
-    // Update the current index.
-    this.currentIndex = i;
+    // Update the current index as appropriate.
+    if (this._allowDeselect && this._currentIndex === i) {
+      this.currentIndex = -1;
+    } else {
+      this.currentIndex = i;
+    }
   }
 
   /**
