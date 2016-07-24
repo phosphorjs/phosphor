@@ -50,7 +50,7 @@ import {
 } from './title';
 
 import {
-  VNode, h, render
+  VNode, h, realize, render
 } from './vdom';
 
 import {
@@ -118,6 +118,15 @@ const DETACH_THRESHOLD = 20;
  */
 const TRANSITION_DURATION = 150;  // Keep in sync with CSS.
 
+/**
+ * The DOM structure for a TabBar.
+ */
+const TAB_BAR_NODE = (
+  h.div(
+    h.ul({ className: CONTENT_CLASS })
+  )
+);
+
 
 /**
  * A widget which displays titles as a single row or column of tabs.
@@ -135,7 +144,7 @@ class TabBar extends Widget {
    * @param options - The options for initializing the tab bar.
    */
   constructor(options: TabBar.IOptions = {}) {
-    super({ node: Private.createNode() });
+    super({ node: realize(TAB_BAR_NODE) });
     this.addClass(TAB_BAR_CLASS);
     this.setFlag(WidgetFlag.DisallowLayout);
     this._tabsMovable = options.tabsMovable || false;
@@ -1239,18 +1248,6 @@ namespace TabBar {
  * The namespace for the private module data.
  */
 namespace Private {
-  /**
-   * Create the DOM node for a tab bar.
-   */
-  export
-  function createNode(): HTMLElement {
-    let node = document.createElement('div');
-    let content = document.createElement('ul');
-    content.className = CONTENT_CLASS;
-    node.appendChild(content);
-    return node;
-  }
-
   /**
    * A struct which holds the drag data for a tab bar.
    */
