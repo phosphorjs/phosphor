@@ -468,6 +468,8 @@ class TabBar extends Widget {
       // Connect to the title changed signal.
       title.changed.connect(this._onTitleChanged, this);
 
+      // TODO handle insert behavior
+
       // Update the current index.
       if (this._currentIndex === -1) {
         this._currentIndex = j;
@@ -496,6 +498,8 @@ class TabBar extends Widget {
 
     // Move the title to the new location.
     move(this._titles, i, j);
+
+    // TODO handle insert behavior
 
     // Adjust the current index.
     let ci = this._currentIndex;
@@ -551,6 +555,8 @@ class TabBar extends Widget {
 
     // Disconnect from the title changed signal.
     title.changed.disconnect(this._onTitleChanged, this);
+
+    // TODO handle remove behavior
 
     // Update the current index.
     if (this._currentIndex === i) {
