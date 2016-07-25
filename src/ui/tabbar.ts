@@ -396,14 +396,14 @@ class TabBar extends Widget {
   /**
    * Get the selection behavior when removing a tab.
    */
-  get selectionBehaviorOnRemove(): TabBar.RemoveBehavior {
+  get removeBehavior(): TabBar.RemoveBehavior {
     return this._removeBehavior;
   }
 
   /**
    * Set the selection behavior when removing a tab.
    */
-  set selectionBehaviorOnRemove(value: TabBar.RemoveBehavior) {
+  set removeBehavior(value: TabBar.RemoveBehavior) {
     this._removeBehavior = value;
   }
 
@@ -468,18 +468,8 @@ class TabBar extends Widget {
       // Connect to the title changed signal.
       title.changed.connect(this._onTitleChanged, this);
 
-      // TODO handle insert behavior
-
-      // Update the current index.
-      if (this._currentIndex === -1) {
-        this._currentIndex = j;
-        this.currentChanged.emit({
-          previousIndex: -1, previousTitle: null,
-          currentIndex: j, currentTitle: title
-        });
-      } else if (this._currentIndex >= j) {
-        this._currentIndex++;
-      }
+      // Update the current index for the insert.
+      this._updateCurrentForInsert(j, title);
 
       // Schedule an update of the tabs.
       this.update();
@@ -499,17 +489,8 @@ class TabBar extends Widget {
     // Move the title to the new location.
     move(this._titles, i, j);
 
-    // TODO handle insert behavior
-
-    // Adjust the current index.
-    let ci = this._currentIndex;
-    if (ci === i) {
-      this._currentIndex = j;
-    } else if (ci < i && ci >= j) {
-      this._currentIndex++;
-    } else if (ci > i && ci <= j) {
-      this._currentIndex--;
-    }
+    // Update the current index for the move.
+    this._updateCurrentForMove(i, j);
 
     // Schedule an update of the tabs.
     this.update();
@@ -556,20 +537,8 @@ class TabBar extends Widget {
     // Disconnect from the title changed signal.
     title.changed.disconnect(this._onTitleChanged, this);
 
-    // TODO handle remove behavior
-
-    // Update the current index.
-    if (this._currentIndex === i) {
-      let ci = Math.min(i, this._titles.length - 1);
-      let ct = ci === -1 ? null : this._titles.at(ci);
-      this._currentIndex = ci;
-      this.currentChanged.emit({
-        previousIndex: i, previousTitle: title,
-        currentIndex: ci, currentTitle: ct
-      });
-    } else if (this._currentIndex > i) {
-      this._currentIndex--;
-    }
+    // Update the current index for the remove.
+    this._updateCurrentForRemove(i, title);
 
     // Schedule an update of the tabs.
     this.update();
@@ -947,23 +916,16 @@ class TabBar extends Widget {
       // Move the title to the new locations.
       move(this._titles, i, j);
 
-      // Update the current index.
-      let ci = this._currentIndex;
-      if (ci === i) {
-        this._currentIndex = j;
-      } else if (ci < i && ci >= j) {
-        this._currentIndex++;
-      } else if (ci > i && ci <= j) {
-        this._currentIndex--;
-      }
-
-      // Update the tabs immediately.
-      sendMessage(this, WidgetMessage.UpdateRequest);
+      // Update the current index for the move.
+      this._updateCurrentForMove(i, j);
 
       // Emit the tab moved signal.
       this.tabMoved.emit({
         fromIndex: i, toIndex: j, title: this._titles.at(j)
       });
+
+      // Update the tabs immediately to prevent flicker.
+      sendMessage(this, WidgetMessage.UpdateRequest);
     }, TRANSITION_DURATION);
   }
 
@@ -1004,6 +966,81 @@ class TabBar extends Widget {
     // Clear the dragging style classes.
     data.tab.classList.remove(DRAGGING_CLASS);
     this.removeClass(DRAGGING_CLASS);
+  }
+
+  /**
+   * Update the current index for a tab insert operation.
+   *
+   * This method accounts for the tab bar's insertion behavior when
+   * adjusting the current index and emitting the changed signal.
+   */
+  private _updateCurrentForInsert(i: number, title: Title): void {
+    // Lookup commonly used variables.
+    let ct = this.currentTitle;
+    let ci = this._currentIndex;
+    let bh = this._insertBehavior;
+
+    // Handle the behavior where the new tab is always selected.
+    if (bh === 'select-tab') {
+      this._currentIndex = i;
+      this.currentChanged.emit({
+        previousIndex: ci, previousTitle: ct,
+        currentIndex: i, currentTitle: title
+      });
+      return;
+    }
+
+    // Handle the behavior where the new tab is selected if needed.
+    if (bh === 'select-tab-if-needed' && ci === -1) {
+      this._currentIndex = i;
+      this.currentChanged.emit({
+        previousIndex: -1, previousTitle: null,
+        currentIndex: i, currentTitle: title
+      });
+      return;
+    }
+
+    // Otherwise, silently adjust the current index if needed.
+    if (ci >= i) this._currentIndex++;
+  }
+
+  /**
+   * Update the current index for a tab move operation.
+   *
+   * This method will not cause the actual current tab to change.
+   * It silently adjusts the index to account for the given move.
+   */
+  private _updateCurrentForMove(i: number, j: number): void {
+    if (this._currentIndex === i) {
+      this._currentIndex = j;
+    } else if (this._currentIndex < i && this._currentIndex >= j) {
+      this._currentIndex++;
+    } else if (this._currentIndex > i && this._currentIndex <= j) {
+      this._currentIndex--;
+    }
+  }
+
+  /**
+   * Update the current index for a tab remove operation.
+   *
+   * This method accounts for the tab bar's remove behavior when
+   * adjusting the current index and emitting the changed signal.
+   */
+  private _updateCurrentForRemove(i: number, title: Title): void {
+    // // TODO handle remove behavior
+
+    // // Update the current index.
+    // if (this._currentIndex === i) {
+    //   let ci = Math.min(i, this._titles.length - 1);
+    //   let ct = ci === -1 ? null : this._titles.at(ci);
+    //   this._currentIndex = ci;
+    //   this.currentChanged.emit({
+    //     previousIndex: i, previousTitle: title,
+    //     currentIndex: ci, currentTitle: ct
+    //   });
+    // } else if (this._currentIndex > i) {
+    //   this._currentIndex--;
+    // }
   }
 
   /**
