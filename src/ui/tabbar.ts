@@ -818,10 +818,16 @@ class TabBar extends Widget {
 
       // Fill in the rest of the drag data measurements.
       let tabRect = data.tab.getBoundingClientRect();
-      data.tabLeft = data.tab.offsetLeft;
-      data.tabWidth = tabRect.width;
-      data.tabPressX = data.pressX - tabRect.left;
-      data.tabLayout = Private.snapTabLayout(tabs);
+      if (this._orientation === 'horizontal') {
+        data.tabPos = data.tab.offsetLeft;
+        data.tabSize = tabRect.width;
+        data.tabPressPos = data.pressX - tabRect.left;
+      } else {
+        data.tabPos = data.tab.offsetTop;
+        data.tabSize = tabRect.height;
+        data.tabPressPos = data.pressY - tabRect.top;
+      }
+      data.tabLayout = Private.snapTabLayout(tabs, this._orientation);
       data.contentRect = this.contentNode.getBoundingClientRect();
       data.override = overrideCursor('default');
 
@@ -855,7 +861,7 @@ class TabBar extends Widget {
     }
 
     // Update the positions of the tabs.
-    Private.layoutTabs(tabs, data, event);
+    Private.layoutTabs(tabs, data, event, this._orientation);
   }
 
   /**
@@ -890,7 +896,7 @@ class TabBar extends Widget {
     }
 
     // Position the tab at its final resting position.
-    Private.finalizeTabPosition(data);
+    Private.finalizeTabPosition(data, this._orientation);
 
     // Remove the dragging class from the tab so it can be transitioned.
     data.tab.classList.remove(DRAGGING_CLASS);
@@ -1481,19 +1487,19 @@ namespace Private {
     index = -1;
 
     /**
-     * The offset left of the tab being dragged.
+     * The offset left/top of the tab being dragged.
      */
-    tabLeft = -1;
+    tabPos = -1;
 
     /**
-     * The offset width of the tab being dragged.
+     * The offset width/height of the tab being dragged.
      */
-    tabWidth = -1;
+    tabSize = -1;
 
     /**
-     * The original mouse X position in tab coordinates.
+     * The original mouse X/Y position in tab coordinates.
      */
-    tabPressX = -1;
+    tabPressPos = -1;
 
     /**
      * The tab target index upon mouse release.
@@ -1547,19 +1553,19 @@ namespace Private {
   export
   interface ITabLayout {
     /**
-     * The left margin value for the tab.
+     * The left/top margin value for the tab.
      */
     margin: number;
 
     /**
-     * The offset left position of the tab.
+     * The offset left/top position of the tab.
      */
-    left: number;
+    pos: number;
 
     /**
-     * The offset width of the tab.
+     * The offset width/height of the tab.
      */
-    width: number;
+    size: number;
   }
 
   /**
@@ -1574,15 +1580,26 @@ namespace Private {
    * Get a snapshot of the current tab layout values.
    */
   export
-  function snapTabLayout(tabs: HTMLCollection): ITabLayout[] {
+  function snapTabLayout(tabs: HTMLCollection, orientation: TabBar.Orientation): ITabLayout[] {
     let layout = new Array<ITabLayout>(tabs.length);
-    for (let i = 0, n = tabs.length; i < n; ++i) {
-      let node = tabs[i] as HTMLElement;
-      let left = node.offsetLeft;
-      let width = node.offsetWidth;
-      let cstyle = window.getComputedStyle(node);
-      let margin = parseInt(cstyle.marginLeft, 10) || 0;
-      layout[i] = { margin, left, width };
+    if (orientation === 'horizontal') {
+      for (let i = 0, n = tabs.length; i < n; ++i) {
+        let node = tabs[i] as HTMLElement;
+        let pos = node.offsetLeft;
+        let size = node.offsetWidth;
+        let cstyle = window.getComputedStyle(node);
+        let margin = parseInt(cstyle.marginLeft, 10) || 0;
+        layout[i] = { margin, pos, size };
+      }
+    } else {
+      for (let i = 0, n = tabs.length; i < n; ++i) {
+        let node = tabs[i] as HTMLElement;
+        let pos = node.offsetTop;
+        let size = node.offsetHeight;
+        let cstyle = window.getComputedStyle(node);
+        let margin = parseInt(cstyle.marginTop, 10) || 0;
+        layout[i] = { margin, pos, size };
+      }
     }
     return layout;
   }
@@ -1605,28 +1622,55 @@ namespace Private {
    * Update the relative tab positions and computed target index.
    */
   export
-  function layoutTabs(tabs: HTMLCollection, data: DragData, event: MouseEvent): void {
+  function layoutTabs(tabs: HTMLCollection, data: DragData, event: MouseEvent, orientation: TabBar.Orientation): void {
+    // Compute the orientation-sensitive values.
+    let pressPos: number;
+    let localPos: number;
+    let clientPos: number;
+    let clientSize: number;
+    if (orientation === 'horizontal') {
+      pressPos = data.pressX;
+      localPos = event.clientX - data.contentRect.left;
+      clientPos = event.clientX;
+      clientSize = data.contentRect.width;
+    } else {
+      pressPos = data.pressY;
+      localPos = event.clientY - data.contentRect.top;
+      clientPos = event.clientY;
+      clientSize = data.contentRect.height;
+    }
+
+    // Compute the target data.
     let targetIndex = data.index;
-    let targetLeft = event.clientX - data.contentRect.left - data.tabPressX;
-    let targetRight = targetLeft + data.tabWidth;
+    let targetPos = localPos - data.tabPressPos;
+    let targetEnd = targetPos + data.tabSize;
+
+    // Update the relative tab positions.
     for (let i = 0, n = tabs.length; i < n; ++i) {
-      let style = (tabs[i] as HTMLElement).style;
+      let pxPos: string;
       let layout = data.tabLayout[i];
-      let threshold = layout.left + (layout.width >> 1);
-      if (i < data.index && targetLeft < threshold) {
-        style.left = `${data.tabWidth + data.tabLayout[i + 1].margin}px`;
+      let threshold = layout.pos + (layout.size >> 1);
+      if (i < data.index && targetPos < threshold) {
+        pxPos = `${data.tabSize + data.tabLayout[i + 1].margin}px`;
         targetIndex = Math.min(targetIndex, i);
-      } else if (i > data.index && targetRight > threshold) {
-        style.left = `${-data.tabWidth - layout.margin}px`;
+      } else if (i > data.index && targetEnd > threshold) {
+        pxPos = `${-data.tabSize - layout.margin}px`;
         targetIndex = Math.max(targetIndex, i);
       } else if (i === data.index) {
-        let ideal = event.clientX - data.pressX;
-        let limit = data.contentRect.width - (data.tabLeft + data.tabWidth);
-        style.left = `${Math.max(-data.tabLeft, Math.min(ideal, limit))}px`;
+        let ideal = clientPos - pressPos;
+        let limit = clientSize - (data.tabPos + data.tabSize);
+        pxPos = `${Math.max(-data.tabPos, Math.min(ideal, limit))}px`;
       } else {
-        style.left = '';
+        pxPos = '';
+      }
+      if (orientation === 'horizontal') {
+        (tabs[i] as HTMLElement).style.left = pxPos;
+      } else {
+        (tabs[i] as HTMLElement).style.top = pxPos;
       }
     }
+
+    // Update the computed target index.
     data.targetIndex = targetIndex;
   }
 
@@ -1634,20 +1678,37 @@ namespace Private {
    * Position the drag tab at its final resting relative position.
    */
   export
-  function finalizeTabPosition(data: DragData): void {
+  function finalizeTabPosition(data: DragData, orientation: TabBar.Orientation): void {
+    // Compute the orientation-sensitive client size.
+    let clientSize: number;
+    if (orientation === 'horizontal') {
+      clientSize = data.contentRect.width;
+    } else {
+      clientSize = data.contentRect.height;
+    }
+
+    // Compute the ideal final tab position.
     let ideal: number;
     if (data.targetIndex === data.index) {
       ideal = 0;
     } else if (data.targetIndex > data.index) {
       let tgt = data.tabLayout[data.targetIndex];
-      ideal = tgt.left + tgt.width - data.tabWidth - data.tabLeft;
+      ideal = tgt.pos + tgt.size - data.tabSize - data.tabPos;
     } else {
       let tgt = data.tabLayout[data.targetIndex];
-      ideal = tgt.left - data.tabLeft;
+      ideal = tgt.pos - data.tabPos;
     }
-    let style = data.tab.style;
-    let limit = data.contentRect.width - (data.tabLeft + data.tabWidth);
-    style.left = `${Math.max(-data.tabLeft, Math.min(ideal, limit))}px`;
+
+    // Compute the tab position limit.
+    let limit = clientSize - (data.tabPos + data.tabSize);
+    let final = Math.max(-data.tabPos, Math.min(ideal, limit));
+
+    // Set the final orientation-sensitive position.
+    if (orientation === 'horizontal') {
+      data.tab.style.left = `${final}px`;
+    } else {
+      data.tab.style.top = `${final}px`;
+    }
   }
 
   /**
