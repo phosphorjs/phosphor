@@ -152,7 +152,7 @@ class TabBar extends Widget {
     this._orientation = options.orientation || 'horizontal';
     this._renderer = options.renderer || TabBar.defaultRenderer;
     this._insertBehavior = options.insertBehavior || 'select-tab-if-needed';
-    this._removeBehavior = options.removeBehavior || 'select-previous-tab';
+    this._removeBehavior = options.removeBehavior || 'select-tab-after';
     this.addClass(`p-mod-${this._orientation}`);
   }
 
@@ -1027,20 +1027,63 @@ class TabBar extends Widget {
    * adjusting the current index and emitting the changed signal.
    */
   private _updateCurrentForRemove(i: number, title: Title): void {
-    // // TODO handle remove behavior
+    // Lookup commonly used variables.
+    let ci = this._currentIndex;
+    let bh = this._removeBehavior;
 
-    // // Update the current index.
-    // if (this._currentIndex === i) {
-    //   let ci = Math.min(i, this._titles.length - 1);
-    //   let ct = ci === -1 ? null : this._titles.at(ci);
-    //   this._currentIndex = ci;
-    //   this.currentChanged.emit({
-    //     previousIndex: i, previousTitle: title,
-    //     currentIndex: ci, currentTitle: ct
-    //   });
-    // } else if (this._currentIndex > i) {
-    //   this._currentIndex--;
-    // }
+    // Do nothing if there is no current tab.
+    if (ci === -1) {
+      return;
+    }
+
+    // Silently adjust the index if the current tab is not removed.
+    if (ci !== i) {
+      if (ci > i) this._currentIndex--;
+      return;
+    }
+
+    // No tab gets selected if the tab bar is now empty.
+    if (this._titles.length === 0) {
+      this._currentIndex = -1;
+      this.currentChanged.emit({
+        previousIndex: i, previousTitle: title,
+        currentIndex: -1, currentTitle: null
+      });
+      return;
+    }
+
+    // Handle behavior where the next sibling tab is selected.
+    if (bh === 'select-tab-after') {
+      this._currentIndex = Math.min(i, this._titles.length - 1);
+      this.currentChanged.emit({
+        previousIndex: i, previousTitle: title,
+        currentIndex: this._currentIndex, currentTitle: this.currentTitle
+      });
+      return;
+    }
+
+    // Handle behavior where the previous sibling tab is selected.
+    if (bh === 'select-tab-before') {
+      this._currentIndex = Math.max(0, i - 1);
+      this.currentChanged.emit({
+        previousIndex: i, previousTitle: title,
+        currentIndex: this._currentIndex, currentTitle: this.currentTitle
+      });
+      return;
+    }
+
+    // Handle behavior where the previous history tab is selected.
+    if (bh === 'select-previous-tab') {
+      // TODO
+      return;
+    }
+
+    // Otherwise, no tab gets selected.
+    this._currentIndex = -1;
+    this.currentChanged.emit({
+      previousIndex: i, previousTitle: title,
+      currentIndex: -1, currentTitle: null
+    });
   }
 
   /**
@@ -1177,7 +1220,7 @@ namespace TabBar {
     /**
      * The selection behavior when removing a tab.
      *
-     * The default is `'select-previous-tab'`.
+     * The default is `'select-tab-after'`.
      */
     removeBehavior?: TabBar.RemoveBehavior;
 
