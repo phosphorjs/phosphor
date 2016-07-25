@@ -912,7 +912,7 @@ class TabBar extends Widget {
       this._dragData = null;
 
       // Reset the positions of the tabs.
-      Private.resetTabPositions(this.contentNode.children);
+      Private.resetTabPositions(this.contentNode.children, this._orientation);
 
       // Clear the cursor grab.
       data.override.dispose();
@@ -972,7 +972,7 @@ class TabBar extends Widget {
     }
 
     // Reset the tabs to their non-dragged positions.
-    Private.resetTabPositions(this.contentNode.children);
+    Private.resetTabPositions(this.contentNode.children, this._orientation);
 
     // Clear the cursor override.
     data.override.dispose();
@@ -1715,7 +1715,11 @@ namespace Private {
    * Reset the relative positions of the given tabs.
    */
   export
-  function resetTabPositions(tabs: HTMLCollection): void {
-    each(tabs, tab => { (tab as HTMLElement).style.left = ''; });
+  function resetTabPositions(tabs: HTMLCollection, orientation: TabBar.Orientation): void {
+    if (orientation === 'horizontal') {
+      each(tabs, tab => { (tab as HTMLElement).style.left = ''; });
+    } else {
+      each(tabs, tab => { (tab as HTMLElement).style.top = ''; });
+    }
   }
 }
