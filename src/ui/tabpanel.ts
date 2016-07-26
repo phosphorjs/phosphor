@@ -173,7 +173,7 @@ class TabPanel extends Widget {
    * Get the whether the tabs are movable by the user.
    *
    * #### Notes
-   * Tabs can be moved programmatically, irrespective of this value.
+   * Tabs can always be moved programmatically.
    */
   get tabsMovable(): boolean {
     return this._tabBar.tabsMovable;
@@ -183,7 +183,7 @@ class TabPanel extends Widget {
    * Set the whether the tabs are movable by the user.
    *
    * #### Notes
-   * Tabs can be moved programmatically, irrespective of this value.
+   * Tabs can always be moved programmatically.
    */
   set tabsMovable(value: boolean) {
     this._tabBar.tabsMovable = value;
