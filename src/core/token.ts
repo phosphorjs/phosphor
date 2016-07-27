@@ -45,6 +45,8 @@ class Token<T> {
    * The human readable name for the token.
    *
    * #### Notes
+   * This can be useful for debugging and logging.
+   *
    * This is a read-only property.
    */
   get name(): string {
