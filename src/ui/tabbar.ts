@@ -1397,16 +1397,38 @@ namespace TabBar {
      */
     renderTab(data: IRenderData): VNode {
       let { label, caption } = data.title;
+      let key = this.createTabKey(data);
       let style = this.createTabStyle(data);
       let tabClass = this.createTabclass(data);
       let iconClass = this.createIconClass(data);
       return (
-        h.li({ className: tabClass, title: caption, style },
+        h.li({ key, className: tabClass, title: caption, style },
           h.div({ className: iconClass }),
           h.div({ className: LABEL_CLASS }, label),
           h.div({ className: CLOSE_ICON_CLASS })
         )
       );
+    }
+
+    /**
+     * Create a unique render key for the tab.
+     *
+     * @param data - The data to use for the tab.
+     *
+     * @returns The unique render key for the tab.
+     *
+     * #### Notes
+     * This method caches the key against the tab title the first time
+     * the key is generated. This enables efficient rendering of moved
+     * tabs and avoids subtle hover style artifacts.
+     */
+    createTabKey(data: IRenderData): string {
+      let key = this._tabKeys.get(data.title);
+      if (key === void 0) {
+        key = `tab-key-${this._tabID++}`;
+        this._tabKeys.set(data.title, key);
+      }
+      return key;
     }
 
     /**
@@ -1457,6 +1479,9 @@ namespace TabBar {
       }
       return name;
     }
+
+    private _tabID = 0;
+    private _tabKeys = new WeakMap<Title, string>();
   }
 
   /**
