@@ -6,20 +6,12 @@
 | The full license is in the file LICENSE, distributed with this software.
 |----------------------------------------------------------------------------*/
 import {
-  IterableOrArrayLike, each
-} from '../algorithm/iteration';
-
-import {
   Token
 } from '../core/token';
 
 import {
   CommandRegistry
 } from './commandregistry';
-
-import {
-  EN_US, IKeyboardLayout
-} from './keyboard';
 
 import {
   Keymap
@@ -45,22 +37,10 @@ export
 abstract class Application<T extends Widget> {
   /**
    * Construct a new application.
-   *
-   * @param options - The options for initializing the application.
    */
-  constructor(options: Application.IOptions<T> = {}) {
-    // Parse the options.
-    let plugins = options.plugins || [];
-    let layout = options.keyboardLayout || EN_US;
-
-    // Setup the commands and keymap.
-    let commands = new CommandRegistry();
-    let keymap = new Keymap({ commands, layout });
-    this._commands = commands;
-    this._keymap = keymap;
-
-    // Register the initial plugins.
-    each(plugins, p => { this.registerPlugin(p); });
+  constructor() {
+    this._commands = new CommandRegistry();
+    this._keymap = new Keymap({ commands: this._commands });
   }
 
   /**
@@ -113,8 +93,21 @@ abstract class Application<T extends Widget> {
    * If the plugin provides a service which has already already been
    * provided by another plugin, the new service will override.
    */
-  registerPlugin<U>(plugin: Application.IPlugin<T, U>): void {
+  registerPlugin(value: Application.IPlugin<this, any>): void {
 
+  }
+
+  /**
+   * Register multiple plugins with the application.
+   *
+   * @param plugins - The plugins to register.
+   *
+   * #### Notes
+   * This is a simple convenience method which registers each plugin
+   * individually by calling `registerPlugin()`.
+   */
+  registerPlugins(plugins: Application.IPlugin<this, any>[]): void {
+    for (let plugin of plugins) this.registerPlugin(plugin);
   }
 
   /**
@@ -138,13 +131,56 @@ abstract class Application<T extends Widget> {
   }
 
   /**
+   * Activate the plugin with the given id.
+   *
+   * @param id - The ID of the plugin of interest.
+   *
+   * @returns A promise which resolves when the plugin is activated
+   *   or rejects with an error if it cannot be activated.
+   */
+  activatePlugin(id: string): Promise<void> {
+    // Reject the promise if the plugin is not registered.
+    let data = this._pluginMap[id];
+    if (!data) {
+      return Promise.reject(new Error(`Plugin '${id}' is not registered.`));
+    }
+
+    // Resolve immediately if the plugin is already activated.
+    if (data.activated) {
+      return Promise.resolve<void>();
+    }
+
+    // Return the pending resolver promise if it exists.
+    if (data.promise) {
+      return data.promise;
+    }
+
+    // Resolve the services required by the plugin.
+    let promises = data.requires.map(req => this.resolveService(req));
+
+    // Setup the resolver promise for the plugin.
+    data.promise = Promise.all(promises).then(deps => {
+      return data.activate.apply(void 0, [this].concat(deps));
+    }).then(service => {
+      data.service = service;
+      data.activated = true;
+      data.promise = null;
+    }).catch(error => {
+      data.promise = null;
+      throw error;
+    });
+
+    // Return the pending resolver promise.
+    return data.promise;
+  }
+
+  /**
    * Resolve a service of a given type.
    *
    * @param token - The token for the service type of interest.
    *
    * @returns A promise which resolves to an instance of the requested
-   *   service, or rejects with an error if there is no plugin which
-   *   provides the service or if its dependencies cannot be resolved.
+   *   service, or rejects with an error if it cannot be resolved.
    *
    * #### Notes
    * Services are singletons. The same instance will be returned each
@@ -155,22 +191,23 @@ abstract class Application<T extends Widget> {
    *
    * User code will not typically call this method directly. Instead,
    * the required services for the user's plugins will be resolved
-   * automatically as needed.
+   * automatically when the plugin is activated.
    */
   resolveService<U>(token: Token<U>): Promise<U> {
-    return null;
-  }
+    // Reject the promise if there is no provider for the type.
+    let id = this._serviceMap.get(token);
+    if (!id) {
+      return Promise.reject(new Error(`No provider for: ${token.name}.`));
+    }
 
-  /**
-   * Activate the plugin with the given id.
-   *
-   * @param id - The ID of the plugin of interest.
-   *
-   * @returns A promise which resolves when the plugin is activated
-   *   or rejects with an error if it cannot be activated.
-   */
-  activatePlugin(id: string): Promise<void> {
-    return null;
+    // Resolve immediately if the plugin is already activated.
+    let data = this._pluginMap[id];
+    if (data.activated) {
+      return Promise.resolve(data.service);
+    }
+
+    // Otherwise, activate the plugin and wait on the results.
+    return this.activatePlugin(id).then(() => data.service);
   }
 
   /**
@@ -349,8 +386,8 @@ abstract class Application<T extends Widget> {
   private _keymap: Keymap;
   private _commands: CommandRegistry;
   private _promise: Promise<void> = null;
+  private _pluginMap = Private.createPluginMap();
   private _serviceMap = Private.createServiceMap();
-  private _pluginMap = Private.createPluginMap<T>();
 }
 
 
@@ -376,7 +413,7 @@ namespace Application {
    * A plugin should be treated as an immutable object.
    */
   export
-  interface IPlugin<T extends Widget, U> {
+  interface IPlugin<T, U> {
     /**
      * The human readable id of the plugin.
      *
@@ -423,32 +460,7 @@ namespace Application {
      * This function will not be called unless all of its required
      * services can be fulfilled.
      */
-    activate: (app: Application<T>, ...args: any[]) => U | Promise<U>;
-  }
-
-  /**
-   * An options object for initializing an application.
-   */
-  export
-  interface IOptions<T extends Widget> {
-    /**
-     * The element id of the host node for the application shell.
-     *
-     * The default is the document body.
-     */
-    hostID?: string;
-
-    /**
-     * The keyboard layout for the application.
-     *
-     * The default is a US-English layout.
-     */
-    keyboardLayout?: IKeyboardLayout;
-
-    /**
-     * The initial plugins for the application.
-     */
-    plugins?: IterableOrArrayLike<IPlugin<T, any>>;
+    activate: (app: T, ...args: any[]) => U | Promise<U>;
   }
 }
 
@@ -458,27 +470,68 @@ namespace Application {
  */
 namespace Private {
   /**
-   *
+   * An object which holds the full application state for a plugin.
    */
   export
-  type PluginMap<T extends Widget> = { [id: string]: Application.IPlugin<T, any> };
+  interface IPluginData {
+    /**
+     * The human readable id of the plugin.
+     */
+    id: string;
+
+    /**
+     * The types of services required by the plugin, or `[]`.
+     */
+    requires: Token<any>[];
+
+    /**
+     * The type of service provided by the plugin, or `null`.
+     */
+    provides: Token<any>;
+
+    /**
+     * The function which activates the plugin.
+     */
+    activate: (app: any, ...args: any[]) => any;
+
+    /**
+     * Whether the plugin has been activated.
+     */
+    activated: boolean;
+
+    /**
+     * The resolved service for the plugin, or `null`.
+     */
+    service: any;
+
+    /**
+     * The pending resolver promise, or `null`.
+     */
+    promise: Promise<void>;
+  }
 
   /**
-   *
+   * A type alias for a mapping of plugin id to plugin.
+   */
+  export
+  type PluginMap = { [id: string]: IPluginData };
+
+  /**
+   * A type alias for a mapping of service token to plugin id.
    */
   export
   type ServiceMap = Map<Token<any>, string>;
 
   /**
-   *
+   * Create a new plugin map.
    */
   export
-  function createPluginMap<T extends Widget>(): PluginMap<T> {
+  function createPluginMap(): PluginMap {
     return Object.create(null);
   }
 
   /**
-   *
+   * Create a new service map.
    */
   export
   function createServiceMap(): ServiceMap {
