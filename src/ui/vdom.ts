@@ -657,7 +657,7 @@ class VNode {
  * as positional arguments. This makes it easy to build up an array of
  * children by any desired means.
  *
- * A strongly typed bound function for each tag name is aslo available
+ * A strongly typed bound function for each tag name is also available
  * as a static attached to the `h()` function. E.g. `h('div', ...)` is
  * equivalent to `h.div(...)`.
  */
@@ -764,7 +764,7 @@ export function h(tag: string, first?: any): VNode {
   let attrs: any;
   let children: any[];
 
-  // Parse the first variadic arugment.
+  // Parse the first variadic argument.
   if (first) {
     if (typeof first === 'string') {
       children = [first];

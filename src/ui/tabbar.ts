@@ -1399,7 +1399,7 @@ namespace TabBar {
       let { label, caption } = data.title;
       let key = this.createTabKey(data);
       let style = this.createTabStyle(data);
-      let tabClass = this.createTabclass(data);
+      let tabClass = this.createTabClass(data);
       let iconClass = this.createIconClass(data);
       return (
         h.li({ key, className: tabClass, title: caption, style },
@@ -1449,7 +1449,7 @@ namespace TabBar {
      *
      * @returns The full class name for the tab.
      */
-    createTabclass(data: IRenderData): string {
+    createTabClass(data: IRenderData): string {
       let { title, current } = data;
       let name = TAB_CLASS;
       if (title.className) {
