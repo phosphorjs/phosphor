@@ -384,7 +384,7 @@ namespace TabPanel {
     /**
      * Whether the tabs are movable by the user.
      *
-     * The default is `'false'`.
+     * The default is `false`.
      */
     tabsMovable?: boolean;
 
