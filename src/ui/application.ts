@@ -30,7 +30,7 @@ import {
  * UI applications with the ability to be safely extended by third
  * party code via plugins.
  *
- * Use of this class is optional. Applications of low to moderate
+ * Use of this class is optional. Applications with low to moderate
  * complexity will have no need for the features this class provides.
  */
 export
@@ -95,7 +95,7 @@ abstract class Application<T extends Widget> {
   /**
    * List the IDs of the plugins registered with the application.
    *
-   * @returns A new array of the IDs of the registered plugins.
+   * @returns A new array of the registered plugin IDs.
    */
   listPlugins(): string[] {
     return Object.keys(this._pluginMap);
@@ -110,8 +110,8 @@ abstract class Application<T extends Widget> {
    * An error will be thrown if a plugin with the same id is already
    * registered, or if the plugin has a circular dependency.
    *
-   * If the plugin provides a service which has already already been
-   * provided by another plugin, the new service will override.
+   * If the plugin provides a service which has already been provided
+   * by another plugin, the new service will override the old service.
    */
   registerPlugin(plugin: Application.IPlugin<this, any>): void {
     // Throw an error if the plugin id is already registered.
@@ -119,13 +119,13 @@ abstract class Application<T extends Widget> {
       throw new Error(`Plugin '${plugin.id}' is already registered.`);
     }
 
-    // Create the plugin data.
+    // Create the normalized plugin data.
     let data = Private.createPluginData(plugin);
 
     // Ensure the plugin does not cause a cyclic dependency.
     Private.ensureNoCycle(data, this._pluginMap, this._serviceMap);
 
-    // Add the service token to the registry, if needed.
+    // Add the service token to the registry.
     if (data.provides) this._serviceMap.set(data.provides, data.id);
 
     // Add the plugin to the registry.
@@ -138,8 +138,7 @@ abstract class Application<T extends Widget> {
    * @param plugins - The plugins to register.
    *
    * #### Notes
-   * This is a simple convenience method which registers each plugin
-   * individually by calling `registerPlugin()`.
+   * This calls `registerPlugin()` for each of the given plugins.
    */
   registerPlugins(plugins: Application.IPlugin<this, any>[]): void {
     for (let plugin of plugins) {
@@ -230,6 +229,8 @@ abstract class Application<T extends Widget> {
   /**
    * Start the application.
    *
+   * @param options - The options for starting the application.
+   *
    * @returns A promise which resolves when all bootstrapping work
    *   is complete and the shell is mounted to the DOM, or rejects
    *   with an error if the bootstrapping process fails.
@@ -241,7 +242,7 @@ abstract class Application<T extends Widget> {
    * Bootstrapping the application consists of the following steps:
    * 1. Create the shell widget
    * 2. Activate the startup plugins
-   * 3. Wait for plugins to activate
+   * 3. Wait for those plugins to activate
    * 4. Attach the shell widget to the DOM
    * 5. Add the application event listeners
    */
@@ -268,7 +269,7 @@ abstract class Application<T extends Widget> {
     // Generate the activation promises.
     let promises = startups.map(id => this.activatePlugin(id));
 
-    // Wait for all plugins to activate, then finalize startup.
+    // Wait for the plugins to activate, then finalize startup.
     this._promise = Promise.all(promises).then(() =>  {
       this._started = true;
       this._promise = null;
@@ -319,7 +320,7 @@ abstract class Application<T extends Widget> {
   /**
    * Attach the application shell to the DOM.
    *
-   * @param id - The id of the host node for shell, or `''`.
+   * @param id - The id of the host node for the shell, or `''`.
    *
    * #### Notes
    * If the id is not provided, the document body will be the host.
@@ -542,7 +543,7 @@ namespace Private {
   }
 
   /**
-   * A type alias for a mapping of plugin id to plugin.
+   * A type alias for a mapping of plugin id to plugin data.
    */
   export
   type PluginMap = { [id: string]: IPluginData };
@@ -580,9 +581,9 @@ namespace Private {
       promise: null,
       activated: false,
       activate: plugin.activate,
-      requires: plugin.requires || [],
       provides: plugin.provides || null,
       autoStart: plugin.autoStart || false,
+      requires: plugin.requires ? plugin.requires.slice() : [],
     };
   }
 

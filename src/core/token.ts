@@ -11,7 +11,7 @@
  * A runtime object which captures compile-time type information.
  *
  * #### Notes
- * A token captures the compile-time type of an interface or class into
+ * A token captures the compile-time type of an interface or class in
  * an object which is useful for various type-safe runtime operations.
  *
  * #### Example

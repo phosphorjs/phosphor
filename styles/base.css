@@ -19,10 +19,10 @@ body.p-mod-override-cursor * {
 | ui/widget
 |----------------------------------------------------------------------------*/
 .p-Widget {
-  box-sizing: border-box; /* TODO - remove this as a default? */
-  position: relative; /* TODO - remove this as a default? */
-  overflow: hidden; /* TODO - remove this as a default? */
-  cursor: default; /* TODO - remove this as a default? */
+  box-sizing: border-box;
+  position: relative;
+  overflow: hidden;
+  cursor: default;
 }
 
 
@@ -239,10 +239,10 @@ body.p-mod-override-cursor * {
 
 
 .p-TabBar-content {
-  display: flex;
-  flex: 1 1 auto;
   margin: 0;
   padding: 0;
+  display: flex;
+  flex: 1 1 auto;
   list-style-type: none;
 }
 

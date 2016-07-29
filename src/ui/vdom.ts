@@ -20,6 +20,9 @@ interface IVNodeAttrs {
    * siblings in the render tree, provided the type of the node does
    * not change.
    *
+   * In general, reordering child nodes will cause the nodes to be
+   * completely re-rendered. Keys allow this to be optimized away.
+   *
    * If a key is provided, it must be unique among sibling nodes.
    */
   key?: string;
@@ -575,7 +578,7 @@ interface IVideoAttrs extends IMediaAttrs {
  * `h()` function will be called to create a node in a type-safe manner.
  *
  * A node *must* be treated as immutable. Mutating the state of a node
- * *will* result in undefined rendering behavior.
+ * **will** result in undefined rendering behavior.
  */
 export
 class VNode {
@@ -593,9 +596,9 @@ class VNode {
    * The tag for the node.
    *
    * #### Notes
-   * The interpretation of the tag depends upon the node type:
-   *   - 'element': the element tag name
-   *   - 'text': the text content
+   * The interpretation of the tag depends upon the node `type`:
+   *   - `'element'`: the element tag name
+   *   - `'text'`: the text content
    */
   tag: string;
 
@@ -603,9 +606,9 @@ class VNode {
    * The attributes for the node.
    *
    * #### Notes
-   * The interpretation of the attrs depends upon the node type:
-   *   - 'element': the element attributes
-   *   - 'text': an empty object
+   * The interpretation of the attrs depends upon the node `type`:
+   *   - `'element'`: the element attributes
+   *   - `'text'`: an empty object
    */
   attrs: IVNodeAttrs;
 
@@ -613,9 +616,9 @@ class VNode {
    * The array of child elements.
    *
    * #### Notes
-   * The interpretation of the children depends upon the node type:
-   *   - 'element': the element children
-   *   - 'text': an empty array
+   * The interpretation of the children depends upon the node `type`:
+   *   - `'element'`: the element children
+   *   - `'text'`: an empty array
    */
   children: VNode[];
 
@@ -655,7 +658,7 @@ class VNode {
  * array of either of those things. String literals are converted into
  * text nodes, and arrays are inlined as if their contents were given
  * as positional arguments. This makes it easy to build up an array of
- * children by any desired means.
+ * children by any desired means. `null` child values are ignored.
  *
  * A strongly typed bound function for each tag name is also available
  * as a static attached to the `h()` function. E.g. `h('div', ...)` is
