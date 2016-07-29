@@ -82,35 +82,6 @@ abstract class Application<T extends Widget> {
   }
 
   /**
-   * Register a plugin with the application.
-   *
-   * @param plugin - The plugin to register.
-   *
-   * #### Notes
-   * An error will be thrown if a plugin with the same id is already
-   * registered, or if the plugin has a circular dependency.
-   *
-   * If the plugin provides a service which has already already been
-   * provided by another plugin, the new service will override.
-   */
-  registerPlugin(value: Application.IPlugin<this, any>): void {
-
-  }
-
-  /**
-   * Register multiple plugins with the application.
-   *
-   * @param plugins - The plugins to register.
-   *
-   * #### Notes
-   * This is a simple convenience method which registers each plugin
-   * individually by calling `registerPlugin()`.
-   */
-  registerPlugins(plugins: Application.IPlugin<this, any>[]): void {
-    for (let plugin of plugins) this.registerPlugin(plugin);
-  }
-
-  /**
    * Test whether a plugin is registered with the application.
    *
    * @param id - The id of the plugin of interest.
@@ -128,6 +99,52 @@ abstract class Application<T extends Widget> {
    */
   listPlugins(): string[] {
     return Object.keys(this._pluginMap);
+  }
+
+  /**
+   * Register a plugin with the application.
+   *
+   * @param plugin - The plugin to register.
+   *
+   * #### Notes
+   * An error will be thrown if a plugin with the same id is already
+   * registered, or if the plugin has a circular dependency.
+   *
+   * If the plugin provides a service which has already already been
+   * provided by another plugin, the new service will override.
+   */
+  registerPlugin(plugin: Application.IPlugin<this, any>): void {
+    // Throw an error if the plugin id is already registered.
+    if (plugin.id in this._pluginMap) {
+      throw new Error(`Plugin '${plugin.id}' is already registered.`);
+    }
+
+    // Create the plugin data.
+    let data = Private.createPluginData(plugin);
+
+    // Ensure the plugin does not cause a cyclic dependency.
+    Private.ensureNoCycle(data, this._pluginMap, this._serviceMap);
+
+    // Add the service token to the registry, if needed.
+    if (data.provides) this._serviceMap.set(data.provides, data.id);
+
+    // Add the plugin to the registry.
+    this._pluginMap[data.id] = data;
+  }
+
+  /**
+   * Register multiple plugins with the application.
+   *
+   * @param plugins - The plugins to register.
+   *
+   * #### Notes
+   * This is a simple convenience method which registers each plugin
+   * individually by calling `registerPlugin()`.
+   */
+  registerPlugins(plugins: Application.IPlugin<this, any>[]): void {
+    for (let plugin of plugins) {
+      this.registerPlugin(plugin);
+    }
   }
 
   /**
@@ -223,76 +240,47 @@ abstract class Application<T extends Widget> {
    *
    * Bootstrapping the application consists of the following steps:
    * 1. Create the shell widget
-   * 2. Activate the autostart plugins
-   * 3. Attach the shell widget to the DOM
-   * 4. Add the application event listeners
+   * 2. Activate the startup plugins
+   * 3. Wait for plugins to activate
+   * 4. Attach the shell widget to the DOM
+   * 5. Add the application event listeners
    */
-  start(): Promise<void> {
-    return null;
-    // // Resolve immediately if the application is already started.
-    // if (this._started) {
-    //   return Promise.resolve<void>();
-    // }
+  start(options: Application.IStartOptions = {}): Promise<void> {
+    // Resolve immediately if the application is already started.
+    if (this._started) {
+      return Promise.resolve<void>();
+    }
 
-    // // Return the pending promise if it exists.
-    // if (this._promise) {
-    //   return this._promise;
-    // }
+    // Return the pending promise if it exists.
+    if (this._promise) {
+      return this._promise;
+    }
 
-    // // Create the shell widget.
-    // this._shell = this.createShell();
+    // Create the shell widget.
+    this._shell = this.createShell();
 
-    // // Setup the promise for the rest of the bootstrapping.
-    // this._promise = Promise.all(promises).then(results => {
+    // Parse the host id for attaching the shell.
+    let hostID = options.hostID || '';
 
-    //   // Store the resolved default services.
-    //   this._commands = results[0] as ABCCommandRegistry;
-    //   this._palette = results[1] as ABCPaletteRegistry;
-    //   this._shortcuts = results[2] as ABCShortcutRegistry;
+    // Collect the ids of the startup plugins.
+    let startups = Private.collectStartupPlugins(this._pluginMap, options);
 
-    //   // Compute the extension ids to activate.
-    //   let extIDs: string[];
-    //   let optVal = options.activateExtensions;
-    //   if (optVal === true) {
-    //     extIDs = this.listExtensions();
-    //   } else if (optVal === false) {
-    //     extIDs = [];
-    //   } else if (optVal) {
-    //     extIDs = optVal as string[];
-    //   } else {
-    //     extIDs = this.listExtensions();
-    //   }
+    // Generate the activation promises.
+    let promises = startups.map(id => this.activatePlugin(id));
 
-    //   // Activate the initial extensions.
-    //   return Promise.all(extIDs.map(id => this.activateExtension(id)));
+    // Wait for all plugins to activate, then finalize startup.
+    this._promise = Promise.all(promises).then(() =>  {
+      this._started = true;
+      this._promise = null;
+      this.attachShell(hostID);
+      this.addEventListeners();
+    }).catch(error => {
+      this._promise = null;
+      throw error;
+    });
 
-    // }).then(() =>  {
-
-    //   // Mark the application as started and clear the stored promise.
-    //   this._promise = null;
-    //   this._started = true;
-
-    //   // Compute the id of the shell host node.
-    //   let shellHostID = options.shellHostID || '';
-
-    //   // Attach the application shell to the host node.
-    //   this.attachApplicationShell(shellHostID);
-
-    //   // Add the application event listeners.
-    //   this.addEventListeners();
-
-    // }).catch(error => {
-
-    //   // Clear the stored promise.
-    //   this._promise = null;
-
-    //   // Rethrow the error to reject the promise.
-    //   throw error;
-
-    // });
-
-    // // Return the pending bootstrapping promise.
-    // return this._promise;
+    // Return the pending bootstrapping promise.
+    return this._promise;
   }
 
   /**
@@ -423,6 +411,14 @@ namespace Application {
     id: string;
 
     /**
+     * Whether the plugin should be activated on application start.
+     *
+     * #### Notes
+     * The default is `false`.
+     */
+    autoStart?: boolean;
+
+    /**
      * The types of services required by the plugin, if any.
      *
      * #### Notes
@@ -462,6 +458,36 @@ namespace Application {
      */
     activate: (app: T, ...args: any[]) => U | Promise<U>;
   }
+
+  /**
+   * An options object for application startup.
+   */
+  export
+  interface IStartOptions {
+    /**
+     * The ID of the DOM node to host the application shell.
+     *
+     * #### Notes
+     * If this is not provided, the document body will be the host.
+     */
+    hostID?: string;
+
+    /**
+     * The plugins to activate on startup.
+     *
+     * #### Notes
+     * These will be *in addition* to any `autoStart` plugins.
+     */
+    startPlugins?: string[];
+
+    /**
+     * The plugins to **not** activate on startup.
+     *
+     * #### Notes
+     * This will override `startPlugins` and any `autoStart` plugins.
+     */
+    ignorePlugins?: string[];
+  }
 }
 
 
@@ -478,6 +504,11 @@ namespace Private {
      * The human readable id of the plugin.
      */
     id: string;
+
+    /**
+     * Whether the plugin should be activated on application start.
+     */
+    autoStart: boolean;
 
     /**
      * The types of services required by the plugin, or `[]`.
@@ -536,5 +567,96 @@ namespace Private {
   export
   function createServiceMap(): ServiceMap {
     return new Map<Token<any>, string>();
+  }
+
+  /**
+   * Create a normalized plugin data object for the given plugin.
+   */
+  export
+  function createPluginData(plugin: Application.IPlugin<any, any>): IPluginData {
+    return {
+      id: plugin.id,
+      service: null,
+      promise: null,
+      activated: false,
+      activate: plugin.activate,
+      requires: plugin.requires || [],
+      provides: plugin.provides || null,
+      autoStart: plugin.autoStart || false,
+    };
+  }
+
+  /**
+   * Ensure no cycle is present in the plugin resolution graph.
+   *
+   * If a cycle is detected, an error will be thrown.
+   */
+  export
+  function ensureNoCycle(data: IPluginData, pluginMap: PluginMap, serviceMap: ServiceMap): void {
+    // Bail early if there cannot be a cycle.
+    if (!data.provides || data.requires.length === 0) {
+      return;
+    }
+
+    // Setup a stack to trace service resolution.
+    let trace = [data.id];
+
+    // Throw an exception if a cycle is present.
+    if (data.requires.some(visit)) {
+      throw new Error(`Cycle detected: ${trace.join(' -> ')}.`);
+    }
+
+    function visit(token: Token<any>): boolean {
+      if (token === data.provides) {
+        return true;
+      }
+      let id = serviceMap.get(token);
+      if (!id) {
+        return false;
+      }
+      let other = pluginMap[id];
+      if (other.requires.length === 0) {
+        return false;
+      }
+      trace.push(id);
+      if (other.requires.some(visit)) {
+        return true;
+      }
+      trace.pop();
+      return false;
+    }
+  }
+
+  /**
+   * Collect the IDs of the plugins to activate on startup.
+   */
+  export
+  function collectStartupPlugins(pluginMap: PluginMap, options: Application.IStartOptions): string[] {
+    // Create a map to hold the plugin IDs.
+    let resultMap: { [id: string]: boolean } = Object.create(null);
+
+    // Collect the auto-start plugins.
+    for (let id in pluginMap) {
+      if (pluginMap[id].autoStart) {
+        resultMap[id] = true;
+      }
+    }
+
+    // Add the startup plugins.
+    if (options.startPlugins) {
+      for (let id of options.startPlugins) {
+        resultMap[id] = true;
+      }
+    }
+
+    // Remove the ignored plugins.
+    if (options.ignorePlugins) {
+      for (let id of options.ignorePlugins) {
+        delete resultMap[id];
+      }
+    }
+
+    // Return the final startup plugins.
+    return Object.keys(resultMap);
   }
 }
