@@ -104,6 +104,7 @@ class ContentWidget extends Widget {
     this.addClass(name.toLowerCase());
     this.title.label = name;
     this.title.closable = true;
+    this.title.caption = `Long description for: ${name}`;
   }
 
   get inputNode(): HTMLInputElement {

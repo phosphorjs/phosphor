@@ -30,7 +30,7 @@ import {
 } from '../core/disposable';
 
 import {
-  Message
+  Message, sendMessage
 } from '../core/messaging';
 
 import {
@@ -50,7 +50,11 @@ import {
 } from './title';
 
 import {
-  Widget, WidgetFlag
+  VNode, h, realize, render
+} from './vdom';
+
+import {
+  Widget, WidgetFlag, WidgetMessage
 } from './widget';
 
 
@@ -60,24 +64,9 @@ import {
 const TAB_BAR_CLASS = 'p-TabBar';
 
 /**
- * The class name added to a tab bar body node.
- */
-const BODY_CLASS = 'p-TabBar-body';
-
-/**
- * The class name added to a tab bar header node.
- */
-const HEADER_CLASS = 'p-TabBar-header';
-
-/**
  * The class name added to a tab bar content node.
  */
 const CONTENT_CLASS = 'p-TabBar-content';
-
-/**
- * The class name added to a tab bar footer node.
- */
-const FOOTER_CLASS = 'p-TabBar-footer';
 
 /**
  * The class name added to a tab bar tab.
@@ -129,9 +118,23 @@ const DETACH_THRESHOLD = 20;
  */
 const TRANSITION_DURATION = 150;  // Keep in sync with CSS.
 
+/**
+ * The DOM structure for a TabBar.
+ */
+const TAB_BAR_NODE = (
+  h.div(
+    h.ul({ className: CONTENT_CLASS })
+  )
+);
+
 
 /**
- * A widget which displays titles as a row of tabs.
+ * A widget which displays titles as a single row or column of tabs.
+ *
+ * #### Notes
+ * If CSS transforms are used to rotate nodes for vertically oriented
+ * text, then tab dragging will not work correctly. The `tabsMovable`
+ * property should be set to `false` when rotating nodes from CSS.
  */
 export
 class TabBar extends Widget {
@@ -141,11 +144,16 @@ class TabBar extends Widget {
    * @param options - The options for initializing the tab bar.
    */
   constructor(options: TabBar.IOptions = {}) {
-    super({ node: Private.createNode() });
+    super({ node: realize(TAB_BAR_NODE) });
     this.addClass(TAB_BAR_CLASS);
     this.setFlag(WidgetFlag.DisallowLayout);
     this._tabsMovable = options.tabsMovable || false;
+    this._allowDeselect = options.allowDeselect || false;
+    this._orientation = options.orientation || 'horizontal';
     this._renderer = options.renderer || TabBar.defaultRenderer;
+    this._insertBehavior = options.insertBehavior || 'select-tab-if-needed';
+    this._removeBehavior = options.removeBehavior || 'select-tab-after';
+    this.addClass(`p-mod-${this._orientation}`);
   }
 
   /**
@@ -153,10 +161,9 @@ class TabBar extends Widget {
    */
   dispose(): void {
     this._releaseMouse();
-    this._tabs.clear();
     this._titles.clear();
-    this._dirtyTitles.clear();
     this._renderer = null;
+    this._previousTitle = null;
     super.dispose();
   }
 
@@ -204,42 +211,6 @@ class TabBar extends Widget {
    * This signal is only emitted once per drag cycle.
    */
   tabDetachRequested: ISignal<TabBar, TabBar.ITabDetachRequestedArgs>;
-
-  /**
-   * Get the tab bar header node.
-   *
-   * #### Notes
-   * This node can be used to add extra content to the tab bar header.
-   *
-   * This is a read-only property.
-   */
-  get headerNode(): HTMLDivElement {
-    return this.node.getElementsByClassName(HEADER_CLASS)[0] as HTMLDivElement;
-  }
-
-  /**
-   * Get the tab bar body node.
-   *
-   * #### Notes
-   * This node can be used to add extra content to the tab bar.
-   *
-   * This is a read-only property.
-   */
-  get bodyNode(): HTMLDivElement {
-    return this.node.getElementsByClassName(BODY_CLASS)[0] as HTMLDivElement;
-  }
-
-  /**
-   * Get the tab bar footer node.
-   *
-   * #### Notes
-   * This node can be used to add extra content to the tab bar footer.
-   *
-   * This is a read-only property.
-   */
-  get footerNode(): HTMLDivElement {
-    return this.node.getElementsByClassName(FOOTER_CLASS)[0] as HTMLDivElement;
-  }
 
   /**
    * Get the tab bar content node.
@@ -322,8 +293,9 @@ class TabBar extends Widget {
     let ci = i;
     let ct = ci === -1 ? null : this._titles.at(ci);
 
-    // Update the current index.
-    this._currentIndex = i;
+    // Update the current index and previous title.
+    this._currentIndex = ci;
+    this._previousTitle = pt;
 
     // Emit the current changed signal.
     this.currentChanged.emit({
@@ -336,10 +308,44 @@ class TabBar extends Widget {
   }
 
   /**
+   * Get the orientation of the tab bar.
+   *
+   * #### Notes
+   * This controls whether the tabs are arranged in a row or column.
+   */
+  get orientation(): TabBar.Orientation {
+    return this._orientation;
+  }
+
+  /**
+   * Set the orientation of the tab bar.
+   *
+   * #### Notes
+   * This controls whether the tabs are arranged in a row or column.
+   */
+  set orientation(value: TabBar.Orientation) {
+    // Do nothing if the orientation does not change.
+    if (this._orientation === value) {
+      return;
+    }
+
+    // Release the mouse before making any changes.
+    this._releaseMouse();
+
+    // Swap the orientation values.
+    let old = this._orientation;
+    this._orientation = value;
+
+    // Toggle the orientation classes.
+    this.removeClass(`p-mod-${old}`);
+    this.addClass(`p-mod-${value}`);
+  }
+
+  /**
    * Get whether the tabs are movable by the user.
    *
    * #### Notes
-   * Tabs can be moved programmatically, irrespective of this value.
+   * Tabs can always be moved programmatically.
    */
   get tabsMovable(): boolean {
     return this._tabsMovable;
@@ -349,14 +355,62 @@ class TabBar extends Widget {
    * Set whether the tabs are movable by the user.
    *
    * #### Notes
-   * Tabs can be moved programmatically, irrespective of this value.
+   * Tabs can always be moved programmatically.
    */
   set tabsMovable(value: boolean) {
     this._tabsMovable = value;
   }
 
   /**
-   * The renderer used by the tab bar
+   * Get whether a tab can be deselected by the user.
+   *
+   * #### Notes
+   * Tabs can be always be deselected programmatically.
+   */
+  get allowDeselect(): boolean {
+    return this._allowDeselect;
+  }
+
+  /**
+   * Set whether a tab can be deselected by the user.
+   *
+   * #### Notes
+   * Tabs can be always be deselected programmatically.
+   */
+  set allowDeselect(value: boolean) {
+    this._allowDeselect = value;
+  }
+
+  /**
+   * Get the selection behavior when inserting a tab.
+   */
+  get insertBehavior(): TabBar.InsertBehavior {
+    return this._insertBehavior;
+  }
+
+  /**
+   * Set the selection behavior when inserting a tab.
+   */
+  set insertBehavior(value: TabBar.InsertBehavior) {
+    this._insertBehavior = value;
+  }
+
+  /**
+   * Get the selection behavior when removing a tab.
+   */
+  get removeBehavior(): TabBar.RemoveBehavior {
+    return this._removeBehavior;
+  }
+
+  /**
+   * Set the selection behavior when removing a tab.
+   */
+  set removeBehavior(value: TabBar.RemoveBehavior) {
+    this._removeBehavior = value;
+  }
+
+  /**
+   * The renderer used by the tab bar.
    *
    * #### Notes
    * This is a read-only property.
@@ -410,33 +464,14 @@ class TabBar extends Widget {
 
     // If the title is not in the vector, insert it.
     if (i === -1) {
-      // Create the new tab node for the title.
-      let tab = this._renderer.createTabNode();
-      this._renderer.updateTabNode(tab, title);
-
-      // Insert the tab and title into the vectors.
-      this._tabs.insert(j, tab);
+      // Insert the title into the vector.
       this._titles.insert(j, title);
-
-      // Look up the next sibling node.
-      let ref = j + 1 < this._tabs.length ? this._tabs.at(j + 1) : null;
-
-      // Insert the tab into the content node.
-      this.contentNode.insertBefore(tab, ref);
 
       // Connect to the title changed signal.
       title.changed.connect(this._onTitleChanged, this);
 
-      // Update the current index.
-      if (this._currentIndex === -1) {
-        this._currentIndex = j;
-        this.currentChanged.emit({
-          previousIndex: -1, previousTitle: null,
-          currentIndex: j, currentTitle: title
-        });
-      } else if (this._currentIndex >= j) {
-        this._currentIndex++;
-      }
+      // Adjust the current index for the insert.
+      this._adjustCurrentForInsert(j, title);
 
       // Schedule an update of the tabs.
       this.update();
@@ -453,25 +488,11 @@ class TabBar extends Widget {
     // Bail if there is no effective move.
     if (i === j) return title;
 
-    // Move the tab and title to the new locations.
-    move(this._tabs, i, j);
+    // Move the title to the new location.
     move(this._titles, i, j);
 
-    // Look up the next sibling node.
-    let ref = j + 1 < this._tabs.length ? this._tabs.at(j + 1) : null;
-
-    // Move the tab in the content node.
-    this.contentNode.insertBefore(this._tabs.at(j), ref);
-
-    // Update the current index.
-    let ci = this._currentIndex;
-    if (ci === i) {
-      this._currentIndex = j;
-    } else if (ci < i && ci >= j) {
-      this._currentIndex++;
-    } else if (ci > i && ci <= j) {
-      this._currentIndex--;
-    }
+    // Adjust the current index for the move.
+    this._adjustCurrentForMove(i, j);
 
     // Schedule an update of the tabs.
     this.update();
@@ -512,31 +533,19 @@ class TabBar extends Widget {
     // Release the mouse before making any changes.
     this._releaseMouse();
 
-    // Remove the tab and title from the vectors.
-    let tab = this._tabs.removeAt(i);
+    // Remove the title from the vector.
     let title = this._titles.removeAt(i);
-
-    // Remove the title from the dirty set.
-    this._dirtyTitles.delete(title);
 
     // Disconnect from the title changed signal.
     title.changed.disconnect(this._onTitleChanged, this);
 
-    // Remove the tab from the content node.
-    this.contentNode.removeChild(tab);
-
-    // Update the current index.
-    if (this._currentIndex === i) {
-      let ci = Math.min(i, this._titles.length - 1);
-      let ct = ci === -1 ? null : this._titles.at(ci);
-      this._currentIndex = ci;
-      this.currentChanged.emit({
-        previousIndex: i, previousTitle: title,
-        currentIndex: ci, currentTitle: ct
-      });
-    } else if (this._currentIndex > i) {
-      this._currentIndex--;
+    // Clear the previous title if it's being removed.
+    if (title === this._previousTitle) {
+      this._previousTitle = null;
     }
+
+    // Adjust the current index for the remove.
+    this._adjustCurrentForRemove(i, title);
 
     // Schedule an update of the tabs.
     this.update();
@@ -566,18 +575,15 @@ class TabBar extends Widget {
     let pi = this.currentIndex;
     let pt = this.currentTitle;
 
-    // Reset the current index.
+    // Reset the current index and previous title.
     this._currentIndex = -1;
+    this._previousTitle = null;
 
-    // Clear the tab and title vectors.
-    this._tabs.clear();
+    // Clear the title vector.
     this._titles.clear();
 
-    // Clear the dirty title set.
-    this._dirtyTitles.clear();
-
-    // Clear the content node.
-    this.contentNode.textContent = '';
+    // Schedule an update of the tabs.
+    this.update();
 
     // If no tab was selected, there's nothing else to do.
     if (pi === -1) {
@@ -658,26 +664,17 @@ class TabBar extends Widget {
    * A message handler invoked on an `'update-request'` message.
    */
   protected onUpdateRequest(msg: Message): void {
-    let tabs = this._tabs;
+    let content: VNode[] = [];
     let titles = this._titles;
     let renderer = this._renderer;
-    let dirtyTitles = this._dirtyTitles;
     let currentTitle = this.currentTitle;
-    for (let i = 0, n = tabs.length; i < n; ++i) {
-      let tab = tabs.at(i);
+    for (let i = 0, n = titles.length; i < n; ++i) {
       let title = titles.at(i);
-      if (dirtyTitles.has(title)) {
-        renderer.updateTabNode(tab, title);
-      }
-      if (title === currentTitle) {
-        tab.classList.add(CURRENT_CLASS);
-        tab.style.zIndex = `${n}`;
-      } else {
-        tab.classList.remove(CURRENT_CLASS);
-        tab.style.zIndex = `${n - i - 1}`;
-      }
+      let current = title === currentTitle;
+      let zIndex = current ? n : n - i - 1;
+      content.push(renderer.renderTab({ title, current, zIndex }));
     }
-    dirtyTitles.clear();
+    render(content, this.contentNode);
   }
 
   /**
@@ -706,10 +703,13 @@ class TabBar extends Widget {
       return;
     }
 
+    // Lookup the tab nodes.
+    let tabs = this.contentNode.children;
+
     // Do nothing if the click is not on a tab.
     let x = event.clientX;
     let y = event.clientY;
-    let i = findIndex(this._tabs, tab => hitTest(tab, x, y));
+    let i = findIndex(tabs, tab => hitTest(tab, x, y));
     if (i < 0) {
       return;
     }
@@ -725,7 +725,7 @@ class TabBar extends Widget {
     }
 
     // Ignore the click if it was not on a close icon.
-    let icon = this._renderer.closeIconNode(this._tabs.at(i));
+    let icon = tabs[i].querySelector(this._renderer.closeIconSelector);
     if (!icon || !icon.contains(event.target as HTMLElement)) {
       return;
     }
@@ -748,10 +748,13 @@ class TabBar extends Widget {
       return;
     }
 
+    // Lookup the tab nodes.
+    let tabs = this.contentNode.children;
+
     // Do nothing if the press is not on a tab.
     let x = event.clientX;
     let y = event.clientY;
-    let i = findIndex(this._tabs, tab => hitTest(tab, x, y));
+    let i = findIndex(tabs, tab => hitTest(tab, x, y));
     if (i < 0) {
       return;
     }
@@ -761,7 +764,7 @@ class TabBar extends Widget {
     event.stopPropagation();
 
     // Ignore the press if it was on a close icon.
-    let icon = this._renderer.closeIconNode(this._tabs.at(i));
+    let icon = tabs[i].querySelector(this._renderer.closeIconSelector);
     if (icon && icon.contains(event.target as HTMLElement)) {
       return;
     }
@@ -770,7 +773,7 @@ class TabBar extends Widget {
     if (this._tabsMovable) {
       this._dragData = new Private.DragData();
       this._dragData.index = i;
-      this._dragData.tab = this._tabs.at(i);
+      this._dragData.tab = tabs[i] as HTMLElement;
       this._dragData.pressX = event.clientX;
       this._dragData.pressY = event.clientY;
       document.addEventListener('mousemove', this, true);
@@ -779,8 +782,12 @@ class TabBar extends Widget {
       document.addEventListener('contextmenu', this, true);
     }
 
-    // Update the current index.
-    this.currentIndex = i;
+    // Update the current index as appropriate.
+    if (this._allowDeselect && this._currentIndex === i) {
+      this.currentIndex = -1;
+    } else {
+      this.currentIndex = i;
+    }
   }
 
   /**
@@ -796,6 +803,9 @@ class TabBar extends Widget {
     event.preventDefault();
     event.stopPropagation();
 
+    // Lookup the tab nodes.
+    let tabs = this.contentNode.children;
+
     // Check the threshold if the drag is not active.
     let data = this._dragData;
     if (!data.dragActive) {
@@ -808,10 +818,16 @@ class TabBar extends Widget {
 
       // Fill in the rest of the drag data measurements.
       let tabRect = data.tab.getBoundingClientRect();
-      data.tabLeft = data.tab.offsetLeft;
-      data.tabWidth = tabRect.width;
-      data.tabPressX = data.pressX - tabRect.left;
-      data.tabLayout = Private.snapTabLayout(this._tabs);
+      if (this._orientation === 'horizontal') {
+        data.tabPos = data.tab.offsetLeft;
+        data.tabSize = tabRect.width;
+        data.tabPressPos = data.pressX - tabRect.left;
+      } else {
+        data.tabPos = data.tab.offsetTop;
+        data.tabSize = tabRect.height;
+        data.tabPressPos = data.pressY - tabRect.top;
+      }
+      data.tabLayout = Private.snapTabLayout(tabs, this._orientation);
       data.contentRect = this.contentNode.getBoundingClientRect();
       data.override = overrideCursor('default');
 
@@ -832,7 +848,7 @@ class TabBar extends Widget {
       let index = data.index;
       let clientX = event.clientX;
       let clientY = event.clientY;
-      let tab = this._tabs.at(index);
+      let tab = tabs[index] as HTMLElement;
       let title = this._titles.at(index);
 
       // Emit the tab detach requested signal.
@@ -845,7 +861,7 @@ class TabBar extends Widget {
     }
 
     // Update the positions of the tabs.
-    Private.layoutTabs(this._tabs, data, event);
+    Private.layoutTabs(tabs, data, event, this._orientation);
   }
 
   /**
@@ -880,7 +896,7 @@ class TabBar extends Widget {
     }
 
     // Position the tab at its final resting position.
-    Private.finalizeTabPosition(data);
+    Private.finalizeTabPosition(data, this._orientation);
 
     // Remove the dragging class from the tab so it can be transitioned.
     data.tab.classList.remove(DRAGGING_CLASS);
@@ -896,7 +912,7 @@ class TabBar extends Widget {
       this._dragData = null;
 
       // Reset the positions of the tabs.
-      Private.resetTabPositions(this._tabs);
+      Private.resetTabPositions(this.contentNode.children, this._orientation);
 
       // Clear the cursor grab.
       data.override.dispose();
@@ -911,33 +927,19 @@ class TabBar extends Widget {
         return;
       }
 
-      // Move the tab and title to the new locations.
-      move(this._tabs, i, j);
+      // Move the title to the new locations.
       move(this._titles, i, j);
 
-      // Look up the next sibling node.
-      let ref = j + 1 < this._tabs.length ? this._tabs.at(j + 1) : null;
-
-      // Move the tab in the content node.
-      this.contentNode.insertBefore(this._tabs.at(j), ref);
-
-      // Update the current index.
-      let ci = this._currentIndex;
-      if (ci === i) {
-        this._currentIndex = j;
-      } else if (ci < i && ci >= j) {
-        this._currentIndex++;
-      } else if (ci > i && ci <= j) {
-        this._currentIndex--;
-      }
+      // Adjust the current index for the move.
+      this._adjustCurrentForMove(i, j);
 
       // Emit the tab moved signal.
       this.tabMoved.emit({
         fromIndex: i, toIndex: j, title: this._titles.at(j)
       });
 
-      // Schedule an update of the tabs.
-      this.update();
+      // Update the tabs immediately to prevent flicker.
+      sendMessage(this, WidgetMessage.UpdateRequest);
     }, TRANSITION_DURATION);
   }
 
@@ -970,7 +972,7 @@ class TabBar extends Widget {
     }
 
     // Reset the tabs to their non-dragged positions.
-    Private.resetTabPositions(this._tabs);
+    Private.resetTabPositions(this.contentNode.children, this._orientation);
 
     // Clear the cursor override.
     data.override.dispose();
@@ -981,20 +983,136 @@ class TabBar extends Widget {
   }
 
   /**
+   * Adjust the current index for a tab insert operation.
+   *
+   * This method accounts for the tab bar's insertion behavior when
+   * adjusting the current index and emitting the changed signal.
+   */
+  private _adjustCurrentForInsert(i: number, title: Title): void {
+    // Lookup commonly used variables.
+    let ct = this.currentTitle;
+    let ci = this._currentIndex;
+    let bh = this._insertBehavior;
+
+    // Handle the behavior where the new tab is always selected,
+    // or the behavior where the new tab is selected if needed.
+    if (bh === 'select-tab' || (bh === 'select-tab-if-needed' && ci === -1)) {
+      this._currentIndex = i;
+      this._previousTitle = ct;
+      this.currentChanged.emit({
+        previousIndex: ci, previousTitle: ct,
+        currentIndex: i, currentTitle: title
+      });
+      return;
+    }
+
+    // Otherwise, silently adjust the current index if needed.
+    if (ci >= i) this._currentIndex++;
+  }
+
+  /**
+   * Adjust the current index for a tab move operation.
+   *
+   * This method will not cause the actual current tab to change.
+   * It silently adjusts the index to account for the given move.
+   */
+  private _adjustCurrentForMove(i: number, j: number): void {
+    if (this._currentIndex === i) {
+      this._currentIndex = j;
+    } else if (this._currentIndex < i && this._currentIndex >= j) {
+      this._currentIndex++;
+    } else if (this._currentIndex > i && this._currentIndex <= j) {
+      this._currentIndex--;
+    }
+  }
+
+  /**
+   * Adjust the current index for a tab remove operation.
+   *
+   * This method accounts for the tab bar's remove behavior when
+   * adjusting the current index and emitting the changed signal.
+   */
+  private _adjustCurrentForRemove(i: number, title: Title): void {
+    // Lookup commonly used variables.
+    let ci = this._currentIndex;
+    let bh = this._removeBehavior;
+
+    // Silently adjust the index if the current tab is not removed.
+    if (ci !== i) {
+      if (ci > i) this._currentIndex--;
+      return;
+    }
+
+    // No tab gets selected if the tab bar is empty.
+    if (this._titles.length === 0) {
+      this._currentIndex = -1;
+      this.currentChanged.emit({
+        previousIndex: i, previousTitle: title,
+        currentIndex: -1, currentTitle: null
+      });
+      return;
+    }
+
+    // Handle behavior where the next sibling tab is selected.
+    if (bh === 'select-tab-after') {
+      this._currentIndex = Math.min(i, this._titles.length - 1);
+      this.currentChanged.emit({
+        previousIndex: i, previousTitle: title,
+        currentIndex: this._currentIndex, currentTitle: this.currentTitle
+      });
+      return;
+    }
+
+    // Handle behavior where the previous sibling tab is selected.
+    if (bh === 'select-tab-before') {
+      this._currentIndex = Math.max(0, i - 1);
+      this.currentChanged.emit({
+        previousIndex: i, previousTitle: title,
+        currentIndex: this._currentIndex, currentTitle: this.currentTitle
+      });
+      return;
+    }
+
+    // Handle behavior where the previous history tab is selected.
+    if (bh === 'select-previous-tab') {
+      if (this._previousTitle) {
+        this._currentIndex = indexOf(this._titles, this._previousTitle);
+        this._previousTitle = null;
+      } else {
+        this._currentIndex = Math.min(i, this._titles.length - 1);
+      }
+      this.currentChanged.emit({
+        previousIndex: i, previousTitle: title,
+        currentIndex: this._currentIndex, currentTitle: this.currentTitle
+      });
+      return;
+    }
+
+    // Otherwise, no tab gets selected.
+    this._currentIndex = -1;
+    this.currentChanged.emit({
+      previousIndex: i, previousTitle: title,
+      currentIndex: -1, currentTitle: null
+    });
+  }
+
+  /**
    * Handle the `changed` signal of a title object.
    */
   private _onTitleChanged(sender: Title): void {
-    this._dirtyTitles.add(sender);
     this.update();
   }
 
   private _currentIndex = -1;
   private _tabsMovable: boolean;
+  private _allowDeselect: boolean;
   private _renderer: TabBar.IRenderer;
+  private _previousTitle: Title = null;
   private _titles = new Vector<Title>();
-  private _dirtyTitles= new Set<Title>();
+  private _orientation: TabBar.Orientation;
   private _dragData: Private.DragData = null;
-  private _tabs = new Vector<HTMLLIElement>();
+  private _insertBehavior: TabBar.InsertBehavior;
+  private _removeBehavior: TabBar.RemoveBehavior;
 }
 
 
@@ -1011,16 +1129,111 @@ defineSignal(TabBar.prototype, 'tabDetachRequested');
 export
 namespace TabBar {
   /**
+   * A type alias for a tab bar orientation.
+   */
+  export
+  type Orientation = (
+    /**
+     * The tabs are arranged in a single row, left-to-right.
+     *
+     * The tab text orientation is horizontal.
+     */
+    'horizontal' |
+
+    /**
+     * The tabs are arranged in a single column, top-to-bottom.
+     *
+     * The tab text orientation is horizontal.
+     */
+    'vertical'
+  );
+
+  /**
+   * A type alias for the selection behavior on tab insert.
+   */
+  export
+  type InsertBehavior = (
+    /**
+     * The selected tab will not be changed.
+     */
+    'none' |
+
+    /**
+     * The inserted tab will be selected.
+     */
+    'select-tab' |
+
+    /**
+     * The inserted tab will be selected if the current tab is null.
+     */
+    'select-tab-if-needed'
+  );
+
+  /**
+   * A type alias for the selection behavior on tab remove.
+   */
+  export
+  type RemoveBehavior = (
+    /**
+     * No tab will be selected.
+     */
+    'none' |
+
+    /**
+     * The tab after the removed tab will be selected if possible.
+     */
+    'select-tab-after' |
+
+    /**
+     * The tab before the removed tab will be selected if possible.
+     */
+    'select-tab-before' |
+
+    /**
+     * The previously selected tab will be selected if possible.
+     */
+    'select-previous-tab'
+  );
+
+  /**
    * An options object for creating a tab bar.
    */
   export
   interface IOptions {
+    /**
+     * The layout orientation of the tab bar.
+     *
+     * The default is `horizontal`.
+     */
+    orientation?: TabBar.Orientation;
+
     /**
      * Whether the tabs are movable by the user.
      *
      * The default is `false`.
      */
     tabsMovable?: boolean;
+
+    /**
+     * Whether a tab can be deselected by the user.
+     *
+     * The default is `false`.
+     */
+    allowDeselect?: boolean;
+
+    /**
+     * The selection behavior when inserting a tab.
+     *
+     * The default is `'select-tab-if-needed'`.
+     */
+    insertBehavior?: TabBar.InsertBehavior;
+
+    /**
+     * The selection behavior when removing a tab.
+     *
+     * The default is `'select-tab-after'`.
+     */
+    removeBehavior?: TabBar.RemoveBehavior;
 
     /**
      * A renderer to use with the tab bar.
@@ -1111,7 +1324,7 @@ namespace TabBar {
     /**
      * The node representing the tab.
      */
-    tab: HTMLLIElement;
+    tab: HTMLElement;
 
     /**
      * The current client X position of the mouse.
@@ -1125,46 +1338,44 @@ namespace TabBar {
   }
 
   /**
+   * An object which holds the data to render a tab.
+   */
+  export
+  interface IRenderData {
+    /**
+     * The title associated with the tab.
+     */
+    title: Title;
+
+    /**
+     * Whether the tab is the current tab.
+     */
+    current: boolean;
+
+    /**
+     * The z-index for the tab.
+     */
+    zIndex: number;
+  }
+
+  /**
    * A renderer for use with a tab bar.
    */
   export
   interface IRenderer {
     /**
-     * Create a node for a tab.
-     *
-     * @returns A new node for a tab.
-     *
-     * #### Notes
-     * The data in the node should be uninitialized.
-     *
-     * The `updateTabNode` method will be called for initialization.
+     * A selector which matches the close icon node in a tab.
      */
-    createTabNode(): HTMLLIElement;
+    closeIconSelector: string;
 
     /**
-     * Update a tab node to reflect the state of a title.
+     * Render the node for the a tab.
      *
-     * @param node - A node created by a call to `createTabNode`.
+     * @param data - The data to use for rendering the tab.
      *
-     * @param title - The title object holding the data for the tab.
-     *
-     * #### Notes
-     * This method should completely reset the state of the node to
-     * reflect the data in the title.
+     * @returns A virtual DOM node representing the tab.
      */
-    updateTabNode(node: HTMLLIElement, title: Title): void;
-
-    /**
-     * Look up the close icon descendant node for a tab node.
-     *
-     * @param node - A node created by a call to `createTabNode`.
-     *
-     * @returns The close icon node, or `null` if none exists.
-     *
-     * #### Notes
-     * This is used by the tab bar to detect clicks on the close icon.
-     */
-    closeIconNode(node: HTMLLIElement): HTMLElement;
+    renderTab(data: IRenderData): VNode;
   }
 
   /**
@@ -1173,54 +1384,104 @@ namespace TabBar {
   export
   class Renderer implements IRenderer {
     /**
-     * Create a node for a tab.
-     *
-     * @returns A new node for a tab.
+     * A selector which matches the close icon node in a tab.
      */
-    createTabNode(): HTMLLIElement {
-      let node = document.createElement('li');
-      let icon = document.createElement('div');
-      let label = document.createElement('div');
-      let close = document.createElement('div');
-      node.className = TAB_CLASS;
-      icon.className = ICON_CLASS;
-      label.className = LABEL_CLASS;
-      close.className = CLOSE_ICON_CLASS;
-      node.appendChild(icon);
-      node.appendChild(label);
-      node.appendChild(close);
-      return node;
+    closeIconSelector = `.${CLOSE_ICON_CLASS}`;
+
+    /**
+     * Render the node for the a tab.
+     *
+     * @param data - The data to use for rendering the tab.
+     *
+     * @returns A virtual DOM node representing the tab.
+     */
+    renderTab(data: IRenderData): VNode {
+      let { label, caption } = data.title;
+      let key = this.createTabKey(data);
+      let style = this.createTabStyle(data);
+      let tabClass = this.createTabClass(data);
+      let iconClass = this.createIconClass(data);
+      return (
+        h.li({ key, className: tabClass, title: caption, style },
+          h.div({ className: iconClass }),
+          h.div({ className: LABEL_CLASS }, label),
+          h.div({ className: CLOSE_ICON_CLASS })
+        )
+      );
     }
 
     /**
-     * Update a tab node to reflect the state of a title.
+     * Create a unique render key for the tab.
      *
-     * @param node - A node created by a call to `createTabNode`.
+     * @param data - The data to use for the tab.
      *
-     * @param title - The title object holding the data for the tab.
+     * @returns The unique render key for the tab.
+     *
+     * #### Notes
+     * This method caches the key against the tab title the first time
+     * the key is generated. This enables efficient rendering of moved
+     * tabs and avoids subtle hover style artifacts.
      */
-    updateTabNode(node: HTMLLIElement, title: Title): void {
-      let tabInfix = title.className ? ` ${title.className}` : '';
-      let tabSuffix = title.closable ? ` ${CLOSABLE_CLASS}` : '';
-      let iconSuffix = title.icon ? ` ${title.icon}` : '';
-      let icon = node.firstChild as HTMLElement;
-      let label = icon.nextSibling as HTMLElement;
-      node.className = `${TAB_CLASS} ${tabInfix} ${tabSuffix}`;
-      icon.className = `${ICON_CLASS} ${iconSuffix}`;
-      label.textContent = title.label;
-      label.title = title.caption;
+    createTabKey(data: IRenderData): string {
+      let key = this._tabKeys.get(data.title);
+      if (key === void 0) {
+        key = `tab-key-${this._tabID++}`;
+        this._tabKeys.set(data.title, key);
+      }
+      return key;
     }
 
     /**
-     * Look up the close icon descendant node for a tab node.
+     * Create the inline style object for a tab.
      *
-     * @param node - A node created by a call to `createTabNode`.
+     * @param data - The data to use for the tab.
      *
-     * @returns The close icon node, or `null` if none exists.
+     * @returns The inline style data for the tab.
      */
-    closeIconNode(node: HTMLLIElement): HTMLElement {
-      return node.lastChild as HTMLElement;
+    createTabStyle(data: IRenderData): any {
+      return { zIndex: `${data.zIndex}` };
     }
+
+    /**
+     * Create the class name for the tab.
+     *
+     * @param data - The data to use for the tab.
+     *
+     * @returns The full class name for the tab.
+     */
+    createTabClass(data: IRenderData): string {
+      let { title, current } = data;
+      let name = TAB_CLASS;
+      if (title.className) {
+        name += ` ${title.className}`;
+      }
+      if (title.closable) {
+        name += ` ${CLOSABLE_CLASS}`;
+      }
+      if (current) {
+        name += ` ${CURRENT_CLASS}`;
+      }
+      return name;
+    }
+
+    /**
+     * Create the class name for the tab icon.
+     *
+     * @param data - The data to use for the tab.
+     *
+     * @returns The full class name for the tab icon.
+     */
+    createIconClass(data: IRenderData): string {
+      let { title } = data;
+      let name = ICON_CLASS;
+      if (title.icon) {
+        name += ` ${title.icon}`;
+      }
+      return name;
+    }
+
+    private _tabID = 0;
+    private _tabKeys = new WeakMap<Title, string>();
   }
 
   /**
@@ -1243,7 +1504,7 @@ namespace Private {
     /**
      * The tab node being dragged.
      */
-    tab: HTMLLIElement = null;
+    tab: HTMLElement = null;
 
     /**
      * The index of the tab being dragged.
@@ -1251,19 +1512,19 @@ namespace Private {
     index = -1;
 
     /**
-     * The offset left of the tab being dragged.
+     * The offset left/top of the tab being dragged.
      */
-    tabLeft = -1;
+    tabPos = -1;
 
     /**
-     * The offset width of the tab being dragged.
+     * The offset width/height of the tab being dragged.
      */
-    tabWidth = -1;
+    tabSize = -1;
 
     /**
-     * The original mouse X position in tab coordinates.
+     * The original mouse X/Y position in tab coordinates.
      */
-    tabPressX = -1;
+    tabPressPos = -1;
 
     /**
      * The tab target index upon mouse release.
@@ -1317,40 +1578,19 @@ namespace Private {
   export
   interface ITabLayout {
     /**
-     * The left margin value for the tab.
+     * The left/top margin value for the tab.
      */
     margin: number;
 
     /**
-     * The offset left position of the tab.
+     * The offset left/top position of the tab.
      */
-    left: number;
+    pos: number;
 
     /**
-     * The offset width of the tab.
+     * The offset width/height of the tab.
      */
-    width: number;
-  }
-
-  /**
-   * Create the DOM node for a tab bar.
-   */
-  export
-  function createNode(): HTMLDivElement {
-    let node = document.createElement('div');
-    let header = document.createElement('div');
-    let body = document.createElement('div');
-    let footer = document.createElement('div');
-    let content = document.createElement('ul');
-    header.className = HEADER_CLASS;
-    body.className = BODY_CLASS;
-    footer.className = FOOTER_CLASS;
-    content.className = CONTENT_CLASS;
-    body.appendChild(content);
-    node.appendChild(header);
-    node.appendChild(body);
-    node.appendChild(footer);
-    return node;
+    size: number;
   }
 
   /**
@@ -1365,15 +1605,26 @@ namespace Private {
    * Get a snapshot of the current tab layout values.
    */
   export
-  function snapTabLayout(tabs: ISequence<HTMLLIElement>): ITabLayout[] {
+  function snapTabLayout(tabs: HTMLCollection, orientation: TabBar.Orientation): ITabLayout[] {
     let layout = new Array<ITabLayout>(tabs.length);
-    for (let i = 0, n = tabs.length; i < n; ++i) {
-      let node = tabs.at(i);
-      let left = node.offsetLeft;
-      let width = node.offsetWidth;
-      let cstyle = window.getComputedStyle(node);
-      let margin = parseInt(cstyle.marginLeft, 10) || 0;
-      layout[i] = { margin, left, width };
+    if (orientation === 'horizontal') {
+      for (let i = 0, n = tabs.length; i < n; ++i) {
+        let node = tabs[i] as HTMLElement;
+        let pos = node.offsetLeft;
+        let size = node.offsetWidth;
+        let cstyle = window.getComputedStyle(node);
+        let margin = parseInt(cstyle.marginLeft, 10) || 0;
+        layout[i] = { margin, pos, size };
+      }
+    } else {
+      for (let i = 0, n = tabs.length; i < n; ++i) {
+        let node = tabs[i] as HTMLElement;
+        let pos = node.offsetTop;
+        let size = node.offsetHeight;
+        let cstyle = window.getComputedStyle(node);
+        let margin = parseInt(cstyle.marginTop, 10) || 0;
+        layout[i] = { margin, pos, size };
+      }
     }
     return layout;
   }
@@ -1396,28 +1647,55 @@ namespace Private {
    * Update the relative tab positions and computed target index.
    */
   export
-  function layoutTabs(tabs: ISequence<HTMLLIElement>, data: DragData, event: MouseEvent): void {
+  function layoutTabs(tabs: HTMLCollection, data: DragData, event: MouseEvent, orientation: TabBar.Orientation): void {
+    // Compute the orientation-sensitive values.
+    let pressPos: number;
+    let localPos: number;
+    let clientPos: number;
+    let clientSize: number;
+    if (orientation === 'horizontal') {
+      pressPos = data.pressX;
+      localPos = event.clientX - data.contentRect.left;
+      clientPos = event.clientX;
+      clientSize = data.contentRect.width;
+    } else {
+      pressPos = data.pressY;
+      localPos = event.clientY - data.contentRect.top;
+      clientPos = event.clientY;
+      clientSize = data.contentRect.height;
+    }
+
+    // Compute the target data.
     let targetIndex = data.index;
-    let targetLeft = event.clientX - data.contentRect.left - data.tabPressX;
-    let targetRight = targetLeft + data.tabWidth;
+    let targetPos = localPos - data.tabPressPos;
+    let targetEnd = targetPos + data.tabSize;
+
+    // Update the relative tab positions.
     for (let i = 0, n = tabs.length; i < n; ++i) {
-      let style = tabs.at(i).style;
+      let pxPos: string;
       let layout = data.tabLayout[i];
-      let threshold = layout.left + (layout.width >> 1);
-      if (i < data.index && targetLeft < threshold) {
-        style.left = `${data.tabWidth + data.tabLayout[i + 1].margin}px`;
+      let threshold = layout.pos + (layout.size >> 1);
+      if (i < data.index && targetPos < threshold) {
+        pxPos = `${data.tabSize + data.tabLayout[i + 1].margin}px`;
         targetIndex = Math.min(targetIndex, i);
-      } else if (i > data.index && targetRight > threshold) {
-        style.left = `${-data.tabWidth - layout.margin}px`;
+      } else if (i > data.index && targetEnd > threshold) {
+        pxPos = `${-data.tabSize - layout.margin}px`;
         targetIndex = Math.max(targetIndex, i);
       } else if (i === data.index) {
-        let ideal = event.clientX - data.pressX;
-        let limit = data.contentRect.width - (data.tabLeft + data.tabWidth);
-        style.left = `${Math.max(-data.tabLeft, Math.min(ideal, limit))}px`;
+        let ideal = clientPos - pressPos;
+        let limit = clientSize - (data.tabPos + data.tabSize);
+        pxPos = `${Math.max(-data.tabPos, Math.min(ideal, limit))}px`;
       } else {
-        style.left = '';
+        pxPos = '';
+      }
+      if (orientation === 'horizontal') {
+        (tabs[i] as HTMLElement).style.left = pxPos;
+      } else {
+        (tabs[i] as HTMLElement).style.top = pxPos;
       }
     }
+
+    // Update the computed target index.
     data.targetIndex = targetIndex;
   }
 
@@ -1425,27 +1703,48 @@ namespace Private {
    * Position the drag tab at its final resting relative position.
    */
   export
-  function finalizeTabPosition(data: DragData): void {
+  function finalizeTabPosition(data: DragData, orientation: TabBar.Orientation): void {
+    // Compute the orientation-sensitive client size.
+    let clientSize: number;
+    if (orientation === 'horizontal') {
+      clientSize = data.contentRect.width;
+    } else {
+      clientSize = data.contentRect.height;
+    }
+
+    // Compute the ideal final tab position.
     let ideal: number;
     if (data.targetIndex === data.index) {
       ideal = 0;
     } else if (data.targetIndex > data.index) {
       let tgt = data.tabLayout[data.targetIndex];
-      ideal = tgt.left + tgt.width - data.tabWidth - data.tabLeft;
+      ideal = tgt.pos + tgt.size - data.tabSize - data.tabPos;
     } else {
       let tgt = data.tabLayout[data.targetIndex];
-      ideal = tgt.left - data.tabLeft;
+      ideal = tgt.pos - data.tabPos;
     }
-    let style = data.tab.style;
-    let limit = data.contentRect.width - (data.tabLeft + data.tabWidth);
-    style.left = `${Math.max(-data.tabLeft, Math.min(ideal, limit))}px`;
+
+    // Compute the tab position limit.
+    let limit = clientSize - (data.tabPos + data.tabSize);
+    let final = Math.max(-data.tabPos, Math.min(ideal, limit));
+
+    // Set the final orientation-sensitive position.
+    if (orientation === 'horizontal') {
+      data.tab.style.left = `${final}px`;
+    } else {
+      data.tab.style.top = `${final}px`;
+    }
   }
 
   /**
    * Reset the relative positions of the given tabs.
    */
   export
-  function resetTabPositions(tabs: ISequence<HTMLLIElement>): void {
-    each(tabs, tab => { tab.style.left = ''; });
+  function resetTabPositions(tabs: HTMLCollection, orientation: TabBar.Orientation): void {
+    if (orientation === 'horizontal') {
+      each(tabs, tab => { (tab as HTMLElement).style.left = ''; });
+    } else {
+      each(tabs, tab => { (tab as HTMLElement).style.top = ''; });
+    }
   }
 }
