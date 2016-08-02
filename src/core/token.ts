@@ -54,5 +54,4 @@ class Token<T> {
   }
 
   private _name: string;
-  private _tokenStructuralPropertyT: T;
 }
