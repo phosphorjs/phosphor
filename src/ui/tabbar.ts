@@ -1365,6 +1365,9 @@ namespace TabBar {
   interface IRenderer {
     /**
      * A selector which matches the close icon node in a tab.
+     *
+     * #### Notes
+     * This should be a read-only property.
      */
     closeIconSelector: string;
 
@@ -1384,9 +1387,23 @@ namespace TabBar {
   export
   class Renderer implements IRenderer {
     /**
-     * A selector which matches the close icon node in a tab.
+     * Construct a new renderer.
+     *
+     * @param options - The options for initializing the renderer.
      */
-    closeIconSelector = `.${CLOSE_ICON_CLASS}`;
+    constructor(options: Renderer.IOptions = {}) {
+      this._extraTabClass = options.extraTabClass || '';
+    }
+
+    /**
+     * A selector which matches the close icon node in a tab.
+     *
+     * #### Notes
+     * This is a read-only property.
+     */
+    get closeIconSelector(): string {
+      return `.${CLOSE_ICON_CLASS}`;
+    }
 
     /**
      * Render the node for the a tab.
@@ -1461,6 +1478,9 @@ namespace TabBar {
       if (current) {
         name += ` ${CURRENT_CLASS}`;
       }
+      if (this._extraTabClass) {
+        name += ` ${this._extraTabClass}`;
+      }
       return name;
     }
 
@@ -1481,7 +1501,25 @@ namespace TabBar {
     }
 
     private _tabID = 0;
+    private _extraTabClass: string;
     private _tabKeys = new WeakMap<Title, string>();
+  }
+
+  /**
+   * The namespace for the `Renderer` class statics.
+   */
+  export
+  namespace Renderer {
+    /**
+     * An options object for creating a renderer.
+     */
+    export
+    interface IOptions {
+      /**
+       * The extra CSS class name to add to each tab.
+       */
+      extraTabClass?: string;
+    }
   }
 
   /**
