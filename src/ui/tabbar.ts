@@ -114,11 +114,6 @@ const DRAG_THRESHOLD = 5;
 const DETACH_THRESHOLD = 20;
 
 /**
- * The tab transition duration.
- */
-const TRANSITION_DURATION = 150;  // Keep in sync with CSS.
-
-/**
  * The DOM structure for a TabBar.
  */
 const TAB_BAR_NODE = (
@@ -901,6 +896,9 @@ class TabBar extends Widget {
     // Remove the dragging class from the tab so it can be transitioned.
     data.tab.classList.remove(DRAGGING_CLASS);
 
+    // Parse the transition duration for releasing the tab.
+    let duration = Private.parseTransitionDuration(data.tab);
+
     // Complete the release on a timer to allow the tab to transition.
     setTimeout(() => {
       // Do nothing if the drag has been aborted.
@@ -940,7 +938,7 @@ class TabBar extends Widget {
 
       // Update the tabs immediately to prevent flicker.
       sendMessage(this, WidgetMessage.UpdateRequest);
-    }, TRANSITION_DURATION);
+    }, duration);
   }
 
   /**
@@ -1637,6 +1635,15 @@ namespace Private {
   export
   function asTitle(value: Title | Title.IOptions): Title {
     return value instanceof Title ? value : new Title(value);
+  }
+
+  /**
+   * Parse the transition duration for a tab node.
+   */
+  export
+  function parseTransitionDuration(tab: HTMLElement): number {
+    let style = window.getComputedStyle(tab);
+    return 1000 * (parseFloat(style.transitionDuration) || 0);
   }
 
   /**
