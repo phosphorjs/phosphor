@@ -290,13 +290,13 @@ body.p-mod-override-cursor * {
 
 .p-TabBar.p-mod-horizontal.p-mod-dragging .p-TabBar-tab {
   left: 0;
-  transition: left 150ms ease; /* keep in sync with JS */
+  transition: left 150ms ease;
 }
 
 
 .p-TabBar.p-mod-vertical.p-mod-dragging .p-TabBar-tab {
   top: 0;
-  transition: top 150ms ease; /* keep in sync with JS */
+  transition: top 150ms ease;
 }
 
 
