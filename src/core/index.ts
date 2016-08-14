@@ -10,5 +10,6 @@ import * as messaging from './messaging';
 import * as mimedata from './mimedata';
 import * as properties from './properties';
 import * as signaling from './signaling';
+import * as token from './token';
 
 export { disposable, messaging, mimedata, properties, signaling };
