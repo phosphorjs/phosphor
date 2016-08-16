@@ -12,4 +12,4 @@ import * as properties from './properties';
 import * as signaling from './signaling';
 import * as token from './token';
 
-export { disposable, messaging, mimedata, properties, signaling };
+export { disposable, messaging, mimedata, properties, signaling, token };
