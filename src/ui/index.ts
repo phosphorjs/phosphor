@@ -10,6 +10,7 @@ import * as boxengine from './boxengine';
 import * as boxpanel from './boxpanel';
 import * as commandpalette from './commandpalette';
 import * as commandregistry from './commandregistry';
+import * as dockpanel from './dockpanel';
 import * as keyboard from './keyboard';
 import * as keymap from './keymap';
 import * as menu from './menu';
@@ -24,7 +25,7 @@ import * as vdom from './vdom';
 import * as widget from './widget';
 
 export {
-  application, boxengine, boxpanel, commandpalette, commandregistry, keyboard,
-  keymap, menu, menubar, panel, splitpanel, stackedpanel, tabbar, tabpanel,
-  title, vdom, widget
+  application, boxengine, boxpanel, commandpalette, commandregistry,
+  dockpanel, keyboard, keymap, menu, menubar, panel, splitpanel, stackedpanel,
+  tabbar, tabpanel, title, vdom, widget
 };
