@@ -68,6 +68,9 @@
     "ui",
     "widget"
   ],
+  "directories": {
+    "lib": "lib/"
+  },
   "author": "S. Chris Colbert <sccolbert@gmail.com>",
   "contributors": [
     "A. Darian <git@darian.af>",
