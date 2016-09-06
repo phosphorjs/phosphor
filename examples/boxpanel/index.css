@@ -1,0 +1,33 @@
+/*-----------------------------------------------------------------------------
+| Copyright (c) 2014-2016, PhosphorJS Contributors
+|
+| Distributed under the terms of the BSD 3-Clause License.
+|
+| The full license is in the file LICENSE, distributed with this software.
+|----------------------------------------------------------------------------*/
+#main {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+}
+
+.red {
+  background: #E74C3C;
+}
+
+
+.yellow {
+  background: #F1C40F;
+}
+
+
+.green {
+  background: #27AE60;
+}
+
+
+.blue {
+  background: #3498DB;
+}
