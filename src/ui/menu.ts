@@ -1423,9 +1423,9 @@ namespace Menu {
 
       // Set the command ID in the data set.
       if (item.type === 'command') {
-        node.dataset['command'] = item.command;
+        node.setAttribute('data-command', item.command);
       } else {
-        delete node.dataset['command'];
+        node.removeAttribute('data-command');
       }
 
       // Update the rest of the node state.
