@@ -261,12 +261,15 @@ describe('ui/focustracker', () => {
         let tracker = new FocusTracker();
         let widget0 = createWidget();
         let widget1 = createWidget();
+        let widget2 = createWidget();
         widget0.node.focus();
         tracker.add(widget0);
         tracker.add(widget1);
+        tracker.add(widget2);
         simulate(widget1.node, 'focus');
-        tracker.remove(widget1);
-        expect(tracker.currentWidget).to.be(widget0);
+        simulate(widget2.node, 'focus');
+        tracker.remove(widget2);
+        expect(tracker.currentWidget).to.be(widget1);
       });
 
       it('should be a no-op if the widget is not tracked', () => {
@@ -304,6 +307,20 @@ describe('ui/focustracker', () => {
           expect(tracker.focusNumber(widget0)).to.be(0);
           simulate(widget0.node, 'focus');
           expect(tracker.focusNumber(widget0)).to.be(2);
+        });
+
+        it('should be a no-op if the widget is already current', () => {
+          let tracker = new FocusTracker();
+          let called = false;
+          let widget = createWidget();
+          widget.node.focus();
+          tracker.add(widget);
+          tracker.currentChanged.connect((sender, args) => {
+            called = true;
+          });
+          widget.node.blur();
+          simulate(widget.node, 'focus');
+          expect(called).to.be(false);
         });
 
       });
