@@ -7,43 +7,43 @@
 |----------------------------------------------------------------------------*/
 import {
   Message
-} from '../lib/core/messaging';
+} from '../../lib/core/messaging';
 
 import {
   BoxPanel
-} from '../lib/ui/boxpanel';
+} from '../../lib/ui/boxpanel';
 
 import {
   CommandPalette
-} from '../lib/ui/commandpalette';
+} from '../../lib/ui/commandpalette';
 
 import {
   CommandRegistry
-} from '../lib/ui/commandregistry';
+} from '../../lib/ui/commandregistry';
 
 import {
   DockPanel
-} from '../lib/ui/dockpanel';
+} from '../../lib/ui/dockpanel';
 
 import {
   Keymap
-} from '../lib/ui/keymap';
+} from '../../lib/ui/keymap';
 
 import {
   Menu
-} from '../lib/ui/menu';
+} from '../../lib/ui/menu';
 
 import {
   MenuBar
-} from '../lib/ui/menubar';
+} from '../../lib/ui/menubar';
 
 import {
   Widget, WidgetFlag
-} from '../lib/ui/widget';
+} from '../../lib/ui/widget';
 
-import '../styles/base.css';
+import '../../styles/base.css';
 
-import './index.css';
+import '../index.css';
 
 
 const commands = new CommandRegistry();
