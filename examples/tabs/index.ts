@@ -5,61 +5,22 @@
 |
 | The full license is in the file LICENSE, distributed with this software.
 |----------------------------------------------------------------------------*/
-'use strict';
 
 import {
   Message
-} from 'phosphor/lib/core/messaging';
+} from '../../lib/core/messaging';
 
 import {
   TabPanel
-} from 'phosphor/lib/ui/tabpanel';
+} from '../../lib/ui/tabpanel';
 
 import {
-  ResizeMessage, Widget
-} from 'phosphor/lib/ui/widget';
+  Widget
+} from '../../lib/ui/widget';
 
-import 'phosphor/styles/base.css';
+import '../../styles/base.css';
+
 import '../index.css';
-
-
-/**
- * A widget which hosts a CodeMirror editor.
- */
-class CodeMirrorWidget extends Widget {
-
-  constructor(config?: CodeMirror.EditorConfiguration) {
-    super();
-    this.addClass('CodeMirrorWidget');
-    this._editor = CodeMirror(this.node, config);
-  }
-
-  get editor(): CodeMirror.Editor {
-    return this._editor;
-  }
-
-  loadTarget(target: string): void {
-    let doc = this._editor.getDoc();
-    let xhr = new XMLHttpRequest();
-    xhr.open('GET', target);
-    xhr.onreadystatechange = () => doc.setValue(xhr.responseText);
-    xhr.send();
-  }
-
-  protected onAfterAttach(msg: Message): void {
-    this._editor.refresh();
-  }
-
-  protected onResize(msg: ResizeMessage): void {
-    if (msg.width < 0 || msg.height < 0) {
-      this._editor.refresh();
-    } else {
-      this._editor.setSize(msg.width, msg.height);
-    }
-  }
-
-  private _editor: CodeMirror.Editor;
-}
 
 
 /**
@@ -119,16 +80,7 @@ function main(): void {
   demoArea.title.label = 'Demo';
   demoArea.node.appendChild(btn);
 
-  let cmSource = new CodeMirrorWidget({
-    mode: 'text/typescript',
-    lineNumbers: true,
-    tabSize: 2
-  });
-  cmSource.loadTarget('./index.ts');
-  cmSource.title.label = 'Source';
-
   panel.addWidget(demoArea);
-  panel.addWidget(cmSource);
 
   Widget.attach(panel, document.body);
 
