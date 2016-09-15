@@ -1,7 +1,7 @@
 module.exports = {
-  entry: './examples/boxpanel/index.js',
+  entry: './index.js',
   output: {
-    filename: './examples/boxpanel/bundle.js'
+    filename: './bundle.js'
   },
   module: {
     loaders: [
