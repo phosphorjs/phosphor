@@ -918,7 +918,7 @@ namespace Private {
   function cloneKeyboardEvent(event: KeyboardEvent): KeyboardEvent {
     // A custom event is required because Chrome nulls out the
     // `keyCode` field in user-generated `KeyboardEvent` types.
-    let clone = document.createEvent('Event') as KeyboardEvent;
+    let clone = document.createEvent('Event') as any;
     let bubbles = event.bubbles || true;
     let cancelable = event.cancelable || true;
     clone.initEvent(event.type || 'keydown', bubbles, cancelable);
