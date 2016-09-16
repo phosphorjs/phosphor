@@ -5,3 +5,5 @@ docs/api
 lib
 node_modules
 build
+.vscode
+
