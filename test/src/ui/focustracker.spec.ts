@@ -91,11 +91,6 @@ describe('ui/focustracker', () => {
         expect(tracker.isDisposed).to.be(true);
       });
 
-      it('should be read-only', () => {
-        let tracker = new FocusTracker();
-        expect(() => { tracker.isDisposed = true; }).to.throwError();
-      });
-
     });
 
     describe('#currentWidget', () => {
@@ -142,11 +137,6 @@ describe('ui/focustracker', () => {
         expect(tracker.currentWidget).to.be(null);
       });
 
-      it('should be read-only', () => {
-        let tracker = new FocusTracker();
-        expect(() => { tracker.currentWidget = null; }).to.throwError();
-      });
-
     });
 
     describe('#widgets', () => {
@@ -158,11 +148,6 @@ describe('ui/focustracker', () => {
         tracker.add(widget);
         expect(tracker.widgets.length).to.be(1);
         expect(tracker.widgets.at(0)).to.be(widget);
-      });
-
-      it('should be read-only', () => {
-        let tracker = new FocusTracker();
-        expect(() => { tracker.widgets = null; }).to.throwError();
       });
 
     });
