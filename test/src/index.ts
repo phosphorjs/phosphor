@@ -46,6 +46,7 @@ import './ui/tabbar.spec';
 import './ui/tabpanel.spec';
 import './ui/title.spec';
 import './ui/widget.spec';
+import './ui/vdom.spec';
 
 import '../../styles/base.css';
 import '../index.css';
