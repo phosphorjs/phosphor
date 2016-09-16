@@ -84,11 +84,6 @@ describe('core/messaging', () => {
         expect(msg.type).to.be('test');
       });
 
-      it('should be read only', () => {
-        let msg = new Message('test');
-        expect(() => { msg.type = 'other' }).to.throwError();
-      });
-
     });
 
     describe('#isConflatable', () => {
@@ -96,11 +91,6 @@ describe('core/messaging', () => {
       it('should be `false` by default', () => {
         let msg = new Message('test');
         expect(msg.isConflatable).to.be(false);
-      });
-
-      it('should be read only', () => {
-        let msg = new Message('test');
-        expect(() => { msg.isConflatable = true; }).to.throwError();
       });
 
     });
@@ -138,11 +128,6 @@ describe('core/messaging', () => {
       it('should be `true` by default', () => {
         let msg = new ConflatableMessage('test');
         expect(msg.isConflatable).to.be(true);
-      });
-
-      it('should be read only', () => {
-        let msg = new ConflatableMessage('test');
-        expect(() => { msg.isConflatable = false; }).to.throwError();
       });
 
     });

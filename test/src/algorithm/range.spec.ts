@@ -89,11 +89,6 @@ describe('algorithm/range', () => {
         expect(seq.start).to.be(1);
       });
 
-      it('should be read-only', () => {
-        let seq = new Range(1, 10, 2);
-        expect(() => { seq.start = 0; }).to.throwError();
-      });
-
     });
 
     describe('#stop', () => {
@@ -101,11 +96,6 @@ describe('algorithm/range', () => {
       it('should be the stopping value for the range', () => {
         let seq = new Range(1, 10, 2);
         expect(seq.stop).to.be(10);
-      });
-
-      it('should be read-only', () => {
-        let seq = new Range(1, 10, 2);
-        expect(() => { seq.stop = 0; }).to.throwError();
       });
 
     });
@@ -117,11 +107,6 @@ describe('algorithm/range', () => {
         expect(seq.step).to.be(2);
       });
 
-      it('should be read-only', () => {
-        let seq = new Range(1, 10, 2);
-        expect(() => { seq.step = 0; }).to.throwError();
-      });
-
     });
 
     describe('#length', () => {
@@ -129,11 +114,6 @@ describe('algorithm/range', () => {
       it('should be the number of values in the range', () => {
         let seq = new Range(1, 11, 2);
         expect(seq.length).to.be(5);
-      });
-
-      it('should be read-only', () => {
-        let seq = new Range(1, 10, 2);
-        expect(() => { seq.length = 0; }).to.throwError();
       });
 
     });

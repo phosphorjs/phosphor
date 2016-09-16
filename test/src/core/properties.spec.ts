@@ -52,11 +52,6 @@ describe('core/properties', () => {
         expect(p.name).to.be('p');
       });
 
-      it('should be a read-only property', () => {
-        let p = new AttachedProperty<Model, number>({ name: 'p' });
-        expect(() => { p.name = 'q'; }).to.throwException();
-      });
-
     });
 
     describe('#get()', () => {

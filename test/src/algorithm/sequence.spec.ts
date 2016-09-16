@@ -63,12 +63,6 @@ describe('algorithm/sequence', () => {
         expect(seq.length).to.be(5);
       });
 
-      it('should be read-only', () => {
-        let src = [1, 2, 3, 4, 5];
-        let seq = new ArraySequence(src);
-        expect(() => { seq.length = 0; }).to.throwException();
-      });
-
     });
 
     describe('#iter()', () => {

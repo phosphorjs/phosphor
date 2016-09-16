@@ -36,11 +36,6 @@ describe('ui/keyboard', () => {
         expect(layout.name).to.be('ab-cd');
       });
 
-      it('should be read-only', () => {
-        let layout = new KeycodeLayout('ab-cd', {});
-        expect(() => { layout.name = 'ef-gh'; }).to.throwError();
-      });
-
     });
 
     describe('#keys()', () => {

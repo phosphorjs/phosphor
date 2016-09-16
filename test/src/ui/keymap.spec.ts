@@ -201,10 +201,6 @@ describe('ui/keymap', () => {
         expect(keymap.commands).to.be(commands);
       });
 
-      it('should be read-only', () => {
-        expect(() => { keymap.commands = null; }).to.throwError();
-      });
-
     });
 
     describe('#bindings', () => {
@@ -220,10 +216,6 @@ describe('ui/keymap', () => {
         expect(keymap.bindings.at(0).command).to.be('test');
         binding.dispose();
         command.dispose();
-      });
-
-      it('should be read only', () => {
-        expect(() => { keymap.bindings = null; }).to.throwError();
       });
 
     });

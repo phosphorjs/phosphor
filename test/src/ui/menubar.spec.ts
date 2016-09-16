@@ -180,11 +180,6 @@ describe('ui/menubar', () => {
         expect(bar.renderer).to.be(renderer);
       });
 
-      it('should be read-only', () => {
-        let bar = new MenuBar({ keymap });
-        expect(() => { bar.renderer = null; }).to.throwError();
-      });
-
     });
 
     describe('#menus', () => {
@@ -199,11 +194,6 @@ describe('ui/menubar', () => {
         expect(menus.length).to.be(2);
         expect(menus.at(0)).to.be(menu0);
         expect(menus.at(1)).to.be(menu1);
-      });
-
-      it('should be read-only', () => {
-        let bar = new MenuBar({ keymap });
-        expect(() => { bar.menus = null; }).to.throwError();
       });
 
     });
@@ -227,11 +217,6 @@ describe('ui/menubar', () => {
         bar.activeIndex = 0;
         expect(bar.childMenu).to.be(null);
         bar.dispose();
-      });
-
-      it('should be read-only', () => {
-        let bar = new MenuBar({ keymap });
-        expect(() => { bar.childMenu = new Menu({ commands, keymap }); }).to.throwError();
       });
 
     });

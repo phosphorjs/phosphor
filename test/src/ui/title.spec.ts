@@ -64,12 +64,6 @@ describe('ui/title', () => {
         expect(title.owner).to.be(null);
       });
 
-      it('should be read-only', () => {
-        let title = new Title(defaultOptions);
-        expect(title.owner).to.be(document.body);
-        expect(() => { title.owner = null; }).to.throwError();
-      });
-
     });
 
     describe('#label', () => {

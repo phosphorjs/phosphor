@@ -22,7 +22,7 @@
     "simulate-event": "^1.4.0",
     "style-loader": "^0.13.1",
     "typedoc": "^0.4.2",
-    "typescript": "^1.8.0",
+    "typescript": "^2.0.2",
     "watch": "^0.18.0",
     "webpack": "^1.12.14"
   },

@@ -219,11 +219,6 @@ describe('ui/tabpanel', () => {
         expect(bar.hasClass('p-TabPanel-tabBar')).to.be(true);
       });
 
-      it('should be read-only', () => {
-        let panel = new TabPanel();
-        expect(() => { panel.tabBar = null; }).to.throwError();
-      });
-
       it('should move the widget in the stacked panel when a tab is moved', () => {
         let panel = new TabPanel();
         let widgets = [new LogWidget(), new LogWidget()];
@@ -297,11 +292,6 @@ describe('ui/tabpanel', () => {
         expect(stack.hasClass('p-TabPanel-stackedPanel')).to.be(true);
       });
 
-      it('should be read-only', () => {
-        let panel = new TabPanel();
-        expect(() => { panel.stackedPanel = null; }).to.throwError();
-      });
-
       it('remove a tab when a widget is removed from the stacked panel', () => {
         let panel = new TabPanel();
         let widget = new Widget();
@@ -326,11 +316,6 @@ describe('ui/tabpanel', () => {
         let widgets = [new Widget(), new Widget(), new Widget()];
         each(widgets, w => { panel.addWidget(w); });
         expect(toArray(panel.widgets)).to.eql(widgets);
-      });
-
-      it('should be read-only', () => {
-        let panel = new TabPanel();
-        expect(() => { panel.widgets = null; }).to.throwError();
       });
 
     });

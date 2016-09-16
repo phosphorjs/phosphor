@@ -645,11 +645,6 @@ describe('ui/menu', () => {
         menu.dispose();
       });
 
-      it('should be read-only', () => {
-        let menu = new Menu({ commands, keymap });
-        expect(() => { menu.parentMenu = null; }).to.throwError();
-      });
-
     });
 
     describe('#childMenu', () => {
@@ -672,11 +667,6 @@ describe('ui/menu', () => {
         Widget.attach(menu, document.body);
         expect(menu.childMenu).to.be(null);
         menu.dispose();
-      });
-
-      it('should be read-only', () => {
-        let menu = new Menu({ commands, keymap });
-        expect(() => { menu.childMenu = null; }).to.throwError();
       });
 
     });
@@ -710,11 +700,6 @@ describe('ui/menu', () => {
         menu.dispose();
       });
 
-      it('should be read-only', () => {
-        let menu = new Menu({ commands, keymap });
-        expect(() => { menu.rootMenu = null; }).to.throwError();
-      });
-
     });
 
     describe('#leafMenu', () => {
@@ -746,11 +731,6 @@ describe('ui/menu', () => {
         menu.dispose();
       });
 
-      it('should be read-only', () => {
-        let menu = new Menu({ commands, keymap });
-        expect(() => { menu.leafMenu = null; }).to.throwError();
-      });
-
     });
 
     describe('#contentNode', () => {
@@ -761,11 +741,6 @@ describe('ui/menu', () => {
         expect(content.classList.contains('p-Menu-content')).to.be(true);
       });
 
-      it('should be read-only', () => {
-        let menu = new Menu({ commands, keymap });
-        expect(() => { menu.contentNode = null; }).to.throwError();
-      });
-
     });
 
     describe('#renderer', () => {
@@ -774,11 +749,6 @@ describe('ui/menu', () => {
         let renderer = Object.create(Menu.defaultRenderer);
         let menu = new Menu({ renderer , commands, keymap });
         expect(menu.renderer).to.be(renderer);
-      });
-
-      it('should be read-only', () => {
-        let menu = new Menu({ commands, keymap });
-        expect(() => { menu.renderer = null; }).to.throwError();
       });
 
     });
@@ -793,11 +763,6 @@ describe('ui/menu', () => {
         expect(items.length).to.be(2);
         expect(items.at(0).command).to.be('foo');
         expect(items.at(1).command).to.be('bar');
-      });
-
-      it('should be read-only', () => {
-        let menu = new Menu({ commands, keymap });
-        expect(() => { menu.items = null; }).to.throwError();
       });
 
     });
