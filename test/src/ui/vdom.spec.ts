@@ -271,9 +271,9 @@ describe('ui/vdom', () => {
 
     it('should create a real DOM node from a virtual DOM node', () => {
       let node = realize(h.div([h.a(), h.img()]));
-      expect(node.localName).to.be('div');
-      expect(node.firstChild.localName).to.be('a');
-      expect(node.lastChild.localName).to.be('img');
+      expect(node.nodeName.toLowerCase()).to.be('div');
+      expect(node.firstChild.nodeName.toLowerCase()).to.be('a');
+      expect(node.lastChild.nodeName.toLowerCase()).to.be('img');
     });
 
   });
@@ -283,7 +283,7 @@ describe('ui/vdom', () => {
     it('should render virtual DOM content into a host elememnt', () => {
       let host = document.createElement('div');
       render(h.img(), host);
-      expect(host.firstChild.localName).to.be('img');
+      expect(host.firstChild.nodeName.toLowerCase()).to.be('img');
     });
 
     it('should render the delta from the previous rendering', () => {
@@ -293,13 +293,13 @@ describe('ui/vdom', () => {
 
       let first = host.firstChild;
       let last = host.lastChild;
-      expect(first.localName).to.be('a');
-      expect(last.localName).to.be('img');
+      expect(first.nodeName.toLowerCase()).to.be('a');
+      expect(last.nodeName.toLowerCase()).to.be('img');
       children = [children[0], new VNode('text', 'foo', {}, []), children[1]];
       render(children, host);
       expect(host.firstChild).to.be(first);
       expect(host.lastChild).to.not.be(last);
-      expect(host.lastChild.localName).to.be('span');
+      expect(host.lastChild.nodeName.toLowerCase()).to.be('span');
     });
 
     it('should clear the rendering if `null` content is provided', () => {
@@ -359,7 +359,7 @@ describe('ui/vdom', () => {
       newChildren[3] = h.div({ key: '5' });
       render(newChildren, host);
       let newChild = host.lastChild;
-      expect(newChild.localName).to.be('div');
+      expect(newChild.nodeName.toLowerCase()).to.be('div');
     });
 
     it('should update the text of a text node', () => {
