@@ -61,53 +61,6 @@ const TOP_TO_BOTTOM_CLASS = 'p-mod-top-to-bottom';
 const BOTTOM_TO_TOP_CLASS = 'p-mod-bottom-to-top';
 
 
-/**
- * Describes how to align children in the direction of the layout.
- */
-export
-type ContentJustification = 'start' | 'end' | 'center' | 'space-between' | 'space-around';
-
-
-/**
- * If layout is set to wrap, this defines how the wrapped lines will be
- * aligned in relation ro each other.
- */
-export
-type ContentAlignment = ContentJustification | 'stretch';
-
-/**
- * Controls how to align children in the direction perpendicular to that
- * of the layout (for a horizontal layout the will be the vertical align,
- * and vice-versa).
- */
-export
-type ItemAlignment = 'start' | 'end' | 'center' | 'baseline' | 'stretch';
-
-/**
- * Describe how to stretch items to fit into flex panel:
- * 'grow': Allow items to grow from default size
- * 'shrink': Allow items to shrink from default size
- * 'both': Both growing and shrinking is allowed.
- * 'fixed': Do not allow either growing or shrinking.
- */
-export
-type StretchType = 'grow' | 'shrink' | 'both' | 'fixed';
-
-
-function wrapLayoutProperties(widgetClass: { prototype: any },
-                              layoutClass: { prototype: any },
-                              properties: string[]): void {
-  for (let property of properties) {
-    let desc = Object.getOwnPropertyDescriptor(layoutClass.prototype, property);
-    let newDesc: PropertyDescriptor = {
-      get: function () { return this.layout[property]; },
-      set: function (value: any) { this.layout[property] = value; },
-      enumerable: desc.enumerable,
-      configurable: desc.configurable
-    };
-    Object.defineProperty(widgetClass.prototype, property, newDesc);
-  }
-}
 
 /**
  * A panel which arranges its widgets in a single row or column.
@@ -148,53 +101,101 @@ class FlexPanel extends Panel {
   }
 
   /**
-   * Get the layout direction for the flex panel.
+   * The layout direction for the flex panel.
    */
-  direction: FlexPanel.Direction;
+  get direction(): FlexPanel.Direction {
+    return this.layout.direction;
+  };
+
+  set direction(value: FlexPanel.Direction) {
+    this.layout.direction = value;
+  }
 
   /**
-   * Get the minimum inter-element spacing for the flex panel.
+   * The minimum inter-element spacing for the flex panel.
    */
-  minimumSpacing: number;
+  get minimumSpacing(): number {
+    return this.layout.minimumSpacing;
+  };
+
+  set minimumSpacing(value: number) {
+    this.layout.minimumSpacing = value;
+  }
 
   /**
    * Whether the layout should wrap its children if they do not all fit in
    * column/row.
    */
-  wrap: boolean;
+  get wrap(): boolean {
+    return this.layout.wrap;
+  };
+
+  set wrap(value: boolean) {
+    this.layout.wrap = value;
+  }
 
   /**
    * Controls how to align children in the direction of the layout.
    */
-  justifyContent: ContentJustification;
+  get justifyContent(): FlexPanel.ContentJustification {
+    return this.layout.justifyContent;
+  };
+
+  set justifyContent(value: FlexPanel.ContentJustification) {
+    this.layout.justifyContent = value;
+  }
 
   /**
    * Controls how to align children in the direction perpendicular to that
    * of the layout (for a horizontal layout the will be the vertical align,
    * and vice-versa).
    */
-  alignItems: ItemAlignment;
+  get alignItems(): FlexPanel.ItemAlignment {
+    return this.layout.alignItems;
+  };
+
+  set alignItems(value: FlexPanel.ItemAlignment) {
+    this.layout.alignItems = value;
+  }
 
   /**
    * If layout is set to wrap, this defines how the wrapped lines will be
    * aligned in relation ro each other.
    */
-  alignContent: ContentAlignment;
+  get alignContent(): FlexPanel.ContentAlignment {
+    return this.layout.alignContent;
+  };
+
+  set alignContent(value: FlexPanel.ContentAlignment) {
+    this.layout.alignContent = value;
+  }
 
   /**
    * Describe how to stretch items to fit into flex panel.
    */
-  stretchType: StretchType;
+  get stretchType(): FlexPanel.StretchType {
+    return this.layout.stretchType;
+  };
+
+  set stretchType(value: FlexPanel.StretchType) {
+    this.layout.stretchType = value;
+  }
 
   /**
-   * If set the free space is distributed such that the
+   * If set, the free space is distributed such that the
    * children are all the same size. Defaults to `false`.
    *
    * ### Notes
    * Setting this to `true` will make the layout
    * ignore the setting of `stretchType`.
    */
-  evenSizes: boolean;
+  get evenSizes(): boolean {
+    return this.layout.evenSizes;
+  };
+
+  set evenSizes(value: boolean) {
+    this.layout.evenSizes = value;
+  };
 
   /**
    * A message handler invoked on a `'child-added'` message.
@@ -217,6 +218,8 @@ class FlexPanel extends Panel {
     super.onAfterAttach(msg);
     this.fit();
   }
+
+  layout: FlexLayout;
 }
 
 /**
@@ -229,6 +232,26 @@ namespace FlexPanel {
    */
   export
   type Direction = FlexLayout.Direction;
+  /**
+   * A type alias for a flex panel direction.
+   */
+  export
+  type ContentJustification = FlexLayout.ContentJustification;
+  /**
+   * A type alias for a flex panel direction.
+   */
+  export
+  type ContentAlignment = FlexLayout.ContentAlignment;
+  /**
+   * A type alias for a flex panel direction.
+   */
+  export
+  type ItemAlignment = FlexLayout.ItemAlignment;
+  /**
+   * A type alias for a flex panel direction.
+   */
+  export
+  type StretchType = FlexLayout.StretchType;
 
   /**
    * An options object for initializing a flex panel.
@@ -250,7 +273,7 @@ namespace FlexPanel {
    *
    * @param widget - The widget of interest.
    *
-   * @returns The flex panel stretch factor for the widget.
+   * @returns The flex panel grow factor for the widget.
    */
   export
   function getGrow(widget: Widget): number {
@@ -262,7 +285,7 @@ namespace FlexPanel {
    *
    * @param widget - The widget of interest.
    *
-   * @param value - The value for the stretch factor.
+   * @param value - The value for the grow factor.
    */
   export
   function setGrow(widget: Widget, value: number): void {
@@ -270,11 +293,11 @@ namespace FlexPanel {
   }
 
   /**
-   * Get the flex panel grow factor for the given widget.
+   * Get the flex panel shrink factor for the given widget.
    *
    * @param widget - The widget of interest.
    *
-   * @returns The flex panel stretch factor for the widget.
+   * @returns The flex panel shrink factor for the widget.
    */
   export
   function getShrink(widget: Widget): number {
@@ -282,11 +305,11 @@ namespace FlexPanel {
   }
 
   /**
-   * Set the flex panel grow factor for the given widget.
+   * Set the flex panel shrink factor for the given widget.
    *
    * @param widget - The widget of interest.
    *
-   * @param value - The value for the stretch factor.
+   * @param value - The value for the shrink factor.
    */
   export
   function setShrink(widget: Widget, value: number): void {
@@ -433,11 +456,11 @@ class FlexLayout extends PanelLayout {
   /**
    * Controls how to align children in the direction of the layout.
    */
-  get justifyContent(): ContentJustification {
+  get justifyContent(): FlexLayout.ContentJustification {
     return this._justifyContent;
   }
 
-  set justifyContent(value: ContentJustification) {
+  set justifyContent(value: FlexLayout.ContentJustification) {
     if (this._justifyContent !== value) {
       this._justifyContent = value;
       let flex = Private.translateFlexString(value as string);
@@ -451,11 +474,11 @@ class FlexLayout extends PanelLayout {
    * of the layout (for a horizontal layout the will be the vertical align,
    * and vice-versa).
    */
-  get alignItems(): ItemAlignment {
+  get alignItems(): FlexLayout.ItemAlignment {
     return this._alignItems;
   }
 
-  set alignItems(value: ItemAlignment) {
+  set alignItems(value: FlexLayout.ItemAlignment) {
     if (this._alignItems !== value) {
       this._alignItems = value;
       let flex = Private.translateFlexString(value as string);
@@ -468,11 +491,11 @@ class FlexLayout extends PanelLayout {
    * If layout is set to wrap, this defines how the wrapped lines will be
    * aligned in relation ro each other.
    */
-  get alignContent(): ContentAlignment {
+  get alignContent(): FlexLayout.ContentAlignment {
     return this._alignContent;
   }
 
-  set alignContent(value: ContentAlignment) {
+  set alignContent(value: FlexLayout.ContentAlignment) {
     if (this._alignContent !== value) {
       this._alignContent = value;
       let flex = Private.translateFlexString(value as string);
@@ -492,11 +515,11 @@ class FlexLayout extends PanelLayout {
   /**
    * Describe how to stretch items to fit into flex panel.
    */
-  get stretchType(): StretchType {
+  get stretchType(): FlexLayout.StretchType {
     return this._stretchType;
   }
 
-  set stretchType(value: StretchType) {
+  set stretchType(value: FlexLayout.StretchType) {
     if (this._stretchType !== value) {
       this._stretchType = value;
       if (this.parent) {
@@ -506,7 +529,7 @@ class FlexLayout extends PanelLayout {
   }
 
   /**
-   * If set the free space is distributed such that the
+   * If set, the free space is distributed such that the
    * children are all the same size. Defaults to `false`.
    *
    * ### Notes
@@ -699,6 +722,11 @@ class FlexLayout extends PanelLayout {
     }
   }
 
+  /**
+   * Manage the display order of the widgets via the flexbox
+   * attribute `order`, while keeping the internal DOM order
+   * intact.
+   */
   protected order: Vector<Widget> = null;
 
   /**
@@ -775,7 +803,7 @@ class FlexLayout extends PanelLayout {
           shrink = 1;
           break;
         case 'fixed':
-          // Do not allow either growing or shrinking.
+          // Disallow both growing and shrinking.
           grow = 0;
           shrink = 0;
           break;
@@ -807,19 +835,14 @@ class FlexLayout extends PanelLayout {
 
   private _wrap = false;
   private _minimumSpacing = 4;
-  private _justifyContent: ContentJustification;
-  private _alignItems: ItemAlignment;
-  private _alignContent: ContentAlignment;
+  private _justifyContent: FlexLayout.ContentJustification = null;
+  private _alignItems: FlexLayout.ItemAlignment = null;
+  private _alignContent: FlexLayout.ContentAlignment = null;
   private _dirty = false;
   private _direction: FlexLayout.Direction = 'top-to-bottom';
-  private _stretchType: StretchType = null;
+  private _stretchType: FlexLayout.StretchType = null;
   private _evenSizes: boolean = false;
 }
-
-wrapLayoutProperties(FlexPanel, FlexLayout, [
-  'direction', 'minimumSpacing', 'wrap', 'justifyContent',
-  'alignItems', 'alignContent', 'stretchType',
-  'evenSizes']);
 
 
 /**
@@ -834,6 +857,37 @@ namespace FlexLayout {
   type Direction = (
     'left-to-right' | 'right-to-left' | 'top-to-bottom' | 'bottom-to-top'
   );
+
+  /**
+   * Describes how to align children in the direction of the layout.
+   */
+  export
+  type ContentJustification = 'start' | 'end' | 'center' | 'space-between' | 'space-around';
+
+  /**
+   * If layout is set to wrap, this defines how the wrapped lines will be
+   * aligned in relation ro each other.
+   */
+  export
+  type ContentAlignment = ContentJustification | 'stretch';
+
+  /**
+   * Controls how to align children in the direction perpendicular to that
+   * of the layout (for a horizontal layout the will be the vertical align,
+   * and vice-versa).
+   */
+  export
+  type ItemAlignment = 'start' | 'end' | 'center' | 'baseline' | 'stretch';
+
+  /**
+   * Describe how to stretch items to fit into flex panel:
+   * 'grow': Allow items to grow from default size
+   * 'shrink': Allow items to shrink from default size
+   * 'both': Both growing and shrinking is allowed.
+   * 'fixed': Do not allow either growing or shrinking.
+   */
+  export
+  type StretchType = 'grow' | 'shrink' | 'both' | 'fixed';
 
   /**
    * An options object for initializing a flex layout.
@@ -884,7 +938,7 @@ namespace FlexLayout {
     stretchType?: StretchType;
 
     /**
-     * If set the free space is distributed such that the
+     * If set, the free space is distributed such that the
      * children are all the same size. Defaults to `false`.
      *
      * ### Notes
