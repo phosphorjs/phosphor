@@ -1,0 +1,28 @@
+/*-----------------------------------------------------------------------------
+| Copyright (c) 2014-2017, PhosphorJS Contributors
+|
+| Distributed under the terms of the BSD 3-Clause License.
+|
+| The full license is in the file LICENSE, distributed with this software.
+|----------------------------------------------------------------------------*/
+
+
+.p-FlexPanel {
+  display: flex;
+}
+
+.p-FlexPanel.p-mod-left-to-right {
+  flex-direction: row;
+}
+
+.p-FlexPanel.p-mod-right-to-left {
+  flex-direction: row-reverse;
+}
+
+.p-FlexPanel.p-mod-top-to-bottom {
+  flex-direction: column;
+}
+
+.p-FlexPanel.p-mod-bottom-to-top {
+  flex-direction: column-reverse;
+}
