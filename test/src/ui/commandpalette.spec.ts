@@ -99,10 +99,6 @@ describe('ui/commandpalette', () => {
         expect(node.classList.contains('p-CommandPalette-search')).to.be(true);
       });
 
-      it('should be read-only', () => {
-        expect(() => { palette.searchNode = null; }).to.throwError();
-      });
-
     });
 
     describe('#inputNode', () => {
@@ -113,10 +109,6 @@ describe('ui/commandpalette', () => {
         expect(node.classList.contains('p-CommandPalette-input')).to.be(true);
       });
 
-      it('should be read-only', () => {
-        expect(() => { palette.inputNode = null; }).to.throwError();
-      });
-
     });
 
     describe('#contentNode', () => {
@@ -125,10 +117,6 @@ describe('ui/commandpalette', () => {
         let node = palette.contentNode;
         expect(node).to.be.ok();
         expect(node.classList.contains('p-CommandPalette-content')).to.be(true);
-      });
-
-      it('should be read-only', () => {
-        expect(() => { palette.contentNode = null; }).to.throwError();
       });
 
     });
@@ -143,10 +131,6 @@ describe('ui/commandpalette', () => {
         expect(palette.items.at(0).command).to.be('test');
       });
 
-      it('should be read-only', () => {
-        expect(() => { palette.items = null; }).to.throwError();
-      });
-
     });
 
     describe('#commands', () => {
@@ -155,20 +139,12 @@ describe('ui/commandpalette', () => {
         expect(palette.commands).to.be(commands);
       });
 
-      it('should be read-only', () => {
-        expect(() => { palette.commands = null; }).to.throwError();
-      });
-
     });
 
     describe('#keymap', () => {
 
       it('should get the keymap manager for the command palette', () => {
         expect(palette.keymap).to.be(keymap);
-      });
-
-      it('should be read-only', () => {
-        expect(() => { palette.keymap = null; }).to.throwError();
       });
 
     });
@@ -180,10 +156,6 @@ describe('ui/commandpalette', () => {
         let palette = new CommandPalette({ commands, keymap, renderer });
         expect(palette.renderer).to.be(renderer);
         palette.dispose();
-      });
-
-      it('should be read-only', () => {
-        expect(() => { palette.renderer = null; }).to.throwError();
       });
 
     });

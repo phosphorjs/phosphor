@@ -267,11 +267,6 @@ describe('ui/splitpanel', () => {
         expect(panel.renderer).to.be(customRenderer);
       });
 
-      it('should be read-only', () => {
-        let panel = new SplitPanel();
-        expect(() => { panel.renderer = null; }).to.throwError();
-      });
-
     });
 
     describe('#handles', () => {
@@ -282,11 +277,6 @@ describe('ui/splitpanel', () => {
         each(widgets, w => { panel.addWidget(w); });
         let handles = panel.handles;
         expect(handles.length).to.be(3);
-      });
-
-      it('should be read-only', () => {
-        let panel = new SplitPanel();
-        expect(() => { panel.handles = null; }).to.throwError();
       });
 
     });
@@ -717,11 +707,6 @@ describe('ui/splitpanel', () => {
         expect(layout.renderer).to.be(customRenderer);
       });
 
-      it('should be read-only', () => {
-        let layout = new SplitLayout({ renderer: customRenderer });
-        expect(() => { layout.renderer = null; }).to.throwError();
-      });
-
     });
 
     describe('#handles', () => {
@@ -731,11 +716,6 @@ describe('ui/splitpanel', () => {
         let widgets = [new Widget(), new Widget(), new Widget()];
         each(widgets, w => { layout.addWidget(w); });
         expect(every(layout.handles, h => h instanceof HTMLElement));
-      });
-
-      it('should be read-only', () => {
-        let layout = new SplitLayout({ renderer: customRenderer });
-        expect(() => { layout.handles = null; }).to.throwError();
       });
 
     });

@@ -286,11 +286,6 @@ describe('ui/widget', () => {
         expect(widget.isDisposed).to.be(false);
       });
 
-      it('should be read-only', () => {
-        let widget = new Widget();
-        expect(() => { widget.isDisposed = true; }).to.throwError();
-      });
-
     });
 
     describe('#isAttached', () => {
@@ -305,11 +300,6 @@ describe('ui/widget', () => {
       it('should be `false` if the widget is not attached', () => {
         let widget = new Widget();
         expect(widget.isAttached).to.be(false);
-      });
-
-      it('should be read-only', () => {
-        let widget = new Widget();
-        expect(() => { widget.isAttached = true; }).to.throwError();
       });
 
     });
@@ -329,11 +319,6 @@ describe('ui/widget', () => {
         Widget.attach(widget, document.body);
         expect(widget.isHidden).to.be(false);
         widget.dispose();
-      });
-
-      it('should be read-only', () => {
-        let widget = new Widget();
-        expect(() => { widget.isHidden = true; }).to.throwError();
       });
 
     });
@@ -360,11 +345,6 @@ describe('ui/widget', () => {
         expect(widget.isVisible).to.be(false);
       });
 
-      it('should be read-only', () => {
-        let widget = new Widget();
-        expect(() => { widget.node = null; }).to.throwError();
-      });
-
     });
 
     describe('#node', () => {
@@ -373,11 +353,6 @@ describe('ui/widget', () => {
         let widget = new Widget();
         let node = widget.node;
         expect(node.tagName).to.be('DIV');
-      });
-
-      it('should be read-only', () => {
-        let widget = new Widget();
-        expect(() => { widget.node = null; }).to.throwError();
       });
 
     });
@@ -403,12 +378,6 @@ describe('ui/widget', () => {
       it('should get the title data object for the widget', () => {
         let widget = new Widget();
         expect(widget.title).to.be.a(Title);
-      });
-
-      it('should be read-only', () => {
-        let widget = new Widget();
-        let title = new Title();
-        expect(() => { widget.title = title; }).to.throwError();
       });
 
     });
@@ -1458,13 +1427,6 @@ describe('ui/widget', () => {
         expect(msg.child).to.be(widget);
       });
 
-      it('should be a read-only property', () => {
-        let widget0 = new Widget();
-        let widget1 = new Widget();
-        let msg = new ChildMessage('test', widget0);
-        expect(() => { msg.child = widget1; }).to.throwError();
-      });
-
     });
 
   });
@@ -1506,11 +1468,6 @@ describe('ui/widget', () => {
         expect(msg.width).to.be(100);
       });
 
-      it('should be a read-only property', () => {
-        let msg = new ResizeMessage(100, 200);
-        expect(() => { msg.width = 200; }).to.throwError();
-      });
-
     });
 
     describe('#height', () => {
@@ -1518,11 +1475,6 @@ describe('ui/widget', () => {
       it('should be the height passed to the constructor', () => {
         let msg = new ResizeMessage(100, 200);
         expect(msg.height).to.be(200);
-      });
-
-      it('should be a read-only property', () => {
-        let msg = new ResizeMessage(100, 200);
-        expect(() => { msg.height = 200; }).to.throwError();
       });
 
     });
@@ -1595,11 +1547,6 @@ describe('ui/widget', () => {
         expect(layout.isDisposed).to.be(false);
         layout.dispose();
         expect(layout.isDisposed).to.be(true);
-      });
-
-      it('should be read-only', () => {
-        let layout = new LogLayout();
-        expect(() => { layout.isDisposed = false; }).to.throwError();
       });
 
     });

@@ -375,11 +375,6 @@ describe('ui/tabbar', () => {
         expect(bar.contentNode.classList.contains('p-TabBar-content')).to.be(true);
       });
 
-      it('should be read-only', () => {
-        let bar = new TabBar();
-        expect(() => { bar.contentNode = null; }).to.throwError();
-      });
-
     });
 
     describe('#titles', () => {
@@ -389,11 +384,6 @@ describe('ui/tabbar', () => {
         let titles = [new Title(), new Title(), new Title()];
         each(titles, t => { bar.addTab(t); });
         expect(toArray(bar.titles)).to.eql(titles);
-      });
-
-      it('should be read-only', () => {
-        let bar = new TabBar();
-        expect(() => { bar.titles = null; }).to.throwError();
       });
 
     });
@@ -526,11 +516,6 @@ describe('ui/tabbar', () => {
       it('should default to the default renderer', () => {
         let bar = new TabBar();
         expect(bar.renderer).to.be(TabBar.defaultRenderer);
-      });
-
-      it('should be read-only', () => {
-        let bar = new TabBar();
-        expect(() => { bar.renderer = null; }).to.throwError();
       });
 
     });

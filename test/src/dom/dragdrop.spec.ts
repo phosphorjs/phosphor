@@ -171,11 +171,6 @@ describe('dom/dragdrop', () => {
         expect(drag.isDisposed).to.be(true);
       });
 
-      it('should be read-only', () => {
-        let drag = new Drag({ mimeData: new MimeData() });
-        expect(() => { drag.isDisposed = false; }).to.throwError();
-      });
-
     });
 
     describe('#mimeData', () => {
@@ -184,11 +179,6 @@ describe('dom/dragdrop', () => {
         let mimeData = new MimeData();
         let drag = new Drag({ mimeData });
         expect(drag.mimeData).to.be(mimeData);
-      });
-
-      it('should be read-only', () => {
-        let drag = new Drag({ mimeData: new MimeData() });
-        expect(() => { drag.mimeData = null; }).to.throwError();
       });
 
     });
@@ -204,11 +194,6 @@ describe('dom/dragdrop', () => {
       it('should default to `null`', () => {
         let drag = new Drag({ mimeData: new MimeData() });
         expect(drag.dragImage).to.be(null);
-      });
-
-      it('should be read-only', () => {
-        let drag = new Drag({ mimeData: new MimeData() });
-        expect(() => { drag.dragImage = null; }).to.throwError();
       });
 
     });
@@ -228,11 +213,6 @@ describe('dom/dragdrop', () => {
         expect(drag.proposedAction).to.be('copy');
       });
 
-      it('should be read-only', () => {
-        let drag = new Drag({ mimeData: new MimeData() });
-        expect(() => { drag.proposedAction = 'link'; }).to.throwError();
-      });
-
     });
 
     describe('#supportedActions', () => {
@@ -250,11 +230,6 @@ describe('dom/dragdrop', () => {
         expect(drag.supportedActions).to.be('all');
       });
 
-      it('should be read-only', () => {
-        let drag = new Drag({ mimeData: new MimeData() });
-        expect(() => { drag.supportedActions = 'none'; }).to.throwError();
-      });
-
     });
 
     describe('#source', () => {
@@ -268,11 +243,6 @@ describe('dom/dragdrop', () => {
       it('should default to `null`', () => {
         let drag = new Drag({ mimeData: new MimeData() });
         expect(drag.source).to.be(null);
-      });
-
-      it('should be read-only', () => {
-        let drag = new Drag({ mimeData: new MimeData() });
-        expect(() => { drag.source = null; }).to.throwError();
       });
 
     });

@@ -114,11 +114,6 @@ describe('ui/panel', () => {
         expect(widgets.at(0)).to.be(widget);
       });
 
-      it('should be read-only', () => {
-        let panel = new Panel();
-        expect(() => { panel.widgets = null; }).to.throwError();
-      });
-
     });
 
     describe('#addWidget()', () => {
@@ -188,11 +183,6 @@ describe('ui/panel', () => {
         let widgets = layout.widgets;
         expect(widgets.length).to.be(1);
         expect(widgets.at(0)).to.be(widget);
-      });
-
-      it('should be read-only', () => {
-        let layout = new PanelLayout();
-        expect(() => { layout.widgets = null; }).to.throwError();
       });
 
     });

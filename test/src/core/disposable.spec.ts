@@ -52,11 +52,6 @@ describe('core/disposable', () => {
         expect(delegate.isDisposed).to.be(true);
       });
 
-      it('should be read-only', () => {
-        let delegate = new DisposableDelegate(() => { });
-        expect(() => delegate.isDisposed = true).to.throwException();
-      });
-
     });
 
     describe('#dispose()', () => {
@@ -113,11 +108,6 @@ describe('core/disposable', () => {
         let set = new DisposableSet();
         set.dispose();
         expect(set.isDisposed).to.be(true);
-      });
-
-      it('should be read-only', () => {
-        let set = new DisposableSet();
-        expect(() => set.isDisposed = true).to.throwException();
       });
 
     });
