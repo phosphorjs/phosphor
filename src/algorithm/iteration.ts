@@ -620,6 +620,76 @@ class EnumerateIterator<T> implements IIterator<[number, T]> {
 
 
 /**
+ * Chain together several iterables.
+ *
+ * @param objects - The iterables or array-like objects of interest.
+ *
+ * @returns An iterator which yields the values of the given iterables
+ *   in the order in which they are supplied.
+ */
+export
+function chain<T>(...objects: IterableOrArrayLike<T>[]): ChainIterator<T> {
+  return new ChainIterator<T>(objects.map(iter));
+}
+
+
+/**
+ * An iterator which chains together several iterables.
+ */
+export
+class ChainIterator<T> implements IIterator<T> {
+  /**
+   * Construct a new chain iterator.
+   *
+   * @param source - The iterators of interest.
+   */
+  constructor(source: IIterator<T>[]) {
+    this._source = source;
+  }
+
+  /**
+   * Create an iterator over the object's values.
+   *
+   * @returns A reference to `this` iterator.
+   */
+  iter(): this {
+    return this;
+  }
+
+  /**
+   * Create an independent clone of the chain iterator.
+   *
+   * @returns A new iterator starting with the current value.
+   *
+   * #### Notes
+   * The source iterators must be cloneable.
+   */
+  clone(): ChainIterator<T> {
+    return new ChainIterator<T>(this._source.map(it => it.clone()));
+  }
+
+  /**
+   * Get the next value from the iterator.
+   *
+   * @returns The next value from the iterator, or `undefined` when
+   *   all source iterators are exhausted.
+   */
+  next(): T {
+    while (this._source.length > 0) {
+      let value = this._source[0].next();
+      if (value !== void 0) {
+        return value;
+      }
+      this._source.shift();
+    }
+    return void 0;
+  }
+
+  private _source: IIterator<T>[];
+}
+
+
+/**
  * Iterate several iterables in lockstep.
  *
  * @param objects - The iterables or array-like objects of interest.
