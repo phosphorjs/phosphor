@@ -8,6 +8,10 @@
 import expect = require('expect.js');
 
 import {
+  simulate
+} from 'simulate-event';
+
+import {
   Token
 } from '../../../lib/core/token';
 
@@ -27,8 +31,12 @@ import {
   Widget
 } from '../../../lib/ui/widget';
 
+import {
+  LogWidget
+} from './widget.spec';
 
-class TestApplication extends Application<Widget> {
+
+class TestApplication extends Application<LogWidget> {
 
   events: string[] = [];
   methods: string[] = [];
@@ -38,9 +46,9 @@ class TestApplication extends Application<Widget> {
     this.events.push(event.type);
   }
 
-  protected createShell(): Widget {
+  protected createShell(): LogWidget {
     this.methods.push('createShell');
-    return new Widget();
+    return new LogWidget();
   }
 
   protected attachShell(id: string): void {
@@ -66,17 +74,21 @@ class TestApplication extends Application<Widget> {
 
 
 const FOO = new Token<string>('foo');
-const BAR = new Token<number>('bar');
 
 
 describe('ui/application', () => {
+
+  let app: TestApplication;
+
+  beforeEach(() => {
+    app = new TestApplication();
+  });
 
   describe('Application', () => {
 
     describe('#constructor()', () => {
 
       it('should accept no arguments', () => {
-        let app = new TestApplication();
         expect(app).to.be.an(Application);
       });
 
@@ -85,13 +97,11 @@ describe('ui/application', () => {
     describe('#shell', () => {
 
       it('should get the application shell widget', () => {
-        let app = new TestApplication();
         app.start();
         expect(app.shell).to.be.a(Widget);
       });
 
       it('should be `null` until the application is started', () => {
-        let app = new TestApplication();
         expect(app.shell).to.be(null);
       });
 
@@ -100,7 +110,6 @@ describe('ui/application', () => {
     describe('#commands', () => {
 
       it('should get the application command registry', () => {
-        let app = new TestApplication();
         expect(app.commands).to.be.a(CommandRegistry);
       });
 
@@ -109,7 +118,6 @@ describe('ui/application', () => {
     describe('#keymap', () => {
 
       it('should get the application keymap', () => {
-        let app = new TestApplication();
         expect(app.keymap).to.be.a(Keymap);
       });
 
@@ -118,7 +126,6 @@ describe('ui/application', () => {
     describe('#hasPlugin()', () => {
 
       it('should test whether a plugin is registered with the application', () => {
-        let app = new TestApplication();
         expect(app.hasPlugin('foo')).to.be(false);
         app.registerPlugin({
           id: 'foo',
@@ -131,7 +138,6 @@ describe('ui/application', () => {
     describe('#listPlugins()', () => {
 
       it('should list the IDs of the plugins registered with the application', () => {
-        let app = new TestApplication();
         expect(app.listPlugins()).to.eql([]);
         ['foo', 'bar'].map(name => {
           app.registerPlugin({
@@ -147,7 +153,6 @@ describe('ui/application', () => {
     describe('#registerPlugin()', () => {
 
       it('should register a plugin with the application', () => {
-        let app = new TestApplication();
         app.registerPlugin({
           id: 'foo',
           activate: () => { /* no-op */ }
@@ -156,7 +161,6 @@ describe('ui/application', () => {
       });
 
       it('should throw an error if a plugin with the same id is already registered', () => {
-        let app = new TestApplication();
         app.registerPlugin({
           id: 'foo',
           activate: () => { /* no-op */ }
@@ -170,7 +174,6 @@ describe('ui/application', () => {
       });
 
       it('should throw an error if the plugin has a circular dependency', () => {
-        let app = new TestApplication();
         expect(() => {
           app.registerPlugin({
             id: 'foo',
@@ -182,7 +185,6 @@ describe('ui/application', () => {
       });
 
       it('should override a service provided by another plugin', (done) => {
-        let app = new TestApplication();
         app.registerPlugin({
           id: 'foo',
           provides: FOO,
@@ -210,7 +212,6 @@ describe('ui/application', () => {
     describe('#registerPlugins', () => {
 
       it('should register multiple plugins with the application', () => {
-        let app = new TestApplication();
         app.registerPlugins([
           {
             id: 'foo',
@@ -229,7 +230,6 @@ describe('ui/application', () => {
     describe('#activatePlugin()', () => {
 
       it('should activate the plugin with the given id', (done) => {
-        let app = new TestApplication();
         app.registerPlugin({
           id: 'foo',
           activate: () => { return 'foo'; }
@@ -238,7 +238,6 @@ describe('ui/application', () => {
       });
 
       it('should reject if it cannot be activated', (done) => {
-        let app = new TestApplication();
         app.activatePlugin('foo').catch(() => { done(); });
       });
 
@@ -247,7 +246,6 @@ describe('ui/application', () => {
     describe('#resolveService()', () => {
 
       it('should resolve a service of a given type', (done) => {
-        let app = new TestApplication();
         app.registerPlugin({
           id: 'foo',
           provides: FOO,
@@ -260,13 +258,11 @@ describe('ui/application', () => {
       });
 
       it('should reject with an error if it cannot be resolved', (done) => {
-        let app = new TestApplication();
         app.resolveService(FOO).catch(() => { done(); });
       });
 
       it('should return the same instance each time a given service token is resolved', (done) => {
         let called = 0;
-        let app = new TestApplication();
         app.registerPlugin({
           id: 'foo',
           provides: FOO,
@@ -276,6 +272,214 @@ describe('ui/application', () => {
           expect(value).to.be('hi from foo 1');
           return app.resolveService(FOO).then(value2 => {
             expect(value2).to.be('hi from foo 1');
+            done();
+          });
+        }).catch(done);
+      });
+
+    });
+
+    describe('#start()', () => {
+
+      it('should create the shell widget', () => {
+        expect(app.shell).to.be(null);
+        app.start();
+        expect(app.shell).to.be.a(Widget);
+      });
+
+      it('should resolve when the startup plugins have activated', (done) => {
+        let called = 0;
+        app.registerPlugins([
+          {
+            id: 'foo',
+            autoStart: true,
+            activate: () => {
+              called++;
+              return Promise.resolve(void 0);
+            }
+          },
+          {
+            id: 'bar',
+            autoStart: true,
+            activate: () => {
+              called++;
+              return Promise.resolve(void 0);
+            }
+          }
+        ]);
+        app.start().then(() => {
+          expect(called).to.be(2);
+          done();
+        }).catch(done);
+      });
+
+      it('should mount the shell to the DOM', (done) => {
+        app.start().then(() => {
+          expect(app.shell.isAttached).to.be(true);
+          done();
+        }).catch(done);
+      });
+
+      it('should attach the cell to the node with a given id', (done) => {
+        let node = document.createElement('div');
+        node.id = 'foo';
+        document.body.appendChild(node);
+        app.start({ hostID: 'foo' }).then(() => {
+          expect(node.firstChild).to.be(app.shell.node);
+          document.body.removeChild(node);
+          done();
+        }).catch(done);
+      });
+
+      it('should activate plugins by name', (done) => {
+        let called: string[] = [];
+        app.registerPlugins([
+          {
+            id: 'foo',
+            activate: () => { called.push('foo'); }
+          },
+          {
+            id: 'bar',
+            activate: () => { called.push('bar'); }
+          }
+        ]);
+        app.start({ startPlugins: ['foo'] }).then(() => {
+          expect(called).to.eql(['foo']);
+          done();
+        }).catch(done);
+      });
+
+      it('should ignore plugins by name', (done) => {
+        let called: string[] = [];
+        app.registerPlugins([
+          {
+            id: 'foo',
+            autoStart: true,
+            activate: () => { called.push('foo'); }
+          },
+          {
+            id: 'bar',
+            autoStart: true,
+            activate: () => { called.push('bar'); }
+          }
+        ]);
+        app.start({ ignorePlugins: ['foo'] }).then(() => {
+          expect(called).to.eql(['bar']);
+          done();
+        }).catch(done);
+      });
+
+      it('should attach event listeners', (done) => {
+        app.start().then(() => {
+          simulate(window, 'resize');
+          expect(app.events).to.contain('resize');
+          simulate(document.body, 'keydown');
+          expect(app.events).to.contain('keydown');
+          done();
+        }).catch(done);
+      });
+
+    });
+
+    describe('#createShell()', () => {
+
+      it('should be called during start', (done) => {
+        app.start().then(() => {
+          expect(app.methods).to.contain('createShell');
+          done();
+        }).catch(done);
+      });
+
+    });
+
+    describe('#attachShell()', () => {
+
+      it('should be called during start', (done) => {
+        app.start().then(() => {
+          expect(app.methods).to.contain('attachShell');
+          done();
+        }).catch(done);
+      });
+
+      it('should attach to document.body by default', (done) => {
+        app.start().then(() => {
+          expect(app.shell.node.parentNode).to.be(document.body);
+          done();
+        }).catch(done);
+      });
+
+      it('should attach the cell to the node with a given id', (done) => {
+        let node = document.createElement('div');
+        node.id = 'foo';
+        document.body.appendChild(node);
+        app.start({ hostID: 'foo' }).then(() => {
+          expect(node.firstChild).to.be(app.shell.node);
+          document.body.removeChild(node);
+          done();
+        }).catch(done);
+      });
+
+    });
+
+    describe('#addEventListeners()', () => {
+
+      it('should add listeners for \'keydown\' and \'resize\' events', (done) => {
+        app.start().then(() => {
+          expect(app.methods).to.contain('addEventListeners');
+          simulate(window, 'resize');
+          expect(app.events).to.contain('resize');
+          simulate(document.body, 'keydown');
+          expect(app.events).to.contain('keydown');
+          done();
+        }).catch(done);
+      });
+
+    });
+
+    describe('#evtKeydown()', () => {
+
+      it('should be invoked on a document \'keydown\' event', (done) => {
+        app.start().then(() => {
+          simulate(document.body, 'keydown');
+          expect(app.methods).to.contain('evtKeydown');
+          done();
+        }).catch(done);
+      });
+
+      it('should invoke the key down processing of the application keymap', (done) => {
+        let called = false;
+        app.commands.addCommand('test', {
+          execute: () => { called = true; }
+        });
+        app.keymap.addBinding({
+          keys: ['Enter'],
+          selector: `body`,
+          command: 'test'
+        });
+        app.start().then(() => {
+          simulate(document.body, 'keydown', { keyCode: 13 });
+          expect(called).to.be(true);
+          done();
+        }).catch(done);
+      });
+
+    });
+
+    describe('#evtResize()', () => {
+
+      it('should be invoked on a window \'resize\' event', (done) => {
+        app.start().then(() => {
+          simulate(window, 'resize');
+          expect(app.methods).to.contain('evtResize');
+          done();
+        }).catch(done);
+      });
+
+      it('should post an update to the shell', (done) => {
+        app.start().then(() => {
+          simulate(window, 'resize');
+          requestAnimationFrame(() => {
+            expect(app.shell.messages).to.contain('update-request');
             done();
           });
         }).catch(done);

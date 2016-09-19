@@ -28,6 +28,7 @@ import {
 } from '../../../lib/ui/widget';
 
 
+export
 class LogWidget extends Widget {
 
   messages: string[] = [];
