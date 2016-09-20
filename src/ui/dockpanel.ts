@@ -5,69 +5,69 @@
 |
 | The full license is in the file LICENSE, distributed with this software.
 |----------------------------------------------------------------------------*/
-import {
-  each
-} from '../algorithm/iteration';
+// import {
+//   each
+// } from '../algorithm/iteration';
 
-import {
-  find, indexOf, max
-} from '../algorithm/searching';
+// import {
+//   find, indexOf, max
+// } from '../algorithm/searching';
 
-import {
-  ISequence
-} from '../algorithm/sequence';
+// import {
+//   ISequence
+// } from '../algorithm/sequence';
 
-import {
-  Vector
-} from '../collections/vector';
+// import {
+//   Vector
+// } from '../collections/vector';
 
-import {
-  Message
-} from '../core/messaging';
+// import {
+//   Message
+// } from '../core/messaging';
 
-import {
-  MimeData
-} from '../core/mimedata';
+// import {
+//   MimeData
+// } from '../core/mimedata';
 
-import {
-  ISignal, defineSignal
-} from '../core/signaling';
+// import {
+//   ISignal, defineSignal
+// } from '../core/signaling';
 
-import {
-  Drag, IDragEvent
-} from '../dom/dragdrop';
+// import {
+//   Drag, IDragEvent
+// } from '../dom/dragdrop';
 
-import {
-  hitTest
-} from '../dom/query';
+// import {
+//   hitTest
+// } from '../dom/query';
 
-import {
-  boxSizing
-} from '../dom/sizing';
+// import {
+//   boxSizing
+// } from '../dom/sizing';
 
-import {
-  FocusTracker
-} from './focustracker';
+// import {
+//   FocusTracker
+// } from './focustracker';
 
-import {
-  SplitPanel
-} from './splitpanel';
+// import {
+//   SplitPanel
+// } from './splitpanel';
 
-import {
-  StackedLayout, StackedPanel
-} from './stackedpanel';
+// import {
+//   StackedLayout, StackedPanel
+// } from './stackedpanel';
 
-import {
-  TabBar
-} from './tabbar';
+// import {
+//   TabBar
+// } from './tabbar';
 
-import {
-  TabPanel
-} from './tabpanel';
+// import {
+//   TabPanel
+// } from './tabpanel';
 
-import {
-  Widget
-} from './widget';
+// import {
+//   Widget
+// } from './widget';
 
 
 /**
@@ -121,45 +121,45 @@ class DockPanel extends Widget {
     this.addClass(DOCK_PANEL_CLASS);
 
     // Install the layout on the panel.
-    this.layout = new StackedLayout();
+    this.layout = new DockLayout();
 
     // Parse the spacing option.
-    if (options.spacing !== void 0) {
-      this._spacing = Private.clampSpacing(options.spacing);
-    }
+    // if (options.spacing !== void 0) {
+    //   this._spacing = Private.clampSpacing(options.spacing);
+    // }
 
     // Setup the overlay indicator.
-    if (options.overlay !== void 0) {
-      this._overlay = options.overlay;
-    } else {
-      this._overlay = new DockPanel.Overlay();
-    }
+    // if (options.overlay !== void 0) {
+    //   this._overlay = options.overlay;
+    // } else {
+    //   this._overlay = new DockPanel.Overlay();
+    // }
 
     // Connect the focus tracker changed signal.
-    this._tracker.currentChanged.connect(this._onCurrentChanged, this);
+    // this._tracker.currentChanged.connect(this._onCurrentChanged, this);
 
     // Add the overlay node to the panel.
-    this.node.appendChild(this._overlay.node);
+    // this.node.appendChild(this._overlay.node);
   }
 
   /**
    * Dispose of the resources held by the panel.
    */
   dispose(): void {
-    // Hide the overlay.
-    this._overlay.hide(0);
+    // // Hide the overlay.
+    // this._overlay.hide(0);
 
-    // Cancel a drag if one is in progress.
-    if (this._drag) this._drag.dispose();
+    // // Cancel a drag if one is in progress.
+    // if (this._drag) this._drag.dispose();
 
-    // Clear the data structures.
-    this._root = null;
-    this._widgets.clear();
-    this._tabPanels.clear();
-    this._splitPanels.clear();
+    // // Clear the data structures.
+    // this._root = null;
+    // this._widgets.clear();
+    // this._tabPanels.clear();
+    // this._splitPanels.clear();
 
-    // Dispose of the focus tracker.
-    this._tracker.dispose();
+    // // Dispose of the focus tracker.
+    // this._tracker.dispose();
 
     // Dispose of the base class.
     super.dispose();
@@ -1487,9 +1487,339 @@ namespace DockPanel {
 
 
 /**
+ *
+ */
+export
+class DockLayout extends Layout {
+  /**
+   *
+   */
+  dispose(): void {
+
+    super.dispose();
+  }
+
+  /**
+   *
+   */
+  get spacing(): number {
+
+  }
+
+  /**
+   *
+   */
+  set spacing(value: number) {
+
+  }
+
+  /**
+   *
+   */
+  iter(): IIterator<Widget> {
+
+  }
+
+  /**
+   *
+   */
+  protected onLayoutChanged(msg: Message): void {
+
+  }
+
+  /**
+   *
+   */
+  protected onChildRemoved(msg: ChildMessage): void {
+
+  }
+
+  /**
+   * A message handler invoked on an `'after-show'` message.
+   */
+  protected onAfterShow(msg: Message): void {
+    super.onAfterShow(msg);
+    this.parent.update();
+  }
+
+  /**
+   * A message handler invoked on an `'after-attach'` message.
+   */
+  protected onAfterAttach(msg: Message): void {
+    super.onAfterAttach(msg);
+    this.parent.fit();
+  }
+
+  /**
+   * A message handler invoked on a `'child-shown'` message.
+   */
+  protected onChildShown(msg: ChildMessage): void {
+    if (IS_IE) { // prevent flicker on IE
+      sendMessage(this.parent, WidgetMessage.FitRequest);
+    } else {
+      this.parent.fit();
+    }
+  }
+
+  /**
+   * A message handler invoked on a `'child-hidden'` message.
+   */
+  protected onChildHidden(msg: ChildMessage): void {
+    if (IS_IE) { // prevent flicker on IE
+      sendMessage(this.parent, WidgetMessage.FitRequest);
+    } else {
+      this.parent.fit();
+    }
+  }
+
+  /**
+   * A message handler invoked on a `'resize'` message.
+   */
+  protected onResize(msg: ResizeMessage): void {
+    if (this.parent.isVisible) {
+      this._update(msg.width, msg.height);
+    }
+  }
+
+  /**
+   * A message handler invoked on an `'update-request'` message.
+   */
+  protected onUpdateRequest(msg: Message): void {
+    if (this.parent.isVisible) {
+      this._update(-1, -1);
+    }
+  }
+
+  /**
+   * A message handler invoked on a `'fit-request'` message.
+   */
+  protected onFitRequest(msg: Message): void {
+    if (this.parent.isAttached) {
+      this._fit();
+    }
+  }
+}
+
+
+/**
+ *
+ */
+export
+namespace DockLayout {
+
+
+}
+
+
+/**
  * The namespace for the module private data.
  */
 namespace Private {
+  /**
+   * A type alias for the orientation of a split layout node.
+   */
+  export
+  type Orientation = 'horizontal' | 'vertical';
+
+  /**
+   * A layout node for managing a tabbed layout area.
+   */
+  export
+  class TabLayoutNode {
+    /**
+     * Construct a new tab layout node.
+     *
+     * @param tabBar - A new tab bar to use for the area.
+     */
+    constructor(tabBar: TabBar) {
+      let tabSizer = new BoxSizer();
+      let widgetSizer = new BoxSizer();
+      tabSizer.stretch = 0;
+      widgetSizer.stretch = 1;
+      this._sizers = [tabSizer, widgetSizer];
+      this.tabBar = tabBar;
+    }
+
+    /**
+     * The tab bar used by the layout node.
+     *
+     * #### Notes
+     * The dock panel should add widget titles and manipulate this tab
+     * bar as needed. The widget for the current tab will be layed out
+     * directly underneath the tab bar.
+     *
+     * The dock layout is responsible for ensuring the tab bar and any
+     * of the added widgets are attached to the parent widget.
+     */
+    readonly tabBar: TabBar;
+
+    /**
+     * Fit the tab layout node.
+     *
+     * @param spacing - This parameter is ignored. It is only defined
+     *   to make this method compatible with `SplitLayoutNode.fit()`.
+     *
+     * @returns The updated size limits for the layout node.
+     */
+    fit(spacing?: number): ISizeLimits {
+      // Setup the limit variables.
+      let minWidth = 0;
+      let minHeight = 0;
+      let maxWidth = Infinity;
+      let maxHeight = Infinity;
+
+      // Lookup common variables.
+      let tabBar = this.tabBar;
+      let tabSizer = this._sizers[0];
+      let widgetSizer = this._sizers[1];
+      let currentTitle = tabBar.currentTitle;
+      let widget = currenTitle ? currentTitle.owner as Widget : null;
+
+      // Adjust the starting max height if a widget is visible.
+      if (!tabBar.isHidden || (widget && !widget.isHidden)) {
+        maxHeight = 0;
+      }
+
+      // Update the results and sizer for the tab bar.
+      if (!tabBar.isHidden) {
+        let limits = sizeLimits(tabBar.node);
+        minWidth = Math.max(minWidth, limits.minWidth);
+        maxWidth = Math.min(maxWidth, limits.maxWidth);
+        minHeight += limits.minHeight;
+        maxHeight += limits.maxHeight;
+        tabSizer.minSize = limits.minHeight;
+        tabSizer.maxSize = limits.maxHeight;
+      } else {
+        tabSizer.minSize = 0;
+        tabSizer.maxSize = 0;
+      }
+
+      // Update the results and sizer for the current widget.
+      if (widget && !widget.isHidden) {
+        let limits = sizeLimits(widget.node);
+        minWidth = Math.max(minWidth, limits.minWidth);
+        maxWidth = Math.min(maxWidth, limits.maxWidth);
+        minHeight += limits.minHeight;
+        maxHeight += limits.maxHeight;
+        widgetSizer.minSize = limits.minHeight;
+        widgetSizer.maxSize = limits.maxHeight;
+      } else {
+        widgetSizer.minSize = 0;
+        widgetSizer.maxSize = 0;
+      }
+
+      // TODO normalize sizes to ensure max >= min?
+
+      // Return the computed size limits for the layout node.
+      return { minWidth, minHeight, maxWidth, maxHeight };
+    }
+
+    private _sizers: [BoxSizer, BoxSizer];
+  }
+
+  /**
+   * A layout node for managing a split layout area.
+   */
+  export
+  class SplitLayoutNode {
+    /**
+     * Construct a new split layout node.
+     *
+     * @param orientation - The layout orientation of the node.
+     */
+    constructor(orientation: Orientation) {
+      this.orientation = orientation;
+    }
+
+    /**
+     * The layout orientation of the node.
+     */
+    readonly orientation: Orientation;
+
+    /**
+     * The child nodes for the split layout node.
+     *
+     * #### Notes
+     * The dock layout should manipulate this array as necessary.
+     *
+     * It should be kept in sync with the `sizers` array.
+     */
+    readonly children: Array<SplitLayoutNode | TabLayoutNode> = [];
+
+    /**
+     * The array of box sizers for the layout children.
+     *
+     * #### Notes
+     * The dock layout should keep this in sync with `children`.
+     */
+    readonly sizers: BoxSizer[] = [];
+
+    /**
+     * The array of split handles for the node.
+     *
+     * #### Notes
+     * The dock layout should keep this in sync with `children`.
+     *
+     * For `n >= 1` children, there should be `n - 1` handles.
+     */
+    readonly handles: HTMLElement[] = [];
+
+    /**
+     * Fit the split layout node.
+     *
+     * @param spacing - The spacing to place between areas.
+     *
+     * @returns The updated size limits for the layout node.
+     */
+    fit(spacing: number): ISizeLimits {
+      // Setup the limit variables.
+      let minWidth = 0;
+      let minHeight = 0;
+      let maxWidth = Infinity;
+      let maxHeight = Infinity;
+
+      // Compute common values.
+      let horz = this.orientation === 'horizontal';
+      let fixed = Math.max(0, this.children.length - 1) * spacing;
+
+      // Adjust the starting limits for the orientation.
+      if (horz) {
+        minWidth = fixed;
+        maxWidth = fixed;
+      } else {
+        minHeight = fixed;
+        maxHeight = fixed;
+      }
+
+      // Adjust the limits and sizer for each child area.
+      for (let i = 0, n = this.children.length; i < n; ++i) {
+        let sizer = this.sizers[i];
+        let child = this.children[i];
+        let limits = child.fit(spacing);
+        if (horz) {
+          minHeight = Math.max(minHeight, limits.minHeight);
+          maxHeight = Math.min(maxHeight, limits.maxHeight);
+          minWidth += limits.minWidth;
+          maxWidth += limits.maxWidth;
+          sizer.minSize = limits.minWidth;
+          sizer.maxSize = limits.maxWidth;
+        } else {
+          minWidth = Math.max(minWidth, limits.minWidth);
+          maxWidth = Math.min(maxWidth, limits.maxWidth);
+          minHeight += limits.minHeight;
+          maxHeight += limits.maxHeight;
+          sizer.minSize = limits.minHeight;
+          sizer.maxSize = limits.maxHeight;
+        }
+      }
+
+      // TODO normalize sizes to ensure max >= min?
+
+      // Return the computed size limits for the layout node.
+      return { minWidth, minHeight, maxWidth, maxHeight };
+    }
+  }
+
   /**
    * Clamp a spacing value to an integer >= 0.
    */
