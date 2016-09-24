@@ -30,7 +30,7 @@ import {
 } from '../core/messaging';
 
 import {
-  ChildMessage, Layout, Widget, WidgetMessage
+  Layout, Widget, WidgetMessage
 } from './widget';
 
 
@@ -388,18 +388,6 @@ class PanelLayout extends Layout {
       widget.parent = this.parent;
       this.attachWidget(i, widget);
     }
-  }
-
-  /**
-   * A message handler invoked on a `'child-removed'` message.
-   *
-   * #### Notes
-   * This will remove the child widget from the layout.
-   *
-   * Subclasses should **not** typically reimplement this method.
-   */
-  protected onChildRemoved(msg: ChildMessage): void {
-    this.removeWidget(msg.child);
   }
 
   private _widgets = new Vector<Widget>();

@@ -873,6 +873,21 @@ abstract class Layout implements IIterable<Widget>, IDisposable {
   abstract iter(): IIterator<Widget>;
 
   /**
+   * Remove a widget from the layout.
+   *
+   * @param widget - The widget to remove from the layout.
+   *
+   * #### Notes
+   * A widget is automatically removed from the layout when its `parent`
+   * is set to `null`. This method should only be invoked directly when
+   * removing a widget from a layout which has yet to be installed on a
+   * parent widget.
+   *
+   * This method should *not* modify the widget's `parent`.
+   */
+  abstract removeWidget(widget: Widget): void;
+
+  /**
    * A message handler invoked on a `'layout-changed'` message.
    *
    * #### Notes
@@ -883,18 +898,6 @@ abstract class Layout implements IIterable<Widget>, IDisposable {
    * This abstract method must be implemented by a subclass.
    */
   protected abstract onLayoutChanged(msg: Message): void;
-
-  /**
-   * A message handler invoked on a `'child-removed'` message.
-   *
-   * #### Notes
-   * This method is invoked when a child widget's `parent` property
-   * is set to `null`. The layout should remove the widget and detach
-   * its node from the DOM.
-   *
-   * This abstract method must be implemented by a subclass.
-   */
-  protected abstract onChildRemoved(msg: ChildMessage): void;
 
   /**
    * Dispose of the resources held by the layout.
@@ -1089,6 +1092,18 @@ abstract class Layout implements IIterable<Widget>, IDisposable {
    */
   protected onBeforeHide(msg: Message): void {
     each(this, widget => { if (!widget.isHidden) sendMessage(widget, msg); });
+  }
+
+  /**
+   * A message handler invoked on a `'child-removed'` message.
+   *
+   * #### Notes
+   * This will remove the child widget from the layout.
+   *
+   * Subclasses should **not** typically reimplement this method.
+   */
+  protected onChildRemoved(msg: ChildMessage): void {
+    this.removeWidget(msg.child);
   }
 
   /**
