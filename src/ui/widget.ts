@@ -265,7 +265,6 @@ class Widget implements IDisposable, IMessageHandler {
     }
     this._layout = value;
     value.parent = this;
-    sendMessage(this, WidgetMessage.LayoutChanged);
   }
 
   /**
@@ -888,18 +887,6 @@ abstract class Layout implements IIterable<Widget>, IDisposable {
   abstract removeWidget(widget: Widget): void;
 
   /**
-   * A message handler invoked on a `'layout-changed'` message.
-   *
-   * #### Notes
-   * This method is invoked when the layout is installed on its parent
-   * widget. It should reparent all of the widgets to the new parent,
-   * and add their DOM nodes to the parent's node as appropriate.
-   *
-   * This abstract method must be implemented by a subclass.
-   */
-  protected abstract onLayoutChanged(msg: Message): void;
-
-  /**
    * Dispose of the resources held by the layout.
    *
    * #### Notes
@@ -954,6 +941,7 @@ abstract class Layout implements IIterable<Widget>, IDisposable {
       throw new Error('Invalid parent widget.');
     }
     this._parent = value;
+    this.init();
   }
 
   /**
@@ -998,10 +986,24 @@ abstract class Layout implements IIterable<Widget>, IDisposable {
     case 'child-hidden':
       this.onChildHidden(msg as ChildMessage);
       break;
-    case 'layout-changed':
-      this.onLayoutChanged(msg);
-      break;
     }
+  }
+
+  /**
+   * Perform layout initialization which requires the parent widget.
+   *
+   * #### Notes
+   * This method is invoked immediately after the layout is installed
+   * on the parent widget.
+   *
+   * The default implementation reparents all of the widgets to the
+   * layout parent widget.
+   *
+   * Subclasses should reimplement this method and attach the child
+   * widget nodes to the parent widget's node.
+   */
+  protected init(): void {
+    each(this, widget => { widget.parent = this.parent; });
   }
 
   /**
@@ -1222,15 +1224,6 @@ namespace WidgetMessage {
    */
   export
   const ParentChanged = new Message('parent-changed');
-
-  /**
-   * A singleton `'layout-changed'` message.
-   *
-   * #### Notes
-   * This message is sent to a widget when its layout has changed.
-   */
-  export
-  const LayoutChanged = new Message('layout-changed');
 
   /**
    * A singleton conflatable `'update-request'` message.

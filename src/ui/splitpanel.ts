@@ -670,6 +670,14 @@ class SplitLayout extends PanelLayout {
   }
 
   /**
+   * Perform layout initialization which requires the parent widget.
+   */
+  protected init(): void {
+    Private.toggleOrientation(this.parent, this.orientation);
+    super.init();
+  }
+
+  /**
    * Attach a widget to the parent's DOM node.
    *
    * @param index - The current index of the widget in the layout.
@@ -751,17 +759,6 @@ class SplitLayout extends PanelLayout {
 
     // Post a layout request for the parent widget.
     this.parent.fit();
-  }
-
-  /**
-   * A message handler invoked on a `'layout-changed'` message.
-   *
-   * #### Notes
-   * This is called when the layout is installed on its parent.
-   */
-  protected onLayoutChanged(msg: Message): void {
-    Private.toggleOrientation(this.parent, this.orientation);
-    super.onLayoutChanged(msg);
   }
 
   /**

@@ -274,6 +274,16 @@ class PanelLayout extends Layout {
   }
 
   /**
+   * Perform layout initialization which requires the parent widget.
+   */
+  protected init(): void {
+    super.init();
+    for (let i = 0; i < this._widgets.length; ++i) {
+      this.attachWidget(i, this._widgets.at(i));
+    }
+  }
+
+  /**
    * Attach a widget to the parent's DOM node.
    *
    * @param index - The current index of the widget in the layout.
@@ -370,24 +380,6 @@ class PanelLayout extends Layout {
 
     // Remove the widget's node from the parent.
     this.parent.node.removeChild(widget.node);
-  }
-
-  /**
-   * A message handler invoked on a `'layout-changed'` message.
-   *
-   * #### Notes
-   * This is called when the layout is installed on its parent.
-   *
-   * The default implementation attaches all widgets to the DOM.
-   *
-   * This may be reimplemented by subclasses as needed.
-   */
-  protected onLayoutChanged(msg: Message): void {
-    for (let i = 0; i < this._widgets.length; ++i) {
-      let widget = this._widgets.at(i);
-      widget.parent = this.parent;
-      this.attachWidget(i, widget);
-    }
   }
 
   private _widgets = new Vector<Widget>();
