@@ -665,7 +665,8 @@ class ChainIterator<T> implements IIterator<T> {
    * The source iterators must be cloneable.
    */
   clone(): ChainIterator<T> {
-    return new ChainIterator<T>(this._source.map(it => it.clone()));
+    let remaining = this._source.slice(this._index);
+    return new ChainIterator<T>(remaining.map(it => it.clone()));
   }
 
   /**
@@ -675,16 +676,17 @@ class ChainIterator<T> implements IIterator<T> {
    *   all source iterators are exhausted.
    */
   next(): T {
-    while (this._source.length > 0) {
-      let value = this._source[0].next();
+    while (this._index < this._source.length) {
+      let value = this._source[this._index].next();
       if (value !== void 0) {
         return value;
       }
-      this._source.shift();
+      this._index++;
     }
     return void 0;
   }
 
+  private _index = 0;
   private _source: IIterator<T>[];
 }
 
