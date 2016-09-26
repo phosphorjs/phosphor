@@ -133,7 +133,7 @@ class StackedLayout extends PanelLayout {
     // Send an `'after-attach'` message if the parent is attached.
     if (this.parent.isAttached) sendMessage(widget, WidgetMessage.AfterAttach);
 
-    // Post a layout request for the parent widget.
+    // Post a fit request for the parent widget.
     this.parent.fit();
   }
 
@@ -177,7 +177,7 @@ class StackedLayout extends PanelLayout {
     // Reset the z-index for the widget.
     widget.node.style.zIndex = '';
 
-    // Post a layout request for the parent widget.
+    // Post a fit request for the parent widget.
     this.parent.fit();
   }
 

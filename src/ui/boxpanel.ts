@@ -320,7 +320,7 @@ class BoxLayout extends PanelLayout {
     // Send an `'after-attach'` message if the parent is attached.
     if (this.parent.isAttached) sendMessage(widget, WidgetMessage.AfterAttach);
 
-    // Post a layout request for the parent widget.
+    // Post a fit request for the parent widget.
     this.parent.fit();
   }
 
@@ -367,7 +367,7 @@ class BoxLayout extends PanelLayout {
     // Reset the layout geometry for the widget.
     Widget.resetGeometry(widget);
 
-    // Post a layout request for the parent widget.
+    // Post a fit request for the parent widget.
     this.parent.fit();
   }
 
