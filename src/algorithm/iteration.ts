@@ -698,22 +698,23 @@ class RepeatIterator<T> implements IIterator<T> {
  */
 export
 function chain<T>(...objects: IterableOrArrayLike<T>[]): ChainIterator<T> {
-  return new ChainIterator<T>(objects.map(iter));
+  return new ChainIterator<T>(map(objects, iter));
 }
 
 
 /**
- * An iterator which chains together several iterables.
+ * An iterator which chains together several iterators.
  */
 export
 class ChainIterator<T> implements IIterator<T> {
   /**
    * Construct a new chain iterator.
    *
-   * @param source - The iterators of interest.
+   * @param source - The iterator of iterators of interest.
    */
-  constructor(source: IIterator<T>[]) {
+  constructor(source: IIterator<IIterator<T>>) {
     this._source = source;
+    this._active = void 0;
   }
 
   /**
@@ -734,8 +735,9 @@ class ChainIterator<T> implements IIterator<T> {
    * The source iterators must be cloneable.
    */
   clone(): ChainIterator<T> {
-    let remaining = this._source.slice(this._index);
-    return new ChainIterator<T>(remaining.map(it => it.clone()));
+    let result = new ChainIterator(this._source.clone());
+    if (this._active) result._active = this._active.clone();
+    return result;
   }
 
   /**
@@ -745,18 +747,22 @@ class ChainIterator<T> implements IIterator<T> {
    *   all source iterators are exhausted.
    */
   next(): T {
-    while (this._index < this._source.length) {
-      let value = this._source[this._index].next();
-      if (value !== void 0) {
-        return value;
+    if (this._active === void 0) {
+      this._active = this._source.next();
+      if (this._active === void 0) {
+        return void 0;
       }
-      this._index++;
     }
-    return void 0;
+    let value = this._active.next();
+    if (value !== void 0) {
+      return value;
+    }
+    this._active = void 0;
+    return this.next();
   }
 
-  private _index = 0;
-  private _source: IIterator<T>[];
+  private _source: IIterator<IIterator<T>>;
+  private _active: IIterator<T>;
 }
 
 
