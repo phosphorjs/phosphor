@@ -12,6 +12,10 @@ import {
 } from 'simulate-event';
 
 import {
+  Message
+} from '../../../lib/core/messaging';
+
+import {
   Token
 } from '../../../lib/core/token';
 
@@ -31,9 +35,16 @@ import {
   Widget
 } from '../../../lib/ui/widget';
 
-import {
-  LogWidget
-} from './widget.spec';
+
+class LogWidget extends Widget {
+
+  messages: string[] = [];
+
+  processMessage(msg: Message): void {
+    super.processMessage(msg);
+    this.messages.push(msg.type);
+  }
+}
 
 
 class TestApplication extends Application<LogWidget> {
@@ -74,6 +85,8 @@ class TestApplication extends Application<LogWidget> {
 
 
 const FOO = new Token<string>('foo');
+const BAR = new Token<number>('bar');
+const BAZ = new Token<string[]>('baz');
 
 
 describe('ui/application', () => {
@@ -237,8 +250,41 @@ describe('ui/application', () => {
         app.activatePlugin('foo').then(done, done);
       });
 
-      it('should reject if it cannot be activated', (done) => {
+      it('should reject if the plugin is not registered', (done) => {
         app.activatePlugin('foo').catch(() => { done(); });
+      });
+
+      it('should reject if the plugin errors', (done) => {
+        app.registerPlugin({
+          id: 'foo',
+          activate: () => { throw new Error('foo'); }
+        });
+        app.activatePlugin('foo').catch(() => { done(); });
+      });
+
+      it('should handle complex situations', (done) => {
+        app.registerPlugins([
+        {
+          id: 'foo',
+          provides: FOO,
+          activate: () => { return 'hi from foo'; }
+        },
+        {
+          id: 'bar',
+          provides: BAR,
+          requires: [FOO, BAZ],
+          activate: () => { return 'hi from foo'; }
+        },
+        {
+          id: 'baz',
+          provides: BAZ,
+          activate: () => { return 'hi from foo'; }
+        }]);
+        app.activatePlugin('foo').then(() => {
+          app.activatePlugin('bar').then(() => {
+            done();
+          });
+        });
       });
 
     });
