@@ -6,7 +6,7 @@
 | The full license is in the file LICENSE, distributed with this software.
 |----------------------------------------------------------------------------*/
 import {
-  IIterator
+  IIterator, each
 } from '../algorithm/iteration';
 
 import {
@@ -278,9 +278,8 @@ class PanelLayout extends Layout {
    */
   protected init(): void {
     super.init();
-    for (let i = 0; i < this._widgets.length; ++i) {
-      this.attachWidget(i, this._widgets.at(i));
-    }
+    let index = 0;
+    each(this, widget => { this.attachWidget(index++, widget); });
   }
 
   /**
