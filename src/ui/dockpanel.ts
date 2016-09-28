@@ -286,19 +286,40 @@ class DockLayout extends Layout {
       ref = null;
       console.warn('Reference widget is same as target widget.');
     }
-    // if (ref && indexOf(this._widgets, ref) === -1) {
-    //   ref = null;
-    //   console.warn('Reference widget not contained in dock layout.');
-    // }
+
+    // Lookup the layout node for the reference widget.
+    let refNode: Private.TabLayoutNode = null;
+    if (this._root && ref) {
+      refNode = this._root.findTabNode(ref);
+    }
+
+    // Warn if the reference widget is not found.
+    if (ref && !refNode) {
+      ref = null;
+      console.warn('Reference widget not in the dock layout.');
+    }
 
     // Reparent the widget to the current layout parent.
     widget.parent = this.parent;
 
-    // Insert the widget into the layout structure.
-    // this._root = Private.insertWidget(this._root, widget, mode, ref);
+    // Remove the widget from its current location.
+    let contained = this._removeFromLayout(widget);
 
-    // Fit the parent widget if attached.
-    // if (this.parent && this.parent.isAttached) this.parent.fit();
+    // Insert the widget into the new location.
+    this._insertIntoLayout(widget, mode, ref, refNode);
+
+    // Do nothing further if there is no layout parent.
+    if (!this.parent) {
+      return;
+    }
+
+    // Fit the parent if the new widget has already been added.
+    // Otherwise, attach the new widget to the parent widget.
+    if (contained) {
+      this.parent.fit();
+    } else {
+      this._attachWidget(widget);
+    }
   }
 
   /**
@@ -417,6 +438,108 @@ class DockLayout extends Layout {
 
     // Post a fit request for the parent widget.
     this.parent.fit();
+  }
+
+  /**
+   * Remove the specified widget from the layout structure.
+   *
+   * Returns `true` if the widget was removed, or `false` if the
+   * widget was not found in the layout structure.
+   */
+  private _removeFromLayout(widget: Widget): boolean {
+    // Bail early if there is no layout root.
+    if (!this._root) {
+      return false;
+    }
+
+    // Find the tab node containing the specified widget.
+    let tabNode = this._root.findTabNode(widget);
+    if (!tabNode) {
+      return false;
+    }
+
+    // Remove the tab from the tab bar.
+    tabNode.tabBar.removeTab(widget.title);
+
+    // Removal is complete if the tab bar still has tabs.
+    if (tabNode.tabBar.titles.length > 0) {
+      return true;
+    }
+
+    // Handle the case where the tab node is the root.
+    if (this._root === tabNode) {
+      this._root = null;
+      tabNode.tabBar.dispose();
+      return true;
+    }
+
+    // Remove the tab node from its parent.
+    let splitNode = tabNode.parent;
+    tabNode.parent = null;
+
+    // Remove the child data from the split node.
+    let i = splitNode.children.remove(tabNode);
+    let handle = splitNode.handles.removeAt(i);
+    splitNode.sizers.removeAt(i);
+
+    // Remove the handle from its parent node.
+    if (handle.parentNode) {
+      handle.parentNode.removeChild(handle);
+    }
+
+    // Update the visibility of the last handle.
+    let lastHandle = splitNode.handles.back;
+    if (lastHandle) {
+      lastHandle.style.display = 'none';
+    }
+
+    // Dispose of the tab bar.
+    tabNode.tabBar.dispose();
+
+    // Removal is complete if there are still multiple children.
+    if (splitNode.children.length > 1) {
+      return true;
+    }
+
+    // Remove the remaining handle from its parent node.
+    if (lastHandle.parentNode) {
+      lastHandle.parentNode.removeChild(lastHandle);
+    }
+
+    // Lookup the split node parent and remaining child node.
+    let parentNode = splitNode.parent;
+    let lastNode = splitNode.children.at(0);
+
+    // Clear the split node.
+    splitNode.children.clear();
+    splitNode.handles.clear();
+    splitNode.sizers.clear();
+    splitNode.parent = null;
+
+    // Handle the case where the split node is the root.
+    if (this._root === splitNode) {
+      this._root = lastNode;
+      return true;
+    }
+
+    // Lookup the index of the split node.
+    let i2 = indexOf(parentNode.children, splitNode);
+
+    // Handle the case where the last node is a tab node.
+    if (lastNode instanceof Private.TabLayoutNode) {
+      lastNode.parent = parentNode;
+      parentNode.children.set(i2, lastNode);
+      return true;
+    }
+
+    // Otherwise, the last node is a split node. Merge the children
+    // of the last node with the parent at the split node's index.
+
+    return true;
+  }
+
+  private _insertIntoLayout(...args: any[]): void {
+
   }
 
   /**
@@ -676,6 +799,22 @@ namespace Private {
     }
 
     /**
+     * Find the tab layout node which holds the reference widget.
+     *
+     * @returns `this` if the reference widget is contained by this
+     *   layout node, `null` otherwise.
+     */
+    findTabNode(ref: Widget): TabLayoutNode {
+      let titles = this.tabBar.titles;
+      for (let i = 0, n = titles.length; i < n; ++i) {
+        if (titles.at(i).owner === ref) {
+          return this;
+        }
+      }
+      return null;
+    }
+
+    /**
      * Fit the tab layout node.
      *
      * @param spacing - This parameter is ignored. It is included to
@@ -832,6 +971,22 @@ namespace Private {
      */
     iter(): IIterator<Widget> {
       return new ChainIterator(map(this.children, iter));
+    }
+
+    /**
+     * Find the tab layout node which holds the reference widget.
+     *
+     * @returns The layout node which holds the reference widget,
+     *   or `null` if the reference widget is not found.
+     */
+    findTabNode(ref: Widget): TabLayoutNode {
+      for (let i = 0, n = this.children.length; i < n; ++i) {
+        let node = this.children.at(i).findTabNode(ref);
+        if (node !== null) {
+          return node;
+        }
+      }
+      return null;
     }
 
     /**
