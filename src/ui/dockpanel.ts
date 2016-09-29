@@ -506,9 +506,9 @@ class DockLayout extends Layout {
       lastHandle.parentNode.removeChild(lastHandle);
     }
 
-    // Lookup the split node parent and remaining child node.
+    // Lookup the split node parent and remaining child data.
     let parentNode = splitNode.parent;
-    let lastNode = splitNode.children.at(0);
+    let childNode = splitNode.children.at(0);
 
     // Clear the split node.
     splitNode.children.clear();
@@ -518,17 +518,17 @@ class DockLayout extends Layout {
 
     // Handle the case where the split node is the root.
     if (this._root === splitNode) {
-      this._root = lastNode;
+      this._root = childNode;
       return true;
     }
 
     // Lookup the index of the split node.
-    let i2 = indexOf(parentNode.children, splitNode);
+    let index = indexOf(parentNode.children, splitNode);
 
     // Handle the case where the last node is a tab node.
-    if (lastNode instanceof Private.TabLayoutNode) {
-      lastNode.parent = parentNode;
-      parentNode.children.set(i2, lastNode);
+    if (childNode instanceof Private.TabLayoutNode) {
+      childNode.parent = parentNode;
+      parentNode.children.set(index, childNode);
       return true;
     }
 
