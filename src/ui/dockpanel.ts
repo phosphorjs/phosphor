@@ -523,8 +523,10 @@ class DockLayout extends Layout {
       splitHandle.parentNode.removeChild(splitHandle);
     }
 
-    // The last node is a split node. Merge the children of that
-    // node with the parent at the split node's original index.
+    // Otherwise, the child node is a split layout node...
+
+    // The child node and the split parent node will have the same
+    // orientation. Merge the grandchildren with the split parent.
     for (let i = 0, n = childNode.children.length; i < n; ++i) {
       let xChild = childNode.children.at(i);
       let xHandle = childNode.handles.at(i);
@@ -544,7 +546,7 @@ class DockLayout extends Layout {
     // Update the handle visibility on the parent node.
     Private.updateHandleVisibility(parentNode);
 
-    // All removal edge cases have been handled.
+    // All removal conditions have been handled.
     return true;
   }
 
