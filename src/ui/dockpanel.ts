@@ -302,10 +302,10 @@ class DockLayout extends Layout {
     // Reparent the widget to the current layout parent.
     widget.parent = this.parent;
 
-    // Remove the widget from its current location.
+    // Remove the widget from its current layout location.
     let contained = this._removeFromLayout(widget);
 
-    // Insert the widget into the new location.
+    // Insert the widget into the new layout location.
     this._insertIntoLayout(widget, mode, ref, refNode);
 
     // Do nothing further if there is no layout parent.
@@ -313,13 +313,13 @@ class DockLayout extends Layout {
       return;
     }
 
-    // Fit the parent if the new widget has already been added.
-    // Otherwise, attach the new widget to the parent widget.
-    if (contained) {
-      this.parent.fit();
-    } else {
+    // Attach the widget if it was not contained in the layout.
+    if (!contained) {
       this._attachWidget(widget);
     }
+
+    // Post a fit request to the parent widget.
+    this.parent.fit();
   }
 
   /**
@@ -352,30 +352,6 @@ class DockLayout extends Layout {
   protected onAfterAttach(msg: Message): void {
     super.onAfterAttach(msg);
     this.parent.fit();
-    // TODO audit this method
-  }
-
-  /**
-   * A message handler invoked on a `'child-shown'` message.
-   */
-  protected onChildShown(msg: ChildMessage): void {
-    if (IS_IE) { // prevent flicker on IE
-      sendMessage(this.parent, WidgetMessage.FitRequest);
-    } else {
-      this.parent.fit();
-    }
-    // TODO audit this method
-  }
-
-  /**
-   * A message handler invoked on a `'child-hidden'` message.
-   */
-  protected onChildHidden(msg: ChildMessage): void {
-    if (IS_IE) { // prevent flicker on IE
-      sendMessage(this.parent, WidgetMessage.FitRequest);
-    } else {
-      this.parent.fit();
-    }
     // TODO audit this method
   }
 
@@ -420,7 +396,7 @@ class DockLayout extends Layout {
     if (this.parent.isAttached) sendMessage(widget, WidgetMessage.AfterAttach);
 
     // Post a fit request for the parent widget.
-    this.parent.fit();
+    this.parent.fit(); // TODO really want this here?
   }
 
   /**
@@ -437,7 +413,7 @@ class DockLayout extends Layout {
     Widget.resetGeometry(widget);
 
     // Post a fit request for the parent widget.
-    this.parent.fit();
+    this.parent.fit(); // TODO really want this here?
   }
 
   /**
@@ -458,13 +434,13 @@ class DockLayout extends Layout {
       return false;
     }
 
-    // Remove the tab from the tab bar.
-    tabNode.tabBar.removeTab(widget.title);
-
-    // Removal is complete if the tab bar still has tabs.
-    if (tabNode.tabBar.titles.length > 0) {
+    // If there are multiple tabs, just remove the widget's tab.
+    if (tabNode.tabBar.titles.length > 1) {
+      tabNode.tabBar.removeTab(widget.title);
       return true;
     }
+
+    // Otherwise, the tab node needs to be removed...
 
     // Handle the case where the tab node is the root.
     if (this._root === tabNode) {
@@ -473,68 +449,102 @@ class DockLayout extends Layout {
       return true;
     }
 
-    // Remove the tab node from its parent.
+    // Otherwise, remove the tab node from its parent...
+
+    // Clear the parent split node reference on the tab node.
     let splitNode = tabNode.parent;
     tabNode.parent = null;
 
-    // Remove the child data from the split node.
+    // Remove the tab node and data from its parent split node.
     let i = splitNode.children.remove(tabNode);
     let handle = splitNode.handles.removeAt(i);
     splitNode.sizers.removeAt(i);
 
-    // Remove the handle from its parent node.
+    // Remove the handle from its parent DOM node.
     if (handle.parentNode) {
       handle.parentNode.removeChild(handle);
     }
 
-    // Update the visibility of the last handle.
-    let lastHandle = splitNode.handles.back;
-    if (lastHandle) {
-      lastHandle.style.display = 'none';
-    }
-
-    // Dispose of the tab bar.
+    // Dispose the tab bar.
     tabNode.tabBar.dispose();
 
-    // Removal is complete if there are still multiple children.
+    // If there are multiple children, just update the handles.
     if (splitNode.children.length > 1) {
+      Private.updateHandleVisibility(splitNode);
       return true;
     }
 
-    // Remove the remaining handle from its parent node.
-    if (lastHandle.parentNode) {
-      lastHandle.parentNode.removeChild(lastHandle);
-    }
+    // Otherwise, the split node needs to be removed...
 
-    // Lookup the split node parent and remaining child data.
-    let parentNode = splitNode.parent;
+    // Lookup the remaining child data.
     let childNode = splitNode.children.at(0);
+    let childHandle = splitNode.handles.at(0);
 
-    // Clear the split node.
+    // Clear the split node data.
     splitNode.children.clear();
     splitNode.handles.clear();
     splitNode.sizers.clear();
-    splitNode.parent = null;
+
+    // Remove the child handle from its parent node.
+    if (childHandle.parentNode) {
+      childHandle.parentNode.removeChild(childHandle);
+    }
 
     // Handle the case where the split node is the root.
     if (this._root === splitNode) {
+      childNode.parent = null;
       this._root = childNode;
       return true;
     }
 
-    // Lookup the index of the split node.
-    let index = indexOf(parentNode.children, splitNode);
+    // Otherwise, move the child node to the split parent...
 
-    // Handle the case where the last node is a tab node.
+    // Clear the parent reference on the split node.
+    let parentNode = splitNode.parent;
+    splitNode.parent = null;
+
+    // Lookup the index of the split node.
+    let j = indexOf(parentNode.children, splitNode);
+
+    // Handle the case where the child node is a tab node.
     if (childNode instanceof Private.TabLayoutNode) {
       childNode.parent = parentNode;
-      parentNode.children.set(index, childNode);
+      parentNode.children.set(j, childNode);
       return true;
     }
 
-    // Otherwise, the last node is a split node. Merge the children
-    // of the last node with the parent at the split node's index.
+    // Otherwise, remove the split data from the parent.
+    let splitHandle = parentNode.handles.removeAt(j);
+    parentNode.children.removeAt(j);
+    parentNode.sizers.removeAt(j);
 
+    // Remove the split handle from its parent node.
+    if (splitHandle.parentNode) {
+      splitHandle.parentNode.removeChild(splitHandle);
+    }
+
+    // The last node is a split node. Merge the children of that
+    // node with the parent at the split node's original index.
+    for (let i = 0, n = childNode.children.length; i < n; ++i) {
+      let xChild = childNode.children.at(i);
+      let xHandle = childNode.handles.at(i);
+      let xSizer = childNode.sizers.at(i);
+      parentNode.children.insert(j + i, xChild);
+      parentNode.handles.insert(j + i, xHandle);
+      parentNode.sizers.insert(j + i, xSizer);
+      xChild.parent = parentNode;
+    }
+
+    // Clear the child node.
+    childNode.children.clear();
+    childNode.handles.clear();
+    childNode.sizers.clear();
+    childNode.parent = null;
+
+    // Update the handle visibility on the parent node.
+    Private.updateHandleVisibility(parentNode);
+
+    // All removal edge cases have been handled.
     return true;
   }
 
@@ -1098,5 +1108,22 @@ namespace Private {
   export
   function clampSpacing(value: number): number {
     return Math.max(0, Math.floor(value));
+  }
+
+  /**
+   * Update the visibility of the handles for a split layout node.
+   *
+   * The makes all handles visible except the last, which is set
+   * to `display: none`.
+   */
+  export
+  function updateHandleVisibility(splitNode: SplitLayoutNode): void {
+    if (splitNode.handles.isEmpty) {
+      return;
+    }
+    for (let i = 0, n = splitNode.handles.length - 1; i < n; ++i) {
+      splitNode.handles.at(i).style.display = '';
+    }
+    splitNode.handles.back.style.display = 'none';
   }
 }
