@@ -306,7 +306,7 @@ class DockLayout extends Layout {
     let contained = this._removeFromLayout(widget);
 
     // Insert the widget into the new layout location.
-    this._insertIntoLayout(widget, mode, ref, refNode);
+    this._insertIntoLayout(widget, mode, refNode, ref);
 
     // Do nothing further if there is no layout parent.
     if (!this.parent) {
@@ -550,8 +550,114 @@ class DockLayout extends Layout {
     return true;
   }
 
-  private _insertIntoLayout(...args: any[]): void {
+  /**
+   *
+   */
+  private _insertIntoLayout(widget: Widget, mode: DockLayout.Mode, refNode: Private.TabLayoutNode, ref: Widget): void {
+    // Determine whether the insert is before or after the ref.
+    let after = (
+      mode === 'tab-after' ||
+      mode === 'split-right' ||
+      mode === 'split-bottom'
+    );
 
+    // Handle the simple case of adding to a tab panel.
+    if (mode === 'tab-before' || mode === 'tab-after') {
+      if (refNode) {
+        let i = findIndex(refNode.tabBar.titles, t => t.owner === ref);
+        refNode.tabBar.insertTab(i + (after ? 1 : 0), widget.title);
+      } else {
+        let tabNode = this._ensureTabNode();
+        let i = after ? tabNode.tabBar.titles.length : 0;
+        tabNode.tabBar.insertTab(i, widget.title);
+      }
+      return;
+    }
+
+    // Otherwise, determine the orientation of the new split.
+    let orientation: Private.Orientation;
+    if (mode === 'split-top' || mode === 'split-bottom') {
+      orientation = 'vertical';
+    } else {
+      orientation = 'horizontal';
+    }
+
+    // Setup the new tab node to host the widget.
+    let tabNode = this._createTabNode();
+    tabNode.tabBar.addTab(widget.title);
+
+    // If there is no root, set the new tab node as the root.
+    if (!this._root) {
+      this._root = tabNode;
+      return;
+    }
+
+    // If the ref node is null, split the root panel.
+    if (!refNode) {
+      let splitNode = this._ensureSplitRoot(orientation);
+      let i = after ? splitNode.children.length : 0;
+      let handle = this._createHandle();
+      let sizer = this._createSizer();
+      splitNode.children.insert(i, tabNode);
+      splitNode.handles.insert(i, handle);
+      splitNode.sizers.insert(i, sizer);
+      // let sizes = splitNode.relativeSizes();
+      // sizes.splice(index, 0, 0.5);
+      // splitNode.setRelativeSizes(sizes);
+      return;
+    }
+
+    // If the ref node is the root, split the root.
+    if (this._root === refNode) {
+      let splitNode = this._ensureSplitRoot(orientation);
+      let handle = this._createHandle();
+      let sizer = this._createSizer();
+      let i = after ? 1 : 0;
+      splitNode.children.insert(i, tabNode);
+      splitNode.handles.insert(i, handle);
+      splitNode.sizers.insert(i, sizer);
+      // TODO handle sizes
+      return;
+    }
+
+    // Otherwise, insert relative to the ref node parent.
+    let splitNode = refNode.parent;
+
+    // If the split node is the correct orientation, the widget
+    // can be inserted directly and sized to 0.5 of the ref space.
+    if (splitNode.orientation === orientation) {
+      let i = indexOf(splitNode.children, refNode) + (after ? 1 : 0);
+      let handle = this._createHandle();
+      let sizer = this._createSizer();
+      splitNode.children.insert(i, tabNode);
+      splitNode.handles.insert(i, handle);
+      splitNode.sizers.insert(i, sizer);
+      //let sizes = splitPanel.relativeSizes();
+      //let size = sizes[i] = sizes[i] / 2;
+      //sizes.splice(index, 0, size);
+      //splitPanel.insertWidget(index, tabPanel);
+      //splitPanel.setRelativeSizes(sizes);
+      return;
+    }
+
+    // Otherwise, a new split node with the correct orientation needs
+    // to be created to hold the ref node and tab node. It is inserted
+    // at the previous location of the ref node.
+    //let sizes = splitPanel.relativeSizes();
+    let i = indexOf(splitNode.children, refNode);
+    let childNode = this._createSplitNode(orientation);
+    let refHandle = this._createHandle();
+    let tabHandle = this._createHandle();
+    let refSizer = this._createSizer();
+    let tabSizer = this._createSizer();
+    childNode.children.insert(0, refNode);
+    childHode.handles.insert(0, refHandle);
+    childNode.sizers.insert(0, refSizer);
+    childNode.children.insert(after ? 1 : 0, tabNode);
+    childNode.handles.insert(after ? 1 : 0, tabHandle);
+    childNode.sizers.insert(after ? 1 : 0, tabSizer);
+    splitNode.set(i, childNode);
+    childNode.parent = splitNode;
   }
 
   /**
