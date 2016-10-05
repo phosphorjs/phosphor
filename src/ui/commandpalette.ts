@@ -152,7 +152,7 @@ class CommandPalette extends Widget {
    * This is a read-only property.
    */
   get searchNode(): HTMLDivElement {
-    return this.node.getElementsByClassName(SEARCH_CLASS)[0] as HTMLDivElement;
+    return this.node!.getElementsByClassName(SEARCH_CLASS)[0] as HTMLDivElement;
   }
 
   /**
@@ -162,7 +162,7 @@ class CommandPalette extends Widget {
    * This is a read-only property.
    */
   get inputNode(): HTMLInputElement {
-    return this.node.getElementsByClassName(INPUT_CLASS)[0] as HTMLInputElement;
+    return this.node!.getElementsByClassName(INPUT_CLASS)[0] as HTMLInputElement;
   }
 
   /**
@@ -176,7 +176,7 @@ class CommandPalette extends Widget {
    * This is a read-only property.
    */
   get contentNode(): HTMLUListElement {
-    return this.node.getElementsByClassName(CONTENT_CLASS)[0] as HTMLUListElement;
+    return this.node!.getElementsByClassName(CONTENT_CLASS)[0] as HTMLUListElement;
   }
 
   /**
@@ -228,7 +228,7 @@ class CommandPalette extends Widget {
    */
   addItem(options: CommandPalette.IItemOptions): CommandPalette.IItem {
     // Create a new command item for the options.
-    let item = Private.createItem(this._commands, this._keymap, options);
+    let item = Private.createItem(this._commands!, this._keymap!, options);
 
     // Add the item to the vector.
     this._items.pushBack(item);
@@ -318,9 +318,10 @@ class CommandPalette extends Widget {
    * A message handler invoked on a `'after-attach'` message.
    */
   protected onAfterAttach(msg: Message): void {
-    this.node.addEventListener('click', this);
-    this.node.addEventListener('keydown', this);
-    this.node.addEventListener('input', this);
+    let node = this.node!;
+    node.addEventListener('click', this);
+    node.addEventListener('keydown', this);
+    node.addEventListener('input', this);
     this.update();
   }
 
@@ -328,9 +329,10 @@ class CommandPalette extends Widget {
    * A message handler invoked on a `'before-detach'` message.
    */
   protected onBeforeDetach(msg: Message): void {
-    this.node.removeEventListener('click', this);
-    this.node.removeEventListener('keydown', this);
-    this.node.removeEventListener('input', this);
+    let node = this.node!;
+    node.removeEventListener('click', this);
+    node.removeEventListener('keydown', this);
+    node.removeEventListener('input', this);
   }
 
   /**
@@ -383,7 +385,7 @@ class CommandPalette extends Widget {
     }
 
     // Fetch command variables.
-    let renderer = this._renderer;
+    let renderer = this._renderer!;
     let itemNodes = this._itemNodes;
     let headerNodes = this._headerNodes;
 
@@ -645,7 +647,7 @@ class CommandPalette extends Widget {
     if (part.item) {
       input.focus();
       input.select();
-      this._commands.execute(part.item.command, part.item.args);
+      this._commands!.execute(part.item.command, part.item.args);
       return;
     }
 

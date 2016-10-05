@@ -164,14 +164,14 @@ class Widget implements IDisposable, IMessageHandler {
    * Get the id of the widget's DOM node.
    */
   get id(): string {
-    return this._node.id;
+    return this._node!.id;
   }
 
   /**
    * Set the id of the widget's DOM node.
    */
   set id(value: string) {
-    this._node.id = value;
+    this._node!.id = value;
   }
 
   /**
@@ -305,7 +305,7 @@ class Widget implements IDisposable, IMessageHandler {
    * @returns `true` if the node has the class, `false` otherwise.
    */
   hasClass(name: string): boolean {
-    return this._node.classList.contains(name);
+    return this._node!.classList.contains(name);
   }
 
   /**
@@ -319,7 +319,7 @@ class Widget implements IDisposable, IMessageHandler {
    * The class name must not contain whitespace.
    */
   addClass(name: string): void {
-    this._node.classList.add(name);
+    this._node!.classList.add(name);
   }
 
   /**
@@ -333,7 +333,7 @@ class Widget implements IDisposable, IMessageHandler {
    * The class name must not contain whitespace.
    */
   removeClass(name: string): void {
-    this._node.classList.remove(name);
+    this._node!.classList.remove(name);
   }
 
   /**
@@ -352,14 +352,14 @@ class Widget implements IDisposable, IMessageHandler {
    */
   toggleClass(name: string, force?: boolean): boolean {
     if (force === true) {
-      this._node.classList.add(name);
+      this._node!.classList.add(name);
       return true;
     }
     if (force === false) {
-      this._node.classList.remove(name);
+      this._node!.classList.remove(name);
       return false;
     }
-    return this._node.classList.toggle(name);
+    return this._node!.classList.toggle(name);
   }
 
   /**
@@ -727,13 +727,13 @@ namespace Widget {
     if (widget.parent) {
       throw new Error('Cannot attach child widget.');
     }
-    if (widget.isAttached || document.body.contains(widget.node)) {
+    if (widget.isAttached || document.body.contains(widget.node!)) {
       throw new Error('Widget already attached.');
     }
     if (!document.body.contains(host)) {
       throw new Error('Host not attached.');
     }
-    host.appendChild(widget.node);
+    host.appendChild(widget.node!);
     sendMessage(widget, WidgetMessage.AfterAttach);
   }
 
@@ -752,11 +752,11 @@ namespace Widget {
     if (widget.parent) {
       throw new Error('Cannot detach child widget.');
     }
-    if (!widget.isAttached || !document.body.contains(widget.node)) {
+    if (!widget.isAttached || !document.body.contains(widget.node!)) {
       throw new Error('Widget not attached.');
     }
     sendMessage(widget, WidgetMessage.BeforeDetach);
-    widget.node.parentNode.removeChild(widget.node);
+    widget.node!.parentNode.removeChild(widget.node!);
   }
 
   /**
@@ -769,7 +769,7 @@ namespace Widget {
    */
   export
   function prepareGeometry(widget: Widget): void {
-    widget.node.style.position = 'absolute';
+    widget.node!.style.position = 'absolute';
   }
 
   /**
@@ -782,7 +782,7 @@ namespace Widget {
    */
   export
   function resetGeometry(widget: Widget): void {
-    let style = widget.node.style;
+    let style = widget.node!.style;
     let rect = Private.rectProperty.get(widget)!;
     rect.top = NaN;
     rect.left = NaN;
@@ -820,7 +820,7 @@ namespace Widget {
   export
   function setGeometry(widget: Widget, left: number, top: number, width: number, height: number): void {
     let resized = false;
-    let style = widget.node.style;
+    let style = widget.node!.style;
     let rect = Private.rectProperty.get(widget)!;
     if (rect.top !== top) {
       rect.top = top;

@@ -64,7 +64,7 @@ class FocusTracker<T extends Widget> implements IDisposable {
 
     // Remove all event listeners.
     each(this._widgets, widget => {
-      widget.node.removeEventListener('focus', this, true);
+      widget.node!.removeEventListener('focus', this, true);
     });
 
     // Clear the internal data structures.
@@ -182,7 +182,7 @@ class FocusTracker<T extends Widget> implements IDisposable {
     }
 
     // Test whether this widget has focus.
-    let focused = widget.node.contains(document.activeElement);
+    let focused = widget.node!.contains(document.activeElement);
 
     // Setup the initial focus number.
     let n = focused ? this._counter++ : -1;
@@ -190,12 +190,12 @@ class FocusTracker<T extends Widget> implements IDisposable {
     // Add the widget to the internal data structures.
     this._numbers.set(widget, n);
     this._widgets.pushBack(widget);
-    this._nodes.set(widget.node, widget);
+    this._nodes.set(widget.node!, widget);
 
     // Setup the focus event listener. The capturing phase must
     // be used since the 'focus' event doesn't bubble and since
     // firefox doesn't support the 'focusin' event.
-    widget.node.addEventListener('focus', this, true);
+    widget.node!.addEventListener('focus', this, true);
 
     // Connect the disposed signal handler.
     widget.disposed.connect(this._onWidgetDisposed, this);
@@ -226,11 +226,11 @@ class FocusTracker<T extends Widget> implements IDisposable {
     widget.disposed.disconnect(this._onWidgetDisposed, this);
 
     // Remove the focus event listener.
-    widget.node.removeEventListener('focus', this, true);
+    widget.node!.removeEventListener('focus', this, true);
 
     // Remove the widget from the internal data structures.
     this._widgets.remove(widget);
-    this._nodes.delete(widget.node);
+    this._nodes.delete(widget.node!);
     this._numbers.delete(widget);
 
     // If the widget is not the current widget, we're done.

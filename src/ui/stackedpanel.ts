@@ -128,13 +128,13 @@ class StackedLayout extends PanelLayout {
     Widget.prepareGeometry(widget);
 
     // Add the widget's node to the parent.
-    this.parent.node.appendChild(widget.node);
+    this.parent!.node!.appendChild(widget.node!);
 
     // Send an `'after-attach'` message if the parent is attached.
-    if (this.parent.isAttached) sendMessage(widget, WidgetMessage.AfterAttach);
+    if (this.parent!.isAttached) sendMessage(widget, WidgetMessage.AfterAttach);
 
     // Post a layout request for the parent widget.
-    this.parent.fit();
+    this.parent!.fit();
   }
 
   /**
@@ -151,7 +151,7 @@ class StackedLayout extends PanelLayout {
    */
   protected moveWidget(fromIndex: number, toIndex: number, widget: Widget): void {
     // Post an update request for the parent widget.
-    this.parent.update();
+    this.parent!.update();
   }
 
   /**
@@ -166,19 +166,19 @@ class StackedLayout extends PanelLayout {
    */
   protected detachWidget(index: number, widget: Widget): void {
     // Send a `'before-detach'` message if the parent is attached.
-    if (this.parent.isAttached) sendMessage(widget, WidgetMessage.BeforeDetach);
+    if (this.parent!.isAttached) sendMessage(widget, WidgetMessage.BeforeDetach);
 
     // Remove the widget's node from the parent.
-    this.parent.node.removeChild(widget.node);
+    this.parent!.node!.removeChild(widget.node!);
 
     // Reset the layout geometry for the widget.
     Widget.resetGeometry(widget);
 
     // Reset the z-index for the widget.
-    widget.node.style.zIndex = '';
+    widget.node!.style.zIndex = '';
 
     // Post a layout request for the parent widget.
-    this.parent.fit();
+    this.parent!.fit();
   }
 
   /**
@@ -186,7 +186,7 @@ class StackedLayout extends PanelLayout {
    */
   protected onAfterShow(msg: Message): void {
     super.onAfterShow(msg);
-    this.parent.update();
+    this.parent!.update();
   }
 
   /**
@@ -194,7 +194,7 @@ class StackedLayout extends PanelLayout {
    */
   protected onAfterAttach(msg: Message): void {
     super.onAfterAttach(msg);
-    this.parent.fit();
+    this.parent!.fit();
   }
 
   /**
@@ -202,9 +202,9 @@ class StackedLayout extends PanelLayout {
    */
   protected onChildShown(msg: ChildMessage): void {
     if (IS_IE) { // prevent flicker on IE
-      sendMessage(this.parent, WidgetMessage.FitRequest);
+      sendMessage(this.parent!, WidgetMessage.FitRequest);
     } else {
-      this.parent.fit();
+      this.parent!.fit();
     }
   }
 
@@ -213,9 +213,9 @@ class StackedLayout extends PanelLayout {
    */
   protected onChildHidden(msg: ChildMessage): void {
     if (IS_IE) { // prevent flicker on IE
-      sendMessage(this.parent, WidgetMessage.FitRequest);
+      sendMessage(this.parent!, WidgetMessage.FitRequest);
     } else {
-      this.parent.fit();
+      this.parent!.fit();
     }
   }
 
@@ -223,7 +223,7 @@ class StackedLayout extends PanelLayout {
    * A message handler invoked on a `'resize'` message.
    */
   protected onResize(msg: ResizeMessage): void {
-    if (this.parent.isVisible) {
+    if (this.parent!.isVisible) {
       this._update(msg.width, msg.height);
     }
   }
@@ -232,7 +232,7 @@ class StackedLayout extends PanelLayout {
    * A message handler invoked on an `'update-request'` message.
    */
   protected onUpdateRequest(msg: Message): void {
-    if (this.parent.isVisible) {
+    if (this.parent!.isVisible) {
       this._update(-1, -1);
     }
   }
@@ -241,7 +241,7 @@ class StackedLayout extends PanelLayout {
    * A message handler invoked on a `'fit-request'` message.
    */
   protected onFitRequest(msg: Message): void {
-    if (this.parent.isAttached) {
+    if (this.parent!.isAttached) {
       this._fit();
     }
   }
@@ -263,7 +263,7 @@ class StackedLayout extends PanelLayout {
       if (widget.isHidden) {
         continue;
       }
-      let limits = sizeLimits(widget.node);
+      let limits = sizeLimits(widget.node!);
       minW = Math.max(minW, limits.minWidth);
       minH = Math.max(minH, limits.minHeight);
       maxW = Math.min(maxW, limits.maxWidth);
@@ -275,14 +275,14 @@ class StackedLayout extends PanelLayout {
     maxH = Math.max(minH, maxH);
 
     // Update the box sizing and add it to the size constraints.
-    let box = this._box = boxSizing(this.parent.node);
+    let box = this._box = boxSizing(this.parent!.node!);
     minW += box.horizontalSum;
     minH += box.verticalSum;
     maxW += box.horizontalSum;
     maxH += box.verticalSum;
 
     // Update the parent's size constraints.
-    let style = this.parent.node.style;
+    let style = this.parent!.node!.style;
     style.minWidth = `${minW}px`;
     style.minHeight = `${minH}px`;
     style.maxWidth = maxW === Infinity ? 'none' : `${maxW}px`;
@@ -293,12 +293,12 @@ class StackedLayout extends PanelLayout {
 
     // Notify the ancestor that it should fit immediately. This may
     // cause a resize of the parent, fulfilling the required update.
-    let ancestor = this.parent.parent;
+    let ancestor = this.parent!.parent;
     if (ancestor) sendMessage(ancestor, WidgetMessage.FitRequest);
 
     // If the dirty flag is still set, the parent was not resized.
     // Trigger the required update on the parent widget immediately.
-    if (this._dirty) sendMessage(this.parent, WidgetMessage.UpdateRequest);
+    if (this._dirty) sendMessage(this.parent!, WidgetMessage.UpdateRequest);
   }
 
   /**
@@ -317,15 +317,16 @@ class StackedLayout extends PanelLayout {
     }
 
     // Measure the parent if the offset dimensions are unknown.
+    let parentNode = this.parent!.node!;
     if (offsetWidth < 0) {
-      offsetWidth = this.parent.node.offsetWidth;
+      offsetWidth = parentNode.offsetWidth;
     }
     if (offsetHeight < 0) {
-      offsetHeight = this.parent.node.offsetHeight;
+      offsetHeight = parentNode.offsetHeight;
     }
 
     // Ensure the parent box sizing data is computed.
-    let box = this._box || (this._box = boxSizing(this.parent.node));
+    let box = this._box || (this._box = boxSizing(parentNode));
 
     // Compute the actual layout bounds adjusted for border and padding.
     let top = box.paddingTop;
@@ -339,7 +340,7 @@ class StackedLayout extends PanelLayout {
       if (widget.isHidden) {
         continue;
       }
-      widget.node.style.zIndex = `${i}`;
+      widget.node!.style.zIndex = `${i}`;
       Widget.setGeometry(widget, left, top, width, height);
     }
   }

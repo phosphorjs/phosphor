@@ -306,13 +306,13 @@ class PanelLayout extends Layout {
    */
   protected attachWidget(index: number, widget: Widget): void {
     // Look up the next sibling reference node.
-    let ref = this.parent.node.children[index];
+    let ref = this.parent!.node!.children[index];
 
     // Insert the widget's node before the sibling.
-    this.parent.node.insertBefore(widget.node, ref);
+    this.parent!.node!.insertBefore(widget.node!, ref);
 
     // Send an `'after-attach'` message if the parent is attached.
-    if (this.parent.isAttached) sendMessage(widget, WidgetMessage.AfterAttach);
+    if (this.parent!.isAttached) sendMessage(widget, WidgetMessage.AfterAttach);
   }
 
   /**
@@ -340,19 +340,21 @@ class PanelLayout extends Layout {
    */
   protected moveWidget(fromIndex: number, toIndex: number, widget: Widget): void {
     // Send a `'before-detach'` message if the parent is attached.
-    if (this.parent.isAttached) sendMessage(widget, WidgetMessage.BeforeDetach);
+    if (this.parent!.isAttached) sendMessage(widget, WidgetMessage.BeforeDetach);
+
+    let parentNode = this.parent!.node!;
 
     // Remove the widget's node from the parent.
-    this.parent.node.removeChild(widget.node);
+    parentNode.removeChild(widget.node!);
 
     // Look up the next sibling reference node.
-    let ref = this.parent.node.children[toIndex];
+    let ref = parentNode.children[toIndex];
 
     // Insert the widget's node before the sibling.
-    this.parent.node.insertBefore(widget.node, ref);
+    parentNode.insertBefore(widget.node!, ref);
 
     // Send an `'after-attach'` message if the parent is attached.
-    if (this.parent.isAttached) sendMessage(widget, WidgetMessage.AfterAttach);
+    if (this.parent!.isAttached) sendMessage(widget, WidgetMessage.AfterAttach);
   }
 
   /**
@@ -377,10 +379,10 @@ class PanelLayout extends Layout {
    */
   protected detachWidget(index: number, widget: Widget): void {
     // Send a `'before-detach'` message if the parent is attached.
-    if (this.parent.isAttached) sendMessage(widget, WidgetMessage.BeforeDetach);
+    if (this.parent!.isAttached) sendMessage(widget, WidgetMessage.BeforeDetach);
 
     // Remove the widget's node from the parent.
-    this.parent.node.removeChild(widget.node);
+    this.parent!.node!.removeChild(widget.node!);
   }
 
   /**

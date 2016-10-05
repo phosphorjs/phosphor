@@ -135,7 +135,7 @@ class TabPanel extends Widget {
    * This will be `-1` if no tab is selected.
    */
   get currentIndex(): number {
-    return this._tabBar.currentIndex;
+    return this._tabBar!.currentIndex;
   }
 
   /**
@@ -145,7 +145,7 @@ class TabPanel extends Widget {
    * If the index is out of range, it will be set to `-1`.
    */
   set currentIndex(value: number) {
-    this._tabBar.currentIndex = value;
+    this._tabBar!.currentIndex = value;
   }
 
   /**
@@ -155,7 +155,7 @@ class TabPanel extends Widget {
    * This will be `null` if there is no selected tab.
    */
   get currentWidget(): Widget | null {
-    let title = this._tabBar.currentTitle;
+    let title = this._tabBar!.currentTitle;
     return title ? title.owner as Widget : null;
   }
 
@@ -166,7 +166,7 @@ class TabPanel extends Widget {
    * If the widget is not in the panel, it will be set to `null`.
    */
   set currentWidget(value: Widget | null) {
-    this._tabBar.currentTitle = value ? value.title : null;
+    this._tabBar!.currentTitle = value ? value.title : null;
   }
 
   /**
@@ -176,7 +176,7 @@ class TabPanel extends Widget {
    * Tabs can always be moved programmatically.
    */
   get tabsMovable(): boolean {
-    return this._tabBar.tabsMovable;
+    return this._tabBar!.tabsMovable;
   }
 
   /**
@@ -186,7 +186,7 @@ class TabPanel extends Widget {
    * Tabs can always be moved programmatically.
    */
   set tabsMovable(value: boolean) {
-    this._tabBar.tabsMovable = value;
+    this._tabBar!.tabsMovable = value;
   }
 
   /**
@@ -220,9 +220,9 @@ class TabPanel extends Widget {
     let orientation = Private.orientationFromPlacement(value);
 
     // Configure the tab bar for the placement.
-    this._tabBar.orientation = orientation;
-    this._tabBar.removeClass(`p-mod-${old}`);
-    this._tabBar.addClass(`p-mod-${value}`);
+    this._tabBar!.orientation = orientation;
+    this._tabBar!.removeClass(`p-mod-${old}`);
+    this._tabBar!.addClass(`p-mod-${value}`);
 
     // Update the layout direction.
     (this.layout as BoxLayout).direction = direction;
@@ -259,7 +259,7 @@ class TabPanel extends Widget {
    * This is a read-only property.
    */
   get widgets(): ISequence<Widget> {
-    return this._stackedPanel.widgets;
+    return this._stackedPanel!.widgets;
   }
 
   /**
@@ -290,8 +290,8 @@ class TabPanel extends Widget {
    */
   insertWidget(index: number, widget: Widget): void {
     if (widget !== this.currentWidget) widget.hide();
-    this._stackedPanel.insertWidget(index, widget);
-    this._tabBar.insertTab(index, widget.title);
+    this._stackedPanel!.insertWidget(index, widget);
+    this._tabBar!.insertTab(index, widget.title);
   }
 
   /**
@@ -325,14 +325,14 @@ class TabPanel extends Widget {
    * Handle the `tabMoved` signal from the tab bar.
    */
   private _onTabMoved(sender: TabBar, args: TabBar.ITabMovedArgs): void {
-    this._stackedPanel.insertWidget(args.toIndex, args.title.owner as Widget);
+    this._stackedPanel!.insertWidget(args.toIndex, args.title.owner as Widget);
   }
 
   /**
    * Handle the `widgetRemoved` signal from the stacked panel.
    */
   private _onWidgetRemoved(sender: StackedPanel, widget: Widget): void {
-    this._tabBar.removeTab(widget.title);
+    this._tabBar!.removeTab(widget.title);
   }
 
   private _tabBar: TabBar | null;

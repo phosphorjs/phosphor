@@ -218,7 +218,7 @@ class TabBar extends Widget {
    * This is a read-only property.
    */
   get contentNode(): HTMLUListElement {
-    return this.node.getElementsByClassName(CONTENT_CLASS)[0] as HTMLUListElement;
+    return this.node!.getElementsByClassName(CONTENT_CLASS)[0] as HTMLUListElement;
   }
 
   /**
@@ -642,16 +642,18 @@ class TabBar extends Widget {
    * A message handler invoked on an `'after-attach'` message.
    */
   protected onAfterAttach(msg: Message): void {
-    this.node.addEventListener('click', this);
-    this.node.addEventListener('mousedown', this);
+    let node = this.node!;
+    node.addEventListener('click', this);
+    node.addEventListener('mousedown', this);
   }
 
   /**
    * A message handler invoked on a `'before-detach'` message.
    */
   protected onBeforeDetach(msg: Message): void {
-    this.node.removeEventListener('click', this);
-    this.node.removeEventListener('mousedown', this);
+    let node = this.node!;
+    node.removeEventListener('click', this);
+    node.removeEventListener('mousedown', this);
     this._releaseMouse();
   }
 
@@ -661,7 +663,7 @@ class TabBar extends Widget {
   protected onUpdateRequest(msg: Message): void {
     let content: VNode[] = [];
     let titles = this._titles;
-    let renderer = this._renderer;
+    let renderer = this._renderer!;
     let currentTitle = this.currentTitle;
     for (let i = 0, n = titles.length; i < n; ++i) {
       let title = titles.at(i);
@@ -720,7 +722,7 @@ class TabBar extends Widget {
     }
 
     // Ignore the click if it was not on a close icon.
-    let icon = tabs[i].querySelector(this._renderer.closeIconSelector);
+    let icon = tabs[i].querySelector(this._renderer!.closeIconSelector);
     if (!icon || !icon.contains(event.target as HTMLElement)) {
       return;
     }
@@ -759,7 +761,7 @@ class TabBar extends Widget {
     event.stopPropagation();
 
     // Ignore the press if it was on a close icon.
-    let icon = tabs[i].querySelector(this._renderer.closeIconSelector);
+    let icon = tabs[i].querySelector(this._renderer!.closeIconSelector);
     if (icon && icon.contains(event.target as HTMLElement)) {
       return;
     }

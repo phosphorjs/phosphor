@@ -132,7 +132,7 @@ class MenuBar extends Widget {
    * This is a read-only property.
    */
   get contentNode(): HTMLUListElement {
-    return this.node.getElementsByClassName(CONTENT_CLASS)[0] as HTMLUListElement;
+    return this.node!.getElementsByClassName(CONTENT_CLASS)[0] as HTMLUListElement;
   }
 
   /**
@@ -301,8 +301,8 @@ class MenuBar extends Widget {
     // If the menu is not in the vector, insert it.
     if (i === -1) {
       // Create the new item node for the menu.
-      let node = this._renderer.createItemNode();
-      this._renderer.updateItemNode(node, menu.title);
+      let node = this._renderer!.createItemNode();
+      this._renderer!.updateItemNode(node, menu.title);
 
       // Insert the node and menu into the vectors.
       this._nodes.insert(j, node);
@@ -459,22 +459,24 @@ class MenuBar extends Widget {
    * A message handler invoked on an `'after-attach'` message.
    */
   protected onAfterAttach(msg: Message): void {
-    this.node.addEventListener('keydown', this);
-    this.node.addEventListener('mousedown', this);
-    this.node.addEventListener('mousemove', this);
-    this.node.addEventListener('mouseleave', this);
-    this.node.addEventListener('contextmenu', this);
+    let node = this.node!;
+    node.addEventListener('keydown', this);
+    node.addEventListener('mousedown', this);
+    node.addEventListener('mousemove', this);
+    node.addEventListener('mouseleave', this);
+    node.addEventListener('contextmenu', this);
   }
 
   /**
    * A message handler invoked on a `'before-detach'` message.
    */
   protected onBeforeDetach(msg: Message): void {
-    this.node.removeEventListener('keydown', this);
-    this.node.removeEventListener('mousedown', this);
-    this.node.removeEventListener('mousemove', this);
-    this.node.removeEventListener('mouseleave', this);
-    this.node.removeEventListener('contextmenu', this);
+    let node = this.node!;
+    node.removeEventListener('keydown', this);
+    node.removeEventListener('mousedown', this);
+    node.removeEventListener('mousemove', this);
+    node.removeEventListener('mouseleave', this);
+    node.removeEventListener('contextmenu', this);
     this._closeChildMenu();
   }
 
@@ -482,14 +484,14 @@ class MenuBar extends Widget {
    * A message handler invoked on an `'activate-request'` message.
    */
   protected onActivateRequest(msg: Message): void {
-    if (this.isAttached) this.node.focus();
+    if (this.isAttached) this.node!.focus();
   }
 
   /**
    * A message handler invoked on a `'deactivate-request'` message.
    */
   protected onDeactivateRequest(msg: Message): void {
-    if (this.isAttached) this.node.blur();
+    if (this.isAttached) this.node!.blur();
   }
 
   /**
@@ -499,7 +501,7 @@ class MenuBar extends Widget {
     // Fetch common variables.
     let menus = this._menus;
     let nodes = this._nodes;
-    let renderer = this._renderer;
+    let renderer = this._renderer!;
 
     // Update the state of the item nodes.
     for (let i = 0, n = menus.length; i < n; ++i) {
@@ -556,7 +558,7 @@ class MenuBar extends Widget {
     // The following code activates an item by mnemonic.
 
     // Get the pressed key character for the current layout.
-    let key = this._keymap.layout.keyForKeydownEvent(event);
+    let key = this._keymap!.layout.keyForKeydownEvent(event);
 
     // Bail if the key is not valid for the current layout.
     if (!key) {
@@ -623,7 +625,7 @@ class MenuBar extends Widget {
     // when the document listener is installed for an active menu bar.
     let x = event.clientX;
     let y = event.clientY;
-    if (!hitTest(this.node, x, y)) {
+    if (!hitTest(this.node!, x, y)) {
       return;
     }
 

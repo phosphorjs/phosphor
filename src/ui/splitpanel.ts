@@ -234,14 +234,14 @@ class SplitPanel extends Panel {
    * A message handler invoked on an `'after-attach'` message.
    */
   protected onAfterAttach(msg: Message): void {
-    this.node.addEventListener('mousedown', this);
+    this.node!.addEventListener('mousedown', this);
   }
 
   /**
    * A message handler invoked on a `'before-detach'` message.
    */
   protected onBeforeDetach(msg: Message): void {
-    this.node.removeEventListener('mousedown', this);
+    this.node!.removeEventListener('mousedown', this);
     this._releaseMouse();
   }
 
@@ -329,7 +329,7 @@ class SplitPanel extends Panel {
     // Compute the desired offset position for the handle.
     let pos: number;
     let layout = this.layout as SplitLayout;
-    let rect = this.node.getBoundingClientRect();
+    let rect = this.node!.getBoundingClientRect();
     let pressData = this._pressData!;
     if (layout.orientation === 'horizontal') {
       pos = event.clientX - rect.left - pressData.delta;
@@ -692,14 +692,15 @@ class SplitLayout extends PanelLayout {
     Widget.prepareGeometry(widget);
 
     // Add the widget and handle nodes to the parent.
-    this.parent.node.appendChild(widget.node);
-    this.parent.node.appendChild(handle);
+    let node = this.parent!.node!;
+    node.appendChild(widget.node!);
+    node.appendChild(handle);
 
     // Send an `'after-attach'` message if the parent is attached.
-    if (this.parent.isAttached) sendMessage(widget, WidgetMessage.AfterAttach);
+    if (this.parent!.isAttached) sendMessage(widget, WidgetMessage.AfterAttach);
 
     // Post a layout request for the parent widget.
-    this.parent.fit();
+    this.parent!.fit();
   }
 
   /**
@@ -720,7 +721,7 @@ class SplitLayout extends PanelLayout {
     move(this._handles, fromIndex, toIndex);
 
     // Post a fit request to the parent to show/hide last handle.
-    this.parent.fit();
+    this.parent!.fit();
   }
 
   /**
@@ -741,17 +742,18 @@ class SplitLayout extends PanelLayout {
     this._sizers.removeAt(index);
 
     // Send a `'before-detach'` message if the parent is attached.
-    if (this.parent.isAttached) sendMessage(widget, WidgetMessage.BeforeDetach);
+    if (this.parent!.isAttached) sendMessage(widget, WidgetMessage.BeforeDetach);
 
     // Remove the widget and handle nodes from the parent.
-    this.parent.node.removeChild(widget.node);
-    this.parent.node.removeChild(handle);
+    let node = this.parent!.node!;
+    node.removeChild(widget.node!);
+    node.removeChild(handle);
 
     // Reset the layout geometry for the widget.
     Widget.resetGeometry(widget);
 
     // Post a layout request for the parent widget.
-    this.parent.fit();
+    this.parent!.fit();
   }
 
   /**
@@ -761,7 +763,7 @@ class SplitLayout extends PanelLayout {
    * This is called when the layout is installed on its parent.
    */
   protected onLayoutChanged(msg: Message): void {
-    Private.toggleOrientation(this.parent, this.orientation);
+    Private.toggleOrientation(this.parent!, this.orientation);
     super.onLayoutChanged(msg);
   }
 
@@ -770,7 +772,7 @@ class SplitLayout extends PanelLayout {
    */
   protected onAfterShow(msg: Message): void {
     super.onAfterShow(msg);
-    this.parent.update();
+    this.parent!.update();
   }
 
   /**
@@ -778,7 +780,7 @@ class SplitLayout extends PanelLayout {
    */
   protected onAfterAttach(msg: Message): void {
     super.onAfterAttach(msg);
-    this.parent.fit();
+    this.parent!.fit();
   }
 
   /**
@@ -786,9 +788,9 @@ class SplitLayout extends PanelLayout {
    */
   protected onChildShown(msg: ChildMessage): void {
     if (IS_IE) { // prevent flicker on IE
-      sendMessage(this.parent, WidgetMessage.FitRequest);
+      sendMessage(this.parent!, WidgetMessage.FitRequest);
     } else {
-      this.parent.fit();
+      this.parent!.fit();
     }
   }
 
@@ -797,9 +799,9 @@ class SplitLayout extends PanelLayout {
    */
   protected onChildHidden(msg: ChildMessage): void {
     if (IS_IE) { // prevent flicker on IE
-      sendMessage(this.parent, WidgetMessage.FitRequest);
+      sendMessage(this.parent!, WidgetMessage.FitRequest);
     } else {
-      this.parent.fit();
+      this.parent!.fit();
     }
   }
 
@@ -807,7 +809,7 @@ class SplitLayout extends PanelLayout {
    * A message handler invoked on a `'resize'` message.
    */
   protected onResize(msg: ResizeMessage): void {
-    if (this.parent.isVisible) {
+    if (this.parent!.isVisible) {
       this._update(msg.width, msg.height);
     }
   }
@@ -816,7 +818,7 @@ class SplitLayout extends PanelLayout {
    * A message handler invoked on an `'update-request'` message.
    */
   protected onUpdateRequest(msg: Message): void {
-    if (this.parent.isVisible) {
+    if (this.parent!.isVisible) {
       this._update(-1, -1);
     }
   }
@@ -825,7 +827,7 @@ class SplitLayout extends PanelLayout {
    * A message handler invoked on a `'fit-request'` message.
    */
   protected onFitRequest(msg: Message): void {
-    if (this.parent.isAttached) {
+    if (this.parent!.isAttached) {
       this._fit();
     }
   }
@@ -881,7 +883,7 @@ class SplitLayout extends PanelLayout {
         sizer.maxSize = 0;
         continue;
       }
-      let limits = sizeLimits(widget.node);
+      let limits = sizeLimits(widget.node!);
       sizer.stretch = SplitLayout.getStretch(widget);
       if (horz) {
         sizer.minSize = limits.minWidth;
@@ -901,14 +903,14 @@ class SplitLayout extends PanelLayout {
     }
 
     // Update the box sizing and add it to the size constraints.
-    let box = this._box = boxSizing(this.parent.node);
+    let box = this._box = boxSizing(this.parent!.node!);
     minW += box.horizontalSum;
     minH += box.verticalSum;
     maxW += box.horizontalSum;
     maxH += box.verticalSum;
 
     // Update the parent's size constraints.
-    let style = this.parent.node.style;
+    let style = this.parent!.node!.style;
     style.minWidth = `${minW}px`;
     style.minHeight = `${minH}px`;
     style.maxWidth = maxW === Infinity ? 'none' : `${maxW}px`;
@@ -919,12 +921,12 @@ class SplitLayout extends PanelLayout {
 
     // Notify the ancestor that it should fit immediately. This may
     // cause a resize of the parent, fulfilling the required update.
-    let ancestor = this.parent.parent;
+    let ancestor = this.parent!.parent;
     if (ancestor) sendMessage(ancestor, WidgetMessage.FitRequest);
 
     // If the dirty flag is still set, the parent was not resized.
     // Trigger the required update on the parent widget immediately.
-    if (this._dirty) sendMessage(this.parent, WidgetMessage.UpdateRequest);
+    if (this._dirty) sendMessage(this.parent!, WidgetMessage.UpdateRequest);
   }
 
   /**
@@ -943,15 +945,16 @@ class SplitLayout extends PanelLayout {
     }
 
     // Measure the parent if the offset dimensions are unknown.
+    let node = this.parent!.node!;
     if (offsetWidth < 0) {
-      offsetWidth = this.parent.node.offsetWidth;
+      offsetWidth = node.offsetWidth;
     }
     if (offsetHeight < 0) {
-      offsetHeight = this.parent.node.offsetHeight;
+      offsetHeight = node.offsetHeight;
     }
 
     // Ensure the parent box sizing data is computed.
-    let box = this._box || (this._box = boxSizing(this.parent.node));
+    let box = this._box || (this._box = boxSizing(node));
 
     // Compute the actual layout bounds adjusted for border and padding.
     let top = box.paddingTop;

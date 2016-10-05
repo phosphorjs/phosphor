@@ -307,13 +307,13 @@ class BoxLayout extends PanelLayout {
     Widget.prepareGeometry(widget);
 
     // Add the widget's node to the parent.
-    this.parent.node.appendChild(widget.node);
+    this.parent!.node!.appendChild(widget.node!);
 
     // Send an `'after-attach'` message if the parent is attached.
-    if (this.parent.isAttached) sendMessage(widget, WidgetMessage.AfterAttach);
+    if (this.parent!.isAttached) sendMessage(widget, WidgetMessage.AfterAttach);
 
     // Post a layout request for the parent widget.
-    this.parent.fit();
+    this.parent!.fit();
   }
 
   /**
@@ -333,7 +333,7 @@ class BoxLayout extends PanelLayout {
     move(this._sizers, fromIndex, toIndex);
 
     // Post an update request for the parent widget.
-    this.parent.update();
+    this.parent!.update();
   }
 
   /**
@@ -351,16 +351,16 @@ class BoxLayout extends PanelLayout {
     this._sizers.removeAt(index);
 
     // Send a `'before-detach'` message if the parent is attached.
-    if (this.parent.isAttached) sendMessage(widget, WidgetMessage.BeforeDetach);
+    if (this.parent!.isAttached) sendMessage(widget, WidgetMessage.BeforeDetach);
 
     // Remove the widget's node from the parent.
-    this.parent.node.removeChild(widget.node);
+    this.parent!.node!.removeChild(widget.node!);
 
     // Reset the layout geometry for the widget.
     Widget.resetGeometry(widget);
 
     // Post a layout request for the parent widget.
-    this.parent.fit();
+    this.parent!.fit();
   }
 
   /**
@@ -370,7 +370,7 @@ class BoxLayout extends PanelLayout {
    * This is called when the layout is installed on its parent.
    */
   protected onLayoutChanged(msg: Message): void {
-    Private.toggleDirection(this.parent, this.direction);
+    Private.toggleDirection(this.parent!, this.direction);
     super.onLayoutChanged(msg);
   }
 
@@ -379,7 +379,7 @@ class BoxLayout extends PanelLayout {
    */
   protected onAfterShow(msg: Message): void {
     super.onAfterShow(msg);
-    this.parent.update();
+    this.parent!.update();
   }
 
   /**
@@ -387,7 +387,7 @@ class BoxLayout extends PanelLayout {
    */
   protected onAfterAttach(msg: Message): void {
     super.onAfterAttach(msg);
-    this.parent.fit();
+    this.parent!.fit();
   }
 
   /**
@@ -395,9 +395,9 @@ class BoxLayout extends PanelLayout {
    */
   protected onChildShown(msg: ChildMessage): void {
     if (IS_IE) { // prevent flicker on IE
-      sendMessage(this.parent, WidgetMessage.FitRequest);
+      sendMessage(this.parent!, WidgetMessage.FitRequest);
     } else {
-      this.parent.fit();
+      this.parent!.fit();
     }
   }
 
@@ -406,9 +406,9 @@ class BoxLayout extends PanelLayout {
    */
   protected onChildHidden(msg: ChildMessage): void {
     if (IS_IE) { // prevent flicker on IE
-      sendMessage(this.parent, WidgetMessage.FitRequest);
+      sendMessage(this.parent!, WidgetMessage.FitRequest);
     } else {
-      this.parent.fit();
+      this.parent!.fit();
     }
   }
 
@@ -416,7 +416,7 @@ class BoxLayout extends PanelLayout {
    * A message handler invoked on a `'resize'` message.
    */
   protected onResize(msg: ResizeMessage): void {
-    if (this.parent.isVisible) {
+    if (this.parent!.isVisible) {
       this._update(msg.width, msg.height);
     }
   }
@@ -425,7 +425,7 @@ class BoxLayout extends PanelLayout {
    * A message handler invoked on an `'update-request'` message.
    */
   protected onUpdateRequest(msg: Message): void {
-    if (this.parent.isVisible) {
+    if (this.parent!.isVisible) {
       this._update(-1, -1);
     }
   }
@@ -434,7 +434,7 @@ class BoxLayout extends PanelLayout {
    * A message handler invoked on a `'fit-request'` message.
    */
   protected onFitRequest(msg: Message): void {
-    if (this.parent.isAttached) {
+    if (this.parent!.isAttached) {
       this._fit();
     }
   }
@@ -476,7 +476,7 @@ class BoxLayout extends PanelLayout {
         sizer.maxSize = 0;
         continue;
       }
-      let limits = sizeLimits(widget.node);
+      let limits = sizeLimits(widget.node!);
       sizer.sizeHint = BoxLayout.getSizeBasis(widget);
       sizer.stretch = BoxLayout.getStretch(widget);
       if (horz) {
@@ -497,14 +497,14 @@ class BoxLayout extends PanelLayout {
     }
 
     // Update the box sizing and add it to the size constraints.
-    let box = this._box = boxSizing(this.parent.node);
+    let box = this._box = boxSizing(this.parent!.node!);
     minW += box.horizontalSum;
     minH += box.verticalSum;
     maxW += box.horizontalSum;
     maxH += box.verticalSum;
 
     // Update the parent's size constraints.
-    let style = this.parent.node.style;
+    let style = this.parent!.node!.style;
     style.minWidth = `${minW}px`;
     style.minHeight = `${minH}px`;
     style.maxWidth = maxW === Infinity ? 'none' : `${maxW}px`;
@@ -515,12 +515,12 @@ class BoxLayout extends PanelLayout {
 
     // Notify the ancestor that it should fit immediately. This may
     // cause a resize of the parent, fulfilling the required update.
-    let ancestor = this.parent.parent;
+    let ancestor = this.parent!.parent;
     if (ancestor) sendMessage(ancestor, WidgetMessage.FitRequest);
 
     // If the dirty flag is still set, the parent was not resized.
     // Trigger the required update on the parent widget immediately.
-    if (this._dirty) sendMessage(this.parent, WidgetMessage.UpdateRequest);
+    if (this._dirty) sendMessage(this.parent!, WidgetMessage.UpdateRequest);
   }
 
   /**
@@ -540,14 +540,14 @@ class BoxLayout extends PanelLayout {
 
     // Measure the parent if the offset dimensions are unknown.
     if (offsetWidth < 0) {
-      offsetWidth = this.parent.node.offsetWidth;
+      offsetWidth = this.parent!.node!.offsetWidth;
     }
     if (offsetHeight < 0) {
-      offsetHeight = this.parent.node.offsetHeight;
+      offsetHeight = this.parent!.node!.offsetHeight;
     }
 
     // Ensure the parent box sizing data is computed.
-    let box = this._box || (this._box = boxSizing(this.parent.node));
+    let box = this._box || (this._box = boxSizing(this.parent!.node!));
 
     // Compute the layout area adjusted for border and padding.
     let top = box.paddingTop;
@@ -760,6 +760,6 @@ namespace Private {
   function onChildPropertyChanged(child: Widget): void {
     let parent = child.parent;
     let layout = parent && parent.layout;
-    if (layout instanceof BoxLayout) parent.fit();
+    if (layout instanceof BoxLayout) parent!.fit();
   }
 }
