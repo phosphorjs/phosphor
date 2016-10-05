@@ -162,9 +162,10 @@ class Menu extends Widget {
     this.close();
     this._items.clear();
     this._nodes.clear();
-    this._keymap = null;
-    this._commands = null;
-    this._renderer = null;
+    // Do not type check these on disposed objects:
+    this._keymap = null!;
+    this._commands = null!;
+    this._renderer = null!;
     super.dispose();
   }
 
@@ -257,7 +258,7 @@ class Menu extends Widget {
    * This is a read-only property.
    */
   get contentNode(): HTMLUListElement {
-    return this.node!.getElementsByClassName(CONTENT_CLASS)[0] as HTMLUListElement;
+    return this.node.getElementsByClassName(CONTENT_CLASS)[0] as HTMLUListElement;
   }
 
   /**
@@ -266,7 +267,7 @@ class Menu extends Widget {
    * #### Notes
    * This is a read-only property.
    */
-  get commands(): CommandRegistry | null {
+  get commands(): CommandRegistry {
     return this._commands;
   }
 
@@ -276,7 +277,7 @@ class Menu extends Widget {
    * #### Notes
    * This is a read-only property.
    */
-  get keymap(): Keymap | null {
+  get keymap(): Keymap {
     return this._keymap;
   }
 
@@ -286,7 +287,7 @@ class Menu extends Widget {
    * #### Notes
    * This is a read-only property.
    */
-  get renderer(): Menu.IRenderer | null {
+  get renderer(): Menu.IRenderer {
     return this._renderer;
   }
 
@@ -454,8 +455,8 @@ class Menu extends Widget {
 
     // Execute the command for the item.
     let { command, args } = item;
-    if (this._commands!.isEnabled(command, args)) {
-      this._commands!.execute(command, args);
+    if (this._commands.isEnabled(command, args)) {
+      this._commands.execute(command, args);
     } else {
       // TODO - is this the right logging here?
       console.log(`Command '${command}' is disabled.`);
@@ -498,10 +499,10 @@ class Menu extends Widget {
     let i = Math.max(0, Math.min(Math.floor(index), this._items.length));
 
     // Create the item for the options.
-    let item = Private.createItem(this._commands!, this._keymap!, options);
+    let item = Private.createItem(this._commands, this._keymap, options);
 
     // Create the node for the item. It will be initialized on open.
-    let node = this._renderer!.createItemNode();
+    let node = this._renderer.createItemNode();
 
     // Insert the item and node into the vectors.
     this._items.insert(i, item);
@@ -659,13 +660,12 @@ class Menu extends Widget {
    * A message handler invoked on an `'after-attach'` message.
    */
   protected onAfterAttach(msg: Message): void {
-    let node = this.node!;
-    node.addEventListener('keydown', this);
-    node.addEventListener('mouseup', this);
-    node.addEventListener('mousemove', this);
-    node.addEventListener('mouseenter', this);
-    node.addEventListener('mouseleave', this);
-    node.addEventListener('contextmenu', this);
+    this.node.addEventListener('keydown', this);
+    this.node.addEventListener('mouseup', this);
+    this.node.addEventListener('mousemove', this);
+    this.node.addEventListener('mouseenter', this);
+    this.node.addEventListener('mouseleave', this);
+    this.node.addEventListener('contextmenu', this);
     document.addEventListener('mousedown', this, true);
   }
 
@@ -673,13 +673,12 @@ class Menu extends Widget {
    * A message handler invoked on a `'before-detach'` message.
    */
   protected onBeforeDetach(msg: Message): void {
-    let node = this.node!;
-    node.removeEventListener('keydown', this);
-    node.removeEventListener('mouseup', this);
-    node.removeEventListener('mousemove', this);
-    node.removeEventListener('mouseenter', this);
-    node.removeEventListener('mouseleave', this);
-    node.removeEventListener('contextmenu', this);
+    this.node.removeEventListener('keydown', this);
+    this.node.removeEventListener('mouseup', this);
+    this.node.removeEventListener('mousemove', this);
+    this.node.removeEventListener('mouseenter', this);
+    this.node.removeEventListener('mouseleave', this);
+    this.node.removeEventListener('contextmenu', this);
     document.removeEventListener('mousedown', this, true);
   }
 
@@ -687,14 +686,14 @@ class Menu extends Widget {
    * A message handler invoked on an `'activate-request'` message.
    */
   protected onActivateRequest(msg: Message): void {
-    if (this.isAttached) this.node!.focus();
+    if (this.isAttached) this.node.focus();
   }
 
   /**
    * A message handler invoked on a `'deactivate-request'` message.
    */
   protected onDeactivateRequest(msg: Message): void {
-    if (this.isAttached) this.node!.blur();
+    if (this.isAttached) this.node.blur();
   }
 
   /**
@@ -710,7 +709,7 @@ class Menu extends Widget {
     // Fetch common variables.
     let items = this._items;
     let nodes = this._nodes;
-    let renderer = this._renderer!;
+    let renderer = this._renderer;
 
     // Update the state of the item nodes.
     for (let i = 0, n = items.length; i < n; ++i) {
@@ -828,7 +827,7 @@ class Menu extends Widget {
     // The following code activates an item by mnemonic.
 
     // Get the pressed key character for the current layout.
-    let key = this._keymap!.layout.keyForKeydownEvent(event);
+    let key = this._keymap.layout!.keyForKeydownEvent(event);
 
     // Bail if the key is not valid for the current layout.
     if (!key) {
@@ -984,7 +983,7 @@ class Menu extends Widget {
     }
 
     // If the mouse is over the child menu, cancel the close timer.
-    if (hitTest(this._childMenu.node!, event.clientX, event.clientY)) {
+    if (hitTest(this._childMenu.node, event.clientX, event.clientY)) {
       this._cancelCloseTimer();
       return;
     }
@@ -1116,15 +1115,15 @@ class Menu extends Widget {
     }
   }
 
-  private _keymap: Keymap | null;
+  private _keymap: Keymap;
   private _childIndex = -1;
   private _openTimerID = 0;
   private _closeTimerID = 0;
   private _activeIndex = -1;
   private _childMenu: Menu | null = null;
   private _parentMenu: Menu | null = null;
-  private _renderer: Menu.IRenderer | null;
-  private _commands: CommandRegistry | null;
+  private _renderer: Menu.IRenderer;
+  private _commands: CommandRegistry;
   private _items = new Vector<Menu.IItem>();
   private _nodes = new Vector<HTMLLIElement>();
 }
@@ -1200,7 +1199,7 @@ namespace Menu {
      *
      * The default value is `null`.
      */
-    menu?: Menu | null;
+    menu?: Menu;
   }
 
   /**
@@ -1513,7 +1512,7 @@ namespace Private {
   export
   function hitTestMenus(menu: Menu | null, x: number, y: number): boolean {
     for (; menu; menu = menu.childMenu) {
-      if (hitTest(menu.node!, x, y)) return true;
+      if (hitTest(menu.node, x, y)) return true;
     }
     return false;
   }
@@ -1585,7 +1584,7 @@ namespace Private {
     let maxHeight = ch - (forceY ? y : 0);
 
     // Fetch common variables.
-    let node = menu.node!;
+    let node = menu.node;
     let style = node.style;
 
     // Clear the menu geometry and prepare it for measuring.
@@ -1647,7 +1646,7 @@ namespace Private {
     let maxHeight = ch;
 
     // Fetch common variables.
-    let node = menu.node!;
+    let node = menu.node;
     let style = node.style;
 
     // Clear the menu geometry and prepare it for measuring.
@@ -1670,7 +1669,7 @@ namespace Private {
     let { width, height } = node.getBoundingClientRect();
 
     // Compute the box sizing for the menu.
-    let box = boxSizing(node);
+    let box = boxSizing(menu.node);
 
     // Get the bounding rect for the target item node.
     let itemRect = itemNode.getBoundingClientRect();

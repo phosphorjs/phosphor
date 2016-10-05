@@ -139,7 +139,7 @@ class DockPanel extends Widget {
     this._tracker.currentChanged.connect(this._onCurrentChanged, this);
 
     // Add the overlay node to the panel.
-    this.node!.appendChild(this._overlay.node);
+    this.node.appendChild(this._overlay.node);
   }
 
   /**
@@ -314,7 +314,7 @@ class DockPanel extends Widget {
    */
   findDropTarget(clientX: number, clientY: number): DockPanel.IDropTarget {
     // If the position is not over the dock panel, bail.
-    if (!hitTest(this.node!, clientX, clientY)) {
+    if (!hitTest(this.node, clientX, clientY)) {
       return { zone: 'invalid', panel: null };
     }
 
@@ -324,19 +324,19 @@ class DockPanel extends Widget {
     }
 
     // Test for a root zone first.
-    let zone = Private.getRootZone(this.node!, clientX, clientY);
+    let zone = Private.getRootZone(this.node, clientX, clientY);
     if (zone !== 'invalid') {
       return { zone, panel: null };
     }
 
     // Find the panel at the client position.
     let panel = find(this._tabPanels, panel => {
-      return hitTest(panel.node!, clientX, clientY);
+      return hitTest(panel.node, clientX, clientY);
     }) || null;
 
     // Compute the zone for the hit panel, if any.
     if (panel) {
-      zone = Private.getPanelZone(panel.node!, clientX, clientY);
+      zone = Private.getPanelZone(panel.node, clientX, clientY);
     } else {
       zone = 'invalid';
     }
@@ -375,8 +375,8 @@ class DockPanel extends Widget {
     let right: number;
     let bottom: number;
     let cr: ClientRect;
-    let box = boxSizing(this.node!); // TODO cache this?
-    let rect = this.node!.getBoundingClientRect();
+    let box = boxSizing(this.node); // TODO cache this?
+    let rect = this.node.getBoundingClientRect();
 
     // Compute the overlay geometry based on the dock zone.
     switch (target.zone) {
@@ -411,35 +411,35 @@ class DockPanel extends Widget {
       bottom = box.paddingBottom;
       break;
     case 'panel-top':
-      cr = target.panel!.node!.getBoundingClientRect();
+      cr = target.panel!.node.getBoundingClientRect();
       top = cr.top - rect.top - box.borderTop;
       left = cr.left - rect.left - box.borderLeft;
       right = rect.right - cr.right - box.borderRight;
       bottom = rect.bottom - cr.bottom + cr.height / 2 - box.borderBottom;
       break;
     case 'panel-left':
-      cr = target.panel!.node!.getBoundingClientRect();
+      cr = target.panel!.node.getBoundingClientRect();
       top = cr.top - rect.top - box.borderTop;
       left = cr.left - rect.left - box.borderLeft;
       right = rect.right - cr.right + cr.width / 2 - box.borderRight;
       bottom = rect.bottom - cr.bottom - box.borderBottom;
       break;
     case 'panel-right':
-      cr = target.panel!.node!.getBoundingClientRect();
+      cr = target.panel!.node.getBoundingClientRect();
       top = cr.top - rect.top - box.borderTop;
       left = cr.left - rect.left + cr.width / 2 - box.borderLeft;
       right = rect.right - cr.right - box.borderRight;
       bottom = rect.bottom - cr.bottom - box.borderBottom;
       break;
     case 'panel-bottom':
-      cr = target.panel!.node!.getBoundingClientRect();
+      cr = target.panel!.node.getBoundingClientRect();
       top = cr.top - rect.top + cr.height / 2 - box.borderTop;
       left = cr.left - rect.left - box.borderLeft;
       right = rect.right - cr.right - box.borderRight;
       bottom = rect.bottom - cr.bottom - box.borderBottom;
       break;
     case 'panel-center':
-      cr = target.panel!.node!.getBoundingClientRect();
+      cr = target.panel!.node.getBoundingClientRect();
       top = cr.top - rect.top - box.borderTop;
       left = cr.left - rect.left - box.borderLeft;
       right = rect.right - cr.right - box.borderRight;
@@ -497,7 +497,7 @@ class DockPanel extends Widget {
    * A message handler invoked on an `'after-attach'` message.
    */
   protected onAfterAttach(msg: Message): void {
-    let node = this.node!;
+    let node = this.node;
     node.addEventListener('p-dragenter', this);
     node.addEventListener('p-dragleave', this);
     node.addEventListener('p-dragover', this);
@@ -508,7 +508,7 @@ class DockPanel extends Widget {
    * A message handler invoked on a `'before-detach'` message.
    */
   protected onBeforeDetach(msg: Message): void {
-    let node = this.node!;
+    let node = this.node;
     node.removeEventListener('p-dragenter', this);
     node.removeEventListener('p-dragleave', this);
     node.removeEventListener('p-dragover', this);
@@ -521,7 +521,7 @@ class DockPanel extends Widget {
   private _evtDragEnter(event: IDragEvent): void {
     // If the factory mime type is present, mark the event as
     // handled in order to get the rest of the drag events.
-    if (event.mimeData!.hasData(FACTORY_MIME)) {
+    if (event.mimeData.hasData(FACTORY_MIME)) {
       event.preventDefault();
       event.stopPropagation();
     }
@@ -539,7 +539,7 @@ class DockPanel extends Widget {
     let related = event.relatedTarget as HTMLElement;
 
     // Hide the overlay if the drag is leaving the dock panel.
-    if (!related || !this.node!.contains(related)) {
+    if (!related || !this.node.contains(related)) {
       this._overlay.hide(0);
     }
   }
@@ -588,7 +588,7 @@ class DockPanel extends Widget {
     }
 
     // Bail if the factory mime type has invalid data.
-    let factory = event.mimeData!.getData(FACTORY_MIME);
+    let factory = event.mimeData.getData(FACTORY_MIME);
     if (typeof factory !== 'function') {
       event.dropAction = 'none';
       return;
@@ -789,8 +789,8 @@ class DockPanel extends Widget {
   private _createTabPanel(): TabPanel {
     let panel = new TabPanel({ tabsMovable: true });
     panel.addClass(TAB_PANEL_CLASS);
-    panel.tabBar!.tabDetachRequested.connect(this._onTabDetachRequested, this);
-    panel.stackedPanel!.widgetRemoved.connect(this._onWidgetRemoved, this);
+    panel.tabBar.tabDetachRequested.connect(this._onTabDetachRequested, this);
+    panel.stackedPanel.widgetRemoved.connect(this._onWidgetRemoved, this);
     this._tabPanels.pushBack(panel);
     return panel;
   }

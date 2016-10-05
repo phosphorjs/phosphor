@@ -55,7 +55,7 @@ interface IDragEvent extends MouseEvent {
    * This property should be considered read-only, but for performance
    * reasons this is not enforced.
    */
-  mimeData: MimeData | null;
+  mimeData: MimeData;
 
   /**
    * The drop action supported or taken by the drop target.
@@ -207,7 +207,7 @@ class Drag implements IDisposable {
    * #### Notes
    * This is a read-only property.
    */
-  get mimeData(): MimeData | null {
+  get mimeData(): MimeData {
     return this._mimeData;
   }
 
@@ -566,7 +566,7 @@ class Drag implements IDisposable {
     // Clear the internal drag state.
     this._disposed = true;
     this._source = null;
-    this._mimeData = null;
+    this._mimeData = null!; // Do not null type check
     this._dragImage = null;
     this._dropAction = 'none';
     this._proposedAction = 'none';
@@ -583,7 +583,7 @@ class Drag implements IDisposable {
 
   private _disposed = false;
   private _source: any = null;
-  private _mimeData: MimeData | null = null;
+  private _mimeData: MimeData;
   private _dragImage: HTMLElement | null = null;
   private _dropAction: DropAction = 'none';
   private _proposedAction: DropAction = 'copy';
@@ -910,7 +910,7 @@ namespace Private {
 
     // Add the custom drag event data.
     dragEvent.dropAction = 'none';
-    dragEvent.mimeData = drag.mimeData;
+    dragEvent.mimeData = drag.mimeData!;
     dragEvent.proposedAction = drag.proposedAction;
     dragEvent.supportedActions = drag.supportedActions;
     dragEvent.source = drag.source;

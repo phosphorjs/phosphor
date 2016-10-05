@@ -234,14 +234,14 @@ class SplitPanel extends Panel {
    * A message handler invoked on an `'after-attach'` message.
    */
   protected onAfterAttach(msg: Message): void {
-    this.node!.addEventListener('mousedown', this);
+    this.node.addEventListener('mousedown', this);
   }
 
   /**
    * A message handler invoked on a `'before-detach'` message.
    */
   protected onBeforeDetach(msg: Message): void {
-    this.node!.removeEventListener('mousedown', this);
+    this.node.removeEventListener('mousedown', this);
     this._releaseMouse();
   }
 
@@ -329,7 +329,7 @@ class SplitPanel extends Panel {
     // Compute the desired offset position for the handle.
     let pos: number;
     let layout = this.layout as SplitLayout;
-    let rect = this.node!.getBoundingClientRect();
+    let rect = this.node.getBoundingClientRect();
     let pressData = this._pressData!;
     if (layout.orientation === 'horizontal') {
       pos = event.clientX - rect.left - pressData.delta;
@@ -692,15 +692,15 @@ class SplitLayout extends PanelLayout {
     Widget.prepareGeometry(widget);
 
     // Add the widget and handle nodes to the parent.
-    let node = this.parent!.node!;
-    node.appendChild(widget.node!);
-    node.appendChild(handle);
+    let parent = this.parent!;
+    parent.node.appendChild(widget.node);
+    parent.node.appendChild(handle);
 
     // Send an `'after-attach'` message if the parent is attached.
-    if (this.parent!.isAttached) sendMessage(widget, WidgetMessage.AfterAttach);
+    if (parent.isAttached) sendMessage(widget, WidgetMessage.AfterAttach);
 
     // Post a layout request for the parent widget.
-    this.parent!.fit();
+    parent.fit();
   }
 
   /**
@@ -742,18 +742,18 @@ class SplitLayout extends PanelLayout {
     this._sizers.removeAt(index);
 
     // Send a `'before-detach'` message if the parent is attached.
-    if (this.parent!.isAttached) sendMessage(widget, WidgetMessage.BeforeDetach);
+    let parent = this.parent!;
+    if (parent.isAttached) sendMessage(widget, WidgetMessage.BeforeDetach);
 
     // Remove the widget and handle nodes from the parent.
-    let node = this.parent!.node!;
-    node.removeChild(widget.node!);
-    node.removeChild(handle);
+    parent.node.removeChild(widget.node);
+    parent.node.removeChild(handle);
 
     // Reset the layout geometry for the widget.
     Widget.resetGeometry(widget);
 
     // Post a layout request for the parent widget.
-    this.parent!.fit();
+    parent.fit();
   }
 
   /**
@@ -883,7 +883,7 @@ class SplitLayout extends PanelLayout {
         sizer.maxSize = 0;
         continue;
       }
-      let limits = sizeLimits(widget.node!);
+      let limits = sizeLimits(widget.node);
       sizer.stretch = SplitLayout.getStretch(widget);
       if (horz) {
         sizer.minSize = limits.minWidth;
@@ -903,14 +903,14 @@ class SplitLayout extends PanelLayout {
     }
 
     // Update the box sizing and add it to the size constraints.
-    let box = this._box = boxSizing(this.parent!.node!);
+    let box = this._box = boxSizing(this.parent!.node);
     minW += box.horizontalSum;
     minH += box.verticalSum;
     maxW += box.horizontalSum;
     maxH += box.verticalSum;
 
     // Update the parent's size constraints.
-    let style = this.parent!.node!.style;
+    let style = this.parent!.node.style;
     style.minWidth = `${minW}px`;
     style.minHeight = `${minH}px`;
     style.maxWidth = maxW === Infinity ? 'none' : `${maxW}px`;
@@ -945,16 +945,15 @@ class SplitLayout extends PanelLayout {
     }
 
     // Measure the parent if the offset dimensions are unknown.
-    let node = this.parent!.node!;
     if (offsetWidth < 0) {
-      offsetWidth = node.offsetWidth;
+      offsetWidth = this.parent!.node.offsetWidth;
     }
     if (offsetHeight < 0) {
-      offsetHeight = node.offsetHeight;
+      offsetHeight = this.parent!.node.offsetHeight;
     }
 
     // Ensure the parent box sizing data is computed.
-    let box = this._box || (this._box = boxSizing(node));
+    let box = this._box || (this._box = boxSizing(this.parent!.node));
 
     // Compute the actual layout bounds adjusted for border and padding.
     let top = box.paddingTop;

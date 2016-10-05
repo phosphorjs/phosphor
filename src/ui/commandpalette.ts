@@ -137,9 +137,10 @@ class CommandPalette extends Widget {
     this._itemNodes.clear();
     this._headerNodes.clear();
     this._result = null;
-    this._keymap = null;
-    this._commands = null;
-    this._renderer = null;
+    // Do not use null type checking for these:
+    this._keymap = null!;
+    this._commands = null!;
+    this._renderer = null!;
     super.dispose();
   }
 
@@ -152,7 +153,7 @@ class CommandPalette extends Widget {
    * This is a read-only property.
    */
   get searchNode(): HTMLDivElement {
-    return this.node!.getElementsByClassName(SEARCH_CLASS)[0] as HTMLDivElement;
+    return this.node.getElementsByClassName(SEARCH_CLASS)[0] as HTMLDivElement;
   }
 
   /**
@@ -162,7 +163,7 @@ class CommandPalette extends Widget {
    * This is a read-only property.
    */
   get inputNode(): HTMLInputElement {
-    return this.node!.getElementsByClassName(INPUT_CLASS)[0] as HTMLInputElement;
+    return this.node.getElementsByClassName(INPUT_CLASS)[0] as HTMLInputElement;
   }
 
   /**
@@ -176,7 +177,7 @@ class CommandPalette extends Widget {
    * This is a read-only property.
    */
   get contentNode(): HTMLUListElement {
-    return this.node!.getElementsByClassName(CONTENT_CLASS)[0] as HTMLUListElement;
+    return this.node.getElementsByClassName(CONTENT_CLASS)[0] as HTMLUListElement;
   }
 
   /**
@@ -195,7 +196,7 @@ class CommandPalette extends Widget {
    * #### Notes
    * This is a read-only property.
    */
-  get commands(): CommandRegistry | null {
+  get commands(): CommandRegistry {
     return this._commands;
   }
 
@@ -205,7 +206,7 @@ class CommandPalette extends Widget {
    * #### Notes
    * This is a read-only property.
    */
-  get keymap(): Keymap | null {
+  get keymap(): Keymap {
     return this._keymap;
   }
 
@@ -215,7 +216,7 @@ class CommandPalette extends Widget {
    * #### Notes
    * This is a read-only property.
    */
-  get renderer(): CommandPalette.IRenderer | null {
+  get renderer(): CommandPalette.IRenderer {
     return this._renderer;
   }
 
@@ -228,7 +229,7 @@ class CommandPalette extends Widget {
    */
   addItem(options: CommandPalette.IItemOptions): CommandPalette.IItem {
     // Create a new command item for the options.
-    let item = Private.createItem(this._commands!, this._keymap!, options);
+    let item = Private.createItem(this._commands, this._keymap, options);
 
     // Add the item to the vector.
     this._items.pushBack(item);
@@ -318,10 +319,9 @@ class CommandPalette extends Widget {
    * A message handler invoked on a `'after-attach'` message.
    */
   protected onAfterAttach(msg: Message): void {
-    let node = this.node!;
-    node.addEventListener('click', this);
-    node.addEventListener('keydown', this);
-    node.addEventListener('input', this);
+    this.node.addEventListener('click', this);
+    this.node.addEventListener('keydown', this);
+    this.node.addEventListener('input', this);
     this.update();
   }
 
@@ -329,10 +329,9 @@ class CommandPalette extends Widget {
    * A message handler invoked on a `'before-detach'` message.
    */
   protected onBeforeDetach(msg: Message): void {
-    let node = this.node!;
-    node.removeEventListener('click', this);
-    node.removeEventListener('keydown', this);
-    node.removeEventListener('input', this);
+    this.node.removeEventListener('click', this);
+    this.node.removeEventListener('keydown', this);
+    this.node.removeEventListener('input', this);
   }
 
   /**
@@ -385,7 +384,7 @@ class CommandPalette extends Widget {
     }
 
     // Fetch command variables.
-    let renderer = this._renderer!;
+    let renderer = this._renderer;
     let itemNodes = this._itemNodes;
     let headerNodes = this._headerNodes;
 
@@ -647,7 +646,7 @@ class CommandPalette extends Widget {
     if (part.item) {
       input.focus();
       input.select();
-      this._commands!.execute(part.item.command, part.item.args);
+      this._commands.execute(part.item.command, part.item.args);
       return;
     }
 
@@ -679,9 +678,9 @@ class CommandPalette extends Widget {
   }
 
   private _activeIndex = 1;
-  private _keymap: Keymap | null;
-  private _commands: CommandRegistry | null;
-  private _renderer: CommandPalette.IRenderer | null;
+  private _keymap: Keymap;
+  private _commands: CommandRegistry;
+  private _renderer: CommandPalette.IRenderer;
   private _itemNodes = new Vector<HTMLLIElement>();
   private _headerNodes = new Vector<HTMLLIElement>();
   private _items = new Vector<CommandPalette.IItem>();
