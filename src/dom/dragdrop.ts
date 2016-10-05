@@ -55,7 +55,7 @@ interface IDragEvent extends MouseEvent {
    * This property should be considered read-only, but for performance
    * reasons this is not enforced.
    */
-  mimeData: MimeData;
+  mimeData: MimeData | null;
 
   /**
    * The drop action supported or taken by the drop target.
@@ -207,7 +207,7 @@ class Drag implements IDisposable {
    * #### Notes
    * This is a read-only property.
    */
-  get mimeData(): MimeData {
+  get mimeData(): MimeData | null {
     return this._mimeData;
   }
 
@@ -217,7 +217,7 @@ class Drag implements IDisposable {
    * #### Notes
    * This is a read-only property.
    */
-  get dragImage(): HTMLElement {
+  get dragImage(): HTMLElement | null {
     return this._dragImage;
   }
 

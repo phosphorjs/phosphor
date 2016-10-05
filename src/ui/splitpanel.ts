@@ -330,14 +330,15 @@ class SplitPanel extends Panel {
     let pos: number;
     let layout = this.layout as SplitLayout;
     let rect = this.node.getBoundingClientRect();
+    let pressData = this._pressData!;
     if (layout.orientation === 'horizontal') {
-      pos = event.clientX - rect.left - this._pressData.delta;
+      pos = event.clientX - rect.left - pressData.delta;
     } else {
       pos = event.clientY - rect.top - pressData.delta;
     }
 
     // Set the handle as close to the desired position as possible.
-    layout.setHandlePosition(this._pressData.index, pos);
+    layout.setHandlePosition(pressData.index, pos);
   }
 
   /**
