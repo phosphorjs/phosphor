@@ -703,7 +703,7 @@ namespace Private {
   function createMouseEvent(type: string, clientX: number, clientY: number): MouseEvent {
     let event = document.createEvent('MouseEvent');
     event.initMouseEvent(type, true, true, window, 0, 0, 0,
-      clientX, clientY, false, false, false, false, 0, null);
+      clientX, clientY, false, false, false, false, 0, null!);
     return event;
   }
 
@@ -905,7 +905,7 @@ namespace Private {
       event.clientX, event.clientY,
       event.ctrlKey, event.altKey,
       event.shiftKey, event.metaKey,
-      event.button, related
+      event.button, related! // Workaround: Related can be null, but lib.d.ts typings are incorrect
     );
 
     // Add the custom drag event data.
