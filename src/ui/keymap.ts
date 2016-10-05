@@ -93,7 +93,7 @@ class Keymap {
    * #### Notes
    * The default is a US English layout.
    */
-  get layout(): IKeyboardLayout {
+  get layout(): IKeyboardLayout | null {
     return this._layout;
   }
 
@@ -104,7 +104,7 @@ class Keymap {
    * A keymap requires a keyboard layout, so setting this value to
    * `null` will revert the layout to the default US English layout.
    */
-  set layout(value: IKeyboardLayout) {
+  set layout(value: IKeyboardLayout | null) {
     let oldValue = this._layout;
     let newValue = value || EN_US;
     if (oldValue === newValue) {

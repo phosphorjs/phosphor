@@ -728,7 +728,7 @@ namespace Private {
    * https://html.spec.whatwg.org/multipage/interaction.html#drag-and-drop-processing-model
    */
   export
-  function dispatchDragEnter(drag: Drag, currElem: Element, currTarget: Element | null, event: MouseEvent): Element | null {
+  function dispatchDragEnter(drag: Drag, currElem: Element | null, currTarget: Element | null, event: MouseEvent): Element | null {
     // If the current element is null, return null as the new target.
     if (!currElem) {
       return null;
@@ -838,7 +838,7 @@ namespace Private {
    * https://html.spec.whatwg.org/multipage/interaction.html#drag-and-drop-processing-model
    */
   export
-  function dispatchDrop(drag: Drag, currTarget: Element, event: MouseEvent): DropAction {
+  function dispatchDrop(drag: Drag, currTarget: Element | null, event: MouseEvent): DropAction {
     // If there is no current target, the drop action is none.
     if (!currTarget) {
       return 'none';

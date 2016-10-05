@@ -558,7 +558,7 @@ class MenuBar extends Widget {
     // The following code activates an item by mnemonic.
 
     // Get the pressed key character for the current layout.
-    let key = this._keymap!.layout.keyForKeydownEvent(event);
+    let key = this._keymap!.layout!.keyForKeydownEvent(event);
 
     // Bail if the key is not valid for the current layout.
     if (!key) {

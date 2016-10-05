@@ -1116,7 +1116,7 @@ namespace DockPanel {
      *
      * The default is `null`.
      */
-    ref?: Widget;
+    ref?: Widget | null;
 
     /**
      * Whether to activate the new widget.

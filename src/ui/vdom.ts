@@ -955,7 +955,7 @@ function realize(content: VNode): HTMLElement {
  * result in undefined rendering behavior.
  */
 export
-function render(content: VNode | VNode[], host: HTMLElement): void {
+function render(content: VNode | VNode[] | null, host: HTMLElement): void {
   Private.renderImpl(content, host);
 }
 
@@ -994,7 +994,7 @@ namespace Private {
    * The internal `render` entry point.
    */
   export
-  function renderImpl(content: VNode | VNode[], host: HTMLElement): void {
+  function renderImpl(content: VNode | VNode[] | null, host: HTMLElement): void {
     let oldContent = hostMap.get(host) || emptyArray;
     let newContent = asVNodeArray(content);
     hostMap.set(host, newContent);
@@ -1021,7 +1021,7 @@ namespace Private {
    *
    * Null content will be coerced to an empty array.
    */
-  function asVNodeArray(content: VNode | VNode[]): VNode[] {
+  function asVNodeArray(content: VNode | VNode[] | null): VNode[] {
     if (content instanceof Array) {
       return content as VNode[];
     }
