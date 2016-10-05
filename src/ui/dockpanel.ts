@@ -445,6 +445,8 @@ class DockPanel extends Widget {
       right = rect.right - cr.right - box.borderRight;
       bottom = rect.bottom - cr.bottom - box.borderBottom;
       break;
+    default:
+      throw 'Invalid value for target zone: "' + target.zone + '"';
     }
 
     // Derive the width and height from the other dimensions.
