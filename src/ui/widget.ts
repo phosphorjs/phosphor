@@ -156,7 +156,7 @@ class Widget implements IDisposable, IMessageHandler {
    * #### Notes
    * This is a read-only property.
    */
-  get node(): HTMLElement {
+  get node(): HTMLElement | null {
     return this._node;
   }
 
@@ -197,7 +197,7 @@ class Widget implements IDisposable, IMessageHandler {
    * #### Notes
    * This will be `null` if the widget does not have a parent.
    */
-  get parent(): Widget {
+  get parent(): Widget | null {
     return this._parent;
   }
 
@@ -212,7 +212,7 @@ class Widget implements IDisposable, IMessageHandler {
    *
    * This is a no-op if there is no effective parent change.
    */
-  set parent(value: Widget) {
+  set parent(value: Widget | null) {
     value = value || null;
     if (this._parent === value) {
       return;
@@ -927,7 +927,7 @@ abstract class Layout implements IIterable<Widget>, IDisposable {
   /**
    * Get the parent widget of the layout.
    */
-  get parent(): Widget {
+  get parent(): Widget | null {
     return this._parent;
   }
 
@@ -938,7 +938,7 @@ abstract class Layout implements IIterable<Widget>, IDisposable {
    * This is set automatically when installing the layout on the parent
    * widget. The parent widget should not be set directly by user code.
    */
-  set parent(value: Widget) {
+  set parent(value: Widget | null) {
     if (!value) {
       throw new Error('Cannot set parent widget to null.');
     }

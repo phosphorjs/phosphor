@@ -141,7 +141,7 @@ class MenuBar extends Widget {
    * #### Notes
    * This is a read-only property.
    */
-  get keymap(): Keymap {
+  get keymap(): Keymap | null {
     return this._keymap;
   }
 
@@ -151,7 +151,7 @@ class MenuBar extends Widget {
    * #### Notes
    * This is a read-only property.
    */
-  get renderer(): MenuBar.IRenderer {
+  get renderer(): MenuBar.IRenderer | null {
     return this._renderer;
   }
 
@@ -173,7 +173,7 @@ class MenuBar extends Widget {
    *
    * This is a read-only property.
    */
-  get childMenu(): Menu {
+  get childMenu(): Menu | null {
     return this._childMenu;
   }
 

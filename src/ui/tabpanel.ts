@@ -154,7 +154,7 @@ class TabPanel extends Widget {
    * #### Notes
    * This will be `null` if there is no selected tab.
    */
-  get currentWidget(): Widget {
+  get currentWidget(): Widget | null {
     let title = this._tabBar.currentTitle;
     return title ? title.owner as Widget : null;
   }
@@ -165,7 +165,7 @@ class TabPanel extends Widget {
    * #### Notes
    * If the widget is not in the panel, it will be set to `null`.
    */
-  set currentWidget(value: Widget) {
+  set currentWidget(value: Widget | null) {
     this._tabBar.currentTitle = value ? value.title : null;
   }
 
@@ -236,7 +236,7 @@ class TabPanel extends Widget {
    *
    * This is a read-only property.
    */
-  get tabBar(): TabBar {
+  get tabBar(): TabBar | null {
     return this._tabBar;
   }
 
@@ -248,7 +248,7 @@ class TabPanel extends Widget {
    *
    * This is a read-only property.
    */
-  get stackedPanel(): StackedPanel {
+  get stackedPanel(): StackedPanel | null {
     return this._stackedPanel;
   }
 

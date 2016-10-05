@@ -202,7 +202,7 @@ class Menu extends Widget {
    *
    * This is a read-only property.
    */
-  get parentMenu(): Menu {
+  get parentMenu(): Menu | null {
     return this._parentMenu;
   }
 
@@ -214,7 +214,7 @@ class Menu extends Widget {
    *
    * This is a read-only property.
    */
-  get childMenu(): Menu {
+  get childMenu(): Menu | null {
     return this._childMenu;
   }
 
@@ -266,7 +266,7 @@ class Menu extends Widget {
    * #### Notes
    * This is a read-only property.
    */
-  get commands(): CommandRegistry {
+  get commands(): CommandRegistry | null {
     return this._commands;
   }
 
@@ -276,7 +276,7 @@ class Menu extends Widget {
    * #### Notes
    * This is a read-only property.
    */
-  get keymap(): Keymap {
+  get keymap(): Keymap | null {
     return this._keymap;
   }
 
@@ -286,7 +286,7 @@ class Menu extends Widget {
    * #### Notes
    * This is a read-only property.
    */
-  get renderer(): Menu.IRenderer {
+  get renderer(): Menu.IRenderer | null {
     return this._renderer;
   }
 
@@ -1198,7 +1198,7 @@ namespace Menu {
      *
      * The default value is `null`.
      */
-    menu?: Menu;
+    menu?: Menu | null;
   }
 
   /**
@@ -1227,7 +1227,7 @@ namespace Menu {
     /**
      * The menu for a `'submenu'` type item.
      */
-    menu: Menu;
+    menu: Menu | null;
 
     /**
      * The display label for the menu item.
@@ -1272,7 +1272,7 @@ namespace Menu {
     /**
      * The key binding for the menu item.
      */
-    keyBinding: Keymap.IBinding;
+    keyBinding: Keymap.IBinding | null;
   }
 
   /**
@@ -1737,7 +1737,7 @@ namespace Private {
     /**
      * The menu for a `'submenu'` type item.
      */
-    get menu(): Menu {
+    get menu(): Menu | null {
       return this._menu;
     }
 
@@ -1845,7 +1845,7 @@ namespace Private {
     /**
      * The key binding for the menu item.
      */
-    get keyBinding(): Keymap.IBinding {
+    get keyBinding(): Keymap.IBinding | null {
       if (this._type === 'command') {
         return this._keymap.findBinding(this._command, this._args);
       }

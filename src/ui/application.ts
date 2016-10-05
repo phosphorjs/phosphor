@@ -57,7 +57,7 @@ abstract class Application<T extends Widget> {
    *
    * This is a read-only property.
    */
-  get shell(): T {
+  get shell(): T | null {
     return this._shell;
   }
 

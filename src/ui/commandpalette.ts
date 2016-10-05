@@ -195,7 +195,7 @@ class CommandPalette extends Widget {
    * #### Notes
    * This is a read-only property.
    */
-  get commands(): CommandRegistry {
+  get commands(): CommandRegistry | null {
     return this._commands;
   }
 
@@ -205,7 +205,7 @@ class CommandPalette extends Widget {
    * #### Notes
    * This is a read-only property.
    */
-  get keymap(): Keymap {
+  get keymap(): Keymap | null {
     return this._keymap;
   }
 
@@ -215,7 +215,7 @@ class CommandPalette extends Widget {
    * #### Notes
    * This is a read-only property.
    */
-  get renderer(): CommandPalette.IRenderer {
+  get renderer(): CommandPalette.IRenderer | null {
     return this._renderer;
   }
 
@@ -796,7 +796,7 @@ namespace CommandPalette {
     /**
      * The key binding for the command item.
      */
-    keyBinding: Keymap.IBinding;
+    keyBinding: Keymap.IBinding | null;
   }
 
   /**
@@ -1224,7 +1224,7 @@ namespace Private {
     /**
      * The key binding for the command item.
      */
-    get keyBinding(): Keymap.IBinding {
+    get keyBinding(): Keymap.IBinding | null {
       return this._keymap.findBinding(this._command, this._args);
     }
 

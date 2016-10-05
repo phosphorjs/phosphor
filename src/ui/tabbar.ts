@@ -410,7 +410,7 @@ class TabBar extends Widget {
    * #### Notes
    * This is a read-only property.
    */
-  get renderer(): TabBar.IRenderer {
+  get renderer(): TabBar.IRenderer | null {
     return this._renderer;
   }
 
