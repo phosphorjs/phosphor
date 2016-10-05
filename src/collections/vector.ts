@@ -186,7 +186,7 @@ class Vector<T> implements IMutableSequence<T> {
    * #### Iterator Validity
    * Iterators pointing at the removed value are invalidated.
    */
-  popBack(): T {
+  popBack(): T | undefined {
     return this._array.pop();
   }
 
@@ -262,7 +262,7 @@ class Vector<T> implements IMutableSequence<T> {
    * #### Undefined Behavior
    * An `index` which is non-integral.
    */
-  removeAt(index: number): T {
+  removeAt(index: number): T | undefined {
     let array = this._array;
     let n = array.length;
     if (index < 0 || index >= n) {

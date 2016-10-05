@@ -225,7 +225,7 @@ class DockPanel extends Widget {
    *
    * This is a read-only property.
    */
-  get currentWidget(): Widget {
+  get currentWidget(): Widget | null {
     return this._tracker.currentWidget;
   }
 
@@ -261,7 +261,7 @@ class DockPanel extends Widget {
   addWidget(widget: Widget, options: DockPanel.IAddOptions = {}): void {
     // Setup the option defaults.
     let activate = true;
-    let ref: Widget = null;
+    let ref: Widget | null = null;
     let mode: DockPanel.Mode = 'tab-after';
 
     // Extract the options.
@@ -681,7 +681,7 @@ class DockPanel extends Widget {
    * The target widget should have no parent, and the reference widget
    * should either be null or a widget contained in the dock panel.
    */
-  private _insertWidget(widget: Widget, mode: DockPanel.Mode, ref: Widget): void {
+  private _insertWidget(widget: Widget, mode: DockPanel.Mode, ref: Widget | null): void {
     // Determine whether the insert is before or after the ref.
     let after = (
       mode === 'tab-after' ||
@@ -1042,13 +1042,13 @@ class DockPanel extends Widget {
   }
 
   private _spacing: number;
-  private _drag: Drag = null;
+  private _drag: Drag | null = null;
   private _overlay: DockPanel.IOverlay;
   private _widgets = new Vector<Widget>();
   private _tabPanels = new Vector<TabPanel>();
   private _splitPanels = new Vector<SplitPanel>();
   private _tracker = new FocusTracker<Widget>();
-  private _root: SplitPanel | TabPanel = null;
+  private _root: SplitPanel | TabPanel | null = null;
 }
 
 
@@ -1069,12 +1069,12 @@ namespace DockPanel {
     /**
      * The old value for the `currentWidget`, or `null`.
      */
-    oldValue: Widget;
+    oldValue: Widget | null;
 
     /**
      * The new value for the `currentWidget`, or `null`.
      */
-    newValue: Widget;
+    newValue: Widget | null;
   }
 
   /**
@@ -1272,7 +1272,7 @@ namespace DockPanel {
      *
      * This will be `null` if the dock zone is not a panel zone.
      */
-    panel: TabPanel;
+    panel: TabPanel | null;
   }
 
   /**

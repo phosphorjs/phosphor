@@ -75,7 +75,7 @@ class Queue<T> implements IIterable<T> {
    * #### Iterator Validity
    * No changes.
    */
-  get front(): T {
+  get front(): T | undefined {
     return this._front ? this._front.value : void 0;
   }
 
@@ -94,7 +94,7 @@ class Queue<T> implements IIterable<T> {
    * #### Iterator Validity
    * No changes.
    */
-  get back(): T {
+  get back(): T | undefined {
     return this._back ? this._back.value : void 0;
   }
 
@@ -132,7 +132,7 @@ class Queue<T> implements IIterable<T> {
       this._front = node;
       this._back = node;
     } else {
-      this._back.next = node;
+      this._back!.next = node;
       this._back = node;
     }
     return ++this._length;
@@ -150,11 +150,11 @@ class Queue<T> implements IIterable<T> {
    * #### Iterator Validity
    * Iterators pointing at the removed value are invalidated.
    */
-  popFront(): T {
+  popFront(): T | undefined {
     if (this._length === 0) {
       return void 0;
     }
-    let node = this._front;
+    let node = this._front!;
     if (this._length === 1) {
       this._front = null;
       this._back = null;
@@ -212,8 +212,8 @@ class Queue<T> implements IIterable<T> {
   }
 
   private _length = 0;
-  private _front: QueueNode<T> = null;
-  private _back: QueueNode<T> = null;
+  private _front: QueueNode<T> | null = null;
+  private _back: QueueNode<T> | null = null;
 }
 
 
@@ -226,7 +226,7 @@ class QueueIterator<T> implements IIterator<T> {
    *
    * @param node - The node at the front of range.
    */
-  constructor(node: QueueNode<T>) {
+  constructor(node: QueueNode<T> | null) {
     this._node = node;
   }
 
@@ -254,7 +254,7 @@ class QueueIterator<T> implements IIterator<T> {
    * @returns The next value from the queue, or `undefined` if the
    *   iterator is exhausted.
    */
-  next(): T {
+  next(): T | undefined {
     if (!this._node) {
       return void 0;
     }
@@ -263,7 +263,7 @@ class QueueIterator<T> implements IIterator<T> {
     return value;
   }
 
-  private _node: QueueNode<T>;
+  private _node: QueueNode<T> | null;
 }
 
 
@@ -274,7 +274,7 @@ class QueueNode<T> {
   /**
    * The next node the queue.
    */
-  next: QueueNode<T> = null;
+  next: QueueNode<T> | null = null;
 
   /**
    * The value for the node.

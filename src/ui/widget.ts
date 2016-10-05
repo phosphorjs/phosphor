@@ -188,7 +188,7 @@ class Widget implements IDisposable, IMessageHandler {
    * This is a read-only property.
    */
   get title(): Title {
-    return Private.titleProperty.get(this);
+    return Private.titleProperty.get(this)!;
   }
 
   /**
@@ -236,7 +236,7 @@ class Widget implements IDisposable, IMessageHandler {
    * #### Notes
    * This will be `null` if the widget does not have a layout.
    */
-  get layout(): Layout {
+  get layout(): Layout | null {
     return this._layout;
   }
 
@@ -249,7 +249,7 @@ class Widget implements IDisposable, IMessageHandler {
    *
    * The layout is disposed automatically when the widget is disposed.
    */
-  set layout(value: Layout) {
+  set layout(value: Layout | null) {
     value = value || null;
     if (this._layout === value) {
       return;
@@ -260,11 +260,12 @@ class Widget implements IDisposable, IMessageHandler {
     if (this._layout) {
       throw new Error('Cannot change widget layout.');
     }
-    if (value.parent) {
+    // Know that value is not null from above checks
+    if (value!.parent) {
       throw new Error('Cannot change layout parent.');
     }
     this._layout = value;
-    value.parent = this;
+    value!.parent = this;
     sendMessage(this, WidgetMessage.LayoutChanged);
   }
 
@@ -289,7 +290,7 @@ class Widget implements IDisposable, IMessageHandler {
    *
    * @returns `true` if the widget is a descendant, `false` otherwise.
    */
-  contains(widget: Widget): boolean {
+  contains(widget: Widget | null): boolean {
     for (; widget; widget = widget._parent) {
       if (widget === this) return true;
     }
@@ -677,9 +678,9 @@ class Widget implements IDisposable, IMessageHandler {
   protected onChildRemoved(msg: ChildMessage): void { }
 
   private _flags = 0;
-  private _node: HTMLElement;
-  private _layout: Layout = null;
-  private _parent: Widget = null;
+  private _node: HTMLElement | null;
+  private _layout: Layout | null = null;
+  private _parent: Widget | null = null;
 }
 
 
@@ -782,7 +783,7 @@ namespace Widget {
   export
   function resetGeometry(widget: Widget): void {
     let style = widget.node.style;
-    let rect = Private.rectProperty.get(widget);
+    let rect = Private.rectProperty.get(widget)!;
     rect.top = NaN;
     rect.left = NaN;
     rect.width = NaN;
@@ -820,7 +821,7 @@ namespace Widget {
   function setGeometry(widget: Widget, left: number, top: number, width: number, height: number): void {
     let resized = false;
     let style = widget.node.style;
-    let rect = Private.rectProperty.get(widget);
+    let rect = Private.rectProperty.get(widget)!;
     if (rect.top !== top) {
       rect.top = top;
       style.top = `${top}px`;
@@ -1116,7 +1117,7 @@ abstract class Layout implements IIterable<Widget>, IDisposable {
   protected onChildHidden(msg: ChildMessage): void { }
 
   private _disposed = false;
-  private _parent: Widget = null;
+  private _parent: Widget | null = null;
 }
 
 

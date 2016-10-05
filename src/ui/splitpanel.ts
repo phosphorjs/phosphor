@@ -333,7 +333,7 @@ class SplitPanel extends Panel {
     if (layout.orientation === 'horizontal') {
       pos = event.clientX - rect.left - this._pressData.delta;
     } else {
-      pos = event.clientY - rect.top - this._pressData.delta;
+      pos = event.clientY - rect.top - pressData.delta;
     }
 
     // Set the handle as close to the desired position as possible.
@@ -379,7 +379,7 @@ class SplitPanel extends Panel {
     document.removeEventListener('contextmenu', this, true);
   }
 
-  private _pressData: Private.IPressData = null;
+  private _pressData: Private.IPressData | null = null;
 }
 
 
@@ -734,7 +734,7 @@ class SplitLayout extends PanelLayout {
    */
   protected detachWidget(index: number, widget: Widget): void {
     // Remove the handle for the widget.
-    let handle = this._handles.removeAt(index);
+    let handle = this._handles.removeAt(index)!;
 
     // Remove the sizer for the widget.
     this._sizers.removeAt(index);
@@ -836,7 +836,7 @@ class SplitLayout extends PanelLayout {
     // Update the handles and track the visible widget count.
     let nVisible = 0;
     let widgets = this.widgets;
-    let lastHandle: HTMLDivElement = null;
+    let lastHandle: HTMLDivElement | null = null;
     for (let i = 0, n = widgets.length; i < n; ++i) {
       let handle = this._handles.at(i);
       if (widgets.at(i).isHidden) {
@@ -1009,7 +1009,7 @@ class SplitLayout extends PanelLayout {
   private _spacing = 4;
   private _dirty = false;
   private _hasNormedSizes = false;
-  private _box: IBoxSizing = null;
+  private _box: IBoxSizing | null = null;
   private _renderer: SplitLayout.IRenderer;
   private _sizers = new Vector<BoxSizer>();
   private _handles = new Vector<HTMLDivElement>();
@@ -1075,7 +1075,7 @@ namespace SplitLayout {
    */
   export
   function getStretch(widget: Widget): number {
-    return Private.stretchProperty.get(widget);
+    return Private.stretchProperty.get(widget)!;
   }
 
   /**
@@ -1303,7 +1303,6 @@ namespace Private {
    */
   function onChildPropertyChanged(child: Widget): void {
     let parent = child.parent;
-    let layout = parent && parent.layout;
-    if (layout instanceof SplitLayout) parent.fit();
+    if (parent && parent.layout instanceof SplitLayout) parent.fit();
   }
 }

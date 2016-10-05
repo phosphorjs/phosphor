@@ -335,8 +335,8 @@ class TabPanel extends Widget {
     this._tabBar.removeTab(widget.title);
   }
 
-  private _tabBar: TabBar;
-  private _stackedPanel: StackedPanel;
+  private _tabBar: TabBar | null;
+  private _stackedPanel: StackedPanel | null;
   private _tabPlacement: TabPanel.TabPlacement;
 }
 
@@ -416,7 +416,7 @@ namespace TabPanel {
     /**
      * The previously selected widget.
      */
-    previousWidget: Widget;
+    previousWidget: Widget | null;
 
     /**
      * The currently selected index.
@@ -426,7 +426,7 @@ namespace TabPanel {
     /**
      * The currently selected widget.
      */
-    currentWidget: Widget;
+    currentWidget: Widget | null;
   }
 }
 

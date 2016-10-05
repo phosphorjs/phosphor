@@ -139,7 +139,7 @@ class Keymap {
    * sequence of key `bindings`. If custom search behavior is needed,
    * user code may search that sequence manually.
    */
-  findBinding(command: string, args: JSONObject): Keymap.IBinding {
+  findBinding(command: string, args: JSONObject | null): Keymap.IBinding | null {
     let i = findLastIndex(this._bindings, kb => {
       return kb.command === command && deepEqual(kb.args, args);
     });
@@ -240,7 +240,7 @@ class Keymap {
     // can be dispatched immediately. The pending state is cleared so
     // the next key press starts from the default state.
     if (!partial) {
-      this._execute(exact);
+      this._execute(exact!);
       this._clearPendingState();
       return;
     }
@@ -335,7 +335,7 @@ class Keymap {
   private _layout: IKeyboardLayout;
   private _commands: CommandRegistry;
   private _events: KeyboardEvent[] = [];
-  private _exact: Keymap.IBinding = null;
+  private _exact: Keymap.IBinding | null = null;
   private _bindings = new Vector<Keymap.IBinding>();
 }
 
@@ -414,7 +414,7 @@ namespace Keymap {
     /**
      * The arguments for the command, if necessary.
      */
-    args?: JSONObject;
+    args?: JSONObject | null;
 
     /**
      * The key sequence to use when running on Windows.
@@ -464,7 +464,7 @@ namespace Keymap {
     /**
      * The arguments for the command.
      */
-    args: JSONObject;
+    args: JSONObject | null;
   }
 
   /**
@@ -709,7 +709,7 @@ namespace Private {
     /**
      * The best binding which exactly matches the key sequence.
      */
-    exact: Keymap.IBinding;
+    exact: Keymap.IBinding | null;
 
     /**
      * Whether there are bindings which partially match the sequence.
@@ -729,7 +729,7 @@ namespace Private {
     let partial = false;
 
     // The current best exact match.
-    let exact: Keymap.IBinding = null;
+    let exact: Keymap.IBinding | null = null;
 
     // The match distance for the exact match.
     let distance = Infinity;
@@ -829,14 +829,14 @@ namespace Private {
     /**
      * The arguments for the command.
      */
-    get args(): JSONObject {
+    get args(): JSONObject | null {
       return this._args;
     }
 
     private _keys: string[];
     private _selector: string;
     private _command: string;
-    private _args: JSONObject;
+    private _args: JSONObject | null;
   }
 
   /**

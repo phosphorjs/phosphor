@@ -387,7 +387,7 @@ namespace MessageLoop {
     // the reference to the hook and remove the node from the list.
     // The node's next reference is *not* cleared so that dispatch
     // may continue when the hook is removed during dispatch.
-    let prev: HookNode = null;
+    let prev: HookNode | null = null;
     let node = hooks.get(handler) || null;
     for (; node !== null; prev = node, node = node.next) {
       if (node.hook === hook) {
@@ -436,7 +436,7 @@ namespace MessageLoop {
   /**
    * A type alias for a node in a message hook list.
    */
-  type HookNode = { next: HookNode, hook: MessageHook };
+  type HookNode = { next: HookNode, hook: MessageHook | null };
 
   /**
    * The queue of posted message pairs.
@@ -539,7 +539,7 @@ namespace MessageLoop {
     // Enter the message loop.
     while (!queue.isEmpty) {
       // Remove the first posted message in the queue.
-      let posted = queue.popFront();
+      let posted = queue.popFront()!;
 
       // If the value is the sentinel, exit the loop.
       if (posted === sentinel) {

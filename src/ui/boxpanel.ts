@@ -604,7 +604,7 @@ class BoxLayout extends PanelLayout {
   private _fixed = 0;
   private _spacing = 4;
   private _dirty = false;
-  private _box: IBoxSizing = null;
+  private _box: IBoxSizing | null = null;
   private _sizers = new Vector<BoxSizer>();
   private _direction: BoxLayout.Direction = 'top-to-bottom';
 }
@@ -652,7 +652,7 @@ namespace BoxLayout {
    */
   export
   function getStretch(widget: Widget): number {
-    return Private.stretchProperty.get(widget);
+    return Private.stretchProperty.get(widget)!;
   }
 
   /**
@@ -676,7 +676,7 @@ namespace BoxLayout {
    */
   export
   function getSizeBasis(widget: Widget): number {
-    return Private.sizeBasisProperty.get(widget);
+    return Private.sizeBasisProperty.get(widget)!;
   }
 
   /**

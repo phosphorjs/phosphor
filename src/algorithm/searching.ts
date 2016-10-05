@@ -47,8 +47,8 @@ import {
  * ```
  */
 export
-function find<T>(object: IterableOrArrayLike<T>, fn: (value: T) => boolean): T {
-  let value: T;
+function find<T>(object: IterableOrArrayLike<T>, fn: (value: T) => boolean): T | undefined {
+  let value: T | undefined;
   let it = iter(object);
   while ((value = it.next()) !== void 0) {
     if (fn(value)) {
@@ -88,13 +88,13 @@ function find<T>(object: IterableOrArrayLike<T>, fn: (value: T) => boolean): T {
  * ```
  */
 export
-function min<T>(object: IterableOrArrayLike<T>, fn: (first: T, second: T) => number): T {
+function min<T>(object: IterableOrArrayLike<T>, fn: (first: T, second: T) => number): T | undefined {
   let it = iter(object);
   let result = it.next();
   if (result === void 0) {
     return void 0;
   }
-  let value: T;
+  let value: T | undefined;
   while ((value = it.next()) !== void 0) {
     if (fn(value, result) < 0) {
       result = value;
@@ -133,13 +133,13 @@ function min<T>(object: IterableOrArrayLike<T>, fn: (first: T, second: T) => num
  * ```
  */
 export
-function max<T>(object: IterableOrArrayLike<T>, fn: (first: T, second: T) => number): T {
+function max<T>(object: IterableOrArrayLike<T>, fn: (first: T, second: T) => number): T | undefined {
   let it = iter(object);
   let result = it.next();
   if (result === void 0) {
     return void 0;
   }
-  let value: T;
+  let value: T | undefined;
   while ((value = it.next()) !== void 0) {
     if (fn(value, result) > 0) {
       result = value;
@@ -546,7 +546,7 @@ namespace StringSearch {
    * required, the text should be transformed before scoring.
    */
   export
-  function sumOfSquares(sourceText: string, queryText: string): ISumOfSquaresResult {
+  function sumOfSquares(sourceText: string, queryText: string): ISumOfSquaresResult | null {
     let score = 0;
     let indices = new Array<number>(queryText.length);
     for (let i = 0, j = 0, n = queryText.length; i < n; ++i, ++j) {

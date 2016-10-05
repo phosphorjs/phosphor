@@ -75,7 +75,7 @@ class DisposableDelegate implements IDisposable {
     callback();
   }
 
-  private _callback: () => void;
+  private _callback: (() => void) | null;
 }
 
 
@@ -90,7 +90,7 @@ class DisposableSet implements IDisposable {
    * @param items - The initial disposable items.
    */
   constructor(items?: IterableOrArrayLike<IDisposable>) {
-    if (items) each(items, item => { this._set.add(item); });
+    if (items) each(items, item => { this._set!.add(item); });
   }
 
   /**
@@ -164,5 +164,5 @@ class DisposableSet implements IDisposable {
     this._set.clear();
   }
 
-  private _set = new Set<IDisposable>();
+  private _set: Set<IDisposable> | null = new Set<IDisposable>();
 }

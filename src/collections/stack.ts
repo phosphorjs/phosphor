@@ -123,7 +123,7 @@ class Stack<T> implements IIterable<T> {
    * #### Iterator Validity
    * Iterators pointing at the removed value are invalidated.
    */
-  popBack(): T {
+  popBack(): T | undefined {
     return this._array.pop();
   }
 
@@ -202,7 +202,7 @@ class StackIterator<T> implements IIterator<T> {
    * @returns The next value from the stack, or `undefined` if the
    *   iterator is exhausted.
    */
-  next(): T {
+  next(): T | undefined {
     if (this._index < 0 || this._index >= this._array.length) {
       return void 0;
     }

@@ -183,7 +183,7 @@ class MenuBar extends Widget {
    * #### Notes
    * This will be `null` if no menu is active.
    */
-  get activeMenu(): Menu {
+  get activeMenu(): Menu | null {
     let i = this._activeIndex;
     return i !== -1 ? this._menus.at(i): null;
   }
@@ -194,7 +194,7 @@ class MenuBar extends Widget {
    * #### Notes
    * If the menu does not exist, the menu will be set to `null`.
    */
-  set activeMenu(value: Menu) {
+  set activeMenu(value: Menu | null) {
     this.activeIndex = indexOf(this._menus, value);
   }
 
@@ -367,7 +367,7 @@ class MenuBar extends Widget {
    * @returns The menu occupying the index, or `null` if the index
    *   is out of range.
    */
-  removeMenuAt(index: number): Menu {
+  removeMenuAt(index: number): Menu | null {
     // Bail if the index is out of range.
     let i = Math.floor(index);
     if (i < 0 || i >= this._menus.length) {
@@ -378,8 +378,8 @@ class MenuBar extends Widget {
     this._closeChildMenu();
 
     // Remove the node and menu from the vectors.
-    let node = this._nodes.removeAt(i);
-    let menu = this._menus.removeAt(i);
+    let node = this._nodes.removeAt(i)!;
+    let menu = this._menus.removeAt(i)!;
 
     // Disconnect from the menu signals.
     menu.aboutToClose.disconnect(this._onMenuAboutToClose, this);
@@ -820,12 +820,12 @@ class MenuBar extends Widget {
     this.update();
   }
 
-  private _keymap: Keymap;
+  private _keymap: Keymap | null;
   private _activeIndex = -1;
-  private _childMenu: Menu = null;
+  private _childMenu: Menu | null = null;
   private _menus = new Vector<Menu>();
   private _nodes = new Vector<HTMLLIElement>();
-  private _renderer: MenuBar.IRenderer;
+  private _renderer: MenuBar.IRenderer | null;
 }
 
 

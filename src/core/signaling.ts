@@ -558,7 +558,7 @@ function invokeSlot(conn: IConnection, args: any): void {
  * @returns The first connection which matches the supplied parameters,
  *   or null if no matching connection is found.
  */
-function findConnection(list: IConnection[], token: any, slot: Slot<any, any>, thisArg: any): IConnection {
+function findConnection(list: IConnection[], token: any, slot: Slot<any, any>, thisArg: any): IConnection | null {
   for (let i = 0, n = list.length; i < n; ++i) {
     let conn = list[i];
     if (conn.token === token &&

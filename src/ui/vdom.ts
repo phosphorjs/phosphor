@@ -765,7 +765,7 @@ export function h(tag: string, attrs?: IElementAttrs, ...children: h.FactoryChil
 export function h(tag: string, first?: any): VNode {
   // Setup the variables to hold the parsed data.
   let attrs: any;
-  let children: any[];
+  let children: any[] | undefined;
 
   // Parse the first variadic argument.
   if (first) {

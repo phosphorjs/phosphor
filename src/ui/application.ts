@@ -371,10 +371,10 @@ abstract class Application<T extends Widget> {
   }
 
   private _started = false;
-  private _shell: T = null;
+  private _shell: T | null = null;
   private _keymap: Keymap;
   private _commands: CommandRegistry;
-  private _promise: Promise<void> = null;
+  private _promise: Promise<void> | null = null;
   private _pluginMap = Private.createPluginMap();
   private _serviceMap = Private.createServiceMap();
 }
@@ -519,7 +519,7 @@ namespace Private {
     /**
      * The type of service provided by the plugin, or `null`.
      */
-    provides: Token<any>;
+    provides: Token<any> | null;
 
     /**
      * The function which activates the plugin.
@@ -534,12 +534,12 @@ namespace Private {
     /**
      * The resolved service for the plugin, or `null`.
      */
-    service: any;
+    service: any | null;
 
     /**
      * The pending resolver promise, or `null`.
      */
-    promise: Promise<void>;
+    promise: Promise<void> | null;
   }
 
   /**

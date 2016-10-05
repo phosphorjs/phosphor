@@ -11,7 +11,7 @@
  * A type alias for a JSON primitive.
  */
 export
-type JSONPrimitive = boolean | number | string;
+type JSONPrimitive = boolean | number | string | null;
 
 
 /**

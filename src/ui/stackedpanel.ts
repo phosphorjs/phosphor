@@ -345,7 +345,7 @@ class StackedLayout extends PanelLayout {
   }
 
   private _dirty = false;
-  private _box: IBoxSizing = null;
+  private _box: IBoxSizing | null = null;
 }
 
 
