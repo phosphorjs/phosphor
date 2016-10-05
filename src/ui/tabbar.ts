@@ -1540,7 +1540,7 @@ namespace Private {
     /**
      * The tab node being dragged.
      */
-    tab: HTMLElement = null;
+    tab: HTMLElement;
 
     /**
      * The index of the tab being dragged.
@@ -1570,7 +1570,7 @@ namespace Private {
     /**
      * The array of tab layout objects snapped at drag start.
      */
-    tabLayout: ITabLayout[] = null;
+    tabLayout: ITabLayout[];
 
     /**
      * The mouse press client X position.
@@ -1585,12 +1585,12 @@ namespace Private {
     /**
      * The bounding client rect of the tab bar content node.
      */
-    contentRect: ClientRect = null;
+    contentRect: ClientRect;
 
     /**
      * The disposable to clean up the cursor override.
      */
-    override: IDisposable = null;
+    override: IDisposable;
 
     /**
      * Whether the drag is currently active.
