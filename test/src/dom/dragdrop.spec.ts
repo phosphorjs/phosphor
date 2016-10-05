@@ -346,7 +346,7 @@ describe('dom/dragdrop', () => {
           let child0 = panel.widgets.at(0) as DropTarget;
           let rect = child0.node.getBoundingClientRect();
           simulate(child0.node, 'mousemove', { clientX: rect.left + 1, clientY: rect.top + 1 } );
-          let image = drag.dragImage;
+          let image = drag.dragImage!;
           expect(image.style.top).to.be(`${rect.top + 1}px`);
           expect(image.style.left).to.be(`${rect.left + 1}px`);
         });
@@ -442,7 +442,7 @@ describe('dom/dragdrop', () => {
         });
 
         it('should detach the drag image', () => {
-          let image = drag.dragImage;
+          let image = drag.dragImage!;
           let child0 = panel.widgets.at(0) as DropTarget;
           let rect = child0.node.getBoundingClientRect();
           simulate(child0.node, 'mouseup', { clientX: rect.left + 1, clientY: rect.top + 1 } );

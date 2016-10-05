@@ -815,7 +815,7 @@ export function h(tag: string, first?: any): VNode {
  */
 export
 namespace h {
-  export type FactoryChild = (string | VNode) | Array<string | VNode>;
+  export type FactoryChild = (string | VNode | null) | Array<string | VNode | null>;
   export type Factory<T extends IVNodeAttrs> = (attrs?: T, ...children: FactoryChild[]) => VNode;
   export const a: Factory<IAnchorAttrs> = h.bind(void 0, 'a');
   export const abbr: Factory<IElementAttrs> = h.bind(void 0, 'abbr');

@@ -1199,7 +1199,7 @@ namespace Menu {
      *
      * The default value is `null`.
      */
-    menu?: Menu;
+    menu?: Menu | null;
   }
 
   /**

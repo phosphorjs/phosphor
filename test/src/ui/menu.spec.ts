@@ -480,7 +480,7 @@ describe('ui/menu', () => {
         };
         let disposable = keymap.addBinding(binding);
         let item = menu.addItem({ command: 'test' });
-        expect(item.keyBinding.keys).to.eql(['A']);
+        expect(item.keyBinding!.keys).to.eql(['A']);
         disposable.dispose();
       });
 
