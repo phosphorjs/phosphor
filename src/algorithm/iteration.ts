@@ -142,6 +142,17 @@ function toArray<T>(object: IterableOrArrayLike<T>): T[] {
 
 
 /**
+ * Create an empty iterator.
+ *
+ * @returns A new iterator which yields nothing.
+ */
+export
+function empty<T>(): EmptyIterator<T> {
+  return new EmptyIterator<T>();
+}
+
+
+/**
  * An iterator which is always empty.
  */
 export
@@ -177,19 +188,6 @@ class EmptyIterator<T> implements IIterator<T> {
   next(): T {
     return void 0;
   }
-}
-
-
-/**
- * The namespace for the `EmptyIterator` class statics.
- */
-export
-namespace EmptyIterator {
-  /**
-   * A singleton instance of an empty iterator.
-   */
-  export
-  const instance = new EmptyIterator<any>();
 }
 
 
