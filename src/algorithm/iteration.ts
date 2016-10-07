@@ -618,6 +618,19 @@ class EnumerateIterator<T> implements IIterator<[number, T]> {
 
 
 /**
+ * Create an iterator which yields a value a single time.
+ *
+ * @param value - The value to wrap in an iterator.
+ *
+ * @returns A new iterator which yields the value a single time.
+ */
+export
+function once<T>(value: T): RepeatIterator<T> {
+  return new RepeatIterator<T>(value, 1);
+}
+
+
+/**
  * Create an iterator which repeats a value a number of times.
  *
  * @param value - The value to repeat.
