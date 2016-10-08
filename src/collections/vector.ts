@@ -138,6 +138,58 @@ class Vector<T> implements IMutableSequence<T> {
   }
 
   /**
+   * Find the index of the first occurrence of a value in the vector.
+   *
+   * @param value - The value to locate in the vector. Values are
+   *   compared using strict `===` equality.
+   *
+   * @param fromIndex - The starting index of the search. The default
+   *   value is `0`. Negative values are taken as an offset from the
+   *   end of the vector.
+   *
+   * @returns The index of the first occurrence of the value, or `-1`
+   *   if the value is not found.
+   *
+   * #### Complexity
+   * Linear.
+   *
+   * #### Iterator Validity
+   * No changes.
+   *
+   * #### Undefined Behavior
+   * A `fromIndex` which is non-integral.
+   */
+  indexOf(value: T, fromIndex = 0): number {
+    return this._array.indexOf(value, fromIndex);
+  }
+
+  /**
+   * Find the index of the last occurrence of a value in the vector.
+   *
+   * @param value - The value to locate in the vector. Values are
+   *   compared using strict `===` equality.
+   *
+   * @param fromIndex - The starting index of the search. The default
+   *   value is `length - 1`. Negative values are taken as an offset
+   *   from the end of the vector.
+   *
+   * @returns The index of the last occurrence of the value, or `-1`
+   *   if the value is not found.
+   *
+   * #### Complexity
+   * Linear.
+   *
+   * #### Iterator Validity
+   * No changes.
+   *
+   * #### Undefined Behavior
+   * A `fromIndex` which is non-integral.
+   */
+  lastIndexOf(value: T, fromIndex = this.length - 1): number {
+    return this._array.lastIndexOf(value, fromIndex);
+  }
+
+  /**
    * Set the value at the specified index.
    *
    * @param index - The positive integer index of interest.
