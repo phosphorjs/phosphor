@@ -66,15 +66,15 @@ describe('ui/keymap', () => {
       it('should be set from instantiation options', () => {
         let options = { keys: ['Ctrl A'], selector: 'body', command: 'test' };
         keymap.addBinding(options);
-        let binding = keymap.findBinding('test', null);
+        let binding = keymap.findBinding('test', null)!;
         expect(binding.keys).to.eql(['Ctrl A']);
       });
 
       it('should be read only', () => {
         let options = { keys: ['Ctrl A'], selector: 'body', command: 'test' };
         keymap.addBinding(options);
-        let binding = keymap.findBinding('test', null);
-        expect(() => { binding.keys = null; }).to.throwError();
+        let binding = keymap.findBinding('test', null)!;
+        expect(() => { binding.keys = null!; }).to.throwError();
       });
 
     });
@@ -84,15 +84,15 @@ describe('ui/keymap', () => {
       it('should be set from instantiation options', () => {
         let options = { keys: ['Ctrl A'], selector: 'body', command: 'test' };
         keymap.addBinding(options);
-        let binding = keymap.findBinding('test', null);
+        let binding = keymap.findBinding('test', null)!;
         expect(binding.selector).to.be('body');
       });
 
       it('should be read only', () => {
         let options = { keys: ['Ctrl A'], selector: 'body', command: 'test' };
         keymap.addBinding(options);
-        let binding = keymap.findBinding('test', null);
-        expect(() => { binding.selector = null; }).to.throwError();
+        let binding = keymap.findBinding('test', null)!;
+        expect(() => { binding.selector = null!; }).to.throwError();
       });
 
     });
@@ -102,15 +102,15 @@ describe('ui/keymap', () => {
       it('should be set from instantiation options', () => {
         let options = { keys: ['Ctrl A'], selector: 'body', command: 'test' };
         keymap.addBinding(options);
-        let binding = keymap.findBinding('test', null);
+        let binding = keymap.findBinding('test', null)!;
         expect(binding.command).to.be('test');
       });
 
       it('should be read only', () => {
         let options = { keys: ['Ctrl A'], selector: 'body', command: 'test' };
         keymap.addBinding(options);
-        let binding = keymap.findBinding('test', null);
-        expect(() => { binding.command = null; }).to.throwError();
+        let binding = keymap.findBinding('test', null)!;
+        expect(() => { binding.command = null!; }).to.throwError();
       });
 
     });
@@ -125,14 +125,14 @@ describe('ui/keymap', () => {
           args: { foo: 'bar', baz: 'qux' } as JSONObject
         };
         keymap.addBinding(options);
-        let binding = keymap.findBinding('test', options.args);
+        let binding = keymap.findBinding('test', options.args)!;
         expect(binding.args).to.eql(options.args);
       });
 
       it('should be read only', () => {
         let options = { keys: ['Ctrl A'], selector: 'body', command: 'test' };
         keymap.addBinding(options);
-        let binding = keymap.findBinding('test', null);
+        let binding = keymap.findBinding('test', null)!;
         expect(() => { binding.args = null; }).to.throwError();
       });
 
@@ -299,7 +299,7 @@ describe('ui/keymap', () => {
         let a1: JSONObject = { 'foo': 'bar' };
         let a2: JSONObject = { 'bar': 'baz' };
         let a3: JSONObject = { 'baz': 'qux' };
-        let a4: JSONObject = null;
+        let a4 = null;
         let b1 = keymap.addBinding({
           keys: ['Ctrl ;'],
           selector: '.b1',
@@ -324,10 +324,10 @@ describe('ui/keymap', () => {
           command: 'c2',
           args: a4
         });
-        expect(keymap.findBinding('c1', a1).selector).to.be('.b1');
-        expect(keymap.findBinding('c1', a2).selector).to.be('.b2');
-        expect(keymap.findBinding('c1', a3).selector).to.be('.b3');
-        expect(keymap.findBinding('c2', a4).selector).to.be('.b4');
+        expect(keymap.findBinding('c1', a1)!.selector).to.be('.b1');
+        expect(keymap.findBinding('c1', a2)!.selector).to.be('.b2');
+        expect(keymap.findBinding('c1', a3)!.selector).to.be('.b3');
+        expect(keymap.findBinding('c2', a4)!.selector).to.be('.b4');
         b1.dispose();
         b2.dispose();
         b3.dispose();

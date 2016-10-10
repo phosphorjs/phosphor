@@ -63,7 +63,7 @@ interface IIterator<T> extends IIterable<T> {
    * an object allocation on each iteration; and an `isDone()` method
    * increases implementation and runtime complexity.
    */
-  next(): T;
+  next(): T | undefined;
 }
 
 
@@ -131,7 +131,7 @@ function iter<T>(object: IterableOrArrayLike<T>): IIterator<T> {
  */
 export
 function toArray<T>(object: IterableOrArrayLike<T>): T[] {
-  let value: T;
+  let value: T | undefined;
   let result: T[] = [];
   let it = iter(object);
   while ((value = it.next()) !== void 0) {
@@ -174,7 +174,7 @@ class EmptyIterator<T> implements IIterator<T> {
    *
    * @returns Always `undefined`.
    */
-  next(): T {
+  next(): T | undefined {
     return void 0;
   }
 }
@@ -240,7 +240,7 @@ class ArrayIterator<T> implements IIterator<T> {
    * @returns The next value from the source array, or `undefined`
    *   if the iterator is exhausted.
    */
-  next(): T {
+  next(): T | undefined {
     if (this._index >= this._source.length) {
       return void 0;
     }
@@ -264,7 +264,7 @@ class ArrayIterator<T> implements IIterator<T> {
  */
 export
 function each<T>(object: IterableOrArrayLike<T>, fn: (value: T) => void): void {
-  let value: T;
+  let value: T | undefined;
   let it = iter(object);
   while ((value = it.next()) !== void 0) {
     fn(value);
@@ -286,7 +286,7 @@ function each<T>(object: IterableOrArrayLike<T>, fn: (value: T) => void): void {
  */
 export
 function every<T>(object: IterableOrArrayLike<T>, fn: (value: T) => boolean): boolean {
-  let value: T;
+  let value: T | undefined;
   let it = iter(object);
   while ((value = it.next()) !== void 0) {
     if (!fn(value)) return false;
@@ -309,7 +309,7 @@ function every<T>(object: IterableOrArrayLike<T>, fn: (value: T) => boolean): bo
  */
 export
 function some<T>(object: IterableOrArrayLike<T>, fn: (value: T) => boolean): boolean {
-  let value: T;
+  let value: T | undefined;
   let it = iter(object);
   while ((value = it.next()) !== void 0) {
     if (fn(value)) return true;
@@ -385,7 +385,7 @@ function reduce<T>(object: IterableOrArrayLike<T>, fn: (accumulator: any, value:
   }
 
   // Iterate the rest of the values, updating the accumulator.
-  let next: T;
+  let next: T | undefined;
   while ((next = it.next()) !== void 0) {
     accumulator = fn(accumulator, next);
   }
@@ -457,8 +457,8 @@ class FilterIterator<T> implements IIterator<T> {
    * @returns The next value from the source iterator which passes
    *   the predicate, or `undefined` if the iterator is exhausted.
    */
-  next(): T {
-    let value: T;
+  next(): T | undefined {
+    let value: T | undefined;
     let fn = this._fn;
     let it = this._source;
     while ((value = it.next()) !== void 0) {
@@ -534,7 +534,7 @@ class MapIterator<T, U> implements IIterator<U> {
    * @returns The next value from the source iterator transformed
    *   by the mapper, or `undefined` if the iterator is exhausted.
    */
-  next(): U {
+  next(): U | undefined {
     let value = this._source.next();
     if (value === void 0) {
       return void 0;
@@ -606,7 +606,7 @@ class EnumerateIterator<T> implements IIterator<[number, T]> {
    * @returns The next value from the enumeration, or `undefined` if
    *   the iterator is exhausted.
    */
-  next(): [number, T] {
+  next(): [number, T] | undefined {
     let value = this._source.next();
     if (value === void 0) {
       return void 0;
@@ -675,7 +675,7 @@ class ZipIterator<T> implements IIterator<T[]> {
    * @returns The next zipped value from the iterator, or `undefined`
    *   when the first source iterator is exhausted.
    */
-  next(): T[] {
+  next(): T[] | undefined {
     let iters = this._source;
     let result = new Array<T>(iters.length);
     for (let i = 0, n = iters.length; i < n; ++i) {
@@ -753,7 +753,7 @@ class StrideIterator<T> implements IIterator<T> {
    * @returns The next stepped value from the iterator, or `undefined`
    *   when the source iterator is exhausted.
    */
-  next(): T {
+  next(): T | undefined {
     let value = this._source.next();
     if (value === void 0) {
       return void 0;

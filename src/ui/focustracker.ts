@@ -111,7 +111,7 @@ class FocusTracker<T extends Widget> implements IDisposable {
    *
    * This is a read-only property.
    */
-  get currentWidget(): T {
+  get currentWidget(): T | null {
     return this._currentWidget;
   }
 
@@ -271,7 +271,7 @@ class FocusTracker<T extends Widget> implements IDisposable {
   /**
    * Set the current widget for the tracker.
    */
-  private _setCurrentWidget(widget: T): void {
+  private _setCurrentWidget(widget: T | null): void {
     // Do nothing if there is no change.
     if (this._currentWidget === widget) {
       return;
@@ -307,7 +307,7 @@ class FocusTracker<T extends Widget> implements IDisposable {
   }
 
   private _counter = 0;
-  private _currentWidget: T = null;
+  private _currentWidget: T | null = null;
   private _widgets = new Vector<T>();
   private _numbers = new Map<T, number>();
   private _nodes = new Map<HTMLElement, T>();
@@ -331,11 +331,11 @@ namespace FocusTracker {
     /**
      * The old value for the `currentWidget`, or `null`.
      */
-    oldValue: T;
+    oldValue: T | null;
 
     /**
      * The new value for the `currentWidget`, or `null`.
      */
-    newValue: T;
+    newValue: T | null;
   }
 }

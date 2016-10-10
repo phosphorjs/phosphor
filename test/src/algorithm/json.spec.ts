@@ -24,7 +24,7 @@ describe('algorithm/json', () => {
     });
 
     it('should return `false` if the value is not a primitive or `null`', () => {
-      expect(isPrimitive(void 0)).to.be(false);
+      expect(isPrimitive(void 0 as any)).to.be(false);
       expect(isPrimitive([])).to.be(false);
       expect(isPrimitive({})).to.be(false);
     });
@@ -65,7 +65,7 @@ describe('algorithm/json', () => {
       expect(deepEqual({a: []}, {a: [1]})).to.be(false);
       expect(deepEqual([1], [1, 2])).to.be(false);
       expect(deepEqual(null, [1, 2])).to.be(false);
-      expect(deepEqual(void 0, [])).to.be(false);
+      expect(deepEqual(void 0 as any, [])).to.be(false);
       expect(deepEqual([1], {})).to.be(false);
       expect(deepEqual([1], [2])).to.be(false);
       expect(deepEqual({}, { a: 1 })).to.be(false);

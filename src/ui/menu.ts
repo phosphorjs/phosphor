@@ -162,9 +162,10 @@ class Menu extends Widget {
     this.close();
     this._items.clear();
     this._nodes.clear();
-    this._keymap = null;
-    this._commands = null;
-    this._renderer = null;
+    // Do not type check these on disposed objects:
+    this._keymap = null!;
+    this._commands = null!;
+    this._renderer = null!;
     super.dispose();
   }
 
@@ -202,7 +203,7 @@ class Menu extends Widget {
    *
    * This is a read-only property.
    */
-  get parentMenu(): Menu {
+  get parentMenu(): Menu | null {
     return this._parentMenu;
   }
 
@@ -214,7 +215,7 @@ class Menu extends Widget {
    *
    * This is a read-only property.
    */
-  get childMenu(): Menu {
+  get childMenu(): Menu | null {
     return this._childMenu;
   }
 
@@ -306,7 +307,7 @@ class Menu extends Widget {
    * #### Notes
    * This will be `null` if no menu item is active.
    */
-  get activeItem(): Menu.IItem {
+  get activeItem(): Menu.IItem | null {
     let i = this._activeIndex;
     return i !== -1 ? this._items.at(i) : null;
   }
@@ -317,7 +318,7 @@ class Menu extends Widget {
    * #### Notes
    * If the item cannot be activated, the item will be set to `null`.
    */
-  set activeItem(value: Menu.IItem) {
+  set activeItem(value: Menu.IItem | null) {
     this.activeIndex = indexOf(this._items, value);
   }
 
@@ -539,7 +540,7 @@ class Menu extends Widget {
    * @returns The item occupying the index, or `null` if the index
    *   is out of range.
    */
-  removeItemAt(index: number): Menu.IItem {
+  removeItemAt(index: number): Menu.IItem | null {
     // Bail if the index is out of range.
     let i = Math.floor(index);
     if (i < 0 || i >= this._items.length) {
@@ -555,8 +556,8 @@ class Menu extends Widget {
     this.activeIndex = -1;
 
     // Remove the node and items from the vectors.
-    let node = this._nodes.removeAt(i);
-    let item = this._items.removeAt(i);
+    let node = this._nodes.removeAt(i)!;
+    let item = this._items.removeAt(i)!;
 
     // Remove the node from the content node.
     this.contentNode.removeChild(node);
@@ -826,7 +827,7 @@ class Menu extends Widget {
     // The following code activates an item by mnemonic.
 
     // Get the pressed key character for the current layout.
-    let key = this._keymap.layout.keyForKeydownEvent(event);
+    let key = this._keymap.layout!.keyForKeydownEvent(event);
 
     // Bail if the key is not valid for the current layout.
     if (!key) {
@@ -1119,8 +1120,8 @@ class Menu extends Widget {
   private _openTimerID = 0;
   private _closeTimerID = 0;
   private _activeIndex = -1;
-  private _childMenu: Menu = null;
-  private _parentMenu: Menu = null;
+  private _childMenu: Menu | null = null;
+  private _parentMenu: Menu | null = null;
   private _renderer: Menu.IRenderer;
   private _commands: CommandRegistry;
   private _items = new Vector<Menu.IItem>();
@@ -1191,14 +1192,14 @@ namespace Menu {
      *
      * The default value is `null`.
      */
-    args?: JSONObject;
+    args?: JSONObject | null;
 
     /**
      * The menu for a `'submenu'` type item.
      *
      * The default value is `null`.
      */
-    menu?: Menu;
+    menu?: Menu | null;
   }
 
   /**
@@ -1222,12 +1223,12 @@ namespace Menu {
     /**
      * The arguments for the command.
      */
-    args: JSONObject;
+    args: JSONObject | null;
 
     /**
      * The menu for a `'submenu'` type item.
      */
-    menu: Menu;
+    menu: Menu | null;
 
     /**
      * The display label for the menu item.
@@ -1272,7 +1273,7 @@ namespace Menu {
     /**
      * The key binding for the menu item.
      */
-    keyBinding: Keymap.IBinding;
+    keyBinding: Keymap.IBinding | null;
   }
 
   /**
@@ -1467,7 +1468,7 @@ namespace Menu {
      *
      * @returns The formatted shortcut text for display.
      */
-    formatShortcut(binding: Keymap.IBinding): string {
+    formatShortcut(binding: Keymap.IBinding | null): string {
       return binding ? binding.keys.map(Keymap.formatKeystroke).join(' ') : '';
     }
   }
@@ -1509,7 +1510,7 @@ namespace Private {
    * Hit test a menu hierarchy starting at the given root.
    */
   export
-  function hitTestMenus(menu: Menu, x: number, y: number): boolean {
+  function hitTestMenus(menu: Menu | null, x: number, y: number): boolean {
     for (; menu; menu = menu.childMenu) {
       if (hitTest(menu.node, x, y)) return true;
     }
@@ -1730,14 +1731,14 @@ namespace Private {
     /**
      * The arguments for the command.
      */
-    get args(): JSONObject {
+    get args(): JSONObject | null {
       return this._args;
     }
 
     /**
      * The menu for a `'submenu'` type item.
      */
-    get menu(): Menu {
+    get menu(): Menu | null {
       return this._menu;
     }
 
@@ -1845,7 +1846,7 @@ namespace Private {
     /**
      * The key binding for the menu item.
      */
-    get keyBinding(): Keymap.IBinding {
+    get keyBinding(): Keymap.IBinding | null {
       if (this._type === 'command') {
         return this._keymap.findBinding(this._command, this._args);
       }
@@ -1856,7 +1857,7 @@ namespace Private {
     private _keymap: Keymap;
     private _type: Menu.ItemType;
     private _command: string;
-    private _args: JSONObject;
-    private _menu: Menu;
+    private _args: JSONObject | null;
+    private _menu: Menu | null;
   }
 }

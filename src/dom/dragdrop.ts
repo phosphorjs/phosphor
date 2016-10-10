@@ -217,7 +217,7 @@ class Drag implements IDisposable {
    * #### Notes
    * This is a read-only property.
    */
-  get dragImage(): HTMLElement {
+  get dragImage(): HTMLElement | null {
     return this._dragImage;
   }
 
@@ -566,7 +566,7 @@ class Drag implements IDisposable {
     // Clear the internal drag state.
     this._disposed = true;
     this._source = null;
-    this._mimeData = null;
+    this._mimeData = null!; // Do not null type check
     this._dragImage = null;
     this._dropAction = 'none';
     this._proposedAction = 'none';
@@ -583,16 +583,16 @@ class Drag implements IDisposable {
 
   private _disposed = false;
   private _source: any = null;
-  private _mimeData: MimeData = null;
-  private _dragImage: HTMLElement = null;
+  private _mimeData: MimeData;
+  private _dragImage: HTMLElement | null = null;
   private _dropAction: DropAction = 'none';
   private _proposedAction: DropAction = 'copy';
   private _supportedActions: SupportedActions = 'all';
-  private _override: IDisposable = null;
-  private _currentTarget: Element = null;
-  private _currentElement: Element = null;
-  private _promise: Promise<DropAction> = null;
-  private _resolve: (value: DropAction) => void = null;
+  private _override: IDisposable | null = null;
+  private _currentTarget: Element | null = null;
+  private _currentElement: Element | null = null;
+  private _promise: Promise<DropAction> | null = null;
+  private _resolve: ((value: DropAction) => void) | null = null;
 }
 
 
@@ -703,7 +703,7 @@ namespace Private {
   function createMouseEvent(type: string, clientX: number, clientY: number): MouseEvent {
     let event = document.createEvent('MouseEvent');
     event.initMouseEvent(type, true, true, window, 0, 0, 0,
-      clientX, clientY, false, false, false, false, 0, null);
+      clientX, clientY, false, false, false, false, 0, null!);
     return event;
   }
 
@@ -728,7 +728,7 @@ namespace Private {
    * https://html.spec.whatwg.org/multipage/interaction.html#drag-and-drop-processing-model
    */
   export
-  function dispatchDragEnter(drag: Drag, currElem: Element, currTarget: Element, event: MouseEvent): Element {
+  function dispatchDragEnter(drag: Drag, currElem: Element | null, currTarget: Element | null, event: MouseEvent): Element | null {
     // If the current element is null, return null as the new target.
     if (!currElem) {
       return null;
@@ -774,7 +774,7 @@ namespace Private {
    * https://html.spec.whatwg.org/multipage/interaction.html#drag-and-drop-processing-model
    */
   export
-  function dispatchDragLeave(drag: Drag, prevTarget: Element, currTarget: Element, event: MouseEvent): void {
+  function dispatchDragLeave(drag: Drag, prevTarget: Element | null, currTarget: Element | null, event: MouseEvent): void {
     // If the previous target is null, do nothing.
     if (!prevTarget) {
       return;
@@ -802,7 +802,7 @@ namespace Private {
    * https://html.spec.whatwg.org/multipage/interaction.html#drag-and-drop-processing-model
    */
   export
-  function dispatchDragOver(drag: Drag, currTarget: Element, event: MouseEvent): DropAction {
+  function dispatchDragOver(drag: Drag, currTarget: Element | null, event: MouseEvent): DropAction {
     // If there is no current target, the drop action is none.
     if (!currTarget) {
       return 'none';
@@ -838,7 +838,7 @@ namespace Private {
    * https://html.spec.whatwg.org/multipage/interaction.html#drag-and-drop-processing-model
    */
   export
-  function dispatchDrop(drag: Drag, currTarget: Element, event: MouseEvent): DropAction {
+  function dispatchDrop(drag: Drag, currTarget: Element | null, event: MouseEvent): DropAction {
     // If there is no current target, the drop action is none.
     if (!currTarget) {
       return 'none';
@@ -894,7 +894,7 @@ namespace Private {
    *
    * @returns A new object which implements `IDragEvent`.
    */
-  function createDragEvent(type: string, drag: Drag, event: MouseEvent, related: Element): IDragEvent {
+  function createDragEvent(type: string, drag: Drag, event: MouseEvent, related: Element | null): IDragEvent {
     // Create a new mouse event and cast to a custom drag event.
     let dragEvent = document.createEvent('MouseEvent') as IDragEvent;
 
@@ -905,12 +905,12 @@ namespace Private {
       event.clientX, event.clientY,
       event.ctrlKey, event.altKey,
       event.shiftKey, event.metaKey,
-      event.button, related
+      event.button, related! // Workaround: Related can be null, but lib.d.ts typings are incorrect
     );
 
     // Add the custom drag event data.
     dragEvent.dropAction = 'none';
-    dragEvent.mimeData = drag.mimeData;
+    dragEvent.mimeData = drag.mimeData!;
     dragEvent.proposedAction = drag.proposedAction;
     dragEvent.supportedActions = drag.supportedActions;
     dragEvent.source = drag.source;

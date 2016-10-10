@@ -39,7 +39,7 @@ const OVERRIDE_CURSOR_CLASS = 'p-mod-override-cursor';
  * ```
  */
 export
-function overrideCursor(cursor: string): IDisposable {
+function overrideCursor(cursor: string | null): IDisposable {
   let id = ++Private.cursorID;
   let body = document.body;
   body.style.cursor = cursor;

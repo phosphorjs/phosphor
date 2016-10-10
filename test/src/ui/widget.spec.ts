@@ -121,7 +121,7 @@ class LogLayout extends Layout {
 
   dispose(): void {
     each(this._widgets, w => w.dispose());
-    this._widgets = null;
+    this._widgets = null!;
     super.dispose();
   }
 
@@ -1689,12 +1689,12 @@ describe('ui/widget', () => {
         let parent = new Widget();
         parent.layout = layout;
         let iter = layout.iter();
-        let child = iter.next();
+        let child = iter.next()!;
         child.hide();
         sendMessage(parent, WidgetMessage.AfterShow);
         expect(layout.methods.indexOf('onAfterShow')).to.not.be(-1);
         expect(child.methods.indexOf('onAfterShow')).to.be(-1);
-        child = iter.next();
+        child = iter.next()!;
         expect(child.methods.indexOf('onAfterShow')).to.not.be(-1);
       });
 
@@ -1715,12 +1715,12 @@ describe('ui/widget', () => {
         let parent = new Widget();
         parent.layout = layout;
         let iter = layout.iter();
-        let child = iter.next();
+        let child = iter.next()!;
         child.hide();
         sendMessage(parent, WidgetMessage.BeforeHide);
         expect(layout.methods.indexOf('onBeforeHide')).to.not.be(-1);
         expect(child.methods.indexOf('onBeforeHide')).to.be(-1);
-        child = iter.next();
+        child = iter.next()!;
         expect(child.methods.indexOf('onBeforeHide')).to.not.be(-1);
       });
 

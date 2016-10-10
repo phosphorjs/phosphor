@@ -137,9 +137,10 @@ class CommandPalette extends Widget {
     this._itemNodes.clear();
     this._headerNodes.clear();
     this._result = null;
-    this._keymap = null;
-    this._commands = null;
-    this._renderer = null;
+    // Do not use null type checking for these:
+    this._keymap = null!;
+    this._commands = null!;
+    this._renderer = null!;
     super.dispose();
   }
 
@@ -262,7 +263,7 @@ class CommandPalette extends Widget {
    * @returns The item occupying the index, or `null` if the index
    *   is out of range.
    */
-  removeItemAt(index: number): CommandPalette.IItem {
+  removeItemAt(index: number): CommandPalette.IItem | null {
     // Bail if the index is out of range.
     let i = Math.floor(index);
     if (i < 0 || i >= this._items.length) {
@@ -270,7 +271,7 @@ class CommandPalette extends Widget {
     }
 
     // Remove the item from the vector.
-    let item = this._items.removeAt(index);
+    let item = this._items.removeAt(index)!;
 
     // Schedule an update of the content.
     if (this.isAttached) this.update();
@@ -683,7 +684,7 @@ class CommandPalette extends Widget {
   private _itemNodes = new Vector<HTMLLIElement>();
   private _headerNodes = new Vector<HTMLLIElement>();
   private _items = new Vector<CommandPalette.IItem>();
-  private _result: Private.ISearchResult = null;
+  private _result: Private.ISearchResult | null = null;
 }
 
 
@@ -730,7 +731,7 @@ namespace CommandPalette {
      *
      * The default value is `null`.
      */
-    args?: JSONObject;
+    args?: JSONObject | null;
 
     /**
      * The category for the item.
@@ -756,7 +757,7 @@ namespace CommandPalette {
     /**
      * The arguments for the command.
      */
-    args: JSONObject;
+    args: JSONObject | null;
 
     /**
      * The category for the command item.
@@ -796,7 +797,7 @@ namespace CommandPalette {
     /**
      * The key binding for the command item.
      */
-    keyBinding: Keymap.IBinding;
+    keyBinding: Keymap.IBinding | null;
   }
 
   /**
@@ -968,7 +969,7 @@ namespace CommandPalette {
      *
      * @returns The formatted shortcut text for display.
      */
-    formatShortcut(binding: Keymap.IBinding): string {
+    formatShortcut(binding: Keymap.IBinding | null): string {
       return binding ? binding.keys.map(Keymap.formatKeystroke).join(' ') : '';
     }
   }
@@ -1048,7 +1049,7 @@ namespace Private {
      *
      * This is `null` for a header part.
      */
-    item: CommandPalette.IItem;
+    item: CommandPalette.IItem | null;
   }
 
   /**
@@ -1168,7 +1169,7 @@ namespace Private {
     /**
      * The arguments for the command.
      */
-    get args(): JSONObject {
+    get args(): JSONObject | null {
       return this._args;
     }
 
@@ -1224,14 +1225,14 @@ namespace Private {
     /**
      * The key binding for the command item.
      */
-    get keyBinding(): Keymap.IBinding {
+    get keyBinding(): Keymap.IBinding | null {
       return this._keymap.findBinding(this._command, this._args);
     }
 
     private _commands: CommandRegistry;
     private _keymap: Keymap;
     private _command: string;
-    private _args: JSONObject;
+    private _args: JSONObject | null;
     private _category: string;
   }
 
@@ -1252,7 +1253,7 @@ namespace Private {
     /**
      * The indices of the matched characters.
      */
-    indices: number[];
+    indices: number[] | null;
   }
 
   /**
@@ -1517,7 +1518,7 @@ namespace Private {
    *
    * @returns The text interpolated with `<mark>` tags as needed.
    */
-  function highlightText(text: string, indices: number[]): string {
+  function highlightText(text: string, indices: number[] | null): string {
     return indices ? StringSearch.highlight(text, indices) : text;
   }
 }

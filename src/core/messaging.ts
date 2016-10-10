@@ -345,7 +345,7 @@ namespace MessageLoop {
     }
 
     // Conflate message if possible.
-    let conflated = some(queue, posted => {
+    let conflated = some(queue, (posted: PostedMessage) => {
       if (posted.handler !== handler) {
         return false;
       }
@@ -387,7 +387,7 @@ namespace MessageLoop {
     // the reference to the hook and remove the node from the list.
     // The node's next reference is *not* cleared so that dispatch
     // may continue when the hook is removed during dispatch.
-    let prev: HookNode = null;
+    let prev: HookNode | null = null;
     let node = hooks.get(handler) || null;
     for (; node !== null; prev = node, node = node.next) {
       if (node.hook === hook) {
@@ -431,17 +431,18 @@ namespace MessageLoop {
   /**
    * A type alias for a posted message pair.
    */
-  type PostedMessage = { handler: IMessageHandler, msg: Message };
+  type PostedMessage = { handler: IMessageHandler | null, msg: Message };
+  type PostedMessageSentinel = { handler: IMessageHandler | null, msg: Message | null};
 
   /**
    * A type alias for a node in a message hook list.
    */
-  type HookNode = { next: HookNode, hook: MessageHook };
+  type HookNode = { next: HookNode, hook: MessageHook | null };
 
   /**
    * The queue of posted message pairs.
    */
-  const queue = new Queue<PostedMessage>();
+  const queue = new Queue<PostedMessage | PostedMessageSentinel>();
 
   /**
    * A mapping of handler to list of installed message hooks.
@@ -533,13 +534,13 @@ namespace MessageLoop {
     // Add a sentinel value to the end of the queue. The queue will
     // only be processed up to the sentinel. Messages posted during
     // this cycle will execute on the next cycle.
-    let sentinel: PostedMessage = { handler: null, msg: null };
+    let sentinel: PostedMessageSentinel = { handler: null, msg: null };
     queue.pushBack(sentinel);
 
     // Enter the message loop.
     while (!queue.isEmpty) {
       // Remove the first posted message in the queue.
-      let posted = queue.popFront();
+      let posted = queue.popFront()!;
 
       // If the value is the sentinel, exit the loop.
       if (posted === sentinel) {
@@ -548,7 +549,7 @@ namespace MessageLoop {
 
       // Dispatch the message if the handler has not been cleared.
       if (posted.handler !== null) {
-        sendMessage(posted.handler, posted.msg);
+        sendMessage(posted.handler, posted.msg!);
       }
     }
   }

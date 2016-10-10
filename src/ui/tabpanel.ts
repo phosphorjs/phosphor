@@ -110,8 +110,9 @@ class TabPanel extends Widget {
    * Dispose of the resources held by the widget.
    */
   dispose(): void {
-    this._tabBar = null;
-    this._stackedPanel = null;
+    // Do not type check these for disposed objects:
+    this._tabBar = null!;
+    this._stackedPanel = null!;
     super.dispose();
   }
 
@@ -154,7 +155,7 @@ class TabPanel extends Widget {
    * #### Notes
    * This will be `null` if there is no selected tab.
    */
-  get currentWidget(): Widget {
+  get currentWidget(): Widget | null {
     let title = this._tabBar.currentTitle;
     return title ? title.owner as Widget : null;
   }
@@ -165,7 +166,7 @@ class TabPanel extends Widget {
    * #### Notes
    * If the widget is not in the panel, it will be set to `null`.
    */
-  set currentWidget(value: Widget) {
+  set currentWidget(value: Widget | null) {
     this._tabBar.currentTitle = value ? value.title : null;
   }
 
@@ -416,7 +417,7 @@ namespace TabPanel {
     /**
      * The previously selected widget.
      */
-    previousWidget: Widget;
+    previousWidget: Widget | null;
 
     /**
      * The currently selected index.
@@ -426,7 +427,7 @@ namespace TabPanel {
     /**
      * The currently selected widget.
      */
-    currentWidget: Widget;
+    currentWidget: Widget | null;
   }
 }
 

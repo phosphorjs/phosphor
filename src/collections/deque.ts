@@ -75,7 +75,7 @@ class Deque<T> implements IIterable<T> {
    * #### Iterator Validity
    * No changes.
    */
-  get front(): T {
+  get front(): T | undefined {
     return this._front ? this._front.value : void 0;
   }
 
@@ -94,7 +94,7 @@ class Deque<T> implements IIterable<T> {
    * #### Iterator Validity
    * No changes.
    */
-  get back(): T {
+  get back(): T | undefined {
     return this._back ? this._back.value : void 0;
   }
 
@@ -133,7 +133,7 @@ class Deque<T> implements IIterable<T> {
       this._back = node;
     } else {
       node.next = this._front;
-      this._front.prev = node;
+      this._front!.prev = node;
       this._front = node;
     }
     return ++this._length;
@@ -159,7 +159,7 @@ class Deque<T> implements IIterable<T> {
       this._back = node;
     } else {
       node.prev = this._back;
-      this._back.next = node;
+      this._back!.next = node;
       this._back = node;
     }
     return ++this._length;
@@ -177,17 +177,17 @@ class Deque<T> implements IIterable<T> {
    * #### Iterator Validity
    * Iterators pointing at the removed value are invalidated.
    */
-  popFront(): T {
+  popFront(): T | undefined {
     if (this._length === 0) {
       return void 0;
     }
-    let node = this._front;
+    let node = this._front!;
     if (this._length === 1) {
       this._front = null;
       this._back = null;
     } else {
       this._front = node.next;
-      this._front.prev = null;
+      this._front!.prev = null;
       node.next = null;
     }
     this._length--;
@@ -206,17 +206,17 @@ class Deque<T> implements IIterable<T> {
    * #### Iterator Validity
    * Iterators pointing at the removed value are invalidated.
    */
-  popBack(): T {
+  popBack(): T | undefined {
     if (this._length === 0) {
       return void 0;
     }
-    let node = this._back;
+    let node = this._back!;
     if (this._length === 1) {
       this._front = null;
       this._back = null;
     } else {
       this._back = node.prev;
-      this._back.next = null;
+      this._back!.next = null;
       node.prev = null;
     }
     this._length--;
@@ -270,8 +270,8 @@ class Deque<T> implements IIterable<T> {
   }
 
   private _length = 0;
-  private _front: DequeNode<T> = null;
-  private _back: DequeNode<T> = null;
+  private _front: DequeNode<T> | null = null;
+  private _back: DequeNode<T> | null = null;
 }
 
 
@@ -284,7 +284,7 @@ class DequeIterator<T> implements IIterator<T> {
    *
    * @param node - The node at the front of range.
    */
-  constructor(node: DequeNode<T>) {
+  constructor(node: DequeNode<T> | null) {
     this._node = node;
   }
 
@@ -312,7 +312,7 @@ class DequeIterator<T> implements IIterator<T> {
    * @returns The next value from the deque, or `undefined` if the
    *   iterator is exhausted.
    */
-  next(): T {
+  next(): T | undefined {
     if (!this._node) {
       return void 0;
     }
@@ -321,7 +321,7 @@ class DequeIterator<T> implements IIterator<T> {
     return value;
   }
 
-  private _node: DequeNode<T>;
+  private _node: DequeNode<T> | null;
 }
 
 
@@ -332,12 +332,12 @@ class DequeNode<T> {
   /**
    * The next node the deque.
    */
-  next: DequeNode<T> = null;
+  next: DequeNode<T> | null = null;
 
   /**
    * The previous node in the deque.
    */
-  prev: DequeNode<T> = null;
+  prev: DequeNode<T> | null = null;
 
   /**
    * The value for the node.

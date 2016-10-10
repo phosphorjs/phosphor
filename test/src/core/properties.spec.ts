@@ -418,8 +418,8 @@ describe('core/properties', () => {
       });
 
       it('should use the default value as old value if value is not yet set', () => {
-        let oldval: number;
-        let newval: number;
+        let oldval: number | undefined;
+        let newval: number | undefined;
         let coerce = (m: Model, v: number) => Math.max(20, v);
         let changed = (m: Model, o: number, n: number) => { oldval = o; newval = n; };
         let p = new AttachedProperty<Model, number>({ name: 'p', value: 0, coerce, changed });
@@ -430,8 +430,8 @@ describe('core/properties', () => {
       });
 
       it('should use the default factory for old value if value is not yet set', () => {
-        let oldval: number;
-        let newval: number;
+        let oldval: number | undefined;
+        let newval: number | undefined;
         let create = () => 12;
         let coerce = (m: Model, v: number) => Math.max(20, v);
         let changed = (m: Model, o: number, n: number) => { oldval = o; newval = n; };
@@ -443,8 +443,8 @@ describe('core/properties', () => {
       });
 
       it('should prefer the default factory over default value', () => {
-        let oldval: number;
-        let newval: number;
+        let oldval: number | undefined;
+        let newval: number | undefined;
         let create = () => 12;
         let coerce = (m: Model, v: number) => Math.max(20, v);
         let changed = (m: Model, o: number, n: number) => { oldval = o; newval = n; };

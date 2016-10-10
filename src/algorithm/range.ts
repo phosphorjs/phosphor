@@ -186,7 +186,7 @@ class RangeIterator implements IIterator<number> {
    * @returns The next value from the range, or `undefined` if the
    *   iterator is exhausted.
    */
-  next(): number {
+  next(): number | undefined {
     if (this._index >= this._length) {
       return void 0;
     }

@@ -765,7 +765,7 @@ export function h(tag: string, attrs?: IElementAttrs, ...children: h.FactoryChil
 export function h(tag: string, first?: any): VNode {
   // Setup the variables to hold the parsed data.
   let attrs: any;
-  let children: any[];
+  let children: any[] | undefined;
 
   // Parse the first variadic argument.
   if (first) {
@@ -815,7 +815,7 @@ export function h(tag: string, first?: any): VNode {
  */
 export
 namespace h {
-  export type FactoryChild = (string | VNode) | Array<string | VNode>;
+  export type FactoryChild = (string | VNode | null) | Array<string | VNode | null>;
   export type Factory<T extends IVNodeAttrs> = (attrs?: T, ...children: FactoryChild[]) => VNode;
   export const a: Factory<IAnchorAttrs> = h.bind(void 0, 'a');
   export const abbr: Factory<IElementAttrs> = h.bind(void 0, 'abbr');
@@ -955,7 +955,7 @@ function realize(content: VNode): HTMLElement {
  * result in undefined rendering behavior.
  */
 export
-function render(content: VNode | VNode[], host: HTMLElement): void {
+function render(content: VNode | VNode[] | null, host: HTMLElement): void {
   Private.renderImpl(content, host);
 }
 
@@ -994,7 +994,7 @@ namespace Private {
    * The internal `render` entry point.
    */
   export
-  function renderImpl(content: VNode | VNode[], host: HTMLElement): void {
+  function renderImpl(content: VNode | VNode[] | null, host: HTMLElement): void {
     let oldContent = hostMap.get(host) || emptyArray;
     let newContent = asVNodeArray(content);
     hostMap.set(host, newContent);
@@ -1021,7 +1021,7 @@ namespace Private {
    *
    * Null content will be coerced to an empty array.
    */
-  function asVNodeArray(content: VNode | VNode[]): VNode[] {
+  function asVNodeArray(content: VNode | VNode[] | null): VNode[] {
     if (content instanceof Array) {
       return content as VNode[];
     }

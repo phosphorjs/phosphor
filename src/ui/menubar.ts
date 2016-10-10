@@ -116,8 +116,9 @@ class MenuBar extends Widget {
     this._closeChildMenu();
     this._menus.clear();
     this._nodes.clear();
-    this._keymap = null;
-    this._renderer = null;
+    // Do not ype check these for disposed objects
+    this._keymap = null!;
+    this._renderer = null!;
     super.dispose();
   }
 
@@ -173,7 +174,7 @@ class MenuBar extends Widget {
    *
    * This is a read-only property.
    */
-  get childMenu(): Menu {
+  get childMenu(): Menu | null {
     return this._childMenu;
   }
 
@@ -183,7 +184,7 @@ class MenuBar extends Widget {
    * #### Notes
    * This will be `null` if no menu is active.
    */
-  get activeMenu(): Menu {
+  get activeMenu(): Menu | null {
     let i = this._activeIndex;
     return i !== -1 ? this._menus.at(i): null;
   }
@@ -194,7 +195,7 @@ class MenuBar extends Widget {
    * #### Notes
    * If the menu does not exist, the menu will be set to `null`.
    */
-  set activeMenu(value: Menu) {
+  set activeMenu(value: Menu | null) {
     this.activeIndex = indexOf(this._menus, value);
   }
 
@@ -367,7 +368,7 @@ class MenuBar extends Widget {
    * @returns The menu occupying the index, or `null` if the index
    *   is out of range.
    */
-  removeMenuAt(index: number): Menu {
+  removeMenuAt(index: number): Menu | null {
     // Bail if the index is out of range.
     let i = Math.floor(index);
     if (i < 0 || i >= this._menus.length) {
@@ -378,8 +379,8 @@ class MenuBar extends Widget {
     this._closeChildMenu();
 
     // Remove the node and menu from the vectors.
-    let node = this._nodes.removeAt(i);
-    let menu = this._menus.removeAt(i);
+    let node = this._nodes.removeAt(i)!;
+    let menu = this._menus.removeAt(i)!;
 
     // Disconnect from the menu signals.
     menu.aboutToClose.disconnect(this._onMenuAboutToClose, this);
@@ -556,7 +557,8 @@ class MenuBar extends Widget {
     // The following code activates an item by mnemonic.
 
     // Get the pressed key character for the current layout.
-    let key = this._keymap.layout.keyForKeydownEvent(event);
+
+    let key = this._keymap.layout!.keyForKeydownEvent(event);
 
     // Bail if the key is not valid for the current layout.
     if (!key) {
@@ -822,7 +824,7 @@ class MenuBar extends Widget {
 
   private _keymap: Keymap;
   private _activeIndex = -1;
-  private _childMenu: Menu = null;
+  private _childMenu: Menu | null = null;
   private _menus = new Vector<Menu>();
   private _nodes = new Vector<HTMLLIElement>();
   private _renderer: MenuBar.IRenderer;

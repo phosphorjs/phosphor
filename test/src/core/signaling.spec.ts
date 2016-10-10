@@ -44,7 +44,7 @@ class TestHandler {
 
   twoValue = 0;
 
-  twoSender: TestObject = null;
+  twoSender: TestObject | null = null;
 
   onOne(): void {
     this.oneCount++;
@@ -283,7 +283,7 @@ describe('core/signaling', () => {
 
     it('should define a read-only property', () => {
       let obj = new TestObject();
-      expect(() => { obj.one = null; }).to.throwError();
+      expect(() => { obj.one = null!; }).to.throwError();
     });
 
   });

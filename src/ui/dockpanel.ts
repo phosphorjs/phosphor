@@ -225,7 +225,7 @@ class DockPanel extends Widget {
    *
    * This is a read-only property.
    */
-  get currentWidget(): Widget {
+  get currentWidget(): Widget | null {
     return this._tracker.currentWidget;
   }
 
@@ -245,7 +245,7 @@ class DockPanel extends Widget {
     }
 
     // Ensure the widget is the current widget.
-    (widget.parent.parent as TabPanel).currentWidget = widget;
+    (widget.parent!.parent as TabPanel).currentWidget = widget;
 
     // Activate the widget.
     widget.activate();
@@ -261,7 +261,7 @@ class DockPanel extends Widget {
   addWidget(widget: Widget, options: DockPanel.IAddOptions = {}): void {
     // Setup the option defaults.
     let activate = true;
-    let ref: Widget = null;
+    let ref: Widget | null = null;
     let mode: DockPanel.Mode = 'tab-after';
 
     // Extract the options.
@@ -411,40 +411,42 @@ class DockPanel extends Widget {
       bottom = box.paddingBottom;
       break;
     case 'panel-top':
-      cr = target.panel.node.getBoundingClientRect();
+      cr = target.panel!.node.getBoundingClientRect();
       top = cr.top - rect.top - box.borderTop;
       left = cr.left - rect.left - box.borderLeft;
       right = rect.right - cr.right - box.borderRight;
       bottom = rect.bottom - cr.bottom + cr.height / 2 - box.borderBottom;
       break;
     case 'panel-left':
-      cr = target.panel.node.getBoundingClientRect();
+      cr = target.panel!.node.getBoundingClientRect();
       top = cr.top - rect.top - box.borderTop;
       left = cr.left - rect.left - box.borderLeft;
       right = rect.right - cr.right + cr.width / 2 - box.borderRight;
       bottom = rect.bottom - cr.bottom - box.borderBottom;
       break;
     case 'panel-right':
-      cr = target.panel.node.getBoundingClientRect();
+      cr = target.panel!.node.getBoundingClientRect();
       top = cr.top - rect.top - box.borderTop;
       left = cr.left - rect.left + cr.width / 2 - box.borderLeft;
       right = rect.right - cr.right - box.borderRight;
       bottom = rect.bottom - cr.bottom - box.borderBottom;
       break;
     case 'panel-bottom':
-      cr = target.panel.node.getBoundingClientRect();
+      cr = target.panel!.node.getBoundingClientRect();
       top = cr.top - rect.top + cr.height / 2 - box.borderTop;
       left = cr.left - rect.left - box.borderLeft;
       right = rect.right - cr.right - box.borderRight;
       bottom = rect.bottom - cr.bottom - box.borderBottom;
       break;
     case 'panel-center':
-      cr = target.panel.node.getBoundingClientRect();
+      cr = target.panel!.node.getBoundingClientRect();
       top = cr.top - rect.top - box.borderTop;
       left = cr.left - rect.left - box.borderLeft;
       right = rect.right - cr.right - box.borderRight;
       bottom = rect.bottom - cr.bottom - box.borderBottom;
       break;
+    default:
+      throw 'Invalid value for target zone: "' + target.zone + '"';
     }
 
     // Derive the width and height from the other dimensions.
@@ -637,7 +639,7 @@ class DockPanel extends Widget {
     // Otherwise, it's a panel drop, and that requires more checks.
 
     // Fetch the children of the target panel.
-    let children = target.panel.widgets;
+    let children = target.panel!.widgets;
 
     // Do nothing if the widget is dropped as a tab on its own panel.
     if (target.zone === 'panel-center' && indexOf(children, widget) !== -1) {
@@ -681,7 +683,7 @@ class DockPanel extends Widget {
    * The target widget should have no parent, and the reference widget
    * should either be null or a widget contained in the dock panel.
    */
-  private _insertWidget(widget: Widget, mode: DockPanel.Mode, ref: Widget): void {
+  private _insertWidget(widget: Widget, mode: DockPanel.Mode, ref: Widget | null): void {
     // Determine whether the insert is before or after the ref.
     let after = (
       mode === 'tab-after' ||
@@ -692,7 +694,7 @@ class DockPanel extends Widget {
     // Handle the simple case of adding to a tab panel.
     if (mode === 'tab-before' || mode === 'tab-after') {
       if (ref) {
-        let tabPanel = ref.parent.parent as TabPanel;
+        let tabPanel = ref.parent!.parent as TabPanel;
         let index = indexOf(tabPanel.widgets, ref) + (after ? 1 : 0);
         tabPanel.insertWidget(index, widget);
       } else {
@@ -733,7 +735,7 @@ class DockPanel extends Widget {
     }
 
     // Lookup the tab panel for the ref widget.
-    let refTabPanel = ref.parent.parent as TabPanel;
+    let refTabPanel = ref.parent!.parent as TabPanel;
 
     // If the ref tab panel is the root, split the root.
     if (this._root === refTabPanel) {
@@ -838,7 +840,7 @@ class DockPanel extends Widget {
     // Otherwise, use the tab panel of the current widget if possible.
     let current = this._tracker.currentWidget;
     if (current) {
-      return current.parent.parent as TabPanel;
+      return current.parent!.parent as TabPanel;
     }
 
     // Otherwise, fallback on using the top-left tab panel.
@@ -1042,13 +1044,13 @@ class DockPanel extends Widget {
   }
 
   private _spacing: number;
-  private _drag: Drag = null;
+  private _drag: Drag | null = null;
   private _overlay: DockPanel.IOverlay;
   private _widgets = new Vector<Widget>();
   private _tabPanels = new Vector<TabPanel>();
   private _splitPanels = new Vector<SplitPanel>();
   private _tracker = new FocusTracker<Widget>();
-  private _root: SplitPanel | TabPanel = null;
+  private _root: SplitPanel | TabPanel | null = null;
 }
 
 
@@ -1069,12 +1071,12 @@ namespace DockPanel {
     /**
      * The old value for the `currentWidget`, or `null`.
      */
-    oldValue: Widget;
+    oldValue: Widget | null;
 
     /**
      * The new value for the `currentWidget`, or `null`.
      */
-    newValue: Widget;
+    newValue: Widget | null;
   }
 
   /**
@@ -1114,7 +1116,7 @@ namespace DockPanel {
      *
      * The default is `null`.
      */
-    ref?: Widget;
+    ref?: Widget | null;
 
     /**
      * Whether to activate the new widget.
@@ -1272,7 +1274,7 @@ namespace DockPanel {
      *
      * This will be `null` if the dock zone is not a panel zone.
      */
-    panel: TabPanel;
+    panel: TabPanel | null;
   }
 
   /**

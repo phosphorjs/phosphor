@@ -157,7 +157,7 @@ class TabBar extends Widget {
   dispose(): void {
     this._releaseMouse();
     this._titles.clear();
-    this._renderer = null;
+    this._renderer = null!;  // Do not type check null
     this._previousTitle = null;
     super.dispose();
   }
@@ -237,7 +237,7 @@ class TabBar extends Widget {
    * #### Notes
    * This will be `null` if no tab is selected.
    */
-  get currentTitle(): Title {
+  get currentTitle(): Title | null {
     let i = this._currentIndex;
     return i !== -1 ? this._titles.at(i) : null;
   }
@@ -248,7 +248,7 @@ class TabBar extends Widget {
    * #### Notes
    * If the title does not exist, the title will be set to `null`.
    */
-  set currentTitle(value: Title) {
+  set currentTitle(value: Title | null) {
     this.currentIndex = indexOf(this._titles, value);
   }
 
@@ -518,7 +518,7 @@ class TabBar extends Widget {
    * @returns The title occupying the index, or `null` if the index
    *   is out of range.
    */
-  removeTabAt(index: number): Title {
+  removeTabAt(index: number): Title | null {
     // Bail if the index is out of range.
     let i = Math.floor(index);
     if (i < 0 || i >= this._titles.length) {
@@ -529,7 +529,7 @@ class TabBar extends Widget {
     this._releaseMouse();
 
     // Remove the title from the vector.
-    let title = this._titles.removeAt(i);
+    let title = this._titles.removeAt(i)!;
 
     // Disconnect from the title changed signal.
     title.changed.disconnect(this._onTitleChanged, this);
@@ -1105,10 +1105,10 @@ class TabBar extends Widget {
   private _tabsMovable: boolean;
   private _allowDeselect: boolean;
   private _renderer: TabBar.IRenderer;
-  private _previousTitle: Title = null;
+  private _previousTitle: Title | null = null;
   private _titles = new Vector<Title>();
   private _orientation: TabBar.Orientation;
-  private _dragData: Private.DragData = null;
+  private _dragData: Private.DragData | null = null;
   private _insertBehavior: TabBar.InsertBehavior;
   private _removeBehavior: TabBar.RemoveBehavior;
 }
@@ -1254,7 +1254,7 @@ namespace TabBar {
     /**
      * The previously selected title.
      */
-    previousTitle: Title;
+    previousTitle: Title | null;
 
     /**
      * The currently selected index.
@@ -1264,7 +1264,7 @@ namespace TabBar {
     /**
      * The currently selected title.
      */
-    currentTitle: Title;
+    currentTitle: Title | null;
   }
 
   /**
@@ -1540,7 +1540,7 @@ namespace Private {
     /**
      * The tab node being dragged.
      */
-    tab: HTMLElement = null;
+    tab: HTMLElement;
 
     /**
      * The index of the tab being dragged.
@@ -1570,7 +1570,7 @@ namespace Private {
     /**
      * The array of tab layout objects snapped at drag start.
      */
-    tabLayout: ITabLayout[] = null;
+    tabLayout: ITabLayout[];
 
     /**
      * The mouse press client X position.
@@ -1585,12 +1585,12 @@ namespace Private {
     /**
      * The bounding client rect of the tab bar content node.
      */
-    contentRect: ClientRect = null;
+    contentRect: ClientRect;
 
     /**
      * The disposable to clean up the cursor override.
      */
-    override: IDisposable = null;
+    override: IDisposable;
 
     /**
      * Whether the drag is currently active.
@@ -1643,7 +1643,7 @@ namespace Private {
   export
   function parseTransitionDuration(tab: HTMLElement): number {
     let style = window.getComputedStyle(tab);
-    return 1000 * (parseFloat(style.transitionDuration) || 0);
+    return 1000 * (parseFloat(style.transitionDuration!) || 0);
   }
 
   /**
@@ -1658,7 +1658,7 @@ namespace Private {
         let pos = node.offsetLeft;
         let size = node.offsetWidth;
         let cstyle = window.getComputedStyle(node);
-        let margin = parseInt(cstyle.marginLeft, 10) || 0;
+        let margin = parseInt(cstyle.marginLeft!, 10) || 0;
         layout[i] = { margin, pos, size };
       }
     } else {
@@ -1667,7 +1667,7 @@ namespace Private {
         let pos = node.offsetTop;
         let size = node.offsetHeight;
         let cstyle = window.getComputedStyle(node);
-        let margin = parseInt(cstyle.marginTop, 10) || 0;
+        let margin = parseInt(cstyle.marginTop!, 10) || 0;
         layout[i] = { margin, pos, size };
       }
     }

@@ -135,8 +135,8 @@ class AttachedProperty<T, U> {
    * If the value has not yet been set, the default value will be
    * computed and assigned as the current value of the property.
    */
-  get(owner: T): U {
-    let value: U;
+  get(owner: T): U | undefined {
+    let value: U | undefined;
     let map = ensureMap(owner);
     if (this._pid in map) {
       value = map[this._pid];
@@ -157,8 +157,8 @@ class AttachedProperty<T, U> {
    * If the value has not yet been set, the default value will be
    * computed and used as the previous value for the comparison.
    */
-  set(owner: T, value: U): void {
-    let oldValue: U;
+  set(owner: T, value: U | undefined): void {
+    let oldValue: U | undefined;
     let map = ensureMap(owner);
     if (this._pid in map) {
       oldValue = map[this._pid];
@@ -179,7 +179,7 @@ class AttachedProperty<T, U> {
    * computed and used as the previous value for the comparison.
    */
   coerce(owner: T): void {
-    let oldValue: U;
+    let oldValue: U | undefined;
     let map = ensureMap(owner);
     if (this._pid in map) {
       oldValue = map[this._pid];
@@ -193,7 +193,7 @@ class AttachedProperty<T, U> {
   /**
    * Get or create the default value for the given owner.
    */
-  private _createValue(owner: T): U {
+  private _createValue(owner: T): U | undefined {
     let create = this._create;
     return create ? create(owner) : this._value;
   }
@@ -201,7 +201,7 @@ class AttachedProperty<T, U> {
   /**
    * Coerce the value for the given owner.
    */
-  private _coerceValue(owner: T, value: U): U {
+  private _coerceValue(owner: T, value: U | undefined): U | undefined {
     let coerce = this._coerce;
     return coerce ? coerce(owner, value) : value;
   }
@@ -209,7 +209,7 @@ class AttachedProperty<T, U> {
   /**
    * Compare the old value and new value for equality.
    */
-  private _compareValue(oldValue: U, newValue: U): boolean {
+  private _compareValue(oldValue: U | undefined, newValue: U | undefined): boolean {
     let compare = this._compare;
     return compare ? compare(oldValue, newValue) : oldValue === newValue;
   }
@@ -217,20 +217,20 @@ class AttachedProperty<T, U> {
   /**
    * Run the change notification if the given values are different.
    */
-  private _maybeNotify(owner: T, oldValue: U, newValue: U): void {
+  private _maybeNotify(owner: T, oldValue: U | undefined, newValue: U | undefined): void {
     if (!this._changed || this._compareValue(oldValue, newValue)) {
       return;
     }
     this._changed.call(void 0, owner, oldValue, newValue);
   }
 
-  private _value: U;
+  private _value: U | undefined;
   private _name: string;
   private _pid = nextPID();
-  private _create: (owner: T) => U;
-  private _coerce: (owner: T, value: U) => U;
-  private _compare: (oldValue: U, newValue: U) => boolean;
-  private _changed: (owner: T, oldValue: U, newValue: U) => void;
+  private _create: ((owner: T) => U) | undefined;
+  private _coerce: ((owner: T, value: U | undefined) => U | undefined) | undefined;
+  private _compare: ((oldValue: U | undefined, newValue: U | undefined) => boolean) | undefined;
+  private _changed: ((owner: T, oldValue: U | undefined, newValue: U | undefined) => void) | undefined;
 }
 
 

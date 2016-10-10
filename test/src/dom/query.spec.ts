@@ -85,9 +85,9 @@ describe('dom/query', () => {
 
     afterEach(() => {
       document.body.removeChild(area);
-      area = null;
-      elemA = null;
-      elemB = null;
+      area = null!;
+      elemA = null!;
+      elemB = null!;
     });
 
     it('should do nothing if the element covers the viewport', () => {

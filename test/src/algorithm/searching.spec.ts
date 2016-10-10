@@ -328,9 +328,9 @@ describe('algorithm/searching', () => {
     describe('sumOfSquares()', () => {
 
       it('should score the match using the sum of squared distances', () => {
-        let r1 = StringSearch.sumOfSquares('Foo Bar Baz', 'Faa');
-        let r2 = StringSearch.sumOfSquares('Foo Bar Baz', 'oBz');
-        let r3 = StringSearch.sumOfSquares('Foo Bar Baz', 'r B');
+        let r1 = StringSearch.sumOfSquares('Foo Bar Baz', 'Faa')!;
+        let r2 = StringSearch.sumOfSquares('Foo Bar Baz', 'oBz')!;
+        let r3 = StringSearch.sumOfSquares('Foo Bar Baz', 'r B')!;
         expect(r1.score).to.be(106);
         expect(r1.indices).to.eql([0, 5, 9]);
         expect(r2.score).to.be(117);
@@ -353,9 +353,9 @@ describe('algorithm/searching', () => {
     describe('highlight()', () => {
 
       it('should interpolate text with <mark> tags', () => {
-        let r1 = StringSearch.sumOfSquares('Foo Bar Baz', 'Faa');
-        let r2 = StringSearch.sumOfSquares('Foo Bar Baz', 'oBz');
-        let r3 = StringSearch.sumOfSquares('Foo Bar Baz', 'r B');
+        let r1 = StringSearch.sumOfSquares('Foo Bar Baz', 'Faa')!;
+        let r2 = StringSearch.sumOfSquares('Foo Bar Baz', 'oBz')!;
+        let r3 = StringSearch.sumOfSquares('Foo Bar Baz', 'r B')!;
         let h1 = StringSearch.highlight('Foo Bar Baz', r1.indices);
         let h2 = StringSearch.highlight('Foo Bar Baz', r2.indices);
         let h3 = StringSearch.highlight('Foo Bar Baz', r3.indices);

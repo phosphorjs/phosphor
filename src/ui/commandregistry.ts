@@ -123,7 +123,7 @@ class CommandRegistry {
    * #### Notes
    * Returns an empty string if the command is not registered.
    */
-  label(id: string, args: JSONObject): string {
+  label(id: string, args: JSONObject | null): string {
     let cmd = this._commands[id];
     return cmd ? cmd.label.call(void 0, args) : '';
   }
@@ -140,7 +140,7 @@ class CommandRegistry {
    * #### Notes
    * Returns `-1` if the command is not registered.
    */
-  mnemonic(id: string, args: JSONObject): number {
+  mnemonic(id: string, args: JSONObject | null): number {
     let cmd = this._commands[id];
     return cmd ? cmd.mnemonic.call(void 0, args) : -1;
   }
@@ -157,7 +157,7 @@ class CommandRegistry {
    * #### Notes
    * Returns an empty string if the command is not registered.
    */
-  icon(id: string, args: JSONObject): string {
+  icon(id: string, args: JSONObject | null): string {
     let cmd = this._commands[id];
     return cmd ? cmd.icon.call(void 0, args) : '';
   }
@@ -174,7 +174,7 @@ class CommandRegistry {
    * #### Notes
    * Returns an empty string if the command is not registered.
    */
-  caption(id: string, args: JSONObject): string {
+  caption(id: string, args: JSONObject | null): string {
     let cmd = this._commands[id];
     return cmd ? cmd.caption.call(void 0, args) : '';
   }
@@ -191,7 +191,7 @@ class CommandRegistry {
    * #### Notes
    * Returns an empty string if the command is not registered.
    */
-  usage(id: string, args: JSONObject): string {
+  usage(id: string, args: JSONObject | null): string {
     let cmd = this._commands[id];
     return cmd ? cmd.usage.call(void 0, args) : '';
   }
@@ -208,7 +208,7 @@ class CommandRegistry {
    * #### Notes
    * Returns an empty string if the command is not registered.
    */
-  className(id: string, args: JSONObject): string {
+  className(id: string, args: JSONObject | null): string {
     let cmd = this._commands[id];
     return cmd ? cmd.className.call(void 0, args) : '';
   }
@@ -225,7 +225,7 @@ class CommandRegistry {
    * #### Notes
    * Returns `false` if the command is not registered.
    */
-  isEnabled(id: string, args: JSONObject): boolean {
+  isEnabled(id: string, args: JSONObject | null): boolean {
     let cmd = this._commands[id];
     return cmd ? cmd.isEnabled.call(void 0, args) : false;
   }
@@ -242,7 +242,7 @@ class CommandRegistry {
    * #### Notes
    * Returns `false` if the command is not registered.
    */
-  isToggled(id: string, args: JSONObject): boolean {
+  isToggled(id: string, args: JSONObject | null): boolean {
     let cmd = this._commands[id];
     return cmd ? cmd.isToggled.call(void 0, args) : false;
   }
@@ -259,7 +259,7 @@ class CommandRegistry {
    * #### Notes
    * Returns `false` if the command is not registered.
    */
-  isVisible(id: string, args: JSONObject): boolean {
+  isVisible(id: string, args: JSONObject | null): boolean {
     let cmd = this._commands[id];
     return cmd ? cmd.isVisible.call(void 0, args) : false;
   }
@@ -276,7 +276,7 @@ class CommandRegistry {
    * #### Notes
    * The promise will reject if the command is not registered.
    */
-  execute(id: string, args: JSONObject): Promise<any> {
+  execute(id: string, args: JSONObject | null): Promise<any> {
     // Reject if the command is not registered.
     let cmd = this._commands[id];
     if (!cmd) {
@@ -344,7 +344,7 @@ namespace CommandRegistry {
     /**
      * The arguments object passed to the command.
      */
-    args: JSONObject;
+    args: JSONObject | null;
   }
 
   /**
@@ -355,7 +355,7 @@ namespace CommandRegistry {
    * @returns The command result, a promise to the result, or void.
    */
   export
-  type ExecFunc = (args: JSONObject) => any;
+  type ExecFunc = (args: JSONObject | null) => any;
 
   /**
    * A type alias for a command string function.
@@ -365,7 +365,7 @@ namespace CommandRegistry {
    * @returns The relevant string result.
    */
   export
-  type StringFunc = (args: JSONObject) => string;
+  type StringFunc = (args: JSONObject | null) => string;
 
   /**
    * A type alias for a command number function.
@@ -375,7 +375,7 @@ namespace CommandRegistry {
    * @returns The relevant number result.
    */
   export
-  type NumberFunc = (args: JSONObject) => number;
+  type NumberFunc = (args: JSONObject | null) => number;
 
   /**
    * A type alias for a command boolean function.
@@ -385,7 +385,7 @@ namespace CommandRegistry {
    * @returns The relevant boolean result.
    */
   export
-  type BoolFunc = (args: JSONObject) => boolean;
+  type BoolFunc = (args: JSONObject | null) => boolean;
 
   /**
    * An options object for creating a command.
@@ -590,22 +590,22 @@ namespace Private {
   /**
    * A singleton empty string function.
    */
-  const emptyStringFunc: StringFunc = (args: JSONObject) => '';
+  const emptyStringFunc: StringFunc = (args: JSONObject | null) => '';
 
   /**
    * A singleton `-1` number function
    */
-  const negativeOneFunc: NumberFunc = (args: JSONObject) => -1;
+  const negativeOneFunc: NumberFunc = (args: JSONObject | null) => -1;
 
   /**
    * A singleton true boolean function.
    */
-  const trueFunc: BoolFunc = (args: JSONObject) => true;
+  const trueFunc: BoolFunc = (args: JSONObject | null) => true;
 
   /**
    * A singleton false boolean function.
    */
-  const falseFunc: BoolFunc = (args: JSONObject) => false;
+  const falseFunc: BoolFunc = (args: JSONObject | null) => false;
 
   /**
    * Coerce a value to a string function.
@@ -617,7 +617,7 @@ namespace Private {
     if (typeof value === 'function') {
       return value;
     }
-    return (args: JSONObject) => value as string;
+    return (args: JSONObject | null) => value as string;
   }
 
   /**
@@ -630,6 +630,6 @@ namespace Private {
     if (typeof value === 'function') {
       return value;
     }
-    return (args: JSONObject) => value as number;
+    return (args: JSONObject | null) => value as number;
   }
 }

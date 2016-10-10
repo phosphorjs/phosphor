@@ -88,14 +88,15 @@ interface IBoxSizing {
 export
 function boxSizing(node: HTMLElement): IBoxSizing {
   let cstyle = window.getComputedStyle(node);
-  let bt = parseInt(cstyle.borderTopWidth, 10) || 0;
-  let bl = parseInt(cstyle.borderLeftWidth, 10) || 0;
-  let br = parseInt(cstyle.borderRightWidth, 10) || 0;
-  let bb = parseInt(cstyle.borderBottomWidth, 10) || 0;
-  let pt = parseInt(cstyle.paddingTop, 10) || 0;
-  let pl = parseInt(cstyle.paddingLeft, 10) || 0;
-  let pr = parseInt(cstyle.paddingRight, 10) || 0;
-  let pb = parseInt(cstyle.paddingBottom, 10) || 0;
+  // Override null type check as all values have `|| <number>`:
+  let bt = parseInt(cstyle.borderTopWidth!, 10) || 0;
+  let bl = parseInt(cstyle.borderLeftWidth!, 10) || 0;
+  let br = parseInt(cstyle.borderRightWidth!, 10) || 0;
+  let bb = parseInt(cstyle.borderBottomWidth!, 10) || 0;
+  let pt = parseInt(cstyle.paddingTop!, 10) || 0;
+  let pl = parseInt(cstyle.paddingLeft!, 10) || 0;
+  let pr = parseInt(cstyle.paddingRight!, 10) || 0;
+  let pb = parseInt(cstyle.paddingBottom!, 10) || 0;
   let hs = bl + pl + pr + br;
   let vs = bt + pt + pb + bb;
   return {
@@ -165,9 +166,10 @@ export
 function sizeLimits(node: HTMLElement): ISizeLimits {
   let cstyle = window.getComputedStyle(node);
   return {
-    minWidth: parseInt(cstyle.minWidth, 10) || 0,
-    minHeight: parseInt(cstyle.minHeight, 10) || 0,
-    maxWidth: parseInt(cstyle.maxWidth, 10) || Infinity,
-    maxHeight: parseInt(cstyle.maxHeight, 10) || Infinity
+    // Override null type check as all values have `|| <number>`:
+    minWidth: parseInt(cstyle.minWidth!, 10) || 0,
+    minHeight: parseInt(cstyle.minHeight!, 10) || 0,
+    maxWidth: parseInt(cstyle.maxWidth!, 10) || Infinity,
+    maxHeight: parseInt(cstyle.maxHeight!, 10) || Infinity
   };
 }

@@ -189,7 +189,7 @@ describe('ui/commandpalette', () => {
 
         expect(node).to.be.ok();
         expect(shortcut).to.be.ok();
-        expect(shortcut.textContent.length).to.be.greaterThan(0);
+        expect(shortcut.textContent!.length).to.be.greaterThan(0);
         expect(palette.items.length).to.be(1);
         expect(palette.items.at(0).command).to.be('test');
       });
@@ -398,7 +398,7 @@ describe('ui/commandpalette', () => {
               command: 'test'
             });
             let item = palette.addItem({ command: 'test' });
-            expect(item.keyBinding.keys).to.eql(['Ctrl A']);
+            expect(item.keyBinding!.keys).to.eql(['Ctrl A']);
           });
 
           it('should be read-only', () => {
