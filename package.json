@@ -2,9 +2,7 @@
   "name": "phosphor",
   "version": "0.6.1",
   "description": "The PhosphorJS libary.",
-  "dependencies": {
-    "typescript": "^2.0.3"
-  },
+  "dependencies": {},
   "devDependencies": {
     "coveralls": "^2.11.9",
     "css-loader": "^0.23.1",
@@ -24,7 +22,7 @@
     "simulate-event": "^1.4.0",
     "style-loader": "^0.13.1",
     "typedoc": "^0.5.0",
-    "typescript": "^2.0.2",
+    "typescript": "^2.0.3",
     "watch": "^0.18.0",
     "webpack": "^1.12.14"
   },
