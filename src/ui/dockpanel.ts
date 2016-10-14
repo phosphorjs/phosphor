@@ -359,14 +359,14 @@ class DockLayout extends Layout {
     // Clear the reference to the renderer.
     this._renderer = null;
 
-    // Grab an iterator for the widgets in the layout.
-    let it = this.iter();
+    // Get an iterator over the widgets in the layout.
+    let widgets = this.iter();
 
     // Clear the layout before disposing the widgets.
     this._root = null;
 
-    // Dispose of the widget in the old layout root.
-    each(it, widget => { widget.dispose(); });
+    // Dispose of the widgets contained in the old layout root.
+    each(widgets, widget => { widget.dispose(); });
 
     // Dispose of the base class.
     super.dispose();
@@ -521,7 +521,6 @@ class DockLayout extends Layout {
    * parent widget.
    *
    * This method does *not* modify the widget's `parent`.
-   *
    */
   removeWidget(widget: Widget): void {
     // Remove the widget from its current layout location.
@@ -812,7 +811,7 @@ class DockLayout extends Layout {
    *
    * @param widget - The widget to add to the layout.
    *
-   * @param ref - The reference widet, or `null`.
+   * @param ref - The reference widget, or `null`.
    *
    * @param refNode - The layout node for the ref widget, or `null`.
    *
@@ -850,7 +849,7 @@ class DockLayout extends Layout {
    *
    * @param widget - The widget to add to the layout.
    *
-   * @param ref - The reference widet, or `null`.
+   * @param ref - The reference widget, or `null`.
    *
    * @param refNode - The layout node for the ref widget, or `null`.
    *
