@@ -92,17 +92,19 @@ class DockPanel extends Widget {
     super();
     this.addClass(DOCK_PANEL_CLASS);
 
-    //
-    this._renderer = options.renderer || DockPanel.defaultRenderer;
+    // Extract the inter-panel spacing.
     let spacing = options.spacing !== void 0 ? options.spacing : 4;
 
-    //
-    let renderer: DockPanel.IRenderer = {
+    // Extract the content renderer for the panel.
+    this._renderer = options.renderer || DockPanel.defaultRenderer;
+
+    // Create the delegate renderer for the layout.
+    let renderer: DockLayout.IRenderer = {
       createTabBar: () => this._createTabBar(),
       createHandle: () => this._createHandle()
     };
 
-    //
+    // Setup the dock layout for the panel.
     this.layout = new DockLayout({ renderer, spacing });
 
     // Setup the overlay indicator.
@@ -123,6 +125,9 @@ class DockPanel extends Widget {
    * Dispose of the resources held by the panel.
    */
   dispose(): void {
+    //
+    this._renderer = null;
+
     // // Hide the overlay.
     // this._overlay.hide(0);
 
@@ -165,56 +170,60 @@ class DockPanel extends Widget {
    * @param options - The additional options for adding the widget.
    */
   addWidget(widget: Widget, options: DockPanel.IAddOptions = {}): void {
-    // TODO handle activation
     (this.layout as DockLayout).addWidget(widget, options);
+    // TODO handle activation
   }
 
   /**
-   *
+   * Create a new tab bar for use by the panel.
    */
   private _createTabBar(): TabBar {
-    //
+    // Create the tab bar using the internal renderer.
     let tabBar = this._renderer.createTabBar();
 
-    //
+    // Add the relevant class names to the tab bar.
     tabBar.addClass(TAB_BAR_CLASS);
 
-    //
+    // Setup the signal handlers for the tab bar.
+    tabBar.currentChanged.connect(this._onCurrentChanged, this);
+    tabBar.tabCloseRequested.connect(this._onTabCloseRequested, this);
+
+    // Return the initialized tab bar.
     return tabBar;
   }
 
   /**
-   *
+   * Create a new split handle for use by the panel.
    */
   private _createHandle(): HTMLDivElement {
-    //
+    // Create the handle using the internal renderer.
     let handle = this._renderer.createHandle();
 
-    //
+    // Add the relevant class names to the handle.
     handle.classList.add(HANDLE_CLASS);
 
-    //
+    // Return the initialized handle.
     return handle;
   }
 
   /**
-   *
+   * Handle the `currentChanged` signal from a tab bar in the panel.
    */
   private _onCurrentChanged(sender: TabBar, args: TabBar.ICurrentChangedArgs): void {
-    //
+    // Extract the previous and current title from the args.
     let { previousTitle, currentTitle } = args;
 
-    //
+    // Extract the widgets from the titles.
     let previousWidget = previousTitle ? previousTitle.owner as Widget : null;
     let currentWidget = currentTitle ? currentTitle.owner as Widget : null;
 
-    //
+    // Hide and deactivate the previous widget.
     if (previousWidget) {
       previousWidget.hide();
       previousWidget.deactivate();
     }
 
-    //
+    // Show and activate the current widget.
     if (currentWidget) {
       currentWidget.show();
       currentWidget.activate();
@@ -222,7 +231,7 @@ class DockPanel extends Widget {
   }
 
   /**
-   *
+   * Handle the `tabCloseRequested` signal from a tab bar in the panel.
    */
   private _onTabCloseRequested(sender: TabBar, args: TabBar.ITabCloseRequestedArgs): void {
     (args.title.owner as Widget).close();
