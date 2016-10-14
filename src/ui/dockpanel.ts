@@ -637,6 +637,7 @@ class DockLayout extends Layout {
    */
   protected onChildShown(msg: ChildMessage): void {
     if (IS_IE || IS_EDGE) { // prevent flicker on IE/Edge
+      // TODO not collapsing can cause lots of fitting on IE
       sendMessage(this.parent, WidgetMessage.FitRequest);
     } else {
       this.parent.fit();
@@ -648,6 +649,7 @@ class DockLayout extends Layout {
    */
   protected onChildHidden(msg: ChildMessage): void {
     if (IS_IE || IS_EDGE) { // prevent flicker on IE/Edge
+      // TODO not collapsing can cause lots of fitting on IE
       sendMessage(this.parent, WidgetMessage.FitRequest);
     } else {
       this.parent.fit();
