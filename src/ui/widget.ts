@@ -6,7 +6,7 @@
 | The full license is in the file LICENSE, distributed with this software.
 |----------------------------------------------------------------------------*/
 import {
-  IIterable, IIterator, each, empty, iter
+  IIterable, IIterator, each, empty
 } from '../algorithm/iteration';
 
 import {
@@ -278,7 +278,7 @@ class Widget implements IDisposable, IMessageHandler {
    * If a layout is not installed, the returned iterator will be empty.
    */
   children(): IIterator<Widget> {
-    return iter(this._layout || empty<Widget>());
+    return this._layout ? this._layout.iter() : empty<Widget>();
   }
 
   /**
