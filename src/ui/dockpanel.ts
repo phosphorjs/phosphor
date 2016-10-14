@@ -6,7 +6,7 @@
 | The full license is in the file LICENSE, distributed with this software.
 |----------------------------------------------------------------------------*/
 import {
-  ChainIterator, IIterable, IIterator, chain, each, empty, iter, map, once
+  ChainIterator, IIterator, chain, each, empty, map, once
 } from '../algorithm/iteration';
 
 import {
