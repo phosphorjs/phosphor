@@ -510,11 +510,33 @@ class DockLayout extends Layout {
   }
 
   /**
+   * Remove a widget from the layout.
+   *
+   * @param widget - The widget to remove from the layout.
+   *
+   * #### Notes
+   * A widget is automatically removed from the layout when its `parent`
+   * is set to `null`. This method should only be invoked directly when
+   * removing a widget from a layout which has yet to be installed on a
+   * parent widget.
+   *
+   * This method does *not* modify the widget's `parent`.
    *
    */
   removeWidget(widget: Widget): void {
-    // TODO implement this method
-    // Do nothing if it's a tab bar owned by the dock panel.
+    // Remove the widget from its current layout location.
+    this._removeWidget(widget);
+
+    // Do nothing else if there is no parent widget.
+    if (!this.parent) {
+      return;
+    }
+
+    // Detach the widget from the parent widget.
+    this.detachWidget(widget);
+
+    // Post a fit request for the parent widget.
+    this.parent.fit();
   }
 
   /**
