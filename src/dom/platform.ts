@@ -26,3 +26,10 @@ const IS_WIN = !!navigator.platform.match(/Win/i);
  */
 export
 const IS_IE = /Trident/.test(navigator.userAgent);
+
+
+/**
+ * A flag indicating whether the browser is Edge.
+ */
+export
+const IS_EDGE = /Edge/.test(navigator.userAgent);
