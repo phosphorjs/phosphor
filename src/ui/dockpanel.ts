@@ -484,6 +484,9 @@ class DockLayout extends Layout {
     // Remove the widget from its current layout location.
     this._removeWidget(widget);
 
+    // TODO - comment why this is here.
+    widget.hide();
+
     // Insert the widget according to the insert mode.
     switch (mode) {
     case 'tab-after':
