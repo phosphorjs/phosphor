@@ -1,3 +1,5 @@
+
+
 /**
  * A widget which provides a flexible docking area for widgets.
  */
@@ -1455,3 +1457,214 @@ namespace DockPanel {
     }
     return zone;
   }
+
+
+
+
+    /**
+     * Create an iterator over the tab layout nodes in the layout.
+     *
+     * @returns A new iterator of the tab layout nodes.
+     */
+    tabNodes(): IIterator<TabLayoutNode> {
+      return new ChainIterator(map(this.children, child => child.tabNodes()));
+    }
+
+    /**
+     * Create an iterator over the split layout nodes in the layout.
+     *
+     * @returns A new iterator of the split layout nodes.
+     */
+    splitNodes(): IIterator<SplitLayoutNode> {
+      let others = map(this.children, child => child.splitNodes());
+      return chain(once(this), new ChainIterator(others));
+    }
+
+
+
+
+    /**
+     * Create an iterator over the tab layout nodes in the layout.
+     *
+     * @returns A single iterator for this layout node.
+     */
+    tabNodes(): IIterator<TabLayoutNode> {
+      return once(this);
+    }
+
+    /**
+     * Create an iterator over the split layout nodes in the layout.
+     *
+     * @returns An empty iterator.
+     */
+    splitNodes(): IIterator<SplitLayoutNode> {
+      return empty<SplitLayoutNode>();
+    }
+
+
+
+
+
+
+    // Find the tab layout node for the reference widget.
+    let refNode: Private.TabLayoutNode = null;
+    if (ref && this._root) {
+      refNode = this._root.findTabNode(ref);
+    }
+
+    // Warn if the reference widget is not found.
+    if (ref && !refNode) {
+      ref = null;
+      console.warn('Reference widget is not in the dock layout.');
+    }
+
+
+    // // Determine whether the insert is before or after the ref.
+    // let after = (
+    //   mode === 'tab-after' ||
+    //   mode === 'split-right' ||
+    //   mode === 'split-bottom'
+    // );
+
+    // // Handle the simple case of adding to a tab panel.
+    // if (mode === 'tab-before' || mode === 'tab-after') {
+    //   if (refNode) {
+    //     let i = findIndex(refNode.tabBar.titles, t => t.owner === ref);
+    //     refNode.tabBar.insertTab(i + (after ? 1 : 0), widget.title);
+    //   } else {
+    //     let tabNode = this._ensureTabNode();
+    //     let i = after ? tabNode.tabBar.titles.length : 0;
+    //     tabNode.tabBar.insertTab(i, widget.title);
+    //   }
+    //   return;
+    // }
+
+    // // Otherwise, determine the orientation of the new split.
+    // let orientation: Private.Orientation;
+    // if (mode === 'split-top' || mode === 'split-bottom') {
+    //   orientation = 'vertical';
+    // } else {
+    //   orientation = 'horizontal';
+    // }
+
+    // // Setup the new tab node to host the widget.
+    // let tabNode = this._createTabNode();
+    // tabNode.tabBar.addTab(widget.title);
+
+    // // If there is no root, set the new tab node as the root.
+    // if (!this._root) {
+    //   this._root = tabNode;
+    //   return;
+    // }
+
+    // // If the ref node is null, split the root panel.
+    // if (!refNode) {
+    //   let splitNode = this._ensureSplitRoot(orientation);
+    //   let i = after ? splitNode.children.length : 0;
+    //   let handle = this._createHandle();
+    //   let sizer = this._createSizer();
+    //   splitNode.children.insert(i, tabNode);
+    //   splitNode.handles.insert(i, handle);
+    //   splitNode.sizers.insert(i, sizer);
+    //   // let sizes = splitNode.relativeSizes();
+    //   // sizes.splice(index, 0, 0.5);
+    //   // splitNode.setRelativeSizes(sizes);
+    //   return;
+    // }
+
+    // // If the ref node is the root, split the root.
+    // if (this._root === refNode) {
+    //   let splitNode = this._ensureSplitRoot(orientation);
+    //   let handle = this._createHandle();
+    //   let sizer = this._createSizer();
+    //   let i = after ? 1 : 0;
+    //   splitNode.children.insert(i, tabNode);
+    //   splitNode.handles.insert(i, handle);
+    //   splitNode.sizers.insert(i, sizer);
+    //   // TODO handle sizes
+    //   return;
+    // }
+
+    // // Otherwise, insert relative to the ref node parent.
+    // let splitNode = refNode.parent;
+
+    // // If the split node is the correct orientation, the widget
+    // // can be inserted directly and sized to 0.5 of the ref space.
+    // if (splitNode.orientation === orientation) {
+    //   let i = indexOf(splitNode.children, refNode) + (after ? 1 : 0);
+    //   let handle = this._createHandle();
+    //   let sizer = this._createSizer();
+    //   splitNode.children.insert(i, tabNode);
+    //   splitNode.handles.insert(i, handle);
+    //   splitNode.sizers.insert(i, sizer);
+    //   //let sizes = splitPanel.relativeSizes();
+    //   //let size = sizes[i] = sizes[i] / 2;
+    //   //sizes.splice(index, 0, size);
+    //   //splitPanel.insertWidget(index, tabPanel);
+    //   //splitPanel.setRelativeSizes(sizes);
+    //   return;
+    // }
+
+    // // Otherwise, a new split node with the correct orientation needs
+    // // to be created to hold the ref node and tab node. It is inserted
+    // // at the previous location of the ref node.
+    // //let sizes = splitPanel.relativeSizes();
+    // let i = indexOf(splitNode.children, refNode);
+    // let childNode = this._createSplitNode(orientation);
+    // let refHandle = this._createHandle();
+    // let tabHandle = this._createHandle();
+    // let refSizer = this._createSizer();
+    // let tabSizer = this._createSizer();
+    // childNode.children.insert(0, refNode);
+    // childHode.handles.insert(0, refHandle);
+    // childNode.sizers.insert(0, refSizer);
+    // childNode.children.insert(after ? 1 : 0, tabNode);
+    // childNode.handles.insert(after ? 1 : 0, tabHandle);
+    // childNode.sizers.insert(after ? 1 : 0, tabSizer);
+    // splitNode.set(i, childNode);
+    // childNode.parent = splitNode;
+    /**
+     * Create an iterator over the tab layout nodes in the layout.
+     *
+     * @returns A single iterator for this layout node.
+     */
+    tabNodes(): IIterator<TabLayoutNode> {
+      return once(this);
+    }
+
+    /**
+     * Create an iterator over the split layout nodes in the layout.
+     *
+     * @returns An empty iterator.
+     */
+    splitNodes(): IIterator<SplitLayoutNode> {
+      return empty<SplitLayoutNode>();
+    }
+
+    /**
+     * Create an iterator over the tab layout nodes in the layout.
+     *
+     * @returns A new iterator of the tab layout nodes.
+     */
+    tabNodes(): IIterator<TabLayoutNode> {
+      return new ChainIterator(map(this.children, child => child.tabNodes()));
+    }
+
+    /**
+     * Create an iterator over the split layout nodes in the layout.
+     *
+     * @returns A new iterator of the split layout nodes.
+     */
+    splitNodes(): IIterator<SplitLayoutNode> {
+      let others = map(this.children, child => child.splitNodes());
+      return chain(once(this), new ChainIterator(others));
+    }
+    /**
+     * The parent of the layout node, or `null`.
+     *
+     * #### Notes
+     * The dock layout should manipulate this as needed.
+     */
+    parent: SplitLayoutNode = null;
+
+
