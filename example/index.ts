@@ -302,13 +302,20 @@ function main(): void {
   let g1 = new ContentWidget('Green');
   let y1 = new ContentWidget('Yellow');
 
+  let r2 = new ContentWidget('Red');
+  let b2 = new ContentWidget('Blue');
+  let g2 = new ContentWidget('Green');
+  let y2 = new ContentWidget('Yellow');
+
   let dock = new DockPanel();
   dock.addWidget(r1);
   dock.addWidget(b1, { mode: 'split-right', ref: r1 });
   dock.addWidget(y1, { mode: 'split-bottom', ref: b1 });
   dock.addWidget(g1, { mode: 'split-left', ref: y1 });
+  dock.addWidget(r2, { ref: b1 });
 
-  dock.currentChanged.connect((s, a) => { console.log(a); });
+
+  //dock.currentChanged.connect((s, a) => { console.log(a); });
 
   BoxPanel.setStretch(dock, 1);
 
@@ -321,6 +328,8 @@ function main(): void {
 
   Widget.attach(bar, document.body);
   Widget.attach(main, document.body);
+
+  (window as any).dock = dock;
 }
 
 
