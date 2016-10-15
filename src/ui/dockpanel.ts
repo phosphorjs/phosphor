@@ -344,6 +344,9 @@ namespace DockPanel {
 
 /**
  * A layout which provides a flexible docking arrangement.
+ *
+ * TODO - document responsibilities of the external widget
+ * wrt to tab bar behavior, dragging, etc...
  */
 export
 class DockLayout extends Layout {
