@@ -391,16 +391,6 @@ class Widget implements IDisposable, IMessageHandler {
   }
 
   /**
-   * Post a `'deactivate-request'` message to the widget.
-   *
-   * #### Notes
-   * This is a simple convenience method for posting the message.
-   */
-  deactivate(): void {
-    postMessage(this, WidgetMessage.DeactivateRequest);
-  }
-
-  /**
    * Send a `'close-request'` message to the widget.
    *
    * #### Notes
@@ -545,10 +535,6 @@ class Widget implements IDisposable, IMessageHandler {
       this.notifyLayout(msg);
       this.onActivateRequest(msg);
       break;
-    case 'deactivate-request':
-      this.notifyLayout(msg);
-      this.onDeactivateRequest(msg);
-      break;
     case 'close-request':
       this.notifyLayout(msg);
       this.onCloseRequest(msg);
@@ -618,14 +604,6 @@ class Widget implements IDisposable, IMessageHandler {
    * The default implementation of this handler is a no-op.
    */
   protected onActivateRequest(msg: Message): void { }
-
-  /**
-   * A message handler invoked on a `'deactivate-request'` message.
-   *
-   * #### Notes
-   * The default implementation of this handler is a no-op.
-   */
-  protected onDeactivateRequest(msg: Message): void { }
 
   /**
    * A message handler invoked on an `'after-show'` message.
@@ -1261,17 +1239,6 @@ namespace WidgetMessage {
    */
   export
   const ActivateRequest = new ConflatableMessage('activate-request');
-
-  /**
-   * A singleton conflatable `'deactivate-request'` message.
-   *
-   * #### Notes
-   * This message should be dispatched to a widget when it should
-   * perform the actions necessary to decactivate the widget, which
-   * may include blurring its node or descendant node.
-   */
-  export
-  const DeactivateRequest = new ConflatableMessage('deactivate-request');
 
   /**
    * A singleton conflatable `'close-request'` message.
