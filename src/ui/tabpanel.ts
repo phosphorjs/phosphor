@@ -324,14 +324,14 @@ class TabPanel extends Widget {
   /**
    * Handle the `tabActivateRequested` signal from the tab bar.
    */
-  private _onTabActivateRequested(sender: TabBar, args: TabBar.ITabIndexArgs): void {
+  private _onTabActivateRequested(sender: TabBar, args: TabBar.ITabActivateRequestedArgs): void {
     (args.title.owner as Widget).activate();
   }
 
   /**
    * Handle the `tabCloseRequested` signal from the tab bar.
    */
-  private _onTabCloseRequested(sender: TabBar, args: TabBar.ITabIndexArgs): void {
+  private _onTabCloseRequested(sender: TabBar, args: TabBar.ITabCloseRequestedArgs): void {
     (args.title.owner as Widget).close();
   }
 

@@ -194,7 +194,7 @@ class TabBar extends Widget {
    *
    * This signal is emitted even if the clicked tab is the current tab.
    */
-  tabActivateRequested: ISignal<TabBar, TabBar.ITabIndexArgs>;
+  tabActivateRequested: ISignal<TabBar, TabBar.ITabActivateRequestedArgs>;
 
   /**
    * A signal emitted when a tab close icon is clicked.
@@ -202,7 +202,7 @@ class TabBar extends Widget {
    * #### Notes
    * This signal is not emitted unless the tab title is `closable`.
    */
-  tabCloseRequested: ISignal<TabBar, TabBar.ITabIndexArgs>;
+  tabCloseRequested: ISignal<TabBar, TabBar.ITabCloseRequestedArgs>;
 
   /**
    * A signal emitted when a tab is dragged beyond the detach threshold.
@@ -1265,22 +1265,6 @@ namespace TabBar {
   }
 
   /**
-   * The arguments object for various tab signals.
-   */
-  export
-  interface ITabIndexArgs {
-    /**
-     * The index of the tab to close.
-     */
-    index: number;
-
-    /**
-     * The title for the tab.
-     */
-    title: Title;
-  }
-
-  /**
    * The arguments object for the `currentChanged` signal.
    */
   export
@@ -1320,6 +1304,38 @@ namespace TabBar {
      * The current index of the tab.
      */
     toIndex: number;
+
+    /**
+     * The title for the tab.
+     */
+    title: Title;
+  }
+
+  /**
+   * The arguments object for the `tabActivateRequested` signal.
+   */
+  export
+  interface ITabActivateRequestedArgs {
+    /**
+     * The index of the tab to activate.
+     */
+    index: number;
+
+    /**
+     * The title for the tab.
+     */
+    title: Title;
+  }
+
+  /**
+   * The arguments object for the `tabCloseRequested` signal.
+   */
+  export
+  interface ITabCloseRequestedArgs {
+    /**
+     * The index of the tab to close.
+     */
+    index: number;
 
     /**
      * The title for the tab.
