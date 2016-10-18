@@ -310,10 +310,9 @@ class TabPanel extends Widget {
       previousWidget.hide();
     }
 
-    // Show and activate the current widget.
+    // Show the current widget.
     if (currentWidget) {
       currentWidget.show();
-      currentWidget.activate();
     }
 
     // Emit the `currentChanged` signal for the tab panel.
@@ -323,9 +322,16 @@ class TabPanel extends Widget {
   }
 
   /**
+   * Handle the `tabActivateRequested` signal from the tab bar.
+   */
+  private _onTabActivateRequested(sender: TabBar, args: TabBar.ITabIndexArgs): void {
+    (args.title.owner as Widget).activate();
+  }
+
+  /**
    * Handle the `tabCloseRequested` signal from the tab bar.
    */
-  private _onTabCloseRequested(sender: TabBar, args: TabBar.ITabCloseRequestedArgs): void {
+  private _onTabCloseRequested(sender: TabBar, args: TabBar.ITabIndexArgs): void {
     (args.title.owner as Widget).close();
   }
 
