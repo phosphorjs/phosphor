@@ -50,7 +50,7 @@ import {
 } from '../dom/sizing';
 
 import {
-  BoxSizer, boxCalc
+  BoxSizer, adjustSizer, boxCalc
 } from './boxengine';
 
 import {
@@ -652,11 +652,7 @@ class SplitLayout extends PanelLayout {
     });
 
     // Adjust the sizers to reflect the handle movement.
-    if (delta > 0) {
-      Private.growSizer(this._sizers, index, delta);
-    } else {
-      Private.shrinkSizer(this._sizers, index, -delta);
-    }
+    adjustSizer(this._sizers, index, delta);
 
     // Update the layout of the widgets.
     if (this.parent) this.parent.update();
@@ -1184,108 +1180,6 @@ namespace Private {
     if (n === 0) return [];
     let sum = values.reduce((a, b) => a + Math.abs(b), 0);
     return sum === 0 ? values.map(v => 1 / n) : values.map(v => v / sum);
-  }
-
-  /**
-   * Grow a sizer to the right by a positive delta and adjust neighbors.
-   */
-  export
-  function growSizer(sizers: Vector<BoxSizer>, index: number, delta: number): void {
-    // Compute how much the items to the left can expand.
-    let growLimit = 0;
-    for (let i = 0; i <= index; ++i) {
-      let sizer = sizers.at(i);
-      growLimit += sizer.maxSize - sizer.size;
-    }
-
-    // Compute how much the items to the right can shrink.
-    let shrinkLimit = 0;
-    for (let i = index + 1, n = sizers.length; i < n; ++i) {
-      let sizer = sizers.at(i);
-      shrinkLimit += sizer.size - sizer.minSize;
-    }
-
-    // Clamp the delta adjustment to the limits.
-    delta = Math.min(delta, growLimit, shrinkLimit);
-
-    // Grow the sizers to the left by the delta.
-    let grow = delta;
-    for (let i = index; i >= 0 && grow > 0; --i) {
-      let sizer = sizers.at(i);
-      let limit = sizer.maxSize - sizer.size;
-      if (limit >= grow) {
-        sizer.sizeHint = sizer.size + grow;
-        grow = 0;
-      } else {
-        sizer.sizeHint = sizer.size + limit;
-        grow -= limit;
-      }
-    }
-
-    // Shrink the sizers to the right by the delta.
-    let shrink = delta;
-    for (let i = index + 1, n = sizers.length; i < n && shrink > 0; ++i) {
-      let sizer = sizers.at(i);
-      let limit = sizer.size - sizer.minSize;
-      if (limit >= shrink) {
-        sizer.sizeHint = sizer.size - shrink;
-        shrink = 0;
-      } else {
-        sizer.sizeHint = sizer.size - limit;
-        shrink -= limit;
-      }
-    }
-  }
-
-  /**
-   * Shrink a sizer to the left by a positive delta and adjust neighbors.
-   */
-  export
-  function shrinkSizer(sizers: Vector<BoxSizer>, index: number, delta: number): void {
-    // Compute how much the items to the right can expand.
-    let growLimit = 0;
-    for (let i = index + 1, n = sizers.length; i < n; ++i) {
-      let sizer = sizers.at(i);
-      growLimit += sizer.maxSize - sizer.size;
-    }
-
-    // Compute how much the items to the left can shrink.
-    let shrinkLimit = 0;
-    for (let i = 0; i <= index; ++i) {
-      let sizer = sizers.at(i);
-      shrinkLimit += sizer.size - sizer.minSize;
-    }
-
-    // Clamp the delta adjustment to the limits.
-    delta = Math.min(delta, growLimit, shrinkLimit);
-
-    // Grow the sizers to the right by the delta.
-    let grow = delta;
-    for (let i = index + 1, n = sizers.length; i < n && grow > 0; ++i) {
-      let sizer = sizers.at(i);
-      let limit = sizer.maxSize - sizer.size;
-      if (limit >= grow) {
-        sizer.sizeHint = sizer.size + grow;
-        grow = 0;
-      } else {
-        sizer.sizeHint = sizer.size + limit;
-        grow -= limit;
-      }
-    }
-
-    // Shrink the sizers to the left by the delta.
-    let shrink = delta;
-    for (let i = index; i >= 0 && shrink > 0; --i) {
-      let sizer = sizers.at(i);
-      let limit = sizer.size - sizer.minSize;
-      if (limit >= shrink) {
-        sizer.sizeHint = sizer.size - shrink;
-        shrink = 0;
-      } else {
-        sizer.sizeHint = sizer.size - limit;
-        shrink -= limit;
-      }
-    }
   }
 
   /**

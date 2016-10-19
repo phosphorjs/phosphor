@@ -341,3 +341,150 @@ function boxCalc(object: SequenceOrArrayLike<BoxSizer>, space: number): void {
     }
   }
 }
+
+
+/**
+ * Adjust a sizer by a delta and adjust its neighbors accordingly.
+ *
+ * @param object - The sizers which should be adjusted.
+ *
+ * @param index - The index of the sizer to grow.
+ *
+ * @param delta - The amount to adjust the sizer, positive or negative.
+ *
+ * #### Notes
+ * This will adjust the indicated sizer by the specified amount, along
+ * with the sizes of the appropriate neighbors, subject to the limits
+ * specified by each of the sizers.
+ *
+ * This is useful when implementing box layouts where the boundaries
+ * between the sizers are interactively adjustable by the user.
+ */
+export
+function adjustSizer(object: SequenceOrArrayLike<BoxSizer>, index: number, delta: number): void {
+  // Bail early when there is nothing to do.
+  if (object.length === 0 || delta === 0) {
+    return;
+  }
+
+  // Dispatch to the proper implementation.
+  if (delta > 0) {
+    Private.growSizer(object, index, delta);
+  } else {
+    Private.shrinkSizer(object, index, -delta);
+  }
+}
+
+
+/**
+ * The namespace for the private module data.
+ */
+namespace Private {
+  /**
+   * Grow a sizer by a positive delta and adjust neighbors.
+   */
+  export
+  function growSizer(object: SequenceOrArrayLike<BoxSizer>, index: number, delta: number): void {
+    // Cast the object to a sequence of sizers.
+    let sizers = asSequence(object);
+
+    // Compute how much the items to the left can expand.
+    let growLimit = 0;
+    for (let i = 0; i <= index; ++i) {
+      let sizer = sizers.at(i);
+      growLimit += sizer.maxSize - sizer.size;
+    }
+
+    // Compute how much the items to the right can shrink.
+    let shrinkLimit = 0;
+    for (let i = index + 1, n = sizers.length; i < n; ++i) {
+      let sizer = sizers.at(i);
+      shrinkLimit += sizer.size - sizer.minSize;
+    }
+
+    // Clamp the delta adjustment to the limits.
+    delta = Math.min(delta, growLimit, shrinkLimit);
+
+    // Grow the sizers to the left by the delta.
+    let grow = delta;
+    for (let i = index; i >= 0 && grow > 0; --i) {
+      let sizer = sizers.at(i);
+      let limit = sizer.maxSize - sizer.size;
+      if (limit >= grow) {
+        sizer.sizeHint = sizer.size + grow;
+        grow = 0;
+      } else {
+        sizer.sizeHint = sizer.size + limit;
+        grow -= limit;
+      }
+    }
+
+    // Shrink the sizers to the right by the delta.
+    let shrink = delta;
+    for (let i = index + 1, n = sizers.length; i < n && shrink > 0; ++i) {
+      let sizer = sizers.at(i);
+      let limit = sizer.size - sizer.minSize;
+      if (limit >= shrink) {
+        sizer.sizeHint = sizer.size - shrink;
+        shrink = 0;
+      } else {
+        sizer.sizeHint = sizer.size - limit;
+        shrink -= limit;
+      }
+    }
+  }
+
+  /**
+   * Shrink a sizer by a positive delta and adjust neighbors.
+   */
+  export
+  function shrinkSizer(object: SequenceOrArrayLike<BoxSizer>, index: number, delta: number): void {
+    // Cast the object to a sequence of sizers.
+    let sizers = asSequence(object);
+
+    // Compute how much the items to the right can expand.
+    let growLimit = 0;
+    for (let i = index + 1, n = sizers.length; i < n; ++i) {
+      let sizer = sizers.at(i);
+      growLimit += sizer.maxSize - sizer.size;
+    }
+
+    // Compute how much the items to the left can shrink.
+    let shrinkLimit = 0;
+    for (let i = 0; i <= index; ++i) {
+      let sizer = sizers.at(i);
+      shrinkLimit += sizer.size - sizer.minSize;
+    }
+
+    // Clamp the delta adjustment to the limits.
+    delta = Math.min(delta, growLimit, shrinkLimit);
+
+    // Grow the sizers to the right by the delta.
+    let grow = delta;
+    for (let i = index + 1, n = sizers.length; i < n && grow > 0; ++i) {
+      let sizer = sizers.at(i);
+      let limit = sizer.maxSize - sizer.size;
+      if (limit >= grow) {
+        sizer.sizeHint = sizer.size + grow;
+        grow = 0;
+      } else {
+        sizer.sizeHint = sizer.size + limit;
+        grow -= limit;
+      }
+    }
+
+    // Shrink the sizers to the left by the delta.
+    let shrink = delta;
+    for (let i = index; i >= 0 && shrink > 0; --i) {
+      let sizer = sizers.at(i);
+      let limit = sizer.size - sizer.minSize;
+      if (limit >= shrink) {
+        sizer.sizeHint = sizer.size - shrink;
+        shrink = 0;
+      } else {
+        sizer.sizeHint = sizer.size - limit;
+        shrink -= limit;
+      }
+    }
+  }
+}
