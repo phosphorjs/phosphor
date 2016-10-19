@@ -220,10 +220,7 @@ class SplitPanel extends Panel {
     case 'keydown':
       this._evtKeyDown(event as KeyboardEvent);
       break;
-    case 'keyup':
-    case 'keypress':
     case 'contextmenu':
-      // Stop input events during drag.
       event.preventDefault();
       event.stopPropagation();
       break;
@@ -298,8 +295,6 @@ class SplitPanel extends Panel {
     document.addEventListener('mouseup', this, true);
     document.addEventListener('mousemove', this, true);
     document.addEventListener('keydown', this, true);
-    document.addEventListener('keyup', this, true);
-    document.addEventListener('keypress', this, true);
     document.addEventListener('contextmenu', this, true);
 
     // Compute the offset delta for the handle press.
@@ -374,8 +369,6 @@ class SplitPanel extends Panel {
     document.removeEventListener('mouseup', this, true);
     document.removeEventListener('mousemove', this, true);
     document.removeEventListener('keydown', this, true);
-    document.removeEventListener('keyup', this, true);
-    document.removeEventListener('keypress', this, true);
     document.removeEventListener('contextmenu', this, true);
   }
 
