@@ -48,6 +48,11 @@ import {
 const DOCK_PANEL_CLASS = 'p-DockPanel';
 
 /**
+ * The class name added to DockPanel widgets.
+ */
+const WIDGET_CLASS = 'p-DockPanel-widget';
+
+/**
  * The class name added to a DockPanel tab bar.
  */
 const TAB_BAR_CLASS = 'p-DockPanel-tabBar';
@@ -66,6 +71,16 @@ const OVERLAY_CLASS = 'p-DockPanel-overlay';
  * The class name added to hidden entities.
  */
 const HIDDEN_CLASS = 'p-mod-hidden';
+
+/**
+ * The class name added to horizontal handles.
+ */
+const HORIZONTAL_CLASS = 'p-mod-horizontal';
+
+/**
+ * The class name added to vertical handles.
+ */
+const VERTICAL_CLASS = 'p-mod-vertical';
 
 /**
  * The factory MIME type supported by the dock panel.
@@ -125,9 +140,6 @@ class DockPanel extends Widget {
    * Dispose of the resources held by the panel.
    */
   dispose(): void {
-    //
-    this._renderer = null;
-
     // // Hide the overlay.
     // this._overlay.hide(0);
 
@@ -170,23 +182,54 @@ class DockPanel extends Widget {
    * @param options - The additional options for adding the widget.
    */
   addWidget(widget: Widget, options: DockPanel.IAddOptions = {}): void {
+    // Hide the widget before adding it to the panel. It will be
+    // shown if it becomes the current tab within its tab bar.
+    widget.hide();  // TODO - what if we are just moving the widget within its tab bar?
+
+    // Add the widget to the layout.
     (this.layout as DockLayout).addWidget(widget, options);
-    // TODO handle activation
+
+    // TODO - handle activation
+  }
+
+  /**
+   * A message handler invoked on a `'child-added'` message.
+   */
+  protected onChildAdded(msg: ChildMessage): void {
+    // Ignore the generated tab bars.
+    if (msg.child.hasClass(TAB_BAR_CLASS)) {
+      return;
+    }
+
+    // Add the widget class to the child.
+    msg.child.addClass(WIDGET_CLASS);
+  }
+
+  /**
+   * A message handler invoked on a `'child-removed'` message.
+   */
+  protected onChildRemoved(msg: ChildMessage): void {
+    // Ignore the generated tab bars.
+    if (msg.child.hasClass(TAB_BAR_CLASS)) {
+      return;
+    }
+
+    // Remove the widget class from the child.
+    msg.child.removeClass(WIDGET_CLASS);
   }
 
   /**
    * Create a new tab bar for use by the panel.
    */
   private _createTabBar(): TabBar {
-    // Create the tab bar using the internal renderer.
+    // Create and initialize the tab bar.
     let tabBar = this._renderer.createTabBar();
-
-    // Add the relevant class names to the tab bar.
     tabBar.addClass(TAB_BAR_CLASS);
 
     // Setup the signal handlers for the tab bar.
     tabBar.currentChanged.connect(this._onCurrentChanged, this);
     tabBar.tabCloseRequested.connect(this._onTabCloseRequested, this);
+    tabBar.tabActivateRequested.connect(this._onTabActivateRequested, this);
 
     // Return the initialized tab bar.
     return tabBar;
@@ -196,13 +239,8 @@ class DockPanel extends Widget {
    * Create a new split handle for use by the panel.
    */
   private _createHandle(): HTMLDivElement {
-    // Create the handle using the internal renderer.
     let handle = this._renderer.createHandle();
-
-    // Add the relevant class names to the handle.
     handle.classList.add(HANDLE_CLASS);
-
-    // Return the initialized handle.
     return handle;
   }
 
@@ -217,21 +255,26 @@ class DockPanel extends Widget {
     let previousWidget = previousTitle ? previousTitle.owner as Widget : null;
     let currentWidget = currentTitle ? currentTitle.owner as Widget : null;
 
-    // Hide and deactivate the previous widget.
+    // Hide the previous widget.
     if (previousWidget) {
       previousWidget.hide();
-      previousWidget.deactivate();
     }
 
-    // Show and activate the current widget.
+    // Show the current widget.
     if (currentWidget) {
       currentWidget.show();
-      currentWidget.activate();
     }
   }
 
   /**
-   * Handle the `tabCloseRequested` signal from a tab bar in the panel.
+   * Handle the `tabActivateRequested` signal from a tab bar.
+   */
+  private _onTabActivateRequested(sender: TabBar, args: TabBar.ITabActivateRequestedArgs): void {
+    (args.title.owner as Widget).activate();
+  }
+
+  /**
+   * Handle the `tabCloseRequested` signal from a tab bar.
    */
   private _onTabCloseRequested(sender: TabBar, args: TabBar.ITabCloseRequestedArgs): void {
     (args.title.owner as Widget).close();
@@ -346,7 +389,7 @@ namespace DockPanel {
  * A layout which provides a flexible docking arrangement.
  *
  * TODO - document responsibilities of the external widget
- * wrt to tab bar behavior, dragging, etc...
+ * wrt to tab bar behavior, dragging, show/hide, etc...
  */
 export
 class DockLayout extends Layout {
@@ -428,13 +471,25 @@ class DockLayout extends Layout {
   /**
    * Create an iterator over the user widgets in the layout.
    *
-   * @returns A new iterator over the widgets in the layout.
+   * @returns A new iterator over the user widgets in the layout.
    *
    * #### Notes
    * This iterator does not include the generated tab bars.
    */
   widgets(): IIterator<Widget> {
     return this._root ? Private.iterUserWidgets(this._root) : empty<Widget>();
+  }
+
+  /**
+   * Create an iterator over the tab bars in the layout.
+   *
+   * @returns A new iterator over the tab bars in the layout.
+   *
+   * #### Notes
+   * This iterator does not include the user widgets.
+   */
+  tabBars(): IIterator<TabBar> {
+    return this._root ? Private.iterTabBars(this._root) : empty<TabBar>();
   }
 
   /**
@@ -485,10 +540,7 @@ class DockLayout extends Layout {
     widget.parent = this.parent;
 
     // Remove the widget from its current layout location.
-    this._removeWidget(widget);
-
-    // TODO - comment why this is here.
-    widget.hide();
+    this._removeWidget(widget);  // TODO - what if we are just moving the widget within its tab bar?
 
     // Insert the widget according to the insert mode.
     switch (mode) {
@@ -643,7 +695,7 @@ class DockLayout extends Layout {
    */
   protected onChildShown(msg: ChildMessage): void {
     if (IS_IE || IS_EDGE) { // prevent flicker on IE/Edge
-      // TODO not collapsing can cause lots of fitting on IE
+      // TODO not collapsing can cause lots of fitting
       sendMessage(this.parent, WidgetMessage.FitRequest);
     } else {
       this.parent.fit();
@@ -655,7 +707,7 @@ class DockLayout extends Layout {
    */
   protected onChildHidden(msg: ChildMessage): void {
     if (IS_IE || IS_EDGE) { // prevent flicker on IE/Edge
-      // TODO not collapsing can cause lots of fitting on IE
+      // TODO not collapsing can cause lots of fitting
       sendMessage(this.parent, WidgetMessage.FitRequest);
     } else {
       this.parent.fit();
@@ -748,7 +800,7 @@ class DockLayout extends Layout {
 
     // If there are multiple children, just update the split handles.
     if (splitNode.children.length > 1) {
-      Private.updateSplitHandles(splitNode);
+      Private.syncHandles(splitNode);
       return;
     }
 
@@ -819,8 +871,8 @@ class DockLayout extends Layout {
     childNode.sizers.clear();
     childNode.parent = null;
 
-    // Update the split handles on the parent node.
-    Private.updateSplitHandles(parentNode);
+    // Sync the split handles on the parent node.
+    Private.syncHandles(parentNode);
   }
 
   /**
@@ -900,7 +952,7 @@ class DockLayout extends Layout {
       root.children.insert(i, tabNode);
       root.sizers.insert(i, new BoxSizer());
       root.handles.insert(i, this._createHandle());
-      Private.updateSplitHandles(root);
+      Private.syncHandles(root);
       tabNode.parent = root;
       return;
     }
@@ -912,7 +964,7 @@ class DockLayout extends Layout {
       splitNode.children.insert(i, tabNode);
       splitNode.sizers.insert(i, new BoxSizer());
       splitNode.handles.insert(i, this._createHandle());
-      Private.updateSplitHandles(splitNode);
+      Private.syncHandles(splitNode);
       tabNode.parent = splitNode;
       return;
     }
@@ -934,14 +986,14 @@ class DockLayout extends Layout {
     childNode.children.insert(j, tabNode);
     childNode.sizers.insert(j, new BoxSizer());
     childNode.handles.insert(j, this._createHandle());
-    Private.updateSplitHandles(childNode);
+    Private.syncHandles(childNode);
     tabNode.parent = childNode;
 
     // Add the new child node to the original split node.
     splitNode.children.insert(i, childNode);
     splitNode.sizers.insert(i, new BoxSizer());
     splitNode.handles.insert(i, this._createHandle());
-    Private.updateSplitHandles(splitNode);
+    Private.syncHandles(splitNode);
     childNode.parent = splitNode;
   }
 
@@ -955,15 +1007,12 @@ class DockLayout extends Layout {
   private _splitRoot(orientation: Private.Orientation): Private.SplitLayoutNode {
     // Bail early if the root already meets the requirements.
     let root = this._root;
-    if (root instanceof Private.SplitLayoutNode) {
-      if (root.orientation === orientation) {
-        return root;
-      }
+    if (root instanceof Private.SplitLayoutNode && root.orientation === orientation) {
+      return root;
     }
 
     // Create a new root node with the specified orientation.
-    let result = new Private.SplitLayoutNode(orientation);
-    this._root = result;
+    let result = this._root = new Private.SplitLayoutNode(orientation);
 
     // Add the old root to the new root.
     result.children.pushBack(root);
@@ -987,7 +1036,7 @@ class DockLayout extends Layout {
 
     // Update the limits for the root layout node.
     if (this._root) {
-      let limits = Private.fitNode(this._root, this._spacing);
+      let limits = Private.fitLayoutNode(this._root, this._spacing);
       minW = limits.minWidth;
       minH = limits.minHeight;
       maxW = limits.maxWidth;
@@ -1056,7 +1105,7 @@ class DockLayout extends Layout {
     let height = offsetHeight - box.verticalSum;
 
     // Update the geometry of the root layout node.
-    Private.updateNode(this._root, x, y, width, height, this._spacing);
+    Private.updateLayoutNode(this._root, x, y, width, height, this._spacing);
   }
 
   /**
@@ -1069,7 +1118,7 @@ class DockLayout extends Layout {
     // Create the tab bar using the renderer.
     let tabBar = this._renderer.createTabBar();
 
-    // Enforce necessary tab bar behavior.
+    // Enforce necessary tab bar layout behavior.
     // TODO: allow different tab bar locations?
     tabBar.orientation = 'horizontal';
 
@@ -1093,7 +1142,7 @@ class DockLayout extends Layout {
     // Create the handle using the renderer.
     let handle = this._renderer.createHandle();
 
-    // Initialize the handle geometry.
+    // Initialize the handle layout behavior.
     let style = handle.style;
     style.position = 'absolute';
     style.top = '0';
@@ -1430,6 +1479,24 @@ namespace Private {
   }
 
   /**
+   * Create an iterator for the tab bars in the tree.
+   *
+   * @param node - The root layout node of interest.
+   *
+   * @returns An iterator which yields the tab bars in the tree.
+   */
+  export
+  function iterTabBars(node: LayoutNode): IIterator<TabBar> {
+    let it: IIterator<TabBar>;
+    if (node instanceof TabLayoutNode) {
+      it = once(node.tabBar);
+    } else {
+      it = new ChainIterator(map(node.children, iterTabBars));
+    }
+    return it;
+  }
+
+  /**
    * Create an iterator for the split handles in the tree.
    *
    * @param node - The root layout node of interest.
@@ -1465,6 +1532,22 @@ namespace Private {
   }
 
   /**
+   * Find the split layout node which contains the given handle.
+   *
+   * @param node - The root layout node of interest.
+   *
+   * @param handle - The handle of interest.
+   *
+   * @returns The split node which holds the handle, or `null`.
+   */
+  export
+  function findSplitNode(node: LayoutNode, handle: HTMLDivElement): SplitLayoutNode {
+    return find(iterSplitNodes(node), splitNode => {
+      return splitNode.handles.indexOf(handle) !== -1;
+    });
+  }
+
+  /**
    * Recursively fit the given layout node.
    *
    * @param node - The layout node of interest.
@@ -1474,7 +1557,7 @@ namespace Private {
    * @returns The computed size limits for the layout node.
    */
   export
-  function fitNode(node: LayoutNode, spacing: number): ISizeLimits {
+  function fitLayoutNode(node: LayoutNode, spacing: number): ISizeLimits {
     let limits: ISizeLimits;
     if (node instanceof TabLayoutNode) {
       limits = fitTabNode(node);
@@ -1500,7 +1583,7 @@ namespace Private {
    * @param spacing - The spacing to use between tab areas.
    */
   export
-  function updateNode(node: LayoutNode, x: number, y: number, width: number, height: number, spacing: number): void {
+  function updateLayoutNode(node: LayoutNode, x: number, y: number, width: number, height: number, spacing: number): void {
     if (node instanceof TabLayoutNode) {
       updateTabNode(node, x, y, width, height);
     } else {
@@ -1509,24 +1592,31 @@ namespace Private {
   }
 
   /**
-   * Update the visibility and orientation of split handles.
+   * Sync the visibility and orientation of split handles.
    *
-   * @param splitNode - The split layout node of interest.
+   * @param splitNode - The split node of interest.
    */
   export
-  function updateSplitHandles(splitNode: SplitLayoutNode): void {
+  function syncHandles(splitNode: SplitLayoutNode): void {
     // Do nothing if there are no handles.
     if (splitNode.handles.isEmpty) {
       return;
     }
 
+    // Compute the classes to add and remove.
+    let horizontal = splitNode.orientation === 'horizontal';
+    let remClass = horizontal ? VERTICAL_CLASS : HORIZONTAL_CLASS;
+    let addClass = horizontal ? HORIZONTAL_CLASS : VERTICAL_CLASS;
+
     // Show all handles and update their orientation.
-    for (let i = 0, n = splitNode.handles.length; i < n; ++i) {
-      splitNode.handles.at(i).style.display = '';
-    }
+    each(splitNode.handles, handle => {
+      handle.classList.remove(HIDDEN_CLASS);
+      handle.classList.remove(remClass);
+      handle.classList.add(addClass);
+    });
 
     // Hide the last handle.
-    splitNode.handles.back.style.display = 'none';
+    splitNode.handles.back.classList.add(HIDDEN_CLASS);
   }
 
   /**
@@ -1620,7 +1710,7 @@ namespace Private {
     for (let i = 0, n = splitNode.children.length; i < n; ++i) {
       let sizer = splitNode.sizers.at(i);
       let child = splitNode.children.at(i);
-      let limits = fitNode(child, spacing);
+      let limits = fitLayoutNode(child, spacing);
       if (horizontal) {
         minHeight = Math.max(minHeight, limits.minHeight);
         maxHeight = Math.min(maxHeight, limits.maxHeight);
@@ -1710,7 +1800,7 @@ namespace Private {
       let size = splitNode.sizers.at(i).size;
       let style = splitNode.handles.at(i).style;
       if (horizontal) {
-        updateNode(child, x, y, size, height, spacing);
+        updateLayoutNode(child, x, y, size, height, spacing);
         x += size;
         style.top = `${y}px`;
         style.left = `${x}px`;
@@ -1718,7 +1808,7 @@ namespace Private {
         style.height = `${height}px`;
         x += spacing;
       } else {
-        updateNode(child, x, y, width, size, spacing);
+        updateLayoutNode(child, x, y, width, size, spacing);
         y += size;
         style.top = `${y}px`;
         style.left = `${x}px`;
