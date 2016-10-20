@@ -18,8 +18,16 @@ import {
 } from '../collections/vector';
 
 import {
+  IDisposable
+} from '../core/disposable';
+
+import {
   Message, sendMessage
 } from '../core/messaging';
+
+import {
+  overrideCursor
+} from '../dom/cursor';
 
 import {
   IS_EDGE, IS_IE
@@ -30,7 +38,7 @@ import {
 } from '../dom/sizing';
 
 import {
-  BoxSizer, boxCalc
+  BoxSizer, adjustSizer, boxCalc
 } from './boxengine';
 
 import {
@@ -140,6 +148,9 @@ class DockPanel extends Widget {
    * Dispose of the resources held by the panel.
    */
   dispose(): void {
+    // Ensure the mouse is released.
+    this._releaseMouse();
+
     // // Hide the overlay.
     // this._overlay.hide(0);
 
@@ -193,6 +204,52 @@ class DockPanel extends Widget {
   }
 
   /**
+   * Handle the DOM events for the dock panel.
+   *
+   * @param event - The DOM event sent to the panel.
+   *
+   * #### Notes
+   * This method implements the DOM `EventListener` interface and is
+   * called in response to events on the panel's DOM node. It should
+   * not be called directly by user code.
+   */
+  handleEvent(event: Event): void {
+    switch (event.type) {
+    case 'mousedown':
+      this._evtMouseDown(event as MouseEvent);
+      break;
+    case 'mousemove':
+      this._evtMouseMove(event as MouseEvent);
+      break;
+    case 'mouseup':
+      this._evtMouseUp(event as MouseEvent);
+      break;
+    case 'keydown':
+      this._evtKeyDown(event as KeyboardEvent);
+      break;
+    case 'contextmenu':
+      event.preventDefault();
+      event.stopPropagation();
+      break;
+    }
+  }
+
+  /**
+   * A message handler invoked on an `'after-attach'` message.
+   */
+  protected onAfterAttach(msg: Message): void {
+    this.node.addEventListener('mousedown', this);
+  }
+
+  /**
+   * A message handler invoked on a `'before-detach'` message.
+   */
+  protected onBeforeDetach(msg: Message): void {
+    this.node.removeEventListener('mousedown', this);
+    this._releaseMouse();
+  }
+
+  /**
    * A message handler invoked on a `'child-added'` message.
    */
   protected onChildAdded(msg: ChildMessage): void {
@@ -219,6 +276,113 @@ class DockPanel extends Widget {
   }
 
   /**
+   * Handle the `'keydown'` event for the dock panel.
+   */
+  private _evtKeyDown(event: KeyboardEvent): void {
+    // Stop input events during drag.
+    event.preventDefault();
+    event.stopPropagation();
+
+    // Release the mouse if `Escape` is pressed.
+    if (event.keyCode === 27) {
+      this._releaseMouse();
+    }
+  }
+
+  /**
+   * Handle the `'mousedown'` event for the dock panel.
+   */
+  private _evtMouseDown(event: MouseEvent): void {
+    // Do nothing if the left mouse button is not pressed.
+    if (event.button !== 0) {
+      return;
+    }
+
+    // Find the handle which contains the mouse target, if any.
+    let layout = this.layout as DockLayout;
+    let target = event.target as HTMLElement;
+    let handle = find(layout.handles(), handle => handle.contains(target));
+    if (!handle) {
+      return;
+    }
+
+    // Stop the event when a handle is pressed.
+    event.preventDefault();
+    event.stopPropagation();
+
+    // Add the extra document listeners.
+    document.addEventListener('keydown', this, true);
+    document.addEventListener('mouseup', this, true);
+    document.addEventListener('mousemove', this, true);
+    document.addEventListener('contextmenu', this, true);
+
+    // Compute the offset deltas for the handle press.
+    let rect = handle.getBoundingClientRect();
+    let deltaX = event.clientX - rect.left;
+    let deltaY = event.clientY - rect.top;
+
+    // Override the cursor and store the press data.
+    let style = window.getComputedStyle(handle);
+    let override = overrideCursor(style.cursor);
+    this._pressData = { handle, deltaX, deltaY, override };
+  }
+
+  /**
+   * Handle the `'mousemove'` event for the dock panel.
+   */
+  private _evtMouseMove(event: MouseEvent): void {
+    // Stop the event when dragging a handle.
+    event.preventDefault();
+    event.stopPropagation();
+
+    // Compute the desired offset position for the handle.
+    let rect = this.node.getBoundingClientRect();
+    let xPos = event.clientX - rect.left - this._pressData.deltaX;
+    let yPos = event.clientY - rect.top - this._pressData.deltaY;
+
+    // Set the handle as close to the desired position as possible.
+    let layout = this.layout as DockLayout;
+    layout.moveHandle(this._pressData.handle, xPos, yPos);
+  }
+
+  /**
+   * Handle the `'mouseup'` event for the dock panel.
+   */
+  private _evtMouseUp(event: MouseEvent): void {
+    // Do nothing if the left mouse button is not released.
+    if (event.button !== 0) {
+      return;
+    }
+
+    // Stop the event when releasing a handle.
+    event.preventDefault();
+    event.stopPropagation();
+
+    // Finalize the mouse release.
+    this._releaseMouse();
+  }
+
+  /**
+   * Release the mouse grab for the dock panel.
+   */
+  private _releaseMouse(): void {
+    // Bail early if no drag is in progress.
+    if (!this._pressData) {
+      return;
+    }
+
+    // Clear the override cursor.
+    this._pressData.override.dispose();
+    this._pressData = null;
+
+    // Remove the extra document listeners.
+    document.removeEventListener('keydown', this, true);
+    document.removeEventListener('mouseup', this, true);
+    document.removeEventListener('mousemove', this, true);
+    document.removeEventListener('contextmenu', this, true);
+  }
+
+  /**
    * Create a new tab bar for use by the panel.
    */
   private _createTabBar(): TabBar {
@@ -236,7 +400,7 @@ class DockPanel extends Widget {
   }
 
   /**
-   * Create a new split handle for use by the panel.
+   * Create a new handle for use by the panel.
    */
   private _createHandle(): HTMLDivElement {
     let handle = this._renderer.createHandle();
@@ -281,6 +445,7 @@ class DockPanel extends Widget {
   }
 
   private _renderer: DockPanel.IRenderer;
+  private _pressData: Private.IPressData = null;
 }
 
 
@@ -493,12 +658,67 @@ class DockLayout extends Layout {
   }
 
   /**
-   * Create an iterator over the split handles in the layout.
+   * Create an iterator over the handles in the layout.
    *
    * @returns A new iterator over the handles in the layout.
    */
   handles(): IIterator<HTMLDivElement> {
     return this._root ? Private.iterHandles(this._root) : empty<HTMLDivElement>();
+  }
+
+  /**
+   * Move a handle to the given offset position.
+   *
+   * @param handle - The handle to move.
+   *
+   * @param offsetX - The desired offset X position of the handle.
+   *
+   * @param offsetY - The desired offset Y position of the handle.
+   *
+   * #### Notes
+   * If the given handle is not contained in the layout, this is no-op.
+   *
+   * The handle will be moved as close as possible to the desired
+   * position without violating any of the layout constraints.
+   *
+   * Only one of the coordinates is used depending on the orientation
+   * of the handle. This method accepts both coordinates to make it
+   * easy to invoke from a mouse move event without needing to know
+   * the handle orientation.
+   */
+  moveHandle(handle: HTMLDivElement, offsetX: number, offsetY: number): void {
+    // Bail early if there is no root or if the handle is hidden.
+    if (!this._root || handle.classList.contains(HIDDEN_CLASS)) {
+      return;
+    }
+
+    // Lookup the split node for the handle.
+    let data = Private.findSplitNode(this._root, handle);
+    if (!data) {
+      return;
+    }
+
+    // Compute the desired delta movement for the handle.
+    let delta: number;
+    if (data.node.orientation === 'horizontal') {
+      delta = offsetX - handle.offsetLeft;
+    } else {
+      delta = offsetY - handle.offsetTop;
+    }
+
+    // Bail if there is no handle movement.
+    if (delta === 0) {
+      return;
+    }
+
+    // Prevent resizing unless needed.
+    each(data.node.sizers, sizer => { sizer.sizeHint = sizer.size; });
+
+    // Adjust the sizers to reflect the handle movement.
+    adjustSizer(data.node.sizers, data.index, delta);
+
+    // Update the layout of the widgets.
+    if (this.parent) this.parent.update();
   }
 
   /**
@@ -798,7 +1018,7 @@ class DockLayout extends Layout {
       handle.parentNode.removeChild(handle);
     }
 
-    // If there are multiple children, just update the split handles.
+    // If there are multiple children, just update the handles.
     if (splitNode.children.length > 1) {
       Private.syncHandles(splitNode);
       return;
@@ -848,7 +1068,7 @@ class DockLayout extends Layout {
     parentNode.children.removeAt(j);
     parentNode.sizers.removeAt(j);
 
-    // Remove the split handle from its parent node.
+    // Remove the handle from its parent node.
     if (splitHandle.parentNode) {
       splitHandle.parentNode.removeChild(splitHandle);
     }
@@ -871,7 +1091,7 @@ class DockLayout extends Layout {
     childNode.sizers.clear();
     childNode.parent = null;
 
-    // Sync the split handles on the parent node.
+    // Sync the handles on the parent node.
     Private.syncHandles(parentNode);
   }
 
@@ -908,7 +1128,7 @@ class DockLayout extends Layout {
     }
 
     // Otherwise, insert relative to the first tab area.
-    let tabNode = Private.iterTabNodes(this._root).next();
+    let tabNode = Private.firstTabNode(this._root);
     let i = tabNode.tabBar.currentIndex + (after ? 1 : 0);
     tabNode.tabBar.insertTab(i, widget.title);
   }
@@ -1133,7 +1353,7 @@ class DockLayout extends Layout {
   }
 
   /**
-   * Create a new split handle for the dock layout.
+   * Create a new handle for the dock layout.
    *
    * #### Notes
    * The handle will be attached to the parent if it exists.
@@ -1304,6 +1524,32 @@ namespace DockLayout {
  */
 namespace Private {
   /**
+   * An object which holds mouse press data.
+   */
+  export
+  interface IPressData {
+    /**
+     * The handle which was pressed.
+     */
+    handle: HTMLDivElement;
+
+    /**
+     * The X offset of the press in handle coordinates.
+     */
+    deltaX: number;
+
+    /**
+     * The Y offset of the press in handle coordinates.
+     */
+    deltaY: number;
+
+    /**
+     * The disposable which will clear the override cursor.
+     */
+    override: IDisposable;
+  }
+
+  /**
    * A type alias for a dock layout node.
    */
   export
@@ -1386,7 +1632,7 @@ namespace Private {
     readonly sizers = new Vector<BoxSizer>();
 
     /**
-     * The split handles for the layout children.
+     * The handles for the layout children.
      */
     readonly handles = new Vector<HTMLDivElement>();
   }
@@ -1442,43 +1688,6 @@ namespace Private {
   }
 
   /**
-   * Create an iterator for the tab layout nodes in the tree.
-   *
-   * @param node - The root layout node of interest.
-   *
-   * @returns An iterator which yields the tab nodes in the tree.
-   */
-  export
-  function iterTabNodes(node: LayoutNode): IIterator<TabLayoutNode> {
-    let it: IIterator<TabLayoutNode>;
-    if (node instanceof TabLayoutNode) {
-      it = once(node);
-    } else {
-      it = new ChainIterator(map(node.children, iterTabNodes));
-    }
-    return it;
-  }
-
-  /**
-   * Create an iterator for the split layout nodes in the tree.
-   *
-   * @param node - The root layout node of interest.
-   *
-   * @returns An iterator which yields the split nodes in the tree.
-   */
-  export
-  function iterSplitNodes(node: LayoutNode): IIterator<SplitLayoutNode> {
-    let it: IIterator<SplitLayoutNode>;
-    if (node instanceof TabLayoutNode) {
-      it = empty<SplitLayoutNode>();
-    } else {
-      let others = map(node.children, iterSplitNodes);
-      it = chain(once(node), new ChainIterator(others));
-    }
-    return it;
-  }
-
-  /**
    * Create an iterator for the tab bars in the tree.
    *
    * @param node - The root layout node of interest.
@@ -1497,11 +1706,11 @@ namespace Private {
   }
 
   /**
-   * Create an iterator for the split handles in the tree.
+   * Create an iterator for the handles in the tree.
    *
    * @param node - The root layout node of interest.
    *
-   * @returns An iterator which yields the split handles in the tree.
+   * @returns An iterator which yields the handles in the tree.
    */
   export
   function iterHandles(node: LayoutNode): IIterator<HTMLDivElement> {
@@ -1516,6 +1725,32 @@ namespace Private {
   }
 
   /**
+   * Find the first tab layout node in a layout tree.
+   *
+   * @param node - The root layout node of interest.
+   *
+   * @returns The first tab node in the tree, or `null`.
+   */
+  export
+  function firstTabNode(node: LayoutNode): TabLayoutNode {
+    // Return the node if it's a tab layout node.
+    if (node instanceof TabLayoutNode) {
+      return node;
+    }
+
+    // Recursively search the children for a tab layout node.
+    for (let i = 0, n = node.children.length; i < n; ++i) {
+      let result = firstTabNode(node.children.at(i));
+      if (result !== null) {
+        return result;
+      }
+    }
+
+    // Otherwise, there is no tab layout node.
+    return null;
+  }
+
+  /**
    * Find the tab layout node which contains the given widget.
    *
    * @param node - The root layout node of interest.
@@ -1526,9 +1761,21 @@ namespace Private {
    */
   export
   function findTabNode(node: LayoutNode, widget: Widget): TabLayoutNode {
-    return find(iterTabNodes(node), tabNode => {
-      return contains(tabNode.tabBar.titles, widget.title);
-    });
+    // Return the tab node if it contains the widget.
+    if (node instanceof TabLayoutNode) {
+      return contains(node.tabBar.titles, widget.title) ? node : null;
+    }
+
+    // Recursively search the children of a split layout node.
+    for (let i = 0, n = node.children.length; i < n; ++i) {
+      let result = findTabNode(node.children.at(i), widget);
+      if (result !== null) {
+        return result;
+      }
+    }
+
+    // Otherwise, the widget does not exist in the tree.
+    return null;
   }
 
   /**
@@ -1538,13 +1785,32 @@ namespace Private {
    *
    * @param handle - The handle of interest.
    *
-   * @returns The split node which holds the handle, or `null`.
+   * @returns An object which contains the split node and the index
+   *   of the handle, or `null` if the split node is not found.
    */
   export
-  function findSplitNode(node: LayoutNode, handle: HTMLDivElement): SplitLayoutNode {
-    return find(iterSplitNodes(node), splitNode => {
-      return splitNode.handles.indexOf(handle) !== -1;
-    });
+  function findSplitNode(node: LayoutNode, handle: HTMLDivElement): { index: number, node: SplitLayoutNode } {
+    // Bail if the node is not a split node.
+    if (node instanceof TabLayoutNode) {
+      return null;
+    }
+
+    // Return the pair if the node contains the handle.
+    let index = node.handles.indexOf(handle);
+    if (index !== -1) {
+      return { index, node };
+    }
+
+    // Recursively search the child split nodes.
+    for (let i = 0, n = node.children.length; i < n; ++i) {
+      let result = findSplitNode(node.children.at(i), handle);
+      if (result !== null) {
+        return result;
+      }
+    }
+
+    // Otherwise, the handle does not exist in the tree.
+    return null;
   }
 
   /**
@@ -1592,7 +1858,7 @@ namespace Private {
   }
 
   /**
-   * Sync the visibility and orientation of split handles.
+   * Sync the visibility and orientation of split node handles.
    *
    * @param splitNode - The split node of interest.
    */
@@ -1794,7 +2060,7 @@ namespace Private {
     // Distribute the layout space to the sizers.
     boxCalc(splitNode.sizers, space);
 
-    // Update the geometry of the child areas and split handles.
+    // Update the geometry of the child areas and handles.
     for (let i = 0, n = splitNode.children.length; i < n; ++i) {
       let child = splitNode.children.at(i);
       let size = splitNode.sizers.at(i).size;
