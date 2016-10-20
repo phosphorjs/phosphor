@@ -610,6 +610,7 @@ class SplitLayout extends PanelLayout {
     if (this.parent) this.parent.update();
   }
 
+  // TODO rename this to `moveHandle`
   /**
    * Set the offset position of a split handle.
    *
@@ -648,6 +649,7 @@ class SplitLayout extends PanelLayout {
 
     // Prevent widget resizing unless needed.
     each(this._sizers, sizer => {
+      // TODO is this check actually necessary?
       if (sizer.size > 0) sizer.sizeHint = sizer.size;
     });
 
