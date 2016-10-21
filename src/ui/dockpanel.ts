@@ -639,22 +639,22 @@ class DockPanel extends Widget {
       top = box.paddingTop;
       left = box.paddingLeft;
       right = box.paddingRight;
-      bottom = (rect.height - box.verticalSum) / 2;
+      bottom = rect.height / 2;
       break;
     case 'root-left':
       top = box.paddingTop;
       left = box.paddingLeft;
-      right = (rect.width - box.horizontalSum) / 2;
+      right = rect.width / 2;
       bottom = box.paddingBottom;
       break;
     case 'root-right':
       top = box.paddingTop;
-      left = (rect.width - box.horizontalSum) / 2;
+      left = rect.width / 2;
       right = box.paddingRight;
       bottom = box.paddingBottom;
       break;
     case 'root-bottom':
-      top = (rect.height - box.verticalSum) / 2;
+      top = rect.height / 2;
       left = box.paddingLeft;
       right = box.paddingRight;
       bottom = box.paddingBottom;
