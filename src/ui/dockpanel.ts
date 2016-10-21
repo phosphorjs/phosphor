@@ -26,12 +26,24 @@ import {
 } from '../core/messaging';
 
 import {
+  MimeData
+} from '../core/mimedata';
+
+import {
   overrideCursor
 } from '../dom/cursor';
 
 import {
+  Drag, IDragEvent
+} from '../dom/dragdrop';
+
+import {
   IS_EDGE, IS_IE
 } from '../dom/platform';
+
+import {
+  hitTest
+} from '../dom/query';
 
 import {
   IBoxSizing, ISizeLimits, boxSizing, sizeLimits
@@ -95,11 +107,6 @@ const VERTICAL_CLASS = 'p-mod-vertical';
  */
 const FACTORY_MIME = 'application/vnd.phosphor.widget-factory';
 
-/**
- * The size of the edge dock zone for the root panel, in pixels.
- */
-const EDGE_SIZE = 30;
-
 
 /**
  * A widget which provides a flexible docking area for widgets.
@@ -130,18 +137,17 @@ class DockPanel extends Widget {
     // Setup the dock layout for the panel.
     this.layout = new DockLayout({ renderer, spacing });
 
-    // Setup the overlay indicator.
-    // if (options.overlay !== void 0) {
-    //   this._overlay = options.overlay;
-    // } else {
-    //   this._overlay = new DockPanel.Overlay();
-    // }
+    // Setup the overlay drop indicator.
+    if (options.overlay !== void 0) {
+      this._overlay = options.overlay;
+    } else {
+      this._overlay = new DockPanel.Overlay();
+    }
+    this._overlay.node.classList.add(OVERLAY_CLASS);
+    this.node.appendChild(this._overlay.node);
 
     // Connect the focus tracker changed signal.
     // this._tracker.currentChanged.connect(this._onCurrentChanged, this);
-
-    // Add the overlay node to the panel.
-    // this.node.appendChild(this._overlay.node);
   }
 
   /**
@@ -151,17 +157,24 @@ class DockPanel extends Widget {
     // Ensure the mouse is released.
     this._releaseMouse();
 
-    // // Hide the overlay.
-    // this._overlay.hide(0);
+    // Hide the overlay.
+    this._overlay.hide(0);
 
-    // // Cancel a drag if one is in progress.
-    // if (this._drag) this._drag.dispose();
+    // Cancel a drag if one is in progress.
+    if (this._drag) this._drag.dispose();
 
     // // Dispose of the focus tracker.
     // this._tracker.dispose();
 
     // Dispose of the base class.
     super.dispose();
+  }
+
+  /**
+   * The overlay used by the dock panel.
+   */
+  get overlay(): DockPanel.IOverlay {
+    return this._overlay;
   }
 
   /**
@@ -215,6 +228,18 @@ class DockPanel extends Widget {
    */
   handleEvent(event: Event): void {
     switch (event.type) {
+    case 'p-dragenter':
+      this._evtDragEnter(event as IDragEvent);
+      break;
+    case 'p-dragleave':
+      this._evtDragLeave(event as IDragEvent);
+      break;
+    case 'p-dragover':
+      this._evtDragOver(event as IDragEvent);
+      break;
+    case 'p-drop':
+      this._evtDrop(event as IDragEvent);
+      break;
     case 'mousedown':
       this._evtMouseDown(event as MouseEvent);
       break;
@@ -238,6 +263,10 @@ class DockPanel extends Widget {
    * A message handler invoked on an `'after-attach'` message.
    */
   protected onAfterAttach(msg: Message): void {
+    this.node.addEventListener('p-dragenter', this);
+    this.node.addEventListener('p-dragleave', this);
+    this.node.addEventListener('p-dragover', this);
+    this.node.addEventListener('p-drop', this);
     this.node.addEventListener('mousedown', this);
   }
 
@@ -245,6 +274,10 @@ class DockPanel extends Widget {
    * A message handler invoked on a `'before-detach'` message.
    */
   protected onBeforeDetach(msg: Message): void {
+    this.node.removeEventListener('p-dragenter', this);
+    this.node.removeEventListener('p-dragleave', this);
+    this.node.removeEventListener('p-dragover', this);
+    this.node.removeEventListener('p-drop', this);
     this.node.removeEventListener('mousedown', this);
     this._releaseMouse();
   }
@@ -273,6 +306,134 @@ class DockPanel extends Widget {
 
     // Remove the widget class from the child.
     msg.child.removeClass(WIDGET_CLASS);
+  }
+
+  /**
+   * Handle the `'p-dragenter'` event for the dock panel.
+   */
+  private _evtDragEnter(event: IDragEvent): void {
+    // If the factory mime type is present, mark the event as
+    // handled in order to get the rest of the drag events.
+    if (event.mimeData.hasData(FACTORY_MIME)) {
+      event.preventDefault();
+      event.stopPropagation();
+    }
+  }
+
+  /**
+   * Handle the `'p-dragleave'` event for the dock panel.
+   */
+  private _evtDragLeave(event: IDragEvent): void {
+    // Always mark the event as handled.
+    event.preventDefault();
+    event.stopPropagation();
+
+    // Get the node into which the drag is entering.
+    let related = event.relatedTarget as HTMLElement;
+
+    // Hide the overlay if the drag is leaving the dock panel.
+    if (!related || !this.node.contains(related)) {
+      this._overlay.hide(0);
+    }
+  }
+
+  /**
+   * Handle the `'p-dragover'` event for the dock panel.
+   */
+  private _evtDragOver(event: IDragEvent): void {
+    // Always mark the event as handled.
+    event.preventDefault();
+    event.stopPropagation();
+
+    // Show the drop indicator overlay and update the drop
+    // action based on the drop target zone under the mouse.
+    let { clientX, clientY, shiftKey } = event;
+    if (this._showOverlay(clientX, clientY, shiftKey) === 'invalid') {
+      event.dropAction = 'none';
+    } else {
+      event.dropAction = event.proposedAction;
+    }
+  }
+
+  /**
+   * Handle the `'p-drop'` event for the dock panel.
+   */
+  private _evtDrop(event: IDragEvent): void {
+    // Always mark the event as handled.
+    event.preventDefault();
+    event.stopPropagation();
+
+    // Hide the drop indicator overlay.
+    this._overlay.hide(0);
+
+    // Bail if the proposed action is to do nothing.
+    if (event.proposedAction === 'none') {
+      event.dropAction = 'none';
+      return;
+    }
+
+    // Find the drop target under the mouse.
+    let { clientX, clientY, shiftKey } = event;
+    let { zone, target } = this._findDropTarget(clientX, clientY, shiftKey);
+
+    // Bail if the drop zone is invalid.
+    if (zone === 'invalid') {
+      event.dropAction = 'none';
+      return;
+    }
+
+    // Bail if the factory mime type has invalid data.
+    let factory = event.mimeData.getData(FACTORY_MIME);
+    if (typeof factory !== 'function') {
+      event.dropAction = 'none';
+      return;
+    }
+
+    // Bail if the factory does not produce a widget.
+    let widget = factory();
+    if (!(widget instanceof Widget)) {
+      event.dropAction = 'none';
+      return;
+    }
+
+    // Handle the drop using the generated widget.
+    switch(zone) {
+    case 'root':
+      this.addWidget(widget);
+      break;
+    case 'root-top':
+      this.addWidget(widget, { mode: 'split-top' });
+      break;
+    case 'root-left':
+      this.addWidget(widget, { mode: 'split-left' });
+      break;
+    case 'root-right':
+      this.addWidget(widget, { mode: 'split-right' });
+      break;
+    case 'root-bottom':
+      this.addWidget(widget, { mode: 'split-bottom' });
+      break;
+    case 'tab-bar':
+      let titles = (target as TabBar).titles;
+      let last = titles.at(titles.length - 1).owner as Widget;
+      this.addWidget(widget, { mode: 'tab-after', ref: last });
+      break;
+    case 'widget-top':
+      this.addWidget(widget, { mode: 'split-top', ref: target });
+      break;
+    case 'widget-left':
+      this.addWidget(widget, { mode: 'split-left', ref: target });
+      break;
+    case 'widget-right':
+      this.addWidget(widget, { mode: 'split-right', ref: target });
+      break;
+    case 'widget-bottom':
+      this.addWidget(widget, { mode: 'split-bottom', ref: target });
+      break;
+    }
+
+    // Accept the proposed drop action.
+    event.dropAction = event.proposedAction;
   }
 
   /**
@@ -383,6 +544,175 @@ class DockPanel extends Widget {
   }
 
   /**
+   * Find the drop target for the given client position.
+   *
+   * @param clientX - The client X position of interest.
+   *
+   * @param clientY - The client Y position of interest.
+   *
+   * @param shift - Whether to search for shifted drop targets.
+   *
+   * @returns The dock target at the specified client position.
+   */
+  private _findDropTarget(clientX: number, clientY: number, shift: boolean): Private.IDropTarget {
+    // Bail, if the mouse is not over the dock panel.
+    if (!hitTest(this.node, clientX, clientY)) {
+      return { zone: 'invalid', target: null };
+    }
+
+    // Lookup the layout for the panel.
+    let layout = this.layout as DockLayout;
+
+    // If the layout is empty, indicate a root drop zone.
+    if (layout.isEmpty) {
+      return { zone: 'root', target: null };
+    }
+
+    // Handle the shifted drop zones.
+    if (shift) {
+      let edge = Private.calcEdge(this.node, clientX, clientY);
+      return { zone: `root-${edge}` as Private.DropZone, target: null };
+    }
+
+    // Find the widget at the given client position.
+    let widget = find(layout, widget => {
+      return widget.isVisible && hitTest(widget.node, clientX, clientY);
+    });
+
+    // Bail if no widget is found.
+    if (!widget) {
+      return { zone: 'invalid', target: null };
+    }
+
+    // Handle the drop zone for a generated tab bar.
+    if (widget.hasClass(TAB_BAR_CLASS)) {
+      return { zone: 'tab-bar', target: widget };
+    }
+
+    // Handle the drop zone for a user widget.
+    let edge = Private.calcEdge(widget.node, clientX, clientY);
+    return { zone: `widget-${edge}` as Private.DropZone, target: widget };
+  }
+
+  /**
+   * Show the overlay indicator at the given client position.
+   *
+   * @param clientX - The client X position of interest.
+   *
+   * @param clientY - The client Y position of interest.
+   *
+   * @param shift - Whether to show the shifted drop targets.
+   *
+   * @returns The drop zone at the specified client position.
+   *
+   * #### Notes
+   * If the position is not over a valid zone, the overlay is hidden.
+   */
+  private _showOverlay(clientX: number, clientY: number, shift: boolean): Private.DropZone {
+    // Find the dock target for the given client position.
+    let { zone, target } = this._findDropTarget(clientX, clientY, shift);
+
+    // If the drop zone is invalid, hide the overlay and bail.
+    if (zone === 'invalid') {
+      this._overlay.hide(100);
+      return zone;
+    }
+
+    // Setup the variables needed to compute the overlay geometry.
+    let top: number;
+    let left: number;
+    let right: number;
+    let bottom: number;
+    let tr: ClientRect;
+    let box = boxSizing(this.node); // TODO cache this?
+    let rect = this.node.getBoundingClientRect();
+
+    // Compute the overlay geometry based on the dock zone.
+    switch (zone) {
+    case 'root':
+      top = box.paddingTop;
+      left = box.paddingLeft;
+      right = box.paddingRight;
+      bottom = box.paddingBottom;
+      break;
+    case 'root-top':
+      top = box.paddingTop;
+      left = box.paddingLeft;
+      right = box.paddingRight;
+      bottom = (rect.height - box.verticalSum) / 2;
+      break;
+    case 'root-left':
+      top = box.paddingTop;
+      left = box.paddingLeft;
+      right = (rect.width - box.horizontalSum) / 2;
+      bottom = box.paddingBottom;
+      break;
+    case 'root-right':
+      top = box.paddingTop;
+      left = (rect.width - box.horizontalSum) / 2;
+      right = box.paddingRight;
+      bottom = box.paddingBottom;
+      break;
+    case 'root-bottom':
+      top = (rect.height - box.verticalSum) / 2;
+      left = box.paddingLeft;
+      right = box.paddingRight;
+      bottom = box.paddingBottom;
+      break;
+    case 'tab-bar':
+      tr = target.node.getBoundingClientRect();
+      top = tr.top - rect.top - box.borderTop;
+      left = tr.left - rect.left - box.borderLeft;
+      right = rect.right - tr.right - box.borderRight;
+      bottom = rect.bottom - tr.bottom - box.borderBottom;
+      break;
+    case 'widget-top':
+      tr = target.node.getBoundingClientRect();
+      top = tr.top - rect.top - box.borderTop;
+      left = tr.left - rect.left - box.borderLeft;
+      right = rect.right - tr.right - box.borderRight;
+      bottom = rect.bottom - tr.bottom + tr.height / 2 - box.borderBottom;
+      break;
+    case 'widget-left':
+      tr = target.node.getBoundingClientRect();
+      top = tr.top - rect.top - box.borderTop;
+      left = tr.left - rect.left - box.borderLeft;
+      right = rect.right - tr.right + tr.width / 2 - box.borderRight;
+      bottom = rect.bottom - tr.bottom - box.borderBottom;
+      break;
+    case 'widget-right':
+      tr = target.node.getBoundingClientRect();
+      top = tr.top - rect.top - box.borderTop;
+      left = tr.left - rect.left + tr.width / 2 - box.borderLeft;
+      right = rect.right - tr.right - box.borderRight;
+      bottom = rect.bottom - tr.bottom - box.borderBottom;
+      break;
+    case 'widget-bottom':
+      tr = target.node.getBoundingClientRect();
+      top = tr.top - rect.top + tr.height / 2 - box.borderTop;
+      left = tr.left - rect.left - box.borderLeft;
+      right = rect.right - tr.right - box.borderRight;
+      bottom = rect.bottom - tr.bottom - box.borderBottom;
+      break;
+    }
+
+    // Derive the width and height from the other dimensions.
+    let width = rect.width - right - left - box.borderLeft - box.borderRight;
+    let height = rect.height - bottom - top - box.borderTop - box.borderBottom;
+
+    // Show the overlay with the computed geometry.
+    this._overlay.show({
+      mouseX: clientX,
+      mouseY: clientY,
+      parentRect: rect,
+      top, left, right, bottom, width, height
+    });
+
+    // Finally, return the computed drop zone.
+    return zone;
+  }
+
+  /**
    * Create a new tab bar for use by the panel.
    */
   private _createTabBar(): TabBar {
@@ -393,6 +723,7 @@ class DockPanel extends Widget {
     // Setup the signal handlers for the tab bar.
     tabBar.currentChanged.connect(this._onCurrentChanged, this);
     tabBar.tabCloseRequested.connect(this._onTabCloseRequested, this);
+    tabBar.tabDetachRequested.connect(this._onTabDetachRequested, this);
     tabBar.tabActivateRequested.connect(this._onTabActivateRequested, this);
 
     // Return the initialized tab bar.
@@ -444,6 +775,52 @@ class DockPanel extends Widget {
     (args.title.owner as Widget).close();
   }
 
+  /**
+   * Handle the `tabDetachRequested` signal from a tab bar.
+   */
+  private _onTabDetachRequested(sender: TabBar, args: TabBar.ITabDetachRequestedArgs): void {
+    // Do nothing if a drag is already in progress.
+    if (this._drag) {
+      return;
+    }
+
+    // Release the tab bar's hold on the mouse.
+    sender.releaseMouse();
+
+    // Extract the data from the args.
+    let { index, title, tab, clientX, clientY } = args;
+
+    // Setup the mime data for the drag operation.
+    let mimeData = new MimeData();
+    let widget = title.owner as Widget;
+    mimeData.setData(FACTORY_MIME, () => widget);
+
+    // Create the drag image for the drag operation.
+    let dragImage = tab.cloneNode(true) as HTMLElement;
+
+    // Create the drag object to manage the drag-drop operation.
+    this._drag = new Drag({
+      mimeData: mimeData,
+      dragImage: dragImage,
+      proposedAction: 'move',
+      supportedActions: 'move',
+    });
+
+    // Hide the tab node in the original tab.
+    tab.classList.add(HIDDEN_CLASS);
+
+    // Create the cleanup callback.
+    let cleanup = (() => {
+      this._drag = null;
+      tab.classList.remove(HIDDEN_CLASS);
+    });
+
+    // Start the drag operation and cleanup when done.
+    this._drag.start(clientX, clientY).then(cleanup);
+  }
+
+  private _drag: Drag = null;
+  private _overlay: DockPanel.IOverlay;
   private _renderer: DockPanel.IRenderer;
   private _pressData: Private.IPressData = null;
 }
@@ -455,16 +832,17 @@ class DockPanel extends Widget {
 export
 namespace DockPanel {
   /**
-   * A type alias for a dock panel renderer;
-   */
-  export
-  type IRenderer = DockLayout.IRenderer;
-
-  /**
    * An options object for creating a dock panel.
    */
   export
   interface IOptions {
+    /**
+     * The overlay to use with the dock panel.
+     *
+     * The default is a new `Overlay` instance.
+     */
+    overlay?: IOverlay;
+
     /**
      * The renderer to use for the dock panel.
      *
@@ -512,6 +890,190 @@ namespace DockPanel {
      */
     activate?: boolean;
   }
+
+  /**
+   * An object which holds the geometry for overlay positioning.
+   */
+  export
+  interface IOverlayGeometry {
+    /**
+     * The client X position of the mouse.
+     */
+    mouseX: number;
+
+    /**
+     * The client Y position of the mouse.
+     */
+    mouseY: number;
+
+    /**
+     * The client rect of the overlay parent node.
+     */
+    parentRect: ClientRect;
+
+    /**
+     * The distance between the overlay and parent top edges.
+     */
+    top: number;
+
+    /**
+     * The distance between the overlay and parent left edges.
+     */
+    left: number;
+
+    /**
+     * The distance between the overlay and parent right edges.
+     */
+    right: number;
+
+    /**
+     * The distance between the overlay and parent bottom edges.
+     */
+    bottom: number;
+
+    /**
+     * The width of the overlay.
+     */
+    width: number;
+
+    /**
+     * The height of the overlay.
+     */
+    height: number;
+  }
+
+  /**
+   * An object which manages the overlay node for a dock panel.
+   */
+  export
+  interface IOverlay {
+    /**
+     * The DOM node for the overlay.
+     */
+    readonly node: HTMLDivElement;
+
+    /**
+     * Show the overlay using the given overlay geometry.
+     *
+     * @param geo - The desired geometry for the overlay.
+     *
+     * #### Notes
+     * The given geometry values assume the node will use absolute
+     * positioning.
+     *
+     * This is called on every mouse move event during a drag in order
+     * to update the position of the overlay. It should be efficient.
+     */
+    show(geo: IOverlayGeometry): void;
+
+    /**
+     * Hide the overlay node.
+     *
+     * @param delay - The delay (in ms) before hiding the overlay.
+     *   A delay value <= 0 should hide the overlay immediately.
+     *
+     * #### Notes
+     * This is called whenever the overlay node should been hidden.
+     */
+    hide(delay: number): void;
+  }
+
+  /**
+   * A concrete implementation of `IOverlay`.
+   *
+   * This is the default overlay implementation for a dock panel.
+   */
+  export
+  class Overlay implements IOverlay {
+    /**
+     * Construct a new overlay.
+     */
+    constructor() {
+      this._node = document.createElement('div');
+      this._node.classList.add(HIDDEN_CLASS);
+      this._node.style.position = 'absolute';
+    }
+
+    /**
+     * The DOM node for the overlay.
+     */
+    get node(): HTMLDivElement {
+      return this._node;
+    }
+
+    /**
+     * Show the overlay using the given overlay geometry.
+     *
+     * @param geo - The desired geometry for the overlay.
+     */
+    show(geo: IOverlayGeometry): void {
+      // Update the position of the overlay.
+      let style = this._node.style;
+      style.top = `${geo.top}px`;
+      style.left = `${geo.left}px`;
+      style.right = `${geo.right}px`;
+      style.bottom = `${geo.bottom}px`;
+
+      // Clear any pending hide timer.
+      clearTimeout(this._timer);
+      this._timer = -1;
+
+      // If the overlay is already visible, we're done.
+      if (!this._hidden) {
+        return;
+      }
+
+      // Clear the hidden flag.
+      this._hidden = false;
+
+      // Finally, show the overlay.
+      this._node.classList.remove(HIDDEN_CLASS);
+    }
+
+    /**
+     * Hide the overlay node.
+     *
+     * @param delay - The delay (in ms) before hiding the overlay.
+     *   A delay value <= 0 will hide the overlay immediately.
+     */
+    hide(delay: number): void {
+      // Do nothing if the overlay is already hidden.
+      if (this._hidden) {
+        return;
+      }
+
+      // Hide immediately if the delay is <= 0.
+      if (delay <= 0) {
+        clearTimeout(this._timer);
+        this._timer = -1;
+        this._hidden = true;
+        this._node.classList.add(HIDDEN_CLASS);
+        return;
+      }
+
+      // Do nothing if a hide is already pending.
+      if (this._timer !== -1) {
+        return;
+      }
+
+      // Otherwise setup the hide timer.
+      this._timer = setTimeout(() => {
+        this._timer = -1;
+        this._hidden = true;
+        this._node.classList.add(HIDDEN_CLASS);
+      }, delay);
+    }
+
+    private _timer = -1;
+    private _hidden = true;
+    private _node: HTMLDivElement;
+  }
+
+  /**
+   * A type alias for a dock panel renderer;
+   */
+  export
+  type IRenderer = DockLayout.IRenderer;
 
   /**
    * The default implementation of `IRenderer`.
@@ -612,6 +1174,13 @@ class DockLayout extends Layout {
       return;
     }
     this.parent.fit();
+  }
+
+  /**
+   * Whether the layout is empty.
+   */
+  get isEmpty(): boolean {
+    return this._root === null;
   }
 
   /**
@@ -738,12 +1307,6 @@ class DockLayout extends Layout {
     let ref = options.ref || null;
     let mode = options.mode || 'tab-after';
 
-    // Warn if the reference widget is invalid.
-    if (widget === ref) {
-      console.warn('Reference widget is the same as the target widget.');
-      ref = null;
-    }
-
     // Find the tab node which holds the reference widget.
     let refNode: Private.TabLayoutNode = null;
     if (this._root && ref) {
@@ -754,6 +1317,11 @@ class DockLayout extends Layout {
     if (ref && !refNode) {
       console.warn('Reference widget is not in the layout.');
       ref = null;
+    }
+
+    // Bail early if the target widget is the reference widget.
+    if (widget === ref) {
+      return;
     }
 
     // Reparent the widget to the current layout parent.
@@ -1550,6 +2118,83 @@ namespace Private {
   }
 
   /**
+   * A type alias for a drop zone.
+   */
+  export
+  type DropZone = (
+    /**
+     * An invalid drop zone.
+     */
+    'invalid' |
+
+    /**
+     * The drop zone for an empty root.
+     */
+    'root' |
+
+    /**
+     * The top half of the root dock area.
+     */
+    'root-top' |
+
+    /**
+     * The left half of the root dock area.
+     */
+    'root-left' |
+
+    /**
+     * The right half of the root dock area.
+     */
+    'root-right' |
+
+    /**
+     * The bottom half of the root dock area.
+     */
+    'root-bottom' |
+
+    /**
+     * The area of a generated tab bar.
+     */
+    'tab-bar' |
+
+    /**
+     * The top half of a user widget.
+     */
+    'widget-top' |
+
+    /**
+     * The left half of a user widget.
+     */
+    'widget-left' |
+
+    /**
+     * The right half of a user widget.
+     */
+    'widget-right' |
+
+    /**
+     * The bottom half of a user widget.
+     */
+    'widget-bottom'
+  );
+
+  /**
+   * An object which holds the drop target zone and widget.
+   */
+  export
+  interface IDropTarget {
+    /**
+     * The semantic zone for the mouse position.
+     */
+    zone: DropZone;
+
+    /**
+     * The target widget related to the drop zone, or `null`.
+     */
+    target: Widget;
+  }
+
+  /**
    * A type alias for a dock layout node.
    */
   export
@@ -2083,5 +2728,26 @@ namespace Private {
         y += spacing;
       }
     }
+  }
+
+  /**
+   * Determine the zone for the given node and client position.
+   *
+   * This assumes the position lies within the node's client rect.
+   */
+  export
+  function calcEdge(node: HTMLElement, x: number, y: number): 'top' | 'left' | 'right' | 'bottom' {
+    let rect = node.getBoundingClientRect();
+    let fracX = (x - rect.left) / rect.width;
+    let fracY = (y - rect.top) / rect.height;
+    let normX = fracX > 0.5 ? 1 - fracX : fracX;
+    let normY = fracY > 0.5 ? 1 - fracY : fracY;
+    let result: 'top' | 'left' | 'right' | 'bottom';
+    if (normX < normY) {
+      result = fracX <= 0.5 ? 'left' : 'right';
+    } else {
+      result = fracY <= 0.5 ? 'top' : 'bottom';
+    }
+    return result;
   }
 }
