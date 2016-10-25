@@ -721,7 +721,6 @@ class DockPanel extends Widget {
     tabBar.addClass(TAB_BAR_CLASS);
 
     // Setup the signal handlers for the tab bar.
-    tabBar.currentChanged.connect(this._onCurrentChanged, this);
     tabBar.tabCloseRequested.connect(this._onTabCloseRequested, this);
     tabBar.tabDetachRequested.connect(this._onTabDetachRequested, this);
     tabBar.tabActivateRequested.connect(this._onTabActivateRequested, this);
@@ -737,28 +736,6 @@ class DockPanel extends Widget {
     let handle = this._renderer.createHandle();
     handle.classList.add(HANDLE_CLASS);
     return handle;
-  }
-
-  /**
-   * Handle the `currentChanged` signal from a tab bar in the panel.
-   */
-  private _onCurrentChanged(sender: TabBar, args: TabBar.ICurrentChangedArgs): void {
-    // Extract the previous and current title from the args.
-    let { previousTitle, currentTitle } = args;
-
-    // Extract the widgets from the titles.
-    let previousWidget = previousTitle ? previousTitle.owner as Widget : null;
-    let currentWidget = currentTitle ? currentTitle.owner as Widget : null;
-
-    // Hide the previous widget.
-    if (previousWidget) {
-      previousWidget.hide();
-    }
-
-    // Show the current widget.
-    if (currentWidget) {
-      currentWidget.show();
-    }
   }
 
   /**
@@ -1910,6 +1887,9 @@ class DockLayout extends Layout {
     // TODO: allow different tab bar locations?
     tabBar.orientation = 'horizontal';
 
+    // Setup the signal handlers for the tab bar.
+    tabBar.currentChanged.connect(this._onCurrentChanged, this);
+
     // Reparent and attach the tab bar to the parent if possible.
     if (this.parent) {
       tabBar.parent = this.parent;
@@ -1945,6 +1925,28 @@ class DockLayout extends Layout {
 
     // Return the initialized handle.
     return handle;
+  }
+
+  /**
+   * Handle the `currentChanged` signal from a tab bar in the layout.
+   */
+  private _onCurrentChanged(sender: TabBar, args: TabBar.ICurrentChangedArgs): void {
+    // Extract the previous and current title from the args.
+    let { previousTitle, currentTitle } = args;
+
+    // Extract the widgets from the titles.
+    let previousWidget = previousTitle ? previousTitle.owner as Widget : null;
+    let currentWidget = currentTitle ? currentTitle.owner as Widget : null;
+
+    // Hide the previous widget.
+    if (previousWidget) {
+      previousWidget.hide();
+    }
+
+    // Show the current widget.
+    if (currentWidget) {
+      currentWidget.show();
+    }
   }
 
   private _dirty = false;
