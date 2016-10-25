@@ -1747,7 +1747,7 @@ class DockLayout extends Layout {
     refNode.parent = childNode;
 
     // Add the tab node to the child node.
-    let j = after ? i : 0;
+    let j = after ? 1 : 0;
     childNode.children.insert(j, tabNode);
     childNode.sizers.insert(j, new BoxSizer());
     childNode.handles.insert(j, this._createHandle());
