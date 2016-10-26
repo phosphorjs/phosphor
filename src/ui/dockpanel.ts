@@ -422,7 +422,7 @@ class DockPanel extends Widget {
       this.addWidget(widget, { mode: 'split-bottom', ref: target });
       break;
     case 'tab-bar':
-      let ref = Private.getTabBarRef(target as TabBar);
+      let ref = Private.tabBarRef(target as TabBar);
       this.addWidget(widget, { mode: 'tab-after', ref });
       break;
     }
@@ -1058,12 +1058,7 @@ namespace DockPanel {
      * @returns A new tab bar for a dock panel.
      */
     createTabBar(): TabBar {
-      return new TabBar({
-        tabsMovable: true,
-        allowDeselect: false,
-        insertBehavior: 'select-tab-if-needed',
-        removeBehavior: 'select-previous-tab',
-      });
+      return new TabBar();
     }
 
     /**
@@ -1087,8 +1082,11 @@ namespace DockPanel {
 /**
  * A layout which provides a flexible docking arrangement.
  *
- * TODO - document responsibilities of the external widget
- * wrt to tab bar behavior, dragging, show/hide, etc...
+ * #### Notes
+ * The layout handles the `currentChanged` signals of the tab bars and
+ * the corresponding visibility of the child widgets. The widget which
+ * consumes the layout is responsible for all other tab interactions
+ * as well as all mouse and drag events.
  */
 export
 class DockLayout extends Layout {
@@ -1893,9 +1891,13 @@ class DockLayout extends Layout {
     // Create the tab bar using the renderer.
     let tabBar = this._renderer.createTabBar();
 
-    // Enforce necessary tab bar layout behavior.
-    // TODO: allow different tab bar locations?
+    // Enforce necessary tab bar behavior.
+    // TODO: do we really want to enforce *all* of these?
+    tabBar.tabsMovable = true;
+    tabBar.allowDeselect = false;
     tabBar.orientation = 'horizontal';
+    tabBar.removeBehavior = 'select-previous-tab';
+    tabBar.insertBehavior = 'select-tab-if-needed';
 
     // Setup the signal handlers for the tab bar.
     tabBar.currentChanged.connect(this._onCurrentChanged, this);
@@ -2389,7 +2391,7 @@ namespace Private {
    * @returns The target reference widget in the tab bar, or null.
    */
   export
-  function getTabBarRef(tabBar: TabBar): Widget {
+  function tabBarRef(tabBar: TabBar): Widget {
     if (tabBar.currentTitle) {
       return tabBar.currentTitle.owner as Widget;
     }
