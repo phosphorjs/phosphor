@@ -206,10 +206,6 @@ class DockPanel extends Widget {
    * @param options - The additional options for adding the widget.
    */
   addWidget(widget: Widget, options: DockPanel.IAddOptions = {}): void {
-    // Hide the widget before adding it to the panel. It will be
-    // shown if it becomes the current tab within its tab bar.
-    widget.hide();  // TODO - what if we are just moving the widget within its tab bar?
-
     // Add the widget to the layout.
     (this.layout as DockLayout).addWidget(widget, options);
 
@@ -413,11 +409,6 @@ class DockPanel extends Widget {
     case 'root-bottom':
       this.addWidget(widget, { mode: 'split-bottom' });
       break;
-    case 'tab-bar':
-      let titles = (target as TabBar).titles;
-      let last = titles.at(titles.length - 1).owner as Widget;
-      this.addWidget(widget, { mode: 'tab-after', ref: last });
-      break;
     case 'widget-top':
       this.addWidget(widget, { mode: 'split-top', ref: target });
       break;
@@ -429,6 +420,10 @@ class DockPanel extends Widget {
       break;
     case 'widget-bottom':
       this.addWidget(widget, { mode: 'split-bottom', ref: target });
+      break;
+    case 'tab-bar':
+      let ref = Private.getTabBarRef(target as TabBar);
+      this.addWidget(widget, { mode: 'tab-after', ref });
       break;
     }
 
@@ -1290,22 +1285,13 @@ class DockLayout extends Layout {
       refNode = Private.findTabNode(this._root, ref);
     }
 
-    // Warn if the reference widget is invalid.
+    // Throw and error if the reference widget is invalid.
     if (ref && !refNode) {
-      console.warn('Reference widget is not in the layout.');
-      ref = null;
-    }
-
-    // Bail early if the target widget is the reference widget.
-    if (widget === ref) {
-      return;
+      throw new Error('Reference widget is not in the layout.');
     }
 
     // Reparent the widget to the current layout parent.
     widget.parent = this.parent;
-
-    // Remove the widget from its current layout location.
-    this._removeWidget(widget);  // TODO - what if we are just moving the widget within its tab bar?
 
     // Insert the widget according to the insert mode.
     switch (mode) {
@@ -1657,6 +1643,11 @@ class DockLayout extends Layout {
    * This does not attach the widget to the parent widget.
    */
   private _insertTab(widget: Widget, ref: Widget, refNode: Private.TabLayoutNode, after: boolean): void {
+    // Do nothing if the tab is inserted next to itself.
+    if (widget === ref) {
+      return;
+    }
+
     // Create the root if it does not exist.
     if (!this._root) {
       let tabNode = new Private.TabLayoutNode(this._createTabBar());
@@ -1665,17 +1656,28 @@ class DockLayout extends Layout {
       return;
     }
 
-    // If there is a ref node, insert relative to the ref widget.
-    if (refNode) {
-      let i = indexOf(refNode.tabBar.titles, ref.title) + (after ? 1 : 0);
-      refNode.tabBar.insertTab(i, widget.title);
-      return;
+    // Use the first tab node as the ref node if needed.
+    if (!refNode) {
+      refNode = Private.firstTabNode(this._root);
     }
 
-    // Otherwise, insert relative to the first tab area.
-    let tabNode = Private.firstTabNode(this._root);
-    let i = tabNode.tabBar.currentIndex + (after ? 1 : 0);
-    tabNode.tabBar.insertTab(i, widget.title);
+    // If the widget is not contained in the ref node, ensure it is
+    // removed from the layout and hidden before being added again.
+    if (!contains(refNode.tabBar.titles, widget.title)) {
+      this._removeWidget(widget);
+      widget.hide();
+    }
+
+    // Lookup the target index for inserting the tab.
+    let index: number;
+    if (ref) {
+      index = indexOf(refNode.tabBar.titles, ref.title);
+    } else {
+      index = refNode.tabBar.currentIndex;
+    }
+
+    // Insert the widget's tab relative to the target index.
+    refNode.tabBar.insertTab(index + (after ? 1 : 0), widget.title);
   }
 
   /**
@@ -1697,6 +1699,14 @@ class DockLayout extends Layout {
    * This does not attach the widget to the parent widget.
    */
   private _insertSplit(widget: Widget, ref: Widget, refNode: Private.TabLayoutNode, orientation: Private.Orientation, after: boolean): void {
+    // Do nothing if there is no effective split.
+    if (widget === ref && refNode.tabBar.titles.length === 1) {
+      return;
+    }
+
+    // Ensure the widget is removed from the current layout.
+    this._removeWidget(widget);
+
     // Create the tab layout node to hold the widget.
     let tabNode = new Private.TabLayoutNode(this._createTabBar());
     tabNode.tabBar.addTab(widget.title);
@@ -2369,6 +2379,24 @@ namespace Private {
       it = chain(node.handles, new ChainIterator(others));
     }
     return it;
+  }
+
+  /**
+   * Get the reference widget for a tab bar.
+   *
+   * @param tabBar - The tab bar of interest.
+   *
+   * @returns The target reference widget in the tab bar, or null.
+   */
+  export
+  function getTabBarRef(tabBar: TabBar): Widget {
+    if (tabBar.currentTitle) {
+      return tabBar.currentTitle.owner as Widget;
+    }
+    if (tabBar.titles.length > 0) {
+      return tabBar.titles.at(tabBar.titles.length - 1).owner as Widget;
+    }
+    return null;
   }
 
   /**
