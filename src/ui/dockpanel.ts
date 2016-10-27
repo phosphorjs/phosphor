@@ -1250,8 +1250,8 @@ class DockLayout extends Layout {
       return;
     }
 
-    // Prevent resizing unless needed.
-    each(data.node.sizers, sizer => { sizer.sizeHint = sizer.size; });
+    // Prevent sibling resizing unless needed.
+    Private.holdSizes(data.node.sizers);
 
     // Adjust the sizers to reflect the handle movement.
     adjustSizer(data.node.sizers, data.index, delta);
@@ -1532,6 +1532,9 @@ class DockLayout extends Layout {
     }
 
     // Otherwise, remove the tab node from its parent...
+
+    // Prevent widget resizing unless needed.
+    Private.holdLayoutSizes(this._root);
 
     // Clear the parent reference on the tab node.
     let splitNode = tabNode.parent;
@@ -2560,6 +2563,29 @@ namespace Private {
 
     // Hide the last handle.
     splitNode.handles.back.classList.add(HIDDEN_CLASS);
+  }
+
+  /**
+   * Hold the current sizes of a vector of box sizers.
+   *
+   * This sets the size hint of each sizer to its current size.
+   */
+  export
+  function holdSizes(sizers: Vector<BoxSizer>): void {
+    each(sizers, sizer => { sizer.sizeHint = sizer.size; });
+  }
+
+  /**
+   * Recursively hold all the layout sizes in the tree.
+   *
+   * This ignores the sizers of tab layout nodes.
+   */
+  export
+  function holdLayoutSizes(node: LayoutNode): void {
+    if (node instanceof SplitLayoutNode) {
+      each(node.children, holdLayoutSizes);
+      holdSizes(node.sizers);
+    }
   }
 
   /**
