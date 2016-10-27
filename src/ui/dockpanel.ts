@@ -1783,8 +1783,10 @@ class DockLayout extends Layout {
   private _splitRoot(orientation: Private.Orientation): Private.SplitLayoutNode {
     // Bail early if the root already meets the requirements.
     let root = this._root;
-    if (root instanceof Private.SplitLayoutNode && root.orientation === orientation) {
-      return root;
+    if (root instanceof Private.SplitLayoutNode) {
+      if (root.orientation === orientation) {
+        return root;
+      }
     }
 
     // Create a new root node with the specified orientation.
