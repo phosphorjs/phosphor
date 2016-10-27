@@ -2566,6 +2566,27 @@ namespace Private {
   }
 
   /**
+   * Determine the zone for the given node and client position.
+   *
+   * This assumes the position lies within the node's client rect.
+   */
+  export
+  function calcEdge(node: HTMLElement, x: number, y: number): 'top' | 'left' | 'right' | 'bottom' {
+    let rect = node.getBoundingClientRect();
+    let fracX = (x - rect.left) / rect.width;
+    let fracY = (y - rect.top) / rect.height;
+    let normX = fracX > 0.5 ? 1 - fracX : fracX;
+    let normY = fracY > 0.5 ? 1 - fracY : fracY;
+    let result: 'top' | 'left' | 'right' | 'bottom';
+    if (normX < normY) {
+      result = fracX <= 0.5 ? 'left' : 'right';
+    } else {
+      result = fracY <= 0.5 ? 'top' : 'bottom';
+    }
+    return result;
+  }
+
+  /**
    * Hold the current sizes of a vector of box sizers.
    *
    * This sets the size hint of each sizer to its current size.
@@ -2786,26 +2807,5 @@ namespace Private {
         y += spacing;
       }
     }
-  }
-
-  /**
-   * Determine the zone for the given node and client position.
-   *
-   * This assumes the position lies within the node's client rect.
-   */
-  export
-  function calcEdge(node: HTMLElement, x: number, y: number): 'top' | 'left' | 'right' | 'bottom' {
-    let rect = node.getBoundingClientRect();
-    let fracX = (x - rect.left) / rect.width;
-    let fracY = (y - rect.top) / rect.height;
-    let normX = fracX > 0.5 ? 1 - fracX : fracX;
-    let normY = fracY > 0.5 ? 1 - fracY : fracY;
-    let result: 'top' | 'left' | 'right' | 'bottom';
-    if (normX < normY) {
-      result = fracX <= 0.5 ? 'left' : 'right';
-    } else {
-      result = fracY <= 0.5 ? 'top' : 'bottom';
-    }
-    return result;
   }
 }
