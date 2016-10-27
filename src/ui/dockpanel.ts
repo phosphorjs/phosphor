@@ -1509,7 +1509,7 @@ class DockLayout extends Layout {
     // Find the tab node which contains the given widget.
     let tabNode = Private.findTabNode(this._root, widget);
 
-    // Bail if the tab node is not found.
+    // Bail early if the tab node is not found.
     if (!tabNode) {
       return;
     }
