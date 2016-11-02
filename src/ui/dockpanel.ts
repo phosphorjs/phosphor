@@ -26,6 +26,10 @@ import {
 } from '../core/messaging';
 
 import {
+  ISignal, defineSignal
+} from '../core/signaling';
+
+import {
   MimeData
 } from '../core/mimedata';
 
@@ -52,6 +56,10 @@ import {
 import {
   BoxSizer, adjustSizer, boxCalc
 } from './boxengine';
+
+import {
+  FocusTracker
+} from './focustracker';
 
 import {
   TabBar
@@ -157,7 +165,7 @@ class DockPanel extends Widget {
     this.node.appendChild(this._overlay.node);
 
     // Connect the focus tracker changed signal.
-    // this._tracker.currentChanged.connect(this._onCurrentChanged, this);
+    this._tracker.currentChanged.connect(this._onCurrentChanged, this);
   }
 
   /**
@@ -173,11 +181,34 @@ class DockPanel extends Widget {
     // Cancel a drag if one is in progress.
     if (this._drag) this._drag.dispose();
 
-    // // Dispose of the focus tracker.
-    // this._tracker.dispose();
+    // Dispose of the focus tracker.
+    this._tracker.dispose();
 
     // Dispose of the base class.
     super.dispose();
+  }
+
+  /**
+   * A signal emitted when the current widget has changed.
+   */
+  currentChanged: ISignal<DockPanel, DockPanel.ICurrentChangedArgs>;
+
+  /**
+   * The current widget in the dock panel.
+   *
+   * #### Notes
+   * The current widget is the widget among the added widgets which
+   * has the *descendant node* which has most recently been focused.
+   *
+   * This is the `currentWidget` of an internal `FocusTracker` which
+   * tracks all widgets in the dock panel.
+   *
+   * This will be `null` if there is no current widget.
+   *
+   * This is a read-only property.
+   */
+  get currentWidget(): Widget {
+    return this._tracker.currentWidget;
   }
 
   /**
@@ -264,7 +295,11 @@ class DockPanel extends Widget {
    * @param options - The additional options for adding the widget.
    */
   addWidget(widget: Widget, options: DockPanel.IAddOptions = {}): void {
+    // Add the widget to the layout.
     (this.layout as DockLayout).addWidget(widget, options);
+
+    // Add the widget to the focus tracker.
+    this._tracker.add(widget);
   }
 
   /**
@@ -357,6 +392,9 @@ class DockPanel extends Widget {
 
     // Remove the widget class from the child.
     msg.child.removeClass(WIDGET_CLASS);
+
+    // Remove the widget from the focus tracker.
+    this._tracker.remove(msg.child);
   }
 
   /**
@@ -846,11 +884,23 @@ class DockPanel extends Widget {
     this._drag.start(clientX, clientY).then(cleanup);
   }
 
+  /**
+   * Handle the `currentChanged` signal from the focus tracker.
+   */
+  private _onCurrentChanged(sender: FocusTracker<Widget>, args: DockPanel.ICurrentChangedArgs): void {
+    this.currentChanged.emit(args);
+  }
+
   private _drag: Drag = null;
   private _overlay: DockPanel.IOverlay;
   private _renderer: DockPanel.IRenderer;
   private _pressData: Private.IPressData = null;
+  private _tracker = new FocusTracker<Widget>();
 }
+
+
+// Define the signals for the `DockPanel` class.
+defineSignal(DockPanel.prototype, 'currentChanged');
 
 
 /**
@@ -884,6 +934,12 @@ namespace DockPanel {
      */
     spacing?: number;
   }
+
+  /**
+   * An arguments object for the `currentChanged` signal.
+   */
+  export
+  type ICurrentChangedArgs = FocusTracker.ICurrentChangedArgs<Widget>;
 
   /**
    * A type alias for the supported insertion modes.
