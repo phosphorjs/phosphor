@@ -522,6 +522,9 @@ class DockPanel extends Widget {
 
     // Accept the proposed drop action.
     event.dropAction = event.proposedAction;
+
+    // Activate the dropped widget.
+    this.activateWidget(widget);
   }
 
   /**
