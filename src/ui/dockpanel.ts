@@ -123,7 +123,7 @@ const FACTORY_MIME = 'application/vnd.phosphor.widget-factory';
 /**
  * A fraction used for sizing root panels; ~= `1 / golden_ratio`.
  */
-const GOLDEN = 0.618
+const GOLDEN = 0.618;
 
 
 /**
@@ -233,6 +233,13 @@ class DockPanel extends Widget {
   }
 
   /**
+   * Whether the dock panel is empty.
+   */
+  get isEmpty(): boolean {
+    return (this.layout as DockLayout).isEmpty;
+  }
+
+  /**
    * The renderer used by the dock panel.
    */
   get renderer(): DockPanel.IRenderer {
@@ -261,6 +268,15 @@ class DockPanel extends Widget {
    */
   tabBars(): IIterator<TabBar> {
     return (this.layout as DockLayout).tabBars();
+  }
+
+  /**
+   * Create an iterator over the handles in the panel.
+   *
+   * @returns A new iterator over the handles in the panel.
+   */
+  handles(): IIterator<HTMLDivElement> {
+    return (this.layout as DockLayout).handles();
   }
 
   /**
@@ -1240,7 +1256,7 @@ class DockLayout extends Layout {
   }
 
   /**
-   * Whether the layout is empty.
+   * Whether the dock layout is empty.
    */
   get isEmpty(): boolean {
     return this._root === null;
@@ -2015,7 +2031,7 @@ class DockLayout extends Layout {
     let tabBar = this._renderer.createTabBar();
 
     // Enforce necessary tab bar behavior.
-    // TODO: do we really want to enforce *all* of these?
+    // TODO do we really want to enforce *all* of these?
     tabBar.tabsMovable = true;
     tabBar.allowDeselect = false;
     tabBar.orientation = 'horizontal';
@@ -2831,8 +2847,6 @@ namespace Private {
       widgetSizer.maxSize = 0;
     }
 
-    // TODO normalize sizes to ensure max >= min?
-
     // Return the computed size limits for the layout node.
     return { minWidth, minHeight, maxWidth, maxHeight };
   }
@@ -2885,8 +2899,6 @@ namespace Private {
         sizer.maxSize = limits.maxHeight;
       }
     }
-
-    // TODO normalize sizes to ensure max >= min?
 
     // Return the computed size limits for the layout node.
     return { minWidth, minHeight, maxWidth, maxHeight };
