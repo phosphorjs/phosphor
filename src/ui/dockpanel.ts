@@ -6,7 +6,7 @@
 | The full license is in the file LICENSE, distributed with this software.
 |----------------------------------------------------------------------------*/
 import {
-  ChainIterator, IIterator, chain, each, empty, map, once
+  ChainIterator, IIterator, chain, each, empty, map, once, reduce
 } from '../algorithm/iteration';
 
 import {
@@ -111,6 +111,11 @@ const VERTICAL_CLASS = 'p-mod-vertical';
  * The factory MIME type supported by the dock panel.
  */
 const FACTORY_MIME = 'application/vnd.phosphor.widget-factory';
+
+/**
+ * A fraction used for sizing root panels; ~= `1 / golden_ratio`.
+ */
+const GOLDEN = 0.618
 
 
 /**
@@ -639,22 +644,22 @@ class DockPanel extends Widget {
       top = box.paddingTop;
       left = box.paddingLeft;
       right = box.paddingRight;
-      bottom = rect.height / 2;
+      bottom = rect.height * GOLDEN;
       break;
     case 'root-left':
       top = box.paddingTop;
       left = box.paddingLeft;
-      right = rect.width / 2;
+      right = rect.width * GOLDEN;
       bottom = box.paddingBottom;
       break;
     case 'root-right':
       top = box.paddingTop;
-      left = rect.width / 2;
+      left = rect.width * GOLDEN;
       right = box.paddingRight;
       bottom = box.paddingBottom;
       break;
     case 'root-bottom':
-      top = rect.height / 2;
+      top = rect.height * GOLDEN;
       left = box.paddingLeft;
       right = box.paddingRight;
       bottom = box.paddingBottom;
@@ -1726,55 +1731,80 @@ class DockLayout extends Layout {
     // Lookup the split node for the ref widget.
     let splitNode = refNode ? refNode.parent : null;
 
-    // If the split node is null, split the root node.
+    // If the split node is null, split the root.
     if (!splitNode) {
+      // Ensure the root is split with the correct orientation.
       let root = this._splitRoot(orientation);
+
+      // Determine the insert index for the new tab node.
       let i = after ? root.children.length : 0;
+
+      // Normalize the sizes for the root.
+      Private.normalizeSizes(root);
+
+      // Insert the tab node sized to the golden ratio.
       root.children.insert(i, tabNode);
-      root.sizers.insert(i, new BoxSizer());
+      root.sizers.insert(i, Private.createSizer(GOLDEN));
       root.handles.insert(i, this._createHandle());
-      Private.syncHandles(root);
       tabNode.parent = root;
+
+      // Re-normalize the sizes to maintain proper aspect ratio.
+      Private.normalizeSizes(root);
+
+      // Finally, synchronize the visibility of the handles.
+      Private.syncHandles(root);
       return;
     }
 
     // If the split node already had the correct orientation,
     // the widget can be inserted into the split node directly.
     if (splitNode.orientation === orientation) {
-      let i = splitNode.children.indexOf(refNode) + (after ? 1 : 0);
-      splitNode.children.insert(i, tabNode);
-      splitNode.sizers.insert(i, new BoxSizer());
-      splitNode.handles.insert(i, this._createHandle());
-      Private.syncHandles(splitNode);
+      // Find the index of the ref node.
+      let i = splitNode.children.indexOf(refNode);
+
+      // Normalize the sizes for the split node.
+      Private.normalizeSizes(splitNode);
+
+      // Consume half the space for the insert location.
+      let s = splitNode.sizers.at(i).sizeHint /= 2;
+
+      // Insert the tab node sized to the other half.
+      let j = i + (after ? 1 : 0);
+      splitNode.children.insert(j, tabNode);
+      splitNode.sizers.insert(j, Private.createSizer(s));
+      splitNode.handles.insert(j, this._createHandle());
       tabNode.parent = splitNode;
+
+      // Finally, synchronize the visibility of the handles.
+      Private.syncHandles(splitNode);
       return;
     }
 
     // Remove the ref node from the split node.
     let i = splitNode.children.remove(refNode);
-    let refSizer = splitNode.sizers.removeAt(i);
-    let refHandle = splitNode.handles.removeAt(i);
 
-    // Add the ref node to a new child split node.
+    // Create a new normalized split node for the children.
     let childNode = new Private.SplitLayoutNode(orientation);
+    childNode.normalized = true;
+
+    // Add the ref node sized to half the space.
     childNode.children.pushBack(refNode);
-    childNode.sizers.pushBack(refSizer);
-    childNode.handles.pushBack(refHandle);
+    childNode.sizers.pushBack(Private.createSizer(0.5));
+    childNode.handles.pushBack(this._createHandle());
     refNode.parent = childNode;
 
-    // Add the tab node to the child node.
+    // Add the tab node sized to the other half.
     let j = after ? 1 : 0;
     childNode.children.insert(j, tabNode);
-    childNode.sizers.insert(j, new BoxSizer());
+    childNode.sizers.insert(j, Private.createSizer(0.5));
     childNode.handles.insert(j, this._createHandle());
-    Private.syncHandles(childNode);
     tabNode.parent = childNode;
 
-    // Add the new child node to the original split node.
+    // Synchronize the visibility of the handles.
+    Private.syncHandles(childNode);
+
+    // Finally, add the new child node to the original split node.
     splitNode.children.insert(i, childNode);
-    splitNode.sizers.insert(i, new BoxSizer());
-    splitNode.handles.insert(i, this._createHandle());
-    Private.syncHandles(splitNode);
     childNode.parent = splitNode;
   }
 
@@ -1799,7 +1829,7 @@ class DockLayout extends Layout {
 
     // Add the old root to the new root.
     result.children.pushBack(root);
-    result.sizers.pushBack(new BoxSizer());
+    result.sizers.pushBack(Private.createSizer(0));
     result.handles.pushBack(this._createHandle());
     root.parent = result;
 
@@ -2286,6 +2316,11 @@ namespace Private {
     parent: SplitLayoutNode = null;
 
     /**
+     * Whether the sizers have been normalized.
+     */
+    normalized = false;
+
+    /**
      * The orientation of the node.
      */
     readonly orientation: Orientation;
@@ -2617,6 +2652,49 @@ namespace Private {
   }
 
   /**
+   * Create a box sizer with an initial size hint.
+   */
+  export
+  function createSizer(hint: number): BoxSizer {
+    let sizer = new BoxSizer();
+    sizer.sizeHint = hint;
+    sizer.size = hint;
+    return sizer;
+  }
+
+  /**
+   * Normalize the sizes of the box sizers for a split layout node.
+   */
+  export
+  function normalizeSizes(splitNode: SplitLayoutNode): void {
+    // Bail early if the sizers are empty.
+    let n = splitNode.sizers.length;
+    if (n === 0) {
+      return;
+    }
+
+    // Hold the current sizes of the sizers.
+    holdSizes(splitNode.sizers);
+
+    // Compute the sum of the sizes.
+    let sum = reduce(splitNode.sizers, (v, sizer) => v + sizer.sizeHint, 0);
+
+    // Normalize the sizes based on the sum.
+    if (sum === 0) {
+      each(splitNode.sizers, sizer => {
+        sizer.size = sizer.sizeHint = 1 / n;
+      });
+    } else {
+      each(splitNode.sizers, sizer => {
+        sizer.size = sizer.sizeHint /= sum;
+      });
+    }
+
+    // Mark the split node as normalized.
+    splitNode.normalized = true;
+  }
+
+  /**
    * Fit the given tab layout node.
    *
    * @param tabNode - The tab node of interest.
@@ -2787,6 +2865,12 @@ namespace Private {
     let horizontal = splitNode.orientation === 'horizontal';
     let fixed = Math.max(0, splitNode.children.length - 1) * spacing;
     let space = Math.max(0, (horizontal ? width : height) - fixed);
+
+    // De-normalize the split node if needed.
+    if (splitNode.normalized) {
+      each(splitNode.sizers, sizer => { sizer.sizeHint *= space; });
+      splitNode.normalized = false;
+    }
 
     // Distribute the layout space to the sizers.
     boxCalc(splitNode.sizers, space);
