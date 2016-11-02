@@ -1620,7 +1620,7 @@ class DockLayout extends Layout {
     // Otherwise, move the child node to the parent node...
 
     // Lookup the index of the split node.
-    let j = parentNode.children.indexOf(splitNode);
+    let j = indexOf(parentNode.children, splitNode);
 
     // Handle the case where the child node is a tab node.
     if (childNode instanceof Private.TabLayoutNode) {
@@ -1784,7 +1784,7 @@ class DockLayout extends Layout {
     // the widget can be inserted into the split node directly.
     if (splitNode.orientation === orientation) {
       // Find the index of the ref node.
-      let i = splitNode.children.indexOf(refNode);
+      let i = indexOf(splitNode.children, refNode);
 
       // Normalize the sizes for the split node.
       Private.normalizeSizes(splitNode);
@@ -2542,7 +2542,7 @@ namespace Private {
     }
 
     // Return the pair if the node contains the handle.
-    let index = node.handles.indexOf(handle);
+    let index = indexOf(node.handles, handle);
     if (index !== -1) {
       return { index, node };
     }
