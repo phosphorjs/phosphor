@@ -209,6 +209,54 @@ class DockPanel extends Widget {
   }
 
   /**
+   * Create an iterator over the user widgets in the panel.
+   *
+   * @returns A new iterator over the user widgets in the panel.
+   *
+   * #### Notes
+   * This iterator does not include the generated tab bars.
+   */
+  widgets(): IIterator<Widget> {
+    return (this.layout as DockLayout).widgets();
+  }
+
+  /**
+   * Create an iterator over the tab bars in the panel.
+   *
+   * @returns A new iterator over the tab bars in the panel.
+   *
+   * #### Notes
+   * This iterator does not include the user widgets.
+   */
+  tabBars(): IIterator<TabBar> {
+    return (this.layout as DockLayout).tabBars();
+  }
+
+  /**
+   * Activate the specified widget in the dock panel.
+   *
+   * @param widget - The widget of interest.
+   *
+   * #### Notes
+   * This will make the widget the current widget in its tab area and
+   * post the widget an `activate-request` message.
+   */
+  activateWidget(widget: Widget): void {
+    // Find the tab bar which contains the widget.
+    let title = widget.title;
+    let tabBar = find(this.tabBars(), bar => contains(bar.titles, title));
+
+    // Throw an error if no tab bar is found.
+    if (!tabBar) {
+      throw new Error('Widget is not contained in the dock panel.');
+    }
+
+    // Update the current title and activate the widget.
+    tabBar.currentTitle = title;
+    widget.activate();
+  }
+
+  /**
    * Add a widget to the dock panel.
    *
    * @param widget - The widget to add to the dock panel.
@@ -216,10 +264,7 @@ class DockPanel extends Widget {
    * @param options - The additional options for adding the widget.
    */
   addWidget(widget: Widget, options: DockPanel.IAddOptions = {}): void {
-    // Add the widget to the layout.
     (this.layout as DockLayout).addWidget(widget, options);
-
-    // TODO - handle activation
   }
 
   /**
@@ -847,31 +892,10 @@ namespace DockPanel {
   type InsertMode = DockLayout.InsertMode;
 
   /**
-   * An options object for adding a widget to the dock panel.
+   * A type alias for the add widget options.
    */
   export
-  interface IAddOptions {
-    /**
-     * The insertion mode for adding the widget.
-     *
-     * The default is `'tab-after'`.
-     */
-    mode?: InsertMode;
-
-    /**
-     * The reference widget for the insert location.
-     *
-     * The default is `null`.
-     */
-    ref?: Widget;
-
-    /**
-     * Whether to activate the new widget.
-     *
-     * The default is `true`.
-     */
-    activate?: boolean;
-  }
+  type IAddOptions = DockLayout.IAddOptions;
 
   /**
    * An object which holds the geometry for overlay positioning.
