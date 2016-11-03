@@ -91,9 +91,11 @@ class ContentWidget extends Widget {
 
   static createNode(): HTMLElement {
     let node = document.createElement('div');
+    let content = document.createElement('div');
     let input = document.createElement('input');
     input.placeholder = 'Placeholder...';
-    node.appendChild(input);
+    content.appendChild(input);
+    node.appendChild(content);
     return node;
   }
 
@@ -108,7 +110,7 @@ class ContentWidget extends Widget {
   }
 
   get inputNode(): HTMLInputElement {
-    return this.node.firstChild as HTMLInputElement;
+    return this.node.getElementsByTagName('input')[0] as HTMLInputElement;
   }
 
   protected onActivateRequest(msg: Message): void {
@@ -313,13 +315,13 @@ function main(): void {
   dock.addWidget(y1, { mode: 'split-bottom', ref: b1 });
   dock.addWidget(g1, { mode: 'split-left', ref: y1 });
   dock.addWidget(r2, { ref: b1 });
+  dock.addWidget(b2, { mode: 'split-right', ref: y1 });
 
-
-  //dock.currentChanged.connect((s, a) => { console.log(a); });
+  dock.currentChanged.connect((s, a) => { console.log(a.newValue); });
 
   BoxPanel.setStretch(dock, 1);
 
-  let main = new BoxPanel({ direction: 'left-to-right' });
+  let main = new BoxPanel({ direction: 'left-to-right', spacing: 0 });
   main.id = 'main';
   main.addWidget(palette);
   main.addWidget(dock);
