@@ -14,7 +14,7 @@ import {
 } from '../core/signaling';
 
 import {
-  IS_IE
+  IS_EDGE, IS_IE
 } from '../dom/platform';
 
 import {
@@ -133,7 +133,7 @@ class StackedLayout extends PanelLayout {
     // Send an `'after-attach'` message if the parent is attached.
     if (this.parent.isAttached) sendMessage(widget, WidgetMessage.AfterAttach);
 
-    // Post a layout request for the parent widget.
+    // Post a fit request for the parent widget.
     this.parent.fit();
   }
 
@@ -177,7 +177,7 @@ class StackedLayout extends PanelLayout {
     // Reset the z-index for the widget.
     widget.node.style.zIndex = '';
 
-    // Post a layout request for the parent widget.
+    // Post a fit request for the parent widget.
     this.parent.fit();
   }
 
@@ -201,7 +201,7 @@ class StackedLayout extends PanelLayout {
    * A message handler invoked on a `'child-shown'` message.
    */
   protected onChildShown(msg: ChildMessage): void {
-    if (IS_IE) { // prevent flicker on IE
+    if (IS_IE || IS_EDGE) { // prevent flicker on IE/Edge
       sendMessage(this.parent, WidgetMessage.FitRequest);
     } else {
       this.parent.fit();
@@ -212,7 +212,7 @@ class StackedLayout extends PanelLayout {
    * A message handler invoked on a `'child-hidden'` message.
    */
   protected onChildHidden(msg: ChildMessage): void {
-    if (IS_IE) { // prevent flicker on IE
+    if (IS_IE || IS_EDGE) { // prevent flicker on IE/Edge
       sendMessage(this.parent, WidgetMessage.FitRequest);
     } else {
       this.parent.fit();

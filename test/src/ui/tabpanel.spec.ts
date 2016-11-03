@@ -240,24 +240,18 @@ describe('ui/tabpanel', () => {
         panel.dispose();
       });
 
-      it('should show and activate the new widget when the current tab changes', (done) => {
+      it('should show the new widget when the current tab changes', () => {
         let panel = new TabPanel();
         let widgets = [new LogWidget(), new LogWidget(), new LogWidget()];
         each(widgets, w => { panel.addWidget(w); });
         each(widgets, w => { w.node.tabIndex = -1; });
         Widget.attach(panel, document.body);
-        let bar = panel.tabBar;
-        bar.currentChanged.connect((sender, args) => {
+        panel.tabBar.currentChanged.connect((sender, args) => {
           expect(widgets[args.previousIndex].isVisible).to.be(false);
-          let widget = widgets[args.currentIndex];
-          expect(widget.isVisible).to.be(true);
-          requestAnimationFrame(() => {
-            expect(widget.methods).to.contain('onActivateRequest');
-            panel.dispose();
-            done();
-          });
+          expect(widgets[args.currentIndex].isVisible).to.be(true);
         });
-        bar.currentIndex = 1;
+        panel.tabBar.currentIndex = 1;
+        panel.dispose();
       });
 
       it('should close the widget when a tab is closed', () => {

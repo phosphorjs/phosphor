@@ -60,6 +60,42 @@ function find<T>(object: IterableOrArrayLike<T>, fn: (value: T) => boolean): T {
 
 
 /**
+ * Test whether an iterable contains a specific value.
+ *
+ * @param object - The iterable or array-like object to search.
+ *
+ * @param value - The value to search for in the iterable. Values
+ *   are compared using strict `===` equality.
+ *
+ * @returns `true` if the value is found, `false` otherwise.
+ *
+ * #### Complexity
+ * Linear.
+ *
+ * #### Example
+ * ```typescript
+ * import { contains } from 'phosphor/lib/algorithm/searching';
+ *
+ * let data: number[] = [5, 7, 0, -2, 9];
+ *
+ * contains(data, -2);  // true
+ * contains(data, 3);   // false
+ * ```
+ */
+export
+function contains<T>(object: IterableOrArrayLike<T>, value: T): boolean {
+  let temp: T;
+  let it = iter(object);
+  while ((temp = it.next()) !== void 0) {
+    if (temp === value) {
+      return true;
+    }
+  }
+  return false;
+}
+
+
+/**
  * Find the minimum value in an iterable.
  *
  * @param object - The iterable or array-like object to search.

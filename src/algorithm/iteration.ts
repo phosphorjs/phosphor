@@ -142,6 +142,17 @@ function toArray<T>(object: IterableOrArrayLike<T>): T[] {
 
 
 /**
+ * Create an empty iterator.
+ *
+ * @returns A new iterator which yields nothing.
+ */
+export
+function empty<T>(): EmptyIterator<T> {
+  return new EmptyIterator<T>();
+}
+
+
+/**
  * An iterator which is always empty.
  */
 export
@@ -177,19 +188,6 @@ class EmptyIterator<T> implements IIterator<T> {
   next(): T {
     return void 0;
   }
-}
-
-
-/**
- * The namespace for the `EmptyIterator` class statics.
- */
-export
-namespace EmptyIterator {
-  /**
-   * A singleton instance of an empty iterator.
-   */
-  export
-  const instance = new EmptyIterator<any>();
 }
 
 
@@ -289,7 +287,9 @@ function every<T>(object: IterableOrArrayLike<T>, fn: (value: T) => boolean): bo
   let value: T;
   let it = iter(object);
   while ((value = it.next()) !== void 0) {
-    if (!fn(value)) return false;
+    if (!fn(value)) {
+      return false;
+    }
   }
   return true;
 }
@@ -312,7 +312,9 @@ function some<T>(object: IterableOrArrayLike<T>, fn: (value: T) => boolean): boo
   let value: T;
   let it = iter(object);
   while ((value = it.next()) !== void 0) {
-    if (fn(value)) return true;
+    if (fn(value)) {
+      return true;
+    }
   }
   return false;
 }
@@ -462,7 +464,9 @@ class FilterIterator<T> implements IIterator<T> {
     let fn = this._fn;
     let it = this._source;
     while ((value = it.next()) !== void 0) {
-      if (fn(value)) return value;
+      if (fn(value)) {
+        return value;
+      }
     }
     return void 0;
   }
@@ -616,6 +620,172 @@ class EnumerateIterator<T> implements IIterator<[number, T]> {
 
   private _source: IIterator<T>;
   private _index: number;
+}
+
+
+/**
+ * Create an iterator which yields a value a single time.
+ *
+ * @param value - The value to wrap in an iterator.
+ *
+ * @returns A new iterator which yields the value a single time.
+ */
+export
+function once<T>(value: T): RepeatIterator<T> {
+  return new RepeatIterator<T>(value, 1);
+}
+
+
+/**
+ * Create an iterator which repeats a value a number of times.
+ *
+ * @param value - The value to repeat.
+ *
+ * @param count - The number of times to repeat the value.
+ *
+ * @returns A new iterator which repeats the specified value.
+ */
+export
+function repeat<T>(value: T, count: number): RepeatIterator<T> {
+  return new RepeatIterator<T>(value, count);
+}
+
+
+/**
+ * An iterator which repeats a value a specified number of times.
+ */
+export
+class RepeatIterator<T> implements IIterator<T> {
+  /**
+   * Construct a new repeat iterator.
+   *
+   * @param value - The value to repeat.
+   *
+   * @param count - The number of times to repeat the value.
+   */
+  constructor(value: T, count: number) {
+    this._value = value;
+    this._count = count;
+  }
+
+  /**
+   * Create an iterator over the object's values.
+   *
+   * @returns A reference to `this` iterator.
+   */
+  iter(): this {
+    return this;
+  }
+
+  /**
+   * Create an independent clone of the repeat iterator.
+   *
+   * @returns A new iterator starting with the current value.
+   */
+  clone(): RepeatIterator<T> {
+    return new RepeatIterator(this._value, this._count);
+  }
+
+  /**
+   * Get the next value from the iterator.
+   *
+   * @returns The next value from the iterator, or `undefined` if
+   *   the iterator is exhausted.
+   */
+  next(): T {
+    if (this._count <= 0) {
+      return void 0;
+    }
+    this._count--;
+    return this._value;
+  }
+
+  private _value: T;
+  private _count: number;
+}
+
+
+/**
+ * Chain together several iterables.
+ *
+ * @param objects - The iterables or array-like objects of interest.
+ *
+ * @returns An iterator which yields the values of the given iterables
+ *   in the order in which they are supplied.
+ */
+export
+function chain<T>(...objects: IterableOrArrayLike<T>[]): ChainIterator<T> {
+  return new ChainIterator<T>(map(objects, iter));
+}
+
+
+/**
+ * An iterator which chains together several iterators.
+ */
+export
+class ChainIterator<T> implements IIterator<T> {
+  /**
+   * Construct a new chain iterator.
+   *
+   * @param source - The iterator of iterators of interest.
+   */
+  constructor(source: IIterator<IIterator<T>>) {
+    this._source = source;
+    this._active = void 0;
+  }
+
+  /**
+   * Create an iterator over the object's values.
+   *
+   * @returns A reference to `this` iterator.
+   */
+  iter(): this {
+    return this;
+  }
+
+  /**
+   * Create an independent clone of the chain iterator.
+   *
+   * @returns A new iterator starting with the current value.
+   *
+   * #### Notes
+   * The source iterators must be cloneable.
+   */
+  clone(): ChainIterator<T> {
+    let result = new ChainIterator(this._source.clone());
+    result._active = this._active && this._active.clone();
+    result._cloned = true;
+    this._cloned = true;
+    return result;
+  }
+
+  /**
+   * Get the next value from the iterator.
+   *
+   * @returns The next value from the iterator, or `undefined` when
+   *   all source iterators are exhausted.
+   */
+  next(): T {
+    if (this._active === void 0) {
+      this._active = this._source.next();
+      if (this._active === void 0) {
+        return void 0;
+      }
+      if (this._cloned) {
+        this._active = this._active.clone();
+      }
+    }
+    let value = this._active.next();
+    if (value !== void 0) {
+      return value;
+    }
+    this._active = void 0;
+    return this.next();
+  }
+
+  private _source: IIterator<IIterator<T>>;
+  private _active: IIterator<T>;
+  private _cloned = false;
 }
 
 

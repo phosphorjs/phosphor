@@ -186,6 +186,17 @@ class TabBar extends Widget {
   tabMoved: ISignal<TabBar, TabBar.ITabMovedArgs>;
 
   /**
+   * A signal emitted when a tab is clicked by the user.
+   *
+   * #### Notes
+   * If the clicked tab is not the current tab, the clicked tab will be
+   * made current and the `currentChanged` signal will be emitted first.
+   *
+   * This signal is emitted even if the clicked tab is the current tab.
+   */
+  tabActivateRequested: ISignal<TabBar, TabBar.ITabActivateRequestedArgs>;
+
+  /**
    * A signal emitted when a tab close icon is clicked.
    *
    * #### Notes
@@ -783,6 +794,17 @@ class TabBar extends Widget {
     } else {
       this.currentIndex = i;
     }
+
+    // Do nothing else if there is no current tab.
+    if (this._currentIndex === -1) {
+      return;
+    }
+
+    // Emit the tab activate request signal.
+    this.tabActivateRequested.emit({
+      index: this.currentIndex,
+      title: this.currentTitle
+    });
   }
 
   /**
@@ -1117,6 +1139,7 @@ class TabBar extends Widget {
 // Define the signals for the `TabBar` class.
 defineSignal(TabBar.prototype, 'currentChanged');
 defineSignal(TabBar.prototype, 'tabMoved');
+defineSignal(TabBar.prototype, 'tabActivateRequested');
 defineSignal(TabBar.prototype, 'tabCloseRequested');
 defineSignal(TabBar.prototype, 'tabDetachRequested');
 
@@ -1281,6 +1304,22 @@ namespace TabBar {
      * The current index of the tab.
      */
     toIndex: number;
+
+    /**
+     * The title for the tab.
+     */
+    title: Title;
+  }
+
+  /**
+   * The arguments object for the `tabActivateRequested` signal.
+   */
+  export
+  interface ITabActivateRequestedArgs {
+    /**
+     * The index of the tab to activate.
+     */
+    index: number;
 
     /**
      * The title for the tab.

@@ -486,13 +486,6 @@ class MenuBar extends Widget {
   }
 
   /**
-   * A message handler invoked on a `'deactivate-request'` message.
-   */
-  protected onDeactivateRequest(msg: Message): void {
-    if (this.isAttached) this.node.blur();
-  }
-
-  /**
    * A message handler invoked on an `'update-request'` message.
    */
   protected onUpdateRequest(msg: Message): void {
@@ -533,7 +526,7 @@ class MenuBar extends Widget {
     if (kc === 27) {
       this._closeChildMenu();
       this.activeIndex = -1;
-      this.deactivate();
+      this.node.blur();
       return;
     }
 

@@ -204,14 +204,14 @@ body.p-mod-override-cursor * {
 
 .p-SplitPanel.p-mod-horizontal > .p-SplitPanel-handle:after {
   left: 50%;
-  min-width: 7px;
+  min-width: 8px;
   transform: translateX(-50%);
 }
 
 
 .p-SplitPanel.p-mod-vertical > .p-SplitPanel-handle:after {
   top: 50%;
-  min-height: 7px;
+  min-height: 8px;
   transform: translateY(-50%);
 }
 
@@ -326,14 +326,62 @@ body.p-mod-override-cursor * {
 }
 
 
-.p-DockPanel-splitPanel,
-.p-DockPanel-tabPanel {
+.p-DockPanel-widget {
   z-index: 0;
 }
 
 
-.p-DockPanel-overlay {
+.p-DockPanel-tabBar {
   z-index: 1;
+}
+
+
+.p-DockPanel-handle {
+  z-index: 2;
+}
+
+
+.p-DockPanel-handle.p-mod-hidden {
+  display: none;
+}
+
+
+.p-DockPanel-handle:after {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  content: '';
+}
+
+
+.p-DockPanel-handle.p-mod-horizontal {
+  cursor: ew-resize;
+}
+
+
+.p-DockPanel-handle.p-mod-vertical {
+  cursor: ns-resize;
+}
+
+
+.p-DockPanel-handle.p-mod-horizontal:after {
+  left: 50%;
+  min-width: 8px;
+  transform: translateX(-50%);
+}
+
+
+.p-DockPanel-handle.p-mod-vertical:after {
+  top: 50%;
+  min-height: 8px;
+  transform: translateY(-50%);
+}
+
+
+.p-DockPanel-overlay {
+  z-index: 3;
   box-sizing: border-box;
   pointer-events: none;
 }

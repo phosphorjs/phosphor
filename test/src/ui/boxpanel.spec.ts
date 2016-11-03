@@ -32,6 +32,11 @@ class LogBoxLayout extends BoxLayout {
 
   methods: string[] = [];
 
+  protected init(): void {
+    super.init();
+    this.methods.push('init');
+  }
+
   protected attachWidget(index: number, widget: Widget): void {
     super.attachWidget(index, widget);
     this.methods.push('attachWidget');
@@ -45,11 +50,6 @@ class LogBoxLayout extends BoxLayout {
   protected detachWidget(index: number, widget: Widget): void {
     super.detachWidget(index, widget);
     this.methods.push('detachWidget');
-  }
-
-  protected onLayoutChanged(msg: Message): void {
-    super.onLayoutChanged(msg);
-    this.methods.push('onLayoutChanged');
   }
 
   protected onAfterShow(msg: Message): void {
@@ -366,6 +366,31 @@ describe('ui/boxpanel', () => {
 
     });
 
+    describe('#init()', () => {
+
+      it('should set the direction class on the parent widget', () => {
+        let parent = new Widget();
+        let layout = new LogBoxLayout();
+        parent.layout = layout;
+        expect(parent.hasClass('p-mod-top-to-bottom')).to.be(true);
+        expect(layout.methods.indexOf('init')).to.not.be(-1);
+        parent.dispose();
+      });
+
+      it('should attach the child widgets', () => {
+        let parent = new Widget();
+        let layout = new LogBoxLayout();
+        let widgets = [new Widget(), new Widget(), new Widget()];
+        each(widgets, w => { layout.addWidget(w); });
+        Widget.attach(parent, document.body);
+        parent.layout = layout;
+        expect(every(widgets, w => w.parent === parent));
+        expect(layout.methods.indexOf('attachWidget')).to.not.be(-1);
+        parent.dispose();
+      });
+
+    });
+
     describe('#attachWidget()', () => {
 
       it("should attach a widget to the parent's DOM node", () => {
@@ -460,31 +485,6 @@ describe('ui/boxpanel', () => {
             done();
           });
         });
-      });
-
-    });
-
-    describe('#onLayoutChanged()', () => {
-
-      it('should set the direction class on the parent widget', () => {
-        let parent = new Widget();
-        let layout = new LogBoxLayout();
-        parent.layout = layout;
-        expect(parent.hasClass('p-mod-top-to-bottom')).to.be(true);
-        expect(layout.methods.indexOf('onLayoutChanged')).to.not.be(-1);
-        parent.dispose();
-      });
-
-      it('should attach the child widgets', () => {
-        let parent = new Widget();
-        let layout = new LogBoxLayout();
-        let widgets = [new Widget(), new Widget(), new Widget()];
-        each(widgets, w => { layout.addWidget(w); });
-        Widget.attach(parent, document.body);
-        parent.layout = layout;
-        expect(every(widgets, w => w.parent === parent));
-        expect(layout.methods.indexOf('attachWidget')).to.not.be(-1);
-        parent.dispose();
       });
 
     });

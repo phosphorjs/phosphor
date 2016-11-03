@@ -6,7 +6,7 @@
 | The full license is in the file LICENSE, distributed with this software.
 |----------------------------------------------------------------------------*/
 import {
-  EmptyIterator, IIterable, IIterator, each, iter
+  IIterable, IIterator, each, empty
 } from '../algorithm/iteration';
 
 import {
@@ -265,7 +265,6 @@ class Widget implements IDisposable, IMessageHandler {
     }
     this._layout = value;
     value.parent = this;
-    sendMessage(this, WidgetMessage.LayoutChanged);
   }
 
   /**
@@ -279,7 +278,7 @@ class Widget implements IDisposable, IMessageHandler {
    * If a layout is not installed, the returned iterator will be empty.
    */
   children(): IIterator<Widget> {
-    return iter(this._layout || EmptyIterator.instance);
+    return this._layout ? this._layout.iter() : empty<Widget>();
   }
 
   /**
@@ -389,16 +388,6 @@ class Widget implements IDisposable, IMessageHandler {
    */
   activate(): void {
     postMessage(this, WidgetMessage.ActivateRequest);
-  }
-
-  /**
-   * Post a `'deactivate-request'` message to the widget.
-   *
-   * #### Notes
-   * This is a simple convenience method for posting the message.
-   */
-  deactivate(): void {
-    postMessage(this, WidgetMessage.DeactivateRequest);
   }
 
   /**
@@ -546,10 +535,6 @@ class Widget implements IDisposable, IMessageHandler {
       this.notifyLayout(msg);
       this.onActivateRequest(msg);
       break;
-    case 'deactivate-request':
-      this.notifyLayout(msg);
-      this.onDeactivateRequest(msg);
-      break;
     case 'close-request':
       this.notifyLayout(msg);
       this.onCloseRequest(msg);
@@ -619,14 +604,6 @@ class Widget implements IDisposable, IMessageHandler {
    * The default implementation of this handler is a no-op.
    */
   protected onActivateRequest(msg: Message): void { }
-
-  /**
-   * A message handler invoked on a `'deactivate-request'` message.
-   *
-   * #### Notes
-   * The default implementation of this handler is a no-op.
-   */
-  protected onDeactivateRequest(msg: Message): void { }
 
   /**
    * A message handler invoked on an `'after-show'` message.
@@ -873,28 +850,19 @@ abstract class Layout implements IIterable<Widget>, IDisposable {
   abstract iter(): IIterator<Widget>;
 
   /**
-   * A message handler invoked on a `'layout-changed'` message.
+   * Remove a widget from the layout.
+   *
+   * @param widget - The widget to remove from the layout.
    *
    * #### Notes
-   * This method is invoked when the layout is installed on its parent
-   * widget. It should reparent all of the widgets to the new parent,
-   * and add their DOM nodes to the parent's node as appropriate.
+   * A widget is automatically removed from the layout when its `parent`
+   * is set to `null`. This method should only be invoked directly when
+   * removing a widget from a layout which has yet to be installed on a
+   * parent widget.
    *
-   * This abstract method must be implemented by a subclass.
+   * This method should *not* modify the widget's `parent`.
    */
-  protected abstract onLayoutChanged(msg: Message): void;
-
-  /**
-   * A message handler invoked on a `'child-removed'` message.
-   *
-   * #### Notes
-   * This method is invoked when a child widget's `parent` property
-   * is set to `null`. The layout should remove the widget and detach
-   * its node from the DOM.
-   *
-   * This abstract method must be implemented by a subclass.
-   */
-  protected abstract onChildRemoved(msg: ChildMessage): void;
+  abstract removeWidget(widget: Widget): void;
 
   /**
    * Dispose of the resources held by the layout.
@@ -951,6 +919,7 @@ abstract class Layout implements IIterable<Widget>, IDisposable {
       throw new Error('Invalid parent widget.');
     }
     this._parent = value;
+    this.init();
   }
 
   /**
@@ -995,10 +964,24 @@ abstract class Layout implements IIterable<Widget>, IDisposable {
     case 'child-hidden':
       this.onChildHidden(msg as ChildMessage);
       break;
-    case 'layout-changed':
-      this.onLayoutChanged(msg);
-      break;
     }
+  }
+
+  /**
+   * Perform layout initialization which requires the parent widget.
+   *
+   * #### Notes
+   * This method is invoked immediately after the layout is installed
+   * on the parent widget.
+   *
+   * The default implementation reparents all of the widgets to the
+   * layout parent widget.
+   *
+   * Subclasses should reimplement this method and attach the child
+   * widget nodes to the parent widget's node.
+   */
+  protected init(): void {
+    each(this, widget => { widget.parent = this.parent; });
   }
 
   /**
@@ -1089,6 +1072,18 @@ abstract class Layout implements IIterable<Widget>, IDisposable {
    */
   protected onBeforeHide(msg: Message): void {
     each(this, widget => { if (!widget.isHidden) sendMessage(widget, msg); });
+  }
+
+  /**
+   * A message handler invoked on a `'child-removed'` message.
+   *
+   * #### Notes
+   * This will remove the child widget from the layout.
+   *
+   * Subclasses should **not** typically reimplement this method.
+   */
+  protected onChildRemoved(msg: ChildMessage): void {
+    this.removeWidget(msg.child);
   }
 
   /**
@@ -1209,15 +1204,6 @@ namespace WidgetMessage {
   const ParentChanged = new Message('parent-changed');
 
   /**
-   * A singleton `'layout-changed'` message.
-   *
-   * #### Notes
-   * This message is sent to a widget when its layout has changed.
-   */
-  export
-  const LayoutChanged = new Message('layout-changed');
-
-  /**
    * A singleton conflatable `'update-request'` message.
    *
    * #### Notes
@@ -1253,17 +1239,6 @@ namespace WidgetMessage {
    */
   export
   const ActivateRequest = new ConflatableMessage('activate-request');
-
-  /**
-   * A singleton conflatable `'deactivate-request'` message.
-   *
-   * #### Notes
-   * This message should be dispatched to a widget when it should
-   * perform the actions necessary to decactivate the widget, which
-   * may include blurring its node or descendant node.
-   */
-  export
-  const DeactivateRequest = new ConflatableMessage('deactivate-request');
 
   /**
    * A singleton conflatable `'close-request'` message.

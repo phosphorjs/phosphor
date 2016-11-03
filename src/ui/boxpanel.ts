@@ -22,7 +22,7 @@ import {
 } from '../core/properties';
 
 import {
-  IS_IE
+  IS_EDGE, IS_IE
 } from '../dom/platform';
 
 import {
@@ -290,6 +290,14 @@ class BoxLayout extends PanelLayout {
   }
 
   /**
+   * Perform layout initialization which requires the parent widget.
+   */
+  protected init(): void {
+    Private.toggleDirection(this.parent, this.direction);
+    super.init();
+  }
+
+  /**
    * Attach a widget to the parent's DOM node.
    *
    * @param index - The current index of the widget in the layout.
@@ -312,7 +320,7 @@ class BoxLayout extends PanelLayout {
     // Send an `'after-attach'` message if the parent is attached.
     if (this.parent.isAttached) sendMessage(widget, WidgetMessage.AfterAttach);
 
-    // Post a layout request for the parent widget.
+    // Post a fit request for the parent widget.
     this.parent.fit();
   }
 
@@ -359,19 +367,8 @@ class BoxLayout extends PanelLayout {
     // Reset the layout geometry for the widget.
     Widget.resetGeometry(widget);
 
-    // Post a layout request for the parent widget.
+    // Post a fit request for the parent widget.
     this.parent.fit();
-  }
-
-  /**
-   * A message handler invoked on a `'layout-changed'` message.
-   *
-   * #### Notes
-   * This is called when the layout is installed on its parent.
-   */
-  protected onLayoutChanged(msg: Message): void {
-    Private.toggleDirection(this.parent, this.direction);
-    super.onLayoutChanged(msg);
   }
 
   /**
@@ -394,7 +391,7 @@ class BoxLayout extends PanelLayout {
    * A message handler invoked on a `'child-shown'` message.
    */
   protected onChildShown(msg: ChildMessage): void {
-    if (IS_IE) { // prevent flicker on IE
+    if (IS_IE || IS_EDGE) { // prevent flicker on IE/Edge
       sendMessage(this.parent, WidgetMessage.FitRequest);
     } else {
       this.parent.fit();
@@ -405,7 +402,7 @@ class BoxLayout extends PanelLayout {
    * A message handler invoked on a `'child-hidden'` message.
    */
   protected onChildHidden(msg: ChildMessage): void {
-    if (IS_IE) { // prevent flicker on IE
+    if (IS_IE || IS_EDGE) { // prevent flicker on IE/Edge
       sendMessage(this.parent, WidgetMessage.FitRequest);
     } else {
       this.parent.fit();

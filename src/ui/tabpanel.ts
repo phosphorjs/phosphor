@@ -298,20 +298,34 @@ class TabPanel extends Widget {
    * Handle the `currentChanged` signal from the tab bar.
    */
   private _onCurrentChanged(sender: TabBar, args: TabBar.ICurrentChangedArgs): void {
+    // Extract the previous and current title from the args.
     let { previousIndex, previousTitle, currentIndex, currentTitle } = args;
+
+    // Extract the widgets from the titles.
     let previousWidget = previousTitle ? previousTitle.owner as Widget : null;
     let currentWidget = currentTitle ? currentTitle.owner as Widget : null;
+
+    // Hide the previous widget.
     if (previousWidget) {
       previousWidget.hide();
-      previousWidget.deactivate();
     }
+
+    // Show the current widget.
     if (currentWidget) {
       currentWidget.show();
-      currentWidget.activate();
     }
+
+    // Emit the `currentChanged` signal for the tab panel.
     this.currentChanged.emit({
       previousIndex, previousWidget, currentIndex, currentWidget
     });
+  }
+
+  /**
+   * Handle the `tabActivateRequested` signal from the tab bar.
+   */
+  private _onTabActivateRequested(sender: TabBar, args: TabBar.ITabActivateRequestedArgs): void {
+    (args.title.owner as Widget).activate();
   }
 
   /**
