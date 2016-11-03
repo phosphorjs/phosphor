@@ -287,7 +287,9 @@ function every<T>(object: IterableOrArrayLike<T>, fn: (value: T) => boolean): bo
   let value: T;
   let it = iter(object);
   while ((value = it.next()) !== void 0) {
-    if (!fn(value)) return false;
+    if (!fn(value)) {
+      return false;
+    }
   }
   return true;
 }
@@ -310,7 +312,9 @@ function some<T>(object: IterableOrArrayLike<T>, fn: (value: T) => boolean): boo
   let value: T;
   let it = iter(object);
   while ((value = it.next()) !== void 0) {
-    if (fn(value)) return true;
+    if (fn(value)) {
+      return true;
+    }
   }
   return false;
 }
@@ -460,7 +464,9 @@ class FilterIterator<T> implements IIterator<T> {
     let fn = this._fn;
     let it = this._source;
     while ((value = it.next()) !== void 0) {
-      if (fn(value)) return value;
+      if (fn(value)) {
+        return value;
+      }
     }
     return void 0;
   }
