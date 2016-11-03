@@ -6,6 +6,8 @@
     "module": "commonjs",
     "moduleResolution": "node",
     "target": "ES5",
-    "outDir": "../build"
+    "outDir": "../build",
+    "lib": ["dom", "es5", "es2015.collection", "es2015.promise"],
+    "types": ["expect.js", "mocha"]
   }
 }
