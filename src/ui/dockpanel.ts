@@ -1386,7 +1386,7 @@ class DockLayout extends Layout {
       refNode = Private.findTabNode(this._root, ref);
     }
 
-    // Throw and error if the reference widget is invalid.
+    // Throw an error if the reference widget is invalid.
     if (ref && !refNode) {
       throw new Error('Reference widget is not in the layout.');
     }
