@@ -8,9 +8,10 @@
 import expect = require('expect.js');
 
 import {
-  ArrayIterator, EmptyIterator, EnumerateIterator, FilterIterator, MapIterator,
-  StrideIterator, ZipIterator, each, empty, enumerate, every, filter, iter,
-  map, reduce, some, stride, toArray, zip
+  ArrayIterator, ChainIterator, EmptyIterator, EnumerateIterator,
+  FilterIterator, MapIterator, RepeatIterator, StrideIterator, ZipIterator,
+  chain, each, empty, enumerate, every, filter, iter, map, once, reduce,
+  repeat, some, stride, toArray, zip
 } from '../../../lib/algorithm/iteration';
 
 
@@ -68,6 +69,88 @@ describe('algorithm/iteration', () => {
         let iterator = new ArrayIterator(data, 4);
         expect(iterator.next()).to.be(data[4]);
         expect(iterator.next()).to.be(data[5]);
+        expect(iterator.next()).to.be(void 0);
+      });
+
+    });
+
+  });
+
+  describe('ChainIterator', () => {
+
+    describe('#constructor()', () => {
+
+      it('should accept an iterator source', () => {
+        let data1 = [0, 1, 2];
+        let data2 = [3, 4, 5];
+        let i1 = iter(data1);
+        let i2 = iter(data2);
+        let iterator = new ChainIterator(iter([i1, i2]));
+        expect(iterator).to.be.a(ChainIterator);
+      });
+
+    });
+
+    describe('#clone()', () => {
+
+      it('should create a clone of the original iterator', () => {
+        let data1 = [0, 1, 2];
+        let data2 = [3, 4, 5];
+        let result = [0, 1, 2, 3, 4, 5];
+        let i1 = iter(data1);
+        let i2 = iter(data2);
+        let iterator = new ChainIterator(iter([i1, i2]));
+        let clone = iterator.clone();
+        expect(clone).to.be.a(ChainIterator);
+        expect(toArray(iterator)).to.eql(result);
+        expect(toArray(clone)).to.eql(result);
+      });
+
+      it('should deep clone the inner iterators', () => {
+        let data1 = [0, 1, 2];
+        let data2 = [3, 4, 5];
+        let result1 = [1, 2, 3, 4, 5];
+        let result2 = [2, 3, 4, 5];
+        let i1 = iter(data1);
+        let i2 = iter(data2);
+        let iterator = new ChainIterator(iter([i1, i2]));
+        iterator.next();
+        let clone = iterator.clone();
+        iterator.next();
+        expect(clone).to.be.a(ChainIterator);
+        expect(toArray(iterator)).to.eql(result2);
+        expect(toArray(clone)).to.eql(result1);
+      });
+
+    });
+
+    describe('#iter()', () => {
+
+      it('should return `this`', () => {
+        let data1 = [0, 1, 2];
+        let data2 = [3, 4, 5];
+        let i1 = iter(data1);
+        let i2 = iter(data2);
+        let iterator = new ChainIterator(iter([i1, i2]));
+        expect(iterator.iter()).to.be(iterator);
+      });
+
+    });
+
+    describe('#next()', () => {
+
+      it('should return the next item in the iterator', () => {
+        let data1 = [0, 1, 2];
+        let data2 = [3, 4, 5];
+        let i1 = iter(data1);
+        let i2 = iter(data2);
+        let iterator = new ChainIterator(iter([i1, i2]));
+        expect(iterator.next()).to.be(0);
+        expect(iterator.next()).to.be(1);
+        expect(iterator.next()).to.be(2);
+        expect(iterator.next()).to.be(3);
+        expect(iterator.next()).to.be(4);
+        expect(iterator.next()).to.be(5);
         expect(iterator.next()).to.be(void 0);
       });
 
@@ -286,6 +369,55 @@ describe('algorithm/iteration', () => {
 
   });
 
+  describe('RepeatIterator', () => {
+
+    describe('#constructor()', () => {
+
+      it('should accept a value and count', () => {
+        let iterator = new RepeatIterator('foo', 7);
+        expect(iterator).to.be.a(RepeatIterator);
+      });
+
+    });
+
+    describe('#clone()', () => {
+
+      it('should create a clone of the original iterator', () => {
+        let iterator = new RepeatIterator('foo', 2);
+        let clone = iterator.clone();
+        let result = ['foo', 'foo'];
+        expect(clone).to.be.a(RepeatIterator);
+        expect(toArray(iterator)).to.eql(result);
+        expect(toArray(clone)).to.eql(result);
+      });
+
+    });
+
+    describe('#iter()', () => {
+
+      it('should return `this`', () => {
+        let iterator = new RepeatIterator('foo', 2);
+        expect(iterator.iter()).to.be(iterator);
+      });
+
+    });
+
+    describe('#next()', () => {
+
+      it('should return the next item in the iterator', () => {
+        let iterator = new RepeatIterator('foo', 5);
+        expect(iterator.next()).to.be('foo');
+        expect(iterator.next()).to.be('foo');
+        expect(iterator.next()).to.be('foo');
+        expect(iterator.next()).to.be('foo');
+        expect(iterator.next()).to.be('foo');
+        expect(iterator.next()).to.be(void 0);
+      });
+
+    });
+
+  });
+
   describe('StrideIterator', () => {
 
     describe('#constructor()', () => {
@@ -472,6 +604,19 @@ describe('algorithm/iteration', () => {
 
   });
 
+  describe('chain()', () => {
+
+    it('should return a chain iterator', () => {
+      let data1 = [0, 1, 2];
+      let data2 = [3, 4, 5];
+      let wanted = [0, 1, 2, 3, 4, 5];
+      let iterator = chain(data1, data2);
+      expect(iterator).to.be.a(ChainIterator);
+      expect(toArray(iterator)).to.eql(wanted);
+    });
+
+  });
+
   describe('empty()', () => {
 
     it('should return an empty iterator', () => {
@@ -530,6 +675,16 @@ describe('algorithm/iteration', () => {
 
   });
 
+  describe('once()', () => {
+
+    it('should return a repeat iterator with one value', () => {
+      let iterator = once('foo');
+      expect(iterator).to.be.a(RepeatIterator);
+      expect(toArray(iterator)).to.eql(['foo']);
+    });
+
+  });
+
   describe('reduce()', () => {
 
     it('should reduce items in an iterable into an accumulated value', () => {
@@ -574,6 +729,16 @@ describe('algorithm/iteration', () => {
       let reducer = (a: number, x: number) => a + x;
       let result = reduce(data, reducer);
       expect(result).to.be(data.reduce(reducer));
+    });
+
+  });
+
+  describe('repeat()', () => {
+
+    it('should return a repeat iterator', () => {
+      let iterator = repeat('foo', 3);
+      expect(iterator).to.be.a(RepeatIterator);
+      expect(toArray(iterator)).to.eql(['foo', 'foo', 'foo']);
     });
 
   });
