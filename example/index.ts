@@ -330,8 +330,6 @@ function main(): void {
 
   Widget.attach(bar, document.body);
   Widget.attach(main, document.body);
-
-  (window as any).dock = dock;
 }
 
 
