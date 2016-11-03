@@ -86,11 +86,6 @@ const WIDGET_CLASS = 'p-DockPanel-widget';
 const TAB_BAR_CLASS = 'p-DockPanel-tabBar';
 
 /**
- * The class name added to a DockPanel drag tab.
- */
-const DRAG_TAB_CLASS = 'p-DockPanel-dragTab';
-
-/**
  * The class name added to a DockPanel handle.
  */
 const HANDLE_CLASS = 'p-DockPanel-handle';
@@ -879,7 +874,6 @@ class DockPanel extends Widget {
 
     // Create the drag image for the drag operation.
     let dragImage = tab.cloneNode(true) as HTMLElement;
-    dragImage.classList.add(DRAG_TAB_CLASS);
 
     // Create the drag object to manage the drag-drop operation.
     this._drag = new Drag({
