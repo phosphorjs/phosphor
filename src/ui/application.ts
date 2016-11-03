@@ -163,7 +163,7 @@ abstract class Application<T extends Widget> {
 
     // Resolve immediately if the plugin is already activated.
     if (data.activated) {
-      return Promise.resolve<void>();
+      return Promise.resolve(void 0);
     }
 
     // Return the pending resolver promise if it exists.
@@ -249,7 +249,7 @@ abstract class Application<T extends Widget> {
   start(options: Application.IStartOptions = {}): Promise<void> {
     // Resolve immediately if the application is already started.
     if (this._started) {
-      return Promise.resolve<void>();
+      return Promise.resolve(void 0);
     }
 
     // Return the pending promise if it exists.
