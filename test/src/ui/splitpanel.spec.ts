@@ -39,6 +39,11 @@ class LogSplitLayout extends SplitLayout {
 
   methods: string[] = [];
 
+  protected init(): void {
+    super.init();
+    this.methods.push('init');
+  }
+
   protected attachWidget(index: number, widget: Widget): void {
     super.attachWidget(index, widget);
     this.methods.push('attachWidget');
@@ -52,11 +57,6 @@ class LogSplitLayout extends SplitLayout {
   protected detachWidget(index: number, widget: Widget): void {
     super.detachWidget(index, widget);
     this.methods.push('detachWidget');
-  }
-
-  protected onLayoutChanged(msg: Message): void {
-    super.onLayoutChanged(msg);
-    this.methods.push('onLayoutChanged');
   }
 
   protected onAfterShow(msg: Message): void {
@@ -343,10 +343,6 @@ describe('ui/splitpanel', () => {
           expect(panel.events.indexOf('mousemove')).to.not.be(-1);
           simulate(document.body, 'keydown');
           expect(panel.events.indexOf('keydown')).to.not.be(-1);
-          simulate(document.body, 'keyup');
-          expect(panel.events.indexOf('keyup')).to.not.be(-1);
-          simulate(document.body, 'keypress');
-          expect(panel.events.indexOf('keypress')).to.not.be(-1);
           simulate(document.body, 'contextmenu');
           expect(panel.events.indexOf('contextmenu')).to.not.be(-1);
           // Mouseup releases the mouse, so must be last.
@@ -405,10 +401,6 @@ describe('ui/splitpanel', () => {
           expect(panel.events.indexOf('mousemove')).to.be(-1);
           simulate(document.body, 'keydown');
           expect(panel.events.indexOf('keydown')).to.be(-1);
-          simulate(document.body, 'keyup');
-          expect(panel.events.indexOf('keyup')).to.be(-1);
-          simulate(document.body, 'keypress');
-          expect(panel.events.indexOf('keypress')).to.be(-1);
           simulate(document.body, 'contextmenu');
           expect(panel.events.indexOf('contextmenu')).to.be(-1);
         });
@@ -432,30 +424,6 @@ describe('ui/splitpanel', () => {
           expect(panel.events.indexOf('keydown')).to.not.be(-1);
           simulate(panel.node, 'mousemove');
           expect(panel.events.indexOf('mousemove')).to.be(-1);
-        });
-
-      });
-
-      context('keyup', () => {
-
-        it('should prevent events during drag', () => {
-          simulate(layout.handles.at(0), 'mousedown');
-          let evt = generate('keyup');
-          let cancelled = !document.body.dispatchEvent(evt);
-          expect(cancelled).to.be(true);
-          expect(panel.events.indexOf('keyup')).to.not.be(-1);
-        });
-
-      });
-
-      context('keypress', () => {
-
-        it('should prevent events during drag', () => {
-          simulate(layout.handles.at(0), 'mousedown');
-          let evt = generate('keypress');
-          let cancelled = !document.body.dispatchEvent(evt);
-          expect(cancelled).to.be(true);
-          expect(panel.events.indexOf('keypress')).to.not.be(-1);
         });
 
       });
@@ -836,6 +804,34 @@ describe('ui/splitpanel', () => {
 
     });
 
+    describe('#init()', () => {
+
+      it('should set the orientation class of the parent widget', () => {
+        let parent = new Widget();
+        let layout = new LogSplitLayout({ renderer: customRenderer });
+        parent.layout = layout;
+        expect(layout.methods.indexOf('init')).to.not.be(-1);
+        expect(parent.hasClass('p-mod-horizontal')).to.be(true);
+      });
+
+      it('should attach all widgets to the DOM', () => {
+        let parent = new Widget();
+        Widget.attach(parent, document.body);
+        let layout = new LogSplitLayout({ renderer: customRenderer });
+        let widgets = [new LogWidget(), new LogWidget(), new LogWidget()];
+        each(widgets, w => { layout.addWidget(w); });
+        parent.layout = layout;
+        expect(layout.methods.indexOf('init')).to.not.be(-1);
+        expect(every(widgets, w => w.parent === parent)).to.be(true);
+        let predicate = (w: LogWidget) => {
+          return w.methods.indexOf('onAfterAttach') !== -1;
+        };
+        expect(every(widgets, predicate)).to.be(true);
+        parent.dispose();
+      });
+
+    });
+
     describe('#attachWidget()', () => {
 
       it("should attach a widget to the parent's DOM node", () => {
@@ -948,34 +944,6 @@ describe('ui/splitpanel', () => {
           expect(layout.methods.indexOf('onFitRequest')).to.not.be(-1);
           done();
         });
-      });
-
-    });
-
-    describe('#onLayoutChanged()', () => {
-
-      it('should set the orientation class of the parent widget', () => {
-        let parent = new Widget();
-        let layout = new LogSplitLayout({ renderer: customRenderer });
-        parent.layout = layout;
-        expect(layout.methods.indexOf('onLayoutChanged')).to.not.be(-1);
-        expect(parent.hasClass('p-mod-horizontal')).to.be(true);
-      });
-
-      it('should attach all widgets to the DOM', () => {
-        let parent = new Widget();
-        Widget.attach(parent, document.body);
-        let layout = new LogSplitLayout({ renderer: customRenderer });
-        let widgets = [new LogWidget(), new LogWidget(), new LogWidget()];
-        each(widgets, w => { layout.addWidget(w); });
-        parent.layout = layout;
-        expect(layout.methods.indexOf('onLayoutChanged')).to.not.be(-1);
-        expect(every(widgets, w => w.parent === parent)).to.be(true);
-        let predicate = (w: LogWidget) => {
-          return w.methods.indexOf('onAfterAttach') !== -1;
-        };
-        expect(every(widgets, predicate)).to.be(true);
-        parent.dispose();
       });
 
     });

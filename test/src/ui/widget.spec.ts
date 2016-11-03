@@ -51,11 +51,6 @@ class LogWidget extends Widget {
     this.methods.push('onActivateRequest');
   }
 
-  protected onDeactivateRequest(msg: Message): void {
-    super.onDeactivateRequest(msg);
-    this.methods.push('onDeactivateRequest');
-  }
-
   protected onCloseRequest(msg: Message): void {
     super.onCloseRequest(msg);
     this.methods.push('onCloseRequest');
@@ -115,22 +110,25 @@ class LogLayout extends Layout {
     this._widgets.pushBack(new LogWidget());
   }
 
+  dispose(): void {
+    while (!this._widgets.isEmpty) {
+      this._widgets.popBack().dispose();
+    }
+    super.dispose();
+  }
+
   iter(): IIterator<LogWidget> {
     return this._widgets.iter();
   }
 
-  dispose(): void {
-    each(this._widgets, w => w.dispose());
-    this._widgets = null;
-    super.dispose();
+  removeWidget(widget: Widget): void {
+    this.methods.push('removeWidget');
+    this._widgets.remove(widget as LogWidget);
   }
 
-  protected onLayoutChanged(msg: Message): void {
-    this.methods.push('onLayoutChanged');
-  }
-
-  protected onChildRemoved(msg: ChildMessage): void {
-    this.methods.push('onChildRemoved');
+  protected init(): void {
+    this.methods.push('init');
+    super.init();
   }
 
   protected onResize(msg: ResizeMessage): void {
@@ -700,20 +698,6 @@ describe('ui/widget', () => {
 
     });
 
-    describe('#deactivate()', () => {
-
-      it('should post a `deactivate-request` message', (done) => {
-        let widget = new LogWidget();
-        widget.deactivate();
-        expect(widget.messages).to.eql([]);
-        requestAnimationFrame(() => {
-          expect(widget.messages).to.eql(['deactivate-request']);
-          done();
-        });
-      });
-
-    });
-
     describe('#close()', () => {
 
       it('should send a `close-request` message', () => {
@@ -874,7 +858,7 @@ describe('ui/widget', () => {
         parent.layout = layout;
         child.parent = parent;
         expect(parent.methods.indexOf('notifyLayout')).to.not.be(-1);
-        expect(layout.methods.indexOf('onLayoutChanged')).to.not.be(-1);
+        expect(layout.methods.indexOf('init')).to.not.be(-1);
       });
 
     });
@@ -890,22 +874,6 @@ describe('ui/widget', () => {
       it('should notify the layout', () => {
         let widget = new LogWidget();
         sendMessage(widget, WidgetMessage.ActivateRequest);
-        expect(widget.methods.indexOf('notifyLayout')).to.not.be(-1);
-      });
-
-    });
-
-    describe('#onDeactivateRequest()', () => {
-
-      it('should be invoked on a `deactivate-request', () => {
-        let widget = new LogWidget();
-        sendMessage(widget, WidgetMessage.DeactivateRequest);
-        expect(widget.methods.indexOf('onDeactivateRequest')).to.not.be(-1);
-      });
-
-      it('should notify the layout', () => {
-        let widget = new LogWidget();
-        sendMessage(widget, WidgetMessage.DeactivateRequest);
         expect(widget.methods.indexOf('notifyLayout')).to.not.be(-1);
       });
 
@@ -1492,18 +1460,7 @@ describe('ui/widget', () => {
 
     });
 
-    describe('#onLayoutChanged()', () => {
-
-      it('should be invoked when the layout is installed on its parent widget', () => {
-        let widget = new Widget();
-        let layout = new LogLayout();
-        widget.layout = layout;
-        expect(layout.methods.indexOf('onLayoutChanged')).to.not.be(-1);
-      });
-
-    });
-
-    describe('#onChildRemoved()', () => {
+    describe('#removeWidget()', () => {
 
       it("should be invoked when a child widget's `parent` property is set to `null`", () => {
         let parent = new Widget();
@@ -1512,7 +1469,18 @@ describe('ui/widget', () => {
         parent.layout = layout;
         widget.parent = parent;
         widget.parent = null;
-        expect(layout.methods.indexOf('onChildRemoved')).to.not.be(-1);
+        expect(layout.methods.indexOf('removeWidget')).to.not.be(-1);
+      });
+
+    });
+
+    describe('#init()', () => {
+
+      it('should be invoked when the layout is installed on its parent widget', () => {
+        let widget = new Widget();
+        let layout = new LogLayout();
+        widget.layout = layout;
+        expect(layout.methods.indexOf('init')).to.not.be(-1);
       });
 
     });
@@ -1523,7 +1491,7 @@ describe('ui/widget', () => {
         let widget = new Widget();
         let layout = new LogLayout();
         widget.layout = layout;
-        let children = toArray(layout);
+        let children = toArray(widget.children());
         layout.dispose();
         expect(layout.parent).to.be(null);
         expect(every(children, w => w.isDisposed)).to.be(true);

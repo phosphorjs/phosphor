@@ -9,8 +9,8 @@ import expect = require('expect.js');
 
 import {
   ArrayIterator, EmptyIterator, EnumerateIterator, FilterIterator, MapIterator,
-  StrideIterator, ZipIterator, each, enumerate, every, filter, iter, map,
-  reduce, some, stride, toArray, zip
+  StrideIterator, ZipIterator, each, empty, enumerate, every, filter, iter,
+  map, reduce, some, stride, toArray, zip
 } from '../../../lib/algorithm/iteration';
 
 
@@ -76,14 +76,6 @@ describe('algorithm/iteration', () => {
   });
 
   describe('EmptyIterator', () => {
-
-    describe('.instance', () => {
-
-      it('should be an `EmptyIterator` insance', () => {
-        expect(EmptyIterator.instance).to.be.an(EmptyIterator);
-      });
-
-    });
 
     describe('#constructor()', () => {
 
@@ -476,6 +468,16 @@ describe('algorithm/iteration', () => {
       let data = [1, 2, 3, 4, 5];
       each(data, x => { result += x; });
       expect(result).to.be(15);
+    });
+
+  });
+
+  describe('empty()', () => {
+
+    it('should return an empty iterator', () => {
+      let iterator = empty<number>();
+      expect(iterator).to.be.an(EmptyIterator);
+      expect(toArray(iterator)).to.eql([]);
     });
 
   });
