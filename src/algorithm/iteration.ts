@@ -753,7 +753,9 @@ class ChainIterator<T> implements IIterator<T> {
    */
   clone(): ChainIterator<T> {
     let result = new ChainIterator(this._source.clone());
-    if (this._active) result._active = this._active.clone();
+    result._active = this._active && this._active.clone();
+    result._cloned = true;
+    this._cloned = true;
     return result;
   }
 
@@ -769,6 +771,9 @@ class ChainIterator<T> implements IIterator<T> {
       if (this._active === void 0) {
         return void 0;
       }
+      if (this._cloned) {
+        this._active = this._active.clone();
+      }
     }
     let value = this._active.next();
     if (value !== void 0) {
@@ -780,6 +785,7 @@ class ChainIterator<T> implements IIterator<T> {
 
   private _source: IIterator<IIterator<T>>;
   private _active: IIterator<T>;
+  private _cloned = false;
 }
 
 
