@@ -156,11 +156,7 @@ class DockPanel extends Widget {
     this.layout = new DockLayout({ renderer, spacing });
 
     // Setup the overlay drop indicator.
-    if (options.overlay !== void 0) {
-      this._overlay = options.overlay;
-    } else {
-      this._overlay = new DockPanel.Overlay();
-    }
+    this._overlay = options.overlay || new DockPanel.Overlay();
     this._overlay.node.classList.add(OVERLAY_CLASS);
     this.node.appendChild(this._overlay.node);
 
@@ -179,7 +175,9 @@ class DockPanel extends Widget {
     this._overlay.hide(0);
 
     // Cancel a drag if one is in progress.
-    if (this._drag) this._drag.dispose();
+    if (this._drag) {
+      this._drag.dispose();
+    }
 
     // Dispose of the focus tracker.
     this._tracker.dispose();
@@ -1366,7 +1364,9 @@ class DockLayout extends Layout {
     adjustSizer(data.node.sizers, data.index, delta);
 
     // Update the layout of the widgets.
-    if (this.parent) this.parent.update();
+    if (this.parent) {
+      this.parent.update();
+    }
   }
 
   /**
@@ -1838,7 +1838,7 @@ class DockLayout extends Layout {
       // Determine the insert index for the new tab node.
       let i = after ? root.children.length : 0;
 
-      // Normalize the sizes for the root.
+      // Normalize the split node.
       Private.normalizeSizes(root);
 
       // Insert the tab node sized to the golden ratio.
@@ -1847,7 +1847,7 @@ class DockLayout extends Layout {
       root.handles.insert(i, this._createHandle());
       tabNode.parent = root;
 
-      // Re-normalize the sizes to maintain proper aspect ratio.
+      // Re-normalize the split node to maintain the ratios.
       Private.normalizeSizes(root);
 
       // Finally, synchronize the visibility of the handles.
@@ -1861,7 +1861,7 @@ class DockLayout extends Layout {
       // Find the index of the ref node.
       let i = indexOf(splitNode.children, refNode);
 
-      // Normalize the sizes for the split node.
+      // Normalize the split node.
       Private.normalizeSizes(splitNode);
 
       // Consume half the space for the insert location.
@@ -2153,7 +2153,7 @@ namespace DockLayout {
    * A type alias for the supported insertion modes.
    *
    * An insert mode is used to specify how a widget should be added
-   * to the dock panel relative to a reference widget.
+   * to the dock layout relative to a reference widget.
    */
   export
   type InsertMode = (
@@ -2163,7 +2163,7 @@ namespace DockLayout {
      * The widget will be inserted just above the reference widget.
      *
      * If the reference widget is null or invalid, the widget will be
-     * inserted at the top edge of the dock panel.
+     * inserted at the top edge of the dock layout.
      */
     'split-top' |
 
@@ -2173,7 +2173,7 @@ namespace DockLayout {
      * The widget will be inserted just left of the reference widget.
      *
      * If the reference widget is null or invalid, the widget will be
-     * inserted at the left edge of the dock panel.
+     * inserted at the left edge of the dock layout.
      */
     'split-left' |
 
@@ -2183,7 +2183,7 @@ namespace DockLayout {
      * The widget will be inserted just right of the reference widget.
      *
      * If the reference widget is null or invalid, the widget will be
-     * inserted  at the right edge of the dock panel.
+     * inserted  at the right edge of the dock layout.
      */
     'split-right' |
 
@@ -2193,7 +2193,7 @@ namespace DockLayout {
      * The widget will be inserted just below the reference widget.
      *
      * If the reference widget is null or invalid, the widget will be
-     * inserted at the bottom edge of the dock panel.
+     * inserted at the bottom edge of the dock layout.
      */
     'split-bottom' |
 
@@ -2762,7 +2762,7 @@ namespace Private {
   }
 
   /**
-   * Normalize the sizes of the box sizers for a split layout node.
+   * Normalize the sizes of a split layout node.
    */
   export
   function normalizeSizes(splitNode: SplitLayoutNode): void {
@@ -2974,22 +2974,22 @@ namespace Private {
     for (let i = 0, n = splitNode.children.length; i < n; ++i) {
       let child = splitNode.children.at(i);
       let size = splitNode.sizers.at(i).size;
-      let style = splitNode.handles.at(i).style;
+      let hStyle = splitNode.handles.at(i).style;
       if (horizontal) {
         updateLayoutNode(child, x, y, size, height, spacing);
         x += size;
-        style.top = `${y}px`;
-        style.left = `${x}px`;
-        style.width = `${spacing}px`;
-        style.height = `${height}px`;
+        hStyle.top = `${y}px`;
+        hStyle.left = `${x}px`;
+        hStyle.width = `${spacing}px`;
+        hStyle.height = `${height}px`;
         x += spacing;
       } else {
         updateLayoutNode(child, x, y, width, size, spacing);
         y += size;
-        style.top = `${y}px`;
-        style.left = `${x}px`;
-        style.width = `${width}px`;
-        style.height = `${spacing}px`;
+        hStyle.top = `${y}px`;
+        hStyle.left = `${x}px`;
+        hStyle.width = `${width}px`;
+        hStyle.height = `${spacing}px`;
         y += spacing;
       }
     }
