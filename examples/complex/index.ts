@@ -43,7 +43,7 @@ import {
 
 import '../../styles/base.css';
 
-import '../index.css';
+import './index.css';
 
 
 const commands = new CommandRegistry();
