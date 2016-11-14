@@ -6,22 +6,19 @@
 | The full license is in the file LICENSE, distributed with this software.
 |----------------------------------------------------------------------------*/
 import {
-  ArrayIterator, IArrayLike, IIterable
-} from './iteration';
+  IArrayLike
+} from './iterable';
 
 
 /**
- * A finite-length sequence of indexable values.
+ * A sequence of indexable values.
  */
 export
 interface ISequence<T> extends IIterable<T> {
   /**
    * The length of the sequence.
-   *
-   * #### Notes
-   * This is a read-only property.
    */
-  length: number;
+  readonly length: number;
 
   /**
    * Get the value at the specified index.
@@ -65,7 +62,7 @@ interface IMutableSequence<T> extends ISequence<T> {
  * on these objects in a uniform fashion.
  */
 export
-type SequenceOrArrayLike<T> = ISequence<T> | IArrayLike<T>;
+type Sequence<T> = ISequence<T> | IArrayLike<T>;
 
 
 /**
@@ -77,7 +74,7 @@ type SequenceOrArrayLike<T> = ISequence<T> | IArrayLike<T>;
  * on these objects in a uniform fashion.
  */
 export
-type MutableSequenceOrArrayLike<T> = IMutableSequence<T> | IArrayLike<T>;
+type MutableSequence<T> = IMutableSequence<T> | IArrayLike<T>;
 
 
 /**
@@ -92,6 +89,20 @@ type MutableSequenceOrArrayLike<T> = IMutableSequence<T> | IArrayLike<T>;
  * sequence types and builtin array-like objects in a uniform fashion.
  */
 export
+function asSequence<T>(object: Sequence<T>): ISequence<T>;
+export
+function asSequence<T>(object: MutableSequence<T>): IMutableSequence<T>;
+export
+function asSequence<T>(object: any): any {
+  return typeof object.at === 'function' ? object : new ArraySequence(object);
+  if (typeof object.at === 'function') {
+    return object as ISequence<T>;
+  }
+  return new ArraySequence(object as IArrayLike<T>);
+}
+
+
+export
 function asSequence<T>(object: SequenceOrArrayLike<T>): ISequence<T> {
   let seq: ISequence<T>;
   if (typeof (object as any).at === 'function') {
@@ -104,36 +115,13 @@ function asSequence<T>(object: SequenceOrArrayLike<T>): ISequence<T> {
 
 
 /**
- * Cast a mutable sequence or array-like object to a mutable sequence.
- *
- * @param object - The sequence or array-like object of interest.
- *
- * @returns A mutable sequence for the given object.
- *
- * #### Notes
- * This function allows sequence algorithms to operate on user-defined
- * sequence types and builtin array-like objects in a uniform fashion.
- */
-export
-function asMutableSequence<T>(object: MutableSequenceOrArrayLike<T>): IMutableSequence<T> {
-  let seq: IMutableSequence<T>;
-  if (typeof (object as any).set === 'function') {
-    seq = object as IMutableSequence<T>;
-  } else {
-    seq = new MutableArraySequence(object as IArrayLike<T>);
-  }
-  return seq;
-}
-
-
-/**
  * A sequence for an array-like object.
  *
  * #### Notes
  * This sequence can be used for any builtin JS array-like object.
  */
 export
-class ArraySequence<T> implements ISequence<T> {
+class ArraySequence<T> implements IMutableSequence<T> {
   /**
    * Construct a new array sequence.
    *
@@ -145,9 +133,6 @@ class ArraySequence<T> implements ISequence<T> {
 
   /**
    * The length of the sequence.
-   *
-   * #### Notes
-   * This is a read-only property.
    */
   get length(): number {
     return this._source.length;
@@ -159,7 +144,7 @@ class ArraySequence<T> implements ISequence<T> {
    * @returns A new iterator which traverses the object's values.
    */
   iter(): ArrayIterator<T> {
-    return new ArrayIterator(this._source, 0);
+    return new ArrayIterator(this._source);
   }
 
   /**
@@ -176,18 +161,6 @@ class ArraySequence<T> implements ISequence<T> {
     return this._source[index];
   }
 
-  protected _source: IArrayLike<T>;
-}
-
-
-/**
- * A sequence for a mutable array-like object.
- *
- * #### Notes
- * This sequence can be used for any builtin JS array-like object.
- */
-export
-class MutableArraySequence<T> extends ArraySequence<T> implements IMutableSequence<T> {
   /**
    * Set the value at the specified index.
    *
@@ -201,4 +174,6 @@ class MutableArraySequence<T> extends ArraySequence<T> implements IMutableSequen
   set(index: number, value: T): void {
     this._source[index] = value;
   }
+
+  private _source: IArrayLike<T>;
 }

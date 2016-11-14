@@ -7,7 +7,7 @@
 |----------------------------------------------------------------------------*/
 import {
   IIterator
-} from './iteration';
+} from './iterable';
 
 import {
   ISequence
@@ -21,7 +21,7 @@ import {
  *
  * @param stop - The stopping value for the range, exclusive.
  *
- * @param step - The nonzero distance between each value.
+ * @param step - The distance between each value.
  *
  * @returns A range object which produces evenly spaced values.
  *
@@ -31,8 +31,6 @@ import {
  *
  * In the two argument form of `range(start, stop)`, `step` defaults
  * to `1`.
- *
- * All values can be any real number, but `step` cannot be `0`.
  */
 export
 function range(start: number, stop?: number, step?: number): Range {
@@ -61,7 +59,6 @@ class Range implements ISequence<number> {
    * @param step - The nonzero distance between each value.
    */
   constructor(start: number, stop: number, step: number) {
-    if (step === 0) throw new Error('Range(): Step cannot be zero');
     this._start = start;
     this._stop = stop;
     this._step = step;
@@ -70,9 +67,6 @@ class Range implements ISequence<number> {
 
   /**
    * The starting value for the range, inclusive.
-   *
-   * #### Notes
-   * This is a read-only property.
    */
   get start(): number {
     return this._start;
@@ -80,9 +74,6 @@ class Range implements ISequence<number> {
 
   /**
    * The stopping value for the range, exclusive.
-   *
-   * #### Notes
-   * This is a read-only property.
    */
   get stop(): number {
     return this._stop;
@@ -90,9 +81,6 @@ class Range implements ISequence<number> {
 
   /**
    * The distance between each value.
-   *
-   * #### Notes
-   * This is a read-only property.
    */
   get step(): number {
     return this._step;
@@ -100,9 +88,6 @@ class Range implements ISequence<number> {
 
   /**
    * The number of values in the range.
-   *
-   * #### Notes
-   * This is a read-only property.
    */
   get length(): number {
     return this._length;
@@ -153,11 +138,10 @@ class RangeIterator implements IIterator<number> {
    * @param step - The non-zero distance between each value.
    */
   constructor(start: number, stop: number, step: number) {
-    if (step === 0) throw new Error('RangeIterator(): Step cannot be zero');
-    this._index = 0;
-    this._step = step;
     this._start = start;
-    this._length = rangeLength(start, stop, step);
+    this._stop = stop;
+    this._step = step;
+    this._length = Private.rangeLength(start, stop, step);
   }
 
   /**
@@ -175,9 +159,9 @@ class RangeIterator implements IIterator<number> {
    * @returns A new iterator starting with the current value.
    */
   clone(): RangeIterator {
-    let start = this._start + this._step * this._index;
-    let stop = this._start + this._step * this._length;
-    return new RangeIterator(start, stop, this._step);
+    let result = new RangeIterator(this._start, this._stop, this._step);
+    result._index = this._index;
+    return result;
   }
 
   /**
@@ -193,30 +177,39 @@ class RangeIterator implements IIterator<number> {
     return this._start + this._step * this._index++;
   }
 
-  private _start: number;
-  private _step: number;
-  private _index: number;
+  private _index: 0;
   private _length: number;
+  private _start: number;
+  private _stop: number;
+  private _step: number;
 }
 
 
 /**
- * Compute the effective length of a range.
- *
- * @param start - The starting value for the range, inclusive.
- *
- * @param stop - The stopping value for the range, exclusive.
- *
- * @param step - The non-zero distance between each value.
- *
- * @returns The number of steps need to traverse the range.
+ * The namespace for the private module data.
  */
-function rangeLength(start: number, stop: number, step: number): number {
-  if (start > stop && step > 0) {
-    return 0;
+namespace Private {
+  /**
+   * Compute the effective length of a range.
+   *
+   * @param start - The starting value for the range, inclusive.
+   *
+   * @param stop - The stopping value for the range, exclusive.
+   *
+   * @param step - The distance between each value.
+   *
+   * @returns The number of steps need to traverse the range.
+   */
+  function rangeLength(start: number, stop: number, step: number): number {
+    if (step === 0) {
+      return Infinity;
+    }
+    if (start > stop && step > 0) {
+      return 0;
+    }
+    if (start < stop && step < 0) {
+      return 0;
+    }
+    return Math.ceil((stop - start) / step);
   }
-  if (start < stop && step < 0) {
-    return 0;
-  }
-  return Math.ceil((stop - start) / step);
 }

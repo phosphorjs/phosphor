@@ -5,22 +5,42 @@
 |
 | The full license is in the file LICENSE, distributed with this software.
 |----------------------------------------------------------------------------*/
+import {
+  each
+} from './each';
+
+import {
+  Iterable
+} from './iterable';
 
 
 /**
- * Topologically sort an array of edges.
+ * Topologically sort an iterable of edges.
  *
- * @param edges - The array of edges to sort. An edge is represented
+ * @param edges - The iterable of edges to sort. An edge is represented
  *   as a 2-tuple of the form `[fromNode, toNode]`.
  *
- * @returns The sorted array of nodes.
+ * @returns The topologically sorted array of nodes.
  *
  * #### Notes
  * If a cycle is present in the graph, the cycle will be ignored and
  * the return value will be only approximately sorted.
+ *
+ * #### Example
+ * ```typescript
+ * import { topSort } from '@phosphor/algorithm';
+ *
+ * let data = [
+ *   ['d', 'e'],
+ *   ['c', 'd'],
+ *   ['a', 'b'],
+ *   ['b', 'c']
+ * ];
+ *
+ * topSort(data);  // ['a', 'b', 'c', 'd', 'e']
  */
 export
-function topSort(edges: Array<[string, string]>): string[] {
+function topSort(edges: Iterable<[string, string]>): string[] {
   // A type alias for an object hash.
   type StringMap<T> = { [key: string]: T };
 
@@ -30,20 +50,17 @@ function topSort(edges: Array<[string, string]>): string[] {
   let visited: StringMap<boolean> = Object.create(null);
 
   // Add the edges to the graph.
-  for (let [fromNode, toNode] of edges) {
-    addEdge(fromNode, toNode);
-  }
+  each(edges, addEdge);
 
   // Visit each node in the graph.
-  for (let node in graph) {
-    visit(node);
-  }
+  Object.keys(graph).forEach(visit);
 
   // Return the sorted results.
   return sorted;
 
   // Add an edge to the graph.
-  function addEdge(fromNode: string, toNode: string): void {
+  function addEdge(edge: [string, string]): void {
+    let [fromNode, toNode] = edge;
     if (toNode in graph) {
       graph[toNode].push(fromNode);
     } else {
@@ -58,9 +75,7 @@ function topSort(edges: Array<[string, string]>): string[] {
     }
     visited[node] = true;
     if (node in graph) {
-      for (let other of graph[node]) {
-        visit(other);
-      }
+      graph[node].forEach(visit);
     }
     sorted.push(node);
   }

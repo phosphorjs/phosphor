@@ -303,11 +303,11 @@ class PanelLayout extends Layout {
    * attached to the DOM.
    */
   protected attachWidget(index: number, widget: Widget): void {
-    // Look up the next sibling reference node.
-    let ref = this.parent.node.children[index];
+    // Look up the next sibling reference widget.
+    let ref = this._widgets.at(index + 1) || null;
 
     // Insert the widget's node before the sibling.
-    this.parent.node.insertBefore(widget.node, ref);
+    this.parent.node.insertBefore(widget.node, ref && ref.node);
 
     // Send an `'after-attach'` message if the parent is attached.
     if (this.parent.isAttached) sendMessage(widget, WidgetMessage.AfterAttach);
