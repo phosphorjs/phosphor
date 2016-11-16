@@ -22,9 +22,6 @@ import {
  * #### Notes
  * Iteration terminates on the first `false` predicate result.
  *
- * This function can also be used like [[each]], but with support
- * for early termination by returning `false` from the predicate.
- *
  * #### Example
  * ```typescript
  * import { every } from '@phosphor/algorithm';
