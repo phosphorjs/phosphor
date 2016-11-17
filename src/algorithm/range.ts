@@ -6,11 +6,7 @@
 | The full license is in the file LICENSE, distributed with this software.
 |----------------------------------------------------------------------------*/
 import {
-  IIterator
-} from './iterable';
-
-import {
-  ISequence
+  ISequence, SequenceIterator
 } from './sequence';
 
 
@@ -59,129 +55,54 @@ class Range implements ISequence<number> {
    * @param step - The nonzero distance between each value.
    */
   constructor(start: number, stop: number, step: number) {
-    this._start = start;
-    this._stop = stop;
-    this._step = step;
-    this._length = rangeLength(start, stop, step);
+    this.start = start;
+    this.stop = stop;
+    this.step = step;
+    this.length = Private.rangeLength(start, stop, step);
   }
 
   /**
    * The starting value for the range, inclusive.
    */
-  get start(): number {
-    return this._start;
-  }
+  readonly start: number;
 
   /**
    * The stopping value for the range, exclusive.
    */
-  get stop(): number {
-    return this._stop;
-  }
+  readonly stop: number;
 
   /**
    * The distance between each value.
    */
-  get step(): number {
-    return this._step;
-  }
+  readonly step: number;
 
   /**
    * The number of values in the range.
    */
-  get length(): number {
-    return this._length;
-  }
+  readonly length: number;
 
   /**
    * Create an iterator over the range of values.
    *
    * @returns A new iterator for the range of values.
    */
-  iter(): RangeIterator {
-    return new RangeIterator(this._start, this._stop, this._step);
+  iter(): SequenceIterator<number> {
+    return new SequenceIterator<number>(this);
   }
 
   /**
    * Get the value at the specified index.
    *
-   * @param index - The positive integer index of interest.
+   * @param index - The index of interest.
    *
    * @returns The value at the specified index.
    *
    * #### Undefined Behavior
-   * An `index` which is non-integral or out of range.
+   * An `index` which is negative, non-integral, or out of range.
    */
   at(index: number): number {
-    return this._start + this._step * index;
+    return this.start + this.step * index;
   }
-
-  private _start: number;
-  private _stop: number;
-  private _step: number;
-  private _length: number;
-}
-
-
-/**
- * An iterator which generates evenly spaced values.
- */
-export
-class RangeIterator implements IIterator<number> {
-  /**
-   * Construct a new range iterator.
-   *
-   * @param start - The starting value for the range, inclusive.
-   *
-   * @param stop - The stopping value for the range, exclusive.
-   *
-   * @param step - The non-zero distance between each value.
-   */
-  constructor(start: number, stop: number, step: number) {
-    this._start = start;
-    this._stop = stop;
-    this._step = step;
-    this._length = Private.rangeLength(start, stop, step);
-  }
-
-  /**
-   * Create an iterator over the object's values.
-   *
-   * @returns A reference to `this` iterator.
-   */
-  iter(): this {
-    return this;
-  }
-
-  /**
-   * Create an independent clone of the range iterator.
-   *
-   * @returns A new iterator starting with the current value.
-   */
-  clone(): RangeIterator {
-    let result = new RangeIterator(this._start, this._stop, this._step);
-    result._index = this._index;
-    return result;
-  }
-
-  /**
-   * Get the next value from the range.
-   *
-   * @returns The next value from the range, or `undefined` if the
-   *   iterator is exhausted.
-   */
-  next(): number {
-    if (this._index >= this._length) {
-      return void 0;
-    }
-    return this._start + this._step * this._index++;
-  }
-
-  private _index: 0;
-  private _length: number;
-  private _start: number;
-  private _stop: number;
-  private _step: number;
 }
 
 
