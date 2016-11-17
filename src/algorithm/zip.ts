@@ -79,14 +79,11 @@ class ZipIterator<T> implements IIterator<T[]> {
    *   when the first source iterator is exhausted.
    */
   next(): T[] {
-    let iters = this._source;
-    let result = new Array<T>(iters.length);
-    for (let i = 0, n = iters.length; i < n; ++i) {
-      let value = iters[i].next();
-      if (value === void 0) {
+    let result = new Array<T>(this._source.length);
+    for (let i = 0, n = this._source.length; i < n; ++i) {
+      if ((result[i] = this._source[i].next()) === void 0) {
         return void 0;
       }
-      result[i] = value;
     }
     return result;
   }
