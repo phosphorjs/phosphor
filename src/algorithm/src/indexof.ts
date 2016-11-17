@@ -53,6 +53,9 @@ function indexOf<T>(object: Sequence<T>, value: T, fromIndex?: number): number {
   } else if (fromIndex < 0) {
     fromIndex = Math.max(0, fromIndex + n);
   }
+  if (fromIndex >= n) {
+    return -1;
+  }
   let seq = asSequence(object);
   for (let i = fromIndex; i < n; ++i) {
     if (seq.at(i) === value) {

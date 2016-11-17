@@ -53,6 +53,9 @@ function lastIndexOf<T>(object: Sequence<T>, value: T, fromIndex?: number): numb
   } else if (fromIndex < 0) {
     fromIndex += n;
   }
+  if (fromIndex < 0) {
+    return -1;
+  }
   let seq = asSequence(object);
   for (let i = fromIndex; i >= 0; --i) {
     if (seq.at(i) === value) {
