@@ -6,7 +6,7 @@
 | The full license is in the file LICENSE, distributed with this software.
 |----------------------------------------------------------------------------*/
 import {
-  IArrayLike
+  IArrayLike, IIterable, IIterator
 } from './iterable';
 
 
@@ -21,14 +21,14 @@ interface ISequence<T> extends IIterable<T> {
   readonly length: number;
 
   /**
-   * Get the value at the specified index.
+   * Get the value at a specific index.
    *
-   * @param index - The positive integer index of interest.
+   * @param index - The index of interest.
    *
    * @returns The value at the specified index.
    *
    * #### Undefined Behavior
-   * An `index` which is non-integral or out of range.
+   * An `index` which is negative, non-integral, or out of range.
    */
   at(index: number): T;
 }
@@ -40,14 +40,14 @@ interface ISequence<T> extends IIterable<T> {
 export
 interface IMutableSequence<T> extends ISequence<T> {
   /**
-   * Set the value at the specified index.
+   * Set the value at a specific index.
    *
-   * @param index - The positive integer index of interest.
+   * @param index - The index of interest.
    *
    * @param value - The value to set at the specified index.
    *
    * #### Undefined Behavior
-   * An `index` which is non-integral or out of range.
+   *  An `index` which is negative, non-integral, or out of range.
    */
   set(index: number, value: T): void;
 }
@@ -55,11 +55,6 @@ interface IMutableSequence<T> extends ISequence<T> {
 
 /**
  * A type alias for a sequence or builtin array-like object.
- *
- * #### Notes
- * The [[seq]] function can be used to produce an [[ISequence]] for
- * objects of this type. This allows sequence algorithms to operate
- * on these objects in a uniform fashion.
  */
 export
 type Sequence<T> = ISequence<T> | IArrayLike<T>;
@@ -67,11 +62,6 @@ type Sequence<T> = ISequence<T> | IArrayLike<T>;
 
 /**
  * A type alias for a mutable sequence or builtin array-like object.
- *
- * #### Notes
- * The [[mseq]] function can be used to produce an [[IMutableSequence]]
- * for objects of this type. This allows sequence algorithms to operate
- * on these objects in a uniform fashion.
  */
 export
 type MutableSequence<T> = IMutableSequence<T> | IArrayLike<T>;
@@ -89,36 +79,42 @@ type MutableSequence<T> = IMutableSequence<T> | IArrayLike<T>;
  * sequence types and builtin array-like objects in a uniform fashion.
  */
 export
-function asSequence<T>(object: Sequence<T>): ISequence<T>;
-export
-function asSequence<T>(object: MutableSequence<T>): IMutableSequence<T>;
-export
-function asSequence<T>(object: any): any {
-  return typeof object.at === 'function' ? object : new ArraySequence(object);
-  if (typeof object.at === 'function') {
-    return object as ISequence<T>;
-  }
-  return new ArraySequence(object as IArrayLike<T>);
-}
-
-
-export
-function asSequence<T>(object: SequenceOrArrayLike<T>): ISequence<T> {
+function asSequence<T>(object: Sequence<T>): ISequence<T> {
   let seq: ISequence<T>;
   if (typeof (object as any).at === 'function') {
     seq = object as ISequence<T>;
   } else {
-    seq = new ArraySequence(object as IArrayLike<T>);
+    seq = new ArraySequence<T>(object as IArrayLike<T>);
   }
   return seq;
 }
 
 
 /**
- * A sequence for an array-like object.
+ * Cast a mutable sequence or array-like object to a mutable sequence.
+ *
+ * @param object - The sequence or array-like object of interest.
+ *
+ * @returns A mutable sequence for the given object.
  *
  * #### Notes
- * This sequence can be used for any builtin JS array-like object.
+ * This function allows sequence algorithms to operate on user-defined
+ * sequence types and builtin array-like objects in a uniform fashion.
+ */
+export
+function asMutableSequence<T>(object: MutableSequence<T>): IMutableSequence<T> {
+  let seq: IMutableSequence<T>;
+  if (typeof (object as any).set === 'function') {
+    seq = object as IMutableSequence<T>;
+  } else {
+    seq = new ArraySequence<T>(object as IArrayLike<T>);
+  }
+  return seq;
+}
+
+
+/**
+ * A sequence for a builtin JS array-like object.
  */
 export
 class ArraySequence<T> implements IMutableSequence<T> {
@@ -144,18 +140,16 @@ class ArraySequence<T> implements IMutableSequence<T> {
    * @returns A new iterator which traverses the object's values.
    */
   iter(): ArrayIterator<T> {
-    return new ArrayIterator(this._source);
+    return new ArrayIterator<T>(this._source);
   }
 
   /**
    * Get the value at the specified index.
    *
-   * @param index - The positive integer index of interest.
+   * @param index - The index of interest.
    *
-   * @returns The value at the specified index.
-   *
-   * #### Undefined Behavior
-   * An `index` which is non-integral or out of range.
+   * @returns The value at the specified index, or `undefined`
+   *   if the index is negative, non-integral, or out of range.
    */
   at(index: number): T {
     return this._source[index];
@@ -169,11 +163,66 @@ class ArraySequence<T> implements IMutableSequence<T> {
    * @param value - The value to set at the specified index.
    *
    * #### Undefined Behavior
-   * An `index` which is non-integral or out of range.
+   * An `index` which is negative, non-integral, or out of range.
    */
   set(index: number, value: T): void {
     this._source[index] = value;
   }
 
   private _source: IArrayLike<T>;
+}
+
+
+/**
+ * An iterator for a generic sequence.
+ */
+export
+class SequenceIterator<T> implements IIterator<T> {
+  /**
+   * Construct a new sequence iterator.
+   *
+   * @param source - The sequence of interest.
+   */
+  constructor(source: ISequence<T>) {
+    this._source = source;
+  }
+
+  /**
+   * Create an iterator over the object's values.
+   *
+   * @returns A reference to `this` iterator.
+   */
+  iter(): this {
+    return this;
+  }
+
+  /**
+   * Create an independent clone of the current iterator.
+   *
+   * @returns A new independent clone of the current iterator.
+   *
+   * #### Notes
+   * The source sequence is shared among clones.
+   */
+  clone(): SequenceIterator<T> {
+    let result = new SequenceIterator<T>(this._source);
+    result._index = this._index;
+    return result;
+  }
+
+  /**
+   * Get the next value from the source sequence.
+   *
+   * @returns The next value from the source sequence, or `undefined`
+   *   if the iterator is exhausted.
+   */
+  next(): T {
+    if (this._index >= this._source.length) {
+      return void 0;
+    }
+    return this._source.at(this._index++);
+  }
+
+  private _index = 0;
+  private _source: ISequence<T>;
 }
