@@ -82,10 +82,10 @@ class StrideIterator<T> implements IIterator<T> {
    * @returns The next stepped value from the iterator, or `undefined`
    *   when the source iterator is exhausted.
    */
-  next(): T {
+  next(): T | undefined {
     let value = this._source.next();
-    if (value === void 0) {
-      return void 0;
+    if (value === undefined) {
+      return undefined;
     }
     let step = this._step;
     while (--step > 0) {

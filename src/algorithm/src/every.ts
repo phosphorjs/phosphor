@@ -34,10 +34,10 @@ import {
  */
 export
 function every<T>(object: Iterable<T>, fn: (value: T, index: number) => boolean): boolean {
-  let value: T;
   let index = 0;
   let it = iter(object);
-  while ((value = it.next()) !== void 0) {
+  let value: T | undefined;
+  while ((value = it.next()) !== undefined) {
     if (!fn(value, index++)) {
       return false;
     }

@@ -6,7 +6,7 @@
 | The full license is in the file LICENSE, distributed with this software.
 |----------------------------------------------------------------------------*/
 import {
-  IArrayLike, IIterable, IIterator
+  ArrayIterator, IArrayLike, IIterable, IIterator
 } from './iterable';
 
 
@@ -216,9 +216,9 @@ class SequenceIterator<T> implements IIterator<T> {
    * @returns The next value from the source sequence, or `undefined`
    *   if the iterator is exhausted.
    */
-  next(): T {
+  next(): T | undefined {
     if (this._index >= this._source.length) {
-      return void 0;
+      return undefined;
     }
     return this._source.at(this._index++);
   }

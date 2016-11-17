@@ -59,39 +59,39 @@ function reduce<T>(object: Iterable<T>, fn: (accumulator: any, value: T, index: 
   let first = it.next();
 
   // An empty iterator and no initial value is an error.
-  if (first === void 0 && initial === void 0) {
+  if (first === undefined && initial === undefined) {
     throw new TypeError('Reduce of empty iterable with no initial value.');
   }
 
   // If the iterator is empty, return the initial value.
-  if (first === void 0) {
+  if (first === undefined) {
     return initial;
   }
 
   // If the iterator has a single item and no initial value, the
   // reducer is not invoked and the first item is the return value.
   let second = it.next();
-  if (second === void 0 && initial === void 0) {
+  if (second === undefined && initial === undefined) {
     return first;
   }
 
   // If iterator has a single item and an initial value is provided,
   // the reducer is invoked and that result is the return value.
-  if (second === void 0) {
+  if (second === undefined) {
     return fn(initial, first, index++);
   }
 
   // Setup the initial accumlated value.
   let accumulator: any;
-  if (initial === void 0) {
+  if (initial === undefined) {
     accumulator = fn(first, second, index++);
   } else {
     accumulator = fn(fn(initial, first, index++), second, index++);
   }
 
   // Iterate the rest of the values, updating the accumulator.
-  let next: T;
-  while ((next = it.next()) !== void 0) {
+  let next: T | undefined;
+  while ((next = it.next()) !== undefined) {
     accumulator = fn(accumulator, next, index++);
   }
 

@@ -43,14 +43,14 @@ import {
  * ```
  */
 export
-function find<T>(object: Iterable<T>, fn: (value: T, index: number) => boolean): T {
-  let value: T;
+function find<T>(object: Iterable<T>, fn: (value: T, index: number) => boolean): T | undefined {
   let index = 0;
   let it = iter(object);
-  while ((value = it.next()) !== void 0) {
+  let value: T | undefined;
+  while ((value = it.next()) !== undefined) {
     if (fn(value, index++)) {
       return value;
     }
   }
-  return void 0;
+  return undefined;
 }

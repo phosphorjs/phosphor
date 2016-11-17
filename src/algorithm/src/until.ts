@@ -11,32 +11,38 @@ import {
 
 
 /**
- * Invoke a function for each value in an iterable.
+ * Invoke a function for an iterable until it returns `true`.
  *
  * @param object - The iterable object of interest.
  *
  * @param fn - The callback function to invoke for each value.
  *
  * #### Notes
- * Iteration cannot be terminated early.
- *
- * The [[until]] function supports early termination.
+ * Iteration is terminated when the callback returns `true`.
  *
  * #### Example
  * ```typescript
- * import { each } from '@phosphor/algorithm';
+ * import { until } from '@phosphor/algorithm';
  *
  * let data = [5, 7, 0, -2, 9];
  *
- * each(data, value => { console.log(value); });
+ * let total = 0;
+ * until(data, value => {
+ *   total += value;
+ *   return total > 10;
+ * });
+ *
+ * console.log(total);  // 12
  * ```
  */
 export
-function each<T>(object: Iterable<T>, fn: (value: T, index: number) => void): void {
-  let value: T;
+function until<T>(object: Iterable<T>, fn: (value: T, index: number) => boolean): void {
   let index = 0;
   let it = iter(object);
-  while ((value = it.next()) !== void 0) {
-    fn(value, index++);
+  let value: T | undefined;
+  while ((value = it.next()) !== undefined) {
+    if (fn(value, index++)) {
+      return;
+    }
   }
 }

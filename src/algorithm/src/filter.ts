@@ -84,16 +84,16 @@ class FilterIterator<T> implements IIterator<T> {
    * @returns The next value from the source iterator which passes
    *   the predicate, or `undefined` if the iterator is exhausted.
    */
-  next(): T {
-    let value: T;
+  next(): T | undefined {
     let fn = this._fn;
     let it = this._source;
-    while ((value = it.next()) !== void 0) {
+    let value: T | undefined;
+    while ((value = it.next()) !== undefined) {
       if (fn(value, this._index++)) {
         return value;
       }
     }
-    return void 0;
+    return undefined;
   }
 
   private _index = 0;

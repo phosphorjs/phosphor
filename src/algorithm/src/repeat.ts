@@ -7,7 +7,7 @@
 |----------------------------------------------------------------------------*/
 import {
   IIterator
-} from './iterator';
+} from './iterable';
 
 
 /**
@@ -75,9 +75,9 @@ class RepeatIterator<T> implements IIterator<T> {
    * @returns The next value from the iterator, or `undefined` if
    *   the iterator is exhausted.
    */
-  next(): T {
+  next(): T | undefined {
     if (this._count <= 0) {
-      return void 0;
+      return undefined;
     }
     this._count--;
     return this._value;

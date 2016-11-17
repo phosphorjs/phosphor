@@ -63,7 +63,7 @@ class EmptyIterator<T> implements IIterator<T> {
    *
    * @returns Always `undefined`.
    */
-  next(): T {
-    return void 0;
+  next(): T | undefined {
+    return undefined;
   }
 }

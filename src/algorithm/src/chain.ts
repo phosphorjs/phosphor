@@ -48,7 +48,7 @@ class ChainIterator<T> implements IIterator<T> {
    */
   constructor(source: IIterator<IIterator<T>>) {
     this._source = source;
-    this._active = void 0;
+    this._active = undefined;
   }
 
   /**
@@ -82,25 +82,25 @@ class ChainIterator<T> implements IIterator<T> {
    * @returns The next value from the iterator, or `undefined`
    *   when all source iterators are exhausted.
    */
-  next(): T {
-    if (this._active === void 0) {
+  next(): T | undefined {
+    if (this._active === undefined) {
       this._active = this._source.next();
-      if (this._active === void 0) {
-        return void 0;
+      if (this._active === undefined) {
+        return undefined;
       }
       if (this._cloned) {
         this._active = this._active.clone();
       }
     }
     let value = this._active.next();
-    if (value !== void 0) {
+    if (value !== undefined) {
       return value;
     }
-    this._active = void 0;
+    this._active = undefined;
     return this.next();
   }
 
   private _source: IIterator<IIterator<T>>;
-  private _active: IIterator<T>;
+  private _active: IIterator<T> | undefined;
   private _cloned = false;
 }

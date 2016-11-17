@@ -84,12 +84,12 @@ class MapIterator<T, U> implements IIterator<U> {
    * @returns The next value from the source iterator transformed
    *   by the mapper, or `undefined` if the iterator is exhausted.
    */
-  next(): U {
+  next(): U | undefined {
     let value = this._source.next();
-    if (value === void 0) {
-      return void 0;
+    if (value === undefined) {
+      return undefined;
     }
-    return this._fn.call(void 0, value, this._index++);
+    return this._fn.call(undefined, value, this._index++);
   }
 
   private _index = 0;

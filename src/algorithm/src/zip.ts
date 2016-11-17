@@ -78,12 +78,14 @@ class ZipIterator<T> implements IIterator<T[]> {
    * @returns The next zipped value from the iterator, or `undefined`
    *   when the first source iterator is exhausted.
    */
-  next(): T[] {
+  next(): T[] | undefined {
     let result = new Array<T>(this._source.length);
     for (let i = 0, n = this._source.length; i < n; ++i) {
-      if ((result[i] = this._source[i].next()) === void 0) {
-        return void 0;
+      let value = this._source[i].next();
+      if (value === undefined) {
+        return undefined;
       }
+      result[i] = value;
     }
     return result;
   }

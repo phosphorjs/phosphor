@@ -30,10 +30,10 @@ import {
  */
 export
 function range(start: number, stop?: number, step?: number): Range {
-  if (stop === void 0) {
+  if (stop === undefined) {
     return new Range(0, start, 1);
   }
-  if (step === void 0) {
+  if (step === undefined) {
     return new Range(start, stop, 1);
   }
   return new Range(start, stop, step);
@@ -121,6 +121,7 @@ namespace Private {
    *
    * @returns The number of steps need to traverse the range.
    */
+  export
   function rangeLength(start: number, stop: number, step: number): number {
     if (step === 0) {
       return Infinity;

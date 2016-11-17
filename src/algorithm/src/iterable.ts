@@ -62,7 +62,7 @@ interface IIterator<T> extends IIterable<T> {
    * an object allocation on each iteration; and an `isDone()` method
    * would increase implementation and runtime complexity.
    */
-  next(): T;
+  next(): T | undefined;
 }
 
 
@@ -162,9 +162,9 @@ class ArrayIterator<T> implements IIterator<T> {
    * @returns The next value from the source array, or `undefined`
    *   if the iterator is exhausted.
    */
-  next(): T {
+  next(): T | undefined {
     if (this._index >= this._source.length) {
-      return void 0;
+      return undefined;
     }
     return this._source[this._index++];
   }

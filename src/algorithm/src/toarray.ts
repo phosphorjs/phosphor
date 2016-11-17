@@ -30,10 +30,10 @@ import {
  */
 export
 function toArray<T>(object: Iterable<T>): T[] {
-  let value: T;
   let result: T[] = [];
   let it = iter(object);
-  while ((value = it.next()) !== void 0) {
+  let value: T | undefined;
+  while ((value = it.next()) !== undefined) {
     result[result.length] = value;
   }
   return result;

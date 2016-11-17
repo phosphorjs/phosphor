@@ -35,9 +35,9 @@ import {
  */
 export
 function contains<T>(object: Iterable<T>, value: T): boolean {
-  let temp: T;
   let it = iter(object);
-  while ((temp = it.next()) !== void 0) {
+  let temp: T | undefined;
+  while ((temp = it.next()) !== undefined) {
     if (temp === value) {
       return true;
     }
