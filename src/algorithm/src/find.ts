@@ -6,14 +6,14 @@
 | The full license is in the file LICENSE, distributed with this software.
 |----------------------------------------------------------------------------*/
 import {
-  Iterable, iter
+  IterableOrArrayLike, iter
 } from './iterable';
 
 
 /**
  * Find the first value in an iterable which matches a predicate.
  *
- * @param object - The iterable object to search.
+ * @param object - The iterable or array-like object to search.
  *
  * @param fn - The predicate function to apply to the values.
  *
@@ -43,7 +43,7 @@ import {
  * ```
  */
 export
-function find<T>(object: Iterable<T>, fn: (value: T, index: number) => boolean): T | undefined {
+function find<T>(object: IterableOrArrayLike<T>, fn: (value: T, index: number) => boolean): T | undefined {
   let index = 0;
   let it = iter(object);
   let value: T | undefined;

@@ -6,14 +6,14 @@
 | The full license is in the file LICENSE, distributed with this software.
 |----------------------------------------------------------------------------*/
 import {
-  Iterable, iter
+  IterableOrArrayLike, iter
 } from './iterable';
 
 
 /**
  * Test whether an iterable contains a specific value.
  *
- * @param object - The iterable object to search.
+ * @param object - The iterable or array-like object to search.
  *
  * @param value - The value to search for in the iterable. Values
  *   are compared using strict `===` equality.
@@ -34,7 +34,7 @@ import {
  * ```
  */
 export
-function contains<T>(object: Iterable<T>, value: T): boolean {
+function contains<T>(object: IterableOrArrayLike<T>, value: T): boolean {
   let it = iter(object);
   let temp: T | undefined;
   while ((temp = it.next()) !== undefined) {

@@ -6,14 +6,14 @@
 | The full license is in the file LICENSE, distributed with this software.
 |----------------------------------------------------------------------------*/
 import {
-  Sequence, asSequence
+  SequenceOrArrayLike, asSequence
 } from './sequence';
 
 
 /**
  * Find the index of the first element which compares `>` than a value.
  *
- * @param sequence - The sorted sequence to search.
+ * @param sequence - The sorted sequence or array-like object to search.
  *
  * @param value - The value to locate in the sequence.
  *
@@ -50,7 +50,7 @@ import {
  * ```
  */
 export
-function upperBound<T, U>(object: Sequence<T>, value: U, fn: (element: T, value: U) => number): number {
+function upperBound<T, U>(object: SequenceOrArrayLike<T>, value: U, fn: (element: T, value: U) => number): number {
   let n = object.length;
   if (n === 0) {
     return 0;

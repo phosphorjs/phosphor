@@ -6,14 +6,14 @@
 | The full license is in the file LICENSE, distributed with this software.
 |----------------------------------------------------------------------------*/
 import {
-  Iterable, iter
+  IterableOrArrayLike, iter
 } from './iterable';
 
 
 /**
  * Invoke a function for each value in an iterable.
  *
- * @param object - The iterable object of interest.
+ * @param object - The iterable or array-like object of interest.
  *
  * @param fn - The callback function to invoke for each value.
  *
@@ -32,7 +32,7 @@ import {
  * ```
  */
 export
-function each<T>(object: Iterable<T>, fn: (value: T, index: number) => void): void {
+function each<T>(object: IterableOrArrayLike<T>, fn: (value: T, index: number) => void): void {
   let index = 0;
   let it = iter(object);
   let value: T | undefined;

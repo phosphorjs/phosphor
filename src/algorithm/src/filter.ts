@@ -6,14 +6,14 @@
 | The full license is in the file LICENSE, distributed with this software.
 |----------------------------------------------------------------------------*/
 import {
-  IIterator, Iterable, iter
+  IIterator, IterableOrArrayLike, iter
 } from './iterable';
 
 
 /**
  * Filter an iterable for values which pass a test.
  *
- * @param object - The iterable object of interest.
+ * @param object - The iterable or array-like object of interest.
  *
  * @param fn - The predicate function to invoke for each value.
  *
@@ -31,7 +31,7 @@ import {
  * ```
  */
 export
-function filter<T>(object: Iterable<T>, fn: (value: T, index: number) => boolean): FilterIterator<T> {
+function filter<T>(object: IterableOrArrayLike<T>, fn: (value: T, index: number) => boolean): FilterIterator<T> {
   return new FilterIterator<T>(iter(object), fn);
 }
 

@@ -6,14 +6,14 @@
 | The full license is in the file LICENSE, distributed with this software.
 |----------------------------------------------------------------------------*/
 import {
-  Iterable, iter
+  IterableOrArrayLike, iter
 } from './iterable';
 
 
 /**
  * Find the maximum value in an iterable.
  *
- * @param object - The iterable object to search.
+ * @param object - The iterable or array-like object to search.
  *
  * @param fn - The 3-way comparison function to apply to the values.
  *   It should return `< 0` if the first value is less than the second.
@@ -39,7 +39,7 @@ import {
  * ```
  */
 export
-function max<T>(object: Iterable<T>, fn: (first: T, second: T) => number): T | undefined {
+function max<T>(object: IterableOrArrayLike<T>, fn: (first: T, second: T) => number): T | undefined {
   let it = iter(object);
   let result = it.next();
   if (result === undefined) {

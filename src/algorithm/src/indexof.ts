@@ -6,14 +6,14 @@
 | The full license is in the file LICENSE, distributed with this software.
 |----------------------------------------------------------------------------*/
 import {
-  Sequence, asSequence
+  SequenceOrArrayLike, asSequence
 } from './sequence';
 
 
 /**
  * Find the index of the first occurrence of a value in a sequence.
  *
- * @param object - The sequence to search.
+ * @param object - The sequence or array-like to search.
  *
  * @param value - The value to locate in the sequence. Values are
  *   compared using strict `===` equality.
@@ -43,7 +43,7 @@ import {
  * ```
  */
 export
-function indexOf<T>(object: Sequence<T>, value: T, fromIndex?: number): number {
+function indexOf<T>(object: SequenceOrArrayLike<T>, value: T, fromIndex?: number): number {
   let n = object.length;
   if (n === 0) {
     return -1;

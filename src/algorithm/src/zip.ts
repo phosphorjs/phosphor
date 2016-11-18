@@ -6,14 +6,14 @@
 | The full license is in the file LICENSE, distributed with this software.
 |----------------------------------------------------------------------------*/
 import {
-  IIterator, Iterable, iter
+  IIterator, IterableOrArrayLike, iter
 } from './iterable';
 
 
 /**
  * Iterate several iterables in lockstep.
  *
- * @param objects - The iterable objects of interest.
+ * @param objects - The iterable or array-like objects of interest.
  *
  * @returns An iterator which yields successive tuples of values where
  *   each value is taken in turn from the provided iterables. It will
@@ -32,7 +32,7 @@ import {
  * ```
  */
 export
-function zip<T>(...objects: Iterable<T>[]): ZipIterator<T> {
+function zip<T>(...objects: IterableOrArrayLike<T>[]): ZipIterator<T> {
   return new ZipIterator<T>(objects.map(iter));
 }
 

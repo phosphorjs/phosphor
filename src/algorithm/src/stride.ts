@@ -6,14 +6,14 @@
 | The full license is in the file LICENSE, distributed with this software.
 |----------------------------------------------------------------------------*/
 import {
-  IIterator, Iterable, iter
+  IIterator, IterableOrArrayLike, iter
 } from './iterable';
 
 
 /**
  * Iterate over an iterable using a stepped increment.
  *
- * @param object - The iterable object of interest.
+ * @param object - The iterable or array-like object of interest.
  *
  * @param step - The distance to step on each iteration. A value
  *   of less than `1` will behave the same as a value of `1`.
@@ -32,7 +32,7 @@ import {
  * ```
  */
 export
-function stride<T>(object: Iterable<T>, step: number): StrideIterator<T> {
+function stride<T>(object: IterableOrArrayLike<T>, step: number): StrideIterator<T> {
   return new StrideIterator<T>(iter(object), step);
 }
 

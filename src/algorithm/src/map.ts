@@ -6,14 +6,14 @@
 | The full license is in the file LICENSE, distributed with this software.
 |----------------------------------------------------------------------------*/
 import {
-  IIterator, Iterable, iter
+  IIterator, IterableOrArrayLike, iter
 } from './iterable';
 
 
 /**
  * Transform the values of an iterable with a mapping function.
  *
- * @param object - The iterable object of interest.
+ * @param object - The iterable or array-like object of interest.
  *
  * @param fn - The mapping function to invoke for each value.
  *
@@ -31,7 +31,7 @@ import {
  * ```
  */
 export
-function map<T, U>(object: Iterable<T>, fn: (value: T, index: number) => U): MapIterator<T, U> {
+function map<T, U>(object: IterableOrArrayLike<T>, fn: (value: T, index: number) => U): MapIterator<T, U> {
   return new MapIterator<T, U>(iter(object), fn);
 }
 

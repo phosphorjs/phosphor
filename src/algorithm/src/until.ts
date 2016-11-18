@@ -6,14 +6,14 @@
 | The full license is in the file LICENSE, distributed with this software.
 |----------------------------------------------------------------------------*/
 import {
-  Iterable, iter
+  IterableOrArrayLike, iter
 } from './iterable';
 
 
 /**
  * Invoke a function for an iterable until it returns `true`.
  *
- * @param object - The iterable object of interest.
+ * @param object - The iterable or array-like object of interest.
  *
  * @param fn - The callback function to invoke for each value.
  *
@@ -27,16 +27,16 @@ import {
  * let data = [5, 7, 0, -2, 9];
  *
  * let total = 0;
- * until(data, value => {
+ * until(data, (value, i) => {
  *   total += value;
- *   return total > 10;
+ *   return i >= 3;
  * });
  *
  * console.log(total);  // 12
  * ```
  */
 export
-function until<T>(object: Iterable<T>, fn: (value: T, index: number) => boolean): void {
+function until<T>(object: IterableOrArrayLike<T>, fn: (value: T, index: number) => boolean): void {
   let index = 0;
   let it = iter(object);
   let value: T | undefined;

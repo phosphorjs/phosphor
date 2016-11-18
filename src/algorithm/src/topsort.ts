@@ -10,15 +10,15 @@ import {
 } from './each';
 
 import {
-  Iterable
+  IterableOrArrayLike
 } from './iterable';
 
 
 /**
  * Topologically sort an iterable of edges.
  *
- * @param edges - The iterable of edges to sort. An edge is represented
- *   as a 2-tuple of the form `[fromNode, toNode]`.
+ * @param edges - The iterable or array-like object of edges to sort.
+ *   An edge is represented as a 2-tuple of `[fromNode, toNode]`.
  *
  * @returns The topologically sorted array of nodes.
  *
@@ -40,7 +40,7 @@ import {
  * topSort(data);  // ['a', 'b', 'c', 'd', 'e']
  */
 export
-function topSort(edges: Iterable<[string, string]>): string[] {
+function topSort(edges: IterableOrArrayLike<[string, string]>): string[] {
   // A type alias for an object hash.
   type StringMap<T> = { [key: string]: T };
 

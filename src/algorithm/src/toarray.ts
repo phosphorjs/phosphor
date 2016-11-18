@@ -6,14 +6,14 @@
 | The full license is in the file LICENSE, distributed with this software.
 |----------------------------------------------------------------------------*/
 import {
-  Iterable, iter
+  IterableOrArrayLike, iter
 } from './iterable';
 
 
 /**
  * Create an array from an iterable of values.
  *
- * @param object - The iterable object of interest.
+ * @param object - The iterable or array-like object of interest.
  *
  * @returns A new array of values from the given object.
  *
@@ -29,7 +29,7 @@ import {
  * ```
  */
 export
-function toArray<T>(object: Iterable<T>): T[] {
+function toArray<T>(object: IterableOrArrayLike<T>): T[] {
   let result: T[] = [];
   let it = iter(object);
   let value: T | undefined;

@@ -6,14 +6,14 @@
 | The full license is in the file LICENSE, distributed with this software.
 |----------------------------------------------------------------------------*/
 import {
-  Iterable, iter
+  IterableOrArrayLike, iter
 } from './iterable';
 
 
 /**
  * Summarize all values in an iterable using a reducer function.
  *
- * @param object - The iterable object of interest.
+ * @param object - The iterable or array-like object of interest.
  *
  * @param fn - The reducer function to invoke for each value.
  *
@@ -48,11 +48,11 @@ import {
  * ```
  */
 export
-function reduce<T>(object: Iterable<T>, fn: (accumulator: T, value: T, index: number) => T): T;
+function reduce<T>(object: IterableOrArrayLike<T>, fn: (accumulator: T, value: T, index: number) => T): T;
 export
-function reduce<T, U>(object: Iterable<T>, fn: (accumulator: U, value: T, index: number) => U, initial: U): U;
+function reduce<T, U>(object: IterableOrArrayLike<T>, fn: (accumulator: U, value: T, index: number) => U, initial: U): U;
 export
-function reduce<T>(object: Iterable<T>, fn: (accumulator: any, value: T, index: number) => any, initial?: any): any {
+function reduce<T>(object: IterableOrArrayLike<T>, fn: (accumulator: any, value: T, index: number) => any, initial?: any): any {
   // Setup the iterator and fetch the first value.
   let index = 0;
   let it = iter(object);

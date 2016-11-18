@@ -90,13 +90,13 @@ interface IArrayLike<T> {
  * A type alias for an iterable or builtin array-like object.
  */
 export
-type Iterable<T> = IIterable<T> | IArrayLike<T>;
+type IterableOrArrayLike<T> = IIterable<T> | IArrayLike<T>;
 
 
 /**
  * Create an iterator for an iterabl object.
  *
- * @param object - The iterable object of interest.
+ * @param object - The iterable or array-like object of interest.
  *
  * @returns A new iterator for the given object.
  *
@@ -105,7 +105,7 @@ type Iterable<T> = IIterable<T> | IArrayLike<T>;
  * iterable types and builtin array-like objects in a uniform fashion.
  */
 export
-function iter<T>(object: Iterable<T>): IIterator<T> {
+function iter<T>(object: IterableOrArrayLike<T>): IIterator<T> {
   let it: IIterator<T>;
   if (typeof (object as any).iter === 'function') {
     it = (object as IIterable<T>).iter();

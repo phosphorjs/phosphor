@@ -6,14 +6,14 @@
 | The full license is in the file LICENSE, distributed with this software.
 |----------------------------------------------------------------------------*/
 import {
-  Sequence, asSequence
+  SequenceOrArrayLike, asSequence
 } from './sequence';
 
 
 /**
  * Find the index of the last value which matches a predicate.
  *
- * @param object - The sequence to search.
+ * @param object - The sequence or array-like object to search.
  *
  * @param fn - The predicate function to apply to the values.
  *
@@ -47,7 +47,7 @@ import {
  * ```
  */
 export
-function findLastIndex<T>(object: Sequence<T>, fn: (value: T, index: number) => boolean, fromIndex?: number): number {
+function findLastIndex<T>(object: SequenceOrArrayLike<T>, fn: (value: T, index: number) => boolean, fromIndex?: number): number {
   let n = object.length;
   if (n === 0) {
     return -1;

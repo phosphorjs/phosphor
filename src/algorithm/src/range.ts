@@ -6,6 +6,10 @@
 | The full license is in the file LICENSE, distributed with this software.
 |----------------------------------------------------------------------------*/
 import {
+  IIterator
+} from './iterable';
+
+import {
   ISequence, SequenceIterator
 } from './sequence';
 
@@ -86,7 +90,7 @@ class Range implements ISequence<number> {
    *
    * @returns A new iterator for the range of values.
    */
-  iter(): SequenceIterator<number> {
+  iter(): IIterator<number> {
     return new SequenceIterator<number>(this);
   }
 

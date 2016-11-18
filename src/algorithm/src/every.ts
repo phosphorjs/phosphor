@@ -6,14 +6,14 @@
 | The full license is in the file LICENSE, distributed with this software.
 |----------------------------------------------------------------------------*/
 import {
-  Iterable, iter
+  IterableOrArrayLike, iter
 } from './iterable';
 
 
 /**
  * Test whether all values in an iterable satisfy a predicate.
  *
- * @param object - The iterable object of interest.
+ * @param object - The iterable or array-like object of interest.
  *
  * @param fn - The predicate function to invoke for each value.
  *
@@ -33,7 +33,7 @@ import {
  * ```
  */
 export
-function every<T>(object: Iterable<T>, fn: (value: T, index: number) => boolean): boolean {
+function every<T>(object: IterableOrArrayLike<T>, fn: (value: T, index: number) => boolean): boolean {
   let index = 0;
   let it = iter(object);
   let value: T | undefined;

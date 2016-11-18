@@ -6,14 +6,14 @@
 | The full license is in the file LICENSE, distributed with this software.
 |----------------------------------------------------------------------------*/
 import {
-  IIterator, Iterable, iter
+  IIterator, IterableOrArrayLike, iter
 } from './iterable';
 
 
 /**
  * Chain together several iterables.
  *
- * @param objects - The iterable objects of interest.
+ * @param objects - The iterable or array-like objects of interest.
  *
  * @returns An iterator which yields the values of the iterables
  *   in the order in which they are supplied.
@@ -31,7 +31,7 @@ import {
  * ```
  */
 export
-function chain<T>(...objects: Iterable<T>[]): ChainIterator<T> {
+function chain<T>(...objects: IterableOrArrayLike<T>[]): ChainIterator<T> {
   return new ChainIterator<T>(iter(objects.map(iter)));
 }
 

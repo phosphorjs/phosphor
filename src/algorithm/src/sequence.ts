@@ -57,14 +57,14 @@ interface IMutableSequence<T> extends ISequence<T> {
  * A type alias for a sequence or builtin array-like object.
  */
 export
-type Sequence<T> = ISequence<T> | IArrayLike<T>;
+type SequenceOrArrayLike<T> = ISequence<T> | IArrayLike<T>;
 
 
 /**
  * A type alias for a mutable sequence or builtin array-like object.
  */
 export
-type MutableSequence<T> = IMutableSequence<T> | IArrayLike<T>;
+type MutableSequenceOrArrayLike<T> = IMutableSequence<T> | IArrayLike<T>;
 
 
 /**
@@ -79,7 +79,7 @@ type MutableSequence<T> = IMutableSequence<T> | IArrayLike<T>;
  * sequence types and builtin array-like objects in a uniform fashion.
  */
 export
-function asSequence<T>(object: Sequence<T>): ISequence<T> {
+function asSequence<T>(object: SequenceOrArrayLike<T>): ISequence<T> {
   let seq: ISequence<T>;
   if (typeof (object as any).at === 'function') {
     seq = object as ISequence<T>;
@@ -102,7 +102,7 @@ function asSequence<T>(object: Sequence<T>): ISequence<T> {
  * sequence types and builtin array-like objects in a uniform fashion.
  */
 export
-function asMutableSequence<T>(object: MutableSequence<T>): IMutableSequence<T> {
+function asMutableSequence<T>(object: MutableSequenceOrArrayLike<T>): IMutableSequence<T> {
   let seq: IMutableSequence<T>;
   if (typeof (object as any).set === 'function') {
     seq = object as IMutableSequence<T>;
@@ -139,7 +139,7 @@ class ArraySequence<T> implements IMutableSequence<T> {
    *
    * @returns A new iterator which traverses the object's values.
    */
-  iter(): ArrayIterator<T> {
+  iter(): IIterator<T> {
     return new ArrayIterator<T>(this._source);
   }
 
