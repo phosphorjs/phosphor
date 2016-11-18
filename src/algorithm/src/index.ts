@@ -21,6 +21,7 @@ export * from './lowerbound';
 export * from './map';
 export * from './max';
 export * from './min';
+export * from './move';
 export * from './once';
 export * from './range';
 export * from './reduce';
