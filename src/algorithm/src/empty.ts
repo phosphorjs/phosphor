@@ -41,27 +41,27 @@ class EmptyIterator<T> implements IIterator<T> {
   constructor() { }
 
   /**
-   * Create an iterator over the object's values.
+   * Get an iterator over the object's values.
    *
-   * @returns A reference to `this` iterator.
+   * @returns An iterator which yields the object's values.
    */
-  iter(): this {
+  iter(): IIterator<T> {
     return this;
   }
 
   /**
-   * Create an independent clone of the current iterator.
+   * Create an independent clone of the iterator.
    *
-   * @returns A new independent clone of the current iterator.
+   * @returns A new independent clone of the iterator.
    */
-  clone(): EmptyIterator<T> {
+  clone(): IIterator<T> {
     return new EmptyIterator<T>();
   }
 
   /**
    * Get the next value from the iterator.
    *
-   * @returns Always `undefined`.
+   * @returns The next value from the iterator, or `undefined`.
    */
   next(): T | undefined {
     return undefined;

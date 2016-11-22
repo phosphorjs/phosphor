@@ -135,9 +135,9 @@ class ArraySequence<T> implements IMutableSequence<T> {
   }
 
   /**
-   * Create an iterator over the object's values.
+   * Get an iterator over the object's values.
    *
-   * @returns A new iterator which traverses the object's values.
+   * @returns An iterator which yields the object's values.
    */
   iter(): IIterator<T> {
     return new ArrayIterator<T>(this._source);
@@ -188,33 +188,29 @@ class SequenceIterator<T> implements IIterator<T> {
   }
 
   /**
-   * Create an iterator over the object's values.
+   * Get an iterator over the object's values.
    *
-   * @returns A reference to `this` iterator.
+   * @returns An iterator which yields the object's values.
    */
-  iter(): this {
+  iter(): IIterator<T> {
     return this;
   }
 
   /**
-   * Create an independent clone of the current iterator.
+   * Create an independent clone of the iterator.
    *
-   * @returns A new independent clone of the current iterator.
-   *
-   * #### Notes
-   * The source sequence is shared among clones.
+   * @returns A new independent clone of the iterator.
    */
-  clone(): SequenceIterator<T> {
+  clone(): IIterator<T> {
     let result = new SequenceIterator<T>(this._source);
     result._index = this._index;
     return result;
   }
 
   /**
-   * Get the next value from the source sequence.
+   * Get the next value from the iterator.
    *
-   * @returns The next value from the source sequence, or `undefined`
-   *   if the iterator is exhausted.
+   * @returns The next value from the iterator, or `undefined`.
    */
   next(): T | undefined {
     if (this._index >= this._source.length) {

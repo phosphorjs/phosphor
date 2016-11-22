@@ -52,28 +52,27 @@ class RepeatIterator<T> implements IIterator<T> {
   }
 
   /**
-   * Create an iterator over the object's values.
+   * Get an iterator over the object's values.
    *
-   * @returns A reference to `this` iterator.
+   * @returns An iterator which yields the object's values.
    */
-  iter(): this {
+  iter(): IIterator<T> {
     return this;
   }
 
   /**
-   * Create an independent clone of the repeat iterator.
+   * Create an independent clone of the iterator.
    *
-   * @returns A new iterator starting with the current value.
+   * @returns A new independent clone of the iterator.
    */
-  clone(): RepeatIterator<T> {
+  clone(): IIterator<T> {
     return new RepeatIterator<T>(this._value, this._count);
   }
 
   /**
    * Get the next value from the iterator.
    *
-   * @returns The next value from the iterator, or `undefined` if
-   *   the iterator is exhausted.
+   * @returns The next value from the iterator, or `undefined`.
    */
   next(): T | undefined {
     if (this._count <= 0) {

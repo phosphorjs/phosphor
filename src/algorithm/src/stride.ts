@@ -56,31 +56,27 @@ class StrideIterator<T> implements IIterator<T> {
   }
 
   /**
-   * Create an iterator over the object's values.
+   * Get an iterator over the object's values.
    *
-   * @returns A reference to `this` iterator.
+   * @returns An iterator which yields the object's values.
    */
-  iter(): this {
+  iter(): IIterator<T> {
     return this;
   }
 
   /**
-   * Create an independent clone of the stride iterator.
+   * Create an independent clone of the iterator.
    *
-   * @returns A new iterator starting with the current value.
-   *
-   * #### Notes
-   * The source iterator must be cloneable.
+   * @returns A new independent clone of the iterator.
    */
-  clone(): StrideIterator<T> {
+  clone(): IIterator<T> {
     return new StrideIterator<T>(this._source.clone(), this._step);
   }
 
   /**
-   * Get the next stepped value from the iterator.
+   * Get the next value from the iterator.
    *
-   * @returns The next stepped value from the iterator, or `undefined`
-   *   when the source iterator is exhausted.
+   * @returns The next value from the iterator, or `undefined`.
    */
   next(): T | undefined {
     let value = this._source.next();

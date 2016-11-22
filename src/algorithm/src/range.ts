@@ -86,9 +86,9 @@ class Range implements ISequence<number> {
   readonly length: number;
 
   /**
-   * Create an iterator over the range of values.
+   * Get an iterator over the object's values.
    *
-   * @returns A new iterator for the range of values.
+   * @returns An iterator which yields the object's values.
    */
   iter(): IIterator<number> {
     return new SequenceIterator<number>(this);

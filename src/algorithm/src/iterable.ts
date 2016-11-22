@@ -13,9 +13,15 @@
 export
 interface IIterable<T> {
   /**
-   * Create an iterator over the object's values.
+   * Get an iterator over the object's values.
    *
-   * @returns A new iterator which traverses the object's values.
+   * @returns An iterator which yields the object's values.
+   *
+   * #### Notes
+   * Depending on the iterable, the returned iterator may or may not be
+   * a new object. A collection or other container-like object should
+   * typically return a new iterator, while an iterator itself should
+   * normally return `this`.
    */
   iter(): IIterator<T>;
 }
@@ -26,7 +32,7 @@ interface IIterable<T> {
  *
  * #### Notes
  * An `IIterator` is itself an `IIterable`. Most implementations of
- * `IIterator` will simply return `this` from their `iter()` method.
+ * `IIterator` should simply return `this` from the `iter()` method.
  */
 export
 interface IIterator<T> extends IIterable<T> {
@@ -38,19 +44,16 @@ interface IIterator<T> extends IIterable<T> {
    * #### Notes
    * The cloned iterator can be consumed independently of the current
    * iterator. In essence, it is a copy of the iterator value stream
-   * which starts at the current location. This can be useful for
-   * lookahead and stream duplication.
+   * which starts at the current location.
    *
-   * Most iterators can trivially support cloning. Those which cannot
-   * should throw an exception and document the restriction.
+   * This can be useful for lookahead and stream duplication.
    */
   clone(): IIterator<T>;
 
   /**
-   * Get the next value in the collection.
+   * Get the next value from the iterator.
    *
-   * @returns The next value in the collection, or `undefined` if the
-   *   iterator is exhausted.
+   * @returns The next value from the iterator, or `undefined`.
    *
    * #### Notes
    * The `undefined` value is used to signal the end of iteration and
@@ -134,33 +137,29 @@ class ArrayIterator<T> implements IIterator<T> {
   }
 
   /**
-   * Create an iterator over the object's values.
+   * Get an iterator over the object's values.
    *
-   * @returns A reference to `this` iterator.
+   * @returns An iterator which yields the object's values.
    */
-  iter(): this {
+  iter(): IIterator<T> {
     return this;
   }
 
   /**
-   * Create an independent clone of the current iterator.
+   * Create an independent clone of the iterator.
    *
-   * @returns A new independent clone of the current iterator.
-   *
-   * #### Notes
-   * The source array is shared among clones.
+   * @returns A new independent clone of the iterator.
    */
-  clone(): ArrayIterator<T> {
+  clone(): IIterator<T> {
     let result = new ArrayIterator<T>(this._source);
     result._index = this._index;
     return result;
   }
 
   /**
-   * Get the next value from the source array.
+   * Get the next value from the iterator.
    *
-   * @returns The next value from the source array, or `undefined`
-   *   if the iterator is exhausted.
+   * @returns The next value from the iterator, or `undefined`.
    */
   next(): T | undefined {
     if (this._index >= this._source.length) {

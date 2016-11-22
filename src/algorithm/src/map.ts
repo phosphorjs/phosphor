@@ -54,35 +54,29 @@ class MapIterator<T, U> implements IIterator<U> {
   }
 
   /**
-   * Create an iterator over the object's values.
+   * Get an iterator over the object's values.
    *
-   * @returns A reference to `this` iterator.
+   * @returns An iterator which yields the object's values.
    */
-  iter(): this {
+  iter(): IIterator<U> {
     return this;
   }
 
   /**
-   * Create an independent clone of the current iterator.
+   * Create an independent clone of the iterator.
    *
-   * @returns A new independent clone of the current iterator.
-   *
-   * #### Notes
-   * The source iterator must be cloneable.
-   *
-   * The mapping function is shared among clones.
+   * @returns A new independent clone of the iterator.
    */
-  clone(): MapIterator<T, U> {
+  clone(): IIterator<U> {
     let result = new MapIterator<T, U>(this._source.clone(), this._fn);
     result._index = this._index;
     return result;
   }
 
   /**
-   * Get the next mapped value from the source iterator.
+   * Get the next value from the iterator.
    *
-   * @returns The next value from the source iterator transformed
-   *   by the mapper, or `undefined` if the iterator is exhausted.
+   * @returns The next value from the iterator, or `undefined`.
    */
   next(): U | undefined {
     let value = this._source.next();

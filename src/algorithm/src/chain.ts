@@ -31,7 +31,7 @@ import {
  * ```
  */
 export
-function chain<T>(...objects: IterableOrArrayLike<T>[]): ChainIterator<T> {
+function chain<T>(...objects: IterableOrArrayLike<T>[]): IIterator<T> {
   return new ChainIterator<T>(iter(objects.map(iter)));
 }
 
@@ -52,23 +52,20 @@ class ChainIterator<T> implements IIterator<T> {
   }
 
   /**
-   * Create an iterator over the object's values.
+   * Get an iterator over the object's values.
    *
-   * @returns A reference to `this` iterator.
+   * @returns An iterator which yields the object's values.
    */
-  iter(): this {
+  iter(): IIterator<T> {
     return this;
   }
 
   /**
-   * Create an independent clone of the chain iterator.
+   * Create an independent clone of the iterator.
    *
-   * @returns A new iterator starting with the current value.
-   *
-   * #### Notes
-   * The source iterators must be cloneable.
+   * @returns A new independent clone of the iterator.
    */
-  clone(): ChainIterator<T> {
+  clone(): IIterator<T> {
     let result = new ChainIterator<T>(this._source.clone());
     result._active = this._active && this._active.clone();
     result._cloned = true;
@@ -79,8 +76,7 @@ class ChainIterator<T> implements IIterator<T> {
   /**
    * Get the next value from the iterator.
    *
-   * @returns The next value from the iterator, or `undefined`
-   *   when all source iterators are exhausted.
+   * @returns The next value from the iterator, or `undefined`.
    */
   next(): T | undefined {
     if (this._active === undefined) {

@@ -52,31 +52,27 @@ class ZipIterator<T> implements IIterator<T[]> {
   }
 
   /**
-   * Create an iterator over the object's values.
+   * Get an iterator over the object's values.
    *
-   * @returns A reference to `this` iterator.
+   * @returns An iterator which yields the object's values.
    */
-  iter(): this {
+  iter(): IIterator<T[]> {
     return this;
   }
 
   /**
-   * Create an independent clone of the zip iterator.
+   * Create an independent clone of the iterator.
    *
-   * @returns A new iterator starting with the current value.
-   *
-   * #### Notes
-   * The source iterators must be cloneable.
+   * @returns A new independent clone of the iterator.
    */
-  clone(): ZipIterator<T> {
+  clone(): IIterator<T[]> {
     return new ZipIterator<T>(this._source.map(it => it.clone()));
   }
 
   /**
-   * Get the next zipped value from the iterator.
+   * Get the next value from the iterator.
    *
-   * @returns The next zipped value from the iterator, or `undefined`
-   *   when the first source iterator is exhausted.
+   * @returns The next value from the iterator, or `undefined`.
    */
   next(): T[] | undefined {
     let result = new Array<T>(this._source.length);
