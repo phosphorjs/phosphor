@@ -6,7 +6,7 @@
 | The full license is in the file LICENSE, distributed with this software.
 |----------------------------------------------------------------------------*/
 import {
-  SequenceOrArrayLike, asSequence
+  SequenceOrArrayLike, sequence
 } from './sequence';
 
 
@@ -56,7 +56,7 @@ function indexOf<T>(object: SequenceOrArrayLike<T>, value: T, fromIndex?: number
   if (fromIndex >= n) {
     return -1;
   }
-  let seq = asSequence(object);
+  let seq = sequence(object);
   for (let i = fromIndex; i < n; ++i) {
     if (seq.at(i) === value) {
       return i;

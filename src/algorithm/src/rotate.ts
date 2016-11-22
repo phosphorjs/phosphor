@@ -10,7 +10,7 @@ import {
 } from './reverse';
 
 import {
-  MutableSequenceOrArrayLike, asMutableSequence
+  MutableSequenceOrArrayLike, mutableSequence
 } from './sequence';
 
 
@@ -54,7 +54,7 @@ function rotate<T>(object: MutableSequenceOrArrayLike<T>, delta: number): void {
   if (delta === 0) {
     return;
   }
-  let seq = asMutableSequence(object);
+  let seq = mutableSequence(object);
   reverse(seq, 0, delta - 1);
   reverse(seq, delta, n - 1);
   reverse(seq, 0, n - 1);

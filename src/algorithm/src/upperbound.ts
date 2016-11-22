@@ -6,7 +6,7 @@
 | The full license is in the file LICENSE, distributed with this software.
 |----------------------------------------------------------------------------*/
 import {
-  SequenceOrArrayLike, asSequence
+  SequenceOrArrayLike, sequence
 } from './sequence';
 
 
@@ -58,7 +58,7 @@ function upperBound<T, U>(object: SequenceOrArrayLike<T>, value: U, fn: (element
   let begin = 0;
   let half: number;
   let middle: number;
-  let seq = asSequence(object);
+  let seq = sequence(object);
   while (n > 0) {
     half = n >> 1;
     middle = begin + half;

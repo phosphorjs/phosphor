@@ -6,7 +6,7 @@
 | The full license is in the file LICENSE, distributed with this software.
 |----------------------------------------------------------------------------*/
 import {
-  SequenceOrArrayLike, asSequence
+  SequenceOrArrayLike, sequence
 } from './sequence';
 
 
@@ -60,7 +60,7 @@ function findLastIndex<T>(object: SequenceOrArrayLike<T>, fn: (value: T, index: 
   if (fromIndex < 0) {
     return -1;
   }
-  let seq = asSequence(object);
+  let seq = sequence(object);
   for (let i = fromIndex; i >= 0; --i) {
     if (fn(seq.at(i), i)) {
       return i;

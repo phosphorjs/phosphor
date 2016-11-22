@@ -79,7 +79,7 @@ type MutableSequenceOrArrayLike<T> = IMutableSequence<T> | IArrayLike<T>;
  * sequence types and builtin array-like objects in a uniform fashion.
  */
 export
-function asSequence<T>(object: SequenceOrArrayLike<T>): ISequence<T> {
+function sequence<T>(object: SequenceOrArrayLike<T>): ISequence<T> {
   let seq: ISequence<T>;
   if (typeof (object as any).at === 'function') {
     seq = object as ISequence<T>;
@@ -102,7 +102,7 @@ function asSequence<T>(object: SequenceOrArrayLike<T>): ISequence<T> {
  * sequence types and builtin array-like objects in a uniform fashion.
  */
 export
-function asMutableSequence<T>(object: MutableSequenceOrArrayLike<T>): IMutableSequence<T> {
+function mutableSequence<T>(object: MutableSequenceOrArrayLike<T>): IMutableSequence<T> {
   let seq: IMutableSequence<T>;
   if (typeof (object as any).set === 'function') {
     seq = object as IMutableSequence<T>;

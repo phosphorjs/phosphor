@@ -6,7 +6,7 @@
 | The full license is in the file LICENSE, distributed with this software.
 |----------------------------------------------------------------------------*/
 import {
-  MutableSequenceOrArrayLike, asMutableSequence
+  MutableSequenceOrArrayLike, mutableSequence
 } from './sequence';
 
 
@@ -62,7 +62,7 @@ function reverse<T>(object: MutableSequenceOrArrayLike<T>, start?: number, end?:
   if (start >= end) {
     return;
   }
-  let seq = asMutableSequence(object);
+  let seq = mutableSequence(object);
   while (start < end) {
     let front = seq.at(start);
     let back = seq.at(end);

@@ -6,7 +6,7 @@
 | The full license is in the file LICENSE, distributed with this software.
 |----------------------------------------------------------------------------*/
 import {
-  MutableSequenceOrArrayLike, asMutableSequence
+  MutableSequenceOrArrayLike, mutableSequence
 } from './sequence';
 
 
@@ -54,7 +54,7 @@ function move<T>(object: MutableSequenceOrArrayLike<T>, fromIndex: number, toInd
     return;
   }
   let d = fromIndex < toIndex ? 1 : -1;
-  let seq = asMutableSequence(object);
+  let seq = mutableSequence(object);
   let value = seq.at(fromIndex);
   for (let i = fromIndex; i !== toIndex; i += d) {
     seq.set(i, seq.at(i + d));
