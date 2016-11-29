@@ -6,7 +6,7 @@
 | The full license is in the file LICENSE, distributed with this software.
 |----------------------------------------------------------------------------*/
 import {
-  ArrayIterator, IArrayLike, IIterable, IIterator
+  ArrayIterator, IIterable, IIterator
 } from './iterable';
 
 
@@ -57,14 +57,14 @@ interface IMutableSequence<T> extends ISequence<T> {
  * A type alias for a sequence or builtin array-like object.
  */
 export
-type SequenceOrArrayLike<T> = ISequence<T> | IArrayLike<T>;
+type SequenceOrArrayLike<T> = ISequence<T> | ArrayLike<T>;
 
 
 /**
- * A type alias for a mutable sequence or builtin array-like object.
+ * A type alias for a mutable sequence or builtin array object.
  */
 export
-type MutableSequenceOrArrayLike<T> = IMutableSequence<T> | IArrayLike<T>;
+type MutableSequenceOrArray<T> = IMutableSequence<T> | Array<T>;
 
 
 /**
@@ -84,30 +84,30 @@ function sequence<T>(object: SequenceOrArrayLike<T>): ISequence<T> {
   if (typeof (object as any).at === 'function') {
     seq = object as ISequence<T>;
   } else {
-    seq = new ArraySequence<T>(object as IArrayLike<T>);
+    seq = new ArraySequence<T>(object as ArrayLike<T>);
   }
   return seq;
 }
 
 
 /**
- * Cast a mutable sequence or array-like object to a mutable sequence.
+ * Cast a mutable sequence or array object to a mutable sequence.
  *
- * @param object - The sequence or array-like object of interest.
+ * @param object - The mutable sequence or array object of interest.
  *
  * @returns A mutable sequence for the given object.
  *
  * #### Notes
  * This function allows sequence algorithms to operate on user-defined
- * sequence types and builtin array-like objects in a uniform fashion.
+ * sequence types and builtin array objects in a uniform fashion.
  */
 export
-function mutableSequence<T>(object: MutableSequenceOrArrayLike<T>): IMutableSequence<T> {
+function mutableSequence<T>(object: MutableSequenceOrArray<T>): IMutableSequence<T> {
   let seq: IMutableSequence<T>;
   if (typeof (object as any).set === 'function') {
     seq = object as IMutableSequence<T>;
   } else {
-    seq = new ArraySequence<T>(object as IArrayLike<T>);
+    seq = new MutableArraySequence<T>(object as Array<T>);
   }
   return seq;
 }
@@ -117,13 +117,13 @@ function mutableSequence<T>(object: MutableSequenceOrArrayLike<T>): IMutableSequ
  * A sequence for a builtin JS array-like object.
  */
 export
-class ArraySequence<T> implements IMutableSequence<T> {
+class ArraySequence<T> implements ISequence<T> {
   /**
    * Construct a new array sequence.
    *
    * @param source - The array-like object of interest.
    */
-  constructor(source: IArrayLike<T>) {
+  constructor(source: ArrayLike<T>) {
     this._source = source;
   }
 
@@ -155,6 +155,24 @@ class ArraySequence<T> implements IMutableSequence<T> {
     return this._source[index];
   }
 
+  protected _source: ArrayLike<T>;
+}
+
+
+/**
+ * A mutable sequence for a builtin JS array object.
+ */
+export
+class MutableArraySequence<T> extends ArraySequence<T> implements IMutableSequence<T> {
+  /**
+   * Construct a new mutable array sequence.
+   *
+   * @param source - The array object of interest.
+   */
+  constructor(source: Array<T>) {
+    super(source);
+  }
+
   /**
    * Set the value at the specified index.
    *
@@ -169,7 +187,7 @@ class ArraySequence<T> implements IMutableSequence<T> {
     this._source[index] = value;
   }
 
-  private _source: IArrayLike<T>;
+  protected _source: Array<T>;
 }
 
 

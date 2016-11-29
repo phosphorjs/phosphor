@@ -10,7 +10,7 @@ import {
 } from './reverse';
 
 import {
-  MutableSequenceOrArrayLike, mutableSequence
+  MutableSequenceOrArray, mutableSequence
 } from './sequence';
 
 
@@ -41,7 +41,7 @@ import {
  * ```
  */
 export
-function rotate<T>(object: MutableSequenceOrArrayLike<T>, delta: number): void {
+function rotate<T>(object: MutableSequenceOrArray<T>, delta: number): void {
   let n = object.length;
   if (n <= 1) {
     return;

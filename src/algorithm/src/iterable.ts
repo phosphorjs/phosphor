@@ -70,30 +70,10 @@ interface IIterator<T> extends IIterable<T> {
 
 
 /**
- * An object which behaves like an array for property access.
- *
- * #### Notes
- * This interface represents the builtin JS array-like objects.
- */
-export
-interface IArrayLike<T> {
-  /**
-   * The length of the object.
-   */
-  length: number;
-
-  /**
-   * The index-based property accessor.
-   */
-  [index: number]: T;
-}
-
-
-/**
  * A type alias for an iterable or builtin array-like object.
  */
 export
-type IterableOrArrayLike<T> = IIterable<T> | IArrayLike<T>;
+type IterableOrArrayLike<T> = IIterable<T> | ArrayLike<T>;
 
 
 /**
@@ -113,7 +93,7 @@ function iter<T>(object: IterableOrArrayLike<T>): IIterator<T> {
   if (typeof (object as any).iter === 'function') {
     it = (object as IIterable<T>).iter();
   } else {
-    it = new ArrayIterator<T>(object as IArrayLike<T>);
+    it = new ArrayIterator<T>(object as ArrayLike<T>);
   }
   return it;
 }
@@ -132,7 +112,7 @@ class ArrayIterator<T> implements IIterator<T> {
    *
    * @param source - The array-like object of interest.
    */
-  constructor(source: IArrayLike<T>) {
+  constructor(source: ArrayLike<T>) {
     this._source = source;
   }
 
@@ -169,5 +149,5 @@ class ArrayIterator<T> implements IIterator<T> {
   }
 
   private _index = 0;
-  private _source: IArrayLike<T>;
+  private _source: ArrayLike<T>;
 }

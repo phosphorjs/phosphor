@@ -6,14 +6,14 @@
 | The full license is in the file LICENSE, distributed with this software.
 |----------------------------------------------------------------------------*/
 import {
-  MutableSequenceOrArrayLike, mutableSequence
+  MutableSequenceOrArray, mutableSequence
 } from './sequence';
 
 
 /**
  * Move an element in a sequence from one index to another.
  *
- * @param object - The sequence to mutate.
+ * @param object - The sequence or array to mutate.
  *
  * @param fromIndex - The index of the element to move.
  *
@@ -35,7 +35,7 @@ import {
  * ```
  */
 export
-function move<T>(object: MutableSequenceOrArrayLike<T>, fromIndex: number, toIndex: number): void {
+function move<T>(object: MutableSequenceOrArray<T>, fromIndex: number, toIndex: number): void {
   let n = object.length;
   if (n <= 1) {
     return;
