@@ -191,7 +191,7 @@ class DockPanel extends Widget {
    *
    * #### Notes
    * The current widget is the widget among the added widgets which
-   * has the *descendant node* which has most recently been focused.
+   * has the *descendant node* which is currently focused.
    *
    * This is the `currentWidget` of an internal `FocusTracker` which
    * tracks all widgets in the dock panel.
