@@ -25,7 +25,7 @@ import {
  * ```
  */
 export
-function empty<T>(): EmptyIterator<T> {
+function empty<T>(): IIterator<T> {
   return new EmptyIterator<T>();
 }
 

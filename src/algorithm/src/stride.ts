@@ -32,7 +32,7 @@ import {
  * ```
  */
 export
-function stride<T>(object: IterableOrArrayLike<T>, step: number): StrideIterator<T> {
+function stride<T>(object: IterableOrArrayLike<T>, step: number): IIterator<T> {
   return new StrideIterator<T>(iter(object), step);
 }
 

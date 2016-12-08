@@ -31,7 +31,7 @@ import {
  * ```
  */
 export
-function filter<T>(object: IterableOrArrayLike<T>, fn: (value: T, index: number) => boolean): FilterIterator<T> {
+function filter<T>(object: IterableOrArrayLike<T>, fn: (value: T, index: number) => boolean): IIterator<T> {
   return new FilterIterator<T>(iter(object), fn);
 }
 

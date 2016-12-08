@@ -29,8 +29,30 @@ import {
  * ```
  */
 export
-function repeat<T>(value: T, count: number): RepeatIterator<T> {
+function repeat<T>(value: T, count: number): IIterator<T> {
   return new RepeatIterator<T>(value, count);
+}
+
+
+/**
+ * Create an iterator which yields a value a single time.
+ *
+ * @param value - The value to wrap in an iterator.
+ *
+ * @returns A new iterator which yields the value a single time.
+ *
+ * #### Example
+ * ```typescript
+ * import { once, toArray } from '@phosphor/algorithm';
+ *
+ * let stream = once(7);
+ *
+ * toArray(stream);  // [7]
+ * ```
+ */
+export
+function once<T>(value: T): IIterator<T> {
+  return new RepeatIterator<T>(value, 1);
 }
 
 

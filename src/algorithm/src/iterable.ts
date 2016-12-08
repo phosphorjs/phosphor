@@ -100,6 +100,36 @@ function iter<T>(object: IterableOrArrayLike<T>): IIterator<T> {
 
 
 /**
+ * Create an array from an iterable of values.
+ *
+ * @param object - The iterable or array-like object of interest.
+ *
+ * @returns A new array of values from the given object.
+ *
+ * #### Example
+ * ```typescript
+ * import { iter, toArray } from '@phosphor/algorithm';
+ *
+ * let data = [1, 2, 3, 4, 5, 6];
+ *
+ * let stream = iter(data);
+ *
+ * toArray(stream);  // [1, 2, 3, 4, 5, 6];
+ * ```
+ */
+export
+function toArray<T>(object: IterableOrArrayLike<T>): T[] {
+  let result: T[] = [];
+  let it = iter(object);
+  let value: T | undefined;
+  while ((value = it.next()) !== undefined) {
+    result[result.length] = value;
+  }
+  return result;
+}
+
+
+/**
  * An iterator for an array-like object.
  *
  * #### Notes

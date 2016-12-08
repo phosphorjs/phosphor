@@ -80,13 +80,11 @@ class ChainIterator<T> implements IIterator<T> {
    */
   next(): T | undefined {
     if (this._active === undefined) {
-      this._active = this._source.next();
-      if (this._active === undefined) {
+      let active = this._source.next();
+      if (active === undefined) {
         return undefined;
       }
-      if (this._cloned) {
-        this._active = this._active.clone();
-      }
+      this._active = this._cloned ? active.clone() : active;
     }
     let value = this._active.next();
     if (value !== undefined) {

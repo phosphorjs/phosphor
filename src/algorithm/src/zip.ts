@@ -32,7 +32,7 @@ import {
  * ```
  */
 export
-function zip<T>(...objects: IterableOrArrayLike<T>[]): ZipIterator<T> {
+function zip<T>(...objects: IterableOrArrayLike<T>[]): IIterator<T[]> {
   return new ZipIterator<T>(objects.map(iter));
 }
 

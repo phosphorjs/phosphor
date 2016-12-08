@@ -31,7 +31,7 @@ import {
  * ```
  */
 export
-function map<T, U>(object: IterableOrArrayLike<T>, fn: (value: T, index: number) => U): MapIterator<T, U> {
+function map<T, U>(object: IterableOrArrayLike<T>, fn: (value: T, index: number) => U): IIterator<U> {
   return new MapIterator<T, U>(iter(object), fn);
 }
 
