@@ -9,6 +9,10 @@ import {
   IIterator, IterableOrArrayLike, iter
 } from './iterable';
 
+import {
+  drop
+} from './iterate';
+
 
 /**
  * Iterate over an iterable using a stepped increment.
@@ -80,13 +84,7 @@ class StrideIterator<T> implements IIterator<T> {
    */
   next(): T | undefined {
     let value = this._source.next();
-    if (value === undefined) {
-      return undefined;
-    }
-    let step = this._step;
-    while (--step > 0) {
-      this._source.next();
-    }
+    drop(this._source, this._step - 1);
     return value;
   }
 

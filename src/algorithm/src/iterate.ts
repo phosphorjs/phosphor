@@ -6,8 +6,26 @@
 | The full license is in the file LICENSE, distributed with this software.
 |----------------------------------------------------------------------------*/
 import {
-  IterableOrArrayLike, iter
+  IIterator, IterableOrArrayLike, iter
 } from './iterable';
+
+
+/**
+ * Drop a specific number of items from an iterator.
+ *
+ * @param it - The iterator of interest.
+ *
+ * @param n - The number of items to drop from the iterator.
+ *
+ * @returns The original iterator as a convenience.
+ */
+export
+function drop<T>(it: IIterator<T>, n: number): IIterator<T> {
+  while (n-- > 0) {
+    it.next();
+  }
+  return it;
+}
 
 
 /**
