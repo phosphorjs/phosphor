@@ -29,6 +29,10 @@
     "webpack": "^1.12.14"
   },
   "scripts": {
+    "build:algorithm": "cd src/algorithm && tsc",
+    "clean:algorithm": "rimraf src/algorithm/lib",
+    "build:collections": "cd src/collections && tsc",
+    "clean:collections": "rimraf src/collections/lib",
     "clean:src": "rimraf lib",
     "clean:test": "rimraf test/build && rimraf test/coverage",
     "clean": "npm run clean:src && npm run clean:test",
