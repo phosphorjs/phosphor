@@ -16,4 +16,5 @@ export * from './repeat';
 export * from './search';
 export * from './sort';
 export * from './stride';
+export * from './take';
 export * from './zip';
