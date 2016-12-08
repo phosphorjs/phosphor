@@ -1,7 +1,8 @@
 {
+  "private": true,
   "name": "@phosphor/algorithm",
-  "version": "0.0.0",
-  "description": "PhosphorJS - algorithms and iterators",
+  "version": "1.0.0",
+  "description": "PhosphorJS - Algorithms and Iterators",
   "main": "lib/index.js",
   "types": "lib/index.d.ts",
   "repository": {
