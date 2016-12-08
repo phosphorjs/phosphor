@@ -7,11 +7,11 @@
 |----------------------------------------------------------------------------*/
 import {
   IIterable, IIterator, IterableOrArrayLike, each
-} from '../algorithm/iteration';
+} from '@phosphor/algorithm';
 
 
 /**
- * A generic FIFO queue data structure.
+ * A generic first-in-first-out queue data structure.
  */
 export
 class Queue<T> implements IIterable<T> {
@@ -21,16 +21,15 @@ class Queue<T> implements IIterable<T> {
    * @param values - The initial values for the queue.
    */
   constructor(values?: IterableOrArrayLike<T>) {
-    if (values) each(values, value => { this.pushBack(value); });
+    if (values) {
+      each(values, value => { this.push(value); });
+    }
   }
 
   /**
    * Test whether the queue is empty.
    *
    * @returns `true` if the queue is empty, `false` otherwise.
-   *
-   * #### Notes
-   * This is a read-only property.
    *
    * #### Complexity
    * Constant.
@@ -47,9 +46,6 @@ class Queue<T> implements IIterable<T> {
    *
    * @return The number of values in the queue.
    *
-   * #### Notes
-   * This is a read-only property.
-   *
    * #### Complexity
    * Constant.
    *
@@ -63,11 +59,7 @@ class Queue<T> implements IIterable<T> {
   /**
    * Get the value at the front of the queue.
    *
-   * @returns The value at the front of the queue, or `undefined` if
-   *   the queue is empty.
-   *
-   * #### Notes
-   * This is a read-only property.
+   * @returns The front value, or `undefined` if the queue is empty.
    *
    * #### Complexity
    * Constant.
@@ -75,18 +67,14 @@ class Queue<T> implements IIterable<T> {
    * #### Iterator Validity
    * No changes.
    */
-  get front(): T {
-    return this._front ? this._front.value : void 0;
+  get front(): T | undefined {
+    return this._front ? this._front.value : undefined;
   }
 
   /**
    * Get the value at the back of the queue.
    *
-   * @returns The value at the back of the queue, or `undefined` if
-   *   the queue is empty.
-   *
-   * #### Notes
-   * This is a read-only property.
+   * @returns The back value, or `undefined` if the queue is empty.
    *
    * #### Complexity
    * Constant.
@@ -94,8 +82,8 @@ class Queue<T> implements IIterable<T> {
    * #### Iterator Validity
    * No changes.
    */
-  get back(): T {
-    return this._back ? this._back.value : void 0;
+  get back(): T | undefined {
+    return this._back ? this._back.value : undefined;
   }
 
   /**
@@ -110,11 +98,11 @@ class Queue<T> implements IIterable<T> {
    * No changes.
    */
   iter(): IIterator<T> {
-    return new QueueIterator<T>(this._front);
+    return new Private.QueueIterator<T>(this._front);
   }
 
   /**
-   * Add a value to the back of the queue.
+   * Push a value onto the back of the queue.
    *
    * @param value - The value to add to the back of the queue.
    *
@@ -126,9 +114,9 @@ class Queue<T> implements IIterable<T> {
    * #### Iterator Validity
    * No changes.
    */
-  pushBack(value: T): number {
-    let node = new QueueNode(value);
-    if (this._length === 0) {
+  push(value: T): number {
+    let node = new Private.QueueNode<T>(value);
+    if (!this._back) {
       this._front = node;
       this._back = node;
     } else {
@@ -141,8 +129,7 @@ class Queue<T> implements IIterable<T> {
   /**
    * Remove and return the value at the front of the queue.
    *
-   * @returns The value at the front of the queue, or `undefined` if
-   *   the queue is empty.
+   * @returns The front value, or `undefined` if the queue is empty.
    *
    * #### Complexity
    * Constant.
@@ -150,12 +137,12 @@ class Queue<T> implements IIterable<T> {
    * #### Iterator Validity
    * Iterators pointing at the removed value are invalidated.
    */
-  popFront(): T {
-    if (this._length === 0) {
-      return void 0;
-    }
+  pop(): T | undefined {
     let node = this._front;
-    if (this._length === 1) {
+    if (!node) {
+      return undefined;
+    }
+    if (node === this._back) {
       this._front = null;
       this._back = null;
     } else {
@@ -182,9 +169,9 @@ class Queue<T> implements IIterable<T> {
       node.next = null;
       node = next;
     }
-    this._length = 0;
     this._front = null;
     this._back = null;
+    this._length = 0;
   }
 
   /**
@@ -212,81 +199,86 @@ class Queue<T> implements IIterable<T> {
   }
 
   private _length = 0;
-  private _front: QueueNode<T> = null;
-  private _back: QueueNode<T> = null;
+  private _front: Private.QueueNode<T> | null = null;
+  private _back: Private.QueueNode<T> | null = null;
 }
 
 
 /**
- * An iterator for a queue.
+ * The namespace for the private module data.
  */
-class QueueIterator<T> implements IIterator<T> {
+namespace Private {
   /**
-   * Construct a new queue iterator.
-   *
-   * @param node - The node at the front of range.
+   * An iterator for a queue.
    */
-  constructor(node: QueueNode<T>) {
-    this._node = node;
-  }
-
-  /**
-   * Create an iterator over the object's values.
-   *
-   * @returns A reference to `this` iterator.
-   */
-  iter(): this {
-    return this;
-  }
-
-  /**
-   * Create an independent clone of the queue iterator.
-   *
-   * @returns A new iterator starting with the current value.
-   */
-  clone(): QueueIterator<T> {
-    return new QueueIterator<T>(this._node);
-  }
-
-  /**
-   * Get the next value from the queue.
-   *
-   * @returns The next value from the queue, or `undefined` if the
-   *   iterator is exhausted.
-   */
-  next(): T {
-    if (!this._node) {
-      return void 0;
+  export
+  class QueueIterator<T> implements IIterator<T> {
+    /**
+     * Construct a new queue iterator.
+     *
+     * @param node - The node at the front of the queue.
+     */
+    constructor(node: QueueNode<T> | null) {
+      this._node = node;
     }
-    let value = this._node.value;
-    this._node = this._node.next;
-    return value;
+
+    /**
+     * Get an iterator over the object's values.
+     *
+     * @returns An iterator which yields the object's values.
+     */
+    iter(): IIterator<T> {
+      return this;
+    }
+
+    /**
+     * Create an independent clone of the iterator.
+     *
+     * @returns A new independent clone of the iterator.
+     */
+    clone(): IIterator<T> {
+      return new QueueIterator<T>(this._node);
+    }
+
+    /**
+     * Get the next value from the iterator.
+     *
+     * @returns The next value from the iterator, or `undefined`.
+     */
+    next(): T | undefined {
+      if (!this._node) {
+        return undefined;
+      }
+      let value = this._node.value;
+      this._node = this._node.next;
+      return value;
+    }
+
+    private _node: QueueNode<T> | null;
   }
 
-  private _node: QueueNode<T>;
-}
-
-
-/**
- * The node type for a queue.
- */
-class QueueNode<T> {
   /**
-   * The next node the queue.
+   * The node type for a queue.
    */
-  next: QueueNode<T> = null;
+  export
+  class QueueNode<T> {
+    /**
+     * The next node the queue.
+     */
+    next: QueueNode<T> | null = null;
 
-  /**
-   * The value for the node.
-   */
-  value: T;
+    /**
+     * The value for the node.
+     */
+    value: T;
 
-  /**
-   * Construct a new queue node.
-   *
-   * @param value - The value for the node.
-   */
-  constructor(value: T) {
-    this.value = value;
+    /**
+     * Construct a new queue node.
+     *
+     * @param value - The value for the node.
+     */
+    constructor(value: T) {
+      this.value = value;
+    }
   }
 }

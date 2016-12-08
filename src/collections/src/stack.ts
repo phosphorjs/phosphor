@@ -7,11 +7,11 @@
 |----------------------------------------------------------------------------*/
 import {
   IIterable, IIterator, IterableOrArrayLike, each
-} from '../algorithm/iteration';
+} from '@phosphor/algorithm';
 
 
 /**
- * A generic LIFO stack data structure.
+ * A generic last-in-first-out stack data structure.
  */
 export
 class Stack<T> implements IIterable<T> {
@@ -21,16 +21,15 @@ class Stack<T> implements IIterable<T> {
    * @param values - The initial values for the stack.
    */
   constructor(values?: IterableOrArrayLike<T>) {
-    if (values) each(values, value => { this.pushBack(value); });
+    if (values) {
+      each(values, value => { this.push(value); });
+    }
   }
 
   /**
    * Test whether the stack is empty.
    *
    * @returns `true` if the stack is empty, `false` otherwise.
-   *
-   * #### Notes
-   * This is a read-only property.
    *
    * #### Complexity
    * Constant.
@@ -47,9 +46,6 @@ class Stack<T> implements IIterable<T> {
    *
    * @return The number of values in the stack.
    *
-   * #### Notes
-   * This is a read-only property.
-   *
    * #### Complexity
    * Constant.
    *
@@ -61,13 +57,9 @@ class Stack<T> implements IIterable<T> {
   }
 
   /**
-   * Get the value at the back of the stack.
+   * Get the value at the top of the stack.
    *
-   * @returns The value at the back of the stack, or `undefined` if
-   *   the stack is empty.
-   *
-   * #### Notes
-   * This is a read-only property.
+   * @returns The top value, or `undefined` if the stack is empty.
    *
    * #### Complexity
    * Constant.
@@ -75,8 +67,23 @@ class Stack<T> implements IIterable<T> {
    * #### Iterator Validity
    * No changes.
    */
-  get back(): T {
+  get top(): T | undefined {
     return this._array[this._array.length - 1];
+  }
+
+  /**
+   * Get the value at the bottom of the stack.
+   *
+   * @returns The bottom value, or `undefined` if the stack is empty.
+   *
+   * #### Complexity
+   * Constant.
+   *
+   * #### Iterator Validity
+   * No changes.
+   */
+  get bottom(): T | undefined {
+    return this._array[0];
   }
 
   /**
@@ -91,13 +98,13 @@ class Stack<T> implements IIterable<T> {
    * No changes.
    */
   iter(): IIterator<T> {
-    return new StackIterator<T>(this._array, this._array.length - 1);
+    return new Private.StackIterator<T>(this._array);
   }
 
   /**
-   * Add a value to the back of the stack.
+   * Push a value onto the top of the stack.
    *
-   * @param value - The value to add to the back of the stack.
+   * @param value - The value to add to the top of the stack.
    *
    * @returns The new length of the stack.
    *
@@ -107,15 +114,14 @@ class Stack<T> implements IIterable<T> {
    * #### Iterator Validity
    * No changes.
    */
-  pushBack(value: T): number {
+  push(value: T): number {
     return this._array.push(value);
   }
 
   /**
-   * Remove and return the value at the back of the stack.
+   * Remove and return the value at the top of the stack.
    *
-   * @returns The value at the back of the stack, or `undefined` if
-   *   the stack is empty.
+   * @returns The top value, or `undefined` if the stack is empty.
    *
    * #### Complexity
    * Constant.
@@ -123,7 +129,7 @@ class Stack<T> implements IIterable<T> {
    * #### Iterator Validity
    * Iterators pointing at the removed value are invalidated.
    */
-  popBack(): T {
+  pop(): T | undefined {
     return this._array.pop();
   }
 
@@ -163,52 +169,57 @@ class Stack<T> implements IIterable<T> {
 
 
 /**
- * An iterator for a stack.
+ * The namespace for the private module data.
  */
-class StackIterator<T> implements IIterator<T> {
+namespace Private {
   /**
-   * Construct a new stack iterator.
-   *
-   * @param array - The stack of values of interest.
-   *
-   * @param index - The index of the top of the stack.
+   * An iterator for a stack.
    */
-  constructor(array: T[], index: number) {
-    this._array = array;
-    this._index = index;
-  }
-
-  /**
-   * Create an iterator over the object's values.
-   *
-   * @returns A reference to `this` iterator.
-   */
-  iter(): this {
-    return this;
-  }
-
-  /**
-   * Create an independent clone of the stack iterator.
-   *
-   * @returns A new iterator starting with the current value.
-   */
-  clone(): StackIterator<T> {
-    return new StackIterator<T>(this._array, this._index);
-  }
-
-  /**
-   * Get the next value from the stack.
-   *
-   * @returns The next value from the stack, or `undefined` if the
-   *   iterator is exhausted.
-   */
-  next(): T {
-    if (this._index < 0 || this._index >= this._array.length) {
-      return void 0;
+  export
+  class StackIterator<T> implements IIterator<T> {
+    /**
+     * Construct a new stack iterator.
+     *
+     * @param array - The stack of values of interest.
+     */
+    constructor(array: T[]) {
+      this._array = array;
+      this._index = array.length - 1;
     }
-    return this._array[this._index--];
-  }
 
-  private _array: T[];
-  private _index: number;
+    /**
+     * Get an iterator over the object's values.
+     *
+     * @returns An iterator which yields the object's values.
+     */
+    iter(): IIterator<T> {
+      return this;
+    }
+
+    /**
+     * Create an independent clone of the iterator.
+     *
+     * @returns A new independent clone of the iterator.
+     */
+    clone(): IIterator<T> {
+      let result = new StackIterator<T>(this._array);
+      result._index = this._index;
+      return result;
+    }
+
+    /**
+     * Get the next value from the iterator.
+     *
+     * @returns The next value from the iterator, or `undefined`.
+     */
+    next(): T | undefined {
+      if (this._index < 0 || this._index >= this._array.length) {
+        return undefined;
+      }
+      return this._array[this._index--];
+    }
+
+    private _array: T[];
+    private _index: number;
+  }
 }
