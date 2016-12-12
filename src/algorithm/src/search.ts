@@ -195,6 +195,340 @@ function minmax<T>(object: IterableOrArrayLike<T>, fn: (first: T, second: T) => 
 
 
 /**
+ * Find the index of the first occurrence of a value in an array.
+ *
+ * @param array - The array-like object to search.
+ *
+ * @param value - The value to locate in the array. Values are
+ *   compared using strict `===` equality.
+ *
+ * @param fromIndex - The starting index of the search. The default
+ *   value is `0`. Negative values are taken as an offset from the
+ *   end of the array.
+ *
+ * @returns The index of the first occurrence of the value, or `-1`
+ *   if the value is not found.
+ *
+ * #### Complexity
+ * Linear.
+ *
+ * #### Undefined Behavior
+ * A `fromIndex` which is non-integral.
+ *
+ * #### Example
+ * ```typescript
+ * import { indexOf } from '@phosphor/algorithm';
+ *
+ * let data = ['one', 'two', 'three', 'four', 'one'];
+ * indexOf(data, 'red');     // -1
+ * indexOf(data, 'one');     // 0
+ * indexOf(data, 'one', 1);  // 4
+ * indexOf(data, 'two', 2);  // -1
+ * ```
+ */
+export
+function indexOf<T>(array: ArrayLike<T>, value: T, fromIndex = 0): number {
+  let n = array.length;
+  if (n === 0) {
+    return -1;
+  }
+  if (fromIndex < 0) {
+    fromIndex += n;
+  }
+  for (let i = Math.max(0, fromIndex); i < n; ++i) {
+    if (array[i] === value) {
+      return i;
+    }
+  }
+  return -1;
+}
+
+
+/**
+ * Find the index of the last occurrence of a value in an array.
+ *
+ * @param array - The array-like object to search.
+ *
+ * @param value - The value to locate in the array. Values are
+ *   compared using strict `===` equality.
+ *
+ * @param fromIndex - The starting index of the search. The default
+ *   value is `length - 1`. Negative values are taken as an offset
+ *   from the end of the array.
+ *
+ * @returns The index of the last occurrence of the value, or `-1`
+ *   if the value is not found.
+ *
+ * #### Complexity
+ * Linear.
+ *
+ * #### Undefined Behavior
+ * A `fromIndex` which is non-integral.
+ *
+ * #### Example
+ * ```typescript
+ * import { lastIndexOf } from '@phosphor/algorithm';
+ *
+ * let data = ['one', 'two', 'three', 'four', 'one'];
+ * lastIndexOf(data, 'red');     // -1
+ * lastIndexOf(data, 'one');     // 4
+ * lastIndexOf(data, 'one', 1);  // 0
+ * lastIndexOf(data, 'two', 2);  // 1
+ * ```
+ */
+export
+function lastIndexOf<T>(array: ArrayLike<T>, value: T, fromIndex = -1): number {
+  let n = array.length;
+  if (n === 0) {
+    return -1;
+  }
+  if (fromIndex < 0) {
+    fromIndex += n;
+  }
+  for (let i = Math.min(fromIndex, n - 1); i >= 0; --i) {
+    if (array[i] === value) {
+      return i;
+    }
+  }
+  return -1;
+}
+
+
+/**
+ * Find the index of the first value which matches a predicate.
+ *
+ * @param array - The array-like object to search.
+ *
+ * @param fn - The predicate function to apply to the values.
+ *
+ * @param fromIndex - The starting index of the search. The default
+ *   value is `0`. Negative values are taken as an offset from the
+ *   end of the array.
+ *
+ * @returns The index of the first matching value, or `-1` if no
+ *   matching value is found.
+ *
+ * #### Complexity
+ * Linear.
+ *
+ * #### Undefined Behavior
+ * A `fromIndex` which is non-integral.
+ *
+ * Modifying the length of the array while searching.
+ *
+ * #### Example
+ * ```typescript
+ * import { findIndex } from '@phosphor/algorithm';
+ *
+ * function isEven(value: number): boolean {
+ *   return value % 2 === 0;
+ * }
+ *
+ * let data = [1, 2, 3, 4, 3, 2, 1];
+ * findIndex(data, isEven);     // 1
+ * findIndex(data, isEven, 4);  // 5
+ * findIndex(data, isEven, 6);  // -1
+ * ```
+ */
+export
+function findIndex<T>(array: ArrayLike<T>, fn: (value: T, index: number) => boolean, fromIndex = 0): number {
+  let n = array.length;
+  if (n === 0) {
+    return -1;
+  }
+  if (fromIndex < 0) {
+    fromIndex += n;
+  }
+  for (let i = Math.max(0, fromIndex); i < n; ++i) {
+    if (fn(array[i], i)) {
+      return i;
+    }
+  }
+  return -1;
+}
+
+
+/**
+ * Find the index of the last value which matches a predicate.
+ *
+ * @param object - The array-like object to search.
+ *
+ * @param fn - The predicate function to apply to the values.
+ *
+ * @param fromIndex - The starting index of the search. The default
+ *   value is `length - 1`. Negative values are taken as an offset
+ *   from the end of the array.
+ *
+ * @returns The index of the last matching value, or `-1` if no
+ *   matching value is found.
+ *
+ * #### Complexity
+ * Linear.
+ *
+ * #### Undefined Behavior
+ * A `fromIndex` which is non-integral.
+ *
+ * Modifying the length of the array while searching.
+ *
+ * #### Example
+ * ```typescript
+ * import { findLastIndex } from '@phosphor/algorithm';
+ *
+ * function isEven(value: number): boolean {
+ *   return value % 2 === 0;
+ * }
+ *
+ * let data = [1, 2, 3, 4, 3, 2, 1];
+ * findLastIndex(data, isEven);     // 5
+ * findLastIndex(data, isEven, 4);  // 3
+ * findLastIndex(data, isEven, 0);  // -1
+ * ```
+ */
+export
+function findLastIndex<T>(array: ArrayLike<T>, fn: (value: T, index: number) => boolean, fromIndex = -1): number {
+  let n = array.length;
+  if (n === 0) {
+    return -1;
+  }
+  if (fromIndex < 0) {
+    fromIndex += n;
+  }
+  for (let i = Math.min(fromIndex, n - 1); i >= 0; --i) {
+    if (fn(array[i], i)) {
+      return i;
+    }
+  }
+  return -1;
+}
+
+
+/**
+ * Find the index of the first element which compares `>=` to a value.
+ *
+ * @param array - The sorted array-like object to search.
+ *
+ * @param value - The value to locate in the array.
+ *
+ * @param fn - The 3-way comparison function to apply to the values.
+ *   It should return `< 0` if an element is less than a value, `0` if
+ *   an element is equal to a value, or `> 0` if an element is greater
+ *   than a value.
+ *
+ * @returns The index of the first element which compares `>=` to the
+ *   value, or `length` if there is no such element.
+ *
+ * #### Notes
+ * The array must already be sorted in ascending order according to
+ * the comparison function.
+ *
+ * #### Complexity
+ * Logarithmic.
+ *
+ * #### Undefined Behavior
+ * Searching an array which is not sorted in ascending order.
+ *
+ * Modifying the length of the array while searching.
+ *
+ * #### Example
+ * ```typescript
+ * import { lowerBound } from '@phosphor/algorithm';
+ *
+ * function numberCmp(a: number, b: number): number {
+ *   return a - b;
+ * }
+ *
+ * let data = [0, 3, 4, 7, 7, 9];
+ * lowerBound(data, 0, numberCmp);   // 0
+ * lowerBound(data, 6, numberCmp);   // 3
+ * lowerBound(data, 7, numberCmp);   // 3
+ * lowerBound(data, -1, numberCmp);  // 0
+ * lowerBound(data, 10, numberCmp);  // 6
+ * ```
+ */
+export
+function lowerBound<T, U>(array: ArrayLike<T>, value: U, fn: (element: T, value: U) => number): number {
+  let begin = 0;
+  let half: number;
+  let middle: number;
+  let n = array.length;
+  while (n > 0) {
+    half = n >> 1;
+    middle = begin + half;
+    if (fn(array[middle], value) < 0) {
+      begin = middle + 1;
+      n -= half + 1;
+    } else {
+      n = half;
+    }
+  }
+  return begin;
+}
+
+
+/**
+ * Find the index of the first element which compares `>` than a value.
+ *
+ * @param array - The sorted array-like object to search.
+ *
+ * @param value - The value to locate in the array.
+ *
+ * @param fn - The 3-way comparison function to apply to the values.
+ *   It should return `< 0` if an element is less than a value, `0` if
+ *   an element is equal to a value, or `> 0` if an element is greater
+ *   than a value.
+ *
+ * @returns The index of the first element which compares `>` than the
+ *   value, or `length` if there is no such element.
+ *
+ * #### Notes
+ * The array must already be sorted in ascending order according to
+ * the comparison function.
+ *
+ * #### Complexity
+ * Logarithmic.
+ *
+ * #### Undefined Behavior
+ * Searching an array which is not sorted in ascending order.
+ *
+ * Modifying the length of the array while searching.
+ *
+ * #### Example
+ * ```typescript
+ * import { upperBound } from '@phosphor/algorithm';
+ *
+ * function numberCmp(a: number, b: number): number {
+ *   return a - b;
+ * }
+ *
+ * let data = [0, 3, 4, 7, 7, 9];
+ * upperBound(data, 0, numberCmp);   // 1
+ * upperBound(data, 6, numberCmp);   // 3
+ * upperBound(data, 7, numberCmp);   // 5
+ * upperBound(data, -1, numberCmp);  // 0
+ * upperBound(data, 10, numberCmp);  // 6
+ * ```
+ */
+export
+function upperBound<T, U>(array: ArrayLike<T>, value: U, fn: (element: T, value: U) => number): number {
+  let begin = 0;
+  let half: number;
+  let middle: number;
+  let n = array.length;
+  while (n > 0) {
+    half = n >> 1;
+    middle = begin + half;
+    if (fn(array[middle], value) > 0) {
+      n = half;
+    } else {
+      begin = middle + 1;
+      n -= half + 1;
+    }
+  }
+  return begin;
+}
+
+
+/**
  * Compute a fuzzy match for the given search text.
  *
  * @param sourceText - The text which should be searched.
