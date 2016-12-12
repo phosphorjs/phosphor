@@ -13,6 +13,7 @@ export * from './iterate';
 export * from './map';
 export * from './range';
 export * from './repeat';
+export * from './retro';
 export * from './search';
 export * from './sort';
 export * from './stride';
