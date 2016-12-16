@@ -5,7 +5,4 @@
 |
 | The full license is in the file LICENSE, distributed with this software.
 |----------------------------------------------------------------------------*/
-export * from './deque';
-export * from './queue';
-export * from './stack';
-export * from './vector';
+export * from './linkedlist';
