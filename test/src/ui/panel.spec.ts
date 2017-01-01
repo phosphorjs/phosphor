@@ -91,8 +91,10 @@ describe('ui/panel', () => {
       });
 
       it('should accept options', () => {
+        let node = document.createElement('div');
         let layout = new PanelLayout();
-        let panel = new Panel({ layout });
+        let panel = new Panel({ node, layout });
+        expect(panel.node).to.be(node);
         expect(panel.layout).to.be(layout);
       });
 
