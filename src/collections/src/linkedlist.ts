@@ -194,11 +194,11 @@ class LinkedList<T> implements IIterable<T> {
    *
    * @returns The list node which holds the value.
    *
-   * #### Complexity
-   * Constant.
-   *
    * #### Notes
    * The reference node must be owned by the list.
+   *
+   * #### Complexity
+   * Constant.
    */
   insertBefore(value: T, ref: LinkedList.INode<T> | null): LinkedList.INode<T> {
     if (!ref || ref === this._first) {
@@ -207,8 +207,8 @@ class LinkedList<T> implements IIterable<T> {
     if (!(ref instanceof Private.LinkedListNode) || ref.list !== this) {
       throw new Error('Reference node is not owned by the list.');
     }
-    let _ref = ref as Private.LinkedListNode<T>;
     let node = new Private.LinkedListNode<T>(this, value);
+    let _ref = ref as Private.LinkedListNode<T>;
     let prev = _ref.prev!;
     node.next = _ref;
     node.prev = prev;
@@ -228,11 +228,11 @@ class LinkedList<T> implements IIterable<T> {
    *
    * @returns The list node which holds the value.
    *
-   * #### Complexity
-   * Constant.
-   *
    * #### Notes
    * The reference node must be owned by the list.
+   *
+   * #### Complexity
+   * Constant.
    */
   insertAfter(value: T, ref: LinkedList.INode<T> | null): LinkedList.INode<T> {
     if (!ref || ref === this._last) {
@@ -241,8 +241,8 @@ class LinkedList<T> implements IIterable<T> {
     if (!(ref instanceof Private.LinkedListNode) || ref.list !== this) {
       throw new Error('Reference node is not owned by the list.');
     }
-    let _ref = ref as Private.LinkedListNode<T>;
     let node = new Private.LinkedListNode<T>(this, value);
+    let _ref = ref as Private.LinkedListNode<T>;
     let next = _ref.next!;
     node.next = next;
     node.prev = _ref;
