@@ -206,6 +206,10 @@ function minmax<T>(object: IterableOrArrayLike<T>, fn: (first: T, second: T) => 
  *   value is `0`. Negative values are taken as an offset from the
  *   end of the array.
  *
+ * @param wrap - Whether to wraparound at the end of the array so
+ *   that all elements can be searched when `fromIndex !== 0`. The
+ *   default is `false`.
+ *
  * @returns The index of the first occurrence of the value, or `-1`
  *   if the value is not found.
  *
@@ -220,24 +224,36 @@ function minmax<T>(object: IterableOrArrayLike<T>, fn: (first: T, second: T) => 
  * import { indexOf } from '@phosphor/algorithm';
  *
  * let data = ['one', 'two', 'three', 'four', 'one'];
- * indexOf(data, 'red');     // -1
- * indexOf(data, 'one');     // 0
- * indexOf(data, 'one', 1);  // 4
- * indexOf(data, 'two', 2);  // -1
+ * indexOf(data, 'red');           // -1
+ * indexOf(data, 'one');           // 0
+ * indexOf(data, 'one', 1);        // 4
+ * indexOf(data, 'two', 2);        // -1
+ * indexOf(data, 'two', 2, true);  // 1
  * ```
  */
 export
-function indexOf<T>(array: ArrayLike<T>, value: T, fromIndex = 0): number {
+function indexOf<T>(array: ArrayLike<T>, value: T, fromIndex = 0, wrap = false): number {
   let n = array.length;
   if (n === 0) {
     return -1;
   }
   if (fromIndex < 0) {
-    fromIndex += n;
+    fromIndex = Math.max(0, fromIndex + n);
+  } else {
+    fromIndex = Math.min(fromIndex, n);
   }
-  for (let i = Math.max(0, fromIndex); i < n; ++i) {
-    if (array[i] === value) {
-      return i;
+  if (wrap) {
+    for (let i = 0; i < n; ++i) {
+      let j = (i + fromIndex) % n;
+      if (array[j] === value) {
+        return j;
+      }
+    }
+  } else {
+    for (let i = fromIndex; i < n; ++i) {
+      if (array[i] === value) {
+        return i;
+      }
     }
   }
   return -1;
@@ -253,8 +269,12 @@ function indexOf<T>(array: ArrayLike<T>, value: T, fromIndex = 0): number {
  *   compared using strict `===` equality.
  *
  * @param fromIndex - The starting index of the search. The default
- *   value is `length - 1`. Negative values are taken as an offset
- *   from the end of the array.
+ *   value is `-1`. Negative values are taken as an offset from the
+ *   end of the array.
+ *
+ * @param wrap - Whether to wraparound at the front of the array so
+ *   that all elements can be searched when `fromIndex !== -1`. The
+ *   default is `false`.
  *
  * @returns The index of the last occurrence of the value, or `-1`
  *   if the value is not found.
@@ -270,24 +290,36 @@ function indexOf<T>(array: ArrayLike<T>, value: T, fromIndex = 0): number {
  * import { lastIndexOf } from '@phosphor/algorithm';
  *
  * let data = ['one', 'two', 'three', 'four', 'one'];
- * lastIndexOf(data, 'red');     // -1
- * lastIndexOf(data, 'one');     // 4
- * lastIndexOf(data, 'one', 1);  // 0
- * lastIndexOf(data, 'two', 2);  // 1
+ * lastIndexOf(data, 'red');           // -1
+ * lastIndexOf(data, 'one');           // 4
+ * lastIndexOf(data, 'one', 1);        // 0
+ * lastIndexOf(data, 'two', 0);        // -1
+ * lastIndexOf(data, 'two', 0, true);  // 1
  * ```
  */
 export
-function lastIndexOf<T>(array: ArrayLike<T>, value: T, fromIndex = -1): number {
+function lastIndexOf<T>(array: ArrayLike<T>, value: T, fromIndex = -1, wrap = false): number {
   let n = array.length;
   if (n === 0) {
     return -1;
   }
   if (fromIndex < 0) {
-    fromIndex += n;
+    fromIndex = Math.max(-1, fromIndex + n);
+  } else {
+    fromIndex = Math.min(fromIndex, n - 1);
   }
-  for (let i = Math.min(fromIndex, n - 1); i >= 0; --i) {
-    if (array[i] === value) {
-      return i;
+  if (wrap) {
+    for (let i = n; i > 0; --i) {
+      let j = (i + fromIndex) % n;
+      if (array[j] === value) {
+        return j;
+      }
+    }
+  } else {
+    for (let i = fromIndex; i >= 0; --i) {
+      if (array[i] === value) {
+        return i;
+      }
     }
   }
   return -1;
@@ -304,6 +336,10 @@ function lastIndexOf<T>(array: ArrayLike<T>, value: T, fromIndex = -1): number {
  * @param fromIndex - The starting index of the search. The default
  *   value is `0`. Negative values are taken as an offset from the
  *   end of the array.
+ *
+ * @param wrap - Whether to wraparound at the end of the array so
+ *   that all elements can be searched when `fromIndex !== 0`. The
+ *   default is `false`.
  *
  * @returns The index of the first matching value, or `-1` if no
  *   matching value is found.
@@ -325,23 +361,35 @@ function lastIndexOf<T>(array: ArrayLike<T>, value: T, fromIndex = -1): number {
  * }
  *
  * let data = [1, 2, 3, 4, 3, 2, 1];
- * findIndex(data, isEven);     // 1
- * findIndex(data, isEven, 4);  // 5
- * findIndex(data, isEven, 6);  // -1
+ * findIndex(data, isEven);           // 1
+ * findIndex(data, isEven, 4);        // 5
+ * findIndex(data, isEven, 6);        // -1
+ * findIndex(data, isEven, 6, true);  // 1
  * ```
  */
 export
-function findIndex<T>(array: ArrayLike<T>, fn: (value: T, index: number) => boolean, fromIndex = 0): number {
+function findIndex<T>(array: ArrayLike<T>, fn: (value: T, index: number) => boolean, fromIndex = 0, wrap = false): number {
   let n = array.length;
   if (n === 0) {
     return -1;
   }
   if (fromIndex < 0) {
-    fromIndex += n;
+    fromIndex = Math.max(0, fromIndex + n);
+  } else {
+    fromIndex = Math.min(fromIndex, n);
   }
-  for (let i = Math.max(0, fromIndex); i < n; ++i) {
-    if (fn(array[i], i)) {
-      return i;
+  if (wrap) {
+    for (let i = 0; i < n; ++i) {
+      let j = (i + fromIndex) % n;
+      if (fn(array[j], j)) {
+        return j;
+      }
+    }
+  } else {
+    for (let i = fromIndex; i < n; ++i) {
+      if (fn(array[i], i)) {
+        return i;
+      }
     }
   }
   return -1;
@@ -356,8 +404,12 @@ function findIndex<T>(array: ArrayLike<T>, fn: (value: T, index: number) => bool
  * @param fn - The predicate function to apply to the values.
  *
  * @param fromIndex - The starting index of the search. The default
- *   value is `length - 1`. Negative values are taken as an offset
- *   from the end of the array.
+ *   value is `-1`. Negative values are taken as an offset from the
+ *   end of the array.
+ *
+ * @param wrap - Whether to wraparound at the front of the array so
+ *   that all elements can be searched when `fromIndex !== -1`. The
+ *   default is `false`.
  *
  * @returns The index of the last matching value, or `-1` if no
  *   matching value is found.
@@ -379,23 +431,35 @@ function findIndex<T>(array: ArrayLike<T>, fn: (value: T, index: number) => bool
  * }
  *
  * let data = [1, 2, 3, 4, 3, 2, 1];
- * findLastIndex(data, isEven);     // 5
- * findLastIndex(data, isEven, 4);  // 3
- * findLastIndex(data, isEven, 0);  // -1
+ * findLastIndex(data, isEven);           // 5
+ * findLastIndex(data, isEven, 4);        // 3
+ * findLastIndex(data, isEven, 0);        // -1
+ * findLastIndex(data, isEven, 0, true);  // 5
  * ```
  */
 export
-function findLastIndex<T>(array: ArrayLike<T>, fn: (value: T, index: number) => boolean, fromIndex = -1): number {
+function findLastIndex<T>(array: ArrayLike<T>, fn: (value: T, index: number) => boolean, fromIndex = -1, wrap = false): number {
   let n = array.length;
   if (n === 0) {
     return -1;
   }
   if (fromIndex < 0) {
-    fromIndex += n;
+    fromIndex = Math.max(-1, fromIndex + n);
+  } else {
+    fromIndex = Math.min(fromIndex, n - 1);
   }
-  for (let i = Math.min(fromIndex, n - 1); i >= 0; --i) {
-    if (fn(array[i], i)) {
-      return i;
+  if (wrap) {
+    for (let i = n; i > 0; --i) {
+      let j = (i + fromIndex) % n;
+      if (fn(array[j], j)) {
+        return j;
+      }
+    }
+  } else {
+    for (let i = fromIndex; i >= 0; --i) {
+      if (fn(array[i], i)) {
+        return i;
+      }
     }
   }
   return -1;
