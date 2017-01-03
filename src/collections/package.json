@@ -13,6 +13,9 @@
     "lib/*.d.ts",
     "lib/*.js"
   ],
+  "dependencies": {
+    "@phosphor/algorithm": "^1.0.0"
+  },
   "keywords": [
     "collections"
   ],
