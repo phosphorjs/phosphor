@@ -30,7 +30,7 @@ import {
  */
 export
 function retro<T>(object: ArrayLike<T>): IIterator<T> {
-  return new RetroIterator<T>(object);
+  return new RetroArrayIterator<T>(object);
 }
 
 
@@ -41,7 +41,7 @@ function retro<T>(object: ArrayLike<T>): IIterator<T> {
  * This iterator can be used for any builtin JS array-like object.
  */
 export
-class RetroIterator<T> implements IIterator<T> {
+class RetroArrayIterator<T> implements IIterator<T> {
   /**
    * Construct a new retro iterator.
    *
@@ -67,7 +67,7 @@ class RetroIterator<T> implements IIterator<T> {
    * @returns A new independent clone of the iterator.
    */
   clone(): IIterator<T> {
-    let result = new RetroIterator<T>(this._source);
+    let result = new RetroArrayIterator<T>(this._source);
     result._index = this._index;
     return result;
   }
