@@ -33,6 +33,8 @@
     "clean:algorithm": "rimraf src/algorithm/lib",
     "build:collections": "cd src/collections && tsc",
     "clean:collections": "rimraf src/collections/lib",
+    "build:json": "cd src/json && tsc",
+    "clean:json": "rimraf src/json/lib",
     "clean:src": "rimraf lib",
     "clean:test": "rimraf test/build && rimraf test/coverage",
     "clean": "npm run clean:src && npm run clean:test",
