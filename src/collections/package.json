@@ -16,9 +16,6 @@
   "dependencies": {
     "@phosphor/algorithm": "^1.0.0"
   },
-  "keywords": [
-    "collections"
-  ],
   "directories": {
     "lib": "lib/"
   },
