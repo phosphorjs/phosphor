@@ -18,6 +18,20 @@ import {
  * @param n - The number of items to drop from the iterator.
  *
  * @returns The original iterator as a convenience.
+ *
+ * #### Complexity
+ * Linear.
+ *
+ * #### Example
+ * ```typescript
+ * import { drop, iter, toArray } from '@phosphor/algorithm';
+ *
+ * let data = [5, 7, 0, -2, 9];
+ *
+ * let stream = drop(iter(data), 2);
+ *
+ * toArray(stream);  // [0, -2, 9];
+ * ```
  */
 export
 function drop<T>(it: IIterator<T>, n: number): IIterator<T> {
@@ -38,6 +52,9 @@ function drop<T>(it: IIterator<T>, n: number): IIterator<T> {
  * #### Notes
  * Iteration can be terminated early by returning `false` from the
  * callback function.
+ *
+ * #### Complexity
+ * Linear.
  *
  * #### Example
  * ```typescript
@@ -70,6 +87,9 @@ function each<T>(object: IterableOrArrayLike<T>, fn: (value: T, index: number) =
  *   are compared using strict `===` equality.
  *
  * @returns `true` if the value is found, `false` otherwise.
+ *
+ * #### Notes
+ * Iteration terminates on the first matching value.
  *
  * #### Complexity
  * Linear.
@@ -109,6 +129,9 @@ function contains<T>(object: IterableOrArrayLike<T>, value: T): boolean {
  * #### Notes
  * Iteration terminates on the first `false` predicate result.
  *
+ * #### Complexity
+ * Linear.
+ *
  * #### Example
  * ```typescript
  * import { every } from '@phosphor/algorithm';
@@ -144,6 +167,9 @@ function every<T>(object: IterableOrArrayLike<T>, fn: (value: T, index: number) 
  *
  * #### Notes
  * Iteration terminates on the first `true` predicate result.
+ *
+ * #### Complexity
+ * Linear.
  *
  * #### Example
  * ```typescript
