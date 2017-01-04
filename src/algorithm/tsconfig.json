@@ -7,9 +7,9 @@
     "strictNullChecks": true,
     "module": "commonjs",
     "moduleResolution": "node",
-    "target": "es5",
+    "target": "ES5",
     "outDir": "./lib",
-    "lib": ["es5"],
+    "lib": ["ES5"],
     "types": []
   }
 }
