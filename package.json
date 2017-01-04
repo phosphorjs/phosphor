@@ -33,6 +33,8 @@
     "clean:algorithm": "rimraf src/algorithm/lib",
     "build:collections": "cd src/collections && tsc",
     "clean:collections": "rimraf src/collections/lib",
+    "build:disposable": "cd src/disposable && tsc",
+    "clean:disposable": "rimraf src/disposable/lib",
     "build:json": "cd src/json && tsc",
     "clean:json": "rimraf src/json/lib",
     "clean:src": "rimraf lib",
