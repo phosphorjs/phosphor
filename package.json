@@ -37,6 +37,8 @@
     "clean:disposable": "rimraf src/disposable/lib",
     "build:json": "cd src/json && tsc",
     "clean:json": "rimraf src/json/lib",
+    "build:messaging": "cd src/messaging && tsc",
+    "clean:messaging": "rimraf src/messaging/lib",
     "clean:src": "rimraf lib",
     "clean:test": "rimraf test/build && rimraf test/coverage",
     "clean": "npm run clean:src && npm run clean:test",
