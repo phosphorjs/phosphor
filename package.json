@@ -39,6 +39,8 @@
     "clean:json": "rimraf src/json/lib",
     "build:messaging": "cd src/messaging && tsc",
     "clean:messaging": "rimraf src/messaging/lib",
+    "build:signaling": "cd src/signaling && tsc",
+    "clean:signaling": "rimraf src/signaling/lib",
     "clean:src": "rimraf lib",
     "clean:test": "rimraf test/build && rimraf test/coverage",
     "clean": "npm run clean:src && npm run clean:test",
