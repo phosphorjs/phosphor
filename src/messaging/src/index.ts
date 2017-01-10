@@ -340,7 +340,7 @@ namespace MessageLoop {
   }
 
   /**
-   * Clear all data associated with a message handler.
+   * Clear all message data associated with a message handler.
    *
    * @param handler - The message handler of interest.
    *
