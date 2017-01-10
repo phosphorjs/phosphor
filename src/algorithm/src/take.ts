@@ -74,8 +74,12 @@ class TakeIterator<T> implements IIterator<T> {
     if (this._count <= 0) {
       return undefined;
     }
+    let value = this._source.next();
+    if (value === undefined) {
+      return undefined;
+    }
     this._count--;
-    return this._source.next();
+    return value;
   }
 
   private _count: number;
