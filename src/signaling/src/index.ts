@@ -93,7 +93,7 @@ interface ISignal<T, U> {
  *
  *   readonly name: string;
  *
- *   get valueChanged: ISignal<SomeClass, number> {
+ *   get valueChanged: ISignal<this, number> {
  *     return this._valueChanged;
  *   }
  *
@@ -110,7 +110,7 @@ interface ISignal<T, U> {
  *   }
  *
  *   private _value = 0;
- *   private _valueChanged = new Signal<SomeClass, number>(this);
+ *   private _valueChanged = new Signal<this, number>(this);
  * }
  *
  * function logger(sender: SomeClass, value: number): void {
