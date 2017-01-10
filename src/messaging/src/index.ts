@@ -35,9 +35,9 @@ class Message {
    * The type of the message.
    *
    * #### Notes
-   * The `type` of a message should related directly to its actual
-   * runtime type. This means that `type` can and will be used to
-   * cast the message to the relevant derived `Message` subtype.
+   * The `type` of a message should be related directly to its actual
+   * runtime type. This means that `type` can and will be used to cast
+   * the message to the relevant derived `Message` subtype.
    */
   readonly type: string;
 
