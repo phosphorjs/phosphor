@@ -301,7 +301,7 @@ namespace Private {
   export
   function disconnect<T, U>(signal: Signal<T, U>, slot: Slot<T, U>, thisArg?: any): boolean {
     // Coerce a `null` `thisArg` to `undefined`.
-    thisArg = thisArg || void 0;
+    thisArg = thisArg || undefined;
 
     // Lookup the list of receivers, and bail if none exist.
     let receivers = receiversForSender.get(signal.sender);
