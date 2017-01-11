@@ -47,9 +47,9 @@ class MimeData {
    * @returns The value for the given MIME type, or `undefined` if
    *   the dataset does not contain a value for the type.
    */
-  getData(mime: string): any {
+  getData(mime: string): any | undefined {
     let i = this._types.indexOf(mime);
-    return i !== -1 ? this._values[i] : void 0;
+    return i !== -1 ? this._values[i] : undefined;
   }
 
   /**
@@ -78,9 +78,10 @@ class MimeData {
    */
   clearData(mime: string): void {
     let i = this._types.indexOf(mime);
-    if (i === -1) return;
-    this._types.splice(i, 1);
-    this._values.splice(i, 1);
+    if (i !== -1) {
+      this._types.splice(i, 1);
+      this._values.splice(i, 1);
+    }
   }
 
   /**

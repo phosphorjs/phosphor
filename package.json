@@ -39,6 +39,8 @@
     "clean:json": "rimraf src/json/lib",
     "build:messaging": "cd src/messaging && tsc",
     "clean:messaging": "rimraf src/messaging/lib",
+    "build:mime": "cd src/mime && tsc",
+    "clean:mime": "rimraf src/mime/lib",
     "build:properties": "cd src/properties && tsc",
     "clean:properties": "rimraf src/properties/lib",
     "build:signaling": "cd src/signaling && tsc",
