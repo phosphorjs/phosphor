@@ -77,7 +77,7 @@ type IterableOrArrayLike<T> = IIterable<T> | ArrayLike<T>;
 
 
 /**
- * Create an iterator for an iterabl object.
+ * Create an iterator for an iterable object.
  *
  * @param object - The iterable or array-like object of interest.
  *
