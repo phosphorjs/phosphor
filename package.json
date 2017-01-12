@@ -35,6 +35,8 @@
     "clean:collections": "rimraf src/collections/lib",
     "build:disposable": "cd src/disposable && tsc",
     "clean:disposable": "rimraf src/disposable/lib",
+    "build:dragdrop": "cd src/dragdrop && tsc",
+    "clean:dragdrop": "rimraf src/dragdrop/lib",
     "build:json": "cd src/json && tsc",
     "clean:json": "rimraf src/json/lib",
     "build:messaging": "cd src/messaging && tsc",
