@@ -30,9 +30,9 @@ class AttachedProperty<T, U> {
   constructor(options: AttachedProperty.IOptions<T, U>) {
     this.name = options.name;
     this._create = options.create;
-    this._coerce = options.coerce;
-    this._compare = options.compare;
-    this._changed = options.changed;
+    this._coerce = options.coerce || null;
+    this._compare = options.compare || null;
+    this._changed = options.changed || null;
   }
 
   /**
@@ -142,9 +142,9 @@ class AttachedProperty<T, U> {
 
   private _pid = Private.nextPID();
   private _create: ((owner: T) => U);
-  private _coerce: ((owner: T, value: U) => U) | undefined;
-  private _compare: ((oldValue: U, newValue: U) => boolean) | undefined;
-  private _changed: ((owner: T, oldValue: U, newValue: U) => void) | undefined;
+  private _coerce: ((owner: T, value: U) => U) | null;
+  private _compare: ((oldValue: U, newValue: U) => boolean) | null;
+  private _changed: ((owner: T, oldValue: U, newValue: U) => void) | null;
 }
 
 
