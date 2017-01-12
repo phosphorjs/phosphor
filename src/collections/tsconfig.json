@@ -11,9 +11,9 @@
     "outDir": "./lib",
     "lib": ["ES5"],
     "types": [],
-    "baseUrl": ".",
+    "baseUrl": "..",
     "paths": {
-      "@phosphor/algorithm": ["../algorithm"]
+      "@phosphor/*": ["*"]
     }
   }
 }

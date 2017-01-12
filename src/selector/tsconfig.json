@@ -10,6 +10,10 @@
     "target": "ES5",
     "outDir": "./lib",
     "lib": ["ES5", "DOM"],
-    "types": []
+    "types": [],
+    "baseUrl": "..",
+    "paths": {
+      "@phosphor/*": ["*"]
+    }
   }
 }

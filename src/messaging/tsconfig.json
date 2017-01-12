@@ -11,10 +11,9 @@
     "outDir": "./lib",
     "lib": ["ES5", "ES2015.Collection", "DOM"],
     "types": [],
-    "baseUrl": ".",
+    "baseUrl": "..",
     "paths": {
-      "@phosphor/algorithm": ["../algorithm"],
-      "@phosphor/collections": ["../collections"]
+      "@phosphor/*": ["*"]
     }
   }
 }
