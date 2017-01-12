@@ -43,6 +43,8 @@
     "clean:mime": "rimraf src/mime/lib",
     "build:properties": "cd src/properties && tsc",
     "clean:properties": "rimraf src/properties/lib",
+    "build:selector": "cd src/selector && tsc",
+    "clean:selector": "rimraf src/selector/lib",
     "build:signaling": "cd src/signaling && tsc",
     "clean:signaling": "rimraf src/signaling/lib",
     "clean:src": "rimraf lib",

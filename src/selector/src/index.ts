@@ -34,12 +34,11 @@
  */
 export
 function calculateSpecificity(selector: string): number {
-  let result = Private.specificityCache[selector];
-  if (result === void 0) {
-    result = Private.calculateSingle(selector);
-    Private.specificityCache[selector] = result;
+  if (selector in Private.specificityCache) {
+    return Private.specificityCache[selector];
   }
-  return result;
+  let result = Private.calculateSingle(selector);
+  return Private.specificityCache[selector] = result;
 }
 
 
@@ -56,42 +55,23 @@ function calculateSpecificity(selector: string): number {
  */
 export
 function isValidSelector(selector: string): boolean {
-  let result = Private.validityCache[selector];
-  if (result === void 0) {
-    try {
-      Private.testElem.querySelector(selector);
-      result = true;
-    } catch (err) {
-      result = false;
-    }
-    Private.validityCache[selector] = result;
+  if (selector in Private.validityCache) {
+    return Private.validityCache[selector];
   }
-  return result;
-}
-
-
-/**
- * Validate a CSS selector.
- *
- * @param selector - The CSS selector of interest.
- *
- * @returns The provided selector.
- *
- * @throws An error if the selector is invalid.
- */
-export
-function validateSelector(selector: string): string {
-  if (!isValidSelector(selector)) {
-    throw new Error(`Invalid selector: ${selector}`);
+  let result = true;
+  try {
+    Private.testElem.querySelector(selector);
+  } catch (err) {
+    result = false;
   }
-  return selector;
+  return Private.validityCache[selector] = result;
 }
 
 
 /**
  * Test whether an element matches a CSS selector.
  *
- * @param elem - The element of interest.
+ * @param element - The element of interest.
  *
  * @param selector - The valid CSS selector of interest.
  *
@@ -102,8 +82,8 @@ function validateSelector(selector: string): string {
  * falling back onto a document query otherwise.
  */
 export
-function matchesSelector(elem: Element, selector: string): boolean {
-  return Private.protoMatchFunc.call(elem, selector);
+function matchesSelector(element: Element, selector: string): boolean {
+  return Private.protoMatchFunc.call(element, selector);
 }
 
 
@@ -112,56 +92,22 @@ function matchesSelector(elem: Element, selector: string): boolean {
  */
 namespace Private {
   /**
-   * A regex which matches an ID selector at string start.
-   */
-  const ID_RE = /^#[^\s\+>~#\.\[:]+/;
-
-  /**
-   * A regex which matches a class selector at string start.
-   */
-  const CLASS_RE = /^\.[^\s\+>~#\.\[:]+/;
-
-  /**
-   * A regex which matches an attribute selector at string start.
-   */
-  const ATTR_RE = /^\[[^\]]+\]/;
-
-  /**
-   * A regex which matches a type selector at string start.
-   */
-  const TYPE_RE = /^[^\s\+>~#\.\[:]+/;
-
-  /**
-   * A regex which matches a pseudo-element selector at string start.
-   */
-  const PSEUDO_ELEM_RE = /^(::[^\s\+>~#\.\[:]+|:first-line|:first-letter|:before|:after)/;
-
-  /**
-   * A regex which matches a pseudo-class selector at string start.
-   */
-  const PSEUDO_CLASS_RE = /^:[^\s\+>~#\.\[:]+/;
-
-  /**
-   * A regex which matches ignored characters at string start.
-   */
-  const IGNORE_RE = /^[\s\+>~\*]+/;
-
-  /**
-   * A regex which matches the negation pseudo-class globally.
-   */
-  const NEGATION_RE = /:not\(([^\)]+)\)/g;
-
-  /**
-   * A cached of computed selector specificity values.
+   * A type alias for an object hash.
    */
   export
-  const specificityCache: { [key: string]: number } = Object.create(null);
+  type StringMap<T> = { [key: string]: T };
 
   /**
-   * A cached of computed selector validity.
+   * A cache of computed selector specificity values.
    */
   export
-  const validityCache: { [key: string]: boolean } = Object.create(null);
+  const specificityCache: StringMap<number> = Object.create(null);
+
+  /**
+   * A cache of computed selector validity.
+   */
+  export
+  const validityCache: StringMap<boolean> = Object.create(null);
 
   /**
    * An empty element for testing selector validity.
@@ -205,7 +151,7 @@ namespace Private {
     let b = 0;
     let c = 0;
 
-    // Apply a regex to the front selector. If the match succeeds, that
+    // Apply a regex to the front of the selector. If it succeeds, that
     // portion of the selector is removed. Returns a success/fail flag.
     function match(re: RegExp): boolean {
       let match = selector.match(re);
@@ -233,11 +179,11 @@ namespace Private {
       if (match(ATTR_RE)) { b++; continue; }
 
       // Match a pseudo-element selector. This is done before matching
-      // a pseudo-class since this regex overlaps with the class regex.
+      // a pseudo-class since this regex overlaps with that regex.
       if (match(PSEUDO_ELEM_RE)) { c++; continue; }
 
       // Match a pseudo-class selector.
-      if (match(PSEUDO_CLASS_RE)) { b++; continue; }
+      if (match(PSEDUO_CLASS_RE)) { b++; continue; }
 
       // Match a plain type selector.
       if (match(TYPE_RE)) { c++; continue; }
@@ -257,4 +203,44 @@ namespace Private {
     // Combine the components into a single result.
     return (a << 16) | (b << 8) | c;
   }
+
+  /**
+   * A regex which matches an ID selector at string start.
+   */
+  const ID_RE = /^#[^\s\+>~#\.\[:]+/;
+
+  /**
+   * A regex which matches a class selector at string start.
+   */
+  const CLASS_RE = /^\.[^\s\+>~#\.\[:]+/;
+
+  /**
+   * A regex which matches an attribute selector at string start.
+   */
+  const ATTR_RE = /^\[[^\]]+\]/;
+
+  /**
+   * A regex which matches a type selector at string start.
+   */
+  const TYPE_RE = /^[^\s\+>~#\.\[:]+/;
+
+  /**
+   * A regex which matches a pseudo-element selector at string start.
+   */
+  const PSEUDO_ELEM_RE = /^(::[^\s\+>~#\.\[:]+|:first-line|:first-letter|:before|:after)/;
+
+  /**
+   * A regex which matches a pseudo-class selector at string start.
+   */
+  const PSEDUO_CLASS_RE = /^:[^\s\+>~#\.\[:]+/;
+
+  /**
+   * A regex which matches ignored characters at string start.
+   */
+  const IGNORE_RE = /^[\s\+>~\*]+/;
+
+  /**
+   * A regex which matches the negation pseudo-class globally.
+   */
+  const NEGATION_RE = /:not\(([^\)]+)\)/g;
 }
