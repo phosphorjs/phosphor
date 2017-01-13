@@ -19,158 +19,6 @@ import {
 
 
 /**
- * An object which represents a user-defined command.
- *
- * #### Notes
- * A command is an abstract representation of code to be executed along
- * with metadata for describing how the command should be displayed in
- * a visual representation.
- *
- * A command is a collection of functions, *not* methods. The command
- * registry will always invoke the command functions with a `thisArg`
- * which is `undefined`.
- */
-export
-interface ICommand {
-  /**
-   * The function to invoke when the command is executed.
-   *
-   * #### Notes
-   * The should return the result of the command (if applicable) or
-   * a promise to the result. The result is resolved as a promise
-   * and that promise is returned to the code which executed the
-   * command.
-   *
-   * This may be invoked even when `isEnabled` returns `false`.
-   */
-  readonly execute: (args: JSONObject | null) => any;
-
-  /**
-   * The label text for the command.
-   *
-   * #### Notes
-   * This can be a string literal, or a function which returns the
-   * label based on the provided command arguments.
-   *
-   * The default value is an empty string.
-   */
-  readonly label?: string | ((args: JSONObject | null) => string);
-
-  /**
-   * The index of the mnemonic character in the command's label.
-   *
-   * #### Notes
-   * This can be an index literal, or a function which returns the
-   * mnemonic index based on the provided command arguments.
-   *
-   * The mnemonic character is often used by menus to provide easy
-   * single-key keyboard access for triggering a menu item. It is
-   * typically rendered as an underlined character in the label.
-   *
-   * The default value is `-1`.
-   */
-  readonly mnemonic?: number | ((args: JSONObject | null) => number);
-
-  /**
-   * The icon class for the command.
-   *
-   * #### Notes
-   * This class name will be added to the icon node for the visual
-   * representation of the command.
-   *
-   * Multiple class names can be separated with white space.
-   *
-   * This can be a string literal, or a function which returns the
-   * icon based on the provided command arguments.
-   *
-   * The default value is an empty string.
-   */
-  readonly icon?: string | ((args: JSONObject | null) => string);
-
-  /**
-   * The caption for the command.
-   *
-   * #### Notes
-   * This should be a simple one line description of the command. It
-   * is used by some visual representations to show quick info about
-   * the command.
-   *
-   * This can be a string literal, or a function which returns the
-   * caption based on the provided command arguments.
-   *
-   * The default value is an empty string.
-   */
-  readonly caption?: string | ((args: JSONObject | null) => string);
-
-  /**
-   * The usage text for the command.
-   *
-   * #### Notes
-   * This should be a full description of the command, which includes
-   * information about the structure of the arguments and the type of
-   * the return value. It is used by some visual representations when
-   * displaying complete help info about the command.
-   *
-   * This can be a string literal, or a function which returns the
-   * usage text based on the provided command arguments.
-   *
-   * The default value is an empty string.
-   */
-  readonly usage?: string | ((args: JSONObject | null) => string);
-
-  /**
-   * The general class name for the command.
-   *
-   * #### Notes
-   * This class name will be added to the primary node for the visual
-   * representation of the command.
-   *
-   * Multiple class names can be separated with white space.
-   *
-   * This can be a string literal, or a function which returns the
-   * class name based on the provided command arguments.
-   *
-   * The default value is an empty string.
-   */
-  readonly className?: string | ((args: JSONObject | null) => string);
-
-  /**
-   * A function which indicates whether the command is enabled.
-   *
-   * #### Notes
-   * Visual representations may use this value to display a disabled
-   * command as grayed-out or in some other non-interactive fashion.
-   *
-   * The default value is `true`.
-   */
-  readonly isEnabled?: (args: JSONObject | null) => boolean;
-
-  /**
-   * A function which indicates whether the command is toggled.
-   *
-   * #### Notes
-   * Visual representations may use this value to display a toggled
-   * command in a different form, such as a check mark icon for a
-   * menu item or a depressed state for a toggle button.
-   *
-   * The default value is `false`.
-   */
-  readonly isToggled?: (args: JSONObject | null) => boolean;
-
-  /**
-   * A function which indicates whether the command is visible.
-   *
-   * #### Notes
-   * Visual representations may use this value to hide or otherwise
-   * not display a non-visible command.
-   *
-   * The default value is `true`.
-   */
-  readonly isVisible?: (args: JSONObject | null) => boolean;
-}
-
-
-/**
  * An object which manages a collection of commands.
  *
  * #### Notes
@@ -232,20 +80,20 @@ class CommandRegistry {
    *
    * @param id - The unique id of the command.
    *
-   * @param command - The command to add to the registry.
+   * @param options - The options for the command.
    *
    * @returns A disposable which will remove the command.
    *
    * @throws An error if the given `id` is already registered.
    */
-  addCommand(id: string, command: ICommand): IDisposable {
+  addCommand(id: string, options: CommandRegistry.ICommandOptions): IDisposable {
     // Throw an error if the id is already registered.
     if (id in this._commands) {
       throw new Error(`Command '${id}' already registered.`);
     }
 
     // Add the command to the registry.
-    this._commands[id] = command;
+    this._commands[id] = Private.createCommand(options);
 
     // Emit the `commandChanged` signal.
     this._commandChanged.emit({ id, type: 'added' });
@@ -293,13 +141,7 @@ class CommandRegistry {
    */
   label(id: string, args: JSONObject | null): string {
     let cmd = this._commands[id];
-    if (!cmd || cmd.label === undefined) {
-      return '';
-    }
-    if (typeof cmd.label === 'string') {
-      return cmd.label;
-    }
-    return cmd.label.call(undefined, args);
+    return cmd ? cmd.label.call(undefined, args) : '';
   }
 
   /**
@@ -314,13 +156,7 @@ class CommandRegistry {
    */
   mnemonic(id: string, args: JSONObject | null): number {
     let cmd = this._commands[id];
-    if (!cmd || cmd.mnemonic === undefined) {
-      return -1;
-    }
-    if (typeof cmd.mnemonic === 'number') {
-      return cmd.mnemonic;
-    }
-    return cmd.mnemonic.call(undefined, args);
+    return cmd ? cmd.mnemonic.call(undefined, args) : -1;
   }
 
   /**
@@ -335,13 +171,7 @@ class CommandRegistry {
    */
   icon(id: string, args: JSONObject | null): string {
     let cmd = this._commands[id];
-    if (!cmd || cmd.icon === undefined) {
-      return '';
-    }
-    if (typeof cmd.icon === 'string') {
-      return cmd.icon;
-    }
-    return cmd.icon.call(undefined, args);
+    return cmd ? cmd.icon.call(undefined, args) : '';
   }
 
   /**
@@ -356,13 +186,7 @@ class CommandRegistry {
    */
   caption(id: string, args: JSONObject | null): string {
     let cmd = this._commands[id];
-    if (!cmd || cmd.caption === undefined) {
-      return '';
-    }
-    if (typeof cmd.caption === 'string') {
-      return cmd.caption;
-    }
-    return cmd.caption.call(undefined, args);
+    return cmd ? cmd.caption.call(undefined, args) : '';
   }
 
   /**
@@ -377,13 +201,7 @@ class CommandRegistry {
    */
   usage(id: string, args: JSONObject | null): string {
     let cmd = this._commands[id];
-    if (!cmd || cmd.usage === undefined) {
-      return '';
-    }
-    if (typeof cmd.usage === 'string') {
-      return cmd.usage;
-    }
-    return cmd.usage.call(undefined, args);
+    return cmd ? cmd.usage.call(undefined, args) : '';
   }
 
   /**
@@ -398,13 +216,7 @@ class CommandRegistry {
    */
   className(id: string, args: JSONObject | null): string {
     let cmd = this._commands[id];
-    if (!cmd || cmd.className === undefined) {
-      return '';
-    }
-    if (typeof cmd.className === 'string') {
-      return cmd.className;
-    }
-    return cmd.className.call(undefined, args);
+    return cmd ? cmd.className.call(undefined, args) : '';
   }
 
   /**
@@ -414,18 +226,12 @@ class CommandRegistry {
    *
    * @param args - The arguments for the command.
    *
-   * @returns `true` if the command is enabled, or `false` if
-   *   the command is disabled or not registered.
+   * @returns A boolean indicating whether the command is enabled,
+   *   or `false` if the command is not registered.
    */
   isEnabled(id: string, args: JSONObject | null): boolean {
     let cmd = this._commands[id];
-    if (!cmd) {
-      return false;
-    }
-    if (cmd.isEnabled === undefined) {
-      return true;
-    }
-    return cmd.isEnabled.call(undefined, args);
+    return cmd ? cmd.isEnabled.call(undefined, args) : false;
   }
 
   /**
@@ -435,15 +241,12 @@ class CommandRegistry {
    *
    * @param args - The arguments for the command.
    *
-   * @returns `true` if the command is toggled, or `false` if
-   *   the command is not toggled or not registered.
+   * @returns A boolean indicating whether the command is toggled,
+   *   or `false` if the command is not registered.
    */
   isToggled(id: string, args: JSONObject | null): boolean {
     let cmd = this._commands[id];
-    if (!cmd || cmd.isToggled === undefined) {
-      return false;
-    }
-    return cmd.isToggled.call(undefined, args);
+    return cmd ? cmd.isToggled.call(undefined, args) : false;
   }
 
   /**
@@ -453,18 +256,12 @@ class CommandRegistry {
    *
    * @param args - The arguments for the command.
    *
-   * @returns `true` if the command is visible, or `false` if
-   *   the command is not visible or not registered.
+   * @returns A boolean indicating whether the command is visible,
+   *   or `false` if the command is not registered.
    */
   isVisible(id: string, args: JSONObject | null): boolean {
     let cmd = this._commands[id];
-    if (!cmd) {
-      return false;
-    }
-    if (cmd.isVisible === undefined) {
-      return true;
-    }
-    return cmd.isVisible.call(undefined, args);
+    return cmd ? cmd.isVisible.call(undefined, args) : false;
   }
 
   /**
@@ -505,7 +302,7 @@ class CommandRegistry {
     return result;
   }
 
-  private _commands: { [id: string]: ICommand } = Object.create(null);
+  private _commands: { [id: string]: Private.ICommand } = Object.create(null);
   private _commandChanged = new Signal<this, CommandRegistry.ICommandChangedArgs>(this);
   private _commandExecuted = new Signal<this, CommandRegistry.ICommandExecutedArgs>(this);
 }
@@ -516,6 +313,165 @@ class CommandRegistry {
  */
 export
 namespace CommandRegistry {
+  /**
+   * A type alias for a user-defined command function.
+   */
+  export
+  type CommandFunc<T> = (args: JSONObject | null) => T;
+
+  /**
+   * An options object for creating a command.
+   *
+   * #### Notes
+   * A command is an abstract representation of code to be executed along
+   * with metadata for describing how the command should be displayed in
+   * a visual representation.
+   *
+   * A command is a collection of functions, *not* methods. The command
+   * registry will always invoke the command functions with a `thisArg`
+   * which is `undefined`.
+   */
+  export
+  interface ICommandOptions {
+    /**
+     * The function to invoke when the command is executed.
+     *
+     * #### Notes
+     * The should return the result of the command (if applicable) or
+     * a promise to the result. The result is resolved as a promise
+     * and that promise is returned to the code which executed the
+     * command.
+     *
+     * This may be invoked even when `isEnabled` returns `false`.
+     */
+    execute: CommandFunc<any | Promise<any>>;
+
+    /**
+     * The label for the command.
+     *
+     * #### Notes
+     * This can be a string literal, or a function which returns the
+     * label based on the provided command arguments.
+     *
+     * The label is often used as the primary text for the command.
+     *
+     * The default value is an empty string.
+     */
+    label?: string | CommandFunc<string>;
+
+    /**
+     * The index of the mnemonic character in the command's label.
+     *
+     * #### Notes
+     * This can be an index literal, or a function which returns the
+     * mnemonic index based on the provided command arguments.
+     *
+     * The mnemonic character is often used by menus to provide easy
+     * single-key keyboard access for triggering a menu item. It is
+     * typically rendered as an underlined character in the label.
+     *
+     * The default value is `-1`.
+     */
+    mnemonic?: number | CommandFunc<number>;
+
+    /**
+     * The icon class for the command.
+     *
+     * #### Notes
+     * This class name will be added to the icon node for the visual
+     * representation of the command.
+     *
+     * Multiple class names can be separated with white space.
+     *
+     * This can be a string literal, or a function which returns the
+     * icon based on the provided command arguments.
+     *
+     * The default value is an empty string.
+     */
+    icon?: string | CommandFunc<string>;
+
+    /**
+     * The caption for the command.
+     *
+     * #### Notes
+     * This should be a simple one line description of the command. It
+     * is used by some visual representations to show quick info about
+     * the command.
+     *
+     * This can be a string literal, or a function which returns the
+     * caption based on the provided command arguments.
+     *
+     * The default value is an empty string.
+     */
+    caption?: string | CommandFunc<string>;
+
+    /**
+     * The usage text for the command.
+     *
+     * #### Notes
+     * This should be a full description of the command, which includes
+     * information about the structure of the arguments and the type of
+     * the return value. It is used by some visual representations when
+     * displaying complete help info about the command.
+     *
+     * This can be a string literal, or a function which returns the
+     * usage text based on the provided command arguments.
+     *
+     * The default value is an empty string.
+     */
+    usage?: string | CommandFunc<string>;
+
+    /**
+     * The general class name for the command.
+     *
+     * #### Notes
+     * This class name will be added to the primary node for the visual
+     * representation of the command.
+     *
+     * Multiple class names can be separated with white space.
+     *
+     * This can be a string literal, or a function which returns the
+     * class name based on the provided command arguments.
+     *
+     * The default value is an empty string.
+     */
+    className?: string | CommandFunc<string>;
+
+    /**
+     * A function which indicates whether the command is enabled.
+     *
+     * #### Notes
+     * Visual representations may use this value to display a disabled
+     * command as grayed-out or in some other non-interactive fashion.
+     *
+     * The default value is `true`.
+     */
+    isEnabled?: CommandFunc<boolean>;
+
+    /**
+     * A function which indicates whether the command is toggled.
+     *
+     * #### Notes
+     * Visual representations may use this value to display a toggled
+     * command in a different form, such as a check mark icon for a
+     * menu item or a depressed state for a toggle button.
+     *
+     * The default value is `false`.
+     */
+    isToggled?: CommandFunc<boolean>;
+
+    /**
+     * A function which indicates whether the command is visible.
+     *
+     * #### Notes
+     * Visual representations may use this value to hide or otherwise
+     * not display a non-visible command.
+     *
+     * The default value is `true`.
+     */
+    isVisible?: CommandFunc<boolean>;
+  }
+
   /**
    * An arguments object for the `commandChanged` signal.
    */
@@ -551,5 +507,86 @@ namespace CommandRegistry {
      * The promise which resolves to the result of the command.
      */
     readonly result: Promise<any>;
+  }
+}
+
+
+/**
+ * The namespace for the module private data.
+ */
+export
+namespace Private {
+  /**
+   * A normalized command object.
+   */
+  export
+  interface ICommand {
+    readonly execute: (args: JSONObject | null) => any;
+    readonly label: (args: JSONObject | null) => string;
+    readonly mnemonic:(args: JSONObject | null) => number;
+    readonly icon: (args: JSONObject | null) => string;
+    readonly caption: (args: JSONObject | null) => string;
+    readonly usage: (args: JSONObject | null) => string;
+    readonly className: (args: JSONObject | null) => string;
+    readonly isEnabled: (args: JSONObject | null) => boolean;
+    readonly isToggled: (args: JSONObject | null) => boolean;
+    readonly isVisible: (args: JSONObject | null) => boolean;
+  }
+
+  /**
+   * Create a normalized command from an options object.
+   */
+  export
+  function createCommand(options: CommandRegistry.ICommandOptions): ICommand {
+    return {
+      execute: options.execute,
+      label: asFunc(options.label, emptyStringFunc),
+      mnemonic: asFunc(options.mnemonic, negativeOneFunc),
+      icon: asFunc(options.icon, emptyStringFunc),
+      caption: asFunc(options.caption, emptyStringFunc),
+      usage: asFunc(options.usage, emptyStringFunc),
+      className: asFunc(options.className, emptyStringFunc),
+      isEnabled: options.isEnabled || trueFunc,
+      isToggled: options.isToggled || falseFunc,
+      isVisible: options.isVisible || trueFunc
+    };
+  }
+
+  /**
+   * A convenience type alias.
+   */
+  type CommandFunc<T> = CommandRegistry.CommandFunc<T>;
+
+  /**
+   * A singleton empty string function.
+   */
+  const emptyStringFunc = () => '';
+
+  /**
+   * A singleton `-1` number function
+   */
+  const negativeOneFunc = () => -1;
+
+  /**
+   * A singleton true boolean function.
+   */
+  const trueFunc = () => true;
+
+  /**
+   * A singleton false boolean function.
+   */
+  const falseFunc = () => false;
+
+  /**
+   * Cast a value or command func to a command func.
+   */
+  function asFunc<T>(value: undefined | T | CommandFunc<T>, dfault: CommandFunc<T>): CommandFunc<T> {
+    if (value === undefined) {
+      return dfault;
+    }
+    if (typeof value === 'function') {
+      return value;
+    }
+    return () => value;
   }
 }
