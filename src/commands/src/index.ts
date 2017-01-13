@@ -337,10 +337,10 @@ namespace CommandRegistry {
      * The function to invoke when the command is executed.
      *
      * #### Notes
-     * The should return the result of the command (if applicable) or
-     * a promise to the result. The result is resolved as a promise
-     * and that promise is returned to the code which executed the
-     * command.
+     * This should return the result of the command (if applicable) or
+     * a promise which yields the result. The result is resolved as a
+     * promise and that promise is returned to the code which executed
+     * the command.
      *
      * This may be invoked even when `isEnabled` returns `false`.
      */
