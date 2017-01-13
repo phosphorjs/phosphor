@@ -271,7 +271,7 @@ class CommandRegistry {
    *
    * @param args - The arguments for the command.
    *
-   * @returns A promise which resolves to the result of the command.
+   * @returns A promise which resolves with the result of the command.
    *
    * #### Notes
    * The promise will reject if the command throws an exception,
@@ -504,7 +504,7 @@ namespace CommandRegistry {
     readonly args: JSONObject | null;
 
     /**
-     * The promise which resolves to the result of the command.
+     * The promise which resolves with the result of the command.
      */
     readonly result: Promise<any>;
   }
