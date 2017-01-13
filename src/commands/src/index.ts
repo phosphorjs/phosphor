@@ -444,7 +444,7 @@ namespace CommandRegistry {
      * Visual representations may use this value to display a disabled
      * command as grayed-out or in some other non-interactive fashion.
      *
-     * The default value is `true`.
+     * The default value is `() => true`.
      */
     isEnabled?: CommandFunc<boolean>;
 
@@ -456,7 +456,7 @@ namespace CommandRegistry {
      * command in a different form, such as a check mark icon for a
      * menu item or a depressed state for a toggle button.
      *
-     * The default value is `false`.
+     * The default value is `() => false`.
      */
     isToggled?: CommandFunc<boolean>;
 
@@ -467,7 +467,7 @@ namespace CommandRegistry {
      * Visual representations may use this value to hide or otherwise
      * not display a non-visible command.
      *
-     * The default value is `true`.
+     * The default value is `() => true`.
      */
     isVisible?: CommandFunc<boolean>;
   }
