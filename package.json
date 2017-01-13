@@ -45,6 +45,8 @@
     "clean:messaging": "rimraf src/messaging/lib",
     "build:mime": "cd src/mime && tsc",
     "clean:mime": "rimraf src/mime/lib",
+    "build:platform": "cd src/platform && tsc",
+    "clean:platform": "rimraf src/platform/lib",
     "build:properties": "cd src/properties && tsc",
     "clean:properties": "rimraf src/properties/lib",
     "build:selector": "cd src/selector && tsc",
