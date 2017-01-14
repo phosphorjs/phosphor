@@ -41,6 +41,8 @@
     "clean:dragdrop": "rimraf src/dragdrop/lib",
     "build:json": "cd src/json && tsc",
     "clean:json": "rimraf src/json/lib",
+    "build:keymap": "cd src/keymap && tsc",
+    "clean:keymap": "rimraf src/keymap/lib",
     "build:messaging": "cd src/messaging && tsc",
     "clean:messaging": "rimraf src/messaging/lib",
     "build:mime": "cd src/mime && tsc",
