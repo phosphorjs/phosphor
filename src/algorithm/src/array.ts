@@ -761,6 +761,68 @@ namespace ArrayExt {
   }
 
   /**
+   * Fill an array with a static value.
+   *
+   * @param array - The mutable array-like object to fill.
+   *
+   * @param value - The static value to use to fill the array.
+   *
+   * @param start - The index of the first element in the range to be
+   *   filled, inclusive. The default value is `0`. Negative values
+   *   are taken as an offset from the end of the array.
+   *
+   * @param stop - The index of the last element in the range to be
+   *   filled, inclusive. The default value is `-1`. Negative values
+   *   are taken as an offset from the end of the array.
+   *
+   * #### Notes
+   * If `stop < start` the fill will wrap at the end of the array.
+   *
+   * #### Complexity
+   * Linear.
+   *
+   * #### Undefined Behavior
+   * A `start` or `stop` which is non-integral.
+   *
+   * #### Example
+   * ```typescript
+   * import { ArrayExt } from '@phosphor/algorithm';
+   *
+   * let data = ['one', 'two', 'three', 'four'];
+   * ArrayExt.fill(data, 'r');        // ['r', 'r', 'r', 'r']
+   * ArrayExt.fill(data, 'g', 1);     // ['r', 'g', 'g', 'g']
+   * ArrayExt.fill(data, 'b', 2, 3);  // ['r', 'g', 'b', 'b']
+   * ArrayExt.fill(data, 'z', 3, 1);  // ['z', 'z', 'b', 'z']
+   * ```
+   */
+  export
+  function fill<T>(array: MutableArrayLike<T>, value: T, start = 0, stop = -1): void {
+    let n = array.length;
+    if (n === 0) {
+      return;
+    }
+    if (start < 0) {
+      start = Math.max(0, start + n);
+    } else {
+      start = Math.min(start, n - 1);
+    }
+    if (stop < 0) {
+      stop = Math.max(0, stop + n);
+    } else {
+      stop = Math.min(stop, n - 1);
+    }
+    let span: number;
+    if (stop < start) {
+      span = (stop + 1) + (n - start);
+    } else {
+      span = stop - start + 1;
+    }
+    for (let i = 0; i < span; ++i) {
+      array[(start + i) % n] = value;
+    }
+  }
+
+  /**
    * Insert a value into an array at a specific index.
    *
    * @param array - The mutable array-like object of interest.
