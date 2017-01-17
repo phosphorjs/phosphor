@@ -7,11 +7,7 @@
 |----------------------------------------------------------------------------*/
 import {
   IIterator, IterableOrArrayLike, iter
-} from './iterable';
-
-import {
-  drop
-} from './iterate';
+} from './iter';
 
 
 /**
@@ -84,7 +80,9 @@ class StrideIterator<T> implements IIterator<T> {
    */
   next(): T | undefined {
     let value = this._source.next();
-    drop(this._source, this._step - 1);
+    for (let n = this._step - 1; n > 0; --n) {
+      this._source.next();
+    }
     return value;
   }
 

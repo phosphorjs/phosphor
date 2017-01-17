@@ -6,12 +6,8 @@
 | The full license is in the file LICENSE, distributed with this software.
 |----------------------------------------------------------------------------*/
 import {
-  IterableOrArrayLike
-} from './iterable';
-
-import {
-  each
-} from './iterate';
+  IterableOrArrayLike, each
+} from './iter';
 
 
 /**
@@ -28,7 +24,7 @@ import {
  *
  * #### Example
  * ```typescript
- * import { topSort } from '@phosphor/algorithm';
+ * import { topologicSort } from '@phosphor/algorithm';
  *
  * let data = [
  *   ['d', 'e'],
@@ -37,45 +33,44 @@ import {
  *   ['b', 'c']
  * ];
  *
- * topSort(data);  // ['a', 'b', 'c', 'd', 'e']
+ * topologicSort(data);  // ['a', 'b', 'c', 'd', 'e']
  */
 export
-function topSort(edges: IterableOrArrayLike<[string, string]>): string[] {
-  // A type alias for an object hash.
-  type StringMap<T> = { [key: string]: T };
-
+function topologicSort<T>(edges: IterableOrArrayLike<[T, T]>): T[] {
   // Setup the shared sorting state.
-  let sorted: string[] = [];
-  let graph: StringMap<string[]> = Object.create(null);
-  let visited: StringMap<boolean> = Object.create(null);
+  let sorted: T[] = [];
+  let visited = new Set<T>();
+  let graph = new Map<T, T[]>();
 
   // Add the edges to the graph.
   each(edges, addEdge);
 
   // Visit each node in the graph.
-  Object.keys(graph).forEach(visit);
+  graph.forEach((v, k) => { visit(k); });
 
   // Return the sorted results.
   return sorted;
 
   // Add an edge to the graph.
-  function addEdge(edge: [string, string]): void {
+  function addEdge(edge: [T, T]): void {
     let [fromNode, toNode] = edge;
-    if (toNode in graph) {
-      graph[toNode].push(fromNode);
+    let children = graph.get(toNode);
+    if (children) {
+      children.push(fromNode);
     } else {
-      graph[toNode] = [fromNode];
+      graph.set(toNode, [fromNode]);
     }
   }
 
   // Recursively visit the node.
-  function visit(node: string): void {
-    if (node in visited) {
+  function visit(node: T): void {
+    if (visited.has(node)) {
       return;
     }
-    visited[node] = true;
-    if (node in graph) {
-      graph[node].forEach(visit);
+    visited.add(node);
+    let children = graph.get(node);
+    if (children) {
+      children.forEach(visit);
     }
     sorted.push(node);
   }

@@ -7,15 +7,36 @@
 |----------------------------------------------------------------------------*/
 import {
   IIterator
-} from './iterable';
+} from './iter';
 
 
 /**
- * Create a retro iterator for an array-like object.
+ * An object which can produce a reverse iterator over its values.
+ */
+export
+interface IRetroable<T> {
+  /**
+   * Get a reverse iterator over the object's values.
+   *
+   * @returns An iterator which yields the object's values in reverse.
+   */
+  retro(): IIterator<T>;
+}
+
+
+/**
+ * A type alias for a retroable or builtin array-like object.
+ */
+export
+type RetroableOrArrayLike<T> = IRetroable<T> | ArrayLike<T>;
+
+
+/**
+ * Create an iterator for a retroable object.
  *
- * @param object - The array-like object of interest.
+ * @param object - The retroable or array-like object of interest.
  *
- * @returns An iterator which traverses the array in reverse.
+ * @returns An iterator which traverses the object's values in reverse.
  *
  * #### Example
  * ```typescript
@@ -29,13 +50,19 @@ import {
  * ```
  */
 export
-function retro<T>(object: ArrayLike<T>): IIterator<T> {
-  return new RetroArrayIterator<T>(object);
+function retro<T>(object: RetroableOrArrayLike<T>): IIterator<T> {
+  let it: IIterator<T>;
+  if (typeof (object as any).retro === 'function') {
+    it = (object as IRetroable<T>).retro();
+  } else {
+    it = new RetroArrayIterator<T>(object as ArrayLike<T>);
+  }
+  return it;
 }
 
 
 /**
- * An iterator which traverses an array in reverse.
+ * An iterator which traverses an array-like object in reverse.
  *
  * #### Notes
  * This iterator can be used for any builtin JS array-like object.

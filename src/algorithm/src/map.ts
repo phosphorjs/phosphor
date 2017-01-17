@@ -7,7 +7,7 @@
 |----------------------------------------------------------------------------*/
 import {
   IIterator, IterableOrArrayLike, iter
-} from './iterable';
+} from './iter';
 
 
 /**
