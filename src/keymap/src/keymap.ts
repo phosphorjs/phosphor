@@ -114,6 +114,7 @@ class Keymap {
    * code may search that sequence manually.
    */
   findBinding(command: string, args: JSONObject | null): Keymap.IBinding | undefined {
+    // TODO - we may want to augment this search with a target node.
     return ArrayExt.findLastValue(this._bindings, binding => {
       return binding.command === command && deepEqual(binding.args, args);
     });
