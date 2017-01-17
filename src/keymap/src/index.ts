@@ -7,4 +7,3 @@
 |----------------------------------------------------------------------------*/
 export * from './keyboard';
 export * from './keymap';
-export * from './keystroke';

@@ -54,7 +54,7 @@ interface IKeyboardLayout {
 /**
  * A concrete implementation of [[IKeyboardLayout]] based on keycodes.
  *
- * The `.keyCode` property of a `'keydown'` event is a browser and OS
+ * The `keyCode` property of a `'keydown'` event is a browser and OS
  * specific representation of the physical key (not character) which
  * was pressed on a keyboard. While not the most convenient API, it
  * is currently the only one which works reliably on all browsers.
