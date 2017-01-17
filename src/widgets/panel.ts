@@ -26,7 +26,7 @@ import {
 } from '../collections/vector';
 
 import {
-  Message, sendMessage
+  sendMessage
 } from '../core/messaging';
 
 import {
