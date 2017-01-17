@@ -6,7 +6,7 @@
 | The full license is in the file LICENSE, distributed with this software.
 |----------------------------------------------------------------------------*/
 import {
-  IIterable, IIterator, IterableOrArrayLike, each
+  IIterable, IIterator, IRetroable, IterableOrArrayLike, each
 } from '@phosphor/algorithm';
 
 
@@ -14,7 +14,7 @@ import {
  * A generic doubly-linked list.
  */
 export
-class LinkedList<T> implements IIterable<T> {
+class LinkedList<T> implements IIterable<T>, IRetroable<T> {
   /**
    * Construct a new linked list.
    */

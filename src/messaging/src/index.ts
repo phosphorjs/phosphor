@@ -6,7 +6,7 @@
 | The full license is in the file LICENSE, distributed with this software.
 |----------------------------------------------------------------------------*/
 import {
-  each, every, retro, some
+  ArrayExt, each, every, retro, some
 } from '@phosphor/algorithm';
 
 import {
@@ -354,9 +354,7 @@ namespace MessageLoop {
 
     // Clear all messsage hooks for the handler.
     if (hooks && hooks.length > 0) {
-      for (let i = 0, n = hooks.length; i < n; ++i) {
-        hooks[i] = null;
-      }
+      ArrayExt.fill(hooks, null);
       scheduleCleanup(hooks);
     }
 
@@ -524,14 +522,13 @@ namespace MessageLoop {
    * stack frame is guaranteed to not be on the path of user code.
    */
   function cleanupHooks(hooks: Array<MessageHook | null>): void {
-    let count = 0;
-    for (let i = 0, n = hooks.length; i < n; ++i) {
-      if (!hooks[i]) {
-        count++;
-      } else {
-        hooks[i - count] = hooks[i];
-      }
-    }
-    hooks.length -= count;
+    ArrayExt.removeAllWhere(hooks, isNull);
+  }
+
+  /**
+   * Test whether a value is `null`.
+   */
+  function isNull<T>(value: T | null): boolean {
+    return value === null;
   }
 }

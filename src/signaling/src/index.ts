@@ -6,7 +6,7 @@
 | The full license is in the file LICENSE, distributed with this software.
 |----------------------------------------------------------------------------*/
 import {
-  each, find
+  ArrayExt, each, find
 } from '@phosphor/algorithm';
 
 
@@ -534,14 +534,15 @@ namespace Private {
    * stack frame is guaranteed to not be on the path of user code.
    */
   function cleanupConnections(connections: IConnection[]): void {
-    let count = 0;
-    for (let i = 0, n = connections.length; i < n; ++i) {
-      if (!connections[i].signal) {
-        count++;
-      } else {
-        connections[i - count] = connections[i];
-      }
-    }
-    connections.length -= count;
+    ArrayExt.removeAllWhere(connections, isDeadConnection);
+  }
+
+  /**
+   * Test whether a connection is dead.
+   *
+   * A dead connection has a `null` signal.
+   */
+  function isDeadConnection(connection: IConnection): boolean {
+    return connection.signal === null;
   }
 }
