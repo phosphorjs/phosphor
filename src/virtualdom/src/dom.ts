@@ -561,6 +561,8 @@ type ElementEventMap = {
  * The names of the dataset properties will be automatically prefixed
  * with `data-` before being added to the node, e.g. `{ thing: '12' }`
  * will be rendered as `data-thing='12'` in the DOM element.
+ *
+ * Dataset property names should not contain spaces.
  */
 export
 type ElementDataset = {
