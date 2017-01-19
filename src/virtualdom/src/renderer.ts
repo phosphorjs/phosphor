@@ -370,16 +370,16 @@ namespace Private {
   /**
    * A mapping of string key to pair of element and rendered node.
    */
-  interface IKeyMap {
+  type KeyMap = {
     [key: string]: { vNode: VirtualElementNode, element: HTMLElement };
-  }
+  };
 
   /**
    * Collect a mapping of keyed elements for the host content.
    */
-  function collectKeys(host: HTMLElement, content: ReadonlyArray<VirtualNode>): IKeyMap {
+  function collectKeys(host: HTMLElement, content: ReadonlyArray<VirtualNode>): KeyMap {
     let node = host.firstChild;
-    let keyMap: IKeyMap = Object.create(null);
+    let keyMap: KeyMap = Object.create(null);
     for (let vNode of content) {
       if (vNode.type === 'element' && vNode.attrs.key) {
         keyMap[vNode.attrs.key] = { vNode, element: node as HTMLElement };
