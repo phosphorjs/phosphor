@@ -124,93 +124,6 @@ type ElementAttrNames = (
 
 
 /**
- * A mapping of inline event name to event object type.
- *
- * This mapping is used to create the event listener properties for
- * the virtual DOM element attributes object. If a standardized or
- * widely supported name is missing, please open an issue to have it
- * added.
- *
- * The event names were collected from the following sources:
- *   - TypeScript's `lib.dom.d.ts` file
- *   - https://www.w3.org/TR/html5/index.html#attributes-1
- *   - https://html.spec.whatwg.org/multipage/webappapis.html#idl-definitions
- */
-export
-type ElementEventMap = {
-  onabort: UIEvent;
-  onauxclick: MouseEvent;
-  onblur: FocusEvent;
-  oncanplay: Event;
-  oncanplaythrough: Event;
-  onchange: Event;
-  onclick: MouseEvent;
-  oncontextmenu: PointerEvent;
-  oncopy: ClipboardEvent;
-  oncuechange: Event;
-  oncut: ClipboardEvent;
-  ondblclick: MouseEvent;
-  ondrag: DragEvent;
-  ondragend: DragEvent;
-  ondragenter: DragEvent;
-  ondragexit: DragEvent;
-  ondragleave: DragEvent;
-  ondragover: DragEvent;
-  ondragstart: DragEvent;
-  ondrop: DragEvent;
-  ondurationchange: Event;
-  onemptied: Event;
-  onended: MediaStreamErrorEvent;
-  onerror: ErrorEvent;
-  onfocus: FocusEvent;
-  oninput: Event;
-  oninvalid: Event;
-  onkeydown: KeyboardEvent;
-  onkeypress: KeyboardEvent;
-  onkeyup: KeyboardEvent;
-  onload: Event;
-  onloadeddata: Event;
-  onloadedmetadata: Event;
-  onloadend: Event;
-  onloadstart: Event;
-  onmousedown: MouseEvent;
-  onmouseenter: MouseEvent;
-  onmouseleave: MouseEvent;
-  onmousemove: MouseEvent;
-  onmouseout: MouseEvent;
-  onmouseover: MouseEvent;
-  onmouseup: MouseEvent;
-  onmousewheel: WheelEvent;
-  onpaste: ClipboardEvent;
-  onpause: Event;
-  onplay: Event;
-  onplaying: Event;
-  onpointercancel: PointerEvent;
-  onpointerdown: PointerEvent;
-  onpointerenter: PointerEvent;
-  onpointerleave: PointerEvent;
-  onpointermove: PointerEvent;
-  onpointerout: PointerEvent;
-  onpointerover: PointerEvent;
-  onpointerup: PointerEvent;
-  onprogress: ProgressEvent;
-  onratechange: Event;
-  onreset: Event;
-  onscroll: UIEvent;
-  onseeked: Event;
-  onseeking: Event;
-  onselect: UIEvent;
-  onselectstart: Event;
-  onstalled: Event;
-  onsubmit: Event;
-  onsuspend: Event;
-  ontimeupdate: Event;
-  onvolumechange: Event;
-  onwaiting: Event;
-};
-
-
-/**
  * The names of the supported HTML5 CSS property names.
  *
  * If a standardized or widely supported name is missing, please open
@@ -553,6 +466,93 @@ type CSSPropertyNames = (
   'zIndex' |
   'zoom'
 );
+
+
+/**
+ * A mapping of inline event name to event object type.
+ *
+ * This mapping is used to create the event listener properties for
+ * the virtual DOM element attributes object. If a standardized or
+ * widely supported name is missing, please open an issue to have it
+ * added.
+ *
+ * The event names were collected from the following sources:
+ *   - TypeScript's `lib.dom.d.ts` file
+ *   - https://www.w3.org/TR/html5/index.html#attributes-1
+ *   - https://html.spec.whatwg.org/multipage/webappapis.html#idl-definitions
+ */
+export
+type ElementEventMap = {
+  onabort: UIEvent;
+  onauxclick: MouseEvent;
+  onblur: FocusEvent;
+  oncanplay: Event;
+  oncanplaythrough: Event;
+  onchange: Event;
+  onclick: MouseEvent;
+  oncontextmenu: PointerEvent;
+  oncopy: ClipboardEvent;
+  oncuechange: Event;
+  oncut: ClipboardEvent;
+  ondblclick: MouseEvent;
+  ondrag: DragEvent;
+  ondragend: DragEvent;
+  ondragenter: DragEvent;
+  ondragexit: DragEvent;
+  ondragleave: DragEvent;
+  ondragover: DragEvent;
+  ondragstart: DragEvent;
+  ondrop: DragEvent;
+  ondurationchange: Event;
+  onemptied: Event;
+  onended: MediaStreamErrorEvent;
+  onerror: ErrorEvent;
+  onfocus: FocusEvent;
+  oninput: Event;
+  oninvalid: Event;
+  onkeydown: KeyboardEvent;
+  onkeypress: KeyboardEvent;
+  onkeyup: KeyboardEvent;
+  onload: Event;
+  onloadeddata: Event;
+  onloadedmetadata: Event;
+  onloadend: Event;
+  onloadstart: Event;
+  onmousedown: MouseEvent;
+  onmouseenter: MouseEvent;
+  onmouseleave: MouseEvent;
+  onmousemove: MouseEvent;
+  onmouseout: MouseEvent;
+  onmouseover: MouseEvent;
+  onmouseup: MouseEvent;
+  onmousewheel: WheelEvent;
+  onpaste: ClipboardEvent;
+  onpause: Event;
+  onplay: Event;
+  onplaying: Event;
+  onpointercancel: PointerEvent;
+  onpointerdown: PointerEvent;
+  onpointerenter: PointerEvent;
+  onpointerleave: PointerEvent;
+  onpointermove: PointerEvent;
+  onpointerout: PointerEvent;
+  onpointerover: PointerEvent;
+  onpointerup: PointerEvent;
+  onprogress: ProgressEvent;
+  onratechange: Event;
+  onreset: Event;
+  onscroll: UIEvent;
+  onseeked: Event;
+  onseeking: Event;
+  onselect: UIEvent;
+  onselectstart: Event;
+  onstalled: Event;
+  onsubmit: Event;
+  onsuspend: Event;
+  ontimeupdate: Event;
+  onvolumechange: Event;
+  onwaiting: Event;
+};
 
 
 /**
