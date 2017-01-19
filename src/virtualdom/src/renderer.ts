@@ -185,7 +185,7 @@ namespace Private {
       if (newKey && newKey in oldKeyed) {
         let pair = oldKeyed[newKey];
         if (pair.vNode !== oldElemNode) {
-          ArrayExt.move(oldCopy, oldCopy.indexOf(pair.vNode), i);
+          ArrayExt.move(oldCopy, oldCopy.indexOf(pair.vNode, i), i);
           host.insertBefore(pair.element, currElem);
           oldElemNode = pair.vNode;
           currElem = pair.element;
