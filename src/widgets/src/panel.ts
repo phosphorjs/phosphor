@@ -54,7 +54,7 @@ class Panel extends Widget {
    * @param widget - The widget to add to the panel.
    *
    * #### Notes
-   * If the is already contained in the panel, it will be moved.
+   * If the widget is already contained in the panel, it will be moved.
    */
   addWidget(widget: Widget): void {
     (this.layout as PanelLayout).addWidget(widget);
