@@ -635,7 +635,7 @@ class Widget implements IDisposable, IMessageHandler {
    * #### Notes
    * The default implementation of this handler is a no-op.
    */
-  protected oBeforeAttach(msg: Message): void { }
+  protected onBeforeAttach(msg: Message): void { }
 
   /**
    * A message handler invoked on an `'after-attach'` message.
