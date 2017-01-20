@@ -6,38 +6,16 @@
 | The full license is in the file LICENSE, distributed with this software.
 |----------------------------------------------------------------------------*/
 import {
-  IIterator, each
-} from '../algorithm/iteration';
+  ArrayExt, IIterator, each, iter
+} from '@phosphor/algorithm';
 
 import {
-  move
-} from '../algorithm/mutation';
+  MessageLoop
+} from '@phosphor/messaging';
 
 import {
-  indexOf
-} from '../algorithm/searching';
-
-import {
-  ISequence
-} from '../algorithm/sequence';
-
-import {
-  Vector
-} from '../collections/vector';
-
-import {
-  sendMessage
-} from '../core/messaging';
-
-import {
-  Layout, Widget, WidgetMessage
+  Layout, Widget
 } from './widget';
-
-
-/**
- * The class name added to Panel instances.
- */
-const PANEL_CLASS = 'p-Panel';
 
 
 /**
@@ -59,17 +37,14 @@ class Panel extends Widget {
    */
   constructor(options: Panel.IOptions = {}) {
     super();
-    this.addClass(PANEL_CLASS);
+    this.addClass(Panel.PANEL_CLASS);
     this.layout = Private.createLayout(options);
   }
 
   /**
-   * A read-only sequence of the widgets in the panel.
-   *
-   * #### Notes
-   * This is a read-only property.
+   * A read-only array of the widgets in the panel.
    */
-  get widgets(): ISequence<Widget> {
+  get widgets(): ReadonlyArray<Widget> {
     return (this.layout as PanelLayout).widgets;
   }
 
@@ -107,6 +82,12 @@ class Panel extends Widget {
 export
 namespace Panel {
   /**
+   * The class name added to Panel instances.
+   */
+  export
+  const PANEL_CLASS = 'p-Panel';
+
+  /**
    * An options object for creating a panel.
    */
   export
@@ -143,18 +124,15 @@ class PanelLayout extends Layout {
    */
   dispose(): void {
     while (this._widgets.length > 0) {
-      this._widgets.popBack().dispose();
+      this._widgets.pop()!.dispose();
     }
     super.dispose();
   }
 
   /**
-   * A read-only sequence of the widgets in the layout.
-   *
-   * #### Notes
-   * This is a read-only property.
+   * A read-only array of the widgets in the layout.
    */
-  get widgets(): ISequence<Widget> {
+  get widgets(): ReadonlyArray<Widget> {
     return this._widgets;
   }
 
@@ -164,7 +142,7 @@ class PanelLayout extends Layout {
    * @returns A new iterator over the widgets in the layout.
    */
   iter(): IIterator<Widget> {
-    return this._widgets.iter();
+    return iter(this._widgets);
   }
 
   /**
@@ -190,6 +168,9 @@ class PanelLayout extends Layout {
    * The index will be clamped to the bounds of the widgets.
    *
    * If the widget is already added to the layout, it will be moved.
+   *
+   * #### Undefined Behavior
+   * An `index` which is non-integral.
    */
   insertWidget(index: number, widget: Widget): void {
     // Remove the widget from its current parent. This is a no-op
@@ -197,36 +178,44 @@ class PanelLayout extends Layout {
     widget.parent = this.parent;
 
     // Look up the current index of the widget.
-    let i = indexOf(this._widgets, widget);
+    let i = this._widgets.indexOf(widget);
 
-    // Clamp the insert index to the vector bounds.
-    let j = Math.max(0, Math.min(Math.floor(index), this._widgets.length));
+    // Clamp the insert index to the array bounds.
+    let j = Math.max(0, Math.min(index, this._widgets.length));
 
     // If the widget is not in the vector, insert it.
     if (i === -1) {
       // Insert the widget into the vector.
-      this._widgets.insert(j, widget);
+      ArrayExt.insert(this._widgets, j, widget);
 
       // If the layout is parented, attach the widget to the DOM.
-      if (this.parent) this.attachWidget(j, widget);
+      if (this.parent) {
+        this.attachWidget(j, widget);
+      }
 
       // There is nothing more to do.
       return;
     }
 
-    // Otherwise, the widget exists in the vector and should be moved.
+    // Otherwise, the widget exists in the array and should be moved.
 
-    // Adjust the index if the location is at the end of the vector.
-    if (j === this._widgets.length) j--;
+    // Adjust the index if the location is at the end of the array.
+    if (j === this._widgets.length) {
+      j--;
+    }
 
     // Bail if there is no effective move.
-    if (i === j) return;
+    if (i === j) {
+      return;
+    }
 
     // Move the widget to the new location.
-    move(this._widgets, i, j);
+    ArrayExt.move(this._widgets, i, j);
 
     // If the layout is parented, move the widget in the DOM.
-    if (this.parent) this.moveWidget(i, j, widget);
+    if (this.parent) {
+      this.moveWidget(i, j, widget);
+    }
   }
 
   /**
@@ -243,7 +232,7 @@ class PanelLayout extends Layout {
    * This method does *not* modify the widget's `parent`.
    */
   removeWidget(widget: Widget): void {
-    this.removeWidgetAt(indexOf(this._widgets, widget));
+    this.removeWidgetAt(this._widgets.indexOf(widget));
   }
 
   /**
@@ -258,19 +247,18 @@ class PanelLayout extends Layout {
    * parent widget.
    *
    * This method does *not* modify the widget's `parent`.
+   *
+   * #### Undefined Behavior
+   * An `index` which is non-integral.
    */
   removeWidgetAt(index: number): void {
-    // Bail if the index is out of range.
-    let i = Math.floor(index);
-    if (i < 0 || i >= this._widgets.length) {
-      return;
-    }
-
-    // Remove the widget from the vector.
-    let widget = this._widgets.removeAt(i);
+    // Remove the widget from the array.
+    let widget = ArrayExt.removeAt(this._widgets, index);
 
     // If the layout is parented, detach the widget from the DOM.
-    if (this.parent) this.detachWidget(i, widget);
+    if (widget && this.parent) {
+      this.detachWidget(index, widget);
+    }
   }
 
   /**
@@ -278,8 +266,9 @@ class PanelLayout extends Layout {
    */
   protected init(): void {
     super.init();
-    let index = 0;
-    each(this, widget => { this.attachWidget(index++, widget); });
+    each(this, (widget, index) => {
+      this.attachWidget(index, widget);
+    });
   }
 
   /**
@@ -294,23 +283,28 @@ class PanelLayout extends Layout {
    * appropriate time. It should not be called directly by user code.
    *
    * The default implementation adds the widgets's node to the parent's
-   * node at the proper location, and sends an `'after-attach'` message
-   * to the widget if the parent is attached to the DOM.
+   * node at the proper location, and sends the appropriate attach
+   * messages to the widget if the parent is attached to the DOM.
    *
    * Subclasses may reimplement this method to control how the widget's
-   * node is added to the parent's node, but the reimplementation must
-   * send an `'after-attach'` message to the widget if the parent is
-   * attached to the DOM.
+   * node is added to the parent's node.
    */
   protected attachWidget(index: number, widget: Widget): void {
     // Look up the next sibling reference widget.
-    let ref = this._widgets.at(index + 1) || null;
+    let ref = this._widgets[index + 1] || null;
+
+    // Send a `'before-attach'` message if the parent is attached.
+    if (this.parent!.isAttached) {
+      MessageLoop.sendMessage(widget, Widget.Msg.BeforeAttach);
+    }
 
     // Insert the widget's node before the sibling.
-    this.parent.node.insertBefore(widget.node, ref && ref.node);
+    this.parent!.node.insertBefore(widget.node, ref && ref.node);
 
     // Send an `'after-attach'` message if the parent is attached.
-    if (this.parent.isAttached) sendMessage(widget, WidgetMessage.AfterAttach);
+    if (this.parent!.isAttached) {
+      MessageLoop.sendMessage(widget, Widget.Msg.AfterAttach);
+    }
   }
 
   /**
@@ -327,30 +321,41 @@ class PanelLayout extends Layout {
    * appropriate time. It should not be called directly by user code.
    *
    * The default implementation moves the widget's node to the proper
-   * location in the parent's node and sends both a `'before-detach'`
-   * and an `'after-attach'` message to the widget if the parent is
-   * attached to the DOM.
+   * location in the parent's node and sends the appropriate attach and
+   * detach messages to the widget if the parent is attached to the DOM.
    *
    * Subclasses may reimplement this method to control how the widget's
-   * node is moved in the parent's node, but the reimplementation must
-   * send both a `'before-detach'` and an `'after-attach'` message to
-   * the widget if the parent is attached to the DOM.
+   * node is moved in the parent's node.
    */
   protected moveWidget(fromIndex: number, toIndex: number, widget: Widget): void {
     // Send a `'before-detach'` message if the parent is attached.
-    if (this.parent.isAttached) sendMessage(widget, WidgetMessage.BeforeDetach);
+    if (this.parent!.isAttached) {
+      MessageLoop.sendMessage(widget, Widget.Msg.BeforeDetach);
+    }
 
     // Remove the widget's node from the parent.
-    this.parent.node.removeChild(widget.node);
+    this.parent!.node.removeChild(widget.node);
+
+    // Send an `'after-detach'` and  message if the parent is attached.
+    if (this.parent!.isAttached) {
+      MessageLoop.sendMessage(widget, Widget.Msg.AfterDetach);
+    }
 
     // Look up the next sibling reference node.
-    let ref = this.parent.node.children[toIndex];
+    let ref = this.parent!.node.children[toIndex];
+
+    // Send a `'before-attach'` message if the parent is attached.
+    if (this.parent!.isAttached) {
+      MessageLoop.sendMessage(widget, Widget.Msg.BeforeAttach);
+    }
 
     // Insert the widget's node before the sibling.
-    this.parent.node.insertBefore(widget.node, ref);
+    this.parent!.node.insertBefore(widget.node, ref);
 
     // Send an `'after-attach'` message if the parent is attached.
-    if (this.parent.isAttached) sendMessage(widget, WidgetMessage.AfterAttach);
+    if (this.parent!.isAttached) {
+      MessageLoop.sendMessage(widget, Widget.Msg.AfterAttach);
+    }
   }
 
   /**
@@ -365,23 +370,28 @@ class PanelLayout extends Layout {
    * appropriate time. It should not be called directly by user code.
    *
    * The default implementation removes the widget's node from the
-   * parent's node, and sends a `'before-detach'` message to the widget
-   * if the parent is attached to the DOM.
+   * parent's node, and sends the appropriate detach messages to the
+   * widget if the parent is attached to the DOM.
    *
    * Subclasses may reimplement this method to control how the widget's
-   * node is removed from the parent's node, but the reimplementation
-   * must send a `'before-detach'` message to the widget if the parent
-   * is attached to the DOM.
+   * node is removed from the parent's node.
    */
   protected detachWidget(index: number, widget: Widget): void {
     // Send a `'before-detach'` message if the parent is attached.
-    if (this.parent.isAttached) sendMessage(widget, WidgetMessage.BeforeDetach);
+    if (this.parent!.isAttached) {
+      MessageLoop.sendMessage(widget, Widget.Msg.BeforeDetach);
+    }
 
     // Remove the widget's node from the parent.
-    this.parent.node.removeChild(widget.node);
+    this.parent!.node.removeChild(widget.node);
+
+    // Send an `'after-detach'` message if the parent is attached.
+    if (this.parent!.isAttached) {
+      MessageLoop.sendMessage(widget, Widget.Msg.AfterDetach);
+    }
   }
 
-  private _widgets = new Vector<Widget>();
+  private _widgets: Widget[] = [];
 }
 
 
