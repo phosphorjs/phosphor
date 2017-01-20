@@ -77,7 +77,7 @@ class Title<T> {
       return;
     }
     this._label = value;
-    this._changed.emit(void 0);
+    this._changed.emit(undefined);
   }
 
   /**
@@ -98,7 +98,7 @@ class Title<T> {
       return;
     }
     this._mnemonic = value;
-    this._changed.emit(void 0);
+    this._changed.emit(undefined);
   }
 
   /**
@@ -122,7 +122,7 @@ class Title<T> {
       return;
     }
     this._icon = value;
-    this._changed.emit(void 0);
+    this._changed.emit(undefined);
   }
 
   /**
@@ -143,7 +143,7 @@ class Title<T> {
       return;
     }
     this._caption = value;
-    this._changed.emit(void 0);
+    this._changed.emit(undefined);
   }
 
   /**
@@ -167,7 +167,7 @@ class Title<T> {
       return;
     }
     this._className = value;
-    this._changed.emit(void 0);
+    this._changed.emit(undefined);
   }
 
   /**
@@ -191,7 +191,7 @@ class Title<T> {
       return;
     }
     this._closable = value;
-    this._changed.emit(void 0);
+    this._changed.emit(undefined);
   }
 
   private _icon = '';
