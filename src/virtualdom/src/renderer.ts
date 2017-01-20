@@ -343,7 +343,7 @@ namespace Private {
    */
   function addStyle(element: HTMLElement, style: ElementInlineStyle): void {
     let elemStyle = element.style;
-    let name: keyof ElementInlineStyle
+    let name: keyof ElementInlineStyle;
     for (name in style) {
       elemStyle[name] = style[name];
     }
