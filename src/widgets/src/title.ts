@@ -6,65 +6,58 @@
 | The full license is in the file LICENSE, distributed with this software.
 |----------------------------------------------------------------------------*/
 import {
-  ISignal, defineSignal
-} from '../core/signaling';
+  ISignal, Signal
+} from '@phosphor/signaling';
 
 
 /**
- * An object which holds data related to a widget's title.
+ * An object which holds data related to an object's title.
  *
  * #### Notes
  * A title object is intended to hold the data necessary to display a
- * header for a particular widget. A common example is the `TabPanel`,
+ * header for a particular object. A common example is the `TabPanel`,
  * which uses the widget title to populate the tab for a child widget.
  */
 export
-class Title {
+class Title<T> {
   /**
    * Construct a new title.
    *
    * @param options - The options for initializing the title.
    */
-  constructor(options: Title.IOptions = {}) {
-    if (options.owner !== void 0) {
-      this._owner = options.owner;
-    }
-    if (options.label !== void 0) {
+  constructor(options: Title.IOptions<T>) {
+    this.owner = options.owner;
+    if (options.label !== undefined) {
       this._label = options.label;
     }
-    if (options.mnemonic !== void 0) {
+    if (options.mnemonic !== undefined) {
       this._mnemonic = options.mnemonic;
     }
-    if (options.icon !== void 0) {
+    if (options.icon !== undefined) {
       this._icon = options.icon;
     }
-    if (options.caption !== void 0) {
+    if (options.caption !== undefined) {
       this._caption = options.caption;
     }
-    if (options.closable !== void 0) {
-      this._closable = options.closable;
-    }
-    if (options.className !== void 0) {
+    if (options.className !== undefined) {
       this._className = options.className;
+    }
+    if (options.closable !== undefined) {
+      this._closable = options.closable;
     }
   }
 
   /**
    * A signal emitted when the state of the title changes.
    */
-  changed: ISignal<Title, void>;
+  get changed(): ISignal<this, void> {
+    return this._changed;
+  }
 
   /**
-   * Get the object which owns the title.
-   *
-   * #### Notes
-   * This will be `null` if the title has no owner.
-   *
-   * This is a read-only property.
+   * The object which owns the title.
    */
-  get owner(): any {
-    return this._owner;
-  }
+  readonly owner: T;
 
   /**
    * Get the label for the title.
@@ -84,7 +77,7 @@ class Title {
       return;
     }
     this._label = value;
-    this.changed.emit(void 0);
+    this._changed.emit(void 0);
   }
 
   /**
@@ -105,7 +98,7 @@ class Title {
       return;
     }
     this._mnemonic = value;
-    this.changed.emit(void 0);
+    this._changed.emit(void 0);
   }
 
   /**
@@ -129,7 +122,7 @@ class Title {
       return;
     }
     this._icon = value;
-    this.changed.emit(void 0);
+    this._changed.emit(void 0);
   }
 
   /**
@@ -150,7 +143,7 @@ class Title {
       return;
     }
     this._caption = value;
-    this.changed.emit(void 0);
+    this._changed.emit(void 0);
   }
 
   /**
@@ -174,7 +167,7 @@ class Title {
       return;
     }
     this._className = value;
-    this.changed.emit(void 0);
+    this._changed.emit(void 0);
   }
 
   /**
@@ -198,21 +191,17 @@ class Title {
       return;
     }
     this._closable = value;
-    this.changed.emit(void 0);
+    this._changed.emit(void 0);
   }
 
-  private _label = '';
   private _icon = '';
+  private _label = '';
   private _caption = '';
   private _mnemonic = -1;
   private _className = '';
   private _closable = false;
-  private _owner: any = null;
+  private _changed = new Signal<this, void>(this);
 }
-
-
-// Define the signals for the `Title` class.
-defineSignal(Title.prototype, 'changed');
 
 
 /**
@@ -224,11 +213,11 @@ namespace Title {
    * An options object for initializing a title.
    */
   export
-  interface IOptions {
+  interface IOptions<T> {
     /**
      * The object which owns the title.
      */
-    owner?: any;
+    owner: T;
 
     /**
      * The label for the title.
