@@ -5,9 +5,6 @@
 |
 | The full license is in the file LICENSE, distributed with this software.
 |----------------------------------------------------------------------------*/
-import {
-  SequenceOrArrayLike, asSequence
-} from '../algorithm/sequence';
 
 
 /**
@@ -169,15 +166,12 @@ class BoxSizer {
  * create new sizer objects on each resize event.
  */
 export
-function boxCalc(object: SequenceOrArrayLike<BoxSizer>, space: number): void {
+function boxCalc(sizers: ArrayLike<BoxSizer>, space: number): void {
   // Bail early if there is nothing to do.
-  let count = object.length;
+  let count = sizers.length;
   if (count === 0) {
     return;
   }
-
-  // Cast the object to a sequence of sizers.
-  let sizers = asSequence(object);
 
   // Setup the size and stretch counters.
   let totalMin = 0;
@@ -188,7 +182,7 @@ function boxCalc(object: SequenceOrArrayLike<BoxSizer>, space: number): void {
 
   // Setup the sizers and compute the totals.
   for (let i = 0; i < count; ++i) {
-    let sizer = sizers.at(i);
+    let sizer = sizers[i];
     let min = sizer.minSize;
     let max = sizer.maxSize;
     let hint = sizer.sizeHint;
@@ -211,7 +205,7 @@ function boxCalc(object: SequenceOrArrayLike<BoxSizer>, space: number): void {
   // If the space is less than the total min, minimize each sizer.
   if (space <= totalMin) {
     for (let i = 0; i < count; ++i) {
-      let sizer = sizers.at(i);
+      let sizer = sizers[i];
       sizer.size = sizer.minSize;
     }
     return;
@@ -220,7 +214,7 @@ function boxCalc(object: SequenceOrArrayLike<BoxSizer>, space: number): void {
   // If the space is greater than the total max, maximize each sizer.
   if (space >= totalMax) {
     for (let i = 0; i < count; ++i) {
-      let sizer = sizers.at(i);
+      let sizer = sizers[i];
       sizer.size = sizer.maxSize;
     }
     return;
@@ -249,7 +243,7 @@ function boxCalc(object: SequenceOrArrayLike<BoxSizer>, space: number): void {
       let distSpace = freeSpace;
       let distStretch = totalStretch;
       for (let i = 0; i < count; ++i) {
-        let sizer = sizers.at(i);
+        let sizer = sizers[i];
         if (sizer.done || sizer.stretch === 0) {
           continue;
         }
@@ -272,7 +266,7 @@ function boxCalc(object: SequenceOrArrayLike<BoxSizer>, space: number): void {
     while (notDoneCount > 0 && freeSpace > nearZero) {
       let amt = freeSpace / notDoneCount;
       for (let i = 0; i < count; ++i) {
-        let sizer = sizers.at(i);
+        let sizer = sizers[i];
         if (sizer.done) {
           continue;
         }
@@ -301,7 +295,7 @@ function boxCalc(object: SequenceOrArrayLike<BoxSizer>, space: number): void {
       let distSpace = freeSpace;
       let distStretch = totalStretch;
       for (let i = 0; i < count; ++i) {
-        let sizer = sizers.at(i);
+        let sizer = sizers[i];
         if (sizer.done || sizer.stretch === 0) {
           continue;
         }
@@ -324,7 +318,7 @@ function boxCalc(object: SequenceOrArrayLike<BoxSizer>, space: number): void {
     while (notDoneCount > 0 && freeSpace > nearZero) {
       let amt = freeSpace / notDoneCount;
       for (let i = 0; i < count; ++i) {
-        let sizer = sizers.at(i);
+        let sizer = sizers[i];
         if (sizer.done) {
           continue;
         }
@@ -346,7 +340,7 @@ function boxCalc(object: SequenceOrArrayLike<BoxSizer>, space: number): void {
 /**
  * Adjust a sizer by a delta and adjust its neighbors accordingly.
  *
- * @param object - The sizers which should be adjusted.
+ * @param sizers - The sizers which should be adjusted.
  *
  * @param index - The index of the sizer to grow.
  *
@@ -361,17 +355,17 @@ function boxCalc(object: SequenceOrArrayLike<BoxSizer>, space: number): void {
  * between the sizers are interactively adjustable by the user.
  */
 export
-function adjustSizer(object: SequenceOrArrayLike<BoxSizer>, index: number, delta: number): void {
+function adjustSizer(sizers: ArrayLike<BoxSizer>, index: number, delta: number): void {
   // Bail early when there is nothing to do.
-  if (object.length === 0 || delta === 0) {
+  if (sizers.length === 0 || delta === 0) {
     return;
   }
 
   // Dispatch to the proper implementation.
   if (delta > 0) {
-    Private.growSizer(object, index, delta);
+    Private.growSizer(sizers, index, delta);
   } else {
-    Private.shrinkSizer(object, index, -delta);
+    Private.shrinkSizer(sizers, index, -delta);
   }
 }
 
@@ -384,21 +378,18 @@ namespace Private {
    * Grow a sizer by a positive delta and adjust neighbors.
    */
   export
-  function growSizer(object: SequenceOrArrayLike<BoxSizer>, index: number, delta: number): void {
-    // Cast the object to a sequence of sizers.
-    let sizers = asSequence(object);
-
+  function growSizer(sizers: ArrayLike<BoxSizer>, index: number, delta: number): void {
     // Compute how much the items to the left can expand.
     let growLimit = 0;
     for (let i = 0; i <= index; ++i) {
-      let sizer = sizers.at(i);
+      let sizer = sizers[i];
       growLimit += sizer.maxSize - sizer.size;
     }
 
     // Compute how much the items to the right can shrink.
     let shrinkLimit = 0;
     for (let i = index + 1, n = sizers.length; i < n; ++i) {
-      let sizer = sizers.at(i);
+      let sizer = sizers[i];
       shrinkLimit += sizer.size - sizer.minSize;
     }
 
@@ -408,7 +399,7 @@ namespace Private {
     // Grow the sizers to the left by the delta.
     let grow = delta;
     for (let i = index; i >= 0 && grow > 0; --i) {
-      let sizer = sizers.at(i);
+      let sizer = sizers[i];
       let limit = sizer.maxSize - sizer.size;
       if (limit >= grow) {
         sizer.sizeHint = sizer.size + grow;
@@ -422,7 +413,7 @@ namespace Private {
     // Shrink the sizers to the right by the delta.
     let shrink = delta;
     for (let i = index + 1, n = sizers.length; i < n && shrink > 0; ++i) {
-      let sizer = sizers.at(i);
+      let sizer = sizers[i];
       let limit = sizer.size - sizer.minSize;
       if (limit >= shrink) {
         sizer.sizeHint = sizer.size - shrink;
@@ -438,21 +429,18 @@ namespace Private {
    * Shrink a sizer by a positive delta and adjust neighbors.
    */
   export
-  function shrinkSizer(object: SequenceOrArrayLike<BoxSizer>, index: number, delta: number): void {
-    // Cast the object to a sequence of sizers.
-    let sizers = asSequence(object);
-
+  function shrinkSizer(sizers: ArrayLike<BoxSizer>, index: number, delta: number): void {
     // Compute how much the items to the right can expand.
     let growLimit = 0;
     for (let i = index + 1, n = sizers.length; i < n; ++i) {
-      let sizer = sizers.at(i);
+      let sizer = sizers[i];
       growLimit += sizer.maxSize - sizer.size;
     }
 
     // Compute how much the items to the left can shrink.
     let shrinkLimit = 0;
     for (let i = 0; i <= index; ++i) {
-      let sizer = sizers.at(i);
+      let sizer = sizers[i];
       shrinkLimit += sizer.size - sizer.minSize;
     }
 
@@ -462,7 +450,7 @@ namespace Private {
     // Grow the sizers to the right by the delta.
     let grow = delta;
     for (let i = index + 1, n = sizers.length; i < n && grow > 0; ++i) {
-      let sizer = sizers.at(i);
+      let sizer = sizers[i];
       let limit = sizer.maxSize - sizer.size;
       if (limit >= grow) {
         sizer.sizeHint = sizer.size + grow;
@@ -476,7 +464,7 @@ namespace Private {
     // Shrink the sizers to the left by the delta.
     let shrink = delta;
     for (let i = index; i >= 0 && shrink > 0; --i) {
-      let sizer = sizers.at(i);
+      let sizer = sizers[i];
       let limit = sizer.size - sizer.minSize;
       if (limit >= shrink) {
         sizer.sizeHint = sizer.size - shrink;
