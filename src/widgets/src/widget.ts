@@ -408,6 +408,9 @@ class Widget implements IDisposable, IMessageHandler {
     }
     this.setFlag(Widget.Flag.IsHidden);
     this.addClass(Widget.HIDDEN_CLASS);
+    if (this.isAttached && (!this.parent || this.parent.isVisible)) {
+      MessageLoop.sendMessage(this, Widget.Msg.AfterHide);
+    }
     if (this.parent) {
       let msg = new Widget.ChildMessage('child-hidden', this);
       MessageLoop.sendMessage(this.parent, msg);
@@ -491,6 +494,10 @@ class Widget implements IDisposable, IMessageHandler {
       this.notifyLayout(msg);
       this.onBeforeHide(msg);
       this.clearFlag(Widget.Flag.IsVisible);
+      break;
+    case 'after-hide':
+      this.notifyLayout(msg);
+      this.onAfterHide(msg);
       break;
     case 'before-attach':
       this.notifyLayout(msg);
@@ -613,6 +620,14 @@ class Widget implements IDisposable, IMessageHandler {
    * The default implementation of this handler is a no-op.
    */
   protected onBeforeHide(msg: Message): void { }
+
+  /**
+   * A message handler invoked on an `'after-hide'` message.
+   *
+   * #### Notes
+   * The default implementation of this handler is a no-op.
+   */
+  protected onAfterHide(msg: Message): void { }
 
   /**
    * A message handler invoked on a `'before-attach'` message.
@@ -770,6 +785,17 @@ namespace Widget {
      */
     export
     const BeforeHide = new Message('before-hide');
+
+    /**
+     * A singleton `'after-hide'` message.
+     *
+     * #### Notes
+     * This message is sent to a widget after it becomes not-visible.
+     *
+     * This message is **not** sent when the widget is being detached.
+     */
+    export
+    const AfterHide = new Message('after-hide');
 
     /**
      * A singleton `'before-attach'` message.
@@ -1198,6 +1224,9 @@ abstract class Layout implements IIterable<Widget>, IDisposable {
     case 'before-hide':
       this.onBeforeHide(msg);
       break;
+    case 'after-hide':
+      this.onAfterHide(msg);
+      break;
     case 'before-attach':
       this.onBeforeAttach(msg);
       break;
@@ -1390,6 +1419,24 @@ abstract class Layout implements IIterable<Widget>, IDisposable {
    * This may be reimplemented by subclasses as needed.
    */
   protected onBeforeHide(msg: Message): void {
+    each(this, widget => {
+      if (!widget.isHidden) {
+        MessageLoop.sendMessage(widget, msg);
+      }
+    });
+  }
+
+  /**
+   * A message handler invoked on an `'after-hide'` message.
+   *
+   * #### Notes
+   * The default implementation of this method forwards the message to
+   * all non-hidden widgets. It assumes all widget nodes are attached
+   * to the parent widget node.
+   *
+   * This may be reimplemented by subclasses as needed.
+   */
+  protected onAfterHide(msg: Message): void {
     each(this, widget => {
       if (!widget.isHidden) {
         MessageLoop.sendMessage(widget, msg);
