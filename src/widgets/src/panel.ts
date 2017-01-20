@@ -183,9 +183,9 @@ class PanelLayout extends Layout {
     // Clamp the insert index to the array bounds.
     let j = Math.max(0, Math.min(index, this._widgets.length));
 
-    // If the widget is not in the vector, insert it.
+    // If the widget is not in the array, insert it.
     if (i === -1) {
-      // Insert the widget into the vector.
+      // Insert the widget into the array.
       ArrayExt.insert(this._widgets, j, widget);
 
       // If the layout is parented, attach the widget to the DOM.
