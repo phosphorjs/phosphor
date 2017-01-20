@@ -7,39 +7,27 @@
 |----------------------------------------------------------------------------*/
 import {
   IIterable, IIterator, each, empty
-} from '../algorithm/iteration';
+} from '@phosphor/algorithm';
 
 import {
   IDisposable
-} from '../core/disposable';
+} from '@phosphor/disposable';
 
 import {
-  ConflatableMessage, IMessageHandler, Message, clearMessageData, postMessage,
-  sendMessage
-} from '../core/messaging';
+  ConflatableMessage, IMessageHandler, Message, MessageLoop
+} from '@phosphor/messaging';
 
 import {
-  AttachedProperty, clearPropertyData
-} from '../core/properties';
+  AttachedProperty
+} from '@phosphor/properties';
 
 import {
-  ISignal, clearSignalData, defineSignal
-} from '../core/signaling';
+  ISignal, Signal
+} from '@phosphor/signaling';
 
 import {
   Title
 } from './title';
-
-
-/**
- * The class name added to Widget instances.
- */
-const WIDGET_CLASS = 'p-Widget';
-
-/**
- * The class name added to hidden widgets.
- */
-const HIDDEN_CLASS = 'p-mod-hidden';
 
 
 /**
@@ -58,8 +46,8 @@ class Widget implements IDisposable, IMessageHandler {
    * @param options - The options for initializing the widget.
    */
   constructor(options: Widget.IOptions = {}) {
-    this._node = Private.createNode(options);
-    this.addClass(WIDGET_CLASS);
+    this.node = Private.createNode(options);
+    this.addClass(Widget.WIDGET_CLASS);
   }
 
   /**
@@ -77,8 +65,8 @@ class Widget implements IDisposable, IMessageHandler {
     }
 
     // Set the disposed flag and emit the disposed signal.
-    this.setFlag(WidgetFlag.IsDisposed);
-    this.disposed.emit(void 0);
+    this.setFlag(Widget.Flag.IsDisposed);
+    this._disposed.emit(undefined);
 
     // Remove or detach the widget if necessary.
     if (this.parent) {
@@ -93,48 +81,43 @@ class Widget implements IDisposable, IMessageHandler {
       this._layout = null;
     }
 
-    // Clear the attached data associated with the widget.
-    clearSignalData(this);
-    clearMessageData(this);
-    clearPropertyData(this);
-
-    // Clear the reference to the DOM node.
-    this._node = null;
+    // Clear the extra data associated with the widget.
+    Signal.clearData(this);
+    MessageLoop.clearData(this);
+    AttachedProperty.clearData(this);
   }
 
   /**
    * A signal emitted when the widget is disposed.
    */
-  disposed: ISignal<Widget, void>;
+  get disposed(): ISignal<this, void> {
+    return this._disposed;
+  }
+
+  /**
+   * Get the DOM node owned by the widget.
+   */
+  readonly node: HTMLElement;
 
   /**
    * Test whether the widget has been disposed.
-   *
-   * #### Notes
-   * This is a read-only property.
    */
   get isDisposed(): boolean {
-    return this.testFlag(WidgetFlag.IsDisposed);
+    return this.testFlag(Widget.Flag.IsDisposed);
   }
 
   /**
    * Test whether the widget's node is attached to the DOM.
-   *
-   * #### Notes
-   * This is a read-only property.
    */
   get isAttached(): boolean {
-    return this.testFlag(WidgetFlag.IsAttached);
+    return this.testFlag(Widget.Flag.IsAttached);
   }
 
   /**
    * Test whether the widget is explicitly hidden.
-   *
-   * #### Notes
-   * This is a read-only property.
    */
   get isHidden(): boolean {
-    return this.testFlag(WidgetFlag.IsHidden);
+    return this.testFlag(Widget.Flag.IsHidden);
   }
 
   /**
@@ -143,39 +126,13 @@ class Widget implements IDisposable, IMessageHandler {
    * #### Notes
    * A widget is visible when it is attached to the DOM, is not
    * explicitly hidden, and has no explicitly hidden ancestors.
-   *
-   * This is a read-only property.
    */
   get isVisible(): boolean {
-    return this.testFlag(WidgetFlag.IsVisible);
+    return this.testFlag(Widget.Flag.IsVisible);
   }
 
   /**
-   * Get the DOM node owned by the widget.
-   *
-   * #### Notes
-   * This is a read-only property.
-   */
-  get node(): HTMLElement {
-    return this._node;
-  }
-
-  /**
-   * Get the id of the widget's DOM node.
-   */
-  get id(): string {
-    return this._node.id;
-  }
-
-  /**
-   * Set the id of the widget's DOM node.
-   */
-  set id(value: string) {
-    this._node.id = value;
-  }
-
-  /**
-   * Get the title object for the widget.
+   * The title object for the widget.
    *
    * #### Notes
    * The title object is used by some container widgets when displaying
@@ -184,20 +141,29 @@ class Widget implements IDisposable, IMessageHandler {
    * Since not all widgets will use the title, it is created on demand.
    *
    * The `owner` property of the title is set to this widget.
-   *
-   * This is a read-only property.
    */
-  get title(): Title {
+  get title(): Title<Widget> {
     return Private.titleProperty.get(this);
   }
 
   /**
-   * Get the parent of the widget.
-   *
-   * #### Notes
-   * This will be `null` if the widget does not have a parent.
+   * Get the id of the widget's DOM node.
    */
-  get parent(): Widget {
+  get id(): string {
+    return this.node.id;
+  }
+
+  /**
+   * Set the id of the widget's DOM node.
+   */
+  set id(value: string) {
+    this.node.id = value;
+  }
+
+  /**
+   * Get the parent of the widget.
+   */
+  get parent(): Widget | null {
     return this._parent;
   }
 
@@ -212,8 +178,7 @@ class Widget implements IDisposable, IMessageHandler {
    *
    * This is a no-op if there is no effective parent change.
    */
-  set parent(value: Widget) {
-    value = value || null;
+  set parent(value: Widget | null) {
     if (this._parent === value) {
       return;
     }
@@ -221,22 +186,21 @@ class Widget implements IDisposable, IMessageHandler {
       throw new Error('Invalid parent widget.');
     }
     if (this._parent && !this._parent.isDisposed) {
-      sendMessage(this._parent, new ChildMessage('child-removed', this));
+      let msg = new Widget.ChildMessage('child-removed', this);
+      MessageLoop.sendMessage(this._parent, msg);
     }
     this._parent = value;
     if (this._parent && !this._parent.isDisposed) {
-      sendMessage(this._parent, new ChildMessage('child-added', this));
+      let msg = new Widget.ChildMessage('child-added', this);
+      MessageLoop.sendMessage(this._parent, msg);
     }
-    sendMessage(this, WidgetMessage.ParentChanged);
+    MessageLoop.sendMessage(this, Widget.Msg.ParentChanged);
   }
 
   /**
    * Get the layout for the widget.
-   *
-   * #### Notes
-   * This will be `null` if the widget does not have a layout.
    */
-  get layout(): Layout {
+  get layout(): Layout | null {
     return this._layout;
   }
 
@@ -244,27 +208,26 @@ class Widget implements IDisposable, IMessageHandler {
    * Set the layout for the widget.
    *
    * #### Notes
-   * The layout is single-use only. It cannot be set to `null` and it
-   * cannot be changed after the first assignment.
+   * The layout is single-use only. It cannot be changed after the
+   * first assignment.
    *
    * The layout is disposed automatically when the widget is disposed.
    */
-  set layout(value: Layout) {
-    value = value || null;
+  set layout(value: Layout | null) {
     if (this._layout === value) {
       return;
     }
-    if (this.testFlag(WidgetFlag.DisallowLayout)) {
+    if (this.testFlag(Widget.Flag.DisallowLayout)) {
       throw new Error('Cannot set widget layout.');
     }
     if (this._layout) {
       throw new Error('Cannot change widget layout.');
     }
-    if (value.parent) {
+    if (value!.parent) {
       throw new Error('Cannot change layout parent.');
     }
     this._layout = value;
-    value.parent = this;
+    value!.parent = this;
   }
 
   /**
@@ -289,8 +252,10 @@ class Widget implements IDisposable, IMessageHandler {
    * @returns `true` if the widget is a descendant, `false` otherwise.
    */
   contains(widget: Widget): boolean {
-    for (; widget; widget = widget._parent) {
-      if (widget === this) return true;
+    for (let value: Widget | null = widget; value; value = value._parent) {
+      if (value === this) {
+        return true;
+      }
     }
     return false;
   }
@@ -303,7 +268,7 @@ class Widget implements IDisposable, IMessageHandler {
    * @returns `true` if the node has the class, `false` otherwise.
    */
   hasClass(name: string): boolean {
-    return this._node.classList.contains(name);
+    return this.node.classList.contains(name);
   }
 
   /**
@@ -317,7 +282,7 @@ class Widget implements IDisposable, IMessageHandler {
    * The class name must not contain whitespace.
    */
   addClass(name: string): void {
-    this._node.classList.add(name);
+    this.node.classList.add(name);
   }
 
   /**
@@ -331,7 +296,7 @@ class Widget implements IDisposable, IMessageHandler {
    * The class name must not contain whitespace.
    */
   removeClass(name: string): void {
-    this._node.classList.remove(name);
+    this.node.classList.remove(name);
   }
 
   /**
@@ -350,14 +315,14 @@ class Widget implements IDisposable, IMessageHandler {
    */
   toggleClass(name: string, force?: boolean): boolean {
     if (force === true) {
-      this._node.classList.add(name);
+      this.node.classList.add(name);
       return true;
     }
     if (force === false) {
-      this._node.classList.remove(name);
+      this.node.classList.remove(name);
       return false;
     }
-    return this._node.classList.toggle(name);
+    return this.node.classList.toggle(name);
   }
 
   /**
@@ -367,7 +332,7 @@ class Widget implements IDisposable, IMessageHandler {
    * This is a simple convenience method for posting the message.
    */
   update(): void {
-    postMessage(this, WidgetMessage.UpdateRequest);
+    MessageLoop.postMessage(this, Widget.Msg.UpdateRequest);
   }
 
   /**
@@ -377,7 +342,7 @@ class Widget implements IDisposable, IMessageHandler {
    * This is a simple convenience method for posting the message.
    */
   fit(): void {
-    postMessage(this, WidgetMessage.FitRequest);
+    MessageLoop.postMessage(this, Widget.Msg.FitRequest);
   }
 
   /**
@@ -387,7 +352,7 @@ class Widget implements IDisposable, IMessageHandler {
    * This is a simple convenience method for posting the message.
    */
   activate(): void {
-    postMessage(this, WidgetMessage.ActivateRequest);
+    MessageLoop.postMessage(this, Widget.Msg.ActivateRequest);
   }
 
   /**
@@ -397,7 +362,7 @@ class Widget implements IDisposable, IMessageHandler {
    * This is a simple convenience method for sending the message.
    */
   close(): void {
-    sendMessage(this, WidgetMessage.CloseRequest);
+    MessageLoop.sendMessage(this, Widget.Msg.CloseRequest);
   }
 
   /**
@@ -409,16 +374,17 @@ class Widget implements IDisposable, IMessageHandler {
    * If the widget is not explicitly hidden, this is a no-op.
    */
   show(): void {
-    if (!this.testFlag(WidgetFlag.IsHidden)) {
+    if (!this.testFlag(Widget.Flag.IsHidden)) {
       return;
     }
-    this.clearFlag(WidgetFlag.IsHidden);
-    this.removeClass(HIDDEN_CLASS);
+    this.clearFlag(Widget.Flag.IsHidden);
+    this.removeClass(Widget.HIDDEN_CLASS);
     if (this.isAttached && (!this.parent || this.parent.isVisible)) {
-      sendMessage(this, WidgetMessage.AfterShow);
+      MessageLoop.sendMessage(this, Widget.Msg.AfterShow);
     }
     if (this.parent) {
-      sendMessage(this.parent, new ChildMessage('child-shown', this));
+      let msg = new Widget.ChildMessage('child-shown', this);
+      MessageLoop.sendMessage(this.parent, msg);
     }
   }
 
@@ -431,16 +397,17 @@ class Widget implements IDisposable, IMessageHandler {
    * If the widget is explicitly hidden, this is a no-op.
    */
   hide(): void {
-    if (this.testFlag(WidgetFlag.IsHidden)) {
+    if (this.testFlag(Widget.Flag.IsHidden)) {
       return;
     }
     if (this.isAttached && (!this.parent || this.parent.isVisible)) {
-      sendMessage(this, WidgetMessage.BeforeHide);
+      MessageLoop.sendMessage(this, Widget.Msg.BeforeHide);
     }
-    this.setFlag(WidgetFlag.IsHidden);
-    this.addClass(HIDDEN_CLASS);
+    this.setFlag(Widget.Flag.IsHidden);
+    this.addClass(Widget.HIDDEN_CLASS);
     if (this.parent) {
-      sendMessage(this.parent, new ChildMessage('child-hidden', this));
+      let msg = new Widget.ChildMessage('child-hidden', this);
+      MessageLoop.sendMessage(this.parent, msg);
     }
   }
 
@@ -466,7 +433,7 @@ class Widget implements IDisposable, IMessageHandler {
    * #### Notes
    * This will not typically be called directly by user code.
    */
-  testFlag(flag: WidgetFlag): boolean {
+  testFlag(flag: Widget.Flag): boolean {
     return (this._flags & flag) !== 0;
   }
 
@@ -476,7 +443,7 @@ class Widget implements IDisposable, IMessageHandler {
    * #### Notes
    * This will not typically be called directly by user code.
    */
-  setFlag(flag: WidgetFlag): void {
+  setFlag(flag: Widget.Flag): void {
     this._flags |= flag;
   }
 
@@ -486,7 +453,7 @@ class Widget implements IDisposable, IMessageHandler {
    * #### Notes
    * This will not typically be called directly by user code.
    */
-  clearFlag(flag: WidgetFlag): void {
+  clearFlag(flag: Widget.Flag): void {
     this._flags &= ~flag;
   }
 
@@ -502,34 +469,35 @@ class Widget implements IDisposable, IMessageHandler {
     switch (msg.type) {
     case 'resize':
       this.notifyLayout(msg);
-      this.onResize(msg as ResizeMessage);
+      this.onResize(msg as Widget.ResizeMessage);
       break;
     case 'update-request':
       this.notifyLayout(msg);
       this.onUpdateRequest(msg);
       break;
     case 'after-show':
-      this.setFlag(WidgetFlag.IsVisible);
+      this.setFlag(Widget.Flag.IsVisible);
       this.notifyLayout(msg);
       this.onAfterShow(msg);
       break;
     case 'before-hide':
       this.notifyLayout(msg);
       this.onBeforeHide(msg);
-      this.clearFlag(WidgetFlag.IsVisible);
+      this.clearFlag(Widget.Flag.IsVisible);
       break;
     case 'after-attach':
-      let visible = !this.isHidden && (!this.parent || this.parent.isVisible);
-      if (visible) this.setFlag(WidgetFlag.IsVisible);
-      this.setFlag(WidgetFlag.IsAttached);
+      if (!this.isHidden && (!this.parent || this.parent.isVisible)) {
+        this.setFlag(Widget.Flag.IsVisible);
+      }
+      this.setFlag(Widget.Flag.IsAttached);
       this.notifyLayout(msg);
       this.onAfterAttach(msg);
       break;
     case 'before-detach':
       this.notifyLayout(msg);
       this.onBeforeDetach(msg);
-      this.clearFlag(WidgetFlag.IsVisible);
-      this.clearFlag(WidgetFlag.IsAttached);
+      this.clearFlag(Widget.Flag.IsVisible);
+      this.clearFlag(Widget.Flag.IsAttached);
       break;
     case 'activate-request':
       this.notifyLayout(msg);
@@ -541,11 +509,11 @@ class Widget implements IDisposable, IMessageHandler {
       break;
     case 'child-added':
       this.notifyLayout(msg);
-      this.onChildAdded(msg as ChildMessage);
+      this.onChildAdded(msg as Widget.ChildMessage);
       break;
     case 'child-removed':
       this.notifyLayout(msg);
-      this.onChildRemoved(msg as ChildMessage);
+      this.onChildRemoved(msg as Widget.ChildMessage);
       break;
     default:
       this.notifyLayout(msg);
@@ -564,7 +532,9 @@ class Widget implements IDisposable, IMessageHandler {
    * This will not typically be called directly by user code.
    */
   protected notifyLayout(msg: Message): void {
-    if (this._layout) this._layout.processParentMessage(msg);
+    if (this._layout) {
+      this._layout.processParentMessage(msg);
+    }
   }
 
   /**
@@ -587,7 +557,7 @@ class Widget implements IDisposable, IMessageHandler {
    * #### Notes
    * The default implementation of this handler is a no-op.
    */
-  protected onResize(msg: ResizeMessage): void { }
+  protected onResize(msg: Widget.ResizeMessage): void { }
 
   /**
    * A message handler invoked on an `'update-request'` message.
@@ -643,7 +613,7 @@ class Widget implements IDisposable, IMessageHandler {
    * #### Notes
    * The default implementation of this handler is a no-op.
    */
-  protected onChildAdded(msg: ChildMessage): void { }
+  protected onChildAdded(msg: Widget.ChildMessage): void { }
 
   /**
    * A message handler invoked on a `'child-removed'` message.
@@ -651,17 +621,13 @@ class Widget implements IDisposable, IMessageHandler {
    * #### Notes
    * The default implementation of this handler is a no-op.
    */
-  protected onChildRemoved(msg: ChildMessage): void { }
+  protected onChildRemoved(msg: Widget.ChildMessage): void { }
 
   private _flags = 0;
-  private _node: HTMLElement;
-  private _layout: Layout = null;
-  private _parent: Widget = null;
+  private _layout: Layout | null = null;
+  private _parent: Widget | null = null;
+  private _disposed = new Signal<this, void>(this);
 }
-
-
-// Define the signals for the `Widget` class.
-defineSignal(Widget.prototype, 'disposed');
 
 
 /**
@@ -669,6 +635,18 @@ defineSignal(Widget.prototype, 'disposed');
  */
 export
 namespace Widget {
+  /**
+   * The class name added to Widget instances.
+   */
+  export
+  const WIDGET_CLASS = 'p-Widget';
+
+  /**
+   * The class name added to hidden widgets.
+   */
+  export
+  const HIDDEN_CLASS = 'p-mod-hidden';
+
   /**
    * An options object for initializing a widget.
    */
@@ -685,7 +663,211 @@ namespace Widget {
     node?: HTMLElement;
   }
 
-  // TODO - should this be an instance method?
+  /**
+   * An enum of widget bit flags.
+   */
+  export
+  enum Flag {
+    /**
+     * The widget has been disposed.
+     */
+    IsDisposed = 0x1,
+
+    /**
+     * The widget is attached to the DOM.
+     */
+    IsAttached = 0x2,
+
+    /**
+     * The widget is hidden.
+     */
+    IsHidden = 0x4,
+
+    /**
+     * The widget is visible.
+     */
+    IsVisible = 0x8,
+
+    /**
+     * A layout cannot be set on the widget.
+     */
+    DisallowLayout = 0x10
+  }
+
+  /**
+   * A collection of stateless messages related to widgets.
+   */
+  export
+  namespace Msg {
+    /**
+     * A singleton `'after-show'` message.
+     *
+     * #### Notes
+     * This message is sent to a widget after it becomes visible.
+     *
+     * This message is **not** sent when the widget is being attached.
+     */
+    export
+    const AfterShow = new Message('after-show');
+
+    /**
+     * A singleton `'before-hide'` message.
+     *
+     * #### Notes
+     * This message is sent to a widget before it becomes not-visible.
+     *
+     * This message is **not** sent when the widget is being detached.
+     */
+    export
+    const BeforeHide = new Message('before-hide');
+
+    /**
+     * A singleton `'after-attach'` message.
+     *
+     * #### Notes
+     * This message is sent to a widget after it is attached.
+     */
+    export
+    const AfterAttach = new Message('after-attach');
+
+    /**
+     * A singleton `'before-detach'` message.
+     *
+     * #### Notes
+     * This message is sent to a widget before it is detached.
+     */
+    export
+    const BeforeDetach = new Message('before-detach');
+
+    /**
+     * A singleton `'parent-changed'` message.
+     *
+     * #### Notes
+     * This message is sent to a widget when its parent has changed.
+     */
+    export
+    const ParentChanged = new Message('parent-changed');
+
+    /**
+     * A singleton conflatable `'update-request'` message.
+     *
+     * #### Notes
+     * This message can be dispatched to supporting widgets in order to
+     * update their content based on the current widget state. Not all
+     * widgets will respond to messages of this type.
+     *
+     * For widgets with a layout, this message will inform the layout to
+     * update the position and size of its child widgets.
+     */
+    export
+    const UpdateRequest = new ConflatableMessage('update-request');
+
+    /**
+     * A singleton conflatable `'fit-request'` message.
+     *
+     * #### Notes
+     * For widgets with a layout, this message will inform the layout to
+     * recalculate its size constraints to fit the space requirements of
+     * its child widgets, and to update their position and size. Not all
+     * layouts will respond to messages of this type.
+     */
+    export
+    const FitRequest = new ConflatableMessage('fit-request');
+
+    /**
+     * A singleton conflatable `'activate-request'` message.
+     *
+     * #### Notes
+     * This message should be dispatched to a widget when it should
+     * perform the actions necessary to activate the widget, which
+     * may include focusing its node or descendant node.
+     */
+    export
+    const ActivateRequest = new ConflatableMessage('activate-request');
+
+    /**
+     * A singleton conflatable `'close-request'` message.
+     *
+     * #### Notes
+     * This message should be dispatched to a widget when it should close
+     * and remove itself from the widget hierarchy.
+     */
+    export
+    const CloseRequest = new ConflatableMessage('close-request');
+  }
+
+  /**
+   * A message class for child related messages.
+   */
+  export
+  class ChildMessage extends Message {
+    /**
+     * Construct a new child message.
+     *
+     * @param type - The message type.
+     *
+     * @param child - The child widget for the message.
+     */
+    constructor(type: string, child: Widget) {
+      super(type);
+      this.child = child;
+    }
+
+    /**
+     * The child widget for the message.
+     */
+    readonly child: Widget;
+  }
+
+  /**
+   * A message class for `'resize'` messages.
+   */
+  export
+  class ResizeMessage extends Message {
+    /**
+     * Construct a new resize message.
+     *
+     * @param width - The **offset width** of the widget, or `-1` if
+     *   the width is not known.
+     *
+     * @param height - The **offset height** of the widget, or `-1` if
+     *   the height is not known.
+     */
+    constructor(width: number, height: number) {
+      super('resize');
+      this.width = width;
+      this.height = height;
+    }
+
+    /**
+     * The offset width of the widget.
+     *
+     * #### Notes
+     * This will be `-1` if the width is unknown.
+     */
+    readonly width: number;
+
+    /**
+     * The offset height of the widget.
+     *
+     * #### Notes
+     * This will be `-1` if the height is unknown.
+     */
+    readonly height: number;
+  }
+
+  /**
+   * The namespace for the `ResizeMessage` class statics.
+   */
+  export
+  namespace ResizeMessage {
+    /**
+     * A singleton `'resize'` message with an unknown size.
+     */
+    export
+    const UnknownSize = new ResizeMessage(-1, -1);
+  }
+
   /**
    * Attach a widget to a host DOM node.
    *
@@ -701,38 +883,37 @@ namespace Widget {
   export
   function attach(widget: Widget, host: HTMLElement): void {
     if (widget.parent) {
-      throw new Error('Cannot attach child widget.');
+      throw new Error('Cannot attach a child widget.');
     }
     if (widget.isAttached || document.body.contains(widget.node)) {
-      throw new Error('Widget already attached.');
+      throw new Error('Widget is already attached.');
     }
     if (!document.body.contains(host)) {
-      throw new Error('Host not attached.');
+      throw new Error('Host is not attached.');
     }
     host.appendChild(widget.node);
-    sendMessage(widget, WidgetMessage.AfterAttach);
+    MessageLoop.sendMessage(widget, Widget.Msg.AfterAttach);
   }
 
-  // TODO - should this be an instance method?
   /**
    * Detach the widget from its host DOM node.
    *
    * @param widget - The widget of interest.
    *
    * #### Notes
-   * This will throw an error if the widget is not a root widget, or
-   * if the widget is not attached to the DOM.
+   * This will throw an error if the widget is not a root widget,
+   * or if the widget is not attached to the DOM.
    */
   export
   function detach(widget: Widget): void {
     if (widget.parent) {
-      throw new Error('Cannot detach child widget.');
+      throw new Error('Cannot detach a child widget.');
     }
     if (!widget.isAttached || !document.body.contains(widget.node)) {
-      throw new Error('Widget not attached.');
+      throw new Error('Widget is not attached.');
     }
-    sendMessage(widget, WidgetMessage.BeforeDetach);
-    widget.node.parentNode.removeChild(widget.node);
+    MessageLoop.sendMessage(widget, Widget.Msg.BeforeDetach);
+    widget.node.parentNode!.removeChild(widget.node);
   }
 
   /**
@@ -764,11 +945,11 @@ namespace Widget {
     rect.left = NaN;
     rect.width = NaN;
     rect.height = NaN;
-    style.position = '';
-    style.top = '';
-    style.left = '';
-    style.width = '';
-    style.height = '';
+    style.position = null;
+    style.top = null;
+    style.left = null;
+    style.width = null;
+    style.height = null;
   }
 
   /**
@@ -817,7 +998,8 @@ namespace Widget {
       style.height = `${height}px`;
     }
     if (resized) {
-      sendMessage(widget, new ResizeMessage(width, height));
+      let msg = new Widget.ResizeMessage(width, height);
+      MessageLoop.sendMessage(widget, msg);
     }
   }
 }
@@ -875,17 +1057,14 @@ abstract class Layout implements IIterable<Widget>, IDisposable {
    * This method is called automatically when the parent is disposed.
    */
   dispose(): void {
-    this._disposed = true;
     this._parent = null;
-    clearSignalData(this);
-    clearPropertyData(this);
+    this._disposed = true;
+    Signal.clearData(this);
+    AttachedProperty.clearData(this);
   }
 
   /**
    * Test whether the layout is disposed.
-   *
-   * #### Notes
-   * This is a read-only property.
    */
   get isDisposed(): boolean {
     return this._disposed;
@@ -894,7 +1073,7 @@ abstract class Layout implements IIterable<Widget>, IDisposable {
   /**
    * Get the parent widget of the layout.
    */
-  get parent(): Widget {
+  get parent(): Widget | null {
     return this._parent;
   }
 
@@ -905,17 +1084,14 @@ abstract class Layout implements IIterable<Widget>, IDisposable {
    * This is set automatically when installing the layout on the parent
    * widget. The parent widget should not be set directly by user code.
    */
-  set parent(value: Widget) {
-    if (!value) {
-      throw new Error('Cannot set parent widget to null.');
-    }
+  set parent(value: Widget | null) {
     if (this._parent === value) {
       return;
     }
     if (this._parent) {
       throw new Error('Cannot change parent widget.');
     }
-    if (value.layout !== this) {
+    if (value!.layout !== this) {
       throw new Error('Invalid parent widget.');
     }
     this._parent = value;
@@ -935,7 +1111,7 @@ abstract class Layout implements IIterable<Widget>, IDisposable {
   processParentMessage(msg: Message): void {
     switch (msg.type) {
     case 'resize':
-      this.onResize(msg as ResizeMessage);
+      this.onResize(msg as Widget.ResizeMessage);
       break;
     case 'update-request':
       this.onUpdateRequest(msg);
@@ -956,13 +1132,13 @@ abstract class Layout implements IIterable<Widget>, IDisposable {
       this.onBeforeDetach(msg);
       break;
     case 'child-removed':
-      this.onChildRemoved(msg as ChildMessage);
+      this.onChildRemoved(msg as Widget.ChildMessage);
       break;
     case 'child-shown':
-      this.onChildShown(msg as ChildMessage);
+      this.onChildShown(msg as Widget.ChildMessage);
       break;
     case 'child-hidden':
-      this.onChildHidden(msg as ChildMessage);
+      this.onChildHidden(msg as Widget.ChildMessage);
       break;
     }
   }
@@ -981,7 +1157,9 @@ abstract class Layout implements IIterable<Widget>, IDisposable {
    * widget nodes to the parent widget's node.
    */
   protected init(): void {
-    each(this, widget => { widget.parent = this.parent; });
+    each(this, widget => {
+      widget.parent = this.parent;
+    });
   }
 
   /**
@@ -997,8 +1175,10 @@ abstract class Layout implements IIterable<Widget>, IDisposable {
    *
    * This may be reimplemented by subclasses as needed.
    */
-  protected onResize(msg: ResizeMessage): void {
-    each(this, widget => { sendMessage(widget, ResizeMessage.UnknownSize); });
+  protected onResize(msg: Widget.ResizeMessage): void {
+    each(this, widget => {
+      MessageLoop.sendMessage(widget, Widget.ResizeMessage.UnknownSize);
+    });
   }
 
   /**
@@ -1015,7 +1195,9 @@ abstract class Layout implements IIterable<Widget>, IDisposable {
    * This may be reimplemented by subclasses as needed.
    */
   protected onUpdateRequest(msg: Message): void {
-    each(this, widget => { sendMessage(widget, ResizeMessage.UnknownSize); });
+    each(this, widget => {
+      MessageLoop.sendMessage(widget, Widget.ResizeMessage.UnknownSize);
+    });
   }
 
   /**
@@ -1029,7 +1211,9 @@ abstract class Layout implements IIterable<Widget>, IDisposable {
    * This may be reimplemented by subclasses as needed.
    */
   protected onAfterAttach(msg: Message): void {
-    each(this, widget => { sendMessage(widget, msg); });
+    each(this, widget => {
+      MessageLoop.sendMessage(widget, msg);
+    });
   }
 
   /**
@@ -1043,7 +1227,9 @@ abstract class Layout implements IIterable<Widget>, IDisposable {
    * This may be reimplemented by subclasses as needed.
    */
   protected onBeforeDetach(msg: Message): void {
-    each(this, widget => { sendMessage(widget, msg); });
+    each(this, widget => {
+      MessageLoop.sendMessage(widget, msg);
+    });
   }
 
   /**
@@ -1057,7 +1243,11 @@ abstract class Layout implements IIterable<Widget>, IDisposable {
    * This may be reimplemented by subclasses as needed.
    */
   protected onAfterShow(msg: Message): void {
-    each(this, widget => { if (!widget.isHidden) sendMessage(widget, msg); });
+    each(this, widget => {
+      if (!widget.isHidden) {
+        MessageLoop.sendMessage(widget, msg);
+      }
+    });
   }
 
   /**
@@ -1071,7 +1261,11 @@ abstract class Layout implements IIterable<Widget>, IDisposable {
    * This may be reimplemented by subclasses as needed.
    */
   protected onBeforeHide(msg: Message): void {
-    each(this, widget => { if (!widget.isHidden) sendMessage(widget, msg); });
+    each(this, widget => {
+      if (!widget.isHidden) {
+        MessageLoop.sendMessage(widget, msg);
+      }
+    });
   }
 
   /**
@@ -1082,7 +1276,7 @@ abstract class Layout implements IIterable<Widget>, IDisposable {
    *
    * Subclasses should **not** typically reimplement this method.
    */
-  protected onChildRemoved(msg: ChildMessage): void {
+  protected onChildRemoved(msg: Widget.ChildMessage): void {
     this.removeWidget(msg.child);
   }
 
@@ -1100,7 +1294,7 @@ abstract class Layout implements IIterable<Widget>, IDisposable {
    * #### Notes
    * The default implementation of this handler is a no-op.
    */
-  protected onChildShown(msg: ChildMessage): void { }
+  protected onChildShown(msg: Widget.ChildMessage): void { }
 
   /**
    * A message handler invoked on a `'child-hidden'` message.
@@ -1108,242 +1302,10 @@ abstract class Layout implements IIterable<Widget>, IDisposable {
    * #### Notes
    * The default implementation of this handler is a no-op.
    */
-  protected onChildHidden(msg: ChildMessage): void { }
+  protected onChildHidden(msg: Widget.ChildMessage): void { }
 
   private _disposed = false;
-  private _parent: Widget = null;
-}
-
-
-// TODO should this be in the Widget namespace?
-/**
- * An enum of widget bit flags.
- */
-export
-enum WidgetFlag {
-  /**
-   * The widget has been disposed.
-   */
-  IsDisposed = 0x1,
-
-  /**
-   * The widget is attached to the DOM.
-   */
-  IsAttached = 0x2,
-
-  /**
-   * The widget is hidden.
-   */
-  IsHidden = 0x4,
-
-  /**
-   * The widget is visible.
-   */
-  IsVisible = 0x8,
-
-  /**
-   * A layout cannot be set on the widget.
-   */
-  DisallowLayout = 0x10
-}
-
-
-// TODO should this be in the Widget namespace?
-/**
- * A collection of stateless messages related to widgets.
- */
-export
-namespace WidgetMessage {
-  /**
-   * A singleton `'after-show'` message.
-   *
-   * #### Notes
-   * This message is sent to a widget after it becomes visible.
-   *
-   * This message is **not** sent when the widget is being attached.
-   */
-  export
-  const AfterShow = new Message('after-show');
-
-  /**
-   * A singleton `'before-hide'` message.
-   *
-   * #### Notes
-   * This message is sent to a widget before it becomes not-visible.
-   *
-   * This message is **not** sent when the widget is being detached.
-   */
-  export
-  const BeforeHide = new Message('before-hide');
-
-  /**
-   * A singleton `'after-attach'` message.
-   *
-   * #### Notes
-   * This message is sent to a widget after it is attached.
-   */
-  export
-  const AfterAttach = new Message('after-attach');
-
-  /**
-   * A singleton `'before-detach'` message.
-   *
-   * #### Notes
-   * This message is sent to a widget before it is detached.
-   */
-  export
-  const BeforeDetach = new Message('before-detach');
-
-  /**
-   * A singleton `'parent-changed'` message.
-   *
-   * #### Notes
-   * This message is sent to a widget when its parent has changed.
-   */
-  export
-  const ParentChanged = new Message('parent-changed');
-
-  /**
-   * A singleton conflatable `'update-request'` message.
-   *
-   * #### Notes
-   * This message can be dispatched to supporting widgets in order to
-   * update their content based on the current widget state. Not all
-   * widgets will respond to messages of this type.
-   *
-   * For widgets with a layout, this message will inform the layout to
-   * update the position and size of its child widgets.
-   */
-  export
-  const UpdateRequest = new ConflatableMessage('update-request');
-
-  /**
-   * A singleton conflatable `'fit-request'` message.
-   *
-   * #### Notes
-   * For widgets with a layout, this message will inform the layout to
-   * recalculate its size constraints to fit the space requirements of
-   * its child widgets, and to update their position and size. Not all
-   * layouts will respond to messages of this type.
-   */
-  export
-  const FitRequest = new ConflatableMessage('fit-request');
-
-  /**
-   * A singleton conflatable `'activate-request'` message.
-   *
-   * #### Notes
-   * This message should be dispatched to a widget when it should
-   * perform the actions necessary to activate the widget, which
-   * may include focusing its node or descendant node.
-   */
-  export
-  const ActivateRequest = new ConflatableMessage('activate-request');
-
-  /**
-   * A singleton conflatable `'close-request'` message.
-   *
-   * #### Notes
-   * This message should be dispatched to a widget when it should close
-   * and remove itself from the widget hierarchy.
-   */
-  export
-  const CloseRequest = new ConflatableMessage('close-request');
-}
-
-
-// TODO should this be in the Widget namespace?
-/**
- * A message class for child related messages.
- */
-export
-class ChildMessage extends Message {
-  /**
-   * Construct a new child message.
-   *
-   * @param type - The message type.
-   *
-   * @param child - The child widget for the message.
-   */
-  constructor(type: string, child: Widget) {
-    super(type);
-    this._child = child;
-  }
-
-  /**
-   * The child widget for the message.
-   *
-   * #### Notes
-   * This is a read-only property.
-   */
-  get child(): Widget {
-    return this._child;
-  }
-
-  private _child: Widget;
-}
-
-
-// TODO should this be in the Widget namespace?
-/**
- * A message class for `'resize'` messages.
- */
-export
-class ResizeMessage extends Message {
-  /**
-   * Construct a new resize message.
-   *
-   * @param width - The **offset width** of the widget, or `-1` if
-   *   the width is not known.
-   *
-   * @param height - The **offset height** of the widget, or `-1` if
-   *   the height is not known.
-   */
-  constructor(width: number, height: number) {
-    super('resize');
-    this._width = width;
-    this._height = height;
-  }
-
-  /**
-   * The offset width of the widget.
-   *
-   * #### Notes
-   * This will be `-1` if the width is unknown.
-   *
-   * This is a read-only property.
-   */
-  get width(): number {
-    return this._width;
-  }
-
-  /**
-   * The offset height of the widget.
-   *
-   * #### Notes
-   * This will be `-1` if the height is unknown.
-   *
-   * This is a read-only property.
-   */
-  get height(): number {
-    return this._height;
-  }
-
-  private _width: number;
-  private _height: number;
-}
-
-
-/**
- * The namespace for the `ResizeMessage` class statics.
- */
-export
-namespace ResizeMessage {
-  /**
-   * A singleton `'resize'` message with an unknown size.
-   */
-  export
-  const UnknownSize = new ResizeMessage(-1, -1);
+  private _parent: Widget | null = null;
 }
 
 
@@ -1390,9 +1352,9 @@ namespace Private {
    * An attached property for the widget title object.
    */
   export
-  const titleProperty = new AttachedProperty<Widget, Title>({
+  const titleProperty = new AttachedProperty<Widget, Title<Widget>>({
     name: 'title',
-    create: owner => new Title({ owner }),
+    create: owner => new Title<Widget>({ owner }),
   });
 
   /**
