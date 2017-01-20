@@ -493,9 +493,9 @@ class Widget implements IDisposable, IMessageHandler {
     case 'before-hide':
       this.notifyLayout(msg);
       this.onBeforeHide(msg);
-      this.clearFlag(Widget.Flag.IsVisible);
       break;
     case 'after-hide':
+      this.clearFlag(Widget.Flag.IsVisible);
       this.notifyLayout(msg);
       this.onAfterHide(msg);
       break;
@@ -514,10 +514,10 @@ class Widget implements IDisposable, IMessageHandler {
     case 'before-detach':
       this.notifyLayout(msg);
       this.onBeforeDetach(msg);
-      this.clearFlag(Widget.Flag.IsVisible);
-      this.clearFlag(Widget.Flag.IsAttached);
       break;
     case 'after-detach':
+      this.clearFlag(Widget.Flag.IsVisible);
+      this.clearFlag(Widget.Flag.IsAttached);
       this.notifyLayout(msg);
       this.onAfterDetach(msg);
       break;
