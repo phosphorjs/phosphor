@@ -377,6 +377,9 @@ class Widget implements IDisposable, IMessageHandler {
     if (!this.testFlag(Widget.Flag.IsHidden)) {
       return;
     }
+    if (this.isAttached && (!this.parent || this.parent.isVisible)) {
+      MessageLoop.sendMessage(this, Widget.Msg.BeforeShow);
+    }
     this.clearFlag(Widget.Flag.IsHidden);
     this.removeClass(Widget.HIDDEN_CLASS);
     if (this.isAttached && (!this.parent || this.parent.isVisible)) {
