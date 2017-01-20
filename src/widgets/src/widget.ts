@@ -475,6 +475,10 @@ class Widget implements IDisposable, IMessageHandler {
       this.notifyLayout(msg);
       this.onUpdateRequest(msg);
       break;
+    case 'before-show':
+      this.notifyLayout(msg);
+      this.onBeforeShow(msg);
+      break;
     case 'after-show':
       this.setFlag(Widget.Flag.IsVisible);
       this.notifyLayout(msg);
@@ -582,6 +586,14 @@ class Widget implements IDisposable, IMessageHandler {
    * The default implementation of this handler is a no-op.
    */
   protected onActivateRequest(msg: Message): void { }
+
+  /**
+   * A message handler invoked on a `'before-show'` message.
+   *
+   * #### Notes
+   * The default implementation of this handler is a no-op.
+   */
+  protected onBeforeShow(msg: Message): void { }
 
   /**
    * A message handler invoked on an `'after-show'` message.
@@ -723,6 +735,17 @@ namespace Widget {
    */
   export
   namespace Msg {
+    /**
+     * A singleton `'before-show'` message.
+     *
+     * #### Notes
+     * This message is sent to a widget before it becomes visible.
+     *
+     * This message is **not** sent when the widget is being attached.
+     */
+    export
+    const BeforeShow = new Message('before-show');
+
     /**
      * A singleton `'after-show'` message.
      *
@@ -1163,6 +1186,9 @@ abstract class Layout implements IIterable<Widget>, IDisposable {
     case 'fit-request':
       this.onFitRequest(msg);
       break;
+    case 'before-show':
+      this.onBeforeShow(msg);
+      break;
     case 'after-show':
       this.onAfterShow(msg);
       break;
@@ -1311,6 +1337,24 @@ abstract class Layout implements IIterable<Widget>, IDisposable {
   protected onAfterDetach(msg: Message): void {
     each(this, widget => {
       MessageLoop.sendMessage(widget, msg);
+    });
+  }
+
+  /**
+   * A message handler invoked on a `'before-show'` message.
+   *
+   * #### Notes
+   * The default implementation of this method forwards the message to
+   * all non-hidden widgets. It assumes all widget nodes are attached
+   * to the parent widget node.
+   *
+   * This may be reimplemented by subclasses as needed.
+   */
+  protected onBeforeShow(msg: Message): void {
+    each(this, widget => {
+      if (!widget.isHidden) {
+        MessageLoop.sendMessage(widget, msg);
+      }
     });
   }
 
