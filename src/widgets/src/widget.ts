@@ -499,6 +499,10 @@ class Widget implements IDisposable, IMessageHandler {
       this.clearFlag(Widget.Flag.IsVisible);
       this.clearFlag(Widget.Flag.IsAttached);
       break;
+    case 'after-detach':
+      this.notifyLayout(msg);
+      this.onAfterDetach(msg);
+      break;
     case 'activate-request':
       this.notifyLayout(msg);
       this.onActivateRequest(msg);
@@ -606,6 +610,14 @@ class Widget implements IDisposable, IMessageHandler {
    * The default implementation of this handler is a no-op.
    */
   protected onBeforeDetach(msg: Message): void { }
+
+  /**
+   * A message handler invoked on an `'after-detach'` message.
+   *
+   * #### Notes
+   * The default implementation of this handler is a no-op.
+   */
+  protected onAfterDetach(msg: Message): void { }
 
   /**
    * A message handler invoked on a `'child-added'` message.
@@ -738,6 +750,15 @@ namespace Widget {
      */
     export
     const BeforeDetach = new Message('before-detach');
+
+    /**
+     * A singleton `'after-detach'` message.
+     *
+     * #### Notes
+     * This message is sent to a widget after it is detached.
+     */
+    export
+    const AfterDetach = new Message('after-detach');
 
     /**
      * A singleton `'parent-changed'` message.
@@ -914,6 +935,7 @@ namespace Widget {
     }
     MessageLoop.sendMessage(widget, Widget.Msg.BeforeDetach);
     widget.node.parentNode!.removeChild(widget.node);
+    MessageLoop.sendMessage(widget, Widget.Msg.AfterDetach);
   }
 
   /**
@@ -1131,6 +1153,9 @@ abstract class Layout implements IIterable<Widget>, IDisposable {
     case 'before-detach':
       this.onBeforeDetach(msg);
       break;
+    case 'after-detach':
+      this.onAfterDetach(msg);
+      break;
     case 'child-removed':
       this.onChildRemoved(msg as Widget.ChildMessage);
       break;
@@ -1227,6 +1252,22 @@ abstract class Layout implements IIterable<Widget>, IDisposable {
    * This may be reimplemented by subclasses as needed.
    */
   protected onBeforeDetach(msg: Message): void {
+    each(this, widget => {
+      MessageLoop.sendMessage(widget, msg);
+    });
+  }
+
+  /**
+   * A message handler invoked on an `'after-detach'` message.
+   *
+   * #### Notes
+   * The default implementation of this method forwards the message
+   * to all widgets. It assumes all widget nodes are attached to the
+   * parent widget node.
+   *
+   * This may be reimplemented by subclasses as needed.
+   */
+  protected onAfterDetach(msg: Message): void {
     each(this, widget => {
       MessageLoop.sendMessage(widget, msg);
     });
