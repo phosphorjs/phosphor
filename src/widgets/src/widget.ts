@@ -485,6 +485,10 @@ class Widget implements IDisposable, IMessageHandler {
       this.onBeforeHide(msg);
       this.clearFlag(Widget.Flag.IsVisible);
       break;
+    case 'before-attach':
+      this.notifyLayout(msg);
+      this.onBeforeAttach(msg);
+      break;
     case 'after-attach':
       if (!this.isHidden && (!this.parent || this.parent.isVisible)) {
         this.setFlag(Widget.Flag.IsVisible);
@@ -594,6 +598,14 @@ class Widget implements IDisposable, IMessageHandler {
    * The default implementation of this handler is a no-op.
    */
   protected onBeforeHide(msg: Message): void { }
+
+  /**
+   * A message handler invoked on a `'before-attach'` message.
+   *
+   * #### Notes
+   * The default implementation of this handler is a no-op.
+   */
+  protected oBeforeAttach(msg: Message): void { }
 
   /**
    * A message handler invoked on an `'after-attach'` message.
@@ -732,6 +744,15 @@ namespace Widget {
      */
     export
     const BeforeHide = new Message('before-hide');
+
+    /**
+     * A singleton `'before-attach'` message.
+     *
+     * #### Notes
+     * This message is sent to a widget before it is attached.
+     */
+    export
+    const BeforeAttach = new Message('before-attach');
 
     /**
      * A singleton `'after-attach'` message.
@@ -912,6 +933,7 @@ namespace Widget {
     if (!document.body.contains(host)) {
       throw new Error('Host is not attached.');
     }
+    MessageLoop.sendMessage(widget, Widget.Msg.BeforeAttach);
     host.appendChild(widget.node);
     MessageLoop.sendMessage(widget, Widget.Msg.AfterAttach);
   }
@@ -1147,6 +1169,9 @@ abstract class Layout implements IIterable<Widget>, IDisposable {
     case 'before-hide':
       this.onBeforeHide(msg);
       break;
+    case 'before-attach':
+      this.onBeforeAttach(msg);
+      break;
     case 'after-attach':
       this.onAfterAttach(msg);
       break;
@@ -1222,6 +1247,22 @@ abstract class Layout implements IIterable<Widget>, IDisposable {
   protected onUpdateRequest(msg: Message): void {
     each(this, widget => {
       MessageLoop.sendMessage(widget, Widget.ResizeMessage.UnknownSize);
+    });
+  }
+
+  /**
+   * A message handler invoked on a `'before-attach'` message.
+   *
+   * #### Notes
+   * The default implementation of this method forwards the message
+   * to all widgets. It assumes all widget nodes are attached to the
+   * parent widget node.
+   *
+   * This may be reimplemented by subclasses as needed.
+   */
+  protected onBeforeAttach(msg: Message): void {
+    each(this, widget => {
+      MessageLoop.sendMessage(widget, msg);
     });
   }
 
