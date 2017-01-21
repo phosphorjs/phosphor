@@ -8,11 +8,11 @@
 
 
 /**
- * A sizer object for use with the [[boxCalc]] function.
+ * A sizer object for use with the box engine layout functions.
  *
  * #### Notes
- * A box sizer holds the geometry information for an object along a
- * layout orientation.
+ * A box sizer holds the geometry information for an object along an
+ * arbitrary layout orientation.
  *
  * For best performance, this class should be treated as a raw data
  * struct. It should not typically be subclassed.
@@ -109,275 +109,273 @@ class BoxSizer {
 
 
 /**
- * Compute the optimal layout sizes for a sequence of box sizers.
- *
- * This distributes the available layout space among the box sizers
- * according to the following algorithm:
- *
- * 1. Initialize the sizers's size to its size hint and compute the
- *    sums for each of size hint, min size, and max size.
- *
- * 2. If the total size hint equals the available space, return.
- *
- * 3. If the available space is less than the total min size, set all
- *    sizers to their min size and return.
- *
- * 4. If the available space is greater than the total max size, set
- *    all sizers to their max size and return.
- *
- * 5. If the layout space is less than the total size hint, distribute
- *    the negative delta as follows:
- *
- *    a. Shrink each sizer with a stretch factor greater than zero by
- *       an amount proportional to the negative space and the sum of
- *       stretch factors. If the sizer reaches its min size, remove
- *       it and its stretch factor from the computation.
- *
- *    b. If after adjusting all stretch sizers there remains negative
- *       space, distribute the space equally among the sizers with a
- *       stretch factor of zero. If a sizer reaches its min size,
- *       remove it from the computation.
- *
- * 6. If the layout space is greater than the total size hint,
- *    distribute the positive delta as follows:
- *
- *    a. Expand each sizer with a stretch factor greater than zero by
- *       an amount proportional to the postive space and the sum of
- *       stretch factors. If the sizer reaches its max size, remove
- *       it and its stretch factor from the computation.
- *
- *    b. If after adjusting all stretch sizers there remains positive
- *       space, distribute the space equally among the sizers with a
- *       stretch factor of zero. If a sizer reaches its max size,
- *       remove it from the computation.
- *
- * 7. return
- *
- * @param sizers - The sizers for a particular layout line.
- *
- * @param space - The available layout space for the sizers.
- *
- * #### Notes
- * The [[size]] of each sizer is updated with the computed size.
- *
- * This function can be called at any time to recompute the layout for
- * an existing sequence of sizers. The previously computed results will
- * have no effect on the new output. It is therefore not necessary to
- * create new sizer objects on each resize event.
+ * The namespace for the box engine layout functions.
  */
 export
-function boxCalc(sizers: ArrayLike<BoxSizer>, space: number): void {
-  // Bail early if there is nothing to do.
-  let count = sizers.length;
-  if (count === 0) {
-    return;
-  }
-
-  // Setup the size and stretch counters.
-  let totalMin = 0;
-  let totalMax = 0;
-  let totalSize = 0;
-  let totalStretch = 0;
-  let stretchCount = 0;
-
-  // Setup the sizers and compute the totals.
-  for (let i = 0; i < count; ++i) {
-    let sizer = sizers[i];
-    let min = sizer.minSize;
-    let max = sizer.maxSize;
-    let hint = sizer.sizeHint;
-    sizer.done = false;
-    sizer.size = Math.max(min, Math.min(hint, max));
-    totalSize += sizer.size;
-    totalMin += min;
-    totalMax += max;
-    if (sizer.stretch > 0) {
-      totalStretch += sizer.stretch;
-      stretchCount++;
+namespace BoxEngine {
+  /**
+   * Calculate the optimal layout sizes for a sequence of box sizers.
+   *
+   * This distributes the available layout space among the box sizers
+   * according to the following algorithm:
+   *
+   * 1. Initialize the sizers's size to its size hint and compute the
+   *    sums for each of size hint, min size, and max size.
+   *
+   * 2. If the total size hint equals the available space, return.
+   *
+   * 3. If the available space is less than the total min size, set all
+   *    sizers to their min size and return.
+   *
+   * 4. If the available space is greater than the total max size, set
+   *    all sizers to their max size and return.
+   *
+   * 5. If the layout space is less than the total size hint, distribute
+   *    the negative delta as follows:
+   *
+   *    a. Shrink each sizer with a stretch factor greater than zero by
+   *       an amount proportional to the negative space and the sum of
+   *       stretch factors. If the sizer reaches its min size, remove
+   *       it and its stretch factor from the computation.
+   *
+   *    b. If after adjusting all stretch sizers there remains negative
+   *       space, distribute the space equally among the sizers with a
+   *       stretch factor of zero. If a sizer reaches its min size,
+   *       remove it from the computation.
+   *
+   * 6. If the layout space is greater than the total size hint,
+   *    distribute the positive delta as follows:
+   *
+   *    a. Expand each sizer with a stretch factor greater than zero by
+   *       an amount proportional to the postive space and the sum of
+   *       stretch factors. If the sizer reaches its max size, remove
+   *       it and its stretch factor from the computation.
+   *
+   *    b. If after adjusting all stretch sizers there remains positive
+   *       space, distribute the space equally among the sizers with a
+   *       stretch factor of zero. If a sizer reaches its max size,
+   *       remove it from the computation.
+   *
+   * 7. return
+   *
+   * @param sizers - The sizers for a particular layout line.
+   *
+   * @param space - The available layout space for the sizers.
+   *
+   * #### Notes
+   * The [[size]] of each sizer is updated with the computed size.
+   *
+   * This function can be called at any time to recompute the layout for
+   * an existing sequence of sizers. The previously computed results will
+   * have no effect on the new output. It is therefore not necessary to
+   * create new sizer objects on each resize event.
+   */
+  export
+  function calc(sizers: ArrayLike<BoxSizer>, space: number): void {
+    // Bail early if there is nothing to do.
+    let count = sizers.length;
+    if (count === 0) {
+      return;
     }
-  }
 
-  // If the space is equal to the total size, return.
-  if (space === totalSize) {
-    return;
-  }
+    // Setup the size and stretch counters.
+    let totalMin = 0;
+    let totalMax = 0;
+    let totalSize = 0;
+    let totalStretch = 0;
+    let stretchCount = 0;
 
-  // If the space is less than the total min, minimize each sizer.
-  if (space <= totalMin) {
+    // Setup the sizers and compute the totals.
     for (let i = 0; i < count; ++i) {
       let sizer = sizers[i];
-      sizer.size = sizer.minSize;
+      let min = sizer.minSize;
+      let max = sizer.maxSize;
+      let hint = sizer.sizeHint;
+      sizer.done = false;
+      sizer.size = Math.max(min, Math.min(hint, max));
+      totalSize += sizer.size;
+      totalMin += min;
+      totalMax += max;
+      if (sizer.stretch > 0) {
+        totalStretch += sizer.stretch;
+        stretchCount++;
+      }
     }
-    return;
-  }
 
-  // If the space is greater than the total max, maximize each sizer.
-  if (space >= totalMax) {
-    for (let i = 0; i < count; ++i) {
-      let sizer = sizers[i];
-      sizer.size = sizer.maxSize;
+    // If the space is equal to the total size, return.
+    if (space === totalSize) {
+      return;
     }
-    return;
-  }
 
-  // The loops below perform sub-pixel precision sizing. A near zero
-  // value is used for compares instead of zero to ensure that the
-  // loop terminates when the subdivided space is reasonably small.
-  let nearZero = 0.01;
-
-  // A counter which is decremented each time a sizer is resized to
-  // its limit. This ensures the loops terminate even if there is
-  // space remaining to distribute.
-  let notDoneCount = count;
-
-  // Distribute negative delta space.
-  if (space < totalSize) {
-    // Shrink each stretchable sizer by an amount proportional to its
-    // stretch factor. If a sizer reaches its min size it's marked as
-    // done. The loop progresses in phases where each sizer is given
-    // a chance to consume its fair share for the pass, regardless of
-    // whether a sizer before it reached its limit. This continues
-    // until the stretchable sizers or the free space is exhausted.
-    let freeSpace = totalSize - space;
-    while (stretchCount > 0 && freeSpace > nearZero) {
-      let distSpace = freeSpace;
-      let distStretch = totalStretch;
+    // If the space is less than the total min, minimize each sizer.
+    if (space <= totalMin) {
       for (let i = 0; i < count; ++i) {
         let sizer = sizers[i];
-        if (sizer.done || sizer.stretch === 0) {
-          continue;
+        sizer.size = sizer.minSize;
+      }
+      return;
+    }
+
+    // If the space is greater than the total max, maximize each sizer.
+    if (space >= totalMax) {
+      for (let i = 0; i < count; ++i) {
+        let sizer = sizers[i];
+        sizer.size = sizer.maxSize;
+      }
+      return;
+    }
+
+    // The loops below perform sub-pixel precision sizing. A near zero
+    // value is used for compares instead of zero to ensure that the
+    // loop terminates when the subdivided space is reasonably small.
+    let nearZero = 0.01;
+
+    // A counter which is decremented each time a sizer is resized to
+    // its limit. This ensures the loops terminate even if there is
+    // space remaining to distribute.
+    let notDoneCount = count;
+
+    // Distribute negative delta space.
+    if (space < totalSize) {
+      // Shrink each stretchable sizer by an amount proportional to its
+      // stretch factor. If a sizer reaches its min size it's marked as
+      // done. The loop progresses in phases where each sizer is given
+      // a chance to consume its fair share for the pass, regardless of
+      // whether a sizer before it reached its limit. This continues
+      // until the stretchable sizers or the free space is exhausted.
+      let freeSpace = totalSize - space;
+      while (stretchCount > 0 && freeSpace > nearZero) {
+        let distSpace = freeSpace;
+        let distStretch = totalStretch;
+        for (let i = 0; i < count; ++i) {
+          let sizer = sizers[i];
+          if (sizer.done || sizer.stretch === 0) {
+            continue;
+          }
+          let amt = sizer.stretch * distSpace / distStretch;
+          if (sizer.size - amt <= sizer.minSize) {
+            freeSpace -= sizer.size - sizer.minSize;
+            totalStretch -= sizer.stretch;
+            sizer.size = sizer.minSize;
+            sizer.done = true;
+            notDoneCount--;
+            stretchCount--;
+          } else {
+            freeSpace -= amt;
+            sizer.size -= amt;
+          }
         }
-        let amt = sizer.stretch * distSpace / distStretch;
-        if (sizer.size - amt <= sizer.minSize) {
-          freeSpace -= sizer.size - sizer.minSize;
-          totalStretch -= sizer.stretch;
-          sizer.size = sizer.minSize;
-          sizer.done = true;
-          notDoneCount--;
-          stretchCount--;
-        } else {
-          freeSpace -= amt;
-          sizer.size -= amt;
+      }
+      // Distribute any remaining space evenly among the non-stretchable
+      // sizers. This progresses in phases in the same manner as above.
+      while (notDoneCount > 0 && freeSpace > nearZero) {
+        let amt = freeSpace / notDoneCount;
+        for (let i = 0; i < count; ++i) {
+          let sizer = sizers[i];
+          if (sizer.done) {
+            continue;
+          }
+          if (sizer.size - amt <= sizer.minSize) {
+            freeSpace -= sizer.size - sizer.minSize;
+            sizer.size = sizer.minSize;
+            sizer.done = true;
+            notDoneCount--;
+          } else {
+            freeSpace -= amt;
+            sizer.size -= amt;
+          }
         }
       }
     }
-    // Distribute any remaining space evenly among the non-stretchable
-    // sizers. This progresses in phases in the same manner as above.
-    while (notDoneCount > 0 && freeSpace > nearZero) {
-      let amt = freeSpace / notDoneCount;
-      for (let i = 0; i < count; ++i) {
-        let sizer = sizers[i];
-        if (sizer.done) {
-          continue;
+    // Distribute positive delta space.
+    else {
+      // Expand each stretchable sizer by an amount proportional to its
+      // stretch factor. If a sizer reaches its max size it's marked as
+      // done. The loop progresses in phases where each sizer is given
+      // a chance to consume its fair share for the pass, regardless of
+      // whether a sizer before it reached its limit. This continues
+      // until the stretchable sizers or the free space is exhausted.
+      let freeSpace = space - totalSize;
+      while (stretchCount > 0 && freeSpace > nearZero) {
+        let distSpace = freeSpace;
+        let distStretch = totalStretch;
+        for (let i = 0; i < count; ++i) {
+          let sizer = sizers[i];
+          if (sizer.done || sizer.stretch === 0) {
+            continue;
+          }
+          let amt = sizer.stretch * distSpace / distStretch;
+          if (sizer.size + amt >= sizer.maxSize) {
+            freeSpace -= sizer.maxSize - sizer.size;
+            totalStretch -= sizer.stretch;
+            sizer.size = sizer.maxSize;
+            sizer.done = true;
+            notDoneCount--;
+            stretchCount--;
+          } else {
+            freeSpace -= amt;
+            sizer.size += amt;
+          }
         }
-        if (sizer.size - amt <= sizer.minSize) {
-          freeSpace -= sizer.size - sizer.minSize;
-          sizer.size = sizer.minSize;
-          sizer.done = true;
-          notDoneCount--;
-        } else {
-          freeSpace -= amt;
-          sizer.size -= amt;
+      }
+      // Distribute any remaining space evenly among the non-stretchable
+      // sizers. This progresses in phases in the same manner as above.
+      while (notDoneCount > 0 && freeSpace > nearZero) {
+        let amt = freeSpace / notDoneCount;
+        for (let i = 0; i < count; ++i) {
+          let sizer = sizers[i];
+          if (sizer.done) {
+            continue;
+          }
+          if (sizer.size + amt >= sizer.maxSize) {
+            freeSpace -= sizer.maxSize - sizer.size;
+            sizer.size = sizer.maxSize;
+            sizer.done = true;
+            notDoneCount--;
+          } else {
+            freeSpace -= amt;
+            sizer.size += amt;
+          }
         }
       }
     }
   }
-  // Distribute positive delta space.
-  else {
-    // Expand each stretchable sizer by an amount proportional to its
-    // stretch factor. If a sizer reaches its max size it's marked as
-    // done. The loop progresses in phases where each sizer is given
-    // a chance to consume its fair share for the pass, regardless of
-    // whether a sizer before it reached its limit. This continues
-    // until the stretchable sizers or the free space is exhausted.
-    let freeSpace = space - totalSize;
-    while (stretchCount > 0 && freeSpace > nearZero) {
-      let distSpace = freeSpace;
-      let distStretch = totalStretch;
-      for (let i = 0; i < count; ++i) {
-        let sizer = sizers[i];
-        if (sizer.done || sizer.stretch === 0) {
-          continue;
-        }
-        let amt = sizer.stretch * distSpace / distStretch;
-        if (sizer.size + amt >= sizer.maxSize) {
-          freeSpace -= sizer.maxSize - sizer.size;
-          totalStretch -= sizer.stretch;
-          sizer.size = sizer.maxSize;
-          sizer.done = true;
-          notDoneCount--;
-          stretchCount--;
-        } else {
-          freeSpace -= amt;
-          sizer.size += amt;
-        }
-      }
+
+  /**
+   * Adjust a sizer by a delta and update its neighbors accordingly.
+   *
+   * @param sizers - The sizers which should be adjusted.
+   *
+   * @param index - The index of the sizer to grow.
+   *
+   * @param delta - The amount to adjust the sizer, positive or negative.
+   *
+   * #### Notes
+   * This will adjust the indicated sizer by the specified amount, along
+   * with the sizes of the appropriate neighbors, subject to the limits
+   * specified by each of the sizers.
+   *
+   * This is useful when implementing box layouts where the boundaries
+   * between the sizers are interactively adjustable by the user.
+   */
+  export
+  function adjust(sizers: ArrayLike<BoxSizer>, index: number, delta: number): void {
+    // Bail early when there is nothing to do.
+    if (sizers.length === 0 || delta === 0) {
+      return;
     }
-    // Distribute any remaining space evenly among the non-stretchable
-    // sizers. This progresses in phases in the same manner as above.
-    while (notDoneCount > 0 && freeSpace > nearZero) {
-      let amt = freeSpace / notDoneCount;
-      for (let i = 0; i < count; ++i) {
-        let sizer = sizers[i];
-        if (sizer.done) {
-          continue;
-        }
-        if (sizer.size + amt >= sizer.maxSize) {
-          freeSpace -= sizer.maxSize - sizer.size;
-          sizer.size = sizer.maxSize;
-          sizer.done = true;
-          notDoneCount--;
-        } else {
-          freeSpace -= amt;
-          sizer.size += amt;
-        }
-      }
+
+    // Dispatch to the proper implementation.
+    if (delta > 0) {
+      growSizer(sizers, index, delta);
+    } else {
+      shrinkSizer(sizers, index, -delta);
     }
   }
-}
 
-
-/**
- * Adjust a sizer by a delta and adjust its neighbors accordingly.
- *
- * @param sizers - The sizers which should be adjusted.
- *
- * @param index - The index of the sizer to grow.
- *
- * @param delta - The amount to adjust the sizer, positive or negative.
- *
- * #### Notes
- * This will adjust the indicated sizer by the specified amount, along
- * with the sizes of the appropriate neighbors, subject to the limits
- * specified by each of the sizers.
- *
- * This is useful when implementing box layouts where the boundaries
- * between the sizers are interactively adjustable by the user.
- */
-export
-function adjustSizer(sizers: ArrayLike<BoxSizer>, index: number, delta: number): void {
-  // Bail early when there is nothing to do.
-  if (sizers.length === 0 || delta === 0) {
-    return;
-  }
-
-  // Dispatch to the proper implementation.
-  if (delta > 0) {
-    Private.growSizer(sizers, index, delta);
-  } else {
-    Private.shrinkSizer(sizers, index, -delta);
-  }
-}
-
-
-/**
- * The namespace for the private module data.
- */
-namespace Private {
   /**
    * Grow a sizer by a positive delta and adjust neighbors.
    */
-  export
   function growSizer(sizers: ArrayLike<BoxSizer>, index: number, delta: number): void {
     // Compute how much the items to the left can expand.
     let growLimit = 0;
@@ -428,7 +426,6 @@ namespace Private {
   /**
    * Shrink a sizer by a positive delta and adjust neighbors.
    */
-  export
   function shrinkSizer(sizers: ArrayLike<BoxSizer>, index: number, delta: number): void {
     // Compute how much the items to the right can expand.
     let growLimit = 0;
