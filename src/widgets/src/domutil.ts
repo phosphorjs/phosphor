@@ -78,14 +78,14 @@ namespace DOMUtil {
   export
   function boxSizing(element: Element): IBoxSizing {
     let style = window.getComputedStyle(element);
-    let bt = parseInt(style.borderTopWidth || '', 10) || 0;
-    let bl = parseInt(style.borderLeftWidth || '', 10) || 0;
-    let br = parseInt(style.borderRightWidth || '', 10) || 0;
-    let bb = parseInt(style.borderBottomWidth || '', 10) || 0;
-    let pt = parseInt(style.paddingTop || '', 10) || 0;
-    let pl = parseInt(style.paddingLeft || '', 10) || 0;
-    let pr = parseInt(style.paddingRight || '', 10) || 0;
-    let pb = parseInt(style.paddingBottom || '', 10) || 0;
+    let bt = parseInt(style.borderTopWidth!, 10) || 0;
+    let bl = parseInt(style.borderLeftWidth!, 10) || 0;
+    let br = parseInt(style.borderRightWidth!, 10) || 0;
+    let bb = parseInt(style.borderBottomWidth!, 10) || 0;
+    let pt = parseInt(style.paddingTop!, 10) || 0;
+    let pl = parseInt(style.paddingLeft!, 10) || 0;
+    let pr = parseInt(style.paddingRight!, 10) || 0;
+    let pb = parseInt(style.paddingBottom!, 10) || 0;
     let hs = bl + pl + pr + br;
     let vs = bt + pt + pb + bb;
     return {
@@ -139,10 +139,10 @@ namespace DOMUtil {
   function sizeLimits(element: Element): ISizeLimits {
     let style = window.getComputedStyle(element);
     return {
-      minWidth: parseInt(style.minWidth || '', 10) || 0,
-      minHeight: parseInt(style.minHeight || '', 10) || 0,
-      maxWidth: parseInt(style.maxWidth || '', 10) || Infinity,
-      maxHeight: parseInt(style.maxHeight || '', 10) || Infinity
+      minWidth: parseInt(style.minWidth!, 10) || 0,
+      minHeight: parseInt(style.minHeight!, 10) || 0,
+      maxWidth: parseInt(style.maxWidth!, 10) || Infinity,
+      maxHeight: parseInt(style.maxHeight!, 10) || Infinity
     };
   }
 
