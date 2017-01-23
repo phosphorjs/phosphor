@@ -357,7 +357,7 @@ namespace Private {
     let name: keyof ElementInlineStyle;
     for (name in oldStyle) {
       if (!(name in newStyle)) {
-        elemStyle[name] = null;
+        elemStyle[name] = '';
       }
     }
     for (name in newStyle) {
