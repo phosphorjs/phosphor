@@ -396,7 +396,7 @@ class BoxLayout extends PanelLayout {
   }
 
   /**
-   * A message handler invoked on an `'before-show'` message.
+   * A message handler invoked on a `'before-show'` message.
    */
   protected onBeforeShow(msg: Message): void {
     super.onBeforeShow(msg);
@@ -404,7 +404,7 @@ class BoxLayout extends PanelLayout {
   }
 
   /**
-   * A message handler invoked on an `'before-attach'` message.
+   * A message handler invoked on a `'before-attach'` message.
    */
   protected onBeforeAttach(msg: Message): void {
     super.onBeforeAttach(msg);
