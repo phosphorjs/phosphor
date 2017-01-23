@@ -1041,11 +1041,11 @@ namespace Widget {
     rect.left = NaN;
     rect.width = NaN;
     rect.height = NaN;
-    style.position = null;
-    style.top = null;
-    style.left = null;
-    style.width = null;
-    style.height = null;
+    style.position = '';
+    style.top = '';
+    style.left = '';
+    style.width = '';
+    style.height = '';
   }
 
   /**
