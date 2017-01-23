@@ -578,7 +578,7 @@ type ElementDataset = {
  */
 export
 type ElementInlineStyle = {
-  readonly [T in CSSPropertyNames]?: string | null;
+  readonly [T in CSSPropertyNames]?: string;
 };
 
 
