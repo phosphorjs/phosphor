@@ -6,71 +6,36 @@
 | The full license is in the file LICENSE, distributed with this software.
 |----------------------------------------------------------------------------*/
 import {
-  move
-} from '../algorithm/mutation';
+  ArrayExt
+} from '@phosphor/algorithm';
 
 import {
-  Vector
-} from '../collections/vector';
-
-import {
-  Message, sendMessage
-} from '../core/messaging';
-
-import {
-  AttachedProperty
-} from '../core/properties';
+  Message, MessageLoop
+} from '@phosphor/messaging';
 
 import {
   IS_EDGE, IS_IE
-} from '../dom/platform';
+} from '@phosphor/platform';
 
 import {
-  IBoxSizing, boxSizing, sizeLimits
-} from '../dom/sizing';
+  AttachedProperty
+} from '@phosphor/properties';
 
 import {
-  BoxSizer, boxCalc
+  BoxEngine, BoxSizer
 } from './boxengine';
+
+import {
+  DOMUtil
+} from './domutil';
 
 import {
   Panel, PanelLayout
 } from './panel';
 
 import {
-  ChildMessage, ResizeMessage, Widget, WidgetMessage
+  Widget
 } from './widget';
-
-
-/**
- * The class name added to BoxPanel instances.
- */
-const BOX_PANEL_CLASS = 'p-BoxPanel';
-
-/**
- * The class name added to a BoxPanel child.
- */
-const CHILD_CLASS = 'p-BoxPanel-child';
-
-/**
- * The class name added to left-to-right box layout parents.
- */
-const LEFT_TO_RIGHT_CLASS = 'p-mod-left-to-right';
-
-/**
- * The class name added to right-to-left box layout parents.
- */
-const RIGHT_TO_LEFT_CLASS = 'p-mod-right-to-left';
-
-/**
- * The class name added to top-to-bottom box layout parents.
- */
-const TOP_TO_BOTTOM_CLASS = 'p-mod-top-to-bottom';
-
-/**
- * The class name added to bottom-to-top box layout parents.
- */
-const BOTTOM_TO_TOP_CLASS = 'p-mod-bottom-to-top';
 
 
 /**
@@ -88,7 +53,7 @@ class BoxPanel extends Panel {
    */
   constructor(options: BoxPanel.IOptions = {}) {
     super({ layout: Private.createLayout(options) });
-    this.addClass(BOX_PANEL_CLASS);
+    this.addClass(BoxPanel.BOX_PANEL_CLASS);
   }
 
   /**
@@ -122,15 +87,15 @@ class BoxPanel extends Panel {
   /**
    * A message handler invoked on a `'child-added'` message.
    */
-  protected onChildAdded(msg: ChildMessage): void {
-    msg.child.addClass(CHILD_CLASS);
+  protected onChildAdded(msg: Widget.ChildMessage): void {
+    msg.child.addClass(BoxPanel.CHILD_CLASS);
   }
 
   /**
    * A message handler invoked on a `'child-removed'` message.
    */
-  protected onChildRemoved(msg: ChildMessage): void {
-    msg.child.removeClass(CHILD_CLASS);
+  protected onChildRemoved(msg: Widget.ChildMessage): void {
+    msg.child.removeClass(BoxPanel.CHILD_CLASS);
   }
 }
 
@@ -140,6 +105,42 @@ class BoxPanel extends Panel {
  */
 export
 namespace BoxPanel {
+  /**
+   * The class name added to BoxPanel instances.
+   */
+  export
+  const BOX_PANEL_CLASS = 'p-BoxPanel';
+
+  /**
+   * The class name added to a BoxPanel child.
+   */
+  export
+  const CHILD_CLASS = 'p-BoxPanel-child';
+
+  /**
+   * The class name added to left-to-right box panels.
+   */
+  export
+  const LEFT_TO_RIGHT_CLASS = BoxLayout.LEFT_TO_RIGHT_CLASS;
+
+  /**
+   * The class name added to right-to-left box panels.
+   */
+  export
+  const RIGHT_TO_LEFT_CLASS = BoxLayout.RIGHT_TO_LEFT_CLASS;
+
+  /**
+   * The class name added to top-to-bottom box panels.
+   */
+  export
+  const TOP_TO_BOTTOM_CLASS = BoxLayout.TOP_TO_BOTTOM_CLASS;
+
+  /**
+   * The class name added to bottom-to-top box panels.
+   */
+  export
+  const BOTTOM_TO_TOP_CLASS = BoxLayout.BOTTOM_TO_TOP_CLASS;
+
   /**
    * A type alias for a box panel direction.
    */
@@ -237,12 +238,21 @@ class BoxLayout extends PanelLayout {
    */
   constructor(options: BoxLayout.IOptions = {}) {
     super();
-    if (options.direction !== void 0) {
+    if (options.direction !== undefined) {
       this._direction = options.direction;
     }
-    if (options.spacing !== void 0) {
+    if (options.spacing !== undefined) {
       this._spacing = Private.clampSpacing(options.spacing);
     }
+  }
+
+  /**
+   * Dispose of the resources held by the layout.
+   */
+  dispose(): void {
+    this._box = null;
+    this._sizers.length = 0;
+    super.dispose();
   }
 
   /**
@@ -293,7 +303,7 @@ class BoxLayout extends PanelLayout {
    * Perform layout initialization which requires the parent widget.
    */
   protected init(): void {
-    Private.toggleDirection(this.parent, this.direction);
+    Private.toggleDirection(this.parent!, this.direction);
     super.init();
   }
 
@@ -309,19 +319,26 @@ class BoxLayout extends PanelLayout {
    */
   protected attachWidget(index: number, widget: Widget): void {
     // Create and add a new sizer for the widget.
-    this._sizers.insert(index, new BoxSizer());
+    ArrayExt.insert(this._sizers, index, new BoxSizer());
 
     // Prepare the layout geometry for the widget.
     Widget.prepareGeometry(widget);
 
+    // Send a `'before-attach'` message if the parent is attached.
+    if (this.parent!.isAttached) {
+      MessageLoop.sendMessage(widget, Widget.Msg.BeforeAttach);
+    }
+
     // Add the widget's node to the parent.
-    this.parent.node.appendChild(widget.node);
+    this.parent!.node.appendChild(widget.node);
 
     // Send an `'after-attach'` message if the parent is attached.
-    if (this.parent.isAttached) sendMessage(widget, WidgetMessage.AfterAttach);
+    if (this.parent!.isAttached) {
+      MessageLoop.sendMessage(widget, Widget.Msg.AfterAttach);
+    }
 
     // Post a fit request for the parent widget.
-    this.parent.fit();
+    this.parent!.fit();
   }
 
   /**
@@ -338,10 +355,10 @@ class BoxLayout extends PanelLayout {
    */
   protected moveWidget(fromIndex: number, toIndex: number, widget: Widget): void {
     // Move the sizer for the widget.
-    move(this._sizers, fromIndex, toIndex);
+    ArrayExt.move(this._sizers, fromIndex, toIndex);
 
     // Post an update request for the parent widget.
-    this.parent.update();
+    this.parent!.update();
   }
 
   /**
@@ -356,64 +373,71 @@ class BoxLayout extends PanelLayout {
    */
   protected detachWidget(index: number, widget: Widget): void {
     // Remove the sizer for the widget.
-    this._sizers.removeAt(index);
+    ArrayExt.removeAt(this._sizers, index);
 
     // Send a `'before-detach'` message if the parent is attached.
-    if (this.parent.isAttached) sendMessage(widget, WidgetMessage.BeforeDetach);
+    if (this.parent!.isAttached) {
+      MessageLoop.sendMessage(widget, Widget.Msg.BeforeDetach);
+    }
 
     // Remove the widget's node from the parent.
-    this.parent.node.removeChild(widget.node);
+    this.parent!.node.removeChild(widget.node);
+
+    // Send an `'after-detach'` message if the parent is attached.
+    if (this.parent!.isAttached) {
+      MessageLoop.sendMessage(widget, Widget.Msg.AfterDetach);
+    }
 
     // Reset the layout geometry for the widget.
     Widget.resetGeometry(widget);
 
     // Post a fit request for the parent widget.
-    this.parent.fit();
+    this.parent!.fit();
   }
 
   /**
-   * A message handler invoked on an `'after-show'` message.
+   * A message handler invoked on an `'before-show'` message.
    */
-  protected onAfterShow(msg: Message): void {
-    super.onAfterShow(msg);
-    this.parent.update();
+  protected onBeforeShow(msg: Message): void {
+    super.onBeforeShow(msg);
+    this.parent!.update();
   }
 
   /**
-   * A message handler invoked on an `'after-attach'` message.
+   * A message handler invoked on an `'before-attach'` message.
    */
-  protected onAfterAttach(msg: Message): void {
-    super.onAfterAttach(msg);
-    this.parent.fit();
+  protected onBeforeAttach(msg: Message): void {
+    super.onBeforeAttach(msg);
+    this.parent!.fit();
   }
 
   /**
    * A message handler invoked on a `'child-shown'` message.
    */
-  protected onChildShown(msg: ChildMessage): void {
-    if (IS_IE || IS_EDGE) { // prevent flicker on IE/Edge
-      sendMessage(this.parent, WidgetMessage.FitRequest);
+  protected onChildShown(msg: Widget.ChildMessage): void {
+    if (IS_IE || IS_EDGE) { // prevent flicker on IE/Edge - TODO fix this
+      MessageLoop.sendMessage(this.parent!, Widget.Msg.FitRequest);
     } else {
-      this.parent.fit();
+      this.parent!.fit();
     }
   }
 
   /**
    * A message handler invoked on a `'child-hidden'` message.
    */
-  protected onChildHidden(msg: ChildMessage): void {
-    if (IS_IE || IS_EDGE) { // prevent flicker on IE/Edge
-      sendMessage(this.parent, WidgetMessage.FitRequest);
+  protected onChildHidden(msg: Widget.ChildMessage): void {
+    if (IS_IE || IS_EDGE) { // prevent flicker on IE/Edge - TODO fix this
+      MessageLoop.sendMessage(this.parent!, Widget.Msg.FitRequest);
     } else {
-      this.parent.fit();
+      this.parent!.fit();
     }
   }
 
   /**
    * A message handler invoked on a `'resize'` message.
    */
-  protected onResize(msg: ResizeMessage): void {
-    if (this.parent.isVisible) {
+  protected onResize(msg: Widget.ResizeMessage): void {
+    if (this.parent!.isVisible) {
       this._update(msg.width, msg.height);
     }
   }
@@ -422,7 +446,7 @@ class BoxLayout extends PanelLayout {
    * A message handler invoked on an `'update-request'` message.
    */
   protected onUpdateRequest(msg: Message): void {
-    if (this.parent.isVisible) {
+    if (this.parent!.isVisible) {
       this._update(-1, -1);
     }
   }
@@ -431,7 +455,7 @@ class BoxLayout extends PanelLayout {
    * A message handler invoked on a `'fit-request'` message.
    */
   protected onFitRequest(msg: Message): void {
-    if (this.parent.isAttached) {
+    if (this.parent!.isAttached) {
       this._fit();
     }
   }
@@ -444,7 +468,7 @@ class BoxLayout extends PanelLayout {
     let nVisible = 0;
     let widgets = this.widgets;
     for (let i = 0, n = widgets.length; i < n; ++i) {
-      if (!widgets.at(i).isHidden) nVisible++;
+      nVisible += +!widgets[i].isHidden;
     }
 
     // Update the fixed space for the visible items.
@@ -466,14 +490,14 @@ class BoxLayout extends PanelLayout {
 
     // Update the sizers and computed size limits.
     for (let i = 0, n = widgets.length; i < n; ++i) {
-      let widget = widgets.at(i);
-      let sizer = this._sizers.at(i);
+      let widget = widgets[i];
+      let sizer = this._sizers[i];
       if (widget.isHidden) {
         sizer.minSize = 0;
         sizer.maxSize = 0;
         continue;
       }
-      let limits = sizeLimits(widget.node);
+      let limits = DOMUtil.sizeLimits(widget.node);
       sizer.sizeHint = BoxLayout.getSizeBasis(widget);
       sizer.stretch = BoxLayout.getStretch(widget);
       if (horz) {
@@ -494,14 +518,14 @@ class BoxLayout extends PanelLayout {
     }
 
     // Update the box sizing and add it to the size constraints.
-    let box = this._box = boxSizing(this.parent.node);
+    let box = this._box = DOMUtil.boxSizing(this.parent!.node);
     minW += box.horizontalSum;
     minH += box.verticalSum;
     maxW += box.horizontalSum;
     maxH += box.verticalSum;
 
     // Update the parent's size constraints.
-    let style = this.parent.node.style;
+    let style = this.parent!.node.style;
     style.minWidth = `${minW}px`;
     style.minHeight = `${minH}px`;
     style.maxWidth = maxW === Infinity ? 'none' : `${maxW}px`;
@@ -512,12 +536,15 @@ class BoxLayout extends PanelLayout {
 
     // Notify the ancestor that it should fit immediately. This may
     // cause a resize of the parent, fulfilling the required update.
-    let ancestor = this.parent.parent;
-    if (ancestor) sendMessage(ancestor, WidgetMessage.FitRequest);
+    if (this.parent!.parent) {
+      MessageLoop.sendMessage(this.parent!.parent!, Widget.Msg.FitRequest);
+    }
 
     // If the dirty flag is still set, the parent was not resized.
     // Trigger the required update on the parent widget immediately.
-    if (this._dirty) sendMessage(this.parent, WidgetMessage.UpdateRequest);
+    if (this._dirty) {
+      MessageLoop.sendMessage(this.parent!, Widget.Msg.UpdateRequest);
+    }
   }
 
   /**
@@ -537,14 +564,14 @@ class BoxLayout extends PanelLayout {
 
     // Measure the parent if the offset dimensions are unknown.
     if (offsetWidth < 0) {
-      offsetWidth = this.parent.node.offsetWidth;
+      offsetWidth = this.parent!.node.offsetWidth;
     }
     if (offsetHeight < 0) {
-      offsetHeight = this.parent.node.offsetHeight;
+      offsetHeight = this.parent!.node.offsetHeight;
     }
 
     // Ensure the parent box sizing data is computed.
-    let box = this._box || (this._box = boxSizing(this.parent.node));
+    let box = this._box || (this._box = DOMUtil.boxSizing(this.parent!.node));
 
     // Compute the layout area adjusted for border and padding.
     let top = box.paddingTop;
@@ -555,28 +582,28 @@ class BoxLayout extends PanelLayout {
     // Distribute the layout space and adjust the start position.
     switch (this._direction) {
     case 'left-to-right':
-      boxCalc(this._sizers, Math.max(0, width - this._fixed));
+      BoxEngine.calc(this._sizers, Math.max(0, width - this._fixed));
       break;
     case 'top-to-bottom':
-      boxCalc(this._sizers, Math.max(0, height - this._fixed));
+      BoxEngine.calc(this._sizers, Math.max(0, height - this._fixed));
       break;
     case 'right-to-left':
-      boxCalc(this._sizers, Math.max(0, width - this._fixed));
+      BoxEngine.calc(this._sizers, Math.max(0, width - this._fixed));
       left += width;
       break;
     case 'bottom-to-top':
-      boxCalc(this._sizers, Math.max(0, height - this._fixed));
+      BoxEngine.calc(this._sizers, Math.max(0, height - this._fixed));
       top += height;
       break;
     }
 
     // Layout the widgets using the computed box sizes.
     for (let i = 0, n = widgets.length; i < n; ++i) {
-      let widget = widgets.at(i);
+      let widget = widgets[i];
       if (widget.isHidden) {
         continue;
       }
-      let size = this._sizers.at(i).size;
+      let { size } = this._sizers[i];
       switch (this._direction) {
       case 'left-to-right':
         Widget.setGeometry(widget, left, top, size, height);
@@ -601,8 +628,8 @@ class BoxLayout extends PanelLayout {
   private _fixed = 0;
   private _spacing = 4;
   private _dirty = false;
-  private _box: IBoxSizing = null;
-  private _sizers = new Vector<BoxSizer>();
+  private _sizers: BoxSizer[] = [];
+  private _box: DOMUtil.IBoxSizing | null = null;
   private _direction: BoxLayout.Direction = 'top-to-bottom';
 }
 
@@ -612,6 +639,30 @@ class BoxLayout extends PanelLayout {
  */
 export
 namespace BoxLayout {
+  /**
+   * The class name added to left-to-right box layout parents.
+   */
+  export
+  const LEFT_TO_RIGHT_CLASS = 'p-mod-left-to-right';
+
+  /**
+   * The class name added to right-to-left box layout parents.
+   */
+  export
+  const RIGHT_TO_LEFT_CLASS = 'p-mod-right-to-left';
+
+  /**
+   * The class name added to top-to-bottom box layout parents.
+   */
+  export
+  const TOP_TO_BOTTOM_CLASS = 'p-mod-top-to-bottom';
+
+  /**
+   * The class name added to bottom-to-top box layout parents.
+   */
+  export
+  const BOTTOM_TO_TOP_CLASS = 'p-mod-bottom-to-top';
+
   /**
    * A type alias for a box layout direction.
    */
@@ -700,7 +751,7 @@ namespace Private {
   export
   const stretchProperty = new AttachedProperty<Widget, number>({
     name: 'stretch',
-    value: 0,
+    create: () => 0,
     coerce: (owner, value) => Math.max(0, Math.floor(value)),
     changed: onChildPropertyChanged
   });
@@ -711,7 +762,7 @@ namespace Private {
   export
   const sizeBasisProperty = new AttachedProperty<Widget, number>({
     name: 'sizeBasis',
-    value: 0,
+    create: () => 0,
     coerce: (owner, value) => Math.max(0, Math.floor(value)),
     changed: onChildPropertyChanged
   });
@@ -737,10 +788,10 @@ namespace Private {
    */
   export
   function toggleDirection(widget: Widget, dir: BoxLayout.Direction): void {
-    widget.toggleClass(LEFT_TO_RIGHT_CLASS, dir === 'left-to-right');
-    widget.toggleClass(RIGHT_TO_LEFT_CLASS, dir === 'right-to-left');
-    widget.toggleClass(TOP_TO_BOTTOM_CLASS, dir === 'top-to-bottom');
-    widget.toggleClass(BOTTOM_TO_TOP_CLASS, dir === 'bottom-to-top');
+    widget.toggleClass(BoxLayout.LEFT_TO_RIGHT_CLASS, dir === 'left-to-right');
+    widget.toggleClass(BoxLayout.RIGHT_TO_LEFT_CLASS, dir === 'right-to-left');
+    widget.toggleClass(BoxLayout.TOP_TO_BOTTOM_CLASS, dir === 'top-to-bottom');
+    widget.toggleClass(BoxLayout.BOTTOM_TO_TOP_CLASS, dir === 'bottom-to-top');
   }
 
   /**
@@ -755,8 +806,8 @@ namespace Private {
    * The change handler for the attached child properties.
    */
   function onChildPropertyChanged(child: Widget): void {
-    let parent = child.parent;
-    let layout = parent && parent.layout;
-    if (layout instanceof BoxLayout) parent.fit();
+    if (child.parent && child.parent.layout instanceof BoxLayout) {
+      child.parent.fit();
+    }
   }
 }
