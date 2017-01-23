@@ -6,39 +6,28 @@
 | The full license is in the file LICENSE, distributed with this software.
 |----------------------------------------------------------------------------*/
 import {
-  Message, sendMessage
-} from '../core/messaging';
+  Message, MessageLoop
+} from '@phosphor/messaging';
 
 import {
-  ISignal, defineSignal
-} from '../core/signaling';
+  ISignal, Signal
+} from '@phosphor/signaling';
 
 import {
   IS_EDGE, IS_IE
-} from '../dom/platform';
+} from '@phosphor/platform';
 
 import {
-  IBoxSizing, boxSizing, sizeLimits
-} from '../dom/sizing';
+  DOMUtil
+} from './domutil';
 
 import {
   Panel, PanelLayout
 } from './panel';
 
 import {
-  ChildMessage, ResizeMessage, Widget, WidgetMessage
+  Widget
 } from './widget';
-
-
-/**
- * The class name added to StackedPanel instances.
- */
-const STACKED_PANEL_CLASS = 'p-StackedPanel';
-
-/**
- * The class name added to a StackedPanel child.
- */
-const CHILD_CLASS = 'p-StackedPanel-child';
 
 
 /**
@@ -56,33 +45,33 @@ class StackedPanel extends Panel {
    */
   constructor(options: StackedPanel.IOptions = {}) {
     super({ layout: Private.createLayout(options) });
-    this.addClass(STACKED_PANEL_CLASS);
+    this.addClass(StackedPanel.STACKED_PANEL_CLASS);
   }
 
   /**
    * A signal emitted when a widget is removed from a stacked panel.
    */
-  widgetRemoved: ISignal<StackedPanel, Widget>;
+  get widgetRemoved(): ISignal<this, Widget> {
+    return this._widgetRemoved;
+  }
 
   /**
    * A message handler invoked on a `'child-added'` message.
    */
-  protected onChildAdded(msg: ChildMessage): void {
-    msg.child.addClass(CHILD_CLASS);
+  protected onChildAdded(msg: Widget.ChildMessage): void {
+    msg.child.addClass(StackedPanel.CHILD_CLASS);
   }
 
   /**
    * A message handler invoked on a `'child-removed'` message.
    */
-  protected onChildRemoved(msg: ChildMessage): void {
-    msg.child.removeClass(CHILD_CLASS);
-    this.widgetRemoved.emit(msg.child);
+  protected onChildRemoved(msg: Widget.ChildMessage): void {
+    msg.child.removeClass(StackedPanel.CHILD_CLASS);
+    this._widgetRemoved.emit(msg.child);
   }
+
+  private _widgetRemoved = new Signal<this, Widget>(this);
 }
-
-
-// Define the signals for the `StackedPanel` class.
-defineSignal(StackedPanel.prototype, 'widgetRemoved');
 
 
 /**
@@ -90,6 +79,18 @@ defineSignal(StackedPanel.prototype, 'widgetRemoved');
  */
 export
 namespace StackedPanel {
+  /**
+   * The class name added to StackedPanel instances.
+   */
+  export
+  const STACKED_PANEL_CLASS = 'p-StackedPanel';
+
+  /**
+   * The class name added to a StackedPanel child.
+   */
+  export
+  const CHILD_CLASS = 'p-StackedPanel-child';
+
   /**
    * An options object for creating a stacked panel.
    */
@@ -127,14 +128,21 @@ class StackedLayout extends PanelLayout {
     // Prepare the layout geometry for the widget.
     Widget.prepareGeometry(widget);
 
+    // Send a `'before-attach'` message if the parent is attached.
+    if (this.parent!.isAttached) {
+      MessageLoop.sendMessage(widget, Widget.Msg.BeforeAttach);
+    }
+
     // Add the widget's node to the parent.
-    this.parent.node.appendChild(widget.node);
+    this.parent!.node.appendChild(widget.node);
 
     // Send an `'after-attach'` message if the parent is attached.
-    if (this.parent.isAttached) sendMessage(widget, WidgetMessage.AfterAttach);
+    if (this.parent!.isAttached) {
+      MessageLoop.sendMessage(widget, Widget.Msg.AfterAttach);
+    }
 
     // Post a fit request for the parent widget.
-    this.parent.fit();
+    this.parent!.fit();
   }
 
   /**
@@ -150,8 +158,8 @@ class StackedLayout extends PanelLayout {
    * This is a reimplementation of the superclass method.
    */
   protected moveWidget(fromIndex: number, toIndex: number, widget: Widget): void {
-    // Post an update request for the parent widget.
-    this.parent.update();
+    // No logic is needed other than an update.
+    this.parent!.update();
   }
 
   /**
@@ -166,64 +174,71 @@ class StackedLayout extends PanelLayout {
    */
   protected detachWidget(index: number, widget: Widget): void {
     // Send a `'before-detach'` message if the parent is attached.
-    if (this.parent.isAttached) sendMessage(widget, WidgetMessage.BeforeDetach);
+    if (this.parent!.isAttached) {
+      MessageLoop.sendMessage(widget, Widget.Msg.BeforeDetach);
+    }
 
     // Remove the widget's node from the parent.
-    this.parent.node.removeChild(widget.node);
+    this.parent!.node.removeChild(widget.node);
+
+    // Send an `'after-detach'` message if the parent is attached.
+    if (this.parent!.isAttached) {
+      MessageLoop.sendMessage(widget, Widget.Msg.AfterDetach);
+    }
 
     // Reset the layout geometry for the widget.
     Widget.resetGeometry(widget);
 
     // Reset the z-index for the widget.
-    widget.node.style.zIndex = '';
+    widget.node.style.zIndex = null;
 
     // Post a fit request for the parent widget.
-    this.parent.fit();
+    this.parent!.fit();
   }
 
   /**
-   * A message handler invoked on an `'after-show'` message.
+   * A message handler invoked on a `'before-show'` message.
    */
-  protected onAfterShow(msg: Message): void {
-    super.onAfterShow(msg);
-    this.parent.update();
+  protected onBeforeShow(msg: Message): void {
+    super.onBeforeShow(msg);
+    this.parent!.update();
   }
 
   /**
-   * A message handler invoked on an `'after-attach'` message.
+   * A message handler invoked on a `'before-attach'` message.
    */
-  protected onAfterAttach(msg: Message): void {
-    super.onAfterAttach(msg);
-    this.parent.fit();
+  protected onBeforeAttach(msg: Message): void {
+    super.onBeforeAttach(msg);
+    this.parent!.fit();
   }
 
   /**
    * A message handler invoked on a `'child-shown'` message.
    */
-  protected onChildShown(msg: ChildMessage): void {
-    if (IS_IE || IS_EDGE) { // prevent flicker on IE/Edge
-      sendMessage(this.parent, WidgetMessage.FitRequest);
+  protected onChildShown(msg: Widget.ChildMessage): void {
+    if (IS_IE || IS_EDGE) { // prevent flicker on IE/Edge - TODO fix this
+      MessageLoop.sendMessage(this.parent!, Widget.Msg.FitRequest);
     } else {
-      this.parent.fit();
+      this.parent!.fit();
     }
   }
 
   /**
    * A message handler invoked on a `'child-hidden'` message.
    */
-  protected onChildHidden(msg: ChildMessage): void {
-    if (IS_IE || IS_EDGE) { // prevent flicker on IE/Edge
-      sendMessage(this.parent, WidgetMessage.FitRequest);
+  protected onChildHidden(msg: Widget.ChildMessage): void {
+    if (IS_IE || IS_EDGE) { // prevent flicker on IE/Edge - TODO fix this
+      MessageLoop.sendMessage(this.parent!, Widget.Msg.FitRequest);
     } else {
-      this.parent.fit();
+      this.parent!.fit();
     }
   }
 
   /**
    * A message handler invoked on a `'resize'` message.
    */
-  protected onResize(msg: ResizeMessage): void {
-    if (this.parent.isVisible) {
+  protected onResize(msg: Widget.ResizeMessage): void {
+    if (this.parent!.isVisible) {
       this._update(msg.width, msg.height);
     }
   }
@@ -232,7 +247,7 @@ class StackedLayout extends PanelLayout {
    * A message handler invoked on an `'update-request'` message.
    */
   protected onUpdateRequest(msg: Message): void {
-    if (this.parent.isVisible) {
+    if (this.parent!.isVisible) {
       this._update(-1, -1);
     }
   }
@@ -241,7 +256,7 @@ class StackedLayout extends PanelLayout {
    * A message handler invoked on a `'fit-request'` message.
    */
   protected onFitRequest(msg: Message): void {
-    if (this.parent.isAttached) {
+    if (this.parent!.isAttached) {
       this._fit();
     }
   }
@@ -259,11 +274,11 @@ class StackedLayout extends PanelLayout {
     // Update the computed size limits.
     let widgets = this.widgets;
     for (let i = 0, n = widgets.length; i < n; ++i) {
-      let widget = widgets.at(i);
+      let widget = widgets[i];
       if (widget.isHidden) {
         continue;
       }
-      let limits = sizeLimits(widget.node);
+      let limits = DOMUtil.sizeLimits(widget.node);
       minW = Math.max(minW, limits.minWidth);
       minH = Math.max(minH, limits.minHeight);
       maxW = Math.min(maxW, limits.maxWidth);
@@ -275,14 +290,14 @@ class StackedLayout extends PanelLayout {
     maxH = Math.max(minH, maxH);
 
     // Update the box sizing and add it to the size constraints.
-    let box = this._box = boxSizing(this.parent.node);
+    let box = this._box = DOMUtil.boxSizing(this.parent!.node);
     minW += box.horizontalSum;
     minH += box.verticalSum;
     maxW += box.horizontalSum;
     maxH += box.verticalSum;
 
     // Update the parent's size constraints.
-    let style = this.parent.node.style;
+    let style = this.parent!.node.style;
     style.minWidth = `${minW}px`;
     style.minHeight = `${minH}px`;
     style.maxWidth = maxW === Infinity ? 'none' : `${maxW}px`;
@@ -293,12 +308,15 @@ class StackedLayout extends PanelLayout {
 
     // Notify the ancestor that it should fit immediately. This may
     // cause a resize of the parent, fulfilling the required update.
-    let ancestor = this.parent.parent;
-    if (ancestor) sendMessage(ancestor, WidgetMessage.FitRequest);
+    if (this.parent!.parent) {
+      MessageLoop.sendMessage(this.parent!.parent!, Widget.Msg.FitRequest);
+    }
 
     // If the dirty flag is still set, the parent was not resized.
     // Trigger the required update on the parent widget immediately.
-    if (this._dirty) sendMessage(this.parent, WidgetMessage.UpdateRequest);
+    if (this._dirty) {
+      MessageLoop.sendMessage(this.parent!, Widget.Msg.UpdateRequest);
+    }
   }
 
   /**
@@ -318,14 +336,14 @@ class StackedLayout extends PanelLayout {
 
     // Measure the parent if the offset dimensions are unknown.
     if (offsetWidth < 0) {
-      offsetWidth = this.parent.node.offsetWidth;
+      offsetWidth = this.parent!.node.offsetWidth;
     }
     if (offsetHeight < 0) {
-      offsetHeight = this.parent.node.offsetHeight;
+      offsetHeight = this.parent!.node.offsetHeight;
     }
 
     // Ensure the parent box sizing data is computed.
-    let box = this._box || (this._box = boxSizing(this.parent.node));
+    let box = this._box || (this._box = DOMUtil.boxSizing(this.parent!.node));
 
     // Compute the actual layout bounds adjusted for border and padding.
     let top = box.paddingTop;
@@ -335,7 +353,7 @@ class StackedLayout extends PanelLayout {
 
     // Update the widget stacking order and layout geometry.
     for (let i = 0, n = widgets.length; i < n; ++i) {
-      let widget = widgets.at(i);
+      let widget = widgets[i];
       if (widget.isHidden) {
         continue;
       }
@@ -345,7 +363,7 @@ class StackedLayout extends PanelLayout {
   }
 
   private _dirty = false;
-  private _box: IBoxSizing = null;
+  private _box: DOMUtil.IBoxSizing | null = null;
 }
 
 
