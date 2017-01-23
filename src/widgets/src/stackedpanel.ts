@@ -190,7 +190,7 @@ class StackedLayout extends PanelLayout {
     Widget.resetGeometry(widget);
 
     // Reset the z-index for the widget.
-    widget.node.style.zIndex = null;
+    widget.node.style.zIndex = '';
 
     // Post a fit request for the parent widget.
     this.parent!.fit();
