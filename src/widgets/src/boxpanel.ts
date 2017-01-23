@@ -603,7 +603,7 @@ class BoxLayout extends PanelLayout {
       if (widget.isHidden) {
         continue;
       }
-      let { size } = this._sizers[i];
+      let size = this._sizers[i].size;
       switch (this._direction) {
       case 'left-to-right':
         Widget.setGeometry(widget, left, top, size, height);
