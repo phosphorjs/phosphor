@@ -10,8 +10,8 @@ import {
 } from '@phosphor/algorithm';
 
 import {
-  ElementAttrs, ElementDataset, ElementInlineStyle, VirtualElementNode,
-  VirtualNode, VirtualTextNode
+  ElementAttrs, ElementDataset, ElementInlineStyle, VirtualElement,
+  VirtualNode, VirtualText
 } from './dom';
 
 
@@ -29,7 +29,7 @@ import {
  * If virtual diffing is desired, use the `render` function instead.
  */
 export
-function realize(node: VirtualElementNode): HTMLElement {
+function realize(node: VirtualElement): HTMLElement {
   return Private.createDOMNode(node);
 }
 
@@ -87,9 +87,9 @@ namespace Private {
    * Create a new DOM element for a virtual node.
    */
   export
-  function createDOMNode(node: VirtualTextNode): Text;
+  function createDOMNode(node: VirtualText): Text;
   export
-  function createDOMNode(node: VirtualElementNode): HTMLElement;
+  function createDOMNode(node: VirtualElement): HTMLElement;
   export
   function createDOMNode(node: VirtualNode): HTMLElement | Text;
   export
@@ -174,8 +174,8 @@ namespace Private {
       }
 
       // At this point, both nodes are known to be element nodes.
-      let oldElemNode = oldVNode as VirtualElementNode;
-      let newElemNode = newVNode as VirtualElementNode;
+      let oldElemNode = oldVNode as VirtualElement;
+      let newElemNode = newVNode as VirtualElement;
 
       // If the new elem is keyed, move an old keyed elem to the proper
       // location before proceeding with the diff. The search can start
@@ -371,7 +371,7 @@ namespace Private {
    * A mapping of string key to pair of element and rendered node.
    */
   type KeyMap = {
-    [key: string]: { vNode: VirtualElementNode, element: HTMLElement };
+    [key: string]: { vNode: VirtualElement, element: HTMLElement };
   };
 
   /**

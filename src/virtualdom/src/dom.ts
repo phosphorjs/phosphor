@@ -659,11 +659,11 @@ type ElementAttrs = (
  * A virtual node which represents plain text content.
  *
  * #### Notes
- * User code will not typically create a `VirtualTextNode` directly.
+ * User code will not typically create a `VirtualText` node directly.
  * Instead, the `h()` function will be used to create an element tree.
  */
 export
-class VirtualTextNode {
+class VirtualText {
   /**
    * The text content for the node.
    */
@@ -692,11 +692,11 @@ class VirtualTextNode {
  * A virtual node which represents an HTML element.
  *
  * #### Notes
- * User code will not typically create a `VirtualElementNode` directly.
+ * User code will not typically create a `VirtualElement` node directly.
  * Instead, the `h()` function will be used to create an element tree.
  */
 export
-class VirtualElementNode {
+class VirtualElement {
   /**
    * The tag name for the element.
    */
@@ -741,7 +741,7 @@ class VirtualElementNode {
  * A type alias for a general virtual node.
  */
 export
-type VirtualNode = VirtualElementNode | VirtualTextNode;
+type VirtualNode = VirtualElement | VirtualText;
 
 
 /**
@@ -766,18 +766,18 @@ type VirtualNode = VirtualElementNode | VirtualTextNode;
  * function attached to the `h()` function. E.g. `h('div', ...)` is
  * equivalent to `h.div(...)`.
  */
-export function h(tag: string, ...children: h.Child[]): VirtualElementNode;
-export function h(tag: string, attrs: ElementAttrs, ...children: h.Child[]): VirtualElementNode;
-export function h(tag: string): VirtualElementNode {
+export function h(tag: string, ...children: h.Child[]): VirtualElement;
+export function h(tag: string, attrs: ElementAttrs, ...children: h.Child[]): VirtualElement;
+export function h(tag: string): VirtualElement {
   let attrs: ElementAttrs = {};
   let children: VirtualNode[] = [];
   for (let i = 1, n = arguments.length; i < n; ++i) {
     let arg = arguments[i];
     if (typeof arg === 'string') {
-      children.push(new VirtualTextNode(arg));
-    } else if (arg instanceof VirtualTextNode) {
+      children.push(new VirtualText(arg));
+    } else if (arg instanceof VirtualText) {
       children.push(arg);
-    } else if (arg instanceof VirtualElementNode) {
+    } else if (arg instanceof VirtualElement) {
       children.push(arg);
     } else if (arg instanceof Array) {
       extend(children, arg);
@@ -785,15 +785,15 @@ export function h(tag: string): VirtualElementNode {
       attrs = arg;
     }
   }
-  return new VirtualElementNode(tag, attrs, children);
+  return new VirtualElement(tag, attrs, children);
 
   function extend(array: VirtualNode[], values: h.Child[]): void {
     for (let child of values) {
       if (typeof child === 'string') {
-        array.push(new VirtualTextNode(child));
-      } else if (child instanceof VirtualTextNode) {
+        array.push(new VirtualText(child));
+      } else if (child instanceof VirtualText) {
         array.push(child);
-      } else if (child instanceof VirtualElementNode) {
+      } else if (child instanceof VirtualElement) {
         array.push(child);
       }
     }
@@ -817,8 +817,8 @@ namespace h {
    */
   export
   interface IFactory {
-    (...children: Child[]): VirtualElementNode;
-    (attrs: ElementAttrs, ...children: Child[]): VirtualElementNode;
+    (...children: Child[]): VirtualElement;
+    (attrs: ElementAttrs, ...children: Child[]): VirtualElement;
   }
 
   export const a: IFactory = h.bind(undefined, 'a');
