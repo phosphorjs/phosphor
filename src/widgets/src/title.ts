@@ -45,6 +45,13 @@ class Title<T> {
     if (options.closable !== undefined) {
       this._closable = options.closable;
     }
+    if (options.dataset !== undefined) {
+      for (let key in options.dataset) {
+        if (options.dataset[key]) {
+          this._dataset[key] = options.dataset[key];
+        }
+      }
+    }
   }
 
   /**
@@ -194,6 +201,74 @@ class Title<T> {
     this._changed.emit(undefined);
   }
 
+  /**
+   * Get the data value for a data key.
+   *
+   * @param key - The data key of interest.
+   *
+   * @returns The value for the given key, or an empty string.
+   *
+   * #### Notes
+   * The dataset is intended for advanced use cases where the other
+   * properties on the title are insufficient to contain all of the
+   * data needed to render the title for an object.
+   */
+  getData(key: string): string {
+    return this._dataset[key] || '';
+  }
+
+  /**
+   * Set the data value for a data key.
+   *
+   * @param key - The data key of interest.
+   *
+   * @param value - The value to set for the data key.
+   *
+   * #### Notes
+   * The dataset is intended for advanced use cases where the other
+   * properties on the title are insufficient to contain all of the
+   * data needed to render the title for an object.
+   */
+  setData(key: string, value: string): void {
+    if (value === (this._dataset[key] || '')) {
+      return;
+    }
+    if (value) {
+      this._dataset[key] = value;
+    } else {
+      delete this._dataset[key];
+    }
+    this._changed.emit(undefined);
+  }
+
+  /**
+   * Update the data values for multiple data keys.
+   *
+   * @param value - An object mapping of key/value pairs to update.
+   *
+   * #### Notes
+   * The dataset is intended for advanced use cases where the other
+   * properties on the title are insufficient to contain all of the
+   * data needed to render the title for an object.
+   */
+  updateData(values: { [key: string]: string }): void {
+    let changed = false;
+    for (let key in values) {
+      if (values[key] === (this._dataset[key] || '')) {
+        continue;
+      }
+      if (values[key]) {
+        this._dataset[key] = values[key];
+      } else {
+        delete this._dataset[key];
+      }
+      changed = true;
+    }
+    if (changed) {
+      this._changed.emit(undefined);
+    }
+  }
+
   private _icon = '';
   private _label = '';
   private _caption = '';
@@ -201,6 +276,7 @@ class Title<T> {
   private _className = '';
   private _closable = false;
   private _changed = new Signal<this, void>(this);
+  private _dataset: { [key: string]: string } = Object.create(null);
 }
 
 
@@ -248,5 +324,10 @@ namespace Title {
      * The closable state for the title.
      */
     closable?: boolean;
+
+    /**
+     * The initial dataset for the title.
+     */
+    dataset?: { [key: string]: string };
   }
 }
