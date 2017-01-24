@@ -346,12 +346,6 @@ namespace SplitPanel {
   const CHILD_CLASS = 'p-SplitPanel-child';
 
   /**
-   * The class name added to split panel handles.
-   */
-  export
-  const HANDLE_CLASS = 'p-SplitPanel-handle';
-
-  /**
    * The class name added to horizontal split panels.
    */
   export
@@ -429,9 +423,21 @@ namespace SplitPanel {
      */
     createHandle(): HTMLDivElement {
       let handle = document.createElement('div');
-      handle.className = HANDLE_CLASS;
+      handle.className = Renderer.HANDLE_CLASS;
       return handle;
     }
+  }
+
+  /**
+   * The namespace for the `Renderer` class statics.
+   */
+  export
+  namespace Renderer {
+    /**
+     * The class name added to split panel handles.
+     */
+    export
+    const HANDLE_CLASS = 'p-SplitPanel-handle';
   }
 
   /**
