@@ -6,91 +6,44 @@
 | The full license is in the file LICENSE, distributed with this software.
 |----------------------------------------------------------------------------*/
 import {
-  each, map, reduce, toArray
-} from '../algorithm/iteration';
-
-import {
-  move
-} from '../algorithm/mutation';
-
-import {
-  findIndex
-} from '../algorithm/searching';
-
-import {
-  ISequence
-} from '../algorithm/sequence';
-
-import {
-  Vector
-} from '../collections/vector';
+  ArrayExt
+} from '@phosphor/algorithm';
 
 import {
   IDisposable
-} from '../core/disposable';
+} from '@phosphor/disposable';
 
 import {
-  Message, sendMessage
-} from '../core/messaging';
+  Drag
+} from '@phosphor/dragdrop';
 
 import {
-  AttachedProperty
-} from '../core/properties';
-
-import {
-  overrideCursor
-} from '../dom/cursor';
+  Message, MessageLoop
+} from '@phosphor/messaging';
 
 import {
   IS_EDGE, IS_IE
-} from '../dom/platform';
+} from '@phosphor/platform';
 
 import {
-  IBoxSizing, boxSizing, sizeLimits
-} from '../dom/sizing';
+  AttachedProperty
+} from '@phosphor/properties';
 
 import {
-  BoxSizer, adjustSizer, boxCalc
+  BoxEngine, BoxSizer
 } from './boxengine';
+
+import {
+  DOMUtil
+} from './domutil';
 
 import {
   Panel, PanelLayout
 } from './panel';
 
 import {
-  ChildMessage, ResizeMessage, Widget, WidgetMessage
+  Widget
 } from './widget';
-
-
-/**
- * The class name added to SplitPanel instances.
- */
-const SPLIT_PANEL_CLASS = 'p-SplitPanel';
-
-/**
- * The class name added to split panel children.
- */
-const CHILD_CLASS = 'p-SplitPanel-child';
-
-/**
- * The class name added to split panel handles.
- */
-const HANDLE_CLASS = 'p-SplitPanel-handle';
-
-/**
- * The class name added to hidden split handles.
- */
-const HIDDEN_CLASS = 'p-mod-hidden';
-
-/**
- * The class name added to horizontal split panels.
- */
-const HORIZONTAL_CLASS = 'p-mod-horizontal';
-
-/**
- * The class name added to vertical split panels.
- */
-const VERTICAL_CLASS = 'p-mod-vertical';
 
 
 /**
@@ -108,7 +61,7 @@ class SplitPanel extends Panel {
    */
   constructor(options: SplitPanel.IOptions = {}) {
     super({ layout: Private.createLayout(options) });
-    this.addClass(SPLIT_PANEL_CLASS);
+    this.addClass(SplitPanel.SPLIT_PANEL_CLASS);
   }
 
   /**
@@ -149,21 +102,15 @@ class SplitPanel extends Panel {
 
   /**
    * The renderer used by the split panel.
-   *
-   * #### Notes
-   * This is a read-only property.
    */
   get renderer(): SplitPanel.IRenderer {
     return (this.layout as SplitLayout).renderer;
   }
 
   /**
-   * A read-only sequence of the split handles in the panel.
-   *
-   * #### Notes
-   * This is a read-only property.
+   * A read-only array of the split handles in the panel.
    */
-  get handles(): ISequence<HTMLDivElement> {
+  get handles(): ReadonlyArray<HTMLDivElement> {
     return (this.layout as SplitLayout).handles;
   }
 
@@ -245,16 +192,16 @@ class SplitPanel extends Panel {
   /**
    * A message handler invoked on a `'child-added'` message.
    */
-  protected onChildAdded(msg: ChildMessage): void {
-    msg.child.addClass(CHILD_CLASS);
+  protected onChildAdded(msg: Widget.ChildMessage): void {
+    msg.child.addClass(SplitPanel.CHILD_CLASS);
     this._releaseMouse();
   }
 
   /**
    * A message handler invoked on a `'child-removed'` message.
    */
-  protected onChildRemoved(msg: ChildMessage): void {
-    msg.child.removeClass(CHILD_CLASS);
+  protected onChildRemoved(msg: Widget.ChildMessage): void {
+    msg.child.removeClass(SplitPanel.CHILD_CLASS);
     this._releaseMouse();
   }
 
@@ -267,7 +214,9 @@ class SplitPanel extends Panel {
     event.stopPropagation();
 
     // Release the mouse if `Escape` is pressed.
-    if (event.keyCode === 27) this._releaseMouse();
+    if (event.keyCode === 27) {
+      this._releaseMouse();
+    }
   }
 
   /**
@@ -281,8 +230,11 @@ class SplitPanel extends Panel {
 
     // Find the handle which contains the mouse target, if any.
     let layout = this.layout as SplitLayout;
-    let target = event.target as HTMLElement;
-    let index = findIndex(layout.handles, handle => handle.contains(target));
+    let index = ArrayExt.findFirstIndex(layout.handles, handle => {
+      return handle.contains(event.target as HTMLElement);
+    });
+
+    // Bail early if the mouse press was not on a handle.
     if (index === -1) {
       return;
     }
@@ -299,7 +251,7 @@ class SplitPanel extends Panel {
 
     // Compute the offset delta for the handle press.
     let delta: number;
-    let handle = layout.handles.at(index);
+    let handle = layout.handles[index];
     let rect = handle.getBoundingClientRect();
     if (layout.orientation === 'horizontal') {
       delta = event.clientX - rect.left;
@@ -309,7 +261,7 @@ class SplitPanel extends Panel {
 
     // Override the cursor and store the press data.
     let style = window.getComputedStyle(handle);
-    let override = overrideCursor(style.cursor);
+    let override = Drag.overrideCursor(style.cursor!);
     this._pressData = { index, delta, override };
   }
 
@@ -326,13 +278,13 @@ class SplitPanel extends Panel {
     let layout = this.layout as SplitLayout;
     let rect = this.node.getBoundingClientRect();
     if (layout.orientation === 'horizontal') {
-      pos = event.clientX - rect.left - this._pressData.delta;
+      pos = event.clientX - rect.left - this._pressData!.delta;
     } else {
-      pos = event.clientY - rect.top - this._pressData.delta;
+      pos = event.clientY - rect.top - this._pressData!.delta;
     }
 
-    // Set the handle as close to the desired position as possible.
-    layout.setHandlePosition(this._pressData.index, pos);
+    // Move the handle as close to the desired position as possible.
+    layout.moveHandle(this._pressData!.index, pos);
   }
 
   /**
@@ -372,7 +324,7 @@ class SplitPanel extends Panel {
     document.removeEventListener('contextmenu', this, true);
   }
 
-  private _pressData: Private.IPressData = null;
+  private _pressData: Private.IPressData | null = null;
 }
 
 
@@ -382,13 +334,49 @@ class SplitPanel extends Panel {
 export
 namespace SplitPanel {
   /**
+   * The class name added to SplitPanel instances.
+   */
+  export
+  const SPLIT_PANEL_CLASS = 'p-SplitPanel';
+
+  /**
+   * The class name added to split panel children.
+   */
+  export
+  const CHILD_CLASS = 'p-SplitPanel-child';
+
+  /**
+   * The class name added to split panel handles.
+   */
+  export
+  const HANDLE_CLASS = 'p-SplitPanel-handle';
+
+  /**
+   * The class name added to horizontal split panels.
+   */
+  export
+  const HORIZONTAL_CLASS = SplitLayout.HORIZONTAL_CLASS;
+
+  /**
+   * The class name added to vertical split panels.
+   */
+  export
+  const VERTICAL_CLASS = SplitLayout.VERTICAL_CLASS;
+
+  /**
+   * The class name added to hidden split panel handles.
+   */
+  export
+  const HIDDEN_CLASS = SplitLayout.HIDDEN_CLASS;
+
+  /**
    * A type alias for a split panel orientation.
    */
   export
   type Orientation = SplitLayout.Orientation;
 
   /**
-   * A type alias for a split panel renderer;
+   * A type alias for a split panel renderer.
    */
   export
   type IRenderer = SplitLayout.IRenderer;
@@ -435,14 +423,14 @@ namespace SplitPanel {
   export
   class Renderer implements IRenderer {
     /**
-     * Create a new handle node for use with a split panel.
+     * Create a new handle for use with a split panel.
      *
-     * @returns A new handle node for a split panel.
+     * @returns A new handle element for a split panel.
      */
-    createHandleNode(): HTMLDivElement {
-      let node = document.createElement('div');
-      node.className = HANDLE_CLASS;
-      return node;
+    createHandle(): HTMLDivElement {
+      let handle = document.createElement('div');
+      handle.className = HANDLE_CLASS;
+      return handle;
     }
   }
 
@@ -491,10 +479,10 @@ class SplitLayout extends PanelLayout {
   constructor(options: SplitLayout.IOptions) {
     super();
     this._renderer = options.renderer;
-    if (options.orientation !== void 0) {
+    if (options.orientation !== undefined) {
       this._orientation = options.orientation;
     }
-    if (options.spacing !== void 0) {
+    if (options.spacing !== undefined) {
       this._spacing = Private.clampSpacing(options.spacing);
     }
   }
@@ -545,21 +533,15 @@ class SplitLayout extends PanelLayout {
 
   /**
    * The renderer used by the split layout.
-   *
-   * #### Notes
-   * This is a read-only property.
    */
   get renderer(): SplitLayout.IRenderer {
     return this._renderer;
   }
 
   /**
-   * A read-only sequence of the split handles in the layout.
-   *
-   * #### Notes
-   * This is a read-only property.
+   * A read-only array of the split handles in the layout.
    */
-  get handles(): ISequence<HTMLDivElement> {
+  get handles(): ReadonlyArray<HTMLDivElement> {
     return this._handles;
   }
 
@@ -575,7 +557,7 @@ class SplitLayout extends PanelLayout {
    * This method **does not** measure the DOM nodes.
    */
   relativeSizes(): number[] {
-    return Private.normalize(toArray(map(this._sizers, sizer => sizer.size)));
+    return Private.normalize(this._sizers.map(sizer => sizer.size));
   }
 
   /**
@@ -592,27 +574,31 @@ class SplitLayout extends PanelLayout {
     // Copy the sizes and pad with zeros as needed.
     let n = this._sizers.length;
     let temp = sizes.slice(0, n);
-    while (temp.length < n) temp.push(0);
+    while (temp.length < n) {
+      temp.push(0);
+    }
 
     // Normalize the padded sizes.
     let normed = Private.normalize(temp);
 
     // Apply the normalized sizes to the sizers.
     for (let i = 0; i < n; ++i) {
-      let sizer = this._sizers.at(i);
-      sizer.sizeHint = sizer.size = normed[i];
+      let sizer = this._sizers[i];
+      sizer.sizeHint = normed[i];
+      sizer.size = normed[i];
     }
 
     // Set the flag indicating the sizes are normalized.
     this._hasNormedSizes = true;
 
     // Trigger an update of the parent widget.
-    if (this.parent) this.parent.update();
+    if (this.parent) {
+      this.parent.update();
+    }
   }
 
-  // TODO rename this to `moveHandle`
   /**
-   * Set the offset position of a split handle.
+   * Move the offset position of a split handle.
    *
    * @param index - The index of the handle of the interest.
    *
@@ -623,14 +609,11 @@ class SplitLayout extends PanelLayout {
    *
    * This will move the handle as close as possible to the desired
    * position. The sibling widgets will be adjusted as necessary.
-   *
-   * #### Undefined Behavior
-   * An `index` which is non-integral or out of range.
    */
-  setHandlePosition(index: number, position: number): void {
+  moveHandle(index: number, position: number): void {
     // Bail if the index is invalid or the handle is hidden.
-    let handle = this._handles.at(index);
-    if (!handle || handle.classList.contains(HIDDEN_CLASS)) {
+    let handle = this._handles[index];
+    if (!handle || handle.classList.contains(SplitLayout.HIDDEN_CLASS)) {
       return;
     }
 
@@ -648,23 +631,26 @@ class SplitLayout extends PanelLayout {
     }
 
     // Prevent widget resizing unless needed.
-    each(this._sizers, sizer => {
-      // TODO is this check actually necessary?
-      if (sizer.size > 0) sizer.sizeHint = sizer.size;
-    });
+    for (let sizer of this._sizers) {
+      if (sizer.size > 0) {
+        sizer.sizeHint = sizer.size;
+      }
+    }
 
     // Adjust the sizers to reflect the handle movement.
-    adjustSizer(this._sizers, index, delta);
+    BoxEngine.adjust(this._sizers, index, delta);
 
     // Update the layout of the widgets.
-    if (this.parent) this.parent.update();
+    if (this.parent) {
+      this.parent.update();
+    }
   }
 
   /**
    * Perform layout initialization which requires the parent widget.
    */
   protected init(): void {
-    Private.toggleOrientation(this.parent, this.orientation);
+    Private.toggleOrientation(this.parent!, this.orientation);
     super.init();
   }
 
@@ -679,25 +665,34 @@ class SplitLayout extends PanelLayout {
    * This is a reimplementation of the superclass method.
    */
   protected attachWidget(index: number, widget: Widget): void {
-    // Create and add the handle and sizer for the new widget.
+    // Create the handle and sizer for the new widget.
     let handle = Private.createHandle(this._renderer);
     let average = Private.averageSize(this._sizers);
     let sizer = Private.createSizer(average);
-    this._sizers.insert(index, sizer);
-    this._handles.insert(index, handle);
+
+    // Insert the handle and sizer into the internal arrays.
+    ArrayExt.insert(this._sizers, index, sizer);
+    ArrayExt.insert(this._handles, index, handle);
 
     // Prepare the layout geometry for the widget.
     Widget.prepareGeometry(widget);
 
+    // Send a `'before-attach'` message if the parent is attached.
+    if (this.parent!.isAttached) {
+      MessageLoop.sendMessage(widget, Widget.Msg.BeforeAttach);
+    }
+
     // Add the widget and handle nodes to the parent.
-    this.parent.node.appendChild(widget.node);
-    this.parent.node.appendChild(handle);
+    this.parent!.node.appendChild(widget.node);
+    this.parent!.node.appendChild(handle);
 
     // Send an `'after-attach'` message if the parent is attached.
-    if (this.parent.isAttached) sendMessage(widget, WidgetMessage.AfterAttach);
+    if (this.parent!.isAttached) {
+      MessageLoop.sendMessage(widget, Widget.Msg.AfterAttach);
+    }
 
     // Post a fit request for the parent widget.
-    this.parent.fit();
+    this.parent!.fit();
   }
 
   /**
@@ -714,11 +709,11 @@ class SplitLayout extends PanelLayout {
    */
   protected moveWidget(fromIndex: number, toIndex: number, widget: Widget): void {
     // Move the sizer and handle for the widget.
-    move(this._sizers, fromIndex, toIndex);
-    move(this._handles, fromIndex, toIndex);
+    ArrayExt.move(this._sizers, fromIndex, toIndex);
+    ArrayExt.move(this._handles, fromIndex, toIndex);
 
     // Post a fit request to the parent to show/hide last handle.
-    this.parent.fit();
+    this.parent!.fit();
   }
 
   /**
@@ -733,68 +728,75 @@ class SplitLayout extends PanelLayout {
    */
   protected detachWidget(index: number, widget: Widget): void {
     // Remove the handle for the widget.
-    let handle = this._handles.removeAt(index);
+    let handle = ArrayExt.removeAt(this._handles, index);
 
     // Remove the sizer for the widget.
-    this._sizers.removeAt(index);
+    ArrayExt.removeAt(this._sizers, index);
 
     // Send a `'before-detach'` message if the parent is attached.
-    if (this.parent.isAttached) sendMessage(widget, WidgetMessage.BeforeDetach);
+    if (this.parent!.isAttached) {
+      MessageLoop.sendMessage(widget, Widget.Msg.BeforeDetach);
+    }
 
     // Remove the widget and handle nodes from the parent.
-    this.parent.node.removeChild(widget.node);
-    this.parent.node.removeChild(handle);
+    this.parent!.node.removeChild(widget.node);
+    this.parent!.node.removeChild(handle!);
+
+    // Send an `'after-detach'` message if the parent is attached.
+    if (this.parent!.isAttached) {
+      MessageLoop.sendMessage(widget, Widget.Msg.AfterDetach);
+    }
 
     // Reset the layout geometry for the widget.
     Widget.resetGeometry(widget);
 
     // Post a fit request for the parent widget.
-    this.parent.fit();
+    this.parent!.fit();
   }
 
   /**
-   * A message handler invoked on an `'after-show'` message.
+   * A message handler invoked on a `'before-show'` message.
    */
-  protected onAfterShow(msg: Message): void {
-    super.onAfterShow(msg);
-    this.parent.update();
+  protected onBeforeShow(msg: Message): void {
+    super.onBeforeShow(msg);
+    this.parent!.update();
   }
 
   /**
-   * A message handler invoked on an `'after-attach'` message.
+   * A message handler invoked on a `'before-attach'` message.
    */
-  protected onAfterAttach(msg: Message): void {
-    super.onAfterAttach(msg);
-    this.parent.fit();
+  protected onBeforeAttach(msg: Message): void {
+    super.onBeforeAttach(msg);
+    this.parent!.fit();
   }
 
   /**
    * A message handler invoked on a `'child-shown'` message.
    */
-  protected onChildShown(msg: ChildMessage): void {
-    if (IS_IE || IS_EDGE) { // prevent flicker on IE/Edge
-      sendMessage(this.parent, WidgetMessage.FitRequest);
+  protected onChildShown(msg: Widget.ChildMessage): void {
+    if (IS_IE || IS_EDGE) { // prevent flicker on IE/Edge - TODO fix this
+      MessageLoop.sendMessage(this.parent!, Widget.Msg.FitRequest);
     } else {
-      this.parent.fit();
+      this.parent!.fit();
     }
   }
 
   /**
    * A message handler invoked on a `'child-hidden'` message.
    */
-  protected onChildHidden(msg: ChildMessage): void {
-    if (IS_IE || IS_EDGE) { // prevent flicker on IE/Edge
-      sendMessage(this.parent, WidgetMessage.FitRequest);
+  protected onChildHidden(msg: Widget.ChildMessage): void {
+    if (IS_IE || IS_EDGE) { // prevent flicker on IE/Edge - TODO fix this
+      MessageLoop.sendMessage(this.parent!, Widget.Msg.FitRequest);
     } else {
-      this.parent.fit();
+      this.parent!.fit();
     }
   }
 
   /**
    * A message handler invoked on a `'resize'` message.
    */
-  protected onResize(msg: ResizeMessage): void {
-    if (this.parent.isVisible) {
+  protected onResize(msg: Widget.ResizeMessage): void {
+    if (this.parent!.isVisible) {
       this._update(msg.width, msg.height);
     }
   }
@@ -803,7 +805,7 @@ class SplitLayout extends PanelLayout {
    * A message handler invoked on an `'update-request'` message.
    */
   protected onUpdateRequest(msg: Message): void {
-    if (this.parent.isVisible) {
+    if (this.parent!.isVisible) {
       this._update(-1, -1);
     }
   }
@@ -812,7 +814,7 @@ class SplitLayout extends PanelLayout {
    * A message handler invoked on a `'fit-request'` message.
    */
   protected onFitRequest(msg: Message): void {
-    if (this.parent.isAttached) {
+    if (this.parent!.isAttached) {
       this._fit();
     }
   }
@@ -824,20 +826,21 @@ class SplitLayout extends PanelLayout {
     // Update the handles and track the visible widget count.
     let nVisible = 0;
     let widgets = this.widgets;
-    let lastHandle: HTMLDivElement = null;
+    let lastHandle: HTMLDivElement | null = null;
     for (let i = 0, n = widgets.length; i < n; ++i) {
-      let handle = this._handles.at(i);
-      if (widgets.at(i).isHidden) {
-        handle.classList.add(HIDDEN_CLASS);
+      if (widgets[i].isHidden) {
+        this._handles[i].classList.add(SplitLayout.HIDDEN_CLASS);
       } else {
-        handle.classList.remove(HIDDEN_CLASS);
-        lastHandle = handle;
+        this._handles[i].classList.remove(SplitLayout.HIDDEN_CLASS);
+        lastHandle = this._handles[i];
         nVisible++;
       }
     }
 
     // Hide the handle for the last visible widget.
-    if (lastHandle) lastHandle.classList.add(HIDDEN_CLASS);
+    if (lastHandle) {
+      lastHandle.classList.add(SplitLayout.HIDDEN_CLASS);
+    }
 
     // Update the fixed space for the visible items.
     this._fixed = this._spacing * Math.max(0, nVisible - 1);
@@ -858,8 +861,8 @@ class SplitLayout extends PanelLayout {
 
     // Update the sizers and computed size limits.
     for (let i = 0, n = widgets.length; i < n; ++i) {
-      let widget = widgets.at(i);
-      let sizer = this._sizers.at(i);
+      let widget = widgets[i];
+      let sizer = this._sizers[i];
       if (sizer.size > 0) {
         sizer.sizeHint = sizer.size;
       }
@@ -868,7 +871,7 @@ class SplitLayout extends PanelLayout {
         sizer.maxSize = 0;
         continue;
       }
-      let limits = sizeLimits(widget.node);
+      let limits = DOMUtil.sizeLimits(widget.node);
       sizer.stretch = SplitLayout.getStretch(widget);
       if (horz) {
         sizer.minSize = limits.minWidth;
@@ -888,14 +891,14 @@ class SplitLayout extends PanelLayout {
     }
 
     // Update the box sizing and add it to the size constraints.
-    let box = this._box = boxSizing(this.parent.node);
+    let box = this._box = DOMUtil.boxSizing(this.parent!.node);
     minW += box.horizontalSum;
     minH += box.verticalSum;
     maxW += box.horizontalSum;
     maxH += box.verticalSum;
 
     // Update the parent's size constraints.
-    let style = this.parent.node.style;
+    let style = this.parent!.node.style;
     style.minWidth = `${minW}px`;
     style.minHeight = `${minH}px`;
     style.maxWidth = maxW === Infinity ? 'none' : `${maxW}px`;
@@ -906,12 +909,15 @@ class SplitLayout extends PanelLayout {
 
     // Notify the ancestor that it should fit immediately. This may
     // cause a resize of the parent, fulfilling the required update.
-    let ancestor = this.parent.parent;
-    if (ancestor) sendMessage(ancestor, WidgetMessage.FitRequest);
+    if (this.parent!.parent) {
+      MessageLoop.sendMessage(this.parent!.parent!, Widget.Msg.FitRequest);
+    }
 
     // If the dirty flag is still set, the parent was not resized.
     // Trigger the required update on the parent widget immediately.
-    if (this._dirty) sendMessage(this.parent, WidgetMessage.UpdateRequest);
+    if (this._dirty) {
+      MessageLoop.sendMessage(this.parent!, Widget.Msg.UpdateRequest);
+    }
   }
 
   /**
@@ -931,14 +937,14 @@ class SplitLayout extends PanelLayout {
 
     // Measure the parent if the offset dimensions are unknown.
     if (offsetWidth < 0) {
-      offsetWidth = this.parent.node.offsetWidth;
+      offsetWidth = this.parent!.node.offsetWidth;
     }
     if (offsetHeight < 0) {
-      offsetHeight = this.parent.node.offsetHeight;
+      offsetHeight = this.parent!.node.offsetHeight;
     }
 
     // Ensure the parent box sizing data is computed.
-    let box = this._box || (this._box = boxSizing(this.parent.node));
+    let box = this._box || (this._box = DOMUtil.boxSizing(this.parent!.node));
 
     // Compute the actual layout bounds adjusted for border and padding.
     let top = box.paddingTop;
@@ -957,37 +963,39 @@ class SplitLayout extends PanelLayout {
 
     // Scale the size hints if they are normalized.
     if (this._hasNormedSizes) {
-      each(this._sizers, sizer => { sizer.sizeHint *= space; });
+      for (let sizer of this._sizers) {
+        sizer.sizeHint *= space;
+      }
       this._hasNormedSizes = false;
     }
 
     // Distribute the layout space to the box sizers.
-    boxCalc(this._sizers, space);
+    BoxEngine.calc(this._sizers, space);
 
     // Layout the widgets using the computed box sizes.
     let spacing = this._spacing;
     for (let i = 0, n = widgets.length; i < n; ++i) {
-      let widget = widgets.at(i);
+      let widget = widgets[i];
       if (widget.isHidden) {
         continue;
       }
-      let size = this._sizers.at(i).size;
-      let hstyle = this._handles.at(i).style;
+      let size = this._sizers[i].size;
+      let handleStyle = this._handles[i].style;
       if (horz) {
         Widget.setGeometry(widget, left, top, size, height);
         left += size;
-        hstyle.top = `${top}px`;
-        hstyle.left = `${left}px`;
-        hstyle.width = `${spacing}px`;
-        hstyle.height = `${height}px`;
+        handleStyle.top = `${top}px`;
+        handleStyle.left = `${left}px`;
+        handleStyle.width = `${spacing}px`;
+        handleStyle.height = `${height}px`;
         left += spacing;
       } else {
         Widget.setGeometry(widget, left, top, width, size);
         top += size;
-        hstyle.top = `${top}px`;
-        hstyle.left = `${left}px`;
-        hstyle.width = `${width}px`;
-        hstyle.height = `${spacing}px`;
+        handleStyle.top = `${top}px`;
+        handleStyle.left = `${left}px`;
+        handleStyle.width = `${width}px`;
+        handleStyle.height = `${spacing}px`;
         top += spacing;
       }
     }
@@ -997,10 +1005,10 @@ class SplitLayout extends PanelLayout {
   private _spacing = 4;
   private _dirty = false;
   private _hasNormedSizes = false;
-  private _box: IBoxSizing = null;
+  private _sizers: BoxSizer[] = [];
+  private _handles: HTMLDivElement[] = [];
   private _renderer: SplitLayout.IRenderer;
-  private _sizers = new Vector<BoxSizer>();
-  private _handles = new Vector<HTMLDivElement>();
+  private _box: DOMUtil.IBoxSizing | null = null;
   private _orientation: SplitLayout.Orientation = 'horizontal';
 }
 
@@ -1010,6 +1018,24 @@ class SplitLayout extends PanelLayout {
  */
 export
 namespace SplitLayout {
+  /**
+   * The class name added to horizontal split layout parents.
+   */
+  export
+  const HORIZONTAL_CLASS = 'p-mod-horizontal';
+
+  /**
+   * The class name added to vertical split layout parents.
+   */
+  export
+  const VERTICAL_CLASS = 'p-mod-vertical';
+
+  /**
+   * The class name added to hidden split layout handles.
+   */
+  export
+  const HIDDEN_CLASS = 'p-mod-hidden';
+
   /**
    * A type alias for a split layout orientation.
    */
@@ -1047,11 +1073,11 @@ namespace SplitLayout {
   export
   interface IRenderer {
     /**
-     * Create a new handle node for use with a split layout.
+     * Create a new handle for use with a split layout.
      *
-     * @returns A new handle node.
+     * @returns A new handle element.
      */
-    createHandleNode(): HTMLDivElement;
+    createHandle(): HTMLDivElement;
   }
 
   /**
@@ -1111,7 +1137,7 @@ namespace Private {
   export
   const stretchProperty = new AttachedProperty<Widget, number>({
     name: 'stretch',
-    value: 0,
+    create: () => 0,
     coerce: (owner, value) => Math.max(0, Math.floor(value)),
     changed: onChildPropertyChanged
   });
@@ -1143,9 +1169,9 @@ namespace Private {
    */
   export
   function createHandle(renderer: SplitLayout.IRenderer): HTMLDivElement {
-    let node = renderer.createHandleNode();
-    node.style.position = 'absolute';
-    return node;
+    let handle = renderer.createHandle();
+    handle.style.position = 'absolute';
+    return handle;
   }
 
   /**
@@ -1153,8 +1179,8 @@ namespace Private {
    */
   export
   function toggleOrientation(widget: Widget, orient: SplitLayout.Orientation): void {
-    widget.toggleClass(HORIZONTAL_CLASS, orient === 'horizontal');
-    widget.toggleClass(VERTICAL_CLASS, orient === 'vertical');
+    widget.toggleClass(SplitLayout.HORIZONTAL_CLASS, orient === 'horizontal');
+    widget.toggleClass(SplitLayout.VERTICAL_CLASS, orient === 'vertical');
   }
 
   /**
@@ -1169,8 +1195,8 @@ namespace Private {
    * Compute the average size of a vector of box sizers.
    */
   export
-  function averageSize(sizers: Vector<BoxSizer>): number {
-    return reduce(sizers, (v, s) => v + s.size, 0) / sizers.length || 0;
+  function averageSize(sizers: BoxSizer[]): number {
+    return sizers.reduce((v, s) => v + s.size, 0) / sizers.length || 0;
   }
 
   /**
@@ -1179,7 +1205,9 @@ namespace Private {
   export
   function normalize(values: number[]): number[] {
     let n = values.length;
-    if (n === 0) return [];
+    if (n === 0) {
+      return [];
+    }
     let sum = values.reduce((a, b) => a + Math.abs(b), 0);
     return sum === 0 ? values.map(v => 1 / n) : values.map(v => v / sum);
   }
@@ -1188,8 +1216,8 @@ namespace Private {
    * The change handler for the attached child properties.
    */
   function onChildPropertyChanged(child: Widget): void {
-    let parent = child.parent;
-    let layout = parent && parent.layout;
-    if (layout instanceof SplitLayout) parent.fit();
+    if (child.parent && child.parent.layout instanceof SplitLayout) {
+      child.parent.fit();
+    }
   }
 }
