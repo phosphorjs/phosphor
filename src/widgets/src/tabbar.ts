@@ -65,8 +65,8 @@ class TabBar<T> extends Widget {
     this.allowDeselect = options.allowDeselect || false;
     this.insertBehavior = options.insertBehavior || 'select-tab-if-needed';
     this.removeBehavior = options.removeBehavior || 'select-tab-after';
+    this.renderer = options.renderer || TabBar.defaultRenderer;
     this._orientation = options.orientation || 'horizontal';
-    this._renderer = options.renderer || TabBar.defaultRenderer;
     Private.toggleOrientation(this, this._orientation);
   }
 
@@ -145,6 +145,11 @@ class TabBar<T> extends Widget {
   get tabDetachRequested(): ISignal<this, TabBar.ITabDetachRequestedArgs<T>> {
     return this._tabDetachRequested;
   }
+
+  /**
+   * The renderer used by the tab bar.
+   */
+  readonly renderer: TabBar.IRenderer<T>;
 
   /**
    * Whether the tabs are movable by the user.
@@ -288,13 +293,6 @@ class TabBar<T> extends Widget {
    */
   get contentNode(): HTMLUListElement {
     return this.node.getElementsByClassName(TabBar.CONTENT_CLASS)[0] as HTMLUListElement;
-  }
-
-  /**
-   * The renderer used by the tab bar.
-   */
-  get renderer(): TabBar.IRenderer<T> {
-    return this._renderer;
   }
 
   /**
@@ -541,7 +539,7 @@ class TabBar<T> extends Widget {
    */
   protected onUpdateRequest(msg: Message): void {
     let titles = this._titles;
-    let renderer = this._renderer;
+    let renderer = this.renderer;
     let currentTitle = this.currentTitle;
     let content = new Array<VirtualElement>(titles.length);
     for (let i = 0, n = titles.length; i < n; ++i) {
@@ -605,7 +603,7 @@ class TabBar<T> extends Widget {
     }
 
     // Ignore the click if it was not on a close icon.
-    let icon = tabs[index].querySelector(this._renderer.closeIconSelector);
+    let icon = tabs[index].querySelector(this.renderer.closeIconSelector);
     if (!icon || !icon.contains(event.target as HTMLElement)) {
       return;
     }
@@ -646,7 +644,7 @@ class TabBar<T> extends Widget {
     event.stopPropagation();
 
     // Ignore the press if it was on a close icon.
-    let icon = tabs[index].querySelector(this._renderer.closeIconSelector);
+    let icon = tabs[index].querySelector(this.renderer.closeIconSelector);
     if (icon && icon.contains(event.target as HTMLElement)) {
       return;
     }
@@ -1016,7 +1014,6 @@ class TabBar<T> extends Widget {
 
   private _currentIndex = -1;
   private _titles: Title<T>[] = [];
-  private _renderer: TabBar.IRenderer<T>;
   private _orientation: TabBar.Orientation;
   private _previousTitle: Title<T> | null = null;
   private _dragData: Private.IDragData | null = null;

@@ -484,7 +484,7 @@ class SplitLayout extends PanelLayout {
    */
   constructor(options: SplitLayout.IOptions) {
     super();
-    this._renderer = options.renderer;
+    this.renderer = options.renderer;
     if (options.orientation !== undefined) {
       this._orientation = options.orientation;
     }
@@ -492,6 +492,11 @@ class SplitLayout extends PanelLayout {
       this._spacing = Private.clampSpacing(options.spacing);
     }
   }
+
+  /**
+   * The renderer used by the split layout.
+   */
+  readonly renderer: SplitLayout.IRenderer;
 
   /**
    * Get the layout orientation for the split layout.
@@ -535,13 +540,6 @@ class SplitLayout extends PanelLayout {
       return;
     }
     this.parent.fit();
-  }
-
-  /**
-   * The renderer used by the split layout.
-   */
-  get renderer(): SplitLayout.IRenderer {
-    return this._renderer;
   }
 
   /**
@@ -672,7 +670,7 @@ class SplitLayout extends PanelLayout {
    */
   protected attachWidget(index: number, widget: Widget): void {
     // Create the handle and sizer for the new widget.
-    let handle = Private.createHandle(this._renderer);
+    let handle = Private.createHandle(this.renderer);
     let average = Private.averageSize(this._sizers);
     let sizer = Private.createSizer(average);
 
@@ -1013,7 +1011,6 @@ class SplitLayout extends PanelLayout {
   private _hasNormedSizes = false;
   private _sizers: BoxSizer[] = [];
   private _handles: HTMLDivElement[] = [];
-  private _renderer: SplitLayout.IRenderer;
   private _box: DOMUtil.IBoxSizing | null = null;
   private _orientation: SplitLayout.Orientation = 'horizontal';
 }
