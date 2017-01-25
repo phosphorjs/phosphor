@@ -49,19 +49,19 @@ class TabPanel extends Widget {
     this.addClass(TabPanel.TAB_PANEL_CLASS);
 
     // Create the tab bar and stacked panel.
-    this._tabBar = new TabBar<Widget>(options);
-    this._tabBar.addClass(TabPanel.TAB_BAR_CLASS);
-    this._stackedPanel = new StackedPanel();
-    this._stackedPanel.addClass(TabPanel.STACKED_PANEL_CLASS);
+    this.tabBar = new TabBar<Widget>(options);
+    this.tabBar.addClass(TabPanel.TAB_BAR_CLASS);
+    this.stackedPanel = new StackedPanel();
+    this.stackedPanel.addClass(TabPanel.STACKED_PANEL_CLASS);
 
     // Connect the tab bar signal handlers.
-    this._tabBar.tabMoved.connect(this._onTabMoved, this);
-    this._tabBar.currentChanged.connect(this._onCurrentChanged, this);
-    this._tabBar.tabCloseRequested.connect(this._onTabCloseRequested, this);
-    this._tabBar.tabActivateRequested.connect(this._onTabActivateRequested, this);
+    this.tabBar.tabMoved.connect(this._onTabMoved, this);
+    this.tabBar.currentChanged.connect(this._onCurrentChanged, this);
+    this.tabBar.tabCloseRequested.connect(this._onTabCloseRequested, this);
+    this.tabBar.tabActivateRequested.connect(this._onTabActivateRequested, this);
 
     // Connect the stacked panel signal handlers.
-    this._stackedPanel.widgetRemoved.connect(this._onWidgetRemoved, this);
+    this.stackedPanel.widgetRemoved.connect(this._onWidgetRemoved, this);
 
     // Get the data related to the placement.
     this._tabPlacement = options.tabPlacement || 'top';
@@ -69,19 +69,19 @@ class TabPanel extends Widget {
     let orientation = Private.orientationFromPlacement(this._tabPlacement);
 
     // Configure the tab bar for the placement.
-    this._tabBar.orientation = orientation;
-    Private.togglePlacement(this._tabBar, this._tabPlacement);
+    this.tabBar.orientation = orientation;
+    Private.togglePlacement(this.tabBar, this._tabPlacement);
 
     // Create the box layout.
     let layout = new BoxLayout({ direction, spacing: 0 });
 
     // Set the stretch factors for the child widgets.
-    BoxLayout.setStretch(this._tabBar, 0);
-    BoxLayout.setStretch(this._stackedPanel, 1);
+    BoxLayout.setStretch(this.tabBar, 0);
+    BoxLayout.setStretch(this.stackedPanel, 1);
 
     // Add the child widgets to the layout.
-    layout.addWidget(this._tabBar);
-    layout.addWidget(this._stackedPanel);
+    layout.addWidget(this.tabBar);
+    layout.addWidget(this.stackedPanel);
 
     // Install the layout on the tab panel.
     this.layout = layout;
@@ -109,7 +109,7 @@ class TabPanel extends Widget {
    * This will be `-1` if no tab is selected.
    */
   get currentIndex(): number {
-    return this._tabBar.currentIndex;
+    return this.tabBar.currentIndex;
   }
 
   /**
@@ -119,7 +119,7 @@ class TabPanel extends Widget {
    * If the index is out of range, it will be set to `-1`.
    */
   set currentIndex(value: number) {
-    this._tabBar.currentIndex = value;
+    this.tabBar.currentIndex = value;
   }
 
   /**
@@ -129,7 +129,7 @@ class TabPanel extends Widget {
    * This will be `null` if there is no selected tab.
    */
   get currentWidget(): Widget | null {
-    let title = this._tabBar.currentTitle;
+    let title = this.tabBar.currentTitle;
     return title ? title.owner : null;
   }
 
@@ -140,7 +140,7 @@ class TabPanel extends Widget {
    * If the widget is not in the panel, it will be set to `null`.
    */
   set currentWidget(value: Widget | null) {
-    this._tabBar.currentTitle = value ? value.title : null;
+    this.tabBar.currentTitle = value ? value.title : null;
   }
 
   /**
@@ -150,7 +150,7 @@ class TabPanel extends Widget {
    * Tabs can always be moved programmatically.
    */
   get tabsMovable(): boolean {
-    return this._tabBar.tabsMovable;
+    return this.tabBar.tabsMovable;
   }
 
   /**
@@ -160,7 +160,7 @@ class TabPanel extends Widget {
    * Tabs can always be moved programmatically.
    */
   set tabsMovable(value: boolean) {
-    this._tabBar.tabsMovable = value;
+    this.tabBar.tabsMovable = value;
   }
 
   /**
@@ -193,8 +193,8 @@ class TabPanel extends Widget {
     let orientation = Private.orientationFromPlacement(value);
 
     // Configure the tab bar for the placement.
-    this._tabBar.orientation = orientation;
-    Private.togglePlacement(this._tabBar, value);
+    this.tabBar.orientation = orientation;
+    Private.togglePlacement(this.tabBar, value);
 
     // Update the layout direction.
     (this.layout as BoxLayout).direction = direction;
@@ -206,9 +206,7 @@ class TabPanel extends Widget {
    * #### Notes
    * Modifying the tab bar directly can lead to undefined behavior.
    */
-  get tabBar(): TabBar<Widget> {
-    return this._tabBar;
-  }
+  readonly tabBar: TabBar<Widget>;
 
   /**
    * The stacked panel used by the tab panel.
@@ -216,15 +214,13 @@ class TabPanel extends Widget {
    * #### Notes
    * Modifying the panel directly can lead to undefined behavior.
    */
-  get stackedPanel(): StackedPanel {
-    return this._stackedPanel;
-  }
+  readonly stackedPanel: StackedPanel;
 
   /**
    * A read-only array of the widgets in the panel.
    */
   get widgets(): ReadonlyArray<Widget> {
-    return this._stackedPanel.widgets;
+    return this.stackedPanel.widgets;
   }
 
   /**
@@ -257,8 +253,8 @@ class TabPanel extends Widget {
     if (widget !== this.currentWidget) {
       widget.hide();
     }
-    this._stackedPanel.insertWidget(index, widget);
-    this._tabBar.insertTab(index, widget.title);
+    this.stackedPanel.insertWidget(index, widget);
+    this.tabBar.insertTab(index, widget.title);
   }
 
   /**
@@ -306,18 +302,16 @@ class TabPanel extends Widget {
    * Handle the `tabMoved` signal from the tab bar.
    */
   private _onTabMoved(sender: TabBar<Widget>, args: TabBar.ITabMovedArgs<Widget>): void {
-    this._stackedPanel.insertWidget(args.toIndex, args.title.owner);
+    this.stackedPanel.insertWidget(args.toIndex, args.title.owner);
   }
 
   /**
    * Handle the `widgetRemoved` signal from the stacked panel.
    */
   private _onWidgetRemoved(sender: StackedPanel, widget: Widget): void {
-    this._tabBar.removeTab(widget.title);
+    this.tabBar.removeTab(widget.title);
   }
 
-  private _tabBar: TabBar<Widget>;
-  private _stackedPanel: StackedPanel;
   private _tabPlacement: TabPanel.TabPlacement;
   private _currentChanged = new Signal<this, TabPanel.ICurrentChangedArgs>(this);
 }
