@@ -607,7 +607,7 @@ type ElementBaseAttrs = {
  */
 export
 type ElementEventAttrs = {
-  readonly [T in keyof ElementEventMap]?: (event: ElementEventMap[T]) => any;
+  readonly [T in keyof ElementEventMap]?: (this: HTMLElement, event: ElementEventMap[T]) => any;
 };
 
 
