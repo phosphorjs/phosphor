@@ -801,7 +801,7 @@ namespace Private {
   function validateSelector(options: Keymap.IBindingOptions): string {
     let selector = options.selector;
     if (selector.indexOf(',') !== -1) {
-      throw new Error(`Selector cannot contains commas: ${selector}`);
+      throw new Error(`Selector cannot contain commas: ${selector}`);
     }
     if (!isValidSelector(selector)) {
       throw new Error(`Invalid selector: ${selector}`);
