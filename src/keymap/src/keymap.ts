@@ -374,6 +374,8 @@ namespace Keymap {
      * The binding will only be invoked when the selector matches a
      * node on the propagation path of the keydown event. This allows
      * the binding to be restricted to user-defined contexts.
+     *
+     * The selector must not contain commas.
      */
     selector: string;
 
@@ -679,7 +681,7 @@ namespace Private {
   function createBinding(options: Keymap.IBindingOptions): Keymap.IBinding {
     return {
       keys: normalizeKeys(options),
-      selector: normalizeSelector(options),
+      selector: validateSelector(options),
       command: options.command,
       args: options.args || null
     };
@@ -791,12 +793,16 @@ namespace Private {
   }
 
   /**
-   * Normalize the selector for an options object.
+   * Validate the selector for an options object.
    *
-   * This returns the validated first clause of the selector.
+   * This returns the validated selector, or throws if the selector is
+   * invalid or contains commas.
    */
-  function normalizeSelector(options: Keymap.IBindingOptions): string {
-    let selector = options.selector.split(',', 1)[0];
+  function validateSelector(options: Keymap.IBindingOptions): string {
+    let selector = options.selector;
+    if (selector.indexOf(',') !== -1) {
+      throw new Error(`Selector cannot contains commas: ${selector}`);
+    }
     if (!isValidSelector(selector)) {
       throw new Error(`Invalid selector: ${selector}`);
     }
