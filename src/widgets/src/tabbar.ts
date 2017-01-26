@@ -1317,17 +1317,20 @@ namespace TabBar {
     readonly closeIconSelector: string;
 
     /**
-     * Render the element for the a tab.
+     * Render the virtual element for a tab.
      *
      * @param data - The data to use for rendering the tab.
      *
-     * @returns A virtual DOM element representing the tab.
+     * @returns A virtual element representing the tab.
      */
     renderTab(data: IRenderData<T>): VirtualElement;
   }
 
   /**
    * The default implementation of `IRenderer`.
+   *
+   * #### Notes
+   * Subclasses are free to reimplement rendering methods as needed.
    */
   export
   class Renderer implements IRenderer<any> {
@@ -1357,9 +1360,6 @@ namespace TabBar {
      * @param data - The data to use for rendering the tab.
      *
      * @returns A virtual element representing the tab.
-     *
-     * #### Notes
-     * This method may be reimplemented by a subclass as needed.
      */
     renderTab(data: IRenderData<any>): VirtualElement {
       let title = data.title.caption;
@@ -1381,9 +1381,6 @@ namespace TabBar {
      * @param data - The data to use for rendering the tab.
      *
      * @returns A virtual element representing the tab icon.
-     *
-     * #### Notes
-     * This method may be reimplemented by a subclass as needed.
      */
     renderIcon(data: IRenderData<any>): VirtualElement {
       return h.div({ className: this.createIconClass(data) });
@@ -1395,9 +1392,6 @@ namespace TabBar {
      * @param data - The data to use for rendering the tab.
      *
      * @returns A virtual element representing the tab label.
-     *
-     * #### Notes
-     * This method may be reimplemented by a subclass as needed.
      */
     renderLabel(data: IRenderData<any>): VirtualElement {
       return h.div({ className: Renderer.LABEL_CLASS }, data.title.label);
@@ -1409,9 +1403,6 @@ namespace TabBar {
      * @param data - The data to use for rendering the tab.
      *
      * @returns A virtual element representing the tab close icon.
-     *
-     * #### Notes
-     * This method may be reimplemented by a subclass as needed.
      */
     renderCloseIcon(data: IRenderData<any>): VirtualElement {
       return h.div({ className: Renderer.CLOSE_ICON_CLASS });
@@ -1428,8 +1419,6 @@ namespace TabBar {
      * This method caches the key against the tab title the first time
      * the key is generated. This enables efficient rendering of moved
      * tabs and avoids subtle hover style artifacts.
-     *
-     * This method may be reimplemented by a subclass as needed.
      */
     createTabKey(data: IRenderData<any>): string {
       let key = this._tabKeys.get(data.title);
@@ -1446,9 +1435,6 @@ namespace TabBar {
      * @param data - The data to use for the tab.
      *
      * @returns The inline style data for the tab.
-     *
-     * #### Notes
-     * This method may be reimplemented by a subclass as needed.
      */
     createTabStyle(data: IRenderData<any>): ElementInlineStyle {
       return { zIndex: `${data.zIndex}` };
@@ -1460,9 +1446,6 @@ namespace TabBar {
      * @param data - The data to use for the tab.
      *
      * @returns The full class name for the tab.
-     *
-     * #### Notes
-     * This method may be reimplemented by a subclass as needed.
      */
     createTabClass(data: IRenderData<any>): string {
       let name = Renderer.TAB_CLASS;
