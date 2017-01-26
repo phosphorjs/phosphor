@@ -6,36 +6,24 @@
 | The full license is in the file LICENSE, distributed with this software.
 |----------------------------------------------------------------------------*/
 import {
-  each
-} from '../algorithm/iteration';
-
-import {
-  move
-} from '../algorithm/mutation';
-
-import {
-  findIndex, indexOf
-} from '../algorithm/searching';
-
-import {
-  ISequence
-} from '../algorithm/sequence';
-
-import {
-  Vector
-} from '../collections/vector';
-
-import {
-  Message
-} from '../core/messaging';
-
-import {
-  hitTest
-} from '../dom/query';
+  ArrayExt
+} from '@phosphor/algorithm';
 
 import {
   Keymap
-} from './keymap';
+} from '@phosphor/keymap';
+
+import {
+  Message, MessageLoop
+} from '@phosphor/messaging';
+
+import {
+  VirtualDOM, VirtualElement, h
+} from '@phosphor/virtualdom';
+
+import {
+  DOMUtil
+} from './domutil';
 
 import {
   Menu
@@ -46,49 +34,8 @@ import {
 } from './title';
 
 import {
-  Widget, WidgetFlag
+  Widget
 } from './widget';
-
-
-/**
- * The class name added to a menu bar widget.
- */
-const MENU_BAR_CLASS = 'p-MenuBar';
-
-/**
- * The class name added to a menu bar content node.
- */
-const CONTENT_CLASS = 'p-MenuBar-content';
-
-/**
- * The class name added to an open menu bar menu.
- */
-const MENU_CLASS = 'p-MenuBar-menu';
-
-/**
- * The class name added to a menu bar item node.
- */
-const ITEM_CLASS = 'p-MenuBar-item';
-
-/**
- * The class name added to a menu bar item icon node.
- */
-const ICON_CLASS = 'p-MenuBar-itemIcon';
-
-/**
- * The class name added to a menu bar item label node.
- */
-const LABEL_CLASS = 'p-MenuBar-itemLabel';
-
-/**
- * The class name added to a menu bar item mnemonic node.
- */
-const MNEMONIC_CLASS = 'p-MenuBar-itemMnemonic';
-
-/**
- * The class name added to an active menu bar and item.
- */
-const ACTIVE_CLASS = 'p-mod-active';
 
 
 /**
@@ -101,12 +48,12 @@ class MenuBar extends Widget {
    *
    * @param options - The options for initializing the menu bar.
    */
-  constructor(options: MenuBar.IOptions) {
+  constructor(options: MenuBar.IOptions = {}) {
     super({ node: Private.createNode() });
-    this.addClass(MENU_BAR_CLASS);
-    this.setFlag(WidgetFlag.DisallowLayout);
-    this._keymap = options.keymap;
-    this._renderer = options.renderer || MenuBar.defaultRenderer;
+    this.addClass(MenuBar.MENU_BAR_CLASS);
+    this.setFlag(Widget.Flag.DisallowLayout);
+    this.keymap = options.keymap || null;
+    this.renderer = options.renderer || MenuBar.defaultRenderer;
   }
 
   /**
@@ -114,11 +61,28 @@ class MenuBar extends Widget {
    */
   dispose(): void {
     this._closeChildMenu();
-    this._menus.clear();
-    this._nodes.clear();
-    this._keymap = null;
-    this._renderer = null;
+    this._menus.length = 0;
     super.dispose();
+  }
+
+  /**
+   * The keymap used by the menu bar.
+   */
+  readonly keymap: Keymap | null;
+
+  /**
+   * The renderer used by the menu bar.
+   */
+  readonly renderer: MenuBar.IRenderer;
+
+  /**
+   * The child menu of the menu bar.
+   *
+   * #### Notes
+   * This will be `null` if the menu bar does not have an open menu.
+   */
+  get childMenu(): Menu | null {
+    return this._childMenu;
   }
 
   /**
@@ -128,64 +92,16 @@ class MenuBar extends Widget {
    * This is the node which holds the menu title nodes.
    *
    * Modifying this node directly can lead to undefined behavior.
-   *
-   * This is a read-only property.
    */
   get contentNode(): HTMLUListElement {
-    return this.node.getElementsByClassName(CONTENT_CLASS)[0] as HTMLUListElement;
-  }
-
-  /**
-   * The keymap used by the menu bar.
-   *
-   * #### Notes
-   * This is a read-only property.
-   */
-  get keymap(): Keymap {
-    return this._keymap;
-  }
-
-  /**
-   * The renderer used by the menu bar.
-   *
-   * #### Notes
-   * This is a read-only property.
-   */
-  get renderer(): MenuBar.IRenderer {
-    return this._renderer;
-  }
-
-  /**
-   * A read-only sequence of the menus in the menu bar.
-   *
-   * #### Notes
-   * This is a read-only property.
-   */
-  get menus(): ISequence<Menu> {
-    return this._menus;
-  }
-
-  /**
-   * Get the child menu of the menu bar.
-   *
-   * #### Notes
-   * This will be `null` if the menu bar does not have an open menu.
-   *
-   * This is a read-only property.
-   */
-  get childMenu(): Menu {
-    return this._childMenu;
+    return this.node.getElementsByClassName(MenuBar.CONTENT_CLASS)[0] as HTMLUListElement;
   }
 
   /**
    * Get the currently active menu.
-   *
-   * #### Notes
-   * This will be `null` if no menu is active.
    */
-  get activeMenu(): Menu {
-    let i = this._activeIndex;
-    return i !== -1 ? this._menus.at(i): null;
+  get activeMenu(): Menu | null {
+    return this._menus[this._activeIndex] || null;
   }
 
   /**
@@ -194,8 +110,8 @@ class MenuBar extends Widget {
    * #### Notes
    * If the menu does not exist, the menu will be set to `null`.
    */
-  set activeMenu(value: Menu) {
-    this.activeIndex = indexOf(this._menus, value);
+  set activeMenu(value: Menu | null) {
+    this.activeIndex = value ? this._menus.indexOf(value) : -1;
   }
 
   /**
@@ -212,34 +128,31 @@ class MenuBar extends Widget {
    * Set the index of the currently active menu.
    *
    * #### Notes
-   * If the index is out of range, the index will be set to `-1`.
+   * If the menu cannot be activated, the index will be set to `-1`.
    */
   set activeIndex(value: number) {
-    // Coerce the value to an index.
-    let i = Math.floor(value);
-    if (i < 0 || i >= this._menus.length) {
-      i = -1;
+    // Adjust the value for an out of range index.
+    if (value < 0 || value >= this._menus.length) {
+      value = -1;
     }
 
     // Bail early if the index will not change.
-    if (this._activeIndex === i) {
+    if (this._activeIndex === value) {
       return;
     }
 
-    // Remove the active class from the old node.
-    if (this._activeIndex !== -1) {
-      let node = this._nodes.at(this._activeIndex);
-      node.classList.remove(ACTIVE_CLASS);
-    }
-
-    // Add the active class to the new node.
-    if (i !== -1) {
-      let node = this._nodes.at(i);
-      node.classList.add(ACTIVE_CLASS);
-    }
-
     // Update the active index.
-    this._activeIndex = i;
+    this._activeIndex = value;
+
+    // Schedule an update of the items.
+    this.update();
+  }
+
+  /**
+   * A read-only array of the menus in the menu bar.
+   */
+  get menus(): ReadonlyArray<Menu> {
+    return this._menus;
   }
 
   /**
@@ -293,56 +206,48 @@ class MenuBar extends Widget {
     this._closeChildMenu();
 
     // Look up the index of the menu.
-    let i = indexOf(this._menus, menu);
+    let i = this._menus.indexOf(menu);
 
-    // Clamp the insert index to the vector bounds.
-    let j = Math.max(0, Math.min(Math.floor(index), this._menus.length));
+    // Clamp the insert index to the array bounds.
+    let j = Math.max(0, Math.min(index, this._menus.length));
 
-    // If the menu is not in the vector, insert it.
+    // If the menu is not in the array, insert it.
     if (i === -1) {
-      // Create the new item node for the menu.
-      let node = this._renderer.createItemNode();
-      this._renderer.updateItemNode(node, menu.title);
-
-      // Insert the node and menu into the vectors.
-      this._nodes.insert(j, node);
-      this._menus.insert(j, menu);
+      // Insert the menu into the array.
+      ArrayExt.insert(this._menus, j, menu);
 
       // Add the styling class to the menu.
-      menu.addClass(MENU_CLASS);
-
-      // Look up the next sibling node.
-      let ref = j + 1 < this._nodes.length ? this._nodes.at(j + 1) : null;
-
-      // Insert the item node into the content node.
-      this.contentNode.insertBefore(node, ref);
+      menu.addClass(MenuBar.MENU_CLASS);
 
       // Connect to the menu signals.
       menu.aboutToClose.connect(this._onMenuAboutToClose, this);
       menu.menuRequested.connect(this._onMenuMenuRequested, this);
       menu.title.changed.connect(this._onTitleChanged, this);
 
+      // Schedule an update of the items.
+      this.update();
+
       // There is nothing more to do.
       return;
     }
 
-    // Otherwise, the menu exists in the vector and should be moved.
+    // Otherwise, the menu exists in the array and should be moved.
 
-    // Adjust the index if the location is at the end of the vector.
-    if (j === this._menus.length) j--;
+    // Adjust the index if the location is at the end of the array.
+    if (j === this._menus.length) {
+      j--;
+    }
 
     // Bail if there is no effective move.
-    if (i === j) return;
+    if (i === j) {
+      return;
+    }
 
-    // Move the item node and menu to the new locations.
-    move(this._nodes, i, j);
-    move(this._menus, i, j);
+    // Move the menu to the new locations.
+    ArrayExt.move(this._menus, i, j);
 
-    // Look up the next sibling node.
-    let ref = j + 1 < this._nodes.length ? this._nodes.at(j + 1) : null;
-
-    // Move the node in the content node.
-    this.contentNode.insertBefore(this._nodes.at(j), ref);
+    // Schedule an update of the items.
+    this.update();
   }
 
   /**
@@ -350,13 +255,11 @@ class MenuBar extends Widget {
    *
    * @param menu - The menu to remove from the menu bar.
    *
-   * @returns The index occupied by the menu, or `-1` if the menu
-   *   was not contained in the menu bar.
+   * #### Notes
+   * This is a no-op if the menu is not in the menu bar.
    */
-  removeMenu(menu: Menu): number {
-    let index = indexOf(this._menus, menu);
-    if (index !== -1) this.removeMenuAt(index);
-    return index;
+  removeMenu(menu: Menu): void {
+    this.removeMenuAt(this._menus.indexOf(menu));
   }
 
   /**
@@ -364,36 +267,31 @@ class MenuBar extends Widget {
    *
    * @param index - The index of the menu to remove.
    *
-   * @returns The menu occupying the index, or `null` if the index
-   *   is out of range.
+   * #### Notes
+   * This is a no-op if the index is out of range.
    */
-  removeMenuAt(index: number): Menu {
-    // Bail if the index is out of range.
-    let i = Math.floor(index);
-    if (i < 0 || i >= this._menus.length) {
-      return null;
-    }
-
+  removeMenuAt(index: number): void {
     // Close the child menu before making changes.
     this._closeChildMenu();
 
-    // Remove the node and menu from the vectors.
-    let node = this._nodes.removeAt(i);
-    let menu = this._menus.removeAt(i);
+    // Remove the menu from the array.
+    let menu = ArrayExt.removeAt(this._menus, index);
+
+    // Bail if the index is out of range.
+    if (!menu) {
+      return;
+    }
 
     // Disconnect from the menu signals.
     menu.aboutToClose.disconnect(this._onMenuAboutToClose, this);
     menu.menuRequested.disconnect(this._onMenuMenuRequested, this);
     menu.title.changed.disconnect(this._onTitleChanged, this);
 
-    // Remove the node from the content node.
-    this.contentNode.removeChild(node);
-
     // Remove the styling class from the menu.
-    menu.removeClass(MENU_CLASS);
+    menu.removeClass(MenuBar.MENU_CLASS);
 
-    // Return the removed menu.
-    return menu;
+    // Schedule an update of the items.
+    this.update();
   }
 
   /**
@@ -409,19 +307,18 @@ class MenuBar extends Widget {
     this._closeChildMenu();
 
     // Disconnect from the menu signals and remove the styling class.
-    each(this._menus, menu => {
+    for (let menu of this._menus) {
       menu.aboutToClose.disconnect(this._onMenuAboutToClose, this);
       menu.menuRequested.disconnect(this._onMenuMenuRequested, this);
       menu.title.changed.disconnect(this._onTitleChanged, this);
-      menu.removeClass(MENU_CLASS);
-    });
+      menu.removeClass(MenuBar.MENU_CLASS);
+    }
 
-    // Clear the node and menus vectors.
-    this._nodes.clear();
-    this._menus.clear();
+    // Clear the menus array.
+    this._menus.length = 0;
 
-    // Clear the content node.
-    this.contentNode.textContent = '';
+    // Schedule an update of the items.
+    this.update();
   }
 
   /**
@@ -482,27 +379,24 @@ class MenuBar extends Widget {
    * A message handler invoked on an `'activate-request'` message.
    */
   protected onActivateRequest(msg: Message): void {
-    if (this.isAttached) this.node.focus();
+    if (this.isAttached) {
+      this.node.focus();
+    }
   }
 
   /**
    * A message handler invoked on an `'update-request'` message.
    */
   protected onUpdateRequest(msg: Message): void {
-    // Fetch common variables.
     let menus = this._menus;
-    let nodes = this._nodes;
-    let renderer = this._renderer;
-
-    // Update the state of the item nodes.
+    let renderer = this.renderer;
+    let content = new Array<VirtualElement>(menus.length);
     for (let i = 0, n = menus.length; i < n; ++i) {
-      renderer.updateItemNode(nodes.at(i), menus.at(i).title);
+      let title = menus[i].title;
+      let active = i === this._activeIndex;
+      content[i] = renderer.renderItem({ title, active });
     }
-
-    // Add the active class to the active item.
-    if (this._activeIndex !== -1) {
-      nodes.at(this._activeIndex).classList.add(ACTIVE_CLASS);
-    }
+    VirtualDOM.render(content, this.contentNode);
   }
 
   /**
@@ -546,65 +440,34 @@ class MenuBar extends Widget {
       return;
     }
 
-    // The following code activates an item by mnemonic.
+    // If there is no keymap, mnemonics cannot be handled.
+    if (!this.keymap) {
+      return;
+    }
 
     // Get the pressed key character for the current layout.
-    let key = this._keymap.layout.keyForKeydownEvent(event);
+    let key = this.keymap.layout.keyForKeydownEvent(event);
 
     // Bail if the key is not valid for the current layout.
     if (!key) {
       return;
     }
 
-    // Normalize the case of the key.
-    key = key.toUpperCase();
-
-    // Setup the storage for the search results.
-    let mnIndex = -1;
-    let autoIndex = -1;
-    let mnMultiple = false;
-
-    // Search for the best mnemonic menu. This searches the menus
-    // starting at the active index and finds the following:
-    //   - the index of the first matching mnemonic menu
-    //   - whether there are multiple matching mnemonic menus
-    //   - the index of the first menu with no mnemonic, but
-    //     which has a matching first character.
-    let n = this._menus.length;
-    let j = this._activeIndex + 1;
-    for (let i = 0; i < n; ++i) {
-      let k = (i + j) % n;
-      let title = this._menus.at(k).title;
-      if (title.label.length === 0) {
-        continue;
-      }
-      let mn = title.mnemonic;
-      if (mn >= 0 && mn < title.label.length) {
-        if (title.label[mn].toUpperCase() === key) {
-          if (mnIndex === -1) {
-            mnIndex = k;
-          } else {
-            mnMultiple = true;
-          }
-        }
-      } else if (autoIndex === -1) {
-        if (title.label[0].toUpperCase() === key) {
-          autoIndex = k;
-        }
-      }
-    }
+    // Search for the next best matching mnemonic item.
+    let start = this._activeIndex + 1;
+    let result = Private.findMnemonic(this._menus, key, start);
 
     // Handle the requested mnemonic based on the search results.
     // If exactly one mnemonic is matched, that menu is opened.
     // Otherwise, the next mnemonic is activated if available,
     // followed by the auto mnemonic if available.
-    if (mnIndex !== -1 && !mnMultiple) {
-      this.activeIndex = mnIndex;
+    if (result.index !== -1 && !result.multiple) {
+      this.activeIndex = result.index;
       this.openActiveMenu();
-    } else if (mnIndex !== -1) {
-      this.activeIndex = mnIndex;
-    } else if (autoIndex !== -1) {
-      this.activeIndex = autoIndex;
+    } else if (result.index !== -1) {
+      this.activeIndex = result.index;
+    } else if (result.auto !== -1) {
+      this.activeIndex = result.auto;
     }
   }
 
@@ -614,9 +477,7 @@ class MenuBar extends Widget {
   private _evtMouseDown(event: MouseEvent): void {
     // Bail if the mouse press was not on the menu bar. This can occur
     // when the document listener is installed for an active menu bar.
-    let x = event.clientX;
-    let y = event.clientY;
-    if (!hitTest(this.node, x, y)) {
+    if (!DOMUtil.hitTest(this.node, event.clientX, event.clientY)) {
       return;
     }
 
@@ -627,10 +488,12 @@ class MenuBar extends Widget {
     event.stopImmediatePropagation();
 
     // Check if the mouse is over one of the menu items.
-    let i = findIndex(this._nodes, node => hitTest(node, x, y));
+    let index = ArrayExt.findFirstIndex(this.contentNode.children, node => {
+      return DOMUtil.hitTest(node, event.clientX, event.clientY);
+    });
 
     // If the press was not on an item, close the child menu.
-    if (i === -1) {
+    if (index === -1) {
       this._closeChildMenu();
       return;
     }
@@ -643,9 +506,9 @@ class MenuBar extends Widget {
     // Otherwise, toggle the open state of the child menu.
     if (this._childMenu) {
       this._closeChildMenu();
-      this.activeIndex = i;
+      this.activeIndex = index;
     } else {
-      this.activeIndex = i;
+      this.activeIndex = index;
       this._openChildMenu();
     }
   }
@@ -655,24 +518,24 @@ class MenuBar extends Widget {
    */
   private _evtMouseMove(event: MouseEvent): void {
     // Check if the mouse is over one of the menu items.
-    let x = event.clientX;
-    let y = event.clientY;
-    let i = findIndex(this._nodes, node => hitTest(node, x, y));
+    let index = ArrayExt.findFirstIndex(this.contentNode.children, node => {
+      return DOMUtil.hitTest(node, event.clientX, event.clientY);
+    });
 
     // Bail early if the active index will not change.
-    if (i === this._activeIndex) {
+    if (index === this._activeIndex) {
       return;
     }
 
     // Bail early if a child menu is open and the mouse is not over
     // an item. This allows the child menu to be kept open when the
     // mouse is over the empty part of the menu bar.
-    if (i === -1 && this._childMenu) {
+    if (index === -1 && this._childMenu) {
       return;
     }
 
     // Update the active index to the hovered item.
-    this.activeIndex = i;
+    this.activeIndex = index;
 
     // Open the new menu if a menu is already open.
     if (this._childMenu) {
@@ -717,13 +580,16 @@ class MenuBar extends Widget {
     if (oldMenu) {
       oldMenu.close();
     } else {
-      this.addClass(ACTIVE_CLASS);
+      this.addClass(MenuBar.ACTIVE_CLASS);
       document.addEventListener('mousedown', this, true);
     }
 
+    // Ensure the menu bar is updated and lookup the item node.
+    MessageLoop.sendMessage(this, Widget.Msg.UpdateRequest);
+    let itemNode = this.contentNode.children[this._activeIndex];
+
     // Get the positioning data for the new menu.
-    let node = this._nodes.at(this._activeIndex);
-    let { left, bottom } = node.getBoundingClientRect();
+    let { left, bottom } = (itemNode as HTMLElement).getBoundingClientRect();
 
     // Open the new menu at the computed location.
     newMenu.open(left, bottom, { forceX: true, forceY: true });
@@ -741,7 +607,7 @@ class MenuBar extends Widget {
     }
 
     // Remove the active class from the menu bar.
-    this.removeClass(ACTIVE_CLASS);
+    this.removeClass(MenuBar.ACTIVE_CLASS);
 
     // Remove the document listeners.
     document.removeEventListener('mousedown', this, true);
@@ -767,7 +633,7 @@ class MenuBar extends Widget {
     }
 
     // Remove the active class from the menu bar.
-    this.removeClass(ACTIVE_CLASS);
+    this.removeClass(MenuBar.ACTIVE_CLASS);
 
     // Remove the document listeners.
     document.removeEventListener('mousedown', this, true);
@@ -809,16 +675,13 @@ class MenuBar extends Widget {
   /**
    * Handle the `changed` signal of a title object.
    */
-  private _onTitleChanged(sender: Title): void {
+  private _onTitleChanged(): void {
     this.update();
   }
 
-  private _keymap: Keymap;
   private _activeIndex = -1;
-  private _childMenu: Menu = null;
-  private _menus = new Vector<Menu>();
-  private _nodes = new Vector<HTMLLIElement>();
-  private _renderer: MenuBar.IRenderer;
+  private _menus: Menu[] = [];
+  private _childMenu: Menu | null = null;
 }
 
 
@@ -828,17 +691,41 @@ class MenuBar extends Widget {
 export
 namespace MenuBar {
   /**
+   * The class name added to a menu bar widget.
+   */
+  export
+  const MENU_BAR_CLASS = 'p-MenuBar';
+
+  /**
+   * The class name added to a menu bar content node.
+   */
+  export
+  const CONTENT_CLASS = 'p-MenuBar-content';
+
+  /**
+   * The class name added to an open menu bar menu.
+   */
+  export
+  const MENU_CLASS = 'p-MenuBar-menu';
+
+  /**
+   * The class name added to an active menu bar.
+   */
+  export
+  const ACTIVE_CLASS = 'p-mod-active';
+
+  /**
    * An options object for creating a menu bar.
    */
   export
   interface IOptions {
     /**
-     * The keymap to use for the menu bar.
+     * The keymap for use with the menu bar.
      *
-     * The layout installed on the keymap is used to translate a
-     * `'keydown'` event into a mnemonic for navigation purposes.
+     * If a keymap is not provided, the menu bar will be unable to
+     * support navigation via keyboard mnemonic.
      */
-    keymap: Keymap;
+    keymap?: Keymap;
 
     /**
      * A custom renderer for creating menu bar content.
@@ -849,100 +736,183 @@ namespace MenuBar {
   }
 
   /**
+   * An object which holds the data to render a menu bar item.
+   */
+  export
+  interface IRenderData {
+    /**
+     * The title to be rendered.
+     */
+    readonly title: Title<Widget>;
+
+    /**
+     * Whether the item is the active item.
+     */
+    readonly active: boolean;
+  }
+
+  /**
    * A renderer for use with a menu bar.
    */
   export
   interface IRenderer {
     /**
-     * Create a node for a menu bar item.
+     * Render the virtual element for a menu bar item.
      *
-     * @returns A new node for a menu bar item.
+     * @param data - The data to use for rendering the item.
      *
-     * #### Notes
-     * The data in the node should be uninitialized.
-     *
-     * The `updateItemNode` method will be called for initialization.
+     * @returns A virtual element representing the item.
      */
-    createItemNode(): HTMLLIElement;
-
-    /**
-     * Update an item node to reflect the state of a menu title.
-     *
-     * @param node - A node created by a call to `createItemNode`.
-     *
-     * @param title - The menu title holding the data for the node.
-     *
-     * #### Notes
-     * This method should completely reset the state of the node to
-     * reflect the data in the menu title.
-     */
-    updateItemNode(node: HTMLLIElement, title: Title): void;
+    renderItem(data: IRenderData): VirtualElement;
   }
 
   /**
    * The default implementation of `IRenderer`.
+   *
+   * #### Notes
+   * Subclasses are free to reimplement rendering methods as needed.
    */
   export
   class Renderer implements IRenderer {
     /**
-     * Create a node for a menu bar item.
-     *
-     * @returns A new node for a menu bar item.
+     * Construct a new renderer.
      */
-    createItemNode(): HTMLLIElement {
-      let node = document.createElement('li');
-      let icon = document.createElement('div');
-      let label = document.createElement('div');
-      node.className = ITEM_CLASS;
-      icon.className = ICON_CLASS;
-      label.className = LABEL_CLASS;
-      node.appendChild(icon);
-      node.appendChild(label);
-      return node;
+    constructor() { }
+
+    /**
+     * Render the virtual element for a menu bar item.
+     *
+     * @param data - The data to use for rendering the item.
+     *
+     * @returns A virtual element representing the item.
+     */
+    renderItem(data: IRenderData): VirtualElement {
+      let className = this.createItemClass(data);
+      return (
+        h.li({ className },
+          this.renderIcon(data),
+          this.renderLabel(data)
+        )
+      );
     }
 
     /**
-     * Update an item node to reflect the state of a menu title.
+     * Render the icon element for a menu bar item.
      *
-     * @param node - A node created by a call to `createItemNode`.
+     * @param data - The data to use for rendering the icon.
      *
-     * @param title - The menu title holding the data for the node.
+     * @returns A virtual element representing the item icon.
      */
-    updateItemNode(node: HTMLLIElement, title: Title): void {
-      let icon = node.firstChild as HTMLElement;
-      let label = node.lastChild as HTMLElement;
-      let itemClass = ITEM_CLASS;
-      let iconClass = ICON_CLASS;
-      if (title.className) itemClass += ` ${title.className}`;
-      if (title.icon) iconClass += ` ${title.icon}`;
-      node.className = itemClass;
-      icon.className = iconClass;
-      label.innerHTML = this.formatLabel(title.label, title.mnemonic);
+    renderIcon(data: IRenderData): VirtualElement {
+      return h.div({ className: this.createIconClass(data) });
     }
 
     /**
-     * Format a label into HTML for display.
+     * Render the label element for a menu item.
      *
-     * @param label - The label text of interest.
+     * @param data - The data to use for rendering the label.
      *
-     * @param mnemonic - The index of the mnemonic character.
-     *
-     * @return The formatted label HTML for display.
+     * @returns A virtual element representing the item label.
      */
-    formatLabel(label: string, mnemonic: number): string {
+    renderLabel(data: IRenderData): VirtualElement {
+      let content = this.formatLabel(data);
+      return h.div({ className: Renderer.LABEL_CLASS }, content);
+    }
+
+    /**
+     * Create the class name for the menu bar item.
+     *
+     * @param data - The data to use for the class name.
+     *
+     * @returns The full class name for the menu item.
+     */
+    createItemClass(data: IRenderData): string {
+      let name = Renderer.ITEM_CLASS;
+      if (data.title.className) {
+        name += ` ${data.title.className}`;
+      }
+      if (data.active) {
+        name += ` ${Renderer.ACTIVE_CLASS}`;
+      }
+      return name;
+    }
+
+    /**
+     * Create the class name for the menu bar item icon.
+     *
+     * @param data - The data to use for the class name.
+     *
+     * @returns The full class name for the item icon.
+     */
+    createIconClass(data: IRenderData): string {
+      let name = Renderer.ICON_CLASS;
+      let extra = data.title.icon;
+      return extra ? `${name} ${extra}` : name;
+    }
+
+    /**
+     * Create the render content for the label node.
+     *
+     * @param data - The data to use for the label content.
+     *
+     * @returns The content to add to the label node.
+     */
+    formatLabel(data: IRenderData): h.Child {
+      // Fetch the label text and mnemonic index.
+      let { label, mnemonic } = data.title;
+
       // If the index is out of range, do not modify the label.
       if (mnemonic < 0 || mnemonic >= label.length) {
         return label;
       }
 
       // Split the label into parts.
-      let pref = label.slice(0, mnemonic);
-      let suff = label.slice(mnemonic + 1);
+      let prefix = label.slice(0, mnemonic);
+      let suffix = label.slice(mnemonic + 1);
       let char = label[mnemonic];
 
-      // Join the label with the mnemonic span.
-      return `${pref}<span class="${MNEMONIC_CLASS}">${char}</span>${suff}`;
+      // Wrap the mnemonic character in a span.
+      let span = h.span({ className: Renderer.MNEMONIC_CLASS }, char);
+
+      // Return the content parts.
+      return [prefix, span, suffix];
     }
+  }
+
+  /**
+   * The namespace for the `Renderer` class statics.
+   */
+  export
+  namespace Renderer {
+    /**
+     * The class name added to a menu bar item node.
+     */
+    export
+    const ITEM_CLASS = 'p-MenuBar-item';
+
+    /**
+     * The class name added to a menu bar item icon node.
+     */
+    export
+    const ICON_CLASS = 'p-MenuBar-itemIcon';
+
+    /**
+     * The class name added to a menu bar item label node.
+     */
+    export
+    const LABEL_CLASS = 'p-MenuBar-itemLabel';
+
+    /**
+     * The class name added to a menu bar item mnemonic node.
+     */
+    export
+    const MNEMONIC_CLASS = 'p-MenuBar-itemMnemonic';
+
+    /**
+     * The class name added to an active menu bar item.
+     */
+    export
+    const ACTIVE_CLASS = 'p-mod-active';
   }
 
   /**
@@ -964,9 +934,83 @@ namespace Private {
   function createNode(): HTMLDivElement {
     let node = document.createElement('div');
     let content = document.createElement('ul');
-    content.className = CONTENT_CLASS;
+    content.className = MenuBar.CONTENT_CLASS;
     node.appendChild(content);
     node.tabIndex = -1;
     return node;
+  }
+
+  /**
+   * The results of a mnemonic search.
+   */
+  export
+  interface IMnemonicResult {
+    /**
+     * The index of the first matching mnemonic item, or `-1`.
+     */
+    index: number;
+
+    /**
+     * Whether multiple mnemonic items matched.
+     */
+    multiple: boolean;
+
+    /**
+     * The index of the first auto matched non-mnemonic item.
+     */
+    auto: number;
+  }
+
+  /**
+   * Find the best matching mnemonic item.
+   *
+   * The search starts at the given index and wraps around.
+   */
+  export
+  function findMnemonic(menus: ReadonlyArray<Menu>, key: string, start: number): IMnemonicResult {
+    // Setup the result variables.
+    let index = -1;
+    let auto = -1;
+    let multiple = false;
+
+    // Normalize the key to upper case.
+    let upperKey = key.toUpperCase();
+
+    // Search the items from the given start index.
+    for (let i = 0, n = menus.length; i < n; ++i) {
+      // Compute the wrapped index.
+      let k = (i + start) % n;
+
+      // Lookup the menu title.
+      let title = menus[k].title;
+
+      // Ignore titles with an empty label.
+      if (title.label.length === 0) {
+        continue;
+      }
+
+      // Lookup the mnemonic index for the label.
+      let mn = title.mnemonic;
+
+      // Handle a valid mnemonic index.
+      if (mn >= 0 && mn < title.label.length) {
+        if (title.label[mn].toUpperCase() === upperKey) {
+          if (index === -1) {
+            index = k;
+          } else {
+            multiple = true;
+          }
+        }
+        continue;
+      }
+
+      // Finally, handle the auto index if possible.
+      if (auto === -1 && title.label[0].toUpperCase() === upperKey) {
+        auto = k;
+      }
+    }
+
+    // Return the search results.
+    return { index, multiple, auto };
   }
 }
