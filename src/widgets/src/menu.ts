@@ -936,6 +936,9 @@ namespace Menu {
      *
      * If a keymap is provided, its `commands` registry must be the
      * same as the `commands` option.
+     *
+     * If a keymap is not provided, the menu will be unable to render
+     * keyboard shortcuts or support navigation via keyboard mnemonic.
      */
     keymap?: Keymap;
 
@@ -1287,8 +1290,7 @@ namespace Menu {
      */
     formatLabel(data: IRenderData): h.Child {
       // Fetch the label text and mnemonic index.
-      let label = data.item.label;
-      let mnemonic = data.item.mnemonic;
+      let { label, mnemonic } = data.item;
 
       // If the index is out of range, do not modify the label.
       if (mnemonic < 0 || mnemonic >= label.length) {

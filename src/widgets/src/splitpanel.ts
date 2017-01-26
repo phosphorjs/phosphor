@@ -1195,7 +1195,7 @@ namespace Private {
   }
 
   /**
-   * Compute the average size of a vector of box sizers.
+   * Compute the average size of an array of box sizers.
    */
   export
   function averageSize(sizers: BoxSizer[]): number {
