@@ -1336,23 +1336,13 @@ namespace TabBar {
   class Renderer implements IRenderer<any> {
     /**
      * Construct a new renderer.
-     *
-     * @param options - The options for initializing the renderer.
      */
-    constructor(options: Renderer.IOptions = {}) {
-      this.extraTabClass = options.extraTabClass || '';
-      this.closeIconSelector = `.${Renderer.CLOSE_ICON_CLASS}`;
-    }
+    constructor() { }
 
     /**
      * A selector which matches the close icon node in a tab.
      */
-    readonly closeIconSelector: string;
-
-    /**
-     * The extra CSS class name(s) to add to each tab.
-     */
-    readonly extraTabClass: string;
+    readonly closeIconSelector = `.${Renderer.CLOSE_ICON_CLASS}`;
 
     /**
      * Render the virtual element for a tab.
@@ -1458,9 +1448,6 @@ namespace TabBar {
       if (data.current) {
         name += ` ${Renderer.CURRENT_CLASS}`;
       }
-      if (this.extraTabClass) {
-        name += ` ${this.extraTabClass}`;
-      }
       return name;
     }
 
@@ -1521,17 +1508,6 @@ namespace TabBar {
      */
     export
     const CLOSABLE_CLASS = 'p-mod-closable';
-
-    /**
-     * An options object for creating a renderer.
-     */
-    export
-    interface IOptions {
-      /**
-       * The extra CSS class name to add to each tab.
-       */
-      extraTabClass?: string;
-    }
   }
 
   /**
