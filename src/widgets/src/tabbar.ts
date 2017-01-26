@@ -1470,16 +1470,11 @@ namespace TabBar {
      * @param data - The data to use for the tab.
      *
      * @returns The full class name for the tab icon.
-     *
-     * #### Notes
-     * This method may be reimplemented by a subclass as needed.
      */
     createIconClass(data: IRenderData<any>): string {
       let name = Renderer.ICON_CLASS;
-      if (data.title.icon) {
-        name += ` ${data.title.icon}`;
-      }
-      return name;
+      let extra = data.title.icon;
+      return extra ? `${name} ${extra}` : name;
     }
 
     private _tabID = 0;
