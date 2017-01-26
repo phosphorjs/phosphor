@@ -336,6 +336,11 @@ class Menu extends Widget {
    * The index will be clamped to the bounds of the items.
    */
   insertItem(index: number, options: Menu.IItemOptions): Menu.IItem {
+    // Close the menu if it's attached.
+    if (this.isAttached) {
+      this.close();
+    }
+
     // Reset the active index.
     this.activeIndex = -1;
 
@@ -376,6 +381,11 @@ class Menu extends Widget {
    * This is a no-op if the index is out of range.
    */
   removeItemAt(index: number): void {
+    // Close the menu if it's attached.
+    if (this.isAttached) {
+      this.close();
+    }
+
     // Reset the active index.
     this.activeIndex = -1;
 
@@ -395,6 +405,11 @@ class Menu extends Widget {
    * Remove all menu items from the menu.
    */
   clearItems(): void {
+    // Close the menu if it's attached.
+    if (this.isAttached) {
+      this.close();
+    }
+
     // Reset the active index.
     this.activeIndex = -1;
 
