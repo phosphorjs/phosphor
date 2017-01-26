@@ -934,9 +934,8 @@ namespace Menu {
     /**
      * The keymap for use with the menu.
      *
-     * If a keymap is provided, it's `commands` registry should be the
-     * same as the `commands` option, or the menu items may not render
-     * the correct key bindings.
+     * If a keymap is provided, its `commands` registry must be the
+     * same as the `commands` option.
      */
     keymap?: Keymap;
 
