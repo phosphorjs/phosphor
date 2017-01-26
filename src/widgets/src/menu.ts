@@ -6,6 +6,10 @@
 | The full license is in the file LICENSE, distributed with this software.
 |----------------------------------------------------------------------------*/
 import {
+  ArrayExt
+} from '@phosphor/algorithm';
+
+import {
   CommandRegistry
 } from '@phosphor/commands';
 
@@ -16,6 +20,10 @@ import {
 import {
   Keymap
 } from '@phosphor/keymap';
+
+import {
+  ISignal, Signal
+} from '@phosphor/signaling';
 
 import {
   ElementDataset, VirtualElement, h
@@ -47,6 +55,45 @@ class Menu extends Widget {
   }
 
   /**
+   * Dispose of the resources held by the menu.
+   */
+  dispose(): void {
+    this.close();
+    this._items.length = 0;
+    super.dispose();
+  }
+
+  /**
+   * A signal emitted just before the menu is closed.
+   *
+   * #### Notes
+   * This signal is emitted when the menu receives a `'close-request'`
+   * message, just before it removes itself from the DOM.
+   *
+   * This signal is not emitted if the menu is already detached from
+   * the DOM when it receives the `'close-request'` message.
+   */
+  get aboutToClose(): ISignal<this, void> {
+    return this._aboutToClose;
+  }
+
+  /**
+   * A signal emitted when a new menu is requested by the user.
+   *
+   * #### Notes
+   * This signal is emitted whenever the user presses the right or left
+   * arrow keys, and a submenu cannot be opened or closed in response.
+   *
+   * This signal is useful when implementing menu bars in order to open
+   * the next or previous menu in response to a user key press.
+   *
+   * This signal is only emitted for the root menu in a hierarchy.
+   */
+  get menuRequested(): ISignal<Menu, 'next' | 'previous'> {
+    return this._menuRequested;
+  }
+
+  /**
    * The command registry used by the menu.
    */
   readonly commands: CommandRegistry;
@@ -60,6 +107,260 @@ class Menu extends Widget {
    * The renderer used by the menu.
    */
   readonly renderer: Menu.IRenderer;
+
+  /**
+   * The parent menu of the menu.
+   *
+   * #### Notes
+   * This is `null` unless the menu is an open submenu.
+   */
+  get parentMenu(): Menu | null {
+    return this._parentMenu;
+  }
+
+  /**
+   * The child menu of the menu.
+   *
+   * #### Notes
+   * This is `null` unless the menu has an open submenu.
+   */
+  get childMenu(): Menu | null {
+    return this._childMenu;
+  }
+
+  /**
+   * The root menu of the menu hierarchy.
+   */
+  get rootMenu(): Menu {
+    let menu: Menu = this;
+    while (menu._parentMenu) {
+      menu = menu._parentMenu;
+    }
+    return menu;
+  }
+
+  /**
+   * The leaf menu of the menu hierarchy.
+   */
+  get leafMenu(): Menu {
+    let menu: Menu = this;
+    while (menu._childMenu) {
+      menu = menu._childMenu;
+    }
+    return menu;
+  }
+
+  /**
+   * The menu content node.
+   *
+   * #### Notes
+   * This is the node which holds the menu item nodes.
+   *
+   * Modifying this node directly can lead to undefined behavior.
+   */
+  get contentNode(): HTMLUListElement {
+    return this.node.getElementsByClassName(Menu.CONTENT_CLASS)[0] as HTMLUListElement;
+  }
+
+  /**
+   * Get the currently active menu item.
+   */
+  get activeItem(): Menu.IItem | null {
+    return this._items[this._activeIndex] || null;
+  }
+
+  /**
+   * Set the currently active menu item.
+   *
+   * #### Notes
+   * If the item cannot be activated, the item will be set to `null`.
+   */
+  set activeItem(value: Menu.IItem | null) {
+    this.activeIndex = value ? this._items.indexOf(value) : -1;
+  }
+
+  /**
+   * Get the index of the currently active menu item.
+   *
+   * #### Notes
+   * This will be `-1` if no menu item is active.
+   */
+  get activeIndex(): number {
+    return this._activeIndex;
+  }
+
+  /**
+   * Set the index of the currently active menu item.
+   *
+   * #### Notes
+   * If the item cannot be activated, the index will be set to `-1`.
+   */
+  set activeIndex(value: number) {
+    // Adjust the value for an out of range index.
+    if (value < 0 || value >= this._items.length) {
+      value = -1;
+    }
+
+    // Ensure the item can be activated.
+    if (value !== -1 && !Private.canActivate(this._items[value])) {
+      value = -1;
+    }
+
+    // Bail if the index will not change.
+    if (this._activeIndex === value) {
+      return;
+    }
+
+    // Update the active index.
+    this._activeIndex = value;
+
+    // schedule an update of the items.
+    this.update();
+  }
+
+  /**
+   * A read-only array of the menu items in the menu.
+   */
+  get items(): ReadonlyArray<Menu.IItem> {
+    return this._items;
+  }
+
+  /**
+   * Activate the next selectable item in the menu.
+   *
+   * #### Notes
+   * If no item is selectable, the index will be set to `-1`.
+   */
+  activateNextItem(): void {
+    let n = this._items.length;
+    let ai = this._activeIndex;
+    let start = ai < n - 1 ? n + 1 : 0;
+    let stop = start === 0 ? n - 1 : start - 1;
+    this.activeIndex = ArrayExt.findFirstIndex(
+      this._items, Private.canActivate, start, stop
+    );
+  }
+
+  /**
+   * Activate the previous selectable item in the menu.
+   *
+   * #### Notes
+   * If no item is selectable, the index will be set to `-1`.
+   */
+  activatePreviousItem(): void {
+    let n = this._items.length;
+    let ai = this._activeIndex;
+    let start = ai <= 0 ? n - 1 : ai - 1;
+    let stop = start === n - 1 ? 0 : start + 1;
+    this.activeIndex = ArrayExt.findLastIndex(
+      this._items, Private.canActivate, start, stop
+    );
+  }
+
+  /**
+   * Add a menu item to the end of the menu.
+   *
+   * @param options - The options for creating the menu item.
+   *
+   * @returns The menu item added to the menu.
+   */
+  addItem(options: Menu.IItemOptions): Menu.IItem {
+    return this.insertItem(this._items.length, options);
+  }
+
+  /**
+   * Insert a menu item into the menu at the specified index.
+   *
+   * @param index - The index at which to insert the item.
+   *
+   * @param options - The options for creating the menu item.
+   *
+   * @returns The menu item added to the menu.
+   *
+   * #### Notes
+   * The index will be clamped to the bounds of the items.
+   */
+  insertItem(index: number, options: Menu.IItemOptions): Menu.IItem {
+    // Reset the active index.
+    this.activeIndex = -1;
+
+    // Clamp the insert index to the array bounds.
+    let i = Math.max(0, Math.min(index, this._items.length));
+
+    // Create the item for the options.
+    let item = Private.createItem(this, options);
+
+    // Insert the item into the array.
+    ArrayExt.insert(this._items, i, item);
+
+    // Schedule an update of the items.
+    this.update();
+
+    // Return the item added to the menu.
+    return item;
+  }
+
+  /**
+   * Remove an item from the menu.
+   *
+   * @param item - The item to remove from the menu.
+   *
+   * #### Notes
+   * This is a no-op if the item is not in the menu.
+   */
+  removeItem(item: Menu.IItem): void {
+    this.removeItemAt(this._items.indexOf(item));
+  }
+
+  /**
+   * Remove the item at a given index from the menu.
+   *
+   * @param index - The index of the item to remove.
+   *
+   * #### Notes
+   * This is a no-op if the index is out of range.
+   */
+  removeItemAt(index: number): void {
+    // Reset the active index.
+    this.activeIndex = -1;
+
+    // Remove the item from the array.
+    let item = ArrayExt.removeAt(this._items, index);
+
+    // Bail if the index is out of range.
+    if (!item) {
+      return
+    }
+
+    // Schedule an update of the items.
+    this.update();
+  }
+
+  /**
+   * Remove all menu items from the menu.
+   */
+  clearItems(): void {
+    // Reset the active index.
+    this.activeIndex = -1;
+
+    // Bail if there is nothing to remove.
+    if (this._items.length === 0) {
+      return;
+    }
+
+    // Clear the items.
+    this._items.length = 0;
+
+    // Schedule an update of the items.
+    this.update();
+  }
+
+  private _activeIndex = -1;
+  private _items: Menu.IItem[] = [];
+  private _childMenu: Menu | null = null;
+  private _parentMenu: Menu | null = null;
+  private _aboutToClose = new Signal<this, void>(this);
+  private _menuRequested = new Signal<this, 'next' | 'previous'>(this);
 }
 
 
@@ -114,6 +415,40 @@ namespace Menu {
   type ItemType = 'command' | 'submenu' | 'separator';
 
   /**
+   * An options object for creating a menu item.
+   */
+  export
+  interface IItemOptions {
+    /**
+     * The type of the menu item.
+     *
+     * The default value is `'command'`.
+     */
+    type?: ItemType;
+
+    /**
+     * The command to execute when the item is triggered.
+     *
+     * The default value is an empty string.
+     */
+    command?: string;
+
+    /**
+     * The arguments for the command.
+     *
+     * The default value is `null`.
+     */
+    args?: JSONObject | null;
+
+    /**
+     * The submenu for a `'submenu'` type item.
+     *
+     * The default value is `null`.
+     */
+    submenu?: Menu | null;
+  }
+
+  /**
    * An object which represents a menu item.
    *
    * #### Notes
@@ -137,7 +472,7 @@ namespace Menu {
     readonly args: JSONObject | null;
 
     /**
-     * The menu for a `'submenu'` type item.
+     * The submenu for a `'submenu'` type item.
      */
     readonly submenu: Menu | null;
 
@@ -533,5 +868,172 @@ namespace Private {
     node.appendChild(content);
     node.tabIndex = -1;
     return node;
+  }
+
+  /**
+   * Test whether a menu item can be activated.
+   */
+  export
+  function canActivate(item: Menu.IItem): boolean {
+    return item.type !== 'separator' && item.isEnabled && item.isVisible;
+  }
+
+  /**
+   * Create a new menu item for an owner menu.
+   */
+  export
+  function createItem(owner: Menu, options: Menu.IItemOptions): Menu.IItem {
+    return new MenuItem(owner.commands, owner.keymap, options);
+  }
+
+  /**
+   * A concrete implementation of `Menu.IItem`.
+   */
+  class MenuItem implements Menu.IItem {
+    /**
+     * Construct a new menu item.
+     */
+    constructor(commands: CommandRegistry, keymap: Keymap | null, options: Menu.IItemOptions) {
+      this._commands = commands;
+      this._keymap = keymap;
+      this.type = options.type || 'command';
+      this.command = options.command || '';
+      this.args = options.args || null;
+      this.submenu = options.submenu || null;
+    }
+
+    /**
+     * The type of the menu item.
+     */
+    readonly type: Menu.ItemType;
+
+    /**
+     * The command to execute when the item is triggered.
+     */
+    readonly command: string;
+
+    /**
+     * The arguments for the command.
+     */
+    readonly args: JSONObject | null;
+
+    /**
+     * The submenu for a `'submenu'` type item.
+     */
+    readonly submenu: Menu | null;
+
+    /**
+     * The display label for the menu item.
+     */
+    get label(): string {
+      if (this.type === 'command') {
+        return this._commands.label(this.command, this.args);
+      }
+      if (this.type === 'submenu' && this.submenu) {
+        return this.submenu.title.label;
+      }
+      return '';
+    }
+
+    /**
+     * The mnemonic index for the menu item.
+     */
+    get mnemonic(): number {
+      if (this.type === 'command') {
+        return this._commands.mnemonic(this.command, this.args);
+      }
+      if (this.type === 'submenu' && this.submenu) {
+        return this.submenu.title.mnemonic;
+      }
+      return -1;
+    }
+
+    /**
+     * The icon class for the menu item.
+     */
+    get icon(): string {
+      if (this.type === 'command') {
+        return this._commands.icon(this.command, this.args);
+      }
+      if (this.type === 'submenu' && this.submenu) {
+        return this.submenu.title.icon;
+      }
+      return '';
+    }
+
+    /**
+     * The display caption for the menu item.
+     */
+    get caption(): string {
+      if (this.type === 'command') {
+        return this._commands.caption(this.command, this.args);
+      }
+      if (this.type === 'submenu' && this.submenu) {
+        return this.submenu.title.caption;
+      }
+      return '';
+    }
+
+    /**
+     * The extra class name for the menu item.
+     */
+    get className(): string {
+      if (this.type === 'command') {
+        return this._commands.className(this.command, this.args);
+      }
+      if (this.type === 'submenu' && this.submenu) {
+        return this.submenu.title.className;
+      }
+      return '';
+    }
+
+    /**
+     * Whether the menu item is enabled.
+     */
+    get isEnabled(): boolean {
+      if (this.type === 'command') {
+        return this._commands.isEnabled(this.command, this.args);
+      }
+      if (this.type === 'submenu') {
+        return this.submenu !== null;
+      }
+      return true;
+    }
+
+    /**
+     * Whether the menu item is toggled.
+     */
+    get isToggled(): boolean {
+      if (this.type === 'command') {
+        return this._commands.isToggled(this.command, this.args);
+      }
+      return false;
+    }
+
+    /**
+     * Whether the menu item is visible.
+     */
+    get isVisible(): boolean {
+      if (this.type === 'command') {
+        return this._commands.isVisible(this.command, this.args);
+      }
+      if (this.type === 'submenu') {
+        return this.submenu !== null;
+      }
+      return true;
+    }
+
+    /**
+     * The key binding for the menu item.
+     */
+    get keyBinding(): Keymap.IBinding | null {
+      if (this._keymap && this.type === 'command') {
+        return this._keymap.findBinding(this.command, this.args) || null;
+      }
+      return null;
+    }
+
+    private _commands: CommandRegistry;
+    private _keymap: Keymap | null;
   }
 }
