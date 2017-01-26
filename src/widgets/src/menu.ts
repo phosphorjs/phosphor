@@ -22,12 +22,20 @@ import {
 } from '@phosphor/keymap';
 
 import {
+  Message, MessageLoop
+} from '@phosphor/messaging';
+
+import {
   ISignal, Signal
 } from '@phosphor/signaling';
 
 import {
-  ElementDataset, VirtualElement, h
+  ElementDataset, VirtualDOM, VirtualElement, h
 } from '@phosphor/virtualdom';
+
+import {
+  DOMUtil
+} from './domutil';
 
 import {
   Widget
@@ -51,7 +59,7 @@ class Menu extends Widget {
     this.commands = options.commands;
     this.keymap = options.keymap || null;
     this.renderer = options.renderer || Menu.defaultRenderer;
-    // TODO warn if keymap.commands !== commands.
+    Private.sanityCheckCommands(this);
   }
 
   /**
@@ -258,6 +266,53 @@ class Menu extends Widget {
   }
 
   /**
+   * Trigger the active menu item.
+   *
+   * #### Notes
+   * If the active item is a submenu, it will be opened and the first
+   * item will be activated.
+   *
+   * If the active item is a command, the command will be executed.
+   *
+   * If the menu is not attached, this is a no-op.
+   *
+   * If there is no active item, this is a no-op.
+   */
+  triggerActiveItem(): void {
+    // Bail if the menu is not attached.
+    if (!this.isAttached) {
+      return;
+    }
+
+    // Bail if there is no active item.
+    let item = this.activeItem;
+    if (!item) {
+      return;
+    }
+
+    // Cancel the pending timers.
+    this._cancelOpenTimer();
+    this._cancelCloseTimer();
+
+    // If the item is a submenu, open it.
+    if (item.type === 'submenu') {
+      this._openChildMenu(true);
+      return;
+    }
+
+    // Close the root menu before executing the command.
+    this.rootMenu.close();
+
+    // Execute the command for the item.
+    let { command, args } = item;
+    if (this.commands.isEnabled(command, args)) {
+      this.commands.execute(command, args);
+    } else {
+      console.log(`Command '${command}' is disabled.`);
+    }
+  }
+
+  /**
    * Add a menu item to the end of the menu.
    *
    * @param options - The options for creating the menu item.
@@ -355,7 +410,492 @@ class Menu extends Widget {
     this.update();
   }
 
+  /**
+   * Open the menu at the specified location.
+   *
+   * @param x - The client X coordinate of the menu location.
+   *
+   * @param y - The client Y coordinate of the menu location.
+   *
+   * @param options - The additional options for opening the menu.
+   *
+   * #### Notes
+   * The menu will be opened at the given location unless it will not
+   * fully fit on the screen. If it will not fit, it will be adjusted
+   * to fit naturally on the screen.
+   *
+   * This is a no-op if the menu is already attached to the DOM.
+   */
+  open(x: number, y: number, options: Menu.IOpenOptions = {}): void {
+    // Bail early if the menu is already attached.
+    if (this.isAttached) {
+      return;
+    }
+
+    // Extract the position options.
+    let forceX = options.forceX || false;
+    let forceY = options.forceY || false;
+
+    // Open the menu as a root menu.
+    Private.openRootMenu(this, x, y, forceX, forceY);
+
+    // Activate the menu to accept keyboard input.
+    this.activate();
+  }
+
+  /**
+   * Handle the DOM events for the menu.
+   *
+   * @param event - The DOM event sent to the menu.
+   *
+   * #### Notes
+   * This method implements the DOM `EventListener` interface and is
+   * called in response to events on the menu's DOM nodes. It should
+   * not be called directly by user code.
+   */
+  handleEvent(event: Event): void {
+    switch (event.type) {
+    case 'keydown':
+      this._evtKeyDown(event as KeyboardEvent);
+      break;
+    case 'mouseup':
+      this._evtMouseUp(event as MouseEvent);
+      break;
+    case 'mousemove':
+      this._evtMouseMove(event as MouseEvent);
+      break;
+    case 'mouseenter':
+      this._evtMouseEnter(event as MouseEvent);
+      break;
+    case 'mouseleave':
+      this._evtMouseLeave(event as MouseEvent);
+      break;
+    case 'mousedown':
+      this._evtMouseDown(event as MouseEvent);
+      break;
+    case 'contextmenu':
+      event.preventDefault();
+      event.stopPropagation();
+      break;
+    }
+  }
+
+  /**
+   * A message handler invoked on an `'after-attach'` message.
+   */
+  protected onAfterAttach(msg: Message): void {
+    this.node.addEventListener('keydown', this);
+    this.node.addEventListener('mouseup', this);
+    this.node.addEventListener('mousemove', this);
+    this.node.addEventListener('mouseenter', this);
+    this.node.addEventListener('mouseleave', this);
+    this.node.addEventListener('contextmenu', this);
+    document.addEventListener('mousedown', this, true);
+  }
+
+  /**
+   * A message handler invoked on a `'before-detach'` message.
+   */
+  protected onBeforeDetach(msg: Message): void {
+    this.node.removeEventListener('keydown', this);
+    this.node.removeEventListener('mouseup', this);
+    this.node.removeEventListener('mousemove', this);
+    this.node.removeEventListener('mouseenter', this);
+    this.node.removeEventListener('mouseleave', this);
+    this.node.removeEventListener('contextmenu', this);
+    document.removeEventListener('mousedown', this, true);
+  }
+
+  /**
+   * A message handler invoked on an `'activate-request'` message.
+   */
+  protected onActivateRequest(msg: Message): void {
+    if (this.isAttached) {
+      this.node.focus();
+    }
+  }
+
+  /**
+   * A message handler invoked on an `'update-request'` message.
+   */
+  protected onUpdateRequest(msg: Message): void {
+    let items = this._items;
+    let renderer = this.renderer;
+    let activeIndex = this._activeIndex;
+    let collapsedFlags = Private.computeCollapsed(items);
+    let content = new Array<VirtualElement>(items.length);
+    for (let i = 0, n = items.length; i < n; ++i) {
+      let item = items[i];
+      let active = i === activeIndex;
+      let collapsed = collapsedFlags[i];
+      content[i] = renderer.renderItem({ item, active, collapsed });
+    }
+    VirtualDOM.render(content, this.contentNode);
+  }
+
+  /**
+   * A message handler invoked on a `'close-request'` message.
+   */
+  protected onCloseRequest(msg: Message): void {
+    // Cancel the pending timers.
+    this._cancelOpenTimer();
+    this._cancelCloseTimer();
+
+    // Reset the active index.
+    this.activeIndex = -1;
+
+    // Close any open child menu.
+    let childMenu = this._childMenu;
+    if (childMenu) {
+      this._childIndex = -1;
+      this._childMenu = null;
+      childMenu._parentMenu = null;
+      childMenu.close();
+    }
+
+    // Remove this menu from its parent and activate the parent.
+    let parentMenu = this._parentMenu;
+    if (parentMenu) {
+      this._parentMenu = null;
+      parentMenu._cancelOpenTimer();
+      parentMenu._cancelCloseTimer();
+      parentMenu._childIndex = -1;
+      parentMenu._childMenu = null;
+      parentMenu.activate();
+    }
+
+    // Emit the `aboutToClose` signal if the menu is attached.
+    if (this.isAttached) {
+      this._aboutToClose.emit(undefined);
+    }
+
+    // Finish closing the menu.
+    super.onCloseRequest(msg);
+  }
+
+  /**
+   * Handle the `'keydown'` event for the menu.
+   *
+   * #### Notes
+   * This listener is attached to the menu node.
+   */
+  private _evtKeyDown(event: KeyboardEvent): void {
+    // A menu handles all keydown events.
+    event.preventDefault();
+    event.stopPropagation();
+
+    // Fetch the key code for the event.
+    let kc = event.keyCode;
+
+    // Enter
+    if (kc === 13) {
+      this.triggerActiveItem();
+      return;
+    }
+
+    // Escape
+    if (kc === 27) {
+      this.close();
+      return;
+    }
+
+    // Left Arrow
+    if (kc === 37) {
+      if (this._parentMenu) {
+        this.close();
+      } else {
+        this._menuRequested.emit('previous');
+      }
+      return;
+    }
+
+    // Up Arrow
+    if (kc === 38) {
+      this.activatePreviousItem();
+      return;
+    }
+
+    // Right Arrow
+    if (kc === 39) {
+      let item = this.activeItem;
+      if (item && item.type === 'submenu') {
+        this.triggerActiveItem();
+      } else {
+        this.rootMenu._menuRequested.emit('next');
+      }
+      return;
+    }
+
+    // Down Arrow
+    if (kc === 40) {
+      this.activateNextItem();
+      return;
+    }
+
+    // If there is no keymap, mnemonics cannot be handled.
+    if (!this.keymap) {
+      return;
+    }
+
+    // Get the pressed key character for the current layout.
+    let key = this.keymap.layout.keyForKeydownEvent(event);
+
+    // Bail if the key is not valid for the current layout.
+    if (!key) {
+      return;
+    }
+
+    // Search for the next best matching mnemonic item.
+    let start = this._activeIndex + 1;
+    let result = Private.findMnemonic(this._items, key, start);
+
+    // Handle the requested mnemonic based on the search results.
+    // If exactly one mnemonic is matched, that item is triggered.
+    // Otherwise, the next mnemonic is activated if available,
+    // followed by the auto mnemonic if available.
+    if (result.index !== -1 && !result.multiple) {
+      this.activeIndex = result.index;
+      this.triggerActiveItem();
+    } else if (result.index !== -1) {
+      this.activeIndex = result.index;
+    } else if (result.auto !== -1) {
+      this.activeIndex = result.auto;
+    }
+  }
+
+  /**
+   * Handle the `'mouseup'` event for the menu.
+   *
+   * #### Notes
+   * This listener is attached to the menu node.
+   */
+  private _evtMouseUp(event: MouseEvent): void {
+    if (event.button !== 0) {
+      return;
+    }
+    event.preventDefault();
+    event.stopPropagation();
+    this.triggerActiveItem();
+  }
+
+  /**
+   * Handle the `'mousemove'` event for the menu.
+   *
+   * #### Notes
+   * This listener is attached to the menu node.
+   */
+  private _evtMouseMove(event: MouseEvent): void {
+    // Hit test the item nodes for the item under the mouse.
+    let index = ArrayExt.findFirstIndex(this.contentNode.children, node => {
+      return DOMUtil.hitTest(node, event.clientX, event.clientY);
+    });
+
+    // Bail early if the mouse is already over the active index.
+    if (index === this._activeIndex) {
+      return;
+    }
+
+    // Update and coerce the active index.
+    this.activeIndex = index;
+    index = this.activeIndex;
+
+    // If the index is the current child index, cancel the timers.
+    if (index === this._childIndex) {
+      this._cancelOpenTimer();
+      this._cancelCloseTimer();
+      return;
+    }
+
+    // If a child menu is currently open, start the close timer.
+    if (this._childIndex !== -1) {
+      this._startCloseTimer();
+    }
+
+    // Cancel the open timer to give a full delay for opening.
+    this._cancelOpenTimer();
+
+    // Bail if the active item is not a valid submenu item.
+    let item = this.activeItem;
+    if (!item || item.type !== 'submenu' || !item.submenu) {
+      return;
+    }
+
+    // Start the open timer to open the active item submenu.
+    this._startOpenTimer();
+  }
+
+  /**
+   * Handle the `'mouseenter'` event for the menu.
+   *
+   * #### Notes
+   * This listener is attached to the menu node.
+   */
+  private _evtMouseEnter(event: MouseEvent): void {
+    // Synchronize the active ancestor items.
+    for (let menu = this._parentMenu; menu; menu = menu._parentMenu) {
+      menu._cancelOpenTimer();
+      menu._cancelCloseTimer();
+      menu.activeIndex = menu._childIndex;
+    }
+  }
+
+  /**
+   * Handle the `'mouseleave'` event for the menu.
+   *
+   * #### Notes
+   * This listener is attached to the menu node.
+   */
+  private _evtMouseLeave(event: MouseEvent): void {
+    // Cancel any pending submenu opening.
+    this._cancelOpenTimer();
+
+    // If there is no open child menu, just reset the active index.
+    if (!this._childMenu) {
+      this.activeIndex = -1;
+      return;
+    }
+
+    // If the mouse is over the child menu, cancel the close timer.
+    if (DOMUtil.hitTest(this._childMenu.node, event.clientX, event.clientY)) {
+      this._cancelCloseTimer();
+      return;
+    }
+
+    // Otherwise, reset the active index and start the close timer.
+    this.activeIndex = -1;
+    this._startCloseTimer();
+  }
+
+  /**
+   * Handle the `'mousedown'` event for the menu.
+   *
+   * #### Notes
+   * This listener is attached to the document node.
+   */
+  private _evtMouseDown(event: MouseEvent): void {
+    // Bail if the menu is not a root menu.
+    if (this._parentMenu) {
+      return;
+    }
+
+    // The mouse button which is pressed is irrelevant. If the press
+    // is not on a menu, the entire hierarchy is closed and the event
+    // is allowed to propagate. This allows other code to act on the
+    // event, such as focusing the clicked element.
+    if (Private.hitTestMenus(this, event.clientX, event.clientY)) {
+      event.preventDefault();
+      event.stopPropagation();
+    } else {
+      this.close();
+    }
+  }
+
+  /**
+   * Open the child menu at the active index immediately.
+   *
+   * If a different child menu is already open, it will be closed,
+   * even if the active item is not a valid submenu.
+   */
+  private _openChildMenu(activateFirst = false): void {
+    // If the item is not a valid submenu, close the child menu.
+    let item = this.activeItem;
+    if (!item || item.type !== 'submenu' || !item.submenu) {
+      this._closeChildMenu();
+      return;
+    }
+
+    // Do nothing if the child menu will not change.
+    let submenu = item.submenu;
+    if (submenu === this._childMenu) {
+      return;
+    }
+
+    // Ensure the current child menu is closed.
+    this._closeChildMenu();
+
+    // Update the private child state.
+    this._childMenu = submenu;
+    this._childIndex = this._activeIndex;
+
+    // Set the parent menu reference for the child.
+    submenu._parentMenu = this;
+
+    // Ensure the menu is updated and lookup the item node.
+    MessageLoop.sendMessage(this, Widget.Msg.UpdateRequest);
+    let itemNode = this.contentNode.children[this._activeIndex];
+
+    // Open the submenu at the active node.
+    Private.openSubmenu(submenu, itemNode as HTMLElement);
+
+    // Activate the first item if desired.
+    if (activateFirst) {
+      submenu.activeIndex = -1;
+      submenu.activateNextItem();
+    }
+
+    // Activate the child menu.
+    submenu.activate();
+  }
+
+  /**
+   * Start the open timer, unless it is already pending.
+   */
+  private _startOpenTimer(): void {
+    if (this._openTimerID === 0) {
+      this._openTimerID = setTimeout(() => {
+        this._openTimerID = 0;
+        this._openChildMenu();
+      }, Private.TIMER_DELAY);
+    }
+  }
+
+  /**
+   * Start the close timer, unless it is already pending.
+   */
+  private _startCloseTimer(): void {
+    if (this._closeTimerID === 0) {
+      this._closeTimerID = setTimeout(() => {
+        this._closeTimerID = 0;
+        this._closeChildMenu();
+      }, Private.TIMER_DELAY);
+    }
+  }
+
+  /**
+   * Close the child menu immediately.
+   *
+   * This is a no-op if a child menu is not open.
+   */
+  private _closeChildMenu(): void {
+    if (this._childMenu) {
+      this._childMenu.close();
+    }
+  }
+
+  /**
+   * Cancel the open timer, if the timer is pending.
+   */
+  private _cancelOpenTimer(): void {
+    if (this._openTimerID !== 0) {
+      clearTimeout(this._openTimerID);
+      this._openTimerID = 0;
+    }
+  }
+
+  /**
+   * Cancel the close timer, if the timer is pending.
+   */
+  private _cancelCloseTimer(): void {
+    if (this._closeTimerID !== 0) {
+      clearTimeout(this._closeTimerID);
+      this._closeTimerID = 0;
+    }
+  }
+
+  private _childIndex = 1;
   private _activeIndex = -1;
+  private _openTimerID = 0;
+  private _closeTimerID = 0;
   private _items: Menu.IItem[] = [];
   private _childMenu: Menu | null = null;
   private _parentMenu: Menu | null = null;
@@ -406,6 +946,32 @@ namespace Menu {
      * The default is a shared renderer instance.
      */
     renderer?: IRenderer;
+  }
+
+  /**
+   * An options object for the `open` method on a menu.
+   */
+  export
+  interface IOpenOptions {
+    /**
+     * Whether to force the X position of the menu.
+     *
+     * Setting to `true` will disable the logic which repositions the
+     * X coordinate of the menu if it will not fit entirely on screen.
+     *
+     * The default is `false`.
+     */
+    forceX?: boolean;
+
+    /**
+     * Whether to force the Y position of the menu.
+     *
+     * Setting to `true` will disable the logic which repositions the
+     * Y coordinate of the menu if it will not fit entirely on screen.
+     *
+     * The default is `false`.
+     */
+    forceY?: boolean;
   }
 
   /**
@@ -858,6 +1424,17 @@ namespace Menu {
  */
 namespace Private {
   /**
+   * The ms delay for opening and closing a submenu.
+   */
+  export
+  const TIMER_DELAY = 300;
+
+  /**
+   * The horizontal pixel overlap for an open submenu.
+   */
+  const SUBMENU_OVERLAP = 3;
+
+  /**
    * Create the DOM node for a menu.
    */
   export
@@ -884,6 +1461,300 @@ namespace Private {
   export
   function createItem(owner: Menu, options: Menu.IItemOptions): Menu.IItem {
     return new MenuItem(owner.commands, owner.keymap, options);
+  }
+
+  /**
+   * Hit test a menu hierarchy starting at the given root.
+   */
+  export
+  function hitTestMenus(menu: Menu, x: number, y: number): boolean {
+    for (let temp: Menu | null = menu; temp; temp = temp.childMenu) {
+      if (DOMUtil.hitTest(temp.node, x, y)) {
+        return true;
+      }
+    }
+    return false;
+  }
+
+  /**
+   * Ensure that the menu commands and keymap commands match.
+   *
+   * This throws an error if the objects are incompatible.
+   */
+  export
+  function sanityCheckCommands(menu: Menu): void {
+    if (!menu.keymap || menu.commands === menu.keymap.commands) {
+      return;
+    }
+    throw new Error('`menu.commands` !== `menu.keymap.commands`');
+  }
+
+  /**
+   * Compute which extra separator items should be collapsed.
+   */
+  export
+  function computeCollapsed(items: ReadonlyArray<Menu.IItem>): boolean[] {
+    // Allocate the return array and fill it with `false`.
+    let result = new Array<boolean>(items.length);
+    ArrayExt.fill(result, false);
+
+    // Collapse the leading separators.
+    let k1 = 0;
+    let n = items.length;
+    for (; k1 < n; ++k1) {
+      let item = items[k1];
+      if (!item.isVisible) {
+        continue;
+      }
+      if (item.type !== 'separator') {
+        break;
+      }
+      result[k1] = true;
+    }
+
+    // Hide the trailing separators.
+    let k2 = n - 1;
+    for (; k2 >= 0; --k2) {
+      let item = items[k2];
+      if (!item.isVisible) {
+        continue;
+      }
+      if (item.type !== 'separator') {
+        break;
+      }
+      result[k2] = true;
+    }
+
+    // Hide the remaining consecutive separators.
+    let hide = false;
+    while (++k1 < k2) {
+      let item = items[k1];
+      if (!item.isVisible) {
+        continue;
+      }
+      if (item.type !== 'separator') {
+        hide = false;
+      } else if (hide) {
+        result[k1] = true;
+      } else {
+        hide = true;
+      }
+    }
+
+    // Return the resulting flags.
+    return result;
+  }
+
+  /**
+   * Open a menu as a root menu at the target location.
+   */
+  export
+  function openRootMenu(menu: Menu, x: number, y: number, forceX: boolean, forceY: boolean): void {
+    // Ensure the menu is updated before attaching and measuring.
+    MessageLoop.sendMessage(menu, Widget.Msg.UpdateRequest);
+
+    // Get the current position and size of the main viewport.
+    let px = window.pageXOffset;
+    let py = window.pageYOffset;
+    let cw = document.documentElement.clientWidth;
+    let ch = document.documentElement.clientHeight;
+
+    // Compute the maximum allowed height for the menu.
+    let maxHeight = ch - (forceY ? y : 0);
+
+    // Fetch common variables.
+    let node = menu.node;
+    let style = node.style;
+
+    // Clear the menu geometry and prepare it for measuring.
+    style.top = '';
+    style.left = '';
+    style.width = '';
+    style.height = '';
+    style.visibility = 'hidden';
+    style.maxHeight = `${maxHeight}px`;
+
+    // Attach the menu to the document.
+    Widget.attach(menu, document.body);
+
+    // Expand the menu width by the scrollbar size, if present.
+    if (node.scrollHeight > maxHeight) {
+      style.width = `${2 * node.offsetWidth - node.clientWidth}px`;
+    }
+
+    // Measure the size of the menu.
+    let { width, height } = node.getBoundingClientRect();
+
+    // Adjust the X position of the menu to fit on-screen.
+    if (!forceX && (x + width > px + cw)) {
+      x = px + cw - width;
+    }
+
+    // Adjust the Y position of the menu to fit on-screen.
+    if (!forceY && (y + height > py + ch)) {
+      if (y > py + ch) {
+        y = py + ch - height;
+      } else {
+        y = y - height;
+      }
+    }
+
+    // Update the position of the menu to the computed position.
+    style.top = `${Math.max(0, y)}px`;
+    style.left = `${Math.max(0, x)}px`;
+
+    // Finally, make the menu visible on the screen.
+    style.visibility = '';
+  }
+
+  /**
+   * Open a menu as a submenu using an item node for positioning.
+   */
+  export
+  function openSubmenu(submenu: Menu, itemNode: HTMLElement): void {
+    // Ensure the menu is updated before opening.
+    MessageLoop.sendMessage(submenu, Widget.Msg.UpdateRequest);
+
+    // Get the current position and size of the main viewport.
+    let px = window.pageXOffset;
+    let py = window.pageYOffset;
+    let cw = document.documentElement.clientWidth;
+    let ch = document.documentElement.clientHeight;
+
+    // Compute the maximum allowed height for the menu.
+    let maxHeight = ch;
+
+    // Fetch common variables.
+    let node = submenu.node;
+    let style = node.style;
+
+    // Clear the menu geometry and prepare it for measuring.
+    style.top = '';
+    style.left = '';
+    style.width = '';
+    style.height = '';
+    style.visibility = 'hidden';
+    style.maxHeight = `${maxHeight}px`;
+
+    // Attach the menu to the document.
+    Widget.attach(submenu, document.body);
+
+    // Expand the menu width by the scrollbar size, if present.
+    if (node.scrollHeight > maxHeight) {
+      style.width = `${2 * node.offsetWidth - node.clientWidth}px`;
+    }
+
+    // Measure the size of the menu.
+    let { width, height } = node.getBoundingClientRect();
+
+    // Compute the box sizing for the menu.
+    let box = DOMUtil.boxSizing(submenu.node);
+
+    // Get the bounding rect for the target item node.
+    let itemRect = itemNode.getBoundingClientRect();
+
+    // Compute the target X position.
+    let x = itemRect.right - SUBMENU_OVERLAP;
+
+    // Adjust the X position to fit on the screen.
+    if (x + width > px + cw) {
+      x = itemRect.left + SUBMENU_OVERLAP - width;
+    }
+
+    // Compute the target Y position.
+    let y = itemRect.top - box.borderTop - box.paddingTop;
+
+    // Adjust the Y position to fit on the screen.
+    if (y + height > py + ch) {
+      y = itemRect.bottom + box.borderBottom + box.paddingBottom - height;
+    }
+
+    // Update the position of the menu to the computed position.
+    style.top = `${Math.max(0, y)}px`;
+    style.left = `${Math.max(0, x)}px`;
+
+    // Finally, make the menu visible on the screen.
+    style.visibility = '';
+  }
+
+  /**
+   * The results of a mnemonic search.
+   */
+  export
+  interface IMnemonicResult {
+    /**
+     * The index of the first matching mnemonic item, or `-1`.
+     */
+    index: number;
+
+    /**
+     * Whether multiple mnemonic items matched.
+     */
+    multiple: boolean;
+
+    /**
+     * The index of the first auto matched non-mnemonic item.
+     */
+    auto: number;
+  }
+
+  /**
+   * Find the best matching mnemonic item.
+   *
+   * The search starts at the given index and wraps around.
+   */
+  export
+  function findMnemonic(items: ReadonlyArray<Menu.IItem>, key: string, start: number): IMnemonicResult {
+    // Setup the result variables.
+    let index = -1;
+    let auto = -1;
+    let multiple = false;
+
+    // Normalize the key to upper case.
+    let upperKey = key.toUpperCase();
+
+    // Search the items from the given start index.
+    for (let i = 0, n = items.length; i < n; ++i) {
+      // Compute the wrapped index.
+      let k = (i + start) % n;
+
+      // Lookup the item
+      let item = items[k];
+
+      // Ignore items which cannot be activated.
+      if (!canActivate(item)) {
+        continue;
+      }
+
+      // Ignore items with an empty label.
+      let label = item.label;
+      if (label.length === 0) {
+        continue;
+      }
+
+      // Lookup the mnemonic index for the label.
+      let mn = item.mnemonic;
+
+      // Handle a valid mnemonic index.
+      if (mn >= 0 && mn < label.length) {
+        if (label[mn].toUpperCase() === upperKey) {
+          if (index === -1) {
+            index = k;
+          } else {
+            multiple = true;
+          }
+        }
+        continue;
+      }
+
+      // Finally, handle the auto index if possible.
+      if (auto === -1 && label[0].toUpperCase() === upperKey) {
+        auto = k;
+      }
+    }
+
+    // Return the search results.
+    return { index, multiple, auto };
   }
 
   /**
