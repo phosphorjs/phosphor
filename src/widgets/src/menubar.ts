@@ -567,7 +567,7 @@ class MenuBar extends Widget {
       return;
     }
 
-    // Bail, if there is no effective menu change.
+    // Bail if there is no effective menu change.
     let oldMenu = this._childMenu;
     if (oldMenu === newMenu) {
       return;
@@ -584,7 +584,7 @@ class MenuBar extends Widget {
       document.addEventListener('mousedown', this, true);
     }
 
-    // Ensure the menu bar is updated and lookup the item node.
+    // Ensure the menu bar is updated and look up the item node.
     MessageLoop.sendMessage(this, Widget.Msg.UpdateRequest);
     let itemNode = this.contentNode.children[this._activeIndex];
 
@@ -654,7 +654,7 @@ class MenuBar extends Widget {
       return;
     }
 
-    // Lookup the active index and menu count.
+    // Look up the active index and menu count.
     let i = this._activeIndex;
     let n = this._menus.length;
 
@@ -686,7 +686,7 @@ class MenuBar extends Widget {
 
 
 /**
- * The namespaces for the `MenuBar` class statics.
+ * The namespace for the `MenuBar` class statics.
  */
 export
 namespace MenuBar {
@@ -981,7 +981,7 @@ namespace Private {
       // Compute the wrapped index.
       let k = (i + start) % n;
 
-      // Lookup the menu title.
+      // Look up the menu title.
       let title = menus[k].title;
 
       // Ignore titles with an empty label.
@@ -989,7 +989,7 @@ namespace Private {
         continue;
       }
 
-      // Lookup the mnemonic index for the label.
+      // Look up the mnemonic index for the label.
       let mn = title.mnemonic;
 
       // Handle a valid mnemonic index.
