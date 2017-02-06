@@ -853,7 +853,7 @@ namespace Private {
     } else {
       keys = options.linuxKeys || options.keys;
     }
-    return Object.freeze(keys.map(Keymap.normalizeKeystroke));
+    return Object.freeze(keys.map(Keymap.normalizeKeystroke)) as string[];
   }
 
   /**

@@ -1004,12 +1004,12 @@ namespace Private {
   /**
    * A shared frozen empty array.
    */
-  const emptyArray = Object.freeze([]);
+  const emptyArray = Object.freeze([]) as any[];
 
   /**
    * A shared frozen empty object.
    */
-  const emptyObject = Object.freeze({});
+  const emptyObject = Object.freeze({}) as any[];
 
   /**
    * A weak mapping of host element to virtual DOM content.
