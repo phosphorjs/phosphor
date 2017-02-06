@@ -5,45 +5,31 @@
 |
 | The full license is in the file LICENSE, distributed with this software.
 |----------------------------------------------------------------------------*/
-import {
-  Message
-} from '../lib/core/messaging';
-
-import {
-  BoxPanel
-} from '../lib/ui/boxpanel';
-
-import {
-  CommandPalette
-} from '../lib/ui/commandpalette';
 
 import {
   CommandRegistry
-} from '../lib/ui/commandregistry';
-
-import {
-  DockPanel
-} from '../lib/ui/dockpanel';
+} from '../../lib/ui/commandregistry';
 
 import {
   Keymap
-} from '../lib/ui/keymap';
+} from '../../lib/ui/keymap';
 
 import {
   Menu
-} from '../lib/ui/menu';
+} from '../../lib/ui/menu';
 
 import {
   MenuBar
-} from '../lib/ui/menubar';
+} from '../../lib/ui/menubar';
 
 import {
-  Widget, WidgetFlag
-} from '../lib/ui/widget';
+  Widget
+} from '../../lib/ui/widget';
 
-import '../styles/base.css';
 
-import './index.css';
+import '../../styles/base.css';
+
+import '../index.css';
 
 
 const commands = new CommandRegistry();
@@ -87,36 +73,15 @@ function createMenu(): Menu {
 }
 
 
-class ContentWidget extends Widget {
-
-  static createNode(): HTMLElement {
-    let node = document.createElement('div');
-    let content = document.createElement('div');
-    let input = document.createElement('input');
-    input.placeholder = 'Placeholder...';
-    content.appendChild(input);
-    node.appendChild(content);
-    return node;
-  }
-
-  constructor(name: string) {
-    super({ node: ContentWidget.createNode() });
-    this.setFlag(WidgetFlag.DisallowLayout);
-    this.addClass('content');
-    this.addClass(name.toLowerCase());
-    this.title.label = name;
-    this.title.closable = true;
-    this.title.caption = `Long description for: ${name}`;
-  }
-
-  get inputNode(): HTMLInputElement {
-    return this.node.getElementsByTagName('input')[0] as HTMLInputElement;
-  }
-
-  protected onActivateRequest(msg: Message): void {
-    if (this.isAttached) this.inputNode.focus();
-  }
+/**
+ * A handler which logs the item text to the log span.
+ */
+function logHandler(value: string): void {
+  let node = document.getElementById('log-span');
+  node.textContent = value.replace(/&/g, '');
+  console.log(value);
 }
+
 
 
 function main(): void {
@@ -126,7 +91,7 @@ function main(): void {
     mnemonic: 1,
     icon: 'fa fa-cut',
     execute: () => {
-      console.log('Cut');
+      logHandler('Cut');
     }
   });
 
@@ -135,7 +100,7 @@ function main(): void {
     mnemonic: 0,
     icon: 'fa fa-copy',
     execute: () => {
-      console.log('Copy');
+      logHandler('Copy');
     }
   });
 
@@ -144,7 +109,7 @@ function main(): void {
     mnemonic: 0,
     icon: 'fa fa-paste',
     execute: () => {
-      console.log('Paste');
+      logHandler('Paste');
     }
   });
 
@@ -153,7 +118,7 @@ function main(): void {
     mnemonic: 0,
     caption: 'Open a new tab',
     execute: () => {
-      console.log('New Tab');
+      logHandler('New Tab');
     }
   });
 
@@ -162,7 +127,7 @@ function main(): void {
     mnemonic: 2,
     caption: 'Close the current tab',
     execute: () => {
-      console.log('Close Tab');
+      logHandler('Close Tab');
     }
   });
 
@@ -171,7 +136,7 @@ function main(): void {
     mnemonic: 0,
     caption: 'Toggle the save on exit flag',
     execute: () => {
-      console.log('Save on Exit');
+      logHandler('Save on Exit');
     }
   });
 
@@ -187,35 +152,35 @@ function main(): void {
     mnemonic: 0,
     icon: 'fa fa-close',
     execute: () => {
-      console.log('Close');
+      logHandler('Close');
     }
   });
 
   commands.addCommand('example:one', {
     label: 'One',
     execute: () => {
-      console.log('One');
+      logHandler('One');
     }
   });
 
   commands.addCommand('example:two', {
     label: 'Two',
     execute: () => {
-      console.log('Two');
+      logHandler('Two');
     }
   });
 
   commands.addCommand('example:three', {
     label: 'Three',
     execute: () => {
-      console.log('Three');
+      logHandler('Three');
     }
   });
 
   commands.addCommand('example:four', {
     label: 'Four',
     execute: () => {
-      console.log('Four');
+      logHandler('Four');
     }
   });
 
@@ -249,6 +214,16 @@ function main(): void {
     command: 'example:open-task-manager'
   });
 
+  let contextArea = new Widget();
+  contextArea.addClass('ContextArea');
+  contextArea.id = 'main';
+  contextArea.node.innerHTML = (
+    '<h2>Notice the menu bar at the top of the document.</h2>' +
+    '<h2>Right click this panel for a context menu.</h2>' +
+    '<h3>Clicked Item: <span id="log-span"></span></h3>'
+  );
+  contextArea.title.label = 'Demo';
+
   let menu1 = createMenu();
   menu1.title.label = 'File';
   menu1.title.mnemonic = 0;
@@ -261,75 +236,24 @@ function main(): void {
   menu3.title.label = 'View';
   menu3.title.mnemonic = 0;
 
-  let ctxt = createMenu();
+  let contextMenu = createMenu();
 
   let bar = new MenuBar({ keymap });
   bar.addMenu(menu1);
   bar.addMenu(menu2);
   bar.addMenu(menu3);
 
-  let palette = new CommandPalette({ commands, keymap });
-  palette.addItem({ command: 'example:cut', category: 'edit' });
-  palette.addItem({ command: 'example:copy', category: 'edit' });
-  palette.addItem({ command: 'example:paste', category: 'edit' });
-  palette.addItem({ command: 'example:one', category: 'number' });
-  palette.addItem({ command: 'example:two', category: 'number' });
-  palette.addItem({ command: 'example:three', category: 'number' });
-  palette.addItem({ command: 'example:four', category: 'number' });
-  palette.addItem({ command: 'example:new-tab' });
-  palette.addItem({ command: 'example:close-tab' });
-  palette.addItem({ command: 'example:save-on-exit' });
-  palette.addItem({ command: 'example:open-task-manager' });
-  palette.addItem({ command: 'example:close' });
-
-  document.addEventListener('contextmenu', (event: MouseEvent) => {
+  contextArea.node.addEventListener('contextmenu', (event: MouseEvent) => {
     event.preventDefault();
-    ctxt.open(event.clientX, event.clientY);
-    console.log('ctxt menu');
+    let x = event.clientX;
+    let y = event.clientY;
+    contextMenu.open(x, y);
   });
-
-  document.addEventListener('keydown', (event: KeyboardEvent) => {
-    if (!event.ctrlKey && !event.shiftKey && !event.metaKey && event.keyCode === 18) {
-      event.preventDefault();
-      event.stopPropagation();
-      bar.activeIndex = 0;
-      bar.activate();
-    } else {
-      keymap.processKeydownEvent(event);
-    }
-  });
-
-  let r1 = new ContentWidget('Red');
-  let b1 = new ContentWidget('Blue');
-  let g1 = new ContentWidget('Green');
-  let y1 = new ContentWidget('Yellow');
-
-  let r2 = new ContentWidget('Red');
-  let b2 = new ContentWidget('Blue');
-  let g2 = new ContentWidget('Green');
-  let y2 = new ContentWidget('Yellow');
-
-  let dock = new DockPanel();
-  dock.addWidget(r1);
-  dock.addWidget(b1, { mode: 'split-right', ref: r1 });
-  dock.addWidget(y1, { mode: 'split-bottom', ref: b1 });
-  dock.addWidget(g1, { mode: 'split-left', ref: y1 });
-  dock.addWidget(r2, { ref: b1 });
-  dock.addWidget(b2, { mode: 'split-right', ref: y1 });
-
-  dock.currentChanged.connect((s, a) => { console.log(a.newValue); });
-
-  BoxPanel.setStretch(dock, 1);
-
-  let main = new BoxPanel({ direction: 'left-to-right', spacing: 0 });
-  main.id = 'main';
-  main.addWidget(palette);
-  main.addWidget(dock);
-
-  window.onresize = () => { main.update(); };
 
   Widget.attach(bar, document.body);
-  Widget.attach(main, document.body);
+  Widget.attach(contextArea, document.body);
+
+  window.onresize = () => { contextArea.update(); };
 }
 
 

@@ -15,7 +15,7 @@ import {
 
 import '../../styles/base.css';
 
-import './index.css';
+import '../index.css';
 
 
 function main(): void {

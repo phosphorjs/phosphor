@@ -8,3 +8,5 @@ example/bundle.js
 example/index.js
 test/build
 test/coverage
+examples/**/bundle.js
+examples/**/index.js
