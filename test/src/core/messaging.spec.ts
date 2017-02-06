@@ -8,8 +8,9 @@
 import expect = require('expect.js');
 
 import {
-  ConflatableMessage, IMessageHandler, Message, MessageHook, clearMessageData,
-  installMessageHook, postMessage, removeMessageHook, sendMessage
+  ConflatableMessage, IMessageHandler, IMessageHook, Message, MessageHook,
+  clearMessageData, installMessageHook, postMessage, removeMessageHook,
+  sendMessage
 } from '../../../lib/core/messaging';
 
 
@@ -42,7 +43,7 @@ class GlobalHandler extends Handler {
 }
 
 
-class LogHook {
+class LogHook implements IMessageHook {
 
   preventTypes: string[] = [];
 
@@ -50,11 +51,11 @@ class LogHook {
 
   handlers: IMessageHandler[] = [];
 
-  hook = (handler: IMessageHandler, msg: Message) => {
+  messageHook(handler: IMessageHandler, msg: Message): boolean {
     this.messages.push(msg.type);
     this.handlers.push(handler);
     return this.preventTypes.indexOf(msg.type) === -1;
-  };
+  }
 }
 
 
@@ -167,7 +168,7 @@ describe('core/messaging', () => {
       it('should be called for every message sent to a handler', () => {
         let handler = new Handler();
         let logHook = new LogHook();
-        installMessageHook(handler, logHook.hook);
+        installMessageHook(handler, logHook);
         sendMessage(handler, new Message('one'));
         sendMessage(handler, new Message('two'));
         sendMessage(handler, new Message('three'));
@@ -184,8 +185,8 @@ describe('core/messaging', () => {
         let handler2 = new Handler();
         let logHook = new LogHook();
         logHook.preventTypes = ['one', 'two'];
-        installMessageHook(handler1, logHook.hook);
-        installMessageHook(handler2, logHook.hook);
+        installMessageHook(handler1, logHook);
+        installMessageHook(handler2, logHook);
         sendMessage(handler1, new Message('one'));
         sendMessage(handler2, new Message('one'));
         sendMessage(handler1, new Message('two'));
@@ -232,8 +233,8 @@ describe('core/messaging', () => {
       let logHook2 = new LogHook();
       logHook1.preventTypes = ['one'];
       logHook2.preventTypes = ['two'];
-      installMessageHook(handler, logHook1.hook);
-      installMessageHook(handler, logHook2.hook);
+      installMessageHook(handler, logHook1);
+      installMessageHook(handler, logHook2);
       sendMessage(handler, new Message('one'));
       sendMessage(handler, new Message('two'));
       sendMessage(handler, new Message('three'));
@@ -250,9 +251,9 @@ describe('core/messaging', () => {
       logHook1.preventTypes = ['one'];
       logHook2.preventTypes = ['one'];
       logHook3.preventTypes = ['one'];
-      installMessageHook(handler, logHook1.hook);
-      installMessageHook(handler, logHook2.hook);
-      installMessageHook(handler, logHook3.hook);
+      installMessageHook(handler, logHook1);
+      installMessageHook(handler, logHook2);
+      installMessageHook(handler, logHook3);
       sendMessage(handler, new Message('one'));
       sendMessage(handler, new Message('two'));
       sendMessage(handler, new Message('three'));
@@ -368,7 +369,7 @@ describe('core/messaging', () => {
       let handler = new Handler();
       let logHook = new LogHook();
       logHook.preventTypes = ['one'];
-      installMessageHook(handler, logHook.hook);
+      installMessageHook(handler, logHook);
       expect(handler.messages).to.eql([]);
       sendMessage(handler, new Message('one'));
       expect(handler.messages).to.eql([]);
@@ -380,9 +381,9 @@ describe('core/messaging', () => {
       let logHook2 = new LogHook();
       logHook1.preventTypes = ['one'];
       logHook2.preventTypes = ['two'];
-      installMessageHook(handler, logHook1.hook);
+      installMessageHook(handler, logHook1);
       sendMessage(handler, new Message('two'));
-      installMessageHook(handler, logHook2.hook);
+      installMessageHook(handler, logHook2);
       sendMessage(handler, new Message('two'));
       sendMessage(handler, new Message('two'));
       sendMessage(handler, new Message('three'));
@@ -396,9 +397,9 @@ describe('core/messaging', () => {
       let handler = new Handler();
       let logHook1 = new LogHook();
       let logHook2 = new LogHook();
-      installMessageHook(handler, logHook1.hook);
-      installMessageHook(handler, logHook2.hook);
-      installMessageHook(handler, logHook1.hook);
+      installMessageHook(handler, logHook1);
+      installMessageHook(handler, logHook2);
+      installMessageHook(handler, logHook1);
       sendMessage(handler, new Message('one'));
       sendMessage(handler, new Message('two'));
       expect(handler.messages).to.eql(['one', 'two']);
@@ -418,12 +419,12 @@ describe('core/messaging', () => {
       logHook2.preventTypes = ['two'];
       sendMessage(handler, new Message('one'));
       sendMessage(handler, new Message('two'));
-      installMessageHook(handler, logHook1.hook);
-      installMessageHook(handler, logHook2.hook);
+      installMessageHook(handler, logHook1);
+      installMessageHook(handler, logHook2);
       sendMessage(handler, new Message('one'));
       sendMessage(handler, new Message('two'));
-      removeMessageHook(handler, logHook2.hook);
-      removeMessageHook(handler, logHook1.hook);
+      removeMessageHook(handler, logHook2);
+      removeMessageHook(handler, logHook1);
       sendMessage(handler, new Message('one'));
       sendMessage(handler, new Message('two'));
       expect(handler.messages).to.eql(['one', 'two', 'one', 'two']);
@@ -436,7 +437,7 @@ describe('core/messaging', () => {
       let logHook = new LogHook();
       logHook.preventTypes = ['one'];
       sendMessage(handler, new Message('one'));
-      removeMessageHook(handler, logHook.hook);
+      removeMessageHook(handler, logHook);
       sendMessage(handler, new Message('one'));
       expect(handler.messages).to.eql(['one', 'one']);
     });
@@ -447,13 +448,13 @@ describe('core/messaging', () => {
       let logHook2 = new LogHook();
       let logHook3 = new LogHook();
       let remHook: MessageHook = (handler: IMessageHandler, msg: Message) => {
-        let result = logHook3.hook(handler, msg);
+        let result = logHook3.messageHook(handler, msg);
         removeMessageHook(handler, remHook);
         return result;
       };
-      installMessageHook(handler, logHook1.hook);
+      installMessageHook(handler, logHook1);
       installMessageHook(handler, remHook);
-      installMessageHook(handler, logHook2.hook);
+      installMessageHook(handler, logHook2);
       sendMessage(handler, new Message('one'));
       sendMessage(handler, new Message('two'));
       sendMessage(handler, new Message('three'));
@@ -471,7 +472,7 @@ describe('core/messaging', () => {
       let h1 = new Handler();
       let h2 = new Handler();
       let logHook = new LogHook();
-      installMessageHook(h1, logHook.hook);
+      installMessageHook(h1, logHook);
       postMessage(h1, new Message('one'));
       postMessage(h2, new Message('one'));
       postMessage(h1, new Message('two'));
