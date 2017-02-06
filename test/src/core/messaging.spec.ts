@@ -50,7 +50,7 @@ class LogHook {
 
   handlers: IMessageHandler[] = [];
 
-  hook: MessageHook = (handler: IMessageHandler, msg: Message) => {
+  hook = (handler: IMessageHandler, msg: Message) => {
     this.messages.push(msg.type);
     this.handlers.push(handler);
     return this.preventTypes.indexOf(msg.type) === -1;
