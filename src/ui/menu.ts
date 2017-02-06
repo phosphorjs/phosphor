@@ -1653,7 +1653,7 @@ namespace Private {
     Widget.attach(menu, document.body);
 
     // Expand the menu width by the scrollbar size, if present.
-    if (node.scrollHeight > maxHeight) {
+    if (node.scrollHeight >= maxHeight) {
       style.width = `${2 * node.offsetWidth - node.clientWidth}px`;
     }
 
