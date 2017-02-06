@@ -65,6 +65,7 @@ class FocusTracker<T extends Widget> implements IDisposable {
     // Remove all event listeners.
     each(this._widgets, widget => {
       widget.node.removeEventListener('focus', this, true);
+      widget.node.removeEventListener('blur', this, true);
     });
 
     // Clear the internal data structures.
@@ -94,18 +95,16 @@ class FocusTracker<T extends Widget> implements IDisposable {
    *
    * #### Notes
    * The current widget is the widget among the tracked widgets which
-   * has the *descendant node* which has most recently been focused.
+   * has the *descendant node* which is currently focused.
    *
-   * The current widget will not be updated if the node loses focus. It
-   * will only be updated when a different tracked widget gains focus.
+   * If the current widget loses focus, the current widget will be
+   * set to `null` unless the `relatedTarget` of the blur event
+   * is also contained in the focus tracker.
+   *
+   * A widget can only become the current widget when its node is focused.
    *
    * If the current widget is removed from the tracker, the previous
    * current widget will be restored.
-   *
-   * This behavior is intended to follow a user's conceptual model of
-   * a semantically "active" widget, where the "last thing of type X"
-   * to be interacted with is the "active instance of X", regardless
-   * of whether that instance still has focus.
    *
    * This will be `null` if there is no current widget.
    *
@@ -192,10 +191,11 @@ class FocusTracker<T extends Widget> implements IDisposable {
     this._widgets.pushBack(widget);
     this._nodes.set(widget.node, widget);
 
-    // Setup the focus event listener. The capturing phase must
-    // be used since the 'focus' event doesn't bubble and since
-    // firefox doesn't support the 'focusin' event.
+    // Setup the focus and blur event listeners. The capturing phase must
+    // be used since 'focus' and 'blur' events don't bubble and since
+    // firefox doesn't support the 'focusin' and 'focusout' events.
     widget.node.addEventListener('focus', this, true);
+    widget.node.addEventListener('blur', this, true);
 
     // Connect the disposed signal handler.
     widget.disposed.connect(this._onWidgetDisposed, this);
@@ -225,8 +225,9 @@ class FocusTracker<T extends Widget> implements IDisposable {
     // Disconnect the disposed signal handler.
     widget.disposed.disconnect(this._onWidgetDisposed, this);
 
-    // Remove the focus event listener.
+    // Remove the focus and blur event listeners.
     widget.node.removeEventListener('focus', this, true);
+    widget.node.removeEventListener('blur', this, true);
 
     // Remove the widget from the internal data structures.
     this._widgets.remove(widget);
@@ -263,8 +264,15 @@ class FocusTracker<T extends Widget> implements IDisposable {
    * not be called directly by user code.
    */
   handleEvent(event: Event): void {
-    if (event.type === 'focus') {
-      this._evtFocus(event);
+    switch (event.type) {
+    case 'focus':
+      this._evtFocus(event as FocusEvent);
+      break;
+    case 'blur':
+      this._evtBlur(event as FocusEvent);
+      break;
+    default:
+      break;
     }
   }
 
@@ -288,7 +296,7 @@ class FocusTracker<T extends Widget> implements IDisposable {
   /**
    * Handle the `'focus'` event for a tracked widget.
    */
-  private _evtFocus(event: Event): void {
+  private _evtFocus(event: FocusEvent): void {
     // Find the widget which gained focus.
     let widget = this._nodes.get(event.currentTarget as HTMLElement);
 
@@ -297,6 +305,19 @@ class FocusTracker<T extends Widget> implements IDisposable {
 
     // Update the current widget.
     this._setCurrentWidget(widget);
+  }
+
+  /**
+   * Handle the `'blur'` event for a tracked widget.
+   */
+  private _evtBlur(event: FocusEvent): void {
+    // Find the widget which will be gaining focus.
+    let widget = this._nodes.get(event.relatedTarget as HTMLElement);
+
+    // If no tracked widget is gaining focus, clear the current widget.
+    if (!widget) {
+      this._setCurrentWidget(null);
+    }
   }
 
   /**

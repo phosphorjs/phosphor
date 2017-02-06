@@ -8,7 +8,7 @@
 import expect = require('expect.js');
 
 import {
-  simulate
+  generate, simulate
 } from 'simulate-event';
 
 import {
@@ -306,6 +306,40 @@ describe('ui/focustracker', () => {
           widget.node.blur();
           simulate(widget.node, 'focus');
           expect(called).to.be(false);
+        });
+
+      });
+
+      context('blur', () => {
+
+        it('should set the current widget to null', () => {
+          let tracker = new FocusTracker();
+          let widget = createWidget();
+          widget.node.focus();
+          tracker.add(widget);
+          simulate(widget.node, 'blur');
+          expect(tracker.currentWidget).to.be(null);
+        });
+
+        it('should set the current widget to the other widget', () => {
+          let tracker = new FocusTracker();
+          let called = 0;
+          let widget0 = createWidget();
+          let widget1 = createWidget();
+          widget0.node.focus();
+          tracker.add(widget0);
+          tracker.add(widget1);
+          tracker.currentChanged.connect((sender, args) => {
+            called++;
+          });
+          let evt = generate('blur');
+          (evt as any).relatedTarget = widget1.node;
+          widget0.node.dispatchEvent(evt);
+          expect(called).to.be(0);
+          expect(tracker.currentWidget).to.be(widget0);
+          simulate(widget1.node, 'focus');
+          expect(called).to.be(1);
+          expect(tracker.currentWidget).to.be(widget1);
         });
 
       });
