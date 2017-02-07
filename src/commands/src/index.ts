@@ -512,8 +512,7 @@ class CommandRegistry {
     if (this.isEnabled(command, args)) {
       this.execute(command, args);
     } else {
-      let parts = binding.keys.map(CommandRegistry.formatKeystroke);
-      console.log(`Command '${command}' is disabled (${parts.join(' ')}).`);
+      console.log(`Command '${command}' is disabled.`);
     }
   }
 
@@ -983,48 +982,6 @@ namespace CommandRegistry {
     }
     if (parts.cmd && IS_MAC) {
       mods += 'Cmd ';
-    }
-    return mods + parts.key;
-  }
-
-  /**
-   * Format a keystroke for display on the local system.
-   *
-   * @param keystroke - The keystroke of interest.
-   *
-   * @returns The keystroke formatted for display on the local system.
-   *
-   * #### Notes
-   * On Mac, this replaces the modifiers with the Mac-specific unicode
-   * characters. On other systems, this joins the modifiers with `+`.
-   */
-  export
-  function formatKeystroke(keystroke: string): string {
-    let mods = '';
-    let parts = parseKeystroke(keystroke);
-    if (IS_MAC) {
-      if (parts.ctrl) {
-        mods += '\u2303 ';
-      }
-      if (parts.alt) {
-        mods += '\u2325 ';
-      }
-      if (parts.shift) {
-        mods += '\u21E7 ';
-      }
-      if (parts.cmd) {
-        mods += '\u2318 ';
-      }
-    } else {
-      if (parts.ctrl) {
-        mods += 'Ctrl+';
-      }
-      if (parts.alt) {
-        mods += 'Alt+';
-      }
-      if (parts.shift) {
-        mods += 'Shift+';
-      }
     }
     return mods + parts.key;
   }
