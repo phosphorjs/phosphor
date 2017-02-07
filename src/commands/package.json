@@ -14,8 +14,11 @@
     "lib/*.js"
   ],
   "dependencies": {
+    "@phosphor/algorithm": "^1.0.0",
     "@phosphor/disposable": "^1.0.0",
     "@phosphor/json": "^1.0.0",
+    "@phosphor/platform": "^1.0.0",
+    "@phosphor/selector": "^1.0.0",
     "@phosphor/signaling": "^1.0.0"
   },
   "directories": {
