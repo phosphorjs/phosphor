@@ -10,8 +10,8 @@ import {
 } from '@phosphor/algorithm';
 
 import {
-  Keymap
-} from '@phosphor/keymap';
+  getKeyboardLayout
+} from '@phosphor/keyboard';
 
 import {
   Message, MessageLoop
@@ -52,7 +52,6 @@ class MenuBar extends Widget {
     super({ node: Private.createNode() });
     this.addClass(MenuBar.MENU_BAR_CLASS);
     this.setFlag(Widget.Flag.DisallowLayout);
-    this.keymap = options.keymap || null;
     this.renderer = options.renderer || MenuBar.defaultRenderer;
   }
 
@@ -64,11 +63,6 @@ class MenuBar extends Widget {
     this._menus.length = 0;
     super.dispose();
   }
-
-  /**
-   * The keymap used by the menu bar.
-   */
-  readonly keymap: Keymap | null;
 
   /**
    * The renderer used by the menu bar.
@@ -440,15 +434,10 @@ class MenuBar extends Widget {
       return;
     }
 
-    // If there is no keymap, mnemonics cannot be handled.
-    if (!this.keymap) {
-      return;
-    }
+    // Get the pressed key character.
+    let key = getKeyboardLayout().keyForKeydownEvent(event);
 
-    // Get the pressed key character for the current layout.
-    let key = this.keymap.layout.keyForKeydownEvent(event);
-
-    // Bail if the key is not valid for the current layout.
+    // Bail if the key is not valid.
     if (!key) {
       return;
     }
@@ -719,14 +708,6 @@ namespace MenuBar {
    */
   export
   interface IOptions {
-    /**
-     * The keymap for use with the menu bar.
-     *
-     * If a keymap is not provided, the menu bar will be unable to
-     * support navigation via keyboard mnemonic.
-     */
-    keymap?: Keymap;
-
     /**
      * A custom renderer for creating menu bar content.
      *

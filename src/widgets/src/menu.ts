@@ -18,12 +18,16 @@ import {
 } from '@phosphor/json';
 
 import {
-  Keymap
-} from '@phosphor/keymap';
+  getKeyboardLayout
+} from '@phosphor/keyboard';
 
 import {
   Message, MessageLoop
 } from '@phosphor/messaging';
+
+import {
+  IS_MAC
+} from '@phosphor/platform';
 
 import {
   ISignal, Signal
@@ -57,9 +61,7 @@ class Menu extends Widget {
     this.addClass(Menu.MENU_CLASS);
     this.setFlag(Widget.Flag.DisallowLayout);
     this.commands = options.commands;
-    this.keymap = options.keymap || null;
     this.renderer = options.renderer || Menu.defaultRenderer;
-    Private.sanityCheckCommands(this);
   }
 
   /**
@@ -105,11 +107,6 @@ class Menu extends Widget {
    * The command registry used by the menu.
    */
   readonly commands: CommandRegistry;
-
-  /**
-   * The keymap used by the menu.
-   */
-  readonly keymap: Keymap | null;
 
   /**
    * The renderer used by the menu.
@@ -647,15 +644,10 @@ class Menu extends Widget {
       return;
     }
 
-    // If there is no keymap, mnemonics cannot be handled.
-    if (!this.keymap) {
-      return;
-    }
+    // Get the pressed key character.
+    let key = getKeyboardLayout().keyForKeydownEvent(event);
 
-    // Get the pressed key character for the current layout.
-    let key = this.keymap.layout.keyForKeydownEvent(event);
-
-    // Bail if the key is not valid for the current layout.
+    // Bail if the key is not valid.
     if (!key) {
       return;
     }
@@ -947,17 +939,6 @@ namespace Menu {
     commands: CommandRegistry;
 
     /**
-     * The keymap for use with the menu.
-     *
-     * If a keymap is provided, its `commands` registry must be the
-     * same as the `commands` option.
-     *
-     * If a keymap is not provided, the menu will be unable to render
-     * keyboard shortcuts or support navigation via keyboard mnemonic.
-     */
-    keymap?: Keymap;
-
-    /**
      * A custom renderer for use with the menu.
      *
      * The default is a shared renderer instance.
@@ -1102,7 +1083,7 @@ namespace Menu {
     /**
      * The key binding for the menu item.
      */
-    readonly keyBinding: Keymap.IBinding | null;
+    readonly keyBinding: CommandRegistry.IKeyBinding | null;
   }
 
   /**
@@ -1333,7 +1314,7 @@ namespace Menu {
      */
     formatShortcut(data: IRenderData): h.Child {
       let kb = data.item.keyBinding;
-      return kb ? kb.keys.map(Keymap.formatKeystroke).join(' ') : null;
+      return kb ? kb.keys.map(Private.formatKeystroke).join(', ') : null;
     }
   }
 
@@ -1476,7 +1457,41 @@ namespace Private {
    */
   export
   function createItem(owner: Menu, options: Menu.IItemOptions): Menu.IItem {
-    return new MenuItem(owner.commands, owner.keymap, options);
+    return new MenuItem(owner.commands, options);
+  }
+
+  /**
+   * Format a keystroke for display on the local system.
+   */
+  export
+  function formatKeystroke(keystroke: string): string {
+    let mods = '';
+    let parts = CommandRegistry.parseKeystroke(keystroke);
+    if (IS_MAC) {
+      if (parts.ctrl) {
+        mods += '\u2303 ';
+      }
+      if (parts.alt) {
+        mods += '\u2325 ';
+      }
+      if (parts.shift) {
+        mods += '\u21E7 ';
+      }
+      if (parts.cmd) {
+        mods += '\u2318 ';
+      }
+    } else {
+      if (parts.ctrl) {
+        mods += 'Ctrl+';
+      }
+      if (parts.alt) {
+        mods += 'Alt+';
+      }
+      if (parts.shift) {
+        mods += 'Shift+';
+      }
+    }
+    return mods + parts.key;
   }
 
   /**
@@ -1490,19 +1505,6 @@ namespace Private {
       }
     }
     return false;
-  }
-
-  /**
-   * Ensure that the menu commands and keymap commands match.
-   *
-   * This throws an error if the objects are incompatible.
-   */
-  export
-  function sanityCheckCommands(menu: Menu): void {
-    if (!menu.keymap || menu.commands === menu.keymap.commands) {
-      return;
-    }
-    throw new Error('`menu.commands` !== `menu.keymap.commands`');
   }
 
   /**
@@ -1780,9 +1782,8 @@ namespace Private {
     /**
      * Construct a new menu item.
      */
-    constructor(commands: CommandRegistry, keymap: Keymap | null, options: Menu.IItemOptions) {
+    constructor(commands: CommandRegistry, options: Menu.IItemOptions) {
       this._commands = commands;
-      this._keymap = keymap;
       this.type = options.type || 'command';
       this.command = options.command || '';
       this.args = options.args || null;
@@ -1913,14 +1914,13 @@ namespace Private {
     /**
      * The key binding for the menu item.
      */
-    get keyBinding(): Keymap.IBinding | null {
-      if (this._keymap && this.type === 'command') {
-        return this._keymap.findBinding(this.command, this.args) || null;
+    get keyBinding(): CommandRegistry.IKeyBinding | null {
+      if (this.type === 'command') {
+        return this._commands.findKeyBinding(this.command, this.args) || null;
       }
       return null;
     }
 
     private _commands: CommandRegistry;
-    private _keymap: Keymap | null;
   }
 }
