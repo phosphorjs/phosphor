@@ -52,6 +52,35 @@ interface IKeyboardLayout {
 
 
 /**
+ * Get the global application keyboard layout instance.
+ *
+ * @returns The keyboard layout for use by the application.
+ *
+ * #### Notes
+ * The default keyboard layout is US-English.
+ */
+export
+function getKeyboardLayout(): IKeyboardLayout {
+  return Private.keyboardLayout;
+}
+
+
+/**
+ * Set the global application keyboard layout instance.
+ *
+ * @param - The keyboard layout for use by the application.
+ *
+ * #### Notes
+ * The keyboard layout should typically be set on application startup
+ * to a layout which is appropriate for the user's system.
+ */
+export
+function setKeyboardLayout(layout: IKeyboardLayout): void {
+  Private.keyboardLayout = layout;
+}
+
+
+/**
  * A concrete implementation of [[IKeyboardLayout]] based on keycodes.
  *
  * The `keyCode` property of a `'keydown'` event is a browser and OS
@@ -272,3 +301,15 @@ const EN_US: IKeyboardLayout = new KeycodeLayout('en-us', {
   221: ']',
   222: '\''
 });
+
+
+/**
+ * The namespace for the private module data.
+ */
+namespace Private {
+  /**
+   * The global keyboard layout instance.
+   */
+  export
+  let keyboardLayout = EN_US;
+}
