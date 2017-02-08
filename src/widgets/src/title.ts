@@ -46,11 +46,7 @@ class Title<T> {
       this._closable = options.closable;
     }
     if (options.dataset !== undefined) {
-      for (let key in options.dataset) {
-        if (options.dataset[key]) {
-          this._dataset[key] = options.dataset[key];
-        }
-      }
+      Private.updateData(this._dataset, options.dataset);
     }
   }
 
@@ -214,7 +210,7 @@ class Title<T> {
    * data needed to render the title for an object.
    */
   getData(key: string): string {
-    return this._dataset[key] || '';
+    return Private.getData(this._dataset, key);
   }
 
   /**
@@ -230,15 +226,9 @@ class Title<T> {
    * data needed to render the title for an object.
    */
   setData(key: string, value: string): void {
-    if (value === (this._dataset[key] || '')) {
-      return;
+    if (Private.setData(this._dataset, key, value)) {
+      this._changed.emit(undefined);
     }
-    if (value) {
-      this._dataset[key] = value;
-    } else {
-      delete this._dataset[key];
-    }
-    this._changed.emit(undefined);
   }
 
   /**
@@ -251,20 +241,8 @@ class Title<T> {
    * properties on the title are insufficient to contain all of the
    * data needed to render the title for an object.
    */
-  updateData(values: { [key: string]: string }): void {
-    let changed = false;
-    for (let key in values) {
-      if (values[key] === (this._dataset[key] || '')) {
-        continue;
-      }
-      if (values[key]) {
-        this._dataset[key] = values[key];
-      } else {
-        delete this._dataset[key];
-      }
-      changed = true;
-    }
-    if (changed) {
+  updateData(values: Title.Dataset): void {
+    if (Private.updateData(this._dataset, values)) {
       this._changed.emit(undefined);
     }
   }
@@ -276,7 +254,7 @@ class Title<T> {
   private _className = '';
   private _closable = false;
   private _changed = new Signal<this, void>(this);
-  private _dataset: { [key: string]: string } = Object.create(null);
+  private _dataset: Title.Dataset = Object.create(null);
 }
 
 
@@ -285,6 +263,12 @@ class Title<T> {
  */
 export
 namespace Title {
+  /**
+   * A type alias for a simple string dataset.
+   */
+  export
+  type Dataset = { [key: string]: string };
+
   /**
    * An options object for initializing a title.
    */
@@ -328,6 +312,62 @@ namespace Title {
     /**
      * The initial dataset for the title.
      */
-    dataset?: { [key: string]: string };
+    dataset?: Dataset;
+  }
+}
+
+
+/**
+ * The namespace for the module private data.
+ */
+namespace Private {
+  /**
+   * Get the value for a dataset key.
+   *
+   * Returns an empty string if the key does not exist.
+   */
+  export
+  function getData(dataset: Title.Dataset, key: string): string {
+    return dataset[key] || '';
+  }
+
+  /**
+   * Set the value for a dataset key.
+   *
+   * Returns whether the value was changed.
+   */
+  export
+  function setData(dataset: Title.Dataset, key: string, value: string): boolean {
+    if (value === (dataset[key] || '')) {
+      return false;
+    }
+    if (value) {
+      dataset[key] = value;
+    } else {
+      delete dataset[key];
+    }
+    return true;
+  }
+
+  /**
+   * Update the values for a dataset.
+   *
+   * Returns whether any value was changed.
+   */
+  export
+  function updateData(dataset: Title.Dataset, values: Title.Dataset): boolean {
+    let changed = false;
+    for (let key in values) {
+      if (values[key] === (dataset[key] || '')) {
+        continue;
+      }
+      if (values[key]) {
+        dataset[key] = values[key];
+      } else {
+        delete dataset[key];
+      }
+      changed = true;
+    }
+    return changed;
   }
 }
