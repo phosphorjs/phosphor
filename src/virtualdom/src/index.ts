@@ -1087,35 +1087,33 @@ namespace Private {
         continue;
       }
 
-      // If the new node is text node, the old node is now known
-      // to be an element node, so create and insert a new node.
-      if (newVNode.type === 'text') {
+      // If the old or new node is a text node, the other node is now
+      // known to be an element node, so create and insert a new node.
+      if (oldVNode.type === 'text' || newVNode.type === 'text') {
         ArrayExt.insert(oldCopy, i, newVNode);
         host.insertBefore(createDOMNode(newVNode), currElem);
         continue;
       }
 
       // At this point, both nodes are known to be element nodes.
-      let oldElemNode = oldVNode as VirtualElement;
-      let newElemNode = newVNode as VirtualElement;
 
       // If the new elem is keyed, move an old keyed elem to the proper
       // location before proceeding with the diff. The search can start
       // at the current index, since the unmatched old keyed elems are
       // pushed forward in the old copy array.
-      let newKey = newElemNode.attrs.key;
+      let newKey = newVNode.attrs.key;
       if (newKey && newKey in oldKeyed) {
         let pair = oldKeyed[newKey];
-        if (pair.vNode !== oldElemNode) {
+        if (pair.vNode !== oldVNode) {
           ArrayExt.move(oldCopy, oldCopy.indexOf(pair.vNode, i + 1), i);
           host.insertBefore(pair.element, currElem);
-          oldElemNode = pair.vNode;
+          oldVNode = pair.vNode;
           currElem = pair.element;
         }
       }
 
       // If both elements are identical, there is nothing to do.
-      if (oldElemNode === newElemNode) {
+      if (oldVNode === newVNode) {
         currElem = currElem!.nextSibling;
         continue;
       }
@@ -1123,7 +1121,7 @@ namespace Private {
       // If the old elem is keyed and does not match the new elem key,
       // create a new node. This is necessary since the old keyed elem
       // may be matched at a later point in the diff.
-      let oldKey = oldElemNode.attrs.key;
+      let oldKey = oldVNode.attrs.key;
       if (oldKey && oldKey !== newKey) {
         ArrayExt.insert(oldCopy, i, newVNode);
         host.insertBefore(createDOMNode(newVNode), currElem);
@@ -1131,19 +1129,19 @@ namespace Private {
       }
 
       // If the tags are different, create a new node.
-      if (oldElemNode.tag !== newElemNode.tag) {
-        ArrayExt.insert(oldCopy, i, newElemNode);
-        host.insertBefore(createDOMNode(newElemNode), currElem);
+      if (oldVNode.tag !== newVNode.tag) {
+        ArrayExt.insert(oldCopy, i, newVNode);
+        host.insertBefore(createDOMNode(newVNode), currElem);
         continue;
       }
 
       // At this point, the element can be updated in-place.
 
       // Update the element attributes.
-      updateAttrs(currElem as HTMLElement, oldElemNode.attrs, newElemNode.attrs);
+      updateAttrs(currElem as HTMLElement, oldVNode.attrs, newVNode.attrs);
 
       // Update the element content.
-      updateContent(currElem as HTMLElement, oldElemNode.children, newElemNode.children);
+      updateContent(currElem as HTMLElement, oldVNode.children, newVNode.children);
 
       // Step to the next sibling element.
       currElem = currElem!.nextSibling;
