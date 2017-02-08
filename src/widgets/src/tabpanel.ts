@@ -11,7 +11,7 @@ import {
 
 import {
   BoxLayout
-} from './boxpanel';
+} from './boxlayout';
 
 import {
   StackedPanel
