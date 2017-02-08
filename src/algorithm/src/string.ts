@@ -84,31 +84,33 @@ namespace StringExt {
    * @param indices - The indices of the matched characters. They must
    *   appear in increasing order and must be in bounds of the source.
    *
-   * @param prefix - The text to insert before a matched chunk of
-   *   characters. The default value is `'<mark>'`.
+   * @param fn - The function to apply to matched chunks.
    *
-   * @param prefix - The text to insert after a matched chunk of
-   *   characters. The default value is `'</mark>'`.
-   *
-   * @returns A string interpolated with the given tags.
+   * @returns An array of unmatched and highlighted chunks.
    */
   export
-  function highlight(source: string, indices: number[], prefix = '<mark>', suffix = '</mark>'): string {
+  function highlight<T>(source: string, indices: ReadonlyArray<number>, fn: (chunk: string) => T): Array<string | T> {
     let k = 0;
     let last = 0;
-    let result = '';
     let n = indices.length;
+    let result: Array<string |T> = [];
     while (k < n) {
       let i = indices[k];
       let j = indices[k];
       while (++k < n && indices[k] === j + 1) {
         j++;
       }
-      let head = source.slice(last, i);
-      let chunk = source.slice(i, j + 1);
-      result += `${head}${prefix}${chunk}${suffix}`;
+      if (last < i) {
+        result.push(source.slice(last, i));
+      }
+      if (i < j + 1) {
+        result.push(fn(source.slice(i, j + 1)));
+      }
       last = j + 1;
     }
-    return result + source.slice(last);
+    if (last < source.length) {
+      result.push(source.slice(last));
+    }
+    return result;
   }
 }
