@@ -287,7 +287,9 @@ class CommandPalette extends Widget {
     for (let i = 0, n = results.length; i < n; ++i) {
       let result = results[i];
       if (result.type === 'header') {
-        content[i] = renderer.renderHeader({ label: result.label });
+        let label = result.label;
+        let indices = result.indices;
+        content[i] = renderer.renderHeader({ label, indices });
       } else {
         let item = result.item;
         let indices = result.indices;
@@ -420,8 +422,17 @@ class CommandPalette extends Widget {
       return;
     }
 
-    // Bail if the part is not an enabled item.
-    if (part.type !== 'item' || !part.item.isEnabled) {
+    // Update the search text if the item is a header.
+    if (part.type === 'header') {
+      let input = this.inputNode;
+      input.value = `${part.label.toLowerCase()} `;
+      input.focus();
+      this._refresh();
+      return;
+    }
+
+    // Bail if item is not enabled.
+    if (!part.item.isEnabled) {
       return;
     }
 
@@ -614,6 +625,11 @@ namespace CommandPalette {
      * The label for the header.
      */
     readonly label: string;
+
+    /**
+     * The indices of the matched characters in the header label.
+     */
+    readonly indices: ReadonlyArray<number> | null;
   }
 
   /**
@@ -819,7 +835,10 @@ namespace CommandPalette {
      * @returns The content to add to the label node.
      */
     formatHeaderLabel(data: IHeaderRenderData): h.Child {
-      return data.label;
+      if (!data.indices || data.indices.length === 0) {
+        return data.label;
+      }
+      return this.highlight(data.label, data.indices, h.mark);
     }
 
     /**
@@ -1076,6 +1095,11 @@ namespace Private {
      * The category label for the header.
      */
     readonly label: string;
+
+    /**
+     * The indices of the matched label characters.
+     */
+    readonly indices: ReadonlyArray<number> | null;
   }
 
   /**
@@ -1145,8 +1169,8 @@ namespace Private {
   /**
    * Normalize the source text for a fuzzy search.
    */
-  function normalizeSource(text: string): string {
-    return text.toLowerCase();
+  function normalizeSource(item: CommandPalette.IItem): string {
+    return `${item.category}${item.label}`.toLowerCase();
   }
 
   /**
@@ -1194,7 +1218,7 @@ namespace Private {
       }
 
       // Create the source text to be searched.
-      let source = normalizeSource(item.label);
+      let source = normalizeSource(item);
 
       // Run the fuzzy search for the source and query.
       let match = StringExt.fuzzySearch(source, query);
@@ -1245,11 +1269,26 @@ namespace Private {
         continue;
       }
 
-      // Extract the category for the current score.
-      let category = scores[i].item.category;
+      // Extract the current item and indices.
+      let { item, indices } = scores[i];
+
+      // Extract the category for the current item.
+      let category = item.category;
+
+      // Setup the pivot index for finding the slice index.
+      let pivot = category.length;
+
+      // Setup the slice index.
+      let sliceIndex = 0;
+
+      // Update the header indices if there is a text match.
+      if (indices) {
+        sliceIndex = ArrayExt.lowerBound(indices, pivot, numberCmp);
+        indices = indices.slice(0, sliceIndex);
+      }
 
       // Add the header result for the category.
-      results.push({ type: 'header', label: category });
+      results.push({ type: 'header', label: category, indices });
 
       // Find the rest of the scores with the same category.
       for (let j = i; j < n; ++j) {
@@ -1266,6 +1305,14 @@ namespace Private {
           continue;
         }
 
+        // Update and offset the indices if there is a text match.
+        if (indices) {
+          indices = indices.slice(sliceIndex);
+          for (let p = 0, q = indices.length; p < q; ++p) {
+            indices[p] -= pivot;
+          }
+        }
+
         // Create the item result for the score.
         results.push({ type: 'item', item, indices });
 
@@ -1276,6 +1323,13 @@ namespace Private {
 
     // Return the final results.
     return results;
+  }
+
+  /**
+   * A number comparison function.
+   */
+  function numberCmp(a: number, b: number): number {
+    return a - b;
   }
 
   /**
