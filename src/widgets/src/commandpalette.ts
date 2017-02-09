@@ -811,7 +811,7 @@ namespace CommandPalette {
      * @returns The full class name for the command palette item.
      */
     createItemClass(data: IItemRenderData): string {
-      // Setup the initial class name.
+      // Set up the initial class name.
       let name = Renderer.ITEM_CLASS;
 
       // Add the boolean state classes.
@@ -921,17 +921,17 @@ namespace CommandPalette {
      * @returns An array of unmatched and highlighted chunks.
      */
     highlight<T>(source: string, indices: ReadonlyArray<number>, fn: (chunk: string) => T): Array<string | T> {
-      // Setup the result array.
+      // Set up the result array.
       let result: Array<string |T> = [];
 
-      // Setup the counter variables.
+      // Set up the counter variables.
       let k = 0;
       let last = 0;
       let n = indices.length;
 
       // Iterator over each index.
       while (k < n) {
-        // Setup the chunk indices.
+        // Set up the chunk indices.
         let i = indices[k];
         let j = indices[k];
 
@@ -1286,11 +1286,11 @@ namespace Private {
    * Create the results from an array of sorted scores.
    */
   function createResults(scores: IScore[]): SearchResult[] {
-    // Setup an array to track which scores have been visited.
+    // Set up an array to track which scores have been visited.
     let visited = new Array(scores.length);
     ArrayExt.fill(visited, false);
 
-    // Setup the search results array.
+    // Set up the search results array.
     let results: SearchResult[] = [];
 
     // Iterate over each score in the array.
@@ -1306,10 +1306,10 @@ namespace Private {
       // Extract the category for the current item.
       let category = item.category;
 
-      // Setup the pivot index for finding the slice index.
+      // Set up the pivot index for finding the slice index.
       let pivot = category.length;
 
-      // Setup the slice index.
+      // Set up the slice index.
       let sliceIndex = 0;
 
       // Update the header indices if there is a text match.
