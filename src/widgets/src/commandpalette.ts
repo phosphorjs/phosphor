@@ -935,7 +935,7 @@ namespace CommandPalette {
         let i = indices[k];
         let j = indices[k];
 
-        // Advance the right chunk index until its non-contiguous.
+        // Advance the right chunk index until it's non-contiguous.
         while (++k < n && indices[k] === j + 1) {
           j++;
         }
@@ -982,25 +982,25 @@ namespace CommandPalette {
     const ITEM_CLASS = 'p-CommandPalette-item';
 
     /**
-     * The class name added to a the empty message node.
+     * The class name added to an empty message node.
      */
     export
     const EMPTY_MESSAGE_CLASS = 'p-CommandPalette-emptyMessage';
 
     /**
-     * The class name added to a item label node.
+     * The class name added to an item label node.
      */
     export
     const LABEL_CLASS = 'p-CommandPalette-itemLabel';
 
     /**
-     * The class name added to a item shortcut node.
+     * The class name added to an item shortcut node.
      */
     export
     const SHORTCUT_CLASS = 'p-CommandPalette-itemShortcut';
 
     /**
-     * The class name added to a item caption node.
+     * The class name added to an item caption node.
      */
     export
     const CAPTION_CLASS = 'p-CommandPalette-itemCaption';
