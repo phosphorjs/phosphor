@@ -3,10 +3,18 @@
     "declaration": false,
     "noImplicitAny": true,
     "noEmitOnError": true,
+    "noUnusedLocals": true,
+    "strictNullChecks": true,
     "module": "commonjs",
     "moduleResolution": "node",
     "target": "ES5",
-    "lib": ["dom", "es5", "es2015.collection", "es2015.promise"],
-    "types": []
-  }
+    "outDir": ".",
+    "lib": ["ES5", "ES2015.Promise", "DOM"],
+    "types": [],
+    "baseUrl": "..",
+    "paths": {
+      "@phosphor/*": ["src/*"]
+    }
+  },
+  "files": ["index.ts"]
 }
