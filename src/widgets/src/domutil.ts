@@ -185,7 +185,7 @@ namespace DOMUtil {
    * the nearest edges of the area and element are aligned.
    */
   export
-  function scrollIntoViewIfNeeded(area: HTMLElement, element: HTMLElement): void {
+  function scrollIntoViewIfNeeded(area: Element, element: Element): void {
     let ar = area.getBoundingClientRect();
     let er = element.getBoundingClientRect();
     if (er.top <= ar.top && er.bottom >= ar.bottom) {
