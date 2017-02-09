@@ -75,42 +75,4 @@ namespace StringExt {
       indices: number[];
     }
   }
-
-  /**
-   * Highlight the matched characters of a source string.
-   *
-   * @param source - The text which should be highlighted.
-   *
-   * @param indices - The indices of the matched characters. They must
-   *   appear in increasing order and must be in bounds of the source.
-   *
-   * @param fn - The function to apply to matched chunks.
-   *
-   * @returns An array of unmatched and highlighted chunks.
-   */
-  export
-  function highlight<T>(source: string, indices: ReadonlyArray<number>, fn: (chunk: string) => T): Array<string | T> {
-    let k = 0;
-    let last = 0;
-    let n = indices.length;
-    let result: Array<string |T> = [];
-    while (k < n) {
-      let i = indices[k];
-      let j = indices[k];
-      while (++k < n && indices[k] === j + 1) {
-        j++;
-      }
-      if (last < i) {
-        result.push(source.slice(last, i));
-      }
-      if (i < j + 1) {
-        result.push(fn(source.slice(i, j + 1)));
-      }
-      last = j + 1;
-    }
-    if (last < source.length) {
-      result.push(source.slice(last));
-    }
-    return result;
-  }
 }
