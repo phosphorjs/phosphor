@@ -414,8 +414,8 @@ class CommandPalette extends Widget {
       return;
     }
 
-    // Bail if the active index is out of range.
-    let part = this._results[this._activeIndex];
+    // Bail if the index is out of range.
+    let part = this._results[index];
     if (!part) {
       return;
     }
