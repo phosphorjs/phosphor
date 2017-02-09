@@ -239,7 +239,7 @@ class Menu extends Widget {
   activateNextItem(): void {
     let n = this._items.length;
     let ai = this._activeIndex;
-    let start = ai < n - 1 ? n + 1 : 0;
+    let start = ai < n - 1 ? ai + 1 : 0;
     let stop = start === 0 ? n - 1 : start - 1;
     this.activeIndex = ArrayExt.findFirstIndex(
       this._items, Private.canActivate, start, stop
