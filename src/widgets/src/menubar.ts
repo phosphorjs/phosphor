@@ -384,10 +384,11 @@ class MenuBar extends Widget {
   protected onUpdateRequest(msg: Message): void {
     let menus = this._menus;
     let renderer = this.renderer;
+    let activeIndex = this._activeIndex;
     let content = new Array<VirtualElement>(menus.length);
     for (let i = 0, n = menus.length; i < n; ++i) {
       let title = menus[i].title;
-      let active = i === this._activeIndex;
+      let active = i === activeIndex;
       content[i] = renderer.renderItem({ title, active });
     }
     VirtualDOM.render(content, this.contentNode);
