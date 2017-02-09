@@ -207,6 +207,10 @@ class CommandPalette extends Widget {
     case 'input':
       this._refresh();
       break;
+    case 'focus':
+    case 'blur':
+      this._toggleFocused();
+      break;
     }
   }
 
@@ -217,6 +221,8 @@ class CommandPalette extends Widget {
     this.node.addEventListener('click', this);
     this.node.addEventListener('keydown', this);
     this.node.addEventListener('input', this);
+    this.node.addEventListener('focus', this, true);
+    this.node.addEventListener('blur', this, true);
   }
 
   /**
@@ -226,6 +232,8 @@ class CommandPalette extends Widget {
     this.node.removeEventListener('click', this);
     this.node.removeEventListener('keydown', this);
     this.node.removeEventListener('input', this);
+    this.node.removeEventListener('focus', this, true);
+    this.node.removeEventListener('blur', this, true);
   }
 
   /**
@@ -428,6 +436,14 @@ class CommandPalette extends Widget {
   }
 
   /**
+   * Toggle the focused modifier based on the input node focus state.
+   */
+  private _toggleFocused(): void {
+    let focused = document.activeElement === this.inputNode;
+    this.toggleClass(CommandPalette.FOCUSED_CLASS, focused);
+  }
+
+  /**
    * Clear the search results and schedule an item update.
    */
   private _refresh(): void {
@@ -482,6 +498,12 @@ namespace CommandPalette {
    */
   export
   const CONTENT_CLASS = 'p-CommandPalette-content';
+
+  /**
+   * The class name added to a focused palette.
+   */
+  export
+  const FOCUSED_CLASS = 'p-mod-focused';
 
   /**
    * An options object for creating a command palette.
