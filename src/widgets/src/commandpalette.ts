@@ -555,6 +555,20 @@ namespace CommandPalette {
      * The default value is `null`.
      */
     args?: JSONObject | null;
+
+    /**
+     * The rank for the command item.
+     *
+     * The rank is used as a tie-breaker when ordering command items
+     * for display. Items are sorted in the following order:
+     *   1. Text match (lower is better)
+     *   2. Category (locale order)
+     *   3. Rank (lower is better)
+     *   4. Label (locale order)
+     *
+     * The default rank is `Infinity`.
+     */
+    rank?: number;
   }
 
   /**
@@ -579,6 +593,11 @@ namespace CommandPalette {
      * The category for the command item.
      */
     readonly category: string;
+
+    /**
+     * The rank for the command item.
+     */
+    readonly rank: number;
 
     /**
      * The display label for the command item.
@@ -1240,14 +1259,26 @@ namespace Private {
    * A sort comparison function for a match score.
    */
   function scoreCmp(a: IScore, b: IScore): number {
+    // First compare based on the match score.
     let d1 = a.score - b.score;
     if (d1 !== 0) {
       return d1;
     }
+
+    // If the scores are the same, compare by category.
     let d2 = a.item.category.localeCompare(b.item.category);
     if (d2 !== 0) {
       return d2;
     }
+
+    // If the categories are the same, compare by rank.
+    let r1 = a.item.rank;
+    let r2 = b.item.rank;
+    if (r1 !== r2) {
+      return r1 < r2 ? -1 : 1;  // Infinity safe
+    }
+
+    // Finally, compare by label.
     return a.item.label.localeCompare(b.item.label);
   }
 
@@ -1344,6 +1375,7 @@ namespace Private {
       this.category = normalizeCategory(options.category);
       this.command = options.command;
       this.args = options.args || null;
+      this.rank = options.rank !== undefined ? options.rank : Infinity;
     }
 
     /**
@@ -1360,6 +1392,11 @@ namespace Private {
      * The arguments for the command.
      */
     readonly args: JSONObject | null;
+
+    /**
+     * The rank for the command item.
+     */
+    readonly rank: number;
 
     /**
      * The display label for the command item.
