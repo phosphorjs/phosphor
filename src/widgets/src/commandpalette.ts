@@ -1271,7 +1271,7 @@ namespace Private {
     let consumed = 0;
 
     // Generate the phrase to be searched. This splits the phrase at
-    // the end of a work boundary, while preserving the whitespace.
+    // the end of a word boundary, while preserving the whitespace.
     let phrase = `${category} ${label}`.split(/\b(?=\S)/);
 
     // Iterate over each word in the phrase.
