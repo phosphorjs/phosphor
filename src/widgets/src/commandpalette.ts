@@ -6,7 +6,7 @@
 | The full license is in the file LICENSE, distributed with this software.
 |----------------------------------------------------------------------------*/
 import {
-  ArrayExt, StringExt
+  ArrayExt
 } from '@phosphor/algorithm';
 
 import {
@@ -287,9 +287,9 @@ class CommandPalette extends Widget {
     for (let i = 0, n = results.length; i < n; ++i) {
       let result = results[i];
       if (result.type === 'header') {
-        let label = result.label;
         let indices = result.indices;
-        content[i] = renderer.renderHeader({ label, indices });
+        let category = result.category;
+        content[i] = renderer.renderHeader({ category, indices });
       } else {
         let item = result.item;
         let indices = result.indices;
@@ -425,7 +425,7 @@ class CommandPalette extends Widget {
     // Update the search text if the item is a header.
     if (part.type === 'header') {
       let input = this.inputNode;
-      input.value = `${part.label.toLowerCase()} `;
+      input.value = `${part.category.toLowerCase()} `;
       input.focus();
       this._refresh();
       return;
@@ -641,12 +641,12 @@ namespace CommandPalette {
   export
   interface IHeaderRenderData {
     /**
-     * The label for the header.
+     * The category of the header.
      */
-    readonly label: string;
+    readonly category: string;
 
     /**
-     * The indices of the matched characters in the header label.
+     * The indices of the matched characters in the category.
      */
     readonly indices: ReadonlyArray<number> | null;
   }
@@ -662,7 +662,7 @@ namespace CommandPalette {
     readonly item: IItem;
 
     /**
-     * The indices of the matched characters in the item label.
+     * The indices of the matched characters in the label.
      */
     readonly indices: ReadonlyArray<number> | null;
 
@@ -732,7 +732,7 @@ namespace CommandPalette {
      * @returns A virtual element representing the header.
      */
     renderHeader(data: IHeaderRenderData): VirtualElement {
-      let content = this.formatHeaderLabel(data);
+      let content = this.formatHeader(data);
       return h.li({ className: Renderer.HEADER_CLASS }, content);
     }
 
@@ -847,17 +847,17 @@ namespace CommandPalette {
     }
 
     /**
-     * Create the render content for the header label node.
+     * Create the render content for the header node.
      *
-     * @param data - The data to use for the label content.
+     * @param data - The data to use for the header content.
      *
-     * @returns The content to add to the label node.
+     * @returns The content to add to the header node.
      */
-    formatHeaderLabel(data: IHeaderRenderData): h.Child {
+    formatHeader(data: IHeaderRenderData): h.Child {
       if (!data.indices || data.indices.length === 0) {
-        return data.label;
+        return data.category;
       }
-      return this.highlight(data.label, data.indices, h.mark);
+      return this.highlight(data.category, data.indices, h.mark);
     }
 
     /**
@@ -1111,12 +1111,12 @@ namespace Private {
     readonly type: 'header';
 
     /**
-     * The category label for the header.
+     * The category for the header.
      */
-    readonly label: string;
+    readonly category: string;
 
     /**
-     * The indices of the matched label characters.
+     * The indices of the matched category characters.
      */
     readonly indices: ReadonlyArray<number> | null;
   }
@@ -1186,13 +1186,6 @@ namespace Private {
   }
 
   /**
-   * Normalize the source text for a fuzzy search.
-   */
-  function normalizeSource(item: CommandPalette.IItem): string {
-    return `${item.category}${item.label}`.toLowerCase();
-  }
-
-  /**
    * A text match score with associated command item.
    */
   interface IScore {
@@ -1202,9 +1195,14 @@ namespace Private {
     score: number;
 
     /**
-     * The indices of the matched label text.
+     * The indices of the matched category characters.
      */
-    indices: number[] | null;
+    categoryIndices: number[] | null;
+
+    /**
+     * The indices of the matched label characters.
+     */
+    labelIndices: number[] | null;
 
     /**
      * The command item associated with the match.
@@ -1232,27 +1230,118 @@ namespace Private {
 
       // If the query is empty, all items are matched by default.
       if (!query) {
-        scores.push({ score: 0, indices: null, item });
+        scores.push({
+          score: 0, categoryIndices: null, labelIndices: null, item
+        });
         continue;
       }
 
-      // Create the source text to be searched.
-      let source = normalizeSource(item);
+      // Run the fuzzy search for the item and query.
+      let score = fuzzySearch(item, query);
 
-      // Run the fuzzy search for the source and query.
-      let match = StringExt.fuzzySearch(source, query);
-
-      // Skip the item if there is no match.
-      if (!match) {
-        continue;
+      // Add the score to the result if there is a match.
+      if (score) {
+        scores.push(score);
       }
-
-      // Create the score for the matched item.
-      scores.push({ score: match.score, indices: match.indices, item });
     }
 
     // Return the final array of scores.
     return scores;
+  }
+
+  /**
+   * Perform a fuzzy search on a single command item.
+   */
+  function fuzzySearch(item: CommandPalette.IItem, query: string): IScore | null {
+    // Normalize the case of the category and label.
+    let category = item.category.toLowerCase();
+    let label = item.label.toLowerCase();
+
+    // Set up the result variables.
+    let categoryIndices: number[] = [];
+    let labelIndices: number[] = [];
+    let score = 0;
+
+    // Set up the query length and index counter.
+    let qLength = query.length;
+    let qIndex = 0;
+
+    // Set up the pivot index and consumed char counter.
+    let pivot = category.length + 1;
+    let consumed = 0;
+
+    // Generate the phrase to be searched. This splits the phrase at
+    // the end of a work boundary, while preserving the whitespace.
+    let phrase = `${category} ${label}`.split(/\b(?=\S)/);
+
+    // Iterate over each word in the phrase.
+    for (let i = 0, n = phrase.length; i < n; ++i) {
+      // Get the word to process.
+      let word = phrase[i];
+
+      // Find the current query character in the word.
+      let j = word.indexOf(query[qIndex]);
+
+      // If the char is not found, consume the word.
+      if (j === -1) {
+        consumed += word.length;
+        continue;
+      }
+
+      // Add the word location to the score.
+      score += i;
+
+      // Add the character index to the score.
+      score += j;
+
+      // Advance the query index.
+      qIndex++;
+
+      // Add the matched index to the relevant array.
+      if (consumed < pivot) {
+        categoryIndices.push(j + consumed);
+      } else {
+        labelIndices.push(j + consumed - pivot);
+      }
+
+      // Continue matching query characters for the current word.
+      while (qIndex < qLength) {
+        // Find the current query character in the word.
+        let k = word.indexOf(query[qIndex], j + 1);
+
+        // Bail on the current word if the character is not found.
+        if (k === -1) {
+          break;
+        }
+
+        // Add the delta from the last character to the score.
+        score += k - j - 1;
+
+        // Update the current character index.
+        j = k;
+
+        // Advance the query index.
+        qIndex++;
+
+        // Add the matched index to the relevant array.
+        if (consumed < pivot) {
+          categoryIndices.push(j + consumed);
+        } else {
+          labelIndices.push(j + consumed - pivot);
+        }
+      }
+
+      // Consume the word.
+      consumed += word.length;
+    }
+
+    // If all of the query was not found, there is no match.
+    if (qIndex !== qLength) {
+      return null;
+    }
+
+    // Return the final score and matched indices.
+    return { score, categoryIndices, labelIndices, item };
   }
 
   /**
@@ -1301,25 +1390,13 @@ namespace Private {
       }
 
       // Extract the current item and indices.
-      let { item, indices } = scores[i];
+      let { item, categoryIndices } = scores[i];
 
       // Extract the category for the current item.
       let category = item.category;
 
-      // Set up the pivot index for finding the slice index.
-      let pivot = category.length;
-
-      // Set up the slice index.
-      let sliceIndex = 0;
-
-      // Update the header indices if there is a text match.
-      if (indices) {
-        sliceIndex = ArrayExt.lowerBound(indices, pivot, numberCmp);
-        indices = indices.slice(0, sliceIndex);
-      }
-
       // Add the header result for the category.
-      results.push({ type: 'header', label: category, indices });
+      results.push({ type: 'header', category, indices: categoryIndices });
 
       // Find the rest of the scores with the same category.
       for (let j = i; j < n; ++j) {
@@ -1329,23 +1406,15 @@ namespace Private {
         }
 
         // Extract the data for the current score.
-        let { item, indices } = scores[j];
+        let { item, labelIndices } = scores[j];
 
         // Ignore an item with a different category.
         if (item.category !== category) {
           continue;
         }
 
-        // Update and offset the indices if there is a text match.
-        if (indices) {
-          indices = indices.slice(sliceIndex);
-          for (let p = 0, q = indices.length; p < q; ++p) {
-            indices[p] -= pivot;
-          }
-        }
-
         // Create the item result for the score.
-        results.push({ type: 'item', item, indices });
+        results.push({ type: 'item', item, indices: labelIndices });
 
         // Mark the score as processed.
         visited[j] = true;
@@ -1354,13 +1423,6 @@ namespace Private {
 
     // Return the final results.
     return results;
-  }
-
-  /**
-   * A number comparison function.
-   */
-  function numberCmp(a: number, b: number): number {
-    return a - b;
   }
 
   /**
