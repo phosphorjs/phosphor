@@ -108,7 +108,7 @@ function main(): void {
   });
 
   commands.addCommand('example:copy', {
-    label: 'Copy',
+    label: 'Copy File',
     mnemonic: 0,
     icon: 'fa fa-copy',
     execute: () => {
@@ -196,6 +196,13 @@ function main(): void {
     }
   });
 
+  commands.addCommand('notebook:new', {
+    label: 'New Notebook',
+    execute: () => {
+      console.log('New Notebook');
+    }
+  });
+
   commands.addKeyBinding({
     keys: ['Accel X'],
     selector: 'body',
@@ -258,6 +265,7 @@ function main(): void {
   palette.addItem({ command: 'example:save-on-exit', category: 'File' });
   palette.addItem({ command: 'example:open-task-manager', category: 'File' });
   palette.addItem({ command: 'example:close', category: 'File' });
+  palette.addItem({ command: 'notebook:new', category: 'Notebook' });
 
   document.addEventListener('contextmenu', (event: MouseEvent) => {
     event.preventDefault();
