@@ -1260,88 +1260,97 @@ namespace Private {
     // Set up the result variables.
     let categoryIndices: number[] = [];
     let labelIndices: number[] = [];
-    let score = 0;
+    let score = Infinity;
 
-    // Set up the query length and index counter.
-    let qLength = query.length;
-    let qIndex = 0;
+    // let indices: number[] = [];
+    // let source = category + label;
+    // for (let i = 0, j = 0, n = source.length; i < n; ++i, ++j) {
+    //   j = source.indexOf(query[0], j);
+    //   if (j === -1) {
+    //     break;
+    //   }
+    //   let [s, ind] = scorePart(source, query, j);
+    //   if (s === -1) {
+    //     break;
+    //   }
+    //   if (s < score) {
+    //     score = s;
+    //     indices = ind;
+    //   }
+    // }
 
-    // Set up the pivot index and consumed char counter.
-    let pivot = category.length + 1;
-    let consumed = 0;
+    let pivot = 0;
 
-    // Generate the phrase to be searched. This splits the phrase at
-    // the end of a word boundary, while preserving the whitespace.
-    let phrase = `${category} ${label}`.split(/\b(?=\S)/);
-
-    // Iterate over each word in the phrase.
-    for (let i = 0, n = phrase.length; i < n; ++i) {
-      // Get the word to process.
-      let word = phrase[i];
-
-      // Find the current query character in the word.
-      let j = word.indexOf(query[qIndex]);
-
-      // If the char is not found, consume the word.
-      if (j === -1) {
-        consumed += word.length;
-        continue;
-      }
-
-      // Add the word location to the score.
-      score += i;
-
-      // Add the character index to the score.
-      score += j;
-
-      // Advance the query index.
-      qIndex++;
-
-      // Add the matched index to the relevant array.
-      if (consumed < pivot) {
-        categoryIndices.push(j + consumed);
-      } else {
-        labelIndices.push(j + consumed - pivot);
-      }
-
-      // Continue matching query characters for the current word.
-      while (qIndex < qLength) {
-        // Find the current query character in the word.
-        let k = word.indexOf(query[qIndex], j + 1);
-
-        // Bail on the current word if the character is not found.
-        if (k === -1) {
-          break;
-        }
-
-        // Add the delta from the last character to the score.
-        score += k - j - 1;
-
-        // Update the current character index.
-        j = k;
-
-        // Advance the query index.
-        qIndex++;
-
-        // Add the matched index to the relevant array.
-        if (consumed < pivot) {
-          categoryIndices.push(j + consumed);
-        } else {
-          labelIndices.push(j + consumed - pivot);
-        }
-      }
-
-      // Consume the word.
-      consumed += word.length;
+    let cs = scorePart(category, query, 0, query.length);
+    if (cs !== -1 && cs < score) {
+      score = cs;
+      pivot = query.length;
     }
 
-    // If all of the query was not found, there is no match.
-    if (qIndex !== qLength) {
+    let ls = scorePart(label, query, 0, query.length);
+    if (ls !== -1 && ls + 1 < score) {
+      score = ls + 1;
+      pivot = 0;
+    }
+
+    for (let i = 0, n = query.length - 1; i < n; ++i) {
+      let cs = scorePart(category, query, 0, i + 1);
+      if (cs === -1) {
+        continue;
+      }
+      let ls = scorePart(label, query, i + 1, query.length);
+      if (ls === -1) {
+        continue;
+      }
+      if (cs + ls + 2 < score) {
+        score = cs + ls + 2;
+        pivot = i + 1;
+      }
+    }
+
+    if (score === Infinity) {
       return null;
     }
 
+    categoryIndices = scoreIndices(category, query, 0, pivot);
+    labelIndices = scoreIndices(label, query, pivot, query.length);
+
+    // for (let i = 0, n = indices.length; i < n; ++i) {
+    //   let j = indices[i];
+    //   if (j < category.length) {
+    //     categoryIndices.push(j);
+    //   } else {
+    //     labelIndices.push(j - category.length);
+    //   }
+    // }
+
+    console.log(category, label, query, score);
+
     // Return the final score and matched indices.
     return { score, categoryIndices, labelIndices, item };
+  }
+
+
+  function scorePart(source: string, query: string, start: number, stop: number): number {
+    let score = 0;
+    for (let i = start, j = 0; i < stop; ++i, ++j) {
+      let k = source.indexOf(query[i], j);
+      if (k === -1) {
+        return -1;
+      }
+      score += k - j;
+      j = k;
+    }
+    return score;
+  }
+
+  function scoreIndices(source: string, query: string, start: number, stop: number): number[] {
+    let indices = new Array<number>(stop - start);
+    for (let i = start, j = 0; i < stop; ++i, ++j) {
+      j = source.indexOf(query[i], j);
+      indices[i - start] = j;
+    }
+    return indices;
   }
 
   /**
