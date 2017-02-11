@@ -1184,10 +1184,18 @@ namespace Private {
       // Run the fuzzy search for the item and query.
       let score = fuzzySearch(item, query);
 
-      // Add the score to the result if there is a match.
-      if (score) {
-        scores.push(score);
+      // Ignore the item if it is not a match.
+      if (!score) {
+        continue;
       }
+
+      // Penalize disabled items.
+      if (!item.isEnabled) {
+        score.score += 1000;
+      }
+
+      // Add the score to the results.
+      scores.push(score);
     }
 
     // Return the final array of scores.
