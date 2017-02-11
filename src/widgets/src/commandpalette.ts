@@ -1248,6 +1248,7 @@ namespace Private {
       }
     }
 
+    // Bail if there is no match.
     if (score === Infinity) {
       return null;
     }
