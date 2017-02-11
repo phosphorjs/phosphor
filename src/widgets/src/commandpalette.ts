@@ -6,7 +6,7 @@
 | The full license is in the file LICENSE, distributed with this software.
 |----------------------------------------------------------------------------*/
 import {
-  ArrayExt
+  ArrayExt, StringExt
 } from '@phosphor/algorithm';
 
 import {
@@ -857,7 +857,7 @@ namespace CommandPalette {
       if (!data.indices || data.indices.length === 0) {
         return data.category;
       }
-      return this.highlight(data.category, data.indices, h.mark);
+      return StringExt.highlight(data.category, data.indices, h.mark);
     }
 
     /**
@@ -894,7 +894,7 @@ namespace CommandPalette {
       if (!data.indices || data.indices.length === 0) {
         return data.item.label;
       }
-      return this.highlight(data.item.label, data.indices, h.mark);
+      return StringExt.highlight(data.item.label, data.indices, h.mark);
     }
 
     /**
@@ -906,61 +906,6 @@ namespace CommandPalette {
      */
     formatItemCaption(data: IItemRenderData): h.Child {
       return data.item.caption;
-    }
-
-    /**
-     * Highlight the matched characters of a source string.
-     *
-     * @param source - The text which should be highlighted.
-     *
-     * @param indices - The indices of the matched characters. They must
-     *   appear in increasing order and must be in bounds of the source.
-     *
-     * @param fn - The function to apply to matched chunks.
-     *
-     * @returns An array of unmatched and highlighted chunks.
-     */
-    highlight<T>(source: string, indices: ReadonlyArray<number>, fn: (chunk: string) => T): Array<string | T> {
-      // Set up the result array.
-      let result: Array<string |T> = [];
-
-      // Set up the counter variables.
-      let k = 0;
-      let last = 0;
-      let n = indices.length;
-
-      // Iterator over each index.
-      while (k < n) {
-        // Set up the chunk indices.
-        let i = indices[k];
-        let j = indices[k];
-
-        // Advance the right chunk index until it's non-contiguous.
-        while (++k < n && indices[k] === j + 1) {
-          j++;
-        }
-
-        // Extract the unmatched text.
-        if (last < i) {
-          result.push(source.slice(last, i));
-        }
-
-        // Extract and highlight the matched text.
-        if (i < j + 1) {
-          result.push(fn(source.slice(i, j + 1)));
-        }
-
-        // Update the last visited index.
-        last = j + 1;
-      }
-
-      // Extract any remaining unmatched text.
-      if (last < source.length) {
-        result.push(source.slice(last));
-      }
-
-      // Return the highlighted result.
-      return result;
     }
   }
 
