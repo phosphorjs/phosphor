@@ -1211,53 +1211,40 @@ namespace Private {
     let label = item.label.toLowerCase();
 
     // Set up the result variables.
-    let categoryIndices: number[] = [];
-    let labelIndices: number[] = [];
+    let categoryIndices: number[] | null = null;
+    let labelIndices: number[] | null = null;
     let score = Infinity;
 
-    // let indices: number[] = [];
-    // let source = category + label;
-    // for (let i = 0, j = 0, n = source.length; i < n; ++i, ++j) {
-    //   j = source.indexOf(query[0], j);
-    //   if (j === -1) {
-    //     break;
-    //   }
-    //   let [s, ind] = scorePart(source, query, j);
-    //   if (s === -1) {
-    //     break;
-    //   }
-    //   if (s < score) {
-    //     score = s;
-    //     indices = ind;
-    //   }
-    // }
-
-    let pivot = 0;
-
-    let cs = scorePart(category, query, 0, query.length);
-    if (cs !== -1 && cs < score) {
-      score = cs;
-      pivot = query.length;
+    // Test for a full match in the category, penalized by 0.
+    let cMatch = StringExt.matchSumOfDeltas(category, query);
+    if (cMatch && cMatch.score < score) {
+      score = cMatch.score;
+      categoryIndices = cMatch.indices;
+      labelIndices = null;
     }
 
-    let ls = scorePart(label, query, 0, query.length);
-    if (ls !== -1 && ls + 1 < score) {
-      score = ls + 1;
-      pivot = 0;
+    // Test for a better full match in the label, penalized by 1.
+    let lMatch = StringExt.matchSumOfDeltas(label, query);
+    if (lMatch && lMatch.score + 1 < score) {
+      score = lMatch.score + 1;
+      labelIndices = lMatch.indices;
+      categoryIndices = null;
     }
 
+    // Test for a better split match, penalized by 2.
     for (let i = 0, n = query.length - 1; i < n; ++i) {
-      let cs = scorePart(category, query, 0, i + 1);
-      if (cs === -1) {
+      let cMatch = StringExt.matchSumOfDeltas(category, query.slice(0, i + 1));
+      if (!cMatch) {
         continue;
       }
-      let ls = scorePart(label, query, i + 1, query.length);
-      if (ls === -1) {
+      let lMatch = StringExt.matchSumOfDeltas(label, query.slice(i + 1));
+      if (!lMatch) {
         continue;
       }
-      if (cs + ls + 2 < score) {
-        score = cs + ls + 2;
-        pivot = i + 1;
+      if (cMatch.score + lMatch.score + 2 < score) {
+        score = cMatch.score + lMatch.score + 2;
+        categoryIndices = cMatch.indices;
+        labelIndices = lMatch.indices;
       }
     }
 
@@ -1265,45 +1252,8 @@ namespace Private {
       return null;
     }
 
-    categoryIndices = scoreIndices(category, query, 0, pivot);
-    labelIndices = scoreIndices(label, query, pivot, query.length);
-
-    // for (let i = 0, n = indices.length; i < n; ++i) {
-    //   let j = indices[i];
-    //   if (j < category.length) {
-    //     categoryIndices.push(j);
-    //   } else {
-    //     labelIndices.push(j - category.length);
-    //   }
-    // }
-
-    console.log(category, label, query, score);
-
     // Return the final score and matched indices.
     return { score, categoryIndices, labelIndices, item };
-  }
-
-
-  function scorePart(source: string, query: string, start: number, stop: number): number {
-    let score = 0;
-    for (let i = start, j = 0; i < stop; ++i, ++j) {
-      let k = source.indexOf(query[i], j);
-      if (k === -1) {
-        return -1;
-      }
-      score += k - j;
-      j = k;
-    }
-    return score;
-  }
-
-  function scoreIndices(source: string, query: string, start: number, stop: number): number[] {
-    let indices = new Array<number>(stop - start);
-    for (let i = start, j = 0; i < stop; ++i, ++j) {
-      j = source.indexOf(query[i], j);
-      indices[i - start] = j;
-    }
-    return indices;
   }
 
   /**
