@@ -1215,7 +1215,7 @@ namespace Private {
     let labelIndices: number[] | null = null;
     let score = Infinity;
 
-    // Test for a full match in the category, penalized by 0.
+    // Test for a full match in the category.
     let cMatch = StringExt.matchSumOfDeltas(category, query);
     if (cMatch && cMatch.score < score) {
       score = cMatch.score;
@@ -1223,15 +1223,15 @@ namespace Private {
       labelIndices = null;
     }
 
-    // Test for a better full match in the label, penalized by 1.
+    // Test for a better full match in the label.
     let lMatch = StringExt.matchSumOfDeltas(label, query);
-    if (lMatch && lMatch.score + 1 < score) {
-      score = lMatch.score + 1;
+    if (lMatch && lMatch.score < score) {
+      score = lMatch.score;
       labelIndices = lMatch.indices;
       categoryIndices = null;
     }
 
-    // Test for a better split match, penalized by 2.
+    // Test for a better split match.
     for (let i = 0, n = query.length - 1; i < n; ++i) {
       let cMatch = StringExt.matchSumOfDeltas(category, query.slice(0, i + 1));
       if (!cMatch) {
@@ -1241,8 +1241,8 @@ namespace Private {
       if (!lMatch) {
         continue;
       }
-      if (cMatch.score + lMatch.score + 2 < score) {
-        score = cMatch.score + lMatch.score + 2;
+      if (cMatch.score + lMatch.score < score) {
+        score = cMatch.score + lMatch.score;
         categoryIndices = cMatch.indices;
         labelIndices = lMatch.indices;
       }
@@ -1267,13 +1267,27 @@ namespace Private {
       return d1;
     }
 
-    // If the scores are the same, compare by category.
+    // Otherwise, prefer a pure category match.
+    let c1 = !!a.categoryIndices && !a.labelIndices;
+    let c2 = !!b.categoryIndices && !b.labelIndices;
+    if (c1 !== c2) {
+      return c1 ? -1 : 1;
+    }
+
+    // Otherwise, prefer a pure label match.
+    let l1 = !!a.labelIndices && !a.categoryIndices;
+    let l2 = !!b.labelIndices && !b.categoryIndices;
+    if (l1 !== l2) {
+      return l1 ? -1 : 1;
+    }
+
+    // Otherwise, compare by category.
     let d2 = a.item.category.localeCompare(b.item.category);
     if (d2 !== 0) {
       return d2;
     }
 
-    // If the categories are the same, compare by rank.
+    // Otherwise, compare by rank.
     let r1 = a.item.rank;
     let r2 = b.item.rank;
     if (r1 !== r2) {
