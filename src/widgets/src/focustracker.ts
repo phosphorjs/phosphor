@@ -6,7 +6,7 @@
 | The full license is in the file LICENSE, distributed with this software.
 |----------------------------------------------------------------------------*/
 import {
-  ArrayExt, each, filter, max
+  ArrayExt, each, filter, find, max
 } from '@phosphor/algorithm';
 
 import {
@@ -53,9 +53,11 @@ class FocusTracker<T extends Widget> implements IDisposable {
     // Remove all event listeners.
     each(this._widgets, w => {
       w.node.removeEventListener('focus', this, true);
+      w.node.removeEventListener('blur', this, true);
     });
 
     // Clear the internal data structures.
+    this._activeWidget = null;
     this._currentWidget = null;
     this._nodes.clear();
     this._numbers.clear();
@@ -65,8 +67,15 @@ class FocusTracker<T extends Widget> implements IDisposable {
   /**
    * A signal emitted when the current widget has changed.
    */
-  get currentChanged(): ISignal<this, FocusTracker.ICurrentChangedArgs<T>> {
+  get currentChanged(): ISignal<this, FocusTracker.IChangedArgs<T>> {
     return this._currentChanged;
+  }
+
+  /**
+   * A signal emitted when the active widget has changed.
+   */
+  get activeChanged(): ISignal<this, FocusTracker.IChangedArgs<T>> {
+    return this._activeChanged;
   }
 
   /**
@@ -96,6 +105,18 @@ class FocusTracker<T extends Widget> implements IDisposable {
    */
   get currentWidget(): T | null {
     return this._currentWidget;
+  }
+
+  /**
+   * The active widget in the tracker.
+   *
+   * #### Notes
+   * The semantics of `activeWidget` are the same as `currentWidget`,
+   * except except that `activeWidget` will be set to `null` when the
+   * `currentWidget` loses focus.
+   */
+  get activeWidget(): T | null {
+    return this._activeWidget;
   }
 
   /**
@@ -146,9 +167,6 @@ class FocusTracker<T extends Widget> implements IDisposable {
    * @param widget - The widget of interest.
    *
    * #### Notes
-   * If the widget is currently focused, it will automatically become
-   * the new `currentWidget`.
-   *
    * A widget will be automatically removed from the tracker if it
    * is disposed after being added.
    *
@@ -160,10 +178,10 @@ class FocusTracker<T extends Widget> implements IDisposable {
       return;
     }
 
-    // Test whether this widget has focus.
+    // Test whether the widget has focus.
     let focused = widget.node.contains(document.activeElement);
 
-    // Setup the initial focus number.
+    // Set up the initial focus number.
     let n = focused ? this._counter++ : -1;
 
     // Add the widget to the internal data structures.
@@ -171,17 +189,18 @@ class FocusTracker<T extends Widget> implements IDisposable {
     this._numbers.set(widget, n);
     this._nodes.set(widget.node, widget);
 
-    // Setup the focus event listener. The capturing phase must
-    // be used since the 'focus' event doesn't bubble and since
-    // firefox doesn't support the 'focusin' event.
+    // Set up the event listeners. The capturing phase must be used
+    // since the 'focus' and 'blur' events don't bubble and Firefox
+    // doesn't support the 'focusin' or 'focusout' events.
     widget.node.addEventListener('focus', this, true);
+    widget.node.addEventListener('blur', this, true);
 
     // Connect the disposed signal handler.
     widget.disposed.connect(this._onWidgetDisposed, this);
 
-    // Update the current widget if the new widget has focus.
+    // Set the current and active widgets if needed.
     if (focused) {
-      this._setCurrentWidget(widget);
+      this._setWidgets(widget, widget);
     }
   }
 
@@ -198,7 +217,7 @@ class FocusTracker<T extends Widget> implements IDisposable {
    * If the widget is not tracked, this is a no-op.
    */
   remove(widget: T): void {
-    // Do nothing if the widget is not tracked.
+    // Bail early if the widget is not tracked.
     if (!this._numbers.has(widget)) {
       return;
     }
@@ -206,20 +225,21 @@ class FocusTracker<T extends Widget> implements IDisposable {
     // Disconnect the disposed signal handler.
     widget.disposed.disconnect(this._onWidgetDisposed, this);
 
-    // Remove the focus event listener.
+    // Remove the event listeners.
     widget.node.removeEventListener('focus', this, true);
+    widget.node.removeEventListener('blur', this, true);
 
     // Remove the widget from the internal data structures.
     ArrayExt.removeFirstOf(this._widgets, widget);
     this._nodes.delete(widget.node);
     this._numbers.delete(widget);
 
-    // Do nothing else if the widget is not the current widget.
+    // Bail early if the widget is not the current widget.
     if (this._currentWidget !== widget) {
       return;
     }
 
-    // Otherwise, filter the widgets for those which have had focus.
+    // Filter the widgets for those which have had focus.
     let valid = filter(this._widgets, w => this._numbers.get(w) !== -1);
 
     // Get the valid widget with the max focus number.
@@ -229,8 +249,8 @@ class FocusTracker<T extends Widget> implements IDisposable {
       return a - b;
     }) || null;
 
-    // Finally, update the current widget.
-    this._setCurrentWidget(previous);
+    // Set the current and active widgets.
+    this._setWidgets(previous, null);
   }
 
   /**
@@ -244,40 +264,81 @@ class FocusTracker<T extends Widget> implements IDisposable {
    * not be called directly by user code.
    */
   handleEvent(event: Event): void {
-    if (event.type === 'focus') {
-      this._evtFocus(event);
+    switch (event.type) {
+    case 'focus':
+      this._evtFocus(event as FocusEvent);
+      break;
+    case 'blur':
+      this._evtBlur(event as FocusEvent);
+      break;
     }
   }
 
   /**
-   * Set the current widget for the tracker.
+   * Set the current and active widgets for the tracker.
    */
-  private _setCurrentWidget(widget: T | null): void {
-    // Do nothing if there is no change.
-    if (this._currentWidget === widget) {
-      return;
+  private _setWidgets(current: T | null, active: T | null): void {
+    // Swap the current widget.
+    let oldCurrent = this._currentWidget;
+    this._currentWidget = current;
+
+    // Swap the active widget.
+    let oldActive = this._activeWidget;
+    this._activeWidget = active;
+
+    // Emit the `currentChanged` signal if needed.
+    if (oldCurrent !== current) {
+      this._currentChanged.emit({ oldValue: oldCurrent, newValue: current });
     }
 
-    // Swap the current widget.
-    let old = this._currentWidget;
-    this._currentWidget = widget;
-
-    // Emit the changed signal.
-    this._currentChanged.emit({ oldValue: old, newValue: widget });
+    // Emit the `activeChanged` signal if needed.
+    if (oldActive !== active) {
+      this._activeChanged.emit({ oldValue: oldActive, newValue: active });
+    }
   }
 
   /**
    * Handle the `'focus'` event for a tracked widget.
    */
-  private _evtFocus(event: Event): void {
-    // Find the widget which gained focus.
+  private _evtFocus(event: FocusEvent): void {
+    // Find the widget which gained focus, which is known to exist.
     let widget = this._nodes.get(event.currentTarget as HTMLElement)!;
 
-    // Update the focus number for the widget.
-    this._numbers.set(widget, this._counter++);
+    // Update the focus number if necessary.
+    if (widget !== this._currentWidget) {
+      this._numbers.set(widget, this._counter++);
+    }
 
-    // Update the current widget.
-    this._setCurrentWidget(widget);
+    // Set the current and active widgets.
+    this._setWidgets(widget, widget);
+  }
+
+  /**
+   * Handle the `'blur'` event for a tracked widget.
+   */
+  private _evtBlur(event: FocusEvent): void {
+    // Find the widget which lost focus, which is known to exist.
+    let widget = this._nodes.get(event.currentTarget as HTMLElement)!;
+
+    // Get the node which being focused after this blur.
+    let focusTarget = event.relatedTarget as HTMLElement;
+
+    // If no other node is being focused, clear the active widget.
+    if (!focusTarget) {
+      this._setWidgets(this._currentWidget, null);
+      return;
+    }
+
+    // Bail if the focus widget is not changing.
+    if (widget.node.contains(focusTarget)) {
+      return;
+    }
+
+    // If no tracked widget is being focused, clear the active widget.
+    if (!find(this._widgets, w => w.node.contains(focusTarget))) {
+      this._setWidgets(this._currentWidget, null);
+      return;
+    }
   }
 
   /**
@@ -289,10 +350,12 @@ class FocusTracker<T extends Widget> implements IDisposable {
 
   private _counter = 0;
   private _widgets: T[] = [];
+  private _activeWidget: T | null = null;
   private _currentWidget: T | null = null;
   private _numbers = new Map<T, number>();
   private _nodes = new Map<HTMLElement, T>();
-  private _currentChanged = new Signal<this, FocusTracker.ICurrentChangedArgs<T>>(this);
+  private _activeChanged = new Signal<this, FocusTracker.IChangedArgs<T>>(this);
+  private _currentChanged = new Signal<this, FocusTracker.IChangedArgs<T>>(this);
 }
 
 
@@ -302,17 +365,17 @@ class FocusTracker<T extends Widget> implements IDisposable {
 export
 namespace FocusTracker {
   /**
-   * An arguments object for the `currentChanged` signal.
+   * An arguments object for the changed signals.
    */
   export
-  interface ICurrentChangedArgs<T extends Widget> {
+  interface IChangedArgs<T extends Widget> {
     /**
-     * The old value for the `currentWidget`.
+     * The old value for the widget.
      */
     oldValue: T | null;
 
     /**
-     * The new value for the `currentWidget`.
+     * The new value for the widget.
      */
     newValue: T | null;
   }
