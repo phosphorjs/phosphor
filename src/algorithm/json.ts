@@ -11,7 +11,7 @@
  * A type alias for a JSON primitive.
  */
 export
-type JSONPrimitive = boolean | number | string;
+type JSONPrimitive = boolean | number | string | null;
 
 
 /**
@@ -25,7 +25,7 @@ type JSONValue = JSONPrimitive | JSONObject | JSONArray;
  * A type definition for a JSON object.
  */
 export
-interface JSONObject { [key: string]: JSONValue; }
+interface JSONObject { [key: string]: JSONValue | undefined; }
 
 
 /**
