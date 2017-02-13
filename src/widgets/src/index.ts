@@ -11,7 +11,7 @@ export * from './boxpanel';
 export * from './commandpalette';
 //export * from './dockpanel';
 export * from './domutil';
-//export * from './focustracker';
+export * from './focustracker';
 export * from './layout';
 export * from './menu';
 export * from './menubar';
