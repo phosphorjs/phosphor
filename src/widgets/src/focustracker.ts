@@ -111,9 +111,8 @@ class FocusTracker<T extends Widget> implements IDisposable {
    * The active widget in the tracker.
    *
    * #### Notes
-   * The semantics of `activeWidget` are the same as `currentWidget`,
-   * except except that `activeWidget` will be set to `null` when the
-   * `currentWidget` loses focus.
+   * The active widget is the widget among the tracked widgets which
+   * has the *descendant node* which is currently focused.
    */
   get activeWidget(): T | null {
     return this._activeWidget;
