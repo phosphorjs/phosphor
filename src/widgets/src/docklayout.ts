@@ -181,7 +181,7 @@ class DockLayout extends Layout {
    */
   moveHandle(handle: HTMLDivElement, offsetX: number, offsetY: number): void {
     // Bail early if there is no root or if the handle is hidden.
-    if (!this._root || handle.classList.contains(DockLayout.HIDDEN_CLASS)) {
+    if (!this._root || handle.classList.contains(Constants.HIDDEN_CLASS)) {
       return;
     }
 
@@ -699,7 +699,7 @@ class DockLayout extends Layout {
 
       // Insert the tab node sized to the golden ratio.
       ArrayExt.insert(root.children, i, tabNode);
-      ArrayExt.insert(root.sizers, i, Private.createSizer(Private.GOLDEN));
+      ArrayExt.insert(root.sizers, i, Private.createSizer(Constants.GOLDEN_RATIO));
       ArrayExt.insert(root.handles, i, this._createHandle());
       tabNode.parent = root;
 
@@ -971,24 +971,6 @@ class DockLayout extends Layout {
 export
 namespace DockLayout {
   /**
-   * The class name added to hidden handles.
-   */
-  export
-  const HIDDEN_CLASS = 'p-mod-hidden';
-
-  /**
-   * The class name added to horizontal handles.
-   */
-  export
-  const HORIZONTAL_CLASS = 'p-mod-horizontal';
-
-  /**
-   * The class name added to vertical handles.
-   */
-  export
-  const VERTICAL_CLASS = 'p-mod-vertical';
-
-  /**
    * An options object for creating a dock layout.
    */
   export
@@ -1116,15 +1098,39 @@ namespace DockLayout {
 
 
 /**
- * The namespace for the module private data.
+ * The namespace for the module constants.
  */
-namespace Private {
+namespace Constants {
+  /**
+   * The class name added to hidden handles.
+   */
+  export
+  const HIDDEN_CLASS = 'p-mod-hidden';
+
+  /**
+   * The class name added to horizontal handles.
+   */
+  export
+  const HORIZONTAL_CLASS = 'p-mod-horizontal';
+
+  /**
+   * The class name added to vertical handles.
+   */
+  export
+  const VERTICAL_CLASS = 'p-mod-vertical';
+
   /**
    * A fraction used for sizing root panels; ~= `1 / golden_ratio`.
    */
   export
-  const GOLDEN = 0.618;
+  const GOLDEN_RATIO = 0.618;
+}
 
+
+/**
+ * The namespace for the module private details.
+ */
+namespace Private {
   /**
    * A type alias for a dock layout node.
    */
@@ -1305,22 +1311,6 @@ namespace Private {
   }
 
   /**
-   * Get the reference widget for a tab bar.
-   *
-   * @param tabBar - The tab bar of interest.
-   *
-   * @returns The target reference widget in the tab bar, or `null`.
-   */
-  export
-  function tabBarRef(tabBar: TabBar<Widget>): Widget | null {
-    if (tabBar.currentTitle) {
-      return tabBar.currentTitle.owner;
-    }
-    let lastTitle = tabBar.titles[tabBar.titles.length - 1];
-    return lastTitle ? lastTitle.owner : null;
-  }
-
-  /**
    * Find the first tab layout node in a layout tree.
    *
    * @param node - The root layout node of interest.
@@ -1468,39 +1458,18 @@ namespace Private {
     // Update the handle orienation and visibility.
     each(splitNode.handles, (handle, i) => {
       if (splitNode.orientation === 'horizontal') {
-        handle.classList.remove(DockLayout.VERTICAL_CLASS);
-        handle.classList.add(DockLayout.HORIZONTAL_CLASS);
+        handle.classList.remove(Constants.VERTICAL_CLASS);
+        handle.classList.add(Constants.HORIZONTAL_CLASS);
       } else {
-        handle.classList.remove(DockLayout.HORIZONTAL_CLASS);
-        handle.classList.add(DockLayout.VERTICAL_CLASS);
+        handle.classList.remove(Constants.HORIZONTAL_CLASS);
+        handle.classList.add(Constants.VERTICAL_CLASS);
       }
       if (i === splitNode.handles.length - 1) {
-        handle.classList.add(DockLayout.HIDDEN_CLASS);
+        handle.classList.add(Constants.HIDDEN_CLASS);
       } else {
-        handle.classList.remove(DockLayout.HIDDEN_CLASS);
+        handle.classList.remove(Constants.HIDDEN_CLASS);
       }
     });
-  }
-
-  /**
-   * Determine the zone for the given node and client position.
-   *
-   * This assumes the position lies within the node's client rect.
-   */
-  export
-  function calcEdge(node: HTMLElement, x: number, y: number): 'top' | 'left' | 'right' | 'bottom' {
-    let rect = node.getBoundingClientRect();
-    let fracX = (x - rect.left) / rect.width;
-    let fracY = (y - rect.top) / rect.height;
-    let normX = fracX > 0.5 ? 1 - fracX : fracX;
-    let normY = fracY > 0.5 ? 1 - fracY : fracY;
-    let result: 'top' | 'left' | 'right' | 'bottom';
-    if (normX < normY) {
-      result = fracX <= 0.5 ? 'left' : 'right';
-    } else {
-      result = fracY <= 0.5 ? 'top' : 'bottom';
-    }
-    return result;
   }
 
   /**
