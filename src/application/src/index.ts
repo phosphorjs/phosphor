@@ -10,6 +10,10 @@ import {
 } from '@phosphor/commands';
 
 import {
+  PromiseDelegate
+} from '@phosphor/utilities';
+
+import {
   Widget
 } from '@phosphor/widgets';
 
@@ -139,6 +143,8 @@ export
 class Application<T extends Widget> {
   /**
    * Construct a new application.
+   *
+   * @param options - The options for creating the application.
    */
   constructor(options: Application.IOptions<T>) {
     this.shell = options.shell;
@@ -158,6 +164,17 @@ class Application<T extends Widget> {
    * application plugins to insert content in a variety of places.
    */
   readonly shell: T;
+
+  /**
+   * A promise which resolves after the application has started.
+   *
+   * #### Notes
+   * This promise will resolve after the `start()` method is called,
+   * when all the bootstrapping and shell mounting work is complete.
+   */
+  get started(): Promise<void> {
+    return this._delegate.promise;
+  }
 
   /**
    * Test whether a plugin is registered with the application.
@@ -328,15 +345,13 @@ class Application<T extends Widget> {
    * 4. Add the application event listeners
    */
   start(options: Application.IStartOptions = {}): Promise<void> {
-    // Resolve immediately if the application is already started.
+    // Return immediately if the application is already started.
     if (this._started) {
-      return Promise.resolve(undefined);
+      return this._delegate.promise;
     }
 
-    // Return the pending promise if it exists.
-    if (this._promise) {
-      return this._promise;
-    }
+    // Mark the application as started;
+    this._started = true;
 
     // Parse the host id for attaching the shell.
     let hostID = options.hostID || '';
@@ -350,15 +365,14 @@ class Application<T extends Widget> {
     });
 
     // Wait for the plugins to activate, then finalize startup.
-    this._promise = Promise.all(promises).then(() => {
-      this._started = true;
-      this._promise = null;
+    Promise.all(promises).then(() => {
       this.attachShell(hostID);
       this.addEventListeners();
+      this._delegate.resolve(undefined);
     });
 
-    // Return the pending bootstrapping promise.
-    return this._promise;
+    // Return the pending delegate promise.
+    return this._delegate.promise;
   }
 
   /**
@@ -436,9 +450,9 @@ class Application<T extends Widget> {
   }
 
   private _started = false;
-  private _promise: Promise<void> | null = null;
   private _pluginMap = Private.createPluginMap();
   private _serviceMap = Private.createServiceMap();
+  private _delegate = new PromiseDelegate<void>();
 }
 
 
