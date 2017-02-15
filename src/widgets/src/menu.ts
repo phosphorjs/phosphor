@@ -91,7 +91,7 @@ class Menu extends Widget {
    *
    * This signal is only emitted for the root menu in a hierarchy.
    */
-  get menuRequested(): ISignal<Menu, 'next' | 'previous'> {
+  get menuRequested(): ISignal<this, 'next' | 'previous'> {
     return this._menuRequested;
   }
 
