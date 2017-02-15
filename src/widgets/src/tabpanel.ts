@@ -10,12 +10,12 @@ import {
 } from '@phosphor/messaging';
 
 import {
-  IS_EDGE, IS_IE
-} from '@phosphor/platform';
-
-import {
   ISignal, Signal
 } from '@phosphor/signaling';
+
+import {
+  Platform
+} from '@phosphor/utilities';
 
 import {
   BoxLayout
@@ -292,7 +292,7 @@ class TabPanel extends Widget {
     });
 
     // Flush the message loop on IE and Edge to prevent flicker.
-    if (IS_EDGE || IS_IE) {
+    if (Platform.IS_EDGE || Platform.IS_IE) {
       MessageLoop.flush();
     }
   }

@@ -14,24 +14,16 @@ import {
 } from '@phosphor/disposable';
 
 import {
-  JSONObject, deepEqual
-} from '@phosphor/json';
-
-import {
   getKeyboardLayout
 } from '@phosphor/keyboard';
 
 import {
-  IS_MAC, IS_WIN
-} from '@phosphor/platform';
-
-import {
-  calculateSpecificity, isValidSelector, matchesSelector
-} from '@phosphor/selector';
-
-import {
   ISignal, Signal
 } from '@phosphor/signaling';
+
+import {
+  DOM, JSONExt, JSONObject, Platform
+} from '@phosphor/utilities';
 
 
 /**
@@ -350,7 +342,7 @@ class CommandRegistry {
   findKeyBinding(id: string, args: JSONObject | null): CommandRegistry.IKeyBinding | undefined {
     // TODO - we may want to augment this search with a target node.
     return ArrayExt.findLastValue(this._keyBindings, kb => {
-      return kb.command === id && deepEqual(kb.args, args);
+      return kb.command === id && JSONExt.deepEqual(kb.args, args);
     });
   }
 
@@ -934,7 +926,7 @@ namespace CommandRegistry {
     let shift = false;
     for (let token of keystroke.split(/\s+/)) {
       if (token === 'Accel') {
-        if (IS_MAC) {
+        if (Platform.IS_MAC) {
           cmd = true;
         } else {
           ctrl = true;
@@ -980,7 +972,7 @@ namespace CommandRegistry {
     if (parts.shift) {
       mods += 'Shift ';
     }
-    if (parts.cmd && IS_MAC) {
+    if (parts.cmd && Platform.IS_MAC) {
       mods += 'Cmd ';
     }
     return mods + parts.key;
@@ -1010,7 +1002,7 @@ namespace CommandRegistry {
     if (event.shiftKey) {
       mods += 'Shift ';
     }
-    if (event.metaKey && IS_MAC) {
+    if (event.metaKey && Platform.IS_MAC) {
       mods += 'Cmd ';
     }
     return mods + key;
@@ -1149,7 +1141,7 @@ namespace Private {
       }
 
       // Get the specificity for the selector.
-      let sp = calculateSpecificity(binding.selector);
+      let sp = DOM.calculateSpecificity(binding.selector);
 
       // Update the best match if this match is stronger.
       if (!exact || td < distance || sp >= specificity) {
@@ -1211,9 +1203,9 @@ namespace Private {
    */
   function normalizeKeys(options: CommandRegistry.IKeyBindingOptions): string[] {
     let keys: string[];
-    if (IS_WIN) {
+    if (Platform.IS_WIN) {
       keys = options.winKeys || options.keys;
-    } else if (IS_MAC) {
+    } else if (Platform.IS_MAC) {
       keys = options.macKeys || options.keys;
     } else {
       keys = options.linuxKeys || options.keys;
@@ -1231,7 +1223,7 @@ namespace Private {
     if (options.selector.indexOf(',') !== -1) {
       throw new Error(`Selector cannot contain commas: ${options.selector}`);
     }
-    if (!isValidSelector(options.selector)) {
+    if (!DOM.isValidSelector(options.selector)) {
       throw new Error(`Invalid selector: ${options.selector}`);
     }
     return options.selector;
@@ -1273,7 +1265,7 @@ namespace Private {
     let targ = event.target as (Element | null);
     let curr = event.currentTarget as (Element | null);
     for (let dist = 0; targ !== null; targ = targ.parentElement, ++dist) {
-      if (matchesSelector(targ, selector)) {
+      if (DOM.matchesSelector(targ, selector)) {
         return dist;
       }
       if (targ === curr) {

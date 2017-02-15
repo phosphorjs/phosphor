@@ -6,5 +6,7 @@
 | The full license is in the file LICENSE, distributed with this software.
 |----------------------------------------------------------------------------*/
 export * from './dom';
+export * from './json';
+export * from './mime';
 export * from './platform';
 export * from './promise';

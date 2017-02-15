@@ -14,16 +14,12 @@ import {
 } from '@phosphor/messaging';
 
 import {
-  IS_EDGE, IS_IE
-} from '@phosphor/platform';
+  DOM, Platform
+} from '@phosphor/utilities';
 
 import {
   BoxEngine, BoxSizer
 } from './boxengine';
-
-import {
-  DOMUtil
-} from './domutil';
 
 import {
   Layout
@@ -781,7 +777,7 @@ class DockLayout extends Layout {
     }
 
     // Update the box sizing and add it to the size limits.
-    let box = this._box = DOMUtil.boxSizing(this.parent!.node);
+    let box = this._box = DOM.boxSizing(this.parent!.node);
     minW += box.horizontalSum;
     minH += box.verticalSum;
     maxW += box.horizontalSum;
@@ -833,7 +829,7 @@ class DockLayout extends Layout {
     }
 
     // Ensure the parent box sizing data is computed.
-    let box = this._box || (this._box = DOMUtil.boxSizing(this.parent!.node));
+    let box = this._box || (this._box = DOM.boxSizing(this.parent!.node));
 
     // Compute the actual layout bounds adjusted for border and padding.
     let x = box.paddingTop;
@@ -921,14 +917,14 @@ class DockLayout extends Layout {
     }
 
     // Flush the message loop on IE and Edge to prevent flicker.
-    if (IS_EDGE || IS_IE) {
+    if (Platform.IS_EDGE || Platform.IS_IE) {
       MessageLoop.flush();
     }
   }
 
   private _dirty = false;
   private _spacing: number;
-  private _box: DOMUtil.IBoxSizing | null = null;
+  private _box: DOM.IBoxSizing | null = null;
   private _root: Private.LayoutNode | null = null;
 }
 
@@ -1314,8 +1310,8 @@ namespace Private {
    * Recursively fit the given layout node.
    */
   export
-  function fitLayoutNode(node: LayoutNode, spacing: number): DOMUtil.ISizeLimits {
-    let limits: DOMUtil.ISizeLimits;
+  function fitLayoutNode(node: LayoutNode, spacing: number): DOM.ISizeLimits {
+    let limits: DOM.ISizeLimits;
     if (node instanceof TabLayoutNode) {
       limits = fitTabNode(node);
     } else {
@@ -1432,7 +1428,7 @@ namespace Private {
   /**
    * Fit the given tab layout node.
    */
-  function fitTabNode(tabNode: TabLayoutNode): DOMUtil.ISizeLimits {
+  function fitTabNode(tabNode: TabLayoutNode): DOM.ISizeLimits {
     // Set up the limit variables.
     let minWidth = 0;
     let minHeight = 0;
@@ -1453,7 +1449,7 @@ namespace Private {
 
     // Update the results and sizer for the tab bar.
     if (!tabBar.isHidden) {
-      let limits = DOMUtil.sizeLimits(tabBar.node);
+      let limits = DOM.sizeLimits(tabBar.node);
       minWidth = Math.max(minWidth, limits.minWidth);
       maxWidth = Math.min(maxWidth, limits.maxWidth);
       minHeight += limits.minHeight;
@@ -1467,7 +1463,7 @@ namespace Private {
 
     // Update the results and sizer for the current widget.
     if (widget && !widget.isHidden) {
-      let limits = DOMUtil.sizeLimits(widget.node);
+      let limits = DOM.sizeLimits(widget.node);
       minWidth = Math.max(minWidth, limits.minWidth);
       maxWidth = Math.min(maxWidth, limits.maxWidth);
       minHeight += limits.minHeight;
@@ -1486,7 +1482,7 @@ namespace Private {
   /**
    * Recursively fit the given split layout node.
    */
-  function fitSplitNode(splitNode: SplitLayoutNode, spacing: number): DOMUtil.ISizeLimits {
+  function fitSplitNode(splitNode: SplitLayoutNode, spacing: number): DOM.ISizeLimits {
     // Set up the limit variables.
     let minWidth = 0;
     let minHeight = 0;

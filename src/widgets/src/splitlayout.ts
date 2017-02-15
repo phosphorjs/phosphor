@@ -18,12 +18,12 @@ import {
 } from '@phosphor/properties';
 
 import {
-  BoxEngine, BoxSizer
-} from './boxengine';
+  DOM
+} from '@phosphor/utilities';
 
 import {
-  DOMUtil
-} from './domutil';
+  BoxEngine, BoxSizer
+} from './boxengine';
 
 import {
   PanelLayout
@@ -429,7 +429,7 @@ class SplitLayout extends PanelLayout {
         sizer.maxSize = 0;
         continue;
       }
-      let limits = DOMUtil.sizeLimits(widget.node);
+      let limits = DOM.sizeLimits(widget.node);
       sizer.stretch = SplitLayout.getStretch(widget);
       if (horz) {
         sizer.minSize = limits.minWidth;
@@ -449,7 +449,7 @@ class SplitLayout extends PanelLayout {
     }
 
     // Update the box sizing and add it to the size constraints.
-    let box = this._box = DOMUtil.boxSizing(this.parent!.node);
+    let box = this._box = DOM.boxSizing(this.parent!.node);
     minW += box.horizontalSum;
     minH += box.verticalSum;
     maxW += box.horizontalSum;
@@ -502,7 +502,7 @@ class SplitLayout extends PanelLayout {
     }
 
     // Ensure the parent box sizing data is computed.
-    let box = this._box || (this._box = DOMUtil.boxSizing(this.parent!.node));
+    let box = this._box || (this._box = DOM.boxSizing(this.parent!.node));
 
     // Compute the actual layout bounds adjusted for border and padding.
     let top = box.paddingTop;
@@ -565,7 +565,7 @@ class SplitLayout extends PanelLayout {
   private _hasNormedSizes = false;
   private _sizers: BoxSizer[] = [];
   private _handles: HTMLDivElement[] = [];
-  private _box: DOMUtil.IBoxSizing | null = null;
+  private _box: DOM.IBoxSizing | null = null;
   private _orientation: SplitLayout.Orientation = 'horizontal';
 }
 

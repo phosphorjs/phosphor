@@ -14,24 +14,16 @@ import {
 } from '@phosphor/commands';
 
 import {
-  JSONObject
-} from '@phosphor/json';
-
-import {
   Message
 } from '@phosphor/messaging';
 
 import {
-  IS_MAC
-} from '@phosphor/platform';
+  DOM, JSONObject, Platform
+} from '@phosphor/utilities';
 
 import {
   ElementDataset, VirtualDOM, VirtualElement, h
 } from '@phosphor/virtualdom';
-
-import {
-  DOMUtil
-} from './domutil';
 
 import {
   Widget
@@ -306,7 +298,7 @@ class CommandPalette extends Widget {
       contentNode.scrollTop = 0;
     } else {
       let element = contentNode.children[activeIndex];
-      DOMUtil.scrollIntoViewIfNeeded(contentNode, element);
+      DOM.scrollIntoViewIfNeeded(contentNode, element);
     }
   }
 
@@ -922,7 +914,7 @@ namespace Private {
   function formatKeystroke(keystroke: string): string {
     let mods = '';
     let parts = CommandRegistry.parseKeystroke(keystroke);
-    if (IS_MAC) {
+    if (Platform.IS_MAC) {
       if (parts.ctrl) {
         mods += '\u2303 ';
       }

@@ -26,12 +26,12 @@ import {
 } from '@phosphor/signaling';
 
 import {
-  ElementInlineStyle, VirtualDOM, VirtualElement, h
-} from '@phosphor/virtualdom';
+  DOM
+} from '@phosphor/utilities';
 
 import {
-  DOMUtil
-} from './domutil';
+  ElementInlineStyle, VirtualDOM, VirtualElement, h
+} from '@phosphor/virtualdom';
 
 import {
   Title
@@ -584,7 +584,7 @@ class TabBar<T> extends Widget {
 
     // Find the index of the clicked tab.
     let index = ArrayExt.findFirstIndex(tabs, tab => {
-      return DOMUtil.hitTest(tab, event.clientX, event.clientY);
+      return DOM.hitTest(tab, event.clientX, event.clientY);
     });
 
     // Do nothing if the click is not on a tab.
@@ -631,7 +631,7 @@ class TabBar<T> extends Widget {
 
     // Find the index of the pressed tab.
     let index = ArrayExt.findFirstIndex(tabs, tab => {
-      return DOMUtil.hitTest(tab, event.clientX, event.clientY);
+      return DOM.hitTest(tab, event.clientX, event.clientY);
     });
 
     // Do nothing if the press is not on a tab.

@@ -1,8 +1,8 @@
 {
   "private": true,
-  "name": "@phosphor/mime",
+  "name": "@phosphor/utilities",
   "version": "1.0.0",
-  "description": "PhosphorJS - MIME Utilities",
+  "description": "PhosphorJS - Utilities",
   "main": "lib/index.js",
   "types": "lib/index.d.ts",
   "repository": {

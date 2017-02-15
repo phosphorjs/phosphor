@@ -22,20 +22,16 @@ import {
 } from '@phosphor/messaging';
 
 import {
-  MimeData
-} from '@phosphor/mime';
-
-import {
   AttachedProperty
 } from '@phosphor/properties';
 
 import {
-  DockLayout
-} from './docklayout';
+  DOM, MimeData
+} from '@phosphor/utilities';
 
 import {
-  DOMUtil
-} from './domutil';
+  DockLayout
+} from './docklayout';
 
 import {
   TabBar
@@ -569,7 +565,7 @@ class DockPanel extends Widget {
     let bottom: number;
     let tr: ClientRect;
     let wr: ClientRect;
-    let box = DOMUtil.boxSizing(this.node); // TODO cache this?
+    let box = DOM.boxSizing(this.node); // TODO cache this?
     let rect = this.node.getBoundingClientRect();
 
     // Compute the overlay geometry based on the dock zone.
@@ -1149,7 +1145,7 @@ namespace Private {
   export
   function findDropTarget(panel: DockPanel, x: number, y: number): IDropTarget {
     // Bail, if the mouse is not over the dock panel.
-    if (!DOMUtil.hitTest(panel.node, x, y)) {
+    if (!DOM.hitTest(panel.node, x, y)) {
       return { zone: 'invalid', target: null };
     }
 
@@ -1201,10 +1197,10 @@ namespace Private {
       if (!bar.currentTitle) {
         return false;
       }
-      if (DOMUtil.hitTest(bar.node, x, y)) {
+      if (DOM.hitTest(bar.node, x, y)) {
         return true;
       }
-      return DOMUtil.hitTest(bar.currentTitle.owner.node, x, y);
+      return DOM.hitTest(bar.currentTitle.owner.node, x, y);
     });
 
     // Bail if no tab area was found.

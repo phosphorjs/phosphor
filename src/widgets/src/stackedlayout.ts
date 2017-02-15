@@ -10,8 +10,8 @@ import {
 } from '@phosphor/messaging';
 
 import {
-  DOMUtil
-} from './domutil';
+  DOM
+} from '@phosphor/utilities';
 
 import {
   PanelLayout
@@ -186,7 +186,7 @@ class StackedLayout extends PanelLayout {
       if (widget.isHidden) {
         continue;
       }
-      let limits = DOMUtil.sizeLimits(widget.node);
+      let limits = DOM.sizeLimits(widget.node);
       minW = Math.max(minW, limits.minWidth);
       minH = Math.max(minH, limits.minHeight);
       maxW = Math.min(maxW, limits.maxWidth);
@@ -198,7 +198,7 @@ class StackedLayout extends PanelLayout {
     maxH = Math.max(minH, maxH);
 
     // Update the box sizing and add it to the size constraints.
-    let box = this._box = DOMUtil.boxSizing(this.parent!.node);
+    let box = this._box = DOM.boxSizing(this.parent!.node);
     minW += box.horizontalSum;
     minH += box.verticalSum;
     maxW += box.horizontalSum;
@@ -251,7 +251,7 @@ class StackedLayout extends PanelLayout {
     }
 
     // Ensure the parent box sizing data is computed.
-    let box = this._box || (this._box = DOMUtil.boxSizing(this.parent!.node));
+    let box = this._box || (this._box = DOM.boxSizing(this.parent!.node));
 
     // Compute the actual layout bounds adjusted for border and padding.
     let top = box.paddingTop;
@@ -271,5 +271,5 @@ class StackedLayout extends PanelLayout {
   }
 
   private _dirty = false;
-  private _box: DOMUtil.IBoxSizing | null = null;
+  private _box: DOM.IBoxSizing | null = null;
 }

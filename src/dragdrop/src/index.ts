@@ -11,7 +11,7 @@ import {
 
 import {
   MimeData
-} from '@phosphor/mime';
+} from '@phosphor/utilities';
 
 
 /**

@@ -18,12 +18,12 @@ import {
 } from '@phosphor/properties';
 
 import {
-  BoxEngine, BoxSizer
-} from './boxengine';
+  DOM
+} from '@phosphor/utilities';
 
 import {
-  DOMUtil
-} from './domutil';
+  BoxEngine, BoxSizer
+} from './boxengine';
 
 import {
   PanelLayout
@@ -297,7 +297,7 @@ class BoxLayout extends PanelLayout {
         sizer.maxSize = 0;
         continue;
       }
-      let limits = DOMUtil.sizeLimits(widget.node);
+      let limits = DOM.sizeLimits(widget.node);
       sizer.sizeHint = BoxLayout.getSizeBasis(widget);
       sizer.stretch = BoxLayout.getStretch(widget);
       if (horz) {
@@ -318,7 +318,7 @@ class BoxLayout extends PanelLayout {
     }
 
     // Update the box sizing and add it to the size constraints.
-    let box = this._box = DOMUtil.boxSizing(this.parent!.node);
+    let box = this._box = DOM.boxSizing(this.parent!.node);
     minW += box.horizontalSum;
     minH += box.verticalSum;
     maxW += box.horizontalSum;
@@ -371,7 +371,7 @@ class BoxLayout extends PanelLayout {
     }
 
     // Ensure the parent box sizing data is computed.
-    let box = this._box || (this._box = DOMUtil.boxSizing(this.parent!.node));
+    let box = this._box || (this._box = DOM.boxSizing(this.parent!.node));
 
     // Compute the layout area adjusted for border and padding.
     let top = box.paddingTop;
@@ -429,7 +429,7 @@ class BoxLayout extends PanelLayout {
   private _spacing = 4;
   private _dirty = false;
   private _sizers: BoxSizer[] = [];
-  private _box: DOMUtil.IBoxSizing | null = null;
+  private _box: DOM.IBoxSizing | null = null;
   private _direction: BoxLayout.Direction = 'top-to-bottom';
 }
 

@@ -14,20 +14,12 @@ import {
 } from '@phosphor/commands';
 
 import {
-  JSONObject
-} from '@phosphor/json';
-
-import {
   getKeyboardLayout
 } from '@phosphor/keyboard';
 
 import {
   Message, MessageLoop
 } from '@phosphor/messaging';
-
-import {
-  IS_MAC
-} from '@phosphor/platform';
 
 import {
   ISignal, Signal
@@ -38,8 +30,8 @@ import {
 } from '@phosphor/virtualdom';
 
 import {
-  DOMUtil
-} from './domutil';
+  DOM, JSONObject, Platform
+} from '@phosphor/utilities';
 
 import {
   Widget
@@ -692,7 +684,7 @@ class Menu extends Widget {
   private _evtMouseMove(event: MouseEvent): void {
     // Hit test the item nodes for the item under the mouse.
     let index = ArrayExt.findFirstIndex(this.contentNode.children, node => {
-      return DOMUtil.hitTest(node, event.clientX, event.clientY);
+      return DOM.hitTest(node, event.clientX, event.clientY);
     });
 
     // Bail early if the mouse is already over the active index.
@@ -761,7 +753,7 @@ class Menu extends Widget {
     }
 
     // If the mouse is over the child menu, cancel the close timer.
-    if (DOMUtil.hitTest(this._childMenu.node, event.clientX, event.clientY)) {
+    if (DOM.hitTest(this._childMenu.node, event.clientX, event.clientY)) {
       this._cancelCloseTimer();
       return;
     }
@@ -1351,7 +1343,7 @@ namespace Private {
   function formatKeystroke(keystroke: string): string {
     let mods = '';
     let parts = CommandRegistry.parseKeystroke(keystroke);
-    if (IS_MAC) {
+    if (Platform.IS_MAC) {
       if (parts.ctrl) {
         mods += '\u2303 ';
       }
@@ -1384,7 +1376,7 @@ namespace Private {
   export
   function hitTestMenus(menu: Menu, x: number, y: number): boolean {
     for (let temp: Menu | null = menu; temp; temp = temp.childMenu) {
-      if (DOMUtil.hitTest(temp.node, x, y)) {
+      if (DOM.hitTest(temp.node, x, y)) {
         return true;
       }
     }
@@ -1550,7 +1542,7 @@ namespace Private {
     let { width, height } = node.getBoundingClientRect();
 
     // Compute the box sizing for the menu.
-    let box = DOMUtil.boxSizing(submenu.node);
+    let box = DOM.boxSizing(submenu.node);
 
     // Get the bounding rect for the target item node.
     let itemRect = itemNode.getBoundingClientRect();
