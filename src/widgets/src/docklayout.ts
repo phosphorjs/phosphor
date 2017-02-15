@@ -226,7 +226,7 @@ class DockLayout extends Layout {
    * #### Notes
    * The widget will be moved if it is already contained in the layout.
    *
-   * A warning will be logged if the reference widget is invalid.
+   * An error will be thrown if the reference widget is invalid.
    */
   addWidget(widget: Widget, options: DockLayout.IAddOptions = {}): void {
     // Parse the options.
@@ -457,8 +457,6 @@ class DockLayout extends Layout {
   /**
    * Remove the specified widget from the layout structure.
    *
-   * @param widget - The widget to remove from the layout.
-   *
    * #### Notes
    * This is a no-op if the widget is not in the layout tree.
    *
@@ -523,7 +521,7 @@ class DockLayout extends Layout {
     // Otherwise, the split node also needs to be removed...
 
     // Clear the parent reference on the split node.
-    let temp = splitNode.parent;
+    let maybeParent = splitNode.parent;
     splitNode.parent = null;
 
     // Lookup the remaining child node and handle.
@@ -548,7 +546,7 @@ class DockLayout extends Layout {
     }
 
     // Otherwise, move the child node to the parent node...
-    let parentNode = temp!;
+    let parentNode = maybeParent!;
 
     // Lookup the index of the split node.
     let j = parentNode.children.indexOf(splitNode);
@@ -595,17 +593,7 @@ class DockLayout extends Layout {
   /**
    * Insert a widget next to an existing tab.
    *
-   * @param widget - The widget to add to the layout.
-   *
-   * @param ref - The reference widget, or `null`.
-   *
-   * @param refNode - The layout node for the ref widget, or `null`.
-   *
-   * @param after - Whether to insert the widget after the ref.
-   *
    * #### Notes
-   * This assumes the target widget is not in the layout tree.
-   *
    * This does not attach the widget to the parent widget.
    */
   private _insertTab(widget: Widget, ref: Widget | null, refNode: Private.TabLayoutNode | null, after: boolean): void {
@@ -649,24 +637,12 @@ class DockLayout extends Layout {
   /**
    * Insert a widget as a new split area.
    *
-   * @param widget - The widget to add to the layout.
-   *
-   * @param ref - The reference widget, or `null`.
-   *
-   * @param refNode - The layout node for the ref widget, or `null`.
-   *
-   * @param orientation - The orientation for the split.
-   *
-   * @param after - Whether to insert the widget after the ref.
-   *
    * #### Notes
-   * This assumes the target widget is not in the layout tree.
-   *
    * This does not attach the widget to the parent widget.
    */
   private _insertSplit(widget: Widget, ref: Widget | null, refNode: Private.TabLayoutNode | null, orientation: Private.Orientation, after: boolean): void {
     // Do nothing if there is no effective split.
-    if (widget === ref && refNode!.tabBar.titles.length === 1) {
+    if (widget === ref && refNode && refNode.tabBar.titles.length === 1) {
       return;
     }
 
@@ -683,11 +659,8 @@ class DockLayout extends Layout {
       return;
     }
 
-    // Lookup the split node for the ref widget.
-    let splitNode = refNode ? refNode.parent : null;
-
-    // If the split node is null, split the root.
-    if (!splitNode) {
+    // If the ref node parent is null, split the root.
+    if (!refNode || !refNode.parent) {
       // Ensure the root is split with the correct orientation.
       let root = this._splitRoot(orientation);
 
@@ -697,9 +670,12 @@ class DockLayout extends Layout {
       // Normalize the split node.
       Private.normalizeSizes(root);
 
+      // Create the sizer for new tab node.
+      let sizer = Private.createSizer(refNode ? 1 : Constants.GOLDEN_RATIO);
+
       // Insert the tab node sized to the golden ratio.
       ArrayExt.insert(root.children, i, tabNode);
-      ArrayExt.insert(root.sizers, i, Private.createSizer(Constants.GOLDEN_RATIO));
+      ArrayExt.insert(root.sizers, i, sizer);
       ArrayExt.insert(root.handles, i, this._createHandle());
       tabNode.parent = root;
 
@@ -711,11 +687,14 @@ class DockLayout extends Layout {
       return;
     }
 
+    // Lookup the split node for the ref widget.
+    let splitNode = refNode.parent;
+
     // If the split node already had the correct orientation,
     // the widget can be inserted into the split node directly.
     if (splitNode.orientation === orientation) {
       // Find the index of the ref node.
-      let i = splitNode.children.indexOf(refNode!);
+      let i = splitNode.children.indexOf(refNode);
 
       // Normalize the split node.
       Private.normalizeSizes(splitNode);
@@ -736,17 +715,17 @@ class DockLayout extends Layout {
     }
 
     // Remove the ref node from the split node.
-    let i = ArrayExt.removeFirstOf(splitNode.children, refNode!);
+    let i = ArrayExt.removeFirstOf(splitNode.children, refNode);
 
     // Create a new normalized split node for the children.
     let childNode = new Private.SplitLayoutNode(orientation);
     childNode.normalized = true;
 
     // Add the ref node sized to half the space.
-    childNode.children.push(refNode!);
+    childNode.children.push(refNode);
     childNode.sizers.push(Private.createSizer(0.5));
     childNode.handles.push(this._createHandle());
-    refNode!.parent = childNode;
+    refNode.parent = childNode;
 
     // Add the tab node sized to the other half.
     let j = after ? 1 : 0;
@@ -765,10 +744,6 @@ class DockLayout extends Layout {
 
   /**
    * Ensure the root is a split node with the given orientation.
-   *
-   * @param orientation - The required orientation of the root.
-   *
-   * @returns The new root node (as a convenience).
    */
   private _splitRoot(orientation: Private.Orientation): Private.SplitLayoutNode {
     // Bail early if the root already meets the requirements.
@@ -943,18 +918,14 @@ class DockLayout extends Layout {
     // Extract the previous and current title from the args.
     let { previousTitle, currentTitle } = args;
 
-    // Extract the widgets from the titles.
-    let previousWidget = previousTitle ? previousTitle.owner : null;
-    let currentWidget = currentTitle ? currentTitle.owner : null;
-
     // Hide the previous widget.
-    if (previousWidget) {
-      previousWidget.hide();
+    if (previousTitle) {
+      previousTitle.owner.hide();
     }
 
     // Show the current widget.
-    if (currentWidget) {
-      currentWidget.show();
+    if (currentTitle) {
+      currentTitle.owner.show();
     }
   }
 
@@ -1128,7 +1099,7 @@ namespace Constants {
 
 
 /**
- * The namespace for the module private details.
+ * The namespace for the module implementation details.
  */
 namespace Private {
   /**
@@ -1234,10 +1205,6 @@ namespace Private {
   /**
    * Create an iterator for all widgets in the layout tree.
    *
-   * @param node - The root layout node of interest.
-   *
-   * @returns An iterator which yields all widgets in the tree.
-   *
    * #### Notes
    * This includes the tab bars for the tab layout nodes.
    */
@@ -1255,10 +1222,6 @@ namespace Private {
   /**
    * Create an iterator for the user widgets in the layout tree.
    *
-   * @param node - The root layout node of interest.
-   *
-   * @returns An iterator which yields the user widgets in the tree.
-   *
    * #### Notes
    * This does not include the tab bars for the tab layout nodes.
    */
@@ -1275,10 +1238,6 @@ namespace Private {
 
   /**
    * Create an iterator for the tab bars in the tree.
-   *
-   * @param node - The root layout node of interest.
-   *
-   * @returns An iterator which yields the tab bars in the tree.
    */
   export
   function iterTabBars(node: LayoutNode): IIterator<TabBar<Widget>> {
@@ -1293,10 +1252,6 @@ namespace Private {
 
   /**
    * Create an iterator for the handles in the tree.
-   *
-   * @param node - The root layout node of interest.
-   *
-   * @returns An iterator which yields the handles in the tree.
    */
   export
   function iterHandles(node: LayoutNode): IIterator<HTMLDivElement> {
@@ -1312,10 +1267,6 @@ namespace Private {
 
   /**
    * Find the first tab layout node in a layout tree.
-   *
-   * @param node - The root layout node of interest.
-   *
-   * @returns The first tab node in the tree, or `null`.
    */
   export
   function firstTabNode(node: LayoutNode): TabLayoutNode | null {
@@ -1338,12 +1289,6 @@ namespace Private {
 
   /**
    * Find the tab layout node which contains the given widget.
-   *
-   * @param node - The root layout node of interest.
-   *
-   * @param widget - The widget of interest.
-   *
-   * @returns The tab node which holds the widget, or `null`.
    */
   export
   function findTabNode(node: LayoutNode, widget: Widget): TabLayoutNode | null {
@@ -1366,13 +1311,6 @@ namespace Private {
 
   /**
    * Find the split layout node which contains the given handle.
-   *
-   * @param node - The root layout node of interest.
-   *
-   * @param handle - The handle of interest.
-   *
-   * @returns An object which contains the split node and the index
-   *   of the handle, or `null` if the split node is not found.
    */
   export
   function findSplitNode(node: LayoutNode, handle: HTMLDivElement): { index: number, node: SplitLayoutNode } | null {
@@ -1401,12 +1339,6 @@ namespace Private {
 
   /**
    * Recursively fit the given layout node.
-   *
-   * @param node - The layout node of interest.
-   *
-   * @param spacing - The spacing to use between tab areas.
-   *
-   * @returns The computed size limits for the layout node.
    */
   export
   function fitLayoutNode(node: LayoutNode, spacing: number): DOMUtil.ISizeLimits {
@@ -1421,18 +1353,6 @@ namespace Private {
 
   /**
    * Recursively update the given layout node.
-   *
-   * @param node - The layout node of interest.
-   *
-   * @param x - The offset left position of the layout area.
-   *
-   * @param y - The offset top position of the layout area.
-   *
-   * @param width - The width of the layout area.
-   *
-   * @param height - The height of the layout area.
-   *
-   * @param spacing - The spacing to use between tab areas.
    */
   export
   function updateLayoutNode(node: LayoutNode, x: number, y: number, width: number, height: number, spacing: number): void {
@@ -1445,8 +1365,6 @@ namespace Private {
 
   /**
    * Sync the visibility and orientation of split node handles.
-   *
-   * @param splitNode - The split node of interest.
    */
   export
   function syncHandles(splitNode: SplitLayoutNode): void {
@@ -1540,10 +1458,6 @@ namespace Private {
 
   /**
    * Fit the given tab layout node.
-   *
-   * @param tabNode - The tab node of interest.
-   *
-   * @returns The computed size limits for the node.
    */
   function fitTabNode(tabNode: TabLayoutNode): DOMUtil.ISizeLimits {
     // Setup the limit variables.
@@ -1598,10 +1512,6 @@ namespace Private {
 
   /**
    * Recursively fit the given split layout node.
-   *
-   * @param splitNode - The split node of interest.
-   *
-   * @returns The computed size limits for the node.
    */
   function fitSplitNode(splitNode: SplitLayoutNode, spacing: number): DOMUtil.ISizeLimits {
     // Setup the limit variables.
@@ -1651,16 +1561,6 @@ namespace Private {
 
   /**
    * Update the given tab layout node.
-   *
-   * @param tabNode - The tab node of interest.
-   *
-   * @param x - The offset left position of the layout area.
-   *
-   * @param y - The offset top position of the layout area.
-   *
-   * @param width - The width of the layout area.
-   *
-   * @param height - The height of the layout area.
    */
   function updateTabNode(tabNode: TabLayoutNode, x: number, y: number, width: number, height: number): void {
     // Lookup common variables.
@@ -1687,18 +1587,6 @@ namespace Private {
 
   /**
    * Update the given split layout node.
-   *
-   * @param splitNode - The split node of interest.
-   *
-   * @param x - The offset left position of the layout area.
-   *
-   * @param y - The offset top position of the layout area.
-   *
-   * @param width - The width of the layout area.
-   *
-   * @param height - The height of the layout area.
-   *
-   * @param spacing - The spacing to use between tab areas.
    */
   function updateSplitNode(splitNode: SplitLayoutNode, x: number, y: number, width: number, height: number, spacing: number): void {
     // Compute the available layout space.
