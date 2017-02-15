@@ -386,6 +386,34 @@ namespace MessageLoop {
   }
 
   /**
+   * Process the pending posted messages in the queue immediately.
+   *
+   * #### Notes
+   * This function is useful when posted messages must be processed
+   * immediately, instead of on the next animation frame.
+   *
+   * This function should normally not be needed, but some browsers
+   * may require its use in order to work around idiosyncrasies.
+   *
+   * Recursing into this function is a no-op.
+   */
+  export
+  function flush(): void {
+    // Bail if recursion is detected or if there is no pending task.
+    if (flushGuard || loopTaskID === 0) {
+      return;
+    }
+
+    // Cancel the pending loop task.
+    cancelAnimationFrame(loopTaskID);
+
+    // Run the message loop within the recursion guard.
+    flushGuard = true;
+    runMessageLoop();
+    flushGuard = false;
+  }
+
+  /**
    * A type alias for a posted message pair.
    */
   type PostedMessage = { handler: IMessageHandler | null, msg: Message | null };
@@ -406,17 +434,14 @@ namespace MessageLoop {
   const dirtySet = new Set<Array<MessageHook | null>>();
 
   /**
-   * A local reference to an event loop callback.
+   * The id of the pending loop task animation frame.
    */
-  const defer = (() => {
-    let ok = typeof requestAnimationFrame === 'function';
-    return ok ? requestAnimationFrame : setImmediate;
-  })();
+  let loopTaskID = 0;
 
   /**
-   * Whether a message loop task is pending.
+   * A guard flag to prevent flush recursion.
    */
-  let loopTaskPending = false;
+  let flushGuard = false;
 
   /**
    * Invoke a message hook with the specified handler and message.
@@ -462,13 +487,12 @@ namespace MessageLoop {
     messageQueue.addLast({ handler, msg });
 
     // Bail if a loop task is already pending.
-    if (loopTaskPending) {
+    if (loopTaskID !== 0) {
       return;
     }
 
     // Schedule a run of the message loop.
-    loopTaskPending = true;
-    defer(runMessageLoop);
+    loopTaskID = requestAnimationFrame(runMessageLoop);
   }
 
   /**
@@ -479,8 +503,8 @@ namespace MessageLoop {
    * be processed on the next cycle of the loop.
    */
   function runMessageLoop(): void {
-    // Clear the pending flag so the next loop can be scheduled.
-    loopTaskPending = false;
+    // Clear the task ID so the next loop can be scheduled.
+    loopTaskID = 0;
 
     // If the message queue is empty, there is nothing else to do.
     if (messageQueue.isEmpty) {
@@ -519,7 +543,7 @@ namespace MessageLoop {
    */
   function scheduleCleanup(hooks: Array<MessageHook | null>): void {
     if (dirtySet.size === 0) {
-      defer(cleanupDirtySet);
+      requestAnimationFrame(cleanupDirtySet);
     }
     dirtySet.add(hooks);
   }
