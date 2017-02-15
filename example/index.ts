@@ -14,7 +14,7 @@ import {
 } from '@phosphor/messaging';
 
 import {
-  BoxPanel, CommandPalette, Menu, MenuBar, Widget
+  BoxPanel, CommandPalette, DockPanel, Menu, MenuBar, Widget
 } from '@phosphor/widgets';
 
 // import '../styles/base.css';
@@ -196,6 +196,13 @@ function main(): void {
     }
   });
 
+  commands.addCommand('example:black', {
+    label: 'Black',
+    execute: () => {
+      console.log('Black');
+    }
+  });
+
   commands.addCommand('notebook:new', {
     label: 'New Notebook',
     execute: () => {
@@ -260,6 +267,7 @@ function main(): void {
   palette.addItem({ command: 'example:two', category: 'Number' });
   palette.addItem({ command: 'example:three', category: 'Number' });
   palette.addItem({ command: 'example:four', category: 'Number' });
+  palette.addItem({ command: 'example:black', category: 'Number' });
   palette.addItem({ command: 'example:new-tab', category: 'File' });
   palette.addItem({ command: 'example:close-tab', category: 'File' });
   palette.addItem({ command: 'example:save-on-exit', category: 'File' });
@@ -286,34 +294,29 @@ function main(): void {
   });
 
   let r1 = new ContentWidget('Red');
-  // let b1 = new ContentWidget('Blue');
-  // let g1 = new ContentWidget('Green');
-  // let y1 = new ContentWidget('Yellow');
+  let b1 = new ContentWidget('Blue');
+  let g1 = new ContentWidget('Green');
+  let y1 = new ContentWidget('Yellow');
 
-  // let r2 = new ContentWidget('Red');
-  // let b2 = new ContentWidget('Blue');
+  let r2 = new ContentWidget('Red');
+  let b2 = new ContentWidget('Blue');
   // let g2 = new ContentWidget('Green');
   // let y2 = new ContentWidget('Yellow');
 
-  // let dock = new DockPanel();
-  // dock.addWidget(r1);
-  // dock.addWidget(b1, { mode: 'split-right', ref: r1 });
-  // dock.addWidget(y1, { mode: 'split-bottom', ref: b1 });
-  // dock.addWidget(g1, { mode: 'split-left', ref: y1 });
-  // dock.addWidget(r2, { ref: b1 });
-  // dock.addWidget(b2, { mode: 'split-right', ref: y1 });
+  let dock = new DockPanel();
+  dock.addWidget(r1);
+  dock.addWidget(b1, { mode: 'split-right', ref: r1 });
+  dock.addWidget(y1, { mode: 'split-bottom', ref: b1 });
+  dock.addWidget(g1, { mode: 'split-left', ref: y1 });
+  dock.addWidget(r2, { ref: b1 });
+  dock.addWidget(b2, { mode: 'split-right', ref: y1 });
 
-  // dock.currentChanged.connect((s, a) => { console.log(a.newValue); });
-
-  // BoxPanel.setStretch(dock, 1);
-
-  BoxPanel.setStretch(r1, 1);
+  BoxPanel.setStretch(dock, 1);
 
   let main = new BoxPanel({ direction: 'left-to-right', spacing: 0 });
   main.id = 'main';
   main.addWidget(palette);
-  // main.addWidget(dock);
-  main.addWidget(r1);
+  main.addWidget(dock);
 
   window.onresize = () => { main.update(); };
 
