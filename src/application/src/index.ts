@@ -312,12 +312,14 @@ class Application<T extends Widget> {
    * @param options - The options for starting the application.
    *
    * @returns A promise which resolves when all bootstrapping work
-   *   is complete and the shell is mounted to the DOM, or rejects
-   *   with an error if the bootstrapping process fails.
+   *   is complete and the shell is mounted to the DOM.
    *
    * #### Notes
    * This should be called once by the application creator after all
    * initial plugins have been registered.
+   *
+   * If a plugin fails to the load, the error will be logged and the
+   * other valid plugins will continue to be loaded.
    *
    * Bootstrapping the application consists of the following steps:
    * 1. Activate the startup plugins
@@ -343,17 +345,16 @@ class Application<T extends Widget> {
     let startups = Private.collectStartupPlugins(this._pluginMap, options);
 
     // Generate the activation promises.
-    let promises = startups.map(id => this.activatePlugin(id));
+    let promises = startups.map(id => {
+      return this.activatePlugin(id).catch(console.error);
+    });
 
     // Wait for the plugins to activate, then finalize startup.
-    this._promise = Promise.all(promises).then(() =>  {
+    this._promise = Promise.all(promises).then(() => {
       this._started = true;
       this._promise = null;
       this.attachShell(hostID);
       this.addEventListeners();
-    }).catch(error => {
-      this._promise = null;
-      throw error;
     });
 
     // Return the pending bootstrapping promise.
