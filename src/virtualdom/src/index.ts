@@ -1154,7 +1154,7 @@ namespace Private {
   }
 
   /**
-   *
+   * A set of special-cased attribute names.
    */
   const specialAttrs = {
     'key': true,

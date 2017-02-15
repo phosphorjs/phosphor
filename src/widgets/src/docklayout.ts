@@ -671,7 +671,7 @@ class DockLayout extends Layout {
       Private.normalizeSizes(root);
 
       // Create the sizer for new tab node.
-      let sizer = Private.createSizer(refNode ? 1 : Constants.GOLDEN_RATIO);
+      let sizer = Private.createSizer(refNode ? 1 : Private.GOLDEN_RATIO);
 
       // Insert the tab node sized to the golden ratio.
       ArrayExt.insert(root.children, i, tabNode);
@@ -1069,21 +1069,15 @@ namespace DockLayout {
 
 
 /**
- * The namespace for the module constants.
+ * The namespace for the module implementation details.
  */
-namespace Constants {
+namespace Private {
   /**
    * A fraction used for sizing root panels; ~= `1 / golden_ratio`.
    */
   export
   const GOLDEN_RATIO = 0.618;
-}
 
-
-/**
- * The namespace for the module implementation details.
- */
-namespace Private {
   /**
    * A type alias for a dock layout node.
    */

@@ -422,7 +422,7 @@ class Drag implements IDisposable {
     if (!this.dragImage) {
       return;
     }
-    this.dragImage.classList.add(Drag.DRAG_IMAGE_CLASS);
+    this.dragImage.classList.add('p-mod-drag-image');
     let style = this.dragImage.style;
     style.pointerEvents = 'none';
     style.position = 'absolute';
@@ -607,18 +607,6 @@ namespace Drag {
   }
 
   /**
-   * The class name added to drag image nodes.
-   */
-  export
-  const DRAG_IMAGE_CLASS = 'p-mod-drag-image';
-
-  /**
-   * The class name added to the document body during cursor override.
-   */
-  export
-  const OVERRIDE_CURSOR_CLASS = 'p-mod-override-cursor';
-
-  /**
    * Override the cursor icon for the entire document.
    *
    * @param cursor - The string representing the cursor style.
@@ -648,11 +636,11 @@ namespace Drag {
   function overrideCursor(cursor: string): IDisposable {
     let id = ++overrideCursorID;
     document.body.style.cursor = cursor;
-    document.body.classList.add(OVERRIDE_CURSOR_CLASS);
+    document.body.classList.add('p-mod-override-cursor');
     return new DisposableDelegate(() => {
       if (id === overrideCursorID) {
         document.body.style.cursor = '';
-        document.body.classList.remove(OVERRIDE_CURSOR_CLASS);
+        document.body.classList.remove('p-mod-override-cursor');
       }
     });
   }

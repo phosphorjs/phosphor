@@ -584,22 +584,22 @@ class DockPanel extends Widget {
       top = box.paddingTop;
       left = box.paddingLeft;
       right = box.paddingRight;
-      bottom = rect.height * Constants.GOLDEN_RATIO;
+      bottom = rect.height * Private.GOLDEN_RATIO;
       break;
     case 'root-left':
       top = box.paddingTop;
       left = box.paddingLeft;
-      right = rect.width * Constants.GOLDEN_RATIO;
+      right = rect.width * Private.GOLDEN_RATIO;
       bottom = box.paddingBottom;
       break;
     case 'root-right':
       top = box.paddingTop;
-      left = rect.width * Constants.GOLDEN_RATIO;
+      left = rect.width * Private.GOLDEN_RATIO;
       right = box.paddingRight;
       bottom = box.paddingBottom;
       break;
     case 'root-bottom':
-      top = rect.height * Constants.GOLDEN_RATIO;
+      top = rect.height * Private.GOLDEN_RATIO;
       left = box.paddingLeft;
       right = box.paddingRight;
       bottom = box.paddingBottom;
@@ -1016,9 +1016,9 @@ namespace DockPanel {
 
 
 /**
- * The namespace for the module constants.
+ * The namespace for the module implementation details.
  */
-namespace Constants {
+namespace Private {
   /**
    * A fraction used for sizing root panels; ~= `1 / golden_ratio`.
    */
@@ -1030,13 +1030,7 @@ namespace Constants {
    */
   export
   const EDGE_SIZE = 40;
-}
 
-
-/**
- * The namespace for the module implementation details.
- */
-namespace Private {
   /**
    * An object which holds mouse press data.
    */
@@ -1171,7 +1165,7 @@ namespace Private {
     let panelRect = panel.node.getBoundingClientRect();
 
     // Check for a left edge zone.
-    if (x < panelRect.left + Constants.EDGE_SIZE) {
+    if (x < panelRect.left + EDGE_SIZE) {
       if (y - panelRect.top < x - panelRect.left) {
         return { zone: 'root-top', target: null };
       }
@@ -1182,7 +1176,7 @@ namespace Private {
     }
 
     // Check for a right edge zone.
-    if (x >= panelRect.right - Constants.EDGE_SIZE) {
+    if (x >= panelRect.right - EDGE_SIZE) {
       if (y - panelRect.top < panelRect.right - x) {
         return { zone: 'root-top', target: null };
       }
@@ -1193,12 +1187,12 @@ namespace Private {
     }
 
     // Check for a top edge zone.
-    if (y < panelRect.top + Constants.EDGE_SIZE) {
+    if (y < panelRect.top + EDGE_SIZE) {
       return { zone: 'root-top', target: null };
     }
 
     // Check for a bottom edge zone.
-    if (y >= panelRect.bottom - Constants.EDGE_SIZE) {
+    if (y >= panelRect.bottom - EDGE_SIZE) {
       return { zone: 'root-bottom', target: null };
     }
 

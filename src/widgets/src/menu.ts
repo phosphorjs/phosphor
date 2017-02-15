@@ -861,7 +861,7 @@ class Menu extends Widget {
       this._openTimerID = setTimeout(() => {
         this._openTimerID = 0;
         this._openChildMenu();
-      }, Constants.TIMER_DELAY);
+      }, Private.TIMER_DELAY);
     }
   }
 
@@ -873,7 +873,7 @@ class Menu extends Widget {
       this._closeTimerID = setTimeout(() => {
         this._closeTimerID = 0;
         this._closeChildMenu();
-      }, Constants.TIMER_DELAY);
+      }, Private.TIMER_DELAY);
     }
   }
 
@@ -1300,9 +1300,9 @@ namespace Menu {
 
 
 /**
- * The namespace for the module constants.
+ * The namespace for the module implementation details.
  */
-namespace Constants {
+namespace Private {
   /**
    * The ms delay for opening and closing a submenu.
    */
@@ -1314,13 +1314,7 @@ namespace Constants {
    */
   export
   const SUBMENU_OVERLAP = 3;
-}
 
-
-/**
- * The namespace for the module implementation details.
- */
-namespace Private {
   /**
    * Create the DOM node for a menu.
    */
@@ -1562,11 +1556,11 @@ namespace Private {
     let itemRect = itemNode.getBoundingClientRect();
 
     // Compute the target X position.
-    let x = itemRect.right - Constants.SUBMENU_OVERLAP;
+    let x = itemRect.right - SUBMENU_OVERLAP;
 
     // Adjust the X position to fit on the screen.
     if (x + width > px + cw) {
-      x = itemRect.left + Constants.SUBMENU_OVERLAP - width;
+      x = itemRect.left + SUBMENU_OVERLAP - width;
     }
 
     // Compute the target Y position.

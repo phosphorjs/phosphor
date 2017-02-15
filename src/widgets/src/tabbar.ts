@@ -1447,9 +1447,9 @@ namespace TabBar {
 
 
 /**
- * The namespace for the module constants.
+ * The namespace for the module implementation details.
  */
-namespace Constants {
+namespace Private {
   /**
    * The start drag distance threshold.
    */
@@ -1461,13 +1461,7 @@ namespace Constants {
    */
   export
   const DETACH_THRESHOLD = 20;
-}
 
-
-/**
- * The namespace for the module implementation details.
- */
-namespace Private {
   /**
    * A struct which holds the drag data for a tab bar.
    */
@@ -1648,10 +1642,9 @@ namespace Private {
    */
   export
   function dragExceeded(data: IDragData, event: MouseEvent): boolean {
-    let thresh = Constants.DRAG_THRESHOLD;
     let dx = Math.abs(event.clientX - data.pressX);
     let dy = Math.abs(event.clientY - data.pressY);
-    return dx >= thresh || dy >= thresh;
+    return dx >= DRAG_THRESHOLD || dy >= DRAG_THRESHOLD;
   }
 
   /**
@@ -1660,12 +1653,11 @@ namespace Private {
   export
   function detachExceeded(data: IDragData, event: MouseEvent): boolean {
     let rect = data.contentRect!;
-    let thresh = Constants.DETACH_THRESHOLD;
     return (
-      (event.clientX < rect.left - thresh) ||
-      (event.clientX >= rect.right + thresh) ||
-      (event.clientY < rect.top - thresh) ||
-      (event.clientY >= rect.bottom + thresh)
+      (event.clientX < rect.left - DETACH_THRESHOLD) ||
+      (event.clientX >= rect.right + DETACH_THRESHOLD) ||
+      (event.clientY < rect.top - DETACH_THRESHOLD) ||
+      (event.clientY >= rect.bottom + DETACH_THRESHOLD)
     );
   }
 
