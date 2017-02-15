@@ -569,8 +569,6 @@ class Menu extends Widget {
     let parentMenu = this._parentMenu;
     if (parentMenu) {
       this._parentMenu = null;
-      parentMenu._cancelOpenTimer();
-      parentMenu._cancelCloseTimer();
       parentMenu._childIndex = -1;
       parentMenu._childMenu = null;
       parentMenu.activate();
