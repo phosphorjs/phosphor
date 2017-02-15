@@ -245,9 +245,9 @@ class DockPanel extends Widget {
   }
 
   /**
-   * A message handler invoked on an `'after-attach'` message.
+   * A message handler invoked on a `'before-attach'` message.
    */
-  protected onAfterAttach(msg: Message): void {
+  protected onBeforeAttach(msg: Message): void {
     this.node.addEventListener('p-dragenter', this);
     this.node.addEventListener('p-dragleave', this);
     this.node.addEventListener('p-dragover', this);
@@ -256,9 +256,9 @@ class DockPanel extends Widget {
   }
 
   /**
-   * A message handler invoked on a `'before-detach'` message.
+   * A message handler invoked on an `'after-detach'` message.
    */
-  protected onBeforeDetach(msg: Message): void {
+  protected onAfterDetach(msg: Message): void {
     this.node.removeEventListener('p-dragenter', this);
     this.node.removeEventListener('p-dragleave', this);
     this.node.removeEventListener('p-dragover', this);

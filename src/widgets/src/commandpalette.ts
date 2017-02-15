@@ -215,9 +215,9 @@ class CommandPalette extends Widget {
   }
 
   /**
-   * A message handler invoked on a `'after-attach'` message.
+   * A message handler invoked on a `'before-attach'` message.
    */
-  protected onAfterAttach(msg: Message): void {
+  protected onBeforeAttach(msg: Message): void {
     this.node.addEventListener('click', this);
     this.node.addEventListener('keydown', this);
     this.node.addEventListener('input', this);
@@ -226,9 +226,9 @@ class CommandPalette extends Widget {
   }
 
   /**
-   * A message handler invoked on a `'before-detach'` message.
+   * A message handler invoked on an `'after-detach'` message.
    */
-  protected onBeforeDetach(msg: Message): void {
+  protected onAfterDetach(msg: Message): void {
     this.node.removeEventListener('click', this);
     this.node.removeEventListener('keydown', this);
     this.node.removeEventListener('input', this);

@@ -163,16 +163,16 @@ class SplitPanel extends Panel {
   }
 
   /**
-   * A message handler invoked on an `'after-attach'` message.
+   * A message handler invoked on a `'before-attach'` message.
    */
-  protected onAfterAttach(msg: Message): void {
+  protected onBeforeAttach(msg: Message): void {
     this.node.addEventListener('mousedown', this);
   }
 
   /**
-   * A message handler invoked on a `'before-detach'` message.
+   * A message handler invoked on an `'after-detach'` message.
    */
-  protected onBeforeDetach(msg: Message): void {
+  protected onAfterDetach(msg: Message): void {
     this.node.removeEventListener('mousedown', this);
     this._releaseMouse();
   }
