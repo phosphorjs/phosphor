@@ -181,7 +181,7 @@ class DockLayout extends Layout {
    */
   moveHandle(handle: HTMLDivElement, offsetX: number, offsetY: number): void {
     // Bail early if there is no root or if the handle is hidden.
-    if (!this._root || handle.classList.contains(Constants.HIDDEN_CLASS)) {
+    if (!this._root || handle.classList.contains('p-mod-hidden')) {
       return;
     }
 
@@ -1073,24 +1073,6 @@ namespace DockLayout {
  */
 namespace Constants {
   /**
-   * The class name added to hidden handles.
-   */
-  export
-  const HIDDEN_CLASS = 'p-mod-hidden';
-
-  /**
-   * The class name added to horizontal handles.
-   */
-  export
-  const HORIZONTAL_CLASS = 'p-mod-horizontal';
-
-  /**
-   * The class name added to vertical handles.
-   */
-  export
-  const VERTICAL_CLASS = 'p-mod-vertical';
-
-  /**
    * A fraction used for sizing root panels; ~= `1 / golden_ratio`.
    */
   export
@@ -1376,16 +1358,16 @@ namespace Private {
     // Update the handle orientation and visibility.
     each(splitNode.handles, (handle, i) => {
       if (splitNode.orientation === 'horizontal') {
-        handle.classList.remove(Constants.VERTICAL_CLASS);
-        handle.classList.add(Constants.HORIZONTAL_CLASS);
+        handle.classList.remove('p-mod-vertical');
+        handle.classList.add('p-mod-horizontal');
       } else {
-        handle.classList.remove(Constants.HORIZONTAL_CLASS);
-        handle.classList.add(Constants.VERTICAL_CLASS);
+        handle.classList.remove('p-mod-horizontal');
+        handle.classList.add('p-mod-vertical');
       }
       if (i === splitNode.handles.length - 1) {
-        handle.classList.add(Constants.HIDDEN_CLASS);
+        handle.classList.add('p-mod-hidden');
       } else {
-        handle.classList.remove(Constants.HIDDEN_CLASS);
+        handle.classList.remove('p-mod-hidden');
       }
     });
   }

@@ -33,7 +33,7 @@ class BoxPanel extends Panel {
    */
   constructor(options: BoxPanel.IOptions = {}) {
     super({ layout: Private.createLayout(options) });
-    this.addClass(BoxPanel.BOX_PANEL_CLASS);
+    this.addClass('p-BoxPanel');
   }
 
   /**
@@ -68,14 +68,14 @@ class BoxPanel extends Panel {
    * A message handler invoked on a `'child-added'` message.
    */
   protected onChildAdded(msg: Widget.ChildMessage): void {
-    msg.child.addClass(BoxPanel.CHILD_CLASS);
+    msg.child.addClass('p-BoxPanel-child');
   }
 
   /**
    * A message handler invoked on a `'child-removed'` message.
    */
   protected onChildRemoved(msg: Widget.ChildMessage): void {
-    msg.child.removeClass(BoxPanel.CHILD_CLASS);
+    msg.child.removeClass('p-BoxPanel-child');
   }
 }
 
@@ -85,42 +85,6 @@ class BoxPanel extends Panel {
  */
 export
 namespace BoxPanel {
-  /**
-   * The class name added to BoxPanel instances.
-   */
-  export
-  const BOX_PANEL_CLASS = 'p-BoxPanel';
-
-  /**
-   * The class name added to a BoxPanel child.
-   */
-  export
-  const CHILD_CLASS = 'p-BoxPanel-child';
-
-  /**
-   * The class name added to left-to-right box panels.
-   */
-  export
-  const LEFT_TO_RIGHT_CLASS = BoxLayout.LEFT_TO_RIGHT_CLASS;
-
-  /**
-   * The class name added to right-to-left box panels.
-   */
-  export
-  const RIGHT_TO_LEFT_CLASS = BoxLayout.RIGHT_TO_LEFT_CLASS;
-
-  /**
-   * The class name added to top-to-bottom box panels.
-   */
-  export
-  const TOP_TO_BOTTOM_CLASS = BoxLayout.TOP_TO_BOTTOM_CLASS;
-
-  /**
-   * The class name added to bottom-to-top box panels.
-   */
-  export
-  const BOTTOM_TO_TOP_CLASS = BoxLayout.BOTTOM_TO_TOP_CLASS;
-
   /**
    * A type alias for a box panel direction.
    */

@@ -58,7 +58,7 @@ class DockPanel extends Widget {
    */
   constructor(options: DockPanel.IOptions = {}) {
     super();
-    this.addClass(Constants.DOCK_PANEL_CLASS);
+    this.addClass('p-DockPanel');
 
     // Extract the inter-panel spacing.
     let spacing = options.spacing !== undefined ? options.spacing : 4;
@@ -277,7 +277,7 @@ class DockPanel extends Widget {
     }
 
     // Add the widget class to the child.
-    msg.child.addClass(Constants.WIDGET_CLASS);
+    msg.child.addClass('p-DockPanel-widget');
   }
 
   /**
@@ -290,7 +290,7 @@ class DockPanel extends Widget {
     }
 
     // Remove the widget class from the child.
-    msg.child.removeClass(Constants.WIDGET_CLASS);
+    msg.child.removeClass('p-DockPanel-widget');
   }
 
   /**
@@ -299,7 +299,7 @@ class DockPanel extends Widget {
   private _evtDragEnter(event: IDragEvent): void {
     // If the factory mime type is present, mark the event as
     // handled in order to get the rest of the drag events.
-    if (event.mimeData.hasData(Constants.FACTORY_MIME)) {
+    if (event.mimeData.hasData('application/vnd.phosphor.widget-factory')) {
       event.preventDefault();
       event.stopPropagation();
     }
@@ -367,7 +367,8 @@ class DockPanel extends Widget {
     }
 
     // Bail if the factory mime type has invalid data.
-    let factory = event.mimeData.getData(Constants.FACTORY_MIME);
+    let mimeData = event.mimeData;
+    let factory = mimeData.getData('application/vnd.phosphor.widget-factory');
     if (typeof factory !== 'function') {
       event.dropAction = 'none';
       return;
@@ -720,7 +721,8 @@ class DockPanel extends Widget {
 
     // Setup the mime data for the drag operation.
     let mimeData = new MimeData();
-    mimeData.setData(Constants.FACTORY_MIME, () => title.owner);
+    let factory = () => title.owner;
+    mimeData.setData('application/vnd.phosphor.widget-factory', factory);
 
     // Create the drag image for the drag operation.
     let dragImage = tab.cloneNode(true) as HTMLElement;
@@ -733,12 +735,12 @@ class DockPanel extends Widget {
     });
 
     // Hide the tab node in the original tab.
-    tab.classList.add(Constants.HIDDEN_CLASS);
+    tab.classList.add('p-mod-hidden');
 
     // Create the cleanup callback.
     let cleanup = (() => {
       this._drag = null;
-      tab.classList.remove(Constants.HIDDEN_CLASS);
+      tab.classList.remove('p-mod-hidden');
     });
 
     // Start the drag operation and cleanup when done.
@@ -894,8 +896,8 @@ namespace DockPanel {
      */
     constructor() {
       this.node = document.createElement('div');
-      this.node.classList.add(Constants.OVERLAY_CLASS);
-      this.node.classList.add(Constants.HIDDEN_CLASS);
+      this.node.classList.add('p-DockPanel-overlay');
+      this.node.classList.add('p-mod-hidden');
       this.node.style.position = 'absolute';
     }
 
@@ -930,7 +932,7 @@ namespace DockPanel {
       this._hidden = false;
 
       // Finally, show the overlay.
-      this.node.classList.remove(Constants.HIDDEN_CLASS);
+      this.node.classList.remove('p-mod-hidden');
     }
 
     /**
@@ -950,7 +952,7 @@ namespace DockPanel {
         clearTimeout(this._timer);
         this._timer = -1;
         this._hidden = true;
-        this.node.classList.add(Constants.HIDDEN_CLASS);
+        this.node.classList.add('p-mod-hidden');
         return;
       }
 
@@ -963,7 +965,7 @@ namespace DockPanel {
       this._timer = setTimeout(() => {
         this._timer = -1;
         this._hidden = true;
-        this.node.classList.add(Constants.HIDDEN_CLASS);
+        this.node.classList.add('p-mod-hidden');
       }, delay);
     }
 
@@ -989,7 +991,7 @@ namespace DockPanel {
      */
     createTabBar(): TabBar<Widget> {
       let bar = new TabBar<Widget>();
-      bar.addClass(Constants.TAB_BAR_CLASS);
+      bar.addClass('p-DockPanel-tabBar');
       return bar;
     }
 
@@ -1000,7 +1002,7 @@ namespace DockPanel {
      */
     createHandle(): HTMLDivElement {
       let handle = document.createElement('div');
-      handle.className = Constants.HANDLE_CLASS;
+      handle.className = 'p-DockPanel-handle';
       return handle;
     }
   }
@@ -1017,48 +1019,6 @@ namespace DockPanel {
  * The namespace for the module constants.
  */
 namespace Constants {
-  /**
-   * The class name added to a DockPanel instance.
-   */
-  export
-  const DOCK_PANEL_CLASS = 'p-DockPanel';
-
-  /**
-   * The class name added to DockPanel widgets.
-   */
-  export
-  const WIDGET_CLASS = 'p-DockPanel-widget';
-
-  /**
-   * The class name added to a DockPanel overlay.
-   */
-  export
-  const OVERLAY_CLASS = 'p-DockPanel-overlay';
-
-  /**
-   * The class name added to a DockPanel handle.
-   */
-  export
-  const HANDLE_CLASS = 'p-DockPanel-handle';
-
-  /**
-   * The class name added to a DockPanel tab bar.
-   */
-  export
-  const TAB_BAR_CLASS = 'p-DockPanel-tabBar';
-
-  /**
-   * The class name added to hidden entities.
-   */
-  export
-  const HIDDEN_CLASS = 'p-mod-hidden';
-
-  /**
-   * The factory MIME type supported by the dock panel.
-   */
-  export
-  const FACTORY_MIME = 'application/vnd.phosphor.widget-factory';
-
   /**
    * A fraction used for sizing root panels; ~= `1 / golden_ratio`.
    */

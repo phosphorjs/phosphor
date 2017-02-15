@@ -33,7 +33,7 @@ class Panel extends Widget {
    */
   constructor(options: Panel.IOptions = {}) {
     super();
-    this.addClass(Panel.PANEL_CLASS);
+    this.addClass('p-Panel');
     this.layout = Private.createLayout(options);
   }
 
@@ -77,12 +77,6 @@ class Panel extends Widget {
  */
 export
 namespace Panel {
-  /**
-   * The class name added to Panel instances.
-   */
-  export
-  const PANEL_CLASS = 'p-Panel';
-
   /**
    * An options object for creating a panel.
    */

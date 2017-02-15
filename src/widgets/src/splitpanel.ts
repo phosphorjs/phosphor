@@ -49,7 +49,7 @@ class SplitPanel extends Panel {
    */
   constructor(options: SplitPanel.IOptions = {}) {
     super({ layout: Private.createLayout(options) });
-    this.addClass(SplitPanel.SPLIT_PANEL_CLASS);
+    this.addClass('p-SplitPanel');
   }
 
   /**
@@ -181,7 +181,7 @@ class SplitPanel extends Panel {
    * A message handler invoked on a `'child-added'` message.
    */
   protected onChildAdded(msg: Widget.ChildMessage): void {
-    msg.child.addClass(SplitPanel.CHILD_CLASS);
+    msg.child.addClass('p-SplitPanel-child');
     this._releaseMouse();
   }
 
@@ -189,7 +189,7 @@ class SplitPanel extends Panel {
    * A message handler invoked on a `'child-removed'` message.
    */
   protected onChildRemoved(msg: Widget.ChildMessage): void {
-    msg.child.removeClass(SplitPanel.CHILD_CLASS);
+    msg.child.removeClass('p-SplitPanel-child');
     this._releaseMouse();
   }
 
@@ -322,36 +322,6 @@ class SplitPanel extends Panel {
 export
 namespace SplitPanel {
   /**
-   * The class name added to SplitPanel instances.
-   */
-  export
-  const SPLIT_PANEL_CLASS = 'p-SplitPanel';
-
-  /**
-   * The class name added to split panel children.
-   */
-  export
-  const CHILD_CLASS = 'p-SplitPanel-child';
-
-  /**
-   * The class name added to horizontal split panels.
-   */
-  export
-  const HORIZONTAL_CLASS = SplitLayout.HORIZONTAL_CLASS;
-
-  /**
-   * The class name added to vertical split panels.
-   */
-  export
-  const VERTICAL_CLASS = SplitLayout.VERTICAL_CLASS;
-
-  /**
-   * The class name added to hidden split panel handles.
-   */
-  export
-  const HIDDEN_CLASS = SplitLayout.HIDDEN_CLASS;
-
-  /**
    * A type alias for a split panel orientation.
    */
   export
@@ -411,21 +381,9 @@ namespace SplitPanel {
      */
     createHandle(): HTMLDivElement {
       let handle = document.createElement('div');
-      handle.className = Renderer.HANDLE_CLASS;
+      handle.className = 'p-SplitPanel-handle';
       return handle;
     }
-  }
-
-  /**
-   * The namespace for the `Renderer` class statics.
-   */
-  export
-  namespace Renderer {
-    /**
-     * The class name added to split panel handles.
-     */
-    export
-    const HANDLE_CLASS = 'p-SplitPanel-handle';
   }
 
   /**

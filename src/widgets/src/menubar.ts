@@ -50,7 +50,7 @@ class MenuBar extends Widget {
    */
   constructor(options: MenuBar.IOptions = {}) {
     super({ node: Private.createNode() });
-    this.addClass(MenuBar.MENU_BAR_CLASS);
+    this.addClass('p-MenuBar');
     this.setFlag(Widget.Flag.DisallowLayout);
     this.renderer = options.renderer || MenuBar.defaultRenderer;
   }
@@ -88,7 +88,7 @@ class MenuBar extends Widget {
    * Modifying this node directly can lead to undefined behavior.
    */
   get contentNode(): HTMLUListElement {
-    return this.node.getElementsByClassName(MenuBar.CONTENT_CLASS)[0] as HTMLUListElement;
+    return this.node.getElementsByClassName('p-MenuBar-content')[0] as HTMLUListElement;
   }
 
   /**
@@ -211,7 +211,7 @@ class MenuBar extends Widget {
       ArrayExt.insert(this._menus, j, menu);
 
       // Add the styling class to the menu.
-      menu.addClass(MenuBar.MENU_CLASS);
+      menu.addClass('p-MenuBar-menu');
 
       // Connect to the menu signals.
       menu.aboutToClose.connect(this._onMenuAboutToClose, this);
@@ -282,7 +282,7 @@ class MenuBar extends Widget {
     menu.title.changed.disconnect(this._onTitleChanged, this);
 
     // Remove the styling class from the menu.
-    menu.removeClass(MenuBar.MENU_CLASS);
+    menu.removeClass('p-MenuBar-menu');
 
     // Schedule an update of the items.
     this.update();
@@ -305,7 +305,7 @@ class MenuBar extends Widget {
       menu.aboutToClose.disconnect(this._onMenuAboutToClose, this);
       menu.menuRequested.disconnect(this._onMenuMenuRequested, this);
       menu.title.changed.disconnect(this._onTitleChanged, this);
-      menu.removeClass(MenuBar.MENU_CLASS);
+      menu.removeClass('p-MenuBar-menu');
     }
 
     // Clear the menus array.
@@ -570,7 +570,7 @@ class MenuBar extends Widget {
     if (oldMenu) {
       oldMenu.close();
     } else {
-      this.addClass(MenuBar.ACTIVE_CLASS);
+      this.addClass('p-mod-active');
       document.addEventListener('mousedown', this, true);
     }
 
@@ -597,7 +597,7 @@ class MenuBar extends Widget {
     }
 
     // Remove the active class from the menu bar.
-    this.removeClass(MenuBar.ACTIVE_CLASS);
+    this.removeClass('p-mod-active');
 
     // Remove the document listeners.
     document.removeEventListener('mousedown', this, true);
@@ -623,7 +623,7 @@ class MenuBar extends Widget {
     }
 
     // Remove the active class from the menu bar.
-    this.removeClass(MenuBar.ACTIVE_CLASS);
+    this.removeClass('p-mod-active');
 
     // Remove the document listeners.
     document.removeEventListener('mousedown', this, true);
@@ -680,30 +680,6 @@ class MenuBar extends Widget {
  */
 export
 namespace MenuBar {
-  /**
-   * The class name added to a menu bar widget.
-   */
-  export
-  const MENU_BAR_CLASS = 'p-MenuBar';
-
-  /**
-   * The class name added to a menu bar content node.
-   */
-  export
-  const CONTENT_CLASS = 'p-MenuBar-content';
-
-  /**
-   * The class name added to an open menu bar menu.
-   */
-  export
-  const MENU_CLASS = 'p-MenuBar-menu';
-
-  /**
-   * The class name added to an active menu bar.
-   */
-  export
-  const ACTIVE_CLASS = 'p-mod-active';
-
   /**
    * An options object for creating a menu bar.
    */
@@ -798,7 +774,7 @@ namespace MenuBar {
      */
     renderLabel(data: IRenderData): VirtualElement {
       let content = this.formatLabel(data);
-      return h.div({ className: Renderer.LABEL_CLASS }, content);
+      return h.div({ className: 'p-MenuBar-itemLabel' }, content);
     }
 
     /**
@@ -809,12 +785,12 @@ namespace MenuBar {
      * @returns The full class name for the menu item.
      */
     createItemClass(data: IRenderData): string {
-      let name = Renderer.ITEM_CLASS;
+      let name = 'p-MenuBar-item';
       if (data.title.className) {
         name += ` ${data.title.className}`;
       }
       if (data.active) {
-        name += ` ${Renderer.ACTIVE_CLASS}`;
+        name += ' p-mod-active';
       }
       return name;
     }
@@ -827,7 +803,7 @@ namespace MenuBar {
      * @returns The full class name for the item icon.
      */
     createIconClass(data: IRenderData): string {
-      let name = Renderer.ICON_CLASS;
+      let name = 'p-MenuBar-itemIcon';
       let extra = data.title.icon;
       return extra ? `${name} ${extra}` : name;
     }
@@ -854,47 +830,11 @@ namespace MenuBar {
       let char = label[mnemonic];
 
       // Wrap the mnemonic character in a span.
-      let span = h.span({ className: Renderer.MNEMONIC_CLASS }, char);
+      let span = h.span({ className: 'p-MenuBar-itemMnemonic' }, char);
 
       // Return the content parts.
       return [prefix, span, suffix];
     }
-  }
-
-  /**
-   * The namespace for the `Renderer` class statics.
-   */
-  export
-  namespace Renderer {
-    /**
-     * The class name added to a menu bar item node.
-     */
-    export
-    const ITEM_CLASS = 'p-MenuBar-item';
-
-    /**
-     * The class name added to a menu bar item icon node.
-     */
-    export
-    const ICON_CLASS = 'p-MenuBar-itemIcon';
-
-    /**
-     * The class name added to a menu bar item label node.
-     */
-    export
-    const LABEL_CLASS = 'p-MenuBar-itemLabel';
-
-    /**
-     * The class name added to a menu bar item mnemonic node.
-     */
-    export
-    const MNEMONIC_CLASS = 'p-MenuBar-itemMnemonic';
-
-    /**
-     * The class name added to an active menu bar item.
-     */
-    export
-    const ACTIVE_CLASS = 'p-mod-active';
   }
 
   /**
@@ -916,7 +856,7 @@ namespace Private {
   function createNode(): HTMLDivElement {
     let node = document.createElement('div');
     let content = document.createElement('ul');
-    content.className = MenuBar.CONTENT_CLASS;
+    content.className = 'p-MenuBar-content';
     node.appendChild(content);
     node.tabIndex = -1;
     return node;

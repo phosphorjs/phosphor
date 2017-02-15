@@ -37,7 +37,7 @@ class StackedPanel extends Panel {
    */
   constructor(options: StackedPanel.IOptions = {}) {
     super({ layout: Private.createLayout(options) });
-    this.addClass(StackedPanel.STACKED_PANEL_CLASS);
+    this.addClass('p-StackedPanel');
   }
 
   /**
@@ -51,14 +51,14 @@ class StackedPanel extends Panel {
    * A message handler invoked on a `'child-added'` message.
    */
   protected onChildAdded(msg: Widget.ChildMessage): void {
-    msg.child.addClass(StackedPanel.CHILD_CLASS);
+    msg.child.addClass('p-StackedPanel-child');
   }
 
   /**
    * A message handler invoked on a `'child-removed'` message.
    */
   protected onChildRemoved(msg: Widget.ChildMessage): void {
-    msg.child.removeClass(StackedPanel.CHILD_CLASS);
+    msg.child.removeClass('p-StackedPanel-child');
     this._widgetRemoved.emit(msg.child);
   }
 
@@ -71,18 +71,6 @@ class StackedPanel extends Panel {
  */
 export
 namespace StackedPanel {
-  /**
-   * The class name added to StackedPanel instances.
-   */
-  export
-  const STACKED_PANEL_CLASS = 'p-StackedPanel';
-
-  /**
-   * The class name added to a StackedPanel child.
-   */
-  export
-  const CHILD_CLASS = 'p-StackedPanel-child';
-
   /**
    * An options object for creating a stacked panel.
    */

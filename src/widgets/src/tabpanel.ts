@@ -46,13 +46,13 @@ class TabPanel extends Widget {
    */
   constructor(options: TabPanel.IOptions = {}) {
     super();
-    this.addClass(TabPanel.TAB_PANEL_CLASS);
+    this.addClass('p-TabPanel');
 
     // Create the tab bar and stacked panel.
     this.tabBar = new TabBar<Widget>(options);
-    this.tabBar.addClass(TabPanel.TAB_BAR_CLASS);
+    this.tabBar.addClass('p-TabPanel-tabBar');
     this.stackedPanel = new StackedPanel();
-    this.stackedPanel.addClass(TabPanel.STACKED_PANEL_CLASS);
+    this.stackedPanel.addClass('p-TabPanel-stackedPanel');
 
     // Connect the tab bar signal handlers.
     this.tabBar.tabMoved.connect(this._onTabMoved, this);
@@ -323,48 +323,6 @@ class TabPanel extends Widget {
 export
 namespace TabPanel {
   /**
-   * The class name added to TabPanel instances.
-   */
-  export
-  const TAB_PANEL_CLASS = 'p-TabPanel';
-
-  /**
-   * The class name added to a TabPanel's tab bar.
-   */
-  export
-  const TAB_BAR_CLASS = 'p-TabPanel-tabBar';
-
-  /**
-   * The class name added to a TabPanel's stacked panel.
-   */
-  export
-  const STACKED_PANEL_CLASS = 'p-TabPanel-stackedPanel';
-
-  /**
-   * The class name added to a `top` placement tab bar.
-   */
-  export
-  const TOP_CLASS = 'p-mod-top';
-
-  /**
-   * The class name added to a `left` placement tab bar.
-   */
-  export
-  const LEFT_CLASS = 'p-mod-left';
-
-  /**
-   * The class name added to a `right` placement tab bar.
-   */
-  export
-  const RIGHT_CLASS = 'p-mod-right';
-
-  /**
-   * The class name added to a `bottom` placement tab bar.
-   */
-  export
-  const BOTTOM_CLASS = 'p-mod-bottom';
-
-  /**
    * A type alias for tab placement in a tab bar.
    */
   export
@@ -454,10 +412,10 @@ namespace Private {
    */
   export
   function togglePlacement(bar: TabBar<any>, plc: TabPanel.TabPlacement): void {
-    bar.toggleClass(TabPanel.TOP_CLASS, plc === 'top');
-    bar.toggleClass(TabPanel.LEFT_CLASS, plc === 'left');
-    bar.toggleClass(TabPanel.RIGHT_CLASS, plc === 'right');
-    bar.toggleClass(TabPanel.BOTTOM_CLASS, plc === 'bottom');
+    bar.toggleClass('p-mod-top', plc === 'top');
+    bar.toggleClass('p-mod-left', plc === 'left');
+    bar.toggleClass('p-mod-right', plc === 'right');
+    bar.toggleClass('p-mod-bottom', plc === 'bottom');
   }
 
   /**

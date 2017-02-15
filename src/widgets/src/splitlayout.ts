@@ -183,7 +183,7 @@ class SplitLayout extends PanelLayout {
   moveHandle(index: number, position: number): void {
     // Bail if the index is invalid or the handle is hidden.
     let handle = this._handles[index];
-    if (!handle || handle.classList.contains(SplitLayout.HIDDEN_CLASS)) {
+    if (!handle || handle.classList.contains('p-mod-hidden')) {
       return;
     }
 
@@ -399,9 +399,9 @@ class SplitLayout extends PanelLayout {
     let lastHandle: HTMLDivElement | null = null;
     for (let i = 0, n = widgets.length; i < n; ++i) {
       if (widgets[i].isHidden) {
-        this._handles[i].classList.add(SplitLayout.HIDDEN_CLASS);
+        this._handles[i].classList.add('p-mod-hidden');
       } else {
-        this._handles[i].classList.remove(SplitLayout.HIDDEN_CLASS);
+        this._handles[i].classList.remove('p-mod-hidden');
         lastHandle = this._handles[i];
         nVisible++;
       }
@@ -409,7 +409,7 @@ class SplitLayout extends PanelLayout {
 
     // Hide the handle for the last visible widget.
     if (lastHandle) {
-      lastHandle.classList.add(SplitLayout.HIDDEN_CLASS);
+      lastHandle.classList.add('p-mod-hidden');
     }
 
     // Update the fixed space for the visible items.
@@ -588,24 +588,6 @@ class SplitLayout extends PanelLayout {
 export
 namespace SplitLayout {
   /**
-   * The class name added to horizontal split layout parents.
-   */
-  export
-  const HORIZONTAL_CLASS = 'p-mod-horizontal';
-
-  /**
-   * The class name added to vertical split layout parents.
-   */
-  export
-  const VERTICAL_CLASS = 'p-mod-vertical';
-
-  /**
-   * The class name added to hidden split layout handles.
-   */
-  export
-  const HIDDEN_CLASS = 'p-mod-hidden';
-
-  /**
    * A type alias for a split layout orientation.
    */
   export
@@ -715,8 +697,8 @@ namespace Private {
    */
   export
   function toggleOrientation(widget: Widget, orient: SplitLayout.Orientation): void {
-    widget.toggleClass(SplitLayout.HORIZONTAL_CLASS, orient === 'horizontal');
-    widget.toggleClass(SplitLayout.VERTICAL_CLASS, orient === 'vertical');
+    widget.toggleClass('p-mod-horizontal', orient === 'horizontal');
+    widget.toggleClass('p-mod-vertical', orient === 'vertical');
   }
 
   /**

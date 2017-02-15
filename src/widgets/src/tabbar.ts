@@ -59,7 +59,7 @@ class TabBar<T> extends Widget {
    */
   constructor(options: TabBar.IOptions<T> = {}) {
     super({ node: Private.createNode() });
-    this.addClass(TabBar.TAB_BAR_CLASS);
+    this.addClass('p-TabBar');
     this.setFlag(Widget.Flag.DisallowLayout);
     this.tabsMovable = options.tabsMovable || false;
     this.allowDeselect = options.allowDeselect || false;
@@ -292,7 +292,7 @@ class TabBar<T> extends Widget {
    * Modifying this node directly can lead to undefined behavior.
    */
   get contentNode(): HTMLUListElement {
-    return this.node.getElementsByClassName(TabBar.CONTENT_CLASS)[0] as HTMLUListElement;
+    return this.node.getElementsByClassName('p-TabBar-content')[0] as HTMLUListElement;
   }
 
   /**
@@ -734,8 +734,8 @@ class TabBar<T> extends Widget {
       data.override = Drag.overrideCursor('default');
 
       // Add the dragging style classes.
-      data.tab.classList.add(TabBar.DRAGGING_CLASS);
-      this.addClass(TabBar.DRAGGING_CLASS);
+      data.tab.classList.add('p-mod-dragging');
+      this.addClass('p-mod-dragging');
 
       // Mark the drag as active.
       data.dragActive = true;
@@ -801,7 +801,7 @@ class TabBar<T> extends Widget {
     Private.finalizeTabPosition(data, this._orientation);
 
     // Remove the dragging class from the tab so it can be transitioned.
-    data.tab.classList.remove(TabBar.DRAGGING_CLASS);
+    data.tab.classList.remove('p-mod-dragging');
 
     // Parse the transition duration for releasing the tab.
     let duration = Private.parseTransitionDuration(data.tab);
@@ -823,7 +823,7 @@ class TabBar<T> extends Widget {
       data.override!.dispose();
 
       // Remove the remaining dragging style.
-      this.removeClass(TabBar.DRAGGING_CLASS);
+      this.removeClass('p-mod-dragging');
 
       // If the tab was not moved, there is nothing else to do.
       let i = data.index;
@@ -883,8 +883,8 @@ class TabBar<T> extends Widget {
     data.override!.dispose();
 
     // Clear the dragging style classes.
-    data.tab.classList.remove(TabBar.DRAGGING_CLASS);
-    this.removeClass(TabBar.DRAGGING_CLASS);
+    data.tab.classList.remove('p-mod-dragging');
+    this.removeClass('p-mod-dragging');
   }
 
   /**
@@ -1030,36 +1030,6 @@ class TabBar<T> extends Widget {
  */
 export
 namespace TabBar {
-  /**
-   * The class name added to TabBar instances.
-   */
-  export
-  const TAB_BAR_CLASS = 'p-TabBar';
-
-  /**
-   * The class name added to a tab bar content node.
-   */
-  export
-  const CONTENT_CLASS = 'p-TabBar-content';
-
-  /**
-   * The class name added to a horizontal tab bar.
-   */
-  export
-  const HORIZONTAL_CLASS = 'p-mod-horizontal';
-
-  /**
-   * The class name added to a vertical tab bar.
-   */
-  export
-  const VERTICAL_CLASS = 'p-mod-vertical';
-
-  /**
-   * The class name added to a tab bar *and* tab when dragging.
-   */
-  export
-  const DRAGGING_CLASS = 'p-mod-dragging';
-
   /**
    * A type alias for a tab bar orientation.
    */
@@ -1342,7 +1312,7 @@ namespace TabBar {
     /**
      * A selector which matches the close icon node in a tab.
      */
-    readonly closeIconSelector = `.${Renderer.CLOSE_ICON_CLASS}`;
+    readonly closeIconSelector = '.p-TabBar-tabCloseIcon';
 
     /**
      * Render the virtual element for a tab.
@@ -1384,7 +1354,7 @@ namespace TabBar {
      * @returns A virtual element representing the tab label.
      */
     renderLabel(data: IRenderData<any>): VirtualElement {
-      return h.div({ className: Renderer.LABEL_CLASS }, data.title.label);
+      return h.div({ className: 'p-TabBar-tabLabel' }, data.title.label);
     }
 
     /**
@@ -1395,7 +1365,7 @@ namespace TabBar {
      * @returns A virtual element representing the tab close icon.
      */
     renderCloseIcon(data: IRenderData<any>): VirtualElement {
-      return h.div({ className: Renderer.CLOSE_ICON_CLASS });
+      return h.div({ className: 'p-TabBar-tabCloseIcon' });
     }
 
     /**
@@ -1438,15 +1408,15 @@ namespace TabBar {
      * @returns The full class name for the tab.
      */
     createTabClass(data: IRenderData<any>): string {
-      let name = Renderer.TAB_CLASS;
+      let name = 'p-TabBar-tab';
       if (data.title.className) {
         name += ` ${data.title.className}`;
       }
       if (data.title.closable) {
-        name += ` ${Renderer.CLOSABLE_CLASS}`;
+        name += ' p-mod-closable';
       }
       if (data.current) {
-        name += ` ${Renderer.CURRENT_CLASS}`;
+        name += ' p-mod-current';
       }
       return name;
     }
@@ -1459,55 +1429,13 @@ namespace TabBar {
      * @returns The full class name for the tab icon.
      */
     createIconClass(data: IRenderData<any>): string {
-      let name = Renderer.ICON_CLASS;
+      let name = 'p-TabBar-tabIcon';
       let extra = data.title.icon;
       return extra ? `${name} ${extra}` : name;
     }
 
     private _tabID = 0;
     private _tabKeys = new WeakMap<Title<any>, string>();
-  }
-
-  /**
-   * The namespace for the `Renderer` class statics.
-   */
-  export
-  namespace Renderer {
-    /**
-     * The class name added to a tab bar tab.
-     */
-    export
-    const TAB_CLASS = 'p-TabBar-tab';
-
-    /**
-     * The class name added to a tab label node.
-     */
-    export
-    const LABEL_CLASS = 'p-TabBar-tabLabel';
-
-    /**
-     * The class name added to a tab icon node.
-     */
-    export
-    const ICON_CLASS = 'p-TabBar-tabIcon';
-
-    /**
-     * The class name added to a tab close icon node.
-     */
-    export
-    const CLOSE_ICON_CLASS = 'p-TabBar-tabCloseIcon';
-
-    /**
-     * The class name added to the current tab.
-     */
-    export
-    const CURRENT_CLASS = 'p-mod-current';
-
-    /**
-     * The class name added to a closable tab.
-     */
-    export
-    const CLOSABLE_CLASS = 'p-mod-closable';
   }
 
   /**
@@ -1519,19 +1447,27 @@ namespace TabBar {
 
 
 /**
- * The namespace for the module implementation details.
+ * The namespace for the module constants.
  */
-namespace Private {
+namespace Constants {
   /**
    * The start drag distance threshold.
    */
+  export
   const DRAG_THRESHOLD = 5;
 
   /**
    * The detach distance threshold.
    */
+  export
   const DETACH_THRESHOLD = 20;
+}
 
+
+/**
+ * The namespace for the module implementation details.
+ */
+namespace Private {
   /**
    * A struct which holds the drag data for a tab bar.
    */
@@ -1650,7 +1586,7 @@ namespace Private {
   function createNode(): HTMLDivElement {
     let node = document.createElement('div');
     let content = document.createElement('ul');
-    content.className = TabBar.CONTENT_CLASS;
+    content.className = 'p-TabBar-content';
     node.appendChild(content);
     return node;
   }
@@ -1668,8 +1604,8 @@ namespace Private {
    */
   export
   function toggleOrientation(bar: TabBar<any>, orient: TabBar.Orientation): void {
-    bar.toggleClass(TabBar.HORIZONTAL_CLASS, orient === 'horizontal');
-    bar.toggleClass(TabBar.VERTICAL_CLASS, orient === 'vertical');
+    bar.toggleClass('p-mod-horizontal', orient === 'horizontal');
+    bar.toggleClass('p-mod-vertical', orient === 'vertical');
   }
 
   /**
@@ -1712,9 +1648,10 @@ namespace Private {
    */
   export
   function dragExceeded(data: IDragData, event: MouseEvent): boolean {
+    let thresh = Constants.DRAG_THRESHOLD;
     let dx = Math.abs(event.clientX - data.pressX);
     let dy = Math.abs(event.clientY - data.pressY);
-    return dx >= DRAG_THRESHOLD || dy >= DRAG_THRESHOLD;
+    return dx >= thresh || dy >= thresh;
   }
 
   /**
@@ -1723,11 +1660,12 @@ namespace Private {
   export
   function detachExceeded(data: IDragData, event: MouseEvent): boolean {
     let rect = data.contentRect!;
+    let thresh = Constants.DETACH_THRESHOLD;
     return (
-      (event.clientX < rect.left - DETACH_THRESHOLD) ||
-      (event.clientX >= rect.right + DETACH_THRESHOLD) ||
-      (event.clientY < rect.top - DETACH_THRESHOLD) ||
-      (event.clientY >= rect.bottom + DETACH_THRESHOLD)
+      (event.clientX < rect.left - thresh) ||
+      (event.clientX >= rect.right + thresh) ||
+      (event.clientY < rect.top - thresh) ||
+      (event.clientY >= rect.bottom + thresh)
     );
   }
 

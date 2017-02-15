@@ -51,7 +51,7 @@ class Widget implements IDisposable, IMessageHandler {
    */
   constructor(options: Widget.IOptions = {}) {
     this.node = Private.createNode(options);
-    this.addClass(Widget.WIDGET_CLASS);
+    this.addClass('p-Widget');
   }
 
   /**
@@ -385,7 +385,7 @@ class Widget implements IDisposable, IMessageHandler {
       MessageLoop.sendMessage(this, Widget.Msg.BeforeShow);
     }
     this.clearFlag(Widget.Flag.IsHidden);
-    this.removeClass(Widget.HIDDEN_CLASS);
+    this.removeClass('p-mod-hidden');
     if (this.isAttached && (!this.parent || this.parent.isVisible)) {
       MessageLoop.sendMessage(this, Widget.Msg.AfterShow);
     }
@@ -411,7 +411,7 @@ class Widget implements IDisposable, IMessageHandler {
       MessageLoop.sendMessage(this, Widget.Msg.BeforeHide);
     }
     this.setFlag(Widget.Flag.IsHidden);
-    this.addClass(Widget.HIDDEN_CLASS);
+    this.addClass('p-mod-hidden');
     if (this.isAttached && (!this.parent || this.parent.isVisible)) {
       MessageLoop.sendMessage(this, Widget.Msg.AfterHide);
     }
@@ -693,18 +693,6 @@ class Widget implements IDisposable, IMessageHandler {
  */
 export
 namespace Widget {
-  /**
-   * The class name added to Widget instances.
-   */
-  export
-  const WIDGET_CLASS = 'p-Widget';
-
-  /**
-   * The class name added to hidden widgets.
-   */
-  export
-  const HIDDEN_CLASS = 'p-mod-hidden';
-
   /**
    * An options object for initializing a widget.
    */

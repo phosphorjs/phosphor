@@ -58,7 +58,7 @@ class Menu extends Widget {
    */
   constructor(options: Menu.IOptions) {
     super({ node: Private.createNode() });
-    this.addClass(Menu.MENU_CLASS);
+    this.addClass('p-Menu');
     this.setFlag(Widget.Flag.DisallowLayout);
     this.commands = options.commands;
     this.renderer = options.renderer || Menu.defaultRenderer;
@@ -164,7 +164,7 @@ class Menu extends Widget {
    * Modifying this node directly can lead to undefined behavior.
    */
   get contentNode(): HTMLUListElement {
-    return this.node.getElementsByClassName(Menu.CONTENT_CLASS)[0] as HTMLUListElement;
+    return this.node.getElementsByClassName('p-Menu-content')[0] as HTMLUListElement;
   }
 
   /**
@@ -861,7 +861,7 @@ class Menu extends Widget {
       this._openTimerID = setTimeout(() => {
         this._openTimerID = 0;
         this._openChildMenu();
-      }, Private.TIMER_DELAY);
+      }, Constants.TIMER_DELAY);
     }
   }
 
@@ -873,7 +873,7 @@ class Menu extends Widget {
       this._closeTimerID = setTimeout(() => {
         this._closeTimerID = 0;
         this._closeChildMenu();
-      }, Private.TIMER_DELAY);
+      }, Constants.TIMER_DELAY);
     }
   }
 
@@ -914,18 +914,6 @@ class Menu extends Widget {
  */
 export
 namespace Menu {
-  /**
-   * The class name added to Menu instances.
-   */
-  export
-  const MENU_CLASS = 'p-Menu';
-
-  /**
-   * The class name added to a menu content node.
-   */
-  export
-  const CONTENT_CLASS = 'p-Menu-content';
-
   /**
    * An options object for creating a menu.
    */
@@ -1173,7 +1161,7 @@ namespace Menu {
      */
     renderLabel(data: IRenderData): VirtualElement {
       let content = this.formatLabel(data);
-      return h.div({ className: Renderer.LABEL_CLASS }, content);
+      return h.div({ className: 'p-Menu-itemLabel' }, content);
     }
 
     /**
@@ -1185,7 +1173,7 @@ namespace Menu {
      */
     renderShortcut(data: IRenderData): VirtualElement {
       let content = this.formatShortcut(data);
-      return h.div({ className: Renderer.SHORTCUT_CLASS }, content);
+      return h.div({ className: 'p-Menu-itemShortcut' }, content);
     }
 
     /**
@@ -1196,7 +1184,7 @@ namespace Menu {
      * @returns A virtual element representing the submenu icon.
      */
     renderSubmenu(data: IRenderData): VirtualElement {
-      return h.div({ className: Renderer.SUBMENU_ICON_CLASS });
+      return h.div({ className: 'p-Menu-itemSubmenuIcon' });
     }
 
     /**
@@ -1208,36 +1196,23 @@ namespace Menu {
      */
     createItemClass(data: IRenderData): string {
       // Setup the initial class name.
-      let name = Renderer.ITEM_CLASS;
-
-      // Add the type class.
-      switch (data.item.type) {
-      case 'command':
-        name += ` ${Renderer.COMMAND_TYPE_CLASS}`;
-        break;
-      case 'submenu':
-        name += ` ${Renderer.SUBMENU_TYPE_CLASS}`;
-        break;
-      case 'separator':
-        name += ` ${Renderer.SEPARATOR_TYPE_CLASS}`;
-        break;
-      }
+      let name = 'p-Menu-item';
 
       // Add the boolean state classes.
       if (!data.item.isEnabled) {
-        name += ` ${Renderer.DISABLED_CLASS}`;
+        name += ' p-mod-disabled';
       }
       if (data.item.isToggled) {
-        name += ` ${Renderer.TOGGLED_CLASS}`;
+        name += ' p-mod-toggled';
       }
       if (!data.item.isVisible) {
-        name += ` ${Renderer.HIDDEN_CLASS}`;
+        name += ' p-mod-hidden';
       }
       if (data.active) {
-        name += ` ${Renderer.ACTIVE_CLASS}`;
+        name += ' p-mod-active';
       }
       if (data.collapsed) {
-        name += ` ${Renderer.COLLAPSED_CLASS}`;
+        name += ' p-mod-collapsed';
       }
 
       // Add the extra class.
@@ -1259,7 +1234,7 @@ namespace Menu {
      */
     createItemDataset(data: IRenderData): ElementDataset {
       let { type, command } = data.item;
-      return type === 'command' ? { command } : { };
+      return type === 'command' ? { type, command } : { type };
     }
 
     /**
@@ -1270,7 +1245,7 @@ namespace Menu {
      * @returns The full class name for the item icon.
      */
     createIconClass(data: IRenderData): string {
-      let name = Renderer.ICON_CLASS;
+      let name = 'p-Menu-itemIcon';
       let extra = data.item.icon;
       return extra ? `${name} ${extra}` : name;
     }
@@ -1297,7 +1272,7 @@ namespace Menu {
       let char = label[mnemonic];
 
       // Wrap the mnemonic character in a span.
-      let span = h.span({ className: Renderer.MNEMONIC_CLASS }, char);
+      let span = h.span({ className: 'p-Menu-itemMnemonic' }, char);
 
       // Return the content parts.
       return [prefix, span, suffix];
@@ -1317,96 +1292,6 @@ namespace Menu {
   }
 
   /**
-   * The namespace for the `Renderer` class statics.
-   */
-  export
-  namespace Renderer {
-    /**
-     * The class name added to a menu item node.
-     */
-    export
-    const ITEM_CLASS = 'p-Menu-item';
-
-    /**
-     * The class name added to a menu item icon node.
-     */
-    export
-    const ICON_CLASS = 'p-Menu-itemIcon';
-
-    /**
-     * The class name added to a menu item label node.
-     */
-    export
-    const LABEL_CLASS = 'p-Menu-itemLabel';
-
-    /**
-     * The class name added to a menu item mnemonic node.
-     */
-    export
-    const MNEMONIC_CLASS = 'p-Menu-itemMnemonic';
-
-    /**
-     * The class name added to a menu item shortcut node.
-     */
-    export
-    const SHORTCUT_CLASS = 'p-Menu-itemShortcut';
-
-    /**
-     * The class name added to a menu item submenu icon node.
-     */
-    export
-    const SUBMENU_ICON_CLASS = 'p-Menu-itemSubmenuIcon';
-
-    /**
-     * The class name added to a `'command'` type menu item.
-     */
-    export
-    const COMMAND_TYPE_CLASS = 'p-type-command';
-
-    /**
-     * The class name added to a `'separator'` type menu item.
-     */
-    export
-    const SEPARATOR_TYPE_CLASS = 'p-type-separator';
-
-    /**
-     * The class name added to a `'submenu'` type menu item.
-     */
-    export
-    const SUBMENU_TYPE_CLASS = 'p-type-submenu';
-
-    /**
-     * The class name added to a disabled menu item.
-     */
-    export
-    const DISABLED_CLASS = 'p-mod-disabled';
-
-    /**
-     * The class name added to a toggled menu item.
-     */
-    export
-    const TOGGLED_CLASS = 'p-mod-toggled';
-
-    /**
-     * The class name added to a hidden menu item.
-     */
-    export
-    const HIDDEN_CLASS = 'p-mod-hidden';
-
-    /**
-     * The class name added to active menu items.
-     */
-    export
-    const ACTIVE_CLASS = 'p-mod-active';
-
-    /**
-     * The class name added to a collapsed menu item.
-     */
-    export
-    const COLLAPSED_CLASS = 'p-mod-collapsed';
-  }
-
-  /**
    * The default `Renderer` instance.
    */
   export
@@ -1415,9 +1300,9 @@ namespace Menu {
 
 
 /**
- * The namespace for the module implementation details.
+ * The namespace for the module constants.
  */
-namespace Private {
+namespace Constants {
   /**
    * The ms delay for opening and closing a submenu.
    */
@@ -1427,8 +1312,15 @@ namespace Private {
   /**
    * The horizontal pixel overlap for an open submenu.
    */
+  export
   const SUBMENU_OVERLAP = 3;
+}
 
+
+/**
+ * The namespace for the module implementation details.
+ */
+namespace Private {
   /**
    * Create the DOM node for a menu.
    */
@@ -1436,7 +1328,7 @@ namespace Private {
   function createNode(): HTMLDivElement {
     let node = document.createElement('div');
     let content = document.createElement('ul');
-    content.className = Menu.CONTENT_CLASS;
+    content.className = 'p-Menu-content';
     node.appendChild(content);
     node.tabIndex = -1;
     return node;
@@ -1670,11 +1562,11 @@ namespace Private {
     let itemRect = itemNode.getBoundingClientRect();
 
     // Compute the target X position.
-    let x = itemRect.right - SUBMENU_OVERLAP;
+    let x = itemRect.right - Constants.SUBMENU_OVERLAP;
 
     // Adjust the X position to fit on the screen.
     if (x + width > px + cw) {
-      x = itemRect.left + SUBMENU_OVERLAP - width;
+      x = itemRect.left + Constants.SUBMENU_OVERLAP - width;
     }
 
     // Compute the target Y position.

@@ -50,7 +50,7 @@ class CommandPalette extends Widget {
    */
   constructor(options: CommandPalette.IOptions) {
     super({ node: Private.createNode() });
-    this.addClass(CommandPalette.COMMAND_PALETTE_CLASS);
+    this.addClass('p-CommandPalette');
     this.setFlag(Widget.Flag.DisallowLayout);
     this.commands = options.commands;
     this.renderer = options.renderer || CommandPalette.defaultRenderer;
@@ -84,7 +84,7 @@ class CommandPalette extends Widget {
    * This is the node which contains the search-related elements.
    */
   get searchNode(): HTMLDivElement {
-    return this.node.getElementsByClassName(CommandPalette.SEARCH_CLASS)[0] as HTMLDivElement;
+    return this.node.getElementsByClassName('p-CommandPalette-search')[0] as HTMLDivElement;
   }
 
   /**
@@ -94,7 +94,7 @@ class CommandPalette extends Widget {
    * This is the actual input node for the search area.
    */
   get inputNode(): HTMLInputElement {
-    return this.node.getElementsByClassName(CommandPalette.INPUT_CLASS)[0] as HTMLInputElement;
+    return this.node.getElementsByClassName('p-CommandPalette-input')[0] as HTMLInputElement;
   }
 
   /**
@@ -106,7 +106,7 @@ class CommandPalette extends Widget {
    * Modifying this node directly can lead to undefined behavior.
    */
   get contentNode(): HTMLUListElement {
-    return this.node.getElementsByClassName(CommandPalette.CONTENT_CLASS)[0] as HTMLUListElement;
+    return this.node.getElementsByClassName('p-CommandPalette-content')[0] as HTMLUListElement;
   }
 
   /**
@@ -451,7 +451,7 @@ class CommandPalette extends Widget {
    */
   private _toggleFocused(): void {
     let focused = document.activeElement === this.inputNode;
-    this.toggleClass(CommandPalette.FOCUSED_CLASS, focused);
+    this.toggleClass('p-mod-focused', focused);
   }
 
   /**
@@ -480,42 +480,6 @@ class CommandPalette extends Widget {
  */
 export
 namespace CommandPalette {
-  /**
-   * The class name added to `CommandPalette` instances.
-   */
-  export
-  const COMMAND_PALETTE_CLASS = 'p-CommandPalette';
-
-  /**
-   * The class name added to the input wrapper in the search section.
-   */
-  export
-  const WRAPPER_CLASS = 'p-CommandPalette-wrapper';
-
-  /**
-   * The class name added to the search section of the palette.
-   */
-  export
-  const SEARCH_CLASS = 'p-CommandPalette-search';
-
-  /**
-   * The class name added to the input node in the search section.
-   */
-  export
-  const INPUT_CLASS = 'p-CommandPalette-input';
-
-  /**
-   * The class name added to the content section of the palette.
-   */
-  export
-  const CONTENT_CLASS = 'p-CommandPalette-content';
-
-  /**
-   * The class name added to a focused palette.
-   */
-  export
-  const FOCUSED_CLASS = 'p-mod-focused';
-
   /**
    * An options object for creating a command palette.
    */
@@ -733,7 +697,7 @@ namespace CommandPalette {
      */
     renderHeader(data: IHeaderRenderData): VirtualElement {
       let content = this.formatHeader(data);
-      return h.li({ className: Renderer.HEADER_CLASS }, content);
+      return h.li({ className: 'p-CommandPalette-header' }, content);
     }
 
     /**
@@ -764,7 +728,7 @@ namespace CommandPalette {
      */
     renderEmptyMessage(data: IEmptyMessageRenderData): VirtualElement {
       let content = this.formatEmptyMessage(data);
-      return h.li({ className: Renderer.EMPTY_MESSAGE_CLASS }, content);
+      return h.li({ className: 'p-CommandPalette-emptyMessage' }, content);
     }
 
     /**
@@ -776,7 +740,7 @@ namespace CommandPalette {
      */
     renderItemShortcut(data: IItemRenderData): VirtualElement {
       let content = this.formatItemShortcut(data);
-      return h.div({ className: Renderer.SHORTCUT_CLASS }, content);
+      return h.div({ className: 'p-CommandPalette-itemShortcut' }, content);
     }
 
     /**
@@ -788,7 +752,7 @@ namespace CommandPalette {
      */
     renderItemLabel(data: IItemRenderData): VirtualElement {
       let content = this.formatItemLabel(data);
-      return h.div({ className: Renderer.LABEL_CLASS }, content);
+      return h.div({ className: 'p-CommandPalette-itemLabel' }, content);
     }
 
     /**
@@ -800,7 +764,7 @@ namespace CommandPalette {
      */
     renderItemCaption(data: IItemRenderData): VirtualElement {
       let content = this.formatItemCaption(data);
-      return h.div({ className: Renderer.CAPTION_CLASS }, content);
+      return h.div({ className: 'p-CommandPalette-itemCaption' }, content);
     }
 
     /**
@@ -812,17 +776,17 @@ namespace CommandPalette {
      */
     createItemClass(data: IItemRenderData): string {
       // Set up the initial class name.
-      let name = Renderer.ITEM_CLASS;
+      let name = 'p-CommandPalette-item';
 
       // Add the boolean state classes.
       if (!data.item.isEnabled) {
-        name += ` ${Renderer.DISABLED_CLASS}`;
+        name += ' p-mod-disabled';
       }
       if (data.item.isToggled) {
-        name += ` ${Renderer.TOGGLED_CLASS}`;
+        name += ' p-mod-toggled';
       }
       if (data.active) {
-        name += ` ${Renderer.ACTIVE_CLASS}`;
+        name += ' p-mod-active';
       }
 
       // Add the extra class.
@@ -910,66 +874,6 @@ namespace CommandPalette {
   }
 
   /**
-   * The namespace for the `Renderer` class statics.
-   */
-  export
-  namespace Renderer {
-    /**
-     * The class name added to a palette section header.
-     */
-    export
-    const HEADER_CLASS = 'p-CommandPalette-header';
-
-    /**
-     * The class name added to a palette item node.
-     */
-    export
-    const ITEM_CLASS = 'p-CommandPalette-item';
-
-    /**
-     * The class name added to an empty message node.
-     */
-    export
-    const EMPTY_MESSAGE_CLASS = 'p-CommandPalette-emptyMessage';
-
-    /**
-     * The class name added to an item label node.
-     */
-    export
-    const LABEL_CLASS = 'p-CommandPalette-itemLabel';
-
-    /**
-     * The class name added to an item shortcut node.
-     */
-    export
-    const SHORTCUT_CLASS = 'p-CommandPalette-itemShortcut';
-
-    /**
-     * The class name added to an item caption node.
-     */
-    export
-    const CAPTION_CLASS = 'p-CommandPalette-itemCaption';
-
-    /**
-     * The class name added to a disabled command item.
-     */
-    export
-    const DISABLED_CLASS = 'p-mod-disabled';
-
-    /**
-     * The class name added to a toggled command item.
-     */
-    export
-    const TOGGLED_CLASS = 'p-mod-toggled';
-
-    /**
-     * The class name added to the active command item.
-     */
-    export
-    const ACTIVE_CLASS = 'p-mod-active';
-  }
-
-  /**
    * The default `Renderer` instance.
    */
   export
@@ -991,10 +895,10 @@ namespace Private {
     let wrapper = document.createElement('div');
     let input = document.createElement('input');
     let content = document.createElement('ul');
-    search.className = CommandPalette.SEARCH_CLASS;
-    wrapper.className = CommandPalette.WRAPPER_CLASS;
-    input.className = CommandPalette.INPUT_CLASS;
-    content.className = CommandPalette.CONTENT_CLASS;
+    search.className = 'p-CommandPalette-search';
+    wrapper.className = 'p-CommandPalette-wrapper';
+    input.className = 'p-CommandPalette-input';
+    content.className = 'p-CommandPalette-content';
     input.spellcheck = false;
     wrapper.appendChild(input);
     search.appendChild(wrapper);

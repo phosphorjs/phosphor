@@ -452,30 +452,6 @@ class BoxLayout extends PanelLayout {
 export
 namespace BoxLayout {
   /**
-   * The class name added to left-to-right box layout parents.
-   */
-  export
-  const LEFT_TO_RIGHT_CLASS = 'p-mod-left-to-right';
-
-  /**
-   * The class name added to right-to-left box layout parents.
-   */
-  export
-  const RIGHT_TO_LEFT_CLASS = 'p-mod-right-to-left';
-
-  /**
-   * The class name added to top-to-bottom box layout parents.
-   */
-  export
-  const TOP_TO_BOTTOM_CLASS = 'p-mod-top-to-bottom';
-
-  /**
-   * The class name added to bottom-to-top box layout parents.
-   */
-  export
-  const BOTTOM_TO_TOP_CLASS = 'p-mod-bottom-to-top';
-
-  /**
    * A type alias for a box layout direction.
    */
   export
@@ -592,10 +568,10 @@ namespace Private {
    */
   export
   function toggleDirection(widget: Widget, dir: BoxLayout.Direction): void {
-    widget.toggleClass(BoxLayout.LEFT_TO_RIGHT_CLASS, dir === 'left-to-right');
-    widget.toggleClass(BoxLayout.RIGHT_TO_LEFT_CLASS, dir === 'right-to-left');
-    widget.toggleClass(BoxLayout.TOP_TO_BOTTOM_CLASS, dir === 'top-to-bottom');
-    widget.toggleClass(BoxLayout.BOTTOM_TO_TOP_CLASS, dir === 'bottom-to-top');
+    widget.toggleClass('p-mod-left-to-right', dir === 'left-to-right');
+    widget.toggleClass('p-mod-right-to-left', dir === 'right-to-left');
+    widget.toggleClass('p-mod-top-to-bottom', dir === 'top-to-bottom');
+    widget.toggleClass('p-mod-bottom-to-top', dir === 'bottom-to-top');
   }
 
   /**
