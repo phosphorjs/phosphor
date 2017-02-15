@@ -845,6 +845,17 @@ class Menu extends Widget {
   }
 
   /**
+   * Close the child menu immediately.
+   *
+   * This is a no-op if a child menu is not open.
+   */
+  private _closeChildMenu(): void {
+    if (this._childMenu) {
+      this._childMenu.close();
+    }
+  }
+
+  /**
    * Start the open timer, unless it is already pending.
    */
   private _startOpenTimer(): void {
@@ -865,17 +876,6 @@ class Menu extends Widget {
         this._closeTimerID = 0;
         this._closeChildMenu();
       }, Private.TIMER_DELAY);
-    }
-  }
-
-  /**
-   * Close the child menu immediately.
-   *
-   * This is a no-op if a child menu is not open.
-   */
-  private _closeChildMenu(): void {
-    if (this._childMenu) {
-      this._childMenu.close();
     }
   }
 
