@@ -773,7 +773,7 @@ class DockLayout extends Layout {
    * Fit the layout to the total size required by the widgets.
    */
   private _fit(): void {
-    // Setup the size limits.
+    // Set up the size limits.
     let minW = 0;
     let minH = 0;
     let maxW = Infinity;
@@ -871,7 +871,7 @@ class DockLayout extends Layout {
     tabBar.removeBehavior = 'select-previous-tab';
     tabBar.insertBehavior = 'select-tab-if-needed';
 
-    // Setup the signal handlers for the tab bar.
+    // Set up the signal handlers for the tab bar.
     tabBar.currentChanged.connect(this._onCurrentChanged, this);
 
     // Reparent and attach the tab bar to the parent if possible.
@@ -1373,7 +1373,7 @@ namespace Private {
       return;
     }
 
-    // Update the handle orienation and visibility.
+    // Update the handle orientation and visibility.
     each(splitNode.handles, (handle, i) => {
       if (splitNode.orientation === 'horizontal') {
         handle.classList.remove(Constants.VERTICAL_CLASS);
@@ -1460,7 +1460,7 @@ namespace Private {
    * Fit the given tab layout node.
    */
   function fitTabNode(tabNode: TabLayoutNode): DOMUtil.ISizeLimits {
-    // Setup the limit variables.
+    // Set up the limit variables.
     let minWidth = 0;
     let minHeight = 0;
     let maxWidth = Infinity;
@@ -1514,7 +1514,7 @@ namespace Private {
    * Recursively fit the given split layout node.
    */
   function fitSplitNode(splitNode: SplitLayoutNode, spacing: number): DOMUtil.ISizeLimits {
-    // Setup the limit variables.
+    // Set up the limit variables.
     let minWidth = 0;
     let minHeight = 0;
     let maxWidth = Infinity;

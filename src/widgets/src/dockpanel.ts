@@ -172,7 +172,7 @@ class DockPanel extends Widget {
    *
    * #### Notes
    * This will make the widget the current widget in its tab area and
-   * post the widget an `activate-request` message.
+   * post an `activate-request` message to the widget.
    */
   activateWidget(widget: Widget): void {
     // Find the tab bar which contains the widget.
