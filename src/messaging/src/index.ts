@@ -392,8 +392,8 @@ namespace MessageLoop {
    * This function is useful when posted messages must be processed
    * immediately, instead of on the next animation frame.
    *
-   * This function should normally not be needed, but some browsers
-   * may require its use in order to work around idiosyncrasies.
+   * This function should normally not be needed, but it may be
+   * required to work around certain browser idiosyncrasies.
    *
    * Recursing into this function is a no-op.
    */
