@@ -26,6 +26,10 @@ import {
 } from '@phosphor/mime';
 
 import {
+  AttachedProperty
+} from '@phosphor/properties';
+
+import {
   DockLayout
 } from './docklayout';
 
@@ -59,7 +63,7 @@ class DockPanel extends Widget {
     // Extract the inter-panel spacing.
     let spacing = options.spacing !== undefined ? options.spacing : 4;
 
-    // Extract the content renderer for the panel.
+    // Extract the renderer for the panel.
     this._renderer = options.renderer || DockPanel.defaultRenderer;
 
     // Create the delegate renderer for the layout.
@@ -68,10 +72,10 @@ class DockPanel extends Widget {
       createHandle: () => this._createHandle()
     };
 
-    // Setup the dock layout for the panel.
+    // Set up the dock layout for the panel.
     this.layout = new DockLayout({ renderer, spacing });
 
-    // Setup the overlay drop indicator.
+    // Set up the overlay drop indicator.
     this.overlay = options.overlay || new DockPanel.Overlay();
     this.node.appendChild(this.overlay.node);
   }
@@ -172,8 +176,9 @@ class DockPanel extends Widget {
    */
   activateWidget(widget: Widget): void {
     // Find the tab bar which contains the widget.
-    let title = widget.title;
-    let tabBar = find(this.tabBars(), bar => bar.titles.indexOf(title) !== -1);
+    let tabBar = find(this.tabBars(), bar => {
+      return bar.titles.indexOf(widget.title) !== -1;
+    });
 
     // Throw an error if no tab bar is found.
     if (!tabBar) {
@@ -181,7 +186,7 @@ class DockPanel extends Widget {
     }
 
     // Update the current title and activate the widget.
-    tabBar.currentTitle = title;
+    tabBar.currentTitle = widget.title;
     widget.activate();
   }
 
@@ -193,7 +198,6 @@ class DockPanel extends Widget {
    * @param options - The additional options for adding the widget.
    */
   addWidget(widget: Widget, options: DockPanel.IAddOptions = {}): void {
-    // Add the widget to the layout.
     (this.layout as DockLayout).addWidget(widget, options);
   }
 
@@ -268,7 +272,7 @@ class DockPanel extends Widget {
    */
   protected onChildAdded(msg: Widget.ChildMessage): void {
     // Ignore the generated tab bars.
-    if (msg.child.hasClass(Constants.TAB_BAR_CLASS)) { // FIXME
+    if (Private.isGeneratedTabBarProperty.get(msg.child)) {
       return;
     }
 
@@ -281,7 +285,7 @@ class DockPanel extends Widget {
    */
   protected onChildRemoved(msg: Widget.ChildMessage): void {
     // Ignore the generated tab bars.
-    if (msg.child.hasClass(Constants.TAB_BAR_CLASS)) { // FIXME
+    if (Private.isGeneratedTabBarProperty.get(msg.child)) {
       return;
     }
 
@@ -328,8 +332,7 @@ class DockPanel extends Widget {
 
     // Show the drop indicator overlay and update the drop
     // action based on the drop target zone under the mouse.
-    let { clientX, clientY, shiftKey } = event;
-    if (this._showOverlay(clientX, clientY, shiftKey) === 'invalid') {
+    if (this._showOverlay(event.clientX, event.clientY) === 'invalid') {
       event.dropAction = 'none';
     } else {
       event.dropAction = event.proposedAction;
@@ -354,8 +357,8 @@ class DockPanel extends Widget {
     }
 
     // Find the drop target under the mouse.
-    let { clientX, clientY, shiftKey } = event;
-    let { zone, target } = this._findDropTarget(clientX, clientY, shiftKey);
+    let { clientX, clientY } = event;
+    let { zone, target } = Private.findDropTarget(this, clientX, clientY);
 
     // Bail if the drop zone is invalid.
     if (zone === 'invalid') {
@@ -377,7 +380,15 @@ class DockPanel extends Widget {
       return;
     }
 
-    // Handle the drop using the generated widget.
+    // Find the reference widget for the drop target.
+    let ref: Widget | null = null;
+    if (target && target.currentTitle) {
+      ref = target.currentTitle.owner;
+    } else if (target && target.titles.length > 0) {
+      ref = target.titles[target.titles.length - 1].owner;
+    }
+
+    // Add the widget according to the indicated drop zone.
     switch(zone) {
     case 'root':
       this.addWidget(widget);
@@ -395,21 +406,22 @@ class DockPanel extends Widget {
       this.addWidget(widget, { mode: 'split-bottom' });
       break;
     case 'widget-top':
-      this.addWidget(widget, { mode: 'split-top', ref: target });
+      this.addWidget(widget, { mode: 'split-top', ref });
       break;
     case 'widget-left':
-      this.addWidget(widget, { mode: 'split-left', ref: target });
+      this.addWidget(widget, { mode: 'split-left', ref });
       break;
     case 'widget-right':
-      this.addWidget(widget, { mode: 'split-right', ref: target });
+      this.addWidget(widget, { mode: 'split-right', ref });
       break;
     case 'widget-bottom':
-      this.addWidget(widget, { mode: 'split-bottom', ref: target });
+      this.addWidget(widget, { mode: 'split-bottom', ref });
       break;
-    case 'tab-bar':
-      let ref = Private.tabBarRef(target as TabBar<Widget>);
+    case 'widget-center':
       this.addWidget(widget, { mode: 'tab-after', ref });
       break;
+    default:
+      throw 'unreachable';
     }
 
     // Accept the proposed drop action.
@@ -532,76 +544,19 @@ class DockPanel extends Widget {
   }
 
   /**
-   * Find the drop target for the given client position.
-   *
-   * @param clientX - The client X position of interest.
-   *
-   * @param clientY - The client Y position of interest.
-   *
-   * @param shift - Whether to search for shifted drop targets.
-   *
-   * @returns The dock target at the specified client position.
-   */
-  private _findDropTarget(clientX: number, clientY: number, shift: boolean): Private.IDropTarget {
-    // Bail, if the mouse is not over the dock panel.
-    if (!DOMUtil.hitTest(this.node, clientX, clientY)) {
-      return { zone: 'invalid', target: null };
-    }
-
-    // Lookup the layout for the panel.
-    let layout = this.layout as DockLayout;
-
-    // If the layout is empty, indicate a root drop zone.
-    if (layout.isEmpty) {
-      return { zone: 'root', target: null };
-    }
-
-    // Handle the shifted drop zones.
-    if (shift) {
-      let edge = Private.calcEdge(this.node, clientX, clientY);
-      return { zone: `root-${edge}` as Private.DropZone, target: null };
-    }
-
-    // Find the widget at the given client position.
-    let widget = find(layout, w => {
-      return w.isVisible && DOMUtil.hitTest(w.node, clientX, clientY);
-    });
-
-    // Bail if no widget is found.
-    if (!widget) {
-      return { zone: 'invalid', target: null };
-    }
-
-    // Handle the drop zone for a generated tab bar.
-    if (widget.hasClass(Constants.TAB_BAR_CLASS)) { // FIXME
-      return { zone: 'tab-bar', target: widget };
-    }
-
-    // Handle the drop zone for a user widget.
-    let edge = Private.calcEdge(widget.node, clientX, clientY);
-    return { zone: `widget-${edge}` as Private.DropZone, target: widget };
-  }
-
-  /**
    * Show the overlay indicator at the given client position.
    *
-   * @param clientX - The client X position of interest.
-   *
-   * @param clientY - The client Y position of interest.
-   *
-   * @param shift - Whether to show the shifted drop targets.
-   *
-   * @returns The drop zone at the specified client position.
+   * Returns the drop zone at the specified client position.
    *
    * #### Notes
    * If the position is not over a valid zone, the overlay is hidden.
    */
-  private _showOverlay(clientX: number, clientY: number, shift: boolean): Private.DropZone {
+  private _showOverlay(clientX: number, clientY: number): Private.DropZone {
     // Find the dock target for the given client position.
-    let { zone, target } = this._findDropTarget(clientX, clientY, shift);
+    let { zone, target } = Private.findDropTarget(this, clientX, clientY);
 
     // If the drop zone is invalid, hide the overlay and bail.
-    if (zone === 'invalid' || !target) {
+    if (zone === 'invalid') {
       this.overlay.hide(100);
       return zone;
     }
@@ -612,6 +567,7 @@ class DockPanel extends Widget {
     let right: number;
     let bottom: number;
     let tr: ClientRect;
+    let wr: ClientRect;
     let box = DOMUtil.boxSizing(this.node); // TODO cache this?
     let rect = this.node.getBoundingClientRect();
 
@@ -647,40 +603,45 @@ class DockPanel extends Widget {
       right = box.paddingRight;
       bottom = box.paddingBottom;
       break;
-    case 'tab-bar':
-      tr = target.node.getBoundingClientRect();
-      top = tr.top - rect.top - box.borderTop;
-      left = tr.left - rect.left - box.borderLeft;
-      right = rect.right - tr.right - box.borderRight;
-      bottom = rect.bottom - tr.bottom - box.borderBottom;
-      break;
     case 'widget-top':
-      tr = target.node.getBoundingClientRect();
+      tr = target!.node.getBoundingClientRect();
+      wr = target!.currentTitle!.owner.node.getBoundingClientRect();
       top = tr.top - rect.top - box.borderTop;
       left = tr.left - rect.left - box.borderLeft;
       right = rect.right - tr.right - box.borderRight;
-      bottom = rect.bottom - tr.bottom + tr.height / 2 - box.borderBottom;
+      bottom = rect.bottom - wr.bottom + (tr.height + wr.height) / 2 - box.borderBottom;
       break;
     case 'widget-left':
-      tr = target.node.getBoundingClientRect();
+      tr = target!.node.getBoundingClientRect();
+      wr = target!.currentTitle!.owner.node.getBoundingClientRect();
       top = tr.top - rect.top - box.borderTop;
       left = tr.left - rect.left - box.borderLeft;
       right = rect.right - tr.right + tr.width / 2 - box.borderRight;
-      bottom = rect.bottom - tr.bottom - box.borderBottom;
+      bottom = rect.bottom - wr.bottom - box.borderBottom;
       break;
     case 'widget-right':
-      tr = target.node.getBoundingClientRect();
+      tr = target!.node.getBoundingClientRect();
+      wr = target!.currentTitle!.owner.node.getBoundingClientRect();
       top = tr.top - rect.top - box.borderTop;
       left = tr.left - rect.left + tr.width / 2 - box.borderLeft;
       right = rect.right - tr.right - box.borderRight;
-      bottom = rect.bottom - tr.bottom - box.borderBottom;
+      bottom = rect.bottom - wr.bottom - box.borderBottom;
       break;
     case 'widget-bottom':
-      tr = target.node.getBoundingClientRect();
-      top = tr.top - rect.top + tr.height / 2 - box.borderTop;
+      tr = target!.node.getBoundingClientRect();
+      wr = target!.currentTitle!.owner.node.getBoundingClientRect();
+      top = tr.top - rect.top + (tr.height + wr.height) / 2 - box.borderTop;
       left = tr.left - rect.left - box.borderLeft;
       right = rect.right - tr.right - box.borderRight;
-      bottom = rect.bottom - tr.bottom - box.borderBottom;
+      bottom = rect.bottom - wr.bottom - box.borderBottom;
+      break;
+    case 'widget-center':
+      tr = target!.node.getBoundingClientRect();
+      wr = target!.currentTitle!.owner.node.getBoundingClientRect();
+      top = tr.top - rect.top - box.borderTop;
+      left = tr.left - rect.left - box.borderLeft;
+      right = rect.right - tr.right - box.borderRight;
+      bottom = rect.bottom - wr.bottom - box.borderBottom;
       break;
     default:
       throw 'unreachable';
@@ -706,11 +667,13 @@ class DockPanel extends Widget {
    * Create a new tab bar for use by the panel.
    */
   private _createTabBar(): TabBar<Widget> {
-    // Create and initialize the tab bar.
+    // Create the tab bar.
     let tabBar = this._renderer.createTabBar();
-    //tabBar.addClass(TAB_BAR_CLASS); FIXME
 
-    // Setup the signal handlers for the tab bar.
+    // Set the generated tab bar property for the tab bar.
+    Private.isGeneratedTabBarProperty.set(tabBar, true);
+
+    // Connect the signal handlers for the tab bar.
     tabBar.tabCloseRequested.connect(this._onTabCloseRequested, this);
     tabBar.tabDetachRequested.connect(this._onTabDetachRequested, this);
     tabBar.tabActivateRequested.connect(this._onTabActivateRequested, this);
@@ -723,9 +686,7 @@ class DockPanel extends Widget {
    * Create a new handle for use by the panel.
    */
   private _createHandle(): HTMLDivElement {
-    let handle = this._renderer.createHandle();
-    //handle.classList.add(HANDLE_CLASS); FIXME
-    return handle;
+    return this._renderer.createHandle();
   }
 
   /**
@@ -758,9 +719,8 @@ class DockPanel extends Widget {
     let { title, tab, clientX, clientY } = args;
 
     // Setup the mime data for the drag operation.
-    let widget = title.owner;
     let mimeData = new MimeData();
-    mimeData.setData(Constants.FACTORY_MIME, () => widget);
+    mimeData.setData(Constants.FACTORY_MIME, () => title.owner);
 
     // Create the drag image for the drag operation.
     let dragImage = tab.cloneNode(true) as HTMLElement;
@@ -1040,7 +1000,7 @@ namespace DockPanel {
      */
     createHandle(): HTMLDivElement {
       let handle = document.createElement('div');
-      handle.classList.add(Constants.HANDLE_CLASS);
+      handle.className = Constants.HANDLE_CLASS;
       return handle;
     }
   }
@@ -1104,11 +1064,17 @@ namespace Constants {
    */
   export
   const GOLDEN_RATIO = 0.618;
+
+  /**
+   * The size of the edge dock zone for the root panel, in pixels.
+   */
+  export
+  const EDGE_SIZE = 40;
 }
 
 
 /**
- * The namespace for the module private details.
+ * The namespace for the module implementation details.
  */
 namespace Private {
   /**
@@ -1173,29 +1139,29 @@ namespace Private {
     'root-bottom' |
 
     /**
-     * The area of a generated tab bar.
-     */
-    'tab-bar' |
-
-    /**
-     * The top half of a user widget.
+     * The top third of tabbed widget area.
      */
     'widget-top' |
 
     /**
-     * The left half of a user widget.
+     * The left third of tabbed widget area.
      */
     'widget-left' |
 
     /**
-     * The right half of a user widget.
+     * The right third of tabbed widget area.
      */
     'widget-right' |
 
     /**
-     * The bottom half of a user widget.
+     * The bottom third of tabbed widget area.
      */
-    'widget-bottom'
+    'widget-bottom' |
+
+    /**
+     * The center third of tabbed widget area.
+     */
+    'widget-center'
   );
 
   /**
@@ -1209,45 +1175,126 @@ namespace Private {
     zone: DropZone;
 
     /**
-     * The target widget related to the drop zone, or `null`.
+     * The target tab bar related to the drop zone, or `null`.
      */
-    target: Widget | null;
+    target: TabBar<Widget> | null;
   }
 
   /**
-   * Get the reference widget for a tab bar.
-   *
-   * @param tabBar - The tab bar of interest.
-   *
-   * @returns The target reference widget in the tab bar, or `null`.
+   * An attached property used to track generated tab bars.
    */
   export
-  function tabBarRef(tabBar: TabBar<Widget>): Widget | null {
-    if (tabBar.currentTitle) {
-      return tabBar.currentTitle.owner;
-    }
-    let lastTitle = tabBar.titles[tabBar.titles.length - 1];
-    return lastTitle ? lastTitle.owner : null;
-  }
+  const isGeneratedTabBarProperty = new AttachedProperty<Widget, boolean>({
+    name: 'isGeneratedTabBar',
+    create: () => false
+  });
 
   /**
-   * Determine the zone for the given node and client position.
-   *
-   * This assumes the position lies within the node's client rect.
+   * Find the drop target at the given client position.
    */
   export
-  function calcEdge(node: HTMLElement, x: number, y: number): 'top' | 'left' | 'right' | 'bottom' {
-    let rect = node.getBoundingClientRect();
-    let fracX = (x - rect.left) / rect.width;
-    let fracY = (y - rect.top) / rect.height;
-    let normX = fracX > 0.5 ? 1 - fracX : fracX;
-    let normY = fracY > 0.5 ? 1 - fracY : fracY;
-    let result: 'top' | 'left' | 'right' | 'bottom';
-    if (normX < normY) {
-      result = fracX <= 0.5 ? 'left' : 'right';
-    } else {
-      result = fracY <= 0.5 ? 'top' : 'bottom';
+  function findDropTarget(panel: DockPanel, x: number, y: number): IDropTarget {
+    // Bail, if the mouse is not over the dock panel.
+    if (!DOMUtil.hitTest(panel.node, x, y)) {
+      return { zone: 'invalid', target: null };
     }
-    return result;
+
+    // Look up the layout for the panel.
+    let layout = panel.layout as DockLayout;
+
+    // If the layout is empty, indicate a root drop zone.
+    if (layout.isEmpty) {
+      return { zone: 'root', target: null };
+    }
+
+    // Get the rect for the dock panel.
+    let panelRect = panel.node.getBoundingClientRect();
+
+    // Check for a left edge zone.
+    if (x < panelRect.left + Constants.EDGE_SIZE) {
+      if (y - panelRect.top < x - panelRect.left) {
+        return { zone: 'root-top', target: null };
+      }
+      if (panelRect.bottom - y < x - panelRect.left) {
+        return { zone: 'root-bottom', target: null };
+      }
+      return { zone: 'root-left', target: null };
+    }
+
+    // Check for a right edge zone.
+    if (x >= panelRect.right - Constants.EDGE_SIZE) {
+      if (y - panelRect.top < panelRect.right - x) {
+        return { zone: 'root-top', target: null };
+      }
+      if (panelRect.bottom - y < panelRect.right - x) {
+        return { zone: 'root-bottom', target: null };
+      }
+      return { zone: 'root-right', target: null };
+    }
+
+    // Check for a top edge zone.
+    if (y < panelRect.top + Constants.EDGE_SIZE) {
+      return { zone: 'root-top', target: null };
+    }
+
+    // Check for a bottom edge zone.
+    if (y >= panelRect.bottom - Constants.EDGE_SIZE) {
+      return { zone: 'root-bottom', target: null };
+    }
+
+    // Find the tab area which contains the position.
+    let tabBar = find(layout.tabBars(), bar => {
+      if (!bar.currentTitle) {
+        return false;
+      }
+      if (DOMUtil.hitTest(bar.node, x, y)) {
+        return true;
+      }
+      return DOMUtil.hitTest(bar.currentTitle.owner.node, x, y);
+    });
+
+    // Bail if no tab area was found.
+    if (!tabBar) {
+      return { zone: 'invalid', target: null };
+    }
+
+    // Get the rects for the tab bar and widget.
+    let tr = tabBar.node.getBoundingClientRect();
+    let wr = tabBar.currentTitle!.owner.node.getBoundingClientRect();
+
+    // Compute the fractional position in the tab area.
+    let fracX = (x - tr.left) / tr.width;
+    let fracY = (y - tr.top) / (tr.height + wr.height);
+
+    // Check for a left widget zone.
+    if (fracX < 1 / 3) {
+      if (fracY < fracX) {
+        return { zone: 'widget-top', target: tabBar };
+      }
+      if (1 - fracY < fracX) {
+        return { zone: 'widget-bottom', target: tabBar };
+      }
+      return { zone: 'widget-left', target: tabBar };
+    }
+
+    // Check for a center widget zone.
+    if (fracX < 2 / 3) {
+      if (fracY < 1 / 3) {
+        return { zone: 'widget-top', target: tabBar };
+      }
+      if (fracY < 2 / 3) {
+        return { zone: 'widget-center', target: tabBar };
+      }
+      return { zone: 'widget-bottom', target: tabBar };
+    }
+
+    // Check for a right widget zone.
+    if (fracY < 1 - fracX) {
+      return { zone: 'widget-top', target: tabBar };
+    }
+    if (fracY > fracX) {
+      return { zone: 'widget-bottom', target: tabBar };
+    }
+    return { zone: 'widget-right', target: tabBar };
   }
 }
