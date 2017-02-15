@@ -14,10 +14,6 @@ import {
 } from '@phosphor/messaging';
 
 import {
-  IS_EDGE, IS_IE
-} from '@phosphor/platform';
-
-import {
   AttachedProperty
 } from '@phosphor/properties';
 
@@ -227,22 +223,14 @@ class BoxLayout extends PanelLayout {
    * A message handler invoked on a `'child-shown'` message.
    */
   protected onChildShown(msg: Widget.ChildMessage): void {
-    if (IS_IE || IS_EDGE) { // prevent flicker on IE/Edge - TODO fix this
-      MessageLoop.sendMessage(this.parent!, Widget.Msg.FitRequest);
-    } else {
-      this.parent!.fit();
-    }
+    this.parent!.fit();
   }
 
   /**
    * A message handler invoked on a `'child-hidden'` message.
    */
   protected onChildHidden(msg: Widget.ChildMessage): void {
-    if (IS_IE || IS_EDGE) { // prevent flicker on IE/Edge - TODO fix this
-      MessageLoop.sendMessage(this.parent!, Widget.Msg.FitRequest);
-    } else {
-      this.parent!.fit();
-    }
+    this.parent!.fit();
   }
 
   /**

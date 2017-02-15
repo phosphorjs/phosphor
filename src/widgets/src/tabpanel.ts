@@ -6,6 +6,14 @@
 | The full license is in the file LICENSE, distributed with this software.
 |----------------------------------------------------------------------------*/
 import {
+  MessageLoop
+} from '@phosphor/messaging';
+
+import {
+  IS_EDGE, IS_IE
+} from '@phosphor/platform';
+
+import {
   ISignal, Signal
 } from '@phosphor/signaling';
 
@@ -282,6 +290,11 @@ class TabPanel extends Widget {
     this._currentChanged.emit({
       previousIndex, previousWidget, currentIndex, currentWidget
     });
+
+    // Flush the message loop on IE and Edge to prevent flicker.
+    if (IS_EDGE || IS_IE) {
+      MessageLoop.flush();
+    }
   }
 
   /**
