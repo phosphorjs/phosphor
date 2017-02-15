@@ -36,19 +36,21 @@ class PromiseDelegate<T> {
    *
    * @param value - The value to use for resolving the promise.
    */
-  resolve(value: T): void {
-    this._resolve.call(undefined, value);
+  resolve(value: T | PromiseLike<T>): void {
+    let resolve = this._resolve;
+    resolve(value);
   }
 
   /**
    * Reject the wrapped promise with the given value.
    *
-   * @value - The value to use for rejecting the promise.
+   * @reason - The reason for rejecting the promise.
    */
-  reject(value: any): void {
-    this._reject.call(undefined, value);
+  reject(reason: any): void {
+    let reject = this._reject;
+    reject(reason);
   }
 
-  private _resolve: (value: T) => void;
-  private _reject: (value: any) => void;
+  private _resolve: (value: T | PromiseLike<T>) => void;
+  private _reject: (reason: any) => void;
 }
