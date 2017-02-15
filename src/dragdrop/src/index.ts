@@ -425,7 +425,7 @@ class Drag implements IDisposable {
     this.dragImage.classList.add('p-mod-drag-image');
     let style = this.dragImage.style;
     style.pointerEvents = 'none';
-    style.position = 'absolute';
+    style.position = 'fixed';
     style.top = `${clientY}px`;
     style.left = `${clientX}px`;
     document.body.appendChild(this.dragImage);
