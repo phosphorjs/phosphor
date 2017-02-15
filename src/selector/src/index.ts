@@ -88,7 +88,7 @@ function matchesSelector(element: Element, selector: string): boolean {
 
 
 /**
- * The namespace for the private module data.
+ * The namespace for the module implementation details.
  */
 namespace Private {
   /**

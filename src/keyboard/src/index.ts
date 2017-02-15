@@ -304,7 +304,7 @@ const EN_US: IKeyboardLayout = new KeycodeLayout('en-us', {
 
 
 /**
- * The namespace for the private module data.
+ * The namespace for the module implementation details.
  */
 namespace Private {
   /**

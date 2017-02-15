@@ -1019,9 +1019,8 @@ namespace CommandRegistry {
 
 
 /**
- * The namespace for the module private data.
+ * The namespace for the module implementation details.
  */
-export
 namespace Private {
   /**
    * The timeout in ms for triggering a key binding chord.

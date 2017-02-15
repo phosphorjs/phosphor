@@ -318,7 +318,7 @@ namespace Title {
 
 
 /**
- * The namespace for the module private data.
+ * The namespace for the module implementation details.
  */
 namespace Private {
   /**

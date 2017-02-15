@@ -99,7 +99,7 @@ namespace StackedPanel {
 
 
 /**
- * The namespace for the private module data.
+ * The namespace for the module implementation details.
  */
 namespace Private {
   /**
