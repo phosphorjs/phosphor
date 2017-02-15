@@ -6,20 +6,12 @@
 | The full license is in the file LICENSE, distributed with this software.
 |----------------------------------------------------------------------------*/
 import {
-  Token
-} from '../core/token';
-
-import {
   CommandRegistry
-} from './commandregistry';
-
-import {
-  Keymap
-} from './keymap';
+} from '@phosphor/commands';
 
 import {
   Widget
-} from './widget';
+} from '@phosphor/widgets';
 
 
 /**
@@ -27,23 +19,8 @@ import {
  *
  * #### Notes
  * A token captures the compile-time type of an interface or class in
- * an object which is useful for various type-safe runtime operations.
- *
- * #### Example
- * ``` typescript
- * interface IThing {
- *   value: number;
- * }
- *
- * const IThing = new Token<IThing>('my-module/IThing');
- *
- * // some runtime type registry
- * registry.registerFactory(IThing, () => { value: 42 });
- *
- * // later...
- * let thing = registry.getInstance(IThing);
- * thing.value; // 42
- * ```
+ * an object which can be used to register a provider of that object
+ * type with an application in a type-safe fashion.
  */
 export
 class Token<T> {
@@ -53,7 +30,7 @@ class Token<T> {
    * @param name - A human readable name for the token.
    */
   constructor(name: string) {
-    this._name = name;
+    this.name = name;
   }
 
   /**
@@ -61,38 +38,116 @@ class Token<T> {
    *
    * #### Notes
    * This can be useful for debugging and logging.
-   *
-   * This is a read-only property.
    */
-  get name(): string {
-    return this._name;
-  }
+  readonly name: string;
 
-  private _name: string;
-  private _tokenStructuralPropertyT: T;
+  /**
+   * A structural property to make the token unique to the compiler.
+   *
+   * #### Notes
+   * User code should pretend this value does not exist.
+   *
+   * This value only serves to enforce compiler behavior.
+   */
+  readonly __tokenStructuralPropertyT__: T | null = null;
 }
 
 
 /**
- * An abstract base class for creating pluggable applications.
+ * A user-defined application plugin.
+ *
+ * #### Notes
+ * Plugins are the foundation for building an extensible application.
+ *
+ * Plugins consume and provide "services", which are nothing more than
+ * concrete implementations of interfaces and/or abstract types.
+ *
+ * Unlike regular imports and exports, which tie the service consumer
+ * to a particular implementation of the service, plugins decouple the
+ * service producer from the service consumer, allowing an application
+ * to be easily customized by third parties in a type-safe fashion.
+ */
+export
+interface IPlugin<T, U> {
+  /**
+   * The human readable id of the plugin.
+   *
+   * #### Notes
+   * This must be unique within an application.
+   */
+  id: string;
+
+  /**
+   * Whether the plugin should be activated on application start.
+   *
+   * #### Notes
+   * The default is `false`.
+   */
+  autoStart?: boolean;
+
+  /**
+   * The types of services required by the plugin, if any.
+   *
+   * #### Notes
+   * These tokens correspond to the services required by the plugin.
+   * When the plugin is activated, a concrete instance of each type
+   * will be passed to the `activate()` function, in the order they
+   * are specified in the `requires` array.
+   */
+  requires?: Token<any>[];
+
+  /**
+   * The type of service provided by the plugin, if any.
+   *
+   * #### Notes
+   * This token corresponds to the service exported by the plugin.
+   * When the plugin is activated, the return value of `activate()`
+   * is used as the concrete instance of the type.
+   */
+  provides?: Token<U>;
+
+  /**
+   * A function invoked to activate the plugin.
+   *
+   * @param app - The application which owns the plugin.
+   *
+   * @param args - The services specified by the `requires` property.
+   *
+   * @returns The provided service, or a promise to the service.
+   *
+   * #### Notes
+   * This function will be called whenever the plugin is manually
+   * activated, or when another plugin being activated requires
+   * the service it provides.
+   *
+   * This function will not be called unless all of its required
+   * services can be fulfilled.
+   */
+  activate: (app: T, ...args: any[]) => U | Promise<U>;
+}
+
+
+/**
+ * A class for creating pluggable applications.
  *
  * #### Notes
  * The `Application` class is useful when creating large, complex
  * UI applications with the ability to be safely extended by third
  * party code via plugins.
- *
- * Use of this class is optional. Applications with low to moderate
- * complexity will have no need for the features this class provides.
  */
 export
-abstract class Application<T extends Widget> {
+class Application<T extends Widget> {
   /**
    * Construct a new application.
    */
-  constructor() {
-    this._commands = new CommandRegistry();
-    this._keymap = new Keymap({ commands: this._commands });
+  constructor(options: Application.IOptions<T>) {
+    this.shell = options.shell;
   }
+
+  /**
+   * The application command registry.
+   */
+  readonly commands = new CommandRegistry();
 
   /**
    * The application shell widget.
@@ -101,36 +156,8 @@ abstract class Application<T extends Widget> {
    * The shell widget is the root "container" widget for the entire
    * application. It will typically expose an API which allows the
    * application plugins to insert content in a variety of places.
-   *
-   * This is created by a subclass in the `createShell()` method.
-   *
-   * This will be `null` until the application is started.
-   *
-   * This is a read-only property.
    */
-  get shell(): T {
-    return this._shell;
-  }
-
-  /**
-   * The application command registry.
-   *
-   * #### Notes
-   * This is a read-only property.
-   */
-  get commands(): CommandRegistry {
-    return this._commands;
-  }
-
-  /**
-   * The application keymap.
-   *
-   * #### Notes
-   * This is a read-only property.
-   */
-  get keymap(): Keymap {
-    return this._keymap;
-  }
+  readonly shell: T;
 
   /**
    * Test whether a plugin is registered with the application.
@@ -164,7 +191,7 @@ abstract class Application<T extends Widget> {
    * If the plugin provides a service which has already been provided
    * by another plugin, the new service will override the old service.
    */
-  registerPlugin(plugin: Application.IPlugin<this, any>): void {
+  registerPlugin(plugin: IPlugin<this, any>): void {
     // Throw an error if the plugin id is already registered.
     if (plugin.id in this._pluginMap) {
       throw new Error(`Plugin '${plugin.id}' is already registered.`);
@@ -176,10 +203,12 @@ abstract class Application<T extends Widget> {
     // Ensure the plugin does not cause a cyclic dependency.
     Private.ensureNoCycle(data, this._pluginMap, this._serviceMap);
 
-    // Add the service token to the registry.
-    if (data.provides) this._serviceMap.set(data.provides, data.id);
+    // Add the service token to the service map.
+    if (data.provides) {
+      this._serviceMap.set(data.provides, data.id);
+    }
 
-    // Add the plugin to the registry.
+    // Add the plugin to the plugin map.
     this._pluginMap[data.id] = data;
   }
 
@@ -191,7 +220,7 @@ abstract class Application<T extends Widget> {
    * #### Notes
    * This calls `registerPlugin()` for each of the given plugins.
    */
-  registerPlugins(plugins: Application.IPlugin<this, any>[]): void {
+  registerPlugins(plugins: IPlugin<this, any>[]): void {
     for (let plugin of plugins) {
       this.registerPlugin(plugin);
     }
@@ -214,7 +243,7 @@ abstract class Application<T extends Widget> {
 
     // Resolve immediately if the plugin is already activated.
     if (data.activated) {
-      return Promise.resolve(void 0);
+      return Promise.resolve(undefined);
     }
 
     // Return the pending resolver promise if it exists.
@@ -227,7 +256,7 @@ abstract class Application<T extends Widget> {
 
     // Setup the resolver promise for the plugin.
     data.promise = Promise.all(promises).then(deps => {
-      return data.activate.apply(void 0, [this].concat(deps));
+      return data.activate.apply(undefined, [this, ...deps]);
     }).then(service => {
       data.service = service;
       data.activated = true;
@@ -291,25 +320,21 @@ abstract class Application<T extends Widget> {
    * initial plugins have been registered.
    *
    * Bootstrapping the application consists of the following steps:
-   * 1. Create the shell widget
-   * 2. Activate the startup plugins
-   * 3. Wait for those plugins to activate
-   * 4. Attach the shell widget to the DOM
-   * 5. Add the application event listeners
+   * 1. Activate the startup plugins
+   * 2. Wait for those plugins to activate
+   * 3. Attach the shell widget to the DOM
+   * 4. Add the application event listeners
    */
   start(options: Application.IStartOptions = {}): Promise<void> {
     // Resolve immediately if the application is already started.
     if (this._started) {
-      return Promise.resolve(void 0);
+      return Promise.resolve(undefined);
     }
 
     // Return the pending promise if it exists.
     if (this._promise) {
       return this._promise;
     }
-
-    // Create the shell widget.
-    this._shell = this.createShell();
 
     // Parse the host id for attaching the shell.
     let hostID = options.hostID || '';
@@ -357,18 +382,6 @@ abstract class Application<T extends Widget> {
   }
 
   /**
-   * Create the shell widget for the application.
-   *
-   * @returns A new application shell widget.
-   *
-   * #### Notes
-   * This method is called when the application is started.
-   *
-   * This method must be reimplemented by a subclass.
-   */
-  protected abstract createShell(): T;
-
-  /**
    * Attach the application shell to the DOM.
    *
    * @param id - The id of the host node for the shell, or `''`.
@@ -401,12 +414,12 @@ abstract class Application<T extends Widget> {
    *
    * #### Notes
    * The default implementation of this method invokes the key down
-   * processing method of the application keymap.
+   * processing method of the application command registry.
    *
    * A subclass may reimplement this method as needed.
    */
   protected evtKeydown(event: KeyboardEvent): void {
-    this.keymap.processKeydownEvent(event);
+    this.commands.processKeydownEvent(event);
   }
 
   /**
@@ -422,10 +435,7 @@ abstract class Application<T extends Widget> {
   }
 
   private _started = false;
-  private _shell: T = null;
-  private _keymap: Keymap;
-  private _commands: CommandRegistry;
-  private _promise: Promise<void> = null;
+  private _promise: Promise<void> | null = null;
   private _pluginMap = Private.createPluginMap();
   private _serviceMap = Private.createServiceMap();
 }
@@ -437,78 +447,18 @@ abstract class Application<T extends Widget> {
 export
 namespace Application {
   /**
-   * A user-defined application plugin.
-   *
-   * #### Notes
-   * Plugins are the foundation for building an extensible application.
-   *
-   * Plugins consume and provide "services", which are nothing more than
-   * concrete implementations of interfaces and/or abstract types.
-   *
-   * Unlike regular imports and exports, which tie the service consumer
-   * to a particular implementation of the service, plugins decouple the
-   * service producer from the service consumer, allowing an application
-   * to be easily customized by third parties in a type-safe fashion.
-   *
-   * A plugin should be treated as an immutable object.
+   * An options object for creating an application.
    */
   export
-  interface IPlugin<T, U> {
+  interface IOptions<T extends Widget> {
     /**
-     * The human readable id of the plugin.
+     * The shell widget to use for the application.
      *
-     * #### Notes
-     * This must be unique within an application.
+     * This should be a newly created and initialized widget.
+     *
+     * The application will attach the widget to the DOM.
      */
-    id: string;
-
-    /**
-     * Whether the plugin should be activated on application start.
-     *
-     * #### Notes
-     * The default is `false`.
-     */
-    autoStart?: boolean;
-
-    /**
-     * The types of services required by the plugin, if any.
-     *
-     * #### Notes
-     * These tokens correspond to the services required by the plugin.
-     * When the plugin is activated, a concrete instance of each type
-     * will be passed to the `activate()` function, in the order they
-     * are specified in the `requires` array.
-     */
-    requires?: Token<any>[];
-
-    /**
-     * The type of service provided by the plugin, if any.
-     *
-     * #### Notes
-     * This token corresponds to the service exported by the plugin.
-     * When the plugin is activated, the return value of `activate()`
-     * is used as the concrete instance of the type.
-     */
-    provides?: Token<U>;
-
-    /**
-     * A function invoked to activate the plugin.
-     *
-     * @param app - The application which owns the plugin.
-     *
-     * @param args - The services specified by the `requires` property.
-     *
-     * @returns The provided service, or a promise to the service.
-     *
-     * #### Notes
-     * This function will be called whenever the plugin is manually
-     * activated, or when another plugin being activated requires
-     * the service it provides.
-     *
-     * This function will not be called unless all of its required
-     * services can be fulfilled.
-     */
-    activate: (app: T, ...args: any[]) => U | Promise<U>;
+    shell: T;
   }
 
   /**
@@ -555,27 +505,27 @@ namespace Private {
     /**
      * The human readable id of the plugin.
      */
-    id: string;
+    readonly id: string;
 
     /**
      * Whether the plugin should be activated on application start.
      */
-    autoStart: boolean;
+    readonly autoStart: boolean;
 
     /**
      * The types of services required by the plugin, or `[]`.
      */
-    requires: Token<any>[];
+    readonly requires: Token<any>[];
 
     /**
      * The type of service provided by the plugin, or `null`.
      */
-    provides: Token<any>;
+    readonly provides: Token<any> | null;
 
     /**
      * The function which activates the plugin.
      */
-    activate: (app: any, ...args: any[]) => any;
+    readonly activate: (app: any, ...args: any[]) => any;
 
     /**
      * Whether the plugin has been activated.
@@ -585,12 +535,12 @@ namespace Private {
     /**
      * The resolved service for the plugin, or `null`.
      */
-    service: any;
+    service: any | null;
 
     /**
      * The pending resolver promise, or `null`.
      */
-    promise: Promise<void>;
+    promise: Promise<void> | null;
   }
 
   /**
@@ -625,7 +575,7 @@ namespace Private {
    * Create a normalized plugin data object for the given plugin.
    */
   export
-  function createPluginData(plugin: Application.IPlugin<any, any>): IPluginData {
+  function createPluginData(plugin: IPlugin<any, any>): IPluginData {
     return {
       id: plugin.id,
       service: null,
