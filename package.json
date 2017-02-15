@@ -1,7 +1,5 @@
 {
-  "name": "phosphor",
-  "version": "0.7.1",
-  "description": "The PhosphorJS libary.",
+  "private": true,
   "dependencies": {},
   "devDependencies": {
     "@types/expect.js": "^0.3.29",
@@ -30,6 +28,7 @@
   },
   "scripts": {
     "build:algorithm": "cd src/algorithm && tsc",
+    "build:application": "cd src/application && tsc",
     "build:collections": "cd src/collections && tsc",
     "build:commands": "cd src/commands && tsc",
     "build:disposable": "cd src/disposable && tsc",
@@ -44,8 +43,11 @@
     "build:signaling": "cd src/signaling && tsc",
     "build:virtualdom": "cd src/virtualdom && tsc",
     "build:widgets": "cd src/widgets && tsc",
-    "build:src": "npm run build:algorithm && npm run build:collections && npm run build:disposable && npm run build:json && npm run build:keyboard && npm run build:platform && npm run build:selector && npm run build:signaling && npm run build:commands && npm run build:mime && npm run build:dragdrop && npm run build:messaging && npm run build:virtualdom && npm run build:properties && npm run build:widgets",
+    "build:src": "npm run build:algorithm && npm run build:collections && npm run build:disposable && npm run build:json && npm run build:keyboard && npm run build:platform && npm run build:selector && npm run build:signaling && npm run build:commands && npm run build:mime && npm run build:dragdrop && npm run build:messaging && npm run build:virtualdom && npm run build:properties && npm run build:widgets && npm run build:application",
+    "build:example": "cd example && tsc && webpack --config webpack.conf.js",
+    "build": "npm run build:src && npm run build:example",
     "clean:algorithm": "rimraf src/algorithm/lib",
+    "clean:application": "rimraf src/application/lib",
     "clean:collections": "rimraf src/collections/lib",
     "clean:commands": "rimraf src/commands/lib",
     "clean:disposable": "rimraf src/disposable/lib",
@@ -60,59 +62,7 @@
     "clean:signaling": "rimraf src/signaling/lib",
     "clean:virtualdom": "rimraf src/virtualdom/lib",
     "clean:widgets": "rimraf src/widgets/lib",
-    "clean:src": "rimraf lib",
-    "clean:test": "rimraf test/build && rimraf test/coverage",
-    "clean": "npm run clean:src && npm run clean:test",
-    "build:example": "cd example && tsc && webpack --config webpack.conf.js",
-    "build:examples": "tsc --project examples/boxpanel && webpack --config examples/boxpanel/webpack.conf.js",
-    "build:test": "tsc --project test/src && webpack --config test/webpack.conf.js",
-    "docs": "rimraf docs/api && typedoc --mode modules --module commonjs --excludeNotExported --target es5 --moduleResolution node --out docs/api src",
-    "prepublish": "npm run build",
-    "test:chrome": "karma start --browsers=Chrome test/karma.conf.js",
-    "test:coverage": "webpack --config test/webpack-cov.conf.js && karma start test/karma-cov.conf.js",
-    "test:firefox": "karma start --browsers=Firefox test/karma.conf.js",
-    "test:ie": "karma start --browsers=IE test/karma.conf.js",
-    "test:debug": "karma start --browsers=Chrome --singleRun=false --debug=true test/karma.conf.js",
-    "test": "npm run test:firefox",
-    "watch": "watch 'npm run build' src",
-    "watch:test": "watch 'npm run build && npm test' src test/src"
-  },
-  "repository": {
-    "type": "git",
-    "url": "https://github.com/phosphorjs/phosphor.git"
-  },
-  "files": [
-    "lib/*.d.ts",
-    "lib/*.js",
-    "lib/**/*.d.ts",
-    "lib/**/*.js",
-    "styles/*.css",
-    "styles/**/*.css"
-  ],
-  "keywords": [
-    "algorithm",
-    "collections",
-    "dom",
-    "layout",
-    "messaging",
-    "properties",
-    "signaling",
-    "ui",
-    "widget"
-  ],
-  "directories": {
-    "lib": "lib/"
-  },
-  "author": "S. Chris Colbert <sccolbert@gmail.com>",
-  "contributors": [
-    "A. Darian <git@darian.af>",
-    "Dave Willmer <dave.willmer@gmail.com>",
-    "S. Chris Colbert <sccolbert@gmail.com>",
-    "Steven Silvester <steven.silvester@gmail.com>"
-  ],
-  "license": "BSD-3-Clause",
-  "bugs": {
-    "url": "https://github.com/phosphorjs/phosphor/issues"
-  },
-  "homepage": "https://github.com/phosphorjs/phosphor"
+    "clean:src": "npm run clean:algorithm && npm run clean:collections && npm run clean:disposable && npm run clean:json && npm run clean:keyboard && npm run clean:platform && npm run clean:selector && npm run clean:signaling && npm run clean:commands && npm run clean:mime && npm run clean:dragdrop && npm run clean:messaging && npm run clean:virtualdom && npm run clean:properties && npm run clean:widgets && npm run clean:application",
+    "clean": "npm run clean:src"
+  }
 }
