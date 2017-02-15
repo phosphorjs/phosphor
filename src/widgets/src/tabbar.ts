@@ -1694,13 +1694,13 @@ namespace Private {
         layout[i] = {
           pos: node.offsetLeft,
           size: node.offsetWidth,
-          margin: parseInt(style.marginLeft!, 10) || 0
+          margin: parseFloat(style.marginLeft!) || 0
         };
       } else {
         layout[i] = {
           pos: node.offsetTop,
           size: node.offsetHeight,
-          margin: parseInt(style.marginTop!, 10) || 0
+          margin: parseFloat(style.marginTop!) || 0
         };
       }
     }
