@@ -31,6 +31,14 @@ import {
 export
 class StackedLayout extends PanelLayout {
   /**
+   * Dispose of the resources held by the layout.
+   */
+  dispose(): void {
+    this._box = null;
+    super.dispose();
+  }
+
+  /**
    * Attach a widget to the parent's DOM node.
    *
    * @param index - The current index of the widget in the layout.

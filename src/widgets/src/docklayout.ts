@@ -67,6 +67,7 @@ class DockLayout extends Layout {
     let widgets = this.iter();
 
     // Clear the layout before disposing the widgets.
+    this._box = null;
     this._root = null;
 
     // Dispose of the widgets contained in the old layout root.

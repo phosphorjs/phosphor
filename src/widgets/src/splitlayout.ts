@@ -56,6 +56,16 @@ class SplitLayout extends PanelLayout {
   }
 
   /**
+   * Dispose of the resources held by the layout.
+   */
+  dispose(): void {
+    this._box = null;
+    this._sizers.length = 0;
+    this._handles.length = 0;
+    super.dispose();
+  }
+
+  /**
    * The renderer used by the split layout.
    */
   readonly renderer: SplitLayout.IRenderer;
