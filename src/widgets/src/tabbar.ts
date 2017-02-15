@@ -236,14 +236,14 @@ class TabBar<T> extends Widget {
     this._currentIndex = ci;
     this._previousTitle = pt;
 
+    // Schedule an update of the tabs.
+    this.update();
+
     // Emit the current changed signal.
     this._currentChanged.emit({
       previousIndex: pi, previousTitle: pt,
       currentIndex: ci, currentTitle: ct
     });
-
-    // Schedule an update of the tabs.
-    this.update();
   }
 
   /**
@@ -346,11 +346,11 @@ class TabBar<T> extends Widget {
       // Connect to the title changed signal.
       title.changed.connect(this._onTitleChanged, this);
 
-      // Adjust the current index for the insert.
-      this._adjustCurrentForInsert(j, title);
-
       // Schedule an update of the tabs.
       this.update();
+
+      // Adjust the current index for the insert.
+      this._adjustCurrentForInsert(j, title);
 
       // Return the title added to the tab bar.
       return title;
@@ -371,11 +371,11 @@ class TabBar<T> extends Widget {
     // Move the title to the new location.
     ArrayExt.move(this._titles, i, j);
 
-    // Adjust the current index for the move.
-    this._adjustCurrentForMove(i, j);
-
     // Schedule an update of the tabs.
     this.update();
+
+    // Adjust the current index for the move.
+    this._adjustCurrentForMove(i, j);
 
     // Return the title added to the tab bar.
     return title;
@@ -421,11 +421,11 @@ class TabBar<T> extends Widget {
       this._previousTitle = null;
     }
 
-    // Adjust the current index for the remove.
-    this._adjustCurrentForRemove(index, title);
-
     // Schedule an update of the tabs.
     this.update();
+
+    // Adjust the current index for the remove.
+    this._adjustCurrentForRemove(index, title);
   }
 
   /**
