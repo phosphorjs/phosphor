@@ -138,12 +138,13 @@ namespace DOM {
   export
   function sizeLimits(element: Element): ISizeLimits {
     let style = window.getComputedStyle(element);
-    return {
-      minWidth: parseFloat(style.minWidth!) || 0,
-      minHeight: parseFloat(style.minHeight!) || 0,
-      maxWidth: parseFloat(style.maxWidth!) || Infinity,
-      maxHeight: parseFloat(style.maxHeight!) || Infinity
-    };
+    let minWidth = parseFloat(style.minWidth!) || 0;
+    let minHeight = parseFloat(style.minHeight!) || 0;
+    let maxWidth = parseFloat(style.maxWidth!) || Infinity;
+    let maxHeight = parseFloat(style.maxHeight!) || Infinity;
+    maxWidth = Math.max(minWidth, maxWidth);
+    maxHeight = Math.max(minHeight, maxHeight);
+    return { minWidth, minHeight, maxWidth, maxHeight };
   }
 
   /**
