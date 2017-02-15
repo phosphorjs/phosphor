@@ -26,12 +26,12 @@ import {
 } from '@phosphor/signaling';
 
 import {
-  ElementDataset, VirtualDOM, VirtualElement, h
-} from '@phosphor/virtualdom';
-
-import {
   DOM, JSONObject, Platform
 } from '@phosphor/utilities';
+
+import {
+  ElementDataset, VirtualDOM, VirtualElement, h
+} from '@phosphor/virtualdom';
 
 import {
   Widget
