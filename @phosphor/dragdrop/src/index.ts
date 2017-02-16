@@ -391,12 +391,16 @@ class Drag implements IDisposable {
     // Update the current element reference.
     this._currentElement = currElem;
 
-    // Note: drag enter fires *before* drag leave according to spec.
-    // https://html.spec.whatwg.org/multipage/interaction.html#drag-and-drop-processing-model
+    // If the indicated element changes from the previous iteration,
+    // and is different from the current target, dispatch the exit
+    // event to the target.
+    if (currElem !== prevElem && currElem !== currTarget) {
+      Private.dispatchDragExit(this, currTarget, currElem, event);
+    }
 
     // If the indicated element changes from the previous iteration,
     // and is different from the current target, dispatch the enter
-    // events and compute the new target element.
+    // event and compute the new target element.
     if (currElem !== prevElem && currElem !== currTarget) {
       currTarget = Private.dispatchDragEnter(this, currElem, currTarget, event);
     }
@@ -732,6 +736,35 @@ namespace Private {
 
     // Ignore the event cancellation, and use the body as the new target.
     return document.body;
+  }
+
+  /**
+   * Dispatch a drag exit event to the indicated element.
+   *
+   * @param drag - The drag object associated with the action.
+   *
+   * @param prevTarget - The previous target element, or `null`. This
+   *   is the previous "current target element" from the whatwg spec.
+   *
+   * @param currTarget - The current drag target element, or `null`. This
+   *   is the "current target element" from the whatwg spec.
+   *
+   * @param event - The mouse event related to the action.
+   *
+   * #### Notes
+   * This largely implements the drag exit portion of the whatwg spec:
+   * https://html.spec.whatwg.org/multipage/interaction.html#drag-and-drop-processing-model
+   */
+  export
+  function dispatchDragExit(drag: Drag, prevTarget: Element | null, currTarget: Element | null, event: MouseEvent): void {
+    // If the previous target is null, do nothing.
+    if (!prevTarget) {
+      return;
+    }
+
+    // Dispatch the drag exit event to the previous target.
+    let dragEvent = createDragEvent('p-dragexit', drag, event, currTarget);
+    prevTarget.dispatchEvent(dragEvent);
   }
 
   /**
