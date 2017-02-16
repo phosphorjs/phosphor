@@ -6,52 +6,27 @@
 | The full license is in the file LICENSE, distributed with this software.
 |----------------------------------------------------------------------------*/
 import {
-  Message
-} from '../lib/core/messaging';
-
-import {
-  BoxPanel
-} from '../lib/ui/boxpanel';
-
-import {
-  CommandPalette
-} from '../lib/ui/commandpalette';
-
-import {
   CommandRegistry
-} from '../lib/ui/commandregistry';
+} from '@phosphor/commands';
 
 import {
-  DockPanel
-} from '../lib/ui/dockpanel';
+  Message
+} from '@phosphor/messaging';
 
 import {
-  Keymap
-} from '../lib/ui/keymap';
+  BoxPanel, CommandPalette, DockPanel, Menu, MenuBar, Widget
+} from '@phosphor/widgets';
 
-import {
-  Menu
-} from '../lib/ui/menu';
+// import '../styles/base.css';
 
-import {
-  MenuBar
-} from '../lib/ui/menubar';
-
-import {
-  Widget, WidgetFlag
-} from '../lib/ui/widget';
-
-import '../styles/base.css';
-
-import './index.css';
+// import './index.css';
 
 
 const commands = new CommandRegistry();
-const keymap = new Keymap({ commands });
 
 
 function createMenu(): Menu {
-  let sub1 = new Menu({ commands, keymap });
+  let sub1 = new Menu({ commands });
   sub1.title.label = 'More...';
   sub1.title.mnemonic = 0;
   sub1.addItem({ command: 'example:one' });
@@ -59,16 +34,16 @@ function createMenu(): Menu {
   sub1.addItem({ command: 'example:three' });
   sub1.addItem({ command: 'example:four' });
 
-  let sub2 = new Menu({ commands, keymap });
+  let sub2 = new Menu({ commands });
   sub2.title.label = 'More...';
   sub2.title.mnemonic = 0;
   sub2.addItem({ command: 'example:one' });
   sub2.addItem({ command: 'example:two' });
   sub2.addItem({ command: 'example:three' });
   sub2.addItem({ command: 'example:four' });
-  sub2.addItem({ type: 'submenu', menu: sub1 });
+  sub2.addItem({ type: 'submenu', submenu: sub1 });
 
-  let root = new Menu({ commands, keymap });
+  let root = new Menu({ commands });
   root.addItem({ command: 'example:copy' });
   root.addItem({ command: 'example:cut' });
   root.addItem({ command: 'example:paste' });
@@ -79,7 +54,7 @@ function createMenu(): Menu {
   root.addItem({ type: 'separator' });
   root.addItem({ command: 'example:open-task-manager' });
   root.addItem({ type: 'separator' });
-  root.addItem({ type: 'submenu', menu: sub2 });
+  root.addItem({ type: 'submenu', submenu: sub2 });
   root.addItem({ type: 'separator' });
   root.addItem({ command: 'example:close' });
 
@@ -101,7 +76,7 @@ class ContentWidget extends Widget {
 
   constructor(name: string) {
     super({ node: ContentWidget.createNode() });
-    this.setFlag(WidgetFlag.DisallowLayout);
+    this.setFlag(Widget.Flag.DisallowLayout);
     this.addClass('content');
     this.addClass(name.toLowerCase());
     this.title.label = name;
@@ -114,7 +89,9 @@ class ContentWidget extends Widget {
   }
 
   protected onActivateRequest(msg: Message): void {
-    if (this.isAttached) this.inputNode.focus();
+    if (this.isAttached) {
+      this.inputNode.focus();
+    }
   }
 }
 
@@ -131,7 +108,7 @@ function main(): void {
   });
 
   commands.addCommand('example:copy', {
-    label: 'Copy',
+    label: 'Copy File',
     mnemonic: 0,
     icon: 'fa fa-copy',
     execute: () => {
@@ -219,31 +196,45 @@ function main(): void {
     }
   });
 
-  keymap.addBinding({
+  commands.addCommand('example:black', {
+    label: 'Black',
+    execute: () => {
+      console.log('Black');
+    }
+  });
+
+  commands.addCommand('notebook:new', {
+    label: 'New Notebook',
+    execute: () => {
+      console.log('New Notebook');
+    }
+  });
+
+  commands.addKeyBinding({
     keys: ['Accel X'],
     selector: 'body',
     command: 'example:cut'
   });
 
-  keymap.addBinding({
+  commands.addKeyBinding({
     keys: ['Accel C'],
     selector: 'body',
     command: 'example:copy'
   });
 
-  keymap.addBinding({
+  commands.addKeyBinding({
     keys: ['Accel V'],
     selector: 'body',
     command: 'example:paste'
   });
 
-  keymap.addBinding({
+  commands.addKeyBinding({
     keys: ['Accel J', 'Accel J'],
     selector: 'body',
     command: 'example:new-tab'
   });
 
-  keymap.addBinding({
+  commands.addKeyBinding({
     keys: ['Accel M'],
     selector: 'body',
     command: 'example:open-task-manager'
@@ -263,24 +254,26 @@ function main(): void {
 
   let ctxt = createMenu();
 
-  let bar = new MenuBar({ keymap });
+  let bar = new MenuBar();
   bar.addMenu(menu1);
   bar.addMenu(menu2);
   bar.addMenu(menu3);
 
-  let palette = new CommandPalette({ commands, keymap });
-  palette.addItem({ command: 'example:cut', category: 'edit' });
-  palette.addItem({ command: 'example:copy', category: 'edit' });
-  palette.addItem({ command: 'example:paste', category: 'edit' });
-  palette.addItem({ command: 'example:one', category: 'number' });
-  palette.addItem({ command: 'example:two', category: 'number' });
-  palette.addItem({ command: 'example:three', category: 'number' });
-  palette.addItem({ command: 'example:four', category: 'number' });
-  palette.addItem({ command: 'example:new-tab' });
-  palette.addItem({ command: 'example:close-tab' });
-  palette.addItem({ command: 'example:save-on-exit' });
-  palette.addItem({ command: 'example:open-task-manager' });
-  palette.addItem({ command: 'example:close' });
+  let palette = new CommandPalette({ commands });
+  palette.addItem({ command: 'example:cut', category: 'Edit' });
+  palette.addItem({ command: 'example:copy', category: 'Edit' });
+  palette.addItem({ command: 'example:paste', category: 'Edit' });
+  palette.addItem({ command: 'example:one', category: 'Number' });
+  palette.addItem({ command: 'example:two', category: 'Number' });
+  palette.addItem({ command: 'example:three', category: 'Number' });
+  palette.addItem({ command: 'example:four', category: 'Number' });
+  palette.addItem({ command: 'example:black', category: 'Number' });
+  palette.addItem({ command: 'example:new-tab', category: 'File' });
+  palette.addItem({ command: 'example:close-tab', category: 'File' });
+  palette.addItem({ command: 'example:save-on-exit', category: 'File' });
+  palette.addItem({ command: 'example:open-task-manager', category: 'File' });
+  palette.addItem({ command: 'example:close', category: 'File' });
+  palette.addItem({ command: 'notebook:new', category: 'Notebook' });
 
   document.addEventListener('contextmenu', (event: MouseEvent) => {
     event.preventDefault();
@@ -289,14 +282,15 @@ function main(): void {
   });
 
   document.addEventListener('keydown', (event: KeyboardEvent) => {
-    if (!event.ctrlKey && !event.shiftKey && !event.metaKey && event.keyCode === 18) {
-      event.preventDefault();
-      event.stopPropagation();
-      bar.activeIndex = 0;
-      bar.activate();
-    } else {
-      keymap.processKeydownEvent(event);
-    }
+    // if (!event.ctrlKey && !event.shiftKey && !event.metaKey && event.keyCode === 18) {
+    //   event.preventDefault();
+    //   event.stopPropagation();
+    //   bar.activeIndex = 0;
+    //   bar.activate();
+    // } else {
+    //   keymap.processKeydownEvent(event);
+    // }
+    commands.processKeydownEvent(event);
   });
 
   let r1 = new ContentWidget('Red');
@@ -306,8 +300,8 @@ function main(): void {
 
   let r2 = new ContentWidget('Red');
   let b2 = new ContentWidget('Blue');
-  let g2 = new ContentWidget('Green');
-  let y2 = new ContentWidget('Yellow');
+  // let g2 = new ContentWidget('Green');
+  // let y2 = new ContentWidget('Yellow');
 
   let dock = new DockPanel();
   dock.addWidget(r1);
@@ -316,8 +310,6 @@ function main(): void {
   dock.addWidget(g1, { mode: 'split-left', ref: y1 });
   dock.addWidget(r2, { ref: b1 });
   dock.addWidget(b2, { mode: 'split-right', ref: y1 });
-
-  dock.currentChanged.connect((s, a) => { console.log(a.newValue); });
 
   BoxPanel.setStretch(dock, 1);
 

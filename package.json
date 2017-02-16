@@ -1,7 +1,5 @@
 {
-  "name": "phosphor",
-  "version": "0.7.1",
-  "description": "The PhosphorJS libary.",
+  "private": true,
   "dependencies": {},
   "devDependencies": {
     "@types/expect.js": "^0.3.29",
@@ -24,66 +22,41 @@
     "simulate-event": "^1.4.0",
     "style-loader": "^0.13.1",
     "typedoc": "^0.5.0",
-    "typescript": "^2.0.3",
+    "typescript": "^2.1.5",
     "watch": "^0.18.0",
     "webpack": "^1.12.14"
   },
   "scripts": {
-    "clean:src": "rimraf lib",
-    "clean:test": "rimraf test/build && rimraf test/coverage",
-    "clean": "npm run clean:src && npm run clean:test",
-    "build:example": "tsc --project example && webpack --config example/webpack.conf.js",
-    "build:examples": "tsc --project examples/boxpanel && webpack --config examples/boxpanel/webpack.conf.js",
-    "build:src": "tsc --project src",
-    "build:test": "tsc --project test/src && webpack --config test/webpack.conf.js",
-    "build": "npm run build:src && npm run build:test",
-    "docs": "rimraf docs/api && typedoc --mode modules --module commonjs --excludeNotExported --target es5 --moduleResolution node --out docs/api src",
-    "prepublish": "npm run build",
-    "test:chrome": "karma start --browsers=Chrome test/karma.conf.js",
-    "test:coverage": "webpack --config test/webpack-cov.conf.js && karma start test/karma-cov.conf.js",
-    "test:firefox": "karma start --browsers=Firefox test/karma.conf.js",
-    "test:ie": "karma start --browsers=IE test/karma.conf.js",
-    "test:debug": "karma start --browsers=Chrome --singleRun=false --debug=true test/karma.conf.js",
-    "test": "npm run test:firefox",
-    "watch": "watch 'npm run build' src",
-    "watch:test": "watch 'npm run build && npm test' src test/src"
-  },
-  "repository": {
-    "type": "git",
-    "url": "https://github.com/phosphorjs/phosphor.git"
-  },
-  "files": [
-    "lib/*.d.ts",
-    "lib/*.js",
-    "lib/**/*.d.ts",
-    "lib/**/*.js",
-    "styles/*.css",
-    "styles/**/*.css"
-  ],
-  "keywords": [
-    "algorithm",
-    "collections",
-    "dom",
-    "layout",
-    "messaging",
-    "properties",
-    "signaling",
-    "ui",
-    "widget"
-  ],
-  "directories": {
-    "lib": "lib/"
-  },
-  "author": "S. Chris Colbert <sccolbert@gmail.com>",
-  "contributors": [
-    "A. Darian <git@darian.af>",
-    "Dave Willmer <dave.willmer@gmail.com>",
-    "S. Chris Colbert <sccolbert@gmail.com>",
-    "Steven Silvester <steven.silvester@gmail.com>"
-  ],
-  "license": "BSD-3-Clause",
-  "bugs": {
-    "url": "https://github.com/phosphorjs/phosphor/issues"
-  },
-  "homepage": "https://github.com/phosphorjs/phosphor"
+    "build:algorithm": "cd src/algorithm && tsc",
+    "build:application": "cd src/application && tsc",
+    "build:collections": "cd src/collections && tsc",
+    "build:commands": "cd src/commands && tsc",
+    "build:disposable": "cd src/disposable && tsc",
+    "build:dragdrop": "cd src/dragdrop && tsc",
+    "build:keyboard": "cd src/keyboard && tsc",
+    "build:messaging": "cd src/messaging && tsc",
+    "build:properties": "cd src/properties && tsc",
+    "build:signaling": "cd src/signaling && tsc",
+    "build:utilities": "cd src/utilities && tsc",
+    "build:virtualdom": "cd src/virtualdom && tsc",
+    "build:widgets": "cd src/widgets && tsc",
+    "build:src": "npm run build:algorithm && npm run build:collections && npm run build:disposable && npm run build:utilities && npm run build:keyboard && npm run build:signaling && npm run build:commands && npm run build:dragdrop && npm run build:messaging && npm run build:virtualdom && npm run build:properties && npm run build:widgets && npm run build:application",
+    "build:example": "cd example && tsc && webpack --config webpack.conf.js",
+    "build": "npm run build:src && npm run build:example",
+    "clean:algorithm": "rimraf src/algorithm/lib",
+    "clean:application": "rimraf src/application/lib",
+    "clean:collections": "rimraf src/collections/lib",
+    "clean:commands": "rimraf src/commands/lib",
+    "clean:disposable": "rimraf src/disposable/lib",
+    "clean:dragdrop": "rimraf src/dragdrop/lib",
+    "clean:keyboard": "rimraf src/keyboard/lib",
+    "clean:messaging": "rimraf src/messaging/lib",
+    "clean:properties": "rimraf src/properties/lib",
+    "clean:signaling": "rimraf src/signaling/lib",
+    "clean:utilities": "rimraf src/utilities/lib",
+    "clean:virtualdom": "rimraf src/virtualdom/lib",
+    "clean:widgets": "rimraf src/widgets/lib",
+    "clean:src": "npm run clean:algorithm && npm run clean:collections && npm run clean:disposable && npm run clean:utilities && npm run clean:keyboard && npm run clean:signaling && npm run clean:commands && npm run clean:dragdrop && npm run clean:messaging && npm run clean:virtualdom && npm run clean:properties && npm run clean:widgets && npm run clean:application",
+    "clean": "npm run clean:src"
+  }
 }
