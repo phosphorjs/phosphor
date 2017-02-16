@@ -283,6 +283,14 @@ class FlexLayout extends PanelLayout {
   isVertical(): boolean {
     return !this.isHorizontal();
   }
+  
+  /**
+   * Perform layout initialization which requires the parent widget.
+   */
+  protected init(): void {
+    Private.toggleDirection(this.parent!, this.direction);
+    super.init();
+  }
 
   /**
    * Attach a widget to the parent's DOM node.
@@ -359,17 +367,6 @@ class FlexLayout extends PanelLayout {
 
     // Post a layout request for the parent widget.
     this.parent!.fit();
-  }
-
-  /**
-   * A message handler invoked on a `'layout-changed'` message.
-   *
-   * #### Notes
-   * This is called when the layout is installed on its parent.
-   */
-  protected onLayoutChanged(msg: Message): void {
-    Private.toggleDirection(this.parent!, this.direction);
-    super.onLayoutChanged(msg);
   }
 
   /**
