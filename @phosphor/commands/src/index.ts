@@ -398,7 +398,7 @@ class CommandRegistry {
    *
    * The registry **does not** install its own listener for `'keydown'`
    * events. This allows the application full control over the nodes
-   * for which the registry processes `'keydown'` events.
+   * and phase for which the registry processes `'keydown'` events.
    */
   processKeydownEvent(event: KeyboardEvent): void {
     // Bail immediately if playing back keystrokes.
