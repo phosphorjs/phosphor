@@ -158,6 +158,7 @@ class FlexLayout extends PanelLayout {
     if (!this.parent) {
       return;
     }
+    this.parent.node.style.flexWrap = value ? 'wrap' : 'nowrap';
     this.parent.fit();
   }
 
@@ -437,7 +438,7 @@ class FlexLayout extends PanelLayout {
    * attribute `order`, while keeping the internal DOM order
    * intact.
    */
-  protected order: Vector<Widget> = null;
+  protected order: Vector<Widget> | null = null;
 
   /**
    * Fit the layout to the total size required by the widgets.
@@ -518,7 +519,8 @@ class FlexLayout extends PanelLayout {
           shrink = 0;
           break;
         default:
-          throw 'Invalid stretch type: ' + this._stretchType;
+          throw new TypeError(
+            'Invalid stretch type: ' + this._stretchType);
         }
       }
       for (let i = 0; i < widgets.length; ++i) {
@@ -539,7 +541,7 @@ class FlexLayout extends PanelLayout {
     // Update display order
     for (let i = 0; i < widgets.length; ++i) {
       let widget = widgets.at(i);
-      widget.node.style.order = this.order ?  i.toString() : '';
+      widget.node.style.order = this.order ?  i.toString() : null;
     }
   }
 
