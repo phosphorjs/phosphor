@@ -420,7 +420,7 @@ class Application<T extends Widget> {
    * A subclass may reimplement this method as needed.
    */
   protected addEventListeners(): void {
-    document.addEventListener('keydown', this);
+    document.addEventListener('keydown', this, true);
     window.addEventListener('resize', this);
   }
 
