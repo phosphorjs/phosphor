@@ -11,7 +11,8 @@
   },
   "files": [
     "lib/*.d.ts",
-    "lib/*.js"
+    "lib/*.js",
+    "style/*.css"
   ],
   "dependencies": {
     "@phosphor/algorithm": "^0.1.0",
