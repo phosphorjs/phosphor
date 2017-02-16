@@ -1471,11 +1471,6 @@ namespace Private {
     // Attach the menu to the document.
     Widget.attach(menu, document.body);
 
-    // Expand the menu width by the scrollbar size, if present.
-    if (node.scrollHeight > maxHeight) {
-      style.width = `${2 * node.offsetWidth - node.clientWidth}px`;
-    }
-
     // Measure the size of the menu.
     let { width, height } = node.getBoundingClientRect();
 
@@ -1532,11 +1527,6 @@ namespace Private {
 
     // Attach the menu to the document.
     Widget.attach(submenu, document.body);
-
-    // Expand the menu width by the scrollbar size, if present.
-    if (node.scrollHeight > maxHeight) {
-      style.width = `${2 * node.offsetWidth - node.clientWidth}px`;
-    }
 
     // Measure the size of the menu.
     let { width, height } = node.getBoundingClientRect();
