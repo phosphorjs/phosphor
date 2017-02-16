@@ -1,7 +1,7 @@
 {
   "private": true,
   "name": "@phosphor/application",
-  "version": "1.0.0",
+  "version": "0.1.0",
   "description": "PhosphorJS - Application",
   "main": "lib/index.js",
   "types": "lib/index.d.ts",

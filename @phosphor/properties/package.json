@@ -1,7 +1,7 @@
 {
   "private": true,
   "name": "@phosphor/properties",
-  "version": "1.0.0",
+  "version": "0.1.0",
   "description": "PhosphorJS - Attached Properties",
   "main": "lib/index.js",
   "types": "lib/index.d.ts",

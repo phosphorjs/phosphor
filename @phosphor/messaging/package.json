@@ -1,7 +1,7 @@
 {
   "private": true,
   "name": "@phosphor/messaging",
-  "version": "1.0.0",
+  "version": "0.1.0",
   "description": "PhosphorJS - Message Passing",
   "main": "lib/index.js",
   "types": "lib/index.d.ts",
