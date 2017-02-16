@@ -6,15 +6,11 @@
 | The full license is in the file LICENSE, distributed with this software.
 |----------------------------------------------------------------------------*/
 import {
-  move
+  ArrayExt
 } from '@phosphor/algorithm';
 
 import {
-  Vector
-} from '@phosphor/collections';
-
-import {
-  Message, sendMessage
+  Message, MessageLoop
 } from '@phosphor/messaging';
 
 import {
@@ -309,7 +305,7 @@ class FlexLayout extends PanelLayout {
 
     // Set order, if applicable
     if (this.order) {
-      this.order.insert(index, widget);
+      ArrayExt.insert(this.order, index, widget);
     }
 
     // Post a layout request for the parent widget.
@@ -332,9 +328,9 @@ class FlexLayout extends PanelLayout {
     if (fromIndex !== toIndex) {
       // Change the order of the widget.
       if (!this.order) {
-        this.order = new Vector(this.widgets);
+        this.order = this.widgets.slice();
       }
-      move(this.order, fromIndex, toIndex);
+      ArrayExt.move(this.order, fromIndex, toIndex);
       this._dirty = true;
     }
 
@@ -357,8 +353,8 @@ class FlexLayout extends PanelLayout {
     if (this.order) {
       let i = 0;
       for (; i < this.order.length; ++i) {
-        if (widget === this.order.at(i)) {
-          this.order.removeAt(i);
+        if (widget === this.order[i]) {
+          ArrayExt.removeAt(this.order, i);
           break;
         }
       }
@@ -438,7 +434,7 @@ class FlexLayout extends PanelLayout {
    * attribute `order`, while keeping the internal DOM order
    * intact.
    */
-  protected order: Vector<Widget> | null = null;
+  protected order: Widget[] | null = null;
 
   /**
    * Fit the layout to the total size required by the widgets.
@@ -451,13 +447,13 @@ class FlexLayout extends PanelLayout {
     // cause a resize of the parent, fulfilling the required update.
     let ancestor = this.parent!.parent;
     if (ancestor) {
-      sendMessage(ancestor, Widget.Msg.FitRequest);
+      MessageLoop.sendMessage(ancestor, Widget.Msg.FitRequest);
     }
 
     // If the dirty flag is still set, the parent was not resized.
     // Trigger the required update on the parent widget immediately.
     if (this._dirty) {
-      sendMessage(this.parent!, Widget.Msg.UpdateRequest);
+      MessageLoop.sendMessage(this.parent!, Widget.Msg.UpdateRequest);
     }
   }
 
@@ -480,11 +476,11 @@ class FlexLayout extends PanelLayout {
     let spacing = this.minimumSpacing.toString() + 'px';
     if (this.isHorizontal()) {
       for (let i = 0; i < widgets.length - 1; ++i) {
-        widgets.at(i).node.style.marginRight = spacing;
+        widgets[i].node.style.marginRight = spacing;
       }
     } else {
       for (let i = 0; i < widgets.length - 1; ++i) {
-        widgets.at(i).node.style.marginBottom = spacing;
+        widgets[i].node.style.marginBottom = spacing;
       }
     }
 
@@ -524,7 +520,7 @@ class FlexLayout extends PanelLayout {
         }
       }
       for (let i = 0; i < widgets.length; ++i) {
-        let style = widgets.at(i).node.style;
+        let style = widgets[i].node.style;
         if (basis !== null) {
           // Can only be 0, so no unit needed
           style.flexBasis = basis.toString();
@@ -540,7 +536,7 @@ class FlexLayout extends PanelLayout {
 
     // Update display order
     for (let i = 0; i < widgets.length; ++i) {
-      let widget = widgets.at(i);
+      let widget = widgets[i];
       widget.node.style.order = this.order ?  i.toString() : null;
     }
   }
