@@ -1,14 +1,19 @@
 var path = require('path');
 
 module.exports = {
-  entry: './index.js',
+  entry: './build/index.js',
   output: {
-    filename: './bundle.js'
+    filename: './build/bundle.js'
   },
   resolve: {
-    alias: {
-      '@phosphor': 'src'
-    },
-    root: path.resolve('..')
+    modules: [path.resolve('..')]
+  },
+  module: {
+    rules: [
+      {
+        test: /\.css$/,
+        use: ['style-loader', 'css-loader']
+      }
+    ]
   }
 };

@@ -17,9 +17,7 @@ import {
   BoxPanel, CommandPalette, DockPanel, Menu, MenuBar, Widget
 } from '@phosphor/widgets';
 
-// import '../styles/base.css';
-
-// import './index.css';
+import '../style/index.css';
 
 
 const commands = new CommandRegistry();
@@ -258,6 +256,7 @@ function main(): void {
   bar.addMenu(menu1);
   bar.addMenu(menu2);
   bar.addMenu(menu3);
+  bar.id = 'menuBar';
 
   let palette = new CommandPalette({ commands });
   palette.addItem({ command: 'example:cut', category: 'Edit' });
@@ -274,6 +273,7 @@ function main(): void {
   palette.addItem({ command: 'example:open-task-manager', category: 'File' });
   palette.addItem({ command: 'example:close', category: 'File' });
   palette.addItem({ command: 'notebook:new', category: 'Notebook' });
+  palette.id = 'palette';
 
   document.addEventListener('contextmenu', (event: MouseEvent) => {
     event.preventDefault();
@@ -310,6 +310,7 @@ function main(): void {
   dock.addWidget(g1, { mode: 'split-left', ref: y1 });
   dock.addWidget(r2, { ref: b1 });
   dock.addWidget(b2, { mode: 'split-right', ref: y1 });
+  dock.id = 'dock';
 
   BoxPanel.setStretch(dock, 1);
 
