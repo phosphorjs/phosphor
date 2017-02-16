@@ -11,9 +11,6 @@
     "outDir": "./lib",
     "lib": ["ES5", "ES2015.Promise", "DOM"],
     "types": [],
-    "baseUrl": "..",
-    "paths": {
-      "@phosphor/*": ["*"]
-    }
+    "baseUrl": "../.."
   }
 }
