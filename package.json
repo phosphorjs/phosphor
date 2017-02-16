@@ -2,29 +2,11 @@
   "private": true,
   "dependencies": {},
   "devDependencies": {
-    "@types/expect.js": "^0.3.29",
-    "@types/mocha": "^2.2.32",
-    "coveralls": "^2.11.9",
-    "css-loader": "^0.23.1",
-    "es6-promise": "^3.2.1",
-    "expect.js": "^0.3.1",
-    "istanbul-instrumenter-loader": "^0.2.0",
-    "karma": "^0.13.22",
-    "karma-chrome-launcher": "^0.2.3",
-    "karma-coverage": "^0.5.5",
-    "karma-firefox-launcher": "^0.1.7",
-    "karma-ie-launcher": "^0.2.0",
-    "karma-mocha": "^0.2.2",
-    "karma-mocha-reporter": "^2.0.0",
-    "karma-webpack": "^1.7.0",
-    "mocha": "^2.4.5",
+    "css-loader": "^0.26.1",
     "rimraf": "^2.5.2",
-    "simulate-event": "^1.4.0",
     "style-loader": "^0.13.1",
-    "typedoc": "^0.5.0",
     "typescript": "^2.1.5",
-    "watch": "^0.18.0",
-    "webpack": "^1.12.14"
+    "webpack": "^2.2.1"
   },
   "scripts": {
     "build:algorithm": "cd @phosphor/algorithm && tsc",
@@ -57,6 +39,7 @@
     "clean:virtualdom": "rimraf @phosphor/virtualdom/lib",
     "clean:widgets": "rimraf @phosphor/widgets/lib",
     "clean:src": "npm run clean:algorithm && npm run clean:collections && npm run clean:disposable && npm run clean:utilities && npm run clean:keyboard && npm run clean:signaling && npm run clean:commands && npm run clean:dragdrop && npm run clean:messaging && npm run clean:virtualdom && npm run clean:properties && npm run clean:widgets && npm run clean:application",
-    "clean": "npm run clean:src"
+    "clean:example": "rimraf example/build",
+    "clean": "npm run clean:src && npm run clean:example"
   }
 }
