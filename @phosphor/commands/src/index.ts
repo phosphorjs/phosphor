@@ -497,15 +497,19 @@ class CommandRegistry {
   /**
    * Execute the command for the given key binding.
    *
-   * If the command is disabled, a message will be logged.
+   * If the command is missing or disabled, a warning will be logged.
    */
   private _executeKeyBinding(binding: CommandRegistry.IKeyBinding): void {
     let { command, args } = binding;
-    if (this.isEnabled(command, args)) {
-      this.execute(command, args);
-    } else {
-      console.log(`Command '${command}' is disabled.`);
+    if (!this.hasCommand(command) || !this.isEnabled(command, args)) {
+      let word = this.hasCommand(command) ? 'enabled' : 'registered';
+      let keys = binding.keys.join(', ');
+      let msg1 = `Cannot execute key binding '${keys}':`;
+      let msg2 = `command '${command}' is not ${word}.`;
+      console.warn(`${msg1} ${msg2}`);
+      return;
     }
+    this.execute(command, args);
   }
 
   /**
