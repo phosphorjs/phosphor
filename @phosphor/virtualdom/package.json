@@ -14,7 +14,7 @@
     "lib/*.js"
   ],
   "dependencies": {
-    "@phosphor/algorithm": "^1.0.0"
+    "@phosphor/algorithm": "^0.1.0"
   },
   "directories": {
     "lib": "lib/"

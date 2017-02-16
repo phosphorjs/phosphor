@@ -2,7 +2,7 @@
   "private": true,
   "name": "@phosphor/dragdrop",
   "version": "0.1.0",
-  "description": "PhosphorJS - Flexible Drag and Drop",
+  "description": "PhosphorJS - Drag and Drop",
   "main": "lib/index.js",
   "types": "lib/index.d.ts",
   "repository": {
@@ -14,8 +14,8 @@
     "lib/*.js"
   ],
   "dependencies": {
-    "@phosphor/disposable": "^1.0.0",
-    "@phosphor/mime": "^1.0.0"
+    "@phosphor/disposable": "^0.1.0",
+    "@phosphor/utilities": "^0.1.0"
   },
   "directories": {
     "lib": "lib/"

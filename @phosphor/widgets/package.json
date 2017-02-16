@@ -13,6 +13,18 @@
     "lib/*.d.ts",
     "lib/*.js"
   ],
+  "dependencies": {
+    "@phosphor/algorithm": "^0.1.0",
+    "@phosphor/commands": "^0.1.0",
+    "@phosphor/disposable": "^0.1.0",
+    "@phosphor/dragdrop": "^0.1.0",
+    "@phosphor/keyboard": "^0.1.0",
+    "@phosphor/messaging": "^0.1.0",
+    "@phosphor/properties": "^0.1.0",
+    "@phosphor/signaling": "^0.1.0",
+    "@phosphor/utilities": "^0.1.0",
+    "@phosphor/virtualdom": "^0.1.0"
+  },
   "directories": {
     "lib": "lib/"
   },

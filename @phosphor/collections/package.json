@@ -2,7 +2,7 @@
   "private": true,
   "name": "@phosphor/collections",
   "version": "0.1.0",
-  "description": "PhosphorJS - Collections",
+  "description": "PhosphorJS - Generic Collections",
   "main": "lib/index.js",
   "types": "lib/index.d.ts",
   "repository": {
@@ -14,7 +14,7 @@
     "lib/*.js"
   ],
   "dependencies": {
-    "@phosphor/algorithm": "^1.0.0"
+    "@phosphor/algorithm": "^0.1.0"
   },
   "directories": {
     "lib": "lib/"

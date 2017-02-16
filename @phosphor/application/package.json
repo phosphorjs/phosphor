@@ -2,7 +2,7 @@
   "private": true,
   "name": "@phosphor/application",
   "version": "0.1.0",
-  "description": "PhosphorJS - Application",
+  "description": "PhosphorJS - Pluggable Application",
   "main": "lib/index.js",
   "types": "lib/index.d.ts",
   "repository": {
@@ -13,6 +13,11 @@
     "lib/*.d.ts",
     "lib/*.js"
   ],
+  "dependencies": {
+    "@phosphor/commands": "^0.1.0",
+    "@phosphor/utilities": "^0.1.0",
+    "@phosphor/widgets": "^0.1.0"
+  },
   "directories": {
     "lib": "lib/"
   },
