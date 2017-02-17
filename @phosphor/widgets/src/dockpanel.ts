@@ -1160,36 +1160,35 @@ namespace Private {
     // Get the rect for the dock panel.
     let panelRect = panel.node.getBoundingClientRect();
 
-    // Check for a left edge zone.
-    if (x < panelRect.left + EDGE_SIZE) {
-      if (y - panelRect.top < x - panelRect.left) {
-        return { zone: 'root-top', target: null };
-      }
-      if (panelRect.bottom - y < x - panelRect.left) {
-        return { zone: 'root-bottom', target: null };
-      }
-      return { zone: 'root-left', target: null };
-    }
+    // Compute the distance to each edge of the panel.
+    let pl = x - panelRect.left + 1;
+    let pt = y - panelRect.top + 1;
+    let pr = panelRect.right - x;
+    let pb = panelRect.bottom - y;
 
-    // Check for a right edge zone.
-    if (x >= panelRect.right - EDGE_SIZE) {
-      if (y - panelRect.top < panelRect.right - x) {
-        return { zone: 'root-top', target: null };
-      }
-      if (panelRect.bottom - y < panelRect.right - x) {
-        return { zone: 'root-bottom', target: null };
-      }
-      return { zone: 'root-right', target: null };
-    }
+    // Find the minimum distance to an edge.
+    let pd = Math.min(pl, pt, pr, pb);
 
-    // Check for a top edge zone.
-    if (y < panelRect.top + EDGE_SIZE) {
-      return { zone: 'root-top', target: null };
-    }
-
-    // Check for a bottom edge zone.
-    if (y >= panelRect.bottom - EDGE_SIZE) {
-      return { zone: 'root-bottom', target: null };
+    // If the mouse is within an edge zone, find the root zone.
+    if (pd <= EDGE_SIZE) {
+      let zone: DropZone;
+      switch (pd) {
+      case pl:
+        zone = 'root-left';
+        break;
+      case pt:
+        zone = 'root-top';
+        break;
+      case pr:
+        zone = 'root-right';
+        break;
+      case pb:
+        zone = 'root-bottom';
+        break;
+      default:
+        throw 'unreachable';
+      }
+      return { zone, target: null };
     }
 
     // Find the tab area which contains the position.
@@ -1212,39 +1211,50 @@ namespace Private {
     let tr = tabBar.node.getBoundingClientRect();
     let wr = tabBar.currentTitle!.owner.node.getBoundingClientRect();
 
-    // Compute the fractional position in the tab area.
-    let fracX = (x - tr.left) / tr.width;
-    let fracY = (y - tr.top) / (tr.height + wr.height);
+    // Compute the distance to each edge of the tab area.
+    let al = x - tr.left + 1;
+    let at = y - tr.top + 1;
+    let ar = tr.right - x;
+    let ab = wr.bottom - y;
 
-    // Check for a left widget zone.
-    if (fracX < 1 / 3) {
-      if (fracY < fracX) {
-        return { zone: 'widget-top', target: tabBar };
-      }
-      if (1 - fracY < fracX) {
-        return { zone: 'widget-bottom', target: tabBar };
-      }
-      return { zone: 'widget-left', target: tabBar };
-    }
+    // Get the X and Y edge sizes for the area.
+    let rx = Math.round(tr.width / 3);
+    let ry = Math.round((tr.height + wr.height) / 3);
 
-    // Check for a center widget zone.
-    if (fracX < 2 / 3) {
-      if (fracY < 1 / 3) {
-        return { zone: 'widget-top', target: tabBar };
-      }
-      if (fracY < 2 / 3) {
-        return { zone: 'widget-center', target: tabBar };
-      }
-      return { zone: 'widget-bottom', target: tabBar };
+    // If the mouse is not within an edge, return the center zone.
+    if (al > rx && ar > rx && at > ry && ab > ry) {
+      return { zone: 'widget-center', target: tabBar };
     }
 
-    // Check for a right widget zone.
-    if (fracY < 1 - fracX) {
-      return { zone: 'widget-top', target: tabBar };
+    // Scale the distances by the slenderness ratio.
+    al /= rx;
+    at /= ry;
+    ar /= rx;
+    ab /= ry;
+
+    // Find the minimum distance to the area edge.
+    let ad = Math.min(al, at, ar, ab);
+
+    // Find the widget zone for the area edge.
+    let zone: DropZone;
+    switch (ad) {
+    case al:
+      zone = 'widget-left';
+      break;
+    case at:
+      zone = 'widget-top';
+      break;
+    case ar:
+      zone = 'widget-right';
+      break;
+    case ab:
+      zone = 'widget-bottom';
+      break;
+    default:
+      throw 'unreachable';
     }
-    if (fracY > fracX) {
-      return { zone: 'widget-bottom', target: tabBar };
-    }
-    return { zone: 'widget-right', target: tabBar };
+
+    // Return the final drop target.
+    return { zone, target: tabBar };
   }
 }
