@@ -90,10 +90,12 @@ interface IPlugin<T, U> {
   autoStart?: boolean;
 
   /**
-   * The types of services required by the plugin, if any.
+   * The types of required services for the plugin, if any.
    *
    * #### Notes
-   * These tokens correspond to the services required by the plugin.
+   * These tokens correspond to the services that are required by
+   * the plugin for correct operation.
+   *
    * When the plugin is activated, a concrete instance of each type
    * will be passed to the `activate()` function, in the order they
    * are specified in the `requires` array.
@@ -101,10 +103,24 @@ interface IPlugin<T, U> {
   requires?: Token<any>[];
 
   /**
+   * The types of optional services for the plugin, if any.
+   *
+   * #### Notes
+   * These tokens correspond to the services that can be used by the
+   * plugin if available, but are not necessarily required.
+   *
+   * The optional services will be passed to the `activate()` function
+   * following all required services. If an optional service cannot be
+   * resolved, `null` will be passed in its place.
+   */
+  optional?: Token<any>[];
+
+  /**
    * The type of service provided by the plugin, if any.
    *
    * #### Notes
    * This token corresponds to the service exported by the plugin.
+   *
    * When the plugin is activated, the return value of `activate()`
    * is used as the concrete instance of the type.
    */
@@ -268,12 +284,18 @@ class Application<T extends Widget> {
       return data.promise;
     }
 
-    // Resolve the services required by the plugin.
-    let promises = data.requires.map(req => this.resolveService(req));
+    // Resolve the required services for the plugin.
+    let required = data.requires.map(t => this.resolveRequiredService(t));
+
+    // Resolve the optional services for the plugin.
+    let optional = data.optional.map(t => this.resolveOptionalService(t));
+
+    // Create the array of promises to resolve.
+    let promises = required.concat(optional);
 
     // Setup the resolver promise for the plugin.
-    data.promise = Promise.all(promises).then(deps => {
-      return data.activate.apply(undefined, [this, ...deps]);
+    data.promise = Promise.all(promises).then(services => {
+      return data.activate.apply(undefined, [this, ...services]);
     }).then(service => {
       data.service = service;
       data.activated = true;
@@ -288,7 +310,7 @@ class Application<T extends Widget> {
   }
 
   /**
-   * Resolve a service of a given type.
+   * Resolve a required service of a given type.
    *
    * @param token - The token for the service type of interest.
    *
@@ -304,11 +326,9 @@ class Application<T extends Widget> {
    *
    * User code will not typically call this method directly. Instead,
    * the required services for the user's plugins will be resolved
-   * automatically when the plugin is activated. However, this can
-   * be useful if a plugin does not want to explicitly depend on a
-   * service, but will use it if available.
+   * automatically when the plugin is activated.
    */
-  resolveService<U>(token: Token<U>): Promise<U> {
+  resolveRequiredService<U>(token: Token<U>): Promise<U> {
     // Reject the promise if there is no provider for the type.
     let id = this._serviceMap.get(token);
     if (!id) {
@@ -323,6 +343,47 @@ class Application<T extends Widget> {
 
     // Otherwise, activate the plugin and wait on the results.
     return this.activatePlugin(id).then(() => data.service);
+  }
+
+  /**
+   * Resolve an optional service of a given type.
+   *
+   * @param token - The token for the service type of interest.
+   *
+   * @returns A promise which resolves to an instance of the requested
+   *   service, or `null` if it cannot be resolved.
+   *
+   * #### Notes
+   * Services are singletons. The same instance will be returned each
+   * time a given service token is resolved.
+   *
+   * If the plugin which provides the service has not been activated,
+   * resolving the service will automatically activate the plugin.
+   *
+   * User code will not typically call this method directly. Instead,
+   * the optional services for the user's plugins will be resolved
+   * automatically when the plugin is activated.
+   */
+  resolveOptionalService<U>(token: Token<U>): Promise<U | null> {
+    // Resolve with `null` if there is no provider for the type.
+    let id = this._serviceMap.get(token);
+    if (!id) {
+      return Promise.resolve(null);
+    }
+
+    // Resolve immediately if the plugin is already activated.
+    let data = this._pluginMap[id];
+    if (data.activated) {
+      return Promise.resolve(data.service);
+    }
+
+    // Otherwise, activate the plugin and wait on the results.
+    return this.activatePlugin(id).then(() => {
+      return data.service;
+    }).catch(reason => {
+      console.error(reason);
+      return null;
+    });
   }
 
   /**
@@ -530,9 +591,14 @@ namespace Private {
     readonly autoStart: boolean;
 
     /**
-     * The types of services required by the plugin, or `[]`.
+     * The types of required services for the plugin, or `[]`.
      */
     readonly requires: Token<any>[];
+
+    /**
+     * The types of optional services for the the plugin, or `[]`.
+     */
+    readonly optional: Token<any>[];
 
     /**
      * The type of service provided by the plugin, or `null`.
@@ -602,6 +668,7 @@ namespace Private {
       provides: plugin.provides || null,
       autoStart: plugin.autoStart || false,
       requires: plugin.requires ? plugin.requires.slice() : [],
+      optional: plugin.optional ? plugin.optional.slice() : []
     };
   }
 
