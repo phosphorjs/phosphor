@@ -6,4 +6,4 @@ Phosphor
 
 The PhosphorJS libary.
 
-[API Docs](http://phosphorjs.github.io/phosphor/api/)
+[Docs](http://phosphorjs.github.io/phosphor)
