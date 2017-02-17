@@ -304,7 +304,9 @@ class Application<T extends Widget> {
    *
    * User code will not typically call this method directly. Instead,
    * the required services for the user's plugins will be resolved
-   * automatically when the plugin is activated.
+   * automatically when the plugin is activated. However, this can
+   * be useful if a plugin does not want to explicitly depend on a
+   * service, but will use it if available.
    */
   resolveService<U>(token: Token<U>): Promise<U> {
     // Reject the promise if there is no provider for the type.
