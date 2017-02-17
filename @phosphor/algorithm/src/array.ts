@@ -825,7 +825,7 @@ namespace ArrayExt {
   /**
    * Insert a value into an array at a specific index.
    *
-   * @param array - The mutable array-like object of interest.
+   * @param array - The array of interest.
    *
    * @param index - The index at which to insert the value. Negative
    *   values are taken as an offset from the end of the array.
@@ -866,7 +866,7 @@ namespace ArrayExt {
   /**
    * Remove and return a value at a specific index in an array.
    *
-   * @param array - The mutable array-like object of interest.
+   * @param array - The array of interest.
    *
    * @param index - The index of the value to remove. Negative values
    *   are taken as an offset from the end of the array.
@@ -910,7 +910,7 @@ namespace ArrayExt {
   /**
    * Remove the first occurrence of a value from an array.
    *
-   * @param array - The mutable array-like object of interest.
+   * @param array - The array of interest.
    *
    * @param value - The value to remove from the array. Values are
    *   compared using strict `===` equality.
@@ -955,7 +955,7 @@ namespace ArrayExt {
   /**
    * Remove the last occurrence of a value from an array.
    *
-   * @param array - The mutable array-like object of interest.
+   * @param array - The array of interest.
    *
    * @param value - The value to remove from the array. Values are
    *   compared using strict `===` equality.
@@ -1000,7 +1000,7 @@ namespace ArrayExt {
   /**
    * Remove all occurrences of a value from an array.
    *
-   * @param array - The mutable array-like object of interest.
+   * @param array - The array of interest.
    *
    * @param value - The value to remove from the array. Values are
    *   compared using strict `===` equality.
@@ -1067,7 +1067,7 @@ namespace ArrayExt {
   /**
    * Remove the first occurrence of a value which matches a predicate.
    *
-   * @param array - The mutable array-like object of interest.
+   * @param array - The array of interest.
    *
    * @param fn - The predicate function to apply to the values.
    *
@@ -1115,7 +1115,7 @@ namespace ArrayExt {
   /**
    * Remove the last occurrence of a value which matches a predicate.
    *
-   * @param array - The mutable array-like object of interest.
+   * @param array - The array of interest.
    *
    * @param fn - The predicate function to apply to the values.
    *
@@ -1163,7 +1163,7 @@ namespace ArrayExt {
   /**
    * Remove all occurrences of values which match a predicate.
    *
-   * @param array - The mutable array-like object of interest.
+   * @param array - The array of interest.
    *
    * @param fn - The predicate function to apply to the values.
    *
