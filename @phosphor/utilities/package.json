@@ -1,5 +1,4 @@
 {
-  "private": true,
   "name": "@phosphor/utilities",
   "version": "0.1.0",
   "description": "PhosphorJS - Utilities",

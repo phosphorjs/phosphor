@@ -1,5 +1,4 @@
 {
-  "private": true,
   "name": "@phosphor/virtualdom",
   "version": "0.1.0",
   "description": "PhosphorJS - Virtual DOM",

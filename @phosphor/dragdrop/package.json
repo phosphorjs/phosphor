@@ -1,5 +1,4 @@
 {
-  "private": true,
   "name": "@phosphor/dragdrop",
   "version": "0.1.0",
   "description": "PhosphorJS - Drag and Drop",

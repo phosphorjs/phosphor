@@ -1,5 +1,4 @@
 {
-  "private": true,
   "name": "@phosphor/messaging",
   "version": "0.1.0",
   "description": "PhosphorJS - Message Passing",

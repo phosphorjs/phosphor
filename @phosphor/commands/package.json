@@ -1,5 +1,4 @@
 {
-  "private": true,
   "name": "@phosphor/commands",
   "version": "0.1.0",
   "description": "PhosphorJS - Commands",
