@@ -287,11 +287,11 @@ class Drag implements IDisposable {
     event.preventDefault();
     event.stopPropagation();
 
-    // Update the drag scroll element.
-    this._updateDragScroll(event);
-
     // Update the current target node and dispatch enter/leave events.
     this._updateCurrentTarget(event);
+
+    // Update the drag scroll element.
+    this._updateDragScroll(event);
 
     // Move the drag image to the specified client position. This is
     // performed *after* dispatching to prevent unnecessary reflows.
