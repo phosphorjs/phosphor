@@ -116,6 +116,11 @@ interface IDragEvent extends MouseEvent {
  * A drag operation can be terminated at any time by pressing `Escape`
  * or by disposing the drag object.
  *
+ * A drag object has the ability to automatically scroll a scrollable
+ * element when the mouse is hovered near one of its edges. To enable
+ * this, add the `data-p-dragscroll` attribute to any element which
+ * the drag object should consider for scrolling.
+ *
  * #### Notes
  * This class is designed to be used when dragging and dropping custom
  * data *within* a single application. It is *not* a replacement for
@@ -282,6 +287,9 @@ class Drag implements IDisposable {
     event.preventDefault();
     event.stopPropagation();
 
+    // Update the drag scroll element.
+    this._updateDragScroll(event);
+
     // Update the current target node and dispatch enter/leave events.
     this._updateCurrentTarget(event);
 
@@ -374,6 +382,27 @@ class Drag implements IDisposable {
     document.removeEventListener('keyup', this, true);
     document.removeEventListener('keypress', this, true);
     document.removeEventListener('contextmenu', this, true);
+  }
+
+  /**
+   * Update the drag scroll element under the mouse.
+   */
+  private _updateDragScroll(event: MouseEvent): void {
+    // Find the scroll target under the mouse.
+    let target = Private.findScrollTarget(event);
+
+    // Bail if there is nothing to scroll.
+    if (!this._scrollTarget && !target) {
+      return;
+    }
+
+    // Start the scroll loop if needed.
+    if (!this._scrollTarget) {
+      setTimeout(this._onScrollFrame, 500);
+    }
+
+    // Update the scroll target.
+    this._scrollTarget = target;
   }
 
   /**
@@ -520,6 +549,7 @@ class Drag implements IDisposable {
     this._dropAction = 'none';
     this._currentTarget = null;
     this._currentElement = null;
+    this._scrollTarget = null;
     this._promise = null;
     this._resolve = null;
 
@@ -529,12 +559,50 @@ class Drag implements IDisposable {
     }
   }
 
+  /**
+   * The scroll loop handler function.
+   */
+  private _onScrollFrame = () => {
+    // Bail early if there is no scroll target.
+    if (!this._scrollTarget) {
+      return;
+    }
+
+    // Unpack the scroll target.
+    let { element, edge, distance } = this._scrollTarget;
+
+    // Calculate the scroll delta using nonlinear acceleration.
+    let d = Private.SCROLL_EDGE_SIZE - distance;
+    let f = Math.pow(d / Private.SCROLL_EDGE_SIZE, 2);
+    let s = Math.max(1, Math.round(f * Private.SCROLL_EDGE_SIZE));
+
+    // Scroll the element in the specified direction.
+    switch (edge) {
+    case 'top':
+      element.scrollTop -= s;
+      break;
+    case 'left':
+      element.scrollLeft -= s;
+      break;
+    case 'right':
+      element.scrollLeft += s;
+      break;
+    case 'bottom':
+      element.scrollTop += s;
+      break;
+    }
+
+    // Request the next cycle of the scroll loop.
+    requestAnimationFrame(this._onScrollFrame);
+  };
+
   private _disposed = false;
   private _dropAction: DropAction = 'none';
   private _override: IDisposable | null = null;
   private _currentTarget: Element | null = null;
   private _currentElement: Element | null = null;
   private _promise: Promise<DropAction> | null = null;
+  private _scrollTarget: Private.IScrollTarget | null = null;
   private _resolve: ((value: DropAction) => void) | null = null;
 }
 
@@ -661,6 +729,12 @@ namespace Drag {
  */
 namespace Private {
   /**
+   * The size of a drag scroll edge, in pixels.
+   */
+  export
+  const SCROLL_EDGE_SIZE = 20;
+
+  /**
    * Validate the given action is one of the supported actions.
    *
    * Returns the given action or `'none'` if the action is unsupported.
@@ -687,6 +761,139 @@ namespace Private {
     event.initMouseEvent(type, true, true, window, 0, 0, 0,
       clientX, clientY, false, false, false, false, 0, null);
     return event;
+  }
+
+  /**
+   * An object which holds the scroll target data.
+   */
+  export
+  interface IScrollTarget {
+    /**
+     * The element to be scrolled.
+     */
+    element: Element;
+
+    /**
+     * The scroll edge underneath the mouse.
+     */
+    edge: 'top' | 'left' | 'right' | 'bottom';
+
+    /**
+     * The distance from the mouse to the scroll edge.
+     */
+    distance: number;
+  }
+
+  /**
+   * Find the drag scroll target under the mouse, if any.
+   */
+  export
+  function findScrollTarget(event: MouseEvent): IScrollTarget | null {
+    // Look up the client mouse position.
+    let x = event.clientX;
+    let y = event.clientY;
+
+    // Get the element under the mouse.
+    let element: Element | null = document.elementFromPoint(x, y);
+
+    // Search for a scrollable target based on the mouse position.
+    // The null assert in third clause of for-loop is required due to:
+    // https://github.com/Microsoft/TypeScript/issues/14143
+    for (; element; element = element!.parentElement) {
+      // Ignore elements which are not marked as scrollable.
+      if (!element.hasAttribute('data-p-dragscroll')) {
+        continue;
+      }
+
+      // Set up the coordinate offsets for the element.
+      let offsetX = 0;
+      let offsetY = 0;
+      if (element === document.body) {
+        offsetX = window.pageXOffset;
+        offsetY = window.pageYOffset;
+      }
+
+      // Get the element bounds in viewport coordinates.
+      let r = element.getBoundingClientRect();
+      let top = r.top + offsetY;
+      let left = r.left + offsetX;
+      let right = left + r.width;
+      let bottom = top + r.height;
+
+      // Skip the element if it's not under the mouse.
+      if (x < left || x >= right || y < top || y >= bottom) {
+        continue;
+      }
+
+      // Compute the distance to each edge.
+      let dl = x - left + 1;
+      let dt = y - top + 1;
+      let dr = right - x;
+      let db = bottom - y;
+
+      // Find the smallest of the edge distances.
+      let distance = Math.min(dl, dt, dr, db);
+
+      // Skip the element if the mouse is not within a scroll edge.
+      if (distance > SCROLL_EDGE_SIZE) {
+        continue;
+      }
+
+      // Set up the edge result variable.
+      let edge: 'top' | 'left' | 'right' | 'bottom';
+
+      // Find the edge for the computed distance.
+      switch (distance) {
+      case db:
+        edge = 'bottom';
+        break;
+      case dt:
+        edge = 'top';
+        break;
+      case dr:
+        edge = 'right';
+        break;
+      case dl:
+        edge = 'left';
+        break;
+      default:
+        throw 'unreachable';
+      }
+
+      // Compute how much the element can scroll in width and height.
+      let dsw = element.scrollWidth - element.clientWidth;
+      let dsh = element.scrollHeight - element.clientHeight;
+
+      // Determine if the element should be scrolled for the edge.
+      let shouldScroll: boolean;
+      switch (edge) {
+      case 'top':
+        shouldScroll = dsh > 0 && element.scrollTop > 0;
+        break;
+      case 'left':
+        shouldScroll = dsw > 0 && element.scrollLeft > 0;
+        break;
+      case 'right':
+        shouldScroll = dsw > 0 && element.scrollLeft < dsw;
+        break;
+      case 'bottom':
+        shouldScroll = dsh > 0 && element.scrollTop < dsh;
+        break;
+      default:
+        throw 'unreachable';
+      }
+
+      // Skip the element if it should not be scrolled.
+      if (!shouldScroll) {
+        continue;
+      }
+
+      // Return the drag scroll target.
+      return { element, edge, distance };
+    }
+
+    // No drag scroll target was found.
+    return null;
   }
 
   /**
