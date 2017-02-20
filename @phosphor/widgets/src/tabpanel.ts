@@ -6,16 +6,16 @@
 | The full license is in the file LICENSE, distributed with this software.
 |----------------------------------------------------------------------------*/
 import {
+  Platform
+} from '@phosphor/domutils';
+
+import {
   MessageLoop
 } from '@phosphor/messaging';
 
 import {
   ISignal, Signal
 } from '@phosphor/signaling';
-
-import {
-  Platform
-} from '@phosphor/utilities';
 
 import {
   BoxLayout

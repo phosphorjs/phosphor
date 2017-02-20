@@ -1,7 +1,7 @@
 {
-  "name": "@phosphor/utilities",
+  "name": "@phosphor/coreutil",
   "version": "0.1.0",
-  "description": "PhosphorJS - Utilities",
+  "description": "PhosphorJS - Core Utilities",
   "main": "lib/index.js",
   "types": "lib/index.d.ts",
   "repository": {

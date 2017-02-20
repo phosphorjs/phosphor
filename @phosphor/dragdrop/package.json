@@ -14,8 +14,8 @@
     "style/*.css"
   ],
   "dependencies": {
-    "@phosphor/disposable": "^0.1.0",
-    "@phosphor/utilities": "^0.1.0"
+    "@phosphor/coreutils": "^0.1.0",
+    "@phosphor/disposable": "^0.1.0"
   },
   "directories": {
     "lib": "lib/"

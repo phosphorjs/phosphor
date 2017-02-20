@@ -10,16 +10,16 @@ import {
 } from '@phosphor/algorithm';
 
 import {
+  ElementExt
+} from '@phosphor/domutils';
+
+import {
   Message, MessageLoop
 } from '@phosphor/messaging';
 
 import {
   AttachedProperty
 } from '@phosphor/properties';
-
-import {
-  DOM
-} from '@phosphor/utilities';
 
 import {
   BoxEngine, BoxSizer
@@ -439,7 +439,7 @@ class SplitLayout extends PanelLayout {
         sizer.maxSize = 0;
         continue;
       }
-      let limits = DOM.sizeLimits(widget.node);
+      let limits = ElementExt.sizeLimits(widget.node);
       sizer.stretch = SplitLayout.getStretch(widget);
       if (horz) {
         sizer.minSize = limits.minWidth;
@@ -459,7 +459,7 @@ class SplitLayout extends PanelLayout {
     }
 
     // Update the box sizing and add it to the size constraints.
-    let box = this._box = DOM.boxSizing(this.parent!.node);
+    let box = this._box = ElementExt.boxSizing(this.parent!.node);
     minW += box.horizontalSum;
     minH += box.verticalSum;
     maxW += box.horizontalSum;
@@ -512,13 +512,15 @@ class SplitLayout extends PanelLayout {
     }
 
     // Ensure the parent box sizing data is computed.
-    let box = this._box || (this._box = DOM.boxSizing(this.parent!.node));
+    if (!this._box) {
+      this._box = ElementExt.boxSizing(this.parent!.node);
+    }
 
     // Compute the actual layout bounds adjusted for border and padding.
-    let top = box.paddingTop;
-    let left = box.paddingLeft;
-    let width = offsetWidth - box.horizontalSum;
-    let height = offsetHeight - box.verticalSum;
+    let top = this._box.paddingTop;
+    let left = this._box.paddingLeft;
+    let width = offsetWidth - this._box.horizontalSum;
+    let height = offsetHeight - this._box.verticalSum;
 
     // Compute the adjusted layout space.
     let space: number;
@@ -575,7 +577,7 @@ class SplitLayout extends PanelLayout {
   private _hasNormedSizes = false;
   private _sizers: BoxSizer[] = [];
   private _handles: HTMLDivElement[] = [];
-  private _box: DOM.IBoxSizing | null = null;
+  private _box: ElementExt.IBoxSizing | null = null;
   private _orientation: SplitLayout.Orientation = 'horizontal';
 }
 

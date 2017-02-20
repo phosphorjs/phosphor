@@ -14,6 +14,14 @@ import {
 } from '@phosphor/commands';
 
 import {
+  JSONObject
+} from '@phosphor/coreutils';
+
+import {
+  ElementExt, Platform
+} from '@phosphor/domutils';
+
+import {
   getKeyboardLayout
 } from '@phosphor/keyboard';
 
@@ -24,10 +32,6 @@ import {
 import {
   ISignal, Signal
 } from '@phosphor/signaling';
-
-import {
-  DOM, JSONObject, Platform
-} from '@phosphor/utilities';
 
 import {
   ElementDataset, VirtualDOM, VirtualElement, h
@@ -684,7 +688,7 @@ class Menu extends Widget {
   private _evtMouseMove(event: MouseEvent): void {
     // Hit test the item nodes for the item under the mouse.
     let index = ArrayExt.findFirstIndex(this.contentNode.children, node => {
-      return DOM.hitTest(node, event.clientX, event.clientY);
+      return ElementExt.hitTest(node, event.clientX, event.clientY);
     });
 
     // Bail early if the mouse is already over the active index.
@@ -753,7 +757,8 @@ class Menu extends Widget {
     }
 
     // If the mouse is over the child menu, cancel the close timer.
-    if (DOM.hitTest(this._childMenu.node, event.clientX, event.clientY)) {
+    let { clientX, clientY } = event;
+    if (ElementExt.hitTest(this._childMenu.node, clientX, clientY)) {
       this._cancelCloseTimer();
       return;
     }
@@ -1376,7 +1381,7 @@ namespace Private {
   export
   function hitTestMenus(menu: Menu, x: number, y: number): boolean {
     for (let temp: Menu | null = menu; temp; temp = temp.childMenu) {
-      if (DOM.hitTest(temp.node, x, y)) {
+      if (ElementExt.hitTest(temp.node, x, y)) {
         return true;
       }
     }
@@ -1532,7 +1537,7 @@ namespace Private {
     let { width, height } = node.getBoundingClientRect();
 
     // Compute the box sizing for the menu.
-    let box = DOM.boxSizing(submenu.node);
+    let box = ElementExt.boxSizing(submenu.node);
 
     // Get the bounding rect for the target item node.
     let itemRect = itemNode.getBoundingClientRect();
