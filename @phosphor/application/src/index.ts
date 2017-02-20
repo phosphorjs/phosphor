@@ -11,7 +11,7 @@ import {
 
 import {
   PromiseDelegate
-} from '@phosphor/utilities';
+} from '@phosphor/coreutils';
 
 import {
   Widget

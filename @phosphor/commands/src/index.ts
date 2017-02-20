@@ -10,8 +10,16 @@ import {
 } from '@phosphor/algorithm';
 
 import {
+  JSONExt, JSONObject
+} from '@phosphor/coreutils';
+
+import {
   DisposableDelegate, IDisposable
 } from '@phosphor/disposable';
+
+import {
+  Platform, Selector
+} from '@phosphor/domutils';
 
 import {
   getKeyboardLayout
@@ -20,10 +28,6 @@ import {
 import {
   ISignal, Signal
 } from '@phosphor/signaling';
-
-import {
-  DOM, JSONExt, JSONObject, Platform
-} from '@phosphor/utilities';
 
 
 /**
@@ -1145,7 +1149,7 @@ namespace Private {
       }
 
       // Get the specificity for the selector.
-      let sp = DOM.calculateSpecificity(binding.selector);
+      let sp = Selector.calculateSpecificity(binding.selector);
 
       // Update the best match if this match is stronger.
       if (!exact || td < distance || sp >= specificity) {
@@ -1227,7 +1231,7 @@ namespace Private {
     if (options.selector.indexOf(',') !== -1) {
       throw new Error(`Selector cannot contain commas: ${options.selector}`);
     }
-    if (!DOM.isValidSelector(options.selector)) {
+    if (!Selector.isValid(options.selector)) {
       throw new Error(`Invalid selector: ${options.selector}`);
     }
     return options.selector;
@@ -1269,7 +1273,7 @@ namespace Private {
     let targ = event.target as (Element | null);
     let curr = event.currentTarget as (Element | null);
     for (let dist = 0; targ !== null; targ = targ.parentElement, ++dist) {
-      if (DOM.matchesSelector(targ, selector)) {
+      if (Selector.matches(targ, selector)) {
         return dist;
       }
       if (targ === curr) {

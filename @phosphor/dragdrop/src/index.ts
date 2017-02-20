@@ -6,12 +6,12 @@
 | The full license is in the file LICENSE, distributed with this software.
 |----------------------------------------------------------------------------*/
 import {
-  DisposableDelegate, IDisposable
-} from '@phosphor/disposable';
+  MimeData
+} from '@phosphor/coreutils';
 
 import {
-  MimeData
-} from '@phosphor/utilities';
+  DisposableDelegate, IDisposable
+} from '@phosphor/disposable';
 
 
 /**

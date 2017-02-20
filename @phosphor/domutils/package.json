@@ -1,7 +1,7 @@
 {
-  "name": "@phosphor/utilities",
+  "name": "@phosphor/domutils",
   "version": "0.1.0",
-  "description": "PhosphorJS - Utilities",
+  "description": "PhosphorJS - DOM Utilities",
   "main": "lib/index.js",
   "types": "lib/index.d.ts",
   "repository": {

@@ -10,8 +10,16 @@ import {
 } from '@phosphor/algorithm';
 
 import {
+  MimeData
+} from '@phosphor/coreutils';
+
+import {
   IDisposable
 } from '@phosphor/disposable';
+
+import {
+  ElementExt
+} from '@phosphor/domutils';
 
 import {
   Drag, IDragEvent
@@ -24,10 +32,6 @@ import {
 import {
   AttachedProperty
 } from '@phosphor/properties';
-
-import {
-  DOM, MimeData
-} from '@phosphor/utilities';
 
 import {
   DockLayout
@@ -565,7 +569,7 @@ class DockPanel extends Widget {
     let bottom: number;
     let tr: ClientRect;
     let wr: ClientRect;
-    let box = DOM.boxSizing(this.node); // TODO cache this?
+    let box = ElementExt.boxSizing(this.node); // TODO cache this?
     let rect = this.node.getBoundingClientRect();
 
     // Compute the overlay geometry based on the dock zone.
@@ -1145,7 +1149,7 @@ namespace Private {
   export
   function findDropTarget(panel: DockPanel, x: number, y: number): IDropTarget {
     // Bail, if the mouse is not over the dock panel.
-    if (!DOM.hitTest(panel.node, x, y)) {
+    if (!ElementExt.hitTest(panel.node, x, y)) {
       return { zone: 'invalid', target: null };
     }
 
@@ -1196,10 +1200,10 @@ namespace Private {
       if (!bar.currentTitle) {
         return false;
       }
-      if (DOM.hitTest(bar.node, x, y)) {
+      if (ElementExt.hitTest(bar.node, x, y)) {
         return true;
       }
-      return DOM.hitTest(bar.currentTitle.owner.node, x, y);
+      return ElementExt.hitTest(bar.currentTitle.owner.node, x, y);
     });
 
     // Bail if no tab area was found.

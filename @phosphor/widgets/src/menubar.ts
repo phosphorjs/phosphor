@@ -10,16 +10,16 @@ import {
 } from '@phosphor/algorithm';
 
 import {
+  ElementExt
+} from '@phosphor/domutils';
+
+import {
   getKeyboardLayout
 } from '@phosphor/keyboard';
 
 import {
   Message, MessageLoop
 } from '@phosphor/messaging';
-
-import {
-  DOM
-} from '@phosphor/utilities';
 
 import {
   VirtualDOM, VirtualElement, h
@@ -467,7 +467,7 @@ class MenuBar extends Widget {
   private _evtMouseDown(event: MouseEvent): void {
     // Bail if the mouse press was not on the menu bar. This can occur
     // when the document listener is installed for an active menu bar.
-    if (!DOM.hitTest(this.node, event.clientX, event.clientY)) {
+    if (!ElementExt.hitTest(this.node, event.clientX, event.clientY)) {
       return;
     }
 
@@ -479,7 +479,7 @@ class MenuBar extends Widget {
 
     // Check if the mouse is over one of the menu items.
     let index = ArrayExt.findFirstIndex(this.contentNode.children, node => {
-      return DOM.hitTest(node, event.clientX, event.clientY);
+      return ElementExt.hitTest(node, event.clientX, event.clientY);
     });
 
     // If the press was not on an item, close the child menu.
@@ -509,7 +509,7 @@ class MenuBar extends Widget {
   private _evtMouseMove(event: MouseEvent): void {
     // Check if the mouse is over one of the menu items.
     let index = ArrayExt.findFirstIndex(this.contentNode.children, node => {
-      return DOM.hitTest(node, event.clientX, event.clientY);
+      return ElementExt.hitTest(node, event.clientX, event.clientY);
     });
 
     // Bail early if the active index will not change.

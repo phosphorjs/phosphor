@@ -14,6 +14,10 @@ import {
 } from '@phosphor/disposable';
 
 import {
+  ElementExt
+} from '@phosphor/domutils';
+
+import {
   Drag
 } from '@phosphor/dragdrop';
 
@@ -24,10 +28,6 @@ import {
 import {
   ISignal, Signal
 } from '@phosphor/signaling';
-
-import {
-  DOM
-} from '@phosphor/utilities';
 
 import {
   ElementInlineStyle, VirtualDOM, VirtualElement, h
@@ -584,7 +584,7 @@ class TabBar<T> extends Widget {
 
     // Find the index of the clicked tab.
     let index = ArrayExt.findFirstIndex(tabs, tab => {
-      return DOM.hitTest(tab, event.clientX, event.clientY);
+      return ElementExt.hitTest(tab, event.clientX, event.clientY);
     });
 
     // Do nothing if the click is not on a tab.
@@ -631,7 +631,7 @@ class TabBar<T> extends Widget {
 
     // Find the index of the pressed tab.
     let index = ArrayExt.findFirstIndex(tabs, tab => {
-      return DOM.hitTest(tab, event.clientX, event.clientY);
+      return ElementExt.hitTest(tab, event.clientX, event.clientY);
     });
 
     // Do nothing if the press is not on a tab.

@@ -6,12 +6,12 @@
 | The full license is in the file LICENSE, distributed with this software.
 |----------------------------------------------------------------------------*/
 import {
-  Message, MessageLoop
-} from '@phosphor/messaging';
+  ElementExt
+} from '@phosphor/domutils';
 
 import {
-  DOM
-} from '@phosphor/utilities';
+  Message, MessageLoop
+} from '@phosphor/messaging';
 
 import {
   PanelLayout
@@ -194,7 +194,7 @@ class StackedLayout extends PanelLayout {
       if (widget.isHidden) {
         continue;
       }
-      let limits = DOM.sizeLimits(widget.node);
+      let limits = ElementExt.sizeLimits(widget.node);
       minW = Math.max(minW, limits.minWidth);
       minH = Math.max(minH, limits.minHeight);
       maxW = Math.min(maxW, limits.maxWidth);
@@ -206,7 +206,7 @@ class StackedLayout extends PanelLayout {
     maxH = Math.max(minH, maxH);
 
     // Update the box sizing and add it to the size constraints.
-    let box = this._box = DOM.boxSizing(this.parent!.node);
+    let box = this._box = ElementExt.boxSizing(this.parent!.node);
     minW += box.horizontalSum;
     minH += box.verticalSum;
     maxW += box.horizontalSum;
@@ -259,13 +259,15 @@ class StackedLayout extends PanelLayout {
     }
 
     // Ensure the parent box sizing data is computed.
-    let box = this._box || (this._box = DOM.boxSizing(this.parent!.node));
+    if (!this._box) {
+      this._box = ElementExt.boxSizing(this.parent!.node);
+    }
 
     // Compute the actual layout bounds adjusted for border and padding.
-    let top = box.paddingTop;
-    let left = box.paddingLeft;
-    let width = offsetWidth - box.horizontalSum;
-    let height = offsetHeight - box.verticalSum;
+    let top = this._box.paddingTop;
+    let left = this._box.paddingLeft;
+    let width = offsetWidth - this._box.horizontalSum;
+    let height = offsetHeight - this._box.verticalSum;
 
     // Update the widget stacking order and layout geometry.
     for (let i = 0, n = widgets.length; i < n; ++i) {
@@ -279,5 +281,5 @@ class StackedLayout extends PanelLayout {
   }
 
   private _dirty = false;
-  private _box: DOM.IBoxSizing | null = null;
+  private _box: ElementExt.IBoxSizing | null = null;
 }

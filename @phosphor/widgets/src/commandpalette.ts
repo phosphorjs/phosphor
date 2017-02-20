@@ -10,16 +10,20 @@ import {
 } from '@phosphor/algorithm';
 
 import {
+  JSONObject
+} from '@phosphor/coreutils';
+
+import {
   CommandRegistry
 } from '@phosphor/commands';
 
 import {
-  Message
-} from '@phosphor/messaging';
+  ElementExt, Platform
+} from '@phosphor/domutils';
 
 import {
-  DOM, JSONObject, Platform
-} from '@phosphor/utilities';
+  Message
+} from '@phosphor/messaging';
 
 import {
   ElementDataset, VirtualDOM, VirtualElement, h
@@ -298,7 +302,7 @@ class CommandPalette extends Widget {
       contentNode.scrollTop = 0;
     } else {
       let element = contentNode.children[activeIndex];
-      DOM.scrollIntoViewIfNeeded(contentNode, element);
+      ElementExt.scrollIntoViewIfNeeded(contentNode, element);
     }
   }
 
