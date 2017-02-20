@@ -15,7 +15,7 @@
   "dependencies": {
     "@phosphor/commands": "^0.1.0",
     "@phosphor/coreutils": "^0.1.0",
-    "@phosphor/widgets": "^0.1.0"
+    "@phosphor/widgets": "^0.1.2"
   },
   "directories": {
     "lib": "lib/"
