@@ -6,7 +6,7 @@ module.exports = {
     filename: './build/bundle.js'
   },
   resolve: {
-    modules: [path.resolve('..')]
+    modules: [path.resolve('..'), 'node_modules']
   },
   module: {
     rules: [
