@@ -5,5 +5,5 @@ docs/api
 lib
 node_modules
 example/build
-test/build
-test/coverage
+tests/build
+tests/coverage

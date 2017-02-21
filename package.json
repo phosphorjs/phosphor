@@ -2,7 +2,17 @@
   "private": true,
   "dependencies": {},
   "devDependencies": {
+    "@types/chai": "^3.4.35",
+    "@types/mocha": "^2.2.39",
+    "chai": "^3.5.0",
     "css-loader": "^0.26.1",
+    "karma": "^1.5.0",
+    "karma-chrome-launcher": "^2.0.0",
+    "karma-firefox-launcher": "^1.0.0",
+    "karma-ie-launcher": "^1.0.0",
+    "karma-mocha": "^1.3.0",
+    "karma-mocha-reporter": "^2.2.2",
+    "mocha": "^3.2.0",
     "rimraf": "^2.5.2",
     "style-loader": "^0.13.1",
     "typescript": "^2.1.5",
@@ -42,6 +52,12 @@
     "clean:widgets": "rimraf @phosphor/widgets/lib",
     "clean:src": "npm run clean:algorithm && npm run clean:collections && npm run clean:disposable && npm run clean:coreutils && npm run clean:domutils && npm run clean:keyboard && npm run clean:signaling && npm run clean:commands && npm run clean:dragdrop && npm run clean:messaging && npm run clean:virtualdom && npm run clean:properties && npm run clean:widgets && npm run clean:application",
     "clean:example": "rimraf example/build",
-    "clean": "npm run clean:src && npm run clean:example"
+    "clean": "npm run clean:src && npm run clean:example",
+    "build:tests": "cd tests && tsc && webpack --config webpack.conf.js",
+    "clean:tests": "rimraf tests/build",
+    "test:chrome": "karma start --browsers=Chrome tests/karma.conf.js",
+    "test:firefox": "karma start --browsers=Firefox tests/karma.conf.js",
+    "test:ie": "karma start --browsers=IE tests/karma.conf.js",
+    "test": "npm run test:firefox"
   }
 }
