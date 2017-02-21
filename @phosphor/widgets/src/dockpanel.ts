@@ -391,6 +391,8 @@ class DockPanel extends Widget {
 
     // Add the widget according to the indicated drop zone.
     switch(zone) {
+    case 'float':
+      break;
     case 'root':
       this.addWidget(widget);
       break;
@@ -565,15 +567,43 @@ class DockPanel extends Widget {
     // Setup the variables needed to compute the overlay geometry.
     let top: number;
     let left: number;
-    let right: number;
-    let bottom: number;
+    let right = 0;
+    let bottom = 0;
+    let width = 0;
+    let height = 0;
     let tr: ClientRect;
     let wr: ClientRect;
     let box = ElementExt.boxSizing(this.node); // TODO cache this?
     let rect = this.node.getBoundingClientRect();
+    let jump = false;
 
     // Compute the overlay geometry based on the dock zone.
     switch (zone) {
+    case 'float':
+      tr = target!.node.getBoundingClientRect();
+      wr = target!.currentTitle!.owner.node.getBoundingClientRect();
+      top = clientY - rect.top + tr.height;
+      left = clientX - rect.left;
+
+      if (this._drag && this._drag.dragImage) {
+        const transform = window.getComputedStyle(this._drag!.dragImage!).transform;
+        if (transform) {
+          const matrix = transform.split(/[(),]/);
+          top += parseFloat(matrix[6] || '0');
+          left += parseFloat(matrix[5] || '0');
+        }
+      }
+
+      if(wr.width < wr.height) {
+        width = wr.width / 2;
+        height = width * Private.GOLDEN_RATIO;
+      } else {
+        height = wr.height / 2;
+        width = height / Private.GOLDEN_RATIO;
+      }
+
+      jump = true;
+      break;
     case 'root':
       top = box.paddingTop;
       left = box.paddingLeft;
@@ -649,15 +679,24 @@ class DockPanel extends Widget {
     }
 
     // Derive the width and height from the other dimensions.
-    let width = rect.width - right - left - box.borderLeft - box.borderRight;
-    let height = rect.height - bottom - top - box.borderTop - box.borderBottom;
+    if (!width) {
+      width = rect.width - right - left - box.borderLeft - box.borderRight;
+    } else if (!right) {
+      right = rect.width - width - left - box.borderLeft - box.borderRight;
+    }
+
+    if (!height) {
+      height = rect.height - bottom - top - box.borderTop - box.borderBottom;
+    } else if (!bottom) {
+      bottom = rect.height - height - top - box.borderTop - box.borderBottom;
+    }
 
     // Show the overlay with the computed geometry.
     this.overlay.show({
       mouseX: clientX,
       mouseY: clientY,
       parentRect: rect,
-      top, left, right, bottom, width, height
+      top, left, right, bottom, width, height, jump
     });
 
     // Finally, return the computed drop zone.
@@ -846,6 +885,11 @@ namespace DockPanel {
      * The height of the overlay.
      */
     height: number;
+
+    /**
+     * Whether the geometry should be applied without transitions.
+     */
+    jump?: boolean;
   }
 
   /**
@@ -912,6 +956,18 @@ namespace DockPanel {
      * @param geo - The desired geometry for the overlay.
      */
     show(geo: IOverlayGeometry): void {
+      const jump = geo.jump || false;
+
+      if(jump != this._jump) {
+        if (jump) {
+          this.node.classList.add('p-mod-overlay-jump');
+        } else {
+          this.node.classList.remove('p-mod-overlay-jump');
+        }
+
+        this._jump = jump;
+      }
+
       // Update the position of the overlay.
       let style = this.node.style;
       style.top = `${geo.top}px`;
@@ -971,6 +1027,7 @@ namespace DockPanel {
 
     private _timer = -1;
     private _hidden = true;
+    private _jump = false;
   }
 
   /**
@@ -1066,6 +1123,11 @@ namespace Private {
      * An invalid drop zone.
      */
     'invalid' |
+
+    /**
+     * A freely floating panel.
+     */
+    'float' |
 
     /**
      * The drop zone for an empty root.
@@ -1224,10 +1286,17 @@ namespace Private {
     // Get the X and Y edge sizes for the area.
     let rx = Math.round(tr.width / 3);
     let ry = Math.round((tr.height + wr.height) / 3);
+    let centerZone: DropZone = 'widget-center';
+
+    if (tabBar.currentTitle!.owner.testFlag(Widget.Flag.IsFloatContainer)) {
+      rx = EDGE_SIZE;
+      ry = EDGE_SIZE;
+      centerZone = 'float';
+    }
 
     // If the mouse is not within an edge, return the center zone.
     if (al > rx && ar > rx && at > ry && ab > ry) {
-      return { zone: 'widget-center', target: tabBar };
+      return { zone: centerZone, target: tabBar };
     }
 
     // Scale the distances by the slenderness ratio.

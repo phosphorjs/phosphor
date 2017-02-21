@@ -14,3 +14,7 @@
   transition-duration: 150ms;
   transition-timing-function: ease;
 }
+
+.p-mod-overlay-jump {
+  transition: none;
+}
