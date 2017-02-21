@@ -466,6 +466,14 @@ namespace Private {
   const dirtySet = new Set<IConnection[]>();
 
   /**
+   * A function to schedule an event loop callback.
+   */
+  const schedule = (() => {
+    let ok = typeof requestAnimationFrame === 'function';
+    return ok ? requestAnimationFrame : setImmediate;
+  })();
+
+  /**
    * Find a connection which matches the given parameters.
    */
   function findConnection(connections: IConnection[], signal: Signal<any, any>, slot: Slot<any, any>, thisArg: any): IConnection | undefined {
@@ -501,7 +509,7 @@ namespace Private {
    */
   function scheduleCleanup(array: IConnection[]): void {
     if (dirtySet.size === 0) {
-      requestAnimationFrame(cleanupDirtySet);
+      schedule(cleanupDirtySet);
     }
     dirtySet.add(array);
   }
