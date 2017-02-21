@@ -404,8 +404,8 @@ namespace MessageLoop {
       return;
     }
 
-    // Cancel the pending loop task.
-    cancelAnimationFrame(loopTaskID);
+    // Unschedule the pending loop task.
+    unschedule(loopTaskID);
 
     // Run the message loop within the recursion guard.
     flushGuard = true;
@@ -442,6 +442,22 @@ namespace MessageLoop {
    * A guard flag to prevent flush recursion.
    */
   let flushGuard = false;
+
+  /**
+   * A function to schedule an event loop callback.
+   */
+  const schedule = (() => {
+    let ok = typeof requestAnimationFrame === 'function';
+    return ok ? requestAnimationFrame : setImmediate;
+  })();
+
+  /**
+   * A function to unschedule an event loop callback.
+   */
+  const unschedule = (() => {
+    let ok = typeof cancelAnimationFrame === 'function';
+    return ok ? cancelAnimationFrame : clearImmediate;
+  })();
 
   /**
    * Invoke a message hook with the specified handler and message.
@@ -492,7 +508,7 @@ namespace MessageLoop {
     }
 
     // Schedule a run of the message loop.
-    loopTaskID = requestAnimationFrame(runMessageLoop);
+    loopTaskID = schedule(runMessageLoop);
   }
 
   /**
@@ -543,7 +559,7 @@ namespace MessageLoop {
    */
   function scheduleCleanup(hooks: Array<MessageHook | null>): void {
     if (dirtySet.size === 0) {
-      requestAnimationFrame(cleanupDirtySet);
+      schedule(cleanupDirtySet);
     }
     dirtySet.add(hooks);
   }
