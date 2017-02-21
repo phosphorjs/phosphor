@@ -586,6 +586,7 @@ class DockPanel extends Widget {
       left = clientX - rect.left;
 
       if (this._drag && this._drag.dragImage) {
+        // Get drag image offset from mouse position as configured in CSS.
         const transform = window.getComputedStyle(this._drag!.dragImage!).transform;
         if (transform) {
           const matrix = transform.split(/[(),]/);
@@ -594,6 +595,8 @@ class DockPanel extends Widget {
         }
       }
 
+      // Compute initial floating panel size so its longer dimension
+      // is half that of the area it's floating over.
       if(wr.width < wr.height) {
         width = wr.width / 2;
         height = width * Private.GOLDEN_RATIO;
@@ -678,7 +681,7 @@ class DockPanel extends Widget {
       throw 'unreachable';
     }
 
-    // Derive the width and height from the other dimensions.
+    // Derive the width, height, right and bottom from the other dimensions.
     if (!width) {
       width = rect.width - right - left - box.borderLeft - box.borderRight;
     } else if (!right) {
@@ -1288,6 +1291,8 @@ namespace Private {
     let ry = Math.round((tr.height + wr.height) / 3);
     let centerZone: DropZone = 'widget-center';
 
+    // If area underneath allows floating panels, replace center dock zone
+    // and shrink edge snap distance.
     if (tabBar.currentTitle!.owner.testFlag(Widget.Flag.IsFloatContainer)) {
       rx = EDGE_SIZE;
       ry = EDGE_SIZE;
