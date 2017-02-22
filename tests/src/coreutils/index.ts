@@ -5,5 +5,6 @@
 |
 | The full license is in the file LICENSE, distributed with this software.
 |----------------------------------------------------------------------------*/
-import './algorithm';
-import './coreutils';
+import './json.spec';
+import './mime.spec';
+import './promise.spec';
