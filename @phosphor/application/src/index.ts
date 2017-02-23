@@ -301,7 +301,7 @@ class Application<T extends Widget> {
       data.activated = true;
       data.promise = null;
     }).catch(error => {
-      console.error(`Failed to activate plugin: "${id}"`);
+      console.error(`Plugin '${id}' failed to activate.`);
       data.promise = null;
       throw error;
     });
