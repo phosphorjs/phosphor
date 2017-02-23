@@ -14,6 +14,7 @@
     "karma-mocha-reporter": "^2.2.2",
     "mocha": "^3.2.0",
     "rimraf": "^2.5.2",
+    "simulate-event": "^1.4.0",
     "style-loader": "^0.13.1",
     "typescript": "^2.2.1",
     "webpack": "^2.2.1"
@@ -27,10 +28,8 @@
     "test:algorithm:firefox": "cd @phosphor/algorithm && karma start --browsers=Firefox karma.test.conf.js",
     "test:algorithm:ie": "cd @phosphor/algorithm && karma start --browsers=IE karma.test.conf.js",
     "test:algorithm": "npm run test:algorithm:firefox",
-
     "build:application": "cd @phosphor/application && tsc",
     "clean:application": "rimraf @phosphor/application/lib",
-
     "build:collections:src": "cd @phosphor/collections && tsc --project tsconfig.src.json",
     "build:collections:test": "cd @phosphor/collections && tsc --project tsconfig.test.json && webpack --config webpack.test.conf.js",
     "build:collections": "npm run build:collections:src && npm run build:collections:test",
@@ -39,10 +38,8 @@
     "test:collections:firefox": "cd @phosphor/collections && karma start --browsers=Firefox karma.test.conf.js",
     "test:collections:ie": "cd @phosphor/collections && karma start --browsers=IE karma.test.conf.js",
     "test:collections": "npm run test:collections:firefox",
-
     "build:commands": "cd @phosphor/commands && tsc",
     "clean:commands": "rimraf @phosphor/commands/lib",
-
     "build:coreutils:src": "cd @phosphor/coreutils && tsc --project tsconfig.src.json",
     "build:coreutils:test": "cd @phosphor/coreutils && tsc --project tsconfig.test.json && webpack --config webpack.test.conf.js",
     "build:coreutils": "npm run build:coreutils:src && npm run build:coreutils:test",
@@ -51,7 +48,6 @@
     "test:coreutils:firefox": "cd @phosphor/coreutils && karma start --browsers=Firefox karma.test.conf.js",
     "test:coreutils:ie": "cd @phosphor/coreutils && karma start --browsers=IE karma.test.conf.js",
     "test:coreutils": "npm run test:coreutils:firefox",
-
     "build:disposable:src": "cd @phosphor/disposable && tsc --project tsconfig.src.json",
     "build:disposable:test": "cd @phosphor/disposable && tsc --project tsconfig.test.json && webpack --config webpack.test.conf.js",
     "build:disposable": "npm run build:disposable:src && npm run build:disposable:test",
@@ -60,7 +56,6 @@
     "test:disposable:firefox": "cd @phosphor/disposable && karma start --browsers=Firefox karma.test.conf.js",
     "test:disposable:ie": "cd @phosphor/disposable && karma start --browsers=IE karma.test.conf.js",
     "test:disposable": "npm run test:disposable:firefox",
-
     "build:domutils:src": "cd @phosphor/domutils && tsc --project tsconfig.src.json",
     "build:domutils:test": "cd @phosphor/domutils && tsc --project tsconfig.test.json && webpack --config webpack.test.conf.js",
     "build:domutils": "npm run build:domutils:src && npm run build:domutils:test",
@@ -69,16 +64,18 @@
     "test:domutils:firefox": "cd @phosphor/domutils && karma start --browsers=Firefox karma.test.conf.js",
     "test:domutils:ie": "cd @phosphor/domutils && karma start --browsers=IE karma.test.conf.js",
     "test:domutils": "npm run test:domutils:firefox",
-
     "build:dragdrop": "cd @phosphor/dragdrop && tsc",
     "clean:dragdrop": "rimraf @phosphor/dragdrop/lib",
-
-    "build:keyboard": "cd @phosphor/keyboard && tsc",
-    "clean:keyboard": "rimraf @phosphor/keyboard/lib",
-
+    "build:keyboard:src": "cd @phosphor/keyboard && tsc --project tsconfig.src.json",
+    "build:keyboard:test": "cd @phosphor/keyboard && tsc --project tsconfig.test.json && webpack --config webpack.test.conf.js",
+    "build:keyboard": "npm run build:keyboard:src && npm run build:keyboard:test",
+    "clean:keyboard": "rimraf @phosphor/keyboard/lib && rimraf @phosphor/keyboard/build",
+    "test:keyboard:chrome": "cd @phosphor/keyboard && karma start --browsers=Chrome karma.test.conf.js",
+    "test:keyboard:firefox": "cd @phosphor/keyboard && karma start --browsers=Firefox karma.test.conf.js",
+    "test:keyboard:ie": "cd @phosphor/keyboard && karma start --browsers=IE karma.test.conf.js",
+    "test:keyboard": "npm run test:keyboard:firefox",
     "build:messaging": "cd @phosphor/messaging && tsc",
     "clean:messaging": "rimraf @phosphor/messaging/lib",
-
     "build:properties:src": "cd @phosphor/properties && tsc --project tsconfig.src.json",
     "build:properties:test": "cd @phosphor/properties && tsc --project tsconfig.test.json && webpack --config webpack.test.conf.js",
     "build:properties": "npm run build:properties:src && npm run build:properties:test",
@@ -87,20 +84,15 @@
     "test:properties:firefox": "cd @phosphor/properties && karma start --browsers=Firefox karma.test.conf.js",
     "test:properties:ie": "cd @phosphor/properties && karma start --browsers=IE karma.test.conf.js",
     "test:properties": "npm run test:properties:firefox",
-
     "build:signaling": "cd @phosphor/signaling && tsc",
     "clean:signaling": "rimraf @phosphor/signaling/lib",
-
     "build:virtualdom": "cd @phosphor/virtualdom && tsc",
     "clean:virtualdom": "rimraf @phosphor/virtualdom/lib",
-
     "build:widgets": "cd @phosphor/widgets && tsc",
     "clean:widgets": "rimraf @phosphor/widgets/lib",
-
     "build": "npm run build:algorithm && npm run build:collections && npm run build:disposable && npm run build:coreutils && npm run build:domutils && npm run build:keyboard && npm run build:signaling && npm run build:commands && npm run build:dragdrop && npm run build:messaging && npm run build:virtualdom && npm run build:properties && npm run build:widgets && npm run build:application",
     "clean": "npm run clean:algorithm && npm run clean:collections && npm run clean:disposable && npm run clean:coreutils && npm run clean:domutils && npm run clean:keyboard && npm run clean:signaling && npm run clean:commands && npm run clean:dragdrop && npm run clean:messaging && npm run clean:virtualdom && npm run clean:properties && npm run clean:widgets && npm run clean:application",
     "test": "npm run test:algorithm && npm run test:collections && npm run test:disposable && npm run test:coreutils && npm run test:domutils && npm run test:keyboard && npm run test:signaling && npm run test:commands && npm run test:dragdrop && npm run test:messaging && npm run test:virtualdom && npm run test:properties && npm run test:widgets && npm run test:application",
-
     "build:example": "cd example && tsc && webpack --config webpack.conf.js",
     "clean:example": "rimraf example/build"
   }
