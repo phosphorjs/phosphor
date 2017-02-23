@@ -82,18 +82,6 @@ describe('@phosphor/disposable', () => {
 
   describe('DisposableSet', () => {
 
-    describe('.from()', () => {
-
-      it('should accept an iterable of disposable items', () => {
-        let item1 = new TestDisposable();
-        let item2 = new TestDisposable();
-        let item3 = new TestDisposable();
-        let set = DisposableSet.from([item1, item2, item3]);
-        expect(set).to.be.an.instanceof(DisposableSet);
-      });
-
-    });
-
     describe('#constructor()', () => {
 
       it('should accept no arguments', () => {
@@ -271,6 +259,18 @@ describe('@phosphor/disposable', () => {
         expect(item1.count).to.equal(0);
         expect(item2.count).to.equal(0);
         expect(item3.count).to.equal(0);
+      });
+
+    });
+
+    describe('.from()', () => {
+
+      it('should accept an iterable of disposable items', () => {
+        let item1 = new TestDisposable();
+        let item2 = new TestDisposable();
+        let item3 = new TestDisposable();
+        let set = DisposableSet.from([item1, item2, item3]);
+        expect(set).to.be.an.instanceof(DisposableSet);
       });
 
     });
