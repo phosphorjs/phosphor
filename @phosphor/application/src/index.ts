@@ -424,7 +424,10 @@ class Application<T extends Widget> {
 
     // Generate the activation promises.
     let promises = startups.map(id => {
-      return this.activatePlugin(id).catch(console.error);
+      return this.activatePlugin(id).catch(error => {
+        console.error(`Plugin '${id}' failed to activate.`);
+        console.error(error);
+      });
     });
 
     // Wait for the plugins to activate, then finalize startup.
