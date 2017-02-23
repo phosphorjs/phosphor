@@ -46,8 +46,14 @@
     "test:coreutils:ie": "cd @phosphor/coreutils && karma start --browsers=IE karma.test.conf.js",
     "test:coreutils": "npm run test:coreutils:firefox",
 
-    "build:disposable": "cd @phosphor/disposable && tsc",
-    "clean:disposable": "rimraf @phosphor/disposable/lib",
+    "build:disposable:src": "cd @phosphor/disposable && tsc --project tsconfig.src.json",
+    "build:disposable:test": "cd @phosphor/disposable && tsc --project tsconfig.test.json && webpack --config webpack.test.conf.js",
+    "build:disposable": "npm run build:disposable:src && npm run build:disposable:test",
+    "clean:disposable": "rimraf @phosphor/disposable/lib && rimraf @phosphor/disposable/build",
+    "test:disposable:chrome": "cd @phosphor/disposable && karma start --browsers=Chrome karma.test.conf.js",
+    "test:disposable:firefox": "cd @phosphor/disposable && karma start --browsers=Firefox karma.test.conf.js",
+    "test:disposable:ie": "cd @phosphor/disposable && karma start --browsers=IE karma.test.conf.js",
+    "test:disposable": "npm run test:disposable:firefox",
 
     "build:domutils": "cd @phosphor/domutils && tsc",
     "clean:domutils": "rimraf @phosphor/domutils/lib",
