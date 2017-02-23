@@ -73,8 +73,14 @@
     "build:messaging": "cd @phosphor/messaging && tsc",
     "clean:messaging": "rimraf @phosphor/messaging/lib",
 
-    "build:properties": "cd @phosphor/properties && tsc",
-    "clean:properties": "rimraf @phosphor/properties/lib",
+    "build:properties:src": "cd @phosphor/properties && tsc --project tsconfig.src.json",
+    "build:properties:test": "cd @phosphor/properties && tsc --project tsconfig.test.json && webpack --config webpack.test.conf.js",
+    "build:properties": "npm run build:properties:src && npm run build:properties:test",
+    "clean:properties": "rimraf @phosphor/properties/lib && rimraf @phosphor/properties/build",
+    "test:properties:chrome": "cd @phosphor/properties && karma start --browsers=Chrome karma.test.conf.js",
+    "test:properties:firefox": "cd @phosphor/properties && karma start --browsers=Firefox karma.test.conf.js",
+    "test:properties:ie": "cd @phosphor/properties && karma start --browsers=IE karma.test.conf.js",
+    "test:properties": "npm run test:properties:firefox",
 
     "build:signaling": "cd @phosphor/signaling && tsc",
     "clean:signaling": "rimraf @phosphor/signaling/lib",
