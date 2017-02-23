@@ -55,8 +55,14 @@
     "test:disposable:ie": "cd @phosphor/disposable && karma start --browsers=IE karma.test.conf.js",
     "test:disposable": "npm run test:disposable:firefox",
 
-    "build:domutils": "cd @phosphor/domutils && tsc",
-    "clean:domutils": "rimraf @phosphor/domutils/lib",
+    "build:domutils:src": "cd @phosphor/domutils && tsc --project tsconfig.src.json",
+    "build:domutils:test": "cd @phosphor/domutils && tsc --project tsconfig.test.json && webpack --config webpack.test.conf.js",
+    "build:domutils": "npm run build:domutils:src && npm run build:domutils:test",
+    "clean:domutils": "rimraf @phosphor/domutils/lib && rimraf @phosphor/domutils/build",
+    "test:domutils:chrome": "cd @phosphor/domutils && karma start --browsers=Chrome karma.test.conf.js",
+    "test:domutils:firefox": "cd @phosphor/domutils && karma start --browsers=Firefox karma.test.conf.js",
+    "test:domutils:ie": "cd @phosphor/domutils && karma start --browsers=IE karma.test.conf.js",
+    "test:domutils": "npm run test:domutils:firefox",
 
     "build:dragdrop": "cd @phosphor/dragdrop && tsc",
     "clean:dragdrop": "rimraf @phosphor/dragdrop/lib",
