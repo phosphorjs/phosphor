@@ -31,8 +31,14 @@
     "build:application": "cd @phosphor/application && tsc",
     "clean:application": "rimraf @phosphor/application/lib",
 
-    "build:collections": "cd @phosphor/collections && tsc",
-    "clean:collections": "rimraf @phosphor/collections/lib",
+    "build:collections:src": "cd @phosphor/collections && tsc --project tsconfig.src.json",
+    "build:collections:test": "cd @phosphor/collections && tsc --project tsconfig.test.json && webpack --config webpack.test.conf.js",
+    "build:collections": "npm run build:collections:src && npm run build:collections:test",
+    "clean:collections": "rimraf @phosphor/collections/lib && rimraf @phosphor/collections/build",
+    "test:collections:chrome": "cd @phosphor/collections && karma start --browsers=Chrome karma.test.conf.js",
+    "test:collections:firefox": "cd @phosphor/collections && karma start --browsers=Firefox karma.test.conf.js",
+    "test:collections:ie": "cd @phosphor/collections && karma start --browsers=IE karma.test.conf.js",
+    "test:collections": "npm run test:collections:firefox",
 
     "build:commands": "cd @phosphor/commands && tsc",
     "clean:commands": "rimraf @phosphor/commands/lib",

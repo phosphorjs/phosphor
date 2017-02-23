@@ -1,6 +1,6 @@
 {
   "compilerOptions": {
-    "declaration": true,
+    "declaration": false,
     "noImplicitAny": true,
     "noEmitOnError": true,
     "noUnusedLocals": true,
@@ -8,9 +8,10 @@
     "module": "commonjs",
     "moduleResolution": "node",
     "target": "ES5",
-    "outDir": "./lib",
+    "outDir": "./build/test",
     "lib": ["ES5"],
-    "types": [],
+    "types": ["chai", "mocha"],
     "baseUrl": "../.."
-  }
+  },
+  "include": ["test/**/*"]
 }
