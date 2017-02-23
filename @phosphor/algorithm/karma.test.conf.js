@@ -1,9 +1,9 @@
 module.exports = function (config) {
   config.set({
-    basePath: '..',
+    basePath: '.',
     frameworks: ['mocha'],
     reporters: ['mocha'],
-    files: ['tests/build/bundle.js'],
+    files: ['build/bundle.test.js'],
     port: 9876,
     colors: true,
     singleRun: true,
