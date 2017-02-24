@@ -68,9 +68,9 @@ describe('@phosphor/domutils', () => {
   describe('ElementExt', () => {
 
     const styleNode = document.createElement('style');
-    styleNode.textContent = STYLE_TEXT;
 
     before(() => {
+      styleNode.textContent = STYLE_TEXT;
       document.head.appendChild(styleNode);
     });
 
