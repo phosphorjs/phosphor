@@ -374,9 +374,9 @@ class DockPanel extends Widget {
       return;
     }
 
-    // Bail if the factory does not produce a widget.
+    // Bail if the factory does not produce a widget or it contains this panel.
     let widget = factory();
-    if (!(widget instanceof Widget)) {
+    if (!(widget instanceof Widget) || widget.node.contains(this.node)) {
       event.dropAction = 'none';
       return;
     }
