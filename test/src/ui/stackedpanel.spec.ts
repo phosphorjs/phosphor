@@ -48,6 +48,11 @@ class LogStackedLayout extends StackedLayout {
 
   methods: string[] = [];
 
+  protected init(): void {
+    super.init();
+    this.methods.push('init');
+  }
+
   protected attachWidget(index: number, widget: Widget): void {
     super.attachWidget(index, widget);
     this.methods.push('attachWidget');
@@ -61,11 +66,6 @@ class LogStackedLayout extends StackedLayout {
   protected detachWidget(index: number, widget: Widget): void {
     super.detachWidget(index, widget);
     this.methods.push('detachWidget');
-  }
-
-  protected onLayoutChanged(msg: Message): void {
-    super.onLayoutChanged(msg);
-    this.methods.push('onLayoutChanged');
   }
 
   protected onAfterShow(msg: Message): void {

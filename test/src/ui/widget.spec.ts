@@ -46,14 +46,9 @@ class LogWidget extends Widget {
     this.methods.push('notifyLayout');
   }
 
-  protected onFocusRequest(msg: Message): void {
-    super.onFocusRequest(msg);
-    this.methods.push('onFocusRequest');
-  }
-
-  protected onBlurRequest(msg: Message): void {
-    super.onBlurRequest(msg);
-    this.methods.push('onBlurRequest');
+  protected onActivateRequest(msg: Message): void {
+    super.onActivateRequest(msg);
+    this.methods.push('onActivateRequest');
   }
 
   protected onCloseRequest(msg: Message): void {
@@ -115,22 +110,25 @@ class LogLayout extends Layout {
     this._widgets.pushBack(new LogWidget());
   }
 
+  dispose(): void {
+    while (!this._widgets.isEmpty) {
+      this._widgets.popBack().dispose();
+    }
+    super.dispose();
+  }
+
   iter(): IIterator<LogWidget> {
     return this._widgets.iter();
   }
 
-  dispose(): void {
-    each(this._widgets, w => w.dispose());
-    this._widgets = null;
-    super.dispose();
+  removeWidget(widget: Widget): void {
+    this.methods.push('removeWidget');
+    this._widgets.remove(widget as LogWidget);
   }
 
-  protected onLayoutChanged(msg: Message): void {
-    this.methods.push('onLayoutChanged');
-  }
-
-  protected onChildRemoved(msg: ChildMessage): void {
-    this.methods.push('onChildRemoved');
+  protected init(): void {
+    this.methods.push('init');
+    super.init();
   }
 
   protected onResize(msg: ResizeMessage): void {
@@ -286,11 +284,6 @@ describe('ui/widget', () => {
         expect(widget.isDisposed).to.be(false);
       });
 
-      it('should be read-only', () => {
-        let widget = new Widget();
-        expect(() => { widget.isDisposed = true; }).to.throwError();
-      });
-
     });
 
     describe('#isAttached', () => {
@@ -305,11 +298,6 @@ describe('ui/widget', () => {
       it('should be `false` if the widget is not attached', () => {
         let widget = new Widget();
         expect(widget.isAttached).to.be(false);
-      });
-
-      it('should be read-only', () => {
-        let widget = new Widget();
-        expect(() => { widget.isAttached = true; }).to.throwError();
       });
 
     });
@@ -329,11 +317,6 @@ describe('ui/widget', () => {
         Widget.attach(widget, document.body);
         expect(widget.isHidden).to.be(false);
         widget.dispose();
-      });
-
-      it('should be read-only', () => {
-        let widget = new Widget();
-        expect(() => { widget.isHidden = true; }).to.throwError();
       });
 
     });
@@ -360,11 +343,6 @@ describe('ui/widget', () => {
         expect(widget.isVisible).to.be(false);
       });
 
-      it('should be read-only', () => {
-        let widget = new Widget();
-        expect(() => { widget.node = null; }).to.throwError();
-      });
-
     });
 
     describe('#node', () => {
@@ -373,11 +351,6 @@ describe('ui/widget', () => {
         let widget = new Widget();
         let node = widget.node;
         expect(node.tagName).to.be('DIV');
-      });
-
-      it('should be read-only', () => {
-        let widget = new Widget();
-        expect(() => { widget.node = null; }).to.throwError();
       });
 
     });
@@ -403,12 +376,6 @@ describe('ui/widget', () => {
       it('should get the title data object for the widget', () => {
         let widget = new Widget();
         expect(widget.title).to.be.a(Title);
-      });
-
-      it('should be read-only', () => {
-        let widget = new Widget();
-        let title = new Title();
-        expect(() => { widget.title = title; }).to.throwError();
       });
 
     });
@@ -715,24 +682,18 @@ describe('ui/widget', () => {
 
     });
 
-    describe('#focus()', () => {
+    describe('#activate()', () => {
 
-      it('should send a `focus-request` message', () => {
+      it('should post an `activate-request` message', (done) => {
         let widget = new LogWidget();
         expect(widget.messages).to.eql([]);
-        widget.focus();
-        expect(widget.messages).to.eql(['focus-request']);
-      });
-
-    });
-
-    describe('#blur()', () => {
-
-      it('should send a `blur-request` message', () => {
-        let widget = new LogWidget();
+        widget.activate();
         expect(widget.messages).to.eql([]);
-        widget.blur();
-        expect(widget.messages).to.eql(['blur-request']);
+        requestAnimationFrame(() => {
+          expect(widget.messages).to.eql(['activate-request']);
+          done();
+        });
+
       });
 
     });
@@ -897,59 +858,23 @@ describe('ui/widget', () => {
         parent.layout = layout;
         child.parent = parent;
         expect(parent.methods.indexOf('notifyLayout')).to.not.be(-1);
-        expect(layout.methods.indexOf('onLayoutChanged')).to.not.be(-1);
+        expect(layout.methods.indexOf('init')).to.not.be(-1);
       });
 
     });
 
-    describe('#onFocusRequest()', () => {
+    describe('#onActivateRequest()', () => {
 
-      it('should be invoked on a `focus-request', () => {
+      it('should be invoked on an `activate-request', () => {
         let widget = new LogWidget();
-        sendMessage(widget, WidgetMessage.FocusRequest);
-        expect(widget.methods.indexOf('onFocusRequest')).to.not.be(-1);
+        sendMessage(widget, WidgetMessage.ActivateRequest);
+        expect(widget.methods.indexOf('onActivateRequest')).to.not.be(-1);
       });
 
       it('should notify the layout', () => {
         let widget = new LogWidget();
-        sendMessage(widget, WidgetMessage.FocusRequest);
+        sendMessage(widget, WidgetMessage.ActivateRequest);
         expect(widget.methods.indexOf('notifyLayout')).to.not.be(-1);
-      });
-
-      it('should focus the widget node', () => {
-        let widget = new Widget();
-        widget.node.tabIndex = -1;
-        Widget.attach(widget, document.body);
-        sendMessage(widget, WidgetMessage.FocusRequest);
-        expect(document.activeElement).to.be(widget.node);
-        widget.dispose();
-      });
-
-    });
-
-    describe('#onBlurRequest()', () => {
-
-      it('should be invoked on a `blur-request', () => {
-        let widget = new LogWidget();
-        sendMessage(widget, WidgetMessage.BlurRequest);
-        expect(widget.methods.indexOf('onBlurRequest')).to.not.be(-1);
-      });
-
-      it('should notify the layout', () => {
-        let widget = new LogWidget();
-        sendMessage(widget, WidgetMessage.BlurRequest);
-        expect(widget.methods.indexOf('notifyLayout')).to.not.be(-1);
-      });
-
-      it('should blur the widget node', () => {
-        let widget = new Widget();
-        widget.node.tabIndex = -1;
-        Widget.attach(widget, document.body);
-        widget.node.focus();
-        expect(document.activeElement).to.be(widget.node);
-        sendMessage(widget, WidgetMessage.BlurRequest);
-        expect(document.activeElement).to.not.be(widget.node);
-        widget.dispose();
       });
 
     });
@@ -1470,13 +1395,6 @@ describe('ui/widget', () => {
         expect(msg.child).to.be(widget);
       });
 
-      it('should be a read-only property', () => {
-        let widget0 = new Widget();
-        let widget1 = new Widget();
-        let msg = new ChildMessage('test', widget0);
-        expect(() => { msg.child = widget1; }).to.throwError();
-      });
-
     });
 
   });
@@ -1518,11 +1436,6 @@ describe('ui/widget', () => {
         expect(msg.width).to.be(100);
       });
 
-      it('should be a read-only property', () => {
-        let msg = new ResizeMessage(100, 200);
-        expect(() => { msg.width = 200; }).to.throwError();
-      });
-
     });
 
     describe('#height', () => {
@@ -1530,11 +1443,6 @@ describe('ui/widget', () => {
       it('should be the height passed to the constructor', () => {
         let msg = new ResizeMessage(100, 200);
         expect(msg.height).to.be(200);
-      });
-
-      it('should be a read-only property', () => {
-        let msg = new ResizeMessage(100, 200);
-        expect(() => { msg.height = 200; }).to.throwError();
       });
 
     });
@@ -1552,18 +1460,7 @@ describe('ui/widget', () => {
 
     });
 
-    describe('#onLayoutChanged()', () => {
-
-      it('should be invoked when the layout is installed on its parent widget', () => {
-        let widget = new Widget();
-        let layout = new LogLayout();
-        widget.layout = layout;
-        expect(layout.methods.indexOf('onLayoutChanged')).to.not.be(-1);
-      });
-
-    });
-
-    describe('#onChildRemoved()', () => {
+    describe('#removeWidget()', () => {
 
       it("should be invoked when a child widget's `parent` property is set to `null`", () => {
         let parent = new Widget();
@@ -1572,7 +1469,18 @@ describe('ui/widget', () => {
         parent.layout = layout;
         widget.parent = parent;
         widget.parent = null;
-        expect(layout.methods.indexOf('onChildRemoved')).to.not.be(-1);
+        expect(layout.methods.indexOf('removeWidget')).to.not.be(-1);
+      });
+
+    });
+
+    describe('#init()', () => {
+
+      it('should be invoked when the layout is installed on its parent widget', () => {
+        let widget = new Widget();
+        let layout = new LogLayout();
+        widget.layout = layout;
+        expect(layout.methods.indexOf('init')).to.not.be(-1);
       });
 
     });
@@ -1583,7 +1491,7 @@ describe('ui/widget', () => {
         let widget = new Widget();
         let layout = new LogLayout();
         widget.layout = layout;
-        let children = toArray(layout);
+        let children = toArray(widget.children());
         layout.dispose();
         expect(layout.parent).to.be(null);
         expect(every(children, w => w.isDisposed)).to.be(true);
@@ -1607,11 +1515,6 @@ describe('ui/widget', () => {
         expect(layout.isDisposed).to.be(false);
         layout.dispose();
         expect(layout.isDisposed).to.be(true);
-      });
-
-      it('should be read-only', () => {
-        let layout = new LogLayout();
-        expect(() => { layout.isDisposed = false; }).to.throwError();
       });
 
     });

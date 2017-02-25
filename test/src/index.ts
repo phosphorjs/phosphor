@@ -20,10 +20,12 @@ import './collections/vector.spec';
 
 import './core/disposable.spec';
 import './core/messaging.spec';
+import './core/mimedata.spec';
 import './core/properties.spec';
 import './core/signaling.spec';
 
 import './dom/cursor.spec';
+import './dom/dragdrop.spec';
 import './dom/query.spec';
 import './dom/selector.spec';
 import './dom/sizing.spec';
@@ -31,7 +33,8 @@ import './dom/sizing.spec';
 import './ui/boxengine.spec';
 import './ui/boxpanel.spec';
 import './ui/commandpalette.spec';
-import './ui/commands.spec';
+import './ui/commandregistry.spec';
+import './ui/focustracker.spec';
 import './ui/keyboard.spec';
 import './ui/keymap.spec';
 import './ui/menu.spec';
@@ -43,6 +46,7 @@ import './ui/tabbar.spec';
 import './ui/tabpanel.spec';
 import './ui/title.spec';
 import './ui/widget.spec';
+import './ui/vdom.spec';
 
 import '../../styles/base.css';
 import '../index.css';

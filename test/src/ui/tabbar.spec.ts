@@ -20,7 +20,7 @@ import {
 } from '../../../lib/algorithm/range';
 
 import {
-  Message
+  Message, sendMessage
 } from '../../../lib/core/messaging';
 
 import {
@@ -32,7 +32,11 @@ import {
 } from '../../../lib/ui/title';
 
 import {
-  Widget
+  realize
+} from '../../../lib/ui/vdom';
+
+import {
+  Widget, WidgetMessage
 } from '../../../lib/ui/widget';
 
 
@@ -69,6 +73,7 @@ function createBar(): LogTabBar {
   each(range(3), i => {
     bar.addTab({ label: `Test - ${i}`, closable: true });
   });
+  sendMessage(bar, WidgetMessage.UpdateRequest);
   return bar;
 }
 
@@ -323,7 +328,7 @@ describe('ui/tabbar', () => {
         let called = false;
         bar.tabDetachRequested.connect((sender, args) => {
           bar.releaseMouse();
-          bar.removeTab(args.index);
+          bar.removeTabAt(args.index);
           called = true;
         });
         rect = bar.contentNode.getBoundingClientRect();
@@ -337,7 +342,7 @@ describe('ui/tabbar', () => {
         let called = 0;
         bar.tabDetachRequested.connect((sender, args) => {
           bar.releaseMouse();
-          bar.removeTab(args.index);
+          bar.removeTabAt(args.index);
           called++;
         });
         rect = bar.contentNode.getBoundingClientRect();
@@ -363,58 +368,11 @@ describe('ui/tabbar', () => {
 
     });
 
-    describe('#headerNode', () => {
-
-      it('should get the tab bar header node', () => {
-        let bar = new TabBar();
-        expect(bar.headerNode.classList.contains('p-TabBar-header')).to.be(true);
-      });
-
-      it('should be read-only', () => {
-        let bar = new TabBar();
-        expect(() => { bar.headerNode = null; }).to.throwError();
-      });
-
-    });
-
-    describe('#bodyNode', () => {
-
-      it('should get the tab bar body node', () => {
-        let bar = new TabBar();
-        expect(bar.bodyNode.classList.contains('p-TabBar-body')).to.be(true);
-      });
-
-      it('should be read-only', () => {
-        let bar = new TabBar();
-        expect(() => { bar.bodyNode = null; }).to.throwError();
-      });
-
-    });
-
-    describe('#footerNode', () => {
-
-      it('should get the tab bar foorter node', () => {
-        let bar = new TabBar();
-        expect(bar.footerNode.classList.contains('p-TabBar-footer')).to.be(true);
-      });
-
-      it('should be read-only', () => {
-        let bar = new TabBar();
-        expect(() => { bar.footerNode = null; }).to.throwError();
-      });
-
-    });
-
     describe('#contentNode', () => {
 
       it('should get the tab bar content node', () => {
         let bar = new TabBar();
         expect(bar.contentNode.classList.contains('p-TabBar-content')).to.be(true);
-      });
-
-      it('should be read-only', () => {
-        let bar = new TabBar();
-        expect(() => { bar.contentNode = null; }).to.throwError();
       });
 
     });
@@ -426,11 +384,6 @@ describe('ui/tabbar', () => {
         let titles = [new Title(), new Title(), new Title()];
         each(titles, t => { bar.addTab(t); });
         expect(toArray(bar.titles)).to.eql(titles);
-      });
-
-      it('should be read-only', () => {
-        let bar = new TabBar();
-        expect(() => { bar.titles = null; }).to.throwError();
       });
 
     });
@@ -565,11 +518,6 @@ describe('ui/tabbar', () => {
         expect(bar.renderer).to.be(TabBar.defaultRenderer);
       });
 
-      it('should be read-only', () => {
-        let bar = new TabBar();
-        expect(() => { bar.renderer = null; }).to.throwError();
-      });
-
     });
 
     describe('#addTab()', () => {
@@ -665,32 +613,57 @@ describe('ui/tabbar', () => {
         expect(bar.titles.at(0)).to.be(titles[1]);
       });
 
-      it('should remove a tab from the tab bar by index', () => {
+      it('should return the index of the removed tab', () => {
         let bar = createBar();
         let titles = toArray(bar.titles);
-        bar.removeTab(1);
-        expect(bar.titles.at(1)).to.be(titles[2]);
+        expect(bar.removeTab(titles[0])).to.be(0);
       });
 
-      it('should bail if the title is not in the tab bar', () => {
+      it('should return `-1` if the title is not in the tab bar', () => {
         let bar = createBar();
-        bar.removeTab(new Title());
-        expect(bar.titles.length).to.be(3);
-      });
-
-      it('should bail if the index is out of range', () => {
-        let bar = createBar();
-        bar.removeTab(-1);
-        expect(bar.titles.length).to.be(3);
-        bar.removeTab(3);
-        expect(bar.titles.length).to.be(3);
+        expect(bar.removeTab(new Title())).to.be(-1);
       });
 
       it('should schedule an update of the tabs', (done) => {
         let bar = new LogTabBar();
         bar.insertTab(0, new Title());
         requestAnimationFrame(() => {
-          bar.removeTab(0);
+          bar.removeTab(bar.titles.at(0));
+          bar.methods = [];
+          requestAnimationFrame(() => {
+            expect(bar.methods.indexOf('onUpdateRequest')).to.not.be(-1);
+            done();
+          });
+        });
+      });
+
+    });
+
+    describe('#removeTabAt()', () => {
+
+      it('should remove a tab at a specific index', () => {
+        let bar = createBar();
+        let titles = toArray(bar.titles);
+        bar.removeTabAt(0);
+        expect(bar.titles.at(0)).to.be(titles[1]);
+      });
+
+      it('should return the removed title', () => {
+        let bar = createBar();
+        let titles = toArray(bar.titles);
+        expect(bar.removeTabAt(0)).to.be(titles[0]);
+      });
+
+      it('should return `null` if the index is out of range', () => {
+        let bar = createBar();
+        expect(bar.removeTabAt(9)).to.be(null);
+      });
+
+      it('should schedule an update of the tabs', (done) => {
+        let bar = new LogTabBar();
+        bar.insertTab(0, new Title());
+        requestAnimationFrame(() => {
+          bar.removeTabAt(0);
           bar.methods = [];
           requestAnimationFrame(() => {
             expect(bar.methods.indexOf('onUpdateRequest')).to.not.be(-1);
@@ -1050,6 +1023,7 @@ describe('ui/tabbar', () => {
       it('should remove event listeners', () => {
         let bar = new LogTabBar();
         bar.addTab(new Title({ label: 'foo' }));
+        sendMessage(bar, WidgetMessage.UpdateRequest);
         Widget.attach(bar, document.body);
         let tab = bar.contentNode.firstChild as HTMLElement;
         let rect = tab.getBoundingClientRect();
@@ -1083,22 +1057,18 @@ describe('ui/tabbar', () => {
 
     describe('.Renderer', () => {
 
-      describe('#createTabNode()', () => {
+      describe('#closeIconSelector', () => {
 
-        it('should create a node for a tab', () => {
+        it('should be `.p-TabBar-tabCloseIcon`', () => {
           let renderer = new TabBar.Renderer();
-          let node = renderer.createTabNode();
-          expect(node.classList.contains('p-TabBar-tab')).to.be(true);
-          expect(node.getElementsByClassName('p-TabBar-tabIcon').length).to.be(1);
-          expect(node.getElementsByClassName('p-TabBar-tabLabel').length).to.be(1);
-          expect(node.getElementsByClassName('p-TabBar-tabCloseIcon').length).to.be(1);
+          expect(renderer.closeIconSelector).to.be('.p-TabBar-tabCloseIcon');
         });
 
       });
 
-      describe('#updateTabNode()', () => {
+      describe('#renderTab()', () => {
 
-        it('should update a tab node to reflect the state of a title', () => {
+        it('should render a virtual node for a tab', () => {
           let title = new Title({
             label: 'foo',
             closable: true,
@@ -1106,27 +1076,25 @@ describe('ui/tabbar', () => {
             className: 'fizz',
             caption: 'this is a caption'
           });
+
           let renderer = new TabBar.Renderer();
-          let node = renderer.createTabNode();
-          renderer.updateTabNode(node, title);
+          let vNode = renderer.renderTab({ title, current: true, zIndex: 1 });
+          let node = realize(vNode);
+
+          expect(node.getElementsByClassName('p-TabBar-tabIcon').length).to.be(1);
+          expect(node.getElementsByClassName('p-TabBar-tabLabel').length).to.be(1);
+          expect(node.getElementsByClassName('p-TabBar-tabCloseIcon').length).to.be(1);
+
+          expect(node.classList.contains('p-TabBar-tab')).to.be(true);
           expect(node.classList.contains(title.className)).to.be(true);
+          expect(node.classList.contains('p-mod-current')).to.be(true);
           expect(node.classList.contains('p-mod-closable')).to.be(true);
+          expect(node.title).to.be(title.caption);
+
           let icon = node.getElementsByClassName('p-TabBar-tabIcon')[0] as HTMLElement;
-          expect(icon.classList.contains(title.icon)).to.be(true);
           let label = node.getElementsByClassName('p-TabBar-tabLabel')[0] as HTMLElement;
+          expect(icon.classList.contains(title.icon)).to.be(true);
           expect(label.textContent).to.be(title.label);
-          expect(label.title).to.be(title.caption);
-        });
-
-      });
-
-      describe('#closeIconNode()', () => {
-
-        it('should look up the close icon descendant node for a tab node', () => {
-          let renderer = new TabBar.Renderer();
-          let node = renderer.createTabNode();
-          let closeNode = renderer.closeIconNode(node);
-          expect(closeNode.classList.contains('p-TabBar-tabCloseIcon')).to.be(true);
         });
 
       });

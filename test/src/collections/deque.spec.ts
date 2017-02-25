@@ -130,6 +130,13 @@ describe('collections/deque', () => {
         expect(deque.back).to.be(99);
       });
 
+      it('should return the new length of the deque', () => {
+        let deque = new Deque<number>();
+        expect(deque.pushBack(1)).to.be(deque.length);
+        expect(deque.pushBack(1)).to.be(deque.length);
+        expect(deque.pushBack(1)).to.be(deque.length);
+      });
+
     });
 
     describe('#pushFront()', () => {
@@ -163,6 +170,13 @@ describe('collections/deque', () => {
         expect(deque.isEmpty).to.be(false);
         expect(deque.length).to.be(1);
         expect(deque.front).to.be(99);
+      });
+
+      it('should return the new length of the deque', () => {
+        let deque = new Deque<number>();
+        expect(deque.pushFront(1)).to.be(deque.length);
+        expect(deque.pushFront(1)).to.be(deque.length);
+        expect(deque.pushFront(1)).to.be(deque.length);
       });
 
     });

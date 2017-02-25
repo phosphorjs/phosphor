@@ -20,12 +20,11 @@ import {
 } from '../../../lib/dom/platform';
 
 import {
-  commands
-} from '../../../lib/ui/commands';
+  CommandRegistry
+} from '../../../lib/ui/commandregistry';
 
 import {
-  KeyBinding, keymap, KeymapManager, keystrokeForKeydownEvent,
-  normalizeKeystroke, formatKeystroke
+  Keymap
 } from '../../../lib/ui/keymap';
 
 import {
@@ -52,36 +51,29 @@ function createElement(): HTMLElement {
 
 describe('ui/keymap', () => {
 
-  describe('KeyBinding', () => {
+  describe('Keymap.IBinding', () => {
 
-    describe('#constructor()', () => {
+    let commands: CommandRegistry;
+    let keymap: Keymap;
 
-      it('should accept a keybinding options argument', () => {
-        let options = { keys: ['Ctrl A'], selector: 'body', command: 'test' };
-        let binding = new KeyBinding(options);
-        expect(binding).to.be.a(KeyBinding);
-      });
-
+    beforeEach(() => {
+      commands = new CommandRegistry();
+      keymap = new Keymap({ commands });
     });
 
     describe('#keys', () => {
 
       it('should be set from instantiation options', () => {
         let options = { keys: ['Ctrl A'], selector: 'body', command: 'test' };
-        let binding = new KeyBinding(options);
-        expect(binding.keys).to.eql(['Ctrl A']);
-      });
-
-      it('should make an immutable copy of instantiation keys', () => {
-        let options = { keys: ['Ctrl A'], selector: 'body', command: 'test' };
-        let binding = new KeyBinding(options);
-        options.keys.push('Alt Z');
+        keymap.addBinding(options);
+        let binding = keymap.findBinding('test', null);
         expect(binding.keys).to.eql(['Ctrl A']);
       });
 
       it('should be read only', () => {
         let options = { keys: ['Ctrl A'], selector: 'body', command: 'test' };
-        let binding = new KeyBinding(options);
+        keymap.addBinding(options);
+        let binding = keymap.findBinding('test', null);
         expect(() => { binding.keys = null; }).to.throwError();
       });
 
@@ -91,13 +83,15 @@ describe('ui/keymap', () => {
 
       it('should be set from instantiation options', () => {
         let options = { keys: ['Ctrl A'], selector: 'body', command: 'test' };
-        let binding = new KeyBinding(options);
+        keymap.addBinding(options);
+        let binding = keymap.findBinding('test', null);
         expect(binding.selector).to.be('body');
       });
 
       it('should be read only', () => {
         let options = { keys: ['Ctrl A'], selector: 'body', command: 'test' };
-        let binding = new KeyBinding(options);
+        keymap.addBinding(options);
+        let binding = keymap.findBinding('test', null);
         expect(() => { binding.selector = null; }).to.throwError();
       });
 
@@ -107,13 +101,15 @@ describe('ui/keymap', () => {
 
       it('should be set from instantiation options', () => {
         let options = { keys: ['Ctrl A'], selector: 'body', command: 'test' };
-        let binding = new KeyBinding(options);
+        keymap.addBinding(options);
+        let binding = keymap.findBinding('test', null);
         expect(binding.command).to.be('test');
       });
 
       it('should be read only', () => {
         let options = { keys: ['Ctrl A'], selector: 'body', command: 'test' };
-        let binding = new KeyBinding(options);
+        keymap.addBinding(options);
+        let binding = keymap.findBinding('test', null);
         expect(() => { binding.command = null; }).to.throwError();
       });
 
@@ -128,13 +124,15 @@ describe('ui/keymap', () => {
           command: 'test',
           args: { foo: 'bar', baz: 'qux' } as JSONObject
         };
-        let binding = new KeyBinding(options);
+        keymap.addBinding(options);
+        let binding = keymap.findBinding('test', options.args);
         expect(binding.args).to.eql(options.args);
       });
 
       it('should be read only', () => {
         let options = { keys: ['Ctrl A'], selector: 'body', command: 'test' };
-        let binding = new KeyBinding(options);
+        keymap.addBinding(options);
+        let binding = keymap.findBinding('test', null);
         expect(() => { binding.args = null; }).to.throwError();
       });
 
@@ -142,14 +140,28 @@ describe('ui/keymap', () => {
 
   });
 
-  describe('KeymapManager', () => {
+  describe('Keymap', () => {
+
+    let commands: CommandRegistry;
+    let keymap: Keymap;
+
+    beforeEach(() => {
+      commands = new CommandRegistry();
+      keymap = new Keymap({ commands });
+    });
 
     describe('#constructor()', () => {
 
       it('should accept no arguments', () => {
-        let keymap = new KeymapManager();
-        expect(keymap).to.be.a(KeymapManager);
-      })
+        let keymap = new Keymap({ commands });
+        expect(keymap).to.be.a(Keymap);
+      });
+
+      it('should accept an options object', () => {
+        let commands = new CommandRegistry();
+        let keymap = new Keymap({ commands });
+        expect(keymap.commands).to.be(commands);
+      });
 
     });
 
@@ -181,6 +193,16 @@ describe('ui/keymap', () => {
 
     });
 
+    describe('#commands', () => {
+
+      it('should be the command registry used by the keymap', () => {
+        let commands = new CommandRegistry();
+        let keymap = new Keymap({ commands });
+        expect(keymap.commands).to.be(commands);
+      });
+
+    });
+
     describe('#bindings', () => {
 
       it('should return the bindings as a sequence', () => {
@@ -194,10 +216,6 @@ describe('ui/keymap', () => {
         expect(keymap.bindings.at(0).command).to.be('test');
         binding.dispose();
         command.dispose();
-      });
-
-      it('should be read only', () => {
-        expect(() => { keymap.bindings = null; }).to.throwError();
       });
 
     });
@@ -248,7 +266,7 @@ describe('ui/keymap', () => {
         let added = false;
         let command = commands.addCommand('test', { execute: () => { } });
         let handler = (sender: any, args: any) => {
-          added = (args as KeymapManager.IBindingChangedArgs).type === 'added';
+          added = (args as Keymap.IBindingChangedArgs).type === 'added';
         };
         keymap.bindingChanged.connect(handler);
         let binding = keymap.addBinding({
@@ -306,10 +324,10 @@ describe('ui/keymap', () => {
           command: 'c2',
           args: a4
         });
-        expect(keymap.findKeyBinding('c1', a1).selector).to.be('.b1');
-        expect(keymap.findKeyBinding('c1', a2).selector).to.be('.b2');
-        expect(keymap.findKeyBinding('c1', a3).selector).to.be('.b3');
-        expect(keymap.findKeyBinding('c2', a4).selector).to.be('.b4');
+        expect(keymap.findBinding('c1', a1).selector).to.be('.b1');
+        expect(keymap.findBinding('c1', a2).selector).to.be('.b2');
+        expect(keymap.findBinding('c1', a3).selector).to.be('.b3');
+        expect(keymap.findBinding('c2', a4).selector).to.be('.b4');
         b1.dispose();
         b2.dispose();
         b3.dispose();
@@ -343,7 +361,7 @@ describe('ui/keymap', () => {
         let added = false;
         let command = commands.addCommand('test', { execute: () => { } });
         let handler = (sender: any, args: any) => {
-          added = (args as KeymapManager.IBindingChangedArgs).type === 'added';
+          added = (args as Keymap.IBindingChangedArgs).type === 'added';
         };
         keymap.bindingChanged.connect(handler);
         let binding = keymap.addBinding({
@@ -707,10 +725,10 @@ describe('ui/keymap', () => {
         let called1 = false;
         let called2 = false;
         let command1 = commands.addCommand('test1', {
-          execute: () => { called1 = true }
+          execute: () => { called1 = true; }
         });
         let command2 = commands.addCommand('test2', {
-          execute: () => { called2 = true }
+          execute: () => { called2 = true; }
         });
         let binding1 = keymap.addBinding({
           keys: ['D', 'D'],
@@ -777,10 +795,10 @@ describe('ui/keymap', () => {
         let called1 = false;
         let called2 = false;
         let command1 = commands.addCommand('test1', {
-          execute: () => { called1 = true }
+          execute: () => { called1 = true; }
         });
         let command2 = commands.addCommand('test2', {
-          execute: () => { called2 = true }
+          execute: () => { called2 = true; }
         });
         let binding1 = keymap.addBinding({
           keys: ['Ctrl ;'],
@@ -877,19 +895,11 @@ describe('ui/keymap', () => {
 
   });
 
-  describe('keymap', () => {
-
-    it('should be a keymap manager', () => {
-      expect(keymap).to.be.a(KeymapManager);
-    })
-
-  });
-
-  describe('keystrokeForKeydownEvent()', () => {
+  describe('.keystrokeForKeydownEvent()', () => {
 
     it('should create a normalized keystroke', () => {
       let event = generate('keydown', { ctrlKey: true, keyCode: 83 });
-      let keystroke = keystrokeForKeydownEvent(event as KeyboardEvent, EN_US);
+      let keystroke = Keymap.keystrokeForKeydownEvent(event as KeyboardEvent, EN_US);
       expect(keystroke).to.be('Ctrl S');
     });
 
@@ -900,51 +910,51 @@ describe('ui/keymap', () => {
         shiftKey: true,
         keyCode: 83
       });
-      let keystroke = keystrokeForKeydownEvent(event as KeyboardEvent, EN_US);
+      let keystroke = Keymap.keystrokeForKeydownEvent(event as KeyboardEvent, EN_US);
       expect(keystroke).to.be('Ctrl Alt Shift S');
     });
 
     it('should fail on an invalid shortcut', () => {
       let event = generate('keydown', { keyCode: -1 });
-      let keystroke = keystrokeForKeydownEvent(event as KeyboardEvent, EN_US);
+      let keystroke = Keymap.keystrokeForKeydownEvent(event as KeyboardEvent, EN_US);
       expect(keystroke).to.be('');
     });
 
   });
 
-  describe('normalizeKeystroke()', () => {
+  describe('.normalizeKeystroke()', () => {
 
     it('should normalize and validate a keystroke', () => {
-      let stroke = normalizeKeystroke('Ctrl S');
+      let stroke = Keymap.normalizeKeystroke('Ctrl S');
       expect(stroke).to.be('Ctrl S');
     });
 
     it('should handle multiple modifiers', () => {
-      let stroke = normalizeKeystroke('Ctrl Shift Alt S');
+      let stroke = Keymap.normalizeKeystroke('Ctrl Shift Alt S');
       expect(stroke).to.be('Ctrl Alt Shift S');
     });
 
     it('should handle platform specific modifiers', () => {
       let stroke = '';
       if (IS_MAC) {
-        stroke = normalizeKeystroke('Cmd S');
+        stroke = Keymap.normalizeKeystroke('Cmd S');
         expect(stroke).to.be('Cmd S');
-        stroke = normalizeKeystroke('Accel S');
+        stroke = Keymap.normalizeKeystroke('Accel S');
         expect(stroke).to.be('Cmd S');
       } else {
-        stroke = normalizeKeystroke('Cmd S')
+        stroke = Keymap.normalizeKeystroke('Cmd S');
         expect(stroke).to.be('S');
-        stroke = normalizeKeystroke('Accel S');
+        stroke = Keymap.normalizeKeystroke('Accel S');
         expect(stroke).to.be('Ctrl S');
       }
     });
 
   });
 
-  describe('formatKeystroke()', () => {
+  describe('.formatKeystroke()', () => {
 
     it('should format a keystroke', () => {
-      let stroke = formatKeystroke('Accel Ctrl Alt Shift S');
+      let stroke = Keymap.formatKeystroke('Accel Ctrl Alt Shift S');
       if (IS_MAC) {
         expect(stroke).to.be('\u2303\u2325\u21E7\u2318S');
       } else {

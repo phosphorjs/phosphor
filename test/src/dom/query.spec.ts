@@ -8,7 +8,7 @@
 import expect = require('expect.js');
 
 import {
-  hitTest, scrollIfNeeded
+  hitTest, scrollIntoViewIfNeeded
 } from '../../../lib/dom/query';
 
 
@@ -48,103 +48,101 @@ describe('dom/query', () => {
 
   });
 
-  describe('scrollIfNeeded()', () => {
+  describe('scrollIntoViewIfNeeded()', () => {
 
-    it('should scroll an element up if needed', () => {
-      let area = document.createElement('div');
-      let elem = document.createElement('div');
-      area.style.height = '100px';
+    let area: HTMLElement;
+    let elemA: HTMLElement;
+    let elemB: HTMLElement;
+
+    beforeEach(() => {
+      area = document.createElement('div');
+      elemA = document.createElement('div');
+      elemB = document.createElement('div');
+
+      area.style.position = 'absolute';
       area.style.overflow = 'auto';
-      elem.textContent = 'visible content';
-      for (let i = 0; i < 50; i++) {
-        area.appendChild(document.createElement('br'));
-      }
-      area.appendChild(elem);
+      area.style.top = '0px';
+      area.style.left = '0px';
+      area.style.width = '300px';
+      area.style.height = '600px';
+
+      elemA.style.position = 'absolute';
+      elemA.style.top = '50px';
+      elemA.style.left = '50px';
+      elemA.style.width = '100px';
+      elemA.style.height = '700px';
+
+      elemB.style.position = 'absolute';
+      elemB.style.top = '70px';
+      elemB.style.left = '100px';
+      elemB.style.width = '100px';
+      elemB.style.height = '100px';
+
+      area.appendChild(elemA);
+      area.appendChild(elemB);
       document.body.appendChild(area);
-      let ar = area.getBoundingClientRect();
-      let er = elem.getBoundingClientRect();
-      scrollIfNeeded(area, elem);
-      expect(area.scrollTop).to.be(Math.round(er.bottom - ar.bottom));
-      document.body.removeChild(area);
     });
 
-    it('should scroll an element down if needed', () => {
-      let area = document.createElement('div');
-      let elem = document.createElement('div');
-      area.style.height = '100px';
-      area.style.overflow = 'auto';
-      elem.textContent = 'visible content';
-      area.appendChild(elem);
-      for (let i = 0; i < 50; i++) {
-        area.appendChild(document.createElement('br'));
-      }
-      document.body.appendChild(area);
-      area.scrollTop = 100;
-      let ar = area.getBoundingClientRect();
-      let er = elem.getBoundingClientRect();
-      scrollIfNeeded(area, elem);
-      expect(area.scrollTop).to.be(Math.round(100 - ar.top + er.top));
+    afterEach(() => {
       document.body.removeChild(area);
+      area = null;
+      elemA = null;
+      elemB = null;
     });
 
-    it('should respect the overflow threshold when scrolling up', () => {
-      let area = document.createElement('div');
-      let elem = document.createElement('div');
-      area.style.height = '100px';
-      area.style.overflow = 'auto';
-      elem.textContent = 'visible content';
-      for (let i = 0; i < 50; i++) {
-        area.appendChild(document.createElement('br'));
-      }
-      area.appendChild(elem);
-      document.body.appendChild(area);
-
-      let threshold = 10;
-      let ar = area.getBoundingClientRect();
-      let er = elem.getBoundingClientRect();
-      let goal = Math.round(er.bottom - ar.bottom);
-      area.scrollTop = er.bottom - ar.bottom - threshold + 2;
-      let top = area.scrollTop;
-      scrollIfNeeded(area, elem, threshold);
-      expect(area.scrollTop).to.be(top);
-
-      ar = area.getBoundingClientRect();
-      er = elem.getBoundingClientRect();
-      area.scrollTop = er.bottom - ar.bottom - threshold;
-      top = area.scrollTop;
-      scrollIfNeeded(area, elem, threshold);
-      expect(Math.abs(area.scrollTop - goal) <= 1).to.be(true);
-      document.body.removeChild(area);
+    it('should do nothing if the element covers the viewport', () => {
+      elemB.style.top = '1000px';
+      area.scrollTop = 75;
+      scrollIntoViewIfNeeded(area, elemA);
+      expect(area.scrollTop).to.be(75);
     });
 
-    it('should respect the overflow threshold when scrolling down', () => {
-      let area = document.createElement('div');
-      let elem = document.createElement('div');
-      area.style.height = '100px';
-      area.style.overflow = 'auto';
-      elem.textContent = 'visible content';
-      area.appendChild(elem);
-      for (let i = 0; i < 50; i++) {
-        area.appendChild(document.createElement('br'));
-      }
-      document.body.appendChild(area);
-      area.scrollTop = 100;
+    it('should do nothing if the element fits within the viewport', () => {
+      area.scrollTop = 25;
+      scrollIntoViewIfNeeded(area, elemB);
+      expect(area.scrollTop).to.be(25);
+    });
 
-      let threshold = 10;
-      let ar = area.getBoundingClientRect();
-      let er = elem.getBoundingClientRect();
-      let goal = threshold;
-      area.scrollTop = er.top - ar.top + threshold - 2;
-      let top = area.scrollTop;
-      scrollIfNeeded(area, elem, threshold);
-      expect(area.scrollTop).to.be(top);
+    it('should align the top edge for smaller size elements overlapping the top', () => {
+      elemA.style.top = '1000px';
+      area.scrollTop = 90;
+      scrollIntoViewIfNeeded(area, elemB);
+      expect(area.scrollTop).to.be(70);
+    });
 
-      ar = area.getBoundingClientRect();
-      er = elem.getBoundingClientRect();
-      area.scrollTop = er.top - ar.top + threshold;
-      scrollIfNeeded(area, elem, threshold);
-      expect(area.scrollTop).to.be(goal);
-      document.body.removeChild(area);
+    it('should align the top edge for equal size elements overlapping the top', () => {
+      elemA.style.height = '600px';
+      elemB.style.top = '1000px';
+      area.scrollTop = 90;
+      scrollIntoViewIfNeeded(area, elemA);
+      expect(area.scrollTop).to.be(50);
+    });
+
+    it('should align the top edge for larger size elements overlapping the bottom', () => {
+      elemB.style.top = '1000px';
+      scrollIntoViewIfNeeded(area, elemA);
+      expect(area.scrollTop).to.be(50);
+    });
+
+    it('should align the top edge for equal size elements overlapping the bottom', () => {
+      elemA.style.height = '600px';
+      elemB.style.top = '1000px';
+      scrollIntoViewIfNeeded(area, elemA);
+      expect(area.scrollTop).to.be(50);
+    });
+
+    it('should align the bottom edge for larger size elements overlapping the top', () => {
+      elemB.style.top = '1000px';
+      area.scrollTop = 200;
+      scrollIntoViewIfNeeded(area, elemA);
+      expect(area.scrollTop).to.be(150);
+    });
+
+    it('should align the bottom edge for smaller size elements overlapping the bottom', () => {
+      elemB.style.top = '600px';
+      area.scrollTop = 50;
+      scrollIntoViewIfNeeded(area, elemB);
+      expect(area.scrollTop).to.be(100);
     });
 
   });

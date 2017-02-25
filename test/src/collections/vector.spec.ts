@@ -141,7 +141,7 @@ describe('collections/vector', () => {
       });
 
       it('should add a value to an empty vector', () => {
-        let vector = new Vector();
+        let vector = new Vector<number>();
 
         expect(vector.isEmpty).to.be(true);
         expect(vector.length).to.be(0);
@@ -152,6 +152,13 @@ describe('collections/vector', () => {
         expect(vector.isEmpty).to.be(false);
         expect(vector.length).to.be(1);
         expect(vector.back).to.be(99);
+      });
+
+      it('should return the new length of the vector', () => {
+        let vector = new Vector<number>();
+        expect(vector.pushBack(1)).to.be(vector.length);
+        expect(vector.pushBack(1)).to.be(vector.length);
+        expect(vector.pushBack(1)).to.be(vector.length);
       });
 
     });
@@ -194,24 +201,73 @@ describe('collections/vector', () => {
         expect(toArray(vector)).to.eql([7, 4, 8, 5, 9, 6]);
       });
 
+      it('should return the new length of the vector', () => {
+        let vector = new Vector();
+        expect(vector.insert(0, 1)).to.be(vector.length);
+        expect(vector.insert(0, 1)).to.be(vector.length);
+        expect(vector.insert(0, 1)).to.be(vector.length);
+      });
+
+      it('should clamp the index to the bounds of the vector', () => {
+        let vector = new Vector();
+        vector.insert(-10, 9);
+        expect(toArray(vector)).to.eql([9]);
+        vector.insert(-5, 8);
+        expect(toArray(vector)).to.eql([8, 9]);
+        vector.insert(-1, 7);
+        expect(toArray(vector)).to.eql([7, 8, 9]);
+        vector.insert(13, 6);
+        expect(toArray(vector)).to.eql([7, 8, 9, 6]);
+        vector.insert(8, 4);
+        expect(toArray(vector)).to.eql([7, 8, 9, 6, 4]);
+      });
+
     });
 
     describe('#remove()', () => {
 
+      it('should remove the first instance of the value', () => {
+        let vector = new Vector([7, 4, 8, 5, 9, 6, 7, 4]);
+        expect(vector.remove(4)).to.be(1);
+        expect(toArray(vector)).to.eql([7, 8, 5, 9, 6, 7, 4]);
+        expect(vector.remove(5)).to.be(2);
+        expect(toArray(vector)).to.eql([7, 8, 9, 6, 7, 4]);
+        expect(vector.remove(6)).to.be(3);
+        expect(toArray(vector)).to.eql([7, 8, 9, 7, 4]);
+        expect(vector.remove(7)).to.be(0);
+        expect(toArray(vector)).to.eql([8, 9, 7, 4]);
+        expect(vector.remove(8)).to.be(0);
+        expect(toArray(vector)).to.eql([9, 7, 4]);
+        expect(vector.remove(7)).to.be(1);
+        expect(toArray(vector)).to.eql([9, 4]);
+      });
+
+    });
+
+    describe('#removeAt()', () => {
+
       it('should remove the value at a specified index', () => {
         let vector = new Vector([7, 4, 8, 5, 9, 6]);
-        vector.remove(1);
+        expect(vector.removeAt(1)).to.be(4);
         expect(toArray(vector)).to.eql([7, 8, 5, 9, 6]);
-        vector.remove(2);
+        expect(vector.removeAt(2)).to.be(5);
         expect(toArray(vector)).to.eql([7, 8, 9, 6]);
-        vector.remove(3);
+        expect(vector.removeAt(3)).to.be(6);
         expect(toArray(vector)).to.eql([7, 8, 9]);
-        vector.remove(0);
+        expect(vector.removeAt(0)).to.be(7);
         expect(toArray(vector)).to.eql([8, 9]);
-        vector.remove(0);
+        expect(vector.removeAt(0)).to.be(8);
         expect(toArray(vector)).to.eql([9]);
-        vector.remove(0);
+        expect(vector.removeAt(0)).to.be(9);
         expect(toArray(vector)).to.eql([]);
+      });
+
+      it('should return `undefined` if the index is out of range', () => {
+        let vector = new Vector([7, 4, 8, 5, 9, 6]);
+        expect(vector.removeAt(10)).to.be(void 0);
+        expect(toArray(vector)).to.eql([7, 4, 8, 5, 9, 6]);
+        expect(vector.removeAt(-2)).to.be(void 0);
+        expect(toArray(vector)).to.eql([7, 4, 8, 5, 9, 6]);
       });
 
     });

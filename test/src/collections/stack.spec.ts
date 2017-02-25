@@ -116,6 +116,13 @@ describe('collections/stack', () => {
         expect(stack.back).to.be(99);
       });
 
+      it('should return the new length of the stack', () => {
+        let stack = new Stack<number>();
+        expect(stack.pushBack(1)).to.be(stack.length);
+        expect(stack.pushBack(1)).to.be(stack.length);
+        expect(stack.pushBack(1)).to.be(stack.length);
+      });
+
     });
 
     describe('#popBack()', () => {
