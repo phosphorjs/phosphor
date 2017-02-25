@@ -7,5 +7,13 @@ module.exports = {
   },
   resolve: {
     modules: [path.resolve('../..'), 'node_modules']
+  },
+  module: {
+    rules: [
+      {
+        test: /\.css$/,
+        use: ['style-loader', 'css-loader']
+      }
+    ]
   }
 }

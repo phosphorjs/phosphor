@@ -5,6 +5,8 @@
 |
 | The full license is in the file LICENSE, distributed with this software.
 |----------------------------------------------------------------------------*/
+import '@phosphor/widgets/style/index.css';
+
 import './boxengine.spec';
 import './boxlayout.spec';
 import './boxpanel.spec';
