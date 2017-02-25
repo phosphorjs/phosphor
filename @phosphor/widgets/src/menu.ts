@@ -894,7 +894,7 @@ class Menu extends Widget {
     }
   }
 
-  private _childIndex = 1;
+  private _childIndex = -1;
   private _activeIndex = -1;
   private _openTimerID = 0;
   private _closeTimerID = 0;
