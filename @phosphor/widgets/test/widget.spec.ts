@@ -22,6 +22,7 @@ import {
 } from '@phosphor/widgets';
 
 
+export
 class LogWidget extends Widget {
 
   messages: string[] = [];
