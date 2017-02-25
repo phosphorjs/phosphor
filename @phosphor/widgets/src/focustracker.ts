@@ -243,8 +243,8 @@ class FocusTracker<T extends Widget> implements IDisposable {
 
     // Get the valid widget with the max focus number.
     let previous = max(valid, (first, second) => {
-      let a = this._numbers.get(first);
-      let b = this._numbers.get(second);
+      let a = this._numbers.get(first)!;
+      let b = this._numbers.get(second)!;
       return a - b;
     }) || null;
 
