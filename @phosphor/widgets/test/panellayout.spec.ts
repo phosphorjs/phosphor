@@ -14,7 +14,7 @@ import {
 } from '@phosphor/algorithm';
 
 import {
-  IMessageHandler, Message, MessageLoop
+  IMessageHandler, IMessageHook, Message, MessageLoop
 } from '@phosphor/messaging';
 
 import {
@@ -22,7 +22,7 @@ import {
 } from '@phosphor/widgets';
 
 
-class LogHook {
+class LogHook implements IMessageHook {
 
   messages: string[] = [];
 
