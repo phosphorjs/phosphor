@@ -214,7 +214,11 @@ namespace JSONExt {
    * Create a deep copy of a JSON array.
    */
   function deepArrayCopy(value: JSONArray): JSONArray {
-    return value.map(deepCopy);
+    let result = new Array<JSONValue>(value.length);
+    for (let i = 0, n = value.length; i < n; ++i) {
+      result[i] = deepCopy(value[i]);
+    }
+    return result;
   }
 
   /**
