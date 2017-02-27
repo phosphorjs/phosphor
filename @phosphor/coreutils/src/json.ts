@@ -121,15 +121,39 @@ namespace JSONExt {
   }
 
   /**
-   * Compare two JSON arrays for deep equality.
+   * Create a deep copy of a JSON value.
    *
-   * @param first - The first JSON array of interest.
+   * @param value - The JSON value to copy.
    *
-   * @param second - The second JSON array of interest.
-   *
-   * @returns `true` if the arrays are equal, `false` otherwise.
+   * @returns A deep copy of the given JSON value.
    */
   export
+  function deepCopy(value: JSONPrimitive): JSONPrimitive;
+  export
+  function deepCopy(value: JSONArray): JSONArray;
+  export
+  function deepCopy(value: JSONObject): JSONObject;
+  export
+  function deepCopy(value: JSONValue): JSONValue;
+  export
+  function deepCopy(value: JSONValue): JSONValue {
+    // Do nothing for primitive values.
+    if (isPrimitive(value)) {
+      return value;
+    }
+
+    // Deep copy an array.
+    if (isArray(value)) {
+      return deepArrayCopy(value);
+    }
+
+    // Deep copy an object.
+    return deepObjectCopy(value);
+  }
+
+  /**
+   * Compare two JSON arrays for deep equality.
+   */
   function deepArrayEqual(first: JSONArray, second: JSONArray): boolean {
     // Check referential equality first.
     if (first === second) {
@@ -154,14 +178,7 @@ namespace JSONExt {
 
   /**
    * Compare two JSON objects for deep equality.
-   *
-   * @param first - The first JSON array of interest.
-   *
-   * @param second - The second JSON array of interest.
-   *
-   * @returns `true` if the arrays are equal, `false` otherwise.
    */
-  export
   function deepObjectEqual(first: JSONObject, second: JSONObject): boolean {
     // Check referential equality first.
     if (first === second) {
@@ -191,5 +208,27 @@ namespace JSONExt {
 
     // At this point, the objects are equal.
     return true;
+  }
+
+  /**
+   * Create a deep copy of a JSON array.
+   */
+  function deepArrayCopy(value: JSONArray): JSONArray {
+    let result = new Array<JSONValue>(value.length);
+    for (let i = 0, n = value.length; i < n; ++i) {
+      result[i] = deepCopy(value[i]);
+    }
+    return result;
+  }
+
+  /**
+   * Create a deep copy of a JSON object.
+   */
+  function deepObjectCopy(value: JSONObject): JSONObject {
+    let result: JSONObject = {};
+    for (let key in value) {
+      result[key] = deepCopy(value[key]);
+    }
+    return result;
   }
 }
