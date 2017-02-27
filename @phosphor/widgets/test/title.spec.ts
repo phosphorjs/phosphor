@@ -69,7 +69,7 @@ describe('@phosphor/widgets', () => {
 
       it('should be writable', () => {
         let title = new Title({ owner, label: 'foo' });
-        title.label = 'bar'
+        title.label = 'bar';
         expect(title.label).to.equal('bar');
       });
 
@@ -153,7 +153,7 @@ describe('@phosphor/widgets', () => {
 
       it('should be writable', () => {
         let title = new Title({ owner, icon: 'foo' });
-        title.icon = 'bar'
+        title.icon = 'bar';
         expect(title.icon).to.equal('bar');
       });
 
@@ -195,7 +195,7 @@ describe('@phosphor/widgets', () => {
 
       it('should be writable', () => {
         let title = new Title({ owner, caption: 'foo' });
-        title.caption = 'bar'
+        title.caption = 'bar';
         expect(title.caption).to.equal('bar');
       });
 
@@ -237,7 +237,7 @@ describe('@phosphor/widgets', () => {
 
       it('should be writable', () => {
         let title = new Title({ owner, className: 'foo' });
-        title.className = 'bar'
+        title.className = 'bar';
         expect(title.className).to.equal('bar');
       });
 
@@ -279,7 +279,7 @@ describe('@phosphor/widgets', () => {
 
       it('should be writable', () => {
         let title = new Title({ owner, closable: true });
-        title.closable = false
+        title.closable = false;
         expect(title.closable).to.equal(false);
       });
 
