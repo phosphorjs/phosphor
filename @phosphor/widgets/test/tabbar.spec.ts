@@ -58,16 +58,22 @@ class LogTabBar extends TabBar<Widget> {
 }
 
 
-function createBar(): LogTabBar {
-  let bar = new LogTabBar();
+function populateBar(bar: TabBar<Widget>): void {
+  // Add some tabs with labels.
   each(range(3), i => {
     let widget = new Widget();
     widget.title.label = `Test - ${i}`;
     widget.title.closable = true;
     bar.addTab(widget.title);
   });
+  // Force the tabs to render
   MessageLoop.sendMessage(bar, Widget.Msg.UpdateRequest);
-  return bar;
+  // Add the close icon content.
+  each(range(3), i => {
+    let tab = bar.contentNode.children[i];
+    let icon = tab.querySelector(bar.renderer.closeIconSelector);
+    icon!.textContent = 'X';
+  });
 }
 
 
@@ -107,16 +113,27 @@ describe('@phosphor/widgets', () => {
 
   describe('TabBar', () => {
 
+    let bar: LogTabBar;
+
+    beforeEach((done) => {
+      bar = new LogTabBar();
+      Widget.attach(bar, document.body);
+    });
+
+    afterEach(() => {
+      bar.dispose();
+    });
+
     describe('#constructor()', () => {
 
       it('should take no arguments', () => {
-        let bar = new TabBar<Widget>();
-        expect(bar).to.be.an.instanceof(TabBar);
+        let newBar = new TabBar<Widget>();
+        expect(newBar).to.be.an.instanceof(TabBar);
       });
 
       it('should take an options argument', () => {
         let renderer = new TabBar.Renderer();
-        let bar = new TabBar<Widget>({
+        let newBar = new TabBar<Widget>({
           orientation: 'horizontal',
           tabsMovable: true,
           allowDeselect: true,
@@ -124,14 +141,14 @@ describe('@phosphor/widgets', () => {
           removeBehavior: 'select-previous-tab',
           renderer
         });
-        expect(bar).to.be.an.instanceof(TabBar);
-        expect(bar.tabsMovable).to.equal(true);
-        expect(bar.renderer).to.equal(renderer);
+        expect(newBar).to.be.an.instanceof(TabBar);
+        expect(newBar.tabsMovable).to.equal(true);
+        expect(newBar.renderer).to.equal(renderer);
       });
 
       it('should add the `p-TabBar` class', () => {
-        let bar = new TabBar<Widget>();
-        expect(bar.hasClass('p-TabBar')).to.equal(true);
+        let newBar = new TabBar<Widget>();
+        expect(newBar.hasClass('p-TabBar')).to.equal(true);
       });
 
     });
@@ -139,9 +156,9 @@ describe('@phosphor/widgets', () => {
     describe('#dispose()', () => {
 
       it('should dispose of the resources held by the widget', () => {
-        let bar = createBar();
         bar.dispose();
-        expect(bar.titles.length).to.equal(0);
+        expect(bar.isDisposed).to.equal(true);
+        bar.dispose();
         expect(bar.isDisposed).to.equal(true);
       });
 
@@ -150,7 +167,7 @@ describe('@phosphor/widgets', () => {
     describe('#currentChanged', () => {
 
       it('should be emitted when the current tab is changed', () => {
-        let bar = createBar();
+        populateBar(bar);
         let called = false;
         let titles = bar.titles;
         bar.currentChanged.connect((sender, args) => {
@@ -166,7 +183,7 @@ describe('@phosphor/widgets', () => {
       });
 
       it('should not be emitted when another tab is inserted', () => {
-        let bar = createBar();
+        populateBar(bar);
         let called = false;
         bar.currentChanged.connect((sender, args) => { called = true; });
         let widget = new Widget();
@@ -175,7 +192,7 @@ describe('@phosphor/widgets', () => {
       });
 
       it('should not be emitted when another tab is removed', () => {
-        let bar = createBar();
+        populateBar(bar);
         let called = false;
         bar.currentIndex = 1;
         bar.currentChanged.connect((sender, args) => { called = true; });
@@ -184,7 +201,7 @@ describe('@phosphor/widgets', () => {
       });
 
       it('should not be emitted when the current tab is moved', () => {
-        let bar = createBar();
+        populateBar(bar);
         let called = false;
         bar.currentChanged.connect((sender, args) => { called = true; });
         bar.insertTab(2, bar.titles[0]);
@@ -196,43 +213,37 @@ describe('@phosphor/widgets', () => {
     describe('#tabMoved', () => {
 
       it('should be emitted when a tab is moved right by the user', (done) => {
-        let bar = createBar();
-        Widget.attach(bar, document.body);
-        requestAnimationFrame(() => {
-          let titles = toArray(bar.titles);
-          bar.tabMoved.connect((sender, args) => {
-            expect(sender).to.equal(bar);
-            expect(args.fromIndex).to.equal(0);
-            expect(args.toIndex).to.equal(2);
-            expect(args.title).to.equal(titles[0]);
-            bar.dispose();
-            done();
-          });
-          startDrag(bar);
-          simulate(document.body, 'mouseup');
+        populateBar(bar);
+        let called = false;
+        bar.tabMoved.connect((sender, args) => {
+          expect(sender).to.equal(bar);
+          expect(args.fromIndex).to.equal(0);
+          expect(args.toIndex).to.equal(2);
+          expect(args.title).to.equal(bar.titles[0]);
+          called = true;
         });
+        startDrag(bar);
+        simulate(document.body, 'mouseup');
+        expect(called).to.equal(true);
       });
 
-      it('should be emitted when a tab is moved left by the user', (done) => {
-        let bar = createBar();
-        Widget.attach(bar, document.body);
-        requestAnimationFrame(() => {
-          let titles = toArray(bar.titles);
-          bar.tabMoved.connect((sender, args) => {
-            expect(sender).to.equal(bar);
-            expect(args.fromIndex).to.equal(2);
-            expect(args.toIndex).to.equal(0);
-            expect(args.title).to.equal(titles[2]);
-            bar.dispose();
-            done();
-          });
-          startDrag(bar, 2, 'left');
-          simulate(document.body, 'mouseup');
+      it('should be emitted when a tab is moved left by the user', () => {
+        populateBar(bar);
+        let called = false;
+        bar.tabMoved.connect((sender, args) => {
+          expect(sender).to.equal(bar);
+          expect(args.fromIndex).to.equal(2);
+          expect(args.toIndex).to.equal(0);
+          expect(args.title).to.equal(bar.titles[2]);
+          called = true;
         });
+        startDrag(bar, 2, 'left');
+        simulate(document.body, 'mouseup');
+        expect(called).to.equal(true);
       });
 
       it('should not be emitted when a tab is moved programmatically', () => {
-        let bar = createBar();
+        populateBar(bar);
         let called = false;
         bar.tabMoved.connect((sender, args) => { called = true; });
         bar.insertTab(2, bar.titles[0]);
@@ -241,22 +252,55 @@ describe('@phosphor/widgets', () => {
 
     });
 
-    describe('#tabCloseRequested', () => {
+    describe('#tabActivateRequested', () => {
 
-      let bar: LogTabBar;
-      let closeIcon: HTMLElement;
-
-      beforeEach((done) => {
-        bar = createBar();
-        let tab = bar.contentNode.firstChild as HTMLElement;
-        closeIcon = tab.getElementsByClassName('p-TabBar-tabCloseIcon')[0] as HTMLElement;
-        closeIcon.textContent = 'X';
-        Widget.attach(bar, document.body);
-        requestAnimationFrame(() => { done(); });
+      it('should be emitted when a tab is clicked by the user', () => {
+        populateBar(bar)
+        let called = false;
+        bar.tabActivateRequested.connect((sender, args) => {
+          expect(sender).to.equal(bar);
+          expect(args.index).to.equal(2);
+          expect(args.title).to.equal(bar.titles[2]);
+          called = true;
+        });
+        let tab = bar.contentNode.getElementsByClassName('p-TabBar-tab')[2] as HTMLElement;
+        simulate(tab, 'click');
+        expect(called).to.equal(true);
       });
 
-      afterEach(() => {
-        bar.dispose();
+      it('should make the tab current and emit the `currentChanged` signal', () => {
+        populateBar(bar);
+        let called = 0;
+        bar.currentIndex = 1;
+        bar.tabActivateRequested.connect(() => { called++; });
+        bar.currentChanged.connect(() => { called++; });
+        let tab = bar.contentNode.getElementsByClassName('p-TabBar-tab')[2] as HTMLElement;
+        simulate(tab, 'click');
+        expect(bar.currentIndex).to.equal(2);
+        expect(called).to.equal(2);
+      });
+
+      it('should emit even if the clicked tab is the current tab', () => {
+        populateBar(bar);
+        let called = 0;
+        bar.currentIndex = 2;
+        bar.tabActivateRequested.connect(() => { called++; });
+        let tab = bar.contentNode.getElementsByClassName('p-TabBar-tab')[2] as HTMLElement;
+        simulate(tab, 'click');
+        expect(bar.currentIndex).to.equal(2);
+        expect(called).to.equal(2);
+      });
+
+    });
+
+    describe('#tabCloseRequested', () => {
+
+      let closeIcon: Element;
+
+      beforeEach(() => {
+        populateBar(bar);
+        let tab = bar.contentNode.children[bar.currentIndex];
+        closeIcon = tab.querySelector(bar.renderer.closeIconSelector)!;
       });
 
       it('should be emitted when a tab close icon is clicked', () => {
@@ -291,19 +335,12 @@ describe('@phosphor/widgets', () => {
 
     describe('#tabDetachRequested', () => {
 
-      let bar: LogTabBar;
       let tab: HTMLElement;
 
-      beforeEach((done) => {
-        bar = createBar();
+      beforeEach(() => {
+        populateBar(bar);
         bar.tabsMovable = true;
-        tab = bar.contentNode.firstChild as HTMLElement;
-        Widget.attach(bar, document.body);
-        requestAnimationFrame(() => { done(); });
-      });
-
-      afterEach(() => {
-        bar.dispose();
+        tab = bar.contentNode.children[bar.currentIndex] as HTMLElement;
       });
 
       it('should be emitted when a tab is dragged beyond the detach threshold', () => {
@@ -394,7 +431,7 @@ describe('@phosphor/widgets', () => {
     describe('#currentTitle', () => {
 
       it('should get the currently selected title', () => {
-        let bar = createBar();
+        populateBar(bar);
         expect(bar.currentTitle).to.equal(bar.titles[0]);
       });
 
@@ -404,14 +441,14 @@ describe('@phosphor/widgets', () => {
       });
 
       it('should set the currently selected title', () => {
-        let bar = createBar();
+        populateBar(bar);
         let titles = toArray(bar.titles);
         bar.currentTitle = titles[1];
         expect(bar.currentTitle).to.equal(titles[1]);
       });
 
       it('should set the title to `null` if the title does not exist', () => {
-        let bar = createBar();
+        populateBar(bar);
         bar.currentTitle =  new Widget().title;
         expect(bar.currentTitle).to.equal(null);
       });
@@ -421,7 +458,7 @@ describe('@phosphor/widgets', () => {
     describe('#currentIndex', () => {
 
       it('should get index of the currently selected tab', () => {
-        let bar = createBar();
+        populateBar(bar);
         expect(bar.currentIndex).to.equal(0);
       });
 
@@ -431,13 +468,13 @@ describe('@phosphor/widgets', () => {
       });
 
       it('should set index of the currently selected tab', () => {
-        let bar = createBar();
+        populateBar(bar);
         bar.currentIndex = 1;
         expect(bar.currentIndex).to.equal(1);
       });
 
       it('should set the index to `-1` if the value is out of range', () => {
-        let bar = createBar();
+        populateBar(bar);
         bar.currentIndex = -1;
         expect(bar.currentIndex).to.equal(-1);
         bar.currentIndex = 10;
@@ -445,7 +482,7 @@ describe('@phosphor/widgets', () => {
       });
 
       it('should emit the `currentChanged` signal', () => {
-        let bar = createBar();
+        populateBar(bar);
         let titles = bar.titles;
         let called = false;
         bar.currentChanged.connect((sender, args) => {
@@ -461,7 +498,7 @@ describe('@phosphor/widgets', () => {
       });
 
       it('should schedule an update of the tabs', (done) => {
-        let bar = createBar();
+        populateBar(bar);
         requestAnimationFrame(() => {
           bar.currentIndex = 1;
           bar.methods = [];
@@ -473,7 +510,7 @@ describe('@phosphor/widgets', () => {
       });
 
       it('should be a no-op if the index does not change', (done) => {
-        let bar = createBar();
+        populateBar(bar);
         requestAnimationFrame(() => {
           bar.currentIndex = 0;
           bar.methods = [];
@@ -500,7 +537,7 @@ describe('@phosphor/widgets', () => {
       });
 
       it('should still allow programmatic moves', () => {
-        let bar = createBar();
+        populateBar(bar);
         let titles = toArray(bar.titles);
         bar.insertTab(2, titles[0]);
         expect(bar.titles[2]).to.equal(titles[0]);
@@ -526,7 +563,7 @@ describe('@phosphor/widgets', () => {
     describe('#addTab()', () => {
 
       it('should add a tab to the end of the tab bar', () => {
-        let bar = createBar();
+        populateBar(bar);
         let title = new Widget().title;
         bar.addTab(title);
         expect(bar.titles[3]).to.equal(title);
@@ -541,7 +578,7 @@ describe('@phosphor/widgets', () => {
       });
 
       it('should move an existing title to the end', () => {
-        let bar = createBar();
+        populateBar(bar);
         let titles = toArray(bar.titles);
         bar.addTab(titles[0]);
         expect(bar.titles[2]).to.equal(titles[0]);
@@ -552,21 +589,21 @@ describe('@phosphor/widgets', () => {
     describe('#insertTab()', () => {
 
       it('should insert a tab into the tab bar at the specified index', () => {
-        let bar = createBar();
+        populateBar(bar);
         let title = new Widget().title;
         bar.insertTab(1, title);
         expect(bar.titles[1]).to.equal(title);
       });
 
       it('should accept a title options object', () => {
-        let bar = createBar();
+        populateBar(bar);
         let title = bar.insertTab(1, { owner: new Widget(), label: 'foo' });
         expect(title).to.be.an.instanceof(Title);
         expect(title.label).to.equal('foo');
       });
 
       it('should clamp the index to the bounds of the tabs', () => {
-        let bar = createBar();
+        populateBar(bar);
         let title = new Widget().title;
         bar.insertTab(-1, title);
         expect(bar.titles[0]).to.equal(title);
@@ -576,7 +613,7 @@ describe('@phosphor/widgets', () => {
       });
 
       it('should move an existing tab', () => {
-        let bar = createBar();
+        populateBar(bar);
         let titles = toArray(bar.titles);
         bar.insertTab(1, titles[0]);
         expect(bar.titles[1]).to.equal(titles[0]);
@@ -611,20 +648,20 @@ describe('@phosphor/widgets', () => {
     describe('#removeTab()', () => {
 
       it('should remove a tab from the tab bar by value', () => {
-        let bar = createBar();
+        populateBar(bar);
         let titles = toArray(bar.titles);
         bar.removeTab(titles[0]);
         expect(bar.titles[0]).to.equal(titles[1]);
       });
 
       it('should return the index of the removed tab', () => {
-        let bar = createBar();
+        populateBar(bar);
         let titles = toArray(bar.titles);
         expect(bar.removeTab(titles[0])).to.equal(0);
       });
 
       it('should return `-1` if the title is not in the tab bar', () => {
-        let bar = createBar();
+        populateBar(bar);
         expect(bar.removeTab(new Widget().title)).to.equal(-1);
       });
 
@@ -646,20 +683,20 @@ describe('@phosphor/widgets', () => {
     describe('#removeTabAt()', () => {
 
       it('should remove a tab at a specific index', () => {
-        let bar = createBar();
+        populateBar(bar);
         let titles = toArray(bar.titles);
         bar.removeTabAt(0);
         expect(bar.titles[0]).to.equal(titles[1]);
       });
 
       it('should return the removed title', () => {
-        let bar = createBar();
+        populateBar(bar);
         let titles = toArray(bar.titles);
         expect(bar.removeTabAt(0)).to.equal(titles[0]);
       });
 
       it('should return `null` if the index is out of range', () => {
-        let bar = createBar();
+        populateBar(bar);
         expect(bar.removeTabAt(9)).to.equal(null);
       });
 
@@ -681,7 +718,7 @@ describe('@phosphor/widgets', () => {
     describe('#clearTabs()', () => {
 
       it('should remove all tabs from the tab bar', () => {
-        let bar = createBar();
+        populateBar(bar);
         bar.clearTabs();
         expect(bar.titles.length).to.equal(0);
       });
@@ -693,7 +730,7 @@ describe('@phosphor/widgets', () => {
       });
 
       it('should emit the `currentChanged` signal if there was a selected tab', () => {
-        let bar = createBar();
+        populateBar(bar);
         let titles = toArray(bar.titles);
         let called = false;
         bar.currentChanged.connect((sender, args) => {
@@ -709,7 +746,7 @@ describe('@phosphor/widgets', () => {
       });
 
       it('should not emit the `currentChanged` signal if there was no selected tab', () => {
-        let bar = createBar();
+        populateBar(bar);
         let called = false;
         bar.currentIndex = -1;
         bar.currentChanged.connect((sender, args) => { called = true; });
@@ -722,7 +759,7 @@ describe('@phosphor/widgets', () => {
     describe('#releaseMouse()', () => {
 
       it('should release the mouse and restore the non-dragged tab positions', () => {
-        let bar = createBar();
+        populateBar(bar);
         startDrag(bar, 0, 'left');
         bar.releaseMouse();
         simulate(document.body, 'mousemove');
@@ -739,7 +776,7 @@ describe('@phosphor/widgets', () => {
       let closeIcon: HTMLElement;
 
       beforeEach((done) => {
-        bar = createBar();
+        bar = new LogTabBar();
         bar.tabsMovable = true;
         let content = bar.contentNode;
         tab = content.firstChild as HTMLElement;
@@ -1045,7 +1082,7 @@ describe('@phosphor/widgets', () => {
     describe('#onUpdateRequest()', () => {
 
       it('should render tabs and set styles', (done) => {
-        let bar = createBar();
+        populateBar(bar);
         let tab = bar.contentNode.firstChild as HTMLElement;
         let title = bar.titles[0];
         let label = tab.getElementsByClassName('p-TabBar-tabLabel')[0] as HTMLElement;
