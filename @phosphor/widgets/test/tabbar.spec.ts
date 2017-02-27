@@ -254,38 +254,40 @@ describe('@phosphor/widgets', () => {
 
     describe('#tabActivateRequested', () => {
 
-      it('should be emitted when a tab is clicked by the user', () => {
+      let tab: HTMLElement;
+
+      beforeEach(() => {
         populateBar(bar);
+        tab = bar.contentNode.getElementsByClassName('p-TabBar-tab')[2] as HTMLElement;
+      });
+
+      it('should be emitted when a tab is clicked by the user', () => {
         let called = false;
+        bar.currentIndex = 0;
         bar.tabActivateRequested.connect((sender, args) => {
           expect(sender).to.equal(bar);
           expect(args.index).to.equal(2);
           expect(args.title).to.equal(bar.titles[2]);
           called = true;
         });
-        let tab = bar.contentNode.getElementsByClassName('p-TabBar-tab')[2] as HTMLElement;
         simulate(tab, 'click');
         expect(called).to.equal(true);
       });
 
       it('should make the tab current and emit the `currentChanged` signal', () => {
-        populateBar(bar);
         let called = 0;
         bar.currentIndex = 1;
         bar.tabActivateRequested.connect(() => { called++; });
         bar.currentChanged.connect(() => { called++; });
-        let tab = bar.contentNode.getElementsByClassName('p-TabBar-tab')[2] as HTMLElement;
         simulate(tab, 'click');
         expect(bar.currentIndex).to.equal(2);
         expect(called).to.equal(2);
       });
 
       it('should emit even if the clicked tab is the current tab', () => {
-        populateBar(bar);
         let called = 0;
         bar.currentIndex = 2;
         bar.tabActivateRequested.connect(() => { called++; });
-        let tab = bar.contentNode.getElementsByClassName('p-TabBar-tab')[2] as HTMLElement;
         simulate(tab, 'click');
         expect(bar.currentIndex).to.equal(2);
         expect(called).to.equal(2);
@@ -446,27 +448,111 @@ describe('@phosphor/widgets', () => {
     describe('#allowDeselect', () => {
 
       it('should determine whether a tab can be deselected by the user', () => {
+        populateBar(bar);
+        bar.allowDeselect = false;
+        bar.currentIndex = 2;
+        let tab = bar.contentNode.getElementsByClassName('p-TabBar-tab')[2] as HTMLElement;
+        simulate(tab, 'click');
+        expect(bar.currentIndex).to.equal(2);
 
+        bar.allowDeselect = true;
+        simulate(tab, 'click');
+        expect(bar.currentIndex).to.equal(-1);
       });
 
       it('should always allow programmatic deselection', () => {
-
+        populateBar(bar);
+        bar.allowDeselect = false;
+        bar.currentIndex = -1;
+        expect(bar.currentIndex).to.equal(-1);
       });
 
     });
 
     describe('#insertBehavior', () => {
 
-      it('should be the selection behavior when inserting a new tab', () => {
+      it('should not change the selection', () => {
+        populateBar(bar);
+        bar.insertBehavior = 'none';
+        bar.currentIndex = 0;
+        bar.insertTab(2, new Widget().title);
+        expect(bar.currentIndex).to.equal(0);
+      });
 
+      it('should select the tab', () => {
+        populateBar(bar);
+        bar.insertBehavior = 'select-tab';
+        bar.currentIndex = 0;
+        bar.insertTab(2, new Widget().title);
+        expect(bar.currentIndex).to.equal(2);
+
+        bar.currentIndex = -1;
+        bar.insertTab(1, new Widget().title);
+        expect(bar.currentIndex).to.equal(1);
+      });
+
+      it('should select the tab if needed', () => {
+        populateBar(bar);
+        bar.insertBehavior = 'select-tab-if-needed';
+        bar.currentIndex = 0;
+        bar.insertTab(2, new Widget().title);
+        expect(bar.currentIndex).to.equal(0);
+
+        bar.currentIndex = -1;
+        bar.insertTab(1, new Widget().title);
+        expect(bar.currentIndex).to.equal(1);
       });
 
     });
 
     describe('#removeBehavior', () => {
 
-      it('should be the selection behavior when removing a tab', () => {
+      it('should select no tab', () => {
+        populateBar(bar);
+        bar.removeBehavior = 'none';
+        bar.currentIndex = 2;
+        bar.removeTabAt(2);
+        expect(bar.currentIndex).to.equal(-1);
+      });
 
+      it('should select the tab after the removed tab if possible', () => {
+        populateBar(bar);
+        bar.removeBehavior = 'select-tab-after';
+        bar.currentIndex = 0;
+        bar.removeTabAt(0);
+        expect(bar.currentIndex).to.equal(0);
+
+        bar.currentIndex = 1;
+        bar.removeTabAt(1);
+        expect(bar.currentIndex).to.equal(-1);
+      });
+
+      it('should select the tab before the removed tab if possible', () => {
+        populateBar(bar);
+        bar.removeBehavior = 'select-tab-before';
+        bar.currentIndex = 1;
+        bar.removeTabAt(1);
+        expect(bar.currentIndex).to.equal(0);
+        bar.removeTabAt(0);
+        expect(bar.currentIndex).to.equal(-1);
+      });
+
+      it('should select the previously selected tab if possible', () => {
+        populateBar(bar);
+        bar.removeBehavior = 'select-previous-tab';
+        bar.currentIndex = 0;
+        bar.currentIndex = 2;
+        bar.removeTabAt(2);
+        expect(bar.currentIndex).to.equal(0);
+
+        // Reset the bar.
+        bar.removeTabAt(0);
+        bar.removeTabAt(0);
+        populateBar(bar);
+
+        bar.currentIndex = 1;
+        bar.removeTabAt(1);
+        expect(bar.currentIndex).to.equal(-1);
       });
 
     });
@@ -566,24 +652,37 @@ describe('@phosphor/widgets', () => {
 
     });
 
-    describe('#contentNode', () => {
+    describe('#orientation', () => {
 
-      it('should get the tab bar content node', () => {
-        let bar = new TabBar<Widget>();
-        expect(bar.contentNode.classList.contains('p-TabBar-content')).to.equal(true);
+      it('should get the orientation of the tab bar', () => {
+
+      });
+
+      it('should set the orientation of the tab bar', () => {
+
       });
 
     });
 
     describe('#titles', () => {
 
-      it('should get the read-only sequence of titles in the tab bar', () => {
+      it('should get the read-only array of titles in the tab bar', () => {
         let bar = new TabBar<Widget>();
         let widgets = [new Widget(), new Widget(), new Widget()];
         each(widgets, widget => { bar.addTab(widget.title); });
+        expect(bar.titles.length).to.equal(3);
         each(bar.titles, (title, i) => {
           expect(title.owner).to.equal(widgets[i]);
         });
+      });
+
+    });
+
+    describe('#contentNode', () => {
+
+      it('should get the tab bar content node', () => {
+        let bar = new TabBar<Widget>();
+        expect(bar.contentNode.classList.contains('p-TabBar-content')).to.equal(true);
       });
 
     });
