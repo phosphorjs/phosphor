@@ -14,7 +14,7 @@ import {
 } from 'simulate-event';
 
 import {
-  each, range, toArray
+  each, range
 } from '@phosphor/algorithm';
 
 import {
@@ -255,7 +255,7 @@ describe('@phosphor/widgets', () => {
     describe('#tabActivateRequested', () => {
 
       it('should be emitted when a tab is clicked by the user', () => {
-        populateBar(bar)
+        populateBar(bar);
         let called = false;
         bar.tabActivateRequested.connect((sender, args) => {
           expect(sender).to.equal(bar);
@@ -406,24 +406,67 @@ describe('@phosphor/widgets', () => {
 
     });
 
-    describe('#contentNode', () => {
+    describe('#renderer', () => {
 
-      it('should get the tab bar content node', () => {
+      it('should be the tab bar renderer', () => {
+        let renderer = Object.create(TabBar.defaultRenderer);
+        let bar = new TabBar<Widget>({ renderer });
+        expect(bar.renderer).to.equal(renderer);
+      });
+
+      it('should default to the default renderer', () => {
         let bar = new TabBar<Widget>();
-        expect(bar.contentNode.classList.contains('p-TabBar-content')).to.equal(true);
+        expect(bar.renderer).to.equal(TabBar.defaultRenderer);
       });
 
     });
 
-    describe('#titles', () => {
+    describe('#tabsMovable', () => {
 
-      it('should get the read-only sequence of titles in the tab bar', () => {
+      it('should get whether the tabs are movable by the user', () => {
         let bar = new TabBar<Widget>();
-        let widgets = [new Widget(), new Widget(), new Widget()];
-        each(widgets, widget => { bar.addTab(widget.title); });
-        each(bar.titles, (title, i) => {
-          expect(title.owner).to.equal(widgets[i]);
-        });
+        expect(bar.tabsMovable).to.equal(false);
+      });
+
+      it('should set whether the tabs are movable by the user', () => {
+        let bar = new TabBar<Widget>();
+        bar.tabsMovable = true;
+        expect(bar.tabsMovable).to.equal(true);
+      });
+
+      it('should still allow programmatic moves', () => {
+        populateBar(bar);
+        let titles = bar.titles.slice();
+        bar.insertTab(2, titles[0]);
+        expect(bar.titles[2]).to.equal(titles[0]);
+      });
+
+    });
+
+    describe('#allowDeselect', () => {
+
+      it('should determine whether a tab can be deselected by the user', () => {
+
+      });
+
+      it('should always allow programmatic deselection', () => {
+
+      });
+
+    });
+
+    describe('#insertBehavior', () => {
+
+      it('should be the selection behavior when inserting a new tab', () => {
+
+      });
+
+    });
+
+    describe('#removeBehavior', () => {
+
+      it('should be the selection behavior when removing a tab', () => {
+
       });
 
     });
@@ -442,9 +485,8 @@ describe('@phosphor/widgets', () => {
 
       it('should set the currently selected title', () => {
         populateBar(bar);
-        let titles = toArray(bar.titles);
-        bar.currentTitle = titles[1];
-        expect(bar.currentTitle).to.equal(titles[1]);
+        bar.currentTitle = bar.titles[1];
+        expect(bar.currentTitle).to.equal(bar.titles[1]);
       });
 
       it('should set the title to `null` if the title does not exist', () => {
@@ -454,6 +496,7 @@ describe('@phosphor/widgets', () => {
       });
 
     });
+
 
     describe('#currentIndex', () => {
 
@@ -523,39 +566,24 @@ describe('@phosphor/widgets', () => {
 
     });
 
-    describe('#tabsMovable', () => {
+    describe('#contentNode', () => {
 
-      it('should get whether the tabs are movable by the user', () => {
+      it('should get the tab bar content node', () => {
         let bar = new TabBar<Widget>();
-        expect(bar.tabsMovable).to.equal(false);
-      });
-
-      it('should set whether the tabs are movable by the user', () => {
-        let bar = new TabBar<Widget>();
-        bar.tabsMovable = true;
-        expect(bar.tabsMovable).to.equal(true);
-      });
-
-      it('should still allow programmatic moves', () => {
-        populateBar(bar);
-        let titles = toArray(bar.titles);
-        bar.insertTab(2, titles[0]);
-        expect(bar.titles[2]).to.equal(titles[0]);
+        expect(bar.contentNode.classList.contains('p-TabBar-content')).to.equal(true);
       });
 
     });
 
-    describe('#renderer', () => {
+    describe('#titles', () => {
 
-      it('should be the tab bar renderer', () => {
-        let renderer = Object.create(TabBar.defaultRenderer);
-        let bar = new TabBar<Widget>({ renderer });
-        expect(bar.renderer).to.equal(renderer);
-      });
-
-      it('should default to the default renderer', () => {
+      it('should get the read-only sequence of titles in the tab bar', () => {
         let bar = new TabBar<Widget>();
-        expect(bar.renderer).to.equal(TabBar.defaultRenderer);
+        let widgets = [new Widget(), new Widget(), new Widget()];
+        each(widgets, widget => { bar.addTab(widget.title); });
+        each(bar.titles, (title, i) => {
+          expect(title.owner).to.equal(widgets[i]);
+        });
       });
 
     });
@@ -579,7 +607,7 @@ describe('@phosphor/widgets', () => {
 
       it('should move an existing title to the end', () => {
         populateBar(bar);
-        let titles = toArray(bar.titles);
+        let titles = bar.titles.slice();
         bar.addTab(titles[0]);
         expect(bar.titles[2]).to.equal(titles[0]);
       });
@@ -614,7 +642,7 @@ describe('@phosphor/widgets', () => {
 
       it('should move an existing tab', () => {
         populateBar(bar);
-        let titles = toArray(bar.titles);
+        let titles = bar.titles.slice();
         bar.insertTab(1, titles[0]);
         expect(bar.titles[1]).to.equal(titles[0]);
       });
@@ -649,15 +677,14 @@ describe('@phosphor/widgets', () => {
 
       it('should remove a tab from the tab bar by value', () => {
         populateBar(bar);
-        let titles = toArray(bar.titles);
+        let titles = bar.titles.slice();
         bar.removeTab(titles[0]);
         expect(bar.titles[0]).to.equal(titles[1]);
       });
 
       it('should return the index of the removed tab', () => {
         populateBar(bar);
-        let titles = toArray(bar.titles);
-        expect(bar.removeTab(titles[0])).to.equal(0);
+        expect(bar.removeTab(bar.titles[0])).to.equal(0);
       });
 
       it('should return `-1` if the title is not in the tab bar', () => {
@@ -684,14 +711,14 @@ describe('@phosphor/widgets', () => {
 
       it('should remove a tab at a specific index', () => {
         populateBar(bar);
-        let titles = toArray(bar.titles);
+        let titles = bar.titles.slice();
         bar.removeTabAt(0);
         expect(bar.titles[0]).to.equal(titles[1]);
       });
 
       it('should return the removed title', () => {
         populateBar(bar);
-        let titles = toArray(bar.titles);
+        let titles = bar.titles.slice();
         expect(bar.removeTabAt(0)).to.equal(titles[0]);
       });
 
@@ -731,12 +758,11 @@ describe('@phosphor/widgets', () => {
 
       it('should emit the `currentChanged` signal if there was a selected tab', () => {
         populateBar(bar);
-        let titles = toArray(bar.titles);
         let called = false;
         bar.currentChanged.connect((sender, args) => {
           expect(sender).to.equal(bar);
           expect(args.previousIndex).to.equal(0);
-          expect(args.previousTitle).to.equal(titles[0]);
+          expect(args.previousTitle).to.equal(bar.titles[0]);
           expect(args.currentIndex).to.equal(-1);
           expect(args.currentTitle).to.equal(null);
           called = true;
