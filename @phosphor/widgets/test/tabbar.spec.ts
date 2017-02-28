@@ -83,11 +83,13 @@ type Direction = 'left' | 'right' | 'up' | 'down';
 function startDrag(bar: LogTabBar, index = 0, direction: Direction = 'right'): void {
   bar.tabsMovable = true;
   let tab = bar.contentNode.children[index] as HTMLElement;
-  let rect = tab.getBoundingClientRect();
-  simulate(tab, 'mousedown', { clientX: rect.left + 1, clientY: rect.top });
+  bar.currentIndex = index;
+  // Force an update.
+  MessageLoop.sendMessage(bar, Widget.Msg.UpdateRequest);
+  simulateOnNode(tab, 'mousedown');
   let called = true;
   bar.tabDetachRequested.connect((sender, args) => { called = true; });
-  rect = bar.contentNode.getBoundingClientRect();
+  let rect = bar.contentNode.getBoundingClientRect();
   let args: any;
   switch (direction) {
   case 'left':
@@ -109,13 +111,19 @@ function startDrag(bar: LogTabBar, index = 0, direction: Direction = 'right'): v
 }
 
 
+function simulateOnNode(node: Element, eventName: string): void {
+  let rect = node.getBoundingClientRect();
+  simulate(node, eventName, { clientX: rect.left + 1, clientY: rect.top });
+}
+
+
 describe('@phosphor/widgets', () => {
 
   describe('TabBar', () => {
 
     let bar: LogTabBar;
 
-    beforeEach((done) => {
+    beforeEach(() => {
       bar = new LogTabBar();
       Widget.attach(bar, document.body);
     });
@@ -214,32 +222,30 @@ describe('@phosphor/widgets', () => {
 
       it('should be emitted when a tab is moved right by the user', (done) => {
         populateBar(bar);
-        let called = false;
+        let titles = bar.titles.slice();
         bar.tabMoved.connect((sender, args) => {
           expect(sender).to.equal(bar);
           expect(args.fromIndex).to.equal(0);
           expect(args.toIndex).to.equal(2);
-          expect(args.title).to.equal(bar.titles[0]);
-          called = true;
+          expect(args.title).to.equal(titles[0]);
+          done();
         });
         startDrag(bar);
         simulate(document.body, 'mouseup');
-        expect(called).to.equal(true);
       });
 
-      it('should be emitted when a tab is moved left by the user', () => {
+      it('should be emitted when a tab is moved left by the user', (done) => {
         populateBar(bar);
-        let called = false;
+        let titles = bar.titles.slice();
         bar.tabMoved.connect((sender, args) => {
           expect(sender).to.equal(bar);
           expect(args.fromIndex).to.equal(2);
           expect(args.toIndex).to.equal(0);
-          expect(args.title).to.equal(bar.titles[2]);
-          called = true;
+          expect(args.title).to.equal(titles[2]);
+          done();
         });
         startDrag(bar, 2, 'left');
         simulate(document.body, 'mouseup');
-        expect(called).to.equal(true);
       });
 
       it('should not be emitted when a tab is moved programmatically', () => {
@@ -258,39 +264,46 @@ describe('@phosphor/widgets', () => {
 
       beforeEach(() => {
         populateBar(bar);
+        bar.tabsMovable = false;
         tab = bar.contentNode.getElementsByClassName('p-TabBar-tab')[2] as HTMLElement;
       });
 
       it('should be emitted when a tab is clicked by the user', () => {
         let called = false;
         bar.currentIndex = 0;
+        // Force an update.
+        MessageLoop.sendMessage(bar, Widget.Msg.UpdateRequest);
         bar.tabActivateRequested.connect((sender, args) => {
           expect(sender).to.equal(bar);
           expect(args.index).to.equal(2);
           expect(args.title).to.equal(bar.titles[2]);
           called = true;
         });
-        simulate(tab, 'click');
+        simulateOnNode(tab, 'mousedown');
         expect(called).to.equal(true);
       });
 
       it('should make the tab current and emit the `currentChanged` signal', () => {
         let called = 0;
         bar.currentIndex = 1;
+        // Force an update.
+        MessageLoop.sendMessage(bar, Widget.Msg.UpdateRequest);
         bar.tabActivateRequested.connect(() => { called++; });
         bar.currentChanged.connect(() => { called++; });
-        simulate(tab, 'click');
+        simulateOnNode(tab, 'mousedown');
         expect(bar.currentIndex).to.equal(2);
         expect(called).to.equal(2);
       });
 
       it('should emit even if the clicked tab is the current tab', () => {
-        let called = 0;
+        let called = false;
         bar.currentIndex = 2;
-        bar.tabActivateRequested.connect(() => { called++; });
-        simulate(tab, 'click');
+        // Force an update.
+        MessageLoop.sendMessage(bar, Widget.Msg.UpdateRequest);
+        bar.tabActivateRequested.connect(() => { called = true; });
+        simulateOnNode(tab, 'mousedown');
         expect(bar.currentIndex).to.equal(2);
-        expect(called).to.equal(2);
+        expect(called).to.equal(true);
       });
 
     });
@@ -307,7 +320,6 @@ describe('@phosphor/widgets', () => {
       });
 
       it('should be emitted when a tab close icon is clicked', () => {
-        let rect = closeIcon.getBoundingClientRect();
         let called = false;
         bar.tabCloseRequested.connect((sender, args) => {
           expect(sender).to.equal(bar);
@@ -315,12 +327,11 @@ describe('@phosphor/widgets', () => {
           expect(args.title).to.equal(bar.titles[0]);
           called = true;
         });
-        simulate(closeIcon, 'click', { clientX: rect.left, clientY: rect.top });
+        simulateOnNode(closeIcon, 'click');
         expect(called).to.equal(true);
       });
 
       it('should not be emitted if the tab title is not `closable`', () => {
-        let rect = closeIcon.getBoundingClientRect();
         let called = false;
         let title = bar.titles[0];
         title.closable = false;
@@ -330,7 +341,7 @@ describe('@phosphor/widgets', () => {
           expect(args.title).to.equal(bar.titles[0]);
           called = true;
         });
-        simulate(closeIcon, 'click', { clientX: rect.left, clientY: rect.top });
+        simulateOnNode(closeIcon, 'click');
         expect(called).to.equal(false);
       });
 
@@ -347,8 +358,7 @@ describe('@phosphor/widgets', () => {
       });
 
       it('should be emitted when a tab is dragged beyond the detach threshold', () => {
-        let rect = tab.getBoundingClientRect();
-        simulate(tab, 'mousedown', { clientX: rect.left, clientY: rect.top });
+        simulateOnNode(tab, 'mousedown');
         let called = false;
         bar.tabDetachRequested.connect((sender, args) => {
           expect(sender).to.equal(bar);
@@ -358,35 +368,33 @@ describe('@phosphor/widgets', () => {
           expect(args.clientY).to.equal(rect.top);
           called = true;
         });
-        rect = bar.contentNode.getBoundingClientRect();
+        let rect = bar.contentNode.getBoundingClientRect();
         simulate(document.body, 'mousemove', { clientX: rect.right + 200, clientY: rect.top });
         expect(called).to.equal(true);
       });
 
       it('should be handled by calling `releaseMouse` and removing the tab', () => {
-        let rect = tab.getBoundingClientRect();
-        simulate(tab, 'mousedown', { clientX: rect.left, clientY: rect.top });
+        simulateOnNode(tab, 'mousedown');
         let called = false;
         bar.tabDetachRequested.connect((sender, args) => {
           bar.releaseMouse();
           bar.removeTabAt(args.index);
           called = true;
         });
-        rect = bar.contentNode.getBoundingClientRect();
+        let rect = bar.contentNode.getBoundingClientRect();
         simulate(document.body, 'mousemove', { clientX: rect.right + 200, clientY: rect.top });
         expect(called).to.equal(true);
       });
 
       it('should only be emitted once per drag cycle', () => {
-        let rect = tab.getBoundingClientRect();
-        simulate(tab, 'mousedown', { clientX: rect.left, clientY: rect.top });
+        simulateOnNode(tab, 'mousedown');
         let called = 0;
         bar.tabDetachRequested.connect((sender, args) => {
           bar.releaseMouse();
           bar.removeTabAt(args.index);
           called++;
         });
-        rect = bar.contentNode.getBoundingClientRect();
+        let rect = bar.contentNode.getBoundingClientRect();
         simulate(document.body, 'mousemove', { clientX: rect.right + 200, clientY: rect.top });
         expect(called).to.equal(1);
         simulate(document.body, 'mousemove', { clientX: rect.right + 201, clientY: rect.top });
@@ -394,15 +402,14 @@ describe('@phosphor/widgets', () => {
       });
 
       it('should add the `p-mod-dragging` class to the tab and the bar', () => {
-        let rect = tab.getBoundingClientRect();
-        simulate(tab, 'mousedown', { clientX: rect.left, clientY: rect.top });
+        simulateOnNode(tab, 'mousedown');
         let called = false;
         bar.tabDetachRequested.connect((sender, args) => {
           expect(tab.classList.contains('p-mod-dragging')).to.equal(true);
           expect(bar.hasClass('p-mod-dragging')).to.equal(true);
           called = true;
         });
-        rect = bar.contentNode.getBoundingClientRect();
+        let rect = bar.contentNode.getBoundingClientRect();
         simulate(document.body, 'mousemove', { clientX: rect.right + 200, clientY: rect.top });
         expect(called).to.equal(true);
       });
@@ -451,13 +458,16 @@ describe('@phosphor/widgets', () => {
       it('should determine whether a tab can be deselected by the user', () => {
         populateBar(bar);
         bar.allowDeselect = false;
+        bar.tabsMovable = false;
         bar.currentIndex = 2;
+        // Force the tabs to render
+        MessageLoop.sendMessage(bar, Widget.Msg.UpdateRequest);
         let tab = bar.contentNode.getElementsByClassName('p-TabBar-tab')[2] as HTMLElement;
-        simulate(tab, 'click');
+        simulateOnNode(tab, 'mousedown');
         expect(bar.currentIndex).to.equal(2);
 
         bar.allowDeselect = true;
-        simulate(tab, 'click');
+        simulateOnNode(tab, 'mousedown');
         expect(bar.currentIndex).to.equal(-1);
       });
 
@@ -525,7 +535,7 @@ describe('@phosphor/widgets', () => {
 
         bar.currentIndex = 1;
         bar.removeTabAt(1);
-        expect(bar.currentIndex).to.equal(-1);
+        expect(bar.currentIndex).to.equal(0);
       });
 
       it('should select the tab before the removed tab if possible', () => {
@@ -535,7 +545,7 @@ describe('@phosphor/widgets', () => {
         bar.removeTabAt(1);
         expect(bar.currentIndex).to.equal(0);
         bar.removeTabAt(0);
-        expect(bar.currentIndex).to.equal(-1);
+        expect(bar.currentIndex).to.equal(0);
       });
 
       it('should select the previously selected tab if possible', () => {
@@ -553,7 +563,7 @@ describe('@phosphor/widgets', () => {
 
         bar.currentIndex = 1;
         bar.removeTabAt(1);
-        expect(bar.currentIndex).to.equal(-1);
+        expect(bar.currentIndex).to.equal(0);
       });
 
     });
@@ -562,11 +572,13 @@ describe('@phosphor/widgets', () => {
 
       it('should get the currently selected title', () => {
         populateBar(bar);
+        bar.currentIndex = 0;
         expect(bar.currentTitle).to.equal(bar.titles[0]);
       });
 
       it('should be `null` if no tab is selected', () => {
         populateBar(bar);
+        bar.currentIndex = -1;
         expect(bar.currentTitle).to.equal(null);
       });
 
@@ -655,7 +667,7 @@ describe('@phosphor/widgets', () => {
     describe('#orientation', () => {
 
       it('should be the orientation of the tab bar', () => {
-        expect(bar.orientation).to.be('horizontal');
+        expect(bar.orientation).to.equal('horizontal');
         expect(bar.hasClass('p-mod-horizontal')).to.equal(true);
         bar.orientation = 'vertical';
         expect(bar.hasClass('p-mod-vertical')).to.equal(true);
@@ -844,12 +856,10 @@ describe('@phosphor/widgets', () => {
       it('should emit the `currentChanged` signal if there was a selected tab', () => {
         populateBar(bar);
         let called = false;
+        bar.currentIndex = 0;
         bar.currentChanged.connect((sender, args) => {
           expect(sender).to.equal(bar);
           expect(args.previousIndex).to.equal(0);
-          expect(args.previousTitle).to.equal(bar.titles[0]);
-          expect(args.currentIndex).to.equal(-1);
-          expect(args.currentTitle).to.equal(null);
           called = true;
         });
         bar.clearTabs();
@@ -895,7 +905,6 @@ describe('@phosphor/widgets', () => {
       context('click', () => {
 
         it('should emit a tab close requested signal', () => {
-          let rect = closeIcon.getBoundingClientRect();
           let called = false;
           bar.tabCloseRequested.connect((sender, args) => {
             expect(sender).to.equal(bar);
@@ -903,7 +912,7 @@ describe('@phosphor/widgets', () => {
             expect(args.title).to.equal(bar.titles[0]);
             called = true;
           });
-          simulate(closeIcon, 'click', { clientX: rect.left, clientY: rect.top });
+          simulateOnNode(closeIcon, 'click');
           expect(called).to.equal(true);
         });
 
@@ -917,36 +926,32 @@ describe('@phosphor/widgets', () => {
 
         it('should do nothing if a drag is in progress', () => {
           startDrag(bar, 1, 'up');
-          let rect = closeIcon.getBoundingClientRect();
           let called = false;
           bar.tabCloseRequested.connect((sender, args) => { called = true; });
-          simulate(closeIcon, 'click', { clientX: rect.left, clientY: rect.top });
+          simulateOnNode(closeIcon, 'click');
           expect(called).to.equal(false);
         });
 
         it('should do nothing if the click is not on a tab', () => {
-          let rect = closeIcon.getBoundingClientRect();
           let called = false;
           bar.tabCloseRequested.connect((sender, args) => { called = true; });
-          simulate(tab, 'click', { clientX: rect.left, clientY: rect.top });
+          simulateOnNode(tab, 'click');
           expect(called).to.equal(false);
         });
 
         it('should do nothing if the tab is not closable', () => {
-          let rect = closeIcon.getBoundingClientRect();
           let called = false;
           let title = bar.titles[0];
           title.closable = false;
           bar.tabCloseRequested.connect((sender, args) => { called = true; });
-          simulate(closeIcon, 'click', { clientX: rect.left, clientY: rect.top });
+          simulateOnNode(closeIcon, 'click');
           expect(called).to.equal(false);
         });
 
         it('should do nothing if the click is not on a close icon', () => {
-          let rect = tab.getBoundingClientRect();
           let called = false;
           bar.tabCloseRequested.connect((sender, args) => { called = true; });
-          simulate(tab, 'click', { clientX: rect.left, clientY: rect.top });
+          simulateOnNode(tab, 'click');
           expect(called).to.equal(false);
         });
 
@@ -955,8 +960,7 @@ describe('@phosphor/widgets', () => {
       context('mousedown', () => {
 
         it('should add event listeners if the tabs are movable', () => {
-          let rect = tab.getBoundingClientRect();
-          simulate(tab, 'mousedown', { clientX: rect.left, clientY: rect.top });
+          simulateOnNode(tab, 'mousedown');
           simulate(document.body, 'mousemove');
           expect(bar.events.indexOf('mousemove')).to.not.equal(-1);
         });
@@ -969,22 +973,21 @@ describe('@phosphor/widgets', () => {
         });
 
         it('should do nothing if the click is not on a tab', () => {
-          simulate(tab, 'mousedown');
+          let rect = tab.getBoundingClientRect();
+          simulate(tab, 'mousedown', { clientX: rect.left - 1, clientY: rect.top });
           simulate(document.body, 'mousemove');
           expect(bar.events.indexOf('mousemove')).to.equal(-1);
         });
 
         it('should do nothing if the click is on a close icon', () => {
-          let rect = closeIcon.getBoundingClientRect();
-          simulate(closeIcon, 'mousedown', { clientX: rect.left, clientY: rect.top });
+          simulateOnNode(closeIcon, 'mousedown');
           simulate(document.body, 'mousemove');
           expect(bar.events.indexOf('mousemove')).to.equal(-1);
         });
 
         it('should do nothing if the tabs are not movable', () => {
           bar.tabsMovable = false;
-          let rect = tab.getBoundingClientRect();
-          simulate(tab, 'mousedown', { clientX: rect.left, clientY: rect.top });
+          simulateOnNode(tab, 'mousedown');
           simulate(document.body, 'mousemove');
           expect(bar.events.indexOf('mousemove')).to.equal(-1);
         });
@@ -1002,11 +1005,10 @@ describe('@phosphor/widgets', () => {
       context('mousemove', () => {
 
         it('should do nothing if there is a drag in progress', () => {
-          let rect = tab.getBoundingClientRect();
-          simulate(tab, 'mousedown', { clientX: rect.left, clientY: rect.top });
+          simulateOnNode(tab, 'mousedown');
           let called = 0;
           bar.tabDetachRequested.connect((sender, args) => { called++; });
-          rect = bar.contentNode.getBoundingClientRect();
+          let rect = bar.contentNode.getBoundingClientRect();
           simulate(document.body, 'mousemove', { clientX: rect.right + 200, clientY: rect.top });
           expect(called).to.equal(1);
           simulate(document.body, 'mousemove', { clientX: rect.right + 200, clientY: rect.top });
@@ -1014,21 +1016,19 @@ describe('@phosphor/widgets', () => {
         });
 
         it('should bail if the drag threshold is not exceeded', () => {
-          let rect = tab.getBoundingClientRect();
-          simulate(tab, 'mousedown', { clientX: rect.left, clientY: rect.top });
+          simulateOnNode(tab, 'mousedown');
           let called = false;
           bar.tabDetachRequested.connect((sender, args) => {
             bar.releaseMouse();
             called = true;
           });
-          rect = bar.contentNode.getBoundingClientRect();
+          let rect = bar.contentNode.getBoundingClientRect();
           simulate(document.body, 'mousemove', { clientX: rect.right + 1, clientY: rect.top });
           expect(called).to.equal(false);
         });
 
         it('should emit the detach requested signal if the threshold is exceeded', () => {
-          let rect = tab.getBoundingClientRect();
-          simulate(tab, 'mousedown', { clientX: rect.left, clientY: rect.top });
+          simulateOnNode(tab, 'mousedown');
           let called = false;
           bar.tabDetachRequested.connect((sender, args) => {
             expect(sender).to.equal(bar);
@@ -1038,20 +1038,19 @@ describe('@phosphor/widgets', () => {
             expect(args.clientY).to.equal(rect.top);
             called = true;
           });
-          rect = bar.contentNode.getBoundingClientRect();
+          let rect = bar.contentNode.getBoundingClientRect();
           simulate(document.body, 'mousemove', { clientX: rect.right + 200, clientY: rect.top });
           expect(called).to.equal(true);
         });
 
         it('should bail if the signal handler aborted the drag', () => {
-          let rect = tab.getBoundingClientRect();
-          simulate(tab, 'mousedown', { clientX: rect.left, clientY: rect.top });
+          simulateOnNode(tab, 'mousedown');
           let called = false;
           bar.tabDetachRequested.connect((sender, args) => {
             bar.releaseMouse();
             called = true;
           });
-          rect = bar.contentNode.getBoundingClientRect();
+          let rect = bar.contentNode.getBoundingClientRect();
           simulate(document.body, 'mousemove', { clientX: rect.right + 200, clientY: rect.top });
           expect(called).to.equal(true);
           let left = rect.left;
@@ -1060,11 +1059,10 @@ describe('@phosphor/widgets', () => {
         });
 
         it('should update the positions of the tabs', () => {
-          let rect = tab.getBoundingClientRect();
-          simulate(tab, 'mousedown', { clientX: rect.left, clientY: rect.top });
+          simulateOnNode(tab, 'mousedown');
           let called = false;
           bar.tabDetachRequested.connect((sender, args) => { called = true; });
-          rect = bar.contentNode.getBoundingClientRect();
+          let rect = bar.contentNode.getBoundingClientRect();
           simulate(document.body, 'mousemove', { clientX: rect.right + 200, clientY: rect.top });
           expect(called).to.equal(true);
           let left = rect.left;
@@ -1099,17 +1097,11 @@ describe('@phosphor/widgets', () => {
           expect(cancelled).to.equal(false);
         });
 
-        it('should bail if the drag is not active', (done) => {
-          let rect = tab.getBoundingClientRect();
-          simulate(tab, 'mousedown', { clientX: rect.left, clientY: rect.top });
-          simulate(document.body, 'mouseup');
-          let title = bar.titles[0];
-          bar.methods = [];
-          setTimeout(() => {
-            expect(bar.titles[0]).to.equal(title);
-            expect(bar.methods.indexOf('onUpdateRequest')).to.equal(-1);
-            done();
-          }, 200);
+        it('should bail if the drag is not active', () => {
+          simulateOnNode(tab, 'mousedown');
+          let evt = generate('mouseup', { button: 1 });
+          let cancelled = !document.body.dispatchEvent(evt);
+          expect(cancelled).to.equal(false);
         });
 
       });
@@ -1126,8 +1118,7 @@ describe('@phosphor/widgets', () => {
         it('should release the mouse if `Escape` is pressed', () => {
           startDrag(bar);
           simulate(document.body, 'keydown', { keyCode: 27 });
-          let rect = tab.getBoundingClientRect();
-          simulate(tab, 'mousedown', { clientX: rect.left, clientY: rect.top });
+          simulateOnNode(tab, 'mousedown');
           expect(bar.events.indexOf('mousemove')).to.equal(-1);
         });
 
@@ -1169,11 +1160,11 @@ describe('@phosphor/widgets', () => {
         bar.addTab(new Title({ owner, label: 'foo' }));
         MessageLoop.sendMessage(bar, Widget.Msg.UpdateRequest);
         Widget.attach(bar, document.body);
-        expect(bar.methods).to.contain('onAfterDetach');
         let tab = bar.contentNode.firstChild as HTMLElement;
         let rect = tab.getBoundingClientRect();
         simulate(tab, 'mousedown', { clientX: rect.left, clientY: rect.top });
         Widget.detach(bar);
+        expect(bar.methods).to.contain('onAfterDetach');
         simulate(document.body, 'mousemove');
         expect(bar.events.indexOf('mousemove')).to.equal(-1);
         simulate(bar.node, 'click');
@@ -1252,7 +1243,7 @@ describe('@phosphor/widgets', () => {
           let renderer = new TabBar.Renderer();
           let vNode = renderer.renderIcon({ title, current: true, zIndex: 1 });
           let node = VirtualDOM.realize(vNode);
-          expect(node.classList).to.contain('p-TabBar-tabIcon');
+          expect(node.className).to.contain('p-TabBar-tabIcon');
           expect(node.classList.contains(title.icon)).to.equal(true);
         });
 
@@ -1264,7 +1255,7 @@ describe('@phosphor/widgets', () => {
           let renderer = new TabBar.Renderer();
           let vNode = renderer.renderLabel({ title, current: true, zIndex: 1 });
           let label = VirtualDOM.realize(vNode);
-          expect(label.classList).to.contain('p-TabBar-tabLabel');
+          expect(label.className).to.contain('p-TabBar-tabLabel');
           expect(label.textContent).to.equal(title.label);
         });
 
@@ -1276,7 +1267,7 @@ describe('@phosphor/widgets', () => {
           let renderer = new TabBar.Renderer();
           let vNode = renderer.renderCloseIcon({ title, current: true, zIndex: 1 });
           let icon = VirtualDOM.realize(vNode);
-          expect(icon.classList).to.contain('p-TabBar-tabCloseIcon');
+          expect(icon.className).to.contain('p-TabBar-tabCloseIcon');
         });
 
       });
@@ -1297,7 +1288,7 @@ describe('@phosphor/widgets', () => {
         it('should create the inline style object for a tabl', () => {
           let renderer = new TabBar.Renderer();
           let style = renderer.createTabStyle({ title, current: true, zIndex: 1 });
-          expect(style['zIndex']).to.equal(1);
+          expect(style['zIndex']).to.equal('1');
         });
 
       });
