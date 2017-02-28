@@ -1289,7 +1289,7 @@ describe('@phosphor/widgets', () => {
 
       describe('#createTabStyle()', () => {
 
-        it('should create the inline style object for a tabl', () => {
+        it('should create the inline style object for a tab', () => {
           let renderer = new TabBar.Renderer();
           let style = renderer.createTabStyle({ title, current: true, zIndex: 1 });
           expect(style['zIndex']).to.equal('1');
