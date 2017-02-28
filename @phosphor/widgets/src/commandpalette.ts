@@ -127,7 +127,7 @@ class CommandPalette extends Widget {
     this._items.push(item);
 
     // Refresh the search results.
-    this._refresh();
+    this.refresh();
 
     // Return the item added to the palette.
     return item;
@@ -163,7 +163,7 @@ class CommandPalette extends Widget {
     }
 
     // Refresh the search results.
-    this._refresh();
+    this.refresh();
   }
 
   /**
@@ -179,7 +179,25 @@ class CommandPalette extends Widget {
     this._items.length = 0;
 
     // Refresh the search results.
-    this._refresh();
+    this.refresh();
+  }
+
+  /**
+   * Clear the search results and schedule an update.
+   *
+   * #### Notes
+   * This should be called whenever the search results of the palette
+   * should be updated.
+   *
+   * This is typically called automatically by the palette as needed,
+   * but can be called manually if the input text is programatically
+   * changed.
+   *
+   * The rendered results are updated asynchronously.
+   */
+  refresh(): void {
+    this._results = null;
+    this.update();
   }
 
   /**
@@ -201,7 +219,7 @@ class CommandPalette extends Widget {
       this._evtKeyDown(event as KeyboardEvent);
       break;
     case 'input':
-      this._refresh();
+      this.refresh();
       break;
     case 'focus':
     case 'blur':
@@ -423,7 +441,7 @@ class CommandPalette extends Widget {
       let input = this.inputNode;
       input.value = `${part.category.toLowerCase()} `;
       input.focus();
-      this._refresh();
+      this.refresh();
       return;
     }
 
@@ -439,7 +457,7 @@ class CommandPalette extends Widget {
     this.inputNode.value = '';
 
     // Refresh the search results.
-    this._refresh();
+    this.refresh();
   }
 
   /**
@@ -451,18 +469,10 @@ class CommandPalette extends Widget {
   }
 
   /**
-   * Clear the search results and schedule an item update.
-   */
-  private _refresh(): void {
-    this._results = null;
-    this.update();
-  }
-
-  /**
    * A signal handler for generic command changes.
    */
   private _onGenericChange(): void {
-    this._refresh();
+    this.refresh();
   }
 
   private _activeIndex = -1;
