@@ -1177,12 +1177,16 @@ describe('@phosphor/widgets', () => {
 
       it('should render tabs and set styles', () => {
         populateBar(bar);
-        let tab = bar.contentNode.firstChild as HTMLElement;
-        let title = bar.titles[0];
-        let label = tab.getElementsByClassName('p-TabBar-tabLabel')[0] as HTMLElement;
+        bar.currentIndex = 0;
+        MessageLoop.sendMessage(bar, Widget.Msg.UpdateRequest);
         expect(bar.methods.indexOf('onUpdateRequest')).to.not.equal(-1);
-        expect(label.textContent).to.equal(title.label);
-        expect(tab.classList.contains('p-mod-current')).to.equal(true);
+        each(bar.titles, (title, i) => {
+          let tab = bar.contentNode.children[i] as HTMLElement;
+          let label = tab.getElementsByClassName('p-TabBar-tabLabel')[0] as HTMLElement;
+          expect(label.textContent).to.equal(title.label);
+          let current = i === 0;
+          expect(tab.classList.contains('p-mod-current')).to.equal(current);
+        });
       });
 
     });
