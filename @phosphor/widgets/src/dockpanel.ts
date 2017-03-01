@@ -381,6 +381,12 @@ class DockPanel extends Widget {
       return;
     }
 
+    // Bail if the widget is an ancestor of the dock panel.
+    if (widget.contains(this)) {
+      event.dropAction = 'none';
+      return;
+    }
+
     // Find the reference widget for the drop target.
     let ref: Widget | null = null;
     if (target && target.currentTitle) {
