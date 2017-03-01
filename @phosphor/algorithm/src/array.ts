@@ -437,7 +437,7 @@ namespace ArrayExt {
    * Logarithmic.
    *
    * #### Undefined Behavior
-   * Searching an array which is not sorted in ascending order.
+   * Searching a range which is not sorted in ascending order.
    *
    * A `start` or `stop` which is non-integral.
    *
@@ -523,7 +523,7 @@ namespace ArrayExt {
    * Logarithmic.
    *
    * #### Undefined Behavior
-   * Searching an array which is not sorted in ascending order.
+   * Searching a range which is not sorted in ascending order.
    *
    * A `start` or `stop` which is non-integral.
    *
@@ -745,11 +745,11 @@ namespace ArrayExt {
     if (start >= stop) {
       return;
     }
-    let span = stop - start;
+    let length = stop - start + 1;
     if (delta > 0) {
-      delta = delta % span;
+      delta = delta % length;
     } else if (delta < 0) {
-      delta = ((delta % span) + span) % span;
+      delta = ((delta % length) + length) % length;
     }
     if (delta === 0) {
       return;
