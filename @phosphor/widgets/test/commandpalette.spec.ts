@@ -167,9 +167,9 @@ describe('@phosphor/widgets', () => {
             expect(item.args).to.deep.equal(defaultOptions.args);
           });
 
-          it('should default to `null`', () => {
+          it('should default to an empty object', () => {
             let item = palette.addItem({ command: 'test', category: 'test' });
-            expect(item.args).to.equal(null);
+            expect(item.args).to.deep.equal({});
           });
 
         });

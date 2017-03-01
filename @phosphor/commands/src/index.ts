@@ -165,7 +165,7 @@ class CommandRegistry {
    * @returns The display label for the command, or an empty string
    *   if the command is not registered.
    */
-  label(id: string, args: JSONObject | null): string {
+  label(id: string, args: JSONObject = JSONExt.emptyObject): string {
     let cmd = this._commands[id];
     return cmd ? cmd.label.call(undefined, args) : '';
   }
@@ -180,7 +180,7 @@ class CommandRegistry {
    * @returns The mnemonic index for the command, or `-1` if the
    *   command is not registered.
    */
-  mnemonic(id: string, args: JSONObject | null): number {
+  mnemonic(id: string, args: JSONObject = JSONExt.emptyObject): number {
     let cmd = this._commands[id];
     return cmd ? cmd.mnemonic.call(undefined, args) : -1;
   }
@@ -195,7 +195,7 @@ class CommandRegistry {
    * @returns The icon class for the command, or an empty string if
    *   the command is not registered.
    */
-  icon(id: string, args: JSONObject | null): string {
+  icon(id: string, args: JSONObject = JSONExt.emptyObject): string {
     let cmd = this._commands[id];
     return cmd ? cmd.icon.call(undefined, args) : '';
   }
@@ -210,7 +210,7 @@ class CommandRegistry {
    * @returns The caption for the command, or an empty string if the
    *   command is not registered.
    */
-  caption(id: string, args: JSONObject | null): string {
+  caption(id: string, args: JSONObject = JSONExt.emptyObject): string {
     let cmd = this._commands[id];
     return cmd ? cmd.caption.call(undefined, args) : '';
   }
@@ -225,7 +225,7 @@ class CommandRegistry {
    * @returns The usage text for the command, or an empty string if
    *   the command is not registered.
    */
-  usage(id: string, args: JSONObject | null): string {
+  usage(id: string, args: JSONObject = JSONExt.emptyObject): string {
     let cmd = this._commands[id];
     return cmd ? cmd.usage.call(undefined, args) : '';
   }
@@ -240,7 +240,7 @@ class CommandRegistry {
    * @returns The class name for the command, or an empty string if
    *   the command is not registered.
    */
-  className(id: string, args: JSONObject | null): string {
+  className(id: string, args: JSONObject = JSONExt.emptyObject): string {
     let cmd = this._commands[id];
     return cmd ? cmd.className.call(undefined, args) : '';
   }
@@ -255,7 +255,7 @@ class CommandRegistry {
    * @returns A boolean indicating whether the command is enabled,
    *   or `false` if the command is not registered.
    */
-  isEnabled(id: string, args: JSONObject | null): boolean {
+  isEnabled(id: string, args: JSONObject = JSONExt.emptyObject): boolean {
     let cmd = this._commands[id];
     return cmd ? cmd.isEnabled.call(undefined, args) : false;
   }
@@ -270,7 +270,7 @@ class CommandRegistry {
    * @returns A boolean indicating whether the command is toggled,
    *   or `false` if the command is not registered.
    */
-  isToggled(id: string, args: JSONObject | null): boolean {
+  isToggled(id: string, args: JSONObject = JSONExt.emptyObject): boolean {
     let cmd = this._commands[id];
     return cmd ? cmd.isToggled.call(undefined, args) : false;
   }
@@ -285,7 +285,7 @@ class CommandRegistry {
    * @returns A boolean indicating whether the command is visible,
    *   or `false` if the command is not registered.
    */
-  isVisible(id: string, args: JSONObject | null): boolean {
+  isVisible(id: string, args: JSONObject = JSONExt.emptyObject): boolean {
     let cmd = this._commands[id];
     return cmd ? cmd.isVisible.call(undefined, args) : false;
   }
@@ -303,7 +303,7 @@ class CommandRegistry {
    * The promise will reject if the command throws an exception,
    * or if the command is not registered.
    */
-  execute(id: string, args: JSONObject | null): Promise<any> {
+  execute(id: string, args: JSONObject = JSONExt.emptyObject): Promise<any> {
     // Reject if the command is not registered.
     let cmd = this._commands[id];
     if (!cmd) {
@@ -326,28 +326,6 @@ class CommandRegistry {
 
     // Return the result promise to the caller.
     return result;
-  }
-
-  /**
-   * Find a key binding which matches the given command and args.
-   *
-   * @param id - The id of the command of interest.
-   *
-   * @param args - The arguments for the command.
-   *
-   * @returns The most recently added key binding which matches the
-   *   given command and args, or `undefined` if no match is found.
-   *
-   * #### Notes
-   * This is a convenience method which searches through the public
-   * `keyBindings` array. If custom search behavior is needed, user
-   * code may search that array manually.
-   */
-  findKeyBinding(id: string, args: JSONObject | null): CommandRegistry.IKeyBinding | undefined {
-    // TODO - we may want to augment this search with a target node.
-    return ArrayExt.findLastValue(this._keyBindings, kb => {
-      return kb.command === id && JSONExt.deepEqual(kb.args, args);
-    });
   }
 
   /**
@@ -561,7 +539,7 @@ namespace CommandRegistry {
    * A type alias for a user-defined command function.
    */
   export
-  type CommandFunc<T> = (args: JSONObject | null) => T;
+  type CommandFunc<T> = (args: JSONObject) => T;
 
   /**
    * An options object for creating a command.
@@ -745,7 +723,7 @@ namespace CommandRegistry {
     /**
      * The arguments object passed to the command.
      */
-    readonly args: JSONObject | null;
+    readonly args: JSONObject;
 
     /**
      * The promise which resolves with the result of the command.
@@ -801,9 +779,9 @@ namespace CommandRegistry {
     /**
      * The arguments for the command, if necessary.
      *
-     * The default value is `null`.
+     * The default value is an empty object.
      */
-    args?: JSONObject | null;
+    args?: JSONObject;
 
     /**
      * The key sequence to use when running on Windows.
@@ -853,7 +831,7 @@ namespace CommandRegistry {
     /**
      * The arguments for the command.
      */
-    readonly args: JSONObject | null;
+    readonly args: JSONObject;
   }
 
   /**
@@ -1079,7 +1057,7 @@ namespace Private {
       keys: normalizeKeys(options),
       selector: validateSelector(options),
       command: options.command,
-      args: options.args || null
+      args: options.args || JSONExt.emptyObject
     };
   }
 

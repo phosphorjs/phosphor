@@ -14,7 +14,7 @@ import {
 } from '@phosphor/commands';
 
 import {
-  JSONObject
+  JSONExt, JSONObject
 } from '@phosphor/coreutils';
 
 import {
@@ -983,9 +983,9 @@ namespace Menu {
     /**
      * The arguments for the command.
      *
-     * The default value is `null`.
+     * The default value is an empty object.
      */
-    args?: JSONObject | null;
+    args?: JSONObject;
 
     /**
      * The submenu for a `'submenu'` type item.
@@ -1016,7 +1016,7 @@ namespace Menu {
     /**
      * The arguments for the command.
      */
-    readonly args: JSONObject | null;
+    readonly args: JSONObject;
 
     /**
      * The submenu for a `'submenu'` type item.
@@ -1657,7 +1657,7 @@ namespace Private {
       this._commands = commands;
       this.type = options.type || 'command';
       this.command = options.command || '';
-      this.args = options.args || null;
+      this.args = options.args || JSONExt.emptyObject;
       this.submenu = options.submenu || null;
     }
 
@@ -1674,7 +1674,7 @@ namespace Private {
     /**
      * The arguments for the command.
      */
-    readonly args: JSONObject | null;
+    readonly args: JSONObject;
 
     /**
      * The submenu for a `'submenu'` type item.
@@ -1787,7 +1787,10 @@ namespace Private {
      */
     get keyBinding(): CommandRegistry.IKeyBinding | null {
       if (this.type === 'command') {
-        return this._commands.findKeyBinding(this.command, this.args) || null;
+        let { command, args } = this;
+        return ArrayExt.findLastValue(this._commands.keyBindings, kb => {
+          return kb.command === command && JSONExt.deepEqual(kb.args, args);
+        }) || null;
       }
       return null;
     }

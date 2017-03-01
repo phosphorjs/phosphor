@@ -10,7 +10,7 @@ import {
 } from '@phosphor/algorithm';
 
 import {
-  JSONObject
+  JSONExt, JSONObject
 } from '@phosphor/coreutils';
 
 import {
@@ -522,9 +522,9 @@ namespace CommandPalette {
     /**
      * The arguments for the command.
      *
-     * The default value is `null`.
+     * The default value is an empty object.
      */
-    args?: JSONObject | null;
+    args?: JSONObject;
 
     /**
      * The rank for the command item.
@@ -557,7 +557,7 @@ namespace CommandPalette {
     /**
      * The arguments for the command.
      */
-    readonly args: JSONObject | null;
+    readonly args: JSONObject;
 
     /**
      * The category for the command item.
@@ -1273,7 +1273,7 @@ namespace Private {
       this._commands = commands;
       this.category = normalizeCategory(options.category);
       this.command = options.command;
-      this.args = options.args || null;
+      this.args = options.args || JSONExt.emptyObject;
       this.rank = options.rank !== undefined ? options.rank : Infinity;
     }
 
@@ -1290,7 +1290,7 @@ namespace Private {
     /**
      * The arguments for the command.
      */
-    readonly args: JSONObject | null;
+    readonly args: JSONObject;
 
     /**
      * The rank for the command item.
@@ -1343,7 +1343,10 @@ namespace Private {
      * The key binding for the command item.
      */
     get keyBinding(): CommandRegistry.IKeyBinding | null {
-      return this._commands.findKeyBinding(this.command, this.args) || null;
+      let { command, args } = this;
+      return ArrayExt.findLastValue(this._commands.keyBindings, kb => {
+        return kb.command === command && JSONExt.deepEqual(kb.args, args);
+      }) || null;
     }
 
     private _commands: CommandRegistry;

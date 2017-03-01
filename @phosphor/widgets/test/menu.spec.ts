@@ -1031,9 +1031,9 @@ describe('@phosphor/widgets', () => {
           expect(item.args).to.deep.equal({ foo: 1 });
         });
 
-        it('should default to `null`', () => {
+        it('should default to an empty object', () => {
           let item = menu.addItem({});
-          expect(item.args).to.equal(null);
+          expect(item.args).to.deep.equal({});
         });
 
       });
