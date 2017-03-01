@@ -41,6 +41,18 @@ interface JSONArray extends Array<JSONValue> { }
 export
 namespace JSONExt {
   /**
+   * A shared frozen empty JSONObject
+   */
+  export
+  const emptyObject = Object.freeze({}) as JSONObject;
+
+  /**
+   * A shared frozen empty JSONArray
+   */
+  export
+  const emptyArray = Object.freeze([]) as any as JSONArray;
+
+  /**
    * Test whether a JSON value is a primitive.
    *
    * @param value - The JSON value of interest.

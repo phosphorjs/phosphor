@@ -27,7 +27,7 @@ import {
 
 
 const NULL_COMMAND = {
-  execute: (args: JSONObject | null) => { return args; }
+  execute: (args: JSONObject) => { return args; }
 };
 
 
@@ -99,10 +99,11 @@ describe('@phosphor/commands', () => {
         registry.commandExecuted.connect((reg, args) => {
           expect(reg).to.equal(registry);
           expect(args.id).to.equal('test');
-          expect(args.args).to.equal(null);
+          expect(args.args).to.deep.equal({});
+          expect(args.result).to.be.an.instanceof(Promise);
           called = true;
         });
-        registry.execute('test', null);
+        registry.execute('test');
         expect(called).to.equal(true);
       });
 
@@ -173,12 +174,12 @@ describe('@phosphor/commands', () => {
 
       it('should clone the `cmd` before adding it to the registry', () => {
         let cmd = {
-          execute: (args: JSONObject | null) => { return args; },
+          execute: (args: JSONObject) => { return args; },
           label: 'foo'
         };
         registry.addCommand('test', cmd);
         cmd.label = 'bar';
-        expect(registry.label('test', null)).to.equal('foo');
+        expect(registry.label('test')).to.equal('foo');
       });
 
     });
@@ -210,29 +211,29 @@ describe('@phosphor/commands', () => {
 
       it('should get the display label for a specific command', () => {
         let cmd = {
-          execute: (args: JSONObject | null) => { return args; },
+          execute: (args: JSONObject) => { return args; },
           label: 'foo'
         };
         registry.addCommand('test', cmd);
-        expect(registry.label('test', null)).to.equal('foo');
+        expect(registry.label('test')).to.equal('foo');
       });
 
       it('should give the appropriate label given arguments', () => {
         let cmd = {
-          execute: (args: JSONObject | null) => { return args; },
-          label: (args: JSONObject | null) => { return JSON.stringify(args); }
+          execute: (args: JSONObject) => { return args; },
+          label: (args: JSONObject) => { return JSON.stringify(args); }
         };
         registry.addCommand('test', cmd);
-        expect(registry.label('test', null)).to.equal('null');
+        expect(registry.label('test', {})).to.equal('{}');
       });
 
       it('should return an empty string if the command is not registered', () => {
-        expect(registry.label('foo', null)).to.equal('');
+        expect(registry.label('foo')).to.equal('');
       });
 
       it('should default to an empty string for a command', () => {
         registry.addCommand('test', NULL_COMMAND);
-        expect(registry.label('test', null)).to.equal('');
+        expect(registry.label('test')).to.equal('');
       });
 
     });
@@ -241,29 +242,29 @@ describe('@phosphor/commands', () => {
 
       it('should get the mnemonic index for a specific command', () => {
         let cmd = {
-          execute: (args: JSONObject | null) => { return args; },
+          execute: (args: JSONObject) => { return args; },
           mnemonic: 1
         };
         registry.addCommand('test', cmd);
-        expect(registry.mnemonic('test', null)).to.equal(1);
+        expect(registry.mnemonic('test')).to.equal(1);
       });
 
       it('should give the appropriate mnemonic given arguments', () => {
         let cmd = {
-          execute: (args: JSONObject | null) => { return args; },
-          mnemonic: (args: JSONObject | null) => { return JSON.stringify(args).length; }
+          execute: (args: JSONObject) => { return args; },
+          mnemonic: (args: JSONObject) => { return JSON.stringify(args).length; }
         };
         registry.addCommand('test', cmd);
-        expect(registry.mnemonic('test', null)).to.equal(4);
+        expect(registry.mnemonic('test', {})).to.equal(2);
       });
 
       it('should return a `-1` if the command is not registered', () => {
-        expect(registry.mnemonic('foo', null)).to.equal(-1);
+        expect(registry.mnemonic('foo')).to.equal(-1);
       });
 
       it('should default to `-1` for a command', () => {
         registry.addCommand('test', NULL_COMMAND);
-        expect(registry.mnemonic('test', null)).to.equal(-1);
+        expect(registry.mnemonic('test')).to.equal(-1);
       });
 
     });
@@ -272,29 +273,29 @@ describe('@phosphor/commands', () => {
 
       it('should get the icon for a specific command', () => {
         let cmd = {
-          execute: (args: JSONObject | null) => { return args; },
+          execute: (args: JSONObject) => { return args; },
           icon: 'foo'
         };
         registry.addCommand('test', cmd);
-        expect(registry.icon('test', null)).to.equal('foo');
+        expect(registry.icon('test')).to.equal('foo');
       });
 
       it('should give the appropriate icon given arguments', () => {
         let cmd = {
-          execute: (args: JSONObject | null) => { return args; },
-          icon: (args: JSONObject | null) => { return JSON.stringify(args); }
+          execute: (args: JSONObject) => { return args; },
+          icon: (args: JSONObject) => { return JSON.stringify(args); }
         };
         registry.addCommand('test', cmd);
-        expect(registry.icon('test', null)).to.equal('null');
+        expect(registry.icon('test', {})).to.equal('{}');
       });
 
       it('should return an empty string if the command is not registered', () => {
-        expect(registry.icon('foo', null)).to.equal('');
+        expect(registry.icon('foo')).to.equal('');
       });
 
       it('should default to an empty string for a command', () => {
         registry.addCommand('test', NULL_COMMAND);
-        expect(registry.icon('test', null)).to.equal('');
+        expect(registry.icon('test')).to.equal('');
       });
 
     });
@@ -303,29 +304,29 @@ describe('@phosphor/commands', () => {
 
       it('should get the caption for a specific command', () => {
         let cmd = {
-          execute: (args: JSONObject | null) => { return args; },
+          execute: (args: JSONObject) => { return args; },
           caption: 'foo'
         };
         registry.addCommand('test', cmd);
-        expect(registry.caption('test', null)).to.equal('foo');
+        expect(registry.caption('test')).to.equal('foo');
       });
 
       it('should give the appropriate caption given arguments', () => {
         let cmd = {
-          execute: (args: JSONObject | null) => { return args; },
-          caption: (args: JSONObject | null) => { return JSON.stringify(args); }
+          execute: (args: JSONObject) => { return args; },
+          caption: (args: JSONObject) => { return JSON.stringify(args); }
         };
         registry.addCommand('test', cmd);
-        expect(registry.caption('test', null)).to.equal('null');
+        expect(registry.caption('test', {})).to.equal('{}');
       });
 
       it('should return an empty string if the command is not registered', () => {
-        expect(registry.caption('foo', null)).to.equal('');
+        expect(registry.caption('foo')).to.equal('');
       });
 
       it('should default to an empty string for a command', () => {
         registry.addCommand('test', NULL_COMMAND);
-        expect(registry.caption('test', null)).to.equal('');
+        expect(registry.caption('test')).to.equal('');
       });
 
     });
@@ -334,29 +335,29 @@ describe('@phosphor/commands', () => {
 
       it('should get the usage text for a specific command', () => {
         let cmd = {
-          execute: (args: JSONObject | null) => { return args; },
+          execute: (args: JSONObject) => { return args; },
           usage: 'foo'
         };
         registry.addCommand('test', cmd);
-        expect(registry.usage('test', null)).to.equal('foo');
+        expect(registry.usage('test')).to.equal('foo');
       });
 
       it('should give the appropriate usage text given arguments', () => {
         let cmd = {
-          execute: (args: JSONObject | null) => { return args; },
-          usage: (args: JSONObject | null) => { return JSON.stringify(args); }
+          execute: (args: JSONObject) => { return args; },
+          usage: (args: JSONObject) => { return JSON.stringify(args); }
         };
         registry.addCommand('test', cmd);
-        expect(registry.usage('test', null)).to.equal('null');
+        expect(registry.usage('test', {})).to.equal('{}');
       });
 
       it('should return an empty string if the command is not registered', () => {
-        expect(registry.usage('foo', null)).to.equal('');
+        expect(registry.usage('foo')).to.equal('');
       });
 
       it('should default to an empty string for a command', () => {
         registry.addCommand('test', NULL_COMMAND);
-        expect(registry.usage('test', null)).to.equal('');
+        expect(registry.usage('test')).to.equal('');
       });
 
     });
@@ -365,29 +366,29 @@ describe('@phosphor/commands', () => {
 
       it('should get the extra class name for a specific command', () => {
         let cmd = {
-          execute: (args: JSONObject | null) => { return args; },
+          execute: (args: JSONObject) => { return args; },
           className: 'foo'
         };
         registry.addCommand('test', cmd);
-        expect(registry.className('test', null)).to.equal('foo');
+        expect(registry.className('test')).to.equal('foo');
       });
 
       it('should give the appropriate class name given arguments', () => {
         let cmd = {
-          execute: (args: JSONObject | null) => { return args; },
-          className: (args: JSONObject | null) => { return JSON.stringify(args); }
+          execute: (args: JSONObject) => { return args; },
+          className: (args: JSONObject) => { return JSON.stringify(args); }
         };
         registry.addCommand('test', cmd);
-        expect(registry.className('test', null)).to.equal('null');
+        expect(registry.className('test', {})).to.equal('{}');
       });
 
       it('should return an empty string if the command is not registered', () => {
-        expect(registry.className('foo', null)).to.equal('');
+        expect(registry.className('foo')).to.equal('');
       });
 
       it('should default to an empty string for a command', () => {
         registry.addCommand('test', NULL_COMMAND);
-        expect(registry.className('test', null)).to.equal('');
+        expect(registry.className('test')).to.equal('');
       });
 
     });
@@ -396,29 +397,21 @@ describe('@phosphor/commands', () => {
 
       it('should test whether a specific command is enabled', () => {
         let cmd = {
-          execute: (args: JSONObject | null) => { return args; },
-          isEnabled: (args: JSONObject | null) => { return args === null; }
+          execute: (args: JSONObject) => { return args; },
+          isEnabled: (args: JSONObject) => { return args.enabled as boolean; }
         };
         registry.addCommand('test', cmd);
-        expect(registry.isEnabled('test', null)).to.equal(true);
-      });
-
-      it('should give the appropriate value given arguments', () => {
-        let cmd = {
-          execute: (args: JSONObject | null) => { return args; },
-          isEnabled: (args: JSONObject | null) => { return args === null; }
-        };
-        registry.addCommand('test', cmd);
-        expect(registry.isEnabled('test', {})).to.equal(false);
+        expect(registry.isEnabled('test', { enabled: true })).to.equal(true);
+        expect(registry.isEnabled('test', { enabled: false })).to.equal(false);
       });
 
       it('should return `false` if the command is not registered', () => {
-        expect(registry.isEnabled('foo', null)).to.equal(false);
+        expect(registry.isEnabled('foo')).to.equal(false);
       });
 
       it('should default to `true` for a command', () => {
         registry.addCommand('test', NULL_COMMAND);
-        expect(registry.isEnabled('test', null)).to.equal(true);
+        expect(registry.isEnabled('test')).to.equal(true);
       });
 
     });
@@ -427,29 +420,21 @@ describe('@phosphor/commands', () => {
 
       it('should test whether a specific command is toggled', () => {
         let cmd = {
-          execute: (args: JSONObject | null) => { return args; },
-          isToggled: (args: JSONObject | null) => { return args === null; }
+          execute: (args: JSONObject) => { return args; },
+          isToggled: (args: JSONObject) => { return args.toggled as boolean; }
         };
         registry.addCommand('test', cmd);
-        expect(registry.isToggled('test', null)).to.equal(true);
-      });
-
-      it('should give the appropriate value given arguments', () => {
-        let cmd = {
-          execute: (args: JSONObject | null) => { return args; },
-          isToggled: (args: JSONObject | null) => { return args === null; }
-        };
-        registry.addCommand('test', cmd);
-        expect(registry.isToggled('test', {})).to.equal(false);
+        expect(registry.isToggled('test', { toggled: true })).to.equal(true);
+        expect(registry.isToggled('test', { toggled: false })).to.equal(false);
       });
 
       it('should return `false` if the command is not registered', () => {
-        expect(registry.isToggled('foo', null)).to.equal(false);
+        expect(registry.isToggled('foo')).to.equal(false);
       });
 
       it('should default to `false` for a command', () => {
         registry.addCommand('test', NULL_COMMAND);
-        expect(registry.isToggled('test', null)).to.equal(false);
+        expect(registry.isToggled('test')).to.equal(false);
       });
 
     });
@@ -458,29 +443,21 @@ describe('@phosphor/commands', () => {
 
       it('should test whether a specific command is visible', () => {
         let cmd = {
-          execute: (args: JSONObject | null) => { return args; },
-          isVisible: (args: JSONObject | null) => { return args === null; }
+          execute: (args: JSONObject) => { return args; },
+          isVisible: (args: JSONObject) => { return args.visible as boolean; }
         };
         registry.addCommand('test', cmd);
-        expect(registry.isVisible('test', null)).to.equal(true);
-      });
-
-      it('should give the appropriate value given arguments', () => {
-        let cmd = {
-          execute: (args: JSONObject | null) => { return args; },
-          isVisible: (args: JSONObject | null) => { return args === null; }
-        };
-        registry.addCommand('test', cmd);
-        expect(registry.isVisible('test', {})).to.equal(false);
+        expect(registry.isVisible('test', { visible: true })).to.equal(true);
+        expect(registry.isVisible('test', { visible: false })).to.equal(false);
       });
 
       it('should return `false` if the command is not registered', () => {
-        expect(registry.isVisible('foo', null)).to.equal(false);
+        expect(registry.isVisible('foo')).to.equal(false);
       });
 
       it('should default to `true` for a command', () => {
         registry.addCommand('test', NULL_COMMAND);
-        expect(registry.isVisible('test', null)).to.equal(true);
+        expect(registry.isVisible('test')).to.equal(true);
       });
 
     });
@@ -490,36 +467,36 @@ describe('@phosphor/commands', () => {
       it('should execute a specific command', () => {
         let called = false;
         let cmd = {
-          execute: (args: JSONObject | null) => { called = true; },
+          execute: (args: JSONObject) => { called = true; },
         };
         registry.addCommand('test', cmd);
-        registry.execute('test', null);
+        registry.execute('test');
         expect(called).to.equal(true);
       });
 
       it('should resolve with the result of the command', (done) => {
         let cmd = {
-          execute: (args: JSONObject | null) => { return Promise.resolve(null); },
+          execute: (args: JSONObject) => { return args; },
         };
         registry.addCommand('test', cmd);
-        registry.execute('test', null).then(result => {
-          expect(result).to.equal(null);
+        registry.execute('test', { foo: 12 }).then(result => {
+          expect(result).to.deep.equal({ foo: 12 });
           done();
         });
       });
 
       it('should reject if the command throws an error', (done) => {
         let cmd = {
-          execute: (args: JSONObject | null) => { throw new Error(''); },
+          execute: (args: JSONObject) => { throw new Error(''); },
         };
         registry.addCommand('test', cmd);
-        registry.execute('test', null).catch(() => {
+        registry.execute('test').catch(() => {
           done();
         });
       });
 
       it('should reject if the command is not registered', (done) => {
-        registry.execute('foo', null).catch(() => {
+        registry.execute('foo').catch(() => {
           done();
         });
       });
@@ -540,45 +517,6 @@ describe('@phosphor/commands', () => {
 
     afterEach(() => {
       document.body.removeChild(elem);
-    });
-
-    describe('#findKeyBinding()', () => {
-
-      it('should find a key binding based on command and args', () => {
-        let a1: JSONObject | null = { 'foo': 'bar' };
-        let a2: JSONObject | null = { 'bar': 'baz' };
-        let a3: JSONObject | null = { 'baz': 'qux' };
-        let a4: JSONObject | null = null;
-        registry.addKeyBinding({
-          keys: ['Ctrl ;'],
-          selector: '.b1',
-          command: 'c1',
-          args: a1
-        });
-        registry.addKeyBinding({
-          keys: ['Ctrl ;'],
-          selector: '.b2',
-          command: 'c1',
-          args: a2
-        });
-        registry.addKeyBinding({
-          keys: ['Ctrl ;'],
-          selector: '.b3',
-          command: 'c1',
-          args: a3
-        });
-        registry.addKeyBinding({
-          keys: ['Ctrl ;'],
-          selector: '.b4',
-          command: 'c2',
-          args: a4
-        });
-        expect(registry.findKeyBinding('c1', a1)!.selector).to.equal('.b1');
-        expect(registry.findKeyBinding('c1', a2)!.selector).to.equal('.b2');
-        expect(registry.findKeyBinding('c1', a3)!.selector).to.equal('.b3');
-        expect(registry.findKeyBinding('c2', a4)!.selector).to.equal('.b4');
-      });
-
     });
 
     describe('#addKeyBinding()', () => {
