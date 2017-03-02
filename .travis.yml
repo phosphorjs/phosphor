@@ -4,15 +4,12 @@ node_js:
 addons:
   firefox: latest
 sudo: false
-env:
-  matrix:
-    - GROUP=
-  global:
-    - GHREPO=github.com/phosphorjs/phosphor
-    - secure: Zv6POtOhi0kIMgvGnt3dGouLc+hXeajKuoBMUPLdYdkeD/JLhNHyZyZkF7SKKeKcVSCUj8Y20hcWH2rErRckvGO3jUdeupUZN5DnwKnFZ2QXF4/s7+xzSR5jbS5IUbL9YVPoxSXMyK7VtkcGa1M4H/1cZYOdSUIz51pkfXipgus=
 install:
   - npm install
 script:
-  - bash ./scripts/travis_script.sh
-after_success:
-  - bash ./scripts/travis_after_success.sh
+  - export DISPLAY=:99.0
+    sh -e /etc/init.d/xvfb start
+    set -e
+    npm run clean
+    npm run build
+    npm run test
