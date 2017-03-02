@@ -303,6 +303,9 @@ function main(): void {
   // let g2 = new ContentWidget('Green');
   // let y2 = new ContentWidget('Yellow');
 
+  // Allow other panels to freely float on top.
+  r1.setFlag(Widget.Flag.IsFloatContainer);
+
   let dock = new DockPanel();
   dock.addWidget(r1);
   dock.addWidget(b1, { mode: 'split-right', ref: r1 });

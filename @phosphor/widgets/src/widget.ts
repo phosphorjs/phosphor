@@ -737,7 +737,12 @@ namespace Widget {
     /**
      * A layout cannot be set on the widget.
      */
-    DisallowLayout = 0x10
+    DisallowLayout = 0x10,
+
+    /**
+     * The widget can contain floating panels.
+     */
+    IsFloatContainer = 0x20
   }
 
   /**
