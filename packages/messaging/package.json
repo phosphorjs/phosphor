@@ -16,10 +16,12 @@
     "@phosphor/collections": "^0.1.0"
   },
   "devDependencies": {
+    "rimraf": "^2.5.2",
     "typescript": "^2.2.1"
   },
   "scripts": {
-    "build": "tsc"
+    "build": "tsc",
+    "clean": "rimraf lib"
   },
   "repository": {
     "type": "git",

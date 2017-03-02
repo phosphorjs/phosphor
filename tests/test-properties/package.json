@@ -2,6 +2,19 @@
   "private": true,
   "name": "@phosphor/test-properties",
   "version": "0.0.1",
-  "dependencies": {},
-  "devDependencies": {}
+  "dependencies": {
+    "@phosphor/properties": "^0.1.0"
+  },
+  "devDependencies": {
+    "@types/chai": "^3.4.35",
+    "@types/mocha": "^2.2.39",
+    "chai": "^3.5.0",
+    "mocha": "^3.2.0",
+    "rimraf": "^2.5.2",
+    "typescript": "^2.2.1"
+  },
+  "scripts": {
+  	"build": "tsc",
+    "clean": "rimraf build"
+  }
 }

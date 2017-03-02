@@ -8,10 +8,9 @@
     "module": "commonjs",
     "moduleResolution": "node",
     "target": "ES5",
-    "outDir": "./build/test",
+    "outDir": "./build",
     "lib": ["ES5", "DOM"],
-    "types": ["chai", "mocha"],
-    "baseUrl": "../.."
+    "types": ["chai", "mocha"]
   },
-  "include": ["test/**/*"]
+  "include": ["src/*"]
 }
