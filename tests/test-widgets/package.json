@@ -16,12 +16,15 @@
     "@types/chai": "^3.4.35",
     "@types/mocha": "^2.2.39",
     "chai": "^3.5.0",
+    "css-loader": "^0.26.1",
     "mocha": "^3.2.0",
     "rimraf": "^2.5.2",
-    "typescript": "^2.2.1"
+    "style-loader": "^0.13.1",
+    "typescript": "^2.2.1",
+    "webpack": "^2.2.1"
   },
   "scripts": {
-  	"build": "tsc",
+  	"build": "tsc && webpack",
     "clean": "rimraf build"
   }
 }

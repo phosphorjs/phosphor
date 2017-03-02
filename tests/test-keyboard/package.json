@@ -12,10 +12,11 @@
     "mocha": "^3.2.0",
     "rimraf": "^2.5.2",
     "simulate-event": "^1.4.0",
-    "typescript": "^2.2.1"
+    "typescript": "^2.2.1",
+    "webpack": "^2.2.1"
   },
   "scripts": {
-  	"build": "tsc",
+  	"build": "tsc && webpack",
     "clean": "rimraf build"
   }
 }
