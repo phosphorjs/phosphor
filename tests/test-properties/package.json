@@ -1,7 +1,6 @@
 {
   "private": true,
   "name": "@phosphor/test-properties",
-  "version": "0.0.1",
   "dependencies": {
     "@phosphor/properties": "^0.1.0"
   },

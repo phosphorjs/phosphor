@@ -1,7 +1,6 @@
 {
   "private": true,
   "name": "@phosphor/test-disposable",
-  "version": "0.0.1",
   "dependencies": {
     "@phosphor/disposable": "^0.1.0"
   },

@@ -1,7 +1,6 @@
 {
   "private": true,
   "name": "@phosphor/test-coreutils",
-  "version": "0.0.1",
   "dependencies": {
     "@phosphor/coreutils": "^0.1.3"
   },

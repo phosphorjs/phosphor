@@ -1,7 +1,6 @@
 {
   "private": true,
   "name": "@phosphor/test-domutils",
-  "version": "0.0.1",
   "dependencies": {
     "@phosphor/domutils": "^0.1.1"
   },

@@ -1,7 +1,6 @@
 {
   "private": true,
   "name": "@phosphor/test-signaling",
-  "version": "0.0.1",
   "dependencies": {
     "@phosphor/signaling": "^0.1.1"
   },

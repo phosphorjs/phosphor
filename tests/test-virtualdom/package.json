@@ -1,7 +1,6 @@
 {
   "private": true,
   "name": "@phosphor/test-virtualdom",
-  "version": "0.0.1",
   "dependencies": {
     "@phosphor/virtualdom": "^0.1.0"
   },

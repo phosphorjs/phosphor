@@ -1,7 +1,6 @@
 {
   "private": true,
   "name": "@phosphor/test-messaging",
-  "version": "0.0.1",
   "dependencies": {
     "@phosphor/messaging": "^0.1.1"
   },

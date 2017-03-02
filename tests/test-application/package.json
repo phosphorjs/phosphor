@@ -1,7 +1,6 @@
 {
   "private": true,
   "name": "@phosphor/test-application",
-  "version": "0.0.1",
   "dependencies": {
     "@phosphor/application": "^0.1.3"
   },

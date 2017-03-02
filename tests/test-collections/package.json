@@ -1,7 +1,6 @@
 {
   "private": true,
   "name": "@phosphor/test-collections",
-  "version": "0.0.1",
   "dependencies": {
     "@phosphor/algorithm": "^0.1.0",
     "@phosphor/collections": "^0.1.0"

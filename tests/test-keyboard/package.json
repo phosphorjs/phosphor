@@ -1,7 +1,6 @@
 {
   "private": true,
   "name": "@phosphor/test-keyboard",
-  "version": "0.0.1",
   "dependencies": {
     "@phosphor/keyboard": "^0.1.0"
   },
