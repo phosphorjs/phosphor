@@ -10,8 +10,7 @@
     "target": "ES5",
     "outDir": "./lib",
     "lib": ["ES5", "ES2015.Promise"],
-    "types": [],
-    "baseUrl": "../.."
+    "types": []
   },
-  "include": ["src/**/*"]
+  "include": ["src/*"]
 }

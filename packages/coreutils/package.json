@@ -4,16 +4,23 @@
   "description": "PhosphorJS - Core Utilities",
   "main": "lib/index.js",
   "types": "lib/index.d.ts",
-  "repository": {
-    "type": "git",
-    "url": "https://github.com/phosphorjs/phosphor.git"
-  },
   "files": [
     "lib/*.d.ts",
     "lib/*.js"
   ],
   "directories": {
     "lib": "lib/"
+  },
+  "dependencies": {},
+  "devDependencies": {
+    "typescript": "^2.2.1"
+  },
+  "scripts": {
+    "build": "tsc"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/phosphorjs/phosphor.git"
   },
   "author": "S. Chris Colbert <sccolbert@gmail.com>",
   "contributors": [

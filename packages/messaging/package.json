@@ -4,20 +4,26 @@
   "description": "PhosphorJS - Message Passing",
   "main": "lib/index.js",
   "types": "lib/index.d.ts",
-  "repository": {
-    "type": "git",
-    "url": "https://github.com/phosphorjs/phosphor.git"
-  },
   "files": [
     "lib/*.d.ts",
     "lib/*.js"
   ],
+  "directories": {
+    "lib": "lib/"
+  },
   "dependencies": {
     "@phosphor/algorithm": "^0.1.0",
     "@phosphor/collections": "^0.1.0"
   },
-  "directories": {
-    "lib": "lib/"
+  "devDependencies": {
+    "typescript": "^2.2.1"
+  },
+  "scripts": {
+    "build": "tsc"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/phosphorjs/phosphor.git"
   },
   "author": "S. Chris Colbert <sccolbert@gmail.com>",
   "contributors": [
