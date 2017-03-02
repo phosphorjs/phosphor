@@ -12,6 +12,9 @@
     "clean": "lerna run clean",
     "clean:src": "lerna run clean --scope \"@phosphor/!(test-)*\"",
     "clean:tests": "lerna run clean --scope \"@phosphor/test-*\"",
-    "test": "lerna run test --scope \"@phosphor/test-*\""
+    "test": "lerna run test --scope \"@phosphor/test-*\"",
+    "test:chrome": "lerna run test:chrome --scope \"@phosphor/test-*\"",
+    "test:firefox": "lerna run test:firefox --scope \"@phosphor/test-*\"",
+    "test:ie": "lerna run test:ie --scope \"@phosphor/test-*\""
   }
 }
