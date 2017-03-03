@@ -193,6 +193,23 @@ class Signal<T, U> implements ISignal<T, U> {
 export
 namespace Signal {
   /**
+   * Remove all connections between a sender and receiver.
+   *
+   * @param sender - The sender object of interest.
+   *
+   * @param receiver - The receiver object of interest.
+   *
+   * #### Notes
+   * If a `thisArg` is provided when connecting a signal, that object
+   * is considered the receiver. Otherwise, the `slot` is considered
+   * the receiver.
+   */
+  export
+  function disconnectBetween(sender: any, receiver: any): void {
+    Private.disconnectBetween(sender, receiver);
+  }
+
+  /**
    * Remove all connections where the given object is the sender.
    *
    * @param sender - The sender object of interest.
@@ -218,18 +235,32 @@ namespace Signal {
   }
 
   /**
+   * Remove all connections where an object is the sender or receiver.
+   *
+   * @param object - The object of interest.
+   *
+   * #### Notes
+   * If a `thisArg` is provided when connecting a signal, that object
+   * is considered the receiver. Otherwise, the `slot` is considered
+   * the receiver.
+   */
+  export
+  function disconnectAll(object: any): void {
+    Private.disconnectAll(object);
+  }
+
+  /**
    * Clear all signal data associated with the given object.
    *
    * @param object - The object for which the data should be cleared.
    *
    * #### Notes
-   * This removes all signal connections where the object is used as
-   * either the sender or the receiver.
+   * This removes all signal connections and any other signal data
+   * associated with the object.
    */
   export
   function clearData(object: any): void {
-    Private.disconnectSender(object);
-    Private.disconnectReceiver(object);
+    Private.disconnectAll(object);
   }
 }
 
@@ -305,7 +336,7 @@ namespace Private {
 
     // Lookup the list of receivers, and bail if none exist.
     let receivers = receiversForSender.get(signal.sender);
-    if (!receivers) {
+    if (!receivers || receivers.length === 0) {
       return false;
     }
 
@@ -328,6 +359,45 @@ namespace Private {
 
     // Indicate a successful disconnection.
     return true;
+  }
+
+  /**
+   * Remove all connections between a sender and receiver.
+   *
+   * @param sender - The sender object of interest.
+   *
+   * @param receiver - The receiver object of interest.
+   */
+  export
+  function disconnectBetween(sender: any, receiver: any): void {
+    // If there are no receivers, there is nothing to do.
+    let receivers = receiversForSender.get(sender);
+    if (!receivers || receivers.length === 0) {
+      return;
+    }
+
+    // If there are no senders, there is nothing to do.
+    let senders = sendersForReceiver.get(receiver);
+    if (!senders || senders.length === 0) {
+      return;
+    }
+
+    // Clear each connection between the sender and receiver.
+    each(senders, connection => {
+      // Skip connections which have already been cleared.
+      if (!connection.signal) {
+        return;
+      }
+
+      // Clear the connection if it matches the sender.
+      if (connection.signal.sender === sender) {
+        connection.signal = null;
+      }
+    });
+
+    // Schedule a cleanup of the senders and receivers.
+    scheduleCleanup(receivers);
+    scheduleCleanup(senders);
   }
 
   /**
@@ -396,6 +466,28 @@ namespace Private {
 
     // Schedule a cleanup of the list of senders.
     scheduleCleanup(senders);
+  }
+
+  /**
+   * Remove all connections where an object is the sender or receiver.
+   *
+   * @param object - The object of interest.
+   */
+  export
+  function disconnectAll(object: any): void {
+    // Clear and cleanup any receiver connections.
+    let receivers = receiversForSender.get(object);
+    if (receivers && receivers.length > 0) {
+      each(receivers, connection => { connection.signal = null; });
+      scheduleCleanup(receivers);
+    }
+
+    // Clear and cleanup any sender connections.
+    let senders = sendersForReceiver.get(object);
+    if (senders && senders.length > 0) {
+      each(senders, connection => { connection.signal = null; });
+      scheduleCleanup(senders);
+    }
   }
 
   /**

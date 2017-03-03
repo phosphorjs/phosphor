@@ -286,6 +286,37 @@ describe('@phosphor/signaling', () => {
 
     });
 
+    describe('.disconnectBetween()', () => {
+
+      it('should clear all connections between a sender and receiver', () => {
+        let obj = new TestObject();
+        let handler1 = new TestHandler();
+        let handler2 = new TestHandler();
+        obj.one.connect(handler1.onOne, handler1);
+        obj.one.connect(handler2.onOne, handler2);
+        obj.two.connect(handler1.onTwo, handler1);
+        obj.two.connect(handler2.onTwo, handler2);
+        obj.one.emit(undefined);
+        expect(handler1.oneCount).to.equal(1);
+        expect(handler2.oneCount).to.equal(1);
+        obj.two.emit(42);
+        expect(handler1.twoValue).to.equal(42);
+        expect(handler2.twoValue).to.equal(42);
+        Signal.disconnectBetween(obj, handler1);
+        obj.one.emit(undefined);
+        expect(handler1.oneCount).to.equal(1);
+        expect(handler2.oneCount).to.equal(2);
+        obj.two.emit(7);
+        expect(handler1.twoValue).to.equal(42);
+        expect(handler2.twoValue).to.equal(7);
+      });
+
+      it('should be a no-op if the sender or receiver is not connected', () => {
+        expect(() => Signal.disconnectBetween({}, {})).to.not.throw(Error);
+      });
+
+    });
+
     describe('.disconnectSender()', () => {
 
       it('should disconnect all signals from a specific sender', () => {
@@ -335,6 +366,29 @@ describe('@phosphor/signaling', () => {
 
       it('should be a no-op if the receiver is not connected', () => {
         expect(() => Signal.disconnectReceiver({})).to.not.throw(Error);
+      });
+
+    });
+
+    describe('.disconnectAll()', () => {
+
+      it('should clear all connections for an object', () => {
+        let counter = 0;
+        let onCount = () => { counter++ };
+        let ext1 = new ExtendedObject();
+        let ext2 = new ExtendedObject();
+        ext1.one.connect(ext1.onNotify, ext1);
+        ext1.one.connect(ext2.onNotify, ext2);
+        ext1.one.connect(onCount);
+        ext2.one.connect(ext1.onNotify, ext1);
+        ext2.one.connect(ext2.onNotify, ext2);
+        ext2.one.connect(onCount);
+        Signal.disconnectAll(ext1);
+        ext1.one.emit(undefined);
+        ext2.one.emit(undefined);
+        expect(ext1.notifyCount).to.equal(0);
+        expect(ext2.notifyCount).to.equal(1);
+        expect(counter).to.equal(1);
       });
 
     });
