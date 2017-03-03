@@ -11,6 +11,7 @@
     "@phosphor/virtualdom": "^0.1.0",
     "@phosphor/widgets": "^0.1.5",
     "chai": "^3.5.0",
+    "es6-promise": "^4.0.5",
     "mocha": "^3.2.0",
     "simulate-event": "^1.4.0"
   },
