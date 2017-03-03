@@ -15,6 +15,6 @@
     "test": "lerna run test --scope \"@phosphor/test-*\"",
     "test:chrome": "lerna run test:chrome --scope \"@phosphor/test-*\"",
     "test:firefox": "lerna run test:firefox --scope \"@phosphor/test-*\"",
-    "test:ie": "lerna run test:ie --scope \"@phosphor/test-*\""
+    "test:ie": "lerna run test:ie --concurrency 1 --scope \"@phosphor/test-*\""
   }
 }

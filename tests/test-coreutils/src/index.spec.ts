@@ -5,6 +5,8 @@
 |
 | The full license is in the file LICENSE, distributed with this software.
 |----------------------------------------------------------------------------*/
+import 'es6-promise/auto';  // polyfill Promise on IE
+
 import './json.spec';
 import './mime.spec';
 import './promise.spec';

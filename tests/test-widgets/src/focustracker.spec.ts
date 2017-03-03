@@ -10,6 +10,14 @@ import {
 } from 'chai';
 
 import {
+  simulate
+} from 'simulate-event';
+
+import {
+  Platform
+} from '@phosphor/domutils';
+
+import {
   FocusTracker, Widget
 } from '@phosphor/widgets';
 
@@ -32,6 +40,22 @@ describe('@phosphor/widgets', () => {
     Widget.attach(widget, document.body);
     _widgets.push(widget);
     return widget;
+  }
+
+  function focusWidget(widget: Widget): void {
+    widget.node.focus();
+    if (Platform.IS_IE) {
+      // Ensure we get a synchronous event on IE for testing.
+      simulate(widget.node, 'focus');
+    }
+  }
+
+  function blurWidget(widget: Widget): void {
+    widget.node.blur();
+    if (Platform.IS_IE) {
+      // Ensure we get a synchronous event on IE for testing.
+      simulate(widget.node, 'blur');
+    }
   }
 
   afterEach(() => {
@@ -80,12 +104,12 @@ describe('@phosphor/widgets', () => {
         let widget1 = createWidget();
         tracker.add(widget0);
         tracker.add(widget1);
-        widget0.node.focus();
+        focusWidget(widget0);
         let emitArgs: FocusTracker.IChangedArgs<Widget> | null = null;
         tracker.currentChanged.connect((sender, args) => {
           emitArgs = args;
         });
-        widget1.node.focus();
+        focusWidget(widget1);
         expect(emitArgs).to.not.equal(null);
         expect(emitArgs!.oldValue).to.equal(widget0);
         expect(emitArgs!.newValue).to.equal(widget1);
@@ -94,14 +118,14 @@ describe('@phosphor/widgets', () => {
       it('should not be emitted when the current widget does not change', () => {
         let tracker = createTracker();
         let widget = createWidget();
-        widget.node.focus();
+        focusWidget(widget);
         tracker.add(widget);
         let emitArgs: FocusTracker.IChangedArgs<Widget> | null = null;
         tracker.currentChanged.connect((sender, args) => {
           emitArgs = args;
         });
-        widget.node.blur();
-        widget.node.focus();
+        blurWidget(widget);
+        focusWidget(widget);
         expect(emitArgs).to.equal(null);
       });
 
@@ -115,12 +139,12 @@ describe('@phosphor/widgets', () => {
         let widget1 = createWidget();
         tracker.add(widget0);
         tracker.add(widget1);
-        widget0.node.focus();
+        focusWidget(widget0);
         let emitArgs: FocusTracker.IChangedArgs<Widget> | null = null;
         tracker.activeChanged.connect((sender, args) => {
           emitArgs = args;
         });
-        widget1.node.focus();
+        focusWidget(widget1);
         expect(emitArgs).to.not.equal(null);
         expect(emitArgs!.oldValue).to.equal(widget0);
         expect(emitArgs!.newValue).to.equal(widget1);
@@ -129,13 +153,13 @@ describe('@phosphor/widgets', () => {
       it('should be emitted when the active widget is set to null', () => {
         let tracker = createTracker();
         let widget = createWidget();
-        widget.node.focus();
+        focusWidget(widget);
         tracker.add(widget);
         let emitArgs: FocusTracker.IChangedArgs<Widget> | null = null;
         tracker.activeChanged.connect((sender, args) => {
           emitArgs = args;
         });
-        widget.node.blur();
+        blurWidget(widget);
         expect(emitArgs).to.not.equal(null);
         expect(emitArgs!.oldValue).to.equal(widget);
         expect(emitArgs!.newValue).to.equal(null);
@@ -159,7 +183,7 @@ describe('@phosphor/widgets', () => {
       it('should get the current widget in the tracker', () => {
         let tracker = createTracker();
         let widget = createWidget();
-        widget.node.focus();
+        focusWidget(widget);
         tracker.add(widget);
         expect(tracker.currentWidget).to.equal(widget);
       });
@@ -167,10 +191,10 @@ describe('@phosphor/widgets', () => {
       it('should not be updated when the current widget loses focus', () => {
         let tracker = createTracker();
         let widget = createWidget();
-        widget.node.focus();
+        focusWidget(widget);
         tracker.add(widget);
         expect(tracker.currentWidget).to.equal(widget);
-        widget.node.blur();
+        blurWidget(widget);
         expect(tracker.currentWidget).to.equal(widget);
       });
 
@@ -178,11 +202,11 @@ describe('@phosphor/widgets', () => {
         let tracker = createTracker();
         let widget0 = createWidget();
         let widget1 = createWidget();
-        widget0.node.focus();
+        focusWidget(widget0);
         tracker.add(widget0);
         tracker.add(widget1);
         expect(tracker.currentWidget).to.equal(widget0);
-        widget1.node.focus();
+        focusWidget(widget1);
         expect(tracker.currentWidget).to.equal(widget1);
       });
 
@@ -190,10 +214,10 @@ describe('@phosphor/widgets', () => {
         let tracker = createTracker();
         let widget0 = createWidget();
         let widget1 = createWidget();
-        widget0.node.focus();
+        focusWidget(widget0);
         tracker.add(widget0);
         tracker.add(widget1);
-        widget1.node.focus();
+        focusWidget(widget1);
         expect(tracker.currentWidget).to.equal(widget1);
         widget1.dispose();
         expect(tracker.currentWidget).to.equal(widget0);
@@ -203,7 +227,7 @@ describe('@phosphor/widgets', () => {
         let tracker = createTracker();
         expect(tracker.currentWidget).to.equal(null);
         let widget = createWidget();
-        widget.node.focus();
+        focusWidget(widget);
         tracker.add(widget);
         expect(tracker.currentWidget).to.equal(widget);
         widget.dispose();
@@ -217,7 +241,7 @@ describe('@phosphor/widgets', () => {
       it('should get the active widget in the tracker', () => {
         let tracker = createTracker();
         let widget = createWidget();
-        widget.node.focus();
+        focusWidget(widget);
         tracker.add(widget);
         expect(tracker.activeWidget).to.equal(widget);
       });
@@ -225,10 +249,10 @@ describe('@phosphor/widgets', () => {
       it('should be set to `null` when the active widget loses focus', () => {
         let tracker = createTracker();
         let widget = createWidget();
-        widget.node.focus();
+        focusWidget(widget);
         tracker.add(widget);
         expect(tracker.activeWidget).to.equal(widget);
-        widget.node.blur();
+        blurWidget(widget);
         expect(tracker.activeWidget).to.equal(null);
       });
 
@@ -236,11 +260,11 @@ describe('@phosphor/widgets', () => {
         let tracker = createTracker();
         let widget0 = createWidget();
         let widget1 = createWidget();
-        widget0.node.focus();
+        focusWidget(widget0);
         tracker.add(widget0);
         tracker.add(widget1);
         expect(tracker.activeWidget).to.equal(widget0);
-        widget1.node.focus();
+        focusWidget(widget1);
         expect(tracker.activeWidget).to.equal(widget1);
       });
 
@@ -248,7 +272,7 @@ describe('@phosphor/widgets', () => {
         let tracker = createTracker();
         expect(tracker.currentWidget).to.equal(null);
         let widget = createWidget();
-        widget.node.focus();
+        focusWidget(widget);
         tracker.add(widget);
         expect(tracker.activeWidget).to.equal(widget);
         widget.dispose();
@@ -275,7 +299,7 @@ describe('@phosphor/widgets', () => {
       it('should get the focus number for a particular widget in the tracker', () => {
         let tracker = createTracker();
         let widget = createWidget();
-        widget.node.focus();
+        focusWidget(widget);
         tracker.add(widget);
         expect(tracker.focusNumber(widget)).to.equal(0);
       });
@@ -284,13 +308,13 @@ describe('@phosphor/widgets', () => {
         let tracker = createTracker();
         let widget0 = createWidget();
         let widget1 = createWidget();
-        widget0.node.focus();
+        focusWidget(widget0);
         tracker.add(widget0);
         tracker.add(widget1);
-        widget1.node.focus();
+        focusWidget(widget1);
         expect(tracker.focusNumber(widget1)).to.equal(1);
         expect(tracker.focusNumber(widget0)).to.equal(0);
-        widget0.node.focus();
+        focusWidget(widget0);
         expect(tracker.focusNumber(widget0)).to.equal(2);
       });
 
@@ -305,12 +329,12 @@ describe('@phosphor/widgets', () => {
         let tracker = createTracker();
         let widget0 = createWidget();
         let widget1 = createWidget();
-        widget0.node.focus();
+        focusWidget(widget0);
         tracker.add(widget0);
         tracker.add(widget1);
-        widget1.node.focus();
+        focusWidget(widget1);
         expect(tracker.focusNumber(widget0)).to.equal(0);
-        widget0.node.focus();
+        focusWidget(widget0);
         expect(tracker.focusNumber(widget0)).to.equal(2);
       });
 
@@ -340,7 +364,7 @@ describe('@phosphor/widgets', () => {
       it('should make the widget the currentWidget if focused', () => {
         let tracker = createTracker();
         let widget = createWidget();
-        widget.node.focus();
+        focusWidget(widget);
         tracker.add(widget);
         expect(tracker.currentWidget).to.equal(widget);
       });
@@ -378,12 +402,12 @@ describe('@phosphor/widgets', () => {
         let widget0 = createWidget();
         let widget1 = createWidget();
         let widget2 = createWidget();
-        widget0.node.focus();
+        focusWidget(widget0);
         tracker.add(widget0);
         tracker.add(widget1);
         tracker.add(widget2);
-        widget1.node.focus();
-        widget2.node.focus();
+        focusWidget(widget1);
+        focusWidget(widget2);
         tracker.remove(widget2);
         expect(tracker.currentWidget).to.equal(widget1);
       });

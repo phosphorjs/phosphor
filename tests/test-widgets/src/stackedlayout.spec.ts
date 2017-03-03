@@ -221,13 +221,14 @@ describe('@phosphor/widgets', () => {
         layout.addWidget(widget2);
         Widget.attach(parent, document.body);
         requestAnimationFrame(() => {
-          expect(widget1.node.style.zIndex).to.equal('0');
-          expect(widget2.node.style.zIndex).to.equal('1');
+          // string casts are required for IE
+          expect(`${widget1.node.style.zIndex}`).to.equal('0');
+          expect(`${widget2.node.style.zIndex}`).to.equal('1');
           layout.removeWidget(widget1);
-          expect(widget1.node.style.zIndex).to.equal('');
-          expect(widget2.node.style.zIndex).to.equal('1');
+          expect(`${widget1.node.style.zIndex}`).to.equal('');
+          expect(`${widget2.node.style.zIndex}`).to.equal('1');
           layout.removeWidget(widget2);
-          expect(widget2.node.style.zIndex).to.equal('');
+          expect(`${widget2.node.style.zIndex}`).to.equal('');
           parent.dispose();
           done();
         });
