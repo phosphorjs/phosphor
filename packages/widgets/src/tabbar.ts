@@ -495,9 +495,6 @@ class TabBar<T> extends Widget {
    */
   handleEvent(event: Event): void {
     switch (event.type) {
-    case 'click':
-      this._evtClick(event as MouseEvent);
-      break;
     case 'mousedown':
       this._evtMouseDown(event as MouseEvent);
       break;
@@ -521,7 +518,6 @@ class TabBar<T> extends Widget {
    * A message handler invoked on a `'before-attach'` message.
    */
   protected onBeforeAttach(msg: Message): void {
-    this.node.addEventListener('click', this);
     this.node.addEventListener('mousedown', this);
   }
 
@@ -529,7 +525,6 @@ class TabBar<T> extends Widget {
    * A message handler invoked on an `'after-detach'` message.
    */
   protected onAfterDetach(msg: Message): void {
-    this.node.removeEventListener('click', this);
     this.node.removeEventListener('mousedown', this);
     this._releaseMouse();
   }
@@ -566,58 +561,11 @@ class TabBar<T> extends Widget {
   }
 
   /**
-   * Handle the `'click'` event for the tab bar.
-   */
-  private _evtClick(event: MouseEvent): void {
-    // Do nothing if it's not a left click.
-    if (event.button !== 0) {
-      return;
-    }
-
-    // Do nothing if a drag is in progress.
-    if (this._dragData) {
-      return;
-    }
-
-    // Lookup the tab nodes.
-    let tabs = this.contentNode.children;
-
-    // Find the index of the clicked tab.
-    let index = ArrayExt.findFirstIndex(tabs, tab => {
-      return ElementExt.hitTest(tab, event.clientX, event.clientY);
-    });
-
-    // Do nothing if the click is not on a tab.
-    if (index === -1) {
-      return;
-    }
-
-    // Clicking on a tab stops the event propagation.
-    event.preventDefault();
-    event.stopPropagation();
-
-    // Ignore the click if the title is not closable.
-    let title = this._titles[index];
-    if (!title.closable) {
-      return;
-    }
-
-    // Ignore the click if it was not on a close icon.
-    let icon = tabs[index].querySelector(this.renderer.closeIconSelector);
-    if (!icon || !icon.contains(event.target as HTMLElement)) {
-      return;
-    }
-
-    // Emit the tab close requested signal.
-    this._tabCloseRequested.emit({ index, title });
-  }
-
-  /**
    * Handle the `'mousedown'` event for the tab bar.
    */
   private _evtMouseDown(event: MouseEvent): void {
-    // Do nothing if it's not a left mouse press.
-    if (event.button !== 0) {
+    // Do nothing if it's not a left or middle mouse press.
+    if (event.button !== 0 && event.button !== 1) {
       return;
     }
 
@@ -643,35 +591,41 @@ class TabBar<T> extends Widget {
     event.preventDefault();
     event.stopPropagation();
 
-    // Ignore the press if it was on a close icon.
+    // Initialize the non-measured parts of the drag data.
+    this._dragData = {
+      tab: tabs[index] as HTMLElement,
+      index: index,
+      pressX: event.clientX,
+      pressY: event.clientY,
+      tabPos: -1,
+      tabSize: -1,
+      tabPressPos: -1,
+      targetIndex: -1,
+      tabLayout: null,
+      contentRect: null,
+      override: null,
+      dragActive: false,
+      dragAborted: false,
+      detachRequested: false
+    };
+
+    // Add the document mouse up listener.
+    document.addEventListener('mouseup', this, true);
+
+    // Do nothing else if the middle button is clicked.
+    if (event.button === 1) {
+      return;
+    }
+
+    // Do nothing else if the close icon is clicked.
     let icon = tabs[index].querySelector(this.renderer.closeIconSelector);
     if (icon && icon.contains(event.target as HTMLElement)) {
       return;
     }
 
-    // Setup the drag if the tabs are movable.
+    // Add the extra listeners if the tabs are movable.
     if (this.tabsMovable) {
-      // Initialize the non-measured parts of the drag data.
-      this._dragData = {
-        tab: tabs[index] as HTMLElement,
-        index: index,
-        pressX: event.clientX,
-        pressY: event.clientY,
-        tabPos: -1,
-        tabSize: -1,
-        tabPressPos: -1,
-        targetIndex: -1,
-        tabLayout: null,
-        contentRect: null,
-        override: null,
-        dragActive: false,
-        dragAborted: false,
-        detachRequested: false
-      };
-
-      // Add the extra event listeners.
       document.addEventListener('mousemove', this, true);
-      document.addEventListener('mouseup', this, true);
       document.addEventListener('keydown', this, true);
       document.addEventListener('contextmenu', this, true);
     }
@@ -767,11 +721,11 @@ class TabBar<T> extends Widget {
   }
 
   /**
-   * Handle the `'mouseup'` event for the tab bar.
+   * Handle the `'mouseup'` event for the document.
    */
   private _evtMouseUp(event: MouseEvent): void {
-    // Do nothing if it's not a left mouse release.
-    if (event.button !== 0) {
+    // Do nothing if it's not a left or middle mouse release.
+    if (event.button !== 0 && event.button !== 1) {
       return;
     }
 
@@ -781,7 +735,7 @@ class TabBar<T> extends Widget {
       return;
     }
 
-    // Suppress the event during a drag operation.
+    // Stop the event propagation.
     event.preventDefault();
     event.stopPropagation();
 
@@ -791,9 +745,49 @@ class TabBar<T> extends Widget {
     document.removeEventListener('keydown', this, true);
     document.removeEventListener('contextmenu', this, true);
 
-    // Bail early if the drag is not active.
+    // Handle a release when the drag is not active.
     if (!data.dragActive) {
+      // Clear the drag data.
       this._dragData = null;
+
+      // Lookup the tab nodes.
+      let tabs = this.contentNode.children;
+
+      // Find the index of the released tab.
+      let index = ArrayExt.findFirstIndex(tabs, tab => {
+        return ElementExt.hitTest(tab, event.clientX, event.clientY);
+      });
+
+      // Do nothing if the release is not on the original pressed tab.
+      if (index !== data.index) {
+        return;
+      }
+
+      // Ignore the release if the title is not closable.
+      let title = this._titles[index];
+      if (!title.closable) {
+        return;
+      }
+
+      // Emit the close requested signal if the middle button is released.
+      if (event.button === 1) {
+        this._tabCloseRequested.emit({ index, title });
+        return;
+      }
+
+      // Emit the close requested signal if the close icon was released.
+      let icon = tabs[index].querySelector(this.renderer.closeIconSelector);
+      if (icon && icon.contains(event.target as HTMLElement)) {
+        this._tabCloseRequested.emit({ index, title });
+        return;
+      }
+
+      // Otherwise, there is nothing left to do.
+      return;
+    }
+
+    // Do nothing if the left button is not released.
+    if (event.button !== 0) {
       return;
     }
 
