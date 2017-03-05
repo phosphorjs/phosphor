@@ -314,6 +314,36 @@ function main(): void {
   dock.addWidget(b2, { mode: 'split-right', ref: y1 });
   dock.id = 'dock';
 
+  let savedLayouts: DockPanel.ILayoutConfig[] = [];
+
+  commands.addCommand('save-dock-layout', {
+    label: 'Save Layout',
+    caption: 'Save the current dock layout',
+    execute: () => {
+      savedLayouts.push(dock.saveLayout());
+      palette.addItem({
+        command: 'restore-dock-layout',
+        category: 'Dock Layout',
+        args: { index: savedLayouts.length - 1 }
+      });
+    }
+  });
+
+  commands.addCommand('restore-dock-layout', {
+    label: args => {
+      return `Restore Layout ${args.index as number}`;
+    },
+    execute: args => {
+      dock.restoreLayout(savedLayouts[args.index as number]);
+    }
+  });
+
+  palette.addItem({
+    command: 'save-dock-layout',
+    category: 'Dock Layout',
+    rank: 0
+  });
+
   BoxPanel.setStretch(dock, 1);
 
   let main = new BoxPanel({ direction: 'left-to-right', spacing: 0 });
