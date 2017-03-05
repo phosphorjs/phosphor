@@ -295,6 +295,11 @@ class DockLayout extends Layout {
 
     // Post a fit request to the parent.
     this.parent.fit();
+
+    // Flush the message loop on IE and Edge to prevent flicker.
+    if (Platform.IS_EDGE || Platform.IS_IE) {
+      MessageLoop.flush();
+    }
   }
 
   /**
