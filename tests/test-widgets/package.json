@@ -9,7 +9,7 @@
     "@phosphor/domutils": "^0.1.2",
     "@phosphor/messaging": "^0.1.2",
     "@phosphor/virtualdom": "^0.1.1",
-    "@phosphor/widgets": "^0.1.6",
+    "@phosphor/widgets": "^0.1.7",
     "chai": "^3.5.0",
     "es6-promise": "^4.0.5",
     "mocha": "^3.2.0",
@@ -38,5 +38,5 @@
     "test:firefox": "karma start --browsers=Firefox",
     "test:ie": "karma start --browsers=IE"
   },
-  "version": "0.1.1"
+  "version": "0.1.2"
 }
