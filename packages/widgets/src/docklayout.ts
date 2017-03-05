@@ -214,6 +214,90 @@ class DockLayout extends Layout {
   }
 
   /**
+   * Save the current configuration of the dock layout.
+   *
+   * @returns A new snapshot of the current dock layout configuration.
+   *
+   * #### Notes
+   * The return value can be provided to the `restoreLayout` method
+   * in order to restore the layout to its current configuration.
+   */
+  saveLayout(): DockLayout.ILayoutConfig {
+    // Bail early if there is no root.
+    if (!this._root) {
+      return { main: null };
+    }
+
+    // Hold the current layout sizes.
+    Private.holdLayoutSizes(this._root);
+
+    // Create the main area config.
+    let main = Private.createConfig(this._root);
+
+    // Return the layout config.
+    return { main };
+  }
+
+  /**
+   * Restore the layout to a previously saved configuration.
+   *
+   * @param config - The layout configuration to restore.
+   *
+   * @throws An error if the config is invalid.
+   *
+   * #### Notes
+   * Widgets which currently belong to the layout but which are not
+   * contained in the config will be unparented.
+   */
+  restoreLayout(config: DockLayout.ILayoutConfig): void {
+    // Validate the config and collect the contained widgets.
+    let widgetSet = Private.validateConfig(config);
+
+    // Create iterators over the old widgets and tab bars.
+    let oldWidgets = this.widgets();
+    let oldTabBars = this.tabBars();
+
+    // Clear the root before removing the old widgets.
+    this._root = null;
+
+    // Unparent the old widgets which are not in the new config.
+    each(oldWidgets, widget => {
+      if (!widgetSet.has(widget)) {
+        widget.parent = null;
+      }
+    });
+
+    // Dispose of the old tab bars.
+    each(oldTabBars, tabBar => {
+      tabBar.dispose();
+    });
+
+    // Reparent the new widgets to the current parent.
+    widgetSet.forEach(widget => {
+      widget.parent = this.parent;
+    });
+
+    // Create the root node for the new config.
+    this._root = Private.realizeConfig(config, {
+      createTabBar: () => this._createTabBar(),
+      createHandle: () => this._createHandle()
+    });
+
+    // If there is no parent, there is nothing more to do.
+    if (!this.parent) {
+      return;
+    }
+
+    // Attach the new widgets to the parent.
+    widgetSet.forEach(widget => {
+      this.attachWidget(widget);
+    });
+
+    // Post a fit request to the parent.
+    this.parent.fit();
+  }
+
+  /**
    * Add a widget to the dock layout.
    *
    * @param widget - The widget to add to the dock layout.
@@ -1061,6 +1145,70 @@ namespace DockLayout {
      */
     ref?: Widget | null;
   }
+
+  /**
+   * A layout config object for a tab area.
+   */
+  export
+  interface ITabAreaConfig {
+    /**
+     * The discriminated type of the config object.
+     */
+    type: 'tab-area';
+
+    /**
+     * The widgets contained in the tab area.
+     */
+    widgets: Widget[];
+
+    /**
+     * The index of the selected tab.
+     */
+    currentIndex: number;
+  }
+
+  /**
+   * A layout config object for a split area.
+   */
+  export
+  interface ISplitAreaConfig {
+    /**
+     * The discriminated type of the config object.
+     */
+    type: 'split-area';
+
+    /**
+     * The orientation of the split area.
+     */
+    orientation: 'horizontal' | 'vertical';
+
+    /**
+     * The children in the split area.
+     */
+    children: AreaConfig[];
+
+    /**
+     * The relative sizes of the children.
+     */
+    sizes: number[];
+  }
+
+  /**
+   * A type alias for a general area config.
+   */
+  export
+  type AreaConfig = ITabAreaConfig | ISplitAreaConfig;
+
+  /**
+   * A layout config object for a dock layout.
+   */
+  export
+  interface ILayoutConfig {
+    /**
+     * The layout config for the main dock area.
+     */
+    main: AreaConfig | null;
+  }
 }
 
 
@@ -1336,6 +1484,58 @@ namespace Private {
   }
 
   /**
+   * Create an area config object for a dock layout node.
+   */
+  export
+  function createConfig(node: LayoutNode): DockLayout.AreaConfig {
+    let config: DockLayout.AreaConfig;
+    if (node instanceof TabLayoutNode) {
+      config = createTabAreaConfig(node);
+    } else {
+      config = createSplitAreaConfig(node);
+    }
+    return config;
+  }
+
+  /**
+   * Valid a layout configuration object.
+   */
+  export
+  function validateConfig(config: DockLayout.ILayoutConfig): Set<Widget> {
+    // Create the set to hold the contained widgets.
+    let widgetSet = new Set<Widget>();
+
+    // Bail early if there is no main area.
+    if (!config.main) {
+      return widgetSet;
+    }
+
+    // Validate the main area.
+    if (config.main.type === 'tab-area') {
+      validateTabArea(config.main, widgetSet);
+    } else {
+      validateSplitArea(config.main, widgetSet);
+    }
+
+    // Return the contained widgets.
+    return widgetSet;
+  }
+
+  /**
+   * Create the root layout node for a layout configuration.
+   */
+  export
+  function realizeConfig(config: DockLayout.ILayoutConfig, renderer: DockLayout.IRenderer): LayoutNode | null {
+    // Bail early if there is no main area.
+    if (!config.main) {
+      return null;
+    }
+
+    // Create the layout node for the main area.
+    return buildAreaNode(config.main, renderer);
+  }
+
+  /**
    * Sync the visibility and orientation of split node handles.
    */
   export
@@ -1598,5 +1798,160 @@ namespace Private {
         y += spacing;
       }
     }
+  }
+
+  /**
+   * Create the tab area configuration for a tab layout node.
+   */
+  function createTabAreaConfig(node: TabLayoutNode): DockLayout.ITabAreaConfig {
+    let widgets = node.tabBar.titles.map(title => title.owner);
+    let currentIndex = node.tabBar.currentIndex;
+    return { type: 'tab-area', widgets, currentIndex };
+  }
+
+  /**
+   * Create the split area configuration for a split layout node.
+   */
+  function createSplitAreaConfig(node: SplitLayoutNode): DockLayout.ISplitAreaConfig {
+    let orientation = node.orientation;
+    let children = node.children.map(createConfig);
+    let sizes = createNormalizedSizes(node);
+    return { type: 'split-area', orientation, children, sizes };
+  }
+
+  /**
+   * Snap the normalized sizes of a split layout node.
+   */
+  function createNormalizedSizes(splitNode: SplitLayoutNode): number[] {
+    // Bail early if the sizers are empty.
+    let n = splitNode.sizers.length;
+    if (n === 0) {
+      return [];
+    }
+
+    // Grab the current sizes of the sizers.
+    let sizes = splitNode.sizers.map(sizer => sizer.size);
+
+    // Compute the sum of the sizes.
+    let sum = reduce(sizes, (v, size) => v + size, 0);
+
+    // Normalize the sizes based on the sum.
+    if (sum === 0) {
+      each(sizes, (size, i) => { sizes[i] = 1 / n; });
+    } else {
+      each(sizes, (size, i) => { sizes[i] = size / sum; });
+    }
+
+    // Return the normalized sizes.
+    return sizes;
+  }
+
+  /**
+   * Validate a tab area config and collect the visited widgets.
+   */
+  function validateTabArea(config: DockLayout.ITabAreaConfig, widgetSet: Set<Widget>): void {
+    each(config.widgets, widget => {
+      if (widgetSet.has(widget)) {
+        throw new Error('Layout config has duplicate widget.');
+      }
+      widgetSet.add(widget);
+    });
+  }
+
+  /**
+   * Validate a split area config and collect the visited widgets.
+   */
+  function validateSplitArea(config: DockLayout.ISplitAreaConfig, widgetSet: Set<Widget>): void {
+    if (config.sizes.length !== config.children.length) {
+      throw new Error('Split area config has mismatched sizes count.');
+    }
+    if (config.sizes.some(size => size < 0)) {
+      throw new Error('Split area config has negative sizes.');
+    }
+    each(config.children, child => validateChildArea(config, child, widgetSet));
+  }
+
+  /**
+   * Validate a child area config.
+   */
+  function validateChildArea(parent: DockLayout.ISplitAreaConfig, child: DockLayout.AreaConfig, widgetSet: Set<Widget>): void {
+    if (child.type === 'tab-area') {
+      validateTabArea(child, widgetSet);
+    } else if (parent.orientation === child.orientation) {
+      throw new Error('Child split area config has invalid orientation.');
+    } else {
+      validateSplitArea(child, widgetSet);
+    }
+  }
+
+  /**
+   * Create a new layout node for an area config.
+   */
+  function buildAreaNode(config: DockLayout.AreaConfig, renderer: DockLayout.IRenderer): LayoutNode {
+    let node: LayoutNode;
+    if (config.type === 'tab-area') {
+      node = buildTabAreaNode(config, renderer);
+    } else {
+      node = buildSplitAreaNode(config, renderer);
+    }
+    return node;
+  }
+
+  /**
+   * Create a new layout node for a tab area config.
+   */
+  function buildTabAreaNode(config: DockLayout.ITabAreaConfig, renderer: DockLayout.IRenderer): LayoutNode {
+    // Create the tab bar for the layout node.
+    let tabBar = renderer.createTabBar();
+
+    // Hide each widget and add it to the tab bar.
+    each(config.widgets, widget => {
+      widget.hide();
+      tabBar.addTab(widget.title);
+    });
+
+    // Set the current index of the tab bar.
+    let n = tabBar.titles.length;
+    tabBar.currentIndex = Math.max(0, Math.min(config.currentIndex, n - 1));
+
+    // Return the new tab layout node.
+    return new TabLayoutNode(tabBar);
+  }
+
+  /**
+   * Create a new layout node for a split area config.
+   */
+  function buildSplitAreaNode(config: DockLayout.ISplitAreaConfig, renderer: DockLayout.IRenderer): LayoutNode {
+    // Create the split layout node.
+    let node = new SplitLayoutNode(config.orientation);
+
+    // Add each child to the split layout node.
+    each(config.children, (child, i) => {
+      // Recursively create the child layout node.
+      let childNode = buildAreaNode(child, renderer);
+
+      // Create the sizer for the child.
+      let sizer = createSizer(config.sizes[i]);
+
+      // Create the handle for the child.
+      let handle = renderer.createHandle();
+
+      // Add the child data to the layout node.
+      node.children.push(childNode);
+      node.handles.push(handle);
+      node.sizers.push(sizer);
+
+      // Update the parent for the child node.
+      childNode.parent = node;
+    });
+
+    // Synchronize the handle state for the split layout node.
+    syncHandles(node);
+
+    // Normalize the sizes for the split layout node.
+    normalizeSizes(node);
+
+    // Return the new split layout node.
+    return node;
   }
 }
