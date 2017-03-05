@@ -191,6 +191,34 @@ class DockPanel extends Widget {
   }
 
   /**
+   * Save the current layout configuration of the dock panel.
+   *
+   * @returns A new snapshot of the current layout configuration.
+   *
+   * #### Notes
+   * The return value can be provided to the `restoreLayout` method
+   * in order to restore the layout to its current configuration.
+   */
+  saveLayout(): DockPanel.ILayoutConfig {
+    return (this.layout as DockLayout).saveLayout();
+  }
+
+  /**
+   * Restore the layout to a previously saved configuration.
+   *
+   * @param config - The layout configuration to restore.
+   *
+   * @throws An error if the config is invalid.
+   *
+   * #### Notes
+   * Widgets which currently belong to the layout but which are not
+   * contained in the config will be unparented.
+   */
+  restoreLayout(config: DockPanel.ILayoutConfig): void {
+    (this.layout as DockLayout).restoreLayout(config);
+  }
+
+  /**
    * Add a widget to the dock panel.
    *
    * @param widget - The widget to add to the dock panel.
@@ -790,6 +818,12 @@ namespace DockPanel {
      */
     spacing?: number;
   }
+
+  /**
+   * A type alias for a layout configuration object.
+   */
+  export
+  type ILayoutConfig = DockLayout.ILayoutConfig;
 
   /**
    * A type alias for the supported insertion modes.
