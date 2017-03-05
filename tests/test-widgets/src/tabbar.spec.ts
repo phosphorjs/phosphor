@@ -268,7 +268,7 @@ describe('@phosphor/widgets', () => {
         tab = bar.contentNode.getElementsByClassName('p-TabBar-tab')[2] as HTMLElement;
       });
 
-      it('should be emitted when a tab is clicked by the user', () => {
+      it('should be emitted when a tab is left pressed by the user', () => {
         let called = false;
         bar.currentIndex = 0;
         // Force an update.
@@ -295,7 +295,7 @@ describe('@phosphor/widgets', () => {
         expect(called).to.equal(2);
       });
 
-      it('should emit even if the clicked tab is the current tab', () => {
+      it('should emit even if the pressed tab is the current tab', () => {
         let called = false;
         bar.currentIndex = 2;
         // Force an update.
@@ -310,24 +310,41 @@ describe('@phosphor/widgets', () => {
 
     describe('#tabCloseRequested', () => {
 
+      let tab: Element;
       let closeIcon: Element;
 
       beforeEach(() => {
         populateBar(bar);
         bar.currentIndex = 0;
-        let tab = bar.contentNode.children[0];
+        tab = bar.contentNode.children[0];
         closeIcon = tab.querySelector(bar.renderer.closeIconSelector)!;
       });
 
-      it('should be emitted when a tab close icon is clicked', () => {
+      it('should be emitted when a tab close icon is left clicked', () => {
         let called = false;
+        let rect = closeIcon.getBoundingClientRect();
         bar.tabCloseRequested.connect((sender, args) => {
           expect(sender).to.equal(bar);
           expect(args.index).to.equal(0);
           expect(args.title).to.equal(bar.titles[0]);
           called = true;
         });
-        simulateOnNode(closeIcon, 'click');
+        simulate(closeIcon, 'mousedown', { clientX: rect.left, clientY: rect.top, button: 0 });
+        simulate(closeIcon, 'mouseup', { clientX: rect.left, clientY: rect.top, button: 0 });
+        expect(called).to.equal(true);
+      });
+
+      it('should be emitted when a tab is middle clicked', () => {
+        let called = false;
+        let rect = tab.getBoundingClientRect();
+        bar.tabCloseRequested.connect((sender, args) => {
+          expect(sender).to.equal(bar);
+          expect(args.index).to.equal(0);
+          expect(args.title).to.equal(bar.titles[0]);
+          called = true;
+        });
+        simulate(tab, 'mousedown', { clientX: rect.left, clientY: rect.top, button: 1 });
+        simulate(tab, 'mouseup', { clientX: rect.left, clientY: rect.top, button: 1 });
         expect(called).to.equal(true);
       });
 
@@ -341,7 +358,12 @@ describe('@phosphor/widgets', () => {
           expect(args.title).to.equal(bar.titles[0]);
           called = true;
         });
-        simulateOnNode(closeIcon, 'click');
+        let rect1 = closeIcon.getBoundingClientRect();
+        let rect2 = tab.getBoundingClientRect();
+        simulate(closeIcon, 'mousedown', { clientX: rect1.left, clientY: rect1.top, button: 0 });
+        simulate(closeIcon, 'mouseup', { clientX: rect1.left, clientY: rect1.top, button: 0 });
+        simulate(tab, 'mousedown', { clientX: rect2.left, clientY: rect2.top, button: 1 });
+        simulate(tab, 'mouseup', { clientX: rect2.left, clientY: rect2.top, button: 1 });
         expect(called).to.equal(false);
       });
 
@@ -465,10 +487,12 @@ describe('@phosphor/widgets', () => {
         let tab = bar.contentNode.getElementsByClassName('p-TabBar-tab')[2] as HTMLElement;
         simulateOnNode(tab, 'mousedown');
         expect(bar.currentIndex).to.equal(2);
+        simulateOnNode(tab, 'mouseup');
 
         bar.allowDeselect = true;
         simulateOnNode(tab, 'mousedown');
         expect(bar.currentIndex).to.equal(-1);
+        simulateOnNode(tab, 'mouseup');
       });
 
       it('should always allow programmatic deselection', () => {
@@ -902,56 +926,97 @@ describe('@phosphor/widgets', () => {
         closeIcon = tab.querySelector(bar.renderer.closeIconSelector)!;
       });
 
-      context('click', () => {
+      context('left click', () => {
 
         it('should emit a tab close requested signal', () => {
           let called = false;
+          let rect = closeIcon.getBoundingClientRect();
           bar.tabCloseRequested.connect((sender, args) => {
             expect(sender).to.equal(bar);
             expect(args.index).to.equal(0);
             expect(args.title).to.equal(bar.titles[0]);
             called = true;
           });
-          simulateOnNode(closeIcon, 'click');
+          simulate(closeIcon, 'mousedown', { clientX: rect.left, clientY: rect.top, button: 0 });
+          simulate(closeIcon, 'mouseup', { clientX: rect.left, clientY: rect.top, button: 0 });
           expect(called).to.equal(true);
-        });
-
-        it('should do nothing if it is not a left click', () => {
-          let rect = closeIcon.getBoundingClientRect();
-          let called = false;
-          bar.tabCloseRequested.connect((sender, args) => { called = true; });
-          simulate(closeIcon, 'click', { clientX: rect.left, clientY: rect.top, button: 1 });
-          expect(called).to.equal(false);
         });
 
         it('should do nothing if a drag is in progress', () => {
           startDrag(bar, 1, 'up');
           let called = false;
+          let rect = closeIcon.getBoundingClientRect();
           bar.tabCloseRequested.connect((sender, args) => { called = true; });
-          simulateOnNode(closeIcon, 'click');
-          expect(called).to.equal(false);
-        });
-
-        it('should do nothing if the click is not on a tab', () => {
-          let called = false;
-          bar.tabCloseRequested.connect((sender, args) => { called = true; });
-          simulateOnNode(tab, 'click');
-          expect(called).to.equal(false);
-        });
-
-        it('should do nothing if the tab is not closable', () => {
-          let called = false;
-          let title = bar.titles[0];
-          title.closable = false;
-          bar.tabCloseRequested.connect((sender, args) => { called = true; });
-          simulateOnNode(closeIcon, 'click');
+          simulate(closeIcon, 'mousedown', { clientX: rect.left, clientY: rect.top, button: 0 });
+          simulate(closeIcon, 'mouseup', { clientX: rect.left, clientY: rect.top, button: 0 });
           expect(called).to.equal(false);
         });
 
         it('should do nothing if the click is not on a close icon', () => {
           let called = false;
+          let rect = closeIcon.getBoundingClientRect();
           bar.tabCloseRequested.connect((sender, args) => { called = true; });
-          simulateOnNode(tab, 'click');
+          simulate(closeIcon, 'mousedown', { clientX: rect.left, clientY: rect.top, button: 0 });
+          simulate(closeIcon, 'mouseup', { clientX: rect.left - 1, clientY: rect.top - 1, button: 0 });
+          expect(called).to.equal(false);
+          expect(called).to.equal(false);
+        });
+
+        it('should do nothing if the tab is not closable', () => {
+          let called = false;
+          bar.titles[0].closable = false;
+          let rect = closeIcon.getBoundingClientRect();
+          bar.tabCloseRequested.connect((sender, args) => { called = true; });
+          simulate(closeIcon, 'mousedown', { clientX: rect.left, clientY: rect.top, button: 0 });
+          simulate(closeIcon, 'mouseup', { clientX: rect.left, clientY: rect.top, button: 0 });
+          expect(called).to.equal(false);
+        });
+
+      });
+
+      context('middle click', () => {
+
+        it('should emit a tab close requested signal', () => {
+          let called = false;
+          let rect = tab.getBoundingClientRect();
+          bar.tabCloseRequested.connect((sender, args) => {
+            expect(sender).to.equal(bar);
+            expect(args.index).to.equal(0);
+            expect(args.title).to.equal(bar.titles[0]);
+            called = true;
+          });
+          simulate(tab, 'mousedown', { clientX: rect.left, clientY: rect.top, button: 1 });
+          simulate(tab, 'mouseup', { clientX: rect.left, clientY: rect.top, button: 1 });
+          expect(called).to.equal(true);
+        });
+
+        it('should do nothing if a drag is in progress', () => {
+          startDrag(bar, 1, 'up');
+          let called = false;
+          let rect = tab.getBoundingClientRect();
+          bar.tabCloseRequested.connect((sender, args) => { called = true; });
+          simulate(tab, 'mousedown', { clientX: rect.left, clientY: rect.top, button: 1 });
+          simulate(tab, 'mouseup', { clientX: rect.left, clientY: rect.top, button: 1 });
+          expect(called).to.equal(false);
+        });
+
+        it('should do nothing if the click is not on the tab', () => {
+          let called = false;
+          let rect = tab.getBoundingClientRect();
+          bar.tabCloseRequested.connect((sender, args) => { called = true; });
+          simulate(tab, 'mousedown', { clientX: rect.left, clientY: rect.top, button: 1 });
+          simulate(tab, 'mouseup', { clientX: rect.left - 1, clientY: rect.top - 1, button: 1 });
+          expect(called).to.equal(false);
+          expect(called).to.equal(false);
+        });
+
+        it('should do nothing if the tab is not closable', () => {
+          let called = false;
+          bar.titles[0].closable = false;
+          let rect = tab.getBoundingClientRect();
+          bar.tabCloseRequested.connect((sender, args) => { called = true; });
+          simulate(tab, 'mousedown', { clientX: rect.left, clientY: rect.top, button: 1 });
+          simulate(tab, 'mouseup', { clientX: rect.left, clientY: rect.top, button: 1 });
           expect(called).to.equal(false);
         });
 
@@ -972,14 +1037,14 @@ describe('@phosphor/widgets', () => {
           expect(bar.events.indexOf('mousemove')).to.equal(-1);
         });
 
-        it('should do nothing if the click is not on a tab', () => {
+        it('should do nothing if the press is not on a tab', () => {
           let rect = tab.getBoundingClientRect();
           simulate(tab, 'mousedown', { clientX: rect.left - 1, clientY: rect.top });
           simulate(document.body, 'mousemove');
           expect(bar.events.indexOf('mousemove')).to.equal(-1);
         });
 
-        it('should do nothing if the click is on a close icon', () => {
+        it('should do nothing if the press is on a close icon', () => {
           simulateOnNode(closeIcon, 'mousedown');
           simulate(document.body, 'mousemove');
           expect(bar.events.indexOf('mousemove')).to.equal(-1);
@@ -1090,18 +1155,11 @@ describe('@phosphor/widgets', () => {
           });
         });
 
-        it('should bail if it is not a left mouse release', () => {
+        it('should cancel a middle mouse release', () => {
           startDrag(bar);
           let evt = generate('mouseup', { button: 1 });
           let cancelled = !document.body.dispatchEvent(evt);
-          expect(cancelled).to.equal(false);
-        });
-
-        it('should bail if the drag is not active', () => {
-          simulateOnNode(tab, 'mousedown');
-          let evt = generate('mouseup', { button: 1 });
-          let cancelled = !document.body.dispatchEvent(evt);
-          expect(cancelled).to.equal(false);
+          expect(cancelled).to.equal(true);
         });
 
       });
@@ -1143,8 +1201,6 @@ describe('@phosphor/widgets', () => {
         let bar = new LogTabBar();
         Widget.attach(bar, document.body);
         expect(bar.methods).to.contain('onBeforeAttach');
-        simulate(bar.node, 'click');
-        expect(bar.events.indexOf('click')).to.not.equal(-1);
         simulate(bar.node, 'mousedown');
         expect(bar.events.indexOf('mousedown')).to.not.equal(-1);
         bar.dispose();
@@ -1167,8 +1223,8 @@ describe('@phosphor/widgets', () => {
         expect(bar.methods).to.contain('onAfterDetach');
         simulate(document.body, 'mousemove');
         expect(bar.events.indexOf('mousemove')).to.equal(-1);
-        simulate(bar.node, 'click');
-        expect(bar.events.indexOf('click')).to.equal(-1);
+        simulate(document.body, 'mouseup');
+        expect(bar.events.indexOf('mouseup')).to.equal(-1);
       });
 
     });
