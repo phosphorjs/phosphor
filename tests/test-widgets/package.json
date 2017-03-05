@@ -1,6 +1,7 @@
 {
   "private": true,
   "name": "@phosphor/test-widgets",
+  "version": "0.1.2",
   "dependencies": {
     "@phosphor/algorithm": "^0.1.1",
     "@phosphor/commands": "^0.1.4",
@@ -37,6 +38,5 @@
     "test:chrome": "karma start --browsers=Chrome",
     "test:firefox": "karma start --browsers=Firefox",
     "test:ie": "karma start --browsers=IE"
-  },
-  "version": "0.1.2"
+  }
 }

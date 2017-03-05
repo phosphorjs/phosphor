@@ -1,6 +1,7 @@
 {
   "private": true,
   "name": "@phosphor/test-domutils",
+  "version": "0.1.1",
   "dependencies": {
     "@phosphor/domutils": "^0.1.2",
     "chai": "^3.5.0",
@@ -26,6 +27,5 @@
     "test:chrome": "karma start --browsers=Chrome",
     "test:firefox": "karma start --browsers=Firefox",
     "test:ie": "karma start --browsers=IE"
-  },
-  "version": "0.1.1"
+  }
 }
