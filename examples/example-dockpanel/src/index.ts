@@ -314,13 +314,13 @@ function main(): void {
   dock.addWidget(b2, { mode: 'split-right', ref: y1 });
   dock.id = 'dock';
 
-  let savedLayouts: DockPanel.ILayoutConfig[] = [];
+  let savedLayouts: DockPanel.LayoutConfig[] = [];
 
   commands.addCommand('save-dock-layout', {
     label: 'Save Layout',
     caption: 'Save the current dock layout',
     execute: () => {
-      savedLayouts.push(dock.saveLayout());
+      savedLayouts.push(dock.saveLayout({ version: '1' }));
       palette.addItem({
         command: 'restore-dock-layout',
         category: 'Dock Layout',
