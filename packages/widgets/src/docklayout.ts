@@ -1252,7 +1252,7 @@ namespace DockLayout {
   export
   type LayoutConfigVersionMap = {
     '1': ILayoutConfigV1;
-  }
+  };
 }
 
 
