@@ -216,16 +216,27 @@ class DockLayout extends Layout {
   /**
    * Save the current configuration of the dock layout.
    *
-   * @returns A new snapshot of the current dock layout configuration.
+   * @param options - The options specifying the version of the layout
+   *   config object to generate.
+   *
+   * @returns A new layout config object of the specified version.
    *
    * #### Notes
+   * The version number enables future expansion of the layout config
+   * in a backwards compatible fashion.
+   *
    * The return value can be provided to the `restoreLayout` method
    * in order to restore the layout to its current configuration.
    */
-  saveLayout(): DockLayout.ILayoutConfig {
+  saveLayout<T extends keyof DockLayout.LayoutConfigVersionMap>(options: { version: T }): DockLayout.LayoutConfigVersionMap[T] {
+    // Sanity check the layout config version.
+    if (options.version !== '1') {
+      throw new Error(`Unsupported config version: '${options.version}'`);
+    }
+
     // Bail early if there is no root.
     if (!this._root) {
-      return { main: null };
+      return { version: '1', main: null };
     }
 
     // Hold the current layout sizes.
@@ -235,7 +246,7 @@ class DockLayout extends Layout {
     let main = Private.createAreaConfig(this._root);
 
     // Return the layout config.
-    return { main };
+    return { version: '1', main };
   }
 
   /**
@@ -249,9 +260,14 @@ class DockLayout extends Layout {
    * Widgets which currently belong to the layout but which are not
    * contained in the config will be unparented.
    */
-  restoreLayout(config: DockLayout.ILayoutConfig): void {
+  restoreLayout(config: DockLayout.LayoutConfig): void {
+    // Sanity check the layout config version.
+    if (config.version !== '1') {
+      throw new Error(`Unsupported config version: '${config.version}'`);
+    }
+
     // Validate the config and collect the contained widgets.
-    let widgetSet = Private.validateLayoutConfig(config);
+    let widgetSet = Private.validateLayoutConfigV1(config);
 
     // Create iterators over the old widgets and tab bars.
     let oldWidgets = this.widgets();
@@ -1209,15 +1225,34 @@ namespace DockLayout {
   type AreaConfig = ITabAreaConfig | ISplitAreaConfig;
 
   /**
-   * A layout config object for a dock layout.
+   * Version 1 of the dock layout config object.
    */
   export
-  interface ILayoutConfig {
+  interface ILayoutConfigV1 {
+    /**
+     * The version number of the config object.
+     */
+    version: '1';
+
     /**
      * The layout config for the main dock area.
      */
     main: AreaConfig | null;
   }
+
+  /**
+   * A union type alias of the supported layout config versions.
+   */
+  export
+  type LayoutConfig = ILayoutConfigV1;
+
+  /**
+   * A type mapping of version number to layout config type.
+   */
+  export
+  type LayoutConfigVersionMap = {
+    '1': ILayoutConfigV1;
+  };
 }
 
 
@@ -1507,10 +1542,10 @@ namespace Private {
   }
 
   /**
-   * Valid a layout configuration object.
+   * Validate a version '1' layout configuration object.
    */
   export
-  function validateLayoutConfig(config: DockLayout.ILayoutConfig): Set<Widget> {
+  function validateLayoutConfigV1(config: DockLayout.ILayoutConfigV1): Set<Widget> {
     // Create the set to hold the contained widgets.
     let widgetSet = new Set<Widget>();
 

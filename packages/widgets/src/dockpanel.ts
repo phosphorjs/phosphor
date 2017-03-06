@@ -193,14 +193,20 @@ class DockPanel extends Widget {
   /**
    * Save the current layout configuration of the dock panel.
    *
-   * @returns A new snapshot of the current layout configuration.
+   * @param options - The options specifying the version of the layout
+   *   config object to generate.
+   *
+   * @returns A new layout config object of the specified version.
    *
    * #### Notes
+   * The version number enables future expansion of the layout config
+   * in a backwards compatible fashion.
+   *
    * The return value can be provided to the `restoreLayout` method
    * in order to restore the layout to its current configuration.
    */
-  saveLayout(): DockPanel.ILayoutConfig {
-    return (this.layout as DockLayout).saveLayout();
+  saveLayout<T extends keyof DockPanel.LayoutConfigVersionMap>(options: { version: T }): DockPanel.LayoutConfigVersionMap[T] {
+    return (this.layout as DockLayout).saveLayout(options);
   }
 
   /**
@@ -214,7 +220,7 @@ class DockPanel extends Widget {
    * Widgets which currently belong to the layout but which are not
    * contained in the config will be unparented.
    */
-  restoreLayout(config: DockPanel.ILayoutConfig): void {
+  restoreLayout(config: DockPanel.LayoutConfig): void {
     (this.layout as DockLayout).restoreLayout(config);
   }
 
@@ -823,7 +829,13 @@ namespace DockPanel {
    * A type alias for a layout configuration object.
    */
   export
-  type ILayoutConfig = DockLayout.ILayoutConfig;
+  type LayoutConfig = DockLayout.LayoutConfig;
+
+  /**
+   * A type alias for the layout config version map.
+   */
+  export
+  type LayoutConfigVersionMap = DockLayout.LayoutConfigVersionMap;
 
   /**
    * A type alias for the supported insertion modes.
