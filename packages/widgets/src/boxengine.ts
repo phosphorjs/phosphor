@@ -162,6 +162,11 @@ namespace BoxEngine {
    *
    * @param space - The available layout space for the sizers.
    *
+   * @returns The delta between the provided available space and the
+   *   actual consumed space. This value will be zero if the sizers
+   *   can be adjusted to fit, negative if the available space is too
+   *   small, and positive if the available space is too large.
+   *
    * #### Notes
    * The [[size]] of each sizer is updated with the computed size.
    *
@@ -171,11 +176,11 @@ namespace BoxEngine {
    * create new sizer objects on each resize event.
    */
   export
-  function calc(sizers: ArrayLike<BoxSizer>, space: number): void {
+  function calc(sizers: ArrayLike<BoxSizer>, space: number): number {
     // Bail early if there is nothing to do.
     let count = sizers.length;
     if (count === 0) {
-      return;
+      return space;
     }
 
     // Setup the size and stretch counters.
@@ -202,9 +207,9 @@ namespace BoxEngine {
       }
     }
 
-    // If the space is equal to the total size, return.
+    // If the space is equal to the total size, return early.
     if (space === totalSize) {
-      return;
+      return 0;
     }
 
     // If the space is less than the total min, minimize each sizer.
@@ -213,7 +218,7 @@ namespace BoxEngine {
         let sizer = sizers[i];
         sizer.size = sizer.minSize;
       }
-      return;
+      return space - totalMin;
     }
 
     // If the space is greater than the total max, maximize each sizer.
@@ -222,7 +227,7 @@ namespace BoxEngine {
         let sizer = sizers[i];
         sizer.size = sizer.maxSize;
       }
-      return;
+      return space - totalMax;
     }
 
     // The loops below perform sub-pixel precision sizing. A near zero
@@ -339,6 +344,9 @@ namespace BoxEngine {
         }
       }
     }
+
+    // Indicate that the consumed space equals the available space.
+    return 0;
   }
 
   /**
