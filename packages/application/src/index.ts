@@ -10,51 +10,12 @@ import {
 } from '@phosphor/commands';
 
 import {
-  PromiseDelegate
+  PromiseDelegate, Token
 } from '@phosphor/coreutils';
 
 import {
   Widget
 } from '@phosphor/widgets';
-
-
-/**
- * A runtime object which captures compile-time type information.
- *
- * #### Notes
- * A token captures the compile-time type of an interface or class in
- * an object which can be used to register a provider of that object
- * type with an application in a type-safe fashion.
- */
-export
-class Token<T> {
-  /**
-   * Construct a new token.
-   *
-   * @param name - A human readable name for the token.
-   */
-  constructor(name: string) {
-    this.name = name;
-  }
-
-  /**
-   * The human readable name for the token.
-   *
-   * #### Notes
-   * This can be useful for debugging and logging.
-   */
-  readonly name: string;
-
-  /**
-   * A structural property to make the token unique to the compiler.
-   *
-   * #### Notes
-   * User code should pretend this value does not exist.
-   *
-   * This value only serves to enforce compiler behavior.
-   */
-  readonly __tokenStructuralPropertyT__: T | null = null;
-}
 
 
 /**
