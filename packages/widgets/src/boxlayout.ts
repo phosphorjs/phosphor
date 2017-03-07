@@ -119,10 +119,45 @@ class BoxLayout extends PanelLayout {
   }
 
   /**
+   * Get the content alignment for the box layout.
+   *
+   * #### Notes
+   * This is the alignment of the widgets in the layout direction.
+   *
+   * The content alignment has no effect if the widgets can expand
+   * to fill the entire box layout.
+   */
+  get alignment(): BoxLayout.ContentAlignment {
+    return this._alignment;
+  }
+
+  /**
+   * Set the content alignment for the box layout.
+   *
+   * #### Notes
+   * This is the alignment of the widgets in the layout direction.
+   *
+   * The content alignment has no effect if the widgets can expand
+   * to fill the entire box layout.
+   */
+  set alignment(value: BoxLayout.ContentAlignment) {
+    if (this._alignment === value) {
+      return;
+    }
+    this._alignment = value;
+    if (!this.parent) {
+      return;
+    }
+    Private.toggleAlignment(this.parent, value);
+    this.parent.update();
+  }
+
+  /**
    * Perform layout initialization which requires the parent widget.
    */
   protected init(): void {
     Private.toggleDirection(this.parent!, this.direction);
+    Private.toggleAlignment(this.parent!, this.alignment);
     super.init();
   }
 
@@ -415,8 +450,31 @@ class BoxLayout extends PanelLayout {
       throw 'unreachable';
     }
 
-    // Compute the extra space for each item, if any.
-    let extra = delta > 0 ? delta / nVisible : 0;
+    // Setup the variables for justification and alignment offset.
+    let extra = 0;
+    let offset = 0;
+
+    // Account for alignment if there is extra layout space.
+    if (delta > 0) {
+      switch (this._alignment) {
+      case 'start':
+        break;
+      case 'center':
+        extra = 0;
+        offset = delta / 2;
+        break;
+      case 'end':
+        extra = 0;
+        offset = delta;
+        break;
+      case 'justify':
+        extra = delta / nVisible;
+        offset = 0;
+        break;
+      default:
+        throw 'unreachable';
+      }
+    }
 
     // Layout the items using the computed box sizes.
     for (let i = 0, n = this._items.length; i < n; ++i) {
@@ -434,19 +492,19 @@ class BoxLayout extends PanelLayout {
       // Update the widget geometry and advance the relevant edge.
       switch (this._direction) {
       case 'left-to-right':
-        item.update(left, top, size + extra, height);
+        item.update(left + offset, top, size + extra, height);
         left += size + extra + this._spacing;
         break;
       case 'top-to-bottom':
-        item.update(left, top, width, size + extra);
+        item.update(left, top + offset, width, size + extra);
         top += size + extra + this._spacing;
         break;
       case 'right-to-left':
-        item.update(left - size - extra, top, size + extra, height);
+        item.update(left - offset - size - extra, top, size + extra, height);
         left -= size + extra + this._spacing;
         break;
       case 'bottom-to-top':
-        item.update(left, top - size - extra, width, size + extra);
+        item.update(left, top - offset - size - extra, width, size + extra);
         top -= size + extra + this._spacing;
         break;
       default:
@@ -461,6 +519,7 @@ class BoxLayout extends PanelLayout {
   private _sizers: BoxSizer[] = [];
   private _items: LayoutItem[] = [];
   private _box: ElementExt.IBoxSizing | null = null;
+  private _alignment: BoxLayout.ContentAlignment = 'start';
   private _direction: BoxLayout.Direction = 'top-to-bottom';
 }
 
@@ -477,6 +536,12 @@ namespace BoxLayout {
   type Direction = (
     'left-to-right' | 'right-to-left' | 'top-to-bottom' | 'bottom-to-top'
   );
+
+  /**
+   * A type alias for box layout content alignment.
+   */
+  export
+  type ContentAlignment = 'start' | 'center' | 'end' | 'justify';
 
   /**
    * A type alias for a widget horizontal alignment.
@@ -683,6 +748,17 @@ namespace Private {
     widget.toggleClass('p-mod-right-to-left', dir === 'right-to-left');
     widget.toggleClass('p-mod-top-to-bottom', dir === 'top-to-bottom');
     widget.toggleClass('p-mod-bottom-to-top', dir === 'bottom-to-top');
+  }
+
+  /**
+   * Toggle the CSS alignment class for the given widget.
+   */
+  export
+  function toggleAlignment(widget: Widget, align: BoxLayout.ContentAlignment): void {
+    widget.toggleClass('p-mod-align-start', align === 'start');
+    widget.toggleClass('p-mod-align-center', align === 'center');
+    widget.toggleClass('p-mod-align-end', align === 'end');
+    widget.toggleClass('p-mod-align-justify', align === 'justify');
   }
 
   /**

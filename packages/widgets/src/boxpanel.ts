@@ -65,6 +65,32 @@ class BoxPanel extends Panel {
   }
 
   /**
+   * Get the content alignment for the box panel.
+   *
+   * #### Notes
+   * This is the alignment of the widgets in the layout direction.
+   *
+   * The content alignment has no effect if the widgets can expand
+   * to fill the entire box panel.
+   */
+  get alignment(): BoxPanel.ContentAlignment {
+    return (this.layout as BoxLayout).alignment;
+  }
+
+  /**
+   * Set the content alignment for the box panel.
+   *
+   * #### Notes
+   * This is the alignment of the widgets in the layout direction.
+   *
+   * The content alignment has no effect if the widgets can expand
+   * to fill the entire box panel.
+   */
+  set alignment(value: BoxPanel.ContentAlignment) {
+    (this.layout as BoxLayout).alignment = value;
+  }
+
+  /**
    * A message handler invoked on a `'child-added'` message.
    */
   protected onChildAdded(msg: Widget.ChildMessage): void {
@@ -90,6 +116,12 @@ namespace BoxPanel {
    */
   export
   type Direction = BoxLayout.Direction;
+
+  /**
+   * A type alias for box panel content alignment.
+   */
+  export
+  type ContentAlignment = BoxLayout.ContentAlignment;
 
   /**
    * A type alias for a widget horizontal alignment.
