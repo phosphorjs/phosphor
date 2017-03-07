@@ -18,6 +18,10 @@ import {
 } from '@phosphor/messaging';
 
 import {
+  AttachedProperty
+} from '@phosphor/properties';
+
+import {
   Widget
 } from './widget';
 
@@ -153,22 +157,14 @@ class LayoutItem implements IDisposable {
    * @param width - The width of the layout box.
    *
    * @param height - The height of the layout box.
-   *
-   * @param hAlign - The horizontal alignment for the widget.
-   *
-   * @param vAlign - The vertical alignment for the widget.
-   *
-   * #### Notes
-   * The alignment values only have an effect if the maximum size of
-   * the widget is less than the respective size of the layout box.
    */
-  update(left: number, top: number, width: number, height: number, hAlign: LayoutItem.HorizontalAlignment, vAlign: LayoutItem.VerticalAlignment): void {
+  update(left: number, top: number, width: number, height: number): void {
     // Clamp the size to the widget's size limits.
     let clampW = Math.max(this.minWidth, Math.min(width, this.maxWidth));
     let clampH = Math.max(this.minHeight, Math.min(height, this.maxHeight));
 
     // Ajdust the left edge position if needed.
-    switch (hAlign) {
+    switch (LayoutItem.getHorizontalAlignment(this.widget)) {
     case 'left':
       break;
     case 'center':
@@ -186,7 +182,7 @@ class LayoutItem implements IDisposable {
     }
 
     // Ajdust the top edge position if needed.
-    switch (vAlign) {
+    switch (LayoutItem.getVerticalAlignment(this.widget)) {
     case 'top':
       break;
     case 'center':
@@ -255,6 +251,22 @@ export
 namespace LayoutItem {
   /**
    * A type alias for the supported horizontal alignments.
+   */
+  export
+  type HorizontalAlignment = 'left' | 'center' | 'right';
+
+  /**
+   * A type alias for the supported vertical alignments.
+   */
+  export
+  type VerticalAlignment = 'top' | 'center' | 'bottom';
+
+  /**
+   * Get the horizontal alignment for the given widget.
+   *
+   * @param widget - The widget of interest.
+   *
+   * @returns The horizontal alignment for the widget.
    *
    * #### Notes
    * If the layout width allocated to a widget is larger than its max
@@ -265,10 +277,36 @@ namespace LayoutItem {
    * horizontal alignment has no effect.
    */
   export
-  type HorizontalAlignment = 'left' | 'center' | 'right';
+  function getHorizontalAlignment(widget: Widget): HorizontalAlignment {
+    return Private.horizontalAlignmentProperty.get(widget);
+  }
 
   /**
-   * A type alias for the supported vertical alignments.
+   * Set the horizontal alignment for the given widget.
+   *
+   * @param widget - The widget of interest.
+   *
+   * @param value - The value for the alignment.
+   *
+   * #### Notes
+   * If the layout width allocated to a widget is larger than its max
+   * width, the horizontal alignment controls how the widget is placed
+   * within the extra horizontal space.
+   *
+   * If the allocated width is less than the widget's max width, the
+   * horizontal alignment has no effect.
+   */
+  export
+  function setHorizontalAlignment(widget: Widget, value: HorizontalAlignment): void {
+    Private.horizontalAlignmentProperty.set(widget, value);
+  }
+
+  /**
+   * Get the vertical alignment for the given widget.
+   *
+   * @param widget - The widget of interest.
+   *
+   * @returns The vertical alignment for the widget.
    *
    * #### Notes
    * If the layout height allocated to a widget is larger than its max
@@ -279,5 +317,62 @@ namespace LayoutItem {
    * vertical alignment has no effect.
    */
   export
-  type VerticalAlignment = 'top' | 'center' | 'bottom';
+  function getVerticalAlignment(widget: Widget): VerticalAlignment {
+    return Private.verticalAlignmentProperty.get(widget);
+  }
+
+  /**
+   * Set the vertical alignment for the given widget.
+   *
+   * @param widget - The widget of interest.
+   *
+   * @param value - The value for the alignment.
+   *
+   * #### Notes
+   * If the layout height allocated to a widget is larger than its max
+   * height, the vertical alignment controls how the widget is placed
+   * within the extra vertical space.
+   *
+   * If the allocated height is less than the widget's max height, the
+   * vertical alignment has no effect.
+   */
+  export
+  function setVerticalAlignment(widget: Widget, value: VerticalAlignment): void {
+    Private.verticalAlignmentProperty.set(widget, value);
+  }
+}
+
+
+/**
+ * The namespace for the module implementation details.
+ */
+namespace Private {
+  /**
+   * The property descriptor for a widget horizontal alignment.
+   */
+  export
+  const horizontalAlignmentProperty = new AttachedProperty<Widget, LayoutItem.HorizontalAlignment>({
+    name: 'horizontalAlignment',
+    create: () => 'center',
+    changed: onAlignmentChanged
+  });
+
+  /**
+   * The property descriptor for a widget vertical alignment.
+   */
+  export
+  const verticalAlignmentProperty = new AttachedProperty<Widget, LayoutItem.VerticalAlignment>({
+    name: 'verticalAlignment',
+    create: () => 'top',
+    changed: onAlignmentChanged
+  });
+
+  /**
+   * The change handler for the alignment properties.
+   */
+  function onAlignmentChanged(child: Widget): void {
+    if (child.parent && child.parent.layout) {
+      child.parent.update();
+    }
+  }
 }
