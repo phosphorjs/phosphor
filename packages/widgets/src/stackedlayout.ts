@@ -18,6 +18,10 @@ import {
 } from '@phosphor/messaging';
 
 import {
+  AttachedProperty
+} from '@phosphor/properties';
+
+import {
   LayoutItem
 } from './layoutitem';
 
@@ -299,11 +303,15 @@ class StackedLayout extends PanelLayout {
         continue;
       }
 
+      // Fetch the alignment for the widget.
+      let hAlign = StackedLayout.getHorizontalAlignment(item.widget);
+      let vAlign = StackedLayout.getVerticalAlignment(item.widget);
+
       // Set the z-index for the widget.
       item.widget.node.style.zIndex = `${i}`;
 
       // Update the item geometry.
-      item.update(left, top, width, height);
+      item.update(left, top, width, height, hAlign, vAlign);
     }
   }
 
@@ -347,7 +355,7 @@ namespace StackedLayout {
    */
   export
   function getHorizontalAlignment(widget: Widget): HorizontalAlignment {
-    return LayoutItem.getHorizontalAlignment(widget);
+    return Private.horizontalAlignmentProperty.get(widget);
   }
 
   /**
@@ -367,7 +375,7 @@ namespace StackedLayout {
    */
   export
   function setHorizontalAlignment(widget: Widget, value: HorizontalAlignment): void {
-    LayoutItem.setHorizontalAlignment(widget, value);
+    Private.horizontalAlignmentProperty.set(widget, value);
   }
 
   /**
@@ -387,7 +395,7 @@ namespace StackedLayout {
    */
   export
   function getVerticalAlignment(widget: Widget): VerticalAlignment {
-    return LayoutItem.getVerticalAlignment(widget);
+    return Private.verticalAlignmentProperty.get(widget);
   }
 
   /**
@@ -407,6 +415,41 @@ namespace StackedLayout {
    */
   export
   function setVerticalAlignment(widget: Widget, value: VerticalAlignment): void {
-    LayoutItem.setVerticalAlignment(widget, value);
+    Private.verticalAlignmentProperty.set(widget, value);
+  }
+}
+
+
+/**
+ * The namespace for the module implementation details.
+ */
+namespace Private {
+  /**
+   * The property descriptor for a widget horizontal alignment.
+   */
+  export
+  const horizontalAlignmentProperty = new AttachedProperty<Widget, StackedLayout.HorizontalAlignment>({
+    name: 'horizontalAlignment',
+    create: () => 'center',
+    changed: onChildAlignmentChanged
+  });
+
+  /**
+   * The property descriptor for a widget vertical alignment.
+   */
+  export
+  const verticalAlignmentProperty = new AttachedProperty<Widget, StackedLayout.VerticalAlignment>({
+    name: 'verticalAlignment',
+    create: () => 'top',
+    changed: onChildAlignmentChanged
+  });
+
+  /**
+   * The change handler for the attached alignment properties.
+   */
+  function onChildAlignmentChanged(child: Widget): void {
+    if (child.parent && child.parent.layout instanceof StackedLayout) {
+      child.parent.update();
+    }
   }
 }

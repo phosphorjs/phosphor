@@ -621,15 +621,17 @@ class SplitLayout extends PanelLayout {
         continue;
       }
 
-      // Fetch the computed size for the widget.
+      // Fetch the computed size and alignment for the widget.
       let size = this._sizers[i].size;
+      let hAlign = SplitLayout.getHorizontalAlignment(item.widget);
+      let vAlign = SplitLayout.getVerticalAlignment(item.widget);
 
       // Fetch the style for the handle.
       let handleStyle = this._handles[i].style;
 
       // Update the widget and handle, and advance the relevant edge.
       if (horz) {
-        item.update(left + offset, top, size + extra, height);
+        item.update(left + offset, top, size + extra, height, hAlign, vAlign);
         left += size + extra;
         handleStyle.top = `${top}px`;
         handleStyle.left = `${left + offset}px`;
@@ -637,7 +639,7 @@ class SplitLayout extends PanelLayout {
         handleStyle.height = `${height}px`;
         left += this._spacing;
       } else {
-        item.update(left, top + offset, width, size + extra);
+        item.update(left, top + offset, width, size + extra, hAlign, vAlign);
         top += size + extra;
         handleStyle.top = `${top + offset}px`;
         handleStyle.left = `${left}px`;
@@ -769,7 +771,7 @@ namespace SplitLayout {
    */
   export
   function getHorizontalAlignment(widget: Widget): HorizontalAlignment {
-    return LayoutItem.getHorizontalAlignment(widget);
+    return Private.horizontalAlignmentProperty.get(widget);
   }
 
   /**
@@ -789,7 +791,7 @@ namespace SplitLayout {
    */
   export
   function setHorizontalAlignment(widget: Widget, value: HorizontalAlignment): void {
-    LayoutItem.setHorizontalAlignment(widget, value);
+    Private.horizontalAlignmentProperty.set(widget, value);
   }
 
   /**
@@ -809,7 +811,7 @@ namespace SplitLayout {
    */
   export
   function getVerticalAlignment(widget: Widget): VerticalAlignment {
-    return LayoutItem.getVerticalAlignment(widget);
+    return Private.verticalAlignmentProperty.get(widget);
   }
 
   /**
@@ -829,7 +831,7 @@ namespace SplitLayout {
    */
   export
   function setVerticalAlignment(widget: Widget, value: VerticalAlignment): void {
-    LayoutItem.setVerticalAlignment(widget, value);
+    Private.verticalAlignmentProperty.set(widget, value);
   }
 }
 
@@ -846,7 +848,27 @@ namespace Private {
     name: 'stretch',
     create: () => 0,
     coerce: (owner, value) => Math.max(0, Math.floor(value)),
-    changed: onChildPropertyChanged
+    changed: onChildSizingChanged
+  });
+
+  /**
+   * The property descriptor for a widget horizontal alignment.
+   */
+  export
+  const horizontalAlignmentProperty = new AttachedProperty<Widget, SplitLayout.HorizontalAlignment>({
+    name: 'horizontalAlignment',
+    create: () => 'center',
+    changed: onChildAlignmentChanged
+  });
+
+  /**
+   * The property descriptor for a widget vertical alignment.
+   */
+  export
+  const verticalAlignmentProperty = new AttachedProperty<Widget, SplitLayout.VerticalAlignment>({
+    name: 'verticalAlignment',
+    create: () => 'top',
+    changed: onChildAlignmentChanged
   });
 
   /**
@@ -919,11 +941,20 @@ namespace Private {
   }
 
   /**
-   * The change handler for the attached child properties.
+   * The change handler for the attached sizing properties.
    */
-  function onChildPropertyChanged(child: Widget): void {
+  function onChildSizingChanged(child: Widget): void {
     if (child.parent && child.parent.layout instanceof SplitLayout) {
       child.parent.fit();
+    }
+  }
+
+  /**
+   * The change handler for the attached alignment properties.
+   */
+  function onChildAlignmentChanged(child: Widget): void {
+    if (child.parent && child.parent.layout instanceof SplitLayout) {
+      child.parent.update();
     }
   }
 }
