@@ -89,6 +89,32 @@ class SplitPanel extends Panel {
   }
 
   /**
+   * Get the content alignment for the split panel.
+   *
+   * #### Notes
+   * This is the alignment of the widgets in the layout direction.
+   *
+   * The content alignment has no effect if the widgets can expand
+   * to fill the entire split panel.
+   */
+  get alignment(): SplitPanel.ContentAlignment {
+    return (this.layout as SplitLayout).alignment;
+  }
+
+  /**
+   * Set the content alignment for the split panel.
+   *
+   * #### Notes
+   * This is the alignment of the widgets in the layout direction.
+   *
+   * The content alignment has no effect if the widgets can expand
+   * to fill the entire split panel.
+   */
+  set alignment(value: SplitPanel.ContentAlignment) {
+    (this.layout as SplitLayout).alignment = value;
+  }
+
+  /**
    * The renderer used by the split panel.
    */
   get renderer(): SplitPanel.IRenderer {
@@ -328,6 +354,24 @@ namespace SplitPanel {
   type Orientation = SplitLayout.Orientation;
 
   /**
+   * A type alias for split panel content alignment.
+   */
+  export
+  type ContentAlignment = SplitLayout.ContentAlignment;
+
+  /**
+   * A type alias for a widget horizontal alignment.
+   */
+  export
+  type HorizontalAlignment = SplitLayout.HorizontalAlignment;
+
+  /**
+   * A type alias for a widget vertical alignment.
+   */
+  export
+  type VerticalAlignment = SplitLayout.VerticalAlignment;
+
+  /**
    * A type alias for a split panel renderer.
    */
   export
@@ -414,6 +458,86 @@ namespace SplitPanel {
   export
   function setStretch(widget: Widget, value: number): void {
     SplitLayout.setStretch(widget, value);
+  }
+
+  /**
+   * Get the horizontal alignment for the given widget.
+   *
+   * @param widget - The widget of interest.
+   *
+   * @returns The horizontal alignment for the widget.
+   *
+   * #### Notes
+   * If the layout width allocated to a widget is larger than its max
+   * width, the horizontal alignment controls how the widget is placed
+   * within the extra horizontal space.
+   *
+   * If the allocated width is less than the widget's max width, the
+   * horizontal alignment has no effect.
+   */
+  export
+  function getHorizontalAlignment(widget: Widget): HorizontalAlignment {
+    return SplitLayout.getHorizontalAlignment(widget);
+  }
+
+  /**
+   * Set the horizontal alignment for the given widget.
+   *
+   * @param widget - The widget of interest.
+   *
+   * @param value - The value for the alignment.
+   *
+   * #### Notes
+   * If the layout width allocated to a widget is larger than its max
+   * width, the horizontal alignment controls how the widget is placed
+   * within the extra horizontal space.
+   *
+   * If the allocated width is less than the widget's max width, the
+   * horizontal alignment has no effect.
+   */
+  export
+  function setHorizontalAlignment(widget: Widget, value: HorizontalAlignment): void {
+    SplitLayout.setHorizontalAlignment(widget, value);
+  }
+
+  /**
+   * Get the vertical alignment for the given widget.
+   *
+   * @param widget - The widget of interest.
+   *
+   * @returns The vertical alignment for the widget.
+   *
+   * #### Notes
+   * If the layout height allocated to a widget is larger than its max
+   * height, the vertical alignment controls how the widget is placed
+   * within the extra vertical space.
+   *
+   * If the allocated height is less than the widget's max height, the
+   * vertical alignment has no effect.
+   */
+  export
+  function getVerticalAlignment(widget: Widget): VerticalAlignment {
+    return SplitLayout.getVerticalAlignment(widget);
+  }
+
+  /**
+   * Set the vertical alignment for the given widget.
+   *
+   * @param widget - The widget of interest.
+   *
+   * @param value - The value for the alignment.
+   *
+   * #### Notes
+   * If the layout height allocated to a widget is larger than its max
+   * height, the vertical alignment controls how the widget is placed
+   * within the extra vertical space.
+   *
+   * If the allocated height is less than the widget's max height, the
+   * vertical alignment has no effect.
+   */
+  export
+  function setVerticalAlignment(widget: Widget, value: VerticalAlignment): void {
+    SplitLayout.setVerticalAlignment(widget, value);
   }
 }
 
