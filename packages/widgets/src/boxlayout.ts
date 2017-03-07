@@ -6,7 +6,7 @@
 | The full license is in the file LICENSE, distributed with this software.
 |----------------------------------------------------------------------------*/
 import {
-  ArrayExt
+  ArrayExt, each
 } from '@phosphor/algorithm';
 
 import {
@@ -24,6 +24,10 @@ import {
 import {
   BoxEngine, BoxSizer
 } from './boxengine';
+
+import {
+  LayoutItem
+} from './layoutitem';
 
 import {
   PanelLayout
@@ -58,8 +62,15 @@ class BoxLayout extends PanelLayout {
    * Dispose of the resources held by the layout.
    */
   dispose(): void {
+    // Dispose of the layout items.
+    each(this._items, item => { item.dispose(); });
+
+    // Clear the layout state.
     this._box = null;
+    this._items.length = 0;
     this._sizers.length = 0;
+
+    // Dispose of the rest of the layout.
     super.dispose();
   }
 
@@ -126,11 +137,11 @@ class BoxLayout extends PanelLayout {
    * This is a reimplementation of the superclass method.
    */
   protected attachWidget(index: number, widget: Widget): void {
+    // Create and add a new layout item for the widget.
+    ArrayExt.insert(this._items, index, new LayoutItem(widget));
+
     // Create and add a new sizer for the widget.
     ArrayExt.insert(this._sizers, index, new BoxSizer());
-
-    // Prepare the layout geometry for the widget.
-    Widget.prepareGeometry(widget);
 
     // Send a `'before-attach'` message if the parent is attached.
     if (this.parent!.isAttached) {
@@ -162,6 +173,9 @@ class BoxLayout extends PanelLayout {
    * This is a reimplementation of the superclass method.
    */
   protected moveWidget(fromIndex: number, toIndex: number, widget: Widget): void {
+    // Move the layout item for the widget.
+    ArrayExt.move(this._items, fromIndex, toIndex);
+
     // Move the sizer for the widget.
     ArrayExt.move(this._sizers, fromIndex, toIndex);
 
@@ -180,6 +194,9 @@ class BoxLayout extends PanelLayout {
    * This is a reimplementation of the superclass method.
    */
   protected detachWidget(index: number, widget: Widget): void {
+    // Remove the layout item for the widget.
+    let item = ArrayExt.removeAt(this._items, index);
+
     // Remove the sizer for the widget.
     ArrayExt.removeAt(this._sizers, index);
 
@@ -196,8 +213,8 @@ class BoxLayout extends PanelLayout {
       MessageLoop.sendMessage(widget, Widget.Msg.AfterDetach);
     }
 
-    // Reset the layout geometry for the widget.
-    Widget.resetGeometry(widget);
+    // Dispose of the layout item.
+    item!.dispose();
 
     // Post a fit request for the parent widget.
     this.parent!.fit();
@@ -266,70 +283,61 @@ class BoxLayout extends PanelLayout {
   private _fit(): void {
     // Compute the visible item count.
     let nVisible = 0;
-    let widgets = this.widgets;
-    for (let i = 0, n = widgets.length; i < n; ++i) {
-      nVisible += +!widgets[i].isHidden;
+    for (let i = 0, n = this._items.length; i < n; ++i) {
+      nVisible += +!this._items[i].isHidden;
     }
 
     // Update the fixed space for the visible items.
     this._fixed = this._spacing * Math.max(0, nVisible - 1);
 
-    // Setup the initial size limits.
-    let minW = 0;
-    let minH = 0;
-    let maxW = Infinity;
-    let maxH = Infinity;
+    // Setup the computed minimum size.
     let horz = Private.isHorizontal(this._direction);
-    if (horz) {
-      minW = this._fixed;
-      maxW = nVisible > 0 ? minW : maxW;
-    } else {
-      minH = this._fixed;
-      maxH = nVisible > 0 ? minH : maxH;
-    }
+    let minW = horz ? this._fixed : 0;
+    let minH = horz ? 0 : this._fixed;
 
-    // Update the sizers and computed size limits.
-    for (let i = 0, n = widgets.length; i < n; ++i) {
-      let widget = widgets[i];
+    // Update the sizers and computed minimum size.
+    for (let i = 0, n = this._items.length; i < n; ++i) {
+      // Fetch the item and corresponding box sizer.
+      let item = this._items[i];
       let sizer = this._sizers[i];
-      if (widget.isHidden) {
+
+      // If the item is hidden, it should consume zero size.
+      if (item.isHidden) {
         sizer.minSize = 0;
         sizer.maxSize = 0;
         continue;
       }
-      let limits = ElementExt.sizeLimits(widget.node);
-      sizer.sizeHint = BoxLayout.getSizeBasis(widget);
-      sizer.stretch = BoxLayout.getStretch(widget);
+
+      // Update the size limits for the item.
+      item.fit();
+
+      // Update the size basis and stretch factor.
+      sizer.sizeHint = BoxLayout.getSizeBasis(item.widget);
+      sizer.stretch = BoxLayout.getStretch(item.widget);
+
+      // Update the sizer limits and computed min size.
       if (horz) {
-        sizer.minSize = limits.minWidth;
-        sizer.maxSize = limits.maxWidth;
-        minW += limits.minWidth;
-        maxW += limits.maxWidth;
-        minH = Math.max(minH, limits.minHeight);
-        maxH = Math.min(maxH, limits.maxHeight);
+        sizer.minSize = item.minWidth;
+        sizer.maxSize = item.maxWidth;
+        minW += item.minWidth;
+        minH = Math.max(minH, item.minHeight);
       } else {
-        sizer.minSize = limits.minHeight;
-        sizer.maxSize = limits.maxHeight;
-        minH += limits.minHeight;
-        maxH += limits.maxHeight;
-        minW = Math.max(minW, limits.minWidth);
-        maxW = Math.min(maxW, limits.maxWidth);
+        sizer.minSize = item.minHeight;
+        sizer.maxSize = item.maxHeight;
+        minH += item.minHeight;
+        minW = Math.max(minW, item.minWidth);
       }
     }
 
-    // Update the box sizing and add it to the size constraints.
+    // Update the box sizing and add it to the computed min size.
     let box = this._box = ElementExt.boxSizing(this.parent!.node);
     minW += box.horizontalSum;
     minH += box.verticalSum;
-    maxW += box.horizontalSum;
-    maxH += box.verticalSum;
 
-    // Update the parent's size constraints.
+    // Update the parent's min size constraints.
     let style = this.parent!.node.style;
     style.minWidth = `${minW}px`;
     style.minHeight = `${minH}px`;
-    style.maxWidth = maxW === Infinity ? 'none' : `${maxW}px`;
-    style.maxHeight = maxH === Infinity ? 'none' : `${maxH}px`;
 
     // Set the dirty flag to ensure only a single update occurs.
     this._dirty = true;
@@ -356,9 +364,14 @@ class BoxLayout extends PanelLayout {
     // Clear the dirty flag to indicate the update occurred.
     this._dirty = false;
 
-    // Bail early if there are no widgets to layout.
-    let widgets = this.widgets;
-    if (widgets.length === 0) {
+    // Compute the visible item count.
+    let nVisible = 0;
+    for (let i = 0, n = this._items.length; i < n; ++i) {
+      nVisible += +!this._items[i].isHidden;
+    }
+
+    // Bail early if there are no visible items to layout.
+    if (nVisible === 0) {
       return;
     }
 
@@ -382,47 +395,62 @@ class BoxLayout extends PanelLayout {
     let height = offsetHeight - this._box.verticalSum;
 
     // Distribute the layout space and adjust the start position.
+    let delta: number;
     switch (this._direction) {
     case 'left-to-right':
-      BoxEngine.calc(this._sizers, Math.max(0, width - this._fixed));
+      delta = BoxEngine.calc(this._sizers, Math.max(0, width - this._fixed));
       break;
     case 'top-to-bottom':
-      BoxEngine.calc(this._sizers, Math.max(0, height - this._fixed));
+      delta = BoxEngine.calc(this._sizers, Math.max(0, height - this._fixed));
       break;
     case 'right-to-left':
-      BoxEngine.calc(this._sizers, Math.max(0, width - this._fixed));
+      delta = BoxEngine.calc(this._sizers, Math.max(0, width - this._fixed));
       left += width;
       break;
     case 'bottom-to-top':
-      BoxEngine.calc(this._sizers, Math.max(0, height - this._fixed));
+      delta = BoxEngine.calc(this._sizers, Math.max(0, height - this._fixed));
       top += height;
       break;
+    default:
+      throw 'unreachable';
     }
 
-    // Layout the widgets using the computed box sizes.
-    for (let i = 0, n = widgets.length; i < n; ++i) {
-      let widget = widgets[i];
-      if (widget.isHidden) {
+    // Compute the extra space for each item, if any.
+    let extra = delta > 0 ? delta / nVisible : 0;
+
+    // Layout the items using the computed box sizes.
+    for (let i = 0, n = this._items.length; i < n; ++i) {
+      // Fetch the item.
+      let item = this._items[i];
+
+      // Ignore hidden items.
+      if (item.isHidden) {
         continue;
       }
+
+      // Fetch the computed size for the widget.
       let size = this._sizers[i].size;
+
+      // Update the widget geometry and advance the relevant edge.
       switch (this._direction) {
       case 'left-to-right':
-        Widget.setGeometry(widget, left, top, size, height);
-        left += size + this._spacing;
+        item.update(left, top, size + extra, height);
+        left += size + extra + this._spacing;
         break;
       case 'top-to-bottom':
-        Widget.setGeometry(widget, left, top, width, size);
-        top += size + this._spacing;
+        item.update(left, top, width, size + extra);
+        top += size + extra + this._spacing;
         break;
       case 'right-to-left':
-        Widget.setGeometry(widget, left - size, top, size, height);
-        left -= size + this._spacing;
+        item.update(left - size - extra, top, size + extra, height);
+        left -= size + extra + this._spacing;
         break;
       case 'bottom-to-top':
-        Widget.setGeometry(widget, left, top - size, width, size);
-        top -= size + this._spacing;
+        item.update(left, top - size - extra, width, size + extra);
+        top -= size + extra + this._spacing;
         break;
+      default:
+        throw 'unreachable';
       }
     }
   }
@@ -431,6 +459,7 @@ class BoxLayout extends PanelLayout {
   private _spacing = 4;
   private _dirty = false;
   private _sizers: BoxSizer[] = [];
+  private _items: LayoutItem[] = [];
   private _box: ElementExt.IBoxSizing | null = null;
   private _direction: BoxLayout.Direction = 'top-to-bottom';
 }
@@ -448,6 +477,18 @@ namespace BoxLayout {
   type Direction = (
     'left-to-right' | 'right-to-left' | 'top-to-bottom' | 'bottom-to-top'
   );
+
+  /**
+   * A type alias for a widget horizontal alignment.
+   */
+  export
+  type HorizontalAlignment = LayoutItem.HorizontalAlignment;
+
+  /**
+   * A type alias for a widget vertical alignment.
+   */
+  export
+  type VerticalAlignment = LayoutItem.VerticalAlignment;
 
   /**
    * An options object for initializing a box layout.
@@ -515,6 +556,86 @@ namespace BoxLayout {
   export
   function setSizeBasis(widget: Widget, value: number): void {
     Private.sizeBasisProperty.set(widget, value);
+  }
+
+  /**
+   * Get the horizontal alignment for the given widget.
+   *
+   * @param widget - The widget of interest.
+   *
+   * @returns The horizontal alignment for the widget.
+   *
+   * #### Notes
+   * If the layout width allocated to a widget is larger than its max
+   * width, the horizontal alignment controls how the widget is placed
+   * within the extra horizontal space.
+   *
+   * If the allocated width is less than the widget's max width, the
+   * horizontal alignment has no effect.
+   */
+  export
+  function getHorizontalAlignment(widget: Widget): HorizontalAlignment {
+    return LayoutItem.getHorizontalAlignment(widget);
+  }
+
+  /**
+   * Set the horizontal alignment for the given widget.
+   *
+   * @param widget - The widget of interest.
+   *
+   * @param value - The value for the alignment.
+   *
+   * #### Notes
+   * If the layout width allocated to a widget is larger than its max
+   * width, the horizontal alignment controls how the widget is placed
+   * within the extra horizontal space.
+   *
+   * If the allocated width is less than the widget's max width, the
+   * horizontal alignment has no effect.
+   */
+  export
+  function setHorizontalAlignment(widget: Widget, value: HorizontalAlignment): void {
+    LayoutItem.setHorizontalAlignment(widget, value);
+  }
+
+  /**
+   * Get the vertical alignment for the given widget.
+   *
+   * @param widget - The widget of interest.
+   *
+   * @returns The vertical alignment for the widget.
+   *
+   * #### Notes
+   * If the layout height allocated to a widget is larger than its max
+   * height, the vertical alignment controls how the widget is placed
+   * within the extra vertical space.
+   *
+   * If the allocated height is less than the widget's max height, the
+   * vertical alignment has no effect.
+   */
+  export
+  function getVerticalAlignment(widget: Widget): VerticalAlignment {
+    return LayoutItem.getVerticalAlignment(widget);
+  }
+
+  /**
+   * Set the vertical alignment for the given widget.
+   *
+   * @param widget - The widget of interest.
+   *
+   * @param value - The value for the alignment.
+   *
+   * #### Notes
+   * If the layout height allocated to a widget is larger than its max
+   * height, the vertical alignment controls how the widget is placed
+   * within the extra vertical space.
+   *
+   * If the allocated height is less than the widget's max height, the
+   * vertical alignment has no effect.
+   */
+  export
+  function setVerticalAlignment(widget: Widget, value: VerticalAlignment): void {
+    LayoutItem.setVerticalAlignment(widget, value);
   }
 }
 
