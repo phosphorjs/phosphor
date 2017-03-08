@@ -692,9 +692,15 @@ describe('@phosphor/widgets', () => {
 
       it('should be the orientation of the tab bar', () => {
         expect(bar.orientation).to.equal('horizontal');
-        expect(bar.hasClass('p-mod-horizontal')).to.equal(true);
         bar.orientation = 'vertical';
-        expect(bar.hasClass('p-mod-vertical')).to.equal(true);
+        expect(bar.orientation).to.equal('vertical');
+      });
+
+      it('should set the orientation attribute of the tab bar', () => {
+        bar.orientation = 'horizontal';
+        expect(bar.node.getAttribute('data-orientation')).to.equal('horizontal');
+        bar.orientation = 'vertical';
+        expect(bar.node.getAttribute('data-orientation')).to.equal('vertical');
       });
 
     });

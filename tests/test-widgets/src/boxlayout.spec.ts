@@ -141,6 +141,20 @@ describe('@phosphor/widgets', () => {
         expect(layout.direction).to.equal('left-to-right');
       });
 
+      it('should set the direction attribute of the parent widget', () => {
+        let parent = new Widget();
+        let layout = new BoxLayout();
+        parent.layout = layout;
+        layout.direction = 'top-to-bottom';
+        expect(parent.node.getAttribute('data-direction')).to.equal('top-to-bottom');
+        layout.direction = 'bottom-to-top';
+        expect(parent.node.getAttribute('data-direction')).to.equal('bottom-to-top');
+        layout.direction = 'left-to-right';
+        expect(parent.node.getAttribute('data-direction')).to.equal('left-to-right');
+        layout.direction = 'right-to-left';
+        expect(parent.node.getAttribute('data-direction')).to.equal('right-to-left');
+      });
+
       it('should post a fit request to the parent widget', (done) => {
         let parent = new Widget();
         let layout = new LogBoxLayout();
@@ -204,11 +218,11 @@ describe('@phosphor/widgets', () => {
 
     describe('#init()', () => {
 
-      it('should set the direction class on the parent widget', () => {
+      it('should set the direction attribute on the parent widget', () => {
         let parent = new Widget();
         let layout = new LogBoxLayout();
         parent.layout = layout;
-        expect(parent.hasClass('p-mod-top-to-bottom')).to.equal(true);
+        expect(parent.node.getAttribute('data-direction')).to.equal('top-to-bottom');
         expect(layout.methods).to.contain('init');
         parent.dispose();
       });

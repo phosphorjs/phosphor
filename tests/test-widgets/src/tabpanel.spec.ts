@@ -200,19 +200,19 @@ describe('@phosphor/widgets', () => {
         let panel = new TabPanel();
         expect(panel.tabPlacement).to.equal('top');
         expect(panel.tabBar.orientation).to.equal('horizontal');
-        expect(panel.tabBar.hasClass('p-mod-top')).to.equal(true);
+        expect(panel.tabBar.node.getAttribute('data-placement')).to.equal('top');
 
         panel.tabPlacement = 'bottom';
         expect(panel.tabBar.orientation).to.equal('horizontal');
-        expect(panel.tabBar.hasClass('p-mod-bottom')).to.equal(true);
+        expect(panel.tabBar.node.getAttribute('data-placement')).to.equal('bottom');
 
         panel.tabPlacement = 'left';
         expect(panel.tabBar.orientation).to.equal('vertical');
-        expect(panel.tabBar.hasClass('p-mod-left')).to.equal(true);
+        expect(panel.tabBar.node.getAttribute('data-placement')).to.equal('left');
 
         panel.tabPlacement = 'right';
         expect(panel.tabBar.orientation).to.equal('vertical');
-        expect(panel.tabBar.hasClass('p-mod-right')).to.equal(true);
+        expect(panel.tabBar.node.getAttribute('data-placement')).to.equal('right');
       });
 
     });

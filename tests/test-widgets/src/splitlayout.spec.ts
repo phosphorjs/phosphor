@@ -125,14 +125,14 @@ describe('@phosphor/widgets', () => {
         expect(layout.orientation).to.equal('vertical');
       });
 
-      it('should set the orientation class of the parent widget', () => {
+      it('should set the orientation attribute of the parent widget', () => {
         let parent = new Widget();
         let layout = new SplitLayout({ renderer });
         parent.layout = layout;
         layout.orientation = 'vertical';
-        expect(parent.hasClass('p-mod-vertical')).to.equal(true);
+        expect(parent.node.getAttribute('data-orientation')).to.equal('vertical');
         layout.orientation = 'horizontal';
-        expect(parent.hasClass('p-mod-horizontal')).to.equal(true);
+        expect(parent.node.getAttribute('data-orientation')).to.equal('horizontal');
       });
 
       it('should post a fit request to the parent widget', (done) => {
@@ -284,12 +284,12 @@ describe('@phosphor/widgets', () => {
 
     describe('#init()', () => {
 
-      it('should set the orientation class of the parent widget', () => {
+      it('should set the orientation attribute of the parent widget', () => {
         let parent = new Widget();
         let layout = new LogSplitLayout({ renderer });
         parent.layout = layout;
         expect(layout.methods).to.contain('init');
-        expect(parent.hasClass('p-mod-horizontal')).to.equal(true);
+        expect(parent.node.getAttribute('data-orientation')).to.equal('horizontal');
       });
 
       it('should attach all widgets to the DOM', () => {
