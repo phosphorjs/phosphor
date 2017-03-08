@@ -124,7 +124,7 @@ class DockLayout extends Layout {
    * This iterator includes the generated tab bars.
    */
   iter(): IIterator<Widget> {
-    return this._root ? Private.iterAllWidgets(this._root) : empty<Widget>();
+    return this._root ? this._root.iterAllWidgets() : empty<Widget>();
   }
 
   /**
@@ -136,7 +136,7 @@ class DockLayout extends Layout {
    * This iterator does not include the generated tab bars.
    */
   widgets(): IIterator<Widget> {
-    return this._root ? Private.iterUserWidgets(this._root) : empty<Widget>();
+    return this._root ? this._root.iterUserWidgets() : empty<Widget>();
   }
 
   /**
@@ -148,7 +148,7 @@ class DockLayout extends Layout {
    * This iterator does not include the user widgets.
    */
   tabBars(): IIterator<TabBar<Widget>> {
-    return this._root ? Private.iterTabBars(this._root) : empty<TabBar<Widget>>();
+    return this._root ? this._root.iterTabBars() : empty<TabBar<Widget>>();
   }
 
   /**
@@ -157,7 +157,7 @@ class DockLayout extends Layout {
    * @returns A new iterator over the handles in the layout.
    */
   handles(): IIterator<HTMLDivElement> {
-    return this._root ? Private.iterHandles(this._root) : empty<HTMLDivElement>();
+    return this._root ? this._root.iterHandles() : empty<HTMLDivElement>();
   }
 
   /**
@@ -1299,7 +1299,7 @@ namespace Private {
       tabSizer.stretch = 0;
       widgetSizer.stretch = 1;
       this.tabBar = tabBar;
-      this.sizers = [tabSizer, widgetSizer];
+      this._sizers = [tabSizer, widgetSizer];
     }
 
     /**
@@ -1313,12 +1313,35 @@ namespace Private {
     readonly tabBar: TabBar<Widget>;
 
     /**
-     * The box sizers for the tab bar and current widget.
+     * Create an iterator for all widgets in the layout tree.
      */
-    readonly sizers: [BoxSizer, BoxSizer];
+    iterAllWidgets(): IIterator<Widget> {
+      return chain(once(this.tabBar), this.iterUserWidgets());
+    }
 
     /**
-     * Fit the tab layout node.
+     * Create an iterator for the user widgets in the layout tree.
+     */
+    iterUserWidgets(): IIterator<Widget> {
+      return map(this.tabBar.titles, title => title.owner);
+    }
+
+    /**
+     * Create an iterator for the tab bars in the layout tree.
+     */
+    iterTabBars(): IIterator<TabBar<Widget>> {
+      return once(this.tabBar);
+    }
+
+    /**
+     * Create an iterator for the handles in the layout tree.
+     */
+    iterHandles(): IIterator<HTMLDivElement> {
+      return empty<HTMLDivElement>();
+    }
+
+    /**
+     * Fit the layout tree.
      */
     fit(spacing: number, items: ItemMap): ElementExt.ISizeLimits {
       // Set up the limit variables.
@@ -1335,7 +1358,7 @@ namespace Private {
       let widgetItem = current ? items.get(current.owner) : undefined;
 
       // Lookup the tab bar and widget sizers.
-      let [tabBarSizer, widgetSizer] = this.sizers;
+      let [tabBarSizer, widgetSizer] = this._sizers;
 
       // Update the tab bar limits.
       if (tabBarItem) {
@@ -1374,7 +1397,7 @@ namespace Private {
     }
 
     /**
-     * Update the tab layout node.
+     * Update the layout tree.
      */
     update(x: number, y: number, width: number, height: number, spacing: number, items: ItemMap): void {
       // Lookup the tab bar layout item.
@@ -1385,21 +1408,23 @@ namespace Private {
       let widgetItem = current ? items.get(current.owner) : undefined;
 
       // Distribute the layout space to the sizers.
-      BoxEngine.calc(this.sizers, height);
+      BoxEngine.calc(this._sizers, height);
 
       // Update the tab bar item using the computed size.
       if (tabBarItem && !tabBarItem.isHidden) {
-        let size = this.sizers[0].size;
+        let size = this._sizers[0].size;
         tabBarItem.update(x, y, width, size);
         y += size;
       }
 
       // Layout the widget using the computed size.
       if (widgetItem && !widgetItem.isHidden) {
-        let size = this.sizers[1].size;
+        let size = this._sizers[1].size;
         widgetItem.update(x, y, width, size);
       }
     }
+
+    private _sizers: [BoxSizer, BoxSizer];
   }
 
   /**
@@ -1447,7 +1472,39 @@ namespace Private {
     readonly handles: HTMLDivElement[] = [];
 
     /**
-     * Recursively fit the split layout node.
+     * Create an iterator for all widgets in the layout tree.
+     */
+    iterAllWidgets(): IIterator<Widget> {
+      let children = map(this.children, child => child.iterAllWidgets());
+      return new ChainIterator<Widget>(children);
+    }
+
+    /**
+     * Create an iterator for the user widgets in the layout tree.
+     */
+    iterUserWidgets(): IIterator<Widget> {
+      let children = map(this.children, child => child.iterUserWidgets());
+      return new ChainIterator<Widget>(children);
+    }
+
+    /**
+     * Create an iterator for the tab bars in the layout tree.
+     */
+    iterTabBars(): IIterator<TabBar<Widget>> {
+      let children = map(this.children, child => child.iterTabBars());
+      return new ChainIterator<TabBar<Widget>>(children);
+    }
+
+    /**
+     * Create an iterator for the handles in the layout tree.
+     */
+    iterHandles(): IIterator<HTMLDivElement> {
+      let children = map(this.children, child => child.iterHandles());
+      return chain(this.handles, new ChainIterator<HTMLDivElement>(children));
+    }
+
+    /**
+     * Fit the layout tree.
      */
     fit(spacing: number, items: ItemMap): ElementExt.ISizeLimits {
       // Compute the required fixed space.
@@ -1479,7 +1536,7 @@ namespace Private {
     }
 
     /**
-     * Recursively update the split layout node.
+     * Update the layout tree.
      */
     update(x: number, y: number, width: number, height: number, spacing: number, items: ItemMap): void {
       // Compute the available layout space.
@@ -1528,69 +1585,6 @@ namespace Private {
   export
   function clampSpacing(value: number): number {
     return Math.max(0, Math.floor(value));
-  }
-
-  /**
-   * Create an iterator for all widgets in the layout tree.
-   *
-   * #### Notes
-   * This includes the tab bars for the tab layout nodes.
-   */
-  export
-  function iterAllWidgets(node: LayoutNode): IIterator<Widget> {
-    let it: IIterator<Widget>;
-    if (node instanceof TabLayoutNode) {
-      it = chain(once(node.tabBar), iterUserWidgets(node));
-    } else {
-      it = new ChainIterator<Widget>(map(node.children, iterAllWidgets));
-    }
-    return it;
-  }
-
-  /**
-   * Create an iterator for the user widgets in the layout tree.
-   *
-   * #### Notes
-   * This does not include the tab bars for the tab layout nodes.
-   */
-  export
-  function iterUserWidgets(node: LayoutNode): IIterator<Widget> {
-    let it: IIterator<Widget>;
-    if (node instanceof TabLayoutNode) {
-      it = map(node.tabBar.titles, title => title.owner);
-    } else {
-      it = new ChainIterator<Widget>(map(node.children, iterUserWidgets));
-    }
-    return it;
-  }
-
-  /**
-   * Create an iterator for the tab bars in the tree.
-   */
-  export
-  function iterTabBars(node: LayoutNode): IIterator<TabBar<Widget>> {
-    let it: IIterator<TabBar<Widget>>;
-    if (node instanceof TabLayoutNode) {
-      it = once(node.tabBar);
-    } else {
-      it = new ChainIterator<TabBar<Widget>>(map(node.children, iterTabBars));
-    }
-    return it;
-  }
-
-  /**
-   * Create an iterator for the handles in the tree.
-   */
-  export
-  function iterHandles(node: LayoutNode): IIterator<HTMLDivElement> {
-    let it: IIterator<HTMLDivElement>;
-    if (node instanceof TabLayoutNode) {
-      it = empty<HTMLDivElement>();
-    } else {
-      let others = map(node.children, iterHandles);
-      it = chain(node.handles, new ChainIterator<HTMLDivElement>(others));
-    }
-    return it;
   }
 
   /**
