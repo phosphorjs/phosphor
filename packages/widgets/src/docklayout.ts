@@ -618,7 +618,7 @@ class DockLayout extends Layout {
 
     // If there are multiple children, just update the handles.
     if (splitNode.children.length > 1) {
-      Private.syncHandles(splitNode);
+      splitNode.syncHandles();
       return;
     }
 
@@ -691,7 +691,7 @@ class DockLayout extends Layout {
     childNode.parent = null;
 
     // Sync the handles on the parent node.
-    Private.syncHandles(parentNode);
+    parentNode.syncHandles();
   }
 
   /**
@@ -787,7 +787,7 @@ class DockLayout extends Layout {
       Private.normalizeSizes(root);
 
       // Finally, synchronize the visibility of the handles.
-      Private.syncHandles(root);
+      root.syncHandles();
       return;
     }
 
@@ -814,7 +814,7 @@ class DockLayout extends Layout {
       tabNode.parent = splitNode;
 
       // Finally, synchronize the visibility of the handles.
-      Private.syncHandles(splitNode);
+      splitNode.syncHandles();
       return;
     }
 
@@ -839,7 +839,7 @@ class DockLayout extends Layout {
     tabNode.parent = childNode;
 
     // Synchronize the visibility of the handles.
-    Private.syncHandles(childNode);
+    childNode.syncHandles();
 
     // Finally, add the new child node to the original split node.
     ArrayExt.insert(splitNode.children, i, childNode);
@@ -1584,6 +1584,26 @@ namespace Private {
     }
 
     /**
+     * Sync the visibility and orientation of the handles.
+     */
+    syncHandles(): void {
+      each(this.handles, (handle, i) => {
+        if (this.orientation === 'horizontal') {
+          handle.classList.remove('p-mod-vertical');
+          handle.classList.add('p-mod-horizontal');
+        } else {
+          handle.classList.remove('p-mod-horizontal');
+          handle.classList.add('p-mod-vertical');
+        }
+        if (i === this.handles.length - 1) {
+          handle.classList.add('p-mod-hidden');
+        } else {
+          handle.classList.remove('p-mod-hidden');
+        }
+      });
+    }
+
+    /**
      * Fit the layout tree.
      */
     fit(spacing: number, items: ItemMap): ElementExt.ISizeLimits {
@@ -1703,33 +1723,6 @@ namespace Private {
       node = realizeSplitAreaConfig(config, renderer);
     }
     return node;
-  }
-
-  /**
-   * Sync the visibility and orientation of split node handles.
-   */
-  export
-  function syncHandles(splitNode: SplitLayoutNode): void {
-    // Do nothing if there are no handles.
-    if (splitNode.handles.length === 0) {
-      return;
-    }
-
-    // Update the handle orientation and visibility.
-    each(splitNode.handles, (handle, i) => {
-      if (splitNode.orientation === 'horizontal') {
-        handle.classList.remove('p-mod-vertical');
-        handle.classList.add('p-mod-horizontal');
-      } else {
-        handle.classList.remove('p-mod-horizontal');
-        handle.classList.add('p-mod-vertical');
-      }
-      if (i === splitNode.handles.length - 1) {
-        handle.classList.add('p-mod-hidden');
-      } else {
-        handle.classList.remove('p-mod-hidden');
-      }
-    });
   }
 
   /**
@@ -1912,7 +1905,7 @@ namespace Private {
     });
 
     // Synchronize the handle state for the split layout node.
-    syncHandles(node);
+    node.syncHandles();
 
     // Normalize the sizes for the split layout node.
     normalizeSizes(node);
