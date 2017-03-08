@@ -206,7 +206,7 @@ class DockLayout extends Layout {
     }
 
     // Prevent sibling resizing unless needed.
-    Private.holdSizes(data.node.sizers);
+    data.node.holdSizes();
 
     // Adjust the sizers to reflect the handle movement.
     BoxEngine.adjust(data.node.sizers, data.index, delta);
@@ -243,8 +243,8 @@ class DockLayout extends Layout {
       return { version: '1', main: null };
     }
 
-    // Hold the current layout sizes.
-    Private.holdLayoutSizes(this._root);
+    // Hold the current sizes in the layout tree.
+    this._root.holdAllSizes();
 
     // Create the main area config.
     let main = this._root.createConfigV1();
@@ -600,7 +600,7 @@ class DockLayout extends Layout {
     // Otherwise, remove the tab node from its parent...
 
     // Prevent widget resizing unless needed.
-    Private.holdLayoutSizes(this._root);
+    this._root.holdAllSizes();
 
     // Clear the parent reference on the tab node.
     let splitNode = tabNode.parent!;
@@ -1371,6 +1371,15 @@ namespace Private {
     }
 
     /**
+     * Recursively hold all of the sizes in the layout tree.
+     *
+     * This ignores the sizers of tab layout nodes.
+     */
+    holdAllSizes(): void {
+      return;
+    }
+
+    /**
      * Fit the layout tree.
      */
     fit(spacing: number, items: ItemMap): ElementExt.ISizeLimits {
@@ -1604,6 +1613,25 @@ namespace Private {
     }
 
     /**
+     * Hold the current sizes of the box sizers.
+     *
+     * This sets the size hint of each sizer to its current size.
+     */
+    holdSizes(): void {
+      each(this.sizers, sizer => { sizer.sizeHint = sizer.size; });
+    }
+
+    /**
+     * Recursively hold all of the sizes in the layout tree.
+     *
+     * This ignores the sizers of tab layout nodes.
+     */
+    holdAllSizes(): void {
+      each(this.children, child => child.holdAllSizes());
+      this.holdSizes();
+    }
+
+    /**
      * Fit the layout tree.
      */
     fit(spacing: number, items: ItemMap): ElementExt.ISizeLimits {
@@ -1726,29 +1754,6 @@ namespace Private {
   }
 
   /**
-   * Hold the current sizes of an array of box sizers.
-   *
-   * This sets the size hint of each sizer to its current size.
-   */
-  export
-  function holdSizes(sizers: BoxSizer[]): void {
-    each(sizers, sizer => { sizer.sizeHint = sizer.size; });
-  }
-
-  /**
-   * Recursively hold all the layout sizes in the tree.
-   *
-   * This ignores the sizers of tab layout nodes.
-   */
-  export
-  function holdLayoutSizes(node: LayoutNode): void {
-    if (node instanceof SplitLayoutNode) {
-      each(node.children, holdLayoutSizes);
-      holdSizes(node.sizers);
-    }
-  }
-
-  /**
    * Create a box sizer with an initial size hint.
    */
   export
@@ -1771,7 +1776,7 @@ namespace Private {
     }
 
     // Hold the current sizes of the sizers.
-    holdSizes(splitNode.sizers);
+    splitNode.holdSizes();
 
     // Compute the sum of the sizes.
     let sum = reduce(splitNode.sizers, (v, sizer) => v + sizer.sizeHint, 0);
