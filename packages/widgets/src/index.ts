@@ -13,7 +13,6 @@ export * from './docklayout';
 export * from './dockpanel';
 export * from './focustracker';
 export * from './layout';
-export * from './layoutitem';
 export * from './menu';
 export * from './menubar';
 export * from './panel';

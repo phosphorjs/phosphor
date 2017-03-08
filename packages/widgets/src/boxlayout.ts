@@ -27,7 +27,7 @@ import {
 
 import {
   LayoutItem
-} from './layoutitem';
+} from './layout';
 
 import {
   PanelLayout
@@ -52,6 +52,9 @@ class BoxLayout extends PanelLayout {
     super();
     if (options.direction !== undefined) {
       this._direction = options.direction;
+    }
+    if (options.alignment !== undefined) {
+      this._alignment = options.alignment;
     }
     if (options.spacing !== undefined) {
       this._spacing = Private.clampSpacing(options.spacing);
@@ -97,6 +100,40 @@ class BoxLayout extends PanelLayout {
   }
 
   /**
+   * Get the content alignment for the box layout.
+   *
+   * #### Notes
+   * This is the alignment of the widgets in the layout direction.
+   *
+   * The alignment has no effect if the widgets can expand to fill the
+   * entire box layout.
+   */
+  get alignment(): BoxLayout.Alignment {
+    return this._alignment;
+  }
+
+  /**
+   * Set the content alignment for the box layout.
+   *
+   * #### Notes
+   * This is the alignment of the widgets in the layout direction.
+   *
+   * The alignment has no effect if the widgets can expand to fill the
+   * entire box layout.
+   */
+  set alignment(value: BoxLayout.Alignment) {
+    if (this._alignment === value) {
+      return;
+    }
+    this._alignment = value;
+    if (!this.parent) {
+      return;
+    }
+    Private.toggleAlignment(this.parent, value);
+    this.parent.update();
+  }
+
+  /**
    * Get the inter-element spacing for the box layout.
    */
   get spacing(): number {
@@ -116,40 +153,6 @@ class BoxLayout extends PanelLayout {
       return;
     }
     this.parent.fit();
-  }
-
-  /**
-   * Get the content alignment for the box layout.
-   *
-   * #### Notes
-   * This is the alignment of the widgets in the layout direction.
-   *
-   * The content alignment has no effect if the widgets can expand
-   * to fill the entire box layout.
-   */
-  get alignment(): BoxLayout.ContentAlignment {
-    return this._alignment;
-  }
-
-  /**
-   * Set the content alignment for the box layout.
-   *
-   * #### Notes
-   * This is the alignment of the widgets in the layout direction.
-   *
-   * The content alignment has no effect if the widgets can expand
-   * to fill the entire box layout.
-   */
-  set alignment(value: BoxLayout.ContentAlignment) {
-    if (this._alignment === value) {
-      return;
-    }
-    this._alignment = value;
-    if (!this.parent) {
-      return;
-    }
-    Private.toggleAlignment(this.parent, value);
-    this.parent.update();
   }
 
   /**
@@ -486,27 +489,25 @@ class BoxLayout extends PanelLayout {
         continue;
       }
 
-      // Fetch the computed size and alignment for the widget.
+      // Fetch the computed size for the widget.
       let size = this._sizers[i].size;
-      let hAlign = BoxLayout.getHorizontalAlignment(item.widget);
-      let vAlign = BoxLayout.getVerticalAlignment(item.widget);
 
       // Update the widget geometry and advance the relevant edge.
       switch (this._direction) {
       case 'left-to-right':
-        item.update(left + offset, top, size + extra, height, hAlign, vAlign);
+        item.update(left + offset, top, size + extra, height);
         left += size + extra + this._spacing;
         break;
       case 'top-to-bottom':
-        item.update(left, top + offset, width, size + extra, hAlign, vAlign);
+        item.update(left, top + offset, width, size + extra);
         top += size + extra + this._spacing;
         break;
       case 'right-to-left':
-        item.update(left - offset - size - extra, top, size + extra, height, hAlign, vAlign);
+        item.update(left - offset - size - extra, top, size + extra, height);
         left -= size + extra + this._spacing;
         break;
       case 'bottom-to-top':
-        item.update(left, top - offset - size - extra, width, size + extra, hAlign, vAlign);
+        item.update(left, top - offset - size - extra, width, size + extra);
         top -= size + extra + this._spacing;
         break;
       default:
@@ -521,7 +522,7 @@ class BoxLayout extends PanelLayout {
   private _sizers: BoxSizer[] = [];
   private _items: LayoutItem[] = [];
   private _box: ElementExt.IBoxSizing | null = null;
-  private _alignment: BoxLayout.ContentAlignment = 'start';
+  private _alignment: BoxLayout.Alignment = 'start';
   private _direction: BoxLayout.Direction = 'top-to-bottom';
 }
 
@@ -540,22 +541,10 @@ namespace BoxLayout {
   );
 
   /**
-   * A type alias for box layout content alignment.
+   * A type alias for a box layout alignment.
    */
   export
-  type ContentAlignment = 'start' | 'center' | 'end' | 'justify';
-
-  /**
-   * A type alias for a widget horizontal alignment.
-   */
-  export
-  type HorizontalAlignment = LayoutItem.HorizontalAlignment;
-
-  /**
-   * A type alias for a widget vertical alignment.
-   */
-  export
-  type VerticalAlignment = LayoutItem.VerticalAlignment;
+  type Alignment = 'start' | 'center' | 'end' | 'justify';
 
   /**
    * An options object for initializing a box layout.
@@ -568,6 +557,13 @@ namespace BoxLayout {
      * The default is `'top-to-bottom'`.
      */
     direction?: Direction;
+
+    /**
+     * The content alignment of the layout.
+     *
+     * The default is `'start'`.
+     */
+    alignment?: Alignment;
 
     /**
      * The spacing between items in the layout.
@@ -624,86 +620,6 @@ namespace BoxLayout {
   function setSizeBasis(widget: Widget, value: number): void {
     Private.sizeBasisProperty.set(widget, value);
   }
-
-  /**
-   * Get the horizontal alignment for the given widget.
-   *
-   * @param widget - The widget of interest.
-   *
-   * @returns The horizontal alignment for the widget.
-   *
-   * #### Notes
-   * If the layout width allocated to a widget is larger than its max
-   * width, the horizontal alignment controls how the widget is placed
-   * within the extra horizontal space.
-   *
-   * If the allocated width is less than the widget's max width, the
-   * horizontal alignment has no effect.
-   */
-  export
-  function getHorizontalAlignment(widget: Widget): HorizontalAlignment {
-    return Private.horizontalAlignmentProperty.get(widget);
-  }
-
-  /**
-   * Set the horizontal alignment for the given widget.
-   *
-   * @param widget - The widget of interest.
-   *
-   * @param value - The value for the alignment.
-   *
-   * #### Notes
-   * If the layout width allocated to a widget is larger than its max
-   * width, the horizontal alignment controls how the widget is placed
-   * within the extra horizontal space.
-   *
-   * If the allocated width is less than the widget's max width, the
-   * horizontal alignment has no effect.
-   */
-  export
-  function setHorizontalAlignment(widget: Widget, value: HorizontalAlignment): void {
-    Private.horizontalAlignmentProperty.set(widget, value);
-  }
-
-  /**
-   * Get the vertical alignment for the given widget.
-   *
-   * @param widget - The widget of interest.
-   *
-   * @returns The vertical alignment for the widget.
-   *
-   * #### Notes
-   * If the layout height allocated to a widget is larger than its max
-   * height, the vertical alignment controls how the widget is placed
-   * within the extra vertical space.
-   *
-   * If the allocated height is less than the widget's max height, the
-   * vertical alignment has no effect.
-   */
-  export
-  function getVerticalAlignment(widget: Widget): VerticalAlignment {
-    return Private.verticalAlignmentProperty.get(widget);
-  }
-
-  /**
-   * Set the vertical alignment for the given widget.
-   *
-   * @param widget - The widget of interest.
-   *
-   * @param value - The value for the alignment.
-   *
-   * #### Notes
-   * If the layout height allocated to a widget is larger than its max
-   * height, the vertical alignment controls how the widget is placed
-   * within the extra vertical space.
-   *
-   * If the allocated height is less than the widget's max height, the
-   * vertical alignment has no effect.
-   */
-  export
-  function setVerticalAlignment(widget: Widget, value: VerticalAlignment): void {
-    Private.verticalAlignmentProperty.set(widget, value);
-  }
 }
 
 
@@ -734,26 +650,6 @@ namespace Private {
   });
 
   /**
-   * The property descriptor for a widget horizontal alignment.
-   */
-  export
-  const horizontalAlignmentProperty = new AttachedProperty<Widget, BoxLayout.HorizontalAlignment>({
-    name: 'horizontalAlignment',
-    create: () => 'center',
-    changed: onChildAlignmentChanged
-  });
-
-  /**
-   * The property descriptor for a widget vertical alignment.
-   */
-  export
-  const verticalAlignmentProperty = new AttachedProperty<Widget, BoxLayout.VerticalAlignment>({
-    name: 'verticalAlignment',
-    create: () => 'top',
-    changed: onChildAlignmentChanged
-  });
-
-  /**
    * Test whether a direction has horizontal orientation.
    */
   export
@@ -766,21 +662,15 @@ namespace Private {
    */
   export
   function toggleDirection(widget: Widget, dir: BoxLayout.Direction): void {
-    widget.toggleClass('p-mod-left-to-right', dir === 'left-to-right');
-    widget.toggleClass('p-mod-right-to-left', dir === 'right-to-left');
-    widget.toggleClass('p-mod-top-to-bottom', dir === 'top-to-bottom');
-    widget.toggleClass('p-mod-bottom-to-top', dir === 'bottom-to-top');
+    widget.node.setAttribute('data-direction', dir);
   }
 
   /**
    * Toggle the CSS alignment class for the given widget.
    */
   export
-  function toggleAlignment(widget: Widget, align: BoxLayout.ContentAlignment): void {
-    widget.toggleClass('p-mod-align-start', align === 'start');
-    widget.toggleClass('p-mod-align-center', align === 'center');
-    widget.toggleClass('p-mod-align-end', align === 'end');
-    widget.toggleClass('p-mod-align-justify', align === 'justify');
+  function toggleAlignment(widget: Widget, align: BoxLayout.Alignment): void {
+    widget.node.setAttribute('data-alignment', align);
   }
 
   /**
@@ -797,15 +687,6 @@ namespace Private {
   function onChildSizingChanged(child: Widget): void {
     if (child.parent && child.parent.layout instanceof BoxLayout) {
       child.parent.fit();
-    }
-  }
-
-  /**
-   * The change handler for the attached alignment properties.
-   */
-  function onChildAlignmentChanged(child: Widget): void {
-    if (child.parent && child.parent.layout instanceof BoxLayout) {
-      child.parent.update();
     }
   }
 }

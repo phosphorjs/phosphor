@@ -18,12 +18,8 @@ import {
 } from '@phosphor/messaging';
 
 import {
-  AttachedProperty
-} from '@phosphor/properties';
-
-import {
   LayoutItem
-} from './layoutitem';
+} from './layout';
 
 import {
   PanelLayout
@@ -303,153 +299,15 @@ class StackedLayout extends PanelLayout {
         continue;
       }
 
-      // Fetch the alignment for the widget.
-      let hAlign = StackedLayout.getHorizontalAlignment(item.widget);
-      let vAlign = StackedLayout.getVerticalAlignment(item.widget);
-
       // Set the z-index for the widget.
       item.widget.node.style.zIndex = `${i}`;
 
       // Update the item geometry.
-      item.update(left, top, width, height, hAlign, vAlign);
+      item.update(left, top, width, height);
     }
   }
 
   private _dirty = false;
   private _items: LayoutItem[] = [];
   private _box: ElementExt.IBoxSizing | null = null;
-}
-
-
-/**
- * The namespace for the `StackedLayout` class statics.
- */
-export
-namespace StackedLayout {
-  /**
-   * A type alias for a widget horizontal alignment.
-   */
-  export
-  type HorizontalAlignment = LayoutItem.HorizontalAlignment;
-
-  /**
-   * A type alias for a widget vertical alignment.
-   */
-  export
-  type VerticalAlignment = LayoutItem.VerticalAlignment;
-
-  /**
-   * Get the horizontal alignment for the given widget.
-   *
-   * @param widget - The widget of interest.
-   *
-   * @returns The horizontal alignment for the widget.
-   *
-   * #### Notes
-   * If the layout width allocated to a widget is larger than its max
-   * width, the horizontal alignment controls how the widget is placed
-   * within the extra horizontal space.
-   *
-   * If the allocated width is less than the widget's max width, the
-   * horizontal alignment has no effect.
-   */
-  export
-  function getHorizontalAlignment(widget: Widget): HorizontalAlignment {
-    return Private.horizontalAlignmentProperty.get(widget);
-  }
-
-  /**
-   * Set the horizontal alignment for the given widget.
-   *
-   * @param widget - The widget of interest.
-   *
-   * @param value - The value for the alignment.
-   *
-   * #### Notes
-   * If the layout width allocated to a widget is larger than its max
-   * width, the horizontal alignment controls how the widget is placed
-   * within the extra horizontal space.
-   *
-   * If the allocated width is less than the widget's max width, the
-   * horizontal alignment has no effect.
-   */
-  export
-  function setHorizontalAlignment(widget: Widget, value: HorizontalAlignment): void {
-    Private.horizontalAlignmentProperty.set(widget, value);
-  }
-
-  /**
-   * Get the vertical alignment for the given widget.
-   *
-   * @param widget - The widget of interest.
-   *
-   * @returns The vertical alignment for the widget.
-   *
-   * #### Notes
-   * If the layout height allocated to a widget is larger than its max
-   * height, the vertical alignment controls how the widget is placed
-   * within the extra vertical space.
-   *
-   * If the allocated height is less than the widget's max height, the
-   * vertical alignment has no effect.
-   */
-  export
-  function getVerticalAlignment(widget: Widget): VerticalAlignment {
-    return Private.verticalAlignmentProperty.get(widget);
-  }
-
-  /**
-   * Set the vertical alignment for the given widget.
-   *
-   * @param widget - The widget of interest.
-   *
-   * @param value - The value for the alignment.
-   *
-   * #### Notes
-   * If the layout height allocated to a widget is larger than its max
-   * height, the vertical alignment controls how the widget is placed
-   * within the extra vertical space.
-   *
-   * If the allocated height is less than the widget's max height, the
-   * vertical alignment has no effect.
-   */
-  export
-  function setVerticalAlignment(widget: Widget, value: VerticalAlignment): void {
-    Private.verticalAlignmentProperty.set(widget, value);
-  }
-}
-
-
-/**
- * The namespace for the module implementation details.
- */
-namespace Private {
-  /**
-   * The property descriptor for a widget horizontal alignment.
-   */
-  export
-  const horizontalAlignmentProperty = new AttachedProperty<Widget, StackedLayout.HorizontalAlignment>({
-    name: 'horizontalAlignment',
-    create: () => 'center',
-    changed: onChildAlignmentChanged
-  });
-
-  /**
-   * The property descriptor for a widget vertical alignment.
-   */
-  export
-  const verticalAlignmentProperty = new AttachedProperty<Widget, StackedLayout.VerticalAlignment>({
-    name: 'verticalAlignment',
-    create: () => 'top',
-    changed: onChildAlignmentChanged
-  });
-
-  /**
-   * The change handler for the attached alignment properties.
-   */
-  function onChildAlignmentChanged(child: Widget): void {
-    if (child.parent && child.parent.layout instanceof StackedLayout) {
-      child.parent.update();
-    }
-  }
 }

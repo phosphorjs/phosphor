@@ -27,7 +27,7 @@ import {
 
 import {
   LayoutItem
-} from './layoutitem';
+} from './layout';
 
 import {
   PanelLayout
@@ -53,6 +53,9 @@ class SplitLayout extends PanelLayout {
     this.renderer = options.renderer;
     if (options.orientation !== undefined) {
       this._orientation = options.orientation;
+    }
+    if (options.alignment !== undefined) {
+      this._alignment = options.alignment;
     }
     if (options.spacing !== undefined) {
       this._spacing = Private.clampSpacing(options.spacing);
@@ -104,6 +107,40 @@ class SplitLayout extends PanelLayout {
   }
 
   /**
+   * Get the content alignment for the split layout.
+   *
+   * #### Notes
+   * This is the alignment of the widgets in the layout direction.
+   *
+   * The alignment has no effect if the widgets can expand  to fill the
+   * entire split layout.
+   */
+  get alignment(): SplitLayout.Alignment {
+    return this._alignment;
+  }
+
+  /**
+   * Set the content alignment for the split layout.
+   *
+   * #### Notes
+   * This is the alignment of the widgets in the layout direction.
+   *
+   * The alignment has no effect if the widgets can expand  to fill the
+   * entire split layout.
+   */
+  set alignment(value: SplitLayout.Alignment) {
+    if (this._alignment === value) {
+      return;
+    }
+    this._alignment = value;
+    if (!this.parent) {
+      return;
+    }
+    Private.toggleAlignment(this.parent, value);
+    this.parent.update();
+  }
+
+  /**
    * Get the inter-element spacing for the split layout.
    */
   get spacing(): number {
@@ -123,40 +160,6 @@ class SplitLayout extends PanelLayout {
       return;
     }
     this.parent.fit();
-  }
-
-  /**
-   * Get the content alignment for the split layout.
-   *
-   * #### Notes
-   * This is the alignment of the widgets in the layout direction.
-   *
-   * The content alignment has no effect if the widgets can expand
-   * to fill the entire split layout.
-   */
-  get alignment(): SplitLayout.ContentAlignment {
-    return this._alignment;
-  }
-
-  /**
-   * Set the content alignment for the split layout.
-   *
-   * #### Notes
-   * This is the alignment of the widgets in the layout direction.
-   *
-   * The content alignment has no effect if the widgets can expand
-   * to fill the entire split layout.
-   */
-  set alignment(value: SplitLayout.ContentAlignment) {
-    if (this._alignment === value) {
-      return;
-    }
-    this._alignment = value;
-    if (!this.parent) {
-      return;
-    }
-    Private.toggleAlignment(this.parent, value);
-    this.parent.update();
   }
 
   /**
@@ -621,17 +624,15 @@ class SplitLayout extends PanelLayout {
         continue;
       }
 
-      // Fetch the computed size and alignment for the widget.
+      // Fetch the computed size for the widget.
       let size = this._sizers[i].size;
-      let hAlign = SplitLayout.getHorizontalAlignment(item.widget);
-      let vAlign = SplitLayout.getVerticalAlignment(item.widget);
 
       // Fetch the style for the handle.
       let handleStyle = this._handles[i].style;
 
       // Update the widget and handle, and advance the relevant edge.
       if (horz) {
-        item.update(left + offset, top, size + extra, height, hAlign, vAlign);
+        item.update(left + offset, top, size + extra, height);
         left += size + extra;
         handleStyle.top = `${top}px`;
         handleStyle.left = `${left + offset}px`;
@@ -639,7 +640,7 @@ class SplitLayout extends PanelLayout {
         handleStyle.height = `${height}px`;
         left += this._spacing;
       } else {
-        item.update(left, top + offset, width, size + extra, hAlign, vAlign);
+        item.update(left, top + offset, width, size + extra);
         top += size + extra;
         handleStyle.top = `${top + offset}px`;
         handleStyle.left = `${left}px`;
@@ -658,7 +659,7 @@ class SplitLayout extends PanelLayout {
   private _items: LayoutItem[] = [];
   private _handles: HTMLDivElement[] = [];
   private _box: ElementExt.IBoxSizing | null = null;
-  private _alignment: SplitLayout.ContentAlignment = 'start';
+  private _alignment: SplitLayout.Alignment = 'start';
   private _orientation: SplitLayout.Orientation = 'horizontal';
 }
 
@@ -675,22 +676,10 @@ namespace SplitLayout {
   type Orientation = 'horizontal' | 'vertical';
 
   /**
-   * A type alias for split layout content alignment.
+   * A type alias for a split layout alignment.
    */
   export
-  type ContentAlignment = 'start' | 'center' | 'end' | 'justify';
-
-  /**
-   * A type alias for a widget horizontal alignment.
-   */
-  export
-  type HorizontalAlignment = LayoutItem.HorizontalAlignment;
-
-  /**
-   * A type alias for a widget vertical alignment.
-   */
-  export
-  type VerticalAlignment = LayoutItem.VerticalAlignment;
+  type Alignment = 'start' | 'center' | 'end' | 'justify';
 
   /**
    * An options object for initializing a split layout.
@@ -708,6 +697,13 @@ namespace SplitLayout {
      * The default is `'horizontal'`.
      */
     orientation?: Orientation;
+
+    /**
+     * The content alignment of the layout.
+     *
+     * The default is `'start'`.
+     */
+    alignment?: Alignment;
 
     /**
      * The spacing between items in the layout.
@@ -753,86 +749,6 @@ namespace SplitLayout {
   function setStretch(widget: Widget, value: number): void {
     Private.stretchProperty.set(widget, value);
   }
-
-  /**
-   * Get the horizontal alignment for the given widget.
-   *
-   * @param widget - The widget of interest.
-   *
-   * @returns The horizontal alignment for the widget.
-   *
-   * #### Notes
-   * If the layout width allocated to a widget is larger than its max
-   * width, the horizontal alignment controls how the widget is placed
-   * within the extra horizontal space.
-   *
-   * If the allocated width is less than the widget's max width, the
-   * horizontal alignment has no effect.
-   */
-  export
-  function getHorizontalAlignment(widget: Widget): HorizontalAlignment {
-    return Private.horizontalAlignmentProperty.get(widget);
-  }
-
-  /**
-   * Set the horizontal alignment for the given widget.
-   *
-   * @param widget - The widget of interest.
-   *
-   * @param value - The value for the alignment.
-   *
-   * #### Notes
-   * If the layout width allocated to a widget is larger than its max
-   * width, the horizontal alignment controls how the widget is placed
-   * within the extra horizontal space.
-   *
-   * If the allocated width is less than the widget's max width, the
-   * horizontal alignment has no effect.
-   */
-  export
-  function setHorizontalAlignment(widget: Widget, value: HorizontalAlignment): void {
-    Private.horizontalAlignmentProperty.set(widget, value);
-  }
-
-  /**
-   * Get the vertical alignment for the given widget.
-   *
-   * @param widget - The widget of interest.
-   *
-   * @returns The vertical alignment for the widget.
-   *
-   * #### Notes
-   * If the layout height allocated to a widget is larger than its max
-   * height, the vertical alignment controls how the widget is placed
-   * within the extra vertical space.
-   *
-   * If the allocated height is less than the widget's max height, the
-   * vertical alignment has no effect.
-   */
-  export
-  function getVerticalAlignment(widget: Widget): VerticalAlignment {
-    return Private.verticalAlignmentProperty.get(widget);
-  }
-
-  /**
-   * Set the vertical alignment for the given widget.
-   *
-   * @param widget - The widget of interest.
-   *
-   * @param value - The value for the alignment.
-   *
-   * #### Notes
-   * If the layout height allocated to a widget is larger than its max
-   * height, the vertical alignment controls how the widget is placed
-   * within the extra vertical space.
-   *
-   * If the allocated height is less than the widget's max height, the
-   * vertical alignment has no effect.
-   */
-  export
-  function setVerticalAlignment(widget: Widget, value: VerticalAlignment): void {
-    Private.verticalAlignmentProperty.set(widget, value);
-  }
 }
 
 
@@ -849,26 +765,6 @@ namespace Private {
     create: () => 0,
     coerce: (owner, value) => Math.max(0, Math.floor(value)),
     changed: onChildSizingChanged
-  });
-
-  /**
-   * The property descriptor for a widget horizontal alignment.
-   */
-  export
-  const horizontalAlignmentProperty = new AttachedProperty<Widget, SplitLayout.HorizontalAlignment>({
-    name: 'horizontalAlignment',
-    create: () => 'center',
-    changed: onChildAlignmentChanged
-  });
-
-  /**
-   * The property descriptor for a widget vertical alignment.
-   */
-  export
-  const verticalAlignmentProperty = new AttachedProperty<Widget, SplitLayout.VerticalAlignment>({
-    name: 'verticalAlignment',
-    create: () => 'top',
-    changed: onChildAlignmentChanged
   });
 
   /**
@@ -896,19 +792,15 @@ namespace Private {
    */
   export
   function toggleOrientation(widget: Widget, orient: SplitLayout.Orientation): void {
-    widget.toggleClass('p-mod-horizontal', orient === 'horizontal');
-    widget.toggleClass('p-mod-vertical', orient === 'vertical');
+    widget.node.setAttribute('data-orientation', orient);
   }
 
   /**
    * Toggle the CSS alignment class for the given widget.
    */
   export
-  function toggleAlignment(widget: Widget, align: SplitLayout.ContentAlignment): void {
-    widget.toggleClass('p-mod-align-start', align === 'start');
-    widget.toggleClass('p-mod-align-center', align === 'center');
-    widget.toggleClass('p-mod-align-end', align === 'end');
-    widget.toggleClass('p-mod-align-justify', align === 'justify');
+  function toggleAlignment(widget: Widget, align: SplitLayout.Alignment): void {
+    widget.node.setAttribute('data-alignment', align);
   }
 
   /**
@@ -946,15 +838,6 @@ namespace Private {
   function onChildSizingChanged(child: Widget): void {
     if (child.parent && child.parent.layout instanceof SplitLayout) {
       child.parent.fit();
-    }
-  }
-
-  /**
-   * The change handler for the attached alignment properties.
-   */
-  function onChildAlignmentChanged(child: Widget): void {
-    if (child.parent && child.parent.layout instanceof SplitLayout) {
-      child.parent.update();
     }
   }
 }

@@ -51,6 +51,32 @@ class BoxPanel extends Panel {
   }
 
   /**
+   * Get the content alignment for the box panel.
+   *
+   * #### Notes
+   * This is the alignment of the widgets in the layout direction.
+   *
+   * The alignment has no effect if the widgets can expand to fill the
+   * entire box layout.
+   */
+  get alignment(): BoxPanel.Alignment {
+    return (this.layout as BoxLayout).alignment;
+  }
+
+  /**
+   * Set the content alignment for the box panel.
+   *
+   * #### Notes
+   * This is the alignment of the widgets in the layout direction.
+   *
+   * The alignment has no effect if the widgets can expand to fill the
+   * entire box layout.
+   */
+  set alignment(value: BoxPanel.Alignment) {
+    (this.layout as BoxLayout).alignment = value;
+  }
+
+  /**
    * Get the inter-element spacing for the box panel.
    */
   get spacing(): number {
@@ -62,32 +88,6 @@ class BoxPanel extends Panel {
    */
   set spacing(value: number) {
     (this.layout as BoxLayout).spacing = value;
-  }
-
-  /**
-   * Get the content alignment for the box panel.
-   *
-   * #### Notes
-   * This is the alignment of the widgets in the layout direction.
-   *
-   * The content alignment has no effect if the widgets can expand
-   * to fill the entire box panel.
-   */
-  get alignment(): BoxPanel.ContentAlignment {
-    return (this.layout as BoxLayout).alignment;
-  }
-
-  /**
-   * Set the content alignment for the box panel.
-   *
-   * #### Notes
-   * This is the alignment of the widgets in the layout direction.
-   *
-   * The content alignment has no effect if the widgets can expand
-   * to fill the entire box panel.
-   */
-  set alignment(value: BoxPanel.ContentAlignment) {
-    (this.layout as BoxLayout).alignment = value;
   }
 
   /**
@@ -118,22 +118,10 @@ namespace BoxPanel {
   type Direction = BoxLayout.Direction;
 
   /**
-   * A type alias for box panel content alignment.
+   * A type alias for a box panel alignment.
    */
   export
-  type ContentAlignment = BoxLayout.ContentAlignment;
-
-  /**
-   * A type alias for a widget horizontal alignment.
-   */
-  export
-  type HorizontalAlignment = BoxLayout.HorizontalAlignment;
-
-  /**
-   * A type alias for a widget vertical alignment.
-   */
-  export
-  type VerticalAlignment = BoxLayout.VerticalAlignment;
+  type Alignment = BoxLayout.Alignment;
 
   /**
    * An options object for initializing a box panel.
@@ -146,6 +134,13 @@ namespace BoxPanel {
      * The default is `'top-to-bottom'`.
      */
     direction?: Direction;
+
+    /**
+     * The content alignment of the panel.
+     *
+     * The default is `'start'`.
+     */
+    alignment?: Alignment;
 
     /**
      * The spacing between items in the panel.
@@ -162,134 +157,6 @@ namespace BoxPanel {
      * The default is a new `BoxLayout`.
      */
     layout?: BoxLayout;
-  }
-
-  /**
-   * Get the box panel stretch factor for the given widget.
-   *
-   * @param widget - The widget of interest.
-   *
-   * @returns The box panel stretch factor for the widget.
-   */
-  export
-  function getStretch(widget: Widget): number {
-    return BoxLayout.getStretch(widget);
-  }
-
-  /**
-   * Set the box panel stretch factor for the given widget.
-   *
-   * @param widget - The widget of interest.
-   *
-   * @param value - The value for the stretch factor.
-   */
-  export
-  function setStretch(widget: Widget, value: number): void {
-    BoxLayout.setStretch(widget, value);
-  }
-
-  /**
-   * Get the box panel size basis for the given widget.
-   *
-   * @param widget - The widget of interest.
-   *
-   * @returns The box panel size basis for the widget.
-   */
-  export
-  function getSizeBasis(widget: Widget): number {
-    return BoxLayout.getSizeBasis(widget);
-  }
-
-  /**
-   * Set the box panel size basis for the given widget.
-   *
-   * @param widget - The widget of interest.
-   *
-   * @param value - The value for the size basis.
-   */
-  export
-  function setSizeBasis(widget: Widget, value: number): void {
-    BoxLayout.setSizeBasis(widget, value);
-  }
-
-  /**
-   * Get the horizontal alignment for the given widget.
-   *
-   * @param widget - The widget of interest.
-   *
-   * @returns The horizontal alignment for the widget.
-   *
-   * #### Notes
-   * If the layout width allocated to a widget is larger than its max
-   * width, the horizontal alignment controls how the widget is placed
-   * within the extra horizontal space.
-   *
-   * If the allocated width is less than the widget's max width, the
-   * horizontal alignment has no effect.
-   */
-  export
-  function getHorizontalAlignment(widget: Widget): HorizontalAlignment {
-    return BoxLayout.getHorizontalAlignment(widget);
-  }
-
-  /**
-   * Set the horizontal alignment for the given widget.
-   *
-   * @param widget - The widget of interest.
-   *
-   * @param value - The value for the alignment.
-   *
-   * #### Notes
-   * If the layout width allocated to a widget is larger than its max
-   * width, the horizontal alignment controls how the widget is placed
-   * within the extra horizontal space.
-   *
-   * If the allocated width is less than the widget's max width, the
-   * horizontal alignment has no effect.
-   */
-  export
-  function setHorizontalAlignment(widget: Widget, value: HorizontalAlignment): void {
-    BoxLayout.setHorizontalAlignment(widget, value);
-  }
-
-  /**
-   * Get the vertical alignment for the given widget.
-   *
-   * @param widget - The widget of interest.
-   *
-   * @returns The vertical alignment for the widget.
-   *
-   * #### Notes
-   * If the layout height allocated to a widget is larger than its max
-   * height, the vertical alignment controls how the widget is placed
-   * within the extra vertical space.
-   *
-   * If the allocated height is less than the widget's max height, the
-   * vertical alignment has no effect.
-   */
-  export
-  function getVerticalAlignment(widget: Widget): VerticalAlignment {
-    return BoxLayout.getVerticalAlignment(widget);
-  }
-
-  /**
-   * Set the vertical alignment for the given widget.
-   *
-   * @param widget - The widget of interest.
-   *
-   * @param value - The value for the alignment.
-   *
-   * #### Notes
-   * If the layout height allocated to a widget is larger than its max
-   * height, the vertical alignment controls how the widget is placed
-   * within the extra vertical space.
-   *
-   * If the allocated height is less than the widget's max height, the
-   * vertical alignment has no effect.
-   */
-  export
-  function setVerticalAlignment(widget: Widget, value: VerticalAlignment): void {
-    BoxLayout.setVerticalAlignment(widget, value);
   }
 }
 

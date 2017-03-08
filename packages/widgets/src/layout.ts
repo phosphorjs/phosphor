@@ -14,6 +14,10 @@ import {
 } from '@phosphor/disposable';
 
 import {
+  ElementExt
+} from '@phosphor/domutils';
+
+import {
   Message, MessageLoop
 } from '@phosphor/messaging';
 
@@ -411,4 +415,371 @@ abstract class Layout implements IIterable<Widget>, IDisposable {
 
   private _disposed = false;
   private _parent: Widget | null = null;
+}
+
+
+/**
+ * The namespace for the `Layout` class statics.
+ */
+export
+namespace Layout {
+  /**
+   * A type alias for the horizontal alignment of a widget.
+   */
+  export
+  type HorizontalAlignment = 'left' | 'center' | 'right';
+
+  /**
+   * A type alias for the vertical alignment of a widget.
+   */
+  export
+  type VerticalAlignment = 'top' | 'center' | 'bottom';
+
+  /**
+   * Get the horizontal alignment for a widget.
+   *
+   * @param widget - The widget of interest.
+   *
+   * @returns The horizontal alignment for the widget.
+   *
+   * #### Notes
+   * If the layout width allocated to a widget is larger than its max
+   * width, the horizontal alignment controls how the widget is placed
+   * within the extra horizontal space.
+   *
+   * If the allocated width is less than the widget's max width, the
+   * horizontal alignment has no effect.
+   *
+   * Some layout implementations may ignore horizontal alignment.
+   */
+  export
+  function getHorizontalAlignment(widget: Widget): HorizontalAlignment {
+    return Private.horizontalAlignmentProperty.get(widget);
+  }
+
+  /**
+   * Set the horizontal alignment for a widget.
+   *
+   * @param widget - The widget of interest.
+   *
+   * @param value - The value for the horizontal alignment.
+   *
+   * #### Notes
+   * If the layout width allocated to a widget is larger than its max
+   * width, the horizontal alignment controls how the widget is placed
+   * within the extra horizontal space.
+   *
+   * If the allocated width is less than the widget's max width, the
+   * horizontal alignment has no effect.
+   *
+   * Some layout implementations may ignore horizontal alignment.
+   *
+   * Changing the horizontal alignment will post an `update-request`
+   * message to widget's parent, provided the parent has a layout
+   * installed.
+   */
+  export
+  function setHorizontalAlignment(widget: Widget, value: HorizontalAlignment): void {
+    Private.horizontalAlignmentProperty.set(widget, value);
+  }
+
+  /**
+   * Get the vertical alignment for a widget.
+   *
+   * @param widget - The widget of interest.
+   *
+   * @returns The vertical alignment for the widget.
+   *
+   * #### Notes
+   * If the layout height allocated to a widget is larger than its max
+   * height, the vertical alignment controls how the widget is placed
+   * within the extra vertical space.
+   *
+   * If the allocated height is less than the widget's max height, the
+   * vertical alignment has no effect.
+   *
+   * Some layout implementations may ignore vertical alignment.
+   */
+  export
+  function getVerticalAlignment(widget: Widget): VerticalAlignment {
+    return Private.verticalAlignmentProperty.get(widget);
+  }
+
+  /**
+   * Set the vertical alignment for a widget.
+   *
+   * @param widget - The widget of interest.
+   *
+   * @param value - The value for the vertical alignment.
+   *
+   * #### Notes
+   * If the layout height allocated to a widget is larger than its max
+   * height, the vertical alignment controls how the widget is placed
+   * within the extra vertical space.
+   *
+   * If the allocated height is less than the widget's max height, the
+   * vertical alignment has no effect.
+   *
+   * Some layout implementations may ignore vertical alignment.
+   *
+   * Changing the horizontal alignment will post an `update-request`
+   * message to widget's parent, provided the parent has a layout
+   * installed.
+   */
+  export
+  function setVerticalAlignment(widget: Widget, value: VerticalAlignment): void {
+    Private.verticalAlignmentProperty.set(widget, value);
+  }
+}
+
+
+/**
+ * An object which assists in the absolute layout of widgets.
+ *
+ * #### Notes
+ * This class is useful when implementing a layout which arranges its
+ * widgets using absolute positioning.
+ *
+ * This class is used by nearly all of the built-in Phosphor layouts.
+ */
+export
+class LayoutItem implements IDisposable {
+  /**
+   * Construct a new layout item.
+   *
+   * @param widget - The widget to be managed by the item.
+   *
+   * #### Notes
+   * The widget will be set to absolute positioning.
+   */
+  constructor(widget: Widget) {
+    this.widget = widget;
+    this.widget.node.style.position = 'absolute';
+  }
+
+  /**
+   * Dispose of the the layout item.
+   *
+   * #### Notes
+   * This will reset the positioning of the widget.
+   */
+  dispose(): void {
+    // Do nothing if the item is already disposed.
+    if (this._disposed) {
+      return;
+    }
+
+    // Mark the item as disposed.
+    this._disposed = true;
+
+    // Reset the widget style.
+    let style = this.widget.node.style;
+    style.position = '';
+    style.top = '';
+    style.left = '';
+    style.width = '';
+    style.height = '';
+  }
+
+  /**
+   * The widget managed by the layout item.
+   */
+  readonly widget: Widget;
+
+  /**
+   * The computed minimum width of the widget.
+   *
+   * #### Notes
+   * This value can be updated by calling the `fit` method.
+   */
+  minWidth = 0;
+
+  /**
+   * The computed minimum height of the widget.
+   *
+   * #### Notes
+   * This value can be updated by calling the `fit` method.
+   */
+  minHeight = 0;
+
+  /**
+   * The computed maximum width of the widget.
+   *
+   * #### Notes
+   * This value can be updated by calling the `fit` method.
+   */
+  maxWidth = Infinity;
+
+  /**
+   * The computed maximum height of the widget.
+   *
+   * #### Notes
+   * This value can be updated by calling the `fit` method.
+   */
+  maxHeight = Infinity;
+
+  /**
+   * Whether the layout item is disposed.
+   */
+  get isDisposed(): boolean {
+    return this._disposed;
+  }
+
+  /**
+   * Whether the managed widget is hidden.
+   */
+  get isHidden(): boolean {
+    return this.widget.isHidden;
+  }
+
+  /**
+   * Whether the managed widget is visible.
+   */
+  get isVisible(): boolean {
+    return this.widget.isVisible;
+  }
+
+  /**
+   * Whether the managed widget is attached.
+   */
+  get isAttached(): boolean {
+    return this.widget.isAttached;
+  }
+
+  /**
+   * Update the computed size limits of the managed widget.
+   */
+  fit(): void {
+    let limits = ElementExt.sizeLimits(this.widget.node);
+    this.minWidth = limits.minWidth;
+    this.minHeight = limits.minHeight;
+    this.maxWidth = limits.maxWidth;
+    this.maxHeight = limits.maxHeight;
+  }
+
+  /**
+   * Update the position and size of the managed widget.
+   *
+   * @param left - The left edge position of the layout box.
+   *
+   * @param top - The top edge position of the layout box.
+   *
+   * @param width - The width of the layout box.
+   *
+   * @param height - The height of the layout box.
+   */
+  update(left: number, top: number, width: number, height: number): void {
+    // Clamp the size to the computed size limits.
+    let clampW = Math.max(this.minWidth, Math.min(width, this.maxWidth));
+    let clampH = Math.max(this.minHeight, Math.min(height, this.maxHeight));
+
+    // Ajdust the left edge for the horizontal alignment, if needed.
+    if (clampW < width) {
+      switch (Layout.getHorizontalAlignment(this.widget)) {
+      case 'left':
+        break;
+      case 'center':
+        left += (width - clampW) / 2;
+        break;
+      case 'right':
+        left += width - clampW;
+        break;
+      default:
+        throw 'unreachable';
+      }
+    }
+
+    // Ajdust the top edge for the vertical alignment, if needed.
+    if (clampH < height) {
+      switch (Layout.getVerticalAlignment(this.widget)) {
+      case 'top':
+        break;
+      case 'center':
+        top += (height - clampH) / 2;
+        break;
+      case 'bottom':
+        top += height - clampH;
+        break;
+      default:
+        throw 'unreachable';
+      }
+    }
+
+    // Set up the resize variables.
+    let resized = false;
+    let style = this.widget.node.style;
+
+    // Update the top edge of the widget if needed.
+    if (this._top !== top) {
+      this._top = top;
+      style.top = `${top}px`;
+    }
+
+    // Update the left edge of the widget if needed.
+    if (this._left !== left) {
+      this._left = left;
+      style.left = `${left}px`;
+    }
+
+    // Update the width of the widget if needed.
+    if (this._width !== clampW) {
+      resized = true;
+      this._width = clampW;
+      style.width = `${clampW}px`;
+    }
+
+    // Update the height of the widget if needed.
+    if (this._height !== clampH) {
+      resized = true;
+      this._height = clampH;
+      style.height = `${clampH}px`;
+    }
+
+    // Send a resize message to the widget if needed.
+    if (resized) {
+      let msg = new Widget.ResizeMessage(clampW, clampH);
+      MessageLoop.sendMessage(this.widget, msg);
+    }
+  }
+
+  private _top = NaN;
+  private _left = NaN;
+  private _width = NaN;
+  private _height = NaN;
+  private _disposed = false;
+}
+
+
+/**
+ * The namespace for the module implementation details.
+ */
+namespace Private {
+  /**
+   * The attached property for a widget horizontal alignment.
+   */
+  export
+  const horizontalAlignmentProperty = new AttachedProperty<Widget, Layout.HorizontalAlignment>({
+    name: 'horizontalAlignment',
+    create: () => 'center',
+    changed: onAlignmentChanged
+  });
+
+  /**
+   * The attached property for a widget vertical alignment.
+   */
+  export
+  const verticalAlignmentProperty = new AttachedProperty<Widget, Layout.VerticalAlignment>({
+    name: 'verticalAlignment',
+    create: () => 'top',
+    changed: onAlignmentChanged
+  });
+
+  /**
+   * The change handler for the attached alignment properties.
+   */
+  function onAlignmentChanged(child: Widget): void {
+    if (child.parent && child.parent.layout) {
+      child.parent.update();
+    }
+  }
 }
