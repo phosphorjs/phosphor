@@ -772,7 +772,7 @@ class DockLayout extends Layout {
       let i = after ? root.children.length : 0;
 
       // Normalize the split node.
-      Private.normalizeSizes(root);
+      root.normalizeSizes();
 
       // Create the sizer for new tab node.
       let sizer = Private.createSizer(refNode ? 1 : Private.GOLDEN_RATIO);
@@ -784,7 +784,7 @@ class DockLayout extends Layout {
       tabNode.parent = root;
 
       // Re-normalize the split node to maintain the ratios.
-      Private.normalizeSizes(root);
+      root.normalizeSizes();
 
       // Finally, synchronize the visibility of the handles.
       root.syncHandles();
@@ -801,7 +801,7 @@ class DockLayout extends Layout {
       let i = splitNode.children.indexOf(refNode);
 
       // Normalize the split node.
-      Private.normalizeSizes(splitNode);
+      splitNode.normalizeSizes();
 
       // Consume half the space for the insert location.
       let s = splitNode.sizers[i].sizeHint /= 2;
@@ -1632,6 +1632,37 @@ namespace Private {
     }
 
     /**
+     * Normalize the sizes of the split layout node.
+     */
+    normalizeSizes(): void {
+      // Bail early if the sizers are empty.
+      let n = this.sizers.length;
+      if (n === 0) {
+        return;
+      }
+
+      // Hold the current sizes of the sizers.
+      this.holdSizes();
+
+      // Compute the sum of the sizes.
+      let sum = reduce(this.sizers, (v, sizer) => v + sizer.sizeHint, 0);
+
+      // Normalize the sizes based on the sum.
+      if (sum === 0) {
+        each(this.sizers, sizer => {
+          sizer.size = sizer.sizeHint = 1 / n;
+        });
+      } else {
+        each(this.sizers, sizer => {
+          sizer.size = sizer.sizeHint /= sum;
+        });
+      }
+
+      // Mark the sizes as normalized.
+      this.normalized = true;
+    }
+
+    /**
      * Fit the layout tree.
      */
     fit(spacing: number, items: ItemMap): ElementExt.ISizeLimits {
@@ -1765,38 +1796,6 @@ namespace Private {
   }
 
   /**
-   * Normalize the sizes of a split layout node.
-   */
-  export
-  function normalizeSizes(splitNode: SplitLayoutNode): void {
-    // Bail early if the sizers are empty.
-    let n = splitNode.sizers.length;
-    if (n === 0) {
-      return;
-    }
-
-    // Hold the current sizes of the sizers.
-    splitNode.holdSizes();
-
-    // Compute the sum of the sizes.
-    let sum = reduce(splitNode.sizers, (v, sizer) => v + sizer.sizeHint, 0);
-
-    // Normalize the sizes based on the sum.
-    if (sum === 0) {
-      each(splitNode.sizers, sizer => {
-        sizer.size = sizer.sizeHint = 1 / n;
-      });
-    } else {
-      each(splitNode.sizers, sizer => {
-        sizer.size = sizer.sizeHint /= sum;
-      });
-    }
-
-    // Mark the split node as normalized.
-    splitNode.normalized = true;
-  }
-
-  /**
    * Snap the normalized sizes of a split layout node.
    */
   function createNormalizedSizes(splitNode: SplitLayoutNode): number[] {
@@ -1913,7 +1912,7 @@ namespace Private {
     node.syncHandles();
 
     // Normalize the sizes for the split layout node.
-    normalizeSizes(node);
+    node.normalizeSizes();
 
     // Return the new split layout node.
     return node;
