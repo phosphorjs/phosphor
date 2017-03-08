@@ -421,7 +421,7 @@ namespace TabPanel {
  */
 namespace Private {
   /**
-   * Toggle the CSS placement class for the given tab bar.
+   * Toggle the CSS placement attribute for the given tab bar.
    */
   export
   function togglePlacement(bar: TabBar<any>, plc: TabPanel.TabPlacement): void {

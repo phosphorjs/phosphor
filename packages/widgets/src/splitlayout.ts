@@ -788,7 +788,7 @@ namespace Private {
   }
 
   /**
-   * Toggle the CSS orientation class for the given widget.
+   * Toggle the CSS orientation attribute for the given widget.
    */
   export
   function toggleOrientation(widget: Widget, orient: SplitLayout.Orientation): void {
@@ -796,7 +796,7 @@ namespace Private {
   }
 
   /**
-   * Toggle the CSS alignment class for the given widget.
+   * Toggle the CSS alignment attribute for the given widget.
    */
   export
   function toggleAlignment(widget: Widget, align: SplitLayout.Alignment): void {

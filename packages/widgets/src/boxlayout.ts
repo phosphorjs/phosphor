@@ -658,7 +658,7 @@ namespace Private {
   }
 
   /**
-   * Toggle the CSS direction class for the given widget.
+   * Toggle the CSS direction attribute for the given widget.
    */
   export
   function toggleDirection(widget: Widget, dir: BoxLayout.Direction): void {
@@ -666,7 +666,7 @@ namespace Private {
   }
 
   /**
-   * Toggle the CSS alignment class for the given widget.
+   * Toggle the CSS alignment attribute for the given widget.
    */
   export
   function toggleAlignment(widget: Widget, align: BoxLayout.Alignment): void {

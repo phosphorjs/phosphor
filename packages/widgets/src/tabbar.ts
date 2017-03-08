@@ -1588,7 +1588,7 @@ namespace Private {
   }
 
   /**
-   * Toggle the CSS orientation class for the given tab bar.
+   * Toggle the CSS orientation attribute for the given tab bar.
    */
   export
   function toggleOrientation(bar: TabBar<any>, orient: TabBar.Orientation): void {
