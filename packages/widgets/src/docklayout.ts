@@ -22,7 +22,7 @@ import {
 } from './boxengine';
 
 import {
-  Layout
+  Layout, LayoutItem
 } from './layout';
 
 import {
@@ -66,9 +66,13 @@ class DockLayout extends Layout {
     // Get an iterator over the widgets in the layout.
     let widgets = this.iter();
 
-    // Clear the layout before disposing the widgets.
+    // Dispose of the layout items.
+    this._items.forEach(item => { item.dispose(); });
+
+    // Clear the layout state before disposing the widgets.
     this._box = null;
     this._root = null;
+    this._items.clear();
 
     // Dispose of the widgets contained in the old layout root.
     each(widgets, widget => { widget.dispose(); });
@@ -447,8 +451,8 @@ class DockLayout extends Layout {
       return;
     }
 
-    // Prepare the layout geometry for the widget.
-    Widget.prepareGeometry(widget);
+    // Create the layout item for the widget.
+    this._items.set(widget, new LayoutItem(widget));
 
     // Send a `'before-attach'` message if the parent is attached.
     if (this.parent!.isAttached) {
@@ -491,8 +495,10 @@ class DockLayout extends Layout {
       MessageLoop.sendMessage(widget, Widget.Msg.AfterDetach);
     }
 
-    // Reset the layout geometry for the widget.
-    Widget.resetGeometry(widget);
+    // Delete the layout item for the widget.
+    let item = this._items.get(widget)!;
+    this._items.delete(widget);
+    item.dispose();
   }
 
   /**
@@ -871,34 +877,26 @@ class DockLayout extends Layout {
    * Fit the layout to the total size required by the widgets.
    */
   private _fit(): void {
-    // Set up the size limits.
+    // Set up the computed minimum size.
     let minW = 0;
     let minH = 0;
-    let maxW = Infinity;
-    let maxH = Infinity;
 
-    // Update the limits for the root layout node.
+    // Update the size limits for the layout tree.
     if (this._root) {
-      let limits = Private.fitLayoutNode(this._root, this._spacing);
-      minW = limits.minWidth;
-      minH = limits.minHeight;
-      maxW = limits.maxWidth;
-      maxH = limits.maxHeight;
+      let size = Private.fitLayoutNode(this._root, this._spacing, this._items);
+      minW = size.width;
+      minH = size.height;
     }
 
-    // Update the box sizing and add it to the size limits.
+    // Update the box sizing and add it to the computed min size.
     let box = this._box = ElementExt.boxSizing(this.parent!.node);
     minW += box.horizontalSum;
     minH += box.verticalSum;
-    maxW += box.horizontalSum;
-    maxH += box.verticalSum;
 
-    // Update the parent's size constraints.
+    // Update the parent's min size constraints.
     let style = this.parent!.node.style;
     style.minWidth = `${minW}px`;
     style.minHeight = `${minH}px`;
-    style.maxWidth = maxW === Infinity ? 'none' : `${maxW}px`;
-    style.maxHeight = maxH === Infinity ? 'none' : `${maxH}px`;
 
     // Set the dirty flag to ensure only a single update occurs.
     this._dirty = true;
@@ -949,8 +947,10 @@ class DockLayout extends Layout {
     let width = offsetWidth - this._box.horizontalSum;
     let height = offsetHeight - this._box.verticalSum;
 
-    // Update the geometry of the root layout node.
-    Private.updateLayoutNode(this._root, x, y, width, height, this._spacing);
+    // Update the geometry of the layout tree.
+    Private.updateLayoutNode(
+      this._root, x, y, width, height, this._spacing, this._items
+    );
   }
 
   /**
@@ -1038,6 +1038,7 @@ class DockLayout extends Layout {
   private _spacing: number;
   private _root: Private.LayoutNode | null = null;
   private _box: ElementExt.IBoxSizing | null = null;
+  private _items: Private.ItemMap = new Map<Widget, LayoutItem>();
 }
 
 
@@ -1279,6 +1280,18 @@ namespace Private {
   type Orientation = 'horizontal' | 'vertical';
 
   /**
+   * A type alias for a layout item map.
+   */
+  export
+  type ItemMap = Map<Widget, LayoutItem>;
+
+  /**
+   * A type alias for a simple size object.
+   */
+  export
+  type Size = { width: number, height: number };
+
+  /**
    * A layout node which holds the data for a tabbed area.
    */
   export
@@ -1505,25 +1518,25 @@ namespace Private {
    * Recursively fit the given layout node.
    */
   export
-  function fitLayoutNode(node: LayoutNode, spacing: number): ElementExt.ISizeLimits {
-    let limits: ElementExt.ISizeLimits;
+  function fitLayoutNode(node: LayoutNode, spacing: number, items: ItemMap): Size {
+    let size: Size;
     if (node instanceof TabLayoutNode) {
-      limits = fitTabNode(node);
+      size = fitTabNode(node, items);
     } else {
-      limits = fitSplitNode(node, spacing);
+      size = fitSplitNode(node, spacing, items);
     }
-    return limits;
+    return size;
   }
 
   /**
    * Recursively update the given layout node.
    */
   export
-  function updateLayoutNode(node: LayoutNode, x: number, y: number, width: number, height: number, spacing: number): void {
+  function updateLayoutNode(node: LayoutNode, x: number, y: number, width: number, height: number, spacing: number, items: ItemMap): void {
     if (node instanceof TabLayoutNode) {
-      updateTabNode(node, x, y, width, height);
+      updateTabNode(node, x, y, width, height, items);
     } else {
-      updateSplitNode(node, x, y, width, height, spacing);
+      updateSplitNode(node, x, y, width, height, spacing, items);
     }
   }
 
@@ -1675,142 +1688,125 @@ namespace Private {
   /**
    * Fit the given tab layout node.
    */
-  function fitTabNode(tabNode: TabLayoutNode): ElementExt.ISizeLimits {
-    // Set up the limit variables.
-    let minWidth = 0;
-    let minHeight = 0;
-    let maxWidth = Infinity;
-    let maxHeight = Infinity;
+  function fitTabNode(tabNode: TabLayoutNode, items: ItemMap): Size {
+    // Set up the result variables.
+    let width = 0;
+    let height = 0;
 
-    // Lookup common variables.
-    let tabBar = tabNode.tabBar;
-    let tabSizer = tabNode.sizers[0];
-    let widgetSizer = tabNode.sizers[1];
-    let currentTitle = tabBar.currentTitle;
-    let widget = currentTitle ? currentTitle.owner : null;
+    // Lookup the tab bar layout item.
+    let tabBarItem = items.get(tabNode.tabBar);
 
-    // Adjust the starting max height if a widget is visible.
-    if (!tabBar.isHidden || (widget && !widget.isHidden)) {
-      maxHeight = 0;
+    // Lookup the widget layout item.
+    let current = tabNode.tabBar.currentTitle;
+    let widgetItem = current ? items.get(current.owner) : undefined;
+
+    // Lookup the tab bar and widget sizers.
+    let [tabBarSizer, widgetSizer] = tabNode.sizers;
+
+    // Update the tab bar limits.
+    if (tabBarItem) {
+      tabBarItem.fit();
+    }
+
+    // Update the widget limits.
+    if (widgetItem) {
+      widgetItem.fit();
     }
 
     // Update the results and sizer for the tab bar.
-    if (!tabBar.isHidden) {
-      let limits = ElementExt.sizeLimits(tabBar.node);
-      minWidth = Math.max(minWidth, limits.minWidth);
-      maxWidth = Math.min(maxWidth, limits.maxWidth);
-      minHeight += limits.minHeight;
-      maxHeight += limits.maxHeight;
-      tabSizer.minSize = limits.minHeight;
-      tabSizer.maxSize = limits.maxHeight;
+    if (tabBarItem && !tabBarItem.isHidden) {
+      width = Math.max(width, tabBarItem.minWidth);
+      height += tabBarItem.minHeight;
+      tabBarSizer.minSize = tabBarItem.minHeight;
+      tabBarSizer.maxSize = tabBarItem.maxHeight;
     } else {
-      tabSizer.minSize = 0;
-      tabSizer.maxSize = 0;
+      tabBarSizer.minSize = 0;
+      tabBarSizer.maxSize = 0;
     }
 
     // Update the results and sizer for the current widget.
-    if (widget && !widget.isHidden) {
-      let limits = ElementExt.sizeLimits(widget.node);
-      minWidth = Math.max(minWidth, limits.minWidth);
-      maxWidth = Math.min(maxWidth, limits.maxWidth);
-      minHeight += limits.minHeight;
-      maxHeight += limits.maxHeight;
-      widgetSizer.minSize = limits.minHeight;
-      widgetSizer.maxSize = limits.maxHeight;
+    if (widgetItem && !widgetItem.isHidden) {
+      width = Math.max(width, widgetItem.minWidth);
+      height += widgetItem.minHeight;
+      widgetSizer.minSize = widgetItem.minHeight;
+      widgetSizer.maxSize = Infinity;
     } else {
       widgetSizer.minSize = 0;
-      widgetSizer.maxSize = 0;
+      widgetSizer.maxSize = Infinity;
     }
 
     // Return the computed size limits for the layout node.
-    return { minWidth, minHeight, maxWidth, maxHeight };
+    return { width, height };
   }
 
   /**
    * Recursively fit the given split layout node.
    */
-  function fitSplitNode(splitNode: SplitLayoutNode, spacing: number): ElementExt.ISizeLimits {
-    // Set up the limit variables.
-    let minWidth = 0;
-    let minHeight = 0;
-    let maxWidth = Infinity;
-    let maxHeight = Infinity;
-
-    // Compute common values.
+  function fitSplitNode(splitNode: SplitLayoutNode, spacing: number, items: ItemMap): Size {
+    // Compute the required fixed space.
     let horizontal = splitNode.orientation === 'horizontal';
     let fixed = Math.max(0, splitNode.children.length - 1) * spacing;
 
-    // Adjust the starting limits for the orientation.
-    if (horizontal) {
-      minWidth = fixed;
-      maxWidth = fixed;
-    } else {
-      minHeight = fixed;
-      maxHeight = fixed;
-    }
+    // Set up the limit variables.
+    let width = horizontal ? fixed : 0;
+    let height = horizontal ? 0 : fixed;
 
-    // Adjust the limits and sizer for each child area.
+    // Adjust the computed size and sizer for each child node.
     for (let i = 0, n = splitNode.children.length; i < n; ++i) {
-      let sizer = splitNode.sizers[i];
-      let child = splitNode.children[i];
-      let limits = fitLayoutNode(child, spacing);
+      let size = fitLayoutNode(splitNode.children[i], spacing, items);
       if (horizontal) {
-        minHeight = Math.max(minHeight, limits.minHeight);
-        maxHeight = Math.min(maxHeight, limits.maxHeight);
-        minWidth += limits.minWidth;
-        maxWidth += limits.maxWidth;
-        sizer.minSize = limits.minWidth;
-        sizer.maxSize = limits.maxWidth;
+        height = Math.max(height, size.height);
+        width += size.width;
+        splitNode.sizers[i].minSize = size.width;
       } else {
-        minWidth = Math.max(minWidth, limits.minWidth);
-        maxWidth = Math.min(maxWidth, limits.maxWidth);
-        minHeight += limits.minHeight;
-        maxHeight += limits.maxHeight;
-        sizer.minSize = limits.minHeight;
-        sizer.maxSize = limits.maxHeight;
+        width = Math.max(width, size.width);
+        height += size.height;
+        splitNode.sizers[i].minSize = size.height;
       }
     }
 
-    // Return the computed size limits for the layout node.
-    return { minWidth, minHeight, maxWidth, maxHeight };
+    // Return the computed min size for the layout node.
+    return { width, height };
   }
 
   /**
    * Update the given tab layout node.
    */
-  function updateTabNode(tabNode: TabLayoutNode, x: number, y: number, width: number, height: number): void {
-    // Lookup common variables.
-    let tabBar = tabNode.tabBar;
-    let tabSizer = tabNode.sizers[0];
-    let widgetSizer = tabNode.sizers[1];
-    let currentTitle = tabBar.currentTitle;
-    let widget = currentTitle ? currentTitle.owner : null;
+  function updateTabNode(tabNode: TabLayoutNode, x: number, y: number, width: number, height: number, items: ItemMap): void {
+    // Lookup the tab bar layout item.
+    let tabBarItem = items.get(tabNode.tabBar);
+
+    // Lookup the widget layout item.
+    let current = tabNode.tabBar.currentTitle;
+    let widgetItem = current ? items.get(current.owner) : undefined;
 
     // Distribute the layout space to the sizers.
     BoxEngine.calc(tabNode.sizers, height);
 
-    // Layout the tab bar using the computed size.
-    if (!tabBar.isHidden) {
-      Widget.setGeometry(tabBar, x, y, width, tabSizer.size);
-      y += tabSizer.size;
+    // Update the tab bar item using the computed size.
+    if (tabBarItem && !tabBarItem.isHidden) {
+      let size = tabNode.sizers[0].size;
+      tabBarItem.update(x, y, width, size);
+      y += size;
     }
 
     // Layout the widget using the computed size.
-    if (widget && !widget.isHidden) {
-      Widget.setGeometry(widget, x, y, width, widgetSizer.size);
+    if (widgetItem && !widgetItem.isHidden) {
+      let size = tabNode.sizers[1].size;
+      widgetItem.update(x, y, width, size);
     }
   }
 
   /**
    * Update the given split layout node.
    */
-  function updateSplitNode(splitNode: SplitLayoutNode, x: number, y: number, width: number, height: number, spacing: number): void {
+  function updateSplitNode(splitNode: SplitLayoutNode, x: number, y: number, width: number, height: number, spacing: number, items: ItemMap): void {
     // Compute the available layout space.
     let horizontal = splitNode.orientation === 'horizontal';
     let fixed = Math.max(0, splitNode.children.length - 1) * spacing;
     let space = Math.max(0, (horizontal ? width : height) - fixed);
 
-    // De-normalize the split node if needed.
+    // De-normalize the sizes if needed.
     if (splitNode.normalized) {
       each(splitNode.sizers, sizer => { sizer.sizeHint *= space; });
       splitNode.normalized = false;
@@ -1819,13 +1815,13 @@ namespace Private {
     // Distribute the layout space to the sizers.
     BoxEngine.calc(splitNode.sizers, space);
 
-    // Update the geometry of the child areas and handles.
+    // Update the geometry of the child nodes and handles.
     for (let i = 0, n = splitNode.children.length; i < n; ++i) {
       let child = splitNode.children[i];
       let size = splitNode.sizers[i].size;
       let handleStyle = splitNode.handles[i].style;
       if (horizontal) {
-        updateLayoutNode(child, x, y, size, height, spacing);
+        updateLayoutNode(child, x, y, size, height, spacing, items);
         x += size;
         handleStyle.top = `${y}px`;
         handleStyle.left = `${x}px`;
@@ -1833,7 +1829,7 @@ namespace Private {
         handleStyle.height = `${height}px`;
         x += spacing;
       } else {
-        updateLayoutNode(child, x, y, width, size, spacing);
+        updateLayoutNode(child, x, y, width, size, spacing, items);
         y += size;
         handleStyle.top = `${y}px`;
         handleStyle.left = `${x}px`;
