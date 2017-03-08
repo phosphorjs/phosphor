@@ -247,7 +247,7 @@ class DockLayout extends Layout {
     Private.holdLayoutSizes(this._root);
 
     // Create the main area config.
-    let main = Private.createAreaConfig(this._root);
+    let main = this._root.createConfigV1();
 
     // Return the layout config.
     return { version: '1', main };
@@ -716,7 +716,7 @@ class DockLayout extends Layout {
 
     // Use the first tab node as the ref node if needed.
     if (!refNode) {
-      refNode = Private.firstTabNode(this._root)!;
+      refNode = this._root.findFirstTabNode()!;
     }
 
     // If the widget is not contained in the ref node, ensure it is
@@ -1355,6 +1355,22 @@ namespace Private {
     }
 
     /**
+     * Find the first tab layout node in a layout tree.
+     */
+    findFirstTabNode(): TabLayoutNode | null {
+      return this;
+    }
+
+    /**
+     * Create a configuration object for the layout tree.
+     */
+    createConfigV1(): DockLayout.ITabAreaConfig {
+      let widgets = this.tabBar.titles.map(title => title.owner);
+      let currentIndex = this.tabBar.currentIndex;
+      return { type: 'tab-area', widgets, currentIndex };
+    }
+
+    /**
      * Fit the layout tree.
      */
     fit(spacing: number, items: ItemMap): ElementExt.ISizeLimits {
@@ -1548,6 +1564,26 @@ namespace Private {
     }
 
     /**
+     * Find the first tab layout node in a layout tree.
+     */
+    findFirstTabNode(): TabLayoutNode | null {
+      if (this.children.length === 0) {
+        return null;
+      }
+      return this.children[0].findFirstTabNode();
+    }
+
+    /**
+     * Create a configuration object for the layout tree.
+     */
+    createConfigV1(): DockLayout.ISplitAreaConfig {
+      let orientation = this.orientation;
+      let sizes = createNormalizedSizes(this);
+      let children = this.children.map(child => child.createConfigV1());
+      return { type: 'split-area', orientation, children, sizes };
+    }
+
+    /**
      * Fit the layout tree.
      */
     fit(spacing: number, items: ItemMap): ElementExt.ISizeLimits {
@@ -1629,42 +1665,6 @@ namespace Private {
   export
   function clampSpacing(value: number): number {
     return Math.max(0, Math.floor(value));
-  }
-
-  /**
-   * Find the first tab layout node in a layout tree.
-   */
-  export
-  function firstTabNode(node: LayoutNode): TabLayoutNode | null {
-    // Return the node if it's a tab layout node.
-    if (node instanceof TabLayoutNode) {
-      return node;
-    }
-
-    // Recursively search the children for a tab layout node.
-    for (let i = 0, n = node.children.length; i < n; ++i) {
-      let result = firstTabNode(node.children[i]);
-      if (result) {
-        return result;
-      }
-    }
-
-    // Otherwise, there is no tab layout node.
-    return null;
-  }
-
-  /**
-   * Create an area config object for a dock layout node.
-   */
-  export
-  function createAreaConfig(node: LayoutNode): DockLayout.AreaConfig {
-    let config: DockLayout.AreaConfig;
-    if (node instanceof TabLayoutNode) {
-      config = createTabAreaConfig(node);
-    } else {
-      config = createSplitAreaConfig(node);
-    }
-    return config;
   }
 
   /**
@@ -1796,25 +1796,6 @@ namespace Private {
 
     // Mark the split node as normalized.
     splitNode.normalized = true;
-  }
-
-  /**
-   * Create the tab area configuration for a tab layout node.
-   */
-  function createTabAreaConfig(node: TabLayoutNode): DockLayout.ITabAreaConfig {
-    let widgets = node.tabBar.titles.map(title => title.owner);
-    let currentIndex = node.tabBar.currentIndex;
-    return { type: 'tab-area', widgets, currentIndex };
-  }
-
-  /**
-   * Create the split area configuration for a split layout node.
-   */
-  function createSplitAreaConfig(node: SplitLayoutNode): DockLayout.ISplitAreaConfig {
-    let orientation = node.orientation;
-    let children = node.children.map(createAreaConfig);
-    let sizes = createNormalizedSizes(node);
-    return { type: 'split-area', orientation, children, sizes };
   }
 
   /**
