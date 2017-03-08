@@ -187,7 +187,7 @@ class DockLayout extends Layout {
     }
 
     // Lookup the split node for the handle.
-    let data = Private.findSplitNode(this._root, handle);
+    let data = this._root.findSplitNode(handle);
     if (!data) {
       return;
     }
@@ -346,7 +346,7 @@ class DockLayout extends Layout {
     // Find the tab node which holds the reference widget.
     let refNode: Private.TabLayoutNode | null = null;
     if (this._root && ref) {
-      refNode = Private.findTabNode(this._root, ref);
+      refNode = this._root.findTabNode(ref);
     }
 
     // Throw an error if the reference widget is invalid.
@@ -573,7 +573,7 @@ class DockLayout extends Layout {
     }
 
     // Find the tab node which contains the given widget.
-    let tabNode = Private.findTabNode(this._root, widget);
+    let tabNode = this._root.findTabNode(widget);
 
     // Bail early if the tab node is not found.
     if (!tabNode) {
@@ -1341,6 +1341,20 @@ namespace Private {
     }
 
     /**
+     * Find the tab layout node which contains the given widget.
+     */
+    findTabNode(widget: Widget): TabLayoutNode | null {
+      return this.tabBar.titles.indexOf(widget.title) !== -1 ? this : null;
+    }
+
+    /**
+     * Find the split layout node which contains the given handle.
+     */
+    findSplitNode(handle: HTMLDivElement): { index: number, node: SplitLayoutNode } | null {
+      return null;
+    }
+
+    /**
      * Fit the layout tree.
      */
     fit(spacing: number, items: ItemMap): ElementExt.ISizeLimits {
@@ -1504,6 +1518,36 @@ namespace Private {
     }
 
     /**
+     * Find the tab layout node which contains the given widget.
+     */
+    findTabNode(widget: Widget): TabLayoutNode | null {
+      for (let i = 0, n = this.children.length; i < n; ++i) {
+        let result = this.children[i].findTabNode(widget);
+        if (result) {
+          return result;
+        }
+      }
+      return null;
+    }
+
+    /**
+     * Find the split layout node which contains the given handle.
+     */
+    findSplitNode(handle: HTMLDivElement): { index: number, node: SplitLayoutNode } | null {
+      let index = this.handles.indexOf(handle);
+      if (index !== -1) {
+        return { index, node: this };
+      }
+      for (let i = 0, n = this.children.length; i < n; ++i) {
+        let result = this.children[i].findSplitNode(handle);
+        if (result) {
+          return result;
+        }
+      }
+      return null;
+    }
+
+    /**
      * Fit the layout tree.
      */
     fit(spacing: number, items: ItemMap): ElementExt.ISizeLimits {
@@ -1606,56 +1650,6 @@ namespace Private {
     }
 
     // Otherwise, there is no tab layout node.
-    return null;
-  }
-
-  /**
-   * Find the tab layout node which contains the given widget.
-   */
-  export
-  function findTabNode(node: LayoutNode, widget: Widget): TabLayoutNode | null {
-    // Return the tab node if it contains the widget.
-    if (node instanceof TabLayoutNode) {
-      return node.tabBar.titles.indexOf(widget.title) !== -1 ? node : null;
-    }
-
-    // Recursively search the children of a split layout node.
-    for (let i = 0, n = node.children.length; i < n; ++i) {
-      let result = findTabNode(node.children[i], widget);
-      if (result) {
-        return result;
-      }
-    }
-
-    // Otherwise, the widget does not exist in the tree.
-    return null;
-  }
-
-  /**
-   * Find the split layout node which contains the given handle.
-   */
-  export
-  function findSplitNode(node: LayoutNode, handle: HTMLDivElement): { index: number, node: SplitLayoutNode } | null {
-    // Bail if the node is not a split node.
-    if (node instanceof TabLayoutNode) {
-      return null;
-    }
-
-    // Return the pair if the node contains the handle.
-    let index = node.handles.indexOf(handle);
-    if (index !== -1) {
-      return { index, node };
-    }
-
-    // Recursively search the child split nodes.
-    for (let i = 0, n = node.children.length; i < n; ++i) {
-      let result = findSplitNode(node.children[i], handle);
-      if (result) {
-        return result;
-      }
-    }
-
-    // Otherwise, the handle does not exist in the tree.
     return null;
   }
 
