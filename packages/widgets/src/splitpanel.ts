@@ -430,6 +430,30 @@ namespace SplitPanel {
    */
   export
   const defaultRenderer = new Renderer();
+
+  /**
+   * Get the split panel stretch factor for the given widget.
+   *
+   * @param widget - The widget of interest.
+   *
+   * @returns The split panel stretch factor for the widget.
+   */
+  export
+  function getStretch(widget: Widget): number {
+    return SplitLayout.getStretch(widget);
+  }
+
+  /**
+   * Set the split panel stretch factor for the given widget.
+   *
+   * @param widget - The widget of interest.
+   *
+   * @param value - The value for the stretch factor.
+   */
+  export
+  function setStretch(widget: Widget, value: number): void {
+    SplitLayout.setStretch(widget, value);
+  }
 }
 
 

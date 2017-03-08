@@ -158,6 +158,54 @@ namespace BoxPanel {
      */
     layout?: BoxLayout;
   }
+
+  /**
+   * Get the box panel stretch factor for the given widget.
+   *
+   * @param widget - The widget of interest.
+   *
+   * @returns The box panel stretch factor for the widget.
+   */
+  export
+  function getStretch(widget: Widget): number {
+    return BoxLayout.getStretch(widget);
+  }
+
+  /**
+   * Set the box panel stretch factor for the given widget.
+   *
+   * @param widget - The widget of interest.
+   *
+   * @param value - The value for the stretch factor.
+   */
+  export
+  function setStretch(widget: Widget, value: number): void {
+    BoxLayout.setStretch(widget, value);
+  }
+
+  /**
+   * Get the box panel size basis for the given widget.
+   *
+   * @param widget - The widget of interest.
+   *
+   * @returns The box panel size basis for the widget.
+   */
+  export
+  function getSizeBasis(widget: Widget): number {
+    return BoxLayout.getSizeBasis(widget);
+  }
+
+  /**
+   * Set the box panel size basis for the given widget.
+   *
+   * @param widget - The widget of interest.
+   *
+   * @param value - The value for the size basis.
+   */
+  export
+  function setSizeBasis(widget: Widget, value: number): void {
+    BoxLayout.setSizeBasis(widget, value);
+  }
 }
 
 
