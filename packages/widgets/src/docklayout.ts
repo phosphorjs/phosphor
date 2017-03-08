@@ -1587,7 +1587,7 @@ namespace Private {
      */
     createConfigV1(): DockLayout.ISplitAreaConfig {
       let orientation = this.orientation;
-      let sizes = createNormalizedSizes(this);
+      let sizes = this.createNormalizedSizes();
       let children = this.children.map(child => child.createConfigV1());
       return { type: 'split-area', orientation, children, sizes };
     }
@@ -1660,6 +1660,33 @@ namespace Private {
 
       // Mark the sizes as normalized.
       this.normalized = true;
+    }
+
+    /**
+     * Snap the normalized sizes of the split layout node.
+     */
+    createNormalizedSizes(): number[] {
+      // Bail early if the sizers are empty.
+      let n = this.sizers.length;
+      if (n === 0) {
+        return [];
+      }
+
+      // Grab the current sizes of the sizers.
+      let sizes = this.sizers.map(sizer => sizer.size);
+
+      // Compute the sum of the sizes.
+      let sum = reduce(sizes, (v, size) => v + size, 0);
+
+      // Normalize the sizes based on the sum.
+      if (sum === 0) {
+        each(sizes, (size, i) => { sizes[i] = 1 / n; });
+      } else {
+        each(sizes, (size, i) => { sizes[i] = size / sum; });
+      }
+
+      // Return the normalized sizes.
+      return sizes;
     }
 
     /**
@@ -1793,33 +1820,6 @@ namespace Private {
     sizer.sizeHint = hint;
     sizer.size = hint;
     return sizer;
-  }
-
-  /**
-   * Snap the normalized sizes of a split layout node.
-   */
-  function createNormalizedSizes(splitNode: SplitLayoutNode): number[] {
-    // Bail early if the sizers are empty.
-    let n = splitNode.sizers.length;
-    if (n === 0) {
-      return [];
-    }
-
-    // Grab the current sizes of the sizers.
-    let sizes = splitNode.sizers.map(sizer => sizer.size);
-
-    // Compute the sum of the sizes.
-    let sum = reduce(sizes, (v, size) => v + size, 0);
-
-    // Normalize the sizes based on the sum.
-    if (sum === 0) {
-      each(sizes, (size, i) => { sizes[i] = 1 / n; });
-    } else {
-      each(sizes, (size, i) => { sizes[i] = size / sum; });
-    }
-
-    // Return the normalized sizes.
-    return sizes;
   }
 
   /**
