@@ -1313,36 +1313,9 @@ namespace Private {
   export
   function validateAreaConfig(config: DockLayout.AreaConfig, widgetSet: Set<Widget>): void {
     if (config.type === 'tab-area') {
-      validateTabArea(config);
+      validateTabAreaConfig(config, widgetSet);
     } else {
-      validateSplitArea(config);
-    }
-
-    function validateTabArea(cfg: DockLayout.ITabAreaConfig): void {
-      each(cfg.widgets, widget => {
-        if (widgetSet.has(widget)) {
-          throw new Error('Tab area config has duplicate widget.');
-        }
-        widgetSet.add(widget);
-      });
-    }
-
-    function validateSplitArea(cfg: DockLayout.ISplitAreaConfig): void {
-      if (cfg.sizes.length !== cfg.children.length) {
-        throw new Error('Split area config has mismatched sizes count.');
-      }
-      if (cfg.sizes.some(size => size < 0)) {
-        throw new Error('Split area config has negative sizes.');
-      }
-      each(cfg.children, child => {
-        if (child.type === 'tab-area') {
-          validateTabArea(child);
-        } else if (child.orientation === cfg.orientation) {
-          throw new Error('Child split area config has invalid orientation.');
-        } else {
-          validateSplitArea(child);
-        }
-      });
+      validateSplitAreaConfig(config, widgetSet);
     }
   }
 
@@ -1353,68 +1326,11 @@ namespace Private {
   function realizeAreaConfig(config: DockLayout.AreaConfig, renderer: DockLayout.IRenderer): LayoutNode {
     let node: LayoutNode;
     if (config.type === 'tab-area') {
-      node = realizeTabArea(config);
+      node = realizeTabAreaConfig(config, renderer);
     } else {
-      node = realizeSplitArea(config);
+      node = realizeSplitAreaConfig(config, renderer);
     }
     return node;
-
-    function realizeTabArea(cfg: DockLayout.ITabAreaConfig): TabLayoutNode {
-      // Create the tab bar for the layout node.
-      let tabBar = renderer.createTabBar();
-
-      // Hide each widget and add it to the tab bar.
-      each(cfg.widgets, widget => {
-        widget.hide();
-        tabBar.addTab(widget.title);
-      });
-
-      // Set the current index of the tab bar.
-      let n = tabBar.titles.length;
-      tabBar.currentIndex = Math.max(0, Math.min(cfg.currentIndex, n - 1));
-
-      // Return the new tab layout node.
-      return new TabLayoutNode(tabBar);
-    }
-
-    function realizeSplitArea(cfg: DockLayout.ISplitAreaConfig): SplitLayoutNode {
-      // Create the split layout node.
-      let node = new SplitLayoutNode(cfg.orientation);
-
-      // Add each child to the split layout node.
-      each(cfg.children, (child, i) => {
-        // Recursively create the child layout node.
-        let childNode: LayoutNode;
-        if (child.type === 'tab-area') {
-          childNode = realizeTabArea(child);
-        } else {
-          childNode = realizeSplitArea(child);
-        }
-
-        // Create the sizer for the child.
-        let sizer = createSizer(cfg.sizes[i]);
-
-        // Create the handle for the child.
-        let handle = renderer.createHandle();
-
-        // Add the child data to the layout node.
-        node.children.push(childNode);
-        node.handles.push(handle);
-        node.sizers.push(sizer);
-
-        // Update the parent for the child node.
-        childNode.parent = node;
-      });
-
-      // Synchronize the handle state for the split layout node.
-      node.syncHandles();
-
-      // Normalize the sizes for the split layout node.
-      node.normalizeSizes();
-
-      // Return the new split layout node.
-      return node;
-    }
   }
 
   /**
@@ -1433,7 +1349,7 @@ namespace Private {
       tabSizer.stretch = 0;
       widgetSizer.stretch = 1;
       this.tabBar = tabBar;
-      this._sizers = [tabSizer, widgetSizer];
+      this.sizers = [tabSizer, widgetSizer];
     }
 
     /**
@@ -1445,6 +1361,11 @@ namespace Private {
      * The tab bar for the layout node.
      */
     readonly tabBar: TabBar<Widget>;
+
+    /**
+     * The sizers for the layout node.
+     */
+    readonly sizers: [BoxSizer, BoxSizer];
 
     /**
      * Create an iterator for all widgets in the layout tree.
@@ -1531,7 +1452,7 @@ namespace Private {
       let widgetItem = current ? items.get(current.owner) : undefined;
 
       // Lookup the tab bar and widget sizers.
-      let [tabBarSizer, widgetSizer] = this._sizers;
+      let [tabBarSizer, widgetSizer] = this.sizers;
 
       // Update the tab bar limits.
       if (tabBarItem) {
@@ -1581,23 +1502,21 @@ namespace Private {
       let widgetItem = current ? items.get(current.owner) : undefined;
 
       // Distribute the layout space to the sizers.
-      BoxEngine.calc(this._sizers, height);
+      BoxEngine.calc(this.sizers, height);
 
       // Update the tab bar item using the computed size.
       if (tabBarItem && !tabBarItem.isHidden) {
-        let size = this._sizers[0].size;
+        let size = this.sizers[0].size;
         tabBarItem.update(x, y, width, size);
         y += size;
       }
 
       // Layout the widget using the computed size.
       if (widgetItem && !widgetItem.isHidden) {
-        let size = this._sizers[1].size;
+        let size = this.sizers[1].size;
         widgetItem.update(x, y, width, size);
       }
     }
-
-    private _sizers: [BoxSizer, BoxSizer];
   }
 
   /**
@@ -1897,5 +1816,91 @@ namespace Private {
         }
       }
     }
+  }
+
+  /**
+   * Validate a tab area config object and collect the visited widgets.
+   */
+  function validateTabAreaConfig(config: DockLayout.ITabAreaConfig, widgetSet: Set<Widget>): void {
+    each(config.widgets, widget => {
+      if (widgetSet.has(widget)) {
+        throw new Error('Tab area config has duplicate widget.');
+      }
+      widgetSet.add(widget);
+    });
+  }
+
+  /**
+   * Validate a split area config object and collect the visited widgets.
+   */
+  function validateSplitAreaConfig(config: DockLayout.ISplitAreaConfig, widgetSet: Set<Widget>): void {
+    if (config.sizes.length !== config.children.length) {
+      throw new Error('Split area config has mismatched sizes count.');
+    }
+    if (config.sizes.some(size => size < 0)) {
+      throw new Error('Split area config has negative sizes.');
+    }
+    each(config.children, child => {
+      if (child.type === 'tab-area') {
+        validateTabAreaConfig(child, widgetSet);
+      } else if (child.orientation === config.orientation) {
+        throw new Error('Child split area config has invalid orientation.');
+      } else {
+        validateSplitAreaConfig(child, widgetSet);
+      }
+    });
+  }
+
+  /**
+   * Convert a tab area config into a layout tree.
+   */
+  function realizeTabAreaConfig(config: DockLayout.ITabAreaConfig, renderer: DockLayout.IRenderer): TabLayoutNode {
+    // Create the tab bar for the layout node.
+    let tabBar = renderer.createTabBar();
+
+    // Hide each widget and add it to the tab bar.
+    each(config.widgets, widget => {
+      widget.hide();
+      tabBar.addTab(widget.title);
+    });
+
+    // Set the current index of the tab bar.
+    tabBar.currentIndex = config.currentIndex;
+
+    // Return the new tab layout node.
+    return new TabLayoutNode(tabBar);
+  }
+
+  /**
+   * Convert a split area config into a layout tree.
+   */
+  function realizeSplitAreaConfig(config: DockLayout.ISplitAreaConfig, renderer: DockLayout.IRenderer): SplitLayoutNode {
+    // Create the split layout node.
+    let node = new SplitLayoutNode(config.orientation);
+
+    // Add each child to the layout node.
+    each(config.children, (child, i) => {
+      // Create the child data for the layout node.
+      let childNode = realizeAreaConfig(child, renderer);
+      let sizer = createSizer(config.sizes[i]);
+      let handle = renderer.createHandle();
+
+      // Add the child data to the layout node.
+      node.children.push(childNode);
+      node.handles.push(handle);
+      node.sizers.push(sizer);
+
+      // Update the parent for the child node.
+      childNode.parent = node;
+    });
+
+    // Synchronize the handle state for the layout node.
+    node.syncHandles();
+
+    // Normalize the sizes for the layout node.
+    node.normalizeSizes();
+
+    // Return the new layout node.
+    return node;
   }
 }
