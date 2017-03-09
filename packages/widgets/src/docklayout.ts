@@ -426,6 +426,53 @@ class DockLayout extends Layout {
   }
 
   /**
+   * Find the tab area which contains the given client position.
+   *
+   * @param clientX - The client X position of interest.
+   *
+   * @param clientY - The client Y position of interest.
+   *
+   * @returns The geometry of the tab area at the given position, or
+   *   `null` if there is no tab area at the given position.
+   */
+  hitTestTabAreas(clientX: number, clientY: number): DockLayout.ITabAreaGeometry | null {
+    // Bail early if hit testing cannot produce valid results.
+    if (!this._root || !this.parent || !this.parent.isVisible) {
+      return null;
+    }
+
+    // Ensure the parent box sizing data is computed.
+    if (!this._box) {
+      this._box = ElementExt.boxSizing(this.parent.node);
+    }
+
+    // Convert from client to local coordinates.
+    let rect = this.parent.node.getBoundingClientRect();
+    let x = clientX - rect.left - this._box.borderLeft;
+    let y = clientY - rect.top - this._box.borderTop;
+
+    // Find the tab layout node at the local position.
+    let tabNode = this._root.hitTestTabNodes(x, y);
+
+    // Bail if a tab layout node was not found.
+    if (!tabNode) {
+      return null;
+    }
+
+    // Extract the data from the tab node.
+    let { tabBar, top, left, width, height } = tabNode;
+
+    // Compute the right and bottom edges of the tab area.
+    let borderWidth = this._box.borderLeft + this._box.borderRight;
+    let borderHeight = this._box.borderTop + this._box.borderBottom;
+    let right = rect.width - borderWidth - (left + width);
+    let bottom = rect.height - borderHeight - (top + height);
+
+    // Return the hit test results.
+    return { tabBar, x, y, top, left, right, bottom, width, height };
+  }
+
+  /**
    * Perform layout initialization which requires the parent widget.
    */
   protected init(): void {
@@ -1259,6 +1306,87 @@ namespace DockLayout {
   type LayoutConfigVersionMap = {
     '1': ILayoutConfigV1;
   };
+
+  /**
+   * An object which represents the geometry of a tab area.
+   */
+  export
+  interface ITabAreaGeometry {
+    /**
+     * The tab bar for the tab area.
+     */
+    tabBar: TabBar<Widget>;
+
+    /**
+     * The local X position of the hit test in the dock area.
+     *
+     * #### Notes
+     * This is the distance from the left edge of the layout parent
+     * widget, to the local X coordinate of the hit test query.
+     */
+    x: number;
+
+    /**
+     * The local Y position of the hit test in the dock area.
+     *
+     * #### Notes
+     * This is the distance from the top edge of the layout parent
+     * widget, to the local Y coordinate of the hit test query.
+     */
+    y: number;
+
+    /**
+     * The local coordinate of the top edge of the tab area.
+     *
+     * #### Notes
+     * This is the distance from the top edge of the layout parent
+     * widget, to the top edge of the tab area.
+     */
+    top: number;
+
+    /**
+     * The local coordinate of the left edge of the tab area.
+     *
+     * #### Notes
+     * This is the distance from the left edge of the layout parent
+     * widget, to the left edge of the tab area.
+     */
+    left: number;
+
+    /**
+     * The local coordinate of the right edge of the tab area.
+     *
+     * #### Notes
+     * This is the distance from the right edge of the layout parent
+     * widget, to the right edge of the tab area.
+     */
+    right: number;
+
+    /**
+     * The local coordinate of the bottom edge of the tab area.
+     *
+     * #### Notes
+     * This is the distance from the bottom edge of the layout parent
+     * widget, to the bottom edge of the tab area.
+     */
+    bottom: number;
+
+    /**
+     * The width of the tab area.
+     *
+     * #### Notes
+     * This is total width allocated for the tab area.
+     */
+    width: number;
+
+    /**
+     * The height of the tab area.
+     *
+     * #### Notes
+     * This is total height allocated for the tab area.
+     */
+    height: number;
+  }
 }
 
 
@@ -1370,6 +1498,34 @@ namespace Private {
     readonly sizers: [BoxSizer, BoxSizer];
 
     /**
+     * The most recent value for the `top` edge of the layout box.
+     */
+    get top(): number {
+      return this._top;
+    }
+
+    /**
+     * The most recent value for the `left` edge of the layout box.
+     */
+    get left(): number {
+      return this._left;
+    }
+
+    /**
+     * The most recent value for the `width` of the layout box.
+     */
+    get width(): number {
+      return this._width;
+    }
+
+    /**
+     * The most recent value for the `height` of the layout box.
+     */
+    get height(): number {
+      return this._height;
+    }
+
+    /**
      * Create an iterator for all widgets in the layout tree.
      */
     iterAllWidgets(): IIterator<Widget> {
@@ -1415,6 +1571,19 @@ namespace Private {
      * Find the first tab layout node in a layout tree.
      */
     findFirstTabNode(): TabLayoutNode | null {
+      return this;
+    }
+
+    /**
+     * Find the tab layout node which contains the local point.
+     */
+    hitTestTabNodes(x: number, y: number): TabLayoutNode | null {
+      if (x < this._left || x >= this._left + this._width) {
+        return null;
+      }
+      if (y < this._top || y >= this._top + this._height) {
+        return null;
+      }
       return this;
     }
 
@@ -1495,7 +1664,13 @@ namespace Private {
     /**
      * Update the layout tree.
      */
-    update(x: number, y: number, width: number, height: number, spacing: number, items: ItemMap): void {
+    update(left: number, top: number, width: number, height: number, spacing: number, items: ItemMap): void {
+      // Update the layout box values.
+      this._top = top;
+      this._left = left;
+      this._width = width;
+      this._height = height;
+
       // Lookup the tab bar layout item.
       let tabBarItem = items.get(this.tabBar);
 
@@ -1509,16 +1684,21 @@ namespace Private {
       // Update the tab bar item using the computed size.
       if (tabBarItem && !tabBarItem.isHidden) {
         let size = this.sizers[0].size;
-        tabBarItem.update(x, y, width, size);
-        y += size;
+        tabBarItem.update(left, top, width, size);
+        top += size;
       }
 
       // Layout the widget using the computed size.
       if (widgetItem && !widgetItem.isHidden) {
         let size = this.sizers[1].size;
-        widgetItem.update(x, y, width, size);
+        widgetItem.update(left, top, width, size);
       }
     }
+
+    private _top = 0;
+    private _left = 0;
+    private _width = 0;
+    private _height = 0;
   }
 
   /**
@@ -1635,6 +1815,19 @@ namespace Private {
         return null;
       }
       return this.children[0].findFirstTabNode();
+    }
+
+    /**
+     * Find the tab layout node which contains the local point.
+     */
+    hitTestTabNodes(x: number, y: number): TabLayoutNode | null {
+      for (let i = 0, n = this.children.length; i < n; ++i) {
+        let result = this.children[i].hitTestTabNodes(x, y);
+        if (result) {
+          return result;
+        }
+      }
+      return null;
     }
 
     /**
@@ -1779,7 +1972,7 @@ namespace Private {
     /**
      * Update the layout tree.
      */
-    update(x: number, y: number, width: number, height: number, spacing: number, items: ItemMap): void {
+    update(left: number, top: number, width: number, height: number, spacing: number, items: ItemMap): void {
       // Compute the available layout space.
       let horizontal = this.orientation === 'horizontal';
       let fixed = Math.max(0, this.children.length - 1) * spacing;
@@ -1800,21 +1993,21 @@ namespace Private {
         let size = this.sizers[i].size;
         let handleStyle = this.handles[i].style;
         if (horizontal) {
-          child.update(x, y, size, height, spacing, items);
-          x += size;
-          handleStyle.top = `${y}px`;
-          handleStyle.left = `${x}px`;
+          child.update(left, top, size, height, spacing, items);
+          left += size;
+          handleStyle.top = `${top}px`;
+          handleStyle.left = `${left}px`;
           handleStyle.width = `${spacing}px`;
           handleStyle.height = `${height}px`;
-          x += spacing;
+          left += spacing;
         } else {
-          child.update(x, y, width, size, spacing, items);
-          y += size;
-          handleStyle.top = `${y}px`;
-          handleStyle.left = `${x}px`;
+          child.update(left, top, width, size, spacing, items);
+          top += size;
+          handleStyle.top = `${top}px`;
+          handleStyle.left = `${left}px`;
           handleStyle.width = `${width}px`;
           handleStyle.height = `${spacing}px`;
-          y += spacing;
+          top += spacing;
         }
       }
     }

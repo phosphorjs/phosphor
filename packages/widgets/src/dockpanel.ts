@@ -422,12 +422,7 @@ class DockPanel extends Widget {
     }
 
     // Find the reference widget for the drop target.
-    let ref: Widget | null = null;
-    if (target && target.currentTitle) {
-      ref = target.currentTitle.owner;
-    } else if (target && target.titles.length > 0) {
-      ref = target.titles[target.titles.length - 1].owner;
-    }
+    let ref = target ? Private.getDropRef(target.tabBar) : null;
 
     // Add the widget according to the indicated drop zone.
     switch(zone) {
@@ -607,8 +602,6 @@ class DockPanel extends Widget {
     let left: number;
     let right: number;
     let bottom: number;
-    let tr: ClientRect;
-    let wr: ClientRect;
     let box = ElementExt.boxSizing(this.node); // TODO cache this?
     let rect = this.node.getBoundingClientRect();
 
@@ -645,60 +638,41 @@ class DockPanel extends Widget {
       bottom = box.paddingBottom;
       break;
     case 'widget-top':
-      tr = target!.node.getBoundingClientRect();
-      wr = target!.currentTitle!.owner.node.getBoundingClientRect();
-      top = tr.top - rect.top - box.borderTop;
-      left = tr.left - rect.left - box.borderLeft;
-      right = rect.right - tr.right - box.borderRight;
-      bottom = rect.bottom - wr.bottom + (tr.height + wr.height) / 2 - box.borderBottom;
+      top = target!.top;
+      left = target!.left;
+      right = target!.right;
+      bottom = target!.bottom + target!.height / 2;
       break;
     case 'widget-left':
-      tr = target!.node.getBoundingClientRect();
-      wr = target!.currentTitle!.owner.node.getBoundingClientRect();
-      top = tr.top - rect.top - box.borderTop;
-      left = tr.left - rect.left - box.borderLeft;
-      right = rect.right - tr.right + tr.width / 2 - box.borderRight;
-      bottom = rect.bottom - wr.bottom - box.borderBottom;
+      top = target!.top;
+      left = target!.left;
+      right = target!.right + target!.width / 2;
+      bottom = target!.bottom;
       break;
     case 'widget-right':
-      tr = target!.node.getBoundingClientRect();
-      wr = target!.currentTitle!.owner.node.getBoundingClientRect();
-      top = tr.top - rect.top - box.borderTop;
-      left = tr.left - rect.left + tr.width / 2 - box.borderLeft;
-      right = rect.right - tr.right - box.borderRight;
-      bottom = rect.bottom - wr.bottom - box.borderBottom;
+      top = target!.top;
+      left = target!.left + target!.width / 2;
+      right = target!.right;
+      bottom = target!.bottom;
       break;
     case 'widget-bottom':
-      tr = target!.node.getBoundingClientRect();
-      wr = target!.currentTitle!.owner.node.getBoundingClientRect();
-      top = tr.top - rect.top + (tr.height + wr.height) / 2 - box.borderTop;
-      left = tr.left - rect.left - box.borderLeft;
-      right = rect.right - tr.right - box.borderRight;
-      bottom = rect.bottom - wr.bottom - box.borderBottom;
+      top = target!.top + target!.height / 2;
+      left = target!.left;
+      right = target!.right;
+      bottom = target!.bottom;
       break;
     case 'widget-center':
-      tr = target!.node.getBoundingClientRect();
-      wr = target!.currentTitle!.owner.node.getBoundingClientRect();
-      top = tr.top - rect.top - box.borderTop;
-      left = tr.left - rect.left - box.borderLeft;
-      right = rect.right - tr.right - box.borderRight;
-      bottom = rect.bottom - wr.bottom - box.borderBottom;
+      top = target!.top;
+      left = target!.left;
+      right = target!.right;
+      bottom = target!.bottom;
       break;
     default:
       throw 'unreachable';
     }
 
-    // Derive the width and height from the other dimensions.
-    let width = rect.width - right - left - box.borderLeft - box.borderRight;
-    let height = rect.height - bottom - top - box.borderTop - box.borderBottom;
-
     // Show the overlay with the computed geometry.
-    this.overlay.show({
-      mouseX: clientX,
-      mouseY: clientY,
-      parentRect: rect,
-      top, left, right, bottom, width, height
-    });
+    this.overlay.show({ top, left, right, bottom });
 
     // Finally, return the computed drop zone.
     return zone;
@@ -855,21 +829,6 @@ namespace DockPanel {
   export
   interface IOverlayGeometry {
     /**
-     * The client X position of the mouse.
-     */
-    mouseX: number;
-
-    /**
-     * The client Y position of the mouse.
-     */
-    mouseY: number;
-
-    /**
-     * The client rect of the overlay parent node.
-     */
-    parentRect: ClientRect;
-
-    /**
      * The distance between the overlay and parent top edges.
      */
     top: number;
@@ -888,16 +847,6 @@ namespace DockPanel {
      * The distance between the overlay and parent bottom edges.
      */
     bottom: number;
-
-    /**
-     * The width of the overlay.
-     */
-    width: number;
-
-    /**
-     * The height of the overlay.
-     */
-    height: number;
   }
 
   /**
@@ -1181,9 +1130,9 @@ namespace Private {
     zone: DropZone;
 
     /**
-     * The target tab bar related to the drop zone, or `null`.
+     * The tab area geometry for the drop zone, or `null`.
      */
-    target: TabBar<Widget> | null;
+    target: DockLayout.ITabAreaGeometry | null;
   }
 
   /**
@@ -1199,9 +1148,9 @@ namespace Private {
    * Find the drop target at the given client position.
    */
   export
-  function findDropTarget(panel: DockPanel, x: number, y: number): IDropTarget {
+  function findDropTarget(panel: DockPanel, clientX: number, clientY: number): IDropTarget {
     // Bail, if the mouse is not over the dock panel.
-    if (!ElementExt.hitTest(panel.node, x, y)) {
+    if (!ElementExt.hitTest(panel.node, clientX, clientY)) {
       return { zone: 'invalid', target: null };
     }
 
@@ -1217,10 +1166,10 @@ namespace Private {
     let panelRect = panel.node.getBoundingClientRect();
 
     // Compute the distance to each edge of the panel.
-    let pl = x - panelRect.left + 1;
-    let pt = y - panelRect.top + 1;
-    let pr = panelRect.right - x;
-    let pb = panelRect.bottom - y;
+    let pl = clientX - panelRect.left + 1;
+    let pt = clientY - panelRect.top + 1;
+    let pr = panelRect.right - clientX;
+    let pb = panelRect.bottom - clientY;
 
     // Find the minimum distance to an edge.
     let pd = Math.min(pl, pt, pr, pb);
@@ -1247,39 +1196,27 @@ namespace Private {
       return { zone, target: null };
     }
 
-    // Find the tab area which contains the position.
-    let tabBar = find(layout.tabBars(), bar => {
-      if (!bar.currentTitle) {
-        return false;
-      }
-      if (ElementExt.hitTest(bar.node, x, y)) {
-        return true;
-      }
-      return ElementExt.hitTest(bar.currentTitle.owner.node, x, y);
-    });
+    // Hit test the dock layout at the given client position.
+    let target = layout.hitTestTabAreas(clientX, clientY);
 
-    // Bail if no tab area was found.
-    if (!tabBar) {
+    // Bail if no target was found.
+    if (!target) {
       return { zone: 'invalid', target: null };
     }
 
-    // Get the rects for the tab bar and widget.
-    let tr = tabBar.node.getBoundingClientRect();
-    let wr = tabBar.currentTitle!.owner.node.getBoundingClientRect();
-
     // Compute the distance to each edge of the tab area.
-    let al = x - tr.left + 1;
-    let at = y - tr.top + 1;
-    let ar = tr.right - x;
-    let ab = wr.bottom - y;
+    let al = target.x - target.left + 1;
+    let at = target.y - target.top + 1;
+    let ar = target.left + target.width - target.x;
+    let ab = target.top + target.height - target.y;
 
     // Get the X and Y edge sizes for the area.
-    let rx = Math.round(tr.width / 3);
-    let ry = Math.round((tr.height + wr.height) / 3);
+    let rx = Math.round(target.width / 3);
+    let ry = Math.round(target.height / 3);
 
     // If the mouse is not within an edge, return the center zone.
     if (al > rx && ar > rx && at > ry && ab > ry) {
-      return { zone: 'widget-center', target: tabBar };
+      return { zone: 'widget-center', target };
     }
 
     // Scale the distances by the slenderness ratio.
@@ -1311,6 +1248,20 @@ namespace Private {
     }
 
     // Return the final drop target.
-    return { zone, target: tabBar };
+    return { zone, target };
+  }
+
+  /**
+   * Get the drop reference widget for a tab bar.
+   */
+  export
+  function getDropRef(tabBar: TabBar<Widget>): Widget | null {
+    if (tabBar.titles.length === 0) {
+      return null;
+    }
+    if (tabBar.currentTitle) {
+      return tabBar.currentTitle.owner;
+    }
+    return tabBar.titles[tabBar.titles.length - 1].owner;
   }
 }
