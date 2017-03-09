@@ -592,7 +592,9 @@ class LayoutItem implements IDisposable {
    * #### Notes
    * This value can be updated by calling the `fit` method.
    */
-  minWidth = 0;
+  get minWidth(): number {
+    return this._minWidth;
+  }
 
   /**
    * The computed minimum height of the widget.
@@ -600,7 +602,9 @@ class LayoutItem implements IDisposable {
    * #### Notes
    * This value can be updated by calling the `fit` method.
    */
-  minHeight = 0;
+  get minHeight(): number {
+    return this._minHeight;
+  }
 
   /**
    * The computed maximum width of the widget.
@@ -608,7 +612,9 @@ class LayoutItem implements IDisposable {
    * #### Notes
    * This value can be updated by calling the `fit` method.
    */
-  maxWidth = Infinity;
+  get maxWidth(): number {
+    return this._maxWidth;
+  }
 
   /**
    * The computed maximum height of the widget.
@@ -616,7 +622,9 @@ class LayoutItem implements IDisposable {
    * #### Notes
    * This value can be updated by calling the `fit` method.
    */
-  maxHeight = Infinity;
+  get maxHeight(): number {
+    return this._maxHeight;
+  }
 
   /**
    * Whether the layout item is disposed.
@@ -651,10 +659,10 @@ class LayoutItem implements IDisposable {
    */
   fit(): void {
     let limits = ElementExt.sizeLimits(this.widget.node);
-    this.minWidth = limits.minWidth;
-    this.minHeight = limits.minHeight;
-    this.maxWidth = limits.maxWidth;
-    this.maxHeight = limits.maxHeight;
+    this._minWidth = limits.minWidth;
+    this._minHeight = limits.minHeight;
+    this._maxWidth = limits.maxWidth;
+    this._maxHeight = limits.maxHeight;
   }
 
   /**
@@ -670,8 +678,8 @@ class LayoutItem implements IDisposable {
    */
   update(left: number, top: number, width: number, height: number): void {
     // Clamp the size to the computed size limits.
-    let clampW = Math.max(this.minWidth, Math.min(width, this.maxWidth));
-    let clampH = Math.max(this.minHeight, Math.min(height, this.maxHeight));
+    let clampW = Math.max(this._minWidth, Math.min(width, this._maxWidth));
+    let clampH = Math.max(this._minHeight, Math.min(height, this._maxHeight));
 
     // Ajdust the left edge for the horizontal alignment, if needed.
     if (clampW < width) {
@@ -746,6 +754,10 @@ class LayoutItem implements IDisposable {
   private _left = NaN;
   private _width = NaN;
   private _height = NaN;
+  private _minWidth = 0;
+  private _minHeight = 0;
+  private _maxWidth = Infinity;
+  private _maxHeight = Infinity;
   private _disposed = false;
 }
 
