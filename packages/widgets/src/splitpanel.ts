@@ -75,6 +75,32 @@ class SplitPanel extends Panel {
   }
 
   /**
+   * Get the content alignment for the split panel.
+   *
+   * #### Notes
+   * This is the alignment of the widgets in the layout direction.
+   *
+   * The alignment has no effect if the widgets can expand to fill the
+   * entire split panel.
+   */
+  get alignment(): SplitPanel.Alignment {
+    return (this.layout as SplitLayout).alignment;
+  }
+
+  /**
+   * Set the content alignment for the split panel.
+   *
+   * #### Notes
+   * This is the alignment of the widgets in the layout direction.
+   *
+   * The alignment has no effect if the widgets can expand to fill the
+   * entire split panel.
+   */
+  set alignment(value: SplitPanel.Alignment) {
+    (this.layout as SplitLayout).alignment = value;
+  }
+
+  /**
    * Get the inter-element spacing for the split panel.
    */
   get spacing(): number {
@@ -328,6 +354,12 @@ namespace SplitPanel {
   type Orientation = SplitLayout.Orientation;
 
   /**
+   * A type alias for a split panel alignment.
+   */
+  export
+  type Alignment = SplitLayout.Alignment;
+
+  /**
    * A type alias for a split panel renderer.
    */
   export
@@ -351,6 +383,13 @@ namespace SplitPanel {
      * The default is `'horizontal'`.
      */
     orientation?: Orientation;
+
+    /**
+     * The content alignment of the panel.
+     *
+     * The default is `'start'`.
+     */
+    alignment?: Alignment;
 
     /**
      * The spacing between items in the panel.
@@ -451,6 +490,7 @@ namespace Private {
     return options.layout || new SplitLayout({
       renderer: options.renderer || SplitPanel.defaultRenderer,
       orientation: options.orientation,
+      alignment: options.alignment,
       spacing: options.spacing
     });
   }

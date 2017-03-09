@@ -6,12 +6,20 @@
 | The full license is in the file LICENSE, distributed with this software.
 |----------------------------------------------------------------------------*/
 import {
+  ArrayExt, each
+} from '@phosphor/algorithm';
+
+import {
   ElementExt
 } from '@phosphor/domutils';
 
 import {
   Message, MessageLoop
 } from '@phosphor/messaging';
+
+import {
+  LayoutItem
+} from './layout';
 
 import {
   PanelLayout
@@ -34,7 +42,14 @@ class StackedLayout extends PanelLayout {
    * Dispose of the resources held by the layout.
    */
   dispose(): void {
+    // Dispose of the layout items.
+    each(this._items, item => { item.dispose(); });
+
+    // Clear the layout state.
     this._box = null;
+    this._items.length = 0;
+
+    // Dispose of the rest of the layout.
     super.dispose();
   }
 
@@ -49,8 +64,8 @@ class StackedLayout extends PanelLayout {
    * This is a reimplementation of the superclass method.
    */
   protected attachWidget(index: number, widget: Widget): void {
-    // Prepare the layout geometry for the widget.
-    Widget.prepareGeometry(widget);
+    // Create and add a new layout item for the widget.
+    ArrayExt.insert(this._items, index, new LayoutItem(widget));
 
     // Send a `'before-attach'` message if the parent is attached.
     if (this.parent!.isAttached) {
@@ -82,7 +97,10 @@ class StackedLayout extends PanelLayout {
    * This is a reimplementation of the superclass method.
    */
   protected moveWidget(fromIndex: number, toIndex: number, widget: Widget): void {
-    // No logic is needed other than an update.
+    // Move the layout item for the widget.
+    ArrayExt.move(this._items, fromIndex, toIndex);
+
+    // Post an update request for the parent widget.
     this.parent!.update();
   }
 
@@ -97,6 +115,9 @@ class StackedLayout extends PanelLayout {
    * This is a reimplementation of the superclass method.
    */
   protected detachWidget(index: number, widget: Widget): void {
+    // Remove the layout item for the widget.
+    let item = ArrayExt.removeAt(this._items, index);
+
     // Send a `'before-detach'` message if the parent is attached.
     if (this.parent!.isAttached) {
       MessageLoop.sendMessage(widget, Widget.Msg.BeforeDetach);
@@ -110,11 +131,11 @@ class StackedLayout extends PanelLayout {
       MessageLoop.sendMessage(widget, Widget.Msg.AfterDetach);
     }
 
-    // Reset the layout geometry for the widget.
-    Widget.resetGeometry(widget);
-
     // Reset the z-index for the widget.
-    widget.node.style.zIndex = '';
+    item!.widget.node.style.zIndex = '';
+
+    // Dispose of the layout item.
+    item!.dispose();
 
     // Post a fit request for the parent widget.
     this.parent!.fit();
@@ -181,43 +202,37 @@ class StackedLayout extends PanelLayout {
    * Fit the layout to the total size required by the widgets.
    */
   private _fit(): void {
-    // Setup the initial size limits.
+    // Set up the computed minimum size.
     let minW = 0;
     let minH = 0;
-    let maxW = Infinity;
-    let maxH = Infinity;
 
-    // Update the computed size limits.
-    let widgets = this.widgets;
-    for (let i = 0, n = widgets.length; i < n; ++i) {
-      let widget = widgets[i];
-      if (widget.isHidden) {
+    // Update the computed minimum size.
+    for (let i = 0, n = this._items.length; i < n; ++i) {
+      // Fetch the item.
+      let item = this._items[i];
+
+      // Ignore hidden items.
+      if (item.isHidden) {
         continue;
       }
-      let limits = ElementExt.sizeLimits(widget.node);
-      minW = Math.max(minW, limits.minWidth);
-      minH = Math.max(minH, limits.minHeight);
-      maxW = Math.min(maxW, limits.maxWidth);
-      maxH = Math.min(maxH, limits.maxHeight);
+
+      // Update the size limits for the item.
+      item.fit();
+
+      // Update the computed minimum size.
+      minW = Math.max(minW, item.minWidth);
+      minH = Math.max(minH, item.minHeight);
     }
 
-    // Ensure max limits >= min limits.
-    maxW = Math.max(minW, maxW);
-    maxH = Math.max(minH, maxH);
-
-    // Update the box sizing and add it to the size constraints.
+    // Update the box sizing and add it to the computed min size.
     let box = this._box = ElementExt.boxSizing(this.parent!.node);
     minW += box.horizontalSum;
     minH += box.verticalSum;
-    maxW += box.horizontalSum;
-    maxH += box.verticalSum;
 
-    // Update the parent's size constraints.
+    // Update the parent's min size constraints.
     let style = this.parent!.node.style;
     style.minWidth = `${minW}px`;
     style.minHeight = `${minH}px`;
-    style.maxWidth = maxW === Infinity ? 'none' : `${maxW}px`;
-    style.maxHeight = maxH === Infinity ? 'none' : `${maxH}px`;
 
     // Set the dirty flag to ensure only a single update occurs.
     this._dirty = true;
@@ -244,9 +259,14 @@ class StackedLayout extends PanelLayout {
     // Clear the dirty flag to indicate the update occurred.
     this._dirty = false;
 
-    // Bail early if there are no widgets to layout.
-    let widgets = this.widgets;
-    if (widgets.length === 0) {
+    // Compute the visible item count.
+    let nVisible = 0;
+    for (let i = 0, n = this._items.length; i < n; ++i) {
+      nVisible += +!this._items[i].isHidden;
+    }
+
+    // Bail early if there are no visible items to layout.
+    if (nVisible === 0) {
       return;
     }
 
@@ -270,16 +290,24 @@ class StackedLayout extends PanelLayout {
     let height = offsetHeight - this._box.verticalSum;
 
     // Update the widget stacking order and layout geometry.
-    for (let i = 0, n = widgets.length; i < n; ++i) {
-      let widget = widgets[i];
-      if (widget.isHidden) {
+    for (let i = 0, n = this._items.length; i < n; ++i) {
+      // Fetch the item.
+      let item = this._items[i];
+
+      // Ignore hidden items.
+      if (item.isHidden) {
         continue;
       }
-      widget.node.style.zIndex = `${i}`;
-      Widget.setGeometry(widget, left, top, width, height);
+
+      // Set the z-index for the widget.
+      item.widget.node.style.zIndex = `${i}`;
+
+      // Update the item geometry.
+      item.update(left, top, width, height);
     }
   }
 
   private _dirty = false;
+  private _items: LayoutItem[] = [];
   private _box: ElementExt.IBoxSizing | null = null;
 }

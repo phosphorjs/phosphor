@@ -51,6 +51,32 @@ class BoxPanel extends Panel {
   }
 
   /**
+   * Get the content alignment for the box panel.
+   *
+   * #### Notes
+   * This is the alignment of the widgets in the layout direction.
+   *
+   * The alignment has no effect if the widgets can expand to fill the
+   * entire box layout.
+   */
+  get alignment(): BoxPanel.Alignment {
+    return (this.layout as BoxLayout).alignment;
+  }
+
+  /**
+   * Set the content alignment for the box panel.
+   *
+   * #### Notes
+   * This is the alignment of the widgets in the layout direction.
+   *
+   * The alignment has no effect if the widgets can expand to fill the
+   * entire box layout.
+   */
+  set alignment(value: BoxPanel.Alignment) {
+    (this.layout as BoxLayout).alignment = value;
+  }
+
+  /**
    * Get the inter-element spacing for the box panel.
    */
   get spacing(): number {
@@ -92,6 +118,12 @@ namespace BoxPanel {
   type Direction = BoxLayout.Direction;
 
   /**
+   * A type alias for a box panel alignment.
+   */
+  export
+  type Alignment = BoxLayout.Alignment;
+
+  /**
    * An options object for initializing a box panel.
    */
   export
@@ -102,6 +134,13 @@ namespace BoxPanel {
      * The default is `'top-to-bottom'`.
      */
     direction?: Direction;
+
+    /**
+     * The content alignment of the panel.
+     *
+     * The default is `'start'`.
+     */
+    alignment?: Alignment;
 
     /**
      * The spacing between items in the panel.

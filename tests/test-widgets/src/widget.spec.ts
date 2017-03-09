@@ -1251,53 +1251,6 @@ describe('@phosphor/widgets', () => {
 
     });
 
-    describe('.prepareGeometry()', () => {
-
-      it('should set the inline style position of the widget to `absolute`', () => {
-        let widget = new Widget();
-        widget.node.style.position = 'relative';
-        Widget.prepareGeometry(widget);
-        expect(widget.node.style.position).to.equal('absolute');
-      });
-
-    });
-
-    describe('.resetGeometry()', () => {
-
-      it('should clear the inline style position and geometry of the widget', () => {
-        let widget = new Widget();
-        Widget.setGeometry(widget, 10, 10, 10, 10);
-        Widget.resetGeometry(widget);
-        let style = widget.node.style;
-        expect(style.position).to.equal('');
-        expect(style.top).to.equal('');
-        expect(style.left).to.equal('');
-        expect(style.width).to.equal('');
-        expect(style.height).to.equal('');
-      });
-
-    });
-
-    describe('.setGeometry()', () => {
-
-      it('should set the absolute layout geometry of the widget', () => {
-        let widget = new Widget();
-        Widget.setGeometry(widget, 10, 10, 10, 10);
-        let style = widget.node.style;
-        expect(style.top).to.equal('10px');
-        expect(style.left).to.equal('10px');
-        expect(style.width).to.equal('10px');
-        expect(style.height).to.equal('10px');
-      });
-
-      it('should send a `resize` message if the size has changed', () => {
-        let widget = new LogWidget();
-        Widget.setGeometry(widget, 10, 10, 10, 10);
-        expect(widget.messages.indexOf('resize')).to.not.equal(-1);
-      });
-
-    });
-
   });
 
 });

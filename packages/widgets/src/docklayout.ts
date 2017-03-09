@@ -22,7 +22,7 @@ import {
 } from './boxengine';
 
 import {
-  Layout
+  Layout, LayoutItem
 } from './layout';
 
 import {
@@ -66,9 +66,13 @@ class DockLayout extends Layout {
     // Get an iterator over the widgets in the layout.
     let widgets = this.iter();
 
-    // Clear the layout before disposing the widgets.
+    // Dispose of the layout items.
+    this._items.forEach(item => { item.dispose(); });
+
+    // Clear the layout state before disposing the widgets.
     this._box = null;
     this._root = null;
+    this._items.clear();
 
     // Dispose of the widgets contained in the old layout root.
     each(widgets, widget => { widget.dispose(); });
@@ -120,7 +124,7 @@ class DockLayout extends Layout {
    * This iterator includes the generated tab bars.
    */
   iter(): IIterator<Widget> {
-    return this._root ? Private.iterAllWidgets(this._root) : empty<Widget>();
+    return this._root ? this._root.iterAllWidgets() : empty<Widget>();
   }
 
   /**
@@ -132,7 +136,7 @@ class DockLayout extends Layout {
    * This iterator does not include the generated tab bars.
    */
   widgets(): IIterator<Widget> {
-    return this._root ? Private.iterUserWidgets(this._root) : empty<Widget>();
+    return this._root ? this._root.iterUserWidgets() : empty<Widget>();
   }
 
   /**
@@ -144,7 +148,7 @@ class DockLayout extends Layout {
    * This iterator does not include the user widgets.
    */
   tabBars(): IIterator<TabBar<Widget>> {
-    return this._root ? Private.iterTabBars(this._root) : empty<TabBar<Widget>>();
+    return this._root ? this._root.iterTabBars() : empty<TabBar<Widget>>();
   }
 
   /**
@@ -153,7 +157,7 @@ class DockLayout extends Layout {
    * @returns A new iterator over the handles in the layout.
    */
   handles(): IIterator<HTMLDivElement> {
-    return this._root ? Private.iterHandles(this._root) : empty<HTMLDivElement>();
+    return this._root ? this._root.iterHandles() : empty<HTMLDivElement>();
   }
 
   /**
@@ -183,7 +187,7 @@ class DockLayout extends Layout {
     }
 
     // Lookup the split node for the handle.
-    let data = Private.findSplitNode(this._root, handle);
+    let data = this._root.findSplitNode(handle);
     if (!data) {
       return;
     }
@@ -202,7 +206,7 @@ class DockLayout extends Layout {
     }
 
     // Prevent sibling resizing unless needed.
-    Private.holdSizes(data.node.sizers);
+    data.node.holdSizes();
 
     // Adjust the sizers to reflect the handle movement.
     BoxEngine.adjust(data.node.sizers, data.index, delta);
@@ -239,11 +243,11 @@ class DockLayout extends Layout {
       return { version: '1', main: null };
     }
 
-    // Hold the current layout sizes.
-    Private.holdLayoutSizes(this._root);
+    // Hold the current sizes in the layout tree.
+    this._root.holdAllSizes();
 
     // Create the main area config.
-    let main = Private.createAreaConfig(this._root);
+    let main = this._root.createConfig();
 
     // Return the layout config.
     return { version: '1', main };
@@ -266,8 +270,13 @@ class DockLayout extends Layout {
       throw new Error(`Unsupported config version: '${config.version}'`);
     }
 
-    // Validate the config and collect the contained widgets.
-    let widgetSet = Private.validateLayoutConfigV1(config);
+    // Create the widget set for validating the config.
+    let widgetSet = new Set<Widget>();
+
+    // Validate the main area if it exists.
+    if (config.main) {
+      Private.validateAreaConfig(config.main, widgetSet);
+    }
 
     // Create iterators over the old widgets and tab bars.
     let oldWidgets = this.widgets();
@@ -342,7 +351,7 @@ class DockLayout extends Layout {
     // Find the tab node which holds the reference widget.
     let refNode: Private.TabLayoutNode | null = null;
     if (this._root && ref) {
-      refNode = Private.findTabNode(this._root, ref);
+      refNode = this._root.findTabNode(ref);
     }
 
     // Throw an error if the reference widget is invalid.
@@ -447,8 +456,8 @@ class DockLayout extends Layout {
       return;
     }
 
-    // Prepare the layout geometry for the widget.
-    Widget.prepareGeometry(widget);
+    // Create the layout item for the widget.
+    this._items.set(widget, new LayoutItem(widget));
 
     // Send a `'before-attach'` message if the parent is attached.
     if (this.parent!.isAttached) {
@@ -491,8 +500,12 @@ class DockLayout extends Layout {
       MessageLoop.sendMessage(widget, Widget.Msg.AfterDetach);
     }
 
-    // Reset the layout geometry for the widget.
-    Widget.resetGeometry(widget);
+    // Delete the layout item for the widget.
+    let item = this._items.get(widget);
+    if (item) {
+      this._items.delete(widget);
+      item.dispose();
+    }
   }
 
   /**
@@ -567,7 +580,7 @@ class DockLayout extends Layout {
     }
 
     // Find the tab node which contains the given widget.
-    let tabNode = Private.findTabNode(this._root, widget);
+    let tabNode = this._root.findTabNode(widget);
 
     // Bail early if the tab node is not found.
     if (!tabNode) {
@@ -594,7 +607,7 @@ class DockLayout extends Layout {
     // Otherwise, remove the tab node from its parent...
 
     // Prevent widget resizing unless needed.
-    Private.holdLayoutSizes(this._root);
+    this._root.holdAllSizes();
 
     // Clear the parent reference on the tab node.
     let splitNode = tabNode.parent!;
@@ -612,7 +625,7 @@ class DockLayout extends Layout {
 
     // If there are multiple children, just update the handles.
     if (splitNode.children.length > 1) {
-      Private.syncHandles(splitNode);
+      splitNode.syncHandles();
       return;
     }
 
@@ -685,7 +698,7 @@ class DockLayout extends Layout {
     childNode.parent = null;
 
     // Sync the handles on the parent node.
-    Private.syncHandles(parentNode);
+    parentNode.syncHandles();
   }
 
   /**
@@ -710,7 +723,7 @@ class DockLayout extends Layout {
 
     // Use the first tab node as the ref node if needed.
     if (!refNode) {
-      refNode = Private.firstTabNode(this._root)!;
+      refNode = this._root.findFirstTabNode()!;
     }
 
     // If the widget is not contained in the ref node, ensure it is
@@ -766,7 +779,7 @@ class DockLayout extends Layout {
       let i = after ? root.children.length : 0;
 
       // Normalize the split node.
-      Private.normalizeSizes(root);
+      root.normalizeSizes();
 
       // Create the sizer for new tab node.
       let sizer = Private.createSizer(refNode ? 1 : Private.GOLDEN_RATIO);
@@ -778,10 +791,10 @@ class DockLayout extends Layout {
       tabNode.parent = root;
 
       // Re-normalize the split node to maintain the ratios.
-      Private.normalizeSizes(root);
+      root.normalizeSizes();
 
       // Finally, synchronize the visibility of the handles.
-      Private.syncHandles(root);
+      root.syncHandles();
       return;
     }
 
@@ -795,7 +808,7 @@ class DockLayout extends Layout {
       let i = splitNode.children.indexOf(refNode);
 
       // Normalize the split node.
-      Private.normalizeSizes(splitNode);
+      splitNode.normalizeSizes();
 
       // Consume half the space for the insert location.
       let s = splitNode.sizers[i].sizeHint /= 2;
@@ -808,7 +821,7 @@ class DockLayout extends Layout {
       tabNode.parent = splitNode;
 
       // Finally, synchronize the visibility of the handles.
-      Private.syncHandles(splitNode);
+      splitNode.syncHandles();
       return;
     }
 
@@ -833,7 +846,7 @@ class DockLayout extends Layout {
     tabNode.parent = childNode;
 
     // Synchronize the visibility of the handles.
-    Private.syncHandles(childNode);
+    childNode.syncHandles();
 
     // Finally, add the new child node to the original split node.
     ArrayExt.insert(splitNode.children, i, childNode);
@@ -871,34 +884,26 @@ class DockLayout extends Layout {
    * Fit the layout to the total size required by the widgets.
    */
   private _fit(): void {
-    // Set up the size limits.
+    // Set up the computed minimum size.
     let minW = 0;
     let minH = 0;
-    let maxW = Infinity;
-    let maxH = Infinity;
 
-    // Update the limits for the root layout node.
+    // Update the size limits for the layout tree.
     if (this._root) {
-      let limits = Private.fitLayoutNode(this._root, this._spacing);
+      let limits = this._root.fit(this._spacing, this._items);
       minW = limits.minWidth;
       minH = limits.minHeight;
-      maxW = limits.maxWidth;
-      maxH = limits.maxHeight;
     }
 
-    // Update the box sizing and add it to the size limits.
+    // Update the box sizing and add it to the computed min size.
     let box = this._box = ElementExt.boxSizing(this.parent!.node);
     minW += box.horizontalSum;
     minH += box.verticalSum;
-    maxW += box.horizontalSum;
-    maxH += box.verticalSum;
 
-    // Update the parent's size constraints.
+    // Update the parent's min size constraints.
     let style = this.parent!.node.style;
     style.minWidth = `${minW}px`;
     style.minHeight = `${minH}px`;
-    style.maxWidth = maxW === Infinity ? 'none' : `${maxW}px`;
-    style.maxHeight = maxH === Infinity ? 'none' : `${maxH}px`;
 
     // Set the dirty flag to ensure only a single update occurs.
     this._dirty = true;
@@ -949,8 +954,8 @@ class DockLayout extends Layout {
     let width = offsetWidth - this._box.horizontalSum;
     let height = offsetHeight - this._box.verticalSum;
 
-    // Update the geometry of the root layout node.
-    Private.updateLayoutNode(this._root, x, y, width, height, this._spacing);
+    // Update the geometry of the layout tree.
+    this._root.update(x, y, width, height, this._spacing, this._items);
   }
 
   /**
@@ -1038,6 +1043,7 @@ class DockLayout extends Layout {
   private _spacing: number;
   private _root: Private.LayoutNode | null = null;
   private _box: ElementExt.IBoxSizing | null = null;
+  private _items: Private.ItemMap = new Map<Widget, LayoutItem>();
 }
 
 
@@ -1279,6 +1285,57 @@ namespace Private {
   type Orientation = 'horizontal' | 'vertical';
 
   /**
+   * A type alias for a layout item map.
+   */
+  export
+  type ItemMap = Map<Widget, LayoutItem>;
+
+  /**
+   * Clamp a spacing value to an integer >= 0.
+   */
+  export
+  function clampSpacing(value: number): number {
+    return Math.max(0, Math.floor(value));
+  }
+
+  /**
+   * Create a box sizer with an initial size hint.
+   */
+  export
+  function createSizer(hint: number): BoxSizer {
+    let sizer = new BoxSizer();
+    sizer.sizeHint = hint;
+    sizer.size = hint;
+    return sizer;
+  }
+
+  /**
+   * Validate an area config.
+   */
+  export
+  function validateAreaConfig(config: DockLayout.AreaConfig, widgetSet: Set<Widget>): void {
+    if (config.type === 'tab-area') {
+      validateTabAreaConfig(config, widgetSet);
+    } else {
+      validateSplitAreaConfig(config, widgetSet);
+    }
+  }
+
+  /**
+   * Convert an area config into a layout tree.
+   */
+  export
+  function realizeAreaConfig(config: DockLayout.AreaConfig, renderer: DockLayout.IRenderer): LayoutNode {
+    let node: LayoutNode;
+    if (config.type === 'tab-area') {
+      node = realizeTabAreaConfig(config, renderer);
+    } else {
+      node = realizeSplitAreaConfig(config, renderer);
+    }
+    return node;
+  }
+
+  /**
    * A layout node which holds the data for a tabbed area.
    */
   export
@@ -1308,9 +1365,160 @@ namespace Private {
     readonly tabBar: TabBar<Widget>;
 
     /**
-     * The box sizers for the tab bar and current widget.
+     * The sizers for the layout node.
      */
     readonly sizers: [BoxSizer, BoxSizer];
+
+    /**
+     * Create an iterator for all widgets in the layout tree.
+     */
+    iterAllWidgets(): IIterator<Widget> {
+      return chain(once(this.tabBar), this.iterUserWidgets());
+    }
+
+    /**
+     * Create an iterator for the user widgets in the layout tree.
+     */
+    iterUserWidgets(): IIterator<Widget> {
+      return map(this.tabBar.titles, title => title.owner);
+    }
+
+    /**
+     * Create an iterator for the tab bars in the layout tree.
+     */
+    iterTabBars(): IIterator<TabBar<Widget>> {
+      return once(this.tabBar);
+    }
+
+    /**
+     * Create an iterator for the handles in the layout tree.
+     */
+    iterHandles(): IIterator<HTMLDivElement> {
+      return empty<HTMLDivElement>();
+    }
+
+    /**
+     * Find the tab layout node which contains the given widget.
+     */
+    findTabNode(widget: Widget): TabLayoutNode | null {
+      return this.tabBar.titles.indexOf(widget.title) !== -1 ? this : null;
+    }
+
+    /**
+     * Find the split layout node which contains the given handle.
+     */
+    findSplitNode(handle: HTMLDivElement): { index: number, node: SplitLayoutNode } | null {
+      return null;
+    }
+
+    /**
+     * Find the first tab layout node in a layout tree.
+     */
+    findFirstTabNode(): TabLayoutNode | null {
+      return this;
+    }
+
+    /**
+     * Create a configuration object for the layout tree.
+     */
+    createConfig(): DockLayout.ITabAreaConfig {
+      let widgets = this.tabBar.titles.map(title => title.owner);
+      let currentIndex = this.tabBar.currentIndex;
+      return { type: 'tab-area', widgets, currentIndex };
+    }
+
+    /**
+     * Recursively hold all of the sizes in the layout tree.
+     *
+     * This ignores the sizers of tab layout nodes.
+     */
+    holdAllSizes(): void {
+      return;
+    }
+
+    /**
+     * Fit the layout tree.
+     */
+    fit(spacing: number, items: ItemMap): ElementExt.ISizeLimits {
+      // Set up the limit variables.
+      let minWidth = 0;
+      let minHeight = 0;
+      let maxWidth = Infinity;
+      let maxHeight = Infinity;
+
+      // Lookup the tab bar layout item.
+      let tabBarItem = items.get(this.tabBar);
+
+      // Lookup the widget layout item.
+      let current = this.tabBar.currentTitle;
+      let widgetItem = current ? items.get(current.owner) : undefined;
+
+      // Lookup the tab bar and widget sizers.
+      let [tabBarSizer, widgetSizer] = this.sizers;
+
+      // Update the tab bar limits.
+      if (tabBarItem) {
+        tabBarItem.fit();
+      }
+
+      // Update the widget limits.
+      if (widgetItem) {
+        widgetItem.fit();
+      }
+
+      // Update the results and sizer for the tab bar.
+      if (tabBarItem && !tabBarItem.isHidden) {
+        minWidth = Math.max(minWidth, tabBarItem.minWidth);
+        minHeight += tabBarItem.minHeight;
+        tabBarSizer.minSize = tabBarItem.minHeight;
+        tabBarSizer.maxSize = tabBarItem.maxHeight;
+      } else {
+        tabBarSizer.minSize = 0;
+        tabBarSizer.maxSize = 0;
+      }
+
+      // Update the results and sizer for the current widget.
+      if (widgetItem && !widgetItem.isHidden) {
+        minWidth = Math.max(minWidth, widgetItem.minWidth);
+        minHeight += widgetItem.minHeight;
+        widgetSizer.minSize = widgetItem.minHeight;
+        widgetSizer.maxSize = Infinity;
+      } else {
+        widgetSizer.minSize = 0;
+        widgetSizer.maxSize = Infinity;
+      }
+
+      // Return the computed size limits for the layout node.
+      return { minWidth, minHeight, maxWidth, maxHeight };
+    }
+
+    /**
+     * Update the layout tree.
+     */
+    update(x: number, y: number, width: number, height: number, spacing: number, items: ItemMap): void {
+      // Lookup the tab bar layout item.
+      let tabBarItem = items.get(this.tabBar);
+
+      // Lookup the widget layout item.
+      let current = this.tabBar.currentTitle;
+      let widgetItem = current ? items.get(current.owner) : undefined;
+
+      // Distribute the layout space to the sizers.
+      BoxEngine.calc(this.sizers, height);
+
+      // Update the tab bar item using the computed size.
+      if (tabBarItem && !tabBarItem.isHidden) {
+        let size = this.sizers[0].size;
+        tabBarItem.update(x, y, width, size);
+        y += size;
+      }
+
+      // Layout the widget using the computed size.
+      if (widgetItem && !widgetItem.isHidden) {
+        let size = this.sizers[1].size;
+        widgetItem.update(x, y, width, size);
+      }
+    }
   }
 
   /**
@@ -1356,554 +1564,276 @@ namespace Private {
      * The handles for the layout children.
      */
     readonly handles: HTMLDivElement[] = [];
-  }
 
-  /**
-   * Clamp a spacing value to an integer >= 0.
-   */
-  export
-  function clampSpacing(value: number): number {
-    return Math.max(0, Math.floor(value));
-  }
-
-  /**
-   * Create an iterator for all widgets in the layout tree.
-   *
-   * #### Notes
-   * This includes the tab bars for the tab layout nodes.
-   */
-  export
-  function iterAllWidgets(node: LayoutNode): IIterator<Widget> {
-    let it: IIterator<Widget>;
-    if (node instanceof TabLayoutNode) {
-      it = chain(once(node.tabBar), iterUserWidgets(node));
-    } else {
-      it = new ChainIterator<Widget>(map(node.children, iterAllWidgets));
-    }
-    return it;
-  }
-
-  /**
-   * Create an iterator for the user widgets in the layout tree.
-   *
-   * #### Notes
-   * This does not include the tab bars for the tab layout nodes.
-   */
-  export
-  function iterUserWidgets(node: LayoutNode): IIterator<Widget> {
-    let it: IIterator<Widget>;
-    if (node instanceof TabLayoutNode) {
-      it = map(node.tabBar.titles, title => title.owner);
-    } else {
-      it = new ChainIterator<Widget>(map(node.children, iterUserWidgets));
-    }
-    return it;
-  }
-
-  /**
-   * Create an iterator for the tab bars in the tree.
-   */
-  export
-  function iterTabBars(node: LayoutNode): IIterator<TabBar<Widget>> {
-    let it: IIterator<TabBar<Widget>>;
-    if (node instanceof TabLayoutNode) {
-      it = once(node.tabBar);
-    } else {
-      it = new ChainIterator<TabBar<Widget>>(map(node.children, iterTabBars));
-    }
-    return it;
-  }
-
-  /**
-   * Create an iterator for the handles in the tree.
-   */
-  export
-  function iterHandles(node: LayoutNode): IIterator<HTMLDivElement> {
-    let it: IIterator<HTMLDivElement>;
-    if (node instanceof TabLayoutNode) {
-      it = empty<HTMLDivElement>();
-    } else {
-      let others = map(node.children, iterHandles);
-      it = chain(node.handles, new ChainIterator<HTMLDivElement>(others));
-    }
-    return it;
-  }
-
-  /**
-   * Find the first tab layout node in a layout tree.
-   */
-  export
-  function firstTabNode(node: LayoutNode): TabLayoutNode | null {
-    // Return the node if it's a tab layout node.
-    if (node instanceof TabLayoutNode) {
-      return node;
+    /**
+     * Create an iterator for all widgets in the layout tree.
+     */
+    iterAllWidgets(): IIterator<Widget> {
+      let children = map(this.children, child => child.iterAllWidgets());
+      return new ChainIterator<Widget>(children);
     }
 
-    // Recursively search the children for a tab layout node.
-    for (let i = 0, n = node.children.length; i < n; ++i) {
-      let result = firstTabNode(node.children[i]);
-      if (result) {
-        return result;
+    /**
+     * Create an iterator for the user widgets in the layout tree.
+     */
+    iterUserWidgets(): IIterator<Widget> {
+      let children = map(this.children, child => child.iterUserWidgets());
+      return new ChainIterator<Widget>(children);
+    }
+
+    /**
+     * Create an iterator for the tab bars in the layout tree.
+     */
+    iterTabBars(): IIterator<TabBar<Widget>> {
+      let children = map(this.children, child => child.iterTabBars());
+      return new ChainIterator<TabBar<Widget>>(children);
+    }
+
+    /**
+     * Create an iterator for the handles in the layout tree.
+     */
+    iterHandles(): IIterator<HTMLDivElement> {
+      let children = map(this.children, child => child.iterHandles());
+      return chain(this.handles, new ChainIterator<HTMLDivElement>(children));
+    }
+
+    /**
+     * Find the tab layout node which contains the given widget.
+     */
+    findTabNode(widget: Widget): TabLayoutNode | null {
+      for (let i = 0, n = this.children.length; i < n; ++i) {
+        let result = this.children[i].findTabNode(widget);
+        if (result) {
+          return result;
+        }
       }
-    }
-
-    // Otherwise, there is no tab layout node.
-    return null;
-  }
-
-  /**
-   * Find the tab layout node which contains the given widget.
-   */
-  export
-  function findTabNode(node: LayoutNode, widget: Widget): TabLayoutNode | null {
-    // Return the tab node if it contains the widget.
-    if (node instanceof TabLayoutNode) {
-      return node.tabBar.titles.indexOf(widget.title) !== -1 ? node : null;
-    }
-
-    // Recursively search the children of a split layout node.
-    for (let i = 0, n = node.children.length; i < n; ++i) {
-      let result = findTabNode(node.children[i], widget);
-      if (result) {
-        return result;
-      }
-    }
-
-    // Otherwise, the widget does not exist in the tree.
-    return null;
-  }
-
-  /**
-   * Find the split layout node which contains the given handle.
-   */
-  export
-  function findSplitNode(node: LayoutNode, handle: HTMLDivElement): { index: number, node: SplitLayoutNode } | null {
-    // Bail if the node is not a split node.
-    if (node instanceof TabLayoutNode) {
       return null;
     }
 
-    // Return the pair if the node contains the handle.
-    let index = node.handles.indexOf(handle);
-    if (index !== -1) {
-      return { index, node };
-    }
-
-    // Recursively search the child split nodes.
-    for (let i = 0, n = node.children.length; i < n; ++i) {
-      let result = findSplitNode(node.children[i], handle);
-      if (result) {
-        return result;
+    /**
+     * Find the split layout node which contains the given handle.
+     */
+    findSplitNode(handle: HTMLDivElement): { index: number, node: SplitLayoutNode } | null {
+      let index = this.handles.indexOf(handle);
+      if (index !== -1) {
+        return { index, node: this };
       }
-    }
-
-    // Otherwise, the handle does not exist in the tree.
-    return null;
-  }
-
-  /**
-   * Recursively fit the given layout node.
-   */
-  export
-  function fitLayoutNode(node: LayoutNode, spacing: number): ElementExt.ISizeLimits {
-    let limits: ElementExt.ISizeLimits;
-    if (node instanceof TabLayoutNode) {
-      limits = fitTabNode(node);
-    } else {
-      limits = fitSplitNode(node, spacing);
-    }
-    return limits;
-  }
-
-  /**
-   * Recursively update the given layout node.
-   */
-  export
-  function updateLayoutNode(node: LayoutNode, x: number, y: number, width: number, height: number, spacing: number): void {
-    if (node instanceof TabLayoutNode) {
-      updateTabNode(node, x, y, width, height);
-    } else {
-      updateSplitNode(node, x, y, width, height, spacing);
-    }
-  }
-
-  /**
-   * Create an area config object for a dock layout node.
-   */
-  export
-  function createAreaConfig(node: LayoutNode): DockLayout.AreaConfig {
-    let config: DockLayout.AreaConfig;
-    if (node instanceof TabLayoutNode) {
-      config = createTabAreaConfig(node);
-    } else {
-      config = createSplitAreaConfig(node);
-    }
-    return config;
-  }
-
-  /**
-   * Validate a version '1' layout configuration object.
-   */
-  export
-  function validateLayoutConfigV1(config: DockLayout.ILayoutConfigV1): Set<Widget> {
-    // Create the set to hold the contained widgets.
-    let widgetSet = new Set<Widget>();
-
-    // Bail early if there is no main area.
-    if (!config.main) {
-      return widgetSet;
-    }
-
-    // Validate the main area.
-    if (config.main.type === 'tab-area') {
-      validateTabAreaConfig(config.main, widgetSet);
-    } else {
-      validateSplitAreaConfig(config.main, widgetSet);
-    }
-
-    // Return the contained widgets.
-    return widgetSet;
-  }
-
-  /**
-   * Create a layout node for an area config.
-   */
-  export
-  function realizeAreaConfig(config: DockLayout.AreaConfig, renderer: DockLayout.IRenderer): LayoutNode {
-    let node: LayoutNode;
-    if (config.type === 'tab-area') {
-      node = realizeTabAreaConfig(config, renderer);
-    } else {
-      node = realizeSplitAreaConfig(config, renderer);
-    }
-    return node;
-  }
-
-  /**
-   * Sync the visibility and orientation of split node handles.
-   */
-  export
-  function syncHandles(splitNode: SplitLayoutNode): void {
-    // Do nothing if there are no handles.
-    if (splitNode.handles.length === 0) {
-      return;
-    }
-
-    // Update the handle orientation and visibility.
-    each(splitNode.handles, (handle, i) => {
-      if (splitNode.orientation === 'horizontal') {
-        handle.classList.remove('p-mod-vertical');
-        handle.classList.add('p-mod-horizontal');
-      } else {
-        handle.classList.remove('p-mod-horizontal');
-        handle.classList.add('p-mod-vertical');
+      for (let i = 0, n = this.children.length; i < n; ++i) {
+        let result = this.children[i].findSplitNode(handle);
+        if (result) {
+          return result;
+        }
       }
-      if (i === splitNode.handles.length - 1) {
-        handle.classList.add('p-mod-hidden');
-      } else {
-        handle.classList.remove('p-mod-hidden');
+      return null;
+    }
+
+    /**
+     * Find the first tab layout node in a layout tree.
+     */
+    findFirstTabNode(): TabLayoutNode | null {
+      if (this.children.length === 0) {
+        return null;
       }
-    });
-  }
-
-  /**
-   * Hold the current sizes of an array of box sizers.
-   *
-   * This sets the size hint of each sizer to its current size.
-   */
-  export
-  function holdSizes(sizers: BoxSizer[]): void {
-    each(sizers, sizer => { sizer.sizeHint = sizer.size; });
-  }
-
-  /**
-   * Recursively hold all the layout sizes in the tree.
-   *
-   * This ignores the sizers of tab layout nodes.
-   */
-  export
-  function holdLayoutSizes(node: LayoutNode): void {
-    if (node instanceof SplitLayoutNode) {
-      each(node.children, holdLayoutSizes);
-      holdSizes(node.sizers);
-    }
-  }
-
-  /**
-   * Create a box sizer with an initial size hint.
-   */
-  export
-  function createSizer(hint: number): BoxSizer {
-    let sizer = new BoxSizer();
-    sizer.sizeHint = hint;
-    sizer.size = hint;
-    return sizer;
-  }
-
-  /**
-   * Normalize the sizes of a split layout node.
-   */
-  export
-  function normalizeSizes(splitNode: SplitLayoutNode): void {
-    // Bail early if the sizers are empty.
-    let n = splitNode.sizers.length;
-    if (n === 0) {
-      return;
+      return this.children[0].findFirstTabNode();
     }
 
-    // Hold the current sizes of the sizers.
-    holdSizes(splitNode.sizers);
+    /**
+     * Create a configuration object for the layout tree.
+     */
+    createConfig(): DockLayout.ISplitAreaConfig {
+      let orientation = this.orientation;
+      let sizes = this.createNormalizedSizes();
+      let children = this.children.map(child => child.createConfig());
+      return { type: 'split-area', orientation, children, sizes };
+    }
 
-    // Compute the sum of the sizes.
-    let sum = reduce(splitNode.sizers, (v, sizer) => v + sizer.sizeHint, 0);
-
-    // Normalize the sizes based on the sum.
-    if (sum === 0) {
-      each(splitNode.sizers, sizer => {
-        sizer.size = sizer.sizeHint = 1 / n;
-      });
-    } else {
-      each(splitNode.sizers, sizer => {
-        sizer.size = sizer.sizeHint /= sum;
+    /**
+     * Sync the visibility and orientation of the handles.
+     */
+    syncHandles(): void {
+      each(this.handles, (handle, i) => {
+        if (this.orientation === 'horizontal') {
+          handle.classList.remove('p-mod-vertical');
+          handle.classList.add('p-mod-horizontal');
+        } else {
+          handle.classList.remove('p-mod-horizontal');
+          handle.classList.add('p-mod-vertical');
+        }
+        if (i === this.handles.length - 1) {
+          handle.classList.add('p-mod-hidden');
+        } else {
+          handle.classList.remove('p-mod-hidden');
+        }
       });
     }
 
-    // Mark the split node as normalized.
-    splitNode.normalized = true;
-  }
-
-  /**
-   * Fit the given tab layout node.
-   */
-  function fitTabNode(tabNode: TabLayoutNode): ElementExt.ISizeLimits {
-    // Set up the limit variables.
-    let minWidth = 0;
-    let minHeight = 0;
-    let maxWidth = Infinity;
-    let maxHeight = Infinity;
-
-    // Lookup common variables.
-    let tabBar = tabNode.tabBar;
-    let tabSizer = tabNode.sizers[0];
-    let widgetSizer = tabNode.sizers[1];
-    let currentTitle = tabBar.currentTitle;
-    let widget = currentTitle ? currentTitle.owner : null;
-
-    // Adjust the starting max height if a widget is visible.
-    if (!tabBar.isHidden || (widget && !widget.isHidden)) {
-      maxHeight = 0;
+    /**
+     * Hold the current sizes of the box sizers.
+     *
+     * This sets the size hint of each sizer to its current size.
+     */
+    holdSizes(): void {
+      each(this.sizers, sizer => { sizer.sizeHint = sizer.size; });
     }
 
-    // Update the results and sizer for the tab bar.
-    if (!tabBar.isHidden) {
-      let limits = ElementExt.sizeLimits(tabBar.node);
-      minWidth = Math.max(minWidth, limits.minWidth);
-      maxWidth = Math.min(maxWidth, limits.maxWidth);
-      minHeight += limits.minHeight;
-      maxHeight += limits.maxHeight;
-      tabSizer.minSize = limits.minHeight;
-      tabSizer.maxSize = limits.maxHeight;
-    } else {
-      tabSizer.minSize = 0;
-      tabSizer.maxSize = 0;
+    /**
+     * Recursively hold all of the sizes in the layout tree.
+     *
+     * This ignores the sizers of tab layout nodes.
+     */
+    holdAllSizes(): void {
+      each(this.children, child => child.holdAllSizes());
+      this.holdSizes();
     }
 
-    // Update the results and sizer for the current widget.
-    if (widget && !widget.isHidden) {
-      let limits = ElementExt.sizeLimits(widget.node);
-      minWidth = Math.max(minWidth, limits.minWidth);
-      maxWidth = Math.min(maxWidth, limits.maxWidth);
-      minHeight += limits.minHeight;
-      maxHeight += limits.maxHeight;
-      widgetSizer.minSize = limits.minHeight;
-      widgetSizer.maxSize = limits.maxHeight;
-    } else {
-      widgetSizer.minSize = 0;
-      widgetSizer.maxSize = 0;
-    }
-
-    // Return the computed size limits for the layout node.
-    return { minWidth, minHeight, maxWidth, maxHeight };
-  }
-
-  /**
-   * Recursively fit the given split layout node.
-   */
-  function fitSplitNode(splitNode: SplitLayoutNode, spacing: number): ElementExt.ISizeLimits {
-    // Set up the limit variables.
-    let minWidth = 0;
-    let minHeight = 0;
-    let maxWidth = Infinity;
-    let maxHeight = Infinity;
-
-    // Compute common values.
-    let horizontal = splitNode.orientation === 'horizontal';
-    let fixed = Math.max(0, splitNode.children.length - 1) * spacing;
-
-    // Adjust the starting limits for the orientation.
-    if (horizontal) {
-      minWidth = fixed;
-      maxWidth = fixed;
-    } else {
-      minHeight = fixed;
-      maxHeight = fixed;
-    }
-
-    // Adjust the limits and sizer for each child area.
-    for (let i = 0, n = splitNode.children.length; i < n; ++i) {
-      let sizer = splitNode.sizers[i];
-      let child = splitNode.children[i];
-      let limits = fitLayoutNode(child, spacing);
-      if (horizontal) {
-        minHeight = Math.max(minHeight, limits.minHeight);
-        maxHeight = Math.min(maxHeight, limits.maxHeight);
-        minWidth += limits.minWidth;
-        maxWidth += limits.maxWidth;
-        sizer.minSize = limits.minWidth;
-        sizer.maxSize = limits.maxWidth;
-      } else {
-        minWidth = Math.max(minWidth, limits.minWidth);
-        maxWidth = Math.min(maxWidth, limits.maxWidth);
-        minHeight += limits.minHeight;
-        maxHeight += limits.maxHeight;
-        sizer.minSize = limits.minHeight;
-        sizer.maxSize = limits.maxHeight;
+    /**
+     * Normalize the sizes of the split layout node.
+     */
+    normalizeSizes(): void {
+      // Bail early if the sizers are empty.
+      let n = this.sizers.length;
+      if (n === 0) {
+        return;
       }
-    }
 
-    // Return the computed size limits for the layout node.
-    return { minWidth, minHeight, maxWidth, maxHeight };
-  }
+      // Hold the current sizes of the sizers.
+      this.holdSizes();
 
-  /**
-   * Update the given tab layout node.
-   */
-  function updateTabNode(tabNode: TabLayoutNode, x: number, y: number, width: number, height: number): void {
-    // Lookup common variables.
-    let tabBar = tabNode.tabBar;
-    let tabSizer = tabNode.sizers[0];
-    let widgetSizer = tabNode.sizers[1];
-    let currentTitle = tabBar.currentTitle;
-    let widget = currentTitle ? currentTitle.owner : null;
+      // Compute the sum of the sizes.
+      let sum = reduce(this.sizers, (v, sizer) => v + sizer.sizeHint, 0);
 
-    // Distribute the layout space to the sizers.
-    BoxEngine.calc(tabNode.sizers, height);
-
-    // Layout the tab bar using the computed size.
-    if (!tabBar.isHidden) {
-      Widget.setGeometry(tabBar, x, y, width, tabSizer.size);
-      y += tabSizer.size;
-    }
-
-    // Layout the widget using the computed size.
-    if (widget && !widget.isHidden) {
-      Widget.setGeometry(widget, x, y, width, widgetSizer.size);
-    }
-  }
-
-  /**
-   * Update the given split layout node.
-   */
-  function updateSplitNode(splitNode: SplitLayoutNode, x: number, y: number, width: number, height: number, spacing: number): void {
-    // Compute the available layout space.
-    let horizontal = splitNode.orientation === 'horizontal';
-    let fixed = Math.max(0, splitNode.children.length - 1) * spacing;
-    let space = Math.max(0, (horizontal ? width : height) - fixed);
-
-    // De-normalize the split node if needed.
-    if (splitNode.normalized) {
-      each(splitNode.sizers, sizer => { sizer.sizeHint *= space; });
-      splitNode.normalized = false;
-    }
-
-    // Distribute the layout space to the sizers.
-    BoxEngine.calc(splitNode.sizers, space);
-
-    // Update the geometry of the child areas and handles.
-    for (let i = 0, n = splitNode.children.length; i < n; ++i) {
-      let child = splitNode.children[i];
-      let size = splitNode.sizers[i].size;
-      let handleStyle = splitNode.handles[i].style;
-      if (horizontal) {
-        updateLayoutNode(child, x, y, size, height, spacing);
-        x += size;
-        handleStyle.top = `${y}px`;
-        handleStyle.left = `${x}px`;
-        handleStyle.width = `${spacing}px`;
-        handleStyle.height = `${height}px`;
-        x += spacing;
+      // Normalize the sizes based on the sum.
+      if (sum === 0) {
+        each(this.sizers, sizer => {
+          sizer.size = sizer.sizeHint = 1 / n;
+        });
       } else {
-        updateLayoutNode(child, x, y, width, size, spacing);
-        y += size;
-        handleStyle.top = `${y}px`;
-        handleStyle.left = `${x}px`;
-        handleStyle.width = `${width}px`;
-        handleStyle.height = `${spacing}px`;
-        y += spacing;
+        each(this.sizers, sizer => {
+          sizer.size = sizer.sizeHint /= sum;
+        });
+      }
+
+      // Mark the sizes as normalized.
+      this.normalized = true;
+    }
+
+    /**
+     * Snap the normalized sizes of the split layout node.
+     */
+    createNormalizedSizes(): number[] {
+      // Bail early if the sizers are empty.
+      let n = this.sizers.length;
+      if (n === 0) {
+        return [];
+      }
+
+      // Grab the current sizes of the sizers.
+      let sizes = this.sizers.map(sizer => sizer.size);
+
+      // Compute the sum of the sizes.
+      let sum = reduce(sizes, (v, size) => v + size, 0);
+
+      // Normalize the sizes based on the sum.
+      if (sum === 0) {
+        each(sizes, (size, i) => { sizes[i] = 1 / n; });
+      } else {
+        each(sizes, (size, i) => { sizes[i] = size / sum; });
+      }
+
+      // Return the normalized sizes.
+      return sizes;
+    }
+
+    /**
+     * Fit the layout tree.
+     */
+    fit(spacing: number, items: ItemMap): ElementExt.ISizeLimits {
+      // Compute the required fixed space.
+      let horizontal = this.orientation === 'horizontal';
+      let fixed = Math.max(0, this.children.length - 1) * spacing;
+
+      // Set up the limit variables.
+      let minWidth = horizontal ? fixed : 0;
+      let minHeight = horizontal ? 0 : fixed;
+      let maxWidth = Infinity;
+      let maxHeight = Infinity;
+
+      // Fit the children and update the limits.
+      for (let i = 0, n = this.children.length; i < n; ++i) {
+        let limits = this.children[i].fit(spacing, items);
+        if (horizontal) {
+          minHeight = Math.max(minHeight, limits.minHeight);
+          minWidth += limits.minWidth;
+          this.sizers[i].minSize = limits.minWidth;
+        } else {
+          minWidth = Math.max(minWidth, limits.minWidth);
+          minHeight += limits.minHeight;
+          this.sizers[i].minSize = limits.minHeight;
+        }
+      }
+
+      // Return the computed limits for the layout node.
+      return { minWidth, minHeight, maxWidth, maxHeight };
+    }
+
+    /**
+     * Update the layout tree.
+     */
+    update(x: number, y: number, width: number, height: number, spacing: number, items: ItemMap): void {
+      // Compute the available layout space.
+      let horizontal = this.orientation === 'horizontal';
+      let fixed = Math.max(0, this.children.length - 1) * spacing;
+      let space = Math.max(0, (horizontal ? width : height) - fixed);
+
+      // De-normalize the sizes if needed.
+      if (this.normalized) {
+        each(this.sizers, sizer => { sizer.sizeHint *= space; });
+        this.normalized = false;
+      }
+
+      // Distribute the layout space to the sizers.
+      BoxEngine.calc(this.sizers, space);
+
+      // Update the geometry of the child nodes and handles.
+      for (let i = 0, n = this.children.length; i < n; ++i) {
+        let child = this.children[i];
+        let size = this.sizers[i].size;
+        let handleStyle = this.handles[i].style;
+        if (horizontal) {
+          child.update(x, y, size, height, spacing, items);
+          x += size;
+          handleStyle.top = `${y}px`;
+          handleStyle.left = `${x}px`;
+          handleStyle.width = `${spacing}px`;
+          handleStyle.height = `${height}px`;
+          x += spacing;
+        } else {
+          child.update(x, y, width, size, spacing, items);
+          y += size;
+          handleStyle.top = `${y}px`;
+          handleStyle.left = `${x}px`;
+          handleStyle.width = `${width}px`;
+          handleStyle.height = `${spacing}px`;
+          y += spacing;
+        }
       }
     }
   }
 
   /**
-   * Create the tab area configuration for a tab layout node.
-   */
-  function createTabAreaConfig(node: TabLayoutNode): DockLayout.ITabAreaConfig {
-    let widgets = node.tabBar.titles.map(title => title.owner);
-    let currentIndex = node.tabBar.currentIndex;
-    return { type: 'tab-area', widgets, currentIndex };
-  }
-
-  /**
-   * Create the split area configuration for a split layout node.
-   */
-  function createSplitAreaConfig(node: SplitLayoutNode): DockLayout.ISplitAreaConfig {
-    let orientation = node.orientation;
-    let children = node.children.map(createAreaConfig);
-    let sizes = createNormalizedSizes(node);
-    return { type: 'split-area', orientation, children, sizes };
-  }
-
-  /**
-   * Snap the normalized sizes of a split layout node.
-   */
-  function createNormalizedSizes(splitNode: SplitLayoutNode): number[] {
-    // Bail early if the sizers are empty.
-    let n = splitNode.sizers.length;
-    if (n === 0) {
-      return [];
-    }
-
-    // Grab the current sizes of the sizers.
-    let sizes = splitNode.sizers.map(sizer => sizer.size);
-
-    // Compute the sum of the sizes.
-    let sum = reduce(sizes, (v, size) => v + size, 0);
-
-    // Normalize the sizes based on the sum.
-    if (sum === 0) {
-      each(sizes, (size, i) => { sizes[i] = 1 / n; });
-    } else {
-      each(sizes, (size, i) => { sizes[i] = size / sum; });
-    }
-
-    // Return the normalized sizes.
-    return sizes;
-  }
-
-  /**
-   * Validate a tab area config and collect the visited widgets.
+   * Validate a tab area config object and collect the visited widgets.
    */
   function validateTabAreaConfig(config: DockLayout.ITabAreaConfig, widgetSet: Set<Widget>): void {
     each(config.widgets, widget => {
       if (widgetSet.has(widget)) {
-        throw new Error('Layout config has duplicate widget.');
+        throw new Error('Tab area config has duplicate widget.');
       }
       widgetSet.add(widget);
     });
   }
 
   /**
-   * Validate a split area config and collect the visited widgets.
+   * Validate a split area config object and collect the visited widgets.
    */
   function validateSplitAreaConfig(config: DockLayout.ISplitAreaConfig, widgetSet: Set<Widget>): void {
     if (config.sizes.length !== config.children.length) {
@@ -1912,26 +1842,21 @@ namespace Private {
     if (config.sizes.some(size => size < 0)) {
       throw new Error('Split area config has negative sizes.');
     }
-    each(config.children, child => validateChildAreaConfig(config, child, widgetSet));
+    each(config.children, child => {
+      if (child.type === 'tab-area') {
+        validateTabAreaConfig(child, widgetSet);
+      } else if (child.orientation === config.orientation) {
+        throw new Error('Child split area config has invalid orientation.');
+      } else {
+        validateSplitAreaConfig(child, widgetSet);
+      }
+    });
   }
 
   /**
-   * Validate a child area config.
+   * Convert a tab area config into a layout tree.
    */
-  function validateChildAreaConfig(parent: DockLayout.ISplitAreaConfig, child: DockLayout.AreaConfig, widgetSet: Set<Widget>): void {
-    if (child.type === 'tab-area') {
-      validateTabAreaConfig(child, widgetSet);
-    } else if (parent.orientation === child.orientation) {
-      throw new Error('Child split area config has invalid orientation.');
-    } else {
-      validateSplitAreaConfig(child, widgetSet);
-    }
-  }
-
-  /**
-   * Create a new layout node for a tab area config.
-   */
-  function realizeTabAreaConfig(config: DockLayout.ITabAreaConfig, renderer: DockLayout.IRenderer): LayoutNode {
+  function realizeTabAreaConfig(config: DockLayout.ITabAreaConfig, renderer: DockLayout.IRenderer): TabLayoutNode {
     // Create the tab bar for the layout node.
     let tabBar = renderer.createTabBar();
 
@@ -1942,29 +1867,24 @@ namespace Private {
     });
 
     // Set the current index of the tab bar.
-    let n = tabBar.titles.length;
-    tabBar.currentIndex = Math.max(0, Math.min(config.currentIndex, n - 1));
+    tabBar.currentIndex = config.currentIndex;
 
     // Return the new tab layout node.
     return new TabLayoutNode(tabBar);
   }
 
   /**
-   * Create a new layout node for a split area config.
+   * Convert a split area config into a layout tree.
    */
-  function realizeSplitAreaConfig(config: DockLayout.ISplitAreaConfig, renderer: DockLayout.IRenderer): LayoutNode {
+  function realizeSplitAreaConfig(config: DockLayout.ISplitAreaConfig, renderer: DockLayout.IRenderer): SplitLayoutNode {
     // Create the split layout node.
     let node = new SplitLayoutNode(config.orientation);
 
-    // Add each child to the split layout node.
+    // Add each child to the layout node.
     each(config.children, (child, i) => {
-      // Recursively create the child layout node.
+      // Create the child data for the layout node.
       let childNode = realizeAreaConfig(child, renderer);
-
-      // Create the sizer for the child.
       let sizer = createSizer(config.sizes[i]);
-
-      // Create the handle for the child.
       let handle = renderer.createHandle();
 
       // Add the child data to the layout node.
@@ -1976,13 +1896,13 @@ namespace Private {
       childNode.parent = node;
     });
 
-    // Synchronize the handle state for the split layout node.
-    syncHandles(node);
+    // Synchronize the handle state for the layout node.
+    node.syncHandles();
 
-    // Normalize the sizes for the split layout node.
-    normalizeSizes(node);
+    // Normalize the sizes for the layout node.
+    node.normalizeSizes();
 
-    // Return the new split layout node.
+    // Return the new layout node.
     return node;
   }
 }

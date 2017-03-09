@@ -1588,12 +1588,11 @@ namespace Private {
   }
 
   /**
-   * Toggle the CSS orientation class for the given tab bar.
+   * Toggle the CSS orientation attribute for the given tab bar.
    */
   export
   function toggleOrientation(bar: TabBar<any>, orient: TabBar.Orientation): void {
-    bar.toggleClass('p-mod-horizontal', orient === 'horizontal');
-    bar.toggleClass('p-mod-vertical', orient === 'vertical');
+    bar.node.setAttribute('data-orientation', orient);
   }
 
   /**

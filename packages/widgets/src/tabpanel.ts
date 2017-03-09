@@ -421,14 +421,11 @@ namespace TabPanel {
  */
 namespace Private {
   /**
-   * Toggle the CSS placement class for the given tab bar.
+   * Toggle the CSS placement attribute for the given tab bar.
    */
   export
   function togglePlacement(bar: TabBar<any>, plc: TabPanel.TabPlacement): void {
-    bar.toggleClass('p-mod-top', plc === 'top');
-    bar.toggleClass('p-mod-left', plc === 'left');
-    bar.toggleClass('p-mod-right', plc === 'right');
-    bar.toggleClass('p-mod-bottom', plc === 'bottom');
+    bar.node.setAttribute('data-placement', plc);
   }
 
   /**

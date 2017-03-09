@@ -6,7 +6,7 @@
 | The full license is in the file LICENSE, distributed with this software.
 |----------------------------------------------------------------------------*/
 import {
-  ArrayExt
+  ArrayExt, each
 } from '@phosphor/algorithm';
 
 import {
@@ -24,6 +24,10 @@ import {
 import {
   BoxEngine, BoxSizer
 } from './boxengine';
+
+import {
+  LayoutItem
+} from './layout';
 
 import {
   PanelLayout
@@ -50,6 +54,9 @@ class SplitLayout extends PanelLayout {
     if (options.orientation !== undefined) {
       this._orientation = options.orientation;
     }
+    if (options.alignment !== undefined) {
+      this._alignment = options.alignment;
+    }
     if (options.spacing !== undefined) {
       this._spacing = Private.clampSpacing(options.spacing);
     }
@@ -59,9 +66,16 @@ class SplitLayout extends PanelLayout {
    * Dispose of the resources held by the layout.
    */
   dispose(): void {
+    // Dispose of the layout items.
+    each(this._items, item => { item.dispose(); });
+
+    // Clear the layout state.
     this._box = null;
+    this._items.length = 0;
     this._sizers.length = 0;
     this._handles.length = 0;
+
+    // Dispose of the rest of the layout.
     super.dispose();
   }
 
@@ -90,6 +104,40 @@ class SplitLayout extends PanelLayout {
     }
     Private.toggleOrientation(this.parent, value);
     this.parent.fit();
+  }
+
+  /**
+   * Get the content alignment for the split layout.
+   *
+   * #### Notes
+   * This is the alignment of the widgets in the layout direction.
+   *
+   * The alignment has no effect if the widgets can expand  to fill the
+   * entire split layout.
+   */
+  get alignment(): SplitLayout.Alignment {
+    return this._alignment;
+  }
+
+  /**
+   * Set the content alignment for the split layout.
+   *
+   * #### Notes
+   * This is the alignment of the widgets in the layout direction.
+   *
+   * The alignment has no effect if the widgets can expand  to fill the
+   * entire split layout.
+   */
+  set alignment(value: SplitLayout.Alignment) {
+    if (this._alignment === value) {
+      return;
+    }
+    this._alignment = value;
+    if (!this.parent) {
+      return;
+    }
+    Private.toggleAlignment(this.parent, value);
+    this.parent.update();
   }
 
   /**
@@ -227,6 +275,7 @@ class SplitLayout extends PanelLayout {
    */
   protected init(): void {
     Private.toggleOrientation(this.parent!, this.orientation);
+    Private.toggleAlignment(this.parent!, this.alignment);
     super.init();
   }
 
@@ -241,17 +290,16 @@ class SplitLayout extends PanelLayout {
    * This is a reimplementation of the superclass method.
    */
   protected attachWidget(index: number, widget: Widget): void {
-    // Create the handle and sizer for the new widget.
+    // Create the item, handle, and sizer for the new widget.
+    let item = new LayoutItem(widget);
     let handle = Private.createHandle(this.renderer);
     let average = Private.averageSize(this._sizers);
     let sizer = Private.createSizer(average);
 
-    // Insert the handle and sizer into the internal arrays.
+    // Insert the item, handle, and sizer into the internal arrays.
+    ArrayExt.insert(this._items, index, item);
     ArrayExt.insert(this._sizers, index, sizer);
     ArrayExt.insert(this._handles, index, handle);
-
-    // Prepare the layout geometry for the widget.
-    Widget.prepareGeometry(widget);
 
     // Send a `'before-attach'` message if the parent is attached.
     if (this.parent!.isAttached) {
@@ -284,7 +332,8 @@ class SplitLayout extends PanelLayout {
    * This is a reimplementation of the superclass method.
    */
   protected moveWidget(fromIndex: number, toIndex: number, widget: Widget): void {
-    // Move the sizer and handle for the widget.
+    // Move the item, sizer, and handle for the widget.
+    ArrayExt.move(this._items, fromIndex, toIndex);
     ArrayExt.move(this._sizers, fromIndex, toIndex);
     ArrayExt.move(this._handles, fromIndex, toIndex);
 
@@ -303,10 +352,9 @@ class SplitLayout extends PanelLayout {
    * This is a reimplementation of the superclass method.
    */
   protected detachWidget(index: number, widget: Widget): void {
-    // Remove the handle for the widget.
+    // Remove the item, handle, and sizer for the widget.
+    let item = ArrayExt.removeAt(this._items, index);
     let handle = ArrayExt.removeAt(this._handles, index);
-
-    // Remove the sizer for the widget.
     ArrayExt.removeAt(this._sizers, index);
 
     // Send a `'before-detach'` message if the parent is attached.
@@ -323,8 +371,8 @@ class SplitLayout extends PanelLayout {
       MessageLoop.sendMessage(widget, Widget.Msg.AfterDetach);
     }
 
-    // Reset the layout geometry for the widget.
-    Widget.resetGeometry(widget);
+    // Dispose of the layout item.
+    item!.dispose();
 
     // Post a fit request for the parent widget.
     this.parent!.fit();
@@ -393,84 +441,77 @@ class SplitLayout extends PanelLayout {
   private _fit(): void {
     // Update the handles and track the visible widget count.
     let nVisible = 0;
-    let widgets = this.widgets;
-    let lastHandle: HTMLDivElement | null = null;
-    for (let i = 0, n = widgets.length; i < n; ++i) {
-      if (widgets[i].isHidden) {
+    let lastHandleIndex = -1;
+    for (let i = 0, n = this._items.length; i < n; ++i) {
+      if (this._items[i].isHidden) {
         this._handles[i].classList.add('p-mod-hidden');
       } else {
         this._handles[i].classList.remove('p-mod-hidden');
-        lastHandle = this._handles[i];
+        lastHandleIndex = i;
         nVisible++;
       }
     }
 
     // Hide the handle for the last visible widget.
-    if (lastHandle) {
-      lastHandle.classList.add('p-mod-hidden');
+    if (lastHandleIndex !== -1) {
+      this._handles[lastHandleIndex].classList.add('p-mod-hidden');
     }
 
     // Update the fixed space for the visible items.
     this._fixed = this._spacing * Math.max(0, nVisible - 1);
 
-    // Setup the initial size limits.
-    let minW = 0;
-    let minH = 0;
-    let maxW = Infinity;
-    let maxH = Infinity;
+    // Setup the computed minimum size.
     let horz = this._orientation === 'horizontal';
-    if (horz) {
-      minW = this._fixed;
-      maxW = nVisible > 0 ? minW : maxW;
-    } else {
-      minH = this._fixed;
-      maxH = nVisible > 0 ? minH : maxH;
-    }
+    let minW = horz ? this._fixed : 0;
+    let minH = horz ? 0 : this._fixed;
 
     // Update the sizers and computed size limits.
-    for (let i = 0, n = widgets.length; i < n; ++i) {
-      let widget = widgets[i];
+    for (let i = 0, n = this._items.length; i < n; ++i) {
+      // Fetch the item and corresponding box sizer.
+      let item = this._items[i];
       let sizer = this._sizers[i];
+
+      // Prevent resizing unless necessary.
       if (sizer.size > 0) {
         sizer.sizeHint = sizer.size;
       }
-      if (widget.isHidden) {
+
+      // If the item is hidden, it should consume zero size.
+      if (item.isHidden) {
         sizer.minSize = 0;
         sizer.maxSize = 0;
         continue;
       }
-      let limits = ElementExt.sizeLimits(widget.node);
-      sizer.stretch = SplitLayout.getStretch(widget);
+
+      // Update the size limits for the item.
+      item.fit();
+
+      // Update the stretch factor.
+      sizer.stretch = SplitLayout.getStretch(item.widget);
+
+      // Update the sizer limits and computed min size.
       if (horz) {
-        sizer.minSize = limits.minWidth;
-        sizer.maxSize = limits.maxWidth;
-        minW += limits.minWidth;
-        maxW += limits.maxWidth;
-        minH = Math.max(minH, limits.minHeight);
-        maxH = Math.min(maxH, limits.maxHeight);
+        sizer.minSize = item.minWidth;
+        sizer.maxSize = item.maxWidth;
+        minW += item.minWidth;
+        minH = Math.max(minH, item.minHeight);
       } else {
-        sizer.minSize = limits.minHeight;
-        sizer.maxSize = limits.maxHeight;
-        minH += limits.minHeight;
-        maxH += limits.maxHeight;
-        minW = Math.max(minW, limits.minWidth);
-        maxW = Math.min(maxW, limits.maxWidth);
+        sizer.minSize = item.minHeight;
+        sizer.maxSize = item.maxHeight;
+        minH += item.minHeight;
+        minW = Math.max(minW, item.minWidth);
       }
     }
 
-    // Update the box sizing and add it to the size constraints.
+    // Update the box sizing and add it to the computed min size.
     let box = this._box = ElementExt.boxSizing(this.parent!.node);
     minW += box.horizontalSum;
     minH += box.verticalSum;
-    maxW += box.horizontalSum;
-    maxH += box.verticalSum;
 
-    // Update the parent's size constraints.
+    // Update the parent's min size constraints.
     let style = this.parent!.node.style;
     style.minWidth = `${minW}px`;
     style.minHeight = `${minH}px`;
-    style.maxWidth = maxW === Infinity ? 'none' : `${maxW}px`;
-    style.maxHeight = maxH === Infinity ? 'none' : `${maxH}px`;
 
     // Set the dirty flag to ensure only a single update occurs.
     this._dirty = true;
@@ -497,9 +538,14 @@ class SplitLayout extends PanelLayout {
     // Clear the dirty flag to indicate the update occurred.
     this._dirty = false;
 
-    // Bail early if there are no widgets to layout.
-    let widgets = this.widgets;
-    if (widgets.length === 0) {
+    // Compute the visible item count.
+    let nVisible = 0;
+    for (let i = 0, n = this._items.length; i < n; ++i) {
+      nVisible += +!this._items[i].isHidden;
+    }
+
+    // Bail early if there are no visible items to layout.
+    if (nVisible === 0) {
       return;
     }
 
@@ -540,33 +586,67 @@ class SplitLayout extends PanelLayout {
     }
 
     // Distribute the layout space to the box sizers.
-    BoxEngine.calc(this._sizers, space);
+    let delta = BoxEngine.calc(this._sizers, space);
 
-    // Layout the widgets using the computed box sizes.
-    let spacing = this._spacing;
-    for (let i = 0, n = widgets.length; i < n; ++i) {
-      let widget = widgets[i];
-      if (widget.isHidden) {
+    // Set up the variables for justification and alignment offset.
+    let extra = 0;
+    let offset = 0;
+
+    // Account for alignment if there is extra layout space.
+    if (delta > 0) {
+      switch (this._alignment) {
+      case 'start':
+        break;
+      case 'center':
+        extra = 0;
+        offset = delta / 2;
+        break;
+      case 'end':
+        extra = 0;
+        offset = delta;
+        break;
+      case 'justify':
+        extra = delta / nVisible;
+        offset = 0;
+        break;
+      default:
+        throw 'unreachable';
+      }
+    }
+
+    // Layout the items using the computed box sizes.
+    for (let i = 0, n = this._items.length; i < n; ++i) {
+      // Fetch the item.
+      let item = this._items[i];
+
+      // Ignore hidden items.
+      if (item.isHidden) {
         continue;
       }
+
+      // Fetch the computed size for the widget.
       let size = this._sizers[i].size;
+
+      // Fetch the style for the handle.
       let handleStyle = this._handles[i].style;
+
+      // Update the widget and handle, and advance the relevant edge.
       if (horz) {
-        Widget.setGeometry(widget, left, top, size, height);
-        left += size;
+        item.update(left + offset, top, size + extra, height);
+        left += size + extra;
         handleStyle.top = `${top}px`;
-        handleStyle.left = `${left}px`;
-        handleStyle.width = `${spacing}px`;
+        handleStyle.left = `${left + offset}px`;
+        handleStyle.width = `${this._spacing}px`;
         handleStyle.height = `${height}px`;
-        left += spacing;
+        left += this._spacing;
       } else {
-        Widget.setGeometry(widget, left, top, width, size);
-        top += size;
-        handleStyle.top = `${top}px`;
+        item.update(left, top + offset, width, size + extra);
+        top += size + extra;
+        handleStyle.top = `${top + offset}px`;
         handleStyle.left = `${left}px`;
         handleStyle.width = `${width}px`;
-        handleStyle.height = `${spacing}px`;
-        top += spacing;
+        handleStyle.height = `${this._spacing}px`;
+        top += this._spacing;
       }
     }
   }
@@ -576,8 +656,10 @@ class SplitLayout extends PanelLayout {
   private _dirty = false;
   private _hasNormedSizes = false;
   private _sizers: BoxSizer[] = [];
+  private _items: LayoutItem[] = [];
   private _handles: HTMLDivElement[] = [];
   private _box: ElementExt.IBoxSizing | null = null;
+  private _alignment: SplitLayout.Alignment = 'start';
   private _orientation: SplitLayout.Orientation = 'horizontal';
 }
 
@@ -592,6 +674,12 @@ namespace SplitLayout {
    */
   export
   type Orientation = 'horizontal' | 'vertical';
+
+  /**
+   * A type alias for a split layout alignment.
+   */
+  export
+  type Alignment = 'start' | 'center' | 'end' | 'justify';
 
   /**
    * An options object for initializing a split layout.
@@ -609,6 +697,13 @@ namespace SplitLayout {
      * The default is `'horizontal'`.
      */
     orientation?: Orientation;
+
+    /**
+     * The content alignment of the layout.
+     *
+     * The default is `'start'`.
+     */
+    alignment?: Alignment;
 
     /**
      * The spacing between items in the layout.
@@ -669,7 +764,7 @@ namespace Private {
     name: 'stretch',
     create: () => 0,
     coerce: (owner, value) => Math.max(0, Math.floor(value)),
-    changed: onChildPropertyChanged
+    changed: onChildSizingChanged
   });
 
   /**
@@ -693,12 +788,19 @@ namespace Private {
   }
 
   /**
-   * Toggle the CSS orientation class for the given widget.
+   * Toggle the CSS orientation attribute for the given widget.
    */
   export
   function toggleOrientation(widget: Widget, orient: SplitLayout.Orientation): void {
-    widget.toggleClass('p-mod-horizontal', orient === 'horizontal');
-    widget.toggleClass('p-mod-vertical', orient === 'vertical');
+    widget.node.setAttribute('data-orientation', orient);
+  }
+
+  /**
+   * Toggle the CSS alignment attribute for the given widget.
+   */
+  export
+  function toggleAlignment(widget: Widget, align: SplitLayout.Alignment): void {
+    widget.node.setAttribute('data-alignment', align);
   }
 
   /**
@@ -731,9 +833,9 @@ namespace Private {
   }
 
   /**
-   * The change handler for the attached child properties.
+   * The change handler for the attached sizing properties.
    */
-  function onChildPropertyChanged(child: Widget): void {
+  function onChildSizingChanged(child: Widget): void {
     if (child.parent && child.parent.layout instanceof SplitLayout) {
       child.parent.fit();
     }
