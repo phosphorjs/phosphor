@@ -501,9 +501,11 @@ class DockLayout extends Layout {
     }
 
     // Delete the layout item for the widget.
-    let item = this._items.get(widget)!;
-    this._items.delete(widget);
-    item.dispose();
+    let item = this._items.get(widget);
+    if (item) {
+      this._items.delete(widget);
+      item.dispose();
+    }
   }
 
   /**
