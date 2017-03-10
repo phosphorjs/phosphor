@@ -115,6 +115,7 @@ class DockPanel extends Widget {
    * This signal is emitted for the following conditions:
    * - A widget is added, moved, or removed
    * - The current tab of a tab bar is changed
+   * - A tab is moved in the tab bar
    * - A split handle is moved by the user
    *
    * This signal is emitted asynchronously in a collapsed fashion, so
@@ -737,7 +738,8 @@ class DockPanel extends Widget {
     Private.isGeneratedTabBarProperty.set(tabBar, true);
 
     // Connect the signal handlers for the tab bar.
-    tabBar.currentChanged.connect(this._onCurrentChanged, this);
+    tabBar.tabMoved.connect(this._onGenericLayoutChange, this);
+    tabBar.currentChanged.connect(this._onGenericLayoutChange, this);
     tabBar.tabCloseRequested.connect(this._onTabCloseRequested, this);
     tabBar.tabDetachRequested.connect(this._onTabDetachRequested, this);
     tabBar.tabActivateRequested.connect(this._onTabActivateRequested, this);
@@ -754,9 +756,9 @@ class DockPanel extends Widget {
   }
 
   /**
-   * Handle the `currentChanged` signal from a tab bar.
+   * Handle a signal which indicates the dock layout is modified.
    */
-  private _onCurrentChanged(): void {
+  private _onGenericLayoutChange(): void {
     MessageLoop.postMessage(this, new ConflatableMessage('layout-modified'));
   }
 
