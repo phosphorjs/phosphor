@@ -1845,13 +1845,7 @@ namespace Private {
      */
     syncHandles(): void {
       each(this.handles, (handle, i) => {
-        if (this.orientation === 'horizontal') {
-          handle.classList.remove('p-mod-vertical');
-          handle.classList.add('p-mod-horizontal');
-        } else {
-          handle.classList.remove('p-mod-horizontal');
-          handle.classList.add('p-mod-vertical');
-        }
+        handle.setAttribute('data-orientation', this.orientation);
         if (i === this.handles.length - 1) {
           handle.classList.add('p-mod-hidden');
         } else {

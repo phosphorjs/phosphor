@@ -16,12 +16,12 @@
 }
 
 
-.p-TabBar.p-mod-horizontal {
+.p-TabBar[data-orientation='horizontal'] {
   flex-direction: row;
 }
 
 
-.p-TabBar.p-mod-vertical {
+.p-TabBar[data-orientation='vertical'] {
   flex-direction: column;
 }
 
@@ -35,12 +35,12 @@
 }
 
 
-.p-TabBar.p-mod-horizontal > .p-TabBar-content {
+.p-TabBar[data-orientation='horizontal'] > .p-TabBar-content {
   flex-direction: row;
 }
 
 
-.p-TabBar.p-mod-vertical > .p-TabBar-content {
+.p-TabBar[data-orientation='vertical'] > .p-TabBar-content {
   flex-direction: column;
 }
 
@@ -76,13 +76,13 @@
 }
 
 
-.p-TabBar.p-mod-horizontal.p-mod-dragging .p-TabBar-tab {
+.p-TabBar.p-mod-dragging[data-orientation='horizontal'] .p-TabBar-tab {
   left: 0;
   transition: left 150ms ease;
 }
 
 
-.p-TabBar.p-mod-vertical.p-mod-dragging .p-TabBar-tab {
+.p-TabBar.p-mod-dragging[data-orientation='vertical'] .p-TabBar-tab {
   top: 0;
   transition: top 150ms ease;
 }

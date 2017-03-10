@@ -32,24 +32,24 @@
 }
 
 
-.p-SplitPanel.p-mod-horizontal > .p-SplitPanel-handle {
+.p-SplitPanel[data-orientation='horizontal'] > .p-SplitPanel-handle {
   cursor: ew-resize;
 }
 
 
-.p-SplitPanel.p-mod-vertical > .p-SplitPanel-handle {
+.p-SplitPanel[data-orientation='vertical'] > .p-SplitPanel-handle {
   cursor: ns-resize;
 }
 
 
-.p-SplitPanel.p-mod-horizontal > .p-SplitPanel-handle:after {
+.p-SplitPanel[data-orientation='horizontal'] > .p-SplitPanel-handle:after {
   left: 50%;
   min-width: 8px;
   transform: translateX(-50%);
 }
 
 
-.p-SplitPanel.p-mod-vertical > .p-SplitPanel-handle:after {
+.p-SplitPanel[data-orientation='vertical'] > .p-SplitPanel-handle:after {
   top: 50%;
   min-height: 8px;
   transform: translateY(-50%);

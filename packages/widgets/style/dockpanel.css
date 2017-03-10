@@ -42,24 +42,24 @@
 }
 
 
-.p-DockPanel-handle.p-mod-horizontal {
+.p-DockPanel-handle[data-orientation='horizontal'] {
   cursor: ew-resize;
 }
 
 
-.p-DockPanel-handle.p-mod-vertical {
+.p-DockPanel-handle[data-orientation='vertical'] {
   cursor: ns-resize;
 }
 
 
-.p-DockPanel-handle.p-mod-horizontal:after {
+.p-DockPanel-handle[data-orientation='horizontal']:after {
   left: 50%;
   min-width: 8px;
   transform: translateX(-50%);
 }
 
 
-.p-DockPanel-handle.p-mod-vertical:after {
+.p-DockPanel-handle[data-orientation='vertical']:after {
   top: 50%;
   min-height: 8px;
   transform: translateY(-50%);
