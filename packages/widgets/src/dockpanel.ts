@@ -26,12 +26,16 @@ import {
 } from '@phosphor/dragdrop';
 
 import {
-  Message
+  ConflatableMessage, Message, MessageLoop
 } from '@phosphor/messaging';
 
 import {
   AttachedProperty
 } from '@phosphor/properties';
+
+import {
+  ISignal, Signal
+} from '@phosphor/signaling';
 
 import {
   DockLayout
@@ -103,6 +107,23 @@ class DockPanel extends Widget {
    * The overlay used by the dock panel.
    */
   readonly overlay: DockPanel.IOverlay;
+
+  /**
+   * A signal emitted when the layout configuration is modified.
+   *
+   * #### Notes
+   * This signal is emitted for the following conditions:
+   * - A widget is added, moved, or removed
+   * - The current tab of a tab bar is changed
+   * - A split handle is moved by the user
+   *
+   * This signal is emitted asynchronously in a collapsed fashion, so
+   * that multiple synchronous modifications results in only a single
+   * emit of the signal.
+   */
+  get layoutModified(): ISignal<this, void> {
+    return this._layoutModified;
+  }
 
   /**
    * The renderer used by the dock panel.
@@ -232,7 +253,24 @@ class DockPanel extends Widget {
    * @param options - The additional options for adding the widget.
    */
   addWidget(widget: Widget, options: DockPanel.IAddOptions = {}): void {
+    // Add the widget to the layout.
     (this.layout as DockLayout).addWidget(widget, options);
+
+    // Schedule an emit of the layout modified signal.
+    MessageLoop.postMessage(this, new ConflatableMessage('layout-modified'));
+  }
+
+  /**
+   * Process a message sent to the widget.
+   *
+   * @param msg - The message sent to the widget.
+   */
+  processMessage(msg: Message): void {
+    if (msg.type === 'layout-modified') {
+      this._layoutModified.emit(undefined);
+    } else {
+      super.processMessage(msg);
+    }
   }
 
   /**
@@ -325,6 +363,9 @@ class DockPanel extends Widget {
 
     // Remove the widget class from the child.
     msg.child.removeClass('p-DockPanel-widget');
+
+    // Schedule an emit of the layout modified signal.
+    MessageLoop.postMessage(this, new ConflatableMessage('layout-modified'));
   }
 
   /**
@@ -477,7 +518,11 @@ class DockPanel extends Widget {
 
     // Release the mouse if `Escape` is pressed.
     if (event.keyCode === 27) {
+      // Finalize the mouse release.
       this._releaseMouse();
+
+      // Schedule an emit of the layout modified signal.
+      MessageLoop.postMessage(this, new ConflatableMessage('layout-modified'));
     }
   }
 
@@ -557,6 +602,9 @@ class DockPanel extends Widget {
 
     // Finalize the mouse release.
     this._releaseMouse();
+
+    // Schedule an emit of the layout modified signal.
+    MessageLoop.postMessage(this, new ConflatableMessage('layout-modified'));
   }
 
   /**
@@ -689,6 +737,7 @@ class DockPanel extends Widget {
     Private.isGeneratedTabBarProperty.set(tabBar, true);
 
     // Connect the signal handlers for the tab bar.
+    tabBar.currentChanged.connect(this._onCurrentChanged, this);
     tabBar.tabCloseRequested.connect(this._onTabCloseRequested, this);
     tabBar.tabDetachRequested.connect(this._onTabDetachRequested, this);
     tabBar.tabActivateRequested.connect(this._onTabActivateRequested, this);
@@ -702,6 +751,13 @@ class DockPanel extends Widget {
    */
   private _createHandle(): HTMLDivElement {
     return this._renderer.createHandle();
+  }
+
+  /**
+   * Handle the `currentChanged` signal from a tab bar.
+   */
+  private _onCurrentChanged(): void {
+    MessageLoop.postMessage(this, new ConflatableMessage('layout-modified'));
   }
 
   /**
@@ -764,6 +820,7 @@ class DockPanel extends Widget {
   private _drag: Drag | null = null;
   private _renderer: DockPanel.IRenderer;
   private _pressData: Private.IPressData | null = null;
+  private _layoutModified = new Signal<this, void>(this);
 }
 
 
