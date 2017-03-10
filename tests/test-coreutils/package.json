@@ -1,9 +1,9 @@
 {
   "private": true,
   "name": "@phosphor/test-coreutils",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "dependencies": {
-    "@phosphor/coreutils": "^0.1.4",
+    "@phosphor/coreutils": "^0.1.5",
     "chai": "^3.5.0",
     "es6-promise": "^4.0.5",
     "mocha": "^3.2.0"

@@ -1,6 +1,6 @@
 {
   "name": "@phosphor/commands",
-  "version": "0.1.4",
+  "version": "0.1.5",
   "description": "PhosphorJS - Commands",
   "main": "lib/index.js",
   "types": "lib/index.d.ts",
@@ -13,7 +13,7 @@
   },
   "dependencies": {
     "@phosphor/algorithm": "^0.1.1",
-    "@phosphor/coreutils": "^0.1.4",
+    "@phosphor/coreutils": "^0.1.5",
     "@phosphor/disposable": "^0.1.1",
     "@phosphor/domutils": "^0.1.2",
     "@phosphor/keyboard": "^0.1.1",
