@@ -142,6 +142,19 @@ class DockLayout extends Layout {
   }
 
   /**
+   * Create an iterator over the selected widgets in the layout.
+   *
+   * @returns A new iterator over the selected user widgets.
+   *
+   * #### Notes
+   * This iterator yields the widgets corresponding to the current tab
+   * of each tab bar in the layout.
+   */
+  selectedWidgets(): IIterator<Widget> {
+    return this._root ? this._root.iterSelectedWidgets() : empty<Widget>();
+  }
+
+  /**
    * Create an iterator over the tab bars in the layout.
    *
    * @returns A new iterator over the tab bars in the layout.
@@ -1544,6 +1557,14 @@ namespace Private {
     }
 
     /**
+     * Create an iterator for the selected widgets in the layout tree.
+     */
+    iterSelectedWidgets(): IIterator<Widget> {
+      let title = this.tabBar.currentTitle;
+      return title ? once(title.owner) : empty<Widget>();
+    }
+
+    /**
      * Create an iterator for the tab bars in the layout tree.
      */
     iterTabBars(): IIterator<TabBar<Widget>> {
@@ -1762,6 +1783,14 @@ namespace Private {
      */
     iterUserWidgets(): IIterator<Widget> {
       let children = map(this.children, child => child.iterUserWidgets());
+      return new ChainIterator<Widget>(children);
+    }
+
+    /**
+     * Create an iterator for the selected widgets in the layout tree.
+     */
+    iterSelectedWidgets(): IIterator<Widget> {
+      let children = map(this.children, child => child.iterSelectedWidgets());
       return new ChainIterator<Widget>(children);
     }
 
