@@ -10,7 +10,7 @@ import {
 } from '@phosphor/algorithm';
 
 import {
-  ElementExt, Platform
+  ElementExt
 } from '@phosphor/domutils';
 
 import {
@@ -38,10 +38,7 @@ import {
  * A layout which provides a flexible docking arrangement.
  *
  * #### Notes
- * The layout handles the `currentChanged` signals of the tab bars and
- * the corresponding visibility of the child widgets. The widget which
- * consumes the layout is responsible for all other tab interactions
- * as well as all mouse and drag events.
+ * TODO - list repsonsibilities of widget consuming the layout.
  */
 export
 class DockLayout extends Layout {
@@ -339,11 +336,6 @@ class DockLayout extends Layout {
 
     // Post a fit request to the parent.
     this.parent.fit();
-
-    // Flush the message loop on IE and Edge to prevent flicker.
-    if (Platform.IS_EDGE || Platform.IS_IE) {
-      MessageLoop.flush();
-    }
   }
 
   /**
@@ -1031,15 +1023,7 @@ class DockLayout extends Layout {
     let tabBar = this.renderer.createTabBar();
 
     // Enforce necessary tab bar behavior.
-    // TODO do we really want to enforce *all* of these?
-    tabBar.tabsMovable = true;
-    tabBar.allowDeselect = false;
     tabBar.orientation = 'horizontal';
-    tabBar.removeBehavior = 'select-previous-tab';
-    tabBar.insertBehavior = 'select-tab-if-needed';
-
-    // Set up the signal handlers for the tab bar.
-    tabBar.currentChanged.connect(this._onCurrentChanged, this);
 
     // Reparent and attach the tab bar to the parent if possible.
     if (this.parent) {
@@ -1076,29 +1060,6 @@ class DockLayout extends Layout {
 
     // Return the initialized handle.
     return handle;
-  }
-
-  /**
-   * Handle the `currentChanged` signal from a tab bar in the layout.
-   */
-  private _onCurrentChanged(sender: TabBar<Widget>, args: TabBar.ICurrentChangedArgs<Widget>): void {
-    // Extract the previous and current title from the args.
-    let { previousTitle, currentTitle } = args;
-
-    // Hide the previous widget.
-    if (previousTitle) {
-      previousTitle.owner.hide();
-    }
-
-    // Show the current widget.
-    if (currentTitle) {
-      currentTitle.owner.show();
-    }
-
-    // Flush the message loop on IE and Edge to prevent flicker.
-    if (Platform.IS_EDGE || Platform.IS_IE) {
-      MessageLoop.flush();
-    }
   }
 
   private _spacing = 4;

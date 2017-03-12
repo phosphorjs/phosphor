@@ -18,7 +18,7 @@ import {
 } from '@phosphor/disposable';
 
 import {
-  ElementExt
+  ElementExt, Platform
 } from '@phosphor/domutils';
 
 import {
@@ -253,7 +253,13 @@ class DockPanel extends Widget {
    * contained in the config will be unparented.
    */
   restoreLayout(config: DockPanel.LayoutConfig): void {
+    // Restore the layout.
     (this.layout as DockLayout).restoreLayout(config);
+
+    // Flush the message loop on IE and Edge to prevent flicker.
+    if (Platform.IS_EDGE || Platform.IS_IE) {
+      MessageLoop.flush();
+    }
   }
 
   /**
@@ -747,9 +753,16 @@ class DockPanel extends Widget {
     // Set the generated tab bar property for the tab bar.
     Private.isGeneratedTabBarProperty.set(tabBar, true);
 
+    // Enforce necessary tab bar behavior.
+    // TODO do we really want to enforce *all* of these?
+    tabBar.tabsMovable = true;
+    tabBar.allowDeselect = false;
+    tabBar.removeBehavior = 'select-previous-tab';
+    tabBar.insertBehavior = 'select-tab-if-needed';
+
     // Connect the signal handlers for the tab bar.
-    tabBar.tabMoved.connect(this._onGenericLayoutChange, this);
-    tabBar.currentChanged.connect(this._onGenericLayoutChange, this);
+    tabBar.tabMoved.connect(this._onTabMoved, this);
+    tabBar.currentChanged.connect(this._onCurrentChanged, this);
     tabBar.tabCloseRequested.connect(this._onTabCloseRequested, this);
     tabBar.tabDetachRequested.connect(this._onTabDetachRequested, this);
     tabBar.tabActivateRequested.connect(this._onTabActivateRequested, this);
@@ -766,9 +779,35 @@ class DockPanel extends Widget {
   }
 
   /**
-   * Handle a signal which indicates the dock layout is modified.
+   * Handle the `tabMoved` signal from a tab bar.
    */
-  private _onGenericLayoutChange(): void {
+  private _onTabMoved(): void {
+    MessageLoop.postMessage(this, new ConflatableMessage('layout-modified'));
+  }
+
+  /**
+   * Handle the `currentChanged` signal from a tab bar.
+   */
+  private _onCurrentChanged(sender: TabBar<Widget>, args: TabBar.ICurrentChangedArgs<Widget>): void {
+    // Extract the previous and current title from the args.
+    let { previousTitle, currentTitle } = args;
+
+    // Hide the previous widget.
+    if (previousTitle) {
+      previousTitle.owner.hide();
+    }
+
+    // Show the current widget.
+    if (currentTitle) {
+      currentTitle.owner.show();
+    }
+
+    // Flush the message loop on IE and Edge to prevent flicker.
+    if (Platform.IS_EDGE || Platform.IS_IE) {
+      MessageLoop.flush();
+    }
+
+    // Schedule an emit of the layout modified signal.
     MessageLoop.postMessage(this, new ConflatableMessage('layout-modified'));
   }
 
