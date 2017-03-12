@@ -53,7 +53,9 @@ class DockLayout extends Layout {
   constructor(options: DockLayout.IOptions) {
     super();
     this.renderer = options.renderer;
-    this._spacing = Private.clampSpacing(options.spacing);
+    if (options.spacing !== undefined) {
+      this._spacing = Private.clampSpacing(options.spacing);
+    }
   }
 
   /**
@@ -1086,8 +1088,8 @@ class DockLayout extends Layout {
     }
   }
 
+  private _spacing = 4;
   private _dirty = false;
-  private _spacing: number;
   private _root: Private.LayoutNode | null = null;
   private _box: ElementExt.IBoxSizing | null = null;
   private _items: Private.ItemMap = new Map<Widget, LayoutItem>();
@@ -1111,8 +1113,10 @@ namespace DockLayout {
 
     /**
      * The spacing between items in the layout.
+     *
+     * The default is `4`.
      */
-    spacing: number;
+    spacing?: number;
   }
 
   /**

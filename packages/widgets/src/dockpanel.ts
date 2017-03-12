@@ -64,9 +64,6 @@ class DockPanel extends Widget {
     super();
     this.addClass('p-DockPanel');
 
-    // Extract the inter-panel spacing.
-    let spacing = options.spacing !== undefined ? options.spacing : 4;
-
     // Extract the renderer for the panel.
     this._renderer = options.renderer || DockPanel.defaultRenderer;
 
@@ -77,7 +74,7 @@ class DockPanel extends Widget {
     };
 
     // Set up the dock layout for the panel.
-    this.layout = new DockLayout({ renderer, spacing });
+    this.layout = new DockLayout({ renderer, spacing: options.spacing });
 
     // Set up the overlay drop indicator.
     this.overlay = options.overlay || new DockPanel.Overlay();
