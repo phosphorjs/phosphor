@@ -63,8 +63,7 @@ class DockPanel extends Widget {
   constructor(options: DockPanel.IOptions = {}) {
     super();
     this.addClass('p-DockPanel');
-
-    // Extract the renderer for the panel.
+    this._dropPolicy = options.dropPolicy || 'split-or-tab';
     this._renderer = options.renderer || DockPanel.defaultRenderer;
 
     // Create the delegate renderer for the layout.
@@ -101,11 +100,6 @@ class DockPanel extends Widget {
   }
 
   /**
-   * The overlay used by the dock panel.
-   */
-  readonly overlay: DockPanel.IOverlay;
-
-  /**
    * A signal emitted when the layout configuration is modified.
    *
    * #### Notes
@@ -122,6 +116,11 @@ class DockPanel extends Widget {
   get layoutModified(): ISignal<this, void> {
     return this._layoutModified;
   }
+
+  /**
+   * The overlay used by the dock panel.
+   */
+  readonly overlay: DockPanel.IOverlay;
 
   /**
    * The renderer used by the dock panel.
@@ -142,6 +141,31 @@ class DockPanel extends Widget {
    */
   set spacing(value: number) {
     (this.layout as DockLayout).spacing = value;
+  }
+
+  /**
+   * Get the drop policy for the dock panel.
+   */
+  get dropPolicy(): DockPanel.DropPolicy {
+    return this._dropPolicy;
+  }
+
+  /**
+   * Set the drop policy for the dock panel.
+   */
+  set dropPolicy(value: DockPanel.DropPolicy) {
+    // Bail early if the value will not change.
+    if (this._dropPolicy === value) {
+      return;
+    }
+
+    // Update the internal drop policy.
+    this._dropPolicy = value;
+
+    // Hide the overlay if drops are disallowed.
+    if (value === 'disallow') {
+      this.overlay.hide(0);
+    }
   }
 
   /**
@@ -389,6 +413,11 @@ class DockPanel extends Widget {
    * Handle the `'p-dragenter'` event for the dock panel.
    */
   private _evtDragEnter(event: IDragEvent): void {
+    // Bail early if drops are disallowed.
+    if (this._dropPolicy === 'disallow') {
+      return;
+    }
+
     // If the factory mime type is present, mark the event as
     // handled in order to get the rest of the drag events.
     if (event.mimeData.hasData('application/vnd.phosphor.widget-factory')) {
@@ -401,7 +430,12 @@ class DockPanel extends Widget {
    * Handle the `'p-dragleave'` event for the dock panel.
    */
   private _evtDragLeave(event: IDragEvent): void {
-    // Always mark the event as handled.
+    // Bail early if drops are disallowed.
+    if (this._dropPolicy === 'disallow') {
+      return;
+    }
+
+    // Mark the event as handled.
     event.preventDefault();
     event.stopPropagation();
 
@@ -418,7 +452,12 @@ class DockPanel extends Widget {
    * Handle the `'p-dragover'` event for the dock panel.
    */
   private _evtDragOver(event: IDragEvent): void {
-    // Always mark the event as handled.
+    // Bail early if drops are disallowed.
+    if (this._dropPolicy === 'disallow') {
+      return;
+    }
+
+    // Mark the event as handled.
     event.preventDefault();
     event.stopPropagation();
 
@@ -435,7 +474,12 @@ class DockPanel extends Widget {
    * Handle the `'p-drop'` event for the dock panel.
    */
   private _evtDrop(event: IDragEvent): void {
-    // Always mark the event as handled.
+    // Bail early if drops are disallowed.
+    if (this._dropPolicy === 'disallow') {
+      return;
+    }
+
+    // Mark the event as handled.
     event.preventDefault();
     event.stopPropagation();
 
@@ -484,7 +528,7 @@ class DockPanel extends Widget {
 
     // Add the widget according to the indicated drop zone.
     switch(zone) {
-    case 'root':
+    case 'root-all':
       this.addWidget(widget);
       break;
     case 'root-top':
@@ -499,6 +543,9 @@ class DockPanel extends Widget {
     case 'root-bottom':
       this.addWidget(widget, { mode: 'split-bottom' });
       break;
+    case 'widget-all':
+      this.addWidget(widget, { mode: 'tab-after', ref });
+      break;
     case 'widget-top':
       this.addWidget(widget, { mode: 'split-top', ref });
       break;
@@ -510,9 +557,6 @@ class DockPanel extends Widget {
       break;
     case 'widget-bottom':
       this.addWidget(widget, { mode: 'split-bottom', ref });
-      break;
-    case 'widget-center':
-      this.addWidget(widget, { mode: 'tab-after', ref });
       break;
     default:
       throw 'unreachable';
@@ -672,7 +716,7 @@ class DockPanel extends Widget {
 
     // Compute the overlay geometry based on the dock zone.
     switch (zone) {
-    case 'root':
+    case 'root-all':
       top = box.paddingTop;
       left = box.paddingLeft;
       right = box.paddingRight;
@@ -702,6 +746,12 @@ class DockPanel extends Widget {
       right = box.paddingRight;
       bottom = box.paddingBottom;
       break;
+    case 'widget-all':
+      top = target!.top;
+      left = target!.left;
+      right = target!.right;
+      bottom = target!.bottom;
+      break;
     case 'widget-top':
       top = target!.top;
       left = target!.left;
@@ -722,12 +772,6 @@ class DockPanel extends Widget {
       break;
     case 'widget-bottom':
       top = target!.top + target!.height / 2;
-      left = target!.left;
-      right = target!.right;
-      bottom = target!.bottom;
-      break;
-    case 'widget-center':
-      top = target!.top;
       left = target!.left;
       right = target!.right;
       bottom = target!.bottom;
@@ -870,6 +914,7 @@ class DockPanel extends Widget {
 
   private _drag: Drag | null = null;
   private _renderer: DockPanel.IRenderer;
+  private _dropPolicy: DockPanel.DropPolicy;
   private _pressData: Private.IPressData | null = null;
   private _layoutModified = new Signal<this, void>(this);
 }
@@ -905,7 +950,40 @@ namespace DockPanel {
      * The default is `4`.
      */
     spacing?: number;
+
+    /**
+     * The drop policy for the dock panel.
+     *
+     * The default is `'split-or-tab'`.
+     */
+    dropPolicy?: DropPolicy;
   }
+
+  /**
+   * A type alias for the supported drop policies.
+   */
+  export
+  type DropPolicy = (
+    /**
+     * Drops are not allowed on the dock panel.
+     */
+    'disallow' |
+
+    /**
+     * Drops may only split an existing area.
+     */
+    'split-only' |
+
+    /**
+     * Drops may only add to an existing tab bar.
+     */
+    'tab-only' |
+
+    /**
+     * Drops may split existing areas or add to existing tab bars.
+     */
+    'split-or-tab'
+  );
 
   /**
    * A type alias for a layout configuration object.
@@ -1177,54 +1255,54 @@ namespace Private {
     'invalid' |
 
     /**
-     * The drop zone for an empty root.
+     * The entirety of the root dock area.
      */
-    'root' |
+    'root-all' |
 
     /**
-     * The top half of the root dock area.
+     * The top portion of the root dock area.
      */
     'root-top' |
 
     /**
-     * The left half of the root dock area.
+     * The left portion of the root dock area.
      */
     'root-left' |
 
     /**
-     * The right half of the root dock area.
+     * The right portion of the root dock area.
      */
     'root-right' |
 
     /**
-     * The bottom half of the root dock area.
+     * The bottom portion of the root dock area.
      */
     'root-bottom' |
 
     /**
-     * The top third of tabbed widget area.
+     * The entirety of a tabbed widget area.
+     */
+    'widget-all' |
+
+    /**
+     * The top portion of tabbed widget area.
      */
     'widget-top' |
 
     /**
-     * The left third of tabbed widget area.
+     * The left portion of tabbed widget area.
      */
     'widget-left' |
 
     /**
-     * The right third of tabbed widget area.
+     * The right portion of tabbed widget area.
      */
     'widget-right' |
 
     /**
-     * The bottom third of tabbed widget area.
+     * The bottom portion of tabbed widget area.
      */
-    'widget-bottom' |
-
-    /**
-     * The center third of tabbed widget area.
-     */
-    'widget-center'
+    'widget-bottom'
   );
 
   /**
@@ -1257,7 +1335,12 @@ namespace Private {
    */
   export
   function findDropTarget(panel: DockPanel, clientX: number, clientY: number): IDropTarget {
-    // Bail, if the mouse is not over the dock panel.
+    // Bail if drops are disallowed
+    if (panel.dropPolicy === 'disallow') {
+      return { zone: 'invalid', target: null };
+    }
+
+    // Bail if the mouse is not over the dock panel.
     if (!ElementExt.hitTest(panel.node, clientX, clientY)) {
       return { zone: 'invalid', target: null };
     }
@@ -1265,51 +1348,59 @@ namespace Private {
     // Look up the layout for the panel.
     let layout = panel.layout as DockLayout;
 
-    // If the layout is empty, indicate a root drop zone.
+    // If the layout is empty, indicate the entire root drop zone.
     if (layout.isEmpty) {
-      return { zone: 'root', target: null };
+      return { zone: 'root-all', target: null };
     }
 
-    // Get the rect for the dock panel.
-    let panelRect = panel.node.getBoundingClientRect();
+    // If split drops are supported, search for a root edge first.
+    if (panel.dropPolicy !== 'tab-only') {
+      // Get the client rect for the dock panel.
+      let panelRect = panel.node.getBoundingClientRect();
 
-    // Compute the distance to each edge of the panel.
-    let pl = clientX - panelRect.left + 1;
-    let pt = clientY - panelRect.top + 1;
-    let pr = panelRect.right - clientX;
-    let pb = panelRect.bottom - clientY;
+      // Compute the distance to each edge of the panel.
+      let pl = clientX - panelRect.left + 1;
+      let pt = clientY - panelRect.top + 1;
+      let pr = panelRect.right - clientX;
+      let pb = panelRect.bottom - clientY;
 
-    // Find the minimum distance to an edge.
-    let pd = Math.min(pl, pt, pr, pb);
+      // Find the minimum distance to an edge.
+      let pd = Math.min(pl, pt, pr, pb);
 
-    // If the mouse is within an edge zone, find the root zone.
-    if (pd <= EDGE_SIZE) {
-      let zone: DropZone;
-      switch (pd) {
-      case pl:
-        zone = 'root-left';
-        break;
-      case pt:
-        zone = 'root-top';
-        break;
-      case pr:
-        zone = 'root-right';
-        break;
-      case pb:
-        zone = 'root-bottom';
-        break;
-      default:
-        throw 'unreachable';
+      // Return a root zone if the mouse is within an edge.
+      if (pd <= EDGE_SIZE) {
+        let zone: DropZone;
+        switch (pd) {
+        case pl:
+          zone = 'root-left';
+          break;
+        case pt:
+          zone = 'root-top';
+          break;
+        case pr:
+          zone = 'root-right';
+          break;
+        case pb:
+          zone = 'root-bottom';
+          break;
+        default:
+          throw 'unreachable';
+        }
+        return { zone, target: null };
       }
-      return { zone, target: null };
     }
 
     // Hit test the dock layout at the given client position.
     let target = layout.hitTestTabAreas(clientX, clientY);
 
-    // Bail if no target was found.
+    // Bail if no target area was found.
     if (!target) {
       return { zone: 'invalid', target: null };
+    }
+
+    // If only tab drops are supported, indicate the entire area.
+    if (panel.dropPolicy === 'tab-only') {
+      return { zone: 'widget-all', target };
     }
 
     // Compute the distance to each edge of the tab area.
@@ -1318,13 +1409,16 @@ namespace Private {
     let ar = target.left + target.width - target.x;
     let ab = target.top + target.height - target.y;
 
-    // Get the X and Y edge sizes for the area.
-    let rx = Math.round(target.width / 3);
-    let ry = Math.round(target.height / 3);
+    // Get the edge ratio for the drop policy.
+    let rd = panel.dropPolicy === 'split-only' ? 2 : 3;
 
-    // If the mouse is not within an edge, return the center zone.
+    // Get the X and Y edge sizes for the area.
+    let rx = Math.round(target.width / rd);
+    let ry = Math.round(target.height / rd);
+
+    // If the mouse is not within an edge, indicate the entire area.
     if (al > rx && ar > rx && at > ry && ab > ry) {
-      return { zone: 'widget-center', target };
+      return { zone: 'widget-all', target };
     }
 
     // Scale the distances by the slenderness ratio.
