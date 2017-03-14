@@ -961,13 +961,18 @@ namespace Widget {
    *
    * @param host - The DOM node to use as the widget's host.
    *
+   * @param ref - The child of `host` to use as the reference element.
+   *   If this is provided, the widget will be inserted before this
+   *   node in the host. The default is `null`, which will cause the
+   *   widget to be added as the last child of the host.
+   *
    * #### Notes
    * This will throw an error if the widget is not a root widget, if
    * the widget is already attached, or if the host is not attached
    * to the DOM.
    */
   export
-  function attach(widget: Widget, host: HTMLElement): void {
+  function attach(widget: Widget, host: HTMLElement, ref: HTMLElement | null = null): void {
     if (widget.parent) {
       throw new Error('Cannot attach a child widget.');
     }
@@ -978,7 +983,7 @@ namespace Widget {
       throw new Error('Host is not attached.');
     }
     MessageLoop.sendMessage(widget, Widget.Msg.BeforeAttach);
-    host.appendChild(widget.node);
+    host.insertBefore(widget.node, ref);
     MessageLoop.sendMessage(widget, Widget.Msg.AfterAttach);
   }
 
