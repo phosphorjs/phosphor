@@ -271,11 +271,12 @@ class DockLayout extends Layout {
       Private.validateAreaConfig(config.main, widgetSet);
     }
 
-    // Create iterators over the old widgets and tab bars.
+    // Create iterators over the old content.
     let oldWidgets = this.widgets();
     let oldTabBars = this.tabBars();
+    let oldHandles = this.handles();
 
-    // Clear the root before removing the old widgets.
+    // Clear the root before removing the old content.
     this._root = null;
 
     // Unparent the old widgets which are not in the new config.
@@ -288,6 +289,13 @@ class DockLayout extends Layout {
     // Dispose of the old tab bars.
     each(oldTabBars, tabBar => {
       tabBar.dispose();
+    });
+
+    // Remove the old handles.
+    each(oldHandles, handle => {
+      if (handle.parentNode) {
+        handle.parentNode.removeChild(handle);
+      }
     });
 
     // Reparent the new widgets to the current parent.
