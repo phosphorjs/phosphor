@@ -6,7 +6,7 @@
 | The full license is in the file LICENSE, distributed with this software.
 |----------------------------------------------------------------------------*/
 import {
-  IIterator, find
+  IIterator, each, find, toArray
 } from '@phosphor/algorithm';
 
 import {
@@ -18,7 +18,7 @@ import {
 } from '@phosphor/disposable';
 
 import {
-  ElementExt
+  ElementExt, Platform
 } from '@phosphor/domutils';
 
 import {
@@ -63,12 +63,11 @@ class DockPanel extends Widget {
   constructor(options: DockPanel.IOptions = {}) {
     super();
     this.addClass('p-DockPanel');
-
-    // Extract the inter-panel spacing.
-    let spacing = options.spacing !== undefined ? options.spacing : 4;
-
-    // Extract the renderer for the panel.
+    this._mode = options.mode || 'multiple-document';
     this._renderer = options.renderer || DockPanel.defaultRenderer;
+
+    // Toggle the CSS mode attribute.
+    this.node.setAttribute('data-mode', this._mode);
 
     // Create the delegate renderer for the layout.
     let renderer: DockPanel.IRenderer = {
@@ -77,7 +76,7 @@ class DockPanel extends Widget {
     };
 
     // Set up the dock layout for the panel.
-    this.layout = new DockLayout({ renderer, spacing });
+    this.layout = new DockLayout({ renderer, spacing: options.spacing });
 
     // Set up the overlay drop indicator.
     this.overlay = options.overlay || new DockPanel.Overlay();
@@ -104,19 +103,11 @@ class DockPanel extends Widget {
   }
 
   /**
-   * The overlay used by the dock panel.
-   */
-  readonly overlay: DockPanel.IOverlay;
-
-  /**
    * A signal emitted when the layout configuration is modified.
    *
    * #### Notes
-   * This signal is emitted for the following conditions:
-   * - A widget is added, moved, or removed
-   * - The current tab of a tab bar is changed
-   * - A tab is moved in the tab bar
-   * - A split handle is moved by the user
+   * This signal is emitted whenever the current layout configuration
+   * may have changed.
    *
    * This signal is emitted asynchronously in a collapsed fashion, so
    * that multiple synchronous modifications results in only a single
@@ -125,6 +116,11 @@ class DockPanel extends Widget {
   get layoutModified(): ISignal<this, void> {
     return this._layoutModified;
   }
+
+  /**
+   * The overlay used by the dock panel.
+   */
+  readonly overlay: DockPanel.IOverlay;
 
   /**
    * The renderer used by the dock panel.
@@ -148,6 +144,52 @@ class DockPanel extends Widget {
   }
 
   /**
+   * Get the mode for the dock panel.
+   */
+  get mode(): DockPanel.Mode {
+    return this._mode;
+  }
+
+  /**
+   * Set the mode for the dock panel.
+   *
+   * #### Notes
+   * Changing the mode is a destructive operation with respect to the
+   * panel's layout configuration. If layout state must be preserved,
+   * save the current layout config before changing the mode.
+   */
+  set mode(value: DockPanel.Mode) {
+    // Bail early if the mode does not change.
+    if (this._mode === value) {
+      return;
+    }
+
+    // Update the internal mode.
+    this._mode = value;
+
+    // Toggle the CSS mode attribute.
+    this.node.setAttribute('data-mode', value);
+
+    // Get the layout for the panel.
+    let layout = this.layout as DockLayout;
+
+    // Configure the layout for the specified mode.
+    switch (value) {
+    case 'multiple-document':
+      each(layout.tabBars(), tabBar => { tabBar.show(); });
+      break;
+    case 'single-document':
+      layout.restoreLayout(Private.createSingleDocumentConfig(this));
+      break;
+    default:
+      throw 'unreachable';
+    }
+
+    // Schedule an emit of the layout modified signal.
+    MessageLoop.postMessage(this, Private.LayoutModified);
+  }
+
+  /**
    * Whether the dock panel is empty.
    */
   get isEmpty(): boolean {
@@ -164,6 +206,19 @@ class DockPanel extends Widget {
    */
   widgets(): IIterator<Widget> {
     return (this.layout as DockLayout).widgets();
+  }
+
+  /**
+   * Create an iterator over the selected widgets in the panel.
+   *
+   * @returns A new iterator over the selected user widgets.
+   *
+   * #### Notes
+   * This iterator yields the widgets corresponding to the current tab
+   * of each tab bar in the panel.
+   */
+  selectedWidgets(): IIterator<Widget> {
+    return (this.layout as DockLayout).selectedWidgets();
   }
 
   /**
@@ -188,15 +243,14 @@ class DockPanel extends Widget {
   }
 
   /**
-   * Activate the specified widget in the dock panel.
+   * Select a specific widget in the dock panel.
    *
    * @param widget - The widget of interest.
    *
    * #### Notes
-   * This will make the widget the current widget in its tab area and
-   * post an `activate-request` message to the widget.
+   * This will make the widget the current widget in its tab area.
    */
-  activateWidget(widget: Widget): void {
+  selectWidget(widget: Widget): void {
     // Find the tab bar which contains the widget.
     let tabBar = find(this.tabBars(), bar => {
       return bar.titles.indexOf(widget.title) !== -1;
@@ -207,28 +261,34 @@ class DockPanel extends Widget {
       throw new Error('Widget is not contained in the dock panel.');
     }
 
-    // Update the current title and activate the widget.
+    // Ensure the widget is the current widget.
     tabBar.currentTitle = widget.title;
+  }
+
+  /**
+   * Activate a specified widget in the dock panel.
+   *
+   * @param widget - The widget of interest.
+   *
+   * #### Notes
+   * This will select and activate the given widget.
+   */
+  activateWidget(widget: Widget): void {
+    this.selectWidget(widget);
     widget.activate();
   }
 
   /**
    * Save the current layout configuration of the dock panel.
    *
-   * @param options - The options specifying the version of the layout
-   *   config object to generate.
-   *
-   * @returns A new layout config object of the specified version.
+   * @returns A new config object for the current layout state.
    *
    * #### Notes
-   * The version number enables future expansion of the layout config
-   * in a backwards compatible fashion.
-   *
    * The return value can be provided to the `restoreLayout` method
    * in order to restore the layout to its current configuration.
    */
-  saveLayout<T extends keyof DockPanel.LayoutConfigVersionMap>(options: { version: T }): DockPanel.LayoutConfigVersionMap[T] {
-    return (this.layout as DockLayout).saveLayout(options);
+  saveLayout(): DockPanel.ILayoutConfig {
+    return (this.layout as DockLayout).saveLayout();
   }
 
   /**
@@ -241,9 +301,24 @@ class DockPanel extends Widget {
    * #### Notes
    * Widgets which currently belong to the layout but which are not
    * contained in the config will be unparented.
+   *
+   * The dock panel automatically reverts to `'multiple-document'` mode
+   * when a layout config is restored.
    */
-  restoreLayout(config: DockPanel.LayoutConfig): void {
+  restoreLayout(config: DockPanel.ILayoutConfig): void {
+    // Reset the mode.
+    this._mode = 'multiple-document';
+
+    // Restore the layout.
     (this.layout as DockLayout).restoreLayout(config);
+
+    // Flush the message loop on IE and Edge to prevent flicker.
+    if (Platform.IS_EDGE || Platform.IS_IE) {
+      MessageLoop.flush();
+    }
+
+    // Schedule an emit of the layout modified signal.
+    MessageLoop.postMessage(this, Private.LayoutModified);
   }
 
   /**
@@ -252,13 +327,21 @@ class DockPanel extends Widget {
    * @param widget - The widget to add to the dock panel.
    *
    * @param options - The additional options for adding the widget.
+   *
+   * #### Notes
+   * If the panel is in single document mode, the options are ignored
+   * and the widget is always added as tab in the hidden tab bar.
    */
   addWidget(widget: Widget, options: DockPanel.IAddOptions = {}): void {
     // Add the widget to the layout.
-    (this.layout as DockLayout).addWidget(widget, options);
+    if (this._mode === 'single-document') {
+      (this.layout as DockLayout).addWidget(widget);
+    } else {
+      (this.layout as DockLayout).addWidget(widget, options);
+    }
 
     // Schedule an emit of the layout modified signal.
-    MessageLoop.postMessage(this, new ConflatableMessage('layout-modified'));
+    MessageLoop.postMessage(this, Private.LayoutModified);
   }
 
   /**
@@ -366,7 +449,7 @@ class DockPanel extends Widget {
     msg.child.removeClass('p-DockPanel-widget');
 
     // Schedule an emit of the layout modified signal.
-    MessageLoop.postMessage(this, new ConflatableMessage('layout-modified'));
+    MessageLoop.postMessage(this, Private.LayoutModified);
   }
 
   /**
@@ -385,7 +468,7 @@ class DockPanel extends Widget {
    * Handle the `'p-dragleave'` event for the dock panel.
    */
   private _evtDragLeave(event: IDragEvent): void {
-    // Always mark the event as handled.
+    // Mark the event as handled.
     event.preventDefault();
     event.stopPropagation();
 
@@ -402,7 +485,7 @@ class DockPanel extends Widget {
    * Handle the `'p-dragover'` event for the dock panel.
    */
   private _evtDragOver(event: IDragEvent): void {
-    // Always mark the event as handled.
+    // Mark the event as handled.
     event.preventDefault();
     event.stopPropagation();
 
@@ -419,7 +502,7 @@ class DockPanel extends Widget {
    * Handle the `'p-drop'` event for the dock panel.
    */
   private _evtDrop(event: IDragEvent): void {
-    // Always mark the event as handled.
+    // Mark the event as handled.
     event.preventDefault();
     event.stopPropagation();
 
@@ -468,7 +551,7 @@ class DockPanel extends Widget {
 
     // Add the widget according to the indicated drop zone.
     switch(zone) {
-    case 'root':
+    case 'root-all':
       this.addWidget(widget);
       break;
     case 'root-top':
@@ -483,6 +566,9 @@ class DockPanel extends Widget {
     case 'root-bottom':
       this.addWidget(widget, { mode: 'split-bottom' });
       break;
+    case 'widget-all':
+      this.addWidget(widget, { mode: 'tab-after', ref });
+      break;
     case 'widget-top':
       this.addWidget(widget, { mode: 'split-top', ref });
       break;
@@ -494,9 +580,6 @@ class DockPanel extends Widget {
       break;
     case 'widget-bottom':
       this.addWidget(widget, { mode: 'split-bottom', ref });
-      break;
-    case 'widget-center':
-      this.addWidget(widget, { mode: 'tab-after', ref });
       break;
     default:
       throw 'unreachable';
@@ -523,7 +606,7 @@ class DockPanel extends Widget {
       this._releaseMouse();
 
       // Schedule an emit of the layout modified signal.
-      MessageLoop.postMessage(this, new ConflatableMessage('layout-modified'));
+      MessageLoop.postMessage(this, Private.LayoutModified);
     }
   }
 
@@ -605,7 +688,7 @@ class DockPanel extends Widget {
     this._releaseMouse();
 
     // Schedule an emit of the layout modified signal.
-    MessageLoop.postMessage(this, new ConflatableMessage('layout-modified'));
+    MessageLoop.postMessage(this, Private.LayoutModified);
   }
 
   /**
@@ -656,7 +739,7 @@ class DockPanel extends Widget {
 
     // Compute the overlay geometry based on the dock zone.
     switch (zone) {
-    case 'root':
+    case 'root-all':
       top = box.paddingTop;
       left = box.paddingLeft;
       right = box.paddingRight;
@@ -686,6 +769,12 @@ class DockPanel extends Widget {
       right = box.paddingRight;
       bottom = box.paddingBottom;
       break;
+    case 'widget-all':
+      top = target!.top;
+      left = target!.left;
+      right = target!.right;
+      bottom = target!.bottom;
+      break;
     case 'widget-top':
       top = target!.top;
       left = target!.left;
@@ -706,12 +795,6 @@ class DockPanel extends Widget {
       break;
     case 'widget-bottom':
       top = target!.top + target!.height / 2;
-      left = target!.left;
-      right = target!.right;
-      bottom = target!.bottom;
-      break;
-    case 'widget-center':
-      top = target!.top;
       left = target!.left;
       right = target!.right;
       bottom = target!.bottom;
@@ -737,9 +820,21 @@ class DockPanel extends Widget {
     // Set the generated tab bar property for the tab bar.
     Private.isGeneratedTabBarProperty.set(tabBar, true);
 
+    // Hide the tab bar when in single document mode.
+    if (this._mode === 'single-document') {
+      tabBar.hide();
+    }
+
+    // Enforce necessary tab bar behavior.
+    // TODO do we really want to enforce *all* of these?
+    tabBar.tabsMovable = true;
+    tabBar.allowDeselect = false;
+    tabBar.removeBehavior = 'select-previous-tab';
+    tabBar.insertBehavior = 'select-tab-if-needed';
+
     // Connect the signal handlers for the tab bar.
-    tabBar.tabMoved.connect(this._onGenericLayoutChange, this);
-    tabBar.currentChanged.connect(this._onGenericLayoutChange, this);
+    tabBar.tabMoved.connect(this._onTabMoved, this);
+    tabBar.currentChanged.connect(this._onCurrentChanged, this);
     tabBar.tabCloseRequested.connect(this._onTabCloseRequested, this);
     tabBar.tabDetachRequested.connect(this._onTabDetachRequested, this);
     tabBar.tabActivateRequested.connect(this._onTabActivateRequested, this);
@@ -756,10 +851,36 @@ class DockPanel extends Widget {
   }
 
   /**
-   * Handle a signal which indicates the dock layout is modified.
+   * Handle the `tabMoved` signal from a tab bar.
    */
-  private _onGenericLayoutChange(): void {
-    MessageLoop.postMessage(this, new ConflatableMessage('layout-modified'));
+  private _onTabMoved(): void {
+    MessageLoop.postMessage(this, Private.LayoutModified);
+  }
+
+  /**
+   * Handle the `currentChanged` signal from a tab bar.
+   */
+  private _onCurrentChanged(sender: TabBar<Widget>, args: TabBar.ICurrentChangedArgs<Widget>): void {
+    // Extract the previous and current title from the args.
+    let { previousTitle, currentTitle } = args;
+
+    // Hide the previous widget.
+    if (previousTitle) {
+      previousTitle.owner.hide();
+    }
+
+    // Show the current widget.
+    if (currentTitle) {
+      currentTitle.owner.show();
+    }
+
+    // Flush the message loop on IE and Edge to prevent flicker.
+    if (Platform.IS_EDGE || Platform.IS_IE) {
+      MessageLoop.flush();
+    }
+
+    // Schedule an emit of the layout modified signal.
+    MessageLoop.postMessage(this, Private.LayoutModified);
   }
 
   /**
@@ -819,6 +940,7 @@ class DockPanel extends Widget {
     this._drag.start(clientX, clientY).then(cleanup);
   }
 
+  private _mode: DockPanel.Mode;
   private _drag: Drag | null = null;
   private _renderer: DockPanel.IRenderer;
   private _pressData: Private.IPressData | null = null;
@@ -856,19 +978,42 @@ namespace DockPanel {
      * The default is `4`.
      */
     spacing?: number;
+
+    /**
+     * The mode for the dock panel.
+     *
+     * The deafult is `'multiple-document'`.
+     */
+    mode?: DockPanel.Mode;
   }
+
+  /**
+   * A type alias for the supported dock panel modes.
+   */
+  export
+  type Mode = (
+    /**
+     * The single document mode.
+     *
+     * In this mode, only a single widget is visible at a time, and that
+     * widget fills the available layout space. No tab bars are visible.
+     */
+    'single-document' |
+
+    /**
+     * The multiple document mode.
+     *
+     * In this mode, multiple documents are displayed in separate tab
+     * areas, and those areas can be individually resized by the user.
+     */
+    'multiple-document'
+  );
 
   /**
    * A type alias for a layout configuration object.
    */
   export
-  type LayoutConfig = DockLayout.LayoutConfig;
-
-  /**
-   * A type alias for the layout config version map.
-   */
-  export
-  type LayoutConfigVersionMap = DockLayout.LayoutConfigVersionMap;
+  type ILayoutConfig = DockLayout.ILayoutConfig;
 
   /**
    * A type alias for the supported insertion modes.
@@ -1092,6 +1237,12 @@ namespace Private {
   const EDGE_SIZE = 40;
 
   /**
+   * A singleton `'layout-modified'` conflatable message.
+   */
+  export
+  const LayoutModified = new ConflatableMessage('layout-modified');
+
+  /**
    * An object which holds mouse press data.
    */
   export
@@ -1128,54 +1279,54 @@ namespace Private {
     'invalid' |
 
     /**
-     * The drop zone for an empty root.
+     * The entirety of the root dock area.
      */
-    'root' |
+    'root-all' |
 
     /**
-     * The top half of the root dock area.
+     * The top portion of the root dock area.
      */
     'root-top' |
 
     /**
-     * The left half of the root dock area.
+     * The left portion of the root dock area.
      */
     'root-left' |
 
     /**
-     * The right half of the root dock area.
+     * The right portion of the root dock area.
      */
     'root-right' |
 
     /**
-     * The bottom half of the root dock area.
+     * The bottom portion of the root dock area.
      */
     'root-bottom' |
 
     /**
-     * The top third of tabbed widget area.
+     * The entirety of a tabbed widget area.
+     */
+    'widget-all' |
+
+    /**
+     * The top portion of tabbed widget area.
      */
     'widget-top' |
 
     /**
-     * The left third of tabbed widget area.
+     * The left portion of tabbed widget area.
      */
     'widget-left' |
 
     /**
-     * The right third of tabbed widget area.
+     * The right portion of tabbed widget area.
      */
     'widget-right' |
 
     /**
-     * The bottom third of tabbed widget area.
+     * The bottom portion of tabbed widget area.
      */
-    'widget-bottom' |
-
-    /**
-     * The center third of tabbed widget area.
-     */
-    'widget-center'
+    'widget-bottom'
   );
 
   /**
@@ -1204,11 +1355,34 @@ namespace Private {
   });
 
   /**
+   * Create a single document config for the widgets in a dock panel.
+   */
+  export
+  function createSingleDocumentConfig(panel: DockPanel): DockPanel.ILayoutConfig {
+    // Return an empty config if the panel is empty.
+    if (panel.isEmpty) {
+      return { main: null };
+    }
+
+    // Get a flat array of the widgets in the panel.
+    let widgets = toArray(panel.widgets());
+
+    // Get the first selected widget in the panel.
+    let selected = panel.selectedWidgets().next();
+
+    // Compute the current index for the new config.
+    let currentIndex = selected ? widgets.indexOf(selected) : -1;
+
+    // Return the single document config.
+    return { main: { type: 'tab-area', widgets, currentIndex } };
+  }
+
+  /**
    * Find the drop target at the given client position.
    */
   export
   function findDropTarget(panel: DockPanel, clientX: number, clientY: number): IDropTarget {
-    // Bail, if the mouse is not over the dock panel.
+    // Bail if the mouse is not over the dock panel.
     if (!ElementExt.hitTest(panel.node, clientX, clientY)) {
       return { zone: 'invalid', target: null };
     }
@@ -1216,51 +1390,59 @@ namespace Private {
     // Look up the layout for the panel.
     let layout = panel.layout as DockLayout;
 
-    // If the layout is empty, indicate a root drop zone.
+    // If the layout is empty, indicate the entire root drop zone.
     if (layout.isEmpty) {
-      return { zone: 'root', target: null };
+      return { zone: 'root-all', target: null };
     }
 
-    // Get the rect for the dock panel.
-    let panelRect = panel.node.getBoundingClientRect();
+    // Test the edge zones when in multiple document mode.
+    if (panel.mode === 'multiple-document') {
+      // Get the client rect for the dock panel.
+      let panelRect = panel.node.getBoundingClientRect();
 
-    // Compute the distance to each edge of the panel.
-    let pl = clientX - panelRect.left + 1;
-    let pt = clientY - panelRect.top + 1;
-    let pr = panelRect.right - clientX;
-    let pb = panelRect.bottom - clientY;
+      // Compute the distance to each edge of the panel.
+      let pl = clientX - panelRect.left + 1;
+      let pt = clientY - panelRect.top + 1;
+      let pr = panelRect.right - clientX;
+      let pb = panelRect.bottom - clientY;
 
-    // Find the minimum distance to an edge.
-    let pd = Math.min(pl, pt, pr, pb);
+      // Find the minimum distance to an edge.
+      let pd = Math.min(pl, pt, pr, pb);
 
-    // If the mouse is within an edge zone, find the root zone.
-    if (pd <= EDGE_SIZE) {
-      let zone: DropZone;
-      switch (pd) {
-      case pl:
-        zone = 'root-left';
-        break;
-      case pt:
-        zone = 'root-top';
-        break;
-      case pr:
-        zone = 'root-right';
-        break;
-      case pb:
-        zone = 'root-bottom';
-        break;
-      default:
-        throw 'unreachable';
+      // Return a root zone if the mouse is within an edge.
+      if (pd <= EDGE_SIZE) {
+        let zone: DropZone;
+        switch (pd) {
+        case pl:
+          zone = 'root-left';
+          break;
+        case pt:
+          zone = 'root-top';
+          break;
+        case pr:
+          zone = 'root-right';
+          break;
+        case pb:
+          zone = 'root-bottom';
+          break;
+        default:
+          throw 'unreachable';
+        }
+        return { zone, target: null };
       }
-      return { zone, target: null };
     }
 
     // Hit test the dock layout at the given client position.
     let target = layout.hitTestTabAreas(clientX, clientY);
 
-    // Bail if no target was found.
+    // Bail if no target area was found.
     if (!target) {
       return { zone: 'invalid', target: null };
+    }
+
+    // Return the whole tab area when in single document mode.
+    if (panel.mode === 'single-document') {
+      return { zone: 'widget-all', target };
     }
 
     // Compute the distance to each edge of the tab area.
@@ -1273,9 +1455,9 @@ namespace Private {
     let rx = Math.round(target.width / 3);
     let ry = Math.round(target.height / 3);
 
-    // If the mouse is not within an edge, return the center zone.
+    // If the mouse is not within an edge, indicate the entire area.
     if (al > rx && ar > rx && at > ry && ab > ry) {
-      return { zone: 'widget-center', target };
+      return { zone: 'widget-all', target };
     }
 
     // Scale the distances by the slenderness ratio.

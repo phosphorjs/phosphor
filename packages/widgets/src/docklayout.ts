@@ -10,7 +10,7 @@ import {
 } from '@phosphor/algorithm';
 
 import {
-  ElementExt, Platform
+  ElementExt
 } from '@phosphor/domutils';
 
 import {
@@ -38,10 +38,9 @@ import {
  * A layout which provides a flexible docking arrangement.
  *
  * #### Notes
- * The layout handles the `currentChanged` signals of the tab bars and
- * the corresponding visibility of the child widgets. The widget which
- * consumes the layout is responsible for all other tab interactions
- * as well as all mouse and drag events.
+ * The consumer of this layout is repsonsible for handling all signals
+ * from the generated tab bars and managing the visibility of widgets
+ * and tab bars as needed.
  */
 export
 class DockLayout extends Layout {
@@ -53,7 +52,9 @@ class DockLayout extends Layout {
   constructor(options: DockLayout.IOptions) {
     super();
     this.renderer = options.renderer;
-    this._spacing = Private.clampSpacing(options.spacing);
+    if (options.spacing !== undefined) {
+      this._spacing = Private.clampSpacing(options.spacing);
+    }
   }
 
   /**
@@ -140,6 +141,19 @@ class DockLayout extends Layout {
   }
 
   /**
+   * Create an iterator over the selected widgets in the layout.
+   *
+   * @returns A new iterator over the selected user widgets.
+   *
+   * #### Notes
+   * This iterator yields the widgets corresponding to the current tab
+   * of each tab bar in the layout.
+   */
+  selectedWidgets(): IIterator<Widget> {
+    return this._root ? this._root.iterSelectedWidgets() : empty<Widget>();
+  }
+
+  /**
    * Create an iterator over the tab bars in the layout.
    *
    * @returns A new iterator over the tab bars in the layout.
@@ -220,37 +234,23 @@ class DockLayout extends Layout {
   /**
    * Save the current configuration of the dock layout.
    *
-   * @param options - The options specifying the version of the layout
-   *   config object to generate.
-   *
-   * @returns A new layout config object of the specified version.
+   * @returns A new config object for the current layout state.
    *
    * #### Notes
-   * The version number enables future expansion of the layout config
-   * in a backwards compatible fashion.
-   *
    * The return value can be provided to the `restoreLayout` method
    * in order to restore the layout to its current configuration.
    */
-  saveLayout<T extends keyof DockLayout.LayoutConfigVersionMap>(options: { version: T }): DockLayout.LayoutConfigVersionMap[T] {
-    // Sanity check the layout config version.
-    if (options.version !== '1') {
-      throw new Error(`Unsupported config version: '${options.version}'`);
-    }
-
+  saveLayout(): DockLayout.ILayoutConfig {
     // Bail early if there is no root.
     if (!this._root) {
-      return { version: '1', main: null };
+      return { main: null };
     }
 
     // Hold the current sizes in the layout tree.
     this._root.holdAllSizes();
 
-    // Create the main area config.
-    let main = this._root.createConfig();
-
     // Return the layout config.
-    return { version: '1', main };
+    return { main: this._root.createConfig() };
   }
 
   /**
@@ -264,12 +264,7 @@ class DockLayout extends Layout {
    * Widgets which currently belong to the layout but which are not
    * contained in the config will be unparented.
    */
-  restoreLayout(config: DockLayout.LayoutConfig): void {
-    // Sanity check the layout config version.
-    if (config.version !== '1') {
-      throw new Error(`Unsupported config version: '${config.version}'`);
-    }
-
+  restoreLayout(config: DockLayout.ILayoutConfig): void {
     // Create the widget set for validating the config.
     let widgetSet = new Set<Widget>();
 
@@ -278,11 +273,12 @@ class DockLayout extends Layout {
       Private.validateAreaConfig(config.main, widgetSet);
     }
 
-    // Create iterators over the old widgets and tab bars.
+    // Create iterators over the old content.
     let oldWidgets = this.widgets();
     let oldTabBars = this.tabBars();
+    let oldHandles = this.handles();
 
-    // Clear the root before removing the old widgets.
+    // Clear the root before removing the old content.
     this._root = null;
 
     // Unparent the old widgets which are not in the new config.
@@ -295,6 +291,13 @@ class DockLayout extends Layout {
     // Dispose of the old tab bars.
     each(oldTabBars, tabBar => {
       tabBar.dispose();
+    });
+
+    // Remove the old handles.
+    each(oldHandles, handle => {
+      if (handle.parentNode) {
+        handle.parentNode.removeChild(handle);
+      }
     });
 
     // Reparent the new widgets to the current parent.
@@ -324,11 +327,6 @@ class DockLayout extends Layout {
 
     // Post a fit request to the parent.
     this.parent.fit();
-
-    // Flush the message loop on IE and Edge to prevent flicker.
-    if (Platform.IS_EDGE || Platform.IS_IE) {
-      MessageLoop.flush();
-    }
   }
 
   /**
@@ -1016,15 +1014,7 @@ class DockLayout extends Layout {
     let tabBar = this.renderer.createTabBar();
 
     // Enforce necessary tab bar behavior.
-    // TODO do we really want to enforce *all* of these?
-    tabBar.tabsMovable = true;
-    tabBar.allowDeselect = false;
     tabBar.orientation = 'horizontal';
-    tabBar.removeBehavior = 'select-previous-tab';
-    tabBar.insertBehavior = 'select-tab-if-needed';
-
-    // Set up the signal handlers for the tab bar.
-    tabBar.currentChanged.connect(this._onCurrentChanged, this);
 
     // Reparent and attach the tab bar to the parent if possible.
     if (this.parent) {
@@ -1063,31 +1053,8 @@ class DockLayout extends Layout {
     return handle;
   }
 
-  /**
-   * Handle the `currentChanged` signal from a tab bar in the layout.
-   */
-  private _onCurrentChanged(sender: TabBar<Widget>, args: TabBar.ICurrentChangedArgs<Widget>): void {
-    // Extract the previous and current title from the args.
-    let { previousTitle, currentTitle } = args;
-
-    // Hide the previous widget.
-    if (previousTitle) {
-      previousTitle.owner.hide();
-    }
-
-    // Show the current widget.
-    if (currentTitle) {
-      currentTitle.owner.show();
-    }
-
-    // Flush the message loop on IE and Edge to prevent flicker.
-    if (Platform.IS_EDGE || Platform.IS_IE) {
-      MessageLoop.flush();
-    }
-  }
-
+  private _spacing = 4;
   private _dirty = false;
-  private _spacing: number;
   private _root: Private.LayoutNode | null = null;
   private _box: ElementExt.IBoxSizing | null = null;
   private _items: Private.ItemMap = new Map<Widget, LayoutItem>();
@@ -1111,8 +1078,10 @@ namespace DockLayout {
 
     /**
      * The spacing between items in the layout.
+     *
+     * The default is `4`.
      */
-    spacing: number;
+    spacing?: number;
   }
 
   /**
@@ -1278,34 +1247,15 @@ namespace DockLayout {
   type AreaConfig = ITabAreaConfig | ISplitAreaConfig;
 
   /**
-   * Version 1 of the dock layout config object.
+   * A dock layout configuration object.
    */
   export
-  interface ILayoutConfigV1 {
-    /**
-     * The version number of the config object.
-     */
-    version: '1';
-
+  interface ILayoutConfig {
     /**
      * The layout config for the main dock area.
      */
     main: AreaConfig | null;
   }
-
-  /**
-   * A union type alias of the supported layout config versions.
-   */
-  export
-  type LayoutConfig = ILayoutConfigV1;
-
-  /**
-   * A type mapping of version number to layout config type.
-   */
-  export
-  type LayoutConfigVersionMap = {
-    '1': ILayoutConfigV1;
-  };
 
   /**
    * An object which represents the geometry of a tab area.
@@ -1540,6 +1490,14 @@ namespace Private {
     }
 
     /**
+     * Create an iterator for the selected widgets in the layout tree.
+     */
+    iterSelectedWidgets(): IIterator<Widget> {
+      let title = this.tabBar.currentTitle;
+      return title ? once(title.owner) : empty<Widget>();
+    }
+
+    /**
      * Create an iterator for the tab bars in the layout tree.
      */
     iterTabBars(): IIterator<TabBar<Widget>> {
@@ -1758,6 +1716,14 @@ namespace Private {
      */
     iterUserWidgets(): IIterator<Widget> {
       let children = map(this.children, child => child.iterUserWidgets());
+      return new ChainIterator<Widget>(children);
+    }
+
+    /**
+     * Create an iterator for the selected widgets in the layout tree.
+     */
+    iterSelectedWidgets(): IIterator<Widget> {
+      let children = map(this.children, child => child.iterSelectedWidgets());
       return new ChainIterator<Widget>(children);
     }
 
