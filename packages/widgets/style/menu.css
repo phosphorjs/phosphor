@@ -34,7 +34,8 @@
 }
 
 
-.p-Menu-item.p-mod-hidden {
+.p-Menu-item.p-mod-hidden,
+.p-Menu-item.p-mod-collapsed {
   display: none !important;
 }
 
