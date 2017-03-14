@@ -209,13 +209,13 @@ class DockPanel extends Widget {
   }
 
   /**
-   * Create an iterator over the selected widgets in the layout.
+   * Create an iterator over the selected widgets in the panel.
    *
    * @returns A new iterator over the selected user widgets.
    *
    * #### Notes
    * This iterator yields the widgets corresponding to the current tab
-   * of each tab bar in the layout.
+   * of each tab bar in the panel.
    */
   selectedWidgets(): IIterator<Widget> {
     return (this.layout as DockLayout).selectedWidgets();
