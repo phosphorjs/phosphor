@@ -329,8 +329,8 @@ class DockPanel extends Widget {
    * @param options - The additional options for adding the widget.
    *
    * #### Notes
-   * If the panel is in document layout mode, the options are ignored
-   * and the widget is always added after the current visible widget.
+   * If the panel is in single document mode, the options are ignored
+   * and the widget is always added as tab in the hidden tab bar.
    */
   addWidget(widget: Widget, options: DockPanel.IAddOptions = {}): void {
     // Add the widget to the layout.
