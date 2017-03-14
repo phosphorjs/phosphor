@@ -271,7 +271,7 @@ class DockPanel extends Widget {
    * @param widget - The widget of interest.
    *
    * #### Notes
-   * This will select the widget then activate it.
+   * This will select and activate the given widget.
    */
   activateWidget(widget: Widget): void {
     this.selectWidget(widget);
