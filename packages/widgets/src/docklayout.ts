@@ -232,37 +232,23 @@ class DockLayout extends Layout {
   /**
    * Save the current configuration of the dock layout.
    *
-   * @param options - The options specifying the version of the layout
-   *   config object to generate.
-   *
-   * @returns A new layout config object of the specified version.
+   * @returns A new config object for the current layout state.
    *
    * #### Notes
-   * The version number enables future expansion of the layout config
-   * in a backwards compatible fashion.
-   *
    * The return value can be provided to the `restoreLayout` method
    * in order to restore the layout to its current configuration.
    */
-  saveLayout<T extends keyof DockLayout.LayoutConfigVersionMap>(options: { version: T }): DockLayout.LayoutConfigVersionMap[T] {
-    // Sanity check the layout config version.
-    if (options.version !== '1') {
-      throw new Error(`Unsupported config version: '${options.version}'`);
-    }
-
+  saveLayout(): DockLayout.ILayoutConfig {
     // Bail early if there is no root.
     if (!this._root) {
-      return { version: '1', main: null };
+      return { main: null };
     }
 
     // Hold the current sizes in the layout tree.
     this._root.holdAllSizes();
 
-    // Create the main area config.
-    let main = this._root.createConfig();
-
     // Return the layout config.
-    return { version: '1', main };
+    return { main: this._root.createConfig() };
   }
 
   /**
@@ -276,12 +262,7 @@ class DockLayout extends Layout {
    * Widgets which currently belong to the layout but which are not
    * contained in the config will be unparented.
    */
-  restoreLayout(config: DockLayout.LayoutConfig): void {
-    // Sanity check the layout config version.
-    if (config.version !== '1') {
-      throw new Error(`Unsupported config version: '${config.version}'`);
-    }
-
+  restoreLayout(config: DockLayout.ILayoutConfig): void {
     // Create the widget set for validating the config.
     let widgetSet = new Set<Widget>();
 
@@ -1256,34 +1237,15 @@ namespace DockLayout {
   type AreaConfig = ITabAreaConfig | ISplitAreaConfig;
 
   /**
-   * Version 1 of the dock layout config object.
+   * A dock layout configuration object.
    */
   export
-  interface ILayoutConfigV1 {
-    /**
-     * The version number of the config object.
-     */
-    version: '1';
-
+  interface ILayoutConfig {
     /**
      * The layout config for the main dock area.
      */
     main: AreaConfig | null;
   }
-
-  /**
-   * A union type alias of the supported layout config versions.
-   */
-  export
-  type LayoutConfig = ILayoutConfigV1;
-
-  /**
-   * A type mapping of version number to layout config type.
-   */
-  export
-  type LayoutConfigVersionMap = {
-    '1': ILayoutConfigV1;
-  };
 
   /**
    * An object which represents the geometry of a tab area.
