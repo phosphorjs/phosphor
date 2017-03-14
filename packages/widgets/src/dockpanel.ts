@@ -6,7 +6,7 @@
 | The full license is in the file LICENSE, distributed with this software.
 |----------------------------------------------------------------------------*/
 import {
-  IIterator, find
+  IIterator, each, find, toArray
 } from '@phosphor/algorithm';
 
 import {
@@ -63,8 +63,11 @@ class DockPanel extends Widget {
   constructor(options: DockPanel.IOptions = {}) {
     super();
     this.addClass('p-DockPanel');
-    this._dropPolicy = options.dropPolicy || 'split-or-tab';
+    this._mode = options.mode || 'multiple-document';
     this._renderer = options.renderer || DockPanel.defaultRenderer;
+
+    // Toggle the CSS mode attribute.
+    this.node.setAttribute('data-mode', this._mode);
 
     // Create the delegate renderer for the layout.
     let renderer: DockPanel.IRenderer = {
@@ -103,11 +106,8 @@ class DockPanel extends Widget {
    * A signal emitted when the layout configuration is modified.
    *
    * #### Notes
-   * This signal is emitted for the following conditions:
-   * - A widget is added, moved, or removed
-   * - The current tab of a tab bar is changed
-   * - A tab is moved in the tab bar
-   * - A split handle is moved by the user
+   * This signal is emitted whenever the current layout configuration
+   * may have changed.
    *
    * This signal is emitted asynchronously in a collapsed fashion, so
    * that multiple synchronous modifications results in only a single
@@ -144,28 +144,49 @@ class DockPanel extends Widget {
   }
 
   /**
-   * Get the drop policy for the dock panel.
+   * Get the mode for the dock panel.
    */
-  get dropPolicy(): DockPanel.DropPolicy {
-    return this._dropPolicy;
+  get mode(): DockPanel.Mode {
+    return this._mode;
   }
 
   /**
-   * Set the drop policy for the dock panel.
+   * Set the mode for the dock panel.
+   *
+   * #### Notes
+   * Changing the mode is a destructive operation with respect to the
+   * panel's layout configuration. If layout state must be preserved,
+   * save the current layout config before changing the mode.
    */
-  set dropPolicy(value: DockPanel.DropPolicy) {
-    // Bail early if the value will not change.
-    if (this._dropPolicy === value) {
+  set mode(value: DockPanel.Mode) {
+    // Bail early if the mode does not change.
+    if (this._mode === value) {
       return;
     }
 
-    // Update the internal drop policy.
-    this._dropPolicy = value;
+    // Update the internal mode.
+    this._mode = value;
 
-    // Hide the overlay if drops are disallowed.
-    if (value === 'disallow') {
-      this.overlay.hide(0);
+    // Toggle the CSS mode attribute.
+    this.node.setAttribute('data-mode', value);
+
+    // Get the layout for the panel.
+    let layout = this.layout as DockLayout;
+
+    // Configure the layout for the specified mode.
+    switch (value) {
+    case 'multiple-document':
+      each(layout.tabBars(), tabBar => { tabBar.show(); });
+      break;
+    case 'single-document':
+      layout.restoreLayout(Private.createSingleDocumentConfig(this));
+      break;
+    default:
+      throw 'unreachable';
     }
+
+    // Schedule an emit of the layout modified signal.
+    MessageLoop.postMessage(this, Private.LayoutModified);
   }
 
   /**
@@ -222,15 +243,14 @@ class DockPanel extends Widget {
   }
 
   /**
-   * Activate the specified widget in the dock panel.
+   * Select a specific widget in the dock panel.
    *
    * @param widget - The widget of interest.
    *
    * #### Notes
-   * This will make the widget the current widget in its tab area and
-   * post an `activate-request` message to the widget.
+   * This will make the widget the current widget in its tab area.
    */
-  activateWidget(widget: Widget): void {
+  selectWidget(widget: Widget): void {
     // Find the tab bar which contains the widget.
     let tabBar = find(this.tabBars(), bar => {
       return bar.titles.indexOf(widget.title) !== -1;
@@ -241,8 +261,20 @@ class DockPanel extends Widget {
       throw new Error('Widget is not contained in the dock panel.');
     }
 
-    // Update the current title and activate the widget.
+    // Ensure the widget is the current widget.
     tabBar.currentTitle = widget.title;
+  }
+
+  /**
+   * Activate a specified widget in the dock panel.
+   *
+   * @param widget - The widget of interest.
+   *
+   * #### Notes
+   * This will select the widget then activate it.
+   */
+  activateWidget(widget: Widget): void {
+    this.selectWidget(widget);
     widget.activate();
   }
 
@@ -269,8 +301,14 @@ class DockPanel extends Widget {
    * #### Notes
    * Widgets which currently belong to the layout but which are not
    * contained in the config will be unparented.
+   *
+   * The dock panel automatically reverts to `'multiple-document'` mode
+   * when a layout config is restored.
    */
   restoreLayout(config: DockPanel.ILayoutConfig): void {
+    // Reset the mode.
+    this._mode = 'multiple-document';
+
     // Restore the layout.
     (this.layout as DockLayout).restoreLayout(config);
 
@@ -278,6 +316,9 @@ class DockPanel extends Widget {
     if (Platform.IS_EDGE || Platform.IS_IE) {
       MessageLoop.flush();
     }
+
+    // Schedule an emit of the layout modified signal.
+    MessageLoop.postMessage(this, Private.LayoutModified);
   }
 
   /**
@@ -286,13 +327,21 @@ class DockPanel extends Widget {
    * @param widget - The widget to add to the dock panel.
    *
    * @param options - The additional options for adding the widget.
+   *
+   * #### Notes
+   * If the panel is in document layout mode, the options are ignored
+   * and the widget is always added after the current visible widget.
    */
   addWidget(widget: Widget, options: DockPanel.IAddOptions = {}): void {
     // Add the widget to the layout.
-    (this.layout as DockLayout).addWidget(widget, options);
+    if (this._mode === 'single-document') {
+      (this.layout as DockLayout).addWidget(widget);
+    } else {
+      (this.layout as DockLayout).addWidget(widget, options);
+    }
 
     // Schedule an emit of the layout modified signal.
-    MessageLoop.postMessage(this, new ConflatableMessage('layout-modified'));
+    MessageLoop.postMessage(this, Private.LayoutModified);
   }
 
   /**
@@ -400,18 +449,13 @@ class DockPanel extends Widget {
     msg.child.removeClass('p-DockPanel-widget');
 
     // Schedule an emit of the layout modified signal.
-    MessageLoop.postMessage(this, new ConflatableMessage('layout-modified'));
+    MessageLoop.postMessage(this, Private.LayoutModified);
   }
 
   /**
    * Handle the `'p-dragenter'` event for the dock panel.
    */
   private _evtDragEnter(event: IDragEvent): void {
-    // Bail early if drops are disallowed.
-    if (this._dropPolicy === 'disallow') {
-      return;
-    }
-
     // If the factory mime type is present, mark the event as
     // handled in order to get the rest of the drag events.
     if (event.mimeData.hasData('application/vnd.phosphor.widget-factory')) {
@@ -424,11 +468,6 @@ class DockPanel extends Widget {
    * Handle the `'p-dragleave'` event for the dock panel.
    */
   private _evtDragLeave(event: IDragEvent): void {
-    // Bail early if drops are disallowed.
-    if (this._dropPolicy === 'disallow') {
-      return;
-    }
-
     // Mark the event as handled.
     event.preventDefault();
     event.stopPropagation();
@@ -446,11 +485,6 @@ class DockPanel extends Widget {
    * Handle the `'p-dragover'` event for the dock panel.
    */
   private _evtDragOver(event: IDragEvent): void {
-    // Bail early if drops are disallowed.
-    if (this._dropPolicy === 'disallow') {
-      return;
-    }
-
     // Mark the event as handled.
     event.preventDefault();
     event.stopPropagation();
@@ -468,11 +502,6 @@ class DockPanel extends Widget {
    * Handle the `'p-drop'` event for the dock panel.
    */
   private _evtDrop(event: IDragEvent): void {
-    // Bail early if drops are disallowed.
-    if (this._dropPolicy === 'disallow') {
-      return;
-    }
-
     // Mark the event as handled.
     event.preventDefault();
     event.stopPropagation();
@@ -577,7 +606,7 @@ class DockPanel extends Widget {
       this._releaseMouse();
 
       // Schedule an emit of the layout modified signal.
-      MessageLoop.postMessage(this, new ConflatableMessage('layout-modified'));
+      MessageLoop.postMessage(this, Private.LayoutModified);
     }
   }
 
@@ -659,7 +688,7 @@ class DockPanel extends Widget {
     this._releaseMouse();
 
     // Schedule an emit of the layout modified signal.
-    MessageLoop.postMessage(this, new ConflatableMessage('layout-modified'));
+    MessageLoop.postMessage(this, Private.LayoutModified);
   }
 
   /**
@@ -791,6 +820,11 @@ class DockPanel extends Widget {
     // Set the generated tab bar property for the tab bar.
     Private.isGeneratedTabBarProperty.set(tabBar, true);
 
+    // Hide the tab bar when in single document mode.
+    if (this._mode === 'single-document') {
+      tabBar.hide();
+    }
+
     // Enforce necessary tab bar behavior.
     // TODO do we really want to enforce *all* of these?
     tabBar.tabsMovable = true;
@@ -820,7 +854,7 @@ class DockPanel extends Widget {
    * Handle the `tabMoved` signal from a tab bar.
    */
   private _onTabMoved(): void {
-    MessageLoop.postMessage(this, new ConflatableMessage('layout-modified'));
+    MessageLoop.postMessage(this, Private.LayoutModified);
   }
 
   /**
@@ -846,7 +880,7 @@ class DockPanel extends Widget {
     }
 
     // Schedule an emit of the layout modified signal.
-    MessageLoop.postMessage(this, new ConflatableMessage('layout-modified'));
+    MessageLoop.postMessage(this, Private.LayoutModified);
   }
 
   /**
@@ -906,9 +940,9 @@ class DockPanel extends Widget {
     this._drag.start(clientX, clientY).then(cleanup);
   }
 
+  private _mode: DockPanel.Mode;
   private _drag: Drag | null = null;
   private _renderer: DockPanel.IRenderer;
-  private _dropPolicy: DockPanel.DropPolicy;
   private _pressData: Private.IPressData | null = null;
   private _layoutModified = new Signal<this, void>(this);
 }
@@ -946,37 +980,33 @@ namespace DockPanel {
     spacing?: number;
 
     /**
-     * The drop policy for the dock panel.
+     * The mode for the dock panel.
      *
-     * The default is `'split-or-tab'`.
+     * The deafult is `'multiple-document'`.
      */
-    dropPolicy?: DropPolicy;
+    mode?: DockPanel.Mode;
   }
 
   /**
-   * A type alias for the supported drop policies.
+   * A type alias for the supported dock panel modes.
    */
   export
-  type DropPolicy = (
+  type Mode = (
     /**
-     * Drops are not allowed on the dock panel.
+     * The single document mode.
+     *
+     * In this mode, only a single widget is visible at a time, and that
+     * widget fills the available layout space. No tab bars are visible.
      */
-    'disallow' |
+    'single-document' |
 
     /**
-     * Drops may only split an existing area.
+     * The multiple document mode.
+     *
+     * In this mode, multiple documents are displayed in separate tab
+     * areas, and those areas can be individually resized by the user.
      */
-    'split-only' |
-
-    /**
-     * Drops may only add to an existing tab bar.
-     */
-    'tab-only' |
-
-    /**
-     * Drops may split existing areas or add to existing tab bars.
-     */
-    'split-or-tab'
+    'multiple-document'
   );
 
   /**
@@ -1207,6 +1237,12 @@ namespace Private {
   const EDGE_SIZE = 40;
 
   /**
+   * A singleton `'layout-modified'` conflatable message.
+   */
+  export
+  const LayoutModified = new ConflatableMessage('layout-modified');
+
+  /**
    * An object which holds mouse press data.
    */
   export
@@ -1319,15 +1355,33 @@ namespace Private {
   });
 
   /**
+   * Create a single document config for the widgets in a dock panel.
+   */
+  export
+  function createSingleDocumentConfig(panel: DockPanel): DockPanel.ILayoutConfig {
+    // Return an empty config if the panel is empty.
+    if (panel.isEmpty) {
+      return { main: null };
+    }
+
+    // Get a flat array of the widgets in the panel.
+    let widgets = toArray(panel.widgets());
+
+    // Get the first selected widget in the panel.
+    let selected = panel.selectedWidgets().next();
+
+    // Compute the current index for the new config.
+    let currentIndex = selected ? widgets.indexOf(selected) : -1;
+
+    // Return the single document config.
+    return { main: { type: 'tab-area', widgets, currentIndex } };
+  }
+
+  /**
    * Find the drop target at the given client position.
    */
   export
   function findDropTarget(panel: DockPanel, clientX: number, clientY: number): IDropTarget {
-    // Bail if drops are disallowed
-    if (panel.dropPolicy === 'disallow') {
-      return { zone: 'invalid', target: null };
-    }
-
     // Bail if the mouse is not over the dock panel.
     if (!ElementExt.hitTest(panel.node, clientX, clientY)) {
       return { zone: 'invalid', target: null };
@@ -1341,8 +1395,8 @@ namespace Private {
       return { zone: 'root-all', target: null };
     }
 
-    // If split drops are supported, search for a root edge first.
-    if (panel.dropPolicy !== 'tab-only') {
+    // Test the edge zones when in multiple document mode.
+    if (panel.mode === 'multiple-document') {
       // Get the client rect for the dock panel.
       let panelRect = panel.node.getBoundingClientRect();
 
@@ -1386,8 +1440,8 @@ namespace Private {
       return { zone: 'invalid', target: null };
     }
 
-    // If only tab drops are supported, indicate the entire area.
-    if (panel.dropPolicy === 'tab-only') {
+    // Return the whole tab area when in single document mode.
+    if (panel.mode === 'single-document') {
       return { zone: 'widget-all', target };
     }
 
@@ -1397,12 +1451,9 @@ namespace Private {
     let ar = target.left + target.width - target.x;
     let ab = target.top + target.height - target.y;
 
-    // Get the edge ratio for the drop policy.
-    let rd = panel.dropPolicy === 'split-only' ? 2 : 3;
-
     // Get the X and Y edge sizes for the area.
-    let rx = Math.round(target.width / rd);
-    let ry = Math.round(target.height / rd);
+    let rx = Math.round(target.width / 3);
+    let ry = Math.round(target.height / 3);
 
     // If the mouse is not within an edge, indicate the entire area.
     if (al > rx && ar > rx && at > ry && ab > ry) {
