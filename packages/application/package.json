@@ -1,6 +1,6 @@
 {
   "name": "@phosphor/application",
-  "version": "0.2.1",
+  "version": "0.3.0",
   "description": "PhosphorJS - Pluggable Application",
   "main": "lib/index.js",
   "types": "lib/index.d.ts",
