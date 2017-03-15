@@ -268,9 +268,12 @@ class DockLayout extends Layout {
     // Create the widget set for validating the config.
     let widgetSet = new Set<Widget>();
 
-    // Validate the main area if it exists.
+    // Normalize the main area config and collect the widgets.
+    let mainConfig: DockLayout.AreaConfig | null;
     if (config.main) {
-      Private.validateAreaConfig(config.main, widgetSet);
+      mainConfig = Private.normalizeAreaConfig(config.main, widgetSet);
+    } else {
+      mainConfig = null;
     }
 
     // Create iterators over the old content.
@@ -306,8 +309,8 @@ class DockLayout extends Layout {
     });
 
     // Create the root node for the new config.
-    if (config.main) {
-      this._root = Private.realizeAreaConfig(config.main, {
+    if (mainConfig) {
+      this._root = Private.realizeAreaConfig(mainConfig, {
         createTabBar: () => this._createTabBar(),
         createHandle: () => this._createHandle()
       });
@@ -1388,19 +1391,21 @@ namespace Private {
   }
 
   /**
-   * Validate an area config.
+   * Normalize an area config object and collect the visited widgets.
    */
   export
-  function validateAreaConfig(config: DockLayout.AreaConfig, widgetSet: Set<Widget>): void {
+  function normalizeAreaConfig(config: DockLayout.AreaConfig, widgetSet: Set<Widget>): DockLayout.AreaConfig | null {
+    let result: DockLayout.AreaConfig | null;
     if (config.type === 'tab-area') {
-      validateTabAreaConfig(config, widgetSet);
+      result = normalizeTabAreaConfig(config, widgetSet);
     } else {
-      validateSplitAreaConfig(config, widgetSet);
+      result = normalizeSplitAreaConfig(config, widgetSet);
     }
+    return result;
   }
 
   /**
-   * Convert an area config into a layout tree.
+   * Convert a normalized area config into a layout tree.
    */
   export
   function realizeAreaConfig(config: DockLayout.AreaConfig, renderer: DockLayout.IRenderer): LayoutNode {
@@ -1974,40 +1979,85 @@ namespace Private {
   }
 
   /**
-   * Validate a tab area config object and collect the visited widgets.
+   * Normalize a tab area config and collect the visited widgets.
    */
-  function validateTabAreaConfig(config: DockLayout.ITabAreaConfig, widgetSet: Set<Widget>): void {
+  function normalizeTabAreaConfig(config: DockLayout.ITabAreaConfig, widgetSet: Set<Widget>): DockLayout.ITabAreaConfig | null {
+    // Bail early if there is no content.
+    if (config.widgets.length === 0) {
+      return null;
+    }
+
+    // Setup the filtered widgets array.
+    let widgets: Widget[] = [];
+
+    // Filter the config for unique widgets.
     each(config.widgets, widget => {
-      if (widgetSet.has(widget)) {
-        throw new Error('Tab area config has duplicate widget.');
+      if (!widgetSet.has(widget)) {
+        widgetSet.add(widget);
+        widgets.push(widget);
       }
-      widgetSet.add(widget);
     });
+
+    // Bail if there are no effective widgets.
+    if (widgets.length === 0) {
+      return null;
+    }
+
+    // Normalize the current index.
+    let index = config.currentIndex;
+    if (index !== -1 && (index < 0 || index >= widgets.length)) {
+      index = 0;
+    }
+
+    // Return a normalized config object.
+    return { type: 'tab-area', widgets, currentIndex: index };
   }
 
   /**
-   * Validate a split area config object and collect the visited widgets.
+   * Normalize a split area config and collect the visited widgets.
    */
-  function validateSplitAreaConfig(config: DockLayout.ISplitAreaConfig, widgetSet: Set<Widget>): void {
-    if (config.sizes.length !== config.children.length) {
-      throw new Error('Split area config has mismatched sizes count.');
-    }
-    if (config.sizes.some(size => size < 0)) {
-      throw new Error('Split area config has negative sizes.');
-    }
-    each(config.children, child => {
-      if (child.type === 'tab-area') {
-        validateTabAreaConfig(child, widgetSet);
-      } else if (child.orientation === config.orientation) {
-        throw new Error('Child split area config has invalid orientation.');
-      } else {
-        validateSplitAreaConfig(child, widgetSet);
+  function normalizeSplitAreaConfig(config: DockLayout.ISplitAreaConfig, widgetSet: Set<Widget>): DockLayout.AreaConfig | null {
+    // Set up the result variables.
+    let orientation = config.orientation;
+    let children: DockLayout.AreaConfig[] = [];
+    let sizes: number[] = [];
+
+    // Normalize the config children.
+    for (let i = 0, n = config.children.length; i < n; ++i) {
+      // Normalize the child config.
+      let child = normalizeAreaConfig(config.children[i], widgetSet);
+
+      // Ignore an empty child.
+      if (!child) {
+        continue;
       }
-    });
+
+      // Add the child or hoist its content as appropriate.
+      if (child.type === 'tab-area' || child.orientation !== orientation) {
+        children.push(child);
+        sizes.push(Math.abs(config.sizes[i] || 0));
+      } else {
+        children.push(...child.children);
+        sizes.push(...child.sizes);
+      }
+    }
+
+    // Bail if there are no effective children.
+    if (children.length === 0) {
+      return null;
+    }
+
+    // If there is only one effective child, return that child.
+    if (children.length === 1) {
+      return children[0];
+    }
+
+    // Return a normalized config object.
+    return { type: 'split-area', orientation, children, sizes };
   }
 
   /**
-   * Convert a tab area config into a layout tree.
+   * Convert a normalized tab area config into a layout tree.
    */
   function realizeTabAreaConfig(config: DockLayout.ITabAreaConfig, renderer: DockLayout.IRenderer): TabLayoutNode {
     // Create the tab bar for the layout node.
@@ -2027,7 +2077,7 @@ namespace Private {
   }
 
   /**
-   * Convert a split area config into a layout tree.
+   * Convert a normalized split area config into a layout tree.
    */
   function realizeSplitAreaConfig(config: DockLayout.ISplitAreaConfig, renderer: DockLayout.IRenderer): SplitLayoutNode {
     // Create the split layout node.
