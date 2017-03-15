@@ -296,14 +296,12 @@ class DockPanel extends Widget {
    *
    * @param config - The layout configuration to restore.
    *
-   * @throws An error if the config is invalid.
-   *
    * #### Notes
    * Widgets which currently belong to the layout but which are not
    * contained in the config will be unparented.
    *
-   * The dock panel automatically reverts to `'multiple-document'` mode
-   * when a layout config is restored.
+   * The dock panel automatically reverts to `'multiple-document'`
+   * mode when a layout config is restored.
    */
   restoreLayout(config: DockPanel.ILayoutConfig): void {
     // Reset the mode.
