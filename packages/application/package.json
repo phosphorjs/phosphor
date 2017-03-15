@@ -1,6 +1,6 @@
 {
   "name": "@phosphor/application",
-  "version": "0.2.0",
+  "version": "0.2.1",
   "description": "PhosphorJS - Pluggable Application",
   "main": "lib/index.js",
   "types": "lib/index.d.ts",
@@ -14,7 +14,7 @@
   "dependencies": {
     "@phosphor/commands": "^0.1.5",
     "@phosphor/coreutils": "^0.1.5",
-    "@phosphor/widgets": "^0.2.0"
+    "@phosphor/widgets": "^0.3.0"
   },
   "devDependencies": {
     "rimraf": "^2.5.2",
