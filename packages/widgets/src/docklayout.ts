@@ -258,8 +258,6 @@ class DockLayout extends Layout {
    *
    * @param config - The layout configuration to restore.
    *
-   * @throws An error if the config is invalid.
-   *
    * #### Notes
    * Widgets which currently belong to the layout but which are not
    * contained in the config will be unparented.
