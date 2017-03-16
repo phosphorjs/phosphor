@@ -14,7 +14,7 @@ import {
 } from '@phosphor/coreutils';
 
 import {
-  Widget
+  ContextMenu, Menu, Widget
 } from '@phosphor/widgets';
 
 
@@ -124,13 +124,28 @@ class Application<T extends Widget> {
    * @param options - The options for creating the application.
    */
   constructor(options: Application.IOptions<T>) {
+    // Create the application command registry.
+    let commands = new CommandRegistry();
+
+    // Create the application context menu.
+    let renderer = options.contextMenuRenderer;
+    let contextMenu = new ContextMenu({ commands, renderer });
+
+    // Initialize the application state.
+    this.commands = commands;
+    this.contextMenu = contextMenu;
     this.shell = options.shell;
   }
 
   /**
    * The application command registry.
    */
-  readonly commands = new CommandRegistry();
+  readonly commands: CommandRegistry;
+
+  /**
+   * The application context menu.
+   */
+  readonly contextMenu: ContextMenu;
 
   /**
    * The application shell widget.
@@ -420,6 +435,9 @@ class Application<T extends Widget> {
     case 'keydown':
       this.evtKeydown(event as KeyboardEvent);
       break;
+    case 'contextmenu':
+      this.evtContextMenu(event as MouseEvent);
+      break;
     }
   }
 
@@ -447,6 +465,7 @@ class Application<T extends Widget> {
    * A subclass may reimplement this method as needed.
    */
   protected addEventListeners(): void {
+    document.addEventListener('contextmenu', this);
     document.addEventListener('keydown', this, true);
     window.addEventListener('resize', this);
   }
@@ -462,6 +481,29 @@ class Application<T extends Widget> {
    */
   protected evtKeydown(event: KeyboardEvent): void {
     this.commands.processKeydownEvent(event);
+  }
+
+  /**
+   * A method invoked on a document `'contextmenu'` event.
+   *
+   * #### Notes
+   * The default implementation of this method opens the application
+   * `contextMenu` at the current mouse position.
+   *
+   * If the application context menu has no matching content *or* if
+   * the shift key is pressed, the default browser context menu will
+   * be opened instead.
+   *
+   * A subclass may reimplement this method as needed.
+   */
+  protected evtContextMenu(event: MouseEvent): void {
+    if (event.shiftKey) {
+      return;
+    }
+    if (this.contextMenu.open(event)) {
+      event.preventDefault();
+      event.stopPropagation();
+    }
   }
 
   /**
@@ -501,6 +543,11 @@ namespace Application {
      * The application will attach the widget to the DOM.
      */
     shell: T;
+
+    /**
+     * A custom renderer for the context menu.
+     */
+    contextMenuRenderer?: Menu.IRenderer;
   }
 
   /**
