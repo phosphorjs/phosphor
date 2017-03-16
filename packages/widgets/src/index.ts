@@ -9,6 +9,7 @@ export * from './boxengine';
 export * from './boxlayout';
 export * from './boxpanel';
 export * from './commandpalette';
+export * from './contextmenu';
 export * from './docklayout';
 export * from './dockpanel';
 export * from './focustracker';
