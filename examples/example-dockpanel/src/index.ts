@@ -16,7 +16,7 @@ import {
 } from '@phosphor/messaging';
 
 import {
-  BoxPanel, CommandPalette, DockPanel, Menu, MenuBar, Widget
+  BoxPanel, CommandPalette, ContextMenu, DockPanel, Menu, MenuBar, Widget
 } from '@phosphor/widgets';
 
 import '../style/index.css';
@@ -252,8 +252,6 @@ function main(): void {
   menu3.title.label = 'View';
   menu3.title.mnemonic = 0;
 
-  let ctxt = createMenu();
-
   let bar = new MenuBar();
   bar.addMenu(menu1);
   bar.addMenu(menu2);
@@ -277,21 +275,30 @@ function main(): void {
   palette.addItem({ command: 'notebook:new', category: 'Notebook' });
   palette.id = 'palette';
 
+  let contextMenu = new ContextMenu({ commands });
+
   document.addEventListener('contextmenu', (event: MouseEvent) => {
-    event.preventDefault();
-    ctxt.open(event.clientX, event.clientY);
-    console.log('ctxt menu');
+    if (contextMenu.open(event)) {
+      event.preventDefault();
+    }
   });
 
+  contextMenu.addItem({ command: 'example:cut', selector: '.content' });
+  contextMenu.addItem({ command: 'example:copy', selector: '.content' });
+  contextMenu.addItem({ command: 'example:paste', selector: '.content' });
+
+  contextMenu.addItem({ command: 'example:one', selector: '.p-CommandPalette' });
+  contextMenu.addItem({ command: 'example:two', selector: '.p-CommandPalette' });
+  contextMenu.addItem({ command: 'example:three', selector: '.p-CommandPalette' });
+  contextMenu.addItem({ command: 'example:four', selector: '.p-CommandPalette' });
+  contextMenu.addItem({ command: 'example:black', selector: '.p-CommandPalette' });
+
+  contextMenu.addItem({ command: 'notebook:new', selector: '.p-CommandPalette-input' });
+  contextMenu.addItem({ command: 'example:save-on-exit', selector: '.p-CommandPalette-input' });
+  contextMenu.addItem({ command: 'example:open-task-manager', selector: '.p-CommandPalette-input' });
+  contextMenu.addItem({ type: 'separator', selector: '.p-CommandPalette-input' });
+
   document.addEventListener('keydown', (event: KeyboardEvent) => {
-    // if (!event.ctrlKey && !event.shiftKey && !event.metaKey && event.keyCode === 18) {
-    //   event.preventDefault();
-    //   event.stopPropagation();
-    //   bar.activeIndex = 0;
-    //   bar.activate();
-    // } else {
-    //   keymap.processKeydownEvent(event);
-    // }
     commands.processKeydownEvent(event);
   });
 
