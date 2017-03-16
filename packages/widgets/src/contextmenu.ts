@@ -60,7 +60,7 @@ class ContextMenu {
    */
   addItem(options: ContextMenu.IItemOptions): IDisposable {
     // Create an item from the given options.
-    let item = Private.createItem(options);
+    let item = Private.createItem(options, this._idTick++);
 
     // Add the item to the internal array.
     this._items.push(item);
@@ -111,6 +111,7 @@ class ContextMenu {
     return true;
   }
 
+  private _idTick = 0;
   private _items: Private.IItem[] = [];
 }
 
@@ -161,6 +162,7 @@ namespace ContextMenu {
      *   1. Depth in the DOM tree (deeper is better)
      *   2. Selector specificity (higher is better)
      *   3. Rank (lower is better)
+     *   4. Insertion order
      *
      * The default rank is `Infinity`.
      */
@@ -187,16 +189,21 @@ namespace Private {
      * The rank for the item.
      */
     rank: number;
+
+    /**
+     * The tie-breaking id for the item.
+     */
+    id: number;
   }
 
   /**
    * Create a normalized context menu item from an options object.
    */
   export
-  function createItem(options: ContextMenu.IItemOptions): IItem {
+  function createItem(options: ContextMenu.IItemOptions, id: number): IItem {
     let selector = validateSelector(options.selector);
     let rank = options.rank !== undefined ? options.rank : Infinity;
-    return { ...options, selector, rank };
+    return { ...options, selector, rank, id };
   }
 
   /**
@@ -292,6 +299,11 @@ namespace Private {
     // If specificities are equal, sort based on rank.
     let r1 = a.rank;
     let r2 = b.rank;
-    return r1 === r2 ? 0 : r1 < r2 ? -1 : 1;  // Infinity-safe
+    if (r1 !== r2) {
+      return r1 < r2 ? -1 : 1;  // Infinity-safe
+    }
+
+    // When all else fails, sort by item id.
+    return a.id - b.id;
   }
 }
