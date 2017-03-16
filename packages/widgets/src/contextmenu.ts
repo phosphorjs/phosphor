@@ -217,7 +217,7 @@ namespace Private {
     let result: IItem[] = [];
 
     // Copy the items array to allow in-place modification.
-    let temp: Array<IItem | null> = items.slice();
+    let availableItems: Array<IItem | null> = items.slice();
 
     // Set up the limits of the DOM search.
     let target = event.target as (Element | null);
@@ -229,9 +229,9 @@ namespace Private {
       let matches: IItem[] = [];
 
       // Search the remaining items for matches.
-      for (let i = 0, n = temp.length; i < n; ++i) {
+      for (let i = 0, n = availableItems.length; i < n; ++i) {
         // Fetch the item.
-        let item = temp[i];
+        let item = availableItems[i];
 
         // Skip items which are already consumed.
         if (!item) {
@@ -247,7 +247,7 @@ namespace Private {
         matches.push(item);
 
         // Mark the item as consumed.
-        temp[i] = null;
+        availableItems[i] = null;
       }
 
       // Sort the matches for this level and add them to the results.
