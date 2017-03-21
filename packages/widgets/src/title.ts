@@ -45,9 +45,7 @@ class Title<T> {
     if (options.closable !== undefined) {
       this._closable = options.closable;
     }
-    if (options.dataset !== undefined) {
-      Private.updateData(this._dataset, options.dataset);
-    }
+    this._dataset = options.dataset || {};
   }
 
   /**
@@ -198,53 +196,27 @@ class Title<T> {
   }
 
   /**
-   * Get the data value for a data key.
-   *
-   * @param key - The data key of interest.
-   *
-   * @returns The value for the given key, or an empty string.
+   * Get the dataset for the title.
    *
    * #### Notes
-   * The dataset is intended for advanced use cases where the other
-   * properties on the title are insufficient to contain all of the
-   * data needed to render the title for an object.
+   * The default value is an empty dataset.
    */
-  getData(key: string): string {
-    return Private.getData(this._dataset, key);
+  get dataset(): Title.Dataset {
+    return this._dataset;
   }
 
   /**
-   * Set the data value for a data key.
-   *
-   * @param key - The data key of interest.
-   *
-   * @param value - The value to set for the data key.
+   * Set the dataset for the title.
    *
    * #### Notes
-   * The dataset is intended for advanced use cases where the other
-   * properties on the title are insufficient to contain all of the
-   * data needed to render the title for an object.
+   * This controls the data attributes when applicable.
    */
-  setData(key: string, value: string): void {
-    if (Private.setData(this._dataset, key, value)) {
-      this._changed.emit(undefined);
+  set dataset(value: Title.Dataset) {
+    if (this._dataset === value) {
+      return;
     }
-  }
-
-  /**
-   * Update the data values for multiple data keys.
-   *
-   * @param value - An object mapping of key/value pairs to update.
-   *
-   * #### Notes
-   * The dataset is intended for advanced use cases where the other
-   * properties on the title are insufficient to contain all of the
-   * data needed to render the title for an object.
-   */
-  updateData(values: Title.Dataset): void {
-    if (Private.updateData(this._dataset, values)) {
-      this._changed.emit(undefined);
-    }
+    this._dataset = value;
+    this._changed.emit(undefined);
   }
 
   private _icon = '';
@@ -253,8 +225,8 @@ class Title<T> {
   private _mnemonic = -1;
   private _className = '';
   private _closable = false;
+  private _dataset: Title.Dataset;
   private _changed = new Signal<this, void>(this);
-  private _dataset: Title.Dataset = Object.create(null);
 }
 
 
@@ -264,10 +236,10 @@ class Title<T> {
 export
 namespace Title {
   /**
-   * A type alias for a simple string dataset.
+   * A type alias for a simple immutable string dataset.
    */
   export
-  type Dataset = { [key: string]: string };
+  type Dataset = { readonly [key: string]: string };
 
   /**
    * An options object for initializing a title.
@@ -310,64 +282,8 @@ namespace Title {
     closable?: boolean;
 
     /**
-     * The initial dataset for the title.
+     * The dataset for the title.
      */
     dataset?: Dataset;
-  }
-}
-
-
-/**
- * The namespace for the module implementation details.
- */
-namespace Private {
-  /**
-   * Get the value for a dataset key.
-   *
-   * Returns an empty string if the key does not exist.
-   */
-  export
-  function getData(dataset: Title.Dataset, key: string): string {
-    return dataset[key] || '';
-  }
-
-  /**
-   * Set the value for a dataset key.
-   *
-   * Returns whether the value was changed.
-   */
-  export
-  function setData(dataset: Title.Dataset, key: string, value: string): boolean {
-    if (value === (dataset[key] || '')) {
-      return false;
-    }
-    if (value) {
-      dataset[key] = value;
-    } else {
-      delete dataset[key];
-    }
-    return true;
-  }
-
-  /**
-   * Update the values for a dataset.
-   *
-   * Returns whether any value was changed.
-   */
-  export
-  function updateData(dataset: Title.Dataset, values: Title.Dataset): boolean {
-    let changed = false;
-    for (let key in values) {
-      if (values[key] === (dataset[key] || '')) {
-        continue;
-      }
-      if (values[key]) {
-        dataset[key] = values[key];
-      } else {
-        delete dataset[key];
-      }
-      changed = true;
-    }
-    return changed;
   }
 }

@@ -165,6 +165,13 @@ class Widget implements IDisposable, IMessageHandler {
   }
 
   /**
+   * The dataset for the widget's DOM node.
+   */
+  get dataset(): DOMStringMap {
+    return this.node.dataset;
+  }
+
+  /**
    * Get the parent of the widget.
    */
   get parent(): Widget | null {

@@ -307,94 +307,44 @@ describe('@phosphor/widgets', () => {
 
     });
 
-    describe('getData()', () => {
+    describe('#dataset', () => {
 
-      it('should get the data value for the key', () => {
-        let title = new Title({ owner, dataset: { foo: '1', bar:  '2' }});
-        expect(title.getData('foo')).to.equal('1');
-        expect(title.getData('bar')).to.equal('2');
-      });
-
-      it('should return an empty string for missing values', () => {
+      it('should default to `{}`', () => {
         let title = new Title({ owner });
-        expect(title.getData('foo')).to.equal('');
-        expect(title.getData('bar')).to.equal('');
+        expect(title.dataset).to.deep.equal({});
       });
 
-    });
-
-    describe('setData()', () => {
-
-      it('should set the data value for the key', () => {
-        let title = new Title({ owner, dataset: { foo: '1', bar:  '2' }});
-        title.setData('foo', '3');
-        title.setData('bar', '4');
-        title.setData('baz', '5');
-        expect(title.getData('foo')).to.equal('3');
-        expect(title.getData('bar')).to.equal('4');
-        expect(title.getData('baz')).to.equal('5');
+      it('should initialize from the options', () => {
+        let title = new Title({ owner, dataset: { foo: '12' } });
+        expect(title.dataset).to.deep.equal({ foo: '12' });
       });
 
-      it('should emit the changed signal when a value changes', () => {
+      it('should be writable', () => {
+        let title = new Title({ owner, dataset: { foo: '12' } });
+        title.dataset = { bar: '42' };
+        expect(title.dataset).to.deep.equal({ bar: '42' });
+      });
+
+      it('should emit the changed signal when the value changes', () => {
         let called = false;
-        let title = new Title({ owner, dataset: { foo: '1', bar:  '2' }});
+        let title = new Title({ owner, dataset: { foo: '12' } });
         title.changed.connect((sender, arg) => {
           expect(sender).to.equal(title);
           expect(arg).to.equal(undefined);
           called = true;
         });
-        title.setData('foo', '3');
+        title.dataset = { bar: '42' };
         expect(called).to.equal(true);
       });
 
-      it('should not emit the changed signal when a value does not change', () => {
+      it('should not emit the changed signal when the value does not change', () => {
         let called = false;
-        let title = new Title({ owner, dataset: { foo: '1', bar:  '2' }});
+        let dataset = { foo: '12' };
+        let title = new Title({ owner, dataset });
         title.changed.connect((sender, arg) => {
-          expect(sender).to.equal(title);
-          expect(arg).to.equal(undefined);
           called = true;
         });
-        title.setData('foo', '1');
-        expect(called).to.equal(false);
-      });
-
-    });
-
-    describe('updateData()', () => {
-
-      it('should update several values in the dataset', () => {
-        let title = new Title({ owner, dataset: { foo: '1', bar:  '2' }});
-        title.updateData({ foo: '3', bar: '4', baz: '5' });
-        expect(title.getData('foo')).to.equal('3');
-        expect(title.getData('bar')).to.equal('4');
-        expect(title.getData('baz')).to.equal('5');
-      });
-
-      it('should emit the changed signal when any value changes', () => {
-        let called = false;
-        let title = new Title({ owner, dataset: { foo: '1', bar:  '2' }});
-        title.changed.connect((sender, arg) => {
-          expect(sender).to.equal(title);
-          expect(arg).to.equal(undefined);
-          called = true;
-        });
-        title.updateData({ foo: '3', bar: '2' });
-        expect(called).to.equal(true);
-        called = false;
-        title.updateData({ foo: '3', bar: '2', baz: '5' });
-        expect(called).to.equal(true);
-      });
-
-      it('should not emit the changed signal when no values change', () => {
-        let called = false;
-        let title = new Title({ owner, dataset: { foo: '1', bar:  '2' }});
-        title.changed.connect((sender, arg) => {
-          expect(sender).to.equal(title);
-          expect(arg).to.equal(undefined);
-          called = true;
-        });
-        title.updateData({ foo: '1', bar: '2' });
+        title.dataset = dataset;
         expect(called).to.equal(false);
       });
 

@@ -246,6 +246,21 @@ class CommandRegistry {
   }
 
   /**
+   * Get the dataset for a specific command.
+   *
+   * @param id - The id of the command of interest.
+   *
+   * @param args - The arguments for the command.
+   *
+   * @returns The dataset for the command, or an empty dataset if
+   *   the command is not registered.
+   */
+  dataset(id: string, args: JSONObject = JSONExt.emptyObject): CommandRegistry.Dataset {
+    let cmd = this._commands[id];
+    return cmd ? cmd.dataset.call(undefined, args) : {};
+  }
+
+  /**
    * Test whether a specific command is enabled.
    *
    * @param id - The id of the command of interest.
@@ -542,6 +557,12 @@ namespace CommandRegistry {
   type CommandFunc<T> = (args: JSONObject) => T;
 
   /**
+   * A type alias for a simple immutable string dataset.
+   */
+  export
+  type Dataset = { readonly [key: string]: string };
+
+  /**
    * An options object for creating a command.
    *
    * #### Notes
@@ -658,6 +679,20 @@ namespace CommandRegistry {
      * The default value is an empty string.
      */
     className?: string | CommandFunc<string>;
+
+    /**
+     * The dataset for the command.
+     *
+     * #### Notes
+     * The dataset values will be added to the primary node for the
+     * visual representation of the command.
+     *
+     * This can be a dataset object, or a function which returns the
+     * dataset object based on the provided command arguments.
+     *
+     * The default value is an empty dataset.
+     */
+    dataset?: Dataset | CommandFunc<Dataset>;
 
     /**
      * A function which indicates whether the command is enabled.
@@ -1007,10 +1042,16 @@ namespace Private {
   const CHORD_TIMEOUT = 1000;
 
   /**
-   * A convenience type alias.
+   * A convenience type alias for a command func.
    */
   export
   type CommandFunc<T> = CommandRegistry.CommandFunc<T>;
+
+  /**
+   * A convenience type alias for a command dataset.
+   */
+  export
+  type Dataset = CommandRegistry.Dataset;
 
   /**
    * A normalized command object.
@@ -1024,6 +1065,7 @@ namespace Private {
     readonly caption: CommandFunc<string>;
     readonly usage: CommandFunc<string>;
     readonly className: CommandFunc<string>;
+    readonly dataset: CommandFunc<Dataset>;
     readonly isEnabled: CommandFunc<boolean>;
     readonly isToggled: CommandFunc<boolean>;
     readonly isVisible: CommandFunc<boolean>;
@@ -1042,6 +1084,7 @@ namespace Private {
       caption: asFunc(options.caption, emptyStringFunc),
       usage: asFunc(options.usage, emptyStringFunc),
       className: asFunc(options.className, emptyStringFunc),
+      dataset: asFunc(options.dataset, emptyDatasetFunc),
       isEnabled: options.isEnabled || trueFunc,
       isToggled: options.isToggled || falseFunc,
       isVisible: options.isVisible || trueFunc
@@ -1170,6 +1213,11 @@ namespace Private {
    * A singleton false boolean function.
    */
   const falseFunc = () => false;
+
+  /**
+   * A singleton empty dataset function.
+   */
+  const emptyDatasetFunc = () => ({});
 
   /**
    * Cast a value or command func to a command func.

@@ -78,7 +78,7 @@ class TabPanel extends Widget {
 
     // Configure the tab bar for the placement.
     this.tabBar.orientation = orientation;
-    Private.togglePlacement(this.tabBar, this._tabPlacement);
+    this.tabBar.dataset['placement'] = this._tabPlacement;
 
     // Create the box layout.
     let layout = new BoxLayout({ direction, spacing: 0 });
@@ -202,7 +202,7 @@ class TabPanel extends Widget {
 
     // Configure the tab bar for the placement.
     this.tabBar.orientation = orientation;
-    Private.togglePlacement(this.tabBar, value);
+    this.tabBar.dataset['placement'] = value;
 
     // Update the layout direction.
     (this.layout as BoxLayout).direction = direction;
@@ -420,14 +420,6 @@ namespace TabPanel {
  * The namespace for the module implementation details.
  */
 namespace Private {
-  /**
-   * Toggle the CSS placement attribute for the given tab bar.
-   */
-  export
-  function togglePlacement(bar: TabBar<any>, plc: TabPanel.TabPlacement): void {
-    bar.node.setAttribute('data-placement', plc);
-  }
-
   /**
    * Convert a tab placement to tab bar orientation.
    */

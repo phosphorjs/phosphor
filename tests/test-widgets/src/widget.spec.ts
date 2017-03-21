@@ -298,6 +298,15 @@ describe('@phosphor/widgets', () => {
 
     });
 
+    describe('#datset', () => {
+
+      it('should get the dataset of the widget node', () => {
+        let widget = new Widget();
+        expect(widget.dataset).to.equal(widget.node.dataset);
+      });
+
+    });
+
     describe('#title', () => {
 
       it('should get the title data object for the widget', () => {

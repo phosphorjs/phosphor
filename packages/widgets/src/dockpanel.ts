@@ -67,7 +67,7 @@ class DockPanel extends Widget {
     this._renderer = options.renderer || DockPanel.defaultRenderer;
 
     // Toggle the CSS mode attribute.
-    this.node.setAttribute('data-mode', this._mode);
+    this.dataset['mode'] = this._mode;
 
     // Create the delegate renderer for the layout.
     let renderer: DockPanel.IRenderer = {
@@ -168,7 +168,7 @@ class DockPanel extends Widget {
     this._mode = value;
 
     // Toggle the CSS mode attribute.
-    this.node.setAttribute('data-mode', value);
+    this.dataset['mode'] = value;
 
     // Get the layout for the panel.
     let layout = this.layout as DockLayout;

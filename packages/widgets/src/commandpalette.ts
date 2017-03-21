@@ -585,6 +585,11 @@ namespace CommandPalette {
     readonly className: string;
 
     /**
+     * The dataset for the command item.
+     */
+    readonly dataset: CommandRegistry.Dataset;
+
+    /**
      * Whether the command item is enabled.
      */
     readonly isEnabled: boolean;
@@ -813,7 +818,7 @@ namespace CommandPalette {
      * @returns The dataset for the command palette item.
      */
     createItemDataset(data: IItemRenderData): ElementDataset {
-      return { command: data.item.command };
+      return { ...data.item.dataset, command: data.item.command };
     }
 
     /**
@@ -1316,6 +1321,13 @@ namespace Private {
      */
     get className(): string {
       return this._commands.className(this.command, this.args);
+    }
+
+    /**
+     * The dataset for the command item.
+     */
+    get dataset(): CommandRegistry.Dataset {
+      return this._commands.dataset(this.command, this.args);
     }
 
     /**
