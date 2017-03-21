@@ -30,7 +30,7 @@ import {
 } from '@phosphor/signaling';
 
 import {
-  ElementInlineStyle, VirtualDOM, VirtualElement, h
+  ElementDataset, ElementInlineStyle, VirtualDOM, VirtualElement, h
 } from '@phosphor/virtualdom';
 
 import {
@@ -1320,8 +1320,9 @@ namespace TabBar {
       let key = this.createTabKey(data);
       let style = this.createTabStyle(data);
       let className = this.createTabClass(data);
+      let dataset = this.createTabDataset(data);
       return (
-        h.li({ key, className, title, style },
+        h.li({ key, className, title, style, dataset },
           this.renderIcon(data),
           this.renderLabel(data),
           this.renderCloseIcon(data)
@@ -1413,6 +1414,17 @@ namespace TabBar {
         name += ' p-mod-current';
       }
       return name;
+    }
+
+    /**
+     * Create the dataset for a tab.
+     *
+     * @param data - The data to use for the tab.
+     *
+     * @returns The dataset for the tab.
+     */
+    createTabDataset(data: IRenderData<any>): ElementDataset {
+      return data.title.dataset;
     }
 
     /**

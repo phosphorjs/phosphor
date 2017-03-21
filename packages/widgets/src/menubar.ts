@@ -22,7 +22,7 @@ import {
 } from '@phosphor/messaging';
 
 import {
-  VirtualDOM, VirtualElement, h
+  ElementDataset, VirtualDOM, VirtualElement, h
 } from '@phosphor/virtualdom';
 
 import {
@@ -746,8 +746,9 @@ namespace MenuBar {
      */
     renderItem(data: IRenderData): VirtualElement {
       let className = this.createItemClass(data);
+      let dataset = this.createItemDataset(data);
       return (
-        h.li({ className },
+        h.li({ className, dataset },
           this.renderIcon(data),
           this.renderLabel(data)
         )
@@ -793,6 +794,17 @@ namespace MenuBar {
         name += ' p-mod-active';
       }
       return name;
+    }
+
+    /**
+     * Create the dataset for a menu bar item.
+     *
+     * @param data - The data to use for the item.
+     *
+     * @returns The dataset for the menu bar item.
+     */
+    createItemDataset(data: IRenderData): ElementDataset {
+      return data.title.dataset;
     }
 
     /**

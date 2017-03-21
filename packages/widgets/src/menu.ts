@@ -1049,6 +1049,11 @@ namespace Menu {
     readonly className: string;
 
     /**
+     * The dataset for the menu item.
+     */
+    readonly dataset: CommandRegistry.Dataset;
+
+    /**
      * Whether the menu item is enabled.
      */
     readonly isEnabled: boolean;
@@ -1230,8 +1235,14 @@ namespace Menu {
      * @returns The dataset for the menu item.
      */
     createItemDataset(data: IRenderData): ElementDataset {
-      let { type, command } = data.item;
-      return type === 'command' ? { type, command } : { type };
+      let result: ElementDataset;
+      let { type, command, dataset } = data.item;
+      if (type === 'command') {
+        result = { ...dataset, type, command };
+      } else {
+        result = { ...dataset, type };
+      }
+      return result;
     }
 
     /**
@@ -1744,6 +1755,19 @@ namespace Private {
         return this.submenu.title.className;
       }
       return '';
+    }
+
+    /**
+     * The dataset for the menu item.
+     */
+    get dataset(): CommandRegistry.Dataset {
+      if (this.type === 'command') {
+        return this._commands.dataset(this.command, this.args);
+      }
+      if (this.type === 'submenu' && this.submenu) {
+        return this.submenu.title.dataset;
+      }
+      return {};
     }
 
     /**
