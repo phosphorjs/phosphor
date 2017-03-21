@@ -1,10 +1,10 @@
 {
   "private": true,
   "name": "@phosphor/test-collections",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "dependencies": {
-    "@phosphor/algorithm": "^0.1.1",
-    "@phosphor/collections": "^0.1.1",
+    "@phosphor/algorithm": "^1.0.0",
+    "@phosphor/collections": "^1.0.0",
     "chai": "^3.5.0",
     "mocha": "^3.2.0"
   },

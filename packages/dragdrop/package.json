@@ -1,6 +1,6 @@
 {
   "name": "@phosphor/dragdrop",
-  "version": "0.1.4",
+  "version": "1.0.0",
   "description": "PhosphorJS - Drag and Drop",
   "main": "lib/index.js",
   "types": "lib/index.d.ts",
@@ -13,8 +13,8 @@
     "lib": "lib/"
   },
   "dependencies": {
-    "@phosphor/coreutils": "^0.1.5",
-    "@phosphor/disposable": "^0.1.1"
+    "@phosphor/coreutils": "^1.0.0",
+    "@phosphor/disposable": "^1.0.0"
   },
   "devDependencies": {
     "rimraf": "^2.5.2",

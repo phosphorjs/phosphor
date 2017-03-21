@@ -1,9 +1,9 @@
 {
   "private": true,
   "name": "@phosphor/test-disposable",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "dependencies": {
-    "@phosphor/disposable": "^0.1.1",
+    "@phosphor/disposable": "^1.0.0",
     "chai": "^3.5.0",
     "mocha": "^3.2.0"
   },

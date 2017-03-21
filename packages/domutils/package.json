@@ -1,6 +1,6 @@
 {
   "name": "@phosphor/domutils",
-  "version": "0.1.2",
+  "version": "1.0.0",
   "description": "PhosphorJS - DOM Utilities",
   "main": "lib/index.js",
   "types": "lib/index.d.ts",
