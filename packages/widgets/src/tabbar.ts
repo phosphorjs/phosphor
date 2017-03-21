@@ -67,7 +67,7 @@ class TabBar<T> extends Widget {
     this.removeBehavior = options.removeBehavior || 'select-tab-after';
     this.renderer = options.renderer || TabBar.defaultRenderer;
     this._orientation = options.orientation || 'horizontal';
-    Private.toggleOrientation(this, this._orientation);
+    this.dataset['orientation'] = this._orientation;
   }
 
   /**
@@ -273,7 +273,7 @@ class TabBar<T> extends Widget {
 
     // Toggle the orientation values.
     this._orientation = value;
-    Private.toggleOrientation(this, value);
+    this.dataset['orientation'] = value;
   }
 
   /**
@@ -1597,14 +1597,6 @@ namespace Private {
   export
   function asTitle<T>(value: Title<T> | Title.IOptions<T>): Title<T> {
     return value instanceof Title ? value : new Title<T>(value);
-  }
-
-  /**
-   * Toggle the CSS orientation attribute for the given tab bar.
-   */
-  export
-  function toggleOrientation(bar: TabBar<any>, orient: TabBar.Orientation): void {
-    bar.node.setAttribute('data-orientation', orient);
   }
 
   /**

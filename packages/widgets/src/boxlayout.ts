@@ -95,7 +95,7 @@ class BoxLayout extends PanelLayout {
     if (!this.parent) {
       return;
     }
-    Private.toggleDirection(this.parent, value);
+    this.parent.dataset['direction'] = value;
     this.parent.fit();
   }
 
@@ -129,7 +129,7 @@ class BoxLayout extends PanelLayout {
     if (!this.parent) {
       return;
     }
-    Private.toggleAlignment(this.parent, value);
+    this.parent.dataset['alignment'] = value;
     this.parent.update();
   }
 
@@ -159,8 +159,8 @@ class BoxLayout extends PanelLayout {
    * Perform layout initialization which requires the parent widget.
    */
   protected init(): void {
-    Private.toggleDirection(this.parent!, this.direction);
-    Private.toggleAlignment(this.parent!, this.alignment);
+    this.parent!.dataset['direction'] = this.direction;
+    this.parent!.dataset['alignment'] = this.alignment;
     super.init();
   }
 
@@ -655,22 +655,6 @@ namespace Private {
   export
   function isHorizontal(dir: BoxLayout.Direction): boolean {
     return dir === 'left-to-right' || dir === 'right-to-left';
-  }
-
-  /**
-   * Toggle the CSS direction attribute for the given widget.
-   */
-  export
-  function toggleDirection(widget: Widget, dir: BoxLayout.Direction): void {
-    widget.node.setAttribute('data-direction', dir);
-  }
-
-  /**
-   * Toggle the CSS alignment attribute for the given widget.
-   */
-  export
-  function toggleAlignment(widget: Widget, align: BoxLayout.Alignment): void {
-    widget.node.setAttribute('data-alignment', align);
   }
 
   /**

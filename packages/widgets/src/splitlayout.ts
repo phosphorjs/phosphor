@@ -102,7 +102,7 @@ class SplitLayout extends PanelLayout {
     if (!this.parent) {
       return;
     }
-    Private.toggleOrientation(this.parent, value);
+    this.parent.dataset['orientation'] = value;
     this.parent.fit();
   }
 
@@ -136,7 +136,7 @@ class SplitLayout extends PanelLayout {
     if (!this.parent) {
       return;
     }
-    Private.toggleAlignment(this.parent, value);
+    this.parent.dataset['alignment'] = value;
     this.parent.update();
   }
 
@@ -274,8 +274,8 @@ class SplitLayout extends PanelLayout {
    * Perform layout initialization which requires the parent widget.
    */
   protected init(): void {
-    Private.toggleOrientation(this.parent!, this.orientation);
-    Private.toggleAlignment(this.parent!, this.alignment);
+    this.parent!.dataset['orientation'] = this.orientation;
+    this.parent!.dataset['alignment'] = this.alignment;
     super.init();
   }
 
@@ -785,22 +785,6 @@ namespace Private {
     let handle = renderer.createHandle();
     handle.style.position = 'absolute';
     return handle;
-  }
-
-  /**
-   * Toggle the CSS orientation attribute for the given widget.
-   */
-  export
-  function toggleOrientation(widget: Widget, orient: SplitLayout.Orientation): void {
-    widget.node.setAttribute('data-orientation', orient);
-  }
-
-  /**
-   * Toggle the CSS alignment attribute for the given widget.
-   */
-  export
-  function toggleAlignment(widget: Widget, align: SplitLayout.Alignment): void {
-    widget.node.setAttribute('data-alignment', align);
   }
 
   /**
