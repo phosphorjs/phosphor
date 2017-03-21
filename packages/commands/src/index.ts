@@ -684,7 +684,7 @@ namespace CommandRegistry {
      * The dataset for the command.
      *
      * #### Notes
-     * This dataset values will be added to the primary node for the
+     * The dataset values will be added to the primary node for the
      * visual representation of the command.
      *
      * This can be a dataset object, or a function which returns the
