@@ -21,11 +21,10 @@ class SectionList {
   /**
    * Construct a new section list.
    *
-   * @param baseSize - The size of new sections added to the list.
-   *   This value will be clamped to an integer `>= 0`.
+   * @param options - The options for initializing the list.
    */
-  constructor(baseSize: number) {
-    this._baseSize = Math.max(0, Math.floor(baseSize));
+  constructor(options: SectionList.IOptions) {
+    this._baseSize = Math.max(0, Math.floor(options.baseSize));
   }
 
   /**
@@ -75,28 +74,28 @@ class SectionList {
       return -1;
     }
 
-    // Handle the simple case of no mods.
-    if (this._mods.length === 0) {
+    // Handle the simple case of no modified sections.
+    if (this._sections.length === 0) {
       return Math.floor(offset / this._baseSize);
     }
 
-    // Find the mod for the given offset.
-    let i = ArrayExt.lowerBound(this._mods, offset, Private.offsetCmp);
+    // Find the modified section for the given offset.
+    let i = ArrayExt.lowerBound(this._sections, offset, Private.offsetCmp);
 
-    // Return the modified index for an exact match.
-    if (i < this._mods.length && this._mods[i].offset <= offset) {
-      return this._mods[i].index;
+    // Return the index of an exact match.
+    if (i < this._sections.length && this._sections[i].offset <= offset) {
+      return this._sections[i].index;
     }
 
-    // Handle the case of no modifiers before the offset.
+    // Handle the case of no modified sections before the offset.
     if (i === 0) {
       return Math.floor(offset / this._baseSize);
     }
 
-    // Compute the index from the previous modifier.
-    let mod = this._mods[i - 1];
-    let span = offset - (mod.offset + mod.size);
-    return mod.index + Math.floor(span / this._baseSize) + 1;
+    // Compute the index from the previous modified section.
+    let section = this._sections[i - 1];
+    let span = offset - (section.offset + section.size);
+    return section.index + Math.floor(span / this._baseSize) + 1;
   }
 
   /**
@@ -119,28 +118,28 @@ class SectionList {
       return -1;
     }
 
-    // Handle the simple case of no mods.
-    if (this._mods.length === 0) {
+    // Handle the simple case of no modified sections.
+    if (this._sections.length === 0) {
       return index * this._baseSize;
     }
 
-    // Find the mod for the given index.
-    let i = ArrayExt.lowerBound(this._mods, index, Private.indexCmp);
+    // Find the modified section for the given index.
+    let i = ArrayExt.lowerBound(this._sections, index, Private.indexCmp);
 
-    // Return the modified offset for an exact match.
-    if (i < this._mods.length && this._mods[i].index === index) {
-      return this._mods[i].offset;
+    // Return the offset of an exact match.
+    if (i < this._sections.length && this._sections[i].index === index) {
+      return this._sections[i].offset;
     }
 
-    // Handle the case of no modifiers before the index.
+    // Handle the case of no modified sections before the index.
     if (i === 0) {
       return index * this._baseSize;
     }
 
-    // Compute the offset from the previous modifier.
-    let mod = this._mods[i - 1];
-    let span = index - mod.index - 1;
-    return mod.offset + mod.size + span * this._baseSize;
+    // Compute the offset from the previous modified section.
+    let section = this._sections[i - 1];
+    let span = index - section.index - 1;
+    return section.offset + section.size + span * this._baseSize;
   }
 
   /**
@@ -163,17 +162,17 @@ class SectionList {
       return -1;
     }
 
-    // Handle the simple case of no mods.
-    if (this._mods.length === 0) {
+    // Handle the simple case of no modified sections.
+    if (this._sections.length === 0) {
       return this._baseSize;
     }
 
-    // Find the mod for the given index.
-    let i = ArrayExt.lowerBound(this._mods, index, Private.indexCmp);
+    // Find the modified section for the given index.
+    let i = ArrayExt.lowerBound(this._sections, index, Private.indexCmp);
 
-    // Return the modified size for an exact match.
-    if (i < this._mods.length && this._mods[i].index === index) {
-      return this._mods[i].size;
+    // Return the size of an exact match.
+    if (i < this._sections.length && this._sections[i].index === index) {
+      return this._sections[i].size;
     }
 
     // Return the base size for all other cases.
@@ -204,33 +203,33 @@ class SectionList {
     // Clamp the size to an integer >= 0.
     size = Math.max(0, Math.floor(size));
 
-    // Find the mod for the given index.
-    let i = ArrayExt.lowerBound(this._mods, index, Private.indexCmp);
+    // Find the modified section for the given index.
+    let i = ArrayExt.lowerBound(this._sections, index, Private.indexCmp);
 
-    // Update or create the mod as needed.
+    // Update or create the modified section as needed.
     let delta: number;
-    if (i < this._mods.length && this._mods[i].index === index) {
-      let mod = this._mods[i];
-      delta = size - mod.size;
-      mod.size = size;
+    if (i < this._sections.length && this._sections[i].index === index) {
+      let section = this._sections[i];
+      delta = size - section.size;
+      section.size = size;
     } else if (i === 0) {
       let offset = index * this._baseSize;
-      ArrayExt.insert(this._mods, i, { index, offset, size });
+      ArrayExt.insert(this._sections, i, { index, offset, size });
       delta = size - this._baseSize;
     } else {
-      let mod = this._mods[i - 1];
-      let span = index - mod.index - 1;
-      let offset = mod.offset + mod.size + span * this._baseSize;
-      ArrayExt.insert(this._mods, i, { index, offset, size });
+      let section = this._sections[i - 1];
+      let span = index - section.index - 1;
+      let offset = section.offset + section.size + span * this._baseSize;
+      ArrayExt.insert(this._sections, i, { index, offset, size });
       delta = size - this._baseSize;
     }
 
     // Adjust the totals.
     this._totalSize += delta;
 
-    // Update all mods after the resize.
-    for (let j = i + 1, n = this._mods.length; j < n; ++j) {
-      this._mods[j].offset += delta;
+    // Update all modified sections after the resized section.
+    for (let j = i + 1, n = this._sections.length; j < n; ++j) {
+      this._sections[j].offset += delta;
     }
   }
 
@@ -263,19 +262,19 @@ class SectionList {
     this._sectionCount += count;
     this._totalSize += span;
 
-    // Bail early if there are no mods to update.
-    if (this._mods.length === 0) {
+    // Bail early if there are no modified sections to update.
+    if (this._sections.length === 0) {
       return;
     }
 
-    // Find the mod for the given index.
-    let i = ArrayExt.lowerBound(this._mods, index, Private.indexCmp);
+    // Find the modified section for the given index.
+    let i = ArrayExt.lowerBound(this._sections, index, Private.indexCmp);
 
-    // Update all mods after the insert location.
-    for (let n = this._mods.length; i < n; ++i) {
-      let mod = this._mods[i];
-      mod.index += count;
-      mod.offset += span;
+    // Update all modified sections after the insert location.
+    for (let n = this._sections.length; i < n; ++i) {
+      let section = this._sections[i];
+      section.index += count;
+      section.offset += span;
     }
   }
 
@@ -300,11 +299,11 @@ class SectionList {
       return;
     }
 
-    // Clamp the count to the list bounds.
+    // Clamp the count to the bounds of the list.
     count = Math.min(this._sectionCount - index, count);
 
-    // Handle the simple case of no mods to update.
-    if (this._mods.length === 0) {
+    // Handle the simple case of no modified sections to update.
+    if (this._sections.length === 0) {
       this._sectionCount -= count;
       this._totalSize -= count * this._baseSize;
       return;
@@ -312,36 +311,36 @@ class SectionList {
 
     // Handle the simple case of removing all sections.
     if (count === this._sectionCount) {
-      this._sectionCount = 0;
       this._totalSize = 0;
-      this._mods.length = 0;
+      this._sectionCount = 0;
+      this._sections.length = 0;
       return;
     }
 
-    // Find the mod for the start index.
-    let i = ArrayExt.lowerBound(this._mods, index, Private.indexCmp);
+    // Find the modified section for the start index.
+    let i = ArrayExt.lowerBound(this._sections, index, Private.indexCmp);
 
-    // Find the mod for the end index.
-    let j = ArrayExt.lowerBound(this._mods, index + count, Private.indexCmp);
+    // Find the modified section for the end index.
+    let j = ArrayExt.lowerBound(this._sections, index + count, Private.indexCmp);
 
-    // Remove the old mods.
-    let old = this._mods.splice(i, j - i);
+    // Remove the relevant modified sections.
+    let removed = this._sections.splice(i, j - i);
 
     // Compute the total removed span.
-    let span = (count - old.length) * this._baseSize;
-    for (let k = 0, n = old.length; k < n; ++k) {
-      span += old[k].size;
+    let span = (count - removed.length) * this._baseSize;
+    for (let k = 0, n = removed.length; k < n; ++k) {
+      span += removed[k].size;
     }
 
     // Adjust the totals.
     this._sectionCount -= count;
     this._totalSize -= span;
 
-    // Update all mods after the removed span.
-    for (let k = i, n = this._mods.length; k < n; ++k) {
-      let mod = this._mods[k];
-      mod.index -= count;
-      mod.offset -= span;
+    // Update all modified sections after the removed span.
+    for (let k = i, n = this._sections.length; k < n; ++k) {
+      let section = this._sections[k];
+      section.index -= count;
+      section.offset -= span;
     }
   }
 
@@ -354,13 +353,31 @@ class SectionList {
   clear(): void {
     this._totalSize = 0;
     this._sectionCount = 0;
-    this._mods.length = 0;
+    this._sections.length = 0;
   }
 
   private _totalSize = 0;
-  private _sectionCount = 0;
   private _baseSize: number;
-  private _mods: Private.ISectionMod[] = [];
+  private _sectionCount = 0;
+  private _sections: Private.ISection[] = [];
+}
+
+
+/**
+ * The namespace for the `SectionList` class statics.
+ */
+export
+namespace SectionList {
+  /**
+   * An options object for initializing a section list.
+   */
+  export
+  interface IOptions {
+    /**
+     * The size of new sections added to the list.
+     */
+    baseSize: number;
+  }
 }
 
 
@@ -369,24 +386,24 @@ class SectionList {
  */
 namespace Private {
   /**
-   * A span object used by the SectionList.
+   * An object which represents a modified section.
    */
   export
-  interface ISectionMod {
+  interface ISection {
     /**
-     * The index of the modified section.
+     * The index of the section.
      *
      * This is always `>= 0`.
      */
     index: number;
 
     /**
-     * The offset of the modified section.
+     * The offset of the section.
      */
     offset: number;
 
     /**
-     * The size of the modified section.
+     * The size of the section.
      *
      * This is always `>= 0`.
      */
@@ -397,11 +414,11 @@ namespace Private {
    * A comparison function for searching by offset.
    */
   export
-  function offsetCmp(mod: ISectionMod, offset: number): number {
-    if (mod.offset > offset) {
+  function offsetCmp(section: ISection, offset: number): number {
+    if (offset < section.offset) {
       return 1;
     }
-    if (mod.offset + mod.size <= offset) {
+    if (section.offset + section.size <= offset) {
       return -1;
     }
     return 0;
@@ -411,7 +428,7 @@ namespace Private {
    * A comparison function for searching by index.
    */
   export
-  function indexCmp(mod: ISectionMod, index: number): number {
-    return mod.index - index;
+  function indexCmp(section: ISection, index: number): number {
+    return section.index - index;
   }
 }
