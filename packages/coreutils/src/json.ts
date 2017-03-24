@@ -213,7 +213,7 @@ namespace JSONExt {
 
     // Compare the values for equality.
     for (let key in first) {
-      if (!deepEqual(first[key], second[key])) {
+      if (!deepEqual(first[key]!, second[key]!)) {
         return false;
       }
     }
@@ -239,7 +239,7 @@ namespace JSONExt {
   function deepObjectCopy(value: JSONObject): JSONObject {
     let result: JSONObject = {};
     for (let key in value) {
-      result[key] = deepCopy(value[key]);
+      result[key] = deepCopy(value[key]!);
     }
     return result;
   }
