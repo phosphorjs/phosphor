@@ -216,14 +216,17 @@ class SectionList {
     } else if (i === 0) {
       let offset = index * this._baseSize;
       ArrayExt.insert(this._mods, i, { index, offset, size });
-      delta = size;
+      delta = size - this._baseSize;
     } else {
       let mod = this._mods[i - 1];
       let span = index - mod.index - 1;
       let offset = mod.offset + mod.size + span * this._baseSize;
       ArrayExt.insert(this._mods, i, { index, offset, size });
-      delta = size;
+      delta = size - this._baseSize;
     }
+
+    // Adjust the totals.
+    this._totalSize += delta;
 
     // Update all mods after the resize.
     for (let j = i + 1, n = this._mods.length; j < n; ++j) {
