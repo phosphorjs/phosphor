@@ -1,6 +1,6 @@
 {
   "name": "@phosphor/widgets",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "PhosphorJS - Widgets",
   "main": "lib/index.js",
   "types": "lib/index.d.ts",
