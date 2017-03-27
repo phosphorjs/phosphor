@@ -1,9 +1,9 @@
 {
   "private": true,
   "name": "@phosphor/test-application",
-  "version": "0.1.7",
+  "version": "0.1.8",
   "dependencies": {
-    "@phosphor/application": "^1.0.0",
+    "@phosphor/application": "^1.0.1",
     "chai": "^3.5.0",
     "mocha": "^3.2.0"
   },

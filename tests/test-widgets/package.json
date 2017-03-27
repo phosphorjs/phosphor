@@ -1,7 +1,7 @@
 {
   "private": true,
   "name": "@phosphor/test-widgets",
-  "version": "0.1.6",
+  "version": "0.1.7",
   "dependencies": {
     "@phosphor/algorithm": "^1.0.0",
     "@phosphor/commands": "^1.0.0",
@@ -10,7 +10,7 @@
     "@phosphor/domutils": "^1.0.0",
     "@phosphor/messaging": "^1.0.0",
     "@phosphor/virtualdom": "^1.0.0",
-    "@phosphor/widgets": "^1.0.0",
+    "@phosphor/widgets": "^1.0.1",
     "chai": "^3.5.0",
     "es6-promise": "^4.0.5",
     "mocha": "^3.2.0",
