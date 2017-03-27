@@ -293,7 +293,7 @@ namespace Private {
     let s1 = Selector.calculateSpecificity(a.selector);
     let s2 = Selector.calculateSpecificity(b.selector);
     if (s1 !== s2) {
-      return s1 - s2;
+      return s2 - s1;
     }
 
     // If specificities are equal, sort based on rank.
