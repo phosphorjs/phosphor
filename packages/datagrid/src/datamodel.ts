@@ -5,222 +5,202 @@
 |
 | The full license is in the file LICENSE, distributed with this software.
 |----------------------------------------------------------------------------*/
-// import {
-//   ISignal, Signal
-// } from '@phosphor/signaling';
+import {
+  ISignal
+} from '@phosphor/signaling';
 
 
-// /**
-//  *
-//  */
-// export
-// abstract class DataModel {
-//   /**
-//    *
-//    */
-//   get changed(): ISignal<this, DataModel.ChangedArgs> {
-//     return this._changed;
-//   }
+/**
+ * The core data model interface for a data grid.
+ *
+ * #### Notes
+ * If the predefined data models are insufficient for a particular use
+ * case, a custom model can be defined which implements this interface.
+ */
+export
+interface IDataModel {
+  /**
+   * A signal emitted when the data model has changed.
+   */
+  readonly changed: ISignal<IDataModel, IDataModel.ChangedArgs>;
 
-//   /**
-//    *
-//    */
-//   abstract get rowCount(): number;
+  /**
+   * The number of rows in the data model.
+   *
+   * #### Notes
+   * This property accessor should be efficient.
+   */
+  readonly rowCount: number;
 
-//   /**
-//    *
-//    */
-//   abstract get columnCount(): number;
+  /**
+   * The number of columns in the data model.
+   *
+   * #### Notes
+   * This property accessor should be efficient.
+   */
+  readonly colCount: number;
 
-//   /**
-//    *
-//    */
-//   abstract cellData(row: number, column: number, out: DataModel.IData): void;
-
-//   /**
-//    *
-//    */
-//   protected emitChanged(args: DataModel.ChangedArgs): void {
-//     this._changed.emit(args);
-//   }
-
-//   /**
-//    *
-//    */
-//   private _changed = new Signal<this, DataModel.ChangedArgs>(this);
-// }
+  /**
+   * Get the data for a particular cell in the data model.
+   *
+   * @param row - The row index of the cell of interest.
+   *
+   * @param col - The column index of the cell of interest.
+   *
+   * @param out - The datum to fill with the cell value.
+   *
+   * #### Notes
+   * <explain -1 values for row/colum and reason for out parameter>
+   */
+  data(row: number, col: number, out: IDataModel.IDatum): void;
+}
 
 
-// /**
-//  *
-//  */
-// export
-// namespace DataModel {
-//   /**
-//    *
-//    */
-//   export
-//   interface IData {
-//     /**
-//      *
-//      */
-//     value: any;
+/**
+ * The namespace for the `IDataModel` interface statics.
+ */
+export
+namespace IDataModel {
+  /**
+   *
+   */
+  export
+  interface IDatum {
+    /**
+     *
+     */
+    value: any;
 
-//     /**
-//      *
-//      */
-//     renderer: string;
+    /**
+     *
+     */
+    renderer: string;
 
-//     /**
-//      *
-//      */
-//     config: any;
-//   }
+    /**
+     *
+     */
+    config: any;
+  }
 
-//   /**
-//    *
-//    */
-//   export
-//   interface IModelChangedArgs {
-//     /**
-//      *
-//      */
-//     type: 'model-changed';
-//   }
+  /**
+   *
+   */
+  export
+  interface ISectionsInsertedArgs {
+    /**
+     *
+     */
+    type: 'rows-inserted' | 'cols-inserted';
 
-//   /**
-//    *
-//    */
-//   export
-//   interface IRowsChangedArgs {
-//     /**
-//      *
-//      */
-//     type: 'rows-inserted' | 'rows-removed' | 'rows-changed';
+    /**
+     *
+     */
+    start: number;
 
-//     /**
-//      *
-//      */
-//     startRow: number;
+    /**
+     *
+     */
+    count: number;
+  }
 
-//     /**
-//      *
-//      */
-//     endRow: number;
-//   }
+  /**
+   *
+   */
+  export
+  interface ISectionsRemovedArgs {
+    /**
+     *
+     */
+    type: 'rows-removed' | 'cols-removed';
 
-//   *
-//    *
+    /**
+     *
+     */
+    start: number;
 
-//   export
-//   interface IRowsMovedArgs {
-//     /**
-//      *
-//      */
-//     type: 'rows-moved';
+    /**
+     *
+     */
+    count: number;
+  }
 
-//     /**
-//      *
-//      */
-//     startRow: number;
+  /**
+   *
+   */
+  export
+  interface ISectionsMovedArgs {
+    /**
+     *
+     */
+    type: 'rows-moved' | 'cols-moved';
 
-//     /**
-//      *
-//      */
-//     endRow: number;
+    /**
+     *
+     */
+    start: number;
 
-//     /**
-//      *
-//      */
-//     destRow: number;
-//   }
+    /**
+     *
+     */
+    count: number;
 
-//   /**
-//    *
-//    */
-//   export
-//   interface IColumnsChangedArgs {
-//     /**
-//      *
-//      */
-//     type: 'columns-inserted' | 'columns-removed' | 'columns-changed';
+    /**
+     *
+     */
+    dest: number;
+  }
 
-//     /**
-//      *
-//      */
-//     startColumn: number;
+  /**
+   *
+   */
+  export
+  interface ICellsChangedArgs {
+    /**
+     *
+     */
+    type: 'cells-changed';
 
-//     /**
-//      *
-//      */
-//     endColumn: number;
-//   }
+    /**
+     *
+     */
+    startRow: number;
 
-//   /**
-//    *
-//    */
-//   export
-//   interface IColumnsMovedArgs {
-//     /**
-//      *
-//      */
-//     type: 'columns-moved';
+    /**
+     *
+     */
+    rowCount: number;
 
-//     /**
-//      *
-//      */
-//     startColumn: number;
+    /**
+     *
+     */
+    startCol: number;
 
-//     /**
-//      *
-//      */
-//     endColumn: number;
+    /**
+     *
+     */
+    colCount: number;
+  }
 
-//     /**
-//      *
-//      */
-//     destColumn: number;
-//   }
+  /**
+   *
+   */
+  export
+  interface IModelResetArgs {
+    /**
+     *
+     */
+    type: 'model-reset';
+  }
 
-//   /**
-//    *
-//    */
-//   export
-//   interface ICellsChangedArgs {
-//     /**
-//      *
-//      */
-//     type: 'cells-changed';
-
-//     /**
-//      *
-//      */
-//     startRow: number;
-
-//     /**
-//      *
-//      */
-//     endRow: number;
-
-//     /**
-//      *
-//      */
-//     startColumn: number;
-
-//     /**
-//      *
-//      */
-//     endColumn: number;
-//   }
-
-//   /**
-//    *
-//    */
-//   export
-//   type ChangedArgs = (
-//     IModelChangedArgs |
-//     ISectionsChangedArgs |
-//     ISectionsMovedArgs |
-//     ICellsChangedArgs
-//   );
-// }
+  /**
+   *
+   */
+  export
+  type ChangedArgs = (
+    ISectionsInsertedArgs |
+    ISectionsRemovedArgs |
+    ISectionsMovedArgs |
+    ICellsChangedArgs |
+    IModelResetArgs
+  );
+}
