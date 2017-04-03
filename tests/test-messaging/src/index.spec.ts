@@ -544,6 +544,58 @@ describe('@phosphor/messaging', () => {
 
     });
 
+    describe('getExceptionHandler()', () => {
+
+      it('should default to `console.error`', () => {
+        expect(MessageLoop.getExceptionHandler()).to.equal(console.error);
+      });
+
+    });
+
+    describe('setExceptionHandler()', () => {
+
+      afterEach(() => {
+        MessageLoop.setExceptionHandler(console.error);
+      });
+
+      it('should set the exception handler', () => {
+        let handler = (err: Error) => { console.error(err); };
+        MessageLoop.setExceptionHandler(handler);
+        expect(MessageLoop.getExceptionHandler()).to.equal(handler);
+      });
+
+      it('should return the old exception handler', () => {
+        let handler = (err: Error) => { console.error(err); };
+        let old1 = MessageLoop.setExceptionHandler(handler);
+        let old2 = MessageLoop.setExceptionHandler(old1);
+        expect(old1).to.equal(console.error);
+        expect(old2).to.equal(handler);
+      });
+
+      it('should invoke the exception handler on a message handler exception', () => {
+        let called = false;
+        let handler = new BadHandler();
+        MessageLoop.setExceptionHandler(() => { called = true; });
+        expect(called).to.equal(false);
+        MessageLoop.sendMessage(handler, new Message('foo'));
+        expect(called).to.equal(true);
+      });
+
+      it('should invoke the exception handler on a message hook exception', () => {
+        let called = false;
+        let handler = new Handler();
+        MessageLoop.setExceptionHandler(() => { called = true; });
+        expect(called).to.equal(false);
+        MessageLoop.sendMessage(handler, new Message('foo'));
+        expect(called).to.equal(false);
+        MessageLoop.installMessageHook(handler, () => { throw 'error' });
+        expect(called).to.equal(false);
+        MessageLoop.sendMessage(handler, new Message('foo'));
+        expect(called).to.equal(true);
+      });
+
+    });
+
   });
 
 });

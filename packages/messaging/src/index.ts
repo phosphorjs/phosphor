@@ -414,6 +414,43 @@ namespace MessageLoop {
   }
 
   /**
+   * A type alias for the exception handler function.
+   */
+  export
+  type ExceptionHandler = (err: Error) => void;
+
+  /**
+   * Get the message loop exception handler.
+   *
+   * @returns The current exception handler.
+   *
+   * #### Notes
+   * The default exception handler is `console.error`.
+   */
+  export
+  function getExceptionHandler(): ExceptionHandler {
+    return exceptionHandler;
+  }
+
+  /**
+   * Set the message loop exception handler.
+   *
+   * @param handler - The function to use as the exception handler.
+   *
+   * @returns The old exception handler.
+   *
+   * #### Notes
+   * The exception handler is invoked when a message handler or a
+   * message hook throws an exception.
+   */
+  export
+  function setExceptionHandler(handler: ExceptionHandler): ExceptionHandler {
+    let old = exceptionHandler;
+    exceptionHandler = handler;
+    return old;
+  }
+
+  /**
    * A type alias for a posted message pair.
    */
   type PostedMessage = { handler: IMessageHandler | null, msg: Message | null };
@@ -432,6 +469,11 @@ namespace MessageLoop {
    * A set of message hook arrays which are pending cleanup.
    */
   const dirtySet = new Set<Array<MessageHook | null>>();
+
+  /**
+   * The message loop exception handler.
+   */
+  let exceptionHandler: ExceptionHandler = console.error;
 
   /**
    * The id of the pending loop task animation frame.
@@ -475,7 +517,7 @@ namespace MessageLoop {
         result = hook.messageHook(handler, msg);
       }
     } catch (err) {
-      console.error(err);
+      exceptionHandler(err);
     }
     return result;
   }
@@ -489,7 +531,7 @@ namespace MessageLoop {
     try {
       handler.processMessage(msg);
     } catch (err) {
-      console.error(err);
+      exceptionHandler(err);
     }
   }
 
