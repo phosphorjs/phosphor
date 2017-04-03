@@ -262,45 +262,42 @@ namespace Signal {
   function clearData(object: any): void {
     Private.disconnectAll(object);
   }
-}
 
+  /**
+   * A type alias for the exception handler function.
+   */
+  export
+  type ExceptionHandler = (err: Error) => void;
 
-/**
- * A type alias for the module exception handler function.
- */
-export
-type ExceptionHandler = (err: Error) => void;
+  /**
+   * Get the signal exception handler.
+   *
+   * @returns The current exception handler.
+   *
+   * #### Notes
+   * The default exception handler is `console.error`.
+   */
+  export
+  function getExceptionHandler(): ExceptionHandler {
+    return Private.exceptionHandler;
+  }
 
-
-/**
- * Get the module exception handler.
- *
- * @returns The current exception handler.
- *
- * #### Notes
- * The default exception handler is `console.error`.
- */
-export
-function getExceptionHandler(): ExceptionHandler {
-  return Private.exceptionHandler;
-}
-
-
-/**
- * Set the module exception handler.
- *
- * @param handler - The function to use as the exception handler.
- *
- * @returns The old exception handler.
- *
- * #### Notes
- * The exception handler is invoked when a slot throws an exception.
- */
-export
-function setExceptionHandler(handler: ExceptionHandler): ExceptionHandler {
-  let old = Private.exceptionHandler;
-  Private.exceptionHandler = handler;
-  return old;
+  /**
+   * Set the signal exception handler.
+   *
+   * @param handler - The function to use as the exception handler.
+   *
+   * @returns The old exception handler.
+   *
+   * #### Notes
+   * The exception handler is invoked when a slot throws an exception.
+   */
+  export
+  function setExceptionHandler(handler: ExceptionHandler): ExceptionHandler {
+    let old = Private.exceptionHandler;
+    Private.exceptionHandler = handler;
+    return old;
+  }
 }
 
 
@@ -309,10 +306,10 @@ function setExceptionHandler(handler: ExceptionHandler): ExceptionHandler {
  */
 namespace Private {
   /**
-   * The module-level exception handler.
+   * The signal exception handler function.
    */
   export
-  let exceptionHandler: ExceptionHandler = console.error;
+  let exceptionHandler: Signal.ExceptionHandler = console.error;
 
   /**
    * Connect a slot to a signal.

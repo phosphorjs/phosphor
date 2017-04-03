@@ -416,6 +416,46 @@ describe('@phosphor/signaling', () => {
 
     });
 
+    describe('.getExceptionHandler()', () => {
+
+      it('should default to `console.error`', () => {
+        expect(Signal.getExceptionHandler()).to.equal(console.error);
+      });
+
+    });
+
+    describe('.setExceptionHandler()', () => {
+
+      afterEach(() => {
+        Signal.setExceptionHandler(console.error);
+      });
+
+      it('should set the exception handler', () => {
+        let handler = (err: Error) => { console.error(err); };
+        Signal.setExceptionHandler(handler);
+        expect(Signal.getExceptionHandler()).to.equal(handler);
+      });
+
+      it('should return the old exception handler', () => {
+        let handler = (err: Error) => { console.error(err); };
+        let old1 = Signal.setExceptionHandler(handler);
+        let old2 = Signal.setExceptionHandler(old1);
+        expect(old1).to.equal(console.error);
+        expect(old2).to.equal(handler);
+      });
+
+      it('should invoke exception handler on a slot exception', () => {
+        let called = false;
+        let obj = new TestObject();
+        let handler = new TestHandler();
+        obj.one.connect(handler.onThrow, handler);
+        Signal.setExceptionHandler((err: Error) => { called = true; });
+        obj.one.emit(undefined);
+        expect(called).to.equal(true);
+      });
+
+    });
+
   });
 
   context('https://github.com/phosphorjs/phosphor-signaling/issues/5', () => {
