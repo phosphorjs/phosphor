@@ -1,12 +1,12 @@
 {
   "private": true,
   "name": "@phosphor/example-dockpanel",
-  "version": "0.1.6",
+  "version": "0.1.7",
   "dependencies": {
-    "@phosphor/commands": "^1.0.0",
+    "@phosphor/commands": "^1.1.0",
     "@phosphor/dragdrop": "^1.0.0",
-    "@phosphor/messaging": "^1.0.0",
-    "@phosphor/widgets": "^1.0.1",
+    "@phosphor/messaging": "^1.1.0",
+    "@phosphor/widgets": "^1.1.0",
     "es6-promise": "^4.0.5"
   },
   "devDependencies": {
