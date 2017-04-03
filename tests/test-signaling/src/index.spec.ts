@@ -444,12 +444,13 @@ describe('@phosphor/signaling', () => {
         expect(old2).to.equal(handler);
       });
 
-      it('should invoke exception handler on a slot exception', () => {
+      it('should invoke the exception handler on a slot exception', () => {
         let called = false;
         let obj = new TestObject();
         let handler = new TestHandler();
         obj.one.connect(handler.onThrow, handler);
-        Signal.setExceptionHandler((err: Error) => { called = true; });
+        Signal.setExceptionHandler(() => { called = true; });
+        expect(called).to.equal(false);
         obj.one.emit(undefined);
         expect(called).to.equal(true);
       });
