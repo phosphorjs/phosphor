@@ -11,11 +11,18 @@
  *
  */
 export
-class TextCellRenderer extends SimpleCellRenderer {
+class TextCellRenderer<T extends IDataModel> implements ICellRenderer<T> {
   /**
    *
    */
-  drawContent(gc: CanvasRenderingContext2D, config: CellRenderer.IConfig): void {
+  constructor(options: TextCellRenderer.IOptions<T> = {}) {
+
+  }
+
+  /**
+   *
+   */
+  drawCell(gc: CanvasRenderingContext2D, config: CellRenderer.IConfig): void {
     // Bail if there is no cell value.
     if (config.value === null || config.value === undefined) {
       return;
@@ -32,6 +39,9 @@ class TextCellRenderer extends SimpleCellRenderer {
 
     gc.fillText(text, x, y);
   }
+
+  private _defaultStyle = TextCellRenderer.ICellStyle;
+  private _styleDelegate = TextCellRenderer.StyleDelegate<T> | null;
 }
 
 
@@ -40,6 +50,28 @@ class TextCellRenderer extends SimpleCellRenderer {
  */
 export
 namespace TextCellRenderer {
+  /**
+   *
+   */
+  export
+  interface ICellStyle {
+    /**
+     *
+     */
+    backgroundColor?: string;
+
+    /**
+     *
+     */
+    borderColor?: string;
+
+    /**
+     *
+     */
+    textColor?: string;
+
+  }
+
   /**
    *
    */

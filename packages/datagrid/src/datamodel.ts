@@ -6,7 +6,7 @@
 | The full license is in the file LICENSE, distributed with this software.
 |----------------------------------------------------------------------------*/
 import {
-  ISignal
+  ISignal, Signal
 } from '@phosphor/signaling';
 
 
@@ -248,4 +248,64 @@ namespace IDataModel {
     ICellsChangedArgs |
     IModelChangedArgs
   );
+}
+
+
+/**
+ * An abstract base class implementation of a data model.
+ *
+ * #### Notes
+ * This class provides just a bit of boiler-plate which can be useful
+ * for data models which do not derive from an unrelated class.
+ */
+export
+abstract class DataModel implements IDataModel {
+  /**
+   * A signal emitted when the data model has changed.
+   */
+  get changed(): ISignal<this, IDataModel.ChangedArgs> {
+    return this._changed;
+  }
+
+  /**
+   * The number of rows in the data model.
+   *
+   * #### Notes
+   * This property must be implemented by a subclass.
+   */
+  abstract readonly rowCount: number;
+
+  /**
+   * The number of columns in the data model.
+   *
+   * #### Notes
+   * This property must be implemented by a subclass.
+   */
+  abstract readonly colCount: number;
+
+  /**
+   * Get the data for a particular cell in the data model.
+   *
+   * @param row - The row index of the cell of interest.
+   *
+   * @param col - The column index of the cell of interest.
+   *
+   * @param out - The result object to fill with the cell data.
+   *
+   * #### Notes
+   * This method must be implemented by a subclass.
+   */
+  abstract data(row: number, col: number, out: IDataModel.ICellData): void;
+
+  /**
+   * Emit the `changed` signal with the specified arguments.
+   *
+   * #### Notes
+   * This should be called by subclasses as needed.
+   */
+  protected emitChanged(args: IDataModel.ChangedArgs): void {
+    this._changed.emit(args);
+  }
+
+  private _changed = new Signal<this, IDataModel.ChangedArgs>(this);
 }
