@@ -125,7 +125,7 @@ namespace IDataModel {
     /**
      * The number of inserted rows or columns.
      */
-    count: number;
+    span: number;
   }
 
   /**
@@ -150,7 +150,7 @@ namespace IDataModel {
     /**
      * The number of removed rows or columns.
      */
-    count: number;
+    span: number;
   }
 
   /**
@@ -180,7 +180,7 @@ namespace IDataModel {
     /**
      * The number of moved rows or columns.
      */
-    count: number;
+    span: number;
   }
 
   /**
@@ -210,12 +210,12 @@ namespace IDataModel {
     /**
      * The number of rows in the changed cell range.
      */
-    rowCount: number;
+    rowSpan: number;
 
     /**
      * The number of columns in the changed cell range.
      */
-    colCount: number;
+    colSpan: number;
   }
 
   /**
