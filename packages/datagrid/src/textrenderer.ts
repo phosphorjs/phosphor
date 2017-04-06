@@ -58,7 +58,7 @@ class TextRenderer<T extends TextRenderer.ICellStyle> extends CellRenderer<T> {
     }
 
     // Format the text for display.
-    let text = this.formatter.formatText(config.data);
+    let text = this.formatter.formatText(config);
 
     // Bail if there is no text to draw.
     if (!text) {
