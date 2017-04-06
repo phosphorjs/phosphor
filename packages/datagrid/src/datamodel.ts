@@ -51,7 +51,8 @@ interface IDataModel {
    *
    * @param col - The column index of the cell of interest.
    *
-   * @param out - The result object to fill with the cell data.
+   * @param returns - The data for the specified cell, or `null`
+   *   if the cell is empty.
    *
    * #### Notes
    * A `row` index `< 0` represents a column header cell.
@@ -60,12 +61,9 @@ interface IDataModel {
    *
    * A `row` and `col` index `< 0` represent a corner cell.
    *
-   * The `out` parameter is used for efficiency, to avoid the potential
-   * for thousands of small object allocations during a rendering pass.
-   *
    * This method is called often, and so should be efficient.
    */
-  data(row: number, col: number, out: IDataModel.ICellData): void;
+  data(row: number, col: number): IDataModel.ICellData | null;
 }
 
 
@@ -75,21 +73,10 @@ interface IDataModel {
 export
 namespace IDataModel {
   /**
-   * An object which holds the data for a particular cell.
+   * An object which represents the data for a particular cell.
    */
   export
   interface ICellData {
-    /**
-     * The data value for the cell.
-     *
-     * #### Notes
-     * This may be any value, including complex object types.
-     *
-     * The `type` parameter of the cell data is used by a data grid to
-     * select a cell renderer which knows how to render the data value.
-     */
-    value: any;
-
     /**
      * The descriptive type of the data value.
      *
@@ -100,7 +87,18 @@ namespace IDataModel {
      * The `type` can be any string, but should be descriptive of the
      * actual type of the data value.
      */
-    type: string;
+    readonly type: string;
+
+    /**
+     * The data value for the cell.
+     *
+     * #### Notes
+     * This may be any value, including complex object types.
+     *
+     * The `type` parameter of the cell data is used by a data grid to
+     * select a cell renderer which knows how to render the data value.
+     */
+    readonly value: any;
   }
 
   /**
@@ -115,17 +113,17 @@ namespace IDataModel {
     /**
      * The discriminated type of the args object.
      */
-    type: 'rows-inserted' | 'cols-inserted';
+    readonly type: 'rows-inserted' | 'cols-inserted';
 
     /**
      * The index of the first inserted row or column.
      */
-    index: number;
+    readonly index: number;
 
     /**
      * The number of inserted rows or columns.
      */
-    span: number;
+    readonly span: number;
   }
 
   /**
@@ -140,17 +138,17 @@ namespace IDataModel {
     /**
      * The discriminated type of the args object.
      */
-    type: 'rows-removed' | 'cols-removed';
+    readonly type: 'rows-removed' | 'cols-removed';
 
     /**
      * The index of the first removed row or column.
      */
-    index: number;
+    readonly index: number;
 
     /**
      * The number of removed rows or columns.
      */
-    span: number;
+    readonly span: number;
   }
 
   /**
@@ -165,22 +163,22 @@ namespace IDataModel {
     /**
      * The discriminated type of the args object.
      */
-    type: 'rows-moved' | 'cols-moved';
+    readonly type: 'rows-moved' | 'cols-moved';
 
     /**
      * The starting index of the first moved row or column.
      */
-    fromIndex: number;
+    readonly fromIndex: number;
 
     /**
      * The ending index of the first moved row or column.
      */
-    toIndex: number;
+    readonly toIndex: number;
 
     /**
      * The number of moved rows or columns.
      */
-    span: number;
+    readonly span: number;
   }
 
   /**
@@ -195,27 +193,27 @@ namespace IDataModel {
     /**
      * The discriminated type of the args object.
      */
-    type: 'cells-changed';
+    readonly type: 'cells-changed';
 
     /**
      * The row index of the first changed cell.
      */
-    rowIndex: number;
+    readonly rowIndex: number;
 
     /**
      * The column index of the first changed cell.
      */
-    colIndex: number;
+    readonly colIndex: number;
 
     /**
      * The number of rows in the changed cell range.
      */
-    rowSpan: number;
+    readonly rowSpan: number;
 
     /**
      * The number of columns in the changed cell range.
      */
-    colSpan: number;
+    readonly colSpan: number;
   }
 
   /**
@@ -226,7 +224,7 @@ namespace IDataModel {
    * type when the model has changed in a fashion that cannot be easily
    * expressed by the other args object types.
    *
-   * This will cause any listening data grid to perform a full repaint,
+   * This will cause any listening data grid to perform a full refresh,
    * so the other args object types should be used when possible.
    */
   export
@@ -234,7 +232,7 @@ namespace IDataModel {
     /**
      * The discriminated type of the args object.
      */
-    type: 'model-changed';
+    readonly type: 'model-changed';
   }
 
   /**
@@ -255,7 +253,7 @@ namespace IDataModel {
  * An abstract base class implementation of a data model.
  *
  * #### Notes
- * This class provides just a bit of boiler-plate which can be useful
+ * This class provides basic boiler-plate code which can be useful
  * for data models which do not derive from an unrelated class.
  */
 export
@@ -290,12 +288,13 @@ abstract class DataModel implements IDataModel {
    *
    * @param col - The column index of the cell of interest.
    *
-   * @param out - The result object to fill with the cell data.
+   * @param returns - The data for the specified cell, or `null`
+   *   if the cell is empty.
    *
    * #### Notes
    * This method must be implemented by a subclass.
    */
-  abstract data(row: number, col: number, out: IDataModel.ICellData): void;
+  abstract data(row: number, col: number): IDataModel.ICellData | null;
 
   /**
    * Emit the `changed` signal with the specified arguments.
