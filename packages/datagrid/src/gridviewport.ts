@@ -5,6 +5,25 @@
 |
 | The full license is in the file LICENSE, distributed with this software.
 |----------------------------------------------------------------------------*/
+import {
+  Message, MessageLoop
+} from '@phosphor/messaging';
+
+import {
+  Widget
+} from '@phosphor/widgets';
+
+import {
+  ICellRenderer
+} from './cellrenderer';
+
+import {
+  IDataModel
+} from './datamodel';
+
+import {
+  SectionList
+} from './sectionlist';
 
 
 /**
@@ -27,21 +46,21 @@ class GridViewport extends Widget {
   constructor(options: GridViewport.IOptions = {}) {
     super();
     this.addClass('p-GridViewport');
-    this.setFlag(WidgetFlag.DisallowLayout);
+    this.setFlag(Widget.Flag.DisallowLayout);
 
     // Set up the row and column sections lists.
-    this._rowSections = new GridSectionList({ baseSize: 20 });
-    this._colSections = new GridSectionList({ baseSize: 60 });
-    this._rowHeaderSections = new GridSectionList({ baseSize: 60 });
-    this._colHeaderSections = new GridSectionList({ baseSize: 20 });
+    this._rowSections = new SectionList({ baseSize: 20 });
+    this._colSections = new SectionList({ baseSize: 60 });
+    this._rowHeaderSections = new SectionList({ baseSize: 60 });
+    this._colHeaderSections = new SectionList({ baseSize: 20 });
 
     // Create the canvas and buffer objects.
     this._canvas = Private.createCanvas();
     this._buffer = Private.createCanvas();
 
     // Get the graphics contexts for the canvases.
-    this._canvasGC = this._canvas.getContext('2d');
-    this._bufferGC = this._buffer.getContext('2d');
+    this._canvasGC = this._canvas.getContext('2d')!;
+    this._bufferGC = this._buffer.getContext('2d')!;
 
     // Set up the on-screen canvas.
     this._canvas.style.position = 'absolute';
@@ -73,7 +92,7 @@ class GridViewport extends Widget {
   /**
    * Set the data model rendered by the viewport.
    */
-  set model(value: DataModel | null) {
+  set model(value: IDataModel | null) {
     // Do nothing if the model does not change.
     if (this._model === value) {
       return;
@@ -263,7 +282,7 @@ class GridViewport extends Widget {
   /**
    * A message handler invoked on a `'resize'` message.
    */
-  protected onResize(msg: ResizeMessage): void {
+  protected onResize(msg: Widget.ResizeMessage): void {
     // Bail early if the widget is not visible.
     if (!this.isVisible) {
       return;
@@ -347,7 +366,13 @@ class GridViewport extends Widget {
   private _onChanged(sender: IDataModel, args: IDataModel.ChangedArgs): void { }
 
   /**
+   * Paint the grid content for the given dirty rect.
    *
+   * The rect should be expressed in viewport coordinates.
+   *
+   * This is the primary paint entry point. The individual `_draw*`
+   * methods should not be invoked directly. This method dispatches
+   * to the drawing methods in the correct order.
    */
   private _paint(rx: number, ry: number, rw: number, rh: number): void {
     // Warn and bail if recursive painting is detected.
@@ -356,17 +381,10 @@ class GridViewport extends Widget {
       return;
     }
 
-    // Save the canvas context.
-    this._canvasGC.save();
-
-    // Clip the canvas to the diry rect.
-    this._canvasGC.beginPath();
-    this._canvasGC.rect(rx, ry, rw, rh);
-    this._canvasGC.clip();
-
-    // Execute the actual painting logic.
+    // Execute the actual drawing logic.
     try {
       this._inPaint = true;
+      this._canvasGC.save();
       this._draw(rx, ry, rw, rh);
     } finally {
       this._inPaint = false;
@@ -375,27 +393,139 @@ class GridViewport extends Widget {
   }
 
   /**
+   * Get the visible main cell region for the dirty rect.
    *
+   * If no cells intersect the rect, `null` is returned.
+   *
+   * The returned cell region is expressed in viewport coordinates and
+   * is aligned to the cell boundaries. This means that the region may
+   * be slightly larger than the dirty rect.
+   */
+  private _getMainCellRegion(rx: number, ry: number, rw: number, rh: number): Private.ICellRegion | null {
+    // Get the visible content dimensions.
+    let contentW = this._colSections.totalSize - this._scrollX;
+    let contentH = this._rowSections.totalSize - this._scrollY;
+
+    // Bail if there is no content to draw.
+    if (contentW <= 0 || contentH <= 0) {
+      return null;
+    }
+
+    // Get the visible content origin.
+    let contentX = this._rowHeaderSections.totalSize;
+    let contentY = this._colHeaderSections.totalSize;
+
+    // Bail if the dirty rect does not intersect the content area.
+    if (rx + rw < contentX) {
+      return null;
+    }
+    if (ry + rh < contentY) {
+      return null;
+    }
+    if (rx >= contentX + contentW) {
+      return null;
+    }
+    if (ry >= contentY + contentH) {
+      return null;
+    }
+
+    // Get the upper and lower bounds of the dirty content area.
+    let x1 = Math.max(rx, contentX);
+    let y1 = Math.max(ry, contentY);
+    let x2 = Math.min(rx + rw - 1, contentX + contentW - 1);
+    let y2 = Math.min(ry + rh - 1, contentY + contentH - 1);
+
+    // Convert the dirty content bounds into cell bounds.
+    let r1 = this._rowSections.sectionIndex(y1 - contentY + this._scrollY);
+    let c1 = this._colSections.sectionIndex(x1 - contentX + this._scrollX);
+    let r2 = this._rowSections.sectionIndex(y2 - contentY + this._scrollY + 1);
+    let c2 = this._colSections.sectionIndex(x2 - contentX + this._scrollX + 1);
+
+    // Handle a dirty content area larger than the cell count.
+    if (r2 < 0) {
+      r2 = this._rowSections.sectionCount - 1;
+    }
+    if (c2 < 0) {
+      c2 = this._colSections.sectionCount - 1;
+    }
+
+    // Covert the cell bounds back to visible coordinates.
+    let x = this._colSections.sectionOffset(c1) + contentX - this._scrollX;
+    let y = this._rowSections.sectionOffset(r1) + contentY - this._scrollY;
+
+    // Set up the cell region size variables.
+    let width = 0;
+    let height = 0;
+
+    // Allocate the section sizes arrays.
+    let rowSizes = new Array<number>(r2 - r1 + 1);
+    let colSizes = new Array<number>(c2 - c1 + 1);
+
+    // Get the row sizes for the region.
+    for (let j = r1; j <= r2; ++j) {
+      let size = this._rowSections.sectionSize(j);
+      rowSizes[j - r1] = size;
+      height += size;
+    }
+
+    // Get the col sizes for the region.
+    for (let i = c1; i <= c2; ++i) {
+      let size = this._colSections.sectionSize(i);
+      colSizes[i - c1] = size;
+      width += size;
+    }
+
+    // Return the computed cell region.
+    return { x, y, width, height, r1, c1, r2, c2, rowSizes, colSizes };
+  }
+
+  /**
+   * Draw the grid content for the given dirty rect.
+   *
+   * This method computes the diry cell regions and clipping rects,
+   * and dispatches to the relevant `_draw*` methods.
    */
   private _draw(rx: number, ry: number, rw: number, rh: number): void {
-    // Fill the dirty rect with the void space color.
-    this._canvasGC.fillStyle = '#D4D4D4';  // TODO make configurable.
-    this._canvasGC.fillRect(rx, ry, rw, rh);
+    // Draw the void background for the dirty rect.
+    this._drawVoidBackground(rx, ry, rw, rh);
 
-    // Draw the background for the main area.
-    this._drawMainBackground(rx, ry, rw, rh);
+    // Get the main cell region for the dirty dirty rect.
+    let rgn = this._getMainCellRegion(rx, ry, rw, rh);
 
-    // Draw the grid striping for the main area.
-    this._drawMainStriping(rx, ry, rw, rh);
+    // Draw the main content if relevant.
+    if (rgn) {
+      // Compute the dirty visible content bounds.
+      let x1 = Math.max(rx, this._rowHeaderSections.totalSize);
+      let y1 = Math.max(ry, this._colHeaderSections.totalSize);
+      let x2 = Math.min(rx + rw, rgn.x + rgn.width);
+      let y2 = Math.min(ry + rh, rgn.y + rgn.height);
 
-    // Draw the cell content for the main area.
-    this._drawMainCells(rx, ry, rw, rh);
+      // Save the gc state.
+      this._canvasGC.save();
 
-    // Draw the grid lines for the main area.
-    this._drawMainLines(rx, ry, rw, rh);
+      // Clip to the dirty visible content bounds.
+      this._canvasGC.beginPath();
+      this._canvasGC.rect(x1, y1, x2 - x1, y2 - y1);
+      this._canvasGC.clip();
 
-    // Draw the borders for the main area.
-    this._drawMainBorders(rx, ry, rw, rh);
+      // Draw the background for the main area.
+      this._drawMainBackground(rgn);
+
+      // Draw the grid striping for the main area.
+      this._drawMainStriping(rgn);
+
+      // Draw the cell content for the main area.
+      this._drawMainCells(rgn);
+
+      // Draw the grid lines for the main area.
+      this._drawMainLines(rgn);
+
+      // Draw the borders for the main area.
+      this._drawMainBorders(rgn);
+
+      // Restore the gc state.
+      this._canvasGC.restore();
+    }
 
     // Draw the background for the header area.
     this._drawHeaderBackground(rx, ry, rw, rh);
@@ -411,153 +541,141 @@ class GridViewport extends Widget {
   }
 
   /**
-   *
+   * Fill the dirty rect with the void space color.
    */
-  private _drawMainBackground(rx: number, ry: number, rw: number, rh: number): void {
-    // Fetch the visible content dimensions.
-    let contentW = this._colSections.totalSize - this._scrollX;
-    let contentH = this._rowSections.totalSize - this._scrollY;
+  private _drawVoidBackground(rx: number, ry: number, rw: number, rh: number): void {
+    this._canvasGC.fillStyle = '#D4D4D4';  // TODO make configurable.
+    this._canvasGC.fillRect(rx, ry, rw, rh);
+  }
 
-    // Bail if there is no content to draw.
-    if (contentW <= 0 || contentH <= 0) {
-      return;
-    }
-
-    // Fetch the visible content origin.
-    let contentX = this._rowHeaderSections.totalSize;
-    let contentY = this._colHeaderSections.totalSize;
-
-    // Bail if the region is fully outside of the visible content.
-    if (rx >= contentX + contentW) {
-      return;
-    }
-    if (ry >= contentY + contentH) {
-      return;
-    }
-    if (rx + rw < contentX) {
-      return;
-    }
-    if (ry + rh < contentY) {
-      return;
-    }
-
-    // Clamp the dirty region to the content bounds.
-    let x1 = Math.max(rx, contentX);
-    let y1 = Math.max(ry, contentY);
-    let x2 = Math.min(rx + rw, contentX + contentW);
-    let y2 = Math.min(ry + rh, contentY + contentH);
-
-    // Fill the computed area with the background color.
+  /**
+   * Fill the main cell region with the background color.
+   */
+  private _drawMainBackground(rgn: Private.ICellRegion): void {
     this._canvasGC.fillStyle = '#FFFFFF';  // TODO make configurable
-    this._canvasGC.fillRect(x1, y1, x2 - x1, y2 - y1);
+    this._canvasGC.fillRect(rgn.x, rgn.y, rgn.width, rgn.height);
   }
 
   /**
    *
    */
-  private _drawMainStriping(rx: number, ry: number, rw: number, rh: number): void {
-
+  private _drawMainStriping(rgn: Private.ICellRegion): void {
+    // TODO...
   }
 
   /**
    *
    */
-  private _drawMainCells(rx: number, ry: number, rw: number, rh: number): void {
+  private _drawMainCells(rgn: Private.ICellRegion): void {
+    // TODO...
+  }
 
+  /**
+   * Draw the grid lines for the main cell region.
+   */
+  private _drawMainLines(rgn: Private.ICellRegion): void {
+    // Start the path for the grid lines.
+    this._canvasGC.beginPath();
+
+    // Draw the grid lines for the rows.
+    for (let y = rgn.y, j = 0, n = rgn.rowSizes.length; j < n; ++j) {
+      // Fetch the size of the row.
+      let size = rgn.rowSizes[j];
+
+      // Skip zero sized rows.
+      if (size === 0) {
+        continue;
+      }
+
+      // Compute the Y position of the line.
+      let pos = y + size - 0.5;
+
+      // Draw the 1px thick row line.
+      this._canvasGC.moveTo(rgn.x, pos);
+      this._canvasGC.lineTo(rgn.x + rgn.width, pos);
+
+      // Increment the running Y coordinate.
+      y += size;
+    }
+
+    // Draw the grid lines for the columns.
+    for (let x = rgn.x, i = 0, n = rgn.colSizes.length; i < n; ++i) {
+      // Fetch the size of the column.
+      let size = rgn.colSizes[i];
+
+      // Skip zero sized columns.
+      if (size === 0) {
+        continue;
+      }
+
+      // Compute the X position of the line.
+      let pos = x + size - 0.5;
+
+      // Draw the 1px thick column line.
+      this._canvasGC.moveTo(pos, rgn.y);
+      this._canvasGC.lineTo(pos, rgn.y + rgn.height);
+
+      // Increment the running X coordinate.
+      x += size;
+    }
+
+    // Set the canvas composition mode.
+    let prevMode = this._canvasGC.globalCompositeOperation;
+    this._canvasGC.globalCompositeOperation = 'multiply';  // TODO make configurable
+
+    // Stroke the path with the grid line color.
+    this._canvasGC.strokeStyle = '#DADADA';  // TODO make configurable
+    this._canvasGC.stroke();
+
+    // Restore the composition mode.
+    this._canvasGC.globalCompositeOperation = prevMode;
   }
 
   /**
    *
    */
-  private _drawMainLines(rx: number, ry: number, rw: number, rh: number): void {
-
-  }
-
-  /**
-   *
-   */
-  private _drawMainBorders(rx: number, ry: number, rw: number, rh: number): void {
-
+  private _drawMainBorders(rgn: Private.ICellRegion): void {
+    // TODO...
   }
 
   /**
    *
    */
   private _drawHeaderBackground(rx: number, ry: number, rw: number, rh: number): void {
-    // Fetch the header sizes.
-    let headerW = this._rowHeaderSections.totalSize;
-    let headerH = this._colHeaderSections.totalSize;
-
-    // Bail if there are no headers to draw.
-    if (rx >= headerW && ry >= headerH) {
-      return;
-    }
-
-    // Draw a single rect across the row headers if possible.
-    if (rx + rw <= headerW || ry >= headerH) {
-      let width = Math.min(rx + rw, headerW) - rx;
-      this._canvasGC.fillStyle = '#F3F3F3';  // TODO make configurable
-      this._canvasGC.fillRect(rx, ry, width, rh);
-      return;
-    }
-
-    // Draw a single rect across the col headers if possible.
-    if (ry + rh <= headerH || rx >= headerW) {
-      let height = Math.min(ry + rh, headerH) - ry;
-      this._canvasGC.fillStyle = '#F3F3F3';  // TODO make configurable
-      this._canvasGC.fillRect(rx, ry, rw, height);
-      return;
-    }
-
-    // Compute the rect across the row headers.
-    let x1 = rx;
-    let y1 = ry;
-    let w1 = Math.min(rx + rw, headerW) - rx;
-    let h1 = rh;
-
-    // Compute the rect across the col headers.
-    let x2 = w1;
-    let y2 = ry;
-    let w2 = rx + rw - w1;
-    let h2 = Math.min(ry + rh, headerH) - rh;
-
-    // Draw the rects for the headers.
-    this._canvasGC.fillStyle = '#F3F3F3';  // TODO make configurable
-    this._canvasGC.fillRect(x1, y1, w1, h1);
-    this._canvasGC.fillRect(x2, y2, w2, h2);
+    // TODO...
   }
 
   /**
    *
    */
   private _drawHeaderCells(rx: number, ry: number, rw: number, rh: number): void {
-
+    // TODO...
   }
 
   /**
    *
    */
   private _drawHeaderLines(rx: number, ry: number, rw: number, rh: number): void {
-
+    // TODO...
   }
 
   /**
    *
    */
   private _drawHeaderBorders(rx: number, ry: number, rw: number, rh: number): void {
-
+    // TODO...
   }
 
   private _scrollX = 0;
   private _scrollY = 0;
   private _inPaint = false;
-  private _model: IDataModel = null;
+  private _model: IDataModel | null = null;
+  private _rowSections: SectionList;
+  private _colSections: SectionList;
+  private _rowHeaderSections: SectionList;
+  private _colHeaderSections: SectionList;
   private _canvas: HTMLCanvasElement;
   private _buffer: HTMLCanvasElement;
-  private _rowSections: GridSectionList;
-  private _colSections: GridSectionList;
-  private _rowHeaderSections: GridSectionList;
-  private _colHeaderSections: GridSectionList;
   private _canvasGC: CanvasRenderingContext2D;
   private _bufferGC: CanvasRenderingContext2D;
   private _cellRenderers = Private.createCellRendererMap();
@@ -604,5 +722,73 @@ namespace Private {
     canvas.width = 0;
     canvas.height = 0;
     return canvas;
+  }
+
+  /**
+   * An object which represents a cell region.
+   */
+  export
+  interface ICellRegion {
+    /**
+     * The X coordinate the of the region, in viewport coordinates.
+     *
+     * #### Notes
+     * This is aligned to the first cell boundary.
+     */
+    x: number;
+
+    /**
+     * The Y coordinate the of the region, in viewport coordinates.
+     *
+     * #### Notes
+     * This is aligned to the first cell boundary.
+     */
+    y: number;
+
+    /**
+     * The total width of the cell region.
+     *
+     * #### Notes
+     * This is aligned to the cell boundaries.
+     */
+    width: number;
+
+    /**
+     * The total height of the cell region.
+     *
+     * #### Notes
+     * This is aligned to the cell boundaries.
+     */
+    height: number;
+
+    /**
+     * The row index of the first cell in the region.
+     */
+    r1: number;
+
+    /**
+     * The col index of the first cell in the region.
+     */
+    c1: number;
+
+    /**
+     * The row index of the last cell in the region.
+     */
+    r2: number;
+
+    /**
+     * The col index of the last cell in the region.
+     */
+    c2: number;
+
+    /**
+     * The row sizes for the rows in the region.
+     */
+    rowSizes: number[];
+
+    /**
+     * The col sizes for the cols in the region.
+     */
+    colSizes: number[];
   }
 }
