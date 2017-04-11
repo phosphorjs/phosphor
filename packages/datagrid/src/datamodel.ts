@@ -6,7 +6,7 @@
 | The full license is in the file LICENSE, distributed with this software.
 |----------------------------------------------------------------------------*/
 import {
-  ISignal, Signal
+  ISignal
 } from '@phosphor/signaling';
 
 
@@ -29,7 +29,7 @@ interface IDataModel {
   readonly changed: ISignal<this, IDataModel.ChangedArgs>;
 
   /**
-   * The number of rows in the data model.
+   * The total number of rows in the data model.
    *
    * #### Notes
    * This property is accessed often, and so should be efficient.
@@ -37,12 +37,28 @@ interface IDataModel {
   readonly rowCount: number;
 
   /**
-   * The number of columns in the data model.
+   * The total number of columns in the data model.
    *
    * #### Notes
    * This property is accessed often, and so should be efficient.
    */
   readonly colCount: number;
+
+  /**
+   * The number of row header columns in the data model.
+   *
+   * #### Notes
+   * This property is accessed often, and so should be efficient.
+   */
+  readonly rowHeaderCount: number;
+
+  /**
+   * The number of colum header rows in the data model.
+   *
+   * #### Notes
+   * This property is accessed often, and so should be efficient.
+   */
+  readonly colHeaderCount: number;
 
   /**
    * Get the data for a particular cell in the data model.
@@ -55,12 +71,6 @@ interface IDataModel {
    *   if the cell is empty.
    *
    * #### Notes
-   * A `row` index `< 0` represents a column header cell.
-   *
-   * A `col` index `< 0` represents a row header cell.
-   *
-   * A `row` and `col` index `< 0` represent a corner cell.
-   *
    * This method is called often, and so should be efficient.
    */
   data(row: number, col: number): IDataModel.ICellData | null;
@@ -246,65 +256,4 @@ namespace IDataModel {
     ICellsChangedArgs |
     IModelChangedArgs
   );
-}
-
-
-/**
- * An abstract base class implementation of a data model.
- *
- * #### Notes
- * This class provides basic boiler-plate code which can be useful
- * for data models which do not derive from an unrelated class.
- */
-export
-abstract class DataModel implements IDataModel {
-  /**
-   * A signal emitted when the data model has changed.
-   */
-  get changed(): ISignal<this, IDataModel.ChangedArgs> {
-    return this._changed;
-  }
-
-  /**
-   * The number of rows in the data model.
-   *
-   * #### Notes
-   * This property must be implemented by a subclass.
-   */
-  abstract readonly rowCount: number;
-
-  /**
-   * The number of columns in the data model.
-   *
-   * #### Notes
-   * This property must be implemented by a subclass.
-   */
-  abstract readonly colCount: number;
-
-  /**
-   * Get the data for a particular cell in the data model.
-   *
-   * @param row - The row index of the cell of interest.
-   *
-   * @param col - The column index of the cell of interest.
-   *
-   * @param returns - The data for the specified cell, or `null`
-   *   if the cell is empty.
-   *
-   * #### Notes
-   * This method must be implemented by a subclass.
-   */
-  abstract data(row: number, col: number): IDataModel.ICellData | null;
-
-  /**
-   * Emit the `changed` signal with the specified arguments.
-   *
-   * #### Notes
-   * This should be called by subclasses as needed.
-   */
-  protected emitChanged(args: IDataModel.ChangedArgs): void {
-    this._changed.emit(args);
-  }
-
-  private _changed = new Signal<this, IDataModel.ChangedArgs>(this);
 }

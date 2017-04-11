@@ -17,13 +17,13 @@ import {
  * This class is used to manage the row and column sizes in a grid.
  */
 export
-class GridSectionList {
+class SectionList {
   /**
-   * Construct a new grid section list.
+   * Construct a new section list.
    *
    * @param options - The options for initializing the list.
    */
-  constructor(options: GridSectionList.IOptions) {
+  constructor(options: SectionList.IOptions) {
     this._baseSize = Math.max(0, Math.floor(options.baseSize));
   }
 
@@ -364,12 +364,12 @@ class GridSectionList {
 
 
 /**
- * The namespace for the `GridSectionList` class statics.
+ * The namespace for the `SectionList` class statics.
  */
 export
-namespace GridSectionList {
+namespace SectionList {
   /**
-   * An options object for initializing a grid section list.
+   * An options object for initializing a section list.
    */
   export
   interface IOptions {
