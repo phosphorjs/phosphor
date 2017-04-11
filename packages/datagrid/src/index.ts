@@ -7,6 +7,6 @@
 |----------------------------------------------------------------------------*/
 export * from './cellrenderer';
 export * from './datamodel';
-export * from './sectionlist';
 export * from './gridviewport';
+export * from './sectionlist';
 export * from './textrenderer';

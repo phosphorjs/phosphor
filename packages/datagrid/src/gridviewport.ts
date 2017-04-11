@@ -50,8 +50,8 @@ class GridViewport extends Widget {
 
     // Set up the row and column sections lists.
     this._rowSections = new SectionList({ baseSize: 20 });
-    this._colSections = new SectionList({ baseSize: 60 });
-    this._rowHeaderSections = new SectionList({ baseSize: 60 });
+    this._colSections = new SectionList({ baseSize: 64 });
+    this._rowHeaderSections = new SectionList({ baseSize: 64 });
     this._colHeaderSections = new SectionList({ baseSize: 20 });
 
     // Create the canvas and buffer objects.
@@ -77,7 +77,7 @@ class GridViewport extends Widget {
    * Dispose of the resources held by the widget.
    */
   dispose(): void {
-    // TODO audit this
+    // TODO audit this method
     this._model = null;
     super.dispose();
   }
@@ -111,9 +111,21 @@ class GridViewport extends Widget {
     // Update the internal model reference.
     this._model = value;
 
-    // TODO
-    // - re-initialize the section lists.
-    // - clear the canvas with the void color
+    // Clear the section lists.
+    this._rowSections.clear();
+    this._colSections.clear();
+    this._rowHeaderSections.clear();
+    this._colHeaderSections.clear();
+
+    // TODO reset cell spans and borders.
+
+    // Populate the section lists.
+    if (value) {
+      this._rowSections.insertSections(0, value.rowCount);
+      this._colSections.insertSections(0, value.colCount);
+      this._rowHeaderSections.insertSections(0, value.rowHeaderCount);
+      this._colHeaderSections.insertSections(0, value.colHeaderCount);
+    }
 
     // Schedule a full update of the viewport.
     this.update();
@@ -384,11 +396,9 @@ class GridViewport extends Widget {
     // Execute the actual drawing logic.
     try {
       this._inPaint = true;
-      this._canvasGC.save();
       this._draw(rx, ry, rw, rh);
     } finally {
       this._inPaint = false;
-      this._canvasGC.restore();
     }
   }
 
@@ -487,12 +497,12 @@ class GridViewport extends Widget {
    */
   private _draw(rx: number, ry: number, rw: number, rh: number): void {
     // Draw the void background for the dirty rect.
-    this._drawVoidBackground(rx, ry, rw, rh);
+    this._drawVoidBackground(rx, ry, rw, rh, '#F3F3F3');
 
     // Get the main cell region for the dirty dirty rect.
     let rgn = this._getMainCellRegion(rx, ry, rw, rh);
 
-    // Draw the main content if relevant.
+    // Draw the main cell region if needed.
     if (rgn) {
       // Compute the dirty visible content bounds.
       let x1 = Math.max(rx, this._rowHeaderSections.totalSize);
@@ -508,72 +518,146 @@ class GridViewport extends Widget {
       this._canvasGC.rect(x1, y1, x2 - x1, y2 - y1);
       this._canvasGC.clip();
 
-      // Draw the background for the main area.
-      this._drawMainBackground(rgn);
+      // Draw the background for the cell region.
+      this._drawBackground(rgn, '#FFFFFF');
 
-      // Draw the grid striping for the main area.
-      this._drawMainStriping(rgn);
+      // Draw the grid striping for the cell region.
+      this._drawGridStriping(rgn);
 
-      // Draw the cell content for the main area.
-      this._drawMainCells(rgn);
+      // Draw the cell content for the cell region.
+      this._drawCells(rgn);
 
-      // Draw the grid lines for the main area.
-      this._drawMainLines(rgn);
+      // Draw the grid lines for the cell region.
+      this._drawGridLines(rgn, '#D4D4D4');
 
-      // Draw the borders for the main area.
-      this._drawMainBorders(rgn);
+      // Draw the borders for the cell region.
+      this._drawBorders(rgn);
 
       // Restore the gc state.
       this._canvasGC.restore();
     }
-
-    // Draw the background for the header area.
-    this._drawHeaderBackground(rx, ry, rw, rh);
-
-    // Draw the cell content for the header area.
-    this._drawHeaderCells(rx, ry, rw, rh);
-
-    // Draw the grid lines for the header area.
-    this._drawHeaderLines(rx, ry, rw, rh);
-
-    // Draw the borders for the header area.
-    this._drawHeaderBorders(rx, ry, rw, rh);
   }
 
   /**
-   * Fill the dirty rect with the void space color.
+   * Draw the void background for the dirty rect.
    */
-  private _drawVoidBackground(rx: number, ry: number, rw: number, rh: number): void {
-    this._canvasGC.fillStyle = '#D4D4D4';  // TODO make configurable.
+  private _drawVoidBackground(rx: number, ry: number, rw: number, rh: number, color: string): void {
+    // Bail if there is no void color.
+    if (!color) {
+      return;
+    }
+
+    // Fill the dirty rect with the void color.
+    this._canvasGC.fillStyle = color;
     this._canvasGC.fillRect(rx, ry, rw, rh);
   }
 
   /**
-   * Fill the main cell region with the background color.
+   * Draw the background for the given cell region.
    */
-  private _drawMainBackground(rgn: Private.ICellRegion): void {
-    this._canvasGC.fillStyle = '#FFFFFF';  // TODO make configurable
+  private _drawBackground(rgn: Private.ICellRegion, color: string): void {
+    // Bail if there is no background color.
+    if (!color) {
+      return;
+    }
+
+    // Fill the cell region with the background color.
+    this._canvasGC.fillStyle = color;
     this._canvasGC.fillRect(rgn.x, rgn.y, rgn.width, rgn.height);
   }
 
   /**
-   *
+   * Draw the grid striping for the given cell region.
    */
-  private _drawMainStriping(rgn: Private.ICellRegion): void {
+  private _drawGridStriping(rgn: Private.ICellRegion): void {
     // TODO...
   }
 
   /**
-   *
+   * Draw the cells for the given cell region.
    */
-  private _drawMainCells(rgn: Private.ICellRegion): void {
-    // TODO...
+  private _drawCells(rgn: Private.ICellRegion): void {
+    // Bail if there is no data model.
+    let model = this._model;
+    if (!model) {
+      return;
+    }
+
+    // Set up the cell config object for rendering.
+    let config = new Private.CellConfig();
+
+    // Loop over the columns in the region.
+    for (let x = rgn.x, i = 0, n = rgn.colSizes.length; i < n; ++i) {
+      // Fetch the size of the column.
+      let width = rgn.colSizes[i];
+
+      // Skip zero sized columns.
+      if (width === 0) {
+        continue;
+      }
+
+      // Loop over the rows in the column.
+      for (let y = rgn.y, j = 0, n = rgn.rowSizes.length; j < n; ++j) {
+        // Fetch the size of the row.
+        let height = rgn.rowSizes[j];
+
+        // Skip zero sized rows.
+        if (height === 0) {
+          continue;
+        }
+
+        // Compute the current row and col.
+        let row = rgn.r1 + j;
+        let col = rgn.c1 + i;
+
+        // Get the data for the cell.
+        let data = model.data(row, col);
+
+        // Skip empty cells.
+        if (!data) {
+          y += height;
+          continue;
+        }
+
+        // Look up the renderer for the cell.
+        let renderer = this._cellRenderers[data.type];
+
+        // Skip cells with no renderers.
+        if (!renderer) {
+          y += height;
+          continue;
+        }
+
+        // Update the cell config.
+        config.x = x - 1;
+        config.y = y - 1;
+        config.width = width + 1;
+        config.height = height + 1;
+        config.row = row;
+        config.col = col;
+        config.data = data;
+
+        // Render the cell.
+        renderer.drawCell(this._canvasGC, config);
+
+        // Increment the running Y coordinate.
+        y += height;
+      }
+
+      // Increment the running X coordinate.
+      x += width;
+    }
   }
 
   /**
-   * Draw the grid lines for the main cell region.
+   * Draw the grid lines for the given cell region.
    */
-  private _drawMainLines(rgn: Private.ICellRegion): void {
+  private _drawGridLines(rgn: Private.ICellRegion, color: string): void {
+    // Bail if there is no grid line color.
+    if (!color) {
+      return;
+    }
+
     // Start the path for the grid lines.
     this._canvasGC.beginPath();
 
@@ -621,10 +705,12 @@ class GridViewport extends Widget {
 
     // Set the canvas composition mode.
     let prevMode = this._canvasGC.globalCompositeOperation;
-    this._canvasGC.globalCompositeOperation = 'multiply';  // TODO make configurable
+    // The `multiply` mode is buggy of Firefox on Windows:
+    // https://bugzilla.mozilla.org/show_bug.cgi?id=1333090
+    this._canvasGC.globalCompositeOperation = 'multiply';  // TODO make configurable?
 
     // Stroke the path with the grid line color.
-    this._canvasGC.strokeStyle = '#DADADA';  // TODO make configurable
+    this._canvasGC.strokeStyle = color;
     this._canvasGC.stroke();
 
     // Restore the composition mode.
@@ -632,37 +718,9 @@ class GridViewport extends Widget {
   }
 
   /**
-   *
+   * Draw the borders for the given cell region.
    */
-  private _drawMainBorders(rgn: Private.ICellRegion): void {
-    // TODO...
-  }
-
-  /**
-   *
-   */
-  private _drawHeaderBackground(rx: number, ry: number, rw: number, rh: number): void {
-    // TODO...
-  }
-
-  /**
-   *
-   */
-  private _drawHeaderCells(rx: number, ry: number, rw: number, rh: number): void {
-    // TODO...
-  }
-
-  /**
-   *
-   */
-  private _drawHeaderLines(rx: number, ry: number, rw: number, rh: number): void {
-    // TODO...
-  }
-
-  /**
-   *
-   */
-  private _drawHeaderBorders(rx: number, ry: number, rw: number, rh: number): void {
+  private _drawBorders(rgn: Private.ICellRegion): void {
     // TODO...
   }
 
@@ -790,5 +848,51 @@ namespace Private {
      * The col sizes for the cols in the region.
      */
     colSizes: number[];
+  }
+
+  /**
+   * An object which holds cell config data.
+   */
+  export
+  class CellConfig implements ICellRenderer.ICellConfig {
+    /**
+     * The X coordinate of the cell in viewport coordinates.
+     */
+    x = 0;
+
+    /**
+     * The Y coordinate of the cell in viewport coordinates.
+     */
+    y = 0;
+
+    /**
+     * The width of the cell.
+     */
+    width = 0;
+
+    /**
+     * The width of the cell.
+     */
+    height = 0;
+
+    /**
+     * The row index of the cell.
+     */
+    row = 0;
+
+    /**
+     * The col index of the cell.
+     */
+    col = 0;
+
+    /**
+     * The data model for the cell.
+     */
+    model: IDataModel = null!;
+
+    /**
+     * The data value for the cell.
+     */
+    data: IDataModel.ICellData = null!;
   }
 }

@@ -37,7 +37,7 @@ interface ICellRenderer {
    * #### Notes
    * The data grid renders cells in column-major order. For performance,
    * it **does not** apply a clipping rect to the cell bounds before it
-   * invokes a renderer, but it *does* save and restore the gc.
+   * invokes a renderer, **nor** does it save and restore the gc.
    *
    * A renderer **must not** draw outside of the cell bounding box.
    *

@@ -6,7 +6,7 @@
 | The full license is in the file LICENSE, distributed with this software.
 |----------------------------------------------------------------------------*/
 import {
-  ISignal
+  ISignal, Signal
 } from '@phosphor/signaling';
 
 
@@ -256,4 +256,52 @@ namespace IDataModel {
     ICellsChangedArgs |
     IModelChangedArgs
   );
+}
+
+
+/**
+ *
+ */
+export
+abstract class DataModel implements IDataModel {
+  /**
+   *
+   */
+  get changed(): ISignal<this, IDataModel.ChangedArgs> {
+    return this._changed;
+  }
+
+  /**
+   *
+   */
+  abstract readonly rowCount: number;
+
+  /**
+   *
+   */
+  abstract readonly colCount: number;
+
+  /**
+   *
+   */
+  abstract readonly rowHeaderCount: number;
+
+  /**
+   *
+   */
+  abstract readonly colHeaderCount: number;
+
+  /**
+   *
+   */
+  abstract data(row: number, col: number): IDataModel.ICellData | null;
+
+  /**
+   *
+   */
+  protected emitChanged(args: IDataModel.ChangedArgs): void {
+    this._changed.emit(args);
+  }
+
+  private _changed = new Signal<this, IDataModel.ChangedArgs>(this);
 }
