@@ -11,38 +11,36 @@ import {
 
 
 /**
- * The core data model interface for a data grid.
+ * The abstract data model class for a data grid.
  *
  * #### Notes
  * If the predefined data models are insufficient for a particular use
- * case, a custom model can be defined which implements this interface.
+ * case, a custom model can be defined which derives from this class.
  */
 export
-interface IDataModel {
+abstract class DataModel {
   /**
    * A signal emitted when the data model has changed.
-   *
-   * #### Notes
-   * Implementations should emit this signal whenever the data model
-   * has changed so that attached data grids can update themselves.
    */
-  readonly changed: ISignal<this, IDataModel.ChangedArgs>;
+  get changed(): ISignal<this, DataModel.ChangedArgs> {
+    return this._changed;
+  }
 
   /**
-   * The total number of rows in the data model.
+   * The number of data rows in the data model.
    *
    * #### Notes
    * This property is accessed often, and so should be efficient.
    */
-  readonly rowCount: number;
+  abstract readonly rowCount: number;
 
   /**
-   * The total number of columns in the data model.
+   * The number of data columns in the data model.
    *
    * #### Notes
    * This property is accessed often, and so should be efficient.
    */
-  readonly colCount: number;
+  abstract readonly colCount: number;
 
   /**
    * The number of row header columns in the data model.
@@ -50,7 +48,7 @@ interface IDataModel {
    * #### Notes
    * This property is accessed often, and so should be efficient.
    */
-  readonly rowHeaderCount: number;
+  abstract readonly rowHeaderCount: number;
 
   /**
    * The number of colum header rows in the data model.
@@ -58,7 +56,7 @@ interface IDataModel {
    * #### Notes
    * This property is accessed often, and so should be efficient.
    */
-  readonly colHeaderCount: number;
+  abstract readonly colHeaderCount: number;
 
   /**
    * Get the data for a particular cell in the data model.
@@ -71,17 +69,34 @@ interface IDataModel {
    *   if the cell is empty.
    *
    * #### Notes
+   * A negative `row` index indicates a column header row.
+   *
+   * A negative `col` index indicates a row header column.
+   *
    * This method is called often, and so should be efficient.
    */
-  data(row: number, col: number): IDataModel.ICellData | null;
+  abstract data(row: number, col: number): DataModel.ICellData | null;
+
+  /**
+   * Emit the `changed` signal for the data model.
+   *
+   * #### Notes
+   * Subclass should call this method whenever the data model has
+   * changed so that attached data grids can update themselves.
+   */
+  protected emitChanged(args: DataModel.ChangedArgs): void {
+    this._changed.emit(args);
+  }
+
+  private _changed = new Signal<this, DataModel.ChangedArgs>(this);
 }
 
 
 /**
- * The namespace for the `IDataModel` interface statics.
+ * The namespace for the `DataModel` class statics.
  */
 export
-namespace IDataModel {
+namespace DataModel {
   /**
    * An object which represents the data for a particular cell.
    */
@@ -235,7 +250,7 @@ namespace IDataModel {
    * expressed by the other args object types.
    *
    * This will cause any listening data grid to perform a full refresh,
-   * so the other args object types should be used when possible.
+   * so the other changed args types should be used when possible.
    */
   export
   interface IModelChangedArgs {
@@ -256,52 +271,4 @@ namespace IDataModel {
     ICellsChangedArgs |
     IModelChangedArgs
   );
-}
-
-
-/**
- *
- */
-export
-abstract class DataModel implements IDataModel {
-  /**
-   *
-   */
-  get changed(): ISignal<this, IDataModel.ChangedArgs> {
-    return this._changed;
-  }
-
-  /**
-   *
-   */
-  abstract readonly rowCount: number;
-
-  /**
-   *
-   */
-  abstract readonly colCount: number;
-
-  /**
-   *
-   */
-  abstract readonly rowHeaderCount: number;
-
-  /**
-   *
-   */
-  abstract readonly colHeaderCount: number;
-
-  /**
-   *
-   */
-  abstract data(row: number, col: number): IDataModel.ICellData | null;
-
-  /**
-   *
-   */
-  protected emitChanged(args: IDataModel.ChangedArgs): void {
-    this._changed.emit(args);
-  }
-
-  private _changed = new Signal<this, IDataModel.ChangedArgs>(this);
 }

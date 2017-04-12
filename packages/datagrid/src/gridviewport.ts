@@ -14,20 +14,24 @@ import {
 } from '@phosphor/widgets';
 
 import {
-  ICellRenderer
+  CellRenderer
 } from './cellrenderer';
 
 import {
-  IDataModel
+  DataModel
 } from './datamodel';
 
 import {
   SectionList
 } from './sectionlist';
 
+import {
+  ISectionStriping
+} from './sectionstriping';
+
 
 /**
- * A widget which renders the visible cells of a grid.
+ * A widget which renders the visible cells of a data grid.
  *
  * #### Notes
  * User code will not normally interact with this class directly.
@@ -78,29 +82,29 @@ class GridViewport extends Widget {
    */
   dispose(): void {
     // TODO audit this method
-    this._model = null;
+    this._dataModel = null;
     super.dispose();
   }
 
   /**
    * Get the data model rendered by the viewport.
    */
-  get model(): IDataModel | null {
-    return this._model;
+  get dataModel(): DataModel | null {
+    return this._dataModel;
   }
 
   /**
    * Set the data model rendered by the viewport.
    */
-  set model(value: IDataModel | null) {
+  set dataModel(value: DataModel | null) {
     // Do nothing if the model does not change.
-    if (this._model === value) {
+    if (this._dataModel === value) {
       return;
     }
 
     // Disconnect the change handler from the old model.
-    if (this._model) {
-      this._model.changed.disconnect(this._onChanged, this);
+    if (this._dataModel) {
+      this._dataModel.changed.disconnect(this._onChanged, this);
     }
 
     // Connect the change handler for the new model.
@@ -109,7 +113,7 @@ class GridViewport extends Widget {
     }
 
     // Update the internal model reference.
-    this._model = value;
+    this._dataModel = value;
 
     // Clear the section lists.
     this._rowSections.clear();
@@ -128,6 +132,48 @@ class GridViewport extends Widget {
     }
 
     // Schedule a full update of the viewport.
+    this.update();
+  }
+
+  /**
+   * Get the row striping object for the viewport.
+   */
+  get rowStriping(): ISectionStriping | null {
+    return this._rowStriping;
+  }
+
+  /**
+   * Set the row striping object for the viewport.
+   */
+  set rowStriping(value: ISectionStriping | null) {
+    // Bail if the striping object does not change.
+    if (this._rowStriping === value) {
+      return;
+    }
+
+    // Store the value and schedule an update of the viewport.
+    this._rowStriping = value;
+    this.update();
+  }
+
+  /**
+   * Get the column striping object for the viewport.
+   */
+  get colStriping(): ISectionStriping | null {
+    return this._colStriping;
+  }
+
+  /**
+   * Set the column striping object for the viewport.
+   */
+  set colStriping(value: ISectionStriping | null) {
+    // Bail if the striping object does not change.
+    if (this._colStriping === value) {
+      return;
+    }
+
+    // Store the value and schedule an update of the viewport.
+    this._colStriping = value;
     this.update();
   }
 
@@ -195,7 +241,7 @@ class GridViewport extends Widget {
    *
    * @returns The cell renderer for the given type, or `undefined`.
    */
-  getCellRenderer(type: string): ICellRenderer | undefined {
+  getCellRenderer(type: string): CellRenderer | undefined {
     return this._cellRenderers[type];
   }
 
@@ -211,7 +257,7 @@ class GridViewport extends Widget {
    * specified type. If the renderer is `undefined`, the previous
    * renderer will be removed.
    */
-  setCellRenderer(name: string, value: ICellRenderer | undefined): void {
+  setCellRenderer(name: string, value: CellRenderer | undefined): void {
     // Do nothing if the renderer does not change.
     if (this._cellRenderers[name] === value) {
       return;
@@ -229,16 +275,16 @@ class GridViewport extends Widget {
   }
 
   /**
-   * A message handler invoked on an `'after-show'` message.
+   * A message handler invoked on a `'before-show'` message.
    */
-  protected onAfterShow(msg: Message): void {
+  protected onBeforeShow(msg: Message): void {
     this.fit();
   }
 
   /**
-   * A message handler invoked on an `'after-attach'` message.
+   * A message handler invoked on a `'before-attach'` message.
    */
-  protected onAfterAttach(msg: Message): void {
+  protected onBeforeAttach(msg: Message): void {
     this.fit();
   }
 
@@ -375,7 +421,7 @@ class GridViewport extends Widget {
   /**
    * A signal handler for the data model `changed` signal.
    */
-  private _onChanged(sender: IDataModel, args: IDataModel.ChangedArgs): void { }
+  private _onChanged(sender: DataModel, args: DataModel.ChangedArgs): void { }
 
   /**
    * Paint the grid content for the given dirty rect.
@@ -393,6 +439,7 @@ class GridViewport extends Widget {
       return;
     }
 
+    let t1 = performance.now();
     // Execute the actual drawing logic.
     try {
       this._inPaint = true;
@@ -400,6 +447,8 @@ class GridViewport extends Widget {
     } finally {
       this._inPaint = false;
     }
+    let t2 = performance.now();
+    console.log('paint', t2 - t1);
   }
 
   /**
@@ -521,8 +570,11 @@ class GridViewport extends Widget {
       // Draw the background for the cell region.
       this._drawBackground(rgn, '#FFFFFF');
 
-      // Draw the grid striping for the cell region.
-      this._drawGridStriping(rgn);
+      // Draw the row striping for the cell region.
+      this._drawRowStriping(rgn);
+
+      // Draw the col striping for the cell region.
+      this._drawColStriping(rgn);
 
       // Draw the cell content for the cell region.
       this._drawCells(rgn);
@@ -567,10 +619,77 @@ class GridViewport extends Widget {
   }
 
   /**
-   * Draw the grid striping for the given cell region.
+   * Draw the row striping for the given cell region.
    */
-  private _drawGridStriping(rgn: Private.ICellRegion): void {
-    // TODO...
+  private _drawRowStriping(rgn: Private.ICellRegion): void {
+    // Bail if there is no row striping.
+    if (!this._rowStriping) {
+      return;
+    }
+
+    // Draw the row striping for the region.
+    for (let y = rgn.y, j = 0, n = rgn.rowSizes.length; j < n; ++j) {
+      // Fetch the size of the row.
+      let size = rgn.rowSizes[j];
+
+      // Skip zero sized rows.
+      if (size === 0) {
+        continue;
+      }
+
+      // Get the color for the row.
+      let color = this._rowStriping.sectionColor(rgn.r1 + j);
+
+      // Skip rows with no color.
+      if (!color) {
+        y += size;
+        continue;
+      }
+
+      // Fill the row with the color.
+      this._canvasGC.fillStyle = color;
+      this._canvasGC.fillRect(rgn.x, y - 1, rgn.width, size + 1);
+
+      // Increment the running Y coordinate.
+      y += size;
+    }
+  }
+
+  /**
+   * Draw the column striping for the given cell region.
+   */
+  private _drawColStriping(rgn: Private.ICellRegion): void {
+    // Bail if there is no column striping.
+    if (!this._colStriping) {
+      return;
+    }
+
+    // Draw the column striping for the region.
+    for (let x = rgn.x, i = 0, n = rgn.colSizes.length; i < n; ++i) {
+      // Fetch the size of the column.
+      let size = rgn.colSizes[i];
+
+      // Skip zero sized columns.
+      if (size === 0) {
+        continue;
+      }
+
+      // Get the color for the column.
+      let color = this._colStriping.sectionColor(rgn.c1 + i);
+
+      // Skip columns with no color.
+      if (!color) {
+        x += size;
+        continue;
+      }
+
+      // Fill the column with the color.
+      this._canvasGC.fillStyle = color;
+      this._canvasGC.fillRect(x - 1, rgn.y, size + 1, rgn.height);
+
+      // Increment the running X coordinate.
+      x += size;
+    }
   }
 
   /**
@@ -578,13 +697,14 @@ class GridViewport extends Widget {
    */
   private _drawCells(rgn: Private.ICellRegion): void {
     // Bail if there is no data model.
-    let model = this._model;
-    if (!model) {
+    let dataModel = this._dataModel;
+    if (!dataModel) {
       return;
     }
 
     // Set up the cell config object for rendering.
     let config = new Private.CellConfig();
+    config.dataModel = dataModel;
 
     // Loop over the columns in the region.
     for (let x = rgn.x, i = 0, n = rgn.colSizes.length; i < n; ++i) {
@@ -611,7 +731,7 @@ class GridViewport extends Widget {
         let col = rgn.c1 + i;
 
         // Get the data for the cell.
-        let data = model.data(row, col);
+        let data = dataModel.data(row, col);
 
         // Skip empty cells.
         if (!data) {
@@ -628,7 +748,7 @@ class GridViewport extends Widget {
           continue;
         }
 
-        // Update the cell config.
+        // Update the config for the current cell.
         config.x = x - 1;
         config.y = y - 1;
         config.width = width + 1;
@@ -727,7 +847,9 @@ class GridViewport extends Widget {
   private _scrollX = 0;
   private _scrollY = 0;
   private _inPaint = false;
-  private _model: IDataModel | null = null;
+  private _dataModel: DataModel | null = null;
+  private _rowStriping: ISectionStriping | null = null;
+  private _colStriping: ISectionStriping | null = null;
   private _rowSections: SectionList;
   private _colSections: SectionList;
   private _rowHeaderSections: SectionList;
@@ -761,7 +883,7 @@ namespace Private {
    * A type alias for a cell renderer map.
    */
   export
-  type CellRendererMap = { [name: string]: ICellRenderer };
+  type CellRendererMap = { [name: string]: CellRenderer };
 
   /**
    * Create a new renderer map for a grid viewport.
@@ -854,7 +976,7 @@ namespace Private {
    * An object which holds cell config data.
    */
   export
-  class CellConfig implements ICellRenderer.ICellConfig {
+  class CellConfig implements CellRenderer.ICellConfig {
     /**
      * The X coordinate of the cell in viewport coordinates.
      */
@@ -888,11 +1010,11 @@ namespace Private {
     /**
      * The data model for the cell.
      */
-    model: IDataModel = null!;
+    dataModel: DataModel = null!;
 
     /**
      * The data value for the cell.
      */
-    data: IDataModel.ICellData = null!;
+    data: DataModel.ICellData = null!;
   }
 }

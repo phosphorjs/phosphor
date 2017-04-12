@@ -6,15 +6,19 @@
 | The full license is in the file LICENSE, distributed with this software.
 |----------------------------------------------------------------------------*/
 import {
-  CellRenderer, ICellRenderer
+  CellRenderer
 } from './cellrenderer';
+
+import {
+  SimpleRenderer
+} from './simplerenderer';
 
 
 /**
- * A cell renderer which renders a cell data value as text.
+ * A cell renderer which renders cell values as text.
  */
 export
-class TextRenderer<T extends TextRenderer.ICellStyle> extends CellRenderer<T> {
+class TextRenderer<T extends TextRenderer.ICellStyle> extends SimpleRenderer<T> {
   /**
    * Construct a new text renderer.
    *
@@ -32,7 +36,7 @@ class TextRenderer<T extends TextRenderer.ICellStyle> extends CellRenderer<T> {
   textColor: string;
 
   /**
-   * The formatter for converting a cell value to text.
+   * The formatter for converting cell values to text.
    */
   formatter: TextRenderer.IFormatter;
 
@@ -48,7 +52,7 @@ class TextRenderer<T extends TextRenderer.ICellStyle> extends CellRenderer<T> {
    * #### Notes
    * This method may be reimplemented by a subclass as needed.
    */
-  drawForeground(gc: CanvasRenderingContext2D, config: ICellRenderer.ICellConfig, style: T | null): void {
+  drawForeground(gc: CanvasRenderingContext2D, config: CellRenderer.ICellConfig, style: T | null): void {
     // Resolve the background color for the cell.
     let color = (style && style.textColor) || this.textColor;
 
@@ -65,6 +69,22 @@ class TextRenderer<T extends TextRenderer.ICellStyle> extends CellRenderer<T> {
       return;
     }
 
+    // TODO - clean up this measurement code.
+
+    //
+    let tm = gc.measureText(text);
+
+    //
+    let needsClip = (tm.width + 4) > (config.width - 2);
+
+    //
+    if (needsClip) {
+      gc.save();
+      gc.beginPath();
+      gc.rect(config.x + 1, config.y + 1, config.width - 2, config.height - 2);
+      gc.clip();
+    }
+
     // TODO
     // - font size and style
     // - measure text and clip as needed.
@@ -74,6 +94,10 @@ class TextRenderer<T extends TextRenderer.ICellStyle> extends CellRenderer<T> {
     gc.fillStyle = color;
     gc.textBaseline = 'middle';
     gc.fillText(text, config.x + 4, config.y + config.height / 2);
+
+    if (needsClip) {
+      gc.restore();
+    }
   }
 }
 
@@ -87,7 +111,7 @@ namespace TextRenderer {
    * An object which holds cell style data.
    */
   export
-  interface ICellStyle extends CellRenderer.ICellStyle {
+  interface ICellStyle extends SimpleRenderer.ICellStyle {
     /**
      * The text color for the cell.
      *
@@ -98,25 +122,10 @@ namespace TextRenderer {
   }
 
   /**
-   * An object which coverts a cell value to text.
+   * An options object for initializing a text renderer.
    */
   export
-  interface IFormatter {
-    /**
-     * Format the cell value for the renderer.
-     *
-     * @param config - The configuration data for the cell.
-     *
-     * @returns The cell text for display.
-     */
-    formatText(config: ICellRenderer.ICellConfig): string;
-  }
-
-  /**
-   * An options object for initializing a text cell renderer.
-   */
-  export
-  interface IOptions<T extends ICellStyle> extends CellRenderer.IOptions<T> {
+  interface IOptions<T extends ICellStyle> extends SimpleRenderer.IOptions<T> {
     /**
      * The text color to apply to all cells.
      *
@@ -137,6 +146,21 @@ namespace TextRenderer {
   }
 
   /**
+   * An object which coverts a cell value to text.
+   */
+  export
+  interface IFormatter {
+    /**
+     * Format the cell value for the renderer.
+     *
+     * @param config - The configuration data for the cell.
+     *
+     * @returns The cell text for display.
+     */
+    formatText(config: CellRenderer.ICellConfig): string;
+  }
+
+  /**
    * The default implementation of `IFormatter`.
    */
   export
@@ -148,7 +172,7 @@ namespace TextRenderer {
      *
      * @returns The cell text for display.
      */
-    formatText(config: ICellRenderer.ICellConfig): string {
+    formatText(config: CellRenderer.ICellConfig): string {
       // Get the data value for the cell.
       let value = config.data.value;
 
@@ -157,7 +181,7 @@ namespace TextRenderer {
         return value;
       }
 
-      // Render nothing for `null` or `undefined`.
+      // Return an empty string for `null` or `undefined`.
       if (value === null || value === undefined) {
         return '';
       }
