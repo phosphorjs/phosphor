@@ -22,12 +22,20 @@ import {
 } from './datamodel';
 
 import {
+  IRendererDelegate
+} from './rendererdelegate';
+
+import {
   SectionList
 } from './sectionlist';
 
 import {
   ISectionStriping
 } from './sectionstriping';
+
+import {
+  TextRenderer
+} from './textrenderer';
 
 
 /**
@@ -51,6 +59,10 @@ class GridViewport extends Widget {
     super();
     this.addClass('p-GridViewport');
     this.setFlag(Widget.Flag.DisallowLayout);
+
+    // Parse the options.
+    this._defaultRenderer = options.defaultRenderer || new TextRenderer();
+    this._rendererDelegate = options.rendererDelegate || null;
 
     // Set up the row and column sections lists.
     this._rowSections = new SectionList({ baseSize: 20 });
@@ -121,8 +133,6 @@ class GridViewport extends Widget {
     this._rowHeaderSections.clear();
     this._colHeaderSections.clear();
 
-    // TODO reset cell spans and borders.
-
     // Populate the section lists.
     if (value) {
       this._rowSections.insertSections(0, value.rowCount);
@@ -174,6 +184,48 @@ class GridViewport extends Widget {
 
     // Store the value and schedule an update of the viewport.
     this._colStriping = value;
+    this.update();
+  }
+
+  /**
+   * Get the default cell renderer for the viewport.
+   */
+  get defaultRenderer(): CellRenderer {
+    return this._defaultRenderer;
+  }
+
+  /**
+   * Set the default cell renderer for the viewport.
+   */
+  set defaultRenderer(value: CellRenderer) {
+    // Bail if the renderer does not change.
+    if (this._defaultRenderer === value) {
+      return;
+    }
+
+    // Store the value and schedule an update of the viewport.
+    this._defaultRenderer = value;
+    this.update();
+  }
+
+  /**
+   * Get the cell renderer delegate for the viewport.
+   */
+  get rendererDelegate(): IRendererDelegate | null {
+    return this._rendererDelegate;
+  }
+
+  /**
+   * Set the cell renderer delegate for the viewport.
+   */
+  set rendererDelegate(value: IRendererDelegate | null) {
+    // Bail if the renderer does not change.
+    if (this._rendererDelegate === value) {
+      return;
+    }
+
+    // Store the value and schedule an update of the viewport.
+    this._rendererDelegate = value;
     this.update();
   }
 
@@ -232,46 +284,6 @@ class GridViewport extends Widget {
    */
   scrollTo(x: number, y: number): void {
 
-  }
-
-  /**
-   * Get the cell renderer assigned to a given data type.
-   *
-   * @param type - The cell data type of interest.
-   *
-   * @returns The cell renderer for the given type, or `undefined`.
-   */
-  getCellRenderer(type: string): CellRenderer | undefined {
-    return this._cellRenderers[type];
-  }
-
-  /**
-   * Set the cell renderer for a given data type.
-   *
-   * @param type - The cell data type handled by the renderer.
-   *
-   * @param value - The cell renderer to assign for the data type.
-   *
-   * #### Notes
-   * The given renderer will override the previous renderer for the
-   * specified type. If the renderer is `undefined`, the previous
-   * renderer will be removed.
-   */
-  setCellRenderer(name: string, value: CellRenderer | undefined): void {
-    // Do nothing if the renderer does not change.
-    if (this._cellRenderers[name] === value) {
-      return;
-    }
-
-    // Update the cell renderer map.
-    if (value) {
-      this._cellRenderers[name] = value;
-    } else {
-      delete this._cellRenderers[name];
-    }
-
-    // Schedule an update of the viewport
-    this.update();
   }
 
   /**
@@ -460,7 +472,7 @@ class GridViewport extends Widget {
    */
   private _draw(rx: number, ry: number, rw: number, rh: number): void {
     // Draw the void region.
-    this._drawVoidRegion(rx, ry, rw, rh, '#F3F3F3');
+    this._drawVoidRegion(rx, ry, rw, rh);
 
     // Draw the main cell region.
     this._drawMainCellRegion(rx, ry, rw, rh);
@@ -478,7 +490,7 @@ class GridViewport extends Widget {
   /**
    * Draw the void region which intersects the dirty rect.
    */
-  private _drawVoidRegion(rx: number, ry: number, rw: number, rh: number, color: string): void {
+  private _drawVoidRegion(rx: number, ry: number, rw: number, rh: number): void {
     // Fill the dirty rect with the void color.
     this._canvasGC.fillStyle = '#F3F3F3';  // TODO make configurable.
     this._canvasGC.fillRect(rx, ry, rw, rh);
@@ -957,14 +969,12 @@ class GridViewport extends Widget {
    */
   private _drawCells(rgn: Private.ICellRegion): void {
     // Bail if there is no data model.
-    let dataModel = this._dataModel;
-    if (!dataModel) {
+    if (!this._dataModel) {
       return;
     }
 
     // Set up the cell config object for rendering.
-    let config = new Private.CellConfig();
-    config.dataModel = dataModel;
+    let config = new Private.CellConfig(this._dataModel);
 
     // Loop over the columns in the region.
     for (let x = rgn.x, i = 0, n = rgn.colSizes.length; i < n; ++i) {
@@ -991,19 +1001,10 @@ class GridViewport extends Widget {
         let col = rgn.c1 + i;
 
         // Get the data for the cell.
-        let data = dataModel.data(row, col);
+        let data = this._dataModel.data(row, col);
 
         // Skip empty cells.
         if (!data) {
-          y += height;
-          continue;
-        }
-
-        // Look up the renderer for the cell.
-        let renderer = this._cellRenderers[data.type];
-
-        // Skip cells with no renderers.
-        if (!renderer) {
           y += height;
           continue;
         }
@@ -1016,6 +1017,12 @@ class GridViewport extends Widget {
         config.row = row;
         config.col = col;
         config.data = data;
+
+        // Get the renderer for the cell.
+        let renderer = (
+          this._rendererDelegate &&
+          this._rendererDelegate.getRenderer(config)
+        ) || this._defaultRenderer;
 
         // Render the cell.
         renderer.drawCell(this._canvasGC, config);
@@ -1084,9 +1091,10 @@ class GridViewport extends Widget {
     }
 
     // Set the canvas composition mode.
-    let prevMode = this._canvasGC.globalCompositeOperation;
-    // The `multiply` mode is buggy of Firefox on Windows:
+    //
+    // Note - The `multiply` mode is buggy in Firefox on Windows:
     // https://bugzilla.mozilla.org/show_bug.cgi?id=1333090
+    let prevMode = this._canvasGC.globalCompositeOperation;
     this._canvasGC.globalCompositeOperation = 'multiply';  // TODO make configurable?
 
     // Stroke the path with the grid line color.
@@ -1111,7 +1119,8 @@ class GridViewport extends Widget {
   private _buffer: HTMLCanvasElement;
   private _canvasGC: CanvasRenderingContext2D;
   private _bufferGC: CanvasRenderingContext2D;
-  private _cellRenderers = Private.createCellRendererMap();
+  private _defaultRenderer: CellRenderer;
+  private _rendererDelegate: IRendererDelegate | null;
 }
 
 
@@ -1124,7 +1133,25 @@ namespace GridViewport {
    * An options object for initializing a grid viewport.
    */
   export
-  interface IOptions { }
+  interface IOptions {
+    /**
+     * The cell renderer to use for all cells.
+     *
+     * #### Notes
+     * This can be overridden per-cell by the renderer delegate.
+     *
+     * The default value is a `TextRenderer`.
+     */
+    defaultRenderer?: CellRenderer;
+
+    /**
+     * The renderer delegate for resolving cell-specific renderers.
+     *
+     * #### Notes
+     * The default value is `null`.
+     */
+    rendererDelegate?: IRendererDelegate;
+  }
 }
 
 
@@ -1132,20 +1159,6 @@ namespace GridViewport {
  * The namespace for the module implementation details.
  */
 namespace Private {
-  /**
-   * A type alias for a cell renderer map.
-   */
-  export
-  type CellRendererMap = { [name: string]: CellRenderer };
-
-  /**
-   * Create a new renderer map for a grid viewport.
-   */
-  export
-  function createCellRendererMap(): CellRendererMap {
-    return Object.create(null);
-  }
-
   /**
    * Create a new zero-sized canvas element.
    */
@@ -1251,13 +1264,20 @@ namespace Private {
     col = 0;
 
     /**
-     * The data model for the cell.
-     */
-    dataModel: DataModel = null!;
-
-    /**
      * The data value for the cell.
      */
     data: DataModel.ICellData = null!;
+
+    /**
+     * The data model for the cell.
+     */
+    dataModel: DataModel;
+
+    /**
+     * Construct a new cell config.
+     */
+    constructor(dataModel: DataModel) {
+      this.dataModel = dataModel;
+    }
   }
 }
