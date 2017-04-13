@@ -10,5 +10,4 @@ export * from './datamodel';
 export * from './gridviewport';
 export * from './sectionlist';
 export * from './sectionstriping';
-export * from './simplerenderer';
 export * from './textrenderer';
