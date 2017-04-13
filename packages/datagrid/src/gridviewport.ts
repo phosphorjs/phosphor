@@ -14,16 +14,16 @@ import {
 } from '@phosphor/widgets';
 
 import {
+  ICellDelegate
+} from './celldelegate';
+
+import {
   CellRenderer
 } from './cellrenderer';
 
 import {
   DataModel
 } from './datamodel';
-
-import {
-  IRendererDelegate
-} from './rendererdelegate';
 
 import {
   SectionList
@@ -62,7 +62,7 @@ class GridViewport extends Widget {
 
     // Parse the options.
     this._defaultRenderer = options.defaultRenderer || new TextRenderer();
-    this._rendererDelegate = options.rendererDelegate || null;
+    this._cellDelegate = options.cellDelegate || null;
 
     // Set up the row and column sections lists.
     this._rowSections = new SectionList({ baseSize: 20 });
@@ -94,38 +94,38 @@ class GridViewport extends Widget {
    */
   dispose(): void {
     // TODO audit this method
-    this._dataModel = null;
+    this._model = null;
     super.dispose();
   }
 
   /**
    * Get the data model rendered by the viewport.
    */
-  get dataModel(): DataModel | null {
-    return this._dataModel;
+  get model(): DataModel | null {
+    return this._model;
   }
 
   /**
    * Set the data model rendered by the viewport.
    */
-  set dataModel(value: DataModel | null) {
+  set model(value: DataModel | null) {
     // Do nothing if the model does not change.
-    if (this._dataModel === value) {
+    if (this._model === value) {
       return;
     }
 
     // Disconnect the change handler from the old model.
-    if (this._dataModel) {
-      this._dataModel.changed.disconnect(this._onChanged, this);
+    if (this._model) {
+      this._model.changed.disconnect(this._onModelChanged, this);
     }
 
     // Connect the change handler for the new model.
     if (value) {
-      value.changed.connect(this._onChanged, this);
+      value.changed.connect(this._onModelChanged, this);
     }
 
     // Update the internal model reference.
-    this._dataModel = value;
+    this._model = value;
 
     // Clear the section lists.
     this._rowSections.clear();
@@ -209,23 +209,23 @@ class GridViewport extends Widget {
   }
 
   /**
-   * Get the cell renderer delegate for the viewport.
+   * Get the cell delegate for the viewport.
    */
-  get rendererDelegate(): IRendererDelegate | null {
-    return this._rendererDelegate;
+  get cellDelegate(): ICellDelegate | null {
+    return this._cellDelegate;
   }
 
   /**
-   * Set the cell renderer delegate for the viewport.
+   * Set the cell delegate for the viewport.
    */
-  set rendererDelegate(value: IRendererDelegate | null) {
-    // Bail if the renderer does not change.
-    if (this._rendererDelegate === value) {
+  set cellDelegate(value: ICellDelegate | null) {
+    // Bail if the delegate does not change.
+    if (this._cellDelegate === value) {
       return;
     }
 
     // Store the value and schedule an update of the viewport.
-    this._rendererDelegate = value;
+    this._cellDelegate = value;
     this.update();
   }
 
@@ -433,7 +433,7 @@ class GridViewport extends Widget {
   /**
    * A signal handler for the data model `changed` signal.
    */
-  private _onChanged(sender: DataModel, args: DataModel.ChangedArgs): void { }
+  private _onModelChanged(sender: DataModel, args: DataModel.ChangedArgs): void { }
 
   /**
    * Paint the grid content for the given dirty rect.
@@ -585,7 +585,7 @@ class GridViewport extends Widget {
     this._canvasGC.clip();
 
     // Draw the background for the cell region.
-    this._drawBackground(rgn, '#FFFFFF');
+    this._drawBackground(rgn, '#FFFFFF');  // TODO make configurable
 
     // Draw the row striping for the cell region.
     this._drawRowStriping(rgn);
@@ -597,7 +597,7 @@ class GridViewport extends Widget {
     this._drawCells(rgn);
 
     // Draw the grid lines for the cell region.
-    this._drawGridLines(rgn, '#D4D4D4');
+    this._drawGridLines(rgn, '#D4D4D4');  // TODO make configurable
 
     // Restore the gc state.
     this._canvasGC.restore();
@@ -636,11 +636,14 @@ class GridViewport extends Widget {
     let r1 = this._rowSections.sectionIndex(y1 - contentY + this._scrollY);
     let c1 = this._rowHeaderSections.sectionIndex(x1);
     let r2 = this._rowSections.sectionIndex(y2 - contentY + this._scrollY + 1);
-    let c2 = this._rowHeaderSections.sectionIndex(x2);
+    let c2 = this._rowHeaderSections.sectionIndex(x2 + 1);
 
     // Handle a dirty content area larger than the cell count.
     if (r2 < 0) {
       r2 = this._rowSections.sectionCount - 1;
+    }
+    if (c2 < 0) {
+      c2 = this._rowHeaderSections.sectionCount - 1;
     }
 
     // Convert the cell bounds back to visible coordinates.
@@ -684,13 +687,13 @@ class GridViewport extends Widget {
     this._canvasGC.clip();
 
     // Draw the background for the cell region.
-    this._drawBackground(rgn, '#F3F3F3');
+    this._drawBackground(rgn, '#F3F3F3');  // TODO make configurable
 
     // Draw the cell content for the cell region.
     this._drawCells(rgn);
 
     // Draw the grid lines for the cell region.
-    this._drawGridLines(rgn, '#B5B5B5');
+    this._drawGridLines(rgn, '#B5B5B5');  // TODO make configurable
 
     // Restore the gc state.
     this._canvasGC.restore();
@@ -728,10 +731,13 @@ class GridViewport extends Widget {
     // Convert the dirty content bounds into cell bounds.
     let r1 = this._colHeaderSections.sectionIndex(y1);
     let c1 = this._colSections.sectionIndex(x1 - contentX + this._scrollX);
-    let r2 = this._colHeaderSections.sectionIndex(y2);
+    let r2 = this._colHeaderSections.sectionIndex(y2 + 1);
     let c2 = this._colSections.sectionIndex(x2 - contentX + this._scrollX + 1);
 
     // Handle a dirty content area larger than the cell count.
+    if (r2 < 0) {
+      r2 = this._colHeaderSections.sectionCount - 1;
+    }
     if (c2 < 0) {
       c2 = this._colSections.sectionCount - 1;
     }
@@ -777,13 +783,13 @@ class GridViewport extends Widget {
     this._canvasGC.clip();
 
     // Draw the background for the cell region.
-    this._drawBackground(rgn, '#F3F3F3');
+    this._drawBackground(rgn, '#F3F3F3');  // TODO make configurable
 
     // Draw the cell content for the cell region.
     this._drawCells(rgn);
 
     // Draw the grid lines for the cell region.
-    this._drawGridLines(rgn, '#B5B5B5');
+    this._drawGridLines(rgn, '#B5B5B5');  // TODO make configurable
 
     // Restore the gc state.
     this._canvasGC.restore();
@@ -864,13 +870,13 @@ class GridViewport extends Widget {
     this._canvasGC.clip();
 
     // Draw the background for the cell region.
-    this._drawBackground(rgn, '#F3F3F3');
+    this._drawBackground(rgn, '#F3F3F3');  // TODO make configurable
 
     // Draw the cell content for the cell region.
     this._drawCells(rgn);
 
     // Draw the grid lines for the cell region.
-    this._drawGridLines(rgn, '#B5B5B5');
+    this._drawGridLines(rgn, '#B5B5B5');  // TODO make configurable
 
     // Restore the gc state.
     this._canvasGC.restore();
@@ -969,12 +975,12 @@ class GridViewport extends Widget {
    */
   private _drawCells(rgn: Private.ICellRegion): void {
     // Bail if there is no data model.
-    if (!this._dataModel) {
+    if (!this._model) {
       return;
     }
 
     // Set up the cell config object for rendering.
-    let config = new Private.CellConfig(this._dataModel);
+    let config = new Private.CellConfig(this._model);
 
     // Loop over the columns in the region.
     for (let x = rgn.x, i = 0, n = rgn.colSizes.length; i < n; ++i) {
@@ -1001,7 +1007,7 @@ class GridViewport extends Widget {
         let col = rgn.c1 + i;
 
         // Get the data for the cell.
-        let data = this._dataModel.data(row, col);
+        let data = this._model.data(row, col);
 
         // Skip empty cells.
         if (!data) {
@@ -1020,8 +1026,8 @@ class GridViewport extends Widget {
 
         // Get the renderer for the cell.
         let renderer = (
-          this._rendererDelegate &&
-          this._rendererDelegate.getRenderer(config)
+          this._cellDelegate &&
+          this._cellDelegate.getRenderer(config)
         ) || this._defaultRenderer;
 
         // Render the cell.
@@ -1108,9 +1114,11 @@ class GridViewport extends Widget {
   private _scrollX = 0;
   private _scrollY = 0;
   private _inPaint = false;
-  private _dataModel: DataModel | null = null;
+  private _model: DataModel | null = null;
   private _rowStriping: ISectionStriping | null = null;
   private _colStriping: ISectionStriping | null = null;
+  private _defaultRenderer: CellRenderer;
+  private _cellDelegate: ICellDelegate | null;
   private _rowSections: SectionList;
   private _colSections: SectionList;
   private _rowHeaderSections: SectionList;
@@ -1119,8 +1127,6 @@ class GridViewport extends Widget {
   private _buffer: HTMLCanvasElement;
   private _canvasGC: CanvasRenderingContext2D;
   private _bufferGC: CanvasRenderingContext2D;
-  private _defaultRenderer: CellRenderer;
-  private _rendererDelegate: IRendererDelegate | null;
 }
 
 
@@ -1138,19 +1144,19 @@ namespace GridViewport {
      * The cell renderer to use for all cells.
      *
      * #### Notes
-     * This can be overridden per-cell by the renderer delegate.
+     * This can be overridden per-cell by the cell delegate.
      *
      * The default value is a `TextRenderer`.
      */
     defaultRenderer?: CellRenderer;
 
     /**
-     * The renderer delegate for resolving cell-specific renderers.
+     * The cell delegate for resolving cell-specific data.
      *
      * #### Notes
      * The default value is `null`.
      */
-    rendererDelegate?: IRendererDelegate;
+    cellDelegate?: ICellDelegate;
   }
 }
 
@@ -1271,13 +1277,13 @@ namespace Private {
     /**
      * The data model for the cell.
      */
-    dataModel: DataModel;
+    model: DataModel;
 
     /**
      * Construct a new cell config.
      */
-    constructor(dataModel: DataModel) {
-      this.dataModel = dataModel;
+    constructor(model: DataModel) {
+      this.model = model;
     }
   }
 }

@@ -16,6 +16,9 @@
  *
  * If the state of a striping object is changed in-place, the grid must
  * be manually refreshed in order to paint the new effective results.
+ *
+ * A striping object **must not** throw exceptions, and **must not**
+ * mutate the data model or the data grid.
  */
 export
 interface ISectionStriping {

@@ -11,13 +11,14 @@ import {
 
 
 /**
- * An object which resolves cell-specific renderers for a data grid.
+ * An object which resolves cell-specific data for a data grid.
  *
  * #### Notes
- * A renderer delegate **must not** throw exceptions.
+ * A cell delegate **must not** throw exceptions, and **must not**
+ * mutate the data model or the data grid.
  */
 export
-interface IRendererDelegate {
+interface ICellDelegate {
   /**
    * Get the cell renderer for a specific cell.
    *

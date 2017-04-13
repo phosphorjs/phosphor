@@ -5,10 +5,10 @@
 |
 | The full license is in the file LICENSE, distributed with this software.
 |----------------------------------------------------------------------------*/
+export * from './celldelegate';
 export * from './cellrenderer';
 export * from './datamodel';
 export * from './gridviewport';
-export * from './rendererdelegate';
 export * from './sectionlist';
 export * from './sectionstriping';
 export * from './textrenderer';

@@ -24,7 +24,8 @@ import {
  * If the state of a cell renderer is changed in-place, the grid must
  * be manually refreshed in order to paint the new effective results.
  *
- * A cell renderer **must not** throw exceptions.
+ * A cell renderer **must not** throw exceptions, and **must not**
+ * mutate the data model or the data grid.
  */
 export
 abstract class CellRenderer {
@@ -103,33 +104,21 @@ namespace CellRenderer {
 
     /**
      * The data model for the cell.
-     *
-     * #### Notes
-     * The cell renderer **must not** modify the data model.
      */
-    readonly dataModel: DataModel;
+    readonly model: DataModel;
 
     /**
      * The row index of the cell.
-     *
-     * #### Notes
-     * This will be negative if the cell is a column header cell.
      */
     readonly row: number;
 
     /**
      * The column index of the cell.
-     *
-     * #### Notes
-     * This will be negative if the cell is a row header cell.
      */
     readonly col: number;
 
     /**
      * The cell data object for the cell.
-     *
-     * #### Notes
-     * This value is provided by the data model.
      */
     readonly data: DataModel.ICellData;
   }
