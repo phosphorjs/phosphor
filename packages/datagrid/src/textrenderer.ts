@@ -126,7 +126,7 @@ class TextRenderer extends CellRenderer {
       return;
     }
 
-    // TODO - clean up this measurement code.
+    // TODO - clean up this text measurement code.
 
     //
     let tm = gc.measureText(text);
@@ -144,7 +144,6 @@ class TextRenderer extends CellRenderer {
 
     // TODO
     // - font size and style
-    // - measure text and clip as needed.
     // - horizontal and vertical text alignment
 
     // Draw the text for the cell.
