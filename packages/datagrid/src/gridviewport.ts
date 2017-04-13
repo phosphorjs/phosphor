@@ -620,6 +620,158 @@ class GridViewport extends Widget {
   }
 
   /**
+   * Calculate the visible column header region for the dirty rect.
+   *
+   * If no column header cells intersect the rect, `null` is returned.
+   *
+   * The returned cell region is expressed in viewport coordinates and
+   * is aligned to the cell boundaries. This means that the region may
+   * be slightly larger than the dirty rect.
+   */
+  private _calcColHeaderRegion(rx: number, ry: number, rw: number, rh: number): Private.ICellRegion | null {
+    // Fetch the content height.
+    let contentHeight = this._colHeaderSections.totalSize;
+
+    // Bail if the dirty rect is out of range.
+    if (ry >= contentHeight) {
+      return null;
+    }
+
+    // Compute the content X origin.
+    let contentX = this._rowHeaderSections.totalSize;
+
+    // Compute the visible content width.
+    let contentWidth = Math.max(0, this._colSections.totalSize - this._scrollX);
+
+    // Bail if the dirty rect is out of range.
+    if (rx >= contentX + contentWidth) {
+      return null;
+    }
+
+    // Get the upper and lower bounds of the dirty content area.
+    let x1 = Math.max(rx, contentX);
+    let y1 = ry;
+    let x2 = Math.min(rx + rw - 1, contentX + contentWidth - 1);
+    let y2 = Math.min(ry + rh - 1, contentHeight - 1);
+
+    // Convert the dirty content bounds into cell bounds.
+    let r1 = this._colHeaderSections.sectionIndex(y1);
+    let c1 = this._colSections.sectionIndex(x1 - contentX + this._scrollX);
+    let r2 = this._colHeaderSections.sectionIndex(y2);
+    let c2 = this._colSections.sectionIndex(x2 - contentX + this._scrollX + 1);
+
+    // Handle a dirty content area larger than the cell count.
+    if (c2 < 0) {
+      c2 = this._colSections.sectionCount - 1;
+    }
+
+    // Convert the cell bounds back to visible coordinates.
+    let x = this._colSections.sectionOffset(c1) + contentX - this._scrollX;
+    let y = this._colHeaderSections.sectionOffset(r1);
+
+    // Set up the cell region size variables.
+    let width = 0;
+    let height = 0;
+
+    // Allocate the section sizes arrays.
+    let rowSizes = new Array<number>(r2 - r1 + 1);
+    let colSizes = new Array<number>(c2 - c1 + 1);
+
+    // Get the row sizes for the region.
+    for (let j = r1; j <= r2; ++j) {
+      let size = this._colHeaderSections.sectionSize(j);
+      rowSizes[j - r1] = size;
+      height += size;
+    }
+
+    // Get the col sizes for the region.
+    for (let i = c1; i <= c2; ++i) {
+      let size = this._colSections.sectionSize(i);
+      colSizes[i - c1] = size;
+      width += size;
+    }
+
+    // Adjust the start column for the header offset.
+    r1 -= this._colHeaderSections.sectionCount;
+
+    // Return the computed cell region.
+    return { x, y, width, height, r1, c1, rowSizes, colSizes };
+  }
+
+  /**
+   * Calculate the visible corner header region for the dirty rect.
+   *
+   * If no corner header cells intersect the rect, `null` is returned.
+   *
+   * The returned cell region is expressed in viewport coordinates and
+   * is aligned to the cell boundaries. This means that the region may
+   * be slightly larger than the dirty rect.
+   */
+  private _calcCornerHeaderRegion(rx: number, ry: number, rw: number, rh: number): Private.ICellRegion | null {
+    // Fetch the content width height.
+    let contentWidth = this._rowHeaderSections.totalSize;
+    let contentHeight = this._colHeaderSections.totalSize;
+
+    // Bail if the dirty rect is out of range.
+    if (rx >= contentWidth || ry >= contentHeight) {
+      return null;
+    }
+
+    // Get the upper and lower bounds of the dirty content area.
+    let x1 = rx;
+    let y1 = ry;
+    let x2 = Math.min(rx + rw - 1, contentWidth - 1);
+    let y2 = Math.min(ry + rh - 1, contentHeight - 1);
+
+    // Convert the dirty content bounds into cell bounds.
+    let r1 = this._colHeaderSections.sectionIndex(y1);
+    let c1 = this._rowHeaderSections.sectionIndex(x1);
+    let r2 = this._colHeaderSections.sectionIndex(y2 + 1);
+    let c2 = this._rowHeaderSections.sectionIndex(x2 + 1);
+
+    // Handle a dirty content area larger than the cell count.
+    if (r2 < 0) {
+      r2 = this._colHeaderSections.sectionCount - 1;
+    }
+    if (c2 < 0) {
+      c2 = this._rowHeaderSections.sectionCount - 1;
+    }
+
+    // Convert the cell bounds back to visible coordinates.
+    let x = this._rowHeaderSections.sectionOffset(c1);
+    let y = this._colHeaderSections.sectionOffset(r1);
+
+    // Set up the cell region size variables.
+    let width = 0;
+    let height = 0;
+
+    // Allocate the section sizes arrays.
+    let rowSizes = new Array<number>(r2 - r1 + 1);
+    let colSizes = new Array<number>(c2 - c1 + 1);
+
+    // Get the row sizes for the region.
+    for (let j = r1; j <= r2; ++j) {
+      let size = this._colHeaderSections.sectionSize(j);
+      rowSizes[j - r1] = size;
+      height += size;
+    }
+
+    // Get the col sizes for the region.
+    for (let i = c1; i <= c2; ++i) {
+      let size = this._rowHeaderSections.sectionSize(i);
+      colSizes[i - c1] = size;
+      width += size;
+    }
+
+    // Adjust the start row and column for the header offset.
+    r1 -= this._colHeaderSections.sectionCount;
+    c1 -= this._rowHeaderSections.sectionCount;
+
+    // Return the computed cell region.
+    return { x, y, width, height, r1, c1, rowSizes, colSizes };
+  }
+
+  /**
    * Draw the grid content for the given dirty rect.
    *
    * This method computes the diry cell regions and clipping rects,
@@ -669,6 +821,70 @@ class GridViewport extends Widget {
 
     // Get the row header region for the dirty rect.
     rgn = this._calcRowHeaderRegion(rx, ry, rw, rh);
+
+    // Draw the row header region if needed.
+    if (rgn) {
+      // Compute the dirty visible content bounds.
+      let x1 = rx;
+      let y1 = ry;
+      let x2 = Math.min(rx + rw, rgn.x + rgn.width);
+      let y2 = Math.min(ry + rh, rgn.y + rgn.height);
+
+      // Save the gc state.
+      this._canvasGC.save();
+
+      // Clip to the dirty visible content bounds.
+      this._canvasGC.beginPath();
+      this._canvasGC.rect(x1, y1, x2 - x1, y2 - y1);
+      this._canvasGC.clip();
+
+      // Draw the background for the cell region.
+      this._drawBackground(rgn, '#F3F3F3');
+
+      // Draw the cell content for the cell region.
+      this._drawCells(rgn);
+
+      // Draw the grid lines for the cell region.
+      this._drawGridLines(rgn, '#B5B5B5');
+
+      // Restore the gc state.
+      this._canvasGC.restore();
+    }
+
+    // Get the col header region for the dirty rect.
+    rgn = this._calcColHeaderRegion(rx, ry, rw, rh);
+
+    // Draw the row header region if needed.
+    if (rgn) {
+      // Compute the dirty visible content bounds.
+      let x1 = rx;
+      let y1 = ry;
+      let x2 = Math.min(rx + rw, rgn.x + rgn.width);
+      let y2 = Math.min(ry + rh, rgn.y + rgn.height);
+
+      // Save the gc state.
+      this._canvasGC.save();
+
+      // Clip to the dirty visible content bounds.
+      this._canvasGC.beginPath();
+      this._canvasGC.rect(x1, y1, x2 - x1, y2 - y1);
+      this._canvasGC.clip();
+
+      // Draw the background for the cell region.
+      this._drawBackground(rgn, '#F3F3F3');
+
+      // Draw the cell content for the cell region.
+      this._drawCells(rgn);
+
+      // Draw the grid lines for the cell region.
+      this._drawGridLines(rgn, '#B5B5B5');
+
+      // Restore the gc state.
+      this._canvasGC.restore();
+    }
+
+    // Get the corner header region for the dirty rect.
+    rgn = this._calcCornerHeaderRegion(rx, ry, rw, rh);
 
     // Draw the row header region if needed.
     if (rgn) {
