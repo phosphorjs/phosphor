@@ -15,12 +15,16 @@ import {
  *
  * #### Notes
  * A single cell renderer instance can be used to render the contents
- * of multiple cells. It is registered by cell data type with a data
- * grid and used to render those types for the associated data model.
+ * of multiple cells.
  *
  * If the predefined cell renderers are insufficient for a particular
  * use case, a custom cell renderer can be defined which derives from
  * this class.
+ *
+ * If the state of a cell renderer is changed in-place, the grid must
+ * be manually refreshed in order to paint the new effective results.
+ *
+ * A cell renderer **must not** throw exceptions.
  */
 export
 abstract class CellRenderer {
@@ -34,7 +38,7 @@ abstract class CellRenderer {
    * #### Notes
    * The data grid renders cells in column-major order. For performance,
    * it **does not** apply a clipping rect to the cell bounds before it
-   * invokes a renderer, **nor** does it save and restore the `gc`.
+   * invokes the renderer, **nor** does it save and restore the `gc`.
    *
    * The renderer should assume that the fill, stroke, and text style
    * of the `gc` have been arbitrarily modified, but that the rest of
@@ -43,11 +47,7 @@ abstract class CellRenderer {
    * If the cell renderer modifies any `gc` state aside from the fill,
    * stroke, and text style, it **must** restore those changes on exit.
    *
-   * A cell renderer **must not** draw outside of the cell bounding box
-   * and **must not** throw exceptions during rendering.
-   *
-   * If the state of a cell renderer is changed in-place, the grid must
-   * be manually refreshed in order to paint the new effective results.
+   * A cell renderer **must not** draw outside the cell bounding box.
    */
   abstract drawCell(gc: CanvasRenderingContext2D, config: CellRenderer.ICellConfig): void;
 }
