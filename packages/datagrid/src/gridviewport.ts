@@ -535,7 +535,7 @@ class GridViewport extends Widget {
     }
 
     // Return the computed cell region.
-    return { x, y, width, height, r1, c1, r2, c2, rowSizes, colSizes };
+    return { x, y, width, height, r1, c1, rowSizes, colSizes };
   }
 
   /**
@@ -950,16 +950,6 @@ namespace Private {
      * The col index of the first cell in the region.
      */
     c1: number;
-
-    /**
-     * The row index of the last cell in the region.
-     */
-    r2: number;
-
-    /**
-     * The col index of the last cell in the region.
-     */
-    c2: number;
 
     /**
      * The row sizes for the rows in the region.
