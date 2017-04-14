@@ -18,6 +18,7 @@ export * from './menu';
 export * from './menubar';
 export * from './panel';
 export * from './panellayout';
+export * from './scrollbar';
 export * from './splitlayout';
 export * from './splitpanel';
 export * from './stackedlayout';
