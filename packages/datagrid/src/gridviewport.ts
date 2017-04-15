@@ -615,11 +615,16 @@ class GridViewport extends Widget {
       return;
     }
 
-    // Get the content Y origin.
-    let contentY = this._colHeaderSections.totalSize;
-
     // Get the visible content height.
     let contentHeight = Math.max(0, this._rowSections.totalSize - this._scrollY);
+
+    // Bail if there is no visible content.
+    if (contentHeight <= 0) {
+      return;
+    }
+
+    // Get the content Y origin.
+    let contentY = this._colHeaderSections.totalSize;
 
     // Bail if the dirty rect is out of range.
     if (ry >= contentY + contentHeight) {
@@ -711,11 +716,16 @@ class GridViewport extends Widget {
       return;
     }
 
-    // Get the content X origin.
-    let contentX = this._rowHeaderSections.totalSize;
-
     // Get the visible content width.
     let contentWidth = Math.max(0, this._colSections.totalSize - this._scrollX);
+
+    // Bail if there is no visible content.
+    if (contentWidth <= 0) {
+      return;
+    }
+
+    // Get the content X origin.
+    let contentX = this._rowHeaderSections.totalSize;
 
     // Bail if the dirty rect is out of range.
     if (rx >= contentX + contentWidth) {
@@ -802,6 +812,11 @@ class GridViewport extends Widget {
     // Get the visible content dimensions.
     let contentWidth = this._rowHeaderSections.totalSize;
     let contentHeight = this._colHeaderSections.totalSize;
+
+    // Bail if there is no visible content.
+    if (contentWidth <= 0 || contentHeight <= 0) {
+      return;
+    }
 
     // Bail if the dirty rect is out of range.
     if (rx >= contentWidth || ry >= contentHeight) {
