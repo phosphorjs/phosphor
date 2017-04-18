@@ -49,6 +49,6 @@
 }
 
 
-.p-ScrollBar-thumb:not(.p-mod-active) {
-  transition: left 150ms ease, top 150ms ease, transform 150ms ease;
+.p-ScrollBar-thumb.p-mod-hidden {
+  display: none !important;
 }

@@ -10,11 +10,15 @@ import {
 } from '@phosphor/disposable';
 
 import {
+  ElementExt
+} from '@phosphor/domutils';
+
+import {
   Drag
 } from '@phosphor/dragdrop';
 
 import {
-  Message, MessageLoop
+  Message
 } from '@phosphor/messaging';
 
 import {
@@ -40,20 +44,51 @@ class ScrollBar extends Widget {
     super({ node: Private.createNode() });
     this.addClass('p-ScrollBar');
     this.setFlag(Widget.Flag.DisallowLayout);
+
+    // Set the orientation.
     this._orientation = options.orientation || 'vertical';
     this.dataset['orientation'] = this._orientation;
+
+    // Parse the rest of the options.
+    if (options.maxValue !== undefined) {
+      this._maxValue = Math.max(0, options.maxValue);
+    }
+    if (options.pageSize !== undefined) {
+      this._pageSize = Math.max(0, options.pageSize);
+    }
+    if (options.value !== undefined) {
+      this._value = Math.max(0, Math.min(options.value, this._maxValue));
+    }
   }
 
   /**
-   * A signal emitted when the user moves the scroll bar thumb.
-   *
-   * The signal payload is the current `value` of the scroll bar.
+   * A signal emitted when the user moves the scroll thumb.
    *
    * #### Notes
-   * This signal is not emitted when `value` is changed procedurally.
+   * The payload is the current value of the scroll bar.
    */
-  get scrolled(): ISignal<this, number> {
-    return this._scrolled;
+  get thumbMoved(): ISignal<this, number> {
+    return this._thumbMoved;
+  }
+
+  /**
+   * A signal emitted when the user clicks a step button.
+   *
+   * #### Notes
+   * The payload is whether a decrease or increase is requested.
+   */
+  get stepRequested(): ISignal<this, 'decrement' | 'increment'> {
+    return this._stepRequested;
+  }
+
+  /**
+   * A signal emitted when the user clicks the scroll track.
+   *
+   * #### Notes
+   * The payload is whether a decrease or increase is requested.
+   */
+  get pageRequested(): ISignal<this, 'decrement' | 'increment'> {
+    return this._pageRequested;
   }
 
   /**
@@ -85,9 +120,6 @@ class ScrollBar extends Widget {
 
   /**
    * Get the current value of the scroll bar.
-   *
-   * #### Notes
-   * The value is represented as a percentage between `0` and `1`.
    */
   get value(): number {
     return this._value;
@@ -97,11 +129,11 @@ class ScrollBar extends Widget {
    * Set the current value of the scroll bar.
    *
    * #### Notes
-   * The value is represented as a percentage between `0` and `1`.
+   * The value will be clamped to the range `[0, maxValue]`.
    */
   set value(value: number) {
     // Clamp the value to the allowable range.
-    value = Math.max(0, Math.min(value, 1));
+    value = Math.max(0, Math.min(value, this._maxValue));
 
     // Do nothing if the value does not change.
     if (this._value === value) {
@@ -116,12 +148,44 @@ class ScrollBar extends Widget {
   }
 
   /**
+   * Get the maximum value of the scroll bar.
+   */
+  get maxValue(): number {
+    return this._maxValue;
+  }
+
+  /**
+   * Set the maximum value of the scroll bar.
+   *
+   * #### Notes
+   * The max size will be clamped to the range `[0, Infinity]`.
+   */
+  set maxValue(value: number) {
+    // Clamp the value to the allowable range.
+    value = Math.max(0, value);
+
+    // Do nothing if the value does not change.
+    if (this._maxValue === value) {
+      return;
+    }
+
+    // Update the internal values.
+    this._maxValue = value;
+
+    // Clamp the current value to the new range.
+    this._value = Math.min(this._value, value);
+
+    // Schedule an update the scroll bar.
+    this.update();
+  }
+
+  /**
    * Get the page size of the scroll bar.
    *
    * #### Notes
-   * The page size controls the size of the scroll thumb. It should be
-   * set to a value which represents a single "page" of content, as a
-   * percentage between `0` and `1`.
+   * The page size is the amount of visible content in the scrolled
+   * region, expressed in data units. It determines the size of the
+   * scroll bar thumb.
    */
   get pageSize(): number {
     return this._pageSize;
@@ -131,13 +195,14 @@ class ScrollBar extends Widget {
    * Set the page size of the scroll bar.
    *
    * #### Notes
-   * The page size controls the size of the scroll thumb. It should be
-   * set to a value which represents a single "page" of content, as a
-   * percentage between `0` and `1`.
+   * If the page size is `>= maxValue`, the scroll bar thumb will not
+   * be displayed.
+   *
+   * The page size will be clamped to the range `[0, Infinity]`.
    */
   set pageSize(value: number) {
     // Clamp the page size to the allowable range.
-    value = Math.max(0, Math.min(value, 1));
+    value = Math.max(0, value);
 
     // Do nothing if the value does not change.
     if (this._pageSize === value) {
@@ -152,22 +217,22 @@ class ScrollBar extends Widget {
   }
 
   /**
-   * The scroll bar increment button node.
-   *
-   * #### Notes
-   * Modifying this node directly can lead to undefined behavior.
-   */
-  get incrementButtonNode(): HTMLDivElement {
-    return this.node.getElementsByClassName('p-ScrollBar-button')[0] as HTMLDivElement;
-  }
-
-  /**
    * The scroll bar decrement button node.
    *
    * #### Notes
    * Modifying this node directly can lead to undefined behavior.
    */
-  get decrementButtonNode(): HTMLDivElement {
+  get decrementNode(): HTMLDivElement {
+    return this.node.getElementsByClassName('p-ScrollBar-button')[0] as HTMLDivElement;
+  }
+
+  /**
+   * The scroll bar increment button node.
+   *
+   * #### Notes
+   * Modifying this node directly can lead to undefined behavior.
+   */
+  get incrementNode(): HTMLDivElement {
     return this.node.getElementsByClassName('p-ScrollBar-button')[1] as HTMLDivElement;
   }
 
@@ -198,7 +263,7 @@ class ScrollBar extends Widget {
    *
    * #### Notes
    * This method implements the DOM `EventListener` interface and is
-   * called in response to events on the tab bar's DOM node.
+   * called in response to events on the scroll bar's DOM node.
    *
    * This should not be called directly by user code.
    */
@@ -236,27 +301,48 @@ class ScrollBar extends Widget {
    */
   protected onAfterDetach(msg: Message): void {
     this.node.removeEventListener('mousedown', this);
+    this._releaseMouse();
   }
 
   /**
    * A method invoked on an 'update-request' message.
    */
   protected onUpdateRequest(msg: Message): void {
-    let value = this._value;
-    let pageSize = this._pageSize;
-    let style = this.thumbNode.style;
-    if (this._orientation === 'horizontal') {
-      style.top = '';
-      style.height = '';
-      style.left = `${value * 100}%`;
-      style.width = `${pageSize * 100}%`;
-      style.transform = `translate(${-value * 100}%, 0%)`;
+    // Fetch the thumb node.
+    let thumbNode = this.thumbNode;
+
+    // Update the visibility of the thumb node.
+    if (this._pageSize >= this._maxValue) {
+      thumbNode.classList.add('p-mod-hidden');
     } else {
-      style.left = '';
-      style.width = '';
-      style.top = `${value * 100}%`;
-      style.height = `${pageSize * 100}%`;
-      style.transform = `translate(0%, ${-value * 100}%)`;
+      thumbNode.classList.remove('p-mod-hidden');
+    }
+
+    // Bail early if the thumb is hidden.
+    if (this._pageSize >= this._maxValue) {
+      return;
+    }
+
+    // Convert the value and page size into percentages.
+    let value = this._value * 100 / this._maxValue;
+    let pageSize = this._pageSize * 100 / this._maxValue;
+
+    // Fetch the thumb style.
+    let thumbStyle = thumbNode.style;
+
+    // Update the thumb style for the current orientation.
+    if (this._orientation === 'horizontal') {
+      thumbStyle.top = '';
+      thumbStyle.height = '';
+      thumbStyle.left = `${value}%`;
+      thumbStyle.width = `${pageSize}%`;
+      thumbStyle.transform = `translate(${-value}%, 0%)`;
+    } else {
+      thumbStyle.left = '';
+      thumbStyle.width = '';
+      thumbStyle.top = `${value}%`;
+      thumbStyle.height = `${pageSize}%`;
+      thumbStyle.transform = `translate(0%, ${-value}%)`;
     }
   }
 
@@ -275,16 +361,29 @@ class ScrollBar extends Widget {
   }
 
   /**
-   * Handle the `'mousedown'` event for the tab bar.
+   * Handle the `'mousedown'` event for the scroll bar.
    */
   private _evtMouseDown(event: MouseEvent): void {
     // Do nothing if it's not a left mouse press.
-    if (event.button !== 0 || this._pressData) {
+    if (event.button !== 0) {
       return;
     }
 
-    // Do nothing if a drag is in progress.
+    // Do nothing if the mouse is already captured.
     if (this._pressData) {
+      return;
+    }
+
+    // Do nothing if there is no scrollable content.
+    if (this._pageSize >= this._maxValue) {
+      return;
+    }
+
+    // Find the pressed scroll bar part.
+    let part = Private.findPart(this, event.target as HTMLElement);
+
+    // Do nothing if the part is not of interest.
+    if (!part) {
       return;
     }
 
@@ -292,83 +391,101 @@ class ScrollBar extends Widget {
     event.preventDefault();
     event.stopPropagation();
 
-    // Look up the thumb node.
-    let thumbNode = this.thumbNode;
+    // Override the mouse cursor.
+    let override = Drag.overrideCursor('default');
 
-    // If the press was on the thumb node, start the drag.
-    if (thumbNode.contains(event.target as HTMLElement)) {
-      // Get the offset from the beginning of the thumb.
-      let delta: number;
+    // Set up the press data.
+    this._pressData = {
+      part, override, delta: -1,
+      mouseX: event.clientX,
+      mouseY: event.clientY
+    };
+
+    // Add the extra event listeners.
+    document.addEventListener('mousemove', this, true);
+    document.addEventListener('mouseup', this, true);
+    document.addEventListener('keydown', this, true);
+    document.addEventListener('contextmenu', this, true);
+
+    // Handle a thumb press.
+    if (part === 'thumb') {
+      // Fetch the thumb node.
+      let thumbNode = this.thumbNode;
+
+      // Fetch the client rect for the thumb.
+      let rect = thumbNode.getBoundingClientRect();
+
+      // Update the press data delta for the current orientation.
       if (this._orientation === 'horizontal') {
-        delta = event.clientX - thumbNode.getBoundingClientRect().left;
+        this._pressData.delta = event.clientX - rect.left;
       } else {
-        delta = event.clientY - thumbNode.getBoundingClientRect().top;
+        this._pressData.delta = event.clientY - rect.top;
       }
 
-      // Set up the cursor override.
-      let override = Drag.overrideCursor('default');
-
-      // Set up the press data.
-      this._pressData = { delta, override };
-
-      // Add the active class to the scroll thumb.
+      // Add the active class to the thumb node.
       thumbNode.classList.add('p-mod-active');
 
-      // Add the extra event listeners.
-      document.addEventListener('mousemove', this, true);
-      document.addEventListener('mouseup', this, true);
-      document.addEventListener('keydown', this, true);
-      document.addEventListener('contextmenu', this, true);
-
-      // There is nothing left to do.
+      // Finished.
       return;
     }
 
-    // Look up the track node.
-    let trackNode = this.trackNode;
+    // Handle a track press.
+    if (part === 'track') {
+      // Fetch the client rect for the thumb.
+      let rect = this.thumbNode.getBoundingClientRect();
 
-    // If the press was on the track node, page the scroll bar.
-    if (trackNode.contains(event.target as HTMLElement)) {
-      // Determine whether the press was before the thumb.
-      let before: boolean;
+      // Determine the direction for the page request.
+      let dir: 'decrement' | 'increment';
       if (this._orientation === 'horizontal') {
-        before = event.clientX < thumbNode.getBoundingClientRect().left;
+        dir = event.clientX < rect.left ? 'decrement' : 'increment';
       } else {
-        before = event.clientY < thumbNode.getBoundingClientRect().top;
+        dir = event.clientY < rect.top ? 'decrement' : 'increment';
       }
 
-      // Compute the new paged value.
-      let value: number;
-      if (before) {
-        value = this._value - this._pageSize;
-      } else {
-        value = this._value + this._pageSize;
-      }
+      // Start the repeat timer.
+      this._repeatTimer = setTimeout(this._onRepeat, 350);
 
-      // Clamp the value to the allowable range.
-      value = Math.max(0, Math.min(value, 1));
+      // Emit the page requested signal.
+      this._pageRequested.emit(dir);
 
-      // Bail if the value does not change.
-      if (this._value === value) {
-        return;
-      }
+      // Finished.
+      return;
+    }
 
-      // Silently update the internal value.
-      this._value = value;
+    // Handle a decrement button press.
+    if (part === 'decrement') {
+      // Add the active class to the decrement node.
+      this.decrementNode.classList.add('p-mod-active');
 
-      // Emit the `scrolled` signal and let the consumers update.
-      this._scrolled.emit(value);
+      // Start the repeat timer.
+      this._repeatTimer = setTimeout(this._onRepeat, 350);
 
-      // Immediately update the scroll thumb position.
-      MessageLoop.sendMessage(this, Widget.Msg.UpdateRequest);
+      // Emit the step requested signal.
+      this._stepRequested.emit('decrement');
 
-      // There is nothing left to do.
+      // Finished.
+      return;
+    }
+
+    // Handle an increment button press.
+    if (part === 'increment') {
+
+      // Add the active class to the increment node.
+      this.incrementNode.classList.add('p-mod-active');
+
+      // Start the repeat timer.
+      this._repeatTimer = setTimeout(this._onRepeat, 350);
+
+      // Emit the step requested signal.
+      this._stepRequested.emit('increment');
+
+      // Finished.
       return;
     }
   }
 
   /**
-   * Handle the `'mousemove'` event for the tab bar.
+   * Handle the `'mousemove'` event for the scroll bar.
    */
   private _evtMouseMove(event: MouseEvent): void {
     // Do nothing if no drag is in progress.
@@ -380,39 +497,54 @@ class ScrollBar extends Widget {
     event.preventDefault();
     event.stopPropagation();
 
-    // Get the client rect for the track node.
+    // Update the mouse position.
+    this._pressData.mouseX = event.clientX;
+    this._pressData.mouseY = event.clientY;
+
+    // Bail if the thumb is hidden.
+    if (this._pageSize >= this._maxValue) {
+      return;
+    }
+
+    // Bail if the thumb is not being dragged.
+    if (this._pressData.part !== 'thumb') {
+      return;
+    }
+
+    // Get the client rect for the thumb and track.
+    let thumbRect = this.thumbNode.getBoundingClientRect();
     let trackRect = this.trackNode.getBoundingClientRect();
 
     // Compute the desired value for the thumb.
     let value: number;
     if (this._orientation === 'horizontal') {
       let edge = event.clientX - trackRect.left - this._pressData.delta;
-      value = edge / (trackRect.width - trackRect.width * this._pageSize);
+      value = edge * this._maxValue / (trackRect.width - thumbRect.width);
     } else {
       let edge = event.clientY - trackRect.top - this._pressData.delta;
-      value = edge / (trackRect.height - trackRect.height * this._pageSize);
+      value = edge * this._maxValue / (trackRect.height - thumbRect.height);
     }
 
-    // Clamp the value to the allowable range.
-    value = Math.max(0, Math.min(value, 1));
+    // Clamp the value to the allowed range.
+    value = Math.max(0, Math.min(value, this._maxValue));
 
     // Bail if the value does not change.
     if (this._value === value) {
       return;
     }
 
-    // Silently update the internal value.
+    // Update the internal value.
     this._value = value;
 
-    // Emit the `scrolled` signal and let the consumers update.
-    this._scrolled.emit(value);
+    // Schedule an update of the scroll bar.
+    this.update();
 
-    // Immediately update the scroll thumb position.
-    MessageLoop.sendMessage(this, Widget.Msg.UpdateRequest);
+    // Emit the thumb moved signal.
+    this._thumbMoved.emit(value);
   }
 
   /**
-   * Handle the `'mouseup'` event for the tab bar.
+   * Handle the `'mouseup'` event for the scroll bar.
    */
   private _evtMouseUp(event: MouseEvent): void {
     // Do nothing if it's not a left mouse release.
@@ -429,13 +561,17 @@ class ScrollBar extends Widget {
   }
 
   /**
-   * Release the mouse and restore the non-dragged tab positions.
+   * Release the mouse and restore the node states.
    */
   private _releaseMouse(): void {
-    // Do nothing if no drag is in progress.
+    // Bail if there is no press data.
     if (!this._pressData) {
       return;
     }
+
+    // Clear the repeat timer.
+    clearTimeout(this._repeatTimer);
+    this._repeatTimer = -1;
 
     // Clear the press data.
     this._pressData.override.dispose();
@@ -447,15 +583,115 @@ class ScrollBar extends Widget {
     document.removeEventListener('keydown', this, true);
     document.removeEventListener('contextmenu', this, true);
 
-    // Remove the active class from the scroll thumb.
+    // Remove the active classes from the nodes.
     this.thumbNode.classList.remove('p-mod-active');
+    this.decrementNode.classList.remove('p-mod-active');
+    this.incrementNode.classList.remove('p-mod-active');
   }
 
+  /**
+   * A timeout callback for repeating the mouse press.
+   */
+  private _onRepeat = () => {
+    // Clear the repeat timer id.
+    this._repeatTimer = -1;
+
+    // Bail if the mouse has been released.
+    if (!this._pressData) {
+      return;
+    }
+
+    // Look up the part that was pressed.
+    let part = this._pressData.part;
+
+    // Bail if the thumb was pressed.
+    if (part === 'thumb') {
+      return;
+    }
+
+    // Bail if there is no scrollable content.
+    if (this._pageSize >= this._maxValue) {
+      return;
+    }
+
+    // Schedule the timer for another repeat.
+    this._repeatTimer = setTimeout(this._onRepeat, 20);
+
+    // Get the current mouse position.
+    let mouseX = this._pressData.mouseX;
+    let mouseY = this._pressData.mouseY;
+
+    // Handle a decrement button repeat.
+    if (part === 'decrement') {
+      // Bail if the mouse is not over the button.
+      if (!ElementExt.hitTest(this.decrementNode, mouseX, mouseY)) {
+        return;
+      }
+
+      // Emit the step requested signal.
+      this._stepRequested.emit('decrement');
+
+      // Finished.
+      return;
+    }
+
+    // Handle an increment button repeat.
+    if (part === 'increment') {
+      // Bail if the mouse is not over the button.
+      if (!ElementExt.hitTest(this.incrementNode, mouseX, mouseY)) {
+        return;
+      }
+
+      // Emit the step requested signal.
+      this._stepRequested.emit('increment');
+
+      // Finished.
+      return;
+    }
+
+    // Handle a track repeat.
+    if (part === 'track') {
+      // Bail if the mouse is not over the track.
+      if (!ElementExt.hitTest(this.trackNode, mouseX, mouseY)) {
+        return;
+      }
+
+      // Fetch the thumb node.
+      let thumbNode = this.thumbNode;
+
+      // Bail if the mouse is over the thumb.
+      if (ElementExt.hitTest(thumbNode, mouseX, mouseY)) {
+        return;
+      }
+
+      // Fetch the client rect for the thumb.
+      let rect = thumbNode.getBoundingClientRect();
+
+      // Determine the direction for the page request.
+      let dir: 'decrement' | 'increment';
+      if (this._orientation === 'horizontal') {
+        dir = mouseX < rect.left ? 'decrement' : 'increment';
+      } else {
+        dir = mouseY < rect.top ? 'decrement' : 'increment';
+      }
+
+      // Emit the page requested signal.
+      this._pageRequested.emit(dir);
+
+      // Finished.
+      return;
+    }
+  };
+
   private _value = 0;
-  private _pageSize = 0;
+  private _pageSize = 10;
+  private _maxValue = 100;
+  private _repeatTimer = -1;
   private _orientation: ScrollBar.Orientation;
-  private _scrolled = new Signal<this, number>(this);
   private _pressData: Private.IPressData | null = null;
+  private _thumbMoved = new Signal<this, number>(this);
+  private _stepRequested = new Signal<this, 'decrement' | 'increment'>(this);
+  private _pageRequested = new Signal<this, 'decrement' | 'increment'>(this);
 }
 
 
@@ -481,6 +717,27 @@ namespace ScrollBar {
      * The default is `'vertical'`.
      */
     orientation?: Orientation;
+
+    /**
+     * The value for the scroll bar.
+     *
+     * The default is `0`.
+     */
+    value?: number;
+
+    /**
+     * The maximum value for the scroll bar.
+     *
+     * The default is `100`.
+     */
+    maxValue?: number;
+
+    /**
+     * The page size for the scroll bar.
+     *
+     * The default is `10`.
+     */
+    pageSize?: number;
   }
 }
 
@@ -489,7 +746,44 @@ namespace ScrollBar {
  * The namespace for the module implementation details.
  */
 namespace Private {
-   /**
+  /**
+   * A type alias for the parts of a scroll bar.
+   */
+  export
+  type ScrollBarPart = 'thumb' | 'track' | 'decrement' | 'increment';
+
+  /**
+   * An object which holds mouse press data.
+   */
+  export
+  interface IPressData {
+    /**
+     * The scroll bar part which was pressed.
+     */
+    part: ScrollBarPart;
+
+    /**
+     * The offset of the press in thumb coordinates, or -1.
+     */
+    delta: number;
+
+    /**
+     * The disposable which will clear the override cursor.
+     */
+    override: IDisposable;
+
+    /**
+     * The current X position of the mouse.
+     */
+    mouseX: number;
+
+    /**
+     * The current Y position of the mouse.
+     */
+    mouseY: number;
+  }
+
+  /**
    * Create the DOM node for a scroll bar.
    */
   export
@@ -513,18 +807,31 @@ namespace Private {
   }
 
   /**
-   * An object which holds mouse press data.
+   * Find the scroll bar part which contains the given target.
    */
   export
-  interface IPressData {
-    /**
-     * The offset of the press in thumb coordinates.
-     */
-    delta: number;
+  function findPart(scrollBar: ScrollBar, target: HTMLElement): ScrollBarPart | null {
+    // Test the thumb.
+    if (scrollBar.thumbNode.contains(target)) {
+      return 'thumb';
+    }
 
-    /**
-     * The disposable which will clear the override cursor.
-     */
-    override: IDisposable;
+    // Test the track.
+    if (scrollBar.trackNode.contains(target)) {
+      return 'track';
+    }
+
+    // Test the decrement button.
+    if (scrollBar.decrementNode.contains(target)) {
+      return 'decrement';
+    }
+
+    // Test the increment button.
+    if (scrollBar.incrementNode.contains(target)) {
+      return 'increment';
+    }
+
+    // Indicate no match.
+    return null;
   }
 }
