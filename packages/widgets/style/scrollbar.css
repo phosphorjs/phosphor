@@ -47,8 +47,3 @@
   box-sizing: border-box;
   position: absolute;
 }
-
-
-.p-ScrollBar-thumb.p-mod-hidden {
-  display: none !important;
-}

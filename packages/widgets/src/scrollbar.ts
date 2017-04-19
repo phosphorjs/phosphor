@@ -50,14 +50,14 @@ class ScrollBar extends Widget {
     this.dataset['orientation'] = this._orientation;
 
     // Parse the rest of the options.
-    if (options.maxValue !== undefined) {
-      this._maxValue = Math.max(0, options.maxValue);
+    if (options.maximum !== undefined) {
+      this._maximum = Math.max(0, options.maximum);
     }
-    if (options.pageSize !== undefined) {
-      this._pageSize = Math.max(0, options.pageSize);
+    if (options.page !== undefined) {
+      this._page = Math.max(0, options.page);
     }
     if (options.value !== undefined) {
-      this._value = Math.max(0, Math.min(options.value, this._maxValue));
+      this._value = Math.max(0, Math.min(options.value, this._maximum));
     }
   }
 
@@ -129,11 +129,11 @@ class ScrollBar extends Widget {
    * Set the current value of the scroll bar.
    *
    * #### Notes
-   * The value will be clamped to the range `[0, maxValue]`.
+   * The value will be clamped to the range `[0, maximum]`.
    */
   set value(value: number) {
     // Clamp the value to the allowable range.
-    value = Math.max(0, Math.min(value, this._maxValue));
+    value = Math.max(0, Math.min(value, this._maximum));
 
     // Do nothing if the value does not change.
     if (this._value === value) {
@@ -148,10 +148,44 @@ class ScrollBar extends Widget {
   }
 
   /**
+   * Get the page size of the scroll bar.
+   *
+   * #### Notes
+   * The page size is the amount of visible content in the scrolled
+   * region, expressed in data units. It determines the size of the
+   * scroll bar thumb.
+   */
+  get page(): number {
+    return this._page;
+  }
+
+  /**
+   * Set the page size of the scroll bar.
+   *
+   * #### Notes
+   * The page size will be clamped to the range `[0, Infinity]`.
+   */
+  set page(value: number) {
+    // Clamp the page size to the allowable range.
+    value = Math.max(0, value);
+
+    // Do nothing if the value does not change.
+    if (this._page === value) {
+      return;
+    }
+
+    // Update the internal page size.
+    this._page = value;
+
+    // Schedule an update the scroll bar.
+    this.update();
+  }
+
+  /**
    * Get the maximum value of the scroll bar.
    */
-  get maxValue(): number {
-    return this._maxValue;
+  get maximum(): number {
+    return this._maximum;
   }
 
   /**
@@ -160,57 +194,20 @@ class ScrollBar extends Widget {
    * #### Notes
    * The max size will be clamped to the range `[0, Infinity]`.
    */
-  set maxValue(value: number) {
+  set maximum(value: number) {
     // Clamp the value to the allowable range.
     value = Math.max(0, value);
 
     // Do nothing if the value does not change.
-    if (this._maxValue === value) {
+    if (this._maximum === value) {
       return;
     }
 
     // Update the internal values.
-    this._maxValue = value;
+    this._maximum = value;
 
     // Clamp the current value to the new range.
     this._value = Math.min(this._value, value);
-
-    // Schedule an update the scroll bar.
-    this.update();
-  }
-
-  /**
-   * Get the page size of the scroll bar.
-   *
-   * #### Notes
-   * The page size is the amount of visible content in the scrolled
-   * region, expressed in data units. It determines the size of the
-   * scroll bar thumb.
-   */
-  get pageSize(): number {
-    return this._pageSize;
-  }
-
-  /**
-   * Set the page size of the scroll bar.
-   *
-   * #### Notes
-   * If the page size is `>= maxValue`, the scroll bar thumb will not
-   * be displayed.
-   *
-   * The page size will be clamped to the range `[0, Infinity]`.
-   */
-  set pageSize(value: number) {
-    // Clamp the page size to the allowable range.
-    value = Math.max(0, value);
-
-    // Do nothing if the value does not change.
-    if (this._pageSize === value) {
-      return;
-    }
-
-    // Update the internal page size.
-    this._pageSize = value;
 
     // Schedule an update the scroll bar.
     this.update();
@@ -308,40 +305,29 @@ class ScrollBar extends Widget {
    * A method invoked on an 'update-request' message.
    */
   protected onUpdateRequest(msg: Message): void {
-    // Fetch the thumb node.
-    let thumbNode = this.thumbNode;
+    // Convert the value and page into percentages.
+    let value = this._value * 100 / this._maximum;
+    let page = this._page * 100 / (this._page + this._maximum);
 
-    // Update the visibility of the thumb node.
-    if (this._pageSize >= this._maxValue) {
-      thumbNode.classList.add('p-mod-hidden');
-    } else {
-      thumbNode.classList.remove('p-mod-hidden');
-    }
-
-    // Bail early if the thumb is hidden.
-    if (this._pageSize >= this._maxValue) {
-      return;
-    }
-
-    // Convert the value and page size into percentages.
-    let value = this._value * 100 / this._maxValue;
-    let pageSize = this._pageSize * 100 / this._maxValue;
+    // Clamp the value and page to the relevant range.
+    value = Math.max(0, Math.min(value, 100));
+    page = Math.max(0, Math.min(page, 100));
 
     // Fetch the thumb style.
-    let thumbStyle = thumbNode.style;
+    let thumbStyle = this.thumbNode.style;
 
     // Update the thumb style for the current orientation.
     if (this._orientation === 'horizontal') {
       thumbStyle.top = '';
       thumbStyle.height = '';
       thumbStyle.left = `${value}%`;
-      thumbStyle.width = `${pageSize}%`;
+      thumbStyle.width = `${page}%`;
       thumbStyle.transform = `translate(${-value}%, 0%)`;
     } else {
       thumbStyle.left = '';
       thumbStyle.width = '';
       thumbStyle.top = `${value}%`;
-      thumbStyle.height = `${pageSize}%`;
+      thumbStyle.height = `${page}%`;
       thumbStyle.transform = `translate(0%, ${-value}%)`;
     }
   }
@@ -371,11 +357,6 @@ class ScrollBar extends Widget {
 
     // Do nothing if the mouse is already captured.
     if (this._pressData) {
-      return;
-    }
-
-    // Do nothing if there is no scrollable content.
-    if (this._pageSize >= this._maxValue) {
       return;
     }
 
@@ -413,13 +394,13 @@ class ScrollBar extends Widget {
       let thumbNode = this.thumbNode;
 
       // Fetch the client rect for the thumb.
-      let rect = thumbNode.getBoundingClientRect();
+      let thumbRect = thumbNode.getBoundingClientRect();
 
       // Update the press data delta for the current orientation.
       if (this._orientation === 'horizontal') {
-        this._pressData.delta = event.clientX - rect.left;
+        this._pressData.delta = event.clientX - thumbRect.left;
       } else {
-        this._pressData.delta = event.clientY - rect.top;
+        this._pressData.delta = event.clientY - thumbRect.top;
       }
 
       // Add the active class to the thumb node.
@@ -432,14 +413,14 @@ class ScrollBar extends Widget {
     // Handle a track press.
     if (part === 'track') {
       // Fetch the client rect for the thumb.
-      let rect = this.thumbNode.getBoundingClientRect();
+      let thumbRect = this.thumbNode.getBoundingClientRect();
 
       // Determine the direction for the page request.
       let dir: 'decrement' | 'increment';
       if (this._orientation === 'horizontal') {
-        dir = event.clientX < rect.left ? 'decrement' : 'increment';
+        dir = event.clientX < thumbRect.left ? 'decrement' : 'increment';
       } else {
-        dir = event.clientY < rect.top ? 'decrement' : 'increment';
+        dir = event.clientY < thumbRect.top ? 'decrement' : 'increment';
       }
 
       // Start the repeat timer.
@@ -501,11 +482,6 @@ class ScrollBar extends Widget {
     this._pressData.mouseX = event.clientX;
     this._pressData.mouseY = event.clientY;
 
-    // Bail if the thumb is hidden.
-    if (this._pageSize >= this._maxValue) {
-      return;
-    }
-
     // Bail if the thumb is not being dragged.
     if (this._pressData.part !== 'thumb') {
       return;
@@ -515,18 +491,22 @@ class ScrollBar extends Widget {
     let thumbRect = this.thumbNode.getBoundingClientRect();
     let trackRect = this.trackNode.getBoundingClientRect();
 
-    // Compute the desired value for the thumb.
-    let value: number;
+    // Fetch the scroll geometry based on the orientation.
+    let trackPos: number;
+    let trackSpan: number;
     if (this._orientation === 'horizontal') {
-      let edge = event.clientX - trackRect.left - this._pressData.delta;
-      value = edge * this._maxValue / (trackRect.width - thumbRect.width);
+      trackPos = event.clientX - trackRect.left - this._pressData.delta;
+      trackSpan = trackRect.width - thumbRect.width;
     } else {
-      let edge = event.clientY - trackRect.top - this._pressData.delta;
-      value = edge * this._maxValue / (trackRect.height - thumbRect.height);
+      trackPos = event.clientY - trackRect.top - this._pressData.delta;
+      trackSpan = trackRect.height - thumbRect.height;
     }
 
+    // Compute the desired value from the scroll geometry.
+    let value = trackSpan === 0 ? 0 : trackPos * this._maximum / trackSpan;
+
     // Clamp the value to the allowed range.
-    value = Math.max(0, Math.min(value, this._maxValue));
+    value = Math.max(0, Math.min(value, this._maximum));
 
     // Bail if the value does not change.
     if (this._value === value) {
@@ -609,11 +589,6 @@ class ScrollBar extends Widget {
       return;
     }
 
-    // Bail if there is no scrollable content.
-    if (this._pageSize >= this._maxValue) {
-      return;
-    }
-
     // Schedule the timer for another repeat.
     this._repeatTimer = setTimeout(this._onRepeat, 20);
 
@@ -665,14 +640,14 @@ class ScrollBar extends Widget {
       }
 
       // Fetch the client rect for the thumb.
-      let rect = thumbNode.getBoundingClientRect();
+      let thumbRect = thumbNode.getBoundingClientRect();
 
       // Determine the direction for the page request.
       let dir: 'decrement' | 'increment';
       if (this._orientation === 'horizontal') {
-        dir = mouseX < rect.left ? 'decrement' : 'increment';
+        dir = mouseX < thumbRect.left ? 'decrement' : 'increment';
       } else {
-        dir = mouseY < rect.top ? 'decrement' : 'increment';
+        dir = mouseY < thumbRect.top ? 'decrement' : 'increment';
       }
 
       // Emit the page requested signal.
@@ -684,8 +659,8 @@ class ScrollBar extends Widget {
   };
 
   private _value = 0;
-  private _pageSize = 10;
-  private _maxValue = 100;
+  private _page = 10;
+  private _maximum = 100;
   private _repeatTimer = -1;
   private _orientation: ScrollBar.Orientation;
   private _pressData: Private.IPressData | null = null;
@@ -726,18 +701,18 @@ namespace ScrollBar {
     value?: number;
 
     /**
-     * The maximum value for the scroll bar.
-     *
-     * The default is `100`.
-     */
-    maxValue?: number;
-
-    /**
      * The page size for the scroll bar.
      *
      * The default is `10`.
      */
-    pageSize?: number;
+    page?: number;
+
+    /**
+     * The maximum value for the scroll bar.
+     *
+     * The default is `100`.
+     */
+    maximum?: number;
   }
 }
 
