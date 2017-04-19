@@ -230,6 +230,50 @@ class GridViewport extends Widget {
   }
 
   /**
+   * The total width of the main content.
+   *
+   * #### Notes
+   * This value does not include the width of the row headers. It is
+   * useful for setting the maximum value of a horizontal scrollbar.
+   */
+  get scrollWidth(): number {
+    return this._colSections.totalSize;
+  }
+
+  /**
+   * The total height of the main content.
+   *
+   * #### Notes
+   * This value does not include the height of the column headers. It
+   * is useful for setting the maximum value of a vertical scrollbar.
+   */
+  get scrollHeight(): number {
+    return this._rowSections.totalSize;
+  }
+
+  /**
+   * The width of the visible portion of the main content.
+   *
+   * #### Notes
+   * This value does not include the width of the row headers. It is
+   * useful for setting the page size of a horizontal scrollbar.
+   */
+  get pageWidth(): number {
+    return Math.max(0, this._canvas.width - this._rowHeaderSections.totalSize);
+  }
+
+  /**
+   * The height of the visible portion of the main content.
+   *
+   * #### Notes
+   * This value does not include the height of the column headers. It
+   * is useful for setting the page size of a vertical scrollbar.
+   */
+  get pageHeight(): number {
+    return Math.max(0, this._canvas.height - this._colHeaderSections.totalSize);
+  }
+
+  /**
    * Get the scroll X offset of the viewport.
    */
   get scrollX(): number {
@@ -1198,15 +1242,20 @@ class GridViewport extends Widget {
   private _scrollX = 0;
   private _scrollY = 0;
   private _inPaint = false;
+
   private _model: DataModel | null = null;
+
   private _rowStriping: ISectionStriping | null = null;
   private _colStriping: ISectionStriping | null = null;
+
   private _defaultRenderer: CellRenderer;
   private _cellDelegate: ICellDelegate | null;
+
   private _rowSections: SectionList;
   private _colSections: SectionList;
   private _rowHeaderSections: SectionList;
   private _colHeaderSections: SectionList;
+
   private _canvas: HTMLCanvasElement;
   private _buffer: HTMLCanvasElement;
   private _canvasGC: CanvasRenderingContext2D;
