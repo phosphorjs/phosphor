@@ -67,7 +67,7 @@ class GridViewport extends Widget {
     // Set up the row and column sections lists.
     this._rowSections = new SectionList({ baseSize: 20 });
     this._colSections = new SectionList({ baseSize: 64 });
-    this._rowHeaderSections = new SectionList({ baseSize: 64 });
+    this._rowHeaderSections = new SectionList({ baseSize: 96 });
     this._colHeaderSections = new SectionList({ baseSize: 20 });
 
     // Create the canvas and buffer objects.
