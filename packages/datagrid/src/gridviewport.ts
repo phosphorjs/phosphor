@@ -283,7 +283,76 @@ class GridViewport extends Widget {
    * There is no practical upper limit to the scroll position.
    */
   scrollTo(x: number, y: number): void {
+    // Coerce the desired scroll position to integers `>= 0`.
+    x = Math.max(0, Math.round(x));
+    y = Math.max(0, Math.round(y));
 
+    // Compute the delta scroll amount.
+    let dx = x - this._scrollX;
+    let dy = y - this._scrollY;
+
+    // Bail early if there is no effective scroll.
+    if (dx === 0 && dy === 0) {
+      return;
+    }
+
+    // Update the internal scroll position.
+    this._scrollX = x;
+    this._scrollY = y;
+
+    // Bail early if the widget is not visible.
+    if (!this.isVisible) {
+      return;
+    }
+
+    // Get the current size of the canvas.
+    let width = this._canvas.width;
+    let height = this._canvas.height;
+
+    // Bail early if the canvas is empty.
+    if (width === 0 || height === 0) {
+      return;
+    }
+
+    // Get the visible content origin.
+    let contentX = this._rowHeaderSections.totalSize;
+    let contentY = this._colHeaderSections.totalSize;
+
+    // Get the visible content dimensions.
+    let contentWidth = width - contentX;
+    let contentHeight = height - contentY;
+
+    // Scroll the Y axis if needed. If the scroll distance exceeds
+    // the visible height, paint everything. Otherwise, blit the
+    // valid content and paint the dirty region.
+    if (dy !== 0 && contentHeight > 0) {
+      if (Math.abs(dy) >= contentHeight) {
+        this._paint(0, contentY, width, contentHeight);
+      } else {
+        let x = 0;
+        let y = dy < 0 ? contentY : contentY + dy;
+        let w = width;
+        let h = contentHeight - Math.abs(dy);
+        this._canvasGC.drawImage(this._canvas, x, y, w, h, x, y - dy, w, h);
+        this._paint(0, dy < 0 ? contentY : height - dy, width, Math.abs(dy));
+      }
+    }
+
+    // Scroll the X axis if needed. If the scroll distance exceeds
+    // the visible width, paint everything. Otherwise, blit the
+    // valid content and paint the dirty region.
+    if (dx !== 0 && contentWidth > 0) {
+      if (Math.abs(dx) >= contentWidth) {
+        this._paint(contentX, 0, contentWidth, height);
+      } else {
+        let x = dx < 0 ? contentX : contentX + dx;
+        let y = 0;
+        let w = contentWidth - Math.abs(dx);
+        let h = height;
+        this._canvasGC.drawImage(this._canvas, x, y, w, h, x - dx, y, w, h);
+        this._paint(dx < 0 ? contentX : width - dx, 0, Math.abs(dx), height);
+      }
+    }
   }
 
   /**
