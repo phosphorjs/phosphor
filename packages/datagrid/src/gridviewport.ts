@@ -564,8 +564,6 @@ class GridViewport extends Widget {
       return;
     }
 
-    let t1 = performance.now();
-
     // Execute the actual drawing logic.
     try {
       this._inPaint = true;
@@ -573,9 +571,6 @@ class GridViewport extends Widget {
     } finally {
       this._inPaint = false;
     }
-
-    let t2 = performance.now();
-    console.log('paint', t2 - t1);
   }
 
   /**
