@@ -34,9 +34,6 @@ import {
 } from './widget';
 
 
-const DONT_SET_PARENT_MIN = true;
-
-
 /**
  * A layout which arranges its widgets in a grid.
  */
@@ -47,8 +44,8 @@ class GridLayout extends Layout {
    *
    * @param options - The options for initializing the layout.
    */
-  constructor(options: GridLayout.IOptions) {
-    super();
+  constructor(options: GridLayout.IOptions = {}) {
+    super(options);
     if (options.rowCount !== undefined) {
       Private.reallocSizers(this._rowSizers, options.rowCount);
     }
@@ -538,8 +535,8 @@ class GridLayout extends Layout {
       Private.distributeMin(this._colSizers, c1, c2, item.minWidth);
     }
 
-    // Bail early if the parent min size doesn't need to be set.
-    if (DONT_SET_PARENT_MIN) {
+    // If no size constraint is needed, just update the parent.
+    if (this.fitPolicy === 'set-no-constraint') {
       MessageLoop.sendMessage(this.parent!, Widget.Msg.UpdateRequest);
       return;
     }
@@ -683,7 +680,7 @@ namespace GridLayout {
    * An options object for initializing a grid layout.
    */
   export
-  interface IOptions {
+  interface IOptions extends Layout.IOptions {
     /**
      * The initial row count for the layout.
      *
