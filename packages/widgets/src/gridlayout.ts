@@ -47,13 +47,19 @@ class GridLayout extends Layout {
    *
    * @param options - The options for initializing the layout.
    */
-  constructor(options: GridLayout.IOptions = {}) {
+  constructor(options: GridLayout.IOptions) {
     super();
+    if (options.rowCount !== undefined) {
+      Private.reallocSizers(this._rowSizers, options.rowCount);
+    }
+    if (options.colCount !== undefined) {
+      Private.reallocSizers(this._colSizers, options.colCount);
+    }
     if (options.rowSpacing !== undefined) {
-      this._rowSpacing = Private.clampSpacing(options.rowSpacing);
+      this._rowSpacing = Private.clampValue(options.rowSpacing);
     }
     if (options.colSpacing !== undefined) {
-      this._colSpacing = Private.clampSpacing(options.colSpacing);
+      this._colSpacing = Private.clampValue(options.colSpacing);
     }
   }
 
@@ -81,148 +87,214 @@ class GridLayout extends Layout {
   }
 
   /**
-   *
+   * Get the number of rows in the layout.
    */
   get rowCount(): number {
     return this._rowSizers.length;
   }
 
   /**
+   * Set the number of rows in the layout.
    *
+   * #### Notes
+   * The minimum row count is `1`.
    */
-  get colCount(): number {
-    return this._colSizers.length;
+  set rowCount(value: number) {
+    // Do nothing if the row count does not change.
+    if (value === this.rowCount) {
+      return;
+    }
+
+    // Reallocate the row sizers.
+    Private.reallocSizers(this._rowSizers, value);
+
+    // Schedule a fit of the parent.
+    if (this.parent) {
+      this.parent.fit();
+    }
   }
 
   /**
-   * Get the row spacing for the grid layout.
+   * Get the number of columns in the layout.
+   */
+  get colCount(): number {
+    return this._colSizers.length
+  }
+
+  /**
+   * Set the number of columns in the layout.
+   *
+   * #### Notes
+   * The minimum column count is `1`.
+   */
+  set colCount(value: number) {
+    // Do nothing if the column count does not change.
+    if (value === this.colCount) {
+      return;
+    }
+
+    // Reallocate the column sizers.
+    Private.reallocSizers(this._colSizers, value);
+
+    // Schedule a fit of the parent.
+    if (this.parent) {
+      this.parent.fit();
+    }
+  }
+
+  /**
+   * Get the row spacing for the layout.
    */
   get rowSpacing(): number {
     return this._rowSpacing;
   }
 
   /**
-   * Set the row spacing for the grid layout.
+   * Set the row spacing for the layout.
    */
   set rowSpacing(value: number) {
-    //
-    value = Private.clampSpacing(value);
+    // Clamp the spacing to the allowed range.
+    value = Private.clampValue(value);
 
-    //
+    // Bail if the spacing does not change
     if (this._rowSpacing === value) {
       return;
     }
 
-    //
+    // Update the internal spacing.
     this._rowSpacing = value;
 
-    //
+    // Schedule a fit of the parent.
     if (this.parent) {
       this.parent.fit();
     }
   }
 
   /**
-   * Get the column spacing for the grid layout.
+   * Get the column spacing for the layout.
    */
   get colSpacing(): number {
     return this._colSpacing;
   }
 
   /**
-   * Set the col spacing for the grid layout.
+   * Set the col spacing for the layout.
    */
   set colSpacing(value: number) {
-    //
-    value = Private.clampSpacing(value);
+    // Clamp the spacing to the allowed range.
+    value = Private.clampValue(value);
 
-    //
+    // Bail if the spacing does not change
     if (this._colSpacing === value) {
       return;
     }
 
-    //
+    // Update the internal spacing.
     this._colSpacing = value;
 
-    //
+    // Schedule a fit of the parent.
     if (this.parent) {
       this.parent.fit();
     }
   }
 
   /**
+   * Get the stretch factor for a specific row.
    *
+   * @param index - The row index of interest.
+   *
+   * @returns The stretch factor for the row.
+   *
+   * #### Notes
+   * This returns `-1` if the index is out of range.
    */
-  getRowStretch(index: number): number {
-    //
-    if (index < 0 || index >= this.rowCount) {
-      return -1;
-    }
-
-    //
-    return this._rowSizers[index].stretch;
+  rowStretch(index: number): number {
+    let sizer = this._rowSizers[index];
+    return sizer ? sizer.stretch : -1;
   }
 
   /**
+   * Set the stretch factor for a specific row.
    *
+   * @param index - The row index of interest.
+   *
+   * @param value - The stretch factor for the row.
+   *
+   * #### Notes
+   * This is a no-op if the index is out of range.
    */
   setRowStretch(index: number, value: number): void {
-    //
-    if (index < 0 || index >= this.rowCount) {
+    // Look up the row sizer.
+    let sizer = this._rowSizers[index];
+
+    // Bail if the index is out of range.
+    if (!sizer) {
       return;
     }
 
-    //
-    value = Math.max(0, Math.floor(value));
+    // Clamp the value to the allowed range.
+    value = Private.clampValue(value);
 
-    //
-    if (this._rowSizers[index].stretch === value) {
+    // Bail if the stretch does not change.
+    if (sizer.stretch === value) {
       return;
     }
 
-    //
-    this._rowSizers[index].stretch = value;
+    // Update the sizer stretch.
+    sizer.stretch = value;
 
-    //
+    // Schedule an update of the parent.
     if (this.parent) {
       this.parent.update();
     }
   }
 
   /**
+   * Get the stretch factor for a specific column.
    *
+   * @param index - The column index of interest.
+   *
+   * @returns The stretch factor for the column.
+   *
+   * #### Notes
+   * This returns `-1` if the index is out of range.
    */
-  getColStretch(index: number): number {
-    //
-    if (index < 0 || index >= this.colCount) {
-      return -1;
-    }
-
-    //
-    return this._colSizers[index].stretch;
+  colStretch(index: number): number {
+    let sizer = this._colSizers[index];
+    return sizer ? sizer.stretch : -1;
   }
 
   /**
+   * Set the stretch factor for a specific column.
    *
+   * @param index - The column index of interest.
+   *
+   * @param value - The stretch factor for the column.
+   *
+   * #### Notes
+   * This is a no-op if the index is out of range.
    */
   setColStretch(index: number, value: number): void {
-    //
-    if (index < 0 || index >= this.colCount) {
+    // Look up the column sizer.
+    let sizer = this._colSizers[index];
+
+    // Bail if the index is out of range.
+    if (!sizer) {
       return;
     }
 
-    //
-    value = Math.max(0, Math.floor(value));
+    // Clamp the value to the allowed range.
+    value = Private.clampValue(value);
 
-    //
-    if (this._colSizers[index].stretch === value) {
+    // Bail if the stretch does not change.
+    if (sizer.stretch === value) {
       return;
     }
 
-    //
-    this._colSizers[index].stretch = value;
+    // Update the sizer stretch.
+    sizer.stretch = value;
 
-    //
+    // Schedule an update of the parent.
     if (this.parent) {
       this.parent.update();
     }
@@ -257,10 +329,7 @@ class GridLayout extends Layout {
     // Add the widget to the layout.
     this._items.push(new LayoutItem(widget));
 
-    // TODO sync sizers and row/col count
-    this._rebuild();
-
-    // Attach the widget to the parent, if possible.
+    // Attach the widget to the parent.
     if (this.parent) {
       this.attachWidget(widget);
     }
@@ -291,10 +360,7 @@ class GridLayout extends Layout {
     // Remove the widget from the layout.
     let item = ArrayExt.removeAt(this._items, i)!;
 
-    // TODO sync sizers and row/col count
-    this._rebuild();
-
-    // Detach the widget from the parent, if possible.
+    // Detach the widget from the parent.
     if (this.parent) {
       this.detachWidget(widget);
     }
@@ -434,6 +500,10 @@ class GridLayout extends Layout {
       items[i].fit();
     }
 
+    // Get the max row and column index.
+    let maxRow = this.rowCount - 1;
+    let maxCol = this.colCount - 1;
+
     // Sort the items by row span.
     items.sort(Private.rowSpanCmp);
 
@@ -443,9 +513,9 @@ class GridLayout extends Layout {
       let item = items[i];
 
       // Get the row bounds for the item.
-      let data = GridLayout.getData(item.widget);
-      let r1 = data.row;
-      let r2 = r1 + data.rowSpan - 1;
+      let config = GridLayout.getCellConfig(item.widget);
+      let r1 = Math.min(config.row, maxRow);
+      let r2 = Math.min(config.row + config.rowSpan - 1, maxRow);
 
       // Distribute the minimum height to the sizers as needed.
       Private.distributeMin(this._rowSizers, r1, r2, item.minHeight);
@@ -460,9 +530,9 @@ class GridLayout extends Layout {
       let item = items[i];
 
       // Get the column bounds for the item.
-      let data = GridLayout.getData(item.widget);
-      let c1 = data.col;
-      let c2 = c1 + data.colSpan - 1;
+      let config = GridLayout.getCellConfig(item.widget);
+      let c1 = Math.min(config.col, maxCol);
+      let c2 = Math.min(config.col + config.colSpan - 1, maxCol);
 
       // Distribute the minimum width to the sizers as needed.
       Private.distributeMin(this._colSizers, c1, c2, item.minWidth);
@@ -475,8 +545,8 @@ class GridLayout extends Layout {
     }
 
     // Set up the computed min size.
-    let minW = Math.max(0, this.colCount - 1) * this._colSpacing;
-    let minH = Math.max(0, this.rowCount - 1) * this._rowSpacing;
+    let minW = maxCol * this._colSpacing;
+    let minH = maxRow * this._rowSpacing;
 
     // Add the sizer minimums to the computed min size.
     for (let i = 0, n = this.rowCount; i < n; ++i) {
@@ -521,11 +591,6 @@ class GridLayout extends Layout {
     // Clear the dirty flag to indicate the update occurred.
     this._dirty = false;
 
-    // Bail if there are no layout items.
-    if (this.rowCount === 0 || this.colCount === 0) {
-      return;
-    }
-
     // Measure the parent if the offset dimensions are unknown.
     if (offsetWidth < 0) {
       offsetWidth = this.parent!.node.offsetWidth;
@@ -545,13 +610,17 @@ class GridLayout extends Layout {
     let width = offsetWidth - this._box.horizontalSum;
     let height = offsetHeight - this._box.verticalSum;
 
+    // Get the max row and column index.
+    let maxRow = this.rowCount - 1;
+    let maxCol = this.colCount - 1;
+
     // Compute the total fixed row and column space.
-    let fixedRowSpace = (this.rowCount - 1) * this._rowSpacing;
-    let fixedColSpace = (this.colCount - 1) * this._colSpacing;
+    let fixedRowSpace = maxRow * this._rowSpacing;
+    let fixedColSpace = maxCol * this._colSpacing;
 
     // Distribute the available space to the box sizers.
-    BoxEngine.calc(this._rowSizers, Math.max(0, height - fixedRowSpace));
     BoxEngine.calc(this._colSizers, Math.max(0, width - fixedColSpace));
+    BoxEngine.calc(this._rowSizers, Math.max(0, height - fixedRowSpace));
 
     // Update the row start positions.
     for (let i = 0, pos = top, n = this.rowCount; i < n; ++i) {
@@ -576,11 +645,11 @@ class GridLayout extends Layout {
       }
 
       // Fetch the cell bounds for the widget.
-      let data = GridLayout.getData(item.widget);
-      let r1 = data.row;
-      let c1 = data.col;
-      let r2 = r1 + data.rowSpan - 1;
-      let c2 = c1 + data.colSpan - 1;
+      let config = GridLayout.getCellConfig(item.widget);
+      let r1 = Math.min(config.row, maxRow);
+      let c1 = Math.min(config.col, maxCol);
+      let r2 = Math.min(config.row + config.rowSpan - 1, maxRow);
+      let c2 = Math.min(config.col + config.colSpan - 1, maxCol);
 
       // Compute the cell geometry.
       let x = this._colStarts[c1];
@@ -593,38 +662,14 @@ class GridLayout extends Layout {
     }
   }
 
-  private _rebuild(): void {
-    //
-    let rowCount = 0;
-    let colCount = 0;
-
-    //
-    each(this._items, item => {
-      let data = GridLayout.getData(item.widget);
-      rowCount = Math.max(rowCount, data.row + data.rowSpan);
-      colCount = Math.max(colCount, data.col + data.colSpan);
-    });
-
-    while (this._rowSizers.length < rowCount) {
-      this._rowSizers.push(new BoxSizer());
-    }
-
-    while (this._colSizers.length < colCount) {
-      this._colSizers.push(new BoxSizer());
-    }
-
-    this._rowSizers.length = rowCount;
-    this._colSizers.length = colCount;
-  }
-
   private _dirty = false;
   private _rowSpacing = 4;
   private _colSpacing = 4;
   private _items: LayoutItem[] = [];
   private _rowStarts: number[] = [];
   private _colStarts: number[] = [];
-  private _rowSizers: BoxSizer[] = [];
-  private _colSizers: BoxSizer[] = [];
+  private _rowSizers: BoxSizer[] = [new BoxSizer()];
+  private _colSizers: BoxSizer[] = [new BoxSizer()];
   private _box: ElementExt.IBoxSizing | null = null;
 }
 
@@ -639,6 +684,20 @@ namespace GridLayout {
    */
   export
   interface IOptions {
+    /**
+     * The initial row count for the layout.
+     *
+     * The default is `1`.
+     */
+    rowCount?: number;
+
+    /**
+     * The initial column count for the layout.
+     *
+     * The default is `1`.
+     */
+    colCount?: number;
+
     /**
      * The spacing between rows in the layout.
      *
@@ -655,10 +714,10 @@ namespace GridLayout {
   }
 
   /**
-   * An object which holds the grid layout data for a widget.
+   * An object which holds the cell configuration for a widget.
    */
   export
-  interface ILayoutData {
+  interface ICellConfig {
     /**
      * The row index for the widget.
      */
@@ -681,27 +740,27 @@ namespace GridLayout {
   }
 
   /**
-   * Get the layout data for the given widget.
+   * Get the cell config for the given widget.
    *
    * @param widget - The widget of interest.
    *
-   * @returns The layout data for the widget.
+   * @returns The cell config for the widget.
    */
   export
-  function getData(widget: Widget): ILayoutData {
-    return Private.dataProperty.get(widget);
+  function getCellConfig(widget: Widget): ICellConfig {
+    return Private.cellConfigProperty.get(widget);
   }
 
   /**
-   * Set the layout data for the given widget.
+   * Set the cell config for the given widget.
    *
    * @param widget - The widget of interest.
    *
-   * @param value - The value for the layout data.
+   * @param value - The value for the cell config.
    */
   export
-  function setData(widget: Widget, value: Partial<ILayoutData>): void {
-    Private.dataProperty.set(widget, Private.normalizeData(value));
+  function setCellConfig(widget: Widget, value: Partial<ICellConfig>): void {
+    Private.cellConfigProperty.set(widget, Private.normalizeConfig(value));
   }
 }
 
@@ -711,32 +770,32 @@ namespace GridLayout {
  */
 namespace Private {
   /**
-   * The property descriptor for the widget layout data.
+   * The property descriptor for the widget cell config.
    */
   export
-  const dataProperty = new AttachedProperty<Widget, GridLayout.ILayoutData>({
-    name: 'data',
-    create: () => ({ row: 0, col: 1, rowSpan: 0, colSpan: 1 }),
-    changed: onChildDataChanged
+  const cellConfigProperty = new AttachedProperty<Widget, GridLayout.ICellConfig>({
+    name: 'cellConfig',
+    create: () => ({ row: 0, col: 0, rowSpan: 1, colSpan: 1 }),
+    changed: onChildCellConfigChanged
   });
 
   /**
-   * Normalize the layout data for a partial data object.
+   * Normalize a partial cell config object.
    */
   export
-  function normalizeData(data: Partial<GridLayout.ILayoutData>): GridLayout.ILayoutData {
-    let row = Math.max(0, Math.floor(data.row || 0));
-    let col = Math.max(0, Math.floor(data.col || 0));
-    let rowSpan = Math.max(1, Math.floor(data.rowSpan || 0));
-    let colSpan = Math.max(1, Math.floor(data.colSpan || 0));
+  function normalizeConfig(config: Partial<GridLayout.ICellConfig>): GridLayout.ICellConfig {
+    let row = Math.max(0, Math.floor(config.row || 0));
+    let col = Math.max(0, Math.floor(config.col || 0));
+    let rowSpan = Math.max(1, Math.floor(config.rowSpan || 0));
+    let colSpan = Math.max(1, Math.floor(config.colSpan || 0));
     return { row, col, rowSpan, colSpan };
   }
 
   /**
-   * Clamp a spacing value to an integer >= 0.
+   * Clamp a value to an integer >= 0.
    */
   export
-  function clampSpacing(value: number): number {
+  function clampValue(value: number): number {
     return Math.max(0, Math.floor(value));
   }
 
@@ -745,9 +804,9 @@ namespace Private {
    */
   export
   function rowSpanCmp(a: LayoutItem, b: LayoutItem): number {
-    let d1 = dataProperty.get(a.widget);
-    let d2 = dataProperty.get(b.widget);
-    return d1.rowSpan - d2.rowSpan;
+    let c1 = cellConfigProperty.get(a.widget);
+    let c2 = cellConfigProperty.get(b.widget);
+    return c1.rowSpan - c2.rowSpan;
   }
 
   /**
@@ -755,52 +814,72 @@ namespace Private {
    */
   export
   function colSpanCmp(a: LayoutItem, b: LayoutItem): number {
-    let d1 = dataProperty.get(a.widget);
-    let d2 = dataProperty.get(b.widget);
-    return d1.colSpan - d2.colSpan;
+    let c1 = cellConfigProperty.get(a.widget);
+    let c2 = cellConfigProperty.get(b.widget);
+    return c1.colSpan - c2.colSpan;
   }
 
   /**
-   *
+   * Reallocate the box sizers for the given grid dimensions.
+   */
+  export
+  function reallocSizers(sizers: BoxSizer[], count: number): void {
+    // Coerce the count to the valid range.
+    count = Math.max(1, Math.floor(count));
+
+    // Add the missing sizers.
+    while (sizers.length < count) {
+      sizers.push(new BoxSizer());
+    }
+
+    // Remove the extra sizers.
+    if (sizers.length < count) {
+      sizers.length = count;
+    }
+  }
+
+  /**
+   * Distribute a min size constraint across a range of sizers.
    */
   export
   function distributeMin(sizers: BoxSizer[], i1: number, i2: number, minSize: number): void {
-    //
+    // Sanity check the indices.
     if (i2 < i1) {
       return;
     }
 
-    //
+    // Handle the simple case of no cell span.
     if (i1 === i2) {
       let sizer = sizers[i1];
       sizer.minSize = Math.max(sizer.minSize, minSize);
       return;
     }
 
-    //
-    let total = 0;
+    // Compute the total current min size of the span.
+    let totalMin = 0;
     for (let i = i1; i <= i2; ++i) {
-      total += sizers[i].minSize;
+      totalMin += sizers[i].minSize;
     }
 
-    //
-    if (total >= minSize) {
+    // Do nothing if the total is greater than the required.
+    if (totalMin >= minSize) {
       return;
     }
 
-    //
-    let part = (minSize - total) / (i2 - i1 + 1);
+    // Compute the portion of the space to allocate to each sizer.
+    let portion = (minSize - totalMin) / (i2 - i1 + 1);
+
+    // Add the portion to each sizer.
     for (let i = i1; i <= i2; ++i) {
-      sizers[i].minSize += part;
+      sizers[i].minSize += portion;
     }
   }
 
   /**
-   * The change handler for the child data property.
+   * The change handler for the child cell config property.
    */
-  function onChildDataChanged(child: Widget): void {
+  function onChildCellConfigChanged(child: Widget): void {
     if (child.parent && child.parent.layout instanceof GridLayout) {
-      (child.parent as any)._rebuild();
       child.parent.fit();
     }
   }
