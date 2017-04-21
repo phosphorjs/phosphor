@@ -205,7 +205,9 @@ class Widget implements IDisposable, IMessageHandler {
       let msg = new Widget.ChildMessage('child-added', this);
       MessageLoop.sendMessage(this._parent, msg);
     }
-    MessageLoop.sendMessage(this, Widget.Msg.ParentChanged);
+    if (!this.isDisposed) {
+      MessageLoop.sendMessage(this, Widget.Msg.ParentChanged);
+    }
   }
 
   /**
