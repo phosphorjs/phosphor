@@ -12,6 +12,10 @@ import {
 } from '@phosphor/commands';
 
 import {
+  CellRenderer, DataGrid, DataModel, EvenOddStriping, TextRenderer
+} from '@phosphor/datagrid';
+
+import {
   Message
 } from '@phosphor/messaging';
 
@@ -92,6 +96,40 @@ class ContentWidget extends Widget {
     if (this.isAttached) {
       this.inputNode.focus();
     }
+  }
+}
+
+
+class MyDataModel extends DataModel {
+
+  readonly rowCount = 2000;
+  readonly colCount = 20;
+  readonly rowHeaderCount = 2;
+  readonly colHeaderCount = 2;
+
+  data(row: number, col: number): DataModel.ICellData | null {
+    if (col < 0 && row >= 0) {
+      return { type: 'text', value: `Row: ${row}, ${col}` };
+    }
+    if (row < 0 && col >= 0) {
+      return { type: 'text', value: `Col: ${row}, ${col}` };
+    }
+    if (row < 0 && col < 0) {
+      return { type: 'text', value: `Corner: ${row}, ${col}` };
+    }
+    return { type: 'text', value: `(${row}, ${col})` };
+  }
+}
+
+class MyDelegate implements TextRenderer.IStyleDelegate {
+
+  static readonly orangeBackgroundStyle: TextRenderer.ICellStyle = { backgroundColor: '#F6B26B' };
+
+  getStyle(config: CellRenderer.ICellConfig): TextRenderer.ICellStyle | null {
+    if (config.row >= 5 && config.row <= 7 && config.col >= 5 && config.col <= 7) {
+      return MyDelegate.orangeBackgroundStyle;
+    }
+    return null;
   }
 }
 
@@ -312,6 +350,14 @@ function main(): void {
   // let g2 = new ContentWidget('Green');
   // let y2 = new ContentWidget('Yellow');
 
+  //let myRenderer = new TextRenderer({ styleDelegate: new MyDelegate() });
+
+  let grid = new DataGrid();
+  grid.title.label = 'DataGrid';
+  grid.model = new MyDataModel();
+  grid.rowStriping = new EvenOddStriping({ oddColor: '#FFFDE5'});
+  grid.colStriping = new EvenOddStriping({ oddColor: 'rgba(200, 212, 188, 0.5)' });
+
   let dock = new DockPanel();
   dock.addWidget(r1);
   dock.addWidget(b1, { mode: 'split-right', ref: r1 });
@@ -319,6 +365,7 @@ function main(): void {
   dock.addWidget(g1, { mode: 'split-left', ref: y1 });
   dock.addWidget(r2, { ref: b1 });
   dock.addWidget(b2, { mode: 'split-right', ref: y1 });
+  dock.addWidget(grid, { ref: r1 });
   dock.id = 'dock';
 
   let savedLayouts: DockPanel.ILayoutConfig[] = [];
@@ -362,6 +409,8 @@ function main(): void {
 
   Widget.attach(bar, document.body);
   Widget.attach(main, document.body);
+
+  (window as any).grid = grid;
 }
 
 
