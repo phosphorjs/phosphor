@@ -340,12 +340,10 @@ class GridViewport extends Widget {
       return;
     }
 
-    // Update the internal scroll position.
-    this._scrollX = x;
-    this._scrollY = y;
-
     // Bail early if the widget is not visible.
     if (!this.isVisible) {
+      this._scrollX = x;
+      this._scrollY = y;
       return;
     }
 
@@ -355,6 +353,8 @@ class GridViewport extends Widget {
 
     // Bail early if the canvas is empty.
     if (width === 0 || height === 0) {
+      this._scrollX = x;
+      this._scrollY = y;
       return;
     }
 
@@ -365,6 +365,9 @@ class GridViewport extends Widget {
     // Get the visible content dimensions.
     let contentWidth = width - contentX;
     let contentHeight = height - contentY;
+
+    // Update the internal Y scroll position.
+    this._scrollY = y;
 
     // Scroll the Y axis if needed. If the scroll distance exceeds
     // the visible height, paint everything. Otherwise, blit the
@@ -381,6 +384,9 @@ class GridViewport extends Widget {
         this._paint(0, dy < 0 ? contentY : height - dy, width, Math.abs(dy));
       }
     }
+
+    // Update the internal X scroll position.
+    this._scrollX = x;
 
     // Scroll the X axis if needed. If the scroll distance exceeds
     // the visible width, paint everything. Otherwise, blit the
