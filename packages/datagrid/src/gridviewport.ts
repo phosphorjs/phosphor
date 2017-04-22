@@ -405,6 +405,30 @@ class GridViewport extends Widget {
     }
   }
 
+  rowIndex(offset: number): number {
+    return this._rowSections.sectionIndex(offset);
+  }
+
+  rowOffset(index: number): number {
+    return this._rowSections.sectionOffset(index);
+  }
+
+  rowSize(index: number): number {
+    return this._rowSections.sectionSize(index);
+  }
+
+  colIndex(offset: number): number {
+    return this._colSections.sectionIndex(offset);
+  }
+
+  colOffset(index: number): number {
+    return this._colSections.sectionOffset(index);
+  }
+
+  colSize(index: number): number {
+    return this._colSections.sectionSize(index);
+  }
+
   /**
    * A message handler invoked on a `'before-show'` message.
    */

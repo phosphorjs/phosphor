@@ -157,7 +157,7 @@ class DataGrid extends Widget {
   }
 
   /**
-   * Scroll the data grid up by one visible page.
+   * Scroll the grid up by one visible page.
    */
   pageUp(): void {
     this._viewport.scrollY -= this._viewport.pageHeight;
@@ -165,7 +165,7 @@ class DataGrid extends Widget {
   }
 
   /**
-   * Scroll the data grid down by one visible page.
+   * Scroll the grid down by one visible page.
    */
   pageDown(): void {
     let y = this._viewport.scrollY + this._viewport.pageHeight;
@@ -175,7 +175,7 @@ class DataGrid extends Widget {
   }
 
   /**
-   * Scroll the data grid left by one visible page.
+   * Scroll the grid left by one visible page.
    */
   pageLeft(): void {
     this._viewport.scrollX -= this._viewport.pageWidth;
@@ -183,12 +183,70 @@ class DataGrid extends Widget {
   }
 
   /**
-   * Scroll the data grid right by one visible page.
+   * Scroll the grid right by one visible page.
    */
   pageRight(): void {
     let x = this._viewport.scrollX + this._viewport.pageWidth;
     let maxX = this._viewport.scrollWidth - this._viewport.pageWidth;
     this._viewport.scrollX = Math.min(x, maxX);
+    this._syncScrollBarsWithViewport();
+  }
+
+  /**
+   * Scroll the grid up by one visible step.
+   */
+  stepUp(): void {
+    let row = this._viewport.rowIndex(this._viewport.scrollY - 1);
+    if (row === -1) {
+      this._viewport.scrollY = 0;
+    } else {
+      this._viewport.scrollY = Math.max(0, this._viewport.rowOffset(row));
+    }
+    this._syncScrollBarsWithViewport();
+  }
+
+  /**
+   * Scroll the grid down by one visible step.
+   */
+  stepDown(): void {
+    let maxY = this._viewport.scrollHeight - this._viewport.pageHeight;
+    let row = this._viewport.rowIndex(this._viewport.scrollY);
+    if (row === -1) {
+      this._viewport.scrollY = maxY;
+    } else {
+      let y = this._viewport.rowOffset(row);
+      let s = this._viewport.rowSize(row);
+      this._viewport.scrollY = Math.min(y + s, maxY);
+    }
+    this._syncScrollBarsWithViewport();
+  }
+
+  /**
+   * Scroll the grid left by one visible step.
+   */
+  stepLeft(): void {
+    let col = this._viewport.colIndex(this._viewport.scrollX - 1);
+    if (col === -1) {
+      this._viewport.scrollX = 0;
+    } else {
+      this._viewport.scrollX = this._viewport.colOffset(col);
+    }
+    this._syncScrollBarsWithViewport();
+  }
+
+  /**
+   * Scroll the grid right by one visible step.
+   */
+  stepRight(): void {
+    let maxX = this._viewport.scrollWidth - this._viewport.pageWidth;
+    let col = this._viewport.colIndex(this._viewport.scrollX);
+    if (col === -1) {
+      this._viewport.scrollX = maxX;
+    } else {
+      let x = this._viewport.colOffset(col);
+      let s = this._viewport.colSize(col);
+      this._viewport.scrollX = Math.min(x + s, maxX);
+    }
     this._syncScrollBarsWithViewport();
   }
 
@@ -364,7 +422,19 @@ class DataGrid extends Widget {
    * Handle the `stepRequested` signal from a scroll bar.
    */
   private _onStepRequested(sender: ScrollBar, dir: 'decrement' | 'increment'): void {
-
+    if (sender === this._vScrollBar) {
+      if (dir === 'decrement') {
+        this.stepUp();
+      } else {
+        this.stepDown();
+      }
+    } else {
+      if (dir === 'decrement') {
+        this.stepLeft();
+      } else {
+        this.stepRight();
+      }
+    }
   }
 
   private _viewport: GridViewport;
