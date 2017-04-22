@@ -405,26 +405,74 @@ class GridViewport extends Widget {
     }
   }
 
+  /**
+   * Get the index of the row at the given offset.
+   *
+   * @param offset - The unscrolled Y-offset of interest.
+   *
+   * @returns The row index at the offset, or `-1` if the offset is
+   *   out of range.
+   */
   rowIndex(offset: number): number {
     return this._rowSections.sectionIndex(offset);
   }
 
+  /**
+   * Get the offset of a given row index.
+   *
+   * @param index - The row index of interest.
+   *
+   * @returns The unscrolled offset of the row, or `-1` if the index
+   *   is out of range.
+   */
   rowOffset(index: number): number {
     return this._rowSections.sectionOffset(index);
   }
 
+  /**
+   * Get the size of a given row.
+   *
+   * @param index - The row index of interest.
+   *
+   * @returns The size of the row, or `-1` if the index is out of
+   *   range.
+   */
   rowSize(index: number): number {
     return this._rowSections.sectionSize(index);
   }
 
+  /**
+   * Get the index of the column at the given offset.
+   *
+   * @param offset - The unscrolled X-offset of interest.
+   *
+   * @returns The column index at the offset, or `-1` if the offset
+   *   is out of range.
+   */
   colIndex(offset: number): number {
     return this._colSections.sectionIndex(offset);
   }
 
+  /**
+   * Get the offset of a given column index.
+   *
+   * @param index - The column index of interest.
+   *
+   * @returns The unscrolled offset of the column, or `-1` if the
+   *   index is out of range.
+   */
   colOffset(index: number): number {
     return this._colSections.sectionOffset(index);
   }
 
+  /**
+   * Get the size of a given column.
+   *
+   * @param index - The column index of interest.
+   *
+   * @returns The size of the column, or `-1` if the index is out
+   *   of range.
+   */
   colSize(index: number): number {
     return this._colSections.sectionSize(index);
   }
