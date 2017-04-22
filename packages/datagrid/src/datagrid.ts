@@ -157,6 +157,42 @@ class DataGrid extends Widget {
   }
 
   /**
+   * Scroll the data grid up by one visible page.
+   */
+  pageUp(): void {
+    this._viewport.scrollY -= this._viewport.pageHeight;
+    this._syncScrollBarsWithViewport();
+  }
+
+  /**
+   * Scroll the data grid down by one visible page.
+   */
+  pageDown(): void {
+    let y = this._viewport.scrollY + this._viewport.pageHeight;
+    let maxY = this._viewport.scrollHeight - this._viewport.pageHeight;
+    this._viewport.scrollY = Math.min(y, maxY);
+    this._syncScrollBarsWithViewport();
+  }
+
+  /**
+   * Scroll the data grid left by one visible page.
+   */
+  pageLeft(): void {
+    this._viewport.scrollX -= this._viewport.pageWidth;
+    this._syncScrollBarsWithViewport();
+  }
+
+  /**
+   * Scroll the data grid right by one visible page.
+   */
+  pageRight(): void {
+    let x = this._viewport.scrollX + this._viewport.pageWidth;
+    let maxX = this._viewport.scrollWidth - this._viewport.pageWidth;
+    this._viewport.scrollX = Math.min(x, maxX);
+    this._syncScrollBarsWithViewport();
+  }
+
+  /**
    * Process a message sent to the widget.
    *
    * @param msg - The message sent to the widget.
@@ -309,7 +345,19 @@ class DataGrid extends Widget {
    * Handle the `pageRequested` signal from a scroll bar.
    */
   private _onPageRequested(sender: ScrollBar, dir: 'decrement' | 'increment'): void {
-
+    if (sender === this._vScrollBar) {
+      if (dir === 'decrement') {
+        this.pageUp();
+      } else {
+        this.pageDown();
+      }
+    } else {
+      if (dir === 'decrement') {
+        this.pageLeft();
+      } else {
+        this.pageRight();
+      }
+    }
   }
 
   /**
