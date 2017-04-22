@@ -721,35 +721,38 @@ class GridViewport extends Widget {
    * Draw the row header region which intersects the dirty rect.
    */
   private _drawRowHeaderRegion(rx: number, ry: number, rw: number, rh: number): void {
-    // Get the visible content width.
-    let contentWidth = this._rowHeaderSections.totalSize;
+    // Get the visible content dimensions.
+    let contentW = this._rowHeaderSections.totalSize;
+    let contentH = this._rowSections.totalSize - this._scrollY;
 
-    // Bail if the dirty rect is out of range.
-    if (rx >= contentWidth) {
+    // Bail if there is no content to draw.
+    if (contentW <= 0 || contentH <= 0) {
       return;
     }
 
-    // Get the visible content height.
-    let contentHeight = Math.max(0, this._rowSections.totalSize - this._scrollY);
-
-    // Bail if there is no visible content.
-    if (contentHeight <= 0) {
-      return;
-    }
-
-    // Get the content Y origin.
+    // Get the visible content origin.
+    let contentX = 0;
     let contentY = this._colHeaderSections.totalSize;
 
-    // Bail if the dirty rect is out of range.
-    if (ry >= contentY + contentHeight) {
+    // Bail if the dirty rect does not intersect the content area.
+    if (rx + rw < contentX) {
+      return;
+    }
+    if (ry + rh < contentY) {
+      return;
+    }
+    if (rx >= contentX + contentW) {
+      return;
+    }
+    if (ry >= contentY + contentH) {
       return;
     }
 
     // Get the upper and lower bounds of the dirty content area.
     let x1 = rx;
     let y1 = Math.max(ry, contentY);
-    let x2 = Math.min(rx + rw - 1, contentWidth - 1);
-    let y2 = Math.min(ry + rh - 1, contentY + contentHeight - 1);
+    let x2 = Math.min(rx + rw - 1, contentX + contentW - 1);
+    let y2 = Math.min(ry + rh - 1, contentY + contentH - 1);
 
     // Convert the dirty content bounds into cell bounds.
     let r1 = this._rowSections.sectionIndex(y1 - contentY + this._scrollY);
@@ -822,35 +825,38 @@ class GridViewport extends Widget {
    * Draw the column header region which intersects the dirty rect.
    */
   private _drawColHeaderRegion(rx: number, ry: number, rw: number, rh: number): void {
-    // Get the visible content height.
-    let contentHeight = this._colHeaderSections.totalSize;
+    // Get the visible content dimensions.
+    let contentW = this._colSections.totalSize - this._scrollX;
+    let contentH = this._colHeaderSections.totalSize;
 
-    // Bail if the dirty rect is out of range.
-    if (ry >= contentHeight) {
+    // Bail if there is no content to draw.
+    if (contentW <= 0 || contentH <= 0) {
       return;
     }
 
-    // Get the visible content width.
-    let contentWidth = Math.max(0, this._colSections.totalSize - this._scrollX);
-
-    // Bail if there is no visible content.
-    if (contentWidth <= 0) {
-      return;
-    }
-
-    // Get the content X origin.
+    // Get the visible content origin.
     let contentX = this._rowHeaderSections.totalSize;
+    let contentY = 0;
 
-    // Bail if the dirty rect is out of range.
-    if (rx >= contentX + contentWidth) {
+    // Bail if the dirty rect does not intersect the content area.
+    if (rx + rw < contentX) {
+      return;
+    }
+    if (ry + rh < contentY) {
+      return;
+    }
+    if (rx >= contentX + contentW) {
+      return;
+    }
+    if (ry >= contentY + contentH) {
       return;
     }
 
     // Get the upper and lower bounds of the dirty content area.
     let x1 = Math.max(rx, contentX);
     let y1 = ry;
-    let x2 = Math.min(rx + rw - 1, contentX + contentWidth - 1);
-    let y2 = Math.min(ry + rh - 1, contentHeight - 1);
+    let x2 = Math.min(rx + rw - 1, contentX + contentW - 1);
+    let y2 = Math.min(ry + rh - 1, contentY + contentH - 1);
 
     // Convert the dirty content bounds into cell bounds.
     let r1 = this._colHeaderSections.sectionIndex(y1);
@@ -924,24 +930,37 @@ class GridViewport extends Widget {
    */
   private _drawCornerHeaderRegion(rx: number, ry: number, rw: number, rh: number): void {
     // Get the visible content dimensions.
-    let contentWidth = this._rowHeaderSections.totalSize;
-    let contentHeight = this._colHeaderSections.totalSize;
+    let contentW = this._rowHeaderSections.totalSize;
+    let contentH = this._colHeaderSections.totalSize;
 
-    // Bail if there is no visible content.
-    if (contentWidth <= 0 || contentHeight <= 0) {
+    // Bail if there is no content to draw.
+    if (contentW <= 0 || contentH <= 0) {
       return;
     }
 
-    // Bail if the dirty rect is out of range.
-    if (rx >= contentWidth || ry >= contentHeight) {
+    // Get the visible content origin.
+    let contentX = 0;
+    let contentY = 0;
+
+    // Bail if the dirty rect does not intersect the content area.
+    if (rx + rw < contentX) {
+      return;
+    }
+    if (ry + rh < contentY) {
+      return;
+    }
+    if (rx >= contentX + contentW) {
+      return;
+    }
+    if (ry >= contentY + contentH) {
       return;
     }
 
     // Get the upper and lower bounds of the dirty content area.
     let x1 = rx;
     let y1 = ry;
-    let x2 = Math.min(rx + rw - 1, contentWidth - 1);
-    let y2 = Math.min(ry + rh - 1, contentHeight - 1);
+    let x2 = Math.min(rx + rw - 1, contentX + contentW - 1);
+    let y2 = Math.min(ry + rh - 1, contentY + contentH - 1);
 
     // Convert the dirty content bounds into cell bounds.
     let r1 = this._colHeaderSections.sectionIndex(y1);
