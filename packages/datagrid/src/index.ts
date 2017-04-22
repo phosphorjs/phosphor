@@ -7,6 +7,7 @@
 |----------------------------------------------------------------------------*/
 export * from './celldelegate';
 export * from './cellrenderer';
+export * from './datagrid';
 export * from './datamodel';
 export * from './gridviewport';
 export * from './sectionlist';

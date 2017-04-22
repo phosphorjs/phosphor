@@ -14,6 +14,7 @@
   },
   "dependencies": {
     "@phosphor/algorithm": "^1.0.0",
+    "@phosphor/domutils": "^1.0.0",
     "@phosphor/messaging": "^1.1.0",
     "@phosphor/signaling": "^1.1.0",
     "@phosphor/widgets": "^1.1.0"
