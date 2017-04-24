@@ -12,7 +12,7 @@ import {
 } from '@phosphor/commands';
 
 import {
-  CellRenderer, DataGrid, DataModel, EvenOddStriping, TextRenderer
+  DataGrid, DataModel, EvenOddStriping, TextRenderer
 } from '@phosphor/datagrid';
 
 import {
@@ -125,7 +125,7 @@ class MyDelegate implements TextRenderer.IStyleDelegate {
 
   static readonly orangeBackgroundStyle: TextRenderer.ICellStyle = { backgroundColor: '#F6B26B' };
 
-  getStyle(config: CellRenderer.ICellConfig): TextRenderer.ICellStyle | null {
+  getStyle(config: DataGrid.ICellConfig): TextRenderer.ICellStyle | null {
     if (config.row >= 5 && config.row <= 7 && config.col >= 5 && config.col <= 7) {
       return MyDelegate.orangeBackgroundStyle;
     }
@@ -352,11 +352,13 @@ function main(): void {
 
   //let myRenderer = new TextRenderer({ styleDelegate: new MyDelegate() });
 
-  let grid = new DataGrid();
+  let grid = new DataGrid({
+    cellRenderer: new TextRenderer(),
+    rowStriping: new EvenOddStriping({ oddColor: '#FFFDE5'}),
+    colStriping: new EvenOddStriping({ oddColor: 'rgba(200, 212, 188, 0.5)' })
+  });
   grid.title.label = 'DataGrid';
   grid.model = new MyDataModel();
-  grid.rowStriping = new EvenOddStriping({ oddColor: '#FFFDE5'});
-  grid.colStriping = new EvenOddStriping({ oddColor: 'rgba(200, 212, 188, 0.5)' });
 
   let dock = new DockPanel();
   dock.addWidget(r1);
