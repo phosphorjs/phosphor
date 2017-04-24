@@ -11,7 +11,7 @@ import {
 
 
 /**
- * The abstract data model class for a data grid.
+ * An object which provides the data for a data grid.
  *
  * #### Notes
  * If the predefined data models are insufficient for a particular use
@@ -106,11 +106,8 @@ namespace DataModel {
      * The descriptive type of the data value.
      *
      * #### Notes
-     * This is used by a data grid to select a renderer which knows how
-     * to render the cell data `value`.
-     *
-     * The `type` can be any string, but should be descriptive of the
-     * actual type of the data value.
+     * The `type` can be any string, but it should be descriptive
+     * of the actual type of the data `value`.
      */
     readonly type: string;
 
@@ -119,9 +116,6 @@ namespace DataModel {
      *
      * #### Notes
      * This may be any value, including complex object types.
-     *
-     * The `type` parameter of the cell data is used by a data grid to
-     * select a cell renderer which knows how to render the data value.
      */
     readonly value: any;
   }

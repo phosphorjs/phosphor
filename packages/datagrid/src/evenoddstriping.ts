@@ -5,42 +5,16 @@
 |
 | The full license is in the file LICENSE, distributed with this software.
 |----------------------------------------------------------------------------*/
+import {
+  DataGrid
+} from './datagrid';
 
 
 /**
- * An object which generates background colors for grid sections.
- *
- * #### Notes
- * A section striping object can be used to generate "zebra striping"
- * for rows and columns in a data grid.
- *
- * If the state of a striping object is changed in-place, the grid must
- * be manually refreshed in order to paint the new effective results.
- *
- * A striping object **must not** throw exceptions, and **must not**
- * mutate the data model or the data grid.
+ * An implementation of `IStriping` based on even-odd indices.
  */
 export
-interface ISectionStriping {
-  /**
-   * Get the background color for a specific index.
-   *
-   * @param index - The index of the section of interest.
-   *
-   * @returns The background color for the section, or an empty string.
-   */
-  sectionColor(index: number): string;
-}
-
-
-/**
- * A concrete implementation of `ISectionStriping`.
- *
- * #### Notes
- * This class supports striping based on even-odd indices.
- */
-export
-class EvenOddStriping implements ISectionStriping {
+class EvenOddStriping implements DataGrid.IStriping {
   /**
    * Construct a new even-odd striping object.
    *
@@ -64,11 +38,11 @@ class EvenOddStriping implements ISectionStriping {
   /**
    * Get the background color for a specific index.
    *
-   * @param index - The index of the section of interest.
+   * @param index - The index of the relevant section.
    *
-   * @returns The background color for the section, or an empty string.
+   * @returns The background color for the section, or `''`.
    */
-  sectionColor(index: number): string {
+  backgroundColor(index: number): string {
     return index % 2 === 0 ? this.evenColor : this.oddColor;
   }
 }

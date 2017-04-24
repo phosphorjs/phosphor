@@ -6,22 +6,21 @@
 | The full license is in the file LICENSE, distributed with this software.
 |----------------------------------------------------------------------------*/
 import {
-  CellRenderer
-} from './cellrenderer';
+  DataGrid
+} from './datagrid';
 
 
 /**
  * A cell renderer which renders data values as text.
  */
 export
-class TextRenderer extends CellRenderer {
+class TextRenderer implements DataGrid.ICellRenderer {
   /**
    * Construct a new text renderer.
    *
    * @param options - The options for initializing the renderer.
    */
   constructor(options: TextRenderer.IOptions = {}) {
-    super();
     this.textColor = options.textColor || 'black';
     this.backgroundColor = options.backgroundColor || '';
     this.textFormatter = options.textFormatter || null;
@@ -55,7 +54,7 @@ class TextRenderer extends CellRenderer {
    *
    * @param config - The configuration data for the cell.
    */
-  drawCell(gc: CanvasRenderingContext2D, config: CellRenderer.ICellConfig): void {
+  drawCell(gc: CanvasRenderingContext2D, config: DataGrid.ICellConfig): void {
     // Fetch the cell specific style.
     let style = this.styleDelegate && this.styleDelegate.getStyle(config);
 
@@ -78,7 +77,7 @@ class TextRenderer extends CellRenderer {
    * #### Notes
    * This method may be reimplemented by a subclass if needed.
    */
-  protected drawBackground(gc: CanvasRenderingContext2D, config: CellRenderer.ICellConfig, style: TextRenderer.ICellStyle | null): void {
+  protected drawBackground(gc: CanvasRenderingContext2D, config: DataGrid.ICellConfig, style: TextRenderer.ICellStyle | null): void {
     // Resolve the background color for the cell.
     let color = (style && style.backgroundColor) || this.backgroundColor;
 
@@ -104,7 +103,7 @@ class TextRenderer extends CellRenderer {
    * #### Notes
    * This method may be reimplemented by a subclass if needed.
    */
-  protected drawText(gc: CanvasRenderingContext2D, config: CellRenderer.ICellConfig, style: TextRenderer.ICellStyle | null): void {
+  protected drawText(gc: CanvasRenderingContext2D, config: DataGrid.ICellConfig, style: TextRenderer.ICellStyle | null): void {
     // Resolve the text color for the cell.
     let color = (style && style.textColor) || this.textColor;
 
@@ -185,6 +184,9 @@ namespace TextRenderer {
     backgroundColor?: string;
   }
 
+  // TODO
+  // "Delegate" -> "???"
+
   /**
    * An object which resolves cell-specific styles.
    */
@@ -202,7 +204,7 @@ namespace TextRenderer {
      *
      * The delegate **must not** throw exceptions.
      */
-    getStyle(config: CellRenderer.ICellConfig): ICellStyle | null;
+    getStyle(config: DataGrid.ICellConfig): ICellStyle | null;
   }
 
   /**
@@ -222,7 +224,7 @@ namespace TextRenderer {
      *
      * The formatter **must not** throw exceptions.
      */
-    formatText(config: CellRenderer.ICellConfig): string;
+    formatText(config: DataGrid.ICellConfig): string;
   }
 
   /**

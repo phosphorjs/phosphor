@@ -14,7 +14,9 @@ import {
  * An object which manages a collection of variable sized sections.
  *
  * #### Notes
- * This class is used to manage the row and column sizes in a grid.
+ * This class is an implementation detail. It is designed to manage
+ * the variable row and column sizes for a data grid. User code will
+ * not interact with this class directly.
  */
 export
 class SectionList {
