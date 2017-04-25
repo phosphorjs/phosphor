@@ -62,6 +62,12 @@ class DataGrid extends Widget {
     if (options.headerFillColor !== undefined) {
       this._headerFillColor = options.headerFillColor;
     }
+    if (options.mainGridLineColor !== undefined) {
+      this._mainGridLineColor = options.mainGridLineColor;
+    }
+    if (options.headerGridLineColor !== undefined) {
+      this._headerGridLineColor = options.headerGridLineColor;
+    }
 
     // Set up the row and column sections lists.
     // TODO - allow base size configuration.
@@ -344,6 +350,58 @@ class DataGrid extends Widget {
 
     // Update the internal value.
     this._headerFillColor = value;
+
+    // Schedule a repaint of the viewport.
+    this.repaint();
+  }
+
+  /**
+   * Get the main grid line color for the data grid.
+   */
+  get mainGridLineColor(): string {
+    return this._mainGridLineColor;
+  }
+
+  /**
+   * Set the main grid line color for the data grid.
+   *
+   * #### Notes
+   * Grid lines are composited with `multiply` mode.
+   */
+  set mainGridLineColor(value: string) {
+    // Bail if the grid line color does not change.
+    if (this._mainGridLineColor === value) {
+      return;
+    }
+
+    // Update the internal value.
+    this._mainGridLineColor = value;
+
+    // Schedule a repaint of the viewport.
+    this.repaint();
+  }
+
+  /**
+   * Get the header grid line color for the data grid.
+   */
+  get headerGridLineColor(): string {
+    return this._headerGridLineColor;
+  }
+
+  /**
+   * Set the header grid line color for the data grid.
+   *
+   * #### Notes
+   * Grid lines are composited with `multiply` mode.
+   */
+  set headerGridLineColor(value: string) {
+    // Bail if the grid line color does not change.
+    if (this._headerGridLineColor === value) {
+      return;
+    }
+
+    // Update the internal value.
+    this._headerGridLineColor = value;
 
     // Schedule a repaint of the viewport.
     this.repaint();
@@ -1075,7 +1133,7 @@ class DataGrid extends Widget {
     this._drawCells(rgn);
 
     // Draw the grid lines for the cell region.
-    this._drawGridLines(rgn, '#D4D4D4');  // TODO make configurable
+    this._drawGridLines(rgn, this._mainGridLineColor);
 
     // Restore the gc state.
     this._canvasGC.restore();
@@ -1179,7 +1237,7 @@ class DataGrid extends Widget {
     this._drawCells(rgn);
 
     // Draw the grid lines for the cell region.
-    this._drawGridLines(rgn, '#B5B5B5');  // TODO make configurable
+    this._drawGridLines(rgn, this._headerGridLineColor);
 
     // Restore the gc state.
     this._canvasGC.restore();
@@ -1283,7 +1341,7 @@ class DataGrid extends Widget {
     this._drawCells(rgn);
 
     // Draw the grid lines for the cell region.
-    this._drawGridLines(rgn, '#B5B5B5');  // TODO make configurable
+    this._drawGridLines(rgn, this._headerGridLineColor);
 
     // Restore the gc state.
     this._canvasGC.restore();
@@ -1388,7 +1446,7 @@ class DataGrid extends Widget {
     this._drawCells(rgn);
 
     // Draw the grid lines for the cell region.
-    this._drawGridLines(rgn, '#B5B5B5');  // TODO make configurable
+    this._drawGridLines(rgn, this._headerGridLineColor);
 
     // Restore the gc state.
     this._canvasGC.restore();
@@ -1692,6 +1750,8 @@ class DataGrid extends Widget {
   private _voidFillColor = '#F3F3F3';
   private _mainFillColor = '#FFFFFF';
   private _headerFillColor = '#F3F3F3';
+  private _mainGridLineColor = '#D4D4D4';
+  private _headerGridLineColor = '#B5B5B5';
 
   private _model: DataModel | null = null;
 
@@ -1872,11 +1932,25 @@ namespace DataGrid {
     mainFillColor?: string;
 
     /**
-     * the fill color for the data grid header area.
+     * The fill color for the data grid header area.
      *
      * The default value is `'#F3F3F3'`.
      */
     headerFillColor?: string;
+
+    /**
+     * The color for the main cell area grid lines.
+     *
+     * The default value is '#D4D4D4'.
+     */
+    mainGridLineColor?:  string;
+
+    /**
+     * The color for the header area grid lines.
+     *
+     * The default value is '#B5B5B5'.
+     */
+    headerGridLineColor?: string;
   }
 }
 
