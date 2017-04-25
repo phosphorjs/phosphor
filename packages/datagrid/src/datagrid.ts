@@ -1662,6 +1662,7 @@ class DataGrid extends Widget {
 
     // Set the canvas composition mode.
     //
+    // TODO - Make the composition mode configurable?
     // Note - The `multiply` mode is buggy in Firefox on Windows:
     // https://bugzilla.mozilla.org/show_bug.cgi?id=1333090
     let prevMode = this._canvasGC.globalCompositeOperation;
