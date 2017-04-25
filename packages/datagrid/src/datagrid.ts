@@ -47,11 +47,21 @@ class DataGrid extends Widget {
     super();
     this.addClass('p-DataGrid');
 
-    // Parse the options.
+    // Parse the rendering options.
     this._cellRenderer = options.cellRenderer;
     this._rowStriping = options.rowStriping || null;
     this._colStriping = options.colStriping || null;
-    this._fillColor = options.fillColor || Private.defaultFillColor;
+
+    // Parse the color options.
+    if (options.voidFillColor !== undefined) {
+      this._voidFillColor = options.voidFillColor;
+    }
+    if (options.mainFillColor !== undefined) {
+      this._mainFillColor = options.mainFillColor;
+    }
+    if (options.headerFillColor !== undefined) {
+      this._headerFillColor = options.headerFillColor;
+    }
 
     // Set up the row and column sections lists.
     // TODO - allow base size configuration.
@@ -271,28 +281,69 @@ class DataGrid extends Widget {
   }
 
   /**
-   * Get the fill color for the data grid.
+   * Get the void fill color for the data grid.
    */
-  get fillColor(): string {
-    return this._fillColor;
+  get voidFillColor(): string {
+    return this._voidFillColor;
   }
 
   /**
-   * Set the fill color for the data grid.
-   *
-   * Setting the fill color to `''` will restore the default.
+   * Set the void fill color for the data grid.
    */
-  set fillColor(value: string) {
-    // Coerce an empty string to the default fill color.
-    value = value || Private.defaultFillColor;
-
+  set voidFillColor(value: string) {
     // Bail if the fill color does not change.
-    if (this._fillColor === value) {
+    if (this._voidFillColor === value) {
       return;
     }
 
     // Update the internal value.
-    this._fillColor = value;
+    this._voidFillColor = value;
+
+    // Schedule a repaint of the viewport.
+    this.repaint();
+  }
+
+  /**
+   * Get the main fill color for the data grid.
+   */
+  get mainFillColor(): string {
+    return this._mainFillColor;
+  }
+
+  /**
+   * Set the main fill color for the data grid.
+   */
+  set mainFillColor(value: string) {
+    // Bail if the fill color does not change.
+    if (this._mainFillColor === value) {
+      return;
+    }
+
+    // Update the internal value.
+    this._mainFillColor = value;
+
+    // Schedule a repaint of the viewport.
+    this.repaint();
+  }
+
+  /**
+   * Get the header fill color for the data grid.
+   */
+  get headerFillColor(): string {
+    return this._headerFillColor;
+  }
+
+  /**
+   * Set the header fill color for the data grid.
+   */
+  set headerFillColor(value: string) {
+    // Bail if the fill color does not change.
+    if (this._headerFillColor === value) {
+      return;
+    }
+
+    // Update the internal value.
+    this._headerFillColor = value;
 
     // Schedule a repaint of the viewport.
     this.repaint();
@@ -893,8 +944,8 @@ class DataGrid extends Widget {
     // Clear the dirty rect of all content.
     this._canvasGC.clearRect(rx, ry, rw, rh);
 
-    // Draw the fill region.
-    this._drawFillRegion(rx, ry, rw, rh);
+    // Draw the void region.
+    this._drawVoidRegion(rx, ry, rw, rh);
 
     // Draw the main cell region.
     this._drawMainCellRegion(rx, ry, rw, rh);
@@ -910,16 +961,16 @@ class DataGrid extends Widget {
   }
 
   /**
-   * Draw the fill region for the dirty rect.
+   * Draw the void region for the dirty rect.
    */
-  private _drawFillRegion(rx: number, ry: number, rw: number, rh: number): void {
-    // Bail if there is no fill color.
-    if (!this._fillColor) {
+  private _drawVoidRegion(rx: number, ry: number, rw: number, rh: number): void {
+    // Bail if there is no void fill color.
+    if (!this._voidFillColor) {
       return;
     }
 
     // Fill the dirty rect with the fill color.
-    this._canvasGC.fillStyle = this._fillColor;
+    this._canvasGC.fillStyle = this._voidFillColor;
     this._canvasGC.fillRect(rx, ry, rw, rh);
   }
 
@@ -1012,7 +1063,7 @@ class DataGrid extends Widget {
     this._canvasGC.clip();
 
     // Draw the background for the cell region.
-    this._drawBackground(rgn, '#FFFFFF');  // TODO make configurable
+    this._drawBackground(rgn, this._mainFillColor);
 
     // Draw the row striping for the cell region.
     this._drawRowStriping(rgn);
@@ -1122,7 +1173,7 @@ class DataGrid extends Widget {
     this._canvasGC.clip();
 
     // Draw the background for the cell region.
-    this._drawBackground(rgn, '#F3F3F3');  // TODO make configurable
+    this._drawBackground(rgn, this._headerFillColor);
 
     // Draw the cell content for the cell region.
     this._drawCells(rgn);
@@ -1226,7 +1277,7 @@ class DataGrid extends Widget {
     this._canvasGC.clip();
 
     // Draw the background for the cell region.
-    this._drawBackground(rgn, '#F3F3F3');  // TODO make configurable
+    this._drawBackground(rgn, this._headerFillColor);
 
     // Draw the cell content for the cell region.
     this._drawCells(rgn);
@@ -1331,7 +1382,7 @@ class DataGrid extends Widget {
     this._canvasGC.clip();
 
     // Draw the background for the cell region.
-    this._drawBackground(rgn, '#F3F3F3');  // TODO make configurable
+    this._drawBackground(rgn, this._headerFillColor);
 
     // Draw the cell content for the cell region.
     this._drawCells(rgn);
@@ -1638,7 +1689,9 @@ class DataGrid extends Widget {
   private _scrollY = 0;
   private _inPaint = false;
 
-  private _fillColor: string;
+  private _voidFillColor = '#F3F3F3';
+  private _mainFillColor = '#FFFFFF';
+  private _headerFillColor = '#F3F3F3';
 
   private _model: DataModel | null = null;
 
@@ -1805,11 +1858,25 @@ namespace DataGrid {
     colStriping?: IStriping;
 
     /**
-     * The fill color for the entire data grid.
+     * The fill color for the background of the entire data grid.
      *
      * The default value is `'#F3F3F3'`.
      */
-    fillColor?: string;
+    voidFillColor?: string;
+
+    /**
+     * The fill color for the data grid main cell area.
+     *
+     * The default value is `'#FFFFFF'`.
+     */
+    mainFillColor?: string;
+
+    /**
+     * the fill color for the data grid header area.
+     *
+     * The default value is `'#F3F3F3'`.
+     */
+    headerFillColor?: string;
   }
 }
 
@@ -1818,12 +1885,6 @@ namespace DataGrid {
  * The namespace for the module implementation details.
  */
 namespace Private {
-  /**
-   * The default fill color for data grids.
-   */
-  export
-  const defaultFillColor = '#F3F3F3';
-
   /**
    * A singleton `scroll-request` conflatable message.
    */
