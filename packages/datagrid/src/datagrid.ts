@@ -189,7 +189,12 @@ class DataGrid extends Widget {
       this._colHeaderSections.insertSections(0, value.colHeaderCount);
     }
 
-    // TODO reset scroll and scroll bars
+    // Reset the scroll position.
+    this._scrollX = 0;
+    this._scrollY = 0;
+
+    // Sync the scroll bars with the viewport.
+    this._syncScrollBarsWithViewport();
 
     // Schedule a repaint of the viewport.
     this.repaint();
@@ -570,13 +575,13 @@ class DataGrid extends Widget {
    * A message handler invoked on a `'resize'` message.
    */
   protected onResize(msg: Widget.ResizeMessage): void {
-    // Update the scroll bar visibility for the new viewport size.
+    // Update the scroll bar visibility.
     this._updateScrollBarVisibility();
 
-    // Sync the scroll bars with the new viewport size.
-    this._syncScrollBarsWithViewportSize();
+    // Sync the scroll bars with the viewport.
+    this._syncScrollBarsWithViewport();
 
-    // Re-clamp the scroll position for the new viewport size.
+    // Re-clamp the scroll position to the new page size.
     this.scrollTo(this._scrollX, this._scrollY);
   }
 
@@ -637,19 +642,21 @@ class DataGrid extends Widget {
   }
 
   /**
-   * Synchronize the scroll bars with the size of the viewport.
-   *
-   * The scroll bar `value` is synced by the `scrollTo` method.
+   * Synchronize the scroll bars with the viewport.
    */
-  private _syncScrollBarsWithViewportSize(): void {
+  private _syncScrollBarsWithViewport(): void {
+    let sx = this.scrollX;
     let sw = this.scrollWidth;
     let sh = this.scrollHeight;
+    let sy = this.scrollY;
     let pw = this.pageWidth;
     let ph = this.pageHeight;
     this._hScrollBar.maximum = sw - pw;
     this._hScrollBar.page = pw;
+    this._hScrollBar.value = sx;
     this._vScrollBar.maximum = sh - ph;
     this._vScrollBar.page = ph;
+    this._vScrollBar.value = sy;
   }
 
   /**
