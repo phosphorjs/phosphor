@@ -550,6 +550,15 @@ class DataGrid extends Widget {
       return;
     }
 
+    // Recompute the scroll bar minimums before the layout refits.
+    // This avoids a DOM read after the layout writes any changes.
+    if (msg.type === 'fit-request') {
+      let vsbLimits = ElementExt.sizeLimits(this._vScrollBar.node);
+      let hsbLimits = ElementExt.sizeLimits(this._hScrollBar.node);
+      this._vScrollBarMinWidth = vsbLimits.minWidth;
+      this._hScrollBarMinHeight = hsbLimits.minHeight;
+    }
+
     // Process all other messages as normal.
     super.processMessage(msg);
   }
@@ -605,13 +614,12 @@ class DataGrid extends Widget {
     let hasHScroll = !this._hScrollBar.isHidden;
 
     // Get the minimum sizes of the scroll bars.
-    // TODO - cache these.
-    let vsw = ElementExt.sizeLimits(this._vScrollBar.node).minWidth;
-    let hsw = ElementExt.sizeLimits(this._hScrollBar.node).minHeight;
+    let vsw = this._vScrollBarMinWidth;
+    let hsh = this._hScrollBarMinHeight;
 
     // Get the page size as if no scroll bars are visible.
     let apw = pw + (hasVScroll ? vsw : 0);
-    let aph = ph + (hasHScroll ? hsw : 0);
+    let aph = ph + (hasHScroll ? hsh : 0);
 
     // Test whether scroll bars are needed for the adjusted size.
     let needVScroll = aph < sh;
@@ -624,7 +632,7 @@ class DataGrid extends Widget {
 
     // Re-test the vertical scroll if a horizontal scroll is needed.
     if (needHScroll && !needVScroll) {
-      needVScroll = (aph - hsw) < sh;
+      needVScroll = (aph - hsh) < sh;
     }
 
     // Bail if neither scroll bar visibility will change.
@@ -1511,7 +1519,7 @@ class DataGrid extends Widget {
     // Note - The `multiply` mode is buggy in Firefox on Windows:
     // https://bugzilla.mozilla.org/show_bug.cgi?id=1333090
     let prevMode = this._canvasGC.globalCompositeOperation;
-    this._canvasGC.globalCompositeOperation = 'multiply';  // TODO make configurable?
+    this._canvasGC.globalCompositeOperation = 'multiply';
 
     // Stroke the path with the grid line color.
     this._canvasGC.strokeStyle = color;
@@ -1575,6 +1583,9 @@ class DataGrid extends Widget {
   private _vScrollBar: ScrollBar;
   private _hScrollBar: ScrollBar;
   private _scrollCorner: Widget;
+
+  private _vScrollBarMinWidth = 0;
+  private _hScrollBarMinHeight = 0;
 
   private _canvas: HTMLCanvasElement;
   private _buffer: HTMLCanvasElement;
