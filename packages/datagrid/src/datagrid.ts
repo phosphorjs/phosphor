@@ -302,6 +302,68 @@ class DataGrid extends Widget {
   // }
 
   /**
+   * Scroll the viewport by one page.
+   *
+   * @param - The desired direction of the scroll.
+   */
+  scrollPage(dir: 'up' | 'down' | 'left' | 'right'): void {
+    let dx = 0;
+    let dy = 0;
+    switch (dir) {
+    case 'up':
+      dy = -this.pageHeight;
+      break;
+    case 'down':
+      dy = this.pageHeight;
+      break;
+    case 'left':
+      dx = -this.pageWidth;
+      break;
+    case 'right':
+      dx = this.pageWidth;
+      break;
+    default:
+      throw 'unreachable';
+    }
+    this.scrollBy(dx, dy);
+  }
+
+  /**
+   * Scroll the viewport by one cell-aligned step.
+   *
+   * @param - The desired direction of the scroll.
+   */
+  scrollStep(dir: 'up' | 'down' | 'left' | 'right'): void {
+    let r: number;
+    let c: number;
+    let x = this._scrollX;
+    let y = this._scrollY;
+    let rows = this._rowSections;
+    let cols = this._colSections;
+    switch (dir) {
+    case 'up':
+      r = rows.sectionIndex(y - 1);
+      y = r < 0 ? y : rows.sectionOffset(r);
+      break;
+    case 'down':
+      r = rows.sectionIndex(y);
+      y = r < 0 ? y : rows.sectionOffset(r) + rows.sectionSize(r);
+      break;
+    case 'left':
+      c = cols.sectionIndex(x - 1);
+      x = c < 0 ? x : cols.sectionOffset(c);
+      break;
+    case 'right':
+      c = cols.sectionIndex(x);
+      x = c < 0 ? x : cols.sectionOffset(c) + cols.sectionSize(c);
+      break;
+    default:
+      throw 'unreachable';
+    }
+    this.scrollTo(x, y);
+  }
+
+  /**
    * Scroll the viewport by the specified delta.
    *
    * @param dx - The scroll X delta, in pixels.
@@ -410,85 +472,7 @@ class DataGrid extends Widget {
   }
 
   /**
-   * Scroll the viewport up by one visible page.
-   */
-  pageUp(): void {
-    this.scrollBy(0, -this.pageHeight);
-  }
-
-  /**
-   * Scroll the viewport down by one visible page.
-   */
-  pageDown(): void {
-    this.scrollBy(0, this.pageHeight);
-  }
-
-  /**
-   * Scroll the viewport left by one visible page.
-   */
-  pageLeft(): void {
-    this.scrollBy(-this.pageWidth, 0);
-  }
-
-  /**
-   * Scroll the viewport right by one visible page.
-   */
-  pageRight(): void {
-    this.scrollBy(this.pageWidth, 0);
-  }
-
-  /**
-   * Scroll the viewport up by one visible step.
-   */
-  stepUp(): void {
-    let row = this._rowSections.sectionIndex(this._scrollY - 1);
-    if (row === -1) {
-      return;
-    }
-    let offset = this._rowSections.sectionOffset(row);
-    this.scrollTo(this._scrollX, offset);
-  }
-
-  /**
-   * Scroll the viewport down by one visible step.
-   */
-  stepDown(): void {
-    let row = this._rowSections.sectionIndex(this._scrollY);
-    if (row === -1) {
-      return;
-    }
-    let offset = this._rowSections.sectionOffset(row);
-    let size = this._rowSections.sectionSize(row);
-    this.scrollTo(this._scrollX, offset + size);
-  }
-
-  /**
-   * Scroll the viewport left by one visible step.
-   */
-  stepLeft(): void {
-    let col = this._colSections.sectionIndex(this._scrollX - 1);
-    if (col === -1) {
-      return;
-    }
-    let offset = this._colSections.sectionOffset(col);
-    this.scrollTo(offset, this._scrollY);
-  }
-
-  /**
-   * Scroll the viewport right by one visible step.
-   */
-  stepRight(): void {
-    let col = this._colSections.sectionIndex(this._scrollX);
-    if (col === -1) {
-      return;
-    }
-    let offset = this._colSections.sectionOffset(col);
-    let size = this._colSections.sectionSize(col);
-    this.scrollTo(offset + size, this._scrollY);
-  }
-
-  /**
-   * Schedule a full repaint of the viewport.
+   * Schedule a full repaint of the data grid.
    *
    * #### Notes
    * This method is typically called automatically at the proper times.
@@ -515,7 +499,6 @@ class DataGrid extends Widget {
     }
 
     // Recompute the scroll bar minimums before the layout refits.
-    // This avoids a DOM read after the layout writes any changes.
     if (msg.type === 'fit-request') {
       let vsbLimits = ElementExt.sizeLimits(this._vScrollBar.node);
       let hsbLimits = ElementExt.sizeLimits(this._hScrollBar.node);
@@ -1510,17 +1493,9 @@ class DataGrid extends Widget {
    */
   private _onPageRequested(sender: ScrollBar, dir: 'decrement' | 'increment'): void {
     if (sender === this._vScrollBar) {
-      if (dir === 'decrement') {
-        this.pageUp();
-      } else {
-        this.pageDown();
-      }
+      this.scrollPage(dir === 'decrement' ? 'up' : 'down');
     } else {
-      if (dir === 'decrement') {
-        this.pageLeft();
-      } else {
-        this.pageRight();
-      }
+      this.scrollPage(dir === 'decrement' ? 'left' : 'right');
     }
   }
 
@@ -1529,17 +1504,9 @@ class DataGrid extends Widget {
    */
   private _onStepRequested(sender: ScrollBar, dir: 'decrement' | 'increment'): void {
     if (sender === this._vScrollBar) {
-      if (dir === 'decrement') {
-        this.stepUp();
-      } else {
-        this.stepDown();
-      }
+      this.scrollStep(dir === 'decrement' ? 'up' : 'down');
     } else {
-      if (dir === 'decrement') {
-        this.stepLeft();
-      } else {
-        this.stepRight();
-      }
+      this.scrollStep(dir === 'decrement' ? 'left' : 'right');
     }
   }
 
