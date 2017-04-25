@@ -51,6 +51,7 @@ class DataGrid extends Widget {
     this._cellRenderer = options.cellRenderer;
     this._rowStriping = options.rowStriping || null;
     this._colStriping = options.colStriping || null;
+    this._fillColor = options.fillColor || Private.defaultFillColor;
 
     // Set up the row and column sections lists.
     // TODO - allow base size configuration.
@@ -264,6 +265,34 @@ class DataGrid extends Widget {
 
     // Update the internal value.
     this._colStriping = value;
+
+    // Schedule a repaint of the viewport.
+    this.repaint();
+  }
+
+  /**
+   * Get the fill color for the data grid.
+   */
+  get fillColor(): string {
+    return this._fillColor;
+  }
+
+  /**
+   * Set the fill color for the data grid.
+   *
+   * Setting the fill color to `''` will restore the default.
+   */
+  set fillColor(value: string) {
+    // Coerce an empty string to the default fill color.
+    value = value || Private.defaultFillColor;
+
+    // Bail if the fill color does not change.
+    if (this._fillColor === value) {
+      return;
+    }
+
+    // Update the internal value.
+    this._fillColor = value;
 
     // Schedule a repaint of the viewport.
     this.repaint();
@@ -861,8 +890,11 @@ class DataGrid extends Widget {
    * This method dispatches to the relevant `_draw*` methods.
    */
   private _draw(rx: number, ry: number, rw: number, rh: number): void {
-    // Draw the void region.
-    this._drawVoidRegion(rx, ry, rw, rh);
+    // Clear the dirty rect of all content.
+    this._canvasGC.clearRect(rx, ry, rw, rh);
+
+    // Draw the fill region.
+    this._drawFillRegion(rx, ry, rw, rh);
 
     // Draw the main cell region.
     this._drawMainCellRegion(rx, ry, rw, rh);
@@ -878,11 +910,16 @@ class DataGrid extends Widget {
   }
 
   /**
-   * Draw the void region which intersects the dirty rect.
+   * Draw the fill region for the dirty rect.
    */
-  private _drawVoidRegion(rx: number, ry: number, rw: number, rh: number): void {
-    // Fill the dirty rect with the void color.
-    this._canvasGC.fillStyle = '#F3F3F3';  // TODO make configurable.
+  private _drawFillRegion(rx: number, ry: number, rw: number, rh: number): void {
+    // Bail if there is no fill color.
+    if (!this._fillColor) {
+      return;
+    }
+
+    // Fill the dirty rect with the fill color.
+    this._canvasGC.fillStyle = this._fillColor;
     this._canvasGC.fillRect(rx, ry, rw, rh);
   }
 
@@ -1601,6 +1638,8 @@ class DataGrid extends Widget {
   private _scrollY = 0;
   private _inPaint = false;
 
+  private _fillColor: string;
+
   private _model: DataModel | null = null;
 
   private _rowStriping: DataGrid.IStriping | null;
@@ -1753,13 +1792,24 @@ namespace DataGrid {
 
     /**
      * The row striping object for the data grid.
+     *
+     * The default value is `null`.
      */
     rowStriping?: IStriping;
 
     /**
      * The column striping object for the data grid.
+     *
+     * The default value is `null`.
      */
     colStriping?: IStriping;
+
+    /**
+     * The fill color for the entire data grid.
+     *
+     * The default value is `'#F3F3F3'`.
+     */
+    fillColor?: string;
   }
 }
 
@@ -1768,6 +1818,12 @@ namespace DataGrid {
  * The namespace for the module implementation details.
  */
 namespace Private {
+  /**
+   * The default fill color for data grids.
+   */
+  export
+  const defaultFillColor = '#F3F3F3';
+
   /**
    * A singleton `scroll-request` conflatable message.
    */
