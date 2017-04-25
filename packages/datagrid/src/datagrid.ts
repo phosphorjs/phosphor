@@ -47,27 +47,9 @@ class DataGrid extends Widget {
     super();
     this.addClass('p-DataGrid');
 
-    // Parse the rendering options.
+    // Parse the options.
     this._cellRenderer = options.cellRenderer;
-    this._rowStriping = options.rowStriping || null;
-    this._colStriping = options.colStriping || null;
-
-    // Parse the color options.
-    if (options.voidFillColor !== undefined) {
-      this._voidFillColor = options.voidFillColor;
-    }
-    if (options.mainFillColor !== undefined) {
-      this._mainFillColor = options.mainFillColor;
-    }
-    if (options.headerFillColor !== undefined) {
-      this._headerFillColor = options.headerFillColor;
-    }
-    if (options.mainGridLineColor !== undefined) {
-      this._mainGridLineColor = options.mainGridLineColor;
-    }
-    if (options.headerGridLineColor !== undefined) {
-      this._headerGridLineColor = options.headerGridLineColor;
-    }
+    this._gridTheme = options.gridTheme;
 
     // Set up the row and column sections lists.
     // TODO - allow base size configuration.
@@ -228,183 +210,27 @@ class DataGrid extends Widget {
    * Set the cell renderer for the data grid.
    */
   set cellRenderer(value: DataGrid.ICellRenderer) {
-    // Bail if the renderer does not change.
-    if (this._cellRenderer === value) {
-      return;
+    if (this._cellRenderer !== value) {
+      this._cellRenderer = value;
+      this.repaint();
     }
-
-    // Update the internal value.
-    this._cellRenderer = value;
-
-    // Schedule a repaint of the viewport.
-    this.repaint();
   }
 
   /**
-   * Get the row striping for the data grid.
+   * Get the grid theme for the data grid.
    */
-  get rowStriping(): DataGrid.IStriping | null {
-    return this._rowStriping;
+  get gridTheme(): DataGrid.IGridTheme {
+    return this._gridTheme;
   }
 
   /**
-   * Set the row striping for the data grid.
+   * Set the grid theme for the data grid.
    */
-  set rowStriping(value: DataGrid.IStriping | null) {
-    // Bail if the striping object does not change.
-    if (this._rowStriping === value) {
-      return;
+  set gridTheme(value: DataGrid.IGridTheme) {
+    if (this._gridTheme !== value) {
+      this._gridTheme = value;
+      this.repaint();
     }
-
-    // Update the internal value.
-    this._rowStriping = value;
-
-    // Schedule a repaint of the viewport.
-    this.repaint();
-  }
-
-  /**
-   * Get the column striping for the data grid.
-   */
-  get colStriping(): DataGrid.IStriping | null {
-    return this._colStriping;
-  }
-
-  /**
-   * Set the column striping for the data grid.
-   */
-  set colStriping(value: DataGrid.IStriping | null) {
-    // Bail if the striping object does not change.
-    if (this._colStriping === value) {
-      return;
-    }
-
-    // Update the internal value.
-    this._colStriping = value;
-
-    // Schedule a repaint of the viewport.
-    this.repaint();
-  }
-
-  /**
-   * Get the void fill color for the data grid.
-   */
-  get voidFillColor(): string {
-    return this._voidFillColor;
-  }
-
-  /**
-   * Set the void fill color for the data grid.
-   */
-  set voidFillColor(value: string) {
-    // Bail if the fill color does not change.
-    if (this._voidFillColor === value) {
-      return;
-    }
-
-    // Update the internal value.
-    this._voidFillColor = value;
-
-    // Schedule a repaint of the viewport.
-    this.repaint();
-  }
-
-  /**
-   * Get the main fill color for the data grid.
-   */
-  get mainFillColor(): string {
-    return this._mainFillColor;
-  }
-
-  /**
-   * Set the main fill color for the data grid.
-   */
-  set mainFillColor(value: string) {
-    // Bail if the fill color does not change.
-    if (this._mainFillColor === value) {
-      return;
-    }
-
-    // Update the internal value.
-    this._mainFillColor = value;
-
-    // Schedule a repaint of the viewport.
-    this.repaint();
-  }
-
-  /**
-   * Get the header fill color for the data grid.
-   */
-  get headerFillColor(): string {
-    return this._headerFillColor;
-  }
-
-  /**
-   * Set the header fill color for the data grid.
-   */
-  set headerFillColor(value: string) {
-    // Bail if the fill color does not change.
-    if (this._headerFillColor === value) {
-      return;
-    }
-
-    // Update the internal value.
-    this._headerFillColor = value;
-
-    // Schedule a repaint of the viewport.
-    this.repaint();
-  }
-
-  /**
-   * Get the main grid line color for the data grid.
-   */
-  get mainGridLineColor(): string {
-    return this._mainGridLineColor;
-  }
-
-  /**
-   * Set the main grid line color for the data grid.
-   *
-   * #### Notes
-   * Grid lines are composited with `multiply` mode.
-   */
-  set mainGridLineColor(value: string) {
-    // Bail if the grid line color does not change.
-    if (this._mainGridLineColor === value) {
-      return;
-    }
-
-    // Update the internal value.
-    this._mainGridLineColor = value;
-
-    // Schedule a repaint of the viewport.
-    this.repaint();
-  }
-
-  /**
-   * Get the header grid line color for the data grid.
-   */
-  get headerGridLineColor(): string {
-    return this._headerGridLineColor;
-  }
-
-  /**
-   * Set the header grid line color for the data grid.
-   *
-   * #### Notes
-   * Grid lines are composited with `multiply` mode.
-   */
-  set headerGridLineColor(value: string) {
-    // Bail if the grid line color does not change.
-    if (this._headerGridLineColor === value) {
-      return;
-    }
-
-    // Update the internal value.
-    this._headerGridLineColor = value;
-
-    // Schedule a repaint of the viewport.
-    this.repaint();
   }
 
   /**
@@ -1003,10 +829,10 @@ class DataGrid extends Widget {
     this._canvasGC.clearRect(rx, ry, rw, rh);
 
     // Draw the void region.
-    this._drawVoidRegion(rx, ry, rw, rh);
+    this._drawVoidSpaceRegion(rx, ry, rw, rh);
 
-    // Draw the main cell region.
-    this._drawMainCellRegion(rx, ry, rw, rh);
+    // Draw the main area region.
+    this._drawMainAreaRegion(rx, ry, rw, rh);
 
     // Draw the row header region.
     this._drawRowHeaderRegion(rx, ry, rw, rh);
@@ -1019,23 +845,26 @@ class DataGrid extends Widget {
   }
 
   /**
-   * Draw the void region for the dirty rect.
+   * Draw the void space region for the dirty rect.
    */
-  private _drawVoidRegion(rx: number, ry: number, rw: number, rh: number): void {
-    // Bail if there is no void fill color.
-    if (!this._voidFillColor) {
+  private _drawVoidSpaceRegion(rx: number, ry: number, rw: number, rh: number): void {
+    // Look up the fill color.
+    let fillColor = this._gridTheme.voidSpaceFillColor;
+
+    // Bail if there is no fill color.
+    if (!fillColor) {
       return;
     }
 
     // Fill the dirty rect with the fill color.
-    this._canvasGC.fillStyle = this._voidFillColor;
+    this._canvasGC.fillStyle = fillColor;
     this._canvasGC.fillRect(rx, ry, rw, rh);
   }
 
   /**
-   * Draw the main cell region which intersects the dirty rect.
+   * Draw the main area region which intersects the dirty rect.
    */
-  private _drawMainCellRegion(rx: number, ry: number, rw: number, rh: number): void {
+  private _drawMainAreaRegion(rx: number, ry: number, rw: number, rh: number): void {
     // Get the visible content dimensions.
     let contentW = this._colSections.totalSize - this._scrollX;
     let contentH = this._rowSections.totalSize - this._scrollY;
@@ -1121,7 +950,7 @@ class DataGrid extends Widget {
     this._canvasGC.clip();
 
     // Draw the background for the cell region.
-    this._drawBackground(rgn, this._mainFillColor);
+    this._drawBackground(rgn, this._gridTheme.mainAreaFillColor);
 
     // Draw the row striping for the cell region.
     this._drawRowStriping(rgn);
@@ -1133,7 +962,7 @@ class DataGrid extends Widget {
     this._drawCells(rgn);
 
     // Draw the grid lines for the cell region.
-    this._drawGridLines(rgn, this._mainGridLineColor);
+    this._drawGridLines(rgn, this._gridTheme.mainAreaGridLineColor);
 
     // Restore the gc state.
     this._canvasGC.restore();
@@ -1231,13 +1060,13 @@ class DataGrid extends Widget {
     this._canvasGC.clip();
 
     // Draw the background for the cell region.
-    this._drawBackground(rgn, this._headerFillColor);
+    this._drawBackground(rgn, this._gridTheme.rowHeaderFillColor);
 
     // Draw the cell content for the cell region.
     this._drawCells(rgn);
 
     // Draw the grid lines for the cell region.
-    this._drawGridLines(rgn, this._headerGridLineColor);
+    this._drawGridLines(rgn, this._gridTheme.rowHeaderGridLineColor);
 
     // Restore the gc state.
     this._canvasGC.restore();
@@ -1335,13 +1164,13 @@ class DataGrid extends Widget {
     this._canvasGC.clip();
 
     // Draw the background for the cell region.
-    this._drawBackground(rgn, this._headerFillColor);
+    this._drawBackground(rgn, this._gridTheme.colHeaderFillColor);
 
     // Draw the cell content for the cell region.
     this._drawCells(rgn);
 
     // Draw the grid lines for the cell region.
-    this._drawGridLines(rgn, this._headerGridLineColor);
+    this._drawGridLines(rgn, this._gridTheme.colHeaderGridLineColor);
 
     // Restore the gc state.
     this._canvasGC.restore();
@@ -1440,13 +1269,13 @@ class DataGrid extends Widget {
     this._canvasGC.clip();
 
     // Draw the background for the cell region.
-    this._drawBackground(rgn, this._headerFillColor);
+    this._drawBackground(rgn, this._gridTheme.cornerHeaderFillColor);
 
     // Draw the cell content for the cell region.
     this._drawCells(rgn);
 
     // Draw the grid lines for the cell region.
-    this._drawGridLines(rgn, this._headerGridLineColor);
+    this._drawGridLines(rgn, this._gridTheme.cornerHeaderGridLineColor);
 
     // Restore the gc state.
     this._canvasGC.restore();
@@ -1455,14 +1284,14 @@ class DataGrid extends Widget {
   /**
    * Draw the background for the given cell region.
    */
-  private _drawBackground(rgn: Private.ICellRegion, color: string): void {
-    // Bail if there is no background color.
-    if (!color) {
+  private _drawBackground(rgn: Private.ICellRegion, fillColor: string): void {
+    // Bail if there is no fill color.
+    if (!fillColor) {
       return;
     }
 
-    // Fill the cell region with the background color.
-    this._canvasGC.fillStyle = color;
+    // Fill the cell region with the fill color.
+    this._canvasGC.fillStyle = fillColor;
     this._canvasGC.fillRect(rgn.x, rgn.y, rgn.width, rgn.height);
   }
 
@@ -1470,11 +1299,6 @@ class DataGrid extends Widget {
    * Draw the row striping for the given cell region.
    */
   private _drawRowStriping(rgn: Private.ICellRegion): void {
-    // Bail if there is no row striping.
-    if (!this._rowStriping) {
-      return;
-    }
-
     // Draw the row striping for the region.
     for (let y = rgn.y, j = 0, n = rgn.rowSizes.length; j < n; ++j) {
       // Fetch the size of the row.
@@ -1485,17 +1309,17 @@ class DataGrid extends Widget {
         continue;
       }
 
-      // Get the background color for the row.
-      let color = this._rowStriping.backgroundColor(rgn.r1 + j);
+      // Get the fill color for the row.
+      let fillColor = this._gridTheme.rowFillColor(rgn.r1 + j);
 
-      // Skip rows with no color.
-      if (!color) {
+      // Skip rows with no fill color.
+      if (!fillColor) {
         y += size;
         continue;
       }
 
-      // Fill the row with the color.
-      this._canvasGC.fillStyle = color;
+      // Fill the row with the fill color.
+      this._canvasGC.fillStyle = fillColor;
       this._canvasGC.fillRect(rgn.x, y - 1, rgn.width, size + 1);
 
       // Increment the running Y coordinate.
@@ -1507,11 +1331,6 @@ class DataGrid extends Widget {
    * Draw the column striping for the given cell region.
    */
   private _drawColStriping(rgn: Private.ICellRegion): void {
-    // Bail if there is no column striping.
-    if (!this._colStriping) {
-      return;
-    }
-
     // Draw the column striping for the region.
     for (let x = rgn.x, i = 0, n = rgn.colSizes.length; i < n; ++i) {
       // Fetch the size of the column.
@@ -1522,17 +1341,17 @@ class DataGrid extends Widget {
         continue;
       }
 
-      // Get the background color for the column.
-      let color = this._colStriping.backgroundColor(rgn.c1 + i);
+      // Get the fill color for the column.
+      let fillColor = this._gridTheme.colFillColor(rgn.c1 + i);
 
-      // Skip columns with no color.
-      if (!color) {
+      // Skip columns with no fill color.
+      if (!fillColor) {
         x += size;
         continue;
       }
 
-      // Fill the column with the color.
-      this._canvasGC.fillStyle = color;
+      // Fill the column with the fill color.
+      this._canvasGC.fillStyle = fillColor;
       this._canvasGC.fillRect(x - 1, rgn.y, size + 1, rgn.height);
 
       // Increment the running X coordinate.
@@ -1617,6 +1436,9 @@ class DataGrid extends Widget {
 
     // Start the path for the grid lines.
     this._canvasGC.beginPath();
+
+    // Set the line width for the grid lines.
+    this._canvasGC.lineWidth = 1;
 
     // Draw the grid lines for the rows.
     for (let y = rgn.y, j = 0, n = rgn.rowSizes.length; j < n; ++j) {
@@ -1748,18 +1570,10 @@ class DataGrid extends Widget {
   private _scrollY = 0;
   private _inPaint = false;
 
-  private _voidFillColor = '#F3F3F3';
-  private _mainFillColor = '#FFFFFF';
-  private _headerFillColor = '#F3F3F3';
-  private _mainGridLineColor = '#D4D4D4';
-  private _headerGridLineColor = '#B5B5B5';
-
   private _model: DataModel | null = null;
 
-  private _rowStriping: DataGrid.IStriping | null;
-  private _colStriping: DataGrid.IStriping | null;
-
   private _cellRenderer: DataGrid.ICellRenderer;
+  private _gridTheme: DataGrid.IGridTheme;
 }
 
 
@@ -1873,25 +1687,86 @@ namespace DataGrid {
   }
 
   /**
-   * An object which generates background striping for a data grid.
+   * An object which provides the cell-independent data grid theme.
    *
    * #### Notes
-   * If the state of a striping object changes in-place, the `repaint`
+   * A grid theme provides the overall theme for a data grid which
+   * is independent of the styling provided by the cell renderer.
+   *
+   * Theme colors support the full CSS color syntax.
+   *
+   * An empty string can be used to indicate no color.
+   *
+   * If the state of the grid theme changes in-place, the `repaint`
    * method of the grid should be called to paint the new results.
    *
-   * A striping object **must not** throw exceptions, and **must not**
+   * A grid theme **must not** throw exceptions, and **must not**
    * mutate the data model or the data grid.
    */
   export
-  interface IStriping {
+  interface IGridTheme {
     /**
-     * Get the background color for a row or column section.
-     *
-     * @param index - The index of the relevant section.
-     *
-     * @returns The background color for the section, or `''`.
+     * The fill color for the the entire data grid.
      */
-    backgroundColor(index: number): string;
+    voidSpaceFillColor: string;
+
+    /**
+     * The fill color for the main cell area.
+     */
+    mainAreaFillColor: string;
+
+    /**
+     * The fill color for the row header area.
+     */
+    rowHeaderFillColor: string;
+
+    /**
+     * The fill color for the column header area.
+     */
+    colHeaderFillColor: string;
+
+    /**
+     * The fill color for the corner header area.
+     */
+    cornerHeaderFillColor: string;
+
+    /**
+     * The grid line color for the main cell area.
+     */
+    mainAreaGridLineColor:  string;
+
+    /**
+     * The grid line color for the row header area.
+     */
+    rowHeaderGridLineColor: string;
+
+    /**
+     * The grid line color for the column header area.
+     */
+    colHeaderGridLineColor: string;
+
+    /**
+     * The grid line color for the corner header area.
+     */
+    cornerHeaderGridLineColor: string;
+
+    /**
+     * Get the fill color for a specific row.
+     *
+     * @param index - The row index in the data grid.
+     *
+     * @returns The fill color for the row.
+     */
+    rowFillColor(index: number): string;
+
+    /**
+     * Get the fill color for a specific column.
+     *
+     * @param index - The column index in the data grid.
+     *
+     * @returns The fill color for the column.
+     */
+    colFillColor(index: number): string;
   }
 
   /**
@@ -1905,53 +1780,9 @@ namespace DataGrid {
     cellRenderer: ICellRenderer;
 
     /**
-     * The row striping object for the data grid.
-     *
-     * The default value is `null`.
+     * The grid theme for the data grid.
      */
-    rowStriping?: IStriping;
-
-    /**
-     * The column striping object for the data grid.
-     *
-     * The default value is `null`.
-     */
-    colStriping?: IStriping;
-
-    /**
-     * The fill color for the background of the entire data grid.
-     *
-     * The default value is `'#F3F3F3'`.
-     */
-    voidFillColor?: string;
-
-    /**
-     * The fill color for the data grid main cell area.
-     *
-     * The default value is `'#FFFFFF'`.
-     */
-    mainFillColor?: string;
-
-    /**
-     * The fill color for the data grid header area.
-     *
-     * The default value is `'#F3F3F3'`.
-     */
-    headerFillColor?: string;
-
-    /**
-     * The color for the main cell area grid lines.
-     *
-     * The default value is '#D4D4D4'.
-     */
-    mainGridLineColor?:  string;
-
-    /**
-     * The color for the header area grid lines.
-     *
-     * The default value is '#B5B5B5'.
-     */
-    headerGridLineColor?: string;
+    gridTheme: IGridTheme;
   }
 }
 
