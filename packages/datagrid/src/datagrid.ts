@@ -64,8 +64,8 @@ class DataGrid extends Widget {
     this._buffer = Private.createCanvas();
 
     // Get the graphics contexts for the canvases.
-    this._canvasGC = this._canvas.getContext('2d')!;
-    this._bufferGC = this._buffer.getContext('2d')!;
+    this._canvasGC = this._canvas.getContext('2d', { alpha: false })!;
+    this._bufferGC = this._buffer.getContext('2d', { alpha: false })!;
 
     // Set up the on-screen canvas.
     this._canvas.style.position = 'absolute';
