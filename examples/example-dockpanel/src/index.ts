@@ -121,17 +121,17 @@ class MyDataModel extends DataModel {
   }
 }
 
-// class MyDelegate implements TextRenderer.IStyleDelegate {
+class MyDelegate implements TextRenderer.IStyleDelegate {
 
-//   static readonly orangeBackgroundStyle: TextRenderer.ICellStyle = { backgroundColor: '#F6B26B' };
+  static readonly orangeBackgroundStyle: TextRenderer.ICellStyle = { backgroundColor: '#F6B26B' };
 
-//   getStyle(config: DataGrid.ICellConfig): TextRenderer.ICellStyle | null {
-//     if (config.row >= 5 && config.row <= 7 && config.col >= 5 && config.col <= 7) {
-//       return MyDelegate.orangeBackgroundStyle;
-//     }
-//     return null;
-//   }
-// }
+  getStyle(config: DataGrid.ICellConfig): TextRenderer.ICellStyle | null {
+    if (config.row >= 5 && config.row <= 7 && config.col >= 5 && config.col <= 7) {
+      return MyDelegate.orangeBackgroundStyle;
+    }
+    return null;
+  }
+}
 
 
 function main(): void {
@@ -350,14 +350,14 @@ function main(): void {
   // let g2 = new ContentWidget('Green');
   // let y2 = new ContentWidget('Yellow');
 
-  //let myRenderer = new TextRenderer({ styleDelegate: new MyDelegate() });
+  let cellRenderer = new TextRenderer({ styleDelegate: new MyDelegate() });
 
-  let cellRenderer = new TextRenderer();
+  //let cellRenderer = new TextRenderer();
 
   let myTheme: DataGrid.ITheme = {
     ...DataGrid.defaultTheme,
-    rowFillColor: i => i % 2 === 0 ? '#FFFDE5' : '',
-    colFillColor: i => i % 2 === 0 ? 'rgba(200, 212, 188, 0.5)' : ''
+    rowStripeColor: i => i % 2 === 0 ? '#FFFDE5' : '',
+    colStripeColor: i => i % 2 === 0 ? 'rgba(200, 212, 188, 0.5)' : ''
   };
 
   let grid = new DataGrid({ cellRenderer, theme: myTheme });
