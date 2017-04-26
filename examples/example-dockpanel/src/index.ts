@@ -12,7 +12,7 @@ import {
 } from '@phosphor/commands';
 
 import {
-  DataGrid, DataModel, EvenOddStriping, TextRenderer
+  DataGrid, DataModel, TextRenderer
 } from '@phosphor/datagrid';
 
 import {
@@ -103,7 +103,7 @@ class ContentWidget extends Widget {
 class MyDataModel extends DataModel {
 
   readonly rowCount = 2000;
-  readonly colCount = 20;
+  readonly colCount = 200;
   readonly rowHeaderCount = 2;
   readonly colHeaderCount = 2;
 
@@ -121,17 +121,17 @@ class MyDataModel extends DataModel {
   }
 }
 
-class MyDelegate implements TextRenderer.IStyleDelegate {
+// class MyDelegate implements TextRenderer.IStyleDelegate {
 
-  static readonly orangeBackgroundStyle: TextRenderer.ICellStyle = { backgroundColor: '#F6B26B' };
+//   static readonly orangeBackgroundStyle: TextRenderer.ICellStyle = { backgroundColor: '#F6B26B' };
 
-  getStyle(config: DataGrid.ICellConfig): TextRenderer.ICellStyle | null {
-    if (config.row >= 5 && config.row <= 7 && config.col >= 5 && config.col <= 7) {
-      return MyDelegate.orangeBackgroundStyle;
-    }
-    return null;
-  }
-}
+//   getStyle(config: DataGrid.ICellConfig): TextRenderer.ICellStyle | null {
+//     if (config.row >= 5 && config.row <= 7 && config.col >= 5 && config.col <= 7) {
+//       return MyDelegate.orangeBackgroundStyle;
+//     }
+//     return null;
+//   }
+// }
 
 
 function main(): void {
@@ -352,11 +352,15 @@ function main(): void {
 
   //let myRenderer = new TextRenderer({ styleDelegate: new MyDelegate() });
 
-  let grid = new DataGrid({
-    cellRenderer: new TextRenderer(),
-    rowStriping: new EvenOddStriping({ oddColor: '#FFFDE5'}),
-    colStriping: new EvenOddStriping({ oddColor: 'rgba(200, 212, 188, 0.5)' })
-  });
+  let cellRenderer = new TextRenderer();
+
+  let myTheme: DataGrid.ITheme = {
+    ...DataGrid.defaultTheme,
+    rowFillColor: i => i % 2 === 0 ? '#FFFDE5' : '',
+    colFillColor: i => i % 2 === 0 ? 'rgba(200, 212, 188, 0.5)' : ''
+  };
+
+  let grid = new DataGrid({ cellRenderer, theme: myTheme });
   grid.title.label = 'DataGrid';
   grid.model = new MyDataModel();
 

@@ -49,7 +49,7 @@ class DataGrid extends Widget {
 
     // Parse the options.
     this._cellRenderer = options.cellRenderer;
-    this._gridTheme = options.gridTheme;
+    this._theme = options.theme || DataGrid.defaultTheme;
 
     // Set up the row and column sections lists.
     // TODO - allow base size configuration.
@@ -217,18 +217,18 @@ class DataGrid extends Widget {
   }
 
   /**
-   * Get the grid theme for the data grid.
+   * Get the theme for the data grid.
    */
-  get gridTheme(): DataGrid.IGridTheme {
-    return this._gridTheme;
+  get theme(): DataGrid.ITheme {
+    return this._theme;
   }
 
   /**
-   * Set the grid theme for the data grid.
+   * Set the theme for the data grid.
    */
-  set gridTheme(value: DataGrid.IGridTheme) {
-    if (this._gridTheme !== value) {
-      this._gridTheme = value;
+  set theme(value: DataGrid.ITheme) {
+    if (this._theme !== value) {
+      this._theme = value;
       this.repaint();
     }
   }
@@ -306,7 +306,7 @@ class DataGrid extends Widget {
    *
    * @param - The desired direction of the scroll.
    */
-  scrollPage(dir: 'up' | 'down' | 'left' | 'right'): void {
+  scrollByPage(dir: 'up' | 'down' | 'left' | 'right'): void {
     let dx = 0;
     let dy = 0;
     switch (dir) {
@@ -333,7 +333,7 @@ class DataGrid extends Widget {
    *
    * @param - The desired direction of the scroll.
    */
-  scrollStep(dir: 'up' | 'down' | 'left' | 'right'): void {
+  scrollByStep(dir: 'up' | 'down' | 'left' | 'right'): void {
     let r: number;
     let c: number;
     let x = this._scrollX;
@@ -475,9 +475,9 @@ class DataGrid extends Widget {
    * Schedule a full repaint of the data grid.
    *
    * #### Notes
-   * This method is typically called automatically at the proper times.
-   * However, it should be called manually to repaint the grid whenever
-   * external state causes the effective rendering results to change.
+   * This method is called automatically when changing the state of the
+   * data grid. However, it may be called manually to repaint the grid
+   * whenever external program state change necessitates an update.
    *
    * Multiple synchronous requests are collapsed into a single repaint.
    */
@@ -491,9 +491,9 @@ class DataGrid extends Widget {
    * @param msg - The message sent to the widget.
    */
   processMessage(msg: Message): void {
-    // Ignore child show/hide messages. The datagrid directly controls
-    // the visibility of its children, and it will manually dispatch
-    // the fit-request messages as a result of visibility change.
+    // Ignore child show/hide messages. The data grid controls the
+    // visibility of its children, and will manually dispatch the
+    // fit-request messages as a result of visibility change.
     if (msg.type === 'child-shown' || msg.type === 'child-hidden') {
       return;
     }
@@ -832,7 +832,7 @@ class DataGrid extends Widget {
    */
   private _drawVoidSpaceRegion(rx: number, ry: number, rw: number, rh: number): void {
     // Look up the fill color.
-    let fillColor = this._gridTheme.voidSpaceFillColor;
+    let fillColor = this._theme.voidSpaceFillColor;
 
     // Bail if there is no fill color.
     if (!fillColor) {
@@ -933,7 +933,7 @@ class DataGrid extends Widget {
     this._canvasGC.clip();
 
     // Draw the background for the cell region.
-    this._drawBackground(rgn, this._gridTheme.mainAreaFillColor);
+    this._drawBackground(rgn, this._theme.mainAreaFillColor);
 
     // Draw the row striping for the cell region.
     this._drawRowStriping(rgn);
@@ -945,7 +945,7 @@ class DataGrid extends Widget {
     this._drawCells(rgn);
 
     // Draw the grid lines for the cell region.
-    this._drawGridLines(rgn, this._gridTheme.mainAreaGridLineColor);
+    this._drawGridLines(rgn, this._theme.mainAreaGridLineColor);
 
     // Restore the gc state.
     this._canvasGC.restore();
@@ -1043,13 +1043,13 @@ class DataGrid extends Widget {
     this._canvasGC.clip();
 
     // Draw the background for the cell region.
-    this._drawBackground(rgn, this._gridTheme.rowHeaderFillColor);
+    this._drawBackground(rgn, this._theme.rowHeaderFillColor);
 
     // Draw the cell content for the cell region.
     this._drawCells(rgn);
 
     // Draw the grid lines for the cell region.
-    this._drawGridLines(rgn, this._gridTheme.rowHeaderGridLineColor);
+    this._drawGridLines(rgn, this._theme.rowHeaderGridLineColor);
 
     // Restore the gc state.
     this._canvasGC.restore();
@@ -1147,13 +1147,13 @@ class DataGrid extends Widget {
     this._canvasGC.clip();
 
     // Draw the background for the cell region.
-    this._drawBackground(rgn, this._gridTheme.colHeaderFillColor);
+    this._drawBackground(rgn, this._theme.colHeaderFillColor);
 
     // Draw the cell content for the cell region.
     this._drawCells(rgn);
 
     // Draw the grid lines for the cell region.
-    this._drawGridLines(rgn, this._gridTheme.colHeaderGridLineColor);
+    this._drawGridLines(rgn, this._theme.colHeaderGridLineColor);
 
     // Restore the gc state.
     this._canvasGC.restore();
@@ -1252,13 +1252,13 @@ class DataGrid extends Widget {
     this._canvasGC.clip();
 
     // Draw the background for the cell region.
-    this._drawBackground(rgn, this._gridTheme.cornerHeaderFillColor);
+    this._drawBackground(rgn, this._theme.cornerHeaderFillColor);
 
     // Draw the cell content for the cell region.
     this._drawCells(rgn);
 
     // Draw the grid lines for the cell region.
-    this._drawGridLines(rgn, this._gridTheme.cornerHeaderGridLineColor);
+    this._drawGridLines(rgn, this._theme.cornerHeaderGridLineColor);
 
     // Restore the gc state.
     this._canvasGC.restore();
@@ -1282,6 +1282,12 @@ class DataGrid extends Widget {
    * Draw the row striping for the given cell region.
    */
   private _drawRowStriping(rgn: Private.ICellRegion): void {
+    // Bail if there is no row fill color.
+    let fn = this._theme.rowFillColor;
+    if (!fn) {
+      return;
+    }
+
     // Draw the row striping for the region.
     for (let y = rgn.y, j = 0, n = rgn.rowSizes.length; j < n; ++j) {
       // Fetch the size of the row.
@@ -1293,7 +1299,7 @@ class DataGrid extends Widget {
       }
 
       // Get the fill color for the row.
-      let fillColor = this._gridTheme.rowFillColor(rgn.r1 + j);
+      let fillColor = fn(rgn.r1 + j);
 
       // Skip rows with no fill color.
       if (!fillColor) {
@@ -1314,6 +1320,12 @@ class DataGrid extends Widget {
    * Draw the column striping for the given cell region.
    */
   private _drawColStriping(rgn: Private.ICellRegion): void {
+    // Bail if there is no column fill color.
+    let fn = this._theme.colFillColor;
+    if (!fn) {
+      return;
+    }
+
     // Draw the column striping for the region.
     for (let x = rgn.x, i = 0, n = rgn.colSizes.length; i < n; ++i) {
       // Fetch the size of the column.
@@ -1325,7 +1337,7 @@ class DataGrid extends Widget {
       }
 
       // Get the fill color for the column.
-      let fillColor = this._gridTheme.colFillColor(rgn.c1 + i);
+      let fillColor = fn(rgn.c1 + i);
 
       // Skip columns with no fill color.
       if (!fillColor) {
@@ -1493,9 +1505,9 @@ class DataGrid extends Widget {
    */
   private _onPageRequested(sender: ScrollBar, dir: 'decrement' | 'increment'): void {
     if (sender === this._vScrollBar) {
-      this.scrollPage(dir === 'decrement' ? 'up' : 'down');
+      this.scrollByPage(dir === 'decrement' ? 'up' : 'down');
     } else {
-      this.scrollPage(dir === 'decrement' ? 'left' : 'right');
+      this.scrollByPage(dir === 'decrement' ? 'left' : 'right');
     }
   }
 
@@ -1504,9 +1516,9 @@ class DataGrid extends Widget {
    */
   private _onStepRequested(sender: ScrollBar, dir: 'decrement' | 'increment'): void {
     if (sender === this._vScrollBar) {
-      this.scrollStep(dir === 'decrement' ? 'up' : 'down');
+      this.scrollByStep(dir === 'decrement' ? 'up' : 'down');
     } else {
-      this.scrollStep(dir === 'decrement' ? 'left' : 'right');
+      this.scrollByStep(dir === 'decrement' ? 'left' : 'right');
     }
   }
 
@@ -1540,7 +1552,7 @@ class DataGrid extends Widget {
   private _model: DataModel | null = null;
 
   private _cellRenderer: DataGrid.ICellRenderer;
-  private _gridTheme: DataGrid.IGridTheme;
+  private _theme: DataGrid.ITheme;
 }
 
 
@@ -1556,9 +1568,6 @@ namespace DataGrid {
    * If the predefined cell renderers are insufficient for a particular
    * use case, a custom cell renderer can be defined which implements
    * this interface.
-   *
-   * If the state of a cell renderer changes in-place, the `repaint`
-   * method of the grid should be called to paint the new results.
    *
    * A cell renderer **must not** throw exceptions, and **must not**
    * mutate the data model or the data grid.
@@ -1654,86 +1663,74 @@ namespace DataGrid {
   }
 
   /**
-   * An object which provides the cell-independent data grid theme.
+   * An object which defines the data grid theme.
    *
    * #### Notes
-   * A grid theme provides the overall theme for a data grid which
-   * is independent of the styling provided by the cell renderer.
+   * A theme provides the styling for the parts of data grid which
+   * are independent of the cell renderer.
    *
-   * Theme colors support the full CSS color syntax.
-   *
-   * An empty string can be used to indicate no color.
-   *
-   * If the state of the grid theme changes in-place, the `repaint`
-   * method of the grid should be called to paint the new results.
+   * Theme colors support the full CSS color syntax. An empty string
+   * may be used to signify no color.
    *
    * A grid theme **must not** throw exceptions, and **must not**
    * mutate the data model or the data grid.
    */
   export
-  interface IGridTheme {
+  interface ITheme {
     /**
      * The fill color for the the entire data grid.
      */
-    voidSpaceFillColor: string;
+    readonly voidSpaceFillColor: string;
 
     /**
      * The fill color for the main cell area.
      */
-    mainAreaFillColor: string;
+    readonly mainAreaFillColor: string;
 
     /**
      * The fill color for the row header area.
      */
-    rowHeaderFillColor: string;
+    readonly rowHeaderFillColor: string;
 
     /**
      * The fill color for the column header area.
      */
-    colHeaderFillColor: string;
+    readonly colHeaderFillColor: string;
 
     /**
      * The fill color for the corner header area.
      */
-    cornerHeaderFillColor: string;
+    readonly cornerHeaderFillColor: string;
 
     /**
      * The grid line color for the main cell area.
      */
-    mainAreaGridLineColor:  string;
+    readonly mainAreaGridLineColor: string;
 
     /**
      * The grid line color for the row header area.
      */
-    rowHeaderGridLineColor: string;
+    readonly rowHeaderGridLineColor: string;
 
     /**
      * The grid line color for the column header area.
      */
-    colHeaderGridLineColor: string;
+    readonly colHeaderGridLineColor: string;
 
     /**
      * The grid line color for the corner header area.
      */
-    cornerHeaderGridLineColor: string;
+    readonly cornerHeaderGridLineColor: string;
 
     /**
-     * Get the fill color for a specific row.
-     *
-     * @param index - The row index in the data grid.
-     *
-     * @returns The fill color for the row.
+     * A function which returns the fill color for a specific row.
      */
-    rowFillColor(index: number): string;
+    readonly rowFillColor: ((index: number) => string) | null;
 
     /**
-     * Get the fill color for a specific column.
-     *
-     * @param index - The column index in the data grid.
-     *
-     * @returns The fill color for the column.
+     * A function which returns the fill color for a specific column.
      */
-    colFillColor(index: number): string;
+    readonly colFillColor: ((index: number) => string) | null;
   }
 
   /**
@@ -1748,9 +1745,29 @@ namespace DataGrid {
 
     /**
      * The grid theme for the data grid.
+     *
+     * The default is `DataGrid.defaultTheme`.
      */
-    gridTheme: IGridTheme;
+    theme?: ITheme;
   }
+
+  /**
+   * The default theme for a data grid.
+   */
+  export
+  const defaultTheme: DataGrid.ITheme = {
+    voidSpaceFillColor: '#F3F3F3',
+    mainAreaFillColor: '#FFFFFF',
+    rowHeaderFillColor: '#F3F3F3',
+    colHeaderFillColor: '#F3F3F3',
+    cornerHeaderFillColor: '#F3F3F3',
+    mainAreaGridLineColor: '#D4D4D4',
+    rowHeaderGridLineColor: '#B5B5B5',
+    colHeaderGridLineColor: '#B5B5B5',
+    cornerHeaderGridLineColor: '#B5B5B5',
+    rowFillColor: null,
+    colFillColor: null
+  };
 }
 
 

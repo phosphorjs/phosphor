@@ -7,5 +7,4 @@
 |----------------------------------------------------------------------------*/
 export * from './datagrid';
 export * from './datamodel';
-export * from './simpletheme';
 export * from './textrenderer';
