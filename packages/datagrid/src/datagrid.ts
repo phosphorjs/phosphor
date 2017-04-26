@@ -778,6 +778,40 @@ class DataGrid extends Widget {
   }
 
   /**
+   * Handle the `thumbMoved` signal from a scroll bar.
+   */
+  private _onThumbMoved(sender: ScrollBar): void {
+    MessageLoop.postMessage(this._viewport, Private.ScrollRequest);
+  }
+
+  /**
+   * Handle the `pageRequested` signal from a scroll bar.
+   */
+  private _onPageRequested(sender: ScrollBar, dir: 'decrement' | 'increment'): void {
+    if (sender === this._vScrollBar) {
+      this.scrollByPage(dir === 'decrement' ? 'up' : 'down');
+    } else {
+      this.scrollByPage(dir === 'decrement' ? 'left' : 'right');
+    }
+  }
+
+  /**
+   * Handle the `stepRequested` signal from a scroll bar.
+   */
+  private _onStepRequested(sender: ScrollBar, dir: 'decrement' | 'increment'): void {
+    if (sender === this._vScrollBar) {
+      this.scrollByStep(dir === 'decrement' ? 'up' : 'down');
+    } else {
+      this.scrollByStep(dir === 'decrement' ? 'left' : 'right');
+    }
+  }
+
+  /**
+   * A signal handler for the data model `changed` signal.
+   */
+  private _onModelChanged(sender: DataModel, args: DataModel.ChangedArgs): void { }
+
+  /**
    * Paint the grid content for the given dirty rect.
    *
    * The rect should be expressed in viewport coordinates.
@@ -811,11 +845,14 @@ class DataGrid extends Widget {
     // Clear the dirty rect of all content.
     this._canvasGC.clearRect(rx, ry, rw, rh);
 
-    // Draw the void region.
-    this._drawVoidSpaceRegion(rx, ry, rw, rh);
+    // Fill the dirty rect with the void space color.
+    if (this._theme.voidSpaceColor) {
+      this._canvasGC.fillStyle = this._theme.voidSpaceColor;
+      this._canvasGC.fillRect(rx, ry, rw, rh);
+    }
 
     // Draw the main area region.
-    this._drawMainAreaRegion(rx, ry, rw, rh);
+    this._drawMainCellRegion(rx, ry, rw, rh);
 
     // Draw the row header region.
     this._drawRowHeaderRegion(rx, ry, rw, rh);
@@ -828,26 +865,9 @@ class DataGrid extends Widget {
   }
 
   /**
-   * Draw the void space region for the dirty rect.
+   * Draw the main cell region which intersects the dirty rect.
    */
-  private _drawVoidSpaceRegion(rx: number, ry: number, rw: number, rh: number): void {
-    // Look up the fill color.
-    let fillColor = this._theme.voidSpaceFillColor;
-
-    // Bail if there is no fill color.
-    if (!fillColor) {
-      return;
-    }
-
-    // Fill the dirty rect with the fill color.
-    this._canvasGC.fillStyle = fillColor;
-    this._canvasGC.fillRect(rx, ry, rw, rh);
-  }
-
-  /**
-   * Draw the main area region which intersects the dirty rect.
-   */
-  private _drawMainAreaRegion(rx: number, ry: number, rw: number, rh: number): void {
+  private _drawMainCellRegion(rx: number, ry: number, rw: number, rh: number): void {
     // Get the visible content dimensions.
     let contentW = this._colSections.totalSize - this._scrollX;
     let contentH = this._rowSections.totalSize - this._scrollY;
@@ -932,20 +952,24 @@ class DataGrid extends Widget {
     this._canvasGC.rect(x1, y1, x2 - x1 + 1, y2 - y1 + 1);
     this._canvasGC.clip();
 
-    // Draw the background for the cell region.
-    this._drawBackground(rgn, this._theme.mainAreaFillColor);
+    // Fill the region with the background color.
+    if (this._theme.backgroundColor) {
+      this._canvasGC.fillStyle = this._theme.backgroundColor;
+      this._canvasGC.fillRect(x, y, width, height);
+    }
 
-    // Draw the row striping for the cell region.
-    this._drawRowStriping(rgn);
-
-    // Draw the col striping for the cell region.
-    this._drawColStriping(rgn);
+    // Draw the row and column striping for the cell region.
+    this._drawStriping(rgn);
 
     // Draw the cell content for the cell region.
     this._drawCells(rgn);
 
     // Draw the grid lines for the cell region.
-    this._drawGridLines(rgn, this._theme.mainAreaGridLineColor);
+    this._drawGridLines(rgn,
+      this._theme.gridLineVisibility,
+      this._theme.horizontalGridLineColor,
+      this._theme.verticalGridLineColor
+    );
 
     // Restore the gc state.
     this._canvasGC.restore();
@@ -1042,14 +1066,21 @@ class DataGrid extends Widget {
     this._canvasGC.rect(x1, y1, x2 - x1 + 1, y2 - y1 + 1);
     this._canvasGC.clip();
 
-    // Draw the background for the cell region.
-    this._drawBackground(rgn, this._theme.rowHeaderFillColor);
+    // Fill the region with the background color.
+    if (this._theme.rowHeaderBackgroundColor) {
+      this._canvasGC.fillStyle = this._theme.rowHeaderBackgroundColor;
+      this._canvasGC.fillRect(x, y, width, height);
+    }
 
     // Draw the cell content for the cell region.
     this._drawCells(rgn);
 
     // Draw the grid lines for the cell region.
-    this._drawGridLines(rgn, this._theme.rowHeaderGridLineColor);
+    this._drawGridLines(rgn,
+      this._theme.rowHeaderGridLineVisibility,
+      this._theme.rowHeaderHorizontalGridLineColor,
+      this._theme.rowHeaderVerticalGridLineColor
+    );
 
     // Restore the gc state.
     this._canvasGC.restore();
@@ -1146,14 +1177,21 @@ class DataGrid extends Widget {
     this._canvasGC.rect(x1, y1, x2 - x1 + 1, y2 - y1 + 1);
     this._canvasGC.clip();
 
-    // Draw the background for the cell region.
-    this._drawBackground(rgn, this._theme.colHeaderFillColor);
+    // Fill the region with the background color.
+    if (this._theme.colHeaderBackgroundColor) {
+      this._canvasGC.fillStyle = this._theme.colHeaderBackgroundColor;
+      this._canvasGC.fillRect(x, y, width, height);
+    }
 
     // Draw the cell content for the cell region.
     this._drawCells(rgn);
 
     // Draw the grid lines for the cell region.
-    this._drawGridLines(rgn, this._theme.colHeaderGridLineColor);
+    this._drawGridLines(rgn,
+      this._theme.colHeaderGridLineVisibility,
+      this._theme.colHeaderHorizontalGridLineColor,
+      this._theme.colHeaderVerticalGridLineColor
+    );
 
     // Restore the gc state.
     this._canvasGC.restore();
@@ -1251,106 +1289,90 @@ class DataGrid extends Widget {
     this._canvasGC.rect(x1, y1, x2 - x1 + 1, y2 - y1 + 1);
     this._canvasGC.clip();
 
-    // Draw the background for the cell region.
-    this._drawBackground(rgn, this._theme.cornerHeaderFillColor);
+    // Fill the region with the background color.
+    if (this._theme.cornerHeaderBackgroundColor) {
+      this._canvasGC.fillStyle = this._theme.cornerHeaderBackgroundColor;
+      this._canvasGC.fillRect(x, y, width, height);
+    }
 
     // Draw the cell content for the cell region.
     this._drawCells(rgn);
 
     // Draw the grid lines for the cell region.
-    this._drawGridLines(rgn, this._theme.cornerHeaderGridLineColor);
+    this._drawGridLines(rgn,
+      this._theme.cornerHeaderGridLineVisibility,
+      this._theme.cornerHeaderHorizontalGridLineColor,
+      this._theme.cornerHeaderVerticalGridLineColor
+    );
 
     // Restore the gc state.
     this._canvasGC.restore();
   }
 
   /**
-   * Draw the background for the given cell region.
+   * Draw the row and column striping for the given cell region.
    */
-  private _drawBackground(rgn: Private.ICellRegion, fillColor: string): void {
-    // Bail if there is no fill color.
-    if (!fillColor) {
-      return;
-    }
-
-    // Fill the cell region with the fill color.
-    this._canvasGC.fillStyle = fillColor;
-    this._canvasGC.fillRect(rgn.x, rgn.y, rgn.width, rgn.height);
-  }
-
-  /**
-   * Draw the row striping for the given cell region.
-   */
-  private _drawRowStriping(rgn: Private.ICellRegion): void {
-    // Bail if there is no row fill color.
-    let fn = this._theme.rowFillColor;
-    if (!fn) {
-      return;
-    }
+  private _drawStriping(rgn: Private.ICellRegion): void {
+    // Look up the color stripe functions.
+    let rowStripeColor = this._theme.rowStripeColor;
+    let colStripeColor = this._theme.colStripeColor;
 
     // Draw the row striping for the region.
-    for (let y = rgn.y, j = 0, n = rgn.rowSizes.length; j < n; ++j) {
-      // Fetch the size of the row.
-      let size = rgn.rowSizes[j];
+    if (rowStripeColor) {
+      for (let y = rgn.y, j = 0, n = rgn.rowSizes.length; j < n; ++j) {
+        // Fetch the size of the row.
+        let size = rgn.rowSizes[j];
 
-      // Skip zero sized rows.
-      if (size === 0) {
-        continue;
-      }
+        // Skip zero sized rows.
+        if (size === 0) {
+          continue;
+        }
 
-      // Get the fill color for the row.
-      let fillColor = fn(rgn.r1 + j);
+        // Get the fill color for the row.
+        let color = rowStripeColor(rgn.r1 + j);
 
-      // Skip rows with no fill color.
-      if (!fillColor) {
+        // Skip rows with no fill color.
+        if (!color) {
+          y += size;
+          continue;
+        }
+
+        // Fill the row with the fill color.
+        this._canvasGC.fillStyle = color;
+        this._canvasGC.fillRect(rgn.x, y - 1, rgn.width, size + 1);
+
+        // Increment the running Y coordinate.
         y += size;
-        continue;
       }
-
-      // Fill the row with the fill color.
-      this._canvasGC.fillStyle = fillColor;
-      this._canvasGC.fillRect(rgn.x, y - 1, rgn.width, size + 1);
-
-      // Increment the running Y coordinate.
-      y += size;
-    }
-  }
-
-  /**
-   * Draw the column striping for the given cell region.
-   */
-  private _drawColStriping(rgn: Private.ICellRegion): void {
-    // Bail if there is no column fill color.
-    let fn = this._theme.colFillColor;
-    if (!fn) {
-      return;
     }
 
     // Draw the column striping for the region.
-    for (let x = rgn.x, i = 0, n = rgn.colSizes.length; i < n; ++i) {
-      // Fetch the size of the column.
-      let size = rgn.colSizes[i];
+    if (colStripeColor) {
+      for (let x = rgn.x, i = 0, n = rgn.colSizes.length; i < n; ++i) {
+        // Fetch the size of the column.
+        let size = rgn.colSizes[i];
 
-      // Skip zero sized columns.
-      if (size === 0) {
-        continue;
-      }
+        // Skip zero sized columns.
+        if (size === 0) {
+          continue;
+        }
 
-      // Get the fill color for the column.
-      let fillColor = fn(rgn.c1 + i);
+        // Get the fill color for the column.
+        let color = colStripeColor(rgn.c1 + i);
 
-      // Skip columns with no fill color.
-      if (!fillColor) {
+        // Skip columns with no fill color.
+        if (!color) {
+          x += size;
+          continue;
+        }
+
+        // Fill the column with the fill color.
+        this._canvasGC.fillStyle = color;
+        this._canvasGC.fillRect(x - 1, rgn.y, size + 1, rgn.height);
+
+        // Increment the running X coordinate.
         x += size;
-        continue;
       }
-
-      // Fill the column with the fill color.
-      this._canvasGC.fillStyle = fillColor;
-      this._canvasGC.fillRect(x - 1, rgn.y, size + 1, rgn.height);
-
-      // Increment the running X coordinate.
-      x += size;
     }
   }
 
@@ -1423,109 +1445,80 @@ class DataGrid extends Widget {
   /**
    * Draw the grid lines for the given cell region.
    */
-  private _drawGridLines(rgn: Private.ICellRegion, color: string): void {
-    // Bail if there is no grid line color.
-    if (!color) {
+  private _drawGridLines(rgn: Private.ICellRegion, visibility: 'all' | 'horizontal' | 'vertical' | 'none', hColor: string, vColor: string): void {
+    // Bail if there are no grid lines to draw.
+    if (visibility === 'none') {
       return;
     }
 
-    // Start the path for the grid lines.
-    this._canvasGC.beginPath();
+    // Draw the horizontal grid lines, if specified.
+    if (hColor && (visibility === 'all' || visibility === 'horizontal')) {
+      // Begin the path for the horizontal lines
+      this._canvasGC.beginPath();
 
-    // Set the line width for the grid lines.
-    this._canvasGC.lineWidth = 1;
+      // Set the line width for the grid lines.
+      this._canvasGC.lineWidth = 1;
 
-    // Draw the grid lines for the rows.
-    for (let y = rgn.y, j = 0, n = rgn.rowSizes.length; j < n; ++j) {
-      // Fetch the size of the row.
-      let size = rgn.rowSizes[j];
+      // Draw the horizontal lines.
+      for (let y = rgn.y, j = 0, n = rgn.rowSizes.length; j < n; ++j) {
+        // Fetch the size of the row.
+        let size = rgn.rowSizes[j];
 
-      // Skip zero sized rows.
-      if (size === 0) {
-        continue;
+        // Skip zero sized rows.
+        if (size === 0) {
+          continue;
+        }
+
+        // Compute the Y position of the line.
+        let pos = y + size - 0.5;
+
+        // Draw the 1px thick row line.
+        this._canvasGC.moveTo(rgn.x, pos);
+        this._canvasGC.lineTo(rgn.x + rgn.width, pos);
+
+        // Increment the running Y coordinate.
+        y += size;
       }
 
-      // Compute the Y position of the line.
-      let pos = y + size - 0.5;
-
-      // Draw the 1px thick row line.
-      this._canvasGC.moveTo(rgn.x, pos);
-      this._canvasGC.lineTo(rgn.x + rgn.width, pos);
-
-      // Increment the running Y coordinate.
-      y += size;
+      // Stroke the lines with the specified color.
+      this._canvasGC.strokeStyle = hColor;
+      this._canvasGC.stroke();
     }
 
-    // Draw the grid lines for the columns.
-    for (let x = rgn.x, i = 0, n = rgn.colSizes.length; i < n; ++i) {
-      // Fetch the size of the column.
-      let size = rgn.colSizes[i];
+    // Draw the vertical grid lines, if specified.
+    if (vColor && (visibility === 'all' || visibility === 'vertical')) {
+      // Begin the path for the vertical lines
+      this._canvasGC.beginPath();
 
-      // Skip zero sized columns.
-      if (size === 0) {
-        continue;
+      // Set the line width for the grid lines.
+      this._canvasGC.lineWidth = 1;
+
+      // Draw the vertical lines.
+      for (let x = rgn.x, i = 0, n = rgn.colSizes.length; i < n; ++i) {
+        // Fetch the size of the column.
+        let size = rgn.colSizes[i];
+
+        // Skip zero sized columns.
+        if (size === 0) {
+          continue;
+        }
+
+        // Compute the X position of the line.
+        let pos = x + size - 0.5;
+
+        // Draw the 1px thick column line.
+        this._canvasGC.moveTo(pos, rgn.y);
+        this._canvasGC.lineTo(pos, rgn.y + rgn.height);
+
+        // Increment the running X coordinate.
+        x += size;
       }
 
-      // Compute the X position of the line.
-      let pos = x + size - 0.5;
-
-      // Draw the 1px thick column line.
-      this._canvasGC.moveTo(pos, rgn.y);
-      this._canvasGC.lineTo(pos, rgn.y + rgn.height);
-
-      // Increment the running X coordinate.
-      x += size;
-    }
-
-    // Set the canvas composition mode.
-    //
-    // TODO - Make the composition mode configurable?
-    // Note - The `multiply` mode is buggy in Firefox on Windows:
-    // https://bugzilla.mozilla.org/show_bug.cgi?id=1333090
-    let prevMode = this._canvasGC.globalCompositeOperation;
-    this._canvasGC.globalCompositeOperation = 'multiply';
-
-    // Stroke the path with the grid line color.
-    this._canvasGC.strokeStyle = color;
-    this._canvasGC.stroke();
-
-    // Restore the composition mode.
-    this._canvasGC.globalCompositeOperation = prevMode;
-  }
-
-  /**
-   * Handle the `thumbMoved` signal from a scroll bar.
-   */
-  private _onThumbMoved(sender: ScrollBar): void {
-    MessageLoop.postMessage(this._viewport, Private.ScrollRequest);
-  }
-
-  /**
-   * Handle the `pageRequested` signal from a scroll bar.
-   */
-  private _onPageRequested(sender: ScrollBar, dir: 'decrement' | 'increment'): void {
-    if (sender === this._vScrollBar) {
-      this.scrollByPage(dir === 'decrement' ? 'up' : 'down');
-    } else {
-      this.scrollByPage(dir === 'decrement' ? 'left' : 'right');
+      // Stroke the lines with the specified color.
+      this._canvasGC.strokeStyle = vColor;
+      this._canvasGC.stroke();
     }
   }
-
-  /**
-   * Handle the `stepRequested` signal from a scroll bar.
-   */
-  private _onStepRequested(sender: ScrollBar, dir: 'decrement' | 'increment'): void {
-    if (sender === this._vScrollBar) {
-      this.scrollByStep(dir === 'decrement' ? 'up' : 'down');
-    } else {
-      this.scrollByStep(dir === 'decrement' ? 'left' : 'right');
-    }
-  }
-
-  /**
-   * A signal handler for the data model `changed` signal.
-   */
-  private _onModelChanged(sender: DataModel, args: DataModel.ChangedArgs): void { }
 
   private _viewport: Widget;
   private _vScrollBar: ScrollBar;
@@ -1678,59 +1671,99 @@ namespace DataGrid {
   export
   interface ITheme {
     /**
-     * The fill color for the the entire data grid.
+     * The background color for the the entire data grid.
      */
-    readonly voidSpaceFillColor: string;
+    readonly voidSpaceColor: string;
 
     /**
-     * The fill color for the main cell area.
+     * The background color for the main cell area.
      */
-    readonly mainAreaFillColor: string;
+    readonly backgroundColor: string;
 
     /**
-     * The fill color for the row header area.
+     * A function which returns the stripe color for a specific row.
      */
-    readonly rowHeaderFillColor: string;
+    readonly rowStripeColor: ((index: number) => string) | null;
 
     /**
-     * The fill color for the column header area.
+     * A function which returns the stripe color for a specific column.
      */
-    readonly colHeaderFillColor: string;
+    readonly colStripeColor: ((index: number) => string) | null;
 
     /**
-     * The fill color for the corner header area.
+     * The visibility of the grid lines for the main cell area.
      */
-    readonly cornerHeaderFillColor: string;
+    readonly gridLineVisibility: 'all' | 'horizontal' | 'vertical' | 'none';
 
     /**
-     * The grid line color for the main cell area.
+     * The vertical grid line color for the main cell area.
      */
-    readonly mainAreaGridLineColor: string;
+    readonly verticalGridLineColor: string;
 
     /**
-     * The grid line color for the row header area.
+     * The horizontal grid line color for the main cell area.
      */
-    readonly rowHeaderGridLineColor: string;
+    readonly horizontalGridLineColor: string;
 
     /**
-     * The grid line color for the column header area.
+     * The background color for the row header area.
      */
-    readonly colHeaderGridLineColor: string;
+    readonly rowHeaderBackgroundColor: string;
 
     /**
-     * The grid line color for the corner header area.
+     * The visibility of the grid lines for the row header area.
      */
-    readonly cornerHeaderGridLineColor: string;
+    readonly rowHeaderGridLineVisibility: 'all' | 'horizontal' | 'vertical' | 'none';
 
     /**
-     * A function which returns the fill color for a specific row.
+     * The vertical grid line color for the row header area.
      */
-    readonly rowFillColor: ((index: number) => string) | null;
+    readonly rowHeaderVerticalGridLineColor: string;
 
     /**
-     * A function which returns the fill color for a specific column.
+     * The horizontal grid line color for the row header area.
      */
-    readonly colFillColor: ((index: number) => string) | null;
+    readonly rowHeaderHorizontalGridLineColor: string;
+
+    /**
+     * The background color for the column header area.
+     */
+    readonly colHeaderBackgroundColor: string;
+
+    /**
+     * The visibility of the grid lines for the column header area.
+     */
+    readonly colHeaderGridLineVisibility: 'all' | 'horizontal' | 'vertical' | 'none';
+
+    /**
+     * The vertical grid line color for the column header area.
+     */
+    readonly colHeaderVerticalGridLineColor: string;
+
+    /**
+     * The horizontal grid line color for the column header area.
+     */
+    readonly colHeaderHorizontalGridLineColor: string;
+
+    /**
+     * The background color for the corner header area.
+     */
+    readonly cornerHeaderBackgroundColor: string;
+
+    /**
+     * The visibility of the grid lines for the corner header area.
+     */
+    readonly cornerHeaderGridLineVisibility: 'all' | 'horizontal' | 'vertical' | 'none';
+
+    /**
+     * The vertical grid line color for the corner header area.
+     */
+    readonly cornerHeaderVerticalGridLineColor: string;
+
+    /**
+     * The vertical grid line color for the corner header area.
+     */
+    readonly cornerHeaderHorizontalGridLineColor: string;
   }
 
   /**
@@ -1756,17 +1789,29 @@ namespace DataGrid {
    */
   export
   const defaultTheme: DataGrid.ITheme = {
-    voidSpaceFillColor: '#F3F3F3',
-    mainAreaFillColor: '#FFFFFF',
-    rowHeaderFillColor: '#F3F3F3',
-    colHeaderFillColor: '#F3F3F3',
-    cornerHeaderFillColor: '#F3F3F3',
-    mainAreaGridLineColor: '#D4D4D4',
-    rowHeaderGridLineColor: '#B5B5B5',
-    colHeaderGridLineColor: '#B5B5B5',
-    cornerHeaderGridLineColor: '#B5B5B5',
-    rowFillColor: null,
-    colFillColor: null
+    voidSpaceColor: '#F3F3F3',
+
+    backgroundColor: '#FFFFFF',
+    rowStripeColor: null,
+    colStripeColor: null,
+    gridLineVisibility: 'all',
+    verticalGridLineColor: 'rgba(20, 20, 20, 0.15)',
+    horizontalGridLineColor: 'rgba(20, 20, 20, 0.15)',
+
+    rowHeaderBackgroundColor: '#F3F3F3',
+    rowHeaderGridLineVisibility: 'all',
+    rowHeaderVerticalGridLineColor: '#B5B5B5',
+    rowHeaderHorizontalGridLineColor: '#B5B5B5',
+
+    colHeaderBackgroundColor: '#F3F3F3',
+    colHeaderGridLineVisibility: 'all',
+    colHeaderVerticalGridLineColor: '#B5B5B5',
+    colHeaderHorizontalGridLineColor: '#B5B5B5',
+
+    cornerHeaderBackgroundColor: '#F3F3F3',
+    cornerHeaderGridLineVisibility: 'all',
+    cornerHeaderVerticalGridLineColor: '#B5B5B5',
+    cornerHeaderHorizontalGridLineColor: '#B5B5B5',
   };
 }
 
