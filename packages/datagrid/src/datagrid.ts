@@ -287,6 +287,30 @@ class DataGrid extends Widget {
     return Math.max(0, this._canvas.height - this._colHeaderSections.totalSize);
   }
 
+  /**
+   * The maximum scroll X position for the current grid dimensions.
+   *
+   * #### Notes
+   * This value is `1px` less than the theoretical maximum to allow the
+   * the right-most grid line to be clipped when the vertical scroll bar
+   * is visible.
+   */
+  get maxScrollX(): number {
+    return Math.max(0, this.scrollWidth - this.pageWidth - 1);
+  }
+
+  /**
+   * The maximum scroll Y position for the current grid dimensions.
+   *
+   * #### Notes
+   * This value is `1px` less than the theoretical maximum to allow the
+   * the bottom-most grid line to be clipped when the horizontal scroll
+   * bar is visible.
+   */
+  get maxScrollY(): number {
+    return Math.max(0, this.scrollHeight - this.pageHeight - 1);
+  }
+
   // /**
   //  * The total width of the row headers.
   //  */
@@ -388,10 +412,8 @@ class DataGrid extends Widget {
    */
   scrollTo(x: number, y: number): void {
     // Floor and clamp the position to the allowable range.
-    let maxX = this.scrollWidth - this.pageWidth;
-    let maxY = this.scrollHeight - this.pageHeight;
-    x = Math.max(0, Math.min(Math.floor(x), maxX));
-    y = Math.max(0, Math.min(Math.floor(y), maxY));
+    x = Math.max(0, Math.min(Math.floor(x), this.maxScrollX));
+    y = Math.max(0, Math.min(Math.floor(y), this.maxScrollY));
 
     // Always synchronize the scroll bar values.
     this._hScrollBar.value = x;
@@ -569,17 +591,17 @@ class DataGrid extends Widget {
     let aph = ph + (hasHScroll ? hsh : 0);
 
     // Test whether scroll bars are needed for the adjusted size.
-    let needVScroll = aph < sh;
-    let needHScroll = apw < sw;
+    let needVScroll = aph < sh - 1;
+    let needHScroll = apw < sw - 1;
 
     // Re-test the horizontal scroll if a vertical scroll is needed.
     if (needVScroll && !needHScroll) {
-      needHScroll = (apw - vsw) < sw;
+      needHScroll = (apw - vsw) < sw - 1;
     }
 
     // Re-test the vertical scroll if a horizontal scroll is needed.
     if (needHScroll && !needVScroll) {
-      needVScroll = (aph - hsh) < sh;
+      needVScroll = (aph - hsh) < sh - 1;
     }
 
     // Bail if neither scroll bar visibility will change.
@@ -600,18 +622,12 @@ class DataGrid extends Widget {
    * Synchronize the scroll bars with the viewport.
    */
   private _syncScrollBarsWithViewport(): void {
-    let sx = this.scrollX;
-    let sw = this.scrollWidth;
-    let sh = this.scrollHeight;
-    let sy = this.scrollY;
-    let pw = this.pageWidth;
-    let ph = this.pageHeight;
-    this._hScrollBar.maximum = sw - pw;
-    this._hScrollBar.page = pw;
-    this._hScrollBar.value = sx;
-    this._vScrollBar.maximum = sh - ph;
-    this._vScrollBar.page = ph;
-    this._vScrollBar.value = sy;
+    this._hScrollBar.maximum = this.maxScrollX;
+    this._hScrollBar.page = this.pageWidth;
+    this._hScrollBar.value = this.scrollX;
+    this._vScrollBar.maximum = this.maxScrollY;
+    this._vScrollBar.page = this.pageHeight;
+    this._vScrollBar.value = this.scrollY;
   }
 
   /**
