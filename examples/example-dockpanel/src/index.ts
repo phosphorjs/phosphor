@@ -107,17 +107,17 @@ class MyDataModel extends DataModel {
   readonly rowHeaderCount = 2;
   readonly colHeaderCount = 2;
 
-  data(row: number, col: number): DataModel.ICellData | null {
+  data(row: number, col: number): any {
     if (col < 0 && row >= 0) {
-      return { type: 'text', value: `Row: ${row}, ${col}` };
+      return `Row: ${row}, ${col}`;
     }
     if (row < 0 && col >= 0) {
-      return { type: 'text', value: `Col: ${row}, ${col}` };
+      return `Col: ${row}, ${col}`;
     }
     if (row < 0 && col < 0) {
-      return { type: 'text', value: `Corner: ${row}, ${col}` };
+      return `Corner: ${row}, ${col}`;
     }
-    return { type: 'text', value: `(${row}, ${col})` };
+    return `(${row}, ${col})`;
   }
 }
 
