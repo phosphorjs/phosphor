@@ -117,7 +117,7 @@ class TextRenderer implements DataGrid.ICellRenderer {
     if (this.textFormatter) {
       text = this.textFormatter.formatText(config);
     } else {
-      text = TextRenderer.formatText(config.data.value);
+      text = TextRenderer.formatText(config.value);
     }
 
     // Bail if there is no text to draw.

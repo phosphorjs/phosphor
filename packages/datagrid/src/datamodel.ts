@@ -51,7 +51,7 @@ abstract class DataModel {
   abstract readonly rowHeaderCount: number;
 
   /**
-   * The number of colum header rows in the data model.
+   * The number of column header rows in the data model.
    *
    * #### Notes
    * This property is accessed often, and so should be efficient.
@@ -59,14 +59,13 @@ abstract class DataModel {
   abstract readonly colHeaderCount: number;
 
   /**
-   * Get the data for a particular cell in the data model.
+   * Get the data value for a specific cell in the data model.
    *
    * @param row - The row index of the cell of interest.
    *
    * @param col - The column index of the cell of interest.
    *
-   * @param returns - The data for the specified cell, or `null`
-   *   if the cell is empty.
+   * @param returns - The data value for the specified cell.
    *
    * #### Notes
    * A negative `row` index indicates a column header row.
@@ -75,7 +74,25 @@ abstract class DataModel {
    *
    * This method is called often, and so should be efficient.
    */
-  abstract data(row: number, col: number): DataModel.ICellData | null;
+  abstract data(row: number, col: number): any;
+
+  /**
+   * Get the field descriptor for a specific column in the data model.
+   *
+   * @param index - The index of the column of interest.
+   *
+   * @returns The field descriptor for the column, or `null`.
+   *
+   * #### Notes
+   * Subclasses which support columnar data may reimplement this method
+   * to return a field descriptor for a column.
+   *
+   * The field descriptor can be used by custom cell renderers and cell
+   * editors to customize handling of specific cell data types.
+   */
+  field(index: number): DataModel.IField | null {
+    return null;
+  }
 
   /**
    * Emit the `changed` signal for the data model.
@@ -98,26 +115,19 @@ abstract class DataModel {
 export
 namespace DataModel {
   /**
-   * An object which represents the data for a particular cell.
+   * A field descriptor for a column in a data model.
    */
   export
-  interface ICellData {
+  interface IField {
     /**
-     * The descriptive type of the data value.
-     *
-     * #### Notes
-     * The `type` can be any string, but it should be descriptive
-     * of the actual type of the data `value`.
+     * The name of the column.
      */
-    readonly type: string;
+    name: string;
 
     /**
-     * The data value for the cell.
-     *
-     * #### Notes
-     * This may be any value, including complex object types.
+     * The data type of the values in the column.
      */
-    readonly value: any;
+    type: string;
   }
 
   /**

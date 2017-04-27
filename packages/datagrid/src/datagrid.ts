@@ -1449,7 +1449,10 @@ class DataGrid extends Widget {
     }
 
     // Set up the cell config object for rendering.
-    let config = new Private.CellConfig(this._model);
+    let config = {
+      x: 0, y: 0, width: 0, height: 0, row: 0, col: 0,
+      value: (null as any), field: (null as DataModel.IField | null)
+    };
 
     // Loop over the columns in the region.
     for (let x = rgn.x, i = 0, n = rgn.colSizes.length; i < n; ++i) {
@@ -1461,6 +1464,18 @@ class DataGrid extends Widget {
         continue;
       }
 
+      // Compute the column index.
+      let col = rgn.c1 + i;
+
+      // Get the field for the column.
+      let field = this._model.field(col);
+
+      // Update the config for the current column.
+      config.x = x - 1;
+      config.width = width + 1;
+      config.col = col;
+      config.field = field;
+
       // Loop over the rows in the column.
       for (let y = rgn.y, j = 0, n = rgn.rowSizes.length; j < n; ++j) {
         // Fetch the size of the row.
@@ -1471,27 +1486,17 @@ class DataGrid extends Widget {
           continue;
         }
 
-        // Compute the current row and col.
+        // Compute the row index.
         let row = rgn.r1 + j;
-        let col = rgn.c1 + i;
 
-        // Get the data for the cell.
-        let data = this._model.data(row, col);
-
-        // Skip empty cells.
-        if (!data) {
-          y += height;
-          continue;
-        }
+        // Get the data value for the cell.
+        let value = this._model.data(row, col);
 
         // Update the config for the current cell.
-        config.x = x - 1;
         config.y = y - 1;
-        config.width = width + 1;
         config.height = height + 1;
         config.row = row;
-        config.col = col;
-        config.data = data;
+        config.value = value;
 
         // Draw the cell.
         this._cellRenderer.drawCell(this._canvasGC, config);
@@ -1692,11 +1697,6 @@ namespace DataGrid {
     readonly height: number;
 
     /**
-     * The data model for the cell.
-     */
-    readonly model: DataModel;
-
-    /**
      * The row index of the cell.
      */
     readonly row: number;
@@ -1707,9 +1707,14 @@ namespace DataGrid {
     readonly col: number;
 
     /**
-     * The cell data for the cell.
+     * The data value for the cell.
      */
-    readonly data: DataModel.ICellData;
+    readonly value: any;
+
+    /**
+     * The data field for the column, or `null`.
+     */
+    readonly field: DataModel.IField | null;
   }
 
   /**
@@ -1950,58 +1955,5 @@ namespace Private {
      * The col sizes for the cols in the region.
      */
     colSizes: number[];
-  }
-
-  /**
-   * An object which holds cell config data.
-   */
-  export
-  class CellConfig implements DataGrid.ICellConfig {
-    /**
-     * The X coordinate of the cell in viewport coordinates.
-     */
-    x = 0;
-
-    /**
-     * The Y coordinate of the cell in viewport coordinates.
-     */
-    y = 0;
-
-    /**
-     * The width of the cell.
-     */
-    width = 0;
-
-    /**
-     * The width of the cell.
-     */
-    height = 0;
-
-    /**
-     * The row index of the cell.
-     */
-    row = 0;
-
-    /**
-     * The col index of the cell.
-     */
-    col = 0;
-
-    /**
-     * The data value for the cell.
-     */
-    data: DataModel.ICellData = null!;
-
-    /**
-     * The data model for the cell.
-     */
-    model: DataModel;
-
-    /**
-     * Construct a new cell config.
-     */
-    constructor(model: DataModel) {
-      this.model = model;
-    }
   }
 }
