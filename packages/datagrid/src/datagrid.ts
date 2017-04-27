@@ -980,7 +980,7 @@ class DataGrid extends Widget {
     this._canvasGC.clip();
 
     // Look up the background color.
-    let bgColor = this._theme.rowHeaderBackgroundColor;
+    let bgColor = this._theme.backgroundColor;
 
     // Fill the region with the background color if needed.
     if (bgColor) {
