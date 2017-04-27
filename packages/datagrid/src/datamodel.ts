@@ -121,11 +121,19 @@ namespace DataModel {
   interface IField {
     /**
      * The name of the column.
+     *
+     * #### Notes
+     * This can be any string, should typically be unique for a given
+     * instance of a data model.
      */
     name: string;
 
     /**
      * The data type of the values in the column.
+     *
+     * #### Notes
+     * This can be any string, but should typically be descriptive of
+     * the data type such as `'number'`, `'integer'`, `'array'`, etc.
      */
     type: string;
   }

@@ -1467,7 +1467,7 @@ class DataGrid extends Widget {
       // Compute the column index.
       let col = rgn.c1 + i;
 
-      // Get the field for the column.
+      // Get the field descriptor for the column.
       let field = this._model.field(col);
 
       // Update the config for the current column.
@@ -1712,7 +1712,7 @@ namespace DataGrid {
     readonly value: any;
 
     /**
-     * The data field for the column, or `null`.
+     * The field descriptor for the column, or `null`.
      */
     readonly field: DataModel.IField | null;
   }
