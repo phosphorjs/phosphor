@@ -988,7 +988,7 @@ class DataGrid extends Widget {
       this._canvasGC.fillRect(x, y, width, height);
     }
 
-    // Look up the grid striping parameters.
+    // Look up the grid striping functions.
     let rowStripeColor = this._theme.rowStripeColor;
     let colStripeColor = this._theme.colStripeColor;
 
@@ -1005,34 +1005,48 @@ class DataGrid extends Widget {
     // Draw the cell content for the cell region.
     this._drawCells(rgn);
 
-    // Look up the grid line colors.
-    let glColor = this._theme.gridLineColor;
-    let glHColor = this._theme.horizontalGridLineColor || glColor;
-    let glVColor = this._theme.verticalGridLineColor || glColor;
+    // Look up the horizontal grid line color.
+    let hglColor = (
+      this._theme.horizontalGridLineColor ||
+      this._theme.gridLineColor
+    );
+
+    // Look up the vertical grid line color.
+    let vglColor = (
+      this._theme.verticalGridLineColor ||
+      this._theme.gridLineColor
+    );
 
     // Draw the horizontal grid lines if needed.
-    if (glHColor) {
-      this._drawHorizontalGridLines(rgn, glHColor);
+    if (hglColor) {
+      this._drawHorizontalGridLines(rgn, hglColor);
     }
 
     // Draw the vertical grid lines if needed.
-    if (glVColor) {
-      this._drawVerticalGridLines(rgn, glVColor);
+    if (vglColor) {
+      this._drawVerticalGridLines(rgn, vglColor);
     }
 
-    // Look up the border line colors.
-    let blColor = this._theme.borderLineColor;
-    let blRColor = this._theme.rightBorderLineColor || blColor;
-    let blBColor = this._theme.bottomBorderLineColor || blColor;
+    // Look up the bottom border line color.
+    let bblColor = (
+      this._theme.bottomBorderLineColor ||
+      this._theme.borderLineColor
+    );
+
+    // Look up the right border line color.
+    let rblColor = (
+      this._theme.rightBorderLineColor ||
+      this._theme.borderLineColor
+    );
 
     // Draw the bottom border line if needed.
-    if (blBColor && r2 === this._rowSections.sectionCount - 1) {
-      this._drawBottomBorderLine(rgn, blBColor);
+    if (bblColor && r2 === this._rowSections.sectionCount - 1) {
+      this._drawBottomBorderLine(rgn, bblColor);
     }
 
     // Draw the right border line if needed.
-    if (blRColor && c2 === this._colSections.sectionCount - 1) {
-      this._drawRightBorderLine(rgn, blRColor);
+    if (rblColor && c2 === this._colSections.sectionCount - 1) {
+      this._drawRightBorderLine(rgn, rblColor);
     }
 
     // Restore the gc state.
@@ -1145,34 +1159,56 @@ class DataGrid extends Widget {
     // Draw the cell content for the cell region.
     this._drawCells(rgn);
 
-    // Look up the grid line colors.
-    let glColor = this._theme.headerGridLineColor;
-    let glHColor = this._theme.rowHeaderHorizontalGridLineColor || glColor;
-    let glVColor = this._theme.rowHeaderVerticalGridLineColor || glColor;
+    // Look up the horizontal grid line color.
+    let hglColor = (
+      this._theme.rowHeaderHorizontalGridLineColor ||
+      this._theme.rowHeaderGridLineColor ||
+      this._theme.headerHorizontalGridLineColor ||
+      this._theme.headerGridLineColor
+    );
+
+    // Look up the vertical grid line color.
+    let vglColor = (
+      this._theme.rowHeaderVerticalGridLineColor ||
+      this._theme.rowHeaderGridLineColor ||
+      this._theme.headerVerticalGridLineColor ||
+      this._theme.headerGridLineColor
+    );
 
     // Draw the horizontal grid lines if needed.
-    if (glHColor) {
-      this._drawHorizontalGridLines(rgn, glHColor);
+    if (hglColor) {
+      this._drawHorizontalGridLines(rgn, hglColor);
     }
 
     // Draw the vertical grid lines if needed.
-    if (glVColor) {
-      this._drawVerticalGridLines(rgn, glVColor);
+    if (vglColor) {
+      this._drawVerticalGridLines(rgn, vglColor);
     }
 
-    // Look up the border line colors.
-    let blColor = this._theme.rowHeaderBorderLineColor;
-    let blRColor = this._theme.rowHeaderRightBorderLineColor || blColor;
-    let blBColor = this._theme.rowHeaderBottomBorderLineColor || blColor;
+    // Look up the bottom border line color.
+    let bblColor = (
+      this._theme.rowHeaderBottomBorderLineColor ||
+      this._theme.rowHeaderBorderLineColor ||
+      this._theme.headerBottomBorderLineColor ||
+      this._theme.headerBorderLineColor
+    );
+
+    // Look up the right border line color.
+    let rblColor = (
+      this._theme.rowHeaderRightBorderLineColor ||
+      this._theme.rowHeaderBorderLineColor ||
+      this._theme.headerRightBorderLineColor ||
+      this._theme.headerBorderLineColor
+    );
 
     // Draw the bottom border line if needed.
-    if (blBColor && r2 === this._rowSections.sectionCount - 1) {
-      this._drawBottomBorderLine(rgn, blBColor);
+    if (bblColor && r2 === this._rowSections.sectionCount - 1) {
+      this._drawBottomBorderLine(rgn, bblColor);
     }
 
     // Draw the right border line if needed.
-    if (blRColor && c2 === this._rowHeaderSections.sectionCount - 1) {
-      this._drawRightBorderLine(rgn, blRColor);
+    if (rblColor && c2 === this._rowHeaderSections.sectionCount - 1) {
+      this._drawRightBorderLine(rgn, rblColor);
     }
 
     // Restore the gc state.
@@ -1285,34 +1321,56 @@ class DataGrid extends Widget {
     // Draw the cell content for the cell region.
     this._drawCells(rgn);
 
-    // Look up the grid line colors.
-    let glColor = this._theme.headerGridLineColor;
-    let glHColor = this._theme.colHeaderHorizontalGridLineColor || glColor;
-    let glVColor = this._theme.colHeaderVerticalGridLineColor || glColor;
+    // Look up the horizontal grid line color.
+    let hglColor = (
+      this._theme.colHeaderHorizontalGridLineColor ||
+      this._theme.colHeaderGridLineColor ||
+      this._theme.headerHorizontalGridLineColor ||
+      this._theme.headerGridLineColor
+    );
+
+    // Look up the vertical grid line color.
+    let vglColor = (
+      this._theme.colHeaderVerticalGridLineColor ||
+      this._theme.colHeaderGridLineColor ||
+      this._theme.headerVerticalGridLineColor ||
+      this._theme.headerGridLineColor
+    );
 
     // Draw the horizontal grid lines if needed.
-    if (glHColor) {
-      this._drawHorizontalGridLines(rgn, glHColor);
+    if (hglColor) {
+      this._drawHorizontalGridLines(rgn, hglColor);
     }
 
     // Draw the vertical grid lines if needed.
-    if (glVColor) {
-      this._drawVerticalGridLines(rgn, glVColor);
+    if (vglColor) {
+      this._drawVerticalGridLines(rgn, vglColor);
     }
 
-    // Look up the border line colors.
-    let blColor = this._theme.colHeaderBorderLineColor;
-    let blRColor = this._theme.colHeaderRightBorderLineColor || blColor;
-    let blBColor = this._theme.colHeaderBottomBorderLineColor || blColor;
+    // Look up the bottom border line color.
+    let bblColor = (
+      this._theme.colHeaderBottomBorderLineColor ||
+      this._theme.colHeaderBorderLineColor ||
+      this._theme.headerBottomBorderLineColor ||
+      this._theme.headerBorderLineColor
+    );
+
+    // Look up the right border line color.
+    let rblColor = (
+      this._theme.colHeaderRightBorderLineColor ||
+      this._theme.colHeaderBorderLineColor ||
+      this._theme.headerRightBorderLineColor ||
+      this._theme.headerBorderLineColor
+    );
 
     // Draw the bottom border line if needed.
-    if (blBColor && r2 === this._colHeaderSections.sectionCount - 1) {
-      this._drawBottomBorderLine(rgn, blBColor);
+    if (bblColor && r2 === this._colHeaderSections.sectionCount - 1) {
+      this._drawBottomBorderLine(rgn, bblColor);
     }
 
     // Draw the right border line if needed.
-    if (blRColor && c2 === this._colSections.sectionCount - 1) {
-      this._drawRightBorderLine(rgn, blRColor);
+    if (rblColor && c2 === this._colSections.sectionCount - 1) {
+      this._drawRightBorderLine(rgn, rblColor);
     }
 
     // Restore the gc state.
@@ -1426,34 +1484,56 @@ class DataGrid extends Widget {
     // Draw the cell content for the cell region.
     this._drawCells(rgn);
 
-    // Look up the grid line colors.
-    let glColor = this._theme.headerGridLineColor;
-    let glHColor = this._theme.cornerHeaderHorizontalGridLineColor || glColor;
-    let glVColor = this._theme.cornerHeaderVerticalGridLineColor || glColor;
+    // Look up the horizontal grid line color.
+    let hglColor = (
+      this._theme.cornerHeaderHorizontalGridLineColor ||
+      this._theme.cornerHeaderGridLineColor ||
+      this._theme.headerHorizontalGridLineColor ||
+      this._theme.headerGridLineColor
+    );
+
+    // Look up the vertical grid line color.
+    let vglColor = (
+      this._theme.cornerHeaderVerticalGridLineColor ||
+      this._theme.cornerHeaderGridLineColor ||
+      this._theme.headerVerticalGridLineColor ||
+      this._theme.headerGridLineColor
+    );
 
     // Draw the horizontal grid lines if needed.
-    if (glHColor) {
-      this._drawHorizontalGridLines(rgn, glHColor);
+    if (hglColor) {
+      this._drawHorizontalGridLines(rgn, hglColor);
     }
 
     // Draw the vertical grid lines if needed.
-    if (glVColor) {
-      this._drawVerticalGridLines(rgn, glVColor);
+    if (vglColor) {
+      this._drawVerticalGridLines(rgn, vglColor);
     }
 
-    // Look up the border line colors.
-    let blColor = this._theme.cornerHeaderBorderLineColor;
-    let blRColor = this._theme.cornerHeaderRightBorderLineColor || blColor;
-    let blBColor = this._theme.cornerHeaderBottomBorderLineColor || blColor;
+    // Look up the bottom border line color.
+    let bblColor = (
+      this._theme.cornerHeaderBottomBorderLineColor ||
+      this._theme.cornerHeaderBorderLineColor ||
+      this._theme.headerBottomBorderLineColor ||
+      this._theme.headerBorderLineColor
+    );
+
+    // Look up the right border line color.
+    let rblColor = (
+      this._theme.cornerHeaderRightBorderLineColor ||
+      this._theme.cornerHeaderBorderLineColor ||
+      this._theme.headerRightBorderLineColor ||
+      this._theme.headerBorderLineColor
+    );
 
     // Draw the bottom border line if needed.
-    if (blBColor && r2 === this._rowHeaderSections.sectionCount - 1) {
-      this._drawBottomBorderLine(rgn, blBColor);
+    if (bblColor && r2 === this._rowHeaderSections.sectionCount - 1) {
+      this._drawBottomBorderLine(rgn, bblColor);
     }
 
     // Draw the right border line if needed.
-    if (blRColor && c2 === this._colHeaderSections.sectionCount - 1) {
-      this._drawRightBorderLine(rgn, blRColor);
+    if (rblColor && c2 === this._colHeaderSections.sectionCount - 1) {
+      this._drawRightBorderLine(rgn, rblColor);
     }
 
     // Restore the gc state.
@@ -1909,14 +1989,14 @@ namespace DataGrid {
     /**
      * The line color for the right border of the main cell area.
      *
-     * This border draws on top of the right-most grid line.
+     * This overrides `borderLineColor` for the right line.
      */
     readonly rightBorderLineColor?: string;
 
     /**
      * The line color for the bottom border of the main cell area.
      *
-     * This border draws on top of the bottom-most grid line.
+     * This overrides `borderLineColor` for the bottom line.
      */
     readonly bottomBorderLineColor?: string;
 
@@ -1935,6 +2015,41 @@ namespace DataGrid {
     readonly headerGridLineColor?: string;
 
     /**
+     * The vertical grid line color for the grid headers.
+     *
+     * This overrides `headerGridLineColor` for vertical lines.
+     */
+    readonly headerVerticalGridLineColor?: string;
+
+    /**
+     * The horizontal grid line color for the grid headers.
+     *
+     * This overrides `headerGridLineColor` for horizontal lines.
+     */
+    readonly headerHorizontalGridLineColor?: string;
+
+    /**
+     * The border line color for the grid headers.
+     *
+     * This applies to all of row, column, and corner headers.
+     */
+    readonly headerBorderLineColor?: string;
+
+    /**
+     * The right border line color for the grid headers.
+     *
+     * This overrides `headerBorderLineColor` for the right line.
+     */
+    readonly headerRightBorderLineColor?: string;
+
+    /**
+     * The bottom border line color for the grid headers.
+     *
+     * This overrides `headerBorderLineColor` for the bottom line.
+     */
+    readonly headerBottomBorderLineColor?: string;
+
+    /**
      * The background color for the row header area.
      *
      * This overrides `headerBackgroundColor` for row headers.
@@ -1942,37 +2057,44 @@ namespace DataGrid {
     readonly rowHeaderBackgroundColor?: string;
 
     /**
+     * The grid line color for the row header area.
+     *
+     * This overrides `headerGridLineColor` for row headers.
+     */
+    readonly rowHeaderGridLineColor?: string;
+
+    /**
      * The vertical grid line color for the row header area.
      *
-     * This overrides `headerGridLineColor` for vertical lines.
+     * This overrides `rowHeaderGridLineColor` for vertical lines.
      */
     readonly rowHeaderVerticalGridLineColor?: string;
 
     /**
      * The horizontal grid line color for the row header area.
      *
-     * This overrides `headerGridLineColor` for horizontal lines.
+     * This overrides `rowHeaderGridLineColor` for horizontal lines.
      */
     readonly rowHeaderHorizontalGridLineColor?: string;
 
     /**
      * The line color for the border of the row header area.
      *
-     * This applies to both the right and bottom border lines.
+     * This overrides `headerBorderLineColor` for row headers.
      */
     readonly rowHeaderBorderLineColor?: string;
 
     /**
      * The line color for the right border of the row header area.
      *
-     * This border draws on top of the right-most grid line.
+     * This overrides `rowHeaderBorderLineColor` for the right line.
      */
     readonly rowHeaderRightBorderLineColor?: string;
 
     /**
      * The line color for the bottom border of the row header area.
      *
-     * This border draws on top of the bottom-most grid line.
+     * This overrides `rowHeaderBorderLineColor` for the bottom line.
      */
     readonly rowHeaderBottomBorderLineColor?: string;
 
@@ -1984,37 +2106,44 @@ namespace DataGrid {
     readonly colHeaderBackgroundColor?: string;
 
     /**
+     * The grid line color for the column header area.
+     *
+     * This overrides `headerGridLineColor` for column headers.
+     */
+    readonly colHeaderGridLineColor?: string;
+
+    /**
      * The vertical grid line color for the column header area.
      *
-     * This overrides `headerGridLineColor` for vertical lines.
+     * This overrides `colHeaderGridLineColor` for vertical lines.
      */
     readonly colHeaderVerticalGridLineColor?: string;
 
     /**
      * The horizontal grid line color for the column header area.
      *
-     * This overrides `headerGridLineColor` for horizontal lines.
+     * This overrides `colHeaderGridLineColor` for horizontal lines.
      */
     readonly colHeaderHorizontalGridLineColor?: string;
 
     /**
      * The line color for the border of the column header area.
      *
-     * This applies to both the right and bottom border lines.
+     * This overrides `headerBorderLineColor` for column headers.
      */
     readonly colHeaderBorderLineColor?: string;
 
     /**
      * The line color for the right border of the column header area.
      *
-     * This border draws on top of the right-most grid line.
+     * This overrides `colHeaderBorderLineColor` for the right line.
      */
     readonly colHeaderRightBorderLineColor?: string;
 
     /**
      * The line color for the bottom border of the column header area.
      *
-     * This border draws on top of the bottom-most grid line.
+     * This overrides `colHeaderBorderLineColor` for the bottom line.
      */
     readonly colHeaderBottomBorderLineColor?: string;
 
@@ -2026,37 +2155,44 @@ namespace DataGrid {
     readonly cornerHeaderBackgroundColor?: string;
 
     /**
+     * The grid line color for the corner header area.
+     *
+     * This overrides `headerGridLineColor` for corner headers.
+     */
+    readonly cornerHeaderGridLineColor?: string;
+
+    /**
      * The vertical grid line color for the corner header area.
      *
-     * This overrides `headerGridLineColor` for vertical lines.
+     * This overrides `cornerHeaderGridLineColor` for vertical lines.
      */
     readonly cornerHeaderVerticalGridLineColor?: string;
 
     /**
      * The horizontal grid line color for the corner header area.
      *
-     * This overrides `headerGridLineColor` for horizontal lines.
+     * This overrides `cornerHeaderGridLineColor` for horizontal lines.
      */
     readonly cornerHeaderHorizontalGridLineColor?: string;
 
     /**
      * The line color for the border of the corner header area.
      *
-     * This applies to both the right and bottom border lines.
+     * This overrides `headerBorderLineColor` for corner headers.
      */
     readonly cornerHeaderBorderLineColor?: string;
 
     /**
      * The line color for the right border of the corner header area.
      *
-     * This border draws on top of the right-most grid line.
+     * This overrides `cornerHeaderBorderLineColor` for the right line.
      */
     readonly cornerHeaderRightBorderLineColor?: string;
 
     /**
      * The line color for the bottom border of the corner header area.
      *
-     * This border draws on top of the bottom-most grid line.
+     * This overrides `cornerHeaderBorderLineColor` for the bottom line.
      */
     readonly cornerHeaderBottomBorderLineColor?: string;
   }
@@ -2089,8 +2225,7 @@ namespace DataGrid {
     gridLineColor: 'rgba(20, 20, 20, 0.15)',
     headerBackgroundColor: '#F3F3F3',
     headerGridLineColor: '#B5B5B5',
-    rowHeaderBorderLineColor: '#A0A0A0',
-    colHeaderBorderLineColor: '#A0A0A0'
+    headerBorderLineColor: '#A0A0A0'
   };
 }
 
