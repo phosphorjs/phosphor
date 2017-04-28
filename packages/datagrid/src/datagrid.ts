@@ -74,7 +74,7 @@ class DataGrid extends Widget {
     this._canvas.style.height = '0px';
 
     // Create the internal widgets for the data grid.
-    // TODO - support custom scroll bars and corner?
+    // TODO - support custom scroll bars and scroll corner?
     this._viewport = new Widget();
     this._vScrollBar = new ScrollBar({ orientation: 'vertical' });
     this._hScrollBar = new ScrollBar({ orientation: 'horizontal' });
