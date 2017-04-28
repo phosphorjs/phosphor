@@ -102,8 +102,8 @@ class ContentWidget extends Widget {
 
 class MyDataModel extends DataModel {
 
-  readonly rowCount = 2000;
-  readonly colCount = 200;
+  readonly rowCount = 4000;
+  readonly colCount = 15;
   readonly rowHeaderCount = 2;
   readonly colHeaderCount = 2;
 
@@ -356,22 +356,26 @@ function main(): void {
 
   let myTheme: DataGrid.ITheme = {
     ...DataGrid.defaultTheme,
-    rowStripeColor: i => i % 2 === 0 ? '#FFFDE5' : '',
-    colStripeColor: i => i % 2 === 0 ? 'rgba(200, 212, 188, 0.5)' : ''
+    // rowStripeColor: i => i % 2 === 0 ? '#FFFDE5' : '',
+    // colStripeColor: i => i % 2 === 0 ? 'rgba(200, 212, 188, 0.5)' : ''
   };
 
   let grid = new DataGrid({ cellRenderer, theme: myTheme });
-  grid.title.label = 'DataGrid';
   grid.model = new MyDataModel();
 
+  let wrapper = new BoxPanel();
+  wrapper.id = 'grid';
+  wrapper.title.label = 'DataGrid';
+  wrapper.addWidget(grid);
+
   let dock = new DockPanel();
-  dock.addWidget(r1);
-  dock.addWidget(b1, { mode: 'split-right', ref: r1 });
+  dock.addWidget(wrapper);
+  dock.addWidget(b1, { mode: 'split-right', ref: wrapper });
   dock.addWidget(y1, { mode: 'split-bottom', ref: b1 });
   dock.addWidget(g1, { mode: 'split-left', ref: y1 });
   dock.addWidget(r2, { ref: b1 });
   dock.addWidget(b2, { mode: 'split-right', ref: y1 });
-  dock.addWidget(grid, { ref: r1 });
+  dock.addWidget(r1, { ref: wrapper });
   dock.id = 'dock';
 
   let savedLayouts: DockPanel.ILayoutConfig[] = [];
