@@ -1005,18 +1005,18 @@ class DataGrid extends Widget {
     // Draw the cell content for the cell region.
     this._drawCells(rgn);
 
-    // Look up the grid line parameters.
-    let glVis = this._theme.gridLineVisibility;
-    let glHColor = this._theme.horizontalGridLineColor;
-    let glVColor = this._theme.verticalGridLineColor;
+    // Look up the grid line colors.
+    let glColor = this._theme.gridLineColor;
+    let glHColor = this._theme.horizontalGridLineColor || glColor;
+    let glVColor = this._theme.verticalGridLineColor || glColor;
 
     // Draw the horizontal grid lines if needed.
-    if (glHColor && (glVis === 'all' || glVis === 'horizontal')) {
+    if (glHColor) {
       this._drawHorizontalGridLines(rgn, glHColor);
     }
 
-    // Draw the horizontal grid lines if needed.
-    if (glVColor && (glVis === 'all' || glVis === 'vertical')) {
+    // Draw the vertical grid lines if needed.
+    if (glVColor) {
       this._drawVerticalGridLines(rgn, glVColor);
     }
 
@@ -1116,7 +1116,10 @@ class DataGrid extends Widget {
     this._canvasGC.clip();
 
     // Look up the background color.
-    let bgColor = this._theme.rowHeaderBackgroundColor;
+    let bgColor = (
+      this._theme.rowHeaderBackgroundColor ||
+      this._theme.headerBackgroundColor
+    );
 
     // Fill the region with the background color if needed.
     if (bgColor) {
@@ -1127,18 +1130,18 @@ class DataGrid extends Widget {
     // Draw the cell content for the cell region.
     this._drawCells(rgn);
 
-    // Look up the grid line parameters.
-    let glVis = this._theme.rowHeaderGridLineVisibility;
-    let glHColor = this._theme.rowHeaderHorizontalGridLineColor;
-    let glVColor = this._theme.rowHeaderVerticalGridLineColor;
+    // Look up the grid line colors.
+    let glColor = this._theme.headerGridLineColor;
+    let glHColor = this._theme.rowHeaderHorizontalGridLineColor || glColor;
+    let glVColor = this._theme.rowHeaderVerticalGridLineColor || glColor;
 
     // Draw the horizontal grid lines if needed.
-    if (glHColor && (glVis === 'all' || glVis === 'horizontal')) {
+    if (glHColor) {
       this._drawHorizontalGridLines(rgn, glHColor);
     }
 
-    // Draw the horizontal grid lines if needed.
-    if (glVColor && (glVis === 'all' || glVis === 'vertical')) {
+    // Draw the vertical grid lines if needed.
+    if (glVColor) {
       this._drawVerticalGridLines(rgn, glVColor);
     }
 
@@ -1238,7 +1241,10 @@ class DataGrid extends Widget {
     this._canvasGC.clip();
 
     // Look up the background color.
-    let bgColor = this._theme.colHeaderBackgroundColor;
+    let bgColor = (
+      this._theme.colHeaderBackgroundColor ||
+      this._theme.headerBackgroundColor
+    );
 
     // Fill the region with the background color if needed.
     if (bgColor) {
@@ -1249,18 +1255,18 @@ class DataGrid extends Widget {
     // Draw the cell content for the cell region.
     this._drawCells(rgn);
 
-    // Look up the grid line parameters.
-    let glVis = this._theme.colHeaderGridLineVisibility;
-    let glHColor = this._theme.colHeaderHorizontalGridLineColor;
-    let glVColor = this._theme.colHeaderVerticalGridLineColor;
+    // Look up the grid line colors.
+    let glColor = this._theme.headerGridLineColor;
+    let glHColor = this._theme.colHeaderHorizontalGridLineColor || glColor;
+    let glVColor = this._theme.colHeaderVerticalGridLineColor || glColor;
 
     // Draw the horizontal grid lines if needed.
-    if (glHColor && (glVis === 'all' || glVis === 'horizontal')) {
+    if (glHColor) {
       this._drawHorizontalGridLines(rgn, glHColor);
     }
 
-    // Draw the horizontal grid lines if needed.
-    if (glVColor && (glVis === 'all' || glVis === 'vertical')) {
+    // Draw the vertical grid lines if needed.
+    if (glVColor) {
       this._drawVerticalGridLines(rgn, glVColor);
     }
 
@@ -1361,7 +1367,10 @@ class DataGrid extends Widget {
     this._canvasGC.clip();
 
     // Look up the background color.
-    let bgColor = this._theme.cornerHeaderBackgroundColor;
+    let bgColor = (
+      this._theme.cornerHeaderBackgroundColor ||
+      this._theme.headerBackgroundColor
+    );
 
     // Fill the region with the background color if needed.
     if (bgColor) {
@@ -1372,18 +1381,18 @@ class DataGrid extends Widget {
     // Draw the cell content for the cell region.
     this._drawCells(rgn);
 
-    // Look up the grid line parameters.
-    let glVis = this._theme.cornerHeaderGridLineVisibility;
-    let glHColor = this._theme.cornerHeaderHorizontalGridLineColor;
-    let glVColor = this._theme.cornerHeaderVerticalGridLineColor;
+    // Look up the grid line colors.
+    let glColor = this._theme.headerGridLineColor;
+    let glHColor = this._theme.cornerHeaderHorizontalGridLineColor || glColor;
+    let glVColor = this._theme.cornerHeaderVerticalGridLineColor || glColor;
 
     // Draw the horizontal grid lines if needed.
-    if (glHColor && (glVis === 'all' || glVis === 'horizontal')) {
+    if (glHColor) {
       this._drawHorizontalGridLines(rgn, glHColor);
     }
 
-    // Draw the horizontal grid lines if needed.
-    if (glVColor && (glVis === 'all' || glVis === 'vertical')) {
+    // Draw the vertical grid lines if needed.
+    if (glVColor) {
       this._drawVerticalGridLines(rgn, glVColor);
     }
 
@@ -1740,8 +1749,7 @@ namespace DataGrid {
    * A theme provides the styling for the parts of data grid which
    * are independent of the cell renderer.
    *
-   * Theme colors support the full CSS color syntax. An empty string
-   * may be used to signify no color.
+   * Theme colors support the full CSS color syntax.
    *
    * A grid theme **must not** throw exceptions, and **must not**
    * mutate the data model or the data grid.
@@ -1751,97 +1759,176 @@ namespace DataGrid {
     /**
      * The background color for the the entire data grid.
      */
-    readonly voidSpaceColor: string;
+    readonly voidSpaceColor?: string;
 
     /**
      * The background color for the main cell area.
      */
-    readonly backgroundColor: string;
+    readonly backgroundColor?: string;
 
     /**
-     * A function which returns the stripe color for a specific row.
+     * A function which returns the background color for a row.
      */
-    readonly rowStripeColor: ((index: number) => string) | null;
+    readonly rowStripeColor?: (index: number) => string;
 
     /**
-     * A function which returns the stripe color for a specific column.
+     * A function which returns the background color for a column.
      */
-    readonly colStripeColor: ((index: number) => string) | null;
+    readonly colStripeColor?: (index: number) => string;
 
     /**
-     * The visibility of the grid lines for the main cell area.
+     * The grid line color for the main cell area.
+     *
+     * This applies to both horizontal and vertical lines.
      */
-    readonly gridLineVisibility: 'all' | 'horizontal' | 'vertical' | 'none';
+    readonly gridLineColor?: string;
 
     /**
      * The vertical grid line color for the main cell area.
+     *
+     * This overrides `gridLineColor` for vertical lines.
      */
-    readonly verticalGridLineColor: string;
+    readonly verticalGridLineColor?: string;
 
     /**
      * The horizontal grid line color for the main cell area.
+     *
+     * This overrides `gridLineColor` for horizontal lines.
      */
-    readonly horizontalGridLineColor: string;
+    readonly horizontalGridLineColor?: string;
+
+    /**
+     * The line color for the right border of the main cell area.
+     *
+     * This border draws on top of the right-most grid line.
+     */
+    readonly rightBorderLineColor?: string;
+
+    /**
+     * The line color for the bottom border of the main cell area.
+     *
+     * This border draws on top of the bottom-most grid line.
+     */
+    readonly bottomBorderLineColor?: string;
+
+    /**
+     * The background color for the grid headers.
+     *
+     * This applies to all of row, column, and corner headers.
+     */
+    readonly headerBackgroundColor?: string;
+
+    /**
+     * The grid line color for the grid headers.
+     *
+     * This applies to all of row, column, and corner headers.
+     */
+    readonly headerGridLineColor?: string;
 
     /**
      * The background color for the row header area.
+     *
+     * This overrides `headerBackgroundColor` for row headers.
      */
-    readonly rowHeaderBackgroundColor: string;
-
-    /**
-     * The visibility of the grid lines for the row header area.
-     */
-    readonly rowHeaderGridLineVisibility: 'all' | 'horizontal' | 'vertical' | 'none';
+    readonly rowHeaderBackgroundColor?: string;
 
     /**
      * The vertical grid line color for the row header area.
+     *
+     * This overrides `headerGridLineColor` for vertical lines.
      */
-    readonly rowHeaderVerticalGridLineColor: string;
+    readonly rowHeaderVerticalGridLineColor?: string;
 
     /**
      * The horizontal grid line color for the row header area.
+     *
+     * This overrides `headerGridLineColor` for horizontal lines.
      */
-    readonly rowHeaderHorizontalGridLineColor: string;
+    readonly rowHeaderHorizontalGridLineColor?: string;
+
+    /**
+     * The line color for the right border of the row header area.
+     *
+     * This border draws on top of the right-most grid line.
+     */
+    readonly rowHeaderRightBorderLineColor?: string;
+
+    /**
+     * The line color for the bottom border of the row header area.
+     *
+     * This border draws on top of the bottom-most grid line.
+     */
+    readonly rowHeaderBottomBorderLineColor?: string;
 
     /**
      * The background color for the column header area.
+     *
+     * This overrides `headerBackgroundColor` for column headers.
      */
-    readonly colHeaderBackgroundColor: string;
-
-    /**
-     * The visibility of the grid lines for the column header area.
-     */
-    readonly colHeaderGridLineVisibility: 'all' | 'horizontal' | 'vertical' | 'none';
+    readonly colHeaderBackgroundColor?: string;
 
     /**
      * The vertical grid line color for the column header area.
+     *
+     * This overrides `headerGridLineColor` for vertical lines.
      */
-    readonly colHeaderVerticalGridLineColor: string;
+    readonly colHeaderVerticalGridLineColor?: string;
 
     /**
      * The horizontal grid line color for the column header area.
+     *
+     * This overrides `headerGridLineColor` for horizontal lines.
      */
-    readonly colHeaderHorizontalGridLineColor: string;
+    readonly colHeaderHorizontalGridLineColor?: string;
+
+    /**
+     * The line color for the right border of the column header area.
+     *
+     * This border draws on top of the right-most grid line.
+     */
+    readonly colHeaderRightBorderLineColor?: string;
+
+    /**
+     * The line color for the bottom border of the column header area.
+     *
+     * This border draws on top of the bottom-most grid line.
+     */
+    readonly colHeaderBottomBorderLineColor?: string;
 
     /**
      * The background color for the corner header area.
+     *
+     * This overrides `headerBackgroundColor` for corner headers.
      */
-    readonly cornerHeaderBackgroundColor: string;
-
-    /**
-     * The visibility of the grid lines for the corner header area.
-     */
-    readonly cornerHeaderGridLineVisibility: 'all' | 'horizontal' | 'vertical' | 'none';
+    readonly cornerHeaderBackgroundColor?: string;
 
     /**
      * The vertical grid line color for the corner header area.
+     *
+     * This overrides `headerGridLineColor` for vertical lines.
      */
-    readonly cornerHeaderVerticalGridLineColor: string;
+    readonly cornerHeaderVerticalGridLineColor?: string;
 
     /**
-     * The vertical grid line color for the corner header area.
+     * The horizontal grid line color for the corner header area.
+     *
+     * This overrides `headerGridLineColor` for horizontal lines.
      */
-    readonly cornerHeaderHorizontalGridLineColor: string;
+    readonly cornerHeaderHorizontalGridLineColor?: string;
+
+    /**
+     * The line color for the right border of the corner header area.
+     *
+     * This border draws on top of the right-most grid line.
+     */
+    readonly cornerHeaderRightBorderLineColor?: string;
+
+    /**
+     * The line color for the bottom border of the corner header area.
+     *
+     * This border draws on top of the bottom-most grid line.
+     */
+    readonly cornerHeaderBottomBorderLineColor?: string;
   }
 
   /**
@@ -1868,28 +1955,10 @@ namespace DataGrid {
   export
   const defaultTheme: DataGrid.ITheme = {
     voidSpaceColor: '#F3F3F3',
-
     backgroundColor: '#FFFFFF',
-    rowStripeColor: null,
-    colStripeColor: null,
-    gridLineVisibility: 'all',
-    verticalGridLineColor: 'rgba(20, 20, 20, 0.15)',
-    horizontalGridLineColor: 'rgba(20, 20, 20, 0.15)',
-
-    rowHeaderBackgroundColor: '#F3F3F3',
-    rowHeaderGridLineVisibility: 'all',
-    rowHeaderVerticalGridLineColor: '#B5B5B5',
-    rowHeaderHorizontalGridLineColor: '#B5B5B5',
-
-    colHeaderBackgroundColor: '#F3F3F3',
-    colHeaderGridLineVisibility: 'all',
-    colHeaderVerticalGridLineColor: '#B5B5B5',
-    colHeaderHorizontalGridLineColor: '#B5B5B5',
-
-    cornerHeaderBackgroundColor: '#F3F3F3',
-    cornerHeaderGridLineVisibility: 'all',
-    cornerHeaderVerticalGridLineColor: '#B5B5B5',
-    cornerHeaderHorizontalGridLineColor: '#B5B5B5',
+    gridLineColor: 'rgba(20, 20, 20, 0.15)',
+    headerBackgroundColor: '#F3F3F3',
+    headerGridLineColor: '#B5B5B5',
   };
 }
 
