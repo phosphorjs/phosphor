@@ -340,9 +340,20 @@ class ScrollBar extends Widget {
     event.preventDefault();
     event.stopPropagation();
 
-    // Release the mouse if `Escape` is pressed.
-    if (event.keyCode === 27) {
-      this._releaseMouse();
+    // Ignore anything except the `Escape` key.
+    if (event.keyCode !== 27) {
+      return;
+    }
+
+    // Fetch the previous scroll value.
+    let value = this._pressData ? this._pressData.value : -1;
+
+    // Release the mouse.
+    this._releaseMouse();
+
+    // Restore the old scroll value if possible.
+    if (value !== -1) {
+      this._moveThumb(value);
     }
   }
 
@@ -377,7 +388,8 @@ class ScrollBar extends Widget {
 
     // Set up the press data.
     this._pressData = {
-      part, override, delta: -1,
+      part, override,
+      delta: -1, value: -1,
       mouseX: event.clientX,
       mouseY: event.clientY
     };
@@ -405,6 +417,9 @@ class ScrollBar extends Widget {
 
       // Add the active class to the thumb node.
       thumbNode.classList.add('p-mod-active');
+
+      // Store the current value in the press data.
+      this._pressData.value = this._value;
 
       // Finished.
       return;
@@ -505,22 +520,8 @@ class ScrollBar extends Widget {
     // Compute the desired value from the scroll geometry.
     let value = trackSpan === 0 ? 0 : trackPos * this._maximum / trackSpan;
 
-    // Clamp the value to the allowed range.
-    value = Math.max(0, Math.min(value, this._maximum));
-
-    // Bail if the value does not change.
-    if (this._value === value) {
-      return;
-    }
-
-    // Update the internal value.
-    this._value = value;
-
-    // Schedule an update of the scroll bar.
-    this.update();
-
-    // Emit the thumb moved signal.
-    this._thumbMoved.emit(value);
+    // Move the thumb to the computed value.
+    this._moveThumb(value);
   }
 
   /**
@@ -567,6 +568,28 @@ class ScrollBar extends Widget {
     this.thumbNode.classList.remove('p-mod-active');
     this.decrementNode.classList.remove('p-mod-active');
     this.incrementNode.classList.remove('p-mod-active');
+  }
+
+  /**
+   * Move the thumb to the specified position.
+   */
+  private _moveThumb(value: number): void {
+    // Clamp the value to the allowed range.
+    value = Math.max(0, Math.min(value, this._maximum));
+
+    // Bail if the value does not change.
+    if (this._value === value) {
+      return;
+    }
+
+    // Update the internal value.
+    this._value = value;
+
+    // Schedule an update of the scroll bar.
+    this.update();
+
+    // Emit the thumb moved signal.
+    this._thumbMoved.emit(value);
   }
 
   /**
@@ -741,6 +764,11 @@ namespace Private {
      * The offset of the press in thumb coordinates, or -1.
      */
     delta: number;
+
+    /**
+     * The scroll value at the time the thumb was pressed, or -1.
+     */
+    value: number;
 
     /**
      * The disposable which will clear the override cursor.
