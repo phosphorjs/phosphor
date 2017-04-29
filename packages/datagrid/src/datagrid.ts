@@ -1853,7 +1853,6 @@ class DataGrid extends Widget {
   private _vScrollBar: ScrollBar;
   private _hScrollBar: ScrollBar;
   private _scrollCorner: Widget;
-  private _headerVisibility: DataGrid.HeaderVisibility;
 
   private _vScrollBarMinWidth = 0;
   private _hScrollBarMinHeight = 0;
@@ -1876,6 +1875,7 @@ class DataGrid extends Widget {
 
   private _cellRenderer: DataGrid.ICellRenderer;
   private _theme: DataGrid.ITheme;
+  private _headerVisibility: DataGrid.HeaderVisibility;
 }
 
 
