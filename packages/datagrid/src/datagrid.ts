@@ -50,6 +50,7 @@ class DataGrid extends Widget {
     // Parse the options.
     this._cellRenderer = options.cellRenderer;
     this._theme = options.theme || DataGrid.defaultTheme;
+    this._headerVisibility = options.headerVisibility || 'all';
 
     // Set up the row and column sections lists.
     // TODO - allow base size configuration.
@@ -105,7 +106,7 @@ class DataGrid extends Widget {
     this._vScrollBar.stepRequested.connect(this._onStepRequested, this);
     this._hScrollBar.stepRequested.connect(this._onStepRequested, this);
 
-    // Set the layout cell configs for the child widgets.
+    // Set the layout cell config for the child widgets.
     GridLayout.setCellConfig(this._viewport, { row: 0, col: 0 });
     GridLayout.setCellConfig(this._vScrollBar, { row: 0, col: 1 });
     GridLayout.setCellConfig(this._hScrollBar, { row: 1, col: 0 });
@@ -210,10 +211,16 @@ class DataGrid extends Widget {
    * Set the cell renderer for the data grid.
    */
   set cellRenderer(value: DataGrid.ICellRenderer) {
-    if (this._cellRenderer !== value) {
-      this._cellRenderer = value;
-      this.repaint();
+    // Bail if the renderer does not change.
+    if (this._cellRenderer === value) {
+      return;
     }
+
+    // Update the internal renderer.
+    this._cellRenderer = value;
+
+    // Schedule a full repaint of the grid.
+    this.repaint();
   }
 
   /**
@@ -227,10 +234,49 @@ class DataGrid extends Widget {
    * Set the theme for the data grid.
    */
   set theme(value: DataGrid.ITheme) {
-    if (this._theme !== value) {
-      this._theme = value;
-      this.repaint();
+    // Bail if the theme does not change.
+    if (this._theme === value) {
+      return;
     }
+
+    // Update the internal theme.
+    this._theme = value;
+
+    // Schedule a full repaint of the grid.
+    this.repaint();
+  }
+
+  /**
+   * Get the header visibility for the data grid.
+   */
+  get headerVisibility(): DataGrid.HeaderVisibility {
+    return this._headerVisibility;
+  }
+
+  /**
+   * Set the header visibility for the data grid.
+   */
+  set headerVisibility(value: DataGrid.HeaderVisibility) {
+    // Bail if the visibility does not change.
+    if (this._headerVisibility === value) {
+      return;
+    }
+
+    // Update the internal visibility.
+    this._headerVisibility = value;
+
+    // Re-clamp the scroll position for the new page size.
+    this._scrollX = Math.min(this._scrollX, this.maxScrollX);
+    this._scrollY = Math.min(this._scrollY, this.maxScrollY);
+
+    // Update the scroll bar visibility.
+    this._updateScrollBarVisibility();
+
+    // Re-sync the scroll bars with the viewport.
+    this._syncScrollBarsWithViewport();
+
+    // Schedule a full repaint of the grid.
+    this.repaint();
   }
 
   /**
@@ -268,13 +314,45 @@ class DataGrid extends Widget {
   }
 
   /**
+   * The total width of the row headers.
+   *
+   * #### Notes
+   * This will be `0` if the row headers are hidden.
+   */
+  get rowHeaderWidth(): number {
+    if (this._headerVisibility === 'none') {
+      return 0;
+    }
+    if (this._headerVisibility === 'column') {
+      return 0;
+    }
+    return this._rowHeaderSections.totalSize;
+  }
+
+  /**
+   * The total height of the column headers.
+   *
+   * #### Notes
+   * This will be `0` if the column headers are hidden.
+   */
+  get colHeaderHeight(): number {
+    if (this._headerVisibility === 'none') {
+      return 0;
+    }
+    if (this._headerVisibility === 'row') {
+      return 0;
+    }
+    return this._colHeaderSections.totalSize;
+  }
+
+  /**
    * The width of the visible portion of the main cell content.
    *
    * #### Notes
    * This value does not include the width of the row headers.
    */
   get pageWidth(): number {
-    return Math.max(0, this._canvas.width - this._rowHeaderSections.totalSize);
+    return Math.max(0, this._canvas.width - this.rowHeaderWidth);
   }
 
   /**
@@ -284,7 +362,7 @@ class DataGrid extends Widget {
    * This value does not include the height of the column headers.
    */
   get pageHeight(): number {
-    return Math.max(0, this._canvas.height - this._colHeaderSections.totalSize);
+    return Math.max(0, this._canvas.height - this.colHeaderHeight);
   }
 
   /**
@@ -310,20 +388,6 @@ class DataGrid extends Widget {
   get maxScrollY(): number {
     return Math.max(0, this.scrollHeight - this.pageHeight - 1);
   }
-
-  // /**
-  //  * The total width of the row headers.
-  //  */
-  // get rowHeaderWidth(): number {
-  //   return this._rowHeaderSections.totalSize;
-  // }
-
-  // /**
-  //  * The total height of the column headers.
-  //  */
-  // get colHeaderHeight(): number {
-  //   return this._colHeaderSections.totalSize;
-  // }
 
   /**
    * Scroll the viewport by one page.
@@ -447,8 +511,8 @@ class DataGrid extends Widget {
     }
 
     // Get the visible content origin.
-    let contentX = this._rowHeaderSections.totalSize;
-    let contentY = this._colHeaderSections.totalSize;
+    let contentX = this.rowHeaderWidth;
+    let contentY = this.colHeaderHeight;
 
     // Get the visible content dimensions.
     let contentWidth = width - contentX;
@@ -905,8 +969,8 @@ class DataGrid extends Widget {
     }
 
     // Get the visible content origin.
-    let contentX = this._rowHeaderSections.totalSize;
-    let contentY = this._colHeaderSections.totalSize;
+    let contentX = this.rowHeaderWidth;
+    let contentY = this.colHeaderHeight;
 
     // Bail if the dirty rect does not intersect the content area.
     if (rx + rw < contentX) {
@@ -1058,7 +1122,7 @@ class DataGrid extends Widget {
    */
   private _drawRowHeaderRegion(rx: number, ry: number, rw: number, rh: number): void {
     // Get the visible content dimensions.
-    let contentW = this._rowHeaderSections.totalSize;
+    let contentW = this.rowHeaderWidth;
     let contentH = this._rowSections.totalSize - this._scrollY;
 
     // Bail if there is no content to draw.
@@ -1068,7 +1132,7 @@ class DataGrid extends Widget {
 
     // Get the visible content origin.
     let contentX = 0;
-    let contentY = this._colHeaderSections.totalSize;
+    let contentY = this.colHeaderHeight;
 
     // Bail if the dirty rect does not intersect the content area.
     if (rx + rw < contentX) {
@@ -1221,7 +1285,7 @@ class DataGrid extends Widget {
   private _drawColHeaderRegion(rx: number, ry: number, rw: number, rh: number): void {
     // Get the visible content dimensions.
     let contentW = this._colSections.totalSize - this._scrollX;
-    let contentH = this._colHeaderSections.totalSize;
+    let contentH = this.colHeaderHeight;
 
     // Bail if there is no content to draw.
     if (contentW <= 0 || contentH <= 0) {
@@ -1229,7 +1293,7 @@ class DataGrid extends Widget {
     }
 
     // Get the visible content origin.
-    let contentX = this._rowHeaderSections.totalSize;
+    let contentX = this.rowHeaderWidth;
     let contentY = 0;
 
     // Bail if the dirty rect does not intersect the content area.
@@ -1382,8 +1446,8 @@ class DataGrid extends Widget {
    */
   private _drawCornerHeaderRegion(rx: number, ry: number, rw: number, rh: number): void {
     // Get the visible content dimensions.
-    let contentW = this._rowHeaderSections.totalSize;
-    let contentH = this._colHeaderSections.totalSize;
+    let contentW = this.rowHeaderWidth;
+    let contentH = this.colHeaderHeight;
 
     // Bail if there is no content to draw.
     if (contentW <= 0 || contentH <= 0) {
@@ -1789,6 +1853,7 @@ class DataGrid extends Widget {
   private _vScrollBar: ScrollBar;
   private _hScrollBar: ScrollBar;
   private _scrollCorner: Widget;
+  private _headerVisibility: DataGrid.HeaderVisibility;
 
   private _vScrollBarMinWidth = 0;
   private _hScrollBarMinHeight = 0;
@@ -1819,6 +1884,12 @@ class DataGrid extends Widget {
  */
 export
 namespace DataGrid {
+  /**
+   * A type alias for the supported header visibility modes.
+   */
+  export
+  type HeaderVisibility = 'all' | 'row' | 'column' | 'none';
+
   /**
    * An object which renders the cells of a data grid.
    *
@@ -2208,11 +2279,18 @@ namespace DataGrid {
     cellRenderer: ICellRenderer;
 
     /**
-     * The grid theme for the data grid.
+     * The theme for the data grid.
      *
      * The default is `DataGrid.defaultTheme`.
      */
     theme?: ITheme;
+
+    /**
+     * The header visibility for the data grid.
+     *
+     * The default is `'all'`.
+     */
+    headerVisibility?: HeaderVisibility
   }
 
   /**
