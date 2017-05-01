@@ -356,8 +356,8 @@ function main(): void {
 
   let myTheme: DataGrid.ITheme = {
     ...DataGrid.defaultTheme,
-    // rowStripeColor: i => i % 2 === 0 ? '#FFFDE5' : '',
-    // colStripeColor: i => i % 2 === 0 ? 'rgba(200, 212, 188, 0.5)' : ''
+    rowStripeColor: i => i % 2 === 0 ? '#FFFDE5' : '',
+    colStripeColor: i => i % 2 === 0 ? 'rgba(200, 212, 188, 0.5)' : ''
   };
 
   let grid = new DataGrid({ cellRenderer, theme: myTheme });
