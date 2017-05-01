@@ -64,8 +64,8 @@ class DataGrid extends Widget {
     this._buffer = Private.createCanvas();
 
     // Get the graphics contexts for the canvases.
-    this._canvasGC = this._canvas.getContext('2d', { alpha: false })!;
-    this._bufferGC = this._buffer.getContext('2d', { alpha: false })!;
+    this._canvasGC = this._canvas.getContext('2d')!;
+    this._bufferGC = this._buffer.getContext('2d')!;
 
     // Set up the on-screen canvas.
     this._canvas.style.position = 'absolute';
@@ -1033,23 +1033,20 @@ class DataGrid extends Widget {
     }
 
     // Create the cell region object.
-    let rgn = { x, y, width, height, r1, c1, rowSizes, colSizes };
-
-    // Save the gc state.
-    this._canvasGC.save();
-
-    // Clip to the dirty visible content bounds.
-    this._canvasGC.beginPath();
-    this._canvasGC.rect(x1, y1, x2 - x1 + 1, y2 - y1 + 1);
-    this._canvasGC.clip();
+    let rgn = {
+      xMin: x1, yMin: y1,
+      xMax: x2, yMax: y2,
+      x, y, width, height,
+      row: r1, col: c1,
+      rowSizes, colSizes
+    };
 
     // Look up the background color.
     let bgColor = this._theme.backgroundColor;
 
-    // Fill the region with the background color if needed.
+    // Draw the background if needed.
     if (bgColor) {
-      this._canvasGC.fillStyle = bgColor;
-      this._canvasGC.fillRect(x, y, width, height);
+      this._drawBackground(rgn, bgColor);
     }
 
     // Look up the grid striping functions.
@@ -1112,9 +1109,6 @@ class DataGrid extends Widget {
     if (rblColor && c2 === this._colSections.sectionCount - 1) {
       this._drawRightBorderLine(rgn, rblColor);
     }
-
-    // Restore the gc state.
-    this._canvasGC.restore();
   }
 
   /**
@@ -1198,15 +1192,13 @@ class DataGrid extends Widget {
     c1 -= this._rowHeaderSections.sectionCount;
 
     // Create the cell region object.
-    let rgn = { x, y, width, height, r1, c1, rowSizes, colSizes };
-
-    // Save the gc state.
-    this._canvasGC.save();
-
-    // Clip to the dirty visible content bounds.
-    this._canvasGC.beginPath();
-    this._canvasGC.rect(x1, y1, x2 - x1 + 1, y2 - y1 + 1);
-    this._canvasGC.clip();
+    let rgn = {
+      xMin: x1, yMin: y1,
+      xMax: x2, yMax: y2,
+      x, y, width, height,
+      row: r1, col: c1,
+      rowSizes, colSizes
+    };
 
     // Look up the background color.
     let bgColor = (
@@ -1214,10 +1206,9 @@ class DataGrid extends Widget {
       this._theme.headerBackgroundColor
     );
 
-    // Fill the region with the background color if needed.
+    // Draw the background if needed.
     if (bgColor) {
-      this._canvasGC.fillStyle = bgColor;
-      this._canvasGC.fillRect(x, y, width, height);
+      this._drawBackground(rgn, bgColor);
     }
 
     // Draw the cell content for the cell region.
@@ -1274,9 +1265,6 @@ class DataGrid extends Widget {
     if (rblColor && c2 === this._rowHeaderSections.sectionCount - 1) {
       this._drawRightBorderLine(rgn, rblColor);
     }
-
-    // Restore the gc state.
-    this._canvasGC.restore();
   }
 
   /**
@@ -1360,15 +1348,13 @@ class DataGrid extends Widget {
     r1 -= this._colHeaderSections.sectionCount;
 
     // Create the cell region object.
-    let rgn = { x, y, width, height, r1, c1, rowSizes, colSizes };
-
-    // Save the gc state.
-    this._canvasGC.save();
-
-    // Clip to the dirty visible content bounds.
-    this._canvasGC.beginPath();
-    this._canvasGC.rect(x1, y1, x2 - x1 + 1, y2 - y1 + 1);
-    this._canvasGC.clip();
+    let rgn = {
+      xMin: x1, yMin: y1,
+      xMax: x2, yMax: y2,
+      x, y, width, height,
+      row: r1, col: c1,
+      rowSizes, colSizes
+    };
 
     // Look up the background color.
     let bgColor = (
@@ -1376,10 +1362,9 @@ class DataGrid extends Widget {
       this._theme.headerBackgroundColor
     );
 
-    // Fill the region with the background color if needed.
+    // Draw the background if needed.
     if (bgColor) {
-      this._canvasGC.fillStyle = bgColor;
-      this._canvasGC.fillRect(x, y, width, height);
+      this._drawBackground(rgn, bgColor);
     }
 
     // Draw the cell content for the cell region.
@@ -1436,9 +1421,6 @@ class DataGrid extends Widget {
     if (rblColor && c2 === this._colSections.sectionCount - 1) {
       this._drawRightBorderLine(rgn, rblColor);
     }
-
-    // Restore the gc state.
-    this._canvasGC.restore();
   }
 
   /**
@@ -1523,15 +1505,13 @@ class DataGrid extends Widget {
     c1 -= this._rowHeaderSections.sectionCount;
 
     // Create the cell region object.
-    let rgn = { x, y, width, height, r1, c1, rowSizes, colSizes };
-
-    // Save the gc state.
-    this._canvasGC.save();
-
-    // Clip to the dirty visible content bounds.
-    this._canvasGC.beginPath();
-    this._canvasGC.rect(x1, y1, x2 - x1 + 1, y2 - y1 + 1);
-    this._canvasGC.clip();
+    let rgn = {
+      xMin: x1, yMin: y1,
+      xMax: x2, yMax: y2,
+      x, y, width, height,
+      row: r1, col: c1,
+      rowSizes, colSizes
+    };
 
     // Look up the background color.
     let bgColor = (
@@ -1539,10 +1519,9 @@ class DataGrid extends Widget {
       this._theme.headerBackgroundColor
     );
 
-    // Fill the region with the background color if needed.
+    // Draw the background if needed.
     if (bgColor) {
-      this._canvasGC.fillStyle = bgColor;
-      this._canvasGC.fillRect(x, y, width, height);
+      this._drawBackground(rgn, bgColor);
     }
 
     // Draw the cell content for the cell region.
@@ -1599,15 +1578,25 @@ class DataGrid extends Widget {
     if (rblColor && c2 === this._colHeaderSections.sectionCount - 1) {
       this._drawRightBorderLine(rgn, rblColor);
     }
+  }
 
-    // Restore the gc state.
-    this._canvasGC.restore();
+  /**
+   * Draw the background for the given cell region.
+   */
+  private _drawBackground(rgn: Private.ICellRegion, color: string): void {
+    let { xMin, yMin, xMax, yMax } = rgn;
+    this._canvasGC.fillStyle = color;
+    this._canvasGC.fillRect(xMin, yMin, xMax - xMin + 1, yMax - yMin + 1);
   }
 
   /**
    * Draw the row striping for the given cell region.
    */
   private _drawRowStriping(rgn: Private.ICellRegion, stripeColor: (i: number) => string): void {
+    // Compute the X bounds for the row striping.
+    let x1 = Math.max(rgn.xMin, rgn.x);
+    let x2 = Math.min(rgn.x + rgn.width - 1, rgn.xMax);
+
     // Draw the striping for the rows in the region.
     for (let y = rgn.y, j = 0, n = rgn.rowSizes.length; j < n; ++j) {
       // Fetch the size of the row.
@@ -1619,7 +1608,7 @@ class DataGrid extends Widget {
       }
 
       // Get the stripe color for the row.
-      let color = stripeColor(rgn.r1 + j);
+      let color = stripeColor(rgn.row + j);
 
       // Skip rows with no stripe color.
       if (!color) {
@@ -1627,9 +1616,13 @@ class DataGrid extends Widget {
         continue;
       }
 
+      // Compute the Y bounds for the current row stripe.
+      let y1 = Math.max(rgn.yMin, y - 1);
+      let y2 = Math.min(y + size - 1, rgn.yMax);
+
       // Fill the row with the stripe color.
       this._canvasGC.fillStyle = color;
-      this._canvasGC.fillRect(rgn.x, y - 1, rgn.width, size + 1);
+      this._canvasGC.fillRect(x1, y1, x2 - x1 + 1, y2 - y1 + 1);
 
       // Increment the running Y coordinate.
       y += size;
@@ -1640,6 +1633,10 @@ class DataGrid extends Widget {
    * Draw the column striping for the given cell region.
    */
   private _drawColStriping(rgn: Private.ICellRegion, stripeColor: (i: number) => string): void {
+    // Compute the Y bounds for the column striping.
+    let y1 = Math.max(rgn.yMin, rgn.y);
+    let y2 = Math.min(rgn.y + rgn.height - 1, rgn.yMax);
+
     // Draw the striping for the columns in the region.
     for (let x = rgn.x, i = 0, n = rgn.colSizes.length; i < n; ++i) {
       // Fetch the size of the column.
@@ -1651,7 +1648,7 @@ class DataGrid extends Widget {
       }
 
       // Get the stripe color for the column.
-      let color = stripeColor(rgn.c1 + i);
+      let color = stripeColor(rgn.col + i);
 
       // Skip columns with no stripe color.
       if (!color) {
@@ -1659,9 +1656,13 @@ class DataGrid extends Widget {
         continue;
       }
 
+      // Compute the X bounds for the current column stripe.
+      let x1 = Math.max(rgn.xMin, x - 1);
+      let x2 = Math.min(x + size - 1, rgn.xMax);
+
       // Fill the column with the stripe color.
       this._canvasGC.fillStyle = color;
-      this._canvasGC.fillRect(x - 1, rgn.y, size + 1, rgn.height);
+      this._canvasGC.fillRect(x1, y1, x2 - x1 + 1, y2 - y1 + 1);
 
       // Increment the running X coordinate.
       x += size;
@@ -1683,6 +1684,10 @@ class DataGrid extends Widget {
       value: (null as any), field: (null as DataModel.IField | null)
     };
 
+    // Compute the actual Y bounds for the cell range.
+    let y1 = Math.max(rgn.yMin, rgn.y);
+    let y2 = Math.min(rgn.y + rgn.height - 1, rgn.yMax);
+
     // Loop over the columns in the region.
     for (let x = rgn.x, i = 0, n = rgn.colSizes.length; i < n; ++i) {
       // Fetch the size of the column.
@@ -1694,7 +1699,7 @@ class DataGrid extends Widget {
       }
 
       // Compute the column index.
-      let col = rgn.c1 + i;
+      let col = rgn.col + i;
 
       // Get the field descriptor for the column.
       let field = this._model.field(col);
@@ -1704,6 +1709,9 @@ class DataGrid extends Widget {
       config.width = width + 1;
       config.col = col;
       config.field = field;
+
+      // Clear the buffer rect for the column.
+      this._bufferGC.clearRect(x, rgn.y, width, rgn.height);
 
       // Loop over the rows in the column.
       for (let y = rgn.y, j = 0, n = rgn.rowSizes.length; j < n; ++j) {
@@ -1716,7 +1724,7 @@ class DataGrid extends Widget {
         }
 
         // Compute the row index.
-        let row = rgn.r1 + j;
+        let row = rgn.row + j;
 
         // Get the data value for the cell.
         let value = this._model.data(row, col);
@@ -1727,12 +1735,28 @@ class DataGrid extends Widget {
         config.row = row;
         config.value = value;
 
-        // Draw the cell.
-        this._cellRenderer.drawCell(this._canvasGC, config);
+        // Save the state of the buffer GC.
+        this._bufferGC.save();
+
+        // Paint the cell into the off-screen buffer.
+        this._cellRenderer.drawCell(this._bufferGC, config);
+
+        // Restore the state of the buffer GC.
+        this._bufferGC.restore();
 
         // Increment the running Y coordinate.
         y += height;
       }
+
+      // Compute the actual X bounds for the column.
+      let x1 = Math.max(rgn.xMin, x - 1);
+      let x2 = Math.min(x + width - 1, rgn.xMax);
+
+      // Copy the off-screen buffer column into the on-screen canvas.
+      this._canvasGC.drawImage(this._buffer,
+        x1, y1, x2 - x1 + 1, y2 - y1 + 1,
+        x1, y1, x2 - x1 + 1, y2 - y1 + 1
+      );
 
       // Increment the running X coordinate.
       x += width;
@@ -1743,6 +1767,10 @@ class DataGrid extends Widget {
    * Draw the horizontal grid lines for the given cell region.
    */
   private _drawHorizontalGridLines(rgn: Private.ICellRegion, color: string): void {
+    // Compute the X bounds for the horizontal lines.
+    let x1 = Math.max(rgn.xMin, rgn.x);
+    let x2 = Math.min(rgn.x + rgn.width, rgn.xMax + 1);
+
     // Begin the path for the grid lines.
     this._canvasGC.beginPath();
 
@@ -1760,11 +1788,13 @@ class DataGrid extends Widget {
       }
 
       // Compute the Y position of the line.
-      let pos = y + size - 0.5;
+      let pos = y + size - 1;
 
-      // Draw the 1px thick row line.
-      this._canvasGC.moveTo(rgn.x, pos);
-      this._canvasGC.lineTo(rgn.x + rgn.width, pos);
+      // Draw the line if it's in range of the dirty rect.
+      if (pos >= rgn.yMin && pos <= rgn.yMax) {
+        this._canvasGC.moveTo(x1, pos + 0.5);
+        this._canvasGC.lineTo(x2, pos + 0.5);
+      }
 
       // Increment the running Y coordinate.
       y += size;
@@ -1779,6 +1809,10 @@ class DataGrid extends Widget {
    * Draw the vertical grid lines for the given cell region.
    */
   private _drawVerticalGridLines(rgn: Private.ICellRegion, color: string): void {
+    // Compute the Y bounds for the vertical lines.
+    let y1 = Math.max(rgn.yMin, rgn.y);
+    let y2 = Math.min(rgn.y + rgn.height, rgn.yMax + 1);
+
     // Begin the path for the grid lines
     this._canvasGC.beginPath();
 
@@ -1796,11 +1830,13 @@ class DataGrid extends Widget {
       }
 
       // Compute the X position of the line.
-      let pos = x + size - 0.5;
+      let pos = x + size - 1;
 
-      // Draw the 1px thick column line.
-      this._canvasGC.moveTo(pos, rgn.y);
-      this._canvasGC.lineTo(pos, rgn.y + rgn.height);
+      // Draw the line if it's in range of the dirty rect.
+      if (pos >= rgn.xMin && pos <= rgn.xMax) {
+        this._canvasGC.moveTo(pos + 0.5, y1);
+        this._canvasGC.lineTo(pos + 0.5, y2);
+      }
 
       // Increment the running X coordinate.
       x += size;
@@ -1815,6 +1851,18 @@ class DataGrid extends Widget {
    * Draw the right border line for the cell region.
    */
   private _drawRightBorderLine(rgn: Private.ICellRegion, color: string): void {
+    // Compute the X position of the line.
+    let pos = rgn.x + rgn.width - 1;
+
+    // Bail if the position is out of range.
+    if (pos < rgn.xMin || pos > rgn.xMax) {
+      return;
+    }
+
+    // Compute the Y bounds for the vertical line.
+    let y1 = Math.max(rgn.yMin, rgn.y);
+    let y2 = Math.min(rgn.y + rgn.height, rgn.yMax + 1);
+
     // Begin the path for the border line.
     this._canvasGC.beginPath();
 
@@ -1822,8 +1870,8 @@ class DataGrid extends Widget {
     this._canvasGC.lineWidth = 1;
 
     // Draw the border line.
-    this._canvasGC.moveTo(rgn.x + rgn.width - 0.5, rgn.y);
-    this._canvasGC.lineTo(rgn.x + rgn.width - 0.5, rgn.y + rgn.height);
+    this._canvasGC.moveTo(pos + 0.5, y1);
+    this._canvasGC.lineTo(pos + 0.5, y2);
 
     // Stroke the line with the specified color.
     this._canvasGC.strokeStyle = color;
@@ -1834,6 +1882,18 @@ class DataGrid extends Widget {
    * Draw the bottom border line for the cell region.
    */
   private _drawBottomBorderLine(rgn: Private.ICellRegion, color: string): void {
+    // Compute the Y position of the line.
+    let pos = rgn.y + rgn.height - 1;
+
+    // Bail if the position is out of range.
+    if (pos < rgn.yMin || pos > rgn.yMax) {
+      return;
+    }
+
+    // Compute the X bounds for the horizontal line.
+    let x1 = Math.max(rgn.xMin, rgn.x);
+    let x2 = Math.min(rgn.x + rgn.width, rgn.xMax + 1);
+
     // Begin the path for the border line.
     this._canvasGC.beginPath();
 
@@ -1841,8 +1901,8 @@ class DataGrid extends Widget {
     this._canvasGC.lineWidth = 1;
 
     // Draw the border line.
-    this._canvasGC.moveTo(rgn.x, rgn.y + rgn.height - 0.5);
-    this._canvasGC.lineTo(rgn.x + rgn.width, rgn.y + rgn.height - 0.5);
+    this._canvasGC.moveTo(x1, pos + 0.5);
+    this._canvasGC.lineTo(x2, pos + 0.5);
 
     // Stroke the line with the specified color.
     this._canvasGC.strokeStyle = color;
@@ -2335,6 +2395,38 @@ namespace Private {
   export
   interface ICellRegion {
     /**
+     * The min X coordinate the of the dirty viewport rect.
+     *
+     * #### Notes
+     * The data grid must not draw outside of this boundary.
+     */
+    xMin: number;
+
+    /**
+     * The min Y coordinate the of the dirty viewport rect.
+     *
+     * #### Notes
+     * The data grid must not draw outside of this boundary.
+     */
+    yMin: number;
+
+    /**
+     * The max X coordinate the of the dirty viewport rect.
+     *
+     * #### Notes
+     * The data grid must not draw outside of this boundary.
+     */
+    xMax: number;
+
+    /**
+     * The max Y coordinate the of the dirty viewport rect.
+     *
+     * #### Notes
+     * The data grid must not draw outside of this boundary.
+     */
+    yMax: number;
+
+    /**
      * The X coordinate the of the region, in viewport coordinates.
      *
      * #### Notes
@@ -2369,12 +2461,12 @@ namespace Private {
     /**
      * The row index of the first cell in the region.
      */
-    r1: number;
+    row: number;
 
     /**
      * The col index of the first cell in the region.
      */
-    c1: number;
+    col: number;
 
     /**
      * The row sizes for the rows in the region.
