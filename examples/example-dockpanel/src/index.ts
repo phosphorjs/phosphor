@@ -102,8 +102,8 @@ class ContentWidget extends Widget {
 
 class MyDataModel extends DataModel {
 
-  readonly rowCount = 4000;
-  readonly colCount = 15;
+  readonly rowCount = 40000;
+  readonly colCount = 40000;
   readonly rowHeaderCount = 2;
   readonly colHeaderCount = 2;
 
