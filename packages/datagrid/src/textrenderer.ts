@@ -23,6 +23,8 @@ class TextRenderer implements DataGrid.ICellRenderer {
   constructor(options: TextRenderer.IOptions = {}) {
     this.textColor = options.textColor || 'black';
     this.backgroundColor = options.backgroundColor || '';
+    this.verticalTextAlignment = options.verticalTextAlignment || 'bottom';
+    this.horizontalTextAlignment = options.horizontalTextAlignment || 'left';
     this.textFormatter = options.textFormatter || null;
     this.styleDelegate = options.styleDelegate || null;
   }
@@ -36,6 +38,16 @@ class TextRenderer implements DataGrid.ICellRenderer {
    * The default background color for cells.
    */
   backgroundColor: string;
+
+  /**
+   * The default vertical text alignment for cells.
+   */
+  verticalTextAlignment: 'top' | 'center' | 'bottom';
+
+  /**
+   * The default horizontal text alignment for cells.
+   */
+  horizontalTextAlignment: 'left' | 'center' | 'right';
 
   /**
    * The formatter for converting cell values to text.
@@ -117,7 +129,7 @@ class TextRenderer implements DataGrid.ICellRenderer {
     if (this.textFormatter) {
       text = this.textFormatter.formatText(config);
     } else {
-      text = TextRenderer.formatText(config.value);
+      text = TextRenderer.toString(config.value);
     }
 
     // Bail if there is no text to draw.
@@ -125,34 +137,74 @@ class TextRenderer implements DataGrid.ICellRenderer {
       return;
     }
 
-    // TODO - clean up this text measurement code.
+    // Resolve the vertical text alignment for the cell.
+    let vAlign = (
+      (style && style.verticalTextAlignment) || this.verticalTextAlignment
+    );
 
-    //
-    let tm = gc.measureText(text);
+    // Resolve the horizontal text alignment for the cell.
+    let hAlign = (
+      (style && style.horizontalTextAlignment) || this.horizontalTextAlignment
+    );
 
-    //
-    let needsClip = (tm.width + 4) > (config.width - 2);
+    // Compute the padded text box size for the specified alignment.
+    let boxWidth = config.width - (hAlign === 'center' ? 2 : 4);
+    let boxHeight = config.height - (vAlign === 'center' ? 2 : 3);
 
-    //
-    if (needsClip) {
-      gc.save();
+    // Bail if the text box has no effective size.
+    if (boxWidth <= 0 || boxHeight <= 0) {
+      return;
+    }
+
+    // Compute the text height for the gc font.
+    let textHeight = TextRenderer.measureFontHeight(gc.font);
+
+    // Set up the text position variables.
+    let textX: number;
+    let textY: number;
+
+    // Compute the Y position for the text.
+    switch (vAlign) {
+    case 'top':
+      textY = config.y + 2 + textHeight;
+      break;
+    case 'center':
+      textY = config.y + config.height / 2 + textHeight / 2;
+      break;
+    case 'bottom':
+      textY = config.y + config.height - 2;
+      break;
+    default:
+      throw 'unreachable';
+    }
+
+    // Compute the X position for the text.
+    switch (hAlign) {
+    case 'left':
+      textX = config.x + 3;
+      break;
+    case 'center':
+      textX = config.x + config.width / 2;
+      break;
+    case 'right':
+      textX = config.x + config.width - 3;
+      break;
+    default:
+      throw 'unreachable';
+    }
+
+    // Clip the cell if the text is taller than the text box height.
+    if (textHeight > boxHeight) {
       gc.beginPath();
-      gc.rect(config.x + 1, config.y + 1, config.width - 2, config.height - 2);
+      gc.rect(config.x, config.y + 1, config.width, config.height - 2);
       gc.clip();
     }
 
-    // TODO
-    // - font size and style
-    // - horizontal and vertical text alignment
-
     // Draw the text for the cell.
     gc.fillStyle = color;
-    gc.textBaseline = 'middle';
-    gc.fillText(text, config.x + 4, config.y + config.height / 2);
-
-    if (needsClip) {
-      gc.restore();
-    }
+    gc.textAlign = hAlign;
+    gc.textBaseline = 'bottom';
+    gc.fillText(text, textX, textY);
   }
 }
 
@@ -182,6 +234,22 @@ namespace TextRenderer {
      * This will override the default background color.
      */
     backgroundColor?: string;
+
+    /**
+     * The vertical text alignment for the cell.
+     *
+     * #### Notes
+     * This will override the default vertical text alignment.
+     */
+    verticalTextAlignment?: 'top' | 'center' | 'bottom';
+
+    /**
+     * The horizontal text alignment for the cell.
+     *
+     * #### Notes
+     * This will override the default horizontal text alignment.
+     */
+    horizontalTextAlignment?: 'left' | 'center' | 'right';
   }
 
   // TODO
@@ -253,6 +321,26 @@ namespace TextRenderer {
     backgroundColor?: string;
 
     /**
+     * The vertical text alignment to apply to all cells.
+     *
+     * #### Notes
+     * This can be overridden per-cell by the style delegate.
+     *
+     * The default alignment is `'bottom'`.
+     */
+    verticalTextAlignment?: 'top' | 'center' | 'bottom';
+
+    /**
+     * The horizontal text alignment to apply to all cells.
+     *
+     * #### Notes
+     * This can be overridden per-cell by the style delegate.
+     *
+     * The default alignment is `'left'`.
+     */
+    horizontalTextAlignment?: 'left' | 'center' | 'right';
+
+    /**
      * The text formatter for the renderer.
      *
      * #### Notes
@@ -270,7 +358,7 @@ namespace TextRenderer {
   }
 
   /**
-   * A text format function which converts any value to a string.
+   * Convert any value to a string.
    *
    * #### Notes
    * This is used to format a value when no text formatter is provided
@@ -278,7 +366,7 @@ namespace TextRenderer {
    * formatters.
    */
   export
-  function formatText(value: any): string {
+  function toString(value: any): string {
     // Do nothing for a value which is already a string.
     if (typeof value === 'string') {
       return value;
@@ -292,4 +380,69 @@ namespace TextRenderer {
     // Coerce all other values to a string via `toString()`.
     return value.toString();
   }
+
+  /**
+   * Measure the height of a font.
+   *
+   * @param font - The CSS shorthand font string of interest.
+   *
+   * @returns The height of the font bounding box.
+   *
+   * #### Notes
+   * This function uses a temporary DOM node to measure the text box
+   * height for the specified font. The first call for a given font
+   * will incur a DOM reflow, but the return value is cached, so any
+   * subsequent call for the same font will return the cached value.
+   */
+  export
+  function measureFontHeight(font: string): number {
+    // Return the cached value if it exists.
+    if (font in Private.fontHeightCache) {
+      return Private.fontHeightCache[font];
+    }
+
+    // Set the font on the measurement node.
+    Private.fontMeasureNode.style.font = font;
+
+    // Add the measurement node to the document.
+    document.body.appendChild(Private.fontMeasureNode);
+
+    // Measure the node height.
+    let height = Private.fontMeasureNode.offsetHeight;
+
+    // Remove the measurement node from the document.
+    document.body.removeChild(Private.fontMeasureNode);
+
+    // Cache the measured height.
+    Private.fontHeightCache[font] = height;
+
+    // Return the measured height.
+    return height;
+  }
+}
+
+
+/**
+ * The namespace for the module implementation details.
+ */
+namespace Private {
+  /**
+   * A cache of measured font heights.
+   */
+  export
+  const fontHeightCache: { [font: string]: number } = Object.create(null);
+
+  /**
+   * The DOM node used for font height measurement.
+   */
+  export
+  const fontMeasureNode = (() => {
+    let node = document.createElement('div');
+    node.style.position = 'absolute';
+    node.style.top = '-99999px';
+    node.style.left = '-99999px';
+    node.style.visibility = 'hidden';
+    node.textContent = 'M';
+    return node;
+  })();
 }
