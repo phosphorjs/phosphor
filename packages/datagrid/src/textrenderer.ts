@@ -21,6 +21,7 @@ class TextRenderer implements DataGrid.ICellRenderer {
    * @param options - The options for initializing the renderer.
    */
   constructor(options: TextRenderer.IOptions = {}) {
+    this.font = options.font || '12px sans-serif';
     this.textColor = options.textColor || 'black';
     this.backgroundColor = options.backgroundColor || '';
     this.verticalTextAlignment = options.verticalTextAlignment || 'bottom';
@@ -28,6 +29,11 @@ class TextRenderer implements DataGrid.ICellRenderer {
     this.textFormatter = options.textFormatter || null;
     this.styleDelegate = options.styleDelegate || null;
   }
+
+  /**
+   * The default font for cells.
+   */
+  font: string;
 
   /**
    * The default text color for cells.
@@ -156,6 +162,9 @@ class TextRenderer implements DataGrid.ICellRenderer {
       return;
     }
 
+    // Set the font for the cell.
+    gc.font = (style && style.font) || this.font;
+
     // Compute the text height for the gc font.
     let textHeight = TextRenderer.measureFontHeight(gc.font);
 
@@ -216,38 +225,34 @@ export
 namespace TextRenderer {
   /**
    * An object which holds cell-specific style data.
+   *
+   * #### Notes
+   * The cell style data will override the renderer defaults.
    */
   export
   interface ICellStyle {
     /**
+     * The font for the cell as a CSS font string.
+     */
+    font?: string;
+
+    /**
      * The text color for the cell.
-     *
-     * #### Notes
-     * This will override the default text color.
      */
     textColor?: string;
 
     /**
      * The background color for the cell.
-     *
-     * #### Notes
-     * This will override the default background color.
      */
     backgroundColor?: string;
 
     /**
      * The vertical text alignment for the cell.
-     *
-     * #### Notes
-     * This will override the default vertical text alignment.
      */
     verticalTextAlignment?: 'top' | 'center' | 'bottom';
 
     /**
      * The horizontal text alignment for the cell.
-     *
-     * #### Notes
-     * This will override the default horizontal text alignment.
      */
     horizontalTextAlignment?: 'left' | 'center' | 'right';
   }
@@ -301,11 +306,17 @@ namespace TextRenderer {
   export
   interface IOptions {
     /**
+     * The font for all cells as a CSS font string.
+     *
+     * #### Notes
+     * The default font is `'11px sans-serif'`.
+     */
+    font?: string;
+
+    /**
      * The text color to apply to all cells.
      *
      * #### Notes
-     * This can be overridden per-cell by the style delegate.
-     *
      * The default color is `'black'`.
      */
     textColor?: string;
@@ -314,8 +325,6 @@ namespace TextRenderer {
      * The background color to apply to all cells.
      *
      * #### Notes
-     * This can be overridden per-cell by the style delegate.
-     *
      * The default color is `''`.
      */
     backgroundColor?: string;
@@ -324,8 +333,6 @@ namespace TextRenderer {
      * The vertical text alignment to apply to all cells.
      *
      * #### Notes
-     * This can be overridden per-cell by the style delegate.
-     *
      * The default alignment is `'bottom'`.
      */
     verticalTextAlignment?: 'top' | 'center' | 'bottom';
@@ -334,8 +341,6 @@ namespace TextRenderer {
      * The horizontal text alignment to apply to all cells.
      *
      * #### Notes
-     * This can be overridden per-cell by the style delegate.
-     *
      * The default alignment is `'left'`.
      */
     horizontalTextAlignment?: 'left' | 'center' | 'right';
@@ -384,7 +389,7 @@ namespace TextRenderer {
   /**
    * Measure the height of a font.
    *
-   * @param font - The CSS shorthand font string of interest.
+   * @param font - The CSS font string of interest.
    *
    * @returns The height of the font bounding box.
    *
