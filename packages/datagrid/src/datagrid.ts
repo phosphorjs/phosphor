@@ -2067,9 +2067,6 @@ namespace DataGrid {
    * The data grid **does not** supply its own default colors for
    * theme elements. If the theme does not provide a color for an
    * element, that particular element will not be drawn.
-   *
-   * A grid theme **must not** throw exceptions, and **must not**
-   * mutate the data model or the data grid.
    */
   export
   interface ITheme {
