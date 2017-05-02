@@ -1739,7 +1739,11 @@ class DataGrid extends Widget {
         this._bufferGC.save();
 
         // Paint the cell into the off-screen buffer.
-        this._cellRenderer.drawCell(this._bufferGC, config);
+        try {
+          this._cellRenderer.paint(this._bufferGC, config);
+        } catch (err) {
+          console.error(err);
+        }
 
         // Restore the state of the buffer GC.
         this._bufferGC.restore();
@@ -1963,33 +1967,28 @@ namespace DataGrid {
    * use case, a custom cell renderer can be defined which implements
    * this interface.
    *
-   * A cell renderer **must not** throw exceptions, and **must not**
-   * mutate the data model or the data grid.
+   * A cell renderer **must not** mutate the data model or data grid.
    */
   export
   interface ICellRenderer {
     /**
-     * Draw the content for a cell.
+     * Paint the content for a cell.
      *
      * @param gc - The graphics context to use for drawing.
      *
      * @param config - The configuration data for the cell.
      *
      * #### Notes
-     * The grid renders cells in column-major order. For performance,
-     * it **does not** apply a clipping rect to the cell bounds before
-     * it invokes the renderer, **nor** does it save/restore the `gc`.
+     * The grid renders cells in column-major order, and saves/restores
+     * the `gc` state before/after invoking the renderer.
      *
-     * The renderer should assume that the fill, stroke, and text style
-     * of the `gc` have been arbitrarily modified, but that the rest of
-     * the `gc` state remains in the default state.
+     * For performance, the cell content is efficiently clipped to the
+     * width of the column, but *the height is not clipped*. If height
+     * clipping is needed, the renderer must set up its own clip rect.
      *
-     * If the renderer modifies any `gc` state aside from the fill,
-     * stroke, and text style, it **must** restore the `gc` on exit.
-     *
-     * The renderer **must not** draw outside the cell bounding box.
+     * The renderer **must not** draw outside the cell bounding height.
      */
-    drawCell(gc: CanvasRenderingContext2D, config: ICellConfig): void;
+    paint(gc: CanvasRenderingContext2D, config: ICellConfig): void;
   }
 
   /**

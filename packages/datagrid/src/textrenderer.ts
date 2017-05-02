@@ -66,13 +66,13 @@ class TextRenderer implements DataGrid.ICellRenderer {
   styleDelegate: TextRenderer.IStyleDelegate | null;
 
   /**
-   * Draw the content for the cell.
+   * Paint the content for a cell.
    *
    * @param gc - The graphics context to use for drawing.
    *
    * @param config - The configuration data for the cell.
    */
-  drawCell(gc: CanvasRenderingContext2D, config: DataGrid.ICellConfig): void {
+  paint(gc: CanvasRenderingContext2D, config: DataGrid.ICellConfig): void {
     // Fetch the cell specific style.
     let style = this.styleDelegate && this.styleDelegate.getStyle(config);
 
