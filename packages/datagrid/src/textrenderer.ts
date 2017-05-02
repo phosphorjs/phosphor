@@ -309,7 +309,7 @@ namespace TextRenderer {
      * The font for all cells as a CSS font string.
      *
      * #### Notes
-     * The default font is `'11px sans-serif'`.
+     * The default font is `'12px sans-serif'`.
      */
     font?: string;
 
