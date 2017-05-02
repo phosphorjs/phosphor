@@ -1753,6 +1753,11 @@ class DataGrid extends Widget {
       let x2 = Math.min(x + width - 1, rgn.xMax);
 
       // Copy the off-screen buffer column into the on-screen canvas.
+      //
+      // This is *much* faster than drawing directly into the on-screen
+      // canvas with a clip rect on the column. Managed column clipping
+      // is required to prevent cell renderers from needing to set up a
+      // clip rect for handling horizontal overflow text (slow!).
       this._canvasGC.drawImage(this._buffer,
         x1, y1, x2 - x1 + 1, y2 - y1 + 1,
         x1, y1, x2 - x1 + 1, y2 - y1 + 1
