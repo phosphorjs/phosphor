@@ -153,12 +153,11 @@ class TextRenderer implements DataGrid.ICellRenderer {
       (style && style.horizontalTextAlignment) || this.horizontalTextAlignment
     );
 
-    // Compute the padded text box size for the specified alignment.
-    let boxWidth = config.width - (hAlign === 'center' ? 2 : 4);
+    // Compute the padded text box height for the specified alignment.
     let boxHeight = config.height - (vAlign === 'center' ? 2 : 3);
 
     // Bail if the text box has no effective size.
-    if (boxWidth <= 0 || boxHeight <= 0) {
+    if (boxHeight <= 0) {
       return;
     }
 
