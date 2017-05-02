@@ -21,7 +21,7 @@ class TextRenderer implements DataGrid.ICellRenderer {
    * @param options - The options for initializing the renderer.
    */
   constructor(options: TextRenderer.IOptions = {}) {
-    this.font = options.font || '12px sans-serif';
+    this.font = options.font || '';
     this.textColor = options.textColor || 'black';
     this.backgroundColor = options.backgroundColor || '';
     this.verticalTextAlignment = options.verticalTextAlignment || 'bottom';
@@ -161,8 +161,13 @@ class TextRenderer implements DataGrid.ICellRenderer {
       return;
     }
 
-    // Set the font for the cell.
-    gc.font = (style && style.font) || this.font;
+    // Resolve the font for the cell.
+    let font = (style && style.font) || this.font;
+
+    // Set the gc font if needed.
+    if (font) {
+      gc.font = font;
+    }
 
     // Compute the text height for the gc font.
     let textHeight = TextRenderer.measureFontHeight(gc.font);
@@ -308,7 +313,7 @@ namespace TextRenderer {
      * The font for all cells as a CSS font string.
      *
      * #### Notes
-     * The default font is `'12px sans-serif'`.
+     * The default will use the grid theme font.
      */
     font?: string;
 

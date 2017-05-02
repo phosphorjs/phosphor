@@ -910,7 +910,10 @@ class DataGrid extends Widget {
     // Execute the actual drawing logic.
     try {
       this._inPaint = true;
+      let t1 = performance.now();
       this._draw(rx, ry, rw, rh);
+      let t2 = performance.now();
+      console.log(t2 - t1);
     } finally {
       this._inPaint = false;
     }
@@ -1063,8 +1066,13 @@ class DataGrid extends Widget {
       this._drawColStriping(rgn, colStripeColor);
     }
 
-    // Draw the cell content for the cell region.
-    this._drawCells(rgn);
+    // Look up the cell font.
+    let font = this._theme.font || '';
+
+    // Draw the cell content for the cell region if needed.
+    if (font) {
+      this._drawCells(rgn, font);
+    }
 
     // Look up the horizontal grid line color.
     let hglColor = (
@@ -1211,8 +1219,13 @@ class DataGrid extends Widget {
       this._drawBackground(rgn, bgColor);
     }
 
-    // Draw the cell content for the cell region.
-    this._drawCells(rgn);
+    // Look up the header font.
+    let font = this._theme.rowHeaderFont || this._theme.headerFont || '';
+
+    // Draw the cell content for the cell region if needed.
+    if (font) {
+      this._drawCells(rgn, font);
+    }
 
     // Look up the horizontal grid line color.
     let hglColor = (
@@ -1367,8 +1380,13 @@ class DataGrid extends Widget {
       this._drawBackground(rgn, bgColor);
     }
 
-    // Draw the cell content for the cell region.
-    this._drawCells(rgn);
+    // Look up the header font.
+    let font = this._theme.colHeaderFont || this._theme.headerFont || '';
+
+    // Draw the cell content for the cell region if needed.
+    if (font) {
+      this._drawCells(rgn, font);
+    }
 
     // Look up the horizontal grid line color.
     let hglColor = (
@@ -1524,8 +1542,13 @@ class DataGrid extends Widget {
       this._drawBackground(rgn, bgColor);
     }
 
-    // Draw the cell content for the cell region.
-    this._drawCells(rgn);
+    // Look up the header font.
+    let font = this._theme.cornerHeaderFont || this._theme.headerFont || '';
+
+    // Draw the cell content for the cell region if needed.
+    if (font) {
+      this._drawCells(rgn, font);
+    }
 
     // Look up the horizontal grid line color.
     let hglColor = (
@@ -1672,7 +1695,7 @@ class DataGrid extends Widget {
   /**
    * Draw the cells for the given cell region.
    */
-  private _drawCells(rgn: Private.ICellRegion): void {
+  private _drawCells(rgn: Private.ICellRegion, font: string): void {
     // Bail if there is no data model.
     if (!this._model) {
       return;
@@ -1683,6 +1706,9 @@ class DataGrid extends Widget {
       x: 0, y: 0, width: 0, height: 0, row: 0, col: 0,
       value: (null as any), field: (null as DataModel.IField | null)
     };
+
+    // Set the font for the buffer GC.
+    this._bufferGC.font = font;
 
     // Compute the actual Y bounds for the cell range.
     let y1 = Math.max(rgn.yMin, rgn.y);
@@ -2076,6 +2102,13 @@ namespace DataGrid {
     readonly voidSpaceColor?: string;
 
     /**
+     * The default font for cells in the data grid.
+     *
+     * A cell renderer may override this value.
+     */
+    readonly font?: string;
+
+    /**
      * The background color for the main cell area.
      */
     readonly backgroundColor?: string;
@@ -2133,6 +2166,13 @@ namespace DataGrid {
     readonly bottomBorderLineColor?: string;
 
     /**
+     * The default font for header cells in the data grid.
+     *
+     * This applies to all of row, column, and corner headers.
+     */
+    readonly headerFont?: string;
+
+    /**
      * The background color for the grid headers.
      *
      * This applies to all of row, column, and corner headers.
@@ -2180,6 +2220,13 @@ namespace DataGrid {
      * This overrides `headerBorderLineColor` for the bottom line.
      */
     readonly headerBottomBorderLineColor?: string;
+
+    /**
+     * The default font for row header cells in the data grid.
+     *
+     * This overrides `headerFont` for row headers.
+     */
+    readonly rowHeaderFont?: string;
 
     /**
      * The background color for the row header area.
@@ -2231,6 +2278,13 @@ namespace DataGrid {
     readonly rowHeaderBottomBorderLineColor?: string;
 
     /**
+     * The default font for column header cells in the data grid.
+     *
+     * This overrides `headerFont` for column headers.
+     */
+    readonly colHeaderFont?: string;
+
+    /**
      * The background color for the column header area.
      *
      * This overrides `headerBackgroundColor` for column headers.
@@ -2278,6 +2332,13 @@ namespace DataGrid {
      * This overrides `colHeaderBorderLineColor` for the bottom line.
      */
     readonly colHeaderBottomBorderLineColor?: string;
+
+    /**
+     * The default font for corner header cells in the data grid.
+     *
+     * This overrides `headerFont` for corner headers.
+     */
+    readonly cornerHeaderFont?: string;
 
     /**
      * The background color for the corner header area.
@@ -2360,8 +2421,10 @@ namespace DataGrid {
   export
   const defaultTheme: DataGrid.ITheme = {
     voidSpaceColor: '#F3F3F3',
+    font: '12px sans-serif',
     backgroundColor: '#FFFFFF',
     gridLineColor: 'rgba(20, 20, 20, 0.15)',
+    headerFont: '12px sans-serif',
     headerBackgroundColor: '#F3F3F3',
     headerGridLineColor: '#B5B5B5',
     headerBorderLineColor: '#A0A0A0'
