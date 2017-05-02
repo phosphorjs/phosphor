@@ -401,22 +401,25 @@ namespace TextRenderer {
    */
   export
   function measureFontHeight(font: string): number {
-    // Return the cached value if it exists.
-    if (font in Private.fontHeightCache) {
-      return Private.fontHeightCache[font];
+    // Look up the cached font height.
+    let height = Private.fontHeightCache[font];
+
+    // Return the cached font height if it exists.
+    if (height !== undefined) {
+      return height;
     }
 
     // Set the font on the measurement node.
-    Private.fontMeasureNode.style.font = font;
+    Private.fontMeasurementNode.style.font = font;
 
     // Add the measurement node to the document.
-    document.body.appendChild(Private.fontMeasureNode);
+    document.body.appendChild(Private.fontMeasurementNode);
 
     // Measure the node height.
-    let height = Private.fontMeasureNode.offsetHeight;
+    height = Private.fontMeasurementNode.offsetHeight;
 
     // Remove the measurement node from the document.
-    document.body.removeChild(Private.fontMeasureNode);
+    document.body.removeChild(Private.fontMeasurementNode);
 
     // Cache the measured height.
     Private.fontHeightCache[font] = height;
@@ -441,7 +444,7 @@ namespace Private {
    * The DOM node used for font height measurement.
    */
   export
-  const fontMeasureNode = (() => {
+  const fontMeasurementNode = (() => {
     let node = document.createElement('div');
     node.style.position = 'absolute';
     node.style.top = '-99999px';
