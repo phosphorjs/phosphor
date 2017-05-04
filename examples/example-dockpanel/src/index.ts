@@ -103,7 +103,7 @@ class ContentWidget extends Widget {
 class MyDataModel extends DataModel {
 
   readonly rowCount = 40000;
-  readonly colCount = 40000;
+  readonly colCount = 20;
   readonly rowHeaderCount = 2;
   readonly colHeaderCount = 2;
 
@@ -350,14 +350,14 @@ function main(): void {
   // let g2 = new ContentWidget('Green');
   // let y2 = new ContentWidget('Yellow');
 
-  let cellRenderer = new TextRenderer({ styleDelegate: new MyDelegate() });
+  //let cellRenderer = new TextRenderer({ styleDelegate: new MyDelegate() });
 
-  //let cellRenderer = new TextRenderer();
+  let cellRenderer = new TextRenderer();
 
   let myTheme: DataGrid.ITheme = {
     ...DataGrid.defaultTheme,
-    rowStripeColor: i => i % 2 === 0 ? '#FFFDE5' : '',
-    colStripeColor: i => i % 2 === 0 ? 'rgba(200, 212, 188, 0.5)' : ''
+    bodyRowBackgroundColor: i => i % 2 === 0 ? 'rgba(138, 172, 200, 0.3)' : '',
+    bodyColBackgroundColor: i => i % 2 === 0 ? 'rgba(100, 100, 100, 0.1)' : ''
   };
 
   let grid = new DataGrid({ cellRenderer, theme: myTheme });
