@@ -1,7 +1,7 @@
 {
   "excludeNotExported": true,
   "mode": "file",
-  "out": "../../docs/api/algorithm",
+  "out": "../../docs/api/commands",
   "baseUrl": ".",
   "paths": {
     "@phosphor/*": ["node_modules/@phosphor/*"]

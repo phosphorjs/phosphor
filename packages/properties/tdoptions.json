@@ -1,7 +1,7 @@
 {
   "excludeNotExported": true,
   "mode": "file",
-  "out": "../../docs/api/messaging",
+  "out": "../../docs/api/properties",
   "baseUrl": ".",
   "paths": {
     "@phosphor/*": ["node_modules/@phosphor/*"]
