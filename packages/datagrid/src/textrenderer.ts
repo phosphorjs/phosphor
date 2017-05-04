@@ -324,7 +324,7 @@ namespace TextRenderer {
      * The text color to apply to all cells.
      *
      * #### Notes
-     * The default color is `'black'`.
+     * The default color is `''`.
      */
     textColor?: string;
 
