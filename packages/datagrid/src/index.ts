@@ -7,4 +7,5 @@
 |----------------------------------------------------------------------------*/
 export * from './datagrid';
 export * from './datamodel';
+export * from './graphicscontext';
 export * from './textrenderer';
