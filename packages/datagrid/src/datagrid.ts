@@ -2218,8 +2218,8 @@ namespace DataGrid {
   const defaultTheme: DataGrid.ITheme = {
     baseFont: '12px sans-serif',
     baseBackgroundColor: '#F3F3F3',
+    baseBorderLineColor: '#A0A0A0',
     headerGridLineColor: '#B5B5B5',
-    headerBorderLineColor: '#A0A0A0',
     bodyBackgroundColor: '#FFFFFF',
     bodyGridLineColor: 'rgba(20, 20, 20, 0.15)'
   };
