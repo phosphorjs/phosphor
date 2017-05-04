@@ -15,7 +15,6 @@
     "clean:src": "lerna run clean --scope \"@phosphor/!(test-|example-)*\"",
     "clean:tests": "lerna run clean --scope \"@phosphor/test-*\"",
     "docs": "lerna run docs",
-    "docs:widgets": "typedoc --mode file --module commonjs --excludeNotExported --target es5 --moduleResolution node --out docs/ packages/widgets/src",
     "test": "lerna run test --scope \"@phosphor/test-*\"",
     "test:chrome": "lerna run test:chrome --scope \"@phosphor/test-*\"",
     "test:firefox": "lerna run test:firefox --scope \"@phosphor/test-*\"",

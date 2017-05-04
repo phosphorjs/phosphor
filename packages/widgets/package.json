@@ -33,7 +33,7 @@
   "scripts": {
     "build": "tsc",
     "clean": "rimraf lib",
-    "docs": "typedoc --mode file --module commonjs --excludeNotExported --target es5 --moduleResolution node --out docs/ src"
+    "docs": "typedoc --options ../../tdoptions.json ."
   },
   "repository": {
     "type": "git",
