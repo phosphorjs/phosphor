@@ -9,6 +9,10 @@ import {
   DataGrid
 } from './datagrid';
 
+import {
+  GraphicsContext
+} from './graphicscontext';
+
 
 /**
  * A cell renderer which renders data values as text.
@@ -22,7 +26,7 @@ class TextRenderer implements DataGrid.ICellRenderer {
    */
   constructor(options: TextRenderer.IOptions = {}) {
     this.font = options.font || '';
-    this.textColor = options.textColor || 'black';
+    this.textColor = options.textColor || '';
     this.backgroundColor = options.backgroundColor || '';
     this.verticalTextAlignment = options.verticalTextAlignment || 'bottom';
     this.horizontalTextAlignment = options.horizontalTextAlignment || 'left';
@@ -72,7 +76,7 @@ class TextRenderer implements DataGrid.ICellRenderer {
    *
    * @param config - The configuration data for the cell.
    */
-  paint(gc: CanvasRenderingContext2D, config: DataGrid.ICellConfig): void {
+  paint(gc: GraphicsContext, config: DataGrid.ICellConfig): void {
     // Fetch the cell specific style.
     let style = this.styleDelegate && this.styleDelegate.getStyle(config);
 
@@ -95,7 +99,7 @@ class TextRenderer implements DataGrid.ICellRenderer {
    * #### Notes
    * This method may be reimplemented by a subclass if needed.
    */
-  protected drawBackground(gc: CanvasRenderingContext2D, config: DataGrid.ICellConfig, style: TextRenderer.ICellStyle | null): void {
+  protected drawBackground(gc: GraphicsContext, config: DataGrid.ICellConfig, style: TextRenderer.ICellStyle | null): void {
     // Resolve the background color for the cell.
     let color = (style && style.backgroundColor) || this.backgroundColor;
 
@@ -121,15 +125,7 @@ class TextRenderer implements DataGrid.ICellRenderer {
    * #### Notes
    * This method may be reimplemented by a subclass if needed.
    */
-  protected drawText(gc: CanvasRenderingContext2D, config: DataGrid.ICellConfig, style: TextRenderer.ICellStyle | null): void {
-    // Resolve the text color for the cell.
-    let color = (style && style.textColor) || this.textColor;
-
-    // Bail if there is no text color.
-    if (!color) {
-      return;
-    }
-
+  protected drawText(gc: GraphicsContext, config: DataGrid.ICellConfig, style: TextRenderer.ICellStyle | null): void {
     // Format the text for display.
     let text: string;
     if (this.textFormatter) {
@@ -213,8 +209,15 @@ class TextRenderer implements DataGrid.ICellRenderer {
       gc.clip();
     }
 
+    // Resolve the text color for the cell.
+    let color = (style && style.textColor) || this.textColor;
+
+    // Set the fill style if needed.
+    if (color) {
+      gc.fillStyle = color;
+    }
+
     // Draw the text for the cell.
-    gc.fillStyle = color;
     gc.textAlign = hAlign;
     gc.textBaseline = 'bottom';
     gc.fillText(text, textX, textY);

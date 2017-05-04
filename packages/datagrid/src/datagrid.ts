@@ -22,6 +22,10 @@ import {
 } from './datamodel';
 
 import {
+  GraphicsContext
+} from './graphicscontext';
+
+import {
   SectionList
 } from './sectionlist';
 
@@ -910,10 +914,7 @@ class DataGrid extends Widget {
     // Execute the actual drawing logic.
     try {
       this._inPaint = true;
-      let t1 = performance.now();
       this._draw(rx, ry, rw, rh);
-      let t2 = performance.now();
-      console.log(t2 - t1);
     } finally {
       this._inPaint = false;
     }
@@ -1705,9 +1706,14 @@ class DataGrid extends Widget {
       value: (null as any), field: (null as DataModel.IField | null)
     };
 
+    //
+    let gc = GraphicsContext.wrap(this._bufferGC);
+    gc.textBaseline = 'bottom';
+    gc.textAlign = 'left';
+
     // Set the font for the buffer GC if needed.
     if (font) {
-      this._bufferGC.font = font;
+      gc.font = font;
     }
 
     // Compute the actual Y bounds for the cell range.
@@ -1737,7 +1743,7 @@ class DataGrid extends Widget {
       config.field = field;
 
       // Clear the buffer rect for the column.
-      this._bufferGC.clearRect(x, rgn.y, width, rgn.height);
+      gc.clearRect(x, rgn.y, width, rgn.height);
 
       // Loop over the rows in the column.
       for (let y = rgn.y, j = 0, n = rgn.rowSizes.length; j < n; ++j) {
@@ -1762,17 +1768,17 @@ class DataGrid extends Widget {
         config.value = value;
 
         // Save the state of the buffer GC.
-        this._bufferGC.save();
+        gc.save();
 
         // Paint the cell into the off-screen buffer.
         try {
-          this._cellRenderer.paint(this._bufferGC, config);
+          this._cellRenderer.paint(gc, config);
         } catch (err) {
           console.error(err);
         }
 
         // Restore the state of the buffer GC.
-        this._bufferGC.restore();
+        gc.restore();
 
         // Increment the running Y coordinate.
         y += height;
@@ -2034,7 +2040,7 @@ namespace DataGrid {
      *
      * The renderer **must not** draw outside the cell bounding height.
      */
-    paint(gc: CanvasRenderingContext2D, config: ICellConfig): void;
+    paint(gc: GraphicsContext, config: ICellConfig): void;
   }
 
   /**
