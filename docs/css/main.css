@@ -1,0 +1,443 @@
+/*! HTML5 Boilerplate v5.0 | MIT License | http://h5bp.com/ */
+
+html {
+    background-color: #F4F7F7;
+    color: #112236;
+    font-size: 1em;
+    line-height: 1.4;
+}
+
+::-moz-selection {
+    background: #b3d4fc;
+    text-shadow: none;
+}
+
+::selection {
+    background: #b3d4fc;
+    text-shadow: none;
+}
+
+hr {
+    display: block;
+    height: 1px;
+    border: 0;
+    border-top: 1px solid #ccc;
+    margin: 1em 0;
+    padding: 0;
+}
+
+audio,
+canvas,
+iframe,
+img,
+svg,
+video {
+    vertical-align: middle;
+}
+
+fieldset {
+    border: 0;
+    margin: 0;
+    padding: 0;
+}
+
+textarea {
+    resize: vertical;
+}
+
+.browserupgrade {
+    margin: 0.2em 0;
+    background: #ccc;
+    color: #000;
+    padding: 0.2em 0;
+}
+
+
+/* ===== Initializr Styles ==================================================
+   Author: Jonathan Verrecchia - verekia.com/initializr/responsive-template
+   ========================================================================== */
+
+body {
+    font: 16px/26px;
+}
+
+.wrapper {
+    width: 90%;
+    margin: 0 5%;
+}
+
+/* ===================
+    ALL: Theme
+   =================== */
+body {
+    font-family: 'Lato', sans-serif;
+    font-weight: 300;
+    letter-spacing: 0.03em;
+}
+
+.logo {
+    background: url(../img/phosphorjs.svg) no-repeat top left;
+    height: 2em;
+    width: 2em;
+    float: left;
+    margin-right: 0.75em;
+}
+
+.header-container,
+.footer-container,
+.main aside {
+    background-color: #0C1010;
+    border-bottom: 3px solid #0FCB63;
+}
+
+header {
+    padding: 0.7em 0 0.4em;
+}
+
+header > a {
+    white-space: nowrap;
+}
+
+header .logo {
+    height: 3.5em;
+    width: 3.5em;
+    margin-top: 0.5em;
+}
+
+header h1 {
+    margin: 0.9rem 0;
+}
+
+section {
+    margin-bottom: 4em;
+}
+
+aside {
+    text-align: center;
+    border-radius: 3px;
+}
+
+aside .logo {
+    display: block;
+    float: none;
+    height: 8em;
+    margin: 0.75em auto;
+    width: 8em;
+}
+
+/* ===================
+    ALL: Typography
+   =================== */
+
+h1, h2, h3, h4 {
+    font-family: 'Nunito', sans-serif;
+    color: #112236;
+    font-weight: 300;
+    letter-spacing: 0.055em;
+}
+
+h1 {
+    margin: 0.5rem 0;
+}
+
+h1.title {
+    color: #19F28A;
+}
+
+h2 {
+    font-size: 1.65rem;
+    margin-bottom: 0.3rem;
+    color: #04A43C;
+}
+
+aside h2 {
+    color: #19F28A;
+}
+
+h3 {
+    font-style: italic;
+    margin: -0.15em 0 0.75em;
+}
+
+p {
+    margin-top: 0;
+}
+
+p, li {
+    font-size: 1.2rem;
+    letter-spacing: 0.06em;
+    line-height: 1.5em;
+    color: #112236;
+}
+
+aside p, aside li, footer p, footer li {
+    color: #F4FFF7;
+}
+
+.nobull {
+    list-style: none; list-style-type: none;
+}
+
+.nobull a:hover {
+    color: #04A43C;
+}
+
+a {
+    text-decoration: none;
+    color: #112236;
+}
+
+a:hover {
+    text-decoration: none;
+}
+
+a:hover > h1, a:hover > h2, a:hover > h3, a:hover > h4 {
+    text-shadow: none;
+}
+
+.header-container nav a:hover {
+    text-shadow: 0px 0px 3px #19F28A;
+}
+
+/* ==============
+    MOBILE: Menu
+   ============== */
+
+nav ul {
+    margin: 0;
+    padding: 0;
+    list-style-type: none;
+}
+
+nav a {
+    color: #F4FFF7;
+    display: block;
+    padding: 0.5em 0;
+    text-align: center;
+    text-transform: uppercase;
+}
+
+/* ==============
+    MOBILE: Main
+   ============== */
+
+.main {
+    padding: 30px 0;
+}
+
+.main article h1 {
+    font-size: 2em;
+}
+
+.main aside {
+    padding: 1em 2.5em;
+}
+
+.footer-container footer {
+    color: white;
+    padding: 20px 0;
+}
+
+/* ===============
+    ALL: IE Fixes
+   =============== */
+
+.ie7 .title {
+    padding-top: 20px;
+}
+
+/* ==========================================================================
+   Media Queries
+   ========================================================================== */
+
+@media only screen and (min-width: 480px) {
+
+/* ====================
+    INTERMEDIATE: Menu
+   ==================== */
+
+    nav ul {
+        float: right;
+        width: 90%;
+        margin: -0.01em 0 0.35em;
+    }
+    nav a {
+        float: left;
+        margin: 2% 5%;
+    }
+
+    nav li:first-child a {
+        margin-left: 0;
+    }
+
+    nav li:last-child a {
+        margin-right: 0;
+    }
+
+/* ========================
+    INTERMEDIATE: IE Fixes
+   ======================== */
+
+    nav ul li {
+        display: inline;
+    }
+
+    .oldie nav a {
+        margin: 0 0.7%;
+    }
+}
+
+@media only screen and (min-width: 768px) {
+
+/* ============
+    WIDE: Menu
+   ============ */
+
+    .title {
+        float: left;
+    }
+
+    nav {
+        float: right;
+        margin: 0.2em 0;
+        width: 50%;
+    }
+
+/* ============
+    WIDE: Main
+   ============ */
+
+    .main article {
+        float: left;
+        width: 57%;
+    }
+
+    .main aside {
+        float: right;
+        width: 28%;
+    }
+}
+
+@media only screen and (min-width: 1140px) {
+
+/* ===============
+    Maximal Width
+   =============== */
+
+    .wrapper {
+        width: 1026px; /* 1140px - 10% for margins */
+        margin: 0 auto;
+    }
+}
+
+/* ==========================================================================
+   Helper classes
+   ========================================================================== */
+
+.hidden {
+    display: none !important;
+    visibility: hidden;
+}
+
+.visuallyhidden {
+    border: 0;
+    clip: rect(0 0 0 0);
+    height: 1px;
+    margin: -1px;
+    overflow: hidden;
+    padding: 0;
+    position: absolute;
+    width: 1px;
+}
+
+.visuallyhidden.focusable:active,
+.visuallyhidden.focusable:focus {
+    clip: auto;
+    height: auto;
+    margin: 0;
+    overflow: visible;
+    position: static;
+    width: auto;
+}
+
+.invisible {
+    visibility: hidden;
+}
+
+.clearfix:before,
+.clearfix:after {
+    content: " ";
+    display: table;
+}
+
+.clearfix:after {
+    clear: both;
+}
+
+.clearfix {
+    *zoom: 1;
+}
+
+/* ==========================================================================
+   Print styles
+   ========================================================================== */
+
+@media print {
+    *,
+    *:before,
+    *:after {
+        background: transparent !important;
+        color: #000 !important;
+        box-shadow: none !important;
+        text-shadow: none !important;
+    }
+
+    a,
+    a:visited {
+        text-decoration: underline;
+    }
+
+    a[href]:after {
+        content: " (" attr(href) ")";
+    }
+
+    abbr[title]:after {
+        content: " (" attr(title) ")";
+    }
+
+    a[href^="#"]:after,
+    a[href^="javascript:"]:after {
+        content: "";
+    }
+
+    pre,
+    blockquote {
+        border: 1px solid #999;
+        page-break-inside: avoid;
+    }
+
+    thead {
+        display: table-header-group;
+    }
+
+    tr,
+    img {
+        page-break-inside: avoid;
+    }
+
+    img {
+        max-width: 100% !important;
+    }
+
+    p,
+    h2,
+    h3 {
+        orphans: 3;
+        widows: 3;
+    }
+
+    h2,
+    h3 {
+        page-break-after: avoid;
+    }
+}
