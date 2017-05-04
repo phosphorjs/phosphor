@@ -16,11 +16,13 @@
   },
   "devDependencies": {
     "rimraf": "^2.5.2",
+    "typedoc": "^0.6.0",
     "typescript": "^2.2.1"
   },
   "scripts": {
     "build": "tsc",
-    "clean": "rimraf lib"
+    "clean": "rimraf lib",
+    "docs": "typedoc --mode file --module commonjs --excludeNotExported --target es5 --moduleResolution node --out docs/ src"
   },
   "repository": {
     "type": "git",
