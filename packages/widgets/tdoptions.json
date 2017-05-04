@@ -1,0 +1,9 @@
+{
+  "excludeNotExported": true,
+  "mode": "file",
+  "out": "../../docs/api/widgets",
+  "baseUrl": ".",
+  "paths": {
+    "@phosphor/*": ["node_modules/@phosphor/*"]
+  }
+}

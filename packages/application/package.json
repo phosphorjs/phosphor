@@ -24,7 +24,7 @@
   "scripts": {
     "build": "tsc",
     "clean": "rimraf lib",
-    "docs": "typedoc --options ../../tdoptions.json ."
+    "docs": "typedoc --options tdoptions.json ."
   },
   "repository": {
     "type": "git",
