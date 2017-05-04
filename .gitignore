@@ -5,4 +5,3 @@ docs/api
 lib
 node_modules
 build
-packages/**/docs
