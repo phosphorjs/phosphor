@@ -270,7 +270,7 @@ class GraphicsContext {
     return this._gc.clearRect(x, y, w, h);
   }
 
-  clip(fillRule?: string): void {
+  clip(fillRule?: CanvasFillRule): void {
     if (arguments.length === 0) {
       this._gc.clip();
     } else {
@@ -304,35 +304,26 @@ class GraphicsContext {
     this._gc.drawFocusIfNeeded(element);
   }
 
-  drawImage(image: HTMLImageElement | HTMLCanvasElement | HTMLVideoElement, offsetX: number, offsetY: number, width?: number, height?: number, canvasOffsetX?: number, canvasOffsetY?: number, canvasImageWidth?: number, canvasImageHeight?: number): void {
+  drawImage(image: HTMLImageElement | HTMLCanvasElement | HTMLVideoElement | ImageBitmap, dstX: number, dstY: number): void;
+  drawImage(image: HTMLImageElement | HTMLCanvasElement | HTMLVideoElement | ImageBitmap, dstX: number, dstY: number, dstW: number, dstH: number): void;
+  drawImage(image: HTMLImageElement | HTMLCanvasElement | HTMLVideoElement | ImageBitmap, srcX: number, srcY: number, srcW: number, srcH: number, dstX: number, dstY: number, dstW: number, dstH: number): void;
+  drawImage(image: HTMLImageElement | HTMLCanvasElement | HTMLVideoElement | ImageBitmap, srcX: number, srcY: number, srcW?: number, srcH?: number, dstX?: number, dstY?: number, dstW?: number, dstH?: number): void {
     switch (arguments.length) {
     case 3:
-      this._gc.drawImage(image, offsetX, offsetY);
-      break;
-    case 4:
-      this._gc.drawImage(image, offsetX, offsetY, width);
+      this._gc.drawImage(image, srcX, srcY);
       break;
     case 5:
-      this._gc.drawImage(image, offsetX, offsetY, width, height);
-      break;
-    case 6:
-      this._gc.drawImage(image, offsetX, offsetY, width, height, canvasOffsetX);
-      break;
-    case 7:
-      this._gc.drawImage(image, offsetX, offsetY, width, height, canvasOffsetX, canvasOffsetY);
-      break;
-    case 8:
-      this._gc.drawImage(image, offsetX, offsetY, width, height, canvasOffsetX, canvasOffsetY, canvasImageWidth);
+      this._gc.drawImage(image, srcX, srcY, srcW!, srcH!);
       break;
     case 9:
-      this._gc.drawImage(image, offsetX, offsetY, width, height, canvasOffsetX, canvasOffsetY, canvasImageWidth, canvasImageHeight);
+      this._gc.drawImage(image, srcX, srcY, srcW!, srcW!, dstX!, dstY!, dstW!, dstH!);
       break;
     default:
       throw 'unreachable';
     }
   }
 
-  fill(fillRule?: string): void {
+  fill(fillRule?: CanvasFillRule): void {
     if (arguments.length === 0) {
       this._gc.fill();
     } else {
@@ -360,7 +351,7 @@ class GraphicsContext {
     return this._gc.getLineDash();
   }
 
-  isPointInPath(x: number, y: number, fillRule?: string): boolean {
+  isPointInPath(x: number, y: number, fillRule?: CanvasFillRule): boolean {
     let result: boolean;
     if (arguments.length === 2) {
       result = this._gc.isPointInPath(x, y);
