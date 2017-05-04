@@ -21,11 +21,13 @@
   },
   "devDependencies": {
     "rimraf": "^2.5.2",
+    "typedoc": "^0.6.0",
     "typescript": "^2.2.1"
   },
   "scripts": {
     "build": "tsc",
-    "clean": "rimraf lib"
+    "clean": "rimraf lib",
+    "docs": "typedoc --options tdoptions.json ."
   },
   "repository": {
     "type": "git",
