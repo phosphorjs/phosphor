@@ -52,7 +52,12 @@ class DataGrid extends Widget {
     this.addClass('p-DataGrid');
 
     // Parse the options.
-    this._cellRenderer = options.cellRenderer;
+    this._baseCellRenderer = options.baseCellRenderer;
+    this._headerCellRenderer = options.headerCellRenderer || null;
+    this._rowHeaderCellRenderer = options.rowHeaderCellRenderer || null;
+    this._colHeaderCellRenderer = options.colHeaderCellRenderer || null;
+    this._cornerHeaderCellRenderer = options.cornerHeaderCellRenderer || null;
+    this._bodyCellRenderer = options.bodyCellRenderer || null;
     this._theme = options.theme || DataGrid.defaultTheme;
     this._headerVisibility = options.headerVisibility || 'all';
 
@@ -205,24 +210,144 @@ class DataGrid extends Widget {
   }
 
   /**
-   * Get the cell renderer for the data grid.
+   * Get the base cell renderer for the data grid.
    */
-  get cellRenderer(): DataGrid.ICellRenderer {
-    return this._cellRenderer;
+  get baseCellRenderer(): DataGrid.ICellRenderer {
+    return this._baseCellRenderer;
   }
 
   /**
-   * Set the cell renderer for the data grid.
+   * Set the base cell renderer for the data grid.
    */
-  set cellRenderer(value: DataGrid.ICellRenderer) {
+  set baseCellRenderer(value: DataGrid.ICellRenderer) {
     // Bail if the renderer does not change.
-    if (this._cellRenderer === value) {
+    if (this._baseCellRenderer === value) {
       return;
     }
 
     // Update the internal renderer.
-    this._cellRenderer = value;
+    this._baseCellRenderer = value;
 
+    // Schedule a full repaint of the grid.
+    this.repaint();
+  }
+
+  /**
+   * Get the header cell renderer for the data grid.
+   */
+  get headerCellRenderer(): DataGrid.ICellRenderer | null {
+    return this._headerCellRenderer;
+  }
+
+  /**
+   * Set the header cell renderer for the data grid.
+   */
+  set headerCellRenderer(value: DataGrid.ICellRenderer | null) {
+    // Bail if the renderer does not change.
+    if (this._headerCellRenderer === value) {
+      return;
+    }
+
+    // Update the internal renderer.
+    this._headerCellRenderer = value;
+
+    // TODO - repaint only header regions?
+    // Schedule a full repaint of the grid.
+    this.repaint();
+  }
+
+  /**
+   * Get the row header cell renderer for the data grid.
+   */
+  get rowHeaderCellRenderer(): DataGrid.ICellRenderer | null {
+    return this._rowHeaderCellRenderer;
+  }
+
+  /**
+   * Set the row header cell renderer for the data grid.
+   */
+  set rowHeaderCellRenderer(value: DataGrid.ICellRenderer | null) {
+    // Bail if the renderer does not change.
+    if (this._rowHeaderCellRenderer === value) {
+      return;
+    }
+
+    // Update the internal renderer.
+    this._rowHeaderCellRenderer = value;
+
+    // TODO - repaint only row header region?
+    // Schedule a full repaint of the grid.
+    this.repaint();
+  }
+
+  /**
+   * Get the column header cell renderer for the data grid.
+   */
+  get colHeaderCellRenderer(): DataGrid.ICellRenderer | null {
+    return this._colHeaderCellRenderer;
+  }
+
+  /**
+   * Set the column header cell renderer for the data grid.
+   */
+  set colHeaderCellRenderer(value: DataGrid.ICellRenderer | null) {
+    // Bail if the renderer does not change.
+    if (this._colHeaderCellRenderer === value) {
+      return;
+    }
+
+    // Update the internal renderer.
+    this._colHeaderCellRenderer = value;
+
+    // TODO - repaint only col header region?
+    // Schedule a full repaint of the grid.
+    this.repaint();
+  }
+
+  /**
+   * Get the corner header cell renderer for the data grid.
+   */
+  get cornerHeaderCellRenderer(): DataGrid.ICellRenderer | null {
+    return this._cornerHeaderCellRenderer;
+  }
+
+  /**
+   * Set the corner header cell renderer for the data grid.
+   */
+  set cornerHeaderCellRenderer(value: DataGrid.ICellRenderer | null) {
+    // Bail if the renderer does not change.
+    if (this._cornerHeaderCellRenderer === value) {
+      return;
+    }
+
+    // Update the internal renderer.
+    this._cornerHeaderCellRenderer = value;
+
+    // TODO - repaint only corner header region?
+    // Schedule a full repaint of the grid.
+    this.repaint();
+  }
+
+  /**
+   * Get the body cell renderer for the data grid.
+   */
+  get bodyCellRenderer(): DataGrid.ICellRenderer | null {
+    return this._bodyCellRenderer;
+  }
+
+  /**
+   * Set the body cell renderer for the data grid.
+   */
+  set bodyCellRenderer(value: DataGrid.ICellRenderer | null) {
+    // Bail if the renderer does not change.
+    if (this._bodyCellRenderer === value) {
+      return;
+    }
+
+    // Update the internal renderer.
+    this._bodyCellRenderer = value;
+
+    // TODO - repaint only body region?
     // Schedule a full repaint of the grid.
     this.repaint();
   }
@@ -1067,7 +1192,10 @@ class DataGrid extends Widget {
     );
 
     // Draw the cell content for the cell region.
-    this._drawCells(rgn, this._cellRenderer);
+    this._drawCells(rgn,
+      this._bodyCellRenderer ||
+      this._baseCellRenderer
+    );
 
     // Draw the horizontal grid lines.
     this._drawHorizontalGridLines(rgn,
@@ -1217,7 +1345,11 @@ class DataGrid extends Widget {
     );
 
     // Draw the cell content for the cell region.
-    this._drawCells(rgn, this._cellRenderer);
+    this._drawCells(rgn,
+      this._rowHeaderCellRenderer ||
+      this._headerCellRenderer ||
+      this._baseCellRenderer
+    );
 
     // Draw the horizontal grid lines.
     this._drawHorizontalGridLines(rgn,
@@ -1375,7 +1507,11 @@ class DataGrid extends Widget {
     );
 
     // Draw the cell content for the cell region.
-    this._drawCells(rgn, this._cellRenderer);
+    this._drawCells(rgn,
+      this._colHeaderCellRenderer ||
+      this._headerCellRenderer ||
+      this._baseCellRenderer
+    );
 
     // Draw the horizontal grid lines.
     this._drawHorizontalGridLines(rgn,
@@ -1534,7 +1670,11 @@ class DataGrid extends Widget {
     );
 
     // Draw the cell content for the cell region.
-    this._drawCells(rgn, this._cellRenderer);
+    this._drawCells(rgn,
+      this._cornerHeaderCellRenderer ||
+      this._headerCellRenderer ||
+      this._baseCellRenderer
+    );
 
     // Draw the horizontal grid lines.
     this._drawHorizontalGridLines(rgn,
@@ -1719,6 +1859,15 @@ class DataGrid extends Widget {
         console.error(err);
       }
 
+      // Update the config for the current column.
+      config.x = x - 1;
+      config.width = width + 1;
+      config.col = col;
+      config.field = field;
+
+      // Clear the buffer rect for the column.
+      gc.clearRect(x, rgn.y, width, rgn.height);
+
       // Save the GC state.
       gc.save();
 
@@ -1728,15 +1877,6 @@ class DataGrid extends Widget {
       } catch (err) {
         console.error(err);
       }
-
-      // Update the config for the current column.
-      config.x = x - 1;
-      config.width = width + 1;
-      config.col = col;
-      config.field = field;
-
-      // Clear the buffer rect for the column.
-      gc.clearRect(x, rgn.y, width, rgn.height);
 
       // Loop over the rows in the column.
       for (let y = rgn.y, j = 0, n = rgn.rowSizes.length; j < n; ++j) {
@@ -1995,7 +2135,13 @@ class DataGrid extends Widget {
 
   private _model: DataModel | null = null;
 
-  private _cellRenderer: DataGrid.ICellRenderer;
+  private _baseCellRenderer: DataGrid.ICellRenderer;
+  private _headerCellRenderer: DataGrid.ICellRenderer | null;
+  private _rowHeaderCellRenderer: DataGrid.ICellRenderer | null;
+  private _colHeaderCellRenderer: DataGrid.ICellRenderer | null;
+  private _cornerHeaderCellRenderer: DataGrid.ICellRenderer | null;
+  private _bodyCellRenderer: DataGrid.ICellRenderer | null;
+
   private _theme: DataGrid.ITheme;
   private _headerVisibility: DataGrid.HeaderVisibility;
 }
@@ -2227,9 +2373,44 @@ namespace DataGrid {
   export
   interface IOptions {
     /**
-     * The cell renderer for the data grid.
+     * The base cell renderer for the data grid.
      */
-    cellRenderer: ICellRenderer;
+    baseCellRenderer: ICellRenderer;
+
+    /**
+     * The header cell renderer for the data grid.
+     *
+     * The default is `null`.
+     */
+    headerCellRenderer?: ICellRenderer;
+
+    /**
+     * The row header cell renderer for the data grid.
+     *
+     * The default is `null`.
+     */
+    rowHeaderCellRenderer?: ICellRenderer;
+
+    /**
+     * The column header cell renderer for the data grid.
+     *
+     * The default is `null`.
+     */
+    colHeaderCellRenderer?: ICellRenderer;
+
+    /**
+     * The corner header cell renderer for the data grid.
+     *
+     * The default is `null`.
+     */
+    cornerHeaderCellRenderer?: ICellRenderer;
+
+    /**
+     * The body cell renderer for the data grid.
+     *
+     * The default is `null`.
+     */
+    bodyCellRenderer?: ICellRenderer;
 
     /**
      * The theme for the data grid.
