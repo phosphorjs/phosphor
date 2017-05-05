@@ -1067,10 +1067,7 @@ class DataGrid extends Widget {
     );
 
     // Draw the cell content for the cell region.
-    this._drawCells(rgn,
-      this._theme.bodyFont ||
-      this._theme.baseFont
-    );
+    this._drawCells(rgn, this._cellRenderer);
 
     // Draw the horizontal grid lines.
     this._drawHorizontalGridLines(rgn,
@@ -1220,11 +1217,7 @@ class DataGrid extends Widget {
     );
 
     // Draw the cell content for the cell region.
-    this._drawCells(rgn,
-      this._theme.rowHeaderFont ||
-      this._theme.headerFont ||
-      this._theme.baseFont
-    );
+    this._drawCells(rgn, this._cellRenderer);
 
     // Draw the horizontal grid lines.
     this._drawHorizontalGridLines(rgn,
@@ -1382,11 +1375,7 @@ class DataGrid extends Widget {
     );
 
     // Draw the cell content for the cell region.
-    this._drawCells(rgn,
-      this._theme.colHeaderFont ||
-      this._theme.headerFont ||
-      this._theme.baseFont
-    );
+    this._drawCells(rgn, this._cellRenderer);
 
     // Draw the horizontal grid lines.
     this._drawHorizontalGridLines(rgn,
@@ -1545,11 +1534,7 @@ class DataGrid extends Widget {
     );
 
     // Draw the cell content for the cell region.
-    this._drawCells(rgn,
-      this._theme.cornerHeaderFont ||
-      this._theme.headerFont ||
-      this._theme.baseFont
-    );
+    this._drawCells(rgn, this._cellRenderer);
 
     // Draw the horizontal grid lines.
     this._drawHorizontalGridLines(rgn,
@@ -1694,7 +1679,7 @@ class DataGrid extends Widget {
   /**
    * Draw the cells for the given cell region.
    */
-  private _drawCells(rgn: Private.ICellRegion, font: string | undefined): void {
+  private _drawCells(rgn: Private.ICellRegion, renderer: DataGrid.ICellRenderer): void {
     // Bail if there is no data model.
     if (!this._model) {
       return;
@@ -1706,15 +1691,8 @@ class DataGrid extends Widget {
       value: (null as any), field: (null as DataModel.IField | null)
     };
 
-    //
+    // Wrap the buffer gc for painting the cells.
     let gc = GraphicsContext.wrap(this._bufferGC);
-    gc.textBaseline = 'bottom';
-    gc.textAlign = 'left';
-
-    // Set the font for the buffer GC if needed.
-    if (font) {
-      gc.font = font;
-    }
 
     // Compute the actual Y bounds for the cell range.
     let y1 = Math.max(rgn.yMin, rgn.y);
@@ -1734,7 +1712,22 @@ class DataGrid extends Widget {
       let col = rgn.col + i;
 
       // Get the field descriptor for the column.
-      let field = this._model.field(col);
+      let field: DataModel.IField | null = null;
+      try {
+        field = this._model.field(col);
+      } catch (err) {
+        console.error(err);
+      }
+
+      // Save the GC state.
+      gc.save();
+
+      // Prepare the renderer for drawing the column.
+      try {
+        renderer.prepare(gc, { col, field });
+      } catch (err) {
+        console.error(err);
+      }
 
       // Update the config for the current column.
       config.x = x - 1;
@@ -1759,7 +1752,12 @@ class DataGrid extends Widget {
         let row = rgn.row + j;
 
         // Get the data value for the cell.
-        let value = this._model.data(row, col);
+        let value: any = undefined;
+        try {
+          value = this._model.data(row, col);
+        } catch (err) {
+          console.error(err);
+        }
 
         // Update the config for the current cell.
         config.y = y - 1;
@@ -1767,22 +1765,25 @@ class DataGrid extends Widget {
         config.row = row;
         config.value = value;
 
-        // Save the state of the buffer GC.
+        // Save the GC state.
         gc.save();
 
         // Paint the cell into the off-screen buffer.
         try {
-          this._cellRenderer.paint(gc, config);
+          renderer.paint(gc, config);
         } catch (err) {
           console.error(err);
         }
 
-        // Restore the state of the buffer GC.
+        // Restore the GC state.
         gc.restore();
 
         // Increment the running Y coordinate.
         y += height;
       }
+
+      // Restore the GC state.
+      gc.restore();
 
       // Compute the actual X bounds for the column.
       let x1 = Math.max(rgn.xMin, x - 1);
@@ -2024,6 +2025,24 @@ namespace DataGrid {
   export
   interface ICellRenderer {
     /**
+     * Prepare the renderer for drawing a column of cells.
+     *
+     * @param gc - The graphics context to prepare.
+     *
+     * @param config - The configuration data for the column.
+     *
+     * #### Notes
+     * The grid renders cells in column-major order, and saves/restores
+     * the `gc` state before/after rendering a column.
+     *
+     * This method is called just before the grid renders the cells in
+     * a column. It allows the renderer an opportunity to set defaults
+     * on the `gc` or pre-compute column render state. This can reduce
+     * the need for costly `gc` state changes when painting each cell.
+     */
+    prepare(gc: GraphicsContext, config: IColConfig): void;
+
+    /**
      * Paint the content for a cell.
      *
      * @param gc - The graphics context to use for drawing.
@@ -2041,6 +2060,22 @@ namespace DataGrid {
      * The renderer **must not** draw outside the cell bounding height.
      */
     paint(gc: GraphicsContext, config: ICellConfig): void;
+  }
+
+  /**
+   * An object which holds the configuration data for a column.
+   */
+  export
+  interface IColConfig {
+    /**
+     * The column index.
+     */
+    col: number;
+
+    /**
+     * The field descriptor for the column, or `null`.
+     */
+    field: DataModel.IField | null;
   }
 
   /**
@@ -2120,7 +2155,6 @@ namespace DataGrid {
   export
   interface ITheme {
     // Base styles.
-    readonly baseFont?: string;
     readonly baseBackgroundColor?: string;
     readonly baseRowBackgroundColor?: (index: number) => string;
     readonly baseColBackgroundColor?: (index: number) => string;
@@ -2132,7 +2166,6 @@ namespace DataGrid {
     readonly baseBottomBorderLineColor?: string;
 
     // Header styles.
-    readonly headerFont?: string;
     readonly headerBackgroundColor?: string;
     readonly headerRowBackgroundColor?: (index: number) => string;
     readonly headerColBackgroundColor?: (index: number) => string;
@@ -2144,7 +2177,6 @@ namespace DataGrid {
     readonly headerBottomBorderLineColor?: string;
 
     // Row header styles.
-    readonly rowHeaderFont?: string;
     readonly rowHeaderBackgroundColor?: string;
     readonly rowHeaderRowBackgroundColor?: (index: number) => string;
     readonly rowHeaderColBackgroundColor?: (index: number) => string;
@@ -2156,7 +2188,6 @@ namespace DataGrid {
     readonly rowHeaderBottomBorderLineColor?: string;
 
     // Column header styles.
-    readonly colHeaderFont?: string;
     readonly colHeaderBackgroundColor?: string;
     readonly colHeaderRowBackgroundColor?: (index: number) => string;
     readonly colHeaderColBackgroundColor?: (index: number) => string;
@@ -2168,7 +2199,6 @@ namespace DataGrid {
     readonly colHeaderBottomBorderLineColor?: string;
 
     // Corner header styles.
-    readonly cornerHeaderFont?: string;
     readonly cornerHeaderBackgroundColor?: string;
     readonly cornerHeaderRowBackgroundColor?: (index: number) => string;
     readonly cornerHeaderColBackgroundColor?: (index: number) => string;
@@ -2180,7 +2210,6 @@ namespace DataGrid {
     readonly cornerHeaderBottomBorderLineColor?: string;
 
     // Body styles.
-    readonly bodyFont?: string;
     readonly bodyBackgroundColor?: string;
     readonly bodyRowBackgroundColor?: (index: number) => string;
     readonly bodyColBackgroundColor?: (index: number) => string;
@@ -2222,7 +2251,6 @@ namespace DataGrid {
    */
   export
   const defaultTheme: DataGrid.ITheme = {
-    baseFont: '12px sans-serif',
     baseBackgroundColor: '#F3F3F3',
     baseBorderLineColor: '#A0A0A0',
     headerGridLineColor: '#B5B5B5',
