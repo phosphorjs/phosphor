@@ -307,20 +307,8 @@ class GraphicsContext {
   drawImage(image: HTMLImageElement | HTMLCanvasElement | HTMLVideoElement | ImageBitmap, dstX: number, dstY: number): void;
   drawImage(image: HTMLImageElement | HTMLCanvasElement | HTMLVideoElement | ImageBitmap, dstX: number, dstY: number, dstW: number, dstH: number): void;
   drawImage(image: HTMLImageElement | HTMLCanvasElement | HTMLVideoElement | ImageBitmap, srcX: number, srcY: number, srcW: number, srcH: number, dstX: number, dstY: number, dstW: number, dstH: number): void;
-  drawImage(image: HTMLImageElement | HTMLCanvasElement | HTMLVideoElement | ImageBitmap, srcX: number, srcY: number, srcW?: number, srcH?: number, dstX?: number, dstY?: number, dstW?: number, dstH?: number): void {
-    switch (arguments.length) {
-    case 3:
-      this._gc.drawImage(image, srcX, srcY);
-      break;
-    case 5:
-      this._gc.drawImage(image, srcX, srcY, srcW!, srcH!);
-      break;
-    case 9:
-      this._gc.drawImage(image, srcX, srcY, srcW!, srcW!, dstX!, dstY!, dstW!, dstH!);
-      break;
-    default:
-      throw 'unreachable';
-    }
+  drawImage(): void {
+    this._gc.drawImage.apply(this._gc, arguments);
   }
 
   fill(fillRule?: CanvasFillRule): void {
@@ -365,26 +353,10 @@ class GraphicsContext {
     return this._gc.measureText(text);
   }
 
-  putImageData(imagedata: ImageData, dx: number, dy: number, dirtyX?: number, dirtyY?: number, dirtyWidth?: number, dirtyHeight?: number): void {
-    switch (arguments.length) {
-    case 3:
-      this._gc.putImageData(imagedata, dx, dy);
-      break;
-    case 4:
-      this._gc.putImageData(imagedata, dx, dy, dirtyX);
-      break;
-    case 5:
-      this._gc.putImageData(imagedata, dx, dy, dirtyX, dirtyY);
-      break;
-    case 6:
-      this._gc.putImageData(imagedata, dx, dy, dirtyX, dirtyY, dirtyWidth);
-      break;
-    case 7:
-      this._gc.putImageData(imagedata, dx, dy, dirtyX, dirtyY, dirtyWidth, dirtyHeight);
-      break;
-    default:
-      throw 'unreachable';
-    }
+  putImageData(imagedata: ImageData, dx: number, dy: number): void
+  putImageData(imagedata: ImageData, dx: number, dy: number, dirtyX: number, dirtyY: number, dirtyWidth: number, dirtyHeight: number): void
+  putImageData(): void {
+    this._gc.putImageData.apply(this._gc, arguments);
   }
 
   restore(): void {
