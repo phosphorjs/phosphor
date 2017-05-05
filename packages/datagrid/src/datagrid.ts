@@ -2424,7 +2424,7 @@ namespace DataGrid {
      *
      * The default is `'all'`.
      */
-    headerVisibility?: HeaderVisibility
+    headerVisibility?: HeaderVisibility;
   }
 
   /**
