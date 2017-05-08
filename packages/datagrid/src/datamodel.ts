@@ -79,7 +79,7 @@ abstract class DataModel {
   /**
    * Get the field descriptor for a specific column in the data model.
    *
-   * @param index - The index of the column of interest.
+   * @param col - The index of the column of interest.
    *
    * @returns The field descriptor for the column, or `null`.
    *
@@ -89,8 +89,10 @@ abstract class DataModel {
    *
    * The field descriptor can be used by custom cell renderers and cell
    * editors to customize handling of specific cell data types.
+   *
+   * The default implementation of this method returns `null`.
    */
-  field(index: number): DataModel.IField | null {
+  field(col: number): DataModel.IField | null {
     return null;
   }
 
@@ -123,8 +125,8 @@ namespace DataModel {
      * The name of the column.
      *
      * #### Notes
-     * This can be any string, should typically be unique for a given
-     * instance of a data model.
+     * This can be any string, but should typically be unique for a
+     * given instance of a data model.
      */
     name: string;
 
