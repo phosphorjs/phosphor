@@ -58,7 +58,7 @@ class DataGrid extends Widget {
     this._colHeaderCellRenderer = options.colHeaderCellRenderer || null;
     this._cornerHeaderCellRenderer = options.cornerHeaderCellRenderer || null;
     this._bodyCellRenderer = options.bodyCellRenderer || null;
-    this._theme = options.theme || DataGrid.defaultTheme;
+    this._style = options.style || DataGrid.defaultStyle;
     this._headerVisibility = options.headerVisibility || 'all';
 
     // Set up the row and column sections lists.
@@ -353,23 +353,23 @@ class DataGrid extends Widget {
   }
 
   /**
-   * Get the theme for the data grid.
+   * Get the style for the data grid.
    */
-  get theme(): DataGrid.ITheme {
-    return this._theme;
+  get style(): DataGrid.IStyle {
+    return this._style;
   }
 
   /**
-   * Set the theme for the data grid.
+   * Set the style for the data grid.
    */
-  set theme(value: DataGrid.ITheme) {
-    // Bail if the theme does not change.
-    if (this._theme === value) {
+  set style(value: DataGrid.IStyle) {
+    // Bail if the style does not change.
+    if (this._style === value) {
       return;
     }
 
-    // Update the internal theme.
-    this._theme = value;
+    // Update the internal style.
+    this._style = value;
 
     // Schedule a full repaint of the grid.
     this.repaint();
@@ -1054,8 +1054,8 @@ class DataGrid extends Widget {
     // Clear the dirty rect of all content.
     this._canvasGC.clearRect(rx, ry, rw, rh);
 
-    // Draw the base region.
-    this._drawBaseRegion(rx, ry, rw, rh);
+    // Draw the void region.
+    this._drawVoidRegion(rx, ry, rw, rh);
 
     // Draw the body region.
     this._drawBodyRegion(rx, ry, rw, rh);
@@ -1071,19 +1071,19 @@ class DataGrid extends Widget {
   }
 
   /**
-   * Draw the base region for the dirty rect.
+   * Draw the void region for the dirty rect.
    */
-  private _drawBaseRegion(rx: number, ry: number, rw: number, rh: number): void {
-    // Look up the base background color.
-    let bgColor = this._theme.baseBackgroundColor;
+  private _drawVoidRegion(rx: number, ry: number, rw: number, rh: number): void {
+    // Look up the void color.
+    let color = this._style.voidColor;
 
-    // Bail if there is not background color.
-    if (!bgColor) {
+    // Bail if there is no void color.
+    if (!color) {
       return;
     }
 
-    // Fill the dirty rect with the background color.
-    this._canvasGC.fillStyle = bgColor;
+    // Fill the dirty rect with the void color.
+    this._canvasGC.fillStyle = color;
     this._canvasGC.fillRect(rx, ry, rw, rh);
   }
 
@@ -1174,22 +1174,13 @@ class DataGrid extends Widget {
     };
 
     // Draw the background.
-    this._drawBackground(rgn,
-      this._theme.bodyBackgroundColor ||
-      this._theme.baseBackgroundColor
-    );
+    this._drawBackground(rgn, this._style.backgroundColor);
 
     // Draw the row background.
-    this._drawRowBackground(rgn,
-      this._theme.bodyRowBackgroundColor ||
-      this._theme.baseRowBackgroundColor
-    );
+    this._drawRowBackground(rgn, this._style.rowBackgroundColor);
 
     // Draw the column background.
-    this._drawColBackground(rgn,
-      this._theme.bodyColBackgroundColor ||
-      this._theme.baseColBackgroundColor
-    );
+    this._drawColBackground(rgn, this._style.colBackgroundColor);
 
     // Draw the cell content for the cell region.
     this._drawCells(rgn,
@@ -1199,39 +1190,15 @@ class DataGrid extends Widget {
 
     // Draw the horizontal grid lines.
     this._drawHorizontalGridLines(rgn,
-      this._theme.bodyHorizontalGridLineColor ||
-      this._theme.bodyGridLineColor ||
-      this._theme.baseHorizontalGridLineColor ||
-      this._theme.baseGridLineColor
+      this._style.horizontalGridLineColor ||
+      this._style.gridLineColor
     );
 
     // Draw the vertical grid lines.
     this._drawVerticalGridLines(rgn,
-      this._theme.bodyVerticalGridLineColor ||
-      this._theme.bodyGridLineColor ||
-      this._theme.baseVerticalGridLineColor ||
-      this._theme.baseGridLineColor
+      this._style.verticalGridLineColor ||
+      this._style.gridLineColor
     );
-
-    // Draw the bottom border line if needed.
-    if (r2 === this._rowSections.sectionCount - 1) {
-      this._drawBottomBorderLine(rgn,
-        this._theme.bodyBottomBorderLineColor ||
-        this._theme.bodyBorderLineColor ||
-        this._theme.baseBottomBorderLineColor ||
-        this._theme.baseBorderLineColor
-      );
-    }
-
-    // Draw the right border line if needed.
-    if (c2 === this._colSections.sectionCount - 1) {
-      this._drawRightBorderLine(rgn,
-        this._theme.bodyRightBorderLineColor ||
-        this._theme.bodyBorderLineColor ||
-        this._theme.baseRightBorderLineColor ||
-        this._theme.baseBorderLineColor
-      );
-    }
   }
 
   /**
@@ -1324,25 +1291,7 @@ class DataGrid extends Widget {
     };
 
     // Draw the background.
-    this._drawBackground(rgn,
-      this._theme.rowHeaderBackgroundColor ||
-      this._theme.headerBackgroundColor ||
-      this._theme.baseBackgroundColor
-    );
-
-    // Draw the row background.
-    this._drawRowBackground(rgn,
-      this._theme.rowHeaderRowBackgroundColor ||
-      this._theme.headerRowBackgroundColor ||
-      this._theme.baseRowBackgroundColor
-    );
-
-    // Draw the column background.
-    this._drawColBackground(rgn,
-      this._theme.rowHeaderColBackgroundColor ||
-      this._theme.headerColBackgroundColor ||
-      this._theme.baseColBackgroundColor
-    );
+    this._drawBackground(rgn, this._style.headerBackgroundColor);
 
     // Draw the cell content for the cell region.
     this._drawCells(rgn,
@@ -1353,47 +1302,15 @@ class DataGrid extends Widget {
 
     // Draw the horizontal grid lines.
     this._drawHorizontalGridLines(rgn,
-      this._theme.rowHeaderHorizontalGridLineColor ||
-      this._theme.rowHeaderGridLineColor ||
-      this._theme.headerHorizontalGridLineColor ||
-      this._theme.headerGridLineColor ||
-      this._theme.baseHorizontalGridLineColor ||
-      this._theme.baseGridLineColor
+      this._style.headerHorizontalGridLineColor ||
+      this._style.headerGridLineColor
     );
 
     // Draw the vertical grid lines.
     this._drawVerticalGridLines(rgn,
-      this._theme.rowHeaderVerticalGridLineColor ||
-      this._theme.rowHeaderGridLineColor ||
-      this._theme.headerVerticalGridLineColor ||
-      this._theme.headerGridLineColor ||
-      this._theme.baseVerticalGridLineColor ||
-      this._theme.baseGridLineColor
+      this._style.headerVerticalGridLineColor ||
+      this._style.headerGridLineColor
     );
-
-    // Draw the bottom border line if needed.
-    if (r2 === this._rowSections.sectionCount - 1) {
-      this._drawBottomBorderLine(rgn,
-        this._theme.rowHeaderBottomBorderLineColor ||
-        this._theme.rowHeaderBorderLineColor ||
-        this._theme.headerBottomBorderLineColor ||
-        this._theme.headerBorderLineColor ||
-        this._theme.baseBottomBorderLineColor ||
-        this._theme.baseBorderLineColor
-      );
-    }
-
-    // Draw the right border line if needed.
-    if (c2 === this._rowHeaderSections.sectionCount - 1) {
-      this._drawRightBorderLine(rgn,
-        this._theme.rowHeaderRightBorderLineColor ||
-        this._theme.rowHeaderBorderLineColor ||
-        this._theme.headerRightBorderLineColor ||
-        this._theme.headerBorderLineColor ||
-        this._theme.baseRightBorderLineColor ||
-        this._theme.baseBorderLineColor
-      );
-    }
   }
 
   /**
@@ -1486,25 +1403,7 @@ class DataGrid extends Widget {
     };
 
     // Draw the background.
-    this._drawBackground(rgn,
-      this._theme.colHeaderBackgroundColor ||
-      this._theme.headerBackgroundColor ||
-      this._theme.baseBackgroundColor
-    );
-
-    // Draw the row background.
-    this._drawRowBackground(rgn,
-      this._theme.colHeaderRowBackgroundColor ||
-      this._theme.headerRowBackgroundColor ||
-      this._theme.baseRowBackgroundColor
-    );
-
-    // Draw the column background.
-    this._drawColBackground(rgn,
-      this._theme.colHeaderColBackgroundColor ||
-      this._theme.headerColBackgroundColor ||
-      this._theme.baseColBackgroundColor
-    );
+    this._drawBackground(rgn, this._style.headerBackgroundColor);
 
     // Draw the cell content for the cell region.
     this._drawCells(rgn,
@@ -1515,47 +1414,15 @@ class DataGrid extends Widget {
 
     // Draw the horizontal grid lines.
     this._drawHorizontalGridLines(rgn,
-      this._theme.colHeaderHorizontalGridLineColor ||
-      this._theme.colHeaderGridLineColor ||
-      this._theme.headerHorizontalGridLineColor ||
-      this._theme.headerGridLineColor ||
-      this._theme.baseHorizontalGridLineColor ||
-      this._theme.baseGridLineColor
+      this._style.headerHorizontalGridLineColor ||
+      this._style.headerGridLineColor
     );
 
     // Draw the vertical grid lines.
     this._drawVerticalGridLines(rgn,
-      this._theme.colHeaderVerticalGridLineColor ||
-      this._theme.colHeaderGridLineColor ||
-      this._theme.headerVerticalGridLineColor ||
-      this._theme.headerGridLineColor ||
-      this._theme.baseVerticalGridLineColor ||
-      this._theme.baseGridLineColor
+      this._style.headerVerticalGridLineColor ||
+      this._style.headerGridLineColor
     );
-
-    // Draw the bottom border line if needed.
-    if (r2 === this._colHeaderSections.sectionCount - 1) {
-      this._drawBottomBorderLine(rgn,
-        this._theme.colHeaderBottomBorderLineColor ||
-        this._theme.colHeaderBorderLineColor ||
-        this._theme.headerBottomBorderLineColor ||
-        this._theme.headerBorderLineColor ||
-        this._theme.baseBottomBorderLineColor ||
-        this._theme.baseBorderLineColor
-      );
-    }
-
-    // Draw the right border line if needed.
-    if (c2 === this._colSections.sectionCount - 1) {
-      this._drawRightBorderLine(rgn,
-        this._theme.colHeaderRightBorderLineColor ||
-        this._theme.colHeaderBorderLineColor ||
-        this._theme.headerRightBorderLineColor ||
-        this._theme.headerBorderLineColor ||
-        this._theme.baseRightBorderLineColor ||
-        this._theme.baseBorderLineColor
-      );
-    }
   }
 
   /**
@@ -1649,25 +1516,7 @@ class DataGrid extends Widget {
     };
 
     // Draw the background.
-    this._drawBackground(rgn,
-      this._theme.cornerHeaderBackgroundColor ||
-      this._theme.headerBackgroundColor ||
-      this._theme.baseBackgroundColor
-    );
-
-    // Draw the row background.
-    this._drawRowBackground(rgn,
-      this._theme.cornerHeaderRowBackgroundColor ||
-      this._theme.headerRowBackgroundColor ||
-      this._theme.baseRowBackgroundColor
-    );
-
-    // Draw the column background.
-    this._drawColBackground(rgn,
-      this._theme.cornerHeaderColBackgroundColor ||
-      this._theme.headerColBackgroundColor ||
-      this._theme.baseColBackgroundColor
-    );
+    this._drawBackground(rgn, this._style.headerBackgroundColor);
 
     // Draw the cell content for the cell region.
     this._drawCells(rgn,
@@ -1678,47 +1527,15 @@ class DataGrid extends Widget {
 
     // Draw the horizontal grid lines.
     this._drawHorizontalGridLines(rgn,
-      this._theme.cornerHeaderHorizontalGridLineColor ||
-      this._theme.cornerHeaderGridLineColor ||
-      this._theme.headerHorizontalGridLineColor ||
-      this._theme.headerGridLineColor ||
-      this._theme.baseHorizontalGridLineColor ||
-      this._theme.baseGridLineColor
+      this._style.headerHorizontalGridLineColor ||
+      this._style.headerGridLineColor
     );
 
     // Draw the vertical grid lines.
     this._drawVerticalGridLines(rgn,
-      this._theme.cornerHeaderVerticalGridLineColor ||
-      this._theme.cornerHeaderGridLineColor ||
-      this._theme.headerVerticalGridLineColor ||
-      this._theme.headerGridLineColor ||
-      this._theme.baseVerticalGridLineColor ||
-      this._theme.baseGridLineColor
+      this._style.headerVerticalGridLineColor ||
+      this._style.headerGridLineColor
     );
-
-    // Draw the bottom border line if needed.
-    if (r2 === this._rowHeaderSections.sectionCount - 1) {
-      this._drawBottomBorderLine(rgn,
-        this._theme.cornerHeaderBottomBorderLineColor ||
-        this._theme.cornerHeaderBorderLineColor ||
-        this._theme.headerBottomBorderLineColor ||
-        this._theme.headerBorderLineColor ||
-        this._theme.baseBottomBorderLineColor ||
-        this._theme.baseBorderLineColor
-      );
-    }
-
-    // Draw the right border line if needed.
-    if (c2 === this._colHeaderSections.sectionCount - 1) {
-      this._drawRightBorderLine(rgn,
-        this._theme.cornerHeaderRightBorderLineColor ||
-        this._theme.cornerHeaderBorderLineColor ||
-        this._theme.headerRightBorderLineColor ||
-        this._theme.headerBorderLineColor ||
-        this._theme.baseRightBorderLineColor ||
-        this._theme.baseBorderLineColor
-      );
-    }
   }
 
   /**
@@ -2039,78 +1856,6 @@ class DataGrid extends Widget {
     this._canvasGC.stroke();
   }
 
-  /**
-   * Draw the right border line for the cell region.
-   */
-  private _drawRightBorderLine(rgn: Private.ICellRegion, color: string | undefined): void {
-    // Bail if there is no color to draw.
-    if (!color) {
-      return;
-    }
-
-    // Compute the X position of the line.
-    let pos = rgn.x + rgn.width - 1;
-
-    // Bail if the position is out of range.
-    if (pos < rgn.xMin || pos > rgn.xMax) {
-      return;
-    }
-
-    // Compute the Y bounds for the vertical line.
-    let y1 = Math.max(rgn.yMin, rgn.y);
-    let y2 = Math.min(rgn.y + rgn.height, rgn.yMax + 1);
-
-    // Begin the path for the border line.
-    this._canvasGC.beginPath();
-
-    // Set the line width for the border line.
-    this._canvasGC.lineWidth = 1;
-
-    // Draw the border line.
-    this._canvasGC.moveTo(pos + 0.5, y1);
-    this._canvasGC.lineTo(pos + 0.5, y2);
-
-    // Stroke the line with the specified color.
-    this._canvasGC.strokeStyle = color;
-    this._canvasGC.stroke();
-  }
-
-  /**
-   * Draw the bottom border line for the cell region.
-   */
-  private _drawBottomBorderLine(rgn: Private.ICellRegion, color: string | undefined): void {
-    // Bail if there is no color to draw.
-    if (!color) {
-      return;
-    }
-
-    // Compute the Y position of the line.
-    let pos = rgn.y + rgn.height - 1;
-
-    // Bail if the position is out of range.
-    if (pos < rgn.yMin || pos > rgn.yMax) {
-      return;
-    }
-
-    // Compute the X bounds for the horizontal line.
-    let x1 = Math.max(rgn.xMin, rgn.x);
-    let x2 = Math.min(rgn.x + rgn.width, rgn.xMax + 1);
-
-    // Begin the path for the border line.
-    this._canvasGC.beginPath();
-
-    // Set the line width for the border line.
-    this._canvasGC.lineWidth = 1;
-
-    // Draw the border line.
-    this._canvasGC.moveTo(x1, pos + 0.5);
-    this._canvasGC.lineTo(x2, pos + 0.5);
-
-    // Stroke the line with the specified color.
-    this._canvasGC.strokeStyle = color;
-    this._canvasGC.stroke();
-  }
-
   private _viewport: Widget;
   private _vScrollBar: ScrollBar;
   private _hScrollBar: ScrollBar;
@@ -2142,7 +1887,7 @@ class DataGrid extends Widget {
   private _cornerHeaderCellRenderer: DataGrid.ICellRenderer | null;
   private _bodyCellRenderer: DataGrid.ICellRenderer | null;
 
-  private _theme: DataGrid.ITheme;
+  private _style: DataGrid.IStyle;
   private _headerVisibility: DataGrid.HeaderVisibility;
 }
 
@@ -2153,219 +1898,94 @@ class DataGrid extends Widget {
 export
 namespace DataGrid {
   /**
+   * An object which defines the style for a data grid.
+   *
+   * #### Notes
+   * All style colors support the full CSS color syntax.
+   */
+  export
+  interface IStyle {
+    /**
+     * The void color for the data grid.
+     *
+     * This is the base fill color for the entire data grid.
+     */
+    readonly voidColor?: string;
+
+    /**
+     * The background color for the body cells.
+     */
+    readonly backgroundColor?: string;
+
+    /**
+     * A function which returns the background color for a row.
+     *
+     * This color is layered on top of the `backgroundColor` and can
+     * be used to implement "zebra striping" of the grid rows.
+     */
+    readonly rowBackgroundColor?: (index: number) => string;
+
+    /**
+     * A function which returns the background color for a column.
+     *
+     * This color is layered on top of the `backgroundColor` and can
+     * be used to implement "zebra striping" of the grid columns.
+     */
+    readonly colBackgroundColor?: (index: number) => string;
+
+    /**
+     * The color for the grid lines of the body cells.
+     *
+     * The grid lines are draw on top of the cell contents.
+     */
+    readonly gridLineColor?: string;
+
+    /**
+     * The color for the vertical grid lines of the body cells.
+     *
+     * This overrides the `gridLineColor` option.
+     */
+    readonly verticalGridLineColor?: string;
+
+    /**
+     * The color for the horizontal grid lines of the body cells.
+     *
+     * This overrides the `gridLineColor` option.
+     */
+    readonly horizontalGridLineColor?: string;
+
+    /**
+     * The background color for the header cells.
+     */
+    readonly headerBackgroundColor?: string;
+
+    /**
+     * The color for the grid lines of the header cells.
+     *
+     * The grid lines are draw on top of the cell contents.
+     */
+    readonly headerGridLineColor?: string;
+
+    /**
+     * The color for the vertical grid lines of the header cells.
+     *
+     * This overrides the `headerGridLineColor` option.
+     */
+    readonly headerVerticalGridLineColor?: string;
+
+    /**
+     * The color for the horizontal grid lines of the header cells.
+     *
+     * This overrides the `headerGridLineColor` option.
+     */
+    readonly headerHorizontalGridLineColor?: string;
+  }
+
+  /**
    * A type alias for the supported header visibility modes.
    */
   export
   type HeaderVisibility = 'all' | 'row' | 'column' | 'none';
-
-  /**
-   * An object which renders the cells of a data grid.
-   *
-   * #### Notes
-   * If the predefined cell renderers are insufficient for a particular
-   * use case, a custom cell renderer can be defined which implements
-   * this interface.
-   *
-   * A cell renderer **must not** mutate the data model or data grid.
-   */
-  export
-  interface ICellRenderer {
-    /**
-     * Prepare the renderer for drawing a column of cells.
-     *
-     * @param gc - The graphics context to prepare.
-     *
-     * @param config - The configuration data for the column.
-     *
-     * #### Notes
-     * The grid renders cells in column-major order, and saves/restores
-     * the `gc` state before/after rendering a column.
-     *
-     * This method is called just before the grid renders the cells in
-     * a column. It allows the renderer an opportunity to set defaults
-     * on the `gc` or pre-compute column render state. This can reduce
-     * the need for costly `gc` state changes when painting each cell.
-     */
-    prepare(gc: GraphicsContext, config: IColConfig): void;
-
-    /**
-     * Paint the content for a cell.
-     *
-     * @param gc - The graphics context to use for drawing.
-     *
-     * @param config - The configuration data for the cell.
-     *
-     * #### Notes
-     * The grid renders cells in column-major order, and saves/restores
-     * the `gc` state before/after invoking the renderer.
-     *
-     * For performance, the cell content is efficiently clipped to the
-     * width of the column, but *the height is not clipped*. If height
-     * clipping is needed, the renderer must set up its own clip rect.
-     *
-     * The renderer **must not** draw outside the cell bounding height.
-     */
-    paint(gc: GraphicsContext, config: ICellConfig): void;
-  }
-
-  /**
-   * An object which holds the configuration data for a column.
-   */
-  export
-  interface IColConfig {
-    /**
-     * The column index.
-     */
-    col: number;
-
-    /**
-     * The field descriptor for the column, or `null`.
-     */
-    field: DataModel.IField | null;
-  }
-
-  /**
-   * An object which holds the configuration data for a cell.
-   */
-  export
-  interface ICellConfig {
-    /**
-     * The X coordinate of the cell bounding rectangle.
-     *
-     * #### Notes
-     * This is the viewport coordinate of the rect, and is aligned to
-     * the cell boundary. It may be negative if the cell is partially
-     * off-screen.
-     */
-    readonly x: number;
-
-    /**
-     * The Y coordinate of the cell bounding rectangle.
-     *
-     * #### Notes
-     * This is the viewport coordinate of the rect, and is aligned to
-     * the cell boundary. It may be negative if the cell is partially
-     * off-screen.
-     */
-    readonly y: number;
-
-    /**
-     * The width of the cell bounding rectangle.
-     *
-     * #### Notes
-     * This value is aligned to the cell boundary. It may extend past
-     * the viewport bounds if the cell is partially off-screen.
-     */
-    readonly width: number;
-
-    /**
-     * The width of the cell bounding rectangle.
-     *
-     * #### Notes
-     * This value is aligned to the cell boundary. It may extend past
-     * the viewport bounds if the cell is partially off-screen.
-     */
-    readonly height: number;
-
-    /**
-     * The row index of the cell.
-     */
-    readonly row: number;
-
-    /**
-     * The column index of the cell.
-     */
-    readonly col: number;
-
-    /**
-     * The data value for the cell.
-     */
-    readonly value: any;
-
-    /**
-     * The field descriptor for the column, or `null`.
-     */
-    readonly field: DataModel.IField | null;
-  }
-
-  /**
-   * An object which defines the data grid theme.
-   *
-   * #### Notes
-   * A theme provides the overall styling for the data grid. It is
-   * independent of the cell-specific styling provided by the cell
-   * renderer.
-   *
-   * TODO - document the properties and override semantics.
-   */
-  export
-  interface ITheme {
-    // Base styles.
-    readonly baseBackgroundColor?: string;
-    readonly baseRowBackgroundColor?: (index: number) => string;
-    readonly baseColBackgroundColor?: (index: number) => string;
-    readonly baseGridLineColor?: string;
-    readonly baseVerticalGridLineColor?: string;
-    readonly baseHorizontalGridLineColor?: string;
-    readonly baseBorderLineColor?: string;
-    readonly baseRightBorderLineColor?: string;
-    readonly baseBottomBorderLineColor?: string;
-
-    // Header styles.
-    readonly headerBackgroundColor?: string;
-    readonly headerRowBackgroundColor?: (index: number) => string;
-    readonly headerColBackgroundColor?: (index: number) => string;
-    readonly headerGridLineColor?: string;
-    readonly headerVerticalGridLineColor?: string;
-    readonly headerHorizontalGridLineColor?: string;
-    readonly headerBorderLineColor?: string;
-    readonly headerRightBorderLineColor?: string;
-    readonly headerBottomBorderLineColor?: string;
-
-    // Row header styles.
-    readonly rowHeaderBackgroundColor?: string;
-    readonly rowHeaderRowBackgroundColor?: (index: number) => string;
-    readonly rowHeaderColBackgroundColor?: (index: number) => string;
-    readonly rowHeaderGridLineColor?: string;
-    readonly rowHeaderVerticalGridLineColor?: string;
-    readonly rowHeaderHorizontalGridLineColor?: string;
-    readonly rowHeaderBorderLineColor?: string;
-    readonly rowHeaderRightBorderLineColor?: string;
-    readonly rowHeaderBottomBorderLineColor?: string;
-
-    // Column header styles.
-    readonly colHeaderBackgroundColor?: string;
-    readonly colHeaderRowBackgroundColor?: (index: number) => string;
-    readonly colHeaderColBackgroundColor?: (index: number) => string;
-    readonly colHeaderGridLineColor?: string;
-    readonly colHeaderVerticalGridLineColor?: string;
-    readonly colHeaderHorizontalGridLineColor?: string;
-    readonly colHeaderBorderLineColor?: string;
-    readonly colHeaderRightBorderLineColor?: string;
-    readonly colHeaderBottomBorderLineColor?: string;
-
-    // Corner header styles.
-    readonly cornerHeaderBackgroundColor?: string;
-    readonly cornerHeaderRowBackgroundColor?: (index: number) => string;
-    readonly cornerHeaderColBackgroundColor?: (index: number) => string;
-    readonly cornerHeaderGridLineColor?: string;
-    readonly cornerHeaderVerticalGridLineColor?: string;
-    readonly cornerHeaderHorizontalGridLineColor?: string;
-    readonly cornerHeaderBorderLineColor?: string;
-    readonly cornerHeaderRightBorderLineColor?: string;
-    readonly cornerHeaderBottomBorderLineColor?: string;
-
-    // Body styles.
-    readonly bodyBackgroundColor?: string;
-    readonly bodyRowBackgroundColor?: (index: number) => string;
-    readonly bodyColBackgroundColor?: (index: number) => string;
-    readonly bodyGridLineColor?: string;
-    readonly bodyVerticalGridLineColor?: string;
-    readonly bodyHorizontalGridLineColor?: string;
-    readonly bodyBorderLineColor?: string;
-    readonly bodyRightBorderLineColor?: string;
-    readonly bodyBottomBorderLineColor?: string;
-  }
 
   /**
    * An options object for initializing a data grid.
@@ -2431,12 +2051,12 @@ namespace DataGrid {
    * The default theme for a data grid.
    */
   export
-  const defaultTheme: DataGrid.ITheme = {
-    baseBackgroundColor: '#F3F3F3',
-    baseBorderLineColor: '#A0A0A0',
-    headerGridLineColor: '#B5B5B5',
-    bodyBackgroundColor: '#FFFFFF',
-    bodyGridLineColor: 'rgba(20, 20, 20, 0.15)'
+  const defaultStyle: DataGrid.IStyle = {
+    voidColor: '#F3F3F3',
+    backgroundColor: '#FFFFFF',
+    gridLineColor: 'rgba(20, 20, 20, 0.15)',
+    headerBackgroundColor: '#F3F3F3',
+    headerGridLineColor: '#B5B5B5'
   };
 }
 
