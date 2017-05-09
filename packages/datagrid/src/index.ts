@@ -5,6 +5,7 @@
 |
 | The full license is in the file LICENSE, distributed with this software.
 |----------------------------------------------------------------------------*/
+export * from './cellrenderer';
 export * from './datagrid';
 export * from './datamodel';
 export * from './graphicscontext';
