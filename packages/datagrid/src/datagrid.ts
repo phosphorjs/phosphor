@@ -335,7 +335,7 @@ class DataGrid extends Widget {
     if (this._headerVisibility === 'none') {
       return 0;
     }
-    if (this._headerVisibility === 'column') {
+    if (this._headerVisibility === 'col') {
       return 0;
     }
     return this._rowHeaderSections.totalSize;
@@ -1851,7 +1851,7 @@ namespace DataGrid {
    * A type alias for the supported header visibility modes.
    */
   export
-  type HeaderVisibility = 'all' | 'row' | 'column' | 'none';
+  type HeaderVisibility = 'all' | 'row' | 'col' | 'none';
 
   /**
    * An options object for initializing a data grid.
