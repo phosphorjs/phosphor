@@ -12,7 +12,7 @@ import {
 } from '@phosphor/commands';
 
 import {
-  DataGrid, DataModel, TextRenderer
+  DataGrid, DataModel
 } from '@phosphor/datagrid';
 
 import {
@@ -103,9 +103,9 @@ class ContentWidget extends Widget {
 class MyDataModel extends DataModel {
 
   readonly rowCount = 40000;
-  readonly colCount = 20;
-  readonly rowHeaderCount = 2;
-  readonly colHeaderCount = 2;
+  readonly colCount = 200;
+  readonly rowHeaderCount = 1;
+  readonly colHeaderCount = 1;
 
   data(row: number, col: number): any {
     if (col < 0 && row >= 0) {
@@ -118,18 +118,6 @@ class MyDataModel extends DataModel {
       return `Corner: ${row}, ${col}`;
     }
     return `(${row}, ${col})`;
-  }
-}
-
-class MyDelegate implements TextRenderer.IStyleDelegate {
-
-  static readonly orangeBackgroundStyle: TextRenderer.ICellStyle = { backgroundColor: '#F6B26B' };
-
-  getStyle(config: DataGrid.ICellConfig): TextRenderer.ICellStyle | null {
-    if (config.row >= 5 && config.row <= 7 && config.col >= 5 && config.col <= 7) {
-      return MyDelegate.orangeBackgroundStyle;
-    }
-    return null;
   }
 }
 
@@ -350,17 +338,13 @@ function main(): void {
   // let g2 = new ContentWidget('Green');
   // let y2 = new ContentWidget('Yellow');
 
-  //let cellRenderer = new TextRenderer({ styleDelegate: new MyDelegate() });
-
-  let cellRenderer = new TextRenderer();
-
-  let myTheme: DataGrid.ITheme = {
-    ...DataGrid.defaultTheme,
-    bodyRowBackgroundColor: i => i % 2 === 0 ? 'rgba(138, 172, 200, 0.3)' : '',
-    bodyColBackgroundColor: i => i % 2 === 0 ? 'rgba(100, 100, 100, 0.1)' : ''
+  let myStyle: DataGrid.IStyle = {
+    ...DataGrid.defaultStyle,
+    rowBackgroundColor: i => i % 2 === 0 ? 'rgba(138, 172, 200, 0.3)' : '',
+    colBackgroundColor: i => i % 2 === 0 ? 'rgba(100, 100, 100, 0.1)' : ''
   };
 
-  let grid = new DataGrid({ cellRenderer, theme: myTheme });
+  let grid = new DataGrid({ style: myStyle });
   grid.model = new MyDataModel();
 
   let wrapper = new BoxPanel();
