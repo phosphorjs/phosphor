@@ -30,19 +30,43 @@ class TextRenderer extends CellRenderer {
    */
   constructor(options: TextRenderer.IOptions = {}) {
     super();
-    this.style = options.style || TextRenderer.defaultStyle;
-    this.styleDelegate = options.styleDelegate || null;
+    this.font = options.font || '12px sans-serif';
+    this.textColor = options.textColor || '#000000';
+    this.backgroundColor = options.backgroundColor || '';
+    this.verticalAlignment = options.verticalAlignment || 'center';
+    this.horizontalAlignment = options.horizontalAlignment || 'left';
+    this.formatter = options.formatter || TextRenderer.defaultFormatter;
   }
 
   /**
-   *
+   * The CSS shorthand font for drawing the text.
    */
-  style: TextRenderer.IStyle;
+  font: TextRenderer.StyleProp<string>;
 
   /**
-   *
+   * The CSS color for drawing the text.
    */
-  styleDelegate: TextRenderer.IStyleDelegate | null;
+  textColor: TextRenderer.StyleProp<string>;
+
+  /**
+   * The CSS color for the cell background.
+   */
+  backgroundColor: TextRenderer.StyleProp<string>;
+
+  /**
+   * The vertical alignment for the cell text.
+   */
+  verticalAlignment: TextRenderer.StyleProp<TextRenderer.VerticalAlignment>;
+
+  /**
+   * The horizontal alignment for the cell text.
+   */
+  horizontalAlignment: TextRenderer.StyleProp<TextRenderer.HorizontalAlignment>;
+
+  /**
+   * The format function which converts the cell value to text.
+   */
+  formatter: TextRenderer.CellFunc<string>;
 
   /**
    * Paint the content for a cell.
@@ -68,18 +92,27 @@ class TextRenderer extends CellRenderer {
    * @param field - The field descriptor for the column, or `null`.
    */
   prepare(gc: GraphicsContext, row: number, col: number, field: DataModel.IField | null): void {
-    // Set the default font.
-    if (this.style.font) {
-      gc.font = this.style.font;
+    // Look up the default state from the renderer.
+    let { font, textColor, backgroundColor, horizontalAlignment } = this;
+
+    // Set up the default font.
+    if (font && typeof font === 'string') {
+      gc.font = font;
     }
 
-    // Set the default fill style.
-    if (this.style.textColor) {
-      gc.fillStyle = this.style.textColor;
+    // Set up the default fill style.
+    if (textColor && typeof textColor === 'string') {
+      gc.fillStyle = textColor;
+    } else if (backgroundColor && typeof backgroundColor === 'string') {
+      gc.fillStyle = backgroundColor;
     }
 
     // Set the default text alignment.
-    gc.textAlign = this.style.horizontalAlignment;
+    if (typeof horizontalAlignment === 'string') {
+      gc.textAlign = horizontalAlignment;
+    } else {
+      gc.textAlign = 'left';
+    }
 
     // Set the default text baseline.
     gc.textBaseline = 'bottom';
@@ -93,16 +126,16 @@ class TextRenderer extends CellRenderer {
    * @param config - The configuration data for the cell.
    */
   drawBackground(gc: GraphicsContext, config: CellRenderer.ICellConfig): void {
-    //
-    let color = this._getStyle('backgroundColor', config);
+    // Resolve the background color for the cell.
+    let backgroundColor = Private.resolve(this.backgroundColor, config);
 
     // Bail if there is no background color to draw.
-    if (!color) {
+    if (!backgroundColor) {
       return;
     }
 
     // Fill the cell with the background color.
-    gc.fillStyle = color;
+    gc.fillStyle = backgroundColor;
     gc.fillRect(config.x, config.y, config.width, config.height);
   }
 
@@ -112,19 +145,19 @@ class TextRenderer extends CellRenderer {
    * @param gc - The graphics context to use for drawing.
    *
    * @param config - The configuration data for the cell.
-   *
-   * @param style - The cell-specific style, or `null`.
    */
   drawText(gc: GraphicsContext, config: CellRenderer.ICellConfig): void {
-    //
-    let formatterFn = this.cellFormatter;
+    // Resolve the text color for the cell.
+    let textColor = Private.resolve(this.textColor, config);
 
-    let formatter = Private.resolve(config, this.cellFormatter, this.formatter);
-    //
-    let formatter = (formatterFn && formatterFn(config)) || this.formatter;
+    // Bail if there is no text color to draw.
+    if (!textColor) {
+      return;
+    }
 
     // Format the cell value to text.
-    let text = formatter(config.value);
+    let formatter = this.formatter;
+    let text = formatter(config);
 
     // Bail if there is no text to draw.
     if (!text) {
@@ -132,14 +165,10 @@ class TextRenderer extends CellRenderer {
     }
 
     // Resolve the vertical alignment.
-    let vAlign = Private.resolve(
-      config, this.cellVerticalAlignment, this.verticalAlignment
-    );
+    let vAlign = Private.resolve(this.verticalAlignment, config);
 
     // Resolve the horizontal alignment.
-    let hAlign = Private.resolve(
-      config, this.cellHorizontalAlignment, this.horizontalAlignment
-    );
+    let hAlign = Private.resolve(this.horizontalAlignment, config);
 
     // Compute the padded text box height for the specified alignment.
     let boxHeight = config.height - (vAlign === 'center' ? 2 : 3);
@@ -150,7 +179,7 @@ class TextRenderer extends CellRenderer {
     }
 
     // Resolve the font for the cell.
-    let font = Private.resolve(config, this.cellFont, this.font);
+    let font = Private.resolve(this.font, config);
 
     // Set the gc font if needed.
     if (font) {
@@ -194,16 +223,6 @@ class TextRenderer extends CellRenderer {
       throw 'unreachable';
     }
 
-    // Resolve the text color for the cell.
-    let textColor = Private.resolve(
-      config, this.cellTextColor, this.textColor
-    );
-
-    // Set the fill style if needed.
-    if (textColor) {
-      gc.fillStyle = textColor;
-    }
-
     // Clip the cell if the text is taller than the text box height.
     if (textHeight > boxHeight) {
       gc.beginPath();
@@ -211,16 +230,13 @@ class TextRenderer extends CellRenderer {
       gc.clip();
     }
 
-    // Set the text alignment state.
+    // Set up the text drawing state.
+    gc.fillStyle = textColor;
     gc.textAlign = hAlign;
     gc.textBaseline = 'bottom';
 
     // Draw the text for the cell.
     gc.fillText(text, textX, textY);
-  }
-
-  private _getStyle<K keyof TextRenderer.IStyle>(key: K, config: CellRenderer.ICellConfig): TextRenderer.IStyle[K] {
-    return (this.styleDelegate && this.styleDelegate.getStyle(key, config)) || this.style[key];
   }
 }
 
@@ -231,57 +247,33 @@ class TextRenderer extends CellRenderer {
 export
 namespace TextRenderer {
   /**
-   * A type alias for a function which formats a cell value as text.
+   * A type alias for a text renderer cell config function.
+   *
+   * This function type is used to compute a value from a cell config.
    */
   export
-  type Formatter = (value: any) => string;
+  type CellFunc<T> = (config: CellRenderer.ICellConfig) => T;
 
   /**
+   * A type alias for a text renderer style property.
    *
+   * The type is used to define a static style property, or a function
+   * which computes the style property for a given cell config.
    */
   export
-  interface IStyle {
-    /**
-     *
-     */
-    readonly font: string;
-
-    /**
-     *
-     */
-    readonly formatter: Formatter;
-
-    /**
-     *
-     */
-    readonly textColor: string;
-
-    /**
-     *
-     */
-    readonly backgroundColor: string;
-
-    /**
-     *
-     */
-    readonly verticalAlignment: 'top' | 'center' | 'bottom';
-
-    /**
-     *
-     */
-    readonly horizontalAlignment: 'left' | 'center' | 'right';
-  }
+  type StyleProp<T> = T | CellFunc<T>;
 
   /**
-   *
+   * A type alias for the supported vertical alignment modes.
    */
   export
-  interface IStyleDelegate {
-    /**
-     *
-     */
-    getStyle<K keyof IStyle>(key: K, config: CellRenderer.ICellConfig): IStyle[K] | null;
-  }
+  type VerticalAlignment = 'top' | 'center' | 'bottom';
+
+  /**
+   * A type alias for the supported horizontal alignment modes.
+   */
+  export
+  type HorizontalAlignment = 'left' | 'center' | 'right';
 
   /**
    * An options object for initializing a text renderer.
@@ -289,24 +281,56 @@ namespace TextRenderer {
   export
   interface IOptions {
     /**
+     * The font for drawing the cell text.
      *
+     * The default is `'12px sans-serif'`.
      */
-    style?: IStyle;
+    font?: StyleProp<string>;
 
     /**
+     * The color for the drawing the cell text.
      *
+     * The default `'#000000'`.
      */
-    styleDelegate?: IStyleDelegate;
+    textColor?: StyleProp<string>;
+
+    /**
+     * The background color for the cells.
+     *
+     * The default is `''`.
+     */
+    backgroundColor?: StyleProp<string>;
+
+    /**
+     * The vertical alignment for the cell text.
+     *
+     * The default is `'center'`.
+     */
+    verticalAlignment?: StyleProp<VerticalAlignment>;
+
+    /**
+     * The horizontal alignment for the cell text.
+     *
+     * The default is `'left'`.
+     */
+    horizontalAlignment?: StyleProp<HorizontalAlignment>;
+
+    /**
+     * The format function to convert a cell value to a string.
+     *
+     * The default is `TextRenderer.defaultFormatter`.
+     */
+    formatter?: CellFunc<string>;
   }
 
   /**
-   * Convert any value to a string.
+   * The default formatter for a text renderer.
    *
    * #### Notes
-   * This is the default formatter for a text renderer.
+   * This will convert any cell value to a string.
    */
   export
-  function toString(value: any): string {
+  const defaultFormatter: CellFunc<string> = ({ value }) => {
     // Do nothing for a value which is already a string.
     if (typeof value === 'string') {
       return value;
@@ -319,7 +343,7 @@ namespace TextRenderer {
 
     // Coerce all other values to a string via `toString()`.
     return value.toString();
-  }
+  };
 
   /**
    * Measure the height of a font.
@@ -390,10 +414,10 @@ namespace Private {
   })();
 
   /**
-   * Resolve the concrete cell behavior for a text renderer.
+   * Resolve a style property for a text renderer.
    */
   export
-  function resolve<T>(config: CellRenderer.ICellConfig, cellFn: TextRenderer.CellFunc<T> | null, defaultvalue: T): T {
-    return (cellFn && cellFn(config.row, config.col, config.field, config.value)) || defaultValue;
+  function resolve<T>(thing: TextRenderer.StyleProp<T>, config: CellRenderer.ICellConfig): T {
+    return typeof thing === 'function' ? thing(config) : thing;
   }
 }
