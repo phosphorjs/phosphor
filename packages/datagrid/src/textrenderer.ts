@@ -6,8 +6,12 @@
 | The full license is in the file LICENSE, distributed with this software.
 |----------------------------------------------------------------------------*/
 import {
-  DataGrid
-} from './datagrid';
+  CellRenderer
+} from './cellrenderer';
+
+import {
+  DataModel
+} from './datamodel';
 
 import {
   GraphicsContext
@@ -18,54 +22,25 @@ import {
  * A cell renderer which renders data values as text.
  */
 export
-class TextRenderer implements DataGrid.ICellRenderer {
+class TextRenderer extends CellRenderer {
   /**
    * Construct a new text renderer.
    *
    * @param options - The options for initializing the renderer.
    */
   constructor(options: TextRenderer.IOptions = {}) {
-    this.font = options.font || '';
-    this.textColor = options.textColor || '';
-    this.backgroundColor = options.backgroundColor || '';
-    this.verticalTextAlignment = options.verticalTextAlignment || 'bottom';
-    this.horizontalTextAlignment = options.horizontalTextAlignment || 'left';
-    this.textFormatter = options.textFormatter || null;
+    super();
+    this.style = options.style || TextRenderer.defaultStyle;
     this.styleDelegate = options.styleDelegate || null;
   }
 
   /**
-   * The default font for cells.
+   *
    */
-  font: string;
+  style: TextRenderer.IStyle;
 
   /**
-   * The default text color for cells.
-   */
-  textColor: string;
-
-  /**
-   * The default background color for cells.
-   */
-  backgroundColor: string;
-
-  /**
-   * The default vertical text alignment for cells.
-   */
-  verticalTextAlignment: 'top' | 'center' | 'bottom';
-
-  /**
-   * The default horizontal text alignment for cells.
-   */
-  horizontalTextAlignment: 'left' | 'center' | 'right';
-
-  /**
-   * The formatter for converting cell values to text.
-   */
-  textFormatter: TextRenderer.ITextFormatter | null;
-
-  /**
-   * The delegate object for getting cell-specific styles.
+   *
    */
   styleDelegate: TextRenderer.IStyleDelegate | null;
 
@@ -76,15 +51,38 @@ class TextRenderer implements DataGrid.ICellRenderer {
    *
    * @param config - The configuration data for the cell.
    */
-  paint(gc: GraphicsContext, config: DataGrid.ICellConfig): void {
-    // Fetch the cell specific style.
-    let style = this.styleDelegate && this.styleDelegate.getStyle(config);
+  paint(gc: GraphicsContext, config: CellRenderer.ICellConfig): void {
+    this.drawBackground(gc, config);
+    this.drawText(gc, config);
+  }
 
-    // Draw the cell background.
-    this.drawBackground(gc, config, style);
+  /**
+   * Prepare the graphics context for drawing a column of cells.
+   *
+   * @param gc - The graphics context to prepare.
+   *
+   * @param row - The index of the first row to be rendered.
+   *
+   * @param col - The index of the column to be rendered.
+   *
+   * @param field - The field descriptor for the column, or `null`.
+   */
+  prepare(gc: GraphicsContext, row: number, col: number, field: DataModel.IField | null): void {
+    // Set the default font.
+    if (this.style.font) {
+      gc.font = this.style.font;
+    }
 
-    // Draw the cell text.
-    this.drawText(gc, config, style);
+    // Set the default fill style.
+    if (this.style.textColor) {
+      gc.fillStyle = this.style.textColor;
+    }
+
+    // Set the default text alignment.
+    gc.textAlign = this.style.horizontalAlignment;
+
+    // Set the default text baseline.
+    gc.textBaseline = 'bottom';
   }
 
   /**
@@ -93,17 +91,12 @@ class TextRenderer implements DataGrid.ICellRenderer {
    * @param gc - The graphics context to use for drawing.
    *
    * @param config - The configuration data for the cell.
-   *
-   * @param style - The cell-specific style, or `null`.
-   *
-   * #### Notes
-   * This method may be reimplemented by a subclass if needed.
    */
-  protected drawBackground(gc: GraphicsContext, config: DataGrid.ICellConfig, style: TextRenderer.ICellStyle | null): void {
-    // Resolve the background color for the cell.
-    let color = (style && style.backgroundColor) || this.backgroundColor;
+  drawBackground(gc: GraphicsContext, config: CellRenderer.ICellConfig): void {
+    //
+    let color = this._getStyle('backgroundColor', config);
 
-    // Bail if there is no background to draw.
+    // Bail if there is no background color to draw.
     if (!color) {
       return;
     }
@@ -121,32 +114,31 @@ class TextRenderer implements DataGrid.ICellRenderer {
    * @param config - The configuration data for the cell.
    *
    * @param style - The cell-specific style, or `null`.
-   *
-   * #### Notes
-   * This method may be reimplemented by a subclass if needed.
    */
-  protected drawText(gc: GraphicsContext, config: DataGrid.ICellConfig, style: TextRenderer.ICellStyle | null): void {
-    // Format the text for display.
-    let text: string;
-    if (this.textFormatter) {
-      text = this.textFormatter.formatText(config);
-    } else {
-      text = TextRenderer.toString(config.value);
-    }
+  drawText(gc: GraphicsContext, config: CellRenderer.ICellConfig): void {
+    //
+    let formatterFn = this.cellFormatter;
+
+    let formatter = Private.resolve(config, this.cellFormatter, this.formatter);
+    //
+    let formatter = (formatterFn && formatterFn(config)) || this.formatter;
+
+    // Format the cell value to text.
+    let text = formatter(config.value);
 
     // Bail if there is no text to draw.
     if (!text) {
       return;
     }
 
-    // Resolve the vertical text alignment for the cell.
-    let vAlign = (
-      (style && style.verticalTextAlignment) || this.verticalTextAlignment
+    // Resolve the vertical alignment.
+    let vAlign = Private.resolve(
+      config, this.cellVerticalAlignment, this.verticalAlignment
     );
 
-    // Resolve the horizontal text alignment for the cell.
-    let hAlign = (
-      (style && style.horizontalTextAlignment) || this.horizontalTextAlignment
+    // Resolve the horizontal alignment.
+    let hAlign = Private.resolve(
+      config, this.cellHorizontalAlignment, this.horizontalAlignment
     );
 
     // Compute the padded text box height for the specified alignment.
@@ -158,7 +150,7 @@ class TextRenderer implements DataGrid.ICellRenderer {
     }
 
     // Resolve the font for the cell.
-    let font = (style && style.font) || this.font;
+    let font = Private.resolve(config, this.cellFont, this.font);
 
     // Set the gc font if needed.
     if (font) {
@@ -202,6 +194,16 @@ class TextRenderer implements DataGrid.ICellRenderer {
       throw 'unreachable';
     }
 
+    // Resolve the text color for the cell.
+    let textColor = Private.resolve(
+      config, this.cellTextColor, this.textColor
+    );
+
+    // Set the fill style if needed.
+    if (textColor) {
+      gc.fillStyle = textColor;
+    }
+
     // Clip the cell if the text is taller than the text box height.
     if (textHeight > boxHeight) {
       gc.beginPath();
@@ -209,18 +211,16 @@ class TextRenderer implements DataGrid.ICellRenderer {
       gc.clip();
     }
 
-    // Resolve the text color for the cell.
-    let color = (style && style.textColor) || this.textColor;
-
-    // Set the fill style if needed.
-    if (color) {
-      gc.fillStyle = color;
-    }
-
-    // Draw the text for the cell.
+    // Set the text alignment state.
     gc.textAlign = hAlign;
     gc.textBaseline = 'bottom';
+
+    // Draw the text for the cell.
     gc.fillText(text, textX, textY);
+  }
+
+  private _getStyle<K keyof TextRenderer.IStyle>(key: K, config: CellRenderer.ICellConfig): TextRenderer.IStyle[K] {
+    return (this.styleDelegate && this.styleDelegate.getStyle(key, config)) || this.style[key];
   }
 }
 
@@ -231,80 +231,56 @@ class TextRenderer implements DataGrid.ICellRenderer {
 export
 namespace TextRenderer {
   /**
-   * An object which holds cell-specific style data.
-   *
-   * #### Notes
-   * The cell style data will override the renderer defaults.
+   * A type alias for a function which formats a cell value as text.
    */
   export
-  interface ICellStyle {
-    /**
-     * The font for the cell as a CSS font string.
-     */
-    font?: string;
-
-    /**
-     * The text color for the cell.
-     */
-    textColor?: string;
-
-    /**
-     * The background color for the cell.
-     */
-    backgroundColor?: string;
-
-    /**
-     * The vertical text alignment for the cell.
-     */
-    verticalTextAlignment?: 'top' | 'center' | 'bottom';
-
-    /**
-     * The horizontal text alignment for the cell.
-     */
-    horizontalTextAlignment?: 'left' | 'center' | 'right';
-  }
-
-  // TODO
-  // "Delegate" -> "???"
+  type Formatter = (value: any) => string;
 
   /**
-   * An object which resolves cell-specific styles.
+   *
+   */
+  export
+  interface IStyle {
+    /**
+     *
+     */
+    readonly font: string;
+
+    /**
+     *
+     */
+    readonly formatter: Formatter;
+
+    /**
+     *
+     */
+    readonly textColor: string;
+
+    /**
+     *
+     */
+    readonly backgroundColor: string;
+
+    /**
+     *
+     */
+    readonly verticalAlignment: 'top' | 'center' | 'bottom';
+
+    /**
+     *
+     */
+    readonly horizontalAlignment: 'left' | 'center' | 'right';
+  }
+
+  /**
+   *
    */
   export
   interface IStyleDelegate {
     /**
-     * Get the cell style for a specific cell.
      *
-     * @param config - The configuration data for the cell.
-     *
-     * @returns The style for the specified cell, or `null`.
-     *
-     * #### Notes
-     * This method is called often, and so should be efficient.
-     *
-     * The delegate **must not** throw exceptions.
      */
-    getStyle(config: DataGrid.ICellConfig): ICellStyle | null;
-  }
-
-  /**
-   * An object which converts a cell data value to text.
-   */
-  export
-  interface ITextFormatter {
-    /**
-     * Format the cell data value for the renderer.
-     *
-     * @param config - The configuration data for the cell.
-     *
-     * @returns The cell text for display, or an empty string.
-     *
-     * #### Notes
-     * This method is called often, and so should be efficient.
-     *
-     * The formatter **must not** throw exceptions.
-     */
-    formatText(config: DataGrid.ICellConfig): string;
+    getStyle<K keyof IStyle>(key: K, config: CellRenderer.ICellConfig): IStyle[K] | null;
   }
 
   /**
@@ -313,58 +289,12 @@ namespace TextRenderer {
   export
   interface IOptions {
     /**
-     * The font for all cells as a CSS font string.
      *
-     * #### Notes
-     * The default will use the grid theme font.
      */
-    font?: string;
+    style?: IStyle;
 
     /**
-     * The text color to apply to all cells.
      *
-     * #### Notes
-     * The default color is `''`.
-     */
-    textColor?: string;
-
-    /**
-     * The background color to apply to all cells.
-     *
-     * #### Notes
-     * The default color is `''`.
-     */
-    backgroundColor?: string;
-
-    /**
-     * The vertical text alignment to apply to all cells.
-     *
-     * #### Notes
-     * The default alignment is `'bottom'`.
-     */
-    verticalTextAlignment?: 'top' | 'center' | 'bottom';
-
-    /**
-     * The horizontal text alignment to apply to all cells.
-     *
-     * #### Notes
-     * The default alignment is `'left'`.
-     */
-    horizontalTextAlignment?: 'left' | 'center' | 'right';
-
-    /**
-     * The text formatter for the renderer.
-     *
-     * #### Notes
-     * The default value is `null`.
-     */
-    textFormatter?: ITextFormatter;
-
-    /**
-     * The style delegate for the renderer.
-     *
-     * #### Notes
-     * The default value is `null`.
      */
     styleDelegate?: IStyleDelegate;
   }
@@ -373,9 +303,7 @@ namespace TextRenderer {
    * Convert any value to a string.
    *
    * #### Notes
-   * This is used to format a value when no text formatter is provided
-   * to the renderer. It is also useful as a fallback for custom text
-   * formatters.
+   * This is the default formatter for a text renderer.
    */
   export
   function toString(value: any): string {
@@ -460,4 +388,12 @@ namespace Private {
     node.textContent = 'M';
     return node;
   })();
+
+  /**
+   * Resolve the concrete cell behavior for a text renderer.
+   */
+  export
+  function resolve<T>(config: CellRenderer.ICellConfig, cellFn: TextRenderer.CellFunc<T> | null, defaultvalue: T): T {
+    return (cellFn && cellFn(config.row, config.col, config.field, config.value)) || defaultValue;
+  }
 }
