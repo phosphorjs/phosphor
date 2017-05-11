@@ -33,7 +33,8 @@ class Title<T> {
     if (options.mnemonic !== undefined) {
       this._mnemonic = options.mnemonic;
     }
-    if (options.icon !== undefined) {  // deprecated
+    if (options.icon !== undefined) {
+      console.warn('`Title.IOptions.icon` is deprecated. Use `Title.IOptions.iconClass` instead.');
       this._iconClass = options.icon;
     }
     if (options.caption !== undefined) {

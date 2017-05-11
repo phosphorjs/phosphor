@@ -1118,6 +1118,9 @@ namespace Private {
    */
   export
   function createCommand(options: CommandRegistry.ICommandOptions): ICommand {
+    if (options.icon !== undefined) {
+      console.warn('`CommandRegistry.ICommandOptions.icon` is deprecated. Use `CommandRegistry.ICommandOptions.iconClass` instead.');
+    }
     return {
       execute: options.execute,
       label: asFunc(options.label, emptyStringFunc),
