@@ -186,18 +186,10 @@ class CommandRegistry {
   }
 
   /**
-   * Get the icon class for a specific command.
-   *
-   * @param id - The id of the command of interest.
-   *
-   * @param args - The arguments for the command.
-   *
-   * @returns The icon class for the command, or an empty string if
-   *   the command is not registered.
+   * @deprecated Use `iconClass()` instead.
    */
   icon(id: string, args: JSONObject = JSONExt.emptyObject): string {
-    let cmd = this._commands[id];
-    return cmd ? cmd.icon.call(undefined, args) : '';
+    return this.iconClass(id, args);
   }
 
   /**
@@ -243,6 +235,36 @@ class CommandRegistry {
   className(id: string, args: JSONObject = JSONExt.emptyObject): string {
     let cmd = this._commands[id];
     return cmd ? cmd.className.call(undefined, args) : '';
+  }
+
+  /**
+   * Get the icon label for a specific command.
+   *
+   * @param id - The id of the command of interest.
+   *
+   * @param args - The arguments for the command.
+   *
+   * @returns The icon label for the command, or an empty string if
+   *   the command is not registered.
+   */
+  iconLabel(id: string, args: JSONObject = JSONExt.emptyObject): string {
+    let cmd = this._commands[id];
+    return cmd ? cmd.iconLabel.call(undefined, args) : '';
+  }
+
+  /**
+   * Get the icon class for a specific command.
+   *
+   * @param id - The id of the command of interest.
+   *
+   * @param args - The arguments for the command.
+   *
+   * @returns The icon class for the command, or an empty string if
+   *   the command is not registered.
+   */
+  iconClass(id: string, args: JSONObject = JSONExt.emptyObject): string {
+    let cmd = this._commands[id];
+    return cmd ? cmd.iconClass.call(undefined, args) : '';
   }
 
   /**
@@ -618,18 +640,7 @@ namespace CommandRegistry {
     mnemonic?: number | CommandFunc<number>;
 
     /**
-     * The icon class for the command.
-     *
-     * #### Notes
-     * This class name will be added to the icon node for the visual
-     * representation of the command.
-     *
-     * Multiple class names can be separated with white space.
-     *
-     * This can be a string literal, or a function which returns the
-     * icon based on the provided command arguments.
-     *
-     * The default value is an empty string.
+     * @deprecated Use `iconClass` instead.
      */
     icon?: string | CommandFunc<string>;
 
@@ -679,6 +690,36 @@ namespace CommandRegistry {
      * The default value is an empty string.
      */
     className?: string | CommandFunc<string>;
+
+    /**
+     * The icon label for the command.
+     *
+     * #### Notes
+     * This label will be added as text to the icon node for the visual
+     * representation of the command.
+     *
+     * This can be a string literal, or a function which returns the
+     * label based on the provided command arguments.
+     *
+     * The default value is an empty string.
+     */
+    iconLabel?: string | CommandFunc<string>;
+
+    /**
+     * The icon class for the command.
+     *
+     * #### Notes
+     * This class name will be added to the icon node for the visual
+     * representation of the command.
+     *
+     * Multiple class names can be separated with white space.
+     *
+     * This can be a string literal, or a function which returns the
+     * icon based on the provided command arguments.
+     *
+     * The default value is an empty string.
+     */
+    iconClass?: string | CommandFunc<string>;
 
     /**
      * The dataset for the command.
@@ -1061,10 +1102,11 @@ namespace Private {
     readonly execute: CommandFunc<any>;
     readonly label: CommandFunc<string>;
     readonly mnemonic: CommandFunc<number>;
-    readonly icon: CommandFunc<string>;
     readonly caption: CommandFunc<string>;
     readonly usage: CommandFunc<string>;
     readonly className: CommandFunc<string>;
+    readonly iconLabel: CommandFunc<string>;
+    readonly iconClass: CommandFunc<string>;
     readonly dataset: CommandFunc<Dataset>;
     readonly isEnabled: CommandFunc<boolean>;
     readonly isToggled: CommandFunc<boolean>;
@@ -1080,10 +1122,11 @@ namespace Private {
       execute: options.execute,
       label: asFunc(options.label, emptyStringFunc),
       mnemonic: asFunc(options.mnemonic, negativeOneFunc),
-      icon: asFunc(options.icon, emptyStringFunc),
       caption: asFunc(options.caption, emptyStringFunc),
       usage: asFunc(options.usage, emptyStringFunc),
       className: asFunc(options.className, emptyStringFunc),
+      iconLabel: asFunc(options.iconLabel, emptyStringFunc),
+      iconClass: asFunc(options.iconClass || options.icon, emptyStringFunc),
       dataset: asFunc(options.dataset, emptyDatasetFunc),
       isEnabled: options.isEnabled || trueFunc,
       isToggled: options.isToggled || falseFunc,

@@ -763,7 +763,8 @@ namespace MenuBar {
      * @returns A virtual element representing the item icon.
      */
     renderIcon(data: IRenderData): VirtualElement {
-      return h.div({ className: this.createIconClass(data) });
+      let className = this.createIconClass(data);
+      return h.div({ className }, data.title.iconLabel);
     }
 
     /**
@@ -816,7 +817,7 @@ namespace MenuBar {
      */
     createIconClass(data: IRenderData): string {
       let name = 'p-MenuBar-itemIcon';
-      let extra = data.title.icon;
+      let extra = data.title.iconClass;
       return extra ? `${name} ${extra}` : name;
     }
 
