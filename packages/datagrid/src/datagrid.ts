@@ -1111,7 +1111,7 @@ class DataGrid extends Widget {
     this._drawColBackground(rgn, this._style.colBackgroundColor);
 
     // Draw the cell content for the cell region.
-    this._drawCells(rgn);
+    this._drawCells(rgn, this._cellRenderer);
 
     // Draw the horizontal grid lines.
     this._drawHorizontalGridLines(rgn,
@@ -1219,7 +1219,7 @@ class DataGrid extends Widget {
     this._drawBackground(rgn, this._style.headerBackgroundColor);
 
     // Draw the cell content for the cell region.
-    this._drawCells(rgn);
+    this._drawCells(rgn, this._headerCellRenderer);
 
     // Draw the horizontal grid lines.
     this._drawHorizontalGridLines(rgn,
@@ -1327,7 +1327,7 @@ class DataGrid extends Widget {
     this._drawBackground(rgn, this._style.headerBackgroundColor);
 
     // Draw the cell content for the cell region.
-    this._drawCells(rgn);
+    this._drawCells(rgn, this._headerCellRenderer);
 
     // Draw the horizontal grid lines.
     this._drawHorizontalGridLines(rgn,
@@ -1436,7 +1436,7 @@ class DataGrid extends Widget {
     this._drawBackground(rgn, this._style.headerBackgroundColor);
 
     // Draw the cell content for the cell region.
-    this._drawCells(rgn);
+    this._drawCells(rgn, this._headerCellRenderer);
 
     // Draw the horizontal grid lines.
     this._drawHorizontalGridLines(rgn,
@@ -1549,7 +1549,7 @@ class DataGrid extends Widget {
   /**
    * Draw the cells for the given cell region.
    */
-  private _drawCells(rgn: Private.ICellRegion): void {
+  private _drawCells(rgn: Private.ICellRegion, renderer: CellRenderer): void {
     // Bail if there is no data model.
     if (!this._model) {
       return;
@@ -1603,7 +1603,7 @@ class DataGrid extends Widget {
 
       // Prepare the cell renderer for drawing the column.
       try {
-        this._cellRenderer.prepare(gc, rgn.row, col, field);
+        renderer.prepare(gc, rgn.row, col, field);
       } catch (err) {
         console.error(err);
       }
@@ -1640,7 +1640,7 @@ class DataGrid extends Widget {
 
         // Paint the cell into the off-screen buffer.
         try {
-          this._cellRenderer.paint(gc, config);
+          renderer.paint(gc, config);
         } catch (err) {
           console.error(err);
         }
@@ -1795,6 +1795,7 @@ class DataGrid extends Widget {
 
   private _style: DataGrid.IStyle;
   private _cellRenderer: CellRenderer;
+  private _headerCellRenderer = new TextRenderer();
   private _headerVisibility: DataGrid.HeaderVisibility;
 }
 
