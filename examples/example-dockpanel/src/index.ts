@@ -12,10 +12,6 @@ import {
 } from '@phosphor/commands';
 
 import {
-  DataGrid, DataModel
-} from '@phosphor/datagrid';
-
-import {
   Message
 } from '@phosphor/messaging';
 
@@ -96,28 +92,6 @@ class ContentWidget extends Widget {
     if (this.isAttached) {
       this.inputNode.focus();
     }
-  }
-}
-
-
-class MyDataModel extends DataModel {
-
-  readonly rowCount = 40000;
-  readonly colCount = 200;
-  readonly rowHeaderCount = 1;
-  readonly colHeaderCount = 1;
-
-  data(row: number, col: number): any {
-    if (col < 0 && row >= 0) {
-      return `Row: ${row}, ${col}`;
-    }
-    if (row < 0 && col >= 0) {
-      return `Col: ${row}, ${col}`;
-    }
-    if (row < 0 && col < 0) {
-      return `Corner: ${row}, ${col}`;
-    }
-    return `(${row}, ${col})`;
   }
 }
 
@@ -338,28 +312,13 @@ function main(): void {
   // let g2 = new ContentWidget('Green');
   // let y2 = new ContentWidget('Yellow');
 
-  let myStyle: DataGrid.IStyle = {
-    ...DataGrid.defaultStyle,
-    rowBackgroundColor: i => i % 2 === 0 ? 'rgba(138, 172, 200, 0.3)' : '',
-    colBackgroundColor: i => i % 2 === 0 ? 'rgba(100, 100, 100, 0.1)' : ''
-  };
-
-  let grid = new DataGrid({ style: myStyle });
-  grid.model = new MyDataModel();
-
-  let wrapper = new BoxPanel();
-  wrapper.id = 'grid';
-  wrapper.title.label = 'DataGrid';
-  wrapper.addWidget(grid);
-
   let dock = new DockPanel();
-  dock.addWidget(wrapper);
-  dock.addWidget(b1, { mode: 'split-right', ref: wrapper });
+  dock.addWidget(r1);
+  dock.addWidget(b1, { mode: 'split-right', ref: r1 });
   dock.addWidget(y1, { mode: 'split-bottom', ref: b1 });
   dock.addWidget(g1, { mode: 'split-left', ref: y1 });
   dock.addWidget(r2, { ref: b1 });
   dock.addWidget(b2, { mode: 'split-right', ref: y1 });
-  dock.addWidget(r1, { ref: wrapper });
   dock.id = 'dock';
 
   let savedLayouts: DockPanel.ILayoutConfig[] = [];
@@ -403,8 +362,6 @@ function main(): void {
 
   Widget.attach(bar, document.body);
   Widget.attach(main, document.body);
-
-  (window as any).grid = grid;
 }
 
 
