@@ -1159,7 +1159,6 @@ namespace Private {
         score = lFuzzyMatch.score;
         labelIndices = lFuzzyMatch.indices;
         categoryIndices = null;
-        return { matchType, score, categoryIndices, labelIndices, item };
       }
     }
 
@@ -1171,7 +1170,6 @@ namespace Private {
         score = cExactMatch.score;
         categoryIndices = cExactMatch.indices;
         labelIndices = null;
-        return { matchType, score, categoryIndices, labelIndices, item };
       }
     }
 
@@ -1183,7 +1181,6 @@ namespace Private {
         score = cFuzzyMatch.score;
         categoryIndices = cFuzzyMatch.indices;
         labelIndices = null;
-        return { matchType, score, categoryIndices, labelIndices, item };
       }
     }
 
