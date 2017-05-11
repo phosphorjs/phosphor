@@ -901,7 +901,52 @@ class DataGrid extends Widget {
   /**
    * A signal handler for the data model `changed` signal.
    */
-  private _onModelChanged(sender: DataModel, args: DataModel.ChangedArgs): void { }
+  private _onModelChanged(sender: DataModel, args: DataModel.ChangedArgs): void {
+    if (args.type !== 'cells-changed') {
+      return;
+    }
+
+    let r1 = args.rowIndex;
+    let c1 = args.colIndex;
+    let r2 = r1 + args.rowSpan - 1;
+    let c2 = c1 + args.colSpan - 1;
+
+    let x1 = this._colSections.sectionOffset(c1) - 1;
+    let y1 = this._rowSections.sectionOffset(r1) - 1;
+
+    let x2 = this._colSections.sectionOffset(c2);
+    let y2 = this._rowSections.sectionOffset(r2);
+
+    x2 += this._colSections.sectionSize(c2) - 1;
+    y2 += this._rowSections.sectionSize(r2) - 1;
+
+    x1 -= this._scrollX;
+    y1 -= this._scrollY;
+
+    x2 -= this._scrollX;
+    y2 -= this._scrollY;
+
+    x1 += this.rowHeaderWidth;
+    x2 += this.rowHeaderWidth;
+    y1 += this.colHeaderHeight;
+    y2 += this.colHeaderHeight;
+
+    let minX = this.rowHeaderWidth;
+    let minY = this.colHeaderHeight;
+    let maxX = this._canvas.width - 1;
+    let maxY = this._canvas.height - 1;
+
+    if (x2 < minX || y2 < minY || x1 > maxX || y1 > maxY) {
+      return;
+    }
+
+    x1 = Math.max(minX, x1);
+    x2 = Math.min(x2, maxX);
+    y1 = Math.max(minY, y1);
+    y2 = Math.min(y2, maxY);
+
+    this._paint(x1, y1, x2 - x1 + 1, y2 - y1 + 1);
+  }
 
   /**
    * Paint the grid content for the given dirty rect.
