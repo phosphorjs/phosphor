@@ -229,11 +229,9 @@ namespace Private {
       return null;
     }
 
-    // CodeMirror has some dark edge cases where right clicking on the
-    // caret will cause the `target` to be removed from the DOM before
-    // other event handlers process the context menu event. That means
-    // the `target` will be a dangling node and the matching may fail.
-    // In that case, search for the new target node by point. If that
+    // There are some third party libraries that cause the `target` to
+    // be detached from the DOM before Phosphor can process the event.
+    // If that happens, search for a new target node by point. If that
     // node is still dangling, bail.
     if (!currentTarget.contains(target)) {
       target = document.elementFromPoint(event.clientX, event.clientY);
