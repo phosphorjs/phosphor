@@ -1050,6 +1050,11 @@ namespace Private {
    */
   interface IScore {
     /**
+     * The numerical type for the text match.
+     */
+    matchType: number;
+
+    /**
      * The numerical score for the text match.
      */
     score: number;
@@ -1073,6 +1078,10 @@ namespace Private {
   /**
    * Perform a fuzzy match on an array of command items.
    */
+  let LABEL_EXACT_MATCH_TYPE = 0;
+  let LABEL_FUZZY_MATCH_TYPE = 1;
+  let CATEGORY_EXACT_MATCH_TYPE = 10;
+  let CATEGORY_FUZZY_MATCH_TYPE = 11;
   function matchItems(items: CommandPalette.IItem[], query: string): IScore[] {
     // Normalize the query text to lower case with no whitespace.
     query = normalizeQuery(query);
@@ -1091,7 +1100,7 @@ namespace Private {
       // If the query is empty, all items are matched by default.
       if (!query) {
         scores.push({
-          score: 0, categoryIndices: null, labelIndices: null, item
+          matchType: -1, score: 0, categoryIndices: null, labelIndices: null, item
         });
         continue;
       }
@@ -1128,65 +1137,78 @@ namespace Private {
     // Set up the result variables.
     let categoryIndices: number[] | null = null;
     let labelIndices: number[] | null = null;
+    let matchType = Infinity;
     let score = Infinity;
 
-    // Test for a full match in the category.
-    let cMatch = StringExt.matchSumOfDeltas(category, query);
-    if (cMatch && cMatch.score < score) {
-      score = cMatch.score;
-      categoryIndices = cMatch.indices;
-      labelIndices = null;
+    // First, test for an exact match in the label
+    if (LABEL_EXACT_MATCH_TYPE <= matchType) {
+      let lExactMatch = StringExt.matchExact(label, query);
+      if (lExactMatch) {
+        matchType = LABEL_EXACT_MATCH_TYPE;
+        score = lExactMatch.score;
+        labelIndices = lExactMatch.indices;
+        categoryIndices = null;
+      }
     }
 
-    // Test for a better full match in the label.
-    let lMatch = StringExt.matchSumOfDeltas(label, query);
-    if (lMatch && lMatch.score < score) {
-      score = lMatch.score;
-      labelIndices = lMatch.indices;
-      categoryIndices = null;
+    // Otherwise, test for a fuzzy match in the label.
+    if (LABEL_FUZZY_MATCH_TYPE <= matchType) {
+      let lFuzzyMatch = StringExt.matchSumOfDeltas(label, query);
+      if (lFuzzyMatch) {
+        matchType = LABEL_FUZZY_MATCH_TYPE;
+        score = lFuzzyMatch.score;
+        labelIndices = lFuzzyMatch.indices;
+        categoryIndices = null;
+        return { matchType, score, categoryIndices, labelIndices, item };
+      }
     }
 
-    // Test for a better split match.
-    for (let i = 0, n = query.length - 1; i < n; ++i) {
-      let cMatch = StringExt.matchSumOfDeltas(category, query.slice(0, i + 1));
-      if (!cMatch) {
-        continue;
+    // Otherwise, test for an exact match in the category
+    if (CATEGORY_EXACT_MATCH_TYPE <= matchType) {
+      let cExactMatch = StringExt.matchExact(category, query);
+      if (cExactMatch) {
+        matchType = CATEGORY_EXACT_MATCH_TYPE;
+        score = cExactMatch.score;
+        categoryIndices = cExactMatch.indices;
+        labelIndices = null;
+        return { matchType, score, categoryIndices, labelIndices, item };
       }
-      let lMatch = StringExt.matchSumOfDeltas(label, query.slice(i + 1));
-      if (!lMatch) {
-        continue;
-      }
-      if (cMatch.score + lMatch.score < score) {
-        score = cMatch.score + lMatch.score;
-        categoryIndices = cMatch.indices;
-        labelIndices = lMatch.indices;
+    }
+
+    // Otherwise, test for a fuzzy match in the category
+    if (CATEGORY_FUZZY_MATCH_TYPE <= matchType) {
+      let cFuzzyMatch = StringExt.matchSumOfDeltas(category, query);
+      if (cFuzzyMatch) {
+        matchType = CATEGORY_FUZZY_MATCH_TYPE;
+        score = cFuzzyMatch.score;
+        categoryIndices = cFuzzyMatch.indices;
+        labelIndices = null;
+        return { matchType, score, categoryIndices, labelIndices, item };
       }
     }
 
     // Bail if there is no match.
-    if (score === Infinity) {
+    if (matchType === Infinity || score === Infinity) {
       return null;
     }
 
-    // Return the final score and matched indices.
-    return { score, categoryIndices, labelIndices, item };
+    return { matchType, score, categoryIndices, labelIndices, item };
   }
 
   /**
    * A sort comparison function for a match score.
    */
   function scoreCmp(a: IScore, b: IScore): number {
-    // First compare based on the match score.
+    // First compare based on the match type
+    let m1 = a.matchType - b.matchType;
+    if (m1 !== 0) {
+      return m1;
+    }
+
+    // Otherwise, compare based on the match score.
     let d1 = a.score - b.score;
     if (d1 !== 0) {
       return d1;
-    }
-
-    // Otherwise, prefer a pure category match.
-    let c1 = !!a.categoryIndices && !a.labelIndices;
-    let c2 = !!b.categoryIndices && !b.labelIndices;
-    if (c1 !== c2) {
-      return c1 ? -1 : 1;
     }
 
     // Otherwise, prefer a pure label match.
@@ -1194,6 +1216,13 @@ namespace Private {
     let l2 = !!b.labelIndices && !b.categoryIndices;
     if (l1 !== l2) {
       return l1 ? -1 : 1;
+    }
+
+    // Otherwise, prefer a pure category match.
+    let c1 = !!a.categoryIndices && !a.labelIndices;
+    let c2 = !!b.categoryIndices && !b.labelIndices;
+    if (c1 !== c2) {
+      return c1 ? -1 : 1;
     }
 
     // Otherwise, compare by category.

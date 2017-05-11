@@ -65,6 +65,31 @@ namespace StringExt {
   }
 
   /**
+   * A string matcher that looks for an exact match.
+   *
+   * @param source - The source text which should be searched.
+   *
+   * @param query - The characters to locate in the source text.
+   *
+   * @returns The match result, or `null` if there is no match.
+   *   A lower `score` represents a stronger match.
+   *
+   * #### Complexity
+   * Linear on `sourceText`.
+   */
+  export
+  function matchExact(source: string, query: string): IMatchResult | null {
+    let matchIndex = source.indexOf(query);
+    if (matchIndex === -1) { return null; }
+    let score = matchIndex;
+    let indices = [];
+    for (var i=0; i < query.length; i++) {
+      indices.push(matchIndex+i);
+    }
+    return { score, indices };
+  }
+
+  /**
    * A string matcher which uses a sum-of-squares algorithm.
    *
    * @param source - The source text which should be searched.
