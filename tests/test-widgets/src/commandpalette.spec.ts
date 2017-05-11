@@ -529,12 +529,12 @@ describe('@phosphor/widgets', () => {
           expect(items()).to.have.length(10);
           input(`${categories[1]}`);    // Category match
           expect(items()).to.have.length(5);
+          input(`${names[1][0]}`);         // Label match
+          expect(items()).to.have.length(1);
           input(`${categories[1]} B`);  // No match
           expect(items()).to.have.length(0);
-          input(`${categories[1]} I`);  // Category and text match
-          expect(items()).to.have.length(1);
 
-          input('1');  // Multi-category match
+          input('1');                   // Multi-category match
           expect(headers()).to.have.length(2);
           expect(items()).to.have.length(2);
         });

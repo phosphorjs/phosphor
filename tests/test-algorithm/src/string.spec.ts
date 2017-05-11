@@ -40,6 +40,31 @@ describe('@phosphor/algorithm', () => {
 
     });
 
+    describe('matchExact()', () => {
+
+      it('should find and score exact substring matches by starting index', () => {
+        let r1 = StringExt.matchExact('Foo Bar Baz', 'Fo')!;
+        let r2 = StringExt.matchExact('Foo Bar Baz', 'Baz')!;
+        let r3 = StringExt.matchExact('Foo Bar Baz', 'B')!;
+        expect(r1.score).to.equal(0);
+        expect(r1.indices).to.deep.equal([0, 1]);
+        expect(r2.score).to.equal(8);
+        expect(r2.indices).to.deep.equal([8, 9, 10]);
+        expect(r3.score).to.equal(4);
+        expect(r3.indices).to.deep.equal([4]);
+      });
+
+      it('should return `null` if no match is found', () => {
+        let r1 = StringExt.findIndices('Foo Bar Baz', 'faa');
+        let r2 = StringExt.findIndices('Foo Bar Baz', 'obz');
+        let r3 = StringExt.findIndices('Foo Bar Baz', 'raB');
+        expect(r1).to.equal(null);
+        expect(r2).to.equal(null);
+        expect(r3).to.equal(null);
+      });
+
+    });
+
     describe('matchSumOfSquares()', () => {
 
       it('should score the match using the sum of squared distances', () => {
