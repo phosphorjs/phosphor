@@ -97,7 +97,7 @@ class ContextMenu {
     let items = Private.matchItems(this._items, event);
 
     // Bail if there are no matching items.
-    if (items.length === 0) {
+    if (!items || items.length === 0) {
       return false;
     }
 
@@ -212,16 +212,41 @@ namespace Private {
    * The results are sorted by DOM level, specificity, and rank.
    */
   export
-  function matchItems(items: IItem[], event: MouseEvent): IItem[] {
+  function matchItems(items: IItem[], event: MouseEvent): IItem[] | null {
+    // Look up the target of the event.
+    let target = event.target as (Element | null);
+
+    // Bail if there is no target.
+    if (!target) {
+      return null;
+    }
+
+    // Look up the current target of the event.
+    let currentTarget = event.currentTarget as (Element | null);
+
+    // Bail if there is no current target.
+    if (!currentTarget) {
+      return null;
+    }
+
+    // CodeMirror has some dark edge cases where right clicking on the
+    // caret will cause the `target` to be removed from the DOM before
+    // other event handlers process the context menu event. That means
+    // the `target` will be a dangling node and the matching may fail.
+    // In that case, search for the new target node by point. If that
+    // node is still dangling, bail.
+    if (!currentTarget.contains(target)) {
+      target = document.elementFromPoint(event.clientX, event.clientY);
+      if (!target || !currentTarget.contains(target)) {
+        return null;
+      }
+    }
+
     // Set up the result array.
     let result: IItem[] = [];
 
     // Copy the items array to allow in-place modification.
     let availableItems: Array<IItem | null> = items.slice();
-
-    // Set up the limits of the DOM search.
-    let target = event.target as (Element | null);
-    let current = event.currentTarget as (Element | null);
 
     // Walk up the DOM hierarchy searching for matches.
     while (target !== null) {
@@ -257,7 +282,7 @@ namespace Private {
       }
 
       // Stop searching at the limits of the DOM range.
-      if (target === current) {
+      if (target === currentTarget) {
         break;
       }
 
