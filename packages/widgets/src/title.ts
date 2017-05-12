@@ -34,20 +34,19 @@ class Title<T> {
       this._mnemonic = options.mnemonic;
     }
     if (options.icon !== undefined) {
-      console.warn('`Title.IOptions.icon` is deprecated. Use `Title.IOptions.iconClass` instead.');
       this._iconClass = options.icon;
+    }
+    if (options.iconClass !== undefined) {
+      this._iconClass = options.iconClass;
+    }
+    if (options.iconLabel !== undefined) {
+      this._iconLabel = options.iconLabel;
     }
     if (options.caption !== undefined) {
       this._caption = options.caption;
     }
     if (options.className !== undefined) {
       this._className = options.className;
-    }
-    if (options.iconLabel !== undefined) {
-      this._iconLabel = options.iconLabel;
-    }
-    if (options.iconClass !== undefined) {
-      this._iconClass = options.iconClass;
     }
     if (options.closable !== undefined) {
       this._closable = options.closable;
@@ -113,7 +112,6 @@ class Title<T> {
    * @deprecated Use `iconClass` instead.
    */
   get icon(): string {
-    console.warn('`Title.icon` is deprecated. Use `Title.iconClass` instead.');
     return this.iconClass;
   }
 
@@ -121,8 +119,55 @@ class Title<T> {
    * @deprecated Use `iconClass` instead.
    */
   set icon(value: string) {
-    console.warn('`Title.icon` is deprecated. Use `Title.iconClass` instead.');
     this.iconClass = value;
+  }
+
+  /**
+   * Get the icon class name for the title.
+   *
+   * #### Notes
+   * The default value is an empty string.
+   */
+  get iconClass(): string {
+    return this._iconClass;
+  }
+
+  /**
+   * Set the icon class name for the title.
+   *
+   * #### Notes
+   * Multiple class names can be separated with whitespace.
+   */
+  set iconClass(value: string) {
+    if (this._iconClass === value) {
+      return;
+    }
+    this._iconClass = value;
+    this._changed.emit(undefined);
+  }
+
+  /**
+   * Get the icon label for the title.
+   *
+   * #### Notes
+   * The default value is an empty string.
+   */
+  get iconLabel(): string {
+    return this._iconLabel;
+  }
+
+  /**
+   * Set the icon label for the title.
+   *
+   * #### Notes
+   * Multiple class names can be separated with whitespace.
+   */
+  set iconLabel(value: string) {
+    if (this._iconLabel === value) {
+      return;
+    }
+    this._iconLabel = value;
+    this._changed.emit(undefined);
   }
 
   /**
@@ -167,54 +212,6 @@ class Title<T> {
       return;
     }
     this._className = value;
-    this._changed.emit(undefined);
-  }
-
-  /**
-   * Get the icon label for the title.
-   *
-   * #### Notes
-   * The default value is an empty string.
-   */
-  get iconLabel(): string {
-    return this._iconLabel;
-  }
-
-  /**
-   * Set the icon label for the title.
-   *
-   * #### Notes
-   * Multiple class names can be separated with whitespace.
-   */
-  set iconLabel(value: string) {
-    if (this._iconLabel === value) {
-      return;
-    }
-    this._iconLabel = value;
-    this._changed.emit(undefined);
-  }
-
-  /**
-   * Get the icon class name for the title.
-   *
-   * #### Notes
-   * The default value is an empty string.
-   */
-  get iconClass(): string {
-    return this._iconClass;
-  }
-
-  /**
-   * Set the icon class name for the title.
-   *
-   * #### Notes
-   * Multiple class names can be separated with whitespace.
-   */
-  set iconClass(value: string) {
-    if (this._iconClass === value) {
-      return;
-    }
-    this._iconClass = value;
     this._changed.emit(undefined);
   }
 
@@ -270,8 +267,8 @@ class Title<T> {
   private _caption = '';
   private _mnemonic = -1;
   private _className = '';
-  private _iconLabel = '';
   private _iconClass = '';
+  private _iconLabel = '';
   private _closable = false;
   private _dataset: Title.Dataset;
   private _changed = new Signal<this, void>(this);
@@ -315,6 +312,16 @@ namespace Title {
     icon?: string;
 
     /**
+     * The icon class name for the title.
+     */
+    iconClass?: string;
+
+    /**
+     * The icon label for the title.
+     */
+    iconLabel?: string;
+
+    /**
      * The caption for the title.
      */
     caption?: string;
@@ -323,16 +330,6 @@ namespace Title {
      * The extra class name for the title.
      */
     className?: string;
-
-    /**
-     * The icon label for the title.
-     */
-    iconLabel?: string;
-
-    /**
-     * The icon class name for the title.
-     */
-    iconClass?: string;
 
     /**
      * The closable state for the title.

@@ -193,6 +193,36 @@ class CommandRegistry {
   }
 
   /**
+   * Get the icon class for a specific command.
+   *
+   * @param id - The id of the command of interest.
+   *
+   * @param args - The arguments for the command.
+   *
+   * @returns The icon class for the command, or an empty string if
+   *   the command is not registered.
+   */
+  iconClass(id: string, args: JSONObject = JSONExt.emptyObject): string {
+    let cmd = this._commands[id];
+    return cmd ? cmd.iconClass.call(undefined, args) : '';
+  }
+
+  /**
+   * Get the icon label for a specific command.
+   *
+   * @param id - The id of the command of interest.
+   *
+   * @param args - The arguments for the command.
+   *
+   * @returns The icon label for the command, or an empty string if
+   *   the command is not registered.
+   */
+  iconLabel(id: string, args: JSONObject = JSONExt.emptyObject): string {
+    let cmd = this._commands[id];
+    return cmd ? cmd.iconLabel.call(undefined, args) : '';
+  }
+
+  /**
    * Get the short form caption for a specific command.
    *
    * @param id - The id of the command of interest.
@@ -235,36 +265,6 @@ class CommandRegistry {
   className(id: string, args: JSONObject = JSONExt.emptyObject): string {
     let cmd = this._commands[id];
     return cmd ? cmd.className.call(undefined, args) : '';
-  }
-
-  /**
-   * Get the icon label for a specific command.
-   *
-   * @param id - The id of the command of interest.
-   *
-   * @param args - The arguments for the command.
-   *
-   * @returns The icon label for the command, or an empty string if
-   *   the command is not registered.
-   */
-  iconLabel(id: string, args: JSONObject = JSONExt.emptyObject): string {
-    let cmd = this._commands[id];
-    return cmd ? cmd.iconLabel.call(undefined, args) : '';
-  }
-
-  /**
-   * Get the icon class for a specific command.
-   *
-   * @param id - The id of the command of interest.
-   *
-   * @param args - The arguments for the command.
-   *
-   * @returns The icon class for the command, or an empty string if
-   *   the command is not registered.
-   */
-  iconClass(id: string, args: JSONObject = JSONExt.emptyObject): string {
-    let cmd = this._commands[id];
-    return cmd ? cmd.iconClass.call(undefined, args) : '';
   }
 
   /**
@@ -645,6 +645,36 @@ namespace CommandRegistry {
     icon?: string | CommandFunc<string>;
 
     /**
+     * The icon class for the command.
+     *
+     * #### Notes
+     * This class name will be added to the icon node for the visual
+     * representation of the command.
+     *
+     * Multiple class names can be separated with white space.
+     *
+     * This can be a string literal, or a function which returns the
+     * icon based on the provided command arguments.
+     *
+     * The default value is an empty string.
+     */
+    iconClass?: string | CommandFunc<string>;
+
+    /**
+     * The icon label for the command.
+     *
+     * #### Notes
+     * This label will be added as text to the icon node for the visual
+     * representation of the command.
+     *
+     * This can be a string literal, or a function which returns the
+     * label based on the provided command arguments.
+     *
+     * The default value is an empty string.
+     */
+    iconLabel?: string | CommandFunc<string>;
+
+    /**
      * The caption for the command.
      *
      * #### Notes
@@ -690,36 +720,6 @@ namespace CommandRegistry {
      * The default value is an empty string.
      */
     className?: string | CommandFunc<string>;
-
-    /**
-     * The icon label for the command.
-     *
-     * #### Notes
-     * This label will be added as text to the icon node for the visual
-     * representation of the command.
-     *
-     * This can be a string literal, or a function which returns the
-     * label based on the provided command arguments.
-     *
-     * The default value is an empty string.
-     */
-    iconLabel?: string | CommandFunc<string>;
-
-    /**
-     * The icon class for the command.
-     *
-     * #### Notes
-     * This class name will be added to the icon node for the visual
-     * representation of the command.
-     *
-     * Multiple class names can be separated with white space.
-     *
-     * This can be a string literal, or a function which returns the
-     * icon based on the provided command arguments.
-     *
-     * The default value is an empty string.
-     */
-    iconClass?: string | CommandFunc<string>;
 
     /**
      * The dataset for the command.
@@ -1105,8 +1105,8 @@ namespace Private {
     readonly caption: CommandFunc<string>;
     readonly usage: CommandFunc<string>;
     readonly className: CommandFunc<string>;
-    readonly iconLabel: CommandFunc<string>;
     readonly iconClass: CommandFunc<string>;
+    readonly iconLabel: CommandFunc<string>;
     readonly dataset: CommandFunc<Dataset>;
     readonly isEnabled: CommandFunc<boolean>;
     readonly isToggled: CommandFunc<boolean>;
@@ -1118,9 +1118,6 @@ namespace Private {
    */
   export
   function createCommand(options: CommandRegistry.ICommandOptions): ICommand {
-    if (options.icon !== undefined) {
-      console.warn('`CommandRegistry.ICommandOptions.icon` is deprecated. Use `CommandRegistry.ICommandOptions.iconClass` instead.');
-    }
     return {
       execute: options.execute,
       label: asFunc(options.label, emptyStringFunc),
@@ -1128,8 +1125,8 @@ namespace Private {
       caption: asFunc(options.caption, emptyStringFunc),
       usage: asFunc(options.usage, emptyStringFunc),
       className: asFunc(options.className, emptyStringFunc),
-      iconLabel: asFunc(options.iconLabel, emptyStringFunc),
       iconClass: asFunc(options.iconClass || options.icon, emptyStringFunc),
+      iconLabel: asFunc(options.iconLabel, emptyStringFunc),
       dataset: asFunc(options.dataset, emptyDatasetFunc),
       isEnabled: options.isEnabled || trueFunc,
       isToggled: options.isToggled || falseFunc,

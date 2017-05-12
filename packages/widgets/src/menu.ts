@@ -1039,6 +1039,16 @@ namespace Menu {
     readonly icon: string;
 
     /**
+     * The icon class for the menu item.
+     */
+    readonly iconClass: string;
+
+    /**
+     * The icon label for the menu item.
+     */
+    readonly iconLabel: string;
+
+    /**
      * The display caption for the menu item.
      */
     readonly caption: string;
@@ -1047,16 +1057,6 @@ namespace Menu {
      * The extra class name for the menu item.
      */
     readonly className: string;
-
-    /**
-     * The icon label for the menu item.
-     */
-    readonly iconLabel: string;
-
-    /**
-     * The icon class for the menu item.
-     */
-    readonly iconClass: string;
 
     /**
      * The dataset for the menu item.
@@ -1733,8 +1733,33 @@ namespace Private {
      * @deprecated Use `iconClass` instead.
      */
     get icon(): string {
-      console.warn('`MenuItem.icon` is deprecated. Use `MenuItem.iconClass` instead.');
       return this.iconClass;
+    }
+
+    /**
+     * The icon class for the menu item.
+     */
+    get iconClass(): string {
+      if (this.type === 'command') {
+        return this._commands.iconClass(this.command, this.args);
+      }
+      if (this.type === 'submenu' && this.submenu) {
+        return this.submenu.title.iconClass;
+      }
+      return '';
+    }
+
+    /**
+     * The icon label for the menu item.
+     */
+    get iconLabel(): string {
+      if (this.type === 'command') {
+        return this._commands.iconLabel(this.command, this.args);
+      }
+      if (this.type === 'submenu' && this.submenu) {
+        return this.submenu.title.iconLabel;
+      }
+      return '';
     }
 
     /**
@@ -1759,32 +1784,6 @@ namespace Private {
       }
       if (this.type === 'submenu' && this.submenu) {
         return this.submenu.title.className;
-      }
-      return '';
-    }
-
-    /**
-     * The icon label for the menu item.
-     */
-    get iconLabel(): string {
-      if (this.type === 'command') {
-        return this._commands.iconLabel(this.command, this.args);
-      }
-      if (this.type === 'submenu' && this.submenu) {
-        return this.submenu.title.iconLabel;
-      }
-      return '';
-    }
-
-    /**
-     * The icon class for the menu item.
-     */
-    get iconClass(): string {
-      if (this.type === 'command') {
-        return this._commands.iconClass(this.command, this.args);
-      }
-      if (this.type === 'submenu' && this.submenu) {
-        return this.submenu.title.iconClass;
       }
       return '';
     }
