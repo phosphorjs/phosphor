@@ -203,6 +203,34 @@ function main(): void {
     }
   });
 
+  commands.addCommand('example:clear-cell', {
+    label: 'Clear Cell',
+    execute: () => {
+      console.log('Clear Cell');
+    }
+  });
+
+  commands.addCommand('example:cut-cells', {
+    label: 'Cut Cell(s)',
+    execute: () => {
+      console.log('Cut Cell(s)');
+    }
+  });
+
+  commands.addCommand('example:run-cell', {
+    label: 'Run Cell',
+    execute: () => {
+      console.log('Run Cell');
+    }
+  });
+
+  commands.addCommand('example:cell-test', {
+    label: 'Cell Test',
+    execute: () => {
+      console.log('Cell Test');
+    }
+  });
+
   commands.addCommand('notebook:new', {
     label: 'New Notebook',
     execute: () => {
@@ -272,6 +300,10 @@ function main(): void {
   palette.addItem({ command: 'example:save-on-exit', category: 'File' });
   palette.addItem({ command: 'example:open-task-manager', category: 'File' });
   palette.addItem({ command: 'example:close', category: 'File' });
+  palette.addItem({ command: 'example:clear-cell', category: 'Notebook Cell Operations' });
+  palette.addItem({ command: 'example:cut-cells', category: 'Notebook Cell Operations' });
+  palette.addItem({ command: 'example:run-cell', category: 'Notebook Cell Operations' });
+  palette.addItem({ command: 'example:cell-test', category: 'Console' });
   palette.addItem({ command: 'notebook:new', category: 'Notebook' });
   palette.id = 'palette';
 
