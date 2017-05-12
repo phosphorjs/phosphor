@@ -101,7 +101,7 @@ function main(): void {
   commands.addCommand('example:cut', {
     label: 'Cut',
     mnemonic: 1,
-    icon: 'fa fa-cut',
+    iconClass: 'fa fa-cut',
     execute: () => {
       console.log('Cut');
     }
@@ -110,7 +110,7 @@ function main(): void {
   commands.addCommand('example:copy', {
     label: 'Copy File',
     mnemonic: 0,
-    icon: 'fa fa-copy',
+    iconClass: 'fa fa-copy',
     execute: () => {
       console.log('Copy');
     }
@@ -119,7 +119,7 @@ function main(): void {
   commands.addCommand('example:paste', {
     label: 'Paste',
     mnemonic: 0,
-    icon: 'fa fa-paste',
+    iconClass: 'fa fa-paste',
     execute: () => {
       console.log('Paste');
     }
@@ -162,7 +162,7 @@ function main(): void {
   commands.addCommand('example:close', {
     label: 'Close',
     mnemonic: 0,
-    icon: 'fa fa-close',
+    iconClass: 'fa fa-close',
     execute: () => {
       console.log('Close');
     }
