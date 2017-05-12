@@ -1102,11 +1102,11 @@ namespace Private {
     readonly execute: CommandFunc<any>;
     readonly label: CommandFunc<string>;
     readonly mnemonic: CommandFunc<number>;
+    readonly iconClass: CommandFunc<string>;
+    readonly iconLabel: CommandFunc<string>;
     readonly caption: CommandFunc<string>;
     readonly usage: CommandFunc<string>;
     readonly className: CommandFunc<string>;
-    readonly iconClass: CommandFunc<string>;
-    readonly iconLabel: CommandFunc<string>;
     readonly dataset: CommandFunc<Dataset>;
     readonly isEnabled: CommandFunc<boolean>;
     readonly isToggled: CommandFunc<boolean>;
@@ -1122,11 +1122,11 @@ namespace Private {
       execute: options.execute,
       label: asFunc(options.label, emptyStringFunc),
       mnemonic: asFunc(options.mnemonic, negativeOneFunc),
+      iconClass: asFunc(options.iconClass || options.icon, emptyStringFunc),
+      iconLabel: asFunc(options.iconLabel, emptyStringFunc),
       caption: asFunc(options.caption, emptyStringFunc),
       usage: asFunc(options.usage, emptyStringFunc),
       className: asFunc(options.className, emptyStringFunc),
-      iconClass: asFunc(options.iconClass || options.icon, emptyStringFunc),
-      iconLabel: asFunc(options.iconLabel, emptyStringFunc),
       dataset: asFunc(options.dataset, emptyDatasetFunc),
       isEnabled: options.isEnabled || trueFunc,
       isToggled: options.isToggled || falseFunc,

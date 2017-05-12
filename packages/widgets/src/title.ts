@@ -266,9 +266,9 @@ class Title<T> {
   private _label = '';
   private _caption = '';
   private _mnemonic = -1;
-  private _className = '';
   private _iconClass = '';
   private _iconLabel = '';
+  private _className = '';
   private _closable = false;
   private _dataset: Title.Dataset;
   private _changed = new Signal<this, void>(this);
