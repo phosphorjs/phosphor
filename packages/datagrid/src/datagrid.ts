@@ -364,7 +364,7 @@ class DataGrid extends Widget {
    * This value does not include the width of the row headers.
    */
   get pageWidth(): number {
-    return Math.max(0, this._canvas.width - this.rowHeaderWidth);
+    return Math.max(0, this._viewportWidth - this.rowHeaderWidth);
   }
 
   /**
@@ -374,7 +374,7 @@ class DataGrid extends Widget {
    * This value does not include the height of the column headers.
    */
   get pageHeight(): number {
-    return Math.max(0, this._canvas.height - this.colHeaderHeight);
+    return Math.max(0, this._viewportHeight - this.colHeaderHeight);
   }
 
   /**
@@ -511,11 +511,11 @@ class DataGrid extends Widget {
       return;
     }
 
-    // Get the current size of the canvas.
-    let width = this._canvas.width;
-    let height = this._canvas.height;
+    // Get the current size of the viewport.
+    let width = this._viewportWidth;
+    let height = this._viewportHeight;
 
-    // Bail early if the canvas is empty.
+    // Bail early if the viewport is empty.
     if (width === 0 || height === 0) {
       this._scrollX = x;
       this._scrollY = y;
@@ -756,35 +756,53 @@ class DataGrid extends Widget {
     width = Math.round(width);
     height = Math.round(height);
 
-    // Get the current size of the canvas.
-    let oldWidth = this._canvas.width;
-    let oldHeight = this._canvas.height;
+    // Get the current size of the viewport.
+    let oldWidth = this._viewportWidth;
+    let oldHeight = this._viewportHeight;
 
-    // Determine whether there is valid content to blit.
-    let needBlit = oldWidth > 0 && oldHeight > 0 && width > 0 && height > 0;
+    // Updated internal viewport size.
+    this._viewportWidth = width;
+    this._viewportHeight = height;
 
-    // Resize the off-screen buffer to the new size.
-    this._buffer.width = width;
-    this._buffer.height = height;
+    // Expand the canvas and buffer if needed.
+    if (this._canvas.width < width || this._canvas.height < height) {
+      // Expand the buffer width if needed.
+      if (this._buffer.width < width) {
+        this._buffer.width = width;
+      }
 
-    // Blit the old contents into the buffer, if needed.
-    if (needBlit) {
-      this._bufferGC.clearRect(0, 0, width, height);
-      this._bufferGC.drawImage(this._canvas, 0, 0);
-    }
+      // Expand the buffer height if needed.
+      if (this._buffer.height < height) {
+        this._buffer.height = height;
+      }
 
-    // Resize the on-screen canvas to the new size.
-    this._canvas.width = width;
-    this._canvas.height = height;
+      // Fetch the current canvas size.
+      let copyWidth = this._canvas.width;
+      let copyHeight = this._canvas.height;
 
-    // Update the style of the on-screen canvas.
-    this._canvas.style.width = `${width}px`;
-    this._canvas.style.height = `${height}px`;
+      // Copy the valid content into the buffer if needed.
+      if (copyWidth > 0 && copyHeight > 0) {
+        this._bufferGC.clearRect(0, 0, width, height);
+        this._bufferGC.drawImage(this._canvas, 0, 0);
+      }
 
-    // Blit the buffer contents into the canvas, if needed.
-    if (needBlit) {
-      this._canvasGC.clearRect(0, 0, width, height);
-      this._canvasGC.drawImage(this._buffer, 0, 0);
+      // Expand the canvas width if needed.
+      if (this._canvas.width < width) {
+        this._canvas.width = width;
+        this._canvas.style.width = `${width}px`;
+      }
+
+      // Expand the canvas height of needed.
+      if (this._canvas.height < height) {
+        this._canvas.height = height;
+        this._canvas.style.height = `${height}px`;
+      }
+
+      // Copy the valid content from the buffer if needed.
+      if (copyWidth > 0 && copyHeight > 0) {
+        this._canvasGC.clearRect(0, 0, width, height);
+        this._canvasGC.drawImage(this._buffer, 0, 0);
+      }
     }
 
     // Bail if nothing needs to be painted.
@@ -792,7 +810,7 @@ class DataGrid extends Widget {
       return;
     }
 
-    // Paint the whole canvas if the old size was zero.
+    // Paint the whole viewport if the old size was zero.
     if (oldWidth === 0 || oldHeight === 0) {
       this._paint(0, 0, width, height);
       return;
@@ -829,16 +847,16 @@ class DataGrid extends Widget {
       return;
     }
 
-    // Get the visible size of the canvas.
-    let width = this._canvas.width;
-    let height = this._canvas.height;
+    // Get the visible size of the viewport.
+    let width = this._viewportWidth;
+    let height = this._viewportHeight;
 
-    // Bail early if the canvas has zero area.
+    // Bail early if the viewport has zero area.
     if (width === 0 || height === 0) {
       return;
     }
 
-    // Paint the entire canvas.
+    // Paint the entire viewport.
     this._paint(0, 0, width, height);
   }
 
@@ -855,17 +873,21 @@ class DataGrid extends Widget {
     let width = Math.round(this._viewport.node.offsetWidth);
     let height = Math.round(this._viewport.node.offsetHeight);
 
-    // Resize the canvas and buffer to fit.
-    this._canvas.width = width;
-    this._canvas.height = height;
-    this._buffer.width = width;
-    this._buffer.height = height;
+    // Expand the canvas and buffer width if needed.
+    if (this._canvas.width < width) {
+      this._buffer.width = width;
+      this._canvas.width = width;
+      this._canvas.style.width = `${width}px`;
+    }
 
-    // Update the canvas style to the new size.
-    this._canvas.style.width = `${width}px`;
-    this._canvas.style.height = `${height}px`;
+    // Expand the canvas and buffer height if needed.
+    if (this._canvas.height < height) {
+      this._buffer.width = width;
+      this._canvas.height = height;
+      this._canvas.style.height = `${height}px`;
+    }
 
-    // Repaint the viewport immediately.
+    // Repaint the entire viewport immediately.
     MessageLoop.sendMessage(this._viewport, Widget.Msg.UpdateRequest);
   }
 
@@ -933,8 +955,8 @@ class DataGrid extends Widget {
 
     let minX = this.rowHeaderWidth;
     let minY = this.colHeaderHeight;
-    let maxX = this._canvas.width - 1;
-    let maxY = this._canvas.height - 1;
+    let maxX = this._viewportWidth - 1;
+    let maxY = this._viewportHeight - 1;
 
     if (x2 < minX || y2 < minY || x1 > maxX || y1 > maxY) {
       return;
@@ -1773,6 +1795,9 @@ class DataGrid extends Widget {
   private _vScrollBar: ScrollBar;
   private _hScrollBar: ScrollBar;
   private _scrollCorner: Widget;
+
+  private _viewportWidth = 0;
+  private _viewportHeight = 0;
 
   private _vScrollBarMinWidth = 0;
   private _hScrollBarMinHeight = 0;
