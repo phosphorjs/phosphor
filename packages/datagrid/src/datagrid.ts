@@ -764,46 +764,8 @@ class DataGrid extends Widget {
     this._viewportWidth = width;
     this._viewportHeight = height;
 
-    // Expand the canvas and buffer if needed.
-    if (this._canvas.width < width || this._canvas.height < height) {
-      // Expand the buffer width if needed.
-      if (this._buffer.width < width) {
-        this._buffer.width = width;
-      }
-
-      // Expand the buffer height if needed.
-      if (this._buffer.height < height) {
-        this._buffer.height = height;
-      }
-
-      // Fetch the current canvas size.
-      let copyWidth = this._canvas.width;
-      let copyHeight = this._canvas.height;
-
-      // Copy the valid content into the buffer if needed.
-      if (copyWidth > 0 && copyHeight > 0) {
-        this._bufferGC.clearRect(0, 0, width, height);
-        this._bufferGC.drawImage(this._canvas, 0, 0);
-      }
-
-      // Expand the canvas width if needed.
-      if (this._canvas.width < width) {
-        this._canvas.width = width;
-        this._canvas.style.width = `${width}px`;
-      }
-
-      // Expand the canvas height of needed.
-      if (this._canvas.height < height) {
-        this._canvas.height = height;
-        this._canvas.style.height = `${height}px`;
-      }
-
-      // Copy the valid content from the buffer if needed.
-      if (copyWidth > 0 && copyHeight > 0) {
-        this._canvasGC.clearRect(0, 0, width, height);
-        this._canvasGC.drawImage(this._buffer, 0, 0);
-      }
-    }
+    // Expand the canvas if needed.
+    this._expandCanvasIfNeeded(width, height);
 
     // Bail if nothing needs to be painted.
     if (width === 0 || height === 0) {
@@ -873,19 +835,12 @@ class DataGrid extends Widget {
     let width = Math.round(this._viewport.node.offsetWidth);
     let height = Math.round(this._viewport.node.offsetHeight);
 
-    // Expand the canvas and buffer width if needed.
-    if (this._canvas.width < width) {
-      this._buffer.width = width;
-      this._canvas.width = width;
-      this._canvas.style.width = `${width}px`;
-    }
+    // Updated internal viewport size.
+    this._viewportWidth = width;
+    this._viewportHeight = height;
 
-    // Expand the canvas and buffer height if needed.
-    if (this._canvas.height < height) {
-      this._buffer.width = width;
-      this._canvas.height = height;
-      this._canvas.style.height = `${height}px`;
-    }
+    // Expand the canvas and if needed.
+    this._expandCanvasIfNeeded(width, height);
 
     // Repaint the entire viewport immediately.
     MessageLoop.sendMessage(this._viewport, Widget.Msg.UpdateRequest);
@@ -1789,6 +1744,59 @@ class DataGrid extends Widget {
     // Stroke the lines with the specified color.
     this._canvasGC.strokeStyle = color;
     this._canvasGC.stroke();
+  }
+
+  /**
+   * Ensure the canvas is at least the specified size.
+   *
+   * This method will retain the valid canvas content.
+   */
+  private _expandCanvasIfNeeded(width: number, height: number): void {
+    // Bail if the canvas is larger than the specified size.
+    if (this._canvas.width > width && this._canvas.height > height) {
+      return;
+    }
+
+    // Compute the expanded canvas size.
+    let exWidth = Math.ceil((width + 1) / 512) * 512;
+    let exHeight = Math.ceil((height + 1) / 512) * 512;
+
+    // Expand the buffer width if needed.
+    if (this._buffer.width < width) {
+      this._buffer.width = exWidth;
+    }
+
+    // Expand the buffer height if needed.
+    if (this._buffer.height < height) {
+      this._buffer.height = exHeight;
+    }
+
+    // Test whether there is valid content to blit.
+    let needBlit = this._canvas.width > 0 && this._canvas.height > 0;
+
+    // Copy the valid content into the buffer if needed.
+    if (needBlit) {
+      this._bufferGC.clearRect(0, 0, width, height);
+      this._bufferGC.drawImage(this._canvas, 0, 0);
+    }
+
+    // Expand the canvas width if needed.
+    if (this._canvas.width < width) {
+      this._canvas.width = exWidth;
+      this._canvas.style.width = `${exWidth}px`;
+    }
+
+    // Expand the canvas height of needed.
+    if (this._canvas.height < height) {
+      this._canvas.height = exHeight;
+      this._canvas.style.height = `${exHeight}px`;
+    }
+
+    // Copy the valid content from the buffer if needed.
+    if (needBlit) {
+      this._canvasGC.clearRect(0, 0, width, height);
+      this._canvasGC.drawImage(this._buffer, 0, 0);
+    }
   }
 
   private _viewport: Widget;
