@@ -79,12 +79,13 @@ namespace StringExt {
    */
   export
   function matchExact(source: string, query: string): IMatchResult | null {
-    let matchIndex = source.indexOf(query);
-    if (matchIndex === -1) { return null; }
-    let score = matchIndex;
-    let indices = [];
-    for (var i=0; i < query.length; i++) {
-      indices.push(matchIndex+i);
+    let score = source.indexOf(query);
+    if (score === -1) {
+      return null;
+    }
+    let indices = new Array<number>(query.length);
+    for (let i = 0, n = query.length; i < n; i++) {
+      indices[i] = score + i;
     }
     return { score, indices };
   }

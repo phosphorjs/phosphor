@@ -55,9 +55,9 @@ describe('@phosphor/algorithm', () => {
       });
 
       it('should return `null` if no match is found', () => {
-        let r1 = StringExt.findIndices('Foo Bar Baz', 'faa');
-        let r2 = StringExt.findIndices('Foo Bar Baz', 'obz');
-        let r3 = StringExt.findIndices('Foo Bar Baz', 'raB');
+        let r1 = StringExt.matchExact('Foo Bar Baz', 'faa');
+        let r2 = StringExt.matchExact('Foo Bar Baz', 'obz');
+        let r3 = StringExt.matchExact('Foo Bar Baz', 'raB');
         expect(r1).to.equal(null);
         expect(r2).to.equal(null);
         expect(r3).to.equal(null);
