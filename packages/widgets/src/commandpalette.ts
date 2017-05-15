@@ -1299,7 +1299,7 @@ namespace Private {
       labelIndices[i] -= pivot;
     }
 
-    if (i === 0) {
+    if (categoryIndices.length === 0) {
       return {
         matchType: MatchType.Label,
         categoryIndices: null,
@@ -1308,7 +1308,7 @@ namespace Private {
       };
     }
 
-    if (i === indices.length) {
+    if (labelIndices.length === 0) {
       return {
         matchType: MatchType.Category,
         categoryIndices,
@@ -1341,19 +1341,25 @@ namespace Private {
       return d1;
     }
 
-    // Otherwise, prefer a pure label match.
-    // let l1 = !!a.labelIndices && !a.categoryIndices;
-    // let l2 = !!b.labelIndices && !b.categoryIndices;
-    // if (l1 !== l2) {
-    //   return l1 ? -1 : 1;
-    // }
+    // Find the match index based on the match type.
+    let i1 = 0;
+    let i2 = 0;
+    switch (a.matchType) {
+    case MatchType.Label:
+      i1 = a.labelIndices![0];
+      i2 = b.labelIndices![0];
+      break;
+    case MatchType.Category:
+    case MatchType.Split:
+      i1 = a.categoryIndices![0];
+      i2 = b.categoryIndices![0];
+      break;
+    }
 
-    // Otherwise, prefer a pure category match.
-    // let c1 = !!a.categoryIndices && !a.labelIndices;
-    // let c2 = !!b.categoryIndices && !b.labelIndices;
-    // if (c1 !== c2) {
-    //   return c1 ? -1 : 1;
-    // }
+    // Compare based on the match index.
+    if (i1 !== i2) {
+      return i1 - i2;
+    }
 
     // Otherwise, compare by category.
     let d2 = a.item.category.localeCompare(b.item.category);
