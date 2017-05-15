@@ -1046,7 +1046,7 @@ namespace Private {
   }
 
   /**
-   *
+   * An enum of the supported match types.
    */
   const enum MatchType { Label, Category, Split, Default }
 
@@ -1057,7 +1057,7 @@ namespace Private {
     /**
      * The numerical type for the text match.
      */
-    matchType: number;
+    matchType: MatchType;
 
     /**
      * The numerical score for the text match.
@@ -1102,16 +1102,15 @@ namespace Private {
       if (!query) {
         scores.push({
           matchType: MatchType.Default,
-          score: 0,
           categoryIndices: null,
           labelIndices: null,
-          item
+          score: 0, item
         });
         continue;
       }
 
       // Run the fuzzy search for the item and query.
-      let score = fuzzySearch2(item, query);
+      let score = fuzzySearch(item, query);
 
       // Ignore the item if it is not a match.
       if (!score) {
@@ -1119,6 +1118,7 @@ namespace Private {
       }
 
       // Penalize disabled items.
+      // TODO - push disabled items all the way down in sort cmp?
       if (!item.isEnabled) {
         score.score += 1000;
       }
@@ -1134,171 +1134,65 @@ namespace Private {
   /**
    * Perform a fuzzy search on a single command item.
    */
-  // function fuzzySearch(item: CommandPalette.IItem, query: string): IScore | null {
-  //   // Normalize the case of the category and label.
-  //   let category = item.category.toLowerCase();
-  //   let label = item.label.toLowerCase();
-
-  //   // First, test for an exact match in the label
-  //   let lExactMatch = StringExt.matchExact(label, query);
-  //   if (lExactMatch) {
-  //     return {
-  //       matchType: MatchType.LabelExact,
-  //       score: lExactMatch.score,
-  //       labelIndices: lExactMatch.indices,
-  //       categoryIndices: null,
-  //       item
-  //     };
-  //   }
-
-  //   // Otherwise, test for a fuzzy match in the label.
-  //   let lFuzzyMatch = StringExt.matchSumOfDeltas(label, query);
-  //   if (lFuzzyMatch) {
-  //     return {
-  //       matchType: MatchType.LabelFuzzy,
-  //       score: lFuzzyMatch.score,
-  //       labelIndices: lFuzzyMatch.indices,
-  //       categoryIndices: null,
-  //       item
-  //     };
-  //   }
-
-  //   // Otherwise, test for an exact match in the category
-  //   let cExactMatch = StringExt.matchExact(category, query);
-  //   if (cExactMatch) {
-  //     return {
-  //       matchType: MatchType.CategoryExact,
-  //       score: cExactMatch.score,
-  //       labelIndices: null,
-  //       categoryIndices: cExactMatch.indices,
-  //       item
-  //     };
-  //   }
-
-  //   // Otherwise, test for a fuzzy match in the category
-  //   let cFuzzyMatch = StringExt.matchSumOfDeltas(category, query);
-  //   if (cFuzzyMatch) {
-  //     return {
-  //       matchType: MatchType.CategoryFuzzy,
-  //       score: cFuzzyMatch.score,
-  //       labelIndices: null,
-  //       categoryIndices: cFuzzyMatch.indices,
-  //       item
-  //     };
-  //   }
-
-  //   // Otherwise, test for a fuzzy match across label and category.
-  //   let score = Infinity;
-  //   let labelIndices: number[] | null = null;
-  //   let categoryIndices: number[] | null = null;
-  //   for (let i = 0, n = query.length - 1; i < n; ++i) {
-  //     //
-  //     let cq = query.slice(0, i + 1);
-
-  //     //
-  //     let cMatch = StringExt.matchExact(category, cq);
-
-  //     //
-  //     if (!cMatch) {
-  //       //
-  //       cMatch = StringExt.matchSumOfDeltas(category, cq);
-
-  //       //
-  //       if (!cMatch) {
-  //         continue;
-  //       }
-  //     }
-
-  //     //
-  //     let lq = query.slice(i + 1);
-
-  //     //
-  //     let lMatch = StringExt.matchExact(label, lq);
-
-  //     //
-  //     if (!lMatch) {
-  //       //
-  //       lMatch = StringExt.matchSumOfDeltas(label, lq);
-
-  //       //
-  //       if (!lMatch) {
-  //         continue;
-  //       }
-  //     }
-
-  //     //
-  //     if (cMatch.score + lMatch.score < score) {
-  //       score = cMatch.score + lMatch.score;
-  //       categoryIndices = cMatch.indices;
-  //       labelIndices = lMatch.indices;
-  //     }
-  //   }
-
-  //   // Bail if there is no match.
-  //   if (score === Infinity) {
-  //     return null;
-  //   }
-
-  //   // Return the final score and matched indices.
-  //   return {
-  //     matchType: MatchType.SplitFuzzy, score, categoryIndices, labelIndices, item
-  //   };
-  // }
-
-  /**
-   * Perform a fuzzy search on a single command item.
-   */
-  function fuzzySearch2(item: CommandPalette.IItem, query: string): IScore | null {
-    //
-    let rgx = /\b\w/g;
-
-    //
+  function fuzzySearch(item: CommandPalette.IItem, query: string): IScore | null {
+    // Create the source text to be searched.
     let category = item.category.toLowerCase();
     let label = item.label.toLowerCase();
     let source = `${category} ${label}`;
 
-    //
+    // Set up the match score and indices array.
     let score = Infinity;
     let indices: number[] | null = null;
 
-    //
+    // The regex for search word boundaries
+    let rgx = /\b\w/g;
+
+    // Search the source by word boundary.
     while (true) {
-      //
+      // Find the next word boundary in the source.
       let rgxMatch = rgx.exec(source);
+
+      // Break if there is no more source context.
       if (!rgxMatch) {
         break;
       }
 
-      //
+      // Run the string match on the relevant substring.
       let match = StringExt.matchSumOfDeltas(source, query, rgxMatch.index);
 
-      //
+      // Break if there is no match.
+      if (!match) {
+        break;
+      }
+
+      // Update the match if the score is better.
       if (match && match.score <= score) {
         score = match.score;
         indices = match.indices;
       }
     }
 
-    //
+    // Bail if there was no match.
     if (!indices || score === Infinity) {
       return null;
     }
 
-    //
+    // Compute the pivot index between category and label text.
     let pivot = category.length + 1;
 
-    //
-    let i = ArrayExt.lowerBound(indices, pivot, (a, b) => a - b);
+    // Find the slice index to separate matched indices.
+    let j = ArrayExt.lowerBound(indices, pivot, (a, b) => a - b);
 
-    //
-    let categoryIndices = indices.slice(0, i);
-    let labelIndices = indices.slice(i);
+    // Extract the matched category and label indices.
+    let categoryIndices = indices.slice(0, j);
+    let labelIndices = indices.slice(j);
 
-    //
+    // Adjust the label indices for the pivot offset.
     for (let i = 0, n = labelIndices.length; i < n; ++i) {
       labelIndices[i] -= pivot;
     }
 
+    // Handle a pure label match.
     if (categoryIndices.length === 0) {
       return {
         matchType: MatchType.Label,
@@ -1308,6 +1202,7 @@ namespace Private {
       };
     }
 
+    // Handle a pure category match.
     if (labelIndices.length === 0) {
       return {
         matchType: MatchType.Category,
@@ -1317,6 +1212,7 @@ namespace Private {
       };
     }
 
+    // Handle a split match.
     return {
       matchType: MatchType.Split,
       categoryIndices,

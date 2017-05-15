@@ -66,32 +66,6 @@ namespace StringExt {
     indices: number[];
   }
 
-  // *
-  //  * A string matcher that looks for an exact match.
-  //  *
-  //  * @param source - The source text which should be searched.
-  //  *
-  //  * @param query - The characters to locate in the source text.
-  //  *
-  //  * @returns The match result, or `null` if there is no match.
-  //  *   A lower `score` represents a stronger match.
-  //  *
-  //  * #### Complexity
-  //  * Linear on `sourceText`.
-
-  // export
-  // function matchExact(source: string, query: string): IMatchResult | null {
-  //   let score = source.indexOf(query);
-  //   if (score === -1) {
-  //     return null;
-  //   }
-  //   let indices = new Array<number>(query.length);
-  //   for (let i = 0, n = query.length; i < n; i++) {
-  //     indices[i] = score + i;
-  //   }
-  //   return { score, indices };
-  // }
-
   /**
    * A string matcher which uses a sum-of-squares algorithm.
    *
