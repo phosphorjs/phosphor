@@ -19,6 +19,8 @@ namespace StringExt {
    *
    * @param query - The characters to locate in the source text.
    *
+   * @param start - The index to start the search.
+   *
    * @returns The matched indices, or `null` if there is no match.
    *
    * #### Complexity
@@ -31,9 +33,9 @@ namespace StringExt {
    * Characters are matched using strict `===` equality.
    */
   export
-  function findIndices(source: string, query: string): number[] | null {
+  function findIndices(source: string, query: string, start = 0): number[] | null {
     let indices = new Array<number>(query.length);
-    for (let i = 0, j = 0, n = query.length; i < n; ++i, ++j) {
+    for (let i = 0, j = start, n = query.length; i < n; ++i, ++j) {
       j = source.indexOf(query[i], j);
       if (j === -1) {
         return null;
@@ -64,31 +66,31 @@ namespace StringExt {
     indices: number[];
   }
 
-  /**
-   * A string matcher that looks for an exact match.
-   *
-   * @param source - The source text which should be searched.
-   *
-   * @param query - The characters to locate in the source text.
-   *
-   * @returns The match result, or `null` if there is no match.
-   *   A lower `score` represents a stronger match.
-   *
-   * #### Complexity
-   * Linear on `sourceText`.
-   */
-  export
-  function matchExact(source: string, query: string): IMatchResult | null {
-    let score = source.indexOf(query);
-    if (score === -1) {
-      return null;
-    }
-    let indices = new Array<number>(query.length);
-    for (let i = 0, n = query.length; i < n; i++) {
-      indices[i] = score + i;
-    }
-    return { score, indices };
-  }
+  // *
+  //  * A string matcher that looks for an exact match.
+  //  *
+  //  * @param source - The source text which should be searched.
+  //  *
+  //  * @param query - The characters to locate in the source text.
+  //  *
+  //  * @returns The match result, or `null` if there is no match.
+  //  *   A lower `score` represents a stronger match.
+  //  *
+  //  * #### Complexity
+  //  * Linear on `sourceText`.
+
+  // export
+  // function matchExact(source: string, query: string): IMatchResult | null {
+  //   let score = source.indexOf(query);
+  //   if (score === -1) {
+  //     return null;
+  //   }
+  //   let indices = new Array<number>(query.length);
+  //   for (let i = 0, n = query.length; i < n; i++) {
+  //     indices[i] = score + i;
+  //   }
+  //   return { score, indices };
+  // }
 
   /**
    * A string matcher which uses a sum-of-squares algorithm.
@@ -96,6 +98,8 @@ namespace StringExt {
    * @param source - The source text which should be searched.
    *
    * @param query - The characters to locate in the source text.
+   *
+   * @param start - The index to start the search.
    *
    * @returns The match result, or `null` if there is no match.
    *   A lower `score` represents a stronger match.
@@ -112,14 +116,14 @@ namespace StringExt {
    * late matches are heavily penalized.
    */
   export
-  function matchSumOfSquares(source: string, query: string): IMatchResult | null {
-    let indices = findIndices(source, query);
+  function matchSumOfSquares(source: string, query: string, start = 0): IMatchResult | null {
+    let indices = findIndices(source, query, start);
     if (!indices) {
       return null;
     }
     let score = 0;
     for (let i = 0, n = indices.length; i < n; ++i) {
-      let j = indices[i];
+      let j = indices[i] - start;
       score += j * j;
     }
     return { score, indices };
@@ -131,6 +135,8 @@ namespace StringExt {
    * @param source - The source text which should be searched.
    *
    * @param query - The characters to locate in the source text.
+   *
+   * @param start - The index to start the search.
    *
    * @returns The match result, or `null` if there is no match.
    *   A lower `score` represents a stronger match.
@@ -147,13 +153,13 @@ namespace StringExt {
    * penalized.
    */
   export
-  function matchSumOfDeltas(source: string, query: string): IMatchResult | null {
-    let indices = findIndices(source, query);
+  function matchSumOfDeltas(source: string, query: string, start = 0): IMatchResult | null {
+    let indices = findIndices(source, query, start);
     if (!indices) {
       return null;
     }
     let score = 0;
-    let last = -1;
+    let last = start - 1;
     for (let i = 0, n = indices.length; i < n; ++i) {
       let j = indices[i];
       score += j - last - 1;
