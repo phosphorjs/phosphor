@@ -1,6 +1,6 @@
 {
   "name": "@phosphor/properties",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "description": "PhosphorJS - Attached Properties",
   "main": "lib/index.js",
   "types": "lib/index.d.ts",
@@ -14,11 +14,13 @@
   "dependencies": {},
   "devDependencies": {
     "rimraf": "^2.5.2",
+    "typedoc": "^0.6.0",
     "typescript": "^2.3.0"
   },
   "scripts": {
     "build": "tsc",
-    "clean": "rimraf lib"
+    "clean": "rimraf lib",
+    "docs": "typedoc --options tdoptions.json ."
   },
   "repository": {
     "type": "git",

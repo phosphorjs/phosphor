@@ -1034,9 +1034,19 @@ namespace Menu {
     readonly mnemonic: number;
 
     /**
-     * The icon class for the menu item.
+     * @deprecated Use `iconClass` instead.
      */
     readonly icon: string;
+
+    /**
+     * The icon class for the menu item.
+     */
+    readonly iconClass: string;
+
+    /**
+     * The icon label for the menu item.
+     */
+    readonly iconLabel: string;
 
     /**
      * The display caption for the menu item.
@@ -1151,7 +1161,8 @@ namespace Menu {
      * @returns A virtual element representing the item icon.
      */
     renderIcon(data: IRenderData): VirtualElement {
-      return h.div({ className: this.createIconClass(data) });
+      let className = this.createIconClass(data);
+      return h.div({ className }, data.item.iconLabel);
     }
 
     /**
@@ -1254,7 +1265,7 @@ namespace Menu {
      */
     createIconClass(data: IRenderData): string {
       let name = 'p-Menu-itemIcon';
-      let extra = data.item.icon;
+      let extra = data.item.iconClass;
       return extra ? `${name} ${extra}` : name;
     }
 
@@ -1719,14 +1730,34 @@ namespace Private {
     }
 
     /**
-     * The icon class for the menu item.
+     * @deprecated Use `iconClass` instead.
      */
     get icon(): string {
+      return this.iconClass;
+    }
+
+    /**
+     * The icon class for the menu item.
+     */
+    get iconClass(): string {
       if (this.type === 'command') {
-        return this._commands.icon(this.command, this.args);
+        return this._commands.iconClass(this.command, this.args);
       }
       if (this.type === 'submenu' && this.submenu) {
-        return this.submenu.title.icon;
+        return this.submenu.title.iconClass;
+      }
+      return '';
+    }
+
+    /**
+     * The icon label for the menu item.
+     */
+    get iconLabel(): string {
+      if (this.type === 'command') {
+        return this._commands.iconLabel(this.command, this.args);
+      }
+      if (this.type === 'submenu' && this.submenu) {
+        return this.submenu.title.iconLabel;
       }
       return '';
     }

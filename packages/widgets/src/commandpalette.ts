@@ -1046,9 +1046,19 @@ namespace Private {
   }
 
   /**
+   * An enum of the supported match types.
+   */
+  const enum MatchType { Label, Category, Split, Default }
+
+  /**
    * A text match score with associated command item.
    */
   interface IScore {
+    /**
+     * The numerical type for the text match.
+     */
+    matchType: MatchType;
+
     /**
      * The numerical score for the text match.
      */
@@ -1091,7 +1101,10 @@ namespace Private {
       // If the query is empty, all items are matched by default.
       if (!query) {
         scores.push({
-          score: 0, categoryIndices: null, labelIndices: null, item
+          matchType: MatchType.Default,
+          categoryIndices: null,
+          labelIndices: null,
+          score: 0, item
         });
         continue;
       }
@@ -1105,6 +1118,7 @@ namespace Private {
       }
 
       // Penalize disabled items.
+      // TODO - push disabled items all the way down in sort cmp?
       if (!item.isEnabled) {
         score.score += 1000;
       }
@@ -1121,79 +1135,126 @@ namespace Private {
    * Perform a fuzzy search on a single command item.
    */
   function fuzzySearch(item: CommandPalette.IItem, query: string): IScore | null {
-    // Normalize the case of the category and label.
+    // Create the source text to be searched.
     let category = item.category.toLowerCase();
     let label = item.label.toLowerCase();
+    let source = `${category} ${label}`;
 
-    // Set up the result variables.
-    let categoryIndices: number[] | null = null;
-    let labelIndices: number[] | null = null;
+    // Set up the match score and indices array.
     let score = Infinity;
+    let indices: number[] | null = null;
 
-    // Test for a full match in the category.
-    let cMatch = StringExt.matchSumOfDeltas(category, query);
-    if (cMatch && cMatch.score < score) {
-      score = cMatch.score;
-      categoryIndices = cMatch.indices;
-      labelIndices = null;
-    }
+    // The regex for search word boundaries
+    let rgx = /\b\w/g;
 
-    // Test for a better full match in the label.
-    let lMatch = StringExt.matchSumOfDeltas(label, query);
-    if (lMatch && lMatch.score < score) {
-      score = lMatch.score;
-      labelIndices = lMatch.indices;
-      categoryIndices = null;
-    }
+    // Search the source by word boundary.
+    while (true) {
+      // Find the next word boundary in the source.
+      let rgxMatch = rgx.exec(source);
 
-    // Test for a better split match.
-    for (let i = 0, n = query.length - 1; i < n; ++i) {
-      let cMatch = StringExt.matchSumOfDeltas(category, query.slice(0, i + 1));
-      if (!cMatch) {
-        continue;
+      // Break if there is no more source context.
+      if (!rgxMatch) {
+        break;
       }
-      let lMatch = StringExt.matchSumOfDeltas(label, query.slice(i + 1));
-      if (!lMatch) {
-        continue;
+
+      // Run the string match on the relevant substring.
+      let match = StringExt.matchSumOfDeltas(source, query, rgxMatch.index);
+
+      // Break if there is no match.
+      if (!match) {
+        break;
       }
-      if (cMatch.score + lMatch.score < score) {
-        score = cMatch.score + lMatch.score;
-        categoryIndices = cMatch.indices;
-        labelIndices = lMatch.indices;
+
+      // Update the match if the score is better.
+      if (match && match.score <= score) {
+        score = match.score;
+        indices = match.indices;
       }
     }
 
-    // Bail if there is no match.
-    if (score === Infinity) {
+    // Bail if there was no match.
+    if (!indices || score === Infinity) {
       return null;
     }
 
-    // Return the final score and matched indices.
-    return { score, categoryIndices, labelIndices, item };
+    // Compute the pivot index between category and label text.
+    let pivot = category.length + 1;
+
+    // Find the slice index to separate matched indices.
+    let j = ArrayExt.lowerBound(indices, pivot, (a, b) => a - b);
+
+    // Extract the matched category and label indices.
+    let categoryIndices = indices.slice(0, j);
+    let labelIndices = indices.slice(j);
+
+    // Adjust the label indices for the pivot offset.
+    for (let i = 0, n = labelIndices.length; i < n; ++i) {
+      labelIndices[i] -= pivot;
+    }
+
+    // Handle a pure label match.
+    if (categoryIndices.length === 0) {
+      return {
+        matchType: MatchType.Label,
+        categoryIndices: null,
+        labelIndices,
+        score, item
+      };
+    }
+
+    // Handle a pure category match.
+    if (labelIndices.length === 0) {
+      return {
+        matchType: MatchType.Category,
+        categoryIndices,
+        labelIndices: null,
+        score, item
+      };
+    }
+
+    // Handle a split match.
+    return {
+      matchType: MatchType.Split,
+      categoryIndices,
+      labelIndices,
+      score, item
+    };
   }
 
   /**
    * A sort comparison function for a match score.
    */
   function scoreCmp(a: IScore, b: IScore): number {
-    // First compare based on the match score.
+    // First compare based on the match type
+    let m1 = a.matchType - b.matchType;
+    if (m1 !== 0) {
+      return m1;
+    }
+
+    // Otherwise, compare based on the match score.
     let d1 = a.score - b.score;
     if (d1 !== 0) {
       return d1;
     }
 
-    // Otherwise, prefer a pure category match.
-    let c1 = !!a.categoryIndices && !a.labelIndices;
-    let c2 = !!b.categoryIndices && !b.labelIndices;
-    if (c1 !== c2) {
-      return c1 ? -1 : 1;
+    // Find the match index based on the match type.
+    let i1 = 0;
+    let i2 = 0;
+    switch (a.matchType) {
+    case MatchType.Label:
+      i1 = a.labelIndices![0];
+      i2 = b.labelIndices![0];
+      break;
+    case MatchType.Category:
+    case MatchType.Split:
+      i1 = a.categoryIndices![0];
+      i2 = b.categoryIndices![0];
+      break;
     }
 
-    // Otherwise, prefer a pure label match.
-    let l1 = !!a.labelIndices && !a.categoryIndices;
-    let l2 = !!b.labelIndices && !b.categoryIndices;
-    if (l1 !== l2) {
-      return l1 ? -1 : 1;
+    // Compare based on the match index.
+    if (i1 !== i2) {
+      return i1 - i2;
     }
 
     // Otherwise, compare by category.

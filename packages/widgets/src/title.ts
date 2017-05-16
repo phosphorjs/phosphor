@@ -34,7 +34,13 @@ class Title<T> {
       this._mnemonic = options.mnemonic;
     }
     if (options.icon !== undefined) {
-      this._icon = options.icon;
+      this._iconClass = options.icon;
+    }
+    if (options.iconClass !== undefined) {
+      this._iconClass = options.iconClass;
+    }
+    if (options.iconLabel !== undefined) {
+      this._iconLabel = options.iconLabel;
     }
     if (options.caption !== undefined) {
       this._caption = options.caption;
@@ -103,13 +109,27 @@ class Title<T> {
   }
 
   /**
+   * @deprecated Use `iconClass` instead.
+   */
+  get icon(): string {
+    return this.iconClass;
+  }
+
+  /**
+   * @deprecated Use `iconClass` instead.
+   */
+  set icon(value: string) {
+    this.iconClass = value;
+  }
+
+  /**
    * Get the icon class name for the title.
    *
    * #### Notes
    * The default value is an empty string.
    */
-  get icon(): string {
-    return this._icon;
+  get iconClass(): string {
+    return this._iconClass;
   }
 
   /**
@@ -118,11 +138,35 @@ class Title<T> {
    * #### Notes
    * Multiple class names can be separated with whitespace.
    */
-  set icon(value: string) {
-    if (this._icon === value) {
+  set iconClass(value: string) {
+    if (this._iconClass === value) {
       return;
     }
-    this._icon = value;
+    this._iconClass = value;
+    this._changed.emit(undefined);
+  }
+
+  /**
+   * Get the icon label for the title.
+   *
+   * #### Notes
+   * The default value is an empty string.
+   */
+  get iconLabel(): string {
+    return this._iconLabel;
+  }
+
+  /**
+   * Set the icon label for the title.
+   *
+   * #### Notes
+   * Multiple class names can be separated with whitespace.
+   */
+  set iconLabel(value: string) {
+    if (this._iconLabel === value) {
+      return;
+    }
+    this._iconLabel = value;
     this._changed.emit(undefined);
   }
 
@@ -219,10 +263,11 @@ class Title<T> {
     this._changed.emit(undefined);
   }
 
-  private _icon = '';
   private _label = '';
   private _caption = '';
   private _mnemonic = -1;
+  private _iconClass = '';
+  private _iconLabel = '';
   private _className = '';
   private _closable = false;
   private _dataset: Title.Dataset;
@@ -262,9 +307,19 @@ namespace Title {
     mnemonic?: number;
 
     /**
-     * The icon class for the title.
+     * @deprecated Use `iconClass` instead.
      */
     icon?: string;
+
+    /**
+     * The icon class name for the title.
+     */
+    iconClass?: string;
+
+    /**
+     * The icon label for the title.
+     */
+    iconLabel?: string;
 
     /**
      * The caption for the title.

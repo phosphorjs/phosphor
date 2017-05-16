@@ -101,7 +101,7 @@ function main(): void {
   commands.addCommand('example:cut', {
     label: 'Cut',
     mnemonic: 1,
-    icon: 'fa fa-cut',
+    iconClass: 'fa fa-cut',
     execute: () => {
       console.log('Cut');
     }
@@ -110,7 +110,7 @@ function main(): void {
   commands.addCommand('example:copy', {
     label: 'Copy File',
     mnemonic: 0,
-    icon: 'fa fa-copy',
+    iconClass: 'fa fa-copy',
     execute: () => {
       console.log('Copy');
     }
@@ -119,7 +119,7 @@ function main(): void {
   commands.addCommand('example:paste', {
     label: 'Paste',
     mnemonic: 0,
-    icon: 'fa fa-paste',
+    iconClass: 'fa fa-paste',
     execute: () => {
       console.log('Paste');
     }
@@ -162,7 +162,7 @@ function main(): void {
   commands.addCommand('example:close', {
     label: 'Close',
     mnemonic: 0,
-    icon: 'fa fa-close',
+    iconClass: 'fa fa-close',
     execute: () => {
       console.log('Close');
     }
@@ -200,6 +200,34 @@ function main(): void {
     label: 'Black',
     execute: () => {
       console.log('Black');
+    }
+  });
+
+  commands.addCommand('example:clear-cell', {
+    label: 'Clear Cell',
+    execute: () => {
+      console.log('Clear Cell');
+    }
+  });
+
+  commands.addCommand('example:cut-cells', {
+    label: 'Cut Cell(s)',
+    execute: () => {
+      console.log('Cut Cell(s)');
+    }
+  });
+
+  commands.addCommand('example:run-cell', {
+    label: 'Run Cell',
+    execute: () => {
+      console.log('Run Cell');
+    }
+  });
+
+  commands.addCommand('example:cell-test', {
+    label: 'Cell Test',
+    execute: () => {
+      console.log('Cell Test');
     }
   });
 
@@ -272,6 +300,10 @@ function main(): void {
   palette.addItem({ command: 'example:save-on-exit', category: 'File' });
   palette.addItem({ command: 'example:open-task-manager', category: 'File' });
   palette.addItem({ command: 'example:close', category: 'File' });
+  palette.addItem({ command: 'example:clear-cell', category: 'Notebook Cell Operations' });
+  palette.addItem({ command: 'example:cut-cells', category: 'Notebook Cell Operations' });
+  palette.addItem({ command: 'example:run-cell', category: 'Notebook Cell Operations' });
+  palette.addItem({ command: 'example:cell-test', category: 'Console' });
   palette.addItem({ command: 'notebook:new', category: 'Notebook' });
   palette.id = 'palette';
 

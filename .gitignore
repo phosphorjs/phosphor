@@ -1,7 +1,6 @@
 *.suo
 *.user
 .DS_Store
-docs/api
 lib
 node_modules
 build

@@ -1338,7 +1338,8 @@ namespace TabBar {
      * @returns A virtual element representing the tab icon.
      */
     renderIcon(data: IRenderData<any>): VirtualElement {
-      return h.div({ className: this.createIconClass(data) });
+      let className = this.createIconClass(data);
+      return h.div({ className }, data.title.iconLabel);
     }
 
     /**
@@ -1436,7 +1437,7 @@ namespace TabBar {
      */
     createIconClass(data: IRenderData<any>): string {
       let name = 'p-TabBar-tabIcon';
-      let extra = data.title.icon;
+      let extra = data.title.iconClass;
       return extra ? `${name} ${extra}` : name;
     }
 
