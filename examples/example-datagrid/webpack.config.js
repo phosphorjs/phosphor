@@ -3,7 +3,9 @@ var path = require('path');
 module.exports = {
   entry: './build/index.js',
   output: {
-    filename: './build/bundle.example.js'
+    path: './build/',
+    filename: 'bundle.example.js',
+    publicPath: './build/'
   },
   module: {
     rules: [
