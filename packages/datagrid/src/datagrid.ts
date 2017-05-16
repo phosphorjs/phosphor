@@ -673,44 +673,57 @@ class DataGrid extends Widget {
    * Handle the `'wheel'` event for the data grid.
    */
   private _evtWheel(event: WheelEvent): void {
-    // Note: all browsers send different values for the wheel event
-    // which make it difficult to achieve consistency.
-    //
-    // For now, we use the sign of the scroll value and always scroll
-    // by a single page for each wheel event. This may need improving.
+    // Extract the delta X and Y movement.
+    let dx = event.deltaX;
+    let dy = event.deltaY;
 
-    // Whether the event should be canceled.
-    let cancelEvent = false;
-
-    // Scroll up.
-    if (event.deltaY < 0 && this.scrollY > 0) {
-      cancelEvent = true;
-      this.scrollByPage('up');
+    // Convert the delta values to pixel values.
+    switch (event.deltaMode) {
+    case 0:  // DOM_DELTA_PIXEL
+      break;
+    case 1:  // DOM_DELTA_LINE
+      dx *= this._colSections.baseSize;
+      dy *= this._rowSections.baseSize;
+      break;
+    case 2:  // DOM_DELTA_PAGE
+      dx *= this.pageWidth;
+      dy *= this.pageHeight;
+      break;
+    default:
+      throw 'unreachable';
     }
 
-    // Scroll down.
-    if (event.deltaY > 0 && this.scrollY < this.maxScrollY) {
-      cancelEvent = true;
-      this.scrollByPage('down');
+    // Test whether X scroll is needed.
+    let needScrollX = (
+      (dx < 0 && this.scrollX > 0) ||
+      (dx > 0 && this.scrollX < this.maxScrollX)
+    );
+
+    // Test whether Y scroll is needed.
+    let needScrollY = (
+      (dy < 0 && this.scrollY > 0) ||
+      (dy > 0 && this.scrollY < this.maxScrollY)
+    );
+
+    // Bail if no scrolling is needed.
+    if (!needScrollX && !needScrollY) {
+      return;
     }
 
-    // Scroll left.
-    if (event.deltaX < 0 && this.scrollX > 0) {
-      cancelEvent = true;
-      this.scrollByPage('left');
-    }
+    // Cancel the event if the grid is handling scrolling.
+    event.preventDefault();
+    event.stopPropagation();
 
-    // Scroll right.
-    if (event.deltaX > 0 && this.scrollX < this.maxScrollX) {
-      cancelEvent = true;
-      this.scrollByPage('right');
-    }
+    // Compute the desired scroll position.
+    let x = Math.max(0, Math.min(this.scrollX + dx, this.maxScrollX));
+    let y = Math.max(0, Math.min(this.scrollY + dy, this.maxScrollY));
 
-    // Cancel the event if the scroll was handled.
-    if (cancelEvent) {
-      event.preventDefault();
-      event.stopPropagation();
-    }
+    // Update the scroll bar values with the desired position.
+    this._hScrollBar.value = x;
+    this._vScrollBar.value = y;
+
+    // Post a scroll request message to the viewport.
+    MessageLoop.postMessage(this._viewport, Private.ScrollRequest);
   }
 
   /**
