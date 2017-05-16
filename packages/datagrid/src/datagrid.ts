@@ -626,6 +626,36 @@ class DataGrid extends Widget {
   }
 
   /**
+   * Handle the DOM events for the data grid.
+   *
+   * @param event - The DOM event sent to the data grid.
+   *
+   * #### Notes
+   * This method implements the DOM `EventListener` interface and is
+   * called in response to events on the data grid's DOM node. It
+   * should not be called directly by user code.
+   */
+  handleEvent(event: Event): void {
+    if (event.type === 'wheel') {
+      this._evtWheel(event as WheelEvent);
+    }
+  }
+
+  /**
+   * A message handler invoked on a `'before-attach'` message.
+   */
+  protected onBeforeAttach(msg: Message): void {
+    this.node.addEventListener('wheel', this);
+  }
+
+  /**
+   * A message handler invoked on an `'after-detach'` message.
+   */
+  protected onAfterDetach(msg: Message): void {
+    this.node.removeEventListener('wheel', this);
+  }
+
+  /**
    * A message handler invoked on a `'resize'` message.
    */
   protected onResize(msg: Widget.ResizeMessage): void {
@@ -637,6 +667,50 @@ class DataGrid extends Widget {
 
     // Re-clamp the scroll position to the new page size.
     this.scrollTo(this._scrollX, this._scrollY);
+  }
+
+  /**
+   * Handle the `'wheel'` event for the data grid.
+   */
+  private _evtWheel(event: WheelEvent): void {
+    // Note: all browsers send different values for the wheel event
+    // which make it difficult to achieve consistency.
+    //
+    // For now, we use the sign of the scroll value and always scroll
+    // by a single page for each wheel event. This may need improving.
+
+    // Whether the event should be canceled.
+    let cancelEvent = false;
+
+    // Scroll up.
+    if (event.deltaY < 0 && this.scrollY > 0) {
+      cancelEvent = true;
+      this.scrollByPage('up');
+    }
+
+    // Scroll down.
+    if (event.deltaY > 0 && this.scrollY < this.maxScrollY) {
+      cancelEvent = true;
+      this.scrollByPage('down');
+    }
+
+    // Scroll left.
+    if (event.deltaX < 0 && this.scrollX > 0) {
+      cancelEvent = true;
+      this.scrollByPage('left');
+    }
+
+    // Scroll right.
+    if (event.deltaX > 0 && this.scrollX < this.maxScrollX) {
+      cancelEvent = true;
+      this.scrollByPage('right');
+    }
+
+    // Cancel the event if the scroll was handled.
+    if (cancelEvent) {
+      event.preventDefault();
+      event.stopPropagation();
+    }
   }
 
   /**
