@@ -525,6 +525,8 @@ namespace Private {
      * Pop the next state object and return the current to the pool
      */
     static pop(state: State): State {
+      state.fillStyle = '';
+      state.strokeStyle = '';
       pool[++pi] = state;
       return state.next!;
     }
