@@ -54,7 +54,7 @@ class RandomDataModel extends DataModel {
   constructor() {
     super();
     for (let i = 0, n = this.rowCount * this.colCount; i < n; ++i) {
-      this._data[i] = RandomDataModel.genPoint();
+      this._data[i] = i / n;
     }
     setInterval(this._tick, 30);
   }
@@ -70,9 +70,10 @@ class RandomDataModel extends DataModel {
   }
 
   private _tick = () => {
-    let r = Math.floor(Math.random() * (this.rowCount - 1))
-    let c = Math.floor(Math.random() * (this.colCount - 1))
-    this._data[r * this.colCount + c] = RandomDataModel.genPoint();
+    let i = Math.floor(Math.random() * (this.rowCount * this.colCount - 1));
+    let r = Math.floor(i / this.colCount);
+    let c = i - r * this.colCount;
+    this._data[i] = (this._data[i] + 0.1) % 1;
     this.emitChanged({
       type: 'cells-changed',
       rowIndex: r,
@@ -91,13 +92,8 @@ const formatDecimal: TextRenderer.CellFunc<string> = config => {
 };
 
 
-const negativeRed: TextRenderer.CellFunc<string> = config => {
-  return config.value < 0 ? '#FF0000' : '#000000';
-};
-
-
 const headMapJet: TextRenderer.CellFunc<string> = config => {
-  let value = (config.value + 2) / 5 - 1;
+  let value = config.value * 2 - 1;
   let r = Math.floor(Jet.red(value) * 255);
   let g = Math.floor(Jet.green(value) * 255);
   let b = Math.floor(Jet.blue(value) * 255);
@@ -157,7 +153,7 @@ function main(): void {
   };
 
   let floatRenderer1 = new TextRenderer({
-    textColor: negativeRed,
+    textColor: headMapJet,
     formatter: formatDecimal,
     horizontalAlignment: 'right'
   });
