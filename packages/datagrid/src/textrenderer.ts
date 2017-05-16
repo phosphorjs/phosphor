@@ -147,6 +147,14 @@ class TextRenderer extends CellRenderer {
    * @param config - The configuration data for the cell.
    */
   drawText(gc: GraphicsContext, config: CellRenderer.ICellConfig): void {
+    // Resolve the font for the cell.
+    let font = Private.resolve(this.font, config);
+
+    // Bail if there is no font to draw.
+    if (!font) {
+      return;
+    }
+
     // Resolve the text color for the cell.
     let textColor = Private.resolve(this.textColor, config);
 
@@ -164,10 +172,8 @@ class TextRenderer extends CellRenderer {
       return;
     }
 
-    // Resolve the vertical alignment.
+    // Resolve the vertical and horizontal alignment.
     let vAlign = Private.resolve(this.verticalAlignment, config);
-
-    // Resolve the horizontal alignment.
     let hAlign = Private.resolve(this.horizontalAlignment, config);
 
     // Compute the padded text box height for the specified alignment.
@@ -178,16 +184,8 @@ class TextRenderer extends CellRenderer {
       return;
     }
 
-    // Resolve the font for the cell.
-    let font = Private.resolve(this.font, config);
-
-    // Set the gc font if needed.
-    if (font) {
-      gc.font = font;
-    }
-
     // Compute the text height for the gc font.
-    let textHeight = TextRenderer.measureFontHeight(gc.font);
+    let textHeight = TextRenderer.measureFontHeight(font);
 
     // Set up the text position variables.
     let textX: number;
@@ -230,7 +228,8 @@ class TextRenderer extends CellRenderer {
       gc.clip();
     }
 
-    // Set up the text drawing state.
+    // Set the gc state.
+    gc.font = font;
     gc.fillStyle = textColor;
     gc.textAlign = hAlign;
     gc.textBaseline = 'bottom';
