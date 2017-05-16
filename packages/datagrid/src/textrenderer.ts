@@ -368,8 +368,12 @@ namespace TextRenderer {
       return height;
     }
 
+    // Normalize the font.
+    Private.fontMeasurementGC.font = font;
+    let normFont = Private.fontMeasurementGC.font;
+
     // Set the font on the measurement node.
-    Private.fontMeasurementNode.style.font = font;
+    Private.fontMeasurementNode.style.font = normFont;
 
     // Add the measurement node to the document.
     document.body.appendChild(Private.fontMeasurementNode);
@@ -380,8 +384,9 @@ namespace TextRenderer {
     // Remove the measurement node from the document.
     document.body.removeChild(Private.fontMeasurementNode);
 
-    // Cache the measured height.
+    // Cache the measured height for the font and norm font.
     Private.fontHeightCache[font] = height;
+    Private.fontHeightCache[normFont] = height;
 
     // Return the measured height.
     return height;
@@ -411,6 +416,17 @@ namespace Private {
     node.style.visibility = 'hidden';
     node.textContent = 'M';
     return node;
+  })();
+
+  /**
+   * The GC used for font measurement.
+   */
+  export
+  const fontMeasurementGC = (() => {
+    let canvas = document.createElement('canvas');
+    canvas.width = 0;
+    canvas.height = 0;
+    return canvas.getContext('2d')!;
   })();
 
   /**
