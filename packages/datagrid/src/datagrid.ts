@@ -1625,8 +1625,11 @@ class DataGrid extends Widget {
       value: (null as any), field: (null as DataModel.IField | null)
     };
 
+    // Save the buffer gc before wrapping.
+    this._bufferGC.save();
+
     // Wrap the buffer gc for painting the cells.
-    let gc = GraphicsContext.wrap(this._bufferGC);
+    let gc = new GraphicsContext(this._bufferGC);
 
     // Compute the actual Y bounds for the cell range.
     let y1 = Math.max(rgn.yMin, rgn.y);
@@ -1737,6 +1740,12 @@ class DataGrid extends Widget {
       // Increment the running X coordinate.
       x += width;
     }
+
+    // Dispose of the wrapped gc.
+    gc.dispose();
+
+    // Restore the final buffer state.
+    this._bufferGC.restore();
   }
 
   /**
