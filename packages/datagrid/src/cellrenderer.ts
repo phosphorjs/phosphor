@@ -90,7 +90,7 @@ namespace CellRenderer {
     /**
      * The column index.
      */
-    readonly col: number;
+    readonly column: number;
 
     /**
      * The field descriptor for the column, or `null`.
@@ -131,7 +131,7 @@ namespace CellRenderer {
     /**
      * The column index of the cell.
      */
-    readonly col: number;
+    readonly column: number;
 
     /**
      * The field descriptor for the column, or `null`.

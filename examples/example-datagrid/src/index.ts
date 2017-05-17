@@ -21,21 +21,21 @@ import '../style/index.css';
 class LargeDataModel extends DataModel {
 
   readonly rowCount = 100000000000;
-  readonly colCount = 100000000000;
+  readonly columnCount = 100000000000;
   readonly rowHeaderCount = 3;
-  readonly colHeaderCount = 3;
+  readonly columnHeaderCount = 3;
 
-  data(row: number, col: number): any {
-    if (col < 0 && row >= 0) {
-      return `Row: ${row}, ${col}`;
+  data(row: number, column: number): any {
+    if (column < 0 && row >= 0) {
+      return `R: ${row}, ${column}`;
     }
-    if (row < 0 && col >= 0) {
-      return `Col: ${row}, ${col}`;
+    if (row < 0 && column >= 0) {
+      return `C: ${row}, ${column}`;
     }
-    if (row < 0 && col < 0) {
-      return `Corner: ${row}, ${col}`;
+    if (row < 0 && column < 0) {
+      return `N: ${row}, ${column}`;
     }
-    return `(${row}, ${col})`;
+    return `(${row}, ${column})`;
   }
 }
 
@@ -47,39 +47,42 @@ class RandomDataModel extends DataModel {
   }
 
   readonly rowCount = 80;
-  readonly colCount = 80;
+  readonly columnCount = 80;
   readonly rowHeaderCount = 1;
-  readonly colHeaderCount = 1;
+  readonly columnHeaderCount = 1;
 
   constructor() {
     super();
-    for (let i = 0, n = this.rowCount * this.colCount; i < n; ++i) {
+    for (let i = 0, n = this.rowCount * this.columnCount; i < n; ++i) {
       this._data[i] = i / n;
     }
     setInterval(this._tick, 30);
   }
 
-  data(row: number, col: number): any {
+  data(row: number, column: number): any {
+    if (row < 0 && column < 0) {
+      return `Corner`;
+    }
     if (row < 0) {
-      return `Col: ${col}`;
+      return `C: ${column}`;
     }
-    if (col < 0) {
-      return `Row: ${row}`;
+    if (column < 0) {
+      return `R: ${row}`;
     }
-    return this._data[row * this.colCount + col];
+    return this._data[row * this.columnCount + column];
   }
 
   private _tick = () => {
-    let i = Math.floor(Math.random() * (this.rowCount * this.colCount - 1));
-    let r = Math.floor(i / this.colCount);
-    let c = i - r * this.colCount;
+    let i = Math.floor(Math.random() * (this.rowCount * this.columnCount - 1));
+    let r = Math.floor(i / this.columnCount);
+    let c = i - r * this.columnCount;
     this._data[i] = (this._data[i] + 0.1) % 1;
     this.emitChanged({
       type: 'cells-changed',
       rowIndex: r,
-      colIndex: c,
+      columnIndex: c,
       rowSpan: 1,
-      colSpan: 1
+      columnSpan: 1
     });
   };
 
@@ -149,7 +152,7 @@ function main(): void {
   let myStyle: DataGrid.IStyle = {
     ...DataGrid.defaultStyle,
     rowBackgroundColor: i => i % 2 === 0 ? 'rgba(138, 172, 200, 0.3)' : '',
-    colBackgroundColor: i => i % 2 === 0 ? 'rgba(100, 100, 100, 0.1)' : ''
+    columnBackgroundColor: i => i % 2 === 0 ? 'rgba(100, 100, 100, 0.1)' : ''
   };
 
   let floatRenderer1 = new TextRenderer({

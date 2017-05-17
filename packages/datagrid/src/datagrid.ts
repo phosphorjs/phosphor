@@ -67,9 +67,9 @@ class DataGrid extends Widget {
     // Set up the row and column sections lists.
     // TODO - allow base size configuration.
     this._rowSections = new SectionList({ baseSize: 20 });
-    this._colSections = new SectionList({ baseSize: 64 });
+    this._columnSections = new SectionList({ baseSize: 64 });
     this._rowHeaderSections = new SectionList({ baseSize: 96 });
-    this._colHeaderSections = new SectionList({ baseSize: 20 });
+    this._columnHeaderSections = new SectionList({ baseSize: 20 });
 
     // Create the canvas and buffer objects.
     this._canvas = Private.createCanvas();
@@ -119,25 +119,25 @@ class DataGrid extends Widget {
     this._hScrollBar.stepRequested.connect(this._onStepRequested, this);
 
     // Set the layout cell config for the child widgets.
-    GridLayout.setCellConfig(this._viewport, { row: 0, col: 0 });
-    GridLayout.setCellConfig(this._vScrollBar, { row: 0, col: 1 });
-    GridLayout.setCellConfig(this._hScrollBar, { row: 1, col: 0 });
-    GridLayout.setCellConfig(this._scrollCorner, { row: 1, col: 1 });
+    GridLayout.setCellConfig(this._viewport, { row: 0, column: 0 });
+    GridLayout.setCellConfig(this._vScrollBar, { row: 0, column: 1 });
+    GridLayout.setCellConfig(this._hScrollBar, { row: 1, column: 0 });
+    GridLayout.setCellConfig(this._scrollCorner, { row: 1, column: 1 });
 
     // Create the layout for the data grid.
     let layout = new GridLayout({
       rowCount: 2,
-      colCount: 2,
+      columnCount: 2,
       rowSpacing: 0,
-      colSpacing: 0,
+      columnSpacing: 0,
       fitPolicy: 'set-no-constraint'
     });
 
     // Set the stretch factors for the grid.
     layout.setRowStretch(0, 1);
-    layout.setColStretch(0, 1);
     layout.setRowStretch(1, 0);
-    layout.setColStretch(1, 0);
+    layout.setColumnStretch(0, 1);
+    layout.setColumnStretch(1, 0);
 
     // Add the child widgets to the layout.
     layout.addWidget(this._viewport);
@@ -189,16 +189,16 @@ class DataGrid extends Widget {
 
     // Clear the section lists.
     this._rowSections.clear();
-    this._colSections.clear();
+    this._columnSections.clear();
     this._rowHeaderSections.clear();
-    this._colHeaderSections.clear();
+    this._columnHeaderSections.clear();
 
     // Populate the section lists.
     if (value) {
       this._rowSections.insertSections(0, value.rowCount);
-      this._colSections.insertSections(0, value.colCount);
+      this._columnSections.insertSections(0, value.columnCount);
       this._rowHeaderSections.insertSections(0, value.rowHeaderCount);
-      this._colHeaderSections.insertSections(0, value.colHeaderCount);
+      this._columnHeaderSections.insertSections(0, value.columnHeaderCount);
     }
 
     // Reset the scroll position.
@@ -312,7 +312,7 @@ class DataGrid extends Widget {
    * This value does not include the width of the row headers.
    */
   get scrollWidth(): number {
-    return this._colSections.totalSize;
+    return this._columnSections.totalSize;
   }
 
   /**
@@ -335,7 +335,7 @@ class DataGrid extends Widget {
     if (this._headerVisibility === 'none') {
       return 0;
     }
-    if (this._headerVisibility === 'col') {
+    if (this._headerVisibility === 'column') {
       return 0;
     }
     return this._rowHeaderSections.totalSize;
@@ -347,14 +347,14 @@ class DataGrid extends Widget {
    * #### Notes
    * This will be `0` if the column headers are hidden.
    */
-  get colHeaderHeight(): number {
+  get columnHeaderHeight(): number {
     if (this._headerVisibility === 'none') {
       return 0;
     }
     if (this._headerVisibility === 'row') {
       return 0;
     }
-    return this._colHeaderSections.totalSize;
+    return this._columnHeaderSections.totalSize;
   }
 
   /**
@@ -374,7 +374,7 @@ class DataGrid extends Widget {
    * This value does not include the height of the column headers.
    */
   get pageHeight(): number {
-    return Math.max(0, this._viewportHeight - this.colHeaderHeight);
+    return Math.max(0, this._viewportHeight - this.columnHeaderHeight);
   }
 
   /**
@@ -439,7 +439,7 @@ class DataGrid extends Widget {
     let x = this._scrollX;
     let y = this._scrollY;
     let rows = this._rowSections;
-    let cols = this._colSections;
+    let columns = this._columnSections;
     switch (dir) {
     case 'up':
       r = rows.sectionIndex(y - 1);
@@ -450,12 +450,12 @@ class DataGrid extends Widget {
       y = r < 0 ? y : rows.sectionOffset(r) + rows.sectionSize(r);
       break;
     case 'left':
-      c = cols.sectionIndex(x - 1);
-      x = c < 0 ? x : cols.sectionOffset(c);
+      c = columns.sectionIndex(x - 1);
+      x = c < 0 ? x : columns.sectionOffset(c);
       break;
     case 'right':
-      c = cols.sectionIndex(x);
-      x = c < 0 ? x : cols.sectionOffset(c) + cols.sectionSize(c);
+      c = columns.sectionIndex(x);
+      x = c < 0 ? x : columns.sectionOffset(c) + columns.sectionSize(c);
       break;
     default:
       throw 'unreachable';
@@ -524,7 +524,7 @@ class DataGrid extends Widget {
 
     // Get the visible content origin.
     let contentX = this.rowHeaderWidth;
-    let contentY = this.colHeaderHeight;
+    let contentY = this.columnHeaderHeight;
 
     // Get the visible content dimensions.
     let contentWidth = width - contentX;
@@ -682,7 +682,7 @@ class DataGrid extends Widget {
     case 0:  // DOM_DELTA_PIXEL
       break;
     case 1:  // DOM_DELTA_LINE
-      dx *= this._colSections.baseSize;
+      dx *= this._columnSections.baseSize;
       dy *= this._rowSections.baseSize;
       break;
     case 2:  // DOM_DELTA_PAGE
@@ -971,17 +971,17 @@ class DataGrid extends Widget {
     }
 
     let r1 = args.rowIndex;
-    let c1 = args.colIndex;
+    let c1 = args.columnIndex;
     let r2 = r1 + args.rowSpan - 1;
-    let c2 = c1 + args.colSpan - 1;
+    let c2 = c1 + args.columnSpan - 1;
 
-    let x1 = this._colSections.sectionOffset(c1) - 1;
+    let x1 = this._columnSections.sectionOffset(c1) - 1;
     let y1 = this._rowSections.sectionOffset(r1) - 1;
 
-    let x2 = this._colSections.sectionOffset(c2);
+    let x2 = this._columnSections.sectionOffset(c2);
     let y2 = this._rowSections.sectionOffset(r2);
 
-    x2 += this._colSections.sectionSize(c2) - 1;
+    x2 += this._columnSections.sectionSize(c2) - 1;
     y2 += this._rowSections.sectionSize(r2) - 1;
 
     x1 -= this._scrollX;
@@ -992,11 +992,11 @@ class DataGrid extends Widget {
 
     x1 += this.rowHeaderWidth;
     x2 += this.rowHeaderWidth;
-    y1 += this.colHeaderHeight;
-    y2 += this.colHeaderHeight;
+    y1 += this.columnHeaderHeight;
+    y2 += this.columnHeaderHeight;
 
     let minX = this.rowHeaderWidth;
-    let minY = this.colHeaderHeight;
+    let minY = this.columnHeaderHeight;
     let maxX = this._viewportWidth - 1;
     let maxY = this._viewportHeight - 1;
 
@@ -1056,7 +1056,7 @@ class DataGrid extends Widget {
     this._drawRowHeaderRegion(rx, ry, rw, rh);
 
     // Draw the column header region.
-    this._drawColHeaderRegion(rx, ry, rw, rh);
+    this._drawColumnHeaderRegion(rx, ry, rw, rh);
 
     // Draw the corner header region.
     this._drawCornerHeaderRegion(rx, ry, rw, rh);
@@ -1084,7 +1084,7 @@ class DataGrid extends Widget {
    */
   private _drawBodyRegion(rx: number, ry: number, rw: number, rh: number): void {
     // Get the visible content dimensions.
-    let contentW = this._colSections.totalSize - this._scrollX;
+    let contentW = this._columnSections.totalSize - this._scrollX;
     let contentH = this._rowSections.totalSize - this._scrollY;
 
     // Bail if there is no content to draw.
@@ -1094,7 +1094,7 @@ class DataGrid extends Widget {
 
     // Get the visible content origin.
     let contentX = this.rowHeaderWidth;
-    let contentY = this.colHeaderHeight;
+    let contentY = this.columnHeaderHeight;
 
     // Bail if the dirty rect does not intersect the content area.
     if (rx + rw < contentX) {
@@ -1118,20 +1118,20 @@ class DataGrid extends Widget {
 
     // Convert the dirty content bounds into cell bounds.
     let r1 = this._rowSections.sectionIndex(y1 - contentY + this._scrollY);
-    let c1 = this._colSections.sectionIndex(x1 - contentX + this._scrollX);
+    let c1 = this._columnSections.sectionIndex(x1 - contentX + this._scrollX);
     let r2 = this._rowSections.sectionIndex(y2 - contentY + this._scrollY + 1);
-    let c2 = this._colSections.sectionIndex(x2 - contentX + this._scrollX + 1);
+    let c2 = this._columnSections.sectionIndex(x2 - contentX + this._scrollX + 1);
 
     // Handle a dirty content area larger than the cell count.
     if (r2 < 0) {
       r2 = this._rowSections.sectionCount - 1;
     }
     if (c2 < 0) {
-      c2 = this._colSections.sectionCount - 1;
+      c2 = this._columnSections.sectionCount - 1;
     }
 
     // Convert the cell bounds back to visible coordinates.
-    let x = this._colSections.sectionOffset(c1) + contentX - this._scrollX;
+    let x = this._columnSections.sectionOffset(c1) + contentX - this._scrollX;
     let y = this._rowSections.sectionOffset(r1) + contentY - this._scrollY;
 
     // Set up the cell region size variables.
@@ -1140,7 +1140,7 @@ class DataGrid extends Widget {
 
     // Allocate the section sizes arrays.
     let rowSizes = new Array<number>(r2 - r1 + 1);
-    let colSizes = new Array<number>(c2 - c1 + 1);
+    let columnSizes = new Array<number>(c2 - c1 + 1);
 
     // Get the row sizes for the region.
     for (let j = r1; j <= r2; ++j) {
@@ -1149,10 +1149,10 @@ class DataGrid extends Widget {
       height += size;
     }
 
-    // Get the col sizes for the region.
+    // Get the column sizes for the region.
     for (let i = c1; i <= c2; ++i) {
-      let size = this._colSections.sectionSize(i);
-      colSizes[i - c1] = size;
+      let size = this._columnSections.sectionSize(i);
+      columnSizes[i - c1] = size;
       width += size;
     }
 
@@ -1161,8 +1161,8 @@ class DataGrid extends Widget {
       xMin: x1, yMin: y1,
       xMax: x2, yMax: y2,
       x, y, width, height,
-      row: r1, col: c1,
-      rowSizes, colSizes
+      row: r1, column: c1,
+      rowSizes, columnSizes
     };
 
     // Draw the background.
@@ -1172,7 +1172,7 @@ class DataGrid extends Widget {
     this._drawRowBackground(rgn, this._style.rowBackgroundColor);
 
     // Draw the column background.
-    this._drawColBackground(rgn, this._style.colBackgroundColor);
+    this._drawColumnBackground(rgn, this._style.columnBackgroundColor);
 
     // Draw the cell content for the cell region.
     this._drawCells(rgn, this._cellRenderer);
@@ -1205,7 +1205,7 @@ class DataGrid extends Widget {
 
     // Get the visible content origin.
     let contentX = 0;
-    let contentY = this.colHeaderHeight;
+    let contentY = this.columnHeaderHeight;
 
     // Bail if the dirty rect does not intersect the content area.
     if (rx + rw < contentX) {
@@ -1251,7 +1251,7 @@ class DataGrid extends Widget {
 
     // Allocate the section sizes arrays.
     let rowSizes = new Array<number>(r2 - r1 + 1);
-    let colSizes = new Array<number>(c2 - c1 + 1);
+    let columnSizes = new Array<number>(c2 - c1 + 1);
 
     // Get the row sizes for the region.
     for (let j = r1; j <= r2; ++j) {
@@ -1260,10 +1260,10 @@ class DataGrid extends Widget {
       height += size;
     }
 
-    // Get the col sizes for the region.
+    // Get the column sizes for the region.
     for (let i = c1; i <= c2; ++i) {
       let size = this._rowHeaderSections.sectionSize(i);
-      colSizes[i - c1] = size;
+      columnSizes[i - c1] = size;
       width += size;
     }
 
@@ -1275,8 +1275,8 @@ class DataGrid extends Widget {
       xMin: x1, yMin: y1,
       xMax: x2, yMax: y2,
       x, y, width, height,
-      row: r1, col: c1,
-      rowSizes, colSizes
+      row: r1, column: c1,
+      rowSizes, columnSizes
     };
 
     // Draw the background.
@@ -1301,10 +1301,10 @@ class DataGrid extends Widget {
   /**
    * Draw the column header region which intersects the dirty rect.
    */
-  private _drawColHeaderRegion(rx: number, ry: number, rw: number, rh: number): void {
+  private _drawColumnHeaderRegion(rx: number, ry: number, rw: number, rh: number): void {
     // Get the visible content dimensions.
-    let contentW = this._colSections.totalSize - this._scrollX;
-    let contentH = this.colHeaderHeight;
+    let contentW = this._columnSections.totalSize - this._scrollX;
+    let contentH = this.columnHeaderHeight;
 
     // Bail if there is no content to draw.
     if (contentW <= 0 || contentH <= 0) {
@@ -1336,22 +1336,22 @@ class DataGrid extends Widget {
     let y2 = Math.min(ry + rh - 1, contentY + contentH - 1);
 
     // Convert the dirty content bounds into cell bounds.
-    let r1 = this._colHeaderSections.sectionIndex(y1);
-    let c1 = this._colSections.sectionIndex(x1 - contentX + this._scrollX);
-    let r2 = this._colHeaderSections.sectionIndex(y2 + 1);
-    let c2 = this._colSections.sectionIndex(x2 - contentX + this._scrollX + 1);
+    let r1 = this._columnHeaderSections.sectionIndex(y1);
+    let c1 = this._columnSections.sectionIndex(x1 - contentX + this._scrollX);
+    let r2 = this._columnHeaderSections.sectionIndex(y2 + 1);
+    let c2 = this._columnSections.sectionIndex(x2 - contentX + this._scrollX + 1);
 
     // Handle a dirty content area larger than the cell count.
     if (r2 < 0) {
-      r2 = this._colHeaderSections.sectionCount - 1;
+      r2 = this._columnHeaderSections.sectionCount - 1;
     }
     if (c2 < 0) {
-      c2 = this._colSections.sectionCount - 1;
+      c2 = this._columnSections.sectionCount - 1;
     }
 
     // Convert the cell bounds back to visible coordinates.
-    let x = this._colSections.sectionOffset(c1) + contentX - this._scrollX;
-    let y = this._colHeaderSections.sectionOffset(r1);
+    let x = this._columnSections.sectionOffset(c1) + contentX - this._scrollX;
+    let y = this._columnHeaderSections.sectionOffset(r1);
 
     // Set up the cell region size variables.
     let width = 0;
@@ -1359,32 +1359,32 @@ class DataGrid extends Widget {
 
     // Allocate the section sizes arrays.
     let rowSizes = new Array<number>(r2 - r1 + 1);
-    let colSizes = new Array<number>(c2 - c1 + 1);
+    let columnSizes = new Array<number>(c2 - c1 + 1);
 
     // Get the row sizes for the region.
     for (let j = r1; j <= r2; ++j) {
-      let size = this._colHeaderSections.sectionSize(j);
+      let size = this._columnHeaderSections.sectionSize(j);
       rowSizes[j - r1] = size;
       height += size;
     }
 
-    // Get the col sizes for the region.
+    // Get the column sizes for the region.
     for (let i = c1; i <= c2; ++i) {
-      let size = this._colSections.sectionSize(i);
-      colSizes[i - c1] = size;
+      let size = this._columnSections.sectionSize(i);
+      columnSizes[i - c1] = size;
       width += size;
     }
 
     // Adjust the start column for the header offset.
-    r1 -= this._colHeaderSections.sectionCount;
+    r1 -= this._columnHeaderSections.sectionCount;
 
     // Create the cell region object.
     let rgn = {
       xMin: x1, yMin: y1,
       xMax: x2, yMax: y2,
       x, y, width, height,
-      row: r1, col: c1,
-      rowSizes, colSizes
+      row: r1, column: c1,
+      rowSizes, columnSizes
     };
 
     // Draw the background.
@@ -1412,7 +1412,7 @@ class DataGrid extends Widget {
   private _drawCornerHeaderRegion(rx: number, ry: number, rw: number, rh: number): void {
     // Get the visible content dimensions.
     let contentW = this.rowHeaderWidth;
-    let contentH = this.colHeaderHeight;
+    let contentH = this.columnHeaderHeight;
 
     // Bail if there is no content to draw.
     if (contentW <= 0 || contentH <= 0) {
@@ -1444,14 +1444,14 @@ class DataGrid extends Widget {
     let y2 = Math.min(ry + rh - 1, contentY + contentH - 1);
 
     // Convert the dirty content bounds into cell bounds.
-    let r1 = this._colHeaderSections.sectionIndex(y1);
+    let r1 = this._columnHeaderSections.sectionIndex(y1);
     let c1 = this._rowHeaderSections.sectionIndex(x1);
-    let r2 = this._colHeaderSections.sectionIndex(y2 + 1);
+    let r2 = this._columnHeaderSections.sectionIndex(y2 + 1);
     let c2 = this._rowHeaderSections.sectionIndex(x2 + 1);
 
     // Handle a dirty content area larger than the cell count.
     if (r2 < 0) {
-      r2 = this._colHeaderSections.sectionCount - 1;
+      r2 = this._columnHeaderSections.sectionCount - 1;
     }
     if (c2 < 0) {
       c2 = this._rowHeaderSections.sectionCount - 1;
@@ -1459,7 +1459,7 @@ class DataGrid extends Widget {
 
     // Convert the cell bounds back to visible coordinates.
     let x = this._rowHeaderSections.sectionOffset(c1);
-    let y = this._colHeaderSections.sectionOffset(r1);
+    let y = this._columnHeaderSections.sectionOffset(r1);
 
     // Set up the cell region size variables.
     let width = 0;
@@ -1467,24 +1467,24 @@ class DataGrid extends Widget {
 
     // Allocate the section sizes arrays.
     let rowSizes = new Array<number>(r2 - r1 + 1);
-    let colSizes = new Array<number>(c2 - c1 + 1);
+    let columnSizes = new Array<number>(c2 - c1 + 1);
 
     // Get the row sizes for the region.
     for (let j = r1; j <= r2; ++j) {
-      let size = this._colHeaderSections.sectionSize(j);
+      let size = this._columnHeaderSections.sectionSize(j);
       rowSizes[j - r1] = size;
       height += size;
     }
 
-    // Get the col sizes for the region.
+    // Get the column sizes for the region.
     for (let i = c1; i <= c2; ++i) {
       let size = this._rowHeaderSections.sectionSize(i);
-      colSizes[i - c1] = size;
+      columnSizes[i - c1] = size;
       width += size;
     }
 
     // Adjust the start row and column for the header offset.
-    r1 -= this._colHeaderSections.sectionCount;
+    r1 -= this._columnHeaderSections.sectionCount;
     c1 -= this._rowHeaderSections.sectionCount;
 
     // Create the cell region object.
@@ -1492,8 +1492,8 @@ class DataGrid extends Widget {
       xMin: x1, yMin: y1,
       xMax: x2, yMax: y2,
       x, y, width, height,
-      row: r1, col: c1,
-      rowSizes, colSizes
+      row: r1, column: c1,
+      rowSizes, columnSizes
     };
 
     // Draw the background.
@@ -1574,7 +1574,7 @@ class DataGrid extends Widget {
   /**
    * Draw the column background for the given cell region.
    */
-  private _drawColBackground(rgn: Private.ICellRegion, colorFn: ((i: number) => string) | undefined): void {
+  private _drawColumnBackground(rgn: Private.ICellRegion, colorFn: ((i: number) => string) | undefined): void {
     // Bail if there is no color function.
     if (!colorFn) {
       return;
@@ -1585,9 +1585,9 @@ class DataGrid extends Widget {
     let y2 = Math.min(rgn.y + rgn.height - 1, rgn.yMax);
 
     // Draw the background for the columns in the region.
-    for (let x = rgn.x, i = 0, n = rgn.colSizes.length; i < n; ++i) {
+    for (let x = rgn.x, i = 0, n = rgn.columnSizes.length; i < n; ++i) {
       // Fetch the size of the column.
-      let size = rgn.colSizes[i];
+      let size = rgn.columnSizes[i];
 
       // Skip zero sized columns.
       if (size === 0) {
@@ -1595,7 +1595,7 @@ class DataGrid extends Widget {
       }
 
       // Get the background color for the column.
-      let color = colorFn(rgn.col + i);
+      let color = colorFn(rgn.column + i);
 
       // Fill the column with the background color if needed.
       if (color) {
@@ -1621,7 +1621,7 @@ class DataGrid extends Widget {
 
     // Set up the cell config object for rendering.
     let config = {
-      x: 0, y: 0, width: 0, height: 0, row: 0, col: 0,
+      x: 0, y: 0, width: 0, height: 0, row: 0, column: 0,
       value: (null as any), field: (null as DataModel.IField | null)
     };
 
@@ -1636,9 +1636,9 @@ class DataGrid extends Widget {
     let y2 = Math.min(rgn.y + rgn.height - 1, rgn.yMax);
 
     // Loop over the columns in the region.
-    for (let x = rgn.x, i = 0, n = rgn.colSizes.length; i < n; ++i) {
+    for (let x = rgn.x, i = 0, n = rgn.columnSizes.length; i < n; ++i) {
       // Fetch the size of the column.
-      let width = rgn.colSizes[i];
+      let width = rgn.columnSizes[i];
 
       // Skip zero sized columns.
       if (width === 0) {
@@ -1646,12 +1646,12 @@ class DataGrid extends Widget {
       }
 
       // Compute the column index.
-      let col = rgn.col + i;
+      let column = rgn.column + i;
 
       // Get the field descriptor for the column.
       let field: DataModel.IField | null = null;
       try {
-        field = this._model.field(col);
+        field = this._model.field(column);
       } catch (err) {
         console.error(err);
       }
@@ -1659,7 +1659,7 @@ class DataGrid extends Widget {
       // Update the config for the current column.
       config.x = x - 1;
       config.width = width + 1;
-      config.col = col;
+      config.column = column;
       config.field = field;
 
       // Clear the buffer rect for the column.
@@ -1691,7 +1691,7 @@ class DataGrid extends Widget {
         // Get the data value for the cell.
         let value: any;
         try {
-          value = this._model.data(row, col);
+          value = this._model.data(row, column);
         } catch (err) {
           value = undefined;
           console.error(err);
@@ -1816,9 +1816,9 @@ class DataGrid extends Widget {
     this._canvasGC.lineWidth = 1;
 
     // Draw the vertical grid lines.
-    for (let x = rgn.x, i = 0, n = rgn.colSizes.length; i < n; ++i) {
+    for (let x = rgn.x, i = 0, n = rgn.columnSizes.length; i < n; ++i) {
       // Fetch the size of the column.
-      let size = rgn.colSizes[i];
+      let size = rgn.columnSizes[i];
 
       // Skip zero sized columns.
       if (size === 0) {
@@ -1913,9 +1913,9 @@ class DataGrid extends Widget {
   private _bufferGC: CanvasRenderingContext2D;
 
   private _rowSections: SectionList;
-  private _colSections: SectionList;
+  private _columnSections: SectionList;
   private _rowHeaderSections: SectionList;
-  private _colHeaderSections: SectionList;
+  private _columnHeaderSections: SectionList;
 
   private _scrollX = 0;
   private _scrollY = 0;
@@ -1971,7 +1971,7 @@ namespace DataGrid {
      * This color is layered on top of the `backgroundColor` and can
      * be used to implement "zebra striping" of the grid columns.
      */
-    readonly colBackgroundColor?: (index: number) => string;
+    readonly columnBackgroundColor?: (index: number) => string;
 
     /**
      * The color for the grid lines of the body cells.
@@ -2027,7 +2027,7 @@ namespace DataGrid {
    * A type alias for the supported header visibility modes.
    */
   export
-  type HeaderVisibility = 'all' | 'row' | 'col' | 'none';
+  type HeaderVisibility = 'all' | 'row' | 'column' | 'none';
 
   /**
    * An options object for initializing a data grid.
@@ -2042,7 +2042,7 @@ namespace DataGrid {
     style?: IStyle;
 
     /**
-     * The cell renderer for the data grid.
+     * The default cell renderer for the data grid.
      *
      * The default is a `TextRenderer`.
      */
@@ -2166,9 +2166,9 @@ namespace Private {
     row: number;
 
     /**
-     * The col index of the first cell in the region.
+     * The column index of the first cell in the region.
      */
-    col: number;
+    column: number;
 
     /**
      * The row sizes for the rows in the region.
@@ -2176,8 +2176,8 @@ namespace Private {
     rowSizes: number[];
 
     /**
-     * The col sizes for the cols in the region.
+     * The column sizes for the columns in the region.
      */
-    colSizes: number[];
+    columnSizes: number[];
   }
 }

@@ -49,14 +49,14 @@ class GridLayout extends Layout {
     if (options.rowCount !== undefined) {
       Private.reallocSizers(this._rowSizers, options.rowCount);
     }
-    if (options.colCount !== undefined) {
-      Private.reallocSizers(this._colSizers, options.colCount);
+    if (options.columnCount !== undefined) {
+      Private.reallocSizers(this._columnSizers, options.columnCount);
     }
     if (options.rowSpacing !== undefined) {
       this._rowSpacing = Private.clampValue(options.rowSpacing);
     }
-    if (options.colSpacing !== undefined) {
-      this._colSpacing = Private.clampValue(options.colSpacing);
+    if (options.columnSpacing !== undefined) {
+      this._columnSpacing = Private.clampValue(options.columnSpacing);
     }
   }
 
@@ -75,9 +75,9 @@ class GridLayout extends Layout {
     this._box = null;
     this._items.length = 0;
     this._rowStarts.length = 0;
-    this._colStarts.length = 0;
     this._rowSizers.length = 0;
-    this._colSizers.length = 0;
+    this._columnStarts.length = 0;
+    this._columnSizers.length = 0;
 
     // Dispose of the rest of the layout.
     super.dispose();
@@ -114,8 +114,8 @@ class GridLayout extends Layout {
   /**
    * Get the number of columns in the layout.
    */
-  get colCount(): number {
-    return this._colSizers.length
+  get columnCount(): number {
+    return this._columnSizers.length
   }
 
   /**
@@ -124,14 +124,14 @@ class GridLayout extends Layout {
    * #### Notes
    * The minimum column count is `1`.
    */
-  set colCount(value: number) {
+  set columnCount(value: number) {
     // Do nothing if the column count does not change.
-    if (value === this.colCount) {
+    if (value === this.columnCount) {
       return;
     }
 
     // Reallocate the column sizers.
-    Private.reallocSizers(this._colSizers, value);
+    Private.reallocSizers(this._columnSizers, value);
 
     // Schedule a fit of the parent.
     if (this.parent) {
@@ -170,24 +170,24 @@ class GridLayout extends Layout {
   /**
    * Get the column spacing for the layout.
    */
-  get colSpacing(): number {
-    return this._colSpacing;
+  get columnSpacing(): number {
+    return this._columnSpacing;
   }
 
   /**
    * Set the col spacing for the layout.
    */
-  set colSpacing(value: number) {
+  set columnSpacing(value: number) {
     // Clamp the spacing to the allowed range.
     value = Private.clampValue(value);
 
     // Bail if the spacing does not change
-    if (this._colSpacing === value) {
+    if (this._columnSpacing === value) {
       return;
     }
 
     // Update the internal spacing.
-    this._colSpacing = value;
+    this._columnSpacing = value;
 
     // Schedule a fit of the parent.
     if (this.parent) {
@@ -256,8 +256,8 @@ class GridLayout extends Layout {
    * #### Notes
    * This returns `-1` if the index is out of range.
    */
-  colStretch(index: number): number {
-    let sizer = this._colSizers[index];
+  columnStretch(index: number): number {
+    let sizer = this._columnSizers[index];
     return sizer ? sizer.stretch : -1;
   }
 
@@ -271,9 +271,9 @@ class GridLayout extends Layout {
    * #### Notes
    * This is a no-op if the index is out of range.
    */
-  setColStretch(index: number, value: number): void {
+  setColumnStretch(index: number, value: number): void {
     // Look up the column sizer.
-    let sizer = this._colSizers[index];
+    let sizer = this._columnSizers[index];
 
     // Bail if the index is out of range.
     if (!sizer) {
@@ -485,8 +485,8 @@ class GridLayout extends Layout {
     for (let i = 0, n = this.rowCount; i < n; ++i) {
       this._rowSizers[i].minSize = 0;
     }
-    for (let i = 0, n = this.colCount; i < n; ++i) {
-      this._colSizers[i].minSize = 0;
+    for (let i = 0, n = this.columnCount; i < n; ++i) {
+      this._columnSizers[i].minSize = 0;
     }
 
     // Filter for the visible layout items.
@@ -499,7 +499,7 @@ class GridLayout extends Layout {
 
     // Get the max row and column index.
     let maxRow = this.rowCount - 1;
-    let maxCol = this.colCount - 1;
+    let maxCol = this.columnCount - 1;
 
     // Sort the items by row span.
     items.sort(Private.rowSpanCmp);
@@ -519,7 +519,7 @@ class GridLayout extends Layout {
     }
 
     // Sort the items by column span.
-    items.sort(Private.colSpanCmp);
+    items.sort(Private.columnSpanCmp);
 
     // Update the min sizes of the column sizers.
     for (let i = 0, n = items.length; i < n; ++i) {
@@ -528,11 +528,11 @@ class GridLayout extends Layout {
 
       // Get the column bounds for the item.
       let config = GridLayout.getCellConfig(item.widget);
-      let c1 = Math.min(config.col, maxCol);
-      let c2 = Math.min(config.col + config.colSpan - 1, maxCol);
+      let c1 = Math.min(config.column, maxCol);
+      let c2 = Math.min(config.column + config.columnSpan - 1, maxCol);
 
       // Distribute the minimum width to the sizers as needed.
-      Private.distributeMin(this._colSizers, c1, c2, item.minWidth);
+      Private.distributeMin(this._columnSizers, c1, c2, item.minWidth);
     }
 
     // If no size constraint is needed, just update the parent.
@@ -542,15 +542,15 @@ class GridLayout extends Layout {
     }
 
     // Set up the computed min size.
-    let minW = maxCol * this._colSpacing;
     let minH = maxRow * this._rowSpacing;
+    let minW = maxCol * this._columnSpacing;
 
     // Add the sizer minimums to the computed min size.
     for (let i = 0, n = this.rowCount; i < n; ++i) {
       minH += this._rowSizers[i].minSize;
     }
-    for (let i = 0, n = this.colCount; i < n; ++i) {
-      minW += this._colSizers[i].minSize;
+    for (let i = 0, n = this.columnCount; i < n; ++i) {
+      minW += this._columnSizers[i].minSize;
     }
 
     // Update the box sizing and add it to the computed min size.
@@ -609,15 +609,15 @@ class GridLayout extends Layout {
 
     // Get the max row and column index.
     let maxRow = this.rowCount - 1;
-    let maxCol = this.colCount - 1;
+    let maxCol = this.columnCount - 1;
 
     // Compute the total fixed row and column space.
     let fixedRowSpace = maxRow * this._rowSpacing;
-    let fixedColSpace = maxCol * this._colSpacing;
+    let fixedColSpace = maxCol * this._columnSpacing;
 
     // Distribute the available space to the box sizers.
-    BoxEngine.calc(this._colSizers, Math.max(0, width - fixedColSpace));
     BoxEngine.calc(this._rowSizers, Math.max(0, height - fixedRowSpace));
+    BoxEngine.calc(this._columnSizers, Math.max(0, width - fixedColSpace));
 
     // Update the row start positions.
     for (let i = 0, pos = top, n = this.rowCount; i < n; ++i) {
@@ -626,9 +626,9 @@ class GridLayout extends Layout {
     }
 
     // Update the column start positions.
-    for (let i = 0, pos = left, n = this.colCount; i < n; ++i) {
-      this._colStarts[i] = pos;
-      pos += this._colSizers[i].size + this._colSpacing;
+    for (let i = 0, pos = left, n = this.columnCount; i < n; ++i) {
+      this._columnStarts[i] = pos;
+      pos += this._columnSizers[i].size + this._columnSpacing;
     }
 
     // Update the geometry of the layout items.
@@ -644,14 +644,14 @@ class GridLayout extends Layout {
       // Fetch the cell bounds for the widget.
       let config = GridLayout.getCellConfig(item.widget);
       let r1 = Math.min(config.row, maxRow);
-      let c1 = Math.min(config.col, maxCol);
+      let c1 = Math.min(config.column, maxCol);
       let r2 = Math.min(config.row + config.rowSpan - 1, maxRow);
-      let c2 = Math.min(config.col + config.colSpan - 1, maxCol);
+      let c2 = Math.min(config.column + config.columnSpan - 1, maxCol);
 
       // Compute the cell geometry.
-      let x = this._colStarts[c1];
+      let x = this._columnStarts[c1];
       let y = this._rowStarts[r1];
-      let w = this._colStarts[c2] + this._colSizers[c2].size - x;
+      let w = this._columnStarts[c2] + this._columnSizers[c2].size - x;
       let h = this._rowStarts[r2] + this._rowSizers[r2].size - y;
 
       // Update the geometry of the layout item.
@@ -661,12 +661,12 @@ class GridLayout extends Layout {
 
   private _dirty = false;
   private _rowSpacing = 4;
-  private _colSpacing = 4;
+  private _columnSpacing = 4;
   private _items: LayoutItem[] = [];
   private _rowStarts: number[] = [];
-  private _colStarts: number[] = [];
+  private _columnStarts: number[] = [];
   private _rowSizers: BoxSizer[] = [new BoxSizer()];
-  private _colSizers: BoxSizer[] = [new BoxSizer()];
+  private _columnSizers: BoxSizer[] = [new BoxSizer()];
   private _box: ElementExt.IBoxSizing | null = null;
 }
 
@@ -693,7 +693,7 @@ namespace GridLayout {
      *
      * The default is `1`.
      */
-    colCount?: number;
+    columnCount?: number;
 
     /**
      * The spacing between rows in the layout.
@@ -707,7 +707,7 @@ namespace GridLayout {
      *
      * The default is `4`.
      */
-    colSpacing?: number;
+    columnSpacing?: number;
   }
 
   /**
@@ -723,7 +723,7 @@ namespace GridLayout {
     /**
      * The column index for the widget.
      */
-    readonly col: number;
+    readonly column: number;
 
     /**
      * The row span for the widget.
@@ -733,7 +733,7 @@ namespace GridLayout {
     /**
      * The column span for the widget.
      */
-    readonly colSpan: number;
+    readonly columnSpan: number;
   }
 
   /**
@@ -772,7 +772,7 @@ namespace Private {
   export
   const cellConfigProperty = new AttachedProperty<Widget, GridLayout.ICellConfig>({
     name: 'cellConfig',
-    create: () => ({ row: 0, col: 0, rowSpan: 1, colSpan: 1 }),
+    create: () => ({ row: 0, column: 0, rowSpan: 1, columnSpan: 1 }),
     changed: onChildCellConfigChanged
   });
 
@@ -782,10 +782,10 @@ namespace Private {
   export
   function normalizeConfig(config: Partial<GridLayout.ICellConfig>): GridLayout.ICellConfig {
     let row = Math.max(0, Math.floor(config.row || 0));
-    let col = Math.max(0, Math.floor(config.col || 0));
+    let column = Math.max(0, Math.floor(config.column || 0));
     let rowSpan = Math.max(1, Math.floor(config.rowSpan || 0));
-    let colSpan = Math.max(1, Math.floor(config.colSpan || 0));
-    return { row, col, rowSpan, colSpan };
+    let columnSpan = Math.max(1, Math.floor(config.columnSpan || 0));
+    return { row, column, rowSpan, columnSpan };
   }
 
   /**
@@ -810,10 +810,10 @@ namespace Private {
    * A sort comparison function for column spans.
    */
   export
-  function colSpanCmp(a: LayoutItem, b: LayoutItem): number {
+  function columnSpanCmp(a: LayoutItem, b: LayoutItem): number {
     let c1 = cellConfigProperty.get(a.widget);
     let c2 = cellConfigProperty.get(b.widget);
-    return c1.colSpan - c2.colSpan;
+    return c1.columnSpan - c2.columnSpan;
   }
 
   /**

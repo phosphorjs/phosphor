@@ -40,7 +40,7 @@ abstract class DataModel {
    * #### Notes
    * This property is accessed often, and so should be efficient.
    */
-  abstract readonly colCount: number;
+  abstract readonly columnCount: number;
 
   /**
    * The number of row header columns in the data model.
@@ -56,30 +56,30 @@ abstract class DataModel {
    * #### Notes
    * This property is accessed often, and so should be efficient.
    */
-  abstract readonly colHeaderCount: number;
+  abstract readonly columnHeaderCount: number;
 
   /**
    * Get the data value for a specific cell in the data model.
    *
    * @param row - The row index of the cell of interest.
    *
-   * @param col - The column index of the cell of interest.
+   * @param column - The column index of the cell of interest.
    *
    * @param returns - The data value for the specified cell.
    *
    * #### Notes
    * A negative `row` index indicates a column header row.
    *
-   * A negative `col` index indicates a row header column.
+   * A negative `column` index indicates a row header column.
    *
    * This method is called often, and so should be efficient.
    */
-  abstract data(row: number, col: number): any;
+  abstract data(row: number, column: number): any;
 
   /**
    * Get the field descriptor for a specific column in the data model.
    *
-   * @param col - The index of the column of interest.
+   * @param column - The index of the column of interest.
    *
    * @returns The field descriptor for the column, or `null`.
    *
@@ -92,7 +92,7 @@ abstract class DataModel {
    *
    * The default implementation of this method returns `null`.
    */
-  field(col: number): DataModel.IField | null {
+  field(column: number): DataModel.IField | null {
     return null;
   }
 
@@ -152,7 +152,7 @@ namespace DataModel {
     /**
      * The discriminated type of the args object.
      */
-    readonly type: 'rows-inserted' | 'cols-inserted';
+    readonly type: 'rows-inserted' | 'columns-inserted';
 
     /**
      * The index of the first inserted row or column.
@@ -177,7 +177,7 @@ namespace DataModel {
     /**
      * The discriminated type of the args object.
      */
-    readonly type: 'rows-removed' | 'cols-removed';
+    readonly type: 'rows-removed' | 'columns-removed';
 
     /**
      * The index of the first removed row or column.
@@ -202,7 +202,7 @@ namespace DataModel {
     /**
      * The discriminated type of the args object.
      */
-    readonly type: 'rows-moved' | 'cols-moved';
+    readonly type: 'rows-moved' | 'columns-moved';
 
     /**
      * The starting index of the first moved row or column.
@@ -242,7 +242,7 @@ namespace DataModel {
     /**
      * The column index of the first changed cell.
      */
-    readonly colIndex: number;
+    readonly columnIndex: number;
 
     /**
      * The number of rows in the changed cell range.
@@ -252,7 +252,7 @@ namespace DataModel {
     /**
      * The number of columns in the changed cell range.
      */
-    readonly colSpan: number;
+    readonly columnSpan: number;
   }
 
   /**
