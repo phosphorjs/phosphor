@@ -51,11 +51,7 @@ abstract class CellRenderer {
    *
    * @param gc - The graphics context to prepare.
    *
-   * @param row - The index of the first row to be rendered.
-   *
-   * @param col - The index of the column to be rendered.
-   *
-   * @param field - The field descriptor for the column, or `null`.
+   * @param config - The configuration data for the column.
    *
    * #### Notes
    * This method is called just before the grid renders the cells in
@@ -63,11 +59,11 @@ abstract class CellRenderer {
    * on the `gc` or pre-compute column render state. This can reduce
    * the need for costly `gc` state changes when painting each cell.
    *
-   * The renderer **must not** draw content in this method.
+   * The renderer **must not** draw to the `gc` in this method.
    *
    * The default implementation is a no-op.
    */
-  prepare(gc: GraphicsContext, row: number, col: number, field: DataModel.IField | null): void { }
+  prepare(gc: GraphicsContext, config: CellRenderer.IColumnConfig): void { }
 }
 
 
@@ -76,6 +72,32 @@ abstract class CellRenderer {
  */
 export
 namespace CellRenderer {
+  /**
+   * An object which holds the configuration data for a column.
+   */
+  export
+  interface IColumnConfig {
+    /**
+     * The X position of the column, in viewport coordinates.
+     */
+    readonly x: number;
+
+    /**
+     * The width of the column, in viewport pixels.
+     */
+    readonly width: number;
+
+    /**
+     * The column index.
+     */
+    readonly col: number;
+
+    /**
+     * The field descriptor for the column, or `null`.
+     */
+    readonly field: DataModel.IField | null;
+  }
+
   /**
    * An object which holds the configuration data for a cell.
    */

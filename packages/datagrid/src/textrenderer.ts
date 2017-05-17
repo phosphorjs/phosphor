@@ -10,10 +10,6 @@ import {
 } from './cellrenderer';
 
 import {
-  DataModel
-} from './datamodel';
-
-import {
   GraphicsContext
 } from './graphicscontext';
 
@@ -91,7 +87,7 @@ class TextRenderer extends CellRenderer {
    *
    * @param field - The field descriptor for the column, or `null`.
    */
-  prepare(gc: GraphicsContext, row: number, col: number, field: DataModel.IField | null): void {
+  prepare(gc: GraphicsContext, config: CellRenderer.IColumnConfig): void {
     // Look up the default state from the renderer.
     let { font, textColor, backgroundColor, horizontalAlignment } = this;
 

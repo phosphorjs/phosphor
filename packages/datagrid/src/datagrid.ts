@@ -1670,7 +1670,7 @@ class DataGrid extends Widget {
 
       // Prepare the cell renderer for drawing the column.
       try {
-        renderer.prepare(gc, rgn.row, col, field);
+        renderer.prepare(gc, config);
       } catch (err) {
         console.error(err);
       }
@@ -1689,10 +1689,11 @@ class DataGrid extends Widget {
         let row = rgn.row + j;
 
         // Get the data value for the cell.
-        let value: any = undefined;
+        let value: any;
         try {
           value = this._model.data(row, col);
         } catch (err) {
+          value = undefined;
           console.error(err);
         }
 
@@ -1744,7 +1745,7 @@ class DataGrid extends Widget {
     // Dispose of the wrapped gc.
     gc.dispose();
 
-    // Restore the final buffer state.
+    // Restore the final buffer gc state.
     this._bufferGC.restore();
   }
 
