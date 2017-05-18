@@ -59,10 +59,13 @@ class DataGrid extends Widget {
     super();
     this.addClass('p-DataGrid');
 
-    // Parse the options.
+    // Parse the simple options.
     this._style = options.style || DataGrid.defaultStyle;
-    this._cellRenderer = options.cellRenderer || new TextRenderer();
     this._headerVisibility = options.headerVisibility || 'all';
+
+    // Set up the cell renderer map.
+    let fallback = options.defaultCellRenderer || new TextRenderer();
+    this._cellRendererMap = new Private.CellRendererMap(fallback);
 
     // Set up the row and column sections lists.
     // TODO - allow base size configuration.
@@ -236,23 +239,23 @@ class DataGrid extends Widget {
   }
 
   /**
-   * Get the cell renderer for the data grid.
+   * Get the default cell renderer for the data grid.
    */
-  get cellRenderer(): CellRenderer {
-    return this._cellRenderer;
+  get defaultCellRenderer(): CellRenderer {
+    return this._cellRendererMap.fallback;
   }
 
   /**
-   * Set the cell renderer for the data grid.
+   * Set the default cell renderer for the data grid.
    */
-  set cellRenderer(value: CellRenderer) {
+  set defaultCellRenderer(value: CellRenderer) {
     // Bail if the renderer does not change.
-    if (this._cellRenderer === value) {
+    if (this._cellRendererMap.fallback === value) {
       return;
     }
 
     // Update the internal renderer.
-    this._cellRenderer = value;
+    this._cellRendererMap.fallback = value;
 
     // Schedule a full repaint of the grid.
     this.repaint();
@@ -567,6 +570,59 @@ class DataGrid extends Widget {
         this._paint(dx < 0 ? contentX : width - dx, 0, Math.abs(dx), height);
       }
     }
+  }
+
+  /**
+   * Look up the cell renderer for a specific key.
+   *
+   * @param key - The renderer key of interest.
+   *
+   * @returns The cell renderer which will be applied for the key.
+   *
+   * #### Notes
+   * If the key does not match a renderer added via `setCellRenderer`,
+   * the `defaultCellRenderer` will be returned.
+   */
+  getCellRenderer(key: DataGrid.IRendererKey): CellRenderer {
+    let name = key.fieldName || '';
+    let type = key.fieldType || '';
+    return this._cellRendererMap.get(key.region, name, type);
+  }
+
+  /**
+   * Set the cell renderer for a specific key.
+   *
+   * @param key - The renderer key of interest.
+   *
+   * @param renderer - The renderer to apply for the given key.
+   *
+   * #### Notes
+   * This will replace an old renderer assigned to the same key.
+   */
+  setCellRenderer(key: DataGrid.IRendererKey, renderer: CellRenderer): void {
+    // Coerce the field name and type.
+    let name = key.fieldName || '';
+    let type = key.fieldType || '';
+
+    // Set the renderer in the map.
+    this._cellRendererMap.set(key.region, name, type, renderer);
+
+    // Schedule a full repaint of the grid.
+    this.repaint();
+  }
+
+  /**
+   * Clear all custom cell renderers from the data grid.
+   *
+   * #### Notes
+   * This will not change the `defaultCellRenderer`.
+   */
+  clearCellRenderers(): void {
+    // Clear the custom cell renderers.
+    this._cellRendererMap.clear();
+
+    // Schedule a full repaint of the grid.
+    this.repaint();
   }
 
   /**
@@ -1157,7 +1213,8 @@ class DataGrid extends Widget {
     }
 
     // Create the cell region object.
-    let rgn = {
+    let rgn: Private.ICellRegion = {
+      region: 'body',
       xMin: x1, yMin: y1,
       xMax: x2, yMax: y2,
       x, y, width, height,
@@ -1175,7 +1232,7 @@ class DataGrid extends Widget {
     this._drawColumnBackground(rgn, this._style.columnBackgroundColor);
 
     // Draw the cell content for the cell region.
-    this._drawCells(rgn, this._cellRenderer);
+    this._drawCells(rgn);
 
     // Draw the horizontal grid lines.
     this._drawHorizontalGridLines(rgn,
@@ -1271,7 +1328,8 @@ class DataGrid extends Widget {
     c1 -= this._rowHeaderSections.sectionCount;
 
     // Create the cell region object.
-    let rgn = {
+    let rgn: Private.ICellRegion = {
+      region: 'row-header',
       xMin: x1, yMin: y1,
       xMax: x2, yMax: y2,
       x, y, width, height,
@@ -1283,7 +1341,7 @@ class DataGrid extends Widget {
     this._drawBackground(rgn, this._style.headerBackgroundColor);
 
     // Draw the cell content for the cell region.
-    this._drawCells(rgn, this._headerCellRenderer);
+    this._drawCells(rgn);
 
     // Draw the horizontal grid lines.
     this._drawHorizontalGridLines(rgn,
@@ -1379,7 +1437,8 @@ class DataGrid extends Widget {
     r1 -= this._columnHeaderSections.sectionCount;
 
     // Create the cell region object.
-    let rgn = {
+    let rgn: Private.ICellRegion = {
+      region: 'column-header',
       xMin: x1, yMin: y1,
       xMax: x2, yMax: y2,
       x, y, width, height,
@@ -1391,7 +1450,7 @@ class DataGrid extends Widget {
     this._drawBackground(rgn, this._style.headerBackgroundColor);
 
     // Draw the cell content for the cell region.
-    this._drawCells(rgn, this._headerCellRenderer);
+    this._drawCells(rgn);
 
     // Draw the horizontal grid lines.
     this._drawHorizontalGridLines(rgn,
@@ -1488,7 +1547,8 @@ class DataGrid extends Widget {
     c1 -= this._rowHeaderSections.sectionCount;
 
     // Create the cell region object.
-    let rgn = {
+    let rgn: Private.ICellRegion = {
+      region: 'corner-header',
       xMin: x1, yMin: y1,
       xMax: x2, yMax: y2,
       x, y, width, height,
@@ -1500,7 +1560,7 @@ class DataGrid extends Widget {
     this._drawBackground(rgn, this._style.headerBackgroundColor);
 
     // Draw the cell content for the cell region.
-    this._drawCells(rgn, this._headerCellRenderer);
+    this._drawCells(rgn);
 
     // Draw the horizontal grid lines.
     this._drawHorizontalGridLines(rgn,
@@ -1613,16 +1673,19 @@ class DataGrid extends Widget {
   /**
    * Draw the cells for the given cell region.
    */
-  private _drawCells(rgn: Private.ICellRegion, renderer: CellRenderer): void {
+  private _drawCells(rgn: Private.ICellRegion): void {
     // Bail if there is no data model.
     if (!this._model) {
       return;
     }
 
+    // Set up a default empty field object.
+    let emptyField: DataModel.IField = { name: '', type: '' };
+
     // Set up the cell config object for rendering.
     let config = {
       x: 0, y: 0, width: 0, height: 0, row: 0, column: 0,
-      value: (null as any), field: (null as DataModel.IField | null)
+      value: (null as any), field: emptyField
     };
 
     // Save the buffer gc before wrapping.
@@ -1649,10 +1712,11 @@ class DataGrid extends Widget {
       let column = rgn.column + i;
 
       // Get the field descriptor for the column.
-      let field: DataModel.IField | null = null;
+      let field: DataModel.IField;
       try {
         field = this._model.field(column);
       } catch (err) {
+        field = emptyField;
         console.error(err);
       }
 
@@ -1667,6 +1731,11 @@ class DataGrid extends Widget {
 
       // Save the GC state.
       gc.save();
+
+      // Look up the renderer for the column.
+      let renderer = this._cellRendererMap.get(
+        rgn.region, field.name, field.type
+      );
 
       // Prepare the cell renderer for drawing the column.
       try {
@@ -1924,8 +1993,7 @@ class DataGrid extends Widget {
   private _model: DataModel | null = null;
 
   private _style: DataGrid.IStyle;
-  private _cellRenderer: CellRenderer;
-  private _headerCellRenderer = new TextRenderer();
+  private _cellRendererMap: Private.CellRendererMap;
   private _headerVisibility: DataGrid.HeaderVisibility;
 }
 
@@ -2042,18 +2110,18 @@ namespace DataGrid {
     style?: IStyle;
 
     /**
-     * The default cell renderer for the data grid.
-     *
-     * The default is a `TextRenderer`.
-     */
-    cellRenderer?: CellRenderer;
-
-    /**
      * The header visibility for the data grid.
      *
      * The default is `'all'`.
      */
     headerVisibility?: HeaderVisibility;
+
+    /**
+     * The default cell renderer for the data grid.
+     *
+     * The default is a new `TextRenderer`.
+     */
+    defaultCellRenderer?: CellRenderer;
   }
 
   /**
@@ -2067,6 +2135,43 @@ namespace DataGrid {
     headerBackgroundColor: '#F3F3F3',
     headerGridLineColor: '#B5B5B5'
   };
+
+  /**
+   * A type alias for the data grid regions.
+   */
+  export
+  type Region = 'row-header' | 'column-header' | 'corner-header' | 'body';
+
+  /**
+   * An object used as a key for getting/setting cell renderers.
+   */
+  export
+  interface IRendererKey {
+    /**
+     * The grid region for which the cell renderer is applicable.
+     */
+    region: Region;
+
+    /**
+     * The field name for which the cell renderer is applicable.
+     *
+     * This is matched against the `IField.name` of the data model.
+     *
+     * If this is `undefined` or `''`, the cell renderer will apply
+     * to all field names.
+     */
+    fieldName?: string;
+
+    /**
+     * The field type for which the cell renderer is applicable.
+     *
+     * This is matched against the `IField.type` of the data model.
+     *
+     * If this is `undefined` or `''`, the cell renderer will apply
+     * to all field types.
+     */
+    fieldType?: string;
+  }
 }
 
 
@@ -2096,6 +2201,11 @@ namespace Private {
    */
   export
   interface ICellRegion {
+    /**
+     * The data grid region being drawn.
+     */
+    region: DataGrid.Region;
+
     /**
      * The min X coordinate the of the dirty viewport rect.
      *
@@ -2179,5 +2289,79 @@ namespace Private {
      * The column sizes for the columns in the region.
      */
     columnSizes: number[];
+  }
+
+  /**
+   * An object which manages the mapping of cell renderers.
+   */
+  export
+  class CellRendererMap {
+    /**
+     * Construct a new cell renderer map.
+     *
+     * @param fallback - The cell renderer of last resort.
+     */
+    constructor(fallback: CellRenderer) {
+      this.fallback = fallback;
+    }
+
+    /**
+     * The cell renderer of last resort.
+     */
+    fallback: CellRenderer;
+
+    /**
+     * Look up a cell renderer for a column.
+     *
+     * @param region - The data grid region of interest.
+     *
+     * @param name - The field name of the column, or `''`.
+     *
+     * @param type - The field type of the column, or `''`.
+     *
+     * @returns The cell renderer for the column, or the fallback.
+     *
+     * #### Notes
+     * An empty string for `name` or `type` acts as a wild card.
+     */
+    get(region: DataGrid.Region, name: string, type: string): CellRenderer {
+      return (
+        (name && type && this._map[`${region}|${name}|${type}`]) ||
+        (name && this._map[`${region}|${name}|`]) ||
+        (type && this._map[`${region}||${type}`]) ||
+        (this._map[`${region}||`]) ||
+        this.fallback
+      );
+    }
+
+    /**
+     * Set a cell renderer for a column.
+     *
+     * @param region - The data grid region of interest.
+     *
+     * @param name - The field name of the column, or `''`.
+     *
+     * @param type - The field type of the column, or `''`.
+     *
+     * @param renderer - The cell renderer to use for the column.
+     *
+     * #### Notes
+     * An empty string for `name` or `type` acts as a wild card.
+     */
+    set(region: DataGrid.Region, name: string, type: string, renderer: CellRenderer): void {
+      this._map[`${region}|${name}|${type}`] = renderer;
+    }
+
+    /**
+     * Clear the mapped cell renderers.
+     *
+     * #### Notes
+     * This will not affect the `fallback` renderer.
+     */
+    clear(): void {
+      this._map = Object.create(null);
+    }
+
+    private _map: { [key: string]: CellRenderer } = Object.create(null);
   }
 }
