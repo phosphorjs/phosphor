@@ -81,7 +81,7 @@ abstract class DataModel {
    *
    * @param column - The index of the column of interest.
    *
-   * @returns The field descriptor for the column, or `null`.
+   * @returns The field descriptor for the column.
    *
    * #### Notes
    * Subclasses which support columnar data may reimplement this method
@@ -90,10 +90,10 @@ abstract class DataModel {
    * The field descriptor can be used by custom cell renderers and cell
    * editors to customize handling of specific cell data types.
    *
-   * The default implementation of this method returns `null`.
+   * The default implementation returns `{ name: '', type: '' }`.
    */
-  field(column: number): DataModel.IField | null {
-    return null;
+  field(column: number): DataModel.IField {
+    return { name: '', type: '' };
   }
 
   /**
@@ -128,7 +128,7 @@ namespace DataModel {
      * This can be any string, but should typically be unique for a
      * given instance of a data model.
      */
-    name: string;
+    readonly name: string;
 
     /**
      * The data type of the values in the column.
@@ -137,7 +137,7 @@ namespace DataModel {
      * This can be any string, but should typically be descriptive of
      * the data type such as `'number'`, `'integer'`, `'array'`, etc.
      */
-    type: string;
+    readonly type: string;
   }
 
   /**
