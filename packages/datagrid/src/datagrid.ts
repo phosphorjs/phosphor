@@ -55,7 +55,7 @@ class DataGrid extends Widget {
    *
    * @param options - The options for initializing the data grid.
    */
-  constructor(options: DataGrid.IOptions) {
+  constructor(options: DataGrid.IOptions = {}) {
     super();
     this.addClass('p-DataGrid');
 
