@@ -95,7 +95,7 @@ const formatDecimal: TextRenderer.CellFunc<string> = config => {
 };
 
 
-const headMapJet: TextRenderer.CellFunc<string> = config => {
+const heatMapJet: TextRenderer.CellFunc<string> = config => {
   let value = config.value * 2 - 1;
   let r = Math.floor(Jet.red(value) * 255);
   let g = Math.floor(Jet.green(value) * 255);
@@ -142,6 +142,15 @@ namespace Jet {
 }
 
 
+function createWrapper(content: Widget, title: string): Widget {
+  let wrapper = new StackedPanel();
+  wrapper.addClass('content-wrapper');
+  wrapper.addWidget(content);
+  wrapper.title.label = title;
+  return wrapper;
+}
+
+
 function main(): void {
 
   let model1 = new LargeDataModel();
@@ -149,55 +158,49 @@ function main(): void {
   let model3 = new RandomDataModel();
   let model4 = new RandomDataModel();
 
-  let myStyle: DataGrid.IStyle = {
+  let blueStripeStyle: DataGrid.IStyle = {
     ...DataGrid.defaultStyle,
     rowBackgroundColor: i => i % 2 === 0 ? 'rgba(138, 172, 200, 0.3)' : '',
     columnBackgroundColor: i => i % 2 === 0 ? 'rgba(100, 100, 100, 0.1)' : ''
   };
 
-  let floatRenderer1 = new TextRenderer({
-    textColor: headMapJet,
+  let brownStripeStyle: DataGrid.IStyle = {
+    ...DataGrid.defaultStyle,
+    rowBackgroundColor: i => i % 2 === 0 ? 'rgba(204, 156, 0, 0.2)' : '',
+    columnBackgroundColor: i => i % 2 === 0 ? 'rgba(153, 135, 77, 0.2)' : ''
+  };
+
+  let fgColorFloatRenderer = new TextRenderer({
+    font: 'bold 12px sans-serif',
+    textColor: heatMapJet,
     formatter: formatDecimal,
     horizontalAlignment: 'right'
   });
 
-  let floatRenderer2 = new TextRenderer({
-    backgroundColor: headMapJet,
+  let bgColorFloatRenderer = new TextRenderer({
+    backgroundColor: heatMapJet,
     formatter: formatDecimal,
     horizontalAlignment: 'right'
   });
 
-  let grid1 = new DataGrid({ style: myStyle });
+  let grid1 = new DataGrid({ style: blueStripeStyle });
   grid1.model = model1;
 
-  let grid2 = new DataGrid({ style: myStyle });
+  let grid2 = new DataGrid({ style: brownStripeStyle });
   grid2.model = model2;
 
-  let grid3 = new DataGrid({ cellRenderer: floatRenderer1 });
+  let grid3 = new DataGrid();
+  grid3.setCellRenderer({ region: 'body' }, fgColorFloatRenderer);
   grid3.model = model3;
 
-  let grid4 = new DataGrid({ cellRenderer: floatRenderer2 });
+  let grid4 = new DataGrid();
+  grid4.setCellRenderer({ region: 'body' }, bgColorFloatRenderer);
   grid4.model = model4;
 
-  let wrapper1 = new StackedPanel();
-  wrapper1.addClass('content-wrapper');
-  wrapper1.addWidget(grid1);
-  wrapper1.title.label = 'My Data Model 1';
-
-  let wrapper2 = new StackedPanel();
-  wrapper2.addClass('content-wrapper');
-  wrapper2.addWidget(grid2);
-  wrapper2.title.label = 'My Data Model 2';
-
-  let wrapper3 = new StackedPanel();
-  wrapper3.addClass('content-wrapper');
-  wrapper3.addWidget(grid3);
-  wrapper3.title.label = 'My Data Model 3';
-
-  let wrapper4 = new StackedPanel();
-  wrapper4.addClass('content-wrapper');
-  wrapper4.addWidget(grid4);
-  wrapper4.title.label = 'My Data Model 4';
+  let wrapper1 = createWrapper(grid1, 'Large Data 1');
+  let wrapper2 = createWrapper(grid2, 'Large Data 2');
+  let wrapper3 = createWrapper(grid3, 'Random Data 1');
+  let wrapper4 = createWrapper(grid4, 'Random Data 2');
 
   let dock = new DockPanel();
   dock.id = 'dock';
