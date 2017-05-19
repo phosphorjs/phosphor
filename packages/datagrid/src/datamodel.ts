@@ -268,11 +268,11 @@ namespace DataModel {
    * so the other changed args types should be used when possible.
    */
   export
-  interface IModelChangedArgs {
+  interface IModelResetArgs {
     /**
      * The discriminated type of the args object.
      */
-    readonly type: 'model-changed';
+    readonly type: 'model-reset';
   }
 
   /**
@@ -284,6 +284,6 @@ namespace DataModel {
     ISectionsRemovedArgs |
     ISectionsMovedArgs |
     ICellsChangedArgs |
-    IModelChangedArgs
+    IModelResetArgs
   );
 }
