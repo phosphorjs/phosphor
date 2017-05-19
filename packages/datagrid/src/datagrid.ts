@@ -777,71 +777,6 @@ class DataGrid extends Widget {
   }
 
   /**
-   * Sync the scroll bar visibility and state with the viewport.
-   *
-   * #### Notes
-   * If the visibility of either scroll bar changes, a synchronous
-   * fit-request will be dispatched to the data grid to immediately
-   * resize the viewport.
-   */
-  private _updateScrollBars(): void {
-    // Fetch the viewport dimensions.
-    let sw = this.scrollWidth;
-    let sh = this.scrollHeight;
-    let pw = this.pageWidth;
-    let ph = this.pageHeight;
-
-    // Get the current scroll bar visibility.
-    let hasVScroll = !this._vScrollBar.isHidden;
-    let hasHScroll = !this._hScrollBar.isHidden;
-
-    // Get the minimum sizes of the scroll bars.
-    let vsw = this._vScrollBarMinWidth;
-    let hsh = this._hScrollBarMinHeight;
-
-    // Get the page size as if no scroll bars are visible.
-    let apw = pw + (hasVScroll ? vsw : 0);
-    let aph = ph + (hasHScroll ? hsh : 0);
-
-    // Test whether scroll bars are needed for the adjusted size.
-    let needVScroll = aph < sh - 1;
-    let needHScroll = apw < sw - 1;
-
-    // Re-test the horizontal scroll if a vertical scroll is needed.
-    if (needVScroll && !needHScroll) {
-      needHScroll = (apw - vsw) < sw - 1;
-    }
-
-    // Re-test the vertical scroll if a horizontal scroll is needed.
-    if (needHScroll && !needVScroll) {
-      needVScroll = (aph - hsh) < sh - 1;
-    }
-
-    // Update the vertical scroll bar values.
-    this._vScrollBar.maximum = this.maxScrollY;
-    this._vScrollBar.value = this.scrollY;
-    this._vScrollBar.page = ph;
-
-    // Update the horizontal scroll bar values.
-    this._hScrollBar.maximum = this.maxScrollX;
-    this._hScrollBar.value = this.scrollX;
-    this._hScrollBar.page = pw;
-
-    // Bail if neither scroll bar visibility will change.
-    if (needVScroll === hasVScroll && needHScroll === hasHScroll) {
-      return;
-    }
-
-    // Update the visibility of the scroll bars and corner widget.
-    this._vScrollBar.setHidden(!needVScroll);
-    this._hScrollBar.setHidden(!needHScroll);
-    this._scrollCorner.setHidden(!needVScroll || !needHScroll);
-
-    // Immediately re-fit the data grid to update the layout.
-    MessageLoop.sendMessage(this, Widget.Msg.FitRequest);
-  }
-
-  /**
    * Process a message sent to the viewport
    */
   private _processViewportMessage(msg: Message): void {
@@ -2169,6 +2104,71 @@ class DataGrid extends Widget {
       this._canvasGC.clearRect(0, 0, width, height);
       this._canvasGC.drawImage(this._buffer, 0, 0);
     }
+  }
+
+  /**
+   * Sync the scroll bar visibility and state with the viewport.
+   *
+   * #### Notes
+   * If the visibility of either scroll bar changes, a synchronous
+   * fit-request will be dispatched to the data grid to immediately
+   * resize the viewport.
+   */
+  private _updateScrollBars(): void {
+    // Fetch the viewport dimensions.
+    let sw = this.scrollWidth;
+    let sh = this.scrollHeight;
+    let pw = this.pageWidth;
+    let ph = this.pageHeight;
+
+    // Get the current scroll bar visibility.
+    let hasVScroll = !this._vScrollBar.isHidden;
+    let hasHScroll = !this._hScrollBar.isHidden;
+
+    // Get the minimum sizes of the scroll bars.
+    let vsw = this._vScrollBarMinWidth;
+    let hsh = this._hScrollBarMinHeight;
+
+    // Get the page size as if no scroll bars are visible.
+    let apw = pw + (hasVScroll ? vsw : 0);
+    let aph = ph + (hasHScroll ? hsh : 0);
+
+    // Test whether scroll bars are needed for the adjusted size.
+    let needVScroll = aph < sh - 1;
+    let needHScroll = apw < sw - 1;
+
+    // Re-test the horizontal scroll if a vertical scroll is needed.
+    if (needVScroll && !needHScroll) {
+      needHScroll = (apw - vsw) < sw - 1;
+    }
+
+    // Re-test the vertical scroll if a horizontal scroll is needed.
+    if (needHScroll && !needVScroll) {
+      needVScroll = (aph - hsh) < sh - 1;
+    }
+
+    // Update the vertical scroll bar values.
+    this._vScrollBar.maximum = this.maxScrollY;
+    this._vScrollBar.value = this.scrollY;
+    this._vScrollBar.page = ph;
+
+    // Update the horizontal scroll bar values.
+    this._hScrollBar.maximum = this.maxScrollX;
+    this._hScrollBar.value = this.scrollX;
+    this._hScrollBar.page = pw;
+
+    // Bail if neither scroll bar visibility will change.
+    if (needVScroll === hasVScroll && needHScroll === hasHScroll) {
+      return;
+    }
+
+    // Update the visibility of the scroll bars and corner widget.
+    this._vScrollBar.setHidden(!needVScroll);
+    this._hScrollBar.setHidden(!needHScroll);
+    this._scrollCorner.setHidden(!needVScroll || !needHScroll);
+
+    // Immediately re-fit the data grid to update the layout.
+    MessageLoop.sendMessage(this, Widget.Msg.FitRequest);
   }
 
   private _viewport: Widget;
