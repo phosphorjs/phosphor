@@ -207,17 +207,17 @@ namespace DataModel {
     /**
      * The starting index of the first moved row or column.
      */
-    readonly fromIndex: number;
-
-    /**
-     * The ending index of the first moved row or column.
-     */
-    readonly toIndex: number;
+    readonly index: number;
 
     /**
      * The number of moved rows or columns.
      */
     readonly span: number;
+
+    /**
+     * The ending index of the first moved row or column.
+     */
+    readonly destination: number;
   }
 
   /**
@@ -261,7 +261,8 @@ namespace DataModel {
    * #### Notes
    * Data models should emit the `changed` signal with this args object
    * type when the model has changed in a fashion that cannot be easily
-   * expressed by the other args object types.
+   * expressed by the other args object types, like when the data model
+   * is sorted or filtered.
    *
    * This will cause any listening data grid to perform a full refresh,
    * so the other changed args types should be used when possible.
