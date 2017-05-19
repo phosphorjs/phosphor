@@ -208,8 +208,8 @@ class DataGrid extends Widget {
     this._scrollX = 0;
     this._scrollY = 0;
 
-    // Sync the scroll bars with the viewport.
-    this._syncScrollBarsWithViewport();
+    // Update the scroll bars.
+    this._updateScrollBars();
 
     // Schedule a repaint of the viewport.
     this.repaint();
@@ -284,11 +284,8 @@ class DataGrid extends Widget {
     this._scrollX = Math.min(this._scrollX, this.maxScrollX);
     this._scrollY = Math.min(this._scrollY, this.maxScrollY);
 
-    // Update the scroll bar visibility.
-    this._updateScrollBarVisibility();
-
-    // Re-sync the scroll bars with the viewport.
-    this._syncScrollBarsWithViewport();
+    // Update the scroll bars.
+    this._updateScrollBars();
 
     // Schedule a full repaint of the grid.
     this.repaint();
@@ -715,11 +712,8 @@ class DataGrid extends Widget {
    * A message handler invoked on a `'resize'` message.
    */
   protected onResize(msg: Widget.ResizeMessage): void {
-    // Update the scroll bar visibility.
-    this._updateScrollBarVisibility();
-
-    // Sync the scroll bars with the viewport.
-    this._syncScrollBarsWithViewport();
+    // Update the scroll bars.
+    this._updateScrollBars();
 
     // Re-clamp the scroll position to the new page size.
     this.scrollTo(this._scrollX, this._scrollY);
@@ -783,14 +777,14 @@ class DataGrid extends Widget {
   }
 
   /**
-   * Update the scroll bar visibility based on the viewport size.
+   * Sync the scroll bar visibility and state with the viewport.
    *
    * #### Notes
    * If the visibility of either scroll bar changes, a synchronous
    * fit-request will be dispatched to the data grid to immediately
    * resize the viewport.
    */
-  private _updateScrollBarVisibility(): void {
+  private _updateScrollBars(): void {
     // Fetch the viewport dimensions.
     let sw = this.scrollWidth;
     let sh = this.scrollHeight;
@@ -823,6 +817,16 @@ class DataGrid extends Widget {
       needVScroll = (aph - hsh) < sh - 1;
     }
 
+    // Update the vertical scroll bar values.
+    this._vScrollBar.maximum = this.maxScrollY;
+    this._vScrollBar.value = this.scrollY;
+    this._vScrollBar.page = ph;
+
+    // Update the horizontal scroll bar values.
+    this._hScrollBar.maximum = this.maxScrollX;
+    this._hScrollBar.value = this.scrollX;
+    this._hScrollBar.page = pw;
+
     // Bail if neither scroll bar visibility will change.
     if (needVScroll === hasVScroll && needHScroll === hasHScroll) {
       return;
@@ -835,18 +839,6 @@ class DataGrid extends Widget {
 
     // Immediately re-fit the data grid to update the layout.
     MessageLoop.sendMessage(this, Widget.Msg.FitRequest);
-  }
-
-  /**
-   * Synchronize the scroll bars with the viewport.
-   */
-  private _syncScrollBarsWithViewport(): void {
-    this._hScrollBar.maximum = this.maxScrollX;
-    this._hScrollBar.page = this.pageWidth;
-    this._hScrollBar.value = this.scrollX;
-    this._vScrollBar.maximum = this.maxScrollY;
-    this._vScrollBar.page = this.pageHeight;
-    this._vScrollBar.value = this.scrollY;
   }
 
   /**
@@ -1970,6 +1962,10 @@ class DataGrid extends Widget {
   private _hScrollBar: ScrollBar;
   private _scrollCorner: Widget;
 
+  private _inPaint = false;
+
+  private _scrollX = 0;
+  private _scrollY = 0;
   private _viewportWidth = 0;
   private _viewportHeight = 0;
 
@@ -1985,10 +1981,6 @@ class DataGrid extends Widget {
   private _columnSections: SectionList;
   private _rowHeaderSections: SectionList;
   private _columnHeaderSections: SectionList;
-
-  private _scrollX = 0;
-  private _scrollY = 0;
-  private _inPaint = false;
 
   private _model: DataModel | null = null;
 
