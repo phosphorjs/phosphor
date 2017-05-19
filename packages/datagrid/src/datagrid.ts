@@ -1014,50 +1014,264 @@ class DataGrid extends Widget {
    * A signal handler for the data model `changed` signal.
    */
   private _onModelChanged(sender: DataModel, args: DataModel.ChangedArgs): void {
-    if (args.type !== 'cells-changed') {
+    switch (args.type) {
+    case 'rows-inserted':
+      this._onRowsInserted(args);
+      break;
+    case 'columns-inserted':
+      this._onColumnsInserted(args);
+      break;
+    case 'rows-removed':
+      this._onRowsRemoved(args);
+      break;
+    case 'columns-removed':
+      this._onColumnsRemoved(args);
+      break;
+    case 'rows-moved':
+      this._onRowsMoved(args);
+      break;
+    case 'columns-moved':
+      this._onColumnsMoved(args);
+      break;
+    case 'cells-changed':
+      this._onCellsChanged(args);
+      break;
+    case 'model-reset':
+      this._onModelReset(args);
+      break;
+    default:
+      throw 'unreachable';
+    }
+  }
+
+  /**
+   * Handle the `'rows-inserted'` type for the model changed signal.
+   */
+  private _onRowsInserted(args: DataModel.ISectionsInsertedArgs): void {
+    // Unpack the arg data.
+    let { index, span } = args;
+
+    // Bail early if there are no sections to insert.
+    if (span <= 0) {
       return;
     }
 
-    let r1 = args.rowIndex;
-    let c1 = args.columnIndex;
-    let r2 = r1 + args.rowSpan - 1;
-    let c2 = c1 + args.columnSpan - 1;
-
-    let x1 = this._columnSections.sectionOffset(c1) - 1;
-    let y1 = this._rowSections.sectionOffset(r1) - 1;
-
-    let x2 = this._columnSections.sectionOffset(c2);
-    let y2 = this._rowSections.sectionOffset(r2);
-
-    x2 += this._columnSections.sectionSize(c2) - 1;
-    y2 += this._rowSections.sectionSize(r2) - 1;
-
-    x1 -= this._scrollX;
-    y1 -= this._scrollY;
-
-    x2 -= this._scrollX;
-    y2 -= this._scrollY;
-
-    x1 += this.rowHeaderWidth;
-    x2 += this.rowHeaderWidth;
-    y1 += this.columnHeaderHeight;
-    y2 += this.columnHeaderHeight;
-
-    let minX = this.rowHeaderWidth;
-    let minY = this.columnHeaderHeight;
-    let maxX = this._viewportWidth - 1;
-    let maxY = this._viewportHeight - 1;
-
-    if (x2 < minX || y2 < minY || x1 > maxX || y1 > maxY) {
+    // Handle the simple case of inserting into the column header.
+    if (index < 0) {
+      let n = this._columnHeaderSections.sectionCount;
+      this._columnHeaderSections.insertSections(n + index + 1, span);
+      this._updateScrollBars();
+      this.repaint();
       return;
     }
 
-    x1 = Math.max(minX, x1);
-    x2 = Math.min(x2, maxX);
-    y1 = Math.max(minY, y1);
-    y2 = Math.min(y2, maxY);
+    // Clamp the index to the section bounds.
+    index = Math.min(index, this._rowSections.sectionCount);
 
-    this._paint(x1, y1, x2 - x1 + 1, y2 - y1 + 1);
+    // Look up the Y position of the insert.
+    let insertY: number;
+    if (index === this._rowSections.sectionCount) {
+      insertY = this._rowSections.totalSize;
+    } else {
+      insertY = this._rowSections.sectionOffset(index);
+    }
+
+    // Fetch the scroll geometry before modifying the row sections.
+    let scrollY = this.scrollY;
+    let maxScrollY = this.maxScrollY;
+
+    // Insert the row sections.
+    this._rowSections.insertSections(index, span);
+
+    // Adjust the scroll position as needed.
+    if (scrollY === 0) {
+      this._scrollY = 0;
+    } else if (scrollY === maxScrollY) {
+      this._scrollY = this.maxScrollY;
+    } else if (insertY <= scrollY) {
+      let delta = this._rowSections.baseSize * span;
+      this._scrollY = Math.min(scrollY + delta, this.maxScrollY);
+    }
+
+    // Update the scroll bars.
+    this._updateScrollBars();
+
+    // Schedule a full repaint of the grid if needed.
+    if (insertY < this.scrollY + this.pageHeight) {
+      this.repaint();
+    }
+  }
+
+  /**
+   * Handle the `'columns-inserted'` type for the model changed signal.
+   */
+  private _onColumnsInserted(args: DataModel.ISectionsInsertedArgs): void {
+    // Unpack the arg data.
+    let { index, span } = args;
+
+    // Bail early if there are no sections to insert.
+    if (span <= 0) {
+      return;
+    }
+
+    // Handle the simple case of inserting into the row header.
+    if (index < 0) {
+      let n = this._rowHeaderSections.sectionCount;
+      this._rowHeaderSections.insertSections(n + index + 1, span);
+      this._updateScrollBars();
+      this.repaint();
+      return;
+    }
+
+    // Clamp the index to the section bounds.
+    index = Math.min(index, this._columnSections.sectionCount);
+
+    // Look up the X position of the insert.
+    let insertX: number;
+    if (index === this._columnSections.sectionCount) {
+      insertX = this._columnSections.totalSize;
+    } else {
+      insertX = this._columnSections.sectionOffset(index);
+    }
+
+    // Fetch the scroll geometry before modifying the row sections.
+    let scrollX = this.scrollX;
+    let maxScrollX = this.maxScrollX;
+
+    // Insert the row sections.
+    this._columnSections.insertSections(index, span);
+
+    // Adjust the scroll position as needed.
+    if (scrollX === 0) {
+      this._scrollX = 0;
+    } else if (scrollX === maxScrollX) {
+      this._scrollX = this.maxScrollX;
+    } else if (insertX <= scrollX) {
+      let delta = this._columnSections.baseSize * span;
+      this._scrollX = Math.min(scrollX + delta, this.maxScrollX);
+    }
+
+    // Update the scroll bars.
+    this._updateScrollBars();
+
+    // Schedule a full repaint of the grid if needed.
+    if (insertX < this.scrollX + this.pageHeight) {
+      this.repaint();
+    }
+  }
+
+  private _onRowsRemoved(args: DataModel.ISectionsRemovedArgs): void {
+
+  }
+
+  private _onColumnsRemoved(args: DataModel.ISectionsRemovedArgs): void {
+
+  }
+
+  private _onRowsMoved(args: DataModel.ISectionsMovedArgs): void {
+
+  }
+
+  private _onColumnsMoved(args: DataModel.ISectionsMovedArgs): void {
+
+  }
+
+  private _onCellsChanged(args: DataModel.ICellsChangedArgs): void {
+    // let r1 = args.rowIndex;
+    // let c1 = args.columnIndex;
+    // let r2 = r1 + args.rowSpan - 1;
+    // let c2 = c1 + args.columnSpan - 1;
+
+    // let x1 = this._columnSections.sectionOffset(c1) - 1;
+    // let y1 = this._rowSections.sectionOffset(r1) - 1;
+
+    // let x2 = this._columnSections.sectionOffset(c2);
+    // let y2 = this._rowSections.sectionOffset(r2);
+
+    // x2 += this._columnSections.sectionSize(c2) - 1;
+    // y2 += this._rowSections.sectionSize(r2) - 1;
+
+    // x1 -= this._scrollX;
+    // y1 -= this._scrollY;
+
+    // x2 -= this._scrollX;
+    // y2 -= this._scrollY;
+
+    // x1 += this.rowHeaderWidth;
+    // x2 += this.rowHeaderWidth;
+    // y1 += this.columnHeaderHeight;
+    // y2 += this.columnHeaderHeight;
+
+    // let minX = this.rowHeaderWidth;
+    // let minY = this.columnHeaderHeight;
+    // let maxX = this._viewportWidth - 1;
+    // let maxY = this._viewportHeight - 1;
+
+    // if (x2 < minX || y2 < minY || x1 > maxX || y1 > maxY) {
+    //   return;
+    // }
+
+    // x1 = Math.max(minX, x1);
+    // x2 = Math.min(x2, maxX);
+    // y1 = Math.max(minY, y1);
+    // y2 = Math.min(y2, maxY);
+
+    // this._paint(x1, y1, x2 - x1 + 1, y2 - y1 + 1);
+  }
+
+  /**
+   * Handle the `'model-reset'` type for the model changed signal.
+   */
+  private _onModelReset(args: DataModel.IModelResetArgs): void {
+    // Look up the various current section counts.
+    let nr = this._rowSections.sectionCount;
+    let nc = this._columnSections.sectionCount;
+    let nrh = this._rowHeaderSections.sectionCount;
+    let nch = this._columnHeaderSections.sectionCount;
+
+    // Compute the delta count for each region.
+    let dr = this._model!.rowCount - nr;
+    let dc = this._model!.columnCount - nc;
+    let drh = this._model!.rowHeaderCount - nrh;
+    let dch = this._model!.columnHeaderCount - nch;
+
+    // Update the row sections, if needed.
+    if (dr > 0) {
+      this._rowSections.insertSections(nr, dr);
+    } else if (dr < 0) {
+      this._rowSections.removeSections(nr + dr, -dr);
+    }
+
+    // Update the column sections, if needed.
+    if (dc > 0) {
+      this._columnSections.insertSections(nc, dc);
+    } else if (dc < 0) {
+      this._columnSections.removeSections(nc + dc, -dc);
+    }
+
+    // Update the row header sections, if needed.
+    if (drh > 0) {
+      this._rowHeaderSections.insertSections(nrh, drh);
+    } else if (drh < 0) {
+      this._rowHeaderSections.removeSections(nrh + drh, -drh);
+    }
+
+    // Update the column header sections, if needed.
+    if (dch > 0) {
+      this._columnHeaderSections.insertSections(nch, dch);
+    } else if (dch < 0) {
+      this._columnHeaderSections.removeSections(nch + dch, -dch);
+    }
+
+    // Re-clamp the scroll position for the new page size.
+    this._scrollX = Math.min(this._scrollX, this.maxScrollX);
+    this._scrollY = Math.min(this._scrollY, this.maxScrollY);
+
+    // Update the scroll bars.
+    this._updateScrollBars();
+
+    // Schedule a full repaint of the grid.
+    this.repaint();
   }
 
   /**
