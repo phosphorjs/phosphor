@@ -951,22 +951,26 @@ class DataGrid extends Widget {
   private _onModelChanged(sender: DataModel, args: DataModel.ChangedArgs): void {
     switch (args.type) {
     case 'rows-inserted':
-      this._onRowsInserted(args);
-      break;
     case 'columns-inserted':
-      this._onColumnsInserted(args);
+      if (args.index < 0) {
+        this._onHeaderSectionsInserted(args);
+      } else {
+        this._onBodySectionsInserted(args);
+      }
       break;
     case 'rows-removed':
-      this._onRowsRemoved(args);
-      break;
     case 'columns-removed':
-      this._onColumnsRemoved(args);
+      if (args.index < 0) {
+        this._onHeaderSectionsRemoved(args);
+      } else {
+        this._onBodySectionsRemoved(args);
+      }
       break;
     case 'rows-moved':
-      this._onRowsMoved(args);
+      // TODO
       break;
     case 'columns-moved':
-      this._onColumnsMoved(args);
+      // TODO
       break;
     case 'cells-changed':
       this._onCellsChanged(args);
@@ -980,137 +984,246 @@ class DataGrid extends Widget {
   }
 
   /**
-   * Handle the `'rows-inserted'` type for the model changed signal.
+   * Handle header sections inserted into the data model.
    */
-  private _onRowsInserted(args: DataModel.ISectionsInsertedArgs): void {
+  private _onHeaderSectionsInserted(args: DataModel.ISectionsInsertedArgs): void {
     // Unpack the arg data.
-    let { index, span } = args;
+    let { type, index, span } = args;
 
     // Bail early if there are no sections to insert.
     if (span <= 0) {
       return;
     }
 
-    // Handle the simple case of inserting into the column header.
-    if (index < 0) {
-      let n = this._columnHeaderSections.sectionCount;
-      this._columnHeaderSections.insertSections(n + index + 1, span);
-      this._updateScrollBars();
-      this.repaint();
+    // Look up the relevant section list.
+    let list: SectionList;
+    if (type === 'rows-inserted') {
+      list = this._columnHeaderSections;
+    } else {
+      list = this._rowHeaderSections;
+    }
+
+    // Compute the header insert index.
+    let i = list.sectionCount + index + 1;
+
+    // Insert the sections into the list.
+    list.insertSections(i, span);
+
+    // Update the scroll bars.
+    this._updateScrollBars();
+
+    // Schedule a full repaint of the grid.
+    this.repaint();
+  }
+
+  /**
+   * Handle header sections removed from the data model.
+   */
+  private _onHeaderSectionsRemoved(args: DataModel.ISectionsRemovedArgs): void {
+    // Unpack the arg data.
+    let { type, index, span } = args;
+
+    // Bail early if there are no sections to remove.
+    if (span <= 0) {
       return;
     }
 
-    // Clamp the index to the section bounds.
-    index = Math.min(index, this._rowSections.sectionCount);
-
-    // Look up the Y position of the insert.
-    let insertY: number;
-    if (index === this._rowSections.sectionCount) {
-      insertY = this._rowSections.totalSize;
+    // Look up the relevant section list.
+    let list: SectionList;
+    if (type === 'rows-removed') {
+      list = this._columnHeaderSections;
     } else {
-      insertY = this._rowSections.sectionOffset(index);
+      list = this._rowHeaderSections;
     }
 
-    // Fetch the scroll geometry before modifying the row sections.
-    let scrollY = this.scrollY;
-    let maxScrollY = this.maxScrollY;
+    // Compute the header remove index.
+    let i = list.sectionCount + index;
 
-    // Insert the row sections.
-    this._rowSections.insertSections(index, span);
+    // Bail if the index is out of range.
+    if (i < 0 || i >= list.sectionCount) {
+      return;
+    }
+
+    // Remove the sections from the list.
+    list.removeSections(i, span);
+
+    // Update the scroll bars.
+    this._updateScrollBars();
+
+    // Schedule a full repaint of the grid.
+    this.repaint();
+  }
+
+  /**
+   * Handle body sections inserted into the data model.
+   */
+  private _onBodySectionsInserted(args: DataModel.ISectionsInsertedArgs): void {
+    // Unpack the arg data.
+    let { type, index, span } = args;
+
+    // Bail early if there are no sections to insert.
+    if (span <= 0) {
+      return;
+    }
+
+    // Look up the relevant section data.
+    let list: SectionList;
+    let scrollPos1: number;
+    let maxScrollPos1: number;
+    if (type === 'rows-inserted') {
+      list = this._rowSections;
+      scrollPos1 = this.scrollY;
+      maxScrollPos1 = this.maxScrollY;
+    } else {
+      list = this._columnSections;
+      scrollPos1 = this.scrollX;
+      maxScrollPos1 = this.maxScrollX;
+    }
+
+    // Look up the insert position.
+    let insertPos: number;
+    if (index >= list.sectionCount) {
+      insertPos = list.totalSize;
+    } else {
+      insertPos = list.sectionOffset(index);
+    }
+
+    // Insert the sections and save the pre- and post- size.
+    let size1 = list.totalSize;
+    list.insertSections(index, span);
+    let size2 = list.totalSize;
+
+    // Fetch the new max scroll position.
+    let maxScrollPos2: number;
+    if (type === 'rows-inserted') {
+      maxScrollPos2 = this.maxScrollY;
+    } else {
+      maxScrollPos2 = this.maxScrollX;
+    }
 
     // Adjust the scroll position as needed.
-    if (scrollY === 0) {
-      this._scrollY = 0;
-    } else if (scrollY === maxScrollY) {
-      this._scrollY = this.maxScrollY;
-    } else if (insertY <= scrollY) {
-      let delta = this._rowSections.baseSize * span;
-      this._scrollY = Math.min(scrollY + delta, this.maxScrollY);
+    let scrollPos2: number;
+    if (scrollPos1 === 0) {
+      scrollPos2 = 0;
+    } else if (scrollPos1 === maxScrollPos1) {
+      scrollPos2 = maxScrollPos2;
+    } else if (insertPos <= scrollPos1) {
+      scrollPos2 = Math.min(scrollPos1 + size2 - size1, maxScrollPos2);
+    } else {
+      scrollPos2 = scrollPos1;
+    }
+
+    // Update the new scroll position.
+    if (type === 'rows-inserted') {
+      this._scrollY = scrollPos2;
+    } else {
+      this._scrollX = scrollPos2;
     }
 
     // Update the scroll bars.
     this._updateScrollBars();
 
+    // Compute the repaint boundary.
+    let boundary: number;
+    if (type === 'rows-inserted') {
+      boundary = this.scrollY + this.pageHeight;
+    } else {
+      boundary = this.scrollX + this.pageWidth;
+    }
+
     // Schedule a full repaint of the grid if needed.
-    if (insertY < this.scrollY + this.pageHeight) {
+    if (insertPos < boundary) {
       this.repaint();
     }
   }
 
   /**
-   * Handle the `'columns-inserted'` type for the model changed signal.
+   * Handle body sections removed from the data model.
    */
-  private _onColumnsInserted(args: DataModel.ISectionsInsertedArgs): void {
+  private _onBodySectionsRemoved(args: DataModel.ISectionsRemovedArgs): void {
     // Unpack the arg data.
-    let { index, span } = args;
+    let { type, index, span } = args;
 
-    // Bail early if there are no sections to insert.
+    // Bail early if there are no sections to remove.
     if (span <= 0) {
       return;
     }
 
-    // Handle the simple case of inserting into the row header.
-    if (index < 0) {
-      let n = this._rowHeaderSections.sectionCount;
-      this._rowHeaderSections.insertSections(n + index + 1, span);
-      this._updateScrollBars();
-      this.repaint();
+    // Look up the relevant section data.
+    let list: SectionList;
+    let scrollPos1: number;
+    let maxScrollPos1: number;
+    if (type === 'rows-removed') {
+      list = this._rowSections;
+      scrollPos1 = this.scrollY;
+      maxScrollPos1 = this.maxScrollY;
+    } else {
+      list = this._columnSections;
+      scrollPos1 = this.scrollX;
+      maxScrollPos1 = this.maxScrollX;
+    }
+
+    // Bail early if the index is out of range.
+    if (index < 0 || index >= list.sectionCount) {
       return;
     }
 
-    // Clamp the index to the section bounds.
-    index = Math.min(index, this._columnSections.sectionCount);
+    // Look up the remove position.
+    let removePos = list.sectionOffset(index);
 
-    // Look up the X position of the insert.
-    let insertX: number;
-    if (index === this._columnSections.sectionCount) {
-      insertX = this._columnSections.totalSize;
+    // Remove the sections and save the pre- and post- size.
+    let size1 = list.totalSize;
+    list.removeSections(index, span);
+    let size2 = list.totalSize;
+
+    // Fetch the new max scroll position.
+    let maxScrollPos2: number;
+    if (type === 'rows-removed') {
+      maxScrollPos2 = this.maxScrollY;
     } else {
-      insertX = this._columnSections.sectionOffset(index);
+      maxScrollPos2 = this.maxScrollX;
     }
 
-    // Fetch the scroll geometry before modifying the row sections.
-    let scrollX = this.scrollX;
-    let maxScrollX = this.maxScrollX;
-
-    // Insert the row sections.
-    this._columnSections.insertSections(index, span);
-
     // Adjust the scroll position as needed.
-    if (scrollX === 0) {
-      this._scrollX = 0;
-    } else if (scrollX === maxScrollX) {
-      this._scrollX = this.maxScrollX;
-    } else if (insertX <= scrollX) {
-      let delta = this._columnSections.baseSize * span;
-      this._scrollX = Math.min(scrollX + delta, this.maxScrollX);
+    let scrollPos2: number;
+    if (scrollPos1 === 0) {
+      scrollPos2 = 0;
+    } else if (scrollPos1 === maxScrollPos1) {
+      scrollPos2 = maxScrollPos2;
+    } else if (removePos <= scrollPos1) {
+      let delta = Math.min(scrollPos1 - removePos, size1 - size2);
+      scrollPos2 = Math.min(scrollPos1 - delta, maxScrollPos2);
+    } else {
+      scrollPos2 = scrollPos1;
+    }
+
+    // Update the new scroll position.
+    if (type === 'rows-removed') {
+      this._scrollY = scrollPos2;
+    } else {
+      this._scrollX = scrollPos2;
     }
 
     // Update the scroll bars.
     this._updateScrollBars();
 
+    // Compute the repaint boundary.
+    let boundary: number;
+    if (type === 'rows-removed') {
+      boundary = this.scrollY + this.pageHeight;
+    } else {
+      boundary = this.scrollX + this.pageWidth;
+    }
+
     // Schedule a full repaint of the grid if needed.
-    if (insertX < this.scrollX + this.pageHeight) {
+    if (removePos < boundary) {
       this.repaint();
     }
   }
 
-  private _onRowsRemoved(args: DataModel.ISectionsRemovedArgs): void {
-
-  }
-
-  private _onColumnsRemoved(args: DataModel.ISectionsRemovedArgs): void {
-
-  }
-
-  private _onRowsMoved(args: DataModel.ISectionsMovedArgs): void {
-
-  }
-
-  private _onColumnsMoved(args: DataModel.ISectionsMovedArgs): void {
-
-  }
-
+  /**
+   * Handle cells changed in the data model.
+   */
   private _onCellsChanged(args: DataModel.ICellsChangedArgs): void {
     // let r1 = args.rowIndex;
     // let c1 = args.columnIndex;
@@ -1155,7 +1268,7 @@ class DataGrid extends Widget {
   }
 
   /**
-   * Handle the `'model-reset'` type for the model changed signal.
+   * Handle a full data model reset.
    */
   private _onModelReset(args: DataModel.IModelResetArgs): void {
     // Look up the various current section counts.
