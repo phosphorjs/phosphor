@@ -530,6 +530,41 @@ class DataGrid extends Widget {
     let contentWidth = width - contentX;
     let contentHeight = height - contentY;
 
+    // Bail early if there is no content to draw.
+    if (contentWidth <= 0 && contentHeight <= 0) {
+      this._scrollX = x;
+      this._scrollY = y;
+      return;
+    }
+
+    // Compute the area which needs painting for the `dx` scroll.
+    let dxArea = 0;
+    if (dx !== 0 && contentWidth > 0) {
+      if (Math.abs(dx) >= contentWidth) {
+        dxArea = contentWidth * height;
+      } else {
+        dxArea = Math.abs(dx) * height;
+      }
+    }
+
+    // Compute the area which needs painting for the `dy` scroll.
+    let dyArea = 0;
+    if (dy !== 0 && contentHeight > 0) {
+      if (Math.abs(dy) >= contentHeight) {
+        dyArea = width * contentHeight;
+      } else {
+        dyArea = width * Math.abs(dy);
+      }
+    }
+
+    // If the area sum is larger than the total, paint everything.
+    if ((dxArea + dyArea) >= (width * height)) {
+      this._scrollX = x;
+      this._scrollY = y;
+      this._paint(0, 0, width, height);
+      return;
+    }
+
     // Update the internal Y scroll position.
     this._scrollY = y;
 
