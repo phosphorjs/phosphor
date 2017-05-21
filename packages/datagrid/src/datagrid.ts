@@ -914,17 +914,13 @@ class DataGrid extends Widget {
       return;
     }
 
-    // Get the visible size of the viewport.
-    let width = this._viewportWidth;
-    let height = this._viewportHeight;
-
     // Bail early if the viewport has zero area.
-    if (width === 0 || height === 0) {
+    if (this._viewportWidth === 0 || this._viewportHeight === 0) {
       return;
     }
 
     // Paint the entire viewport.
-    this._paint(0, 0, width, height);
+    this._paint(0, 0, this._viewportWidth, this._viewportHeight);
   }
 
   /**
