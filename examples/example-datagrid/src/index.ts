@@ -20,8 +20,8 @@ import '../style/index.css';
 
 class LargeDataModel extends DataModel {
 
-  readonly rowCount = 100000000000;
-  readonly columnCount = 100000000000;
+  readonly rowCount = 1000000000000;
+  readonly columnCount = 1000000000000;
   readonly rowHeaderCount = 3;
   readonly columnHeaderCount = 3;
 
@@ -40,16 +40,73 @@ class LargeDataModel extends DataModel {
 }
 
 
+class StreamingDataModel extends DataModel {
+
+  readonly rowHeaderCount = 1;
+  readonly columnHeaderCount = 1;
+
+  static createRow(): number[] {
+    let row = new Array(50);
+    for (let i = 0; i < 50; ++i) {
+      row[i] = Math.random();
+    }
+    return row;
+  }
+
+  constructor() {
+    super();
+    setInterval(this._tick, 250);
+  }
+
+  get rowCount(): number {
+    return this._data.length;
+  }
+
+  get columnCount(): number {
+    return 50;
+  }
+
+  data(row: number, column: number): any {
+    if (column < 0 && row >= 0) {
+      return `R: ${row}, ${column}`;
+    }
+    if (row < 0 && column >= 0) {
+      return `C: ${row}, ${column}`;
+    }
+    if (row < 0 && column < 0) {
+      return `N: ${row}, ${column}`;
+    }
+    return this._data[row][column];
+  }
+
+  private _tick = () => {
+    let r1 = Math.random();
+    let r2 = Math.random();
+    let i = Math.floor(r2 * this.rowCount);
+    if (r1 < 0.45 && this.rowCount > 4) {
+      this._data.splice(i, 1);
+      this.emitChanged({ type: 'rows-removed', index: i, span: 1 });
+    } else {
+      let row = StreamingDataModel.createRow();
+      this._data.splice(i, 0, row);
+      this.emitChanged({ type: 'rows-inserted', index: i, span: 1 });
+    }
+  };
+
+  private _data: number[][] = [];
+}
+
+
 class RandomDataModel extends DataModel {
 
   static genPoint(): number {
     return Math.random() * 10 - 2;
   }
 
-  readonly rowCount = 80;
-  readonly columnCount = 80;
-  readonly rowHeaderCount = 1;
-  readonly columnHeaderCount = 1;
+  rowCount = 40;
+  columnCount = 40;
+  rowHeaderCount = 1;
+  columnHeaderCount = 1;
 
   constructor() {
     super();
@@ -95,6 +152,17 @@ const formatDecimal: TextRenderer.CellFunc<string> = config => {
 };
 
 
+const redGreenBlack: TextRenderer.CellFunc<string> = config => {
+  if (config.value <= 1 / 3) {
+    return '#000000';
+  }
+  if (config.value <= 2 / 3) {
+    return '#FF0000';
+  }
+  return '#009B00';
+};
+
+
 const heatMapViridis: TextRenderer.CellFunc<string> = config => {
   let r = Math.floor(ViridisCM.red(config.value) * 255);
   let g = Math.floor(ViridisCM.green(config.value) * 255);
@@ -123,7 +191,7 @@ function createWrapper(content: Widget, title: string): Widget {
 function main(): void {
 
   let model1 = new LargeDataModel();
-  let model2 = new LargeDataModel();
+  let model2 = new StreamingDataModel();
   let model3 = new RandomDataModel();
   let model4 = new RandomDataModel();
 
@@ -141,7 +209,7 @@ function main(): void {
 
   let fgColorFloatRenderer = new TextRenderer({
     font: 'bold 12px sans-serif',
-    textColor: heatMapViridis,
+    textColor: redGreenBlack,
     formatter: formatDecimal,
     horizontalAlignment: 'right'
   });
@@ -167,10 +235,10 @@ function main(): void {
   grid4.setCellRenderer({ region: 'body' }, bgColorFloatRenderer);
   grid4.model = model4;
 
-  let wrapper1 = createWrapper(grid1, 'Large Data 1');
-  let wrapper2 = createWrapper(grid2, 'Large Data 2');
-  let wrapper3 = createWrapper(grid3, 'Random Data 1');
-  let wrapper4 = createWrapper(grid4, 'Random Data 2');
+  let wrapper1 = createWrapper(grid1, 'Trillion Rows/Cols');
+  let wrapper2 = createWrapper(grid2, 'Streaming Rows');
+  let wrapper3 = createWrapper(grid3, 'Random Ticks 1');
+  let wrapper4 = createWrapper(grid4, 'Random Ticks 2');
 
   let dock = new DockPanel();
   dock.id = 'dock';
