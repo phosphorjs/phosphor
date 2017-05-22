@@ -828,6 +828,9 @@ class DataGrid extends Widget {
     case 'fit-request':
       this._onViewportFitRequest(msg);
       break;
+    case 'paint-request':
+      this._onViewportPaintRequest(msg as Private.PaintRequest);
+      break;
     case 'before-show':
     case 'before-attach':
       this._viewport.fit();
@@ -948,6 +951,142 @@ class DataGrid extends Widget {
   }
 
   /**
+   *
+   */
+  private _onViewportPaintRequest(msg: Private.PaintRequest): void {
+    // Look up the section counts for each region.
+    let nr = this._rowSections.sectionCount;
+    let nc = this._columnSections.sectionCount;
+    let nrh = this._rowHeaderSections.sectionCount;
+    let nch = this._columnHeaderSections.sectionCount;
+
+    // Compute the minimum viable row and column index.
+    let rMin: number;
+    let cMin: number;
+    switch (this._headerVisibility) {
+    case 'all':
+      rMin = nch > 0 ? -nch : 0;
+      cMin = nrh > 0 ? -nrh : 0;
+      break;
+    case 'row':
+      rMin = 0;
+      cMin = nrh > 0 ? -nrh : 0;
+      break;
+    case 'column':
+      rMin = nch > 0 ? -nch : 0;
+      cMin = 0;
+      break;
+    case 'none':
+      rMin = 0;
+      cMin = 0;
+      break;
+    default:
+      throw 'unreachable';
+    }
+
+    // Compute the maximum viable row and column index.
+    let rMax = nr > 0 ? nr - 1 : -1;
+    let cMax = nc > 0 ? nc - 1 : -1;
+
+    // Bail early if there are no cells to render.
+    if (rMax < rMin || cMax < cMin) {
+      return;
+    }
+
+    // Bail early if the dirty region is out of range.
+    if (msg.r1 > rMax || msg.c1 > cMax || msg.r2 < rMin || msg.c2 < cMin) {
+      return;
+    }
+
+    // Clamp the dirty region to the allowable bounds.
+    let r1 = Math.max(rMin, Math.min(msg.r1, rMax));
+    let c1 = Math.max(cMin, Math.min(msg.c1, cMax));
+    let r2 = Math.max(rMin, Math.min(msg.r2, rMax));
+    let c2 = Math.max(cMin, Math.min(msg.c2, cMax));
+
+    // Set up the variables for the paint rect.
+    let x1: number;
+    let y1: number;
+    let x2: number;
+    let y2: number;
+
+    // Fetch the sizes of the headers.
+    let headerW = this.rowHeaderWidth;
+    let headerH = this.columnHeaderHeight;
+
+    // Compute the first X boundary of the of the paint rect.
+    if (c1 < 0) {
+      x1 = this._rowHeaderSections.sectionOffset(c1 + nrh) - 1;
+    } else {
+      x1 = headerW + this._columnSections.sectionOffset(c1) - (c1 === 0 ? 0 : 1);
+    }
+
+    // Compute the first Y boundary of the of the paint rect.
+    if (r1 < 0) {
+      y1 = this._columnHeaderSections.sectionOffset(r1 + nch) - 1;
+    } else {
+      y1 = headerH + this._rowSections.sectionOffset(r1) - (r1 === 0 ? 0 : 1);
+    }
+
+    // Compute the second X boundary of the of the paint rect.
+    if (c2 === -1) {
+      x2 = headerW - 1;
+    } else if (c2 < 0) {
+      x2 = this._rowHeaderSections.sectionOffset(c2 + nrh + 1) - 1;
+    } else if (c2 === cMax) {
+      x2 = headerW + this._columnSections.totalSize - 1;
+    } else {
+      x2 = headerW + this._columnSections.sectionOffset(c2 + 1) - 1;
+    }
+
+    // Compute the second Y boundary of the of the paint rect.
+    if (r2 === -1) {
+      y2 = headerH - 1;
+    } else if (r2 < 0) {
+      y2 = this._columnHeaderSections.sectionOffset(r2 + nch + 1) - 1;
+    } else if (r2 === rMax) {
+      y2 = headerH + this._rowSections.totalSize - 1;
+    } else {
+      y2 = headerH + this._rowSections.sectionOffset(r2 + 1) - 1;
+    }
+
+    // Offset the X values by the scroll position.
+    if (c1 >= 0) {
+      x1 -= this._scrollX;
+      x2 -= this._scrollX;
+    } else if (c2 >= 0) {
+      x2 = Math.max(x2 - this._scrollX, headerW - 1);
+    }
+
+    // Offset the Y values by the scroll position.
+    if (r1 >= 0) {
+      y1 -= this._scrollY;
+      y2 -= this._scrollY;
+    } else if (r2 >= 0) {
+      y2 = Math.max(y2 - this._scrollY, headerH - 1);
+    }
+
+    // Bail if the paint region is fully out of range.
+    if (x2 < 0 || y2 < 0 || x1 >= this._viewportWidth || y1 >= this._viewportHeight) {
+      return;
+    }
+
+    // Clamp the rect to the limits.
+    x1 = Math.max(0, x1);
+    y1 = Math.max(0, y1);
+    x2 = Math.min(x2, this._viewportWidth - 1);
+    y2 = Math.min(y2, this._viewportHeight - 1);
+
+    // Bail if there is nothing to paint.
+    if (x2 < x1 || y2 < y1) {
+      return;
+    }
+
+    // Paint the dirty rect.
+    this._paint(x1, y1, x2 - x1 + 1, y2 - y1 + 1);
+  }
+
+  /**
    * Handle the `thumbMoved` signal from a scroll bar.
    */
   private _onThumbMoved(sender: ScrollBar): void {
@@ -1044,6 +1183,7 @@ class DataGrid extends Widget {
     this._updateScrollBars();
 
     // Schedule a full repaint of the grid.
+    // TODO - this can be improved to paint less.
     this.repaint();
   }
 
@@ -1082,6 +1222,7 @@ class DataGrid extends Widget {
     this._updateScrollBars();
 
     // Schedule a full repaint of the grid.
+    // TODO - this can be improved to paint less.
     this.repaint();
   }
 
@@ -1163,6 +1304,7 @@ class DataGrid extends Widget {
     }
 
     // Schedule a full repaint of the grid if needed.
+    // TODO - this can be improved to paint less.
     if (insertPos < boundary) {
       this.repaint();
     }
@@ -1247,6 +1389,7 @@ class DataGrid extends Widget {
     }
 
     // Schedule a full repaint of the grid if needed.
+    // TODO - this can be improved to paint less.
     if (removePos < boundary) {
       this.repaint();
     }
@@ -1256,46 +1399,22 @@ class DataGrid extends Widget {
    * Handle cells changed in the data model.
    */
   private _onCellsChanged(args: DataModel.ICellsChangedArgs): void {
-    // let r1 = args.rowIndex;
-    // let c1 = args.columnIndex;
-    // let r2 = r1 + args.rowSpan - 1;
-    // let c2 = c1 + args.columnSpan - 1;
+    // Bail early if there are no cells to paint.
+    if (args.rowSpan <= 0 || args.columnSpan <= 0) {
+      return;
+    }
 
-    // let x1 = this._columnSections.sectionOffset(c1) - 1;
-    // let y1 = this._rowSections.sectionOffset(r1) - 1;
+    // Compute the cell range.
+    let r1 = args.rowIndex;
+    let c1 = args.columnIndex;
+    let r2 = r1 + args.rowSpan - 1;
+    let c2 = c1 + args.columnSpan - 1;
 
-    // let x2 = this._columnSections.sectionOffset(c2);
-    // let y2 = this._rowSections.sectionOffset(r2);
+    // Create a paint request message for the cell range.
+    let msg = new Private.PaintRequest(r1, c1, r2, c2);
 
-    // x2 += this._columnSections.sectionSize(c2) - 1;
-    // y2 += this._rowSections.sectionSize(r2) - 1;
-
-    // x1 -= this._scrollX;
-    // y1 -= this._scrollY;
-
-    // x2 -= this._scrollX;
-    // y2 -= this._scrollY;
-
-    // x1 += this.rowHeaderWidth;
-    // x2 += this.rowHeaderWidth;
-    // y1 += this.columnHeaderHeight;
-    // y2 += this.columnHeaderHeight;
-
-    // let minX = this.rowHeaderWidth;
-    // let minY = this.columnHeaderHeight;
-    // let maxX = this._viewportWidth - 1;
-    // let maxY = this._viewportHeight - 1;
-
-    // if (x2 < minX || y2 < minY || x1 > maxX || y1 > maxY) {
-    //   return;
-    // }
-
-    // x1 = Math.max(minX, x1);
-    // x2 = Math.min(x2, maxX);
-    // y1 = Math.max(minY, y1);
-    // y2 = Math.min(y2, maxY);
-
-    // this._paint(x1, y1, x2 - x1 + 1, y2 - y1 + 1);
+    // Post the paint request message to the viewport.
+    MessageLoop.postMessage(this._viewport, msg);
   }
 
   /**
@@ -2713,5 +2832,66 @@ namespace Private {
     }
 
     private _map: { [key: string]: CellRenderer } = Object.create(null);
+  }
+
+  /**
+   *
+   */
+  export
+  class PaintRequest extends ConflatableMessage {
+    /**
+     *
+     */
+    constructor(r1: number, c1: number, r2: number, c2: number) {
+      super('paint-request');
+      this._r1 = r1;
+      this._c1 = c1;
+      this._r2 = r2;
+      this._c2 = c2;
+    }
+
+    /**
+     *
+     */
+    get r1(): number {
+      return this._r1;
+    }
+
+    /**
+     *
+     */
+    get c1(): number {
+      return this._c1;
+    }
+
+    /**
+     *
+     */
+    get r2(): number {
+      return this._r2;
+    }
+
+    /**
+     *
+     */
+    get c2(): number {
+      return this._c2;
+    }
+
+    /**
+     *
+     */
+    conflate(other: PaintRequest): boolean {
+      this._r1 = Math.min(this._r1, other._r1);
+      this._c1 = Math.min(this._c1, other._c1);
+      this._r2 = Math.max(this._r2, other._r2);
+      this._c2 = Math.max(this._c2, other._c2);
+      return true;
+    }
+
+    private _r1: number;
+    private _c1: number;
+    private _r2: number;
+    private _c2: number;
   }
 }
