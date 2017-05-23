@@ -1125,12 +1125,11 @@ class DataGrid extends Widget {
     // Insert the sections into the list.
     list.insertSections(i, span);
 
-    // Update the scroll bars.
-    this._updateScrollBars();
-
     // Schedule a full repaint of the grid.
-    // TODO - this can be improved to paint less.
     this.repaint();
+
+    // Update the scroll bars after queueing the repaint.
+    this._updateScrollBars();
   }
 
   /**
@@ -1164,12 +1163,11 @@ class DataGrid extends Widget {
     // Remove the sections from the list.
     list.removeSections(i, span);
 
-    // Update the scroll bars.
-    this._updateScrollBars();
-
     // Schedule a full repaint of the grid.
-    // TODO - this can be improved to paint less.
     this.repaint();
+
+    // Update the scroll bars after queueing the repaint.
+    this._updateScrollBars();
   }
 
   /**
@@ -1190,11 +1188,11 @@ class DataGrid extends Widget {
     let maxScrollPos1: number;
     if (type === 'rows-inserted') {
       list = this._rowSections;
-      scrollPos1 = this.scrollY;
+      scrollPos1 = this._scrollY;
       maxScrollPos1 = this.maxScrollY;
     } else {
       list = this._columnSections;
-      scrollPos1 = this.scrollX;
+      scrollPos1 = this._scrollX;
       maxScrollPos1 = this.maxScrollX;
     }
 
@@ -1231,31 +1229,32 @@ class DataGrid extends Widget {
       scrollPos2 = scrollPos1;
     }
 
-    // Update the new scroll position.
+    // Update the scroll position and compute the paint offset.
+    let offset: number;
     if (type === 'rows-inserted') {
       this._scrollY = scrollPos2;
+      offset = this.columnHeaderHeight;
     } else {
       this._scrollX = scrollPos2;
+      offset = this.rowHeaderWidth;
     }
 
-    // Update the scroll bars.
-    this._updateScrollBars();
+    // Adjust the paint offset if the scroll position did not change.
+    if (scrollPos1 === scrollPos2) {
+      offset = Math.max(offset, offset + insertPos - scrollPos1 - 1);
+    }
 
-    // Compute the dirty area.
-    let x1 = 0;
-    let y1 = 0;
+    // Compute the paint coordinates.
+    let x1 = type === 'rows-inserted' ? 0 : offset;
+    let y1 = type === 'rows-inserted' ? offset : 0;
     let x2 = this._viewportWidth - 1;
     let y2 = this._viewportHeight - 1;
-    if (type === 'rows-inserted') {
-      let offset = this.columnHeaderHeight;
-      y1 = Math.max(offset, offset + insertPos - this.scrollY - 1);
-    } else {
-      let offset = this.rowHeaderWidth;
-      x1 = Math.max(offset, offset + insertPos - this.scrollX - 1);
-    }
 
     // Schedule a repaint of the dirty area.
     this.repaint(x1, y1, x2 - x1 + 1, y2 - y1 + 1);
+
+    // Update the scroll bars after queueing the repaint.
+    this._updateScrollBars();
   }
 
   /**
@@ -1318,31 +1317,32 @@ class DataGrid extends Widget {
       scrollPos2 = scrollPos1;
     }
 
-    // Update the new scroll position.
+    // Update the scroll position and compute the paint offset.
+    let offset: number;
     if (type === 'rows-removed') {
       this._scrollY = scrollPos2;
+      offset = this.columnHeaderHeight;
     } else {
       this._scrollX = scrollPos2;
+      offset = this.rowHeaderWidth;
     }
 
-    // Update the scroll bars.
-    this._updateScrollBars();
+    // Adjust the paint offset if the scroll position did not change.
+    if (scrollPos1 === scrollPos2) {
+      offset = Math.max(offset, offset + removePos - scrollPos1 - 1);
+    }
 
-    // Compute the dirty area.
-    let x1 = 0;
-    let y1 = 0;
+    // Compute the paint coordinates.
+    let x1 = type === 'rows-removed' ? 0 : offset;
+    let y1 = type === 'rows-removed' ? offset : 0;
     let x2 = this._viewportWidth - 1;
     let y2 = this._viewportHeight - 1;
-    if (type === 'rows-removed') {
-      let offset = this.columnHeaderHeight;
-      y1 = Math.max(offset, offset + removePos - this.scrollY - 1);
-    } else {
-      let offset = this.rowHeaderWidth;
-      x1 = Math.max(offset, offset + removePos - this.scrollX - 1);
-    }
 
     // Schedule a repaint of the dirty area.
     this.repaint(x1, y1, x2 - x1 + 1, y2 - y1 + 1);
+
+    // Update the scroll bars after queueing the repaint.
+    this._updateScrollBars();
   }
 
   /**
@@ -1415,11 +1415,11 @@ class DataGrid extends Widget {
     this._scrollX = Math.min(this._scrollX, this.maxScrollX);
     this._scrollY = Math.min(this._scrollY, this.maxScrollY);
 
-    // Update the scroll bars.
-    this._updateScrollBars();
-
     // Schedule a full repaint of the grid.
     this.repaint();
+
+    // Update the scroll bars after queueing the repaint.
+    this._updateScrollBars();
   }
 
   /**
