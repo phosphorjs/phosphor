@@ -145,14 +145,23 @@ namespace DataModel {
    *
    * #### Notes
    * Data models should emit the `changed` signal with this args object
-   * type when new rows or columns are inserted.
+   * type when new rows or columns are inserted or removed.
    */
   export
-  interface ISectionsInsertedArgs {
+  interface ISectionsChangedArgs {
     /**
      * The discriminated type of the args object.
      */
-    readonly type: 'rows-inserted' | 'columns-inserted';
+    readonly type: (
+      'rows-removed' |
+      'rows-inserted' |
+      'columns-removed' |
+      'columns-inserted' |
+      'row-headers-removed' |
+      'row-headers-inserted' |
+      'column-headers-removed' |
+      'column-headers-inserted'
+    );
 
     /**
      * The index of the first inserted row or column.
@@ -170,31 +179,6 @@ namespace DataModel {
    *
    * #### Notes
    * Data models should emit the `changed` signal with this args object
-   * type when existing rows or columns are removed.
-   */
-  export
-  interface ISectionsRemovedArgs {
-    /**
-     * The discriminated type of the args object.
-     */
-    readonly type: 'rows-removed' | 'columns-removed';
-
-    /**
-     * The index of the first removed row or column.
-     */
-    readonly index: number;
-
-    /**
-     * The number of removed rows or columns.
-     */
-    readonly span: number;
-  }
-
-  /**
-   * An arguments object for the `changed` signal.
-   *
-   * #### Notes
-   * Data models should emit the `changed` signal with this args object
    * type when existing rows or columns are moved.
    */
   export
@@ -202,7 +186,12 @@ namespace DataModel {
     /**
      * The discriminated type of the args object.
      */
-    readonly type: 'rows-moved' | 'columns-moved';
+    readonly type: (
+      'rows-moved' |
+      'columns-moved' |
+      'row-headers-moved' |
+      'column-headers-moved'
+    );
 
     /**
      * The starting index of the first moved row or column.
@@ -232,7 +221,12 @@ namespace DataModel {
     /**
      * The discriminated type of the args object.
      */
-    readonly type: 'cells-changed';
+    readonly type: (
+      'cells-changed' |
+      'row-header-cells-changed' |
+      'column-header-cells-changed' |
+      'corner-header-cells-changed'
+    );
 
     /**
      * The row index of the first changed cell.
@@ -264,8 +258,9 @@ namespace DataModel {
    * expressed by the other args object types, like when the data model
    * is sorted or filtered.
    *
-   * This will cause any listening data grid to perform a full refresh,
-   * so the other changed args types should be used when possible.
+   * This is the "big hammer" approach, and will cause any associated
+   * data grid to perform a full reset. The other changed args types
+   * should be used whenever possible.
    */
   export
   interface IModelResetArgs {
@@ -280,8 +275,7 @@ namespace DataModel {
    */
   export
   type ChangedArgs = (
-    ISectionsInsertedArgs |
-    ISectionsRemovedArgs |
+    ISectionsChangedArgs |
     ISectionsMovedArgs |
     ICellsChangedArgs |
     IModelResetArgs
