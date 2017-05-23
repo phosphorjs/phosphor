@@ -1069,7 +1069,7 @@ class DataGrid extends Widget {
     case 'rows-inserted':
     case 'columns-inserted':
       if (args.index < 0) {
-        this._onHeaderSectionsInserted(args);
+        this._onHeaderSectionsModified(args);
       } else {
         this._onBodySectionsInserted(args);
       }
@@ -1077,7 +1077,7 @@ class DataGrid extends Widget {
     case 'rows-removed':
     case 'columns-removed':
       if (args.index < 0) {
-        this._onHeaderSectionsRemoved(args);
+        this._onHeaderSectionsModified(args);
       } else {
         this._onBodySectionsRemoved(args);
       }
@@ -1100,68 +1100,38 @@ class DataGrid extends Widget {
   }
 
   /**
-   * Handle header sections inserted into the data model.
+   * Handle header sections changing in the data model.
    */
-  private _onHeaderSectionsInserted(args: DataModel.ISectionsInsertedArgs): void {
+  private _onHeaderSectionsModified(args: DataModel.ISectionsInsertedArgs | DataModel.ISectionsRemovedArgs): void {
     // Unpack the arg data.
     let { type, index, span } = args;
 
-    // Bail early if there are no sections to insert.
+    // Bail early if there are no sections to modify.
     if (span <= 0) {
       return;
     }
 
-    // Look up the relevant section list.
-    let list: SectionList;
-    if (type === 'rows-inserted') {
-      list = this._columnHeaderSections;
-    } else {
-      list = this._rowHeaderSections;
-    }
-
-    // Compute the header insert index.
-    let i = list.sectionCount + index + 1;
-
-    // Insert the sections into the list.
-    list.insertSections(i, span);
-
-    // Schedule a full repaint of the grid.
-    this.repaint();
-
-    // Update the scroll bars after queueing the repaint.
-    this._updateScrollBars();
-  }
-
-  /**
-   * Handle header sections removed from the data model.
-   */
-  private _onHeaderSectionsRemoved(args: DataModel.ISectionsRemovedArgs): void {
-    // Unpack the arg data.
-    let { type, index, span } = args;
-
-    // Bail early if there are no sections to remove.
-    if (span <= 0) {
-      return;
-    }
+    // Determine the behavior of the change type.
+    let isRows = type === 'rows-inserted' || type === 'rows-removed';
+    let isRemove = type === 'rows-removed' || type === 'columns-removed';
 
     // Look up the relevant section list.
-    let list: SectionList;
-    if (type === 'rows-removed') {
-      list = this._columnHeaderSections;
-    } else {
-      list = this._rowHeaderSections;
-    }
+    let list = isRows ? this._columnHeaderSections : this._rowHeaderSections;
 
-    // Compute the header remove index.
-    let i = list.sectionCount + index;
+    // Compute the modified index.
+    let i = list.sectionCount + index + (isRemove ? 0 : 1);
 
     // Bail if the index is out of range.
-    if (i < 0 || i >= list.sectionCount) {
+    if (isRemove && (i < 0 || i >= list.sectionCount)) {
       return;
     }
 
-    // Remove the sections from the list.
-    list.removeSections(i, span);
+    // Remove or insert the sections as needed.
+    if (isRemove) {
+      list.removeSections(i, span);
+    } else {
+      list.insertSections(i, span);
+    }
 
     // Schedule a full repaint of the grid.
     this.repaint();
