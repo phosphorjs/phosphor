@@ -2390,7 +2390,7 @@ class DataGrid extends Widget {
   private _scrollCorner: Widget;
 
   private _inPaint = false;
-  private _paintPending = false;
+  private _paintPending = false;  // TODO: would like to get rid of this flag
 
   private _scrollX = 0;
   private _scrollY = 0;
