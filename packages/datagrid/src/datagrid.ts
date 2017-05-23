@@ -504,8 +504,16 @@ class DataGrid extends Widget {
       return;
     }
 
-    // Bail early if the widget is not visible.
-    if (!this.isVisible) {
+    // If there is a paint pending, ensure it paints everything.
+    if (this._paintPending) {
+      this._scrollX = x;
+      this._scrollY = y;
+      this.repaint();
+      return;
+    }
+
+    // Bail early if the viewport is not visible.
+    if (!this._viewport.isVisible) {
       this._scrollX = x;
       this._scrollY = y;
       return;
@@ -658,7 +666,15 @@ class DataGrid extends Widget {
   }
 
   /**
-   * Schedule a full repaint of the data grid.
+   * Schedule a repaint of the data grid.
+   *
+   * @param x - The viewport X coordinate of the dirty rect.
+   *
+   * @param y - The viewport Y coordinate of the dirty rect.
+   *
+   * @param w - The width of the dirty rect.
+   *
+   * @param h - The height of the dirty rect.
    *
    * #### Notes
    * This method is called automatically when changing the state of the
@@ -666,9 +682,49 @@ class DataGrid extends Widget {
    * whenever external program state change necessitates an update.
    *
    * Multiple synchronous requests are collapsed into a single repaint.
+   *
+   * The no-argument form of this method will repaint the entire grid.
    */
+  repaint(): void;
+  repaint(x: number, y: number, width: number, height: number): void;
   repaint(): void {
-    this._viewport.update();
+    // TODO bail early if viewport not visible or empty size?
+
+    // Parse the arguments.
+    let x: number;
+    let y: number;
+    let w: number;
+    let h: number;
+    switch (arguments.length) {
+    case 0:
+      x = 0;
+      y = 0;
+      w = this._viewportWidth;
+      h = this._viewportHeight;
+      break;
+    case 4:
+      x = Math.floor(arguments[0]);
+      y = Math.floor(arguments[1]);
+      w = Math.floor(arguments[2]);
+      h = Math.floor(arguments[3]);
+      break;
+    default:
+      throw 'unreachable';
+    }
+
+    // Bail early if there is nothing to paint.
+    if (w <= 0 || h <= 0) {
+      return;
+    }
+
+    // Set the paint pending flag.
+    this._paintPending = true;
+
+    // Create the paint request message.
+    let msg = new Private.PaintRequest(x, y, x + w - 1, y + h - 1);
+
+    // Post the paint request to the viewport.
+    MessageLoop.postMessage(this._viewport, msg);
   }
 
   /**
@@ -822,14 +878,11 @@ class DataGrid extends Widget {
     case 'scroll-request':
       this._onViewportScrollRequest(msg);
       break;
-    case 'update-request':
-      this._onViewportUpdateRequest(msg);
+    case 'paint-request':
+      this._onViewportPaintRequest(msg as Private.PaintRequest);
       break;
     case 'fit-request':
       this._onViewportFitRequest(msg);
-      break;
-    case 'paint-request':
-      this._onViewportPaintRequest(msg as Private.PaintRequest);
       break;
     case 'before-show':
     case 'before-attach':
@@ -880,6 +933,12 @@ class DataGrid extends Widget {
       return;
     }
 
+    // If there is a paint pending, ensure it paints everything.
+    if (this._paintPending) {
+      this.repaint();
+      return;
+    }
+
     // Paint the whole viewport if the old size was zero.
     if (oldWidth === 0 || oldHeight === 0) {
       this._paint(0, 0, width, height);
@@ -909,10 +968,13 @@ class DataGrid extends Widget {
   }
 
   /**
-   * A message hook invoked on a viewport `'update-request'` message.
+   * A message hook invoked on a viewport `'paint-request'` message.
    */
-  private _onViewportUpdateRequest(msg: Message): void {
-    // Do nothing if the viewport is not visible.
+  private _onViewportPaintRequest(msg: Private.PaintRequest): void {
+    // Clear the paint pending flag.
+    this._paintPending = false;
+
+    // Bail early if the viewport is not visible.
     if (!this._viewport.isVisible) {
       return;
     }
@@ -922,168 +984,52 @@ class DataGrid extends Widget {
       return;
     }
 
-    // Paint the entire viewport.
-    this._paint(0, 0, this._viewportWidth, this._viewportHeight);
+    // Compute the paint bounds.
+    let xMin = 0;
+    let yMin = 0;
+    let xMax = this._viewportWidth - 1;
+    let yMax = this._viewportHeight - 1;
+
+    // Unpack the message data.
+    let { x1, y1, x2, y2 } = msg;
+
+    // Bail early if the dirty rect is outside the bounds.
+    if (x2 < xMin || y2 < yMin || x1 > xMax || y1 > yMax) {
+      return;
+    }
+
+    // Clamp the dirty rect to the paint bounds.
+    x1 = Math.max(xMin, Math.min(x1, xMax));
+    y1 = Math.max(yMin, Math.min(y1, yMax));
+    x2 = Math.max(xMin, Math.min(x2, xMax));
+    y2 = Math.max(yMin, Math.min(y2, yMax));
+
+    // Paint the dirty rect.
+    this._paint(x1, y1, x2 - x1 + 1, y2 - y1 + 1);
   }
 
   /**
    * A message hook invoked on a viewport `'fit-request'` message.
    */
   private _onViewportFitRequest(msg: Message): void {
-    // Do nothing if the viewport is not visible.
+    // Bail early if the viewport is not visible.
     if (!this._viewport.isVisible) {
       return;
     }
 
     // Measure the viewport node size.
-    let width = Math.round(this._viewport.node.offsetWidth);
-    let height = Math.round(this._viewport.node.offsetHeight);
+    let width = this._viewport.node.offsetWidth;
+    let height = this._viewport.node.offsetHeight;
 
     // Updated internal viewport size.
     this._viewportWidth = width;
     this._viewportHeight = height;
 
-    // Expand the canvas and if needed.
+    // Expand the canvas if needed.
     this._expandCanvasIfNeeded(width, height);
 
-    // Repaint the entire viewport immediately.
-    MessageLoop.sendMessage(this._viewport, Widget.Msg.UpdateRequest);
-  }
-
-  /**
-   *
-   */
-  private _onViewportPaintRequest(msg: Private.PaintRequest): void {
-    // Look up the section counts for each region.
-    let nr = this._rowSections.sectionCount;
-    let nc = this._columnSections.sectionCount;
-    let nrh = this._rowHeaderSections.sectionCount;
-    let nch = this._columnHeaderSections.sectionCount;
-
-    // Compute the minimum viable row and column index.
-    let rMin: number;
-    let cMin: number;
-    switch (this._headerVisibility) {
-    case 'all':
-      rMin = nch > 0 ? -nch : 0;
-      cMin = nrh > 0 ? -nrh : 0;
-      break;
-    case 'row':
-      rMin = 0;
-      cMin = nrh > 0 ? -nrh : 0;
-      break;
-    case 'column':
-      rMin = nch > 0 ? -nch : 0;
-      cMin = 0;
-      break;
-    case 'none':
-      rMin = 0;
-      cMin = 0;
-      break;
-    default:
-      throw 'unreachable';
-    }
-
-    // Compute the maximum viable row and column index.
-    let rMax = nr > 0 ? nr - 1 : -1;
-    let cMax = nc > 0 ? nc - 1 : -1;
-
-    // Bail early if there are no cells to render.
-    if (rMax < rMin || cMax < cMin) {
-      return;
-    }
-
-    // Bail early if the dirty region is out of range.
-    if (msg.r1 > rMax || msg.c1 > cMax || msg.r2 < rMin || msg.c2 < cMin) {
-      return;
-    }
-
-    // Clamp the dirty region to the allowable bounds.
-    let r1 = Math.max(rMin, Math.min(msg.r1, rMax));
-    let c1 = Math.max(cMin, Math.min(msg.c1, cMax));
-    let r2 = Math.max(rMin, Math.min(msg.r2, rMax));
-    let c2 = Math.max(cMin, Math.min(msg.c2, cMax));
-
-    // Set up the variables for the paint rect.
-    let x1: number;
-    let y1: number;
-    let x2: number;
-    let y2: number;
-
-    // Fetch the sizes of the headers.
-    let headerW = this.rowHeaderWidth;
-    let headerH = this.columnHeaderHeight;
-
-    // Compute the first X boundary of the of the paint rect.
-    if (c1 < 0) {
-      x1 = this._rowHeaderSections.sectionOffset(c1 + nrh) - 1;
-    } else {
-      x1 = headerW + this._columnSections.sectionOffset(c1) - (c1 === 0 ? 0 : 1);
-    }
-
-    // Compute the first Y boundary of the of the paint rect.
-    if (r1 < 0) {
-      y1 = this._columnHeaderSections.sectionOffset(r1 + nch) - 1;
-    } else {
-      y1 = headerH + this._rowSections.sectionOffset(r1) - (r1 === 0 ? 0 : 1);
-    }
-
-    // Compute the second X boundary of the of the paint rect.
-    if (c2 === -1) {
-      x2 = headerW - 1;
-    } else if (c2 < 0) {
-      x2 = this._rowHeaderSections.sectionOffset(c2 + nrh + 1) - 1;
-    } else if (c2 === cMax) {
-      x2 = headerW + this._columnSections.totalSize - 1;
-    } else {
-      x2 = headerW + this._columnSections.sectionOffset(c2 + 1) - 1;
-    }
-
-    // Compute the second Y boundary of the of the paint rect.
-    if (r2 === -1) {
-      y2 = headerH - 1;
-    } else if (r2 < 0) {
-      y2 = this._columnHeaderSections.sectionOffset(r2 + nch + 1) - 1;
-    } else if (r2 === rMax) {
-      y2 = headerH + this._rowSections.totalSize - 1;
-    } else {
-      y2 = headerH + this._rowSections.sectionOffset(r2 + 1) - 1;
-    }
-
-    // Offset the X values by the scroll position.
-    if (c1 >= 0) {
-      x1 -= this._scrollX;
-      x2 -= this._scrollX;
-    } else if (c2 >= 0) {
-      x2 = Math.max(x2 - this._scrollX, headerW - 1);
-    }
-
-    // Offset the Y values by the scroll position.
-    if (r1 >= 0) {
-      y1 -= this._scrollY;
-      y2 -= this._scrollY;
-    } else if (r2 >= 0) {
-      y2 = Math.max(y2 - this._scrollY, headerH - 1);
-    }
-
-    // Bail if the paint region is fully out of range.
-    if (x2 < 0 || y2 < 0 || x1 >= this._viewportWidth || y1 >= this._viewportHeight) {
-      return;
-    }
-
-    // Clamp the rect to the limits.
-    x1 = Math.max(0, x1);
-    y1 = Math.max(0, y1);
-    x2 = Math.min(x2, this._viewportWidth - 1);
-    y2 = Math.min(y2, this._viewportHeight - 1);
-
-    // Bail if there is nothing to paint.
-    if (x2 < x1 || y2 < y1) {
-      return;
-    }
-
-    // Paint the dirty rect.
-    this._paint(x1, y1, x2 - x1 + 1, y2 - y1 + 1);
+    // Paint the entire viewport immediately.
+    this._paint(0, 0, width, height);
   }
 
   /**
@@ -1295,19 +1241,21 @@ class DataGrid extends Widget {
     // Update the scroll bars.
     this._updateScrollBars();
 
-    // Compute the repaint boundary.
-    let boundary: number;
+    // Compute the dirty area.
+    let x1 = 0;
+    let y1 = 0;
+    let x2 = this._viewportWidth - 1;
+    let y2 = this._viewportHeight - 1;
     if (type === 'rows-inserted') {
-      boundary = this.scrollY + this.pageHeight;
+      let offset = this.columnHeaderHeight;
+      y1 = Math.max(offset, offset + insertPos - this.scrollY - 1);
     } else {
-      boundary = this.scrollX + this.pageWidth;
+      let offset = this.rowHeaderWidth;
+      x1 = Math.max(offset, offset + insertPos - this.scrollX - 1);
     }
 
-    // Schedule a full repaint of the grid if needed.
-    // TODO - this can be improved to paint less.
-    if (insertPos < boundary) {
-      this.repaint();
-    }
+    // Schedule a repaint of the dirty area.
+    this.repaint(x1, y1, x2 - x1 + 1, y2 - y1 + 1);
   }
 
   /**
@@ -1380,41 +1328,43 @@ class DataGrid extends Widget {
     // Update the scroll bars.
     this._updateScrollBars();
 
-    // Compute the repaint boundary.
-    let boundary: number;
+    // Compute the dirty area.
+    let x1 = 0;
+    let y1 = 0;
+    let x2 = this._viewportWidth - 1;
+    let y2 = this._viewportHeight - 1;
     if (type === 'rows-removed') {
-      boundary = this.scrollY + this.pageHeight;
+      let offset = this.columnHeaderHeight;
+      y1 = Math.max(offset, offset + removePos - this.scrollY - 1);
     } else {
-      boundary = this.scrollX + this.pageWidth;
+      let offset = this.rowHeaderWidth;
+      x1 = Math.max(offset, offset + removePos - this.scrollX - 1);
     }
 
-    // Schedule a full repaint of the grid if needed.
-    // TODO - this can be improved to paint less.
-    if (removePos < boundary) {
-      this.repaint();
-    }
+    // Schedule a repaint of the dirty area.
+    this.repaint(x1, y1, x2 - x1 + 1, y2 - y1 + 1);
   }
 
   /**
    * Handle cells changed in the data model.
    */
   private _onCellsChanged(args: DataModel.ICellsChangedArgs): void {
-    // Bail early if there are no cells to paint.
-    if (args.rowSpan <= 0 || args.columnSpan <= 0) {
-      return;
-    }
+    // // Bail early if there are no cells to paint.
+    // if (args.rowSpan <= 0 || args.columnSpan <= 0) {
+    //   return;
+    // }
 
-    // Compute the cell range.
-    let r1 = args.rowIndex;
-    let c1 = args.columnIndex;
-    let r2 = r1 + args.rowSpan - 1;
-    let c2 = c1 + args.columnSpan - 1;
+    // // Compute the cell range.
+    // let r1 = args.rowIndex;
+    // let c1 = args.columnIndex;
+    // let r2 = r1 + args.rowSpan - 1;
+    // let c2 = c1 + args.columnSpan - 1;
 
-    // Create a paint request message for the cell range.
-    let msg = new Private.PaintRequest(r1, c1, r2, c2);
+    // // Create a paint request message for the cell range.
+    // let msg = new Private.PaintRequest(r1, c1, r2, c2);
 
-    // Post the paint request message to the viewport.
-    MessageLoop.postMessage(this._viewport, msg);
+    // // Post the paint request message to the viewport.
+    // MessageLoop.postMessage(this._viewport, msg);
   }
 
   /**
@@ -2440,6 +2390,7 @@ class DataGrid extends Widget {
   private _scrollCorner: Widget;
 
   private _inPaint = false;
+  private _paintPending = false;
 
   private _scrollX = 0;
   private _scrollY = 0;
@@ -2835,63 +2786,71 @@ namespace Private {
   }
 
   /**
-   *
+   * A conflatable message which merges dirty paint rects.
    */
   export
   class PaintRequest extends ConflatableMessage {
     /**
+     * Construct a new paint request messages.
      *
+     * @param x1 - The top-left X coordinate of the rect.
+     *
+     * @param y1 - The top-left Y coordinate of the rect.
+     *
+     * @param x2 - The bottom-right X coordinate of the rect.
+     *
+     * @param y2 - The bottom-right Y coordinate of the rect.
      */
-    constructor(r1: number, c1: number, r2: number, c2: number) {
+    constructor(x1: number, y1: number, x2: number, y2: number) {
       super('paint-request');
-      this._r1 = r1;
-      this._c1 = c1;
-      this._r2 = r2;
-      this._c2 = c2;
+      this._x1 = x1;
+      this._y1 = y1;
+      this._x2 = Math.max(x1, x2);
+      this._y2 = Math.max(y1, y2);
     }
 
     /**
-     *
+     * The top-left X coordinate of the rect.
      */
-    get r1(): number {
-      return this._r1;
+    get x1(): number {
+      return this._x1;
     }
 
     /**
-     *
+     * The top-left Y coordinate of the rect.
      */
-    get c1(): number {
-      return this._c1;
+    get y1(): number {
+      return this._y1;
     }
 
     /**
-     *
+     * The bottom-right X coordinate of the rect.
      */
-    get r2(): number {
-      return this._r2;
+    get x2(): number {
+      return this._x2;
     }
 
     /**
-     *
+     * The bottom-right Y coordinate of the rect.
      */
-    get c2(): number {
-      return this._c2;
+    get y2(): number {
+      return this._y2;
     }
 
     /**
-     *
+     * Conflate this message with another paint request.
      */
     conflate(other: PaintRequest): boolean {
-      this._r1 = Math.min(this._r1, other._r1);
-      this._c1 = Math.min(this._c1, other._c1);
-      this._r2 = Math.max(this._r2, other._r2);
-      this._c2 = Math.max(this._c2, other._c2);
+      this._x1 = Math.min(this._x1, other._x1);
+      this._y1 = Math.min(this._y1, other._y1);
+      this._x2 = Math.max(this._x2, other._x2);
+      this._y2 = Math.max(this._y2, other._y2);
       return true;
     }
 
-    private _r1: number;
-    private _c1: number;
-    private _r2: number;
-    private _c2: number;
+    private _x1: number;
+    private _y1: number;
+    private _x2: number;
+    private _y2: number;
   }
 }
