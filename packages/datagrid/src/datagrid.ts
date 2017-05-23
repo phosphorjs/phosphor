@@ -928,8 +928,12 @@ class DataGrid extends Widget {
     // Expand the canvas if needed.
     this._expandCanvasIfNeeded(width, height);
 
+    // Compute the sizes of the dirty regions.
+    let right = width - oldWidth;
+    let bottom = height - oldHeight;
+
     // Bail if nothing needs to be painted.
-    if (width === 0 || height === 0) {
+    if (right <= 0 && bottom <= 0) {
       return;
     }
 
@@ -944,10 +948,6 @@ class DataGrid extends Widget {
       this._paint(0, 0, width, height);
       return;
     }
-
-    // Compute the sizes of the dirty regions.
-    let right = width - oldWidth;
-    let bottom = height - oldHeight;
 
     // Paint the dirty region to the right, if needed.
     if (right > 0) {
