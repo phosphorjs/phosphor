@@ -2461,7 +2461,7 @@ namespace DataGrid {
     backgroundColor: '#FFFFFF',
     gridLineColor: 'rgba(20, 20, 20, 0.15)',
     headerBackgroundColor: '#F3F3F3',
-    headerGridLineColor: '#B5B5B5'
+    headerGridLineColor: 'rgba(20, 20, 20, 0.25)'
   };
 
   /**
