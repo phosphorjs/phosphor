@@ -198,21 +198,21 @@ class DataGrid extends Widget {
 
     // Populate the section lists.
     if (value) {
-      this._rowSections.insertSections(0, value.rowCount);
-      this._columnSections.insertSections(0, value.columnCount);
-      this._rowHeaderSections.insertSections(0, value.rowHeaderCount);
-      this._columnHeaderSections.insertSections(0, value.columnHeaderCount);
+      this._rowSections.insertSections(0, value.rowCount('body'));
+      this._columnSections.insertSections(0, value.columnCount('body'));
+      this._rowHeaderSections.insertSections(0, value.columnCount('row-header'));
+      this._columnHeaderSections.insertSections(0, value.rowCount('column-header'));
     }
 
     // Reset the scroll position.
     this._scrollX = 0;
     this._scrollY = 0;
 
-    // Update the scroll bars.
-    this._updateScrollBars();
-
     // Schedule a repaint of the viewport.
     this.repaint();
+
+    // Update the scroll bars after queueing the repaint.
+    this._updateScrollBars();
   }
 
   /**
@@ -284,11 +284,11 @@ class DataGrid extends Widget {
     this._scrollX = Math.min(this._scrollX, this.maxScrollX);
     this._scrollY = Math.min(this._scrollY, this.maxScrollY);
 
-    // Update the scroll bars.
-    this._updateScrollBars();
-
     // Schedule a full repaint of the grid.
     this.repaint();
+
+    // Update the scroll bars after queueing the repaint.
+    this._updateScrollBars();
   }
 
   /**
@@ -688,8 +688,6 @@ class DataGrid extends Widget {
   repaint(): void;
   repaint(x: number, y: number, width: number, height: number): void;
   repaint(): void {
-    // TODO bail early if viewport not visible or empty size?
-
     // Parse the arguments.
     let x: number;
     let y: number;
@@ -1286,10 +1284,10 @@ class DataGrid extends Widget {
     let nch = this._columnHeaderSections.sectionCount;
 
     // Compute the delta count for each region.
-    let dr = this._model!.rowCount - nr;
-    let dc = this._model!.columnCount - nc;
-    let drh = this._model!.rowHeaderCount - nrh;
-    let dch = this._model!.columnHeaderCount - nch;
+    let dr = this._model!.rowCount('body') - nr;
+    let dc = this._model!.columnCount('body') - nc;
+    let drh = this._model!.columnCount('row-header') - nrh;
+    let dch = this._model!.rowCount('column-header') - nch;
 
     // Update the row sections, if needed.
     if (dr > 0) {
@@ -1586,9 +1584,6 @@ class DataGrid extends Widget {
       width += size;
     }
 
-    // Adjust the start column for the header offset.
-    c1 -= this._rowHeaderSections.sectionCount;
-
     // Create the cell region object.
     let rgn: Private.ICellRegion = {
       region: 'row-header',
@@ -1695,9 +1690,6 @@ class DataGrid extends Widget {
       width += size;
     }
 
-    // Adjust the start column for the header offset.
-    r1 -= this._columnHeaderSections.sectionCount;
-
     // Create the cell region object.
     let rgn: Private.ICellRegion = {
       region: 'column-header',
@@ -1803,10 +1795,6 @@ class DataGrid extends Widget {
       columnSizes[i - c1] = size;
       width += size;
     }
-
-    // Adjust the start row and column for the header offset.
-    r1 -= this._columnHeaderSections.sectionCount;
-    c1 -= this._rowHeaderSections.sectionCount;
 
     // Create the cell region object.
     let rgn: Private.ICellRegion = {
@@ -1946,7 +1934,8 @@ class DataGrid extends Widget {
 
     // Set up the cell config object for rendering.
     let config = {
-      x: 0, y: 0, width: 0, height: 0, row: 0, column: 0,
+      x: 0, y: 0, width: 0, height: 0,
+      region: rgn.region, row: 0, column: 0,
       value: (null as any), field: emptyField
     };
 
@@ -1976,7 +1965,7 @@ class DataGrid extends Widget {
       // Get the field descriptor for the column.
       let field: DataModel.IField;
       try {
-        field = this._model.field(column);
+        field = this._model.field(rgn.region, column);
       } catch (err) {
         field = emptyField;
         console.error(err);
@@ -2022,7 +2011,7 @@ class DataGrid extends Widget {
         // Get the data value for the cell.
         let value: any;
         try {
-          value = this._model.data(row, column);
+          value = this._model.data(rgn.region, row, column);
         } catch (err) {
           value = undefined;
           console.error(err);
@@ -2465,20 +2454,14 @@ namespace DataGrid {
   };
 
   /**
-   * A type alias for the data grid regions.
-   */
-  export
-  type Region = 'row-header' | 'column-header' | 'corner-header' | 'body';
-
-  /**
    * An object used as a key for getting/setting cell renderers.
    */
   export
   interface IRendererKey {
     /**
-     * The grid region for which the cell renderer is applicable.
+     * The cell region for which the renderer is applicable.
      */
-    region: Region;
+    region: DataModel.CellRegion;
 
     /**
      * The field name for which the cell renderer is applicable.
@@ -2524,16 +2507,12 @@ namespace Private {
     return canvas;
   }
 
+  // TODO pick a better name for this interface.
   /**
    * An object which represents a cell region.
    */
   export
   interface ICellRegion {
-    /**
-     * The data grid region being drawn.
-     */
-    region: DataGrid.Region;
-
     /**
      * The min X coordinate the of the dirty viewport rect.
      *
@@ -2599,6 +2578,11 @@ namespace Private {
     height: number;
 
     /**
+     * The cell region being drawn.
+     */
+    region: DataModel.CellRegion;
+
+    /**
      * The row index of the first cell in the region.
      */
     row: number;
@@ -2641,7 +2625,7 @@ namespace Private {
     /**
      * Look up a cell renderer for a column.
      *
-     * @param region - The data grid region of interest.
+     * @param region - The cell region of interest.
      *
      * @param name - The field name of the column, or `''`.
      *
@@ -2652,7 +2636,7 @@ namespace Private {
      * #### Notes
      * An empty string for `name` or `type` acts as a wild card.
      */
-    get(region: DataGrid.Region, name: string, type: string): CellRenderer {
+    get(region: DataModel.CellRegion, name: string, type: string): CellRenderer {
       return (
         (name && type && this._map[`${region}|${name}|${type}`]) ||
         (name && this._map[`${region}|${name}|`]) ||
@@ -2665,7 +2649,7 @@ namespace Private {
     /**
      * Set a cell renderer for a column.
      *
-     * @param region - The data grid region of interest.
+     * @param region - The cell region of interest.
      *
      * @param name - The field name of the column, or `''`.
      *
@@ -2676,7 +2660,7 @@ namespace Private {
      * #### Notes
      * An empty string for `name` or `type` acts as a wild card.
      */
-    set(region: DataGrid.Region, name: string, type: string, renderer: CellRenderer): void {
+    set(region: DataModel.CellRegion, name: string, type: string, renderer: CellRenderer): void {
       this._map[`${region}|${name}|${type}`] = renderer;
     }
 

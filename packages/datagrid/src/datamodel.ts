@@ -27,39 +27,33 @@ abstract class DataModel {
   }
 
   /**
-   * The number of data rows in the data model.
+   * Get the row count for a region in the data model.
+   *
+   * @param region - The row region of interest.
+   *
+   * @returns - The row count for the region.
    *
    * #### Notes
-   * This property is accessed often, and so should be efficient.
+   * This method is called often, and so should be efficient.
    */
-  abstract readonly rowCount: number;
+  abstract rowCount(region: DataModel.RowRegion): number;
 
   /**
-   * The number of data columns in the data model.
+   * Get the column count for a region in the data model.
+   *
+   * @param region - The column region of interest.
+   *
+   * @returns - The column count for the region.
    *
    * #### Notes
-   * This property is accessed often, and so should be efficient.
+   * This method is called often, and so should be efficient.
    */
-  abstract readonly columnCount: number;
+  abstract columnCount(region: DataModel.ColumnRegion): number;
 
   /**
-   * The number of row header columns in the data model.
+   * Get the data value for a cell in the data model.
    *
-   * #### Notes
-   * This property is accessed often, and so should be efficient.
-   */
-  abstract readonly rowHeaderCount: number;
-
-  /**
-   * The number of column header rows in the data model.
-   *
-   * #### Notes
-   * This property is accessed often, and so should be efficient.
-   */
-  abstract readonly columnHeaderCount: number;
-
-  /**
-   * Get the data value for a specific cell in the data model.
+   * @param region - The cell region of interest.
    *
    * @param row - The row index of the cell of interest.
    *
@@ -68,16 +62,14 @@ abstract class DataModel {
    * @param returns - The data value for the specified cell.
    *
    * #### Notes
-   * A negative `row` index indicates a column header row.
-   *
-   * A negative `column` index indicates a row header column.
-   *
    * This method is called often, and so should be efficient.
    */
-  abstract data(row: number, column: number): any;
+  abstract data(region: DataModel.CellRegion, row: number, column: number): any;
 
   /**
-   * Get the field descriptor for a specific column in the data model.
+   * Get the field descriptor for a column in the data model.
+   *
+   * @param region - The cell region of interest.
    *
    * @param column - The index of the column of interest.
    *
@@ -90,9 +82,11 @@ abstract class DataModel {
    * The field descriptor can be used by custom cell renderers and cell
    * editors to customize handling of specific cell data types.
    *
+   * This method is called often, and so should be efficient.
+   *
    * The default implementation returns `{ name: '', type: '' }`.
    */
-  field(column: number): DataModel.IField {
+  field(region: DataModel.CellRegion, column: number): DataModel.IField {
     return { name: '', type: '' };
   }
 
@@ -117,6 +111,24 @@ abstract class DataModel {
 export
 namespace DataModel {
   /**
+   * A type alias for the data model row regions.
+   */
+  export
+  type RowRegion = 'body' | 'column-header';
+
+  /**
+   * A type alias for the data model column regions.
+   */
+  export
+  type ColumnRegion = 'body' | 'row-header';
+
+  /**
+   * A type alias for the data model cell regions.
+   */
+  export
+  type CellRegion = 'body' | 'row-header' | 'column-header' | 'corner-header';
+
+  /**
    * A field descriptor for a column in a data model.
    */
   export
@@ -139,6 +151,8 @@ namespace DataModel {
      */
     readonly type: string;
   }
+
+  // TODO - better names for change args types.
 
   /**
    * An arguments object for the `changed` signal.

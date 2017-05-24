@@ -88,6 +88,11 @@ namespace CellRenderer {
     readonly width: number;
 
     /**
+     * The region for the column.
+     */
+    readonly region: DataModel.CellRegion;
+
+    /**
      * The column index.
      */
     readonly column: number;
@@ -122,6 +127,11 @@ namespace CellRenderer {
      * The width of the cell rectangle, in viewport pixels.
      */
     readonly width: number;
+
+    /**
+     * The region for the cell.
+     */
+    readonly region: DataModel.CellRegion;
 
     /**
      * The row index of the cell.
