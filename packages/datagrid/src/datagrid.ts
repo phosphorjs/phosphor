@@ -208,7 +208,7 @@ class DataGrid extends Widget {
     this._scrollX = 0;
     this._scrollY = 0;
 
-    // Schedule a repaint of the viewport.
+    // Schedule a repaint of the grid.
     this.repaint();
 
     // Update the scroll bars after queueing the repaint.
@@ -1187,14 +1187,16 @@ class DataGrid extends Widget {
       offset = Math.max(offset, offset + targetPos - scrollPos1 - 1);
     }
 
-    // Compute the paint coordinates.
-    let x1 = isRows ? 0 : offset;
-    let y1 = isRows ? offset : 0;
-    let x2 = this._viewportWidth - 1;
-    let y2 = this._viewportHeight - 1;
+    // Compute the dirty area.
+    let x = isRows ? 0 : offset;
+    let y = isRows ? offset : 0;
+    let w = this._viewportWidth - x;
+    let h = this._viewportHeight - y;
 
-    // Schedule a repaint of the dirty area.
-    this.repaint(x1, y1, x2 - x1 + 1, y2 - y1 + 1);
+    // Schedule a repaint of the dirty area, if needed.
+    if (w > 0 && h > 0) {
+      this.repaint(x, y, w, h);
+    }
 
     // Update the scroll bars after queueing the repaint.
     this._updateScrollBars();
