@@ -1226,6 +1226,14 @@ class DataGrid extends Widget {
       return;
     }
 
+    // Compute the paint offset.
+    let offset: number;
+    if (index >= list.sectionCount) {
+      offset = Math.max(0, list.totalSize - 1);
+    } else {
+      offset = Math.max(0, list.sectionOffset(index) - 1);
+    }
+
     // Remove or insert the sections as needed.
     if (isRemove) {
       list.removeSections(index, span);
@@ -1233,8 +1241,16 @@ class DataGrid extends Widget {
       list.insertSections(index, span);
     }
 
-    // Schedule a full repaint of the grid.
-    this.repaint();
+    // Compute the dirty area.
+    let x = isRows ? 0 : offset;
+    let y = isRows ? offset : 0;
+    let w = this._viewportWidth - x;
+    let h = this._viewportHeight - y;
+
+    // Schedule a repaint of the dirty area, if needed.
+    if (w > 0 && h > 0) {
+      this.repaint(x, y, w, h);
+    }
 
     // Update the scroll bars after queueing the repaint.
     this._updateScrollBars();
