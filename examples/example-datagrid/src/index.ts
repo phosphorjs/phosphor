@@ -87,10 +87,10 @@ class StreamingDataModel extends DataModel {
     let i = Math.floor(r2 * nr);
     if (r1 < 0.45 && nr > 4) {
       this._data.splice(i, 1);
-      this.emitChanged({ type: 'rows-removed', index: i, span: 1 });
+      this.emitChanged({ type: 'rows-removed', region: 'body', index: i, span: 1 });
     } else {
       this._data.splice(i, 0, StreamingDataModel.createRow(nc));
-      this.emitChanged({ type: 'rows-inserted', index: i, span: 1 });
+      this.emitChanged({ type: 'rows-inserted', region: 'body', index: i, span: 1 });
     }
   };
 
@@ -144,6 +144,7 @@ class RandomDataModel extends DataModel {
     this._data[i] = (this._data[i] + 0.1) % 1;
     this.emitChanged({
       type: 'cells-changed',
+      region: 'body',
       rowIndex: r,
       columnIndex: c,
       rowSpan: 1,
