@@ -20,19 +20,22 @@ import '../style/index.css';
 
 class LargeDataModel extends DataModel {
 
-  readonly rowCount = 1000000000000;
-  readonly columnCount = 1000000000000;
-  readonly rowHeaderCount = 3;
-  readonly columnHeaderCount = 3;
+  rowCount(region: DataModel.RowRegion): number {
+    return region === 'body' ? 1000000000000 : 2;
+  }
 
-  data(row: number, column: number): any {
-    if (column < 0 && row >= 0) {
+  columnCount(region: DataModel.ColumnRegion): number {
+    return region === 'body' ? 1000000000000 : 3;
+  }
+
+  data(region: DataModel.CellRegion, row: number, column: number): any {
+    if (region === 'row-header') {
       return `R: ${row}, ${column}`;
     }
-    if (row < 0 && column >= 0) {
+    if (region === 'column-header') {
       return `C: ${row}, ${column}`;
     }
-    if (row < 0 && column < 0) {
+    if (region === 'corner-header') {
       return `N: ${row}, ${column}`;
     }
     return `(${row}, ${column})`;
@@ -42,12 +45,9 @@ class LargeDataModel extends DataModel {
 
 class StreamingDataModel extends DataModel {
 
-  readonly rowHeaderCount = 1;
-  readonly columnHeaderCount = 1;
-
-  static createRow(): number[] {
-    let row = new Array(50);
-    for (let i = 0; i < 50; ++i) {
+  static createRow(n: number): number[] {
+    let row = new Array(n);
+    for (let i = 0; i < n; ++i) {
       row[i] = Math.random();
     }
     return row;
@@ -58,37 +58,38 @@ class StreamingDataModel extends DataModel {
     setInterval(this._tick, 250);
   }
 
-  get rowCount(): number {
-    return this._data.length;
+  rowCount(region: DataModel.RowRegion): number {
+    return region === 'body' ? this._data.length : 1;
   }
 
-  get columnCount(): number {
-    return 50;
+  columnCount(region: DataModel.ColumnRegion): number {
+    return region === 'body' ? 50 : 1;
   }
 
-  data(row: number, column: number): any {
-    if (column < 0 && row >= 0) {
+  data(region: DataModel.CellRegion, row: number, column: number): any {
+    if (region === 'row-header') {
       return `R: ${row}, ${column}`;
     }
-    if (row < 0 && column >= 0) {
+    if (region === 'column-header') {
       return `C: ${row}, ${column}`;
     }
-    if (row < 0 && column < 0) {
+    if (region === 'corner-header') {
       return `N: ${row}, ${column}`;
     }
     return this._data[row][column];
   }
 
   private _tick = () => {
+    let nr = this.rowCount('body');
+    let nc = this.columnCount('body');
     let r1 = Math.random();
     let r2 = Math.random();
-    let i = Math.floor(r2 * this.rowCount);
-    if (r1 < 0.45 && this.rowCount > 4) {
+    let i = Math.floor(r2 * nr);
+    if (r1 < 0.45 && nr > 4) {
       this._data.splice(i, 1);
       this.emitChanged({ type: 'rows-removed', index: i, span: 1 });
     } else {
-      let row = StreamingDataModel.createRow();
-      this._data.splice(i, 0, row);
+      this._data.splice(i, 0, StreamingDataModel.createRow(nc));
       this.emitChanged({ type: 'rows-inserted', index: i, span: 1 });
     }
   };
@@ -103,36 +104,43 @@ class RandomDataModel extends DataModel {
     return Math.random() * 10 - 2;
   }
 
-  rowCount = 40;
-  columnCount = 40;
-  rowHeaderCount = 1;
-  columnHeaderCount = 1;
-
   constructor() {
     super();
-    for (let i = 0, n = this.rowCount * this.columnCount; i < n; ++i) {
+    let nr = this.rowCount('body');
+    let nc = this.columnCount('body');
+    for (let i = 0, n = nr * nc; i < n; ++i) {
       this._data[i] = i / n;
     }
     setInterval(this._tick, 30);
   }
 
-  data(row: number, column: number): any {
-    if (row < 0 && column < 0) {
-      return `Corner`;
+  rowCount(region: DataModel.RowRegion): number {
+    return region === 'body' ? 40 : 1;
+  }
+
+  columnCount(region: DataModel.ColumnRegion): number {
+    return region === 'body' ? 40 : 1;
+  }
+
+  data(region: DataModel.CellRegion, row: number, column: number): any {
+    if (region === 'row-header') {
+      return `R: ${row}, ${column}`;
     }
-    if (row < 0) {
-      return `C: ${column}`;
+    if (region === 'column-header') {
+      return `C: ${row}, ${column}`;
     }
-    if (column < 0) {
-      return `R: ${row}`;
+    if (region === 'corner-header') {
+      return `N: ${row}, ${column}`;
     }
-    return this._data[row * this.columnCount + column];
+    return this._data[row * this.columnCount('body') + column];
   }
 
   private _tick = () => {
-    let i = Math.floor(Math.random() * (this.rowCount * this.columnCount - 1));
-    let r = Math.floor(i / this.columnCount);
-    let c = i - r * this.columnCount;
+    let nr = this.rowCount('body');
+    let nc = this.columnCount('body');
+    let i = Math.floor(Math.random() * (nr * nc - 1));
+    let r = Math.floor(i / nc);
+    let c = i - r * nc;
     this._data[i] = (this._data[i] + 0.1) % 1;
     this.emitChanged({
       type: 'cells-changed',
