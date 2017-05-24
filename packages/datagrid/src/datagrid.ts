@@ -1281,7 +1281,114 @@ class DataGrid extends Widget {
    * Handle header cells changing in the data model.
    */
   private _onHeaderCellsChanged(args: DataModel.ICellsChangedArgs): void {
-    // TODO
+    // Unpack the arg data.
+    let { region, rowIndex, columnIndex, rowSpan, columnSpan } = args;
+
+    // Bail early if there are no cells to modify.
+    if (rowSpan <= 0 && columnSpan <= 0) {
+      return;
+    }
+
+    // Look up the row header and column header sizes.
+    let rhw = this.rowHeaderWidth;
+    let chh = this.columnHeaderHeight;
+
+    // Test whether the region is zero-sized.
+    let empty = (
+      (region === 'row-header' && rhw === 0) ||
+      (region === 'column-header' && chh === 0) ||
+      (region === 'corner-header' && (rhw === 0 || chh === 0))
+    );
+
+    // Bail early if the region is zero-sized.
+    if (empty) {
+      return;
+    }
+
+    // Look up the relevant row and column lists.
+    let rList: SectionList;
+    let cList: SectionList;
+    if (region === 'row-header') {
+      rList = this._rowSections;
+    } else {
+      rList = this._columnHeaderSections;
+    }
+    if (region === 'column-header') {
+      cList = this._columnSections;
+    } else {
+      cList = this._rowHeaderSections;
+    }
+
+    // Bail early if the changed cells are out of range.
+    if (rowIndex >= rList.sectionCount || columnIndex >= cList.sectionCount) {
+      return;
+    }
+
+    // Look up the unscrolled top-left corner of the range.
+    let x1 = cList.sectionOffset(columnIndex) - 1;
+    let y1 = rList.sectionOffset(rowIndex) - 1;
+
+    // Look up the unscrolled bottom-right corner of the range.
+    let x2: number;
+    let y2: number;
+    if (columnIndex + columnSpan >= cList.sectionCount) {
+      x2 = cList.totalSize - 1;
+    } else {
+      x2 = cList.sectionOffset(columnIndex + columnSpan) - 1;
+    }
+    if (rowIndex + rowSpan >= rList.sectionCount) {
+      y2 = rList.totalSize - 1;
+    } else {
+      y2 = rList.sectionOffset(rowIndex + rowSpan) - 1;
+    }
+
+    // Compute the paint limits and adjust the region for scroll.
+    let xMin: number;
+    let yMin: number;
+    let xMax: number;
+    let yMax: number;
+    switch (region) {
+    case 'row-header':
+      xMin = 0;
+      yMin = chh;
+      xMax = rhw - 1;
+      yMax = this._viewportHeight - 1;
+      y1 += chh - this._scrollY;
+      y2 += chh - this._scrollY;
+      break;
+    case 'column-header':
+      xMin = rhw;
+      yMin = 0;
+      xMax = this._viewportWidth - 1;
+      yMax = chh - 1;
+      x1 += rhw - this._scrollX;
+      x2 += rhw - this._scrollX;
+      break;
+    case 'corner-header':
+      xMin = 0;
+      yMin = 0;
+      xMax = rhw - 1;
+      yMax = chh - 1;
+      break;
+    default:
+      throw 'unreachable';
+    }
+
+    // Bail early if the dirty region is out of range.
+    if (x2 < xMin || x1 > xMax || y2 < yMin || y1 > yMax) {
+      return;
+    }
+
+    // Compute the dirty area.
+    let x = Math.max(xMin, x1);
+    let y = Math.max(yMin, y1);
+    let w = Math.min(x2, xMax) - x + 1;
+    let h = Math.min(y2, yMax) - y + 1;
+
+    // Schedule a repaint of the dirty area, if needed.
+    if (w > 0 && h > 0) {
+      this.repaint(x, y, w, h);
+    }
   }
 
   /**
