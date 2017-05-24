@@ -152,38 +152,32 @@ namespace DataModel {
     readonly type: string;
   }
 
-  // TODO - better names for change args types.
-
   /**
    * An arguments object for the `changed` signal.
    *
    * #### Notes
    * Data models should emit the `changed` signal with this args object
-   * type when new rows or columns are inserted or removed.
+   * type when rows are inserted or removed.
    */
   export
-  interface ISectionsChangedArgs {
+  interface IRowsChangedArgs {
     /**
      * The discriminated type of the args object.
      */
-    readonly type: (
-      'rows-removed' |
-      'rows-inserted' |
-      'columns-removed' |
-      'columns-inserted' |
-      'row-headers-removed' |
-      'row-headers-inserted' |
-      'column-headers-removed' |
-      'column-headers-inserted'
-    );
+    readonly type: 'rows-inserted' | 'rows-removed';
 
     /**
-     * The index of the first inserted row or column.
+     * The region which contains the modified rows.
+     */
+    readonly region: RowRegion;
+
+    /**
+     * The index of the first modified row.
      */
     readonly index: number;
 
     /**
-     * The number of inserted rows or columns.
+     * The number of modified rows.
      */
     readonly span: number;
   }
@@ -193,32 +187,62 @@ namespace DataModel {
    *
    * #### Notes
    * Data models should emit the `changed` signal with this args object
-   * type when existing rows or columns are moved.
+   * type when columns are inserted or removed.
    */
   export
-  interface ISectionsMovedArgs {
+  interface IColumnsChangedArgs {
     /**
      * The discriminated type of the args object.
      */
-    readonly type: (
-      'rows-moved' |
-      'columns-moved' |
-      'row-headers-moved' |
-      'column-headers-moved'
-    );
+    readonly type: 'columns-inserted' | 'columns-removed';
 
     /**
-     * The starting index of the first moved row or column.
+     * The region which contains the modified columns.
+     */
+    readonly region: ColumnRegion;
+
+    /**
+     * The index of the first modified column.
      */
     readonly index: number;
 
     /**
-     * The number of moved rows or columns.
+     * The number of modified columns.
+     */
+    readonly span: number;
+  }
+
+  /**
+   * An arguments object for the `changed` signal.
+   *
+   * #### Notes
+   * Data models should emit the `changed` signal with this args object
+   * type when rows are moved.
+   */
+  export
+  interface IRowsMovedArgs {
+    /**
+     * The discriminated type of the args object.
+     */
+    readonly type: 'rows-moved';
+
+    /**
+     * The region which contains the modified rows.
+     */
+    readonly region: RowRegion;
+
+    /**
+     * The starting index of the first modified row.
+     */
+    readonly index: number;
+
+    /**
+     * The number of modified rows.
      */
     readonly span: number;
 
     /**
-     * The ending index of the first moved row or column.
+     * The ending index of the first modified row.
      */
     readonly destination: number;
   }
@@ -228,37 +252,72 @@ namespace DataModel {
    *
    * #### Notes
    * Data models should emit the `changed` signal with this args object
-   * type when existing cells are changed in-place.
+   * type when columns are moved.
+   */
+  export
+  interface IColumnsMovedArgs {
+    /**
+     * The discriminated type of the args object.
+     */
+    readonly type: 'columns-moved';
+
+    /**
+     * The region which contains the modified columns.
+     */
+    readonly region: ColumnRegion;
+
+    /**
+     * The starting index of the first modified column.
+     */
+    readonly index: number;
+
+    /**
+     * The number of modified columns.
+     */
+    readonly span: number;
+
+    /**
+     * The ending index of the first modified column.
+     */
+    readonly destination: number;
+  }
+
+  /**
+   * An arguments object for the `changed` signal.
+   *
+   * #### Notes
+   * Data models should emit the `changed` signal with this args object
+   * type when cells are changed in-place.
    */
   export
   interface ICellsChangedArgs {
     /**
      * The discriminated type of the args object.
      */
-    readonly type: (
-      'cells-changed' |
-      'row-header-cells-changed' |
-      'column-header-cells-changed' |
-      'corner-header-cells-changed'
-    );
+    readonly type: 'cells-changed';
 
     /**
-     * The row index of the first changed cell.
+     * The region which contains the modified cells.
+     */
+    readonly region: CellRegion;
+
+    /**
+     * The row index of the first modified cell.
      */
     readonly rowIndex: number;
 
     /**
-     * The column index of the first changed cell.
+     * The column index of the first modified cell.
      */
     readonly columnIndex: number;
 
     /**
-     * The number of rows in the changed cell range.
+     * The number of rows in the modified cell range.
      */
     readonly rowSpan: number;
 
     /**
-     * The number of columns in the changed cell range.
+     * The number of columns in the modified cell range.
      */
     readonly columnSpan: number;
   }
@@ -269,8 +328,7 @@ namespace DataModel {
    * #### Notes
    * Data models should emit the `changed` signal with this args object
    * type when the model has changed in a fashion that cannot be easily
-   * expressed by the other args object types, like when the data model
-   * is sorted or filtered.
+   * expressed by the other args object types.
    *
    * This is the "big hammer" approach, and will cause any associated
    * data grid to perform a full reset. The other changed args types
@@ -289,8 +347,10 @@ namespace DataModel {
    */
   export
   type ChangedArgs = (
-    ISectionsChangedArgs |
-    ISectionsMovedArgs |
+    IRowsChangedArgs |
+    IColumnsChangedArgs |
+    IRowsMovedArgs |
+    IColumnsMovedArgs |
     ICellsChangedArgs |
     IModelResetArgs
   );

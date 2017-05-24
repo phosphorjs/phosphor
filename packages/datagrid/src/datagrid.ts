@@ -1068,29 +1068,26 @@ class DataGrid extends Widget {
     case 'rows-inserted':
     case 'columns-removed':
     case 'columns-inserted':
-      this._onBodySectionsChanged(args);
+      if (args.region === 'body') {
+        this._onBodySectionsChanged(args);
+      } else {
+        this._onHeaderSectionsChanged(args);
+      }
       break;
     case 'rows-moved':
     case 'columns-moved':
-      this._onBodySectionsMoved(args);
+      if (args.region === 'body') {
+        this._onBodySectionsMoved(args);
+      } else {
+        this._onHeaderSectionsMoved(args);
+      }
       break;
     case 'cells-changed':
-      this._onBodyCellsChanged(args);
-      break;
-    case 'row-headers-removed':
-    case 'row-headers-inserted':
-    case 'column-headers-removed':
-    case 'column-headers-inserted':
-      this._onHeaderSectionsChanged(args);
-      break;
-    case 'row-headers-moved':
-    case 'column-headers-moved':
-      this._onHeaderSectionsMoved(args);
-      break;
-    case 'row-header-cells-changed':
-    case 'column-header-cells-changed':
-    case 'corner-header-cells-changed':
-      this._onHeaderCellsChanged(args);
+      if (args.region === 'body') {
+        this._onBodyCellsChanged(args);
+      } else {
+        this._onHeaderCellsChanged(args);
+      }
       break;
     case 'model-reset':
       this._onModelReset(args);
@@ -1103,7 +1100,7 @@ class DataGrid extends Widget {
   /**
    * Handle body sections changing in the data model.
    */
-  private _onBodySectionsChanged(args: DataModel.ISectionsChangedArgs): void {
+  private _onBodySectionsChanged(args: DataModel.IRowsChangedArgs | DataModel.IColumnsChangedArgs): void {
     // Unpack the arg data.
     let { type, index, span } = args;
 
@@ -1204,23 +1201,9 @@ class DataGrid extends Widget {
   }
 
   /**
-   * Handle body sections moving in the data model.
-   */
-  private _onBodySectionsMoved(args: DataModel.ISectionsMovedArgs): void {
-    // TODO
-  }
-
-  /**
-   * Handle body cells changing in the data model.
-   */
-  private _onBodyCellsChanged(args: DataModel.ICellsChangedArgs): void {
-    // TODO
-  }
-
-  /**
    * Handle header sections changing in the data model.
    */
-  private _onHeaderSectionsChanged(args: DataModel.ISectionsChangedArgs): void {
+  private _onHeaderSectionsChanged(args: DataModel.IRowsChangedArgs | DataModel.IColumnsChangedArgs): void {
     // Unpack the arg data.
     let { type, index, span } = args;
 
@@ -1230,12 +1213,8 @@ class DataGrid extends Widget {
     }
 
     // Determine the behavior of the change type.
-    let isRows = (
-      type === 'row-headers-inserted' || type === 'row-headers-removed'
-    );
-    let isRemove = (
-      type === 'row-headers-removed' || type === 'column-headers-removed'
-    );
+    let isRows = type === 'rows-inserted' || type === 'rows-removed';
+    let isRemove = type === 'rows-removed' || type === 'columns-removed';
 
     // Look up the relevant section list.
     let list = isRows ? this._columnHeaderSections : this._rowHeaderSections;
@@ -1260,9 +1239,23 @@ class DataGrid extends Widget {
   }
 
   /**
+   * Handle body sections moving in the data model.
+   */
+  private _onBodySectionsMoved(args: DataModel.IRowsMovedArgs | DataModel.IColumnsMovedArgs): void {
+    // TODO
+  }
+
+  /**
    * Handle header sections moving in the data model.
    */
-  private _onHeaderSectionsMoved(args: DataModel.ISectionsMovedArgs): void {
+  private _onHeaderSectionsMoved(args: DataModel.IRowsMovedArgs | DataModel.IColumnsMovedArgs): void {
+    // TODO
+  }
+
+  /**
+   * Handle body cells changing in the data model.
+   */
+  private _onBodyCellsChanged(args: DataModel.ICellsChangedArgs): void {
     // TODO
   }
 
