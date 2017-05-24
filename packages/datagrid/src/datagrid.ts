@@ -1424,10 +1424,10 @@ class DataGrid extends Widget {
     let contentY = this.columnHeaderHeight;
 
     // Bail if the dirty rect does not intersect the content area.
-    if (rx + rw < contentX) {
+    if (rx + rw <= contentX) {
       return;
     }
-    if (ry + rh < contentY) {
+    if (ry + rh <= contentY) {
       return;
     }
     if (rx >= contentX + contentW) {
@@ -1536,10 +1536,10 @@ class DataGrid extends Widget {
     let contentY = this.columnHeaderHeight;
 
     // Bail if the dirty rect does not intersect the content area.
-    if (rx + rw < contentX) {
+    if (rx + rw <= contentX) {
       return;
     }
-    if (ry + rh < contentY) {
+    if (ry + rh <= contentY) {
       return;
     }
     if (rx >= contentX + contentW) {
@@ -1642,10 +1642,10 @@ class DataGrid extends Widget {
     let contentY = 0;
 
     // Bail if the dirty rect does not intersect the content area.
-    if (rx + rw < contentX) {
+    if (rx + rw <= contentX) {
       return;
     }
-    if (ry + rh < contentY) {
+    if (ry + rh <= contentY) {
       return;
     }
     if (rx >= contentX + contentW) {
@@ -1748,10 +1748,10 @@ class DataGrid extends Widget {
     let contentY = 0;
 
     // Bail if the dirty rect does not intersect the content area.
-    if (rx + rw < contentX) {
+    if (rx + rw <= contentX) {
       return;
     }
-    if (ry + rh < contentY) {
+    if (ry + rh <= contentY) {
       return;
     }
     if (rx >= contentX + contentW) {
