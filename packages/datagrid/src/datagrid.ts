@@ -1118,10 +1118,8 @@ class DataGrid extends Widget {
       return;
     }
 
-    // Set up the variable to hold the paint offset.
+    // Compute the paint offset and handle region-specific behavior.
     let offset: number;
-
-    // Compute the paint offset and update scroll position if needed.
     if (region !== 'body') {
       // Compute the paint offset.
       if (index >= list.sectionCount) {
