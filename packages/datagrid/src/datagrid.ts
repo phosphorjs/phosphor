@@ -1083,11 +1083,7 @@ class DataGrid extends Widget {
       }
       break;
     case 'cells-changed':
-      if (args.region === 'body') {
-        this._onBodyCellsChanged(args);
-      } else {
-        this._onHeaderCellsChanged(args);
-      }
+      this._onCellsChanged(args);
       break;
     case 'model-reset':
       this._onModelReset(args);
@@ -1271,16 +1267,9 @@ class DataGrid extends Widget {
   }
 
   /**
-   * Handle body cells changing in the data model.
+   * Handle cells changing in the data model.
    */
-  private _onBodyCellsChanged(args: DataModel.ICellsChangedArgs): void {
-    // TODO
-  }
-
-  /**
-   * Handle header cells changing in the data model.
-   */
-  private _onHeaderCellsChanged(args: DataModel.ICellsChangedArgs): void {
+  private _onCellsChanged(args: DataModel.ICellsChangedArgs): void {
     // Unpack the arg data.
     let { region, rowIndex, columnIndex, rowSpan, columnSpan } = args;
 
@@ -1292,15 +1281,25 @@ class DataGrid extends Widget {
     // Look up the relevant row and column lists.
     let rList: SectionList;
     let cList: SectionList;
-    if (region === 'row-header') {
+    switch (region) {
+    case 'body':
       rList = this._rowSections;
-    } else {
-      rList = this._columnHeaderSections;
-    }
-    if (region === 'column-header') {
       cList = this._columnSections;
-    } else {
+      break;
+    case 'row-header':
+      rList = this._rowSections;
       cList = this._rowHeaderSections;
+      break;
+    case 'column-header':
+      rList = this._columnHeaderSections;
+      cList = this._columnSections;
+      break;
+    case 'corner-header':
+      rList = this._columnHeaderSections;
+      cList = this._rowHeaderSections;
+      break;
+    default:
+      throw 'unreachable';
     }
 
     // Bail early if the changed cells are out of range.
@@ -1336,6 +1335,16 @@ class DataGrid extends Widget {
     let xMax: number;
     let yMax: number;
     switch (region) {
+    case 'body':
+      xMin = rhw;
+      yMin = chh;
+      xMax = this._viewportWidth - 1;
+      yMax = this._viewportHeight - 1;
+      x1 += rhw - this._scrollX;
+      x2 += rhw - this._scrollX;
+      y1 += chh - this._scrollY;
+      y2 += chh - this._scrollY;
+      break;
     case 'row-header':
       xMin = 0;
       yMin = chh;
