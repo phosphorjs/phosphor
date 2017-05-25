@@ -342,8 +342,8 @@ class Widget implements IDisposable, IMessageHandler {
    * #### Notes
    * This is a simple convenience method for posting the message.
    */
-  update(): void {
-    MessageLoop.postMessage(this, Widget.Msg.UpdateRequest);
+  update(): Promise<any> {
+    return MessageLoop.postMessage(this, Widget.Msg.UpdateRequest);
   }
 
   /**
@@ -482,72 +482,58 @@ class Widget implements IDisposable, IMessageHandler {
    * #### Notes
    * Subclasses may reimplement this method as needed.
    */
-  processMessage(msg: Message): void {
+  processMessage(msg: Message): void | Promise<void> {
     switch (msg.type) {
     case 'resize':
       this.notifyLayout(msg);
-      this.onResize(msg as Widget.ResizeMessage);
-      break;
+      return this.onResize(msg as Widget.ResizeMessage);
     case 'update-request':
       this.notifyLayout(msg);
-      this.onUpdateRequest(msg);
-      break;
+      return this.onUpdateRequest(msg);
     case 'before-show':
       this.notifyLayout(msg);
-      this.onBeforeShow(msg);
-      break;
+      return this.onBeforeShow(msg);
     case 'after-show':
       this.setFlag(Widget.Flag.IsVisible);
       this.notifyLayout(msg);
-      this.onAfterShow(msg);
-      break;
+      return this.onAfterShow(msg);
     case 'before-hide':
       this.notifyLayout(msg);
-      this.onBeforeHide(msg);
-      break;
+      return this.onBeforeHide(msg);
     case 'after-hide':
       this.clearFlag(Widget.Flag.IsVisible);
       this.notifyLayout(msg);
-      this.onAfterHide(msg);
-      break;
+      return this.onAfterHide(msg);
     case 'before-attach':
       this.notifyLayout(msg);
-      this.onBeforeAttach(msg);
-      break;
+      return this.onBeforeAttach(msg);
     case 'after-attach':
       if (!this.isHidden && (!this.parent || this.parent.isVisible)) {
         this.setFlag(Widget.Flag.IsVisible);
       }
       this.setFlag(Widget.Flag.IsAttached);
       this.notifyLayout(msg);
-      this.onAfterAttach(msg);
-      break;
+      return this.onAfterAttach(msg);
     case 'before-detach':
       this.notifyLayout(msg);
-      this.onBeforeDetach(msg);
-      break;
+      return this.onBeforeDetach(msg);
     case 'after-detach':
       this.clearFlag(Widget.Flag.IsVisible);
       this.clearFlag(Widget.Flag.IsAttached);
       this.notifyLayout(msg);
-      this.onAfterDetach(msg);
-      break;
+      return this.onAfterDetach(msg);
     case 'activate-request':
       this.notifyLayout(msg);
-      this.onActivateRequest(msg);
-      break;
+      return this.onActivateRequest(msg);
     case 'close-request':
       this.notifyLayout(msg);
-      this.onCloseRequest(msg);
-      break;
+      return this.onCloseRequest(msg);
     case 'child-added':
       this.notifyLayout(msg);
-      this.onChildAdded(msg as Widget.ChildMessage);
-      break;
+      return this.onChildAdded(msg as Widget.ChildMessage);
     case 'child-removed':
       this.notifyLayout(msg);
-      this.onChildRemoved(msg as Widget.ChildMessage);
-      break;
+      return this.onChildRemoved(msg as Widget.ChildMessage);
     default:
       this.notifyLayout(msg);
       break;
@@ -590,7 +576,7 @@ class Widget implements IDisposable, IMessageHandler {
    * #### Notes
    * The default implementation of this handler is a no-op.
    */
-  protected onResize(msg: Widget.ResizeMessage): void { }
+  protected onResize(msg: Widget.ResizeMessage): void | Promise<void> { }
 
   /**
    * A message handler invoked on an `'update-request'` message.
@@ -598,7 +584,7 @@ class Widget implements IDisposable, IMessageHandler {
    * #### Notes
    * The default implementation of this handler is a no-op.
    */
-  protected onUpdateRequest(msg: Message): void { }
+  protected onUpdateRequest(msg: Message): void | Promise<void> { }
 
   /**
    * A message handler invoked on an `'activate-request'` message.
@@ -606,7 +592,7 @@ class Widget implements IDisposable, IMessageHandler {
    * #### Notes
    * The default implementation of this handler is a no-op.
    */
-  protected onActivateRequest(msg: Message): void { }
+  protected onActivateRequest(msg: Message): void | Promise<void> { }
 
   /**
    * A message handler invoked on a `'before-show'` message.
@@ -614,7 +600,7 @@ class Widget implements IDisposable, IMessageHandler {
    * #### Notes
    * The default implementation of this handler is a no-op.
    */
-  protected onBeforeShow(msg: Message): void { }
+  protected onBeforeShow(msg: Message): void | Promise<void> { }
 
   /**
    * A message handler invoked on an `'after-show'` message.
@@ -622,7 +608,7 @@ class Widget implements IDisposable, IMessageHandler {
    * #### Notes
    * The default implementation of this handler is a no-op.
    */
-  protected onAfterShow(msg: Message): void { }
+  protected onAfterShow(msg: Message): void | Promise<void> { }
 
   /**
    * A message handler invoked on a `'before-hide'` message.
@@ -630,7 +616,7 @@ class Widget implements IDisposable, IMessageHandler {
    * #### Notes
    * The default implementation of this handler is a no-op.
    */
-  protected onBeforeHide(msg: Message): void { }
+  protected onBeforeHide(msg: Message): void | Promise<void> { }
 
   /**
    * A message handler invoked on an `'after-hide'` message.
@@ -638,7 +624,7 @@ class Widget implements IDisposable, IMessageHandler {
    * #### Notes
    * The default implementation of this handler is a no-op.
    */
-  protected onAfterHide(msg: Message): void { }
+  protected onAfterHide(msg: Message): void | Promise<void> { }
 
   /**
    * A message handler invoked on a `'before-attach'` message.
@@ -646,7 +632,7 @@ class Widget implements IDisposable, IMessageHandler {
    * #### Notes
    * The default implementation of this handler is a no-op.
    */
-  protected onBeforeAttach(msg: Message): void { }
+  protected onBeforeAttach(msg: Message): void | Promise<void> { }
 
   /**
    * A message handler invoked on an `'after-attach'` message.
@@ -654,7 +640,7 @@ class Widget implements IDisposable, IMessageHandler {
    * #### Notes
    * The default implementation of this handler is a no-op.
    */
-  protected onAfterAttach(msg: Message): void { }
+  protected onAfterAttach(msg: Message): void | Promise<void> { }
 
   /**
    * A message handler invoked on a `'before-detach'` message.
@@ -662,7 +648,7 @@ class Widget implements IDisposable, IMessageHandler {
    * #### Notes
    * The default implementation of this handler is a no-op.
    */
-  protected onBeforeDetach(msg: Message): void { }
+  protected onBeforeDetach(msg: Message): void | Promise<void> { }
 
   /**
    * A message handler invoked on an `'after-detach'` message.
@@ -670,7 +656,7 @@ class Widget implements IDisposable, IMessageHandler {
    * #### Notes
    * The default implementation of this handler is a no-op.
    */
-  protected onAfterDetach(msg: Message): void { }
+  protected onAfterDetach(msg: Message): void | Promise<void> { }
 
   /**
    * A message handler invoked on a `'child-added'` message.
@@ -678,7 +664,7 @@ class Widget implements IDisposable, IMessageHandler {
    * #### Notes
    * The default implementation of this handler is a no-op.
    */
-  protected onChildAdded(msg: Widget.ChildMessage): void { }
+  protected onChildAdded(msg: Widget.ChildMessage): void | Promise<void> { }
 
   /**
    * A message handler invoked on a `'child-removed'` message.
@@ -686,7 +672,7 @@ class Widget implements IDisposable, IMessageHandler {
    * #### Notes
    * The default implementation of this handler is a no-op.
    */
-  protected onChildRemoved(msg: Widget.ChildMessage): void { }
+  protected onChildRemoved(msg: Widget.ChildMessage): void | Promise<void> { }
 
   private _flags = 0;
   private _layout: Layout | null = null;

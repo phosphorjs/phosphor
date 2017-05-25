@@ -347,11 +347,11 @@ class DockPanel extends Widget {
    *
    * @param msg - The message sent to the widget.
    */
-  processMessage(msg: Message): void {
+  processMessage(msg: Message): void | Promise<void> {
     if (msg.type === 'layout-modified') {
       this._layoutModified.emit(undefined);
     } else {
-      super.processMessage(msg);
+      return super.processMessage(msg);
     }
   }
 

@@ -31,9 +31,10 @@ class LogWidget extends Widget {
 
   raw: Message[] = [];
 
-  processMessage(msg: Message): void {
-    super.processMessage(msg);
+  processMessage(msg: Message): void | Promise<void> {
+    const retVal = super.processMessage(msg);
     this.messages.push(msg.type);
+    return retVal;
   }
 
   protected notifyLayout(msg: Message): void {
@@ -600,6 +601,15 @@ describe('@phosphor/widgets', () => {
         requestAnimationFrame(() => {
           expect(widget.messages).to.deep.equal(['update-request']);
           done();
+        });
+      });
+
+      it('should return a promise', () => {
+        let widget = new LogWidget();
+        return widget.update().then(() => {
+          expect(true).to.be.true;
+        }).catch((e)=>{
+          expect(false).to.be.true;
         });
       });
 
