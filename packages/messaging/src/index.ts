@@ -155,7 +155,7 @@ interface IMessageHandler {
    *
    * @param msg - The message to be processed.
    */
-  processMessage(msg: Message): void;
+  processMessage(msg: Message): void | Promise<void>;
 }
 
 
@@ -224,14 +224,13 @@ namespace MessageLoop {
    * Exceptions in hooks and handlers will be caught and logged.
    */
   export
-  function sendMessage(handler: IMessageHandler, msg: Message): void {
+  function sendMessage(handler: IMessageHandler, msg: Message): Promise<void> {
     // Lookup the message hooks for the handler.
     let hooks = messageHooks.get(handler);
 
     // Handle the common case of no installed hooks.
     if (!hooks || hooks.length === 0) {
-      invokeHandler(handler, msg);
-      return;
+      return invokeHandler(handler, msg);
     }
 
     // Invoke the message hooks starting with the newest first.
@@ -241,8 +240,9 @@ namespace MessageLoop {
 
     // Invoke the handler if the message passes all hooks.
     if (passed) {
-      invokeHandler(handler, msg);
+      return invokeHandler(handler, msg);
     }
+    return Promise.reject("sendMessage - not invoked.");
   }
 
   /**
@@ -260,11 +260,10 @@ namespace MessageLoop {
    * Exceptions in hooks and handlers will be caught and logged.
    */
   export
-  function postMessage(handler: IMessageHandler, msg: Message): void {
+  function postMessage(handler: IMessageHandler, msg: Message): Promise<any> {
     // Handle the common case of a non-conflatable message.
     if (!msg.isConflatable) {
-      enqueueMessage(handler, msg);
-      return;
+      return enqueueMessage(handler, msg);
     }
 
     // Conflate the message with an existing message if possible.
@@ -286,8 +285,9 @@ namespace MessageLoop {
 
     // Enqueue the message if it was not conflated.
     if (!conflated) {
-      enqueueMessage(handler, msg);
+      return enqueueMessage(handler, msg);
     }
+    return Promise.resolve();
   }
 
   /**
@@ -453,7 +453,7 @@ namespace MessageLoop {
   /**
    * A type alias for a posted message pair.
    */
-  type PostedMessage = { handler: IMessageHandler | null, msg: Message | null };
+  type PostedMessage = { handler: IMessageHandler | null, msg: Message | null, resolve?: () => void, reject?: () => void };
 
   /**
    * The queue of posted message pairs.
@@ -527,12 +527,17 @@ namespace MessageLoop {
    *
    * Exceptions in the handler will be caught and logged.
    */
-  function invokeHandler(handler: IMessageHandler, msg: Message): void {
+  function invokeHandler(handler: IMessageHandler, msg: Message): Promise<void> {
     try {
-      handler.processMessage(msg);
+      const retVal = handler.processMessage(msg);
+      if (!retVal) {
+        return Promise.resolve();
+      }
+      return retVal;
     } catch (err) {
       exceptionHandler(err);
     }
+    return Promise.reject("invokeHandler Exception");
   }
 
   /**
@@ -540,17 +545,19 @@ namespace MessageLoop {
    *
    * This will automatically schedule a run of the message loop.
    */
-  function enqueueMessage(handler: IMessageHandler, msg: Message): void {
-    // Add the posted message to the queue.
-    messageQueue.addLast({ handler, msg });
+  function enqueueMessage(handler: IMessageHandler, msg: Message): Promise<any> {
+    return new Promise((resolve, reject) => {
+      // Add the posted message to the queue.
+      messageQueue.addLast({ handler, msg, resolve, reject });
 
-    // Bail if a loop task is already pending.
-    if (loopTaskID !== 0) {
-      return;
-    }
+      // Bail if a loop task is already pending.
+      if (loopTaskID !== 0) {
+        return;
+      }
 
-    // Schedule a run of the message loop.
-    loopTaskID = schedule(runMessageLoop);
+      // Schedule a run of the message loop.
+      loopTaskID = schedule(runMessageLoop);
+    });
   }
 
   /**
@@ -587,7 +594,15 @@ namespace MessageLoop {
 
       // Dispatch the message if it has not been cleared.
       if (posted.handler && posted.msg) {
-        sendMessage(posted.handler, posted.msg);
+        sendMessage(posted.handler, posted.msg).then(() => {
+          if (posted.resolve) {
+            posted.resolve();
+          }
+        }).catch((e) => {
+          if (posted.reject) {
+            posted.reject();
+          }
+        });
       }
     }
   }

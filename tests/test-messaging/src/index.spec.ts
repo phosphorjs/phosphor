@@ -5,6 +5,8 @@
 |
 | The full license is in the file LICENSE, distributed with this software.
 |----------------------------------------------------------------------------*/
+import 'es6-promise/auto';  // polyfill Promise on IE
+
 import {
   expect
 } from 'chai';
@@ -19,7 +21,7 @@ class Handler implements IMessageHandler {
 
   messages: string[] = [];
 
-  processMessage(msg: Message): void {
+  processMessage(msg: Message): void | Promise<void> {
     this.messages.push(msg.type);
   }
 }
@@ -27,7 +29,7 @@ class Handler implements IMessageHandler {
 
 class BadHandler implements IMessageHandler {
 
-  processMessage(msg: Message): void {
+  processMessage(msg: Message): void | Promise<void> {
     throw new Error('process error');
   }
 }
@@ -37,9 +39,10 @@ class GlobalHandler extends Handler {
 
   static messages: string[] = [];
 
-  processMessage(msg: Message): void {
-    super.processMessage(msg);
+  processMessage(msg: Message): void | Promise<void> {
+    const retVal = super.processMessage(msg);
     GlobalHandler.messages.push(msg.type);
+    return retVal;
   }
 }
 
