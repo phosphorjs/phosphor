@@ -1289,22 +1289,6 @@ class DataGrid extends Widget {
       return;
     }
 
-    // Look up the row header and column header sizes.
-    let rhw = this.rowHeaderWidth;
-    let chh = this.columnHeaderHeight;
-
-    // Test whether the region is zero-sized.
-    let empty = (
-      (region === 'row-header' && rhw === 0) ||
-      (region === 'column-header' && chh === 0) ||
-      (region === 'corner-header' && (rhw === 0 || chh === 0))
-    );
-
-    // Bail early if the region is zero-sized.
-    if (empty) {
-      return;
-    }
-
     // Look up the relevant row and column lists.
     let rList: SectionList;
     let cList: SectionList;
@@ -1342,6 +1326,10 @@ class DataGrid extends Widget {
       y2 = rList.sectionOffset(rowIndex + rowSpan) - 1;
     }
 
+    // Fetch the row header and column header sizes.
+    let rhw = this.rowHeaderWidth;
+    let chh = this.columnHeaderHeight;
+
     // Compute the paint limits and adjust the region for scroll.
     let xMin: number;
     let yMin: number;
@@ -1372,6 +1360,11 @@ class DataGrid extends Widget {
       break;
     default:
       throw 'unreachable';
+    }
+
+    // Bail early if the paint limits are empty.
+    if (xMax < xMin || yMax < yMin) {
+      return;
     }
 
     // Bail early if the dirty region is out of range.
