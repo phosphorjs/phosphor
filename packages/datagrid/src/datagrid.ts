@@ -1068,11 +1068,7 @@ class DataGrid extends Widget {
     case 'rows-inserted':
     case 'columns-removed':
     case 'columns-inserted':
-      if (args.region === 'body') {
-        this._onBodySectionsChanged(args);
-      } else {
-        this._onHeaderSectionsChanged(args);
-      }
+      this._onSectionsChanged(args);
       break;
     case 'rows-moved':
     case 'columns-moved':
@@ -1094,11 +1090,11 @@ class DataGrid extends Widget {
   }
 
   /**
-   * Handle body sections changing in the data model.
+   * Handle sections changing in the data model.
    */
-  private _onBodySectionsChanged(args: DataModel.IRowsChangedArgs | DataModel.IColumnsChangedArgs): void {
+  private _onSectionsChanged(args: DataModel.IRowsChangedArgs | DataModel.IColumnsChangedArgs): void {
     // Unpack the arg data.
-    let { type, index, span } = args;
+    let { region, type, index, span } = args;
 
     // Bail early if there are no sections to insert.
     if (span <= 0) {
@@ -1109,132 +1105,102 @@ class DataGrid extends Widget {
     let isRows = type === 'rows-inserted' || type === 'rows-removed';
     let isRemove = type === 'rows-removed' || type === 'columns-removed';
 
-    // Look up the relevant section data.
-    let list: SectionList;
-    let scrollPos1: number;
-    let maxScrollPos1: number;
-    if (isRows) {
-      list = this._rowSections;
-      scrollPos1 = this._scrollY;
-      maxScrollPos1 = this.maxScrollY;
-    } else {
-      list = this._columnSections;
-      scrollPos1 = this._scrollX;
-      maxScrollPos1 = this.maxScrollX;
-    }
-
-    // Bail if the index is out of range.
-    if (isRemove && (index < 0 || index >= list.sectionCount)) {
-      return;
-    }
-
-    // Look up the target position.
-    let targetPos: number;
-    if (index >= list.sectionCount) {
-      targetPos = list.totalSize;
-    } else {
-      targetPos = list.sectionOffset(index);
-    }
-
-    // Remove or Insert the sections and save the pre- and post- size.
-    let size1 = list.totalSize;
-    if (isRemove) {
-      list.removeSections(index, span);
-    } else {
-      list.insertSections(index, span);
-    }
-    let size2 = list.totalSize;
-
-    // Fetch the new max scroll position.
-    let maxScrollPos2: number;
-    if (isRows) {
-      maxScrollPos2 = this.maxScrollY;
-    } else {
-      maxScrollPos2 = this.maxScrollX;
-    }
-
-    // Adjust the scroll position as needed.
-    let scrollPos2: number;
-    if (scrollPos1 === 0) {
-      scrollPos2 = 0;
-    } else if (scrollPos1 === maxScrollPos1) {
-      scrollPos2 = maxScrollPos2;
-    } else if (isRemove && targetPos <= scrollPos1) {
-      let delta = Math.min(scrollPos1 - targetPos, size1 - size2);
-      scrollPos2 = Math.min(scrollPos1 - delta, maxScrollPos2);
-    } else if (targetPos <= scrollPos1) {
-      scrollPos2 = Math.min(scrollPos1 + size2 - size1, maxScrollPos2);
-    } else {
-      scrollPos2 = scrollPos1;
-    }
-
-    // Update the scroll position and compute the paint offset.
-    let offset: number;
-    if (isRows) {
-      this._scrollY = scrollPos2;
-      offset = this.columnHeaderHeight;
-    } else {
-      this._scrollX = scrollPos2;
-      offset = this.rowHeaderWidth;
-    }
-
-    // Adjust the paint offset if the scroll position did not change.
-    if (scrollPos1 === scrollPos2) {
-      offset = Math.max(offset, offset + targetPos - scrollPos1 - 1);
-    }
-
-    // Compute the dirty area.
-    let x = isRows ? 0 : offset;
-    let y = isRows ? offset : 0;
-    let w = this._viewportWidth - x;
-    let h = this._viewportHeight - y;
-
-    // Schedule a repaint of the dirty area, if needed.
-    if (w > 0 && h > 0) {
-      this.repaint(x, y, w, h);
-    }
-
-    // Update the scroll bars after queueing the repaint.
-    this._updateScrollBars();
-  }
-
-  /**
-   * Handle header sections changing in the data model.
-   */
-  private _onHeaderSectionsChanged(args: DataModel.IRowsChangedArgs | DataModel.IColumnsChangedArgs): void {
-    // Unpack the arg data.
-    let { type, index, span } = args;
-
-    // Bail early if there are no sections to modify.
-    if (span <= 0) {
-      return;
-    }
-
-    // Determine the behavior of the change type.
-    let isRows = type === 'rows-inserted' || type === 'rows-removed';
-    let isRemove = type === 'rows-removed' || type === 'columns-removed';
-
     // Look up the relevant section list.
-    let list = isRows ? this._columnHeaderSections : this._rowHeaderSections;
+    let list: SectionList;
+    if (region === 'body') {
+      list = isRows ? this._rowSections : this._columnSections;
+    } else {
+      list = isRows ? this._columnHeaderSections : this._rowHeaderSections;
+    }
 
     // Bail if the index is out of range.
     if (isRemove && (index < 0 || index >= list.sectionCount)) {
       return;
     }
 
-    // Compute the paint offset.
+    // Set up the variable to hold the paint offset.
     let offset: number;
-    if (index >= list.sectionCount) {
-      offset = Math.max(0, list.totalSize - 1);
-    } else {
-      offset = Math.max(0, list.sectionOffset(index) - 1);
-    }
 
-    // Remove or insert the sections as needed.
-    if (isRemove) {
-      list.removeSections(index, span);
+    // Compute the paint offset and update scroll position if needed.
+    if (region !== 'body') {
+      // Compute the paint offset.
+      if (index >= list.sectionCount) {
+        offset = Math.max(0, list.totalSize - 1);
+      } else {
+        offset = Math.max(0, list.sectionOffset(index) - 1);
+      }
+
+      // Remove or insert the sections as needed.
+      if (isRemove) {
+        list.removeSections(index, span);
+      } else {
+        list.insertSections(index, span);
+      }
     } else {
-      list.insertSections(index, span);
+      // Look up the initial scroll geometry.
+      let scrollPos1: number;
+      let maxScrollPos1: number;
+      if (isRows) {
+        scrollPos1 = this._scrollY;
+        maxScrollPos1 = this.maxScrollY;
+      } else {
+        scrollPos1 = this._scrollX;
+        maxScrollPos1 = this.maxScrollX;
+      }
+
+      // Look up the target position.
+      let targetPos: number;
+      if (index >= list.sectionCount) {
+        targetPos = list.totalSize;
+      } else {
+        targetPos = list.sectionOffset(index);
+      }
+
+      // Remove or Insert the sections and save the pre- and post- size.
+      let size1 = list.totalSize;
+      if (isRemove) {
+        list.removeSections(index, span);
+      } else {
+        list.insertSections(index, span);
+      }
+      let size2 = list.totalSize;
+
+      // Fetch the new max scroll position.
+      let maxScrollPos2: number;
+      if (isRows) {
+        maxScrollPos2 = this.maxScrollY;
+      } else {
+        maxScrollPos2 = this.maxScrollX;
+      }
+
+      // Adjust the scroll position as needed.
+      let scrollPos2: number;
+      if (scrollPos1 === 0) {
+        scrollPos2 = 0;
+      } else if (scrollPos1 === maxScrollPos1) {
+        scrollPos2 = maxScrollPos2;
+      } else if (isRemove && targetPos <= scrollPos1) {
+        let delta = Math.min(scrollPos1 - targetPos, size1 - size2);
+        scrollPos2 = Math.min(scrollPos1 - delta, maxScrollPos2);
+      } else if (targetPos <= scrollPos1) {
+        scrollPos2 = Math.min(scrollPos1 + size2 - size1, maxScrollPos2);
+      } else {
+        scrollPos2 = scrollPos1;
+      }
+
+      // Update the scroll position and compute the paint offset.
+      if (isRows) {
+        this._scrollY = scrollPos2;
+        offset = this.columnHeaderHeight;
+      } else {
+        this._scrollX = scrollPos2;
+        offset = this.rowHeaderWidth;
+      }
+
+      // Adjust the paint offset if the scroll position did not change.
+      if (scrollPos1 === scrollPos2) {
+        offset = Math.max(offset, offset + targetPos - scrollPos1 - 1);
+      }
     }
 
     // Compute the dirty area.
