@@ -238,8 +238,8 @@ class SectionList {
   /**
    * Insert sections into the list.
    *
-   * @param index - The index at which to insert the sections.
-   *   This value will be clamped to the bounds of the list.
+   * @param index - The index at which to insert the sections. This
+   *   value will be clamped to the bounds of the list.
    *
    * @param count - The number of sections to insert. This method
    *   is a no-op if this value is `<= 0`.
@@ -283,8 +283,8 @@ class SectionList {
   /**
    * Remove sections from the list.
    *
-   * @param index - The index of the first section to remove.
-   *   This method is a no-op if this value is out of range.
+   * @param index - The index of the first section to remove. This
+   *   method is a no-op if this value is out of range.
    *
    * @param count - The number of sections to remove. This method
    *   is a no-op if this value is `<= 0`.
