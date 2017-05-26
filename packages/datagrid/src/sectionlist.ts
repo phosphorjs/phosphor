@@ -347,6 +347,110 @@ class SectionList {
   }
 
   /**
+   * Move sections within the list.
+   *
+   * @param index - The index of the first section to move. This method
+   *   is a no-op if this value is out of range.
+   *
+   * @param count - The number of sections to move. This method is a
+   *   no-op if this value is `<= 0`.
+   *
+   * @param destination - The destination index for the first section.
+   *   This value will be clamped to the allowable range.
+   *
+   * #### Undefined Behavior
+   * An `index`, `count`, or `destination` which is non-integral.
+   *
+   * #### Complexity
+   * Linear on the number of moved resized sections.
+   */
+  moveSections(index: number, count: number, destination: number): void {
+    // Bail early if there is nothing to move.
+    if (index < 0 || index >= this._sectionCount || count <= 0) {
+      return;
+    }
+
+    // Handle the simple case of no modified sections.
+    if (this._sections.length === 0) {
+      return;
+    }
+
+    // Clamp the move count to the limit.
+    count = Math.min(count, this._sectionCount - index);
+
+    // Clamp the destination index to the limit.
+    destination = Math.min(Math.max(0, destination), this._sectionCount - count);
+
+    // Bail early if there is no effective move.
+    if (index === destination) {
+      return;
+    }
+
+    // Compute the first affected index.
+    let i1 = Math.min(index, destination);
+
+    // Look up the first affected modified section.
+    let k1 = ArrayExt.lowerBound(this._sections, i1, Private.indexCmp);
+
+    // Bail early if there are no affected modified sections.
+    if (k1 === this._sections.length) {
+      return;
+    }
+
+    // Compute the last affected index.
+    let i2 = Math.max(index + count - 1, destination + count - 1);
+
+    // Look up the last affected modified section.
+    let k2 = ArrayExt.upperBound(this._sections, i2, Private.indexCmp) - 1;
+
+    // Bail early if there are no affected modified sections.
+    if (k2 < k1) {
+      return;
+    }
+
+    // Compute the pivot index.
+    let pivot = destination < index ? index : index + count;
+
+    // Compute the count for each side of the pivot.
+    let count1 = pivot - i1;
+    let count2 = i2 - pivot + 1;
+
+    // Compute the span for each side of the pivot.
+    let span1 = count1 * this._baseSize;
+    let span2 = count2 * this._baseSize;
+
+    // Adjust the spans for the modified sections.
+    for (let j = k1; j <= k2; ++j) {
+      let section = this._sections[j];
+      if (section.index < pivot) {
+        span1 += section.size - this._baseSize;
+      } else {
+        span2 += section.size - this._baseSize;
+      }
+    }
+
+    // Look up the pivot section.
+    let k3 = ArrayExt.lowerBound(this._sections, pivot, Private.indexCmp);
+
+    // Rotate the modified sections if needed.
+    if (k1 <= k3 && k3 <= k2) {
+      ArrayExt.rotate(this._sections, k3 - k1, k1, k2);
+    }
+
+    // Adjust the modified section indices and offsets.
+    for (let j = k1; j <= k2; ++j) {
+      let section = this._sections[j];
+      if (section.index < pivot) {
+        section.index += count2;
+        section.offset += span2;
+      } else {
+        section.index -= count1;
+        section.offset -= span1;
+      }
+    }
+  }
+
+  /**
    * Remove all sections from the list.
    *
    * #### Complexity
