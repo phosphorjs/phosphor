@@ -40,8 +40,18 @@ body {
 
 
 .p-DataGrid-scrollCorner {
-  border-left: 1px solid #A0A0A0;
-  border-top: 1px solid #A0A0A0;
+  background-color: #F0F0F0;
+}
+
+
+.p-DataGrid-scrollCorner::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 1px;
+  height: 1px;
+  background-color: #A0A0A0;
 }
 
 
