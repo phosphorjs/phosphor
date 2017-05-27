@@ -1638,7 +1638,7 @@ class DataGrid extends Widget {
     let x = this._columnSections.sectionOffset(c1) + contentX - this._scrollX;
     let y = this._rowSections.sectionOffset(r1) + contentY - this._scrollY;
 
-    // Set up the cell region size variables.
+    // Set up the paint region size variables.
     let width = 0;
     let height = 0;
 
@@ -1660,8 +1660,8 @@ class DataGrid extends Widget {
       width += size;
     }
 
-    // Create the cell region object.
-    let rgn: Private.ICellRegion = {
+    // Create the paint region object.
+    let rgn: Private.IPaintRegion = {
       region: 'body',
       xMin: x1, yMin: y1,
       xMax: x2, yMax: y2,
@@ -1679,7 +1679,7 @@ class DataGrid extends Widget {
     // Draw the column background.
     this._drawColumnBackground(rgn, this._style.columnBackgroundColor);
 
-    // Draw the cell content for the cell region.
+    // Draw the cell content for the paint region.
     this._drawCells(rgn);
 
     // Draw the horizontal grid lines.
@@ -1750,7 +1750,7 @@ class DataGrid extends Widget {
     let x = this._rowHeaderSections.sectionOffset(c1);
     let y = this._rowSections.sectionOffset(r1) + contentY - this._scrollY;
 
-    // Set up the cell region size variables.
+    // Set up the paint region size variables.
     let width = 0;
     let height = 0;
 
@@ -1772,8 +1772,8 @@ class DataGrid extends Widget {
       width += size;
     }
 
-    // Create the cell region object.
-    let rgn: Private.ICellRegion = {
+    // Create the paint region object.
+    let rgn: Private.IPaintRegion = {
       region: 'row-header',
       xMin: x1, yMin: y1,
       xMax: x2, yMax: y2,
@@ -1785,7 +1785,7 @@ class DataGrid extends Widget {
     // Draw the background.
     this._drawBackground(rgn, this._style.headerBackgroundColor);
 
-    // Draw the cell content for the cell region.
+    // Draw the cell content for the paint region.
     this._drawCells(rgn);
 
     // Draw the horizontal grid lines.
@@ -1856,7 +1856,7 @@ class DataGrid extends Widget {
     let x = this._columnSections.sectionOffset(c1) + contentX - this._scrollX;
     let y = this._columnHeaderSections.sectionOffset(r1);
 
-    // Set up the cell region size variables.
+    // Set up the paint region size variables.
     let width = 0;
     let height = 0;
 
@@ -1878,8 +1878,8 @@ class DataGrid extends Widget {
       width += size;
     }
 
-    // Create the cell region object.
-    let rgn: Private.ICellRegion = {
+    // Create the paint region object.
+    let rgn: Private.IPaintRegion = {
       region: 'column-header',
       xMin: x1, yMin: y1,
       xMax: x2, yMax: y2,
@@ -1891,7 +1891,7 @@ class DataGrid extends Widget {
     // Draw the background.
     this._drawBackground(rgn, this._style.headerBackgroundColor);
 
-    // Draw the cell content for the cell region.
+    // Draw the cell content for the paint region.
     this._drawCells(rgn);
 
     // Draw the horizontal grid lines.
@@ -1962,7 +1962,7 @@ class DataGrid extends Widget {
     let x = this._rowHeaderSections.sectionOffset(c1);
     let y = this._columnHeaderSections.sectionOffset(r1);
 
-    // Set up the cell region size variables.
+    // Set up the paint region size variables.
     let width = 0;
     let height = 0;
 
@@ -1984,8 +1984,8 @@ class DataGrid extends Widget {
       width += size;
     }
 
-    // Create the cell region object.
-    let rgn: Private.ICellRegion = {
+    // Create the paint region object.
+    let rgn: Private.IPaintRegion = {
       region: 'corner-header',
       xMin: x1, yMin: y1,
       xMax: x2, yMax: y2,
@@ -1997,7 +1997,7 @@ class DataGrid extends Widget {
     // Draw the background.
     this._drawBackground(rgn, this._style.headerBackgroundColor);
 
-    // Draw the cell content for the cell region.
+    // Draw the cell content for the paint region.
     this._drawCells(rgn);
 
     // Draw the horizontal grid lines.
@@ -2014,9 +2014,9 @@ class DataGrid extends Widget {
   }
 
   /**
-   * Draw the background for the given cell region.
+   * Draw the background for the given paint region.
    */
-  private _drawBackground(rgn: Private.ICellRegion, color: string | undefined): void {
+  private _drawBackground(rgn: Private.IPaintRegion, color: string | undefined): void {
     // Bail if there is no color to draw.
     if (!color) {
       return;
@@ -2031,9 +2031,9 @@ class DataGrid extends Widget {
   }
 
   /**
-   * Draw the row background for the given cell region.
+   * Draw the row background for the given paint region.
    */
-  private _drawRowBackground(rgn: Private.ICellRegion, colorFn: ((i: number) => string) | undefined): void {
+  private _drawRowBackground(rgn: Private.IPaintRegion, colorFn: ((i: number) => string) | undefined): void {
     // Bail if there is no color function.
     if (!colorFn) {
       return;
@@ -2070,9 +2070,9 @@ class DataGrid extends Widget {
   }
 
   /**
-   * Draw the column background for the given cell region.
+   * Draw the column background for the given paint region.
    */
-  private _drawColumnBackground(rgn: Private.ICellRegion, colorFn: ((i: number) => string) | undefined): void {
+  private _drawColumnBackground(rgn: Private.IPaintRegion, colorFn: ((i: number) => string) | undefined): void {
     // Bail if there is no color function.
     if (!colorFn) {
       return;
@@ -2109,9 +2109,9 @@ class DataGrid extends Widget {
   }
 
   /**
-   * Draw the cells for the given cell region.
+   * Draw the cells for the given paint region.
    */
-  private _drawCells(rgn: Private.ICellRegion): void {
+  private _drawCells(rgn: Private.IPaintRegion): void {
     // Bail if there is no data model.
     if (!this._model) {
       return;
@@ -2258,9 +2258,9 @@ class DataGrid extends Widget {
   }
 
   /**
-   * Draw the horizontal grid lines for the given cell region.
+   * Draw the horizontal grid lines for the given paint region.
    */
-  private _drawHorizontalGridLines(rgn: Private.ICellRegion, color: string | undefined): void {
+  private _drawHorizontalGridLines(rgn: Private.IPaintRegion, color: string | undefined): void {
     // Bail if there is no color to draw.
     if (!color) {
       return;
@@ -2305,9 +2305,9 @@ class DataGrid extends Widget {
   }
 
   /**
-   * Draw the vertical grid lines for the given cell region.
+   * Draw the vertical grid lines for the given paint region.
    */
-  private _drawVerticalGridLines(rgn: Private.ICellRegion, color: string | undefined): void {
+  private _drawVerticalGridLines(rgn: Private.IPaintRegion, color: string | undefined): void {
     // Bail if there is no color to draw.
     if (!color) {
       return;
@@ -2695,12 +2695,11 @@ namespace Private {
     return canvas;
   }
 
-  // TODO pick a better name for this interface.
   /**
-   * An object which represents a cell region.
+   * An object which represents a region to be painted.
    */
   export
-  interface ICellRegion {
+  interface IPaintRegion {
     /**
      * The min X coordinate the of the dirty viewport rect.
      *
@@ -2750,7 +2749,7 @@ namespace Private {
     y: number;
 
     /**
-     * The total width of the cell region.
+     * The total width of the region.
      *
      * #### Notes
      * This is aligned to the cell boundaries.
@@ -2758,7 +2757,7 @@ namespace Private {
     width: number;
 
     /**
-     * The total height of the cell region.
+     * The total height of the region.
      *
      * #### Notes
      * This is aligned to the cell boundaries.
@@ -2766,7 +2765,7 @@ namespace Private {
     height: number;
 
     /**
-     * The cell region being drawn.
+     * The cell region being painted.
      */
     region: DataModel.CellRegion;
 
