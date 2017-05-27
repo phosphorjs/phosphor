@@ -85,7 +85,7 @@ class StreamingDataModel extends DataModel {
     let r1 = Math.random();
     let r2 = Math.random();
     let i = Math.floor(r2 * nr);
-    if (r1 < 0.45 && nr > 4) {
+    if ((r1 < 0.45 && nr > 4) || nr >= 500) {
       this._data.splice(i, 1);
       this.emitChanged({ type: 'rows-removed', region: 'body', index: i, span: 1 });
     } else {
@@ -111,7 +111,7 @@ class RandomDataModel extends DataModel {
     for (let i = 0, n = nr * nc; i < n; ++i) {
       this._data[i] = i / n;
     }
-    setInterval(this._tick, 30);
+    setInterval(this._tick, 60);
   }
 
   rowCount(region: DataModel.RowRegion): number {
@@ -141,7 +141,7 @@ class RandomDataModel extends DataModel {
     let i = Math.floor(Math.random() * (nr * nc - 1));
     let r = Math.floor(i / nc);
     let c = i - r * nc;
-    this._data[i] = (this._data[i] + 0.1) % 1;
+    this._data[i] = (this._data[i] + Math.random()) % 1;
     this.emitChanged({
       type: 'cells-changed',
       region: 'body',
