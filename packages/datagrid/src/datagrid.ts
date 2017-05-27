@@ -1072,11 +1072,7 @@ class DataGrid extends Widget {
       break;
     case 'rows-moved':
     case 'columns-moved':
-      if (args.region === 'body') {
-        this._onBodySectionsMoved(args);
-      } else {
-        this._onHeaderSectionsMoved(args);
-      }
+      this._onSectionsMoved(args);
       break;
     case 'cells-changed':
       this._onCellsChanged(args);
@@ -1217,17 +1213,127 @@ class DataGrid extends Widget {
   }
 
   /**
-   * Handle body sections moving in the data model.
+   * Handle sections moving in the data model.
    */
-  private _onBodySectionsMoved(args: DataModel.IRowsMovedArgs | DataModel.IColumnsMovedArgs): void {
-    // TODO
-  }
+  private _onSectionsMoved(args: DataModel.IRowsMovedArgs | DataModel.IColumnsMovedArgs): void {
+    // Unpack the arg data.
+    let { region, type, index, span, destination } = args;
 
-  /**
-   * Handle header sections moving in the data model.
-   */
-  private _onHeaderSectionsMoved(args: DataModel.IRowsMovedArgs | DataModel.IColumnsMovedArgs): void {
-    // TODO
+    // Bail early if there are no sections to move.
+    if (span <= 0) {
+      return;
+    }
+
+    // Determine the behavior of the change type.
+    let isRows = type === 'rows-moved';
+
+    // Look up the relevant section list.
+    let list: SectionList;
+    if (region === 'body') {
+      list = isRows ? this._rowSections : this._columnSections;
+    } else {
+      list = isRows ? this._columnHeaderSections : this._rowHeaderSections;
+    }
+
+    // Bail early if the index is out of range.
+    if (index < 0 || index >= list.sectionCount) {
+      return;
+    }
+
+    // Clamp the move span to the limit.
+    span = Math.min(span, list.sectionCount - index);
+
+    // Clamp the destination index to the limit.
+    destination = Math.min(Math.max(0, destination), list.sectionCount - span);
+
+    // Bail early if there is no effective move.
+    if (index === destination) {
+      return;
+    }
+
+    // Compute the first affected index.
+    let i1 = Math.min(index, destination);
+
+    // Compute the last affected index.
+    let i2 = Math.max(index + span - 1, destination + span - 1);
+
+    // Compute the first paint boundary.
+    let p1 = Math.max(0, list.sectionOffset(i1) - 1);
+
+    // Compute the last paint boundary.
+    let p2: number;
+    if (i2 >= list.sectionCount - 1) {
+      p2 = list.totalSize - 1;
+    } else {
+      p2 = list.sectionOffset(i2 + 1) - 1;
+    }
+
+    // Move the sections in the list.
+    list.moveSections(index, span, destination);
+
+    // Fetch the row header and column header sizes.
+    let rhw = this.rowHeaderWidth;
+    let chh = this.columnHeaderHeight;
+
+    // Set up the initial paint limits.
+    let xMin = 0;
+    let yMin = 0;
+    let xMax = this._viewportWidth - 1;
+    let yMax = this._viewportHeight - 1;
+
+    // Set up the initial paint region.
+    let x1 = xMin;
+    let y1 = yMin;
+    let x2 = xMax;
+    let y2 = yMax;
+
+    // Adjust the limits and paint region.
+    switch (region) {
+    case 'body':
+      if (isRows) {
+        yMin = chh;
+        y1 = chh + p1 - this._scrollY;
+        y2 = chh + p2 - this._scrollY;
+      } else {
+        xMin = rhw;
+        x1 = rhw + p1 - this._scrollX;
+        x2 = rhw + p2 - this._scrollX;
+      }
+      break;
+    case 'row-header':
+      xMax = Math.min(rhw - 1, xMax);
+      x1 = p1;
+      x2 = p2;
+      break;
+    case 'column-header':
+      yMax = Math.min(chh - 1, yMax);
+      y1 = p1;
+      y2 = p2;
+      break;
+    default:
+      throw 'unreachable';
+    }
+
+    // Bail early if the paint limits are empty.
+    if (xMax < xMin || yMax < yMin) {
+      return;
+    }
+
+    // Bail early if the dirty region is out of range.
+    if (x2 < xMin || x1 > xMax || y2 < yMin || y1 > yMax) {
+      return;
+    }
+
+    // Compute the dirty area.
+    let x = Math.max(xMin, x1);
+    let y = Math.max(yMin, y1);
+    let w = Math.min(x2, xMax) - x + 1;
+    let h = Math.min(y2, yMax) - y + 1;
+
+    // Schedule a repaint of the dirty area, if needed.
+    if (w > 0 && h > 0) {
+      this.repaint(x, y, w, h);
+    }
   }
 
   /**
