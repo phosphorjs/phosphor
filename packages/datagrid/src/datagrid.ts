@@ -156,8 +156,12 @@ class DataGrid extends Widget {
    * Dispose of the resources held by the widgets.
    */
   dispose(): void {
-    // TODO - audit this method.
     this._model = null;
+    this._rowSections.clear();
+    this._columnSections.clear();
+    this._rowHeaderSections.clear();
+    this._columnHeaderSections.clear();
+    this._cellRendererMap.clear();
     super.dispose();
   }
 
