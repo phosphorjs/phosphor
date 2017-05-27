@@ -46,7 +46,7 @@ class JSONDataModel extends DataModel {
 
   data(region: DataModel.CellRegion, row: number, column: number): any {
     if (region === 'row-header') {
-      
+      return this._data[row][this._fields[column]['name']];
     }
     if (region === 'column-header') {
       this._fields[column]['name'];
