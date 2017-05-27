@@ -104,10 +104,10 @@ class RandomDataModel extends DataModel {
     return Math.random() * 10 - 2;
   }
 
-  constructor() {
+  constructor(rowCount: number, columnCount: number) {
     super();
-    let nr = this.rowCount('body');
-    let nc = this.columnCount('body');
+    let nr = this._rowCount = rowCount;
+    let nc = this._columnCount = columnCount;
     for (let i = 0, n = nr * nc; i < n; ++i) {
       this._data[i] = i / n;
     }
@@ -115,11 +115,11 @@ class RandomDataModel extends DataModel {
   }
 
   rowCount(region: DataModel.RowRegion): number {
-    return region === 'body' ? 40 : 1;
+    return region === 'body' ? this._rowCount : 1;
   }
 
   columnCount(region: DataModel.ColumnRegion): number {
-    return region === 'body' ? 40 : 1;
+    return region === 'body' ? this._columnCount : 1;
   }
 
   data(region: DataModel.CellRegion, row: number, column: number): any {
@@ -132,12 +132,12 @@ class RandomDataModel extends DataModel {
     if (region === 'corner-header') {
       return `N: ${row}, ${column}`;
     }
-    return this._data[row * this.columnCount('body') + column];
+    return this._data[row * this._columnCount + column];
   }
 
   private _tick = () => {
-    let nr = this.rowCount('body');
-    let nc = this.columnCount('body');
+    let nr = this._rowCount;
+    let nc = this._columnCount;
     let i = Math.floor(Math.random() * (nr * nc - 1));
     let r = Math.floor(i / nc);
     let c = i - r * nc;
@@ -152,6 +152,8 @@ class RandomDataModel extends DataModel {
     });
   };
 
+  private _rowCount: number;
+  private _columnCount: number;
   private _data: number[] = [];
 }
 
@@ -201,8 +203,8 @@ function main(): void {
 
   let model1 = new LargeDataModel();
   let model2 = new StreamingDataModel();
-  let model3 = new RandomDataModel();
-  let model4 = new RandomDataModel();
+  let model3 = new RandomDataModel(15, 10);
+  let model4 = new RandomDataModel(80, 80);
 
   let blueStripeStyle: DataGrid.IStyle = {
     ...DataGrid.defaultStyle,
