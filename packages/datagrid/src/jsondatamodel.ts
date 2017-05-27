@@ -11,14 +11,14 @@ import {
 } from '@phosphor/coreutils';
 
 import {
-  DataModel, IField
-} from '@phosphor/datagrid';
+  DataModel
+} from './datamodel';
 
 
 export
 class JSONDataModel extends DataModel {
 
-  constructor(data: JSONObject, schema: JSONArray) {
+  constructor(data: JSONArray, schema: JSONObject) {
     super();
     this._data = data;
     this._fields = Private.parseFields(schema.fields);
@@ -74,7 +74,7 @@ namespace JSONDataModel {
   type MissingValues = string[];
 
   export
-  interface IJSONField extends IField {
+  interface IJSONField extends DataModel.IField {
 
     format?: string;
     title?: string;
