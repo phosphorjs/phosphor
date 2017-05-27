@@ -1399,43 +1399,37 @@ class DataGrid extends Widget {
     let rhw = this.rowHeaderWidth;
     let chh = this.columnHeaderHeight;
 
-    // Compute the paint limits and adjust the region for scroll.
-    let xMin: number;
-    let yMin: number;
-    let xMax: number;
-    let yMax: number;
+    // Set up the initial paint limits.
+    let xMin = 0;
+    let yMin = 0;
+    let xMax = this._viewportWidth - 1;
+    let yMax = this._viewportHeight - 1;
+
+    // Adjust the limits and paint region.
     switch (region) {
     case 'body':
       xMin = rhw;
       yMin = chh;
-      xMax = this._viewportWidth - 1;
-      yMax = this._viewportHeight - 1;
       x1 += rhw - this._scrollX;
       x2 += rhw - this._scrollX;
       y1 += chh - this._scrollY;
       y2 += chh - this._scrollY;
       break;
     case 'row-header':
-      xMin = 0;
       yMin = chh;
-      xMax = rhw - 1;
-      yMax = this._viewportHeight - 1;
+      xMax = Math.min(rhw - 1, xMax);
       y1 += chh - this._scrollY;
       y2 += chh - this._scrollY;
       break;
     case 'column-header':
       xMin = rhw;
-      yMin = 0;
-      xMax = this._viewportWidth - 1;
-      yMax = chh - 1;
+      yMax = Math.min(chh - 1, yMax);
       x1 += rhw - this._scrollX;
       x2 += rhw - this._scrollX;
       break;
     case 'corner-header':
-      xMin = 0;
-      yMin = 0;
-      xMax = rhw - 1;
-      yMax = chh - 1;
+      xMax = Math.min(rhw - 1, xMax);
+      yMax = Math.min(chh - 1, yMax);
       break;
     default:
       throw 'unreachable';
