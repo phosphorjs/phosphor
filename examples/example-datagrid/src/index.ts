@@ -8,7 +8,7 @@
 import 'es6-promise/auto';  // polyfill Promise on IE
 
 import {
-  DataGrid, DataModel, TextRenderer
+  DataGrid, DataModel, JSONDataModel, TextRenderer
 } from '@phosphor/datagrid';
 
 import {
@@ -205,6 +205,7 @@ function main(): void {
   let model2 = new StreamingDataModel();
   let model3 = new RandomDataModel(15, 10);
   let model4 = new RandomDataModel(80, 80);
+  let model5 = new JSONDataModel(Data.cars.data, Data.cars.schema);
 
   let blueStripeStyle: DataGrid.IStyle = {
     ...DataGrid.defaultStyle,
@@ -246,10 +247,14 @@ function main(): void {
   grid4.setCellRenderer({ region: 'body' }, bgColorFloatRenderer);
   grid4.model = model4;
 
+  let grid5 = new DataGrid({ style: blueStripeStyle });
+  grid5.model = model5;
+
   let wrapper1 = createWrapper(grid1, 'Trillion Rows/Cols');
   let wrapper2 = createWrapper(grid2, 'Streaming Rows');
   let wrapper3 = createWrapper(grid3, 'Random Ticks 1');
   let wrapper4 = createWrapper(grid4, 'Random Ticks 2');
+  let wrapper5 = createWrapper(grid5, 'JSON Data');
 
   let dock = new DockPanel();
   dock.id = 'dock';
@@ -258,6 +263,7 @@ function main(): void {
   dock.addWidget(wrapper2, { mode: 'split-right', ref: wrapper1 });
   dock.addWidget(wrapper3, { mode: 'split-bottom', ref: wrapper1 });
   dock.addWidget(wrapper4, { mode: 'split-bottom', ref: wrapper2 });
+  dock.addWidget(wrapper5, { mode: 'split-bottom', ref: wrapper2 });
 
   window.onresize = () => { dock.update(); };
 
@@ -549,4 +555,424 @@ namespace ViridisCM {
   function getIndex(value: number): number {
     return Math.round(value * (colorTable.length - 1));
   }
+}
+
+
+export
+namespace Data {
+
+  export
+  const cars = {
+    "data": [
+      {
+        "Horsepower": 130.0,
+        "Origin": "USA",
+        "Miles_per_Gallon": 18.0,
+        "Name": "chevrolet chevelle malibu",
+        "index": 0,
+        "Acceleration": 12.0,
+        "Year": "1970-01-01",
+        "Weight_in_lbs": 3504,
+        "Cylinders": 8,
+        "Displacement": 307.0
+      },
+      {
+        "Horsepower": 165.0,
+        "Origin": "USA",
+        "Miles_per_Gallon": 15.0,
+        "Name": "buick skylark 320",
+        "index": 1,
+        "Acceleration": 11.5,
+        "Year": "1970-01-01",
+        "Weight_in_lbs": 3693,
+        "Cylinders": 8,
+        "Displacement": 350.0
+      },
+      {
+        "Horsepower": 150.0,
+        "Origin": "USA",
+        "Miles_per_Gallon": 18.0,
+        "Name": "plymouth satellite",
+        "index": 2,
+        "Acceleration": 11.0,
+        "Year": "1970-01-01",
+        "Weight_in_lbs": 3436,
+        "Cylinders": 8,
+        "Displacement": 318.0
+      },
+      {
+        "Horsepower": 150.0,
+        "Origin": "USA",
+        "Miles_per_Gallon": 16.0,
+        "Name": "amc rebel sst",
+        "index": 3,
+        "Acceleration": 12.0,
+        "Year": "1970-01-01",
+        "Weight_in_lbs": 3433,
+        "Cylinders": 8,
+        "Displacement": 304.0
+      },
+      {
+        "Horsepower": 140.0,
+        "Origin": "USA",
+        "Miles_per_Gallon": 17.0,
+        "Name": "ford torino",
+        "index": 4,
+        "Acceleration": 10.5,
+        "Year": "1970-01-01",
+        "Weight_in_lbs": 3449,
+        "Cylinders": 8,
+        "Displacement": 302.0
+      },
+      {
+        "Horsepower": 198.0,
+        "Origin": "USA",
+        "Miles_per_Gallon": 15.0,
+        "Name": "ford galaxie 500",
+        "index": 5,
+        "Acceleration": 10.0,
+        "Year": "1970-01-01",
+        "Weight_in_lbs": 4341,
+        "Cylinders": 8,
+        "Displacement": 429.0
+      },
+      {
+        "Horsepower": 220.0,
+        "Origin": "USA",
+        "Miles_per_Gallon": 14.0,
+        "Name": "chevrolet impala",
+        "index": 6,
+        "Acceleration": 9.0,
+        "Year": "1970-01-01",
+        "Weight_in_lbs": 4354,
+        "Cylinders": 8,
+        "Displacement": 454.0
+      },
+      {
+        "Horsepower": 215.0,
+        "Origin": "USA",
+        "Miles_per_Gallon": 14.0,
+        "Name": "plymouth fury iii",
+        "index": 7,
+        "Acceleration": 8.5,
+        "Year": "1970-01-01",
+        "Weight_in_lbs": 4312,
+        "Cylinders": 8,
+        "Displacement": 440.0
+      },
+      {
+        "Horsepower": 225.0,
+        "Origin": "USA",
+        "Miles_per_Gallon": 14.0,
+        "Name": "pontiac catalina",
+        "index": 8,
+        "Acceleration": 10.0,
+        "Year": "1970-01-01",
+        "Weight_in_lbs": 4425,
+        "Cylinders": 8,
+        "Displacement": 455.0
+      },
+      {
+        "Horsepower": 190.0,
+        "Origin": "USA",
+        "Miles_per_Gallon": 15.0,
+        "Name": "amc ambassador dpl",
+        "index": 9,
+        "Acceleration": 8.5,
+        "Year": "1970-01-01",
+        "Weight_in_lbs": 3850,
+        "Cylinders": 8,
+        "Displacement": 390.0
+      },
+      {
+        "Horsepower": 115.0,
+        "Origin": "Europe",
+        "Miles_per_Gallon": null,
+        "Name": "citroen ds-21 pallas",
+        "index": 10,
+        "Acceleration": 17.5,
+        "Year": "1970-01-01",
+        "Weight_in_lbs": 3090,
+        "Cylinders": 4,
+        "Displacement": 133.0
+      },
+      {
+        "Horsepower": 165.0,
+        "Origin": "USA",
+        "Miles_per_Gallon": null,
+        "Name": "chevrolet chevelle concours (sw)",
+        "index": 11,
+        "Acceleration": 11.5,
+        "Year": "1970-01-01",
+        "Weight_in_lbs": 4142,
+        "Cylinders": 8,
+        "Displacement": 350.0
+      },
+      {
+        "Horsepower": 153.0,
+        "Origin": "USA",
+        "Miles_per_Gallon": null,
+        "Name": "ford torino (sw)",
+        "index": 12,
+        "Acceleration": 11.0,
+        "Year": "1970-01-01",
+        "Weight_in_lbs": 4034,
+        "Cylinders": 8,
+        "Displacement": 351.0
+      },
+      {
+        "Horsepower": 175.0,
+        "Origin": "USA",
+        "Miles_per_Gallon": null,
+        "Name": "plymouth satellite (sw)",
+        "index": 13,
+        "Acceleration": 10.5,
+        "Year": "1970-01-01",
+        "Weight_in_lbs": 4166,
+        "Cylinders": 8,
+        "Displacement": 383.0
+      },
+      {
+        "Horsepower": 175.0,
+        "Origin": "USA",
+        "Miles_per_Gallon": null,
+        "Name": "amc rebel sst (sw)",
+        "index": 14,
+        "Acceleration": 11.0,
+        "Year": "1970-01-01",
+        "Weight_in_lbs": 3850,
+        "Cylinders": 8,
+        "Displacement": 360.0
+      },
+      {
+        "Horsepower": 170.0,
+        "Origin": "USA",
+        "Miles_per_Gallon": 15.0,
+        "Name": "dodge challenger se",
+        "index": 15,
+        "Acceleration": 10.0,
+        "Year": "1970-01-01",
+        "Weight_in_lbs": 3563,
+        "Cylinders": 8,
+        "Displacement": 383.0
+      },
+      {
+        "Horsepower": 160.0,
+        "Origin": "USA",
+        "Miles_per_Gallon": 14.0,
+        "Name": "plymouth 'cuda 340",
+        "index": 16,
+        "Acceleration": 8.0,
+        "Year": "1970-01-01",
+        "Weight_in_lbs": 3609,
+        "Cylinders": 8,
+        "Displacement": 340.0
+      },
+      {
+        "Horsepower": 140.0,
+        "Origin": "USA",
+        "Miles_per_Gallon": null,
+        "Name": "ford mustang boss 302",
+        "index": 17,
+        "Acceleration": 8.0,
+        "Year": "1970-01-01",
+        "Weight_in_lbs": 3353,
+        "Cylinders": 8,
+        "Displacement": 302.0
+      },
+      {
+        "Horsepower": 150.0,
+        "Origin": "USA",
+        "Miles_per_Gallon": 15.0,
+        "Name": "chevrolet monte carlo",
+        "index": 18,
+        "Acceleration": 9.5,
+        "Year": "1970-01-01",
+        "Weight_in_lbs": 3761,
+        "Cylinders": 8,
+        "Displacement": 400.0
+      },
+      {
+        "Horsepower": 225.0,
+        "Origin": "USA",
+        "Miles_per_Gallon": 14.0,
+        "Name": "buick estate wagon (sw)",
+        "index": 19,
+        "Acceleration": 10.0,
+        "Year": "1970-01-01",
+        "Weight_in_lbs": 3086,
+        "Cylinders": 8,
+        "Displacement": 455.0
+      },
+      {
+        "Horsepower": 95.0,
+        "Origin": "Japan",
+        "Miles_per_Gallon": 24.0,
+        "Name": "toyota corona mark ii",
+        "index": 20,
+        "Acceleration": 15.0,
+        "Year": "1970-01-01",
+        "Weight_in_lbs": 2372,
+        "Cylinders": 4,
+        "Displacement": 113.0
+      },
+      {
+        "Horsepower": 95.0,
+        "Origin": "USA",
+        "Miles_per_Gallon": 22.0,
+        "Name": "plymouth duster",
+        "index": 21,
+        "Acceleration": 15.5,
+        "Year": "1970-01-01",
+        "Weight_in_lbs": 2833,
+        "Cylinders": 6,
+        "Displacement": 198.0
+      },
+      {
+        "Horsepower": 97.0,
+        "Origin": "USA",
+        "Miles_per_Gallon": 18.0,
+        "Name": "amc hornet",
+        "index": 22,
+        "Acceleration": 15.5,
+        "Year": "1970-01-01",
+        "Weight_in_lbs": 2774,
+        "Cylinders": 6,
+        "Displacement": 199.0
+      },
+      {
+        "Horsepower": 85.0,
+        "Origin": "USA",
+        "Miles_per_Gallon": 21.0,
+        "Name": "ford maverick",
+        "index": 23,
+        "Acceleration": 16.0,
+        "Year": "1970-01-01",
+        "Weight_in_lbs": 2587,
+        "Cylinders": 6,
+        "Displacement": 200.0
+      },
+      {
+        "Horsepower": 88.0,
+        "Origin": "Japan",
+        "Miles_per_Gallon": 27.0,
+        "Name": "datsun pl510",
+        "index": 24,
+        "Acceleration": 14.5,
+        "Year": "1970-01-01",
+        "Weight_in_lbs": 2130,
+        "Cylinders": 4,
+        "Displacement": 97.0
+      },
+      {
+        "Horsepower": 46.0,
+        "Origin": "Europe",
+        "Miles_per_Gallon": 26.0,
+        "Name": "volkswagen 1131 deluxe sedan",
+        "index": 25,
+        "Acceleration": 20.5,
+        "Year": "1970-01-01",
+        "Weight_in_lbs": 1835,
+        "Cylinders": 4,
+        "Displacement": 97.0
+      },
+      {
+        "Horsepower": 87.0,
+        "Origin": "Europe",
+        "Miles_per_Gallon": 25.0,
+        "Name": "peugeot 504",
+        "index": 26,
+        "Acceleration": 17.5,
+        "Year": "1970-01-01",
+        "Weight_in_lbs": 2672,
+        "Cylinders": 4,
+        "Displacement": 110.0
+      },
+      {
+        "Horsepower": 90.0,
+        "Origin": "Europe",
+        "Miles_per_Gallon": 24.0,
+        "Name": "audi 100 ls",
+        "index": 27,
+        "Acceleration": 14.5,
+        "Year": "1970-01-01",
+        "Weight_in_lbs": 2430,
+        "Cylinders": 4,
+        "Displacement": 107.0
+      },
+      {
+        "Horsepower": 95.0,
+        "Origin": "Europe",
+        "Miles_per_Gallon": 25.0,
+        "Name": "saab 99e",
+        "index": 28,
+        "Acceleration": 17.5,
+        "Year": "1970-01-01",
+        "Weight_in_lbs": 2375,
+        "Cylinders": 4,
+        "Displacement": 104.0
+      },
+      {
+        "Horsepower": 113.0,
+        "Origin": "Europe",
+        "Miles_per_Gallon": 26.0,
+        "Name": "bmw 2002",
+        "index": 29,
+        "Acceleration": 12.5,
+        "Year": "1970-01-01",
+        "Weight_in_lbs": 2234,
+        "Cylinders": 4,
+        "Displacement": 121.0
+      }
+    ],
+    "schema": {
+      "primaryKey": [
+        "index"
+      ],
+      "fields": [
+        {
+          "name": "index",
+          "type": "integer"
+        },
+        {
+          "name": "Acceleration",
+          "type": "number"
+        },
+        {
+          "name": "Cylinders",
+          "type": "integer"
+        },
+        {
+          "name": "Displacement",
+          "type": "number"
+        },
+        {
+          "name": "Horsepower",
+          "type": "number"
+        },
+        {
+          "name": "Miles_per_Gallon",
+          "type": "number"
+        },
+        {
+          "name": "Name",
+          "type": "string"
+        },
+        {
+          "name": "Origin",
+          "type": "string"
+        },
+        {
+          "name": "Weight_in_lbs",
+          "type": "integer"
+        },
+        {
+          "name": "Year",
+          "type": "string"
+        }
+      ],
+      "pandas_version": "0.20.0"
+    }
+  }
+
 }
