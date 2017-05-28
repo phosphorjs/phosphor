@@ -97,20 +97,20 @@ class TextRenderer extends CellRenderer {
     }
 
     // Set up the default fill style.
-    if (textColor && typeof textColor === 'string') {
-      gc.fillStyle = textColor;
-    } else if (backgroundColor && typeof backgroundColor === 'string') {
+    if (backgroundColor && typeof backgroundColor === 'string') {
       gc.fillStyle = backgroundColor;
+    } else if (textColor && typeof textColor === 'string') {
+      gc.fillStyle = textColor;
     }
 
-    // Set the default text alignment.
+    // Set up the default text alignment.
     if (typeof horizontalAlignment === 'string') {
       gc.textAlign = horizontalAlignment;
     } else {
       gc.textAlign = 'left';
     }
 
-    // Set the default text baseline.
+    // Set up the default text baseline.
     gc.textBaseline = 'bottom';
   }
 
