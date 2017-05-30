@@ -31,38 +31,38 @@ class TextRenderer extends CellRenderer {
     this.backgroundColor = options.backgroundColor || '';
     this.verticalAlignment = options.verticalAlignment || 'center';
     this.horizontalAlignment = options.horizontalAlignment || 'left';
-    this.formatter = options.formatter || TextRenderer.defaultFormatter;
+    this.format = options.format || TextRenderer.formatGeneric();
   }
 
   /**
    * The CSS shorthand font for drawing the text.
    */
-  font: TextRenderer.StyleProp<string>;
+  readonly font: CellRenderer.ConfigOption<string>;
 
   /**
    * The CSS color for drawing the text.
    */
-  textColor: TextRenderer.StyleProp<string>;
+  readonly textColor: CellRenderer.ConfigOption<string>;
 
   /**
    * The CSS color for the cell background.
    */
-  backgroundColor: TextRenderer.StyleProp<string>;
+  readonly backgroundColor: CellRenderer.ConfigOption<string>;
 
   /**
    * The vertical alignment for the cell text.
    */
-  verticalAlignment: TextRenderer.StyleProp<TextRenderer.VerticalAlignment>;
+  readonly verticalAlignment: CellRenderer.ConfigOption<TextRenderer.VerticalAlignment>;
 
   /**
    * The horizontal alignment for the cell text.
    */
-  horizontalAlignment: TextRenderer.StyleProp<TextRenderer.HorizontalAlignment>;
+  readonly horizontalAlignment: CellRenderer.ConfigOption<TextRenderer.HorizontalAlignment>;
 
   /**
-   * The format function which converts the cell value to text.
+   * The format function for the cell value.
    */
-  formatter: TextRenderer.CellFunc<string>;
+  readonly format: TextRenderer.FormatFunc;
 
   /**
    * Paint the content for a cell.
@@ -123,15 +123,15 @@ class TextRenderer extends CellRenderer {
    */
   drawBackground(gc: GraphicsContext, config: CellRenderer.ICellConfig): void {
     // Resolve the background color for the cell.
-    let backgroundColor = Private.resolve(this.backgroundColor, config);
+    let color = CellRenderer.resolveOption(this.backgroundColor, config);
 
     // Bail if there is no background color to draw.
-    if (!backgroundColor) {
+    if (!color) {
       return;
     }
 
     // Fill the cell with the background color.
-    gc.fillStyle = backgroundColor;
+    gc.fillStyle = color;
     gc.fillRect(config.x, config.y, config.width, config.height);
   }
 
@@ -144,7 +144,7 @@ class TextRenderer extends CellRenderer {
    */
   drawText(gc: GraphicsContext, config: CellRenderer.ICellConfig): void {
     // Resolve the font for the cell.
-    let font = Private.resolve(this.font, config);
+    let font = CellRenderer.resolveOption(this.font, config);
 
     // Bail if there is no font to draw.
     if (!font) {
@@ -152,16 +152,16 @@ class TextRenderer extends CellRenderer {
     }
 
     // Resolve the text color for the cell.
-    let textColor = Private.resolve(this.textColor, config);
+    let color = CellRenderer.resolveOption(this.textColor, config);
 
     // Bail if there is no text color to draw.
-    if (!textColor) {
+    if (!color) {
       return;
     }
 
     // Format the cell value to text.
-    let formatter = this.formatter;
-    let text = formatter(config);
+    let format = this.format;
+    let text = format(config);
 
     // Bail if there is no text to draw.
     if (!text) {
@@ -169,8 +169,8 @@ class TextRenderer extends CellRenderer {
     }
 
     // Resolve the vertical and horizontal alignment.
-    let vAlign = Private.resolve(this.verticalAlignment, config);
-    let hAlign = Private.resolve(this.horizontalAlignment, config);
+    let vAlign = CellRenderer.resolveOption(this.verticalAlignment, config);
+    let hAlign = CellRenderer.resolveOption(this.horizontalAlignment, config);
 
     // Compute the padded text box height for the specified alignment.
     let boxHeight = config.height - (vAlign === 'center' ? 2 : 3);
@@ -226,7 +226,7 @@ class TextRenderer extends CellRenderer {
 
     // Set the gc state.
     gc.font = font;
-    gc.fillStyle = textColor;
+    gc.fillStyle = color;
     gc.textAlign = hAlign;
     gc.textBaseline = 'bottom';
 
@@ -241,23 +241,6 @@ class TextRenderer extends CellRenderer {
  */
 export
 namespace TextRenderer {
-  /**
-   * A type alias for a text renderer cell config function.
-   *
-   * This function type is used to compute a value from a cell config.
-   */
-  export
-  type CellFunc<T> = (config: CellRenderer.ICellConfig) => T;
-
-  /**
-   * A type alias for a text renderer style property.
-   *
-   * The type is used to define a static style property, or a function
-   * which computes the style property for a given cell config.
-   */
-  export
-  type StyleProp<T> = T | CellFunc<T>;
-
   /**
    * A type alias for the supported vertical alignment modes.
    */
@@ -280,65 +263,551 @@ namespace TextRenderer {
      *
      * The default is `'12px sans-serif'`.
      */
-    font?: StyleProp<string>;
+    font?: CellRenderer.ConfigOption<string>;
 
     /**
      * The color for the drawing the cell text.
      *
      * The default `'#000000'`.
      */
-    textColor?: StyleProp<string>;
+    textColor?: CellRenderer.ConfigOption<string>;
 
     /**
      * The background color for the cells.
      *
      * The default is `''`.
      */
-    backgroundColor?: StyleProp<string>;
+    backgroundColor?: CellRenderer.ConfigOption<string>;
 
     /**
      * The vertical alignment for the cell text.
      *
      * The default is `'center'`.
      */
-    verticalAlignment?: StyleProp<VerticalAlignment>;
+    verticalAlignment?: CellRenderer.ConfigOption<VerticalAlignment>;
 
     /**
      * The horizontal alignment for the cell text.
      *
      * The default is `'left'`.
      */
-    horizontalAlignment?: StyleProp<HorizontalAlignment>;
+    horizontalAlignment?: CellRenderer.ConfigOption<HorizontalAlignment>;
 
     /**
-     * The format function to convert a cell value to a string.
+     * The format function for the renderer.
      *
-     * The default is `TextRenderer.defaultFormatter`.
+     * The default is `TextRenderer.formatGeneric()`.
      */
-    formatter?: CellFunc<string>;
+    format?: FormatFunc;
   }
 
   /**
-   * The default formatter for a text renderer.
-   *
-   * #### Notes
-   * This will convert any cell value to a string.
+   * A type alias for a format function.
    */
   export
-  const defaultFormatter: CellFunc<string> = ({ value }) => {
-    // Do nothing for a value which is already a string.
-    if (typeof value === 'string') {
-      return value;
-    }
+  type FormatFunc = CellRenderer.ConfigFunc<string>;
 
-    // Convert `null` and `undefined` to an empty string.
-    if (value === null || value === undefined) {
-      return '';
-    }
+  /**
+   * Create a generic text format function.
+   *
+   * @param options - The options for creating the format function.
+   *
+   * @returns A new generic text format function.
+   *
+   * #### Notes
+   * This formatter uses the builtin `String()` to coerce any value
+   * to a string.
+   */
+  export
+  function formatGeneric(options: formatGeneric.IOptions = {}): FormatFunc {
+    let missing = options.missing || '';
+    return ({ value }) => {
+      if (value === null || value === undefined) {
+        return missing;
+      }
+      return String(value);
+    };
+  }
 
-    // Coerce all other values to a string via `toString()`.
-    return value.toString();
-  };
+  /**
+   * The namespace for the `formatGeneric` function statics.
+   */
+  export
+  namespace formatGeneric {
+    /**
+     * The options for creating a generic format function.
+     */
+    export
+    interface IOptions {
+      /**
+       * The text to use for a `null` or `undefined` data value.
+       *
+       * The default is `''`.
+       */
+      missing?: string;
+    }
+  }
+
+  /**
+   * Create a fixed decimal format function.
+   *
+   * @param options - The options for creating the format function.
+   *
+   * @returns A new fixed decimal format function.
+   *
+   * #### Notes
+   * This formatter uses the builtin `Number()` and `toFixed()` to
+   * coerce values.
+   *
+   * The `formatIntlNumber()` formatter is more flexible, but slower.
+   */
+  export
+  function formatFixed(options: formatFixed.IOptions = {}): FormatFunc {
+    let digits = options.digits;
+    let missing = options.missing || '';
+    return ({ value }) => {
+      if (value === null || value === undefined) {
+        return missing;
+      }
+      return Number(value).toFixed(digits);
+    };
+  }
+
+  /**
+   * The namespace for the `formatFixed` function statics.
+   */
+  export
+  namespace formatFixed {
+    /**
+     * The options for creating a fixed format function.
+     */
+    export
+    interface IOptions {
+      /**
+       * The number of digits to include after the decimal point.
+       *
+       * The default is determined by the user agent.
+       */
+      digits?: number;
+
+      /**
+       * The text to use for a `null` or `undefined` data value.
+       *
+       * The default is `''`.
+       */
+      missing?: string;
+    }
+  }
+
+  /**
+   * Create a significant figure format function.
+   *
+   * @param options - The options for creating the format function.
+   *
+   * @returns A new significant figure format function.
+   *
+   * #### Notes
+   * This formatter uses the builtin `Number()` and `toPrecision()`
+   * to coerce values.
+   *
+   * The `formatIntlNumber()` formatter is more flexible, but slower.
+   */
+  export
+  function formatPrecision(options: formatPrecision.IOptions = {}): FormatFunc {
+    let digits = options.digits;
+    let missing = options.missing || '';
+    return ({ value }) => {
+      if (value === null || value === undefined) {
+        return missing;
+      }
+      return Number(value).toPrecision(digits);
+    };
+  }
+
+  /**
+   * The namespace for the `formatPrecision` function statics.
+   */
+  export
+  namespace formatPrecision {
+    /**
+     * The options for creating a precision format function.
+     */
+    export
+    interface IOptions {
+      /**
+       * The number of significant figures to include in the value.
+       *
+       * The default is determined by the user agent.
+       */
+      digits?: number;
+
+      /**
+       * The text to use for a `null` or `undefined` data value.
+       *
+       * The default is `''`.
+       */
+      missing?: string;
+    }
+  }
+
+  /**
+   * Create a scientific notation format function.
+   *
+   * @param options - The options for creating the format function.
+   *
+   * @returns A new scientific notation format function.
+   *
+   * #### Notes
+   * This formatter uses the builtin `Number()` and `toExponential()`
+   * to coerce values.
+   *
+   * The `formatIntlNumber()` formatter is more flexible, but slower.
+   */
+  export
+  function formatExponential(options: formatExponential.IOptions = {}): FormatFunc {
+    let digits = options.digits;
+    let missing = options.missing || '';
+    return ({ value }) => {
+      if (value === null || value === undefined) {
+        return missing;
+      }
+      return Number(value).toExponential(digits);
+    };
+  }
+
+  /**
+   * The namespace for the `formatExponential` function statics.
+   */
+  export
+  namespace formatExponential {
+    /**
+     * The options for creating an exponential format function.
+     */
+    export
+    interface IOptions {
+      /**
+       * The number of digits to include after the decimal point.
+       *
+       * The default is determined by the user agent.
+       */
+      digits?: number;
+
+      /**
+       * The text to use for a `null` or `undefined` data value.
+       *
+       * The default is `''`.
+       */
+      missing?: string;
+    }
+  }
+
+  /**
+   * Create an international number format function.
+   *
+   * @param options - The options for creating the format function.
+   *
+   * @returns A new international number format function.
+   *
+   * #### Notes
+   * This formatter uses the builtin `Intl.NumberFormat` object to
+   * coerce values.
+   *
+   * This is the most flexible (but slowest) number formatter.
+   */
+  export
+  function formatIntlNumber(options: formatIntlNumber.IOptions = {}): FormatFunc {
+    let missing = options.missing || '';
+    let nft = new Intl.NumberFormat(options.locales, options.options);
+    return ({ value }) => {
+      if (value === null || value === undefined) {
+        return missing;
+      }
+      return nft.format(value);
+    };
+  }
+
+  /**
+   * The namespace for the `formatIntlNumber` function statics.
+   */
+  export
+  namespace formatIntlNumber {
+    /**
+     * The options for creating an intl number format function.
+     */
+    export
+    interface IOptions {
+      /**
+       * The locales to pass to the `Intl.NumberFormat` constructor.
+       *
+       * The default is determined by the user agent.
+       */
+      locales?: string | string[];
+
+      /**
+       * The options to pass to the `Intl.NumberFormat` constructor.
+       *
+       * The default is determined by the user agent.
+       */
+      options?: Intl.NumberFormatOptions;
+
+      /**
+       * The text to use for a `null` or `undefined` data value.
+       *
+       * The default is `''`.
+       */
+      missing?: string;
+    }
+  }
+
+  /**
+   * Create a date format function.
+   *
+   * @param options - The options for creating the format function.
+   *
+   * @returns A new date format function.
+   *
+   * #### Notes
+   * This formatter uses `Date.toDateString()` to format the values.
+   *
+   * If a value is not a `Date` object, `new Date(value)` is used to
+   * coerce the value to a date.
+   *
+   * The `formatIntlDateTime()` formatter is more flexible, but slower.
+   */
+  export
+  function formatDate(options: formatDate.IOptions = {}): FormatFunc {
+    let missing = options.missing || '';
+    return ({ value }) => {
+      if (value === null || value === undefined) {
+        return missing;
+      }
+      if (value instanceof Date) {
+        return value.toDateString();
+      }
+      return (new Date(value)).toDateString();
+    };
+  }
+
+  /**
+   * The namespace for the `formatDate` function statics.
+   */
+  export
+  namespace formatDate {
+    /**
+     * The options for creating a date format function.
+     */
+    export
+    interface IOptions {
+      /**
+       * The text to use for a `null` or `undefined` data value.
+       *
+       * The default is `''`.
+       */
+      missing?: string;
+    }
+  }
+
+  /**
+   * Create a time format function.
+   *
+   * @param options - The options for creating the format function.
+   *
+   * @returns A new time format function.
+   *
+   * #### Notes
+   * This formatter uses `Date.toTimeString()` to format the values.
+   *
+   * If a value is not a `Date` object, `new Date(value)` is used to
+   * coerce the value to a date.
+   *
+   * The `formatIntlDateTime()` formatter is more flexible, but slower.
+   */
+  export
+  function formatTime(options: formatTime.IOptions = {}): FormatFunc {
+    let missing = options.missing || '';
+    return ({ value }) => {
+      if (value === null || value === undefined) {
+        return missing;
+      }
+      if (value instanceof Date) {
+        return value.toTimeString();
+      }
+      return (new Date(value)).toTimeString();
+    };
+  }
+
+  /**
+   * The namespace for the `formatTime` function statics.
+   */
+  export
+  namespace formatTime {
+    /**
+     * The options for creating a time format function.
+     */
+    export
+    interface IOptions {
+      /**
+       * The text to use for a `null` or `undefined` data value.
+       *
+       * The default is `''`.
+       */
+      missing?: string;
+    }
+  }
+
+  /**
+   * Create an ISO datetime format function.
+   *
+   * @param options - The options for creating the format function.
+   *
+   * @returns A new ISO datetime format function.
+   *
+   * #### Notes
+   * This formatter uses `Date.toISOString()` to format the values.
+   *
+   * If a value is not a `Date` object, `new Date(value)` is used to
+   * coerce the value to a date.
+   *
+   * The `formatIntlDateTime()` formatter is more flexible, but slower.
+   */
+  export
+  function formatISODateTime(options: formatISODateTime.IOptions = {}): FormatFunc {
+    let missing = options.missing || '';
+    return ({ value }) => {
+      if (value === null || value === undefined) {
+        return missing;
+      }
+      if (value instanceof Date) {
+        return value.toISOString();
+      }
+      return (new Date(value)).toISOString();
+    };
+  }
+
+  /**
+   * The namespace for the `formatISODateTime` function statics.
+   */
+  export
+  namespace formatISODateTime {
+    /**
+     * The options for creating an ISO datetime format function.
+     */
+    export
+    interface IOptions {
+      /**
+       * The text to use for a `null` or `undefined` data value.
+       *
+       * The default is `''`.
+       */
+      missing?: string;
+    }
+  }
+
+  /**
+   * Create a UTC datetime format function.
+   *
+   * @param options - The options for creating the format function.
+   *
+   * @returns A new UTC datetime format function.
+   *
+   * #### Notes
+   * This formatter uses `Date.toUTCString()` to format the values.
+   *
+   * If a value is not a `Date` object, `new Date(value)` is used to
+   * coerce the value to a date.
+   *
+   * The `formatIntlDateTime()` formatter is more flexible, but slower.
+   */
+  export
+  function formatUTCDateTime(options: formatUTCDateTime.IOptions = {}): FormatFunc {
+    let missing = options.missing || '';
+    return ({ value }) => {
+      if (value === null || value === undefined) {
+        return missing;
+      }
+      if (value instanceof Date) {
+        return value.toUTCString();
+      }
+      return (new Date(value)).toUTCString();
+    };
+  }
+
+  /**
+   * The namespace for the `formatUTCDateTime` function statics.
+   */
+  export
+  namespace formatUTCDateTime {
+    /**
+     * The options for creating a UTC datetime format function.
+     */
+    export
+    interface IOptions {
+      /**
+       * The text to use for a `null` or `undefined` data value.
+       *
+       * The default is `''`.
+       */
+      missing?: string;
+    }
+  }
+
+  /**
+   * Create an international datetime format function.
+   *
+   * @param options - The options for creating the format function.
+   *
+   * @returns A new international datetime format function.
+   *
+   * #### Notes
+   * This formatter uses the builtin `Intl.DateTimeFormat` object to
+   * coerce values.
+   *
+   * This is the most flexible (but slowest) datetime formatter.
+   */
+  export
+  function formatIntlDateTime(options: formatIntlDateTime.IOptions = {}): FormatFunc {
+    let missing = options.missing || '';
+    let dtf = new Intl.DateTimeFormat(options.locales, options.options);
+    return ({ value }) => {
+      if (value === null || value === undefined) {
+        return missing;
+      }
+      return dtf.format(value);
+    };
+  }
+
+  /**
+   * The namespace for the `formatIntlDateTime` function statics.
+   */
+  export
+  namespace formatIntlDateTime {
+    /**
+     * The options for creating an intl datetime format function.
+     */
+    export
+    interface IOptions {
+      /**
+       * The locales to pass to the `Intl.DateTimeFormat` constructor.
+       *
+       * The default is determined by the user agent.
+       */
+      locales?: string | string[];
+
+      /**
+       * The options to pass to the `Intl.DateTimeFormat` constructor.
+       *
+       * The default is determined by the user agent.
+       */
+      options?: Intl.DateTimeFormatOptions;
+
+      /**
+       * The text to use for a `null` or `undefined` data value.
+       *
+       * The default is `''`.
+       */
+      missing?: string;
+    }
+  }
 
   /**
    * Measure the height of a font.
@@ -423,12 +892,4 @@ namespace Private {
     canvas.height = 0;
     return canvas.getContext('2d')!;
   })();
-
-  /**
-   * Resolve a style property for a text renderer.
-   */
-  export
-  function resolve<T>(thing: TextRenderer.StyleProp<T>, config: CellRenderer.ICellConfig): T {
-    return typeof thing === 'function' ? thing(config) : thing;
-  }
 }

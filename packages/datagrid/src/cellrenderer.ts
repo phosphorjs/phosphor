@@ -153,4 +153,34 @@ namespace CellRenderer {
      */
     readonly value: any;
   }
+
+  /**
+   * A type alias for a cell renderer config function.
+   *
+   * This type is used to compute a value from a cell config object.
+   */
+  export
+  type ConfigFunc<T> = (config: ICellConfig) => T;
+
+  /**
+   * A type alias for a cell renderer config option.
+   *
+   * A config option can be a static value or a config function.
+   */
+  export
+  type ConfigOption<T> = T | ConfigFunc<T>;
+
+  /**
+   * Resolve a config option for a cell renderer.
+   *
+   * @param option - The config option to resolve.
+   *
+   * @param config - The cell config object.
+   *
+   * @returns The resolved value for the option.
+   */
+  export
+  function resolveOption<T>(option: ConfigOption<T>, config: ICellConfig): T {
+    return typeof option === 'function' ? option(config) : option;
+  }
 }
