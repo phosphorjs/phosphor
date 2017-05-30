@@ -8,7 +8,7 @@
 import 'es6-promise/auto';  // polyfill Promise on IE
 
 import {
-  DataGrid, DataModel, JSONDataModel, TextRenderer
+  CellRenderer, DataGrid, DataModel, JSONDataModel, TextRenderer
 } from '@phosphor/datagrid';
 
 import {
@@ -158,34 +158,29 @@ class RandomDataModel extends DataModel {
 }
 
 
-const formatDecimal: TextRenderer.CellFunc<string> = config => {
-  return config.value.toFixed(2);
-};
-
-
-const redGreenBlack: TextRenderer.CellFunc<string> = config => {
-  if (config.value <= 1 / 3) {
+const redGreenBlack: CellRenderer.ConfigFunc<string> = ({ value }) => {
+  if (value <= 1 / 3) {
     return '#000000';
   }
-  if (config.value <= 2 / 3) {
+  if (value <= 2 / 3) {
     return '#FF0000';
   }
   return '#009B00';
 };
 
 
-const heatMapViridis: TextRenderer.CellFunc<string> = config => {
-  let r = Math.floor(ViridisCM.red(config.value) * 255);
-  let g = Math.floor(ViridisCM.green(config.value) * 255);
-  let b = Math.floor(ViridisCM.blue(config.value) * 255);
+const heatMapViridis: CellRenderer.ConfigFunc<string> = ({ value }) => {
+  let r = Math.floor(ViridisCM.red(value) * 255);
+  let g = Math.floor(ViridisCM.green(value) * 255);
+  let b = Math.floor(ViridisCM.blue(value) * 255);
   return `rgb(${r}, ${g}, ${b})`;
 };
 
 
-const heatMapViridisInverse: TextRenderer.CellFunc<string> = config => {
-  let r = Math.floor(255 - ViridisCM.red(config.value) * 255);
-  let g = Math.floor(255 - ViridisCM.green(config.value) * 255);
-  let b = Math.floor(255 - ViridisCM.blue(config.value) * 255);
+const heatMapViridisInverse: CellRenderer.ConfigFunc<string> = ({ value }) => {
+  let r = Math.floor(255 - ViridisCM.red(value) * 255);
+  let g = Math.floor(255 - ViridisCM.green(value) * 255);
+  let b = Math.floor(255 - ViridisCM.blue(value) * 255);
   return `rgb(${r}, ${g}, ${b})`;
 };
 
@@ -222,14 +217,14 @@ function main(): void {
   let fgColorFloatRenderer = new TextRenderer({
     font: 'bold 12px sans-serif',
     textColor: redGreenBlack,
-    formatter: formatDecimal,
+    format: TextRenderer.formatFixed({ digits: 2 }),
     horizontalAlignment: 'right'
   });
 
   let bgColorFloatRenderer = new TextRenderer({
     textColor: heatMapViridisInverse,
     backgroundColor: heatMapViridis,
-    formatter: formatDecimal,
+    format: TextRenderer.formatFixed({ digits: 2 }),
     horizontalAlignment: 'right'
   });
 
