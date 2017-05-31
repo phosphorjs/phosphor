@@ -627,9 +627,9 @@ class DataGrid extends Widget {
    * If the key does not match a renderer added via `setCellRenderer`,
    * the `defaultCellRenderer` will be returned.
    */
-  getCellRenderer(key: DataGrid.IRendererKey): CellRenderer {
-    let name = key.fieldName || '';
-    let type = key.fieldType || '';
+  getCellRenderer(key: DataGrid.ICellRendererKey): CellRenderer {
+    let name = key.name || '';
+    let type = key.type || '';
     return this._cellRendererMap.get(key.region, name, type);
   }
 
@@ -643,15 +643,10 @@ class DataGrid extends Widget {
    * #### Notes
    * This will replace an old renderer assigned to the same key.
    */
-  setCellRenderer(key: DataGrid.IRendererKey, renderer: CellRenderer): void {
-    // Coerce the field name and type.
-    let name = key.fieldName || '';
-    let type = key.fieldType || '';
-
-    // Set the renderer in the map.
+  setCellRenderer(key: DataGrid.ICellRendererKey, renderer: CellRenderer): void {
+    let name = key.name || '';
+    let type = key.type || '';
     this._cellRendererMap.set(key.region, name, type, renderer);
-
-    // Schedule a full repaint of the grid.
     this.repaint();
   }
 
@@ -662,10 +657,7 @@ class DataGrid extends Widget {
    * This will not change the `defaultCellRenderer`.
    */
   clearCellRenderers(): void {
-    // Clear the custom cell renderers.
     this._cellRendererMap.clear();
-
-    // Schedule a full repaint of the grid.
     this.repaint();
   }
 
@@ -2645,31 +2637,29 @@ namespace DataGrid {
    * An object used as a key for getting/setting cell renderers.
    */
   export
-  interface IRendererKey {
+  interface ICellRendererKey {
     /**
      * The cell region for which the renderer is applicable.
      */
     region: DataModel.CellRegion;
 
     /**
-     * The field name for which the cell renderer is applicable.
+     * The column name for which the cell renderer is applicable.
      *
-     * This is matched against the `IField.name` of the data model.
+     * This is matched against the `IMetadata.name` of the data model.
      *
-     * If this is `undefined` or `''`, the cell renderer will apply
-     * to all field names.
+     * A value of `undefined` or `''` will match all column names.
      */
-    fieldName?: string;
+    name?: string;
 
     /**
-     * The field type for which the cell renderer is applicable.
+     * The column type for which the cell renderer is applicable.
      *
-     * This is matched against the `IField.type` of the data model.
+     * This is matched against the `IMetadata.type` of the data model.
      *
-     * If this is `undefined` or `''`, the cell renderer will apply
-     * to all field types.
+     * A value of `undefined` or `''` will match all column types.
      */
-    fieldType?: string;
+    type?: string;
   }
 }
 
@@ -2814,9 +2804,9 @@ namespace Private {
      *
      * @param region - The cell region of interest.
      *
-     * @param name - The field name of the column, or `''`.
+     * @param name - The name of the column, or `''`.
      *
-     * @param type - The field type of the column, or `''`.
+     * @param type - The type of the column, or `''`.
      *
      * @returns The cell renderer for the column, or the fallback.
      *
@@ -2838,9 +2828,9 @@ namespace Private {
      *
      * @param region - The cell region of interest.
      *
-     * @param name - The field name of the column, or `''`.
+     * @param name - The name of the column, or `''`.
      *
-     * @param type - The field type of the column, or `''`.
+     * @param type - The type of the column, or `''`.
      *
      * @param renderer - The cell renderer to use for the column.
      *
