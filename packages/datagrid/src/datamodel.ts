@@ -67,27 +67,27 @@ abstract class DataModel {
   abstract data(region: DataModel.CellRegion, row: number, column: number): any;
 
   /**
-   * Get the field descriptor for a column in the data model.
+   * Get the metadata for a column in the data model.
    *
    * @param region - The cell region of interest.
    *
    * @param column - The index of the column of interest.
    *
-   * @returns The field descriptor for the column.
+   * @returns The metadata for the column.
    *
    * #### Notes
-   * Subclasses which support columnar data may reimplement this method
-   * to return a field descriptor for a column.
+   * Models which support columnar data may reimplement this method to
+   * return the metadata for a column.
    *
-   * The field descriptor can be used by custom cell renderers and cell
-   * editors to customize handling of specific cell data types.
+   * The metadata can be used by custom cell renderers and cell editors
+   * to customize handling of specific cell data types.
    *
    * This method is called often, and so should be efficient.
    *
-   * The default implementation returns `{ name: '', type: '' }`.
+   * The default implementation returns `{}`.
    */
-  field(region: DataModel.CellRegion, column: number): DataModel.IField {
-    return { name: '', type: '' };
+  metadata(region: DataModel.CellRegion, column: number): DataModel.IMetadata {
+    return {};
   }
 
   /**
@@ -129,10 +129,16 @@ namespace DataModel {
   type CellRegion = 'body' | 'row-header' | 'column-header' | 'corner-header';
 
   /**
-   * A field descriptor for a column in a data model.
+   * The metadata for a column in a data model.
+   *
+   * #### Notes
+   * Data model implementations may provide metadata objects which have
+   * extra properties. The full metadata objects are passed through to
+   * the cell renderers, and the extra properties may be accessed by
+   * casting the metadata object to a known derived type.
    */
   export
-  interface IField {
+  interface IMetadata {
     /**
      * The name of the column.
      *
@@ -140,16 +146,16 @@ namespace DataModel {
      * This can be any string, but should typically be unique for a
      * given instance of a data model.
      */
-    readonly name: string;
+    readonly name?: string;
 
     /**
      * The data type of the values in the column.
      *
      * #### Notes
      * This can be any string, but should typically be descriptive of
-     * the data type such as `'number'`, `'integer'`, `'array'`, etc.
+     * the type of data in the column.
      */
-    readonly type: string;
+    readonly type?: string;
   }
 
   /**

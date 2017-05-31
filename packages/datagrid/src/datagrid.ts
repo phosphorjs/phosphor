@@ -2117,14 +2117,14 @@ class DataGrid extends Widget {
       return;
     }
 
-    // Set up a default empty field object.
-    let emptyField: DataModel.IField = { name: '', type: '' };
+    // Set up an empty metadata object.
+    let emptyMetadata: DataModel.IMetadata = {};
 
     // Set up the cell config object for rendering.
     let config = {
       x: 0, y: 0, width: 0, height: 0,
       region: rgn.region, row: 0, column: 0,
-      value: (null as any), field: emptyField
+      metadata: emptyMetadata, value: (null as any)
     };
 
     // Save the buffer gc before wrapping.
@@ -2150,12 +2150,12 @@ class DataGrid extends Widget {
       // Compute the column index.
       let column = rgn.column + i;
 
-      // Get the field descriptor for the column.
-      let field: DataModel.IField;
+      // Get the metadata for the column.
+      let metadata: DataModel.IMetadata;
       try {
-        field = this._model.field(rgn.region, column);
+        metadata = this._model.metadata(rgn.region, column);
       } catch (err) {
-        field = emptyField;
+        metadata = emptyMetadata;
         console.error(err);
       }
 
@@ -2163,7 +2163,7 @@ class DataGrid extends Widget {
       config.x = x - 1;
       config.width = width + 1;
       config.column = column;
-      config.field = field;
+      config.metadata = metadata;
 
       // Clear the buffer rect for the column.
       gc.clearRect(x, rgn.y, width, rgn.height);
@@ -2173,7 +2173,7 @@ class DataGrid extends Widget {
 
       // Look up the renderer for the column.
       let renderer = this._cellRendererMap.get(
-        rgn.region, field.name, field.type
+        rgn.region, metadata.name || '', metadata.type || ''
       );
 
       // Prepare the cell renderer for drawing the column.
