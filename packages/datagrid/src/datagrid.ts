@@ -2825,10 +2825,10 @@ namespace Private {
      */
     get(region: DataModel.CellRegion, name: string, type: string): CellRenderer {
       return (
-        (name && type && this._map[`${region}|${name}|${type}`]) ||
-        (name && this._map[`${region}|${name}|`]) ||
-        (type && this._map[`${region}||${type}`]) ||
-        (this._map[`${region}||`]) ||
+        (name && type && this._map[`${region}\0${name}\0${type}`]) ||
+        (name && this._map[`${region}\0${name}\0`]) ||
+        (type && this._map[`${region}\0\0${type}`]) ||
+        (this._map[`${region}\0\0`]) ||
         this.fallback
       );
     }
@@ -2848,7 +2848,7 @@ namespace Private {
      * An empty string for `name` or `type` acts as a wild card.
      */
     set(region: DataModel.CellRegion, name: string, type: string, renderer: CellRenderer): void {
-      this._map[`${region}|${name}|${type}`] = renderer;
+      this._map[`${region}\0${name}\0${type}`] = renderer;
     }
 
     /**
