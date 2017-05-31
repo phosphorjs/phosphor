@@ -98,9 +98,9 @@ namespace CellRenderer {
     readonly column: number;
 
     /**
-     * The field descriptor for the column.
+     * The metadata for the column.
      */
-    readonly field: DataModel.IField;
+    readonly metadata: DataModel.IMetadata;
   }
 
   /**
@@ -144,9 +144,9 @@ namespace CellRenderer {
     readonly column: number;
 
     /**
-     * The field descriptor for the column.
+     * The metadata for the column.
      */
-    readonly field: DataModel.IField;
+    readonly metadata: DataModel.IMetadata;
 
     /**
      * The data value for the cell.
