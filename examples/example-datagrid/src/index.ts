@@ -8,7 +8,7 @@
 import 'es6-promise/auto';  // polyfill Promise on IE
 
 import {
-  CellRenderer, DataGrid, DataModel, JSONDataModel, TextRenderer
+  CellRenderer, DataGrid, DataModel, JSONModel, TextRenderer
 } from '@phosphor/datagrid';
 
 import {
@@ -200,7 +200,7 @@ function main(): void {
   let model2 = new StreamingDataModel();
   let model3 = new RandomDataModel(15, 10);
   let model4 = new RandomDataModel(80, 80);
-  let model5 = new JSONDataModel(Data.cars.data, Data.cars.schema);
+  let model5 = new JSONModel(Data.cars);
 
   let blueStripeStyle: DataGrid.IStyle = {
     ...DataGrid.defaultStyle,
@@ -235,11 +235,11 @@ function main(): void {
   grid2.model = model2;
 
   let grid3 = new DataGrid();
-  grid3.setCellRenderer({ region: 'body' }, fgColorFloatRenderer);
+  grid3.cellRenderers.set('body', {}, fgColorFloatRenderer);
   grid3.model = model3;
 
   let grid4 = new DataGrid();
-  grid4.setCellRenderer({ region: 'body' }, bgColorFloatRenderer);
+  grid4.cellRenderers.set('body', {}, bgColorFloatRenderer);
   grid4.model = model4;
 
   let grid5 = new DataGrid({ style: blueStripeStyle });
