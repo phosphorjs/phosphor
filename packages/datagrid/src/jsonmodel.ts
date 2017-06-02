@@ -1,4 +1,3 @@
-
 /*-----------------------------------------------------------------------------
 | Copyright (c) 2014-2017, PhosphorJS Contributors
 |
@@ -7,39 +6,31 @@
 | The full license is in the file LICENSE, distributed with this software.
 |----------------------------------------------------------------------------*/
 import {
-  JSONObject, JSONArray, JSONExt
+  JSONObject
 } from '@phosphor/coreutils';
 
 import {
   DataModel
 } from './datamodel';
 
-/**
- * The number of column headers, which as assume is 1 for now.
- */
-const COLUMN_HEADERS = 1;
 
 /**
- * A DataModel for static JSON data with an associated JSON Table Schema.
- * 
- * #### Notes
- * This assumes the data is passed in a single time and is never changed.
+ * A data model implementation for in-memory JSON data.
  */
 export
-class JSONDataModel extends DataModel {
+class JSONModel extends DataModel {
   /**
    * Create a data model with static JSON data.
-   * 
-   * @param data - An array of JSON records with the actual data.
-   * @param schema - The JSON table schema.
+   *
+   * @param options - The options for initializing the data model.
    */
-  constructor(data: JSONArray, schema: JSONObject) {
+  constructor(options: JSONModel.IOptions) {
     super();
-    this._data = JSONExt.deepCopy(data);
-    this._fields = Private.parseFields(schema.fields as JSONArray);
-    this._primaryKey = Private.parsePrimaryKey(schema.primaryKey as string | string[] | undefined);
-    this._missingValues = schema.missingValues as string[] || [];
-    this._keyCount = this._primaryKey.length;
+    let split = Private.splitFields(options.schema);
+    this._data = options.data;
+    this._bodyFields = split.bodyFields;
+    this._headerFields = split.headerFields;
+    this._missingValues = Private.createMissingMap(options.schema);
   }
 
   /**
@@ -52,11 +43,8 @@ class JSONDataModel extends DataModel {
   rowCount(region: DataModel.RowRegion): number {
     if (region === 'body') {
       return this._data.length;
-    } else if (region === 'column-header') {
-      // For now assume a a fixed number of column headers.
-      return COLUMN_HEADERS;
     }
-    return 0;
+    return 1;  // TODO multiple column-header rows?
   }
 
   /**
@@ -68,11 +56,25 @@ class JSONDataModel extends DataModel {
    */
   columnCount(region: DataModel.ColumnRegion): number {
     if (region === 'body') {
-      return this._fields.length - this._primaryKey.length;
-    } else if (region === 'row-header') {
-      return this._primaryKey.length;
+      return this._bodyFields.length;
     }
-    return 0;
+    return this._headerFields.length;
+  }
+
+  /**
+   * Get the metadata for a column in the data model.
+   *
+   * @param region - The cell region of interest.
+   *
+   * @param column - The index of the column of interest.
+   *
+   * @returns The metadata for the column.
+   */
+  metadata(region: DataModel.CellRegion, column: number): DataModel.Metadata {
+    if (region === 'body' || region === 'column-header') {
+      return this._bodyFields[column];
+    }
+    return this._headerFields[column];
   }
 
   /**
@@ -85,102 +87,242 @@ class JSONDataModel extends DataModel {
    * @param column - The column index of the cell of interest.
    *
    * @param returns - The data value for the specified cell.
+   *
+   * #### Notes
+   * A `missingValue` as defined by the schema is converted to `null`.
    */
   data(region: DataModel.CellRegion, row: number, column: number): any {
-    let rowData: JSONObject;
-    let columnName: string;
-    let keyCount = this._keyCount;
-    if (region === 'row-header') {
-      rowData = this._data[row] as JSONObject;
-      columnName = this._fields[column].name;
-      return rowData[columnName];
+    // Set up the field and value variables.
+    let field: JSONModel.IField;
+    let value: any;
+
+    // Look up the field and value for the region.
+    switch (region) {
+    case 'body':
+      field = this._bodyFields[column];
+      value = this._data[row][field.name];
+      break;
+    case 'column-header':
+      field = this._bodyFields[column];
+      value = field.title || field.name;
+      break;
+    case 'row-header':
+      field = this._headerFields[column];
+      value = this._data[row][field.name];
+      break;
+    case 'corner-header':
+      field = this._headerFields[column];
+      value = field.title || field.name;
+      break;
+    default:
+      throw 'unreachable';
     }
-    if (region === 'column-header') {
-      return this._fields[column + keyCount].name;
-    }
-    if (region === 'corner-header') {
-      return '';
-    }
-    rowData = this._data[row] as JSONObject;
-    columnName = this._fields[column + keyCount].name;
-    return rowData[columnName];
+
+    // Test whether the value is a missing value.
+    let missing = (
+      this._missingValues !== null &&
+      typeof value === 'string' &&
+      this._missingValues[value] === true
+    );
+
+    // Return the final value.
+    return missing ? null : value;
   }
 
-  private _data: JSONArray;
-  private _fields: JSONDataModel.JSONField[];
-  private _primaryKey: JSONDataModel.PrimaryKey;
-  private _missingValues: JSONDataModel.MissingValues;
-  private _keyCount: number;
+  private _data: JSONModel.DataSource;
+  private _bodyFields: JSONModel.IField[];
+  private _headerFields: JSONModel.IField[];
+  private _missingValues: Private.MissingValuesMap | null;
 }
 
 
+/**
+ * The namespace for the `JSONModel` class statics.
+ */
 export
-namespace JSONDataModel {
-
+namespace JSONModel {
+  /**
+   * An object which describes a column of data in the model.
+   *
+   * #### Notes
+   * This is based on the JSON Table Schema specification:
+   * https://specs.frictionlessdata.io/table-schema/
+   */
   export
-  type PrimaryKey = string[];
-
-  export
-  type MissingValues = string[];
-
-  export
-  interface IJSONField extends DataModel.IField {
-
-    format?: string;
-    title?: string;
-    description?: string;
-    constraints?: JSONObject | null;
-  }
-
-  export
-  class JSONField implements IJSONField {
-
-    constructor(value: JSONObject) {
-      this.name = value.name as string | undefined || '';
-      this.type = value.type as string | undefined || 'string';
-      this.format = value.format as string | undefined || '';
-      this.title = value.title as string | undefined || '';
-      this.description = value.description as string | undefined || '';
-      this.constraints = value.constraints as JSONObject | undefined || null;
-    }
-
+  interface IField {
+    /**
+     * The name of the column.
+     *
+     * This is used as the key to extract a value from a data record.
+     * It is also used as the column header label, unless the `title`
+     * property is provided.
+     */
     readonly name: string;
 
-    readonly type: string;
+    /**
+     * The type of data held in the column.
+     */
+    readonly type?: string;
 
+    /**
+     * The format of the data in the column.
+     */
     readonly format?: string;
 
+    /**
+     * The human readable name for the column.
+     *
+     * This is used as the label for the column header.
+     */
     readonly title?: string;
 
-    readonly description?: string;
-
-    readonly constraints?: JSONObject | null;
+    // TODO want/need support for any these?
+    // description?: string;
+    // constraints?: IConstraints;
+    // rdfType?: string;
   }
 
+  /**
+   * An object when specifies the schema for a data model.
+   *
+   * #### Notes
+   * This is based on the JSON Table Schema specification:
+   * https://specs.frictionlessdata.io/table-schema/
+   */
+  export
+  interface ISchema {
+    /**
+     * The fields which describe the data model columns.
+     *
+     * Primary key fields are rendered as row header columns.
+     */
+    readonly fields: IField[];
+
+    /**
+     * The values to treat as "missing" data.
+     *
+     * Missing values are automatically converted to `null`.
+     */
+    readonly missingValues?: string[];
+
+    /**
+     * The field names which act as primary keys.
+     *
+     * Primary key fields are rendered as row header columns.
+     */
+    readonly primaryKey?: string | string[];
+
+    // TODO want/need support for this?
+    // foreignKeys?: IForeignKey[];
+  }
+
+  /**
+   * A type alias for a data source for a JSON data model.
+   *
+   * A data source is an array of JSON object records which represent
+   * the rows of the table. The keys of the records correspond to the
+   * field names of the columns.
+   */
+  export
+  type DataSource = JSONObject[];
+
+  /**
+   * An options object for initializing a JSON data model.
+   */
+  export
+  interface IOptions {
+    /**
+     * The schema for the for the data model.
+     *
+     * The schema should be treated as an immutable object.
+     */
+    schema: ISchema;
+
+    /**
+     * The data source for the data model.
+     *
+     * The data model takes full ownership of the data source.
+     */
+    data: DataSource;
+  }
 }
 
 
-export
+/**
+ * The namespace for the module implementation details.
+ */
 namespace Private {
-
+  /**
+   * An object which holds the results of splitting schema fields.
+   */
   export
-  function parseFields(fields: JSONArray): JSONDataModel.JSONField[] {
-    let newFields = [];
-    for (let field of fields) {
-      newFields.push(new JSONDataModel.JSONField(field as JSONObject));
-    }
-    return newFields;
+  interface ISplitFields {
+    /**
+     * The non-primary key fields to use for the grid body.
+     */
+    bodyFields: JSONModel.IField[];
+
+    /**
+     * The primary key fields to use for the grid headers.
+     */
+    headerFields: JSONModel.IField[];
   }
 
+  /**
+   * Split the schema fields into header and body fields.
+   */
   export
-  function parsePrimaryKey(primaryKey: string | string[] | undefined) {
-    if (typeof primaryKey === 'string') {
-      return [primaryKey];
-    } else if (typeof primaryKey === 'object') {
-      return primaryKey;
+  function splitFields(schema: JSONModel.ISchema): { bodyFields: JSONModel.IField[], headerFields: JSONModel.IField[] } {
+    // Normalize the primary keys.
+    let primaryKeys: string[];
+    if (schema.primaryKey === undefined) {
+      primaryKeys = [];
+    } else if (typeof schema.primaryKey === 'string') {
+      primaryKeys = [schema.primaryKey];
     } else {
-      return [];
+      primaryKeys = schema.primaryKey;
     }
+
+    // Separate the fields for the body and header.
+    let bodyFields: JSONModel.IField[] = [];
+    let headerFields: JSONModel.IField[] = [];
+    for (let field of schema.fields) {
+      if (primaryKeys.indexOf(field.name) === -1) {
+        bodyFields.push(field);
+      } else {
+        headerFields.push(field);
+      }
+    }
+
+    // Return the separated fields.
+    return { bodyFields, headerFields };
   }
 
+  /**
+   * A type alias for a missing value map.
+   */
+  export
+  type MissingValuesMap = { [key: string]: boolean };
+
+  /**
+   * Create a missing values map for a schema.
+   *
+   * This returns `null` if there are no missing values.
+   */
+  export
+  function createMissingMap(schema: JSONModel.ISchema): MissingValuesMap | null {
+    // Bail early if there are no missing values.
+    if (!schema.missingValues || schema.missingValues.length === 0) {
+      return null;
+    }
+
+    // Collect the missing values into a map.
+    let result: MissingValuesMap = Object.create(null);
+    for (let value of schema.missingValues) {
+      result[value] = true;
+    }
+
+    // Return the populated map.
+    return result;
+  }
 }
