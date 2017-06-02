@@ -100,7 +100,7 @@ namespace CellRenderer {
     /**
      * The metadata for the column.
      */
-    readonly metadata: DataModel.IMetadata;
+    readonly metadata: DataModel.Metadata;
   }
 
   /**
@@ -146,7 +146,7 @@ namespace CellRenderer {
     /**
      * The metadata for the column.
      */
-    readonly metadata: DataModel.IMetadata;
+    readonly metadata: DataModel.Metadata;
 
     /**
      * The data value for the cell.

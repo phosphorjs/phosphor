@@ -76,6 +76,8 @@ abstract class DataModel {
    * @returns The metadata for the column.
    *
    * #### Notes
+   * The returned metadata should be treated as immutable.
+   *
    * Models which support columnar data may reimplement this method to
    * return the metadata for a column.
    *
@@ -86,8 +88,8 @@ abstract class DataModel {
    *
    * The default implementation returns `{}`.
    */
-  metadata(region: DataModel.CellRegion, column: number): DataModel.IMetadata {
-    return {};
+  metadata(region: DataModel.CellRegion, column: number): DataModel.Metadata {
+    return DataModel.emptyMetadata;
   }
 
   /**
@@ -130,33 +132,15 @@ namespace DataModel {
 
   /**
    * The metadata for a column in a data model.
-   *
-   * #### Notes
-   * Data model implementations may provide metadata objects which have
-   * extra properties. The full metadata objects are passed through to
-   * the cell renderers, and the extra properties may be accessed by
-   * casting the metadata object to a known derived type.
    */
   export
-  interface IMetadata {
-    /**
-     * The name of the column.
-     *
-     * #### Notes
-     * This can be any string, but should typically be unique for a
-     * given instance of a data model.
-     */
-    readonly name?: string;
+  type Metadata = { [key: string]: any };
 
-    /**
-     * The data type of the values in the column.
-     *
-     * #### Notes
-     * This can be any string, but should typically be descriptive of
-     * the type of data in the column.
-     */
-    readonly type?: string;
-  }
+  /**
+   * A singleton empty metadata object.
+   */
+  export
+  const emptyMetadata: Metadata = Object.freeze({});
 
   /**
    * An arguments object for the `changed` signal.
