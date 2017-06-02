@@ -74,12 +74,17 @@ class DataGrid extends Widget {
     // Connect to the renderer map changed signal
     this._cellRenderers.changed.connect(this._onRenderersChanged, this);
 
+    // Parse the default sizes for the section lists.
+    let drh = Private.parseSize(options.defaultRowHeight, 20);
+    let dcw = Private.parseSize(options.defaultColumnWidth, 64);
+    let drhw = Private.parseSize(options.defaultRowHeaderWidth, 96);
+    let dchh = Private.parseSize(options.defaultColumnHeaderHeight, 20);
+
     // Set up the row and column sections lists.
-    // TODO - allow base size configuration.
-    this._rowSections = new SectionList({ baseSize: 20 });
-    this._columnSections = new SectionList({ baseSize: 64 });
-    this._rowHeaderSections = new SectionList({ baseSize: 96 });
-    this._columnHeaderSections = new SectionList({ baseSize: 20 });
+    this._rowSections = new SectionList({ baseSize: drh });
+    this._columnSections = new SectionList({ baseSize: dcw });
+    this._rowHeaderSections = new SectionList({ baseSize: drhw });
+    this._columnHeaderSections = new SectionList({ baseSize: dchh });
 
     // Create the canvas and buffer objects.
     this._canvas = Private.createCanvas();
@@ -2583,6 +2588,34 @@ namespace DataGrid {
     headerVisibility?: HeaderVisibility;
 
     /**
+     * The height for new rows in the data grid.
+     *
+     * The default is `20`.
+     */
+    defaultRowHeight?: number;
+
+    /**
+     * The width for new columns in the data grid.
+     *
+     * The default is `64`.
+     */
+    defaultColumnWidth?: number;
+
+    /**
+     * The width for new row headers in the data grid.
+     *
+     * The default is `96`.
+     */
+    defaultRowHeaderWidth?: number;
+
+    /**
+     * The height for new column headers in the data grid.
+     *
+     * The default is `20`.
+     */
+    defaultColumnHeaderHeight?: number;
+
+    /**
      * The cell renderer map for the data grid.
      *
      * The default is a new renderer map with a default `TextRenderer`.
@@ -2787,5 +2820,13 @@ namespace Private {
     private _y1: number;
     private _x2: number;
     private _y2: number;
+  }
+
+  /**
+   * Parse a size option with a fallback value.
+   */
+  export
+  function parseSize(size: number | undefined, fallback: number): number {
+    return size === undefined ? fallback : size;
   }
 }

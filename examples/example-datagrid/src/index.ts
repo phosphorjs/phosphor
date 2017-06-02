@@ -242,7 +242,13 @@ function main(): void {
   grid4.cellRenderers.set('body', {}, bgColorFloatRenderer);
   grid4.model = model4;
 
-  let grid5 = new DataGrid({ style: blueStripeStyle });
+  let grid5 = new DataGrid({
+    style: blueStripeStyle,
+    defaultRowHeight: 32,
+    defaultColumnWidth: 128,
+    defaultRowHeaderWidth: 64,
+    defaultColumnHeaderHeight: 32
+  });
   grid5.model = model5;
 
   let wrapper1 = createWrapper(grid1, 'Trillion Rows/Cols');
