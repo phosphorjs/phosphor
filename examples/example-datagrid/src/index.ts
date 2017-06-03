@@ -244,10 +244,10 @@ function main(): void {
 
   let grid5 = new DataGrid({
     style: blueStripeStyle,
-    defaultRowHeight: 32,
-    defaultColumnWidth: 128,
-    defaultRowHeaderWidth: 64,
-    defaultColumnHeaderHeight: 32
+    baseRowHeight: 32,
+    baseColumnWidth: 128,
+    baseRowHeaderWidth: 64,
+    baseColumnHeaderHeight: 32
   });
   grid5.model = model5;
 
