@@ -2503,18 +2503,14 @@ class DataGrid extends Widget {
       needVScroll = (aph - hsh) < sh - 1;
     }
 
-    // Update the vertical scroll bar values.
-    this._vScrollBar.maximum = this.maxScrollY;
-    this._vScrollBar.value = this.scrollY;
-    this._vScrollBar.page = ph;
-
-    // Update the horizontal scroll bar values.
-    this._hScrollBar.maximum = this.maxScrollX;
-    this._hScrollBar.value = this.scrollX;
-    this._hScrollBar.page = pw;
-
-    // Bail if neither scroll bar visibility will change.
+    // If the visibility wont change, just update the scroll bars.
     if (needVScroll === hasVScroll && needHScroll === hasHScroll) {
+      this._vScrollBar.maximum = this.maxScrollY;
+      this._vScrollBar.value = this.scrollY;
+      this._vScrollBar.page = ph;
+      this._hScrollBar.maximum = this.maxScrollX;
+      this._hScrollBar.value = this.scrollX;
+      this._hScrollBar.page = pw;
       return;
     }
 
@@ -2525,6 +2521,14 @@ class DataGrid extends Widget {
 
     // Immediately re-fit the data grid to update the layout.
     MessageLoop.sendMessage(this, Widget.Msg.FitRequest);
+
+    // Update the scroll bars.
+    this._vScrollBar.maximum = this.maxScrollY;
+    this._vScrollBar.value = this.scrollY;
+    this._vScrollBar.page = ph;
+    this._hScrollBar.maximum = this.maxScrollX;
+    this._hScrollBar.value = this.scrollX;
+    this._hScrollBar.page = pw;
   }
 
   /**
