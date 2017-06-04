@@ -30,16 +30,6 @@ class SectionList {
   }
 
   /**
-   * The size of new sections added to the list.
-   *
-   * #### Complexity
-   * Constant.
-   */
-  get baseSize(): number {
-    return this._baseSize;
-  }
-
-  /**
    * The total size of all sections in the list.
    *
    * #### Complexity
@@ -57,6 +47,61 @@ class SectionList {
    */
   get sectionCount(): number {
     return this._sectionCount;
+  }
+
+  /**
+   * Get the base size of sections in the list.
+   *
+   * #### Complexity
+   * Constant.
+   */
+  get baseSize(): number {
+    return this._baseSize;
+  }
+
+  /**
+   * Set the base size of sections in the list.
+   *
+   * #### Complexity
+   * Linear on the number of resized sections.
+   */
+  set baseSize(value: number) {
+    // Normalize the value.
+    value = Math.max(0, Math.floor(value));
+
+    // Bail early if the value does not change.
+    if (this._baseSize === value) {
+      return;
+    }
+
+    // Compute the delta base size.
+    let delta = value - this._baseSize;
+
+    // Update the internal base size.
+    this._baseSize = value;
+
+    // Update the total size.
+    this._totalSize += delta * (this._sectionCount - this._sections.length);
+
+    // Bail early if there are no modified sections.
+    if (this._sections.length === 0) {
+      return;
+    }
+
+    // Recompute the offsets of the modified sections.
+    for (let i = 0, n = this._sections.length; i < n; ++i) {
+      // Look up the previous and current modified sections.
+      let prev = this._sections[i - 1];
+      let curr = this._sections[i];
+
+      // Adjust the offset for the current section.
+      if (prev) {
+        let count = curr.index - prev.index + 1;
+        curr.offset = prev.offset + prev.size + count * value;
+      } else {
+        curr.offset = curr.index * value;
+      }
+    }
   }
 
   /**
