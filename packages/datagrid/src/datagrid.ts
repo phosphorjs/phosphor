@@ -391,6 +391,26 @@ class DataGrid extends Widget {
   }
 
   /**
+   * The width of the grid viewport.
+   *
+   * #### Notes
+   * This value does not include the width of the scroll bar.
+   */
+  get viewportWidth(): number {
+    return this._viewportWidth;
+  }
+
+  /**
+   * The height of the grid viewport.
+   *
+   * #### Notes
+   * This value does not include the height of the scroll bar.
+   */
+  get viewportHeight(): number {
+    return this._viewportHeight;
+  }
+
+  /**
    * The width of the visible portion of the main cell content.
    *
    * #### Notes
