@@ -364,7 +364,7 @@ class DataGrid extends Widget {
    * #### Notes
    * This will be `0` if the row headers are hidden.
    */
-  get rowHeaderWidth(): number {
+  get totalRowHeaderWidth(): number {
     if (this._headerVisibility === 'none') {
       return 0;
     }
@@ -380,7 +380,7 @@ class DataGrid extends Widget {
    * #### Notes
    * This will be `0` if the column headers are hidden.
    */
-  get columnHeaderHeight(): number {
+  get totalColumnHeaderHeight(): number {
     if (this._headerVisibility === 'none') {
       return 0;
     }
@@ -397,7 +397,7 @@ class DataGrid extends Widget {
    * This value does not include the width of the row headers.
    */
   get pageWidth(): number {
-    return Math.max(0, this._viewportWidth - this.rowHeaderWidth);
+    return Math.max(0, this._viewportWidth - this.totalRowHeaderWidth);
   }
 
   /**
@@ -407,7 +407,7 @@ class DataGrid extends Widget {
    * This value does not include the height of the column headers.
    */
   get pageHeight(): number {
-    return Math.max(0, this._viewportHeight - this.columnHeaderHeight);
+    return Math.max(0, this._viewportHeight - this.totalColumnHeaderHeight);
   }
 
   /**
@@ -644,8 +644,8 @@ class DataGrid extends Widget {
     }
 
     // Get the visible content origin.
-    let contentX = this.rowHeaderWidth;
-    let contentY = this.columnHeaderHeight;
+    let contentX = this.totalRowHeaderWidth;
+    let contentY = this.totalColumnHeaderHeight;
 
     // Get the visible content dimensions.
     let contentWidth = width - contentX;
@@ -1245,10 +1245,10 @@ class DataGrid extends Widget {
       // Update the scroll position and compute the paint offset.
       if (isRows) {
         this._scrollY = scrollPos2;
-        offset = this.columnHeaderHeight;
+        offset = this.totalColumnHeaderHeight;
       } else {
         this._scrollX = scrollPos2;
-        offset = this.rowHeaderWidth;
+        offset = this.totalRowHeaderWidth;
       }
 
       // Adjust the paint offset if the scroll position did not change.
@@ -1332,8 +1332,8 @@ class DataGrid extends Widget {
     list.moveSections(index, span, destination);
 
     // Fetch the row header and column header sizes.
-    let rhw = this.rowHeaderWidth;
-    let chh = this.columnHeaderHeight;
+    let rhw = this.totalRowHeaderWidth;
+    let chh = this.totalColumnHeaderHeight;
 
     // Set up the initial paint limits.
     let xMin = 0;
@@ -1456,8 +1456,8 @@ class DataGrid extends Widget {
     }
 
     // Fetch the row header and column header sizes.
-    let rhw = this.rowHeaderWidth;
-    let chh = this.columnHeaderHeight;
+    let rhw = this.totalRowHeaderWidth;
+    let chh = this.totalColumnHeaderHeight;
 
     // Set up the initial paint limits.
     let xMin = 0;
@@ -1660,8 +1660,8 @@ class DataGrid extends Widget {
     }
 
     // Get the visible content origin.
-    let contentX = this.rowHeaderWidth;
-    let contentY = this.columnHeaderHeight;
+    let contentX = this.totalRowHeaderWidth;
+    let contentY = this.totalColumnHeaderHeight;
 
     // Bail if the dirty rect does not intersect the content area.
     if (rx + rw <= contentX) {
@@ -1763,7 +1763,7 @@ class DataGrid extends Widget {
    */
   private _drawRowHeaderRegion(rx: number, ry: number, rw: number, rh: number): void {
     // Get the visible content dimensions.
-    let contentW = this.rowHeaderWidth;
+    let contentW = this.totalRowHeaderWidth;
     let contentH = this._rowSections.totalSize - this._scrollY;
 
     // Bail if there is no content to draw.
@@ -1773,7 +1773,7 @@ class DataGrid extends Widget {
 
     // Get the visible content origin.
     let contentX = 0;
-    let contentY = this.columnHeaderHeight;
+    let contentY = this.totalColumnHeaderHeight;
 
     // Bail if the dirty rect does not intersect the content area.
     if (rx + rw <= contentX) {
@@ -1870,7 +1870,7 @@ class DataGrid extends Widget {
   private _drawColumnHeaderRegion(rx: number, ry: number, rw: number, rh: number): void {
     // Get the visible content dimensions.
     let contentW = this._columnSections.totalSize - this._scrollX;
-    let contentH = this.columnHeaderHeight;
+    let contentH = this.totalColumnHeaderHeight;
 
     // Bail if there is no content to draw.
     if (contentW <= 0 || contentH <= 0) {
@@ -1878,7 +1878,7 @@ class DataGrid extends Widget {
     }
 
     // Get the visible content origin.
-    let contentX = this.rowHeaderWidth;
+    let contentX = this.totalRowHeaderWidth;
     let contentY = 0;
 
     // Bail if the dirty rect does not intersect the content area.
@@ -1975,8 +1975,8 @@ class DataGrid extends Widget {
    */
   private _drawCornerHeaderRegion(rx: number, ry: number, rw: number, rh: number): void {
     // Get the visible content dimensions.
-    let contentW = this.rowHeaderWidth;
-    let contentH = this.columnHeaderHeight;
+    let contentW = this.totalRowHeaderWidth;
+    let contentH = this.totalColumnHeaderHeight;
 
     // Bail if there is no content to draw.
     if (contentW <= 0 || contentH <= 0) {
