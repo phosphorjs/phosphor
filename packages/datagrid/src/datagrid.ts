@@ -435,6 +435,86 @@ class DataGrid extends Widget {
   }
 
   /**
+   * Get the base height of the body rows.
+   *
+   * #### Notes
+   * This is the height of rows which have not been resized.
+   */
+  get baseRowHeight(): number {
+    return this._rowSections.baseSize;
+  }
+
+  /**
+   * Set the base height of the body rows.
+   *
+   * #### Notes
+   * This is the height of rows which have not been resized.
+   */
+  set baseRowHeight(value: number) {
+    this._setBaseSize(this._rowSections, value);
+  }
+
+  /**
+   * Get the base width of the body columns.
+   *
+   * #### Notes
+   * This is the width of columns which have not been resized.
+   */
+  get baseColumnWidth(): number {
+    return this._columnSections.baseSize;
+  }
+
+  /**
+   * Set the base width of the body columns.
+   *
+   * #### Notes
+   * This is the width of columns which have not been resized.
+   */
+  set baseColumnWidth(value: number) {
+    this._setBaseSize(this._columnSections, value);
+  }
+
+  /**
+   * Get the base width of the row header columns.
+   *
+   * #### Notes
+   * This is the width of row headers which have not been resized.
+   */
+  get baseRowHeaderWidth(): number {
+    return this._rowHeaderSections.baseSize;
+  }
+
+  /**
+   * Set the base width of the row header columns.
+   *
+   * #### Notes
+   * This is the width of row headers which have not been resized.
+   */
+  set baseRowHeaderWidth(value: number) {
+    this._setBaseSize(this._rowHeaderSections, value);
+  }
+
+  /**
+   * Get the base height of the column header rows.
+   *
+   * #### Notes
+   * This is the height of column headers which have not been resized.
+   */
+  get baseColumnHeaderHeight(): number {
+    return this._columnHeaderSections.baseSize;
+  }
+
+  /**
+   * Set the base height of the column header rows.
+   *
+   * #### Notes
+   * This is the height of column headers which have not been resized.
+   */
+  set baseColumnHeaderHeight(value: number) {
+    this._setBaseSize(this._columnHeaderSections, value);
+  }
+
+  /**
    * Scroll the viewport by one page.
    *
    * @param - The desired direction of the scroll.
@@ -2445,6 +2525,34 @@ class DataGrid extends Widget {
 
     // Immediately re-fit the data grid to update the layout.
     MessageLoop.sendMessage(this, Widget.Msg.FitRequest);
+  }
+
+  /**
+   * Set the base size for the given section list.
+   *
+   * #### Notes
+   * This will update the scroll bars and repaint as needed.
+   */
+  private _setBaseSize(list: SectionList, value: number): void {
+    // Normalize the value.
+    value = Math.max(0, Math.floor(value));
+
+    // Bail early if the value does not change.
+    if (list.baseSize === value) {
+      return;
+    }
+
+    // Update the list base size.
+    list.baseSize = value;
+
+    // Schedule a full repaint of the grid.
+    this.repaint();
+
+    // Update the scroll bars after queueing the repaint.
+    this._updateScrollBars();
+
+    // Re-clamp the scroll position.
+    this.scrollTo(this._scrollX, this._scrollY);
   }
 
   private _viewport: Widget;
