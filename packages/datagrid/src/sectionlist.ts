@@ -96,7 +96,7 @@ class SectionList {
 
       // Adjust the offset for the current section.
       if (prev) {
-        let count = curr.index - prev.index + 1;
+        let count = curr.index - prev.index - 1;
         curr.offset = prev.offset + prev.size + count * value;
       } else {
         curr.offset = curr.index * value;
