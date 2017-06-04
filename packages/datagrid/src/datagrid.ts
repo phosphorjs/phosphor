@@ -391,24 +391,24 @@ class DataGrid extends Widget {
   }
 
   /**
-   * The total width of the grid.
+   * The total width of the grid content.
    *
    * #### Notes
-   * If the grid is sized larger than this width, a horizontal scroll
-   * bar will not be shown.
+   * If the grid widget is sized larger than this width, a horizontal
+   * scroll bar will not be shown.
    */
-  get totalGridWidth(): number {
+  get totalContentWidth(): number {
     return this.totalRowHeaderWidth + this.totalColumnWidth;
   }
 
   /**
-   * The total height of the grid.
+   * The total height of the grid content.
    *
    * #### Notes
-   * If the grid is sized larger than this height, a vertical scroll
-   * bar will not be shown.
+   * If the grid widget is sized larger than this height, a vertical
+   * scroll bar will not be shown.
    */
-  get totalGridHeight(): number {
+  get totalContentHeight(): number {
     return this.totalColumnHeaderHeight + this.totalRowHeight;
   }
 
