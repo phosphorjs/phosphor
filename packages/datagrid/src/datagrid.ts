@@ -339,23 +339,23 @@ class DataGrid extends Widget {
   }
 
   /**
-   * The total width of the main cell content.
-   *
-   * #### Notes
-   * This value does not include the width of the row headers.
-   */
-  get scrollWidth(): number {
-    return this._columnSections.totalSize;
-  }
-
-  /**
-   * The total height of the main cell content.
+   * The total height of the body rows.
    *
    * #### Notes
    * This value does not include the height of the column headers.
    */
-  get scrollHeight(): number {
+  get totalRowHeight(): number {
     return this._rowSections.totalSize;
+  }
+
+  /**
+   * The total width of the body columns.
+   *
+   * #### Notes
+   * This value does not include the width of the row headers.
+   */
+  get totalColumnWidth(): number {
+    return this._columnSections.totalSize;
   }
 
   /**
@@ -419,7 +419,7 @@ class DataGrid extends Widget {
    * is visible.
    */
   get maxScrollX(): number {
-    return Math.max(0, this.scrollWidth - this.pageWidth - 1);
+    return Math.max(0, this.totalColumnWidth - this.pageWidth - 1);
   }
 
   /**
@@ -431,7 +431,7 @@ class DataGrid extends Widget {
    * bar is visible.
    */
   get maxScrollY(): number {
-    return Math.max(0, this.scrollHeight - this.pageHeight - 1);
+    return Math.max(0, this.totalRowHeight - this.pageHeight - 1);
   }
 
   /**
@@ -2472,8 +2472,8 @@ class DataGrid extends Widget {
    */
   private _updateScrollBars(): void {
     // Fetch the viewport dimensions.
-    let sw = this.scrollWidth;
-    let sh = this.scrollHeight;
+    let sw = this.totalColumnWidth;
+    let sh = this.totalRowHeight;
     let pw = this.pageWidth;
     let ph = this.pageHeight;
 
