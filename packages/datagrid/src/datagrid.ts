@@ -2679,17 +2679,17 @@ class DataGrid extends Widget {
    * #### Notes
    * This will update the scroll bars and repaint as needed.
    */
-  private _setBaseSize(list: SectionList, value: number): void {
-    // Normalize the value.
-    value = Math.max(0, Math.floor(value));
+  private _setBaseSize(list: SectionList, size: number): void {
+    // Normalize the size.
+    size = Math.max(0, Math.floor(size));
 
-    // Bail early if the value does not change.
-    if (list.baseSize === value) {
+    // Bail early if the size does not change.
+    if (list.baseSize === size) {
       return;
     }
 
     // Update the list base size.
-    list.baseSize = value;
+    list.baseSize = size;
 
     // Schedule a full repaint of the grid.
     this.repaint();
