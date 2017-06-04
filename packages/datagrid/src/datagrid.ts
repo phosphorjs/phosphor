@@ -74,11 +74,23 @@ class DataGrid extends Widget {
     // Connect to the renderer map changed signal
     this._cellRenderers.changed.connect(this._onRenderersChanged, this);
 
-    // Parse the default sizes for the section lists.
-    let brh = Private.parseSize(options.baseRowHeight, 20);
-    let bcw = Private.parseSize(options.baseColumnWidth, 64);
-    let brhw = Private.parseSize(options.baseRowHeaderWidth, 96);
-    let bchh = Private.parseSize(options.baseColumnHeaderHeight, 20);
+    // Parse the base sizes for the section lists.
+    let brh = 20;
+    let bcw = 64;
+    let brhw = 64;
+    let bchh = 20;
+    if (options.baseRowHeight !== undefined) {
+      brh = options.baseRowHeight;
+    }
+    if (options.baseColumnWidth !== undefined) {
+      bcw = options.baseColumnWidth;
+    }
+    if (options.baseRowHeaderWidth !== undefined) {
+      brhw = options.baseRowHeaderWidth;
+    }
+    if (options.baseColumnHeaderHeight !== undefined) {
+      bchh = options.baseColumnHeaderHeight;
+    }
 
     // Set up the row and column sections lists.
     this._rowSections = new SectionList({ baseSize: brh });
@@ -2588,28 +2600,28 @@ namespace DataGrid {
     headerVisibility?: HeaderVisibility;
 
     /**
-     * The height for new rows in the data grid.
+     * The base height for rows in the data grid.
      *
      * The default is `20`.
      */
     baseRowHeight?: number;
 
     /**
-     * The width for new columns in the data grid.
+     * The base width for columns in the data grid.
      *
      * The default is `64`.
      */
     baseColumnWidth?: number;
 
     /**
-     * The width for new row headers in the data grid.
+     * The base width for row headers in the data grid.
      *
-     * The default is `96`.
+     * The default is `64`.
      */
     baseRowHeaderWidth?: number;
 
     /**
-     * The height for new column headers in the data grid.
+     * The base height for column headers in the data grid.
      *
      * The default is `20`.
      */
@@ -2820,13 +2832,5 @@ namespace Private {
     private _y1: number;
     private _x2: number;
     private _y2: number;
-  }
-
-  /**
-   * Parse a size option with a fallback value.
-   */
-  export
-  function parseSize(size: number | undefined, fallback: number): number {
-    return size === undefined ? fallback : size;
   }
 }
