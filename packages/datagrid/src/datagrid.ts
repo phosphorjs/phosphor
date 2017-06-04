@@ -557,6 +557,106 @@ class DataGrid extends Widget {
   }
 
   /**
+   * Get the height of a body row.
+   *
+   * @param index - The index of the body row of interest.
+   *
+   * @return The height of the row, or `-1` if `index` is invalid.
+   */
+  rowHeight(index: number): number {
+    return this._rowSections.sectionSize(index);
+  }
+
+  /**
+   * Get the width of a body column.
+   *
+   * @param index - The index of the body column of interest.
+   *
+   * @return The width of the column, or `-1` if `index` is invalid.
+   */
+  columnWidth(index: number): number {
+    return this._columnSections.sectionSize(index);
+  }
+
+  /**
+   * Get the width of a row header column.
+   *
+   * @param index - The index of the row header column of interest.
+   *
+   * @return The width of the column, or `-1` if `index` is invalid.
+   */
+  rowHeaderWidth(index: number): number {
+    return this._rowHeaderSections.sectionSize(index);
+  }
+
+  /**
+   * Get the height of a column header row.
+   *
+   * @param index - The index of the column header row of interest.
+   *
+   * @return The height of the row, or `-1` if `index` is invalid.
+   */
+  columnHeaderHeight(index: number): number {
+    return this._columnHeaderSections.sectionSize(index);
+  }
+
+  /**
+   * Resize a body row.
+   *
+   * @param index - The index of the body row of interest.
+   *
+   * @param size - The new height for the row.
+   *
+   * #### Notes
+   * This is a no-op if `index` is invalid.
+   */
+  resizeRow(index: number, size: number): void {
+    this._resizeSection(this._rowSections, index, size);
+  }
+
+  /**
+   * Resize a body column.
+   *
+   * @param index - The index of the body column of interest.
+   *
+   * @param size - The new width for the column.
+   *
+   * #### Notes
+   * This is a no-op if `index` is invalid.
+   */
+  resizeColumn(index: number, size: number): void {
+    this._resizeSection(this._columnSections, index, size);
+  }
+
+  /**
+   * Resize a row header column.
+   *
+   * @param index - The index of the row header column of interest.
+   *
+   * @param size - The new width for the row header column.
+   *
+   * #### Notes
+   * This is a no-op if `index` is invalid.
+   */
+  resizeRowHeader(index: number, size: number): void {
+    this._resizeSection(this._rowHeaderSections, index, size);
+  }
+
+  /**
+   * Resize a column header row.
+   *
+   * @param index - The index of the column header row of interest.
+   *
+   * @param size - The new height for the column header row.
+   *
+   * #### Notes
+   * This is a no-op if `index` is invalid.
+   */
+  resizeColumnHeader(index: number, size: number): void {
+    this._resizeSection(this._columnHeaderSections, index, size);
+  }
+
+  /**
    * Scroll the viewport by one page.
    *
    * @param - The desired direction of the scroll.
@@ -2599,6 +2699,42 @@ class DataGrid extends Widget {
 
     // Re-clamp the scroll position.
     this.scrollTo(this._scrollX, this._scrollY);
+  }
+
+  /**
+   * Resize a section in the given section list.
+   *
+   * #### Notes
+   * This will update the scroll bars and repaint as needed.
+   */
+  private _resizeSection(list: SectionList, index: number, size: number): void {
+    // Bail early if the index is out of range.
+    if (index < 0 || index >= list.sectionCount) {
+      return;
+    }
+
+    // Normalize the size.
+    size = Math.max(0, Math.floor(size));
+
+    // Look up the old size of the section.
+    let oldSize = list.sectionSize(index);
+
+    // Bail early if the size does not change.
+    if (oldSize === size) {
+      return;
+    }
+
+    // Resize the section in the list.
+    list.resizeSection(index, size);
+
+    // TODO
+    // - only repaint if section is visible
+    // - preserve scroll position
+    // - blit valid content and only repaint dirty area.
+    this.repaint();
+
+    // Update the scroll bars after queueing the repaint.
+    this._updateScrollBars();
   }
 
   private _viewport: Widget;
