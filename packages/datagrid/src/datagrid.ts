@@ -639,7 +639,7 @@ class DataGrid extends Widget {
    * This is a no-op if `index` is invalid.
    */
   resizeRowHeader(index: number, size: number): void {
-    this._resizeHeaderSection(this._rowHeaderSections, index, size);
+    this._resizeSection(this._rowHeaderSections, index, size);
   }
 
   /**
@@ -653,7 +653,7 @@ class DataGrid extends Widget {
    * This is a no-op if `index` is invalid.
    */
   resizeColumnHeader(index: number, size: number): void {
-    this._resizeHeaderSection(this._columnHeaderSections, index, size);
+    this._resizeSection(this._columnHeaderSections, index, size);
   }
 
   /**
@@ -2702,9 +2702,12 @@ class DataGrid extends Widget {
   }
 
   /**
+   * Resize a section in the given section list.
    *
+   * #### Notes
+   * This will update the scroll bars and repaint as needed.
    */
-  private _resizeHeaderSection(list: SectionList, index: number, size: number): void {
+  private _resizeSection(list: SectionList, index: number, size: number): void {
     // Bail early if the index is out of range.
     if (index < 0 || index >= list.sectionCount) {
       return;
@@ -2724,102 +2727,253 @@ class DataGrid extends Widget {
     // Resize the section in the list.
     list.resizeSection(index, newSize);
 
-    // Bail early if the viewport is not visible.
-    if (!this._viewport.isVisible) {
-      this._updateScrollBars();
-      return;
-    }
-
     // Get the current size of the viewport.
     let vpWidth = this._viewportWidth;
     let vpHeight = this._viewportHeight;
 
-    // Bail early if the viewport is empty.
-    if (vpWidth === 0 || vpHeight === 0) {
+    // Bail early if there is nothing to paint.
+    if (!this._viewport.isVisible || vpWidth === 0 || vpHeight === 0) {
+      // Update the scroll bars.
       this._updateScrollBars();
+
+      // Re-clamp the scroll position.
+      this.scrollTo(this._scrollX, this._scrollY);
+
+      // Done.
       return;
     }
 
-    // Look up the offset of the section.
-    let offset = list.sectionOffset(index);
-
-    //
-    let isRows = list === this._columnHeaderSections;
-
-    // Compute the origin of the section.
-    let p1 = Math.max(0, offset - 1);
-    let space = isRows ? vpHeight : vpWidth;
-
-    // Bail early if the section is fully outside the viewport.
-    if (p1 >= space) {
-      this._updateScrollBars();
-      return;
-    }
-
-    // If there is a paint pending, ensure it paints everything.
+    // Handle the case where a paint is already pending.
     if (this._paintPending) {
+      // Esnure everything is painted.
       this.repaint();
-      this._updateScrollBars();
-      return;
-    }
 
-    // Paint the tail if the section spans the viewport.
-    if ((offset + oldSize) >= space || (offset + newSize) >= space) {
-      if (isRows) {
-        this._paint(0, p1, vpWidth, vpHeight - p1);
-      } else {
-        this._paint(p1, 0, vpWidth - p1, vpHeight);
-      }
+      // Update the scroll bars after queueing the paint.
       this._updateScrollBars();
+
+      // Re-clamp the scroll position to the new page size.
+      this.scrollTo(this._scrollX, this._scrollY);
+
+      // Done.
       return;
     }
 
     // Compute the size delta.
     let delta = newSize - oldSize;
 
-    // Compute the blit content dimensions.
-    let sx = isRows ? 0 : offset + oldSize;
-    let sy = isRows ? offset + oldSize : 0;
-    let sw = isRows ? vpWidth : vpWidth - sx - Math.max(0, delta);
-    let sh = isRows ? vpHeight - sy - Math.max(0, delta) : vpHeight;
+    // Paint the relevant dirty regions.
+    switch (list) {
+    case this._rowSections:
+    {
+      // Compute the lower and upper paint limits.
+      let lowerLimit = this.totalColumnHeaderHeight;
+      let upperLimit = vpHeight - 1;
 
-    // Compute the blit destination dimensions.
-    let dx = isRows ? 0 : sx + delta;
-    let dy = isRows ? sy + delta : 0;
-    let dw = sw;
-    let dh = sh;
+      // Look up the offset of the section.
+      let offset = list.sectionOffset(index) + lowerLimit - this._scrollY;
 
-    // Blit the valid contents to the destination.
-    this._canvasGC.drawImage(this._canvas, sx, sy, sw, sh, dx, dy, dw, dh);
+      // Compute the paint origin of the section.
+      let pos = Math.max(lowerLimit, offset - 1);
 
-    // Repaint the header section.
-    if (isRows) {
-      this._paint(0, p1, vpWidth, offset + newSize - p1);
-    } else {
-      this._paint(p1, 0, offset + newSize - p1, vpHeight);
-    }
-
-    // Repaint the trailing space if needed.
-    if (delta < 0) {
-      if (isRows) {
-        this._paint(0, vpHeight + delta, vpWidth, -delta);
-      } else {
-        this._paint(vpWidth + delta, 0, -delta, vpHeight);
+      // Bail early if there is nothing to paint.
+      if (lowerLimit > upperLimit || pos > upperLimit) {
+        break;
       }
+
+      // Adjust the scroll position if the section is offscreen.
+      if (offset + oldSize <= lowerLimit) {
+        this._scrollY += delta;
+        break;
+      }
+
+      // Paint the entire tail if the section spans the limit.
+      if (offset + oldSize > upperLimit || offset + newSize > upperLimit) {
+        this._paint(0, pos, vpWidth, vpHeight - pos);
+        break;
+      }
+
+      // Compute the blit content dimensions.
+      let sx = 0;
+      let sy = offset + oldSize;
+      let sw = vpWidth;
+      let sh = vpHeight - sy - Math.max(0, delta);
+      let dx = 0;
+      let dy = sy + delta;
+
+      // Blit the valid contents to the destination.
+      this._canvasGC.drawImage(this._canvas, sx, sy, sw, sh, dx, dy, sw, sh);
+
+      // Repaint the header section.
+      this._paint(0, pos, vpWidth, offset + newSize - pos);
+
+      // If the section grew, there is nothing left to do.
+      if (delta > 0) {
+        break;
+      }
+
+      // Otherwise, repaint the trailing space.
+      this._paint(0, vpHeight + delta, vpWidth, -delta);
+
+      // Done.
+      break;
+    }
+    case this._columnSections:
+    {
+      // Compute the lower and upper paint limits.
+      let lowerLimit = this.totalRowHeaderWidth;
+      let upperLimit = vpWidth - 1;
+
+      // Look up the offset of the section.
+      let offset = list.sectionOffset(index) + lowerLimit - this._scrollX;
+
+      // Compute the paint origin of the section.
+      let pos = Math.max(lowerLimit, offset - 1);
+
+      // Bail early if there is nothing to paint.
+      if (lowerLimit > upperLimit || pos > upperLimit) {
+        break;
+      }
+
+      // Adjust the scroll position if the section is offscreen.
+      if (offset + oldSize <= lowerLimit) {
+        this._scrollX += delta;
+        break;
+      }
+
+      // Paint the entire tail if the section spans the limit.
+      if (offset + oldSize > upperLimit || offset + newSize > upperLimit) {
+        this._paint(pos, 0, vpWidth - pos, vpHeight);
+        break;
+      }
+
+      // Compute the blit content dimensions.
+      let sx = offset + oldSize;
+      let sy = 0;
+      let sw = vpWidth - sx - Math.max(0, delta);
+      let sh = vpHeight;
+      let dx = sx + delta;
+      let dy = 0;
+
+      // Blit the valid contents to the destination.
+      this._canvasGC.drawImage(this._canvas, sx, sy, sw, sh, dx, dy, sw, sh);
+
+      // Repaint the header section.
+      this._paint(pos, 0, offset + newSize - pos, vpHeight);
+
+      // If the section grew, there is nothing left to do.
+      if (delta > 0) {
+        break;
+      }
+
+      // Otherwise, repaint the trailing space.
+      this._paint(vpWidth + delta, 0, -delta, vpHeight);
+
+      // Done.
+      break;
+    }
+    case this._rowHeaderSections:
+    {
+      // Look up the offset of the section.
+      let offset = list.sectionOffset(index);
+
+      // Compute the origin of the section.
+      let pos = Math.max(0, offset - 1);
+
+      // Compute the paint boundary.
+      let limit = vpWidth - 1;
+
+      // Bail early if the section is fully outside the limit.
+      if (pos > limit) {
+        break;
+      }
+
+      // Paint the entire tail if the section spans the limit.
+      if (offset + oldSize > limit || offset + newSize > limit) {
+        this._paint(pos, 0, vpWidth - pos, vpHeight);
+        break;
+      }
+
+      // Compute the blit content dimensions.
+      let sx = offset + oldSize;
+      let sy = 0;
+      let sw = vpWidth - sx - Math.max(0, delta);
+      let sh = vpHeight;
+      let dx = sx + delta;
+      let dy = 0;
+
+      // Blit the valid contents to the destination.
+      this._canvasGC.drawImage(this._canvas, sx, sy, sw, sh, dx, dy, sw, sh);
+
+      // Repaint the header section.
+      this._paint(pos, 0, offset + newSize - pos, vpHeight);
+
+      // If the section grew, there is nothing left to do.
+      if (delta > 0) {
+        break;
+      }
+
+      // Otherwise, repaint the trailing space.
+      this._paint(vpWidth + delta, 0, -delta, vpHeight);
+
+      // Done
+      break;
+    }
+    case this._columnHeaderSections:
+    {
+      // Look up the offset of the section.
+      let offset = list.sectionOffset(index);
+
+      // Compute the origin of the section.
+      let pos = Math.max(0, offset - 1);
+
+      // Compute the paint boundary.
+      let limit = vpHeight - 1;
+
+      // Bail early if the section is fully outside the limit.
+      if (pos > limit) {
+        break;
+      }
+
+      // Paint the entire tail if the section spans the limit.
+      if (offset + oldSize > limit || offset + newSize > limit) {
+        this._paint(0, pos, vpWidth, vpHeight - pos);
+        break;
+      }
+
+      // Compute the blit content dimensions.
+      let sx = 0;
+      let sy = offset + oldSize;
+      let sw = vpWidth;
+      let sh = vpHeight - sy - Math.max(0, delta);
+      let dx = 0;
+      let dy = sy + delta;
+
+      // Blit the valid contents to the destination.
+      this._canvasGC.drawImage(this._canvas, sx, sy, sw, sh, dx, dy, sw, sh);
+
+      // Repaint the header section.
+      this._paint(0, pos, vpWidth, offset + newSize - pos);
+
+      // If the section grew, there is nothing left to do.
+      if (delta > 0) {
+        break;
+      }
+
+      // Otherwise, repaint the trailing space.
+      this._paint(0, vpHeight + delta, vpWidth, -delta);
+
+      // Done
+      break;
+    }
+    default:
+      throw 'unreachable';
     }
 
     // Update the scroll bars after painting.
     this._updateScrollBars();
-  }
 
-  /**
-   * Resize a section in the given section list.
-   *
-   * #### Notes
-   * This will update the scroll bars and repaint as needed.
-   */
-  private _resizeSection(list: SectionList, index: number, size: number): void {
-
+    // Re-clamp the scroll position to the new page size.
+    this.scrollTo(this._scrollX, this._scrollY);
   }
 
   private _viewport: Widget;
