@@ -413,7 +413,7 @@ class DataGrid extends Widget {
   }
 
   /**
-   * The width of the grid viewport.
+   * The width of the visible portion of the data grid.
    *
    * #### Notes
    * This value does not include the width of the scroll bar.
@@ -423,7 +423,7 @@ class DataGrid extends Widget {
   }
 
   /**
-   * The height of the grid viewport.
+   * The height of the visible portion of the data grid.
    *
    * #### Notes
    * This value does not include the height of the scroll bar.
@@ -433,7 +433,7 @@ class DataGrid extends Widget {
   }
 
   /**
-   * The width of the visible portion of the main cell content.
+   * The width of the visible portion of the body cells.
    *
    * #### Notes
    * This value does not include the width of the row headers.
@@ -443,7 +443,7 @@ class DataGrid extends Widget {
   }
 
   /**
-   * The height of the visible portion of the main cell content.
+   * The height of the visible portion of the body cells.
    *
    * #### Notes
    * This value does not include the height of the column headers.
