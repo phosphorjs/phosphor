@@ -639,7 +639,7 @@ class DataGrid extends Widget {
    * This is a no-op if `index` is invalid.
    */
   resizeRowHeader(index: number, size: number): void {
-    this._resizeSection(this._rowHeaderSections, index, size);
+    this._resizeHeaderSection(this._rowHeaderSections, index, size);
   }
 
   /**
@@ -653,7 +653,7 @@ class DataGrid extends Widget {
    * This is a no-op if `index` is invalid.
    */
   resizeColumnHeader(index: number, size: number): void {
-    this._resizeSection(this._columnHeaderSections, index, size);
+    this._resizeHeaderSection(this._columnHeaderSections, index, size);
   }
 
   /**
@@ -2702,39 +2702,124 @@ class DataGrid extends Widget {
   }
 
   /**
+   *
+   */
+  private _resizeHeaderSection(list: SectionList, index: number, size: number): void {
+    // Bail early if the index is out of range.
+    if (index < 0 || index >= list.sectionCount) {
+      return;
+    }
+
+    // Look up the old size of the section.
+    let oldSize = list.sectionSize(index);
+
+    // Normalize the new size of the section.
+    let newSize = Math.max(0, Math.floor(size));
+
+    // Bail early if the size does not change.
+    if (oldSize === newSize) {
+      return;
+    }
+
+    // Resize the section in the list.
+    list.resizeSection(index, newSize);
+
+    // Bail early if the viewport is not visible.
+    if (!this._viewport.isVisible) {
+      this._updateScrollBars();
+      return;
+    }
+
+    // Get the current size of the viewport.
+    let vpWidth = this._viewportWidth;
+    let vpHeight = this._viewportHeight;
+
+    // Bail early if the viewport is empty.
+    if (vpWidth === 0 || vpHeight === 0) {
+      this._updateScrollBars();
+      return;
+    }
+
+    // Look up the offset of the section.
+    let offset = list.sectionOffset(index);
+
+    //
+    let isRows = list === this._columnHeaderSections;
+
+    // Compute the origin of the section.
+    let p1 = Math.max(0, offset - 1);
+    let space = isRows ? vpHeight : vpWidth;
+
+    // Bail early if the section is fully outside the viewport.
+    if (p1 >= space) {
+      this._updateScrollBars();
+      return;
+    }
+
+    // If there is a paint pending, ensure it paints everything.
+    if (this._paintPending) {
+      this.repaint();
+      this._updateScrollBars();
+      return;
+    }
+
+    // Paint the tail if the section spans the viewport.
+    if ((offset + oldSize) >= space || (offset + newSize) >= space) {
+      if (isRows) {
+        this._paint(0, p1, vpWidth, vpHeight - p1);
+      } else {
+        this._paint(p1, 0, vpWidth - p1, vpHeight);
+      }
+      this._updateScrollBars();
+      return;
+    }
+
+    // Compute the size delta.
+    let delta = newSize - oldSize;
+
+    // Compute the blit content dimensions.
+    let sx = isRows ? 0 : offset + oldSize;
+    let sy = isRows ? offset + oldSize : 0;
+    let sw = isRows ? vpWidth : vpWidth - sx - Math.max(0, delta);
+    let sh = isRows ? vpHeight - sy - Math.max(0, delta) : vpHeight;
+
+    // Compute the blit destination dimensions.
+    let dx = isRows ? 0 : sx + delta;
+    let dy = isRows ? sy + delta : 0;
+    let dw = sw;
+    let dh = sh;
+
+    // Blit the valid contents to the destination.
+    this._canvasGC.drawImage(this._canvas, sx, sy, sw, sh, dx, dy, dw, dh);
+
+    // Repaint the header section.
+    if (isRows) {
+      this._paint(0, p1, vpWidth, offset + newSize - p1);
+    } else {
+      this._paint(p1, 0, offset + newSize - p1, vpHeight);
+    }
+
+    // Repaint the trailing space if needed.
+    if (delta < 0) {
+      if (isRows) {
+        this._paint(0, vpHeight + delta, vpWidth, -delta);
+      } else {
+        this._paint(vpWidth + delta, 0, -delta, vpHeight);
+      }
+    }
+
+    // Update the scroll bars after painting.
+    this._updateScrollBars();
+  }
+
+  /**
    * Resize a section in the given section list.
    *
    * #### Notes
    * This will update the scroll bars and repaint as needed.
    */
   private _resizeSection(list: SectionList, index: number, size: number): void {
-    // Bail early if the index is out of range.
-    if (index < 0 || index >= list.sectionCount) {
-      return;
-    }
 
-    // Normalize the size.
-    size = Math.max(0, Math.floor(size));
-
-    // Look up the old size of the section.
-    let oldSize = list.sectionSize(index);
-
-    // Bail early if the size does not change.
-    if (oldSize === size) {
-      return;
-    }
-
-    // Resize the section in the list.
-    list.resizeSection(index, size);
-
-    // TODO
-    // - only repaint if section is visible
-    // - preserve scroll position
-    // - blit valid content and only repaint dirty area.
-    this.repaint();
-
-    // Update the scroll bars after queueing the repaint.
-    this._updateScrollBars();
   }
 
   private _viewport: Widget;
