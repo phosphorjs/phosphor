@@ -1014,7 +1014,7 @@ class DataGrid extends Widget {
     // Update the scroll bars.
     this._updateScrollBars();
 
-    // Re-clamp the scroll position to the new page size.
+    // Ensure the resize does not scroll the viewport out of range.
     this.scrollTo(this._scrollX, this._scrollY);
   }
 
@@ -1080,25 +1080,25 @@ class DataGrid extends Widget {
    */
   private _processViewportMessage(msg: Message): void {
     switch (msg.type) {
-    case 'resize':
-      this._onViewportResize(msg as Widget.ResizeMessage);
-      break;
     case 'scroll-request':
       this._onViewportScrollRequest(msg);
+      break;
+    case 'resize':
+      this._onViewportResize(msg as Widget.ResizeMessage);
       break;
     case 'paint-request':
       this._onViewportPaintRequest(msg as Private.PaintRequest);
       break;
-    case 'fit-request':
-      this._onViewportFitRequest(msg);
-      break;
-    case 'before-show':
-    case 'before-attach':
-      this._viewport.fit();
-      break;
     default:
       break;
     }
+  }
+
+  /**
+   * A message hook invoked on a viewport `'scroll-request'` message.
+   */
+  private _onViewportScrollRequest(msg: Message): void {
+    this.scrollTo(this._hScrollBar.value, this._vScrollBar.value);
   }
 
   /**
@@ -1169,13 +1169,6 @@ class DataGrid extends Widget {
   }
 
   /**
-   * A message hook invoked on a viewport `'scroll-request'` message.
-   */
-  private _onViewportScrollRequest(msg: Message): void {
-    this.scrollTo(this._hScrollBar.value, this._vScrollBar.value);
-  }
-
-  /**
    * A message hook invoked on a viewport `'paint-request'` message.
    */
   private _onViewportPaintRequest(msg: Private.PaintRequest): void {
@@ -1214,30 +1207,6 @@ class DataGrid extends Widget {
 
     // Paint the dirty rect.
     this._paint(x1, y1, x2 - x1 + 1, y2 - y1 + 1);
-  }
-
-  /**
-   * A message hook invoked on a viewport `'fit-request'` message.
-   */
-  private _onViewportFitRequest(msg: Message): void {
-    // Bail early if the viewport is not visible.
-    if (!this._viewport.isVisible) {
-      return;
-    }
-
-    // Measure the viewport node size.
-    let width = this._viewport.node.offsetWidth;
-    let height = this._viewport.node.offsetHeight;
-
-    // Updated internal viewport size.
-    this._viewportWidth = width;
-    this._viewportHeight = height;
-
-    // Expand the canvas if needed.
-    this._expandCanvasIfNeeded(width, height);
-
-    // Paint the entire viewport immediately.
-    this._paint(0, 0, width, height);
   }
 
   /**
