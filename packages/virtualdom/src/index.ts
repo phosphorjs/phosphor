@@ -27,49 +27,49 @@ export
 type ElementAttrNames = (
   'abbr' |
   'accept' |
-  'accept-charset' |
-  'accesskey' |
+  'acceptCharset' |
+  'accessKey' |
   'action' |
-  'allowfullscreen' |
+  'allowFullScreen' |
   'alt' |
-  'autocomplete' |
-  'autofocus' |
-  'autoplay' |
-  'autosave' |
+  'autoComplete' |
+  'autoFocus' |
+  'autoPlay' |
+  'autoSave' |
   'checked' |
   'cite' |
   'cols' |
-  'colspan' |
-  'contenteditable' |
+  'colSpan' |
+  'contentEditable' |
   'controls' |
   'coords' |
-  'crossorigin' |
+  'crossOrigin' |
   'data' |
-  'datetime' |
+  'dateTime' |
   'default' |
   'dir' |
-  'dirname' |
+  'dirName' |
   'disabled' |
   'download' |
   'draggable' |
-  'dropzone' |
-  'enctype' |
+  'dropZone' |
+  'encType' |
   'form' |
-  'formaction' |
-  'formenctype' |
-  'formmethod' |
-  'formnovalidate' |
-  'formtarget' |
+  'formAction' |
+  'formEncType' |
+  'formMethod' |
+  'formNoValidate' |
+  'formTarget' |
   'headers' |
   'height' |
   'hidden' |
   'high' |
   'href' |
-  'hreflang' |
+  'hrefLang' |
   'id' |
-  'inputmode' |
+  'inputMode' |
   'integrity' |
-  'ismap' |
+  'isMap' |
   'kind' |
   'label' |
   'lang' |
@@ -77,27 +77,27 @@ type ElementAttrNames = (
   'loop' |
   'low' |
   'max' |
-  'maxlength' |
+  'maxLength' |
   'media' |
-  'mediagroup' |
+  'mediaGroup' |
   'method' |
   'min' |
-  'minlength' |
+  'minLength' |
   'multiple' |
   'muted' |
   'name' |
-  'novalidate' |
+  'noValidate' |
   'optimum' |
   'pattern' |
   'placeholder' |
   'poster' |
   'preload' |
-  'readonly' |
+  'readOnly' |
   'rel' |
   'required' |
   'reversed' |
   'rows' |
-  'rowspan' |
+  'rowSpan' |
   'sandbox' |
   'scope' |
   'selected' |
@@ -105,19 +105,19 @@ type ElementAttrNames = (
   'size' |
   'sizes' |
   'span' |
-  'spellcheck' |
+  'spellCheck' |
   'src' |
-  'srcdoc' |
-  'srclang' |
-  'srcset' |
+  'srcDoc' |
+  'srcLang' |
+  'srcSet' |
   'start' |
   'step' |
-  'tabindex' |
+  'tabIndex' |
   'target' |
   'title' |
   'type' |
-  'typemustmatch' |
-  'usemap' |
+  'typeMustMatch' |
+  'useMap' |
   'value' |
   'width' |
   'wrap'
