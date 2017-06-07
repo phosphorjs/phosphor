@@ -990,6 +990,7 @@ class DataGrid extends Widget {
    */
   protected onBeforeAttach(msg: Message): void {
     this.node.addEventListener('wheel', this);
+    this.repaint();
   }
 
   /**
@@ -997,6 +998,13 @@ class DataGrid extends Widget {
    */
   protected onAfterDetach(msg: Message): void {
     this.node.removeEventListener('wheel', this);
+  }
+
+  /**
+   * A message handler invoked on a `'before-show'` message.
+   */
+  protected onBeforeShow(msg: Message): void {
+    this.repaint();
   }
 
   /**
