@@ -231,15 +231,8 @@ class DataGrid extends Widget {
       this._columnHeaderSections.insertSections(0, value.rowCount('column-header'));
     }
 
-    // Reset the scroll position.
-    this._scrollX = 0;
-    this._scrollY = 0;
-
-    // Schedule a repaint of the grid.
-    this.repaint();
-
-    // Update the scroll bars after queueing the repaint.
-    this._updateScrollBars();
+    // Reset the viewport.
+    this._resetViewport(0, 0);
   }
 
   /**
@@ -313,15 +306,8 @@ class DataGrid extends Widget {
     // Update the internal visibility.
     this._headerVisibility = value;
 
-    // Re-clamp the scroll position for the new page size.
-    this._scrollX = Math.min(this._scrollX, this.maxScrollX);
-    this._scrollY = Math.min(this._scrollY, this.maxScrollY);
-
-    // Schedule a full repaint of the grid.
-    this.repaint();
-
-    // Update the scroll bars after queueing the repaint.
-    this._updateScrollBars();
+    // Reset the viewport.
+    this._resetViewport(this._scrollX, this._scrollY);
   }
 
   /**
@@ -1011,8 +997,8 @@ class DataGrid extends Widget {
    * A message handler invoked on a `'resize'` message.
    */
   protected onResize(msg: Widget.ResizeMessage): void {
-    // Update the scroll bars.
-    this._updateScrollBars();
+    // Update the scroll bar visibility.
+    this._updateScrollBarVisibility();
 
     // Ensure the resize does not scroll the viewport out of range.
     this.scrollTo(this._scrollX, this._scrollY);
@@ -1072,6 +1058,18 @@ class DataGrid extends Widget {
   }
 
   /**
+   * Synchronize the scroll bar values with the grid dimensions.
+   */
+  private _syncScrollBars(): void {
+    this._vScrollBar.maximum = this.maxScrollY;
+    this._vScrollBar.value = this.scrollY;
+    this._vScrollBar.page = this.pageHeight;
+    this._hScrollBar.maximum = this.maxScrollX;
+    this._hScrollBar.value = this.scrollX;
+    this._hScrollBar.page = this.pageWidth;
+  }
+
+  /**
    * Sync the scroll bar visibility and state with the viewport.
    *
    * #### Notes
@@ -1079,7 +1077,7 @@ class DataGrid extends Widget {
    * fit-request will be dispatched to the data grid to immediately
    * resize the viewport.
    */
-  private _updateScrollBars(): void {
+  private _updateScrollBarVisibility(): void {
     // Fetch the viewport dimensions.
     let sw = this.totalColumnWidth;
     let sh = this.totalRowHeight;
@@ -1112,14 +1110,9 @@ class DataGrid extends Widget {
       needVScroll = (aph - hsh) < sh - 1;
     }
 
-    // If the visibility wont change, just update the scroll bars.
+    // If the visibility wont change, just sync the scroll bars.
     if (needVScroll === hasVScroll && needHScroll === hasHScroll) {
-      this._vScrollBar.maximum = this.maxScrollY;
-      this._vScrollBar.value = this.scrollY;
-      this._vScrollBar.page = ph;
-      this._hScrollBar.maximum = this.maxScrollX;
-      this._hScrollBar.value = this.scrollX;
-      this._hScrollBar.page = pw;
+      this._syncScrollBars();
       return;
     }
 
@@ -1131,13 +1124,27 @@ class DataGrid extends Widget {
     // Immediately re-fit the data grid to update the layout.
     MessageLoop.sendMessage(this, Widget.Msg.FitRequest);
 
-    // Update the scroll bars.
-    this._vScrollBar.maximum = this.maxScrollY;
-    this._vScrollBar.value = this.scrollY;
-    this._vScrollBar.page = ph;
-    this._hScrollBar.maximum = this.maxScrollX;
-    this._hScrollBar.value = this.scrollX;
-    this._hScrollBar.page = pw;
+    // Sync the scroll bars.
+    this._syncScrollBars();
+  }
+
+  /**
+   * Reset the viewport to the given scroll position.
+   *
+   * #### Notes
+   * This updates the scroll position and scroll bar visibility,
+   * and repaints the entire viewport.
+   */
+  private _resetViewport(scrollX: number, scrollY: number): void {
+    // Re-clamp the scroll position.
+    this._scrollX = Math.min(scrollX, this.maxScrollX);
+    this._scrollY = Math.min(scrollY, this.maxScrollY);
+
+    // Schedule a full repaint of the grid.
+    this.repaint();
+
+    // Update the scroll bar visibility.
+    this._updateScrollBarVisibility();
   }
 
   /**
@@ -1158,15 +1165,8 @@ class DataGrid extends Widget {
     // Update the list base size.
     list.baseSize = size;
 
-    // Re-clamp the scroll position for the new page size.
-    this._scrollX = Math.min(this._scrollX, this.maxScrollX);
-    this._scrollY = Math.min(this._scrollY, this.maxScrollY);
-
-    // Schedule a full repaint of the grid.
-    this.repaint();
-
-    // Update the scroll bars after queueing the repaint.
-    this._updateScrollBars();
+    // Reset the viewport
+    this._resetViewport(this._scrollX, this._scrollY);
   }
 
   /**
@@ -1206,7 +1206,7 @@ class DataGrid extends Widget {
       this._scrollY = Math.min(this._scrollY, this.maxScrollY);
 
       // Update the scroll bars.
-      this._updateScrollBars();
+      this._updateScrollBarVisibility();
 
       // Done.
       return;
@@ -1222,7 +1222,7 @@ class DataGrid extends Widget {
       this.repaint();
 
       // Update the scroll bars after queueing the repaint.
-      this._updateScrollBars();
+      this._updateScrollBarVisibility();
 
       // Done.
       return;
@@ -1452,7 +1452,7 @@ class DataGrid extends Widget {
     }
 
     // Update the scroll bars after painting.
-    this._updateScrollBars();
+    this._updateScrollBarVisibility();
 
     // Re-clamp the scroll position to the new page size.
     this.scrollTo(this._scrollX, this._scrollY);
@@ -1828,7 +1828,7 @@ class DataGrid extends Widget {
     }
 
     // Update the scroll bars after queueing the repaint.
-    this._updateScrollBars();
+    this._updateScrollBarVisibility();
   }
 
   /**
@@ -2120,15 +2120,8 @@ class DataGrid extends Widget {
       this._columnHeaderSections.removeSections(nch + dch, -dch);
     }
 
-    // Re-clamp the scroll position for the new page size.
-    this._scrollX = Math.min(this._scrollX, this.maxScrollX);
-    this._scrollY = Math.min(this._scrollY, this.maxScrollY);
-
-    // Schedule a full repaint of the grid.
-    this.repaint();
-
-    // Update the scroll bars after queueing the repaint.
-    this._updateScrollBars();
+    // Reset the viewport.
+    this._resetViewport(this._scrollX, this._scrollY);
   }
 
   /**
