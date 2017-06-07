@@ -649,6 +649,11 @@ type ElementSpecialAttrs = {
    * The inline style for the rendered DOM element.
    */
   readonly style?: ElementInlineStyle;
+  
+  /**
+   * The children attribute for functional custom elements.
+   */
+  children?: ReadonlyArray<VirtualNode>;
 };
 
 
@@ -1019,6 +1024,12 @@ namespace Private {
     // Create a text node for a virtual text node.
     if (node.type === 'text') {
       return document.createTextNode(node.content);
+    }
+    
+    // If node is a function, call if with its attrs to return a VirtualNode.
+    if (typeof node.tag === 'function') {
+      node.attrs.children = node.children;
+      node = node.tag(node.attrs) as VirtualElement;
     }
 
     // Create the HTML element with the specified tag.
