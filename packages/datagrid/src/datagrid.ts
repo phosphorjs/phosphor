@@ -1019,6 +1019,446 @@ class DataGrid extends Widget {
   }
 
   /**
+   * Ensure the canvas is at least the specified size.
+   *
+   * This method will retain the valid canvas content.
+   */
+  private _expandCanvasIfNeeded(width: number, height: number): void {
+    // Bail if the canvas is larger than the specified size.
+    if (this._canvas.width > width && this._canvas.height > height) {
+      return;
+    }
+
+    // Compute the expanded canvas size.
+    let exWidth = Math.ceil((width + 1) / 512) * 512;
+    let exHeight = Math.ceil((height + 1) / 512) * 512;
+
+    // Expand the buffer width if needed.
+    if (this._buffer.width < width) {
+      this._buffer.width = exWidth;
+    }
+
+    // Expand the buffer height if needed.
+    if (this._buffer.height < height) {
+      this._buffer.height = exHeight;
+    }
+
+    // Test whether there is valid content to blit.
+    let needBlit = this._canvas.width > 0 && this._canvas.height > 0;
+
+    // Copy the valid content into the buffer if needed.
+    if (needBlit) {
+      this._bufferGC.clearRect(0, 0, width, height);
+      this._bufferGC.drawImage(this._canvas, 0, 0);
+    }
+
+    // Expand the canvas width if needed.
+    if (this._canvas.width < width) {
+      this._canvas.width = exWidth;
+      this._canvas.style.width = `${exWidth}px`;
+    }
+
+    // Expand the canvas height of needed.
+    if (this._canvas.height < height) {
+      this._canvas.height = exHeight;
+      this._canvas.style.height = `${exHeight}px`;
+    }
+
+    // Copy the valid content from the buffer if needed.
+    if (needBlit) {
+      this._canvasGC.clearRect(0, 0, width, height);
+      this._canvasGC.drawImage(this._buffer, 0, 0);
+    }
+  }
+
+  /**
+   * Sync the scroll bar visibility and state with the viewport.
+   *
+   * #### Notes
+   * If the visibility of either scroll bar changes, a synchronous
+   * fit-request will be dispatched to the data grid to immediately
+   * resize the viewport.
+   */
+  private _updateScrollBars(): void {
+    // Fetch the viewport dimensions.
+    let sw = this.totalColumnWidth;
+    let sh = this.totalRowHeight;
+    let pw = this.pageWidth;
+    let ph = this.pageHeight;
+
+    // Get the current scroll bar visibility.
+    let hasVScroll = !this._vScrollBar.isHidden;
+    let hasHScroll = !this._hScrollBar.isHidden;
+
+    // Get the minimum sizes of the scroll bars.
+    let vsw = this._vScrollBarMinWidth;
+    let hsh = this._hScrollBarMinHeight;
+
+    // Get the page size as if no scroll bars are visible.
+    let apw = pw + (hasVScroll ? vsw : 0);
+    let aph = ph + (hasHScroll ? hsh : 0);
+
+    // Test whether scroll bars are needed for the adjusted size.
+    let needVScroll = aph < sh - 1;
+    let needHScroll = apw < sw - 1;
+
+    // Re-test the horizontal scroll if a vertical scroll is needed.
+    if (needVScroll && !needHScroll) {
+      needHScroll = (apw - vsw) < sw - 1;
+    }
+
+    // Re-test the vertical scroll if a horizontal scroll is needed.
+    if (needHScroll && !needVScroll) {
+      needVScroll = (aph - hsh) < sh - 1;
+    }
+
+    // If the visibility wont change, just update the scroll bars.
+    if (needVScroll === hasVScroll && needHScroll === hasHScroll) {
+      this._vScrollBar.maximum = this.maxScrollY;
+      this._vScrollBar.value = this.scrollY;
+      this._vScrollBar.page = ph;
+      this._hScrollBar.maximum = this.maxScrollX;
+      this._hScrollBar.value = this.scrollX;
+      this._hScrollBar.page = pw;
+      return;
+    }
+
+    // Update the visibility of the scroll bars and corner widget.
+    this._vScrollBar.setHidden(!needVScroll);
+    this._hScrollBar.setHidden(!needHScroll);
+    this._scrollCorner.setHidden(!needVScroll || !needHScroll);
+
+    // Immediately re-fit the data grid to update the layout.
+    MessageLoop.sendMessage(this, Widget.Msg.FitRequest);
+
+    // Update the scroll bars.
+    this._vScrollBar.maximum = this.maxScrollY;
+    this._vScrollBar.value = this.scrollY;
+    this._vScrollBar.page = ph;
+    this._hScrollBar.maximum = this.maxScrollX;
+    this._hScrollBar.value = this.scrollX;
+    this._hScrollBar.page = pw;
+  }
+
+  /**
+   * Set the base size for the given section list.
+   *
+   * #### Notes
+   * This will update the scroll bars and repaint as needed.
+   */
+  private _setBaseSize(list: SectionList, size: number): void {
+    // Normalize the size.
+    size = Math.max(0, Math.floor(size));
+
+    // Bail early if the size does not change.
+    if (list.baseSize === size) {
+      return;
+    }
+
+    // Update the list base size.
+    list.baseSize = size;
+
+    // Re-clamp the scroll position for the new page size.
+    this._scrollX = Math.min(this._scrollX, this.maxScrollX);
+    this._scrollY = Math.min(this._scrollY, this.maxScrollY);
+
+    // Schedule a full repaint of the grid.
+    this.repaint();
+
+    // Update the scroll bars after queueing the repaint.
+    this._updateScrollBars();
+  }
+
+  /**
+   * Resize a section in the given section list.
+   *
+   * #### Notes
+   * This will update the scroll bars and repaint as needed.
+   */
+  private _resizeSection(list: SectionList, index: number, size: number): void {
+    // Bail early if the index is out of range.
+    if (index < 0 || index >= list.sectionCount) {
+      return;
+    }
+
+    // Look up the old size of the section.
+    let oldSize = list.sectionSize(index);
+
+    // Normalize the new size of the section.
+    let newSize = Math.max(0, Math.floor(size));
+
+    // Bail early if the size does not change.
+    if (oldSize === newSize) {
+      return;
+    }
+
+    // Resize the section in the list.
+    list.resizeSection(index, newSize);
+
+    // Get the current size of the viewport.
+    let vpWidth = this._viewportWidth;
+    let vpHeight = this._viewportHeight;
+
+    // Bail early if there is nothing to paint.
+    if (!this._viewport.isVisible || vpWidth === 0 || vpHeight === 0) {
+      // Re-clamp the scroll position for the new page size.
+      this._scrollX = Math.min(this._scrollX, this.maxScrollX);
+      this._scrollY = Math.min(this._scrollY, this.maxScrollY);
+
+      // Update the scroll bars.
+      this._updateScrollBars();
+
+      // Done.
+      return;
+    }
+
+    // Handle the case where a paint is already pending.
+    if (this._paintPending) {
+      // Re-clamp the scroll position for the new page size.
+      this._scrollX = Math.min(this._scrollX, this.maxScrollX);
+      this._scrollY = Math.min(this._scrollY, this.maxScrollY);
+
+      // Schedule a full repaint of the grid.
+      this.repaint();
+
+      // Update the scroll bars after queueing the repaint.
+      this._updateScrollBars();
+
+      // Done.
+      return;
+    }
+
+    // Compute the size delta.
+    let delta = newSize - oldSize;
+
+    // Paint the relevant dirty regions.
+    switch (list) {
+    case this._rowSections:
+    {
+      // Look up the column header height.
+      let chh = this.totalColumnHeaderHeight;
+
+      // Compute the viewport offset of the section.
+      let offset = list.sectionOffset(index) + chh - this._scrollY;
+
+      // Bail early if there is nothing to paint.
+      if (chh >= vpHeight || offset > vpHeight) {
+        break;
+      }
+
+      // Update the scroll position if the section is not visible.
+      if (offset + oldSize <= chh) {
+        this._scrollY += delta;
+        break;
+      }
+
+      // Compute the paint origin of the section.
+      let pos = Math.max(chh, offset - 1);
+
+      // Paint from the section onward if it spans the viewport.
+      if (offset + oldSize >= vpHeight || offset + newSize >= vpHeight) {
+        this._paint(0, pos, vpWidth, vpHeight - pos);
+        break;
+      }
+
+      // Compute the X blit dimensions.
+      let sx = 0;
+      let sw = vpWidth;
+      let dx = 0;
+
+      // Compute the Y blit dimensions.
+      let sy: number;
+      let sh: number;
+      let dy: number;
+      if (offset + newSize <= chh) {
+        sy = chh - delta;
+        sh = vpHeight - sy;
+        dy = chh;
+      } else {
+        sy = offset + oldSize;
+        sh = vpHeight - sy;
+        dy = sy + delta;
+      }
+
+      // Blit the valid content to the destination.
+      this._canvasGC.drawImage(this._canvas, sx, sy, sw, sh, dx, dy, sw, sh);
+
+      // Repaint the section if needed.
+      if (offset + newSize > chh) {
+        this._paint(0, pos, vpWidth, offset + newSize - pos);
+      }
+
+      // Paint the trailing space if needed.
+      if (delta < 0) {
+        this._paint(0, vpHeight + delta, vpWidth, -delta);
+      }
+
+      // Done.
+      break;
+    }
+    case this._columnSections:
+    {
+      // Look up the row header width.
+      let rhw = this.totalRowHeaderWidth;
+
+      // Compute the viewport offset of the section.
+      let offset = list.sectionOffset(index) + rhw - this._scrollX;
+
+      // Bail early if there is nothing to paint.
+      if (rhw >= vpWidth || offset > vpWidth) {
+        break;
+      }
+
+      // Update the scroll position if the section is not visible.
+      if (offset + oldSize <= rhw) {
+        this._scrollX += delta;
+        break;
+      }
+
+      // Compute the paint origin of the section.
+      let pos = Math.max(rhw, offset - 1);
+
+      // Paint from the section onward if it spans the viewport.
+      if (offset + oldSize >= vpWidth || offset + newSize >= vpWidth) {
+        this._paint(pos, 0, vpWidth - pos, vpHeight);
+        break;
+      }
+
+      // Compute the Y blit dimensions.
+      let sy = 0;
+      let sh = vpHeight;
+      let dy = 0;
+
+      // Compute the X blit dimensions.
+      let sx: number;
+      let sw: number;
+      let dx: number;
+      if (offset + newSize <= rhw) {
+        sx = rhw - delta;
+        sw = vpWidth - sx;
+        dx = rhw;
+      } else {
+        sx = offset + oldSize;
+        sw = vpWidth - sx;
+        dx = sx + delta;
+      }
+
+      // Blit the valid content to the destination.
+      this._canvasGC.drawImage(this._canvas, sx, sy, sw, sh, dx, dy, sw, sh);
+
+      // Repaint the section if needed.
+      if (offset + newSize > rhw) {
+        this._paint(pos, 0, offset + newSize - pos, vpHeight);
+      }
+
+      // Paint the trailing space if needed.
+      if (delta < 0) {
+        this._paint(vpWidth + delta, 0, -delta, vpHeight);
+      }
+
+      // Done.
+      break;
+    }
+    case this._rowHeaderSections:
+    {
+      // Look up the offset of the section.
+      let offset = list.sectionOffset(index);
+
+      // Compute the origin of the section.
+      let pos = Math.max(0, offset - 1);
+
+      // Compute the paint boundary.
+      let limit = vpWidth - 1;
+
+      // Bail early if the section is fully outside the limit.
+      if (pos > limit) {
+        break;
+      }
+
+      // Paint the entire tail if the section spans the limit.
+      if (offset + oldSize > limit || offset + newSize > limit) {
+        this._paint(pos, 0, vpWidth - pos, vpHeight);
+        break;
+      }
+
+      // Compute the blit content dimensions.
+      let sx = offset + oldSize;
+      let sy = 0;
+      let sw = vpWidth - sx - Math.max(0, delta);
+      let sh = vpHeight;
+      let dx = sx + delta;
+      let dy = 0;
+
+      // Blit the valid contents to the destination.
+      this._canvasGC.drawImage(this._canvas, sx, sy, sw, sh, dx, dy, sw, sh);
+
+      // Repaint the header section.
+      this._paint(pos, 0, offset + newSize - pos, vpHeight);
+
+      // Paint the trailing space if needed.
+      if (delta < 0) {
+        this._paint(vpWidth + delta, 0, -delta, vpHeight);
+      }
+
+      // Done
+      break;
+    }
+    case this._columnHeaderSections:
+    {
+      // Look up the offset of the section.
+      let offset = list.sectionOffset(index);
+
+      // Compute the origin of the section.
+      let pos = Math.max(0, offset - 1);
+
+      // Compute the paint boundary.
+      let limit = vpHeight - 1;
+
+      // Bail early if the section is fully outside the limit.
+      if (pos > limit) {
+        break;
+      }
+
+      // Paint the entire tail if the section spans the limit.
+      if (offset + oldSize > limit || offset + newSize > limit) {
+        this._paint(0, pos, vpWidth, vpHeight - pos);
+        break;
+      }
+
+      // Compute the blit content dimensions.
+      let sx = 0;
+      let sy = offset + oldSize;
+      let sw = vpWidth;
+      let sh = vpHeight - sy - Math.max(0, delta);
+      let dx = 0;
+      let dy = sy + delta;
+
+      // Blit the valid contents to the destination.
+      this._canvasGC.drawImage(this._canvas, sx, sy, sw, sh, dx, dy, sw, sh);
+
+      // Repaint the header section.
+      this._paint(0, pos, vpWidth, offset + newSize - pos);
+
+      // Paint the trailing space if needed.
+      if (delta < 0) {
+        this._paint(0, vpHeight + delta, vpWidth, -delta);
+      }
+
+      // Done
+      break;
+    }
+    default:
+      throw 'unreachable';
+    }
+
+    // Update the scroll bars after painting.
+    this._updateScrollBars();
+
+    // Re-clamp the scroll position to the new page size.
+    this.scrollTo(this._scrollX, this._scrollY);
+  }
+
+  /**
    * Handle the `'wheel'` event for the data grid.
    */
   private _evtWheel(event: WheelEvent): void {
@@ -2526,446 +2966,6 @@ class DataGrid extends Widget {
     // Stroke the lines with the specified color.
     this._canvasGC.strokeStyle = color;
     this._canvasGC.stroke();
-  }
-
-  /**
-   * Ensure the canvas is at least the specified size.
-   *
-   * This method will retain the valid canvas content.
-   */
-  private _expandCanvasIfNeeded(width: number, height: number): void {
-    // Bail if the canvas is larger than the specified size.
-    if (this._canvas.width > width && this._canvas.height > height) {
-      return;
-    }
-
-    // Compute the expanded canvas size.
-    let exWidth = Math.ceil((width + 1) / 512) * 512;
-    let exHeight = Math.ceil((height + 1) / 512) * 512;
-
-    // Expand the buffer width if needed.
-    if (this._buffer.width < width) {
-      this._buffer.width = exWidth;
-    }
-
-    // Expand the buffer height if needed.
-    if (this._buffer.height < height) {
-      this._buffer.height = exHeight;
-    }
-
-    // Test whether there is valid content to blit.
-    let needBlit = this._canvas.width > 0 && this._canvas.height > 0;
-
-    // Copy the valid content into the buffer if needed.
-    if (needBlit) {
-      this._bufferGC.clearRect(0, 0, width, height);
-      this._bufferGC.drawImage(this._canvas, 0, 0);
-    }
-
-    // Expand the canvas width if needed.
-    if (this._canvas.width < width) {
-      this._canvas.width = exWidth;
-      this._canvas.style.width = `${exWidth}px`;
-    }
-
-    // Expand the canvas height of needed.
-    if (this._canvas.height < height) {
-      this._canvas.height = exHeight;
-      this._canvas.style.height = `${exHeight}px`;
-    }
-
-    // Copy the valid content from the buffer if needed.
-    if (needBlit) {
-      this._canvasGC.clearRect(0, 0, width, height);
-      this._canvasGC.drawImage(this._buffer, 0, 0);
-    }
-  }
-
-  /**
-   * Sync the scroll bar visibility and state with the viewport.
-   *
-   * #### Notes
-   * If the visibility of either scroll bar changes, a synchronous
-   * fit-request will be dispatched to the data grid to immediately
-   * resize the viewport.
-   */
-  private _updateScrollBars(): void {
-    // Fetch the viewport dimensions.
-    let sw = this.totalColumnWidth;
-    let sh = this.totalRowHeight;
-    let pw = this.pageWidth;
-    let ph = this.pageHeight;
-
-    // Get the current scroll bar visibility.
-    let hasVScroll = !this._vScrollBar.isHidden;
-    let hasHScroll = !this._hScrollBar.isHidden;
-
-    // Get the minimum sizes of the scroll bars.
-    let vsw = this._vScrollBarMinWidth;
-    let hsh = this._hScrollBarMinHeight;
-
-    // Get the page size as if no scroll bars are visible.
-    let apw = pw + (hasVScroll ? vsw : 0);
-    let aph = ph + (hasHScroll ? hsh : 0);
-
-    // Test whether scroll bars are needed for the adjusted size.
-    let needVScroll = aph < sh - 1;
-    let needHScroll = apw < sw - 1;
-
-    // Re-test the horizontal scroll if a vertical scroll is needed.
-    if (needVScroll && !needHScroll) {
-      needHScroll = (apw - vsw) < sw - 1;
-    }
-
-    // Re-test the vertical scroll if a horizontal scroll is needed.
-    if (needHScroll && !needVScroll) {
-      needVScroll = (aph - hsh) < sh - 1;
-    }
-
-    // If the visibility wont change, just update the scroll bars.
-    if (needVScroll === hasVScroll && needHScroll === hasHScroll) {
-      this._vScrollBar.maximum = this.maxScrollY;
-      this._vScrollBar.value = this.scrollY;
-      this._vScrollBar.page = ph;
-      this._hScrollBar.maximum = this.maxScrollX;
-      this._hScrollBar.value = this.scrollX;
-      this._hScrollBar.page = pw;
-      return;
-    }
-
-    // Update the visibility of the scroll bars and corner widget.
-    this._vScrollBar.setHidden(!needVScroll);
-    this._hScrollBar.setHidden(!needHScroll);
-    this._scrollCorner.setHidden(!needVScroll || !needHScroll);
-
-    // Immediately re-fit the data grid to update the layout.
-    MessageLoop.sendMessage(this, Widget.Msg.FitRequest);
-
-    // Update the scroll bars.
-    this._vScrollBar.maximum = this.maxScrollY;
-    this._vScrollBar.value = this.scrollY;
-    this._vScrollBar.page = ph;
-    this._hScrollBar.maximum = this.maxScrollX;
-    this._hScrollBar.value = this.scrollX;
-    this._hScrollBar.page = pw;
-  }
-
-  /**
-   * Set the base size for the given section list.
-   *
-   * #### Notes
-   * This will update the scroll bars and repaint as needed.
-   */
-  private _setBaseSize(list: SectionList, size: number): void {
-    // Normalize the size.
-    size = Math.max(0, Math.floor(size));
-
-    // Bail early if the size does not change.
-    if (list.baseSize === size) {
-      return;
-    }
-
-    // Update the list base size.
-    list.baseSize = size;
-
-    // Re-clamp the scroll position for the new page size.
-    this._scrollX = Math.min(this._scrollX, this.maxScrollX);
-    this._scrollY = Math.min(this._scrollY, this.maxScrollY);
-
-    // Schedule a full repaint of the grid.
-    this.repaint();
-
-    // Update the scroll bars after queueing the repaint.
-    this._updateScrollBars();
-  }
-
-  /**
-   * Resize a section in the given section list.
-   *
-   * #### Notes
-   * This will update the scroll bars and repaint as needed.
-   */
-  private _resizeSection(list: SectionList, index: number, size: number): void {
-    // Bail early if the index is out of range.
-    if (index < 0 || index >= list.sectionCount) {
-      return;
-    }
-
-    // Look up the old size of the section.
-    let oldSize = list.sectionSize(index);
-
-    // Normalize the new size of the section.
-    let newSize = Math.max(0, Math.floor(size));
-
-    // Bail early if the size does not change.
-    if (oldSize === newSize) {
-      return;
-    }
-
-    // Resize the section in the list.
-    list.resizeSection(index, newSize);
-
-    // Get the current size of the viewport.
-    let vpWidth = this._viewportWidth;
-    let vpHeight = this._viewportHeight;
-
-    // Bail early if there is nothing to paint.
-    if (!this._viewport.isVisible || vpWidth === 0 || vpHeight === 0) {
-      // Re-clamp the scroll position for the new page size.
-      this._scrollX = Math.min(this._scrollX, this.maxScrollX);
-      this._scrollY = Math.min(this._scrollY, this.maxScrollY);
-
-      // Update the scroll bars.
-      this._updateScrollBars();
-
-      // Done.
-      return;
-    }
-
-    // Handle the case where a paint is already pending.
-    if (this._paintPending) {
-      // Re-clamp the scroll position for the new page size.
-      this._scrollX = Math.min(this._scrollX, this.maxScrollX);
-      this._scrollY = Math.min(this._scrollY, this.maxScrollY);
-
-      // Schedule a full repaint of the grid.
-      this.repaint();
-
-      // Update the scroll bars after queueing the repaint.
-      this._updateScrollBars();
-
-      // Done.
-      return;
-    }
-
-    // Compute the size delta.
-    let delta = newSize - oldSize;
-
-    // Paint the relevant dirty regions.
-    switch (list) {
-    case this._rowSections:
-    {
-      // Look up the column header height.
-      let chh = this.totalColumnHeaderHeight;
-
-      // Compute the viewport offset of the section.
-      let offset = list.sectionOffset(index) + chh - this._scrollY;
-
-      // Bail early if there is nothing to paint.
-      if (chh >= vpHeight || offset > vpHeight) {
-        break;
-      }
-
-      // Update the scroll position if the section is not visible.
-      if (offset + oldSize <= chh) {
-        this._scrollY += delta;
-        break;
-      }
-
-      // Compute the paint origin of the section.
-      let pos = Math.max(chh, offset - 1);
-
-      // Paint from the section onward if it spans the viewport.
-      if (offset + oldSize >= vpHeight || offset + newSize >= vpHeight) {
-        this._paint(0, pos, vpWidth, vpHeight - pos);
-        break;
-      }
-
-      // Compute the X blit dimensions.
-      let sx = 0;
-      let sw = vpWidth;
-      let dx = 0;
-
-      // Compute the Y blit dimensions.
-      let sy: number;
-      let sh: number;
-      let dy: number;
-      if (offset + newSize <= chh) {
-        sy = chh - delta;
-        sh = vpHeight - sy;
-        dy = chh;
-      } else {
-        sy = offset + oldSize;
-        sh = vpHeight - sy;
-        dy = sy + delta;
-      }
-
-      // Blit the valid content to the destination.
-      this._canvasGC.drawImage(this._canvas, sx, sy, sw, sh, dx, dy, sw, sh);
-
-      // Repaint the section if needed.
-      if (offset + newSize > chh) {
-        this._paint(0, pos, vpWidth, offset + newSize - pos);
-      }
-
-      // Paint the trailing space if needed.
-      if (delta < 0) {
-        this._paint(0, vpHeight + delta, vpWidth, -delta);
-      }
-
-      // Done.
-      break;
-    }
-    case this._columnSections:
-    {
-      // Look up the row header width.
-      let rhw = this.totalRowHeaderWidth;
-
-      // Compute the viewport offset of the section.
-      let offset = list.sectionOffset(index) + rhw - this._scrollX;
-
-      // Bail early if there is nothing to paint.
-      if (rhw >= vpWidth || offset > vpWidth) {
-        break;
-      }
-
-      // Update the scroll position if the section is not visible.
-      if (offset + oldSize <= rhw) {
-        this._scrollX += delta;
-        break;
-      }
-
-      // Compute the paint origin of the section.
-      let pos = Math.max(rhw, offset - 1);
-
-      // Paint from the section onward if it spans the viewport.
-      if (offset + oldSize >= vpWidth || offset + newSize >= vpWidth) {
-        this._paint(pos, 0, vpWidth - pos, vpHeight);
-        break;
-      }
-
-      // Compute the Y blit dimensions.
-      let sy = 0;
-      let sh = vpHeight;
-      let dy = 0;
-
-      // Compute the X blit dimensions.
-      let sx: number;
-      let sw: number;
-      let dx: number;
-      if (offset + newSize <= rhw) {
-        sx = rhw - delta;
-        sw = vpWidth - sx;
-        dx = rhw;
-      } else {
-        sx = offset + oldSize;
-        sw = vpWidth - sx;
-        dx = sx + delta;
-      }
-
-      // Blit the valid content to the destination.
-      this._canvasGC.drawImage(this._canvas, sx, sy, sw, sh, dx, dy, sw, sh);
-
-      // Repaint the section if needed.
-      if (offset + newSize > rhw) {
-        this._paint(pos, 0, offset + newSize - pos, vpHeight);
-      }
-
-      // Paint the trailing space if needed.
-      if (delta < 0) {
-        this._paint(vpWidth + delta, 0, -delta, vpHeight);
-      }
-
-      // Done.
-      break;
-    }
-    case this._rowHeaderSections:
-    {
-      // Look up the offset of the section.
-      let offset = list.sectionOffset(index);
-
-      // Compute the origin of the section.
-      let pos = Math.max(0, offset - 1);
-
-      // Compute the paint boundary.
-      let limit = vpWidth - 1;
-
-      // Bail early if the section is fully outside the limit.
-      if (pos > limit) {
-        break;
-      }
-
-      // Paint the entire tail if the section spans the limit.
-      if (offset + oldSize > limit || offset + newSize > limit) {
-        this._paint(pos, 0, vpWidth - pos, vpHeight);
-        break;
-      }
-
-      // Compute the blit content dimensions.
-      let sx = offset + oldSize;
-      let sy = 0;
-      let sw = vpWidth - sx - Math.max(0, delta);
-      let sh = vpHeight;
-      let dx = sx + delta;
-      let dy = 0;
-
-      // Blit the valid contents to the destination.
-      this._canvasGC.drawImage(this._canvas, sx, sy, sw, sh, dx, dy, sw, sh);
-
-      // Repaint the header section.
-      this._paint(pos, 0, offset + newSize - pos, vpHeight);
-
-      // Paint the trailing space if needed.
-      if (delta < 0) {
-        this._paint(vpWidth + delta, 0, -delta, vpHeight);
-      }
-
-      // Done
-      break;
-    }
-    case this._columnHeaderSections:
-    {
-      // Look up the offset of the section.
-      let offset = list.sectionOffset(index);
-
-      // Compute the origin of the section.
-      let pos = Math.max(0, offset - 1);
-
-      // Compute the paint boundary.
-      let limit = vpHeight - 1;
-
-      // Bail early if the section is fully outside the limit.
-      if (pos > limit) {
-        break;
-      }
-
-      // Paint the entire tail if the section spans the limit.
-      if (offset + oldSize > limit || offset + newSize > limit) {
-        this._paint(0, pos, vpWidth, vpHeight - pos);
-        break;
-      }
-
-      // Compute the blit content dimensions.
-      let sx = 0;
-      let sy = offset + oldSize;
-      let sw = vpWidth;
-      let sh = vpHeight - sy - Math.max(0, delta);
-      let dx = 0;
-      let dy = sy + delta;
-
-      // Blit the valid contents to the destination.
-      this._canvasGC.drawImage(this._canvas, sx, sy, sw, sh, dx, dy, sw, sh);
-
-      // Repaint the header section.
-      this._paint(0, pos, vpWidth, offset + newSize - pos);
-
-      // Paint the trailing space if needed.
-      if (delta < 0) {
-        this._paint(0, vpHeight + delta, vpWidth, -delta);
-      }
-
-      // Done
-      break;
-    }
-    default:
-      throw 'unreachable';
-    }
-
-    // Update the scroll bars after painting.
-    this._updateScrollBars();
-
-    // Re-clamp the scroll position to the new page size.
-    this.scrollTo(this._scrollX, this._scrollY);
   }
 
   private _viewport: Widget;
