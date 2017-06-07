@@ -1333,16 +1333,13 @@ class DataGrid extends Widget {
       // Compute the origin of the section.
       let pos = Math.max(0, offset - 1);
 
-      // Compute the paint boundary.
-      let limit = vpWidth - 1;
-
-      // Bail early if the section is fully outside the limit.
-      if (pos > limit) {
+      // Bail early if the section is fully outside the viewport.
+      if (pos >= vpWidth) {
         break;
       }
 
-      // Paint the entire tail if the section spans the limit.
-      if (offset + oldSize > limit || offset + newSize > limit) {
+      // Paint the entire tail if the section spans the viewport.
+      if (offset + oldSize >= vpWidth || offset + newSize >= vpWidth) {
         this._paint(pos, 0, vpWidth - pos, vpHeight);
         break;
       }
@@ -1350,7 +1347,7 @@ class DataGrid extends Widget {
       // Compute the blit content dimensions.
       let sx = offset + oldSize;
       let sy = 0;
-      let sw = vpWidth - sx - Math.max(0, delta);
+      let sw = vpWidth - sx;
       let sh = vpHeight;
       let dx = sx + delta;
       let dy = 0;
@@ -1377,16 +1374,13 @@ class DataGrid extends Widget {
       // Compute the origin of the section.
       let pos = Math.max(0, offset - 1);
 
-      // Compute the paint boundary.
-      let limit = vpHeight - 1;
-
-      // Bail early if the section is fully outside the limit.
-      if (pos > limit) {
+      // Bail early if the section is fully outside the viewport.
+      if (pos >= vpHeight) {
         break;
       }
 
-      // Paint the entire tail if the section spans the limit.
-      if (offset + oldSize > limit || offset + newSize > limit) {
+      // Paint the entire tail if the section spans the viewport.
+      if (offset + oldSize >= vpHeight || offset + newSize >= vpHeight) {
         this._paint(0, pos, vpWidth, vpHeight - pos);
         break;
       }
@@ -1395,7 +1389,7 @@ class DataGrid extends Widget {
       let sx = 0;
       let sy = offset + oldSize;
       let sw = vpWidth;
-      let sh = vpHeight - sy - Math.max(0, delta);
+      let sh = vpHeight - sy;
       let dx = 0;
       let dy = sy + delta;
 
