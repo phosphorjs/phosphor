@@ -180,6 +180,7 @@ class DataGrid extends Widget {
    * Dispose of the resources held by the widgets.
    */
   dispose(): void {
+    this._releaseMouse();
     this._model = null;
     this._rowSections.clear();
     this._columnSections.clear();
@@ -930,6 +931,12 @@ class DataGrid extends Widget {
       return;
     }
 
+    //
+    if (msg.type === 'resize-section-request') {
+      this._onResizeSectionRequest(msg as Private.ResizeSectionRequest);
+      return;
+    }
+
     // Recompute the scroll bar minimums before the layout refits.
     if (msg.type === 'fit-request') {
       let vsbLimits = ElementExt.sizeLimits(this._vScrollBar.node);
@@ -971,8 +978,14 @@ class DataGrid extends Widget {
    */
   handleEvent(event: Event): void {
     switch (event.type) {
+    case 'mousedown':
+      this._evtMouseDown(event as MouseEvent);
+      break;
     case 'mousemove':
       this._evtMouseMove(event as MouseEvent);
+      break;
+    case 'mouseup':
+      this._evtMouseUp(event as MouseEvent);
       break;
     case 'wheel':
       this._evtWheel(event as WheelEvent);
@@ -985,6 +998,7 @@ class DataGrid extends Widget {
    */
   protected onBeforeAttach(msg: Message): void {
     this.node.addEventListener('wheel', this);
+    this.node.addEventListener('mousedown', this);
     this._viewport.node.addEventListener('mousemove', this);
     this.repaint(); // TODO actually need to fit the viewport ?
   }
@@ -994,6 +1008,7 @@ class DataGrid extends Widget {
    */
   protected onAfterDetach(msg: Message): void {
     this.node.removeEventListener('wheel', this);
+    this.node.removeEventListener('mousedown', this);
     this._viewport.node.removeEventListener('mousemove', this);
   }
 
@@ -1506,9 +1521,67 @@ class DataGrid extends Widget {
   }
 
   /**
+   *
+   */
+  private _releaseMouse(): void {
+    //
+    if (!this._pressData) {
+      return;
+    }
+
+    //
+    //this._pressData.override.dispose();
+    this._pressData = null;
+
+    //
+    document.removeEventListener('mousemove', this, true);
+    document.removeEventListener('mouseup', this, true);
+  }
+
+  /**
+   *
+   */
+  private _evtMouseDown(event: MouseEvent): void {
+    //
+    if (this._pressData || event.button !== 0) {
+      return;
+    }
+
+    // Hit test the grid headers for a resize handle.
+    let handle = this._hitTestResizeHandles(event.clientX, event.clientY);
+    if (!handle) {
+      return;
+    }
+
+    //
+    event.preventDefault();
+    event.stopPropagation();
+
+    //
+    this._pressData = { handle };
+
+    //
+    document.addEventListener('mousemove', this, true);
+    document.addEventListener('mouseup', this, true);
+  }
+
+  /**
    * Handle the `mousemove` event for the grid viewport.
    */
   private _evtMouseMove(event: MouseEvent): void {
+    //
+    if (this._pressData) {
+      //
+      event.preventDefault();
+      event.stopPropagation();
+
+      let msg = new Private.ResizeSectionRequest(this._pressData.handle, event.clientX, event.clientY);
+
+      MessageLoop.postMessage(this, msg);
+
+      return;
+    }
+
     // Hit test the grid headers for a resize handle.
     let handle = this._hitTestResizeHandles(event.clientX, event.clientY);
 
@@ -1526,6 +1599,23 @@ class DataGrid extends Widget {
 
     // Update the viewport cursor.
     this._viewport.node.style.cursor = cursor;
+  }
+
+  /**
+   *
+   */
+  private _evtMouseUp(event: MouseEvent): void {
+    //
+    if (!this._pressData || event.button !== 0) {
+      return;
+    }
+
+    //
+    event.preventDefault();
+    event.stopPropagation();
+
+    //
+    this._releaseMouse();
   }
 
   /**
@@ -1601,6 +1691,63 @@ class DataGrid extends Widget {
       break;
     default:
       break;
+    }
+  }
+
+  /**
+   *
+   */
+  private _onResizeSectionRequest(msg: Private.ResizeSectionRequest): void {
+    //
+    let { handle, clientX, clientY } = msg;
+
+    //
+    let rect = this._viewport.node.getBoundingClientRect();
+    let x = clientX - rect.left;
+    let y = clientY - rect.top;
+
+    //
+    let pos: number;
+    let list: SectionList;
+
+    //
+    switch (handle.region) {
+    case 'row-header':
+      pos = y + this._scrollY - this.totalColumnHeaderHeight;
+      list = this._rowSections;
+      break;
+    case 'column-header':
+      pos = x + this._scrollX - this.totalRowHeaderWidth;
+      list = this._columnSections;
+      break;
+    case 'corner-header':
+      pos = handle.type === 'row' ? y : x;
+      list = handle.type === 'row' ? this._columnHeaderSections : this._rowHeaderSections;
+      break;
+    default:
+      throw 'unreachable';
+    }
+
+    //
+    let offset = list.sectionOffset(handle.index);
+
+    //
+    if (offset < 0) {
+      return;
+    }
+
+    //
+    let size = Math.max(10, pos - offset);
+
+    //
+    this._resizeSection(list, handle.index, size);
+
+    if (handle.index === list.sectionCount - 1) {
+      if (list === this._rowSections) {
+        this.scrollTo(this.scrollX, this.maxScrollY);
+      } else if (list === this._columnSections) {
+        this.scrollTo(this.maxScrollX, this.scrollY);
+      }
     }
   }
 
@@ -3040,6 +3187,7 @@ class DataGrid extends Widget {
 
   private _inPaint = false;
   private _paintPending = false;  // TODO: would like to get rid of this flag
+  private _pressData: Private.IPressData | null = null;
 
   private _scrollX = 0;
   private _scrollY = 0;
@@ -3373,6 +3521,17 @@ namespace Private {
   }
 
   /**
+   * An object which stores the mouse press data.
+   */
+  export
+  interface IPressData {
+    /**
+     * The resize handle which was pressed.
+     */
+    handle: IResizeHandle;
+  }
+
+  /**
    * A conflatable message which merges dirty paint rects.
    */
   export
@@ -3439,6 +3598,47 @@ namespace Private {
     private _y1: number;
     private _x2: number;
     private _y2: number;
+  }
+
+  /**
+   *
+   */
+  export
+  class ResizeSectionRequest extends ConflatableMessage {
+
+    constructor(handle: IResizeHandle, clientX: number, clientY: number) {
+      super('resize-section-request');
+      this._handle = handle;
+      this._clientX = clientX;
+      this._clientY = clientY;
+    }
+
+    get handle(): IResizeHandle {
+      return this._handle;
+    }
+
+    get clientX(): number {
+      return this._clientX;
+    }
+
+    get clientY(): number {
+      return this._clientY;
+    }
+
+    conflate(other: ResizeSectionRequest): boolean {
+      let h1 = this._handle;
+      let h2 = other._handle;
+      if (h1.region !== h2.region || h1.type !== h2.type || h1.index !== h2.index) {
+        return false;
+      }
+      this._clientX = other._clientX;
+      this._clientY = other._clientY;
+      return true;
+    }
+
+    private _handle: IResizeHandle;
+    private _clientX: number;
+    private _clientY: number;
   }
 
   /**
