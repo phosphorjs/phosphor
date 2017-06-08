@@ -970,8 +970,13 @@ class DataGrid extends Widget {
    * should not be called directly by user code.
    */
   handleEvent(event: Event): void {
-    if (event.type === 'wheel') {
+    switch (event.type) {
+    case 'mousemove':
+      this._evtMouseMove(event as MouseEvent);
+      break;
+    case 'wheel':
       this._evtWheel(event as WheelEvent);
+      break;
     }
   }
 
@@ -980,6 +985,7 @@ class DataGrid extends Widget {
    */
   protected onBeforeAttach(msg: Message): void {
     this.node.addEventListener('wheel', this);
+    this._viewport.node.addEventListener('mousemove', this);
     this.repaint(); // TODO actually need to fit the viewport ?
   }
 
@@ -988,6 +994,7 @@ class DataGrid extends Widget {
    */
   protected onAfterDetach(msg: Message): void {
     this.node.removeEventListener('wheel', this);
+    this._viewport.node.removeEventListener('mousemove', this);
   }
 
   /**
@@ -1411,6 +1418,114 @@ class DataGrid extends Widget {
 
     // Sync the scroll state after painting.
     this._syncScrollState();
+  }
+
+  /**
+   * Hit test the grid headers for a resize handle.
+   */
+  private _hitTestResizeHandles(clientX: number, clientY: number): Private.IResizeHandle | null {
+    // Look up the header dimensions.
+    let rhw = this.totalRowHeaderWidth;
+    let chh = this.totalColumnHeaderHeight;
+
+    // Convert the mouse position into local coordinates.
+    let rect = this._viewport.node.getBoundingClientRect();
+    let x = clientX - rect.left;
+    let y = clientY - rect.top;
+
+    // Bail early if the mouse is not over a grid header.
+    if (x >= rhw && y >= chh) {
+      return null;
+    }
+
+    // Test for a match in the corner header first.
+    if (x <= rhw + 2 && y <= chh + 2) {
+      // Set up the resize index.
+      let i = -1;
+
+      // Check for a column match if applicable.
+      if (y <= chh) {
+        i = Private.findResizeIndex(this._rowHeaderSections, x);
+      }
+
+      // Return the column match if found.
+      if (i !== -1) {
+        return { type: 'column', region: 'corner-header', index: i };
+      }
+
+      // Check for a row match if applicable.
+      if (x <= rhw) {
+        i = Private.findResizeIndex(this._columnHeaderSections, y);
+      }
+
+      // Return the row match if found.
+      if (i !== -1) {
+        return { type: 'row', region: 'corner-header', index: i };
+      }
+
+      // Otherwise, there was no match.
+      return null;
+    }
+
+    // Test for a match in the column header second.
+    if (y <= chh) {
+      // Convert the position into unscrolled coordinates.
+      let pos = x + this._scrollX - rhw;
+
+      // Check for a match.
+      let i = Private.findResizeIndex(this._columnSections, pos);
+
+      // Return the column match if found.
+      if (i !== -1) {
+        return { type: 'column', region: 'column-header', index: i };
+      }
+
+      // Otherwise, there was no match.
+      return null;
+    }
+
+    // Test for a match in the row header last.
+    if (x <= rhw) {
+      // Convert the position into unscrolled coordinates.
+      let pos = y + this._scrollY - chh;
+
+      // Check for a match.
+      let i = Private.findResizeIndex(this._rowSections, pos);
+
+      // Return the row match if found.
+      if (i !== -1) {
+        return { type: 'row', region: 'row-header', index: i };
+      }
+
+      // Otherwise, there was no match.
+      return null;
+    }
+
+    // Otherwise, there was no match.
+    return null;
+  }
+
+  /**
+   * Handle the `mousemove` event for the grid viewport.
+   */
+  private _evtMouseMove(event: MouseEvent): void {
+    // Hit test the grid headers for a resize handle.
+    let handle = this._hitTestResizeHandles(event.clientX, event.clientY);
+
+    // Convert the hit test results into a grid cursor.
+    let cursor: string;
+    if (!handle) {
+      cursor = '';
+    } else if (handle.type === 'row') {
+      cursor = 'ns-resize';
+    } else if (handle.type === 'column') {
+      cursor = 'ew-resize';
+    } else {
+      throw 'unreachable';
+    }
+
+    // Update the viewport cursor.
+    this._viewport.node.style.cursor = cursor;
   }
 
   /**
@@ -3237,6 +3352,27 @@ namespace Private {
   }
 
   /**
+   * An object which represents a virtual resize handle.
+   */
+  export
+  interface IResizeHandle {
+    /**
+     * The header region for the handle.
+     */
+    region: 'row-header' | 'column-header' | 'corner-header';
+
+    /**
+     * Whether the handle is for a row or column.
+     */
+    type: 'row' | 'column';
+
+    /**
+     * The index of the handle in the region.
+     */
+    index: number;
+  }
+
+  /**
    * A conflatable message which merges dirty paint rects.
    */
   export
@@ -3303,5 +3439,43 @@ namespace Private {
     private _y1: number;
     private _x2: number;
     private _y2: number;
+  }
+
+  /**
+   * Find the index of the resize handle at the given position.
+   *
+   * This accounts for `3px` of space on either side of a grid line,
+   * for a total of `7px` handle width.
+   *
+   * This returns `-1` if the position is not over a handle.
+   */
+  export
+  function findResizeIndex(list: SectionList, pos: number): number {
+    // Find the section at the given position.
+    let i = list.sectionIndex(pos);
+
+    // Test the last section of the position is out of range.
+    if (i < 0) {
+      return pos - list.totalSize <= 2 ? list.sectionCount - 1 : -1;
+    }
+
+    // Look up the offset for the section.
+    let offset = list.sectionOffset(i);
+
+    // Test whether the position hovers the previous border.
+    if (i > 0 && pos - offset <= 2) {
+      return i - 1;
+    }
+
+    // Look up the size of the section.
+    let size = list.sectionSize(i);
+
+    // Test whether the position hoevers the section border.
+    if (size + offset - pos <= 4) {
+      return i;
+    }
+
+    // Otherwise, no resize border is hovered.
+    return -1;
   }
 }
