@@ -211,7 +211,7 @@ class TextRenderer extends CellRenderer {
       textX = config.x + config.width / 2;
       break;
     case 'right':
-      textX = config.x + config.width - 2;
+      textX = config.x + config.width - 3;
       break;
     default:
       throw 'unreachable';
