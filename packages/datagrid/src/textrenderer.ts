@@ -173,7 +173,7 @@ class TextRenderer extends CellRenderer {
     let hAlign = CellRenderer.resolveOption(this.horizontalAlignment, config);
 
     // Compute the padded text box height for the specified alignment.
-    let boxHeight = config.height - (vAlign === 'center' ? 2 : 3);
+    let boxHeight = config.height - (vAlign === 'center' ? 1 : 2);
 
     // Bail if the text box has no effective size.
     if (boxHeight <= 0) {
@@ -205,13 +205,13 @@ class TextRenderer extends CellRenderer {
     // Compute the X position for the text.
     switch (hAlign) {
     case 'left':
-      textX = config.x + 3;
+      textX = config.x + 2;
       break;
     case 'center':
       textX = config.x + config.width / 2;
       break;
     case 'right':
-      textX = config.x + config.width - 3;
+      textX = config.x + config.width - 2;
       break;
     default:
       throw 'unreachable';
@@ -220,7 +220,7 @@ class TextRenderer extends CellRenderer {
     // Clip the cell if the text is taller than the text box height.
     if (textHeight > boxHeight) {
       gc.beginPath();
-      gc.rect(config.x, config.y + 1, config.width, config.height - 2);
+      gc.rect(config.x, config.y, config.width, config.height - 1);
       gc.clip();
     }
 

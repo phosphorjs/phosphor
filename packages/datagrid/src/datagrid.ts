@@ -1219,7 +1219,7 @@ class DataGrid extends Widget {
       }
 
       // Compute the paint origin of the section.
-      let pos = Math.max(chh, offset - 1);
+      let pos = Math.max(chh, offset);
 
       // Paint from the section onward if it spans the viewport.
       if (offset + oldSize >= vpHeight || offset + newSize >= vpHeight) {
@@ -1250,7 +1250,7 @@ class DataGrid extends Widget {
       this._canvasGC.drawImage(this._canvas, sx, sy, sw, sh, dx, dy, sw, sh);
 
       // Repaint the section if needed.
-      if (offset + newSize > chh) {
+      if (newSize > 0 && offset + newSize > chh) {
         this._paint(0, pos, vpWidth, offset + newSize - pos);
       }
 
@@ -1282,7 +1282,7 @@ class DataGrid extends Widget {
       }
 
       // Compute the paint origin of the section.
-      let pos = Math.max(rhw, offset - 1);
+      let pos = Math.max(rhw, offset);
 
       // Paint from the section onward if it spans the viewport.
       if (offset + oldSize >= vpWidth || offset + newSize >= vpWidth) {
@@ -1313,7 +1313,7 @@ class DataGrid extends Widget {
       this._canvasGC.drawImage(this._canvas, sx, sy, sw, sh, dx, dy, sw, sh);
 
       // Repaint the section if needed.
-      if (offset + newSize > rhw) {
+      if (newSize > 0 && offset + newSize > rhw) {
         this._paint(pos, 0, offset + newSize - pos, vpHeight);
       }
 
@@ -1330,17 +1330,14 @@ class DataGrid extends Widget {
       // Look up the offset of the section.
       let offset = list.sectionOffset(index);
 
-      // Compute the origin of the section.
-      let pos = Math.max(0, offset - 1);
-
       // Bail early if the section is fully outside the viewport.
-      if (pos >= vpWidth) {
+      if (offset >= vpWidth) {
         break;
       }
 
       // Paint the entire tail if the section spans the viewport.
       if (offset + oldSize >= vpWidth || offset + newSize >= vpWidth) {
-        this._paint(pos, 0, vpWidth - pos, vpHeight);
+        this._paint(offset, 0, vpWidth - offset, vpHeight);
         break;
       }
 
@@ -1355,8 +1352,10 @@ class DataGrid extends Widget {
       // Blit the valid contents to the destination.
       this._canvasGC.drawImage(this._canvas, sx, sy, sw, sh, dx, dy, sw, sh);
 
-      // Repaint the header section.
-      this._paint(pos, 0, offset + newSize - pos, vpHeight);
+      // Repaint the header section if needed.
+      if (newSize > 0) {
+        this._paint(offset, 0, newSize, vpHeight);
+      }
 
       // Paint the trailing space if needed.
       if (delta < 0) {
@@ -1371,17 +1370,14 @@ class DataGrid extends Widget {
       // Look up the offset of the section.
       let offset = list.sectionOffset(index);
 
-      // Compute the origin of the section.
-      let pos = Math.max(0, offset - 1);
-
       // Bail early if the section is fully outside the viewport.
-      if (pos >= vpHeight) {
+      if (offset >= vpHeight) {
         break;
       }
 
       // Paint the entire tail if the section spans the viewport.
       if (offset + oldSize >= vpHeight || offset + newSize >= vpHeight) {
-        this._paint(0, pos, vpWidth, vpHeight - pos);
+        this._paint(0, offset, vpWidth, vpHeight - offset);
         break;
       }
 
@@ -1396,8 +1392,10 @@ class DataGrid extends Widget {
       // Blit the valid contents to the destination.
       this._canvasGC.drawImage(this._canvas, sx, sy, sw, sh, dx, dy, sw, sh);
 
-      // Repaint the header section.
-      this._paint(0, pos, vpWidth, offset + newSize - pos);
+      // Repaint the header section if needed.
+      if (newSize > 0) {
+        this._paint(0, offset, vpWidth, newSize);
+      }
 
       // Paint the trailing space if needed.
       if (delta < 0) {
@@ -1697,9 +1695,9 @@ class DataGrid extends Widget {
     if (region !== 'body') {
       // Compute the paint offset.
       if (index >= list.sectionCount) {
-        offset = Math.max(0, list.totalSize - 1);
+        offset = list.totalSize;
       } else {
-        offset = Math.max(0, list.sectionOffset(index) - 1);
+        offset = list.sectionOffset(index);
       }
 
       // Remove or insert the sections as needed.
@@ -1771,7 +1769,7 @@ class DataGrid extends Widget {
 
       // Adjust the paint offset if the scroll position did not change.
       if (scrollPos1 === scrollPos2) {
-        offset = Math.max(offset, offset + targetPos - scrollPos1 - 1);
+        offset = Math.max(offset, offset + targetPos - scrollPos1);
       }
     }
 
@@ -1836,7 +1834,7 @@ class DataGrid extends Widget {
     let i2 = Math.max(index + span - 1, destination + span - 1);
 
     // Compute the first paint boundary.
-    let p1 = Math.max(0, list.sectionOffset(i1) - 1);
+    let p1 = list.sectionOffset(i1);
 
     // Compute the last paint boundary.
     let p2: number;
@@ -1956,8 +1954,8 @@ class DataGrid extends Widget {
     }
 
     // Look up the unscrolled top-left corner of the range.
-    let x1 = cList.sectionOffset(columnIndex) - 1;
-    let y1 = rList.sectionOffset(rowIndex) - 1;
+    let x1 = cList.sectionOffset(columnIndex);
+    let y1 = rList.sectionOffset(rowIndex);
 
     // Look up the unscrolled bottom-right corner of the range.
     let x2: number;
@@ -2197,8 +2195,8 @@ class DataGrid extends Widget {
     // Convert the dirty content bounds into cell bounds.
     let r1 = this._rowSections.sectionIndex(y1 - contentY + this._scrollY);
     let c1 = this._columnSections.sectionIndex(x1 - contentX + this._scrollX);
-    let r2 = this._rowSections.sectionIndex(y2 - contentY + this._scrollY + 1);
-    let c2 = this._columnSections.sectionIndex(x2 - contentX + this._scrollX + 1);
+    let r2 = this._rowSections.sectionIndex(y2 - contentY + this._scrollY);
+    let c2 = this._columnSections.sectionIndex(x2 - contentX + this._scrollX);
 
     // Handle a dirty content area larger than the cell count.
     if (r2 < 0) {
@@ -2309,8 +2307,8 @@ class DataGrid extends Widget {
     // Convert the dirty content bounds into cell bounds.
     let r1 = this._rowSections.sectionIndex(y1 - contentY + this._scrollY);
     let c1 = this._rowHeaderSections.sectionIndex(x1);
-    let r2 = this._rowSections.sectionIndex(y2 - contentY + this._scrollY + 1);
-    let c2 = this._rowHeaderSections.sectionIndex(x2 + 1);
+    let r2 = this._rowSections.sectionIndex(y2 - contentY + this._scrollY);
+    let c2 = this._rowHeaderSections.sectionIndex(x2);
 
     // Handle a dirty content area larger than the cell count.
     if (r2 < 0) {
@@ -2415,8 +2413,8 @@ class DataGrid extends Widget {
     // Convert the dirty content bounds into cell bounds.
     let r1 = this._columnHeaderSections.sectionIndex(y1);
     let c1 = this._columnSections.sectionIndex(x1 - contentX + this._scrollX);
-    let r2 = this._columnHeaderSections.sectionIndex(y2 + 1);
-    let c2 = this._columnSections.sectionIndex(x2 - contentX + this._scrollX + 1);
+    let r2 = this._columnHeaderSections.sectionIndex(y2);
+    let c2 = this._columnSections.sectionIndex(x2 - contentX + this._scrollX);
 
     // Handle a dirty content area larger than the cell count.
     if (r2 < 0) {
@@ -2521,8 +2519,8 @@ class DataGrid extends Widget {
     // Convert the dirty content bounds into cell bounds.
     let r1 = this._columnHeaderSections.sectionIndex(y1);
     let c1 = this._rowHeaderSections.sectionIndex(x1);
-    let r2 = this._columnHeaderSections.sectionIndex(y2 + 1);
-    let c2 = this._rowHeaderSections.sectionIndex(x2 + 1);
+    let r2 = this._columnHeaderSections.sectionIndex(y2);
+    let c2 = this._rowHeaderSections.sectionIndex(x2);
 
     // Handle a dirty content area larger than the cell count.
     if (r2 < 0) {
@@ -2632,7 +2630,7 @@ class DataGrid extends Widget {
 
       // Fill the row with the background color if needed.
       if (color) {
-        let y1 = Math.max(rgn.yMin, y - 1);
+        let y1 = Math.max(rgn.yMin, y);
         let y2 = Math.min(y + size - 1, rgn.yMax);
         this._canvasGC.fillStyle = color;
         this._canvasGC.fillRect(x1, y1, x2 - x1 + 1, y2 - y1 + 1);
@@ -2671,7 +2669,7 @@ class DataGrid extends Widget {
 
       // Fill the column with the background color if needed.
       if (color) {
-        let x1 = Math.max(rgn.xMin, x - 1);
+        let x1 = Math.max(rgn.xMin, x);
         let x2 = Math.min(x + size - 1, rgn.xMax);
         this._canvasGC.fillStyle = color;
         this._canvasGC.fillRect(x1, y1, x2 - x1 + 1, y2 - y1 + 1);
@@ -2731,8 +2729,8 @@ class DataGrid extends Widget {
       }
 
       // Update the config for the current column.
-      config.x = x - 1;
-      config.width = width + 1;
+      config.x = x;
+      config.width = width;
       config.column = column;
       config.metadata = metadata;
 
@@ -2775,8 +2773,8 @@ class DataGrid extends Widget {
         }
 
         // Update the config for the current cell.
-        config.y = y - 1;
-        config.height = height + 1;
+        config.y = y;
+        config.height = height;
         config.row = row;
         config.value = value;
 
@@ -2801,7 +2799,7 @@ class DataGrid extends Widget {
       gc.restore();
 
       // Compute the actual X bounds for the column.
-      let x1 = Math.max(rgn.xMin, x - 1);
+      let x1 = Math.max(rgn.xMin, x);
       let x2 = Math.min(x + width - 1, rgn.xMax);
 
       // Copy the off-screen buffer column into the on-screen canvas.
