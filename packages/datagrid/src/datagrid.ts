@@ -1665,6 +1665,8 @@ class DataGrid extends Widget {
    * Handle sections changing in the data model.
    */
   private _onSectionsChanged(args: DataModel.IRowsChangedArgs | DataModel.IColumnsChangedArgs): void {
+    // TODO clean up this method. It's ugly.
+
     // Unpack the arg data.
     let { region, type, index, span } = args;
 
