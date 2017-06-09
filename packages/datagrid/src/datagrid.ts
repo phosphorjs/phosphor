@@ -6,8 +6,16 @@
 | The full license is in the file LICENSE, distributed with this software.
 |----------------------------------------------------------------------------*/
 import {
+  IDisposable
+} from '@phosphor/disposable';
+
+import {
   ElementExt
 } from '@phosphor/domutils';
+
+import {
+  Drag
+} from '@phosphor/dragdrop';
 
 import {
   ConflatableMessage, IMessageHandler, Message, MessageLoop
@@ -931,12 +939,6 @@ class DataGrid extends Widget {
       return;
     }
 
-    //
-    if (msg.type === 'resize-section-request') {
-      this._onResizeSectionRequest(msg as Private.ResizeSectionRequest);
-      return;
-    }
-
     // Recompute the scroll bar minimums before the layout refits.
     if (msg.type === 'fit-request') {
       let vsbLimits = ElementExt.sizeLimits(this._vScrollBar.node);
@@ -990,6 +992,13 @@ class DataGrid extends Widget {
     case 'wheel':
       this._evtWheel(event as WheelEvent);
       break;
+    case 'keydown':
+      this._evtKeyDown(event as KeyboardEvent);
+      break;
+    case 'contextmenu':
+      event.preventDefault();
+      event.stopPropagation();
+      break;
     }
   }
 
@@ -1010,6 +1019,7 @@ class DataGrid extends Widget {
     this.node.removeEventListener('wheel', this);
     this.node.removeEventListener('mousedown', this);
     this._viewport.node.removeEventListener('mousemove', this);
+    this._releaseMouse();
   }
 
   /**
@@ -1455,27 +1465,27 @@ class DataGrid extends Widget {
 
     // Test for a match in the corner header first.
     if (x <= rhw + 2 && y <= chh + 2) {
-      // Set up the resize index.
-      let i = -1;
+      // Set up the resize index data.
+      let data: { index: number, delta: number } | null = null;
 
       // Check for a column match if applicable.
       if (y <= chh) {
-        i = Private.findResizeIndex(this._rowHeaderSections, x);
+        data = Private.findResizeIndex(this._rowHeaderSections, x);
       }
 
       // Return the column match if found.
-      if (i !== -1) {
-        return { type: 'column', region: 'corner-header', index: i };
+      if (data) {
+        return { type: 'header-column', index: data.index, delta: data.delta };
       }
 
       // Check for a row match if applicable.
       if (x <= rhw) {
-        i = Private.findResizeIndex(this._columnHeaderSections, y);
+        data = Private.findResizeIndex(this._columnHeaderSections, y);
       }
 
       // Return the row match if found.
-      if (i !== -1) {
-        return { type: 'row', region: 'corner-header', index: i };
+      if (data) {
+        return { type: 'header-row', index: data.index, delta: data.delta };
       }
 
       // Otherwise, there was no match.
@@ -1488,11 +1498,11 @@ class DataGrid extends Widget {
       let pos = x + this._scrollX - rhw;
 
       // Check for a match.
-      let i = Private.findResizeIndex(this._columnSections, pos);
+      let data = Private.findResizeIndex(this._columnSections, pos);
 
       // Return the column match if found.
-      if (i !== -1) {
-        return { type: 'column', region: 'column-header', index: i };
+      if (data) {
+        return { type: 'body-column', index: data.index, delta: data.delta };
       }
 
       // Otherwise, there was no match.
@@ -1505,11 +1515,11 @@ class DataGrid extends Widget {
       let pos = y + this._scrollY - chh;
 
       // Check for a match.
-      let i = Private.findResizeIndex(this._rowSections, pos);
+      let data = Private.findResizeIndex(this._rowSections, pos);
 
       // Return the row match if found.
-      if (i !== -1) {
-        return { type: 'row', region: 'row-header', index: i };
+      if (data) {
+        return { type: 'body-row', index: data.index, delta: data.delta };
       }
 
       // Otherwise, there was no match.
@@ -1521,100 +1531,103 @@ class DataGrid extends Widget {
   }
 
   /**
-   *
+   * Handle the `'keydown'` event for the data grid.
    */
-  private _releaseMouse(): void {
-    //
-    if (!this._pressData) {
-      return;
+  private _evtKeyDown(event: KeyboardEvent): void {
+    // Stop input events during drag.
+    event.preventDefault();
+    event.stopPropagation();
+
+    // Release the mouse if `Escape` is pressed.
+    if (event.keyCode === 27) {
+      this._releaseMouse();
     }
-
-    //
-    //this._pressData.override.dispose();
-    this._pressData = null;
-
-    //
-    document.removeEventListener('mousemove', this, true);
-    document.removeEventListener('mouseup', this, true);
   }
 
   /**
-   *
+   * Handle the `'mousedown'` event for the data grid.
    */
   private _evtMouseDown(event: MouseEvent): void {
-    //
-    if (this._pressData || event.button !== 0) {
+    // Do nothing if the left mouse button is not pressed.
+    if (event.button !== 0) {
       return;
     }
 
+    // Extract the client position.
+    let { clientX, clientY } = event;
+
     // Hit test the grid headers for a resize handle.
-    let handle = this._hitTestResizeHandles(event.clientX, event.clientY);
+    let handle = this._hitTestResizeHandles(clientX, clientY);
+
+    // Bail early if no resize handle is pressed.
     if (!handle) {
       return;
     }
 
-    //
+    // Stop the event when a resize handle is pressed.
     event.preventDefault();
     event.stopPropagation();
 
-    //
-    this._pressData = { handle };
+    // Look up the cursor for the handle.
+    let cursor = Private.cursorForHandle(handle);
 
-    //
+    // Override the document cursor.
+    let override = Drag.overrideCursor(cursor);
+
+    // Set up the press data.
+    this._pressData = { handle, clientX, clientY, override };
+
+    // Add the extra document listeners.
     document.addEventListener('mousemove', this, true);
     document.addEventListener('mouseup', this, true);
+    document.addEventListener('keydown', this, true);
+    document.addEventListener('contextmenu', this, true);
   }
 
   /**
-   * Handle the `mousemove` event for the grid viewport.
+   * Handle the `mousemove` event for the data grid.
    */
   private _evtMouseMove(event: MouseEvent): void {
-    //
-    if (this._pressData) {
-      //
-      event.preventDefault();
-      event.stopPropagation();
+    // If a drag is not in progress, the event is for the viewport.
+    if (!this._pressData) {
+      // Hit test the grid headers for a resize handle.
+      let handle = this._hitTestResizeHandles(event.clientX, event.clientY);
 
-      let msg = new Private.ResizeSectionRequest(this._pressData.handle, event.clientX, event.clientY);
+      // Update the viewport cursor.
+      this._viewport.node.style.cursor = Private.cursorForHandle(handle);
 
-      MessageLoop.postMessage(this, msg);
-
+      // Done.
       return;
     }
 
-    // Hit test the grid headers for a resize handle.
-    let handle = this._hitTestResizeHandles(event.clientX, event.clientY);
+    // Otherwise, the event is for the drag in progress.
 
-    // Convert the hit test results into a grid cursor.
-    let cursor: string;
-    if (!handle) {
-      cursor = '';
-    } else if (handle.type === 'row') {
-      cursor = 'ns-resize';
-    } else if (handle.type === 'column') {
-      cursor = 'ew-resize';
-    } else {
-      throw 'unreachable';
-    }
-
-    // Update the viewport cursor.
-    this._viewport.node.style.cursor = cursor;
-  }
-
-  /**
-   *
-   */
-  private _evtMouseUp(event: MouseEvent): void {
-    //
-    if (!this._pressData || event.button !== 0) {
-      return;
-    }
-
-    //
+    // Stop the event.
     event.preventDefault();
     event.stopPropagation();
 
-    //
+    // Update the press data with the current mouse position.
+    this._pressData.clientX = event.clientX;
+    this._pressData.clientY = event.clientY;
+
+    // Post a section resize request message to the viewport.
+    MessageLoop.postMessage(this._viewport, Private.SectionResizeRequest);
+  }
+
+  /**
+   * Handle the `mouseup` event for the data grid.
+   */
+  private _evtMouseUp(event: MouseEvent): void {
+    // Do nothing if the left mouse button is not released.
+    if (event.button !== 0) {
+      return;
+    }
+
+    // Stop the event when releasing the mouse.
+    event.preventDefault();
+    event.stopPropagation();
+
+    // Finalize the mouse release.
     this._releaseMouse();
   }
 
@@ -1622,6 +1635,11 @@ class DataGrid extends Widget {
    * Handle the `'wheel'` event for the data grid.
    */
   private _evtWheel(event: WheelEvent): void {
+    // Do nothing if a drag is in progress.
+    if (this._pressData) {
+      return;
+    }
+
     // Extract the delta X and Y movement.
     let dx = event.deltaX;
     let dy = event.deltaY;
@@ -1676,12 +1694,35 @@ class DataGrid extends Widget {
   }
 
   /**
+   * Release the mouse grab for the data grid.
+   */
+  private _releaseMouse(): void {
+    // Bail early if no drag is in progress.
+    if (!this._pressData) {
+      return;
+    }
+
+    // Clear the press data and cursor override.
+    this._pressData.override.dispose();
+    this._pressData = null;
+
+    // Remove the extra document listeners.
+    document.removeEventListener('mousemove', this, true);
+    document.removeEventListener('mouseup', this, true);
+    document.removeEventListener('keydown', this, true);
+    document.removeEventListener('contextmenu', this, true);
+  }
+
+  /**
    * Process a message sent to the viewport
    */
   private _processViewportMessage(msg: Message): void {
     switch (msg.type) {
     case 'scroll-request':
       this._onViewportScrollRequest(msg);
+      break;
+    case 'section-resize-request':
+      this._onViewportSectionResizeRequest(msg);
       break;
     case 'resize':
       this._onViewportResize(msg as Widget.ResizeMessage);
@@ -1695,60 +1736,59 @@ class DataGrid extends Widget {
   }
 
   /**
-   *
+   * A message hook invoked on a `'section-resize-request'` message.
    */
-  private _onResizeSectionRequest(msg: Private.ResizeSectionRequest): void {
-    //
-    let { handle, clientX, clientY } = msg;
+  private _onViewportSectionResizeRequest(msg: Message): void {
+    // Bail early if a drag is not in progress.
+    if (!this._pressData) {
+      return;
+    }
 
-    //
+    // Extract the relevant press data.
+    let { handle, clientX, clientY } = this._pressData;
+
+    // Convert the client position to viewport coordinates.
     let rect = this._viewport.node.getBoundingClientRect();
     let x = clientX - rect.left;
     let y = clientY - rect.top;
 
-    //
+    // Look up the section list and convert to section position.
     let pos: number;
     let list: SectionList;
-
-    //
-    switch (handle.region) {
-    case 'row-header':
+    switch (handle.type) {
+    case 'body-row':
       pos = y + this._scrollY - this.totalColumnHeaderHeight;
       list = this._rowSections;
       break;
-    case 'column-header':
+    case 'body-column':
       pos = x + this._scrollX - this.totalRowHeaderWidth;
       list = this._columnSections;
       break;
-    case 'corner-header':
-      pos = handle.type === 'row' ? y : x;
-      list = handle.type === 'row' ? this._columnHeaderSections : this._rowHeaderSections;
+    case 'header-row':
+      pos = y;
+      list = this._columnHeaderSections;
+      break;
+    case 'header-column':
+      pos = x;
+      list = this._rowHeaderSections;
       break;
     default:
       throw 'unreachable';
     }
 
-    //
+    // Look up the offset for the handle.
     let offset = list.sectionOffset(handle.index);
 
-    //
+    // Bail if the handle no longer exists.
     if (offset < 0) {
       return;
     }
 
-    //
-    let size = Math.max(10, pos - offset);
+    // Compute the new size for the section.
+    let size = Math.max(4, pos - handle.delta - offset);
 
-    //
+    // Resize the section to the computed size.
     this._resizeSection(list, handle.index, size);
-
-    if (handle.index === list.sectionCount - 1) {
-      if (list === this._rowSections) {
-        this.scrollTo(this.scrollX, this.maxScrollY);
-      } else if (list === this._columnSections) {
-        this.scrollTo(this.maxScrollX, this.scrollY);
-      }
-    }
   }
 
   /**
@@ -3394,6 +3434,12 @@ namespace Private {
   const ScrollRequest = new ConflatableMessage('scroll-request');
 
   /**
+   * A singleton `section-resize-request` conflatable message.
+   */
+  export
+  const SectionResizeRequest = new ConflatableMessage('section-resize-request');
+
+  /**
    * Create a new zero-sized canvas element.
    */
   export
@@ -3505,19 +3551,19 @@ namespace Private {
   export
   interface IResizeHandle {
     /**
-     * The header region for the handle.
+     * The type of the resize handle.
      */
-    region: 'row-header' | 'column-header' | 'corner-header';
-
-    /**
-     * Whether the handle is for a row or column.
-     */
-    type: 'row' | 'column';
+    type: 'body-row' | 'body-column' | 'header-row' | 'header-column';
 
     /**
      * The index of the handle in the region.
      */
     index: number;
+
+    /**
+     * The delta between the queried position and handle position.
+     */
+    delta: number;
   }
 
   /**
@@ -3529,6 +3575,21 @@ namespace Private {
      * The resize handle which was pressed.
      */
     handle: IResizeHandle;
+
+    /**
+     * The most recent client X position of the mouse.
+     */
+    clientX: number;
+
+    /**
+     * The most recent client Y position of the mouse.
+     */
+    clientY: number;
+
+    /**
+     * The disposable which will clear the override cursor.
+     */
+    override: IDisposable;
   }
 
   /**
@@ -3601,81 +3662,77 @@ namespace Private {
   }
 
   /**
-   *
-   */
-  export
-  class ResizeSectionRequest extends ConflatableMessage {
-
-    constructor(handle: IResizeHandle, clientX: number, clientY: number) {
-      super('resize-section-request');
-      this._handle = handle;
-      this._clientX = clientX;
-      this._clientY = clientY;
-    }
-
-    get handle(): IResizeHandle {
-      return this._handle;
-    }
-
-    get clientX(): number {
-      return this._clientX;
-    }
-
-    get clientY(): number {
-      return this._clientY;
-    }
-
-    conflate(other: ResizeSectionRequest): boolean {
-      let h1 = this._handle;
-      let h2 = other._handle;
-      if (h1.region !== h2.region || h1.type !== h2.type || h1.index !== h2.index) {
-        return false;
-      }
-      this._clientX = other._clientX;
-      this._clientY = other._clientY;
-      return true;
-    }
-
-    private _handle: IResizeHandle;
-    private _clientX: number;
-    private _clientY: number;
-  }
-
-  /**
    * Find the index of the resize handle at the given position.
    *
    * This accounts for `3px` of space on either side of a grid line,
    * for a total of `7px` handle width.
    *
-   * This returns `-1` if the position is not over a handle.
+   * Returns the `{ index, delta }` match or `null`.
    */
   export
-  function findResizeIndex(list: SectionList, pos: number): number {
+  function findResizeIndex(list: SectionList, pos: number): { index: number, delta: number } | null {
+    // Bail early if the list is empty or the position is invalid.
+    if (list.sectionCount === 0 || pos < 0) {
+      return null;
+    }
+
+    // Compute the delta from the end of the list.
+    let d1 = pos - (list.totalSize - 1);
+
+    // Bail if the position is out of range.
+    if (d1 > 3) {
+      return null;
+    }
+
+    // Test whether the hover is just past the last section.
+    if (d1 >= 0) {
+      return { index: list.sectionCount - 1, delta: d1 };
+    }
+
     // Find the section at the given position.
     let i = list.sectionIndex(pos);
-
-    // Test the last section of the position is out of range.
-    if (i < 0) {
-      return pos - list.totalSize <= 2 ? list.sectionCount - 1 : -1;
-    }
 
     // Look up the offset for the section.
     let offset = list.sectionOffset(i);
 
+    // Compute the delta to the previous border.
+    let d2 = pos - (offset - 1);
+
     // Test whether the position hovers the previous border.
-    if (i > 0 && pos - offset <= 2) {
-      return i - 1;
+    if (i > 0 && d2 <= 3) {
+      return { index: i - 1, delta: d2 };
     }
 
     // Look up the size of the section.
     let size = list.sectionSize(i);
 
-    // Test whether the position hoevers the section border.
-    if (size + offset - pos <= 4) {
-      return i;
+    // Compute the delta to the next border.
+    let d3 = (size + offset - 1) - pos;
+
+    // Test whether the position hovers the section border.
+    if (d3 <= 3) {
+      return { index: i, delta: -d3 };
     }
 
     // Otherwise, no resize border is hovered.
-    return -1;
+    return null;
   }
+
+  /**
+   * Get the cursor to use for a resize handle.
+   */
+  export
+  function cursorForHandle(handle: IResizeHandle | null): string {
+    return handle ? cursorMap[handle.type] : '';
+  }
+
+  /**
+   * A mapping of resize handle types to cursor values.
+   */
+  const cursorMap = {
+    'body-row': 'ns-resize',
+    'body-column': 'ew-resize',
+    'header-row': 'ns-resize',
+    'header-column': 'ew-resize'
+  };
 }
