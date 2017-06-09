@@ -559,7 +559,6 @@ namespace ViridisCM {
 }
 
 
-export
 namespace Data {
 
   export
