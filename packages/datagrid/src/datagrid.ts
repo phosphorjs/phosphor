@@ -338,32 +338,32 @@ class DataGrid extends Widget {
   }
 
   /**
-   * The total height of the body rows.
-   *
-   * #### Notes
-   * This value does not include the height of the column headers.
-   */
-  get totalRowHeight(): number {
-    return this._rowSections.totalSize;
-  }
-
-  /**
-   * The total width of the body columns.
+   * The virtual width of the grid body.
    *
    * #### Notes
    * This value does not include the width of the row headers.
    */
-  get totalColumnWidth(): number {
+  get bodyWidth(): number {
     return this._columnSections.totalSize;
   }
 
   /**
-   * The total width of the row headers.
+   * The virtual height of the grid body.
+   *
+   * #### Notes
+   * This value does not include the height of the column headers.
+   */
+  get bodyHeight(): number {
+    return this._rowSections.totalSize;
+  }
+
+  /**
+   * The virtual width of the row headers.
    *
    * #### Notes
    * This will be `0` if the row headers are hidden.
    */
-  get totalRowHeaderWidth(): number {
+  get rowHeaderWidth(): number {
     if (this._headerVisibility === 'none') {
       return 0;
     }
@@ -374,12 +374,12 @@ class DataGrid extends Widget {
   }
 
   /**
-   * The total height of the column headers.
+   * The virtual height of the column headers.
    *
    * #### Notes
    * This will be `0` if the column headers are hidden.
    */
-  get totalColumnHeaderHeight(): number {
+  get columnHeaderHeight(): number {
     if (this._headerVisibility === 'none') {
       return 0;
     }
@@ -390,25 +390,25 @@ class DataGrid extends Widget {
   }
 
   /**
-   * The total width of the grid content.
+   * The total virtual width of the grid.
    *
    * #### Notes
    * If the grid widget is sized larger than this width, a horizontal
    * scroll bar will not be shown.
    */
-  get totalContentWidth(): number {
-    return this.totalRowHeaderWidth + this.totalColumnWidth;
+  get totalWidth(): number {
+    return this.rowHeaderWidth + this.bodyWidth;
   }
 
   /**
-   * The total height of the grid content.
+   * The total virtual height of the grid.
    *
    * #### Notes
    * If the grid widget is sized larger than this height, a vertical
    * scroll bar will not be shown.
    */
-  get totalContentHeight(): number {
-    return this.totalColumnHeaderHeight + this.totalRowHeight;
+  get totalHeight(): number {
+    return this.columnHeaderHeight + this.bodyHeight;
   }
 
   /**
@@ -438,7 +438,7 @@ class DataGrid extends Widget {
    * This value does not include the width of the row headers.
    */
   get pageWidth(): number {
-    return Math.max(0, this._viewportWidth - this.totalRowHeaderWidth);
+    return Math.max(0, this._viewportWidth - this.rowHeaderWidth);
   }
 
   /**
@@ -448,7 +448,7 @@ class DataGrid extends Widget {
    * This value does not include the height of the column headers.
    */
   get pageHeight(): number {
-    return Math.max(0, this._viewportHeight - this.totalColumnHeaderHeight);
+    return Math.max(0, this._viewportHeight - this.columnHeaderHeight);
   }
 
   /**
@@ -460,7 +460,7 @@ class DataGrid extends Widget {
    * is visible.
    */
   get maxScrollX(): number {
-    return Math.max(0, this.totalColumnWidth - this.pageWidth - 1);
+    return Math.max(0, this.bodyWidth - this.pageWidth - 1);
   }
 
   /**
@@ -472,7 +472,7 @@ class DataGrid extends Widget {
    * bar is visible.
    */
   get maxScrollY(): number {
-    return Math.max(0, this.totalRowHeight - this.pageHeight - 1);
+    return Math.max(0, this.bodyHeight - this.pageHeight - 1);
   }
 
   /**
@@ -724,8 +724,8 @@ class DataGrid extends Widget {
     }
 
     // Get the visible content origin.
-    let contentX = this.totalRowHeaderWidth;
-    let contentY = this.totalColumnHeaderHeight;
+    let contentX = this.rowHeaderWidth;
+    let contentY = this.columnHeaderHeight;
 
     // Get the visible content dimensions.
     let contentWidth = width - contentX;
@@ -1038,8 +1038,8 @@ class DataGrid extends Widget {
    */
   private _syncScrollState(): void {
     // Fetch the viewport dimensions.
-    let sw = this.totalColumnWidth;
-    let sh = this.totalRowHeight;
+    let bw = this.bodyWidth;
+    let bh = this.bodyHeight;
     let pw = this.pageWidth;
     let ph = this.pageHeight;
 
@@ -1056,17 +1056,17 @@ class DataGrid extends Widget {
     let aph = ph + (hasHScroll ? hsh : 0);
 
     // Test whether scroll bars are needed for the adjusted size.
-    let needVScroll = aph < sh - 1;
-    let needHScroll = apw < sw - 1;
+    let needVScroll = aph < bh - 1;
+    let needHScroll = apw < bw - 1;
 
     // Re-test the horizontal scroll if a vertical scroll is needed.
     if (needVScroll && !needHScroll) {
-      needHScroll = (apw - vsw) < sw - 1;
+      needHScroll = (apw - vsw) < bw - 1;
     }
 
     // Re-test the vertical scroll if a horizontal scroll is needed.
     if (needHScroll && !needVScroll) {
-      needVScroll = (aph - hsh) < sh - 1;
+      needVScroll = (aph - hsh) < bh - 1;
     }
 
     // If the visibility changes, immediately refit the grid.
@@ -1197,7 +1197,7 @@ class DataGrid extends Widget {
     case this._rowSections:
     {
       // Look up the column header height.
-      let chh = this.totalColumnHeaderHeight;
+      let chh = this.columnHeaderHeight;
 
       // Compute the viewport offset of the section.
       let offset = list.sectionOffset(index) + chh - this._scrollY;
@@ -1260,7 +1260,7 @@ class DataGrid extends Widget {
     case this._columnSections:
     {
       // Look up the row header width.
-      let rhw = this.totalRowHeaderWidth;
+      let rhw = this.rowHeaderWidth;
 
       // Compute the viewport offset of the section.
       let offset = list.sectionOffset(index) + rhw - this._scrollX;
@@ -1413,8 +1413,8 @@ class DataGrid extends Widget {
    */
   private _hitTestResizeHandles(clientX: number, clientY: number): Private.IResizeHandle | null {
     // Look up the header dimensions.
-    let rhw = this.totalRowHeaderWidth;
-    let chh = this.totalColumnHeaderHeight;
+    let rhw = this.rowHeaderWidth;
+    let chh = this.columnHeaderHeight;
 
     // Convert the mouse position into local coordinates.
     let rect = this._viewport.node.getBoundingClientRect();
@@ -1727,11 +1727,11 @@ class DataGrid extends Widget {
     let list: SectionList;
     switch (handle.type) {
     case 'body-row':
-      pos = y + this._scrollY - this.totalColumnHeaderHeight;
+      pos = y + this._scrollY - this.columnHeaderHeight;
       list = this._rowSections;
       break;
     case 'body-column':
-      pos = x + this._scrollX - this.totalRowHeaderWidth;
+      pos = x + this._scrollX - this.rowHeaderWidth;
       list = this._columnSections;
       break;
     case 'header-row':
@@ -2026,10 +2026,10 @@ class DataGrid extends Widget {
       // Update the scroll position and compute the paint offset.
       if (isRows) {
         this._scrollY = scrollPos2;
-        offset = this.totalColumnHeaderHeight;
+        offset = this.columnHeaderHeight;
       } else {
         this._scrollX = scrollPos2;
-        offset = this.totalRowHeaderWidth;
+        offset = this.rowHeaderWidth;
       }
 
       // Adjust the paint offset if the scroll position did not change.
@@ -2113,8 +2113,8 @@ class DataGrid extends Widget {
     list.moveSections(index, span, destination);
 
     // Fetch the row header and column header sizes.
-    let rhw = this.totalRowHeaderWidth;
-    let chh = this.totalColumnHeaderHeight;
+    let rhw = this.rowHeaderWidth;
+    let chh = this.columnHeaderHeight;
 
     // Set up the initial paint limits.
     let xMin = 0;
@@ -2237,8 +2237,8 @@ class DataGrid extends Widget {
     }
 
     // Fetch the row header and column header sizes.
-    let rhw = this.totalRowHeaderWidth;
-    let chh = this.totalColumnHeaderHeight;
+    let rhw = this.rowHeaderWidth;
+    let chh = this.columnHeaderHeight;
 
     // Set up the initial paint limits.
     let xMin = 0;
@@ -2434,8 +2434,8 @@ class DataGrid extends Widget {
     }
 
     // Get the visible content origin.
-    let contentX = this.totalRowHeaderWidth;
-    let contentY = this.totalColumnHeaderHeight;
+    let contentX = this.rowHeaderWidth;
+    let contentY = this.columnHeaderHeight;
 
     // Bail if the dirty rect does not intersect the content area.
     if (rx + rw <= contentX) {
@@ -2537,7 +2537,7 @@ class DataGrid extends Widget {
    */
   private _drawRowHeaderRegion(rx: number, ry: number, rw: number, rh: number): void {
     // Get the visible content dimensions.
-    let contentW = this.totalRowHeaderWidth;
+    let contentW = this.rowHeaderWidth;
     let contentH = this._rowSections.totalSize - this._scrollY;
 
     // Bail if there is no content to draw.
@@ -2547,7 +2547,7 @@ class DataGrid extends Widget {
 
     // Get the visible content origin.
     let contentX = 0;
-    let contentY = this.totalColumnHeaderHeight;
+    let contentY = this.columnHeaderHeight;
 
     // Bail if the dirty rect does not intersect the content area.
     if (rx + rw <= contentX) {
@@ -2644,7 +2644,7 @@ class DataGrid extends Widget {
   private _drawColumnHeaderRegion(rx: number, ry: number, rw: number, rh: number): void {
     // Get the visible content dimensions.
     let contentW = this._columnSections.totalSize - this._scrollX;
-    let contentH = this.totalColumnHeaderHeight;
+    let contentH = this.columnHeaderHeight;
 
     // Bail if there is no content to draw.
     if (contentW <= 0 || contentH <= 0) {
@@ -2652,7 +2652,7 @@ class DataGrid extends Widget {
     }
 
     // Get the visible content origin.
-    let contentX = this.totalRowHeaderWidth;
+    let contentX = this.rowHeaderWidth;
     let contentY = 0;
 
     // Bail if the dirty rect does not intersect the content area.
@@ -2749,8 +2749,8 @@ class DataGrid extends Widget {
    */
   private _drawCornerHeaderRegion(rx: number, ry: number, rw: number, rh: number): void {
     // Get the visible content dimensions.
-    let contentW = this.totalRowHeaderWidth;
-    let contentH = this.totalColumnHeaderHeight;
+    let contentW = this.rowHeaderWidth;
+    let contentH = this.columnHeaderHeight;
 
     // Bail if there is no content to draw.
     if (contentW <= 0 || contentH <= 0) {
