@@ -338,6 +338,30 @@ class DataGrid extends Widget {
   }
 
   /**
+   * The maximum scroll X position for the current grid dimensions.
+   *
+   * #### Notes
+   * This value is `1px` less than the theoretical maximum to allow the
+   * the right-most grid line to be clipped when the vertical scroll bar
+   * is visible.
+   */
+  get maxScrollX(): number {
+    return Math.max(0, this.bodyWidth - this.pageWidth - 1);
+  }
+
+  /**
+   * The maximum scroll Y position for the current grid dimensions.
+   *
+   * #### Notes
+   * This value is `1px` less than the theoretical maximum to allow the
+   * the bottom-most grid line to be clipped when the horizontal scroll
+   * bar is visible.
+   */
+  get maxScrollY(): number {
+    return Math.max(0, this.bodyHeight - this.pageHeight - 1);
+  }
+
+  /**
    * The virtual width of the grid body.
    *
    * #### Notes
@@ -449,30 +473,6 @@ class DataGrid extends Widget {
    */
   get pageHeight(): number {
     return Math.max(0, this._viewportHeight - this.columnHeaderHeight);
-  }
-
-  /**
-   * The maximum scroll X position for the current grid dimensions.
-   *
-   * #### Notes
-   * This value is `1px` less than the theoretical maximum to allow the
-   * the right-most grid line to be clipped when the vertical scroll bar
-   * is visible.
-   */
-  get maxScrollX(): number {
-    return Math.max(0, this.bodyWidth - this.pageWidth - 1);
-  }
-
-  /**
-   * The maximum scroll Y position for the current grid dimensions.
-   *
-   * #### Notes
-   * This value is `1px` less than the theoretical maximum to allow the
-   * the bottom-most grid line to be clipped when the horizontal scroll
-   * bar is visible.
-   */
-  get maxScrollY(): number {
-    return Math.max(0, this.bodyHeight - this.pageHeight - 1);
   }
 
   /**
