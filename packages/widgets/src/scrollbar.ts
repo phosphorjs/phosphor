@@ -1,5 +1,5 @@
 /*-----------------------------------------------------------------------------
-| Copyright (c) 2014-2015, S. Chris Colbert
+| Copyright (c) 2014-2017, PhosphorJS Contributors
 |
 | Distributed under the terms of the BSD 3-Clause License.
 |
