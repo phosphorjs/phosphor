@@ -210,8 +210,12 @@ function main(): void {
 
   let brownStripeStyle: DataGrid.IStyle = {
     ...DataGrid.defaultStyle,
-    rowBackgroundColor: i => i % 2 === 0 ? 'rgba(204, 156, 0, 0.2)' : '',
-    columnBackgroundColor: i => i % 2 === 0 ? 'rgba(153, 135, 77, 0.2)' : ''
+    columnBackgroundColor: i => i % 2 === 0 ? 'rgba(165, 143, 53, 0.2)' : ''
+  };
+
+  let greenStripeStyle: DataGrid.IStyle = {
+    ...DataGrid.defaultStyle,
+    rowBackgroundColor: i => i % 2 === 0 ? 'rgba(64, 115, 53, 0.2)' : ''
   };
 
   let fgColorFloatRenderer = new TextRenderer({
@@ -243,11 +247,11 @@ function main(): void {
   grid4.model = model4;
 
   let grid5 = new DataGrid({
-    style: blueStripeStyle,
-    baseRowHeight: 32,
-    baseColumnWidth: 128,
-    baseRowHeaderWidth: 64,
-    baseColumnHeaderHeight: 32
+    style: greenStripeStyle,
+    baseRowSize: 32,
+    baseColumnSize: 128,
+    baseRowHeaderSize: 64,
+    baseColumnHeaderSize: 32
   });
   grid5.model = model5;
 
