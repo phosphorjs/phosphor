@@ -1736,6 +1736,13 @@ class DataGrid extends Widget {
   }
 
   /**
+   * A message hook invoked on a viewport `'scroll-request'` message.
+   */
+  private _onViewportScrollRequest(msg: Message): void {
+    this.scrollTo(this._hScrollBar.value, this._vScrollBar.value);
+  }
+
+  /**
    * A message hook invoked on a `'section-resize-request'` message.
    */
   private _onViewportSectionResizeRequest(msg: Message): void {
@@ -1789,13 +1796,6 @@ class DataGrid extends Widget {
 
     // Resize the section to the computed size.
     this._resizeSection(list, handle.index, size);
-  }
-
-  /**
-   * A message hook invoked on a viewport `'scroll-request'` message.
-   */
-  private _onViewportScrollRequest(msg: Message): void {
-    this.scrollTo(this._hScrollBar.value, this._vScrollBar.value);
   }
 
   /**
