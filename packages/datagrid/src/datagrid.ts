@@ -82,29 +82,29 @@ class DataGrid extends Widget {
     // Connect to the renderer map changed signal
     this._cellRenderers.changed.connect(this._onRenderersChanged, this);
 
-    // Parse the base sizes for the section lists.
-    let brh = 20;
-    let bcw = 64;
-    let brhw = 64;
-    let bchh = 20;
-    if (options.baseRowHeight !== undefined) {
-      brh = options.baseRowHeight;
+    // Parse the base section sizes.
+    let brs = 20;
+    let bcs = 64;
+    let brhs = 64;
+    let bchs = 20;
+    if (options.baseRowSize !== undefined) {
+      brs = options.baseRowSize;
     }
-    if (options.baseColumnWidth !== undefined) {
-      bcw = options.baseColumnWidth;
+    if (options.baseColumnSize !== undefined) {
+      bcs = options.baseColumnSize;
     }
-    if (options.baseRowHeaderWidth !== undefined) {
-      brhw = options.baseRowHeaderWidth;
+    if (options.baseRowHeaderSize !== undefined) {
+      brhs = options.baseRowHeaderSize;
     }
-    if (options.baseColumnHeaderHeight !== undefined) {
-      bchh = options.baseColumnHeaderHeight;
+    if (options.baseColumnHeaderSize !== undefined) {
+      bchs = options.baseColumnHeaderSize;
     }
 
-    // Set up the row and column sections lists.
-    this._rowSections = new SectionList({ baseSize: brh });
-    this._columnSections = new SectionList({ baseSize: bcw });
-    this._rowHeaderSections = new SectionList({ baseSize: brhw });
-    this._columnHeaderSections = new SectionList({ baseSize: bchh });
+    // Set up the sections lists.
+    this._rowSections = new SectionList({ baseSize: brs });
+    this._columnSections = new SectionList({ baseSize: bcs });
+    this._rowHeaderSections = new SectionList({ baseSize: brhs });
+    this._columnHeaderSections = new SectionList({ baseSize: bchs });
 
     // Create the canvas and buffer objects.
     this._canvas = Private.createCanvas();
@@ -476,183 +476,122 @@ class DataGrid extends Widget {
   }
 
   /**
-   * Get the base height of the body rows.
+   * Get the base size of the body rows.
    *
    * #### Notes
-   * This is the height of rows which have not been resized.
+   * This is the size of rows which have not been resized.
    */
-  get baseRowHeight(): number {
+  get baseRowSize(): number {
     return this._rowSections.baseSize;
   }
 
   /**
-   * Set the base height of the body rows.
+   * Set the base size of the body rows.
    *
    * #### Notes
-   * This is the height of rows which have not been resized.
+   * This is the size of rows which have not been resized.
    */
-  set baseRowHeight(value: number) {
+  set baseRowSize(value: number) {
     this._setBaseSize(this._rowSections, value);
   }
 
   /**
-   * Get the base width of the body columns.
+   * Get the base size of the body columns.
    *
    * #### Notes
-   * This is the width of columns which have not been resized.
+   * This is the size of columns which have not been resized.
    */
-  get baseColumnWidth(): number {
+  get baseColumnSize(): number {
     return this._columnSections.baseSize;
   }
 
   /**
-   * Set the base width of the body columns.
+   * Set the base size of the body columns.
    *
    * #### Notes
-   * This is the width of columns which have not been resized.
+   * This is the size of columns which have not been resized.
    */
-  set baseColumnWidth(value: number) {
+  set baseColumnSize(value: number) {
     this._setBaseSize(this._columnSections, value);
   }
 
   /**
-   * Get the base width of the row header columns.
+   * Get the base size of the row headers.
    *
    * #### Notes
-   * This is the width of row headers which have not been resized.
+   * This is the size of row headers which have not been resized.
    */
-  get baseRowHeaderWidth(): number {
+  get baseRowHeaderSize(): number {
     return this._rowHeaderSections.baseSize;
   }
 
   /**
-   * Set the base width of the row header columns.
+   * Set the base size of the row headers.
    *
    * #### Notes
-   * This is the width of row headers which have not been resized.
+   * This is the size of row headers which have not been resized.
    */
-  set baseRowHeaderWidth(value: number) {
+  set baseRowHeaderSize(value: number) {
     this._setBaseSize(this._rowHeaderSections, value);
   }
 
   /**
-   * Get the base height of the column header rows.
+   * Get the base size of the column headers.
    *
    * #### Notes
-   * This is the height of column headers which have not been resized.
+   * This is the size of column headers which have not been resized.
    */
-  get baseColumnHeaderHeight(): number {
+  get baseColumnHeaderSize(): number {
     return this._columnHeaderSections.baseSize;
   }
 
   /**
-   * Set the base height of the column header rows.
+   * Set the base size of the column headers.
    *
    * #### Notes
-   * This is the height of column headers which have not been resized.
+   * This is the size of column headers which have not been resized.
    */
-  set baseColumnHeaderHeight(value: number) {
+  set baseColumnHeaderSize(value: number) {
     this._setBaseSize(this._columnHeaderSections, value);
   }
 
   /**
-   * Get the height of a body row.
+   * Get the size of a section in the data grid.
    *
-   * @param index - The index of the body row of interest.
+   * @param area - The grid area for the section of interest.
    *
-   * @return The height of the row, or `-1` if `index` is invalid.
+   * @param index - The index of the section of interest.
+   *
+   * @return The size of the section, or `-1` if `index` is invalid.
    */
-  rowHeight(index: number): number {
-    return this._rowSections.sectionSize(index);
+  sectionSize(area: 'row' | 'column' | 'row-header' | 'column-header', index: number): number {
+    return this._getSectionList(area).sectionSize(index);
   }
 
   /**
-   * Get the width of a body column.
+   * Resize a section in the data grid.
    *
-   * @param index - The index of the body column of interest.
+   * @param area - The grid area for the section of interest.
    *
-   * @return The width of the column, or `-1` if `index` is invalid.
-   */
-  columnWidth(index: number): number {
-    return this._columnSections.sectionSize(index);
-  }
-
-  /**
-   * Get the width of a row header column.
+   * @param index - The index of the section of interest.
    *
-   * @param index - The index of the row header column of interest.
-   *
-   * @return The width of the column, or `-1` if `index` is invalid.
-   */
-  rowHeaderWidth(index: number): number {
-    return this._rowHeaderSections.sectionSize(index);
-  }
-
-  /**
-   * Get the height of a column header row.
-   *
-   * @param index - The index of the column header row of interest.
-   *
-   * @return The height of the row, or `-1` if `index` is invalid.
-   */
-  columnHeaderHeight(index: number): number {
-    return this._columnHeaderSections.sectionSize(index);
-  }
-
-  /**
-   * Resize a body row.
-   *
-   * @param index - The index of the body row of interest.
-   *
-   * @param size - The new height for the row.
+   * @param size - The new size for the section.
    *
    * #### Notes
    * This is a no-op if `index` is invalid.
    */
-  resizeRow(index: number, size: number): void {
-    this._resizeSection(this._rowSections, index, size);
+  resizeSection(area: 'row' | 'column' | 'row-header' | 'column-header', index: number, size: number): void {
+    this._resizeSection(this._getSectionList(area), index, size);
   }
 
   /**
-   * Resize a body column.
+   * Reset sections in the data grid to their base size.
    *
-   * @param index - The index of the body column of interest.
-   *
-   * @param size - The new width for the column.
-   *
-   * #### Notes
-   * This is a no-op if `index` is invalid.
+   * @param area - The grid area for the section of interest.
    */
-  resizeColumn(index: number, size: number): void {
-    this._resizeSection(this._columnSections, index, size);
-  }
-
-  /**
-   * Resize a row header column.
-   *
-   * @param index - The index of the row header column of interest.
-   *
-   * @param size - The new width for the row header column.
-   *
-   * #### Notes
-   * This is a no-op if `index` is invalid.
-   */
-  resizeRowHeader(index: number, size: number): void {
-    this._resizeSection(this._rowHeaderSections, index, size);
-  }
-
-  /**
-   * Resize a column header row.
-   *
-   * @param index - The index of the column header row of interest.
-   *
-   * @param size - The new height for the column header row.
-   *
-   * #### Notes
-   * This is a no-op if `index` is invalid.
-   */
-  resizeColumnHeader(index: number, size: number): void {
-    this._resizeSection(this._columnHeaderSections, index, size);
+  resetSections(area: 'row' | 'column' | 'row-header' | 'column-header'): void {
+    this._getSectionList(area).reset();
+    this._syncViewport();
   }
 
   /**
@@ -1160,6 +1099,30 @@ class DataGrid extends Widget {
 
     // Sync the scroll state after requesting the repaint.
     this._syncScrollState();
+  }
+
+  /**
+   * Get the section list for the specified grid area.
+   */
+  private _getSectionList(area: 'row' | 'column' | 'row-header' | 'column-header'): SectionList {
+    let list: SectionList;
+    switch (area) {
+    case 'row':
+      list = this._rowSections;
+      break;
+    case 'column':
+      list = this._columnSections;
+      break;
+    case 'row-header':
+      list = this._rowHeaderSections;
+      break;
+    case 'column-header':
+      list = this._columnHeaderSections;
+      break;
+    default:
+      throw 'unreachable';
+    }
+    return list;
   }
 
   /**
@@ -3374,32 +3337,32 @@ namespace DataGrid {
     headerVisibility?: HeaderVisibility;
 
     /**
-     * The base height for rows in the data grid.
+     * The base size for rows in the data grid.
      *
      * The default is `20`.
      */
-    baseRowHeight?: number;
+    baseRowSize?: number;
 
     /**
-     * The base width for columns in the data grid.
+     * The base size for columns in the data grid.
      *
      * The default is `64`.
      */
-    baseColumnWidth?: number;
+    baseColumnSize?: number;
 
     /**
-     * The base width for row headers in the data grid.
+     * The base size for row headers in the data grid.
      *
      * The default is `64`.
      */
-    baseRowHeaderWidth?: number;
+    baseRowHeaderSize?: number;
 
     /**
-     * The base height for column headers in the data grid.
+     * The base size for column headers in the data grid.
      *
      * The default is `20`.
      */
-    baseColumnHeaderHeight?: number;
+    baseColumnHeaderSize?: number;
 
     /**
      * The cell renderer map for the data grid.

@@ -496,6 +496,17 @@ class SectionList {
   }
 
   /**
+   * Reset all modified sections to the base size.
+   *
+   * #### Complexity
+   * Constant.
+   */
+  reset(): void {
+    this._sections.length = 0;
+    this._totalSize = this._sectionCount * this._baseSize;
+  }
+
+  /**
    * Remove all sections from the list.
    *
    * #### Complexity
