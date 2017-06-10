@@ -115,7 +115,7 @@ class GridLayout extends Layout {
    * Get the number of columns in the layout.
    */
   get columnCount(): number {
-    return this._columnSizers.length
+    return this._columnSizers.length;
   }
 
   /**

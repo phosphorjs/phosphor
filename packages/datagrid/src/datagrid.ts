@@ -587,7 +587,7 @@ class DataGrid extends Widget {
   /**
    * Reset sections in the data grid to their base size.
    *
-   * @param area - The grid area for the section of interest.
+   * @param area - The grid area for the sections of interest.
    */
   resetSections(area: 'row' | 'column' | 'row-header' | 'column-header'): void {
     this._getSectionList(area).reset();
