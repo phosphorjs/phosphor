@@ -256,7 +256,7 @@ namespace Private {
    * An object which holds the results of splitting schema fields.
    */
   export
-  interface ISplitFields {
+  interface ISplitFieldsResult {
     /**
      * The non-primary key fields to use for the grid body.
      */
@@ -272,7 +272,7 @@ namespace Private {
    * Split the schema fields into header and body fields.
    */
   export
-  function splitFields(schema: JSONModel.ISchema): { bodyFields: JSONModel.IField[], headerFields: JSONModel.IField[] } {
+  function splitFields(schema: JSONModel.ISchema): ISplitFieldsResult {
     // Normalize the primary keys.
     let primaryKeys: string[];
     if (schema.primaryKey === undefined) {
