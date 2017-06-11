@@ -9,7 +9,6 @@
 
 .p-ScrollBar {
   display: flex;
-  z-index: 0;
   -webkit-user-select: none;
   -moz-user-select: none;
   -ms-user-select: none;
@@ -30,7 +29,6 @@
 .p-ScrollBar-button {
   box-sizing: border-box;
   flex: 0 0 auto;
-  z-index: 1;
 }
 
 
@@ -39,7 +37,6 @@
   position: relative;
   overflow: hidden;
   flex: 1 1 auto;
-  z-index: 0;
 }
 
 
