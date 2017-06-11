@@ -35,8 +35,7 @@ class RendererMap {
    *
    * @param options - The options for initializing the map.
    */
-  constructor(options: RendererMap.IOptions) {
-    this._defaultRenderer = options.defaultRenderer;
+  constructor(options: RendererMap.IOptions = {}) {
     this._ranks = Private.createRankMap(options.priority || []);
   }
 
@@ -48,36 +47,18 @@ class RendererMap {
   }
 
   /**
-   * Get the default cell renderer for the map.
-   */
-  get defaultRenderer(): CellRenderer {
-    return this._defaultRenderer;
-  }
-
-  /**
-   * Set the default cell renderer for the map.
-   */
-  set defaultRenderer(value: CellRenderer) {
-    if (this._defaultRenderer !== value) {
-      this._defaultRenderer = value;
-      this._changed.emit(undefined);
-    }
-  }
-
-  /**
    * Get the cell renderer to use for the given region and metadata.
    *
    * @param region - The cell region of interest.
    *
    * @param metadata - The data model metadata for the region.
    *
-   * @returns The best matching cell renderer, or the default renderer
-   *   if no metadata match is found.
+   * @returns The best matching cell renderer, or `undefined`.
    *
    * #### Notes
    * Non-string metadata values are ignored.
    */
-  get(region: DataModel.CellRegion, metadata: DataModel.Metadata): CellRenderer {
+  get(region: DataModel.CellRegion, metadata: DataModel.Metadata): CellRenderer | undefined {
     // Iterate through the map entries to find the best cell renderer.
     for (let i = 0, n = this._entries.length; i < n; ++i) {
       // Create the key for the current entry.
@@ -100,8 +81,8 @@ class RendererMap {
       }
     }
 
-    // No matching renderer was found, so return the default renderer.
-    return this._defaultRenderer;
+    // Return `undefined` to indicate no match.
+    return undefined;
   }
 
   /**
@@ -163,7 +144,6 @@ class RendererMap {
   }
 
   private _ranks: Private.RankMap;
-  private _defaultRenderer: CellRenderer;
   private _entries: Private.MapEntry[] = [];
   private _changed = new Signal<this, void>(this);
   private _renderers: { [key: string]: CellRenderer } = Object.create(null);
@@ -180,14 +160,6 @@ namespace RendererMap {
    */
   export
   interface IOptions {
-    /**
-     * The default cell renderer for the renderer map.
-     *
-     * This the last-resort cell renderer which is returned when no
-     * other cell renderer is found which matches the given metadata.
-     */
-    defaultRenderer: CellRenderer;
-
     /**
      * The priority of the metadata keys used for matching.
      *

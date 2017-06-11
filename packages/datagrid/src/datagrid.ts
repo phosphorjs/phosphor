@@ -26,6 +26,10 @@ import {
 } from '@phosphor/widgets';
 
 import {
+  CellRenderer
+} from './cellrenderer';
+
+import {
   DataModel
 } from './datamodel';
 
@@ -70,14 +74,8 @@ class DataGrid extends Widget {
     // Parse the simple options.
     this._style = options.style || DataGrid.defaultStyle;
     this._headerVisibility = options.headerVisibility || 'all';
-
-    // Set up the cell renderer map.
-    if (options.cellRenderers) {
-      this._cellRenderers = options.cellRenderers;
-    } else {
-      let defaultRenderer = new TextRenderer();
-      this._cellRenderers = new RendererMap({ defaultRenderer });
-    }
+    this._cellRenderers = options.cellRenderers || new RendererMap();
+    this._defaultRenderer = options.defaultRenderer || new TextRenderer();
 
     // Connect to the renderer map changed signal
     this._cellRenderers.changed.connect(this._onRenderersChanged, this);
@@ -295,6 +293,29 @@ class DataGrid extends Widget {
 
     // Update the internal renderer map.
     this._cellRenderers = value;
+
+    // Schedule a full repaint of the grid.
+    this.repaint();
+  }
+
+  /**
+   * Get the default cell renderer for the data grid.
+   */
+  get defaultRenderer(): CellRenderer {
+    return this._defaultRenderer;
+  }
+
+  /**
+   * Set the default cell renderer for the data grid.
+   */
+  set defaultRenderer(value: CellRenderer) {
+    // Bail if the renderer does not change.
+    if (this._defaultRenderer === value) {
+      return;
+    }
+
+    // Update the internal renderer.
+    this._defaultRenderer = value;
 
     // Schedule a full repaint of the grid.
     this.repaint();
@@ -3006,7 +3027,9 @@ class DataGrid extends Widget {
       gc.save();
 
       // Look up the renderer for the column.
-      let renderer = this._cellRenderers.get(rgn.region, metadata);
+      let renderer = (
+        this._cellRenderers.get(rgn.region, metadata) || this._defaultRenderer
+      );
 
       // Prepare the cell renderer for drawing the column.
       try {
@@ -3214,6 +3237,7 @@ class DataGrid extends Widget {
 
   private _style: DataGrid.IStyle;
   private _cellRenderers: RendererMap;
+  private _defaultRenderer: CellRenderer;
   private _headerVisibility: DataGrid.HeaderVisibility;
 }
 
@@ -3367,9 +3391,16 @@ namespace DataGrid {
     /**
      * The cell renderer map for the data grid.
      *
-     * The default is a new renderer map with a default `TextRenderer`.
+     * The default is an empty renderer map.
      */
     cellRenderers?: RendererMap;
+
+    /**
+     * The default cell renderer for the data grid.
+     *
+     * The default is a new `TextRenderer`.
+     */
+    defaultRenderer?: CellRenderer;
   }
 
   /**
