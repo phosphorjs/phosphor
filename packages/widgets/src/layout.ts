@@ -51,29 +51,13 @@ import {
 export
 abstract class Layout implements IIterable<Widget>, IDisposable {
   /**
-   * Create an iterator over the widgets in the layout.
+   * Construct a new layout.
    *
-   * @returns A new iterator over the widgets in the layout.
-   *
-   * #### Notes
-   * This abstract method must be implemented by a subclass.
+   * @param options - The options for initializing the layout.
    */
-  abstract iter(): IIterator<Widget>;
-
-  /**
-   * Remove a widget from the layout.
-   *
-   * @param widget - The widget to remove from the layout.
-   *
-   * #### Notes
-   * A widget is automatically removed from the layout when its `parent`
-   * is set to `null`. This method should only be invoked directly when
-   * removing a widget from a layout which has yet to be installed on a
-   * parent widget.
-   *
-   * This method should *not* modify the widget's `parent`.
-   */
-  abstract removeWidget(widget: Widget): void;
+  constructor(options: Layout.IOptions = {}) {
+    this._fitPolicy = options.fitPolicy || 'set-min-size';
+  }
 
   /**
    * Dispose of the resources held by the layout.
@@ -126,6 +110,76 @@ abstract class Layout implements IIterable<Widget>, IDisposable {
     this._parent = value;
     this.init();
   }
+
+  /**
+   * Get the fit policy for the layout.
+   *
+   * #### Notes
+   * The fit policy controls the computed size constraints which are
+   * applied to the parent widget by the layout.
+   *
+   * Some layout implementations may ignore the fit policy.
+   */
+  get fitPolicy(): Layout.FitPolicy {
+    return this._fitPolicy;
+  }
+
+  /**
+   * Set the fit policy for the layout.
+   *
+   * #### Notes
+   * The fit policy controls the computed size constraints which are
+   * applied to the parent widget by the layout.
+   *
+   * Some layout implementations may ignore the fit policy.
+   *
+   * Changing the fit policy will clear the current size constraint
+   * for the parent widget and then re-fit the parent.
+   */
+  set fitPolicy(value: Layout.FitPolicy) {
+    // Bail if the policy does not change
+    if (this._fitPolicy === value) {
+      return;
+    }
+
+    // Update the internal policy.
+    this._fitPolicy = value;
+
+    // Clear the size constraints and schedule a fit of the parent.
+    if (this._parent) {
+      let style = this._parent.node.style;
+      style.minWidth = '';
+      style.minHeight = '';
+      style.maxWidth = '';
+      style.maxHeight = '';
+      this._parent.fit();
+    }
+  }
+
+  /**
+   * Create an iterator over the widgets in the layout.
+   *
+   * @returns A new iterator over the widgets in the layout.
+   *
+   * #### Notes
+   * This abstract method must be implemented by a subclass.
+   */
+  abstract iter(): IIterator<Widget>;
+
+  /**
+   * Remove a widget from the layout.
+   *
+   * @param widget - The widget to remove from the layout.
+   *
+   * #### Notes
+   * A widget is automatically removed from the layout when its `parent`
+   * is set to `null`. This method should only be invoked directly when
+   * removing a widget from a layout which has yet to be installed on a
+   * parent widget.
+   *
+   * This method should *not* modify the widget's `parent`.
+   */
+  abstract removeWidget(widget: Widget): void;
 
   /**
    * Process a message sent to the parent widget.
@@ -414,6 +468,7 @@ abstract class Layout implements IIterable<Widget>, IDisposable {
   protected onChildHidden(msg: Widget.ChildMessage): void { }
 
   private _disposed = false;
+  private _fitPolicy: Layout.FitPolicy;
   private _parent: Widget | null = null;
 }
 
@@ -423,6 +478,41 @@ abstract class Layout implements IIterable<Widget>, IDisposable {
  */
 export
 namespace Layout {
+  /**
+   * A type alias for the layout fit policy.
+   *
+   * #### Notes
+   * The fit policy controls the computed size constraints which are
+   * applied to the parent widget by the layout.
+   *
+   * Some layout implementations may ignore the fit policy.
+   */
+  export
+  type FitPolicy = (
+    /**
+     * No size constraint will be applied to the parent widget.
+     */
+    'set-no-constraint' |
+
+    /**
+     * The computed min size will be applied to the parent widget.
+     */
+    'set-min-size'
+  );
+
+  /**
+   * An options object for initializing a layout.
+   */
+  export
+  interface IOptions {
+    /**
+     * The fit policy for the for layout.
+     *
+     * The default is `'set-min-size'`.
+     */
+    fitPolicy?: FitPolicy;
+  }
+
   /**
    * A type alias for the horizontal alignment of a widget.
    */

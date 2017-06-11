@@ -205,7 +205,9 @@ class Widget implements IDisposable, IMessageHandler {
       let msg = new Widget.ChildMessage('child-added', this);
       MessageLoop.sendMessage(this._parent, msg);
     }
-    MessageLoop.sendMessage(this, Widget.Msg.ParentChanged);
+    if (!this.isDisposed) {
+      MessageLoop.sendMessage(this, Widget.Msg.ParentChanged);
+    }
   }
 
   /**
@@ -492,6 +494,10 @@ class Widget implements IDisposable, IMessageHandler {
       this.notifyLayout(msg);
       this.onUpdateRequest(msg);
       break;
+    case 'fit-request':
+      this.notifyLayout(msg);
+      this.onFitRequest(msg);
+      break;
     case 'before-show':
       this.notifyLayout(msg);
       this.onBeforeShow(msg);
@@ -599,6 +605,14 @@ class Widget implements IDisposable, IMessageHandler {
    * The default implementation of this handler is a no-op.
    */
   protected onUpdateRequest(msg: Message): void { }
+
+  /**
+   * A message handler invoked on a `'fit-request'` message.
+   *
+   * #### Notes
+   * The default implementation of this handler is a no-op.
+   */
+  protected onFitRequest(msg: Message): void { }
 
   /**
    * A message handler invoked on an `'activate-request'` message.
