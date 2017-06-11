@@ -145,7 +145,7 @@ abstract class Layout implements IIterable<Widget>, IDisposable {
     // Update the internal policy.
     this._fitPolicy = value;
 
-    // Clear the size constraint and schedule a fit of the parent.
+    // Clear the size constraints and schedule a fit of the parent.
     if (this._parent) {
       let style = this._parent.node.style;
       style.minWidth = '';
