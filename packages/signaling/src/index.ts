@@ -309,7 +309,9 @@ namespace Private {
    * The signal exception handler function.
    */
   export
-  let exceptionHandler: Signal.ExceptionHandler = console.error;
+  let exceptionHandler: Signal.ExceptionHandler = (err: Error) => {
+    console.error(err);
+  };
 
   /**
    * Connect a slot to a signal.

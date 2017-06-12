@@ -473,7 +473,9 @@ namespace MessageLoop {
   /**
    * The message loop exception handler.
    */
-  let exceptionHandler: ExceptionHandler = console.error;
+  let exceptionHandler: ExceptionHandler = (err: Error) => {
+    console.error(err);
+  };
 
   /**
    * The id of the pending loop task animation frame.
