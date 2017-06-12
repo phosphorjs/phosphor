@@ -1,9 +1,9 @@
 {
   "private": true,
   "name": "@phosphor/test-signaling",
-  "version": "0.1.4",
+  "version": "0.1.5",
   "dependencies": {
-    "@phosphor/signaling": "^1.2.0",
+    "@phosphor/signaling": "^1.2.1",
     "chai": "^3.5.0",
     "mocha": "^3.2.0"
   },

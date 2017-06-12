@@ -1,6 +1,6 @@
 {
   "name": "@phosphor/messaging",
-  "version": "1.2.0",
+  "version": "1.2.1",
   "description": "PhosphorJS - Message Passing",
   "main": "lib/index.js",
   "types": "lib/index.d.ts",
@@ -12,8 +12,8 @@
     "lib": "lib/"
   },
   "dependencies": {
-    "@phosphor/algorithm": "^1.1.0",
-    "@phosphor/collections": "^1.1.0"
+    "@phosphor/algorithm": "^1.1.1",
+    "@phosphor/collections": "^1.1.1"
   },
   "devDependencies": {
     "rimraf": "^2.5.2",
