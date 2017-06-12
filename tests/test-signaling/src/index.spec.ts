@@ -418,8 +418,8 @@ describe('@phosphor/signaling', () => {
 
     describe('.getExceptionHandler()', () => {
 
-      it('should default to `console.error`', () => {
-        expect(Signal.getExceptionHandler()).to.equal(console.error);
+      it('should default to an exception handler', () => {
+        expect(Signal.getExceptionHandler()).to.be.a('function');
       });
 
     });

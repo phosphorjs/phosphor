@@ -546,8 +546,8 @@ describe('@phosphor/messaging', () => {
 
     describe('getExceptionHandler()', () => {
 
-      it('should default to `console.error`', () => {
-        expect(MessageLoop.getExceptionHandler()).to.equal(console.error);
+      it('should default to an exception handler', () => {
+        expect(MessageLoop.getExceptionHandler()).to.be.a('function');
       });
 
     });
