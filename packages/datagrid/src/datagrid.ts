@@ -801,7 +801,8 @@ class DataGrid extends Widget {
         let y = dy < 0 ? contentY : contentY + dy;
         let w = width;
         let h = contentHeight - Math.abs(dy);
-        this._canvasGC.drawImage(this._canvas, x, y, w, h, x, y - dy, w, h);
+        Private.bitBlt(this._canvasGC, this._canvas, x, y, w, h, x, y - dy);
+        //this._canvasGC.drawImage(this._canvas, x, y, w, h, x, y - dy, w, h);
         this._paint(0, dy < 0 ? contentY : height - dy, width, Math.abs(dy));
       }
     }
@@ -820,7 +821,8 @@ class DataGrid extends Widget {
         let y = 0;
         let w = contentWidth - Math.abs(dx);
         let h = height;
-        this._canvasGC.drawImage(this._canvas, x, y, w, h, x - dx, y, w, h);
+        Private.bitBlt(this._canvasGC, this._canvas, x, y, w, h, x - dx, y);
+        //this._canvasGC.drawImage(this._canvas, x, y, w, h, x - dx, y, w, h);
         this._paint(dx < 0 ? contentX : width - dx, 0, Math.abs(dx), height);
       }
     }
@@ -1002,10 +1004,18 @@ class DataGrid extends Widget {
    * This method will retain the valid canvas content.
    */
   private _expandCanvasIfNeeded(width: number, height: number): void {
+    const factor = window.devicePixelRatio;
+
+    width = width * factor;
+    height = height * factor;
+
     // Bail if the canvas is larger than the specified size.
     if (this._canvas.width > width && this._canvas.height > height) {
       return;
     }
+
+    this._canvasGC.setTransform(1, 0, 0, 1, 0, 0);
+    this._bufferGC.setTransform(1, 0, 0, 1, 0, 0);
 
     // Compute the expanded canvas size.
     let exWidth = Math.ceil((width + 1) / 512) * 512;
@@ -1033,13 +1043,13 @@ class DataGrid extends Widget {
     // Expand the canvas width if needed.
     if (this._canvas.width < width) {
       this._canvas.width = exWidth;
-      this._canvas.style.width = `${exWidth}px`;
+      this._canvas.style.width = `${exWidth / factor}px`;
     }
 
     // Expand the canvas height of needed.
     if (this._canvas.height < height) {
       this._canvas.height = exHeight;
-      this._canvas.style.height = `${exHeight}px`;
+      this._canvas.style.height = `${exHeight / factor}px`;
     }
 
     // Copy the valid content from the buffer if needed.
@@ -1047,6 +1057,9 @@ class DataGrid extends Widget {
       this._canvasGC.clearRect(0, 0, width, height);
       this._canvasGC.drawImage(this._buffer, 0, 0);
     }
+
+    this._canvasGC.setTransform(factor, 0, 0, factor, 0, 0);
+    this._bufferGC.setTransform(factor, 0, 0, factor, 0, 0);
   }
 
   /**
@@ -1263,7 +1276,8 @@ class DataGrid extends Widget {
       }
 
       // Blit the valid content to the destination.
-      this._canvasGC.drawImage(this._canvas, sx, sy, sw, sh, dx, dy, sw, sh);
+      Private.bitBlt(this._canvasGC, this._canvas, sx, sy, sw, sh, dx, dy);
+      //this._canvasGC.drawImage(this._canvas, sx, sy, sw, sh, dx, dy, sw, sh);
 
       // Repaint the section if needed.
       if (newSize > 0 && offset + newSize > hh) {
@@ -1326,7 +1340,8 @@ class DataGrid extends Widget {
       }
 
       // Blit the valid content to the destination.
-      this._canvasGC.drawImage(this._canvas, sx, sy, sw, sh, dx, dy, sw, sh);
+      Private.bitBlt(this._canvasGC, this._canvas, sx, sy, sw, sh, dx, dy);
+      //this._canvasGC.drawImage(this._canvas, sx, sy, sw, sh, dx, dy, sw, sh);
 
       // Repaint the section if needed.
       if (newSize > 0 && offset + newSize > hw) {
@@ -1366,7 +1381,8 @@ class DataGrid extends Widget {
       let dy = 0;
 
       // Blit the valid contents to the destination.
-      this._canvasGC.drawImage(this._canvas, sx, sy, sw, sh, dx, dy, sw, sh);
+      Private.bitBlt(this._canvasGC, this._canvas, sx, sy, sw, sh, dx, dy);
+      //this._canvasGC.drawImage(this._canvas, sx, sy, sw, sh, dx, dy, sw, sh);
 
       // Repaint the header section if needed.
       if (newSize > 0) {
@@ -1406,7 +1422,8 @@ class DataGrid extends Widget {
       let dy = sy + delta;
 
       // Blit the valid contents to the destination.
-      this._canvasGC.drawImage(this._canvas, sx, sy, sw, sh, dx, dy, sw, sh);
+      Private.bitBlt(this._canvasGC, this._canvas, sx, sy, sw, sh, dx, dy);
+      //this._canvasGC.drawImage(this._canvas, sx, sy, sw, sh, dx, dy, sw, sh);
 
       // Repaint the header section if needed.
       if (newSize > 0) {
@@ -3096,9 +3113,13 @@ class DataGrid extends Widget {
       // canvas with a clip rect on the column. Managed column clipping
       // is required to prevent cell renderers from needing to set up a
       // clip rect for handling horizontal overflow text (slow!).
-      this._canvasGC.drawImage(this._buffer,
-        x1, y1, x2 - x1 + 1, y2 - y1 + 1,
-        x1, y1, x2 - x1 + 1, y2 - y1 + 1
+      // this._canvasGC.drawImage(this._buffer,
+      //   x1, y1, x2 - x1 + 1, y2 - y1 + 1,
+      //   x1, y1, x2 - x1 + 1, y2 - y1 + 1
+      // );
+
+      Private.bitBlt(this._canvasGC, this._buffer,
+        x1, y1, x2 - x1 + 1, y2 - y1 + 1, x1, y1
       );
 
       // Increment the running X coordinate.
@@ -3421,6 +3442,24 @@ namespace DataGrid {
  * The namespace for the module implementation details.
  */
 namespace Private {
+  /**
+   *
+   */
+  export
+  function bitBlt(gc: CanvasRenderingContext2D, img: HTMLCanvasElement, x: number, y: number, w: number, h: number, dx: number, dy: number): void {
+    const factor = window.devicePixelRatio;
+    x *= factor;
+    y *= factor;
+    w *= factor;
+    h *= factor;
+    dx *= factor;
+    dy *= factor;
+    gc.save();
+    gc.setTransform(1, 0, 0, 1, 0, 0);
+    gc.drawImage(img, x, y, w, h, dx, dy, w, h);
+    gc.restore();
+  }
+
   /**
    * A singleton `scroll-request` conflatable message.
    */
