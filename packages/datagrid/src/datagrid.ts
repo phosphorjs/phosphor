@@ -801,7 +801,7 @@ class DataGrid extends Widget {
         let y = dy < 0 ? contentY : contentY + dy;
         let w = width;
         let h = contentHeight - Math.abs(dy);
-        this._canvasGC.drawImage(this._canvas, x, y, w, h, x, y - dy, w, h);
+        this._blit(this._canvas, x, y, w, h, x, y - dy);
         this._paint(0, dy < 0 ? contentY : height - dy, width, Math.abs(dy));
       }
     }
@@ -820,7 +820,7 @@ class DataGrid extends Widget {
         let y = 0;
         let w = contentWidth - Math.abs(dx);
         let h = height;
-        this._canvasGC.drawImage(this._canvas, x, y, w, h, x - dx, y, w, h);
+        this._blit(this._canvas, x, y, w, h, x - dx, y);
         this._paint(dx < 0 ? contentX : width - dx, 0, Math.abs(dx), height);
       }
     }
@@ -959,6 +959,9 @@ class DataGrid extends Widget {
       event.preventDefault();
       event.stopPropagation();
       break;
+    case 'resize':
+      this._refreshDPI();
+      break;
     }
   }
 
@@ -966,6 +969,7 @@ class DataGrid extends Widget {
    * A message handler invoked on a `'before-attach'` message.
    */
   protected onBeforeAttach(msg: Message): void {
+    window.addEventListener('resize', this);
     this.node.addEventListener('wheel', this);
     this.node.addEventListener('mousedown', this);
     this._viewport.node.addEventListener('mousemove', this);
@@ -976,6 +980,7 @@ class DataGrid extends Widget {
    * A message handler invoked on an `'after-detach'` message.
    */
   protected onAfterDetach(msg: Message): void {
+    window.removeEventListener('resize', this);
     this.node.removeEventListener('wheel', this);
     this.node.removeEventListener('mousedown', this);
     this._viewport.node.removeEventListener('mousemove', this);
@@ -997,54 +1002,106 @@ class DataGrid extends Widget {
   }
 
   /**
+   * Refresh the internal dpi ratio.
+   *
+   * This will update the canvas size and schedule a repaint if needed.
+   */
+  private _refreshDPI(): void {
+    // Get the best integral value for the dpi ratio.
+    let dpiRatio = Math.ceil(window.devicePixelRatio);
+
+    // Bail early if the computed dpi ratio has not changed.
+    if (this._dpiRatio === dpiRatio) {
+      return;
+    }
+
+    // Update the internal dpi ratio.
+    this._dpiRatio = dpiRatio;
+
+    // Schedule a full repaint of the grid.
+    this.repaint();
+
+    // Update the canvas size for the new dpi ratio.
+    this._resizeCanvasIfNeeded(this._viewportWidth, this._viewportHeight);
+
+    // Ensure the canvas style is scaled for the new ratio.
+    this._canvas.style.width = `${this._canvas.width / this._dpiRatio}px`;
+    this._canvas.style.height = `${this._canvas.height / this._dpiRatio}px`;
+  }
+
+  /**
    * Ensure the canvas is at least the specified size.
    *
    * This method will retain the valid canvas content.
    */
-  private _expandCanvasIfNeeded(width: number, height: number): void {
-    // Bail if the canvas is larger than the specified size.
-    if (this._canvas.width > width && this._canvas.height > height) {
+  private _resizeCanvasIfNeeded(width: number, height: number): void {
+    // Scale the size by the dpi ratio.
+    width = width * this._dpiRatio;
+    height = height * this._dpiRatio;
+
+    // Compute the maximum canvas size for the given width.
+    let maxW = (Math.ceil((width + 1) / 512) + 1) * 512;
+    let maxH = (Math.ceil((height + 1) / 512) + 1) * 512;
+
+    // Get the current size of the canvas.
+    let curW = this._canvas.width;
+    let curH = this._canvas.height;
+
+    // Bail early if the canvas size is within bounds.
+    if (curW >= width && curH >= height && curW <= maxW && curH <= maxH) {
       return;
     }
 
     // Compute the expanded canvas size.
-    let exWidth = Math.ceil((width + 1) / 512) * 512;
-    let exHeight = Math.ceil((height + 1) / 512) * 512;
+    let expW = maxW - 512;
+    let expH = maxH - 512;
 
-    // Expand the buffer width if needed.
-    if (this._buffer.width < width) {
-      this._buffer.width = exWidth;
+    // Set the transforms to the identity matrix.
+    this._canvasGC.setTransform(1, 0, 0, 1, 0, 0);
+    this._bufferGC.setTransform(1, 0, 0, 1, 0, 0);
+
+    // Resize the buffer width if needed.
+    if (curW < width) {
+      this._buffer.width = expW;
+    } else if (curW > maxW) {
+      this._buffer.width = maxW;
     }
 
-    // Expand the buffer height if needed.
-    if (this._buffer.height < height) {
-      this._buffer.height = exHeight;
+    // Resize the buffer height if needed.
+    if (curH < height) {
+      this._buffer.height = expH;
+    } else if (curH > maxH) {
+      this._buffer.height = maxH;
     }
 
-    // Test whether there is valid content to blit.
-    let needBlit = this._canvas.width > 0 && this._canvas.height > 0;
+    // Test whether there is content to blit.
+    let needBlit = curH > 0 && curH > 0 && width > 0 && height > 0;
 
     // Copy the valid content into the buffer if needed.
     if (needBlit) {
-      this._bufferGC.clearRect(0, 0, width, height);
       this._bufferGC.drawImage(this._canvas, 0, 0);
     }
 
-    // Expand the canvas width if needed.
-    if (this._canvas.width < width) {
-      this._canvas.width = exWidth;
-      this._canvas.style.width = `${exWidth}px`;
+    // Resize the canvas width if needed.
+    if (curW < width) {
+      this._canvas.width = expW;
+      this._canvas.style.width = `${expW / this._dpiRatio}px`;
+    } else if (curW > maxW) {
+      this._canvas.width = maxW;
+      this._canvas.style.width = `${maxW / this._dpiRatio}px`;
     }
 
-    // Expand the canvas height of needed.
-    if (this._canvas.height < height) {
-      this._canvas.height = exHeight;
-      this._canvas.style.height = `${exHeight}px`;
+    // Resize the canvas height if needed.
+    if (curH < height) {
+      this._canvas.height = expH;
+      this._canvas.style.height = `${expH / this._dpiRatio}px`;
+    } else if (curH > maxH) {
+      this._canvas.height = maxH;
+      this._canvas.style.height = `${maxH / this._dpiRatio}px`;
     }
 
     // Copy the valid content from the buffer if needed.
     if (needBlit) {
-      this._canvasGC.clearRect(0, 0, width, height);
       this._canvasGC.drawImage(this._buffer, 0, 0);
     }
   }
@@ -1263,7 +1320,7 @@ class DataGrid extends Widget {
       }
 
       // Blit the valid content to the destination.
-      this._canvasGC.drawImage(this._canvas, sx, sy, sw, sh, dx, dy, sw, sh);
+      this._blit(this._canvas, sx, sy, sw, sh, dx, dy);
 
       // Repaint the section if needed.
       if (newSize > 0 && offset + newSize > hh) {
@@ -1326,7 +1383,7 @@ class DataGrid extends Widget {
       }
 
       // Blit the valid content to the destination.
-      this._canvasGC.drawImage(this._canvas, sx, sy, sw, sh, dx, dy, sw, sh);
+      this._blit(this._canvas, sx, sy, sw, sh, dx, dy);
 
       // Repaint the section if needed.
       if (newSize > 0 && offset + newSize > hw) {
@@ -1366,7 +1423,7 @@ class DataGrid extends Widget {
       let dy = 0;
 
       // Blit the valid contents to the destination.
-      this._canvasGC.drawImage(this._canvas, sx, sy, sw, sh, dx, dy, sw, sh);
+      this._blit(this._canvas, sx, sy, sw, sh, dx, dy);
 
       // Repaint the header section if needed.
       if (newSize > 0) {
@@ -1406,7 +1463,7 @@ class DataGrid extends Widget {
       let dy = sy + delta;
 
       // Blit the valid contents to the destination.
-      this._canvasGC.drawImage(this._canvas, sx, sy, sw, sh, dx, dy, sw, sh);
+      this._blit(this._canvas, sx, sy, sw, sh, dx, dy);
 
       // Repaint the header section if needed.
       if (newSize > 0) {
@@ -1624,6 +1681,11 @@ class DataGrid extends Widget {
       return;
     }
 
+    // Do nothing if the `Ctrl` key is held.
+    if (event.ctrlKey) {
+      return;
+    }
+
     // Extract the delta X and Y movement.
     let dx = event.deltaX;
     let dy = event.deltaY;
@@ -1814,8 +1876,8 @@ class DataGrid extends Widget {
     this._viewportWidth = width;
     this._viewportHeight = height;
 
-    // Expand the canvas if needed.
-    this._expandCanvasIfNeeded(width, height);
+    // Resize the canvas if needed.
+    this._resizeCanvasIfNeeded(width, height);
 
     // Compute the sizes of the dirty regions.
     let right = width - oldWidth;
@@ -2375,6 +2437,35 @@ class DataGrid extends Widget {
   }
 
   /**
+   * Blit content into the on-screen canvas.
+   *
+   * The rect should be expressed in viewport coordinates.
+   *
+   * This automatically accounts for the dpi ratio.
+   */
+  private _blit(source: HTMLCanvasElement, x: number, y: number, w: number, h: number, dx: number, dy: number): void {
+    // Scale the blit coordinates by the dpi ratio.
+    x *= this._dpiRatio;
+    y *= this._dpiRatio;
+    w *= this._dpiRatio;
+    h *= this._dpiRatio;
+    dx *= this._dpiRatio;
+    dy *= this._dpiRatio;
+
+    // Save the current gc state.
+    this._canvasGC.save();
+
+    // Set the transform to the identity matrix.
+    this._canvasGC.setTransform(1, 0, 0, 1, 0, 0);
+
+    // Draw the specified content.
+    this._canvasGC.drawImage(source, x, y, w, h, dx, dy, w, h);
+
+    // Restore the gc state.
+    this._canvasGC.restore();
+  }
+
+  /**
    * Paint the grid content for the given dirty rect.
    *
    * The rect should be expressed in viewport coordinates.
@@ -2405,6 +2496,10 @@ class DataGrid extends Widget {
    * This method dispatches to the relevant `_draw*` methods.
    */
   private _draw(rx: number, ry: number, rw: number, rh: number): void {
+    // Scale the canvas and buffer GC for the dpi ratio.
+    this._canvasGC.setTransform(this._dpiRatio, 0, 0, this._dpiRatio, 0, 0);
+    this._bufferGC.setTransform(this._dpiRatio, 0, 0, this._dpiRatio, 0, 0);
+
     // Clear the dirty rect of all content.
     this._canvasGC.clearRect(rx, ry, rw, rh);
 
@@ -3090,16 +3185,13 @@ class DataGrid extends Widget {
       let x1 = Math.max(rgn.xMin, x);
       let x2 = Math.min(x + width - 1, rgn.xMax);
 
-      // Copy the off-screen buffer column into the on-screen canvas.
+      // Blit the off-screen buffer column into the on-screen canvas.
       //
       // This is *much* faster than drawing directly into the on-screen
       // canvas with a clip rect on the column. Managed column clipping
       // is required to prevent cell renderers from needing to set up a
       // clip rect for handling horizontal overflow text (slow!).
-      this._canvasGC.drawImage(this._buffer,
-        x1, y1, x2 - x1 + 1, y2 - y1 + 1,
-        x1, y1, x2 - x1 + 1, y2 - y1 + 1
-      );
+      this._blit(this._buffer, x1, y1, x2 - x1 + 1, y2 - y1 + 1, x1, y1);
 
       // Increment the running X coordinate.
       x += width;
@@ -3214,6 +3306,7 @@ class DataGrid extends Widget {
   private _inPaint = false;
   private _paintPending = false;  // TODO: would like to get rid of this flag
   private _pressData: Private.IPressData | null = null;
+  private _dpiRatio = Math.ceil(window.devicePixelRatio);
 
   private _scrollX = 0;
   private _scrollY = 0;
