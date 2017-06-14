@@ -1061,9 +1061,9 @@ class DataGrid extends Widget {
     this._bufferGC.setTransform(1, 0, 0, 1, 0, 0);
 
     // Resize the buffer width if needed.
-    if (curH < width) {
+    if (curW < width) {
       this._buffer.width = expW;
-    } else if (curH > maxW) {
+    } else if (curW > maxW) {
       this._buffer.width = maxW;
     }
 
@@ -1084,10 +1084,10 @@ class DataGrid extends Widget {
     }
 
     // Resize the canvas width if needed.
-    if (curH < width) {
+    if (curW < width) {
       this._canvas.width = expW;
       this._canvas.style.width = `${expW / this._dpiRatio}px`;
-    } else if (curH > maxW) {
+    } else if (curW > maxW) {
       this._canvas.width = maxW;
       this._canvas.style.width = `${maxW / this._dpiRatio}px`;
     }
