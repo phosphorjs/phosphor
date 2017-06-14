@@ -1010,7 +1010,7 @@ class DataGrid extends Widget {
     // Get the best integral value for the dpi ratio.
     let dpiRatio = Math.ceil(window.devicePixelRatio);
 
-    // Bail early if the computed dpi ratio does not changed.
+    // Bail early if the computed dpi ratio has not changed.
     if (this._dpiRatio === dpiRatio) {
       return;
     }
@@ -1091,7 +1091,7 @@ class DataGrid extends Widget {
       this._canvas.style.width = `${maxW / this._dpiRatio}px`;
     }
 
-    // Resize the canvas height of needed.
+    // Resize the canvas height if needed.
     if (curH < height) {
       this._canvas.height = expH;
       this._canvas.style.height = `${expH / this._dpiRatio}px`;
