@@ -1079,7 +1079,6 @@ class DataGrid extends Widget {
 
     // Copy the valid content into the buffer if needed.
     if (needBlit) {
-      this._bufferGC.clearRect(0, 0, width, height);
       this._bufferGC.drawImage(this._canvas, 0, 0);
     }
 
@@ -1103,7 +1102,6 @@ class DataGrid extends Widget {
 
     // Copy the valid content from the buffer if needed.
     if (needBlit) {
-      this._canvasGC.clearRect(0, 0, width, height);
       this._canvasGC.drawImage(this._buffer, 0, 0);
     }
   }
