@@ -11,17 +11,25 @@ import {
 
 
 /**
- * A lightweight data store which follows the redux pattern.
+ * A lightweight data store which largely follows the redux pattern.
  *
  * #### Notes
+ * The `S` type parameter is an interface defining the state shape.
+ *
+ * The `A` type parameter is a union type of all actions supported
+ * by the instance of the data store. This type parameter ensures
+ * that compatable reducers and listeners are used with the store.
+ *
  * More information on redux can be found at: http://redux.js.org
  */
 export
-class DataStore<S extends object, A extends DataStore.IAction> {
+class DataStore<S, A extends DataStore.IAction> {
   /**
    * Construct a new data store.
    *
-   * @param reducer - The root reducer function for the store.
+   * @param reducer - The root reducer function for the data store.
+   *
+   * @param state - The initial state for the data store.
    */
   constructor(reducer: DataStore.Reducer<S, A>, state: S) {
     this._reducer = reducer;
@@ -29,31 +37,49 @@ class DataStore<S extends object, A extends DataStore.IAction> {
   }
 
   /**
-   * A signal emitted when the data store is changed.
-   */
-  get changed(): ISignal<this, void> {
-    return this._changed;
-  }
-
-  /**
    * The current state of the data store.
+   *
+   * #### Notes
+   * The state **must** be treated as immutable.
+   *
+   * The only way to change the state is to dispatch an action.
+   * See the redux docs for more info: http://redux.js.org
    */
   get state(): S {
     return this._state;
   }
 
   /**
+   * Get a changed signal for a specific action type.
+   *
+   * @param type - The action type of interest.
+   *
+   * @returns A signal emitted after a matching action is dispatched.
+   *
+   * #### Notes
+   * The `'*'` type can be used to get a signal which is emitted for
+   * *any* change to the data store.
+   */
+  changed(type: A['type'] | '*'): ISignal<this, A> {
+    return this._signals[type] || (this._signals[type] = new Signal<this, A>(this));
+  }
+
+  /**
    * Dispatch an action to the data store.
    *
    * @param action - The action to dispatch to the store.
+   *
+   * #### Notes
+   * After the action is dispatched, the matching changed signals will
+   * be emitted to allow the app to update itself for the new state.
    */
   dispatch(action: A): void {
-    // Do not allow recursive dispatch.
+    // Disallow recursive dispatch.
     if (this._dispatching) {
       throw new Error('Recursive dispatch detected.');
     }
 
-    // Set the dispatch guard flag.
+    // Set the dispatch guard.
     this._dispatching = true;
 
     // Look up the root reducer.
@@ -66,14 +92,27 @@ class DataStore<S extends object, A extends DataStore.IAction> {
       this._dispatching = false;
     }
 
-    // Emit the changed signal
-    this._changed.emit(undefined);
+    // Look up the action-specific signal.
+    let specific = this._signals[action.type];
+
+    // Emit the action-specific signal if it exists.
+    if (specific) {
+      specific.emit(action);
+    }
+
+    // Look up the generic changed signal.
+    let generic = this._signals['*'];
+
+    // Emit the generic changed signal if it exists.
+    if (generic) {
+      generic.emit(action);
+    }
   }
 
   private _state: S;
   private _dispatching = false;
   private _reducer: DataStore.Reducer<S, A>;
-  private _changed = new Signal<this, void>(this);
+  private _signals = Private.createSignalMap<this, A>();
 }
 
 
@@ -84,13 +123,20 @@ export
 namespace DataStore {
   /**
    * An object which represents an action.
+   *
+   * #### Notes
+   * Custom actions may be derived from this interface.
    */
   export
   interface IAction {
     /**
      * The type of the action.
+     *
+     * #### Notes
+     * The data store treats `'*`' as a subscription wildcard, so
+     * **it's best to not use that character as an action type.**
      */
-    type: string;
+    readonly type: string;
   }
 
   /**
@@ -104,4 +150,24 @@ namespace DataStore {
    */
   export
   type Reducer<S, A extends IAction> = (state: S, action: A) => S;
+}
+
+
+/**
+ * The namespace for the module implementation details.
+ */
+namespace Private {
+  /**
+   * A type alias for a string-keyed signal map.
+   */
+  export
+  type SignalMap<T, U> = { [key: string]: Signal<T, U> };
+
+  /**
+   * Create a new empty signal map.
+   */
+  export
+  function createSignalMap<T, U>(): SignalMap<T, U> {
+    return Object.create(null);
+  }
 }
