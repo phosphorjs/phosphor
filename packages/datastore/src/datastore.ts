@@ -19,7 +19,7 @@ import {
 
 
 /**
- * A lightweight data store which largely follows the redux pattern.
+ * A lightweight data store which mostly follows the redux pattern.
  *
  * #### Notes
  * The `S` type parameter is an interface defining the state shape.

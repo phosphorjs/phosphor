@@ -8,10 +8,10 @@
 
 
 /**
- * An object which represents an action.
+ * An object which represents an action for a data store.
  *
  * #### Notes
- * Custom actions may implement this interface.
+ * Actions are dispatched to a data store to change its state.
  */
 export
 interface IAction {

@@ -18,6 +18,9 @@ import {
  * @param action - The action to perform on the state.
  *
  * @returns The new state for the application.
+ *
+ * #### Notes
+ * A reducer processes actions to update the data store state.
  */
 export
 type Reducer<S, A extends IAction> = (state: S, action: A) => S;
