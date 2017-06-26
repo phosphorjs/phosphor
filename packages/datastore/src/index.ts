@@ -49,7 +49,6 @@ class DataStore<S, A extends DataStore.IAction> {
    * The state **must** be treated as immutable.
    *
    * The only way to change the state is to dispatch an action.
-   * See the redux docs for more info: http://redux.js.org
    */
   get state(): S {
     return this._state;
@@ -59,10 +58,6 @@ class DataStore<S, A extends DataStore.IAction> {
    * Dispatch an action to the data store.
    *
    * @param action - The action to dispatch to the store.
-   *
-   * #### Notes
-   * After the action is dispatched, the matching changed signals will
-   * be emitted to allow the app to update itself for the new state.
    */
   dispatch(action: A): void {
     // Disallow recursive dispatch.
