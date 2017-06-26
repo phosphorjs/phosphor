@@ -37,6 +37,13 @@ class DataStore<S, A extends DataStore.IAction> {
   }
 
   /**
+   * A signal emitted when the data store state is changed.
+   */
+  get changed(): ISignal<this, void> {
+    return this._changed;
+  }
+
+  /**
    * The current state of the data store.
    *
    * #### Notes
@@ -47,21 +54,6 @@ class DataStore<S, A extends DataStore.IAction> {
    */
   get state(): S {
     return this._state;
-  }
-
-  /**
-   * Get a changed signal for a specific action type.
-   *
-   * @param type - The action type of interest.
-   *
-   * @returns A signal emitted after a matching action is dispatched.
-   *
-   * #### Notes
-   * The `'*'` type can be used to get a signal which is emitted for
-   * *any* change to the data store.
-   */
-  changed(type: A['type'] | '*'): ISignal<this, A> {
-    return this._signals[type] || (this._signals[type] = new Signal<this, A>(this));
   }
 
   /**
@@ -92,27 +84,14 @@ class DataStore<S, A extends DataStore.IAction> {
       this._dispatching = false;
     }
 
-    // Look up the action-specific signal.
-    let specific = this._signals[action.type];
-
-    // Emit the action-specific signal if it exists.
-    if (specific) {
-      specific.emit(action);
-    }
-
-    // Look up the generic changed signal.
-    let generic = this._signals['*'];
-
-    // Emit the generic changed signal if it exists.
-    if (generic) {
-      generic.emit(action);
-    }
+    // Emit the `changed` signal.
+    this._changed.emit(undefined);
   }
 
   private _state: S;
   private _dispatching = false;
   private _reducer: DataStore.Reducer<S, A>;
-  private _signals = Private.createSignalMap<this, A>();
+  private _changed = new Signal<this, void>(this);
 }
 
 
@@ -150,24 +129,4 @@ namespace DataStore {
    */
   export
   type Reducer<S, A extends IAction> = (state: S, action: A) => S;
-}
-
-
-/**
- * The namespace for the module implementation details.
- */
-namespace Private {
-  /**
-   * A type alias for a string-keyed signal map.
-   */
-  export
-  type SignalMap<T, U> = { [key: string]: Signal<T, U> };
-
-  /**
-   * Create a new empty signal map.
-   */
-  export
-  function createSignalMap<T, U>(): SignalMap<T, U> {
-    return Object.create(null);
-  }
 }
