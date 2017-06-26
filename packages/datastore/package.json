@@ -1,7 +1,7 @@
 {
   "private": true,
   "name": "@phosphor/datastore",
-  "version": "0.0.9",
+  "version": "0.0.1",
   "description": "PhosphorJS - DataStore",
   "main": "lib/index.js",
   "types": "lib/index.d.ts",
