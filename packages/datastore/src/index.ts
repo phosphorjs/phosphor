@@ -17,8 +17,7 @@ import {
  * The `S` type parameter is an interface defining the state shape.
  *
  * The `A` type parameter is a union type of all actions supported
- * by the instance of the data store. This type parameter ensures
- * that compatable reducers and listeners are used with the store.
+ * by the instance of the data store.
  *
  * More information on redux can be found at: http://redux.js.org
  */
