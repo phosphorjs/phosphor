@@ -5,6 +5,19 @@
 |
 | The full license is in the file LICENSE, distributed with this software.
 |----------------------------------------------------------------------------*/
-export * from './action';
-export * from './datastore';
-export * from './reducer';
+import {
+  IAction
+} from './action';
+
+
+/**
+ * A type alias for a reducer function.
+ *
+ * @param state - The current state of the application.
+ *
+ * @param action - The action to perform on the state.
+ *
+ * @returns The new state for the application.
+ */
+export
+type Reducer<S, A extends IAction> = (state: S, action: A) => S;
