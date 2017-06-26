@@ -1,5 +1,4 @@
 {
-  "private": true,
   "name": "@phosphor/datastore",
   "version": "0.0.1",
   "description": "PhosphorJS - DataStore",
