@@ -23,4 +23,4 @@ import {
  * A reducer processes actions to update the data store state.
  */
 export
-type Reducer<S, A extends IAction> = (state: S, action: A) => S;
+type Reducer<S> = (state: S, action: IAction) => S;

@@ -27,6 +27,10 @@ interface IAction {
  *
  * #### Notes
  * Custom actions may derive from this class.
+ *
+ * This class is useful for creating strongly-type actions which
+ * are combined into a discriminated union, and used from within
+ * a `switch` statement inside a reducer.
  */
 export
 class Action<T extends string> implements IAction {

@@ -24,13 +24,10 @@ import {
  * #### Notes
  * The `S` type parameter is an interface defining the state shape.
  *
- * The `A` type parameter is a union type of all actions supported
- * by the instance of the data store.
- *
  * More information on redux can be found at: http://redux.js.org
  */
 export
-class DataStore<S, A extends IAction> {
+class DataStore<S> {
   /**
    * Construct a new data store.
    *
@@ -38,7 +35,7 @@ class DataStore<S, A extends IAction> {
    *
    * @param state - The initial state for the data store.
    */
-  constructor(reducer: Reducer<S, A>, state: S) {
+  constructor(reducer: Reducer<S>, state: S) {
     this._reducer = reducer;
     this._state = state;
   }
@@ -65,9 +62,14 @@ class DataStore<S, A extends IAction> {
   /**
    * Dispatch an action to the data store.
    *
-   * @param action - The action to dispatch to the store.
+   * @param action - The action(s) to dispatch to the store.
+   *
+   * #### Notes
+   * An array of actions will be dispatched atomically.
+   *
+   * The `changed` signal is emitted only once per dispatch.
    */
-  dispatch(action: A): void {
+  dispatch(action: IAction | IAction[]): void {
     // Disallow recursive dispatch.
     if (this._dispatching) {
       throw new Error('Recursive dispatch detected.');
@@ -76,22 +78,59 @@ class DataStore<S, A extends IAction> {
     // Set the dispatch guard.
     this._dispatching = true;
 
-    // Look up the root reducer.
-    let reducer = this._reducer;
+    // Set up the new state variable.
+    let state: S;
 
-    // Invoke the reducer.
+    // Invoke the reducer and compute the new state.
     try {
-      this._state = reducer(this._state, action);
+      if (Array.isArray(action)) {
+        state = Private.reduceMany(this._reducer, this._state, action);
+      } else {
+        state = Private.reduceSingle(this._reducer, this._state, action);
+      }
     } finally {
       this._dispatching = false;
     }
+
+    // Bail early if there is no state change.
+    if (this._state === state) {
+      return;
+    }
+
+    // Update the internal state.
+    this._state = state;
 
     // Emit the `changed` signal.
     this._changed.emit(undefined);
   }
 
   private _state: S;
+  private _reducer: Reducer<S>;
   private _dispatching = false;
-  private _reducer: Reducer<S, A>;
   private _changed = new Signal<this, void>(this);
+}
+
+
+/**
+ * The namespace for the module implementation details.
+ */
+namespace Private {
+  /**
+   * Reduce a single action and return the new state.
+   */
+  export
+  function reduceSingle<S>(reducer: Reducer<S>, state: S, action: IAction): S {
+    return reducer(state, action);
+  }
+
+  /**
+   * Reduce an array of actions and return the final state.
+   */
+  export
+  function reduceMany<S>(reducer: Reducer<S>, state: S, actions: IAction[]): S {
+    for (let i = 0, n = actions.length; i < n; ++i) {
+      state = reducer(state, actions[i]);
+    }
+    return state;
+  }
 }
