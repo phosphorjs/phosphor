@@ -5,6 +5,9 @@
 |
 | The full license is in the file LICENSE, distributed with this software.
 |----------------------------------------------------------------------------*/
+import {
+  JSONPrimitive, JSONValue
+} from '@phosphor/coreutils';
 
 
 /**
@@ -21,40 +24,39 @@
 export
 namespace Table {
   /**
-   * A type alias for a scalar table value.
+   * A type alias for a primitive list.
    */
   export
-  type Value = string | number | boolean | null;
+  type List<T extends JSONPrimitive> = ReadonlyArray<T>;
 
   /**
-   * A type alias for a list table value.
+   * A type alias for a primitive record.
    */
   export
-  type List<T extends Value> = ReadonlyArray<T>;
+  type Record<K extends string> = { readonly [P in K]: JSONPrimitive; };
 
   /**
-   * A type alias for a record table value.
+   * A type alias for a table which holds primitive lists.
    */
   export
-  type Record<K extends string> = { readonly [P in K]: Value; };
+  type ListTable<T extends JSONPrimitive> = { readonly [id: string]: List<T>; };
 
   /**
-   * A type alias for a table which holds scalar values.
-   */
-  export
-  type ValueTable<T extends Value> = { readonly [id: string]: T; };
-
-  /**
-   * A type alias for a table which holds lists.
-   */
-  export
-  type ListTable<T extends Value> = { readonly [id: string]: List<T>; };
-
-  /**
-   * A type alias for a table which holds records.
+   * A type alias for a table which holds primitive records.
    */
   export
   type RecordTable<T extends Record<keyof T>> = { readonly [id: string]: T; };
+
+  /**
+   * A type alias for a table which holds arbitrary JSON.
+   *
+   * #### Notes
+   * Since JSON can be arbitrarily nested, the user is responsible for
+   * making immutable updates to the JSON, and calling `Table.replace`
+   * to update the table with the new value.
+   */
+  export
+  type JSONTable<T extends JSONValue> = { readonly [id: string]: T; };
 
   /**
    * Insert a new entry into a table.
@@ -70,11 +72,11 @@ namespace Table {
    * @throws An error if the id already exists in the table.
    */
   export
+  function insert<T extends JSONValue>(table: JSONTable<T>, id: string, entry: T): JSONTable<T>;
+  export
   function insert<T extends Record<keyof T>>(table: RecordTable<T>, id: string, entry: T): RecordTable<T>;
   export
-  function insert<T extends Value>(table: ListTable<T>, id: string, entry: T): ListTable<T>;
-  export
-  function insert<T extends Value>(table: ValueTable<T>, id: string, entry: T): ValueTable<T>;
+  function insert<T extends JSONPrimitive>(table: ListTable<T>, id: string, entry: T): ListTable<T>;
   export
   function insert(table: any, id: string, entry: any): any {
     // Throw an error if the id already exists.
@@ -100,11 +102,11 @@ namespace Table {
    * @throws An error if the id does not exist in the table.
    */
   export
+  function replace<T extends JSONValue>(table: JSONTable<T>, id: string, entry: T): JSONTable<T>;
+  export
   function replace<T extends Record<keyof T>>(table: RecordTable<T>, id: string, entry: T): RecordTable<T>;
   export
-  function replace<T extends Value>(table: ListTable<T>, id: string, entry: T): ListTable<T>;
-  export
-  function replace<T extends Value>(table: ValueTable<T>, id: string, entry: T): ValueTable<T>;
+  function replace<T extends JSONPrimitive>(table: ListTable<T>, id: string, entry: T): ListTable<T>;
   export
   function replace(table: any, id: string, entry: any): any {
     // Throw an error if the id does not exist.
@@ -133,11 +135,11 @@ namespace Table {
    * @throws An error if the id does not exist in the table.
    */
   export
+  function remove<T extends JSONValue>(table: JSONTable<T>, id: string): JSONTable<T>;
+  export
   function remove<T extends Record<keyof T>>(table: RecordTable<T>, id: string): RecordTable<T>;
   export
-  function remove<T extends Value>(table: ListTable<T>, id: string): ListTable<T>;
-  export
-  function remove<T extends Value>(table: ValueTable<T>, id: string): ValueTable<T>;
+  function remove<T extends JSONPrimitive>(table: ListTable<T>, id: string): ListTable<T>;
   export
   function remove(table: any, id: string): any {
     // Throw an error if the id does not exist.
@@ -197,7 +199,7 @@ namespace Table {
    * @throws An error if the id does not exist in the table.
    */
   export
-  function append<T extends Value>(table: ListTable<T>, id: string, values: T[]): ListTable<T> {
+  function append<T extends JSONPrimitive>(table: ListTable<T>, id: string, values: T[]): ListTable<T> {
     // Throw an error if the id does not exist.
     if (!(id in table)) {
       throw new Error(`Id '${id}' does not exist in the table.`);
@@ -224,7 +226,7 @@ namespace Table {
    * @throws An error if the id does not exist in the table.
    */
   export
-  function prepend<T extends Value>(table: ListTable<T>, id: string, values: T[]): ListTable<T> {
+  function prepend<T extends JSONPrimitive>(table: ListTable<T>, id: string, values: T[]): ListTable<T> {
     // Throw an error if the id does not exist.
     if (!(id in table)) {
       throw new Error(`Id '${id}' does not exist in the table.`);
@@ -255,7 +257,7 @@ namespace Table {
    * @throws An error if the id does not exist in the table.
    */
   export
-  function splice<T extends Value>(table: ListTable<T>, id: string, index: number, count: number, values: T[]): ListTable<T> {
+  function splice<T extends JSONPrimitive>(table: ListTable<T>, id: string, index: number, count: number, values: T[]): ListTable<T> {
     // Throw an error if the id does not exist.
     if (!(id in table)) {
       throw new Error(`Id '${id}' does not exist in the table.`);

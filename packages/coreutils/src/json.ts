@@ -140,15 +140,7 @@ namespace JSONExt {
    * @returns A deep copy of the given JSON value.
    */
   export
-  function deepCopy(value: JSONPrimitive): JSONPrimitive;
-  export
-  function deepCopy(value: JSONArray): JSONArray;
-  export
-  function deepCopy(value: JSONObject): JSONObject;
-  export
-  function deepCopy(value: JSONValue): JSONValue;
-  export
-  function deepCopy(value: JSONValue): JSONValue {
+  function deepCopy<T extends JSONValue>(value: T): T {
     // Do nothing for primitive values.
     if (isPrimitive(value)) {
       return value;
@@ -156,11 +148,11 @@ namespace JSONExt {
 
     // Deep copy an array.
     if (isArray(value)) {
-      return deepArrayCopy(value);
+      return deepArrayCopy(value) as T;
     }
 
     // Deep copy an object.
-    return deepObjectCopy(value);
+    return deepObjectCopy(value as JSONObject) as T;
   }
 
   /**
