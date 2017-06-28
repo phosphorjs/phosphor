@@ -7,5 +7,6 @@
 |----------------------------------------------------------------------------*/
 export * from './action';
 export * from './datastore';
-export * from './helpers';
 export * from './reducer';
+export * from './table';
+export * from './uuid';

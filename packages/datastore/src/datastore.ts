@@ -67,7 +67,9 @@ class DataStore<S> {
    * #### Notes
    * An array of actions will be dispatched atomically.
    *
-   * The `changed` signal is emitted only once per dispatch.
+   * If an action causes an exception, the state will not be modified.
+   *
+   * The `changed` signal is emitted at most once per dispatch.
    */
   dispatch(action: IAction | IAction[]): void {
     // Disallow recursive dispatch.
@@ -79,26 +81,26 @@ class DataStore<S> {
     this._dispatching = true;
 
     // Set up the new state variable.
-    let state: S;
+    let newState: S;
 
     // Invoke the reducer and compute the new state.
     try {
       if (Array.isArray(action)) {
-        state = Private.reduceMany(this._reducer, this._state, action);
+        newState = Private.reduceMany(this._reducer, this._state, action);
       } else {
-        state = Private.reduceSingle(this._reducer, this._state, action);
+        newState = Private.reduceSingle(this._reducer, this._state, action);
       }
     } finally {
       this._dispatching = false;
     }
 
     // Bail early if there is no state change.
-    if (this._state === state) {
+    if (this._state === newState) {
       return;
     }
 
     // Update the internal state.
-    this._state = state;
+    this._state = newState;
 
     // Emit the `changed` signal.
     this._changed.emit(undefined);
