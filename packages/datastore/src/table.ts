@@ -17,9 +17,6 @@ import {
  * This namespace is a collection of types and helper functions which
  * are designed to make it easy to work with maximally flat immutable
  * data stores.
- *
- * All of the table manipulation functions in this namespace are pure,
- * and return a minimal shallow copy of the table with the new state.
  */
 export
 namespace Table {
@@ -52,224 +49,472 @@ namespace Table {
    *
    * #### Notes
    * Since JSON can be arbitrarily nested, the user is responsible for
-   * making immutable updates to the JSON, and calling `Table.replace`
-   * to update the table with the new value.
+   * making immutable changes to the JSON, and then using an 'update'
+   * operation to replace the old value atomically.
    */
   export
   type JSONTable<T extends JSONValue> = { readonly [id: string]: T; };
 
   /**
-   * Insert a new entry into a table.
+   * A table operation for creating a new entry.
    *
-   * @param table - The table of interest.
-   *
-   * @param id - The id for the entry.
-   *
-   * @param entry - The entry to add to the table.
-   *
-   * @returns A table with the inserted entry.
-   *
-   * @throws An error if the id already exists in the table.
+   * An exception is thrown if the entry already exists.
    */
   export
-  function insert<T extends JSONValue>(table: JSONTable<T>, id: string, entry: T): JSONTable<T>;
-  export
-  function insert<T extends Record<keyof T>>(table: RecordTable<T>, id: string, entry: T): RecordTable<T>;
-  export
-  function insert<T extends JSONPrimitive>(table: ListTable<T>, id: string, entry: T): ListTable<T>;
-  export
-  function insert(table: any, id: string, entry: any): any {
-    // Throw an error if the id already exists.
-    if (id in table) {
-      throw new Error(`Id '${id}' already exists in the table.`);
-    }
+  type CreateOp<T> = {
+    /**
+     * The type of the operation.
+     */
+    readonly type: 'create';
 
-    // Add the entry to the table.
-    return { ...table, [id]: entry };
+    /**
+     * The id for the new entry.
+     */
+    readonly id: string;
+
+    /**
+     * The value to add to the table.
+     */
+    readonly value: T;
+  };
+
+  /**
+   * A table operation for replacing an existing entry.
+   *
+   * An exception is thrown if the entry does not exist.
+   */
+  export
+  type UpdateOp<T> = {
+    /**
+     * The type of the operation.
+     */
+    readonly type: 'update';
+
+    /**
+     * The id of the entry to update.
+     */
+    readonly id: string;
+
+    /**
+     * The new value for the entry.
+     */
+    readonly value: T;
+  };
+
+  /**
+   * A table operation for deleting an existing entry.
+   *
+   * An exception is thrown if the entry does not exist.
+   */
+  export
+  type DeleteOp<T> = {
+    /**
+     * The type of the operation.
+     */
+    readonly type: 'delete';
+
+    /**
+     * The id of the entry to delete.
+     */
+    readonly id: string;
+  };
+
+  /**
+   * A table operation for updating a record.
+   *
+   * An exception is thrown if the record does not exist.
+   */
+  export
+  type MergeOp<T> = {
+    /**
+     * The type of the operation.
+     */
+    readonly type: 'merge';
+
+    /**
+     * The id of the record to update.
+     */
+    readonly id: string;
+
+    /**
+     * The new state to apply to the record.
+     */
+    readonly value: Partial<T>;
+  };
+
+  /**
+   * A table operation for appending to a list.
+   *
+   * An exception is thrown if the list does not exist.
+   */
+  export
+  type AppendOp<T> = {
+    /**
+     * The type of the operation.
+     */
+    readonly type: 'append';
+
+    /**
+     * The id of the list to update.
+     */
+    readonly id: string;
+
+    /**
+     * The values to append to the list.
+     */
+    readonly values: T[];
+  };
+
+  /**
+   * A table operation for prepending to a list.
+   *
+   * An exception is thrown if the list does not exist.
+   */
+  export
+  type PrependOp<T> = {
+    /**
+     * The type of the operation.
+     */
+    readonly type: 'prepend';
+
+    /**
+     * The id of the list to update.
+     */
+    readonly id: string;
+
+    /**
+     * The values to prepend to the list.
+     */
+    readonly values: T[];
+  };
+
+  /**
+   * A table operation for splicing a a list.
+   *
+   * An exception is thrown if the list does not exist.
+   */
+  export
+  type SpliceOp<T> = {
+    /**
+     * The type of the operation.
+     */
+    readonly type: 'splice';
+
+    /**
+     * The id of the list to update.
+     */
+    readonly id: string;
+
+    /**
+     * The index of the splice.
+     */
+    readonly index: number;
+
+    /**
+     * The number of elements to remove.
+     */
+    readonly count: number;
+
+    /**
+     * The elements to insert.
+     */
+    readonly values: T[];
+  };
+
+  /**
+   * A type alias of the basic table operations.
+   */
+  export
+  type BasicOp<T> = CreateOp<T> | UpdateOp<T> | DeleteOp<T>;
+
+  /**
+   * A type alias of record operations.
+   */
+  export
+  type RecordOp<T> = MergeOp<T>;
+
+  /**
+   * A type alias of list operations.
+   */
+  export
+  type ListOp<T> = AppendOp<T> | PrependOp<T> | SpliceOp<T>;
+
+  /**
+   * A type alias of operations for JSON tables.
+   */
+  export
+  type JSONTableOp<T> = BasicOp<T>;
+
+  /**
+   * A type alias of operations for record tables.
+   */
+  export
+  type RecordTableOp<T> = BasicOp<T> | RecordOp<T>;
+
+  /**
+   * A type alias of records for list tables.
+   */
+  export
+  type ListTableOp<T> = BasicOp<T> | ListOp<T>;
+
+  /**
+   * A type alias of all possible table operations.
+   */
+  export
+  type AnyTableOp<T> = BasicOp<T> | RecordOp<T> | ListOp<T>;
+
+  /**
+   * Create a new 'create' operation.
+   *
+   * @param id - The id of the entry to create.
+   *
+   * @param value - The value for the entry.
+   *
+   * @returns A new 'create' operation.
+   */
+  export
+  function opCreate<T>(id: string, value: T): CreateOp<T> {
+    return { type: 'create', id, value };
   }
 
   /**
-   * Replace an entry in a table.
+   * Create a new 'update' operation.
    *
-   * @param table - The table of interest.
+   * @param id - The id of the entry to update.
    *
-   * @param id - The id of the entry.
+   * @param value - The new value for the entry.
    *
-   * @param entry - The new entry object.
-   *
-   * @returns A table with the replaced entry.
-   *
-   * @throws An error if the id does not exist in the table.
+   * @returns A new 'update' operation.
    */
   export
-  function replace<T extends JSONValue>(table: JSONTable<T>, id: string, entry: T): JSONTable<T>;
-  export
-  function replace<T extends Record<keyof T>>(table: RecordTable<T>, id: string, entry: T): RecordTable<T>;
-  export
-  function replace<T extends JSONPrimitive>(table: ListTable<T>, id: string, entry: T): ListTable<T>;
-  export
-  function replace(table: any, id: string, entry: any): any {
-    // Throw an error if the id does not exist.
-    if (!(id in table)) {
-      throw new Error(`Id '${id}' does not exist in the table.`);
-    }
-
-    // Return the original table if there is no change.
-    if (table[id] === entry) {
-      return table;
-    }
-
-    // Replace the entry in the table.
-    return { ...table, [id]: entry };
+  function opUpdate<T>(id: string, value: T): UpdateOp<T> {
+    return { type: 'update', id, value };
   }
 
   /**
-   * Remove an entry from a table.
+   * Create a new 'delete' operation.
    *
-   * @param table - The table of interest.
+   * @param id - The id of the entry to delete.
    *
-   * @param id - The id of the entry.
-   *
-   * @returns A table without the specified entry.
-   *
-   * @throws An error if the id does not exist in the table.
+   * @returns A new 'delete' operation.
    */
   export
-  function remove<T extends JSONValue>(table: JSONTable<T>, id: string): JSONTable<T>;
-  export
-  function remove<T extends Record<keyof T>>(table: RecordTable<T>, id: string): RecordTable<T>;
-  export
-  function remove<T extends JSONPrimitive>(table: ListTable<T>, id: string): ListTable<T>;
-  export
-  function remove(table: any, id: string): any {
-    // Throw an error if the id does not exist.
-    if (!(id in table)) {
-      throw new Error(`Id '${id}' does not exist in the table.`);
-    }
-
-    // Create a mutable copy of the table.
-    let copy = { ...table };
-
-    // Delete the specified entry.
-    delete copy[id];
-
-    // Return the updated table.
-    return copy;
+  function opDelete<T>(id: string): DeleteOp<T> {
+    return { type: 'delete', id };
   }
 
   /**
-   * Update the state of a record in a table.
+   * Create a new 'merge' operation.
    *
-   * @param table - The table of interest.
+   * @param id - The id of the record to update.
    *
-   * @param id - The id of the record.
+   * @param value - The new state for the record.
    *
-   * @param values - The values to update on the record.
-   *
-   * @returns A table with the updated record.
-   *
-   * @throws An error if the id does not exist in the table.
+   * @returns A new 'merge' operation.
    */
   export
-  function update<T extends Record<keyof T>>(table: RecordTable<T>, id: string, values: Partial<T>): RecordTable<T> {
-    // Throw an error if the id does not exist.
-    if (!(id in table)) {
-      throw new Error(`Id '${id}' does not exist in the table.`);
-    }
-
-    // https://github.com/Microsoft/TypeScript/issues/16780
-    // Create a new record with the updated values.
-    let record = { ...(table[id] as any), ...(values as any) } as T;
-
-    // Update the record in the table.
-    return { ...table, [id]: record };
+  function opMerge<T>(id: string, value: Partial<T>): MergeOp<T> {
+    return { type: 'merge', id, value };
   }
 
   /**
-   * Append values to a list in a table.
+   * Create a new 'append' operation.
    *
-   * @param table - The table of interest.
+   * @param id - The id of the list to update.
    *
-   * @param id - The id of the list.
+   * @param values - The values to append.
    *
-   * @param values - The values to append to the list.
-   *
-   * @returns A table with the updated list.
-   *
-   * @throws An error if the id does not exist in the table.
+   * @returns A new 'append' operation.
    */
   export
-  function append<T extends JSONPrimitive>(table: ListTable<T>, id: string, values: T[]): ListTable<T> {
-    // Throw an error if the id does not exist.
-    if (!(id in table)) {
-      throw new Error(`Id '${id}' does not exist in the table.`);
-    }
-
-    // Create a new list with the updated values.
-    let list = table[id].concat(values);
-
-    // Update the list in the table.
-    return { ...table, [id]: list };
+  function opAppend<T>(id: string, values: T[]): AppendOp<T> {
+    return { type: 'append', id, values };
   }
 
   /**
-   * Prepend values to a list in a table.
+   * Create a new 'prepend' operation.
    *
-   * @param table - The table of interest.
+   * @param id - The id of the list to update.
    *
-   * @param id - The id of the list.
+   * @param values - The values to prepend.
    *
-   * @param values - The values to prepend to the list.
-   *
-   * @returns A table with the updated list.
-   *
-   * @throws An error if the id does not exist in the table.
+   * @returns A new 'prepend' operation.
    */
   export
-  function prepend<T extends JSONPrimitive>(table: ListTable<T>, id: string, values: T[]): ListTable<T> {
-    // Throw an error if the id does not exist.
-    if (!(id in table)) {
-      throw new Error(`Id '${id}' does not exist in the table.`);
-    }
-
-    // Create a new list with the updated values.
-    let list = values.concat(table[id] as T[]);
-
-    // Update the list in the table.
-    return { ...table, [id]: list };
+  function opPrepend<T>(id: string, values: T[]): PrependOp<T> {
+    return { type: 'prepend', id, values };
   }
 
   /**
-   * Add/remove values to/from a list in a table.
+   * Create a new 'splice' operation.
    *
-   * @param table - The table object of interest.
+   * @param id - The id of the list to update.
    *
-   * @param id - The id of the list.
-   *
-   * @param index - The index to add/remove values.
+   * @param index - The index of the splice.
    *
    * @param count - The number of elements to remove.
    *
-   * @param values - The values to insert into the list.
+   * @param values - The values to insert.
    *
-   * @returns A table with the updated list.
-   *
-   * @throws An error if the id does not exist in the table.
+   * @returns A new 'splice' operation.
    */
   export
-  function splice<T extends JSONPrimitive>(table: ListTable<T>, id: string, index: number, count: number, values: T[]): ListTable<T> {
-    // Throw an error if the id does not exist.
+  function opSplice<T>(id: string, index: number, count: number, values: T[]): SpliceOp<T> {
+    return { type: 'splice', id, index, count, values };
+  }
+
+  /**
+   * Apply an operation or sequence of operations to a table.
+   *
+   * @param table - The table to modify.
+   *
+   * @param ops - The op(s) to apply to the table.
+   *
+   * @returns A new table with the applied operations.
+   */
+  export
+  function apply<T extends JSONValue>(table: JSONTable<T>, ops: JSONTableOp<T> | JSONTableOp<T>[]): JSONTable<T>;
+  export
+  function apply<T extends Record<keyof T>>(table: RecordTable<T>, ops: RecordTableOp<T> | RecordTableOp<T>[]): RecordTable<T>;
+  export
+  function apply<T extends JSONPrimitive>(table: ListTable<T>, ops: ListTableOp<T> | ListTableOp<T>[]): ListTable<T>;
+  export
+  function apply(table: any, ops: any): any {
+    // Create a shallow copy of the table.
+    let newTable = { ...table };
+
+    // Apply the op(s) to the new table.
+    if (Array.isArray(ops)) {
+      Private.applyMany(table, newTable, ops);
+    } else {
+      Private.applySingle(table, newTable, ops);
+    }
+
+    // Return the new table.
+    return newTable;
+  }
+}
+
+
+/**
+ * The namespace for the module implementation details.
+ */
+namespace Private {
+  /**
+   * Apply a single operation to a table.
+   */
+  export
+  function applySingle(oldTable: any, newTable: any, op: Table.AnyTableOp<any>): any {
+    switch (op.type) {
+    case 'create':
+      doCreate(oldTable, newTable, op);
+      break;
+    case 'update':
+      doUpdate(oldTable, newTable, op);
+      break;
+    case 'delete':
+      doDelete(oldTable, newTable, op);
+      break;
+    case 'merge':
+      doMerge(oldTable, newTable, op);
+      break;
+    case 'append':
+      doAppend(oldTable, newTable, op);
+      break;
+    case 'prepend':
+      doPrepend(oldTable, newTable, op);
+      break;
+    case 'splice':
+      doSplice(oldTable, newTable, op);
+      break;
+    default:
+      throw 'unreachable';
+    }
+  }
+
+  /**
+   * Apply multiple operation to a table.
+   */
+  export
+  function applyMany(oldTable: any, newTable: any, ops: Table.AnyTableOp<any>[]): any {
+    for (let i = 0, n = ops.length; i < n; ++i) {
+      applySingle(oldTable, newTable, ops[i]);
+    }
+  }
+
+  /**
+   * Throw an exception if an id is not in the table.
+   */
+  function ensureExists(table: any, id: string): void {
     if (!(id in table)) {
       throw new Error(`Id '${id}' does not exist in the table.`);
     }
+  }
 
-    // Create a copy of the current list.
-    let list = table[id].slice();
+  /**
+   * Throw an exception if an id is already in the table.
+   */
+  function ensureMissing(table: any, id: string): void {
+    if (id in table) {
+      throw new Error(`Id '${id}' already exists in the table.`);
+    }
+  }
 
-    // Mutate the copy.
-    list.splice(index, count, ...values);
+  /**
+   * Handle the 'create' operation.
+   */
+  function doCreate(oldTable: any, newTable: any, op: Table.CreateOp<any>): void {
+    ensureMissing(oldTable, op.id);
+    newTable[op.id] = op.value;
+  }
 
-    // Update the list in the table.
-    return { ...table, [id]: list };
+  /**
+   * Handle the 'update' operation.
+   */
+  function doUpdate(oldTable: any, newTable: any, op: Table.UpdateOp<any>): void {
+    ensureExists(oldTable, op.id);
+    newTable[op.id] = op.value;
+  }
+
+  /**
+   * Handle the 'delete' operation.
+   */
+  function doDelete(oldTable: any, newTable: any, op: Table.DeleteOp<any>): void {
+    ensureExists(oldTable, op.id);
+    delete newTable[op.id];
+  }
+
+  /**
+   * Handle the 'merge' operation.
+   */
+  function doMerge(oldTable: any, newTable: any, op: Table.MergeOp<any>): void {
+    ensureExists(oldTable, op.id);
+    newTable[op.id] = { ...oldTable[op.id], ...op.value };
+  }
+
+  /**
+   * Handle the 'append' operation.
+   */
+  function doAppend(oldTable: any, newTable: any, op: Table.AppendOp<any>): void {
+    ensureExists(oldTable, op.id);
+    newTable[op.id] = [...oldTable[op.id], ...op.values];
+  }
+
+  /**
+   * Handle the 'prepend' operation.
+   */
+  function doPrepend(oldTable: any, newTable: any, op: Table.PrependOp<any>): void {
+    ensureExists(oldTable, op.id);
+    newTable[op.id] = [...op.values, ...oldTable[op.id]];
+  }
+
+  /**
+   * Handle the 'splice' operation.
+   */
+  function doSplice(oldTable: any, newTable: any, op: Table.SpliceOp<any>): void {
+    ensureExists(oldTable, op.id);
+    let list = oldTable[op.id].slice();
+    list.splice(op.index, op.count, ...op.values);
+    newTable[op.id] = list;
   }
 }
