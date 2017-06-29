@@ -56,16 +56,16 @@ namespace Table {
   type JSONTable<T extends JSONValue> = { readonly [id: string]: T; };
 
   /**
-   * A table operation for creating a new entry.
+   * A table operation for inserting a new entry.
    *
    * An exception is thrown if the entry already exists.
    */
   export
-  type CreateOp<T> = {
+  type InsertOp<T> = {
     /**
      * The type of the operation.
      */
-    readonly type: 'create';
+    readonly type: 'insert';
 
     /**
      * The id for the new entry.
@@ -84,14 +84,14 @@ namespace Table {
    * An exception is thrown if the entry does not exist.
    */
   export
-  type UpdateOp<T> = {
+  type ReplaceOp<T> = {
     /**
      * The type of the operation.
      */
-    readonly type: 'update';
+    readonly type: 'replace';
 
     /**
-     * The id of the entry to update.
+     * The id of the entry to replace.
      */
     readonly id: string;
 
@@ -125,11 +125,11 @@ namespace Table {
    * An exception is thrown if the record does not exist.
    */
   export
-  type MergeOp<T> = {
+  type UpdateOp<T> = {
     /**
      * The type of the operation.
      */
-    readonly type: 'merge';
+    readonly type: 'update';
 
     /**
      * The id of the record to update.
@@ -225,13 +225,13 @@ namespace Table {
    * A type alias of the basic table operations.
    */
   export
-  type BasicOp<T> = CreateOp<T> | UpdateOp<T> | DeleteOp<T>;
+  type BasicOp<T> = InsertOp<T> | ReplaceOp<T> | DeleteOp<T>;
 
   /**
    * A type alias of record operations.
    */
   export
-  type RecordOp<T> = MergeOp<T>;
+  type RecordOp<T> = UpdateOp<T>;
 
   /**
    * A type alias of list operations.
@@ -264,31 +264,31 @@ namespace Table {
   type AnyTableOp<T> = BasicOp<T> | RecordOp<T> | ListOp<T>;
 
   /**
-   * Create a new 'create' operation.
+   * Create a new 'insert' operation.
    *
-   * @param id - The id of the entry to create.
+   * @param id - The id of the entry to insert.
    *
    * @param value - The value for the entry.
    *
-   * @returns A new 'create' operation.
+   * @returns A new 'insert' operation.
    */
   export
-  function opCreate<T>(id: string, value: T): CreateOp<T> {
-    return { type: 'create', id, value };
+  function opInsert<T>(id: string, value: T): InsertOp<T> {
+    return { type: 'insert', id, value };
   }
 
   /**
-   * Create a new 'update' operation.
+   * Create a new 'replace' operation.
    *
-   * @param id - The id of the entry to update.
+   * @param id - The id of the entry to replace.
    *
    * @param value - The new value for the entry.
    *
-   * @returns A new 'update' operation.
+   * @returns A new 'replace' operation.
    */
   export
-  function opUpdate<T>(id: string, value: T): UpdateOp<T> {
-    return { type: 'update', id, value };
+  function opReplace<T>(id: string, value: T): ReplaceOp<T> {
+    return { type: 'replace', id, value };
   }
 
   /**
@@ -304,17 +304,17 @@ namespace Table {
   }
 
   /**
-   * Create a new 'merge' operation.
+   * Create a new 'update' operation.
    *
    * @param id - The id of the record to update.
    *
    * @param value - The new state for the record.
    *
-   * @returns A new 'merge' operation.
+   * @returns A new 'update' operation.
    */
   export
-  function opMerge<T>(id: string, value: Partial<T>): MergeOp<T> {
-    return { type: 'merge', id, value };
+  function opUpdate<T>(id: string, value: Partial<T>): UpdateOp<T> {
+    return { type: 'update', id, value };
   }
 
   /**
@@ -406,17 +406,17 @@ namespace Private {
   export
   function applySingle(oldTable: any, newTable: any, op: Table.AnyTableOp<any>): any {
     switch (op.type) {
-    case 'create':
-      doCreate(oldTable, newTable, op);
+    case 'insert':
+      doInsert(oldTable, newTable, op);
       break;
-    case 'update':
-      doUpdate(oldTable, newTable, op);
+    case 'replace':
+      doReplace(oldTable, newTable, op);
       break;
     case 'delete':
       doDelete(oldTable, newTable, op);
       break;
-    case 'merge':
-      doMerge(oldTable, newTable, op);
+    case 'update':
+      doUpdate(oldTable, newTable, op);
       break;
     case 'append':
       doAppend(oldTable, newTable, op);
@@ -461,17 +461,17 @@ namespace Private {
   }
 
   /**
-   * Handle the 'create' operation.
+   * Handle the 'insert' operation.
    */
-  function doCreate(oldTable: any, newTable: any, op: Table.CreateOp<any>): void {
+  function doInsert(oldTable: any, newTable: any, op: Table.InsertOp<any>): void {
     ensureMissing(oldTable, op.id);
     newTable[op.id] = op.value;
   }
 
   /**
-   * Handle the 'update' operation.
+   * Handle the 'replace' operation.
    */
-  function doUpdate(oldTable: any, newTable: any, op: Table.UpdateOp<any>): void {
+  function doReplace(oldTable: any, newTable: any, op: Table.ReplaceOp<any>): void {
     ensureExists(oldTable, op.id);
     newTable[op.id] = op.value;
   }
@@ -485,9 +485,9 @@ namespace Private {
   }
 
   /**
-   * Handle the 'merge' operation.
+   * Handle the 'update' operation.
    */
-  function doMerge(oldTable: any, newTable: any, op: Table.MergeOp<any>): void {
+  function doUpdate(oldTable: any, newTable: any, op: Table.UpdateOp<any>): void {
     ensureExists(oldTable, op.id);
     newTable[op.id] = { ...oldTable[op.id], ...op.value };
   }
