@@ -273,7 +273,7 @@ namespace Table {
    * @returns A new 'insert' operation.
    */
   export
-  function opInsert<T>(id: string, value: T): InsertOp<T> {
+  function $insert<T>(id: string, value: T): InsertOp<T> {
     return { type: 'insert', id, value };
   }
 
@@ -287,7 +287,7 @@ namespace Table {
    * @returns A new 'replace' operation.
    */
   export
-  function opReplace<T>(id: string, value: T): ReplaceOp<T> {
+  function $replace<T>(id: string, value: T): ReplaceOp<T> {
     return { type: 'replace', id, value };
   }
 
@@ -299,7 +299,7 @@ namespace Table {
    * @returns A new 'delete' operation.
    */
   export
-  function opDelete<T>(id: string): DeleteOp<T> {
+  function $delete<T>(id: string): DeleteOp<T> {
     return { type: 'delete', id };
   }
 
@@ -313,7 +313,7 @@ namespace Table {
    * @returns A new 'update' operation.
    */
   export
-  function opUpdate<T>(id: string, value: Partial<T>): UpdateOp<T> {
+  function $update<T>(id: string, value: Partial<T>): UpdateOp<T> {
     return { type: 'update', id, value };
   }
 
@@ -327,7 +327,7 @@ namespace Table {
    * @returns A new 'append' operation.
    */
   export
-  function opAppend<T>(id: string, values: T[]): AppendOp<T> {
+  function $append<T>(id: string, values: T[]): AppendOp<T> {
     return { type: 'append', id, values };
   }
 
@@ -341,7 +341,7 @@ namespace Table {
    * @returns A new 'prepend' operation.
    */
   export
-  function opPrepend<T>(id: string, values: T[]): PrependOp<T> {
+  function $prepend<T>(id: string, values: T[]): PrependOp<T> {
     return { type: 'prepend', id, values };
   }
 
@@ -359,35 +359,33 @@ namespace Table {
    * @returns A new 'splice' operation.
    */
   export
-  function opSplice<T>(id: string, index: number, count: number, values: T[]): SpliceOp<T> {
+  function $splice<T>(id: string, index: number, count: number, values: T[]): SpliceOp<T> {
     return { type: 'splice', id, index, count, values };
   }
 
   /**
-   * Apply an operation or sequence of operations to a table.
+   * Apply a sequence of operations to a table.
    *
    * @param table - The table to modify.
    *
-   * @param ops - The op(s) to apply to the table.
+   * @param ops - The operations to apply to the table.
    *
    * @returns A new table with the applied operations.
    */
   export
-  function apply<T extends JSONValue>(table: JSONTable<T>, ops: JSONTableOp<T> | JSONTableOp<T>[]): JSONTable<T>;
+  function apply<T extends JSONValue>(table: JSONTable<T>, ops: JSONTableOp<T>[]): JSONTable<T>;
   export
-  function apply<T extends Record<keyof T>>(table: RecordTable<T>, ops: RecordTableOp<T> | RecordTableOp<T>[]): RecordTable<T>;
+  function apply<T extends Record<keyof T>>(table: RecordTable<T>, ops: RecordTableOp<T>[]): RecordTable<T>;
   export
-  function apply<T extends JSONPrimitive>(table: ListTable<T>, ops: ListTableOp<T> | ListTableOp<T>[]): ListTable<T>;
+  function apply<T extends JSONPrimitive>(table: ListTable<T>, ops: ListTableOp<T>[]): ListTable<T>;
   export
-  function apply(table: any, ops: any): any {
+  function apply(table: any, ops: AnyTableOp<any>[]): any {
     // Create a shallow copy of the table.
     let newTable = { ...table };
 
     // Apply the op(s) to the new table.
-    if (Array.isArray(ops)) {
-      Private.applyMany(table, newTable, ops);
-    } else {
-      Private.applySingle(table, newTable, ops);
+    for (let i = 0, n = ops.length; i < n; ++i) {
+      Private.apply(table, newTable, ops[i]);
     }
 
     // Return the new table.
@@ -404,7 +402,7 @@ namespace Private {
    * Apply a single operation to a table.
    */
   export
-  function applySingle(oldTable: any, newTable: any, op: Table.AnyTableOp<any>): any {
+  function apply(oldTable: any, newTable: any, op: Table.AnyTableOp<any>): any {
     switch (op.type) {
     case 'insert':
       doInsert(oldTable, newTable, op);
@@ -429,16 +427,6 @@ namespace Private {
       break;
     default:
       throw 'unreachable';
-    }
-  }
-
-  /**
-   * Apply multiple operation to a table.
-   */
-  export
-  function applyMany(oldTable: any, newTable: any, ops: Table.AnyTableOp<any>[]): any {
-    for (let i = 0, n = ops.length; i < n; ++i) {
-      applySingle(oldTable, newTable, ops[i]);
     }
   }
 
