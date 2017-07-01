@@ -36,6 +36,27 @@ interface JSONArray extends Array<JSONValue> { }
 
 
 /**
+ * A type definition for a readonly JSON object.
+ */
+export
+interface ReadonlyJSONObject { readonly [key: string]: ReadonlyJSONValue; }
+
+
+/**
+ * A type definition for a readonly JSON array.
+ */
+export
+interface ReadonlyJSONArray extends ReadonlyArray<ReadonlyJSONValue> { }
+
+
+/**
+ * A type alias for a readonly JSON value.
+ */
+export
+type ReadonlyJSONValue = JSONPrimitive | ReadonlyJSONObject | ReadonlyJSONArray;
+
+
+/**
  * The namespace for JSON-specific functions.
  */
 export
@@ -44,13 +65,13 @@ namespace JSONExt {
    * A shared frozen empty JSONObject
    */
   export
-  const emptyObject = Object.freeze({}) as JSONObject;
+  const emptyObject = Object.freeze({}) as ReadonlyJSONObject;
 
   /**
    * A shared frozen empty JSONArray
    */
   export
-  const emptyArray = Object.freeze([]) as any as JSONArray;
+  const emptyArray = Object.freeze([]) as ReadonlyJSONArray;
 
   /**
    * Test whether a JSON value is a primitive.
@@ -60,7 +81,7 @@ namespace JSONExt {
    * @returns `true` if the value is a primitive,`false` otherwise.
    */
   export
-  function isPrimitive(value: JSONValue): value is JSONPrimitive {
+  function isPrimitive(value: ReadonlyJSONValue): value is JSONPrimitive {
     return (
       value === null ||
       typeof value === 'boolean' ||
@@ -77,7 +98,11 @@ namespace JSONExt {
    * @returns `true` if the value is a an array, `false` otherwise.
    */
   export
-  function isArray(value: JSONValue): value is JSONArray {
+  function isArray(value: JSONValue): value is JSONArray;
+  export
+  function isArray(value: ReadonlyJSONValue): value is ReadonlyJSONArray;
+  export
+  function isArray(value: ReadonlyJSONValue): boolean {
     return Array.isArray(value);
   }
 
@@ -89,7 +114,11 @@ namespace JSONExt {
    * @returns `true` if the value is a an object, `false` otherwise.
    */
   export
-  function isObject(value: JSONValue): value is JSONObject {
+  function isObject(value: JSONValue): value is JSONObject;
+  export
+  function isObject(value: ReadonlyJSONValue): value is ReadonlyJSONObject;
+  export
+  function isObject(value: ReadonlyJSONValue): boolean {
     return !isPrimitive(value) && !isArray(value);
   }
 
@@ -103,7 +132,7 @@ namespace JSONExt {
    * @returns `true` if the values are equivalent, `false` otherwise.
    */
   export
-  function deepEqual(first: JSONValue, second: JSONValue): boolean {
+  function deepEqual(first: ReadonlyJSONValue, second: ReadonlyJSONValue): boolean {
     // Check referential and primitive equality first.
     if (first === second) {
       return true;
@@ -125,11 +154,11 @@ namespace JSONExt {
 
     // If they are both arrays, compare them.
     if (a1 && a2) {
-      return deepArrayEqual(first as JSONArray, second as JSONArray);
+      return deepArrayEqual(first as ReadonlyJSONArray, second as ReadonlyJSONArray);
     }
 
     // At this point, they must both be objects.
-    return deepObjectEqual(first as JSONObject, second as JSONObject);
+    return deepObjectEqual(first as ReadonlyJSONObject, second as ReadonlyJSONObject);
   }
 
   /**
@@ -140,7 +169,7 @@ namespace JSONExt {
    * @returns A deep copy of the given JSON value.
    */
   export
-  function deepCopy<T extends JSONValue>(value: T): T {
+  function deepCopy<T extends ReadonlyJSONValue>(value: T): T {
     // Do nothing for primitive values.
     if (isPrimitive(value)) {
       return value;
@@ -148,17 +177,17 @@ namespace JSONExt {
 
     // Deep copy an array.
     if (isArray(value)) {
-      return deepArrayCopy(value) as T;
+      return deepArrayCopy(value);
     }
 
     // Deep copy an object.
-    return deepObjectCopy(value as JSONObject) as T;
+    return deepObjectCopy(value);
   }
 
   /**
    * Compare two JSON arrays for deep equality.
    */
-  function deepArrayEqual(first: JSONArray, second: JSONArray): boolean {
+  function deepArrayEqual(first: ReadonlyJSONArray, second: ReadonlyJSONArray): boolean {
     // Check referential equality first.
     if (first === second) {
       return true;
@@ -183,7 +212,7 @@ namespace JSONExt {
   /**
    * Compare two JSON objects for deep equality.
    */
-  function deepObjectEqual(first: JSONObject, second: JSONObject): boolean {
+  function deepObjectEqual(first: ReadonlyJSONObject, second: ReadonlyJSONObject): boolean {
     // Check referential equality first.
     if (first === second) {
       return true;
@@ -217,8 +246,8 @@ namespace JSONExt {
   /**
    * Create a deep copy of a JSON array.
    */
-  function deepArrayCopy(value: JSONArray): JSONArray {
-    let result = new Array<JSONValue>(value.length);
+  function deepArrayCopy(value: any): any {
+    let result = new Array<any>(value.length);
     for (let i = 0, n = value.length; i < n; ++i) {
       result[i] = deepCopy(value[i]);
     }
@@ -228,8 +257,8 @@ namespace JSONExt {
   /**
    * Create a deep copy of a JSON object.
    */
-  function deepObjectCopy(value: JSONObject): JSONObject {
-    let result: JSONObject = {};
+  function deepObjectCopy(value: any): any {
+    let result: any = {};
     for (let key in value) {
       result[key] = deepCopy(value[key]);
     }
