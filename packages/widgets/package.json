@@ -1,6 +1,6 @@
 {
   "name": "@phosphor/widgets",
-  "version": "1.3.2",
+  "version": "1.4.0",
   "description": "PhosphorJS - Widgets",
   "main": "lib/index.js",
   "types": "lib/index.d.ts",
@@ -14,11 +14,11 @@
   },
   "dependencies": {
     "@phosphor/algorithm": "^1.1.2",
-    "@phosphor/commands": "^1.2.3",
-    "@phosphor/coreutils": "^1.1.3",
+    "@phosphor/commands": "^1.3.0",
+    "@phosphor/coreutils": "^1.2.0",
     "@phosphor/disposable": "^1.1.2",
     "@phosphor/domutils": "^1.1.2",
-    "@phosphor/dragdrop": "^1.1.3",
+    "@phosphor/dragdrop": "^1.2.0",
     "@phosphor/keyboard": "^1.1.2",
     "@phosphor/messaging": "^1.2.2",
     "@phosphor/properties": "^1.1.2",
