@@ -10,7 +10,7 @@ import {
 } from '@phosphor/algorithm';
 
 import {
-  JSONExt, JSONObject
+  JSONExt, ReadonlyJSONObject
 } from '@phosphor/coreutils';
 
 import {
@@ -165,7 +165,7 @@ class CommandRegistry {
    * @returns The display label for the command, or an empty string
    *   if the command is not registered.
    */
-  label(id: string, args: JSONObject = JSONExt.emptyObject): string {
+  label(id: string, args: ReadonlyJSONObject = JSONExt.emptyObject): string {
     let cmd = this._commands[id];
     return cmd ? cmd.label.call(undefined, args) : '';
   }
@@ -180,7 +180,7 @@ class CommandRegistry {
    * @returns The mnemonic index for the command, or `-1` if the
    *   command is not registered.
    */
-  mnemonic(id: string, args: JSONObject = JSONExt.emptyObject): number {
+  mnemonic(id: string, args: ReadonlyJSONObject = JSONExt.emptyObject): number {
     let cmd = this._commands[id];
     return cmd ? cmd.mnemonic.call(undefined, args) : -1;
   }
@@ -188,7 +188,7 @@ class CommandRegistry {
   /**
    * @deprecated Use `iconClass()` instead.
    */
-  icon(id: string, args: JSONObject = JSONExt.emptyObject): string {
+  icon(id: string, args: ReadonlyJSONObject = JSONExt.emptyObject): string {
     return this.iconClass(id, args);
   }
 
@@ -202,7 +202,7 @@ class CommandRegistry {
    * @returns The icon class for the command, or an empty string if
    *   the command is not registered.
    */
-  iconClass(id: string, args: JSONObject = JSONExt.emptyObject): string {
+  iconClass(id: string, args: ReadonlyJSONObject = JSONExt.emptyObject): string {
     let cmd = this._commands[id];
     return cmd ? cmd.iconClass.call(undefined, args) : '';
   }
@@ -217,7 +217,7 @@ class CommandRegistry {
    * @returns The icon label for the command, or an empty string if
    *   the command is not registered.
    */
-  iconLabel(id: string, args: JSONObject = JSONExt.emptyObject): string {
+  iconLabel(id: string, args: ReadonlyJSONObject = JSONExt.emptyObject): string {
     let cmd = this._commands[id];
     return cmd ? cmd.iconLabel.call(undefined, args) : '';
   }
@@ -232,7 +232,7 @@ class CommandRegistry {
    * @returns The caption for the command, or an empty string if the
    *   command is not registered.
    */
-  caption(id: string, args: JSONObject = JSONExt.emptyObject): string {
+  caption(id: string, args: ReadonlyJSONObject = JSONExt.emptyObject): string {
     let cmd = this._commands[id];
     return cmd ? cmd.caption.call(undefined, args) : '';
   }
@@ -247,7 +247,7 @@ class CommandRegistry {
    * @returns The usage text for the command, or an empty string if
    *   the command is not registered.
    */
-  usage(id: string, args: JSONObject = JSONExt.emptyObject): string {
+  usage(id: string, args: ReadonlyJSONObject = JSONExt.emptyObject): string {
     let cmd = this._commands[id];
     return cmd ? cmd.usage.call(undefined, args) : '';
   }
@@ -262,7 +262,7 @@ class CommandRegistry {
    * @returns The class name for the command, or an empty string if
    *   the command is not registered.
    */
-  className(id: string, args: JSONObject = JSONExt.emptyObject): string {
+  className(id: string, args: ReadonlyJSONObject = JSONExt.emptyObject): string {
     let cmd = this._commands[id];
     return cmd ? cmd.className.call(undefined, args) : '';
   }
@@ -277,7 +277,7 @@ class CommandRegistry {
    * @returns The dataset for the command, or an empty dataset if
    *   the command is not registered.
    */
-  dataset(id: string, args: JSONObject = JSONExt.emptyObject): CommandRegistry.Dataset {
+  dataset(id: string, args: ReadonlyJSONObject = JSONExt.emptyObject): CommandRegistry.Dataset {
     let cmd = this._commands[id];
     return cmd ? cmd.dataset.call(undefined, args) : {};
   }
@@ -292,7 +292,7 @@ class CommandRegistry {
    * @returns A boolean indicating whether the command is enabled,
    *   or `false` if the command is not registered.
    */
-  isEnabled(id: string, args: JSONObject = JSONExt.emptyObject): boolean {
+  isEnabled(id: string, args: ReadonlyJSONObject = JSONExt.emptyObject): boolean {
     let cmd = this._commands[id];
     return cmd ? cmd.isEnabled.call(undefined, args) : false;
   }
@@ -307,7 +307,7 @@ class CommandRegistry {
    * @returns A boolean indicating whether the command is toggled,
    *   or `false` if the command is not registered.
    */
-  isToggled(id: string, args: JSONObject = JSONExt.emptyObject): boolean {
+  isToggled(id: string, args: ReadonlyJSONObject = JSONExt.emptyObject): boolean {
     let cmd = this._commands[id];
     return cmd ? cmd.isToggled.call(undefined, args) : false;
   }
@@ -322,7 +322,7 @@ class CommandRegistry {
    * @returns A boolean indicating whether the command is visible,
    *   or `false` if the command is not registered.
    */
-  isVisible(id: string, args: JSONObject = JSONExt.emptyObject): boolean {
+  isVisible(id: string, args: ReadonlyJSONObject = JSONExt.emptyObject): boolean {
     let cmd = this._commands[id];
     return cmd ? cmd.isVisible.call(undefined, args) : false;
   }
@@ -340,7 +340,7 @@ class CommandRegistry {
    * The promise will reject if the command throws an exception,
    * or if the command is not registered.
    */
-  execute(id: string, args: JSONObject = JSONExt.emptyObject): Promise<any> {
+  execute(id: string, args: ReadonlyJSONObject = JSONExt.emptyObject): Promise<any> {
     // Reject if the command is not registered.
     let cmd = this._commands[id];
     if (!cmd) {
@@ -576,7 +576,7 @@ namespace CommandRegistry {
    * A type alias for a user-defined command function.
    */
   export
-  type CommandFunc<T> = (args: JSONObject) => T;
+  type CommandFunc<T> = (args: ReadonlyJSONObject) => T;
 
   /**
    * A type alias for a simple immutable string dataset.
@@ -799,7 +799,7 @@ namespace CommandRegistry {
     /**
      * The arguments object passed to the command.
      */
-    readonly args: JSONObject;
+    readonly args: ReadonlyJSONObject;
 
     /**
      * The promise which resolves with the result of the command.
@@ -857,7 +857,7 @@ namespace CommandRegistry {
      *
      * The default value is an empty object.
      */
-    args?: JSONObject;
+    args?: ReadonlyJSONObject;
 
     /**
      * The key sequence to use when running on Windows.
@@ -907,7 +907,7 @@ namespace CommandRegistry {
     /**
      * The arguments for the command.
      */
-    readonly args: JSONObject;
+    readonly args: ReadonlyJSONObject;
   }
 
   /**

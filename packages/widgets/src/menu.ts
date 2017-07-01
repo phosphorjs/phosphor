@@ -14,7 +14,7 @@ import {
 } from '@phosphor/commands';
 
 import {
-  JSONExt, JSONObject
+  JSONExt, ReadonlyJSONObject
 } from '@phosphor/coreutils';
 
 import {
@@ -985,7 +985,7 @@ namespace Menu {
      *
      * The default value is an empty object.
      */
-    args?: JSONObject;
+    args?: ReadonlyJSONObject;
 
     /**
      * The submenu for a `'submenu'` type item.
@@ -1016,7 +1016,7 @@ namespace Menu {
     /**
      * The arguments for the command.
      */
-    readonly args: JSONObject;
+    readonly args: ReadonlyJSONObject;
 
     /**
      * The submenu for a `'submenu'` type item.
@@ -1696,7 +1696,7 @@ namespace Private {
     /**
      * The arguments for the command.
      */
-    readonly args: JSONObject;
+    readonly args: ReadonlyJSONObject;
 
     /**
      * The submenu for a `'submenu'` type item.

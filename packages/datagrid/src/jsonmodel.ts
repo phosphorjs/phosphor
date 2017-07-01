@@ -6,7 +6,7 @@
 | The full license is in the file LICENSE, distributed with this software.
 |----------------------------------------------------------------------------*/
 import {
-  JSONObject
+  ReadonlyJSONObject
 } from '@phosphor/coreutils';
 
 import {
@@ -224,7 +224,7 @@ namespace JSONModel {
    * field names of the columns.
    */
   export
-  type DataSource = JSONObject[];
+  type DataSource = ReadonlyArray<ReadonlyJSONObject>;
 
   /**
    * An options object for initializing a JSON data model.

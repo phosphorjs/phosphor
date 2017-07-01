@@ -10,7 +10,7 @@ import {
 } from '@phosphor/algorithm';
 
 import {
-  JSONExt, JSONObject
+  JSONExt, ReadonlyJSONObject
 } from '@phosphor/coreutils';
 
 import {
@@ -524,7 +524,7 @@ namespace CommandPalette {
      *
      * The default value is an empty object.
      */
-    args?: JSONObject;
+    args?: ReadonlyJSONObject;
 
     /**
      * The rank for the command item.
@@ -557,7 +557,7 @@ namespace CommandPalette {
     /**
      * The arguments for the command.
      */
-    readonly args: JSONObject;
+    readonly args: ReadonlyJSONObject;
 
     /**
      * The category for the command item.
@@ -1356,7 +1356,7 @@ namespace Private {
     /**
      * The arguments for the command.
      */
-    readonly args: JSONObject;
+    readonly args: ReadonlyJSONObject;
 
     /**
      * The rank for the command item.
