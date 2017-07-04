@@ -43,6 +43,9 @@ type ReducerMap<S> = { [K in keyof S]?: Reducer<S[K]>; };
  * @returns A single combined reducer function.
  *
  * #### Notes
+ * This function should only be used for state which is a vanilla
+ * spreadable JS object.
+ *
  * When the combined reducer is invoked, the new state is created by
  * applying each reducer in the map to its respective branch of the
  * state. State branches which are not included in the reducers map

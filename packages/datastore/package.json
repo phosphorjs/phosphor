@@ -12,7 +12,6 @@
     "lib": "lib/"
   },
   "dependencies": {
-    "@phosphor/coreutils": "^1.2.0",
     "@phosphor/signaling": "^1.2.2"
   },
   "devDependencies": {
