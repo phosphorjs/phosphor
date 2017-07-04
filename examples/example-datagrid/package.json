@@ -1,11 +1,11 @@
 {
   "private": true,
   "name": "@phosphor/example-datagrid",
-  "version": "0.1.5",
+  "version": "0.1.6",
   "dependencies": {
-    "@phosphor/datagrid": "^0.1.4",
-    "@phosphor/dragdrop": "^1.2.0",
-    "@phosphor/widgets": "^1.4.0",
+    "@phosphor/datagrid": "^0.1.5",
+    "@phosphor/dragdrop": "^1.3.0",
+    "@phosphor/widgets": "^1.5.0",
     "es6-promise": "^4.0.5"
   },
   "devDependencies": {
