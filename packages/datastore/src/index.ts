@@ -8,5 +8,3 @@
 export * from './action';
 export * from './datastore';
 export * from './reducer';
-export * from './table';
-export * from './uuid';
