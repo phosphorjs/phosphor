@@ -10,6 +10,10 @@ import {
 } from '@phosphor/messaging';
 
 import {
+  ISignal
+} from '@phosphor/signaling';
+
+import {
   VirtualContent, VirtualDOM
 } from '@phosphor/virtualdom';
 
@@ -19,10 +23,30 @@ import {
 
 
 /**
- * A widget which renders its content using the virtual DOM.
+ * An object which can be used as a model for a render widget.
  */
 export
-abstract class RenderWidget extends Widget {
+interface IRenderModel {
+  /**
+   * A signal emitted when the model state has changed.
+   *
+   * #### notes
+   * If this signal is provided, the render widget will automatically
+   * update whenever the signal is emitted.
+   */
+  readonly stateChanged?: ISignal<this, void>;
+}
+
+
+/**
+ * A widget which renders its content using the virtual DOM.
+ *
+ * #### Notes
+ * Most subclasses will typically only implement the abstract `render()`
+ * method. Advanced use cases may reimplement some of the other methods.
+ */
+export
+abstract class RenderWidget<T extends IRenderModel = {}> extends Widget {
   /**
    * Construct a new render widget.
    */
@@ -30,6 +54,39 @@ abstract class RenderWidget extends Widget {
     super();
     this.addClass('p-RenderWidget');
     this.setFlag(Widget.Flag.DisallowLayout);
+  }
+
+  /**
+   * Get the model for the widget.
+   */
+  get model(): T | null {
+    return this._model;
+  }
+
+  /**
+   * Set the model for the widget.
+   */
+  set model(value: T | null) {
+    // Bail early if the model does not change.
+    if (this._model === value) {
+      return;
+    }
+
+    // Disconnect from the `stateChanged` signal, if provided.
+    if (this._model && this._model.stateChanged) {
+      this._model.stateChanged.disconnect(this.onModelStateChanged, this);
+    }
+
+    // Update the internal model
+    this._model = value;
+
+    // Connect to the `stateChanged` signal, if provided.
+    if (this._model && this._model.stateChanged) {
+      this._model.stateChanged.connect(this.onModelStateChanged, this);
+    }
+
+    // Schedule an update of the widget.
+    this.update();
   }
 
   /**
@@ -132,6 +189,20 @@ abstract class RenderWidget extends Widget {
     // Send an `'after-render'` message to the widget.
     MessageLoop.sendMessage(this, RenderWidget.AfterRender);
   }
+
+  /**
+   * Handle the `stateChanged` signal from the model.
+   *
+   * #### Notes
+   * The default implementation schedules an update of the widget.
+   *
+   * A subclass may reimplement this method as needed.
+   */
+  protected onModelStateChanged(): void {
+    this.update();
+  }
+
+  private _model: T | null = null;
 }
 
 
