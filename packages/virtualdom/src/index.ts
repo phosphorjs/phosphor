@@ -756,6 +756,13 @@ type VirtualNode = VirtualElement | VirtualText;
 
 
 /**
+ * A type alias for virtual content.
+ */
+export
+type VirtualContent = VirtualNode | ReadonlyArray<VirtualNode> | null;
+
+
+/**
  * Create a new virtual element node.
  *
  * @param tag - The tag name for the element.
@@ -972,7 +979,7 @@ namespace VirtualDOM {
    * result in undefined rendering behavior.
    */
   export
-  function render(content: VirtualNode | ReadonlyArray<VirtualNode> | null, host: HTMLElement): void {
+  function render(content: VirtualContent, host: HTMLElement): void {
     let oldContent = Private.hostMap.get(host) || [];
     let newContent = Private.asContentArray(content);
     Private.hostMap.set(host, newContent);
@@ -995,7 +1002,7 @@ namespace Private {
    * Cast a content value to a content array.
    */
   export
-  function asContentArray(value: VirtualNode | ReadonlyArray<VirtualNode> | null): ReadonlyArray<VirtualNode> {
+  function asContentArray(value: VirtualContent): ReadonlyArray<VirtualNode> {
     if (!value) {
       return [];
     }

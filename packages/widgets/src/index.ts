@@ -19,6 +19,7 @@ export * from './menu';
 export * from './menubar';
 export * from './panel';
 export * from './panellayout';
+export * from './renderwidget';
 export * from './scrollbar';
 export * from './singlelayout';
 export * from './splitlayout';
