@@ -147,7 +147,7 @@ class SingleLayout extends Layout {
       MessageLoop.sendMessage(widget, Widget.Msg.BeforeAttach);
     }
 
-    // Insert the widget's node before the sibling.
+    // Add the widget's node to the parent.
     this.parent!.node.appendChild(widget.node);
 
     // Send an `'after-attach'` message if the parent is attached.
