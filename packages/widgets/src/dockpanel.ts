@@ -470,13 +470,10 @@ class DockPanel extends Widget {
     event.preventDefault();
     event.stopPropagation();
 
-    // Get the node into which the drag is entering.
-    let related = event.relatedTarget as HTMLElement;
-
-    // Hide the overlay if the drag is leaving the dock panel.
-    if (!related || !this.node.contains(related)) {
-      this.overlay.hide(0);
-    }
+    // The new target might be a descendant, so we might still handle the drop.
+    // Hide asynchronously so that if a p-dragover event bubbles up to us, the
+    // hide is cancelled by the p-dragover handler's show overlay logic.
+    this.overlay.hide(1)
   }
 
   /**
