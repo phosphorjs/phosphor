@@ -26,11 +26,11 @@ import {
  * A concrete layout implementation which holds a single widget.
  *
  * #### Notes
- * This class is useful for container widgets which hold a single
- * child which is positioned with CSS.
+ * This class is useful for creating simple container widgets which
+ * hold a single child. The child should be positioned with CSS.
  */
 export
-class SingleLayout extends Layout {
+class SingletonLayout extends Layout {
   /**
    * Dispose of the resources held by the layout.
    */
