@@ -25,7 +25,7 @@ type JSONValue = JSONPrimitive | JSONObject | JSONArray;
  * A type definition for a JSON object.
  */
 export
-interface JSONObject { [key: string]: JSONValue; }
+interface JSONObject { [key: string]: JSONValue | undefined; }
 
 
 /**
@@ -39,7 +39,7 @@ interface JSONArray extends Array<JSONValue> { }
  * A type definition for a readonly JSON object.
  */
 export
-interface ReadonlyJSONObject { readonly [key: string]: ReadonlyJSONValue; }
+interface ReadonlyJSONObject { readonly [key: string]: ReadonlyJSONValue | undefined; }
 
 
 /**
@@ -234,7 +234,13 @@ namespace JSONExt {
 
     // Compare the values for equality.
     for (let key in first) {
-      if (!deepEqual(first[key], second[key])) {
+      let firstValue = first[key];
+      let secondValue = second[key];
+      if (
+        firstValue === undefined ||
+        secondValue === undefined ||
+        !deepEqual(firstValue, secondValue)
+      ) {
         return false;
       }
     }
