@@ -234,13 +234,22 @@ namespace JSONExt {
 
     // Compare the values for equality.
     for (let key in first) {
+      // Get the values.
       let firstValue = first[key];
       let secondValue = second[key];
-      if (
-        firstValue === undefined ||
-        secondValue === undefined ||
-        !deepEqual(firstValue, secondValue)
-      ) {
+
+      // If both are undefined, ignore the key.
+      if (firstValue === undefined && secondValue === undefined) {
+        continue;
+      }
+
+      // If only one value is undefined, the objects are not equal.
+      if (firstValue === undefined || secondValue === undefined) {
+        return false;
+      }
+
+      // Compare the values.
+      if (!deepEqual(firstValue, secondValue)) {
         return false;
       }
     }
@@ -266,7 +275,12 @@ namespace JSONExt {
   function deepObjectCopy(value: any): any {
     let result: any = {};
     for (let key in value) {
-      result[key] = deepCopy(value[key]);
+      // Ignore undefined values.
+      let subvalue = value[key];
+      if (subvalue === undefined) {
+        continue;
+      }
+      result[key] = deepCopy(subvalue);
     }
     return result;
   }
