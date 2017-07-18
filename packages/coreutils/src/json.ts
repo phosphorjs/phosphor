@@ -220,14 +220,14 @@ namespace JSONExt {
 
     // Check for the first object's keys in the second object.
     for (let key in first) {
-      if (!(key in second)) {
+      if (first[key] !== undefined && !(key in second)) {
         return false;
       }
     }
 
     // Check for the second object's keys in the first object.
     for (let key in second) {
-      if (!(key in first)) {
+      if (second[key] !== undefined && !(key in first)) {
         return false;
       }
     }
