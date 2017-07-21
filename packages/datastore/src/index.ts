@@ -7,4 +7,5 @@
 |----------------------------------------------------------------------------*/
 export * from './action';
 export * from './datastore';
+export * from './modeldb';
 export * from './reducer';
