@@ -6,133 +6,119 @@
 | The full license is in the file LICENSE, distributed with this software.
 |----------------------------------------------------------------------------*/
 import {
-  ISignal, Signal
-} from '@phosphor/signaling';
+  IDBRoot
+} from './dbroot';
 
 import {
-  IAction
-} from './action';
-
-import {
-  Reducer
-} from './reducer';
+  IModelDB
+} from './modeldb';
 
 
 /**
- * A lightweight data store which mostly follows the redux pattern.
+ * An object which represents an action for a data store.
  *
  * #### Notes
- * The `S` type parameter is an interface defining the state shape.
- *
- * More information on redux can be found at: http://redux.js.org
+ * Actions are dispatched to a data store to change the model state.
  */
 export
-class DataStore<S> {
+interface IAction {
+  /**
+   * The type of the action.
+   */
+  readonly type: string;
+}
+
+
+/**
+ * A concrete implementation of `IAction`.
+ *
+ * #### Notes
+ * Custom actions may derive from this class.
+ *
+ * This class is useful for creating strongly-type actions which
+ * are combined into a discriminated union, and used from within
+ * a `switch` statement inside a handler.
+ */
+export
+class Action<T extends string> implements IAction {
+  /**
+   * Construct a new action.
+   *
+   * @param type - The type of the action.
+   */
+  constructor(type: T) {
+    this.type = type;
+  }
+
+  /**
+   * The type of the action.
+   */
+  readonly type: T;
+}
+
+
+/**
+ * A type alias for a handler function.
+ *
+ * @param db - The model db to modify.
+ *
+ * @param action - The action to perform on the model.
+ *
+ * #### Notes
+ * Handlers are always invoked from within a db transaction.
+ */
+export
+type Handler = (db: IModelDB, action: IAction) => void;
+
+
+/**
+ * An object which manages the mutable state of a model db.
+ *
+ * #### Notes
+ * This class wraps a model db to provide a "redux-like" API where the
+ * model state can only be changed by dispatching actions to the store.
+ *
+ * The store's action handler (analagous to a "reducer") is invoked
+ * within a `db.transact()` block to enable it to modify the model.
+ *
+ * Consumers of the store do not have direct access the model db, and
+ * therefore cannot modify its state without dispatching an action.
+ */
+export
+class DataStore {
   /**
    * Construct a new data store.
    *
-   * @param reducer - The root reducer function for the data store.
+   * @param db - The model db which holds the application state.
    *
-   * @param state - The initial state for the data store.
+   * @param handler - The action handler for the store.
    */
-  constructor(reducer: Reducer<S>, state: S) {
-    this._reducer = reducer;
-    this._state = state;
+  constructor(db: IModelDB, handler: Handler) {
+    this._db = db;
+    this._handler = handler;
   }
 
-  /**
-   * A signal emitted when the data store state is changed.
-   */
-  get changed(): ISignal<this, void> {
-    return this._changed;
-  }
+  // TODO expose canUndo/canRedo state?
 
-  /**
-   * The current state of the data store.
-   *
-   * #### Notes
-   * The state **must** be treated as immutable.
-   *
-   * The only way to change the state is to dispatch an action.
-   */
-  get state(): S {
-    return this._state;
+  get state(): IDBRoot {
+    return this._db.root;
   }
 
   /**
    * Dispatch an action to the data store.
    *
    * @param action - The action(s) to dispatch to the store.
-   *
-   * #### Notes
-   * An array of actions will be dispatched atomically.
-   *
-   * If an action causes an exception, the state will not be modified.
-   *
-   * The `changed` signal is emitted at most once per dispatch.
    */
   dispatch(action: IAction | IAction[]): void {
-    // Disallow recursive dispatch.
-    if (this._dispatching) {
-      throw new Error('Recursive dispatch detected.');
+    let db = this._db;
+    let handler = this._handler;
+    if (Array.isArray(action)) {
+      db.transact(() => { for (let act of action) handler(db, act); });
+    } else {
+      db.transact(() => { handler(db, action); });
     }
-
-    // Set the dispatch guard.
-    this._dispatching = true;
-
-    // Set up the new state variable.
-    let newState: S;
-
-    // Invoke the reducer and compute the new state.
-    try {
-      if (Array.isArray(action)) {
-        newState = Private.reduceMany(this._reducer, this._state, action);
-      } else {
-        newState = Private.reduceSingle(this._reducer, this._state, action);
-      }
-    } finally {
-      this._dispatching = false;
-    }
-
-    // Bail early if there is no state change.
-    if (this._state === newState) {
-      return;
-    }
-
-    // Update the internal state.
-    this._state = newState;
-
-    // Emit the `changed` signal.
-    this._changed.emit(undefined);
   }
 
-  private _state: S;
-  private _reducer: Reducer<S>;
-  private _dispatching = false;
-  private _changed = new Signal<this, void>(this);
-}
-
-
-/**
- * The namespace for the module implementation details.
- */
-namespace Private {
-  /**
-   * Reduce a single action and return the new state.
-   */
-  export
-  function reduceSingle<S>(reducer: Reducer<S>, state: S, action: IAction): S {
-    return reducer(state, action);
-  }
-
-  /**
-   * Reduce an array of actions and return the final state.
-   */
-  export
-  function reduceMany<S>(reducer: Reducer<S>, state: S, actions: IAction[]): S {
-    for (let i = 0, n = actions.length; i < n; ++i) {
-      state = reducer(state, actions[i]);
-    }
-    return state;
-  }
+  private _db: IModelDB;
+  private _handler: Handler;
 }
