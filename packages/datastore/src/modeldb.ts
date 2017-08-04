@@ -84,7 +84,7 @@ interface IModelDB {
    * @throws An exception if this method is called recursively.
    *
    * #### Notes
-   * The db state can only be modified from with a transaction.
+   * The db state can only be modified from within a transaction.
    *
    * Each transaction forms an undo checkpoint.
    */

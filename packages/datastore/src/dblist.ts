@@ -212,7 +212,7 @@ interface IDBList<T extends ReadonlyJSONValue = ReadonlyJSONValue> extends IDBOb
    * @param index - The integer index of interest. Negative values are
    *   taken as an offset from the end of the list.
    *
-   * @value - The value to set at the specified index.
+   * @param value - The value to set at the specified index.
    *
    * #### Notes
    * This method is a no-op if `index` is out of range.

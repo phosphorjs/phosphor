@@ -75,14 +75,8 @@ type Handler = (db: IModelDB, action: IAction) => void;
  * An object which manages the mutable state of a model db.
  *
  * #### Notes
- * This class wraps a model db to provide a "redux-like" API where the
- * model state can only be changed by dispatching actions to the store.
- *
- * The store's action handler (analagous to a "reducer") is invoked
- * within a `db.transact()` block to enable it to modify the model.
- *
- * Consumers of the store do not have direct access the model db, and
- * therefore cannot modify its state without dispatching an action.
+ * This class wraps a model db to provide a unidirectional dataflow API
+ * where the model state can only be changed through action dispatching.
  */
 export
 class DataStore {
