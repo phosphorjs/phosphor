@@ -6,11 +6,5 @@
 | The full license is in the file LICENSE, distributed with this software.
 |----------------------------------------------------------------------------*/
 export * from './datastore';
-export * from './dblist';
-export * from './dbmap';
-export * from './dbobject';
-export * from './dbrecord';
-export * from './dbroot';
-export * from './dbstring';
-export * from './dbtable';
+export * from './localmodeldb';
 export * from './modeldb';

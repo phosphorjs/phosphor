@@ -6,10 +6,6 @@
 | The full license is in the file LICENSE, distributed with this software.
 |----------------------------------------------------------------------------*/
 import {
-  IDBRoot
-} from './dbroot';
-
-import {
   IModelDB
 } from './modeldb';
 
@@ -94,9 +90,9 @@ class DataStore {
 
   // TODO expose canUndo/canRedo state?
 
-  get state(): IDBRoot {
-    return this._db.root;
-  }
+  // get state(): IDBRoot {
+  //   return this._db.root;
+  // }
 
   /**
    * Dispatch an action to the data store.
