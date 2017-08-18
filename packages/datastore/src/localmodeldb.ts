@@ -1,1064 +1,1168 @@
-/*-----------------------------------------------------------------------------
-| Copyright (c) 2014-2017, PhosphorJS Contributors
-|
-| Distributed under the terms of the BSD 3-Clause License.
-|
-| The full license is in the file LICENSE, distributed with this software.
-|----------------------------------------------------------------------------*/
-import {
-  ArrayExt, IIterator, IterableOrArrayLike, each, iter, iterItems, iterKeys,
-  iterValues, retro, toArray
-} from '@phosphor/algorithm';
+// /*-----------------------------------------------------------------------------
+// | Copyright (c) 2014-2017, PhosphorJS Contributors
+// |
+// | Distributed under the terms of the BSD 3-Clause License.
+// |
+// | The full license is in the file LICENSE, distributed with this software.
+// |----------------------------------------------------------------------------*/
+// import {
+//   ArrayExt, IIterator, IterableOrArrayLike, each, iter, iterItems, iterKeys,
+//   iterValues, retro, toArray
+// } from '@phosphor/algorithm';
+
+// import {
+//   ReadonlyJSONValue, Token, UUID
+// } from '@phosphor/coreutils';
+
+// import {
+//   ISignal, Signal
+// } from '@phosphor/signaling';
+
+// import {
+//   DBRecord, IDBList, IDBMap, IDBString, IDBTable, IModelDB
+// } from './modeldb';
+
 
-import {
-  ReadonlyJSONValue, Token, UUID
-} from '@phosphor/coreutils';
+
+// /**
+//  * The namespace for the module implementation details.
+//  */
+// namespace Private {
+//   /**
+//    * The implementation class for a local model db.
+//    */
+//   export
+//   class LocalDBImpl {
 
-import {
-  ISignal, Signal
-} from '@phosphor/signaling';
+//     constructor(dbModel: LocalModelDB) {
+//       this._dbModel = dbModel;
+//     }
 
-import {
-  DBRecord, IDBList, IDBMap, IDBString, IDBTable, IModelDB
-} from './modeldb';
+//     //-------------------------------------------------------------------------
+//     // DB Methods
+//     //-------------------------------------------------------------------------
+
+//     get dbModel(): IModelDB {
+//       return this._dbModel;
+//     }
+
+//     get canUndo(): boolean {
+//       return false;
+//     }
+
+//     get canRedo(): boolean {
+//       return false;
+//     }
+
+//     undo(): void {
+
+//     }
+
+//     redo(): void {
+
+//     }
+
+//     transact(auth: any, fn: () => void): void {
+//       try {
+
+//       } catch (error) {
+//         // unwind transaction
+//         throw error;
+//       }
+//     }
+
+//     //-------------------------------------------------------------------------
+//     // Model Methods
+//     //-------------------------------------------------------------------------
 
+//     createList<T extends ReadonlyJSONValue>(values?: IterableOrArrayLike<T>): IDBList<T> {
+//       // Guard against disallowed mutations.
+//       this._mutationGuard();
 
+//       // Create and return the list.
+//       return LocalDBList.create<T>(this, values);
+//     }
 
-/**
- * The namespace for the module implementation details.
- */
-namespace Private {
-  /**
-   * The implementation class for a local model db.
-   */
-  export
-  class LocalDBImpl {
+//     createMap<T extends ReadonlyJSONValue>(items?: { [key: string]: T }): IDBMap<T> {
+//       // Guard against disallowed mutations.
+//       this._mutationGuard();
 
-    constructor(dbModel: LocalModelDB) {
-      this._dbModel = dbModel;
-    }
+//       // Create and return the map.
+//       return LocalDBMap.create<T>(this, items);
+//     }
 
-    //-------------------------------------------------------------------------
-    // DB Methods
-    //-------------------------------------------------------------------------
+//     createString(value?: string): IDBString {
+//       // Guard against disallowed mutations.
+//       this._mutationGuard();
 
-    get dbModel(): IModelDB {
-      return this._dbModel;
-    }
+//       // Create and return the string.
+//       return LocalDBString.create(this, value);
+//     }
 
-    get canUndo(): boolean {
-      return false;
-    }
+//     createRecord<T extends DBRecord.State>(state: T): DBRecord<T> {
+//       // Guard against disallowed mutations.
+//       this._mutationGuard();
 
-    get canRedo(): boolean {
-      return false;
-    }
+//       // Create and return the record.
+//       return LocalDBRecordBase.create<T>(this, state);
+//     }
 
-    undo(): void {
+//     createTable<T extends DBRecord.State>(token: Token<T>, records?: IterableOrArrayLike<DBRecord<T>>): IDBTable<T> {
+//       // Guard against disallowed mutations.
+//       this._mutationGuard();
 
-    }
+//       // Ensure the table does not already exist.
+//       if (this._tokenTableMap.has(token)) {
+//         throw new Error(`A table already exists for the token: '${token.name}'.`);
+//       }
 
-    redo(): void {
+//       // Create the table.
+//       let table = new LocalDBTable<T>(token, this, records);
 
-    }
+//       // Store the table for the token.
+//       this._tokenTableMap.set(token, table);
 
-    transact(auth: any, fn: () => void): void {
-      try {
+//       // Register the change.
+//       this._registerModelChange(undefined, table);
 
-      } catch (error) {
-        // unwind transaction
-        throw error;
-      }
-    }
+//       // Return the new table.
+//       return table;
+//     }
 
-    //-------------------------------------------------------------------------
-    // Model Methods
-    //-------------------------------------------------------------------------
+//     hasTable<T extends DBRecord.State>(token: Token<T>): boolean {
+//       return this._tokenTableMap.has(token);
+//     }
 
-    createList<T extends ReadonlyJSONValue>(values?: IterableOrArrayLike<T>): IDBList<T> {
-      // Guard against disallowed mutations.
-      this._mutationGuard();
+//     getTable<T extends DBRecord.State>(token: Token<T>): IDBTable<T> {
+//       // Fetch the table for the token.
+//       let table = this._tokenTableMap.get(token);
 
-      // Create the list.
-      let list = new LocalDBList<T>(this, values);
+//       // Ensure the table exists.
+//       if (!table) {
+//         throw new Error(`No table exists for token: '${token.name}'.`);
+//       }
 
-      // Return the new list.
-      return list;
-    }
+//       // Return the table.
+//       return table;
+//     }
 
-    createMap<T extends ReadonlyJSONValue>(items?: { [key: string]: T }): IDBMap<T> {
-      // Guard against disallowed mutations.
-      this._mutationGuard();
+//     deleteTable<T extends DBRecord.State>(token: Token<T>): void {
+//       // Fetch the table for the token.
+//       let table = this._tokenTableMap.get(token);
 
-      // Create the map.
-      let map = new LocalDBMap<T>(this, items);
+//       // Ensure the table exists.
+//       if (!table) {
+//         throw new Error(`No table exists for token: '${token.name}'.`);
+//       }
 
-      // Return the new map.
-      return map;
-    }
+//       // Delete the table from the token map.
+//       this._tokenTableMap.delete(token);
 
-    createString(value?: string): IDBString {
-      // Guard against disallowed mutations.
-      this._mutationGuard();
+//       // Register the change.
+//       this._registerModelChange(table, undefined);
+//     }
 
-      // Create and the string.
-      let str = new LocalDBString(this, value);
+//     //-------------------------------------------------------------------------
+//     // Private Methods
+//     //-------------------------------------------------------------------------
 
-      // Return the new string.
-      return str;
-    }
+//     private _mutationGuard(): void {
+//       if (!this._inTransaction) {
+//         throw new Error('DB mutation is only allowed within transaction.');
+//       }
+//     }
 
-    createRecord<T extends DBRecord.State>(state: T): DBRecord<T> {
-      // Guard against disallowed mutations.
-      this._mutationGuard();
+//     private _registerModelChange(removed: LocalDBTable<{}> | undefined, added: LocalDBTable<{}> | undefined): void {
 
-      // Create the record.
-      let record = cachedRecordFactory(state)(this, state);
+//     }
 
-      // Return the new record.
-      return record;
-    }
+//     private _registerListChange<T extends ReadonlyJSONValue>(list: LocalDBList<T>, index: number, removed: ReadonlyArray<T>, added: ReadonlyArray<T>): void {
 
-    createTable<T extends DBRecord.State>(token: Token<T>, records?: IterableOrArrayLike<DBRecord<T>>): IDBTable<T> {
-      // Guard against disallowed mutations.
-      this._mutationGuard();
+//     }
 
-      // Ensure the table does not already exist.
-      if (this._tokenTableMap.has(token)) {
-        throw new Error(`A table already exists for the token: '${token.name}'.`);
-      }
+//     private _registerMapChange<T extends ReadonlyJSONValue>(map: LocalDBMap<T>, key: string, removed: T | undefined, added: T | undefined): void {
 
-      // Create the table.
-      let table = new LocalDBTable<T>(token, this, records);
+//     }
 
-      // Store the table for the token.
-      this._tokenTableMap.set(token, table);
+//     private _registerStringChange(str: LocalDBString, index: number, removed: string, added: string): void {
 
-      // Register the change.
-      this._registerModelChange(undefined, table);
+//     }
 
-      // Return the new table.
-      return table;
-    }
+//     private _registerRecordChange<T extends DBRecord.State, K extends keyof T>(record: LocalDBRecord<T>, name: K, oldValue: T[K], newValue: T[K]): void {
 
-    hasTable<T extends DBRecord.State>(token: Token<T>): boolean {
-      return this._tokenTableMap.has(token);
-    }
+//     }
 
-    getTable<T extends DBRecord.State>(token: Token<T>): IDBTable<T> {
-      // Fetch the table for the token.
-      let table = this._tokenTableMap.get(token);
+//     private _registerTableChange<T extends DBRecord.State>(table: LocalDBTable<T>, removed: DBRecord<T> | undefined, added: DBRecord<T> | undefined): void {
 
-      // Ensure the table exists.
-      if (!table) {
-        throw new Error(`No table exists for token: '${token.name}'.`);
-      }
+//     }
 
-      // Return the table.
-      return table;
-    }
+//     private _setObjectParent(object: IDBList | IDBMap | IDBString, record: DBRecord<{}>): void {
 
-    deleteTable<T extends DBRecord.State>(token: Token<T>): void {
-      // Fetch the table for the token.
-      let table = this._tokenTableMap.get(token);
+//     }
 
-      // Ensure the table exists.
-      if (!table) {
-        throw new Error(`No table exists for token: '${token.name}'.`);
-      }
+//     private _setRecordParent<T extends DBRecord.State>(record: DBRecord<T>, table: LocalDBTable<T>): void {
+//       // Fetch the record state.
+//       let state = this._recordStateMap.get(record as any);
 
-      // Delete the table from the token map.
-      this._tokenTableMap.delete(token);
+//       // Validate the ownership of the record.
+//       if (!state) {
+//         throw new Error('Record was not created by this model db.');
+//       }
 
-      // Register the change.
-      this._registerModelChange(table, undefined);
-    }
+//       // Ensure the record does not have a parent.
+//       if (state.dbParent) {
+//         throw new Error('Record already belongs to another table.');
+//       }
 
-    //-------------------------------------------------------------------------
-    // Private Methods
-    //-------------------------------------------------------------------------
+//       // Set the parent of the record.
+//       state.parent = table;
+//     }
 
-    private _mutationGuard(): void {
-      if (!this._inTransaction) {
-        throw new Error('DB mutation is only allowed within transaction.');
-      }
-    }
+//     private _dbModel: LocalModelDB;
+//     private _inTransaction = false;
+//     private _tokenTableMap = new Map<Token<any>, LocalDBTable<any>>();
+//   }
 
-    private _registerModelChange(removed: LocalDBTable<{}> | undefined, added: LocalDBTable<{}> | undefined): void {
+//   /**
+//    *
+//    */
+//   abstract class LocalDBObject {
 
-    }
+//     static getImpl(obj: LocalDBObject): LocalDBImpl {
+//       return obj._dbImpl;
+//     }
 
-    private _registerListChange<T extends ReadonlyJSONValue>(list: LocalDBList<T>, index: number, removed: ReadonlyArray<T>, added: ReadonlyArray<T>): void {
+//     constructor(dbImpl: LocalDBImpl) {
+//       this._dbImpl = dbImpl;
+//     }
 
-    }
 
-    private _registerMapChange<T extends ReadonlyJSONValue>(map: LocalDBMap<T>, key: string, removed: T | undefined, added: T | undefined): void {
 
-    }
+//     get dbId(): string {
+//       return this._dbId;
+//     }
 
-    private _registerStringChange(str: LocalDBString, index: number, removed: string, added: string): void {
+//     get dbModel(): IModelDB {
+//       return this._dbImpl.dbModel;
+//     }
 
-    }
+//     private _dbId = UUID.uuid4();
+//     private _dbImpl: LocalDBImpl;
+//     private _changed = new Signal<this, any>(this);
+//   }
 
-    private _registerRecordChange<T extends DBRecord.State, K extends keyof T>(record: LocalDBRecord<T>, name: K, oldValue: T[K], newValue: T[K]): void {
+//   /**
+//    *
+//    */
+//   abstract class LocalDBRecordChild extends LocalDBObject {
 
-    }
+//     static setParent(child: LocalDBRecordChild, parent: LocalDBRecord<{}> | null): void {
+//       child._dbParent = parent;
+//     }
 
-    private _registerTableChange<T extends DBRecord.State>(table: LocalDBTable<T>, removed: DBRecord<T> | undefined, added: DBRecord<T> | undefined): void {
+//     get dbParent(): DBRecord<{}> | null {
+//       return this._dbParent;
+//     }
 
-    }
+//     private _dbParent: LocalDBRecord<{}> | null = null;
+//   }
 
-    private _setObjectParent(object: IDBList | IDBMap | IDBString, record: DBRecord<{}>): void {
+//   /**
+//    * A concrete implementation of `IDBList`.
+//    */
+//   class LocalDBList<T extends ReadonlyJSONValue> extends LocalDBRecordChild implements IDBList<T> {
 
-    }
+//     static create<K  extends ReadonlyJSONValue>(dbImpl: LocalDBImpl, values?: IterableOrArrayLike<K>): LocalDBList<K> {
+//       // Create the list instance.
+//       let list = new LocalDBList<K>(dbImpl);
 
-    private _setRecordParent<T extends DBRecord.State>(record: DBRecord<T>, table: LocalDBTable<T>): void {
-      // Fetch the record state.
-      let state = this._recordStateMap.get(record as any);
+//       // Bail early if there are no initial values.
+//       if (!values) {
+//         return list;
+//       }
 
-      // Validate the ownership of the record.
-      if (!state) {
-        throw new Error('Record was not created by this model db.');
-      }
+//       // Add the initial list values.
+//       each(values, value => { list._values.push(value); });
 
-      // Ensure the record does not have a parent.
-      if (state.dbParent) {
-        throw new Error('Record already belongs to another table.');
-      }
+//       // Return the initialized list.
+//       return list;
+//     }
 
-      // Set the parent of the record.
-      state.parent = table;
-    }
+//     get changed(): ISignal<this, IDBList.ChangedArgs<T>> {
+//       return this._changed;
+//     }
 
-    private _dbModel: LocalModelDB;
-    private _inTransaction = false;
-    private _tokenTableMap = new Map<Token<any>, LocalDBTable<any>>();
-  }
+//     get dbType(): 'list' {
+//       return 'list';
+//     }
 
-  /**
-   * A concrete implementation of `IDBList`.
-   */
-  class LocalDBList<T extends ReadonlyJSONValue> implements IDBList<T> {
+//     get isEmpty(): boolean {
+//       return this._values.length === 0;
+//     }
 
-    constructor(dbImpl: LocalDBImpl, values?: IterableOrArrayLike<T>) {
-      this._dbImpl = dbImpl;
-      this._values = values ? toArray(values) : [];
-    }
+//     get length(): number {
+//       return this._values.length;
+//     }
 
-    get changed(): ISignal<IDBList<T>, IDBList.ChangedArgs<T>> {
-      return this._changed;
-    }
+//     get first(): T | undefined {
+//       return this.get(0);
+//     }
 
-    get dbType(): 'list' {
-      return 'list';
-    }
+//     get last(): T | undefined {
+//       return this.get(-1);
+//     }
 
-    get dbId(): string {
-      return this._dbId;
-    }
+//     iter(): IIterator<T> {
+//       return iter(this._values);
+//     }
 
-    get dbModel(): IModelDB {
-      return this._dbImpl.dbModel;
-    }
+//     retro(): IIterator<T> {
+//       return retro(this._values);
+//     }
 
-    get dbParent(): DBRecord<{}> | null {
-      return this._dbParent;
-    }
+//     indexOf(value: T, start?: number, stop?: number): number {
+//       return ArrayExt.indexOf(this._values, value, start, stop);
+//     }
 
-    get isEmpty(): boolean {
-      return this._values.length === 0;
-    }
+//     lastIndexOf(value: T, start?: number, stop?: number): number {
+//       return ArrayExt.lastIndexOf(this._values, value, start, stop);
+//     }
 
-    get length(): number {
-      return this._values.length;
-    }
+//     findIndex(fn: (value: T, index: number) => boolean, start?: number, stop?: number): number {
+//       return ArrayExt.findFirstIndex(this._values, fn, start, stop);
+//     }
 
-    get first(): T | undefined {
-      return this.get(0);
-    }
+//     findLastIndex(fn: (value: T, index: number) => boolean, start?: number, stop?: number): number {
+//       return ArrayExt.findLastIndex(this._values, fn, start, stop);
+//     }
 
-    get last(): T | undefined {
-      return this.get(-1);
-    }
+//     get(index: number): T | undefined {
+//       return this._values[index < 0 ? index + this._values.length : index];
+//     }
 
-    iter(): IIterator<T> {
-      return iter(this._values);
-    }
+//     set(index: number, value: T): void {
+//       // Guard against disallowed mutations.
+//       this._dbImpl.mutationGuard();
 
-    retro(): IIterator<T> {
-      return retro(this._values);
-    }
+//       // Wrap the index for negative offsets.
+//       if (index < 0) {
+//         index += this._values.length;
+//       }
 
-    indexOf(value: T, start?: number, stop?: number): number {
-      return ArrayExt.indexOf(this._values, value, start, stop);
-    }
+//       // Bail early if the index is out of range.
+//       if (index < 0 || index >= this._values.length) {
+//         return;
+//       }
 
-    lastIndexOf(value: T, start?: number, stop?: number): number {
-      return ArrayExt.lastIndexOf(this._values, value, start, stop);
-    }
+//       // Look up the current value.
+//       let current = this._values[index];
 
-    findIndex(fn: (value: T, index: number) => boolean, start?: number, stop?: number): number {
-      return ArrayExt.findFirstIndex(this._values, fn, start, stop);
-    }
+//       // Bail early if the value does not change.
+//       if (current === value) {
+//         return;
+//       }
 
-    findLastIndex(fn: (value: T, index: number) => boolean, start?: number, stop?: number): number {
-      return ArrayExt.findLastIndex(this._values, fn, start, stop);
-    }
+//       // Update the internal values.
+//       this._values[index] = value;
 
-    get(index: number): T | undefined {
-      return this._values[index < 0 ? index + this._values.length : index];
-    }
+//       // Register the change.
+//       this._dbImpl.registerListChange(this, index, [current], [value]);
+//     }
 
-    set(index: number, value: T): void {
-      // Guard against disallowed mutations.
-      this._dbImpl.mutationGuard();
+//     push(value: T): void {
+//       // Guard against disallowed mutations.
+//       this._dbImpl.mutationGuard();
 
-      // Wrap the index for negative offsets.
-      if (index < 0) {
-        index += this._values.length;
-      }
+//       // Update the internal values.
+//       let index = this._values.push(value) - 1;
 
-      // Bail early if the index is out of range.
-      if (index < 0 || index >= this._values.length) {
-        return;
-      }
+//       // Register the change.
+//       this._dbImpl.registerListChange(this, index, [], [value]);
+//     }
 
-      // Look up the current value.
-      let current = this._values[index];
+//     insert(index: number, value: T): void {
+//       // Guard against disallowed mutations.
+//       this._dbImpl.mutationGuard();
 
-      // Bail early if the value does not change.
-      if (current === value) {
-        return;
-      }
+//       // Normalize the index for the insert.
+//       if (index < 0) {
+//         index = Math.max(0, index + this._values.length);
+//       } else {
+//         index = Math.min(index, this._values.length);
+//       }
 
-      // Update the internal values.
-      this._values[index] = value;
+//       // Update the internal values.
+//       ArrayExt.insert(this._values, index, value);
 
-      // Register the change.
-      this._dbImpl.registerListChange(this, index, [current], [value]);
-    }
+//       // Register the change.
+//       this._dbImpl.registerListChange(this, index, [], [value]);
+//     }
 
-    push(value: T): void {
-      // Guard against disallowed mutations.
-      this._dbImpl.mutationGuard();
+//     remove(index: number): void {
+//       // Guard against disallowed mutations.
+//       this._dbImpl.mutationGuard();
 
-      // Update the internal values.
-      let index = this._values.push(value) - 1;
+//       // Wrap the index for negative offsets.
+//       if (index < 0) {
+//         index += this._values.length;
+//       }
 
-      // Register the change.
-      this._dbImpl.registerListChange(this, index, [], [value]);
-    }
+//       // Bail early if the index is out of range.
+//       if (index < 0 || index >= this._values.length) {
+//         return;
+//       }
 
-    insert(index: number, value: T): void {
-      // Guard against disallowed mutations.
-      this._dbImpl.mutationGuard();
+//       // Update the internal values.
+//       let removed = ArrayExt.removeAt(this._values, index)!;
 
-      // Normalize the index for the insert.
-      if (index < 0) {
-        index = Math.max(0, index + this._values.length);
-      } else {
-        index = Math.min(index, this._values.length);
-      }
+//       // Register the change.
+//       this._dbImpl.registerListChange(this, index, [removed], []);
+//     }
 
-      // Update the internal values.
-      ArrayExt.insert(this._values, index, value);
+//     splice(index: number, count: number, values?: IterableOrArrayLike<T>): void {
+//       // Guard against disallowed mutations.
+//       this._dbImpl.mutationGuard();
 
-      // Register the change.
-      this._dbImpl.registerListChange(this, index, [], [value]);
-    }
+//       // Normalize the remove count.
+//       count = Math.max(0, count);
 
-    remove(index: number): void {
-      // Guard against disallowed mutations.
-      this._dbImpl.mutationGuard();
+//       // Normalize the added values.
+//       let added = values ? toArray(values) : [];
 
-      // Wrap the index for negative offsets.
-      if (index < 0) {
-        index += this._values.length;
-      }
+//       // Bail early if there is nothing to do.
+//       if (added.length === 0 && (count === 0 || this._values.length === 0)) {
+//         return;
+//       }
 
-      // Bail early if the index is out of range.
-      if (index < 0 || index >= this._values.length) {
-        return;
-      }
+//       // Normalize the index for the splice.
+//       if (index < 0) {
+//         index = Math.max(0, index + this._values.length);
+//       } else {
+//         index = Math.min(index, this._values.length);
+//       }
 
-      // Update the internal values.
-      let removed = ArrayExt.removeAt(this._values, index)!;
+//       // Update the internal values.
+//       let removed = this._values.splice(index, count, ...added);
 
-      // Register the change.
-      this._dbImpl.registerListChange(this, index, [removed], []);
-    }
+//       // Bail early if there is no effective change.
+//       if (shallowEqual(removed, added)) {
+//         return;
+//       }
 
-    splice(index: number, count: number, values?: IterableOrArrayLike<T>): void {
-      // Guard against disallowed mutations.
-      this._dbImpl.mutationGuard();
+//       // Register the change.
+//       this._dbImpl.registerListChange(this, index, removed, added);
+//     }
 
-      // Normalize the remove count.
-      count = Math.max(0, count);
+//     clear(): void {
+//       // Guard against disallowed mutations.
+//       this._dbImpl.mutationGuard();
 
-      // Normalize the added values.
-      let added = values ? toArray(values) : [];
+//       // Bail early if there is no effective change.
+//       if (this._values.length === 0) {
+//         return;
+//       }
 
-      // Bail early if there is nothing to do.
-      if (added.length === 0 && (count === 0 || this._values.length === 0)) {
-        return;
-      }
+//       // Shallow copy the list.
+//       let removed = this._values.slice();
 
-      // Normalize the index for the splice.
-      if (index < 0) {
-        index = Math.max(0, index + this._values.length);
-      } else {
-        index = Math.min(index, this._values.length);
-      }
+//       // Update the internal values.
+//       this._values.length = 0;
 
-      // Update the internal values.
-      let removed = this._values.splice(index, count, ...added);
+//       // Register the change.
+//       this._dbImpl.registerListChange(this, 0, removed, []);
+//     }
 
-      // Bail early if there is no effective change.
-      if (shallowEqual(removed, added)) {
-        return;
-      }
+//     private constructor(dbImpl: LocalDBImpl) { super(dbImpl); }
 
-      // Register the change.
-      this._dbImpl.registerListChange(this, index, removed, added);
-    }
+//     private _values: T[] = [];
+//     private _changed = new Signal<this, IDBList.ChangedArgs<T>>(this);
+//   }
 
-    clear(): void {
-      // Guard against disallowed mutations.
-      this._dbImpl.mutationGuard();
+//   /**
+//    * A concrete implementation of `IDBMap`.
+//    */
+//   class LocalDBMap<T extends ReadonlyJSONValue> extends LocalDBLeaf implements IDBMap<T> {
 
-      // Bail early if there is no effective change.
-      if (this._values.length === 0) {
-        return;
-      }
+//     static create<K  extends ReadonlyJSONValue>(dbImpl: LocalDBImpl, items?: { [key: string]: K }): LocalDBMap<K> {
+//       // Create the map instance.
+//       let map = new LocalDBMap<K>(dbImpl);
 
-      // Shallow copy the list.
-      let removed = this._values.slice();
+//       // Bail early if there are no initial items.
+//       if (!items) {
+//         return map;
+//       }
 
-      // Update the internal values.
-      this._values.length = 0;
+//       // Add the initial map items.
+//       for (let key in items) {
+//         map._items[key] = items[key];
+//         map._size++;
+//       }
 
-      // Register the change.
-      this._dbImpl.registerListChange(this, 0, removed, []);
-    }
+//       // Return the initialized map.
+//       return map;
+//     }
 
-    private _values: T[];
-    private _dbId = UUID.uuid4();
-    private _dbImpl: LocalDBImpl;
-    private _dbParent: LocalDBRecord<{}> | null = null;
-    private _changed = new Signal<this, IDBList.ChangedArgs<T>>(this);
-  }
+//     get dbType(): 'map' {
+//       return 'map';
+//     }
 
-  /**
-   * A concrete implementation of `IDBMap`.
-   */
-  class LocalDBMap<T extends ReadonlyJSONValue> implements IDBMap<T> {
+//     get isEmpty(): boolean {
+//       return this._size === 0;
+//     }
 
-    constructor(dbImpl: LocalDBImpl, items?: { [key: string]: T }) {
-      this._dbImpl = dbImpl;
-      if (items) {
-        for (let key in items) {
-          this._items[key] = items[key];
-          this._size++;
-        }
-      }
-    }
+//     get size(): number {
+//       return this._size;
+//     }
 
-    get changed(): ISignal<IDBMap<T>, IDBMap.ChangedArgs<T>> {
-      return this._changed;
-    }
+//     iter(): IIterator<[string, T]> {
+//       return iterItems(this._items);
+//     }
 
-    get dbType(): 'map' {
-      return 'map';
-    }
+//     keys(): IIterator<string> {
+//       return iterKeys(this._items);
+//     }
 
-    get dbId(): string {
-      return this._dbId;
-    }
+//     values(): IIterator<T> {
+//       return iterValues(this._items);
+//     }
 
-    get dbModel(): IModelDB {
-      return this._dbImpl.dbModel;
-    }
+//     has(key: string): boolean {
+//       return key in this._items;
+//     }
 
-    get dbParent(): DBRecord<{}> | null {
-      return this._dbParent;
-    }
+//     get(key: string): T | undefined {
+//       return this._items[key];
+//     }
 
-    get isEmpty(): boolean {
-      return this._size === 0;
-    }
+//     set(key: string, value: T): void {
+//       // Guard against disallowed mutations.
+//       this._dbImpl.mutationGuard();
 
-    get size(): number {
-      return this._size;
-    }
+//       // Look up the current value.
+//       let current = this._items[key];
 
-    iter(): IIterator<[string, T]> {
-      return iterItems(this._items);
-    }
+//       // Bail early if there is no effective change.
+//       if (current === value) {
+//         return;
+//       }
 
-    keys(): IIterator<string> {
-      return iterKeys(this._items);
-    }
+//       // Update the internal state.
+//       this._items[key] = value;
+//       this._size += +(current === undefined);
 
-    values(): IIterator<T> {
-      return iterValues(this._items);
-    }
+//       // Register the change.
+//       this._dbImpl.registerMapChange(this, key, current, value);
+//     }
 
-    has(key: string): boolean {
-      return key in this._items;
-    }
+//     delete(key: string): void {
+//       // Guard against disallowed mutations.
+//       this._dbImpl.mutationGuard();
 
-    get(key: string): T | undefined {
-      return this._items[key];
-    }
+//       // Look up the current value.
+//       let current = this._items[key];
 
-    set(key: string, value: T): void {
-      // Guard against disallowed mutations.
-      this._dbImpl.mutationGuard();
+//       // Bail early if the key does not exist.
+//       if (current === undefined) {
+//         return;
+//       }
 
-      // Look up the current value.
-      let current = this._items[key];
+//       // Update the internal state.
+//       delete this._items[key];
+//       this._size--;
 
-      // Bail early if there is no effective change.
-      if (current === value) {
-        return;
-      }
+//       // Register the change.
+//       this._dbImpl.registerMapChange(this, key, current, undefined);
+//     }
 
-      // Update the internal state.
-      this._items[key] = value;
-      this._size += +(current === undefined);
+//     clear(): void {
+//       // Guard against disallowed mutations.
+//       this._dbImpl.mutationGuard();
 
-      // Register the change.
-      this._dbImpl.registerMapChange(this, key, current, value);
-    }
+//       // Bail early if there is nothing to do.
+//       if (this._size === 0) {
+//         return;
+//       }
 
-    delete(key: string): void {
-      // Guard against disallowed mutations.
-      this._dbImpl.mutationGuard();
+//       // Iterate over the items.
+//       for (let key in this._items) {
+//         // Fetch the value.
+//         let value = this._items[key];
 
-      // Look up the current value.
-      let current = this._items[key];
+//         // Update the internal state.
+//         delete this._items[key];
+//         this._size--;
 
-      // Bail early if the key does not exist.
-      if (current === undefined) {
-        return;
-      }
+//         // Register the change.
+//         this._dbImpl.registerMapChange(this, key, value, undefined);
+//       }
+//     }
 
-      // Update the internal state.
-      delete this._items[key];
-      this._size--;
+//     private constructor(dbImpl: LocalDBImpl) { super(dbImpl); }
 
-      // Register the change.
-      this._dbImpl.registerMapChange(this, key, current, undefined);
-    }
+//     private _size = 0;
+//     private _items: { [key: string]: T } = Object.create(null);
+//   }
 
-    clear(): void {
-      // Guard against disallowed mutations.
-      this._dbImpl.mutationGuard();
+//   /**
+//    * A concrete implementation of `IDBString`.
+//    */
+//   class LocalDBString extends LocalDBObject implements IDBString {
 
-      // Bail early if there is nothing to do.
-      if (this._size === 0) {
-        return;
-      }
+//     static create(dbImpl: LocalDBImpl, value?: string): LocalDBString {
+//       // Create the string instance.
+//       let str = new LocalDBString(dbImpl);
 
-      // Iterate over the items.
-      for (let key in this._items) {
-        // Fetch the value.
-        let value = this._items[key];
+//       // Bail early if there is no initial value.
+//       if (!value) {
+//         return str;
+//       }
 
-        // Update the internal state.
-        delete this._items[key];
-        this._size--;
+//       // Set the initial value.
+//       str._value = value;
 
-        // Register the change.
-        this._dbImpl.registerMapChange(this, key, value, undefined);
-      }
-    }
+//       // Return the initialized string.
+//       return str;
+//     }
 
-    private _size = 0;
-    private _dbId = UUID.uuid4();
-    private _dbImpl: LocalDBImpl;
-    private _dbParent: LocalDBRecord<{}> | null = null;
-    private _items: { [key: string]: T } = Object.create(null);
-    private _changed = new Signal<this, IDBMap.ChangedArgs<T>>(this);
-  }
-
-  /**
-   * A concrete implementation of `IDBString`.
-   */
-  class LocalDBString implements IDBString {
-
-    constructor(dbImpl: LocalDBImpl, value?: string) {
-      this._dbImpl = dbImpl;
-      this._value = value || '';
-    }
-
-    get changed(): ISignal<IDBString, IDBString.ChangedArgs> {
-      return this._changed;
-    }
-
-    get dbType(): 'string' {
-      return 'string';
-    }
-
-    get dbId(): string {
-      return this._dbId;
-    }
-
-    get dbModel(): IModelDB {
-      return this._dbImpl.dbModel;
-    }
-
-    get dbParent(): DBRecord<{}> | null {
-      return this._dbParent;
-    }
-
-    get isEmpty(): boolean {
-      return this._value.length === 0;
-    }
-
-    get length(): number {
-      return this._value.length;
-    }
-
-    get(): string {
-      return this._value;
-    }
-
-    set(value: string): void {
-      // Guard against disallowed mutations.
-      this._dbImpl.mutationGuard();
-
-      // Look up the current value.
-      let current = this._value;
-
-      // Bail early if there is no effective change.
-      if (current === value) {
-        return;
-      }
-
-      // Update the internal value.
-      this._value = value;
-
-      // Register the change.
-      this._dbImpl.registerStringChange(this, 0, current, value);
-    }
-
-    append(value: string): void {
-      // Guard against disallowed mutations.
-      this._dbImpl.mutationGuard();
-
-      // Bail early if there is nothing to do.
-      if (!value) {
-        return;
-      }
-
-      // Get the index of the modification.
-      let index = this._value.length;
-
-      // Update the internal value.
-      this._value += value;
-
-      // Register the change.
-      this._dbImpl.registerStringChange(this, index, '', value);
-    }
-
-    insert(index: number, value: string): void {
-      // Guard against disallowed mutations.
-      this._dbImpl.mutationGuard();
-
-      // Bail early if there is nothing to do.
-      if (!value) {
-        return;
-      }
-
-      // Normalize the index for the insert.
-      if (index < 0) {
-        index = Math.max(0, index + this._value.length);
-      } else {
-        index = Math.min(index, this._value.length);
-      }
-
-      // Update the internal value.
-      let prefix = this._value.slice(0, index);
-      let suffix = this._value.slice(index);
-      this._value = prefix + value + suffix;
-
-      // Register the change.
-      this._dbImpl.registerStringChange(this, index, '', value);
-    }
-
-    splice(index: number, count: number, value?: string): void {
-      // Guard against disallowed mutations.
-      this._dbImpl.mutationGuard();
-
-      // Normalize the remove count.
-      count = Math.max(0, count);
-
-      // Normalize the added text.
-      let added = value || '';
-
-      // Bail early if there is nothing to do.
-      if (!added && (count === 0 || !this._value)) {
-        return;
-      }
-
-      // Normalize the index for the splice.
-      if (index < 0) {
-        index = Math.max(0, index + this._value.length);
-      } else {
-        index = Math.min(index, this._value.length);
-      }
-
-      // Extract the removed portion of the string.
-      let removed = this._value.slice(index, index + count);
-
-      // Bail early if there is no effective change.
-      if (removed === added) {
-        return;
-      }
-
-      // Update the internal value.
-      let prefix = this._value.slice(0, index);
-      let suffix = this._value.slice(index + count);
-      this._value = prefix + added + suffix;
-
-      // Register the change.
-      this._dbImpl.registerStringChange(this, index, removed, added);
-    }
-
-    clear(): void {
-      // Guard against disallowed mutations.
-      this._dbImpl.mutationGuard();
-
-      // Bail early if there is nothing to do.
-      if (!this._value) {
-        return;
-      }
-
-      // Get the removed value.
-      let removed = this._value;
-
-      // Update the internal value.
-      this._value = '';
-
-      // Register the change.
-      this._dbImpl.registerStringChange(str, 0, removed, '');
-    }
-
-    private _value: string;
-    private _dbId = UUID.uuid4();
-    private _dbImpl: LocalDBImpl;
-    private _dbParent: LocalDBRecord<{}> | null = null;
-    private _changed = new Signal<this, IDBString.ChangedArgs>(this);
-  }
-
-  /**
-   * A concrete partial implementation of `DBRecord`.
-   */
-  class LocalDBRecordBase<T extends DBRecord.State> {
-
-    constructor(dbImpl: LocalDBImp, state: T) {
-      this._dbImpl = dbImpl;
-      this._state = { ...(state as any) } as T;
-    }
-
-    get changed(): ISignal<DBRecord<T>, DBRecord.ChangedArgs<T>> {
-      return this._changed;
-    }
-
-    get dbType(): 'record' {
-      return 'record';
-    }
-
-    get dbId(): string {
-      return this._dbId;
-    }
-
-    get dbModel(): IModelDB {
-      return this._dbImpl.dbModel;
-    }
-
-    get dbParent(): IDBTable<T> | null {
-      return this._dbParent;
-    }
-
-    get<K extends keyof T>(name: K): T[K] {
-      return this._state[name];
-    }
-
-    set<K extends keyof T>(name: K, value: T[K]): void {
-      // Guard against disallowed mutations.
-      this._dbImpl.mutationGuard();
-
-      // TODO validate the value
-
-      // Look up the current value.
-      let current = this._state.data[name];
-
-      // Bail early if there is no effective change.
-      if (current === value) {
-        return;
-      }
-
-      // Update the internal value.
-      this._state[name] = value;
-
-      // Unparent the old value if needed.
-      this._dbImpl.removeParentIfNeeded(record, current);
-
-      // Parent the new value if needed.
-      this._dbImpl.addParentIfNeeded(record, value);
-
-      // Register the change.
-      this._dbImpl.registerRecordChange(record, name, current, value);
-    }
-
-    private _state: T;
-    private _dbId = UUID.uuid4();
-    private _dbImpl: LocalDBImpl;
-    private _dbParent: LocalDBTable<T> | null = null;
-    private _changed = new Signal<this, DBRecord.ChangedArgs<T>>(this);
-  }
-
-  /**
-   * A type alias for a concrete implementation of `DBRecord`.
-   */
-  type LocalDBRecord<T extends DBRecord.State> = T & LocalDBRecordBase<T>;
-
-  /**
-   * A type alias for a record factory function.
-   */
-  type RecordFactory<T extends DBRecord.State> = (dbImpl: LocalDBImpl, state: T) => LocalDBRecord<T>;
-
-  /**
-   * A concrete implementation of `IDBTable`.
-   */
-  class LocalDBTable<T extends DBRecord.State> implements IDBTable<T> {
-
-    // static create(...) {
-    //   // Update the initial records.
-    //   if (initial) {
-    //     // De-duplicate before validating.
-    //     each(initial, record => { records[record.dbId] = record; });
-
-    //     // Set the parent of the records and update the map size.
-    //     for (let id in records) {
-    //       this._setRecordParent(record, table);
-    //       size++;
-    //     }
-    //   }
-    // }
-
-    constructor(dbToken: Token<T>, dbImpl: LocalDBImpl) {
-      this._dbToken = dbToken;
-      this._dbImpl = dbImpl;
-    }
-
-    get changed(): ISignal<IDBTable<T>, IDBTable.ChangedArgs<T>> {
-      return this._changed;
-    }
-
-    get dbType(): 'table' {
-      return 'table';
-    }
-
-    get dbId(): string {
-      return this._dbId;
-    }
-
-    get dbToken(): Token<T> {
-      return this._dbToken;
-    }
-
-    get dbModel(): IModelDB {
-      return this._dbImpl.dbModel;
-    }
-
-    get isEmpty(): boolean {
-      return this._size === 0;
-    }
-
-    get size(): number {
-      return this._size;
-    }
-
-    iter(): IIterator<DBRecord<T>> {
-      return iterValues(this._records);
-    }
-
-    has(id: string): boolean {
-      return id in this._records;
-    }
-
-    get(id: string): DBRecord<T> | undefined {
-      return this._records[id];
-    }
-
-    insert(record: DBRecord<T>): void {
-      // Guard against disallowed mutations.
-      this._dbImpl.mutationGuard();
-
-      // // Validate the type of the record.
-      // if (!(record instanceof LocalDBRecord)) {
-      //   throw new Error('Record was not created by this model db.');
-      // }
-
-      // // Fetch the record state.
-      // let recordState = this._recordStateMap.get(record);
-
-      // // Validate the ownership of the record.
-      // if (!recordState) {
-      //   throw new Error('Record was not created by this model db.');
-      // }
-
-      // // Ensure the record does not have a parent.
-      // if (recordState.dbParent) {
-      //   throw new Error('Record already belongs to another table.');
-      // }
-
-      // Bail early if there is nothing to do.
-      if (record.dbId in this._records) {
-        return;
-      }
-
-      // Update the internal state.
-      this._records[record.dbId] = record;
-      this._size++;
-
-      // Parent the record if needed.
-      // this._dbImpl.addParentIfNeeded(table, record);
-
-      // Register the change.
-      this._dbImpl.registerTableChange(this, undefined, record);
-    }
-
-    delete(id: string): void {
-      // Guard against disallowed mutations.
-      this._dbImpl.mutationGuard();
-
-      // Get the record object.
-      let record = this._records[id];
-
-      // Bail early if there is nothing to do.
-      if (record === undefined) {
-        return;
-      }
-
-      // Update the internal state.
-      delete this._records[id];
-      this._size--;
-
-      // Unparent the record if needed.
-      // this._dbImpl.removeParentIfNeeded(this, record);
-
-      // Register the change.
-      this._dbImpl.registerTableChange(this, record, undefined);
-    }
-
-    clear(): void {
-      // Guard against disallowed mutations.
-      this._dbImpl.mutationGuard();
-
-      // Bail early if there is nothing to do.
-      if (this._size === 0) {
-        return;
-      }
-
-      // Iterate over the records.
-      for (let id in this._records) {
-        // Fetch the record.
-        let record = this._records[id];
-
-        // Update the internal state.
-        delete this._records[id];
-        this._size--;
-
-        // Unparent the record if needed.
-        // this._dbImpl.removeParentIfNeeded(this, record);
-
-        // Register the change.
-        this._dbImpl.registerTableChange(this, record, undefined);
-      }
-    }
-
-    private _size = 0;
-    private _dbToken: Token<T>;
-    private _dbId = UUID.uuid4();
-    private _dbImpl: LocalDBImpl;
-    private _changed = new Signal<this, IDBTable.ChangedArgs<T>>(this);
-    private _records: { [id: string]: LocalDBRecord<T> } = Object.create(null);
-  }
-
-  /**
-   * An enum of the reserved property names for a record.
-   */
-  enum ReservedRecordNames {
-    changed, dbType, dbId, dbModel, dbParent, get, set,
-    _state, _dbId, _dbImpl, _dbParent, _changed
-  };
-
-  /**
-   * A cache of record factory functions.
-   */
-  const factoryCache: { [key: string]: RecordFactory<any> } = Object.create(null);
-
-  /**
-   * Get and/or create the cached record factory for a state object.
-   */
-  function cachedRecordFactory<T extends DBRecord.State>(state: T): RecordFactory<T> {
-    // Get the property names for the record in canonical order.
-    let names = Object.keys(state).sort();
-
-    // Create a map key for the property names.
-    let key = names.join(',');
-
-    // Get and/or create the factory function for the record.
-    return factoryCache[key] || (factoryCache[key] = createRecordFactory<T>(names));
-  }
-
-  /**
-   * Create a factory function for creating full db records.
-   */
-  function createRecordFactory<T extends DBRecord.State>(names: string[]): RecordFactory<T> {
-    // Create a new subclass for defining the named properties.
-    const cls = class extends LocalDBRecordBase<T> { };
-
-    // Define the record properties, disallowing reserved names.
-    for (let name of names) {
-      if (name in ReservedRecordNames) {
-        throw new Error(`Invalid record property name: '${name}'`);
-      }
-      defineRecordProperty(cls.prototype, name);
-    }
-
-    // Return a factory function for the new class.
-    return ((dbImpl: LocalDBImpl, state: T) => new cls(dbImpl, state)) as RecordFactory<T>;
-  }
-
-  /**
-   * Define the get/set property for a record prototype.
-   */
-  function defineRecordProperty(proto: object, name: string): void {
-    Object.defineProperty(proto, name, {
-      get: function() { return this.get(name); },
-      set: function(value: any) { this.set(name, value); },
-      enumerable: true,
-      configurable: true
-    });
-  }
-
-  /**
-   * Test two arrays for shallow equality.
-   */
-  function shallowEqual<T>(a: T[], b: T[]): boolean {
-    if (a.length !== b.length) {
-      return false;
-    }
-    for (let i = 0, n = a.length; i < n; ++i) {
-      if (a[i] !== b[i]) {
-        return false;
-      }
-    }
-    return true;
-  }
-}
+//     get dbType(): 'string' {
+//       return 'string';
+//     }
+
+//     get isEmpty(): boolean {
+//       return this._value.length === 0;
+//     }
+
+//     get length(): number {
+//       return this._value.length;
+//     }
+
+//     get(): string {
+//       return this._value;
+//     }
+
+//     set(value: string): void {
+//       // Guard against disallowed mutations.
+//       this._dbImpl.mutationGuard();
+
+//       // Look up the current value.
+//       let current = this._value;
+
+//       // Bail early if there is no effective change.
+//       if (current === value) {
+//         return;
+//       }
+
+//       // Update the internal value.
+//       this._value = value;
+
+//       // Register the change.
+//       this._dbImpl.registerStringChange(this, 0, current, value);
+//     }
+
+//     append(value: string): void {
+//       // Guard against disallowed mutations.
+//       this._dbImpl.mutationGuard();
+
+//       // Bail early if there is nothing to do.
+//       if (!value) {
+//         return;
+//       }
+
+//       // Get the index of the modification.
+//       let index = this._value.length;
+
+//       // Update the internal value.
+//       this._value += value;
+
+//       // Register the change.
+//       this._dbImpl.registerStringChange(this, index, '', value);
+//     }
+
+//     insert(index: number, value: string): void {
+//       // Guard against disallowed mutations.
+//       this._dbImpl.mutationGuard();
+
+//       // Bail early if there is nothing to do.
+//       if (!value) {
+//         return;
+//       }
+
+//       // Normalize the index for the insert.
+//       if (index < 0) {
+//         index = Math.max(0, index + this._value.length);
+//       } else {
+//         index = Math.min(index, this._value.length);
+//       }
+
+//       // Update the internal value.
+//       let prefix = this._value.slice(0, index);
+//       let suffix = this._value.slice(index);
+//       this._value = prefix + value + suffix;
+
+//       // Register the change.
+//       this._dbImpl.registerStringChange(this, index, '', value);
+//     }
+
+//     splice(index: number, count: number, value?: string): void {
+//       // Guard against disallowed mutations.
+//       this._dbImpl.mutationGuard();
+
+//       // Normalize the remove count.
+//       count = Math.max(0, count);
+
+//       // Normalize the added text.
+//       let added = value || '';
+
+//       // Bail early if there is nothing to do.
+//       if (!added && (count === 0 || !this._value)) {
+//         return;
+//       }
+
+//       // Normalize the index for the splice.
+//       if (index < 0) {
+//         index = Math.max(0, index + this._value.length);
+//       } else {
+//         index = Math.min(index, this._value.length);
+//       }
+
+//       // Extract the removed portion of the string.
+//       let removed = this._value.slice(index, index + count);
+
+//       // Bail early if there is no effective change.
+//       if (removed === added) {
+//         return;
+//       }
+
+//       // Update the internal value.
+//       let prefix = this._value.slice(0, index);
+//       let suffix = this._value.slice(index + count);
+//       this._value = prefix + added + suffix;
+
+//       // Register the change.
+//       this._dbImpl.registerStringChange(this, index, removed, added);
+//     }
+
+//     clear(): void {
+//       // Guard against disallowed mutations.
+//       this._dbImpl.mutationGuard();
+
+//       // Bail early if there is nothing to do.
+//       if (!this._value) {
+//         return;
+//       }
+
+//       // Get the removed value.
+//       let removed = this._value;
+
+//       // Update the internal value.
+//       this._value = '';
+
+//       // Register the change.
+//       this._dbImpl.registerStringChange(str, 0, removed, '');
+//     }
+
+//     private constructor(dbImpl: LocalDBImpl) { super(dbImpl); }
+
+//     private _value = '';
+//   }
+
+//   /**
+//    * A concrete partial implementation of `DBRecord`.
+//    */
+//   class LocalDBRecordBase<T extends DBRecord.State> extends LocalDBObject {
+
+//     static create<K extends DBRecord.State>(dbImpl: LocalDBImpl, state: K): LocalDBRecord<T> {
+//       // Validate the values in the record state.
+//       for (let key in state) {
+//         validateDBValue(state[key], dbImpl);
+//       }
+
+//       // Create the record instance.
+//       let record = this._cachedFactory(state)(dbImpl);
+
+//       // Initialize the state for the record.
+//       record._state = { ...state as any } as T;
+
+//       // Set the db parents.
+//       for (let key in record._state) {
+//         setDBValueParent(record._state[key], record);
+//       }
+
+//       // Return the initialized record.
+//       return record;
+//     }
+
+//     static setParent<K extends DBRecord.State>(record: LocalDBRecord<K>, parent: LocalDBTable<K>): void {
+//       record._dbParent = parent;
+//     }
+
+//     get changed(): ISignal<DBRecord<T>, DBRecord.ChangedArgs<T>> {
+//       return this._changed;
+//     }
+
+//     get dbType(): 'record' {
+//       return 'record';
+//     }
+
+//     get dbId(): string {
+//       return this._dbId;
+//     }
+
+//     get dbModel(): IModelDB {
+//       return this._dbImpl.dbModel;
+//     }
+
+//     get dbParent(): IDBTable<T> | null {
+//       return this._dbParent;
+//     }
+
+//     get<K extends keyof T>(name: K): T[K] {
+//       return this._state[name];
+//     }
+
+//     set<K extends keyof T>(name: K, value: T[K]): void {
+//       // Guard against disallowed mutations.
+//       this._dbImpl.mutationGuard();
+
+//       // TODO validate the value
+
+//       // Look up the current value.
+//       let current = this._state.data[name];
+
+//       // Bail early if there is no effective change.
+//       if (current === value) {
+//         return;
+//       }
+
+//       // Update the internal value.
+//       this._state[name] = value;
+
+//       // Unparent the old value if needed.
+//       this._dbImpl.removeParentIfNeeded(record, current);
+
+//       // Parent the new value if needed.
+//       this._dbImpl.addParentIfNeeded(record, value);
+
+//       // Register the change.
+//       this._dbImpl.registerRecordChange(record, name, current, value);
+//     }
+
+//     private constructor(dbImpl: LocalDBImp) { super(dbImpl); }
+
+//     private _state: T;
+//     private _dbId = UUID.uuid4();
+//     private _dbImpl: LocalDBImpl;
+//     private _dbParent: LocalDBTable<T> | null = null;
+//     private _changed = new Signal<this, DBRecord.ChangedArgs<T>>(this);
+
+//     private static _reservedNames = {
+//       changed: true,
+//       dbType: true,
+//       dbId: true,
+//       dbModel: true,
+//       dbParent: true,
+//       get: true,
+//       set: true,
+//       _state: true,
+//       _dbId: true,
+//       _dbImpl: true,
+//       _dbParent: true,
+//       _changed: true
+//     };
+
+//     private static _factoryCache: {
+//       [key: string]: (dbImpl: LocalDBImpl) => LocalDBRecord<any>
+//     } = Object.create(null);
+
+//     private static _cachedFactory<K extends DBRecord.State>(state: K): (dbImpl: LocalDBImpl) => LocalDBRecord<K> {
+//       // Get the property names for the record in a canonical order.
+//       let names = Object.keys(state).sort();
+
+//       // Create a map key for the property names.
+//       let key = names.join(',');
+
+//       // Get the factory function for the record.
+//       let factory = this._factoryCache[key];
+
+//       // Return the factory if it exists.
+//       if (factory) {
+//         return factory;
+//       }
+
+//       // Create a new subclass for the record shape.
+//       let cls = class extends LocalDBRecordBase<T> { };
+
+//       // Iterate over the property names.
+//       for (let name of names) {
+//         // Disallow properties with reserved names.
+//         if (name in this._reservedNames) {
+//           throw new Error(`Reserved record property name: '${name}'`);
+//         }
+
+//         // Define the named record property.
+//         Object.defineProperty(cls.prototype, name, {
+//           get: function() { return this.get(name); },
+//           set: function(value: any) { this.set(name, value); },
+//           enumerable: true,
+//           configurable: true
+//         });
+//       }
+
+//       // Create the factory function for the new class.
+//       factory = (dbImpl: LocalDBImpl) => new cls(dbImpl) as LocalDBRecord<T>;
+
+//       // Cache and return the new factory function.
+//       return this._factoryCache[key] = factory;
+//     }
+//   }
+
+//   /**
+//    * A type alias for a concrete implementation of `DBRecord`.
+//    */
+//   type LocalDBRecord<T extends DBRecord.State> = T & LocalDBRecordBase<T>;
+
+//   /**
+//    * A concrete implementation of `IDBTable`.
+//    */
+//   class LocalDBTable<T extends DBRecord.State> implements IDBTable<T> {
+
+//     // static create(...) {
+//     //   // Update the initial records.
+//     //   if (initial) {
+//     //     // De-duplicate before validating.
+//     //     each(initial, record => { records[record.dbId] = record; });
+
+//     //     // Set the parent of the records and update the map size.
+//     //     for (let id in records) {
+//     //       this._setRecordParent(record, table);
+//     //       size++;
+//     //     }
+//     //   }
+//     // }
+
+//     constructor(dbToken: Token<T>, dbImpl: LocalDBImpl) {
+//       this._dbToken = dbToken;
+//       this._dbImpl = dbImpl;
+//     }
+
+//     get changed(): ISignal<IDBTable<T>, IDBTable.ChangedArgs<T>> {
+//       return this._changed;
+//     }
+
+//     get dbType(): 'table' {
+//       return 'table';
+//     }
+
+//     get dbId(): string {
+//       return this._dbId;
+//     }
+
+//     get dbToken(): Token<T> {
+//       return this._dbToken;
+//     }
+
+//     get dbModel(): IModelDB {
+//       return this._dbImpl.dbModel;
+//     }
+
+//     get isEmpty(): boolean {
+//       return this._size === 0;
+//     }
+
+//     get size(): number {
+//       return this._size;
+//     }
+
+//     iter(): IIterator<DBRecord<T>> {
+//       return iterValues(this._records);
+//     }
+
+//     has(id: string): boolean {
+//       return id in this._records;
+//     }
+
+//     get(id: string): DBRecord<T> | undefined {
+//       return this._records[id];
+//     }
+
+//     insert(record: DBRecord<T>): void {
+//       // Guard against disallowed mutations.
+//       this._dbImpl.mutationGuard();
+
+//       // // Validate the type of the record.
+//       // if (!(record instanceof LocalDBRecord)) {
+//       //   throw new Error('Record was not created by this model db.');
+//       // }
+
+//       // // Fetch the record state.
+//       // let recordState = this._recordStateMap.get(record);
+
+//       // // Validate the ownership of the record.
+//       // if (!recordState) {
+//       //   throw new Error('Record was not created by this model db.');
+//       // }
+
+//       // // Ensure the record does not have a parent.
+//       // if (recordState.dbParent) {
+//       //   throw new Error('Record already belongs to another table.');
+//       // }
+
+//       // Bail early if there is nothing to do.
+//       if (record.dbId in this._records) {
+//         return;
+//       }
+
+//       // Update the internal state.
+//       this._records[record.dbId] = record;
+//       this._size++;
+
+//       // Parent the record if needed.
+//       // this._dbImpl.addParentIfNeeded(table, record);
+
+//       // Register the change.
+//       this._dbImpl.registerTableChange(this, undefined, record);
+//     }
+
+//     delete(id: string): void {
+//       // Guard against disallowed mutations.
+//       this._dbImpl.mutationGuard();
+
+//       // Get the record object.
+//       let record = this._records[id];
+
+//       // Bail early if there is nothing to do.
+//       if (record === undefined) {
+//         return;
+//       }
+
+//       // Update the internal state.
+//       delete this._records[id];
+//       this._size--;
+
+//       // Unparent the record if needed.
+//       // this._dbImpl.removeParentIfNeeded(this, record);
+
+//       // Register the change.
+//       this._dbImpl.registerTableChange(this, record, undefined);
+//     }
+
+//     clear(): void {
+//       // Guard against disallowed mutations.
+//       this._dbImpl.mutationGuard();
+
+//       // Bail early if there is nothing to do.
+//       if (this._size === 0) {
+//         return;
+//       }
+
+//       // Iterate over the records.
+//       for (let id in this._records) {
+//         // Fetch the record.
+//         let record = this._records[id];
+
+//         // Update the internal state.
+//         delete this._records[id];
+//         this._size--;
+
+//         // Unparent the record if needed.
+//         // this._dbImpl.removeParentIfNeeded(this, record);
+
+//         // Register the change.
+//         this._dbImpl.registerTableChange(this, record, undefined);
+//       }
+//     }
+
+//     private _size = 0;
+//     private _dbToken: Token<T>;
+//     private _dbId = UUID.uuid4();
+//     private _dbImpl: LocalDBImpl;
+//     private _changed = new Signal<this, IDBTable.ChangedArgs<T>>(this);
+//     private _records: { [id: string]: LocalDBRecord<T> } = Object.create(null);
+//   }
+
+//   /**
+//    * Test two arrays for shallow equality.
+//    */
+//   function shallowEqual<T>(a: T[], b: T[]): boolean {
+//     if (a.length !== b.length) {
+//       return false;
+//     }
+//     for (let i = 0, n = a.length; i < n; ++i) {
+//       if (a[i] !== b[i]) {
+//         return false;
+//       }
+//     }
+//     return true;
+//   }
+
+//   /**
+//    * Validate a (potential) DB list/map/string for type and owner.
+//    */
+//   function validateDBValue(value: any, dbImpl: LocalDBImpl): void {
+//     // Bail realy if the value is not a db object.
+//     if (typeof value.dbType !== 'string') {
+//       return;
+//     }
+
+//     // Validate the value based on the db type.
+//     switch (value.dbType) {
+//     case 'list':
+//       assert(value instanceof LocalDBList, 'Invalid DB list type.');
+//       assert(LocalDBList.getImpl(value) === dbImpl, 'Invalid DB list owner.');
+//       assert(value.dbParent === null, 'DB list already belongs to a record.');
+//       break;
+//     case 'map':
+//       assert(value instanceof LocalDBMap, 'Invalid DB map type.');
+//       assert(LocalDBMap.getImpl(value) === dbImpl, 'Invalid DB map owner.');
+//       assert(value.dbParent === null, 'DB map already belongs to a record.');
+//       break;
+//     case 'string':
+//       assert(value instanceof LocalDBString, 'Invalid DB string type.');
+//       assert(LocalDBString.getImpl(value) === dbImpl, 'Invalid DB string owner.');
+//       assert(value.dbParent === null, 'DB string already belongs to a record.');
+//       break;
+//     default:
+//       assert(false, 'Invalid DB type.');
+//       break;
+//     }
+//   }
+
+//   function setDBValueParent(value: any, dbParent: LocalDBRecord<{}>): void {
+//     //
+//     if (typeof value.dbType !== 'string') {
+//       return;
+//     }
+
+//     //
+//     switch (value.type) {
+//     case 'list':
+//       LocalDBList.setParent(value, dbParent);
+//       break;
+//     case 'map':
+//       LocalDBMap.setParent(value, dbParent);
+//       break;
+//     case 'string':
+//       LocalDBString.setParent(value, dbParent);
+//       break;
+//     default:
+//       assert(false, 'Invalid DB type.');
+//       break;
+//     }
+//   }
+
+//   /**
+//    * Validate a DB record for type and owner.
+//    */
+//   function validateDBRecord<T extends DBRecord.State>(value: DBRecord<T>, dbImpl: LocalDBImpl): void {
+//     assert(value instanceof LocalDBRecordBase, 'Invalid DB record type.');
+//     assert(LocalDBRecordBase.getImpl(value) === dbImpl, 'Invalid DB record owner.');
+//     assert(value.dbParent === null, 'DB record already belongs to a table.');
+//   }
+
+//   /**
+//    * A simple assert function.
+//    */
+//   function assert(ok: boolean, msg: string): void {
+//     if (!ok) throw new Error(msg);
+//   }
+// }
