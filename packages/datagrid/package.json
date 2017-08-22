@@ -24,7 +24,7 @@
   "devDependencies": {
     "rimraf": "^2.5.2",
     "typedoc": "^0.7.0",
-    "typescript": "~2.3.0"
+    "typescript": "~2.4.0"
   },
   "scripts": {
     "build": "tsc",
