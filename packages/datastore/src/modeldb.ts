@@ -22,12 +22,7 @@ import {
  * An object which stores application state in a db-like fashion.
  */
 export
-interface IModelDB {
-  /**
-   * The model db root.
-   */
-  readonly root: IDBRoot;
-
+interface IModelDB extends IIterable<IDBTable<{}>> {
   /**
    * Whether the model can currently undo a transaction.
    */
@@ -57,23 +52,16 @@ interface IModelDB {
   /**
    * Execute a transaction on the db.
    *
-   * @param auth - The authorization token for the transaction.
-   *
    * @param fn - The function to invoke to execute the transaction.
    *
-   * @throws An exception if this method is called recursively, or
-   *   if the authorization token is invalid.
+   * @throws An exception if this method is called recursively.
    *
    * #### Notes
    * The db state can only be modified from within a transaction.
    *
-   * The authorization token is used to control the code which can make
-   * a transaction, and therefore modify the db. It is implementation
-   * specific, and negotiated during instantiation of the model db.
-   *
    * Each transaction forms an undo checkpoint.
    */
-  transact(auth: any, fn: () => void): void;
+  transact(fn: () => void): void;
 
   /**
    * Create a new DB list.
@@ -109,23 +97,49 @@ interface IModelDB {
    *
    * @returns A new db record with the initial state.
    */
-  createRecord<T extends DBRecord.State>(state: T): DBRecord<T>;
+  createRecord<T extends IDBRecord.State>(state: T): IDBRecord.Instance<T>;
 
   /**
    * Create a new db table.
    *
-   * @param token - The token for the record.
+   * @param token - The token for the table.
    *
    * @param records - The initial records for the table.
    *
    * @returns The new db table populated with the initial records.
    *
-   * @throws An exception if a table already exists for the token.
-   *
-   * #### Notes
-   * Creating a table automatically adds it to the model.
+   * @throws An exception if the table has already been created.
    */
-  createTable<T extends DBRecord.State>(token: Token<T>, records?: IterableOrArrayLike<DBRecord<T>>): IDBTable<T>;
+  createTable<T extends IDBRecord.State>(token: Token<T>, records?: IterableOrArrayLike<IDBRecord.Instance<T>>): IDBTable<T>;
+
+  /**
+   * Test whether a specific table has been created.
+   *
+   * @param token - The token for the table of interest.
+   *
+   * @returns `true` if the table has been created, `false` otherwise.
+   */
+  hasTable<T extends IDBRecord.State>(token: Token<T>): boolean;
+
+  /**
+   * Get the table for a specific token.
+   *
+   * @param token - The token for the table of interest.
+   *
+   * @returns The table for the specified token.
+   *
+   * @throws An exception the table has not yet been created.
+   */
+  getTable<T extends IDBRecord.State>(token: Token<T>): IDBTable<T>;
+
+  /**
+   * Delete a table from the model db.
+   *
+   * @param token - The token for the table to delete.
+   *
+   * @throws An exception the table has not yet been created.
+   */
+  deleteTable<T extends IDBRecord.State>(token: Token<T>): void;
 }
 
 
@@ -140,7 +154,7 @@ interface IDBObject {
    * #### Complexity
    * Constant.
    */
-  readonly dbType: 'list' | 'map' | 'string' | 'record' | 'table' | 'root';
+  readonly dbType: 'list' | 'map' | 'string' | 'record' | 'table';
 
   /**
    * The unique db id of the object.
@@ -212,7 +226,7 @@ namespace IDBObject {
     /**
      * The type of the change.
      */
-    readonly type: 'list' | 'map' | 'string' | 'record' | 'table' | 'root';
+    readonly type: 'list' | 'map' | 'string' | 'record' | 'table';
 
     /**
      * The db object which generated the changess.
@@ -246,7 +260,7 @@ interface IDBList<T extends ReadonlyJSONValue = ReadonlyJSONValue> extends IDBOb
    * #### Complexity
    * Constant.
    */
-  readonly dbParent: DBRecord<{}> | null;
+  readonly dbParent: IDBRecord<{}> | null;
 
   /**
    * A signal emitted when the object changes.
@@ -574,7 +588,7 @@ interface IDBMap<T extends ReadonlyJSONValue = ReadonlyJSONValue> extends IDBObj
    * #### Complexity
    * Constant.
    */
-  readonly dbParent: DBRecord<{}> | null;
+  readonly dbParent: IDBRecord<{}> | null;
 
   /**
    * A signal emitted when the object changes.
@@ -745,7 +759,7 @@ interface IDBString extends IDBObject {
    * #### Complexity
    * Constant.
    */
-  readonly dbParent: DBRecord<{}> | null;
+  readonly dbParent: IDBRecord<{}> | null;
 
   /**
    * A signal emitted when the object changes.
@@ -876,7 +890,7 @@ namespace IDBString {
  * A db object which holds well-defined state.
  */
 export
-type DBRecord<T extends DBRecord.State> = T & IDBObject & {
+interface IDBRecord<T extends IDBRecord.State> extends IDBObject {
   /**
    * The db type of the object.
    *
@@ -899,7 +913,7 @@ type DBRecord<T extends DBRecord.State> = T & IDBObject & {
    * #### Notes
    * The changed signal is emitted asynchronously.
    */
-  readonly changed: ISignal<DBRecord<T>, DBRecord.IChangedArgs<T> | DBRecord.BubbledArgs>;
+  readonly changed: ISignal<IDBRecord.Instance<T>, IDBRecord.IChangedArgs<T> | IDBRecord.BubbledArgs>;
 
   /**
    * Get the value for a property in the record.
@@ -924,14 +938,14 @@ type DBRecord<T extends DBRecord.State> = T & IDBObject & {
    * Constant.
    */
   set<K extends keyof T>(name: K, value: T[K]): void;
-};
+}
 
 
 /**
- * The namespace for the `DBRecord` type statics.
+ * The namespace for the `IDBRecord` interface statics.
  */
 export
-namespace DBRecord {
+namespace IDBRecord {
   /**
    * The allowed state of a db record.
    */
@@ -942,6 +956,12 @@ namespace DBRecord {
      */
     [key: string]: ReadonlyJSONValue | IDBList | IDBMap | IDBString;
   };
+
+  /**
+   * A type alias for a db record instance.
+   */
+  export
+  type Instance<T extends State> = T & IDBRecord<T>;
 
   /**
    * The data for a db record change.
@@ -972,7 +992,7 @@ namespace DBRecord {
     /**
      * The record which generated the changes.
      */
-    readonly target: DBRecord<T>;
+    readonly target: Instance<T>;
 
     /**
      * The changes applied to the record.
@@ -992,7 +1012,7 @@ namespace DBRecord {
  * A db object which holds records.
  */
 export
-interface IDBTable<T extends DBRecord.State> extends IDBObject, IIterable<DBRecord<T>> {
+interface IDBTable<T extends IDBRecord.State> extends IDBObject, IIterable<IDBRecord.Instance<T>> {
   /**
    * The db type of the object.
    *
@@ -1007,7 +1027,7 @@ interface IDBTable<T extends DBRecord.State> extends IDBObject, IIterable<DBReco
    * #### Complexity
    * Constant.
    */
-  readonly dbParent: IDBRoot | null;
+  readonly dbParent: null;
 
   /**
    * The token associated with the table.
@@ -1063,7 +1083,7 @@ interface IDBTable<T extends DBRecord.State> extends IDBObject, IIterable<DBReco
    * #### Complexity
    * Constant.
    */
-  get(id: string): DBRecord<T> | undefined;
+  get(id: string): IDBRecord.Instance<T> | undefined;
 
   /**
    * Insert a record into the table
@@ -1073,7 +1093,7 @@ interface IDBTable<T extends DBRecord.State> extends IDBObject, IIterable<DBReco
    * #### Complexity
    * Constant.
    */
-  insert(record: DBRecord<T>): void;
+  insert(record: IDBRecord.Instance<T>): void;
 
   /**
    * Delete a record or records from the table.
@@ -1104,23 +1124,23 @@ namespace IDBTable {
    * The data for a db table change.
    */
   export
-  interface IChange<T extends DBRecord.State> extends IDBObject.IChange {
+  interface IChange<T extends IDBRecord.State> extends IDBObject.IChange {
     /**
      * The records that were removed from the table.
      */
-    readonly removed: ReadonlyArray<DBRecord<T>>;
+    readonly removed: ReadonlyArray<IDBRecord.Instance<T>>;
 
     /**
      * The records that were added to the table.
      */
-    readonly added: ReadonlyArray<DBRecord<T>>;
+    readonly added: ReadonlyArray<IDBRecord.Instance<T>>;
   }
 
   /**
    * The type of the db table changed arguments.
    */
   export
-  interface IChangedArgs<T extends DBRecord.State> extends IDBObject.IChangedArgs {
+  interface IChangedArgs<T extends IDBRecord.State> extends IDBObject.IChangedArgs {
     /**
      * The type of the change.
      */
@@ -1141,140 +1161,5 @@ namespace IDBTable {
    * A type alias for the db table bubbled args.
    */
   export
-  type BubbledArgs<T extends DBRecord.State> = DBRecord.IChangedArgs<T> | DBRecord.BubbledArgs;
-}
-
-
-/**
- * A db object which represents the root model state.
- */
-export
-interface IDBRoot extends IDBObject, IIterable<IDBTable<{}>> {
-  /**
-   * The db type of the object.
-   *
-   * #### Complexity
-   * Constant.
-   */
-  readonly dbType: 'root';
-
-  /**
-   * The db parent of the object.
-   *
-   * #### Complexity
-   * Constant.
-   */
-  readonly dbParent: null;
-
-  /**
-   * A signal emitted when the object changes.
-   *
-   * #### Notes
-   * The changed signal is emitted asynchronously.
-   */
-  readonly changed: ISignal<IDBRoot, IDBRoot.IChangedArgs | IDBRoot.BubbledArgs>;
-
-  /**
-   * Whether the root is empty.
-   *
-   * #### Complexity
-   * Constant.
-   */
-  readonly isEmpty: boolean;
-
-  /**
-   * The size of the root.
-   *
-   * #### Complexity
-   * Constant.
-   */
-  readonly size: number;
-
-  /**
-   * Test whether the root has a specific table.
-   *
-   * @param token - The token for the table of interest.
-   *
-   * @returns `true` if the table is in the db root, `false` otherwise.
-   */
-  hasTable<T extends DBRecord.State>(token: Token<T>): boolean;
-
-  /**
-   * Get the table for a specific token.
-   *
-   * @param token - The token for the table of interest.
-   *
-   * @returns The table for the specified token.
-   *
-   * @throws An exception if the table is not in the db root.
-   */
-  getTable<T extends DBRecord.State>(token: Token<T>): IDBTable<T>;
-
-  /**
-   * Delete a table from the db root.
-   *
-   * @param token - The token for the table to delete.
-   *
-   * @throws An exception if the table is already in the db root.
-   */
-  insertTable<T extends DBRecord.State>(table: IDBTable<T>): void;
-
-  /**
-   * Delete a table from the model db.
-   *
-   * @param token - The token for the table to delete.
-   *
-   * @throws An exception if the table is not in the db root.
-   */
-  deleteTable<T extends DBRecord.State>(token: Token<T>): void;
-}
-
-
-/**
- * The namespace for the `IDBRoot` interface statics.
- */
-export
-namespace IDBRoot {
-  /**
-   * The data for a db root change.
-   */
-  export
-  interface IChange extends IDBObject.IChange {
-    /**
-     * The tables that were removed from the root.
-     */
-    readonly removed: ReadonlyArray<IDBTable<{}>>;
-
-    /**
-     * The tables that were added to the root.
-     */
-    readonly added: ReadonlyArray<IDBTable<{}>>;
-  }
-
-  /**
-   * The type of the db root changed arguments.
-   */
-  export
-  interface IChangedArgs extends IDBObject.IChangedArgs {
-    /**
-     * The type of the change.
-     */
-    readonly type: 'root';
-
-    /**
-     * The root which generated the changes.
-     */
-    readonly target: IDBRoot;
-
-    /**
-     * The changes applied to the db root.
-     */
-    readonly changes: ReadonlyArray<IChange>;
-  }
-
-  /**
-   * A type alias for the db root bubbled args.
-   */
-  export
-  type BubbledArgs = IDBTable.IChangedArgs<{}> | IDBTable.BubbledArgs<{}>;
+  type BubbledArgs<T extends IDBRecord.State> = IDBRecord.IChangedArgs<T> | IDBRecord.BubbledArgs;
 }
