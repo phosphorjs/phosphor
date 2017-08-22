@@ -320,6 +320,36 @@ function toArray<T>(object: IterableOrArrayLike<T>): T[] {
 
 
 /**
+ * Create an object from an iterable of key/value pairs.
+ *
+ * @param object - The iterable or array-like object of interest.
+ *
+ * @returns A new object mapping keys to values.
+ *
+ * #### Example
+ * ```typescript
+ * import { iter, toObject } from '@phosphor/algorithm';
+ *
+ * let data = [['one', 1], ['two', 2], ['three', 3]];
+ *
+ * let stream = iter(data);
+ *
+ * toObject(stream);  // { one: 1, two: 2, three: 3 }
+ * ```
+ */
+export
+function toObject<T>(object: IterableOrArrayLike<[string, T]>): { [key: string]: T } {
+  let it = iter(object);
+  let pair: [string, T] | undefined;
+  let result: { [key: string]: T } = {};
+  while ((pair = it.next()) !== undefined) {
+    result[pair[0]] = pair[1];
+  }
+  return result;
+}
+
+
+/**
  * An iterator for an array-like object.
  *
  * #### Notes
