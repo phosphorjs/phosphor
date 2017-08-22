@@ -577,6 +577,59 @@ namespace ArrayExt {
   }
 
   /**
+   * Test whether two arrays are shallowly equal.
+   *
+   * @param a - The first array-like object to compare.
+   *
+   * @param b - The second array-like object to compare.
+   *
+   * @param fn - The comparison function to apply to the elements. It
+   *   should return `true` if the elements are "equal". The default
+   *   compares elements using strict `===` equality.
+   *
+   * @returns Whether the two arrays are shallowly equal.
+   *
+   * #### Complexity
+   * Linear.
+   *
+   * #### Undefined Behavior
+   * Modifying the length of the arrays while comparing.
+   *
+   * #### Example
+   * ```typescript
+   * import { ArrayExt } from '@phosphor/algorithm';
+   *
+   * let d1 = [0, 3, 4, 7, 7, 9];
+   * let d2 = [0, 3, 4, 7, 7, 9];
+   * let d3 = [42];
+   * ArrayExt.shallowEqual(d1, d2);  // true
+   * ArrayExt.shallowEqual(d2, d3);  // false
+   * ```
+   */
+  export
+  function shallowEqual<T>(a: ArrayLike<T>, b: ArrayLike<T>, fn?: (a: T, b: T) => boolean): boolean {
+    // Check for object identity first.
+    if (a === b) {
+      return true;
+    }
+
+    // Bail early if the lengths are different.
+    if (a.length !== b.length) {
+      return false;
+    }
+
+    // Compare each element for equality.
+    for (let i = 0, n = a.length; i < n; ++i) {
+      if (fn ? !fn(a[i], b[i]) : a[i] !== b[i]) {
+        return false;
+      }
+    }
+
+    // The array are shallowly equal.
+    return true;
+  }
+
+  /**
    * An array-like object which supports item assignment.
    */
   export
