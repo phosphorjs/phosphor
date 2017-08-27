@@ -52,21 +52,31 @@ class H5ServDataModel extends DataModel {
     if (region === 'corner-header') {
       return null;
     }
-    let relRow = row % this._blockSize;
-    let relColumn = column % this._blockSize;
-    let rowBlock = (row - relRow) / this._blockSize;
-    let columnBlock = (column - relColumn) / this._blockSize;
+    const relRow = row % this._blockSize;
+    const relColumn = column % this._blockSize;
+    const rowBlock = (row - relRow) / this._blockSize;
+    const columnBlock = (column - relColumn) / this._blockSize;
     if (this._blocks[rowBlock]) {
       if (this._blocks[rowBlock][columnBlock]) {
+        // This data has already been loaded.
         return this._blocks[rowBlock][columnBlock][relRow][relColumn]
       }
     }
+    // This data has not yet been loaded. Fetch the block that it is in.
+    // When the data is received, this will be updated by emitChanged.
     this._fetchBlock(rowBlock, columnBlock);
     return null;
   }
 
   private _fetchBlock = (rowBlock: number, columnBlock: number) => {
-    fetch(this._url + '/value').then(function(response) {
+    const rowStart : number = rowBlock * this._blockSize;
+    const rowStop : number = Math.min(rowStart + this._blockSize,
+                                      this._rowCount);
+    const columnStart : number = columnBlock * this._blockSize;
+    const columnStop: number = Math.min(columnStart + this._blockSize,
+                                        this._columnCount);
+    const query_params : string = `select=[${rowStart}:${rowStop},${columnStart}:${columnStop}]`
+    fetch(this._url + '/value?' + query_params).then(function(response) {
       return response.json();
     }).then((data) => {
       if (!this._blocks[rowBlock]) {
@@ -276,7 +286,7 @@ function main(): void {
   let model3 = new RandomDataModel(15, 10);
   let model4 = new RandomDataModel(80, 80);
   let model5 = new JSONModel(Data.cars);
-  let model6 = new H5ServDataModel('http://example.public.localhost:5000/datasets/a4f48452-8a6c-11e7-87a3-9cf387bf83a8');
+  let model6 = new H5ServDataModel('http://example.public.localhost:5000/datasets/fd57f262-8b5b-11e7-a672-9cf387bf83a8');
 
   let blueStripeStyle: DataGrid.IStyle = {
     ...DataGrid.defaultStyle,
