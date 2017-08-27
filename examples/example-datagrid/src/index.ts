@@ -18,6 +18,39 @@ import {
 import '../style/index.css';
 
 
+class H5ServDataModel extends DataModel {
+
+  constructor(url: string) {
+    super();
+    fetch(url).then(function(response) {
+      return response.json();
+    }).then((metadata) => {
+      [this._rowCount, this._columnCount] = metadata['shape']['dims'];
+      this.emitChanged({ type: 'rows-inserted', region: 'body',
+                        index: 0, span: this._rowCount });
+      this.emitChanged({ type: 'columns-inserted', region: 'body',
+                        index: 0, span: this._columnCount });
+    });
+  }
+
+  rowCount(region: DataModel.RowRegion): number {
+    return region === 'body' ? this._rowCount : 1;
+  }
+
+  columnCount(region: DataModel.ColumnRegion): number {
+    return region === 'body' ? this._columnCount : 1;
+  }
+
+  data(region: DataModel.CellRegion, row: number, column: number): any {
+    return 1;
+  }
+
+  private _rowCount: number = 0;
+  private _columnCount: number = 0;
+}
+
+
+
 class LargeDataModel extends DataModel {
 
   rowCount(region: DataModel.RowRegion): number {
@@ -201,6 +234,7 @@ function main(): void {
   let model3 = new RandomDataModel(15, 10);
   let model4 = new RandomDataModel(80, 80);
   let model5 = new JSONModel(Data.cars);
+  let model6 = new H5ServDataModel('http://example.public.localhost:5000/datasets/a4f48452-8a6c-11e7-87a3-9cf387bf83a8');
 
   let blueStripeStyle: DataGrid.IStyle = {
     ...DataGrid.defaultStyle,
@@ -255,11 +289,15 @@ function main(): void {
   });
   grid5.model = model5;
 
+  let grid6 = new DataGrid()
+  grid6.model = model6
+
   let wrapper1 = createWrapper(grid1, 'Trillion Rows/Cols');
   let wrapper2 = createWrapper(grid2, 'Streaming Rows');
   let wrapper3 = createWrapper(grid3, 'Random Ticks 1');
   let wrapper4 = createWrapper(grid4, 'Random Ticks 2');
   let wrapper5 = createWrapper(grid5, 'JSON Data');
+  let wrapper6 = createWrapper(grid6, 'HDF5 Data');
 
   let dock = new DockPanel();
   dock.id = 'dock';
@@ -269,6 +307,7 @@ function main(): void {
   dock.addWidget(wrapper3, { mode: 'split-bottom', ref: wrapper1 });
   dock.addWidget(wrapper4, { mode: 'split-bottom', ref: wrapper2 });
   dock.addWidget(wrapper5, { mode: 'split-bottom', ref: wrapper2 });
+  dock.addWidget(wrapper6, { mode: 'split-bottom', ref: wrapper2 });
 
   window.onresize = () => { dock.update(); };
 
