@@ -22,6 +22,7 @@ class H5ServDataModel extends DataModel {
 
   constructor(url: string) {
     super();
+    this._url = url;
     fetch(url).then(function(response) {
       return response.json();
     }).then((metadata) => {
@@ -42,11 +43,52 @@ class H5ServDataModel extends DataModel {
   }
 
   data(region: DataModel.CellRegion, row: number, column: number): any {
-    return 1;
+    if (region === 'row-header') {
+      return `${row}`;
+    }
+    if (region === 'column-header') {
+      return `${column}`;
+    }
+    if (region === 'corner-header') {
+      return null;
+    }
+    let relRow = row % this._blockSize;
+    let relColumn = column % this._blockSize;
+    let rowBlock = (row - relRow) / this._blockSize;
+    let columnBlock = (column - relColumn) / this._blockSize;
+    if (this._blocks[rowBlock]) {
+      if (this._blocks[rowBlock][columnBlock]) {
+        return this._blocks[rowBlock][columnBlock][relRow][relColumn]
+      }
+    }
+    this._fetchBlock(rowBlock, columnBlock);
+    return null;
   }
 
+  private _fetchBlock = (rowBlock: number, columnBlock: number) => {
+    fetch(this._url + '/value').then(function(response) {
+      return response.json();
+    }).then((data) => {
+      if (!this._blocks[rowBlock]) {
+        this._blocks[rowBlock] = Object();
+      }
+      this._blocks[rowBlock][columnBlock] = data['value'];
+      this.emitChanged({
+        type: 'cells-changed',
+        region: 'body',
+        rowIndex: rowBlock * this._blockSize,
+        columnIndex: columnBlock * this._blockSize,
+        rowSpan: this._blockSize,
+        columnSpan: this._blockSize
+      });
+    });
+  };
+
+  private _url: string = '';
   private _rowCount: number = 0;
   private _columnCount: number = 0;
+  private _blockSize: number = 100;
+  private _blocks: any = Object();
 }
 
 
