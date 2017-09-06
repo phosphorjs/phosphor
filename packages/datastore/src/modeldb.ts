@@ -144,7 +144,7 @@ interface IModelDB extends IIterable<IDBTable<{}>> {
 
 
 /**
- * The common interface of all db objects.
+ * The common base state for objects created by a model db.
  */
 export
 interface IDBObject {
@@ -188,7 +188,7 @@ interface IDBObject {
 export
 namespace IDBObject {
   /**
-   * The data for a db object change.
+   * The base data for a change to a db object.
    */
   export
   interface IChange {
@@ -229,7 +229,7 @@ namespace IDBObject {
     readonly type: 'list' | 'map' | 'string' | 'record' | 'table';
 
     /**
-     * The db object which generated the changess.
+     * The db object which generated the changes.
      */
     readonly target: IDBObject;
 
@@ -882,7 +882,7 @@ namespace IDBString {
      * The changes applied to the string.
      */
     readonly changes: ReadonlyArray<IChange>;
-  };
+  }
 }
 
 
@@ -983,7 +983,7 @@ namespace IDBRecord {
    * The type of the db record changed arguments.
    */
   export
-  interface IChangedArgs<T extends State> extends IDBObject.IChange {
+  interface IChangedArgs<T extends State> extends IDBObject.IChangedArgs {
     /**
      * The type of the change.
      */
