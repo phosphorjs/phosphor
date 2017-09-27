@@ -925,7 +925,7 @@ interface IDBRecord<T extends IDBRecord.State> extends IDBObject {
    * #### Complexity
    * Constant.
    */
-  get<K extends keyof T>(name: K): T[K];
+  // get<K extends keyof T>(name: K): T[K];
 
   /**
    * Set the value for a property in the record.
@@ -937,7 +937,7 @@ interface IDBRecord<T extends IDBRecord.State> extends IDBObject {
    * #### Complexity
    * Constant.
    */
-  set<K extends keyof T>(name: K, value: T[K]): void;
+  // set<K extends keyof T>(name: K, value: T[K]): void;
 }
 
 
