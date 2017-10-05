@@ -183,6 +183,27 @@ interface IList<T extends ReadonlyJSONValue> extends IIterable<T>, IRetroable<T>
   get(index: number): T | undefined;
 
   /**
+   * Get an array for a portion of the list.
+   *
+   * @param start - The index of the first element to slice, inclusive.
+   *   The default value is `0`. Negative values are taken as an offset
+   *   from the end of the list.
+   *
+   * @param stop - The index of the last element to slice, exclusive.
+   *   The default value is `list.length`. Negative values are taken
+   *   as an offset from the end of the list.
+   *
+   * @returns A new array for the specified portion of the list.
+   *
+   * #### Complexity
+   * Linear.
+   *
+   * #### Undefined Behavior
+   * A `start` or `stop` which is non-integral.
+   */
+  slice(start?: number, stop?: number): T[];
+
+  /**
    * Get an iterator over a portion of the list.
    *
    * @param start - The index of the first element to slice, inclusive.
@@ -201,7 +222,7 @@ interface IList<T extends ReadonlyJSONValue> extends IIterable<T>, IRetroable<T>
    * #### Undefined Behavior
    * A `start` or `stop` which is non-integral.
    */
-  slice(start?: number, stop?: number): IIterator<T>;
+  islice(start?: number, stop?: number): IIterator<T>;
 
   /**
    * Set the value at a specific index.
@@ -462,7 +483,7 @@ interface IText implements IIterable<string> {
    * #### Undefined Behavior
    * A `start` or `stop` which is non-integral.
    */
-  str(start?: number, stop?: number): string;
+  slice(start?: number, stop?: number): string;
 
   /**
    * Get an iterator over a portion of the text.
@@ -484,7 +505,7 @@ interface IText implements IIterable<string> {
    * #### Undefined Behavior
    * A `start` or `stop` which is non-integral.
    */
-  slice(start?: number, stop?: number): IIterator<string>;
+  islice(start?: number, stop?: number): IIterator<string>;
 
   /**
    * Assign a new value to the text, replacing the current content.
