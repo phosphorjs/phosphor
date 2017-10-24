@@ -126,7 +126,7 @@ namespace ITable {
     /**
      * The type of the table change.
      */
-    readonly type: 'record-inserted' | 'record-deleted';
+    readonly type: 'insert' | 'delete';
 
     /**
      * The unique id of the patch which generated the change.
