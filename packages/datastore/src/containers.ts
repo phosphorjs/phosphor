@@ -41,7 +41,7 @@ interface IList<T extends ReadonlyJSONValue> extends IIterable<T>, IRetroable<T>
    * #### Complexity
    * Logarithmic.
    */
-  readonly first: T | undefined;
+  first(): T | undefined;
 
   /**
    * The last value in the list or `undefined` if the list is empty.
@@ -49,7 +49,7 @@ interface IList<T extends ReadonlyJSONValue> extends IIterable<T>, IRetroable<T>
    * #### Complexity
    * Logarithmic.
    */
-  readonly last: T | undefined;
+  last(): T | undefined;
 
   /**
    * Get the value at a specific index.
