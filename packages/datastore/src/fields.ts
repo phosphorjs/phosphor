@@ -30,7 +30,7 @@ abstract class BaseField<DefaultType, RuntimeType, ChangeType> {
   /**
    * The discriminated type of the field.
    */
-  abstract readonly type: 'boolean' | 'number' | 'string' | 'text' | 'list' | 'map' | 'value';
+  abstract readonly type: 'boolean' | 'number' | 'string' | 'value' | 'list' | 'map' | 'text';
 
   /**
    * The default value for the field.
@@ -83,10 +83,51 @@ namespace BaseField {
 
 
 /**
+ * An abstract base class for atomic-valued fields.
+ */
+export
+abstract class AtomicField<T> extends BaseField<T, T, AtomicField.IChange<T>> {
+  /**
+   * The discriminated type of the field.
+   */
+  abstract readonly type: 'boolean' | 'number' | 'string' | 'value';
+}
+
+
+/**
+ * The namespace for the `AtomicField` class statics.
+ */
+export
+namespace AtomicField {
+  /**
+   * An options object for initializing an atomic field.
+   */
+  export
+  interface IOptions extends BaseField.IOptions { }
+
+  /**
+   * The change type for an atomic field.
+   */
+  export
+  interface IChange<T> {
+    /**
+     * The old value of the field.
+     */
+    oldValue: T;
+
+    /**
+     * The new value of the field.
+     */
+    newValue: T;
+  }
+}
+
+
+/**
  * A field which represents a boolean value.
  */
 export
-class BooleanField extends BaseField<boolean, boolean, BooleanField.IChange> {
+class BooleanField extends AtomicField<boolean> {
   /**
    * Construct a new boolean field.
    *
@@ -114,29 +155,13 @@ namespace BooleanField {
    * An options object for initializing a boolean field.
    */
   export
-  interface IOptions extends BaseField.IOptions {
+  interface IOptions extends AtomicField.IOptions {
     /**
      * The default value for the field.
      *
      * The default is `false`.
      */
     defaultValue?: boolean;
-  }
-
-  /**
-   * The change type for a boolean field.
-   */
-  export
-  interface IChange {
-    /**
-     * The old value of the field.
-     */
-    oldValue: boolean;
-
-    /**
-     * The new value of the field.
-     */
-    newValue: boolean;
   }
 }
 
@@ -145,7 +170,7 @@ namespace BooleanField {
  * A field which represents a number value.
  */
 export
-class NumberField extends BaseField<number, number, NumberField.IChange> {
+class NumberField extends AtomicField<number> {
   /**
    * Construct a new number field.
    *
@@ -173,29 +198,13 @@ namespace NumberField {
    * An options object for initializing a number field.
    */
   export
-  interface IOptions extends BaseField.IOptions {
+  interface IOptions extends AtomicField.IOptions {
     /**
      * The default value for the field.
      *
      * The default is `0`.
      */
     defaultValue?: number;
-  }
-
-  /**
-   * The change type for a number field.
-   */
-  export
-  interface IChange {
-    /**
-     * The old value of the field.
-     */
-    oldValue: number;
-
-    /**
-     * The new value of the field.
-     */
-    newValue: number;
   }
 }
 
@@ -204,7 +213,7 @@ namespace NumberField {
  * A field which represents a string value.
  */
 export
-class StringField extends BaseField<string, string, StringField.IChange> {
+class StringField extends AtomicField<string> {
   /**
    * Construct a new string field.
    *
@@ -232,7 +241,7 @@ namespace StringField {
    * An options object for initializing a string field.
    */
   export
-  interface IOptions extends BaseField.IOptions {
+  interface IOptions extends AtomicField.IOptions {
     /**
      * The default value for the field.
      *
@@ -240,85 +249,46 @@ namespace StringField {
      */
     defaultValue?: string;
   }
-
-  /**
-   * The change type for a string field.
-   */
-  export
-  interface IChange {
-    /**
-     * The old value of the field.
-     */
-    oldValue: string;
-
-    /**
-     * The new value of the field.
-     */
-    newValue: string;
-  }
 }
 
 
 /**
- * A field which represents a mutable text value.
+ * A field which represents a readonly JSON value.
  */
 export
-class TextField extends BaseField<string, IText, TextField.IChange> {
+class ValueField<T extends ReadonlyJSONValue = ReadonlyJSONValue> extends AtomicField<T> {
   /**
-   * Construct a new text field.
+   * Construct a new value field.
    *
    * @param options - The options for initializing the field.
    */
-  constructor(options: TextField.IOptions = {}) {
-    super(options.defaultValue || '', options);
+  constructor(options: ValueField.IOptions<T>) {
+    super(options.defaultValue, options);
   }
 
   /**
    * The discriminated type of the field.
    */
-  get type(): 'text' {
-    return 'text';
+  get type(): 'value' {
+    return 'value';
   }
 }
 
 
 /**
- * The namespace for the `TextField` class statics.
+ * The namespace for the `ValueField` class statics.
  */
 export
-namespace TextField {
+namespace ValueField {
   /**
-   * An options object for initializing a text field.
+   * An options object for initializing a value field.
    */
   export
-  interface IOptions extends BaseField.IOptions {
+  interface IOptions<T extends ReadonlyJSONValue> extends AtomicField.IOptions {
     /**
      * The default value for the field.
-     *
-     * The default is `''`.
      */
-    defaultValue?: string;
-  }
-
-  /**
-   * The change type for a text field.
-   */
-  export
-  interface IChange {
-    /**
-     * The index of the modification.
-     */
-    readonly index: number;
-
-    /**
-     * The text removed at the given index.
-     */
-    readonly removedText: string;
-
-    /**
-     * The text inserted at the given index.
-     */
-    readonly insertedText: string;
+    defaultValue: T;
   }
 }
 
@@ -327,7 +297,7 @@ namespace TextField {
  * A field which represents a mutable sequence of values.
  */
 export
-class ListField<T extends ReadonlyJSONValue> extends BaseField<ReadonlyArray<T>, IList<T>, ListField.IChange<T>> {
+class ListField<T extends ReadonlyJSONValue = ReadonlyJSONValue> extends BaseField<ReadonlyArray<T>, IList<T>, ListField.IChange<T>> {
   /**
    * Construct a new list field.
    *
@@ -398,7 +368,7 @@ type ReadonlyMap<T> = { readonly [key: string]: T };
  * A field which represents a mutable map of values.
  */
 export
-class MapField<T extends ReadonlyJSONValue> extends BaseField<ReadonlyMap<T>, IMap<T>, MapField.IChange<T>> {
+class MapField<T extends ReadonlyJSONValue = ReadonlyJSONValue> extends BaseField<ReadonlyMap<T>, IMap<T>, MapField.IChange<T>> {
   /**
    * Construct a new map field.
    *
@@ -454,58 +424,65 @@ namespace MapField {
 
 
 /**
- * A field which represents a readonly JSON value.
+ * A field which represents a mutable text value.
  */
 export
-class ValueField<T extends ReadonlyJSONValue> extends BaseField<T, T, ValueField.IChange<T>> {
+class TextField extends BaseField<string, IText, TextField.IChange> {
   /**
-   * Construct a new value field.
+   * Construct a new text field.
    *
    * @param options - The options for initializing the field.
    */
-  constructor(options: ValueField.IOptions<T>) {
-    super(options.defaultValue, options);
+  constructor(options: TextField.IOptions = {}) {
+    super(options.defaultValue || '', options);
   }
 
   /**
    * The discriminated type of the field.
    */
-  get type(): 'value' {
-    return 'value';
+  get type(): 'text' {
+    return 'text';
   }
 }
 
 
 /**
- * The namespace for the `ValueField` class statics.
+ * The namespace for the `TextField` class statics.
  */
 export
-namespace ValueField {
+namespace TextField {
   /**
-   * An options object for initializing a value field.
+   * An options object for initializing a text field.
    */
   export
-  interface IOptions<T extends ReadonlyJSONValue> extends BaseField.IOptions {
+  interface IOptions extends BaseField.IOptions {
     /**
      * The default value for the field.
+     *
+     * The default is `''`.
      */
-    defaultValue: T;
+    defaultValue?: string;
   }
 
   /**
-   * The change type for a value field.
+   * The change type for a text field.
    */
   export
-  interface IChange<T extends ReadonlyJSONValue> {
+  interface IChange {
     /**
-     * The old value of the field.
+     * The index of the modification.
      */
-    oldValue: T;
+    readonly index: number;
 
     /**
-     * The new value of the field.
+     * The text removed at the given index.
      */
-    newValue: T;
+    readonly removedText: string;
+
+    /**
+     * The text inserted at the given index.
+     */
+    readonly insertedText: string;
   }
 }
 
@@ -518,10 +495,10 @@ type Field = (
   BooleanField |
   NumberField |
   StringField |
-  TextField |
-  ListField<ReadonlyJSONValue> |
-  MapField<ReadonlyJSONValue> |
-  ValueField<ReadonlyJSONValue>
+  ValueField |
+  ListField |
+  MapField |
+  TextField
 );
 
 
