@@ -5,6 +5,3 @@
 |
 | The full license is in the file LICENSE, distributed with this software.
 |----------------------------------------------------------------------------*/
-export * from './datastore';
-export * from './localmodeldb';
-export * from './modeldb';

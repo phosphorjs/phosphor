@@ -15,7 +15,7 @@ import {
 
 
 /**
- * An object which holds an ordered list of readonly JSON values.
+ * A data store object which holds a sequence of values.
  */
 export
 interface IList<T extends ReadonlyJSONValue> extends IIterable<T>, IRetroable<T> {
@@ -39,7 +39,7 @@ interface IList<T extends ReadonlyJSONValue> extends IIterable<T>, IRetroable<T>
    * The first value in the list or `undefined` if the list is empty.
    *
    * #### Complexity
-   * Constant.
+   * Logarithmic.
    */
   readonly first: T | undefined;
 
@@ -47,123 +47,9 @@ interface IList<T extends ReadonlyJSONValue> extends IIterable<T>, IRetroable<T>
    * The last value in the list or `undefined` if the list is empty.
    *
    * #### Complexity
-   * Constant.
+   * Logarithmic.
    */
   readonly last: T | undefined;
-
-  /**
-   * Find the index of the first occurrence of a value in the list.
-   *
-   * @param value - The value to locate in the list. Values are
-   *   compared using strict `===` equality.
-   *
-   * @param start - The index of the first element in the range to be
-   *   searched, inclusive. The default value is `0`. Negative values
-   *   are taken as an offset from the end of the list.
-   *
-   * @param stop - The index of the last element in the range to be
-   *   searched, inclusive. The default value is `-1`. Negative values
-   *   are taken as an offset from the end of the list.
-   *
-   * @returns The index of the first occurrence of the value, or `-1`
-   *   if the value is not found.
-   *
-   * #### Notes
-   * If `stop < start` the search will wrap at the end of the list.
-   *
-   * #### Complexity
-   * Linear.
-   *
-   * #### Undefined Behavior
-   * A `start` or `stop` which is non-integral.
-   */
-  indexOf(value: T, start?: number, stop?: number): number;
-
-  /**
-   * Find the index of the last occurrence of a value in the list.
-   *
-   * @param value - The value to locate in the list. Values are
-   *   compared using strict `===` equality.
-   *
-   * @param start - The index of the first element in the range to be
-   *   searched, inclusive. The default value is `-1`. Negative values
-   *   are taken as an offset from the end of the list.
-   *
-   * @param stop - The index of the last element in the range to be
-   *   searched, inclusive. The default value is `0`. Negative values
-   *   are taken as an offset from the end of the list.
-   *
-   * @returns The index of the last occurrence of the value, or `-1`
-   *   if the value is not found.
-   *
-   * #### Notes
-   * If `start < stop` the search will wrap at the front of the list.
-   *
-   * #### Complexity
-   * Linear.
-   *
-   * #### Undefined Behavior
-   * A `start` or `stop` which is non-integral.
-   */
-  lastIndexOf(value: T, start?: number, stop?: number): number;
-
-  /**
-   * Find the index of the first value which matches a predicate.
-   *
-   * @param fn - The predicate function to apply to the values.
-   *
-   * @param start - The index of the first element in the range to be
-   *   searched, inclusive. The default value is `0`. Negative values
-   *   are taken as an offset from the end of the list.
-   *
-   * @param stop - The index of the last element in the range to be
-   *   searched, inclusive. The default value is `-1`. Negative values
-   *   are taken as an offset from the end of the list.
-   *
-   * @returns The index of the first matching value, or `-1` if no
-   *   matching value is found.
-   *
-   * #### Notes
-   * If `stop < start` the search will wrap at the end of the list.
-   *
-   * #### Complexity
-   * Linear.
-   *
-   * #### Undefined Behavior
-   * A `start` or `stop` which is non-integral.
-   *
-   * Modifying the length of the list while searching.
-   */
-  findIndex(fn: (value: T, index: number) => boolean, start?: number, stop?: number): number;
-
-  /**
-   * Find the index of the last value which matches a predicate.
-   *
-   * @param fn - The predicate function to apply to the values.
-   *
-   * @param start - The index of the first element in the range to be
-   *   searched, inclusive. The default value is `-1`. Negative values
-   *   are taken as an offset from the end of the list.
-   *
-   * @param stop - The index of the last element in the range to be
-   *   searched, inclusive. The default value is `0`. Negative values
-   *   are taken as an offset from the end of the list.
-   *
-   * @returns The index of the last matching value, or `-1` if no
-   *   matching value is found.
-   *
-   * #### Notes
-   * If `start < stop` the search will wrap at the front of the list.
-   *
-   * #### Complexity
-   * Linear.
-   *
-   * #### Undefined Behavior
-   * A `start` or `stop` which is non-integral.
-   *
-   * Modifying the length of the list while searching.
-   */
-  findLastIndex(fn: (value: T, index: number) => boolean, start?: number, stop?: number): number;
 
   /**
    * Get the value at a specific index.
@@ -175,7 +61,7 @@ interface IList<T extends ReadonlyJSONValue> extends IIterable<T>, IRetroable<T>
    *   index is out of range.
    *
    * #### Complexity
-   * Constant.
+   * Logarithmic.
    *
    * #### Undefined Behavior
    * An `index` which is non-integral.
@@ -195,6 +81,9 @@ interface IList<T extends ReadonlyJSONValue> extends IIterable<T>, IRetroable<T>
    *
    * @returns A new array for the specified portion of the list.
    *
+   * #### Notes
+   * If `start > stop`, the values will be in reverse order.
+   *
    * #### Complexity
    * Linear.
    *
@@ -213,6 +102,9 @@ interface IList<T extends ReadonlyJSONValue> extends IIterable<T>, IRetroable<T>
    * @param stop - The index of the last element to slice, exclusive.
    *   The default value is `list.length`. Negative values are taken
    *   as an offset from the end of the list.
+   *
+   * #### Notes
+   * If `start > stop`, the values will be in reverse order.
    *
    * @returns A new iterator over the specified portion of the list.
    *
@@ -236,7 +128,7 @@ interface IList<T extends ReadonlyJSONValue> extends IIterable<T>, IRetroable<T>
    * This method is a no-op if `index` is out of range.
    *
    * #### Complexity
-   * Constant.
+   * Logarithmic.
    *
    * #### Undefined Behavior
    * An `index` which is non-integral.
@@ -246,7 +138,7 @@ interface IList<T extends ReadonlyJSONValue> extends IIterable<T>, IRetroable<T>
   /**
    * Assign new values to the list, replacing the current content.
    *
-   * @param value - The values to assign to the list.
+   * @param values - The values to assign to the list.
    *
    * #### Complexity
    * Linear.
@@ -259,7 +151,7 @@ interface IList<T extends ReadonlyJSONValue> extends IIterable<T>, IRetroable<T>
    * @param value - The value to add to the list.
    *
    * #### Complexity
-   * Constant.
+   * Logarithmic.
    */
   push(value: T): void;
 
@@ -272,12 +164,29 @@ interface IList<T extends ReadonlyJSONValue> extends IIterable<T>, IRetroable<T>
    * @param value - The value to insert at the specified index.
    *
    * #### Complexity
-   * Linear.
+   * Logarithmic.
    *
    * #### Undefined Behavior
    * An `index` which is non-integral.
    */
   insert(index: number, value: T): void;
+
+  /**
+   * Remove a value from the list.
+   *
+   * @param index - The index of the value to remove. Negative
+   *   values are taken as an offset from the end of the list.
+   *
+   * #### Notes
+   * This method is a no-op if `index` is out of range.
+   *
+   * #### Complexity
+   * Logarithmic.
+   *
+   * #### Undefined Behavior
+   * An `index` which is non-integral.
+   */
+  remove(index: number): void;
 
   /**
    * Replace a range of values in the list.
@@ -290,7 +199,7 @@ interface IList<T extends ReadonlyJSONValue> extends IIterable<T>, IRetroable<T>
    * @param values - The values to insert at the specified index.
    *
    * #### Complexity
-   * Linear.
+   * Logarithmic.
    *
    * #### Undefined Behavior
    * An `index` or `count` which is non-integral.
@@ -308,7 +217,7 @@ interface IList<T extends ReadonlyJSONValue> extends IIterable<T>, IRetroable<T>
 
 
 /**
- * An object which maps string keys to readonly JSON values.
+ * A data store object which maps keys to values.
  */
 export
 interface IMap<T extends ReadonlyJSONValue> extends IIterable<[string, T]> {
@@ -391,44 +300,34 @@ interface IMap<T extends ReadonlyJSONValue> extends IIterable<[string, T]> {
   set(key: string, value: T): void;
 
   /**
+   * Assign new items to the map, replacing the current content.
+   *
+   * @param items - The items to add to the list.
+   *
+   * #### Complexity
+   * Linear.
+   */
+  assign(items: { readonly [key: string]: T }): void;
+
+  /**
    * Update the map with items from an object.
    *
-   * @param items - The object-map of items to add to the map.
+   * @param items - The items to add to the map.
    *
    * #### Complexity
    * Linear.
    */
-  update(items: { [key: string]: T }): void;
+  update(items: { readonly [key: string]: T }): void;
 
   /**
-   * Update the map with items from an iterable.
+   * Delete one or more items from the map.
    *
-   * @param items - The iterable of items to add to the map.
-   *
-   * #### Complexity
-   * Linear.
-   */
-  merge(items: IterableOrArrayLike<[string, T]>): void;
-
-  /**
-   * Delete an item from the map.
-   *
-   * @param key - The key of the item to delete from the map.
+   * @param key - The key(s) of the item(s) to delete from the map.
    *
    * #### Complexity
    * Constant.
    */
-  delete(key: string): void;
-
-  /**
-   * Remove multiple items from the map.
-   *
-   * @param keys - The iterable of keys to remove from the map.
-   *
-   * #### Complexity
-   * Linear.
-   */
-  remove(keys: IterableOrArrayLike<string>): void;
+  delete(key: string | IterableOrArrayLike<string>): void;
 
   /**
    * Clear all items from the map.
@@ -441,13 +340,10 @@ interface IMap<T extends ReadonlyJSONValue> extends IIterable<[string, T]> {
 
 
 /**
- * An object which holds mutable text.
- *
- * #### Notes
- * Iterating `IText` yields implementation-defined chunk sizes.
+ * A data store object which holds text.
  */
 export
-interface IText implements IIterable<string> {
+interface IText {
   /**
    * Whether the text is empty.
    *
@@ -465,6 +361,19 @@ interface IText implements IIterable<string> {
   readonly length: number;
 
   /**
+   * Get the character at a specific index.
+   *
+   * @param index - The index of the character of interest. Negative
+   *   values are taken as an offset from the end of the text.
+   *
+   * @returns The character at the specified index.
+   *
+   * #### Complexity
+   * Logarithmic.
+   */
+  charAt(index: number): string;
+
+  /**
    * Get a portion of the text as a string.
    *
    * @param start - The index of the first character, inclusive. The
@@ -478,7 +387,7 @@ interface IText implements IIterable<string> {
    * @returns A new string for the requested portion of the text.
    *
    * #### Complexity
-   * Implementation defined.
+   * Linear.
    *
    * #### Undefined Behavior
    * A `start` or `stop` which is non-integral.
@@ -486,36 +395,14 @@ interface IText implements IIterable<string> {
   slice(start?: number, stop?: number): string;
 
   /**
-   * Get an iterator over a portion of the text.
-   *
-   * @param start - The index of the first character, inclusive. The
-   *   default value is `0`. Negative values are taken as an offset
-   *   from the end of the text.
-   *
-   * @param stop - The index of the last character, exclusive. The
-   *   default value is `text.length`. Negative values are taken
-   *   as an offset from the end of the text.
-   *
-   * @returns A new iterator over the specified portion of the text.
-   *   The iterator yields implementation-defined chunk sizes.
-   *
-   * #### Complexity
-   * Constant.
-   *
-   * #### Undefined Behavior
-   * A `start` or `stop` which is non-integral.
-   */
-  islice(start?: number, stop?: number): IIterator<string>;
-
-  /**
    * Assign a new value to the text, replacing the current content.
    *
-   * @param value - The value(s) to assign to the text.
+   * @param value - The value to assign to the text.
    *
    * #### Complexity
-   * Implementation defined.
+   * Linear.
    */
-  assign(value: string | IterableOrArrayLike<string>): void;
+  assign(value: string): void;
 
   /**
    * Append a value to the end of the text.
@@ -523,9 +410,9 @@ interface IText implements IIterable<string> {
    * @param value - The value(s) to append to the text.
    *
    * #### Complexity
-   * Implementation defined.
+   * Logarithmic.
    */
-  append(value: string | IterableOrArrayLike<string>): void;
+  append(value: string): void;
 
   /**
    * Insert a value into the text.
@@ -536,12 +423,12 @@ interface IText implements IIterable<string> {
    * @param value - The value(s) to insert into the text.
    *
    * #### Complexity
-   * Implementation defined.
+   * Logarithmic.
    *
    * #### Undefined Behavior
    * An `index` which is non-integral.
    */
-  insert(index: number, value: string | IterableOrArrayLike<string>): void;
+  insert(index: number, value: string): void;
 
   /**
    * Replace a range of the text.
@@ -554,18 +441,18 @@ interface IText implements IIterable<string> {
    * @param value - The value(s) to insert at the specified index.
    *
    * #### Complexity
-   * Implementation defined.
+   * Logarithmic.
    *
    * #### Undefined Behavior
    * An `index` or `count` which is non-integral.
    */
-  splice(index: number, count: number, value?: string | IterableOrArrayLike<string>): void;
+  splice(index: number, count: number, value?: string): void;
 
   /**
    * Clear the text value.
    *
    * #### Complexity
-   * Implementation defined.
+   * Linear.
    */
   clear(): void;
 }

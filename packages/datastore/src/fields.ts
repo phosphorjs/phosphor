@@ -17,13 +17,55 @@ import {
  * A data store does not support user-defined fields.
  */
 export
-abstract class BaseField {
+abstract class BaseField<DefaultType, RuntimeType, ChangeType> {
   /**
    * Construct a new base field.
    *
    * @param options - The options for initializing the field.
    */
-  constructor(options: BaseField.IOptions = {}) { }
+  constructor(defaultValue: DefaultType, options: BaseField.IOptions = {}) {
+    this.defaultValue = defaultValue;
+  }
+
+  /**
+   * The discriminated type of the field.
+   */
+  abstract readonly type: 'boolean' | 'number' | 'string' | 'text' | 'list' | 'map' | 'value';
+
+  /**
+   * The default value for the field.
+   *
+   * #### Notes
+   * The default value may be overridden when a record is created.
+   */
+  readonly defaultValue: DefaultType;
+
+  /**
+   * The runtime type for the field.
+   *
+   * #### Notes
+   * This is an internal property which is only used to support the
+   * type system. The runtime value of this property is undefined.
+   */
+  readonly '@@RuntimeType': RuntimeType;
+
+  /**
+   * The update type for the field.
+   *
+   * #### Notes
+   * This is an internal property which is only used to support the
+   * type system. The runtime value of this property is undefined.
+   */
+  readonly '@@UpdateType': DefaultType;
+
+  /**
+   * The change type for the field.
+   *
+   * #### Notes
+   * This is an internal property which is only used to support the
+   * type system. The runtime value of this property is undefined.
+   */
+  readonly '@@ChangeType': ChangeType;
 }
 
 
@@ -44,15 +86,14 @@ namespace BaseField {
  * A field which represents a boolean value.
  */
 export
-class BooleanField extends BaseField {
+class BooleanField extends BaseField<boolean, boolean, BooleanField.IChange> {
   /**
    * Construct a new boolean field.
    *
    * @param options - The options for initializing the field.
    */
   constructor(options: BooleanField.IOptions = {}) {
-    super(options);
-    this.defaultValue = options.defaultValue || false;
+    super(options.defaultValue || false, options);
   }
 
   /**
@@ -61,23 +102,6 @@ class BooleanField extends BaseField {
   get type(): 'boolean' {
     return 'boolean';
   }
-
-  /**
-   * The default value for the field.
-   *
-   * #### Notes
-   * The default value may be overridden when a record is created.
-   */
-  readonly defaultValue: boolean;
-
-  /**
-   * The value type for the field as stored in a record.
-   *
-   * #### Notes
-   * This is an internal property which is only used to support the
-   * type system. The runtime value of this property is undefined.
-   */
-  readonly '@@valueType': boolean;
 }
 
 
@@ -98,6 +122,22 @@ namespace BooleanField {
      */
     defaultValue?: boolean;
   }
+
+  /**
+   * The change type for a boolean field.
+   */
+  export
+  interface IChange {
+    /**
+     * The old value of the field.
+     */
+    oldValue: boolean;
+
+    /**
+     * The new value of the field.
+     */
+    newValue: boolean;
+  }
 }
 
 
@@ -105,15 +145,14 @@ namespace BooleanField {
  * A field which represents a number value.
  */
 export
-class NumberField extends BaseField {
+class NumberField extends BaseField<number, number, NumberField.IChange> {
   /**
    * Construct a new number field.
    *
    * @param options - The options for initializing the field.
    */
   constructor(options: NumberField.IOptions = {}) {
-    super(options);
-    this.defaultValue = options.defaultValue || 0;
+    super(options.defaultValue || 0, options);
   }
 
   /**
@@ -122,23 +161,6 @@ class NumberField extends BaseField {
   get type(): 'number' {
     return 'number';
   }
-
-  /**
-   * The default value for the field.
-   *
-   * #### Notes
-   * The default value may be overridden when a record is created.
-   */
-  readonly defaultValue: number;
-
-  /**
-   * The value type for the field as stored in a record.
-   *
-   * #### Notes
-   * This is an internal property which is only used to support the
-   * type system. The runtime value of this property is undefined.
-   */
-  readonly '@@valueType': number;
 }
 
 
@@ -159,6 +181,22 @@ namespace NumberField {
      */
     defaultValue?: number;
   }
+
+  /**
+   * The change type for a number field.
+   */
+  export
+  interface IChange {
+    /**
+     * The old value of the field.
+     */
+    oldValue: number;
+
+    /**
+     * The new value of the field.
+     */
+    newValue: number;
+  }
 }
 
 
@@ -166,15 +204,14 @@ namespace NumberField {
  * A field which represents a string value.
  */
 export
-class StringField extends BaseField {
+class StringField extends BaseField<string, string, StringField.IChange> {
   /**
    * Construct a new string field.
    *
    * @param options - The options for initializing the field.
    */
   constructor(options: StringField.IOptions = {}) {
-    super(options);
-    this.defaultValue = options.defaultValue || '';
+    super(options.defaultValue || '', options);
   }
 
   /**
@@ -183,23 +220,6 @@ class StringField extends BaseField {
   get type(): 'string' {
     return 'string';
   }
-
-  /**
-   * The default value for the field.
-   *
-   * #### Notes
-   * The default value may be overridden when a record is created.
-   */
-  readonly defaultValue: string;
-
-  /**
-   * The value type for the field as stored in a record.
-   *
-   * #### Notes
-   * This is an internal property which is only used to support the
-   * type system. The runtime value of this property is undefined.
-   */
-  readonly '@@valueType': string;
 }
 
 
@@ -220,6 +240,22 @@ namespace StringField {
      */
     defaultValue?: string;
   }
+
+  /**
+   * The change type for a string field.
+   */
+  export
+  interface IChange {
+    /**
+     * The old value of the field.
+     */
+    oldValue: string;
+
+    /**
+     * The new value of the field.
+     */
+    newValue: string;
+  }
 }
 
 
@@ -227,15 +263,14 @@ namespace StringField {
  * A field which represents a mutable text value.
  */
 export
-class TextField extends BaseField {
+class TextField extends BaseField<string, IText, TextField.IChange> {
   /**
    * Construct a new text field.
    *
    * @param options - The options for initializing the field.
    */
   constructor(options: TextField.IOptions = {}) {
-    super(options);
-    this.defaultValue = options.defaultValue || '';
+    super(options.defaultValue || '', options);
   }
 
   /**
@@ -244,23 +279,6 @@ class TextField extends BaseField {
   get type(): 'text' {
     return 'text';
   }
-
-  /**
-   * The default value for the field.
-   *
-   * #### Notes
-   * The default value may be overridden when a record is created.
-   */
-  readonly defaultValue: string;
-
-  /**
-   * The value type for the field as stored in a record.
-   *
-   * #### Notes
-   * This is an internal property which is only used to support the
-   * type system. The runtime value of this property is undefined.
-   */
-  readonly '@@valueType': IText;
 }
 
 
@@ -281,22 +299,42 @@ namespace TextField {
      */
     defaultValue?: string;
   }
+
+  /**
+   * The change type for a text field.
+   */
+  export
+  interface IChange {
+    /**
+     * The index of the modification.
+     */
+    readonly index: number;
+
+    /**
+     * The text removed at the given index.
+     */
+    readonly removedText: string;
+
+    /**
+     * The text inserted at the given index.
+     */
+    readonly insertedText: string;
+  }
 }
 
 
 /**
- * A field which represents a mutable list of values.
+ * A field which represents a mutable sequence of values.
  */
 export
-class ListField<T extends ReadonlyJSONValue> extends BaseField {
+class ListField<T extends ReadonlyJSONValue> extends BaseField<ReadonlyArray<T>, IList<T>, ListField.IChange<T>> {
   /**
    * Construct a new list field.
    *
    * @param options - The options for initializing the field.
    */
   constructor(options: ListField.IOptions<T> = {}) {
-    super(options);
-    this.defaultValue = [ ...(options.defaultValue || []) ];
+    super([ ...(options.defaultValue || []) ], options);
   }
 
   /**
@@ -305,23 +343,6 @@ class ListField<T extends ReadonlyJSONValue> extends BaseField {
   get type(): 'list' {
     return 'list';
   }
-
-  /**
-   * The default value for the field.
-   *
-   * #### Notes
-   * The default value may be overridden when a record is created.
-   */
-  readonly defaultValue: ReadonlyArray<T>;
-
-  /**
-   * The value type for the field as stored in a record.
-   *
-   * #### Notes
-   * This is an internal property which is only used to support the
-   * type system. The runtime value of this property is undefined.
-   */
-  readonly '@@valueType': IList<T>;
 }
 
 
@@ -342,22 +363,49 @@ namespace ListField {
      */
     defaultValue?: ReadonlyArray<T>;
   }
+
+  /**
+   * The change type for a list field.
+   */
+  export
+  interface IChange<T extends ReadonlyJSONValue> {
+    /**
+     * The index of the modification.
+     */
+    readonly index: number;
+
+    /**
+     * The value removed at the given index.
+     */
+    readonly removedValues: ReadonlyArray<T>;
+
+    /**
+     * The value inserted at the given index.
+     */
+    readonly insertedValues: ReadonlyArray<T>;
+  }
 }
+
+
+/**
+ * A type alias for a readonly object map.
+ */
+export
+type ReadonlyMap<T> = { readonly [key: string]: T };
 
 
 /**
  * A field which represents a mutable map of values.
  */
 export
-class MapField<T extends ReadonlyJSONValue> extends BaseField {
+class MapField<T extends ReadonlyJSONValue> extends BaseField<ReadonlyMap<T>, IMap<T>, MapField.IChange<T>> {
   /**
    * Construct a new map field.
    *
    * @param options - The options for initializing the field.
    */
   constructor(options: MapField.IOptions<T> = {}) {
-    super(options);
-    this.defaultValue = { ...(options.defaultValue || {}) };
+    super({ ...(options.defaultValue || {}) }, options);
   }
 
   /**
@@ -366,23 +414,6 @@ class MapField<T extends ReadonlyJSONValue> extends BaseField {
   get type(): 'map' {
     return 'map';
   }
-
-  /**
-   * The default value for the field.
-   *
-   * #### Notes
-   * The default value may be overridden when a record is created.
-   */
-  readonly defaultValue: { readonly [key: string]: T };
-
-  /**
-   * The value type for the field as stored in a record.
-   *
-   * #### Notes
-   * This is an internal property which is only used to support the
-   * type system. The runtime value of this property is undefined.
-   */
-  readonly '@@valueType': IMap<T>;
 }
 
 
@@ -401,7 +432,23 @@ namespace MapField {
      *
      * The default is `{}`.
      */
-    defaultValue?: { [key: string]: T };
+    defaultValue?: ReadonlyMap<T>;
+  }
+
+  /**
+   * The change type for a map field.
+   */
+  export
+  interface IChange<T extends ReadonlyJSONValue> {
+    /**
+     * The items removed from the map.
+     */
+    readonly removedItems: ReadonlyMap<T>;
+
+    /**
+     * The items added to the map.
+     */
+    readonly addedItems: ReadonlyMap<T>;
   }
 }
 
@@ -410,15 +457,14 @@ namespace MapField {
  * A field which represents a readonly JSON value.
  */
 export
-class ValueField<T extends ReadonlyJSONValue> extends BaseField {
+class ValueField<T extends ReadonlyJSONValue> extends BaseField<T, T, ValueField.IChange<T>> {
   /**
    * Construct a new value field.
    *
    * @param options - The options for initializing the field.
    */
   constructor(options: ValueField.IOptions<T>) {
-    super(options);
-    this.defaultValue = options.defaultValue;
+    super(options.defaultValue, options);
   }
 
   /**
@@ -427,23 +473,6 @@ class ValueField<T extends ReadonlyJSONValue> extends BaseField {
   get type(): 'value' {
     return 'value';
   }
-
-  /**
-   * The default value for the field.
-   *
-   * #### Notes
-   * The default value may be overridden when a record is created.
-   */
-  readonly defaultValue: T;
-
-  /**
-   * The value type for the field as stored in a record.
-   *
-   * #### Notes
-   * This is an internal property which is only used to support the
-   * type system. The runtime value of this property is undefined.
-   */
-  readonly '@@valueType': T;
 }
 
 
@@ -462,6 +491,22 @@ namespace ValueField {
      */
     defaultValue: T;
   }
+
+  /**
+   * The change type for a value field.
+   */
+  export
+  interface IChange<T extends ReadonlyJSONValue> {
+    /**
+     * The old value of the field.
+     */
+    oldValue: T;
+
+    /**
+     * The new value of the field.
+     */
+    newValue: T;
+  }
 }
 
 
@@ -478,3 +523,10 @@ type Field = (
   MapField<ReadonlyJSONValue> |
   ValueField<ReadonlyJSONValue>
 );
+
+
+/**
+ * A type alias for a field set.
+ */
+export
+type FieldSet = ReadonlyMap<Field>;

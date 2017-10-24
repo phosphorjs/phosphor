@@ -6,30 +6,40 @@
 | The full license is in the file LICENSE, distributed with this software.
 |----------------------------------------------------------------------------*/
 import {
-  Field
+  ISignal
+} from '@phosphor/signaling';
+
+import {
+  FieldSet
 } from './fields';
+
+import {
+  IRecord
+} from './record';
 
 
 /**
  * An object which maintains a collection of records.
  */
 export
-interface ITable<T extends ITable.Schema> extends IIterable<ITable.Record<T>> {
+interface ITable<T extends FieldSet> extends IIterable<IRecord<T>> {
   /**
-   * A signal emitted when the table changes.
-   *
-   * #### Notes
-   * This signal is emitted asynchronously.
+   * A signal emitted when the state of the table changes.
    */
-  readonly changed: ISignal<ITable<T>, ReadonlyArray<ITable.Change<T>>>;
+  readonly tableChanged: ISignal<ITable<T>, ITable.IChangedArgs>;
 
   /**
-   * The schema for the table.
+   * A signal emitted when the state of a record changes.
+   */
+  readonly recordChanged: ISignal<ITable<T>, IRecord.IChangedArgs<T>>;
+
+  /**
+   * The field set for the table.
    *
    * #### Complexity
    * Constant.
    */
-  readonly schema: T;
+  readonly fields: T;
 
   /**
    * Whether the table is empty.
@@ -60,7 +70,7 @@ interface ITable<T extends ITable.Schema> extends IIterable<ITable.Record<T>> {
   has(id: string): boolean;
 
   /**
-   * Get the record for a particular id the table.
+   * Get the record for a particular id in the table.
    *
    * @param id - The record id of interest.
    *
@@ -69,39 +79,29 @@ interface ITable<T extends ITable.Schema> extends IIterable<ITable.Record<T>> {
    * #### Complexity
    * Constant.
    */
-  get(id: string): ITable.Record<T> | undefined;
+  get(id: string): IRecord<T> | undefined;
 
   /**
-   * Create and insert a new record into the table.
+   * Insert a new record into the table.
    *
-   * @param state - The initial state for the record.
+   * @param state - The partial initial state for the record.
    *
    * @returns The new record object that was added to the table.
    *
    * #### Complexity
    * Constant.
    */
-  insert(state: ITable.InitialRecordState<T>): ITable.Record<T>;
+  insert(state: IRecord.UpdateState<T>): IRecord<T>;
 
   /**
-   * Delete a record from the table.
+   * Delete one or more records from the table.
    *
-   * @param id - The id of the record to delete from the table.
+   * @param id - The id(s) of the record(s) to delete from the table.
    *
    * #### Complexity
    * Constant.
    */
-  delete(id: string): void;
-
-  /**
-   * Remove multiple records from the table.
-   *
-   * @param ids - The iterable of ids to remove from the table.
-   *
-   * #### Complexity
-   * Linear.
-   */
-  remove(ids: IterableOrArrayLike<string>): void;
+  delete(id: string | IterableOrArrayLike<string>): void;
 
   /**
    * Clear all records from the table.
@@ -119,108 +119,23 @@ interface ITable<T extends ITable.Schema> extends IIterable<ITable.Record<T>> {
 export
 namespace ITable {
   /**
-   * A schema definition for a table.
+   * The arguments object for the `tableChanged` signal.
    */
   export
-  type Schema = {
+  interface IChangedArgs {
     /**
-     * The unique id for the schema.
+     * The type of the table change.
      */
-    readonly id: string;
+    readonly type: 'record-inserted' | 'record-deleted';
 
     /**
-     * The mapping of names to fields for the table records.
-     *
-     * #### Notes
-     * Fields are converted to named properties on a record.
-     *
-     * The only reserved name is `@@id`. A table automatically
-     * generates a unique `@@id` field for each record.
+     * The unique id of the patch which generated the change.
      */
-    readonly fields: { readonly [key: string]: Field };
-  };
-
-  /**
-   * A record definition for a table.
-   */
-  export
-  type Record<T extends Schema> = { readonly '@@id': string } & {
-    /**
-     * The runtime properties of the record.
-     */
-    [K in keyof T['fields']]: T['fields'][K]['@@valueType'];
-  };
-
-  /**
-   * The initial state for a record.
-   */
-  export
-  type InitialRecordState<T extends Schema> = {
-    /**
-     * The initial state for the record.
-     */
-    [K in keyof T['fields']]?: T['fields'][K]['defaultValue'];
-  };
-
-  /**
-   *
-   */
-  export
-  type ChangedRecordState<T extends Schema> = {
-    /**
-     *
-     */
-    [K in keyof T['fields']]?: T['fields'][K]['@@changeType'];
-  };
-
-  /**
-   *
-   */
-  export
-  type TableChangedArgs<T extends Schema> = {
-    /**
-     *
-     */
-    readonly type: 'table-changed';
+    readonly patchId: string;
 
     /**
-     *
-     */
-    readonly added: ReadonlyArray<string>;
-
-    /**
-     *
-     */
-    readonly removed: ReadonlyArray<string>;
-  }
-
-  /**
-   *
-   */
-  export
-  type RecordChangedArgs<T extends Schema> = {
-    /**
-     *
-     */
-    readonly type: 'record-changed';
-
-    /**
-     *
+     * The unique id of the record which was inserted or deleted.
      */
     readonly recordId: string;
-
-    /**
-     *
-     */
-    readonly changes: ChangedRecordState<T>;
-  };
-}
-
-
-let OutputAreaSchema = {
-  id: '@jupyterlab/OutputArea',
-  fields: {
-    trusted: new BooleanField(),
-    outputItemIds: new ListField<string>()
   }
 }
