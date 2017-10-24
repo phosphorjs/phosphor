@@ -136,7 +136,7 @@ interface IList<T extends ReadonlyJSONValue> extends IIterable<T>, IRetroable<T>
   set(index: number, value: T): void;
 
   /**
-   * Assign new values to the list, replacing the current content.
+   * Assign new values to the list, replacing all current values.
    *
    * @param values - The values to assign to the list.
    *
@@ -300,7 +300,7 @@ interface IMap<T extends ReadonlyJSONValue> extends IIterable<[string, T]> {
   set(key: string, value: T): void;
 
   /**
-   * Assign new items to the map, replacing the current content.
+   * Assign new items to the map, replacing all current items.
    *
    * @param items - The items to add to the list.
    *
@@ -310,7 +310,7 @@ interface IMap<T extends ReadonlyJSONValue> extends IIterable<[string, T]> {
   assign(items: { readonly [key: string]: T }): void;
 
   /**
-   * Update the map with items from an object.
+   * Update the map with additional items.
    *
    * @param items - The items to add to the map.
    *
@@ -395,7 +395,7 @@ interface IText {
   slice(start?: number, stop?: number): string;
 
   /**
-   * Assign a new value to the text, replacing the current content.
+   * Assign a new value to the text, replacing all current text.
    *
    * @param value - The value to assign to the text.
    *
