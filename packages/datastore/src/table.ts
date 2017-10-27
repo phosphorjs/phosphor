@@ -10,36 +10,36 @@ import {
 } from '@phosphor/signaling';
 
 import {
-  FieldSet
-} from './fields';
-
-import {
   IRecord
 } from './record';
+
+import {
+  Schema
+} from './schema';
 
 
 /**
  * An object which maintains a collection of records.
  */
 export
-interface ITable<T extends FieldSet> extends IIterable<IRecord<T>> {
+interface ITable<S extends Schema> extends IIterable<ITable.IRecord<S>> {
   /**
-   * A signal emitted when the state of the table changes.
+   * A signal emitted when a record is created.
    */
-  readonly tableChanged: ISignal<ITable<T>, ITable.IChangedArgs>;
+  readonly recordCreated: ISignal<ITable<S>, ITable.IRecordCreatedArgs>;
 
   /**
    * A signal emitted when the state of a record changes.
    */
-  readonly recordChanged: ISignal<ITable<T>, IRecord.IChangedArgs<T>>;
+  readonly recordChanged: ISignal<ITable<S>, ITable.IRecordChangedArgs<S>>;
 
   /**
-   * The field set for the table.
+   * The schema for the table.
    *
    * #### Complexity
    * Constant.
    */
-  readonly fields: T;
+  readonly schema: T;
 
   /**
    * Whether the table is empty.
@@ -60,7 +60,7 @@ interface ITable<T extends FieldSet> extends IIterable<IRecord<T>> {
   /**
    * Test whether the table has a particular record.
    *
-   * @param id - The record id of interest.
+   * @param id - The id of the record of interest.
    *
    * @returns `true` if the table has the record, `false` otherwise.
    *
@@ -72,44 +72,30 @@ interface ITable<T extends FieldSet> extends IIterable<IRecord<T>> {
   /**
    * Get the record for a particular id in the table.
    *
-   * @param id - The record id of interest.
+   * @param id - The id of the record of interest.
    *
-   * @returns The requested record, or `undefined` if the id is missing.
-   *
-   * #### Complexity
-   * Constant.
-   */
-  get(id: string): IRecord<T> | undefined;
-
-  /**
-   * Insert a new record into the table.
-   *
-   * @param state - The partial initial state for the record.
-   *
-   * @returns The new record object that was added to the table.
+   * @returns The requested record, or `undefined` if a record with the
+   *   given id does not exist in the table.
    *
    * #### Complexity
    * Constant.
    */
-  insert(state: IRecord.UpdateState<T>): IRecord<T>;
+  get(id: string): IRecord<S> | undefined;
 
   /**
-   * Delete one or more records from the table.
+   * Create and insert a new record into the table.
    *
-   * @param id - The id(s) of the record(s) to delete from the table.
+   * @param state - The initial state for the record.
+   *
+   * @returns The new record that was inserted into the table.
    *
    * #### Complexity
    * Constant.
-   */
-  delete(id: string | IterableOrArrayLike<string>): void;
-
-  /**
-   * Clear all records from the table.
    *
-   * #### Complexity
-   * Linear.
+   * #### Notes
+   * A record cannot be deleted and its creation cannot be undone.
    */
-  clear(): void;
+  insert(state: IRecord.InitialState<S>): IRecord<S>;
 }
 
 
@@ -119,22 +105,28 @@ interface ITable<T extends FieldSet> extends IIterable<IRecord<T>> {
 export
 namespace ITable {
   /**
-   * The arguments object for the `tableChanged` signal.
+   * The arguments object for the `recordCreated` signal.
    */
   export
-  interface IChangedArgs {
-    /**
-     * The type of the table change.
-     */
-    readonly type: 'insert' | 'delete';
-
+  interface IRecordCreatedArgs {
     /**
      * The unique id of the patch which generated the change.
      */
     readonly patchId: string;
 
     /**
-     * The unique id of the record which was inserted or deleted.
+     * The id of the record that was created.
+     */
+    readonly recordId: string;
+  }
+
+  /**
+   * The arguments object for the `recordChanged` signal.
+   */
+  export
+  interface IRecordChangedArgs<S extends Schema> extends IRecord.IChangedArgs<S> {
+    /**
+     * The id of the record that was changed.
      */
     readonly recordId: string;
   }

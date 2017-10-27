@@ -10,7 +10,7 @@ import {
 } from '@phosphor/signaling';
 
 import {
-  FieldSet
+  Schema
 } from './fields';
 
 
@@ -18,11 +18,11 @@ import {
  * A mutable data store object which holds well-defined state.
  */
 export
-interface IRecord<T extends FieldSet> {
+interface IRecord<S extends Schema> {
   /**
    * A signal emitted when the state of the record changes.
    */
-  readonly changed: ISignal<IRecord<T>, IRecord.IChangedArgs<T>>;
+  readonly changed: ISignal<IRecord<S>, IRecord.IChangedArgs<S>>;
 
   /**
    * The globally unique id of the record.
@@ -30,16 +30,21 @@ interface IRecord<T extends FieldSet> {
   readonly id: string;
 
   /**
+   * The schema for the record.
+   */
+  readonly schema: S;
+
+  /**
    * The current state of the record.
    */
-  readonly state: IRecord.RuntimeState<T>;
+  readonly state: IRecord.RuntimeState<S>;
 
   /**
    * Update the state of the record.
    *
    * @param state - The updated state to apply to the record.
    */
-  update(state: IRecord.UpdateState<T>): void;
+  update(state: IRecord.UpdateState<S>): void;
 }
 
 
@@ -52,53 +57,59 @@ namespace IRecord {
    * A type alias for the runtime state of a record.
    */
   export
-  type RuntimeState<T extends FieldSet> = {
+  type RuntimeState<S extends Schema> = {
     /**
      * The complete runtime state for the record.
      */
-    readonly [K in keyof T]: T[K]['@@RuntimeType'];
+    readonly [K in keyof S['fields']]: S['fields'][K]['@@RuntimeType'];
+  };
+
+  /**
+   * A type alias for the inital state of a record.
+   */
+  export
+  type InitialState<S extends Schema> = {
+    /**
+     * The inital state for the record.
+     */
+    readonly [K in keyof S['fields']]: S['fields'][K]['@@UpdateType'];
   };
 
   /**
    * A type alias for the update state of a record.
    */
   export
-  type UpdateState<T extends FieldSet> = {
+  type UpdateState<S extends Schema> = {
     /**
      * The partial update state for the record.
      */
-    readonly [K in keyof T]?: T[K]['@@UpdateType'];
+    readonly [K in keyof S['fields']]?: S['fields'][K]['@@UpdateType'];
   };
 
   /**
    * A type alias for the change state of a record.
    */
   export
-  type ChangeState<T extends FieldSet> = {
+  type ChangeState<S extends Schema> = {
     /**
      * The partial change state for the record.
      */
-    readonly [K in keyof T]?: T[K]['@@ChangeType'];
+    readonly [K in keyof S['fields']]?: S['fields'][K]['@@ChangeType'];
   };
 
   /**
    * The arguments object for the `changed` signal.
    */
   export
-  interface IChangedArgs<T extends FieldSet> {
+  interface IChangedArgs<S extends Schema> {
     /**
      * The unique id of the patch which generated the change.
      */
     readonly patchId: string;
 
     /**
-     * The unique id of the record which generated the change.
-     */
-    readonly recordId: string;
-
-    /**
      * The partial change state for the record.
      */
-    readonly changes: ChangeState<T>;
+    readonly changes: ChangeState<S>;
   }
 }
