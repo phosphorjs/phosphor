@@ -22,7 +22,7 @@ import {
  * An object which maintains a collection of records.
  */
 export
-interface ITable<S extends Schema> extends IIterable<ITable.IRecord<S>> {
+interface ITable<S extends Schema> extends IIterable<IRecord<S>> {
   /**
    * A signal emitted when a record is created.
    */
