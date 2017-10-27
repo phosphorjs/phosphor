@@ -11,7 +11,7 @@ import {
 
 import {
   Schema
-} from './fields';
+} from './schema';
 
 
 /**
