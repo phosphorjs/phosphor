@@ -23,47 +23,64 @@ import {
 
 
 /**
- *
+ * A multi-user collaborative data store.
  */
 export
 interface IDatastore {
   /**
-   *
+   * The patch server which drives the data store.
    */
-  readonly server: IServer;
+  readonly server: IPatchServer;
 
   /**
+   * Make changes to the the datastore.
    *
-   */
-  undo(patchId: string | IterableOrArrayLike<T>): Promise<void>;
-
-  /**
+   * @param fn - The function that will edit the datastore. The unique
+   *   patch id is provided as the first argument. All changes made by
+   *   the function are associated with the given patch id.
    *
-   */
-  redo(patchId: string | IterableOrArrayLike<T>): Promise<void>;
-
-  /**
+   * @returns The unique patch id.
    *
+   * #### Notes
+   * The datastore can only be modified during a patch operation.
+   *
+   * The patch function is invoked synchronously.
    */
   patch(fn: (patchId: string) => void): string;
 
   /**
+   * Undo one or more patches to the datastore.
    *
+   * @param patchId - The patch(es) to undo.
+   *
+   * @returns A promise which resolves when the action is complete.
    */
-  roots(): IIterator<IRecord<Schema>>;
+  undo(patchId: string | IterableOrArrayLike<T>): Promise<void>;
 
   /**
+   * Redo one or more patches to the datastore.
    *
+   * @param patchId - The patch(es) to redo.
+   *
+   * @returns A promise which resolves when the action is complete.
    */
-  tables(): IIterator<ITable<Schema>>;
+  redo(patchId: string | IterableOrArrayLike<T>): Promise<void>;
 
   /**
+   * Get the root record for a particular schema.
    *
+   * @param schema - The schema of interest.
+   *
+   * @returns The root record for the given schema.
    */
-  getRoot<S extends Schema>(schema: S): IRecord<S>;
+  getRecord<S extends Schema>(schema: S): IRecord<S>;
 
   /**
+   * Get the table for a particular schema.
    *
+   * @param schema - The schema of interest.
+   *
+   * @returns The table for the given schema.
    */
   getTable<S extends Schema>(schema: S): ITable<S>;
 }
@@ -73,4 +90,6 @@ interface IDatastore {
  *
  */
 export
-function createDatastore(server: IServer): Promise<IDatastore> { }
+function createDatastore(options: createDatastore.IOptions): Promise<IDatastore> {
+
+}

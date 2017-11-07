@@ -24,12 +24,18 @@ import {
 export
 interface ITable<S extends Schema> extends IIterable<IRecord<S>> {
   /**
-   * A signal emitted when a record is created.
+   * A signal emitted when a record is inserted.
+   *
+   * #### Notes
+   * The payload is the id of the record that was inserted.
    */
-  readonly recordCreated: ISignal<ITable<S>, ITable.IRecordCreatedArgs>;
+  readonly recordInserted: ISignal<ITable<S>, string>;
 
   /**
    * A signal emitted when the state of a record changes.
+   *
+   * #### Notes
+   * This can be used to handle changes for multiple records.
    */
   readonly recordChanged: ISignal<ITable<S>, ITable.IRecordChangedArgs<S>>;
 
@@ -93,9 +99,9 @@ interface ITable<S extends Schema> extends IIterable<IRecord<S>> {
    * Constant.
    *
    * #### Notes
-   * A record cannot be deleted and its creation cannot be undone.
+   * Once created, a record cannot be deleted.
    */
-  insert(state: IRecord.InitialState<S>): IRecord<S>;
+  insert(state: IRecord.UpdateState<S>): IRecord<S>;
 }
 
 
@@ -104,22 +110,6 @@ interface ITable<S extends Schema> extends IIterable<IRecord<S>> {
  */
 export
 namespace ITable {
-  /**
-   * The arguments object for the `recordCreated` signal.
-   */
-  export
-  interface IRecordCreatedArgs {
-    /**
-     * The unique id of the patch which generated the change.
-     */
-    readonly patchId: string;
-
-    /**
-     * The id of the record that was created.
-     */
-    readonly recordId: string;
-  }
-
   /**
    * The arguments object for the `recordChanged` signal.
    */

@@ -24,21 +24,15 @@ export
 abstract class BaseField<UpdateType, RuntimeType, ChangeType> {
   /**
    * Construct a new base field.
+   *
+   * @param options - The options for initializing the field.
    */
-  constructor(options: BaseField.IOptions = {}) {
-    let { synchronized } = options;
-    this.synchronized = synchronized !== undefined ? synchronized : true;
-  }
+  constructor(options: BaseField.IOptions = {}) { }
 
   /**
    * The discriminated type of the field.
    */
   abstract readonly type: 'value' | 'list' | 'map' | 'text';
-
-  /**
-   * Whether the field value is synchronized among peers.
-   */
-  readonly synchronized: boolean;
 
   /**
    * The update type for the field.
@@ -78,14 +72,7 @@ namespace BaseField {
    * An options object for initializing a base field.
    */
   export
-  interface IOptions {
-    /**
-     * Whether the field value is synchronized among all peers.
-     *
-     * The default value is `true`.
-     */
-    synchronized?: boolean;
-  }
+  interface IOptions { }
 }
 
 
@@ -95,11 +82,26 @@ namespace BaseField {
 export
 class ValueField<T extends ReadonlyJSONValue = ReadonlyJSONValue> extends BaseField<T, T, ValueField.IChange<T>> {
   /**
+   * Construct a new value field.
+   *
+   * @param options - The options for initializing the field.
+   */
+  constructor(options: ValueField.IOptions<T>) {
+    super(options);
+    this.defaultValue = options.defaultValue;
+  }
+
+  /**
    * The discriminated type of the field.
    */
   get type(): 'value' {
     return 'value';
   }
+
+  /**
+   * The default value for the field.
+   */
+  readonly defaultValue: T;
 }
 
 
@@ -108,6 +110,17 @@ class ValueField<T extends ReadonlyJSONValue = ReadonlyJSONValue> extends BaseFi
  */
 export
 namespace ValueField {
+  /**
+   * An options object for initializing a value field.
+   */
+  export
+  interface IOptions<T extends ReadonlyJSONValue> extends BaseField.IOptions {
+    /**
+     * The default value for the field.
+     */
+    defaultValue: T;
+  }
+
   /**
    * The change type for a value field.
    */
@@ -132,11 +145,26 @@ namespace ValueField {
 export
 class ListField<T extends ReadonlyJSONValue = ReadonlyJSONValue> extends BaseField<ReadonlyArray<T>, IList<T>, ListField.IChange<T>> {
   /**
+   * Construct a new list field.
+   *
+   * @param options - The options for initializing the field.
+   */
+  constructor(options: ListField.IOptions<T> = {}) {
+    super(options);
+    this.defaultValue = options.defaultValue || [];
+  }
+
+  /**
    * The discriminated type of the field.
    */
   get type(): 'list' {
     return 'list';
   }
+
+  /**
+   * The default value for the field.
+   */
+  readonly defaultValue: ReadonlyArray<T>;
 }
 
 
@@ -145,6 +173,19 @@ class ListField<T extends ReadonlyJSONValue = ReadonlyJSONValue> extends BaseFie
  */
 export
 namespace ListField {
+  /**
+   * An options object for initializing a list field.
+   */
+  export
+  interface IOptions<T extends ReadonlyJSONValue> extends BaseField.IOptions {
+    /**
+     * The default value for the field.
+     *
+     * The default is an empty array.
+     */
+    defaultValue?: ReadonlyArray<T>;
+  }
+
   /**
    * The change type for a list field.
    */
@@ -174,11 +215,26 @@ namespace ListField {
 export
 class MapField<T extends ReadonlyJSONValue = ReadonlyJSONValue> extends BaseField<{ readonly [key: string]: T }, IMap<T>, MapField.IChange<T>> {
   /**
+   * Construct a new map field.
+   *
+   * @param options - The options for initializing the field.
+   */
+  constructor(options: MapField.IOptions<T> = {}) {
+    super(options);
+    this.defaultValue = options.defaultValue || {};
+  }
+
+  /**
    * The discriminated type of the field.
    */
   get type(): 'map' {
     return 'map';
   }
+
+  /**
+   * The default value for the field.
+   */
+  readonly defaultValue: { readonly [key: string]: T };
 }
 
 
@@ -187,6 +243,19 @@ class MapField<T extends ReadonlyJSONValue = ReadonlyJSONValue> extends BaseFiel
  */
 export
 namespace MapField {
+  /**
+   * An options object for initializing a map field.
+   */
+  export
+  interface IOptions<T extends ReadonlyJSONValue> extends BaseField.IOptions {
+    /**
+     * The default value for the field.
+     *
+     * The default is an empty object.
+     */
+    defaultValue?: { readonly [key: string]: T };
+  }
+
   /**
    * The change type for a map field.
    */
@@ -211,11 +280,26 @@ namespace MapField {
 export
 class TextField extends BaseField<string, IText, TextField.IChange> {
   /**
+   * Construct a new text field.
+   *
+   * @param options - The options for initializing the field.
+   */
+  constructor(options: TextField.IOptions = {}) {
+    super(options);
+    this.defaultValue = options.defaultValue || '';
+  }
+
+  /**
    * The discriminated type of the field.
    */
   get type(): 'text' {
     return 'text';
   }
+
+  /**
+   * The default value for the field.
+   */
+  readonly defaultValue: string;
 }
 
 
@@ -224,6 +308,19 @@ class TextField extends BaseField<string, IText, TextField.IChange> {
  */
 export
 namespace TextField {
+  /**
+   * An options object for initializing a text field.
+   */
+  export
+  interface IOptions extends BaseField.IOptions {
+    /**
+     * The default value for the field.
+     *
+     * The default is an empty string.
+     */
+    defaultValue?: string;
+  }
+
   /**
    * The change type for a text field.
    */

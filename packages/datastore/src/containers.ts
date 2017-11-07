@@ -36,22 +36,6 @@ interface IList<T extends ReadonlyJSONValue> extends IIterable<T>, IRetroable<T>
   readonly length: number;
 
   /**
-   * The first value in the list or `undefined` if the list is empty.
-   *
-   * #### Complexity
-   * Logarithmic.
-   */
-  first(): T | undefined;
-
-  /**
-   * The last value in the list or `undefined` if the list is empty.
-   *
-   * #### Complexity
-   * Logarithmic.
-   */
-  last(): T | undefined;
-
-  /**
    * Get the value at a specific index.
    *
    * @param index - The integer index of interest. Negative values are
@@ -61,7 +45,7 @@ interface IList<T extends ReadonlyJSONValue> extends IIterable<T>, IRetroable<T>
    *   index is out of range.
    *
    * #### Complexity
-   * Logarithmic.
+   *
    *
    * #### Undefined Behavior
    * An `index` which is non-integral.
@@ -128,7 +112,7 @@ interface IList<T extends ReadonlyJSONValue> extends IIterable<T>, IRetroable<T>
    * This method is a no-op if `index` is out of range.
    *
    * #### Complexity
-   * Logarithmic.
+   *
    *
    * #### Undefined Behavior
    * An `index` which is non-integral.
@@ -151,7 +135,7 @@ interface IList<T extends ReadonlyJSONValue> extends IIterable<T>, IRetroable<T>
    * @param value - The value to add to the list.
    *
    * #### Complexity
-   * Logarithmic.
+   *
    */
   push(value: T): void;
 
@@ -164,7 +148,7 @@ interface IList<T extends ReadonlyJSONValue> extends IIterable<T>, IRetroable<T>
    * @param value - The value to insert at the specified index.
    *
    * #### Complexity
-   * Logarithmic.
+   *
    *
    * #### Undefined Behavior
    * An `index` which is non-integral.
@@ -181,7 +165,7 @@ interface IList<T extends ReadonlyJSONValue> extends IIterable<T>, IRetroable<T>
    * This method is a no-op if `index` is out of range.
    *
    * #### Complexity
-   * Logarithmic.
+   *
    *
    * #### Undefined Behavior
    * An `index` which is non-integral.
@@ -199,7 +183,7 @@ interface IList<T extends ReadonlyJSONValue> extends IIterable<T>, IRetroable<T>
    * @param values - The values to insert at the specified index.
    *
    * #### Complexity
-   * Logarithmic.
+   *
    *
    * #### Undefined Behavior
    * An `index` or `count` which is non-integral.

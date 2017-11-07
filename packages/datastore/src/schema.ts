@@ -11,17 +11,16 @@ import {
 
 
 /**
- * A type definition for a table schema.
+ * A type definition for a schema.
  *
  * #### Notes
- * The combination of schema name and version number form a unique
+ * The combination of schema `name` and `version` number form a unique
  * identifier for the schema.
  *
- * The datastore assumes that a schema name/version pair uniquely
- * identifies the shape of the schema fields, and that peers may
- * safely collaborate on tables which share the same schema.
+ * The datastore assumes that peers may safely collaborate on tables
+ * which share the same `name` and `version`.
  *
- * The schema version **must** be incremented whenever changes are
+ * The `version` number **must** be incremented whenever changes are
  * made to the fields, or undefined behavior will result.
  */
 export

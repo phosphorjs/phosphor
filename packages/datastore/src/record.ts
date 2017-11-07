@@ -65,17 +65,6 @@ namespace IRecord {
   };
 
   /**
-   * A type alias for the inital state of a record.
-   */
-  export
-  type InitialState<S extends Schema> = {
-    /**
-     * The inital state for the record.
-     */
-    readonly [K in keyof S['fields']]: S['fields'][K]['@@UpdateType'];
-  };
-
-  /**
    * A type alias for the update state of a record.
    */
   export
