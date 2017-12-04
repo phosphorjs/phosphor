@@ -452,7 +452,7 @@ class Application<T extends Widget> {
    * A subclass may reimplement this method as needed.
    */
   protected attachShell(id: string): void {
-    Widget.attach(this.shell, document.getElementById(id) || document.body);
+    Widget.attach(this.shell, (id && document.getElementById(id)) || document.body);
   }
 
   /**
