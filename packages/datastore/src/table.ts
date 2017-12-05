@@ -6,6 +6,10 @@
 | The full license is in the file LICENSE, distributed with this software.
 |----------------------------------------------------------------------------*/
 import {
+  IIterable
+} from '@phosphor/algorithm';
+
+import {
   ISignal
 } from '@phosphor/signaling';
 
@@ -45,7 +49,7 @@ interface ITable<S extends Schema> extends IIterable<IRecord<S>> {
    * #### Complexity
    * Constant.
    */
-  readonly schema: T;
+  readonly schema: S;
 
   /**
    * Whether the table is empty.

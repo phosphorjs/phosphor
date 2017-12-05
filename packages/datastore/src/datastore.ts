@@ -6,6 +6,10 @@
 | The full license is in the file LICENSE, distributed with this software.
 |----------------------------------------------------------------------------*/
 import {
+  IterableOrArrayLike
+} from '@phosphor/algorithm';
+
+import {
   IRecord
 } from './record';
 
@@ -13,9 +17,9 @@ import {
   Schema
 } from './schema';
 
-import {
-  IServer
-} from './server';
+// import {
+//   IServer
+// } from './server';
 
 import {
   ITable
@@ -30,7 +34,7 @@ interface IDatastore {
   /**
    * The patch server which drives the data store.
    */
-  readonly server: IPatchServer;
+  // readonly server: IPatchServer;
 
   /**
    * Make changes to the the datastore.
@@ -55,7 +59,7 @@ interface IDatastore {
    *
    * @returns A promise which resolves when the action is complete.
    */
-  undo(patchId: string | IterableOrArrayLike<T>): Promise<void>;
+  undo(patchId: string | IterableOrArrayLike<string>): Promise<void>;
 
   /**
    * Redo one or more patches to the datastore.
@@ -64,7 +68,7 @@ interface IDatastore {
    *
    * @returns A promise which resolves when the action is complete.
    */
-  redo(patchId: string | IterableOrArrayLike<T>): Promise<void>;
+  redo(patchId: string | IterableOrArrayLike<string>): Promise<void>;
 
   /**
    * Get the root record for a particular schema.
@@ -90,6 +94,6 @@ interface IDatastore {
  *
  */
 export
-function createDatastore(options: createDatastore.IOptions): Promise<IDatastore> {
-
+function createDatastore(): Promise<IDatastore> {
+  throw '';
 }
