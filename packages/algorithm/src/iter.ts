@@ -175,6 +175,34 @@ function iterItems<T>(object: { [key: string]: T }): IIterator<[string, T]> {
 
 
 /**
+ * Create an iterator for an iterator-like function.
+ *
+ * @param fn - A function which behaves like an iterator `next` method.
+ *
+ * @returns A new iterator for the given function.
+ *
+ * #### Notes
+ * The returned iterator **cannot** be cloned.
+ *
+ * #### Example
+ * ```typescript
+ * import { each, iterFn } from '@phosphor/algorithm';
+ *
+ * let it = iterFn((() => {
+ *   let i = 0;
+ *   return () => i > 3 ? undefined : i++;
+ * })());
+ *
+ * each(it, v => { console.log(v); }); // 0, 1, 2, 3
+ * ```
+ */
+export
+function iterFn<T>(fn: () => T | undefined): IIterator<T> {
+  return new FnIterator<T>(fn);
+}
+
+
+/**
  * Invoke a function for each value in an iterable.
  *
  * @param object - The iterable or array-like object of interest.
@@ -586,4 +614,49 @@ class ItemIterator<T> implements IIterator<[string, T]> {
   private _index = 0;
   private _keys: string[];
   private _source: { [key: string]: T };
+}
+
+
+/**
+ * An iterator for an iterator-like function.
+ */
+export
+class FnIterator<T> implements IIterator<T> {
+  /**
+   * Construct a new function iterator.
+   *
+   * @param fn - The iterator-like function of interest.
+   */
+  constructor(fn: () => T | undefined) {
+    this._fn = fn;
+  }
+
+  /**
+   * Get an iterator over the object's values.
+   *
+   * @returns An iterator which yields the object's values.
+   */
+  iter(): IIterator<T> {
+    return this;
+  }
+
+  /**
+   * Create an independent clone of the iterator.
+   *
+   * @returns A new independent clone of the iterator.
+   */
+  clone(): IIterator<T> {
+    throw new Error('An `FnIterator` cannot be cloned.');
+  }
+
+  /**
+   * Get the next value from the iterator.
+   *
+   * @returns The next value from the iterator, or `undefined`.
+   */
+  next(): T | undefined {
+    return this._fn.call(undefined);
+  }
+
+  private _fn: () => T | undefined;
 }
