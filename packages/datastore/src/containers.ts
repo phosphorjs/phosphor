@@ -50,7 +50,7 @@ interface IList<T extends ReadonlyJSONValue> extends IIterable<T>, IRetroable<T>
    * #### Undefined Behavior
    * An `index` which is non-integral.
    */
-  get(index: number): T | undefined;
+  at(index: number): T | undefined;
 
   /**
    * Get an array for a portion of the list.
