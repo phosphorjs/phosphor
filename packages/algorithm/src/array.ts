@@ -630,6 +630,126 @@ namespace ArrayExt {
   }
 
   /**
+   * Create a slice of an array subject to an optional step.
+   *
+   * @param array - The array-like object of interest.
+   *
+   * @param options - The options for the slice.
+   *
+   * @returns A new array with the specified values.
+   *
+   * @throws An exception if the slice `step` is `0`.
+   *
+   * #### Complexity
+   * Linear.
+   *
+   * #### Undefined Behavior
+   * A `start`, `stop`, or `step` which is non-integral.
+   *
+   * #### Example
+   * ```typescript
+   * import { ArrayExt } from '@phosphor/algorithm';
+   *
+   * let data = [0, 3, 4, 7, 7, 9];
+   * ArrayExt.slice(data);                // [0, 3, 4, 7, 7, 9]
+   * ArrayExt.slice(data, { start: 2 });  // [4, 7, 7, 9]
+   * ArrayExt.slice(data, { stop: 4 });   // [0, 3, 4, 7]
+   * ArrayExt.slice(data, { step: 2 });   // [0, 4, 7]
+   * ArrayExt.slice(data, { step: -1 });  // [9, 7, 7, 4, 3, 0]
+   * ```
+   */
+  export
+  function slice<T>(array: ArrayLike<T>, options: slice.IOptions = {}): T[] {
+    // Unpack the options
+    let { start, stop, step } = options;
+
+    // Validate the step size.
+    if (step === 0) {
+      throw new Error('Slice `step` cannot be zero.');
+    }
+
+    // Set up the `step` value.
+    if (step === undefined) {
+      step = 1;
+    }
+
+    // Look up the length of the array.
+    let n = array.length;
+
+    // Set up the `start` value.
+    if (start === undefined) {
+      start = step < 0 ? n - 1 : 0;
+    } else if (start < 0) {
+      start = Math.max(start + n, step < 0 ? -1 : 0);
+    } else if (start >= n) {
+      start = step < 0 ? n - 1 : n;
+    }
+
+    // Set up the `stop` value.
+    if (stop === undefined) {
+      stop = step < 0 ? -1 : n;
+    } else if (stop < 0) {
+      stop = Math.max(stop + n, step < 0 ? -1 : 0);
+    } else if (stop >= n) {
+      stop = step < 0 ? n - 1 : n;
+    }
+
+    // Compute the slice length.
+    let length;
+    if ((step < 0 && stop >= start) || (step > 0 && start >= stop)) {
+      length = 0;
+    } else if (step < 0) {
+      length = Math.floor((stop - start + 1) / step + 1);
+    } else {
+      length = Math.floor((stop - start - 1) / step + 1);
+    }
+
+    // Compute the sliced result.
+    let result: T[] = [];
+    for (let i = 0; i < length; ++i) {
+      result[i] = array[start + i * step];
+    }
+
+    // Return the result.
+    return result;
+  }
+
+  /**
+   * The namespace for the `slice` function statics.
+   */
+  export
+  namespace slice {
+    /**
+     * An options object for initializing a slice.
+     */
+    export
+    interface IOptions {
+      /**
+       * The starting index of the slice, inclusive.
+       *
+       * The default is `0` if `step > 0` else `n - 1`. Negative
+       * values are taken as an offset from the end of the array.
+       */
+      start?: number;
+
+      /**
+       * The stopping index of the slice, exclusive.
+       *
+       * The default is `n` if `step > 0` else `-n - 1`. Negative
+       * values are taken as an offset from the end of the array.
+       */
+      stop?: number;
+
+      /**
+       * The step value for the slice.
+       *
+       * This must not be `0`. The default is `1`.
+       */
+      step?: number;
+    }
+  }
+
+  /**
    * An array-like object which supports item assignment.
    */
   export
