@@ -527,7 +527,7 @@ namespace Private {
    */
   export
   function extractPath(id: number[]): number[] {
-    return ArrayExt.slice(id, { step: 4 });
+    return ArrayExt.slice(id, 0, id.length, 4);
   }
 
   /**

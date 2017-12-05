@@ -634,7 +634,16 @@ namespace ArrayExt {
    *
    * @param array - The array-like object of interest.
    *
-   * @param options - The options for the slice.
+   * @param start - The starting index of the slice, inclusive.
+   *   The default is `0` if `step > 0` else `n - 1`. Negative
+   *   values are taken as an offset from the end of the array.
+   *
+   * @param stop - The stopping index of the slice, exclusive.
+   *   The default is `n` if `step > 0` else `-n - 1`. Negative
+   *   values are taken as an offset from the end of the array.
+   *
+   * @param step - The step value for the slice. This must not
+   *   be `0`. The default is `1`.
    *
    * @returns A new array with the specified values.
    *
@@ -651,18 +660,15 @@ namespace ArrayExt {
    * import { ArrayExt } from '@phosphor/algorithm';
    *
    * let data = [0, 3, 4, 7, 7, 9];
-   * ArrayExt.slice(data);                // [0, 3, 4, 7, 7, 9]
-   * ArrayExt.slice(data, { start: 2 });  // [4, 7, 7, 9]
-   * ArrayExt.slice(data, { stop: 4 });   // [0, 3, 4, 7]
-   * ArrayExt.slice(data, { step: 2 });   // [0, 4, 7]
-   * ArrayExt.slice(data, { step: -1 });  // [9, 7, 7, 4, 3, 0]
+   * ArrayExt.slice(data);                      // [0, 3, 4, 7, 7, 9]
+   * ArrayExt.slice(data, 2);                   // [4, 7, 7, 9]
+   * ArrayExt.slice(data, 0, 4);                // [0, 3, 4, 7]
+   * ArrayExt.slice(data, 0, data.length, 2);   // [0, 4, 7]
+   * ArrayExt.slice(data, 0, data.length, -1);  // [9, 7, 7, 4, 3, 0]
    * ```
    */
   export
-  function slice<T>(array: ArrayLike<T>, options: slice.IOptions = {}): T[] {
-    // Unpack the options
-    let { start, stop, step } = options;
-
+  function slice<T>(array: ArrayLike<T>, start?: number, stop?: number, step?: number): T[] {
     // Validate the step size.
     if (step === 0) {
       throw new Error('Slice `step` cannot be zero.');
@@ -712,41 +718,6 @@ namespace ArrayExt {
 
     // Return the result.
     return result;
-  }
-
-  /**
-   * The namespace for the `slice` function statics.
-   */
-  export
-  namespace slice {
-    /**
-     * An options object for initializing a slice.
-     */
-    export
-    interface IOptions {
-      /**
-       * The starting index of the slice, inclusive.
-       *
-       * The default is `0` if `step > 0` else `n - 1`. Negative
-       * values are taken as an offset from the end of the array.
-       */
-      start?: number;
-
-      /**
-       * The stopping index of the slice, exclusive.
-       *
-       * The default is `n` if `step > 0` else `-n - 1`. Negative
-       * values are taken as an offset from the end of the array.
-       */
-      stop?: number;
-
-      /**
-       * The step value for the slice.
-       *
-       * This must not be `0`. The default is `1`.
-       */
-      step?: number;
-    }
   }
 
   /**
