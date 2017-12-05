@@ -111,7 +111,7 @@ function iter<T>(object: IterableOrArrayLike<T>): IIterator<T> {
  *
  * #### Example
  * ```typescript
- * import { keys } from '@phosphor/algorithm';
+ * import { each, keys } from '@phosphor/algorithm';
  *
  * let data = { one: 1, two: 2, three: 3 };
  *
@@ -136,7 +136,7 @@ function iterKeys(object: { [key: string]: any }): IIterator<string> {
  *
  * #### Example
  * ```typescript
- * import { values } from '@phosphor/algorithm';
+ * import { each, values } from '@phosphor/algorithm';
  *
  * let data = { one: 1, two: 2, three: 3 };
  *
@@ -161,7 +161,7 @@ function iterValues<T>(object: { [key: string]: T }): IIterator<T> {
  *
  * #### Example
  * ```typescript
- * import { items } from '@phosphor/algorithm';
+ * import { each, items } from '@phosphor/algorithm';
  *
  * let data = { one: 1, two: 2, three: 3 };
  *
