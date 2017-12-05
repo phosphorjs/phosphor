@@ -539,7 +539,7 @@ namespace Private {
     let ca = (clock - cb) / 0x10000;
     let result: number[] = [];
     for (let i = 0; i < path.length; ++i) {
-      result.push(path[i], site, cb, ca);
+      result.push(path[i], site, ca, cb);
     }
     return result;
   }
