@@ -8,6 +8,7 @@
 export * from './array';
 export * from './chain';
 export * from './empty';
+export * from './enumerate';
 export * from './filter';
 export * from './find';
 export * from './iter';
