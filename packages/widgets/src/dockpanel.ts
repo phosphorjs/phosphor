@@ -118,6 +118,22 @@ class DockPanel extends Widget {
   }
 
   /**
+   * A signal emitted when the user has started dragging a widget's tab
+   * away from its tab bar.
+   */
+  get dragStarted(): ISignal<this, Drag> {
+    return this._dragStarted;
+  }
+
+  /**
+   * A signal emitted when a drag has been completed, regardless of whether
+   * it was accepted or not.
+   */
+  get dragEnded(): ISignal<this, Drag> {
+    return this._dragEnded;
+  }
+
+  /**
    * The overlay used by the dock panel.
    */
   readonly overlay: DockPanel.IOverlay;
@@ -930,12 +946,18 @@ class DockPanel extends Widget {
 
     // Create the cleanup callback.
     let cleanup = (() => {
+      if (this._drag !== null) {
+        this._dragEnded.emit(this._drag);
+      }
       this._drag = null;
       tab.classList.remove('p-mod-hidden');
     });
 
     // Start the drag operation and cleanup when done.
     this._drag.start(clientX, clientY).then(cleanup);
+
+    // Notify others about the drag start.
+    this._dragStarted.emit(this._drag);
   }
 
   private _mode: DockPanel.Mode;
@@ -943,6 +965,8 @@ class DockPanel extends Widget {
   private _renderer: DockPanel.IRenderer;
   private _pressData: Private.IPressData | null = null;
   private _layoutModified = new Signal<this, void>(this);
+  private _dragStarted = new Signal<this, Drag>(this);
+  private _dragEnded = new Signal<this, Drag>(this);
 }
 
 
