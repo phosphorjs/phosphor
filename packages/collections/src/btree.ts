@@ -18,7 +18,6 @@ class BTree<K, V> implements IIterable<[K, V]>, IRetroable<[K, V]> {
    */
   constructor(cmp: (a: K, b: K) => number) {
     this.cmp = cmp;
-    this._first = this._last = this._root = new Private.LeafNode<T>();
   }
 
   /**
@@ -36,7 +35,7 @@ class BTree<K, V> implements IIterable<[K, V]>, IRetroable<[K, V]> {
    * Constant.
    */
   get isEmpty(): boolean {
-    return this._root.size === 0;
+    return this._state.root.size === 0;
   }
 
   /**
@@ -46,7 +45,7 @@ class BTree<K, V> implements IIterable<[K, V]>, IRetroable<[K, V]> {
    * Constant.
    */
   get size(): number {
-    return this._root.size;
+    return this._state.root.size;
   }
 
   /**
@@ -58,7 +57,7 @@ class BTree<K, V> implements IIterable<[K, V]>, IRetroable<[K, V]> {
    * Constant.
    */
   get first(): [K, V] | undefined {
-    let { size, keys, values } = this._first;
+    let { size, keys, values } = this._state.first;
     return size > 0 ? [keys[0], values[0]] : undefined;
   }
 
@@ -71,7 +70,7 @@ class BTree<K, V> implements IIterable<[K, V]>, IRetroable<[K, V]> {
    * Constant.
    */
   get last(): [K, V] | undefined {
-    let { size, keys, values } = this._last;
+    let { size, keys, values } = this._state.last;
     return size > 0 ? [keys[size - 1], values[size - 1]] : undefined;
   }
 
@@ -84,7 +83,7 @@ class BTree<K, V> implements IIterable<[K, V]>, IRetroable<[K, V]> {
    * Constant.
    */
   get firstKey(): K | undefined {
-    let { size, keys } = this._first;
+    let { size, keys } = this._state.first;
     return size > 0 ? keys[0] : undefined;
   }
 
@@ -97,7 +96,7 @@ class BTree<K, V> implements IIterable<[K, V]>, IRetroable<[K, V]> {
    * Constant.
    */
   get lastKey(): K | undefined {
-    let { size, keys } = this._last;
+    let { size, keys } = this._state.last;
     return size > 0 ? keys[size - 1] : undefined;
   }
 
@@ -110,7 +109,7 @@ class BTree<K, V> implements IIterable<[K, V]>, IRetroable<[K, V]> {
    * Constant.
    */
   get firstValue(): V | undefined {
-    let { size, values } = this._first;
+    let { size, values } = this._state.first;
     return size > 0 ? values[0] : undefined;
   }
 
@@ -123,7 +122,7 @@ class BTree<K, V> implements IIterable<[K, V]>, IRetroable<[K, V]> {
    * Constant.
    */
   get lastValue(): V | undefined {
-    let { size, values } = this._last;
+    let { size, values } = this._state.last;
     return size > 0 ? values[size - 1] : undefined;
   }
 
@@ -136,7 +135,7 @@ class BTree<K, V> implements IIterable<[K, V]>, IRetroable<[K, V]> {
    * Constant.
    */
   iter(): IIterator<[K, V]> {
-    return Private.iterItems(this._first);
+    return Private.iterItems(this._state.first);
   }
 
   /**
@@ -148,7 +147,7 @@ class BTree<K, V> implements IIterable<[K, V]>, IRetroable<[K, V]> {
    * Constant.
    */
   retro(): IIterator<[K, V]> {
-    return Private.retroItems(this._last);
+    return Private.retroItems(this._state.last);
   }
 
   /**
@@ -160,7 +159,7 @@ class BTree<K, V> implements IIterable<[K, V]>, IRetroable<[K, V]> {
    * Constant.
    */
   keys(): IIterator<K> {
-    return Private.iterKeys(this._first);
+    return Private.iterKeys(this._state.first);
   }
 
   /**
@@ -172,7 +171,7 @@ class BTree<K, V> implements IIterable<[K, V]>, IRetroable<[K, V]> {
    * Constant.
    */
   retroKeys(): IIterator<K> {
-    return Private.retroKeys(this._last);
+    return Private.retroKeys(this._state.last);
   }
 
   /**
@@ -184,7 +183,7 @@ class BTree<K, V> implements IIterable<[K, V]>, IRetroable<[K, V]> {
    * Constant.
    */
   values(): IIterator<V> {
-    return Private.iterValues(this._first);
+    return Private.iterValues(this._state.first);
   }
 
   /**
@@ -196,7 +195,7 @@ class BTree<K, V> implements IIterable<[K, V]>, IRetroable<[K, V]> {
    * Constant.
    */
   retroValues(): IIterator<V> {
-    return Private.retroValues(this._last);
+    return Private.retroValues(this._state.last);
   }
 
   /**
@@ -212,7 +211,7 @@ class BTree<K, V> implements IIterable<[K, V]>, IRetroable<[K, V]> {
    * Logarithmic.
    */
   at(index: number): [K, V] | undefined {
-    return Private.itemAt(this._root, index);
+    return Private.itemAt(this._state.root, index);
   }
 
   /**
@@ -228,7 +227,7 @@ class BTree<K, V> implements IIterable<[K, V]>, IRetroable<[K, V]> {
    * Logarithmic.
    */
   keyAt(index: number): K | undefined {
-    return Private.keyAt(this._root, index);
+    return Private.keyAt(this._state.root, index);
   }
 
   /**
@@ -244,7 +243,7 @@ class BTree<K, V> implements IIterable<[K, V]>, IRetroable<[K, V]> {
    * Logarithmic.
    */
   valueAt(index: number): V | undefined {
-    return Private.valueAt(this._root, index);
+    return Private.valueAt(this._state.root, index);
   }
 
   /**
@@ -259,7 +258,7 @@ class BTree<K, V> implements IIterable<[K, V]>, IRetroable<[K, V]> {
    * Logarithmic.
    */
   has(key: K): boolean {
-    return Private.hasKey(this._root, key);
+    return Private.hasKey(this._state.root, key);
   }
 
   /**
@@ -273,8 +272,8 @@ class BTree<K, V> implements IIterable<[K, V]>, IRetroable<[K, V]> {
    * #### Complexity
    * Logarithmic.
    */
-  get(key: K): T | undefined {
-    return Private.getValue(this._root, key);
+  get(key: K): V | undefined {
+    return Private.getValue(this._state.root, key);
   }
 
   /**
@@ -283,7 +282,7 @@ class BTree<K, V> implements IIterable<[K, V]>, IRetroable<[K, V]> {
    * Logarithmic.
    */
   indexOf(key: K): number {
-    return Private.indexOf(this._root, key);
+    return Private.indexOf(this._state.root, key);
   }
 
   /**
@@ -291,8 +290,22 @@ class BTree<K, V> implements IIterable<[K, V]>, IRetroable<[K, V]> {
    * #### Complexity
    * Logarithmic.
    */
-  insert(key: K, value: T): [number, V | undefined] {
+  insert(key: K, value: V): void {
+    //
+    Private.insertItem(this._state, key, value);
 
+    //
+    if (out === undefined) {
+      return;
+    }
+
+    //
+    out.index = Private.outIndex;
+    out.value = Private.outValue;
+
+    //
+    Private.outIndex = -1;
+    Private.outValue = undefined;
   }
 
   /**
@@ -300,8 +313,22 @@ class BTree<K, V> implements IIterable<[K, V]>, IRetroable<[K, V]> {
    * #### Complexity
    * Logarithmic.
    */
-  delete(key: K): [number, V] | undefined {
+  delete(key: K): void {
+    //
+    Private.deleteItem(this._state, key);
 
+    //
+    if (out === undefined) {
+      return;
+    }
+
+    //
+    out.index = Private.outIndex;
+    out.value = Private.outValue;
+
+    //
+    Private.outIndex = -1;
+    Private.outValue = undefined;
   }
 
   /**
@@ -309,8 +336,22 @@ class BTree<K, V> implements IIterable<[K, V]>, IRetroable<[K, V]> {
    * #### Complexity
    * Logarithmic.
    */
-  remove(index: number): [K, V] | undefined {
+  remove(index: number): void {
+    //
+    Private.removeItem(this._state, index);
 
+    //
+    if (out === undefined) {
+      return;
+    }
+
+    //
+    out.key = Private.outKey;
+    out.value = Private.outValue;
+
+    //
+    Private.outKey = undefined;
+    Private.outValue = undefined;
   }
 
   /**
@@ -319,12 +360,65 @@ class BTree<K, V> implements IIterable<[K, V]>, IRetroable<[K, V]> {
    * Linear.
    */
   clear(): void {
-
+    Private.clear(this._state);
   }
 
-  private _first: Private.LeafNode<T>;
-  private _last: Private.LeafNode<T>;
-  private _root: Private.Node<T>;
+  private _state = Private.createState<K, V>();
+}
+
+
+/**
+ *
+ */
+export
+namespace BTree {
+  /**
+   *
+   */
+  export
+  type InsertOutArg<V> = {
+    /**
+     *
+     */
+    index: number;
+
+    /**
+     *
+     */
+    value: V | undefined;
+  };
+
+  /**
+   *
+   */
+  export
+  type DeleteOutArg<V> = {
+    /**
+     *
+     */
+    index: number;
+
+    /**
+     *
+     */
+    value: V | undefined;
+  };
+
+  /**
+   *
+   */
+  export
+  type RemoveOutArg<K, V> = {
+    /**
+     *
+     */
+    key: K | undefined;
+
+    /**
+     *
+     */
+    value: V | undefined;
+  };
 }
 
 
@@ -333,16 +427,34 @@ class BTree<K, V> implements IIterable<[K, V]>, IRetroable<[K, V]> {
  */
 namespace Private {
   /**
-   * A type
+   *
    */
   export
-  type Node<T> = BranchNode<T> | LeafNode<T>;
+  let outIndex: number = -1;
 
   /**
    *
    */
   export
-  class BranchNode<T> {
+  let outKey: any = undefined;
+
+  /**
+   *
+   */
+  export
+  let outValue: any = undefined;
+
+  /**
+   * A type
+   */
+  export
+  type Node<K, V> = BranchNode<K, V> | LeafNode<K, V>;
+
+  /**
+   *
+   */
+  export
+  class BranchNode<K, V> {
     /**
      *
      */
@@ -351,12 +463,12 @@ namespace Private {
     /**
      *
      */
-    readonly keys: string[] = [];
+    readonly keys: K[] = [];
 
     /**
      *
      */
-    readonly nodes: Node<T>[] = [];
+    readonly nodes: Node<K, V>[] = [];
 
     /**
      *
@@ -368,7 +480,7 @@ namespace Private {
    *
    */
   export
-  class LeafNode<T> {
+  class LeafNode<K, V> {
     /**
      *
      */
@@ -377,7 +489,7 @@ namespace Private {
     /**
      *
      */
-    readonly keys: string[] = [];
+    readonly keys: K[] = [];
 
     /**
      *
@@ -392,12 +504,42 @@ namespace Private {
     /**
      *
      */
-    next: LeafNode<T> | null = null;
+    next: LeafNode<K, V> | null = null;
 
     /**
      *
      */
-    prev: LeafNode<T> | null = null;
+    prev: LeafNode<K, V> | null = null;
+  }
+
+  /**
+   *
+   */
+  export
+  type State<K, V> = {
+    /**
+     *
+     */
+    root: Node<K, V>;
+
+    /**
+     *
+     */
+    first: LeafNode<K, V>;
+
+    /**
+     *
+     */
+    last: LeafNode<K, V>;
+  };
+
+  /**
+   *
+   */
+  export
+  function createState<K, V>(): State<K, V> {
+    let node = new LeafNode<K, V>();
+    return { root: node, first: node, last: node };
   }
 
   /**
