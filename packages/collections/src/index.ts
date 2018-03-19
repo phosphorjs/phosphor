@@ -5,4 +5,5 @@
 |
 | The full license is in the file LICENSE, distributed with this software.
 |----------------------------------------------------------------------------*/
+export * from './btree';
 export * from './linkedlist';
