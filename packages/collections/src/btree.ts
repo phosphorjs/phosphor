@@ -815,7 +815,7 @@ namespace Private {
      */
     get firstItem(): [K, V] | undefined {
       let { size, keys, values } = this;
-      return size >= 0 ? [keys[0], values[0]] : undefined;
+      return size > 0 ? [keys[0], values[0]] : undefined;
     }
 
     /**
@@ -823,7 +823,7 @@ namespace Private {
      */
     get lastItem(): [K, V] | undefined {
       let { size, keys, values } = this;
-      return size >= 0 ? [keys[size - 1], values[size - 1]] : undefined;
+      return size > 0 ? [keys[size - 1], values[size - 1]] : undefined;
     }
 
     /**
@@ -831,7 +831,7 @@ namespace Private {
      */
     get firstKey(): K | undefined {
       let { size, keys } = this;
-      return size >= 0 ? keys[0] : undefined;
+      return size > 0 ? keys[0] : undefined;
     }
 
     /**
@@ -839,7 +839,7 @@ namespace Private {
      */
     get lastKey(): K | undefined {
       let { size, keys } = this;
-      return size >= 0 ? keys[size - 1] : undefined;
+      return size > 0 ? keys[size - 1] : undefined;
     }
 
     /**
@@ -847,7 +847,7 @@ namespace Private {
      */
     get firstValue(): V | undefined {
       let { size, values } = this;
-      return size >= 0 ? values[0] : undefined;
+      return size > 0 ? values[0] : undefined;
     }
 
     /**
@@ -855,7 +855,7 @@ namespace Private {
      */
     get lastValue(): V | undefined {
       let { size, values } = this;
-      return size >= 0 ? values[size - 1] : undefined;
+      return size > 0 ? values[size - 1] : undefined;
     }
 
     /**
