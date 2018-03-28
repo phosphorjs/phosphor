@@ -1,11 +1,11 @@
 /*-----------------------------------------------------------------------------
-| Copyright (c) 2014-2017, PhosphorJS Contributors
+| Copyright (c) 2014-2018, PhosphorJS Contributors
 |
 | Distributed under the terms of the BSD 3-Clause License.
 | The full license is in the file LICENSE, distributed with this software.
 |----------------------------------------------------------------------------*/
 import {
-  IIterable, IIterator, IRetroable, IterableOrArrayLike, each, toArray
+  ArrayExt, IIterable, IIterator, IRetroable, IterableOrArrayLike, each
 } from '@phosphor/algorithm';
 
 
@@ -15,22 +15,13 @@ import {
 export
 class BTree<K, V> implements IIterable<[K, V]>, IRetroable<[K, V]> {
   /**
-   * Construct a new B-tree.
+   * Construct a new B+ tree.
    *
    * @param options - The options for initializing the tree.
    */
   constructor(options: BTree.IOptions<K>) {
-    this._state = new Private.State<K, V>(options);
-  }
-
-  /**
-   * The key comparison function for the tree.
-   *
-   * #### Complexity
-   * Constant.
-   */
-  get cmp(): (a: K, b: K) => number {
-    return this._state.cmp;
+    this._arity = Private.parseArity(options);
+    this._cmp = options.cmp;
   }
 
   /**
@@ -40,7 +31,17 @@ class BTree<K, V> implements IIterable<[K, V]>, IRetroable<[K, V]> {
    * Constant.
    */
   get arity(): number {
-    return this._state.arity;
+    return this._arity;
+  }
+
+  /**
+   * The key comparison function for the tree.
+   *
+   * #### Complexity
+   * Constant.
+   */
+  get cmp(): (a: K, b: K) => number {
+    return this._cmp;
   }
 
   /**
@@ -50,7 +51,7 @@ class BTree<K, V> implements IIterable<[K, V]>, IRetroable<[K, V]> {
    * Constant.
    */
   get isEmpty(): boolean {
-    return this._state.root.size === 0;
+    return this._root.size === 0;
   }
 
   /**
@@ -60,7 +61,7 @@ class BTree<K, V> implements IIterable<[K, V]>, IRetroable<[K, V]> {
    * Constant.
    */
   get size(): number {
-    return this._state.root.size;
+    return this._root.size;
   }
 
   /**
@@ -72,8 +73,7 @@ class BTree<K, V> implements IIterable<[K, V]>, IRetroable<[K, V]> {
    * Constant.
    */
   get first(): [K, V] | undefined {
-    let { size, keys, values } = this._state.first;
-    return size > 0 ? [keys[0], values[0]] : undefined;
+    return this._root.firstLeaf.firstItem;
   }
 
   /**
@@ -85,8 +85,7 @@ class BTree<K, V> implements IIterable<[K, V]>, IRetroable<[K, V]> {
    * Constant.
    */
   get last(): [K, V] | undefined {
-    let { size, keys, values } = this._state.last;
-    return size > 0 ? [keys[size - 1], values[size - 1]] : undefined;
+    return this._root.lastLeaf.lastItem;
   }
 
   /**
@@ -98,8 +97,7 @@ class BTree<K, V> implements IIterable<[K, V]>, IRetroable<[K, V]> {
    * Constant.
    */
   get firstKey(): K | undefined {
-    let { size, keys } = this._state.first;
-    return size > 0 ? keys[0] : undefined;
+    return this._root.firstLeaf.firstKey;
   }
 
   /**
@@ -111,8 +109,7 @@ class BTree<K, V> implements IIterable<[K, V]>, IRetroable<[K, V]> {
    * Constant.
    */
   get lastKey(): K | undefined {
-    let { size, keys } = this._state.last;
-    return size > 0 ? keys[size - 1] : undefined;
+    return this._root.lastLeaf.lastKey;
   }
 
   /**
@@ -124,8 +121,7 @@ class BTree<K, V> implements IIterable<[K, V]>, IRetroable<[K, V]> {
    * Constant.
    */
   get firstValue(): V | undefined {
-    let { size, values } = this._state.first;
-    return size > 0 ? values[0] : undefined;
+    return this._root.firstLeaf.firstValue;
   }
 
   /**
@@ -137,8 +133,7 @@ class BTree<K, V> implements IIterable<[K, V]>, IRetroable<[K, V]> {
    * Constant.
    */
   get lastValue(): V | undefined {
-    let { size, values } = this._state.last;
-    return size > 0 ? values[size - 1] : undefined;
+    return this._root.lastLeaf.lastValue;
   }
 
   /**
@@ -150,7 +145,7 @@ class BTree<K, V> implements IIterable<[K, V]>, IRetroable<[K, V]> {
    * Constant.
    */
   iter(): IIterator<[K, V]> {
-    return Private.iterItems(this._state);
+    return this._root.firstLeaf.iterItems();
   }
 
   /**
@@ -162,7 +157,7 @@ class BTree<K, V> implements IIterable<[K, V]>, IRetroable<[K, V]> {
    * Constant.
    */
   retro(): IIterator<[K, V]> {
-    return Private.retroItems(this._state);
+    return this._root.lastLeaf.retroItems();
   }
 
   /**
@@ -174,7 +169,7 @@ class BTree<K, V> implements IIterable<[K, V]>, IRetroable<[K, V]> {
    * Constant.
    */
   keys(): IIterator<K> {
-    return Private.iterKeys(this._state);
+    return this._root.firstLeaf.iterKeys();
   }
 
   /**
@@ -186,7 +181,7 @@ class BTree<K, V> implements IIterable<[K, V]>, IRetroable<[K, V]> {
    * Constant.
    */
   retroKeys(): IIterator<K> {
-    return Private.retroKeys(this._state);
+    return this._root.lastLeaf.retroKeys();
   }
 
   /**
@@ -198,7 +193,7 @@ class BTree<K, V> implements IIterable<[K, V]>, IRetroable<[K, V]> {
    * Constant.
    */
   values(): IIterator<V> {
-    return Private.iterValues(this._state);
+    return this._root.firstLeaf.iterValues();
   }
 
   /**
@@ -210,7 +205,7 @@ class BTree<K, V> implements IIterable<[K, V]>, IRetroable<[K, V]> {
    * Constant.
    */
   retroValues(): IIterator<V> {
-    return Private.retroValues(this._state);
+    return this._root.lastLeaf.retroValues();
   }
 
   /**
@@ -226,7 +221,13 @@ class BTree<K, V> implements IIterable<[K, V]>, IRetroable<[K, V]> {
    * Logarithmic.
    */
   at(index: number): [K, V] | undefined {
-    return Private.itemAt(this._state, index);
+    if (index < 0) {
+      index += this._root.size;
+    }
+    if (index < 0 || index >= this._root.size) {
+      return undefined;
+    }
+    return this._root.itemAt(index);
   }
 
   /**
@@ -242,7 +243,13 @@ class BTree<K, V> implements IIterable<[K, V]>, IRetroable<[K, V]> {
    * Logarithmic.
    */
   keyAt(index: number): K | undefined {
-    return Private.keyAt(this._state, index);
+    if (index < 0) {
+      index += this._root.size;
+    }
+    if (index < 0 || index >= this._root.size) {
+      return undefined;
+    }
+    return this._root.keyAt(index);
   }
 
   /**
@@ -258,7 +265,13 @@ class BTree<K, V> implements IIterable<[K, V]>, IRetroable<[K, V]> {
    * Logarithmic.
    */
   valueAt(index: number): V | undefined {
-    return Private.valueAt(this._state, index);
+    if (index < 0) {
+      index += this._root.size;
+    }
+    if (index < 0 || index >= this._root.size) {
+      return undefined;
+    }
+    return this._root.valueAt(index);
   }
 
   /**
@@ -273,7 +286,7 @@ class BTree<K, V> implements IIterable<[K, V]>, IRetroable<[K, V]> {
    * Logarithmic.
    */
   has(key: K): boolean {
-    return Private.hasKey(this._state, key);
+    return this._root.hasKey(key, this._cmp);
   }
 
   /**
@@ -288,7 +301,7 @@ class BTree<K, V> implements IIterable<[K, V]>, IRetroable<[K, V]> {
    * Logarithmic.
    */
   get(key: K): V | undefined {
-    return Private.getValue(this._state, key);
+    return this._root.getValue(key, this._cmp);
   }
 
   /**
@@ -304,19 +317,27 @@ class BTree<K, V> implements IIterable<[K, V]>, IRetroable<[K, V]> {
    * Logarithmic.
    */
   indexOf(key: K): number {
-    return Private.indexOf(this._state, key);
+    return this._root.indexOf(key, this._cmp);
   }
 
   /**
    * Assign new items to the tree, replacing all current items.
    *
-   * @param items - The items to assign to the tree.
+   * @param items - The unique sorted items to assign to the tree.
+   *
+   * #### Notes
+   * The given `items` must not contain duplicate keys and must be
+   * sorted according to the `cmp` function.
+   *
+   * #### Undefined Behavior
+   * An `items` which is not sorted or contains duplicate keys.
    *
    * #### Complexity
-   *
+   * Linear.
    */
   assign(items: IterableOrArrayLike<[K, V]>): void {
-    Private.assignItems(this._state, items);
+    this._root.clear();
+    this._root = Private.bulkLoad(items, this._arity);
   }
 
   /**
@@ -326,16 +347,11 @@ class BTree<K, V> implements IIterable<[K, V]>, IRetroable<[K, V]> {
    *
    * @param value - The value for the given key.
    *
-   * @param out - This can be provided to obtain more information
-   *   about the result of the insert operation. An out parameter
-   *   is used for performance, to prevent the need to allocate a
-   *   new return object on each insert.
-   *
    * #### Complexity
    * Logarithmic.
    */
-  insert(key: K, value: V, out?: BTree.IOutArgs<K, V>): void {
-    Private.insertItem(this._state, key, value, out);
+  insert(key: K, value: V): void {
+    this._root = this._root.insert(key, value, this._cmp, this._arity, null, -1);
   }
 
   /**
@@ -343,16 +359,11 @@ class BTree<K, V> implements IIterable<[K, V]>, IRetroable<[K, V]> {
    *
    * @param key - The key of the item to delete.
    *
-   * @param out - This can be provided to obtain more information
-   *   about the result of the delete operation. An out parameter
-   *   is used for performance, to prevent the need to allocate a
-   *   new return object on each delete.
-   *
    * #### Complexity
    * Logarithmic.
    */
-  delete(key: K, out?: BTree.IOutArgs<K, V>): void {
-    Private.deleteItem(this._state, key, out);
+  delete(key: K): void {
+    //Private.deleteItem(this._state, key, out);
   }
 
   /**
@@ -360,16 +371,11 @@ class BTree<K, V> implements IIterable<[K, V]>, IRetroable<[K, V]> {
    *
    * @param index - The index of the item to remove.
    *
-   * @param out - This can be provided to obtain more information
-   *   about the result of the remove operation. An out parameter
-   *   is used for performance, to prevent the need to allocate a
-   *   new return object on each remove.
-   *
    * #### Complexity
    * Logarithmic.
    */
-  remove(index: number, out?: BTree.IOutArgs<K, V>): void {
-    Private.removeItem(this._state, index, out);
+  remove(index: number): void {
+    //Private.removeItem(this._state, index, out);
   }
 
   /**
@@ -379,10 +385,13 @@ class BTree<K, V> implements IIterable<[K, V]>, IRetroable<[K, V]> {
    * Linear.
    */
   clear(): void {
-    Private.clearItems(this._state);
+    this._root.clear();
+    this._root = new Private.LeafNode<K, V>();
   }
 
-  private _state: Private.State<K, V>;
+  private _arity: number;
+  private _cmp: (a: K, b: K) => number;
+  private _root: Private.Node<K, V> = new Private.LeafNode<K, V>();
 }
 
 
@@ -410,62 +419,6 @@ namespace BTree {
      */
     arity?: number;
   }
-
-  /**
-   * An object which holds the result of a B-Tree modification.
-   */
-  export
-  interface IOutArgs<K, V> {
-    /**
-     * The index of the modification.
-     *
-     * On `insert()`, this is the index of the inserted item.
-     *
-     * On `delete()`, this is the index of the deleted item, or `-1` if
-     * the specified key does not exist in the tree.
-     *
-     * On `remove()`, this is the index of the removed item, or `-1` if
-     * the specified index is out of range.
-     */
-    index: number;
-
-    /**
-     * The relevant key for the modification.
-     *
-     * On `insert()`, this is the key that was inserted.
-     *
-     * On `delete()`, this is the deleted key, or `undefined` if the
-     * specified key does not exist in the tree.
-     *
-     * On `remove()`, this is the removed key, or `undefined` if the
-     * specified index is out of range.
-     */
-    key: K | undefined;
-
-    /**
-     * The relevant value for the modification.
-     *
-     * On `insert()`, this is the previous value for an existing key,
-     * or `undefined` if the specified key is newly inserted.
-     *
-     * On `delete()`, this is the value for the deleted key, or
-     * `undefined` if the specified key does not exist in the tree.
-     *
-     * On `remove()`, this is the value for the removed index, or
-     * `undefined` if the specified index is out of range.
-     */
-    value: V | undefined;
-  }
-
-  /**
-   * A convenience function for creating a new out args object.
-   *
-   * @returns A new default initialized out args object.
-   */
-  export
-  function createOutArgs<K, V>(): IOutArgs<K, V> {
-    return { index: -1, key: undefined, value: undefined };
-  }
 }
 
 
@@ -473,12 +426,6 @@ namespace BTree {
  * The namespace for the module implementation details.
  */
 namespace Private {
-  /**
-   * An enum of the B-Tree node types.
-   */
-  export
-  const enum NodeType { Branch, Leaf }
-
   /**
    * A type alias for the nodes in a B-tree.
    */
@@ -491,12 +438,17 @@ namespace Private {
   export
   class BranchNode<K, V> {
     /**
-     * The parent branch node of this branch node.
+     * The first leaf node in the subtree.
      */
-    parent: BranchNode<K, V> | null = null;
+    firstLeaf: LeafNode<K, V>;
 
     /**
-     * The total number of items held in the branch subtree.
+     * The last leaf node in the subtree.
+     */
+    lastLeaf: LeafNode<K, V>;
+
+    /**
+     * The total number of items held in the subtree.
      */
     size = 0;
 
@@ -516,9 +468,143 @@ namespace Private {
     readonly children: Node<K, V>[] = [];
 
     /**
-     * The discriminated type of the branch node.
+     * Get the item at the specified local index.
      */
-    readonly type: NodeType.Branch = NodeType.Branch;
+    itemAt(index: number): [K, V] {
+      let { i, local } = linearFindLocalIndex(this.sizes, index);
+      return this.children[i].itemAt(local);
+    }
+
+    /**
+     * Get the key at the specified local index.
+     */
+    keyAt(index: number): K {
+      let { i, local } = linearFindLocalIndex(this.sizes, index);
+      return this.children[i].keyAt(local);
+    }
+
+    /**
+     * Get the value at the specified local index.
+     */
+    valueAt(index: number): V {
+      let { i, local } = linearFindLocalIndex(this.sizes, index);
+      return this.children[i].valueAt(local);
+    }
+
+    /**
+     * Test whether the subtree contains the specified key.
+     */
+    hasKey(key: K, cmp: (a: K, b: K) => number): boolean {
+      let i = linearFindPivotIndex(this.keys, key, cmp);
+      return this.children[i].hasKey(key, cmp);
+    }
+
+    /**
+     * Get the value for the specified key.
+     */
+    getValue(key: K, cmp: (a: K, b: K) => number): V | undefined {
+      let i = linearFindPivotIndex(this.keys, key, cmp);
+      return this.children[i].getValue(key, cmp);
+    }
+
+    /**
+     * Get the local index of the specified key.
+     */
+    indexOf(key: K, cmp: (a: K, b: K) => number): number {
+      let i = linearFindPivotIndex(this.keys, key, cmp);
+      let j = this.children[i].indexOf(key, cmp);
+      let s = linearComputeSum(this.sizes, i);
+      return j >= 0 ? s + j : -s + j;
+    }
+
+    /**
+     * Insert an item into the subtree.
+     */
+    insert(key: K, value: V, cmp: (a: K, b: K) => number, arity: number, parent: BranchNode<K, V> | null, index: number): Node<K, V> {
+      // Find the pivot index for the given key.
+      let i = linearFindPivotIndex(this.keys, key, cmp);
+
+      // Fetch the current size of the branch.
+      let prevSize = this.size;
+
+      // Step down the tree to perform the insert.
+      this.children[i].insert(key, value, cmp, arity, this, i);
+
+      // Fetch the updated size of the branch.
+      let currSize = this.size;
+
+      // Bail early if the size did not change.
+      if (prevSize === currSize) {
+        return this;
+      }
+
+      // Update the first and last leaves.
+      this.firstLeaf = this.children[0].firstLeaf;
+      this.lastLeaf = this.children[this.children.length - 1].lastLeaf;
+
+      // If there is a parent branch node, update its state.
+      if (parent !== null) {
+        parent.size++;
+        parent.sizes[index]++;
+        parent.keys[index] = this.keys[0];
+      }
+
+      // Bail early if the branch does not need to be split.
+      if (this.keys.length <= arity) {
+        return this;
+      }
+
+      // Create a new branch node for the split.
+      let next = new BranchNode<K, V>();
+
+      // Compute the number of items for the split.
+      let count = Math.floor(arity / 2);
+
+      // Copy the relevant data to the new branch.
+      for (let i = count, n = this.keys.length; i < n; ++i) {
+        this.size -= this.sizes[i];
+        next.size += this.sizes[i];
+        next.keys[i - count] = this.keys[i];
+        next.sizes[i - count] = this.sizes[i];
+        next.children[i - count] = this.children[i];
+      }
+
+      // Remove the copied items from this branch.
+      this.keys.length = count;
+      this.sizes.length = count;
+      this.children.length = count;
+
+      // Update the first and last leaves.
+      this.firstLeaf = this.children[0].firstLeaf;
+      this.lastLeaf = this.children[this.children.length - 1].lastLeaf;
+      next.firstLeaf = next.children[0].firstLeaf;
+      next.lastLeaf = next.children[next.children.length - 1].lastLeaf;
+
+      // If there is a parent branch node, update its state.
+      if (parent !== null) {
+        parent.sizes[index] = this.size;
+        ArrayExt.insert(parent.children, index + 1, next);
+        ArrayExt.insert(parent.sizes, index + 1, next.size);
+        ArrayExt.insert(parent.keys, index + 1, next.keys[0]);
+        return this;
+      }
+
+      // Otherwise, create a new root node.
+      return createRoot(this, next);
+    }
+
+    /**
+     * Clear the contents of the subtree.
+     */
+    clear(): void {
+      each(this.children, child => child.clear());
+      this.firstLeaf = null!;
+      this.lastLeaf = null!;
+      this.size = 0;
+      this.keys.length = 0;
+      this.sizes.length = 0;
+      this.children.length = 0;
+    }
   }
 
   /**
@@ -526,11 +612,6 @@ namespace Private {
    */
   export
   class LeafNode<K, V> {
-    /**
-     * The parent branch node of this leaf node.
-     */
-    parent: BranchNode<K, V> | null = null;
-
     /**
      * The next sibling leaf node of this leaf node.
      */
@@ -540,11 +621,6 @@ namespace Private {
      * The previous sibling leaf node of this leaf node.
      */
     prev: LeafNode<K, V> | null = null;
-
-    /**
-     * The total number of items held in the leaf node.
-     */
-    size = 0;
 
     /**
      * The ordered keys for the leaf node.
@@ -557,383 +633,315 @@ namespace Private {
     readonly values: V[] = [];
 
     /**
-     * The discriminated type of the leaf node.
+     * The total number of items held in the leaf node.
      */
-    readonly type: NodeType.Leaf = NodeType.Leaf;
-  }
-
-  /**
-   * A class which holds the state of a B-tree.
-   */
-  export
-  class State<K, V> {
-    /**
-     * The root node of the B-tree.
-     */
-    root: Node<K, V>;
-
-    /**
-     * The first leaf node of the B-tree.
-     */
-    first: LeafNode<K, V>;
-
-    /**
-     * The last leaf node of the B-tree.
-     */
-    last: LeafNode<K, V>;
-
-    /**
-     * The arity for the tree.
-     */
-    readonly arity: number;
-
-    /**
-     * The key comparison function for the tree.
-     */
-    readonly cmp: (a: K, b: K) => number;
-
-    /**
-     * Construct a new state object.
-     *
-     * @param options - The options for initializing the state.
-     */
-    constructor(options: BTree.IOptions<K>) {
-      let node = new LeafNode<K, V>();
-      this.root = node;
-      this.first = node;
-      this.last = node;
-      this.cmp = options.cmp;
-      this.arity = parseArity(options);
-    }
-  }
-
-  /**
-   * Create a forward iterator for the items in the tree.
-   */
-  export
-  function iterItems<K, V>(state: State<K, V>): IIterator<[K, V]> {
-    return new ForwardIterator<K, V, [K, V]>(state.first, itemMapper);
-  }
-
-  /**
-   * Create a reverse iterator for the items in the tree.
-   */
-  export
-  function retroItems<K, V>(state: State<K, V>): IIterator<[K, V]> {
-    return new RetroIterator<K, V, [K, V]>(state.last, itemMapper);
-  }
-
-  /**
-   * Create a forward iterator for the keys in the tree.
-   */
-  export
-  function iterKeys<K, V>(state: State<K, V>): IIterator<K> {
-    return new ForwardIterator<K, V, K>(state.first, keyMapper);
-  }
-
-  /**
-   * Create a reverse iterator for the keys in the tree.
-   */
-  export
-  function retroKeys<K, V>(state: State<K, V>): IIterator<K> {
-    return new RetroIterator<K, V, K>(state.last, keyMapper);
-  }
-
-  /**
-   * Create a forward iterator for the values in the tree.
-   */
-  export
-  function iterValues<K, V>(state: State<K, V>): IIterator<V> {
-    return new ForwardIterator<K, V, V>(state.first, valueMapper);
-  }
-
-  /**
-   * Create a reverse iterator for the values in the tree.
-   */
-  export
-  function retroValues<K, V>(state: State<K, V>): IIterator<V> {
-    return new RetroIterator<K, V, V>(state.last, valueMapper);
-  }
-
-  /**
-   * Get the item at a specified index.
-   */
-  export
-  function itemAt<K, V>(state: State<K, V>, index: number): [K, V] | undefined {
-    return getAt(state, index, GetAtMode.Item);
-  }
-
-  /**
-   * Get the key at a specified index.
-   */
-  export
-  function keyAt<K, V>(state: State<K, V>, index: number): K | undefined {
-    return getAt(state, index, GetAtMode.Key);
-  }
-
-  /**
-   * Get the value at a specified index.
-   */
-  export
-  function valueAt<K, V>(state: State<K, V>, index: number): V | undefined {
-    return getAt(state, index, GetAtMode.Value);
-  }
-
-  /**
-   * Test whether the tree contains a given key.
-   */
-  export
-  function hasKey<K, V>(state: State<K, V>, key: K): boolean {
-    // Extract the relevant node data.
-    let node = state.root;
-    let cmp = state.cmp;
-
-    // Step down the tree to the correct leaf node.
-    while (node.type === NodeType.Branch) {
-      // Find the pivot index for the branch.
-      let i = linearFindPivotIndex(node.keys, key, cmp);
-
-      // Step down to the next node.
-      node = node.children[i];
+    get size(): number {
+      return this.keys.length;
     }
 
-    // Check whether the leaf contains the key.
-    return linearFindKeyIndex(node.keys, key, cmp) >= 0;
-  }
-
-  /**
-   * Get the value for a specified key.
-   */
-  export
-  function getValue<K, V>(state: State<K, V>, key: K): V | undefined {
-    // Extract the relevant node data.
-    let node = state.root;
-    let cmp = state.cmp;
-
-    // Step down the tree to the correct leaf node.
-    while (node.type === NodeType.Branch) {
-      // Find the pivot index for the branch.
-      let i = linearFindPivotIndex(node.keys, key, cmp);
-
-      // Step down to the next node.
-      node = node.children[i];
+    /**
+     * The first leaf node in the subtree.
+     */
+    get firstLeaf(): LeafNode<K, V> {
+      return this;
     }
 
-    // Find the index for the specified key.
-    let i = linearFindKeyIndex(node.keys, key, cmp);
+    /**
+     * The last leaf node in the subtree.
+     */
+    get lastLeaf(): LeafNode<K, V> {
+      return this;
+    }
 
-    // Return the corresponding value for the key.
-    return i >= 0 ? node.values[i] : undefined;
-  }
+    /**
+     * The first item in the leaf node, or `undefined`.
+     */
+    get firstItem(): [K, V] | undefined {
+      let { size, keys, values } = this;
+      return size >= 0 ? [keys[0], values[0]] : undefined;
+    }
 
-  /**
-   * Get the index of a specified key.
-   */
-  export
-  function indexOf<K, V>(state: State<K, V>, key: K): number {
-    // Extract the relevant node data.
-    let node = state.root;
-    let cmp = state.cmp;
+    /**
+     * The last item in the leaf node, or `undefined`.
+     */
+    get lastItem(): [K, V] | undefined {
+      let { size, keys, values } = this;
+      return size >= 0 ? [keys[size - 1], values[size - 1]] : undefined;
+    }
 
-    // Initialize the index accumulator.
-    let index = 0;
+    /**
+     * The first key in the leaf node, or `undefined`.
+     */
+    get firstKey(): K | undefined {
+      let { size, keys } = this;
+      return size >= 0 ? keys[0] : undefined;
+    }
 
-    // Step down the tree to the correct leaf node.
-    while (node.type === NodeType.Branch) {
-      // Find the pivot index for the branch.
-      let i = linearFindPivotIndex(node.keys, key, cmp);
+    /**
+     * The last key in the leaf node, or `undefined`.
+     */
+    get lastKey(): K | undefined {
+      let { size, keys } = this;
+      return size >= 0 ? keys[size - 1] : undefined;
+    }
 
-      // Update the index accumulator.
-      for (let j = 0; j < i; ++j) {
-        index += node.sizes[j];
+    /**
+     * The first value in the leaf node, or `undefined`.
+     */
+    get firstValue(): V | undefined {
+      let { size, values } = this;
+      return size >= 0 ? values[0] : undefined;
+    }
+
+    /**
+     * The last value in the leaf node, or `undefined`.
+     */
+    get lastValue(): V | undefined {
+      let { size, values } = this;
+      return size >= 0 ? values[size - 1] : undefined;
+    }
+
+    /**
+     * Create a forward iterator for the items in the tree.
+     */
+    iterItems(): IIterator<[K, V]> {
+      return new ForwardIterator<K, V, [K, V]>(this, itemMapper);
+    }
+
+    /**
+     * Create a reverse iterator for the items in the tree.
+     */
+    retroItems(): IIterator<[K, V]> {
+      return new RetroIterator<K, V, [K, V]>(this, itemMapper);
+    }
+
+    /**
+     * Create a forward iterator for the keys in the tree.
+     */
+    iterKeys(): IIterator<K> {
+      return new ForwardIterator<K, V, K>(this, keyMapper);
+    }
+
+    /**
+     * Create a reverse iterator for the keys in the tree.
+     */
+    retroKeys(): IIterator<K> {
+      return new RetroIterator<K, V, K>(this, keyMapper);
+    }
+
+    /**
+     * Create a forward iterator for the values in the tree.
+     */
+    iterValues(): IIterator<V> {
+      return new ForwardIterator<K, V, V>(this, valueMapper);
+    }
+
+    /**
+     * Create a reverse iterator for the values in the tree.
+     */
+    retroValues(): IIterator<V> {
+      return new RetroIterator<K, V, V>(this, valueMapper);
+    }
+
+    /**
+     * Get the item at the specified local index.
+     */
+    itemAt(index: number): [K, V] {
+      return [this.keys[index], this.values[index]];
+    }
+
+    /**
+     * Get the key at the specified local index.
+     */
+    keyAt(index: number): K {
+      return this.keys[index];
+    }
+
+    /**
+     * Get the value at the specified local index.
+     */
+    valueAt(index: number): V {
+      return this.values[index];
+    }
+
+    /**
+     * Test whether the leaf contains the specified key.
+     */
+    hasKey(key: K, cmp: (a: K, b: K) => number): boolean {
+      return linearFindKeyIndex(this.keys, key, cmp) >= 0;
+    }
+
+    /**
+     * Get the value for the specified key.
+     */
+    getValue(key: K, cmp: (a: K, b: K) => number): V | undefined {
+      let i = linearFindKeyIndex(this.keys, key, cmp);
+      return i >= 0 ? this.values[i] : undefined;
+    }
+
+    /**
+     * Get the local index of the specified key.
+     */
+    indexOf(key: K, cmp: (a: K, b: K) => number): number {
+      return linearFindKeyIndex(this.keys, key, cmp);
+    }
+
+    /**
+     * Insert an item into the leaf.
+     */
+    insert(key: K, value: V, cmp: (a: K, b: K) => number, arity: number, parent: BranchNode<K, V> | null, index: number): Node<K, V> {
+      // Find the key index for the given key.
+      let ki = linearFindKeyIndex(this.keys, key, cmp);
+
+      // If the key already exists, update the value in place.
+      if (ki >= 0) {
+        this.values[ki] = value;
+        return this;
       }
 
-      // Step down to the next node.
-      node = node.children[i];
+      // Adjust the key index to the insert index.
+      ki = -ki - 1;
+
+      // Insert the item into the leaf node.
+      ArrayExt.insert(this.keys, ki, key);
+      ArrayExt.insert(this.values, ki, value);
+
+      // If there is a parent branch node, update its state.
+      if (parent !== null) {
+        parent.size++;
+        parent.sizes[index]++;
+        parent.keys[index] = this.keys[0];
+      }
+
+      // Bail early if the leaf does not need to be split.
+      if (this.keys.length <= arity) {
+        return this;
+      }
+
+      // Create a new leaf node for the split.
+      let next = new LeafNode<K, V>();
+
+      // Compute the number of items for the split.
+      let count = Math.floor(this.size / 2);
+
+      // Copy the relevant items to the new leaf.
+      for (let i = count, n = this.keys.length; i < n; ++i) {
+        next.keys[i - count] = this.keys[i];
+        next.values[i - count] = this.values[i];
+      }
+
+      // Remove the copied items from this leaf.
+      this.keys.length = count;
+      this.values.length = count;
+
+      // Update the sibling links.
+      next.next = this.next;
+      next.prev = this;
+      this.next = next;
+
+      // If there is a parent branch node, update its state.
+      if (parent !== null) {
+        parent.sizes[index] = this.size;
+        ArrayExt.insert(parent.children, index + 1, next);
+        ArrayExt.insert(parent.sizes, index + 1, next.size);
+        ArrayExt.insert(parent.keys, index + 1, next.keys[0]);
+        return this;
+      }
+
+      // Otherwise, create a new root node.
+      return createRoot(this, next);
     }
 
-    // Find the index for the key.
-    let i = linearFindKeyIndex(node.keys, key, cmp);
-
-    // Return the computed index for the key.
-    return i >= 0 ? index + i : -index + i - 1;
+    /**
+     * Clear the contents of the leaf node.
+     */
+    clear(): void {
+      this.next = null;
+      this.prev = null;
+      this.keys.length = 0;
+      this.values.length = 0;
+    }
   }
 
   /**
-   *
+   * Parse and normalize the arity option for a B-Tree.
    */
   export
-  function assignItems<K, V>(state: State<K, V>, items: IterableOrArrayLike<[K, V]>): void {
-    //
-    clearItems(state);
+  function parseArity<K>(options: BTree.IOptions<K>): number {
+    let arity = options.arity !== undefined ? options.arity: defaultArity;
+    return Math.max(minimumArity, Math.floor(arity));
+  }
 
-    //
-    let { cmp, arity } = state;
+  /**
+   * Bulk load items into a new tree.
+   */
+  export
+  function bulkLoad<K, V>(items: IterableOrArrayLike<[K, V]>, arity: number): Node<K, V> {
+    // Set up the array to hold the leaf nodes.
+    let leaves: LeafNode<K, V>[] = [new LeafNode<K, V>()];
 
-    //
-    let array = toArray(items).sort((a, b) => cmp(a[0], b[0]));
+    // Create and fill the leaf nodes with the items.
+    each(items, ([key, value]) => {
+      // Fetch the current leaf node.
+      let leaf = leaves[leaves.length - 1];
 
-    //
-    let leaves = [];
-
-    //
-    let leaf = new LeafNode<K, V>();
-
-    //
-    for (let i = 0, n = array.length; i < n; ++i) {
-      //
-      let [key, value] = array[i];
-
-      //
-      let n = leaf.keys.length;
-
-      //
-      if (n > 0 && cmp(leaf.keys[n - 1], key) === 0) {
-        leaf.keys[n - 1] = key;
-        leaf.values[n - 1] = value;
-        continue;
+      // If the current leaf is at capacity, create a new leaf.
+      if (leaf.keys.length === arity) {
+        let next = new LeafNode<K, V>();
+        next.prev = leaf;
+        leaf.next = next;
+        leaves.push(next);
+        leaf = next;
       }
 
-      //
-      if (n === arity) {
-        leaves.push(leaf);
-        leaf = new LeafNode<K, V>();
-      }
-
-      //
-      leaf.size++;
+      // Add the item to the current leaf.
       leaf.keys.push(key);
       leaf.values.push(value);
-    }
+    });
 
-    //
-    leaves.push(leaf);
+    // Set up the variable to hold the working nodes.
+    let nodes: Node<K, V>[] = leaves;
 
-    //
-    for (let i = 1, n = leaves.length; i < n; ++i) {
-      let prev = leaves[i - 1];
-      let curr = leaves[i];
-      prev.next = curr;
-      curr.prev = prev;
-    }
+    // Aggregate the working nodes until there is a single root.
+    while (nodes.length > 1) {
+      // Set up the array to hold the generated branch nodes.
+      let branches: BranchNode<K, V>[] = [new BranchNode<K, V>()];
 
-    //
-    if (leaves.length === 1) {
-      state.root = leaf;
-      state.first = leaf;
-      state.last = leaf;
-      return;
-    }
+      // Create and fill the branches with the working nodes.
+      for (let i = 0, n = nodes.length; i < n; ++i) {
+        // Fetch the current working node.
+        let node = nodes[i];
 
-    //
-    let branches: BranchNode<K, V>[] = [];
+        // Fetch the current branch.
+        let branch = branches[branches.length - 1];
 
-    //
-    let branch = new BranchNode<K, V>();
-
-    //
-    for (let i = 0, n = leaves.length; i < n; ++i) {
-      //
-      let leaf = leaves[i];
-
-      //
-      if (branch.children.length === arity) {
-        branches.push(branch);
-        branch = new BranchNode<K, V>();
-      }
-
-      //
-      leaf.parent = branch;
-
-      //
-      branch.sizes.push(leaf.size);
-      branch.keys.push(leaf.keys[0]);
-      branch.children.push(leaf);
-
-      //
-      branch.size += leaf.size;
-    }
-
-    //
-    branches.push(branch);
-
-    //
-    while (branches.length > 1) {
-      //
-      let source = branches;
-
-      //
-      branches = [];
-
-      //
-      branch = new BranchNode<K, V>();
-
-      //
-      for (let i = 0, n = source.length; i < n; ++i) {
-        //
-        let node = source[i];
-
-        //
-        if (branch.children.length === arity) {
-          branches.push(branch);
+        // If the current branch is at capacity, create a new branch.
+        if (branch.keys.length === arity) {
           branch = new BranchNode<K, V>();
+          branches.push(branch);
         }
 
-        //
-        node.parent = branch;
-
-        //
+        // Add the current node to the branch.
+        branch.size += node.size;
+        branch.children.push(node);
         branch.sizes.push(node.size);
         branch.keys.push(node.keys[0]);
-        branch.children.push(node);
-
-        //
-        branch.size += node.size;
       }
 
-      //
-      branches.push(branch);
+      // Set the first and last leaves on the branches.
+      for (let i = 0, n = branches.length; i < n; ++i) {
+        let branch = branches[0];
+        let children = branch.children;
+        branch.firstLeaf = children[0].firstLeaf;
+        branch.lastLeaf = children[children.length - 1].lastLeaf;
+      }
+
+      // Update the working nodes with the generated branches.
+      nodes = branches;
     }
 
-    state.root = branches[0];
-    state.first = leaves[0];
-    state.last = leaves[leaves.length - 1];
-  }
-
-  /**
-   *
-   */
-  export
-  function insertItem<K, V>(state: State<K, V>, key: K, value: V, out?: BTree.IOutArgs<K, V>): void {
-
-  }
-
-  /**
-   *
-   */
-  export
-  function deleteItem<K, V>(state: State<K, V>, key: K, out?: BTree.IOutArgs<K, V>): void {
-
-  }
-
-  /**
-   *
-   */
-  export
-  function removeItem<K, V>(state: State<K, V>, index: number, out?: BTree.IOutArgs<K, V>): void {
-
-  }
-
-  /**
-   * Clear all the items from the B-Tree
-   */
-  export
-  function clearItems<K, V>(state: State<K, V>): void {
-    // Recursively clear the nodes in the tree.
-    recursiveClear(state.root);
-
-    // Reset the initial state.
-    state.root = state.last = state.first;
+    // Return the root node.
+    return nodes[0];
   }
 
   /**
@@ -945,14 +953,6 @@ namespace Private {
    * The minimum allowed arity for a B-Tree.
    */
   const minimumArity = 4;
-
-  /**
-   * Parse and normalize the arity option for a B-Tree.
-   */
-  function parseArity<K>(options: BTree.IOptions<K>): number {
-    let arity = options.arity !== undefined ? options.arity: defaultArity;
-    return Math.max(minimumArity, Math.floor(arity));
-  }
 
   /**
    * A type alias for a node mapper function.
@@ -1097,78 +1097,6 @@ namespace Private {
   }
 
   /**
-   * An enum of the `getAt` mode types.
-   */
-  const enum GetAtMode { Key, Value, Item }
-
-  /**
-   * Get the data at a specified index.
-   */
-  function getAt<K, V>(state: State<K, V>, index: number, mode: GetAtMode.Key): K | undefined;
-  function getAt<K, V>(state: State<K, V>, index: number, mode: GetAtMode.Value): V | undefined;
-  function getAt<K, V>(state: State<K, V>, index: number, mode: GetAtMode.Item): [K, V] | undefined;
-  function getAt<K, V>(state: State<K, V>, index: number, mode: GetAtMode): K | V | [K, V] | undefined {
-    // Fetch the root node from the state.
-    let node = state.root;
-
-    // Wrap negative indices.
-    if (index < 0) {
-      index += node.size;
-    }
-
-    // Bail early if the index is out of range.
-    if (index < 0 || index >= node.size) {
-      return undefined;
-    }
-
-    // Step down the tree to the correct leaf node.
-    while (node.type === NodeType.Branch) {
-      // Extract the relevant node data.
-      let { sizes, children } = node;
-
-      // Linear search for the next node.
-      for (let i = 0, n = sizes.length; i < n; ++i) {
-        // Update the target node.
-        node = children[i];
-
-        // Stop searching if the index is within bounds.
-        if (index < sizes[i]) {
-          break;
-        }
-
-        // Otherwise, update the index and continue searching.
-        index -= sizes[i];
-      }
-    }
-
-    // Bail if the index is out of range.
-    if (index >= node.size) {
-      return undefined;
-    }
-
-    // Set up the result.
-    let result: K | V | [K, V];
-
-    // Compute the result based on the mode type.
-    switch (mode) {
-    case GetAtMode.Key:
-      result = node.keys[index];
-      break;
-    case GetAtMode.Value:
-      result = node.values[index];
-      break;
-    case GetAtMode.Item:
-      result = [node.keys[index], node.values[index]];
-      break;
-    default:
-      throw 'unreachable';
-    }
-
-    // Return the result.
-    return result;
-  }
-
-  /**
    * Find the pivot index for a key using a linear search.
    */
   function linearFindPivotIndex<K>(keys: K[], key: K, cmp: (a: K, b: K) => number): number {
@@ -1190,30 +1118,50 @@ namespace Private {
         return i;
       }
       if (c > 0) {
-        return -i;
+        return -i - 1;
       }
     }
-    return -keys.length;
+    return -keys.length - 1;
   }
 
   /**
-   * Recursively clear a subtree starting at the given node.
+   * Find the local index using a linear search.
    */
-  function recursiveClear<K, V>(node: Node<K, V>): void {
-    if (node.type === NodeType.Branch) {
-      each(node.children, recursiveClear);
-      node.size = 0;
-      node.parent = null;
-      node.keys.length = 0;
-      node.sizes.length = 0;
-      node.children.length = 0;
-    } else {
-      node.parent = null;
-      node.next = null;
-      node.prev = null;
-      node.size = 0;
-      node.keys.length = 0;
-      node.values.length = 0;
+  function linearFindLocalIndex(sizes: number[], index: number): { i: number, local: number } {
+    for (let i = 0, n = sizes.length; i < n; ++i) {
+      if (index < sizes[i]) {
+        return { i, local: index };
+      }
+      index -= sizes[i];
     }
+    throw 'unreachable';
+  }
+
+  /**
+   * Compute the sum of the first `n` sizes.
+   */
+  function linearComputeSum(sizes: number[], n: number): number {
+    let sum = 0;
+    for (let i = 0; i < n; ++i) {
+      sum += sizes[i];
+    }
+    return sum;
+  }
+
+  /**
+   * Create a root node which holds two children.
+   */
+  function createRoot<K, V>(first: Node<K, V>, second: Node<K, V>): BranchNode<K, V> {
+    let root = new BranchNode<K, V>();
+    root.size = first.size + second.size;
+    root.keys[0] = first.keys[0];
+    root.keys[1] = second.keys[0];
+    root.sizes[0] = first.size;
+    root.sizes[1] = second.size;
+    root.children[0] = first;
+    root.children[1] = second;
+    root.firstLeaf = first.firstLeaf;
+    root.lastLeaf = second.lastLeaf;
+    return root;
   }
 }
