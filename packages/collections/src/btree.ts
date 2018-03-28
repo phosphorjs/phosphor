@@ -20,6 +20,7 @@ class BTree<K, V> implements IIterable<[K, V]>, IRetroable<[K, V]> {
    * @param options - The options for initializing the tree.
    */
   constructor(options: BTree.IOptions<K>) {
+    this._root = this._first = this._last = new Private.LeafNode<K, V>();
     this._arity = Private.parseArity(options);
     this._cmp = options.cmp;
   }
@@ -73,7 +74,7 @@ class BTree<K, V> implements IIterable<[K, V]>, IRetroable<[K, V]> {
    * Constant.
    */
   get first(): [K, V] | undefined {
-    return this._root.firstLeaf.firstItem;
+    return this._first.firstItem;
   }
 
   /**
@@ -85,7 +86,7 @@ class BTree<K, V> implements IIterable<[K, V]>, IRetroable<[K, V]> {
    * Constant.
    */
   get last(): [K, V] | undefined {
-    return this._root.lastLeaf.lastItem;
+    return this._last.lastItem;
   }
 
   /**
@@ -97,7 +98,7 @@ class BTree<K, V> implements IIterable<[K, V]>, IRetroable<[K, V]> {
    * Constant.
    */
   get firstKey(): K | undefined {
-    return this._root.firstLeaf.firstKey;
+    return this._first.firstKey;
   }
 
   /**
@@ -109,7 +110,7 @@ class BTree<K, V> implements IIterable<[K, V]>, IRetroable<[K, V]> {
    * Constant.
    */
   get lastKey(): K | undefined {
-    return this._root.lastLeaf.lastKey;
+    return this._last.lastKey;
   }
 
   /**
@@ -121,7 +122,7 @@ class BTree<K, V> implements IIterable<[K, V]>, IRetroable<[K, V]> {
    * Constant.
    */
   get firstValue(): V | undefined {
-    return this._root.firstLeaf.firstValue;
+    return this._first.firstValue;
   }
 
   /**
@@ -133,7 +134,7 @@ class BTree<K, V> implements IIterable<[K, V]>, IRetroable<[K, V]> {
    * Constant.
    */
   get lastValue(): V | undefined {
-    return this._root.lastLeaf.lastValue;
+    return this._last.lastValue;
   }
 
   /**
@@ -145,7 +146,7 @@ class BTree<K, V> implements IIterable<[K, V]>, IRetroable<[K, V]> {
    * Constant.
    */
   iter(): IIterator<[K, V]> {
-    return this._root.firstLeaf.iterItems();
+    return this._first.iterItems();
   }
 
   /**
@@ -157,7 +158,7 @@ class BTree<K, V> implements IIterable<[K, V]>, IRetroable<[K, V]> {
    * Constant.
    */
   retro(): IIterator<[K, V]> {
-    return this._root.lastLeaf.retroItems();
+    return this._last.retroItems();
   }
 
   /**
@@ -169,7 +170,7 @@ class BTree<K, V> implements IIterable<[K, V]>, IRetroable<[K, V]> {
    * Constant.
    */
   keys(): IIterator<K> {
-    return this._root.firstLeaf.iterKeys();
+    return this._first.iterKeys();
   }
 
   /**
@@ -181,7 +182,7 @@ class BTree<K, V> implements IIterable<[K, V]>, IRetroable<[K, V]> {
    * Constant.
    */
   retroKeys(): IIterator<K> {
-    return this._root.lastLeaf.retroKeys();
+    return this._last.retroKeys();
   }
 
   /**
@@ -193,7 +194,7 @@ class BTree<K, V> implements IIterable<[K, V]>, IRetroable<[K, V]> {
    * Constant.
    */
   values(): IIterator<V> {
-    return this._root.firstLeaf.iterValues();
+    return this._first.iterValues();
   }
 
   /**
@@ -205,7 +206,7 @@ class BTree<K, V> implements IIterable<[K, V]>, IRetroable<[K, V]> {
    * Constant.
    */
   retroValues(): IIterator<V> {
-    return this._root.lastLeaf.retroValues();
+    return this._last.retroValues();
   }
 
   /**
@@ -338,6 +339,8 @@ class BTree<K, V> implements IIterable<[K, V]>, IRetroable<[K, V]> {
   assign(items: IterableOrArrayLike<[K, V]>): void {
     this._root.clear();
     this._root = Private.bulkLoad(items, this._arity);
+    this._first = this._root.firstLeaf();
+    this._last = this._root.lastLeaf();
   }
 
   /**
@@ -352,6 +355,8 @@ class BTree<K, V> implements IIterable<[K, V]>, IRetroable<[K, V]> {
    */
   insert(key: K, value: V): void {
     this._root = this._root.insert(key, value, this._cmp, this._arity, null, -1);
+    this._first = this._root.firstLeaf();
+    this._last = this._root.lastLeaf();
   }
 
   /**
@@ -363,7 +368,9 @@ class BTree<K, V> implements IIterable<[K, V]>, IRetroable<[K, V]> {
    * Logarithmic.
    */
   delete(key: K): void {
-    //Private.deleteItem(this._state, key, out);
+    this._root = this._root.delete(key, this._cmp, this._arity, null, -1);
+    this._first = this._root.firstLeaf();
+    this._last = this._root.lastLeaf();
   }
 
   /**
@@ -375,7 +382,15 @@ class BTree<K, V> implements IIterable<[K, V]>, IRetroable<[K, V]> {
    * Logarithmic.
    */
   remove(index: number): void {
-    //Private.removeItem(this._state, index, out);
+    if (index < 0) {
+      index += this._root.size;
+    }
+    if (index < 0 || index >= this._root.size) {
+      return;
+    }
+    this._root = this._root.remove(index, this._arity, null, -1);
+    this._first = this._root.firstLeaf();
+    this._last = this._root.lastLeaf();
   }
 
   /**
@@ -386,12 +401,14 @@ class BTree<K, V> implements IIterable<[K, V]>, IRetroable<[K, V]> {
    */
   clear(): void {
     this._root.clear();
-    this._root = new Private.LeafNode<K, V>();
+    this._root = this._first = this._last = new Private.LeafNode<K, V>();
   }
 
   private _arity: number;
   private _cmp: (a: K, b: K) => number;
-  private _root: Private.Node<K, V> = new Private.LeafNode<K, V>();
+  private _root: Private.Node<K, V>;
+  private _first: Private.LeafNode<K, V>;
+  private _last: Private.LeafNode<K, V>;
 }
 
 
@@ -437,16 +454,6 @@ namespace Private {
    */
   export
   class BranchNode<K, V> {
-    /**
-     * The first leaf node in the subtree.
-     */
-    firstLeaf: LeafNode<K, V>;
-
-    /**
-     * The last leaf node in the subtree.
-     */
-    lastLeaf: LeafNode<K, V>;
-
     /**
      * The total number of items held in the subtree.
      */
@@ -520,7 +527,7 @@ namespace Private {
     /**
      * Insert an item into the subtree.
      */
-    insert(key: K, value: V, cmp: (a: K, b: K) => number, arity: number, parent: BranchNode<K, V> | null, index: number): Node<K, V> {
+    insert(key: K, value: V, cmp: (a: K, b: K) => number, arity: number, parent: BranchNode<K, V> | null, thisIndex: number): Node<K, V> {
       // Find the pivot index for the given key.
       let i = linearFindPivotIndex(this.keys, key, cmp);
 
@@ -538,17 +545,116 @@ namespace Private {
         return this;
       }
 
-      // Update the first and last leaves.
-      this.firstLeaf = this.children[0].firstLeaf;
-      this.lastLeaf = this.children[this.children.length - 1].lastLeaf;
-
       // If there is a parent branch node, update its state.
-      if (parent !== null) {
+      if (parent) {
         parent.size++;
-        parent.sizes[index]++;
-        parent.keys[index] = this.keys[0];
+        parent.sizes[thisIndex]++;
+        parent.keys[thisIndex] = this.keys[0];
       }
 
+      // Split the branch node if needed.
+      return this.maybeSplit(arity, parent, thisIndex);
+    }
+
+    /**
+     * Delete an item from the subtree.
+     */
+    delete(key: K, cmp: (a: K, b: K) => number, arity: number, parent: BranchNode<K, V> | null, thisIndex: number): Node<K, V> {
+      // Find the pivot index for the given key.
+      let i = linearFindPivotIndex(this.keys, key, cmp);
+
+      // Fetch the current size of the branch.
+      let prevSize = this.size;
+
+      // Step down the tree to perform the delete.
+      this.children[i].delete(key, cmp, arity, this, i);
+
+      // Fetch the updated size of the branch.
+      let currSize = this.size;
+
+      // Bail early if the size did not change.
+      if (prevSize === currSize) {
+        return this;
+      }
+
+      // Bail early if the branch is a root node.
+      if (!parent) {
+        return this;
+      }
+
+      // Otherwise, update the parent state.
+      parent.size--;
+      parent.sizes[thisIndex]--;
+      parent.keys[thisIndex] = this.keys[0];
+
+      // Join the branch node if needed.
+      return this.maybeJoin(arity, parent, thisIndex);
+    }
+
+    /**
+     * Remove an item from the subtree.
+     */
+    remove(index: number, arity: number, parent: BranchNode<K, V> | null, thisIndex: number): Node<K, V> {
+      // Find the local index for the given index.
+      let { i, local } = linearFindLocalIndex(this.sizes, index);
+
+      // Fetch the current size of the branch.
+      let prevSize = this.size;
+
+      // Step down the tree to perform the delete.
+      this.children[i].remove(local, arity, this, i);
+
+      // Fetch the updated size of the branch.
+      let currSize = this.size;
+
+      // Bail early if the size did not change.
+      if (prevSize === currSize) {
+        return this;
+      }
+
+      // Bail early if the branch is a root node.
+      if (!parent) {
+        return this;
+      }
+
+      // Otherwise, update the parent state.
+      parent.size--;
+      parent.sizes[thisIndex]--;
+      parent.keys[thisIndex] = this.keys[0];
+
+      // Join the branch node if needed.
+      return this.maybeJoin(arity, parent, thisIndex);
+    }
+
+    /**
+     * Clear the contents of the subtree.
+     */
+    clear(): void {
+      each(this.children, child => child.clear());
+      this.size = 0;
+      this.keys.length = 0;
+      this.sizes.length = 0;
+      this.children.length = 0;
+    }
+
+    /**
+     * Get the first leaf node in the subtree.
+     */
+    firstLeaf(): LeafNode<K, V> {
+      return this.children[0].firstLeaf();
+    }
+
+    /**
+     * Get the last leaf node in the subtree.
+     */
+    lastLeaf(): LeafNode<K, V> {
+      return this.children[this.children.length - 1].firstLeaf();
+    }
+
+    /**
+     * Split the branch to the right if needed.
+     */
+    maybeSplit(arity: number, parent: BranchNode<K, V> | null, thisIndex: number): Node<K, V> {
       // Bail early if the branch does not need to be split.
       if (this.keys.length <= arity) {
         return this;
@@ -574,18 +680,12 @@ namespace Private {
       this.sizes.length = count;
       this.children.length = count;
 
-      // Update the first and last leaves.
-      this.firstLeaf = this.children[0].firstLeaf;
-      this.lastLeaf = this.children[this.children.length - 1].lastLeaf;
-      next.firstLeaf = next.children[0].firstLeaf;
-      next.lastLeaf = next.children[next.children.length - 1].lastLeaf;
-
       // If there is a parent branch node, update its state.
-      if (parent !== null) {
-        parent.sizes[index] = this.size;
-        ArrayExt.insert(parent.children, index + 1, next);
-        ArrayExt.insert(parent.sizes, index + 1, next.size);
-        ArrayExt.insert(parent.keys, index + 1, next.keys[0]);
+      if (parent) {
+        parent.sizes[thisIndex] = this.size;
+        ArrayExt.insert(parent.children, thisIndex + 1, next);
+        ArrayExt.insert(parent.sizes, thisIndex + 1, next.size);
+        ArrayExt.insert(parent.keys, thisIndex + 1, next.keys[0]);
         return this;
       }
 
@@ -594,16 +694,87 @@ namespace Private {
     }
 
     /**
-     * Clear the contents of the subtree.
+     * Join the branch with it's siblings if needed.
      */
-    clear(): void {
-      each(this.children, child => child.clear());
-      this.firstLeaf = null!;
-      this.lastLeaf = null!;
-      this.size = 0;
-      this.keys.length = 0;
-      this.sizes.length = 0;
-      this.children.length = 0;
+    maybeJoin(arity: number, parent: BranchNode<K, V>, thisIndex: number): Node<K, V> {
+      // Compute the mininum count for the branch node.
+      let count = Math.floor(arity / 2);
+
+      // Bail early if the branch still has sufficient size.
+      if (this.keys.length >= count) {
+        return this;
+      }
+
+      // Extract the sibling branches.
+      let j1 = thisIndex - 1;
+      let j2 = thisIndex + 1;
+      let siblings = parent.children as BranchNode<K, V>[];
+      let prev = (j1 >= 0 && j1 < siblings.length) ? siblings[j1] : null;
+      let next = (j2 >= 0 && j2 < siblings.length) ? siblings[j2] : null;
+
+      // Steal an item from the next sibling if possible.
+      if (next && next.keys.length > count) {
+        let key = next.keys.shift()!;
+        let size = next.sizes.shift()!;
+        let child = next.children.shift()!;
+        next.size -= size;
+        this.size += size;
+        this.keys.push(key);
+        this.sizes.push(size);
+        this.children.push(child);
+        parent.sizes[thisIndex] = this.size;
+        parent.sizes[thisIndex + 1] = next.size;
+        parent.keys[thisIndex + 1] = next.keys[0];
+        return this;
+      }
+
+      // Steal an item from the previous sibling if possible.
+      if (prev && prev.keys.length > count) {
+        let key = prev.keys.pop()!;
+        let size = prev.sizes.pop()!;
+        let child = prev.children.pop()!;
+        prev.size -= size;
+        this.size += size;
+        this.keys.unshift(key);
+        this.sizes.unshift(size);
+        this.children.unshift(child);
+        parent.sizes[thisIndex] = this.size;
+        parent.keys[thisIndex] = this.keys[0];
+        parent.sizes[thisIndex - 1] = prev.size;
+        return this;
+      }
+
+      // Merge the items with the previous sibling if possible.
+      if (prev && (arity - prev.keys.length) >= this.keys.length) {
+        prev.size += this.size;
+        prev.keys.push(...this.keys);
+        prev.sizes.push(...this.sizes);
+        prev.children.push(...this.children);
+        parent.sizes[thisIndex - 1] = prev.size;
+        ArrayExt.removeAt(parent.keys, thisIndex);
+        ArrayExt.removeAt(parent.sizes, thisIndex);
+        ArrayExt.removeAt(parent.children, thisIndex);
+        this.clear();
+        return prev;
+      }
+
+      // Merge the items with the next sibling if possible.
+      if (next && (arity - next.keys.length) >= this.keys.length) {
+        next.size += this.size;
+        next.keys.unshift(...this.keys);
+        next.sizes.unshift(...this.sizes);
+        next.children.unshift(...this.children);
+        parent.sizes[thisIndex + 1] = next.size;
+        parent.keys[thisIndex + 1] = next.keys[0];
+        ArrayExt.removeAt(parent.keys, thisIndex);
+        ArrayExt.removeAt(parent.sizes, thisIndex);
+        ArrayExt.removeAt(parent.children, thisIndex);
+        this.clear();
+        return next;
+      }
+
+      // One of the above conditions must have been satisifed.
+      throw 'unreachable';
     }
   }
 
@@ -637,20 +808,6 @@ namespace Private {
      */
     get size(): number {
       return this.keys.length;
-    }
-
-    /**
-     * The first leaf node in the subtree.
-     */
-    get firstLeaf(): LeafNode<K, V> {
-      return this;
-    }
-
-    /**
-     * The last leaf node in the subtree.
-     */
-    get lastLeaf(): LeafNode<K, V> {
-      return this;
     }
 
     /**
@@ -787,33 +944,103 @@ namespace Private {
     }
 
     /**
-     * Insert an item into the leaf.
+     * Insert an item into the leaf node.
      */
-    insert(key: K, value: V, cmp: (a: K, b: K) => number, arity: number, parent: BranchNode<K, V> | null, index: number): Node<K, V> {
+    insert(key: K, value: V, cmp: (a: K, b: K) => number, arity: number, parent: BranchNode<K, V> | null, thisIndex: number): Node<K, V> {
       // Find the key index for the given key.
-      let ki = linearFindKeyIndex(this.keys, key, cmp);
+      let i = linearFindKeyIndex(this.keys, key, cmp);
 
-      // If the key already exists, update the value in place.
-      if (ki >= 0) {
-        this.values[ki] = value;
+      // If the key already exists, simply update the value in place.
+      if (i >= 0) {
+        this.values[i] = value;
         return this;
       }
 
       // Adjust the key index to the insert index.
-      ki = -ki - 1;
+      i = -i - 1;
 
       // Insert the item into the leaf node.
-      ArrayExt.insert(this.keys, ki, key);
-      ArrayExt.insert(this.values, ki, value);
+      ArrayExt.insert(this.keys, i, key);
+      ArrayExt.insert(this.values, i, value);
 
       // If there is a parent branch node, update its state.
-      if (parent !== null) {
+      if (parent) {
         parent.size++;
-        parent.sizes[index]++;
-        parent.keys[index] = this.keys[0];
+        parent.sizes[thisIndex]++;
+        parent.keys[thisIndex] = this.keys[0];
       }
 
-      // Bail early if the leaf does not need to be split.
+      // Split the leaf node if needed.
+      return this.maybeSplit(arity, parent, thisIndex);
+    }
+
+    /**
+     * Delete an item from the leaf node.
+     */
+    delete(key: K, cmp: (a: K, b: K) => number, arity: number, parent: BranchNode<K, V> | null, thisIndex: number): Node<K, V> {
+      // Find the key index for the given key.
+      let i = linearFindKeyIndex(this.keys, key, cmp);
+
+      // Bail early if the key does not exist.
+      if (i < 0) {
+        return this;
+      }
+
+      // Remove the item at the computed index.
+      return this.remove(i, arity, parent, thisIndex);
+    }
+
+    /**
+     * Remove an item from the leaf node.
+     */
+    remove(index: number, arity: number, parent: BranchNode<K, V> | null, thisIndex: number): Node<K, V> {
+      // Remove the item at the specified index.
+      ArrayExt.removeAt(this.keys, index);
+      ArrayExt.removeAt(this.values, index);
+
+      // Bail early if the leaf is a root node.
+      if (!parent) {
+        return this;
+      }
+
+      // Otherwise, update the parent state.
+      parent.size--;
+      parent.sizes[thisIndex] = this.size;
+      parent.keys[thisIndex] = this.keys[0];
+
+      // Join the leaf with its siblings if needed.
+      return this.maybeJoin(arity, parent, thisIndex);
+    }
+
+    /**
+     * Clear the contents of the leaf node.
+     */
+    clear(): void {
+      this.next = null;
+      this.prev = null;
+      this.keys.length = 0;
+      this.values.length = 0;
+    }
+
+    /**
+     * Get the first leaf node in the subtree.
+     */
+    firstLeaf(): LeafNode<K, V> {
+      return this;
+    }
+
+    /**
+     * Get the last leaf node in the subtree.
+     */
+    lastLeaf(): LeafNode<K, V> {
+      return this;
+    }
+
+    /**
+     * Split leaf to the right if needed.
+     */
+    maybeSplit(arity: number, parent: BranchNode<K, V> | null, thisIndex: number): Node<K, V> {
+      // Bail early if the node does not need to be split.
       if (this.keys.length <= arity) {
         return this;
       }
@@ -822,7 +1049,7 @@ namespace Private {
       let next = new LeafNode<K, V>();
 
       // Compute the number of items for the split.
-      let count = Math.floor(this.size / 2);
+      let count = Math.floor(arity / 2);
 
       // Copy the relevant items to the new leaf.
       for (let i = count, n = this.keys.length; i < n; ++i) {
@@ -840,11 +1067,11 @@ namespace Private {
       this.next = next;
 
       // If there is a parent branch node, update its state.
-      if (parent !== null) {
-        parent.sizes[index] = this.size;
-        ArrayExt.insert(parent.children, index + 1, next);
-        ArrayExt.insert(parent.sizes, index + 1, next.size);
-        ArrayExt.insert(parent.keys, index + 1, next.keys[0]);
+      if (parent) {
+        parent.sizes[thisIndex] = this.size;
+        ArrayExt.insert(parent.children, thisIndex + 1, next);
+        ArrayExt.insert(parent.sizes, thisIndex + 1, next.size);
+        ArrayExt.insert(parent.keys, thisIndex + 1, next.keys[0]);
         return this;
       }
 
@@ -853,13 +1080,75 @@ namespace Private {
     }
 
     /**
-     * Clear the contents of the leaf node.
+     * Join the leaf with it's siblings if needed.
      */
-    clear(): void {
-      this.next = null;
-      this.prev = null;
-      this.keys.length = 0;
-      this.values.length = 0;
+    maybeJoin(arity: number, parent: BranchNode<K, V>, thisIndex: number): Node<K, V> {
+      // Compute the mininum count for the leaf node.
+      let count = Math.floor(arity / 2);
+
+      // Bail early if the leaf still has sufficient size.
+      if (this.keys.length >= count) {
+        return this;
+      }
+
+      // Extract the sibling leaves.
+      let { next, prev } = this;
+
+      // Steal an item from the next sibling if possible.
+      if (next && next.keys.length > count) {
+        let key = next.keys.shift()!;
+        let value = next.values.shift()!;
+        this.keys.push(key);
+        this.values.push(value);
+        parent.sizes[thisIndex] = this.size;
+        parent.sizes[thisIndex + 1] = next.size;
+        parent.keys[thisIndex + 1] = next.keys[0];
+        return this;
+      }
+
+      // Steal an item from the previous sibling if possible.
+      if (prev && prev.keys.length > count) {
+        let key = prev.keys.pop()!;
+        let value = prev.values.pop()!;
+        this.keys.unshift(key);
+        this.values.unshift(value);
+        parent.sizes[thisIndex] = this.size;
+        parent.keys[thisIndex] = this.keys[0];
+        parent.sizes[thisIndex - 1] = prev.size;
+        return this;
+      }
+
+      // Merge the items with the previous sibling if possible.
+      if (prev && (arity - prev.keys.length) >= this.keys.length) {
+        prev.keys.push(...this.keys);
+        prev.values.push(...this.values);
+        parent.sizes[thisIndex - 1] = prev.size;
+        ArrayExt.removeAt(parent.keys, thisIndex);
+        ArrayExt.removeAt(parent.sizes, thisIndex);
+        ArrayExt.removeAt(parent.children, thisIndex);
+        if (next) next.prev = prev;
+        prev.next = next;
+        this.clear();
+        return prev;
+      }
+
+      // Merge the items with the next sibling if possible.
+      if (next && (arity - next.keys.length) >= this.keys.length) {
+        next.keys.unshift(...this.keys);
+        next.values.unshift(...this.values);
+        parent.sizes[thisIndex + 1] = next.size;
+        parent.keys[thisIndex + 1] = next.keys[0];
+        ArrayExt.removeAt(parent.keys, thisIndex);
+        ArrayExt.removeAt(parent.sizes, thisIndex);
+        ArrayExt.removeAt(parent.children, thisIndex);
+        if (prev) prev.next = next;
+        next.prev = prev;
+        this.clear();
+        return next;
+      }
+
+      // One of the above conditions must have been satisifed.
+      throw 'unreachable';
     }
   }
 
@@ -926,14 +1215,6 @@ namespace Private {
         branch.children.push(node);
         branch.sizes.push(node.size);
         branch.keys.push(node.keys[0]);
-      }
-
-      // Set the first and last leaves on the branches.
-      for (let i = 0, n = branches.length; i < n; ++i) {
-        let branch = branches[0];
-        let children = branch.children;
-        branch.firstLeaf = children[0].firstLeaf;
-        branch.lastLeaf = children[children.length - 1].lastLeaf;
       }
 
       // Update the working nodes with the generated branches.
@@ -1160,8 +1441,6 @@ namespace Private {
     root.sizes[1] = second.size;
     root.children[0] = first;
     root.children[1] = second;
-    root.firstLeaf = first.firstLeaf;
-    root.lastLeaf = second.lastLeaf;
     return root;
   }
 }
