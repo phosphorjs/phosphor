@@ -21,18 +21,18 @@ class BTree<K, V> implements IIterable<[K, V]>, IRetroable<[K, V]> {
    */
   constructor(options: BTree.IOptions<K>) {
     this._root = this._first = this._last = new Private.LeafNode<K, V>();
-    this._arity = Private.parseArity(options);
+    this._order = Private.parseOrder(options);
     this._cmp = options.cmp;
   }
 
   /**
-   * The arity of the tree.
+   * The order of the tree.
    *
    * #### Complexity
    * Constant.
    */
-  get arity(): number {
-    return this._arity;
+  get order(): number {
+    return this._order;
   }
 
   /**
@@ -338,7 +338,7 @@ class BTree<K, V> implements IIterable<[K, V]>, IRetroable<[K, V]> {
    */
   assign(items: IterableOrArrayLike<[K, V]>): void {
     this._root.clear();
-    this._root = Private.bulkLoad(items, this._arity);
+    this._root = Private.bulkLoad(items, this._order);
     this._first = this._root.firstLeaf();
     this._last = this._root.lastLeaf();
   }
@@ -354,7 +354,7 @@ class BTree<K, V> implements IIterable<[K, V]>, IRetroable<[K, V]> {
    * Logarithmic.
    */
   insert(key: K, value: V): void {
-    this._root = this._root.insert(key, value, this._cmp, this._arity);
+    this._root = this._root.insert(key, value, this._cmp, this._order);
     this._first = this._root.firstLeaf();
     this._last = this._root.lastLeaf();
   }
@@ -368,7 +368,7 @@ class BTree<K, V> implements IIterable<[K, V]>, IRetroable<[K, V]> {
    * Logarithmic.
    */
   delete(key: K): void {
-    this._root = this._root.delete(key, this._cmp, this._arity);
+    this._root = this._root.delete(key, this._cmp, this._order);
     this._first = this._root.firstLeaf();
     this._last = this._root.lastLeaf();
   }
@@ -388,7 +388,7 @@ class BTree<K, V> implements IIterable<[K, V]>, IRetroable<[K, V]> {
     if (index < 0 || index >= this._root.size) {
       return;
     }
-    this._root = this._root.remove(index, this._arity);
+    this._root = this._root.remove(index, this._order);
     this._first = this._root.firstLeaf();
     this._last = this._root.lastLeaf();
   }
@@ -417,7 +417,7 @@ class BTree<K, V> implements IIterable<[K, V]>, IRetroable<[K, V]> {
     return this._root.dump();
   }
 
-  private _arity: number;
+  private _order: number;
   private _cmp: (a: K, b: K) => number;
   private _root: Private.Node<K, V>;
   private _first: Private.LeafNode<K, V>;
@@ -441,13 +441,13 @@ namespace BTree {
     cmp: (a: K, b: K) => number;
 
     /**
-     * The arity of the tree.
+     * The order of the tree.
      *
-     * A larger arity creates a wider tree.
+     * A larger order creates a wider tree.
      *
-     * This minimum is `4`, the default is `32`.
+     * The minimum is `4`, the default is `32`.
      */
-    arity?: number;
+    order?: number;
   }
 
   /**
@@ -624,17 +624,17 @@ namespace Private {
     /**
      * Insert an item into the subtree.
      */
-    insert(key: K, value: V, cmp: (a: K, b: K) => number, arity: number): Node<K, V> {
+    insert(key: K, value: V, cmp: (a: K, b: K) => number, order: number): Node<K, V> {
       // Perform the actual insert.
-      this.insertInternal(key, value, cmp, arity);
+      this.insertInternal(key, value, cmp, order);
 
       // Bail early if there is still room in the branch.
-      if (this.keys.length <= arity) {
+      if (this.keys.length <= order) {
         return this;
       }
 
       // Split the node to the right and create a new sibling.
-      let next = this.split(arity);
+      let next = this.split(order);
 
       // Return a new root which holds the two branches.
       return createRoot(this, next);
@@ -643,9 +643,9 @@ namespace Private {
     /**
      * Delete an item from the subtree.
      */
-    delete(key: K, cmp: (a: K, b: K) => number, arity: number): Node<K, V> {
+    delete(key: K, cmp: (a: K, b: K) => number, order: number): Node<K, V> {
       // Perform the actual delete.
-      this.deleteInternal(key, cmp, arity);
+      this.deleteInternal(key, cmp, order);
 
       // Bail early if there is more than one child.
       if (this.children.length > 1) {
@@ -665,9 +665,9 @@ namespace Private {
     /**
      * Remove an item from the subtree.
      */
-    remove(index: number, arity: number): Node<K, V> {
+    remove(index: number, order: number): Node<K, V> {
       // Perform the actual remove.
-      this.removeInternal(index, arity);
+      this.removeInternal(index, order);
 
       // Bail early if there is more than one child.
       if (this.children.length > 1) {
@@ -712,7 +712,7 @@ namespace Private {
      *
      * This may cause the node to become overfull.
      */
-    insertInternal(key: K, value: V, cmp: (a: K, b: K) => number, arity: number): void {
+    insertInternal(key: K, value: V, cmp: (a: K, b: K) => number, order: number): void {
       // Find the pivot index for the given key.
       let i = linearFindPivotIndex(this.keys, key, cmp);
 
@@ -723,7 +723,7 @@ namespace Private {
       let prevSize = child.size;
 
       // Perform the actual insert on the child.
-      child.insertInternal(key, value, cmp, arity);
+      child.insertInternal(key, value, cmp, order);
 
       // Fetch the updated size of the child.
       let currSize = child.size;
@@ -739,12 +739,12 @@ namespace Private {
       this.keys[i] = child.keys[0];
 
       // Bail early if the child is not overfull.
-      if (child.keys.length <= arity) {
+      if (child.keys.length <= order) {
         return;
       }
 
       // Split the node to the right and create a new sibling.
-      let next = child.split(arity);
+      let next = child.split(order);
 
       // Update the size record of the original child.
       this.sizes[i] = child.size;
@@ -758,7 +758,7 @@ namespace Private {
     /**
      * Perform an actual delete from the branch node.
      */
-    deleteInternal(key: K, cmp: (a: K, b: K) => number, arity: number): void {
+    deleteInternal(key: K, cmp: (a: K, b: K) => number, order: number): void {
       // Find the pivot index for the given key.
       let i = linearFindPivotIndex(this.keys, key, cmp);
 
@@ -769,7 +769,7 @@ namespace Private {
       let prevSize = child.size;
 
       // Perform the actual delete on the child.
-      child.deleteInternal(key, cmp, arity);
+      child.deleteInternal(key, cmp, order);
 
       // Fetch the updated size of the child.
       let currSize = child.size;
@@ -785,18 +785,18 @@ namespace Private {
       this.keys[i] = child.keys[0];
 
       // Bail early if the child is not underfull.
-      if (child.keys.length >= Math.floor(arity / 2)) {
+      if (child.keys.length >= Math.floor(order / 2)) {
         return;
       }
 
       // Join the child with one of its siblings.
-      this.join(i, arity);
+      this.join(i, order);
     }
 
     /**
      * Perform an actual remove from the branch node.
      */
-    removeInternal(index: number, arity: number): void {
+    removeInternal(index: number, order: number): void {
       // Find the local index for the given index.
       let { i, local } = linearFindLocalIndex(this.sizes, index);
 
@@ -807,7 +807,7 @@ namespace Private {
       let prevSize = child.size;
 
       // Perform the actual remove on the child.
-      child.removeInternal(local, arity);
+      child.removeInternal(local, order);
 
       // Fetch the updated size of the child.
       let currSize = child.size;
@@ -823,12 +823,12 @@ namespace Private {
       this.keys[i] = child.keys[0];
 
       // Bail early if the child is not underfull.
-      if (child.keys.length >= Math.floor(arity / 2)) {
+      if (child.keys.length >= Math.floor(order / 2)) {
         return;
       }
 
       // Join the child with one of its siblings.
-      this.join(i, arity);
+      this.join(i, order);
     }
 
     /**
@@ -836,12 +836,12 @@ namespace Private {
      *
      * This method assumes that the node is already overfull.
      */
-    split(arity: number): BranchNode<K, V> {
+    split(order: number): BranchNode<K, V> {
       // Create a new branch node for the split.
       let next = new BranchNode<K, V>();
 
       // Compute the number of items for the split.
-      let count = Math.floor(arity / 2);
+      let count = Math.floor(order / 2);
 
       // Copy the relevant data to the new branch.
       for (let i = count, n = this.keys.length; i < n; ++i) {
@@ -866,9 +866,9 @@ namespace Private {
      *
      * This method assumes that the child is already underfull.
      */
-    join(i: number, arity: number): void {
+    join(i: number, order: number): void {
       // Compute the minimum number of items.
-      let count = Math.floor(arity / 2);
+      let count = Math.floor(order / 2);
 
       // Fetch the child to be joined.
       let child = this.children[i];
@@ -1260,17 +1260,17 @@ namespace Private {
     /**
      * Insert an item into the leaf node.
      */
-    insert(key: K, value: V, cmp: (a: K, b: K) => number, arity: number): Node<K, V> {
+    insert(key: K, value: V, cmp: (a: K, b: K) => number, order: number): Node<K, V> {
       // Perform the actual insert.
-      this.insertInternal(key, value, cmp, arity);
+      this.insertInternal(key, value, cmp, order);
 
       // Bail early if the node is not overfull.
-      if (this.keys.length <= arity) {
+      if (this.keys.length <= order) {
         return this;
       }
 
       // Split the node to the right and create a new sibling.
-      let next = this.split(arity);
+      let next = this.split(order);
 
       // Return a new root which holds the two leaves.
       return createRoot(this, next);
@@ -1279,16 +1279,16 @@ namespace Private {
     /**
      * Delete an item from the leaf node.
      */
-    delete(key: K, cmp: (a: K, b: K) => number, arity: number): Node<K, V> {
-      this.deleteInternal(key, cmp, arity);
+    delete(key: K, cmp: (a: K, b: K) => number, order: number): Node<K, V> {
+      this.deleteInternal(key, cmp, order);
       return this;
     }
 
     /**
      * Remove an item from the leaf node.
      */
-    remove(index: number, arity: number): Node<K, V> {
-      this.removeInternal(index, arity);
+    remove(index: number, order: number): Node<K, V> {
+      this.removeInternal(index, order);
       return this;
     }
 
@@ -1318,7 +1318,7 @@ namespace Private {
      *
      * This may cause the node to become overfull.
      */
-    insertInternal(key: K, value: V, cmp: (a: K, b: K) => number, arity: number): void {
+    insertInternal(key: K, value: V, cmp: (a: K, b: K) => number, order: number): void {
       // Find the key index for the given key.
       let i = linearFindKeyIndex(this.keys, key, cmp);
 
@@ -1336,7 +1336,7 @@ namespace Private {
     /**
      * Perform an actual delete from the leaf node.
      */
-    deleteInternal(key: K, cmp: (a: K, b: K) => number, arity: number): void {
+    deleteInternal(key: K, cmp: (a: K, b: K) => number, order: number): void {
       // Find the key index for the given key.
       let i = linearFindKeyIndex(this.keys, key, cmp);
 
@@ -1346,13 +1346,13 @@ namespace Private {
       }
 
       // Remove the item at the computed index.
-      return this.removeInternal(i, arity);
+      return this.removeInternal(i, order);
     }
 
     /**
      * Perform an actual remove from the leaf node.
      */
-    removeInternal(index: number, arity: number): void {
+    removeInternal(index: number, order: number): void {
       ArrayExt.removeAt(this.keys, index);
       ArrayExt.removeAt(this.values, index);
     }
@@ -1362,12 +1362,12 @@ namespace Private {
      *
      * This method assumes that the node is already overfull.
      */
-    split(arity: number): LeafNode<K, V> {
+    split(order: number): LeafNode<K, V> {
       // Create a new leaf node for the split.
       let next = new LeafNode<K, V>();
 
       // Compute the number of items for the split.
-      let count = Math.floor(arity / 2);
+      let count = Math.floor(order / 2);
 
       // Copy the relevant items to the new leaf.
       for (let i = count, n = this.keys.length; i < n; ++i) {
@@ -1390,19 +1390,19 @@ namespace Private {
   }
 
   /**
-   * Parse and normalize the arity option for a B-Tree.
+   * Parse and normalize the order option for a B-Tree.
    */
   export
-  function parseArity<K>(options: BTree.IOptions<K>): number {
-    let arity = options.arity !== undefined ? options.arity: defaultArity;
-    return Math.max(minimumArity, Math.floor(arity));
+  function parseOrder<K>(options: BTree.IOptions<K>): number {
+    let order = options.order !== undefined ? options.order: defaultOrder;
+    return Math.max(minimumOrder, Math.floor(order));
   }
 
   /**
    * Bulk load items into a new tree.
    */
   export
-  function bulkLoad<K, V>(items: IterableOrArrayLike<[K, V]>, arity: number): Node<K, V> {
+  function bulkLoad<K, V>(items: IterableOrArrayLike<[K, V]>, order: number): Node<K, V> {
     // Set up the array to hold the leaf nodes.
     let leaves: LeafNode<K, V>[] = [new LeafNode<K, V>()];
 
@@ -1412,7 +1412,7 @@ namespace Private {
       let leaf = leaves[leaves.length - 1];
 
       // If the current leaf is at capacity, create a new leaf.
-      if (leaf.keys.length === arity) {
+      if (leaf.keys.length === order) {
         let next = new LeafNode<K, V>();
         next.prev = leaf;
         leaf.next = next;
@@ -1442,7 +1442,7 @@ namespace Private {
         let branch = branches[branches.length - 1];
 
         // If the current branch is at capacity, create a new branch.
-        if (branch.keys.length === arity) {
+        if (branch.keys.length === order) {
           branch = new BranchNode<K, V>();
           branches.push(branch);
         }
@@ -1463,14 +1463,14 @@ namespace Private {
   }
 
   /**
-   * The default arity for a B-Tree.
+   * The default order for a B-Tree.
    */
-  const defaultArity = 32;
+  const defaultOrder = 32;
 
   /**
-   * The minimum allowed arity for a B-Tree.
+   * The minimum allowed order for a B-Tree.
    */
-  const minimumArity = 4;
+  const minimumOrder = 4;
 
   /**
    * A type alias for a node mapper function.
