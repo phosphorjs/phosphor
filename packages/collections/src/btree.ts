@@ -881,10 +881,8 @@ namespace Private {
       let isLeaf = child.type === 'leaf';
       let hasExtra = sibling.keys.length > count;
 
-      // Perform the join based on the computed flags.
-      switch (true) {
-      case (isLeaf && hasExtra && hasNext):
-      {
+      // Join case #1:
+      if (isLeaf && hasExtra && hasNext) {
         // Cast the children to leaves.
         let c = child as LeafNode<K, V>;
         let s = sibling as LeafNode<K, V>;
@@ -897,10 +895,11 @@ namespace Private {
         this.sizes[i] = c.size;
         this.sizes[i + 1] = s.size;
         this.keys[i + 1] = s.keys[0];
-        break;
+        return;
       }
-      case (isLeaf && hasExtra && !hasNext):
-      {
+
+      // Join case #2:
+      if (isLeaf && hasExtra && !hasNext) {
         // Cast the children to leaves.
         let c = child as LeafNode<K, V>;
         let s = sibling as LeafNode<K, V>;
@@ -913,10 +912,11 @@ namespace Private {
         this.sizes[i] = c.size;
         this.keys[i] = c.keys[0];
         this.sizes[i - 1] = s.size;
-        break;
+        return;
       }
-      case (isLeaf && !hasExtra && hasNext):
-      {
+
+      // Join case #3:
+      if (isLeaf && !hasExtra && hasNext) {
         // Cast the children to leaves.
         let c = child as LeafNode<K, V>;
         let s = sibling as LeafNode<K, V>;
@@ -940,10 +940,11 @@ namespace Private {
 
         // Clear the original child.
         c.clear();
-        break;
+        return;
       }
-      case (isLeaf && !hasExtra && !hasNext):
-      {
+
+      // Join case #4:
+      if (isLeaf && !hasExtra && !hasNext) {
         // Cast the children to leaves.
         let c = child as LeafNode<K, V>;
         let s = sibling as LeafNode<K, V>;
@@ -966,10 +967,11 @@ namespace Private {
 
         // Clear the original child.
         c.clear();
-        break;
+        return;
       }
-      case (!isLeaf && hasExtra && hasNext):
-      {
+
+      // Join case #5:
+      if (!isLeaf && hasExtra && hasNext) {
         // Cast the children to branches.
         let c = child as BranchNode<K, V>;
         let s = sibling as BranchNode<K, V>;
@@ -987,10 +989,11 @@ namespace Private {
         this.sizes[i] = c.size;
         this.sizes[i + 1] = s.size;
         this.keys[i + 1] = s.keys[0];
-        break;
+        return;
       }
-      case (!isLeaf && hasExtra && !hasNext):
-      {
+
+      // Join case #6:
+      if (!isLeaf && hasExtra && !hasNext) {
         // Cast the children to branches.
         let c = child as BranchNode<K, V>;
         let s = sibling as BranchNode<K, V>;
@@ -1008,10 +1011,11 @@ namespace Private {
         this.sizes[i] = c.size;
         this.keys[i] = c.keys[0];
         this.sizes[i - 1] = s.size;
-        break;
+        return;
       }
-      case (!isLeaf && !hasExtra && hasNext):
-      {
+
+      // Join case #7:
+      if (!isLeaf && !hasExtra && hasNext) {
         // Cast the children to branches.
         let c = child as BranchNode<K, V>;
         let s = sibling as BranchNode<K, V>;
@@ -1036,10 +1040,11 @@ namespace Private {
         // Clear the original child.
         c.children.length = 0;
         c.clear();
-        break;
+        return;
       }
-      case (!isLeaf && !hasExtra && !hasNext):
-      {
+
+      // Join case #8:
+      if (!isLeaf && !hasExtra && !hasNext) {
         // Cast the children to branches.
         let c = child as BranchNode<K, V>;
         let s = sibling as BranchNode<K, V>;
@@ -1063,11 +1068,11 @@ namespace Private {
         // Clear the original child.
         c.children.length = 0;
         c.clear();
-        break;
+        return;
       }
-      default:
-        throw 'unreachable';
-      }
+
+      // One of the above cases must match.
+      throw 'unreachable';
     }
   }
 
