@@ -374,21 +374,21 @@ class BTree<K, V> implements IIterable<[K, V]>, IRetroable<[K, V]> {
   }
 
   /**
-   * Remove an item from the tree.
+   * Remove an item at a particular index.
    *
    * @param index - The index of the item to remove.
    *
    * #### Complexity
    * Logarithmic.
    */
-  remove(index: number): void {
+  removeAt(index: number): void {
     if (index < 0) {
       index += this._root.size;
     }
     if (index < 0 || index >= this._root.size) {
       return;
     }
-    this._root = this._root.remove(index, this._order);
+    this._root = this._root.removeAt(index, this._order);
     this._first = this._root.firstLeaf();
     this._last = this._root.lastLeaf();
   }
@@ -665,9 +665,9 @@ namespace Private {
     /**
      * Remove an item from the subtree.
      */
-    remove(index: number, order: number): Node<K, V> {
+    removeAt(index: number, order: number): Node<K, V> {
       // Perform the actual remove.
-      this.removeInternal(index, order);
+      this.removeAtInternal(index, order);
 
       // Bail early if there is more than one child.
       if (this.children.length > 1) {
@@ -796,7 +796,7 @@ namespace Private {
     /**
      * Perform an actual remove from the branch node.
      */
-    removeInternal(index: number, order: number): void {
+    removeAtInternal(index: number, order: number): void {
       // Find the local index for the given index.
       let { i, local } = linearFindLocalIndex(this.sizes, index);
 
@@ -807,7 +807,7 @@ namespace Private {
       let prevSize = child.size;
 
       // Perform the actual remove on the child.
-      child.removeInternal(local, order);
+      child.removeAtInternal(local, order);
 
       // Fetch the updated size of the child.
       let currSize = child.size;
@@ -1292,8 +1292,8 @@ namespace Private {
     /**
      * Remove an item from the leaf node.
      */
-    remove(index: number, order: number): Node<K, V> {
-      this.removeInternal(index, order);
+    removeAt(index: number, order: number): Node<K, V> {
+      this.removeAtInternal(index, order);
       return this;
     }
 
@@ -1351,13 +1351,13 @@ namespace Private {
       }
 
       // Remove the item at the computed index.
-      return this.removeInternal(i, order);
+      return this.removeAtInternal(i, order);
     }
 
     /**
      * Perform an actual remove from the leaf node.
      */
-    removeInternal(index: number, order: number): void {
+    removeAtInternal(index: number, order: number): void {
       ArrayExt.removeAt(this.keys, index);
       ArrayExt.removeAt(this.values, index);
     }
