@@ -331,7 +331,7 @@ class BTree<K, V> implements IIterable<[K, V]>, IRetroable<[K, V]> {
    * sorted according to the `cmp` function.
    *
    * #### Undefined Behavior
-   * An `items` which is not sorted or contains duplicate keys.
+   * An `items` which is not sorted or which contains duplicate keys.
    *
    * #### Complexity
    * Linear.
@@ -1473,7 +1473,7 @@ namespace Private {
   const defaultOrder = 32;
 
   /**
-   * The minimum allowed order for a B-Tree.
+   * The minimum order for a B-Tree.
    */
   const minimumOrder = 4;
 
