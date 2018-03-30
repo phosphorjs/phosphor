@@ -1384,7 +1384,8 @@ namespace Private {
       this.keys.length = count;
       this.values.length = count;
 
-      // Update the sibling links.
+      // Patch up the sibling links.
+      if (this.next) this.next.prev = next;
       next.next = this.next;
       next.prev = this;
       this.next = next;
