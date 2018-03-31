@@ -365,9 +365,34 @@ class DataGrid extends Widget {
     this._uniformResizing = value;
 
     // Reset the baseSizes for the relevant sections.
-    // TODO
-
-    //this._syncViewport();
+    switch (value) {
+      case 'all':
+        this.resetSections('row');
+        this.resetSections('column');
+        this.resetSections('row-header');
+        this.resetSections('column-header');
+        break;
+      case 'body':
+        this.resetSections('row');
+        this.resetSections('column');
+        break;
+      case 'header':
+        this.resetSections('row-header');
+        this.resetSections('column-header');
+        break;
+      case 'body-row':
+        this.resetSections('row');
+        break;
+      case 'body-column':
+        this.resetSections('column');
+        break;
+      case 'header-row':
+        this.resetSections('row-header');
+        break;
+      case 'header-column':
+        this.resetSections('column-header');
+        break;
+    }
   }
 
   /**
