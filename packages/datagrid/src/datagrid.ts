@@ -1248,8 +1248,25 @@ class DataGrid extends Widget {
       return;
     }
 
-    // Resize the section in the list.
-    list.resizeSection(index, newSize);
+    switch (list) {
+      case this._rowSections: {
+        this._setBaseSize(list, newSize);
+        // Keep the scroll bar fixed
+        let delta = (newSize - oldSize);
+        this._scrollY = Math.max(0, this._scrollY + (delta * index));
+        break;
+      }
+      case this._columnSections: {
+        this._setBaseSize(list, newSize);
+        // Keep the scroll bar fixed
+        let delta = (newSize - oldSize);
+        this._scrollX = Math.max(0, this._scrollX + (delta * index));
+        break;
+      }
+      default:
+        list.resizeSection(index, newSize);
+        break;
+    }
 
     // Get the current size of the viewport.
     let vpWidth = this._viewportWidth;
@@ -1615,8 +1632,11 @@ class DataGrid extends Widget {
     // Override the document cursor.
     let override = Drag.overrideCursor(cursor);
 
+    let prevX = clientX;
+    let prevY = clientY;
+
     // Set up the press data.
-    this._pressData = { handle, clientX, clientY, override };
+    this._pressData = { handle, prevX, prevY, clientX, clientY, override };
 
     // Add the extra document listeners.
     document.addEventListener('mousemove', this, true);
@@ -1648,6 +1668,8 @@ class DataGrid extends Widget {
     event.stopPropagation();
 
     // Update the press data with the current mouse position.
+    this._pressData.prevX = this._pressData.clientX;
+    this._pressData.prevY = this._pressData.clientY;
     this._pressData.clientX = event.clientX;
     this._pressData.clientY = event.clientY;
 
@@ -1798,47 +1820,43 @@ class DataGrid extends Widget {
     }
 
     // Extract the relevant press data.
-    let { handle, clientX, clientY } = this._pressData;
+    let { handle, prevX, prevY, clientX, clientY } = this._pressData;
 
     // Convert the client position to viewport coordinates.
-    let rect = this._viewport.node.getBoundingClientRect();
-    let x = clientX - rect.left;
-    let y = clientY - rect.top;
+    let dx = clientX - prevX;
+    let dy = clientY - prevY;
 
     // Look up the section list and convert to section position.
-    let pos: number;
+    let delta: number;
+    let section_min: number;
     let list: SectionList;
     switch (handle.type) {
     case 'body-row':
-      pos = y + this._scrollY - this.headerHeight;
+      delta = dy;
+      section_min = 20;
       list = this._rowSections;
       break;
     case 'body-column':
-      pos = x + this._scrollX - this.headerWidth;
+      delta = dx;
+      section_min = 40;
       list = this._columnSections;
       break;
     case 'header-row':
-      pos = y;
+      delta = dy;
+      section_min = 20;
       list = this._columnHeaderSections;
       break;
     case 'header-column':
-      pos = x;
+      delta = dx;
+      section_min = 40;
       list = this._rowHeaderSections;
       break;
     default:
       throw 'unreachable';
     }
 
-    // Look up the offset for the handle.
-    let offset = list.sectionOffset(handle.index);
-
-    // Bail if the handle no longer exists.
-    if (offset < 0) {
-      return;
-    }
-
     // Compute the new size for the section.
-    let size = Math.max(4, pos - handle.delta - offset);
+    let size = Math.max(section_min, list.sectionSize(handle.index) + delta);
 
     // Resize the section to the computed size.
     this._resizeSection(list, handle.index, size);
@@ -3662,6 +3680,16 @@ namespace Private {
      * The resize handle which was pressed.
      */
     handle: IResizeHandle;
+
+    /**
+     * The starting client X position of the mouse.
+     */
+    prevX: number;
+
+    /**
+     * The starting client Y position of the mouse.
+     */
+    prevY: number;
 
     /**
      * The most recent client X position of the mouse.
