@@ -137,6 +137,79 @@ class LinkedList<T> implements IIterable<T>, IRetroable<T> {
   }
 
   /**
+   * Assign new values to the list, replacing all current values.
+   *
+   * @param values - The values to assign to the list.
+   *
+   * #### Complexity
+   * Linear.
+   */
+  assign(values: IterableOrArrayLike<T>): void {
+    this.clear();
+    each(values, value => { this.addLast(value); });
+  }
+
+  /**
+   * Add a value to the end of the list.
+   *
+   * @param value - The value to add to the end of the list.
+   *
+   * #### Complexity
+   * Constant.
+   *
+   * #### Notes
+   * This is equivalent to `addLast`.
+   */
+  push(value: T): void {
+    this.addLast(value);
+  }
+
+  /**
+   * Remove and return the value at the end of the list.
+   *
+   * @returns The removed value, or `undefined` if the list is empty.
+   *
+   * #### Complexity
+   * Constant.
+   *
+   * #### Notes
+   * This is equivalent to `removeLast`.
+   */
+  pop(): T | undefined {
+    return this.removeLast();
+  }
+
+  /**
+   * Add a value to the beginning of the list.
+   *
+   * @param value - The value to add to the beginning of the list.
+   *
+   * #### Complexity
+   * Constant.
+   *
+   * #### Notes
+   * This is equivalent to `addFirst`.
+   */
+  shift(value: T): void {
+    this.addFirst(value);
+  }
+
+  /**
+   * Remove and return the value at the beginning of the list.
+   *
+   * @returns The removed value, or `undefined` if the list is empty.
+   *
+   * #### Complexity
+   * Constant.
+   *
+   * #### Notes
+   * This is equivalent to `removeFirst`.
+   */
+  unshift(): T | undefined {
+    return this.removeFirst();
+  }
+
+  /**
    * Add a value to the beginning of the list.
    *
    * @param value - The value to add to the beginning of the list.
@@ -416,11 +489,14 @@ namespace LinkedList {
    * @param values - The iterable or array-like object of interest.
    *
    * @returns A new linked list initialized with the given values.
+   *
+   * #### Complexity
+   * Linear.
    */
   export
   function from<T>(values: IterableOrArrayLike<T>): LinkedList<T> {
     let list = new LinkedList<T>();
-    each(values, value => { list.addLast(value); });
+    list.assign(values);
     return list;
   }
 
