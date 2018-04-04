@@ -214,6 +214,126 @@ class TreeMap<K, V> implements IIterable<[K, V]>, IRetroable<[K, V]> {
   }
 
   /**
+   * Create an iterator for a slice of items in the map.
+   *
+   * @param start - The index of the first item, inclusive. This
+   *   should be `< stop`. Negative values are taken as an offset
+   *   from the end of the map. The default is `0`.
+   *
+   * @param stop - The index of the last item, exclusive. This
+   *   should be `> start`. Negative values are taken as an offset
+   *   from the end of the map. The default is `size`.
+   *
+   * @returns A new iterator starting with the specified item.
+   *
+   * #### Complexity
+   * `O(log32 n)`
+   */
+  slice(start?: number, stop?: number): IIterator<[K, V]> {
+    return BPlusTree.sliceItems(this._root, start, stop);
+  }
+
+  /**
+   * Create a reverse iterator for a slice of items in the map.
+   *
+   * @param start - The index of the first item, inclusive. This
+   *   should be `> stop`. Negative values are taken as an offset
+   *   from the end of the map. The default is `size - 1`.
+   *
+   * @param stop - The index of the last item, exclusive. This
+   *   should be `< start`. Negative values are taken as an offset
+   *   from the end of the map. The default is `-size - 1`.
+   *
+   * @returns A new reverse iterator starting with the specified item.
+   *
+   * #### Complexity
+   * `O(log32 n)`
+   */
+  retroSlice(start?: number, stop?: number): IIterator<[K, V]> {
+    return BPlusTree.retroSliceItems(this._root, start, stop);
+  }
+
+  /**
+   * Create an iterator for a slice of keys in the map.
+   *
+   * @param start - The index of the first key, inclusive. This
+   *   should be `< stop`. Negative values are taken as an offset
+   *   from the end of the map. The default is `0`.
+   *
+   * @param stop - The index of the last key, exclusive. This
+   *   should be `> start`. Negative values are taken as an offset
+   *   from the end of the map. The default is `size`.
+   *
+   * @returns A new iterator starting with the specified key.
+   *
+   * #### Complexity
+   * `O(log32 n)`
+   */
+  sliceKeys(start?: number, stop?: number): IIterator<K> {
+    return BPlusTree.sliceKeys(this._root, start, stop);
+  }
+
+  /**
+   * Create a reverse iterator for a slice of keys in the map.
+   *
+   * @param start - The index of the first key, inclusive. This
+   *   should be `> stop`. Negative values are taken as an offset
+   *   from the end of the map. The default is `size - 1`.
+   *
+   * @param stop - The index of the last key, exclusive. This
+   *   should be `< start`. Negative values are taken as an offset
+   *   from the end of the map. The default is `-size - 1`.
+   *
+   * @returns A new reverse iterator starting with the specified key.
+   *
+   * #### Complexity
+   * `O(log32 n)`
+   */
+  retroSliceKeys(start?: number, stop?: number): IIterator<K> {
+    return BPlusTree.retroSliceKeys(this._root, start, stop);
+  }
+
+  /**
+   * Create an iterator for a slice of values in the map.
+   *
+   * @param start - The index of the first value, inclusive. This
+   *   should be `< stop`. Negative values are taken as an offset
+   *   from the end of the map. The default is `0`.
+   *
+   * @param stop - The index of the last value, exclusive. This
+   *   should be `> start`. Negative values are taken as an offset
+   *   from the end of the map. The default is `size`.
+   *
+   * @returns A new iterator starting with the specified value.
+   *
+   * #### Complexity
+   * `O(log32 n)`
+   */
+  sliceValues(start?: number, stop?: number): IIterator<V> {
+    return BPlusTree.sliceValues(this._root, start, stop);
+  }
+
+  /**
+   * Create a reverse iterator for a slice of values in the map.
+   *
+   * @param start - The index of the first value, inclusive. This
+   *   should be `> stop`. Negative values are taken as an offset
+   *   from the end of the map. The default is `size - 1`.
+   *
+   * @param stop - The index of the last value, exclusive. This
+   *   should be `< start`. Negative values are taken as an offset
+   *   from the end of the map. The default is `-size - 1`.
+   *
+   * @returns A new reverse iterator starting with the specified value.
+   *
+   * #### Complexity
+   * `O(log32 n)`
+   */
+  retroSliceValues(start?: number, stop?: number): IIterator<V> {
+    return BPlusTree.retroSliceValues(this._root, start, stop);
+  }
+
+  /**
    * Get the item at a particular index.
    *
    * @param index - The index of the item of interest. Negative

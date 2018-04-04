@@ -101,6 +101,46 @@ class TreeList<T> implements IIterable<T>, IRetroable<T> {
   }
 
   /**
+   * Create an iterator for a slice of values in the list.
+   *
+   * @param start - The index of the first value, inclusive. This
+   *   should be `< stop`. Negative values are taken as an offset
+   *   from the end of the list. The default is `0`.
+   *
+   * @param stop - The index of the last value, exclusive. This
+   *   should be `> start`. Negative values are taken as an offset
+   *   from the end of the list. The default is `size`.
+   *
+   * @returns A new iterator starting with the specified value.
+   *
+   * #### Complexity
+   * `O(log32 n)`
+   */
+  slice(start?: number, stop?: number): IIterator<T> {
+    return BPlusTree.sliceValues(this._root, start, stop);
+  }
+
+  /**
+   * Create a reverse iterator for a slice of values in the list.
+   *
+   * @param start - The index of the first value, inclusive. This
+   *   should be `> stop`. Negative values are taken as an offset
+   *   from the end of the list. The default is `size - 1`.
+   *
+   * @param stop - The index of the last value, exclusive. This
+   *   should be `< start`. Negative values are taken as an offset
+   *   from the end of the list. The default is `-size - 1`.
+   *
+   * @returns A new reverse iterator starting with the specified value.
+   *
+   * #### Complexity
+   * `O(log32 n)`
+   */
+  retroSlice(start?: number, stop?: number): IIterator<T> {
+    return BPlusTree.retroSliceValues(this._root, start, stop);
+  }
+
+  /**
    * Get the value at a particular index.
    *
    * @param index - The index of the value of interest. Negative

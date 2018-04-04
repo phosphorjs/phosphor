@@ -5,7 +5,7 @@
 | The full license is in the file LICENSE, distributed with this software.
 |----------------------------------------------------------------------------*/
 import {
-  ArrayExt, IIterator, IterableOrArrayLike, each
+  ArrayExt, IIterator, IterableOrArrayLike, each, empty
 } from '@phosphor/algorithm';
 
 
@@ -497,7 +497,7 @@ namespace BPlusTree {
    */
   export
   function iterKeys<K>(node: KeyedLeaf<K>): IIterator<K> {
-    return new ForwardIterator<K, any, K>(node, keyMapper);
+    return new ForwardIterator<K, any, K>(node, 0, -1, keyMapper);
   }
 
   /**
@@ -512,7 +512,7 @@ namespace BPlusTree {
    */
   export
   function retroKeys<K>(node: KeyedLeaf<K>): IIterator<K> {
-    return new RetroIterator<K, any, K>(node, keyMapper);
+    return new RetroIterator<K, any, K>(node, node.size - 1, -1, keyMapper);
   }
 
   /**
@@ -527,7 +527,7 @@ namespace BPlusTree {
    */
   export
   function iterValues<V>(node: ValuedLeaf<V>): IIterator<V> {
-    return new ForwardIterator<any, V, V>(node, valueMapper);
+    return new ForwardIterator<any, V, V>(node, 0, -1, valueMapper);
   }
 
   /**
@@ -542,7 +542,7 @@ namespace BPlusTree {
    */
   export
   function retroValues<V>(node: ValuedLeaf<V>): IIterator<V> {
-    return new RetroIterator<any, V, V>(node, valueMapper);
+    return new RetroIterator<any, V, V>(node, node.size - 1, -1, valueMapper);
   }
 
   /**
@@ -557,7 +557,7 @@ namespace BPlusTree {
    */
   export
   function iterItems<K, V>(node: MapLeaf<K, V>): IIterator<[K, V]> {
-    return new ForwardIterator<K, V, [K, V]>(node, itemMapper);
+    return new ForwardIterator<K, V, [K, V]>(node, 0, -1, itemMapper);
   }
 
   /**
@@ -572,7 +572,199 @@ namespace BPlusTree {
    */
   export
   function retroItems<K, V>(node: MapLeaf<K, V>): IIterator<[K, V]> {
-    return new RetroIterator<K, V, [K, V]>(node, itemMapper);
+    return new RetroIterator<K, V, [K, V]>(node, node.size - 1, -1, itemMapper);
+  }
+
+  /**
+   * Create an iterator for a slice of keys in the tree.
+   *
+   * @param node - The root node of interest.
+   *
+   * @param start - The index of the first key, inclusive. This
+   *   should be `< stop`. Negative values are taken as an offset
+   *   from the end of the tree. The default is `0`.
+   *
+   * @param stop - The index of the last key, exclusive. This
+   *   should be `> start`. Negative values are taken as an offset
+   *   from the end of the tree. The default is `size`.
+   *
+   * @returns A new iterator starting with the specified key.
+   *
+   * #### Complexity
+   * `O(log32 n)`
+   */
+  export
+  function sliceKeys<K>(node: KeyedNode<K>, start?: number, stop?: number): IIterator<K> {
+    let { index, count } = forwardSliceRange(node.size, start, stop);
+    if (count === 0) {
+      return empty<K>();
+    }
+    while (isBranchNode(node)) {
+      let i = findPivotIndexByIndex(node.sizes, index);
+      if (i > 0) index -= node.sizes[i - 1];
+      node = node.children[i];
+    }
+    return new ForwardIterator<K, any, K>(node, index, count, keyMapper);
+  }
+
+  /**
+   * Create a reverse iterator for a slice of keys in the tree.
+   *
+   * @param node - The root node of interest.
+   *
+   * @param start - The index of the first key, inclusive. This
+   *   should be `> stop`. Negative values are taken as an offset
+   *   from the end of the tree. The default is `size - 1`.
+   *
+   * @param stop - The index of the last key, exclusive. This
+   *   should be `< start`. Negative values are taken as an offset
+   *   from the end of the tree. The default is `-size - 1`.
+   *
+   * @returns A new reverse iterator starting with the specified key.
+   *
+   * #### Complexity
+   * `O(log32 n)`
+   */
+  export
+  function retroSliceKeys<K>(node: KeyedNode<K>, start?: number, stop?: number): IIterator<K> {
+    let { index, count } = retroSliceRange(node.size, start, stop);
+    if (count === 0) {
+      return empty<K>();
+    }
+    while (isBranchNode(node)) {
+      let i = findPivotIndexByIndex(node.sizes, index);
+      if (i > 0) index -= node.sizes[i - 1];
+      node = node.children[i];
+    }
+    return new RetroIterator<K, any, K>(node, index, count, keyMapper);
+  }
+
+  /**
+   * Create an iterator for a slice of values in the tree.
+   *
+   * @param node - The root node of interest.
+   *
+   * @param start - The index of the first value, inclusive. This
+   *   should be `< stop`. Negative values are taken as an offset
+   *   from the end of the tree. The default is `0`.
+   *
+   * @param stop - The index of the last value, exclusive. This
+   *   should be `> start`. Negative values are taken as an offset
+   *   from the end of the tree. The default is `size`.
+   *
+   * @returns A new iterator starting with the specified value.
+   *
+   * #### Complexity
+   * `O(log32 n)`
+   */
+  export
+  function sliceValues<V>(node: ValuedNode<V>, start?: number, stop?: number): IIterator<V> {
+    let { index, count } = forwardSliceRange(node.size, start, stop);
+    if (count === 0) {
+      return empty<V>();
+    }
+    while (isBranchNode(node)) {
+      let i = findPivotIndexByIndex(node.sizes, index);
+      if (i > 0) index -= node.sizes[i - 1];
+      node = node.children[i];
+    }
+    return new ForwardIterator<any, V, V>(node, index, count, valueMapper);
+  }
+
+  /**
+   * Create a reverse iterator for a slice of values in the tree.
+   *
+   * @param node - The root node of interest.
+   *
+   * @param start - The index of the first value, inclusive. This
+   *   should be `> stop`. Negative values are taken as an offset
+   *   from the end of the tree. The default is `size - 1`.
+   *
+   * @param stop - The index of the last value, exclusive. This
+   *   should be `< start`. Negative values are taken as an offset
+   *   from the end of the tree. The default is `-size - 1`.
+   *
+   * @returns A new reverse iterator starting with the specified value.
+   *
+   * #### Complexity
+   * `O(log32 n)`
+   */
+  export
+  function retroSliceValues<V>(node: ValuedNode<V>, start?: number, stop?: number): IIterator<V> {
+    let { index, count } = retroSliceRange(node.size, start, stop);
+    if (count === 0) {
+      return empty<V>();
+    }
+    while (isBranchNode(node)) {
+      let i = findPivotIndexByIndex(node.sizes, index);
+      if (i > 0) index -= node.sizes[i - 1];
+      node = node.children[i];
+    }
+    return new RetroIterator<any, V, V>(node, index, count, valueMapper);
+  }
+
+  /**
+   * Create an iterator for a slice of items in the tree.
+   *
+   * @param node - The root node of interest.
+   *
+   * @param start - The index of the first item, inclusive. This
+   *   should be `< stop`. Negative values are taken as an offset
+   *   from the end of the tree. The default is `0`.
+   *
+   * @param stop - The index of the last item, exclusive. This
+   *   should be `> start`. Negative values are taken as an offset
+   *   from the end of the tree. The default is `size`.
+   *
+   * @returns A new iterator starting with the specified item.
+   *
+   * #### Complexity
+   * `O(log32 n)`
+   */
+  export
+  function sliceItems<K, V>(node: MapNode<K, V>, start?: number, stop?: number): IIterator<[K, V]> {
+    let { index, count } = forwardSliceRange(node.size, start, stop);
+    if (count === 0) {
+      return empty<[K, V]>();
+    }
+    while (isBranchNode(node)) {
+      let i = findPivotIndexByIndex(node.sizes, index);
+      if (i > 0) index -= node.sizes[i - 1];
+      node = node.children[i];
+    }
+    return new ForwardIterator<K, V, [K, V]>(node, index, count, itemMapper);
+  }
+
+  /**
+   * Create a reverse iterator for a slice of items in the tree.
+   *
+   * @param node - The root node of interest.
+   *
+   * @param start - The index of the first item, inclusive. This
+   *   should be `> stop`. Negative values are taken as an offset
+   *   from the end of the tree. The default is `size - 1`.
+   *
+   * @param stop - The index of the last item, exclusive. This
+   *   should be `< start`. Negative values are taken as an offset
+   *   from the end of the tree. The default is `-size - 1`.
+   *
+   * @returns A new reverse iterator starting with the specified item.
+   *
+   * #### Complexity
+   * `O(log32 n)`
+   */
+  export
+  function retroSliceItems<K, V>(node: MapNode<K, V>, start?: number, stop?: number): IIterator<[K, V]> {
+    let { index, count } = retroSliceRange(node.size, start, stop);
+    if (count === 0) {
+      return empty<[K, V]>();
+    }
+    while (isBranchNode(node)) {
+      let i = findPivotIndexByIndex(node.sizes, index);
+      if (i > 0) index -= node.sizes[i - 1];
+      node = node.children[i];
+    }
+    return new RetroIterator<K, V, [K, V]>(node, index, count, itemMapper);
   }
 
   /**
@@ -1030,10 +1222,16 @@ namespace BPlusTree {
      *
      * @param node - The first leaf node in the chain.
      *
+     * @param index - The local index of the first item.
+     *
+     * @param count - The number of items to iterate.
+     *
      * @param mapper - The node mapper for the iterator.
      */
-    constructor(node: Leaf<K, V> | null, mapper: NodeMapper<K, V, R>) {
+    constructor(node: Leaf<K, V> | null, index: number, count: number, mapper: NodeMapper<K, V, R>) {
       this._node = node;
+      this._index = index;
+      this._count = count;
       this._mapper = mapper;
     }
 
@@ -1052,9 +1250,7 @@ namespace BPlusTree {
      * @returns A new independent clone of the iterator.
      */
     clone(): IIterator<R> {
-      let clone = new ForwardIterator<K, V, R>(this._node, this._mapper);
-      clone._index = this._index;
-      return clone;
+      return new ForwardIterator<K, V, R>(this._node, this._index, this._count, this._mapper);
     }
 
     /**
@@ -1063,18 +1259,22 @@ namespace BPlusTree {
      * @returns The next value from the iterator, or `undefined`.
      */
     next(): R | undefined {
-      if (this._node === null) {
+      if (this._node === null || this._count === 0) {
         return undefined;
       }
       if (this._index >= this._node.size) {
-        this._index = 0;
         this._node = this._node.next;
+        this._index = 0;
         return this.next();
+      }
+      if (this._count > 0) {
+        this._count--;
       }
       return this._mapper.call(undefined, this._node, this._index++);
     }
 
-    private _index = 0;
+    private _index: number;
+    private _count: number;
     private _node: Leaf<K, V> | null;
     private _mapper: NodeMapper<K, V, R>;
   }
@@ -1088,10 +1288,16 @@ namespace BPlusTree {
      *
      * @param node - The last leaf node in the chain.
      *
+     * @param index - The local index of the last item.
+     *
+     * @param count - The number of items to iterate.
+     *
      * @param mapper - The node mapper for the iterator.
      */
-    constructor(node: Leaf<K, V> | null, mapper: NodeMapper<K, V, R>) {
+    constructor(node: Leaf<K, V> | null, index: number, count: number, mapper: NodeMapper<K, V, R>) {
       this._node = node;
+      this._index = index;
+      this._count = count;
       this._mapper = mapper;
     }
 
@@ -1110,9 +1316,7 @@ namespace BPlusTree {
      * @returns A new independent clone of the iterator.
      */
     clone(): IIterator<R> {
-      let clone = new RetroIterator<K, V, R>(this._node, this._mapper);
-      clone._index  = this._index;
-      return clone;
+      return new RetroIterator<K, V, R>(this._node, this._index, this._count, this._mapper);
     }
 
     /**
@@ -1121,21 +1325,69 @@ namespace BPlusTree {
      * @returns The next value from the iterator, or `undefined`.
      */
     next(): R | undefined {
-      if (this._node === null) {
+      if (this._node === null || this._count === 0) {
         return undefined;
       }
       if (this._index >= this._node.size) {
-        this._index = 0;
+        this._index = this._node.size - 1;
+      }
+      if (this._index < 0) {
         this._node = this._node.prev;
+        this._index = this._node ? this._node.size - 1 : -1;
         return this.next();
       }
-      let i = this._node.size - this._index++ - 1;
-      return this._mapper.call(undefined, this._node, i);
+      if (this._count > 0) {
+        this._count--;
+      }
+      return this._mapper.call(undefined, this._node, this._index--);
     }
 
-    private _index = 0;
+    private _index: number;
+    private _count: number;
     private _node: Leaf<K, V> | null;
     private _mapper: NodeMapper<K, V, R>;
+  }
+
+  /**
+   * Get the range for a forward slice.
+   */
+  function forwardSliceRange(size: number, start?: number, stop?: number): { index: number, count: number } {
+    if (start === undefined) {
+      start = 0;
+    } else if (start < 0) {
+      start = Math.max(0, start + size);
+    } else {
+      start = Math.min(start, size);
+    }
+    if (stop === undefined) {
+      stop = size;
+    } else if (stop < 0) {
+      stop = Math.max(0, stop + size);
+    } else {
+      stop = Math.min(stop, size);
+    }
+    return { index: start, count: Math.max(0, stop - start) };
+  }
+
+  /**
+   * Get the range for a retro slice.
+   */
+  function retroSliceRange(size: number, start?: number, stop?: number): { index: number, count: number } {
+    if (start === undefined) {
+      start = size - 1;
+    } else if (start < 0) {
+      start = Math.max(-1, start + size);
+    } else {
+      start = Math.min(start, size - 1);
+    }
+    if (stop === undefined) {
+      stop = -1;
+    } else if (stop < 0) {
+      stop = Math.max(-1, stop + size);
+    } else {
+      stop = Math.min(stop, size - 1);
+    }
+    return { index: start, count: Math.max(0, start - stop) };
   }
 
   /**
