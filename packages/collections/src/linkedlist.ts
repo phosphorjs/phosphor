@@ -27,7 +27,20 @@ class LinkedList<T> implements IIterable<T>, IRetroable<T> {
    * Constant.
    */
   get isEmpty(): boolean {
-    return this._length === 0;
+    return this._size === 0;
+  }
+
+  /**
+   * The size of the list.
+   *
+   * #### Complexity
+   * `O(1)`
+   *
+   * #### Notes
+   * This is equivalent to `length`.
+   */
+  get size(): number {
+    return this._size;
   }
 
   /**
@@ -35,9 +48,14 @@ class LinkedList<T> implements IIterable<T>, IRetroable<T> {
    *
    * #### Complexity
    * Constant.
+   *
+   * #### Notes
+   * This is equivalent to `size`.
+   *
+   * This property is deprecated.
    */
   get length(): number {
-    return this._length;
+    return this._size;
   }
 
   /**
@@ -229,7 +247,7 @@ class LinkedList<T> implements IIterable<T>, IRetroable<T> {
       this._first.prev = node;
       this._first = node;
     }
-    this._length++;
+    this._size++;
     return node;
   }
 
@@ -253,7 +271,7 @@ class LinkedList<T> implements IIterable<T>, IRetroable<T> {
       this._last.next = node;
       this._last = node;
     }
-    this._length++;
+    this._size++;
     return node;
   }
 
@@ -287,7 +305,7 @@ class LinkedList<T> implements IIterable<T>, IRetroable<T> {
     node.prev = prev;
     _ref.prev = node;
     prev.next = node;
-    this._length++;
+    this._size++;
     return node;
   }
 
@@ -321,7 +339,7 @@ class LinkedList<T> implements IIterable<T>, IRetroable<T> {
     node.prev = _ref;
     _ref.next = node;
     next.prev = node;
-    this._length++;
+    this._size++;
     return node;
   }
 
@@ -348,7 +366,7 @@ class LinkedList<T> implements IIterable<T>, IRetroable<T> {
     node.list = null;
     node.next = null;
     node.prev = null;
-    this._length--;
+    this._size--;
     return node.value;
   }
 
@@ -375,7 +393,7 @@ class LinkedList<T> implements IIterable<T>, IRetroable<T> {
     node.list = null;
     node.next = null;
     node.prev = null;
-    this._length--;
+    this._size--;
     return node.value;
   }
 
@@ -411,7 +429,7 @@ class LinkedList<T> implements IIterable<T>, IRetroable<T> {
     _node.list = null;
     _node.next = null;
     _node.prev = null;
-    this._length--;
+    this._size--;
   }
 
   /**
@@ -431,12 +449,12 @@ class LinkedList<T> implements IIterable<T>, IRetroable<T> {
     }
     this._first = null;
     this._last = null;
-    this._length = 0;
+    this._size = 0;
   }
 
   private _first: Private.LinkedListNode<T> | null = null;
   private _last: Private.LinkedListNode<T> | null = null;
-  private _length = 0;
+  private _size = 0;
 }
 
 
