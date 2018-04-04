@@ -5,7 +5,7 @@
 | The full license is in the file LICENSE, distributed with this software.
 |----------------------------------------------------------------------------*/
 import {
-  ArrayExt, IIterator, each
+  ArrayExt, IIterator, IterableOrArrayLike, each
 } from '@phosphor/algorithm';
 
 
@@ -767,6 +767,57 @@ namespace BPlusTree {
   }
 
   /**
+   * Create a new tree set populated with the given keys.
+   *
+   * @param keys - The sorted unique keys of interest.
+   *
+   * @returns A new tree set populated with the given keys.
+   *
+   * #### Undefined Behavior
+   * `keys` which are not sorted or which contain duplicates.
+   *
+   * #### Complexity
+   * `O(n)`
+   */
+  export
+  function assignSet<K>(keys: IterableOrArrayLike<K>): { root: SetNode<K>, first: SetLeaf<K>, last: SetLeaf<K> } {
+    return assignInternal(NodeType.SetLeaf, keys);
+  }
+
+  /**
+   * Create a new tree list populated with the given values.
+   *
+   * @param values - The values of interest.
+   *
+   * @returns A new tree list populated with the given values.
+   *
+   * #### Complexity
+   * `O(n)`
+   */
+  export
+  function assignList<V>(values: IterableOrArrayLike<V>): { root: ListNode<V>, first: ListLeaf<V>, last: ListLeaf<V> } {
+    return assignInternal(NodeType.ListLeaf, values);
+  }
+
+  /**
+   * Create a new tree map populated with the given items.
+   *
+   * @param items - The sorted unique items of interest.
+   *
+   * @returns A new tree map populated with the given items.
+   *
+   * #### Undefined Behavior
+   * `items` which are not sorted or which contain duplicate keys.
+   *
+   * #### Complexity
+   * `O(n)`
+   */
+  export
+  function assignMap<K, V>(items: IterableOrArrayLike<[K, V]>): { root: MapNode<K, V>, first: MapLeaf<K, V>, last: MapLeaf<K, V> } {
+    return assignInternal(NodeType.MapLeaf, items);
+  }
+
+  /**
    * Set the value at a particular index.
    *
    * @param node - The node of interest.
@@ -1261,6 +1312,85 @@ namespace BPlusTree {
       last = sizes[i] = last + children[i].size;
     }
     sizes.length = children.length;
+  }
+
+  /**
+   * Create a new tree populated with the given items.
+   */
+  function assignInternal<K>(type: NodeType.SetLeaf, items: IterableOrArrayLike<K>): { root: SetNode<K>, first: SetLeaf<K>, last: SetLeaf<K> };
+  function assignInternal<V>(type: NodeType.ListLeaf, items: IterableOrArrayLike<V>): { root: ListNode<V>, first: ListLeaf<V>, last: ListLeaf<V> };
+  function assignInternal<K, V>(type: NodeType.MapLeaf, items: IterableOrArrayLike<[K, V]>): { root: MapNode<K, V>, first: MapLeaf<K, V>, last: MapLeaf<K, V> };
+  function assignInternal<K, V>(type: NodeType, items: IterableOrArrayLike<any>): { root: Node<K, V>, first: Leaf<K, V>, last: Leaf<K, V> } {
+    // Set up the array to hold the leaf nodes.
+    let leaves = [createLeaf<K, V>(type)];
+
+    // Create and fill the leaf nodes with the items.
+    each(items, item => {
+      // Fetch the current leaf node.
+      let leaf = leaves[leaves.length - 1];
+
+      // If the current leaf is at capacity, create a new leaf.
+      if (leaf.width === MAX_NODE_WIDTH) {
+        let next = createLeaf<K, V>(type);
+        next.prev = leaf;
+        leaf.next = next;
+        leaves.push(next);
+        leaf = next;
+      }
+
+      // Add the item to the current leaf.
+      if (type === NodeType.SetLeaf) {
+        (leaf as KeyedLeaf<K>).keys.push(item);
+      } else if (type === NodeType.ListLeaf) {
+        (leaf as ValuedLeaf<V>).values.push(item);
+      } else {
+        (leaf as KeyedLeaf<K>).keys.push(item[0]);
+        (leaf as ValuedLeaf<V>).values.push(item[1]);
+      }
+    });
+
+    // Set up the variable to hold the working nodes.
+    let nodes: Node<K, V>[] = leaves;
+
+    // Aggregate the working nodes until there is a single root.
+    while (nodes.length > 1) {
+      // Set up the array to hold the generated branch nodes.
+      let branches = [createBranch<K, V>(type)];
+
+      // Create and fill the branches with the working nodes.
+      for (let i = 0, n = nodes.length; i < n; ++i) {
+        // Fetch the current working node.
+        let node = nodes[i];
+
+        // Fetch the current branch.
+        let branch = branches[branches.length - 1];
+
+        // If the current branch is at capacity, create a new branch.
+        if (branch.width === MAX_NODE_WIDTH) {
+          branch = createBranch<K, V>(type);
+          branches.push(branch);
+        }
+
+        // Add the current node to the branch.
+        (branch.children as Node<K, V>[]).push(node);
+      }
+
+      // Update the sizes of the branches.
+      for (let i = 0, n = branches.length; i < n; ++i) {
+        updateSizes(branches[i], 0);
+      }
+
+      // Update the working nodes with the generated branches.
+      nodes = branches as Node<K, V>[];
+    }
+
+    // Fetch the result data.
+    let root = nodes[0];
+    let first = leaves[0];
+    let last = leaves[leaves.length - 1];
+
+    // Return the assignment result.
+    return { root, first, last };
   }
 
   /**
