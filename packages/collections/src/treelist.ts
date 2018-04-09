@@ -5,7 +5,7 @@
 | The full license is in the file LICENSE, distributed with this software.
 |----------------------------------------------------------------------------*/
 import {
-  IIterable, IIterator, IRetroable, IterableOrArrayLike
+  IIterable, IIterator, IRetroable, IterableOrArrayLike, empty, iter
 } from '@phosphor/algorithm';
 
 import {
@@ -339,6 +339,73 @@ class TreeList<T> implements IIterable<T>, IRetroable<T> {
     if (this._last.size === 0) {
       this._last = BPlusTree.lastLeaf(this._root);
     }
+  }
+
+  /**
+   * Remove and/or insert multiple values from/into the list.
+   *
+   * @param index - The index of the splice. Negative values are taken
+   *   as an offset from the end of the list.
+   *
+   * @param count - The number of values to remove from the list.
+   *
+   * @param values - The values to insert into the list.
+   *
+   * #### Complexity
+   * `O(k log32 n)`
+   */
+  splice(index: number, count: number, values?: IterableOrArrayLike<T>): void {
+    // Fetch the current size of the list.
+    let size = this._root.size;
+
+    // Wrap and clamp the index.
+    if (index < 0) {
+      index = Math.max(0, index + size);
+    } else {
+      index = Math.min(index, size);
+    }
+
+    // Clamp the count.
+    count = Math.max(0, Math.min(count, size - index));
+
+    // Use a simple assign or clear if possible.
+    if (count === size) {
+      if (values) {
+        this.assign(values);
+      } else {
+        this.clear();
+      }
+      return;
+    }
+
+    // Set up an iterator for the values.
+    let it = values ? iter(values) : empty<T>();
+
+    // Set up the variable to hold the iterator value.
+    let value: T | undefined = undefined;
+
+    // Update as many values in-place as possible.
+    while (count > 0 && (value = it.next()) !== undefined) {
+      BPlusTree.setValueAt(this._root, index, value);
+      index++;
+      count--;
+    }
+
+    // Remove any extra values.
+    while (count > 0) {
+      this._root = BPlusTree.removeAt(this._root, index);
+      count--;
+    }
+
+    // Insert any remaining values.
+    while ((value = it.next()) !== undefined) {
+      this._root, BPlusTree.insertAt(this._root, index, value);
+      index++;
+    }
+
+    // Update the first and last leaves.
+    this._first = BPlusTree.firstLeaf(this._root);
+    this._last = BPlusTree.lastLeaf(this._root);
   }
 
   /**
