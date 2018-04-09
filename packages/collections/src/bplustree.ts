@@ -1121,7 +1121,7 @@ namespace BPlusTree {
   }
 
   /**
-   * Rempve a item from the tree.
+   * Remove a item from the tree.
    *
    * @param node - The node of interest.
    *
