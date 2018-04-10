@@ -5,7 +5,7 @@
 | The full license is in the file LICENSE, distributed with this software.
 |----------------------------------------------------------------------------*/
 import {
-  IIterable, IIterator, IRetroable, IterableOrArrayLike
+  IIterable, IIterator, IRetroable, IterableOrArrayLike, each
 } from '@phosphor/algorithm';
 
 import {
@@ -213,16 +213,26 @@ class TreeSet<T> implements IIterable<T>, IRetroable<T> {
   /**
    * Assign new values to the set, replacing all current values.
    *
-   * @param values - The unique sorted values to assign to the set.
+   * @param values - The values to assign to the set.
+   *
+   * @param normalized - Whether the given `values` have no duplicates
+   *   and are sorted according to the `cmp` function. The default is
+   *   `false`.
    *
    * #### Undefined Behavior
-   * `values` which are not sorted according to the `cmp` function,
-   * or which contain duplicates.
+   * `values` which are not normalized when `normalized` is `true`.
    *
    * #### Complexity
-   * `O(n)`
+   * `O(n log32 n)` or `O(n)` if `values` are normalized.
    */
-  assign(values: IterableOrArrayLike<T>): void {
+  assign(values: IterableOrArrayLike<T>, normalized = false): void {
+    // Take the slow path if the values aren't normalized.
+    if (!normalized) {
+      this.clear();
+      this.update(values);
+      return;
+    }
+
     // Clear the current tree.
     BPlusTree.clearTree(this._root);
 
@@ -233,6 +243,18 @@ class TreeSet<T> implements IIterable<T>, IRetroable<T> {
     this._root = root;
     this._first = first;
     this._last = last;
+  }
+
+  /**
+   * Update the set with multiple new values.
+   *
+   * @param values - The values to add to the set.
+   *
+   * #### Complexity
+   * `O(k log32 n)`
+   */
+  update(values: IterableOrArrayLike<T>): void {
+    each(values, value => { this.add(value); });
   }
 
   /**

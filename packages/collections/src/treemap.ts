@@ -5,7 +5,7 @@
 | The full license is in the file LICENSE, distributed with this software.
 |----------------------------------------------------------------------------*/
 import {
-  IIterable, IIterator, IRetroable, IterableOrArrayLike
+  IIterable, IIterator, IRetroable, IterableOrArrayLike, each
 } from '@phosphor/algorithm';
 
 import {
@@ -464,24 +464,46 @@ class TreeMap<K, V> implements IIterable<[K, V]>, IRetroable<[K, V]> {
    *
    * @param items - The unique sorted items to assign to the map.
    *
+   * @param normalized - Whether the given `items` have no duplicates
+   *   and are sorted according to the `cmp` function. The default is
+   *   `false`.
+   *
    * #### Undefined Behavior
-   * `items` which are not sorted according to the `cmp` function,
-   * or which contains duplicate keys.
+   * `items` which are not normalized when `normalized` is `true`.
    *
    * #### Complexity
-   * `O(n)`
+   * `O(n log32 n)` or `O(n)` if `items` are normalized.
    */
-  assign(items: IterableOrArrayLike<[K, V]>): void {
+  assign(items: IterableOrArrayLike<[K, V]>, normalized = false): void {
+    // Take the slow path if the items aren't normalized.
+    if (!normalized) {
+      this.clear();
+      this.update(items);
+      return;
+    }
+
     // Clear the current tree.
     BPlusTree.clearTree(this._root);
 
-    // Assign the values to a new tree.
+    // Assign the items to a new tree.
     let { root, first, last } = BPlusTree.assignMap(items);
 
     // Update the internal state.
     this._root = root;
     this._first = first;
     this._last = last;
+  }
+
+  /**
+   * Update the map with multiple new items.
+   *
+   * @param items - The items to add to the map.
+   *
+   * #### Complexity
+   * `O(k log32 n)`
+   */
+  update(items: IterableOrArrayLike<[K, V]>): void {
+    each(items, ([key, value]) => { this.set(key, value); });
   }
 
   /**
