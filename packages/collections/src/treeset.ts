@@ -299,7 +299,7 @@ class TreeSet<T> implements IIterable<T>, IRetroable<T> {
    * #### Complexity
    * `O(log32 n)`
    */
-  removeAt(index: number): void {
+  remove(index: number): void {
     // Wrap negative indices.
     if (index < 0) {
       index += this._root.size;

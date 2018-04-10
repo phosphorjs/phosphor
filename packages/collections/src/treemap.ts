@@ -576,7 +576,7 @@ class TreeMap<K, V> implements IIterable<[K, V]>, IRetroable<[K, V]> {
    * #### Complexity
    * `O(log32 n)`
    */
-  removeAt(index: number): void {
+  remove(index: number): void {
     // Wrap negative indices.
     if (index < 0) {
       index += this._root.size;

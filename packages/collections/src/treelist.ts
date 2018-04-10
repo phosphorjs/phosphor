@@ -240,7 +240,7 @@ class TreeList<T> implements IIterable<T>, IRetroable<T> {
    */
   pop(): T | undefined {
     let value = this.at(-1);
-    this.removeAt(-1);
+    this.remove(-1);
     return value;
   }
 
@@ -255,7 +255,7 @@ class TreeList<T> implements IIterable<T>, IRetroable<T> {
    */
   shift(): T | undefined {
     let value = this.at(0);
-    this.removeAt(0);
+    this.remove(0);
     return value;
   }
 
@@ -316,7 +316,7 @@ class TreeList<T> implements IIterable<T>, IRetroable<T> {
    * #### Complexity
    * `O(log32 n)`
    */
-  removeAt(index: number): void {
+  remove(index: number): void {
     // Wrap negative indices.
     if (index < 0) {
       index += this._root.size;
