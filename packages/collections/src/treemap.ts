@@ -634,7 +634,7 @@ class TreeMap<K, V> implements IIterable<[K, V]>, IRetroable<[K, V]> {
     BPlusTree.clearTree(this._root);
 
     // Create a new empty tree.
-    this._root = this._first = this._last = new BPlusTree.MapLeaf<K, V>();
+    this._root = this._first = this._last;
   }
 
   private _root: BPlusTree.MapNode<K, V>;
@@ -652,15 +652,14 @@ namespace TreeMap {
   /**
    * Create a new tree map populated with the given items.
    *
-   * @param items - The sorted unique items of interest.
+   * @param items - The items to add to the map.
+   *
+   * @param cmp - The comparison function for the map.
    *
    * @returns A new tree map populated with the given items.
    *
-   * #### Undefined Behavior
-   * `items` which are not sorted or which contain duplicate keys.
-   *
    * #### Complexity
-   * `O(n)`
+   * `O(n log32 n)`
    */
   export
   function from<K, V>(items: IterableOrArrayLike<[K, V]>, cmp: (a: K, b: K) => number): TreeMap<K, V> {

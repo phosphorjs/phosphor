@@ -357,7 +357,7 @@ class TreeSet<T> implements IIterable<T>, IRetroable<T> {
     BPlusTree.clearTree(this._root);
 
     // Create a new empty tree.
-    this._root = this._first = this._last = new BPlusTree.SetLeaf<T>();
+    this._root = this._first = this._last;
   }
 
   private _root: BPlusTree.SetNode<T>;
@@ -375,15 +375,14 @@ namespace TreeSet {
   /**
    * Create a new tree set populated with the given values.
    *
-   * @param values - The sorted unique values of interest.
+   * @param values - The values to add to the set.
+   *
+   * @param cmp - The comparison function for the map.
    *
    * @returns A new tree set populated with the given values.
    *
-   * #### Undefined Behavior
-   * `values` which are not sorted or which contain duplicates.
-   *
    * #### Complexity
-   * `O(n)`
+   * `O(n log32 n)`
    */
   export
   function from<T>(values: IterableOrArrayLike<T>, cmp: (a: T, b: T) => number): TreeSet<T> {

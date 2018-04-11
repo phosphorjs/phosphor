@@ -418,8 +418,8 @@ class TreeList<T> implements IIterable<T>, IRetroable<T> {
     // Clear the current tree.
     BPlusTree.clearTree(this._root);
 
-    // Create a new empty tree.
-    this._root = this._first = this._last = new BPlusTree.ListLeaf<T>();
+    // Point the nodes to a single leaf.
+    this._root = this._first = this._last;
   }
 
   private _root: BPlusTree.ListNode<T>;
