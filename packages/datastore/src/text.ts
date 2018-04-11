@@ -1,5 +1,5 @@
 /*-----------------------------------------------------------------------------
-| Copyright (c) 2014-2017, PhosphorJS Contributors
+| Copyright (c) 2014-2018, PhosphorJS Contributors
 |
 | Distributed under the terms of the BSD 3-Clause License.
 |
@@ -16,17 +16,17 @@ interface IText {
    * Whether the text is empty.
    *
    * #### Complexity
-   * Constant.
+   * `O(1)`
    */
   readonly isEmpty: boolean;
 
   /**
-   * The length of the text.
+   * The size of the text.
    *
    * #### Complexity
-   * Constant.
+   * `O(1)`
    */
-  readonly length: number;
+  readonly size: number;
 
   /**
    * Get the character at a specific index.
@@ -37,7 +37,7 @@ interface IText {
    * @returns The character at the specified index.
    *
    * #### Complexity
-   * Logarithmic.
+   *
    */
   charAt(index: number): string;
 
@@ -55,7 +55,7 @@ interface IText {
    * @returns A new string for the requested portion of the text.
    *
    * #### Complexity
-   * Linear.
+   *
    *
    * #### Undefined Behavior
    * A `start` or `stop` which is non-integral.
@@ -68,19 +68,9 @@ interface IText {
    * @param value - The value to assign to the text.
    *
    * #### Complexity
-   * Linear.
+   *
    */
   assign(value: string): void;
-
-  /**
-   * Append a value to the end of the text.
-   *
-   * @param value - The value(s) to append to the text.
-   *
-   * #### Complexity
-   * Logarithmic.
-   */
-  append(value: string): void;
 
   /**
    * Insert a value into the text.
@@ -106,10 +96,10 @@ interface IText {
    *
    * @param count - The number of characters to remove.
    *
-   * @param value - The value(s) to insert at the specified index.
+   * @param value - The text to insert at the specified index.
    *
    * #### Complexity
-   * Logarithmic.
+   *
    *
    * #### Undefined Behavior
    * An `index` or `count` which is non-integral.
@@ -120,7 +110,7 @@ interface IText {
    * Clear the text value.
    *
    * #### Complexity
-   * Linear.
+   *
    */
   clear(): void;
 }

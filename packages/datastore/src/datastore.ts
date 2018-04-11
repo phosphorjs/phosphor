@@ -1,14 +1,10 @@
 /*-----------------------------------------------------------------------------
-| Copyright (c) 2014-2017, PhosphorJS Contributors
+| Copyright (c) 2014-2018, PhosphorJS Contributors
 |
 | Distributed under the terms of the BSD 3-Clause License.
 |
 | The full license is in the file LICENSE, distributed with this software.
 |----------------------------------------------------------------------------*/
-import {
-  IterableOrArrayLike
-} from '@phosphor/algorithm';
-
 import {
   IRecord
 } from './record';
@@ -16,10 +12,6 @@ import {
 import {
   Schema
 } from './schema';
-
-// import {
-//   IServer
-// } from './server';
 
 import {
   ITable
@@ -55,20 +47,20 @@ interface IDatastore {
   /**
    * Undo one or more patches to the datastore.
    *
-   * @param patchId - The patch(es) to undo.
+   * @param patchId - The patch to undo.
    *
    * @returns A promise which resolves when the action is complete.
    */
-  undo(patchId: string | IterableOrArrayLike<string>): Promise<void>;
+  undo(patchId: string): Promise<void>;
 
   /**
    * Redo one or more patches to the datastore.
    *
-   * @param patchId - The patch(es) to redo.
+   * @param patchId - The patch to redo.
    *
    * @returns A promise which resolves when the action is complete.
    */
-  redo(patchId: string | IterableOrArrayLike<string>): Promise<void>;
+  redo(patchId: string): Promise<void>;
 
   /**
    * Get the root record for a particular schema.
@@ -97,3 +89,8 @@ export
 function createDatastore(): Promise<IDatastore> {
   throw '';
 }
+
+
+/**
+ *
+ */

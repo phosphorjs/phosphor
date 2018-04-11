@@ -1,5 +1,5 @@
 /*-----------------------------------------------------------------------------
-| Copyright (c) 2014-2017, PhosphorJS Contributors
+| Copyright (c) 2014-2018, PhosphorJS Contributors
 |
 | Distributed under the terms of the BSD 3-Clause License.
 |
@@ -28,18 +28,12 @@ import {
 export
 interface ITable<S extends Schema> extends IIterable<IRecord<S>> {
   /**
-   * A signal emitted when a record is inserted.
-   *
-   * #### Notes
-   * The payload is the id of the record that was inserted.
+   * A signal emitted when a record is created.
    */
-  readonly recordInserted: ISignal<ITable<S>, string>;
+  readonly recordCreated: ISignal<ITable<S>, string>;
 
   /**
-   * A signal emitted when the state of a record changes.
-   *
-   * #### Notes
-   * This can be used to handle changes for multiple records.
+   * A signal emitted when the state of a record has changed.
    */
   readonly recordChanged: ISignal<ITable<S>, ITable.IRecordChangedArgs<S>>;
 
@@ -47,7 +41,7 @@ interface ITable<S extends Schema> extends IIterable<IRecord<S>> {
    * The schema for the table.
    *
    * #### Complexity
-   * Constant.
+   * `O(1)`
    */
   readonly schema: S;
 
@@ -55,7 +49,7 @@ interface ITable<S extends Schema> extends IIterable<IRecord<S>> {
    * Whether the table is empty.
    *
    * #### Complexity
-   * Constant.
+   * `O(1)`
    */
   readonly isEmpty: boolean;
 
@@ -63,7 +57,7 @@ interface ITable<S extends Schema> extends IIterable<IRecord<S>> {
    * The size of the table.
    *
    * #### Complexity
-   * Constant.
+   * `O(1)`
    */
   readonly size: number;
 
@@ -75,7 +69,7 @@ interface ITable<S extends Schema> extends IIterable<IRecord<S>> {
    * @returns `true` if the table has the record, `false` otherwise.
    *
    * #### Complexity
-   * Constant.
+   * `O(1)`
    */
   has(id: string): boolean;
 
@@ -88,7 +82,7 @@ interface ITable<S extends Schema> extends IIterable<IRecord<S>> {
    *   given id does not exist in the table.
    *
    * #### Complexity
-   * Constant.
+   * `O(1)`
    */
   get(id: string): IRecord<S> | undefined;
 
@@ -97,15 +91,15 @@ interface ITable<S extends Schema> extends IIterable<IRecord<S>> {
    *
    * @param state - The initial state for the record.
    *
-   * @returns The new record that was inserted into the table.
+   * @returns The new record that was created.
    *
    * #### Complexity
-   * Constant.
+   * `O(1)`
    *
    * #### Notes
    * Once created, a record cannot be deleted.
    */
-  insert(state: IRecord.UpdateState<S>): IRecord<S>;
+  create(state: IRecord.UpdateState<S>): IRecord<S>;
 }
 
 
@@ -118,10 +112,20 @@ namespace ITable {
    * The arguments object for the `recordChanged` signal.
    */
   export
-  interface IRecordChangedArgs<S extends Schema> extends IRecord.IChangedArgs<S> {
+  interface IRecordChangedArgs<S extends Schema> {
     /**
-     * The id of the record that was changed.
+     * The unique id of the patch which generated the change.
+     */
+    readonly patchId: string;
+
+    /**
+     * The unique id of the record that was changed.
      */
     readonly recordId: string;
+
+    /**
+     * The partial change state for the record.
+     */
+    readonly changes: IRecord.ChangeState<S>;
   }
 }

@@ -1,5 +1,5 @@
 /*-----------------------------------------------------------------------------
-| Copyright (c) 2014-2017, PhosphorJS Contributors
+| Copyright (c) 2014-2018, PhosphorJS Contributors
 |
 | Distributed under the terms of the BSD 3-Clause License.
 |
@@ -20,7 +20,7 @@ import {
 export
 interface IRecord<S extends Schema> {
   /**
-   * A signal emitted when the state of the record changes.
+   * A signal emitted when the record state changes.
    */
   readonly changed: ISignal<IRecord<S>, IRecord.IChangedArgs<S>>;
 
