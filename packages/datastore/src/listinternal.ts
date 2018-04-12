@@ -239,6 +239,17 @@ class ListInternal<T extends ReadonlyJSONValue> implements IList<T> {
    * `O(log32 n)`
    */
   set(index: number, value: T): void {
+    // Wrap negative indices.
+    if (index < 0) {
+      index += this.size;
+    }
+
+    // Bail early if the index is out of range.
+    if (index < 0 || index >= this.size) {
+      return;
+    }
+
+    // Set the value at the specified index.
     this.splice(index, 1, once(value));
   }
 
@@ -324,6 +335,17 @@ class ListInternal<T extends ReadonlyJSONValue> implements IList<T> {
    * `O(log32 n)`
    */
   remove(index: number): void {
+    // Wrap negative indices.
+    if (index < 0) {
+      index += this.size;
+    }
+
+    // Bail early if the index is out of range.
+    if (index < 0 || index >= this.size) {
+      return;
+    }
+
+    // Remove the value at the specified index.
     this.splice(index, 1);
   }
 
