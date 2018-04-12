@@ -363,60 +363,7 @@ class ListInternal<T extends ReadonlyJSONValue> implements IList<T> {
    * `O(k log32 n)`
    */
   splice(index: number, count: number, values?: IterableOrArrayLike<T>): void {
-    // Guard against disallowed mutations.
-    this._store.mutationGuard();
-
-    // Wrap and clamp the index.
-    if (index < 0) {
-      index = Math.max(0, index + this.size);
-    } else {
-      index = Math.min(index, this.size);
-    }
-
-    // Clamp the remove count.
-    count = Math.max(0, Math.min(count, this.size - index));
-
-    // Collect the array of values to be removed.
-    let remArr = toArray(this.slice(index, index + count));
-
-    // Collect the array of values to be inserted.
-    let insArr = values ? toArray(values) : [];
-
-    // Set up the map to hold the removed id:value pairs.
-    let remMap: { [key: string]: T } = {};
-
-    // Set up the map to hold the inserted id:value pairs.
-    let insMap: { [key: string]: T } = {};
-
-    // Remove the specified values from the internal map.
-    for (let i = 0; i < count; ++i) {
-      let id = this._map.keyAt(index)!;
-      this._map.remove(index);
-      remMap[id] = remArr[i];
-    }
-
-    // Setup the parameters for the id generation.
-    let n = insArr.length;
-    let site = this._store.site;
-    let clock = this._store.tick();
-    let lower = index === 0 ? undefined : this._map.keyAt(index - 1);
-    let upper = index === this.size ? undefined : this._map.keyAt(index);
-
-    // Create the identifier generator.
-    let idIterator = CRDTUtils.createIds({ n, site, clock, lower, upper });
-
-    // Insert the values into the internal map.
-    for (let i = 0; i < n; ++i) {
-      let id = idIterator.next()!;
-      this._map.set(id, insArr[i]);
-      insMap[id] = insArr[i];
-    }
-
-    // Register the user change for the list.
-    this._store.registerUserListChange(this._id, index, remArr, insArr);
-
-    // Register the broadcast change for the list.
-    this._store.registerBroadcastListChange(this._id, remMap, insMap);
+    Private.splice(this._store, this._id, this._map, index, count, values);
   }
 
   /**
@@ -444,4 +391,83 @@ class ListInternal<T extends ReadonlyJSONValue> implements IList<T> {
   private _id: string;
   private _store: DataStoreInternal;
   private _map = new TreeMap<string, T>(CRDTUtils.compareIds);
+}
+
+
+/**
+ * The namespace for the module implementation details.
+ */
+namespace Private {
+  /**
+   * Perform the splice operation for an internal list.
+   *
+   * @param store - The internal data store for the list.
+   *
+   * @param id - The globally unique id of the list.
+   *
+   * @param map - The internal tree map of the list.
+   *
+   * @param index - The index of the splice.
+   *
+   * @param cound - The number of values to remove.
+   *
+   * @param values - The values to insert.
+   */
+  export
+  function splice<T>(store: DataStoreInternal, id: string, map: TreeMap<string, T>, index: number, count: number, values?: IterableOrArrayLike<T>): void {
+    // Guard against disallowed mutations.
+    store.assertMutationsAllowed();
+
+    // Wrap and clamp the index.
+    if (index < 0) {
+      index = Math.max(0, index + map.size);
+    } else {
+      index = Math.min(index, map.size);
+    }
+
+    // Clamp the remove count.
+    count = Math.max(0, Math.min(count, map.size - index));
+
+    // Collect the array of values to be removed.
+    let remArr = toArray(map.sliceValues(index, index + count));
+
+    // Collect the array of values to be inserted.
+    let insArr = values ? toArray(values) : [];
+
+    // Set up the map to hold the removed id:value pairs.
+    let remMap: { [key: string]: T } = {};
+
+    // Set up the map to hold the inserted id:value pairs.
+    let insMap: { [key: string]: T } = {};
+
+    // Remove the specified values from the internal map.
+    for (let i = 0; i < count; ++i) {
+      let id = map.keyAt(index)!;
+      remMap[id] = remArr[i];
+      map.remove(index);
+    }
+
+    // Setup the parameters for the id generation.
+    let n = insArr.length;
+    let site = store.site;
+    let clock = store.tick();
+    let lower = index === 0 ? undefined : map.keyAt(index - 1);
+    let upper = index === map.size ? undefined : map.keyAt(index);
+
+    // Create the identifier iterator.
+    let it = CRDTUtils.createIds({ n, site, clock, lower, upper });
+
+    // Insert the values into the internal map.
+    for (let i = 0; i < n; ++i) {
+      let id = it.next()!;
+      insMap[id] = insArr[i];
+      map.set(id, insArr[i]);
+    }
+
+    // Register the user change for the list.
+    store.registerUserListChange(id, index, remArr, insArr);
+
+    // Register the broadcast change for the list.
+    store.registerBroadcastListChange(id, remMap, insMap);
+  }
 }
