@@ -47,6 +47,8 @@ class ListInternal<T extends ReadonlyJSONValue> implements IList<T> {
    * @param id - The globally unique identifier for the list.
    *
    * @param snapshot - The initial internal snapshot for the list.
+   *
+   * @returns A new internal list with the given initial state.
    */
   static create<U extends ReadonlyJSONValue>(store: DataStoreInternal, id: string, snapshot: DataStoreInternal.ListSnapshot<U>): ListInternal<U> {
     let list = new ListInternal<U>(store, id);
@@ -57,6 +59,8 @@ class ListInternal<T extends ReadonlyJSONValue> implements IList<T> {
   /**
    * Get an internal snapshot of the current list state.
    *
+   * @param list - The internal list of interest.
+   *
    * @returns A new internal snapshot of the list state.
    */
   static snapshot<U extends ReadonlyJSONValue>(list: ListInternal<U>): DataStoreInternal.ListSnapshot<U> {
@@ -64,11 +68,11 @@ class ListInternal<T extends ReadonlyJSONValue> implements IList<T> {
   }
 
   /**
-   * Apply a remotely generated system change to an internal list.
+   * Apply a broadcasted change to an internal list.
    *
    * @param list - The internal list to modify.
    *
-   * @param change - The broadcast change to apply to the list.
+   * @param change - The broadcasted change to apply to the list.
    */
   static update<U extends ReadonlyJSONValue>(list: ListInternal<U>, change: DataStoreInternal.BroadcastListChange<U>): void {
     // TODO
