@@ -19,66 +19,206 @@ import {
 
 
 /**
- * A multi-user collaborative data store.
+ * A multi-user collaborative datastore.
+ *
+ * #### Notes
+ * A datastore is structured in a maximally flat way using an object
+ * hierarchy of tables, records, and fields. Internally, this object
+ * hierarchy is synchronized among all users via CRDT algorithms.
+ *
+ * https://en.wikipedia.org/wiki/Conflict-free_replicated_data_type
  */
 export
 interface IDatastore {
   /**
-   * The patch server which drives the data store.
+   * A signal emitted when changes are made to the datastore.
+   *
+   * #### Notes
+   * This signal is emitted either at the end of a local mutation,
+   * or after a remote mutation has been applied.
+   *
+   * The payload represents the set of local changes that were made
+   * to bring the datastore to its current state.
    */
-  // readonly server: IPatchServer;
+  readonly changed: ISignal<IDatastore, IDatastore.IChangedArgs>;
+
+  /**
+   * The unique id of the datastore.
+   *
+   * #### Notes
+   * The datastore id is assigned by the patch server and is unique
+   * among all other stores serviced by that server. It is not safe
+   * to assume that the id is a GUID.
+   */
+  readonly id: string;
 
   /**
    * Make changes to the the datastore.
+   *
+   * @param message - The message to associate with the patch.
+   *   This should be a simple human readable description.
    *
    * @param fn - The function that will edit the datastore. The unique
    *   patch id is provided as the first argument. All changes made by
    *   the function are associated with the given patch id.
    *
-   * @returns The unique patch id.
+   * @throws An exception if `mutate` is called recursively.
    *
    * #### Notes
-   * The datastore can only be modified during a patch operation.
+   * Except for `undo` and `redo`, the datastore can only be modified
+   * during a `mutate` operation.
    *
-   * The patch function is invoked synchronously.
+   * The provided mutation function is invoked synchronously.
+   *
+   * If changes are made, the `changed` signal will be emitted before
+   * this method returns.
    */
-  patch(fn: (patchId: string) => void): string;
+  mutate(message: string, fn: (patchId: string) => void): void;
 
   /**
-   * Undo one or more patches to the datastore.
+   * Undo a patch that was previously applied.
    *
    * @param patchId - The patch to undo.
    *
    * @returns A promise which resolves when the action is complete.
+   *   The result will be `true` if the patch was undone, or `false`
+   *   if the patch was already undone. The promise will reject if
+   *   the given patch does not exist.
+   *
+   * @throws An exception if `undo` is called during a mutation.
+   *
+   * #### Notes
+   * If changes are made, the `changed` signal will be emitted before
+   * the promise resolves.
    */
-  undo(patchId: string): Promise<void>;
+  undo(patchId: string): Promise<boolean>;
 
   /**
-   * Redo one or more patches to the datastore.
+   * Redo a patch that was previously undone.
    *
-   * @param patchId - The patch to redo.
+   * @param patchId - The patch(es) to redo.
    *
    * @returns A promise which resolves when the action is complete.
-   */
-  redo(patchId: string): Promise<void>;
-
-  /**
-   * Get the root record for a particular schema.
+   *   The result will be `true` if the patch was redone, or `false`
+   *   if the patch was not already undone. The promise will reject
+   *   if the given patch does not exist.
    *
-   * @param schema - The schema of interest.
+   * @throws An exception if `redo` is called during a mutation.
    *
-   * @returns The root record for the given schema.
+   * #### Notes
+   * If changes are made, the `changed` signal will be emitted before
+   * the promise resolves.
    */
-  getRecord<S extends Schema>(schema: S): IRecord<S>;
+  redo(patchId: string): Promise<boolean>;
 
   /**
    * Get the table for a particular schema.
    *
    * @param schema - The schema of interest.
    *
-   * @returns The table for the given schema.
+   * @returns The table for the specified schema, or `undefined` if
+   *   no such table exists.
+   *
+   * #### Notes
+   * This method may be called at any time.
    */
-  getTable<S extends Schema>(schema: S): ITable<S>;
+  getTable<S extends Schema>(schema: S): ITable<S> | undefined;
+
+  /**
+   * Create a table for the given schema.
+   *
+   * @param schema - The schema of interest.
+   *
+   * @returns A new table for the specified schema, or the existing
+   *   table if such a table already exists.
+   *
+   * #### Notes
+   * This method may only be called during `mutate`.
+   *
+   * Once created, a table cannot be deleted.
+   */
+  createTable<S extends Schema>(schema: S): ITable<S>;
+}
+
+
+/**
+ * The namespace for the `IDatastore` interface statics.
+ */
+export
+namespace IDatastore {
+  /**
+   * The arguments object for the datastore `changed` signal.
+   */
+  export
+  interface IChangedArgs {
+    /**
+     * Whether the change was generated by mutation, undo, or redo.
+     */
+    readonly type: 'mutate' | 'undo' | 'redo';
+
+    /**
+     * The id of the datastore which generated the current change.
+     */
+    readonly storeId: string;
+
+    /**
+     * The id of the patch associated with the change.
+     */
+    readonly patchId: string;
+
+    /**
+     * The mutation message associated with the patch.
+     */
+    readonly patchMessage: string;
+
+    /**
+     * The schema ids of the tables created during the change.
+     */
+    readonly newTables: ReadonlyArray<string>;
+
+    /**
+     * A mapping of schema id to table changes.
+     */
+    readonly tableChanges: TableChangesBySchemaId;
+  }
+
+  /**
+   * A type alias for a mapping of table changes.
+   */
+  export
+  type TableChangesBySchemaId = {
+    /**
+     * An index signature which maps schema ids to table changes.
+     */
+    readonly [schemaId: string]: TableChange<Schema>;
+  };
+
+  /**
+   * A type alias for changes to a specific table.
+   */
+  export
+  type TableChange<S extends Schema> = {
+    /**
+     * The ids of the records created during the change.
+     */
+    readonly newRecords: ReadonlyArray<string>;
+
+    /**
+     * A mapping of record id to record changes.
+     */
+    readonly recordChanges: RecordChangesByRecordId<S>;
+  };
+
+  /**
+   * A type alias for a mapping of record changes.
+   */
+  export
+  type RecordChangesByRecordId<S extends Schema> = {
+    /**
+     * An index signature which maps record ids to record changes.
+     */
+    readonly [recordId: string]: IRecord.ChangeState<S>;
+  };
 }
 
 
@@ -89,8 +229,3 @@ export
 function createDatastore(): Promise<IDatastore> {
   throw '';
 }
-
-
-/**
- *
- */
