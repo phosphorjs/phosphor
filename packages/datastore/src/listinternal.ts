@@ -471,3 +471,236 @@ namespace Private {
     store.registerBroadcastListChange(id, remMap, insMap);
   }
 }
+
+
+/**
+ * The namespace for CRDT utilities.
+ *
+ * https://en.wikipedia.org/wiki/Conflict-free_replicated_data_type
+ */
+export
+namespace CRDTUtils {
+  /**
+   * Perform a three-way comparison on two identifiers.
+   *
+   * @param a - The first identifier of interest.
+   *
+   * @param b - The second identifier of interest.
+   *
+   * @returns `-1` if `a < b`, `1` if `a > b`, or `0` if `a == b`.
+   */
+  export
+  function compareIds(a: number[], b: number[]): number {
+    let an = a.length;
+    let bn = b.length;
+    for (let i = 0, n = Math.min(an, bn); i < n; ++i) {
+      let d = a[i] - b[i];
+      if (d < 0) {
+        return -1;
+      }
+      if (d > 0) {
+        return 1;
+      }
+    }
+    return an < bn ? -1 : an > bn ? 1 : 0;
+  }
+
+  /**
+   *
+   * @param slots - integer >= 1
+   */
+  function randomPathOffset(slots: number): number[] {
+    let r = Math.random();
+    let bucket = Math.sqrt(slots);
+    let offset = Math.round(r * bucket);
+    return Math.max(1, offset);
+  }
+
+  /**
+   *
+   */
+  function newRandomId(clock: number, site: number): number[] {
+    return [randomPathOffset(MAX_PATH_PART), clock, site];
+  }
+
+  function newIdBefore(upper: number[], clock: number, site: number): number[] {
+    //
+    let result: number[] = [];
+
+    //
+    for (let i = 0, n = uppper.length; i < n; i += 3) {
+      //
+      let p = upper[i];
+
+      //
+      if (p === 0) {
+        result.push(0, clock, site);
+        continue;
+      }
+
+      //
+      if (p === 1) {
+        result.push(0, clock, site);
+        break;
+      }
+
+      //
+      let np = p - randomPathOffset(p);
+
+      //
+      result.push(np, clock, site);
+
+      //
+      return result;
+    }
+
+    //
+    let np = MAX_PATH_PART - randomPathOffset(MAX_PATH_PART);
+
+    //
+    result.push(np, clock site);
+
+    //
+    return result;
+  }
+  /**
+   * Create identifiers between two boundary identifiers.
+   *
+   * @param n - The number of identifiers to generate.
+   *
+   * @param clock - The clock value of the datastore.
+   *
+   * @param site - The id of the datastore.
+   *
+   * @param lower - The lower boundary identifier.
+   *
+   * @param upper - The upper boundary identifier.
+   *
+   * @returns An iterator which generates the requested number of
+   *   identifiers between the specified boundaries.
+   */
+  export
+  function createIdBetween(lower: number[] | null, upper: number[] | null, clock: number, site: number): number[] {
+    // Extract the path portions of the identifiers.
+    let lowerPath = lower ? extractPath(lower) : [];
+    let upperPath = upper ? extractPath(upper) : [];
+
+    // Set up the path padding values.
+    let lowerPad = MIN_PATH_PART;
+    let upperPad = upper ? MIN_PATH_PART : MAX_PATH_PART;
+
+    // Pad the paths to equal lengths.
+    while (lowerPath.length < upperPath.length) {
+      lowerPath.push(lowerPad);
+    }
+    while (upperPath.length < lowerPath.length) {
+      upperPath.push(upperPad);
+    }
+
+    // Compute the distance between the paths.
+    let distance = pathDistance(lowerPath, upperPath);
+
+    //
+    if (distance === 0) {
+      let result = lowerPath.slice();
+      result.push(randomPathOffset(MAX_PATH_PART), clock, site);
+      return result;
+    }
+
+    //
+    if (distance === 1) {
+      lowerPath.push(randomPathOffset(MAX_PATH_PART));
+      return makeId(lowerPath, clock, site);
+    }
+
+    let o = randomPathOffset(distance - 1);
+    addToP
+    // Set up the base identifier prefix.
+    let prefix: number[] = [];
+
+    // If the path distance is zero, create a new suffix path branch.
+    if (distance === 0) {
+      prefix = lowerId.slice();
+      lowerPath = [MIN_PAD];
+      upperPath = [MAX_PAD];
+      upperPad = MAX_PAD;
+      distance = MAX_PAD;
+    }
+
+    // Pad the paths until there is sufficient space between them.
+    let space = distance - 1;
+    while (space < n) {
+      lowerPath.push(lowerPad);
+      upperPath.push(upperPad);
+      space = Private.pathDistance(lowerPath, upperPath) - 1;
+    }
+
+    // Create the identifier suffix.
+    let suffix = Private.combinePath(lowerPath, clock, site);
+
+    // Create the base identifier.
+    let base = prefix.concat(suffix);
+
+    // Compute the maximum iteration step size.
+    let step = Math.min(Math.floor(space / n), 64);
+
+
+  }
+
+  /**
+   *
+   */
+  const MIN_PATH_PART = 0;
+
+  /**
+   *
+   */
+  const MAX_PATH_PART = Number.MAX_SAFE_INTEGER;
+
+  /**
+   * Extract the path portion of a numeric id.
+   */
+  function extractPath(id: number[]): number[] {
+    return ArrayExt.slice(id, { step: 3 });
+  }
+
+  /**
+   * Combine a path, site, and clock into an identifier.
+   */
+  function combinePath(path: number[], site: number, clock: number): number[] {
+    let result: number[] = [];
+    for (let i = 0; i < path.length; ++i) {
+      result.push(path[i], site, clock);
+    }
+    return result;
+  }
+
+  /**
+   * Compute the distance between two equal-length paths.
+   */
+  function pathDistance(a: number[], b: number[]): number {
+    let result = 0;
+    for (let i = 0, n = a.length; i < n; ++i) {
+      result += (b[i] - a[i]) * Math.pow(MAX_WIDTH, n - i - 1);
+    }
+    return result;
+  }
+
+  /**
+   * Increment the path portion of an identifier by a given amount.
+   *
+   * @param id - The numeric identifier to modify.
+   *
+   * @param n - The amount to increment `<= 0x7FFF0000`.
+   *
+   * @returns The remainder of the increment, or `0`.
+   */
+  function incrementPath(id: number[], n: number): number {
+    for (let i = id.length - 3; i >= 0 && n > 0; i -= 3) {
+      n += id[i];
+      id[i] = n & 0xFFFF;
+      n >>= 16;
+    }
+    return n;
+  }
+}

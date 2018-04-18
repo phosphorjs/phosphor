@@ -6,12 +6,8 @@
 | The full license is in the file LICENSE, distributed with this software.
 |----------------------------------------------------------------------------*/
 import {
-  IRecord
-} from './record';
-
-import {
-  Schema
-} from './schema';
+  ISignal
+} from '@phosphor/signaling';
 
 import {
   ITable
@@ -27,6 +23,7 @@ import {
  * hierarchy is synchronized among all users via CRDT algorithms.
  *
  * https://en.wikipedia.org/wiki/Conflict-free_replicated_data_type
+ * https://hal.inria.fr/file/index/docid/555588/filename/techreport.pdf
  */
 export
 interface IDatastore {
@@ -39,6 +36,9 @@ interface IDatastore {
    *
    * The payload represents the set of local changes that were made
    * to bring the datastore to its current state.
+   *
+   * #### Complexity
+   * `O(1)`
    */
   readonly changed: ISignal<IDatastore, IDatastore.IChangedArgs>;
 
@@ -49,6 +49,9 @@ interface IDatastore {
    * The datastore id is assigned by the patch server and is unique
    * among all other stores serviced by that server. It is not safe
    * to assume that the id is a GUID.
+   *
+   * #### Complexity
+   * `O(1)`
    */
   readonly id: string;
 
@@ -121,23 +124,30 @@ interface IDatastore {
    *
    * #### Notes
    * This method may be called at any time.
+   *
+   * #### Complexity
+   * `O(1)`
    */
-  getTable<S extends Schema>(schema: S): ITable<S> | undefined;
+  getTable<S extends ITable.Schema>(schema: S): ITable<S> | undefined;
 
   /**
-   * Create a table for the given schema.
+   * Create a new table for a schema.
    *
    * @param schema - The schema of interest.
    *
-   * @returns A new table for the specified schema, or the existing
-   *   table if such a table already exists.
+   * @returns A new table for the specified schema.
+   *
+   * @throws An exception if a table for the schema already exists.
    *
    * #### Notes
    * This method may only be called during `mutate`.
    *
    * Once created, a table cannot be deleted.
+   *
+   * #### Complexity
+   * `O(1)`
    */
-  createTable<S extends Schema>(schema: S): ITable<S>;
+  createTable<S extends ITable.Schema>(schema: S): ITable<S>;
 }
 
 
@@ -167,11 +177,6 @@ namespace IDatastore {
     readonly patchId: string;
 
     /**
-     * The mutation message associated with the patch.
-     */
-    readonly patchMessage: string;
-
-    /**
      * The schema ids of the tables created during the change.
      */
     readonly newTables: ReadonlyArray<string>;
@@ -190,14 +195,14 @@ namespace IDatastore {
     /**
      * An index signature which maps schema ids to table changes.
      */
-    readonly [schemaId: string]: TableChange<Schema>;
+    readonly [schemaId: string]: TableChange<ITable.Schema>;
   };
 
   /**
    * A type alias for changes to a specific table.
    */
   export
-  type TableChange<S extends Schema> = {
+  type TableChange<S extends ITable.Schema> = {
     /**
      * The ids of the records created during the change.
      */
@@ -213,11 +218,22 @@ namespace IDatastore {
    * A type alias for a mapping of record changes.
    */
   export
-  type RecordChangesByRecordId<S extends Schema> = {
+  type RecordChangesByRecordId<S extends ITable.Schema> = {
     /**
      * An index signature which maps record ids to record changes.
      */
-    readonly [recordId: string]: IRecord.ChangeState<S>;
+    readonly [recordId: string]: RecordChange<S>;
+  };
+
+  /**
+   * A type alias for changes to a specific record.
+   */
+  export
+  type RecordChange<S extends ITable.Schema> = {
+    /**
+     * The change state of a record.
+     */
+    readonly [K in keyof S['fields']]?: S['fields'][K]['@@ChangeType'];
   };
 }
 

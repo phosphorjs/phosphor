@@ -10,33 +10,15 @@ import {
 } from '@phosphor/algorithm';
 
 import {
-  ISignal
-} from '@phosphor/signaling';
-
-import {
-  IRecord
-} from './record';
-
-import {
-  Schema
-} from './schema';
+  Field
+} from './fields';
 
 
 /**
- * An object which maintains a collection of records.
+ * A datastore object which holds a collection of records.
  */
 export
-interface ITable<S extends Schema> extends IIterable<IRecord<S>> {
-  /**
-   * A signal emitted when a record is created.
-   */
-  readonly recordCreated: ISignal<ITable<S>, string>;
-
-  /**
-   * A signal emitted when the state of a record has changed.
-   */
-  readonly recordChanged: ISignal<ITable<S>, ITable.IRecordChangedArgs<S>>;
-
+interface ITable<S extends ITable.Schema> extends IIterable<ITable.Record<S>> {
   /**
    * The schema for the table.
    *
@@ -62,6 +44,16 @@ interface ITable<S extends Schema> extends IIterable<IRecord<S>> {
   readonly size: number;
 
   /**
+   * Create a unique id which can be used for a new record.
+   *
+   * @returns A new id which is guaranteed to be unique for the table.
+   *
+   * #### Complexity
+   * `O(1)`
+   */
+  newId(): string;
+
+  /**
    * Test whether the table has a particular record.
    *
    * @param id - The id of the record of interest.
@@ -78,28 +70,26 @@ interface ITable<S extends Schema> extends IIterable<IRecord<S>> {
    *
    * @param id - The id of the record of interest.
    *
-   * @returns The requested record, or `undefined` if a record with the
-   *   given id does not exist in the table.
+   * @returns The record for the specified id, or `undefined` if no
+   *   such record exists.
    *
    * #### Complexity
    * `O(1)`
    */
-  get(id: string): IRecord<S> | undefined;
+  get(id: string): ITable.Record<S> | undefined;
 
   /**
-   * Create and insert a new record into the table.
+   * Set the state of a record in the table.
    *
-   * @param state - The initial state for the record.
+   * @param id - The id of the record of interest. If no such record
+   *   exists, it will be created and added automatically.
    *
-   * @returns The new record that was created.
+   * @param state - The partial state for updating the record.
    *
    * #### Complexity
    * `O(1)`
-   *
-   * #### Notes
-   * Once created, a record cannot be deleted.
    */
-  create(state: IRecord.UpdateState<S>): IRecord<S>;
+  set(id: string, state: ITable.PartialRecordState<S>): void;
 }
 
 
@@ -109,23 +99,58 @@ interface ITable<S extends Schema> extends IIterable<IRecord<S>> {
 export
 namespace ITable {
   /**
-   * The arguments object for the `recordChanged` signal.
+   * A type definition for a schema.
+   *
+   * #### Notes
+   * The datastore assumes that peers may safely collaborate on tables
+   * which share the same schema `id`.
+   *
+   * The schema `id` **must** be changed whenever changes are made to
+   * the schema, or undefined behavior **will** result.
    */
   export
-  interface IRecordChangedArgs<S extends Schema> {
+  type Schema = {
     /**
-     * The unique id of the patch which generated the change.
+     * The unique identifier for the schema.
      */
-    readonly patchId: string;
+    readonly id: string;
 
     /**
-     * The unique id of the record that was changed.
+     * The field definitions for the schema.
      */
-    readonly recordId: string;
+    readonly fields: { readonly [key: string]: Field; };
+  };
 
+  /**
+   * The extra state added to each record by the table.
+   */
+  export
+  type ExtraRecordState = {
     /**
-     * The partial change state for the record.
+     * The unique id of the record.
      */
-    readonly changes: IRecord.ChangeState<S>;
-  }
+    readonly '@@id': string;
+  };
+
+  /**
+   * A type alias for a record in a table.
+   */
+  export
+  type Record<S extends Schema> = ExtraRecordState & {
+    /**
+     * The value state of a record.
+     */
+    readonly [K in keyof S['fields']]: S['fields'][K]['@@ValueType'];
+  };
+
+  /**
+   * A type alias for the partial state of a record.
+   */
+  export
+  type PartialRecordState<S extends Schema> = {
+    /**
+     * The partial state of a record.
+     */
+    readonly [K in keyof S['fields']]?: S['fields'][K]['@@PartialType'];
+  };
 }
