@@ -474,12 +474,9 @@ namespace Private {
 
 
 /**
- * The namespace for CRDT utilities.
  *
- * https://en.wikipedia.org/wiki/Conflict-free_replicated_data_type
  */
-export
-namespace CRDTUtils {
+namespace Private {
   /**
    * Perform a three-way comparison on two identifiers.
    *
@@ -491,78 +488,245 @@ namespace CRDTUtils {
    */
   export
   function compareIds(a: number[], b: number[]): number {
+    // Pre-fetch the lengths of the ids.
     let an = a.length;
     let bn = b.length;
-    for (let i = 0, n = Math.min(an, bn); i < n; ++i) {
-      let d = a[i] - b[i];
-      if (d < 0) {
+
+    // Compute the maximum length.
+    let n = an < bn ? bn : an;
+
+    // Lexographically compare the ids.
+    for (let i = 0; i < n; ++i) {
+      // Fetch the current value or pad with zero.
+      let ai = i < an ? a[i] : 0;
+      let bi = i < bn ? b[i] : 0;
+
+      // Check less-than.
+      if (ai < bi) {
         return -1;
       }
-      if (d > 0) {
+
+      // Check greater-than.
+      if (ai > bi) {
         return 1;
       }
     }
-    return an < bn ? -1 : an > bn ? 1 : 0;
+
+    // The identifiers are equal.
+    return 0;
   }
 
   /**
+   * Create a new identifier between two boundary identifiers.
    *
-   * @param slots - integer >= 1
+   * @param lower - The lower boundary identifier, exclusive,
+   *   or `null` if there is no lower boundary.
+   *
+   * @param upper - The upper boundary identifier, exclusive,
+   *   or `null` if there is no upper boundary.
+   *
+   * @param n - The number of identifiers to generate.
+   *
+   * @param clock - The clock value of the datastore.
+   *
+   * @param site - The id of the datastore.
+   *
+   * @returns A new identifier between the given identifiers.
+   *
+   * #### Undefined Behavior
+   * Boundary identifiers which are malformed or mal-ordered.
    */
-  function randomPathOffset(slots: number): number[] {
-    let r = Math.random();
-    let bucket = Math.sqrt(slots);
-    let offset = Math.round(r * bucket);
-    return Math.max(1, offset);
+  export
+  function createIdBetween(lower: number[] | null, upper: number[] | null, clock: number, site: number): number[] {
+    // If no boundaries are given, create an unconstrained id.
+    if (!lower && !upper) {
+      return newId(clock, site);
+    }
+
+    // If a lower is not given, create an id before the upper.
+    if (!lower) {
+      return newIdBefore(upper, clock, site);
+    }
+
+    // If an upper is not given, create an id after the lower.
+    if (!upper) {
+      return newIdAfter(lower, clock, site);
+    }
+
+    // Otherwise, create an id between the boundaries.
+    return newIdBetween(lower, upper, clock, site);
   }
 
   /**
-   *
+   * The minimum allowed path value in an identifier.
    */
-  function newRandomId(clock: number, site: number): number[] {
-    return [randomPathOffset(MAX_PATH_PART), clock, site];
+  const MIN_PATH = Math.floor(Number.MIN_SAFE_INTEGER / 2);
+
+  /**
+   * The maximum allowed path value in an identifier.
+   */
+  const MAX_PATH = Math.floor(Number.MAX_SAFE_INTEGER / 2);
+
+  /**
+   * Create a new unconstrained id.
+   */
+  function newId(clock: number, site: number): number[] {
+    return [randomLeadingPath(MIN_PATH, MAX_PATH), clock, site];
   }
 
+  /**
+   * Create a new random id before the given upper boundary.
+   */
   function newIdBefore(upper: number[], clock: number, site: number): number[] {
-    //
+    // Set up the array to hold the result.
     let result: number[] = [];
 
-    //
-    for (let i = 0, n = uppper.length; i < n; i += 3) {
-      //
-      let p = upper[i];
+    // Iterate over the upper boundary triplets.
+    for (let i = 0, n = upper.length; i < n; i += 3) {
+      // Fetch the current path.
+      let path = upper[i];
+
+      // If the path is minimal, just copy the current triplet.
+      if (path === MIN_PATH) {
+        result.push(MIN_PATH, upper[i + 1], upper[i + 2]);
+        continue;
+      }
+
+      // Otherwise, add a new path bounded by the current path.
+      result.push(randomTrailingPath(MIN_PATH, path - 1), clock, site);
+
+      // Return the final result.
+      return result;
+    }
+
+    // If this point is reached, the upper boundary is composed of all
+    // minimum paths. Add a new path bounded by the implict zero path.
+    result.push(randomTrailingPath(MIN_PATH, -1), clock, site);
+
+    // Return the final result.
+    return result;
+  }
+
+  /**
+   * Create a new random id after the given lower boundary.
+   */
+  function newIdAfter(lower: number[], clock: number, site: number): number[] {
+    // Set up the array to hold the result.
+    let result: number[] = [];
+
+    // Iterate over the lower boundary triplets.
+    for (let i = 0, n = lower.length; i < n; i += 3) {
+      // Fetch the current path.
+      let path = lower[i];
+
+      // If the path is maximal, just copy the current triplet.
+      if (path === MAX_PATH) {
+        result.push(MAX_PATH, lower[i + 1], lower[i + 2]);
+        continue;
+      }
+
+      // Otherwise, add a new path bounded by the current path.
+      result.push(randomLeadingPath(path + 1, MAX_PATH), clock, site);
+
+      // Return the final result.
+      return result;
+    }
+
+    // If this point is reached, the lower boundary is composed of all
+    // maximal paths. Add a new path bounded by the implict zero path.
+    result.push(randomLeadingPath(1, MAX_PATH), clock, site);
+
+    // Return the final result.
+    return result;
+  }
+
+  /**
+   * Create a new random id between the given boundaries.
+   */
+  function newIdBetween(lower: number[], upper: number[], clock: number, site: number): number[] {
+    // Set up the array to hold the result.
+    let result: number[] = [];
+
+    // Fetch the lengths of the ids.
+    let nL = lower.length;
+    let nU = upper.length;
+
+    // Compute the maximum length.
+    let n = nL < nU ? nU : nL;
+
+    // Iterate over the id triplets.
+    for (let i = 0; i < n; i += 3) {
+      // Fetch the path values, padding with zeros.
+      let lPath = i < nL ? lower[i] : 0;
+      let uPath = i < nU ? upper[i] : 0;
 
       //
-      if (p === 0) {
-        result.push(0, clock, site);
+      if (lPath === uPath) {
+        let lClock = i < nL ? lower[i + 1] : 0;
+        let lSite = i < nL ? lower[i + 2] : 0;
+        result.push(lPath, lClock, lSite);
         continue;
       }
 
       //
-      if (p === 1) {
-        result.push(0, clock, site);
-        break;
+      if (uPath - lPath > 1) {
+        result.push(randomLeadingPath(lPath + 1, uPath - 1), clock, site);
+        return result;
       }
 
       //
-      let np = p - randomPathOffset(p);
+      let heads = Math.random() < 0.5;
 
       //
-      result.push(np, clock, site);
+      if (heads) {
+        addAfter(lower, i, result, clock, site);
+      } else {
+        addBefore(upper, i, result, clock, site);
+      }
 
       //
       return result;
     }
 
     //
-    let np = MAX_PATH_PART - randomPathOffset(MAX_PATH_PART);
-
-    //
-    result.push(np, clock site);
-
-    //
+    result.push(randomLeadingPath(MIN_PATH, MAX_PATH), clock, site);
     return result;
   }
+
+  /**
+   *
+   */
+  function addAfter(lower: number[], i: number, result: number[], clock: number, site: number): void {
+    //
+    for (let n = lower.length; i < n; i += 3) {
+      //
+      let path = lower[i];
+
+      //
+      if (path === MAX_PATH) {
+        result.push(MAX_PATH, lower[i + 1], lower[i + 2]);
+        continue;
+      }
+
+      result.
+
+      break;
+    }
+  }
+  /**
+   * Pick a path in the leading square bucket of an inclusive range.
+   */
+  function randomLeadingPath(min: number, max: number): number {
+    return min + Math.round(Math.random() * Math.sqrt(max - min));
+  }
+
+  /**
+   * Pick a path in the trailing square bucket of an inclusive range.
+   */
+  function randomTrailingPath(min: number, max: number): number {
+    return max - Math.round(Math.random() * Math.sqrt(max - min));
+  }
+
   /**
    * Create identifiers between two boundary identifiers.
    *
@@ -581,6 +745,24 @@ namespace CRDTUtils {
    */
   export
   function createIdBetween(lower: number[] | null, upper: number[] | null, clock: number, site: number): number[] {
+    //
+    if (!lower)
+    //
+    let result: number = [];
+
+    lower = lower || [];
+    upper = upper || [];
+
+    //
+    let n = Math.max(lower.length, upper.length);
+
+    let lPad = 0;
+    let uPad = lower ? 0 : MAX_PAD;
+
+    //
+    for (let i = 0; i < n; i += 3) {
+      let a = (lower && i < lower.length) ? lower[i]
+    }
     // Extract the path portions of the identifiers.
     let lowerPath = lower ? extractPath(lower) : [];
     let upperPath = upper ? extractPath(upper) : [];
@@ -643,64 +825,5 @@ namespace CRDTUtils {
 
     // Compute the maximum iteration step size.
     let step = Math.min(Math.floor(space / n), 64);
-
-
-  }
-
-  /**
-   *
-   */
-  const MIN_PATH_PART = 0;
-
-  /**
-   *
-   */
-  const MAX_PATH_PART = Number.MAX_SAFE_INTEGER;
-
-  /**
-   * Extract the path portion of a numeric id.
-   */
-  function extractPath(id: number[]): number[] {
-    return ArrayExt.slice(id, { step: 3 });
-  }
-
-  /**
-   * Combine a path, site, and clock into an identifier.
-   */
-  function combinePath(path: number[], site: number, clock: number): number[] {
-    let result: number[] = [];
-    for (let i = 0; i < path.length; ++i) {
-      result.push(path[i], site, clock);
-    }
-    return result;
-  }
-
-  /**
-   * Compute the distance between two equal-length paths.
-   */
-  function pathDistance(a: number[], b: number[]): number {
-    let result = 0;
-    for (let i = 0, n = a.length; i < n; ++i) {
-      result += (b[i] - a[i]) * Math.pow(MAX_WIDTH, n - i - 1);
-    }
-    return result;
-  }
-
-  /**
-   * Increment the path portion of an identifier by a given amount.
-   *
-   * @param id - The numeric identifier to modify.
-   *
-   * @param n - The amount to increment `<= 0x7FFF0000`.
-   *
-   * @returns The remainder of the increment, or `0`.
-   */
-  function incrementPath(id: number[], n: number): number {
-    for (let i = id.length - 3; i >= 0 && n > 0; i -= 3) {
-      n += id[i];
-      id[i] = n & 0xFFFF;
-      n >>= 16;
-    }
-    return n;
   }
 }
