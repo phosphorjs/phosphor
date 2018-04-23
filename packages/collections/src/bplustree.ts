@@ -926,7 +926,7 @@ namespace BPlusTree {
     let index = 0;
     while (isBranchNode(node)) {
       let i = findPivotIndexByKey(node.keys, key, cmp);
-      index += sumFirstN(node.sizes, i);
+      if (i > 0) index += node.sizes[i - 1];
       node = node.children[i];
     }
     let i = findKeyIndex(node.keys, key, cmp);
@@ -1541,17 +1541,6 @@ namespace BPlusTree {
       }
     }
     return -n - 1;
-  }
-
-  /**
-   * Compute the sum of the first n values.
-   */
-  function sumFirstN(values: number[], n: number): number {
-    let sum = 0;
-    for (let i = 0; i < n; ++i) {
-      sum += values[i];
-    }
-    return sum;
   }
 
   /**
