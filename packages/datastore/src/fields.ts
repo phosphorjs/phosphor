@@ -101,19 +101,19 @@ namespace ListField {
   export
   interface IChange<T extends ReadonlyJSONValue> {
     /**
+     * Whether a value was inserted or removed.
+     */
+    readonly type: 'insert' | 'remove';
+
+    /**
      * The index of the modification.
      */
     readonly index: number;
 
     /**
-     * The value removed at the given index.
+     * The value inserted at or removed from the given index.
      */
-    readonly removed: T | undefined;
-
-    /**
-     * The value added at the given index.
-     */
-    readonly added: T | undefined;
+    readonly value: T;
   }
 }
 
@@ -288,19 +288,19 @@ namespace TextField {
   export
   interface IChange {
     /**
+     * Whether text was inserted or removed.
+     */
+    readonly type: 'insert' | 'remove';
+
+    /**
      * The index of the modification.
      */
     readonly index: number;
 
     /**
-     * The text removed at the given index.
+     * The text inserted at or removed from the given index.
      */
-    readonly removed: string;
-
-    /**
-     * The text added at the given index.
-     */
-    readonly added: string;
+    readonly text: string;
   }
 }
 

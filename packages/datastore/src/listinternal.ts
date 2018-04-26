@@ -6,7 +6,7 @@
 | The full license is in the file LICENSE, distributed with this software.
 |----------------------------------------------------------------------------*/
 import {
-  IIterator, IterableOrArrayLike, iterItems, once, toArray, toObject
+  IIterator, IterableOrArrayLike, each, empty, iter, iterItems, once, toObject
 } from '@phosphor/algorithm';
 
 import {
@@ -18,11 +18,7 @@ import {
 } from '@phosphor/coreutils';
 
 import {
-  CRDTUtils
-} from './crdtutils';
-
-import {
-  DataStoreInternal
+  DatastoreInternal
 } from './datastoreinternal';
 
 import {
@@ -44,15 +40,16 @@ class ListInternal<T extends ReadonlyJSONValue> implements IList<T> {
    *
    * @param store - The internal data store which owns the list.
    *
-   * @param id - The globally unique identifier for the list.
+   * @param path - The path of the list in the data store.
    *
    * @param snapshot - The initial internal snapshot for the list.
    *
    * @returns A new internal list with the given initial state.
    */
-  static create<U extends ReadonlyJSONValue>(store: DataStoreInternal, id: string, snapshot: DataStoreInternal.ListSnapshot<U>): ListInternal<U> {
-    let list = new ListInternal<U>(store, id);
-    list._map.update(iterItems(snapshot));
+  static create<U extends ReadonlyJSONValue>(store: DatastoreInternal, path: string, snapshot: DatastoreInternal.IListSnapshot<U>): ListInternal<U> {
+    let list = new ListInternal<U>(store, path);
+    list._map.update(iterItems(snapshot.values));
+    list._clock = snapshot.clock;
     return list;
   }
 
@@ -63,29 +60,61 @@ class ListInternal<T extends ReadonlyJSONValue> implements IList<T> {
    *
    * @returns A new internal snapshot of the list state.
    */
-  static snapshot<U extends ReadonlyJSONValue>(list: ListInternal<U>): DataStoreInternal.ListSnapshot<U> {
-    return toObject(list._map);
+  static snapshot<U extends ReadonlyJSONValue>(list: ListInternal<U>): DatastoreInternal.IListSnapshot<U> {
+    return { clock: list._clock, values: toObject(list._map) };
   }
 
   /**
-   * Apply a broadcasted change to an internal list.
+   * Apply a broadcasted update to an internal list.
    *
    * @param list - The internal list to modify.
    *
-   * @param change - The broadcasted change to apply to the list.
+   * @param update - The update to apply to the list.
    */
-  static update<U extends ReadonlyJSONValue>(list: ListInternal<U>, change: DataStoreInternal.BroadcastListChange<U>): void {
-    // TODO
+  static apply<U extends ReadonlyJSONValue>(list: ListInternal<U>, update: DatastoreInternal.IListUpdate<U>): void {
+    // Fast-forward the list clock if necessary.
+    list._clock = Math.max(list._clock, update.clock);
+
+    // Remove the specified values.
+    ListInternal._removeItems(list, update.removed);
+
+    // Insert the specified values.
+    ListInternal._insertItems(list, update.inserted);
   }
 
   /**
-   * The globally unique identifier for the list.
+   *
+   */
+  static undo<U extends ReadonlyJSONValue>(list: ListInternal<U>, update: DatastoreInternal.IListUpdate<U>): void {
+    // Remove the specified values.
+    ListInternal._removeItems(list, update.inserted);
+
+    // Insert the specified values.
+    ListInternal._insertItems(list, update.removed);
+  }
+
+  /**
+   *
+   */
+  static redo<U extends ReadonlyJSONValue>(list: ListInternal<U>, update: DatastoreInternal.IListUpdate<U>): void {
+    // Remove the specified values.
+    ListInternal._removeItems(list, update.removed);
+
+    // Insert the specified values.
+    ListInternal._insertItems(list, update.inserted);
+  }
+
+  /**
+   * The path of the list in the datastore.
+   *
+   * #### Notes
+   * The path has the form: `'<schemaId>/<recordId>/<fieldName>'`.
    *
    * #### Complexity
    * `O(1)`
    */
-  get id(): string {
-    return this._id;
+  get path(): string {
+    return this._path;
   }
 
   /**
@@ -363,7 +392,66 @@ class ListInternal<T extends ReadonlyJSONValue> implements IList<T> {
    * `O(k log32 n)`
    */
   splice(index: number, count: number, values?: IterableOrArrayLike<T>): void {
-    Private.splice(this._store, this._id, this._map, index, count, values);
+    // Guard against disallowed mutations.
+    this._store.assertMutationsAllowed();
+
+    // Wrap and clamp the index.
+    if (index < 0) {
+      index = Math.max(0, index + this._map.size);
+    } else {
+      index = Math.min(index, this._map.size);
+    }
+
+    // Clamp the remove count.
+    count = Math.max(0, Math.min(count, this._map.size - index));
+
+    // Remove the specified values.
+    while (count-- > 0) {
+      // Get the id and value at the specified index.
+      let [id, value] = this._map.at(index)!;
+
+      // Remove the item at the specified index.
+      this._map.remove(index);
+
+      // Register the broadcast change.
+      this._store.registerBroadcastListRemove(this._path, id, value);
+
+      // Register the user change.
+      this._store.registerUserListRemove(this._path, index, value);
+    }
+
+    // Cast the insert values to an iterator.
+    let it = values ? iter(values) : empty<T>();
+
+    // Set up the variable to hold the iterator value.
+    let value: T | undefined;
+
+    // Fetch the lower boundary identifier.
+    let lower = this._map.keyAt(index - 1) || '';
+
+    // Fetch the upper boundary identifier.
+    let upper = this._map.keyAt(index) || '';
+
+    // Add the specified values.
+    while ((value = it.next()) !== undefined) {
+      // Create an identifier between the boundaries.
+      let id = Private.createId(lower, upper, ++this._clock, this._store.id);
+
+      // Insert the value into the map.
+      this._map.set(id, value);
+
+      // Register the broadcast change.
+      this._store.registerBroadcastListInsert(this._path, id, value);
+
+      // Register the user change.
+      this._store.registerUserListInsert(this._path, index, value);
+
+      // Increment the insertion index.
+      index++;
+
+      // Update the lower boundary identifier.
+      lower = id;
+    }
   }
 
   /**
@@ -381,104 +469,114 @@ class ListInternal<T extends ReadonlyJSONValue> implements IList<T> {
    *
    * @param store - The internal data store which owns the list.
    *
-   * @param id - The globally unique id of the list.
+   * @param path - The path of the list in the datastore.
    */
-  private constructor(store: DataStoreInternal, id: string) {
+  private constructor(store: DatastoreInternal, path: string) {
     this._store = store;
-    this._id = id;
+    this._path = path;
   }
 
-  private _id: string;
-  private _store: DataStoreInternal;
-  private _map = new TreeMap<string, T>(CRDTUtils.compareIds);
+  /**
+   *
+   */
+  private static _removeItems<U extends ReadonlyJSONValue>(list: ListInternal<U>, items: { readonly [id: string]: U }): void {
+    // Iterate over the items.
+    each(iterItems(items), ([id, value]) => {
+      // Fetch the index of the id.
+      let index = list._map.indexOf(id);
+
+      // If the id does not exist, increment its tombstone count.
+      if (index < 0) {
+        let tombstones = list._cemetery.get(id);
+        list._cemetery.set(id, tombstones + 1);
+        return;
+      }
+
+      // Remove the item from the map.
+      list._map.remove(index);
+
+      // Register the user change.
+      list._store.registerUserListRemove(list._path, index, value);
+    });
+  }
+
+  /**
+   *
+   */
+  private static _insertItems<U extends ReadonlyJSONValue>(list: ListInternal<U>, items: { readonly [id: string]: U }): void {
+    // Iterate over the items.
+    each(iterItems(items), ([id, value]) => {
+      // If the id is in the cemetery, decrement its tombstone count.
+      let tombstones = list._cemetery.get(id);
+      if (tombstones > 0) {
+        list._cemetery.set(id, tombstones - 1);
+        return;
+      }
+
+      // Fetch the insert index of the id.
+      let index = list._map.indexOf(id);
+
+      // Bail early if the id already exists.
+      if (index >= 0) {
+        return;
+      }
+
+      // Add the item to the map.
+      list._map.set(id, value);
+
+      // Register the user change.
+      list._store.registerUserListInsert(list._path, -index - 1, value);
+    });
+  }
+
+  private _clock = 0;
+  private _path: string;
+  private _store: DatastoreInternal;
+  private _cemetery = new Private.Cemetery();
+  private _map = new TreeMap<string, T>(Private.compareIds);
 }
 
 
 /**
  * The namespace for the module implementation details.
  */
+export
 namespace Private {
   /**
-   * Perform the splice operation for an internal list.
    *
-   * @param store - The internal data store for the list.
-   *
-   * @param id - The globally unique id of the list.
-   *
-   * @param map - The internal tree map of the list.
-   *
-   * @param index - The index of the splice.
-   *
-   * @param cound - The number of values to remove.
-   *
-   * @param values - The values to insert.
    */
   export
-  function splice<T>(store: DataStoreInternal, id: string, map: TreeMap<string, T>, index: number, count: number, values?: IterableOrArrayLike<T>): void {
-    // Guard against disallowed mutations.
-    store.assertMutationsAllowed();
-
-    // Wrap and clamp the index.
-    if (index < 0) {
-      index = Math.max(0, index + map.size);
-    } else {
-      index = Math.min(index, map.size);
+  class Cemetery {
+    /**
+     *
+     */
+    assign(data: { readonly [id: string]: number }): void {
+      this._data = { ...data };
     }
 
-    // Clamp the remove count.
-    count = Math.max(0, Math.min(count, map.size - index));
-
-    // Collect the array of values to be removed.
-    let remArr = toArray(map.sliceValues(index, index + count));
-
-    // Collect the array of values to be inserted.
-    let insArr = values ? toArray(values) : [];
-
-    // Set up the map to hold the removed id:value pairs.
-    let remMap: { [key: string]: T } = {};
-
-    // Set up the map to hold the inserted id:value pairs.
-    let insMap: { [key: string]: T } = {};
-
-    // Remove the specified values from the internal map.
-    for (let i = 0; i < count; ++i) {
-      let id = map.keyAt(index)!;
-      remMap[id] = remArr[i];
-      map.remove(index);
+    /**
+     *
+     */
+    get(id: string): number {
+      return this._data[id] || 0;
     }
 
-    // Setup the parameters for the id generation.
-    let n = insArr.length;
-    let site = store.site;
-    let clock = store.tick();
-    let lower = index === 0 ? undefined : map.keyAt(index - 1);
-    let upper = index === map.size ? undefined : map.keyAt(index);
-
-    // Create the identifier iterator.
-    let it = CRDTUtils.createIds({ n, site, clock, lower, upper });
-
-    // Insert the values into the internal map.
-    for (let i = 0; i < n; ++i) {
-      let id = it.next()!;
-      insMap[id] = insArr[i];
-      map.set(id, insArr[i]);
+    /**
+     *
+     */
+    set(id: string, degree: number): void {
+      if (degree === 0) {
+        delete this._data[id];
+      } else {
+        this._data[id] = degree;
+      }
     }
 
-    // Register the user change for the list.
-    store.registerUserListChange(id, index, remArr, insArr);
-
-    // Register the broadcast change for the list.
-    store.registerBroadcastListChange(id, remMap, insMap);
+    private _data: { [id: string]: number } = {};
   }
-}
 
-
-/**
- *
- */
-namespace Private {
   /**
-   * Perform a three-way comparison on two identifiers.
+   * Perform a three-way comparison for identifiers.
    *
    * @param a - The first identifier of interest.
    *
@@ -487,343 +585,230 @@ namespace Private {
    * @returns `-1` if `a < b`, `1` if `a > b`, or `0` if `a == b`.
    */
   export
-  function compareIds(a: number[], b: number[]): number {
-    // Pre-fetch the lengths of the ids.
-    let an = a.length;
-    let bn = b.length;
-
-    // Compute the maximum length.
-    let n = an < bn ? bn : an;
-
-    // Lexographically compare the ids.
-    for (let i = 0; i < n; ++i) {
-      // Fetch the current value or pad with zero.
-      let ai = i < an ? a[i] : 0;
-      let bi = i < bn ? b[i] : 0;
-
-      // Check less-than.
-      if (ai < bi) {
-        return -1;
-      }
-
-      // Check greater-than.
-      if (ai > bi) {
-        return 1;
-      }
-    }
-
-    // The identifiers are equal.
-    return 0;
+  function compareIds(a: string, b: string): number {
+    return a < b ? -1 : a > b ? 1 : 0;
   }
 
   /**
-   * Create a new identifier between two boundary identifiers.
+   * Create an identifier between two boundary identifiers.
    *
-   * @param lower - The lower boundary identifier, exclusive,
-   *   or `null` if there is no lower boundary.
+   * @param lower - The lower boundary identifier, exclusive, or an
+   *   empty string if there is no lower boundary.
    *
-   * @param upper - The upper boundary identifier, exclusive,
-   *   or `null` if there is no upper boundary.
+   * @param upper - The upper boundary identifier, exclusive, or an
+   *   empty string if there is no upper boundary.
    *
-   * @param n - The number of identifiers to generate.
+   * @param clock - The clock value for the identifier. This must
+   *   be `0 <= clock <= MAX_CLOCK`.
    *
-   * @param clock - The clock value of the datastore.
+   * @param store - The datastore id for the identifier. This must
+   *   be `0 <= store <= DatastoreInternal.MAX_STORE_ID`.
    *
-   * @param site - The id of the datastore.
-   *
-   * @returns A new identifier between the given identifiers.
+   * @returns An identifier which sorts between the given boundaries.
    *
    * #### Undefined Behavior
-   * Boundary identifiers which are malformed or mal-ordered.
+   * A `lower` or `upper` boundary identifier which is malformed or
+   * which is badly ordered.
+   *
+   * A `clock` or `store` which exceeds the allowed maximums.
    */
   export
-  function createIdBetween(lower: number[] | null, upper: number[] | null, clock: number, site: number): number[] {
-    // If no boundaries are given, create an unconstrained id.
-    if (!lower && !upper) {
-      return newId(clock, site);
+  function createId(lower: string, upper: string, clock: number, store: number): string {
+    // Set up the array to hold the numeric id.
+    let id: number[] = [];
+
+    // Fetch the triplet counts of the ids.
+    let lowerCount = lower ? idTripletCount(lower) : 0;
+    let upperCount = upper ? idTripletCount(upper) : 0;
+
+    // Iterate over the id triplets.
+    for (let i = 0, n = Math.max(lowerCount, upperCount); i < n; ++i) {
+      // Fetch the lower identifier triplet, padding as needed.
+      let lp: number;
+      let lc: number;
+      let ls: number;
+      if (lowerCount === 0) {
+        lp = 0;
+        lc = 0;
+        ls = 0;
+      } else if (i < lowerCount) {
+        lp = idPathAt(lower, i);
+        lc = idClockAt(lower, i);
+        ls = idStoreAt(lower, i);
+      } else {
+        lp = 0;
+        lc = 0;
+        ls = 0;
+      }
+
+      // Fetch the upper identifier triplet, padding as needed.
+      let up: number;
+      let uc: number;
+      let us: number;
+      if (upperCount === 0) {
+        up = MAX_PATH;
+        uc = MAX_CLOCK;
+        us = MAX_STORE;
+      } else if (i < upperCount) {
+        up = idPathAt(upper, i);
+        uc = idClockAt(upper, i);
+        us = idStoreAt(upper, i);
+      } else {
+        up = 0;
+        uc = 0;
+        us = 0;
+      }
+
+      // If the triplets are the same, copy the triplet and continue.
+      if (lp === up && lc === uc && ls === us) {
+        idPushTriplet(id, lp, lc, ls);
+        continue;
+      }
+
+      // If the triplets are different, the well-ordered identifiers
+      // assumption means that the lower triplet compares less than
+      // the upper triplet. The task now is to find the nearest free
+      // path slot among the remaining triplets.
+
+      // If there is free space between the path portions of the
+      // triplets, select a new path which falls between them.
+      if (up - lp > 1) {
+        let np = randomPath(lp + 1, up - 1);
+        idPushTriplet(id, np, clock, store);
+        return String.fromCharCode(...id);
+      }
+
+      // Otherwise, copy the left triplet and reset the upper count
+      // to zero so that the loop chooses the nearest available path
+      // slot after the current lower triplet.
+      idPushTriplet(id, lp, lc, ls);
+      upperCount = 0;
     }
 
-    // If a lower is not given, create an id before the upper.
-    if (!lower) {
-      return newIdBefore(upper, clock, site);
-    }
-
-    // If an upper is not given, create an id after the lower.
-    if (!upper) {
-      return newIdAfter(lower, clock, site);
-    }
-
-    // Otherwise, create an id between the boundaries.
-    return newIdBetween(lower, upper, clock, site);
+    // If this point is reached, the lower and upper identifiers share
+    // the same path but diverge based on the clock or store id. It is
+    // safe to insert anywhere after the lower path.
+    let np = randomPath(1, MAX_PATH);
+    idPushTriplet(id, np, clock, store);
+    return String.fromCharCode(...id);
   }
-
-  /**
-   * The minimum allowed path value in an identifier.
-   */
-  const MIN_PATH = Math.floor(Number.MIN_SAFE_INTEGER / 2);
 
   /**
    * The maximum allowed path value in an identifier.
    */
-  const MAX_PATH = Math.floor(Number.MAX_SAFE_INTEGER / 2);
+  const MAX_PATH = 0xFFFFFFFFFFFF;
 
   /**
-   * Create a new unconstrained id.
+   * The maximum allowed clock value in an identifier.
    */
-  function newId(clock: number, site: number): number[] {
-    return [randomLeadingPath(MIN_PATH, MAX_PATH), clock, site];
-  }
+  const MAX_CLOCK = 0xFFFFFFFFFFFF;
 
   /**
-   * Create a new random id before the given upper boundary.
+   * The maximum allowed store id in an identifier.
    */
-  function newIdBefore(upper: number[], clock: number, site: number): number[] {
-    // Set up the array to hold the result.
-    let result: number[] = [];
-
-    // Iterate over the upper boundary triplets.
-    for (let i = 0, n = upper.length; i < n; i += 3) {
-      // Fetch the current path.
-      let path = upper[i];
-
-      // If the path is minimal, just copy the current triplet.
-      if (path === MIN_PATH) {
-        result.push(MIN_PATH, upper[i + 1], upper[i + 2]);
-        continue;
-      }
-
-      // Otherwise, add a new path bounded by the current path.
-      result.push(randomTrailingPath(MIN_PATH, path - 1), clock, site);
-
-      // Return the final result.
-      return result;
-    }
-
-    // If this point is reached, the upper boundary is composed of all
-    // minimum paths. Add a new path bounded by the implict zero path.
-    result.push(randomTrailingPath(MIN_PATH, -1), clock, site);
-
-    // Return the final result.
-    return result;
-  }
+  const MAX_STORE = 0xFFFFFFFF;
 
   /**
-   * Create a new random id after the given lower boundary.
-   */
-  function newIdAfter(lower: number[], clock: number, site: number): number[] {
-    // Set up the array to hold the result.
-    let result: number[] = [];
-
-    // Iterate over the lower boundary triplets.
-    for (let i = 0, n = lower.length; i < n; i += 3) {
-      // Fetch the current path.
-      let path = lower[i];
-
-      // If the path is maximal, just copy the current triplet.
-      if (path === MAX_PATH) {
-        result.push(MAX_PATH, lower[i + 1], lower[i + 2]);
-        continue;
-      }
-
-      // Otherwise, add a new path bounded by the current path.
-      result.push(randomLeadingPath(path + 1, MAX_PATH), clock, site);
-
-      // Return the final result.
-      return result;
-    }
-
-    // If this point is reached, the lower boundary is composed of all
-    // maximal paths. Add a new path bounded by the implict zero path.
-    result.push(randomLeadingPath(1, MAX_PATH), clock, site);
-
-    // Return the final result.
-    return result;
-  }
-
-  /**
-   * Create a new random id between the given boundaries.
-   */
-  function newIdBetween(lower: number[], upper: number[], clock: number, site: number): number[] {
-    // Set up the array to hold the result.
-    let result: number[] = [];
-
-    // Fetch the lengths of the ids.
-    let nL = lower.length;
-    let nU = upper.length;
-
-    // Compute the maximum length.
-    let n = nL < nU ? nU : nL;
-
-    // Iterate over the id triplets.
-    for (let i = 0; i < n; i += 3) {
-      // Fetch the path values, padding with zeros.
-      let lPath = i < nL ? lower[i] : 0;
-      let uPath = i < nU ? upper[i] : 0;
-
-      //
-      if (lPath === uPath) {
-        let lClock = i < nL ? lower[i + 1] : 0;
-        let lSite = i < nL ? lower[i + 2] : 0;
-        result.push(lPath, lClock, lSite);
-        continue;
-      }
-
-      //
-      if (uPath - lPath > 1) {
-        result.push(randomLeadingPath(lPath + 1, uPath - 1), clock, site);
-        return result;
-      }
-
-      //
-      let heads = Math.random() < 0.5;
-
-      //
-      if (heads) {
-        addAfter(lower, i, result, clock, site);
-      } else {
-        addBefore(upper, i, result, clock, site);
-      }
-
-      //
-      return result;
-    }
-
-    //
-    result.push(randomLeadingPath(MIN_PATH, MAX_PATH), clock, site);
-    return result;
-  }
-
-  /**
+   * Get the total number of path triplets in an identifier.
    *
+   * @param id - The identifier of interest.
+   *
+   * @returns The total number of triplets in the id.
    */
-  function addAfter(lower: number[], i: number, result: number[], clock: number, site: number): void {
-    //
-    for (let n = lower.length; i < n; i += 3) {
-      //
-      let path = lower[i];
-
-      //
-      if (path === MAX_PATH) {
-        result.push(MAX_PATH, lower[i + 1], lower[i + 2]);
-        continue;
-      }
-
-      result.
-
-      break;
-    }
+  function idTripletCount(id: string): number {
+    return id.length >> 3;
   }
+
   /**
-   * Pick a path in the leading square bucket of an inclusive range.
+   * Get the path value for a particular triplet.
+   *
+   * @param id - The string id of interest.
+   *
+   * @param i - The index of the triplet.
+   *
+   * @returns The path value for the specified triplet.
    */
-  function randomLeadingPath(min: number, max: number): number {
+  function idPathAt(id: string, i: number): number {
+    let j = i << 3;
+    let a = id.charCodeAt(j + 0);
+    let b = id.charCodeAt(j + 1);
+    let c = id.charCodeAt(j + 2);
+    return a * 0x100000000 + b * 0x10000 + c;
+  }
+
+  /**
+   * Get the clock value for a particular triplet.
+   *
+   * @param id - The identifier of interest.
+   *
+   * @param i - The index of the triplet.
+   *
+   * @returns The clock value for the specified triplet.
+   */
+  function idClockAt(id: string, i: number): number {
+    let j = i << 3;
+    let a = id.charCodeAt(j + 3);
+    let b = id.charCodeAt(j + 4);
+    let c = id.charCodeAt(j + 5);
+    return a * 0x100000000 + b * 0x10000 + c;
+  }
+
+  /**
+   * Get the store id for a particular triplet.
+   *
+   * @param id - The identifier of interest.
+   *
+   * @param i - The index of the triplet.
+   *
+   * @returns The store id for the specified triplet.
+   */
+  function idStoreAt(id: string, i: number): number {
+    let j = i << 3;
+    let a = id.charCodeAt(j + 6);
+    let b = id.charCodeAt(j + 7);
+    return a * 0x10000 + b;
+  }
+
+  /**
+   * Push a triplet onto the end of a numeric identifier.
+   *
+   * @param id - The numeric identifier of interest.
+   *
+   * @param path - The path value to push.
+   *
+   * @param clock - The clock value to push.
+   *
+   * @param store - The store id to push.
+   */
+  function idPushTriplet(id: number[], path: number, clock: number, store: number): void {
+    // Split the path into 16-bit values.
+    let pathC = path & 0xFFFF;
+    let pathB = (((path - pathC) / 0x10000) | 0) & 0xFFFF;
+    let pathA = (((path - pathB - pathC) / 0x100000000) | 0) & 0xFFFF;
+
+    // Split the clock into 16-bit values.
+    let clockC = clock & 0xFFFF;
+    let clockB = (((clock - clockC) / 0x10000) | 0) & 0xFFFF;
+    let clockA = (((clock - clockB - clockC) / 0x100000000) | 0) & 0xFFFF;
+
+    // Split the store id into 16-bit values.
+    let storeB = store & 0xFFFF;
+    let storeA = (((store - storeB) / 0x10000) | 0) & 0xFFFF;
+
+    // Push the parts onto the id.
+    id.push(pathA, pathB, pathC, clockA, clockB, clockC, storeA, storeB);
+  }
+
+  /**
+   * Pick a path in the leading bucket of an inclusive range.
+   *
+   * @param min - The minimum allowed path, inclusive.
+   *
+   * @param max - The maximum allowed path, inclusive.
+   *
+   * @returns A random path in the leading bucket of the range.
+   */
+  function randomPath(min: number, max: number): number {
     return min + Math.round(Math.random() * Math.sqrt(max - min));
-  }
-
-  /**
-   * Pick a path in the trailing square bucket of an inclusive range.
-   */
-  function randomTrailingPath(min: number, max: number): number {
-    return max - Math.round(Math.random() * Math.sqrt(max - min));
-  }
-
-  /**
-   * Create identifiers between two boundary identifiers.
-   *
-   * @param n - The number of identifiers to generate.
-   *
-   * @param clock - The clock value of the datastore.
-   *
-   * @param site - The id of the datastore.
-   *
-   * @param lower - The lower boundary identifier.
-   *
-   * @param upper - The upper boundary identifier.
-   *
-   * @returns An iterator which generates the requested number of
-   *   identifiers between the specified boundaries.
-   */
-  export
-  function createIdBetween(lower: number[] | null, upper: number[] | null, clock: number, site: number): number[] {
-    //
-    if (!lower)
-    //
-    let result: number = [];
-
-    lower = lower || [];
-    upper = upper || [];
-
-    //
-    let n = Math.max(lower.length, upper.length);
-
-    let lPad = 0;
-    let uPad = lower ? 0 : MAX_PAD;
-
-    //
-    for (let i = 0; i < n; i += 3) {
-      let a = (lower && i < lower.length) ? lower[i]
-    }
-    // Extract the path portions of the identifiers.
-    let lowerPath = lower ? extractPath(lower) : [];
-    let upperPath = upper ? extractPath(upper) : [];
-
-    // Set up the path padding values.
-    let lowerPad = MIN_PATH_PART;
-    let upperPad = upper ? MIN_PATH_PART : MAX_PATH_PART;
-
-    // Pad the paths to equal lengths.
-    while (lowerPath.length < upperPath.length) {
-      lowerPath.push(lowerPad);
-    }
-    while (upperPath.length < lowerPath.length) {
-      upperPath.push(upperPad);
-    }
-
-    // Compute the distance between the paths.
-    let distance = pathDistance(lowerPath, upperPath);
-
-    //
-    if (distance === 0) {
-      let result = lowerPath.slice();
-      result.push(randomPathOffset(MAX_PATH_PART), clock, site);
-      return result;
-    }
-
-    //
-    if (distance === 1) {
-      lowerPath.push(randomPathOffset(MAX_PATH_PART));
-      return makeId(lowerPath, clock, site);
-    }
-
-    let o = randomPathOffset(distance - 1);
-    addToP
-    // Set up the base identifier prefix.
-    let prefix: number[] = [];
-
-    // If the path distance is zero, create a new suffix path branch.
-    if (distance === 0) {
-      prefix = lowerId.slice();
-      lowerPath = [MIN_PAD];
-      upperPath = [MAX_PAD];
-      upperPad = MAX_PAD;
-      distance = MAX_PAD;
-    }
-
-    // Pad the paths until there is sufficient space between them.
-    let space = distance - 1;
-    while (space < n) {
-      lowerPath.push(lowerPad);
-      upperPath.push(upperPad);
-      space = Private.pathDistance(lowerPath, upperPath) - 1;
-    }
-
-    // Create the identifier suffix.
-    let suffix = Private.combinePath(lowerPath, clock, site);
-
-    // Create the base identifier.
-    let base = prefix.concat(suffix);
-
-    // Compute the maximum iteration step size.
-    let step = Math.min(Math.floor(space / n), 64);
   }
 }
