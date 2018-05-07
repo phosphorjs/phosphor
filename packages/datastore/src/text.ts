@@ -89,6 +89,22 @@ interface IText {
   insert(index: number, value: string): void;
 
   /**
+   * Remove a range of the text.
+   *
+   * @param index - The index of the first character to be removed.
+   *   Negative values are offset from the end of the text.
+   *
+   * @param count - The number of characters to remove.
+   *
+   * #### Complexity
+   *
+   *
+   * #### Undefined Behavior
+   * An `index` or `count` which is non-integral.
+   */
+  remove(index: number, count: number): void;
+
+  /**
    * Replace a range of the text.
    *
    * @param index - The index of the first character to be removed.

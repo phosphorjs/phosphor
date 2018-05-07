@@ -10,7 +10,7 @@ import {
 } from '@phosphor/algorithm';
 
 import {
-  Field
+  Field, PrimaryKeyField
 } from './fields';
 
 
@@ -44,16 +44,6 @@ interface ITable<S extends ITable.Schema> extends IIterable<ITable.Record<S>> {
   readonly size: number;
 
   /**
-   * Create a unique id which can be used for a new record.
-   *
-   * @returns A new id which is guaranteed to be unique for the table.
-   *
-   * #### Complexity
-   * `O(1)`
-   */
-  newId(): string;
-
-  /**
    * Test whether the table has a particular record.
    *
    * @param id - The id of the record of interest.
@@ -79,17 +69,20 @@ interface ITable<S extends ITable.Schema> extends IIterable<ITable.Record<S>> {
   get(id: string): ITable.Record<S> | undefined;
 
   /**
-   * Set the state of a record in the table.
+   * Create a new record in the table.
    *
-   * @param id - The id of the record of interest. If no such record
-   *   exists, it will be created and added automatically.
+   * @param id - The id for the record. The default is a new uuid4.
    *
-   * @param state - The partial state for updating the record.
+   * @returns A new record with the specified id.
+   *
+   * #### Notes
+   * If a record with the specified id already exists, the existing
+   * record is returned.
    *
    * #### Complexity
    * `O(1)`
    */
-  set(id: string, state: ITable.PartialRecordState<S>): void;
+  create(id?: string): ITable.Record<S>;
 }
 
 
@@ -99,14 +92,14 @@ interface ITable<S extends ITable.Schema> extends IIterable<ITable.Record<S>> {
 export
 namespace ITable {
   /**
-   * A type definition for a schema.
+   * A type definition for a table schema.
    *
    * #### Notes
    * The datastore assumes that peers may safely collaborate on tables
    * which share the same schema `id`.
    *
-   * The schema `id` **must** be changed whenever changes are made to
-   * the schema, or undefined behavior **will** result.
+   * The schema `id` must be changed whenever changes are made to the
+   * schema, or undefined behavior will result.
    */
   export
   type Schema = {
@@ -118,39 +111,78 @@ namespace ITable {
     /**
      * The field definitions for the schema.
      */
-    readonly fields: { readonly [key: string]: Field; };
+    readonly fields: {
+      /**
+       * A single `id` primary key field is required.
+       */
+      readonly id: PrimaryKeyField;
+
+      /**
+       * Any additional fields may be defined.
+       */
+      readonly [name: string]: Field;
+    };
   };
 
   /**
-   * The extra state added to each record by the table.
+   * A type alias which extracts the field names from a schema.
    */
   export
-  type ExtraRecordState = {
-    /**
-     * The unique id of the record.
-     */
-    readonly '@@id': string;
+  type FieldNames<S extends Schema> = keyof S['fields'];
+
+  /**
+   * A type alias which extracts the mutable field names from a schema.
+   */
+  export
+  type MutableFieldNames<S extends Schema> = {
+    [N in FieldNames<S>]: S['fields'][N]['type'] extends 'value' ? N : never;
+  }[FieldNames<S>];
+
+  /**
+   * A type alias which extracts the readonly field names from a schema.
+   */
+  export
+  type ReadonlyFieldNames<S extends Schema> = {
+    [N in FieldNames<S>]: S['fields'][N]['type'] extends 'value' ? never : N;
+  }[FieldNames<S>];
+
+  /**
+   * A type alias for the mutable state of a record in a table.
+   */
+  export
+  type MutableRecordState<S extends Schema> = {
+    [N in MutableFieldNames<S>]: S['fields'][N]['@@ValueType'];
+  };
+
+  /**
+   * A type alias for the readnly state of a record in a table.
+   */
+  export
+  type ReadonlyRecordState<S extends Schema> = {
+    readonly [N in ReadonlyFieldNames<S>]: S['fields'][N]['@@ValueType'];
   };
 
   /**
    * A type alias for a record in a table.
    */
   export
-  type Record<S extends Schema> = ExtraRecordState & {
-    /**
-     * The value state of a record.
-     */
-    readonly [K in keyof S['fields']]: S['fields'][K]['@@ValueType'];
+  type Record<S extends Schema> = (
+    MutableRecordState<S> & ReadonlyRecordState<S>
+  );
+
+  /**
+   * A type alias for changes to a record.
+   */
+  export
+  type RecordChange<S extends Schema> = {
+    readonly [N in FieldNames<S>]?: S['fields'][N]['@@ChangeType'];
   };
 
   /**
-   * A type alias for the partial state of a record.
+   * A type alias for a table change set.
    */
   export
-  type PartialRecordState<S extends Schema> = {
-    /**
-     * The partial state of a record.
-     */
-    readonly [K in keyof S['fields']]?: S['fields'][K]['@@PartialType'];
+  type ChangeSet<S extends Schema> = {
+    readonly [recordId: string]: RecordChange<S>;
   };
 }

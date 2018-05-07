@@ -20,17 +20,6 @@ import {
 export
 interface IList<T extends ReadonlyJSONValue> extends IIterable<T>, IRetroable<T> {
   /**
-   * The path of the list in the datastore.
-   *
-   * #### Notes
-   * The path has the form: `'<schemaId>/<recordId>/<fieldName>'`.
-   *
-   * #### Complexity
-   * `O(1)`
-   */
-  readonly path: string;
-
-  /**
    * Whether the list is empty.
    *
    * #### Complexity

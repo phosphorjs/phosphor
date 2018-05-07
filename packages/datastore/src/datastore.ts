@@ -6,6 +6,10 @@
 | The full license is in the file LICENSE, distributed with this software.
 |----------------------------------------------------------------------------*/
 import {
+  IIterable
+} from '@phosphor/algorithm';
+
+import {
   ISignal
 } from '@phosphor/signaling';
 
@@ -26,7 +30,7 @@ import {
  * https://hal.inria.fr/file/index/docid/555588/filename/techreport.pdf
  */
 export
-interface IDatastore {
+interface IDatastore extends IIterable<ITable<ITable.Schema>> {
   /**
    * A signal emitted when changes are made to the datastore.
    *
@@ -47,13 +51,12 @@ interface IDatastore {
    *
    * #### Notes
    * The datastore id is assigned by the patch server and is unique
-   * among all other stores serviced by that server. It is not safe
-   * to assume that the id is a GUID.
+   * among all other collaborating peers.
    *
    * #### Complexity
    * `O(1)`
    */
-  readonly id: string;
+  readonly id: number;
 
   /**
    * Make changes to the the datastore.
@@ -120,10 +123,7 @@ interface IDatastore {
    * @param schema - The schema of interest.
    *
    * @returns The table for the specified schema, or `undefined` if
-   *   no such table exists.
-   *
-   * #### Notes
-   * This method may be called at any time.
+   *   no such table has been created.
    *
    * #### Complexity
    * `O(1)`
@@ -131,18 +131,15 @@ interface IDatastore {
   getTable<S extends ITable.Schema>(schema: S): ITable<S> | undefined;
 
   /**
-   * Create a new table for a schema.
+   * Create a table for a particular schema.
    *
    * @param schema - The schema of interest.
    *
    * @returns A new table for the specified schema.
    *
-   * @throws An exception if a table for the schema already exists.
-   *
    * #### Notes
-   * This method may only be called during `mutate`.
-   *
-   * Once created, a table cannot be deleted.
+   * If a table for the specified schema already exists, the existing
+   * table is returned.
    *
    * #### Complexity
    * `O(1)`
@@ -167,73 +164,22 @@ namespace IDatastore {
     readonly type: 'mutate' | 'undo' | 'redo';
 
     /**
-     * The id of the datastore which generated the current change.
-     */
-    readonly storeId: string;
-
-    /**
      * The id of the patch associated with the change.
      */
     readonly patchId: string;
 
     /**
-     * The schema ids of the tables created during the change.
+     * A mapping of schema id to table change set.
      */
-    readonly newTables: ReadonlyArray<string>;
-
-    /**
-     * A mapping of schema id to table changes.
-     */
-    readonly tableChanges: TableChangesBySchemaId;
+    readonly changes: ChangeSet;
   }
 
   /**
-   * A type alias for a mapping of table changes.
+   * A type alias for a datastore change set.
    */
   export
-  type TableChangesBySchemaId = {
-    /**
-     * An index signature which maps schema ids to table changes.
-     */
-    readonly [schemaId: string]: TableChange<ITable.Schema>;
-  };
-
-  /**
-   * A type alias for changes to a specific table.
-   */
-  export
-  type TableChange<S extends ITable.Schema> = {
-    /**
-     * The ids of the records created during the change.
-     */
-    readonly newRecords: ReadonlyArray<string>;
-
-    /**
-     * A mapping of record id to record changes.
-     */
-    readonly recordChanges: RecordChangesByRecordId<S>;
-  };
-
-  /**
-   * A type alias for a mapping of record changes.
-   */
-  export
-  type RecordChangesByRecordId<S extends ITable.Schema> = {
-    /**
-     * An index signature which maps record ids to record changes.
-     */
-    readonly [recordId: string]: RecordChange<S>;
-  };
-
-  /**
-   * A type alias for changes to a specific record.
-   */
-  export
-  type RecordChange<S extends ITable.Schema> = {
-    /**
-     * The change state of a record.
-     */
-    readonly [K in keyof S['fields']]?: S['fields'][K]['@@ChangeType'];
+  type ChangeSet = {
+    readonly [schemaId: string]: ITable.ChangeSet<ITable.Schema>;
   };
 }
 
@@ -242,6 +188,6 @@ namespace IDatastore {
  *
  */
 export
-function createDatastore(): Promise<IDatastore> {
+function createDatastore(schemas: ReadonlyArray<ITable.Schema>): Promise<IDatastore> {
   throw '';
 }
