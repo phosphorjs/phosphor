@@ -9,7 +9,7 @@
     "moduleResolution": "node",
     "target": "ES5",
     "outDir": "./lib",
-    "lib": ["ES5", "ES2015.Collection"],
+    "lib": ["ES5", "ES2015.Collection", "ES2015.Symbol"],
     "types": []
   },
   "include": ["src/*"]
