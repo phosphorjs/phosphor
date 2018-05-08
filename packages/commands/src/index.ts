@@ -137,7 +137,8 @@ class CommandRegistry {
   /**
    * Notify listeners that the state of a command has changed.
    *
-   * @param id - The id of the command which has changed.
+   * @param id - The id of the command which has changed, or an empty
+   *   string to represent a wildcard. The default is `''`.
    *
    * @throws An error if the given `id` is not registered.
    *
@@ -148,8 +149,8 @@ class CommandRegistry {
    *
    * This will cause the `commandChanged` signal to be emitted.
    */
-  notifyCommandChanged(id: string): void {
-    if (!(id in this._commands)) {
+  notifyCommandChanged(id = ''): void {
+    if (id && !(id in this._commands)) {
       throw new Error(`Command '${id}' is not registered.`);
     }
     this._commandChanged.emit({ id, type: 'changed' });
