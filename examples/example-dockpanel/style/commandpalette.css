@@ -88,6 +88,11 @@
 }
 
 
+.p-CommandPalette-itemIcon {
+  display: none;
+}
+
+
 .p-CommandPalette-itemLabel > mark {
   background-color: transparent;
   font-weight: bold;

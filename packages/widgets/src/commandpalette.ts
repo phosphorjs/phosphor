@@ -580,6 +580,16 @@ namespace CommandPalette {
     readonly caption: string;
 
     /**
+     * The icon class for the command item.
+     */
+    readonly iconClass: string;
+
+    /**
+     * The icon label for the command item.
+     */
+    readonly iconLabel: string;
+
+    /**
      * The extra class name for the command item.
      */
     readonly className: string;
@@ -723,9 +733,9 @@ namespace CommandPalette {
       let dataset = this.createItemDataset(data);
       return (
         h.li({ className, dataset },
+          this.renderItemIcon(data),
+          this.renderItemContent(data),
           this.renderItemShortcut(data),
-          this.renderItemLabel(data),
-          this.renderItemCaption(data)
         )
       );
     }
@@ -743,15 +753,31 @@ namespace CommandPalette {
     }
 
     /**
-     * Render the shortcut for a command palette item.
+     * Render the icon for a command palette item.
      *
-     * @param data - The data to use for rendering the shortcut.
+     * @param data - The data to use for rendering the icon.
      *
-     * @returns A virtual element representing the shortcut.
+     * @returns A virtual element representing the icon.
      */
-    renderItemShortcut(data: IItemRenderData): VirtualElement {
-      let content = this.formatItemShortcut(data);
-      return h.div({ className: 'p-CommandPalette-itemShortcut' }, content);
+    renderItemIcon(data: IItemRenderData): VirtualElement {
+      let className = this.createIconClass(data);
+      return h.div({ className }, data.item.iconLabel);
+    }
+
+    /**
+     * Render the content for a command palette item.
+     *
+     * @param data - The data to use for rendering the content.
+     *
+     * @returns A virtual element representing the content.
+     */
+    renderItemContent(data: IItemRenderData): VirtualElement {
+      return (
+        h.div({ className: 'p-CommandPalette-itemContent' },
+          this.renderItemLabel(data),
+          this.renderItemCaption(data)
+        )
+      );
     }
 
     /**
@@ -776,6 +802,18 @@ namespace CommandPalette {
     renderItemCaption(data: IItemRenderData): VirtualElement {
       let content = this.formatItemCaption(data);
       return h.div({ className: 'p-CommandPalette-itemCaption' }, content);
+    }
+
+    /**
+     * Render the shortcut for a command palette item.
+     *
+     * @param data - The data to use for rendering the shortcut.
+     *
+     * @returns A virtual element representing the shortcut.
+     */
+    renderItemShortcut(data: IItemRenderData): VirtualElement {
+      let content = this.formatItemShortcut(data);
+      return h.div({ className: 'p-CommandPalette-itemShortcut' }, content);
     }
 
     /**
@@ -819,6 +857,19 @@ namespace CommandPalette {
      */
     createItemDataset(data: IItemRenderData): ElementDataset {
       return { ...data.item.dataset, command: data.item.command };
+    }
+
+    /**
+     * Create the class name for the command item icon.
+     *
+     * @param data - The data to use for the class name.
+     *
+     * @returns The full class name for the item icon.
+     */
+    createIconClass(data: IItemRenderData): string {
+      let name = 'p-CommandPalette-itemIcon';
+      let extra = data.item.iconClass;
+      return extra ? `${name} ${extra}` : name;
     }
 
     /**
@@ -1368,6 +1419,20 @@ namespace Private {
      */
     get label(): string {
       return this._commands.label(this.command, this.args);
+    }
+
+    /**
+     * The icon class for the command item.
+     */
+    get iconClass(): string {
+      return this._commands.iconClass(this.command, this.args);
+    }
+
+    /**
+     * The icon label for the command item.
+     */
+    get iconLabel(): string {
+      return this._commands.iconLabel(this.command, this.args);
     }
 
     /**
