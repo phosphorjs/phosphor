@@ -137,8 +137,8 @@ class CommandRegistry {
   /**
    * Notify listeners that the state of a command has changed.
    *
-   * @param id - The id of the command which has changed, or an empty
-   *   string to represent a wildcard. The default is `''`.
+   * @param id - The id of the command which has changed. If more than
+   *   one command has changed, this argument should be omitted.
    *
    * @throws An error if the given `id` is not registered.
    *
@@ -149,11 +149,11 @@ class CommandRegistry {
    *
    * This will cause the `commandChanged` signal to be emitted.
    */
-  notifyCommandChanged(id = ''): void {
-    if (id && !(id in this._commands)) {
+  notifyCommandChanged(id?: string): void {
+    if (id !== undefined && !(id in this._commands)) {
       throw new Error(`Command '${id}' is not registered.`);
     }
-    this._commandChanged.emit({ id, type: 'changed' });
+    this._commandChanged.emit({ id, type: id ? 'changed' : 'many-changed' });
   }
 
   /**
@@ -778,13 +778,15 @@ namespace CommandRegistry {
   interface ICommandChangedArgs {
     /**
      * The id of the associated command.
+     *
+     * This will be `undefined` when the type is `'many-changed'`.
      */
-    readonly id: string;
+    readonly id: string | undefined;
 
     /**
      * Whether the command was added, removed, or changed.
      */
-    readonly type: 'added' | 'removed' | 'changed';
+    readonly type: 'added' | 'removed' | 'changed' | 'many-changed';
   }
 
   /**
