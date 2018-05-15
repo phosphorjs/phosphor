@@ -34,8 +34,11 @@ class MapImpl<T extends ReadonlyJSONValue> implements IMap<T> {
   /**
    *
    */
-  static fromValue<U extends ReadonlyJSONValue>(store: DatastoreImpl, schemaId: string, recordId: string, name: string, value: { readonly [key: string]: U }): MapImpl<U> {
-
+  constructor(store: DatastoreImpl, schemaId: string, recordId: string, fieldName: string, items: { readonly [key: string]: T }) {
+    this._store = store;
+    this._schemaId = schemaId;
+    this._recordId = recordId;
+    this._fieldName = fieldName;
   }
 
   /**
@@ -67,7 +70,7 @@ class MapImpl<T extends ReadonlyJSONValue> implements IMap<T> {
    * `O(1)`
    */
   iter(): IIterator<[string, T]> {
-    return map(this.keys(), k => [k, this._map[k].value]);
+    return map(this.keys(), k =>  k, this._map[k].value]);
   }
 
   /**
@@ -174,9 +177,12 @@ class MapImpl<T extends ReadonlyJSONValue> implements IMap<T> {
     let entry = this._map[key];
 
     // Bail early if there is no effective change.
+    // TODO - do a deep compare here?
     if (entry && entry.value === value) {
       return;
     }
+
+
   }
 
   /**
@@ -194,15 +200,10 @@ class MapImpl<T extends ReadonlyJSONValue> implements IMap<T> {
     // Guard against disallowed mutations.
     this._store.assertMutationsAllowed();
 
-    // Fetch the map entry.
-    let entry = this._map[key];
+    // Fetch the current map entry.
+    let entry = this._map[key] || null;
 
-    // Bail early if the key does not exist.
-    if (!entry || entry.value === undefined) {
-      return;
-    }
-
-    // Add a "deleted" entry to the map.
+    // Add a deleted entry to the map.
     this._map[key] = {
       value: undefined,
       clock: this._store.clock,
@@ -212,12 +213,17 @@ class MapImpl<T extends ReadonlyJSONValue> implements IMap<T> {
 
     // Broadcast the change to peers.
     this._store.broadcastMapDelete(
-      this._schemaId, this._recordId, this._name, key
+      this._schemaId, this._recordId, this._fieldName, key
     );
+
+    //
+    if (!entry || entry.value === undefined) {
+      return;
+    }
 
     // Notify the user of the change.
     this._store.notifyMapDelete(
-      this._schemaId, this._recordId, this._name, key, entry.value
+      this._schemaId, this._recordId, this._fieldName, key, entry.value
     );
   }
 
@@ -231,18 +237,41 @@ class MapImpl<T extends ReadonlyJSONValue> implements IMap<T> {
     each(iterKeys(this._map), k => { this.delete(k); });
   }
 
-  /**
-   *
-   */
-  private constructor(store: DatastoreImpl, schemaId: string, recordId: string, name: string) {
-    this._store = store;
-    this._schemaId = schemaId;
-    this._recordId = recordId;
-    this._name = name;
-  }
-
-  private _store: DatastoreImpl;
   private _schemaId: string;
   private _recordId: string;
-  private _name: string;
+  private _fieldName: string;
+  private _store: DatastoreImpl;
+  private _map: { [key: string]: Private.IMapEntry<T> } = Object.create(null);
+}
+
+
+/**
+ * The namespace for the module implementation details.
+ */
+namespace Private {
+  /**
+   * An object which represents an entry in a map.
+   */
+  export
+  interface IMapEntry<T extends ReadonlyJSONValue> {
+    /**
+     * The value for the entry.
+     */
+    readonly value: T | undefined;
+
+    /**
+     * The clock value when the entry was created.
+     */
+    readonly clock: number;
+
+    /**
+     * The id of the datastore which created the entry.
+     */
+    readonly storeId: number;
+
+    /**
+     * The next map entry in the list.
+     */
+    next: IMapEntry<T> | null;
+  }
 }

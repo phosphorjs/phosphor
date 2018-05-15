@@ -239,22 +239,22 @@ namespace Private {
           record[key] = id;
           break;
         case 'list':
-          record[key] = ListImpl.fromValue(
+          record[key] = new ListImpl<ReadonlyJSONValue>(
             store, schema.id, id, name, field.initialValue
           );
           break;
         case 'map':
-          record[key] = MapImpl.fromValue(
+          record[key] = new MapImpl<ReadonlyJSONValue>(
             store, schema.id, id, name, field.initialValue
           );
           break;
         case 'text':
-          record[key] = TextImpl.fromValue(
+          record[key] = new TextImpl(
             store, schema.id, id, name, field.initialValue
           );
           break;
         case 'value':
-          record[key] = createInitialRegisterEntry(field.initialValue);
+          record[key] = createRegisterEntry(field.initialValue);
           break;
         default:
           throw 'unreachable';
@@ -341,7 +341,7 @@ namespace Private {
   /**
    * Create a register entry for an initial value.
    */
-  function createInitialRegisterEntry(value: ReadonlyJSONValue): IRegisterEntry {
+  function createRegisterEntry(value: ReadonlyJSONValue): IRegisterEntry {
     return { value, clock: 0, storeId: 0, next: null };
   }
 }

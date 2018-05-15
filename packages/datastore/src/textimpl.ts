@@ -13,11 +13,7 @@ import {
 export
 class TextImpl {
 
-  static fromValue(store: DatastoreImpl, schemaId: string, recordId: string, fieldName: string, initialValue: string): TextImpl {
-    return new TextImpl(store, schemaId, recordId, fieldName);
-  }
-
-  private constructor(store: DatastoreImpl, schemaId: string, recordId: string, fieldName: string) {
+  constructor(store: DatastoreImpl, schemaId: string, recordId: string, fieldName: string, initialValue: string) {
     this._store = store;
     this._schemaId = schemaId;
     this._recordId = recordId;

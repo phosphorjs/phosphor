@@ -6,7 +6,7 @@
 | The full license is in the file LICENSE, distributed with this software.
 |----------------------------------------------------------------------------*/
 import {
-  IIterator, IterableOrArrayLike, iter, once
+  IIterator, IterableOrArrayLike, iter, iterFn, once
 } from '@phosphor/algorithm';
 
 import {
@@ -36,7 +36,7 @@ import {
 export
 class ListImpl<T extends ReadonlyJSONValue> implements IList<T> {
   /**
-   * Create a new list implementation from an initial value.
+   * Construct a new list implementation.
    *
    * @param store - The data store which owns the list.
    *
@@ -44,26 +44,16 @@ class ListImpl<T extends ReadonlyJSONValue> implements IList<T> {
    *
    * @param recordId - The record id for the containing record.
    *
-   * @param name - The field name for the list in the record.
+   * @param fieldName - The field name for the list in the record.
    *
-   * @param value - The initial value for the list.
+   * @param values - The initial values for the list.
    */
-  static fromValue<U extends ReadonlyJSONValue>(store: DatastoreImpl, schemaId: string, recordId: string, name: string, value: ReadonlyArray<U>): ListImpl<U> {
-    // Create the list object.
-    let list = new ListImpl<U>(store, schemaId, recordId, name);
-
-    // Compute the delta value for each path increment. This is
-    // will be at least 1 since the max array length is ~4.2B.
-    let delta = Math.floor(Math.sqrt(Private.MAX_PATH / value.length));
-
-    // Add the values to the map. The generated ids will be the same
-    // across all peers, which is needed for initial list creation.
-    for (let i = 0, n = value.length, path = 1; i < n; ++i, path += delta) {
-      list._map.set(Private.createTriplet(path, 0, 0), value[i]);
-    }
-
-    // Return the initialized list.
-    return list;
+  constructor(store: DatastoreImpl, schemaId: string, recordId: string, fieldName: string, values: ReadonlyArray<T>) {
+    this._store = store;
+    this._schemaId = schemaId;
+    this._recordId = recordId;
+    this._fieldName = fieldName;
+    this._map.assign(Private.createPairs(values), true);
   }
 
   /**
@@ -364,12 +354,12 @@ class ListImpl<T extends ReadonlyJSONValue> implements IList<T> {
 
       // Broadcast the change to peers.
       this._store.broadcastListRemove(
-        this._schemaId, this._recordId, this._name, id, value
+        this._schemaId, this._recordId, this._fieldName, id, value
       );
 
       // Notify the user of the change.
       this._store.notifyListRemove(
-        this._schemaId, this._recordId, this._name, index, value
+        this._schemaId, this._recordId, this._fieldName, index, value
       );
     }
 
@@ -404,12 +394,12 @@ class ListImpl<T extends ReadonlyJSONValue> implements IList<T> {
 
       // Broadcast the change to peers.
       this._store.broadcastListInsert(
-        this._schemaId, this._recordId, this._name, id, value
+        this._schemaId, this._recordId, this._fieldName, id, value
       );
 
       // Notify the user of the change.
       this._store.notifyListInsert(
-        this._schemaId, this._recordId, this._name, index, value
+        this._schemaId, this._recordId, this._fieldName, index, value
       );
 
       // Update the lower boundary identifier.
@@ -430,27 +420,9 @@ class ListImpl<T extends ReadonlyJSONValue> implements IList<T> {
     this.splice(0, this.size);
   }
 
-  /**
-   * Construct a new list implementation.
-   *
-   * @param store - The data store which owns the list.
-   *
-   * @param schemaId - The schema id for the containing table.
-   *
-   * @param recordId - The record id for the containing record.
-   *
-   * @param name - The field name for the list in the record.
-   */
-  private constructor(store: DatastoreImpl, schemaId: string, recordId: string, name: string) {
-    this._store = store;
-    this._schemaId = schemaId;
-    this._recordId = recordId;
-    this._name = name;
-  }
-
-  private _name: string;
   private _schemaId: string;
   private _recordId: string;
+  private _fieldName: string;
   private _store: DatastoreImpl;
   private _map = new TreeMap<string, T>(Private.compareIds);
 }
@@ -484,19 +456,15 @@ namespace Private {
    * @param upper - The upper boundary identifier, exclusive, or an
    *   empty string if there is no upper boundary.
    *
-   * @param clock - The clock value for the identifier. This must
-   *   be `0 <= clock <= MAX_CLOCK`.
+   * @param clock - The datastore clock for the identifier.
    *
-   * @param storeId - The datastore id for the identifier. This must
-   *   be `0 <= storeId <= DatastoreInternal.MAX_STORE_ID`.
+   * @param storeId - The datastore id for the identifier.
    *
    * @returns An identifier which sorts between the given boundaries.
    *
    * #### Undefined Behavior
    * A `lower` or `upper` boundary identifier which is malformed or
    * which is badly ordered.
-   *
-   * A `clock` or `storeId` which exceeds the allowed maximums.
    */
   export
   function createId(lower: string, upper: string, clock: number, storeId: number): string {
@@ -580,6 +548,45 @@ namespace Private {
   }
 
   /**
+   * Create an iterator of `[id, value]` pairs.
+   *
+   * @param values - The values of interest.
+   *
+   * @returns A new iterator of `[id, value]` pairs.
+   *
+   * #### Notes
+   * The generated ids are stable and predictable. For an array of
+   * a given length, the generated ids will always be the same.
+   */
+  export
+  function createPairs<T>(values: ReadonlyArray<T>): IIterator<[string, T]> {
+    // Compute the delta value for each path increment. This will
+    // always be at least `1` since the max array length is ~4.2B.
+    let delta = Math.floor(Math.sqrt(MAX_PATH / values.length));
+
+    // Set up the iterator state.
+    let i = 0;
+    let path = 0;
+
+    // Return the iterator which will generate the paths.
+    return iterFn(() => {
+      if (i >= values.length) {
+        return undefined;
+      }
+      return [createTriplet(path += delta, 0, 0), values[i++]];
+    });
+  }
+
+  // ID format: <6-byte path><6-byte clock><4-byte store>...
+  //            = 128bits per triplet
+  //            = 8 16-bit chars per triplet
+
+  /**
+   * The maximum allowed path value in an identifier.
+   */
+  const MAX_PATH = 0xFFFFFFFFFFFF;
+
+  /**
    * Create a string identifier triplet.
    *
    * @param path - The path value for the triplet.
@@ -588,7 +595,6 @@ namespace Private {
    *
    * @param store - The store id for the triplet.
    */
-  export
   function createTriplet(path: number, clock: number, store: number): string {
     // Split the path into 16-bit values.
     let pc = path & 0xFFFF;
@@ -607,16 +613,6 @@ namespace Private {
     // Convert the parts into a string identifier triplet.
     return String.fromCharCode(pa, pb, pc, ca, cb, cc, sa, sb);
   }
-
-  // ID format: <6-byte path><6-byte clock><4-byte store>...
-  //            = 128bits per triplet
-  //            = 8 16-bit chars per triplet
-
-  /**
-   * The maximum allowed path value in an identifier.
-   */
-  export
-  const MAX_PATH = 0xFFFFFFFFFFFF;
 
   /**
    * Get the total number of path triplets in an identifier.
