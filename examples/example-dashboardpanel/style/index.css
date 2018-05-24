@@ -9,10 +9,7 @@
 @import '~@phosphor/widgets/style/index.css';
 @import './commandpalette.css';
 @import './content.css';
-@import './dockpanel.css';
-@import './menu.css';
-@import './menubar.css';
-@import './tabbar.css';
+@import './dashboardpanel.css';
 
 
 body {
@@ -28,23 +25,25 @@ body {
   overflow: hidden;
 }
 
-
-#menuBar {
-  flex: 0 0 auto;
-}
-
-
 #main {
   flex: 1 1 auto;
 }
-
 
 #palette {
   min-width: 300px;
   border-right: 1px solid #DDDDDD;
 }
 
-
-#dock {
+#dashboard {
   padding: 4px;
+}
+
+#draggable {
+  border: 2px dashed #bbb;
+  background-color: #ddd;
+  text-align: center;
+  padding: 10px;
+  align-items: center;
+  justify-content: center;
+  display: flex;
 }
