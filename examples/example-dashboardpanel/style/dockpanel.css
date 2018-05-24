@@ -5,13 +5,12 @@
 |
 | The full license is in the file LICENSE, distributed with this software.
 |----------------------------------------------------------------------------*/
-@import './widget.css';
-@import './commandpalette.css';
-@import './dashboardpanel.css';
-@import './dockpanel.css';
-@import './menu.css';
-@import './menubar.css';
-@import './scrollbar.css';
-@import './splitpanel.css';
-@import './tabbar.css';
-@import './tabpanel.css';
+
+
+.p-DockPanel-overlay {
+  background: rgba(255, 255, 255, 0.6);
+  border: 1px dashed black;
+  transition-property: top, left, right, bottom;
+  transition-duration: 150ms;
+  transition-timing-function: ease;
+}
