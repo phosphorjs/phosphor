@@ -105,20 +105,18 @@ interface IMap<T extends ReadonlyJSONValue> extends IIterable<[string, T]> {
    *
    * @param key - The key of interest.
    *
-   * @param value - The value to set for the given key.
+   * @param value - The value to set for the given key, or `undefined`
+   *   to delete the item from the map.
    *
    * #### Complexity
    * `O(1)`
    */
-  set(key: string, value: T): void;
+  set(key: string, value: T | undefined): void;
 
   /**
    * Delete an item from the map.
    *
    * @param key - The key of the item to delete.
-   *
-   * #### Notes
-   * This method is a no-op if the key does not exist in the map.
    *
    * #### Complexity
    * `O(1)`

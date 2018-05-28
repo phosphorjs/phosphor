@@ -214,14 +214,18 @@ namespace MapField {
   export
   interface IChange<T extends ReadonlyJSONValue> {
     /**
-     * The items removed from the map.
+     * The previous values for the changed items.
+     * 
+     * A value of `undefined` means the item did not exist.
      */
-    readonly removed: { readonly [key: string]: T };
+    readonly previous: { readonly [key: string]: T | undefined };
 
     /**
-     * The items added to the map.
+     * The current values for the changed items.
+     * 
+     * A value of `undefined` means the item no longer exists.
      */
-    readonly added: { readonly [key: string]: T };
+    readonly current: { readonly [key: string]: T | undefined };
   }
 }
 

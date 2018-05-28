@@ -6,7 +6,7 @@
 | The full license is in the file LICENSE, distributed with this software.
 |----------------------------------------------------------------------------*/
 import {
-  IIterator, each, filter, iterKeys, map
+  IIterable, IIterator, each, filter, iterKeys, iterItems, map
 } from '@phosphor/algorithm';
 
 import {
@@ -70,19 +70,19 @@ class MapImpl<T extends ReadonlyJSONValue> implements IMap<T> {
    * `O(1)`
    */
   iter(): IIterator<[string, T]> {
-    return map(this.keys(), k =>  k, this._map[k].value]);
+    return map(this.keys(), k => [k, this._map[k].value!] as [string, T]);
   }
 
   /**
    * Create an iterator over the keys in the map.
    *
-   * @returns A new iterator starting with the first key.
+   * @returns A new iterator over the keys in the map.
    *
    * #### Complexity
    * `O(1)`
    */
   keys(): IIterator<string> {
-    return filter(iterKeys(this._map), k => this.has(k));
+    return filter(iterKeys(this._map), k => this._map[k].value !== undefined);
   }
 
   /**
@@ -94,7 +94,7 @@ class MapImpl<T extends ReadonlyJSONValue> implements IMap<T> {
    * `O(1)`
    */
   values(): IIterator<T> {
-    return map(this.keys(), k => this._map[k].value);
+    return map(this.keys(), k => this._map[k].value!);
   }
 
   /**
@@ -164,25 +164,53 @@ class MapImpl<T extends ReadonlyJSONValue> implements IMap<T> {
    *
    * @param key - The key of interest.
    *
-   * @param value - The value to set for the given key.
+   * @param value - The value to set for the given key, or `undefined`
+   *   to delete the item from the map.
    *
    * #### Complexity
    * `O(1)`
    */
-  set(key: string, value: T): void {
+  set(key: string, value: T | undefined): void {
     // Guard against disallowed mutations.
     this._store.assertMutationsAllowed();
 
-    // Fetch the map entry.
-    let entry = this._map[key];
+    // Fetch the current map entry.
+    let entry = this._map[key] || null;
 
-    // Bail early if there is no effective change.
-    // TODO - do a deep compare here?
-    if (entry && entry.value === value) {
+    // Bail early if deleting an already deleted item.
+    if (value === undefined && (!entry || entry.value === undefined)) {
       return;
     }
 
+    // Update the size of the map.
+    if (value === undefined) {
+      this._size--;
+    } else if (!entry || entry.value === undefined) {
+      this._size++;
+    }
+    
+    // Fetch the clock and store id.
+    let clock = this._store.clock;
+    let storeId = this._store.id;
 
+    // If the current entry has the same clock and store id, it means
+    // the item is being updated again during the same patch. For
+    // that case, replace the current entry.
+    if (entry && entry.clock === clock && entry.storeId === storeId) {
+      this._map[key] = { value, clock, storeId, next: entry.next };
+    } else {
+      this._map[key] = { value, clock, storeId, next: entry };
+    }
+
+    // Broadcast the change to peers.
+    this._store.broadcastMapChange(
+      this._schemaId, this._recordId, this._fieldName, key, value
+    );
+
+    // Notify the user of the change.
+    this._store.notifyMapChange(
+      this._schemaId, this._recordId, this._fieldName, key, entry.value, value
+    );
   }
 
   /**
@@ -190,41 +218,11 @@ class MapImpl<T extends ReadonlyJSONValue> implements IMap<T> {
    *
    * @param key - The key of the item to delete.
    *
-   * #### Notes
-   * This method is a no-op if the key does not exist in the map.
-   *
    * #### Complexity
    * `O(1)`
    */
   delete(key: string): void {
-    // Guard against disallowed mutations.
-    this._store.assertMutationsAllowed();
-
-    // Fetch the current map entry.
-    let entry = this._map[key] || null;
-
-    // Add a deleted entry to the map.
-    this._map[key] = {
-      value: undefined,
-      clock: this._store.clock,
-      storeId: this._store.id,
-      next: entry
-    };
-
-    // Broadcast the change to peers.
-    this._store.broadcastMapDelete(
-      this._schemaId, this._recordId, this._fieldName, key
-    );
-
-    //
-    if (!entry || entry.value === undefined) {
-      return;
-    }
-
-    // Notify the user of the change.
-    this._store.notifyMapDelete(
-      this._schemaId, this._recordId, this._fieldName, key, entry.value
-    );
+    this.set(key, undefined);
   }
 
   /**
@@ -234,9 +232,10 @@ class MapImpl<T extends ReadonlyJSONValue> implements IMap<T> {
    * `O(n)`
    */
   clear(): void {
-    each(iterKeys(this._map), k => { this.delete(k); });
+    each(this.keys(), k => { this.delete(k); });
   }
 
+  private _size = 0;
   private _schemaId: string;
   private _recordId: string;
   private _fieldName: string;
