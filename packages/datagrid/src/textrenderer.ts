@@ -31,6 +31,7 @@ class TextRenderer extends CellRenderer {
     this.backgroundColor = options.backgroundColor || '';
     this.verticalAlignment = options.verticalAlignment || 'center';
     this.horizontalAlignment = options.horizontalAlignment || 'left';
+    this.overflow = options.overflow || 'ellipsis';
     this.format = options.format || TextRenderer.formatGeneric();
   }
 
@@ -58,6 +59,11 @@ class TextRenderer extends CellRenderer {
    * The horizontal alignment for the cell text.
    */
   readonly horizontalAlignment: CellRenderer.ConfigOption<TextRenderer.HorizontalAlignment>;
+
+  /**
+   * The overflow behavior for the cell text.
+   */
+  readonly overflow: CellRenderer.ConfigOption<TextRenderer.Overflow>;
 
   /**
    * The format function for the cell value.
@@ -228,19 +234,23 @@ class TextRenderer extends CellRenderer {
       gc.clip();
     }
 
-    let elide = '\u2026';
-    let textWidth = gc.measureText(text).width;
+    let overflow = CellRenderer.resolveOption(this.overflow, config);
 
-    // Compute elided text
-    while ((textWidth > boxWidth) && (text.length > 1)) {
-      if (text.length > 4 && textWidth >= 2 * boxWidth) {
-        // If text width is substantially bigger, take half the string
-        text = text.substr(0, (text.length / 2) + 1) + elide;
-      } else {
-        // Otherwise incrementally remove the last character
-        text = text.substr(0, text.length - 2) + elide;
+    if (overflow === 'ellipsis') {
+      let elide = '\u2026';
+      let textWidth = gc.measureText(text).width;
+
+      // Compute elided text
+      while ((textWidth > boxWidth) && (text.length > 1)) {
+        if (text.length > 4 && textWidth >= 2 * boxWidth) {
+          // If text width is substantially bigger, take half the string
+          text = text.substr(0, (text.length / 2) + 1) + elide;
+        } else {
+          // Otherwise incrementally remove the last character
+          text = text.substr(0, text.length - 2) + elide;
+        }
+        textWidth = gc.measureText(text).width;
       }
-      textWidth = gc.measureText(text).width;
     }
 
     // Set the gc state.
@@ -323,7 +333,7 @@ namespace TextRenderer {
      *
      * The default is `'clip'`.
      */
-    overflow?: CellRenderer.ConfigOption<Overflow> | FormatFunc;
+    overflow?: CellRenderer.ConfigOption<Overflow>;
 
     /**
      * The format function for the renderer.
