@@ -34,7 +34,11 @@ namespace WSAdapterMessages {
   export
   type IBaseMessage = {
     msgId: string;
-    msgType: string;
+    msgType: (
+      'storeid-request' | 'storeid-reply' | 'patch-broadcast' |
+      'patch-history-request' | 'patch-history-reply' |
+      'fetch-patch-request' | 'fetch-patch-reply'
+    );
     parentId?: string;
 
     readonly content: ReadonlyJSONObject;
@@ -80,7 +84,7 @@ namespace WSAdapterMessages {
    * 
    */
   export
-  type IPatchHistoryRequest = IBaseMessage & {
+  type IPatchHistoryRequestMessage = IBaseMessage & {
     msgType: 'patch-history-request';
     content: {};
   }
@@ -124,30 +128,34 @@ namespace WSAdapterMessages {
   export
   type IMessage = (
     IStoreIdMessageRequest | IStoreIdMessageReply | IPatchBroadcastMessage |
-    IPatchHistoryRequest | IPatchHistoryReply |
+    IPatchHistoryRequestMessage | IPatchHistoryReply |
     IPatchFetchRequestMessage | IPatchHistoryReply
   );
 
 
   /**
-   * 
-   * @param msgType 
-   * @param content 
-   * @param parentId 
+   * Create a WSServerAdapter message.
+   *
+   * @param {string} msgType The message type.
+   * @param {ReadonlyJSONObject} content The content of the message.
+   * @param {string} parentId An optional id of the parent of this message.
+   * @returns {IPatchBroadcastMessage} The created message.
    */
   export
-  function createMessage(msgType: WSAdapterMessages.IMessage['msgType'], content: ReadonlyJSONObject, parentId?: string): WSAdapterMessages.IBaseMessage {
+  function createMessage(msgType: IMessage['msgType'], content: ReadonlyJSONObject, parentId?: string): IMessage {
     const msgId = UUID.uuid4();
     return {
       msgId,
       msgType,
       parentId,
       content
-    };
+    } as IMessage;
   }
 
   /**
-   * 
+   * Create a `'storeid-request'` message.
+   *
+   * @returns {IStoreIdMessageRequest} The created message.
    */
   export
   function createStoreIdRequestMessage(): IStoreIdMessageRequest {
@@ -155,7 +163,10 @@ namespace WSAdapterMessages {
   }
 
   /**
-   * 
+   * Create a `'patch-broadcast'` message.
+   *
+   * @param {Patch} patch The patch of the message.
+   * @returns {IPatchBroadcastMessage} The created message.
    */
   export
   function createPatchBroadcastMessage(patch: Patch): IPatchBroadcastMessage {
@@ -163,19 +174,24 @@ namespace WSAdapterMessages {
   }
 
   /**
-   * 
+   * Create a `'patch-history-request'` message.
+   *
+   * @returns {IPatchHistoryRequestMessage} The created message.
    */
   export
-  function createPatchHistoryRequestMessage(): IPatchHistoryRequest {
-    return createMessage('patch-history-request', {}) as IPatchHistoryRequest;
+  function createPatchHistoryRequestMessage(): IPatchHistoryRequestMessage {
+    return createMessage('patch-history-request', {}) as IPatchHistoryRequestMessage;
   }
 
   /**
-   * 
+   * Create a `'fetch-patch-request'` message.
+   *
+   * @param {ReadonlyArray<string>} patchIds The patch ids of the message.
+   * @returns {IPatchFetchRequestMessage} The created message.
    */
   export
   function createPatchFetchRequestMessage(patchIds: ReadonlyArray<string>): IPatchFetchRequestMessage {
-    return createMessage('patch-broadcast', { patchIds}) as IPatchFetchRequestMessage;
+    return createMessage('fetch-patch-request', { patchIds}) as IPatchFetchRequestMessage;
   }
 
 }
@@ -231,7 +247,7 @@ class WSServerAdapter implements IServerAdapter, IDisposable {
   }
 
   /**
-   * 
+   * Register a handler for messages from the server adaptor.
    *
    * @param {number} storeId The store id of the patch handler.
    * @param {IMessageHandler} handler The patch handler to register.
@@ -252,8 +268,8 @@ class WSServerAdapter implements IServerAdapter, IDisposable {
   }
 
   /**
-   * 
-   * 
+   * Broadcast a patch to all data stores.
+   *
    * @param {number} storeId The store id of the patch source.
    * @param {ReadonlyJSONObject} content The patch content.
    * @returns {string} The patch id of the broadcasted patch.
@@ -272,10 +288,10 @@ class WSServerAdapter implements IServerAdapter, IDisposable {
   }
 
   /**
-   * 
-   * 
-   * @param {string[]} patchIds 
-   * @returns {Promise<Patch[]>} 
+   * Fetch specific patches from history by their id.
+   *
+   * @param {string[]} patchIds The patch ids to fetch.
+   * @returns {Promise<Patch[]>} A promise to the patches that are fetched.
    */
   fetchPatches(patchIds: string[]): Promise<Patch[]> {
     const msg = WSAdapterMessages.createPatchFetchRequestMessage(patchIds);
@@ -290,7 +306,7 @@ class WSServerAdapter implements IServerAdapter, IDisposable {
    */
   protected handleRequestMessage(msg: WSAdapterMessages.IStoreIdMessageRequest): Promise<WSAdapterMessages.IStoreIdMessageReply>
   protected handleRequestMessage(msg: WSAdapterMessages.IPatchFetchRequestMessage): Promise<WSAdapterMessages.IPatchFetchReplyMessage>
-  protected handleRequestMessage(msg: WSAdapterMessages.IPatchHistoryRequest): Promise<WSAdapterMessages.IPatchHistoryReply>
+  protected handleRequestMessage(msg: WSAdapterMessages.IPatchHistoryRequestMessage): Promise<WSAdapterMessages.IPatchHistoryReply>
   protected handleRequestMessage(msg: WSAdapterMessages.IMessage): Promise<WSAdapterMessages.IReplyMessage> {
     const delegate = new PromiseDelegate<WSAdapterMessages.IReplyMessage>();
     this._delegates.set(msg.msgId, delegate);
@@ -383,7 +399,7 @@ class WSServerAdapter implements IServerAdapter, IDisposable {
     }
     if (msg.msgType === 'patch-broadcast') {
       // TODO: Ensure the if branch narrows the type implicitly
-      this.broadcastLocal((msg as WSAdapterMessages.IPatchBroadcastMessage).content.patch);
+      this.broadcastLocal(msg.content.patch);
       handled = true;
     }
     if (!handled) {
