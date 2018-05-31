@@ -39,7 +39,7 @@ namespace WSAdapterMessages {
       'patch-history-request' | 'patch-history-reply' |
       'fetch-patch-request' | 'fetch-patch-reply'
     );
-    parentId?: string;
+    parentId: undefined;
 
     readonly content: ReadonlyJSONObject;
   }
