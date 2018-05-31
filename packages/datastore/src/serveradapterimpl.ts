@@ -6,7 +6,7 @@
 | The full license is in the file LICENSE, distributed with this software.
 |----------------------------------------------------------------------------*/
 import {
-  ReadonlyJSONObject, JSONObject, UUID, PromiseDelegate
+  ReadonlyJSONObject, UUID, PromiseDelegate
 } from '@phosphor/coreutils';
 
 import {
@@ -18,7 +18,7 @@ import {
 } from '@phosphor/messaging';
 
 import {
-  IServerAdapter, IPatch, IPatchHistory, PatchHistoryMessage, RemotePatchMessage
+  IServerAdapter, Patch, PatchHistory, PatchHistoryMessage, RemotePatchMessage
 } from './serveradapter';
 
 
@@ -32,22 +32,25 @@ namespace WSAdapterMessages {
    * 
    */
   export
-  type IMessage = {
-    header: {
-      msgId: string;
-      msgType: 'storeid-request' | 'storeid-reply' | 'patch-broadcast' | 'fetch-patch-request' | 'fetch-patch-reply';
-      parentId?: string;
-    };
+  type IBaseMessage = {
+    msgId: string;
+    msgType: string;
+    parentId?: string;
 
     readonly content: ReadonlyJSONObject;
+  }
+
+  export
+  type IReplyMessage = IBaseMessage & {
+    parentId: string;
   }
 
   /**
    * 
    */
   export
-  type IStoreIdMessageRequest = IMessage & {
-    header: { msgType: 'storeid-request'};
+  type IStoreIdMessageRequest = IBaseMessage & {
+    msgType: 'storeid-request';
     content: {};
   }
 
@@ -55,8 +58,8 @@ namespace WSAdapterMessages {
    * 
    */
   export
-  type IStoreIdMessageReply = IMessage & {
-    header: { msgType: 'storeid-reply'};
+  type IStoreIdMessageReply = IReplyMessage & {
+    msgType: 'storeid-reply';
     content: {
       readonly storeId: number
     };
@@ -66,10 +69,10 @@ namespace WSAdapterMessages {
    * 
    */
   export
-  type IPatchBroadcastMessage = IMessage & {
-    header: { msgType: 'patch-broadcast'};
+  type IPatchBroadcastMessage = IBaseMessage & {
+    msgType: 'patch-broadcast';
     content: {
-      readonly patch: IPatch;
+      readonly patch: Patch;
     };
   }
 
@@ -77,8 +80,28 @@ namespace WSAdapterMessages {
    * 
    */
   export
-  type IPatchFetchRequestMessage = IMessage & {
-    header: { msgType: 'fetch-patch-request'};
+  type IPatchHistoryRequest = IBaseMessage & {
+    msgType: 'patch-history-request';
+    content: {};
+  }
+
+  /**
+   * 
+   */
+  export
+  type IPatchHistoryReply = IReplyMessage & {
+    msgType: 'patch-history-reply';
+    content: {
+      patchHistory: PatchHistory
+    };
+  }
+
+  /**
+   * 
+   */
+  export
+  type IPatchFetchRequestMessage = IBaseMessage & {
+    msgType: 'fetch-patch-request';
     content: {
       readonly patchIds: ReadonlyArray<string>;
     };
@@ -88,44 +111,110 @@ namespace WSAdapterMessages {
    * 
    */
   export
-  type IPatchFetchReplyMessage = IMessage & {
-    header: { msgType: 'fetch-patch-reply'};
+  type IPatchFetchReplyMessage = IReplyMessage & {
+    msgType: 'fetch-patch-reply';
     content: {
-      readonly patches: IPatch[];
+      readonly patches: Patch[];
     };
+  }
+
+  /**
+   * 
+   */
+  export
+  type IMessage = (
+    IStoreIdMessageRequest | IStoreIdMessageReply | IPatchBroadcastMessage |
+    IPatchHistoryRequest | IPatchHistoryReply |
+    IPatchFetchRequestMessage | IPatchHistoryReply
+  );
+
+
+  /**
+   * 
+   * @param msgType 
+   * @param content 
+   * @param parentId 
+   */
+  export
+  function createMessage(msgType: WSAdapterMessages.IMessage['msgType'], content: ReadonlyJSONObject, parentId?: string): WSAdapterMessages.IBaseMessage {
+    const msgId = UUID.uuid4();
+    return {
+      msgId,
+      msgType,
+      parentId,
+      content
+    };
+  }
+
+  /**
+   * 
+   */
+  export
+  function createStoreIdRequestMessage(): IStoreIdMessageRequest {
+    return createMessage('storeid-request', {}) as IStoreIdMessageRequest;
+  }
+
+  /**
+   * 
+   */
+  export
+  function createPatchBroadcastMessage(patch: Patch): IPatchBroadcastMessage {
+    return createMessage('patch-broadcast', { patch }) as IPatchBroadcastMessage;
+  }
+
+  /**
+   * 
+   */
+  export
+  function createPatchHistoryRequestMessage(): IPatchHistoryRequest {
+    return createMessage('patch-history-request', {}) as IPatchHistoryRequest;
+  }
+
+  /**
+   * 
+   */
+  export
+  function createPatchFetchRequestMessage(patchIds: ReadonlyArray<string>): IPatchFetchRequestMessage {
+    return createMessage('patch-broadcast', { patchIds}) as IPatchFetchRequestMessage;
   }
 
 }
 
 
 
-
+/**
+ *
+ */
 export
-class WSServerAdapter implements IServerAdapter {
+class WSServerAdapter implements IServerAdapter, IDisposable {
   /**
    *
    */
-  constructor(ws: WebSocket) {
-    this._ws = ws;
-    this._ws.onmessage = this._onWSMessage;
-    this._ws.onopen = this._onWSOpen;
-    this._ws.onclose = this._onWSClose;
-    this._ws.onerror = this._onWSClose;
-    this._delegates = new Map<string, PromiseDelegate<WSAdapterMessages.IMessage>>();
+  constructor(wsFactory: () => WebSocket) {
+    this._wsFactory = wsFactory;
+    this._createSocket();
+    this._delegates = new Map<string, PromiseDelegate<WSAdapterMessages.IReplyMessage>>();
     this._handlers = new Map<number, IMessageHandler>();
   }
 
 
-  static createMessage(msgType: WSAdapterMessages.IMessage['header']['msgType'], content: ReadonlyJSONObject, parentId?: string): WSAdapterMessages.IMessage {
-    const msgId = UUID.uuid4();
-    return {
-      header: {
-        msgId,
-        msgType,
-        parentId,
-      },
-      content
-    };
+  /**
+   * Dispose of the resources held by the adapter.
+   */
+  dispose(): void {
+    if (this.isDisposed) {
+      return;
+    }
+    this._isDisposed = true;
+    this._handlers.clear();
+    this._clearSocket();
+  }
+
+  /**
+   * Test whether the kernel has been disposed.
+   */
+  get isDisposed(): boolean {
+    return this._isDisposed;
   }
 
 
@@ -135,10 +224,7 @@ class WSServerAdapter implements IServerAdapter {
    * @returns {Promise<number>} A promise to the new store id.
    */
   createStoreId(): Promise<number> {
-    const msg = WSServerAdapter.createMessage(
-      'storeid-request',
-      {}
-    );
+    const msg = WSAdapterMessages.createStoreIdRequestMessage();
     return this.handleRequestMessage(msg).then((reply: WSAdapterMessages.IStoreIdMessageReply) => {
       return reply.content.storeId;
     });
@@ -153,9 +239,13 @@ class WSServerAdapter implements IServerAdapter {
    */
   registerPatchHandler(storeId: number, handler: IMessageHandler): IDisposable {
     this._handlers.set(storeId, handler);
-    // TODO: Fetch checkpoint + patch history
+    const fetchMsg = WSAdapterMessages.createPatchHistoryRequestMessage();
     // TODO: Record any patches that arrive while waiting for reply
-    // TODO: On reply, send PatchHistoryMessage to handler
+    this.handleRequestMessage(fetchMsg).then((historyMsg: WSAdapterMessages.IPatchHistoryReply) => {
+      // TODO: Add any recorded patches that arrived
+      const message = new PatchHistoryMessage(historyMsg.content.patchHistory);
+      handler.processMessage(message);
+    });
     return new DisposableDelegate(() => {
       this._handlers.delete(storeId);
     });
@@ -175,12 +265,9 @@ class WSServerAdapter implements IServerAdapter {
       storeId,
       content,
     };
-    const msg = WSServerAdapter.createMessage(
-      'patch-broadcast',
-      { patch },
-    );
-    this._ws.send(JSON.stringify(msg));
-    this.broadcast(patch);
+    const msg = WSAdapterMessages.createPatchBroadcastMessage(patch);
+    this.sendMessage(msg);
+    this.broadcastLocal(patch);
     return patchId;
   }
 
@@ -188,32 +275,38 @@ class WSServerAdapter implements IServerAdapter {
    * 
    * 
    * @param {string[]} patchIds 
-   * @returns {Promise<IPatch[]>} 
+   * @returns {Promise<Patch[]>} 
    */
-  fetchPatches(patchIds: string[]): Promise<IPatch[]> {
-    const msg = WSServerAdapter.createMessage(
-      'fetch-patch-request',
-      {
-        patchIds
-      }
-    );
-   return this.handleRequestMessage(msg).then((reply: WSAdapterMessages.IPatchFetchReplyMessage) => {
-    return reply.content.patches;
-   });
+  fetchPatches(patchIds: string[]): Promise<Patch[]> {
+    const msg = WSAdapterMessages.createPatchFetchRequestMessage(patchIds);
+    return this.handleRequestMessage(msg).then((reply: WSAdapterMessages.IPatchFetchReplyMessage) => {
+      return reply.content.patches;
+    });
   }
 
 
   /**
    * Send a message to the server and resolve the reply message.
    */
-  handleRequestMessage(msg: WSAdapterMessages.IMessage): Promise<WSAdapterMessages.IMessage> {
-    const delegate = new PromiseDelegate<WSAdapterMessages.IMessage>();
-    this._delegates.set(msg.header.msgId, delegate);
-    this._ws.send(JSON.stringify(msg));
+  protected handleRequestMessage(msg: WSAdapterMessages.IStoreIdMessageRequest): Promise<WSAdapterMessages.IStoreIdMessageReply>
+  protected handleRequestMessage(msg: WSAdapterMessages.IPatchFetchRequestMessage): Promise<WSAdapterMessages.IPatchFetchReplyMessage>
+  protected handleRequestMessage(msg: WSAdapterMessages.IPatchHistoryRequest): Promise<WSAdapterMessages.IPatchHistoryReply>
+  protected handleRequestMessage(msg: WSAdapterMessages.IMessage): Promise<WSAdapterMessages.IReplyMessage> {
+    const delegate = new PromiseDelegate<WSAdapterMessages.IReplyMessage>();
+    this._delegates.set(msg.msgId, delegate);
+
     return delegate.promise.then((reply) => {
-      this._delegates.delete(msg.header.msgId);
+      this._delegates.delete(msg.msgId);
       return reply;
     });
+  }
+
+  protected sendMessage(msg: WSAdapterMessages.IMessage) {
+    if (!this._ws || this._wsStopped) {
+      throw new Error('Web socket not connected');
+    } else {
+      this._ws.send(JSON.stringify(msg));
+    }
   }
 
   protected createPatchId(storeId: number): string {
@@ -221,7 +314,7 @@ class WSServerAdapter implements IServerAdapter {
   }
 
 
-  protected broadcast(patch: IPatch) {
+  protected broadcastLocal(patch: Patch) {
     const message = new RemotePatchMessage(patch);
     this._handlers.forEach((handler, storeId) => {
       if (storeId === patch.storeId) {
@@ -231,8 +324,38 @@ class WSServerAdapter implements IServerAdapter {
     });
   }
 
+  /**
+   * Create the kernel websocket connection and add socket status handlers.
+   */
+  private _createSocket = () => {
+    this._wsStopped = false;
+    this._ws = this._wsFactory();
+
+    this._ws.onmessage = this._onWSMessage;
+    this._ws.onopen = this._onWSOpen;
+    this._ws.onclose = this._onWSClose;
+    this._ws.onerror = this._onWSClose;
+  }
+
+  /**
+   * Clear the socket state.
+   */
+  private _clearSocket(): void {
+    this._wsStopped = true;
+    if (this._ws !== null) {
+      // Clear the websocket event handlers and the socket itself.
+      this._ws.onopen = this._noOp;
+      this._ws.onclose = this._noOp;
+      this._ws.onerror = this._noOp;
+      this._ws.onmessage = this._noOp;
+      this._ws.close();
+      this._ws = null;
+    }
+  }
+
 
   private _onWSOpen(evt: Event) {
+    this._wsStopped = false;
   }
 
   private _onWSMessage(evt: MessageEvent) {
@@ -243,33 +366,47 @@ class WSServerAdapter implements IServerAdapter {
     let msg = JSON.parse(evt.data) as WSAdapterMessages.IMessage;
     try {
       // TODO: Write a validator
-      validate.validateMessage(msg);
+      // validate.validateMessage(msg);
     } catch (error) {
       console.error(`Invalid message: ${error.message}`);
       return;
     }
 
     let handled = false;
-    let {msgId, msgType, parentId} = msg.header;
 
-    if (parentId) {
-      let delegate = this._delegates && this._delegates.get(parentId);
+    if (msg.parentId) {
+      let delegate = this._delegates && this._delegates.get(msg.parentId);
       if (delegate) {
-        delegate.resolve(msg);
+        delegate.resolve(msg as WSAdapterMessages.IReplyMessage);
         handled = true;
       }
     }
-    if (msgType === 'patch-broadcast') {
-      // TODO: Ensure the if narrows the type implicitly
-      this.broadcast((msg as WSAdapterMessages.IPatchBroadcastMessage).content.patch);
+    if (msg.msgType === 'patch-broadcast') {
+      // TODO: Ensure the if branch narrows the type implicitly
+      this.broadcastLocal((msg as WSAdapterMessages.IPatchBroadcastMessage).content.patch);
+      handled = true;
+    }
+    if (!handled) {
+      console.log('Unhandled server adapter message.', msg);
     }
   }
 
   private _onWSClose(evt: Event) {
+    if (this._wsStopped || !this._ws) {
+      return;
+    }
+    // Clear the websocket event handlers and the socket itself.
+    this._ws.onclose = this._noOp;
+    this._ws.onerror = this._noOp;
+    this._ws = null;
+    this._wsStopped = true;
   }
 
-
-  _ws: WebSocket;
-  _delegates: Map<string, PromiseDelegate<WSAdapterMessages.IMessage>>;
-  _handlers: Map<number, IMessageHandler>;
+  private _wsFactory: () => WebSocket;
+  private _ws: WebSocket | null = null;
+  private _wsStopped: boolean;
+  private _isDisposed = false;
+  private _delegates: Map<string, PromiseDelegate<WSAdapterMessages.IReplyMessage>>;
+  private _handlers: Map<number, IMessageHandler>;
+  private _noOp = () => { /* no-op */};
 }

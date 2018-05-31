@@ -28,7 +28,7 @@ class PatchHistoryMessage extends Message {
    *
    * @param history - The patch history
    */
-  constructor(history: IPatchHistory) {
+  constructor(history: PatchHistory) {
     super('patch-history');
     this.history = history;
   }
@@ -36,7 +36,7 @@ class PatchHistoryMessage extends Message {
   /**
    * The patch history
    */
-  readonly history: IPatchHistory;
+  readonly history: PatchHistory;
 }
 
 
@@ -50,7 +50,7 @@ class RemotePatchMessage extends Message {
    *
    * @param patch - The patch object
    */
-  constructor(patch: IPatch) {
+  constructor(patch: Patch) {
     super('remote-patch');
     this.patch = patch;
   }
@@ -58,7 +58,7 @@ class RemotePatchMessage extends Message {
   /**
    * The patch object.
    */
-  readonly patch: IPatch;
+  readonly patch: Patch;
 }
 
 
@@ -66,7 +66,7 @@ class RemotePatchMessage extends Message {
  * A patch object for the data store.
  */
 export
-interface IPatch {
+type Patch = {
   /**
    * The patch id.
    */
@@ -88,7 +88,7 @@ interface IPatch {
  * A patch history object for the data store.
  */
 export
-interface IPatchHistory {
+type PatchHistory = {
   /**
    * The checkpoint that serves as the base of the patches.
    */
@@ -97,7 +97,7 @@ interface IPatchHistory {
   /**
    * The known patches since the last checkpoint.
    */
-  readonly patches: ReadonlyArray<IPatch>;
+  readonly patches: ReadonlyArray<Patch>;
 }
 
 
@@ -124,5 +124,5 @@ interface IServerAdapter {
   /**
    *
    */
-  fetchPatches(patchIds: string[]): Promise<IPatch[]>;
+  fetchPatches(patchIds: string[]): Promise<Patch[]>;
 }
