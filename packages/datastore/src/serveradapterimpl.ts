@@ -222,6 +222,10 @@ class WSServerAdapter implements IServerAdapter, IDisposable {
       return;
     }
     this._isDisposed = true;
+    this._delegates.forEach((delegate) => {
+      delegate.reject('Disposing of adaptor');
+    });
+    this._delegates.clear();
     this._handlers.clear();
     this._clearSocket();
   }
@@ -244,6 +248,15 @@ class WSServerAdapter implements IServerAdapter, IDisposable {
     return this.handleRequestMessage(msg).then((reply: WSAdapterMessages.IStoreIdMessageReply) => {
       return reply.content.storeId;
     });
+  }
+
+  /**
+   * Create a new, uniwue patch id.
+   * 
+   * @returns {string} The patch id.
+   */
+  createPatchId(): string {
+    return UUID.uuid4();
   }
 
   /**
@@ -270,21 +283,12 @@ class WSServerAdapter implements IServerAdapter, IDisposable {
   /**
    * Broadcast a patch to all data stores.
    *
-   * @param {number} storeId The store id of the patch source.
-   * @param {ReadonlyJSONObject} content The patch content.
-   * @returns {string} The patch id of the broadcasted patch.
+   * @param {Patch} patch The patch to broadcast.
    */
-  broadcastPatch(storeId: number, content: ReadonlyJSONObject): string {
-    const patchId = this.createPatchId(storeId);
-    const patch = {
-      patchId,
-      storeId,
-      content,
-    };
+  broadcastPatch(patch: Patch): void {
     const msg = WSAdapterMessages.createPatchBroadcastMessage(patch);
     this.sendMessage(msg);
     this.broadcastLocal(patch);
-    return patchId;
   }
 
   /**
@@ -323,10 +327,6 @@ class WSServerAdapter implements IServerAdapter, IDisposable {
     } else {
       this._ws.send(JSON.stringify(msg));
     }
-  }
-
-  protected createPatchId(storeId: number): string {
-    return `${storeId}:${UUID.uuid4()}`;
   }
 
 
