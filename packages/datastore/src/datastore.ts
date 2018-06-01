@@ -124,7 +124,7 @@ interface IDatastore extends IIterable<ITable> {
    * @throws An exception if no table exists for the schema.
    *
    * #### Complexity
-   * `O(1)`
+   * `O(log32 n)`
    */
   getTable<S extends Schema>(schema: S): ITable<S>;
 }

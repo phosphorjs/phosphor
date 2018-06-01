@@ -63,7 +63,7 @@ interface IMap<T extends ReadonlyJSONValue = ReadonlyJSONValue> extends IIterabl
    * @returns `true` if the map has the given key, `false` otherwise.
    *
    * #### Complexity
-   * `O(1)`
+   * `O(log32 n)`
    */
   has(key: string): boolean;
 
@@ -76,7 +76,7 @@ interface IMap<T extends ReadonlyJSONValue = ReadonlyJSONValue> extends IIterabl
    *   the map does not have a value for the key.
    *
    * #### Complexity
-   * `O(1)`
+   * `O(log32 n)`
    */
   get(key: string): T | undefined;
 
@@ -108,7 +108,7 @@ interface IMap<T extends ReadonlyJSONValue = ReadonlyJSONValue> extends IIterabl
    * @param value - The value to set for the given key.
    *
    * #### Complexity
-   * `O(1)`
+   * `O(log32 n)`
    */
   set(key: string, value: T): void;
 
@@ -118,7 +118,7 @@ interface IMap<T extends ReadonlyJSONValue = ReadonlyJSONValue> extends IIterabl
    * @param key - The key of the item to delete.
    *
    * #### Complexity
-   * `O(1)`
+   * `O(log32 n)`
    */
   delete(key: string): void;
 

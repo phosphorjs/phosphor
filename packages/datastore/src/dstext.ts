@@ -6,22 +6,22 @@
 | The full license is in the file LICENSE, distributed with this software.
 |----------------------------------------------------------------------------*/
 import {
-  DatastoreImpl
-} from './datastoreimpl';
+  DSHandler
+} from './dshandler';
 
 
 export
-class TextImpl {
+class DSText {
 
-  constructor(store: DatastoreImpl, schemaId: string, recordId: string, fieldName: string, initialValue: string) {
-    this._store = store;
+  constructor(handler: DSHandler, schemaId: string, recordId: string, fieldName: string) {
+    this._handler = handler;
     this._schemaId = schemaId;
     this._recordId = recordId;
     this._fieldName = fieldName;
   }
 
-  private _store: DatastoreImpl;
   private _schemaId: string;
   private _recordId: string;
   private _fieldName: string;
+  private _handler: DSHandler;
 }
