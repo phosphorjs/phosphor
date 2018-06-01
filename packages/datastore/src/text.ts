@@ -81,7 +81,7 @@ interface IText {
    * @param value - The value(s) to insert into the text.
    *
    * #### Complexity
-   * Logarithmic.
+   * 
    *
    * #### Undefined Behavior
    * An `index` which is non-integral.

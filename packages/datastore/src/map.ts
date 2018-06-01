@@ -18,7 +18,7 @@ import {
  * A data store object which holds a map of items.
  */
 export
-interface IMap<T extends ReadonlyJSONValue> extends IIterable<[string, T]> {
+interface IMap<T extends ReadonlyJSONValue = ReadonlyJSONValue> extends IIterable<[string, T]> {
   /**
    * Whether the map is empty.
    *
@@ -105,13 +105,12 @@ interface IMap<T extends ReadonlyJSONValue> extends IIterable<[string, T]> {
    *
    * @param key - The key of interest.
    *
-   * @param value - The value to set for the given key, or `undefined`
-   *   to delete the item from the map.
+   * @param value - The value to set for the given key.
    *
    * #### Complexity
    * `O(1)`
    */
-  set(key: string, value: T | undefined): void;
+  set(key: string, value: T): void;
 
   /**
    * Delete an item from the map.

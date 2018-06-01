@@ -23,21 +23,33 @@ import {
 
 
 /**
- * A field which represents a primary key.
+ * A base class for the datastore field types.
+ *
+ * #### Notes
+ * The datastore does not support user-defined fields.
  */
 export
-class PrimaryKeyField {
+abstract class BaseField<ValueType, ChangeType> {
   /**
-   * Construct a new primary key field.
+   * Construct a new base field.
+   *
+   * @param options - The options for initializing the field.
    */
-  constructor() { }
+  constructor(options: BaseField.IOptions = {}) {
+    let opts = { undoable: true, description: '', ...options };
+    this.undoable = opts.undoable;
+    this.description = opts.description;
+  }
 
   /**
-   * The discriminated type of the field.
+   * Whether changes to the field can be undone.
    */
-  get type(): 'primarykey' {
-    return 'primarykey';
-  }
+  readonly undoable: boolean;
+
+  /**
+   * The human-readable description of the field.
+   */
+  readonly description: string;
 
   /**
    * The value key for the field.
@@ -54,7 +66,7 @@ class PrimaryKeyField {
    * This is an internal property which is only used to support the
    * type system. The runtime value of this property is undefined.
    */
-  readonly '@@ValueType': string;
+  readonly '@@ValueType': ValueType;
 
   /**
    * The change type for the field.
@@ -63,7 +75,34 @@ class PrimaryKeyField {
    * This is an internal property which is only used to support the
    * type system. The runtime value of this property is undefined.
    */
-  readonly '@@ChangeType': never;
+  readonly '@@ChangeType': ChangeType;
+}
+
+
+/**
+ * The namespace for the `BaseField` class statics.
+ */
+export
+namespace BaseField {
+  /**
+   * An options object for initializing a base field.
+   */
+  export
+  interface IOptions {
+    /**
+     * Whether changes to the field can be undone.
+     *
+     * The default is `true`.
+     */
+    undoable?: boolean;
+
+    /**
+     * The human-readable description of the field.
+     *
+     * The default is `''`.
+     */
+    description?: string;
+  }
 }
 
 
@@ -71,14 +110,14 @@ class PrimaryKeyField {
  * A field which represents a mutable sequence of values.
  */
 export
-class ListField<T extends ReadonlyJSONValue = ReadonlyJSONValue> {
+class ListField<T extends ReadonlyJSONValue = ReadonlyJSONValue> extends BaseField<IList<T>, ListField.ChangeArray<T>> {
   /**
    * Construct a new list field.
    *
-   * @param initialValue - The initial value for the field.
+   * @param options - The options for initializing the field.
    */
-  constructor(initialValue: ReadonlyArray<T>) {
-    this.initialValue = initialValue;
+  constructor(options: ListField.IOptions<T> = {}) {
+    super(options);
   }
 
   /**
@@ -87,37 +126,6 @@ class ListField<T extends ReadonlyJSONValue = ReadonlyJSONValue> {
   get type(): 'list' {
     return 'list';
   }
-
-  /**
-   * The initial value for the field.
-   */
-  readonly initialValue: ReadonlyArray<T>;
-
-  /**
-   * The value key for the field.
-   *
-   * #### Notes
-   * This property is an internal implementation detail.
-   */
-  readonly '@@ValueKey' = Symbol();
-
-  /**
-   * The value type for the field.
-   *
-   * #### Notes
-   * This is an internal property which is only used to support the
-   * type system. The runtime value of this property is undefined.
-   */
-  readonly '@@ValueType': IList<T>;
-
-  /**
-   * The change type for the field.
-   *
-   * #### Notes
-   * This is an internal property which is only used to support the
-   * type system. The runtime value of this property is undefined.
-   */
-  readonly '@@ChangeType': ReadonlyArray<ListField.IChange<T>>;
 }
 
 
@@ -126,6 +134,12 @@ class ListField<T extends ReadonlyJSONValue = ReadonlyJSONValue> {
  */
 export
 namespace ListField {
+  /**
+   * An options object for initializing a list field.
+   */
+  export
+  interface IOptions<T extends ReadonlyJSONValue> extends BaseField.IOptions { }
+
   /**
    * An object which represents a single change to a list field.
    */
@@ -146,6 +160,12 @@ namespace ListField {
      */
     readonly value: T;
   }
+
+  /**
+   * A type alias for an array of list changes.
+   */
+  export
+  type ChangeArray<T extends ReadonlyJSONValue> = ReadonlyArray<IChange<T>>;
 }
 
 
@@ -153,14 +173,14 @@ namespace ListField {
  * A field which represents a mutable map of values.
  */
 export
-class MapField<T extends ReadonlyJSONValue = ReadonlyJSONValue> {
+class MapField<T extends ReadonlyJSONValue = ReadonlyJSONValue> extends BaseField<IMap<T>, MapField.IChange<T>> {
   /**
    * Construct a new map field.
    *
-   * @param initialValue - The initial value for the field.
+   * @param options - The options for initializing the field.
    */
-  constructor(initialValue: { readonly [key: string]: T }) {
-    this.initialValue = initialValue;
+  constructor(options: MapField.IOptions<T> = {}) {
+    super(options);
   }
 
   /**
@@ -169,37 +189,6 @@ class MapField<T extends ReadonlyJSONValue = ReadonlyJSONValue> {
   get type(): 'map' {
     return 'map';
   }
-
-  /**
-   * The initial value for the field.
-   */
-  readonly initialValue: { readonly [key: string]: T };
-
-  /**
-   * The value key for the field.
-   *
-   * #### Notes
-   * This property is an internal implementation detail.
-   */
-  readonly '@@ValueKey' = Symbol();
-
-  /**
-   * The value type for the field.
-   *
-   * #### Notes
-   * This is an internal property which is only used to support the
-   * type system. The runtime value of this property is undefined.
-   */
-  readonly '@@ValueType': IMap<T>;
-
-  /**
-   * The change type for the field.
-   *
-   * #### Notes
-   * This is an internal property which is only used to support the
-   * type system. The runtime value of this property is undefined.
-   */
-  readonly '@@ChangeType': MapField.IChange<T>;
 }
 
 
@@ -209,23 +198,25 @@ class MapField<T extends ReadonlyJSONValue = ReadonlyJSONValue> {
 export
 namespace MapField {
   /**
+   * An options object for initializing a map field.
+   */
+  export
+  interface IOptions<T extends ReadonlyJSONValue> extends BaseField.IOptions { }
+
+  /**
    * An object which represents a change to a map field.
    */
   export
   interface IChange<T extends ReadonlyJSONValue> {
     /**
      * The previous values for the changed items.
-     * 
-     * A value of `undefined` means the item did not exist.
      */
-    readonly previous: { readonly [key: string]: T | undefined };
+    readonly previous: { readonly [key: string]: T };
 
     /**
      * The current values for the changed items.
-     * 
-     * A value of `undefined` means the item no longer exists.
      */
-    readonly current: { readonly [key: string]: T | undefined };
+    readonly current: { readonly [key: string]: T };
   }
 }
 
@@ -234,14 +225,14 @@ namespace MapField {
  * A field which represents a mutable text value.
  */
 export
-class TextField {
+class TextField extends BaseField<IText, TextField.ChangeArray> {
   /**
    * Construct a new text field.
    *
-   * @param initialValue - The initial value for the field.
+   * @param options - The options for initializing the field.
    */
-  constructor(initialValue: string) {
-    this.initialValue = initialValue;
+  constructor(options: TextField.IOptions = {}) {
+    super(options);
   }
 
   /**
@@ -250,37 +241,6 @@ class TextField {
   get type(): 'text' {
     return 'text';
   }
-
-  /**
-   * The initial value for the field.
-   */
-  readonly initialValue: string;
-
-  /**
-   * The value key for the field.
-   *
-   * #### Notes
-   * This property is an internal implementation detail.
-   */
-  readonly '@@ValueKey' = Symbol();
-
-  /**
-   * The value type for the field.
-   *
-   * #### Notes
-   * This is an internal property which is only used to support the
-   * type system. The runtime value of this property is undefined.
-   */
-  readonly '@@ValueType': IText;
-
-  /**
-   * The change type for the field.
-   *
-   * #### Notes
-   * This is an internal property which is only used to support the
-   * type system. The runtime value of this property is undefined.
-   */
-  readonly '@@ChangeType': ReadonlyArray<TextField.IChange>;
 }
 
 
@@ -289,6 +249,12 @@ class TextField {
  */
 export
 namespace TextField {
+  /**
+   * An options object for initializing a text field.
+   */
+  export
+  interface IOptions extends BaseField.IOptions { }
+
   /**
    * An object which represents a single change to a text field.
    */
@@ -309,6 +275,12 @@ namespace TextField {
      */
     readonly text: string;
   }
+
+  /**
+   * A type alias for an array of text changes.
+   */
+  export
+  type ChangeArray = ReadonlyArray<IChange>;
 }
 
 
@@ -316,14 +288,15 @@ namespace TextField {
  * A field which represents a readonly JSON value.
  */
 export
-class ValueField<T extends ReadonlyJSONValue = ReadonlyJSONValue> {
+class ValueField<T extends ReadonlyJSONValue = ReadonlyJSONValue> extends BaseField<T, ValueField.IChange<T>> {
   /**
    * Construct a new value field.
    *
-   * @param initialValue - The initial value for the field.
+   * @param options - The options for initializing the field.
    */
-  constructor(initialValue: T) {
-    this.initialValue = initialValue;
+  constructor(options: ValueField.IOptions<T>) {
+    super(options);
+    this.value = options.value;
   }
 
   /**
@@ -336,33 +309,7 @@ class ValueField<T extends ReadonlyJSONValue = ReadonlyJSONValue> {
   /**
    * The initial value for the field.
    */
-  readonly initialValue: T;
-
-  /**
-   * The value key for the field.
-   *
-   * #### Notes
-   * This property is an internal implementation detail.
-   */
-  readonly '@@ValueKey' = Symbol();
-
-  /**
-   * The value type for the field.
-   *
-   * #### Notes
-   * This is an internal property which is only used to support the
-   * type system. The runtime value of this property is undefined.
-   */
-  readonly '@@ValueType': T;
-
-  /**
-   * The change type for the field.
-   *
-   * #### Notes
-   * This is an internal property which is only used to support the
-   * type system. The runtime value of this property is undefined.
-   */
-  readonly '@@ChangeType': ValueField.IChange<T>;
+  readonly value: T;
 }
 
 
@@ -371,6 +318,17 @@ class ValueField<T extends ReadonlyJSONValue = ReadonlyJSONValue> {
  */
 export
 namespace ValueField {
+  /**
+   * An options object for initializing a value field.
+   */
+  export
+  interface IOptions<T extends ReadonlyJSONValue> extends BaseField.IOptions {
+    /**
+     * The initial value for the field.
+     */
+    value: T;
+  }
+
   /**
    * An object which represents a change to a value field.
    */
@@ -393,7 +351,7 @@ namespace ValueField {
  * A type alias of all supported fields.
  */
 export
-type Field = PrimaryKeyField | ListField | MapField | TextField | ValueField;
+type Field = ListField | MapField | TextField | ValueField;
 
 
 /**
@@ -402,102 +360,92 @@ type Field = PrimaryKeyField | ListField | MapField | TextField | ValueField;
 export
 namespace Field {
   /**
-   * A convenience function which creates a primary key field.
-   *
-   * @returns A new primary key field.
-   */
-  export
-  function PrimaryKey(): PrimaryKeyField {
-    return new PrimaryKeyField();
-  }
-
-  /**
    * A convenience function which creates a boolean value field.
    *
-   * @param initialValue - The initial value for the field.
-   *   The default is `false`.
+   * @param options - The options for the field. The default `value`
+   *   option is `false`.
    *
    * @returns A new boolean value field.
    */
   export
-  function Boolean(initialValue = false): ValueField<boolean> {
-    return new ValueField<boolean>(initialValue);
+  function Boolean(options: Partial<ValueField.IOptions<boolean>> = {}): ValueField<boolean> {
+    let opts = { value: false, ...options };
+    return new ValueField<boolean>(opts);
   }
 
   /**
    * A convenience function which creates a number value field.
    *
-   * @param initialValue - The initial value for the field.
-   *   The default is `0`.
+   * @param options - The options for the field. The default `value`
+   *   option is `0`.
    *
    * @returns A new number value field.
    */
   export
-  function Number(initialValue = 0): ValueField<number> {
-    return new ValueField<number>(initialValue);
+  function Number(options: Partial<ValueField.IOptions<number>> = {}): ValueField<number> {
+    let opts = { value: 0, ...options };
+    return new ValueField<number>(opts);
   }
 
   /**
    * A convenience function which creates a string value field.
    *
-   * @param initialValue - The initial value for the field.
-   *   The default is `''`.
+   * @param options - The options for the field. The default `value`
+   *   option is `''`.
    *
    * @returns A new string value field.
    */
   export
-  function String(initialValue = ''): ValueField<string> {
-    return new ValueField<string>(initialValue);
+  function String(options: Partial<ValueField.IOptions<string>> = {}): ValueField<string> {
+    let opts = { value: '', ...options };
+    return new ValueField<string>(opts);
   }
 
   /**
    * A convenience function which creates a list field.
    *
-   * @param initialValue - The initial value for the field.
-   *   The default is `[]`.
+   * @param options - The options for the field.
    *
    * @returns A new list field.
    */
   export
-  function List<T extends ReadonlyJSONValue>(initialValue: ReadonlyArray<T> = []): ListField<T> {
-    return new ListField<T>(initialValue);
+  function List<T extends ReadonlyJSONValue>(options: ListField.IOptions<T> = {}): ListField<T> {
+    return new ListField<T>(options);
   }
 
   /**
    * A convenience function which creates a map field.
    *
-   * @param initialValue - The initial value for the field.
-   *   The default is `{}`.
+   * @param options - The options for the field.
    *
    * @returns A new map field.
    */
   export
-  function Map<T extends ReadonlyJSONValue>(initialValue: { readonly [key: string]: T } = {}): MapField<T> {
-    return new MapField<T>(initialValue);
+  function Map<T extends ReadonlyJSONValue>(options: MapField.IOptions<T> = {}): MapField<T> {
+    return new MapField<T>(options);
   }
 
   /**
    * A convenience function which creates a text field.
    *
-   * @param initialValue - The initial value for the field.
-   *   The default is `''`.
+   * @param options - The options for the field.
    *
    * @returns A new text field.
    */
   export
-  function Text(initialValue = ''): TextField {
-    return new TextField(initialValue);
+  function Text(options: TextField.IOptions = {}): TextField {
+    return new TextField(options);
   }
 
   /**
    * A convenience function which creates a text field.
    *
-   * @param initialValue - The initial value for the field.
+   * @param options - The options for the field.
    *
    * @returns A new value field.
    */
   export
-  function Value<T extends ReadonlyJSONValue>(initialValue: T): ValueField<T> {
-    return new ValueField<T>(initialValue);
+  function Value<T extends ReadonlyJSONValue>(options: ValueField.IOptions<T>): ValueField<T> {
+    return new ValueField<T>(options);
   }
 }

@@ -14,6 +14,10 @@ import {
 } from '@phosphor/signaling';
 
 import {
+  Schema
+} from './schema';
+
+import {
   ITable
 } from './table';
 
@@ -30,7 +34,7 @@ import {
  * https://hal.inria.fr/file/index/docid/555588/filename/techreport.pdf
  */
 export
-interface IDatastore extends IIterable<ITable<ITable.Schema>> {
+interface IDatastore extends IIterable<ITable> {
   /**
    * A signal emitted when changes are made to the datastore.
    *
@@ -50,8 +54,7 @@ interface IDatastore extends IIterable<ITable<ITable.Schema>> {
    * The unique id of the datastore.
    *
    * #### Notes
-   * The datastore id is assigned by the patch server and is unique
-   * among all other collaborating peers.
+   * The datastore id is unique among all other collaborating peers.
    *
    * #### Complexity
    * `O(1)`
@@ -79,17 +82,14 @@ interface IDatastore extends IIterable<ITable<ITable.Schema>> {
    * If changes are made, the `changed` signal will be emitted before
    * this method returns.
    */
-  mutate(message: string, fn: (patchId: string) => void): void;
+  mutate(message: string, fn: () => void): string;
 
   /**
    * Undo a patch that was previously applied.
    *
-   * @param patchId - The patch to undo.
+   * @param patchId - The patch(es) to undo.
    *
    * @returns A promise which resolves when the action is complete.
-   *   The result will be `true` if the patch was undone, or `false`
-   *   if the patch was already undone. The promise will reject if
-   *   the given patch does not exist.
    *
    * @throws An exception if `undo` is called during a mutation.
    *
@@ -97,7 +97,7 @@ interface IDatastore extends IIterable<ITable<ITable.Schema>> {
    * If changes are made, the `changed` signal will be emitted before
    * the promise resolves.
    */
-  undo(patchId: string): Promise<boolean>;
+  undo(patchId: string | string[]): Promise<void>;
 
   /**
    * Redo a patch that was previously undone.
@@ -105,9 +105,6 @@ interface IDatastore extends IIterable<ITable<ITable.Schema>> {
    * @param patchId - The patch(es) to redo.
    *
    * @returns A promise which resolves when the action is complete.
-   *   The result will be `true` if the patch was redone, or `false`
-   *   if the patch was not already undone. The promise will reject
-   *   if the given patch does not exist.
    *
    * @throws An exception if `redo` is called during a mutation.
    *
@@ -115,36 +112,21 @@ interface IDatastore extends IIterable<ITable<ITable.Schema>> {
    * If changes are made, the `changed` signal will be emitted before
    * the promise resolves.
    */
-  redo(patchId: string): Promise<boolean>;
+  redo(patchId: string | string[]): Promise<void>;
 
   /**
    * Get the table for a particular schema.
    *
    * @param schema - The schema of interest.
    *
-   * @returns The table for the specified schema, or `undefined` if
-   *   no such table has been created.
+   * @returns The table for the specified schema.
+   *
+   * @throws An exception if no table exists for the schema.
    *
    * #### Complexity
    * `O(1)`
    */
-  getTable<S extends ITable.Schema>(schema: S): ITable<S> | undefined;
-
-  /**
-   * Create a table for a particular schema.
-   *
-   * @param schema - The schema of interest.
-   *
-   * @returns A new table for the specified schema.
-   *
-   * #### Notes
-   * If a table for the specified schema already exists, the existing
-   * table is returned.
-   *
-   * #### Complexity
-   * `O(1)`
-   */
-  createTable<S extends ITable.Schema>(schema: S): ITable<S>;
+  getTable<S extends Schema>(schema: S): ITable<S>;
 }
 
 
@@ -169,6 +151,11 @@ namespace IDatastore {
     readonly patchId: string;
 
     /**
+     * The id of the datastore responsible for the change.
+     */
+    readonly storeId: number;
+
+    /**
      * A mapping of schema id to table change set.
      */
     readonly changes: ChangeSet;
@@ -179,7 +166,7 @@ namespace IDatastore {
    */
   export
   type ChangeSet = {
-    readonly [schemaId: string]: ITable.ChangeSet<ITable.Schema>;
+    readonly [schemaId: string]: ITable.ChangeSet<Schema>;
   };
 }
 
@@ -188,6 +175,6 @@ namespace IDatastore {
  *
  */
 export
-function createDatastore(schemas: ReadonlyArray<ITable.Schema>): Promise<IDatastore> {
+function createDatastore(schemas: ReadonlyArray<Schema>): Promise<IDatastore> {
   throw '';
 }

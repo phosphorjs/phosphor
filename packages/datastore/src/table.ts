@@ -10,15 +10,19 @@ import {
 } from '@phosphor/algorithm';
 
 import {
-  Field, PrimaryKeyField
-} from './fields';
+  Record
+} from './record';
+
+import {
+  Schema
+} from './schema';
 
 
 /**
  * A datastore object which holds a collection of records.
  */
 export
-interface ITable<S extends ITable.Schema> extends IIterable<ITable.Record<S>> {
+interface ITable<S extends Schema = Schema> extends IIterable<Record<S>> {
   /**
    * The schema for the table.
    *
@@ -51,7 +55,7 @@ interface ITable<S extends ITable.Schema> extends IIterable<ITable.Record<S>> {
    * @returns `true` if the table has the record, `false` otherwise.
    *
    * #### Complexity
-   * `O(1)`
+   * `O(log32 n)`
    */
   has(id: string): boolean;
 
@@ -64,25 +68,23 @@ interface ITable<S extends ITable.Schema> extends IIterable<ITable.Record<S>> {
    *   such record exists.
    *
    * #### Complexity
-   * `O(1)`
+   * `O(log32 n)`
    */
-  get(id: string): ITable.Record<S> | undefined;
+  get(id: string): Record<S> | undefined;
 
   /**
    * Create a new record in the table.
    *
-   * @param id - The id for the record. The default is a new uuid4.
+   * @param id - The id for the record. The default is a new UUIDv4.
    *
    * @returns A new record with the specified id.
    *
-   * #### Notes
-   * If a record with the specified id already exists, the existing
-   * record is returned.
+   * @throws An exception if a record for the given id already exists.
    *
    * #### Complexity
-   * `O(1)`
+   * `O(log32 n)`
    */
-  create(id?: string): ITable.Record<S>;
+  create(id?: string): Record<S>;
 }
 
 
@@ -92,97 +94,10 @@ interface ITable<S extends ITable.Schema> extends IIterable<ITable.Record<S>> {
 export
 namespace ITable {
   /**
-   * A type definition for a table schema.
-   *
-   * #### Notes
-   * The datastore assumes that peers may safely collaborate on tables
-   * which share the same schema `id`.
-   *
-   * The schema `id` must be changed whenever changes are made to the
-   * schema, or undefined behavior will result.
-   */
-  export
-  type Schema = {
-    /**
-     * The unique identifier for the schema.
-     */
-    readonly id: string;
-
-    /**
-     * The field definitions for the schema.
-     */
-    readonly fields: {
-      /**
-       * A single `id` primary key field is required.
-       */
-      readonly id: PrimaryKeyField;
-
-      /**
-       * Any additional fields may be defined.
-       */
-      readonly [name: string]: Field;
-    };
-  };
-
-  /**
-   * A type alias which extracts the field names from a schema.
-   */
-  export
-  type FieldNames<S extends Schema> = keyof S['fields'];
-
-  /**
-   * A type alias which extracts the mutable field names from a schema.
-   */
-  export
-  type MutableFieldNames<S extends Schema> = {
-    [N in FieldNames<S>]: S['fields'][N]['type'] extends 'value' ? N : never;
-  }[FieldNames<S>];
-
-  /**
-   * A type alias which extracts the readonly field names from a schema.
-   */
-  export
-  type ReadonlyFieldNames<S extends Schema> = {
-    [N in FieldNames<S>]: S['fields'][N]['type'] extends 'value' ? never : N;
-  }[FieldNames<S>];
-
-  /**
-   * A type alias for the mutable state of a record in a table.
-   */
-  export
-  type MutableRecordState<S extends Schema> = {
-    [N in MutableFieldNames<S>]: S['fields'][N]['@@ValueType'];
-  };
-
-  /**
-   * A type alias for the readnly state of a record in a table.
-   */
-  export
-  type ReadonlyRecordState<S extends Schema> = {
-    readonly [N in ReadonlyFieldNames<S>]: S['fields'][N]['@@ValueType'];
-  };
-
-  /**
-   * A type alias for a record in a table.
-   */
-  export
-  type Record<S extends Schema> = (
-    MutableRecordState<S> & ReadonlyRecordState<S>
-  );
-
-  /**
-   * A type alias for changes to a record.
-   */
-  export
-  type RecordChange<S extends Schema> = {
-    readonly [N in FieldNames<S>]?: S['fields'][N]['@@ChangeType'];
-  };
-
-  /**
    * A type alias for a table change set.
    */
   export
   type ChangeSet<S extends Schema> = {
-    readonly [recordId: string]: RecordChange<S>;
+    readonly [recordId: string]: Record.ChangeSet<S>;
   };
 }

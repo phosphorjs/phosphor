@@ -18,7 +18,7 @@ import {
  * A data store object which holds a sequence of values.
  */
 export
-interface IList<T extends ReadonlyJSONValue> extends IIterable<T>, IRetroable<T> {
+interface IList<T extends ReadonlyJSONValue = ReadonlyJSONValue> extends IIterable<T>, IRetroable<T> {
   /**
    * Whether the list is empty.
    *
