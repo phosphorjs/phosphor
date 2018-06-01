@@ -18,9 +18,9 @@ import {
 } from '@phosphor/messaging';
 
 
-  /**
-   * A message class for `'patch-history'` messages.
-   */
+/**
+ * A message class for `'patch-history'` messages.
+ */
 export
 class PatchHistoryMessage extends Message {
   /**
@@ -63,7 +63,7 @@ class RemotePatchMessage extends Message {
 
 
 /**
- * A patch object for the data store.
+ * A patch object for the datastore.
  */
 export
 type Patch = {
@@ -73,7 +73,7 @@ type Patch = {
   readonly patchId: string;
 
   /**
-   * The id of the data store that generated the patch.
+   * The id of the datastore that generated the patch.
    */
   readonly storeId: number;
 
@@ -107,35 +107,43 @@ type PatchHistory = {
 export
 interface IServerAdapter {
   /**
-   * Create a new, unique store ID.
+   * Create a new unique store ID.
    *
-   * @returns {Promise<number>} A promise to the new store id.
+   * @returns A promise to the new store id.
    */
   createStoreId(): Promise<number>;
 
   /**
+   * Create a new unique patch id.
+   *
+   * @returns A unique id to use for a new patch.
+   */
+  createPatchId(): string;
+
+  /**
    * Register a handler for messages from the server adaptor.
    *
-   * @param {number} storeId The store id of the patch handler.
-   * @param {IMessageHandler} handler The patch handler to register.
-   * @returns {IDisposable} Disposable to use to unregister the handler.
+   * @param storeId - The store id of the patch handler.
+   *
+   * @param handler - The patch handler to register.
+   *
+   * @returns A disposable to use to unregister the handler.
    */
   registerPatchHandler(storeId: number, handler: IMessageHandler): IDisposable;
 
   /**
-   * Broadcast a patch to all data stores.
+   * Broadcast a patch to all peer data stores.
    *
-   * @param {number} storeId The store id of the patch source.
-   * @param {ReadonlyJSONObject} content The patch content.
-   * @returns {string} The patch id of the broadcasted patch.
+   * @param patch - The patch to broadcast to peers.
    */
-  broadcastPatch(storeId: number, content: ReadonlyJSONObject): string;
+  broadcastPatch(patch: Patch): void;
 
   /**
-   * Fetch specific patches from history by their id.
+   * Fetch specific patches from history by their patch id.
    *
-   * @param {string[]} patchIds The patch ids to fetch.
-   * @returns {Promise<Patch[]>} A promise to the patches that are fetched.
+   * @param patchIds - The ids of the patches to fetch.
+   *
+   * @returns A promise to the patches that are fetched.
    */
   fetchPatches(patchIds: string[]): Promise<Patch[]>;
 }

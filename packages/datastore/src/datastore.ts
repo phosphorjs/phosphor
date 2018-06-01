@@ -82,7 +82,7 @@ interface IDatastore extends IIterable<ITable> {
    * If changes are made, the `changed` signal will be emitted before
    * this method returns.
    */
-  mutate(message: string, fn: () => void): string;
+  mutate(message: string, fn: (patchId: string) => void): void;
 
   /**
    * Undo a patch that was previously applied.
