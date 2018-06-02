@@ -1,15 +1,16 @@
+
 const WebSocket = require('ws');
 const patchDB = new Map();
-storeId = 0;
+numStores = 0;
 
 const wss = new WebSocket.Server({ port: 8081 });
 
-function generateStoreId(msg) {
+function storeId(msg) {
   return {
     msgType: 'storeid-reply',
     parentId: msg.msgId,
     content: {
-      storeId: storeId++
+      storeId: numStores++
     }
   }
 }
@@ -23,7 +24,7 @@ function patchBroadcast(msg, ws) {
   });
 
   // Store the patch for later retreival
-  patchDB.set(msg.patch.patchId, msg.patch);
+  patchDB.set(msg.content.patch.patchId, msg.content.patch);
 
 }
 
@@ -52,23 +53,24 @@ function patchRequest(msg) {
 }
 
 wss.on('connection', function connection(ws) {
- ws.on('message', function incoming(msg) {
-  msg = JSON.parse(msg);
+ ws.on('message', function incoming(data) {
+  console.log('received: ', data);
+  const msg = JSON.parse(data);
   switch(msg.msgType) {
   case 'storeid-request':
-    ws.send(generateStoreId(msg));
+    ws.send(JSON.stringify(storeId(msg)));
     break;
   case 'patch-broadcast':
     patchBroadcast(msg, ws);
     break;
   case 'patch-history-request':
-    ws.send(patchHistory(msg));
+    ws.send(JSON.stringify(patchHistory(msg)));
     break;
   case 'fetch-patch-request':
-    ws.send(patchRequest(msg));
+    ws.send(JSON.stringify(patchRequest(msg)));
     break;
   default:
-    console.error('unhandled message: ', msg.msgType);
+    console.error('unhandled message: ', JSON.stringify(msg));
   }
  });
 });
