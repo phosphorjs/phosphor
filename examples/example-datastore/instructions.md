@@ -10,10 +10,4 @@ Start the node server:
 node dsServer.js
 ```
 
-Serve the page:
-```bash
-http-server
-```
-and navigate to `localhost:8080`.
-
-
+Navigate to the `index.html` page.
