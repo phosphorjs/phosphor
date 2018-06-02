@@ -1,7 +1,6 @@
-
 const WebSocket = require('ws');
 const patchDB = new Map();
-numStores = 0;
+let numStores = 0;
 
 const wss = new WebSocket.Server({ port: 8081 });
 
