@@ -259,7 +259,32 @@ class DSMap<T extends ReadonlyJSONValue = ReadonlyJSONValue> implements IMap<T> 
   private _map = new TreeMap<string, T>(Private.strCmp);
   private _entries = new TreeMap<string, Private.IEntry<T>>(Private.strCmp);
 }
+  // /**
+  //  *
+  //  */
+  // broadcastMapChange(schemaId: string, recordId: string, fieldName: string, key: string, current: ReadonlyJSONValue | undefined): void {
+  //   let recordChanges = this._ensureBroadcastRecordChanges(schemaId, recordId);
+  //   let mapChange = recordChanges[fieldName] as DSHandler.BroadcastMapChange;
+  //   if (!mapChange) {
+  //     mapChange = recordChanges[fieldName] = { items: {} };
+  //   }
+  //   mapChange.items[key] = current;
+  // }
 
+  // /**
+  //  *
+  //  */
+  // notifyMapChange(schemaId: string, recordId: string, fieldName: string, key: string, previous: ReadonlyJSONValue | undefined, current: ReadonlyJSONValue | undefined): void {
+  //   let recordChanges = this._ensureNotifyRecordChanges(schemaId, recordId);
+  //   let mapChange = recordChanges[fieldName] as DSHandler.NotifyMapChange;
+  //   if (!mapChange) {
+  //     mapChange = recordChanges[fieldName] = { previous: {}, current: {} };
+  //   }
+  //   if (!(key in mapChange.previous)) {
+  //     mapChange.previous[key] = previous;
+  //   }
+  //   mapChange.current[key] = current;
+  // }
 
 /**
  * The namespace for the module implementation details.

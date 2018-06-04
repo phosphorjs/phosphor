@@ -174,6 +174,19 @@ class DSTable<S extends Schema> implements ITable<S> {
   private _records = new TreeMap<string, Record<S>>(Private.strCmp);
 }
 
+  // /**
+  //  *
+  //  */
+  // broadcastRecordCreate(schemaId: string, recordId: string): void {
+  //   this._ensureBroadcastRecordChanges(schemaId, recordId);
+  // }
+
+  // /**
+  //  *
+  //  */
+  // notifyRecordCreate(schemaId: string, recordId: string): void {
+  //   this._ensureNotifyRecordChanges(schemaId, recordId);
+  // }
 
 /**
  * The namespace for the module implementation details.

@@ -101,6 +101,32 @@ class DSRegister<T extends ReadonlyJSONValue = ReadonlyJSONValue> {
   private _entry: Private.IEntry<T>;
 }
 
+  // /**
+  //  *
+  //  */
+  // broadcastRegisterChange(schemaId: string, recordId: string, fieldName: string, current: ReadonlyJSONValue): void {
+  //   let recordChanges = this._ensureBroadcastRecordChanges(schemaId, recordId);
+  //   let registerChange = recordChanges[fieldName] as DSHandler.BroadcastRegisterChange;
+  //   if (registerChange) {
+  //     registerChange.value = current;
+  //   } else {
+  //     recordChanges[fieldName] = { value: current };
+  //   }
+  // }
+
+  // /**
+  //  *
+  //  */
+  // notifyRegisterChange(schemaId: string, recordId: string, fieldName: string, previous: ReadonlyJSONValue, current: ReadonlyJSONValue): void {
+  //   let recordChanges = this._ensureNotifyRecordChanges(schemaId, recordId);
+  //   let registerChange = recordChanges[fieldName] as DSHandler.NotifyRegisterChange;
+  //   if (registerChange) {
+  //     registerChange.previous = previous;
+  //     registerChange.current = current;
+  //   } else {
+  //     recordChanges[fieldName] = { previous, current };
+  //   }
+  // }
 
 /**
  * The namespace for the module implementation details.

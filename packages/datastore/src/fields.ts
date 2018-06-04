@@ -211,12 +211,12 @@ namespace MapField {
     /**
      * The previous values for the changed items.
      */
-    readonly previous: { readonly [key: string]: T };
+    readonly previous: { readonly [key: string]: T | undefined };
 
     /**
      * The current values for the changed items.
      */
-    readonly current: { readonly [key: string]: T };
+    readonly current: { readonly [key: string]: T | undefined };
   }
 }
 
@@ -337,12 +337,12 @@ namespace ValueField {
     /**
      * The previous value of the field.
      */
-    previous: T;
+    readonly previous: T;
 
     /**
      * The current value of the field.
      */
-    current: T;
+    readonly current: T;
   }
 }
 

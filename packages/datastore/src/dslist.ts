@@ -423,6 +423,53 @@ class DSList<T extends ReadonlyJSONValue = ReadonlyJSONValue> implements IList<T
   private _handler: DSHandler;
   private _map = new TreeMap<string, T>(Private.compareIds);
 }
+  // /**
+  //  *
+  //  */
+  // broadcastListRemove(schemaId: string, recordId: string, fieldName: string, valueId: string, value: ReadonlyJSONValue): void {
+  //   let recordChanges = this._ensureBroadcastRecordChanges(schemaId, recordId);
+  //   let listChange = recordChanges[fieldName] as DSHandler.BroadcastListChange;
+  //   if (!listChange) {
+  //     listChange = recordChanges[fieldName] = { remove: {}, insert: {} };
+  //   }
+  //   listChange.remove[valueId] = value;
+  // }
+
+  // /**
+  //  *
+  //  */
+  // notifyListRemove(schemaId: string, recordId: string, fieldName: string, index: number, value: ReadonlyJSONValue): void {
+  //   let recordChanges = this._ensureNotifyRecordChanges(schemaId, recordId);
+  //   let listChange = recordChanges[fieldName] as DSHandler.NotifyListChange;
+  //   if (!listChange) {
+  //     listChange = recordChanges[fieldName] = [];
+  //   }
+  //   listChange.push({ type: 'remove', index, value });
+  // }
+
+  // /**
+  //  *
+  //  */
+  // broadcastListInsert(schemaId: string, recordId: string, fieldName: string, valueId: string, value: ReadonlyJSONValue): void {
+  //   let recordChanges = this._ensureBroadcastRecordChanges(schemaId, recordId);
+  //   let listChange = recordChanges[fieldName] as DSHandler.BroadcastListChange;
+  //   if (!listChange) {
+  //     listChange = recordChanges[fieldName] = { remove: {}, insert: {} };
+  //   }
+  //   listChange.insert[valueId] = value;
+  // }
+
+  // /**
+  //  *
+  //  */
+  // notifyListInsert(schemaId: string, recordId: string, fieldName: string, index: number, value: ReadonlyJSONValue): void {
+  //   let recordChanges = this._ensureNotifyRecordChanges(schemaId, recordId);
+  //   let listChange = recordChanges[fieldName] as DSHandler.NotifyListChange;
+  //   if (!listChange) {
+  //     listChange = recordChanges[fieldName] = [];
+  //   }
+  //   listChange.push({ type: 'insert', index, value });
+  // }
 
 
 /**
