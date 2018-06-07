@@ -31,7 +31,7 @@ class TextRenderer extends CellRenderer {
     this.backgroundColor = options.backgroundColor || '';
     this.verticalAlignment = options.verticalAlignment || 'center';
     this.horizontalAlignment = options.horizontalAlignment || 'left';
-    this.overflow = options.overflow || 'ellipsis';
+    this.overflow = options.overflow || 'clip';
     this.format = options.format || TextRenderer.formatGeneric();
   }
 
