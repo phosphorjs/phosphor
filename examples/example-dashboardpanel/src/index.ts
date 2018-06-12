@@ -229,6 +229,9 @@ function main(): void {
   dashboard.addWidget(r2, { ref: b1 });
   dashboard.addWidget(b2, { mode: 'split-right', ref: y1 });
   dashboard.id = 'dashboard';
+  dashboard.layoutRearranged.connect(() => {
+    console.log('layout rearranged');
+  });
 
   let savedLayouts: DashboardPanel.ILayoutConfig[] = [];
 

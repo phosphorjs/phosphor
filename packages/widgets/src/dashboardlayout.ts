@@ -9,6 +9,7 @@ import {
   once,
   reduce
   } from '@phosphor/algorithm';
+import { UUID } from '@phosphor/coreutils';
 import { ElementExt } from '@phosphor/domutils';
 import { Message, MessageLoop } from '@phosphor/messaging';
 import { BoxEngine, BoxSizer } from './boxengine';
@@ -24,6 +25,12 @@ import { Widget } from './widget';
  */
 export
 class DashboardLayout extends Layout {
+
+  /**
+   * The renderer used by the dashboard layout.
+   */
+  readonly renderer: DashboardLayout.IRenderer;
+
   /**
    * Construct a new dashboard layout.
    *
@@ -61,11 +68,6 @@ class DashboardLayout extends Layout {
     // Dispose of the base class.
     super.dispose();
   }
-
-  /**
-   * The renderer used by the dashboard layout.
-   */
-  readonly renderer: DashboardLayout.IRenderer;
 
   /**
    * Get the inter-element spacing for the dashboard layout.
@@ -114,7 +116,6 @@ class DashboardLayout extends Layout {
     return this._root ? this._root.iterHandles() : empty<HTMLDivElement>();
   }
 
-
   /**
    * Move a handle to the given offset position.
    *
@@ -135,7 +136,7 @@ class DashboardLayout extends Layout {
    * easy to invoke from a mouse move event without needing to know
    * the handle orientation.
    */
-  moveHandle(handle: HTMLDivElement, offsetX: number, offsetY: number): void {
+  moveHandle(handle: HTMLDivElement, offsetX: number, offsetY: number): number[] | undefined {
     // Bail early if there is no root or if the handle is hidden.
     if (!this._root || handle.classList.contains('p-mod-hidden')) {
       return;
@@ -165,6 +166,42 @@ class DashboardLayout extends Layout {
 
     // Adjust the sizers to reflect the handle movement.
     BoxEngine.adjust(data.node.sizers, data.index, delta);
+
+    // Update the layout of the widgets.
+    if (this.parent) {
+      this.parent.update();
+    }
+
+    return data.node.createNormalizedSizes();
+  }
+
+  /**
+   * Resize the children of a layout area to specific relative sizes.
+   * 
+   * @param areaId the ID of the split-layout area to be resized
+   * @param sizes the new relative sizes (to each other, adding up to 1)
+   */
+  resizeLayoutArea(areaId: string, sizes: number[]): void {
+    if (!this._root) {
+      return;
+    }
+
+    // Lookup the split node for the ID.
+    let node = this._root.findNode(areaId);
+    if (!node || node instanceof Private.SingleLayoutNode) {
+      return;
+    }
+
+    each(node.children, (child, i) => {
+      // Create the child data for the layout node.
+      let sizer = Private.createSizer(sizes[i]);
+
+      let splitNode = node as Private.SplitLayoutNode;
+      splitNode.sizers[i] = sizer;
+    });
+
+    // Normalize the sizes for the layout node.
+    node.normalizeSizes();
 
     // Update the layout of the widgets.
     if (this.parent) {
@@ -263,7 +300,6 @@ class DashboardLayout extends Layout {
     // Post a fit request to the parent.
     this.parent.fit();
   }
-
 
   /**
    * Add a widget to the dashboard layout.
@@ -398,6 +434,38 @@ class DashboardLayout extends Layout {
 
     // Return the hit test results.
     return { widget, x, y, top, left, right, bottom, width, height };
+  }
+
+  /**
+   * Find the ID of the split node containing the given handle.
+   * 
+   * @param handle - the handle div 
+   */
+  findHandleParent(handle: HTMLDivElement): string | undefined {
+    if (!this._root) {
+      return;
+    }
+    let data = this._root.findSplitNode(handle);
+    if (!data) {
+      return;
+    }
+    return data.node.id;
+  }
+
+  /**
+   * Finds the unique layout ID corresponding to this widget.
+   * 
+   * @param widget - the desired widget
+   */
+  findWidgetAreaId(widget: Widget): string | undefined {
+    if (!this._root) {
+      return;
+    }
+    let area = this._root.findSingleNode(widget);
+    if (!area) {
+      return;
+    }
+    return area.id;
   }
 
   /**
@@ -561,9 +629,9 @@ class DashboardLayout extends Layout {
     singleNode.parent = null;
 
     // Remove the single node from its parent split node.
-    let i = ArrayExt.removeFirstOf(splitNode.children, singleNode);
-    let handle = ArrayExt.removeAt(splitNode.handles, i)!;
-    ArrayExt.removeAt(splitNode.sizers, i);
+    let index = ArrayExt.removeFirstOf(splitNode.children, singleNode);
+    let handle = ArrayExt.removeAt(splitNode.handles, index)!;
+    ArrayExt.removeAt(splitNode.sizers, index);
 
     // Remove the handle from its parent DOM node.
     if (handle.parentNode) {
@@ -782,7 +850,6 @@ class DashboardLayout extends Layout {
     return newRoot;
   }
 
-
   /**
    * Fit the layout to the total size required by the widgets.
    */
@@ -861,7 +928,6 @@ class DashboardLayout extends Layout {
     this._root.update(x, y, width, height, this._spacing, this._items);
   }
 
-
   /**
    * Create a new handle for the dashboard layout.
    *
@@ -889,15 +955,15 @@ class DashboardLayout extends Layout {
     return handle;
   }
 
-  private _spacing = 4;
-  private _dirty = false;
+  private _spacing: number = 4;
+  private _dirty: boolean = false;
   private _root: Private.LayoutNode | null = null;
   private _box: ElementExt.IBoxSizing | null = null;
   private _items: Private.ItemMap = new Map<Widget, LayoutItem>();
 }
 
 export namespace DashboardLayout {
-   /**
+  /**
    * An options object for creating a dashboard layout.
    */
   export
@@ -1011,6 +1077,11 @@ export namespace DashboardLayout {
      * The widget contained in the area.
      */
     widget: Widget;
+
+    /**
+     * A unique identifier within the entire layout tree.
+     */
+    id: string;
   }
 
   /**
@@ -1037,6 +1108,11 @@ export namespace DashboardLayout {
      * The relative sizes of the children.
      */
     sizes: number[];
+
+    /**
+     * A unique identifier within the entire layout tree.
+     */
+    id: string;
   }
 
   /**
@@ -1046,16 +1122,15 @@ export namespace DashboardLayout {
   type AreaConfig = ISingleAreaConfig | ISplitAreaConfig;
 
   /**
-   * A dock layout configuration object.
+   * A dashboard layout configuration object.
    */
   export
   interface ILayoutConfig {
     /**
-     * The layout config for the main dock area.
+     * The layout config for the main dashboard area.
      */
     main: AreaConfig | null;
   }
-
 
   /**
    * An object which represents the geometry of a single area.
@@ -1068,7 +1143,7 @@ export namespace DashboardLayout {
     widget: Widget;
 
     /**
-     * The local X position of the hit test in the dock area.
+     * The local X position of the hit test in the dashboard area.
      *
      * #### Notes
      * This is the distance from the left edge of the layout parent
@@ -1077,7 +1152,7 @@ export namespace DashboardLayout {
     x: number;
 
     /**
-     * The local Y position of the hit test in the dock area.
+     * The local Y position of the hit test in the dashboard area.
      *
      * #### Notes
      * This is the distance from the top edge of the layout parent
@@ -1145,7 +1220,7 @@ namespace Private {
    */
   export
   const GOLDEN_RATIO = 0.618;
-  
+
   /**
    * A type alias for a dashboard layout node.
    */
@@ -1164,7 +1239,6 @@ namespace Private {
   export
   type ItemMap = Map<Widget, LayoutItem>;
 
-  
   /**
    * Clamp a spacing value to an integer >= 0.
    */
@@ -1183,7 +1257,6 @@ namespace Private {
     sizer.size = hint;
     return sizer;
   }
-
 
   /**
    * Normalize an area config object and collect the visited widgets.
@@ -1218,24 +1291,41 @@ namespace Private {
    */
   export
   class SingleLayoutNode {
-
-    constructor(widget: Widget) {
-      let widgetSizer = new BoxSizer();
-      widgetSizer.stretch = 1;
-      this.sizer = widgetSizer;
-
-      this._widget = widget;
-    }
-
     /**
-     * The parent of the layout node.
+     * A unique identifier within the entire layout tree.
      */
-    parent: SplitLayoutNode | null = null;
+    readonly id: string;
     
     /**
      * The sizer for the layout node.
      */
     readonly sizer: BoxSizer;
+
+    /**
+     * Create a new SingleLayoutNode from the given widget and optional ID.
+     * 
+     * @param id - the unique identifier for this node.
+     * @param widget 
+     */
+    constructor(widget: Widget, id?: string) {
+      let widgetSizer = new BoxSizer();
+      widgetSizer.stretch = 1;
+      this.sizer = widgetSizer;
+
+      this._widget = widget;
+      this.id = id == null ? `${UUID.uuid4()}` : id;
+    }
+
+    /**
+     * The parent of the layout node.
+     */
+    get parent(): SplitLayoutNode | null {
+      return this._parent;
+    }
+
+    set parent(value: SplitLayoutNode | null) {
+      this._parent = value;
+    }
 
     /**
      * The widget in the layout node.
@@ -1300,6 +1390,13 @@ namespace Private {
     }
 
     /**
+     * Find the node with the given ID.
+     */
+    findNode(id: string): SplitLayoutNode | SingleLayoutNode | null {
+      return this.id === id ? this : null;
+    }
+
+    /**
      * Find the single layout node which contains the local point.
      */
     hitTestSingleNodes(x: number, y: number): SingleLayoutNode | null {
@@ -1316,7 +1413,7 @@ namespace Private {
      * Create a configuration object for the layout tree.
      */
     createConfig(): DashboardLayout.ISingleAreaConfig {
-      return { type: 'single-area', widget: this._widget };
+      return { type: 'single-area', widget: this._widget, id: this.id };
     }
 
     /**
@@ -1361,7 +1458,7 @@ namespace Private {
       return { minWidth, minHeight, maxWidth, maxHeight };
     }
 
-     /**
+    /**
      * Update the layout tree.
      */
     update(left: number, top: number, width: number, height: number, spacing: number, items: ItemMap): void {
@@ -1384,13 +1481,13 @@ namespace Private {
       }
     }
 
-    private _top = 0;
-    private _left = 0;
-    private _width = 0;
-    private _height = 0;
+    private _parent: SplitLayoutNode | null = null;
+    private _top: number = 0;
+    private _left: number = 0;
+    private _width: number = 0;
+    private _height: number = 0;
     private _widget: Widget;
   }
-
 
   /**
    * A layout node which holds the data for a split area.
@@ -1398,23 +1495,25 @@ namespace Private {
   export
   class SplitLayoutNode {
     /**
-     * Construct a new split layout node.
-     *
-     * @param orientation - The orientation of the node.
+     * A unique identifier within the entire layout tree.
      */
-    constructor(orientation: Orientation) {
-      this.orientation = orientation;
-    }
+    readonly id: string;
 
     /**
      * The parent of the layout node.
      */
-    parent: SplitLayoutNode | null = null;
+    get parent(): SplitLayoutNode | null {
+      return this._parent;
+    }
+
+    set parent(value: SplitLayoutNode | null) {
+      this._parent = value;
+    }
 
     /**
      * Whether the sizers have been normalized.
      */
-    normalized = false;
+    normalized: boolean = false;
 
     /**
      * The orientation of the node.
@@ -1435,6 +1534,17 @@ namespace Private {
      * The handles for the layout children.
      */
     readonly handles: HTMLDivElement[] = [];
+    /**
+     * Construct a new split layout node.
+     *
+     * @param orientation - The orientation of the node.
+     * @param id - the unique identifier for this node.
+     */
+    constructor(orientation: Orientation, id?: string) {
+      this.orientation = orientation;
+      
+      this.id = id == null ? `${UUID.uuid4()}` : id;
+    }
 
     /**
      * Create an iterator for all widgets in the layout tree.
@@ -1483,6 +1593,22 @@ namespace Private {
     }
 
     /**
+     * Find the node with the given ID.
+     */
+    findNode(id: string): SplitLayoutNode | SingleLayoutNode | null {
+      if (this.id === id) {
+        return this;
+      }
+      for (let i = 0, n = this.children.length; i < n; ++i) {
+        let result = this.children[i].findNode(id);
+        if (result) {
+          return result;
+        }
+      }
+      return null;
+    }
+
+    /**
      * Find the single layout node which contains the local point.
      */
     hitTestSingleNodes(x: number, y: number): SingleLayoutNode | null {
@@ -1502,7 +1628,7 @@ namespace Private {
       let orientation = this.orientation;
       let sizes = this.createNormalizedSizes();
       let children = this.children.map(child => child.createConfig());
-      return { type: 'split-area', orientation, children, sizes };
+      return { type: 'split-area', orientation, children, sizes, id: this.id };
     }
 
     /**
@@ -1670,6 +1796,8 @@ namespace Private {
         }
       }
     }
+
+    _parent: SplitLayoutNode | null = null;
   }
 
   /**
@@ -1686,7 +1814,7 @@ namespace Private {
     }
 
     // Return a normalized config object.
-    return { type: 'single-area', widget: config.widget };
+    return { type: 'single-area', widget: config.widget, id: config.id };
   }
 
   /**
@@ -1729,7 +1857,7 @@ namespace Private {
     }
 
     // Return a normalized config object.
-    return { type: 'split-area', orientation, children, sizes };
+    return { type: 'split-area', orientation, children, sizes, id: config.id };
   }
 
   /**
@@ -1737,7 +1865,7 @@ namespace Private {
    */
   function realizeSingleAreaConfig(config: DashboardLayout.ISingleAreaConfig, renderer: DashboardLayout.IRenderer): SingleLayoutNode {
     // Return the new single layout node.
-    return new SingleLayoutNode(config.widget);
+    return new SingleLayoutNode(config.widget, config.id);
   }
 
   /**
@@ -1745,7 +1873,7 @@ namespace Private {
    */
   function realizeSplitAreaConfig(config: DashboardLayout.ISplitAreaConfig, renderer: DashboardLayout.IRenderer): SplitLayoutNode {
     // Create the split layout node.
-    let node = new SplitLayoutNode(config.orientation);
+    let node = new SplitLayoutNode(config.orientation, config.id);
 
     // Add each child to the layout node.
     each(config.children, (child, i) => {

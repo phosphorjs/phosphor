@@ -12,6 +12,12 @@ import { Widget } from './widget';
  */
 export
 class DashboardPanel extends Widget {
+
+  /**
+   * The overlay used by the dashboard panel.
+   */
+  readonly overlay: DashboardPanel.IOverlay;
+
   /**
    * Construct a new dashboard panel.
    *
@@ -45,11 +51,6 @@ class DashboardPanel extends Widget {
     // Hide the overlay.
     this.overlay.hide(0);
 
-    // Cancel a drag if one is in progress.
-    if (this._drag) {
-      this._drag.dispose();
-    }
-
     // Dispose of the base class.
     super.dispose();
   }
@@ -70,9 +71,37 @@ class DashboardPanel extends Widget {
   }
 
   /**
-   * The overlay used by the dashboard panel.
+   * A signal emitted when a split area is resized.
+   *
+   * #### Notes
+   * This may get fired many times in quick succession.
    */
-  readonly overlay: DashboardPanel.IOverlay;
+  get areaResized(): ISignal<this, DashboardPanel.IAreaResized> {
+    return this._areaResized;
+  }
+
+  /**
+   * A signal emitted when a child widget is removed. The child's unique
+   * ID within the layout is emitted.
+   * 
+   * This signal is only emitted when a leaf node is removed, not 
+   * when e.g. the panel is rearranged but no nodes are actually
+   * removed in the layout.
+   */
+  get widgetRemoved(): ISignal<this, Widget> {
+    return this._widgetRemoved;
+  }
+
+  /**
+   * A signal emitted when the layout is rearranged.  That is, an existing 
+   * widget was dragged and dropped to another area in the dashboard panel.
+   * 
+   * This signal does NOT emit when new widgets are added or existing 
+   * widgets are removed.
+   */
+  get layoutRearranged(): ISignal<this, void> {
+    return this._layoutRearranged;
+  }
 
   /**
    * The renderer used by the dashboard panel.
@@ -122,7 +151,6 @@ class DashboardPanel extends Widget {
   handles(): IIterator<HTMLDivElement> {
     return (this.layout as DashboardLayout).handles();
   }
-
 
   /**
    * Save the current layout configuration of the dashboard panel.
@@ -176,6 +204,16 @@ class DashboardPanel extends Widget {
 
     // Schedule an emit of the layout modified signal.
     MessageLoop.postMessage(this, Private.LayoutModified);
+  }
+
+  /**
+   * Resize the children of a layout area to specific relative sizes.
+   *
+   * @param areaId the ID of the split-layout area to be resized
+   * @param sizes the new relative sizes (to each other, adding up to 1)
+   */
+  resizeLayoutArea(areaId: string, sizes: number[]): void {
+    (this.layout as DashboardLayout).resizeLayoutArea(areaId, sizes);
   }
 
   /**
@@ -274,6 +312,9 @@ class DashboardPanel extends Widget {
 
     // Schedule an emit of the layout modified signal.
     MessageLoop.postMessage(this, Private.LayoutModified);
+
+    // Immediately emit the widget-removed signal.
+    this._widgetRemoved.emit(msg.child);
   }
 
   /**
@@ -370,11 +411,15 @@ class DashboardPanel extends Widget {
       return;
     }
 
+    // Determine if this is a new widget or was just moved from another
+    // area of the dashboard panel.
+    let isExistingWidget = find(this.widgets(), w => w == widget);
+
     // Find the reference widget for the drop target.
     let ref = target ? target.widget : null;
 
     // Add the widget according to the indicated drop zone.
-    switch(zone) {
+    switch (zone) {
     case 'root-all':
       this.addWidget(widget);
       break;
@@ -411,6 +456,12 @@ class DashboardPanel extends Widget {
 
     // Activate the dropped widget.
     widget.activate();
+
+    // If the dropped widget was already present in the panel, 
+    // emit the layout rearranged signal.
+    if (isExistingWidget) {
+      this._layoutRearranged.emit(undefined);
+    }
   }
 
   /**
@@ -443,8 +494,14 @@ class DashboardPanel extends Widget {
     // Find the handle which contains the mouse target, if any.
     let layout = this.layout as DashboardLayout;
     let target = event.target as HTMLElement;
-    let handle = find(layout.handles(), handle => handle.contains(target));
+    let handle = find(layout.handles(), h => h.contains(target));
     if (!handle) {
+      return;
+    }
+
+    // find the split node that contains this handle.
+    let splitNodeId = layout.findHandleParent(handle);
+    if (!splitNodeId) {
       return;
     }
 
@@ -466,7 +523,7 @@ class DashboardPanel extends Widget {
     // Override the cursor and store the press data.
     let style = window.getComputedStyle(handle);
     let override = Drag.overrideCursor(style.cursor!);
-    this._pressData = { handle, deltaX, deltaY, override };
+    this._pressData = { handle, deltaX, deltaY, override, splitNodeId };
   }
 
   /**
@@ -489,7 +546,14 @@ class DashboardPanel extends Widget {
 
     // Set the handle as close to the desired position as possible.
     let layout = this.layout as DashboardLayout;
-    layout.moveHandle(this._pressData.handle, xPos, yPos);
+    let newSizes = layout.moveHandle(this._pressData.handle, xPos, yPos);
+
+    if (newSizes) {
+      this._areaResized.emit({
+        areaId: this._pressData.splitNodeId,
+        newSizes
+      });
+    }
   }
 
   /**
@@ -625,7 +689,6 @@ class DashboardPanel extends Widget {
     return zone;
   }
 
-
   /**
    * Create a new handle for use by the panel.
    */
@@ -633,12 +696,13 @@ class DashboardPanel extends Widget {
     return this._renderer.createHandle();
   }
 
-  private _drag: Drag | null = null;
   private _renderer: DashboardPanel.IRenderer;
   private _pressData: Private.IPressData | null = null;
-  private _layoutModified = new Signal<this, void>(this);
+  private _layoutModified: Signal<this, void> = new Signal<this, void>(this);
+  private _areaResized: Signal<this, DashboardPanel.IAreaResized> = new Signal<this, DashboardPanel.IAreaResized>(this);
+  private _widgetRemoved: Signal<this, Widget> = new Signal<this, Widget>(this);
+  private _layoutRearranged: Signal<this, void> = new Signal<this, void>(this);
 }
-
 
 /**
  * The namespace for the `DashboardPanel` class statics.
@@ -760,6 +824,11 @@ namespace DashboardPanel {
   export
   class Overlay implements IOverlay {
     /**
+     * The DOM node for the overlay.
+     */
+    readonly node: HTMLDivElement;
+
+    /**
      * Construct a new overlay.
      */
     constructor() {
@@ -768,11 +837,6 @@ namespace DashboardPanel {
       this.node.classList.add('p-mod-hidden');
       this.node.style.position = 'absolute';
     }
-
-    /**
-     * The DOM node for the overlay.
-     */
-    readonly node: HTMLDivElement;
 
     /**
      * Show the overlay using the given overlay geometry.
@@ -830,15 +894,15 @@ namespace DashboardPanel {
       }
 
       // Otherwise setup the hide timer.
-      this._timer = setTimeout(() => {
+      this._timer = window.setTimeout(() => {
         this._timer = -1;
         this._hidden = true;
         this.node.classList.add('p-mod-hidden');
       }, delay);
     }
 
-    private _timer = -1;
-    private _hidden = true;
+    private _timer: any = -1;
+    private _hidden: boolean = true;
   }
 
   /**
@@ -869,6 +933,11 @@ namespace DashboardPanel {
    */
   export
   const defaultRenderer = new Renderer();
+
+  export interface IAreaResized {
+    areaId: string;
+    newSizes: number[];
+  }
 }
 
 /**
@@ -917,8 +986,13 @@ namespace Private {
      * The disposable which will clear the override cursor.
      */
     override: IDisposable;
+
+    /**
+     * The ID of the split node which the pressed handle is within.
+     */
+    splitNodeId: string;
   }
-  
+
   /**
    * A type alias for a drop zone.
    */
@@ -1010,7 +1084,7 @@ namespace Private {
     }
 
     // Test the edge zones.
-  
+
     // Get the client rect for the dock panel.
     let panelRect = panel.node.getBoundingClientRect();
 
