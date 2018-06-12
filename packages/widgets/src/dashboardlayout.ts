@@ -203,9 +203,12 @@ class DashboardLayout extends Layout {
     // Normalize the sizes for the layout node.
     node.normalizeSizes();
 
-    // Update the layout of the widgets.
     if (this.parent) {
+      // Update the layout of the widgets.
       this.parent.update();
+
+      // Post a fit request for the parent widget.
+      this.parent.fit();
     }
   }
   

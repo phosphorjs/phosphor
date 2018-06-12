@@ -413,7 +413,7 @@ class DashboardPanel extends Widget {
 
     // Determine if this is a new widget or was just moved from another
     // area of the dashboard panel.
-    let isExistingWidget = find(this.widgets(), w => w == widget);
+    let isExistingWidget = find(this.widgets(), w => w === widget);
 
     // Find the reference widget for the drop target.
     let ref = target ? target.widget : null;
