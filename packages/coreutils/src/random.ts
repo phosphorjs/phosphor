@@ -39,7 +39,7 @@ namespace Random {
     // Look up the crypto module if available.
     const crypto: any = (
       (typeof window !== 'undefined' && (window.crypto || window.msCrypto)) ||
-      (typeof require !== 'undefined' && require('crypto')) || null
+      (typeof require !== 'undefined') || null
     );
 
     // Modern browsers and IE 11
