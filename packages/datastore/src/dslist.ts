@@ -6,7 +6,7 @@
 | The full license is in the file LICENSE, distributed with this software.
 |----------------------------------------------------------------------------*/
 import {
-  IIterator, IterableOrArrayLike, iter, once
+  IIterator, IterableOrArrayLike, empty, iter, once, toArray
 } from '@phosphor/algorithm';
 
 import {
@@ -18,16 +18,21 @@ import {
 } from '@phosphor/coreutils';
 
 import {
-  DSHandler
-} from './dshandler';
+  DSStore
+} from './dsstore';
 
 import {
   IList
 } from './list'
 
+import {
+  Record
+} from './record';
+import { ListField } from '.';
+
 
 /**
- * A CRDT list for the datastore.
+ * A CRDT list for the data store.
  *
  * #### Notes
  * This class is an implementation detail and is subject to change
@@ -36,21 +41,25 @@ import {
 export
 class DSList<T extends ReadonlyJSONValue = ReadonlyJSONValue> implements IList<T> {
   /**
-   * Construct a new datastore list.
+   * Construct a new data store list.
    *
-   * @param handler - The datastore handler object.
+   * @param parent - The parent record object.
    *
-   * @param schemaId - The id of the containing table.
-   *
-   * @param recordId - The id of the containing record.
-   *
-   * @param fieldName - The name of the containing field.
+   * @param fieldName - The name of the list field.
    */
-  constructor(handler: DSHandler, schemaId: string, recordId: string, fieldName: string) {
-    this._handler = handler;
-    this._schemaId = schemaId;
-    this._recordId = recordId;
+  constructor(parent: Record, fieldName: string) {
+    this._parent = parent;
     this._fieldName = fieldName;
+  }
+
+  /**
+   * The parent of the list.
+   *
+   * #### Complexity
+   * `O(1)`
+   */
+  get parent(): Record {
+    return this._parent;
   }
 
   /**
@@ -328,8 +337,13 @@ class DSList<T extends ReadonlyJSONValue = ReadonlyJSONValue> implements IList<T
    * `O(k log32 n)`
    */
   splice(index: number, count: number, values?: IterableOrArrayLike<T>): void {
+    // Fetch the root store.
+    let record = this._parent;
+    let table = record[Record.Parent];
+    let store = table.parent as DSStore;
+
     // Guard against disallowed mutations.
-    this._handler.assertMutationsAllowed();
+    store.assertMutationsAllowed();
 
     // Wrap and clamp the index.
     if (index < 0) {
@@ -341,70 +355,51 @@ class DSList<T extends ReadonlyJSONValue = ReadonlyJSONValue> implements IList<T
     // Clamp the remove count.
     count = Math.max(0, Math.min(count, this._map.size - index));
 
+    // Capture the removed and inserted values as arrays.
+    let rvalues = toArray(this.slice(index, index + count));
+    let ivalues = toArray(values || empty<T>());
+
+    // Set up the mutation tracking objects.
+    let removed: { [key: string]: T } = {};
+    let inserted: { [key: string]: T } = {};
+
     // Remove the specified values.
-    while (count-- > 0) {
-      // Get the id and value at the specified index.
+    for (let i = 0; i < count; ++i) {
       let [id, value] = this._map.at(index)!;
-
-      // Remove the item at the specified index.
       this._map.remove(index);
-
-      // Broadcast the change to peers.
-      this._handler.broadcastListRemove(
-        this._schemaId, this._recordId, this._fieldName, id, value
-      );
-
-      // Notify the user of the change.
-      this._handler.notifyListRemove(
-        this._schemaId, this._recordId, this._fieldName, index, value
-      );
+      removed[id] = value;
     }
 
-    // Bail early if there are no values to insert.
-    if (!values) {
-      return;
-    }
-
-    // Cast the insert values to an iterator.
-    let it = iter(values);
-
-    // Set up the variable to hold the iterator value.
-    let value: T | undefined;
-
-    // Fetch the lower boundary identifier.
+    // Fetch the boundary identifiers.
     let lower = this._map.keyAt(index - 1) || '';
-
-    // Fetch the upper boundary identifier.
     let upper = this._map.keyAt(index) || '';
 
-    // Fetch the clock and store id.
-    let clock = this._handler.clock;
-    let storeId = this._handler.storeId;
-
     // Add the specified values.
-    while ((value = it.next()) !== undefined) {
-      // Create an identifier between the boundaries.
-      let id = Private.createId(lower, upper, clock, storeId);
-
-      // Insert the value into the map.
-      this._map.set(id, value);
-
-      // Broadcast the change to peers.
-      this._handler.broadcastListInsert(
-        this._schemaId, this._recordId, this._fieldName, id, value
-      );
-
-      // Notify the user of the change.
-      this._handler.notifyListInsert(
-        this._schemaId, this._recordId, this._fieldName, index, value
-      );
-
-      // Update the lower boundary identifier.
-      lower = id;
-
-      // Increment the insertion index.
-      index++;
+    for (let value of ivalues) {
+      lower = Private.createId(lower, upper, store.clock, store.id);
+      this._map.set(lower, value);
+      inserted[lower] = value;
     }
+
+    // Create the ordered change array.
+    let ordered: ListField.IChange<T>[] = [];
+    if (rvalues.length > 0) {
+      ordered.push({ type: 'remove', index, values: rvalues });
+    }
+    if (ivalues.length > 0) {
+      ordered.push({ type: 'insert', index, values: ivalues });
+    }
+
+    // Log the mutation with the store.
+    store.processMutation({
+      type: 'list',
+      schemaId: table.schema.id,
+      recordId: record[Record.Id],
+      fieldName: this._fieldName,
+      removed,
+      inserted,
+      ordered
+    });
   }
 
   /**
@@ -417,59 +412,10 @@ class DSList<T extends ReadonlyJSONValue = ReadonlyJSONValue> implements IList<T
     this.splice(0, this.size);
   }
 
-  private _schemaId: string;
-  private _recordId: string;
+  private _parent: Record;
   private _fieldName: string;
-  private _handler: DSHandler;
   private _map = new TreeMap<string, T>(Private.compareIds);
 }
-  // /**
-  //  *
-  //  */
-  // broadcastListRemove(schemaId: string, recordId: string, fieldName: string, valueId: string, value: ReadonlyJSONValue): void {
-  //   let recordChanges = this._ensureBroadcastRecordChanges(schemaId, recordId);
-  //   let listChange = recordChanges[fieldName] as DSHandler.BroadcastListChange;
-  //   if (!listChange) {
-  //     listChange = recordChanges[fieldName] = { remove: {}, insert: {} };
-  //   }
-  //   listChange.remove[valueId] = value;
-  // }
-
-  // /**
-  //  *
-  //  */
-  // notifyListRemove(schemaId: string, recordId: string, fieldName: string, index: number, value: ReadonlyJSONValue): void {
-  //   let recordChanges = this._ensureNotifyRecordChanges(schemaId, recordId);
-  //   let listChange = recordChanges[fieldName] as DSHandler.NotifyListChange;
-  //   if (!listChange) {
-  //     listChange = recordChanges[fieldName] = [];
-  //   }
-  //   listChange.push({ type: 'remove', index, value });
-  // }
-
-  // /**
-  //  *
-  //  */
-  // broadcastListInsert(schemaId: string, recordId: string, fieldName: string, valueId: string, value: ReadonlyJSONValue): void {
-  //   let recordChanges = this._ensureBroadcastRecordChanges(schemaId, recordId);
-  //   let listChange = recordChanges[fieldName] as DSHandler.BroadcastListChange;
-  //   if (!listChange) {
-  //     listChange = recordChanges[fieldName] = { remove: {}, insert: {} };
-  //   }
-  //   listChange.insert[valueId] = value;
-  // }
-
-  // /**
-  //  *
-  //  */
-  // notifyListInsert(schemaId: string, recordId: string, fieldName: string, index: number, value: ReadonlyJSONValue): void {
-  //   let recordChanges = this._ensureNotifyRecordChanges(schemaId, recordId);
-  //   let listChange = recordChanges[fieldName] as DSHandler.NotifyListChange;
-  //   if (!listChange) {
-  //     listChange = recordChanges[fieldName] = [];
-  //   }
-  //   listChange.push({ type: 'insert', index, value });
-  // }
 
 
 /**
@@ -477,7 +423,7 @@ class DSList<T extends ReadonlyJSONValue = ReadonlyJSONValue> implements IList<T
  */
 namespace Private {
   /**
-   * Perform a three-way comparison for identifiers.
+   * Perform a three-way comparison of identifiers.
    *
    * @param a - The first identifier of interest.
    *
@@ -499,9 +445,9 @@ namespace Private {
    * @param upper - The upper boundary identifier, exclusive, or an
    *   empty string if there is no upper boundary.
    *
-   * @param clock - The datastore clock for the identifier.
+   * @param clock - The store clock for the identifier.
    *
-   * @param storeId - The datastore id for the identifier.
+   * @param storeId - The store id for the identifier.
    *
    * @returns An identifier which sorts between the given boundaries.
    *

@@ -6,27 +6,27 @@
 | The full license is in the file LICENSE, distributed with this software.
 |----------------------------------------------------------------------------*/
 import {
-  ReadonlyJSONValue
+  ReadonlyJSONValue, UUID
 } from '@phosphor/coreutils';
 
 import {
-  IList
+  List
 } from './list';
 
 import {
-  IMap
+  Map
 } from './map';
 
 import {
-  IText
+  Text
 } from './text';
 
 
 /**
- * A base class for the datastore field types.
+ * A base class for the data store field types.
  *
  * #### Notes
- * The datastore does not support user-defined fields.
+ * The store does not support user-defined fields.
  */
 export
 abstract class BaseField<ValueType, ChangeType> {
@@ -52,30 +52,34 @@ abstract class BaseField<ValueType, ChangeType> {
   readonly description: string;
 
   /**
-   * The value key for the field.
+   * @internal
+   *
+   * The UUID for the field.
    *
    * #### Notes
    * This property is an internal implementation detail.
    */
-  readonly '@@ValueKey' = Symbol();
+  readonly uuid = UUID.uuid4();
 
   /**
+   * @internal
+   *
    * The value type for the field.
    *
    * #### Notes
-   * This is an internal property which is only used to support the
-   * type system. The runtime value of this property is undefined.
+   * This property is an internal implementation detail.
    */
-  readonly '@@ValueType': ValueType;
+  readonly ValueType: ValueType;
 
   /**
+   * @internal
+   *
    * The change type for the field.
    *
    * #### Notes
-   * This is an internal property which is only used to support the
-   * type system. The runtime value of this property is undefined.
+   * This property is an internal implementation detail.
    */
-  readonly '@@ChangeType': ChangeType;
+  readonly ChangeType: ChangeType;
 }
 
 
@@ -110,7 +114,7 @@ namespace BaseField {
  * A field which represents a mutable sequence of values.
  */
 export
-class ListField<T extends ReadonlyJSONValue = ReadonlyJSONValue> extends BaseField<IList<T>, ListField.ChangeArray<T>> {
+class ListField<T extends ReadonlyJSONValue = ReadonlyJSONValue> extends BaseField<List<T>, ListField.ChangeArray<T>> {
   /**
    * Construct a new list field.
    *
@@ -146,7 +150,7 @@ namespace ListField {
   export
   interface IChange<T extends ReadonlyJSONValue> {
     /**
-     * Whether a value was inserted or removed.
+     * Whether values were inserted or removed.
      */
     readonly type: 'insert' | 'remove';
 
@@ -156,9 +160,9 @@ namespace ListField {
     readonly index: number;
 
     /**
-     * The value inserted at or removed from the given index.
+     * The values that were inserted or removed.
      */
-    readonly value: T;
+    readonly values: ReadonlyArray<T>;
   }
 
   /**
@@ -173,7 +177,7 @@ namespace ListField {
  * A field which represents a mutable map of values.
  */
 export
-class MapField<T extends ReadonlyJSONValue = ReadonlyJSONValue> extends BaseField<IMap<T>, MapField.IChange<T>> {
+class MapField<T extends ReadonlyJSONValue = ReadonlyJSONValue> extends BaseField<Map<T>, MapField.IChange<T>> {
   /**
    * Construct a new map field.
    *
@@ -209,12 +213,12 @@ namespace MapField {
   export
   interface IChange<T extends ReadonlyJSONValue> {
     /**
-     * The previous values for the changed items.
+     * The previous values of the changed items.
      */
     readonly previous: { readonly [key: string]: T | undefined };
 
     /**
-     * The current values for the changed items.
+     * The current values of the changed items.
      */
     readonly current: { readonly [key: string]: T | undefined };
   }
@@ -225,7 +229,7 @@ namespace MapField {
  * A field which represents a mutable text value.
  */
 export
-class TextField extends BaseField<IText, TextField.ChangeArray> {
+class TextField extends BaseField<Text, TextField.ChangeArray> {
   /**
    * Construct a new text field.
    *
@@ -271,7 +275,7 @@ namespace TextField {
     readonly index: number;
 
     /**
-     * The text inserted at or removed from the given index.
+     * The text that was inserted or removed.
      */
     readonly text: string;
   }
@@ -369,8 +373,7 @@ namespace Field {
    */
   export
   function Boolean(options: Partial<ValueField.IOptions<boolean>> = {}): ValueField<boolean> {
-    let opts = { value: false, ...options };
-    return new ValueField<boolean>(opts);
+    return new ValueField<boolean>({ value: false, ...options });
   }
 
   /**
@@ -383,8 +386,7 @@ namespace Field {
    */
   export
   function Number(options: Partial<ValueField.IOptions<number>> = {}): ValueField<number> {
-    let opts = { value: 0, ...options };
-    return new ValueField<number>(opts);
+    return new ValueField<number>({ value: 0, ...options });
   }
 
   /**
@@ -397,8 +399,7 @@ namespace Field {
    */
   export
   function String(options: Partial<ValueField.IOptions<string>> = {}): ValueField<string> {
-    let opts = { value: '', ...options };
-    return new ValueField<string>(opts);
+    return new ValueField<string>({ value: '', ...options });
   }
 
   /**

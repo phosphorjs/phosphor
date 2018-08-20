@@ -5,6 +5,9 @@
 |
 | The full license is in the file LICENSE, distributed with this software.
 |----------------------------------------------------------------------------*/
+import {
+  Record
+} from './record';
 
 
 /**
@@ -12,6 +15,14 @@
  */
 export
 interface IText {
+  /**
+   * The parent of the text.
+   *
+   * #### Complexity
+   * `O(1)`
+   */
+  readonly parent: Record;
+
   /**
    * Whether the text is empty.
    *

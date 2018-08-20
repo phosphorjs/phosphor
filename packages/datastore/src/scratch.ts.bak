@@ -1,0 +1,194 @@
+  /**
+   * A class which manages the id tombstones for a list.
+   */
+  export
+  class Cemetery {
+    /**
+     * Get a copy of the raw data for a cemetery.
+     *
+     * @returns A new copy of the raw internal data.
+     */
+    data(): { [id: string]: number } {
+      return { ...this._data };
+    }
+
+    /**
+     * Assign raw data to the cemetery.
+     *
+     * @param data - The raw data to apply to the cemetery.
+     */
+    assign(data: { readonly [id: string]: number }): void {
+      this._data = { ...data };
+    }
+
+    /**
+     * Get the tombstone count for an identifier.
+     *
+     * @param id - The identifier of interest.
+     *
+     * @returns The tombstone count for the identifier `>= 0`.
+     */
+    get(id: string): number {
+      return this._data[id] || 0;
+    }
+
+    /**
+     * Set the tombstone count for an identifier.
+     *
+     * @param id - The identifier of interest.
+     *
+     * @parm count - The tombstone count `>= 0`.
+     */
+    set(id: string, count: number): void {
+      if (count === 0) {
+        delete this._data[id];
+      } else {
+        this._data[id] = count;
+      }
+    }
+
+    private _data: { [id: string]: number } = {};
+  }
+  /**
+   * Take a snapshot of the current list state.
+   *
+   * @returns A new snapshot of the internal list state.
+   */
+  takeSnapshot(): ListImpl.ISnapshot<T> {
+    let clock = this._clock;
+    let values = toObject(this._map);
+    let cemetery = this._cemetery.data();
+    return { clock, values, cemetery };
+  }
+
+  /**
+   * Apply a patch to the list.
+   *
+   * @param patch - The patch to apply to the list.
+   *
+   * #### Notes
+   * The list does not track whether a patch has already been applied
+   * or reverted. That is the responsibility of the datastore.
+   */
+  applyPatch(patch: ListImpl.IPatch<T>): void {
+    this._clock = Math.max(this._clock, patch.clock);
+    this._removePatchValues(patch.removed);
+    this._insertPatchValues(patch.inserted);
+  }
+
+  /**
+   * Revert a patch applied to the list.
+   *
+   * @param patch - The patch to revert.
+   *
+   * #### Notes
+   * The list does not track whether a patch has already been applied
+   * or reverted. That is the responsibility of the datastore.
+   */
+  revertPatch(patch: ListImpl.IPatch<T>): void {
+    this._removePatchValues(patch.inserted);
+    this._insertPatchValues(patch.removed);
+  }
+  /**
+   * Remove patch values from the list.
+   *
+   * @param values - The patch values to remove from the list.
+   */
+  private _removePatchValues(values: { readonly [id: string]: T }): void {
+    // Iterate over the values.
+    for (let id in values) {
+      // Fetch the index of the id.
+      let index = this._map.indexOf(id);
+
+      // If the id does not exist, increment its tombstone count.
+      if (index < 0) {
+        let count = this._cemetery.get(id);
+        this._cemetery.set(id, count + 1);
+        return;
+      }
+
+      // Remove the item from the map.
+      this._map.remove(index);
+
+      // Notify the user of the change.
+      this._store.notifyListRemove(this._path, index, values[id]);
+    }
+  }
+
+  /**
+   * Insert patch values into the list.
+   *
+   * @param values - The patch values to insert into the list.
+   */
+  private _insertPatchValues(values: { readonly [id: string]: T }): void {
+    // Iterate over the values.
+    for (let id in values) {
+      // If the id is in the cemetery, decrement its tombstone count.
+      let count = this._cemetery.get(id);
+      if (count > 0) {
+        this._cemetery.set(id, count - 1);
+        return;
+      }
+
+      // Fetch the insert index of the id.
+      let index = this._map.indexOf(id);
+
+      // Bail early if the id already exists.
+      if (index >= 0) {
+        return;
+      }
+
+      // Add the item to the map.
+      this._map.set(id, values[id]);
+
+      // Notify the user of the change.
+      this._store.notifyListInsert(this._path, -index - 1, values[id]);
+    }
+  }
+/**
+ * The namespace for the `ListImpl` class statics.
+ */
+export
+namespace ListImpl {
+  /**
+   * An object which represents a snapshot of internal list state.
+   */
+  export
+  interface ISnapshot<T extends ReadonlyJSONValue> {
+    /**
+     * The clock value of the list at the time of the snapshot.
+     */
+    readonly clock: number;
+
+    /**
+     * A mapping of indentifier to list value.
+     */
+    readonly values: { readonly [id: string]: T; };
+
+    /**
+     * The internal state of the list cemetery.
+     */
+    readonly cemetery: { readonly [id: string]: number; };
+  }
+
+  /**
+   * An object which represents a patch to a list.
+   */
+  export
+  interface IPatch<T extends ReadonlyJSONValue> {
+    /**
+     * The clock value of the list at the end of the patch.
+     */
+    readonly clock: number;
+
+    /**
+     * A mapping of identifier to removed value.
+     */
+    readonly removed: { readonly [id: string]: T; };
+
+    /**
+     * A mapping of identifier to inserted value.
+     */
+    readonly inserted: { readonly [id: string]: T; };
+  }
+}

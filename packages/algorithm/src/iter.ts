@@ -119,8 +119,8 @@ function iter<T>(object: IterableOrArrayLike<T>): IIterator<T> {
  * ```
  */
 export
-function iterKeys(object: { [key: string]: any }): IIterator<string> {
-  return new KeyIterator(object);
+function iterKeys<T>(object: { readonly [key: string]: T }): IIterator<string> {
+  return new KeyIterator<T>(object);
 }
 
 
@@ -144,7 +144,7 @@ function iterKeys(object: { [key: string]: any }): IIterator<string> {
  * ```
  */
 export
-function iterValues<T>(object: { [key: string]: T }): IIterator<T> {
+function iterValues<T>(object: { readonly [key: string]: T }): IIterator<T> {
   return new ValueIterator<T>(object);
 }
 
@@ -169,7 +169,7 @@ function iterValues<T>(object: { [key: string]: T }): IIterator<T> {
  * ```
  */
 export
-function iterItems<T>(object: { [key: string]: T }): IIterator<[string, T]> {
+function iterItems<T>(object: { readonly [key: string]: T }): IIterator<[string, T]> {
   return new ItemIterator<T>(object);
 }
 
@@ -356,13 +356,11 @@ function toArray<T>(object: IterableOrArrayLike<T>): T[] {
  *
  * #### Example
  * ```typescript
- * import { iter, toObject } from '@phosphor/algorithm';
+ * import { toObject } from '@phosphor/algorithm';
  *
  * let data = [['one', 1], ['two', 2], ['three', 3]];
  *
- * let stream = iter(data);
- *
- * toObject(stream);  // { one: 1, two: 2, three: 3 }
+ * toObject(data);  // { one: 1, two: 2, three: 3 }
  * ```
  */
 export
@@ -446,7 +444,7 @@ class KeyIterator implements IIterator<string> {
    *
    * @param keys - The keys to iterate, if known.
    */
-  constructor(source: { [key: string]: any }, keys = Object.keys(source)) {
+  constructor(source: { readonly [key: string]: any }, keys = Object.keys(source)) {
     this._source = source;
     this._keys = keys;
   }
@@ -489,7 +487,7 @@ class KeyIterator implements IIterator<string> {
 
   private _index = 0;
   private _keys: string[];
-  private _source: { [key: string]: any };
+  private _source: { readonly [key: string]: any };
 }
 
 
@@ -508,7 +506,7 @@ class ValueIterator<T> implements IIterator<T> {
    *
    * @param keys - The keys to iterate, if known.
    */
-  constructor(source: { [key: string]: T }, keys = Object.keys(source)) {
+  constructor(source: { readonly [key: string]: T }, keys = Object.keys(source)) {
     this._source = source;
     this._keys = keys;
   }
@@ -551,7 +549,7 @@ class ValueIterator<T> implements IIterator<T> {
 
   private _index = 0;
   private _keys: string[];
-  private _source: { [key: string]: T };
+  private _source: { readonly [key: string]: T };
 }
 
 
@@ -570,7 +568,7 @@ class ItemIterator<T> implements IIterator<[string, T]> {
    *
    * @param keys - The keys to iterate, if known.
    */
-  constructor(source: { [key: string]: T }, keys = Object.keys(source)) {
+  constructor(source: { readonly [key: string]: T }, keys = Object.keys(source)) {
     this._source = source;
     this._keys = keys;
   }
@@ -613,7 +611,7 @@ class ItemIterator<T> implements IIterator<[string, T]> {
 
   private _index = 0;
   private _keys: string[];
-  private _source: { [key: string]: T };
+  private _source: { readonly [key: string]: T };
 }
 
 
