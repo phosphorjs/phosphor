@@ -25,6 +25,32 @@ import {
   Menu
 } from './menu';
 
+import {
+  Message
+} from '@phosphor/messaging';
+
+export
+class MenuForContextMenu extends Menu {
+  triggerActiveItem(): void {
+    this._doCleanupContextEvent = false;
+    super.triggerActiveItem();
+    this._cleanupContextEvent();
+    this._doCleanupContextEvent = true;
+  }
+
+  protected onCloseRequest(msg: Message): void {
+    super.onCloseRequest(msg);
+    if (this._doCleanupContextEvent) {
+      this._cleanupContextEvent();
+    }
+  }
+
+  private _cleanupContextEvent(): void {
+    this.commands.contextEvent = null;
+  }
+
+  private _doCleanupContextEvent: boolean = true;
+}
 
 /**
  * An object which implements a universal context menu.
@@ -43,13 +69,13 @@ class ContextMenu {
    * @param options - The options for initializing the menu.
    */
   constructor(options: ContextMenu.IOptions) {
-    this.menu = new Menu(options);
+    this.menu = new MenuForContextMenu(options);
   }
 
   /**
    * The menu widget which displays the matched context items.
    */
-  readonly menu: Menu;
+  readonly menu: MenuForContextMenu;
 
   /**
    * Add an item to the context menu.
@@ -100,6 +126,9 @@ class ContextMenu {
     if (!items || items.length === 0) {
       return false;
     }
+
+    // Record the initiating event for use in commands
+    this.menu.commands.contextEvent = event;
 
     // Add the filtered items to the menu.
     each(items, item => { this.menu.addItem(item); });
