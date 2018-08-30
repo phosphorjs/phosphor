@@ -5,7 +5,6 @@
 |
 | The full license is in the file LICENSE, distributed with this software.
 |----------------------------------------------------------------------------*/
+export * from './bplustree';
 export * from './linkedlist';
-export * from './treelist';
-export * from './treemap';
-export * from './treeset';
+
