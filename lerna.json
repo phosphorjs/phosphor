@@ -2,11 +2,5 @@
   "lerna": "3.2.1",
   "version": "independent",
   "npmClient": "yarn",
-  "registry": "https://registry.npmjs.org/",
-  "useWorkspaces": true,
-  "command": {
-    "publish": {
-      "npmClient": "npm"
-    }
-  }
+  "useWorkspaces": true
 }
