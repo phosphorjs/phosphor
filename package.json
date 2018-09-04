@@ -5,7 +5,6 @@
     "lerna": "2.0.0-beta.38"
   },
   "scripts": {
-    "install": "lerna bootstrap --hoist",
     "build": "lerna run build",
     "build:examples": "lerna run build --scope \"@phosphor/example-*\"",
     "build:src": "lerna run build --scope \"@phosphor/!(test-|example-)*\"",
@@ -20,5 +19,10 @@
     "test:firefox": "lerna run test:firefox --scope \"@phosphor/test-*\"",
     "test:ie": "lerna run test:ie --concurrency 1 --scope \"@phosphor/test-*\"",
     "publish": "npm run clean && npm run build && lerna publish -m \"Publish\""
-  }
+  },
+  "workspaces": [
+    "examples/*",
+    "packages/*",
+    "tests/*"
+  ]
 }
