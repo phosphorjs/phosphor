@@ -1044,6 +1044,40 @@ namespace CommandRegistry {
   }
 
   /**
+   * Format a keystroke for display on the local system.
+   */
+  export
+  function formatKeystroke(keystroke: string): string {
+    let mods = '';
+    let parts = parseKeystroke(keystroke);
+    if (Platform.IS_MAC) {
+      if (parts.ctrl) {
+        mods += '\u2303 ';
+      }
+      if (parts.alt) {
+        mods += '\u2325 ';
+      }
+      if (parts.shift) {
+        mods += '\u21E7 ';
+      }
+      if (parts.cmd) {
+        mods += '\u2318 ';
+      }
+    } else {
+      if (parts.ctrl) {
+        mods += 'Ctrl+';
+      }
+      if (parts.alt) {
+        mods += 'Alt+';
+      }
+      if (parts.shift) {
+        mods += 'Shift+';
+      }
+    }
+    return mods + parts.key;
+  }
+
+  /**
    * Create a normalized keystroke for a `'keydown'` event.
    *
    * @param event - The event object for a `'keydown'` event.

@@ -18,7 +18,7 @@ import {
 } from '@phosphor/commands';
 
 import {
-  ElementExt, Platform
+  ElementExt
 } from '@phosphor/domutils';
 
 import {
@@ -906,7 +906,7 @@ namespace CommandPalette {
      */
     formatItemShortcut(data: IItemRenderData): h.Child {
       let kb = data.item.keyBinding;
-      return kb ? kb.keys.map(Private.formatKeystroke).join(', ') : null;
+      return kb ? kb.keys.map(CommandRegistry.formatKeystroke).join(', ') : null;
     }
 
     /**
@@ -975,40 +975,6 @@ namespace Private {
   export
   function createItem(commands: CommandRegistry, options: CommandPalette.IItemOptions): CommandPalette.IItem {
     return new CommandItem(commands, options);
-  }
-
-  /**
-   * Format a keystroke for display on the local system.
-   */
-  export
-  function formatKeystroke(keystroke: string): string {
-    let mods = '';
-    let parts = CommandRegistry.parseKeystroke(keystroke);
-    if (Platform.IS_MAC) {
-      if (parts.ctrl) {
-        mods += '\u2303 ';
-      }
-      if (parts.alt) {
-        mods += '\u2325 ';
-      }
-      if (parts.shift) {
-        mods += '\u21E7 ';
-      }
-      if (parts.cmd) {
-        mods += '\u2318 ';
-      }
-    } else {
-      if (parts.ctrl) {
-        mods += 'Ctrl+';
-      }
-      if (parts.alt) {
-        mods += 'Alt+';
-      }
-      if (parts.shift) {
-        mods += 'Shift+';
-      }
-    }
-    return mods + parts.key;
   }
 
   /**
