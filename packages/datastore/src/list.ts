@@ -11,7 +11,7 @@ import {
 } from '@phosphor/algorithm';
 
 import {
-  TreeMap
+  BPlusTree
 } from '@phosphor/collections';
 
 import {
@@ -37,7 +37,7 @@ class List<T extends ReadonlyJSONValue = ReadonlyJSONValue> implements IIterable
    *
    * Create a new data store list.
    *
-   * @param parent - The parent record object.
+   * @param parent - The parent of the list.
    *
    * @param fieldName - The field name for the list.
    *
@@ -518,9 +518,8 @@ namespace Private {
     return id.slice();
   }
 
-  // ID format: <6-byte path><6-byte clock><4-byte store>...
+  // ID format: <6-byte path><6-byte version><4-byte storeId>...
   //            = 16bytes per triplet
-  //            = 128bits per triplet
   //            = 8 16-bit chars per triplet
 
   /**

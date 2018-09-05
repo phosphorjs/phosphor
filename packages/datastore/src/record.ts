@@ -6,20 +6,16 @@
 | The full license is in the file LICENSE, distributed with this software.
 |----------------------------------------------------------------------------*/
 import {
-  ReadonlyJSONValue
-} from '@phosphor/coreutils';
-
-import {
-  Field, ValueField
-} from './fields';
-
-import {
   List
 } from './list';
 
 import {
   Map
 } from './map';
+
+import {
+  Register
+} from './register';
 
 import {
   Schema
@@ -39,7 +35,7 @@ import {
  */
 export
 type Record<S extends Schema = Schema> = (
-  Record.BaseState & Record.MutableState<S> & Record.ReadonlyState<S>
+  Record.BaseState & Record.FieldState<S>
 );
 
 
@@ -48,28 +44,6 @@ type Record<S extends Schema = Schema> = (
  */
 export
 namespace Record {
-  /**
-   * A type alias which extracts the field names from a schema.
-   */
-  export
-  type FieldNames<S extends Schema> = keyof S['fields'];
-
-  /**
-   * A type alias which extracts the mutable field names from a schema.
-   */
-  export
-  type MutableFieldNames<S extends Schema> = {
-    [N in FieldNames<S>]: S['fields'][N]['type'] extends 'value' ? N : never;
-  }[FieldNames<S>];
-
-  /**
-   * A type alias which extracts the readonly field names from a schema.
-   */
-  export
-  type ReadonlyFieldNames<S extends Schema> = {
-    [N in FieldNames<S>]: S['fields'][N]['type'] extends 'value' ? never : N;
-  }[FieldNames<S>];
-
   /**
    * A type alias for the base state of a record.
    */
@@ -87,19 +61,11 @@ namespace Record {
   };
 
   /**
-   * A type alias for the mutable state of a record.
-   */
-  export
-  type MutableState<S extends Schema> = {
-    [N in MutableFieldNames<S>]: S['fields'][N]['ValueType'];
-  };
-
-  /**
    * A type alias for the readnly state of a record.
    */
   export
-  type ReadonlyState<S extends Schema> = {
-    readonly [N in ReadonlyFieldNames<S>]: S['fields'][N]['ValueType'];
+  type FieldState<S extends Schema> = {
+    readonly [N in keyof S['fields']]: S['fields'][N]['ValueType'];
   };
 
   /**
@@ -107,7 +73,7 @@ namespace Record {
    */
   export
   type ChangeSet<S extends Schema> = {
-    readonly [N in FieldNames<S>]?: S['fields'][N]['ChangeType'];
+    readonly [N in keyof S['fields']]?: S['fields'][N]['ChangeType'];
   };
 
   /**
@@ -141,29 +107,13 @@ namespace Record {
     const prototype: any = {};
 
     // Create the prototype properties.
-    for (let fieldName in schema.fields) {
-      let field = schema.fields[fieldName];
-      switch (field.type) {
-      case 'list':
-      case 'map':
-      case 'text':
-        Object.defineProperty(prototype, fieldName, {
-          get: createPropertyGetter(field),
-          enumerable: true,
-          configurable: false
-        });
-        break;
-      case 'value':
-        Object.defineProperty(prototype, fieldName, {
-          get: createRegisterGetter(field),
-          set: createRegisterSetter(field, fieldName),
-          enumerable: true,
-          configurable: false
-        });
-        break;
-      default:
-        throw 'unreachable';
-      }
+    for (let name in schema.fields) {
+      let field = schema.fields[name];
+      Object.defineProperty(prototype, name, {
+        get: createPropertyGetter(field.uuid),
+        enumerable: true,
+        configurable: false
+      });
     }
 
     // Create the record factory function.
@@ -171,20 +121,20 @@ namespace Record {
       let record = Object.create(prototype);
       record.$parent = parent;
       record.$id = id;
-      for (let fieldName in schema.fields) {
-        let field = schema.fields[fieldName];
+      for (let name in schema.fields) {
+        let field = schema.fields[name];
         switch (field.type) {
         case 'list':
-          record[field.uuid] = List.create(record, fieldName);
+          record[field.uuid] = List.create(record, name);
           break;
         case 'map':
-          record[field.uuid] = Map.create(record, fieldName);
+          record[field.uuid] = Map.create(record, name);
+          break;
+        case 'register':
+          record[field.uuid] = Register.create(record, name);
           break;
         case 'text':
-          record[field.uuid] = Text.create(record, fieldName);
-          break;
-        case 'value':
-          record[field.uuid] = null;
+          record[field.uuid] = Text.create(record, name);
           break;
         default:
           throw 'unreachable';
@@ -200,81 +150,7 @@ namespace Record {
   /**
    * Create a getter function for a record property.
    */
-  function createPropertyGetter(field: Field): () => any {
-    return function() { return this[field.uuid]; };
-  }
-
-  /**
-   * Create a getter function for a record register.
-   */
-  function createRegisterGetter(field: ValueField): () => ReadonlyJSONValue {
-    return function() {
-      // Fetch the entry for the register.
-      let entry = this[field.uuid] as IEntry | null;
-
-      // Return the current or default value as appropriate.
-      return entry ? entry.value : field.value;
-    };
-  }
-
-  /**
-   * Create a setter function for a record register.
-   */
-  function createRegisterSetter(field: ValueField, fieldName: string): (value: ReadonlyJSONValue) => void {
-    return function(value: ReadonlyJSONValue) {
-      // Fetch the relevant ancestors.
-      let table = (this as Record).$parent;
-      let store = table.parent;
-
-      // Guard against disallowed mutations.
-      store.mutationGuard();
-
-      // Fetch the clock and store id.
-      let clock = store.clock;
-      let storeId = store.id;
-
-      // Fetch the current entry for the register.
-      let entry = this[field.uuid] as IEntry | null;
-
-      // Fetch the previous value.
-      let previous = entry ? entry.value : field.value;
-
-      // Determine the next entry in the chain.
-      let next = field.undoable ? entry : null;
-
-      // Replace the current entry if it's during the same mutation.
-      next = (next && next.clock === clock) ? next.next : next;
-
-      // Create the new entry for the register.
-      this[field.uuid] = { value, clock, storeId, next };
-
-      // Notify the store of the mutation.
-      store.processRegisterMutation(this, fieldName, previous, value);
-    };
-  }
-
-  /**
-   * An object which represents a register entry.
-   */
-  interface IEntry {
-    /**
-     * The value for the entry.
-     */
-    readonly value: ReadonlyJSONValue;
-
-    /**
-     * The clock value when the entry was created.
-     */
-    readonly clock: number;
-
-    /**
-     * The id of the data store which created the entry.
-     */
-    readonly storeId: number;
-
-    /**
-     * The next entry in the list.
-     */
-    next: IEntry | null;
+  function createPropertyGetter(uuid: string): () => any {
+    return function() { return this[uuid]; };
   }
 }

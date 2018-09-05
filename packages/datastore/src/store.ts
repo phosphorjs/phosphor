@@ -6,12 +6,16 @@
 | The full license is in the file LICENSE, distributed with this software.
 |----------------------------------------------------------------------------*/
 import {
-  IIterable
+  IIterable, IIterator
 } from '@phosphor/algorithm';
 
 import {
   ReadonlyJSONValue
 } from '@phosphor/coreutils';
+
+import {
+  IMessageHandler, Message
+} from '@phosphor/messaging';
 
 import {
   ISignal
@@ -68,8 +72,8 @@ class Store implements IMessageHandler, IIterable<Table> {
    * #### Complexity
    * `O(1)`
    */
-  get changed(): ISignal<IStore, IStore.IChangedArgs> {
-
+  get changed(): ISignal<Store, Store.IChangedArgs> {
+    throw'';
   }
 
   /**
@@ -85,8 +89,16 @@ class Store implements IMessageHandler, IIterable<Table> {
     return 0;
   }
 
-  get clock(): number {
+  get version(): number {
     return 0;
+  }
+
+  iter(): IIterator<Table> {
+    throw '';
+  }
+
+  processMessage(msg: Message): void {
+
   }
 
   /**
@@ -161,6 +173,48 @@ class Store implements IMessageHandler, IIterable<Table> {
    * `O(log32 n)`
    */
   getTable<S extends Schema>(schema: S): ITable<S> {
+
+  }
+
+  /**
+   * @internal
+   */
+  mutationGuard(): void {
+
+  }
+
+  /**
+   * @internal
+   */
+  processRecordCreation(table: Table, id: string): void {
+
+  }
+
+  /**
+   * @internal
+   */
+  processRegisterMutation(record: Record, name: string, previous: ReadonlyJSONValue, current: ReadonlyJSONValue): void {
+
+  }
+
+  /**
+   * @internal
+   */
+  processListMutation(list: List, removed: null, inserted: null, ordered: null): void {
+
+  }
+
+  /**
+   * @internal
+   */
+  processMapMutation(map: Map, previous: null, current: null): void {
+
+  }
+
+  /**
+   * @internal
+   */
+  processTextMutation(text: Text): void {
 
   }
 
@@ -283,6 +337,6 @@ namespace Store {
  *
  */
 export
-function createStore(schemas: ReadonlyArray<Schema>): Promise<IStore> {
+function createStore(schemas: ReadonlyArray<Schema>): Promise<Store> {
   throw '';
 }

@@ -10,7 +10,7 @@ import {
 } from '@phosphor/algorithm';
 
 import {
-  TreeMap
+  BPlusTree
 } from '@phosphor/collections';
 
 import {
@@ -40,7 +40,7 @@ class Table<S extends Schema = Schema> implements IIterable<Record<S>> {
    *
    * Create a new data store table.
    *
-   * @param parent - The parent store object.
+   * @param parent - The parent of the table.
    *
    * @param schema - The schema for the table.
    *
@@ -70,6 +70,16 @@ class Table<S extends Schema = Schema> implements IIterable<Record<S>> {
   readonly schema: S;
 
   /**
+   * The version number of the table.
+   *
+   * #### Complexity
+   * `O(1)`
+   */
+  get version(): number {
+    return this._version;
+  }
+
+  /**
    * Whether the table is empty.
    *
    * #### Complexity
@@ -95,10 +105,10 @@ class Table<S extends Schema = Schema> implements IIterable<Record<S>> {
    * @returns A new iterator over the table records.
    *
    * #### Complexity
-   * `O(1)`
+   * `O(log32 n)`
    */
   iter(): IIterator<Record<S>> {
-    return this._records.values();
+    return this._records.iter();
   }
 
   /**
@@ -112,7 +122,7 @@ class Table<S extends Schema = Schema> implements IIterable<Record<S>> {
    * `O(log32 n)`
    */
   has(id: string): boolean {
-    return this._records.has(id);
+    return this._records.has(id, Private.recordIdCmp);
   }
 
   /**
@@ -127,7 +137,7 @@ class Table<S extends Schema = Schema> implements IIterable<Record<S>> {
    * `O(log32 n)`
    */
   get(id: string): Record<S> | undefined {
-    return this._records.get(id);
+    return this._records.get(id, Private.recordIdCmp);
   }
 
   /**
@@ -147,15 +157,18 @@ class Table<S extends Schema = Schema> implements IIterable<Record<S>> {
     this.parent.mutationGuard();
 
     // Throw an exception if the record already exists.
-    if (this._records.has(id)) {
+    if (this.has(id)) {
       throw new Error(`Record '${id}' already exists.`);
     }
+
+    // Bump the version number.
+    let version = this._version++;
 
     // Create the record.
     let record = this._factory(id);
 
-    // Add the record to the table.
-    this._records.set(id, record);
+    // Insert the record into the table.
+    this._records.insert(record);
 
     // Notify the store of the mutation.
     this.parent.processRecordCreation(this, id);
@@ -177,8 +190,9 @@ class Table<S extends Schema = Schema> implements IIterable<Record<S>> {
     this._factory = Record.createFactory(this, schema);
   }
 
+  private _version = 0;
   private _factory: Record.Factory<S>;
-  private _records = new TreeMap<string, Record<S>>(StringExt.cmp);
+  private _records = new BPlusTree<Record<S>>(Private.recordCmp);
 }
 
 
@@ -194,4 +208,27 @@ namespace Table {
   type ChangeSet<S extends Schema> = {
     readonly [recordId: string]: Record.ChangeSet<S>;
   };
+}
+
+
+/**
+ * The namespace for the module implementation details.
+ */
+export
+namespace Private {
+  /**
+   * A three-way comparison function for records.
+   */
+  export
+  function recordCmp<S extends Schema>(a: Record<S>, b: Record<S>): number {
+    return StringExt.cmp(a.$id, b.$id);
+  }
+
+  /**
+   * A three-way record id comparison function.
+   */
+  export
+  function recordIdCmp<S extends Schema>(record: Record<S>, id: string): number {
+    return StringExt.cmp(record.$id, id);
+  }
 }

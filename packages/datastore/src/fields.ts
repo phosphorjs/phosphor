@@ -18,6 +18,10 @@ import {
 } from './map';
 
 import {
+  Register
+} from './register';
+
+import {
   Text
 } from './text';
 
@@ -36,15 +40,9 @@ abstract class BaseField<ValueType, ChangeType> {
    * @param options - The options for initializing the field.
    */
   constructor(options: BaseField.IOptions = {}) {
-    let opts = { undoable: true, description: '', ...options };
-    this.undoable = opts.undoable;
+    let opts = { description: '', ...options };
     this.description = opts.description;
   }
-
-  /**
-   * Whether changes to the field can be undone.
-   */
-  readonly undoable: boolean;
 
   /**
    * The human-readable description of the field.
@@ -93,13 +91,6 @@ namespace BaseField {
    */
   export
   interface IOptions {
-    /**
-     * Whether changes to the field can be undone.
-     *
-     * The default is `true`.
-     */
-    undoable?: boolean;
-
     /**
      * The human-readable description of the field.
      *
@@ -226,6 +217,69 @@ namespace MapField {
 
 
 /**
+ * A field which represents an atomic readonly JSON value.
+ */
+export
+class RegisterField<T extends ReadonlyJSONValue = ReadonlyJSONValue> extends BaseField<Register<T>, RegisterField.IChange<T>> {
+  /**
+   * Construct a new value field.
+   *
+   * @param options - The options for initializing the field.
+   */
+  constructor(options: RegisterField.IOptions<T>) {
+    super(options);
+    this.value = options.value;
+  }
+
+  /**
+   * The discriminated type of the field.
+   */
+  get type(): 'register' {
+    return 'register';
+  }
+
+  /**
+   * The initial value for the field.
+   */
+  readonly value: T;
+}
+
+
+/**
+ * The namespace for the `RegisterField` class statics.
+ */
+export
+namespace RegisterField {
+  /**
+   * An options object for initializing a register field.
+   */
+  export
+  interface IOptions<T extends ReadonlyJSONValue> extends BaseField.IOptions {
+    /**
+     * The initial value for the field.
+     */
+    value: T;
+  }
+
+  /**
+   * An object which represents a change to a register field.
+   */
+  export
+  interface IChange<T extends ReadonlyJSONValue> {
+    /**
+     * The previous value of the field.
+     */
+    readonly previous: T;
+
+    /**
+     * The current value of the field.
+     */
+    readonly current: T;
+  }
+}
+
+
+/**
  * A field which represents a mutable text value.
  */
 export
@@ -289,73 +343,10 @@ namespace TextField {
 
 
 /**
- * A field which represents a readonly JSON value.
- */
-export
-class ValueField<T extends ReadonlyJSONValue = ReadonlyJSONValue> extends BaseField<T, ValueField.IChange<T>> {
-  /**
-   * Construct a new value field.
-   *
-   * @param options - The options for initializing the field.
-   */
-  constructor(options: ValueField.IOptions<T>) {
-    super(options);
-    this.value = options.value;
-  }
-
-  /**
-   * The discriminated type of the field.
-   */
-  get type(): 'value' {
-    return 'value';
-  }
-
-  /**
-   * The initial value for the field.
-   */
-  readonly value: T;
-}
-
-
-/**
- * The namespace for the `ValueField` class statics.
- */
-export
-namespace ValueField {
-  /**
-   * An options object for initializing a value field.
-   */
-  export
-  interface IOptions<T extends ReadonlyJSONValue> extends BaseField.IOptions {
-    /**
-     * The initial value for the field.
-     */
-    value: T;
-  }
-
-  /**
-   * An object which represents a change to a value field.
-   */
-  export
-  interface IChange<T extends ReadonlyJSONValue> {
-    /**
-     * The previous value of the field.
-     */
-    readonly previous: T;
-
-    /**
-     * The current value of the field.
-     */
-    readonly current: T;
-  }
-}
-
-
-/**
  * A type alias of all supported fields.
  */
 export
-type Field = ListField | MapField | TextField | ValueField;
+type Field = ListField | MapField | RegisterField | TextField;
 
 
 /**
@@ -364,42 +355,42 @@ type Field = ListField | MapField | TextField | ValueField;
 export
 namespace Field {
   /**
-   * A convenience function which creates a boolean value field.
+   * A convenience function which creates a boolean register field.
    *
    * @param options - The options for the field. The default `value`
    *   option is `false`.
    *
-   * @returns A new boolean value field.
+   * @returns A new boolean register field.
    */
   export
-  function Boolean(options: Partial<ValueField.IOptions<boolean>> = {}): ValueField<boolean> {
-    return new ValueField<boolean>({ value: false, ...options });
+  function Boolean(options: Partial<RegisterField.IOptions<boolean>> = {}): RegisterField<boolean> {
+    return new RegisterField<boolean>({ value: false, ...options });
   }
 
   /**
-   * A convenience function which creates a number value field.
+   * A convenience function which creates a number register field.
    *
    * @param options - The options for the field. The default `value`
    *   option is `0`.
    *
-   * @returns A new number value field.
+   * @returns A new number register field.
    */
   export
-  function Number(options: Partial<ValueField.IOptions<number>> = {}): ValueField<number> {
-    return new ValueField<number>({ value: 0, ...options });
+  function Number(options: Partial<RegisterField.IOptions<number>> = {}): RegisterField<number> {
+    return new RegisterField<number>({ value: 0, ...options });
   }
 
   /**
-   * A convenience function which creates a string value field.
+   * A convenience function which creates a string register field.
    *
    * @param options - The options for the field. The default `value`
    *   option is `''`.
    *
-   * @returns A new string value field.
+   * @returns A new string register field.
    */
   export
-  function String(options: Partial<ValueField.IOptions<string>> = {}): ValueField<string> {
-    return new ValueField<string>({ value: '', ...options });
+  function String(options: Partial<RegisterField.IOptions<string>> = {}): RegisterField<string> {
+    return new RegisterField<string>({ value: '', ...options });
   }
 
   /**
@@ -427,6 +418,18 @@ namespace Field {
   }
 
   /**
+   * A convenience function which creates a register field.
+   *
+   * @param options - The options for the field.
+   *
+   * @returns A new register field.
+   */
+  export
+  function Register<T extends ReadonlyJSONValue>(options: RegisterField.IOptions<T>): RegisterField<T> {
+    return new RegisterField<T>(options);
+  }
+
+  /**
    * A convenience function which creates a text field.
    *
    * @param options - The options for the field.
@@ -436,17 +439,5 @@ namespace Field {
   export
   function Text(options: TextField.IOptions = {}): TextField {
     return new TextField(options);
-  }
-
-  /**
-   * A convenience function which creates a text field.
-   *
-   * @param options - The options for the field.
-   *
-   * @returns A new value field.
-   */
-  export
-  function Value<T extends ReadonlyJSONValue>(options: ValueField.IOptions<T>): ValueField<T> {
-    return new ValueField<T>(options);
   }
 }

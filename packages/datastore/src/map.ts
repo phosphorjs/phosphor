@@ -6,12 +6,8 @@
 | The full license is in the file LICENSE, distributed with this software.
 |----------------------------------------------------------------------------*/
 import {
-  IIterable, IIterator, StringExt, each
+  IIterable, IIterator, each, filter, iterKeys, map
 } from '@phosphor/algorithm';
-
-import {
-  TreeMap
-} from '@phosphor/collections';
 
 import {
   ReadonlyJSONValue
@@ -34,15 +30,15 @@ class Map<T extends ReadonlyJSONValue = ReadonlyJSONValue> implements IIterable<
    *
    * @param parent - The parent record object.
    *
-   * @param fieldName - The field name for the map.
+   * @param name - The name of the map.
    *
    * @returns A new data store map.
    *
    * #### Notes
    * This method is an internal implementation detail.
    */
-  static create<U extends ReadonlyJSONValue = ReadonlyJSONValue>(parent: Record, fieldName: string): Map<U> {
-    return new Map<U>(parent, fieldName);
+  static create<U extends ReadonlyJSONValue = ReadonlyJSONValue>(parent: Record, name: string): Map<U> {
+    return new Map<U>(parent, name);
   }
 
   /**
@@ -54,12 +50,12 @@ class Map<T extends ReadonlyJSONValue = ReadonlyJSONValue> implements IIterable<
   readonly parent: Record;
 
   /**
-   * The field name for the map.
+   * The name of the map.
    *
    * #### Complexity
    * `O(1)`
    */
-  readonly fieldName: string;
+  readonly name: string;
 
   /**
    * Whether the map is empty.
@@ -68,7 +64,7 @@ class Map<T extends ReadonlyJSONValue = ReadonlyJSONValue> implements IIterable<
    * `O(1)`
    */
   get isEmpty(): boolean {
-    return this._items.isEmpty;
+    return this._size === 0;
   }
 
   /**
@@ -78,7 +74,7 @@ class Map<T extends ReadonlyJSONValue = ReadonlyJSONValue> implements IIterable<
    * `O(1)`
    */
   get size(): number {
-    return this._items.size;
+    return this._size;
   }
 
   /**
@@ -90,7 +86,7 @@ class Map<T extends ReadonlyJSONValue = ReadonlyJSONValue> implements IIterable<
    * `O(1)`
    */
   iter(): IIterator<[string, T]> {
-    return this._items.iter();
+    return map(this.keys(), k => [k, this._map[k].value] as [string, T]);
   }
 
   /**
@@ -102,7 +98,7 @@ class Map<T extends ReadonlyJSONValue = ReadonlyJSONValue> implements IIterable<
    * `O(1)`
    */
   keys(): IIterator<string> {
-    return this._items.keys();
+    return filter(iterKeys(this._map), k => this._map[k].value !== undefined);
   }
 
   /**
@@ -114,7 +110,7 @@ class Map<T extends ReadonlyJSONValue = ReadonlyJSONValue> implements IIterable<
    * `O(1)`
    */
   values(): IIterator<T> {
-    return this._items.values();
+    return map(this.keys(), k => this._map[k].value);
   }
 
   /**
@@ -128,7 +124,8 @@ class Map<T extends ReadonlyJSONValue = ReadonlyJSONValue> implements IIterable<
    * `O(log32 n)`
    */
   has(key: string): boolean {
-    return this._items.has(key);
+    let head = this._map[key];
+    return head !== undefined && head.value !== undefined;
   }
 
   /**
@@ -143,7 +140,8 @@ class Map<T extends ReadonlyJSONValue = ReadonlyJSONValue> implements IIterable<
    * `O(log32 n)`
    */
   get(key: string): T | undefined {
-    return this._items.get(key);
+    let head = this._map[key];
+    return head !== undefined ? head.value : undefined;
   }
 
   /**
@@ -155,7 +153,7 @@ class Map<T extends ReadonlyJSONValue = ReadonlyJSONValue> implements IIterable<
    * `O(n)`
    */
   assign(items: { readonly [key: string]: T }): void {
-    this.update({ ...Private.makeClearItems(this), ...items });
+    this.update({ ...Private.makeClearItems(this._map), ...items });
   }
 
   /**
@@ -168,54 +166,54 @@ class Map<T extends ReadonlyJSONValue = ReadonlyJSONValue> implements IIterable<
    * `O(n)`
    */
   update(items: { readonly [key: string]: T | undefined }): void {
-    // Fetch the relevant ancestors
-    let table = this.parent.$parent;
-    let store = table.parent;
+    // // Fetch the relevant ancestors
+    // let table = this.parent.$parent;
+    // let store = table.parent;
 
-    // Fetch the clock and store id.
-    let clock = store.clock;
-    let storeId = store.id;
+    // // Fetch the clock and store id.
+    // let clock = store.clock;
+    // let storeId = store.id;
 
-    // Fetch the schema field for the map.
-    let field = table.schema.fields[this.fieldName];
+    // // Fetch the schema field for the map.
+    // let field = table.schema.fields[this.fieldName];
 
-    // Apply the mutation to the map.
-    store.withMapMutation(this, (previous, current) => {
-      // Loop over the given items.
-      for (let key in items) {
-        // Fetch the value for the current key.
-        let value = items[key];
+    // // Apply the mutation to the map.
+    // store.withMapMutation(this, (previous, current) => {
+    //   // Loop over the given items.
+    //   for (let key in items) {
+    //     // Fetch the value for the current key.
+    //     let value = items[key];
 
-        // Fetch the entry for the current key.
-        let entry = this._entries.get(key) || null;
+    //     // Fetch the entry for the current key.
+    //     let entry = this._entries.get(key) || null;
 
-        // Determine the next entry in the chain.
-        let next = field.undoable ? entry : null;
+    //     // Determine the next entry in the chain.
+    //     let next = field.undoable ? entry : null;
 
-        // Replace the current entry if it's during the same mutation.
-        next = (next && next.clock === clock) ? next.next : next;
+    //     // Replace the current entry if it's during the same mutation.
+    //     next = (next && next.clock === clock) ? next.next : next;
 
-        // Create the new entry for the key.
-        this._entries.set(key, { value, clock, storeId, next });
+    //     // Create the new entry for the key.
+    //     this._entries.set(key, { value, clock, storeId, next });
 
-        // Update the items map as appropriate.
-        if (value === undefined) {
-          this._items.delete(key);
-        } else {
-          this._items.set(key, value);
-        }
+    //     // Update the items map as appropriate.
+    //     if (value === undefined) {
+    //       this._items.delete(key);
+    //     } else {
+    //       this._items.set(key, value);
+    //     }
 
-        // Record the previous value if this is the first time the
-        // item has been modified during the current transaction.
-        if (!(key in previous)) {
-          previous[key] = entry ? entry.value : undefined;
-        }
+    //     // Record the previous value if this is the first time the
+    //     // item has been modified during the current transaction.
+    //     if (!(key in previous)) {
+    //       previous[key] = entry ? entry.value : undefined;
+    //     }
 
-        // Record the current value each time the item is modified
-        // during the transaction.
-        current[key] = value;
-      }
-    });
+    //     // Record the current value each time the item is modified
+    //     // during the transaction.
+    //     current[key] = value;
+    //   }
+    // });
   }
 
   /**
@@ -252,7 +250,7 @@ class Map<T extends ReadonlyJSONValue = ReadonlyJSONValue> implements IIterable<
    * `O(n)`
    */
   clear(): void {
-    this.update(Private.makeClearItems(this));
+    this.update(Private.makeClearItems(this._map));
   }
 
   /**
@@ -260,15 +258,15 @@ class Map<T extends ReadonlyJSONValue = ReadonlyJSONValue> implements IIterable<
    *
    * @param parent - The parent record object.
    *
-   * @param fieldName - The field name for the map.
+   * @param name - The name of the map.
    */
-  private constructor(parent: Record, fieldName: string) {
+  private constructor(parent: Record, name: string) {
     this.parent = parent;
-    this.fieldName = fieldName;
+    this.name = name;
   }
 
-  private _items = new TreeMap<string, T>(StringExt.cmp);
-  private _entries = new TreeMap<string, Private.IEntry<T>>(StringExt.cmp);
+  private _size = 0;
+  private _map: Private.ItemMap<T> = Object.create(null);
 }
 
 
@@ -277,33 +275,19 @@ class Map<T extends ReadonlyJSONValue = ReadonlyJSONValue> implements IIterable<
  */
 namespace Private {
   /**
-   * Create an object to clear the contents of a map.
-   *
-   * @param object - The map object of interest.
-   *
-   * @returns An object which will clear the map.
-   */
-  export
-  function makeClearItems(map: Map): { [key: string]: undefined } {
-    let result: { [key: string]: undefined } = {};
-    each(map.keys(), key => { result[key] = undefined; });
-    return result;
-  }
-
-  /**
    * An object which represents an entry in a map.
    */
   export
-  interface IEntry<T extends ReadonlyJSONValue> {
+  interface IMapLink<T extends ReadonlyJSONValue> {
     /**
      * The value for the entry.
      */
     readonly value: T | undefined;
 
     /**
-     * The clock value when the entry was created.
+     * The data store version when the entry was created.
      */
-    readonly clock: number;
+    readonly version: number;
 
     /**
      * The id of the data store which created the entry.
@@ -313,6 +297,26 @@ namespace Private {
     /**
      * The next entry in the list.
      */
-    next: IEntry<T> | null;
+    next: IMapLink<T> | null;
+  }
+
+  /**
+   * A type alias for an item map.
+   */
+  export
+  type ItemMap<T extends ReadonlyJSONValue> = { [key: string]: IMapLink<T> };
+
+  /**
+   * Create an object to clear the contents of a map.
+   *
+   * @param object - The map object of interest.
+   *
+   * @returns An object which will clear the map.
+   */
+  export
+  function makeClearItems(map: ItemMap<any>): { [key: string]: undefined } {
+    let result: { [key: string]: undefined } = {};
+    for (let key in map) { result[key] = undefined; }
+    return result;
   }
 }

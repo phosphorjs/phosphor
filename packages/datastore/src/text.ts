@@ -10,6 +10,13 @@ import {
 } from './record';
 
 
+export
+class Text {
+  static create(parent: Record, name: string): Text {
+    throw '';
+  }
+}
+
 /**
  * A data store object which holds text.
  */
@@ -92,7 +99,7 @@ interface IText {
    * @param value - The value(s) to insert into the text.
    *
    * #### Complexity
-   * 
+   *
    *
    * #### Undefined Behavior
    * An `index` which is non-integral.

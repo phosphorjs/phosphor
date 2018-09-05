@@ -120,7 +120,7 @@ function iter<T>(object: IterableOrArrayLike<T>): IIterator<T> {
  */
 export
 function iterKeys<T>(object: { readonly [key: string]: T }): IIterator<string> {
-  return new KeyIterator<T>(object);
+  return new KeyIterator(object);
 }
 
 
