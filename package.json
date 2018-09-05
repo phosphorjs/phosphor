@@ -2,6 +2,7 @@
   "private": true,
   "dependencies": {},
   "devDependencies": {
+    "@jupyterlab/buildutils": "^0.9.4",
     "lerna": "^3.2.1"
   },
   "scripts": {
@@ -14,10 +15,13 @@
     "clean:src": "lerna run clean --scope \"@phosphor/!(test-|example-)*\"",
     "clean:tests": "lerna run clean --scope \"@phosphor/test-*\"",
     "docs": "rimraf docs/api && lerna run docs",
+    "get:dependency": "get-dependency",
+    "remove:dependency": "remove-dependency",
     "test": "lerna run test --scope \"@phosphor/test-*\"",
     "test:chrome": "lerna run test:chrome --scope \"@phosphor/test-*\"",
     "test:firefox": "lerna run test:firefox --scope \"@phosphor/test-*\"",
     "test:ie": "lerna run test:ie --concurrency 1 --scope \"@phosphor/test-*\"",
+    "update:dependency": "update-dependency.js",
     "publish": "npm run clean && npm run build && lerna publish -m \"Publish\""
   },
   "workspaces": [
