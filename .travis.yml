@@ -1,11 +1,11 @@
 language: node_js
 node_js:
-  - '5'
+  - '6'
 addons:
   firefox: latest
 sudo: false
 install:
-  - npm install
+  - yarn
 script:
   - export DISPLAY=:99.0;
     sh -e /etc/init.d/xvfb start;
