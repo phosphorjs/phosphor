@@ -15,37 +15,37 @@
   "include": ["*"],
   "references": [
     {
-      "path": "../../../algorithm"
+      "path": "../../../algorithm/src"
     },
     {
-      "path": "../../../commands"
+      "path": "../../../commands/src"
     },
     {
-      "path": "../../../coreutils"
+      "path": "../../../coreutils/src"
     },
     {
-      "path": "../../../disposable"
+      "path": "../../../disposable/src"
     },
     {
-      "path": "../../../domutils"
+      "path": "../../../domutils/src"
     },
     {
-      "path": "../../../dragdrop"
+      "path": "../../../dragdrop/src"
     },
     {
-      "path": "../../../keyboard"
+      "path": "../../../keyboard/src"
     },
     {
-      "path": "../../../messaging"
+      "path": "../../../messaging/src"
     },
     {
-      "path": "../../../properties"
+      "path": "../../../properties/src"
     },
     {
-      "path": "../../../signaling"
+      "path": "../../../signaling/src"
     },
     {
-      "path": "../../../virtualdom"
+      "path": "../../../virtualdom/src"
     }
   ]
 }
