@@ -16,7 +16,7 @@
   "include": ["*"],
   "references": [
     {
-      "path": "../../signaling/sc"
+      "path": "../../signaling/src"
     }
   ]
 }
