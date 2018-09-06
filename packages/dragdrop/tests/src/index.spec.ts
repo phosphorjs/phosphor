@@ -20,7 +20,7 @@ import {
 } from '@phosphor/coreutils';
 
 import {
-  Drag, DropAction, IDragEvent
+  Drag, IDragEvent
 } from '@phosphor/dragdrop';
 
 import '@phosphor/dragdrop/style/index.css';
