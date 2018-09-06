@@ -13,7 +13,7 @@
     "get:dependency": "get-dependency",
     "publish": "npm run clean && npm run build && lerna publish -m \"Publish\"",
     "remove:dependency": "remove-dependency",
-    "test": "lerna run test --scope \"@phosphor/test-*\"",
+    "test": "lerna run test",
     "test:chrome": "lerna run test:chrome",
     "test:firefox": "lerna run test:firefox",
     "test:ie": "lerna run test:ie --concurrency 1",
