@@ -10,6 +10,9 @@ script:
   - export DISPLAY=:99.0;
     sh -e /etc/init.d/xvfb start;
     set -e;
-    npm run clean;
-    npm run build;
-    npm run test;
+    pushd packages/widgets;
+    yarn build;
+    popd;
+    yarn clean;
+    yarn build;
+    yarn test;
