@@ -4,7 +4,7 @@
     "build": "lerna run build",
     "build:examples": "lerna run build --scope \"@phosphor/example-*\"",
     "build:src": "lerna run build --scope \"@phosphor/!(test-|example-)*\"",
-    "build:tests": "lerna run build:tests",
+    "build:test": "lerna run build:test",
     "clean": "lerna run clean",
     "clean:examples": "lerna run clean --scope \"@phosphor/example-*\"",
     "clean:src": "lerna run clean --scope \"@phosphor/!(test-|example-)*\"",
