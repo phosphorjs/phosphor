@@ -1237,7 +1237,7 @@ namespace Private {
    */
   export
   function replayKeyEvent(event: KeyboardEvent): void {
-    event.target.dispatchEvent(cloneKeyboardEvent(event));
+    event.target!.dispatchEvent(cloneKeyboardEvent(event));
   }
 
   /**

@@ -15,13 +15,13 @@
   "include": ["src/*"],
   "references": [
     {
-      "path": "../../../commands/src"
+      "path": "../../commands/src"
     },
     {
-      "path": "../../../coreutils/src"
+      "path": "../../coreutils/src"
     },
     {
-      "path": "../../../widgets/src"
+      "path": "../../widgets/src"
     }
   ]
 }

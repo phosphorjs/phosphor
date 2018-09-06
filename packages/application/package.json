@@ -28,7 +28,7 @@
     "url": "https://github.com/phosphorjs/phosphor.git"
   },
   "scripts": {
-    "build": "tsc --build",
+    "build": "tsc --build src",
     "build": "cd tests && tsc --build && webpack",
     "clean": "rimraf lib",
     "clean": "rimraf tests/build",

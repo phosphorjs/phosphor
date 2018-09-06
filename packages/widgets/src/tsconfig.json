@@ -9,44 +9,44 @@
     "module": "commonjs",
     "moduleResolution": "node",
     "target": "ES5",
-    "outDir": "./lib",
+    "outDir": "../lib",
     "lib": ["ES5", "ES2015.Collection", "ES2015.Promise", "DOM"],
     "types": []
   },
-  "include": ["src/*"],
+  "include": ["*"],
   "references": [
     {
-      "path": "../algorithm/src"
+      "path": "../../algorithm/src"
     },
     {
-      "path": "../commands/src"
+      "path": "../../commands/src"
     },
     {
-      "path": "../coreutils/src"
+      "path": "../../coreutils/src"
     },
     {
-      "path": "../disposable/src"
+      "path": "../../disposable/src"
     },
     {
-      "path": "../domutils/src"
+      "path": "../../domutils/src"
     },
     {
-      "path": "../dragdrop/src"
+      "path": "../../dragdrop/src"
     },
     {
-      "path": "../keyboard/src"
+      "path": "../../keyboard/src"
     },
     {
-      "path": "../messaging/src"
+      "path": "../../messaging/src"
     },
     {
-      "path": "../properties/src"
+      "path": "../../properties/src"
     },
     {
-      "path": "../signaling/src"
+      "path": "../../signaling/src"
     },
     {
-      "path": "../virtualdom/src"
+      "path": "../../virtualdom/src"
     }
   ]
 }

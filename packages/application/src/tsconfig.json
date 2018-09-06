@@ -9,14 +9,20 @@
     "module": "commonjs",
     "moduleResolution": "node",
     "target": "ES5",
-    "outDir": "./lib",
-    "lib": ["ES5"],
+    "outDir": "../lib",
+    "lib": ["ES5", "ES2015.Collection", "ES2015.Promise", "DOM"],
     "types": []
   },
-  "include": ["src/*"],
+  "include": ["*"],
   "references": [
     {
-      "path": "../algorithm/src"
+      "path": "../../commands/src"
+    },
+    {
+      "path": "../../coreutils/src"
+    },
+    {
+      "path": "../../widgets/src"
     }
   ]
 }

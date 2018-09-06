@@ -9,14 +9,14 @@
     "module": "commonjs",
     "moduleResolution": "node",
     "target": "ES5",
-    "outDir": "./lib",
-    "lib": ["ES5", "ES2015.Collection", "DOM"],
+    "outDir": "../lib",
+    "lib": ["ES5", "ES2015.Collection"],
     "types": []
   },
-  "include": ["src/*"],
+  "include": ["*"],
   "references": [
     {
-      "path": "../algorithm/src"
+      "path": "../../algorithm/src"
     }
   ]
 }

@@ -223,6 +223,7 @@ class Drag implements IDisposable {
   start(clientX: number, clientY: number): Promise<DropAction> {
     // If the drag object is already disposed, resolve to `None`.
     if (this._disposed) {
+      // @ts-ignore
       return Promise.resolve('none');
     }
 

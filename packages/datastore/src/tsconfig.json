@@ -9,9 +9,14 @@
     "module": "commonjs",
     "moduleResolution": "node",
     "target": "ES5",
-    "outDir": "./lib",
-    "lib": ["ES5", "ES2015.Promise"],
+    "outDir": "../lib",
+    "lib": ["ES5"],
     "types": []
   },
-  "include": ["src/*"]
+  "include": ["*"],
+  "references": [
+    {
+      "path": "../../signaling/sc"
+    }
+  ]
 }

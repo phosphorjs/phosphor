@@ -9,14 +9,14 @@
     "module": "commonjs",
     "moduleResolution": "node",
     "target": "ES5",
-    "outDir": "./lib",
+    "outDir": "../lib",
     "lib": ["ES5"],
     "types": []
   },
-  "include": ["src/*"],
+  "include": ["*"],
   "references": [
     {
-      "path": "../signaling/src"
+      "path": "../../algorithm/src"
     }
   ]
 }
