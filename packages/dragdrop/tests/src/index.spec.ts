@@ -273,7 +273,6 @@ describe('@phosphor/dragdrop', () => {
     context('Event Handling', () => {
 
       let drag: Drag = null!;
-      let dragPromise: Promise<DropAction> = null!;
       let child0: DropTarget = null!;
       let child1: DropTarget = null!;
 
@@ -286,7 +285,7 @@ describe('@phosphor/dragdrop', () => {
         dragImage.style.minWidth = '10px';
 
         drag = new Drag({ mimeData: new MimeData(), dragImage });
-        dragPromise = drag.start(0, 0);
+        drag.start(0, 0);
       });
 
       afterEach(() => {
