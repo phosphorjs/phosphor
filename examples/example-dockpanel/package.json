@@ -1,7 +1,11 @@
 {
-  "private": true,
   "name": "@phosphor/example-dockpanel",
   "version": "0.1.14",
+  "private": true,
+  "scripts": {
+    "build": "tsc && webpack",
+    "clean": "rimraf build"
+  },
   "dependencies": {
     "@phosphor/commands": "^1.5.0",
     "@phosphor/default-theme": "^0.1.0",
@@ -15,11 +19,7 @@
     "file-loader": "^0.11.1",
     "rimraf": "^2.5.2",
     "style-loader": "^0.13.1",
-    "typescript": "~2.3.0",
+    "typescript": "~3.0.3",
     "webpack": "^2.2.1"
-  },
-  "scripts": {
-    "build": "tsc && webpack",
-    "clean": "rimraf build"
   }
 }
