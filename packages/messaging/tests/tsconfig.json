@@ -12,5 +12,13 @@
     "lib": ["ES5", "DOM"],
     "types": ["chai", "mocha"]
   },
-  "include": ["src/*"]
+  "include": ["src/*"],
+  "references": [
+    {
+      "path": "../../algorithm/src"
+    },
+    {
+      "path": "../../collections/src"
+    }
+  ]
 }

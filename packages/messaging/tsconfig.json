@@ -1,5 +1,6 @@
 {
   "compilerOptions": {
+    "composite": true,
     "declaration": true,
     "noImplicitAny": true,
     "noEmitOnError": true,
@@ -12,5 +13,13 @@
     "lib": ["ES5", "ES2015.Collection", "DOM"],
     "types": []
   },
-  "include": ["src/*"]
+  "include": ["src/*"],
+  "references": [
+    {
+      "path": "../algorithm/src"
+    },
+    {
+      "path": "../collections/src"
+    }
+  ]
 }

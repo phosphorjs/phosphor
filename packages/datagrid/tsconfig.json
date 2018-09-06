@@ -1,5 +1,6 @@
 {
   "compilerOptions": {
+    "composite": true,
     "declaration": true,
     "noImplicitAny": true,
     "noEmitOnError": true,
@@ -12,5 +13,31 @@
     "lib": ["ES5", "DOM"],
     "types": []
   },
-  "include": ["src/*"]
+  "include": ["src/*"],
+  "references": [
+    {
+      "path": "../algorithm/src"
+    },
+    {
+      "path": "../coreutils/src"
+    },
+    {
+      "path": "../disposable/src"
+    },
+    {
+      "path": "../domutils/src"
+    },
+    {
+      "path": "../dragdrop/src"
+    },
+    {
+      "path": "../messaging/src"
+    },
+    {
+      "path": "../signaling/src"
+    },
+    {
+      "path": "../widgets/src"
+    }
+  ]
 }

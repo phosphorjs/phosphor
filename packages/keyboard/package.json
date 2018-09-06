@@ -28,8 +28,8 @@
     "url": "https://github.com/phosphorjs/phosphor.git"
   },
   "scripts": {
-    "build": "tsc",
-    "build:test": "cd tests && tsc && webpack",
+    "build": "tsc --build",
+    "build:test": "cd tests && tsc --build && webpack",
     "clean": "rimraf lib",
     "clean:test": "rimraf tests/build",
     "docs": "typedoc --options tdoptions.json .",

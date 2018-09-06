@@ -12,5 +12,25 @@
     "lib": ["ES5", "ES2015.Promise", "DOM"],
     "types": ["chai", "mocha"]
   },
-  "include": ["src/*"]
+  "include": ["src/*"],
+  "references": [
+    {
+      "path": "../../algorithm/src"
+    },
+    {
+      "path": "../../coreutils/src"
+    },
+    {
+      "path": "../../disposable/src"
+    },
+    {
+      "path": "../../domutils/src"
+    },
+    {
+      "path": "../../keyboard/src"
+    },
+    {
+      "path": "../../signaling/src"
+    }
+  ]
 }

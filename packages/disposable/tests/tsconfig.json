@@ -1,5 +1,6 @@
 {
   "compilerOptions": {
+    "composite": true,
     "declaration": false,
     "noImplicitAny": true,
     "noEmitOnError": true,
@@ -12,5 +13,10 @@
     "lib": ["ES5"],
     "types": ["chai", "mocha"]
   },
-  "include": ["src/*"]
+  "include": ["src/*"],
+  "references": [
+    {
+      "path": "../../algorithm/src"
+    }
+  ]
 }

@@ -12,5 +12,40 @@
     "lib": ["ES5", "DOM"],
     "types": ["chai", "mocha"]
   },
-  "include": ["src/*"]
+  "include": ["src/*"],
+  "references": [
+    {
+      "path": "../../algorithm/src"
+    },
+    {
+      "path": "../../commands/src"
+    },
+    {
+      "path": "../../coreutils/src"
+    },
+    {
+      "path": "../../disposable/src"
+    },
+    {
+      "path": "../../domutils/src"
+    },
+    {
+      "path": "../../dragdrop/src"
+    },
+    {
+      "path": "../../keyboard/src"
+    },
+    {
+      "path": "../../messaging/src"
+    },
+    {
+      "path": "../../properties/src"
+    },
+    {
+      "path": "../../signaling/src"
+    },
+    {
+      "path": "../../virtualdom/src"
+    }
+  ]
 }

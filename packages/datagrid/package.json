@@ -27,9 +27,8 @@
     "url": "https://github.com/phosphorjs/phosphor.git"
   },
   "scripts": {
-    "build": "tsc",
+    "build": "tsc --build",
     "clean": "rimraf lib",
-    "clean:test": "rimraf tests/build",
     "docs": "typedoc --options tdoptions.json ."
   },
   "dependencies": {

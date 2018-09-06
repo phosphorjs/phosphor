@@ -1,5 +1,6 @@
 {
   "compilerOptions": {
+    "composite": true,
     "declaration": true,
     "noImplicitAny": true,
     "noEmitOnError": true,
@@ -12,5 +13,25 @@
     "lib": ["ES5", "ES2015.Promise", "DOM"],
     "types": []
   },
-  "include": ["src/*"]
+  "include": ["src/*"],
+  "references": [
+    {
+      "path": "../algorithm/src"
+    },
+    {
+      "path": "../coreutils/src"
+    },
+    {
+      "path": "../disposable/src"
+    },
+    {
+      "path": "../domutils/src"
+    },
+    {
+      "path": "../keyboard/src"
+    },
+    {
+      "path": "../signaling/src"
+    }
+  ]
 }

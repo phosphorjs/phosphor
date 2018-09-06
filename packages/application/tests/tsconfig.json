@@ -12,5 +12,16 @@
     "lib": ["ES5"],
     "types": ["chai", "mocha"]
   },
-  "include": ["src/*"]
+  "include": ["src/*"],
+  "references": [
+    {
+      "path": "../../../commands/src"
+    },
+    {
+      "path": "../../../coreutils/src"
+    },
+    {
+      "path": "../../../widgets/src"
+    }
+  ]
 }
