@@ -12,7 +12,7 @@
     "lib": ["ES5"],
     "types": ["chai", "mocha"]
   },
-  "include": ["src/*"],
+  "include": ["*"],
   "references": [
     {
       "path": "../../../commands/src"
