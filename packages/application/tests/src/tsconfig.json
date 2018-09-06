@@ -8,9 +8,20 @@
     "module": "commonjs",
     "moduleResolution": "node",
     "target": "ES5",
-    "outDir": "./build",
-    "lib": ["ES5", "ES2015.Promise"],
+    "outDir": "../build",
+    "lib": ["ES5"],
     "types": ["chai", "mocha"]
   },
-  "include": ["src/*"]
+  "include": ["src/*"],
+  "references": [
+    {
+      "path": "../../../commands/src"
+    },
+    {
+      "path": "../../../coreutils/src"
+    },
+    {
+      "path": "../../../widgets/src"
+    }
+  ]
 }

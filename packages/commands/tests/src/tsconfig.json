@@ -8,29 +8,29 @@
     "module": "commonjs",
     "moduleResolution": "node",
     "target": "ES5",
-    "outDir": "./build",
+    "outDir": "../build",
     "lib": ["ES5", "ES2015.Promise", "DOM"],
     "types": ["chai", "mocha"]
   },
-  "include": ["src/*"],
+  "include": ["*"],
   "references": [
     {
-      "path": "../../algorithm/src"
+      "path": "../../../algorithm/src"
     },
     {
-      "path": "../../coreutils/src"
+      "path": "../../../coreutils/src"
     },
     {
-      "path": "../../disposable/src"
+      "path": "../../../disposable/src"
     },
     {
-      "path": "../../domutils/src"
+      "path": "../../../domutils/src"
     },
     {
-      "path": "../../keyboard/src"
+      "path": "../../../keyboard/src"
     },
     {
-      "path": "../../signaling/src"
+      "path": "../../../signaling/src"
     }
   ]
 }

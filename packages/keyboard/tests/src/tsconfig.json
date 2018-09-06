@@ -8,14 +8,9 @@
     "module": "commonjs",
     "moduleResolution": "node",
     "target": "ES5",
-    "outDir": "./build",
+    "outDir": "../build",
     "lib": ["ES5", "DOM"],
     "types": ["chai", "mocha"]
   },
-  "include": ["src/*"],
-  "references": [
-    {
-      "path": "../../algorithm/src"
-    }
-  ]
+  "include": ["*"]
 }

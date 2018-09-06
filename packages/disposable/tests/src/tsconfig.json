@@ -1,6 +1,7 @@
 {
   "compilerOptions": {
-    "declaration": false,
+    "composite": true,
+    "declaration": true,
     "noImplicitAny": true,
     "noEmitOnError": true,
     "noUnusedLocals": true,
@@ -8,14 +9,14 @@
     "module": "commonjs",
     "moduleResolution": "node",
     "target": "ES5",
-    "outDir": "./build",
-    "lib": ["ES5", "DOM"],
+    "outDir": "../build",
+    "lib": ["ES5"],
     "types": ["chai", "mocha"]
   },
-  "include": ["src/*"],
+  "include": ["*"],
   "references": [
     {
-      "path": "../../algorithm/src"
+      "path": "../../../algorithm/src"
     }
   ]
 }
