@@ -15,4 +15,5 @@ script:
     popd;
     yarn clean;
     yarn build;
+    yarn build:test;
     yarn test;
