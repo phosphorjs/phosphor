@@ -33,7 +33,7 @@
     "build:test": "cd tests && tsc --build src && webpack",
     "clean": "rimraf lib",
     "clean:test": "rimraf tests/build",
-    "docs": "typedoc --options tdoptions.json .",
+    "docs": "typedoc --options tdoptions.json src",
     "test": "npm run test:firefox",
     "test:chrome": "cd tests && karma start --browsers=Chrome",
     "test:firefox": "cd tests && karma start --browsers=Firefox",

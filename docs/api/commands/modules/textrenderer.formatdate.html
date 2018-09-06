@@ -3,7 +3,7 @@
 <head>
 	<meta charset="utf-8">
 	<meta http-equiv="X-UA-Compatible" content="IE=edge">
-	<title>IKeyBinding | @phosphor/commands</title>
+	<title>formatDate | @phosphor/datagrid</title>
 	<meta name="description" content="">
 	<meta name="viewport" content="width=device-width, initial-scale=1">
 	<link rel="stylesheet" href="../assets/css/main.css">
@@ -22,7 +22,7 @@
 						<li class="state loading">Preparing search index...</li>
 						<li class="state failure">The search index is not available</li>
 					</ul>
-					<a href="../index.html" class="title">@phosphor/commands</a>
+					<a href="../index.html" class="title">@phosphor/datagrid</a>
 				</div>
 				<div class="table-cell" id="tsd-widgets">
 					<div id="tsd-filter">
@@ -54,13 +54,13 @@
 					<a href="../globals.html">Globals</a>
 				</li>
 				<li>
-					<a href="../classes/commandregistry.html">CommandRegistry</a>
+					<a href="../classes/textrenderer.html">TextRenderer</a>
 				</li>
 				<li>
-					<a href="commandregistry.ikeybinding.html">IKeyBinding</a>
+					<a href="textrenderer.formatdate.html">formatDate</a>
 				</li>
 			</ul>
-			<h1>Interface IKeyBinding</h1>
+			<h1>Module formatDate</h1>
 		</div>
 	</div>
 </header>
@@ -70,96 +70,20 @@
 			<section class="tsd-panel tsd-comment">
 				<div class="tsd-comment tsd-typography">
 					<div class="lead">
-						<p>An object which represents a key binding.</p>
+						<p>The namespace for the <code>formatDate</code> function statics.</p>
 					</div>
-					<h4 id="notes">Notes</h4>
-					<p>A key binding is an immutable object created by a registry.</p>
 				</div>
-			</section>
-			<section class="tsd-panel tsd-hierarchy">
-				<h3>Hierarchy</h3>
-				<ul class="tsd-hierarchy">
-					<li>
-						<span class="target">IKeyBinding</span>
-					</li>
-				</ul>
 			</section>
 			<section class="tsd-panel-group tsd-index-group">
 				<h2>Index</h2>
 				<section class="tsd-panel tsd-index-panel">
 					<div class="tsd-index-content">
 						<section class="tsd-index-section ">
-							<h3>Properties</h3>
+							<h3>Interfaces</h3>
 							<ul class="tsd-index-list">
-								<li class="tsd-kind-property tsd-parent-kind-interface"><a href="commandregistry.ikeybinding.html#args" class="tsd-kind-icon">args</a></li>
-								<li class="tsd-kind-property tsd-parent-kind-interface"><a href="commandregistry.ikeybinding.html#command" class="tsd-kind-icon">command</a></li>
-								<li class="tsd-kind-property tsd-parent-kind-interface"><a href="commandregistry.ikeybinding.html#keys" class="tsd-kind-icon">keys</a></li>
-								<li class="tsd-kind-property tsd-parent-kind-interface"><a href="commandregistry.ikeybinding.html#selector" class="tsd-kind-icon">selector</a></li>
+								<li class="tsd-kind-interface tsd-parent-kind-module"><a href="../interfaces/textrenderer.formatdate.ioptions.html" class="tsd-kind-icon">IOptions</a></li>
 							</ul>
 						</section>
-					</div>
-				</section>
-			</section>
-			<section class="tsd-panel-group tsd-member-group ">
-				<h2>Properties</h2>
-				<section class="tsd-panel tsd-member tsd-kind-property tsd-parent-kind-interface">
-					<a name="args" class="tsd-anchor"></a>
-					<h3>args</h3>
-					<div class="tsd-signature tsd-kind-icon">args<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">JSONObject</span></div>
-					<aside class="tsd-sources">
-						<ul>
-							<li>Defined in <a href="https://github.com/phosphorjs/phosphor/blob/1b1dfe3/packages/commands/src/index.ts#L910">index.ts:910</a></li>
-						</ul>
-					</aside>
-					<div class="tsd-comment tsd-typography">
-						<div class="lead">
-							<p>The arguments for the command.</p>
-						</div>
-					</div>
-				</section>
-				<section class="tsd-panel tsd-member tsd-kind-property tsd-parent-kind-interface">
-					<a name="command" class="tsd-anchor"></a>
-					<h3>command</h3>
-					<div class="tsd-signature tsd-kind-icon">command<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">string</span></div>
-					<aside class="tsd-sources">
-						<ul>
-							<li>Defined in <a href="https://github.com/phosphorjs/phosphor/blob/1b1dfe3/packages/commands/src/index.ts#L905">index.ts:905</a></li>
-						</ul>
-					</aside>
-					<div class="tsd-comment tsd-typography">
-						<div class="lead">
-							<p>The command executed when the binding is matched.</p>
-						</div>
-					</div>
-				</section>
-				<section class="tsd-panel tsd-member tsd-kind-property tsd-parent-kind-interface">
-					<a name="keys" class="tsd-anchor"></a>
-					<h3>keys</h3>
-					<div class="tsd-signature tsd-kind-icon">keys<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">ReadonlyArray</span><span class="tsd-signature-symbol">&lt;</span><span class="tsd-signature-type">string</span><span class="tsd-signature-symbol">&gt;</span></div>
-					<aside class="tsd-sources">
-						<ul>
-							<li>Defined in <a href="https://github.com/phosphorjs/phosphor/blob/1b1dfe3/packages/commands/src/index.ts#L895">index.ts:895</a></li>
-						</ul>
-					</aside>
-					<div class="tsd-comment tsd-typography">
-						<div class="lead">
-							<p>The key sequence for the binding.</p>
-						</div>
-					</div>
-				</section>
-				<section class="tsd-panel tsd-member tsd-kind-property tsd-parent-kind-interface">
-					<a name="selector" class="tsd-anchor"></a>
-					<h3>selector</h3>
-					<div class="tsd-signature tsd-kind-icon">selector<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">string</span></div>
-					<aside class="tsd-sources">
-						<ul>
-							<li>Defined in <a href="https://github.com/phosphorjs/phosphor/blob/1b1dfe3/packages/commands/src/index.ts#L900">index.ts:900</a></li>
-						</ul>
-					</aside>
-					<div class="tsd-comment tsd-typography">
-						<div class="lead">
-							<p>The CSS selector for the binding.</p>
-						</div>
 					</div>
 				</section>
 			</section>
@@ -174,32 +98,9 @@
 			</nav>
 			<nav class="tsd-navigation secondary menu-sticky">
 				<ul class="before-current">
-				</ul>
-				<ul class="current">
-					<li class="current tsd-kind-class">
-						<a href="../classes/commandregistry.html" class="tsd-kind-icon">Command<wbr>Registry</a>
-						<ul>
-							<li class="current tsd-kind-interface tsd-parent-kind-class">
-								<a href="commandregistry.ikeybinding.html" class="tsd-kind-icon">IKey<wbr>Binding</a>
-								<ul>
-									<li class=" tsd-kind-property tsd-parent-kind-interface">
-										<a href="commandregistry.ikeybinding.html#args" class="tsd-kind-icon">args</a>
-									</li>
-									<li class=" tsd-kind-property tsd-parent-kind-interface">
-										<a href="commandregistry.ikeybinding.html#command" class="tsd-kind-icon">command</a>
-									</li>
-									<li class=" tsd-kind-property tsd-parent-kind-interface">
-										<a href="commandregistry.ikeybinding.html#keys" class="tsd-kind-icon">keys</a>
-									</li>
-									<li class=" tsd-kind-property tsd-parent-kind-interface">
-										<a href="commandregistry.ikeybinding.html#selector" class="tsd-kind-icon">selector</a>
-									</li>
-								</ul>
-							</li>
-						</ul>
+					<li class=" tsd-kind-interface tsd-parent-kind-module">
+						<a href="../interfaces/textrenderer.formatdate.ioptions.html" class="tsd-kind-icon">IOptions</a>
 					</li>
-				</ul>
-				<ul class="after-current">
 				</ul>
 			</nav>
 		</div>

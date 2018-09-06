@@ -487,7 +487,7 @@ class CommandRegistry {
    */
   private _startTimer(): void {
     this._clearTimer();
-    this._timerID = setTimeout(() => {
+    this._timerID = window.setTimeout(() => {
       this._onPendingTimeout();
     }, Private.CHORD_TIMEOUT);
   }

@@ -1165,7 +1165,7 @@ namespace DockPanel {
       }
 
       // Otherwise setup the hide timer.
-      this._timer = setTimeout(() => {
+      this._timer = window.setTimeout(() => {
         this._timer = -1;
         this._hidden = true;
         this.node.classList.add('p-mod-hidden');

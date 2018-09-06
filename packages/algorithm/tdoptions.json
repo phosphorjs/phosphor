@@ -1,6 +1,7 @@
 {
   "excludeNotExported": true,
   "mode": "file",
+  "module": "es5",
   "out": "../../docs/api/algorithm",
   "baseUrl": ".",
   "paths": {

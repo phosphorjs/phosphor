@@ -29,7 +29,7 @@
   "scripts": {
     "build": "tsc --build src",
     "clean": "rimraf lib",
-    "docs": "typedoc --options tdoptions.json ."
+    "docs": "typedoc --options tdoptions.json src"
   },
   "dependencies": {
     "@phosphor/algorithm": "^1.1.2",

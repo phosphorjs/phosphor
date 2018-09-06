@@ -78,7 +78,7 @@
 						<section class="tsd-index-section ">
 							<h3>Type aliases</h3>
 							<ul class="tsd-index-list">
-								<li class="tsd-kind-type-alias tsd-parent-kind-module"><a href="arrayext.html#mutablearraylike" class="tsd-kind-icon">Mutable<wbr>Array<wbr>Like</a></li>
+								<li class="tsd-kind-type-alias tsd-parent-kind-module tsd-has-type-parameter"><a href="arrayext.html#mutablearraylike" class="tsd-kind-icon">Mutable<wbr>Array<wbr>Like</a></li>
 							</ul>
 						</section>
 						<section class="tsd-index-section ">
@@ -111,13 +111,13 @@
 			</section>
 			<section class="tsd-panel-group tsd-member-group ">
 				<h2>Type aliases</h2>
-				<section class="tsd-panel tsd-member tsd-kind-type-alias tsd-parent-kind-module">
+				<section class="tsd-panel tsd-member tsd-kind-type-alias tsd-parent-kind-module tsd-has-type-parameter">
 					<a name="mutablearraylike" class="tsd-anchor"></a>
 					<h3>Mutable<wbr>Array<wbr>Like</h3>
 					<div class="tsd-signature tsd-kind-icon">Mutable<wbr>Array<wbr>Like<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">object</span></div>
 					<aside class="tsd-sources">
 						<ul>
-							<li>Defined in <a href="https://github.com/phosphorjs/phosphor/blob/1b1dfe3/packages/algorithm/src/array.ts#L583">array.ts:583</a></li>
+							<li>Defined in <a href="https://github.com/phosphorjs/phosphor/blob/8fee9108/packages/algorithm/src/array.ts#L583">array.ts:583</a></li>
 						</ul>
 					</aside>
 					<div class="tsd-comment tsd-typography">
@@ -147,7 +147,7 @@
 						<li class="tsd-description">
 							<aside class="tsd-sources">
 								<ul>
-									<li>Defined in <a href="https://github.com/phosphorjs/phosphor/blob/1b1dfe3/packages/algorithm/src/array.ts#L799">array.ts:799</a></li>
+									<li>Defined in <a href="https://github.com/phosphorjs/phosphor/blob/8fee9108/packages/algorithm/src/array.ts#L799">array.ts:799</a></li>
 								</ul>
 							</aside>
 							<div class="tsd-comment tsd-typography">
@@ -196,14 +196,13 @@
 										<h4 id="undefined-behavior">Undefined Behavior</h4>
 										<p>A <code>start</code> or <code>stop</code> which is non-integral.</p>
 										<h4 id="example">Example</h4>
-										<pre><code class="lang-typescript"><span class="hljs-keyword">import</span> { ArrayExt } <span class="hljs-keyword">from</span> <span class="hljs-string">'@phosphor/algorithm'</span>;
+										<pre><code class="language-typescript"><span class="hljs-keyword">import</span> { ArrayExt } <span class="hljs-keyword">from</span> <span class="hljs-string">'@phosphor/algorithm'</span>;
 
 <span class="hljs-keyword">let</span> data = [<span class="hljs-string">'one'</span>, <span class="hljs-string">'two'</span>, <span class="hljs-string">'three'</span>, <span class="hljs-string">'four'</span>];
 ArrayExt.fill(data, <span class="hljs-string">'r'</span>);        <span class="hljs-comment">// ['r', 'r', 'r', 'r']</span>
 ArrayExt.fill(data, <span class="hljs-string">'g'</span>, <span class="hljs-number">1</span>);     <span class="hljs-comment">// ['r', 'g', 'g', 'g']</span>
 ArrayExt.fill(data, <span class="hljs-string">'b'</span>, <span class="hljs-number">2</span>, <span class="hljs-number">3</span>);  <span class="hljs-comment">// ['r', 'g', 'b', 'b']</span>
-ArrayExt.fill(data, <span class="hljs-string">'z'</span>, <span class="hljs-number">3</span>, <span class="hljs-number">1</span>);  <span class="hljs-comment">// ['z', 'z', 'b', 'z']</span>
-</code></pre>
+ArrayExt.fill(data, <span class="hljs-string">'z'</span>, <span class="hljs-number">3</span>, <span class="hljs-number">1</span>);  <span class="hljs-comment">// ['z', 'z', 'b', 'z']</span></code></pre>
 									</div>
 								</li>
 							</ul>
@@ -221,7 +220,7 @@ ArrayExt.fill(data, <span class="hljs-string">'z'</span>, <span class="hljs-numb
 						<li class="tsd-description">
 							<aside class="tsd-sources">
 								<ul>
-									<li>Defined in <a href="https://github.com/phosphorjs/phosphor/blob/1b1dfe3/packages/algorithm/src/array.ts#L202">array.ts:202</a></li>
+									<li>Defined in <a href="https://github.com/phosphorjs/phosphor/blob/8fee9108/packages/algorithm/src/array.ts#L202">array.ts:202</a></li>
 								</ul>
 							</aside>
 							<div class="tsd-comment tsd-typography">
@@ -298,7 +297,7 @@ ArrayExt.fill(data, <span class="hljs-string">'z'</span>, <span class="hljs-numb
 							<p>A <code>start</code> or <code>stop</code> which is non-integral.</p>
 							<p>Modifying the length of the array while searching.</p>
 							<h4 id="example">Example</h4>
-							<pre><code class="lang-typescript"><span class="hljs-keyword">import</span> { ArrayExt } <span class="hljs-keyword">from</span> <span class="hljs-string">'@phosphor/algorithm'</span>;
+							<pre><code class="language-typescript"><span class="hljs-keyword">import</span> { ArrayExt } <span class="hljs-keyword">from</span> <span class="hljs-string">'@phosphor/algorithm'</span>;
 
 <span class="hljs-function"><span class="hljs-keyword">function</span> <span class="hljs-title">isEven</span>(<span class="hljs-params">value: <span class="hljs-built_in">number</span></span>): <span class="hljs-title">boolean</span> </span>{
   <span class="hljs-keyword">return</span> value % <span class="hljs-number">2</span> === <span class="hljs-number">0</span>;
@@ -308,8 +307,7 @@ ArrayExt.fill(data, <span class="hljs-string">'z'</span>, <span class="hljs-numb
 ArrayExt.findFirstIndex(data, isEven);       <span class="hljs-comment">// 1</span>
 ArrayExt.findFirstIndex(data, isEven, <span class="hljs-number">4</span>);    <span class="hljs-comment">// 5</span>
 ArrayExt.findFirstIndex(data, isEven, <span class="hljs-number">6</span>);    <span class="hljs-comment">// -1</span>
-ArrayExt.findFirstIndex(data, isEven, <span class="hljs-number">6</span>, <span class="hljs-number">5</span>); <span class="hljs-comment">// 1</span>
-</code></pre>
+ArrayExt.findFirstIndex(data, isEven, <span class="hljs-number">6</span>, <span class="hljs-number">5</span>); <span class="hljs-comment">// 1</span></code></pre>
 						</li>
 					</ul>
 				</section>
@@ -323,7 +321,7 @@ ArrayExt.findFirstIndex(data, isEven, <span class="hljs-number">6</span>, <span 
 						<li class="tsd-description">
 							<aside class="tsd-sources">
 								<ul>
-									<li>Defined in <a href="https://github.com/phosphorjs/phosphor/blob/1b1dfe3/packages/algorithm/src/array.ts#L352">array.ts:352</a></li>
+									<li>Defined in <a href="https://github.com/phosphorjs/phosphor/blob/8fee9108/packages/algorithm/src/array.ts#L352">array.ts:352</a></li>
 								</ul>
 							</aside>
 							<div class="tsd-comment tsd-typography">
@@ -403,7 +401,7 @@ ArrayExt.findFirstIndex(data, isEven, <span class="hljs-number">6</span>, <span 
 							<p>A <code>start</code> or <code>stop</code> which is non-integral.</p>
 							<p>Modifying the length of the array while searching.</p>
 							<h4 id="example">Example</h4>
-							<pre><code class="lang-typescript"><span class="hljs-keyword">import</span> { ArrayExt } <span class="hljs-keyword">from</span> <span class="hljs-string">'@phosphor/algorithm'</span>;
+							<pre><code class="language-typescript"><span class="hljs-keyword">import</span> { ArrayExt } <span class="hljs-keyword">from</span> <span class="hljs-string">'@phosphor/algorithm'</span>;
 
 <span class="hljs-function"><span class="hljs-keyword">function</span> <span class="hljs-title">isEven</span>(<span class="hljs-params">value: <span class="hljs-built_in">number</span></span>): <span class="hljs-title">boolean</span> </span>{
   <span class="hljs-keyword">return</span> value % <span class="hljs-number">2</span> === <span class="hljs-number">0</span>;
@@ -413,8 +411,7 @@ ArrayExt.findFirstIndex(data, isEven, <span class="hljs-number">6</span>, <span 
 ArrayExt.findFirstValue(data, isEven);       <span class="hljs-comment">// 2</span>
 ArrayExt.findFirstValue(data, isEven, <span class="hljs-number">2</span>);    <span class="hljs-comment">// 4</span>
 ArrayExt.findFirstValue(data, isEven, <span class="hljs-number">6</span>);    <span class="hljs-comment">// undefined</span>
-ArrayExt.findFirstValue(data, isEven, <span class="hljs-number">6</span>, <span class="hljs-number">5</span>); <span class="hljs-comment">// 2</span>
-</code></pre>
+ArrayExt.findFirstValue(data, isEven, <span class="hljs-number">6</span>, <span class="hljs-number">5</span>); <span class="hljs-comment">// 2</span></code></pre>
 						</li>
 					</ul>
 				</section>
@@ -428,7 +425,7 @@ ArrayExt.findFirstValue(data, isEven, <span class="hljs-number">6</span>, <span 
 						<li class="tsd-description">
 							<aside class="tsd-sources">
 								<ul>
-									<li>Defined in <a href="https://github.com/phosphorjs/phosphor/blob/1b1dfe3/packages/algorithm/src/array.ts#L277">array.ts:277</a></li>
+									<li>Defined in <a href="https://github.com/phosphorjs/phosphor/blob/8fee9108/packages/algorithm/src/array.ts#L277">array.ts:277</a></li>
 								</ul>
 							</aside>
 							<div class="tsd-comment tsd-typography">
@@ -502,7 +499,7 @@ ArrayExt.findFirstValue(data, isEven, <span class="hljs-number">6</span>, <span 
 							<p>A <code>start</code> or <code>stop</code> which is non-integral.</p>
 							<p>Modifying the length of the array while searching.</p>
 							<h4 id="example">Example</h4>
-							<pre><code class="lang-typescript"><span class="hljs-keyword">import</span> { ArrayExt } <span class="hljs-keyword">from</span> <span class="hljs-string">'@phosphor/algorithm'</span>;
+							<pre><code class="language-typescript"><span class="hljs-keyword">import</span> { ArrayExt } <span class="hljs-keyword">from</span> <span class="hljs-string">'@phosphor/algorithm'</span>;
 
 <span class="hljs-function"><span class="hljs-keyword">function</span> <span class="hljs-title">isEven</span>(<span class="hljs-params">value: <span class="hljs-built_in">number</span></span>): <span class="hljs-title">boolean</span> </span>{
   <span class="hljs-keyword">return</span> value % <span class="hljs-number">2</span> === <span class="hljs-number">0</span>;
@@ -512,8 +509,7 @@ ArrayExt.findFirstValue(data, isEven, <span class="hljs-number">6</span>, <span 
 ArrayExt.findLastIndex(data, isEven);        <span class="hljs-comment">// 5</span>
 ArrayExt.findLastIndex(data, isEven, <span class="hljs-number">4</span>);     <span class="hljs-comment">// 3</span>
 ArrayExt.findLastIndex(data, isEven, <span class="hljs-number">0</span>);     <span class="hljs-comment">// -1</span>
-ArrayExt.findLastIndex(data, isEven, <span class="hljs-number">0</span>, <span class="hljs-number">1</span>);  <span class="hljs-comment">// 5</span>
-</code></pre>
+ArrayExt.findLastIndex(data, isEven, <span class="hljs-number">0</span>, <span class="hljs-number">1</span>);  <span class="hljs-comment">// 5</span></code></pre>
 						</li>
 					</ul>
 				</section>
@@ -527,7 +523,7 @@ ArrayExt.findLastIndex(data, isEven, <span class="hljs-number">0</span>, <span c
 						<li class="tsd-description">
 							<aside class="tsd-sources">
 								<ul>
-									<li>Defined in <a href="https://github.com/phosphorjs/phosphor/blob/1b1dfe3/packages/algorithm/src/array.ts#L402">array.ts:402</a></li>
+									<li>Defined in <a href="https://github.com/phosphorjs/phosphor/blob/8fee9108/packages/algorithm/src/array.ts#L402">array.ts:402</a></li>
 								</ul>
 							</aside>
 							<div class="tsd-comment tsd-typography">
@@ -604,7 +600,7 @@ ArrayExt.findLastIndex(data, isEven, <span class="hljs-number">0</span>, <span c
 							<p>A <code>start</code> or <code>stop</code> which is non-integral.</p>
 							<p>Modifying the length of the array while searching.</p>
 							<h4 id="example">Example</h4>
-							<pre><code class="lang-typescript"><span class="hljs-keyword">import</span> { ArrayExt } <span class="hljs-keyword">from</span> <span class="hljs-string">'@phosphor/algorithm'</span>;
+							<pre><code class="language-typescript"><span class="hljs-keyword">import</span> { ArrayExt } <span class="hljs-keyword">from</span> <span class="hljs-string">'@phosphor/algorithm'</span>;
 
 <span class="hljs-function"><span class="hljs-keyword">function</span> <span class="hljs-title">isEven</span>(<span class="hljs-params">value: <span class="hljs-built_in">number</span></span>): <span class="hljs-title">boolean</span> </span>{
   <span class="hljs-keyword">return</span> value % <span class="hljs-number">2</span> === <span class="hljs-number">0</span>;
@@ -614,8 +610,7 @@ ArrayExt.findLastIndex(data, isEven, <span class="hljs-number">0</span>, <span c
 ArrayExt.findLastValue(data, isEven);        <span class="hljs-comment">// 2</span>
 ArrayExt.findLastValue(data, isEven, <span class="hljs-number">4</span>);     <span class="hljs-comment">// 4</span>
 ArrayExt.findLastValue(data, isEven, <span class="hljs-number">0</span>);     <span class="hljs-comment">// undefined</span>
-ArrayExt.findLastValue(data, isEven, <span class="hljs-number">0</span>, <span class="hljs-number">1</span>);  <span class="hljs-comment">// 2</span>
-</code></pre>
+ArrayExt.findLastValue(data, isEven, <span class="hljs-number">0</span>, <span class="hljs-number">1</span>);  <span class="hljs-comment">// 2</span></code></pre>
 						</li>
 					</ul>
 				</section>
@@ -629,7 +624,7 @@ ArrayExt.findLastValue(data, isEven, <span class="hljs-number">0</span>, <span c
 						<li class="tsd-description">
 							<aside class="tsd-sources">
 								<ul>
-									<li>Defined in <a href="https://github.com/phosphorjs/phosphor/blob/1b1dfe3/packages/algorithm/src/array.ts#L56">array.ts:56</a></li>
+									<li>Defined in <a href="https://github.com/phosphorjs/phosphor/blob/8fee9108/packages/algorithm/src/array.ts#L56">array.ts:56</a></li>
 								</ul>
 							</aside>
 							<div class="tsd-comment tsd-typography">
@@ -685,15 +680,14 @@ ArrayExt.findLastValue(data, isEven, <span class="hljs-number">0</span>, <span c
 							<h4 id="undefined-behavior">Undefined Behavior</h4>
 							<p>A <code>start</code> or <code>stop</code> which is non-integral.</p>
 							<h4 id="example">Example</h4>
-							<pre><code class="lang-typescript"><span class="hljs-keyword">import</span> { ArrayExt } <span class="hljs-keyword">from</span> <span class="hljs-string">'@phosphor/algorithm'</span>;
+							<pre><code class="language-typescript"><span class="hljs-keyword">import</span> { ArrayExt } <span class="hljs-keyword">from</span> <span class="hljs-string">'@phosphor/algorithm'</span>;
 
 <span class="hljs-keyword">let</span> data = [<span class="hljs-string">'one'</span>, <span class="hljs-string">'two'</span>, <span class="hljs-string">'three'</span>, <span class="hljs-string">'four'</span>, <span class="hljs-string">'one'</span>];
 ArrayExt.firstIndexOf(data, <span class="hljs-string">'red'</span>);        <span class="hljs-comment">// -1</span>
 ArrayExt.firstIndexOf(data, <span class="hljs-string">'one'</span>);        <span class="hljs-comment">// 0</span>
 ArrayExt.firstIndexOf(data, <span class="hljs-string">'one'</span>, <span class="hljs-number">1</span>);     <span class="hljs-comment">// 4</span>
 ArrayExt.firstIndexOf(data, <span class="hljs-string">'two'</span>, <span class="hljs-number">2</span>);     <span class="hljs-comment">// -1</span>
-ArrayExt.firstIndexOf(data, <span class="hljs-string">'two'</span>, <span class="hljs-number">2</span>, <span class="hljs-number">1</span>);  <span class="hljs-comment">// 1</span>
-</code></pre>
+ArrayExt.firstIndexOf(data, <span class="hljs-string">'two'</span>, <span class="hljs-number">2</span>, <span class="hljs-number">1</span>);  <span class="hljs-comment">// 1</span></code></pre>
 						</li>
 					</ul>
 				</section>
@@ -707,7 +701,7 @@ ArrayExt.firstIndexOf(data, <span class="hljs-string">'two'</span>, <span class=
 						<li class="tsd-description">
 							<aside class="tsd-sources">
 								<ul>
-									<li>Defined in <a href="https://github.com/phosphorjs/phosphor/blob/1b1dfe3/packages/algorithm/src/array.ts#L853">array.ts:853</a></li>
+									<li>Defined in <a href="https://github.com/phosphorjs/phosphor/blob/8fee9108/packages/algorithm/src/array.ts#L853">array.ts:853</a></li>
 								</ul>
 							</aside>
 							<div class="tsd-comment tsd-typography">
@@ -745,14 +739,13 @@ ArrayExt.firstIndexOf(data, <span class="hljs-string">'two'</span>, <span class=
 										<h4 id="undefined-behavior">Undefined Behavior</h4>
 										<p>An <code>index</code> which is non-integral.</p>
 										<h4 id="example">Example</h4>
-										<pre><code class="lang-typescript"><span class="hljs-keyword">import</span> { ArrayExt } <span class="hljs-keyword">from</span> <span class="hljs-string">'@phosphor/algorithm'</span>;
+										<pre><code class="language-typescript"><span class="hljs-keyword">import</span> { ArrayExt } <span class="hljs-keyword">from</span> <span class="hljs-string">'@phosphor/algorithm'</span>;
 
 <span class="hljs-keyword">let</span> data = [<span class="hljs-number">0</span>, <span class="hljs-number">1</span>, <span class="hljs-number">2</span>];
 ArrayExt.insert(data, <span class="hljs-number">0</span>, <span class="hljs-number">-1</span>);  <span class="hljs-comment">// [-1, 0, 1, 2]</span>
 ArrayExt.insert(data, <span class="hljs-number">2</span>, <span class="hljs-number">12</span>);  <span class="hljs-comment">// [-1, 0, 12, 1, 2]</span>
 ArrayExt.insert(data, <span class="hljs-number">-1</span>, <span class="hljs-number">7</span>);  <span class="hljs-comment">// [-1, 0, 12, 1, 7, 2]</span>
-ArrayExt.insert(data, <span class="hljs-number">6</span>, <span class="hljs-number">19</span>);  <span class="hljs-comment">// [-1, 0, 12, 1, 7, 2, 19]</span>
-</code></pre>
+ArrayExt.insert(data, <span class="hljs-number">6</span>, <span class="hljs-number">19</span>);  <span class="hljs-comment">// [-1, 0, 12, 1, 7, 2, 19]</span></code></pre>
 									</div>
 								</li>
 							</ul>
@@ -770,7 +763,7 @@ ArrayExt.insert(data, <span class="hljs-number">6</span>, <span class="hljs-numb
 						<li class="tsd-description">
 							<aside class="tsd-sources">
 								<ul>
-									<li>Defined in <a href="https://github.com/phosphorjs/phosphor/blob/1b1dfe3/packages/algorithm/src/array.ts#L127">array.ts:127</a></li>
+									<li>Defined in <a href="https://github.com/phosphorjs/phosphor/blob/8fee9108/packages/algorithm/src/array.ts#L127">array.ts:127</a></li>
 								</ul>
 							</aside>
 							<div class="tsd-comment tsd-typography">
@@ -826,15 +819,14 @@ ArrayExt.insert(data, <span class="hljs-number">6</span>, <span class="hljs-numb
 							<h4 id="undefined-behavior">Undefined Behavior</h4>
 							<p>A <code>start</code> or <code>stop</code> which is non-integral.</p>
 							<h4 id="example">Example</h4>
-							<pre><code class="lang-typescript"><span class="hljs-keyword">import</span> { ArrayExt } <span class="hljs-keyword">from</span> <span class="hljs-string">'@phosphor/algorithm'</span>;
+							<pre><code class="language-typescript"><span class="hljs-keyword">import</span> { ArrayExt } <span class="hljs-keyword">from</span> <span class="hljs-string">'@phosphor/algorithm'</span>;
 
 <span class="hljs-keyword">let</span> data = [<span class="hljs-string">'one'</span>, <span class="hljs-string">'two'</span>, <span class="hljs-string">'three'</span>, <span class="hljs-string">'four'</span>, <span class="hljs-string">'one'</span>];
 ArrayExt.lastIndexOf(data, <span class="hljs-string">'red'</span>);        <span class="hljs-comment">// -1</span>
 ArrayExt.lastIndexOf(data, <span class="hljs-string">'one'</span>);        <span class="hljs-comment">// 4</span>
 ArrayExt.lastIndexOf(data, <span class="hljs-string">'one'</span>, <span class="hljs-number">1</span>);     <span class="hljs-comment">// 0</span>
 ArrayExt.lastIndexOf(data, <span class="hljs-string">'two'</span>, <span class="hljs-number">0</span>);     <span class="hljs-comment">// -1</span>
-ArrayExt.lastIndexOf(data, <span class="hljs-string">'two'</span>, <span class="hljs-number">0</span>, <span class="hljs-number">1</span>);  <span class="hljs-comment">// 1</span>
-</code></pre>
+ArrayExt.lastIndexOf(data, <span class="hljs-string">'two'</span>, <span class="hljs-number">0</span>, <span class="hljs-number">1</span>);  <span class="hljs-comment">// 1</span></code></pre>
 						</li>
 					</ul>
 				</section>
@@ -848,7 +840,7 @@ ArrayExt.lastIndexOf(data, <span class="hljs-string">'two'</span>, <span class="
 						<li class="tsd-description">
 							<aside class="tsd-sources">
 								<ul>
-									<li>Defined in <a href="https://github.com/phosphorjs/phosphor/blob/1b1dfe3/packages/algorithm/src/array.ts#L463">array.ts:463</a></li>
+									<li>Defined in <a href="https://github.com/phosphorjs/phosphor/blob/8fee9108/packages/algorithm/src/array.ts#L463">array.ts:463</a></li>
 								</ul>
 							</aside>
 							<div class="tsd-comment tsd-typography">
@@ -941,7 +933,7 @@ ArrayExt.lastIndexOf(data, <span class="hljs-string">'two'</span>, <span class="
 							<p>A <code>start</code> or <code>stop</code> which is non-integral.</p>
 							<p>Modifying the length of the array while searching.</p>
 							<h4 id="example">Example</h4>
-							<pre><code class="lang-typescript"><span class="hljs-keyword">import</span> { ArrayExt } <span class="hljs-keyword">from</span> <span class="hljs-string">'@phosphor/algorithm'</span>;
+							<pre><code class="language-typescript"><span class="hljs-keyword">import</span> { ArrayExt } <span class="hljs-keyword">from</span> <span class="hljs-string">'@phosphor/algorithm'</span>;
 
 <span class="hljs-function"><span class="hljs-keyword">function</span> <span class="hljs-title">numberCmp</span>(<span class="hljs-params">a: <span class="hljs-built_in">number</span>, b: <span class="hljs-built_in">number</span></span>): <span class="hljs-title">number</span> </span>{
   <span class="hljs-keyword">return</span> a - b;
@@ -952,8 +944,7 @@ ArrayExt.lowerBound(data, <span class="hljs-number">0</span>, numberCmp);   <spa
 ArrayExt.lowerBound(data, <span class="hljs-number">6</span>, numberCmp);   <span class="hljs-comment">// 3</span>
 ArrayExt.lowerBound(data, <span class="hljs-number">7</span>, numberCmp);   <span class="hljs-comment">// 3</span>
 ArrayExt.lowerBound(data, <span class="hljs-number">-1</span>, numberCmp);  <span class="hljs-comment">// 0</span>
-ArrayExt.lowerBound(data, <span class="hljs-number">10</span>, numberCmp);  <span class="hljs-comment">// 6</span>
-</code></pre>
+ArrayExt.lowerBound(data, <span class="hljs-number">10</span>, numberCmp);  <span class="hljs-comment">// 6</span></code></pre>
 						</li>
 					</ul>
 				</section>
@@ -967,7 +958,7 @@ ArrayExt.lowerBound(data, <span class="hljs-number">10</span>, numberCmp);  <spa
 						<li class="tsd-description">
 							<aside class="tsd-sources">
 								<ul>
-									<li>Defined in <a href="https://github.com/phosphorjs/phosphor/blob/1b1dfe3/packages/algorithm/src/array.ts#L615">array.ts:615</a></li>
+									<li>Defined in <a href="https://github.com/phosphorjs/phosphor/blob/8fee9108/packages/algorithm/src/array.ts#L615">array.ts:615</a></li>
 								</ul>
 							</aside>
 							<div class="tsd-comment tsd-typography">
@@ -1006,12 +997,11 @@ ArrayExt.lowerBound(data, <span class="hljs-number">10</span>, numberCmp);  <spa
 										<h4 id="undefined-behavior">Undefined Behavior</h4>
 										<p>A <code>fromIndex</code> or <code>toIndex</code> which is non-integral.</p>
 										<h4 id="example">Example</h4>
-										<pre><code class="lang-typescript"><span class="hljs-keyword">import</span> { ArrayExt } <span class="hljs-keyword">from</span> <span class="hljs-keyword">from</span> <span class="hljs-string">'@phosphor/algorithm'</span>;
+										<pre><code class="language-typescript"><span class="hljs-keyword">import</span> { ArrayExt } <span class="hljs-keyword">from</span> <span class="hljs-keyword">from</span> <span class="hljs-string">'@phosphor/algorithm'</span>;
 
 <span class="hljs-keyword">let</span> data = [<span class="hljs-number">0</span>, <span class="hljs-number">1</span>, <span class="hljs-number">2</span>, <span class="hljs-number">3</span>, <span class="hljs-number">4</span>];
 ArrayExt.move(data, <span class="hljs-number">1</span>, <span class="hljs-number">2</span>);  <span class="hljs-comment">// [0, 2, 1, 3, 4]</span>
-ArrayExt.move(data, <span class="hljs-number">4</span>, <span class="hljs-number">2</span>);  <span class="hljs-comment">// [0, 2, 4, 1, 3]</span>
-</code></pre>
+ArrayExt.move(data, <span class="hljs-number">4</span>, <span class="hljs-number">2</span>);  <span class="hljs-comment">// [0, 2, 4, 1, 3]</span></code></pre>
 									</div>
 								</li>
 							</ul>
@@ -1029,7 +1019,7 @@ ArrayExt.move(data, <span class="hljs-number">4</span>, <span class="hljs-number
 						<li class="tsd-description">
 							<aside class="tsd-sources">
 								<ul>
-									<li>Defined in <a href="https://github.com/phosphorjs/phosphor/blob/1b1dfe3/packages/algorithm/src/array.ts#L1036">array.ts:1036</a></li>
+									<li>Defined in <a href="https://github.com/phosphorjs/phosphor/blob/8fee9108/packages/algorithm/src/array.ts#L1036">array.ts:1036</a></li>
 								</ul>
 							</aside>
 							<div class="tsd-comment tsd-typography">
@@ -1083,13 +1073,12 @@ ArrayExt.move(data, <span class="hljs-number">4</span>, <span class="hljs-number
 							<h4 id="complexity">Complexity</h4>
 							<p>Linear.</p>
 							<h4 id="example">Example</h4>
-							<pre><code class="lang-typescript"><span class="hljs-keyword">import</span> { ArrayExt } <span class="hljs-keyword">from</span> <span class="hljs-string">'@phosphor/algorithm'</span>;
+							<pre><code class="language-typescript"><span class="hljs-keyword">import</span> { ArrayExt } <span class="hljs-keyword">from</span> <span class="hljs-string">'@phosphor/algorithm'</span>;
 
 <span class="hljs-keyword">let</span> data = [<span class="hljs-number">14</span>, <span class="hljs-number">12</span>, <span class="hljs-number">23</span>, <span class="hljs-number">39</span>, <span class="hljs-number">14</span>, <span class="hljs-number">12</span>, <span class="hljs-number">19</span>, <span class="hljs-number">14</span>];
 ArrayExt.removeAllOf(data, <span class="hljs-number">12</span>);        <span class="hljs-comment">// 2</span>
 ArrayExt.removeAllOf(data, <span class="hljs-number">17</span>);        <span class="hljs-comment">// 0</span>
-ArrayExt.removeAllOf(data, <span class="hljs-number">14</span>, <span class="hljs-number">1</span>, <span class="hljs-number">4</span>);  <span class="hljs-comment">// 1</span>
-</code></pre>
+ArrayExt.removeAllOf(data, <span class="hljs-number">14</span>, <span class="hljs-number">1</span>, <span class="hljs-number">4</span>);  <span class="hljs-comment">// 1</span></code></pre>
 						</li>
 					</ul>
 				</section>
@@ -1103,7 +1092,7 @@ ArrayExt.removeAllOf(data, <span class="hljs-number">14</span>, <span class="hlj
 						<li class="tsd-description">
 							<aside class="tsd-sources">
 								<ul>
-									<li>Defined in <a href="https://github.com/phosphorjs/phosphor/blob/1b1dfe3/packages/algorithm/src/array.ts#L1205">array.ts:1205</a></li>
+									<li>Defined in <a href="https://github.com/phosphorjs/phosphor/blob/8fee9108/packages/algorithm/src/array.ts#L1205">array.ts:1205</a></li>
 								</ul>
 							</aside>
 							<div class="tsd-comment tsd-typography">
@@ -1177,7 +1166,7 @@ ArrayExt.removeAllOf(data, <span class="hljs-number">14</span>, <span class="hlj
 							<h4 id="complexity">Complexity</h4>
 							<p>Linear.</p>
 							<h4 id="example">Example</h4>
-							<pre><code class="lang-typescript"><span class="hljs-keyword">import</span> { ArrayExt } <span class="hljs-keyword">from</span> <span class="hljs-string">'@phosphor/algorithm'</span>;
+							<pre><code class="language-typescript"><span class="hljs-keyword">import</span> { ArrayExt } <span class="hljs-keyword">from</span> <span class="hljs-string">'@phosphor/algorithm'</span>;
 
 <span class="hljs-function"><span class="hljs-keyword">function</span> <span class="hljs-title">isEven</span>(<span class="hljs-params">value: <span class="hljs-built_in">number</span></span>): <span class="hljs-title">boolean</span> </span>{
   <span class="hljs-keyword">return</span> value % <span class="hljs-number">2</span> === <span class="hljs-number">0</span>;
@@ -1189,8 +1178,7 @@ ArrayExt.removeAllOf(data, <span class="hljs-number">14</span>, <span class="hlj
 
 <span class="hljs-keyword">let</span> data = [<span class="hljs-number">0</span>, <span class="hljs-number">12</span>, <span class="hljs-number">-13</span>, <span class="hljs-number">-9</span>, <span class="hljs-number">23</span>, <span class="hljs-number">39</span>, <span class="hljs-number">14</span>, <span class="hljs-number">-15</span>, <span class="hljs-number">12</span>, <span class="hljs-number">75</span>];
 ArrayExt.removeAllWhere(data, isEven);            <span class="hljs-comment">// 4</span>
-ArrayExt.removeAllWhere(data, isNegative, <span class="hljs-number">0</span>, <span class="hljs-number">3</span>);  <span class="hljs-comment">// 2</span>
-</code></pre>
+ArrayExt.removeAllWhere(data, isNegative, <span class="hljs-number">0</span>, <span class="hljs-number">3</span>);  <span class="hljs-comment">// 2</span></code></pre>
 						</li>
 					</ul>
 				</section>
@@ -1204,7 +1192,7 @@ ArrayExt.removeAllWhere(data, isNegative, <span class="hljs-number">0</span>, <s
 						<li class="tsd-description">
 							<aside class="tsd-sources">
 								<ul>
-									<li>Defined in <a href="https://github.com/phosphorjs/phosphor/blob/1b1dfe3/packages/algorithm/src/array.ts#L894">array.ts:894</a></li>
+									<li>Defined in <a href="https://github.com/phosphorjs/phosphor/blob/8fee9108/packages/algorithm/src/array.ts#L894">array.ts:894</a></li>
 								</ul>
 							</aside>
 							<div class="tsd-comment tsd-typography">
@@ -1245,13 +1233,12 @@ ArrayExt.removeAllWhere(data, isNegative, <span class="hljs-number">0</span>, <s
 							<h4 id="undefined-behavior">Undefined Behavior</h4>
 							<p>An <code>index</code> which is non-integral.</p>
 							<h4 id="example">Example</h4>
-							<pre><code class="lang-typescript"><span class="hljs-keyword">import</span> { ArrayExt } <span class="hljs-keyword">from</span> <span class="hljs-string">'@phosphor/algorithm'</span>;
+							<pre><code class="language-typescript"><span class="hljs-keyword">import</span> { ArrayExt } <span class="hljs-keyword">from</span> <span class="hljs-string">'@phosphor/algorithm'</span>;
 
 <span class="hljs-keyword">let</span> data = [<span class="hljs-number">0</span>, <span class="hljs-number">12</span>, <span class="hljs-number">23</span>, <span class="hljs-number">39</span>, <span class="hljs-number">14</span>, <span class="hljs-number">12</span>, <span class="hljs-number">75</span>];
 ArrayExt.removeAt(data, <span class="hljs-number">2</span>);   <span class="hljs-comment">// 23</span>
 ArrayExt.removeAt(data, <span class="hljs-number">-2</span>);  <span class="hljs-comment">// 12</span>
-ArrayExt.removeAt(data, <span class="hljs-number">10</span>);  <span class="hljs-comment">// undefined;</span>
-</code></pre>
+ArrayExt.removeAt(data, <span class="hljs-number">10</span>);  <span class="hljs-comment">// undefined;</span></code></pre>
 						</li>
 					</ul>
 				</section>
@@ -1265,7 +1252,7 @@ ArrayExt.removeAt(data, <span class="hljs-number">10</span>);  <span class="hljs
 						<li class="tsd-description">
 							<aside class="tsd-sources">
 								<ul>
-									<li>Defined in <a href="https://github.com/phosphorjs/phosphor/blob/1b1dfe3/packages/algorithm/src/array.ts#L947">array.ts:947</a></li>
+									<li>Defined in <a href="https://github.com/phosphorjs/phosphor/blob/8fee9108/packages/algorithm/src/array.ts#L947">array.ts:947</a></li>
 								</ul>
 							</aside>
 							<div class="tsd-comment tsd-typography">
@@ -1319,14 +1306,13 @@ ArrayExt.removeAt(data, <span class="hljs-number">10</span>);  <span class="hljs
 							<h4 id="complexity">Complexity</h4>
 							<p>Linear.</p>
 							<h4 id="example">Example</h4>
-							<pre><code class="lang-typescript"><span class="hljs-keyword">import</span> { ArrayExt } <span class="hljs-keyword">from</span> <span class="hljs-string">'@phosphor/algorithm'</span>;
+							<pre><code class="language-typescript"><span class="hljs-keyword">import</span> { ArrayExt } <span class="hljs-keyword">from</span> <span class="hljs-string">'@phosphor/algorithm'</span>;
 
 <span class="hljs-keyword">let</span> data = [<span class="hljs-number">0</span>, <span class="hljs-number">12</span>, <span class="hljs-number">23</span>, <span class="hljs-number">39</span>, <span class="hljs-number">14</span>, <span class="hljs-number">12</span>, <span class="hljs-number">75</span>];
 ArrayExt.removeFirstOf(data, <span class="hljs-number">12</span>);        <span class="hljs-comment">// 1</span>
 ArrayExt.removeFirstOf(data, <span class="hljs-number">17</span>);        <span class="hljs-comment">// -1</span>
 ArrayExt.removeFirstOf(data, <span class="hljs-number">39</span>, <span class="hljs-number">3</span>);     <span class="hljs-comment">// -1</span>
-ArrayExt.removeFirstOf(data, <span class="hljs-number">39</span>, <span class="hljs-number">3</span>, <span class="hljs-number">2</span>);  <span class="hljs-comment">// 2</span>
-</code></pre>
+ArrayExt.removeFirstOf(data, <span class="hljs-number">39</span>, <span class="hljs-number">3</span>, <span class="hljs-number">2</span>);  <span class="hljs-comment">// 2</span></code></pre>
 						</li>
 					</ul>
 				</section>
@@ -1340,7 +1326,7 @@ ArrayExt.removeFirstOf(data, <span class="hljs-number">39</span>, <span class="h
 						<li class="tsd-description">
 							<aside class="tsd-sources">
 								<ul>
-									<li>Defined in <a href="https://github.com/phosphorjs/phosphor/blob/1b1dfe3/packages/algorithm/src/array.ts#L1106">array.ts:1106</a></li>
+									<li>Defined in <a href="https://github.com/phosphorjs/phosphor/blob/8fee9108/packages/algorithm/src/array.ts#L1106">array.ts:1106</a></li>
 								</ul>
 							</aside>
 							<div class="tsd-comment tsd-typography">
@@ -1414,7 +1400,7 @@ ArrayExt.removeFirstOf(data, <span class="hljs-number">39</span>, <span class="h
 							<h4 id="complexity">Complexity</h4>
 							<p>Linear.</p>
 							<h4 id="example">Example</h4>
-							<pre><code class="lang-typescript"><span class="hljs-keyword">import</span> { ArrayExt } <span class="hljs-keyword">from</span> <span class="hljs-string">'@phosphor/algorithm'</span>;
+							<pre><code class="language-typescript"><span class="hljs-keyword">import</span> { ArrayExt } <span class="hljs-keyword">from</span> <span class="hljs-string">'@phosphor/algorithm'</span>;
 
 <span class="hljs-function"><span class="hljs-keyword">function</span> <span class="hljs-title">isEven</span>(<span class="hljs-params">value: <span class="hljs-built_in">number</span></span>): <span class="hljs-title">boolean</span> </span>{
   <span class="hljs-keyword">return</span> value % <span class="hljs-number">2</span> === <span class="hljs-number">0</span>;
@@ -1423,8 +1409,7 @@ ArrayExt.removeFirstOf(data, <span class="hljs-number">39</span>, <span class="h
 <span class="hljs-keyword">let</span> data = [<span class="hljs-number">0</span>, <span class="hljs-number">12</span>, <span class="hljs-number">23</span>, <span class="hljs-number">39</span>, <span class="hljs-number">14</span>, <span class="hljs-number">12</span>, <span class="hljs-number">75</span>];
 ArrayExt.removeFirstWhere(data, isEven);     <span class="hljs-comment">// { index: 0, value: 0 }</span>
 ArrayExt.removeFirstWhere(data, isEven, <span class="hljs-number">2</span>);  <span class="hljs-comment">// { index: 3, value: 14 }</span>
-ArrayExt.removeFirstWhere(data, isEven, <span class="hljs-number">4</span>);  <span class="hljs-comment">// { index: -1, value: undefined }</span>
-</code></pre>
+ArrayExt.removeFirstWhere(data, isEven, <span class="hljs-number">4</span>);  <span class="hljs-comment">// { index: -1, value: undefined }</span></code></pre>
 							<ul class="tsd-parameters">
 							</ul>
 						</li>
@@ -1440,7 +1425,7 @@ ArrayExt.removeFirstWhere(data, isEven, <span class="hljs-number">4</span>);  <s
 						<li class="tsd-description">
 							<aside class="tsd-sources">
 								<ul>
-									<li>Defined in <a href="https://github.com/phosphorjs/phosphor/blob/1b1dfe3/packages/algorithm/src/array.ts#L992">array.ts:992</a></li>
+									<li>Defined in <a href="https://github.com/phosphorjs/phosphor/blob/8fee9108/packages/algorithm/src/array.ts#L992">array.ts:992</a></li>
 								</ul>
 							</aside>
 							<div class="tsd-comment tsd-typography">
@@ -1494,14 +1479,13 @@ ArrayExt.removeFirstWhere(data, isEven, <span class="hljs-number">4</span>);  <s
 							<h4 id="complexity">Complexity</h4>
 							<p>Linear.</p>
 							<h4 id="example">Example</h4>
-							<pre><code class="lang-typescript"><span class="hljs-keyword">import</span> { ArrayExt } <span class="hljs-keyword">from</span> <span class="hljs-string">'@phosphor/algorithm'</span>;
+							<pre><code class="language-typescript"><span class="hljs-keyword">import</span> { ArrayExt } <span class="hljs-keyword">from</span> <span class="hljs-string">'@phosphor/algorithm'</span>;
 
 <span class="hljs-keyword">let</span> data = [<span class="hljs-number">0</span>, <span class="hljs-number">12</span>, <span class="hljs-number">23</span>, <span class="hljs-number">39</span>, <span class="hljs-number">14</span>, <span class="hljs-number">12</span>, <span class="hljs-number">75</span>];
 ArrayExt.removeLastOf(data, <span class="hljs-number">12</span>);        <span class="hljs-comment">// 5</span>
 ArrayExt.removeLastOf(data, <span class="hljs-number">17</span>);        <span class="hljs-comment">// -1</span>
 ArrayExt.removeLastOf(data, <span class="hljs-number">39</span>, <span class="hljs-number">2</span>);     <span class="hljs-comment">// -1</span>
-ArrayExt.removeLastOf(data, <span class="hljs-number">39</span>, <span class="hljs-number">2</span>, <span class="hljs-number">3</span>);  <span class="hljs-comment">// 3</span>
-</code></pre>
+ArrayExt.removeLastOf(data, <span class="hljs-number">39</span>, <span class="hljs-number">2</span>, <span class="hljs-number">3</span>);  <span class="hljs-comment">// 3</span></code></pre>
 						</li>
 					</ul>
 				</section>
@@ -1515,7 +1499,7 @@ ArrayExt.removeLastOf(data, <span class="hljs-number">39</span>, <span class="hl
 						<li class="tsd-description">
 							<aside class="tsd-sources">
 								<ul>
-									<li>Defined in <a href="https://github.com/phosphorjs/phosphor/blob/1b1dfe3/packages/algorithm/src/array.ts#L1154">array.ts:1154</a></li>
+									<li>Defined in <a href="https://github.com/phosphorjs/phosphor/blob/8fee9108/packages/algorithm/src/array.ts#L1154">array.ts:1154</a></li>
 								</ul>
 							</aside>
 							<div class="tsd-comment tsd-typography">
@@ -1589,7 +1573,7 @@ ArrayExt.removeLastOf(data, <span class="hljs-number">39</span>, <span class="hl
 							<h4 id="complexity">Complexity</h4>
 							<p>Linear.</p>
 							<h4 id="example">Example</h4>
-							<pre><code class="lang-typescript"><span class="hljs-keyword">import</span> { ArrayExt } <span class="hljs-keyword">from</span> <span class="hljs-string">'@phosphor/algorithm'</span>;
+							<pre><code class="language-typescript"><span class="hljs-keyword">import</span> { ArrayExt } <span class="hljs-keyword">from</span> <span class="hljs-string">'@phosphor/algorithm'</span>;
 
 <span class="hljs-function"><span class="hljs-keyword">function</span> <span class="hljs-title">isEven</span>(<span class="hljs-params">value: <span class="hljs-built_in">number</span></span>): <span class="hljs-title">boolean</span> </span>{
   <span class="hljs-keyword">return</span> value % <span class="hljs-number">2</span> === <span class="hljs-number">0</span>;
@@ -1598,8 +1582,7 @@ ArrayExt.removeLastOf(data, <span class="hljs-number">39</span>, <span class="hl
 <span class="hljs-keyword">let</span> data = [<span class="hljs-number">0</span>, <span class="hljs-number">12</span>, <span class="hljs-number">23</span>, <span class="hljs-number">39</span>, <span class="hljs-number">14</span>, <span class="hljs-number">12</span>, <span class="hljs-number">75</span>];
 ArrayExt.removeLastWhere(data, isEven);        <span class="hljs-comment">// { index: 5, value: 12 }</span>
 ArrayExt.removeLastWhere(data, isEven, <span class="hljs-number">2</span>);     <span class="hljs-comment">// { index: 1, value: 12 }</span>
-ArrayExt.removeLastWhere(data, isEven, <span class="hljs-number">2</span>, <span class="hljs-number">1</span>);  <span class="hljs-comment">// { index: -1, value: undefined }</span>
-</code></pre>
+ArrayExt.removeLastWhere(data, isEven, <span class="hljs-number">2</span>, <span class="hljs-number">1</span>);  <span class="hljs-comment">// { index: -1, value: undefined }</span></code></pre>
 							<ul class="tsd-parameters">
 							</ul>
 						</li>
@@ -1615,7 +1598,7 @@ ArrayExt.removeLastWhere(data, isEven, <span class="hljs-number">2</span>, <span
 						<li class="tsd-description">
 							<aside class="tsd-sources">
 								<ul>
-									<li>Defined in <a href="https://github.com/phosphorjs/phosphor/blob/1b1dfe3/packages/algorithm/src/array.ts#L671">array.ts:671</a></li>
+									<li>Defined in <a href="https://github.com/phosphorjs/phosphor/blob/8fee9108/packages/algorithm/src/array.ts#L671">array.ts:671</a></li>
 								</ul>
 							</aside>
 							<div class="tsd-comment tsd-typography">
@@ -1656,13 +1639,12 @@ ArrayExt.removeLastWhere(data, isEven, <span class="hljs-number">2</span>, <span
 										<h4 id="undefined-behavior">Undefined Behavior</h4>
 										<p>A <code>start</code> or  <code>stop</code> index which is non-integral.</p>
 										<h4 id="example">Example</h4>
-										<pre><code class="lang-typescript"><span class="hljs-keyword">import</span> { ArrayExt } <span class="hljs-keyword">from</span> <span class="hljs-string">'@phosphor/algorithm'</span>;
+										<pre><code class="language-typescript"><span class="hljs-keyword">import</span> { ArrayExt } <span class="hljs-keyword">from</span> <span class="hljs-string">'@phosphor/algorithm'</span>;
 
 <span class="hljs-keyword">let</span> data = [<span class="hljs-number">0</span>, <span class="hljs-number">1</span>, <span class="hljs-number">2</span>, <span class="hljs-number">3</span>, <span class="hljs-number">4</span>];
 ArrayExt.reverse(data, <span class="hljs-number">1</span>, <span class="hljs-number">3</span>);  <span class="hljs-comment">// [0, 3, 2, 1, 4]</span>
 ArrayExt.reverse(data, <span class="hljs-number">3</span>);     <span class="hljs-comment">// [0, 3, 2, 4, 1]</span>
-ArrayExt.reverse(data);        <span class="hljs-comment">// [1, 4, 2, 3, 0]</span>
-</code></pre>
+ArrayExt.reverse(data);        <span class="hljs-comment">// [1, 4, 2, 3, 0]</span></code></pre>
 									</div>
 								</li>
 							</ul>
@@ -1680,7 +1662,7 @@ ArrayExt.reverse(data);        <span class="hljs-comment">// [1, 4, 2, 3, 0]</sp
 						<li class="tsd-description">
 							<aside class="tsd-sources">
 								<ul>
-									<li>Defined in <a href="https://github.com/phosphorjs/phosphor/blob/1b1dfe3/packages/algorithm/src/array.ts#L730">array.ts:730</a></li>
+									<li>Defined in <a href="https://github.com/phosphorjs/phosphor/blob/8fee9108/packages/algorithm/src/array.ts#L730">array.ts:730</a></li>
 								</ul>
 							</aside>
 							<div class="tsd-comment tsd-typography">
@@ -1729,15 +1711,14 @@ ArrayExt.reverse(data);        <span class="hljs-comment">// [1, 4, 2, 3, 0]</sp
 										<h4 id="undefined-behavior">Undefined Behavior</h4>
 										<p>A <code>delta</code>, <code>start</code>, or <code>stop</code> which is non-integral.</p>
 										<h4 id="example">Example</h4>
-										<pre><code class="lang-typescript"><span class="hljs-keyword">import</span> { ArrayExt } <span class="hljs-keyword">from</span> <span class="hljs-string">'@phosphor/algorithm'</span>;
+										<pre><code class="language-typescript"><span class="hljs-keyword">import</span> { ArrayExt } <span class="hljs-keyword">from</span> <span class="hljs-string">'@phosphor/algorithm'</span>;
 
 <span class="hljs-keyword">let</span> data = [<span class="hljs-number">0</span>, <span class="hljs-number">1</span>, <span class="hljs-number">2</span>, <span class="hljs-number">3</span>, <span class="hljs-number">4</span>];
 ArrayExt.rotate(data, <span class="hljs-number">2</span>);        <span class="hljs-comment">// [2, 3, 4, 0, 1]</span>
 ArrayExt.rotate(data, <span class="hljs-number">-2</span>);       <span class="hljs-comment">// [0, 1, 2, 3, 4]</span>
 ArrayExt.rotate(data, <span class="hljs-number">10</span>);       <span class="hljs-comment">// [0, 1, 2, 3, 4]</span>
 ArrayExt.rotate(data, <span class="hljs-number">9</span>);        <span class="hljs-comment">// [4, 0, 1, 2, 3]</span>
-ArrayExt.rotate(data, <span class="hljs-number">2</span>, <span class="hljs-number">1</span>, <span class="hljs-number">3</span>);  <span class="hljs-comment">// [4, 2, 0, 1, 3]</span>
-</code></pre>
+ArrayExt.rotate(data, <span class="hljs-number">2</span>, <span class="hljs-number">1</span>, <span class="hljs-number">3</span>);  <span class="hljs-comment">// [4, 2, 0, 1, 3]</span></code></pre>
 									</div>
 								</li>
 							</ul>
@@ -1755,7 +1736,7 @@ ArrayExt.rotate(data, <span class="hljs-number">2</span>, <span class="hljs-numb
 						<li class="tsd-description">
 							<aside class="tsd-sources">
 								<ul>
-									<li>Defined in <a href="https://github.com/phosphorjs/phosphor/blob/1b1dfe3/packages/algorithm/src/array.ts#L549">array.ts:549</a></li>
+									<li>Defined in <a href="https://github.com/phosphorjs/phosphor/blob/8fee9108/packages/algorithm/src/array.ts#L549">array.ts:549</a></li>
 								</ul>
 							</aside>
 							<div class="tsd-comment tsd-typography">
@@ -1848,7 +1829,7 @@ ArrayExt.rotate(data, <span class="hljs-number">2</span>, <span class="hljs-numb
 							<p>A <code>start</code> or <code>stop</code> which is non-integral.</p>
 							<p>Modifying the length of the array while searching.</p>
 							<h4 id="example">Example</h4>
-							<pre><code class="lang-typescript"><span class="hljs-keyword">import</span> { ArrayExt } <span class="hljs-keyword">from</span> <span class="hljs-string">'@phosphor/algorithm'</span>;
+							<pre><code class="language-typescript"><span class="hljs-keyword">import</span> { ArrayExt } <span class="hljs-keyword">from</span> <span class="hljs-string">'@phosphor/algorithm'</span>;
 
 <span class="hljs-function"><span class="hljs-keyword">function</span> <span class="hljs-title">numberCmp</span>(<span class="hljs-params">a: <span class="hljs-built_in">number</span>, b: <span class="hljs-built_in">number</span></span>): <span class="hljs-title">number</span> </span>{
   <span class="hljs-keyword">return</span> a - b;
@@ -1859,8 +1840,7 @@ ArrayExt.upperBound(data, <span class="hljs-number">0</span>, numberCmp);   <spa
 ArrayExt.upperBound(data, <span class="hljs-number">6</span>, numberCmp);   <span class="hljs-comment">// 3</span>
 ArrayExt.upperBound(data, <span class="hljs-number">7</span>, numberCmp);   <span class="hljs-comment">// 5</span>
 ArrayExt.upperBound(data, <span class="hljs-number">-1</span>, numberCmp);  <span class="hljs-comment">// 0</span>
-ArrayExt.upperBound(data, <span class="hljs-number">10</span>, numberCmp);  <span class="hljs-comment">// 6</span>
-</code></pre>
+ArrayExt.upperBound(data, <span class="hljs-number">10</span>, numberCmp);  <span class="hljs-comment">// 6</span></code></pre>
 						</li>
 					</ul>
 				</section>
@@ -1882,7 +1862,7 @@ ArrayExt.upperBound(data, <span class="hljs-number">10</span>, numberCmp);  <spa
 			</nav>
 			<nav class="tsd-navigation secondary menu-sticky">
 				<ul class="before-current">
-					<li class=" tsd-kind-type-alias tsd-parent-kind-module">
+					<li class=" tsd-kind-type-alias tsd-parent-kind-module tsd-has-type-parameter">
 						<a href="arrayext.html#mutablearraylike" class="tsd-kind-icon">Mutable<wbr>Array<wbr>Like</a>
 					</li>
 					<li class=" tsd-kind-function tsd-parent-kind-module tsd-has-type-parameter">

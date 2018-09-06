@@ -3,7 +3,7 @@
 <head>
 	<meta charset="utf-8">
 	<meta http-equiv="X-UA-Compatible" content="IE=edge">
-	<title>IKeyBindingOptions | @phosphor/commands</title>
+	<title>IColumnsChangedArgs | @phosphor/datagrid</title>
 	<meta name="description" content="">
 	<meta name="viewport" content="width=device-width, initial-scale=1">
 	<link rel="stylesheet" href="../assets/css/main.css">
@@ -22,7 +22,7 @@
 						<li class="state loading">Preparing search index...</li>
 						<li class="state failure">The search index is not available</li>
 					</ul>
-					<a href="../index.html" class="title">@phosphor/commands</a>
+					<a href="../index.html" class="title">@phosphor/datagrid</a>
 				</div>
 				<div class="table-cell" id="tsd-widgets">
 					<div id="tsd-filter">
@@ -54,13 +54,13 @@
 					<a href="../globals.html">Globals</a>
 				</li>
 				<li>
-					<a href="../classes/commandregistry.html">CommandRegistry</a>
+					<a href="../classes/datamodel.html">DataModel</a>
 				</li>
 				<li>
-					<a href="commandregistry.ikeybindingoptions.html">IKeyBindingOptions</a>
+					<a href="datamodel.icolumnschangedargs.html">IColumnsChangedArgs</a>
 				</li>
 			</ul>
-			<h1>Interface IKeyBindingOptions</h1>
+			<h1>Interface IColumnsChangedArgs</h1>
 		</div>
 	</div>
 </header>
@@ -70,15 +70,18 @@
 			<section class="tsd-panel tsd-comment">
 				<div class="tsd-comment tsd-typography">
 					<div class="lead">
-						<p>An options object for creating a key binding.</p>
+						<p>An arguments object for the <code>changed</code> signal.</p>
 					</div>
+					<h4 id="notes">Notes</h4>
+					<p>Data models should emit the <code>changed</code> signal with this args object
+					type when columns are inserted or removed.</p>
 				</div>
 			</section>
 			<section class="tsd-panel tsd-hierarchy">
 				<h3>Hierarchy</h3>
 				<ul class="tsd-hierarchy">
 					<li>
-						<span class="target">IKeyBindingOptions</span>
+						<span class="target">IColumnsChangedArgs</span>
 					</li>
 				</ul>
 			</section>
@@ -89,13 +92,10 @@
 						<section class="tsd-index-section ">
 							<h3>Properties</h3>
 							<ul class="tsd-index-list">
-								<li class="tsd-kind-property tsd-parent-kind-interface"><a href="commandregistry.ikeybindingoptions.html#args" class="tsd-kind-icon">args</a></li>
-								<li class="tsd-kind-property tsd-parent-kind-interface"><a href="commandregistry.ikeybindingoptions.html#command" class="tsd-kind-icon">command</a></li>
-								<li class="tsd-kind-property tsd-parent-kind-interface"><a href="commandregistry.ikeybindingoptions.html#keys" class="tsd-kind-icon">keys</a></li>
-								<li class="tsd-kind-property tsd-parent-kind-interface"><a href="commandregistry.ikeybindingoptions.html#linuxkeys" class="tsd-kind-icon">linux<wbr>Keys</a></li>
-								<li class="tsd-kind-property tsd-parent-kind-interface"><a href="commandregistry.ikeybindingoptions.html#mackeys" class="tsd-kind-icon">mac<wbr>Keys</a></li>
-								<li class="tsd-kind-property tsd-parent-kind-interface"><a href="commandregistry.ikeybindingoptions.html#selector" class="tsd-kind-icon">selector</a></li>
-								<li class="tsd-kind-property tsd-parent-kind-interface"><a href="commandregistry.ikeybindingoptions.html#winkeys" class="tsd-kind-icon">win<wbr>Keys</a></li>
+								<li class="tsd-kind-property tsd-parent-kind-interface"><a href="datamodel.icolumnschangedargs.html#index" class="tsd-kind-icon">index</a></li>
+								<li class="tsd-kind-property tsd-parent-kind-interface"><a href="datamodel.icolumnschangedargs.html#region" class="tsd-kind-icon">region</a></li>
+								<li class="tsd-kind-property tsd-parent-kind-interface"><a href="datamodel.icolumnschangedargs.html#span" class="tsd-kind-icon">span</a></li>
+								<li class="tsd-kind-property tsd-parent-kind-interface"><a href="datamodel.icolumnschangedargs.html#type" class="tsd-kind-icon">type</a></li>
 							</ul>
 						</section>
 					</div>
@@ -104,129 +104,63 @@
 			<section class="tsd-panel-group tsd-member-group ">
 				<h2>Properties</h2>
 				<section class="tsd-panel tsd-member tsd-kind-property tsd-parent-kind-interface">
-					<a name="args" class="tsd-anchor"></a>
-					<h3><span class="tsd-flag ts-flagOptional">Optional</span> args</h3>
-					<div class="tsd-signature tsd-kind-icon">args<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">JSONObject</span></div>
+					<a name="index" class="tsd-anchor"></a>
+					<h3>index</h3>
+					<div class="tsd-signature tsd-kind-icon">index<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">number</span></div>
 					<aside class="tsd-sources">
 						<ul>
-							<li>Defined in <a href="https://github.com/phosphorjs/phosphor/blob/1b1dfe3/packages/commands/src/index.ts#L860">index.ts:860</a></li>
+							<li>Defined in <a href="https://github.com/phosphorjs/phosphor/blob/8fee9108/packages/datagrid/src/datamodel.ts#L197">datamodel.ts:197</a></li>
 						</ul>
 					</aside>
 					<div class="tsd-comment tsd-typography">
 						<div class="lead">
-							<p>The arguments for the command, if necessary.</p>
-						</div>
-						<p>The default value is an empty object.</p>
-					</div>
-				</section>
-				<section class="tsd-panel tsd-member tsd-kind-property tsd-parent-kind-interface">
-					<a name="command" class="tsd-anchor"></a>
-					<h3>command</h3>
-					<div class="tsd-signature tsd-kind-icon">command<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">string</span></div>
-					<aside class="tsd-sources">
-						<ul>
-							<li>Defined in <a href="https://github.com/phosphorjs/phosphor/blob/1b1dfe3/packages/commands/src/index.ts#L853">index.ts:853</a></li>
-						</ul>
-					</aside>
-					<div class="tsd-comment tsd-typography">
-						<div class="lead">
-							<p>The id of the command to execute when the binding is matched.</p>
+							<p>The index of the first modified column.</p>
 						</div>
 					</div>
 				</section>
 				<section class="tsd-panel tsd-member tsd-kind-property tsd-parent-kind-interface">
-					<a name="keys" class="tsd-anchor"></a>
-					<h3>keys</h3>
-					<div class="tsd-signature tsd-kind-icon">keys<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">string</span><span class="tsd-signature-symbol">[]</span></div>
+					<a name="region" class="tsd-anchor"></a>
+					<h3>region</h3>
+					<div class="tsd-signature tsd-kind-icon">region<span class="tsd-signature-symbol">:</span> <a href="../classes/datamodel.html#columnregion" class="tsd-signature-type">ColumnRegion</a></div>
 					<aside class="tsd-sources">
 						<ul>
-							<li>Defined in <a href="https://github.com/phosphorjs/phosphor/blob/1b1dfe3/packages/commands/src/index.ts#L837">index.ts:837</a></li>
+							<li>Defined in <a href="https://github.com/phosphorjs/phosphor/blob/8fee9108/packages/datagrid/src/datamodel.ts#L192">datamodel.ts:192</a></li>
 						</ul>
 					</aside>
 					<div class="tsd-comment tsd-typography">
 						<div class="lead">
-							<p>The default key sequence for the key binding.</p>
+							<p>The region which contains the modified columns.</p>
 						</div>
-						<p>A key sequence is composed of one or more keystrokes, where each
-						keystroke is a combination of modifiers and a primary key.</p>
-						<p>Most key sequences will contain a single keystroke. Key sequences
-							with multiple keystrokes are called &quot;chords&quot;, and are useful for
-						implementing modal input (ala Vim).</p>
-						<p>Each keystroke in the sequence should be of the form:
-						<code>[&lt;modifier 1&gt; [&lt;modifier 2&gt; [&lt;modifier N&gt; ]]]&lt;primary key&gt;</code></p>
-						<p>The supported modifiers are: <code>Accel</code>, <code>Alt</code>, <code>Cmd</code>, <code>Ctrl</code>, and
-							<code>Shift</code>. The <code>Accel</code> modifier is translated to <code>Cmd</code> on Mac and
-							<code>Ctrl</code> on all other platforms. The <code>Cmd</code> modifier is ignored on
-						non-Mac platforms.</p>
-						<p>Keystrokes are case sensitive.</p>
-						<p><strong>Examples:</strong> <code>[&#39;Accel C&#39;]</code>, <code>[&#39;Shift F11&#39;]</code>, <code>[&#39;D&#39;, &#39;D&#39;]</code></p>
 					</div>
 				</section>
 				<section class="tsd-panel tsd-member tsd-kind-property tsd-parent-kind-interface">
-					<a name="linuxkeys" class="tsd-anchor"></a>
-					<h3><span class="tsd-flag ts-flagOptional">Optional</span> linux<wbr>Keys</h3>
-					<div class="tsd-signature tsd-kind-icon">linux<wbr>Keys<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">string</span><span class="tsd-signature-symbol">[]</span></div>
+					<a name="span" class="tsd-anchor"></a>
+					<h3>span</h3>
+					<div class="tsd-signature tsd-kind-icon">span<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">number</span></div>
 					<aside class="tsd-sources">
 						<ul>
-							<li>Defined in <a href="https://github.com/phosphorjs/phosphor/blob/1b1dfe3/packages/commands/src/index.ts#L881">index.ts:881</a></li>
+							<li>Defined in <a href="https://github.com/phosphorjs/phosphor/blob/8fee9108/packages/datagrid/src/datamodel.ts#L202">datamodel.ts:202</a></li>
 						</ul>
 					</aside>
 					<div class="tsd-comment tsd-typography">
 						<div class="lead">
-							<p>The key sequence to use when running on Linux.</p>
+							<p>The number of modified columns.</p>
 						</div>
-						<p>If provided, this will override <code>keys</code> on Linux platforms.</p>
 					</div>
 				</section>
 				<section class="tsd-panel tsd-member tsd-kind-property tsd-parent-kind-interface">
-					<a name="mackeys" class="tsd-anchor"></a>
-					<h3><span class="tsd-flag ts-flagOptional">Optional</span> mac<wbr>Keys</h3>
-					<div class="tsd-signature tsd-kind-icon">mac<wbr>Keys<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">string</span><span class="tsd-signature-symbol">[]</span></div>
+					<a name="type" class="tsd-anchor"></a>
+					<h3>type</h3>
+					<div class="tsd-signature tsd-kind-icon">type<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">"columns-inserted"</span><span class="tsd-signature-symbol"> | </span><span class="tsd-signature-type">"columns-removed"</span></div>
 					<aside class="tsd-sources">
 						<ul>
-							<li>Defined in <a href="https://github.com/phosphorjs/phosphor/blob/1b1dfe3/packages/commands/src/index.ts#L874">index.ts:874</a></li>
+							<li>Defined in <a href="https://github.com/phosphorjs/phosphor/blob/8fee9108/packages/datagrid/src/datamodel.ts#L187">datamodel.ts:187</a></li>
 						</ul>
 					</aside>
 					<div class="tsd-comment tsd-typography">
 						<div class="lead">
-							<p>The key sequence to use when running on Mac.</p>
+							<p>The discriminated type of the args object.</p>
 						</div>
-						<p>If provided, this will override <code>keys</code> on Mac platforms.</p>
-					</div>
-				</section>
-				<section class="tsd-panel tsd-member tsd-kind-property tsd-parent-kind-interface">
-					<a name="selector" class="tsd-anchor"></a>
-					<h3>selector</h3>
-					<div class="tsd-signature tsd-kind-icon">selector<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">string</span></div>
-					<aside class="tsd-sources">
-						<ul>
-							<li>Defined in <a href="https://github.com/phosphorjs/phosphor/blob/1b1dfe3/packages/commands/src/index.ts#L848">index.ts:848</a></li>
-						</ul>
-					</aside>
-					<div class="tsd-comment tsd-typography">
-						<div class="lead">
-							<p>The CSS selector for the key binding.</p>
-						</div>
-						<p>The key binding will only be invoked when the selector matches a
-							node on the propagation path of the keydown event. This allows
-						the key binding to be restricted to user-defined contexts.</p>
-						<p>The selector must not contain commas.</p>
-					</div>
-				</section>
-				<section class="tsd-panel tsd-member tsd-kind-property tsd-parent-kind-interface">
-					<a name="winkeys" class="tsd-anchor"></a>
-					<h3><span class="tsd-flag ts-flagOptional">Optional</span> win<wbr>Keys</h3>
-					<div class="tsd-signature tsd-kind-icon">win<wbr>Keys<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">string</span><span class="tsd-signature-symbol">[]</span></div>
-					<aside class="tsd-sources">
-						<ul>
-							<li>Defined in <a href="https://github.com/phosphorjs/phosphor/blob/1b1dfe3/packages/commands/src/index.ts#L867">index.ts:867</a></li>
-						</ul>
-					</aside>
-					<div class="tsd-comment tsd-typography">
-						<div class="lead">
-							<p>The key sequence to use when running on Windows.</p>
-						</div>
-						<p>If provided, this will override <code>keys</code> on Windows platforms.</p>
 					</div>
 				</section>
 			</section>
@@ -241,41 +175,107 @@
 			</nav>
 			<nav class="tsd-navigation secondary menu-sticky">
 				<ul class="before-current">
+					<li class=" tsd-kind-class">
+						<a href="../classes/cellrenderer.html" class="tsd-kind-icon">Cell<wbr>Renderer</a>
+					</li>
+					<li class=" tsd-kind-class">
+						<a href="../classes/datagrid.html" class="tsd-kind-icon">Data<wbr>Grid</a>
+					</li>
 				</ul>
 				<ul class="current">
 					<li class="current tsd-kind-class">
-						<a href="../classes/commandregistry.html" class="tsd-kind-icon">Command<wbr>Registry</a>
+						<a href="../classes/datamodel.html" class="tsd-kind-icon">Data<wbr>Model</a>
 						<ul>
+							<li class=" tsd-kind-interface tsd-parent-kind-class">
+								<a href="datamodel.icellschangedargs.html" class="tsd-kind-icon">ICells<wbr>Changed<wbr>Args</a>
+							</li>
 							<li class="current tsd-kind-interface tsd-parent-kind-class">
-								<a href="commandregistry.ikeybindingoptions.html" class="tsd-kind-icon">IKey<wbr>Binding<wbr>Options</a>
+								<a href="datamodel.icolumnschangedargs.html" class="tsd-kind-icon">IColumns<wbr>Changed<wbr>Args</a>
 								<ul>
 									<li class=" tsd-kind-property tsd-parent-kind-interface">
-										<a href="commandregistry.ikeybindingoptions.html#args" class="tsd-kind-icon">args</a>
+										<a href="datamodel.icolumnschangedargs.html#index" class="tsd-kind-icon">index</a>
 									</li>
 									<li class=" tsd-kind-property tsd-parent-kind-interface">
-										<a href="commandregistry.ikeybindingoptions.html#command" class="tsd-kind-icon">command</a>
+										<a href="datamodel.icolumnschangedargs.html#region" class="tsd-kind-icon">region</a>
 									</li>
 									<li class=" tsd-kind-property tsd-parent-kind-interface">
-										<a href="commandregistry.ikeybindingoptions.html#keys" class="tsd-kind-icon">keys</a>
+										<a href="datamodel.icolumnschangedargs.html#span" class="tsd-kind-icon">span</a>
 									</li>
 									<li class=" tsd-kind-property tsd-parent-kind-interface">
-										<a href="commandregistry.ikeybindingoptions.html#linuxkeys" class="tsd-kind-icon">linux<wbr>Keys</a>
-									</li>
-									<li class=" tsd-kind-property tsd-parent-kind-interface">
-										<a href="commandregistry.ikeybindingoptions.html#mackeys" class="tsd-kind-icon">mac<wbr>Keys</a>
-									</li>
-									<li class=" tsd-kind-property tsd-parent-kind-interface">
-										<a href="commandregistry.ikeybindingoptions.html#selector" class="tsd-kind-icon">selector</a>
-									</li>
-									<li class=" tsd-kind-property tsd-parent-kind-interface">
-										<a href="commandregistry.ikeybindingoptions.html#winkeys" class="tsd-kind-icon">win<wbr>Keys</a>
+										<a href="datamodel.icolumnschangedargs.html#type" class="tsd-kind-icon">type</a>
 									</li>
 								</ul>
+							</li>
+							<li class=" tsd-kind-interface tsd-parent-kind-class">
+								<a href="datamodel.icolumnsmovedargs.html" class="tsd-kind-icon">IColumns<wbr>Moved<wbr>Args</a>
+							</li>
+							<li class=" tsd-kind-interface tsd-parent-kind-class">
+								<a href="datamodel.imodelresetargs.html" class="tsd-kind-icon">IModel<wbr>Reset<wbr>Args</a>
+							</li>
+							<li class=" tsd-kind-interface tsd-parent-kind-class">
+								<a href="datamodel.irowschangedargs.html" class="tsd-kind-icon">IRows<wbr>Changed<wbr>Args</a>
+							</li>
+							<li class=" tsd-kind-interface tsd-parent-kind-class">
+								<a href="datamodel.irowsmovedargs.html" class="tsd-kind-icon">IRows<wbr>Moved<wbr>Args</a>
+							</li>
+							<li class=" tsd-kind-type-alias tsd-parent-kind-class tsd-is-static">
+								<a href="../classes/datamodel.html#cellregion" class="tsd-kind-icon">Cell<wbr>Region</a>
+							</li>
+							<li class=" tsd-kind-type-alias tsd-parent-kind-class tsd-is-static">
+								<a href="../classes/datamodel.html#changedargs" class="tsd-kind-icon">Changed<wbr>Args</a>
+							</li>
+							<li class=" tsd-kind-type-alias tsd-parent-kind-class tsd-is-static">
+								<a href="../classes/datamodel.html#columnregion" class="tsd-kind-icon">Column<wbr>Region</a>
+							</li>
+							<li class=" tsd-kind-type-alias tsd-parent-kind-class tsd-is-static">
+								<a href="../classes/datamodel.html#metadata" class="tsd-kind-icon">Metadata</a>
+							</li>
+							<li class=" tsd-kind-type-alias tsd-parent-kind-class tsd-is-static">
+								<a href="../classes/datamodel.html#rowregion" class="tsd-kind-icon">Row<wbr>Region</a>
+							</li>
+							<li class=" tsd-kind-property tsd-parent-kind-class tsd-is-private">
+								<a href="../classes/datamodel.html#_changed" class="tsd-kind-icon">_changed</a>
+							</li>
+							<li class=" tsd-kind-property tsd-parent-kind-class tsd-is-static">
+								<a href="../classes/datamodel.html#emptymetadata" class="tsd-kind-icon">empty<wbr>Metadata</a>
+							</li>
+							<li class=" tsd-kind-get-signature tsd-parent-kind-class">
+								<a href="../classes/datamodel.html#changed" class="tsd-kind-icon">changed</a>
+							</li>
+							<li class=" tsd-kind-method tsd-parent-kind-class">
+								<a href="../classes/datamodel.html#columncount" class="tsd-kind-icon">column<wbr>Count</a>
+							</li>
+							<li class=" tsd-kind-method tsd-parent-kind-class">
+								<a href="../classes/datamodel.html#data" class="tsd-kind-icon">data</a>
+							</li>
+							<li class=" tsd-kind-method tsd-parent-kind-class tsd-is-protected">
+								<a href="../classes/datamodel.html#emitchanged" class="tsd-kind-icon">emit<wbr>Changed</a>
+							</li>
+							<li class=" tsd-kind-method tsd-parent-kind-class">
+								<a href="../classes/datamodel.html#metadata-1" class="tsd-kind-icon">metadata</a>
+							</li>
+							<li class=" tsd-kind-method tsd-parent-kind-class">
+								<a href="../classes/datamodel.html#rowcount" class="tsd-kind-icon">row<wbr>Count</a>
 							</li>
 						</ul>
 					</li>
 				</ul>
 				<ul class="after-current">
+					<li class=" tsd-kind-class">
+						<a href="../classes/graphicscontext.html" class="tsd-kind-icon">Graphics<wbr>Context</a>
+					</li>
+					<li class=" tsd-kind-class">
+						<a href="../classes/jsonmodel.html" class="tsd-kind-icon">JSONModel</a>
+					</li>
+					<li class=" tsd-kind-class">
+						<a href="../classes/renderermap.html" class="tsd-kind-icon">Renderer<wbr>Map</a>
+					</li>
+					<li class=" tsd-kind-class">
+						<a href="../classes/sectionlist.html" class="tsd-kind-icon">Section<wbr>List</a>
+					</li>
+					<li class=" tsd-kind-class">
+						<a href="../classes/textrenderer.html" class="tsd-kind-icon">Text<wbr>Renderer</a>
+					</li>
 				</ul>
 			</nav>
 		</div>

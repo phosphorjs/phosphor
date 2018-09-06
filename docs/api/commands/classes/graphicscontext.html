@@ -1,0 +1,2294 @@
+<!doctype html>
+<html class="default no-js">
+<head>
+	<meta charset="utf-8">
+	<meta http-equiv="X-UA-Compatible" content="IE=edge">
+	<title>GraphicsContext | @phosphor/datagrid</title>
+	<meta name="description" content="">
+	<meta name="viewport" content="width=device-width, initial-scale=1">
+	<link rel="stylesheet" href="../assets/css/main.css">
+</head>
+<body>
+<header>
+	<div class="tsd-page-toolbar">
+		<div class="container">
+			<div class="table-wrap">
+				<div class="table-cell" id="tsd-search" data-index="../assets/js/search.js" data-base="..">
+					<div class="field">
+						<label for="tsd-search-field" class="tsd-widget search no-caption">Search</label>
+						<input id="tsd-search-field" type="text" />
+					</div>
+					<ul class="results">
+						<li class="state loading">Preparing search index...</li>
+						<li class="state failure">The search index is not available</li>
+					</ul>
+					<a href="../index.html" class="title">@phosphor/datagrid</a>
+				</div>
+				<div class="table-cell" id="tsd-widgets">
+					<div id="tsd-filter">
+						<a href="#" class="tsd-widget options no-caption" data-toggle="options">Options</a>
+						<div class="tsd-filter-group">
+							<div class="tsd-select" id="tsd-filter-visibility">
+								<span class="tsd-select-label">All</span>
+								<ul class="tsd-select-list">
+									<li data-value="public">Public</li>
+									<li data-value="protected">Public/Protected</li>
+									<li data-value="private" class="selected">All</li>
+								</ul>
+							</div>
+							<input type="checkbox" id="tsd-filter-inherited" checked />
+							<label class="tsd-widget" for="tsd-filter-inherited">Inherited</label>
+							<input type="checkbox" id="tsd-filter-externals" checked />
+							<label class="tsd-widget" for="tsd-filter-externals">Externals</label>
+						</div>
+					</div>
+					<a href="#" class="tsd-widget menu no-caption" data-toggle="menu">Menu</a>
+				</div>
+			</div>
+		</div>
+	</div>
+	<div class="tsd-page-title">
+		<div class="container">
+			<ul class="tsd-breadcrumb">
+				<li>
+					<a href="../globals.html">Globals</a>
+				</li>
+				<li>
+					<a href="graphicscontext.html">GraphicsContext</a>
+				</li>
+			</ul>
+			<h1>Class GraphicsContext</h1>
+		</div>
+	</div>
+</header>
+<div class="container container-main">
+	<div class="row">
+		<div class="col-8 col-content">
+			<section class="tsd-panel tsd-comment">
+				<div class="tsd-comment tsd-typography">
+					<div class="lead">
+						<p>A thin caching wrapper around a 2D canvas rendering context.</p>
+					</div>
+					<h4 id="notes">Notes</h4>
+					<p>This class is mostly a transparent wrapper around a canvas rendering
+					context which improves performance when writing context state.</p>
+					<p>For best performance, avoid reading state from the <code>gc</code>. Writes are
+					cached based on the previously written value.</p>
+					<p>Unless otherwise specified, the API and semantics of this class are
+						identical to the builtin 2D canvas rendering context:
+					<a href="https://developer.mozilla.org/en-US/docs/Web/API/CanvasRenderingContext2D">https://developer.mozilla.org/en-US/docs/Web/API/CanvasRenderingContext2D</a></p>
+					<p>The wrapped canvas context should not be manipulated externally
+					until the wrapping <code>GraphicsContext</code> object is disposed.</p>
+				</div>
+			</section>
+			<section class="tsd-panel tsd-hierarchy">
+				<h3>Hierarchy</h3>
+				<ul class="tsd-hierarchy">
+					<li>
+						<span class="target">GraphicsContext</span>
+					</li>
+				</ul>
+			</section>
+			<section class="tsd-panel">
+				<h3>Implements</h3>
+				<ul class="tsd-hierarchy">
+					<li><span class="tsd-signature-type">IDisposable</span></li>
+				</ul>
+			</section>
+			<section class="tsd-panel-group tsd-index-group">
+				<h2>Index</h2>
+				<section class="tsd-panel tsd-index-panel">
+					<div class="tsd-index-content">
+						<section class="tsd-index-section ">
+							<h3>Constructors</h3>
+							<ul class="tsd-index-list">
+								<li class="tsd-kind-constructor tsd-parent-kind-class"><a href="graphicscontext.html#constructor" class="tsd-kind-icon">constructor</a></li>
+							</ul>
+						</section>
+						<section class="tsd-index-section tsd-is-private tsd-is-private-protected">
+							<h3>Properties</h3>
+							<ul class="tsd-index-list">
+								<li class="tsd-kind-property tsd-parent-kind-class tsd-is-private"><a href="graphicscontext.html#_context" class="tsd-kind-icon">_context</a></li>
+								<li class="tsd-kind-property tsd-parent-kind-class tsd-is-private"><a href="graphicscontext.html#_disposed" class="tsd-kind-icon">_disposed</a></li>
+								<li class="tsd-kind-property tsd-parent-kind-class tsd-is-private"><a href="graphicscontext.html#_state" class="tsd-kind-icon">_state</a></li>
+							</ul>
+						</section>
+						<section class="tsd-index-section ">
+							<h3>Accessors</h3>
+							<ul class="tsd-index-list">
+								<li class="tsd-kind-accessor tsd-parent-kind-class"><a href="graphicscontext.html#fillstyle" class="tsd-kind-icon">fill<wbr>Style</a></li>
+								<li class="tsd-kind-accessor tsd-parent-kind-class"><a href="graphicscontext.html#font" class="tsd-kind-icon">font</a></li>
+								<li class="tsd-kind-accessor tsd-parent-kind-class"><a href="graphicscontext.html#globalalpha" class="tsd-kind-icon">global<wbr>Alpha</a></li>
+								<li class="tsd-kind-accessor tsd-parent-kind-class"><a href="graphicscontext.html#globalcompositeoperation" class="tsd-kind-icon">global<wbr>Composite<wbr>Operation</a></li>
+								<li class="tsd-kind-accessor tsd-parent-kind-class"><a href="graphicscontext.html#imagesmoothingenabled" class="tsd-kind-icon">image<wbr>Smoothing<wbr>Enabled</a></li>
+								<li class="tsd-kind-get-signature tsd-parent-kind-class"><a href="graphicscontext.html#isdisposed" class="tsd-kind-icon">is<wbr>Disposed</a></li>
+								<li class="tsd-kind-accessor tsd-parent-kind-class"><a href="graphicscontext.html#linecap" class="tsd-kind-icon">line<wbr>Cap</a></li>
+								<li class="tsd-kind-accessor tsd-parent-kind-class"><a href="graphicscontext.html#linedashoffset" class="tsd-kind-icon">line<wbr>Dash<wbr>Offset</a></li>
+								<li class="tsd-kind-accessor tsd-parent-kind-class"><a href="graphicscontext.html#linejoin" class="tsd-kind-icon">line<wbr>Join</a></li>
+								<li class="tsd-kind-accessor tsd-parent-kind-class"><a href="graphicscontext.html#linewidth" class="tsd-kind-icon">line<wbr>Width</a></li>
+								<li class="tsd-kind-accessor tsd-parent-kind-class"><a href="graphicscontext.html#miterlimit" class="tsd-kind-icon">miter<wbr>Limit</a></li>
+								<li class="tsd-kind-accessor tsd-parent-kind-class"><a href="graphicscontext.html#shadowblur" class="tsd-kind-icon">shadow<wbr>Blur</a></li>
+								<li class="tsd-kind-accessor tsd-parent-kind-class"><a href="graphicscontext.html#shadowcolor" class="tsd-kind-icon">shadow<wbr>Color</a></li>
+								<li class="tsd-kind-accessor tsd-parent-kind-class"><a href="graphicscontext.html#shadowoffsetx" class="tsd-kind-icon">shadow<wbr>OffsetX</a></li>
+								<li class="tsd-kind-accessor tsd-parent-kind-class"><a href="graphicscontext.html#shadowoffsety" class="tsd-kind-icon">shadow<wbr>OffsetY</a></li>
+								<li class="tsd-kind-accessor tsd-parent-kind-class"><a href="graphicscontext.html#strokestyle" class="tsd-kind-icon">stroke<wbr>Style</a></li>
+								<li class="tsd-kind-accessor tsd-parent-kind-class"><a href="graphicscontext.html#textalign" class="tsd-kind-icon">text<wbr>Align</a></li>
+								<li class="tsd-kind-accessor tsd-parent-kind-class"><a href="graphicscontext.html#textbaseline" class="tsd-kind-icon">text<wbr>Baseline</a></li>
+							</ul>
+						</section>
+						<section class="tsd-index-section ">
+							<h3>Methods</h3>
+							<ul class="tsd-index-list">
+								<li class="tsd-kind-method tsd-parent-kind-class"><a href="graphicscontext.html#arc" class="tsd-kind-icon">arc</a></li>
+								<li class="tsd-kind-method tsd-parent-kind-class"><a href="graphicscontext.html#arcto" class="tsd-kind-icon">arc<wbr>To</a></li>
+								<li class="tsd-kind-method tsd-parent-kind-class"><a href="graphicscontext.html#beginpath" class="tsd-kind-icon">begin<wbr>Path</a></li>
+								<li class="tsd-kind-method tsd-parent-kind-class"><a href="graphicscontext.html#beziercurveto" class="tsd-kind-icon">bezier<wbr>Curve<wbr>To</a></li>
+								<li class="tsd-kind-method tsd-parent-kind-class"><a href="graphicscontext.html#clearrect" class="tsd-kind-icon">clear<wbr>Rect</a></li>
+								<li class="tsd-kind-method tsd-parent-kind-class"><a href="graphicscontext.html#clip" class="tsd-kind-icon">clip</a></li>
+								<li class="tsd-kind-method tsd-parent-kind-class"><a href="graphicscontext.html#closepath" class="tsd-kind-icon">close<wbr>Path</a></li>
+								<li class="tsd-kind-method tsd-parent-kind-class"><a href="graphicscontext.html#createimagedata" class="tsd-kind-icon">create<wbr>Image<wbr>Data</a></li>
+								<li class="tsd-kind-method tsd-parent-kind-class"><a href="graphicscontext.html#createlineargradient" class="tsd-kind-icon">create<wbr>Linear<wbr>Gradient</a></li>
+								<li class="tsd-kind-method tsd-parent-kind-class"><a href="graphicscontext.html#createpattern" class="tsd-kind-icon">create<wbr>Pattern</a></li>
+								<li class="tsd-kind-method tsd-parent-kind-class"><a href="graphicscontext.html#createradialgradient" class="tsd-kind-icon">create<wbr>Radial<wbr>Gradient</a></li>
+								<li class="tsd-kind-method tsd-parent-kind-class"><a href="graphicscontext.html#dispose" class="tsd-kind-icon">dispose</a></li>
+								<li class="tsd-kind-method tsd-parent-kind-class"><a href="graphicscontext.html#drawfocusifneeded" class="tsd-kind-icon">draw<wbr>Focus<wbr>IfNeeded</a></li>
+								<li class="tsd-kind-method tsd-parent-kind-class"><a href="graphicscontext.html#drawimage" class="tsd-kind-icon">draw<wbr>Image</a></li>
+								<li class="tsd-kind-method tsd-parent-kind-class"><a href="graphicscontext.html#ellipse" class="tsd-kind-icon">ellipse</a></li>
+								<li class="tsd-kind-method tsd-parent-kind-class"><a href="graphicscontext.html#fill" class="tsd-kind-icon">fill</a></li>
+								<li class="tsd-kind-method tsd-parent-kind-class"><a href="graphicscontext.html#fillrect" class="tsd-kind-icon">fill<wbr>Rect</a></li>
+								<li class="tsd-kind-method tsd-parent-kind-class"><a href="graphicscontext.html#filltext" class="tsd-kind-icon">fill<wbr>Text</a></li>
+								<li class="tsd-kind-method tsd-parent-kind-class"><a href="graphicscontext.html#getimagedata" class="tsd-kind-icon">get<wbr>Image<wbr>Data</a></li>
+								<li class="tsd-kind-method tsd-parent-kind-class"><a href="graphicscontext.html#getlinedash" class="tsd-kind-icon">get<wbr>Line<wbr>Dash</a></li>
+								<li class="tsd-kind-method tsd-parent-kind-class"><a href="graphicscontext.html#ispointinpath" class="tsd-kind-icon">is<wbr>Point<wbr>InPath</a></li>
+								<li class="tsd-kind-method tsd-parent-kind-class"><a href="graphicscontext.html#lineto" class="tsd-kind-icon">line<wbr>To</a></li>
+								<li class="tsd-kind-method tsd-parent-kind-class"><a href="graphicscontext.html#measuretext" class="tsd-kind-icon">measure<wbr>Text</a></li>
+								<li class="tsd-kind-method tsd-parent-kind-class"><a href="graphicscontext.html#moveto" class="tsd-kind-icon">move<wbr>To</a></li>
+								<li class="tsd-kind-method tsd-parent-kind-class"><a href="graphicscontext.html#putimagedata" class="tsd-kind-icon">put<wbr>Image<wbr>Data</a></li>
+								<li class="tsd-kind-method tsd-parent-kind-class"><a href="graphicscontext.html#quadraticcurveto" class="tsd-kind-icon">quadratic<wbr>Curve<wbr>To</a></li>
+								<li class="tsd-kind-method tsd-parent-kind-class"><a href="graphicscontext.html#rect" class="tsd-kind-icon">rect</a></li>
+								<li class="tsd-kind-method tsd-parent-kind-class"><a href="graphicscontext.html#restore" class="tsd-kind-icon">restore</a></li>
+								<li class="tsd-kind-method tsd-parent-kind-class"><a href="graphicscontext.html#rotate" class="tsd-kind-icon">rotate</a></li>
+								<li class="tsd-kind-method tsd-parent-kind-class"><a href="graphicscontext.html#save" class="tsd-kind-icon">save</a></li>
+								<li class="tsd-kind-method tsd-parent-kind-class"><a href="graphicscontext.html#scale" class="tsd-kind-icon">scale</a></li>
+								<li class="tsd-kind-method tsd-parent-kind-class"><a href="graphicscontext.html#setlinedash" class="tsd-kind-icon">set<wbr>Line<wbr>Dash</a></li>
+								<li class="tsd-kind-method tsd-parent-kind-class"><a href="graphicscontext.html#settransform" class="tsd-kind-icon">set<wbr>Transform</a></li>
+								<li class="tsd-kind-method tsd-parent-kind-class"><a href="graphicscontext.html#stroke" class="tsd-kind-icon">stroke</a></li>
+								<li class="tsd-kind-method tsd-parent-kind-class"><a href="graphicscontext.html#strokerect" class="tsd-kind-icon">stroke<wbr>Rect</a></li>
+								<li class="tsd-kind-method tsd-parent-kind-class"><a href="graphicscontext.html#stroketext" class="tsd-kind-icon">stroke<wbr>Text</a></li>
+								<li class="tsd-kind-method tsd-parent-kind-class"><a href="graphicscontext.html#transform" class="tsd-kind-icon">transform</a></li>
+								<li class="tsd-kind-method tsd-parent-kind-class"><a href="graphicscontext.html#translate" class="tsd-kind-icon">translate</a></li>
+							</ul>
+						</section>
+					</div>
+				</section>
+			</section>
+			<section class="tsd-panel-group tsd-member-group ">
+				<h2>Constructors</h2>
+				<section class="tsd-panel tsd-member tsd-kind-constructor tsd-parent-kind-class">
+					<a name="constructor" class="tsd-anchor"></a>
+					<h3>constructor</h3>
+					<ul class="tsd-signatures tsd-kind-constructor tsd-parent-kind-class">
+						<li class="tsd-signature tsd-kind-icon">new <wbr>Graphics<wbr>Context<span class="tsd-signature-symbol">(</span>context<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">CanvasRenderingContext2D</span><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol">: </span><a href="graphicscontext.html" class="tsd-signature-type">GraphicsContext</a></li>
+					</ul>
+					<ul class="tsd-descriptions">
+						<li class="tsd-description">
+							<aside class="tsd-sources">
+								<ul>
+									<li>Defined in <a href="https://github.com/phosphorjs/phosphor/blob/8fee9108/packages/datagrid/src/graphicscontext.ts#L31">graphicscontext.ts:31</a></li>
+								</ul>
+							</aside>
+							<div class="tsd-comment tsd-typography">
+								<div class="lead">
+									<p>Create a new graphics context object.</p>
+								</div>
+							</div>
+							<h4 class="tsd-parameters-title">Parameters</h4>
+							<ul class="tsd-parameters">
+								<li>
+									<h5>context: <span class="tsd-signature-type">CanvasRenderingContext2D</span></h5>
+									<div class="tsd-comment tsd-typography">
+										<div class="lead">
+											<p>The 2D canvas rendering context to wrap.</p>
+										</div>
+									</div>
+								</li>
+							</ul>
+							<h4 class="tsd-returns-title">Returns <a href="graphicscontext.html" class="tsd-signature-type">GraphicsContext</a></h4>
+						</li>
+					</ul>
+				</section>
+			</section>
+			<section class="tsd-panel-group tsd-member-group tsd-is-private tsd-is-private-protected">
+				<h2>Properties</h2>
+				<section class="tsd-panel tsd-member tsd-kind-property tsd-parent-kind-class tsd-is-private">
+					<a name="_context" class="tsd-anchor"></a>
+					<h3><span class="tsd-flag ts-flagPrivate">Private</span> _context</h3>
+					<div class="tsd-signature tsd-kind-icon">_context<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">CanvasRenderingContext2D</span></div>
+					<aside class="tsd-sources">
+						<ul>
+							<li>Defined in <a href="https://github.com/phosphorjs/phosphor/blob/8fee9108/packages/datagrid/src/graphicscontext.ts#L449">graphicscontext.ts:449</a></li>
+						</ul>
+					</aside>
+				</section>
+				<section class="tsd-panel tsd-member tsd-kind-property tsd-parent-kind-class tsd-is-private">
+					<a name="_disposed" class="tsd-anchor"></a>
+					<h3><span class="tsd-flag ts-flagPrivate">Private</span> _disposed</h3>
+					<div class="tsd-signature tsd-kind-icon">_disposed<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">boolean</span><span class="tsd-signature-symbol"> =&nbsp;false</span></div>
+					<aside class="tsd-sources">
+						<ul>
+							<li>Defined in <a href="https://github.com/phosphorjs/phosphor/blob/8fee9108/packages/datagrid/src/graphicscontext.ts#L447">graphicscontext.ts:447</a></li>
+						</ul>
+					</aside>
+				</section>
+				<section class="tsd-panel tsd-member tsd-kind-property tsd-parent-kind-class tsd-is-private">
+					<a name="_state" class="tsd-anchor"></a>
+					<h3><span class="tsd-flag ts-flagPrivate">Private</span> _state</h3>
+					<div class="tsd-signature tsd-kind-icon">_state<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">State</span></div>
+					<aside class="tsd-sources">
+						<ul>
+							<li>Defined in <a href="https://github.com/phosphorjs/phosphor/blob/8fee9108/packages/datagrid/src/graphicscontext.ts#L448">graphicscontext.ts:448</a></li>
+						</ul>
+					</aside>
+				</section>
+			</section>
+			<section class="tsd-panel-group tsd-member-group ">
+				<h2>Accessors</h2>
+				<section class="tsd-panel tsd-member tsd-kind-accessor tsd-parent-kind-class">
+					<a name="fillstyle" class="tsd-anchor"></a>
+					<h3>fill<wbr>Style</h3>
+					<ul class="tsd-signatures tsd-kind-accessor tsd-parent-kind-class">
+						<li class="tsd-signature tsd-kind-icon"><span class="tsd-signature-symbol">get</span> fillStyle<span class="tsd-signature-symbol">(</span><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">string</span><span class="tsd-signature-symbol"> | </span><span class="tsd-signature-type">CanvasGradient</span><span class="tsd-signature-symbol"> | </span><span class="tsd-signature-type">CanvasPattern</span></li>
+						<li class="tsd-signature tsd-kind-icon"><span class="tsd-signature-symbol">set</span> fillStyle<span class="tsd-signature-symbol">(</span>value<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">string</span><span class="tsd-signature-symbol"> | </span><span class="tsd-signature-type">CanvasGradient</span><span class="tsd-signature-symbol"> | </span><span class="tsd-signature-type">CanvasPattern</span><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">void</span></li>
+					</ul>
+					<ul class="tsd-descriptions">
+						<li class="tsd-description">
+							<aside class="tsd-sources">
+								<ul>
+									<li>Defined in <a href="https://github.com/phosphorjs/phosphor/blob/8fee9108/packages/datagrid/src/graphicscontext.ts#L62">graphicscontext.ts:62</a></li>
+								</ul>
+							</aside>
+							<h4 class="tsd-returns-title">Returns <span class="tsd-signature-type">string</span>
+								<span class="tsd-signature-symbol"> | </span>
+								<span class="tsd-signature-type">CanvasGradient</span>
+								<span class="tsd-signature-symbol"> | </span>
+								<span class="tsd-signature-type">CanvasPattern</span>
+							</h4>
+						</li>
+						<li class="tsd-description">
+							<aside class="tsd-sources">
+								<ul>
+									<li>Defined in <a href="https://github.com/phosphorjs/phosphor/blob/8fee9108/packages/datagrid/src/graphicscontext.ts#L66">graphicscontext.ts:66</a></li>
+								</ul>
+							</aside>
+							<h4 class="tsd-parameters-title">Parameters</h4>
+							<ul class="tsd-parameters">
+								<li>
+									<h5>value: <span class="tsd-signature-type">string</span><span class="tsd-signature-symbol"> | </span><span class="tsd-signature-type">CanvasGradient</span><span class="tsd-signature-symbol"> | </span><span class="tsd-signature-type">CanvasPattern</span></h5>
+								</li>
+							</ul>
+							<h4 class="tsd-returns-title">Returns <span class="tsd-signature-type">void</span></h4>
+						</li>
+					</ul>
+				</section>
+				<section class="tsd-panel tsd-member tsd-kind-accessor tsd-parent-kind-class">
+					<a name="font" class="tsd-anchor"></a>
+					<h3>font</h3>
+					<ul class="tsd-signatures tsd-kind-accessor tsd-parent-kind-class">
+						<li class="tsd-signature tsd-kind-icon"><span class="tsd-signature-symbol">get</span> font<span class="tsd-signature-symbol">(</span><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">string</span></li>
+						<li class="tsd-signature tsd-kind-icon"><span class="tsd-signature-symbol">set</span> font<span class="tsd-signature-symbol">(</span>value<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">string</span><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">void</span></li>
+					</ul>
+					<ul class="tsd-descriptions">
+						<li class="tsd-description">
+							<aside class="tsd-sources">
+								<ul>
+									<li>Defined in <a href="https://github.com/phosphorjs/phosphor/blob/8fee9108/packages/datagrid/src/graphicscontext.ts#L84">graphicscontext.ts:84</a></li>
+								</ul>
+							</aside>
+							<h4 class="tsd-returns-title">Returns <span class="tsd-signature-type">string</span></h4>
+						</li>
+						<li class="tsd-description">
+							<aside class="tsd-sources">
+								<ul>
+									<li>Defined in <a href="https://github.com/phosphorjs/phosphor/blob/8fee9108/packages/datagrid/src/graphicscontext.ts#L88">graphicscontext.ts:88</a></li>
+								</ul>
+							</aside>
+							<h4 class="tsd-parameters-title">Parameters</h4>
+							<ul class="tsd-parameters">
+								<li>
+									<h5>value: <span class="tsd-signature-type">string</span></h5>
+								</li>
+							</ul>
+							<h4 class="tsd-returns-title">Returns <span class="tsd-signature-type">void</span></h4>
+						</li>
+					</ul>
+				</section>
+				<section class="tsd-panel tsd-member tsd-kind-accessor tsd-parent-kind-class">
+					<a name="globalalpha" class="tsd-anchor"></a>
+					<h3>global<wbr>Alpha</h3>
+					<ul class="tsd-signatures tsd-kind-accessor tsd-parent-kind-class">
+						<li class="tsd-signature tsd-kind-icon"><span class="tsd-signature-symbol">get</span> globalAlpha<span class="tsd-signature-symbol">(</span><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">number</span></li>
+						<li class="tsd-signature tsd-kind-icon"><span class="tsd-signature-symbol">set</span> globalAlpha<span class="tsd-signature-symbol">(</span>value<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">number</span><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">void</span></li>
+					</ul>
+					<ul class="tsd-descriptions">
+						<li class="tsd-description">
+							<aside class="tsd-sources">
+								<ul>
+									<li>Defined in <a href="https://github.com/phosphorjs/phosphor/blob/8fee9108/packages/datagrid/src/graphicscontext.ts#L227">graphicscontext.ts:227</a></li>
+								</ul>
+							</aside>
+							<h4 class="tsd-returns-title">Returns <span class="tsd-signature-type">number</span></h4>
+						</li>
+						<li class="tsd-description">
+							<aside class="tsd-sources">
+								<ul>
+									<li>Defined in <a href="https://github.com/phosphorjs/phosphor/blob/8fee9108/packages/datagrid/src/graphicscontext.ts#L231">graphicscontext.ts:231</a></li>
+								</ul>
+							</aside>
+							<h4 class="tsd-parameters-title">Parameters</h4>
+							<ul class="tsd-parameters">
+								<li>
+									<h5>value: <span class="tsd-signature-type">number</span></h5>
+								</li>
+							</ul>
+							<h4 class="tsd-returns-title">Returns <span class="tsd-signature-type">void</span></h4>
+						</li>
+					</ul>
+				</section>
+				<section class="tsd-panel tsd-member tsd-kind-accessor tsd-parent-kind-class">
+					<a name="globalcompositeoperation" class="tsd-anchor"></a>
+					<h3>global<wbr>Composite<wbr>Operation</h3>
+					<ul class="tsd-signatures tsd-kind-accessor tsd-parent-kind-class">
+						<li class="tsd-signature tsd-kind-icon"><span class="tsd-signature-symbol">get</span> globalCompositeOperation<span class="tsd-signature-symbol">(</span><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">string</span></li>
+						<li class="tsd-signature tsd-kind-icon"><span class="tsd-signature-symbol">set</span> globalCompositeOperation<span class="tsd-signature-symbol">(</span>value<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">string</span><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">void</span></li>
+					</ul>
+					<ul class="tsd-descriptions">
+						<li class="tsd-description">
+							<aside class="tsd-sources">
+								<ul>
+									<li>Defined in <a href="https://github.com/phosphorjs/phosphor/blob/8fee9108/packages/datagrid/src/graphicscontext.ts#L238">graphicscontext.ts:238</a></li>
+								</ul>
+							</aside>
+							<h4 class="tsd-returns-title">Returns <span class="tsd-signature-type">string</span></h4>
+						</li>
+						<li class="tsd-description">
+							<aside class="tsd-sources">
+								<ul>
+									<li>Defined in <a href="https://github.com/phosphorjs/phosphor/blob/8fee9108/packages/datagrid/src/graphicscontext.ts#L242">graphicscontext.ts:242</a></li>
+								</ul>
+							</aside>
+							<h4 class="tsd-parameters-title">Parameters</h4>
+							<ul class="tsd-parameters">
+								<li>
+									<h5>value: <span class="tsd-signature-type">string</span></h5>
+								</li>
+							</ul>
+							<h4 class="tsd-returns-title">Returns <span class="tsd-signature-type">void</span></h4>
+						</li>
+					</ul>
+				</section>
+				<section class="tsd-panel tsd-member tsd-kind-accessor tsd-parent-kind-class">
+					<a name="imagesmoothingenabled" class="tsd-anchor"></a>
+					<h3>image<wbr>Smoothing<wbr>Enabled</h3>
+					<ul class="tsd-signatures tsd-kind-accessor tsd-parent-kind-class">
+						<li class="tsd-signature tsd-kind-icon"><span class="tsd-signature-symbol">get</span> imageSmoothingEnabled<span class="tsd-signature-symbol">(</span><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">boolean</span></li>
+						<li class="tsd-signature tsd-kind-icon"><span class="tsd-signature-symbol">set</span> imageSmoothingEnabled<span class="tsd-signature-symbol">(</span>value<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">boolean</span><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">void</span></li>
+					</ul>
+					<ul class="tsd-descriptions">
+						<li class="tsd-description">
+							<aside class="tsd-sources">
+								<ul>
+									<li>Defined in <a href="https://github.com/phosphorjs/phosphor/blob/8fee9108/packages/datagrid/src/graphicscontext.ts#L216">graphicscontext.ts:216</a></li>
+								</ul>
+							</aside>
+							<h4 class="tsd-returns-title">Returns <span class="tsd-signature-type">boolean</span></h4>
+						</li>
+						<li class="tsd-description">
+							<aside class="tsd-sources">
+								<ul>
+									<li>Defined in <a href="https://github.com/phosphorjs/phosphor/blob/8fee9108/packages/datagrid/src/graphicscontext.ts#L220">graphicscontext.ts:220</a></li>
+								</ul>
+							</aside>
+							<h4 class="tsd-parameters-title">Parameters</h4>
+							<ul class="tsd-parameters">
+								<li>
+									<h5>value: <span class="tsd-signature-type">boolean</span></h5>
+								</li>
+							</ul>
+							<h4 class="tsd-returns-title">Returns <span class="tsd-signature-type">void</span></h4>
+						</li>
+					</ul>
+				</section>
+				<section class="tsd-panel tsd-member tsd-kind-get-signature tsd-parent-kind-class">
+					<a name="isdisposed" class="tsd-anchor"></a>
+					<h3>is<wbr>Disposed</h3>
+					<ul class="tsd-signatures tsd-kind-get-signature tsd-parent-kind-class">
+						<li class="tsd-signature tsd-kind-icon"><span class="tsd-signature-symbol">get</span> isDisposed<span class="tsd-signature-symbol">(</span><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">boolean</span></li>
+					</ul>
+					<ul class="tsd-descriptions">
+						<li class="tsd-description">
+							<aside class="tsd-sources">
+								<ul>
+									<li>Defined in <a href="https://github.com/phosphorjs/phosphor/blob/8fee9108/packages/datagrid/src/graphicscontext.ts#L58">graphicscontext.ts:58</a></li>
+								</ul>
+							</aside>
+							<h4 class="tsd-returns-title">Returns <span class="tsd-signature-type">boolean</span></h4>
+						</li>
+					</ul>
+				</section>
+				<section class="tsd-panel tsd-member tsd-kind-accessor tsd-parent-kind-class">
+					<a name="linecap" class="tsd-anchor"></a>
+					<h3>line<wbr>Cap</h3>
+					<ul class="tsd-signatures tsd-kind-accessor tsd-parent-kind-class">
+						<li class="tsd-signature tsd-kind-icon"><span class="tsd-signature-symbol">get</span> lineCap<span class="tsd-signature-symbol">(</span><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">string</span></li>
+						<li class="tsd-signature tsd-kind-icon"><span class="tsd-signature-symbol">set</span> lineCap<span class="tsd-signature-symbol">(</span>value<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">string</span><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">void</span></li>
+					</ul>
+					<ul class="tsd-descriptions">
+						<li class="tsd-description">
+							<aside class="tsd-sources">
+								<ul>
+									<li>Defined in <a href="https://github.com/phosphorjs/phosphor/blob/8fee9108/packages/datagrid/src/graphicscontext.ts#L117">graphicscontext.ts:117</a></li>
+								</ul>
+							</aside>
+							<h4 class="tsd-returns-title">Returns <span class="tsd-signature-type">string</span></h4>
+						</li>
+						<li class="tsd-description">
+							<aside class="tsd-sources">
+								<ul>
+									<li>Defined in <a href="https://github.com/phosphorjs/phosphor/blob/8fee9108/packages/datagrid/src/graphicscontext.ts#L121">graphicscontext.ts:121</a></li>
+								</ul>
+							</aside>
+							<h4 class="tsd-parameters-title">Parameters</h4>
+							<ul class="tsd-parameters">
+								<li>
+									<h5>value: <span class="tsd-signature-type">string</span></h5>
+								</li>
+							</ul>
+							<h4 class="tsd-returns-title">Returns <span class="tsd-signature-type">void</span></h4>
+						</li>
+					</ul>
+				</section>
+				<section class="tsd-panel tsd-member tsd-kind-accessor tsd-parent-kind-class">
+					<a name="linedashoffset" class="tsd-anchor"></a>
+					<h3>line<wbr>Dash<wbr>Offset</h3>
+					<ul class="tsd-signatures tsd-kind-accessor tsd-parent-kind-class">
+						<li class="tsd-signature tsd-kind-icon"><span class="tsd-signature-symbol">get</span> lineDashOffset<span class="tsd-signature-symbol">(</span><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">number</span></li>
+						<li class="tsd-signature tsd-kind-icon"><span class="tsd-signature-symbol">set</span> lineDashOffset<span class="tsd-signature-symbol">(</span>value<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">number</span><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">void</span></li>
+					</ul>
+					<ul class="tsd-descriptions">
+						<li class="tsd-description">
+							<aside class="tsd-sources">
+								<ul>
+									<li>Defined in <a href="https://github.com/phosphorjs/phosphor/blob/8fee9108/packages/datagrid/src/graphicscontext.ts#L128">graphicscontext.ts:128</a></li>
+								</ul>
+							</aside>
+							<h4 class="tsd-returns-title">Returns <span class="tsd-signature-type">number</span></h4>
+						</li>
+						<li class="tsd-description">
+							<aside class="tsd-sources">
+								<ul>
+									<li>Defined in <a href="https://github.com/phosphorjs/phosphor/blob/8fee9108/packages/datagrid/src/graphicscontext.ts#L132">graphicscontext.ts:132</a></li>
+								</ul>
+							</aside>
+							<h4 class="tsd-parameters-title">Parameters</h4>
+							<ul class="tsd-parameters">
+								<li>
+									<h5>value: <span class="tsd-signature-type">number</span></h5>
+								</li>
+							</ul>
+							<h4 class="tsd-returns-title">Returns <span class="tsd-signature-type">void</span></h4>
+						</li>
+					</ul>
+				</section>
+				<section class="tsd-panel tsd-member tsd-kind-accessor tsd-parent-kind-class">
+					<a name="linejoin" class="tsd-anchor"></a>
+					<h3>line<wbr>Join</h3>
+					<ul class="tsd-signatures tsd-kind-accessor tsd-parent-kind-class">
+						<li class="tsd-signature tsd-kind-icon"><span class="tsd-signature-symbol">get</span> lineJoin<span class="tsd-signature-symbol">(</span><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">string</span></li>
+						<li class="tsd-signature tsd-kind-icon"><span class="tsd-signature-symbol">set</span> lineJoin<span class="tsd-signature-symbol">(</span>value<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">string</span><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">void</span></li>
+					</ul>
+					<ul class="tsd-descriptions">
+						<li class="tsd-description">
+							<aside class="tsd-sources">
+								<ul>
+									<li>Defined in <a href="https://github.com/phosphorjs/phosphor/blob/8fee9108/packages/datagrid/src/graphicscontext.ts#L139">graphicscontext.ts:139</a></li>
+								</ul>
+							</aside>
+							<h4 class="tsd-returns-title">Returns <span class="tsd-signature-type">string</span></h4>
+						</li>
+						<li class="tsd-description">
+							<aside class="tsd-sources">
+								<ul>
+									<li>Defined in <a href="https://github.com/phosphorjs/phosphor/blob/8fee9108/packages/datagrid/src/graphicscontext.ts#L143">graphicscontext.ts:143</a></li>
+								</ul>
+							</aside>
+							<h4 class="tsd-parameters-title">Parameters</h4>
+							<ul class="tsd-parameters">
+								<li>
+									<h5>value: <span class="tsd-signature-type">string</span></h5>
+								</li>
+							</ul>
+							<h4 class="tsd-returns-title">Returns <span class="tsd-signature-type">void</span></h4>
+						</li>
+					</ul>
+				</section>
+				<section class="tsd-panel tsd-member tsd-kind-accessor tsd-parent-kind-class">
+					<a name="linewidth" class="tsd-anchor"></a>
+					<h3>line<wbr>Width</h3>
+					<ul class="tsd-signatures tsd-kind-accessor tsd-parent-kind-class">
+						<li class="tsd-signature tsd-kind-icon"><span class="tsd-signature-symbol">get</span> lineWidth<span class="tsd-signature-symbol">(</span><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">number</span></li>
+						<li class="tsd-signature tsd-kind-icon"><span class="tsd-signature-symbol">set</span> lineWidth<span class="tsd-signature-symbol">(</span>value<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">number</span><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">void</span></li>
+					</ul>
+					<ul class="tsd-descriptions">
+						<li class="tsd-description">
+							<aside class="tsd-sources">
+								<ul>
+									<li>Defined in <a href="https://github.com/phosphorjs/phosphor/blob/8fee9108/packages/datagrid/src/graphicscontext.ts#L150">graphicscontext.ts:150</a></li>
+								</ul>
+							</aside>
+							<h4 class="tsd-returns-title">Returns <span class="tsd-signature-type">number</span></h4>
+						</li>
+						<li class="tsd-description">
+							<aside class="tsd-sources">
+								<ul>
+									<li>Defined in <a href="https://github.com/phosphorjs/phosphor/blob/8fee9108/packages/datagrid/src/graphicscontext.ts#L154">graphicscontext.ts:154</a></li>
+								</ul>
+							</aside>
+							<h4 class="tsd-parameters-title">Parameters</h4>
+							<ul class="tsd-parameters">
+								<li>
+									<h5>value: <span class="tsd-signature-type">number</span></h5>
+								</li>
+							</ul>
+							<h4 class="tsd-returns-title">Returns <span class="tsd-signature-type">void</span></h4>
+						</li>
+					</ul>
+				</section>
+				<section class="tsd-panel tsd-member tsd-kind-accessor tsd-parent-kind-class">
+					<a name="miterlimit" class="tsd-anchor"></a>
+					<h3>miter<wbr>Limit</h3>
+					<ul class="tsd-signatures tsd-kind-accessor tsd-parent-kind-class">
+						<li class="tsd-signature tsd-kind-icon"><span class="tsd-signature-symbol">get</span> miterLimit<span class="tsd-signature-symbol">(</span><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">number</span></li>
+						<li class="tsd-signature tsd-kind-icon"><span class="tsd-signature-symbol">set</span> miterLimit<span class="tsd-signature-symbol">(</span>value<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">number</span><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">void</span></li>
+					</ul>
+					<ul class="tsd-descriptions">
+						<li class="tsd-description">
+							<aside class="tsd-sources">
+								<ul>
+									<li>Defined in <a href="https://github.com/phosphorjs/phosphor/blob/8fee9108/packages/datagrid/src/graphicscontext.ts#L161">graphicscontext.ts:161</a></li>
+								</ul>
+							</aside>
+							<h4 class="tsd-returns-title">Returns <span class="tsd-signature-type">number</span></h4>
+						</li>
+						<li class="tsd-description">
+							<aside class="tsd-sources">
+								<ul>
+									<li>Defined in <a href="https://github.com/phosphorjs/phosphor/blob/8fee9108/packages/datagrid/src/graphicscontext.ts#L165">graphicscontext.ts:165</a></li>
+								</ul>
+							</aside>
+							<h4 class="tsd-parameters-title">Parameters</h4>
+							<ul class="tsd-parameters">
+								<li>
+									<h5>value: <span class="tsd-signature-type">number</span></h5>
+								</li>
+							</ul>
+							<h4 class="tsd-returns-title">Returns <span class="tsd-signature-type">void</span></h4>
+						</li>
+					</ul>
+				</section>
+				<section class="tsd-panel tsd-member tsd-kind-accessor tsd-parent-kind-class">
+					<a name="shadowblur" class="tsd-anchor"></a>
+					<h3>shadow<wbr>Blur</h3>
+					<ul class="tsd-signatures tsd-kind-accessor tsd-parent-kind-class">
+						<li class="tsd-signature tsd-kind-icon"><span class="tsd-signature-symbol">get</span> shadowBlur<span class="tsd-signature-symbol">(</span><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">number</span></li>
+						<li class="tsd-signature tsd-kind-icon"><span class="tsd-signature-symbol">set</span> shadowBlur<span class="tsd-signature-symbol">(</span>value<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">number</span><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">void</span></li>
+					</ul>
+					<ul class="tsd-descriptions">
+						<li class="tsd-description">
+							<aside class="tsd-sources">
+								<ul>
+									<li>Defined in <a href="https://github.com/phosphorjs/phosphor/blob/8fee9108/packages/datagrid/src/graphicscontext.ts#L172">graphicscontext.ts:172</a></li>
+								</ul>
+							</aside>
+							<h4 class="tsd-returns-title">Returns <span class="tsd-signature-type">number</span></h4>
+						</li>
+						<li class="tsd-description">
+							<aside class="tsd-sources">
+								<ul>
+									<li>Defined in <a href="https://github.com/phosphorjs/phosphor/blob/8fee9108/packages/datagrid/src/graphicscontext.ts#L176">graphicscontext.ts:176</a></li>
+								</ul>
+							</aside>
+							<h4 class="tsd-parameters-title">Parameters</h4>
+							<ul class="tsd-parameters">
+								<li>
+									<h5>value: <span class="tsd-signature-type">number</span></h5>
+								</li>
+							</ul>
+							<h4 class="tsd-returns-title">Returns <span class="tsd-signature-type">void</span></h4>
+						</li>
+					</ul>
+				</section>
+				<section class="tsd-panel tsd-member tsd-kind-accessor tsd-parent-kind-class">
+					<a name="shadowcolor" class="tsd-anchor"></a>
+					<h3>shadow<wbr>Color</h3>
+					<ul class="tsd-signatures tsd-kind-accessor tsd-parent-kind-class">
+						<li class="tsd-signature tsd-kind-icon"><span class="tsd-signature-symbol">get</span> shadowColor<span class="tsd-signature-symbol">(</span><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">string</span></li>
+						<li class="tsd-signature tsd-kind-icon"><span class="tsd-signature-symbol">set</span> shadowColor<span class="tsd-signature-symbol">(</span>value<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">string</span><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">void</span></li>
+					</ul>
+					<ul class="tsd-descriptions">
+						<li class="tsd-description">
+							<aside class="tsd-sources">
+								<ul>
+									<li>Defined in <a href="https://github.com/phosphorjs/phosphor/blob/8fee9108/packages/datagrid/src/graphicscontext.ts#L183">graphicscontext.ts:183</a></li>
+								</ul>
+							</aside>
+							<h4 class="tsd-returns-title">Returns <span class="tsd-signature-type">string</span></h4>
+						</li>
+						<li class="tsd-description">
+							<aside class="tsd-sources">
+								<ul>
+									<li>Defined in <a href="https://github.com/phosphorjs/phosphor/blob/8fee9108/packages/datagrid/src/graphicscontext.ts#L187">graphicscontext.ts:187</a></li>
+								</ul>
+							</aside>
+							<h4 class="tsd-parameters-title">Parameters</h4>
+							<ul class="tsd-parameters">
+								<li>
+									<h5>value: <span class="tsd-signature-type">string</span></h5>
+								</li>
+							</ul>
+							<h4 class="tsd-returns-title">Returns <span class="tsd-signature-type">void</span></h4>
+						</li>
+					</ul>
+				</section>
+				<section class="tsd-panel tsd-member tsd-kind-accessor tsd-parent-kind-class">
+					<a name="shadowoffsetx" class="tsd-anchor"></a>
+					<h3>shadow<wbr>OffsetX</h3>
+					<ul class="tsd-signatures tsd-kind-accessor tsd-parent-kind-class">
+						<li class="tsd-signature tsd-kind-icon"><span class="tsd-signature-symbol">get</span> shadowOffsetX<span class="tsd-signature-symbol">(</span><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">number</span></li>
+						<li class="tsd-signature tsd-kind-icon"><span class="tsd-signature-symbol">set</span> shadowOffsetX<span class="tsd-signature-symbol">(</span>value<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">number</span><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">void</span></li>
+					</ul>
+					<ul class="tsd-descriptions">
+						<li class="tsd-description">
+							<aside class="tsd-sources">
+								<ul>
+									<li>Defined in <a href="https://github.com/phosphorjs/phosphor/blob/8fee9108/packages/datagrid/src/graphicscontext.ts#L194">graphicscontext.ts:194</a></li>
+								</ul>
+							</aside>
+							<h4 class="tsd-returns-title">Returns <span class="tsd-signature-type">number</span></h4>
+						</li>
+						<li class="tsd-description">
+							<aside class="tsd-sources">
+								<ul>
+									<li>Defined in <a href="https://github.com/phosphorjs/phosphor/blob/8fee9108/packages/datagrid/src/graphicscontext.ts#L198">graphicscontext.ts:198</a></li>
+								</ul>
+							</aside>
+							<h4 class="tsd-parameters-title">Parameters</h4>
+							<ul class="tsd-parameters">
+								<li>
+									<h5>value: <span class="tsd-signature-type">number</span></h5>
+								</li>
+							</ul>
+							<h4 class="tsd-returns-title">Returns <span class="tsd-signature-type">void</span></h4>
+						</li>
+					</ul>
+				</section>
+				<section class="tsd-panel tsd-member tsd-kind-accessor tsd-parent-kind-class">
+					<a name="shadowoffsety" class="tsd-anchor"></a>
+					<h3>shadow<wbr>OffsetY</h3>
+					<ul class="tsd-signatures tsd-kind-accessor tsd-parent-kind-class">
+						<li class="tsd-signature tsd-kind-icon"><span class="tsd-signature-symbol">get</span> shadowOffsetY<span class="tsd-signature-symbol">(</span><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">number</span></li>
+						<li class="tsd-signature tsd-kind-icon"><span class="tsd-signature-symbol">set</span> shadowOffsetY<span class="tsd-signature-symbol">(</span>value<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">number</span><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">void</span></li>
+					</ul>
+					<ul class="tsd-descriptions">
+						<li class="tsd-description">
+							<aside class="tsd-sources">
+								<ul>
+									<li>Defined in <a href="https://github.com/phosphorjs/phosphor/blob/8fee9108/packages/datagrid/src/graphicscontext.ts#L205">graphicscontext.ts:205</a></li>
+								</ul>
+							</aside>
+							<h4 class="tsd-returns-title">Returns <span class="tsd-signature-type">number</span></h4>
+						</li>
+						<li class="tsd-description">
+							<aside class="tsd-sources">
+								<ul>
+									<li>Defined in <a href="https://github.com/phosphorjs/phosphor/blob/8fee9108/packages/datagrid/src/graphicscontext.ts#L209">graphicscontext.ts:209</a></li>
+								</ul>
+							</aside>
+							<h4 class="tsd-parameters-title">Parameters</h4>
+							<ul class="tsd-parameters">
+								<li>
+									<h5>value: <span class="tsd-signature-type">number</span></h5>
+								</li>
+							</ul>
+							<h4 class="tsd-returns-title">Returns <span class="tsd-signature-type">void</span></h4>
+						</li>
+					</ul>
+				</section>
+				<section class="tsd-panel tsd-member tsd-kind-accessor tsd-parent-kind-class">
+					<a name="strokestyle" class="tsd-anchor"></a>
+					<h3>stroke<wbr>Style</h3>
+					<ul class="tsd-signatures tsd-kind-accessor tsd-parent-kind-class">
+						<li class="tsd-signature tsd-kind-icon"><span class="tsd-signature-symbol">get</span> strokeStyle<span class="tsd-signature-symbol">(</span><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">string</span><span class="tsd-signature-symbol"> | </span><span class="tsd-signature-type">CanvasGradient</span><span class="tsd-signature-symbol"> | </span><span class="tsd-signature-type">CanvasPattern</span></li>
+						<li class="tsd-signature tsd-kind-icon"><span class="tsd-signature-symbol">set</span> strokeStyle<span class="tsd-signature-symbol">(</span>value<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">string</span><span class="tsd-signature-symbol"> | </span><span class="tsd-signature-type">CanvasGradient</span><span class="tsd-signature-symbol"> | </span><span class="tsd-signature-type">CanvasPattern</span><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">void</span></li>
+					</ul>
+					<ul class="tsd-descriptions">
+						<li class="tsd-description">
+							<aside class="tsd-sources">
+								<ul>
+									<li>Defined in <a href="https://github.com/phosphorjs/phosphor/blob/8fee9108/packages/datagrid/src/graphicscontext.ts#L73">graphicscontext.ts:73</a></li>
+								</ul>
+							</aside>
+							<h4 class="tsd-returns-title">Returns <span class="tsd-signature-type">string</span>
+								<span class="tsd-signature-symbol"> | </span>
+								<span class="tsd-signature-type">CanvasGradient</span>
+								<span class="tsd-signature-symbol"> | </span>
+								<span class="tsd-signature-type">CanvasPattern</span>
+							</h4>
+						</li>
+						<li class="tsd-description">
+							<aside class="tsd-sources">
+								<ul>
+									<li>Defined in <a href="https://github.com/phosphorjs/phosphor/blob/8fee9108/packages/datagrid/src/graphicscontext.ts#L77">graphicscontext.ts:77</a></li>
+								</ul>
+							</aside>
+							<h4 class="tsd-parameters-title">Parameters</h4>
+							<ul class="tsd-parameters">
+								<li>
+									<h5>value: <span class="tsd-signature-type">string</span><span class="tsd-signature-symbol"> | </span><span class="tsd-signature-type">CanvasGradient</span><span class="tsd-signature-symbol"> | </span><span class="tsd-signature-type">CanvasPattern</span></h5>
+								</li>
+							</ul>
+							<h4 class="tsd-returns-title">Returns <span class="tsd-signature-type">void</span></h4>
+						</li>
+					</ul>
+				</section>
+				<section class="tsd-panel tsd-member tsd-kind-accessor tsd-parent-kind-class">
+					<a name="textalign" class="tsd-anchor"></a>
+					<h3>text<wbr>Align</h3>
+					<ul class="tsd-signatures tsd-kind-accessor tsd-parent-kind-class">
+						<li class="tsd-signature tsd-kind-icon"><span class="tsd-signature-symbol">get</span> textAlign<span class="tsd-signature-symbol">(</span><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">string</span></li>
+						<li class="tsd-signature tsd-kind-icon"><span class="tsd-signature-symbol">set</span> textAlign<span class="tsd-signature-symbol">(</span>value<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">string</span><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">void</span></li>
+					</ul>
+					<ul class="tsd-descriptions">
+						<li class="tsd-description">
+							<aside class="tsd-sources">
+								<ul>
+									<li>Defined in <a href="https://github.com/phosphorjs/phosphor/blob/8fee9108/packages/datagrid/src/graphicscontext.ts#L95">graphicscontext.ts:95</a></li>
+								</ul>
+							</aside>
+							<h4 class="tsd-returns-title">Returns <span class="tsd-signature-type">string</span></h4>
+						</li>
+						<li class="tsd-description">
+							<aside class="tsd-sources">
+								<ul>
+									<li>Defined in <a href="https://github.com/phosphorjs/phosphor/blob/8fee9108/packages/datagrid/src/graphicscontext.ts#L99">graphicscontext.ts:99</a></li>
+								</ul>
+							</aside>
+							<h4 class="tsd-parameters-title">Parameters</h4>
+							<ul class="tsd-parameters">
+								<li>
+									<h5>value: <span class="tsd-signature-type">string</span></h5>
+								</li>
+							</ul>
+							<h4 class="tsd-returns-title">Returns <span class="tsd-signature-type">void</span></h4>
+						</li>
+					</ul>
+				</section>
+				<section class="tsd-panel tsd-member tsd-kind-accessor tsd-parent-kind-class">
+					<a name="textbaseline" class="tsd-anchor"></a>
+					<h3>text<wbr>Baseline</h3>
+					<ul class="tsd-signatures tsd-kind-accessor tsd-parent-kind-class">
+						<li class="tsd-signature tsd-kind-icon"><span class="tsd-signature-symbol">get</span> textBaseline<span class="tsd-signature-symbol">(</span><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">string</span></li>
+						<li class="tsd-signature tsd-kind-icon"><span class="tsd-signature-symbol">set</span> textBaseline<span class="tsd-signature-symbol">(</span>value<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">string</span><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">void</span></li>
+					</ul>
+					<ul class="tsd-descriptions">
+						<li class="tsd-description">
+							<aside class="tsd-sources">
+								<ul>
+									<li>Defined in <a href="https://github.com/phosphorjs/phosphor/blob/8fee9108/packages/datagrid/src/graphicscontext.ts#L106">graphicscontext.ts:106</a></li>
+								</ul>
+							</aside>
+							<h4 class="tsd-returns-title">Returns <span class="tsd-signature-type">string</span></h4>
+						</li>
+						<li class="tsd-description">
+							<aside class="tsd-sources">
+								<ul>
+									<li>Defined in <a href="https://github.com/phosphorjs/phosphor/blob/8fee9108/packages/datagrid/src/graphicscontext.ts#L110">graphicscontext.ts:110</a></li>
+								</ul>
+							</aside>
+							<h4 class="tsd-parameters-title">Parameters</h4>
+							<ul class="tsd-parameters">
+								<li>
+									<h5>value: <span class="tsd-signature-type">string</span></h5>
+								</li>
+							</ul>
+							<h4 class="tsd-returns-title">Returns <span class="tsd-signature-type">void</span></h4>
+						</li>
+					</ul>
+				</section>
+			</section>
+			<section class="tsd-panel-group tsd-member-group ">
+				<h2>Methods</h2>
+				<section class="tsd-panel tsd-member tsd-kind-method tsd-parent-kind-class">
+					<a name="arc" class="tsd-anchor"></a>
+					<h3>arc</h3>
+					<ul class="tsd-signatures tsd-kind-method tsd-parent-kind-class">
+						<li class="tsd-signature tsd-kind-icon">arc<span class="tsd-signature-symbol">(</span>x<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">number</span>, y<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">number</span>, radius<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">number</span>, startAngle<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">number</span>, endAngle<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">number</span>, anticlockwise<span class="tsd-signature-symbol">?: </span><span class="tsd-signature-type">boolean</span><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">void</span></li>
+					</ul>
+					<ul class="tsd-descriptions">
+						<li class="tsd-description">
+							<aside class="tsd-sources">
+								<ul>
+									<li>Defined in <a href="https://github.com/phosphorjs/phosphor/blob/8fee9108/packages/datagrid/src/graphicscontext.ts#L316">graphicscontext.ts:316</a></li>
+								</ul>
+							</aside>
+							<h4 class="tsd-parameters-title">Parameters</h4>
+							<ul class="tsd-parameters">
+								<li>
+									<h5>x: <span class="tsd-signature-type">number</span></h5>
+								</li>
+								<li>
+									<h5>y: <span class="tsd-signature-type">number</span></h5>
+								</li>
+								<li>
+									<h5>radius: <span class="tsd-signature-type">number</span></h5>
+								</li>
+								<li>
+									<h5>startAngle: <span class="tsd-signature-type">number</span></h5>
+								</li>
+								<li>
+									<h5>endAngle: <span class="tsd-signature-type">number</span></h5>
+								</li>
+								<li>
+									<h5><span class="tsd-flag ts-flagOptional">Optional</span> anticlockwise: <span class="tsd-signature-type">boolean</span></h5>
+								</li>
+							</ul>
+							<h4 class="tsd-returns-title">Returns <span class="tsd-signature-type">void</span></h4>
+						</li>
+					</ul>
+				</section>
+				<section class="tsd-panel tsd-member tsd-kind-method tsd-parent-kind-class">
+					<a name="arcto" class="tsd-anchor"></a>
+					<h3>arc<wbr>To</h3>
+					<ul class="tsd-signatures tsd-kind-method tsd-parent-kind-class">
+						<li class="tsd-signature tsd-kind-icon">arc<wbr>To<span class="tsd-signature-symbol">(</span>x1<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">number</span>, y1<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">number</span>, x2<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">number</span>, y2<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">number</span>, radius<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">number</span><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">void</span></li>
+					</ul>
+					<ul class="tsd-descriptions">
+						<li class="tsd-description">
+							<aside class="tsd-sources">
+								<ul>
+									<li>Defined in <a href="https://github.com/phosphorjs/phosphor/blob/8fee9108/packages/datagrid/src/graphicscontext.ts#L324">graphicscontext.ts:324</a></li>
+								</ul>
+							</aside>
+							<h4 class="tsd-parameters-title">Parameters</h4>
+							<ul class="tsd-parameters">
+								<li>
+									<h5>x1: <span class="tsd-signature-type">number</span></h5>
+								</li>
+								<li>
+									<h5>y1: <span class="tsd-signature-type">number</span></h5>
+								</li>
+								<li>
+									<h5>x2: <span class="tsd-signature-type">number</span></h5>
+								</li>
+								<li>
+									<h5>y2: <span class="tsd-signature-type">number</span></h5>
+								</li>
+								<li>
+									<h5>radius: <span class="tsd-signature-type">number</span></h5>
+								</li>
+							</ul>
+							<h4 class="tsd-returns-title">Returns <span class="tsd-signature-type">void</span></h4>
+						</li>
+					</ul>
+				</section>
+				<section class="tsd-panel tsd-member tsd-kind-method tsd-parent-kind-class">
+					<a name="beginpath" class="tsd-anchor"></a>
+					<h3>begin<wbr>Path</h3>
+					<ul class="tsd-signatures tsd-kind-method tsd-parent-kind-class">
+						<li class="tsd-signature tsd-kind-icon">begin<wbr>Path<span class="tsd-signature-symbol">(</span><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">void</span></li>
+					</ul>
+					<ul class="tsd-descriptions">
+						<li class="tsd-description">
+							<aside class="tsd-sources">
+								<ul>
+									<li>Defined in <a href="https://github.com/phosphorjs/phosphor/blob/8fee9108/packages/datagrid/src/graphicscontext.ts#L298">graphicscontext.ts:298</a></li>
+								</ul>
+							</aside>
+							<h4 class="tsd-returns-title">Returns <span class="tsd-signature-type">void</span></h4>
+						</li>
+					</ul>
+				</section>
+				<section class="tsd-panel tsd-member tsd-kind-method tsd-parent-kind-class">
+					<a name="beziercurveto" class="tsd-anchor"></a>
+					<h3>bezier<wbr>Curve<wbr>To</h3>
+					<ul class="tsd-signatures tsd-kind-method tsd-parent-kind-class">
+						<li class="tsd-signature tsd-kind-icon">bezier<wbr>Curve<wbr>To<span class="tsd-signature-symbol">(</span>cp1x<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">number</span>, cp1y<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">number</span>, cp2x<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">number</span>, cp2y<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">number</span>, x<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">number</span>, y<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">number</span><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">void</span></li>
+					</ul>
+					<ul class="tsd-descriptions">
+						<li class="tsd-description">
+							<aside class="tsd-sources">
+								<ul>
+									<li>Defined in <a href="https://github.com/phosphorjs/phosphor/blob/8fee9108/packages/datagrid/src/graphicscontext.ts#L328">graphicscontext.ts:328</a></li>
+								</ul>
+							</aside>
+							<h4 class="tsd-parameters-title">Parameters</h4>
+							<ul class="tsd-parameters">
+								<li>
+									<h5>cp1x: <span class="tsd-signature-type">number</span></h5>
+								</li>
+								<li>
+									<h5>cp1y: <span class="tsd-signature-type">number</span></h5>
+								</li>
+								<li>
+									<h5>cp2x: <span class="tsd-signature-type">number</span></h5>
+								</li>
+								<li>
+									<h5>cp2y: <span class="tsd-signature-type">number</span></h5>
+								</li>
+								<li>
+									<h5>x: <span class="tsd-signature-type">number</span></h5>
+								</li>
+								<li>
+									<h5>y: <span class="tsd-signature-type">number</span></h5>
+								</li>
+							</ul>
+							<h4 class="tsd-returns-title">Returns <span class="tsd-signature-type">void</span></h4>
+						</li>
+					</ul>
+				</section>
+				<section class="tsd-panel tsd-member tsd-kind-method tsd-parent-kind-class">
+					<a name="clearrect" class="tsd-anchor"></a>
+					<h3>clear<wbr>Rect</h3>
+					<ul class="tsd-signatures tsd-kind-method tsd-parent-kind-class">
+						<li class="tsd-signature tsd-kind-icon">clear<wbr>Rect<span class="tsd-signature-symbol">(</span>x<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">number</span>, y<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">number</span>, w<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">number</span>, h<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">number</span><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">void</span></li>
+					</ul>
+					<ul class="tsd-descriptions">
+						<li class="tsd-description">
+							<aside class="tsd-sources">
+								<ul>
+									<li>Defined in <a href="https://github.com/phosphorjs/phosphor/blob/8fee9108/packages/datagrid/src/graphicscontext.ts#L376">graphicscontext.ts:376</a></li>
+								</ul>
+							</aside>
+							<h4 class="tsd-parameters-title">Parameters</h4>
+							<ul class="tsd-parameters">
+								<li>
+									<h5>x: <span class="tsd-signature-type">number</span></h5>
+								</li>
+								<li>
+									<h5>y: <span class="tsd-signature-type">number</span></h5>
+								</li>
+								<li>
+									<h5>w: <span class="tsd-signature-type">number</span></h5>
+								</li>
+								<li>
+									<h5>h: <span class="tsd-signature-type">number</span></h5>
+								</li>
+							</ul>
+							<h4 class="tsd-returns-title">Returns <span class="tsd-signature-type">void</span></h4>
+						</li>
+					</ul>
+				</section>
+				<section class="tsd-panel tsd-member tsd-kind-method tsd-parent-kind-class">
+					<a name="clip" class="tsd-anchor"></a>
+					<h3>clip</h3>
+					<ul class="tsd-signatures tsd-kind-method tsd-parent-kind-class">
+						<li class="tsd-signature tsd-kind-icon">clip<span class="tsd-signature-symbol">(</span>fillRule<span class="tsd-signature-symbol">?: </span><span class="tsd-signature-type">CanvasFillRule</span><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">void</span></li>
+					</ul>
+					<ul class="tsd-descriptions">
+						<li class="tsd-description">
+							<aside class="tsd-sources">
+								<ul>
+									<li>Defined in <a href="https://github.com/phosphorjs/phosphor/blob/8fee9108/packages/datagrid/src/graphicscontext.ts#L356">graphicscontext.ts:356</a></li>
+								</ul>
+							</aside>
+							<h4 class="tsd-parameters-title">Parameters</h4>
+							<ul class="tsd-parameters">
+								<li>
+									<h5><span class="tsd-flag ts-flagOptional">Optional</span> fillRule: <span class="tsd-signature-type">CanvasFillRule</span></h5>
+								</li>
+							</ul>
+							<h4 class="tsd-returns-title">Returns <span class="tsd-signature-type">void</span></h4>
+						</li>
+					</ul>
+				</section>
+				<section class="tsd-panel tsd-member tsd-kind-method tsd-parent-kind-class">
+					<a name="closepath" class="tsd-anchor"></a>
+					<h3>close<wbr>Path</h3>
+					<ul class="tsd-signatures tsd-kind-method tsd-parent-kind-class">
+						<li class="tsd-signature tsd-kind-icon">close<wbr>Path<span class="tsd-signature-symbol">(</span><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">void</span></li>
+					</ul>
+					<ul class="tsd-descriptions">
+						<li class="tsd-description">
+							<aside class="tsd-sources">
+								<ul>
+									<li>Defined in <a href="https://github.com/phosphorjs/phosphor/blob/8fee9108/packages/datagrid/src/graphicscontext.ts#L302">graphicscontext.ts:302</a></li>
+								</ul>
+							</aside>
+							<h4 class="tsd-returns-title">Returns <span class="tsd-signature-type">void</span></h4>
+						</li>
+					</ul>
+				</section>
+				<section class="tsd-panel tsd-member tsd-kind-method tsd-parent-kind-class">
+					<a name="createimagedata" class="tsd-anchor"></a>
+					<h3>create<wbr>Image<wbr>Data</h3>
+					<ul class="tsd-signatures tsd-kind-method tsd-parent-kind-class">
+						<li class="tsd-signature tsd-kind-icon">create<wbr>Image<wbr>Data<span class="tsd-signature-symbol">(</span>imageData<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">ImageData</span><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">ImageData</span></li>
+						<li class="tsd-signature tsd-kind-icon">create<wbr>Image<wbr>Data<span class="tsd-signature-symbol">(</span>sw<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">number</span>, sh<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">number</span><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">ImageData</span></li>
+					</ul>
+					<ul class="tsd-descriptions">
+						<li class="tsd-description">
+							<aside class="tsd-sources">
+								<ul>
+									<li>Defined in <a href="https://github.com/phosphorjs/phosphor/blob/8fee9108/packages/datagrid/src/graphicscontext.ts#L420">graphicscontext.ts:420</a></li>
+								</ul>
+							</aside>
+							<h4 class="tsd-parameters-title">Parameters</h4>
+							<ul class="tsd-parameters">
+								<li>
+									<h5>imageData: <span class="tsd-signature-type">ImageData</span></h5>
+								</li>
+							</ul>
+							<h4 class="tsd-returns-title">Returns <span class="tsd-signature-type">ImageData</span></h4>
+						</li>
+						<li class="tsd-description">
+							<aside class="tsd-sources">
+								<ul>
+									<li>Defined in <a href="https://github.com/phosphorjs/phosphor/blob/8fee9108/packages/datagrid/src/graphicscontext.ts#L421">graphicscontext.ts:421</a></li>
+								</ul>
+							</aside>
+							<h4 class="tsd-parameters-title">Parameters</h4>
+							<ul class="tsd-parameters">
+								<li>
+									<h5>sw: <span class="tsd-signature-type">number</span></h5>
+								</li>
+								<li>
+									<h5>sh: <span class="tsd-signature-type">number</span></h5>
+								</li>
+							</ul>
+							<h4 class="tsd-returns-title">Returns <span class="tsd-signature-type">ImageData</span></h4>
+						</li>
+					</ul>
+				</section>
+				<section class="tsd-panel tsd-member tsd-kind-method tsd-parent-kind-class">
+					<a name="createlineargradient" class="tsd-anchor"></a>
+					<h3>create<wbr>Linear<wbr>Gradient</h3>
+					<ul class="tsd-signatures tsd-kind-method tsd-parent-kind-class">
+						<li class="tsd-signature tsd-kind-icon">create<wbr>Linear<wbr>Gradient<span class="tsd-signature-symbol">(</span>x0<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">number</span>, y0<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">number</span>, x1<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">number</span>, y1<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">number</span><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">CanvasGradient</span></li>
+					</ul>
+					<ul class="tsd-descriptions">
+						<li class="tsd-description">
+							<aside class="tsd-sources">
+								<ul>
+									<li>Defined in <a href="https://github.com/phosphorjs/phosphor/blob/8fee9108/packages/datagrid/src/graphicscontext.ts#L408">graphicscontext.ts:408</a></li>
+								</ul>
+							</aside>
+							<h4 class="tsd-parameters-title">Parameters</h4>
+							<ul class="tsd-parameters">
+								<li>
+									<h5>x0: <span class="tsd-signature-type">number</span></h5>
+								</li>
+								<li>
+									<h5>y0: <span class="tsd-signature-type">number</span></h5>
+								</li>
+								<li>
+									<h5>x1: <span class="tsd-signature-type">number</span></h5>
+								</li>
+								<li>
+									<h5>y1: <span class="tsd-signature-type">number</span></h5>
+								</li>
+							</ul>
+							<h4 class="tsd-returns-title">Returns <span class="tsd-signature-type">CanvasGradient</span></h4>
+						</li>
+					</ul>
+				</section>
+				<section class="tsd-panel tsd-member tsd-kind-method tsd-parent-kind-class">
+					<a name="createpattern" class="tsd-anchor"></a>
+					<h3>create<wbr>Pattern</h3>
+					<ul class="tsd-signatures tsd-kind-method tsd-parent-kind-class">
+						<li class="tsd-signature tsd-kind-icon">create<wbr>Pattern<span class="tsd-signature-symbol">(</span>image<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">HTMLImageElement</span><span class="tsd-signature-symbol"> | </span><span class="tsd-signature-type">HTMLCanvasElement</span><span class="tsd-signature-symbol"> | </span><span class="tsd-signature-type">HTMLVideoElement</span>, repetition<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">string</span><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">CanvasPattern</span></li>
+					</ul>
+					<ul class="tsd-descriptions">
+						<li class="tsd-description">
+							<aside class="tsd-sources">
+								<ul>
+									<li>Defined in <a href="https://github.com/phosphorjs/phosphor/blob/8fee9108/packages/datagrid/src/graphicscontext.ts#L416">graphicscontext.ts:416</a></li>
+								</ul>
+							</aside>
+							<h4 class="tsd-parameters-title">Parameters</h4>
+							<ul class="tsd-parameters">
+								<li>
+									<h5>image: <span class="tsd-signature-type">HTMLImageElement</span><span class="tsd-signature-symbol"> | </span><span class="tsd-signature-type">HTMLCanvasElement</span><span class="tsd-signature-symbol"> | </span><span class="tsd-signature-type">HTMLVideoElement</span></h5>
+								</li>
+								<li>
+									<h5>repetition: <span class="tsd-signature-type">string</span></h5>
+								</li>
+							</ul>
+							<h4 class="tsd-returns-title">Returns <span class="tsd-signature-type">CanvasPattern</span></h4>
+						</li>
+					</ul>
+				</section>
+				<section class="tsd-panel tsd-member tsd-kind-method tsd-parent-kind-class">
+					<a name="createradialgradient" class="tsd-anchor"></a>
+					<h3>create<wbr>Radial<wbr>Gradient</h3>
+					<ul class="tsd-signatures tsd-kind-method tsd-parent-kind-class">
+						<li class="tsd-signature tsd-kind-icon">create<wbr>Radial<wbr>Gradient<span class="tsd-signature-symbol">(</span>x0<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">number</span>, y0<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">number</span>, r0<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">number</span>, x1<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">number</span>, y1<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">number</span>, r1<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">number</span><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">CanvasGradient</span></li>
+					</ul>
+					<ul class="tsd-descriptions">
+						<li class="tsd-description">
+							<aside class="tsd-sources">
+								<ul>
+									<li>Defined in <a href="https://github.com/phosphorjs/phosphor/blob/8fee9108/packages/datagrid/src/graphicscontext.ts#L412">graphicscontext.ts:412</a></li>
+								</ul>
+							</aside>
+							<h4 class="tsd-parameters-title">Parameters</h4>
+							<ul class="tsd-parameters">
+								<li>
+									<h5>x0: <span class="tsd-signature-type">number</span></h5>
+								</li>
+								<li>
+									<h5>y0: <span class="tsd-signature-type">number</span></h5>
+								</li>
+								<li>
+									<h5>r0: <span class="tsd-signature-type">number</span></h5>
+								</li>
+								<li>
+									<h5>x1: <span class="tsd-signature-type">number</span></h5>
+								</li>
+								<li>
+									<h5>y1: <span class="tsd-signature-type">number</span></h5>
+								</li>
+								<li>
+									<h5>r1: <span class="tsd-signature-type">number</span></h5>
+								</li>
+							</ul>
+							<h4 class="tsd-returns-title">Returns <span class="tsd-signature-type">CanvasGradient</span></h4>
+						</li>
+					</ul>
+				</section>
+				<section class="tsd-panel tsd-member tsd-kind-method tsd-parent-kind-class">
+					<a name="dispose" class="tsd-anchor"></a>
+					<h3>dispose</h3>
+					<ul class="tsd-signatures tsd-kind-method tsd-parent-kind-class">
+						<li class="tsd-signature tsd-kind-icon">dispose<span class="tsd-signature-symbol">(</span><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">void</span></li>
+					</ul>
+					<ul class="tsd-descriptions">
+						<li class="tsd-description">
+							<aside class="tsd-sources">
+								<ul>
+									<li>Defined in <a href="https://github.com/phosphorjs/phosphor/blob/8fee9108/packages/datagrid/src/graphicscontext.ts#L42">graphicscontext.ts:42</a></li>
+								</ul>
+							</aside>
+							<h4 class="tsd-returns-title">Returns <span class="tsd-signature-type">void</span></h4>
+						</li>
+					</ul>
+				</section>
+				<section class="tsd-panel tsd-member tsd-kind-method tsd-parent-kind-class">
+					<a name="drawfocusifneeded" class="tsd-anchor"></a>
+					<h3>draw<wbr>Focus<wbr>IfNeeded</h3>
+					<ul class="tsd-signatures tsd-kind-method tsd-parent-kind-class">
+						<li class="tsd-signature tsd-kind-icon">draw<wbr>Focus<wbr>IfNeeded<span class="tsd-signature-symbol">(</span>element<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">Element</span><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">void</span></li>
+					</ul>
+					<ul class="tsd-descriptions">
+						<li class="tsd-description">
+							<aside class="tsd-sources">
+								<ul>
+									<li>Defined in <a href="https://github.com/phosphorjs/phosphor/blob/8fee9108/packages/datagrid/src/graphicscontext.ts#L443">graphicscontext.ts:443</a></li>
+								</ul>
+							</aside>
+							<h4 class="tsd-parameters-title">Parameters</h4>
+							<ul class="tsd-parameters">
+								<li>
+									<h5>element: <span class="tsd-signature-type">Element</span></h5>
+								</li>
+							</ul>
+							<h4 class="tsd-returns-title">Returns <span class="tsd-signature-type">void</span></h4>
+						</li>
+					</ul>
+				</section>
+				<section class="tsd-panel tsd-member tsd-kind-method tsd-parent-kind-class">
+					<a name="drawimage" class="tsd-anchor"></a>
+					<h3>draw<wbr>Image</h3>
+					<ul class="tsd-signatures tsd-kind-method tsd-parent-kind-class">
+						<li class="tsd-signature tsd-kind-icon">draw<wbr>Image<span class="tsd-signature-symbol">(</span>image<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">HTMLImageElement</span><span class="tsd-signature-symbol"> | </span><span class="tsd-signature-type">HTMLCanvasElement</span><span class="tsd-signature-symbol"> | </span><span class="tsd-signature-type">HTMLVideoElement</span><span class="tsd-signature-symbol"> | </span><span class="tsd-signature-type">ImageBitmap</span>, dstX<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">number</span>, dstY<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">number</span><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">void</span></li>
+						<li class="tsd-signature tsd-kind-icon">draw<wbr>Image<span class="tsd-signature-symbol">(</span>image<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">HTMLImageElement</span><span class="tsd-signature-symbol"> | </span><span class="tsd-signature-type">HTMLCanvasElement</span><span class="tsd-signature-symbol"> | </span><span class="tsd-signature-type">HTMLVideoElement</span><span class="tsd-signature-symbol"> | </span><span class="tsd-signature-type">ImageBitmap</span>, dstX<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">number</span>, dstY<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">number</span>, dstW<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">number</span>, dstH<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">number</span><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">void</span></li>
+						<li class="tsd-signature tsd-kind-icon">draw<wbr>Image<span class="tsd-signature-symbol">(</span>image<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">HTMLImageElement</span><span class="tsd-signature-symbol"> | </span><span class="tsd-signature-type">HTMLCanvasElement</span><span class="tsd-signature-symbol"> | </span><span class="tsd-signature-type">HTMLVideoElement</span><span class="tsd-signature-symbol"> | </span><span class="tsd-signature-type">ImageBitmap</span>, srcX<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">number</span>, srcY<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">number</span>, srcW<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">number</span>, srcH<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">number</span>, dstX<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">number</span>, dstY<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">number</span>, dstW<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">number</span>, dstH<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">number</span><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">void</span></li>
+					</ul>
+					<ul class="tsd-descriptions">
+						<li class="tsd-description">
+							<aside class="tsd-sources">
+								<ul>
+									<li>Defined in <a href="https://github.com/phosphorjs/phosphor/blob/8fee9108/packages/datagrid/src/graphicscontext.ts#L436">graphicscontext.ts:436</a></li>
+								</ul>
+							</aside>
+							<h4 class="tsd-parameters-title">Parameters</h4>
+							<ul class="tsd-parameters">
+								<li>
+									<h5>image: <span class="tsd-signature-type">HTMLImageElement</span><span class="tsd-signature-symbol"> | </span><span class="tsd-signature-type">HTMLCanvasElement</span><span class="tsd-signature-symbol"> | </span><span class="tsd-signature-type">HTMLVideoElement</span><span class="tsd-signature-symbol"> | </span><span class="tsd-signature-type">ImageBitmap</span></h5>
+								</li>
+								<li>
+									<h5>dstX: <span class="tsd-signature-type">number</span></h5>
+								</li>
+								<li>
+									<h5>dstY: <span class="tsd-signature-type">number</span></h5>
+								</li>
+							</ul>
+							<h4 class="tsd-returns-title">Returns <span class="tsd-signature-type">void</span></h4>
+						</li>
+						<li class="tsd-description">
+							<aside class="tsd-sources">
+								<ul>
+									<li>Defined in <a href="https://github.com/phosphorjs/phosphor/blob/8fee9108/packages/datagrid/src/graphicscontext.ts#L437">graphicscontext.ts:437</a></li>
+								</ul>
+							</aside>
+							<h4 class="tsd-parameters-title">Parameters</h4>
+							<ul class="tsd-parameters">
+								<li>
+									<h5>image: <span class="tsd-signature-type">HTMLImageElement</span><span class="tsd-signature-symbol"> | </span><span class="tsd-signature-type">HTMLCanvasElement</span><span class="tsd-signature-symbol"> | </span><span class="tsd-signature-type">HTMLVideoElement</span><span class="tsd-signature-symbol"> | </span><span class="tsd-signature-type">ImageBitmap</span></h5>
+								</li>
+								<li>
+									<h5>dstX: <span class="tsd-signature-type">number</span></h5>
+								</li>
+								<li>
+									<h5>dstY: <span class="tsd-signature-type">number</span></h5>
+								</li>
+								<li>
+									<h5>dstW: <span class="tsd-signature-type">number</span></h5>
+								</li>
+								<li>
+									<h5>dstH: <span class="tsd-signature-type">number</span></h5>
+								</li>
+							</ul>
+							<h4 class="tsd-returns-title">Returns <span class="tsd-signature-type">void</span></h4>
+						</li>
+						<li class="tsd-description">
+							<aside class="tsd-sources">
+								<ul>
+									<li>Defined in <a href="https://github.com/phosphorjs/phosphor/blob/8fee9108/packages/datagrid/src/graphicscontext.ts#L438">graphicscontext.ts:438</a></li>
+								</ul>
+							</aside>
+							<h4 class="tsd-parameters-title">Parameters</h4>
+							<ul class="tsd-parameters">
+								<li>
+									<h5>image: <span class="tsd-signature-type">HTMLImageElement</span><span class="tsd-signature-symbol"> | </span><span class="tsd-signature-type">HTMLCanvasElement</span><span class="tsd-signature-symbol"> | </span><span class="tsd-signature-type">HTMLVideoElement</span><span class="tsd-signature-symbol"> | </span><span class="tsd-signature-type">ImageBitmap</span></h5>
+								</li>
+								<li>
+									<h5>srcX: <span class="tsd-signature-type">number</span></h5>
+								</li>
+								<li>
+									<h5>srcY: <span class="tsd-signature-type">number</span></h5>
+								</li>
+								<li>
+									<h5>srcW: <span class="tsd-signature-type">number</span></h5>
+								</li>
+								<li>
+									<h5>srcH: <span class="tsd-signature-type">number</span></h5>
+								</li>
+								<li>
+									<h5>dstX: <span class="tsd-signature-type">number</span></h5>
+								</li>
+								<li>
+									<h5>dstY: <span class="tsd-signature-type">number</span></h5>
+								</li>
+								<li>
+									<h5>dstW: <span class="tsd-signature-type">number</span></h5>
+								</li>
+								<li>
+									<h5>dstH: <span class="tsd-signature-type">number</span></h5>
+								</li>
+							</ul>
+							<h4 class="tsd-returns-title">Returns <span class="tsd-signature-type">void</span></h4>
+						</li>
+					</ul>
+				</section>
+				<section class="tsd-panel tsd-member tsd-kind-method tsd-parent-kind-class">
+					<a name="ellipse" class="tsd-anchor"></a>
+					<h3>ellipse</h3>
+					<ul class="tsd-signatures tsd-kind-method tsd-parent-kind-class">
+						<li class="tsd-signature tsd-kind-icon">ellipse<span class="tsd-signature-symbol">(</span>x<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">number</span>, y<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">number</span>, radiusX<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">number</span>, radiusY<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">number</span>, rotation<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">number</span>, startAngle<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">number</span>, endAngle<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">number</span>, anticlockwise<span class="tsd-signature-symbol">?: </span><span class="tsd-signature-type">boolean</span><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">void</span></li>
+					</ul>
+					<ul class="tsd-descriptions">
+						<li class="tsd-description">
+							<aside class="tsd-sources">
+								<ul>
+									<li>Defined in <a href="https://github.com/phosphorjs/phosphor/blob/8fee9108/packages/datagrid/src/graphicscontext.ts#L332">graphicscontext.ts:332</a></li>
+								</ul>
+							</aside>
+							<h4 class="tsd-parameters-title">Parameters</h4>
+							<ul class="tsd-parameters">
+								<li>
+									<h5>x: <span class="tsd-signature-type">number</span></h5>
+								</li>
+								<li>
+									<h5>y: <span class="tsd-signature-type">number</span></h5>
+								</li>
+								<li>
+									<h5>radiusX: <span class="tsd-signature-type">number</span></h5>
+								</li>
+								<li>
+									<h5>radiusY: <span class="tsd-signature-type">number</span></h5>
+								</li>
+								<li>
+									<h5>rotation: <span class="tsd-signature-type">number</span></h5>
+								</li>
+								<li>
+									<h5>startAngle: <span class="tsd-signature-type">number</span></h5>
+								</li>
+								<li>
+									<h5>endAngle: <span class="tsd-signature-type">number</span></h5>
+								</li>
+								<li>
+									<h5><span class="tsd-flag ts-flagOptional">Optional</span> anticlockwise: <span class="tsd-signature-type">boolean</span></h5>
+								</li>
+							</ul>
+							<h4 class="tsd-returns-title">Returns <span class="tsd-signature-type">void</span></h4>
+						</li>
+					</ul>
+				</section>
+				<section class="tsd-panel tsd-member tsd-kind-method tsd-parent-kind-class">
+					<a name="fill" class="tsd-anchor"></a>
+					<h3>fill</h3>
+					<ul class="tsd-signatures tsd-kind-method tsd-parent-kind-class">
+						<li class="tsd-signature tsd-kind-icon">fill<span class="tsd-signature-symbol">(</span>fillRule<span class="tsd-signature-symbol">?: </span><span class="tsd-signature-type">CanvasFillRule</span><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">void</span></li>
+					</ul>
+					<ul class="tsd-descriptions">
+						<li class="tsd-description">
+							<aside class="tsd-sources">
+								<ul>
+									<li>Defined in <a href="https://github.com/phosphorjs/phosphor/blob/8fee9108/packages/datagrid/src/graphicscontext.ts#L364">graphicscontext.ts:364</a></li>
+								</ul>
+							</aside>
+							<h4 class="tsd-parameters-title">Parameters</h4>
+							<ul class="tsd-parameters">
+								<li>
+									<h5><span class="tsd-flag ts-flagOptional">Optional</span> fillRule: <span class="tsd-signature-type">CanvasFillRule</span></h5>
+								</li>
+							</ul>
+							<h4 class="tsd-returns-title">Returns <span class="tsd-signature-type">void</span></h4>
+						</li>
+					</ul>
+				</section>
+				<section class="tsd-panel tsd-member tsd-kind-method tsd-parent-kind-class">
+					<a name="fillrect" class="tsd-anchor"></a>
+					<h3>fill<wbr>Rect</h3>
+					<ul class="tsd-signatures tsd-kind-method tsd-parent-kind-class">
+						<li class="tsd-signature tsd-kind-icon">fill<wbr>Rect<span class="tsd-signature-symbol">(</span>x<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">number</span>, y<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">number</span>, w<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">number</span>, h<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">number</span><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">void</span></li>
+					</ul>
+					<ul class="tsd-descriptions">
+						<li class="tsd-description">
+							<aside class="tsd-sources">
+								<ul>
+									<li>Defined in <a href="https://github.com/phosphorjs/phosphor/blob/8fee9108/packages/datagrid/src/graphicscontext.ts#L380">graphicscontext.ts:380</a></li>
+								</ul>
+							</aside>
+							<h4 class="tsd-parameters-title">Parameters</h4>
+							<ul class="tsd-parameters">
+								<li>
+									<h5>x: <span class="tsd-signature-type">number</span></h5>
+								</li>
+								<li>
+									<h5>y: <span class="tsd-signature-type">number</span></h5>
+								</li>
+								<li>
+									<h5>w: <span class="tsd-signature-type">number</span></h5>
+								</li>
+								<li>
+									<h5>h: <span class="tsd-signature-type">number</span></h5>
+								</li>
+							</ul>
+							<h4 class="tsd-returns-title">Returns <span class="tsd-signature-type">void</span></h4>
+						</li>
+					</ul>
+				</section>
+				<section class="tsd-panel tsd-member tsd-kind-method tsd-parent-kind-class">
+					<a name="filltext" class="tsd-anchor"></a>
+					<h3>fill<wbr>Text</h3>
+					<ul class="tsd-signatures tsd-kind-method tsd-parent-kind-class">
+						<li class="tsd-signature tsd-kind-icon">fill<wbr>Text<span class="tsd-signature-symbol">(</span>text<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">string</span>, x<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">number</span>, y<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">number</span>, maxWidth<span class="tsd-signature-symbol">?: </span><span class="tsd-signature-type">number</span><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">void</span></li>
+					</ul>
+					<ul class="tsd-descriptions">
+						<li class="tsd-description">
+							<aside class="tsd-sources">
+								<ul>
+									<li>Defined in <a href="https://github.com/phosphorjs/phosphor/blob/8fee9108/packages/datagrid/src/graphicscontext.ts#L384">graphicscontext.ts:384</a></li>
+								</ul>
+							</aside>
+							<h4 class="tsd-parameters-title">Parameters</h4>
+							<ul class="tsd-parameters">
+								<li>
+									<h5>text: <span class="tsd-signature-type">string</span></h5>
+								</li>
+								<li>
+									<h5>x: <span class="tsd-signature-type">number</span></h5>
+								</li>
+								<li>
+									<h5>y: <span class="tsd-signature-type">number</span></h5>
+								</li>
+								<li>
+									<h5><span class="tsd-flag ts-flagOptional">Optional</span> maxWidth: <span class="tsd-signature-type">number</span></h5>
+								</li>
+							</ul>
+							<h4 class="tsd-returns-title">Returns <span class="tsd-signature-type">void</span></h4>
+						</li>
+					</ul>
+				</section>
+				<section class="tsd-panel tsd-member tsd-kind-method tsd-parent-kind-class">
+					<a name="getimagedata" class="tsd-anchor"></a>
+					<h3>get<wbr>Image<wbr>Data</h3>
+					<ul class="tsd-signatures tsd-kind-method tsd-parent-kind-class">
+						<li class="tsd-signature tsd-kind-icon">get<wbr>Image<wbr>Data<span class="tsd-signature-symbol">(</span>sx<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">number</span>, sy<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">number</span>, sw<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">number</span>, sh<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">number</span><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">ImageData</span></li>
+					</ul>
+					<ul class="tsd-descriptions">
+						<li class="tsd-description">
+							<aside class="tsd-sources">
+								<ul>
+									<li>Defined in <a href="https://github.com/phosphorjs/phosphor/blob/8fee9108/packages/datagrid/src/graphicscontext.ts#L426">graphicscontext.ts:426</a></li>
+								</ul>
+							</aside>
+							<h4 class="tsd-parameters-title">Parameters</h4>
+							<ul class="tsd-parameters">
+								<li>
+									<h5>sx: <span class="tsd-signature-type">number</span></h5>
+								</li>
+								<li>
+									<h5>sy: <span class="tsd-signature-type">number</span></h5>
+								</li>
+								<li>
+									<h5>sw: <span class="tsd-signature-type">number</span></h5>
+								</li>
+								<li>
+									<h5>sh: <span class="tsd-signature-type">number</span></h5>
+								</li>
+							</ul>
+							<h4 class="tsd-returns-title">Returns <span class="tsd-signature-type">ImageData</span></h4>
+						</li>
+					</ul>
+				</section>
+				<section class="tsd-panel tsd-member tsd-kind-method tsd-parent-kind-class">
+					<a name="getlinedash" class="tsd-anchor"></a>
+					<h3>get<wbr>Line<wbr>Dash</h3>
+					<ul class="tsd-signatures tsd-kind-method tsd-parent-kind-class">
+						<li class="tsd-signature tsd-kind-icon">get<wbr>Line<wbr>Dash<span class="tsd-signature-symbol">(</span><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">number</span><span class="tsd-signature-symbol">[]</span></li>
+					</ul>
+					<ul class="tsd-descriptions">
+						<li class="tsd-description">
+							<aside class="tsd-sources">
+								<ul>
+									<li>Defined in <a href="https://github.com/phosphorjs/phosphor/blob/8fee9108/packages/datagrid/src/graphicscontext.ts#L249">graphicscontext.ts:249</a></li>
+								</ul>
+							</aside>
+							<h4 class="tsd-returns-title">Returns <span class="tsd-signature-type">number</span><span class="tsd-signature-symbol">[]</span></h4>
+						</li>
+					</ul>
+				</section>
+				<section class="tsd-panel tsd-member tsd-kind-method tsd-parent-kind-class">
+					<a name="ispointinpath" class="tsd-anchor"></a>
+					<h3>is<wbr>Point<wbr>InPath</h3>
+					<ul class="tsd-signatures tsd-kind-method tsd-parent-kind-class">
+						<li class="tsd-signature tsd-kind-icon">is<wbr>Point<wbr>InPath<span class="tsd-signature-symbol">(</span>x<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">number</span>, y<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">number</span>, fillRule<span class="tsd-signature-symbol">?: </span><span class="tsd-signature-type">CanvasFillRule</span><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">boolean</span></li>
+					</ul>
+					<ul class="tsd-descriptions">
+						<li class="tsd-description">
+							<aside class="tsd-sources">
+								<ul>
+									<li>Defined in <a href="https://github.com/phosphorjs/phosphor/blob/8fee9108/packages/datagrid/src/graphicscontext.ts#L306">graphicscontext.ts:306</a></li>
+								</ul>
+							</aside>
+							<h4 class="tsd-parameters-title">Parameters</h4>
+							<ul class="tsd-parameters">
+								<li>
+									<h5>x: <span class="tsd-signature-type">number</span></h5>
+								</li>
+								<li>
+									<h5>y: <span class="tsd-signature-type">number</span></h5>
+								</li>
+								<li>
+									<h5><span class="tsd-flag ts-flagOptional">Optional</span> fillRule: <span class="tsd-signature-type">CanvasFillRule</span></h5>
+								</li>
+							</ul>
+							<h4 class="tsd-returns-title">Returns <span class="tsd-signature-type">boolean</span></h4>
+						</li>
+					</ul>
+				</section>
+				<section class="tsd-panel tsd-member tsd-kind-method tsd-parent-kind-class">
+					<a name="lineto" class="tsd-anchor"></a>
+					<h3>line<wbr>To</h3>
+					<ul class="tsd-signatures tsd-kind-method tsd-parent-kind-class">
+						<li class="tsd-signature tsd-kind-icon">line<wbr>To<span class="tsd-signature-symbol">(</span>x<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">number</span>, y<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">number</span><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">void</span></li>
+					</ul>
+					<ul class="tsd-descriptions">
+						<li class="tsd-description">
+							<aside class="tsd-sources">
+								<ul>
+									<li>Defined in <a href="https://github.com/phosphorjs/phosphor/blob/8fee9108/packages/datagrid/src/graphicscontext.ts#L340">graphicscontext.ts:340</a></li>
+								</ul>
+							</aside>
+							<h4 class="tsd-parameters-title">Parameters</h4>
+							<ul class="tsd-parameters">
+								<li>
+									<h5>x: <span class="tsd-signature-type">number</span></h5>
+								</li>
+								<li>
+									<h5>y: <span class="tsd-signature-type">number</span></h5>
+								</li>
+							</ul>
+							<h4 class="tsd-returns-title">Returns <span class="tsd-signature-type">void</span></h4>
+						</li>
+					</ul>
+				</section>
+				<section class="tsd-panel tsd-member tsd-kind-method tsd-parent-kind-class">
+					<a name="measuretext" class="tsd-anchor"></a>
+					<h3>measure<wbr>Text</h3>
+					<ul class="tsd-signatures tsd-kind-method tsd-parent-kind-class">
+						<li class="tsd-signature tsd-kind-icon">measure<wbr>Text<span class="tsd-signature-symbol">(</span>text<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">string</span><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">TextMetrics</span></li>
+					</ul>
+					<ul class="tsd-descriptions">
+						<li class="tsd-description">
+							<aside class="tsd-sources">
+								<ul>
+									<li>Defined in <a href="https://github.com/phosphorjs/phosphor/blob/8fee9108/packages/datagrid/src/graphicscontext.ts#L404">graphicscontext.ts:404</a></li>
+								</ul>
+							</aside>
+							<h4 class="tsd-parameters-title">Parameters</h4>
+							<ul class="tsd-parameters">
+								<li>
+									<h5>text: <span class="tsd-signature-type">string</span></h5>
+								</li>
+							</ul>
+							<h4 class="tsd-returns-title">Returns <span class="tsd-signature-type">TextMetrics</span></h4>
+						</li>
+					</ul>
+				</section>
+				<section class="tsd-panel tsd-member tsd-kind-method tsd-parent-kind-class">
+					<a name="moveto" class="tsd-anchor"></a>
+					<h3>move<wbr>To</h3>
+					<ul class="tsd-signatures tsd-kind-method tsd-parent-kind-class">
+						<li class="tsd-signature tsd-kind-icon">move<wbr>To<span class="tsd-signature-symbol">(</span>x<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">number</span>, y<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">number</span><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">void</span></li>
+					</ul>
+					<ul class="tsd-descriptions">
+						<li class="tsd-description">
+							<aside class="tsd-sources">
+								<ul>
+									<li>Defined in <a href="https://github.com/phosphorjs/phosphor/blob/8fee9108/packages/datagrid/src/graphicscontext.ts#L344">graphicscontext.ts:344</a></li>
+								</ul>
+							</aside>
+							<h4 class="tsd-parameters-title">Parameters</h4>
+							<ul class="tsd-parameters">
+								<li>
+									<h5>x: <span class="tsd-signature-type">number</span></h5>
+								</li>
+								<li>
+									<h5>y: <span class="tsd-signature-type">number</span></h5>
+								</li>
+							</ul>
+							<h4 class="tsd-returns-title">Returns <span class="tsd-signature-type">void</span></h4>
+						</li>
+					</ul>
+				</section>
+				<section class="tsd-panel tsd-member tsd-kind-method tsd-parent-kind-class">
+					<a name="putimagedata" class="tsd-anchor"></a>
+					<h3>put<wbr>Image<wbr>Data</h3>
+					<ul class="tsd-signatures tsd-kind-method tsd-parent-kind-class">
+						<li class="tsd-signature tsd-kind-icon">put<wbr>Image<wbr>Data<span class="tsd-signature-symbol">(</span>imagedata<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">ImageData</span>, dx<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">number</span>, dy<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">number</span><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">void</span></li>
+						<li class="tsd-signature tsd-kind-icon">put<wbr>Image<wbr>Data<span class="tsd-signature-symbol">(</span>imagedata<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">ImageData</span>, dx<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">number</span>, dy<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">number</span>, dirtyX<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">number</span>, dirtyY<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">number</span>, dirtyWidth<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">number</span>, dirtyHeight<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">number</span><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">void</span></li>
+					</ul>
+					<ul class="tsd-descriptions">
+						<li class="tsd-description">
+							<aside class="tsd-sources">
+								<ul>
+									<li>Defined in <a href="https://github.com/phosphorjs/phosphor/blob/8fee9108/packages/datagrid/src/graphicscontext.ts#L430">graphicscontext.ts:430</a></li>
+								</ul>
+							</aside>
+							<h4 class="tsd-parameters-title">Parameters</h4>
+							<ul class="tsd-parameters">
+								<li>
+									<h5>imagedata: <span class="tsd-signature-type">ImageData</span></h5>
+								</li>
+								<li>
+									<h5>dx: <span class="tsd-signature-type">number</span></h5>
+								</li>
+								<li>
+									<h5>dy: <span class="tsd-signature-type">number</span></h5>
+								</li>
+							</ul>
+							<h4 class="tsd-returns-title">Returns <span class="tsd-signature-type">void</span></h4>
+						</li>
+						<li class="tsd-description">
+							<aside class="tsd-sources">
+								<ul>
+									<li>Defined in <a href="https://github.com/phosphorjs/phosphor/blob/8fee9108/packages/datagrid/src/graphicscontext.ts#L431">graphicscontext.ts:431</a></li>
+								</ul>
+							</aside>
+							<h4 class="tsd-parameters-title">Parameters</h4>
+							<ul class="tsd-parameters">
+								<li>
+									<h5>imagedata: <span class="tsd-signature-type">ImageData</span></h5>
+								</li>
+								<li>
+									<h5>dx: <span class="tsd-signature-type">number</span></h5>
+								</li>
+								<li>
+									<h5>dy: <span class="tsd-signature-type">number</span></h5>
+								</li>
+								<li>
+									<h5>dirtyX: <span class="tsd-signature-type">number</span></h5>
+								</li>
+								<li>
+									<h5>dirtyY: <span class="tsd-signature-type">number</span></h5>
+								</li>
+								<li>
+									<h5>dirtyWidth: <span class="tsd-signature-type">number</span></h5>
+								</li>
+								<li>
+									<h5>dirtyHeight: <span class="tsd-signature-type">number</span></h5>
+								</li>
+							</ul>
+							<h4 class="tsd-returns-title">Returns <span class="tsd-signature-type">void</span></h4>
+						</li>
+					</ul>
+				</section>
+				<section class="tsd-panel tsd-member tsd-kind-method tsd-parent-kind-class">
+					<a name="quadraticcurveto" class="tsd-anchor"></a>
+					<h3>quadratic<wbr>Curve<wbr>To</h3>
+					<ul class="tsd-signatures tsd-kind-method tsd-parent-kind-class">
+						<li class="tsd-signature tsd-kind-icon">quadratic<wbr>Curve<wbr>To<span class="tsd-signature-symbol">(</span>cpx<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">number</span>, cpy<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">number</span>, x<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">number</span>, y<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">number</span><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">void</span></li>
+					</ul>
+					<ul class="tsd-descriptions">
+						<li class="tsd-description">
+							<aside class="tsd-sources">
+								<ul>
+									<li>Defined in <a href="https://github.com/phosphorjs/phosphor/blob/8fee9108/packages/datagrid/src/graphicscontext.ts#L348">graphicscontext.ts:348</a></li>
+								</ul>
+							</aside>
+							<h4 class="tsd-parameters-title">Parameters</h4>
+							<ul class="tsd-parameters">
+								<li>
+									<h5>cpx: <span class="tsd-signature-type">number</span></h5>
+								</li>
+								<li>
+									<h5>cpy: <span class="tsd-signature-type">number</span></h5>
+								</li>
+								<li>
+									<h5>x: <span class="tsd-signature-type">number</span></h5>
+								</li>
+								<li>
+									<h5>y: <span class="tsd-signature-type">number</span></h5>
+								</li>
+							</ul>
+							<h4 class="tsd-returns-title">Returns <span class="tsd-signature-type">void</span></h4>
+						</li>
+					</ul>
+				</section>
+				<section class="tsd-panel tsd-member tsd-kind-method tsd-parent-kind-class">
+					<a name="rect" class="tsd-anchor"></a>
+					<h3>rect</h3>
+					<ul class="tsd-signatures tsd-kind-method tsd-parent-kind-class">
+						<li class="tsd-signature tsd-kind-icon">rect<span class="tsd-signature-symbol">(</span>x<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">number</span>, y<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">number</span>, w<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">number</span>, h<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">number</span><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">void</span></li>
+					</ul>
+					<ul class="tsd-descriptions">
+						<li class="tsd-description">
+							<aside class="tsd-sources">
+								<ul>
+									<li>Defined in <a href="https://github.com/phosphorjs/phosphor/blob/8fee9108/packages/datagrid/src/graphicscontext.ts#L352">graphicscontext.ts:352</a></li>
+								</ul>
+							</aside>
+							<h4 class="tsd-parameters-title">Parameters</h4>
+							<ul class="tsd-parameters">
+								<li>
+									<h5>x: <span class="tsd-signature-type">number</span></h5>
+								</li>
+								<li>
+									<h5>y: <span class="tsd-signature-type">number</span></h5>
+								</li>
+								<li>
+									<h5>w: <span class="tsd-signature-type">number</span></h5>
+								</li>
+								<li>
+									<h5>h: <span class="tsd-signature-type">number</span></h5>
+								</li>
+							</ul>
+							<h4 class="tsd-returns-title">Returns <span class="tsd-signature-type">void</span></h4>
+						</li>
+					</ul>
+				</section>
+				<section class="tsd-panel tsd-member tsd-kind-method tsd-parent-kind-class">
+					<a name="restore" class="tsd-anchor"></a>
+					<h3>restore</h3>
+					<ul class="tsd-signatures tsd-kind-method tsd-parent-kind-class">
+						<li class="tsd-signature tsd-kind-icon">restore<span class="tsd-signature-symbol">(</span><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">void</span></li>
+					</ul>
+					<ul class="tsd-descriptions">
+						<li class="tsd-description">
+							<aside class="tsd-sources">
+								<ul>
+									<li>Defined in <a href="https://github.com/phosphorjs/phosphor/blob/8fee9108/packages/datagrid/src/graphicscontext.ts#L285">graphicscontext.ts:285</a></li>
+								</ul>
+							</aside>
+							<h4 class="tsd-returns-title">Returns <span class="tsd-signature-type">void</span></h4>
+						</li>
+					</ul>
+				</section>
+				<section class="tsd-panel tsd-member tsd-kind-method tsd-parent-kind-class">
+					<a name="rotate" class="tsd-anchor"></a>
+					<h3>rotate</h3>
+					<ul class="tsd-signatures tsd-kind-method tsd-parent-kind-class">
+						<li class="tsd-signature tsd-kind-icon">rotate<span class="tsd-signature-symbol">(</span>angle<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">number</span><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">void</span></li>
+					</ul>
+					<ul class="tsd-descriptions">
+						<li class="tsd-description">
+							<aside class="tsd-sources">
+								<ul>
+									<li>Defined in <a href="https://github.com/phosphorjs/phosphor/blob/8fee9108/packages/datagrid/src/graphicscontext.ts#L257">graphicscontext.ts:257</a></li>
+								</ul>
+							</aside>
+							<h4 class="tsd-parameters-title">Parameters</h4>
+							<ul class="tsd-parameters">
+								<li>
+									<h5>angle: <span class="tsd-signature-type">number</span></h5>
+								</li>
+							</ul>
+							<h4 class="tsd-returns-title">Returns <span class="tsd-signature-type">void</span></h4>
+						</li>
+					</ul>
+				</section>
+				<section class="tsd-panel tsd-member tsd-kind-method tsd-parent-kind-class">
+					<a name="save" class="tsd-anchor"></a>
+					<h3>save</h3>
+					<ul class="tsd-signatures tsd-kind-method tsd-parent-kind-class">
+						<li class="tsd-signature tsd-kind-icon">save<span class="tsd-signature-symbol">(</span><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">void</span></li>
+					</ul>
+					<ul class="tsd-descriptions">
+						<li class="tsd-description">
+							<aside class="tsd-sources">
+								<ul>
+									<li>Defined in <a href="https://github.com/phosphorjs/phosphor/blob/8fee9108/packages/datagrid/src/graphicscontext.ts#L277">graphicscontext.ts:277</a></li>
+								</ul>
+							</aside>
+							<h4 class="tsd-returns-title">Returns <span class="tsd-signature-type">void</span></h4>
+						</li>
+					</ul>
+				</section>
+				<section class="tsd-panel tsd-member tsd-kind-method tsd-parent-kind-class">
+					<a name="scale" class="tsd-anchor"></a>
+					<h3>scale</h3>
+					<ul class="tsd-signatures tsd-kind-method tsd-parent-kind-class">
+						<li class="tsd-signature tsd-kind-icon">scale<span class="tsd-signature-symbol">(</span>x<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">number</span>, y<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">number</span><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">void</span></li>
+					</ul>
+					<ul class="tsd-descriptions">
+						<li class="tsd-description">
+							<aside class="tsd-sources">
+								<ul>
+									<li>Defined in <a href="https://github.com/phosphorjs/phosphor/blob/8fee9108/packages/datagrid/src/graphicscontext.ts#L261">graphicscontext.ts:261</a></li>
+								</ul>
+							</aside>
+							<h4 class="tsd-parameters-title">Parameters</h4>
+							<ul class="tsd-parameters">
+								<li>
+									<h5>x: <span class="tsd-signature-type">number</span></h5>
+								</li>
+								<li>
+									<h5>y: <span class="tsd-signature-type">number</span></h5>
+								</li>
+							</ul>
+							<h4 class="tsd-returns-title">Returns <span class="tsd-signature-type">void</span></h4>
+						</li>
+					</ul>
+				</section>
+				<section class="tsd-panel tsd-member tsd-kind-method tsd-parent-kind-class">
+					<a name="setlinedash" class="tsd-anchor"></a>
+					<h3>set<wbr>Line<wbr>Dash</h3>
+					<ul class="tsd-signatures tsd-kind-method tsd-parent-kind-class">
+						<li class="tsd-signature tsd-kind-icon">set<wbr>Line<wbr>Dash<span class="tsd-signature-symbol">(</span>segments<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">number</span><span class="tsd-signature-symbol">[]</span><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">void</span></li>
+					</ul>
+					<ul class="tsd-descriptions">
+						<li class="tsd-description">
+							<aside class="tsd-sources">
+								<ul>
+									<li>Defined in <a href="https://github.com/phosphorjs/phosphor/blob/8fee9108/packages/datagrid/src/graphicscontext.ts#L253">graphicscontext.ts:253</a></li>
+								</ul>
+							</aside>
+							<h4 class="tsd-parameters-title">Parameters</h4>
+							<ul class="tsd-parameters">
+								<li>
+									<h5>segments: <span class="tsd-signature-type">number</span><span class="tsd-signature-symbol">[]</span></h5>
+								</li>
+							</ul>
+							<h4 class="tsd-returns-title">Returns <span class="tsd-signature-type">void</span></h4>
+						</li>
+					</ul>
+				</section>
+				<section class="tsd-panel tsd-member tsd-kind-method tsd-parent-kind-class">
+					<a name="settransform" class="tsd-anchor"></a>
+					<h3>set<wbr>Transform</h3>
+					<ul class="tsd-signatures tsd-kind-method tsd-parent-kind-class">
+						<li class="tsd-signature tsd-kind-icon">set<wbr>Transform<span class="tsd-signature-symbol">(</span>m11<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">number</span>, m12<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">number</span>, m21<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">number</span>, m22<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">number</span>, dx<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">number</span>, dy<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">number</span><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">void</span></li>
+					</ul>
+					<ul class="tsd-descriptions">
+						<li class="tsd-description">
+							<aside class="tsd-sources">
+								<ul>
+									<li>Defined in <a href="https://github.com/phosphorjs/phosphor/blob/8fee9108/packages/datagrid/src/graphicscontext.ts#L273">graphicscontext.ts:273</a></li>
+								</ul>
+							</aside>
+							<h4 class="tsd-parameters-title">Parameters</h4>
+							<ul class="tsd-parameters">
+								<li>
+									<h5>m11: <span class="tsd-signature-type">number</span></h5>
+								</li>
+								<li>
+									<h5>m12: <span class="tsd-signature-type">number</span></h5>
+								</li>
+								<li>
+									<h5>m21: <span class="tsd-signature-type">number</span></h5>
+								</li>
+								<li>
+									<h5>m22: <span class="tsd-signature-type">number</span></h5>
+								</li>
+								<li>
+									<h5>dx: <span class="tsd-signature-type">number</span></h5>
+								</li>
+								<li>
+									<h5>dy: <span class="tsd-signature-type">number</span></h5>
+								</li>
+							</ul>
+							<h4 class="tsd-returns-title">Returns <span class="tsd-signature-type">void</span></h4>
+						</li>
+					</ul>
+				</section>
+				<section class="tsd-panel tsd-member tsd-kind-method tsd-parent-kind-class">
+					<a name="stroke" class="tsd-anchor"></a>
+					<h3>stroke</h3>
+					<ul class="tsd-signatures tsd-kind-method tsd-parent-kind-class">
+						<li class="tsd-signature tsd-kind-icon">stroke<span class="tsd-signature-symbol">(</span><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">void</span></li>
+					</ul>
+					<ul class="tsd-descriptions">
+						<li class="tsd-description">
+							<aside class="tsd-sources">
+								<ul>
+									<li>Defined in <a href="https://github.com/phosphorjs/phosphor/blob/8fee9108/packages/datagrid/src/graphicscontext.ts#L372">graphicscontext.ts:372</a></li>
+								</ul>
+							</aside>
+							<h4 class="tsd-returns-title">Returns <span class="tsd-signature-type">void</span></h4>
+						</li>
+					</ul>
+				</section>
+				<section class="tsd-panel tsd-member tsd-kind-method tsd-parent-kind-class">
+					<a name="strokerect" class="tsd-anchor"></a>
+					<h3>stroke<wbr>Rect</h3>
+					<ul class="tsd-signatures tsd-kind-method tsd-parent-kind-class">
+						<li class="tsd-signature tsd-kind-icon">stroke<wbr>Rect<span class="tsd-signature-symbol">(</span>x<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">number</span>, y<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">number</span>, w<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">number</span>, h<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">number</span><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">void</span></li>
+					</ul>
+					<ul class="tsd-descriptions">
+						<li class="tsd-description">
+							<aside class="tsd-sources">
+								<ul>
+									<li>Defined in <a href="https://github.com/phosphorjs/phosphor/blob/8fee9108/packages/datagrid/src/graphicscontext.ts#L392">graphicscontext.ts:392</a></li>
+								</ul>
+							</aside>
+							<h4 class="tsd-parameters-title">Parameters</h4>
+							<ul class="tsd-parameters">
+								<li>
+									<h5>x: <span class="tsd-signature-type">number</span></h5>
+								</li>
+								<li>
+									<h5>y: <span class="tsd-signature-type">number</span></h5>
+								</li>
+								<li>
+									<h5>w: <span class="tsd-signature-type">number</span></h5>
+								</li>
+								<li>
+									<h5>h: <span class="tsd-signature-type">number</span></h5>
+								</li>
+							</ul>
+							<h4 class="tsd-returns-title">Returns <span class="tsd-signature-type">void</span></h4>
+						</li>
+					</ul>
+				</section>
+				<section class="tsd-panel tsd-member tsd-kind-method tsd-parent-kind-class">
+					<a name="stroketext" class="tsd-anchor"></a>
+					<h3>stroke<wbr>Text</h3>
+					<ul class="tsd-signatures tsd-kind-method tsd-parent-kind-class">
+						<li class="tsd-signature tsd-kind-icon">stroke<wbr>Text<span class="tsd-signature-symbol">(</span>text<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">string</span>, x<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">number</span>, y<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">number</span>, maxWidth<span class="tsd-signature-symbol">?: </span><span class="tsd-signature-type">number</span><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">void</span></li>
+					</ul>
+					<ul class="tsd-descriptions">
+						<li class="tsd-description">
+							<aside class="tsd-sources">
+								<ul>
+									<li>Defined in <a href="https://github.com/phosphorjs/phosphor/blob/8fee9108/packages/datagrid/src/graphicscontext.ts#L396">graphicscontext.ts:396</a></li>
+								</ul>
+							</aside>
+							<h4 class="tsd-parameters-title">Parameters</h4>
+							<ul class="tsd-parameters">
+								<li>
+									<h5>text: <span class="tsd-signature-type">string</span></h5>
+								</li>
+								<li>
+									<h5>x: <span class="tsd-signature-type">number</span></h5>
+								</li>
+								<li>
+									<h5>y: <span class="tsd-signature-type">number</span></h5>
+								</li>
+								<li>
+									<h5><span class="tsd-flag ts-flagOptional">Optional</span> maxWidth: <span class="tsd-signature-type">number</span></h5>
+								</li>
+							</ul>
+							<h4 class="tsd-returns-title">Returns <span class="tsd-signature-type">void</span></h4>
+						</li>
+					</ul>
+				</section>
+				<section class="tsd-panel tsd-member tsd-kind-method tsd-parent-kind-class">
+					<a name="transform" class="tsd-anchor"></a>
+					<h3>transform</h3>
+					<ul class="tsd-signatures tsd-kind-method tsd-parent-kind-class">
+						<li class="tsd-signature tsd-kind-icon">transform<span class="tsd-signature-symbol">(</span>m11<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">number</span>, m12<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">number</span>, m21<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">number</span>, m22<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">number</span>, dx<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">number</span>, dy<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">number</span><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">void</span></li>
+					</ul>
+					<ul class="tsd-descriptions">
+						<li class="tsd-description">
+							<aside class="tsd-sources">
+								<ul>
+									<li>Defined in <a href="https://github.com/phosphorjs/phosphor/blob/8fee9108/packages/datagrid/src/graphicscontext.ts#L265">graphicscontext.ts:265</a></li>
+								</ul>
+							</aside>
+							<h4 class="tsd-parameters-title">Parameters</h4>
+							<ul class="tsd-parameters">
+								<li>
+									<h5>m11: <span class="tsd-signature-type">number</span></h5>
+								</li>
+								<li>
+									<h5>m12: <span class="tsd-signature-type">number</span></h5>
+								</li>
+								<li>
+									<h5>m21: <span class="tsd-signature-type">number</span></h5>
+								</li>
+								<li>
+									<h5>m22: <span class="tsd-signature-type">number</span></h5>
+								</li>
+								<li>
+									<h5>dx: <span class="tsd-signature-type">number</span></h5>
+								</li>
+								<li>
+									<h5>dy: <span class="tsd-signature-type">number</span></h5>
+								</li>
+							</ul>
+							<h4 class="tsd-returns-title">Returns <span class="tsd-signature-type">void</span></h4>
+						</li>
+					</ul>
+				</section>
+				<section class="tsd-panel tsd-member tsd-kind-method tsd-parent-kind-class">
+					<a name="translate" class="tsd-anchor"></a>
+					<h3>translate</h3>
+					<ul class="tsd-signatures tsd-kind-method tsd-parent-kind-class">
+						<li class="tsd-signature tsd-kind-icon">translate<span class="tsd-signature-symbol">(</span>x<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">number</span>, y<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">number</span><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">void</span></li>
+					</ul>
+					<ul class="tsd-descriptions">
+						<li class="tsd-description">
+							<aside class="tsd-sources">
+								<ul>
+									<li>Defined in <a href="https://github.com/phosphorjs/phosphor/blob/8fee9108/packages/datagrid/src/graphicscontext.ts#L269">graphicscontext.ts:269</a></li>
+								</ul>
+							</aside>
+							<h4 class="tsd-parameters-title">Parameters</h4>
+							<ul class="tsd-parameters">
+								<li>
+									<h5>x: <span class="tsd-signature-type">number</span></h5>
+								</li>
+								<li>
+									<h5>y: <span class="tsd-signature-type">number</span></h5>
+								</li>
+							</ul>
+							<h4 class="tsd-returns-title">Returns <span class="tsd-signature-type">void</span></h4>
+						</li>
+					</ul>
+				</section>
+			</section>
+		</div>
+		<div class="col-4 col-menu menu-sticky-wrap menu-highlight">
+			<nav class="tsd-navigation primary">
+				<ul>
+					<li class="globals  ">
+						<a href="../globals.html"><em>Globals</em></a>
+					</li>
+				</ul>
+			</nav>
+			<nav class="tsd-navigation secondary menu-sticky">
+				<ul class="before-current">
+					<li class=" tsd-kind-class">
+						<a href="cellrenderer.html" class="tsd-kind-icon">Cell<wbr>Renderer</a>
+					</li>
+					<li class=" tsd-kind-class">
+						<a href="datagrid.html" class="tsd-kind-icon">Data<wbr>Grid</a>
+					</li>
+					<li class=" tsd-kind-class">
+						<a href="datamodel.html" class="tsd-kind-icon">Data<wbr>Model</a>
+					</li>
+				</ul>
+				<ul class="current">
+					<li class="current tsd-kind-class">
+						<a href="graphicscontext.html" class="tsd-kind-icon">Graphics<wbr>Context</a>
+						<ul>
+							<li class=" tsd-kind-constructor tsd-parent-kind-class">
+								<a href="graphicscontext.html#constructor" class="tsd-kind-icon">constructor</a>
+							</li>
+							<li class=" tsd-kind-property tsd-parent-kind-class tsd-is-private">
+								<a href="graphicscontext.html#_context" class="tsd-kind-icon">_context</a>
+							</li>
+							<li class=" tsd-kind-property tsd-parent-kind-class tsd-is-private">
+								<a href="graphicscontext.html#_disposed" class="tsd-kind-icon">_disposed</a>
+							</li>
+							<li class=" tsd-kind-property tsd-parent-kind-class tsd-is-private">
+								<a href="graphicscontext.html#_state" class="tsd-kind-icon">_state</a>
+							</li>
+							<li class=" tsd-kind-accessor tsd-parent-kind-class">
+								<a href="graphicscontext.html#fillstyle" class="tsd-kind-icon">fill<wbr>Style</a>
+							</li>
+							<li class=" tsd-kind-accessor tsd-parent-kind-class">
+								<a href="graphicscontext.html#font" class="tsd-kind-icon">font</a>
+							</li>
+							<li class=" tsd-kind-accessor tsd-parent-kind-class">
+								<a href="graphicscontext.html#globalalpha" class="tsd-kind-icon">global<wbr>Alpha</a>
+							</li>
+							<li class=" tsd-kind-accessor tsd-parent-kind-class">
+								<a href="graphicscontext.html#globalcompositeoperation" class="tsd-kind-icon">global<wbr>Composite<wbr>Operation</a>
+							</li>
+							<li class=" tsd-kind-accessor tsd-parent-kind-class">
+								<a href="graphicscontext.html#imagesmoothingenabled" class="tsd-kind-icon">image<wbr>Smoothing<wbr>Enabled</a>
+							</li>
+							<li class=" tsd-kind-get-signature tsd-parent-kind-class">
+								<a href="graphicscontext.html#isdisposed" class="tsd-kind-icon">is<wbr>Disposed</a>
+							</li>
+							<li class=" tsd-kind-accessor tsd-parent-kind-class">
+								<a href="graphicscontext.html#linecap" class="tsd-kind-icon">line<wbr>Cap</a>
+							</li>
+							<li class=" tsd-kind-accessor tsd-parent-kind-class">
+								<a href="graphicscontext.html#linedashoffset" class="tsd-kind-icon">line<wbr>Dash<wbr>Offset</a>
+							</li>
+							<li class=" tsd-kind-accessor tsd-parent-kind-class">
+								<a href="graphicscontext.html#linejoin" class="tsd-kind-icon">line<wbr>Join</a>
+							</li>
+							<li class=" tsd-kind-accessor tsd-parent-kind-class">
+								<a href="graphicscontext.html#linewidth" class="tsd-kind-icon">line<wbr>Width</a>
+							</li>
+							<li class=" tsd-kind-accessor tsd-parent-kind-class">
+								<a href="graphicscontext.html#miterlimit" class="tsd-kind-icon">miter<wbr>Limit</a>
+							</li>
+							<li class=" tsd-kind-accessor tsd-parent-kind-class">
+								<a href="graphicscontext.html#shadowblur" class="tsd-kind-icon">shadow<wbr>Blur</a>
+							</li>
+							<li class=" tsd-kind-accessor tsd-parent-kind-class">
+								<a href="graphicscontext.html#shadowcolor" class="tsd-kind-icon">shadow<wbr>Color</a>
+							</li>
+							<li class=" tsd-kind-accessor tsd-parent-kind-class">
+								<a href="graphicscontext.html#shadowoffsetx" class="tsd-kind-icon">shadow<wbr>OffsetX</a>
+							</li>
+							<li class=" tsd-kind-accessor tsd-parent-kind-class">
+								<a href="graphicscontext.html#shadowoffsety" class="tsd-kind-icon">shadow<wbr>OffsetY</a>
+							</li>
+							<li class=" tsd-kind-accessor tsd-parent-kind-class">
+								<a href="graphicscontext.html#strokestyle" class="tsd-kind-icon">stroke<wbr>Style</a>
+							</li>
+							<li class=" tsd-kind-accessor tsd-parent-kind-class">
+								<a href="graphicscontext.html#textalign" class="tsd-kind-icon">text<wbr>Align</a>
+							</li>
+							<li class=" tsd-kind-accessor tsd-parent-kind-class">
+								<a href="graphicscontext.html#textbaseline" class="tsd-kind-icon">text<wbr>Baseline</a>
+							</li>
+							<li class=" tsd-kind-method tsd-parent-kind-class">
+								<a href="graphicscontext.html#arc" class="tsd-kind-icon">arc</a>
+							</li>
+							<li class=" tsd-kind-method tsd-parent-kind-class">
+								<a href="graphicscontext.html#arcto" class="tsd-kind-icon">arc<wbr>To</a>
+							</li>
+							<li class=" tsd-kind-method tsd-parent-kind-class">
+								<a href="graphicscontext.html#beginpath" class="tsd-kind-icon">begin<wbr>Path</a>
+							</li>
+							<li class=" tsd-kind-method tsd-parent-kind-class">
+								<a href="graphicscontext.html#beziercurveto" class="tsd-kind-icon">bezier<wbr>Curve<wbr>To</a>
+							</li>
+							<li class=" tsd-kind-method tsd-parent-kind-class">
+								<a href="graphicscontext.html#clearrect" class="tsd-kind-icon">clear<wbr>Rect</a>
+							</li>
+							<li class=" tsd-kind-method tsd-parent-kind-class">
+								<a href="graphicscontext.html#clip" class="tsd-kind-icon">clip</a>
+							</li>
+							<li class=" tsd-kind-method tsd-parent-kind-class">
+								<a href="graphicscontext.html#closepath" class="tsd-kind-icon">close<wbr>Path</a>
+							</li>
+							<li class=" tsd-kind-method tsd-parent-kind-class">
+								<a href="graphicscontext.html#createimagedata" class="tsd-kind-icon">create<wbr>Image<wbr>Data</a>
+							</li>
+							<li class=" tsd-kind-method tsd-parent-kind-class">
+								<a href="graphicscontext.html#createlineargradient" class="tsd-kind-icon">create<wbr>Linear<wbr>Gradient</a>
+							</li>
+							<li class=" tsd-kind-method tsd-parent-kind-class">
+								<a href="graphicscontext.html#createpattern" class="tsd-kind-icon">create<wbr>Pattern</a>
+							</li>
+							<li class=" tsd-kind-method tsd-parent-kind-class">
+								<a href="graphicscontext.html#createradialgradient" class="tsd-kind-icon">create<wbr>Radial<wbr>Gradient</a>
+							</li>
+							<li class=" tsd-kind-method tsd-parent-kind-class">
+								<a href="graphicscontext.html#dispose" class="tsd-kind-icon">dispose</a>
+							</li>
+							<li class=" tsd-kind-method tsd-parent-kind-class">
+								<a href="graphicscontext.html#drawfocusifneeded" class="tsd-kind-icon">draw<wbr>Focus<wbr>IfNeeded</a>
+							</li>
+							<li class=" tsd-kind-method tsd-parent-kind-class">
+								<a href="graphicscontext.html#drawimage" class="tsd-kind-icon">draw<wbr>Image</a>
+							</li>
+							<li class=" tsd-kind-method tsd-parent-kind-class">
+								<a href="graphicscontext.html#ellipse" class="tsd-kind-icon">ellipse</a>
+							</li>
+							<li class=" tsd-kind-method tsd-parent-kind-class">
+								<a href="graphicscontext.html#fill" class="tsd-kind-icon">fill</a>
+							</li>
+							<li class=" tsd-kind-method tsd-parent-kind-class">
+								<a href="graphicscontext.html#fillrect" class="tsd-kind-icon">fill<wbr>Rect</a>
+							</li>
+							<li class=" tsd-kind-method tsd-parent-kind-class">
+								<a href="graphicscontext.html#filltext" class="tsd-kind-icon">fill<wbr>Text</a>
+							</li>
+							<li class=" tsd-kind-method tsd-parent-kind-class">
+								<a href="graphicscontext.html#getimagedata" class="tsd-kind-icon">get<wbr>Image<wbr>Data</a>
+							</li>
+							<li class=" tsd-kind-method tsd-parent-kind-class">
+								<a href="graphicscontext.html#getlinedash" class="tsd-kind-icon">get<wbr>Line<wbr>Dash</a>
+							</li>
+							<li class=" tsd-kind-method tsd-parent-kind-class">
+								<a href="graphicscontext.html#ispointinpath" class="tsd-kind-icon">is<wbr>Point<wbr>InPath</a>
+							</li>
+							<li class=" tsd-kind-method tsd-parent-kind-class">
+								<a href="graphicscontext.html#lineto" class="tsd-kind-icon">line<wbr>To</a>
+							</li>
+							<li class=" tsd-kind-method tsd-parent-kind-class">
+								<a href="graphicscontext.html#measuretext" class="tsd-kind-icon">measure<wbr>Text</a>
+							</li>
+							<li class=" tsd-kind-method tsd-parent-kind-class">
+								<a href="graphicscontext.html#moveto" class="tsd-kind-icon">move<wbr>To</a>
+							</li>
+							<li class=" tsd-kind-method tsd-parent-kind-class">
+								<a href="graphicscontext.html#putimagedata" class="tsd-kind-icon">put<wbr>Image<wbr>Data</a>
+							</li>
+							<li class=" tsd-kind-method tsd-parent-kind-class">
+								<a href="graphicscontext.html#quadraticcurveto" class="tsd-kind-icon">quadratic<wbr>Curve<wbr>To</a>
+							</li>
+							<li class=" tsd-kind-method tsd-parent-kind-class">
+								<a href="graphicscontext.html#rect" class="tsd-kind-icon">rect</a>
+							</li>
+							<li class=" tsd-kind-method tsd-parent-kind-class">
+								<a href="graphicscontext.html#restore" class="tsd-kind-icon">restore</a>
+							</li>
+							<li class=" tsd-kind-method tsd-parent-kind-class">
+								<a href="graphicscontext.html#rotate" class="tsd-kind-icon">rotate</a>
+							</li>
+							<li class=" tsd-kind-method tsd-parent-kind-class">
+								<a href="graphicscontext.html#save" class="tsd-kind-icon">save</a>
+							</li>
+							<li class=" tsd-kind-method tsd-parent-kind-class">
+								<a href="graphicscontext.html#scale" class="tsd-kind-icon">scale</a>
+							</li>
+							<li class=" tsd-kind-method tsd-parent-kind-class">
+								<a href="graphicscontext.html#setlinedash" class="tsd-kind-icon">set<wbr>Line<wbr>Dash</a>
+							</li>
+							<li class=" tsd-kind-method tsd-parent-kind-class">
+								<a href="graphicscontext.html#settransform" class="tsd-kind-icon">set<wbr>Transform</a>
+							</li>
+							<li class=" tsd-kind-method tsd-parent-kind-class">
+								<a href="graphicscontext.html#stroke" class="tsd-kind-icon">stroke</a>
+							</li>
+							<li class=" tsd-kind-method tsd-parent-kind-class">
+								<a href="graphicscontext.html#strokerect" class="tsd-kind-icon">stroke<wbr>Rect</a>
+							</li>
+							<li class=" tsd-kind-method tsd-parent-kind-class">
+								<a href="graphicscontext.html#stroketext" class="tsd-kind-icon">stroke<wbr>Text</a>
+							</li>
+							<li class=" tsd-kind-method tsd-parent-kind-class">
+								<a href="graphicscontext.html#transform" class="tsd-kind-icon">transform</a>
+							</li>
+							<li class=" tsd-kind-method tsd-parent-kind-class">
+								<a href="graphicscontext.html#translate" class="tsd-kind-icon">translate</a>
+							</li>
+						</ul>
+					</li>
+				</ul>
+				<ul class="after-current">
+					<li class=" tsd-kind-class">
+						<a href="jsonmodel.html" class="tsd-kind-icon">JSONModel</a>
+					</li>
+					<li class=" tsd-kind-class">
+						<a href="renderermap.html" class="tsd-kind-icon">Renderer<wbr>Map</a>
+					</li>
+					<li class=" tsd-kind-class">
+						<a href="sectionlist.html" class="tsd-kind-icon">Section<wbr>List</a>
+					</li>
+					<li class=" tsd-kind-class">
+						<a href="textrenderer.html" class="tsd-kind-icon">Text<wbr>Renderer</a>
+					</li>
+				</ul>
+			</nav>
+		</div>
+	</div>
+</div>
+<footer class="with-border-bottom">
+	<div class="container">
+		<h2>Legend</h2>
+		<div class="tsd-legend-group">
+			<ul class="tsd-legend">
+				<li class="tsd-kind-module"><span class="tsd-kind-icon">Module</span></li>
+				<li class="tsd-kind-object-literal"><span class="tsd-kind-icon">Object literal</span></li>
+				<li class="tsd-kind-variable"><span class="tsd-kind-icon">Variable</span></li>
+				<li class="tsd-kind-function"><span class="tsd-kind-icon">Function</span></li>
+				<li class="tsd-kind-function tsd-has-type-parameter"><span class="tsd-kind-icon">Function with type parameter</span></li>
+				<li class="tsd-kind-index-signature"><span class="tsd-kind-icon">Index signature</span></li>
+				<li class="tsd-kind-type-alias"><span class="tsd-kind-icon">Type alias</span></li>
+			</ul>
+			<ul class="tsd-legend">
+				<li class="tsd-kind-enum"><span class="tsd-kind-icon">Enumeration</span></li>
+				<li class="tsd-kind-enum-member"><span class="tsd-kind-icon">Enumeration member</span></li>
+				<li class="tsd-kind-property tsd-parent-kind-enum"><span class="tsd-kind-icon">Property</span></li>
+				<li class="tsd-kind-method tsd-parent-kind-enum"><span class="tsd-kind-icon">Method</span></li>
+			</ul>
+			<ul class="tsd-legend">
+				<li class="tsd-kind-interface"><span class="tsd-kind-icon">Interface</span></li>
+				<li class="tsd-kind-interface tsd-has-type-parameter"><span class="tsd-kind-icon">Interface with type parameter</span></li>
+				<li class="tsd-kind-constructor tsd-parent-kind-interface"><span class="tsd-kind-icon">Constructor</span></li>
+				<li class="tsd-kind-property tsd-parent-kind-interface"><span class="tsd-kind-icon">Property</span></li>
+				<li class="tsd-kind-method tsd-parent-kind-interface"><span class="tsd-kind-icon">Method</span></li>
+				<li class="tsd-kind-index-signature tsd-parent-kind-interface"><span class="tsd-kind-icon">Index signature</span></li>
+			</ul>
+			<ul class="tsd-legend">
+				<li class="tsd-kind-class"><span class="tsd-kind-icon">Class</span></li>
+				<li class="tsd-kind-class tsd-has-type-parameter"><span class="tsd-kind-icon">Class with type parameter</span></li>
+				<li class="tsd-kind-constructor tsd-parent-kind-class"><span class="tsd-kind-icon">Constructor</span></li>
+				<li class="tsd-kind-property tsd-parent-kind-class"><span class="tsd-kind-icon">Property</span></li>
+				<li class="tsd-kind-method tsd-parent-kind-class"><span class="tsd-kind-icon">Method</span></li>
+				<li class="tsd-kind-accessor tsd-parent-kind-class"><span class="tsd-kind-icon">Accessor</span></li>
+				<li class="tsd-kind-index-signature tsd-parent-kind-class"><span class="tsd-kind-icon">Index signature</span></li>
+			</ul>
+			<ul class="tsd-legend">
+				<li class="tsd-kind-constructor tsd-parent-kind-class tsd-is-inherited"><span class="tsd-kind-icon">Inherited constructor</span></li>
+				<li class="tsd-kind-property tsd-parent-kind-class tsd-is-inherited"><span class="tsd-kind-icon">Inherited property</span></li>
+				<li class="tsd-kind-method tsd-parent-kind-class tsd-is-inherited"><span class="tsd-kind-icon">Inherited method</span></li>
+				<li class="tsd-kind-accessor tsd-parent-kind-class tsd-is-inherited"><span class="tsd-kind-icon">Inherited accessor</span></li>
+			</ul>
+			<ul class="tsd-legend">
+				<li class="tsd-kind-property tsd-parent-kind-class tsd-is-protected"><span class="tsd-kind-icon">Protected property</span></li>
+				<li class="tsd-kind-method tsd-parent-kind-class tsd-is-protected"><span class="tsd-kind-icon">Protected method</span></li>
+				<li class="tsd-kind-accessor tsd-parent-kind-class tsd-is-protected"><span class="tsd-kind-icon">Protected accessor</span></li>
+			</ul>
+			<ul class="tsd-legend">
+				<li class="tsd-kind-property tsd-parent-kind-class tsd-is-private"><span class="tsd-kind-icon">Private property</span></li>
+				<li class="tsd-kind-method tsd-parent-kind-class tsd-is-private"><span class="tsd-kind-icon">Private method</span></li>
+				<li class="tsd-kind-accessor tsd-parent-kind-class tsd-is-private"><span class="tsd-kind-icon">Private accessor</span></li>
+			</ul>
+			<ul class="tsd-legend">
+				<li class="tsd-kind-property tsd-parent-kind-class tsd-is-static"><span class="tsd-kind-icon">Static property</span></li>
+				<li class="tsd-kind-call-signature tsd-parent-kind-class tsd-is-static"><span class="tsd-kind-icon">Static method</span></li>
+			</ul>
+		</div>
+	</div>
+</footer>
+<div class="container tsd-generator">
+	<p>Generated using <a href="http://typedoc.org/" target="_blank">TypeDoc</a></p>
+</div>
+<div class="overlay"></div>
+<script src="../assets/js/main.js"></script>
+<script>if (location.protocol == 'file:') document.write('<script src="../assets/js/search.js"><' + '/script>');</script>
+</body>
+</html>

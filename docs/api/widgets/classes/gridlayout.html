@@ -1,0 +1,1880 @@
+<!doctype html>
+<html class="default no-js">
+<head>
+	<meta charset="utf-8">
+	<meta http-equiv="X-UA-Compatible" content="IE=edge">
+	<title>GridLayout | @phosphor/widgets</title>
+	<meta name="description" content="">
+	<meta name="viewport" content="width=device-width, initial-scale=1">
+	<link rel="stylesheet" href="../assets/css/main.css">
+</head>
+<body>
+<header>
+	<div class="tsd-page-toolbar">
+		<div class="container">
+			<div class="table-wrap">
+				<div class="table-cell" id="tsd-search" data-index="../assets/js/search.js" data-base="..">
+					<div class="field">
+						<label for="tsd-search-field" class="tsd-widget search no-caption">Search</label>
+						<input id="tsd-search-field" type="text" />
+					</div>
+					<ul class="results">
+						<li class="state loading">Preparing search index...</li>
+						<li class="state failure">The search index is not available</li>
+					</ul>
+					<a href="../index.html" class="title">@phosphor/widgets</a>
+				</div>
+				<div class="table-cell" id="tsd-widgets">
+					<div id="tsd-filter">
+						<a href="#" class="tsd-widget options no-caption" data-toggle="options">Options</a>
+						<div class="tsd-filter-group">
+							<div class="tsd-select" id="tsd-filter-visibility">
+								<span class="tsd-select-label">All</span>
+								<ul class="tsd-select-list">
+									<li data-value="public">Public</li>
+									<li data-value="protected">Public/Protected</li>
+									<li data-value="private" class="selected">All</li>
+								</ul>
+							</div>
+							<input type="checkbox" id="tsd-filter-inherited" checked />
+							<label class="tsd-widget" for="tsd-filter-inherited">Inherited</label>
+							<input type="checkbox" id="tsd-filter-externals" checked />
+							<label class="tsd-widget" for="tsd-filter-externals">Externals</label>
+						</div>
+					</div>
+					<a href="#" class="tsd-widget menu no-caption" data-toggle="menu">Menu</a>
+				</div>
+			</div>
+		</div>
+	</div>
+	<div class="tsd-page-title">
+		<div class="container">
+			<ul class="tsd-breadcrumb">
+				<li>
+					<a href="../globals.html">Globals</a>
+				</li>
+				<li>
+					<a href="gridlayout.html">GridLayout</a>
+				</li>
+			</ul>
+			<h1>Class GridLayout</h1>
+		</div>
+	</div>
+</header>
+<div class="container container-main">
+	<div class="row">
+		<div class="col-8 col-content">
+			<section class="tsd-panel tsd-comment">
+				<div class="tsd-comment tsd-typography">
+					<div class="lead">
+						<p>A layout which arranges its widgets in a grid.
+						The namespace for the <code>GridLayout</code> class statics.</p>
+					</div>
+				</div>
+			</section>
+			<section class="tsd-panel tsd-hierarchy">
+				<h3>Hierarchy</h3>
+				<ul class="tsd-hierarchy">
+					<li>
+						<a href="layout.html" class="tsd-signature-type">Layout</a>
+						<ul class="tsd-hierarchy">
+							<li>
+								<span class="target">GridLayout</span>
+							</li>
+						</ul>
+					</li>
+				</ul>
+			</section>
+			<section class="tsd-panel">
+				<h3>Implements</h3>
+				<ul class="tsd-hierarchy">
+					<li><span class="tsd-signature-type">IIterable</span><span class="tsd-signature-symbol">&lt;</span><a href="widget.html" class="tsd-signature-type">Widget</a><span class="tsd-signature-symbol">&gt;</span></li>
+					<li><span class="tsd-signature-type">IDisposable</span></li>
+				</ul>
+			</section>
+			<section class="tsd-panel-group tsd-index-group">
+				<h2>Index</h2>
+				<section class="tsd-panel tsd-index-panel">
+					<div class="tsd-index-content">
+						<section class="tsd-index-section ">
+							<h3>Modules</h3>
+							<ul class="tsd-index-list">
+								<li class="tsd-kind-module tsd-parent-kind-class"><a href="../modules/gridlayout.layout.html" class="tsd-kind-icon">Layout</a></li>
+							</ul>
+						</section>
+						<section class="tsd-index-section ">
+							<h3>Interfaces</h3>
+							<ul class="tsd-index-list">
+								<li class="tsd-kind-interface tsd-parent-kind-class"><a href="../interfaces/gridlayout.icellconfig.html" class="tsd-kind-icon">ICell<wbr>Config</a></li>
+								<li class="tsd-kind-interface tsd-parent-kind-class"><a href="../interfaces/gridlayout.ioptions.html" class="tsd-kind-icon">IOptions</a></li>
+							</ul>
+						</section>
+						<section class="tsd-index-section ">
+							<h3>Constructors</h3>
+							<ul class="tsd-index-list">
+								<li class="tsd-kind-constructor tsd-parent-kind-class tsd-is-overwrite"><a href="gridlayout.html#constructor" class="tsd-kind-icon">constructor</a></li>
+							</ul>
+						</section>
+						<section class="tsd-index-section tsd-is-private tsd-is-private-protected">
+							<h3>Properties</h3>
+							<ul class="tsd-index-list">
+								<li class="tsd-kind-property tsd-parent-kind-class tsd-is-private"><a href="gridlayout.html#_box" class="tsd-kind-icon">_box</a></li>
+								<li class="tsd-kind-property tsd-parent-kind-class tsd-is-private"><a href="gridlayout.html#_columnsizers" class="tsd-kind-icon">_column<wbr>Sizers</a></li>
+								<li class="tsd-kind-property tsd-parent-kind-class tsd-is-private"><a href="gridlayout.html#_columnspacing" class="tsd-kind-icon">_column<wbr>Spacing</a></li>
+								<li class="tsd-kind-property tsd-parent-kind-class tsd-is-private"><a href="gridlayout.html#_columnstarts" class="tsd-kind-icon">_column<wbr>Starts</a></li>
+								<li class="tsd-kind-property tsd-parent-kind-class tsd-is-private"><a href="gridlayout.html#_dirty" class="tsd-kind-icon">_dirty</a></li>
+								<li class="tsd-kind-property tsd-parent-kind-class tsd-is-private"><a href="gridlayout.html#_items" class="tsd-kind-icon">_items</a></li>
+								<li class="tsd-kind-property tsd-parent-kind-class tsd-is-private"><a href="gridlayout.html#_rowsizers" class="tsd-kind-icon">_row<wbr>Sizers</a></li>
+								<li class="tsd-kind-property tsd-parent-kind-class tsd-is-private"><a href="gridlayout.html#_rowspacing" class="tsd-kind-icon">_row<wbr>Spacing</a></li>
+								<li class="tsd-kind-property tsd-parent-kind-class tsd-is-private"><a href="gridlayout.html#_rowstarts" class="tsd-kind-icon">_row<wbr>Starts</a></li>
+							</ul>
+						</section>
+						<section class="tsd-index-section ">
+							<h3>Accessors</h3>
+							<ul class="tsd-index-list">
+								<li class="tsd-kind-accessor tsd-parent-kind-class"><a href="gridlayout.html#columncount" class="tsd-kind-icon">column<wbr>Count</a></li>
+								<li class="tsd-kind-accessor tsd-parent-kind-class"><a href="gridlayout.html#columnspacing" class="tsd-kind-icon">column<wbr>Spacing</a></li>
+								<li class="tsd-kind-accessor tsd-parent-kind-class tsd-is-inherited"><a href="gridlayout.html#fitpolicy" class="tsd-kind-icon">fit<wbr>Policy</a></li>
+								<li class="tsd-kind-get-signature tsd-parent-kind-class tsd-is-inherited"><a href="gridlayout.html#isdisposed" class="tsd-kind-icon">is<wbr>Disposed</a></li>
+								<li class="tsd-kind-accessor tsd-parent-kind-class tsd-is-inherited"><a href="gridlayout.html#parent" class="tsd-kind-icon">parent</a></li>
+								<li class="tsd-kind-accessor tsd-parent-kind-class"><a href="gridlayout.html#rowcount" class="tsd-kind-icon">row<wbr>Count</a></li>
+								<li class="tsd-kind-accessor tsd-parent-kind-class"><a href="gridlayout.html#rowspacing" class="tsd-kind-icon">row<wbr>Spacing</a></li>
+							</ul>
+						</section>
+						<section class="tsd-index-section ">
+							<h3>Methods</h3>
+							<ul class="tsd-index-list">
+								<li class="tsd-kind-method tsd-parent-kind-class tsd-is-private"><a href="gridlayout.html#_fit" class="tsd-kind-icon">_fit</a></li>
+								<li class="tsd-kind-method tsd-parent-kind-class tsd-is-private"><a href="gridlayout.html#_update" class="tsd-kind-icon">_update</a></li>
+								<li class="tsd-kind-method tsd-parent-kind-class"><a href="gridlayout.html#addwidget" class="tsd-kind-icon">add<wbr>Widget</a></li>
+								<li class="tsd-kind-method tsd-parent-kind-class tsd-is-protected"><a href="gridlayout.html#attachwidget" class="tsd-kind-icon">attach<wbr>Widget</a></li>
+								<li class="tsd-kind-method tsd-parent-kind-class"><a href="gridlayout.html#columnstretch" class="tsd-kind-icon">column<wbr>Stretch</a></li>
+								<li class="tsd-kind-method tsd-parent-kind-class tsd-is-protected"><a href="gridlayout.html#detachwidget" class="tsd-kind-icon">detach<wbr>Widget</a></li>
+								<li class="tsd-kind-method tsd-parent-kind-class tsd-is-overwrite"><a href="gridlayout.html#dispose" class="tsd-kind-icon">dispose</a></li>
+								<li class="tsd-kind-method tsd-parent-kind-class tsd-is-overwrite tsd-is-protected"><a href="gridlayout.html#init" class="tsd-kind-icon">init</a></li>
+								<li class="tsd-kind-method tsd-parent-kind-class tsd-is-overwrite"><a href="gridlayout.html#iter" class="tsd-kind-icon">iter</a></li>
+								<li class="tsd-kind-method tsd-parent-kind-class tsd-is-inherited tsd-is-protected"><a href="gridlayout.html#onafterattach" class="tsd-kind-icon">on<wbr>After<wbr>Attach</a></li>
+								<li class="tsd-kind-method tsd-parent-kind-class tsd-is-inherited tsd-is-protected"><a href="gridlayout.html#onafterdetach" class="tsd-kind-icon">on<wbr>After<wbr>Detach</a></li>
+								<li class="tsd-kind-method tsd-parent-kind-class tsd-is-inherited tsd-is-protected"><a href="gridlayout.html#onafterhide" class="tsd-kind-icon">on<wbr>After<wbr>Hide</a></li>
+								<li class="tsd-kind-method tsd-parent-kind-class tsd-is-inherited tsd-is-protected"><a href="gridlayout.html#onaftershow" class="tsd-kind-icon">on<wbr>After<wbr>Show</a></li>
+								<li class="tsd-kind-method tsd-parent-kind-class tsd-is-overwrite tsd-is-protected"><a href="gridlayout.html#onbeforeattach" class="tsd-kind-icon">on<wbr>Before<wbr>Attach</a></li>
+								<li class="tsd-kind-method tsd-parent-kind-class tsd-is-inherited tsd-is-protected"><a href="gridlayout.html#onbeforedetach" class="tsd-kind-icon">on<wbr>Before<wbr>Detach</a></li>
+								<li class="tsd-kind-method tsd-parent-kind-class tsd-is-inherited tsd-is-protected"><a href="gridlayout.html#onbeforehide" class="tsd-kind-icon">on<wbr>Before<wbr>Hide</a></li>
+								<li class="tsd-kind-method tsd-parent-kind-class tsd-is-overwrite tsd-is-protected"><a href="gridlayout.html#onbeforeshow" class="tsd-kind-icon">on<wbr>Before<wbr>Show</a></li>
+								<li class="tsd-kind-method tsd-parent-kind-class tsd-is-overwrite tsd-is-protected"><a href="gridlayout.html#onchildhidden" class="tsd-kind-icon">on<wbr>Child<wbr>Hidden</a></li>
+								<li class="tsd-kind-method tsd-parent-kind-class tsd-is-inherited tsd-is-protected"><a href="gridlayout.html#onchildremoved" class="tsd-kind-icon">on<wbr>Child<wbr>Removed</a></li>
+								<li class="tsd-kind-method tsd-parent-kind-class tsd-is-overwrite tsd-is-protected"><a href="gridlayout.html#onchildshown" class="tsd-kind-icon">on<wbr>Child<wbr>Shown</a></li>
+								<li class="tsd-kind-method tsd-parent-kind-class tsd-is-overwrite tsd-is-protected"><a href="gridlayout.html#onfitrequest" class="tsd-kind-icon">on<wbr>Fit<wbr>Request</a></li>
+								<li class="tsd-kind-method tsd-parent-kind-class tsd-is-overwrite tsd-is-protected"><a href="gridlayout.html#onresize" class="tsd-kind-icon">on<wbr>Resize</a></li>
+								<li class="tsd-kind-method tsd-parent-kind-class tsd-is-overwrite tsd-is-protected"><a href="gridlayout.html#onupdaterequest" class="tsd-kind-icon">on<wbr>Update<wbr>Request</a></li>
+								<li class="tsd-kind-method tsd-parent-kind-class tsd-is-inherited"><a href="gridlayout.html#processparentmessage" class="tsd-kind-icon">process<wbr>Parent<wbr>Message</a></li>
+								<li class="tsd-kind-method tsd-parent-kind-class tsd-is-overwrite"><a href="gridlayout.html#removewidget" class="tsd-kind-icon">remove<wbr>Widget</a></li>
+								<li class="tsd-kind-method tsd-parent-kind-class"><a href="gridlayout.html#rowstretch" class="tsd-kind-icon">row<wbr>Stretch</a></li>
+								<li class="tsd-kind-method tsd-parent-kind-class"><a href="gridlayout.html#setcolumnstretch" class="tsd-kind-icon">set<wbr>Column<wbr>Stretch</a></li>
+								<li class="tsd-kind-method tsd-parent-kind-class"><a href="gridlayout.html#setrowstretch" class="tsd-kind-icon">set<wbr>Row<wbr>Stretch</a></li>
+								<li class="tsd-kind-method tsd-parent-kind-class tsd-is-static"><a href="gridlayout.html#getcellconfig" class="tsd-kind-icon">get<wbr>Cell<wbr>Config</a></li>
+								<li class="tsd-kind-method tsd-parent-kind-class tsd-is-static"><a href="gridlayout.html#setcellconfig" class="tsd-kind-icon">set<wbr>Cell<wbr>Config</a></li>
+							</ul>
+						</section>
+					</div>
+				</section>
+			</section>
+			<section class="tsd-panel-group tsd-member-group ">
+				<h2>Constructors</h2>
+				<section class="tsd-panel tsd-member tsd-kind-constructor tsd-parent-kind-class tsd-is-overwrite">
+					<a name="constructor" class="tsd-anchor"></a>
+					<h3>constructor</h3>
+					<ul class="tsd-signatures tsd-kind-constructor tsd-parent-kind-class tsd-is-overwrite">
+						<li class="tsd-signature tsd-kind-icon">new <wbr>Grid<wbr>Layout<span class="tsd-signature-symbol">(</span>options<span class="tsd-signature-symbol">?: </span><a href="../interfaces/gridlayout.ioptions.html" class="tsd-signature-type">IOptions</a><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol">: </span><a href="gridlayout.html" class="tsd-signature-type">GridLayout</a></li>
+					</ul>
+					<ul class="tsd-descriptions">
+						<li class="tsd-description">
+							<aside class="tsd-sources">
+								<p>Overrides <a href="layout.html">Layout</a>.<a href="layout.html#constructor">constructor</a></p>
+								<ul>
+									<li>Defined in <a href="https://github.com/phosphorjs/phosphor/blob/8fee9108/packages/widgets/src/gridlayout.ts#L41">gridlayout.ts:41</a></li>
+								</ul>
+							</aside>
+							<div class="tsd-comment tsd-typography">
+								<div class="lead">
+									<p>Construct a new grid layout.</p>
+								</div>
+							</div>
+							<h4 class="tsd-parameters-title">Parameters</h4>
+							<ul class="tsd-parameters">
+								<li>
+									<h5><span class="tsd-flag ts-flagDefault value">Default value</span> options: <a href="../interfaces/gridlayout.ioptions.html" class="tsd-signature-type">IOptions</a><span class="tsd-signature-symbol"> =&nbsp;{}</span></h5>
+									<div class="tsd-comment tsd-typography">
+										<div class="lead">
+											<p>The options for initializing the layout.</p>
+										</div>
+									</div>
+								</li>
+							</ul>
+							<h4 class="tsd-returns-title">Returns <a href="gridlayout.html" class="tsd-signature-type">GridLayout</a></h4>
+						</li>
+					</ul>
+				</section>
+			</section>
+			<section class="tsd-panel-group tsd-member-group tsd-is-private tsd-is-private-protected">
+				<h2>Properties</h2>
+				<section class="tsd-panel tsd-member tsd-kind-property tsd-parent-kind-class tsd-is-private">
+					<a name="_box" class="tsd-anchor"></a>
+					<h3><span class="tsd-flag ts-flagPrivate">Private</span> _box</h3>
+					<div class="tsd-signature tsd-kind-icon">_box<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">IBoxSizing</span><span class="tsd-signature-symbol"> | </span><span class="tsd-signature-type">null</span><span class="tsd-signature-symbol"> =&nbsp;null</span></div>
+					<aside class="tsd-sources">
+						<ul>
+							<li>Defined in <a href="https://github.com/phosphorjs/phosphor/blob/8fee9108/packages/widgets/src/gridlayout.ts#L670">gridlayout.ts:670</a></li>
+						</ul>
+					</aside>
+				</section>
+				<section class="tsd-panel tsd-member tsd-kind-property tsd-parent-kind-class tsd-is-private">
+					<a name="_columnsizers" class="tsd-anchor"></a>
+					<h3><span class="tsd-flag ts-flagPrivate">Private</span> _column<wbr>Sizers</h3>
+					<div class="tsd-signature tsd-kind-icon">_column<wbr>Sizers<span class="tsd-signature-symbol">:</span> <a href="boxsizer.html" class="tsd-signature-type">BoxSizer</a><span class="tsd-signature-symbol">[]</span><span class="tsd-signature-symbol"> =&nbsp;[new BoxSizer()]</span></div>
+					<aside class="tsd-sources">
+						<ul>
+							<li>Defined in <a href="https://github.com/phosphorjs/phosphor/blob/8fee9108/packages/widgets/src/gridlayout.ts#L669">gridlayout.ts:669</a></li>
+						</ul>
+					</aside>
+				</section>
+				<section class="tsd-panel tsd-member tsd-kind-property tsd-parent-kind-class tsd-is-private">
+					<a name="_columnspacing" class="tsd-anchor"></a>
+					<h3><span class="tsd-flag ts-flagPrivate">Private</span> _column<wbr>Spacing</h3>
+					<div class="tsd-signature tsd-kind-icon">_column<wbr>Spacing<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">number</span><span class="tsd-signature-symbol"> =&nbsp;4</span></div>
+					<aside class="tsd-sources">
+						<ul>
+							<li>Defined in <a href="https://github.com/phosphorjs/phosphor/blob/8fee9108/packages/widgets/src/gridlayout.ts#L664">gridlayout.ts:664</a></li>
+						</ul>
+					</aside>
+				</section>
+				<section class="tsd-panel tsd-member tsd-kind-property tsd-parent-kind-class tsd-is-private">
+					<a name="_columnstarts" class="tsd-anchor"></a>
+					<h3><span class="tsd-flag ts-flagPrivate">Private</span> _column<wbr>Starts</h3>
+					<div class="tsd-signature tsd-kind-icon">_column<wbr>Starts<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">number</span><span class="tsd-signature-symbol">[]</span><span class="tsd-signature-symbol"> =&nbsp;[]</span></div>
+					<aside class="tsd-sources">
+						<ul>
+							<li>Defined in <a href="https://github.com/phosphorjs/phosphor/blob/8fee9108/packages/widgets/src/gridlayout.ts#L667">gridlayout.ts:667</a></li>
+						</ul>
+					</aside>
+				</section>
+				<section class="tsd-panel tsd-member tsd-kind-property tsd-parent-kind-class tsd-is-private">
+					<a name="_dirty" class="tsd-anchor"></a>
+					<h3><span class="tsd-flag ts-flagPrivate">Private</span> _dirty</h3>
+					<div class="tsd-signature tsd-kind-icon">_dirty<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">boolean</span><span class="tsd-signature-symbol"> =&nbsp;false</span></div>
+					<aside class="tsd-sources">
+						<ul>
+							<li>Defined in <a href="https://github.com/phosphorjs/phosphor/blob/8fee9108/packages/widgets/src/gridlayout.ts#L662">gridlayout.ts:662</a></li>
+						</ul>
+					</aside>
+				</section>
+				<section class="tsd-panel tsd-member tsd-kind-property tsd-parent-kind-class tsd-is-private">
+					<a name="_items" class="tsd-anchor"></a>
+					<h3><span class="tsd-flag ts-flagPrivate">Private</span> _items</h3>
+					<div class="tsd-signature tsd-kind-icon">_items<span class="tsd-signature-symbol">:</span> <a href="layoutitem.html" class="tsd-signature-type">LayoutItem</a><span class="tsd-signature-symbol">[]</span><span class="tsd-signature-symbol"> =&nbsp;[]</span></div>
+					<aside class="tsd-sources">
+						<ul>
+							<li>Defined in <a href="https://github.com/phosphorjs/phosphor/blob/8fee9108/packages/widgets/src/gridlayout.ts#L665">gridlayout.ts:665</a></li>
+						</ul>
+					</aside>
+				</section>
+				<section class="tsd-panel tsd-member tsd-kind-property tsd-parent-kind-class tsd-is-private">
+					<a name="_rowsizers" class="tsd-anchor"></a>
+					<h3><span class="tsd-flag ts-flagPrivate">Private</span> _row<wbr>Sizers</h3>
+					<div class="tsd-signature tsd-kind-icon">_row<wbr>Sizers<span class="tsd-signature-symbol">:</span> <a href="boxsizer.html" class="tsd-signature-type">BoxSizer</a><span class="tsd-signature-symbol">[]</span><span class="tsd-signature-symbol"> =&nbsp;[new BoxSizer()]</span></div>
+					<aside class="tsd-sources">
+						<ul>
+							<li>Defined in <a href="https://github.com/phosphorjs/phosphor/blob/8fee9108/packages/widgets/src/gridlayout.ts#L668">gridlayout.ts:668</a></li>
+						</ul>
+					</aside>
+				</section>
+				<section class="tsd-panel tsd-member tsd-kind-property tsd-parent-kind-class tsd-is-private">
+					<a name="_rowspacing" class="tsd-anchor"></a>
+					<h3><span class="tsd-flag ts-flagPrivate">Private</span> _row<wbr>Spacing</h3>
+					<div class="tsd-signature tsd-kind-icon">_row<wbr>Spacing<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">number</span><span class="tsd-signature-symbol"> =&nbsp;4</span></div>
+					<aside class="tsd-sources">
+						<ul>
+							<li>Defined in <a href="https://github.com/phosphorjs/phosphor/blob/8fee9108/packages/widgets/src/gridlayout.ts#L663">gridlayout.ts:663</a></li>
+						</ul>
+					</aside>
+				</section>
+				<section class="tsd-panel tsd-member tsd-kind-property tsd-parent-kind-class tsd-is-private">
+					<a name="_rowstarts" class="tsd-anchor"></a>
+					<h3><span class="tsd-flag ts-flagPrivate">Private</span> _row<wbr>Starts</h3>
+					<div class="tsd-signature tsd-kind-icon">_row<wbr>Starts<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">number</span><span class="tsd-signature-symbol">[]</span><span class="tsd-signature-symbol"> =&nbsp;[]</span></div>
+					<aside class="tsd-sources">
+						<ul>
+							<li>Defined in <a href="https://github.com/phosphorjs/phosphor/blob/8fee9108/packages/widgets/src/gridlayout.ts#L666">gridlayout.ts:666</a></li>
+						</ul>
+					</aside>
+				</section>
+			</section>
+			<section class="tsd-panel-group tsd-member-group ">
+				<h2>Accessors</h2>
+				<section class="tsd-panel tsd-member tsd-kind-accessor tsd-parent-kind-class">
+					<a name="columncount" class="tsd-anchor"></a>
+					<h3>column<wbr>Count</h3>
+					<ul class="tsd-signatures tsd-kind-accessor tsd-parent-kind-class">
+						<li class="tsd-signature tsd-kind-icon"><span class="tsd-signature-symbol">get</span> columnCount<span class="tsd-signature-symbol">(</span><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">number</span></li>
+						<li class="tsd-signature tsd-kind-icon"><span class="tsd-signature-symbol">set</span> columnCount<span class="tsd-signature-symbol">(</span>value<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">number</span><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">void</span></li>
+					</ul>
+					<ul class="tsd-descriptions">
+						<li class="tsd-description">
+							<aside class="tsd-sources">
+								<ul>
+									<li>Defined in <a href="https://github.com/phosphorjs/phosphor/blob/8fee9108/packages/widgets/src/gridlayout.ts#L117">gridlayout.ts:117</a></li>
+								</ul>
+							</aside>
+							<div class="tsd-comment tsd-typography">
+								<div class="lead">
+									<p>Get the number of columns in the layout.</p>
+								</div>
+								<h4 id="notes">Notes</h4>
+								<p>The minimum column count is <code>1</code>.</p>
+							</div>
+							<h4 class="tsd-returns-title">Returns <span class="tsd-signature-type">number</span></h4>
+						</li>
+						<li class="tsd-description">
+							<aside class="tsd-sources">
+								<ul>
+									<li>Defined in <a href="https://github.com/phosphorjs/phosphor/blob/8fee9108/packages/widgets/src/gridlayout.ts#L127">gridlayout.ts:127</a></li>
+								</ul>
+							</aside>
+							<div class="tsd-comment tsd-typography">
+								<div class="lead">
+									<p>Set the number of columns in the layout.</p>
+								</div>
+								<h4 id="notes">Notes</h4>
+								<p>The minimum column count is <code>1</code>.</p>
+							</div>
+							<h4 class="tsd-parameters-title">Parameters</h4>
+							<ul class="tsd-parameters">
+								<li>
+									<h5>value: <span class="tsd-signature-type">number</span></h5>
+								</li>
+							</ul>
+							<h4 class="tsd-returns-title">Returns <span class="tsd-signature-type">void</span></h4>
+						</li>
+					</ul>
+				</section>
+				<section class="tsd-panel tsd-member tsd-kind-accessor tsd-parent-kind-class">
+					<a name="columnspacing" class="tsd-anchor"></a>
+					<h3>column<wbr>Spacing</h3>
+					<ul class="tsd-signatures tsd-kind-accessor tsd-parent-kind-class">
+						<li class="tsd-signature tsd-kind-icon"><span class="tsd-signature-symbol">get</span> columnSpacing<span class="tsd-signature-symbol">(</span><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">number</span></li>
+						<li class="tsd-signature tsd-kind-icon"><span class="tsd-signature-symbol">set</span> columnSpacing<span class="tsd-signature-symbol">(</span>value<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">number</span><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">void</span></li>
+					</ul>
+					<ul class="tsd-descriptions">
+						<li class="tsd-description">
+							<aside class="tsd-sources">
+								<ul>
+									<li>Defined in <a href="https://github.com/phosphorjs/phosphor/blob/8fee9108/packages/widgets/src/gridlayout.ts#L173">gridlayout.ts:173</a></li>
+								</ul>
+							</aside>
+							<div class="tsd-comment tsd-typography">
+								<div class="lead">
+									<p>Get the column spacing for the layout.</p>
+								</div>
+							</div>
+							<h4 class="tsd-returns-title">Returns <span class="tsd-signature-type">number</span></h4>
+						</li>
+						<li class="tsd-description">
+							<aside class="tsd-sources">
+								<ul>
+									<li>Defined in <a href="https://github.com/phosphorjs/phosphor/blob/8fee9108/packages/widgets/src/gridlayout.ts#L180">gridlayout.ts:180</a></li>
+								</ul>
+							</aside>
+							<div class="tsd-comment tsd-typography">
+								<div class="lead">
+									<p>Set the col spacing for the layout.</p>
+								</div>
+							</div>
+							<h4 class="tsd-parameters-title">Parameters</h4>
+							<ul class="tsd-parameters">
+								<li>
+									<h5>value: <span class="tsd-signature-type">number</span></h5>
+								</li>
+							</ul>
+							<h4 class="tsd-returns-title">Returns <span class="tsd-signature-type">void</span></h4>
+						</li>
+					</ul>
+				</section>
+				<section class="tsd-panel tsd-member tsd-kind-accessor tsd-parent-kind-class tsd-is-inherited">
+					<a name="fitpolicy" class="tsd-anchor"></a>
+					<h3>fit<wbr>Policy</h3>
+					<ul class="tsd-signatures tsd-kind-accessor tsd-parent-kind-class tsd-is-inherited">
+						<li class="tsd-signature tsd-kind-icon"><span class="tsd-signature-symbol">get</span> fitPolicy<span class="tsd-signature-symbol">(</span><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol">: </span><a href="../modules/gridlayout.layout.html#fitpolicy" class="tsd-signature-type">FitPolicy</a></li>
+						<li class="tsd-signature tsd-kind-icon"><span class="tsd-signature-symbol">set</span> fitPolicy<span class="tsd-signature-symbol">(</span>value<span class="tsd-signature-symbol">: </span><a href="../modules/gridlayout.layout.html#fitpolicy" class="tsd-signature-type">FitPolicy</a><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">void</span></li>
+					</ul>
+					<ul class="tsd-descriptions">
+						<li class="tsd-description">
+							<aside class="tsd-sources">
+								<p>Inherited from <a href="layout.html">Layout</a>.<a href="layout.html#fitpolicy-1">fitPolicy</a></p>
+								<ul>
+									<li>Defined in <a href="https://github.com/phosphorjs/phosphor/blob/8fee9108/packages/widgets/src/layout.ts#L123">layout.ts:123</a></li>
+								</ul>
+							</aside>
+							<div class="tsd-comment tsd-typography">
+								<div class="lead">
+									<p>Get the fit policy for the layout.</p>
+								</div>
+								<h4 id="notes">Notes</h4>
+								<p>The fit policy controls the computed size constraints which are
+								applied to the parent widget by the layout.</p>
+								<p>Some layout implementations may ignore the fit policy.</p>
+							</div>
+							<h4 class="tsd-returns-title">Returns <a href="../modules/gridlayout.layout.html#fitpolicy" class="tsd-signature-type">FitPolicy</a></h4>
+						</li>
+						<li class="tsd-description">
+							<aside class="tsd-sources">
+								<p>Inherited from <a href="layout.html">Layout</a>.<a href="layout.html#fitpolicy-1">fitPolicy</a></p>
+								<ul>
+									<li>Defined in <a href="https://github.com/phosphorjs/phosphor/blob/8fee9108/packages/widgets/src/layout.ts#L139">layout.ts:139</a></li>
+								</ul>
+							</aside>
+							<div class="tsd-comment tsd-typography">
+								<div class="lead">
+									<p>Set the fit policy for the layout.</p>
+								</div>
+								<h4 id="notes">Notes</h4>
+								<p>The fit policy controls the computed size constraints which are
+								applied to the parent widget by the layout.</p>
+								<p>Some layout implementations may ignore the fit policy.</p>
+								<p>Changing the fit policy will clear the current size constraint
+								for the parent widget and then re-fit the parent.</p>
+							</div>
+							<h4 class="tsd-parameters-title">Parameters</h4>
+							<ul class="tsd-parameters">
+								<li>
+									<h5>value: <a href="../modules/gridlayout.layout.html#fitpolicy" class="tsd-signature-type">FitPolicy</a></h5>
+								</li>
+							</ul>
+							<h4 class="tsd-returns-title">Returns <span class="tsd-signature-type">void</span></h4>
+						</li>
+					</ul>
+				</section>
+				<section class="tsd-panel tsd-member tsd-kind-get-signature tsd-parent-kind-class tsd-is-inherited">
+					<a name="isdisposed" class="tsd-anchor"></a>
+					<h3>is<wbr>Disposed</h3>
+					<ul class="tsd-signatures tsd-kind-get-signature tsd-parent-kind-class tsd-is-inherited">
+						<li class="tsd-signature tsd-kind-icon"><span class="tsd-signature-symbol">get</span> isDisposed<span class="tsd-signature-symbol">(</span><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">boolean</span></li>
+					</ul>
+					<ul class="tsd-descriptions">
+						<li class="tsd-description">
+							<aside class="tsd-sources">
+								<p>Inherited from <a href="layout.html">Layout</a>.<a href="layout.html#isdisposed">isDisposed</a></p>
+								<ul>
+									<li>Defined in <a href="https://github.com/phosphorjs/phosphor/blob/8fee9108/packages/widgets/src/layout.ts#L82">layout.ts:82</a></li>
+								</ul>
+							</aside>
+							<div class="tsd-comment tsd-typography">
+								<div class="lead">
+									<p>Test whether the layout is disposed.</p>
+								</div>
+							</div>
+							<h4 class="tsd-returns-title">Returns <span class="tsd-signature-type">boolean</span></h4>
+						</li>
+					</ul>
+				</section>
+				<section class="tsd-panel tsd-member tsd-kind-accessor tsd-parent-kind-class tsd-is-inherited">
+					<a name="parent" class="tsd-anchor"></a>
+					<h3>parent</h3>
+					<ul class="tsd-signatures tsd-kind-accessor tsd-parent-kind-class tsd-is-inherited">
+						<li class="tsd-signature tsd-kind-icon"><span class="tsd-signature-symbol">get</span> parent<span class="tsd-signature-symbol">(</span><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol">: </span><a href="widget.html" class="tsd-signature-type">Widget</a><span class="tsd-signature-symbol"> | </span><span class="tsd-signature-type">null</span></li>
+						<li class="tsd-signature tsd-kind-icon"><span class="tsd-signature-symbol">set</span> parent<span class="tsd-signature-symbol">(</span>value<span class="tsd-signature-symbol">: </span><a href="widget.html" class="tsd-signature-type">Widget</a><span class="tsd-signature-symbol"> | </span><span class="tsd-signature-type">null</span><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">void</span></li>
+					</ul>
+					<ul class="tsd-descriptions">
+						<li class="tsd-description">
+							<aside class="tsd-sources">
+								<p>Inherited from <a href="layout.html">Layout</a>.<a href="layout.html#parent">parent</a></p>
+								<ul>
+									<li>Defined in <a href="https://github.com/phosphorjs/phosphor/blob/8fee9108/packages/widgets/src/layout.ts#L89">layout.ts:89</a></li>
+								</ul>
+							</aside>
+							<div class="tsd-comment tsd-typography">
+								<div class="lead">
+									<p>Get the parent widget of the layout.</p>
+								</div>
+								<h4 id="notes">Notes</h4>
+								<p>This is set automatically when installing the layout on the parent
+								widget. The parent widget should not be set directly by user code.</p>
+							</div>
+							<h4 class="tsd-returns-title">Returns <a href="widget.html" class="tsd-signature-type">Widget</a>
+								<span class="tsd-signature-symbol"> | </span>
+								<span class="tsd-signature-type">null</span>
+							</h4>
+						</li>
+						<li class="tsd-description">
+							<aside class="tsd-sources">
+								<p>Inherited from <a href="layout.html">Layout</a>.<a href="layout.html#parent">parent</a></p>
+								<ul>
+									<li>Defined in <a href="https://github.com/phosphorjs/phosphor/blob/8fee9108/packages/widgets/src/layout.ts#L100">layout.ts:100</a></li>
+								</ul>
+							</aside>
+							<div class="tsd-comment tsd-typography">
+								<div class="lead">
+									<p>Set the parent widget of the layout.</p>
+								</div>
+								<h4 id="notes">Notes</h4>
+								<p>This is set automatically when installing the layout on the parent
+								widget. The parent widget should not be set directly by user code.</p>
+							</div>
+							<h4 class="tsd-parameters-title">Parameters</h4>
+							<ul class="tsd-parameters">
+								<li>
+									<h5>value: <a href="widget.html" class="tsd-signature-type">Widget</a><span class="tsd-signature-symbol"> | </span><span class="tsd-signature-type">null</span></h5>
+								</li>
+							</ul>
+							<h4 class="tsd-returns-title">Returns <span class="tsd-signature-type">void</span></h4>
+						</li>
+					</ul>
+				</section>
+				<section class="tsd-panel tsd-member tsd-kind-accessor tsd-parent-kind-class">
+					<a name="rowcount" class="tsd-anchor"></a>
+					<h3>row<wbr>Count</h3>
+					<ul class="tsd-signatures tsd-kind-accessor tsd-parent-kind-class">
+						<li class="tsd-signature tsd-kind-icon"><span class="tsd-signature-symbol">get</span> rowCount<span class="tsd-signature-symbol">(</span><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">number</span></li>
+						<li class="tsd-signature tsd-kind-icon"><span class="tsd-signature-symbol">set</span> rowCount<span class="tsd-signature-symbol">(</span>value<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">number</span><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">void</span></li>
+					</ul>
+					<ul class="tsd-descriptions">
+						<li class="tsd-description">
+							<aside class="tsd-sources">
+								<ul>
+									<li>Defined in <a href="https://github.com/phosphorjs/phosphor/blob/8fee9108/packages/widgets/src/gridlayout.ts#L89">gridlayout.ts:89</a></li>
+								</ul>
+							</aside>
+							<div class="tsd-comment tsd-typography">
+								<div class="lead">
+									<p>Get the number of rows in the layout.</p>
+								</div>
+								<h4 id="notes">Notes</h4>
+								<p>The minimum row count is <code>1</code>.</p>
+							</div>
+							<h4 class="tsd-returns-title">Returns <span class="tsd-signature-type">number</span></h4>
+						</li>
+						<li class="tsd-description">
+							<aside class="tsd-sources">
+								<ul>
+									<li>Defined in <a href="https://github.com/phosphorjs/phosphor/blob/8fee9108/packages/widgets/src/gridlayout.ts#L99">gridlayout.ts:99</a></li>
+								</ul>
+							</aside>
+							<div class="tsd-comment tsd-typography">
+								<div class="lead">
+									<p>Set the number of rows in the layout.</p>
+								</div>
+								<h4 id="notes">Notes</h4>
+								<p>The minimum row count is <code>1</code>.</p>
+							</div>
+							<h4 class="tsd-parameters-title">Parameters</h4>
+							<ul class="tsd-parameters">
+								<li>
+									<h5>value: <span class="tsd-signature-type">number</span></h5>
+								</li>
+							</ul>
+							<h4 class="tsd-returns-title">Returns <span class="tsd-signature-type">void</span></h4>
+						</li>
+					</ul>
+				</section>
+				<section class="tsd-panel tsd-member tsd-kind-accessor tsd-parent-kind-class">
+					<a name="rowspacing" class="tsd-anchor"></a>
+					<h3>row<wbr>Spacing</h3>
+					<ul class="tsd-signatures tsd-kind-accessor tsd-parent-kind-class">
+						<li class="tsd-signature tsd-kind-icon"><span class="tsd-signature-symbol">get</span> rowSpacing<span class="tsd-signature-symbol">(</span><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">number</span></li>
+						<li class="tsd-signature tsd-kind-icon"><span class="tsd-signature-symbol">set</span> rowSpacing<span class="tsd-signature-symbol">(</span>value<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">number</span><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">void</span></li>
+					</ul>
+					<ul class="tsd-descriptions">
+						<li class="tsd-description">
+							<aside class="tsd-sources">
+								<ul>
+									<li>Defined in <a href="https://github.com/phosphorjs/phosphor/blob/8fee9108/packages/widgets/src/gridlayout.ts#L145">gridlayout.ts:145</a></li>
+								</ul>
+							</aside>
+							<div class="tsd-comment tsd-typography">
+								<div class="lead">
+									<p>Get the row spacing for the layout.</p>
+								</div>
+							</div>
+							<h4 class="tsd-returns-title">Returns <span class="tsd-signature-type">number</span></h4>
+						</li>
+						<li class="tsd-description">
+							<aside class="tsd-sources">
+								<ul>
+									<li>Defined in <a href="https://github.com/phosphorjs/phosphor/blob/8fee9108/packages/widgets/src/gridlayout.ts#L152">gridlayout.ts:152</a></li>
+								</ul>
+							</aside>
+							<div class="tsd-comment tsd-typography">
+								<div class="lead">
+									<p>Set the row spacing for the layout.</p>
+								</div>
+							</div>
+							<h4 class="tsd-parameters-title">Parameters</h4>
+							<ul class="tsd-parameters">
+								<li>
+									<h5>value: <span class="tsd-signature-type">number</span></h5>
+								</li>
+							</ul>
+							<h4 class="tsd-returns-title">Returns <span class="tsd-signature-type">void</span></h4>
+						</li>
+					</ul>
+				</section>
+			</section>
+			<section class="tsd-panel-group tsd-member-group ">
+				<h2>Methods</h2>
+				<section class="tsd-panel tsd-member tsd-kind-method tsd-parent-kind-class tsd-is-private">
+					<a name="_fit" class="tsd-anchor"></a>
+					<h3><span class="tsd-flag ts-flagPrivate">Private</span> _fit</h3>
+					<ul class="tsd-signatures tsd-kind-method tsd-parent-kind-class tsd-is-private">
+						<li class="tsd-signature tsd-kind-icon">_fit<span class="tsd-signature-symbol">(</span><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">void</span></li>
+					</ul>
+					<ul class="tsd-descriptions">
+						<li class="tsd-description">
+							<aside class="tsd-sources">
+								<ul>
+									<li>Defined in <a href="https://github.com/phosphorjs/phosphor/blob/8fee9108/packages/widgets/src/gridlayout.ts#L483">gridlayout.ts:483</a></li>
+								</ul>
+							</aside>
+							<div class="tsd-comment tsd-typography">
+								<div class="lead">
+									<p>Fit the layout to the total size required by the widgets.</p>
+								</div>
+							</div>
+							<h4 class="tsd-returns-title">Returns <span class="tsd-signature-type">void</span></h4>
+						</li>
+					</ul>
+				</section>
+				<section class="tsd-panel tsd-member tsd-kind-method tsd-parent-kind-class tsd-is-private">
+					<a name="_update" class="tsd-anchor"></a>
+					<h3><span class="tsd-flag ts-flagPrivate">Private</span> _update</h3>
+					<ul class="tsd-signatures tsd-kind-method tsd-parent-kind-class tsd-is-private">
+						<li class="tsd-signature tsd-kind-icon">_update<span class="tsd-signature-symbol">(</span>offsetWidth<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">number</span>, offsetHeight<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">number</span><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">void</span></li>
+					</ul>
+					<ul class="tsd-descriptions">
+						<li class="tsd-description">
+							<aside class="tsd-sources">
+								<ul>
+									<li>Defined in <a href="https://github.com/phosphorjs/phosphor/blob/8fee9108/packages/widgets/src/gridlayout.ts#L587">gridlayout.ts:587</a></li>
+								</ul>
+							</aside>
+							<div class="tsd-comment tsd-typography">
+								<div class="lead">
+									<p>Update the layout position and size of the widgets.</p>
+								</div>
+								<p>The parent offset dimensions should be <code>-1</code> if unknown.</p>
+							</div>
+							<h4 class="tsd-parameters-title">Parameters</h4>
+							<ul class="tsd-parameters">
+								<li>
+									<h5>offsetWidth: <span class="tsd-signature-type">number</span></h5>
+								</li>
+								<li>
+									<h5>offsetHeight: <span class="tsd-signature-type">number</span></h5>
+								</li>
+							</ul>
+							<h4 class="tsd-returns-title">Returns <span class="tsd-signature-type">void</span></h4>
+						</li>
+					</ul>
+				</section>
+				<section class="tsd-panel tsd-member tsd-kind-method tsd-parent-kind-class">
+					<a name="addwidget" class="tsd-anchor"></a>
+					<h3>add<wbr>Widget</h3>
+					<ul class="tsd-signatures tsd-kind-method tsd-parent-kind-class">
+						<li class="tsd-signature tsd-kind-icon">add<wbr>Widget<span class="tsd-signature-symbol">(</span>widget<span class="tsd-signature-symbol">: </span><a href="widget.html" class="tsd-signature-type">Widget</a><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">void</span></li>
+					</ul>
+					<ul class="tsd-descriptions">
+						<li class="tsd-description">
+							<aside class="tsd-sources">
+								<ul>
+									<li>Defined in <a href="https://github.com/phosphorjs/phosphor/blob/8fee9108/packages/widgets/src/gridlayout.ts#L317">gridlayout.ts:317</a></li>
+								</ul>
+							</aside>
+							<div class="tsd-comment tsd-typography">
+								<div class="lead">
+									<p>Add a widget to the grid layout.</p>
+								</div>
+							</div>
+							<h4 class="tsd-parameters-title">Parameters</h4>
+							<ul class="tsd-parameters">
+								<li>
+									<h5>widget: <a href="widget.html" class="tsd-signature-type">Widget</a></h5>
+									<div class="tsd-comment tsd-typography">
+										<p>The widget to add to the layout.</p>
+										<h4 id="notes">Notes</h4>
+										<p>If the widget is already contained in the layout, this is no-op.</p>
+									</div>
+								</li>
+							</ul>
+							<h4 class="tsd-returns-title">Returns <span class="tsd-signature-type">void</span></h4>
+						</li>
+					</ul>
+				</section>
+				<section class="tsd-panel tsd-member tsd-kind-method tsd-parent-kind-class tsd-is-protected">
+					<a name="attachwidget" class="tsd-anchor"></a>
+					<h3><span class="tsd-flag ts-flagProtected">Protected</span> attach<wbr>Widget</h3>
+					<ul class="tsd-signatures tsd-kind-method tsd-parent-kind-class tsd-is-protected">
+						<li class="tsd-signature tsd-kind-icon">attach<wbr>Widget<span class="tsd-signature-symbol">(</span>widget<span class="tsd-signature-symbol">: </span><a href="widget.html" class="tsd-signature-type">Widget</a><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">void</span></li>
+					</ul>
+					<ul class="tsd-descriptions">
+						<li class="tsd-description">
+							<aside class="tsd-sources">
+								<ul>
+									<li>Defined in <a href="https://github.com/phosphorjs/phosphor/blob/8fee9108/packages/widgets/src/gridlayout.ts#L382">gridlayout.ts:382</a></li>
+								</ul>
+							</aside>
+							<div class="tsd-comment tsd-typography">
+								<div class="lead">
+									<p>Attach a widget to the parent&#39;s DOM node.</p>
+								</div>
+							</div>
+							<h4 class="tsd-parameters-title">Parameters</h4>
+							<ul class="tsd-parameters">
+								<li>
+									<h5>widget: <a href="widget.html" class="tsd-signature-type">Widget</a></h5>
+									<div class="tsd-comment tsd-typography">
+										<p>The widget to attach to the parent.</p>
+									</div>
+								</li>
+							</ul>
+							<h4 class="tsd-returns-title">Returns <span class="tsd-signature-type">void</span></h4>
+						</li>
+					</ul>
+				</section>
+				<section class="tsd-panel tsd-member tsd-kind-method tsd-parent-kind-class">
+					<a name="columnstretch" class="tsd-anchor"></a>
+					<h3>column<wbr>Stretch</h3>
+					<ul class="tsd-signatures tsd-kind-method tsd-parent-kind-class">
+						<li class="tsd-signature tsd-kind-icon">column<wbr>Stretch<span class="tsd-signature-symbol">(</span>index<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">number</span><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">number</span></li>
+					</ul>
+					<ul class="tsd-descriptions">
+						<li class="tsd-description">
+							<aside class="tsd-sources">
+								<ul>
+									<li>Defined in <a href="https://github.com/phosphorjs/phosphor/blob/8fee9108/packages/widgets/src/gridlayout.ts#L259">gridlayout.ts:259</a></li>
+								</ul>
+							</aside>
+							<div class="tsd-comment tsd-typography">
+								<div class="lead">
+									<p>Get the stretch factor for a specific column.</p>
+								</div>
+							</div>
+							<h4 class="tsd-parameters-title">Parameters</h4>
+							<ul class="tsd-parameters">
+								<li>
+									<h5>index: <span class="tsd-signature-type">number</span></h5>
+									<div class="tsd-comment tsd-typography">
+										<p>The column index of interest.</p>
+									</div>
+								</li>
+							</ul>
+							<h4 class="tsd-returns-title">Returns <span class="tsd-signature-type">number</span></h4>
+							<p>The stretch factor for the column.</p>
+							<h4 id="notes">Notes</h4>
+							<p>This returns <code>-1</code> if the index is out of range.</p>
+						</li>
+					</ul>
+				</section>
+				<section class="tsd-panel tsd-member tsd-kind-method tsd-parent-kind-class tsd-is-protected">
+					<a name="detachwidget" class="tsd-anchor"></a>
+					<h3><span class="tsd-flag ts-flagProtected">Protected</span> detach<wbr>Widget</h3>
+					<ul class="tsd-signatures tsd-kind-method tsd-parent-kind-class tsd-is-protected">
+						<li class="tsd-signature tsd-kind-icon">detach<wbr>Widget<span class="tsd-signature-symbol">(</span>widget<span class="tsd-signature-symbol">: </span><a href="widget.html" class="tsd-signature-type">Widget</a><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">void</span></li>
+					</ul>
+					<ul class="tsd-descriptions">
+						<li class="tsd-description">
+							<aside class="tsd-sources">
+								<ul>
+									<li>Defined in <a href="https://github.com/phosphorjs/phosphor/blob/8fee9108/packages/widgets/src/gridlayout.ts#L405">gridlayout.ts:405</a></li>
+								</ul>
+							</aside>
+							<div class="tsd-comment tsd-typography">
+								<div class="lead">
+									<p>Detach a widget from the parent&#39;s DOM node.</p>
+								</div>
+							</div>
+							<h4 class="tsd-parameters-title">Parameters</h4>
+							<ul class="tsd-parameters">
+								<li>
+									<h5>widget: <a href="widget.html" class="tsd-signature-type">Widget</a></h5>
+									<div class="tsd-comment tsd-typography">
+										<p>The widget to detach from the parent.</p>
+									</div>
+								</li>
+							</ul>
+							<h4 class="tsd-returns-title">Returns <span class="tsd-signature-type">void</span></h4>
+						</li>
+					</ul>
+				</section>
+				<section class="tsd-panel tsd-member tsd-kind-method tsd-parent-kind-class tsd-is-overwrite">
+					<a name="dispose" class="tsd-anchor"></a>
+					<h3>dispose</h3>
+					<ul class="tsd-signatures tsd-kind-method tsd-parent-kind-class tsd-is-overwrite">
+						<li class="tsd-signature tsd-kind-icon">dispose<span class="tsd-signature-symbol">(</span><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">void</span></li>
+					</ul>
+					<ul class="tsd-descriptions">
+						<li class="tsd-description">
+							<aside class="tsd-sources">
+								<p>Overrides <a href="layout.html">Layout</a>.<a href="layout.html#dispose">dispose</a></p>
+								<ul>
+									<li>Defined in <a href="https://github.com/phosphorjs/phosphor/blob/8fee9108/packages/widgets/src/gridlayout.ts#L66">gridlayout.ts:66</a></li>
+								</ul>
+							</aside>
+							<div class="tsd-comment tsd-typography">
+								<div class="lead">
+									<p>Dispose of the resources held by the layout.</p>
+								</div>
+							</div>
+							<h4 class="tsd-returns-title">Returns <span class="tsd-signature-type">void</span></h4>
+						</li>
+					</ul>
+				</section>
+				<section class="tsd-panel tsd-member tsd-kind-method tsd-parent-kind-class tsd-is-overwrite tsd-is-protected">
+					<a name="init" class="tsd-anchor"></a>
+					<h3><span class="tsd-flag ts-flagProtected">Protected</span> init</h3>
+					<ul class="tsd-signatures tsd-kind-method tsd-parent-kind-class tsd-is-overwrite tsd-is-protected">
+						<li class="tsd-signature tsd-kind-icon">init<span class="tsd-signature-symbol">(</span><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">void</span></li>
+					</ul>
+					<ul class="tsd-descriptions">
+						<li class="tsd-description">
+							<aside class="tsd-sources">
+								<p>Overrides <a href="layout.html">Layout</a>.<a href="layout.html#init">init</a></p>
+								<ul>
+									<li>Defined in <a href="https://github.com/phosphorjs/phosphor/blob/8fee9108/packages/widgets/src/gridlayout.ts#L372">gridlayout.ts:372</a></li>
+								</ul>
+							</aside>
+							<div class="tsd-comment tsd-typography">
+								<div class="lead">
+									<p>Perform layout initialization which requires the parent widget.</p>
+								</div>
+							</div>
+							<h4 class="tsd-returns-title">Returns <span class="tsd-signature-type">void</span></h4>
+						</li>
+					</ul>
+				</section>
+				<section class="tsd-panel tsd-member tsd-kind-method tsd-parent-kind-class tsd-is-overwrite">
+					<a name="iter" class="tsd-anchor"></a>
+					<h3>iter</h3>
+					<ul class="tsd-signatures tsd-kind-method tsd-parent-kind-class tsd-is-overwrite">
+						<li class="tsd-signature tsd-kind-icon">iter<span class="tsd-signature-symbol">(</span><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">IIterator</span><span class="tsd-signature-symbol">&lt;</span><a href="widget.html" class="tsd-signature-type">Widget</a><span class="tsd-signature-symbol">&gt;</span></li>
+					</ul>
+					<ul class="tsd-descriptions">
+						<li class="tsd-description">
+							<aside class="tsd-sources">
+								<p>Overrides <a href="layout.html">Layout</a>.<a href="layout.html#iter">iter</a></p>
+								<ul>
+									<li>Defined in <a href="https://github.com/phosphorjs/phosphor/blob/8fee9108/packages/widgets/src/gridlayout.ts#L305">gridlayout.ts:305</a></li>
+								</ul>
+							</aside>
+							<div class="tsd-comment tsd-typography">
+								<div class="lead">
+									<p>Create an iterator over the widgets in the layout.</p>
+								</div>
+							</div>
+							<h4 class="tsd-returns-title">Returns <span class="tsd-signature-type">IIterator</span><span class="tsd-signature-symbol">&lt;</span><a href="widget.html" class="tsd-signature-type">Widget</a><span class="tsd-signature-symbol">&gt;</span></h4>
+							<p>A new iterator over the widgets in the layout.</p>
+						</li>
+					</ul>
+				</section>
+				<section class="tsd-panel tsd-member tsd-kind-method tsd-parent-kind-class tsd-is-inherited tsd-is-protected">
+					<a name="onafterattach" class="tsd-anchor"></a>
+					<h3><span class="tsd-flag ts-flagProtected">Protected</span> on<wbr>After<wbr>Attach</h3>
+					<ul class="tsd-signatures tsd-kind-method tsd-parent-kind-class tsd-is-inherited tsd-is-protected">
+						<li class="tsd-signature tsd-kind-icon">on<wbr>After<wbr>Attach<span class="tsd-signature-symbol">(</span>msg<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">Message</span><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">void</span></li>
+					</ul>
+					<ul class="tsd-descriptions">
+						<li class="tsd-description">
+							<aside class="tsd-sources">
+								<p>Inherited from <a href="layout.html">Layout</a>.<a href="layout.html#onafterattach">onAfterAttach</a></p>
+								<ul>
+									<li>Defined in <a href="https://github.com/phosphorjs/phosphor/blob/8fee9108/packages/widgets/src/layout.ts#L324">layout.ts:324</a></li>
+								</ul>
+							</aside>
+							<div class="tsd-comment tsd-typography">
+								<div class="lead">
+									<p>A message handler invoked on an <code>&#39;after-attach&#39;</code> message.</p>
+								</div>
+								<h4 id="notes">Notes</h4>
+								<p>The default implementation of this method forwards the message
+									to all widgets. It assumes all widget nodes are attached to the
+								parent widget node.</p>
+								<p>This may be reimplemented by subclasses as needed.</p>
+							</div>
+							<h4 class="tsd-parameters-title">Parameters</h4>
+							<ul class="tsd-parameters">
+								<li>
+									<h5>msg: <span class="tsd-signature-type">Message</span></h5>
+								</li>
+							</ul>
+							<h4 class="tsd-returns-title">Returns <span class="tsd-signature-type">void</span></h4>
+						</li>
+					</ul>
+				</section>
+				<section class="tsd-panel tsd-member tsd-kind-method tsd-parent-kind-class tsd-is-inherited tsd-is-protected">
+					<a name="onafterdetach" class="tsd-anchor"></a>
+					<h3><span class="tsd-flag ts-flagProtected">Protected</span> on<wbr>After<wbr>Detach</h3>
+					<ul class="tsd-signatures tsd-kind-method tsd-parent-kind-class tsd-is-inherited tsd-is-protected">
+						<li class="tsd-signature tsd-kind-icon">on<wbr>After<wbr>Detach<span class="tsd-signature-symbol">(</span>msg<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">Message</span><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">void</span></li>
+					</ul>
+					<ul class="tsd-descriptions">
+						<li class="tsd-description">
+							<aside class="tsd-sources">
+								<p>Inherited from <a href="layout.html">Layout</a>.<a href="layout.html#onafterdetach">onAfterDetach</a></p>
+								<ul>
+									<li>Defined in <a href="https://github.com/phosphorjs/phosphor/blob/8fee9108/packages/widgets/src/layout.ts#L356">layout.ts:356</a></li>
+								</ul>
+							</aside>
+							<div class="tsd-comment tsd-typography">
+								<div class="lead">
+									<p>A message handler invoked on an <code>&#39;after-detach&#39;</code> message.</p>
+								</div>
+								<h4 id="notes">Notes</h4>
+								<p>The default implementation of this method forwards the message
+									to all widgets. It assumes all widget nodes are attached to the
+								parent widget node.</p>
+								<p>This may be reimplemented by subclasses as needed.</p>
+							</div>
+							<h4 class="tsd-parameters-title">Parameters</h4>
+							<ul class="tsd-parameters">
+								<li>
+									<h5>msg: <span class="tsd-signature-type">Message</span></h5>
+								</li>
+							</ul>
+							<h4 class="tsd-returns-title">Returns <span class="tsd-signature-type">void</span></h4>
+						</li>
+					</ul>
+				</section>
+				<section class="tsd-panel tsd-member tsd-kind-method tsd-parent-kind-class tsd-is-inherited tsd-is-protected">
+					<a name="onafterhide" class="tsd-anchor"></a>
+					<h3><span class="tsd-flag ts-flagProtected">Protected</span> on<wbr>After<wbr>Hide</h3>
+					<ul class="tsd-signatures tsd-kind-method tsd-parent-kind-class tsd-is-inherited tsd-is-protected">
+						<li class="tsd-signature tsd-kind-icon">on<wbr>After<wbr>Hide<span class="tsd-signature-symbol">(</span>msg<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">Message</span><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">void</span></li>
+					</ul>
+					<ul class="tsd-descriptions">
+						<li class="tsd-description">
+							<aside class="tsd-sources">
+								<p>Inherited from <a href="layout.html">Layout</a>.<a href="layout.html#onafterhide">onAfterHide</a></p>
+								<ul>
+									<li>Defined in <a href="https://github.com/phosphorjs/phosphor/blob/8fee9108/packages/widgets/src/layout.ts#L426">layout.ts:426</a></li>
+								</ul>
+							</aside>
+							<div class="tsd-comment tsd-typography">
+								<div class="lead">
+									<p>A message handler invoked on an <code>&#39;after-hide&#39;</code> message.</p>
+								</div>
+								<h4 id="notes">Notes</h4>
+								<p>The default implementation of this method forwards the message to
+									all non-hidden widgets. It assumes all widget nodes are attached
+								to the parent widget node.</p>
+								<p>This may be reimplemented by subclasses as needed.</p>
+							</div>
+							<h4 class="tsd-parameters-title">Parameters</h4>
+							<ul class="tsd-parameters">
+								<li>
+									<h5>msg: <span class="tsd-signature-type">Message</span></h5>
+								</li>
+							</ul>
+							<h4 class="tsd-returns-title">Returns <span class="tsd-signature-type">void</span></h4>
+						</li>
+					</ul>
+				</section>
+				<section class="tsd-panel tsd-member tsd-kind-method tsd-parent-kind-class tsd-is-inherited tsd-is-protected">
+					<a name="onaftershow" class="tsd-anchor"></a>
+					<h3><span class="tsd-flag ts-flagProtected">Protected</span> on<wbr>After<wbr>Show</h3>
+					<ul class="tsd-signatures tsd-kind-method tsd-parent-kind-class tsd-is-inherited tsd-is-protected">
+						<li class="tsd-signature tsd-kind-icon">on<wbr>After<wbr>Show<span class="tsd-signature-symbol">(</span>msg<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">Message</span><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">void</span></li>
+					</ul>
+					<ul class="tsd-descriptions">
+						<li class="tsd-description">
+							<aside class="tsd-sources">
+								<p>Inherited from <a href="layout.html">Layout</a>.<a href="layout.html#onaftershow">onAfterShow</a></p>
+								<ul>
+									<li>Defined in <a href="https://github.com/phosphorjs/phosphor/blob/8fee9108/packages/widgets/src/layout.ts#L390">layout.ts:390</a></li>
+								</ul>
+							</aside>
+							<div class="tsd-comment tsd-typography">
+								<div class="lead">
+									<p>A message handler invoked on an <code>&#39;after-show&#39;</code> message.</p>
+								</div>
+								<h4 id="notes">Notes</h4>
+								<p>The default implementation of this method forwards the message to
+									all non-hidden widgets. It assumes all widget nodes are attached
+								to the parent widget node.</p>
+								<p>This may be reimplemented by subclasses as needed.</p>
+							</div>
+							<h4 class="tsd-parameters-title">Parameters</h4>
+							<ul class="tsd-parameters">
+								<li>
+									<h5>msg: <span class="tsd-signature-type">Message</span></h5>
+								</li>
+							</ul>
+							<h4 class="tsd-returns-title">Returns <span class="tsd-signature-type">void</span></h4>
+						</li>
+					</ul>
+				</section>
+				<section class="tsd-panel tsd-member tsd-kind-method tsd-parent-kind-class tsd-is-overwrite tsd-is-protected">
+					<a name="onbeforeattach" class="tsd-anchor"></a>
+					<h3><span class="tsd-flag ts-flagProtected">Protected</span> on<wbr>Before<wbr>Attach</h3>
+					<ul class="tsd-signatures tsd-kind-method tsd-parent-kind-class tsd-is-overwrite tsd-is-protected">
+						<li class="tsd-signature tsd-kind-icon">on<wbr>Before<wbr>Attach<span class="tsd-signature-symbol">(</span>msg<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">Message</span><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">void</span></li>
+					</ul>
+					<ul class="tsd-descriptions">
+						<li class="tsd-description">
+							<aside class="tsd-sources">
+								<p>Overrides <a href="layout.html">Layout</a>.<a href="layout.html#onbeforeattach">onBeforeAttach</a></p>
+								<ul>
+									<li>Defined in <a href="https://github.com/phosphorjs/phosphor/blob/8fee9108/packages/widgets/src/gridlayout.ts#L434">gridlayout.ts:434</a></li>
+								</ul>
+							</aside>
+							<div class="tsd-comment tsd-typography">
+								<div class="lead">
+									<p>A message handler invoked on a <code>&#39;before-attach&#39;</code> message.</p>
+								</div>
+							</div>
+							<h4 class="tsd-parameters-title">Parameters</h4>
+							<ul class="tsd-parameters">
+								<li>
+									<h5>msg: <span class="tsd-signature-type">Message</span></h5>
+								</li>
+							</ul>
+							<h4 class="tsd-returns-title">Returns <span class="tsd-signature-type">void</span></h4>
+						</li>
+					</ul>
+				</section>
+				<section class="tsd-panel tsd-member tsd-kind-method tsd-parent-kind-class tsd-is-inherited tsd-is-protected">
+					<a name="onbeforedetach" class="tsd-anchor"></a>
+					<h3><span class="tsd-flag ts-flagProtected">Protected</span> on<wbr>Before<wbr>Detach</h3>
+					<ul class="tsd-signatures tsd-kind-method tsd-parent-kind-class tsd-is-inherited tsd-is-protected">
+						<li class="tsd-signature tsd-kind-icon">on<wbr>Before<wbr>Detach<span class="tsd-signature-symbol">(</span>msg<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">Message</span><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">void</span></li>
+					</ul>
+					<ul class="tsd-descriptions">
+						<li class="tsd-description">
+							<aside class="tsd-sources">
+								<p>Inherited from <a href="layout.html">Layout</a>.<a href="layout.html#onbeforedetach">onBeforeDetach</a></p>
+								<ul>
+									<li>Defined in <a href="https://github.com/phosphorjs/phosphor/blob/8fee9108/packages/widgets/src/layout.ts#L340">layout.ts:340</a></li>
+								</ul>
+							</aside>
+							<div class="tsd-comment tsd-typography">
+								<div class="lead">
+									<p>A message handler invoked on a <code>&#39;before-detach&#39;</code> message.</p>
+								</div>
+								<h4 id="notes">Notes</h4>
+								<p>The default implementation of this method forwards the message
+									to all widgets. It assumes all widget nodes are attached to the
+								parent widget node.</p>
+								<p>This may be reimplemented by subclasses as needed.</p>
+							</div>
+							<h4 class="tsd-parameters-title">Parameters</h4>
+							<ul class="tsd-parameters">
+								<li>
+									<h5>msg: <span class="tsd-signature-type">Message</span></h5>
+								</li>
+							</ul>
+							<h4 class="tsd-returns-title">Returns <span class="tsd-signature-type">void</span></h4>
+						</li>
+					</ul>
+				</section>
+				<section class="tsd-panel tsd-member tsd-kind-method tsd-parent-kind-class tsd-is-inherited tsd-is-protected">
+					<a name="onbeforehide" class="tsd-anchor"></a>
+					<h3><span class="tsd-flag ts-flagProtected">Protected</span> on<wbr>Before<wbr>Hide</h3>
+					<ul class="tsd-signatures tsd-kind-method tsd-parent-kind-class tsd-is-inherited tsd-is-protected">
+						<li class="tsd-signature tsd-kind-icon">on<wbr>Before<wbr>Hide<span class="tsd-signature-symbol">(</span>msg<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">Message</span><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">void</span></li>
+					</ul>
+					<ul class="tsd-descriptions">
+						<li class="tsd-description">
+							<aside class="tsd-sources">
+								<p>Inherited from <a href="layout.html">Layout</a>.<a href="layout.html#onbeforehide">onBeforeHide</a></p>
+								<ul>
+									<li>Defined in <a href="https://github.com/phosphorjs/phosphor/blob/8fee9108/packages/widgets/src/layout.ts#L408">layout.ts:408</a></li>
+								</ul>
+							</aside>
+							<div class="tsd-comment tsd-typography">
+								<div class="lead">
+									<p>A message handler invoked on a <code>&#39;before-hide&#39;</code> message.</p>
+								</div>
+								<h4 id="notes">Notes</h4>
+								<p>The default implementation of this method forwards the message to
+									all non-hidden widgets. It assumes all widget nodes are attached
+								to the parent widget node.</p>
+								<p>This may be reimplemented by subclasses as needed.</p>
+							</div>
+							<h4 class="tsd-parameters-title">Parameters</h4>
+							<ul class="tsd-parameters">
+								<li>
+									<h5>msg: <span class="tsd-signature-type">Message</span></h5>
+								</li>
+							</ul>
+							<h4 class="tsd-returns-title">Returns <span class="tsd-signature-type">void</span></h4>
+						</li>
+					</ul>
+				</section>
+				<section class="tsd-panel tsd-member tsd-kind-method tsd-parent-kind-class tsd-is-overwrite tsd-is-protected">
+					<a name="onbeforeshow" class="tsd-anchor"></a>
+					<h3><span class="tsd-flag ts-flagProtected">Protected</span> on<wbr>Before<wbr>Show</h3>
+					<ul class="tsd-signatures tsd-kind-method tsd-parent-kind-class tsd-is-overwrite tsd-is-protected">
+						<li class="tsd-signature tsd-kind-icon">on<wbr>Before<wbr>Show<span class="tsd-signature-symbol">(</span>msg<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">Message</span><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">void</span></li>
+					</ul>
+					<ul class="tsd-descriptions">
+						<li class="tsd-description">
+							<aside class="tsd-sources">
+								<p>Overrides <a href="layout.html">Layout</a>.<a href="layout.html#onbeforeshow">onBeforeShow</a></p>
+								<ul>
+									<li>Defined in <a href="https://github.com/phosphorjs/phosphor/blob/8fee9108/packages/widgets/src/gridlayout.ts#L426">gridlayout.ts:426</a></li>
+								</ul>
+							</aside>
+							<div class="tsd-comment tsd-typography">
+								<div class="lead">
+									<p>A message handler invoked on a <code>&#39;before-show&#39;</code> message.</p>
+								</div>
+							</div>
+							<h4 class="tsd-parameters-title">Parameters</h4>
+							<ul class="tsd-parameters">
+								<li>
+									<h5>msg: <span class="tsd-signature-type">Message</span></h5>
+								</li>
+							</ul>
+							<h4 class="tsd-returns-title">Returns <span class="tsd-signature-type">void</span></h4>
+						</li>
+					</ul>
+				</section>
+				<section class="tsd-panel tsd-member tsd-kind-method tsd-parent-kind-class tsd-is-overwrite tsd-is-protected">
+					<a name="onchildhidden" class="tsd-anchor"></a>
+					<h3><span class="tsd-flag ts-flagProtected">Protected</span> on<wbr>Child<wbr>Hidden</h3>
+					<ul class="tsd-signatures tsd-kind-method tsd-parent-kind-class tsd-is-overwrite tsd-is-protected">
+						<li class="tsd-signature tsd-kind-icon">on<wbr>Child<wbr>Hidden<span class="tsd-signature-symbol">(</span>msg<span class="tsd-signature-symbol">: </span><a href="widget.childmessage.html" class="tsd-signature-type">ChildMessage</a><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">void</span></li>
+					</ul>
+					<ul class="tsd-descriptions">
+						<li class="tsd-description">
+							<aside class="tsd-sources">
+								<p>Overrides <a href="layout.html">Layout</a>.<a href="layout.html#onchildhidden">onChildHidden</a></p>
+								<ul>
+									<li>Defined in <a href="https://github.com/phosphorjs/phosphor/blob/8fee9108/packages/widgets/src/gridlayout.ts#L449">gridlayout.ts:449</a></li>
+								</ul>
+							</aside>
+							<div class="tsd-comment tsd-typography">
+								<div class="lead">
+									<p>A message handler invoked on a <code>&#39;child-hidden&#39;</code> message.</p>
+								</div>
+							</div>
+							<h4 class="tsd-parameters-title">Parameters</h4>
+							<ul class="tsd-parameters">
+								<li>
+									<h5>msg: <a href="widget.childmessage.html" class="tsd-signature-type">ChildMessage</a></h5>
+								</li>
+							</ul>
+							<h4 class="tsd-returns-title">Returns <span class="tsd-signature-type">void</span></h4>
+						</li>
+					</ul>
+				</section>
+				<section class="tsd-panel tsd-member tsd-kind-method tsd-parent-kind-class tsd-is-inherited tsd-is-protected">
+					<a name="onchildremoved" class="tsd-anchor"></a>
+					<h3><span class="tsd-flag ts-flagProtected">Protected</span> on<wbr>Child<wbr>Removed</h3>
+					<ul class="tsd-signatures tsd-kind-method tsd-parent-kind-class tsd-is-inherited tsd-is-protected">
+						<li class="tsd-signature tsd-kind-icon">on<wbr>Child<wbr>Removed<span class="tsd-signature-symbol">(</span>msg<span class="tsd-signature-symbol">: </span><a href="widget.childmessage.html" class="tsd-signature-type">ChildMessage</a><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">void</span></li>
+					</ul>
+					<ul class="tsd-descriptions">
+						<li class="tsd-description">
+							<aside class="tsd-sources">
+								<p>Inherited from <a href="layout.html">Layout</a>.<a href="layout.html#onchildremoved">onChildRemoved</a></p>
+								<ul>
+									<li>Defined in <a href="https://github.com/phosphorjs/phosphor/blob/8fee9108/packages/widgets/src/layout.ts#L442">layout.ts:442</a></li>
+								</ul>
+							</aside>
+							<div class="tsd-comment tsd-typography">
+								<div class="lead">
+									<p>A message handler invoked on a <code>&#39;child-removed&#39;</code> message.</p>
+								</div>
+								<h4 id="notes">Notes</h4>
+								<p>This will remove the child widget from the layout.</p>
+								<p>Subclasses should <strong>not</strong> typically reimplement this method.</p>
+							</div>
+							<h4 class="tsd-parameters-title">Parameters</h4>
+							<ul class="tsd-parameters">
+								<li>
+									<h5>msg: <a href="widget.childmessage.html" class="tsd-signature-type">ChildMessage</a></h5>
+								</li>
+							</ul>
+							<h4 class="tsd-returns-title">Returns <span class="tsd-signature-type">void</span></h4>
+						</li>
+					</ul>
+				</section>
+				<section class="tsd-panel tsd-member tsd-kind-method tsd-parent-kind-class tsd-is-overwrite tsd-is-protected">
+					<a name="onchildshown" class="tsd-anchor"></a>
+					<h3><span class="tsd-flag ts-flagProtected">Protected</span> on<wbr>Child<wbr>Shown</h3>
+					<ul class="tsd-signatures tsd-kind-method tsd-parent-kind-class tsd-is-overwrite tsd-is-protected">
+						<li class="tsd-signature tsd-kind-icon">on<wbr>Child<wbr>Shown<span class="tsd-signature-symbol">(</span>msg<span class="tsd-signature-symbol">: </span><a href="widget.childmessage.html" class="tsd-signature-type">ChildMessage</a><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">void</span></li>
+					</ul>
+					<ul class="tsd-descriptions">
+						<li class="tsd-description">
+							<aside class="tsd-sources">
+								<p>Overrides <a href="layout.html">Layout</a>.<a href="layout.html#onchildshown">onChildShown</a></p>
+								<ul>
+									<li>Defined in <a href="https://github.com/phosphorjs/phosphor/blob/8fee9108/packages/widgets/src/gridlayout.ts#L442">gridlayout.ts:442</a></li>
+								</ul>
+							</aside>
+							<div class="tsd-comment tsd-typography">
+								<div class="lead">
+									<p>A message handler invoked on a <code>&#39;child-shown&#39;</code> message.</p>
+								</div>
+							</div>
+							<h4 class="tsd-parameters-title">Parameters</h4>
+							<ul class="tsd-parameters">
+								<li>
+									<h5>msg: <a href="widget.childmessage.html" class="tsd-signature-type">ChildMessage</a></h5>
+								</li>
+							</ul>
+							<h4 class="tsd-returns-title">Returns <span class="tsd-signature-type">void</span></h4>
+						</li>
+					</ul>
+				</section>
+				<section class="tsd-panel tsd-member tsd-kind-method tsd-parent-kind-class tsd-is-overwrite tsd-is-protected">
+					<a name="onfitrequest" class="tsd-anchor"></a>
+					<h3><span class="tsd-flag ts-flagProtected">Protected</span> on<wbr>Fit<wbr>Request</h3>
+					<ul class="tsd-signatures tsd-kind-method tsd-parent-kind-class tsd-is-overwrite tsd-is-protected">
+						<li class="tsd-signature tsd-kind-icon">on<wbr>Fit<wbr>Request<span class="tsd-signature-symbol">(</span>msg<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">Message</span><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">void</span></li>
+					</ul>
+					<ul class="tsd-descriptions">
+						<li class="tsd-description">
+							<aside class="tsd-sources">
+								<p>Overrides <a href="layout.html">Layout</a>.<a href="layout.html#onfitrequest">onFitRequest</a></p>
+								<ul>
+									<li>Defined in <a href="https://github.com/phosphorjs/phosphor/blob/8fee9108/packages/widgets/src/gridlayout.ts#L474">gridlayout.ts:474</a></li>
+								</ul>
+							</aside>
+							<div class="tsd-comment tsd-typography">
+								<div class="lead">
+									<p>A message handler invoked on a <code>&#39;fit-request&#39;</code> message.</p>
+								</div>
+							</div>
+							<h4 class="tsd-parameters-title">Parameters</h4>
+							<ul class="tsd-parameters">
+								<li>
+									<h5>msg: <span class="tsd-signature-type">Message</span></h5>
+								</li>
+							</ul>
+							<h4 class="tsd-returns-title">Returns <span class="tsd-signature-type">void</span></h4>
+						</li>
+					</ul>
+				</section>
+				<section class="tsd-panel tsd-member tsd-kind-method tsd-parent-kind-class tsd-is-overwrite tsd-is-protected">
+					<a name="onresize" class="tsd-anchor"></a>
+					<h3><span class="tsd-flag ts-flagProtected">Protected</span> on<wbr>Resize</h3>
+					<ul class="tsd-signatures tsd-kind-method tsd-parent-kind-class tsd-is-overwrite tsd-is-protected">
+						<li class="tsd-signature tsd-kind-icon">on<wbr>Resize<span class="tsd-signature-symbol">(</span>msg<span class="tsd-signature-symbol">: </span><a href="widget.resizemessage.html" class="tsd-signature-type">ResizeMessage</a><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">void</span></li>
+					</ul>
+					<ul class="tsd-descriptions">
+						<li class="tsd-description">
+							<aside class="tsd-sources">
+								<p>Overrides <a href="layout.html">Layout</a>.<a href="layout.html#onresize">onResize</a></p>
+								<ul>
+									<li>Defined in <a href="https://github.com/phosphorjs/phosphor/blob/8fee9108/packages/widgets/src/gridlayout.ts#L456">gridlayout.ts:456</a></li>
+								</ul>
+							</aside>
+							<div class="tsd-comment tsd-typography">
+								<div class="lead">
+									<p>A message handler invoked on a <code>&#39;resize&#39;</code> message.</p>
+								</div>
+							</div>
+							<h4 class="tsd-parameters-title">Parameters</h4>
+							<ul class="tsd-parameters">
+								<li>
+									<h5>msg: <a href="widget.resizemessage.html" class="tsd-signature-type">ResizeMessage</a></h5>
+								</li>
+							</ul>
+							<h4 class="tsd-returns-title">Returns <span class="tsd-signature-type">void</span></h4>
+						</li>
+					</ul>
+				</section>
+				<section class="tsd-panel tsd-member tsd-kind-method tsd-parent-kind-class tsd-is-overwrite tsd-is-protected">
+					<a name="onupdaterequest" class="tsd-anchor"></a>
+					<h3><span class="tsd-flag ts-flagProtected">Protected</span> on<wbr>Update<wbr>Request</h3>
+					<ul class="tsd-signatures tsd-kind-method tsd-parent-kind-class tsd-is-overwrite tsd-is-protected">
+						<li class="tsd-signature tsd-kind-icon">on<wbr>Update<wbr>Request<span class="tsd-signature-symbol">(</span>msg<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">Message</span><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">void</span></li>
+					</ul>
+					<ul class="tsd-descriptions">
+						<li class="tsd-description">
+							<aside class="tsd-sources">
+								<p>Overrides <a href="layout.html">Layout</a>.<a href="layout.html#onupdaterequest">onUpdateRequest</a></p>
+								<ul>
+									<li>Defined in <a href="https://github.com/phosphorjs/phosphor/blob/8fee9108/packages/widgets/src/gridlayout.ts#L465">gridlayout.ts:465</a></li>
+								</ul>
+							</aside>
+							<div class="tsd-comment tsd-typography">
+								<div class="lead">
+									<p>A message handler invoked on an <code>&#39;update-request&#39;</code> message.</p>
+								</div>
+							</div>
+							<h4 class="tsd-parameters-title">Parameters</h4>
+							<ul class="tsd-parameters">
+								<li>
+									<h5>msg: <span class="tsd-signature-type">Message</span></h5>
+								</li>
+							</ul>
+							<h4 class="tsd-returns-title">Returns <span class="tsd-signature-type">void</span></h4>
+						</li>
+					</ul>
+				</section>
+				<section class="tsd-panel tsd-member tsd-kind-method tsd-parent-kind-class tsd-is-inherited">
+					<a name="processparentmessage" class="tsd-anchor"></a>
+					<h3>process<wbr>Parent<wbr>Message</h3>
+					<ul class="tsd-signatures tsd-kind-method tsd-parent-kind-class tsd-is-inherited">
+						<li class="tsd-signature tsd-kind-icon">process<wbr>Parent<wbr>Message<span class="tsd-signature-symbol">(</span>msg<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">Message</span><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">void</span></li>
+					</ul>
+					<ul class="tsd-descriptions">
+						<li class="tsd-description">
+							<aside class="tsd-sources">
+								<p>Inherited from <a href="layout.html">Layout</a>.<a href="layout.html#processparentmessage">processParentMessage</a></p>
+								<ul>
+									<li>Defined in <a href="https://github.com/phosphorjs/phosphor/blob/8fee9108/packages/widgets/src/layout.ts#L194">layout.ts:194</a></li>
+								</ul>
+							</aside>
+							<div class="tsd-comment tsd-typography">
+								<div class="lead">
+									<p>Process a message sent to the parent widget.</p>
+								</div>
+							</div>
+							<h4 class="tsd-parameters-title">Parameters</h4>
+							<ul class="tsd-parameters">
+								<li>
+									<h5>msg: <span class="tsd-signature-type">Message</span></h5>
+									<div class="tsd-comment tsd-typography">
+										<p>The message sent to the parent widget.</p>
+										<h4 id="notes">Notes</h4>
+										<p>This method is called by the parent widget to process a message.</p>
+										<p>Subclasses may reimplement this method as needed.</p>
+									</div>
+								</li>
+							</ul>
+							<h4 class="tsd-returns-title">Returns <span class="tsd-signature-type">void</span></h4>
+						</li>
+					</ul>
+				</section>
+				<section class="tsd-panel tsd-member tsd-kind-method tsd-parent-kind-class tsd-is-overwrite">
+					<a name="removewidget" class="tsd-anchor"></a>
+					<h3>remove<wbr>Widget</h3>
+					<ul class="tsd-signatures tsd-kind-method tsd-parent-kind-class tsd-is-overwrite">
+						<li class="tsd-signature tsd-kind-icon">remove<wbr>Widget<span class="tsd-signature-symbol">(</span>widget<span class="tsd-signature-symbol">: </span><a href="widget.html" class="tsd-signature-type">Widget</a><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">void</span></li>
+					</ul>
+					<ul class="tsd-descriptions">
+						<li class="tsd-description">
+							<aside class="tsd-sources">
+								<p>Overrides <a href="layout.html">Layout</a>.<a href="layout.html#removewidget">removeWidget</a></p>
+								<ul>
+									<li>Defined in <a href="https://github.com/phosphorjs/phosphor/blob/8fee9108/packages/widgets/src/gridlayout.ts#L348">gridlayout.ts:348</a></li>
+								</ul>
+							</aside>
+							<div class="tsd-comment tsd-typography">
+								<div class="lead">
+									<p>Remove a widget from the grid layout.</p>
+								</div>
+							</div>
+							<h4 class="tsd-parameters-title">Parameters</h4>
+							<ul class="tsd-parameters">
+								<li>
+									<h5>widget: <a href="widget.html" class="tsd-signature-type">Widget</a></h5>
+									<div class="tsd-comment tsd-typography">
+										<p>The widget to remove from the layout.</p>
+										<h4 id="notes">Notes</h4>
+										<p>A widget is automatically removed from the layout when its <code>parent</code>
+											is set to <code>null</code>. This method should only be invoked directly when
+											removing a widget from a layout which has yet to be installed on a
+										parent widget.</p>
+										<p>This method does <em>not</em> modify the widget&#39;s <code>parent</code>.</p>
+									</div>
+								</li>
+							</ul>
+							<h4 class="tsd-returns-title">Returns <span class="tsd-signature-type">void</span></h4>
+						</li>
+					</ul>
+				</section>
+				<section class="tsd-panel tsd-member tsd-kind-method tsd-parent-kind-class">
+					<a name="rowstretch" class="tsd-anchor"></a>
+					<h3>row<wbr>Stretch</h3>
+					<ul class="tsd-signatures tsd-kind-method tsd-parent-kind-class">
+						<li class="tsd-signature tsd-kind-icon">row<wbr>Stretch<span class="tsd-signature-symbol">(</span>index<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">number</span><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">number</span></li>
+					</ul>
+					<ul class="tsd-descriptions">
+						<li class="tsd-description">
+							<aside class="tsd-sources">
+								<ul>
+									<li>Defined in <a href="https://github.com/phosphorjs/phosphor/blob/8fee9108/packages/widgets/src/gridlayout.ts#L208">gridlayout.ts:208</a></li>
+								</ul>
+							</aside>
+							<div class="tsd-comment tsd-typography">
+								<div class="lead">
+									<p>Get the stretch factor for a specific row.</p>
+								</div>
+							</div>
+							<h4 class="tsd-parameters-title">Parameters</h4>
+							<ul class="tsd-parameters">
+								<li>
+									<h5>index: <span class="tsd-signature-type">number</span></h5>
+									<div class="tsd-comment tsd-typography">
+										<p>The row index of interest.</p>
+									</div>
+								</li>
+							</ul>
+							<h4 class="tsd-returns-title">Returns <span class="tsd-signature-type">number</span></h4>
+							<p>The stretch factor for the row.</p>
+							<h4 id="notes">Notes</h4>
+							<p>This returns <code>-1</code> if the index is out of range.</p>
+						</li>
+					</ul>
+				</section>
+				<section class="tsd-panel tsd-member tsd-kind-method tsd-parent-kind-class">
+					<a name="setcolumnstretch" class="tsd-anchor"></a>
+					<h3>set<wbr>Column<wbr>Stretch</h3>
+					<ul class="tsd-signatures tsd-kind-method tsd-parent-kind-class">
+						<li class="tsd-signature tsd-kind-icon">set<wbr>Column<wbr>Stretch<span class="tsd-signature-symbol">(</span>index<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">number</span>, value<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">number</span><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">void</span></li>
+					</ul>
+					<ul class="tsd-descriptions">
+						<li class="tsd-description">
+							<aside class="tsd-sources">
+								<ul>
+									<li>Defined in <a href="https://github.com/phosphorjs/phosphor/blob/8fee9108/packages/widgets/src/gridlayout.ts#L274">gridlayout.ts:274</a></li>
+								</ul>
+							</aside>
+							<div class="tsd-comment tsd-typography">
+								<div class="lead">
+									<p>Set the stretch factor for a specific column.</p>
+								</div>
+							</div>
+							<h4 class="tsd-parameters-title">Parameters</h4>
+							<ul class="tsd-parameters">
+								<li>
+									<h5>index: <span class="tsd-signature-type">number</span></h5>
+									<div class="tsd-comment tsd-typography">
+										<p>The column index of interest.</p>
+									</div>
+								</li>
+								<li>
+									<h5>value: <span class="tsd-signature-type">number</span></h5>
+									<div class="tsd-comment tsd-typography">
+										<p>The stretch factor for the column.</p>
+										<h4 id="notes">Notes</h4>
+										<p>This is a no-op if the index is out of range.</p>
+									</div>
+								</li>
+							</ul>
+							<h4 class="tsd-returns-title">Returns <span class="tsd-signature-type">void</span></h4>
+						</li>
+					</ul>
+				</section>
+				<section class="tsd-panel tsd-member tsd-kind-method tsd-parent-kind-class">
+					<a name="setrowstretch" class="tsd-anchor"></a>
+					<h3>set<wbr>Row<wbr>Stretch</h3>
+					<ul class="tsd-signatures tsd-kind-method tsd-parent-kind-class">
+						<li class="tsd-signature tsd-kind-icon">set<wbr>Row<wbr>Stretch<span class="tsd-signature-symbol">(</span>index<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">number</span>, value<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">number</span><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">void</span></li>
+					</ul>
+					<ul class="tsd-descriptions">
+						<li class="tsd-description">
+							<aside class="tsd-sources">
+								<ul>
+									<li>Defined in <a href="https://github.com/phosphorjs/phosphor/blob/8fee9108/packages/widgets/src/gridlayout.ts#L223">gridlayout.ts:223</a></li>
+								</ul>
+							</aside>
+							<div class="tsd-comment tsd-typography">
+								<div class="lead">
+									<p>Set the stretch factor for a specific row.</p>
+								</div>
+							</div>
+							<h4 class="tsd-parameters-title">Parameters</h4>
+							<ul class="tsd-parameters">
+								<li>
+									<h5>index: <span class="tsd-signature-type">number</span></h5>
+									<div class="tsd-comment tsd-typography">
+										<p>The row index of interest.</p>
+									</div>
+								</li>
+								<li>
+									<h5>value: <span class="tsd-signature-type">number</span></h5>
+									<div class="tsd-comment tsd-typography">
+										<p>The stretch factor for the row.</p>
+										<h4 id="notes">Notes</h4>
+										<p>This is a no-op if the index is out of range.</p>
+									</div>
+								</li>
+							</ul>
+							<h4 class="tsd-returns-title">Returns <span class="tsd-signature-type">void</span></h4>
+						</li>
+					</ul>
+				</section>
+				<section class="tsd-panel tsd-member tsd-kind-method tsd-parent-kind-class tsd-is-static">
+					<a name="getcellconfig" class="tsd-anchor"></a>
+					<h3><span class="tsd-flag ts-flagStatic">Static</span> get<wbr>Cell<wbr>Config</h3>
+					<ul class="tsd-signatures tsd-kind-method tsd-parent-kind-class tsd-is-static">
+						<li class="tsd-signature tsd-kind-icon">get<wbr>Cell<wbr>Config<span class="tsd-signature-symbol">(</span>widget<span class="tsd-signature-symbol">: </span><a href="widget.html" class="tsd-signature-type">Widget</a><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol">: </span><a href="../interfaces/gridlayout.icellconfig.html" class="tsd-signature-type">ICellConfig</a></li>
+					</ul>
+					<ul class="tsd-descriptions">
+						<li class="tsd-description">
+							<aside class="tsd-sources">
+								<ul>
+									<li>Defined in <a href="https://github.com/phosphorjs/phosphor/blob/8fee9108/packages/widgets/src/gridlayout.ts#L747">gridlayout.ts:747</a></li>
+								</ul>
+							</aside>
+							<div class="tsd-comment tsd-typography">
+								<div class="lead">
+									<p>Get the cell config for the given widget.</p>
+								</div>
+							</div>
+							<h4 class="tsd-parameters-title">Parameters</h4>
+							<ul class="tsd-parameters">
+								<li>
+									<h5>widget: <a href="widget.html" class="tsd-signature-type">Widget</a></h5>
+									<div class="tsd-comment tsd-typography">
+										<p>The widget of interest.</p>
+									</div>
+								</li>
+							</ul>
+							<h4 class="tsd-returns-title">Returns <a href="../interfaces/gridlayout.icellconfig.html" class="tsd-signature-type">ICellConfig</a></h4>
+							<p>The cell config for the widget.</p>
+						</li>
+					</ul>
+				</section>
+				<section class="tsd-panel tsd-member tsd-kind-method tsd-parent-kind-class tsd-is-static">
+					<a name="setcellconfig" class="tsd-anchor"></a>
+					<h3><span class="tsd-flag ts-flagStatic">Static</span> set<wbr>Cell<wbr>Config</h3>
+					<ul class="tsd-signatures tsd-kind-method tsd-parent-kind-class tsd-is-static">
+						<li class="tsd-signature tsd-kind-icon">set<wbr>Cell<wbr>Config<span class="tsd-signature-symbol">(</span>widget<span class="tsd-signature-symbol">: </span><a href="widget.html" class="tsd-signature-type">Widget</a>, value<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">Partial</span><span class="tsd-signature-symbol">&lt;</span><a href="../interfaces/gridlayout.icellconfig.html" class="tsd-signature-type">ICellConfig</a><span class="tsd-signature-symbol">&gt;</span><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">void</span></li>
+					</ul>
+					<ul class="tsd-descriptions">
+						<li class="tsd-description">
+							<aside class="tsd-sources">
+								<ul>
+									<li>Defined in <a href="https://github.com/phosphorjs/phosphor/blob/8fee9108/packages/widgets/src/gridlayout.ts#L759">gridlayout.ts:759</a></li>
+								</ul>
+							</aside>
+							<div class="tsd-comment tsd-typography">
+								<div class="lead">
+									<p>Set the cell config for the given widget.</p>
+								</div>
+							</div>
+							<h4 class="tsd-parameters-title">Parameters</h4>
+							<ul class="tsd-parameters">
+								<li>
+									<h5>widget: <a href="widget.html" class="tsd-signature-type">Widget</a></h5>
+									<div class="tsd-comment tsd-typography">
+										<p>The widget of interest.</p>
+									</div>
+								</li>
+								<li>
+									<h5>value: <span class="tsd-signature-type">Partial</span><span class="tsd-signature-symbol">&lt;</span><a href="../interfaces/gridlayout.icellconfig.html" class="tsd-signature-type">ICellConfig</a><span class="tsd-signature-symbol">&gt;</span></h5>
+									<div class="tsd-comment tsd-typography">
+										<p>The value for the cell config.</p>
+									</div>
+								</li>
+							</ul>
+							<h4 class="tsd-returns-title">Returns <span class="tsd-signature-type">void</span></h4>
+						</li>
+					</ul>
+				</section>
+			</section>
+		</div>
+		<div class="col-4 col-menu menu-sticky-wrap menu-highlight">
+			<nav class="tsd-navigation primary">
+				<ul>
+					<li class="globals  ">
+						<a href="../globals.html"><em>Globals</em></a>
+					</li>
+				</ul>
+			</nav>
+			<nav class="tsd-navigation secondary menu-sticky">
+				<ul class="before-current">
+					<li class=" tsd-kind-class">
+						<a href="boxlayout.html" class="tsd-kind-icon">Box<wbr>Layout</a>
+					</li>
+					<li class=" tsd-kind-class">
+						<a href="boxpanel.html" class="tsd-kind-icon">Box<wbr>Panel</a>
+					</li>
+					<li class=" tsd-kind-class">
+						<a href="boxsizer.html" class="tsd-kind-icon">Box<wbr>Sizer</a>
+					</li>
+					<li class=" tsd-kind-class">
+						<a href="commandpalette.html" class="tsd-kind-icon">Command<wbr>Palette</a>
+					</li>
+					<li class=" tsd-kind-class">
+						<a href="contextmenu.html" class="tsd-kind-icon">Context<wbr>Menu</a>
+					</li>
+					<li class=" tsd-kind-class">
+						<a href="docklayout.html" class="tsd-kind-icon">Dock<wbr>Layout</a>
+					</li>
+					<li class=" tsd-kind-class">
+						<a href="dockpanel.html" class="tsd-kind-icon">Dock<wbr>Panel</a>
+					</li>
+					<li class=" tsd-kind-class tsd-has-type-parameter">
+						<a href="focustracker.html" class="tsd-kind-icon">Focus<wbr>Tracker</a>
+					</li>
+				</ul>
+				<ul class="current">
+					<li class="current tsd-kind-class">
+						<a href="gridlayout.html" class="tsd-kind-icon">Grid<wbr>Layout</a>
+						<ul>
+							<li class=" tsd-kind-interface tsd-parent-kind-class">
+								<a href="../interfaces/gridlayout.icellconfig.html" class="tsd-kind-icon">ICell<wbr>Config</a>
+							</li>
+							<li class=" tsd-kind-interface tsd-parent-kind-class">
+								<a href="../interfaces/gridlayout.ioptions.html" class="tsd-kind-icon">IOptions</a>
+							</li>
+							<li class=" tsd-kind-constructor tsd-parent-kind-class tsd-is-overwrite">
+								<a href="gridlayout.html#constructor" class="tsd-kind-icon">constructor</a>
+							</li>
+							<li class=" tsd-kind-property tsd-parent-kind-class tsd-is-private">
+								<a href="gridlayout.html#_box" class="tsd-kind-icon">_box</a>
+							</li>
+							<li class=" tsd-kind-property tsd-parent-kind-class tsd-is-private">
+								<a href="gridlayout.html#_columnsizers" class="tsd-kind-icon">_column<wbr>Sizers</a>
+							</li>
+							<li class=" tsd-kind-property tsd-parent-kind-class tsd-is-private">
+								<a href="gridlayout.html#_columnspacing" class="tsd-kind-icon">_column<wbr>Spacing</a>
+							</li>
+							<li class=" tsd-kind-property tsd-parent-kind-class tsd-is-private">
+								<a href="gridlayout.html#_columnstarts" class="tsd-kind-icon">_column<wbr>Starts</a>
+							</li>
+							<li class=" tsd-kind-property tsd-parent-kind-class tsd-is-private">
+								<a href="gridlayout.html#_dirty" class="tsd-kind-icon">_dirty</a>
+							</li>
+							<li class=" tsd-kind-property tsd-parent-kind-class tsd-is-private">
+								<a href="gridlayout.html#_items" class="tsd-kind-icon">_items</a>
+							</li>
+							<li class=" tsd-kind-property tsd-parent-kind-class tsd-is-private">
+								<a href="gridlayout.html#_rowsizers" class="tsd-kind-icon">_row<wbr>Sizers</a>
+							</li>
+							<li class=" tsd-kind-property tsd-parent-kind-class tsd-is-private">
+								<a href="gridlayout.html#_rowspacing" class="tsd-kind-icon">_row<wbr>Spacing</a>
+							</li>
+							<li class=" tsd-kind-property tsd-parent-kind-class tsd-is-private">
+								<a href="gridlayout.html#_rowstarts" class="tsd-kind-icon">_row<wbr>Starts</a>
+							</li>
+							<li class=" tsd-kind-accessor tsd-parent-kind-class">
+								<a href="gridlayout.html#columncount" class="tsd-kind-icon">column<wbr>Count</a>
+							</li>
+							<li class=" tsd-kind-accessor tsd-parent-kind-class">
+								<a href="gridlayout.html#columnspacing" class="tsd-kind-icon">column<wbr>Spacing</a>
+							</li>
+							<li class=" tsd-kind-accessor tsd-parent-kind-class tsd-is-inherited">
+								<a href="gridlayout.html#fitpolicy" class="tsd-kind-icon">fit<wbr>Policy</a>
+							</li>
+							<li class=" tsd-kind-get-signature tsd-parent-kind-class tsd-is-inherited">
+								<a href="gridlayout.html#isdisposed" class="tsd-kind-icon">is<wbr>Disposed</a>
+							</li>
+							<li class=" tsd-kind-accessor tsd-parent-kind-class tsd-is-inherited">
+								<a href="gridlayout.html#parent" class="tsd-kind-icon">parent</a>
+							</li>
+							<li class=" tsd-kind-accessor tsd-parent-kind-class">
+								<a href="gridlayout.html#rowcount" class="tsd-kind-icon">row<wbr>Count</a>
+							</li>
+							<li class=" tsd-kind-accessor tsd-parent-kind-class">
+								<a href="gridlayout.html#rowspacing" class="tsd-kind-icon">row<wbr>Spacing</a>
+							</li>
+							<li class=" tsd-kind-method tsd-parent-kind-class tsd-is-private">
+								<a href="gridlayout.html#_fit" class="tsd-kind-icon">_fit</a>
+							</li>
+							<li class=" tsd-kind-method tsd-parent-kind-class tsd-is-private">
+								<a href="gridlayout.html#_update" class="tsd-kind-icon">_update</a>
+							</li>
+							<li class=" tsd-kind-method tsd-parent-kind-class">
+								<a href="gridlayout.html#addwidget" class="tsd-kind-icon">add<wbr>Widget</a>
+							</li>
+							<li class=" tsd-kind-method tsd-parent-kind-class tsd-is-protected">
+								<a href="gridlayout.html#attachwidget" class="tsd-kind-icon">attach<wbr>Widget</a>
+							</li>
+							<li class=" tsd-kind-method tsd-parent-kind-class">
+								<a href="gridlayout.html#columnstretch" class="tsd-kind-icon">column<wbr>Stretch</a>
+							</li>
+							<li class=" tsd-kind-method tsd-parent-kind-class tsd-is-protected">
+								<a href="gridlayout.html#detachwidget" class="tsd-kind-icon">detach<wbr>Widget</a>
+							</li>
+							<li class=" tsd-kind-method tsd-parent-kind-class tsd-is-overwrite">
+								<a href="gridlayout.html#dispose" class="tsd-kind-icon">dispose</a>
+							</li>
+							<li class=" tsd-kind-method tsd-parent-kind-class tsd-is-overwrite tsd-is-protected">
+								<a href="gridlayout.html#init" class="tsd-kind-icon">init</a>
+							</li>
+							<li class=" tsd-kind-method tsd-parent-kind-class tsd-is-overwrite">
+								<a href="gridlayout.html#iter" class="tsd-kind-icon">iter</a>
+							</li>
+							<li class=" tsd-kind-method tsd-parent-kind-class tsd-is-inherited tsd-is-protected">
+								<a href="gridlayout.html#onafterattach" class="tsd-kind-icon">on<wbr>After<wbr>Attach</a>
+							</li>
+							<li class=" tsd-kind-method tsd-parent-kind-class tsd-is-inherited tsd-is-protected">
+								<a href="gridlayout.html#onafterdetach" class="tsd-kind-icon">on<wbr>After<wbr>Detach</a>
+							</li>
+							<li class=" tsd-kind-method tsd-parent-kind-class tsd-is-inherited tsd-is-protected">
+								<a href="gridlayout.html#onafterhide" class="tsd-kind-icon">on<wbr>After<wbr>Hide</a>
+							</li>
+							<li class=" tsd-kind-method tsd-parent-kind-class tsd-is-inherited tsd-is-protected">
+								<a href="gridlayout.html#onaftershow" class="tsd-kind-icon">on<wbr>After<wbr>Show</a>
+							</li>
+							<li class=" tsd-kind-method tsd-parent-kind-class tsd-is-overwrite tsd-is-protected">
+								<a href="gridlayout.html#onbeforeattach" class="tsd-kind-icon">on<wbr>Before<wbr>Attach</a>
+							</li>
+							<li class=" tsd-kind-method tsd-parent-kind-class tsd-is-inherited tsd-is-protected">
+								<a href="gridlayout.html#onbeforedetach" class="tsd-kind-icon">on<wbr>Before<wbr>Detach</a>
+							</li>
+							<li class=" tsd-kind-method tsd-parent-kind-class tsd-is-inherited tsd-is-protected">
+								<a href="gridlayout.html#onbeforehide" class="tsd-kind-icon">on<wbr>Before<wbr>Hide</a>
+							</li>
+							<li class=" tsd-kind-method tsd-parent-kind-class tsd-is-overwrite tsd-is-protected">
+								<a href="gridlayout.html#onbeforeshow" class="tsd-kind-icon">on<wbr>Before<wbr>Show</a>
+							</li>
+							<li class=" tsd-kind-method tsd-parent-kind-class tsd-is-overwrite tsd-is-protected">
+								<a href="gridlayout.html#onchildhidden" class="tsd-kind-icon">on<wbr>Child<wbr>Hidden</a>
+							</li>
+							<li class=" tsd-kind-method tsd-parent-kind-class tsd-is-inherited tsd-is-protected">
+								<a href="gridlayout.html#onchildremoved" class="tsd-kind-icon">on<wbr>Child<wbr>Removed</a>
+							</li>
+							<li class=" tsd-kind-method tsd-parent-kind-class tsd-is-overwrite tsd-is-protected">
+								<a href="gridlayout.html#onchildshown" class="tsd-kind-icon">on<wbr>Child<wbr>Shown</a>
+							</li>
+							<li class=" tsd-kind-method tsd-parent-kind-class tsd-is-overwrite tsd-is-protected">
+								<a href="gridlayout.html#onfitrequest" class="tsd-kind-icon">on<wbr>Fit<wbr>Request</a>
+							</li>
+							<li class=" tsd-kind-method tsd-parent-kind-class tsd-is-overwrite tsd-is-protected">
+								<a href="gridlayout.html#onresize" class="tsd-kind-icon">on<wbr>Resize</a>
+							</li>
+							<li class=" tsd-kind-method tsd-parent-kind-class tsd-is-overwrite tsd-is-protected">
+								<a href="gridlayout.html#onupdaterequest" class="tsd-kind-icon">on<wbr>Update<wbr>Request</a>
+							</li>
+							<li class=" tsd-kind-method tsd-parent-kind-class tsd-is-inherited">
+								<a href="gridlayout.html#processparentmessage" class="tsd-kind-icon">process<wbr>Parent<wbr>Message</a>
+							</li>
+							<li class=" tsd-kind-method tsd-parent-kind-class tsd-is-overwrite">
+								<a href="gridlayout.html#removewidget" class="tsd-kind-icon">remove<wbr>Widget</a>
+							</li>
+							<li class=" tsd-kind-method tsd-parent-kind-class">
+								<a href="gridlayout.html#rowstretch" class="tsd-kind-icon">row<wbr>Stretch</a>
+							</li>
+							<li class=" tsd-kind-method tsd-parent-kind-class">
+								<a href="gridlayout.html#setcolumnstretch" class="tsd-kind-icon">set<wbr>Column<wbr>Stretch</a>
+							</li>
+							<li class=" tsd-kind-method tsd-parent-kind-class">
+								<a href="gridlayout.html#setrowstretch" class="tsd-kind-icon">set<wbr>Row<wbr>Stretch</a>
+							</li>
+							<li class=" tsd-kind-method tsd-parent-kind-class tsd-is-static">
+								<a href="gridlayout.html#getcellconfig" class="tsd-kind-icon">get<wbr>Cell<wbr>Config</a>
+							</li>
+							<li class=" tsd-kind-method tsd-parent-kind-class tsd-is-static">
+								<a href="gridlayout.html#setcellconfig" class="tsd-kind-icon">set<wbr>Cell<wbr>Config</a>
+							</li>
+						</ul>
+					</li>
+				</ul>
+				<ul class="after-current">
+					<li class=" tsd-kind-class">
+						<a href="layout.html" class="tsd-kind-icon">Layout</a>
+					</li>
+					<li class=" tsd-kind-class">
+						<a href="layoutitem.html" class="tsd-kind-icon">Layout<wbr>Item</a>
+					</li>
+					<li class=" tsd-kind-class">
+						<a href="menu.html" class="tsd-kind-icon">Menu</a>
+					</li>
+					<li class=" tsd-kind-class">
+						<a href="menubar.html" class="tsd-kind-icon">Menu<wbr>Bar</a>
+					</li>
+					<li class=" tsd-kind-class">
+						<a href="panel.html" class="tsd-kind-icon">Panel</a>
+					</li>
+					<li class=" tsd-kind-class">
+						<a href="panellayout.html" class="tsd-kind-icon">Panel<wbr>Layout</a>
+					</li>
+					<li class=" tsd-kind-class">
+						<a href="scrollbar.html" class="tsd-kind-icon">Scroll<wbr>Bar</a>
+					</li>
+					<li class=" tsd-kind-class">
+						<a href="singletonlayout.html" class="tsd-kind-icon">Singleton<wbr>Layout</a>
+					</li>
+					<li class=" tsd-kind-class">
+						<a href="splitlayout.html" class="tsd-kind-icon">Split<wbr>Layout</a>
+					</li>
+					<li class=" tsd-kind-class">
+						<a href="splitpanel.html" class="tsd-kind-icon">Split<wbr>Panel</a>
+					</li>
+					<li class=" tsd-kind-class">
+						<a href="stackedlayout.html" class="tsd-kind-icon">Stacked<wbr>Layout</a>
+					</li>
+					<li class=" tsd-kind-class">
+						<a href="stackedpanel.html" class="tsd-kind-icon">Stacked<wbr>Panel</a>
+					</li>
+					<li class=" tsd-kind-class tsd-has-type-parameter">
+						<a href="tabbar.html" class="tsd-kind-icon">Tab<wbr>Bar</a>
+					</li>
+					<li class=" tsd-kind-class">
+						<a href="tabpanel.html" class="tsd-kind-icon">Tab<wbr>Panel</a>
+					</li>
+					<li class=" tsd-kind-class tsd-has-type-parameter">
+						<a href="title.html" class="tsd-kind-icon">Title</a>
+					</li>
+					<li class=" tsd-kind-class">
+						<a href="widget.html" class="tsd-kind-icon">Widget</a>
+					</li>
+				</ul>
+			</nav>
+		</div>
+	</div>
+</div>
+<footer class="with-border-bottom">
+	<div class="container">
+		<h2>Legend</h2>
+		<div class="tsd-legend-group">
+			<ul class="tsd-legend">
+				<li class="tsd-kind-module"><span class="tsd-kind-icon">Module</span></li>
+				<li class="tsd-kind-object-literal"><span class="tsd-kind-icon">Object literal</span></li>
+				<li class="tsd-kind-variable"><span class="tsd-kind-icon">Variable</span></li>
+				<li class="tsd-kind-function"><span class="tsd-kind-icon">Function</span></li>
+				<li class="tsd-kind-function tsd-has-type-parameter"><span class="tsd-kind-icon">Function with type parameter</span></li>
+				<li class="tsd-kind-index-signature"><span class="tsd-kind-icon">Index signature</span></li>
+				<li class="tsd-kind-type-alias"><span class="tsd-kind-icon">Type alias</span></li>
+			</ul>
+			<ul class="tsd-legend">
+				<li class="tsd-kind-enum"><span class="tsd-kind-icon">Enumeration</span></li>
+				<li class="tsd-kind-enum-member"><span class="tsd-kind-icon">Enumeration member</span></li>
+				<li class="tsd-kind-property tsd-parent-kind-enum"><span class="tsd-kind-icon">Property</span></li>
+				<li class="tsd-kind-method tsd-parent-kind-enum"><span class="tsd-kind-icon">Method</span></li>
+			</ul>
+			<ul class="tsd-legend">
+				<li class="tsd-kind-interface"><span class="tsd-kind-icon">Interface</span></li>
+				<li class="tsd-kind-interface tsd-has-type-parameter"><span class="tsd-kind-icon">Interface with type parameter</span></li>
+				<li class="tsd-kind-constructor tsd-parent-kind-interface"><span class="tsd-kind-icon">Constructor</span></li>
+				<li class="tsd-kind-property tsd-parent-kind-interface"><span class="tsd-kind-icon">Property</span></li>
+				<li class="tsd-kind-method tsd-parent-kind-interface"><span class="tsd-kind-icon">Method</span></li>
+				<li class="tsd-kind-index-signature tsd-parent-kind-interface"><span class="tsd-kind-icon">Index signature</span></li>
+			</ul>
+			<ul class="tsd-legend">
+				<li class="tsd-kind-class"><span class="tsd-kind-icon">Class</span></li>
+				<li class="tsd-kind-class tsd-has-type-parameter"><span class="tsd-kind-icon">Class with type parameter</span></li>
+				<li class="tsd-kind-constructor tsd-parent-kind-class"><span class="tsd-kind-icon">Constructor</span></li>
+				<li class="tsd-kind-property tsd-parent-kind-class"><span class="tsd-kind-icon">Property</span></li>
+				<li class="tsd-kind-method tsd-parent-kind-class"><span class="tsd-kind-icon">Method</span></li>
+				<li class="tsd-kind-accessor tsd-parent-kind-class"><span class="tsd-kind-icon">Accessor</span></li>
+				<li class="tsd-kind-index-signature tsd-parent-kind-class"><span class="tsd-kind-icon">Index signature</span></li>
+			</ul>
+			<ul class="tsd-legend">
+				<li class="tsd-kind-constructor tsd-parent-kind-class tsd-is-inherited"><span class="tsd-kind-icon">Inherited constructor</span></li>
+				<li class="tsd-kind-property tsd-parent-kind-class tsd-is-inherited"><span class="tsd-kind-icon">Inherited property</span></li>
+				<li class="tsd-kind-method tsd-parent-kind-class tsd-is-inherited"><span class="tsd-kind-icon">Inherited method</span></li>
+				<li class="tsd-kind-accessor tsd-parent-kind-class tsd-is-inherited"><span class="tsd-kind-icon">Inherited accessor</span></li>
+			</ul>
+			<ul class="tsd-legend">
+				<li class="tsd-kind-property tsd-parent-kind-class tsd-is-protected"><span class="tsd-kind-icon">Protected property</span></li>
+				<li class="tsd-kind-method tsd-parent-kind-class tsd-is-protected"><span class="tsd-kind-icon">Protected method</span></li>
+				<li class="tsd-kind-accessor tsd-parent-kind-class tsd-is-protected"><span class="tsd-kind-icon">Protected accessor</span></li>
+			</ul>
+			<ul class="tsd-legend">
+				<li class="tsd-kind-property tsd-parent-kind-class tsd-is-private"><span class="tsd-kind-icon">Private property</span></li>
+				<li class="tsd-kind-method tsd-parent-kind-class tsd-is-private"><span class="tsd-kind-icon">Private method</span></li>
+				<li class="tsd-kind-accessor tsd-parent-kind-class tsd-is-private"><span class="tsd-kind-icon">Private accessor</span></li>
+			</ul>
+			<ul class="tsd-legend">
+				<li class="tsd-kind-property tsd-parent-kind-class tsd-is-static"><span class="tsd-kind-icon">Static property</span></li>
+				<li class="tsd-kind-call-signature tsd-parent-kind-class tsd-is-static"><span class="tsd-kind-icon">Static method</span></li>
+			</ul>
+		</div>
+	</div>
+</footer>
+<div class="container tsd-generator">
+	<p>Generated using <a href="http://typedoc.org/" target="_blank">TypeDoc</a></p>
+</div>
+<div class="overlay"></div>
+<script src="../assets/js/main.js"></script>
+<script>if (location.protocol == 'file:') document.write('<script src="../assets/js/search.js"><' + '/script>');</script>
+</body>
+</html>

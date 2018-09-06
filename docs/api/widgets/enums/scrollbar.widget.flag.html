@@ -3,7 +3,7 @@
 <head>
 	<meta charset="utf-8">
 	<meta http-equiv="X-UA-Compatible" content="IE=edge">
-	<title>ICommandExecutedArgs | @phosphor/commands</title>
+	<title>Flag | @phosphor/widgets</title>
 	<meta name="description" content="">
 	<meta name="viewport" content="width=device-width, initial-scale=1">
 	<link rel="stylesheet" href="../assets/css/main.css">
@@ -22,7 +22,7 @@
 						<li class="state loading">Preparing search index...</li>
 						<li class="state failure">The search index is not available</li>
 					</ul>
-					<a href="../index.html" class="title">@phosphor/commands</a>
+					<a href="../index.html" class="title">@phosphor/widgets</a>
 				</div>
 				<div class="table-cell" id="tsd-widgets">
 					<div id="tsd-filter">
@@ -54,13 +54,16 @@
 					<a href="../globals.html">Globals</a>
 				</li>
 				<li>
-					<a href="../classes/commandregistry.html">CommandRegistry</a>
+					<a href="../classes/scrollbar.html">ScrollBar</a>
 				</li>
 				<li>
-					<a href="commandregistry.icommandexecutedargs.html">ICommandExecutedArgs</a>
+					<a href="../modules/scrollbar.widget.html">Widget</a>
+				</li>
+				<li>
+					<a href="scrollbar.widget.flag.html">Flag</a>
 				</li>
 			</ul>
-			<h1>Interface ICommandExecutedArgs</h1>
+			<h1>Enumeration Flag</h1>
 		</div>
 	</div>
 </header>
@@ -70,77 +73,101 @@
 			<section class="tsd-panel tsd-comment">
 				<div class="tsd-comment tsd-typography">
 					<div class="lead">
-						<p>An arguments object for the <code>commandExecuted</code> signal.</p>
+						<p>An enum of widget bit flags.</p>
 					</div>
 				</div>
-			</section>
-			<section class="tsd-panel tsd-hierarchy">
-				<h3>Hierarchy</h3>
-				<ul class="tsd-hierarchy">
-					<li>
-						<span class="target">ICommandExecutedArgs</span>
-					</li>
-				</ul>
 			</section>
 			<section class="tsd-panel-group tsd-index-group">
 				<h2>Index</h2>
 				<section class="tsd-panel tsd-index-panel">
 					<div class="tsd-index-content">
 						<section class="tsd-index-section ">
-							<h3>Properties</h3>
+							<h3>Enumeration members</h3>
 							<ul class="tsd-index-list">
-								<li class="tsd-kind-property tsd-parent-kind-interface"><a href="commandregistry.icommandexecutedargs.html#args" class="tsd-kind-icon">args</a></li>
-								<li class="tsd-kind-property tsd-parent-kind-interface"><a href="commandregistry.icommandexecutedargs.html#id" class="tsd-kind-icon">id</a></li>
-								<li class="tsd-kind-property tsd-parent-kind-interface"><a href="commandregistry.icommandexecutedargs.html#result" class="tsd-kind-icon">result</a></li>
+								<li class="tsd-kind-enum-member tsd-parent-kind-enum"><a href="scrollbar.widget.flag.html#disallowlayout" class="tsd-kind-icon">Disallow<wbr>Layout</a></li>
+								<li class="tsd-kind-enum-member tsd-parent-kind-enum"><a href="scrollbar.widget.flag.html#isattached" class="tsd-kind-icon">Is<wbr>Attached</a></li>
+								<li class="tsd-kind-enum-member tsd-parent-kind-enum"><a href="scrollbar.widget.flag.html#isdisposed" class="tsd-kind-icon">Is<wbr>Disposed</a></li>
+								<li class="tsd-kind-enum-member tsd-parent-kind-enum"><a href="scrollbar.widget.flag.html#ishidden" class="tsd-kind-icon">Is<wbr>Hidden</a></li>
+								<li class="tsd-kind-enum-member tsd-parent-kind-enum"><a href="scrollbar.widget.flag.html#isvisible" class="tsd-kind-icon">Is<wbr>Visible</a></li>
 							</ul>
 						</section>
 					</div>
 				</section>
 			</section>
 			<section class="tsd-panel-group tsd-member-group ">
-				<h2>Properties</h2>
-				<section class="tsd-panel tsd-member tsd-kind-property tsd-parent-kind-interface">
-					<a name="args" class="tsd-anchor"></a>
-					<h3>args</h3>
-					<div class="tsd-signature tsd-kind-icon">args<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">JSONObject</span></div>
+				<h2>Enumeration members</h2>
+				<section class="tsd-panel tsd-member tsd-kind-enum-member tsd-parent-kind-enum">
+					<a name="disallowlayout" class="tsd-anchor"></a>
+					<h3>Disallow<wbr>Layout</h3>
+					<div class="tsd-signature tsd-kind-icon">Disallow<wbr>Layout<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-symbol"> =&nbsp;16</span></div>
 					<aside class="tsd-sources">
 						<ul>
-							<li>Defined in <a href="https://github.com/phosphorjs/phosphor/blob/1b1dfe3/packages/commands/src/index.ts#L802">index.ts:802</a></li>
+							<li>Defined in <a href="https://github.com/phosphorjs/phosphor/blob/8fee9108/packages/widgets/src/widget.ts#L761">widget.ts:761</a></li>
 						</ul>
 					</aside>
 					<div class="tsd-comment tsd-typography">
 						<div class="lead">
-							<p>The arguments object passed to the command.</p>
+							<p>A layout cannot be set on the widget.</p>
 						</div>
 					</div>
 				</section>
-				<section class="tsd-panel tsd-member tsd-kind-property tsd-parent-kind-interface">
-					<a name="id" class="tsd-anchor"></a>
-					<h3>id</h3>
-					<div class="tsd-signature tsd-kind-icon">id<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">string</span></div>
+				<section class="tsd-panel tsd-member tsd-kind-enum-member tsd-parent-kind-enum">
+					<a name="isattached" class="tsd-anchor"></a>
+					<h3>Is<wbr>Attached</h3>
+					<div class="tsd-signature tsd-kind-icon">Is<wbr>Attached<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-symbol"> =&nbsp;2</span></div>
 					<aside class="tsd-sources">
 						<ul>
-							<li>Defined in <a href="https://github.com/phosphorjs/phosphor/blob/1b1dfe3/packages/commands/src/index.ts#L797">index.ts:797</a></li>
+							<li>Defined in <a href="https://github.com/phosphorjs/phosphor/blob/8fee9108/packages/widgets/src/widget.ts#L746">widget.ts:746</a></li>
 						</ul>
 					</aside>
 					<div class="tsd-comment tsd-typography">
 						<div class="lead">
-							<p>The id of the associated command.</p>
+							<p>The widget is attached to the DOM.</p>
 						</div>
 					</div>
 				</section>
-				<section class="tsd-panel tsd-member tsd-kind-property tsd-parent-kind-interface">
-					<a name="result" class="tsd-anchor"></a>
-					<h3>result</h3>
-					<div class="tsd-signature tsd-kind-icon">result<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">Promise</span><span class="tsd-signature-symbol">&lt;</span><span class="tsd-signature-type">any</span><span class="tsd-signature-symbol">&gt;</span></div>
+				<section class="tsd-panel tsd-member tsd-kind-enum-member tsd-parent-kind-enum">
+					<a name="isdisposed" class="tsd-anchor"></a>
+					<h3>Is<wbr>Disposed</h3>
+					<div class="tsd-signature tsd-kind-icon">Is<wbr>Disposed<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-symbol"> =&nbsp;1</span></div>
 					<aside class="tsd-sources">
 						<ul>
-							<li>Defined in <a href="https://github.com/phosphorjs/phosphor/blob/1b1dfe3/packages/commands/src/index.ts#L807">index.ts:807</a></li>
+							<li>Defined in <a href="https://github.com/phosphorjs/phosphor/blob/8fee9108/packages/widgets/src/widget.ts#L741">widget.ts:741</a></li>
 						</ul>
 					</aside>
 					<div class="tsd-comment tsd-typography">
 						<div class="lead">
-							<p>The promise which resolves with the result of the command.</p>
+							<p>The widget has been disposed.</p>
+						</div>
+					</div>
+				</section>
+				<section class="tsd-panel tsd-member tsd-kind-enum-member tsd-parent-kind-enum">
+					<a name="ishidden" class="tsd-anchor"></a>
+					<h3>Is<wbr>Hidden</h3>
+					<div class="tsd-signature tsd-kind-icon">Is<wbr>Hidden<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-symbol"> =&nbsp;4</span></div>
+					<aside class="tsd-sources">
+						<ul>
+							<li>Defined in <a href="https://github.com/phosphorjs/phosphor/blob/8fee9108/packages/widgets/src/widget.ts#L751">widget.ts:751</a></li>
+						</ul>
+					</aside>
+					<div class="tsd-comment tsd-typography">
+						<div class="lead">
+							<p>The widget is hidden.</p>
+						</div>
+					</div>
+				</section>
+				<section class="tsd-panel tsd-member tsd-kind-enum-member tsd-parent-kind-enum">
+					<a name="isvisible" class="tsd-anchor"></a>
+					<h3>Is<wbr>Visible</h3>
+					<div class="tsd-signature tsd-kind-icon">Is<wbr>Visible<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-symbol"> =&nbsp;8</span></div>
+					<aside class="tsd-sources">
+						<ul>
+							<li>Defined in <a href="https://github.com/phosphorjs/phosphor/blob/8fee9108/packages/widgets/src/widget.ts#L756">widget.ts:756</a></li>
+						</ul>
+					</aside>
+					<div class="tsd-comment tsd-typography">
+						<div class="lead">
+							<p>The widget is visible.</p>
 						</div>
 					</div>
 				</section>
@@ -158,27 +185,43 @@
 				<ul class="before-current">
 				</ul>
 				<ul class="current">
-					<li class="current tsd-kind-class">
-						<a href="../classes/commandregistry.html" class="tsd-kind-icon">Command<wbr>Registry</a>
+					<li class="current tsd-kind-enum tsd-parent-kind-module">
+						<a href="scrollbar.widget.flag.html" class="tsd-kind-icon">Flag</a>
 						<ul>
-							<li class="current tsd-kind-interface tsd-parent-kind-class">
-								<a href="commandregistry.icommandexecutedargs.html" class="tsd-kind-icon">ICommand<wbr>Executed<wbr>Args</a>
-								<ul>
-									<li class=" tsd-kind-property tsd-parent-kind-interface">
-										<a href="commandregistry.icommandexecutedargs.html#args" class="tsd-kind-icon">args</a>
-									</li>
-									<li class=" tsd-kind-property tsd-parent-kind-interface">
-										<a href="commandregistry.icommandexecutedargs.html#id" class="tsd-kind-icon">id</a>
-									</li>
-									<li class=" tsd-kind-property tsd-parent-kind-interface">
-										<a href="commandregistry.icommandexecutedargs.html#result" class="tsd-kind-icon">result</a>
-									</li>
-								</ul>
+							<li class=" tsd-kind-enum-member tsd-parent-kind-enum">
+								<a href="scrollbar.widget.flag.html#disallowlayout" class="tsd-kind-icon">Disallow<wbr>Layout</a>
+							</li>
+							<li class=" tsd-kind-enum-member tsd-parent-kind-enum">
+								<a href="scrollbar.widget.flag.html#isattached" class="tsd-kind-icon">Is<wbr>Attached</a>
+							</li>
+							<li class=" tsd-kind-enum-member tsd-parent-kind-enum">
+								<a href="scrollbar.widget.flag.html#isdisposed" class="tsd-kind-icon">Is<wbr>Disposed</a>
+							</li>
+							<li class=" tsd-kind-enum-member tsd-parent-kind-enum">
+								<a href="scrollbar.widget.flag.html#ishidden" class="tsd-kind-icon">Is<wbr>Hidden</a>
+							</li>
+							<li class=" tsd-kind-enum-member tsd-parent-kind-enum">
+								<a href="scrollbar.widget.flag.html#isvisible" class="tsd-kind-icon">Is<wbr>Visible</a>
 							</li>
 						</ul>
 					</li>
 				</ul>
 				<ul class="after-current">
+					<li class=" tsd-kind-class tsd-parent-kind-module">
+						<a href="../classes/scrollbar.widget.childmessage.html" class="tsd-kind-icon">Child<wbr>Message</a>
+					</li>
+					<li class=" tsd-kind-class tsd-parent-kind-module">
+						<a href="../classes/scrollbar.widget.resizemessage.html" class="tsd-kind-icon">Resize<wbr>Message</a>
+					</li>
+					<li class=" tsd-kind-interface tsd-parent-kind-module">
+						<a href="../interfaces/scrollbar.widget.ioptions.html" class="tsd-kind-icon">IOptions</a>
+					</li>
+					<li class=" tsd-kind-function tsd-parent-kind-module">
+						<a href="../modules/scrollbar.widget.html#attach" class="tsd-kind-icon">attach</a>
+					</li>
+					<li class=" tsd-kind-function tsd-parent-kind-module">
+						<a href="../modules/scrollbar.widget.html#detach" class="tsd-kind-icon">detach</a>
+					</li>
 				</ul>
 			</nav>
 		</div>
