@@ -102,6 +102,7 @@ describe('@phosphor/commands', () => {
           expect(reg).to.equal(registry);
           expect(args.id).to.equal('test');
           expect(args.args).to.deep.equal({});
+          // @ts-ignore
           expect(args.result).to.be.an.instanceof(Promise);
           called = true;
         });
