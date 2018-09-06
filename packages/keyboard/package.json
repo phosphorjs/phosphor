@@ -29,13 +29,31 @@
   },
   "scripts": {
     "build": "tsc",
+    "build:test": "cd tests && tsc && webpack",
     "clean": "rimraf lib",
-    "docs": "typedoc --options tdoptions.json ."
+    "clean:test": "rimraf tests/build",
+    "docs": "typedoc --options tdoptions.json .",
+    "test": "npm run test:firefox",
+    "test:chrome": "cd tests && karma start --browsers=Chrome",
+    "test:firefox": "cd tests && karma start --browsers=Firefox",
+    "test:ie": "cd tests && karma start --browsers=IE"
   },
   "dependencies": {},
   "devDependencies": {
+    "@types/chai": "^3.4.35",
+    "@types/mocha": "^2.2.39",
+    "chai": "^3.5.0",
+    "karma": "^1.5.0",
+    "karma-chrome-launcher": "^2.0.0",
+    "karma-firefox-launcher": "^1.0.0",
+    "karma-ie-launcher": "^1.0.0",
+    "karma-mocha": "^1.3.0",
+    "karma-mocha-reporter": "^2.2.2",
+    "mocha": "^3.2.0",
     "rimraf": "^2.5.2",
+    "simulate-event": "^1.4.0",
     "typedoc": "~0.12.0",
-    "typescript": "~3.0.3"
+    "typescript": "~3.0.3",
+    "webpack": "^2.2.1"
   }
 }

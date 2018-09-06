@@ -28,7 +28,9 @@
   },
   "scripts": {
     "build": "tsc",
-    "clean": "rimraf lib"
+    "clean": "rimraf lib",
+    "clean:test": "rimraf tests/build",
+    "docs": "typedoc --options tdoptions.json ."
   },
   "dependencies": {
     "@phosphor/algorithm": "^1.1.2",
