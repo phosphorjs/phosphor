@@ -5,6 +5,7 @@ addons:
   firefox: latest
 sudo: false
 install:
+  - npm install -g yarn
   - yarn
 script:
   - export DISPLAY=:99.0;
