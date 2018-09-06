@@ -39,9 +39,7 @@ export
 function topologicSort<T>(edges: IterableOrArrayLike<[T, T]>): T[] {
   // Setup the shared sorting state.
   let sorted: T[] = [];
-  // @ts-ignore
   let visited = new Set<T>();
-  // @ts-ignore
   let graph = new Map<T, T[]>();
 
   // Add the edges to the graph.
