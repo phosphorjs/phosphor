@@ -18,3 +18,4 @@ script:
     yarn build;
     yarn build:test;
     yarn test;
+    yarn docs;
