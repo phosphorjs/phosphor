@@ -70,16 +70,6 @@ class Table<S extends Schema = Schema> implements IIterable<Record<S>> {
   readonly schema: S;
 
   /**
-   * The version number of the table.
-   *
-   * #### Complexity
-   * `O(1)`
-   */
-  get version(): number {
-    return this._version;
-  }
-
-  /**
    * Whether the table is empty.
    *
    * #### Complexity
@@ -153,16 +143,17 @@ class Table<S extends Schema = Schema> implements IIterable<Record<S>> {
    * `O(log32 n)`
    */
   create(id = UUID.uuid4()): Record<S> {
+    // Fetch the context.
+    let schema = this.schema;
+    let store = this.parent;
+
     // Guard against disallowed mutations.
-    this.parent.mutationGuard();
+    store.mutationGuard();
 
     // Throw an exception if the record already exists.
     if (this.has(id)) {
       throw new Error(`Record '${id}' already exists.`);
     }
-
-    // Bump the version number.
-    let version = this._version++;
 
     // Create the record.
     let record = this._factory(id);
@@ -171,7 +162,11 @@ class Table<S extends Schema = Schema> implements IIterable<Record<S>> {
     this._records.insert(record);
 
     // Notify the store of the mutation.
-    this.parent.processRecordCreation(this, id);
+    store.processMutation({
+      type: 'table',
+      schemaId: schema.id,
+      recordId: id
+    });
 
     // Return the record to the user.
     return record;
@@ -181,20 +176,29 @@ class Table<S extends Schema = Schema> implements IIterable<Record<S>> {
    * Construct a new data store table.
    *
    * @param parent - The parent store object.
-   *
+   *s
    * @param schema - The schema for the table.
    */
   private constructor(parent: Store, schema: S) {
     this.parent = parent;
     this.schema = schema;
-    this._factory = Record.createFactory(this, schema);
+    this._factory = Record.createFactory(this);
   }
 
-  private _version = 0;
   private _factory: Record.Factory<S>;
   private _records = new BPlusTree<Record<S>>(Private.recordCmp);
 }
 
+
+Table.update({
+  [myRecordId]: {
+    trusted: false,
+    cellIds: { op: 'push', value: id }
+  },
+});
+
+myRecord.trusted.set(false);
+myRecord.cellIds.push(id);
 
 /**
  * The namespace for the `Table` class statics.

@@ -89,14 +89,31 @@ class Store implements IMessageHandler, IIterable<Table> {
     return 0;
   }
 
+  /**
+   *
+   */
   get version(): number {
     return 0;
   }
 
+  /**
+   *
+   */
+  get inMutate(): boolean {
+    return false;
+  }
+
+  /**
+   *
+   */
   iter(): IIterator<Table> {
     throw '';
   }
 
+  /**
+   *
+   * @param msg
+   */
   processMessage(msg: Message): void {
 
   }
@@ -186,70 +203,7 @@ class Store implements IMessageHandler, IIterable<Table> {
   /**
    * @internal
    */
-  processRecordCreation(table: Table, id: string): void {
-
-  }
-
-  /**
-   * @internal
-   */
-  processRegisterMutation(record: Record, name: string, previous: ReadonlyJSONValue, current: ReadonlyJSONValue): void {
-
-  }
-
-  /**
-   * @internal
-   */
-  processListMutation(list: List, removed: null, inserted: null, ordered: null): void {
-
-  }
-
-  /**
-   * @internal
-   */
-  processMapMutation(map: Map, previous: null, current: null): void {
-
-  }
-
-  /**
-   * @internal
-   */
-  processTextMutation(text: Text): void {
-
-  }
-
-  /**
-   * @internal
-   */
-  withRecordCreation(table: Table, cb: Store.RecordCreationCallback): void {
-
-  }
-
-  /**
-   * @internal
-   */
-  withRegisterMutation(record: Record, cn: Store.RegisterMutationCallback): void {
-
-  }
-
-  /**
-   * @internal
-   */
-  withListMutation(list: List, cb: Store.ListMutationCallback): void {
-
-  }
-
-  /**
-   * @internal
-   */
-  withMapMutation(map: Map, cb: Store.MapMutationCallback): void {
-
-  }
-
-  /**
-   * @internal
-   */
-  withTextMutation(map: Text, cb: Store.TextMutationCallback): void {
+  processMutation(mutation: Store.Mutation): void {
 
   }
 }
@@ -295,41 +249,99 @@ namespace Store {
   };
 
   /**
-   * @internal
-   */
-  export
-  type RecordCreationCallback = () => void;
-
-  /**
-   * @internal
-   */
-  export
-  type RegisterMutationCallback = () => void;
-
-  /**
-   * @internal
-   */
-  export
-  type ListMutationCallback = () => void;
-
-  /**
-   * @internal
-   */
-  export
-  type MapMutationValues = { [key: string]: ReadonlyJSONValue | undefined };
-
-  /**
-   * @internal
    *
    */
   export
-  type MapMutationCallback = (previous: MapMutationValues, current:  MapMutationValues) => void;
+  type TableMutation = {
+    /**
+     *
+     */
+    readonly type: 'table';
+
+    /**
+     *
+     */
+    readonly schemaId: string;
+
+    /**
+     *
+     */
+    readonly recordId: string;
+  };
 
   /**
-   * @internal
+   *
    */
   export
-  type TextMutationCallback = () => void;
+  type RegisterMutation = {
+    /**
+     *
+     */
+    readonly type: 'register';
+
+    /**
+     *
+     */
+    readonly schemaId: string;
+
+    /**
+     *
+     */
+    readonly recordId: string;
+
+    /**
+     *
+     */
+    readonly previous: ReadonlyJSONValue;
+
+    /**
+     *
+     */
+    readonly current: ReadonlyJSONValue;
+  };
+
+  /**
+   *
+   */
+  export
+  type MapMutation = {
+    /**
+     *
+     */
+    readonly type: 'map';
+
+    /**
+     *
+     */
+    readonly schemaId: string;
+
+    /**
+     *
+     */
+    readonly recordId: string;
+
+    /**
+     *
+     */
+    readonly previous: { readonly [key: string]: ReadonlyJSONValue | undefined };
+
+    /**
+     *
+     */
+    readonly current: { readonly [key: string]: ReadonlyJSONValue | undefined };
+  };
+
+  /**
+   *
+   */
+  export
+  type Mutation = TableMutation | RegisterMutation | MapMutation;
+
+  /**
+   *
+   */
+  export
+  type MutationCallback = () => Mutation;
 }
 
 

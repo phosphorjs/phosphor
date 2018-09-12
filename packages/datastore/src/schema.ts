@@ -31,7 +31,7 @@ type Schema = {
    * The field definitions for the schema.
    *
    * #### Notes
-   * Field names cannot begin with `$` or `@`.
+   * Field names cannot begin with `$`.
    */
   readonly fields: { readonly [name: string]: Field };
 };

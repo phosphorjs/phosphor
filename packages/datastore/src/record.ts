@@ -61,7 +61,7 @@ namespace Record {
   };
 
   /**
-   * A type alias for the readnly state of a record.
+   * A type alias for the readonly state of a record.
    */
   export
   type FieldState<S extends Schema> = {
@@ -90,11 +90,9 @@ namespace Record {
   /**
    * @internal
    *
-   * Create a factory function for creating new records.
+   * Create a record factory function for a table.
    *
-   * @param parent - The parent table object.
-   *
-   * @param schema - The schema for the records.
+   * @param parent - The parent table of the records.
    *
    * @returns A factory function for creating new records.
    *
@@ -102,11 +100,14 @@ namespace Record {
    * This function is an internal implementation detail.
    */
   export
-  function createFactory<S extends Schema>(parent: Table, schema: S): Factory<S> {
-    // Create the record prototype.
-    const prototype: any = {};
+  function createFactory<S extends Schema>(parent: Table<S>): Factory<S> {
+    // Create the prototype.
+    let prototype: any = {};
 
-    // Create the prototype properties.
+    // Fetch the schema.
+    let schema = parent.schema;
+
+    // Define the protoype properties.
     for (let name in schema.fields) {
       let field = schema.fields[name];
       Object.defineProperty(prototype, name, {
@@ -116,11 +117,16 @@ namespace Record {
       });
     }
 
-    // Create the record factory function.
+    // Define the factory function.
     function createRecord(id: string): Record<S> {
+      // Create the record object.
       let record = Object.create(prototype);
+
+      // Initialize the base state.
       record.$parent = parent;
       record.$id = id;
+
+      // Initialize the field state.
       for (let name in schema.fields) {
         let field = schema.fields[name];
         switch (field.type) {
@@ -140,10 +146,12 @@ namespace Record {
           throw 'unreachable';
         }
       }
+
+      // Return the new record.
       return record;
     }
 
-    // Return the record factory function.
+    // Return the factory function.
     return createRecord;
   }
 

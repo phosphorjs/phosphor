@@ -78,9 +78,10 @@ class Register<T extends ReadonlyJSONValue = ReadonlyJSONValue> {
    * `O(1)`
    */
   set(value: T): void {
-    // Fetch the ancestors
+    // Fetch the context.
     let record = this.parent;
     let table = record.$parent;
+    let schema = table.schema;
     let store = table.parent;
 
     // Guard against disallowed mutations.
@@ -105,7 +106,13 @@ class Register<T extends ReadonlyJSONValue = ReadonlyJSONValue> {
     this._history = { value, version, storeId, next };
 
     // Notify the store of the mutation.
-    store.processRegisterMutation(this, previous, value);
+    store.processMutation({
+      type: 'register',
+      schemaId: schema.id,
+      recordId: record.$id,
+      previous: previous,
+      current: value
+    });
   }
 
   /**
