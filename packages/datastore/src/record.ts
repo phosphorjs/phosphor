@@ -6,37 +6,15 @@
 | The full license is in the file LICENSE, distributed with this software.
 |----------------------------------------------------------------------------*/
 import {
-  List
-} from './list';
-
-import {
-  Map
-} from './map';
-
-import {
-  Register
-} from './register';
-
-import {
   Schema
 } from './schema';
 
-import {
-  Table
-} from './table';
-
-import {
-  Text
-} from './text';
-
 
 /**
- * A type alias for a data store record.
+ * A type alias for a datastore record.
  */
 export
-type Record<S extends Schema = Schema> = (
-  Record.BaseState & Record.FieldState<S>
-);
+type Record<S extends Schema> = Record.Base<S> & Record.Value<S>;
 
 
 /**
@@ -45,120 +23,82 @@ type Record<S extends Schema = Schema> = (
 export
 namespace Record {
   /**
-   * A type alias for the base state of a record.
+   * A type alias for the record base type.
    */
   export
-  type BaseState = {
-    /**
-     * The parent of the record.
-     */
-    readonly $parent: Table;
-
+  type Base<S extends Schema> = {
     /**
      * The unique id of the record.
      */
     readonly $id: string;
+
+    /**
+     * @internal
+     *
+     * The metadata for the record.
+     */
+    readonly '@@metadata': Metadata<S>;
   };
 
   /**
-   * A type alias for the readonly state of a record.
+   * A type alias for the record value type.
    */
   export
-  type FieldState<S extends Schema> = {
+  type Value<S extends Schema> = {
     readonly [N in keyof S['fields']]: S['fields'][N]['ValueType'];
   };
 
   /**
-   * A type alias for a record change set.
+   * A type alias for the record update type.
    */
   export
-  type ChangeSet<S extends Schema> = {
+  type Update<S extends Schema> = {
+    readonly [N in keyof S['fields']]?: S['fields'][N]['UpdateType'];
+  };
+
+  /**
+   * A type alias for the record change type.
+   */
+  export
+  type Change<S extends Schema> = {
     readonly [N in keyof S['fields']]?: S['fields'][N]['ChangeType'];
+  };
+
+  /**
+   * A type alias for the record patch type.
+   */
+  export
+  type Patch<S extends Schema> = {
+    readonly [N in keyof S['fields']]?: S['fields'][N]['PatchType'];
   };
 
   /**
    * @internal
    *
-   * A type alias for a record factory function.
-   *
-   * #### Notes
-   * This type is an internal implementation detail.
+   * A type alias for the record metadata type.
    */
   export
-  type Factory<S extends Schema> = (id: string) => Record<S>;
+  type Metadata<S extends Schema> = {
+    readonly [N in keyof S['fields']]: S['fields'][N]['MetadataType'];
+  };
 
   /**
    * @internal
    *
-   * Create a record factory function for a table.
-   *
-   * @param parent - The parent table of the records.
-   *
-   * @returns A factory function for creating new records.
-   *
-   * #### Notes
-   * This function is an internal implementation detail.
+   * A type alias for the record mutable change type.
    */
   export
-  function createFactory<S extends Schema>(parent: Table<S>): Factory<S> {
-    // Create the prototype.
-    let prototype: any = {};
-
-    // Fetch the schema.
-    let schema = parent.schema;
-
-    // Define the protoype properties.
-    for (let name in schema.fields) {
-      let field = schema.fields[name];
-      Object.defineProperty(prototype, name, {
-        get: createPropertyGetter(field.uuid),
-        enumerable: true,
-        configurable: false
-      });
-    }
-
-    // Define the factory function.
-    function createRecord(id: string): Record<S> {
-      // Create the record object.
-      let record = Object.create(prototype);
-
-      // Initialize the base state.
-      record.$parent = parent;
-      record.$id = id;
-
-      // Initialize the field state.
-      for (let name in schema.fields) {
-        let field = schema.fields[name];
-        switch (field.type) {
-        case 'list':
-          record[field.uuid] = List.create(record, name);
-          break;
-        case 'map':
-          record[field.uuid] = Map.create(record, name);
-          break;
-        case 'register':
-          record[field.uuid] = Register.create(record, name);
-          break;
-        case 'text':
-          record[field.uuid] = Text.create(record, name);
-          break;
-        default:
-          throw 'unreachable';
-        }
-      }
-
-      // Return the new record.
-      return record;
-    }
-
-    // Return the factory function.
-    return createRecord;
-  }
+  type MutableChange<S extends Schema> = {
+    [N in keyof S['fields']]?: S['fields'][N]['ChangeType'];
+  };
 
   /**
-   * Create a getter function for a record property.
+   * @internal
+   *
+   * A type alias for the record mutable patch type.
    */
-  function createPropertyGetter(uuid: string): () => any {
-    return function() { return this[uuid]; };
-  }
+  export
+  type MutablePatch<S extends Schema> = {
+    [N in keyof S['fields']]?: S['fields'][N]['PatchType'];
+  };
 }

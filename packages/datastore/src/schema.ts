@@ -6,8 +6,8 @@
 | The full license is in the file LICENSE, distributed with this software.
 |----------------------------------------------------------------------------*/
 import {
-  Field
-} from './fields';
+  AnyField
+} from './field';
 
 
 /**
@@ -31,7 +31,7 @@ type Schema = {
    * The field definitions for the schema.
    *
    * #### Notes
-   * Field names cannot begin with `$`.
+   * Field names cannot begin with `$` or `@`.
    */
-  readonly fields: { readonly [name: string]: Field };
+  readonly fields: { readonly [name: string]: AnyField };
 };

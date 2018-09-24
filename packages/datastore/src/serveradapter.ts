@@ -85,7 +85,7 @@ type Patch = {
 
 
 /**
- * A patch history object for the data store.
+ * A patch history object for the datastore.
  */
 export
 type PatchHistory = {
@@ -132,7 +132,7 @@ interface IServerAdapter {
   registerPatchHandler(storeId: number, handler: IMessageHandler): IDisposable;
 
   /**
-   * Broadcast a patch to all peer data stores.
+   * Broadcast a patch to all peer datastores.
    *
    * @param patch - The patch to broadcast to peers.
    */

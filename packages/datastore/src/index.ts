@@ -6,10 +6,14 @@
 | The full license is in the file LICENSE, distributed with this software.
 |----------------------------------------------------------------------------*/
 export * from './datastore';
+export * from './field';
 export * from './fields';
-export * from './list';
-export * from './map';
-export * from './table';
-export * from './text';
+export * from './listfield';
+export * from './mapfield';
+export * from './record';
+export * from './registerfield';
+export * from './schema';
 export * from './serveradapter';
 export * from './serveradapterimpl';
+export * from './table';
+export * from './textfield';

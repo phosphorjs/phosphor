@@ -23,13 +23,13 @@ import {
 
 
 /**
- * 
+ *
  */
 export
 namespace WSAdapterMessages {
 
   /**
-   * 
+   *
    */
   export
   type IBaseMessage = {
@@ -50,7 +50,7 @@ namespace WSAdapterMessages {
   }
 
   /**
-   * 
+   *
    */
   export
   type IStoreIdMessageRequest = IBaseMessage & {
@@ -59,7 +59,7 @@ namespace WSAdapterMessages {
   }
 
   /**
-   * 
+   *
    */
   export
   type IStoreIdMessageReply = IReplyMessage & {
@@ -70,7 +70,7 @@ namespace WSAdapterMessages {
   }
 
   /**
-   * 
+   *
    */
   export
   type IPatchBroadcastMessage = IBaseMessage & {
@@ -81,7 +81,7 @@ namespace WSAdapterMessages {
   }
 
   /**
-   * 
+   *
    */
   export
   type IPatchHistoryRequestMessage = IBaseMessage & {
@@ -90,7 +90,7 @@ namespace WSAdapterMessages {
   }
 
   /**
-   * 
+   *
    */
   export
   type IPatchHistoryReply = IReplyMessage & {
@@ -101,7 +101,7 @@ namespace WSAdapterMessages {
   }
 
   /**
-   * 
+   *
    */
   export
   type IPatchFetchRequestMessage = IBaseMessage & {
@@ -112,7 +112,7 @@ namespace WSAdapterMessages {
   }
 
   /**
-   * 
+   *
    */
   export
   type IPatchFetchReplyMessage = IReplyMessage & {
@@ -123,7 +123,7 @@ namespace WSAdapterMessages {
   }
 
   /**
-   * 
+   *
    */
   export
   type IMessage = (
@@ -268,7 +268,7 @@ class WSServerAdapter implements IServerAdapter, IDisposable {
   }
 
   /**
-   * Broadcast a patch to all data stores.
+   * Broadcast a patch to all datastores.
    *
    * @param {number} storeId The store id of the patch source.
    * @param {ReadonlyJSONObject} content The patch content.
