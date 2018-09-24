@@ -14,10 +14,6 @@ import {
 } from '@phosphor/collections';
 
 import {
-  ReadonlyJSONValue
-} from '@phosphor/coreutils';
-
-import {
   Datastore
 } from './datastore';
 
