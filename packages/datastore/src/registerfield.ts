@@ -6,12 +6,20 @@
 | The full license is in the file LICENSE, distributed with this software.
 |----------------------------------------------------------------------------*/
 import {
+  ArrayExt, StringExt
+} from '@phosphor/algorithm';
+
+import {
   ReadonlyJSONValue
 } from '@phosphor/coreutils';
 
 import {
   Field
 } from './field';
+
+import {
+  createDuplexId
+} from './utilities';
 
 
 /**
@@ -67,7 +75,23 @@ class RegisterField<T extends ReadonlyJSONValue> extends Field<RegisterField.Val
    * @returns The result of applying the update.
    */
   applyUpdate(args: Field.UpdateArgs<RegisterField.Value<T>, RegisterField.Update<T>, RegisterField.Metadata<T>>): Field.UpdateResult<RegisterField.Value<T>, RegisterField.Change<T>, RegisterField.Patch<T>> {
-    throw '';
+    // Unpack the arguments.
+    let { previous, update, metadata, version, storeId } = args;
+
+    // Create the id for the value.
+    let id = createDuplexId(version, storeId);
+
+    // Insert the update value into the metadata.
+    let value = Private.insertIntoMetadata(metadata, id, update);
+
+    // Create the change object.
+    let change = { previous, current: value };
+
+    // Create the patch object.
+    let patch = { id, value };
+
+    // Return the result of the update.
+    return { value, change, patch };
   }
 
   /**
@@ -78,7 +102,17 @@ class RegisterField<T extends ReadonlyJSONValue> extends Field<RegisterField.Val
    * @returns The result of applying the patch.
    */
   applyPatch(args: Field.PatchArgs<RegisterField.Value<T>, RegisterField.Patch<T>, RegisterField.Metadata<T>>): Field.PatchResult<RegisterField.Value<T>, RegisterField.Change<T>> {
-    throw '';
+    // Unpack the arguments.
+    let { previous, patch, metadata } = args;
+
+    // Insert the patch value into the metadata.
+    let value = Private.insertIntoMetadata(metadata, patch.id, patch.value);
+
+    // Create the change object.
+    let change = { previous, current: value };
+
+    // Return the result of the patch.
+    return { value, change };
   }
 
   /**
@@ -91,7 +125,7 @@ class RegisterField<T extends ReadonlyJSONValue> extends Field<RegisterField.Val
    * @returns A new change object which represents both changes.
    */
   mergeChange(first: RegisterField.Change<T>, second: RegisterField.Change<T>): RegisterField.Change<T> {
-    throw '';
+    return { previous: first.previous, current: second.current };
   }
 
   /**
@@ -104,7 +138,7 @@ class RegisterField<T extends ReadonlyJSONValue> extends Field<RegisterField.Val
    * @returns A new patch object which represents both patches.
    */
   mergePatch(first: RegisterField.Patch<T>, second: RegisterField.Patch<T>): RegisterField.Patch<T> {
-    throw '';
+    return second;
   }
 }
 
@@ -184,4 +218,44 @@ namespace RegisterField {
      */
     readonly values: Array<T>;
   };
+}
+
+
+/**
+ * The namespace for the module implementation details.
+ */
+namespace Private {
+  /**
+   * Insert a value into the register field metadata.
+   *
+   * @param metadata - The metadata of interest.
+   *
+   * @param id - The unique id for the value.
+   *
+   * @param value - The value to insert.
+   *
+   * @returns The current value for the register field.
+   *
+   * #### Notes
+   * If the id already exists, the old value will be overwritten.
+   */
+  export
+  function insertIntoMetadata<T extends ReadonlyJSONValue>(metadata: RegisterField.Metadata<T>, id: string, value: T): T {
+    // Unpack the metadata.
+    let { ids, values } = metadata;
+
+    // Find the insert index for the id.
+    let i = ArrayExt.lowerBound(ids, id, StringExt.cmp);
+
+    // Overwrite or insert the value as appropriate.
+    if (i < ids.length && ids[i] === id) {
+      values[i] = value;
+    } else {
+      ArrayExt.insert(ids, i, id);
+      ArrayExt.insert(values, i, value);
+    }
+
+    // Return the current value for the register field.
+    return values[values.length - 1];
+  }
 }
