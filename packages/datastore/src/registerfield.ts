@@ -88,7 +88,7 @@ class RegisterField<T extends ReadonlyJSONValue> extends Field<RegisterField.Val
     let change = { previous, current: value };
 
     // Create the patch object.
-    let patch = { id, value };
+    let patch = { id, value: update };
 
     // Return the result of the update.
     return { value, change, patch };
