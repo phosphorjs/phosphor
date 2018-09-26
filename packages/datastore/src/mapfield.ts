@@ -6,12 +6,20 @@
 | The full license is in the file LICENSE, distributed with this software.
 |----------------------------------------------------------------------------*/
 import {
+  ArrayExt, StringExt
+} from '@phosphor/algorithm';
+
+import {
   ReadonlyJSONValue
 } from '@phosphor/coreutils';
 
 import {
   Field
 } from './field';
+
+import {
+  createDuplexId
+} from './utilities';
 
 
 /**
@@ -61,7 +69,50 @@ class MapField<T extends ReadonlyJSONValue> extends Field<MapField.Value<T>, Map
    * @returns The result of applying the update.
    */
   applyUpdate(args: Field.UpdateArgs<MapField.Value<T>, MapField.Update<T>, MapField.Metadata<T>>): Field.UpdateResult<MapField.Value<T>, MapField.Change<T>, MapField.Patch<T>> {
-    throw '';
+    // Unpack the arguments.
+    let { previous, update, metadata, version, storeId } = args;
+
+    // Create the id for the values.
+    let id = createDuplexId(version, storeId);
+
+    // Create a clone of the previous value.
+    let clone = { ...previous };
+
+    // Set up the previous and current change parts.
+    let prev: { [key: string]: T | null } = {};
+    let curr: { [key: string]: T | null } = {};
+
+    // Iterate over the update.
+    for (let key in update) {
+      // Insert the update value into the metadata.
+      let value = Private.insertIntoMetadata(metadata, key, id, update[key]);
+
+      // Update the clone with the new value.
+      if (value === null) {
+        delete clone[key];
+      } else {
+        clone[key] = value;
+      }
+
+      // Update the previous change part.
+      if (key in previous) {
+        prev[key] = previous[key];
+      } else {
+        prev[key] = null;
+      }
+
+      // Update the current change part.
+      curr[key] = value;
+    }
+
+    // Create the change object.
+    let change = { previous: prev, current: curr };
+
+    // Create the patch object.
+    let patch = { id, values: { ...update } };
+
+    // Return the update result.
+    return { value: clone, change, patch };
   }
 
   /**
@@ -72,7 +123,47 @@ class MapField<T extends ReadonlyJSONValue> extends Field<MapField.Value<T>, Map
    * @returns The result of applying the patch.
    */
   applyPatch(args: Field.PatchArgs<MapField.Value<T>, MapField.Patch<T>, MapField.Metadata<T>>): Field.PatchResult<MapField.Value<T>, MapField.Change<T>> {
-    throw '';
+    // Unpack the arguments.
+    let { previous, patch, metadata } = args;
+
+    // Unpack the patch.
+    let { id, values } = patch;
+
+    // Create a clone of the previous value.
+    let clone = { ...previous };
+
+    // Set up the previous and current change parts.
+    let prev: { [key: string]: T | null } = {};
+    let curr: { [key: string]: T | null } = {};
+
+    // Iterate over the values.
+    for (let key in values) {
+      // Insert the patch value into the metadata.
+      let value = Private.insertIntoMetadata(metadata, key, id, values[key]);
+
+      // Update the clone with the new value.
+      if (value === null) {
+        delete clone[key];
+      } else {
+        clone[key] = value;
+      }
+
+      // Update the previous change part.
+      if (key in previous) {
+        prev[key] = previous[key];
+      } else {
+        prev[key] = null;
+      }
+
+      // Update the current change part.
+      curr[key] = value;
+    }
+
+    // Create the change object.
+    let change = { previous: prev, current: curr };
+
+    // Return the patch result.
+    return { value: clone, change };
   }
 
   /**
@@ -85,7 +176,9 @@ class MapField<T extends ReadonlyJSONValue> extends Field<MapField.Value<T>, Map
    * @returns A new change object which represents both changes.
    */
   mergeChange(first: MapField.Change<T>, second: MapField.Change<T>): MapField.Change<T> {
-    throw '';
+    let previous = { ...second.previous, ...first.previous };
+    let current = { ...first.current, ...second.current };
+    return { previous, current };
   }
 
   /**
@@ -98,7 +191,7 @@ class MapField<T extends ReadonlyJSONValue> extends Field<MapField.Value<T>, Map
    * @returns A new patch object which represents both patches.
    */
   mergePatch(first: MapField.Patch<T>, second: MapField.Patch<T>): MapField.Patch<T> {
-    throw '';
+    return { id: second.id, values: { ...first.values, ...second.values } };
   }
 }
 
@@ -154,12 +247,12 @@ namespace MapField {
     /**
      * The previous values of the changed items.
      */
-    readonly previous: { readonly [key: string]: T };
+    readonly previous: { readonly [key: string]: T | null };
 
     /**
      * The current values of the changed items.
      */
-    readonly current: { readonly [key: string]: T };
+    readonly current: { readonly [key: string]: T | null };
   };
 
   /**
@@ -177,4 +270,47 @@ namespace MapField {
      */
     readonly values: { readonly [key: string]: T | null };
   };
+}
+
+
+/**
+ * The namespace for the module implementation details.
+ */
+namespace Private {
+  /**
+   * Insert a value into the map field metadata.
+   *
+   * @param metadata - The metadata of interest.
+   *
+   * @param key - The key of interest.
+   *
+   * @param id - The unique id for the value.
+   *
+   * @param value - The value to insert.
+   *
+   * @returns The current value for the key.
+   *
+   * #### Notes
+   * If the id already exists, the old value will be overwritten.
+   */
+  export
+  function insertIntoMetadata<T extends ReadonlyJSONValue>(metadata: MapField.Metadata<T>, key: string, id: string, value: T | null): T | null {
+    // Fetch the id and value arrays for the given key.
+    let ids = metadata.ids[key] || (metadata.ids[key] = []);
+    let values = metadata.values[key] || (metadata.values[key] = []);
+
+    // Find the insert index for the id.
+    let i = ArrayExt.lowerBound(ids, id, StringExt.cmp);
+
+    // Overwrite or insert the value as appropriate.
+    if (i < ids.length && ids[i] === id) {
+      values[i] = value;
+    } else {
+      ArrayExt.insert(ids, i, id);
+      ArrayExt.insert(values, i, value);
+    }
+
+    // Return the current value for the key.
+    return values[values.length - 1];
+  }
 }
