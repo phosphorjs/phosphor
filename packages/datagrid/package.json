@@ -2,14 +2,34 @@
   "name": "@phosphor/datagrid",
   "version": "0.1.6",
   "description": "PhosphorJS - Tabular Data Grid",
-  "main": "lib/index.js",
-  "types": "lib/index.d.ts",
+  "homepage": "https://github.com/phosphorjs/phosphor",
+  "bugs": {
+    "url": "https://github.com/phosphorjs/phosphor/issues"
+  },
+  "license": "BSD-3-Clause",
+  "author": "S. Chris Colbert <sccolbert@gmail.com>",
+  "contributors": [
+    "A. Darian <git@darian.af>",
+    "S. Chris Colbert <sccolbert@gmail.com>",
+    "Steven Silvester <steven.silvester@gmail.com>"
+  ],
   "files": [
     "lib/*.d.ts",
     "lib/*.js"
   ],
+  "main": "lib/index.js",
+  "types": "lib/index.d.ts",
   "directories": {
     "lib": "lib/"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/phosphorjs/phosphor.git"
+  },
+  "scripts": {
+    "build": "tsc --build src",
+    "clean": "rimraf lib",
+    "docs": "typedoc --options tdoptions.json src"
   },
   "dependencies": {
     "@phosphor/algorithm": "^1.1.2",
@@ -23,26 +43,7 @@
   },
   "devDependencies": {
     "rimraf": "^2.5.2",
-    "typedoc": "^0.7.0",
-    "typescript": "~2.3.0"
-  },
-  "scripts": {
-    "build": "tsc",
-    "clean": "rimraf lib"
-  },
-  "repository": {
-    "type": "git",
-    "url": "https://github.com/phosphorjs/phosphor.git"
-  },
-  "author": "S. Chris Colbert <sccolbert@gmail.com>",
-  "contributors": [
-    "A. Darian <git@darian.af>",
-    "S. Chris Colbert <sccolbert@gmail.com>",
-    "Steven Silvester <steven.silvester@gmail.com>"
-  ],
-  "license": "BSD-3-Clause",
-  "bugs": {
-    "url": "https://github.com/phosphorjs/phosphor/issues"
-  },
-  "homepage": "https://github.com/phosphorjs/phosphor"
+    "typedoc": "~0.12.0",
+    "typescript": "~3.0.3"
+  }
 }

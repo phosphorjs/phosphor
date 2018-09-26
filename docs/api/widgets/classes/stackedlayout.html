@@ -97,6 +97,12 @@
 				<h2>Index</h2>
 				<section class="tsd-panel tsd-index-panel">
 					<div class="tsd-index-content">
+						<section class="tsd-index-section tsd-is-inherited">
+							<h3>Constructors</h3>
+							<ul class="tsd-index-list">
+								<li class="tsd-kind-constructor tsd-parent-kind-class tsd-is-inherited"><a href="stackedlayout.html#constructor" class="tsd-kind-icon">constructor</a></li>
+							</ul>
+						</section>
 						<section class="tsd-index-section tsd-is-private tsd-is-private-protected">
 							<h3>Properties</h3>
 							<ul class="tsd-index-list">
@@ -108,6 +114,7 @@
 						<section class="tsd-index-section tsd-is-inherited">
 							<h3>Accessors</h3>
 							<ul class="tsd-index-list">
+								<li class="tsd-kind-accessor tsd-parent-kind-class tsd-is-inherited"><a href="stackedlayout.html#fitpolicy" class="tsd-kind-icon">fit<wbr>Policy</a></li>
 								<li class="tsd-kind-get-signature tsd-parent-kind-class tsd-is-inherited"><a href="stackedlayout.html#isdisposed" class="tsd-kind-icon">is<wbr>Disposed</a></li>
 								<li class="tsd-kind-accessor tsd-parent-kind-class tsd-is-inherited"><a href="stackedlayout.html#parent" class="tsd-kind-icon">parent</a></li>
 								<li class="tsd-kind-get-signature tsd-parent-kind-class tsd-is-inherited"><a href="stackedlayout.html#widgets" class="tsd-kind-icon">widgets</a></li>
@@ -148,6 +155,43 @@
 					</div>
 				</section>
 			</section>
+			<section class="tsd-panel-group tsd-member-group tsd-is-inherited">
+				<h2>Constructors</h2>
+				<section class="tsd-panel tsd-member tsd-kind-constructor tsd-parent-kind-class tsd-is-inherited">
+					<a name="constructor" class="tsd-anchor"></a>
+					<h3>constructor</h3>
+					<ul class="tsd-signatures tsd-kind-constructor tsd-parent-kind-class tsd-is-inherited">
+						<li class="tsd-signature tsd-kind-icon">new <wbr>Stacked<wbr>Layout<span class="tsd-signature-symbol">(</span>options<span class="tsd-signature-symbol">?: </span><a href="../interfaces/layout.ioptions.html" class="tsd-signature-type">IOptions</a><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol">: </span><a href="stackedlayout.html" class="tsd-signature-type">StackedLayout</a></li>
+					</ul>
+					<ul class="tsd-descriptions">
+						<li class="tsd-description">
+							<aside class="tsd-sources">
+								<p>Inherited from <a href="layout.html">Layout</a>.<a href="layout.html#constructor">constructor</a></p>
+								<ul>
+									<li>Defined in <a href="https://github.com/phosphorjs/phosphor/blob/8fee9108/packages/widgets/src/layout.ts#L52">layout.ts:52</a></li>
+								</ul>
+							</aside>
+							<div class="tsd-comment tsd-typography">
+								<div class="lead">
+									<p>Construct a new layout.</p>
+								</div>
+							</div>
+							<h4 class="tsd-parameters-title">Parameters</h4>
+							<ul class="tsd-parameters">
+								<li>
+									<h5><span class="tsd-flag ts-flagDefault value">Default value</span> options: <a href="../interfaces/layout.ioptions.html" class="tsd-signature-type">IOptions</a><span class="tsd-signature-symbol"> =&nbsp;{}</span></h5>
+									<div class="tsd-comment tsd-typography">
+										<div class="lead">
+											<p>The options for initializing the layout.</p>
+										</div>
+									</div>
+								</li>
+							</ul>
+							<h4 class="tsd-returns-title">Returns <a href="stackedlayout.html" class="tsd-signature-type">StackedLayout</a></h4>
+						</li>
+					</ul>
+				</section>
+			</section>
 			<section class="tsd-panel-group tsd-member-group tsd-is-private tsd-is-private-protected">
 				<h2>Properties</h2>
 				<section class="tsd-panel tsd-member tsd-kind-property tsd-parent-kind-class tsd-is-private">
@@ -156,7 +200,7 @@
 					<div class="tsd-signature tsd-kind-icon">_box<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">IBoxSizing</span><span class="tsd-signature-symbol"> | </span><span class="tsd-signature-type">null</span><span class="tsd-signature-symbol"> =&nbsp;null</span></div>
 					<aside class="tsd-sources">
 						<ul>
-							<li>Defined in <a href="https://github.com/phosphorjs/phosphor/blob/1b1dfe3/packages/widgets/src/stackedlayout.ts#L312">stackedlayout.ts:312</a></li>
+							<li>Defined in <a href="https://github.com/phosphorjs/phosphor/blob/8fee9108/packages/widgets/src/stackedlayout.ts#L312">stackedlayout.ts:312</a></li>
 						</ul>
 					</aside>
 				</section>
@@ -166,7 +210,7 @@
 					<div class="tsd-signature tsd-kind-icon">_dirty<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">boolean</span><span class="tsd-signature-symbol"> =&nbsp;false</span></div>
 					<aside class="tsd-sources">
 						<ul>
-							<li>Defined in <a href="https://github.com/phosphorjs/phosphor/blob/1b1dfe3/packages/widgets/src/stackedlayout.ts#L310">stackedlayout.ts:310</a></li>
+							<li>Defined in <a href="https://github.com/phosphorjs/phosphor/blob/8fee9108/packages/widgets/src/stackedlayout.ts#L310">stackedlayout.ts:310</a></li>
 						</ul>
 					</aside>
 				</section>
@@ -176,13 +220,67 @@
 					<div class="tsd-signature tsd-kind-icon">_items<span class="tsd-signature-symbol">:</span> <a href="layoutitem.html" class="tsd-signature-type">LayoutItem</a><span class="tsd-signature-symbol">[]</span><span class="tsd-signature-symbol"> =&nbsp;[]</span></div>
 					<aside class="tsd-sources">
 						<ul>
-							<li>Defined in <a href="https://github.com/phosphorjs/phosphor/blob/1b1dfe3/packages/widgets/src/stackedlayout.ts#L311">stackedlayout.ts:311</a></li>
+							<li>Defined in <a href="https://github.com/phosphorjs/phosphor/blob/8fee9108/packages/widgets/src/stackedlayout.ts#L311">stackedlayout.ts:311</a></li>
 						</ul>
 					</aside>
 				</section>
 			</section>
 			<section class="tsd-panel-group tsd-member-group tsd-is-inherited">
 				<h2>Accessors</h2>
+				<section class="tsd-panel tsd-member tsd-kind-accessor tsd-parent-kind-class tsd-is-inherited">
+					<a name="fitpolicy" class="tsd-anchor"></a>
+					<h3>fit<wbr>Policy</h3>
+					<ul class="tsd-signatures tsd-kind-accessor tsd-parent-kind-class tsd-is-inherited">
+						<li class="tsd-signature tsd-kind-icon"><span class="tsd-signature-symbol">get</span> fitPolicy<span class="tsd-signature-symbol">(</span><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol">: </span><a href="layout.html#fitpolicy" class="tsd-signature-type">FitPolicy</a></li>
+						<li class="tsd-signature tsd-kind-icon"><span class="tsd-signature-symbol">set</span> fitPolicy<span class="tsd-signature-symbol">(</span>value<span class="tsd-signature-symbol">: </span><a href="layout.html#fitpolicy" class="tsd-signature-type">FitPolicy</a><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">void</span></li>
+					</ul>
+					<ul class="tsd-descriptions">
+						<li class="tsd-description">
+							<aside class="tsd-sources">
+								<p>Inherited from <a href="layout.html">Layout</a>.<a href="layout.html#fitpolicy-1">fitPolicy</a></p>
+								<ul>
+									<li>Defined in <a href="https://github.com/phosphorjs/phosphor/blob/8fee9108/packages/widgets/src/layout.ts#L123">layout.ts:123</a></li>
+								</ul>
+							</aside>
+							<div class="tsd-comment tsd-typography">
+								<div class="lead">
+									<p>Get the fit policy for the layout.</p>
+								</div>
+								<h4 id="notes">Notes</h4>
+								<p>The fit policy controls the computed size constraints which are
+								applied to the parent widget by the layout.</p>
+								<p>Some layout implementations may ignore the fit policy.</p>
+							</div>
+							<h4 class="tsd-returns-title">Returns <a href="layout.html#fitpolicy" class="tsd-signature-type">FitPolicy</a></h4>
+						</li>
+						<li class="tsd-description">
+							<aside class="tsd-sources">
+								<p>Inherited from <a href="layout.html">Layout</a>.<a href="layout.html#fitpolicy-1">fitPolicy</a></p>
+								<ul>
+									<li>Defined in <a href="https://github.com/phosphorjs/phosphor/blob/8fee9108/packages/widgets/src/layout.ts#L139">layout.ts:139</a></li>
+								</ul>
+							</aside>
+							<div class="tsd-comment tsd-typography">
+								<div class="lead">
+									<p>Set the fit policy for the layout.</p>
+								</div>
+								<h4 id="notes">Notes</h4>
+								<p>The fit policy controls the computed size constraints which are
+								applied to the parent widget by the layout.</p>
+								<p>Some layout implementations may ignore the fit policy.</p>
+								<p>Changing the fit policy will clear the current size constraint
+								for the parent widget and then re-fit the parent.</p>
+							</div>
+							<h4 class="tsd-parameters-title">Parameters</h4>
+							<ul class="tsd-parameters">
+								<li>
+									<h5>value: <a href="layout.html#fitpolicy" class="tsd-signature-type">FitPolicy</a></h5>
+								</li>
+							</ul>
+							<h4 class="tsd-returns-title">Returns <span class="tsd-signature-type">void</span></h4>
+						</li>
+					</ul>
+				</section>
 				<section class="tsd-panel tsd-member tsd-kind-get-signature tsd-parent-kind-class tsd-is-inherited">
 					<a name="isdisposed" class="tsd-anchor"></a>
 					<h3>is<wbr>Disposed</h3>
@@ -194,7 +292,7 @@
 							<aside class="tsd-sources">
 								<p>Inherited from <a href="layout.html">Layout</a>.<a href="layout.html#isdisposed">isDisposed</a></p>
 								<ul>
-									<li>Defined in <a href="https://github.com/phosphorjs/phosphor/blob/1b1dfe3/packages/widgets/src/layout.ts#L98">layout.ts:98</a></li>
+									<li>Defined in <a href="https://github.com/phosphorjs/phosphor/blob/8fee9108/packages/widgets/src/layout.ts#L82">layout.ts:82</a></li>
 								</ul>
 							</aside>
 							<div class="tsd-comment tsd-typography">
@@ -218,7 +316,7 @@
 							<aside class="tsd-sources">
 								<p>Inherited from <a href="layout.html">Layout</a>.<a href="layout.html#parent">parent</a></p>
 								<ul>
-									<li>Defined in <a href="https://github.com/phosphorjs/phosphor/blob/1b1dfe3/packages/widgets/src/layout.ts#L105">layout.ts:105</a></li>
+									<li>Defined in <a href="https://github.com/phosphorjs/phosphor/blob/8fee9108/packages/widgets/src/layout.ts#L89">layout.ts:89</a></li>
 								</ul>
 							</aside>
 							<div class="tsd-comment tsd-typography">
@@ -238,7 +336,7 @@
 							<aside class="tsd-sources">
 								<p>Inherited from <a href="layout.html">Layout</a>.<a href="layout.html#parent">parent</a></p>
 								<ul>
-									<li>Defined in <a href="https://github.com/phosphorjs/phosphor/blob/1b1dfe3/packages/widgets/src/layout.ts#L116">layout.ts:116</a></li>
+									<li>Defined in <a href="https://github.com/phosphorjs/phosphor/blob/8fee9108/packages/widgets/src/layout.ts#L100">layout.ts:100</a></li>
 								</ul>
 							</aside>
 							<div class="tsd-comment tsd-typography">
@@ -270,7 +368,7 @@
 							<aside class="tsd-sources">
 								<p>Inherited from <a href="panellayout.html">PanelLayout</a>.<a href="panellayout.html#widgets">widgets</a></p>
 								<ul>
-									<li>Defined in <a href="https://github.com/phosphorjs/phosphor/blob/1b1dfe3/packages/widgets/src/panellayout.ts#L55">panellayout.ts:55</a></li>
+									<li>Defined in <a href="https://github.com/phosphorjs/phosphor/blob/8fee9108/packages/widgets/src/panellayout.ts#L55">panellayout.ts:55</a></li>
 								</ul>
 							</aside>
 							<div class="tsd-comment tsd-typography">
@@ -295,7 +393,7 @@
 						<li class="tsd-description">
 							<aside class="tsd-sources">
 								<ul>
-									<li>Defined in <a href="https://github.com/phosphorjs/phosphor/blob/1b1dfe3/packages/widgets/src/stackedlayout.ts#L204">stackedlayout.ts:204</a></li>
+									<li>Defined in <a href="https://github.com/phosphorjs/phosphor/blob/8fee9108/packages/widgets/src/stackedlayout.ts#L204">stackedlayout.ts:204</a></li>
 								</ul>
 							</aside>
 							<div class="tsd-comment tsd-typography">
@@ -317,7 +415,7 @@
 						<li class="tsd-description">
 							<aside class="tsd-sources">
 								<ul>
-									<li>Defined in <a href="https://github.com/phosphorjs/phosphor/blob/1b1dfe3/packages/widgets/src/stackedlayout.ts#L258">stackedlayout.ts:258</a></li>
+									<li>Defined in <a href="https://github.com/phosphorjs/phosphor/blob/8fee9108/packages/widgets/src/stackedlayout.ts#L258">stackedlayout.ts:258</a></li>
 								</ul>
 							</aside>
 							<div class="tsd-comment tsd-typography">
@@ -350,7 +448,7 @@
 							<aside class="tsd-sources">
 								<p>Inherited from <a href="panellayout.html">PanelLayout</a>.<a href="panellayout.html#addwidget">addWidget</a></p>
 								<ul>
-									<li>Defined in <a href="https://github.com/phosphorjs/phosphor/blob/1b1dfe3/packages/widgets/src/panellayout.ts#L76">panellayout.ts:76</a></li>
+									<li>Defined in <a href="https://github.com/phosphorjs/phosphor/blob/8fee9108/packages/widgets/src/panellayout.ts#L76">panellayout.ts:76</a></li>
 								</ul>
 							</aside>
 							<div class="tsd-comment tsd-typography">
@@ -384,7 +482,7 @@
 							<aside class="tsd-sources">
 								<p>Overrides <a href="panellayout.html">PanelLayout</a>.<a href="panellayout.html#attachwidget">attachWidget</a></p>
 								<ul>
-									<li>Defined in <a href="https://github.com/phosphorjs/phosphor/blob/1b1dfe3/packages/widgets/src/stackedlayout.ts#L66">stackedlayout.ts:66</a></li>
+									<li>Defined in <a href="https://github.com/phosphorjs/phosphor/blob/8fee9108/packages/widgets/src/stackedlayout.ts#L66">stackedlayout.ts:66</a></li>
 								</ul>
 							</aside>
 							<div class="tsd-comment tsd-typography">
@@ -424,7 +522,7 @@
 							<aside class="tsd-sources">
 								<p>Overrides <a href="panellayout.html">PanelLayout</a>.<a href="panellayout.html#detachwidget">detachWidget</a></p>
 								<ul>
-									<li>Defined in <a href="https://github.com/phosphorjs/phosphor/blob/1b1dfe3/packages/widgets/src/stackedlayout.ts#L117">stackedlayout.ts:117</a></li>
+									<li>Defined in <a href="https://github.com/phosphorjs/phosphor/blob/8fee9108/packages/widgets/src/stackedlayout.ts#L117">stackedlayout.ts:117</a></li>
 								</ul>
 							</aside>
 							<div class="tsd-comment tsd-typography">
@@ -464,7 +562,7 @@
 							<aside class="tsd-sources">
 								<p>Overrides <a href="panellayout.html">PanelLayout</a>.<a href="panellayout.html#dispose">dispose</a></p>
 								<ul>
-									<li>Defined in <a href="https://github.com/phosphorjs/phosphor/blob/1b1dfe3/packages/widgets/src/stackedlayout.ts#L44">stackedlayout.ts:44</a></li>
+									<li>Defined in <a href="https://github.com/phosphorjs/phosphor/blob/8fee9108/packages/widgets/src/stackedlayout.ts#L44">stackedlayout.ts:44</a></li>
 								</ul>
 							</aside>
 							<div class="tsd-comment tsd-typography">
@@ -488,7 +586,7 @@
 								<p>Inherited from <a href="panellayout.html">PanelLayout</a>.<a href="panellayout.html#init">init</a></p>
 								<p>Overrides <a href="layout.html">Layout</a>.<a href="layout.html#init">init</a></p>
 								<ul>
-									<li>Defined in <a href="https://github.com/phosphorjs/phosphor/blob/1b1dfe3/packages/widgets/src/panellayout.ts#L187">panellayout.ts:187</a></li>
+									<li>Defined in <a href="https://github.com/phosphorjs/phosphor/blob/8fee9108/packages/widgets/src/panellayout.ts#L187">panellayout.ts:187</a></li>
 								</ul>
 							</aside>
 							<div class="tsd-comment tsd-typography">
@@ -511,7 +609,7 @@
 							<aside class="tsd-sources">
 								<p>Inherited from <a href="panellayout.html">PanelLayout</a>.<a href="panellayout.html#insertwidget">insertWidget</a></p>
 								<ul>
-									<li>Defined in <a href="https://github.com/phosphorjs/phosphor/blob/1b1dfe3/packages/widgets/src/panellayout.ts#L95">panellayout.ts:95</a></li>
+									<li>Defined in <a href="https://github.com/phosphorjs/phosphor/blob/8fee9108/packages/widgets/src/panellayout.ts#L95">panellayout.ts:95</a></li>
 								</ul>
 							</aside>
 							<div class="tsd-comment tsd-typography">
@@ -555,7 +653,7 @@
 								<p>Inherited from <a href="panellayout.html">PanelLayout</a>.<a href="panellayout.html#iter">iter</a></p>
 								<p>Overrides <a href="layout.html">Layout</a>.<a href="layout.html#iter">iter</a></p>
 								<ul>
-									<li>Defined in <a href="https://github.com/phosphorjs/phosphor/blob/1b1dfe3/packages/widgets/src/panellayout.ts#L64">panellayout.ts:64</a></li>
+									<li>Defined in <a href="https://github.com/phosphorjs/phosphor/blob/8fee9108/packages/widgets/src/panellayout.ts#L64">panellayout.ts:64</a></li>
 								</ul>
 							</aside>
 							<div class="tsd-comment tsd-typography">
@@ -579,7 +677,7 @@
 							<aside class="tsd-sources">
 								<p>Overrides <a href="panellayout.html">PanelLayout</a>.<a href="panellayout.html#movewidget">moveWidget</a></p>
 								<ul>
-									<li>Defined in <a href="https://github.com/phosphorjs/phosphor/blob/1b1dfe3/packages/widgets/src/stackedlayout.ts#L99">stackedlayout.ts:99</a></li>
+									<li>Defined in <a href="https://github.com/phosphorjs/phosphor/blob/8fee9108/packages/widgets/src/stackedlayout.ts#L99">stackedlayout.ts:99</a></li>
 								</ul>
 							</aside>
 							<div class="tsd-comment tsd-typography">
@@ -625,7 +723,7 @@
 							<aside class="tsd-sources">
 								<p>Inherited from <a href="layout.html">Layout</a>.<a href="layout.html#onafterattach">onAfterAttach</a></p>
 								<ul>
-									<li>Defined in <a href="https://github.com/phosphorjs/phosphor/blob/1b1dfe3/packages/widgets/src/layout.ts#L270">layout.ts:270</a></li>
+									<li>Defined in <a href="https://github.com/phosphorjs/phosphor/blob/8fee9108/packages/widgets/src/layout.ts#L324">layout.ts:324</a></li>
 								</ul>
 							</aside>
 							<div class="tsd-comment tsd-typography">
@@ -659,7 +757,7 @@
 							<aside class="tsd-sources">
 								<p>Inherited from <a href="layout.html">Layout</a>.<a href="layout.html#onafterdetach">onAfterDetach</a></p>
 								<ul>
-									<li>Defined in <a href="https://github.com/phosphorjs/phosphor/blob/1b1dfe3/packages/widgets/src/layout.ts#L302">layout.ts:302</a></li>
+									<li>Defined in <a href="https://github.com/phosphorjs/phosphor/blob/8fee9108/packages/widgets/src/layout.ts#L356">layout.ts:356</a></li>
 								</ul>
 							</aside>
 							<div class="tsd-comment tsd-typography">
@@ -693,7 +791,7 @@
 							<aside class="tsd-sources">
 								<p>Inherited from <a href="layout.html">Layout</a>.<a href="layout.html#onafterhide">onAfterHide</a></p>
 								<ul>
-									<li>Defined in <a href="https://github.com/phosphorjs/phosphor/blob/1b1dfe3/packages/widgets/src/layout.ts#L372">layout.ts:372</a></li>
+									<li>Defined in <a href="https://github.com/phosphorjs/phosphor/blob/8fee9108/packages/widgets/src/layout.ts#L426">layout.ts:426</a></li>
 								</ul>
 							</aside>
 							<div class="tsd-comment tsd-typography">
@@ -727,7 +825,7 @@
 							<aside class="tsd-sources">
 								<p>Inherited from <a href="layout.html">Layout</a>.<a href="layout.html#onaftershow">onAfterShow</a></p>
 								<ul>
-									<li>Defined in <a href="https://github.com/phosphorjs/phosphor/blob/1b1dfe3/packages/widgets/src/layout.ts#L336">layout.ts:336</a></li>
+									<li>Defined in <a href="https://github.com/phosphorjs/phosphor/blob/8fee9108/packages/widgets/src/layout.ts#L390">layout.ts:390</a></li>
 								</ul>
 							</aside>
 							<div class="tsd-comment tsd-typography">
@@ -761,7 +859,7 @@
 							<aside class="tsd-sources">
 								<p>Overrides <a href="layout.html">Layout</a>.<a href="layout.html#onbeforeattach">onBeforeAttach</a></p>
 								<ul>
-									<li>Defined in <a href="https://github.com/phosphorjs/phosphor/blob/1b1dfe3/packages/widgets/src/stackedlayout.ts#L155">stackedlayout.ts:155</a></li>
+									<li>Defined in <a href="https://github.com/phosphorjs/phosphor/blob/8fee9108/packages/widgets/src/stackedlayout.ts#L155">stackedlayout.ts:155</a></li>
 								</ul>
 							</aside>
 							<div class="tsd-comment tsd-typography">
@@ -790,7 +888,7 @@
 							<aside class="tsd-sources">
 								<p>Inherited from <a href="layout.html">Layout</a>.<a href="layout.html#onbeforedetach">onBeforeDetach</a></p>
 								<ul>
-									<li>Defined in <a href="https://github.com/phosphorjs/phosphor/blob/1b1dfe3/packages/widgets/src/layout.ts#L286">layout.ts:286</a></li>
+									<li>Defined in <a href="https://github.com/phosphorjs/phosphor/blob/8fee9108/packages/widgets/src/layout.ts#L340">layout.ts:340</a></li>
 								</ul>
 							</aside>
 							<div class="tsd-comment tsd-typography">
@@ -824,7 +922,7 @@
 							<aside class="tsd-sources">
 								<p>Inherited from <a href="layout.html">Layout</a>.<a href="layout.html#onbeforehide">onBeforeHide</a></p>
 								<ul>
-									<li>Defined in <a href="https://github.com/phosphorjs/phosphor/blob/1b1dfe3/packages/widgets/src/layout.ts#L354">layout.ts:354</a></li>
+									<li>Defined in <a href="https://github.com/phosphorjs/phosphor/blob/8fee9108/packages/widgets/src/layout.ts#L408">layout.ts:408</a></li>
 								</ul>
 							</aside>
 							<div class="tsd-comment tsd-typography">
@@ -858,7 +956,7 @@
 							<aside class="tsd-sources">
 								<p>Overrides <a href="layout.html">Layout</a>.<a href="layout.html#onbeforeshow">onBeforeShow</a></p>
 								<ul>
-									<li>Defined in <a href="https://github.com/phosphorjs/phosphor/blob/1b1dfe3/packages/widgets/src/stackedlayout.ts#L147">stackedlayout.ts:147</a></li>
+									<li>Defined in <a href="https://github.com/phosphorjs/phosphor/blob/8fee9108/packages/widgets/src/stackedlayout.ts#L147">stackedlayout.ts:147</a></li>
 								</ul>
 							</aside>
 							<div class="tsd-comment tsd-typography">
@@ -887,7 +985,7 @@
 							<aside class="tsd-sources">
 								<p>Overrides <a href="layout.html">Layout</a>.<a href="layout.html#onchildhidden">onChildHidden</a></p>
 								<ul>
-									<li>Defined in <a href="https://github.com/phosphorjs/phosphor/blob/1b1dfe3/packages/widgets/src/stackedlayout.ts#L170">stackedlayout.ts:170</a></li>
+									<li>Defined in <a href="https://github.com/phosphorjs/phosphor/blob/8fee9108/packages/widgets/src/stackedlayout.ts#L170">stackedlayout.ts:170</a></li>
 								</ul>
 							</aside>
 							<div class="tsd-comment tsd-typography">
@@ -916,7 +1014,7 @@
 							<aside class="tsd-sources">
 								<p>Inherited from <a href="layout.html">Layout</a>.<a href="layout.html#onchildremoved">onChildRemoved</a></p>
 								<ul>
-									<li>Defined in <a href="https://github.com/phosphorjs/phosphor/blob/1b1dfe3/packages/widgets/src/layout.ts#L388">layout.ts:388</a></li>
+									<li>Defined in <a href="https://github.com/phosphorjs/phosphor/blob/8fee9108/packages/widgets/src/layout.ts#L442">layout.ts:442</a></li>
 								</ul>
 							</aside>
 							<div class="tsd-comment tsd-typography">
@@ -948,7 +1046,7 @@
 							<aside class="tsd-sources">
 								<p>Overrides <a href="layout.html">Layout</a>.<a href="layout.html#onchildshown">onChildShown</a></p>
 								<ul>
-									<li>Defined in <a href="https://github.com/phosphorjs/phosphor/blob/1b1dfe3/packages/widgets/src/stackedlayout.ts#L163">stackedlayout.ts:163</a></li>
+									<li>Defined in <a href="https://github.com/phosphorjs/phosphor/blob/8fee9108/packages/widgets/src/stackedlayout.ts#L163">stackedlayout.ts:163</a></li>
 								</ul>
 							</aside>
 							<div class="tsd-comment tsd-typography">
@@ -977,7 +1075,7 @@
 							<aside class="tsd-sources">
 								<p>Overrides <a href="layout.html">Layout</a>.<a href="layout.html#onfitrequest">onFitRequest</a></p>
 								<ul>
-									<li>Defined in <a href="https://github.com/phosphorjs/phosphor/blob/1b1dfe3/packages/widgets/src/stackedlayout.ts#L195">stackedlayout.ts:195</a></li>
+									<li>Defined in <a href="https://github.com/phosphorjs/phosphor/blob/8fee9108/packages/widgets/src/stackedlayout.ts#L195">stackedlayout.ts:195</a></li>
 								</ul>
 							</aside>
 							<div class="tsd-comment tsd-typography">
@@ -1006,7 +1104,7 @@
 							<aside class="tsd-sources">
 								<p>Overrides <a href="layout.html">Layout</a>.<a href="layout.html#onresize">onResize</a></p>
 								<ul>
-									<li>Defined in <a href="https://github.com/phosphorjs/phosphor/blob/1b1dfe3/packages/widgets/src/stackedlayout.ts#L177">stackedlayout.ts:177</a></li>
+									<li>Defined in <a href="https://github.com/phosphorjs/phosphor/blob/8fee9108/packages/widgets/src/stackedlayout.ts#L177">stackedlayout.ts:177</a></li>
 								</ul>
 							</aside>
 							<div class="tsd-comment tsd-typography">
@@ -1035,7 +1133,7 @@
 							<aside class="tsd-sources">
 								<p>Overrides <a href="layout.html">Layout</a>.<a href="layout.html#onupdaterequest">onUpdateRequest</a></p>
 								<ul>
-									<li>Defined in <a href="https://github.com/phosphorjs/phosphor/blob/1b1dfe3/packages/widgets/src/stackedlayout.ts#L186">stackedlayout.ts:186</a></li>
+									<li>Defined in <a href="https://github.com/phosphorjs/phosphor/blob/8fee9108/packages/widgets/src/stackedlayout.ts#L186">stackedlayout.ts:186</a></li>
 								</ul>
 							</aside>
 							<div class="tsd-comment tsd-typography">
@@ -1064,7 +1162,7 @@
 							<aside class="tsd-sources">
 								<p>Inherited from <a href="layout.html">Layout</a>.<a href="layout.html#processparentmessage">processParentMessage</a></p>
 								<ul>
-									<li>Defined in <a href="https://github.com/phosphorjs/phosphor/blob/1b1dfe3/packages/widgets/src/layout.ts#L140">layout.ts:140</a></li>
+									<li>Defined in <a href="https://github.com/phosphorjs/phosphor/blob/8fee9108/packages/widgets/src/layout.ts#L194">layout.ts:194</a></li>
 								</ul>
 							</aside>
 							<div class="tsd-comment tsd-typography">
@@ -1100,7 +1198,7 @@
 								<p>Inherited from <a href="panellayout.html">PanelLayout</a>.<a href="panellayout.html#removewidget">removeWidget</a></p>
 								<p>Overrides <a href="layout.html">Layout</a>.<a href="layout.html#removewidget">removeWidget</a></p>
 								<ul>
-									<li>Defined in <a href="https://github.com/phosphorjs/phosphor/blob/1b1dfe3/packages/widgets/src/panellayout.ts#L154">panellayout.ts:154</a></li>
+									<li>Defined in <a href="https://github.com/phosphorjs/phosphor/blob/8fee9108/packages/widgets/src/panellayout.ts#L154">panellayout.ts:154</a></li>
 								</ul>
 							</aside>
 							<div class="tsd-comment tsd-typography">
@@ -1138,7 +1236,7 @@
 							<aside class="tsd-sources">
 								<p>Inherited from <a href="panellayout.html">PanelLayout</a>.<a href="panellayout.html#removewidgetat">removeWidgetAt</a></p>
 								<ul>
-									<li>Defined in <a href="https://github.com/phosphorjs/phosphor/blob/1b1dfe3/packages/widgets/src/panellayout.ts#L174">panellayout.ts:174</a></li>
+									<li>Defined in <a href="https://github.com/phosphorjs/phosphor/blob/8fee9108/packages/widgets/src/panellayout.ts#L174">panellayout.ts:174</a></li>
 								</ul>
 							</aside>
 							<div class="tsd-comment tsd-typography">
@@ -1204,6 +1302,9 @@
 						<a href="focustracker.html" class="tsd-kind-icon">Focus<wbr>Tracker</a>
 					</li>
 					<li class=" tsd-kind-class">
+						<a href="gridlayout.html" class="tsd-kind-icon">Grid<wbr>Layout</a>
+					</li>
+					<li class=" tsd-kind-class">
 						<a href="layout.html" class="tsd-kind-icon">Layout</a>
 					</li>
 					<li class=" tsd-kind-class">
@@ -1222,6 +1323,12 @@
 						<a href="panellayout.html" class="tsd-kind-icon">Panel<wbr>Layout</a>
 					</li>
 					<li class=" tsd-kind-class">
+						<a href="scrollbar.html" class="tsd-kind-icon">Scroll<wbr>Bar</a>
+					</li>
+					<li class=" tsd-kind-class">
+						<a href="singletonlayout.html" class="tsd-kind-icon">Singleton<wbr>Layout</a>
+					</li>
+					<li class=" tsd-kind-class">
 						<a href="splitlayout.html" class="tsd-kind-icon">Split<wbr>Layout</a>
 					</li>
 					<li class=" tsd-kind-class">
@@ -1232,6 +1339,9 @@
 					<li class="current tsd-kind-class">
 						<a href="stackedlayout.html" class="tsd-kind-icon">Stacked<wbr>Layout</a>
 						<ul>
+							<li class=" tsd-kind-constructor tsd-parent-kind-class tsd-is-inherited">
+								<a href="stackedlayout.html#constructor" class="tsd-kind-icon">constructor</a>
+							</li>
 							<li class=" tsd-kind-property tsd-parent-kind-class tsd-is-private">
 								<a href="stackedlayout.html#_box" class="tsd-kind-icon">_box</a>
 							</li>
@@ -1240,6 +1350,9 @@
 							</li>
 							<li class=" tsd-kind-property tsd-parent-kind-class tsd-is-private">
 								<a href="stackedlayout.html#_items" class="tsd-kind-icon">_items</a>
+							</li>
+							<li class=" tsd-kind-accessor tsd-parent-kind-class tsd-is-inherited">
+								<a href="stackedlayout.html#fitpolicy" class="tsd-kind-icon">fit<wbr>Policy</a>
 							</li>
 							<li class=" tsd-kind-get-signature tsd-parent-kind-class tsd-is-inherited">
 								<a href="stackedlayout.html#isdisposed" class="tsd-kind-icon">is<wbr>Disposed</a>

@@ -439,7 +439,7 @@ class ScrollBar extends Widget {
       }
 
       // Start the repeat timer.
-      this._repeatTimer = setTimeout(this._onRepeat, 350);
+      this._repeatTimer = window.setTimeout(this._onRepeat, 350);
 
       // Emit the page requested signal.
       this._pageRequested.emit(dir);
@@ -454,7 +454,7 @@ class ScrollBar extends Widget {
       this.decrementNode.classList.add('p-mod-active');
 
       // Start the repeat timer.
-      this._repeatTimer = setTimeout(this._onRepeat, 350);
+      this._repeatTimer = window.setTimeout(this._onRepeat, 350);
 
       // Emit the step requested signal.
       this._stepRequested.emit('decrement');
@@ -470,7 +470,7 @@ class ScrollBar extends Widget {
       this.incrementNode.classList.add('p-mod-active');
 
       // Start the repeat timer.
-      this._repeatTimer = setTimeout(this._onRepeat, 350);
+      this._repeatTimer = window.setTimeout(this._onRepeat, 350);
 
       // Emit the step requested signal.
       this._stepRequested.emit('increment');
@@ -613,7 +613,7 @@ class ScrollBar extends Widget {
     }
 
     // Schedule the timer for another repeat.
-    this._repeatTimer = setTimeout(this._onRepeat, 20);
+    this._repeatTimer = window.setTimeout(this._onRepeat, 20);
 
     // Get the current mouse position.
     let mouseX = this._pressData.mouseX;

@@ -1,0 +1,52 @@
+{
+  "compilerOptions": {
+    "composite": true,
+    "declaration": true,
+    "noImplicitAny": true,
+    "noEmitOnError": true,
+    "noUnusedLocals": true,
+    "strictNullChecks": true,
+    "module": "commonjs",
+    "moduleResolution": "node",
+    "target": "ES5",
+    "outDir": "../lib",
+    "lib": ["ES5", "ES2015.Collection", "ES2015.Promise", "DOM"],
+    "types": []
+  },
+  "include": ["*"],
+  "references": [
+    {
+      "path": "../../algorithm/src"
+    },
+    {
+      "path": "../../commands/src"
+    },
+    {
+      "path": "../../coreutils/src"
+    },
+    {
+      "path": "../../disposable/src"
+    },
+    {
+      "path": "../../domutils/src"
+    },
+    {
+      "path": "../../dragdrop/src"
+    },
+    {
+      "path": "../../keyboard/src"
+    },
+    {
+      "path": "../../messaging/src"
+    },
+    {
+      "path": "../../properties/src"
+    },
+    {
+      "path": "../../signaling/src"
+    },
+    {
+      "path": "../../virtualdom/src"
+    }
+  ]
+}

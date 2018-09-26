@@ -855,7 +855,7 @@ class Menu extends Widget {
    */
   private _startOpenTimer(): void {
     if (this._openTimerID === 0) {
-      this._openTimerID = setTimeout(() => {
+      this._openTimerID = window.setTimeout(() => {
         this._openTimerID = 0;
         this._openChildMenu();
       }, Private.TIMER_DELAY);
@@ -867,7 +867,7 @@ class Menu extends Widget {
    */
   private _startCloseTimer(): void {
     if (this._closeTimerID === 0) {
-      this._closeTimerID = setTimeout(() => {
+      this._closeTimerID = window.setTimeout(() => {
         this._closeTimerID = 0;
         this._closeChildMenu();
       }, Private.TIMER_DELAY);

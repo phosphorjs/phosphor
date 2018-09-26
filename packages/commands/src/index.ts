@@ -487,7 +487,7 @@ class CommandRegistry {
    */
   private _startTimer(): void {
     this._clearTimer();
-    this._timerID = setTimeout(() => {
+    this._timerID = window.setTimeout(() => {
       this._onPendingTimeout();
     }, Private.CHORD_TIMEOUT);
   }
@@ -1271,7 +1271,7 @@ namespace Private {
    */
   export
   function replayKeyEvent(event: KeyboardEvent): void {
-    event.target.dispatchEvent(cloneKeyboardEvent(event));
+    event.target!.dispatchEvent(cloneKeyboardEvent(event));
   }
 
   /**
