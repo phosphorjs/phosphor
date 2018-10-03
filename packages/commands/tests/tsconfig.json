@@ -25,22 +25,22 @@
   ],
   "references": [
     {
-      "path": "../../../algorithm/src"
+      "path": "../../../algorithm"
     },
     {
-      "path": "../../../coreutils/src"
+      "path": "../../../coreutils"
     },
     {
-      "path": "../../../disposable/src"
+      "path": "../../../disposable"
     },
     {
-      "path": "../../../domutils/src"
+      "path": "../../../domutils"
     },
     {
-      "path": "../../../keyboard/src"
+      "path": "../../../keyboard"
     },
     {
-      "path": "../../../signaling/src"
+      "path": "../../../signaling"
     }
   ]
 }

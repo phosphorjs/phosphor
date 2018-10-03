@@ -9,16 +9,24 @@
     "moduleResolution": "node",
     "target": "ES5",
     "outDir": "../build",
-    "lib": ["ES5", "DOM"],
-    "types": ["chai", "mocha"]
+    "lib": [
+      "ES5",
+      "DOM"
+    ],
+    "types": [
+      "chai",
+      "mocha"
+    ]
   },
-  "include": ["*"],
+  "include": [
+    "*"
+  ],
   "references": [
     {
-      "path": "../../../coreutils/src"
+      "path": "../../../coreutils"
     },
     {
-      "path": "../../../disposable/src"
+      "path": "../../../disposable"
     }
   ]
 }

@@ -10,13 +10,19 @@
     "moduleResolution": "node",
     "target": "ES5",
     "outDir": "../lib",
-    "lib": ["ES5", "ES2015.Collection", "DOM"],
+    "lib": [
+      "ES5",
+      "ES2015.Collection",
+      "DOM"
+    ],
     "types": []
   },
-  "include": ["*"],
+  "include": [
+    "*"
+  ],
   "references": [
     {
-      "path": "../../algorithm/src"
+      "path": "../../algorithm"
     }
   ]
 }

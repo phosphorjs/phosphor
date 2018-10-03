@@ -21,7 +21,7 @@
   ],
   "references": [
     {
-      "path": "../../algorithm/src"
+      "path": "../../algorithm"
     }
   ]
 }
