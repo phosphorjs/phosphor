@@ -30,7 +30,7 @@
   },
   "scripts": {
     "build": "tsc --build",
-    "build:test": "tsc --build test && webpack",
+    "build:test": "tsc --build tests && cd tests && webpack",
     "clean": "rimraf lib",
     "clean:test": "rimraf tests/build",
     "docs": "typedoc --options tdoptions.json src",
