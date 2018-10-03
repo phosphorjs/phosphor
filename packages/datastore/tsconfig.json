@@ -9,23 +9,19 @@
     "module": "commonjs",
     "moduleResolution": "node",
     "target": "ES5",
-    "outDir": "../lib",
+    "outDir": "lib",
+    "rootDir": "src",
     "lib": [
-      "ES5",
-      "ES2015.Promise",
-      "DOM"
+      "ES5"
     ],
     "types": []
   },
   "include": [
-    "*"
+    "src/*"
   ],
   "references": [
     {
-      "path": "../../coreutils"
-    },
-    {
-      "path": "../../disposable"
+      "path": "../signaling"
     }
   ]
 }

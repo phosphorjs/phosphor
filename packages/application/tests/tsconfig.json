@@ -23,13 +23,13 @@
   ],
   "references": [
     {
-      "path": "../../../commands"
+      "path": "../../commands"
     },
     {
-      "path": "../../../coreutils"
+      "path": "../../coreutils"
     },
     {
-      "path": "../../../widgets"
+      "path": "../../widgets"
     }
   ]
 }

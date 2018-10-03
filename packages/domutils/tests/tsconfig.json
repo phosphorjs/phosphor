@@ -1,7 +1,6 @@
 {
   "compilerOptions": {
-    "composite": true,
-    "declaration": true,
+    "declaration": false,
     "noImplicitAny": true,
     "noEmitOnError": true,
     "noUnusedLocals": true,
@@ -9,15 +8,19 @@
     "module": "commonjs",
     "moduleResolution": "node",
     "target": "ES5",
-    "outDir": "../lib",
+    "outDir": "build",
     "lib": [
       "ES5",
       "DOM"
     ],
-    "types": []
+    "types": [
+      "chai",
+      "mocha"
+    ],
+    "rootDir": "src"
   },
   "include": [
-    "*"
+    "src/*"
   ],
   "references": [
     {

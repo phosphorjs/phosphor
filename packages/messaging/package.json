@@ -28,15 +28,16 @@
     "url": "https://github.com/phosphorjs/phosphor.git"
   },
   "scripts": {
-    "build": "tsc --build src",
-    "build:test": "cd tests && tsc --build src && webpack",
+    "build": "tsc --build",
+    "build:test": "tsc --build test && webpack",
     "clean": "rimraf lib",
     "clean:test": "rimraf tests/build",
     "docs": "typedoc --options tdoptions.json src",
     "test": "npm run test:firefox",
     "test:chrome": "cd tests && karma start --browsers=Chrome",
     "test:firefox": "cd tests && karma start --browsers=Firefox",
-    "test:ie": "cd tests && karma start --browsers=IE"
+    "test:ie": "cd tests && karma start --browsers=IE",
+    "watch": "tsc --build --watch"
   },
   "dependencies": {
     "@phosphor/algorithm": "^1.1.2",

@@ -22,28 +22,28 @@
   ],
   "references": [
     {
-      "path": "../../algorithm"
+      "path": "../algorithm"
     },
     {
-      "path": "../../coreutils"
+      "path": "../coreutils"
     },
     {
-      "path": "../../disposable"
+      "path": "../disposable"
     },
     {
-      "path": "../../domutils"
+      "path": "../domutils"
     },
     {
-      "path": "../../dragdrop"
+      "path": "../dragdrop"
     },
     {
-      "path": "../../messaging"
+      "path": "../messaging"
     },
     {
-      "path": "../../signaling"
+      "path": "../signaling"
     },
     {
-      "path": "../../widgets"
+      "path": "../widgets"
     }
   ]
 }

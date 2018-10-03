@@ -9,18 +9,15 @@
     "module": "commonjs",
     "moduleResolution": "node",
     "target": "ES5",
-    "outDir": "../lib",
+    "outDir": "lib",
     "lib": [
-      "ES5"
+      "ES5",
+      "DOM"
     ],
-    "types": []
+    "types": [],
+    "rootDir": "src"
   },
   "include": [
-    "*"
-  ],
-  "references": [
-    {
-      "path": "../../signaling"
-    }
+    "src/*"
   ]
 }

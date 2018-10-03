@@ -8,7 +8,7 @@
     "module": "commonjs",
     "moduleResolution": "node",
     "target": "ES5",
-    "outDir": "../build",
+    "outDir": "build",
     "lib": [
       "ES5",
       "DOM"
@@ -16,44 +16,45 @@
     "types": [
       "chai",
       "mocha"
-    ]
+    ],
+    "rootDir": "src"
   },
   "include": [
-    "*"
+    "src/*"
   ],
   "references": [
     {
-      "path": "../../../algorithm"
+      "path": "../../algorithm"
     },
     {
-      "path": "../../../commands"
+      "path": "../../commands"
     },
     {
-      "path": "../../../coreutils"
+      "path": "../../coreutils"
     },
     {
-      "path": "../../../disposable"
+      "path": "../../disposable"
     },
     {
-      "path": "../../../domutils"
+      "path": "../../domutils"
     },
     {
-      "path": "../../../dragdrop"
+      "path": "../../dragdrop"
     },
     {
-      "path": "../../../keyboard"
+      "path": "../../keyboard"
     },
     {
-      "path": "../../../messaging"
+      "path": "../../messaging"
     },
     {
-      "path": "../../../properties"
+      "path": "../../properties"
     },
     {
-      "path": "../../../signaling"
+      "path": "../../signaling"
     },
     {
-      "path": "../../../virtualdom"
+      "path": "../../virtualdom"
     }
   ]
 }

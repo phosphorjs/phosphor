@@ -10,7 +10,8 @@
     "target": "ES5",
     "outDir": "build",
     "lib": [
-      "ES5"
+      "ES5",
+      "DOM"
     ],
     "types": [
       "chai",

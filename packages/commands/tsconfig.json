@@ -23,22 +23,22 @@
   ],
   "references": [
     {
-      "path": "../../algorithm"
+      "path": "../algorithm"
     },
     {
-      "path": "../../coreutils"
+      "path": "../coreutils"
     },
     {
-      "path": "../../disposable"
+      "path": "../disposable"
     },
     {
-      "path": "../../domutils"
+      "path": "../domutils"
     },
     {
-      "path": "../../keyboard"
+      "path": "../keyboard"
     },
     {
-      "path": "../../signaling"
+      "path": "../signaling"
     }
   ]
 }

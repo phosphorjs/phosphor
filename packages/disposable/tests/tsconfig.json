@@ -9,21 +9,22 @@
     "module": "commonjs",
     "moduleResolution": "node",
     "target": "ES5",
-    "outDir": "../build",
+    "outDir": "build",
     "lib": [
       "ES5"
     ],
     "types": [
       "chai",
       "mocha"
-    ]
+    ],
+    "rootDir": "src"
   },
   "include": [
-    "*"
+    "src/*"
   ],
   "references": [
     {
-      "path": "../../../algorithm"
+      "path": "../../algorithm"
     }
   ]
 }
