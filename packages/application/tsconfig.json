@@ -9,11 +9,19 @@
     "module": "commonjs",
     "moduleResolution": "node",
     "target": "ES5",
-    "outDir": "../lib",
-    "lib": ["ES5", "ES2015.Collection", "ES2015.Promise", "DOM"],
-    "types": []
+    "outDir": "lib",
+    "lib": [
+      "ES5",
+      "ES2015.Collection",
+      "ES2015.Promise",
+      "DOM"
+    ],
+    "types": [],
+    "rootDir": "src"
   },
-  "include": ["*"],
+  "include": [
+    "src/*"
+  ],
   "references": [
     {
       "path": "../../../commands/src"

@@ -27,9 +27,11 @@
     "url": "https://github.com/phosphorjs/phosphor.git"
   },
   "scripts": {
-    "build": "tsc --build src",
+    "build": "tsc --build",
     "clean": "rimraf lib",
-    "docs": "typedoc --options tdoptions.json src"
+    "docs": "typedoc --options tdoptions.json src",
+    "build:test": "tsc --build test && webpack",
+    "watch": "tsc --build --watch"
   },
   "dependencies": {
     "@phosphor/algorithm": "^1.1.2",
