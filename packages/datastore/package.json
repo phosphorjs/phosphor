@@ -30,7 +30,6 @@
     "build": "tsc --build",
     "clean": "rimraf lib",
     "docs": "typedoc --options tdoptions.json src",
-    "build:test": "tsc --build tests && cd tests && webpack",
     "watch": "tsc --build --watch"
   },
   "dependencies": {
