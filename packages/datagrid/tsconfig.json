@@ -9,35 +9,41 @@
     "module": "commonjs",
     "moduleResolution": "node",
     "target": "ES5",
-    "outDir": "../lib",
-    "lib": ["ES5", "DOM"],
-    "types": []
+    "outDir": "lib",
+    "lib": [
+      "ES5",
+      "DOM"
+    ],
+    "types": [],
+    "rootDir": "src"
   },
-  "include": ["*"],
+  "include": [
+    "src/*"
+  ],
   "references": [
     {
-      "path": "../../algorithm/src"
+      "path": "../algorithm"
     },
     {
-      "path": "../../coreutils/src"
+      "path": "../coreutils"
     },
     {
-      "path": "../../disposable/src"
+      "path": "../disposable"
     },
     {
-      "path": "../../domutils/src"
+      "path": "../domutils"
     },
     {
-      "path": "../../dragdrop/src"
+      "path": "../dragdrop"
     },
     {
-      "path": "../../messaging/src"
+      "path": "../messaging"
     },
     {
-      "path": "../../signaling/src"
+      "path": "../signaling"
     },
     {
-      "path": "../../widgets/src"
+      "path": "../widgets"
     }
   ]
 }

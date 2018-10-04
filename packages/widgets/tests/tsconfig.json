@@ -1,0 +1,60 @@
+{
+  "compilerOptions": {
+    "declaration": false,
+    "noImplicitAny": true,
+    "noEmitOnError": true,
+    "noUnusedLocals": true,
+    "strictNullChecks": true,
+    "module": "commonjs",
+    "moduleResolution": "node",
+    "target": "ES5",
+    "outDir": "build",
+    "lib": [
+      "ES5",
+      "DOM"
+    ],
+    "types": [
+      "chai",
+      "mocha"
+    ],
+    "rootDir": "src"
+  },
+  "include": [
+    "src/*"
+  ],
+  "references": [
+    {
+      "path": "../../algorithm"
+    },
+    {
+      "path": "../../commands"
+    },
+    {
+      "path": "../../coreutils"
+    },
+    {
+      "path": "../../disposable"
+    },
+    {
+      "path": "../../domutils"
+    },
+    {
+      "path": "../../dragdrop"
+    },
+    {
+      "path": "../../keyboard"
+    },
+    {
+      "path": "../../messaging"
+    },
+    {
+      "path": "../../properties"
+    },
+    {
+      "path": "../../signaling"
+    },
+    {
+      "path": "../../virtualdom"
+    }
+  ]
+}

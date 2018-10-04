@@ -8,20 +8,26 @@
     "module": "commonjs",
     "moduleResolution": "node",
     "target": "ES5",
-    "outDir": "../build",
-    "lib": ["ES5"],
-    "types": ["chai", "mocha"]
+    "outDir": "build",
+    "lib": [
+      "ES5",
+      "DOM"
+    ],
+    "types": [
+      "chai",
+      "mocha"
+    ],
+    "rootDir": "src"
   },
-  "include": ["*"],
+  "include": [
+    "src/*"
+  ],
   "references": [
     {
-      "path": "../../../commands/src"
+      "path": "../../algorithm"
     },
     {
-      "path": "../../../coreutils/src"
-    },
-    {
-      "path": "../../../widgets/src"
+      "path": "../../collections"
     }
   ]
 }

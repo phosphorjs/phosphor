@@ -8,17 +8,23 @@
     "module": "commonjs",
     "moduleResolution": "node",
     "target": "ES5",
-    "outDir": "../build",
-    "lib": ["ES5", "DOM"],
-    "types": ["chai", "mocha"]
+    "outDir": "build",
+    "lib": [
+      "ES5",
+      "DOM"
+    ],
+    "types": [
+      "chai",
+      "mocha"
+    ],
+    "rootDir": "src"
   },
-  "include": ["*"],
+  "include": [
+    "src/*"
+  ],
   "references": [
     {
-      "path": "../../../coreutils/src"
-    },
-    {
-      "path": "../../../disposable/src"
+      "path": "../../algorithm"
     }
   ]
 }

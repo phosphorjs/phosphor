@@ -1,6 +1,7 @@
 {
   "compilerOptions": {
-    "declaration": false,
+    "composite": true,
+    "declaration": true,
     "noImplicitAny": true,
     "noEmitOnError": true,
     "noUnusedLocals": true,
@@ -8,14 +9,19 @@
     "module": "commonjs",
     "moduleResolution": "node",
     "target": "ES5",
-    "outDir": "../build",
-    "lib": ["ES5", "DOM"],
-    "types": ["chai", "mocha"]
+    "outDir": "lib",
+    "rootDir": "src",
+    "lib": [
+      "ES5"
+    ],
+    "types": []
   },
-  "include": ["*"],
+  "include": [
+    "src/*"
+  ],
   "references": [
     {
-      "path": "../../../algorithm/src"
+      "path": "../signaling"
     }
   ]
 }

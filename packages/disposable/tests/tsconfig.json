@@ -9,17 +9,22 @@
     "module": "commonjs",
     "moduleResolution": "node",
     "target": "ES5",
-    "outDir": "../lib",
-    "lib": ["ES5", "ES2015.Collection", "DOM"],
-    "types": []
+    "outDir": "build",
+    "lib": [
+      "ES5"
+    ],
+    "types": [
+      "chai",
+      "mocha"
+    ],
+    "rootDir": "src"
   },
-  "include": ["*"],
+  "include": [
+    "src/*"
+  ],
   "references": [
     {
-      "path": "../../algorithm/src"
-    },
-    {
-      "path": "../../collections/src"
+      "path": "../../algorithm"
     }
   ]
 }
