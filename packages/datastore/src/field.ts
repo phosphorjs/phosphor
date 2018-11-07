@@ -159,21 +159,21 @@ namespace Field {
    * A type alias for the arguments to an update operation.
    */
   export
-  type UpdateArgs<ValueType, UpdateType, MetadataType> = {
+  type UpdateArgs<Value, Update, Metadata> = {
     /**
      * The previous value of the field.
      */
-    readonly previous: ValueType;
+    readonly previous: Value;
 
     /**
      * The user update for the field.
      */
-    readonly update: UpdateType;
+    readonly update: Update;
 
     /**
      * The metadata for the field.
      */
-    readonly metadata: MetadataType;
+    readonly metadata: Metadata;
 
     /**
      * The datastore version.
@@ -190,58 +190,58 @@ namespace Field {
    * A type alias for the result of an update operation.
    */
   export
-  type UpdateResult<ValueType, ChangeType, PatchType> = {
+  type UpdateResult<Value, Change, Patch> = {
     /**
      * The new value of the field.
      */
-    readonly value: ValueType;
+    readonly value: Value;
 
     /**
      * The user-facing change for the field.
      */
-    readonly change: ChangeType;
+    readonly change: Change;
 
     /**
      * The system-facing patch for the field.
      */
-    readonly patch: PatchType;
+    readonly patch: Patch;
   };
 
   /**
    * A type alias for the arguments to a patch operation.
    */
   export
-  type PatchArgs<ValueType, PatchType, MetadataType> = {
+  type PatchArgs<Value, Patch, Metadata> = {
     /**
      * The previous value of the field.
      */
-    readonly previous: ValueType;
+    readonly previous: Value;
 
     /**
      * The system patch for the field.
      */
-    readonly patch: PatchType;
+    readonly patch: Patch;
 
     /**
      * The metadata for the field.
      */
-    readonly metadata: MetadataType;
+    readonly metadata: Metadata;
   };
 
   /**
    * A type alias for the result of a patch operation.
    */
   export
-  type PatchResult<ValueType, ChangeType> = {
+  type PatchResult<Value, Change> = {
     /**
      * The new value of the field.
      */
-    readonly value: ValueType;
+    readonly value: Value;
 
     /**
      * The user-facing change for the field.
      */
-    readonly change: ChangeType;
+    readonly change: Change;
   };
 }
 

@@ -95,11 +95,7 @@ class MapField<T extends ReadonlyJSONValue> extends Field<MapField.Value<T>, Map
       }
 
       // Update the previous change part.
-      if (key in previous) {
-        prev[key] = previous[key];
-      } else {
-        prev[key] = null;
-      }
+      prev[key] = key in previous ? previous[key] : null;
 
       // Update the current change part.
       curr[key] = value;
@@ -109,7 +105,7 @@ class MapField<T extends ReadonlyJSONValue> extends Field<MapField.Value<T>, Map
     let change = { previous: prev, current: curr };
 
     // Create the patch object.
-    let patch = { id, values: { ...update } };
+    let patch = { id, values: update };
 
     // Return the update result.
     return { value: clone, change, patch };
@@ -149,11 +145,7 @@ class MapField<T extends ReadonlyJSONValue> extends Field<MapField.Value<T>, Map
       }
 
       // Update the previous change part.
-      if (key in previous) {
-        prev[key] = previous[key];
-      } else {
-        prev[key] = null;
-      }
+      prev[key] = key in previous ? previous[key] : null;
 
       // Update the current change part.
       curr[key] = value;
