@@ -801,10 +801,11 @@ class DockPanel extends Widget {
       bottom = target!.bottom;
       break;
     case 'widget-tab':
+      const tabHeight = target!.tabBar.node.getBoundingClientRect().height;
       top = target!.top;
       left = target!.left;
       right = target!.right;
-      bottom = target!.bottom;
+      bottom = target!.bottom + target!.height - tabHeight;
       break;
     default:
       throw 'unreachable';
