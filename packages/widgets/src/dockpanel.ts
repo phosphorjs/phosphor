@@ -579,6 +579,9 @@ class DockPanel extends Widget {
     case 'widget-bottom':
       this.addWidget(widget, { mode: 'split-bottom', ref });
       break;
+    case 'widget-tab':
+      this.addWidget(widget, { mode: 'tab-after', ref });
+      break;
     default:
       throw 'unreachable';
     }
@@ -793,6 +796,12 @@ class DockPanel extends Widget {
       break;
     case 'widget-bottom':
       top = target!.top + target!.height / 2;
+      left = target!.left;
+      right = target!.right;
+      bottom = target!.bottom;
+      break;
+    case 'widget-tab':
+      top = target!.top;
       left = target!.left;
       right = target!.right;
       bottom = target!.bottom;
@@ -1231,8 +1240,14 @@ namespace Private {
   /**
    * The size of the edge dock zone for the root panel, in pixels.
    */
-  export
   const EDGE_SIZE = 40;
+
+  /**
+   * The size of the top edge dock zone for the root panel, in pixels.
+   * This is different from EDGE_SIZE to distinguish between the top
+   * tab bar and the top root zone.
+   */
+  const TOP_EDGE_SIZE = 12;
 
   /**
    * A singleton `'layout-modified'` conflatable message.
@@ -1324,7 +1339,12 @@ namespace Private {
     /**
      * The bottom portion of tabbed widget area.
      */
-    'widget-bottom'
+    'widget-bottom' |
+
+    /**
+     * The the bar of a tabbed widget area.
+     */
+    'widget-tab'
   );
 
   /**
@@ -1404,18 +1424,20 @@ namespace Private {
       let pr = panelRect.right - clientX;
       let pb = panelRect.bottom - clientY;
 
-      // Find the minimum distance to an edge.
-      let pd = Math.min(pl, pt, pr, pb);
+      // Return the top root zone if we are near to the top of the dock panel.
+      if (pt < TOP_EDGE_SIZE) {
+        return { zone: 'root-top', target: null };
+      }
 
-      // Return a root zone if the mouse is within an edge.
+      // Find the minimum distance to an edge (excluding the top).
+      let pd = Math.min(pl, pr, pb);
+
+      // Return a root zone if the mouse is within an edge (excluding the top).
       if (pd <= EDGE_SIZE) {
         let zone: DropZone;
         switch (pd) {
         case pl:
           zone = 'root-left';
-          break;
-        case pt:
-          zone = 'root-top';
           break;
         case pr:
           zone = 'root-right';
@@ -1448,6 +1470,11 @@ namespace Private {
     let at = target.y - target.top + 1;
     let ar = target.left + target.width - target.x;
     let ab = target.top + target.height - target.y;
+
+    const tabHeight = target.tabBar.node.getBoundingClientRect().height;
+    if (at < tabHeight) {
+      return { zone: 'widget-tab', target };
+    }
 
     // Get the X and Y edge sizes for the area.
     let rx = Math.round(target.width / 3);
