@@ -329,10 +329,13 @@ namespace Private {
     // Clamp the remove count to the array bounds.
     let count = Math.min(remove, array.length - index);
 
-    //
+    // Fetch the lower and upper identifiers.
+    let lower = index === 0 ? '' : metadata.ids[index - 1];
+    let upper = index === array.length ? '' : metadata.ids[index];
+
     let ids: string[] = [];
 
-    // Remove the current ids and values.
+    // Apply the splice to the ids and values.
     let removedIds = metadata.ids.splice(index, count, ...ids);
     let removedValues = array.splice(index, count, ...values);
 
