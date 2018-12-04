@@ -6,8 +6,16 @@
 | The full license is in the file LICENSE, distributed with this software.
 |----------------------------------------------------------------------------*/
 import {
+  ArrayExt, StringExt
+} from '@phosphor/algorithm';
+
+import {
   Field
 } from './field';
+
+import {
+  createTriplexIds
+} from './utilities';
 
 
 /**
@@ -57,7 +65,38 @@ class TextField extends Field<TextField.Value, TextField.Update, TextField.Metad
    * @returns The result of applying the update.
    */
   applyUpdate(args: Field.UpdateArgs<TextField.Value, TextField.Update, TextField.Metadata>): Field.UpdateResult<TextField.Value, TextField.Change, TextField.Patch> {
-    throw '';
+    // Unpack the arguments.
+    let { previous, update, metadata, version, storeId } = args;
+
+    // Set up a variable to hold the current value.
+    let value = previous;
+
+    // Set up the change and patch arrays.
+    let change: TextField.ChangePart[] = [];
+    let patch: TextField.PatchPart[] = [];
+
+    // Coerce the update into an array of splices.
+    if (Private.isSplice(update)) {
+      update = [update];
+    }
+
+    // Iterate over the update.
+    for (let splice of update) {
+      // Apply the splice to the value.
+      let obj = Private.applySplice(value, splice, metadata, version, storeId);
+
+      // Update the change array.
+      change.push(obj.change);
+
+      // Update the patch array.
+      patch.push(obj.patch);
+
+      // Update the current value.
+      value = obj.value;
+    }
+
+    // Return the update result.
+    return { value, change, patch };
   }
 
   /**
@@ -68,7 +107,29 @@ class TextField extends Field<TextField.Value, TextField.Update, TextField.Metad
    * @returns The result of applying the patch.
    */
   applyPatch(args: Field.PatchArgs<TextField.Value, TextField.Patch, TextField.Metadata>): Field.PatchResult<TextField.Value, TextField.Change> {
-    throw '';
+    // Unpack the arguments.
+    let { previous, patch, metadata } = args;
+
+    // Set up a variable to hold the current value.
+    let value = previous;
+
+    // Set up the change array.
+    let change: TextField.ChangePart[] = [];
+
+    // Iterate over the patch.
+    for (let part of patch) {
+      // Apply the patch part to the value.
+      let obj = Private.applyPatch(value, part, metadata);
+
+      // Update the change array.
+      change.push(...obj.change);
+
+      // Update the current value.
+      value = obj.value;
+    }
+
+    // Return the patch result.
+    return { value, change };
   }
 
   /**
@@ -81,7 +142,7 @@ class TextField extends Field<TextField.Value, TextField.Update, TextField.Metad
    * @returns A new change object which represents both changes.
    */
   mergeChange(first: TextField.Change, second: TextField.Change): TextField.Change {
-    throw '';
+    return [...first, ...second];
   }
 
   /**
@@ -94,7 +155,7 @@ class TextField extends Field<TextField.Value, TextField.Update, TextField.Metad
    * @returns A new patch object which represents both patches.
    */
   mergePatch(first: TextField.Patch, second: TextField.Patch): TextField.Patch {
-    throw '';
+    return [...first, ...second];
   }
 }
 
@@ -144,6 +205,22 @@ namespace TextField {
   type Update = Splice | ReadonlyArray<Splice>;
 
   /**
+   * A type alias for the text field metadata type.
+   */
+  export
+  type Metadata = {
+    /**
+     * An array of ids corresponding to the text characters.
+     */
+    readonly ids: Array<string>;
+
+    /**
+     * The cemetery for concurrently deleted characters.
+     */
+    readonly cemetery: { [id: string]: number };
+  };
+
+  /**
    * A type alias for a text field change part.
    */
   export
@@ -171,34 +248,345 @@ namespace TextField {
   type Change = ReadonlyArray<ChangePart>;
 
   /**
-   * A type alias for the text field patch type.
+   * A type alias for the text field patch part.
    */
   export
-  type Patch = {
+  type PatchPart = {
     /**
-     * The id:char pairs removed from the text.
+     * The ids that were removed.
      */
-    readonly removed: { readonly [id: string]: string };
+    readonly removedIds: ReadonlyArray<string>;
 
     /**
-     * The id:char pairs inserted into the text.
+     * The text that were removed.
      */
-    readonly inserted: { readonly [id: string]: string };
+    readonly removedText: string;
+
+    /**
+     * The ids that were inserted.
+     */
+    readonly insertedIds: ReadonlyArray<string>;
+
+    /**
+     * The text that were inserted.
+     */
+    readonly insertedText: string;
   };
 
   /**
-   * A type alias for the text field metadata type.
+   * A type alias for the text field patch type.
    */
   export
-  type Metadata = {
+  type Patch = ReadonlyArray<PatchPart>;
+}
+
+
+/**
+ * The namespace for the module implementation details.
+ */
+namespace Private {
+  /**
+   * A type-guard function for a text field update type.
+   */
+  export
+  function isSplice(value: TextField.Update): value is TextField.Splice {
+    return !Array.isArray(value);
+  }
+
+  /**
+   * A type alias for the result of a splice operation.
+   */
+  export
+  type SpliceResult = {
     /**
-     * An array of ids corresponding to the text characters.
+     * The user-facing change part for the splice.
      */
-    readonly ids: Array<string>;
+    readonly change: TextField.ChangePart;
 
     /**
-     * The cemetery for concurrently deleted characters.
+     * The system-facing patch part for the splice.
      */
-    readonly cemetery: { [id: string]: number };
+    readonly patch: TextField.PatchPart;
+
+    /**
+     * The new value of the text.
+     */
+    readonly value: string;
   };
+
+  /**
+   * Apply a splice to a text field.
+   *
+   * @param value - The current value of the field.
+   *
+   * @param splice - The splice to apply to the field.
+   *
+   * @param metadata - The metadata for the field.
+   *
+   * @param version - The current datastore version.
+   *
+   * @param storeId - The unique id of the datastore.
+   *
+   * @returns The result of the splice operation.
+   */
+  export
+  function applySplice(value: string, splice: TextField.Splice, metadata: TextField.Metadata, version: number, storeId: number): SpliceResult {
+    // Unpack the splice.
+    let { index, remove, text } = splice;
+
+    // Clamp the index to the string bounds.
+    if (index < 0) {
+      index = Math.max(0, index + value.length);
+    } else {
+      index = Math.min(index, value.length);
+    }
+
+    // Clamp the remove count to the string bounds.
+    let count = Math.min(remove, value.length - index);
+
+    // Fetch the lower and upper identifiers.
+    let lower = index === 0 ? '' : metadata.ids[index - 1];
+    let upper = index === value.length ? '' : metadata.ids[index];
+
+    // Create the ids for the splice.
+    let ids = createTriplexIds(text.length, version, storeId, lower, upper);
+
+    // Apply the splice to the ids.
+    let removedIds = metadata.ids.splice(index, count, ...ids);
+
+    // Compute the removed text.
+    let removedText = value.slice(index, index + count);
+
+    // Create the change object.
+    let change = { index, removed: removedText, inserted: text };
+
+    // Create the patch object.
+    let patch = { removedIds, removedText, insertedIds: ids, insertedText: text };
+
+    // Compute the new value.
+    value = value.slice(0, index) + text + value.slice(index + count);
+
+    // Return the splice result.
+    return { change, patch, value };
+  }
+
+  /**
+   * A type alias for the result of a patch operation.
+   */
+  export
+  type PatchResult = {
+    /**
+     * The user-facing change for the patch.
+     */
+    readonly change: TextField.Change;
+
+    /**
+     * The new value of the text.
+     */
+    readonly value: string;
+  };
+
+  /**
+   * Apply a patch to a text field.
+   *
+   * @param value - The current value of the field.
+   *
+   * @param patch - The patch part to apply to the field.
+   *
+   * @param metadata - The metadata for the field.
+   *
+   * @returns The user-facing change array for the patch.
+   */
+  export
+  function applyPatch(value: string, patch: TextField.PatchPart, metadata: TextField.Metadata): PatchResult {
+    // Unpack the patch.
+    let { removedIds, insertedIds, insertedText } = patch;
+
+    // Set up the change array.
+    let change: TextField.ChangePart[] = [];
+
+    // Process the removed identifiers, if necessary.
+    if (removedIds.length > 0) {
+      // Chunkify the removed identifiers.
+      let chunks = findRemoveChunks(removedIds, metadata.ids);
+
+      // Process the chunks.
+      while (chunks.length > 0) {
+        // Pop the last-most chunk.
+        let { index, count } = chunks.pop()!;
+
+        // Remove the identifiers from the metadata.
+        metadata.ids.splice(index, count);
+
+        // Compute the removed text
+        let removed = value.slice(index, count);
+
+        // Compute the new value.
+        value = value.slice(0, index) + value.slice(index + count);
+
+        // Add the change part to the change array.
+        change.push({ index, removed, inserted: '' });
+      }
+    }
+
+    // Process the inserted identifiers, if necessary.
+    if (insertedIds.length > 0) {
+      // Chunkify the inserted identifiers.
+      let chunks = findInsertChunks(insertedIds, insertedText, metadata.ids);
+
+      // Process the chunks.
+      while (chunks.length > 0) {
+        // Pop the last-most chunk.
+        let { index, ids, text } = chunks.pop()!;
+
+        // Insert the identifiers into the metadata.
+        metadata.ids.splice(index, 0, ...ids);
+
+        // Insert the text into the value.
+        value = value.slice(0, index) + text + value.slice(index);
+
+        // Add the change part to the change array.
+        change.push({ index, removed: '', inserted: text });
+      }
+    }
+
+    // Return the change array.
+    return { change, value };
+  }
+
+  /**
+   * A type alias for a remove chunk.
+   */
+  type RemoveChunk = {
+    // The index of the removal.
+    index: number;
+
+    // The number of elements to remove.
+    count: number;
+  };
+
+  /**
+   * Convert an array of identifiers into removal chunks.
+   *
+   * @param ids - The ids to remove from the metadta.
+   *
+   * @param metadataIds - The metadata ids.
+   *
+   * @returns The ordered chunks to remove.
+   */
+  function findRemoveChunks(ids: ReadonlyArray<string>, metadataIds: ReadonlyArray<string>): RemoveChunk[] {
+    // Set up the chunks array.
+    let chunks: RemoveChunk[] = [];
+
+    // Set up the iteration index.
+    let i = 0;
+
+    // Fetch the identifier array length.
+    let n = ids.length;
+
+    // Iterate over the identifiers to remove.
+    while (i < n) {
+      // Find the boundary identifier for the current id.
+      let j = ArrayExt.lowerBound(metadataIds, ids[i], StringExt.cmp);
+
+      // Bail early if the boundary is the end of the array.
+      if (j === metadataIds.length) {
+        break;
+      }
+
+      // Set up the chunk index.
+      let index = j;
+
+      // Set up the chunk count.
+      let count = 0;
+
+      // Find the extent of the chunk.
+      while (i < n && StringExt.cmp(ids[i], metadataIds[j]) === 0) {
+        count++;
+        i++;
+        j++;
+      }
+
+      // Add the chunk to the chunks array, or bump the id index.
+      if (count > 0) {
+        chunks.push({ index, count });
+      } else {
+        i++;
+      }
+    }
+
+    // Return the computed chunks.
+    return chunks;
+  }
+
+  /**
+   * A type alias for an insert chunk.
+   */
+  type InsertChunk = {
+    // The index of the insert.
+    index: number;
+
+    // The identifiers to insert.
+    ids: string[];
+
+    // The text to insert.
+    text: string;
+  };
+
+  /**
+   * Convert arrays of identifiers and values into insert chunks.
+   *
+   * @param ids - The ids to be inserted.
+   *
+   * @param text - The text to be inserted.
+   *
+   * @param metadataIds - The metadata ids.
+   *
+   * @returns The ordered chunks to insert.
+   */
+  function findInsertChunks(ids: ReadonlyArray<string>, text: string, metadataIds: ReadonlyArray<string>): InsertChunk[] {
+    // Set up the chunks array.
+    let chunks: InsertChunk[] = [];
+
+    // Set up the iteration index.
+    let i = 0;
+
+    // Fetch the identifier array length.
+    let n = ids.length;
+
+    // Iterate over the identifiers to insert.
+    while (i < n) {
+      // Find the boundary identifier for the current id.
+      let j = ArrayExt.lowerBound(metadataIds, ids[i], StringExt.cmp);
+
+      // Bail early if the boundary is the end of the array.
+      if (j === metadataIds.length) {
+        chunks.push({ index: j, ids: ids.slice(i), text: text.slice(i) });
+        break;
+      }
+
+      // Set up the chunk ids.
+      let chunkIds: string[] = [];
+
+      // Set up the chunk text.
+      let chunkText: string = '';
+
+      // Find the extent of the chunk.
+      while (i < n && StringExt.cmp(ids[i], metadataIds[j]) < 0) {
+        chunkIds.push(ids[i]);
+        chunkText += text[i];
+        i++;
+      }
+
+      // Add the chunk to the chunks array, or bump the id index.
+      if (chunkIds.length > 0) {
+        chunks.push({ index: j, ids: chunkIds, text: chunkText });
+      } else {
+        i++;
+      }
+    }
+
+    // Return the chunks array.
+    return chunks;
+  }
 }
