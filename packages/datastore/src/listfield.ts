@@ -6,12 +6,20 @@
 | The full license is in the file LICENSE, distributed with this software.
 |----------------------------------------------------------------------------*/
 import {
+  ArrayExt, StringExt
+} from '@phosphor/algorithm';
+
+import {
   ReadonlyJSONValue
 } from '@phosphor/coreutils';
 
 import {
   Field
 } from './field';
+
+import {
+  createTriplexIds
+} from './utilities';
 
 
 /**
@@ -333,19 +341,20 @@ namespace Private {
     let lower = index === 0 ? '' : metadata.ids[index - 1];
     let upper = index === array.length ? '' : metadata.ids[index];
 
-    let ids: string[] = [];
+    // Create the ids for the splice.
+    let ids = createTriplexIds(values.length, version, storeId, lower, upper);
 
     // Apply the splice to the ids and values.
     let removedIds = metadata.ids.splice(index, count, ...ids);
     let removedValues = array.splice(index, count, ...values);
 
-    //
+    // Create the change object.
     let change = { index, removed: removedValues, inserted: values };
 
-    //
+    // Create the patch object.
     let patch = { removedIds, removedValues, insertedIds: ids, insertedValues: values };
 
-    //
+    // Return the splice result.
     return { change, patch };
   }
 
@@ -362,6 +371,245 @@ namespace Private {
    */
   export
   function applyPatch<T extends ReadonlyJSONValue>(value: T[], patch: ListField.PatchPart<T>, metadata: ListField.Metadata<T>): ListField.Change<T> {
-    throw '';
+    // Unpack the patch.
+    let { removedIds, insertedIds, insertedValues } = patch;
+
+    // Set up the change array.
+    let change: ListField.ChangePart<T>[] = [];
+
+    // Process the removed identifiers, if necessary.
+    if (removedIds.length > 0) {
+      // Chunkify the removed identifiers.
+      let chunks = findRemoveChunks(removedIds, metadata.ids);
+
+      // Process the chunks.
+      while (chunks.length > 0) {
+        // Pop the last-most chunk.
+        let { index, count } = chunks.pop()!;
+
+        // Remove the identifiers from the metadata.
+        metadata.ids.splice(index, count);
+
+        // Remove the values from the array.
+        let removed = value.splice(index, count);
+
+        // Add the change part to the change array.
+        change.push({ index, removed, inserted: [] });
+      }
+    }
+
+    // Process the inserted identifiers, if necessary.
+    if (insertedIds.length > 0) {
+      // Chunkify the inserted identifiers.
+      let chunks = findInsertChunks(insertedIds, insertedValues, metadata.ids);
+
+      // Process the chunks.
+      while (chunks.length > 0) {
+        // Pop the last-most chunk.
+        let { index, ids, values } = chunks.pop()!;
+
+        // Insert the identifiers into the metadata.
+        metadata.ids.splice(index, 0, ...ids);
+
+        // Insert the values into the array.
+        value.splice(index, 0, ...values);
+
+        // Add the change part to the change array.
+        change.push({ index, removed: [], inserted: values });
+      }
+    }
+
+    // Return the change array.
+    return change;
+  }
+
+  /**
+   * A type alias for a remove chunk.
+   */
+  type RemoveChunk = {
+    // The index of the removal.
+    index: number;
+
+    // The number of elements to remove.
+    count: number;
+  };
+
+  /**
+   * Convert an array of identifiers into removal chunks.
+   *
+   * @param ids - The ids to remove from the metadta.
+   *
+   * @param metadataIds - The metadata ids.
+   *
+   * @returns The ordered chunks to remove.
+   */
+  function findRemoveChunks(ids: ReadonlyArray<string>, metadataIds: ReadonlyArray<string>): RemoveChunk[] {
+    // Set up the chunks array.
+    let chunks: RemoveChunk[] = [];
+
+    // Set up the iteration index.
+    let i = 0;
+
+    // Fetch the identifier array length.
+    let n = ids.length;
+
+    // Iterate over the identifiers to remove.
+    while (i < n) {
+      // Find the boundary identifier for the current id.
+      let j = ArrayExt.lowerBound(metadataIds, ids[i], StringExt.cmp);
+
+      // Bail early if the boundary is the end of the array.
+      if (j === metadataIds.length) {
+        break;
+      }
+
+      // Set up the chunk index.
+      let index = j;
+
+      // Set up the chunk count.
+      let count = 0;
+
+      // Find the extent of the chunk.
+      while (i < n && StringExt.cmp(ids[i], metadataIds[j]) === 0) {
+        count++;
+        i++;
+        j++;
+      }
+
+      // Add the chunk to the chunks array, or bump the id index.
+      if (count > 0) {
+        chunks.push({ index, count });
+      } else {
+        i++;
+      }
+    }
+
+    // Return the computed chunks.
+    return chunks;
+  }
+
+  /**
+   * A type alias for an insert chunk.
+   */
+  type InsertChunk<T extends ReadonlyJSONValue> = {
+    // The index of the insert.
+    index: number;
+
+    // The identifiers to insert.
+    ids: string[];
+
+    // The values to insert.
+    values: T[];
+  };
+
+  /**
+   * Convert arrays of identifiers and values into insert chunks.
+   *
+   * @param ids - The ids to be inserted.
+   *
+   * @param values - The values to be inserted.
+   *
+   * @param metadataIds - The metadata ids.
+   *
+   * @returns The ordered chunks to insert.
+   */
+  function findInsertChunks<T extends ReadonlyJSONValue>(ids: ReadonlyArray<string>, values: ReadonlyArray<T>, metadataIds: ReadonlyArray<string>): InsertChunk<T>[] {
+    // Set up the chunks array.
+    let chunks: InsertChunk<T>[] = [];
+
+    // Set up the iteration index.
+    let i = 0;
+
+    // Fetch the identifier array length.
+    let n = ids.length;
+
+    // Iterate over the identifiers to insert.
+    while (i < n) {
+      // Find the boundary identifier for the current id.
+      let j = ArrayExt.lowerBound(metadataIds, ids[i], StringExt.cmp);
+
+      // Bail early if the boundary is the end of the array.
+      if (j === metadataIds.length) {
+        chunks.push({ index: j, ids: ids.slice(i), values: values.slice(i) });
+        break;
+      }
+
+      // Set up the chunk ids.
+      let chunkIds: string[] = [];
+
+      // Set up the chunk values.
+      let chunkValues: T[] = [];
+
+      // Find the extent of the chunk.
+      while (i < n && StringExt.cmp(ids[i], metadataIds[j]) < 0) {
+        chunkIds.push(ids[i]);
+        chunkValues.push(values[i]);
+        i++;
+      }
+
+      // Add the chunk to the chunks array, or bump the id index.
+      if (chunkIds.length > 0) {
+        chunks.push({ index: j, ids: chunkIds, values: chunkValues });
+      } else {
+        i++;
+      }
+    }
+
+    // Return the chunks array.
+    return chunks;
   }
 }
+
+
+// This is the logic for the cemetery - needed for undo/redo.
+// /**
+//    * A class which manages the id tombstones for a list.
+//    */
+//   export
+//   class Cemetery {
+//     /**
+//      * Get a copy of the raw data for a cemetery.
+//      *
+//      * @returns A new copy of the raw internal data.
+//      */
+//     data(): { [id: string]: number } {
+//       return { ...this._data };
+//     }
+
+//     /**
+//      * Assign raw data to the cemetery.
+//      *
+//      * @param data - The raw data to apply to the cemetery.
+//      */
+//     assign(data: { readonly [id: string]: number }): void {
+//       this._data = { ...data };
+//     }
+
+//     /**
+//      * Get the tombstone count for an identifier.
+//      *
+//      * @param id - The identifier of interest.
+//      *
+//      * @returns The tombstone count for the identifier `>= 0`.
+//      */
+//     get(id: string): number {
+//       return this._data[id] || 0;
+//     }
+
+//     /**
+//      * Set the tombstone count for an identifier.
+//      *
+//      * @param id - The identifier of interest.
+//      *
+//      * @parm count - The tombstone count `>= 0`.
+//      */
+//     set(id: string, count: number): void {
+//       if (count === 0) {
+//         delete this._data[id];
+//       } else {
+//         this._data[id] = count;
+//       }
+//     }
+
+//     private _data: { [id: string]: number } = {};
+//   }
