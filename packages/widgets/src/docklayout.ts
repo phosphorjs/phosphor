@@ -38,7 +38,7 @@ import {
  * A layout which provides a flexible docking arrangement.
  *
  * #### Notes
- * The consumer of this layout is repsonsible for handling all signals
+ * The consumer of this layout is responsible for handling all signals
  * from the generated tab bars and managing the visibility of widgets
  * and tab bars as needed.
  */
