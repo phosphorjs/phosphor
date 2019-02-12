@@ -23,6 +23,9 @@
   "references": [
     {
       "path": "../algorithm"
-    }
+    },
+    {
+      "path": "../signaling"
+    },
   ]
 }
