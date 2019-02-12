@@ -24,7 +24,7 @@
   ],
   "references": [
     {
-      "path": "../../algorithm"
+      "path": ["../../algorithm", "../../signaling"]
     }
   ]
 }

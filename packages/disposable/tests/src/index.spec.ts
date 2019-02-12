@@ -10,7 +10,8 @@ import {
 } from 'chai';
 
 import {
-  DisposableDelegate, DisposableSet, IDisposable
+  DisposableDelegate, DisposableSet, IDisposable,
+  ObservableDisposableDelegate, ObservableDisposableSet
 } from '@phosphor/disposable';
 
 
@@ -74,6 +75,22 @@ describe('@phosphor/disposable', () => {
         delegate.dispose();
         delegate.dispose();
         expect(count).to.equal(1);
+      });
+
+    });
+
+  });
+
+  describe('ObservableDisposableDelegate', () => {
+
+    describe('#disposed', () => {
+
+      it('should be emitted when the delegate is disposed', () => {
+        let called = false;
+        let delegate = new ObservableDisposableDelegate(() => { });
+        delegate.disposed.connect(() => { called = true; });
+        delegate.dispose();
+        expect(called).to.equal(true);
       });
 
     });
@@ -277,4 +294,44 @@ describe('@phosphor/disposable', () => {
 
   });
 
+  describe('ObservableDisposableSet', () => {
+
+    describe('#disposed', () => {
+
+      it('should be emitted when the set is disposed', () => {
+        let called = false;
+        let set = new ObservableDisposableSet();
+        let item1 = new TestDisposable();
+        let item2 = new TestDisposable();
+        let item3 = new TestDisposable();
+        set.add(item1);
+        set.add(item2);
+        set.add(item3);
+        set.disposed.connect(() => {
+          expect(set.contains(item1)).to.equal(false);
+          expect(set.contains(item2)).to.equal(false);
+          expect(set.contains(item3)).to.equal(false);
+          expect(item1.isDisposed).to.equal(true);
+          expect(item2.isDisposed).to.equal(true);
+          expect(item3.isDisposed).to.equal(true);
+          called = true;
+        });
+        set.dispose();
+        expect(called).to.equal(true);
+      });
+
+    });
+
+    describe('.from()', () => {
+
+      it('should accept an iterable of disposable items', () => {
+        let item1 = new TestDisposable();
+        let item2 = new TestDisposable();
+        let item3 = new TestDisposable();
+        let set = ObservableDisposableSet.from([item1, item2, item3]);
+        expect(set).to.be.an.instanceof(ObservableDisposableSet);
+      });
+
+    });
+  });
 });
