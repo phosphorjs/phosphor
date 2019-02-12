@@ -186,7 +186,7 @@ class Datastore implements IIterable<Table<Schema>>, IMessageHandler, IDisposabl
    * be called.
    */
   beginTransaction(): string {
-    const id = createDuplexId(this.version, this.id);
+    const id = this._transactionIdFactory(this.version, this.id);
     this._initTransaction(id);
     return id;
   }
@@ -313,11 +313,13 @@ class Datastore implements IIterable<Table<Schema>>, IMessageHandler, IDisposabl
   private constructor(
     context: Datastore.Context,
     tables: BPlusTree<Table<Schema>>,
-    broadcastHandler: IMessageHandler
+    broadcastHandler?: IMessageHandler,
+    transactionIdFactory?: Datastore.TransactionIdFactory
   ) {
     this._context = context;
     this._tables = tables;
-    this._broadcastHandler = broadcastHandler;
+    this._broadcastHandler = broadcastHandler || null;
+    this._transactionIdFactory = transactionIdFactory || createDuplexId;
   }
 
 
@@ -346,6 +348,7 @@ class Datastore implements IIterable<Table<Schema>>, IMessageHandler, IDisposabl
   private _tables: BPlusTree<Table<Schema>>;
   private _context: Datastore.Context;
   private _changed = new Signal<Datastore, Datastore.IChangedArgs>(this);
+  private _transactionIdFactory: Datastore.TransactionIdFactory;
 }
 
 
@@ -359,11 +362,25 @@ namespace Datastore {
    */
   export
   interface IOptions {
+    /**
+     * The unique id of the datastore.
+     */
     id: number;
 
+    /**
+     * The table schemas of the datastore.
+     */
     schemas: ReadonlyArray<Schema>;
 
-    broadcastHandler: IMessageHandler;
+    /**
+     * An optional handler for broadcasting transactions to peers.
+     */
+    broadcastHandler?: IMessageHandler;
+
+    /**
+     * An optional transaction id factory to override the default.
+     */
+    transactionIdFactory?: TransactionIdFactory;
   }
 
   /**
@@ -466,6 +483,12 @@ namespace Datastore {
    */
   export
   type Context = Readonly<Private.MutableContext>;
+
+  /**
+   * A factory function for generating a unique transaction id.
+   */
+  export
+  type TransactionIdFactory = (version: number, storeId: number) => string;
 }
 
 
