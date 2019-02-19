@@ -123,7 +123,7 @@ function createTriplexId(version: number, store: number, lower: string, upper: s
 
   // If this point is reached, the lower and upper identifiers share
   // the same path but diverge based on the version or store id. It is
-  // safe to insert anywhere after the lower path.
+  // safe to insert anywhere in an extra triplet.
   let np = Private.randomPath(1, MAX_PATH);
   id += Private.createTriplet(np, version, store);
   return id.slice();

@@ -200,10 +200,10 @@ class Datastore implements IIterable<Table<Schema>>, IMessageHandler, IDisposabl
    * `changed` signal will be emitted.
    */
   endTransaction(): void {
-    this._finalizeTransaction();
+    this._finalizeTransaction(this._context.version + 1);
     if (this._context.change) {
       this._changed.emit({
-        storeId: this.id,
+        storeId: this._context.storeId,
         transactionId: this._context.transactionId,
         type: 'transaction',
         change: this._context.change,
@@ -214,8 +214,9 @@ class Datastore implements IIterable<Table<Schema>>, IMessageHandler, IDisposabl
         this.broadcastHandler,
         new Datastore.TransactionMessage({
           id: this._context.transactionId,
-          storeId: this.id,
+          storeId: this._context.storeId,
           patch: this._context.patch,
+          version: this._context.version
       }));
     }
   }
@@ -295,7 +296,7 @@ class Datastore implements IIterable<Table<Schema>>, IMessageHandler, IDisposabl
       }
       change[schemaId] = Table.patch(table, tablePatch);
     });
-    this._finalizeTransaction();
+    this._finalizeTransaction(Math.max(this._context.version, transaction.version));
     this._changed.emit({
       storeId,
       transactionId: transaction.id,
@@ -334,12 +335,12 @@ class Datastore implements IIterable<Table<Schema>>, IMessageHandler, IDisposabl
     context.transactionId = id;
   }
 
-  private _finalizeTransaction(): void {
+  private _finalizeTransaction(newVersion: number): void {
     const context = this._context as Private.MutableContext;
     if (!context.inTransaction) {
       throw new Error('No transaction in progress.');
     }
-    context.version += 1;
+    context.version = newVersion;
     context.inTransaction = false;
   }
 
@@ -458,9 +459,14 @@ namespace Datastore {
     readonly storeId: number;
 
     /**
-     * @param data - The patch data of the transaction.
+     * The patch data of the transaction.
      */
     readonly patch: Patch;
+
+    /**
+     * The version of the source datastore.
+     */
+    readonly version: number;
   }
 
   /**
@@ -476,6 +482,8 @@ namespace Datastore {
      * The transaction associated with the change.
      */
     readonly transaction: Transaction;
+
+    readonly type: 'datastore-transaction';
   }
 
   /**
