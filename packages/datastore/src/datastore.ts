@@ -48,6 +48,12 @@ import {
  *
  * https://en.wikipedia.org/wiki/Conflict-free_replicated_data_type
  * https://hal.inria.fr/file/index/docid/555588/filename/techreport.pdf
+ *
+ * The internal algorithms require transactions to be delivered in causal
+ * order to guarantee stability. E.g. a transaction that removes some text
+ * must be delivered *after* the transaction that adds that text. Any
+ * deviation from this will *not* raise an error, but can lead to
+ * diverging state between peers.
  */
 export
 class Datastore implements IIterable<Table<Schema>>, IMessageHandler, IDisposable {
