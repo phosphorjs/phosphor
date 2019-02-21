@@ -51,7 +51,7 @@ function createDuplexId(version: number, store: number): string {
  * @returns A new triplex identifier between the two boundaries.
  *
  * #### Notes
- * ID format: <6-byte path><6-byte version><4-byte storeId>...
+ * ID format: <6-byte path><6-byte version><4-byte storeId> * (N >= 1)
  */
 export
 function createTriplexId(version: number, store: number, lower: string, upper: string): string {
