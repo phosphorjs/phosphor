@@ -6,7 +6,7 @@
 | The full license is in the file LICENSE, distributed with this software.
 |----------------------------------------------------------------------------*/
 import {
-  each, IIterable, IIterator, iterItems, map, StringExt
+  each, IIterable, IIterator, iterItems, map, StringExt, toArray, toObject
 } from '@phosphor/algorithm';
 
 import {
@@ -24,6 +24,10 @@ import {
 import {
   ISignal, Signal
 } from '@phosphor/signaling';
+
+import {
+  Record
+} from './record';
 
 import {
   Schema, validateSchema
@@ -82,9 +86,19 @@ class Datastore implements IIterable<Table<Schema>>, IMessageHandler, IDisposabl
     };
 
     const tables = new BPlusTree<Table<Schema>>(Private.recordCmp);
-    tables.assign(map(schemas, s => {
-      return Table.create(s, context);
-    }));
+    if (options.restoreState) {
+      // If passed state to restore, pass the intital state to recreate each
+      // table
+      const state = JSON.parse(options.restoreState);
+      tables.assign(map(schemas, s => {
+        return Table.recreate(s, context, state[s.id] || []);
+      }));
+    } else {
+      // Otherwise, simply create a new, empty table
+      tables.assign(map(schemas, s => {
+        return Table.create(s, context);
+      }));
+    }
 
     return new Datastore(context, tables, options.broadcastHandler);
   }
@@ -307,6 +321,19 @@ class Datastore implements IIterable<Table<Schema>>, IMessageHandler, IDisposabl
   }
 
   /**
+   * Serialize the state of the datastore to a string.
+   *
+   * @returns The serialized state.
+   */
+  toString(): string {
+    return JSON.stringify(toObject(
+      map(this, (table): [string, Record<Schema>[]] => {
+        return [table.schema.id, toArray(table)];
+      })
+    ));
+  }
+
+  /**
    * Create a new datastore.
    *
    * @param id - The unique id of the datastore.
@@ -491,6 +518,11 @@ namespace Datastore {
      * An optional transaction id factory to override the default.
      */
     transactionIdFactory?: TransactionIdFactory;
+
+    /**
+     * Initialize the state to a previously serialized one.
+     */
+    restoreState?: string;
   }
 
   /**
