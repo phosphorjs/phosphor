@@ -54,7 +54,7 @@ import {
  * https://hal.inria.fr/file/index/docid/555588/filename/techreport.pdf
  *
  * The internal algorithms require transactions to be delivered in causal
- * order to guarantee stability. E.g. a transaction that removes some text
+ * order to guarantee convergence. E.g. a transaction that removes some text
  * must be delivered *after* the transaction that adds that text. Any
  * deviation from this will *not* raise an error, but can lead to
  * diverging state between peers.
@@ -255,12 +255,21 @@ class Datastore implements IIterable<Table<Schema>>, IMessageHandler, IDisposabl
     }
   }
 
+  /**
+   * Process a message sent to the datastore.
+   *
+   * @param msg - The message to process.
+   */
   processMessage(msg: Message): void {
     switch (msg.type) {
     // External messages:
     case 'datastore-transaction':
       const m = msg as Datastore.TransactionMessage;
       this._applyTransaction(m.transaction);
+      break;
+    case 'datastore-gc-chance':
+      // We have an opportunity to garbage collect
+      // TODO: implement GC
       break;
 
     // Internal messages (posted from `this`):
@@ -625,6 +634,24 @@ namespace Datastore {
     readonly transaction: Transaction;
 
     readonly type: 'datastore-transaction';
+  }
+
+  /**
+   * A message of a datastore GC opportunity.
+   *
+   * You can send such a message to the datastore when you
+   * are sure that all concurrent transactions have been applied,
+   * i.e. any transactions that arrive later will have the current
+   * state as a base. This will provide  a hint to the datastore
+   * that it is safe to clean up some internal state.
+   */
+  export
+  class GCChanceMessage extends Message {
+    constructor() {
+      super('datastore-gc-chance');
+    }
+
+    readonly type: 'datastore-gc-chance';
   }
 
   /**
