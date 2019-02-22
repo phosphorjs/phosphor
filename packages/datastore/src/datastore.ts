@@ -6,7 +6,7 @@
 | The full license is in the file LICENSE, distributed with this software.
 |----------------------------------------------------------------------------*/
 import {
-  each, IIterable, IIterator, iterItems, iterValues, map, StringExt
+  each, IIterable, IIterator, iterItems, map, StringExt
 } from '@phosphor/algorithm';
 
 import {
@@ -154,7 +154,7 @@ class Datastore implements IIterable<Table<Schema>>, IMessageHandler, IDisposabl
    * @returns An iterator.
    */
   iter(): IIterator<Table<Schema>> {
-    return iterValues(this._tables);
+    return this._tables.iter();
   }
 
   /**
@@ -192,8 +192,9 @@ class Datastore implements IIterable<Table<Schema>>, IMessageHandler, IDisposabl
    * be called.
    */
   beginTransaction(): string {
-    const id = this._transactionIdFactory(this.version, this.id);
-    this._initTransaction(id);
+    const newVersion = this._context.version + 1;
+    const id = this._transactionIdFactory(newVersion, this.id);
+    this._initTransaction(id, newVersion);
     return id;
   }
 
@@ -206,7 +207,7 @@ class Datastore implements IIterable<Table<Schema>>, IMessageHandler, IDisposabl
    * `changed` signal will be emitted.
    */
   endTransaction(): void {
-    this._finalizeTransaction(this._context.version + 1);
+    this._finalizeTransaction();
     if (this._context.change) {
       this._changed.emit({
         storeId: this._context.storeId,
@@ -289,7 +290,7 @@ class Datastore implements IIterable<Table<Schema>>, IMessageHandler, IDisposabl
   private _applyTransaction(transaction: Datastore.Transaction): void {
     const {storeId, patch} = transaction;
 
-    this._initTransaction(transaction.id);
+    this._initTransaction(transaction.id, Math.max(this._context.version, transaction.version));
     const change: Datastore.MutableChange = {};
     each(iterItems(patch), ([schemaId, tablePatch]) => {
       const table = this._tables.get(schemaId, Private.recordIdCmp);
@@ -302,7 +303,7 @@ class Datastore implements IIterable<Table<Schema>>, IMessageHandler, IDisposabl
       }
       change[schemaId] = Table.patch(table, tablePatch);
     });
-    this._finalizeTransaction(Math.max(this._context.version, transaction.version));
+    this._finalizeTransaction();
     this._changed.emit({
       storeId,
       transactionId: transaction.id,
@@ -330,7 +331,7 @@ class Datastore implements IIterable<Table<Schema>>, IMessageHandler, IDisposabl
   }
 
 
-  private _initTransaction(id: string): void {
+  private _initTransaction(id: string, newVersion: number): void {
     const context = this._context as Private.MutableContext;
     if (context.inTransaction) {
       throw new Error(`Already in a transaction: ${this._context.transactionId}`);
@@ -339,14 +340,14 @@ class Datastore implements IIterable<Table<Schema>>, IMessageHandler, IDisposabl
     context.change = {};
     context.patch = {};
     context.transactionId = id;
+    context.version = newVersion;
   }
 
-  private _finalizeTransaction(newVersion: number): void {
+  private _finalizeTransaction(): void {
     const context = this._context as Private.MutableContext;
     if (!context.inTransaction) {
       throw new Error('No transaction in progress.');
     }
-    context.version = newVersion;
     context.inTransaction = false;
   }
 
