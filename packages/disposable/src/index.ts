@@ -107,6 +107,9 @@ class ObservableDisposableDelegate extends DisposableDelegate implements IObserv
    * Dispose of the delegate and invoke the callback function.
    */
   dispose(): void {
+    if (this.isDisposed) {
+      return;
+    }
     super.dispose();
     this._disposed.emit(undefined);
   }
@@ -234,6 +237,9 @@ class ObservableDisposableSet extends DisposableSet implements IObservableDispos
    * Items are disposed in the order they are added to the set.
    */
   dispose(): void {
+    if (this.isDisposed) {
+      return;
+    }
     super.dispose();
     this._disposed.emit(undefined);
   }
