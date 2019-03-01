@@ -252,6 +252,10 @@ class Datastore implements IIterable<Table<Schema>>, IMessageHandler, IDisposabl
     // Internal messages (posted from `this`):
     case 'transaction-begun':
       if (this._context.inTransaction) {
+        console.warn(
+          `Automatically ending transaction (did you forget to end it?): ${
+            this._context.transactionId
+          }`);
         this.endTransaction();
       }
       break;
