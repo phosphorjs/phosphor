@@ -138,8 +138,9 @@ class Datastore implements IIterable<Table<Schema>>, IMessageHandler, IDisposabl
    * The current version of the datastore.
    *
    * #### Notes
-   * This version is automatically incremented for each
-   * transaction to the store.
+   * This version is automatically increased for each transaction
+   * to the store. However, it might not increase linearly (i.e.
+   * it might make jumps).
    *
    * #### Complexity
    * `O(1)`
@@ -363,6 +364,14 @@ class Datastore implements IIterable<Table<Schema>>, IMessageHandler, IDisposabl
     });
   }
 
+  /**
+   * Reset the context state for a new transaction.
+   *
+   * @param id - The id of the new transaction.
+   * @param newVersion - The version of the datastore after the transaction.
+   *
+   * @throws An exception if a transaction is already in progress.
+   */
   private _initTransaction(id: string, newVersion: number): void {
     const context = this._context as Private.MutableContext;
     if (context.inTransaction) {
@@ -375,6 +384,11 @@ class Datastore implements IIterable<Table<Schema>>, IMessageHandler, IDisposabl
     context.version = newVersion;
   }
 
+  /**
+   * Finalize the context state for a transaction in progress.
+   *
+   * @throws An exception if no transaction is in progress.
+   */
   private _finalizeTransaction(): void {
     const context = this._context as Private.MutableContext;
     if (!context.inTransaction) {
