@@ -208,23 +208,24 @@ class Datastore implements IIterable<Table<Schema>>, IMessageHandler, IDisposabl
    */
   endTransaction(): void {
     this._finalizeTransaction();
-    if (this._context.change) {
-      this._changed.emit({
-        storeId: this._context.storeId,
-        transactionId: this._context.transactionId,
-        type: 'transaction',
-        change: this._context.change,
-      });
-    }
-    if (this.broadcastHandler && this._context.patch) {
+    const {patch, change, storeId, transactionId, version} = this._context;
+    if (this.broadcastHandler && patch) {
       MessageLoop.sendMessage(
         this.broadcastHandler,
         new Datastore.TransactionMessage({
-          id: this._context.transactionId,
-          storeId: this._context.storeId,
-          patch: this._context.patch,
-          version: this._context.version
+          id: transactionId,
+          storeId,
+          patch,
+          version
       }));
+    }
+    if (this._context.change) {
+      this._changed.emit({
+        storeId,
+        transactionId,
+        type: 'transaction',
+        change,
+      });
     }
   }
 
