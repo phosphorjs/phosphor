@@ -10,7 +10,7 @@ import {
 } from '@phosphor/algorithm';
 
 import {
-  BPlusTree
+  BPlusTree, LinkedList
 } from '@phosphor/collections';
 
 import {
@@ -18,7 +18,7 @@ import {
 } from '@phosphor/disposable';
 
 import {
-  IMessageHandler, Message, MessageLoop
+  IMessageHandler, Message, MessageLoop, ConflatableMessage
 } from '@phosphor/messaging';
 
 import {
@@ -230,9 +230,17 @@ class Datastore implements IIterable<Table<Schema>>, IMessageHandler, IDisposabl
   }
 
   processMessage(msg: Message): void {
-    if (msg.type === 'datastore-transaction') {
+    switch (msg.type) {
+    // External messages:
+    case 'datastore-transaction':
       const m = msg as Datastore.TransactionMessage;
       this._applyTransaction(m.transaction);
+      break;
+
+    // Internal messages (posted from `this`):
+    case 'queued-transaction':
+      this._processQueue();
+      break;
     }
   }
 
@@ -306,23 +314,41 @@ class Datastore implements IIterable<Table<Schema>>, IMessageHandler, IDisposabl
    * #### Notes
    * If changes are made, the `changed` signal will be emitted.
    */
-  private _applyTransaction(transaction: Datastore.Transaction): void {
+  private _applyTransaction(transaction: Datastore.Transaction, fromQueue=false): void {
+    if (!this._transactionQueue.isEmpty && !fromQueue) {
+      // We have queued transactions waiting to be applied.
+      // As we need to retain causal order of incoming transactions,
+      // we simply add the new one to the end of that queue.
+      this._queueTransaction(transaction);
+      return
+    }
+
     const {storeId, patch} = transaction;
 
-    this._initTransaction(transaction.id, Math.max(this._context.version, transaction.version));
+    try {
+      this._initTransaction(transaction.id, Math.max(this._context.version, transaction.version));
+    } catch (e) {
+      // Already in a transaction. Put transaction in queue to reapply later.
+      this._queueTransaction(transaction);
+      return;
+    }
     const change: Datastore.MutableChange = {};
-    each(iterItems(patch), ([schemaId, tablePatch]) => {
-      const table = this._tables.get(schemaId, Private.recordIdCmp);
-      if (table === undefined) {
-        console.warn(
-          `Missing table for schema id '${
-            schemaId
-          }' in transaction '${transaction.id}'`);
-        return;
-      }
-      change[schemaId] = Table.patch(table, tablePatch);
-    });
-    this._finalizeTransaction();
+    try {
+      each(iterItems(patch), ([schemaId, tablePatch]) => {
+        const table = this._tables.get(schemaId, Private.recordIdCmp);
+        if (table === undefined) {
+          console.warn(
+            `Missing table for schema id '${
+              schemaId
+            }' in transaction '${transaction.id}'`);
+          this._finalizeTransaction();
+          return;
+        }
+        change[schemaId] = Table.patch(table, tablePatch);
+      });
+    } finally {
+      this._finalizeTransaction();
+    }
     this._changed.emit({
       storeId,
       transactionId: transaction.id,
@@ -351,12 +377,54 @@ class Datastore implements IIterable<Table<Schema>>, IMessageHandler, IDisposabl
     context.inTransaction = false;
   }
 
+  /**
+   * Queue a transaction for later application.
+   *
+   * @param transaction - The transaction to queue.
+   */
+  private _queueTransaction(transaction: Datastore.Transaction): void {
+    this._transactionQueue.addLast(transaction);
+    MessageLoop.postMessage(this, new ConflatableMessage('queued-transaction'));
+  }
+
+  /**
+   * Process all transactions currently queued.
+   */
+  private _processQueue(): void {
+    const queue = this._transactionQueue;
+    // If the message queue is empty, there is nothing else to do.
+    if (queue.isEmpty) {
+      return;
+    }
+
+    // Add a sentinel value to the end of the queue. The queue will
+    // only be processed up to the sentinel. Transactions added during
+    // this cycle will execute on the next cycle.
+    const sentinel = {};
+    queue.addLast(sentinel as any);
+
+    // Enter the processing loop.
+    while (true) {
+      // Remove the first transaction in the queue.
+      let transaction = queue.removeFirst()!;
+
+      // If the value is the sentinel, exit the loop.
+      if (transaction === sentinel) {
+        return;
+      }
+
+      // Apply the transaction.
+      this._applyTransaction(transaction, true);
+    }
+  }
+
   private _broadcastHandler: IMessageHandler | null;
   private _disposed = false;
   private _tables: BPlusTree<Table<Schema>>;
   private _context: Datastore.Context;
   private _changed = new Signal<Datastore, Datastore.IChangedArgs>(this);
   private _transactionIdFactory: Datastore.TransactionIdFactory;
+  private _transactionQueue = new LinkedList<Datastore.Transaction>();
 }
 
 
