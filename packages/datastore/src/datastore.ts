@@ -135,6 +135,16 @@ class Datastore implements IIterable<Table<Schema>>, IMessageHandler, IDisposabl
   }
 
   /**
+   * Whether a transaction is currently in progress.
+   *
+   * #### Complexity
+   * `O(1)`
+   */
+  get inTransaction(): boolean {
+    return this._context.inTransaction;
+  }
+
+  /**
    * The current version of the datastore.
    *
    * #### Notes
