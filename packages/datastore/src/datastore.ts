@@ -195,6 +195,7 @@ class Datastore implements IIterable<Table<Schema>>, IMessageHandler, IDisposabl
     const newVersion = this._context.version + 1;
     const id = this._transactionIdFactory(newVersion, this.id);
     this._initTransaction(id, newVersion);
+    MessageLoop.postMessage(this, new ConflatableMessage('transaction-begun'));
     return id;
   }
 
@@ -238,6 +239,11 @@ class Datastore implements IIterable<Table<Schema>>, IMessageHandler, IDisposabl
       break;
 
     // Internal messages (posted from `this`):
+    case 'transaction-begun':
+      if (this._context.inTransaction) {
+        this.endTransaction();
+      }
+      break;
     case 'queued-transaction':
       this._processQueue();
       break;
