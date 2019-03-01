@@ -277,6 +277,24 @@ class Datastore implements IIterable<Table<Schema>>, IMessageHandler, IDisposabl
     return this._broadcastHandler;
   }
 
+  /**
+   * Create a new datastore.
+   *
+   * @param id - The unique id of the datastore.
+   * @param tables - The tables of the datastore.
+   */
+  private constructor(
+    context: Datastore.Context,
+    tables: BPlusTree<Table<Schema>>,
+    broadcastHandler?: IMessageHandler,
+    transactionIdFactory?: Datastore.TransactionIdFactory
+  ) {
+    this._context = context;
+    this._tables = tables;
+    this._broadcastHandler = broadcastHandler || null;
+    this._transactionIdFactory = transactionIdFactory || createDuplexId;
+  }
+
 
   /**
    * Apply a transaction to the datastore.
@@ -312,25 +330,6 @@ class Datastore implements IIterable<Table<Schema>>, IMessageHandler, IDisposabl
       change,
     });
   }
-
-  /**
-   * Create a new datastore.
-   *
-   * @param id - The unique id of the datastore.
-   * @param tables - The tables of the datastore.
-   */
-  private constructor(
-    context: Datastore.Context,
-    tables: BPlusTree<Table<Schema>>,
-    broadcastHandler?: IMessageHandler,
-    transactionIdFactory?: Datastore.TransactionIdFactory
-  ) {
-    this._context = context;
-    this._tables = tables;
-    this._broadcastHandler = broadcastHandler || null;
-    this._transactionIdFactory = transactionIdFactory || createDuplexId;
-  }
-
 
   private _initTransaction(id: string, newVersion: number): void {
     const context = this._context as Private.MutableContext;
