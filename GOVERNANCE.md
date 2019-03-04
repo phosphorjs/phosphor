@@ -1,5 +1,27 @@
 # Governance of PhosphorJS
 
+Chief Executive: Chris Colbert
+
+Package Maintainers:
+
+* `algorithm`:
+* `application`:
+* `collections`:
+* `commands`:
+* `coreutils`:
+* `datagrid`:
+* `datastore`:
+* `default-theme`:
+* `disposable`:
+* `domutils`:
+* `dragdrop`:
+* `keyboard`:
+* `messaging`:
+* `properties`:
+* `signaling`:
+* `virtualdom`:
+* `widgets`:
+
 ## Principles of PhosphorJS
 
 * Take time to design and implement APIs that will stand the test of time.
