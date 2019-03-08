@@ -41,7 +41,7 @@ Package Maintainers:
 * PhosphorJS is governed by a group of Package Maintainers and a Chief Executive,
   that lead the project.
 * Package Maintainers are responsible for one or more PhosphorJS packages. Each
-  package shall have a one or more maintainers.
+  package shall have one or more maintainers.
 * A broader group of Contributors works with the Package Maintainers and Chief
   Executive on the code base and documentation of the Project.
 * Package Maintainers shall individually be responsible:
