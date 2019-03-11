@@ -221,7 +221,7 @@ class Datastore implements IIterable<Table<Schema>>, IMessageHandler, IDisposabl
   endTransaction(): void {
     this._finalizeTransaction();
     const {patch, change, storeId, transactionId, version} = this._context;
-    if (this.broadcastHandler && patch) {
+    if (this.broadcastHandler && !Private.isPatchEmpty(patch)) {
       MessageLoop.sendMessage(
         this.broadcastHandler,
         new Datastore.TransactionMessage({
@@ -231,7 +231,7 @@ class Datastore implements IIterable<Table<Schema>>, IMessageHandler, IDisposabl
           version
       }));
     }
-    if (this._context.change) {
+    if (!Private.isChangeEmpty(this._context.change)) {
       this._changed.emit({
         storeId,
         transactionId,
@@ -626,6 +626,7 @@ namespace Private {
       throw new Error(errors.join('\n\n'));
     }
   }
+
   /**
    * A three-way record comparison function.
    */
@@ -673,5 +674,21 @@ namespace Private {
      * The current patch object of the transaction.
      */
     patch: Datastore.MutablePatch;
+  }
+
+  /**
+   * Checks if a patch is empty.
+   */
+  export
+  function isPatchEmpty(patch: Datastore.Patch): boolean {
+    return Object.keys(patch).length === 0;
+  }
+
+  /**
+   * Checks if a change is empty.
+   */
+  export
+  function isChangeEmpty(change: Datastore.Change): boolean {
+    return Object.keys(change).length === 0;
   }
 }
