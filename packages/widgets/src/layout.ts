@@ -506,7 +506,7 @@ namespace Layout {
   export
   interface IOptions {
     /**
-     * The fit policy for the for layout.
+     * The fit policy for the layout.
      *
      * The default is `'set-min-size'`.
      */
