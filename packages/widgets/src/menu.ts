@@ -34,7 +34,7 @@ import {
 } from '@phosphor/signaling';
 
 import {
-  ElementDataset, VirtualDOM, VirtualElement, h
+  ElementAriaAttrs, ElementDataset, VirtualDOM, VirtualElement, h
 } from '@phosphor/virtualdom';
 
 import {
@@ -1143,8 +1143,9 @@ namespace Menu {
     renderItem(data: IRenderData): VirtualElement {
       let className = this.createItemClass(data);
       let dataset = this.createItemDataset(data);
+      let aria = this.createItemAria(data);
       return (
-        h.li({ className, dataset, role: 'menuitem' },
+        h.li({ className, dataset, aria },
           this.renderIcon(data),
           this.renderLabel(data),
           this.renderShortcut(data),
@@ -1267,6 +1268,21 @@ namespace Menu {
       let name = 'p-Menu-itemIcon';
       let extra = data.item.iconClass;
       return extra ? `${name} ${extra}` : name;
+    }
+
+    createItemAria(data: IRenderData): ElementAriaAttrs {
+      let aria: any = {};
+      switch (data.item.type) {
+      case 'separator':
+        aria.role = 'separator';
+        break;
+      case 'submenu':
+        aria['aria-haspopup'] = true;
+        break;
+      default:
+        aria.role = 'menuitem';
+      }
+      return aria;
     }
 
     /**
