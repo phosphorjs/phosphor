@@ -52,7 +52,6 @@ class MenuBar extends Widget {
   constructor(options: MenuBar.IOptions = {}) {
     super({ node: Private.createNode() });
     this.addClass('p-MenuBar');
-    this.addRole('menubar');
     this.setFlag(Widget.Flag.DisallowLayout);
     this.renderer = options.renderer || MenuBar.defaultRenderer;
   }
@@ -750,7 +749,7 @@ namespace MenuBar {
       let className = this.createItemClass(data);
       let dataset = this.createItemDataset(data);
       return (
-        h.li({ className, dataset },
+        h.li({ className, dataset, role: 'menuitem', 'aria-haspopup': 'true' },
           this.renderIcon(data),
           this.renderLabel(data)
         )
@@ -872,6 +871,7 @@ namespace Private {
     let node = document.createElement('div');
     let content = document.createElement('ul');
     content.className = 'p-MenuBar-content';
+    content.setAttribute('role', 'menubar');
     node.appendChild(content);
     node.tabIndex = -1;
     return node;

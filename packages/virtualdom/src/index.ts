@@ -25,6 +25,9 @@ import {
  */
 export
 type ElementAttrNames = (
+  'role' |
+  'aria-haspopup' |
+
   'abbr' |
   'accept' |
   'accept-charset' |
