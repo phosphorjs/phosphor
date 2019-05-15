@@ -43,6 +43,7 @@ import {
  */
 export
 class MenuBar extends Widget {
+
   /**
    * Construct a new menu bar.
    *
@@ -51,6 +52,7 @@ class MenuBar extends Widget {
   constructor(options: MenuBar.IOptions = {}) {
     super({ node: Private.createNode() });
     this.addClass('p-MenuBar');
+    this.addRole('menubar');
     this.setFlag(Widget.Flag.DisallowLayout);
     this.renderer = options.renderer || MenuBar.defaultRenderer;
   }
