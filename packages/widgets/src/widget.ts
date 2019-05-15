@@ -339,6 +339,16 @@ class Widget implements IMessageHandler, IObservableDisposable {
   }
 
   /**
+   * Adds the aria role to the widget.
+   *
+   * @param role - The role to add.
+   */
+  addRole(role: string): void {
+    this.node.setAttribute('role', role);
+  }
+
+
+  /**
    * Post an `'update-request'` message to the widget.
    *
    * #### Notes
