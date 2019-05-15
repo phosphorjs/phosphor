@@ -22,7 +22,7 @@ import {
 } from '@phosphor/messaging';
 
 import {
-  ElementDataset, VirtualDOM, VirtualElement, h
+  ElementAriaAttrs, ElementDataset, VirtualDOM, VirtualElement, h
 } from '@phosphor/virtualdom';
 
 import {
@@ -748,8 +748,9 @@ namespace MenuBar {
     renderItem(data: IRenderData): VirtualElement {
       let className = this.createItemClass(data);
       let dataset = this.createItemDataset(data);
+      let aria = this.createItemAria(data);
       return (
-        h.li({ className, dataset, role: 'menuitem', 'aria-haspopup': 'true' },
+        h.li({ className, aria, dataset},
           this.renderIcon(data),
           this.renderLabel(data)
         )
@@ -807,6 +808,10 @@ namespace MenuBar {
      */
     createItemDataset(data: IRenderData): ElementDataset {
       return data.title.dataset;
+    }
+
+    createItemAria(data: IRenderData): ElementAriaAttrs {
+      return {role: 'menuitem', 'aria-haspopup': 'true'};
     }
 
     /**
