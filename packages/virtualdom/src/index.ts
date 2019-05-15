@@ -656,6 +656,8 @@ type ElementSpecialAttrs = {
    * The inline style for the rendered DOM element.
    */
   readonly style?: ElementInlineStyle;
+
+  readonly aria?: ElementAriaAttrs;
 };
 
 
@@ -1175,6 +1177,7 @@ namespace Private {
     'className': true,
     'htmlFor': true,
     'dataset': true,
+    'aria': true,
     'style': true,
   };
 
@@ -1213,6 +1216,15 @@ namespace Private {
     if (attrs.style) {
       addStyle(element, attrs.style);
     }
+
+    // Add the aria attributes.
+    if (attrs.aria) {
+      for (let key in attrs.aria) {
+        element.setAttribute(key, (attrs.aria as any)[key]);
+      }
+    }
+
+
   }
 
   /**
