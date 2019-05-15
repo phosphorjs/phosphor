@@ -25,9 +25,6 @@ import {
  */
 export
 type ElementAttrNames = (
-  'role' |
-  'aria-haspopup' |
-
   'abbr' |
   'accept' |
   'accept-charset' |
@@ -559,6 +556,13 @@ type ElementEventMap = {
 };
 
 
+export
+type AriaAttrNames = (
+  'role' |
+  'aria-haspopup'
+);
+
+
 /**
  * An object which represents a dataset for a virtual DOM element.
  *
@@ -655,6 +659,12 @@ type ElementSpecialAttrs = {
 };
 
 
+export
+type ElementAriaAttrs = {
+  readonly [T in AriaAttrNames]?: string;
+};
+
+
 /**
  * The full set of attributes supported by a virtual element node.
  *
@@ -664,6 +674,7 @@ type ElementSpecialAttrs = {
 export
 type ElementAttrs = (
   ElementBaseAttrs &
+  ElementAriaAttrs &
   ElementEventAttrs &
   ElementSpecialAttrs
 );
