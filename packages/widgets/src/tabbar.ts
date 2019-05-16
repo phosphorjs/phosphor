@@ -69,8 +69,6 @@ class TabBar<T extends Widget> extends Widget {
     this._orientation = options.orientation || 'horizontal';
     this.dataset['orientation'] = this._orientation;
 
-    // Should tablist be on the contentNode, or on this.node? (the div or the ul
-    // containing the li elements?)
     let contentNode = this.contentNode;
     contentNode.setAttribute('role', 'tablist');
     contentNode.setAttribute('aria-orientation', this.orientation);
@@ -1450,7 +1448,7 @@ namespace TabBar {
      * @returns The ARIA attributes for the tab.
      */
     createTabARIA(data: IRenderData<T>): ElementARIAAttrs {
-      return {role: 'tab', 'aria-controls': data.title.owner.id, 'aria-selected': data.current.toString()};
+      return {role: 'tab', 'aria-selected': data.current.toString()};
     }
 
     /**
