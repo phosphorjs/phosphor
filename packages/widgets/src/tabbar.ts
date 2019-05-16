@@ -74,6 +74,9 @@ class TabBar<T extends Widget> extends Widget {
     let contentNode = this.contentNode;
     contentNode.setAttribute('role', 'tablist');
     contentNode.setAttribute('aria-orientation', this.orientation);
+
+    // TODO: what should this be?
+    contentNode.setAttribute('aria-label', 'Tabs');
   }
 
   /**
@@ -1447,7 +1450,7 @@ namespace TabBar {
      * @returns The ARIA attributes for the tab.
      */
     createTabARIA(data: IRenderData<T>): ElementARIAAttrs {
-      return {role: 'tab', 'aria-controls': data.title.owner.id};
+      return {role: 'tab', 'aria-controls': data.title.owner.id, 'aria-selected': data.current.toString()};
     }
 
     /**
