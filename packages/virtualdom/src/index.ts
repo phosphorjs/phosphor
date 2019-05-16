@@ -125,6 +125,66 @@ type ElementAttrNames = (
 
 
 /**
+ * The names of ARIA attributes for HTML elements.
+ *
+ * The attribute names are collected from
+ * https://www.w3.org/TR/html5/infrastructure.html#element-attrdef-aria-role
+ */
+export
+type ARIAAttrNames = (
+  'aria-activedescendant' |
+  'aria-atomic' |
+  'aria-autocomplete' |
+  'aria-busy' |
+  'aria-checked' |
+  'aria-colcount' |
+  'aria-colindex' |
+  'aria-colspan' |
+  'aria-controls' |
+  'aria-current' |
+  'aria-describedby' |
+  'aria-details' |
+  'aria-dialog' |
+  'aria-disabled' |
+  'aria-dropeffect' |
+  'aria-errormessage' |
+  'aria-expanded' |
+  'aria-flowto' |
+  'aria-grabbed' |
+  'aria-haspopup' |
+  'aria-hidden' |
+  'aria-invalid' |
+  'aria-keyshortcuts' |
+  'aria-label' |
+  'aria-labelledby' |
+  'aria-level' |
+  'aria-live' |
+  'aria-multiline' |
+  'aria-multiselectable' |
+  'aria-orientation' |
+  'aria-owns' |
+  'aria-placeholder' |
+  'aria-posinset' |
+  'aria-pressed' |
+  'aria-readonly' |
+  'aria-relevant' |
+  'aria-required' |
+  'aria-roledescription' |
+  'aria-rowcount' |
+  'aria-rowindex' |
+  'aria-rowspan' |
+  'aria-selected' |
+  'aria-setsize' |
+  'aria-sort' |
+  'aria-valuemax' |
+  'aria-valuemin' |
+  'aria-valuenow' |
+  'aria-valuetext' |
+  'role'
+);
+
+
+/**
  * The names of the supported HTML5 CSS property names.
  *
  * If a standardized or widely supported name is missing, please open
@@ -556,13 +616,6 @@ type ElementEventMap = {
 };
 
 
-export
-type AriaAttrNames = (
-  'role' |
-  'aria-haspopup'
-);
-
-
 /**
  * An object which represents a dataset for a virtual DOM element.
  *
@@ -595,7 +648,7 @@ type ElementInlineStyle = {
  *
  * These are the attributes which are applied to a real DOM element via
  * `element.setAttribute()`. The supported attribute names are defined
- * by the `ElementAttrNames` type.
+ * by the `ElementAttrNames`type.
  *
  * Node attributes are specified using the lower-case HTML name instead
  * of the camel-case JS name due to browser inconsistencies in handling
@@ -604,6 +657,18 @@ type ElementInlineStyle = {
 export
 type ElementBaseAttrs = {
   readonly [T in ElementAttrNames]?: string;
+};
+
+/**
+ * The ARIA attributes for a virtual element node.
+ *
+ * These are the attributes which are applied to a real DOM element via
+ * `element.setAttribute()`. The supported attribute names are defined
+ * by the `ARIAAttrNames` type.
+ */
+export
+type ElementARIAAttrs = {
+  readonly [T in ARIAAttrNames]?: string;
 };
 
 
@@ -656,27 +721,19 @@ type ElementSpecialAttrs = {
    * The inline style for the rendered DOM element.
    */
   readonly style?: ElementInlineStyle;
-
-  readonly aria?: ElementAriaAttrs;
-};
-
-
-export
-type ElementAriaAttrs = {
-  readonly [T in AriaAttrNames]?: string;
 };
 
 
 /**
  * The full set of attributes supported by a virtual element node.
  *
- * This is the combination of the base element attributes, the inline
- * element event listeners, and the special element attributes.
+ * This is the combination of the base element attributes, the ARIA attributes,
+ * the inline element event listeners, and the special element attributes.
  */
 export
 type ElementAttrs = (
   ElementBaseAttrs &
-  ElementAriaAttrs &
+  ElementARIAAttrs &
   ElementEventAttrs &
   ElementSpecialAttrs
 );
@@ -1177,7 +1234,6 @@ namespace Private {
     'className': true,
     'htmlFor': true,
     'dataset': true,
-    'aria': true,
     'style': true,
   };
 
@@ -1216,15 +1272,6 @@ namespace Private {
     if (attrs.style) {
       addStyle(element, attrs.style);
     }
-
-    // Add the aria attributes.
-    if (attrs.aria) {
-      for (let key in attrs.aria) {
-        element.setAttribute(key, (attrs.aria as any)[key]);
-      }
-    }
-
-
   }
 
   /**
