@@ -1274,7 +1274,7 @@ namespace Menu {
       let aria: {[T in ARIAAttrNames]?: string} = {};
       switch (data.item.type) {
       case 'separator':
-        aria.role = 'separator';
+        aria.role = 'presentation';
         break;
       case 'submenu':
         aria['aria-haspopup'] = 'true';
