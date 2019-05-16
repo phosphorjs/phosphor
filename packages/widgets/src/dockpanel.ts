@@ -1246,7 +1246,7 @@ namespace DockPanel {
      * @returns A new tab bar for a dock panel.
      */
     createTabBar(): TabBar<Widget> {
-      let bar = new TabBar<Widget>({name: `Activities ${this._tabBarCounter++}`});
+      let bar = new TabBar<Widget>();
       bar.addClass('p-DockPanel-tabBar');
       return bar;
     }
@@ -1261,7 +1261,6 @@ namespace DockPanel {
       handle.className = 'p-DockPanel-handle';
       return handle;
     }
-    private _tabBarCounter = 0;
   }
 
   /**
