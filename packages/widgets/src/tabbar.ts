@@ -68,6 +68,12 @@ class TabBar<T> extends Widget {
     this.renderer = options.renderer || TabBar.defaultRenderer;
     this._orientation = options.orientation || 'horizontal';
     this.dataset['orientation'] = this._orientation;
+
+    // Should tablist be on the contentNode, or on this.node? (the div or the ul
+    // containing the li elements?)
+    let contentNode = this.contentNode;
+    contentNode.setAttribute('role', 'tablist');
+    contentNode.setAttribute('aria-orientation', this.orientation);
   }
 
   /**
@@ -1599,7 +1605,6 @@ namespace Private {
   function createNode(): HTMLDivElement {
     let node = document.createElement('div');
     let content = document.createElement('ul');
-    content.setAttribute('role', 'tablist');
     content.className = 'p-TabBar-content';
     node.appendChild(content);
     return node;
