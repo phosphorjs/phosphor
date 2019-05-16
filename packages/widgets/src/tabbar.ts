@@ -60,21 +60,15 @@ class TabBar<T extends Widget> extends Widget {
   constructor(options: TabBar.IOptions<T> = {}) {
     super({ node: Private.createNode() });
     this.addClass('p-TabBar');
+    this.contentNode.setAttribute('role', 'tablist');
     this.setFlag(Widget.Flag.DisallowLayout);
     this.tabsMovable = options.tabsMovable || false;
     this.allowDeselect = options.allowDeselect || false;
     this.insertBehavior = options.insertBehavior || 'select-tab-if-needed';
+    this.name = options.name || '';
+    this.orientation = options.orientation || 'horizontal';
     this.removeBehavior = options.removeBehavior || 'select-tab-after';
     this.renderer = options.renderer || TabBar.defaultRenderer;
-    this._orientation = options.orientation || 'horizontal';
-    this.dataset['orientation'] = this._orientation;
-
-    let contentNode = this.contentNode;
-    contentNode.setAttribute('role', 'tablist');
-    contentNode.setAttribute('aria-orientation', this.orientation);
-
-    // TODO: what should this be?
-    contentNode.setAttribute('aria-label', 'Tabs');
   }
 
   /**
@@ -251,6 +245,25 @@ class TabBar<T extends Widget> extends Widget {
       previousIndex: pi, previousTitle: pt,
       currentIndex: ci, currentTitle: ct
     });
+  }
+
+  /**
+   * Get the name of the tab bar.
+   */
+  get name(): string {
+    return this._name;
+  }
+
+  /**
+   * Set the name of the tab bar.
+   */
+  set name(value: string) {
+    this._name = value;
+    if (value) {
+      this.contentNode.setAttribute('aria-label', value);
+    } else {
+      this.contentNode.removeAttribute('aria-label');
+    }
   }
 
   /**
@@ -1014,6 +1027,7 @@ class TabBar<T extends Widget> extends Widget {
     this.update();
   }
 
+  private _name: string;
   private _currentIndex = -1;
   private _titles: Title<T>[] = [];
   private _orientation: TabBar.Orientation;
@@ -1104,6 +1118,13 @@ namespace TabBar {
    */
   export
   interface IOptions<T> {
+    /**
+     * Name of the tab bar.
+     *
+     * This is used for accessibility reasons. The default is the empty string.
+     */
+    name?: string;
+
     /**
      * The layout orientation of the tab bar.
      *
