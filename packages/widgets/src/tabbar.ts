@@ -30,7 +30,7 @@ import {
 } from '@phosphor/signaling';
 
 import {
-  ElementDataset, ElementInlineStyle, VirtualDOM, VirtualElement, h
+  ElementARIAAttrs, ElementDataset, ElementInlineStyle, VirtualDOM, VirtualElement, h
 } from '@phosphor/virtualdom';
 
 import {
@@ -1321,8 +1321,9 @@ namespace TabBar {
       let style = this.createTabStyle(data);
       let className = this.createTabClass(data);
       let dataset = this.createTabDataset(data);
+      let aria = this.createTabARIA(data);
       return (
-        h.li({ key, className, title, style, dataset },
+        h.li({ key, className, title, style, dataset, ...aria },
           this.renderIcon(data),
           this.renderLabel(data),
           this.renderCloseIcon(data)
@@ -1426,6 +1427,17 @@ namespace TabBar {
      */
     createTabDataset(data: IRenderData<any>): ElementDataset {
       return data.title.dataset;
+    }
+
+    /**
+     * Create the ARIA attributes for a tab.
+     *
+     * @param data - The data to use for the tab.
+     *
+     * @returns The ARIA attributes for the tab.
+     */
+    createTabARIA(data: IRenderData<any>): ElementARIAAttrs {
+      return {role: 'tab'};
     }
 
     /**
@@ -1587,6 +1599,7 @@ namespace Private {
   function createNode(): HTMLDivElement {
     let node = document.createElement('div');
     let content = document.createElement('ul');
+    content.setAttribute('role', 'tablist');
     content.className = 'p-TabBar-content';
     node.appendChild(content);
     return node;
