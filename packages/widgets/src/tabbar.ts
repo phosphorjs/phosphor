@@ -914,6 +914,9 @@ class TabBar<T> extends Widget {
     let ci = this._currentIndex;
     let bh = this.insertBehavior;
 
+
+    // TODO: do we need to do an update to update the aria-selected attribute?
+
     // Handle the behavior where the new tab is always selected,
     // or the behavior where the new tab is selected if needed.
     if (bh === 'select-tab' || (bh === 'select-tab-if-needed' && ci === -1)) {
@@ -966,6 +969,8 @@ class TabBar<T> extends Widget {
       }
       return;
     }
+
+    // TODO: do we need to do an update to adjust the aria-selected value?
 
     // No tab gets selected if the tab bar is empty.
     if (this._titles.length === 0) {
