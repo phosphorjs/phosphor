@@ -32,7 +32,6 @@ import {
 import {
   Widget
 } from './widget';
-import { UUID } from '@phosphor/coreutils';
 
 
 /**
@@ -263,15 +262,12 @@ class TabPanel extends Widget {
       widget.hide();
     }
 
-    widget.id = widget.id || `aria-${UUID.uuid4()}`;
-
     this.stackedPanel.insertWidget(index, widget);
     this.tabBar.insertTab(index, widget.title);
 
-    let tab = this.tabBar.contentNode.children[this.tabBar.titles.indexOf(widget.title)];
-
+    let tabId = this.tabBar.renderer.createTabKey({title: widget.title, current: false, zIndex: 0});
     widget.node.setAttribute('role', 'tabpanel');
-    widget.node.setAttribute('aria-labelledby', tab.id);
+    widget.node.setAttribute('aria-labelledby', tabId);
   }
 
   /**
@@ -333,9 +329,6 @@ class TabPanel extends Widget {
   private _onWidgetRemoved(sender: StackedPanel, widget: Widget): void {
     widget.node.removeAttribute('role');
     widget.node.removeAttribute('aria-labelledby');
-    if (widget.id.slice(5) === 'aria-') {
-      widget.id = '';
-    }
     this.tabBar.removeTab(widget.title);
   }
 
