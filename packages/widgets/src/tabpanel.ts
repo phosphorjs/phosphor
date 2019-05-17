@@ -261,7 +261,6 @@ class TabPanel extends Widget {
     if (widget !== this.currentWidget) {
       widget.hide();
     }
-
     this.stackedPanel.insertWidget(index, widget);
     this.tabBar.insertTab(index, widget.title);
 
