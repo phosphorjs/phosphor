@@ -51,7 +51,7 @@ import {
  * property should be set to `false` when rotating nodes from CSS.
  */
 export
-class TabBar<T extends Widget> extends Widget {
+class TabBar<T> extends Widget {
   /**
    * Construct a new tab bar.
    *
@@ -1328,7 +1328,7 @@ namespace TabBar {
    * Subclasses are free to reimplement rendering methods as needed.
    */
   export
-  class Renderer<T extends Widget = Widget> implements IRenderer<T> {
+  class Renderer implements IRenderer<any> {
     /**
      * Construct a new renderer.
      */
@@ -1346,7 +1346,7 @@ namespace TabBar {
      *
      * @returns A virtual element representing the tab.
      */
-    renderTab(data: IRenderData<T>): VirtualElement {
+    renderTab(data: IRenderData<any>): VirtualElement {
       let title = data.title.caption;
       let key = this.createTabKey(data);
       let id = key;
@@ -1370,7 +1370,7 @@ namespace TabBar {
      *
      * @returns A virtual element representing the tab icon.
      */
-    renderIcon(data: IRenderData<T>): VirtualElement {
+    renderIcon(data: IRenderData<any>): VirtualElement {
       let className = this.createIconClass(data);
       return h.div({ className }, data.title.iconLabel);
     }
@@ -1382,7 +1382,7 @@ namespace TabBar {
      *
      * @returns A virtual element representing the tab label.
      */
-    renderLabel(data: IRenderData<T>): VirtualElement {
+    renderLabel(data: IRenderData<any>): VirtualElement {
       return h.div({ className: 'p-TabBar-tabLabel' }, data.title.label);
     }
 
@@ -1393,7 +1393,7 @@ namespace TabBar {
      *
      * @returns A virtual element representing the tab close icon.
      */
-    renderCloseIcon(data: IRenderData<T>): VirtualElement {
+    renderCloseIcon(data: IRenderData<any>): VirtualElement {
       return h.div({ className: 'p-TabBar-tabCloseIcon' });
     }
 
@@ -1409,7 +1409,7 @@ namespace TabBar {
      * the key is generated. This enables efficient rendering of moved
      * tabs and avoids subtle hover style artifacts.
      */
-    createTabKey(data: IRenderData<T>): string {
+    createTabKey(data: IRenderData<any>): string {
       let key = this._tabKeys.get(data.title);
       if (key === undefined) {
         key = `tab-key-${this._tabID++}`;
@@ -1425,7 +1425,7 @@ namespace TabBar {
      *
      * @returns The inline style data for the tab.
      */
-    createTabStyle(data: IRenderData<T>): ElementInlineStyle {
+    createTabStyle(data: IRenderData<any>): ElementInlineStyle {
       return { zIndex: `${data.zIndex}` };
     }
 
@@ -1436,7 +1436,7 @@ namespace TabBar {
      *
      * @returns The full class name for the tab.
      */
-    createTabClass(data: IRenderData<T>): string {
+    createTabClass(data: IRenderData<any>): string {
       let name = 'p-TabBar-tab';
       if (data.title.className) {
         name += ` ${data.title.className}`;
@@ -1457,7 +1457,7 @@ namespace TabBar {
      *
      * @returns The dataset for the tab.
      */
-    createTabDataset(data: IRenderData<T>): ElementDataset {
+    createTabDataset(data: IRenderData<any>): ElementDataset {
       return data.title.dataset;
     }
 
@@ -1468,7 +1468,7 @@ namespace TabBar {
      *
      * @returns The ARIA attributes for the tab.
      */
-    createTabARIA(data: IRenderData<T>): ElementARIAAttrs {
+    createTabARIA(data: IRenderData<any>): ElementARIAAttrs {
       return {role: 'tab', 'aria-selected': data.current.toString()};
     }
 
@@ -1479,14 +1479,14 @@ namespace TabBar {
      *
      * @returns The full class name for the tab icon.
      */
-    createIconClass(data: IRenderData<T>): string {
+    createIconClass(data: IRenderData<any>): string {
       let name = 'p-TabBar-tabIcon';
       let extra = data.title.iconClass;
       return extra ? `${name} ${extra}` : name;
     }
 
     private _tabID = 0;
-    private _tabKeys = new WeakMap<Title<T>, string>();
+    private _tabKeys = new WeakMap<Title<any>, string>();
   }
 
   /**
