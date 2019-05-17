@@ -648,7 +648,7 @@ type ElementInlineStyle = {
  *
  * These are the attributes which are applied to a real DOM element via
  * `element.setAttribute()`. The supported attribute names are defined
- * by the `ElementAttrNames`type.
+ * by the `ElementAttrNames` type.
  *
  * Node attributes are specified using the lower-case HTML name instead
  * of the camel-case JS name due to browser inconsistencies in handling
