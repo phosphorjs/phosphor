@@ -1143,9 +1143,9 @@ namespace Menu {
     renderItem(data: IRenderData): VirtualElement {
       let className = this.createItemClass(data);
       let dataset = this.createItemDataset(data);
-      let attr = this.createItemARIA(data);
+      let aria = this.createItemARIA(data);
       return (
-        h.li({ className, dataset, ...attr },
+        h.li({ className, dataset, ...aria },
           this.renderIcon(data),
           this.renderLabel(data),
           this.renderShortcut(data),

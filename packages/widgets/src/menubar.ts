@@ -43,7 +43,6 @@ import {
  */
 export
 class MenuBar extends Widget {
-
   /**
    * Construct a new menu bar.
    *
