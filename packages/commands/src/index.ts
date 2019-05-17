@@ -314,6 +314,21 @@ class CommandRegistry {
   }
 
   /**
+   * Test whether a specific command is toggleable.
+   *
+   * @param id - The id of the command of interest.
+   *
+   * @param args - The arguments for the command.
+   *
+   * @returns A boolean indicating whether the command is toggleable,
+   *   or `false` if the command is not registered.
+   */
+  isToggleable(id: string, args: ReadonlyJSONObject = JSONExt.emptyObject): boolean {
+    let cmd = this._commands[id];
+    return cmd ? cmd.isToggleable : false;
+  }
+
+  /**
    * Test whether a specific command is visible.
    *
    * @param id - The id of the command of interest.
@@ -760,6 +775,20 @@ namespace CommandRegistry {
     isToggled?: CommandFunc<boolean>;
 
     /**
+     * A function which indicates whether the command is toggleable.
+     *
+     * #### Notes
+     * Visual representations may use this value to display a toggled command in
+     * a different form, such as a check box for a menu item or a depressed
+     * state for a toggle button. This attribute also allows for accessible
+     * interfaces to notify the user that the command corresponds to some state.
+     *
+     * The default value is `true` if an `isToggled` function is given, `false`
+     * otherwise.
+     */
+    isToggleable?: boolean;
+
+    /**
      * A function which indicates whether the command is visible.
      *
      * #### Notes
@@ -1147,6 +1176,7 @@ namespace Private {
     readonly dataset: CommandFunc<Dataset>;
     readonly isEnabled: CommandFunc<boolean>;
     readonly isToggled: CommandFunc<boolean>;
+    readonly isToggleable: boolean;
     readonly isVisible: CommandFunc<boolean>;
   }
 
@@ -1167,6 +1197,7 @@ namespace Private {
       dataset: asFunc(options.dataset, emptyDatasetFunc),
       isEnabled: options.isEnabled || trueFunc,
       isToggled: options.isToggled || falseFunc,
+      isToggleable: options.isToggleable || !!options.isToggled,
       isVisible: options.isVisible || trueFunc
     };
   }
