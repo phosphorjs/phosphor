@@ -1026,6 +1026,7 @@ namespace DockPanel {
      * The size of the right edge drop zone.
      */
     right: number;
+
     /**
      * The size of the bottom edge drop zone.
      */
