@@ -65,6 +65,7 @@ class DockPanel extends Widget {
     this.addClass('p-DockPanel');
     this._mode = options.mode || 'multiple-document';
     this._renderer = options.renderer || DockPanel.defaultRenderer;
+    this._edges = options.edges || Private.DEFAULT_EDGES;
 
     // Toggle the CSS mode attribute.
     this.dataset['mode'] = this._mode;
@@ -515,7 +516,12 @@ class DockPanel extends Widget {
 
     // Find the drop target under the mouse.
     let { clientX, clientY } = event;
-    let { zone, target } = Private.findDropTarget(this, clientX, clientY);
+    let { zone, target } = Private.findDropTarget(
+      this,
+      clientX,
+      clientY,
+      this._edges
+    );
 
     // Bail if the drop zone is invalid.
     if (zone === 'invalid') {
@@ -722,7 +728,12 @@ class DockPanel extends Widget {
    */
   private _showOverlay(clientX: number, clientY: number): Private.DropZone {
     // Find the dock target for the given client position.
-    let { zone, target } = Private.findDropTarget(this, clientX, clientY);
+    let { zone, target } = Private.findDropTarget(
+      this,
+      clientX,
+      clientY,
+      this._edges
+    );
 
     // If the drop zone is invalid, hide the overlay and bail.
     if (zone === 'invalid') {
@@ -948,6 +959,7 @@ class DockPanel extends Widget {
     this._drag.start(clientX, clientY).then(cleanup);
   }
 
+  private _edges: DockPanel.IEdges;
   private _mode: DockPanel.Mode;
   private _drag: Drag | null = null;
   private _renderer: DockPanel.IRenderer;
@@ -993,7 +1005,37 @@ namespace DockPanel {
      * The deafult is `'multiple-document'`.
      */
     mode?: DockPanel.Mode;
+
+    /**
+     * The sizes of the edge drop zones, in pixels.
+     * If not given, default values will be used.
+     */
+    edges?: IEdges;
   }
+
+  /**
+   * The sizes of the edge drop zones, in pixels.
+   */
+  export interface IEdges {
+    /**
+     * The size of the top edge drop zone.
+     */
+    top: number;
+
+    /**
+     * The size of the right edge drop zone.
+     */
+    right: number;
+    /**
+     * The size of the bottom edge drop zone.
+     */
+    bottom: number;
+
+    /**
+     * The size of the left edge drop zone.
+     */
+    left: number;
+  };
 
   /**
    * A type alias for the supported dock panel modes.
@@ -1239,16 +1281,31 @@ namespace Private {
   const GOLDEN_RATIO = 0.618;
 
   /**
-   * The size of the edge dock zone for the root panel, in pixels.
+   * The default sizes for the edge drop zones, in pixels.
    */
-  const EDGE_SIZE = 40;
+  export const DEFAULT_EDGES = {
+    /**
+     * The size of the top edge dock zone for the root panel, in pixels.
+     * This is different from the others to distinguish between the top
+     * tab bar and the top root zone.
+     */
+    top: 12,
 
-  /**
-   * The size of the top edge dock zone for the root panel, in pixels.
-   * This is different from EDGE_SIZE to distinguish between the top
-   * tab bar and the top root zone.
-   */
-  const TOP_EDGE_SIZE = 12;
+    /**
+     * The size of the edge dock zone for the root panel, in pixels.
+     */
+    right: 40,
+
+    /**
+     * The size of the edge dock zone for the root panel, in pixels.
+     */
+    bottom: 40,
+
+    /**
+     * The size of the edge dock zone for the root panel, in pixels.
+     */
+    left: 40
+  };
 
   /**
    * A singleton `'layout-modified'` conflatable message.
@@ -1400,7 +1457,12 @@ namespace Private {
    * Find the drop target at the given client position.
    */
   export
-  function findDropTarget(panel: DockPanel, clientX: number, clientY: number): IDropTarget {
+  function findDropTarget(
+    panel: DockPanel,
+    clientX: number,
+    clientY: number,
+    edges: DockPanel.IEdges
+  ): IDropTarget {
     // Bail if the mouse is not over the dock panel.
     if (!ElementExt.hitTest(panel.node, clientX, clientY)) {
       return { zone: 'invalid', target: null };
@@ -1425,31 +1487,33 @@ namespace Private {
       let pr = panelRect.right - clientX;
       let pb = panelRect.bottom - clientY;
 
-      // Return the top root zone if we are near to the top of the dock panel.
-      if (pt < TOP_EDGE_SIZE) {
-        return { zone: 'root-top', target: null };
-      }
+      // Find the minimum distance to an edge.
+      let pd = Math.min(pt, pr, pb, pl);
 
-      // Find the minimum distance to an edge (excluding the top).
-      let pd = Math.min(pl, pr, pb);
-
-      // Return a root zone if the mouse is within an edge (excluding the top).
-      if (pd <= EDGE_SIZE) {
-        let zone: DropZone;
-        switch (pd) {
-        case pl:
-          zone = 'root-left';
+      // Return a root zone if the mouse is within an edge.
+      switch (pd) {
+        case pt:
+          if (pt < edges.top) {
+            return { zone: 'root-top', target: null };
+          }
           break;
         case pr:
-          zone = 'root-right';
+          if (pr < edges.right) {
+            return { zone: 'root-right', target: null };
+          }
           break;
         case pb:
-          zone = 'root-bottom';
+          if (pb < edges.bottom) {
+            return { zone: 'root-bottom', target: null };
+          }
+          break;
+        case pl:
+          if (pl < edges.left) {
+            return { zone: 'root-left', target: null };
+          }
           break;
         default:
           throw 'unreachable';
-        }
-        return { zone, target: null };
       }
     }
 
