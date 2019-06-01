@@ -1,6 +1,6 @@
 {
   "name": "@phosphor/datastore",
-  "version": "0.7.0",
+  "version": "0.7.1",
   "description": "PhosphorJS - DataStore",
   "homepage": "https://github.com/phosphorjs/phosphor",
   "bugs": {
@@ -33,7 +33,7 @@
     "watch": "tsc --build --watch"
   },
   "dependencies": {
-    "@phosphor/signaling": "^1.2.2"
+    "@phosphor/signaling": "^1.2.3"
   },
   "devDependencies": {
     "rimraf": "^2.5.2",
