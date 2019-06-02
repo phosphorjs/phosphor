@@ -11,18 +11,19 @@
     "clean:tests": "lerna run clean:tests",
     "docs": "rimraf docs/api && lerna run docs",
     "get:dependency": "get-dependency",
-    "publish": "npm run clean && npm run build && lerna publish -m \"Publish\"",
+    "publish": "npm run clean && npm run build && lerna publish -m \"Publish\" from-package",
     "remove:dependency": "remove-dependency",
     "test": "lerna run test",
     "test:chrome": "lerna run test:chrome",
     "test:firefox": "lerna run test:firefox",
     "test:ie": "lerna run test:ie --concurrency 1",
-    "update:dependency": "update-dependency"
+    "update:dependency": "update-dependency",
+    "version": "lerna version"
   },
   "dependencies": {},
   "devDependencies": {
     "@jupyterlab/buildutils": "^0.10.0",
-    "lerna": "^3.2.1"
+    "lerna": "^3.14.1"
   },
   "workspaces": [
     "examples/*",
