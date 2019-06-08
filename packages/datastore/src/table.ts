@@ -42,7 +42,7 @@ class Table<S extends Schema> implements IIterable<Record<S>> {
    *
    * @returns A new datastore table.
    */
-  static create<U extends Schema>(schema: U, context: Datastore.IContext): Table<U> {
+  static create<U extends Schema>(schema: U, context: Datastore.Context): Table<U> {
     return new Table<U>(schema, context);
   }
 
@@ -198,12 +198,12 @@ class Table<S extends Schema> implements IIterable<Record<S>> {
    *
    * @param context - The datastore context.
    */
-  private constructor(schema: S, context: Datastore.IContext) {
+  private constructor(schema: S, context: Datastore.Context) {
     this.schema = schema;
     this._context = context;
   }
 
-  private _context: Datastore.IContext;
+  private _context: Datastore.Context;
   private _records = new BPlusTree<Record<S>>(Private.recordCmp);
 }
 
@@ -323,7 +323,7 @@ namespace Private {
    * @returns A new record with the update applied.
    */
   export
-  function applyUpdate<S extends Schema>(schema: S, record: Record<S>, update: Record.Update<S>, context: Datastore.IContext): Record<S> {
+  function applyUpdate<S extends Schema>(schema: S, record: Record<S>, update: Record.Update<S>, context: Datastore.Context): Record<S> {
     // Fetch the version and store id.
     let version = context.version;
     let storeId = context.storeId;

@@ -419,7 +419,7 @@ namespace Private {
         metadata.ids.splice(index, count);
 
         // Compute the removed text
-        let removed = value.slice(index, count);
+        let removed = value.slice(index, index + count);
 
         // Compute the new value.
         value = value.slice(0, index) + value.slice(index + count);
