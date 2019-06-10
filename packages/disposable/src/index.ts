@@ -222,7 +222,7 @@ namespace DisposableSet {
  * An observable object which manages a collection of disposable items.
  */
 export
-class ObservableDisposableSet extends DisposableSet implements IObservableDisposable{
+class ObservableDisposableSet extends DisposableSet implements IObservableDisposable {
   /**
    * A signal emitted when the set is disposed.
    */
