@@ -36,7 +36,7 @@ type Schema = {
   readonly fields: { readonly [name: string]: AnyField };
 };
 
-const invalidFielnameLeads = ['$', '@'];
+const invalidFieldnameLeads = ['$', '@'];
 
 /**
  * Validate a schema definition.
@@ -46,7 +46,7 @@ function validateSchema(schema: Schema): string[] {
   const errors = [];
   // Ensure that field names do not begin with `$` or `@`.
   for (let name in schema.fields) {
-    if (invalidFielnameLeads.indexOf(name[0]) !== -1) {
+    if (invalidFieldnameLeads.indexOf(name[0]) !== -1) {
       errors.push(
         `Invalid field name: '${name}'. Cannot start field name with '${name[0]}'`
       );
