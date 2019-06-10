@@ -58,7 +58,7 @@ describe('@phosphor/datastore', () => {
 
     describe('createMetadata()', () => {
 
-      it('should create an initial value for the field', () => {
+      it('should create initial metadata for the field', () => {
         const metadata = field.createMetadata();
         expect(metadata.ids.length).to.equal(0);
         expect(metadata.values.length).to.equal(0);
