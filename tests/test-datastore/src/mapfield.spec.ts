@@ -13,6 +13,10 @@ import {
   MapField
 } from '@phosphor/datastore';
 
+import {
+  createDuplexId
+} from '@phosphor/datastore/lib/utilities';
+
 type MapValue = string;
 
 describe('@phosphor/datastore', () => {
@@ -62,9 +66,156 @@ describe('@phosphor/datastore', () => {
     });
 
     describe('applyUpdate', () => {
+
+      it ('should apply an update to a value', () => {
+        const previous = {'zero': 'zeroth'};
+        const metadata = field.createMetadata();
+        const update = {
+          'one': 'first',
+          'two': 'second'
+        };
+        const { value, patch } = field.applyUpdate({
+          previous,
+          metadata,
+          update,
+          version: 1,
+          storeId: 1
+        });
+        expect(value).to.eql({ 'zero': 'zeroth', 'one': 'first', 'two': 'second' });
+        expect(patch.values).to.eql(update);
+      });
+
+      it ('should indicate changed values in the change object', () => {
+        const previous = {'zero': 'zeroth', 'one': 'first' };
+        const metadata = field.createMetadata();
+        const update = {
+          'one': null, // remove this field.
+          'two': 'second' // add this field.
+        };
+        const { value, change } = field.applyUpdate({
+          previous,
+          metadata,
+          update,
+          version: 1,
+          storeId: 1
+        });
+        expect(value).to.eql({ 'zero': 'zeroth', 'two': 'second' });
+        expect(change.previous).to.eql({ 'one': 'first', 'two': null });
+        expect(change.current).to.eql({ 'one': null, 'two': 'second' });
+      });
+
+      it ('should allow for out-of-order patches', () => {
+        const previous = {'zero': 'zeroth', 'one': 'first' };
+        const metadata = field.createMetadata();
+        const update1 = {
+          'one': null, // remove this field.
+          'two': 'a-new-two' // add this field.
+        };
+        const update2 = {
+          'zero': 'a-new-none', // set this field.
+          'one': 'a-new-one', // set this field.
+          'two': 'second' // add this field.
+        };
+        field.applyUpdate({
+          previous,
+          metadata,
+          update: update1,
+          version: 10, // a later version.
+          storeId: 1
+        });
+        const { value, change } = field.applyUpdate({
+          previous,
+          metadata,
+          update: update2,
+          version: 1,
+          storeId: 1
+        });
+        expect(value).to.eql({ 'zero': 'a-new-none', 'two': 'a-new-two' });
+        expect(change.previous).to.eql({
+          'zero': 'zeroth',
+          'one': 'first',
+          'two': null
+        });
+        expect(change.current).to.eql({
+          'zero': 'a-new-none',
+          'one': null,
+          'two': 'a-new-two' });
+      });
+
     });
 
     describe('applyPatch', () => {
+
+      it ('should apply a patch to a value', () => {
+        const previous = {'zero': 'zeroth'};
+        const metadata = field.createMetadata();
+        const update = {
+          'one': 'first',
+          'two': 'second'
+        };
+        const id = createDuplexId(1, 1);
+        const { value } = field.applyPatch({
+          previous,
+          patch: { id, values: update },
+          metadata
+        });
+        expect(value).to.eql({ 'zero': 'zeroth', 'one': 'first', 'two': 'second' });
+      });
+
+      it ('should indicate changed values in the change object', () => {
+        const previous = {'zero': 'zeroth', 'one': 'first' };
+        const metadata = field.createMetadata();
+        const update = {
+          'one': null, // remove this field.
+          'two': 'second' // add this field.
+        };
+        const id = createDuplexId(1, 1);
+        const { value, change } = field.applyPatch({
+          previous,
+          patch: { id, values: update },
+          metadata
+        });
+        expect(value).to.eql({ 'zero': 'zeroth', 'two': 'second' });
+        expect(change.previous).to.eql({ 'one': 'first', 'two': null });
+        expect(change.current).to.eql({ 'one': null, 'two': 'second' });
+      });
+
+      it ('should allow for out-of-order patches', () => {
+        const previous = {'zero': 'zeroth', 'one': 'first' };
+        const metadata = field.createMetadata();
+        const update1 = {
+          'one': null, // remove this field.
+          'two': 'a-new-two' // add this field.
+        };
+        const update2 = {
+          'zero': 'a-new-none', // set this field.
+          'one': 'a-new-one', // set this field.
+          'two': 'second' // add this field.
+        };
+        const id1 = createDuplexId(10 /* later version */, 2);
+        const id2 = createDuplexId(1 /* earlier version */, 1);
+        field.applyPatch({
+          previous,
+          patch: { id: id1, values: update1 },
+          metadata
+        });
+        const { value, change } = field.applyPatch({
+          previous,
+          patch: { id: id2, values: update2 },
+          metadata
+        });
+        expect(value).to.eql({ 'zero': 'a-new-none', 'two': 'a-new-two' });
+        expect(change.previous).to.eql({
+          'zero': 'zeroth',
+          'one': 'first',
+          'two': null
+        });
+        expect(change.current).to.eql({
+          'zero': 'a-new-none',
+          'one': null,
+          'two': 'a-new-two' });
+      });
+
     });
 
     describe('mergeChange', () => {
