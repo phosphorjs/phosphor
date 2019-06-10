@@ -112,6 +112,7 @@ class ObservableDisposableDelegate extends DisposableDelegate implements IObserv
     }
     super.dispose();
     this._disposed.emit(undefined);
+    Signal.clearData(this);
   }
 
   private _disposed = new Signal<this, void>(this);
@@ -242,6 +243,7 @@ class ObservableDisposableSet extends DisposableSet implements IObservableDispos
     }
     super.dispose();
     this._disposed.emit(undefined);
+    Signal.clearData(this);
   }
 
   private _disposed = new Signal<this, void>(this);
