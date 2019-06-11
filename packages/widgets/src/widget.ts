@@ -10,7 +10,7 @@ import {
 } from '@phosphor/algorithm';
 
 import {
-  IDisposable
+  IObservableDisposable
 } from '@phosphor/disposable';
 
 import {
@@ -43,7 +43,7 @@ import {
  * content.
  */
 export
-class Widget implements IDisposable, IMessageHandler {
+class Widget implements IMessageHandler, IObservableDisposable {
   /**
    * Construct a new widget.
    *
