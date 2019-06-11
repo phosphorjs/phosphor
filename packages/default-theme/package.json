@@ -18,6 +18,7 @@
     "images/*.png",
     "style/*.css"
   ],
+  "style": "style/index.css",
   "repository": {
     "type": "git",
     "url": "https://github.com/phosphorjs/phosphor.git"
