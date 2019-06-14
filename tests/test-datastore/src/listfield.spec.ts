@@ -23,7 +23,7 @@ describe('@phosphor/datastore', () => {
 
     beforeEach(() => {
         field = new ListField<ListValue>({
-          description: 'A map field storing strings'
+          description: 'A list field storing numbers'
         });
     });
 

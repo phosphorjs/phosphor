@@ -9,3 +9,4 @@
 import './listfield.spec';
 import './mapfield.spec';
 import './registerfield.spec';
+import './textfield.spec';

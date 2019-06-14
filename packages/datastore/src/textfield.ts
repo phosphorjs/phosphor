@@ -258,7 +258,7 @@ namespace TextField {
     readonly removedIds: ReadonlyArray<string>;
 
     /**
-     * The text that were removed.
+     * The text that was removed.
      */
     readonly removedText: string;
 
@@ -268,7 +268,7 @@ namespace TextField {
     readonly insertedIds: ReadonlyArray<string>;
 
     /**
-     * The text that were inserted.
+     * The text that was inserted.
      */
     readonly insertedText: string;
   };
