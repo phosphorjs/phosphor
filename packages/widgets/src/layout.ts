@@ -771,7 +771,7 @@ class LayoutItem implements IDisposable {
     let clampW = Math.max(this._minWidth, Math.min(width, this._maxWidth));
     let clampH = Math.max(this._minHeight, Math.min(height, this._maxHeight));
 
-    // Ajdust the left edge for the horizontal alignment, if needed.
+    // Adjust the left edge for the horizontal alignment, if needed.
     if (clampW < width) {
       switch (Layout.getHorizontalAlignment(this.widget)) {
       case 'left':
@@ -787,7 +787,7 @@ class LayoutItem implements IDisposable {
       }
     }
 
-    // Ajdust the top edge for the vertical alignment, if needed.
+    // Adjust the top edge for the vertical alignment, if needed.
     if (clampH < height) {
       switch (Layout.getVerticalAlignment(this.widget)) {
       case 'top':
