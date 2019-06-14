@@ -123,7 +123,7 @@ describe('@phosphor/datastore', () => {
         expect(patch[1].insertedIds.length).to.equal(splice2.values.length);
       });
 
-      it('should allow for out-of-order patches', () => {
+      it('should allow for out-of-order updates', () => {
         const previous = field.createValue();
         const metadata = field.createMetadata();
         const splice1 = {

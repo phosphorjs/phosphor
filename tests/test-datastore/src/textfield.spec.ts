@@ -60,13 +60,62 @@ describe('@phosphor/datastore', () => {
     describe('applyUpdate', () => {
 
       it('should return the result of the update', () => {
+        const previous = field.createValue();
+        const metadata = field.createMetadata();
+        const splice = {
+          index: 0,
+          remove: 0,
+          text: 'abc'
+        };
+        const { value, change, patch } = field.applyUpdate({
+          previous,
+          update: splice,
+          metadata,
+          version: 1,
+          storeId: 1
+        });
+        expect(value).to.equal('abc');
+        expect(change[0]).to.eql({ index: 0, removed: '', inserted: 'abc'});
+        expect(patch.length).to.equal(1);
+        expect(patch[0].removedText.length).to.equal(splice.remove);
+        expect(patch[0].insertedText).to.equal(splice.text);
+        expect(patch[0].removedIds.length).to.equal(splice.remove);
+        expect(patch[0].insertedIds.length).to.equal(splice.text.length);
       });
 
-      it('should allow for out-of-order patches', () => {
-      });
-
-
-      it('should update the metadata with the patch ordering', () => {
+      it('should accept multiple splices', () => {
+        const previous = field.createValue();
+        const metadata = field.createMetadata();
+        const splice1 = {
+          index: 0,
+          remove: 0,
+          text: 'abc'
+        };
+        const splice2 = {
+          index: 1,
+          remove: 1,
+          text: 'de'
+        };
+        const { value, change, patch } = field.applyUpdate({
+          previous,
+          update: [splice1, splice2],
+          metadata,
+          version: 1,
+          storeId: 1
+        });
+        expect(value).to.equal('adec');
+        expect(change.length).to.eql(2);
+        expect(change[0]).to.eql({ index: 0, removed: '', inserted: 'abc'});
+        expect(change[1]).to.eql({ index: 1, removed: 'b', inserted: 'de'});
+        expect(patch.length).to.equal(2);
+        expect(patch[0].removedText.length).to.equal(splice1.remove);
+        expect(patch[0].insertedText).to.eql(splice1.text);
+        expect(patch[0].removedIds.length).to.equal(splice1.remove);
+        expect(patch[0].insertedIds.length).to.equal(splice1.text.length);
+        expect(patch[1].removedText.length).to.equal(splice2.remove);
+        expect(patch[1].insertedText).to.equal(splice2.text);
+        expect(patch[1].removedIds.length).to.equal(splice2.remove);
+        expect(patch[1].insertedIds.length).to.equal(splice2.text.length);
       });
 
     });
@@ -74,9 +123,6 @@ describe('@phosphor/datastore', () => {
     describe('applyPatch', () => {
 
       it('should return the result of the patch', () => {
-      });
-
-      it('should update the metadata with the patch ordering', () => {
       });
 
     });
