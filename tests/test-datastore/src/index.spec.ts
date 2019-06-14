@@ -6,5 +6,6 @@
 | The full license is in the file LICENSE, distributed with this software.
 |----------------------------------------------------------------------------*/
 
+import './listfield.spec';
 import './mapfield.spec';
 import './registerfield.spec';
