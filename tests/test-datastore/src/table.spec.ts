@@ -42,12 +42,17 @@ const schema: TestSchema = {
   }
 };
 
+/**
+ * Remove readonly guards from Context for testing purposes.
+ */
+type MutableContext = { -readonly [K in keyof Datastore.Context]: Datastore.Context[K] };
+
 describe('@phosphor/datastore', () => {
 
   describe('Table', () => {
 
     let table: Table<TestSchema>;
-    let context: Datastore.Context;
+    let context: MutableContext;
 
     beforeEach(() => {
       context = {
@@ -82,11 +87,11 @@ describe('@phosphor/datastore', () => {
 
       it('should return whether the table is empty', () => {
         expect(table.isEmpty).to.be.true;
-        (context as any).inTransaction = true;
+        context.inTransaction = true;
         table.update({
           'my-record': { enabled: true, count: 1 }
         });
-        (context as any).inTransaction = false;
+        context.inTransaction = false;
         expect(table.isEmpty).to.be.false;
 
       });
@@ -97,13 +102,13 @@ describe('@phosphor/datastore', () => {
 
       it('should return the size of the table', () => {
         expect(table.size).to.equal(0);
-        (context as any).inTransaction = true;
+        context.inTransaction = true;
         table.update({
           'my-record': { enabled: true, count: 1 },
           'my-other-record': { enabled: false, count: 2 },
           'my-other-other-record': { enabled: false, count: 3 }
         });
-        (context as any).inTransaction = false;
+        context.inTransaction = false;
         expect(table.size).to.equal(3);
       });
 
@@ -112,13 +117,13 @@ describe('@phosphor/datastore', () => {
     describe('iter()', () => {
 
       it('should return an iterator over the records in the table', () => {
-        (context as any).inTransaction = true;
+        context.inTransaction = true;
         table.update({
           'my-record': { },
           'my-other-record': { },
           'my-other-other-record': { }
         });
-        (context as any).inTransaction = false;
+        context.inTransaction = false;
         const arr = toArray(table.iter());
         expect(arr.length).to.equal(3);
 
@@ -130,11 +135,11 @@ describe('@phosphor/datastore', () => {
 
       it('should return whether the table has a given record', () => {
         expect(table.has('my-record')).to.be.false;
-        (context as any).inTransaction = true;
+        context.inTransaction = true;
         table.update({
           'my-record': { enabled: true, count: 1 }
         });
-        (context as any).inTransaction = false;
+        context.inTransaction = false;
         expect(table.has('my-record')).to.be.true;
 
       });
@@ -148,11 +153,11 @@ describe('@phosphor/datastore', () => {
       })
       
       it('should get an existing record from a table', () => {
-        (context as any).inTransaction = true;
+        context.inTransaction = true;
         table.update({
           'my-record': { enabled: true, count: 1 }
         });
-        (context as any).inTransaction = false;
+        context.inTransaction = false;
         const record = table.get('my-record')!;
         expect(record.$id).to.equal('my-record');
         expect(record.enabled).to.be.true;
@@ -173,11 +178,11 @@ describe('@phosphor/datastore', () => {
       });
 
       it('should create a record if it does not exist', () => {
-        (context as any).inTransaction = true;
+        context.inTransaction = true;
         table.update({
           'my-record': { enabled: true, count: 1 }
         });
-        (context as any).inTransaction = false;
+        context.inTransaction = false;
         const record = table.get('my-record')!;
         expect(record.$id).to.equal('my-record');
         expect(record['@@metadata']).to.not.equal(undefined);
@@ -185,11 +190,11 @@ describe('@phosphor/datastore', () => {
       });
 
       it('should initialize values appropriately', () => {
-        (context as any).inTransaction = true;
+        context.inTransaction = true;
         table.update({
           'my-record': { }
         });
-        (context as any).inTransaction = false;
+        context.inTransaction = false;
         const record = table.get('my-record')!;
         expect(record.content).to.equal('');
         expect(record.enabled).to.be.false;
@@ -200,14 +205,14 @@ describe('@phosphor/datastore', () => {
       });
 
       it('should update the records in the table', () => {
-        (context as any).inTransaction = true;
+        context.inTransaction = true;
         table.update({
           'my-record': {}
         });
-        (context as any).inTransaction = false;
+        context.inTransaction = false;
         let record = table.get('my-record')!;
         expect(record.content).to.equal('');
-        (context as any).inTransaction = true;
+        context.inTransaction = true;
         table.update({
           'my-record': {
             content: { index: 0, remove: 0, text: 'text' },
@@ -217,13 +222,43 @@ describe('@phosphor/datastore', () => {
             metadata: { id: 'new-identifier' }
           }
         });
-        (context as any).inTransaction = false;
+        context.inTransaction = false;
         record = table.get('my-record')!;
         expect(record.content).to.equal('text');
         expect(record.enabled).to.be.true;
         expect(record.count).to.equal(10);
         expect(record.links).to.eql(['a', 'b', 'c']);
         expect(record.metadata).to.eql({ id: 'new-identifier' });
+      });
+
+    });
+
+    describe('patch()', () => {
+
+      it('should create a record if it does not exist', () => {
+        expect(table.get('my-record')).to.be.undefined;
+        const patch = { 'my-record': { count: { id: 'unique-id', value: 2 } } };
+        Table.patch(table, patch);
+        expect(table.get('my-record')).to.not.be.undefined;
+      });
+
+      it('should patch an existing record', () => {
+        context.inTransaction = true;
+        table.update({ 'my-record': { count: 1 } });
+        context.inTransaction = false;
+        expect(table.get('my-record')!.count).to.equal(1);
+        const patch = { 'my-record': { count: { id: 'unique-id', value: 2 } } };
+        Table.patch(table, patch);
+        expect(table.get('my-record')!.count).to.equal(2);
+      });
+
+      it('should return a user-facing change for the patch', () => {
+        const patch = {
+          'my-record': { enabled: { id: 'unique-id', value: true } }
+        };
+        const change = Table.patch(table, patch);
+        expect(change['my-record']!.enabled!.previous).to.be.false;
+        expect(change['my-record']!.enabled!.current).to.be.true;
       });
 
     });
