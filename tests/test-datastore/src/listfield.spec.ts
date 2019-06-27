@@ -46,7 +46,7 @@ describe('@phosphor/datastore', () => {
     describe('createValue()', () => {
 
       it('should create an initial value for the field', () => {
-        const value = field.createValue();
+        let value = field.createValue();
         expect(value).to.eql([]);
       });
 
@@ -55,7 +55,7 @@ describe('@phosphor/datastore', () => {
     describe('createMetadata()', () => {
 
       it('should create initial metadata for the field', () => {
-        const metadata = field.createMetadata();
+        let metadata = field.createMetadata();
         expect(metadata.ids).to.eql([]);
         expect(metadata.cemetery).to.eql({});
       });
@@ -65,14 +65,14 @@ describe('@phosphor/datastore', () => {
     describe('applyUpdate', () => {
 
       it('should return the result of the update', () => {
-        const previous = field.createValue();
-        const metadata = field.createMetadata();
-        const splice = {
+        let previous = field.createValue();
+        let metadata = field.createMetadata();
+        let splice = {
           index: 0,
           remove: 0,
           values: [1, 2, 3]
         };
-        const { value, change, patch } = field.applyUpdate({
+        let { value, change, patch } = field.applyUpdate({
           previous,
           update: splice,
           metadata,
@@ -89,19 +89,19 @@ describe('@phosphor/datastore', () => {
       });
 
       it('should accept multiple splices', () => {
-        const previous = field.createValue();
-        const metadata = field.createMetadata();
-        const splice1 = {
+        let previous = field.createValue();
+        let metadata = field.createMetadata();
+        let splice1 = {
           index: 0,
           remove: 0,
           values: [1, 2, 3]
         };
-        const splice2 = {
+        let splice2 = {
           index: 1,
           remove: 1,
           values: [4, 5]
         };
-        const { value, change, patch } = field.applyUpdate({
+        let { value, change, patch } = field.applyUpdate({
           previous,
           update: [splice1, splice2],
           metadata,
@@ -124,14 +124,14 @@ describe('@phosphor/datastore', () => {
       });
 
       it('should allow for out-of-order updates', () => {
-        const previous = field.createValue();
-        const metadata = field.createMetadata();
-        const splice1 = {
+        let previous = field.createValue();
+        let metadata = field.createMetadata();
+        let splice1 = {
           index: 0,
           remove: 0,
           values: [4, 5]
         };
-        const splice2 = {
+        let splice2 = {
           index: 0,
           remove: 0,
           values: [1, 2]
@@ -143,7 +143,7 @@ describe('@phosphor/datastore', () => {
           version: 10, // later version
           storeId: 1
         });
-        const { value, change, patch } = field.applyUpdate({
+        let { value, change, patch } = field.applyUpdate({
           previous,
           update: splice2,
           metadata,
@@ -177,21 +177,21 @@ describe('@phosphor/datastore', () => {
     describe('mergeChange', () => {
 
       it('should merge two successive changes', () => {
-        const change1 = [
+        let change1 = [
           {
             index: 0,
             removed: [],
             inserted: [0, 1]
           }
         ];
-        const change2 = [
+        let change2 = [
           {
             index: 1,
             removed: [1],
             inserted: [2, 3]
           }
         ];
-        const result = field.mergeChange(change1, change2);
+        let result = field.mergeChange(change1, change2);
         expect(result).to.eql([...change1, ...change2]);
       });
 
@@ -200,7 +200,7 @@ describe('@phosphor/datastore', () => {
     describe('mergePatch', () => {
 
       it('should merge two successive patches', () => {
-        const patch1 = [
+        let patch1 = [
           {
             removedIds: [],
             removedValues: [],
@@ -208,7 +208,7 @@ describe('@phosphor/datastore', () => {
             insertedValues: [0, 1]
           }
         ];
-        const patch2 = [
+        let patch2 = [
           {
             removedIds: ['id-1'],
             removedValues: [0],
@@ -216,7 +216,7 @@ describe('@phosphor/datastore', () => {
             insertedValues: [2, 3]
           }
         ];
-        const result = field.mergePatch(patch1, patch2);
+        let result = field.mergePatch(patch1, patch2);
         expect(result).to.eql([...patch1, ...patch2]);
       });
 

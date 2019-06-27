@@ -60,14 +60,14 @@ describe('@phosphor/datastore', () => {
     describe('applyUpdate', () => {
 
       it('should return the result of the update', () => {
-        const previous = field.createValue();
-        const metadata = field.createMetadata();
-        const splice = {
+        let previous = field.createValue();
+        let metadata = field.createMetadata();
+        let splice = {
           index: 0,
           remove: 0,
           text: 'abc'
         };
-        const { value, change, patch } = field.applyUpdate({
+        let { value, change, patch } = field.applyUpdate({
           previous,
           update: splice,
           metadata,
@@ -84,19 +84,19 @@ describe('@phosphor/datastore', () => {
       });
 
       it('should accept multiple splices', () => {
-        const previous = field.createValue();
-        const metadata = field.createMetadata();
-        const splice1 = {
+        let previous = field.createValue();
+        let metadata = field.createMetadata();
+        let splice1 = {
           index: 0,
           remove: 0,
           text: 'abc'
         };
-        const splice2 = {
+        let splice2 = {
           index: 1,
           remove: 1,
           text: 'de'
         };
-        const { value, change, patch } = field.applyUpdate({
+        let { value, change, patch } = field.applyUpdate({
           previous,
           update: [splice1, splice2],
           metadata,
@@ -130,21 +130,21 @@ describe('@phosphor/datastore', () => {
     describe('mergeChange', () => {
 
       it('should merge two successive changes', () => {
-        const change1 = [
+        let change1 = [
           {
             index: 0,
             removed: '',
             inserted: 'ab'
           }
         ];
-        const change2 = [
+        let change2 = [
           {
             index: 1,
             removed: 'b',
             inserted: 'cd'
           }
         ];
-        const result = field.mergeChange(change1, change2);
+        let result = field.mergeChange(change1, change2);
         expect(result).to.eql([...change1, ...change2]);
       });
 
@@ -153,7 +153,7 @@ describe('@phosphor/datastore', () => {
     describe('mergePatch', () => {
 
       it('should merge two successive patches', () => {
-        const patch1 = [
+        let patch1 = [
           {
             removedIds: [],
             removedText: '' ,
@@ -161,7 +161,7 @@ describe('@phosphor/datastore', () => {
             insertedText: 'ab'
           }
         ];
-        const patch2 = [
+        let patch2 = [
           {
             removedIds: ['id-2'],
             removedText: 'b',
@@ -169,7 +169,7 @@ describe('@phosphor/datastore', () => {
             insertedText: 'cd'
           }
         ];
-        const result = field.mergePatch(patch1, patch2);
+        let result = field.mergePatch(patch1, patch2);
         expect(result).to.eql([...patch1, ...patch2]);
       });
 

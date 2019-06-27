@@ -50,7 +50,7 @@ describe('@phosphor/datastore', () => {
     describe('createValue()', () => {
 
       it('should create an initial value for the field', () => {
-        const value = field.createValue();
+        let value = field.createValue();
         expect(value).to.eql({});
       });
 
@@ -59,7 +59,7 @@ describe('@phosphor/datastore', () => {
     describe('createMetadata()', () => {
 
       it('should create initial metadata for the field', () => {
-        const metadata = field.createMetadata();
+        let metadata = field.createMetadata();
         expect(metadata).to.eql({ ids: {}, values: {} });
       });
 
@@ -68,13 +68,13 @@ describe('@phosphor/datastore', () => {
     describe('applyUpdate', () => {
 
       it ('should apply an update to a value', () => {
-        const previous = {'zero': 'zeroth'};
-        const metadata = field.createMetadata();
-        const update = {
+        let previous = {'zero': 'zeroth'};
+        let metadata = field.createMetadata();
+        let update = {
           'one': 'first',
           'two': 'second'
         };
-        const { value, patch } = field.applyUpdate({
+        let { value, patch } = field.applyUpdate({
           previous,
           metadata,
           update,
@@ -86,13 +86,13 @@ describe('@phosphor/datastore', () => {
       });
 
       it ('should indicate changed values in the change object', () => {
-        const previous = {'zero': 'zeroth', 'one': 'first' };
-        const metadata = field.createMetadata();
-        const update = {
+        let previous = {'zero': 'zeroth', 'one': 'first' };
+        let metadata = field.createMetadata();
+        let update = {
           'one': null, // remove this field.
           'two': 'second' // add this field.
         };
-        const { value, change } = field.applyUpdate({
+        let { value, change } = field.applyUpdate({
           previous,
           metadata,
           update,
@@ -105,13 +105,13 @@ describe('@phosphor/datastore', () => {
       });
 
       it ('should allow for out-of-order patches', () => {
-        const previous = {'zero': 'zeroth', 'one': 'first' };
-        const metadata = field.createMetadata();
-        const update1 = {
+        let previous = {'zero': 'zeroth', 'one': 'first' };
+        let metadata = field.createMetadata();
+        let update1 = {
           'one': null, // remove this field.
           'two': 'a-new-two' // add this field.
         };
-        const update2 = {
+        let update2 = {
           'zero': 'a-new-none', // set this field.
           'one': 'a-new-one', // set this field.
           'two': 'second' // add this field.
@@ -123,7 +123,7 @@ describe('@phosphor/datastore', () => {
           version: 10, // a later version.
           storeId: 1
         });
-        const { value, change } = field.applyUpdate({
+        let { value, change } = field.applyUpdate({
           previous,
           metadata,
           update: update2,
@@ -147,14 +147,14 @@ describe('@phosphor/datastore', () => {
     describe('applyPatch', () => {
 
       it ('should apply a patch to a value', () => {
-        const previous = {'zero': 'zeroth'};
-        const metadata = field.createMetadata();
-        const update = {
+        let previous = {'zero': 'zeroth'};
+        let metadata = field.createMetadata();
+        let update = {
           'one': 'first',
           'two': 'second'
         };
-        const id = createDuplexId(1, 1);
-        const { value } = field.applyPatch({
+        let id = createDuplexId(1, 1);
+        let { value } = field.applyPatch({
           previous,
           patch: { id, values: update },
           metadata
@@ -163,14 +163,14 @@ describe('@phosphor/datastore', () => {
       });
 
       it ('should indicate changed values in the change object', () => {
-        const previous = {'zero': 'zeroth', 'one': 'first' };
-        const metadata = field.createMetadata();
-        const update = {
+        let previous = {'zero': 'zeroth', 'one': 'first' };
+        let metadata = field.createMetadata();
+        let update = {
           'one': null, // remove this field.
           'two': 'second' // add this field.
         };
-        const id = createDuplexId(1, 1);
-        const { value, change } = field.applyPatch({
+        let id = createDuplexId(1, 1);
+        let { value, change } = field.applyPatch({
           previous,
           patch: { id, values: update },
           metadata
@@ -181,25 +181,25 @@ describe('@phosphor/datastore', () => {
       });
 
       it ('should allow for out-of-order patches', () => {
-        const previous = {'zero': 'zeroth', 'one': 'first' };
-        const metadata = field.createMetadata();
-        const update1 = {
+        let previous = {'zero': 'zeroth', 'one': 'first' };
+        let metadata = field.createMetadata();
+        let update1 = {
           'one': null, // remove this field.
           'two': 'a-new-two' // add this field.
         };
-        const update2 = {
+        let update2 = {
           'zero': 'a-new-none', // set this field.
           'one': 'a-new-one', // set this field.
           'two': 'second' // add this field.
         };
-        const id1 = createDuplexId(10 /* later version */, 2);
-        const id2 = createDuplexId(1 /* earlier version */, 1);
+        let id1 = createDuplexId(10 /* later version */, 2);
+        let id2 = createDuplexId(1 /* earlier version */, 1);
         field.applyPatch({
           previous,
           patch: { id: id1, values: update1 },
           metadata
         });
-        const { value, change } = field.applyPatch({
+        let { value, change } = field.applyPatch({
           previous,
           patch: { id: id2, values: update2 },
           metadata
@@ -221,15 +221,15 @@ describe('@phosphor/datastore', () => {
     describe('mergeChange', () => {
 
       it('should merge two successive changes', () => {
-        const change1 = {
+        let change1 = {
           previous: {},
           current: { first: 'first-change' }
         };
-        const change2 = {
+        let change2 = {
           previous: {},
           current: { second: 'second-change' }
         };
-        const result = field.mergeChange(change1, change2);
+        let result = field.mergeChange(change1, change2);
         expect(result.previous).to.eql({});
         expect(result.current).to.eql({
           first: 'first-change',
@@ -239,28 +239,28 @@ describe('@phosphor/datastore', () => {
       });
 
       it('should prefer the first change for the previous merged field', () => {
-        const change1 = {
+        let change1 = {
           previous: { value: 'value' },
           current: { value: 'value-changed' }
         };
-        const change2 = {
+        let change2 = {
           previous: { value: 'other'},
           current: { value: 'other-changed' }
         };
-        const result = field.mergeChange(change1, change2);
+        let result = field.mergeChange(change1, change2);
         expect(result.previous).to.eql({ value: 'value' });
       });
 
       it('should prefer the second change for the current merged field', () => {
-        const change1 = {
+        let change1 = {
           previous: { value: 'value' },
           current: { value: 'value-changed' }
         };
-        const change2 = {
+        let change2 = {
           previous: { value: 'other'},
           current: { value: 'other-changed' }
         };
-        const result = field.mergeChange(change1, change2);
+        let result = field.mergeChange(change1, change2);
         expect(result.current).to.eql({ value: 'other-changed' });
       });
 
@@ -269,15 +269,15 @@ describe('@phosphor/datastore', () => {
     describe('mergePatch', () => {
 
       it('should merge two patches into a single patch object', () => {
-        const patch1 = {
+        let patch1 = {
           id: 'one',
           values: { first: 'first' }
         };
-        const patch2 = {
+        let patch2 = {
           id: 'two',
           values: { second: 'second' }
         };
-        const result = field.mergePatch(patch1, patch2);
+        let result = field.mergePatch(patch1, patch2);
         expect(result).to.eql({
           id: 'two',
           values: { first: 'first', second: 'second' }
@@ -285,15 +285,15 @@ describe('@phosphor/datastore', () => {
       });
 
       it('should prefer the second patch over the first', () => {
-        const patch1 = {
+        let patch1 = {
           id: 'one',
           values: { first: 'first', second: 'second' }
         };
-        const patch2 = {
+        let patch2 = {
           id: 'two',
           values: { first: 'other', second: 'next-other' }
         };
-        const result = field.mergePatch(patch1, patch2);
+        let result = field.mergePatch(patch1, patch2);
         expect(result).to.eql(patch2);
       });
 
