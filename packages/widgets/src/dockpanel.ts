@@ -65,6 +65,7 @@ class DockPanel extends Widget {
     this.addClass('p-DockPanel');
     this._mode = options.mode || 'multiple-document';
     this._renderer = options.renderer || DockPanel.defaultRenderer;
+    this._edges = options.edges || Private.DEFAULT_EDGES;
 
     // Toggle the CSS mode attribute.
     this.dataset['mode'] = this._mode;
@@ -515,7 +516,12 @@ class DockPanel extends Widget {
 
     // Find the drop target under the mouse.
     let { clientX, clientY } = event;
-    let { zone, target } = Private.findDropTarget(this, clientX, clientY);
+    let { zone, target } = Private.findDropTarget(
+      this,
+      clientX,
+      clientY,
+      this._edges
+    );
 
     // Bail if the drop zone is invalid.
     if (zone === 'invalid') {
@@ -578,6 +584,9 @@ class DockPanel extends Widget {
       break;
     case 'widget-bottom':
       this.addWidget(widget, { mode: 'split-bottom', ref });
+      break;
+    case 'widget-tab':
+      this.addWidget(widget, { mode: 'tab-after', ref });
       break;
     default:
       throw 'unreachable';
@@ -719,7 +728,12 @@ class DockPanel extends Widget {
    */
   private _showOverlay(clientX: number, clientY: number): Private.DropZone {
     // Find the dock target for the given client position.
-    let { zone, target } = Private.findDropTarget(this, clientX, clientY);
+    let { zone, target } = Private.findDropTarget(
+      this,
+      clientX,
+      clientY,
+      this._edges
+    );
 
     // If the drop zone is invalid, hide the overlay and bail.
     if (zone === 'invalid') {
@@ -796,6 +810,13 @@ class DockPanel extends Widget {
       left = target!.left;
       right = target!.right;
       bottom = target!.bottom;
+      break;
+    case 'widget-tab':
+      const tabHeight = target!.tabBar.node.getBoundingClientRect().height;
+      top = target!.top;
+      left = target!.left;
+      right = target!.right;
+      bottom = target!.bottom + target!.height - tabHeight;
       break;
     default:
       throw 'unreachable';
@@ -938,6 +959,7 @@ class DockPanel extends Widget {
     this._drag.start(clientX, clientY).then(cleanup);
   }
 
+  private _edges: DockPanel.IEdges;
   private _mode: DockPanel.Mode;
   private _drag: Drag | null = null;
   private _renderer: DockPanel.IRenderer;
@@ -983,7 +1005,38 @@ namespace DockPanel {
      * The deafult is `'multiple-document'`.
      */
     mode?: DockPanel.Mode;
+
+    /**
+     * The sizes of the edge drop zones, in pixels.
+     * If not given, default values will be used.
+     */
+    edges?: IEdges;
   }
+
+  /**
+   * The sizes of the edge drop zones, in pixels.
+   */
+  export interface IEdges {
+    /**
+     * The size of the top edge drop zone.
+     */
+    top: number;
+
+    /**
+     * The size of the right edge drop zone.
+     */
+    right: number;
+
+    /**
+     * The size of the bottom edge drop zone.
+     */
+    bottom: number;
+
+    /**
+     * The size of the left edge drop zone.
+     */
+    left: number;
+  };
 
   /**
    * A type alias for the supported dock panel modes.
@@ -1165,7 +1218,7 @@ namespace DockPanel {
       }
 
       // Otherwise setup the hide timer.
-      this._timer = setTimeout(() => {
+      this._timer = window.setTimeout(() => {
         this._timer = -1;
         this._hidden = true;
         this.node.classList.add('p-mod-hidden');
@@ -1229,10 +1282,31 @@ namespace Private {
   const GOLDEN_RATIO = 0.618;
 
   /**
-   * The size of the edge dock zone for the root panel, in pixels.
+   * The default sizes for the edge drop zones, in pixels.
    */
-  export
-  const EDGE_SIZE = 40;
+  export const DEFAULT_EDGES = {
+    /**
+     * The size of the top edge dock zone for the root panel, in pixels.
+     * This is different from the others to distinguish between the top
+     * tab bar and the top root zone.
+     */
+    top: 12,
+
+    /**
+     * The size of the edge dock zone for the root panel, in pixels.
+     */
+    right: 40,
+
+    /**
+     * The size of the edge dock zone for the root panel, in pixels.
+     */
+    bottom: 40,
+
+    /**
+     * The size of the edge dock zone for the root panel, in pixels.
+     */
+    left: 40
+  };
 
   /**
    * A singleton `'layout-modified'` conflatable message.
@@ -1324,7 +1398,12 @@ namespace Private {
     /**
      * The bottom portion of tabbed widget area.
      */
-    'widget-bottom'
+    'widget-bottom' |
+
+    /**
+     * The the bar of a tabbed widget area.
+     */
+    'widget-tab'
   );
 
   /**
@@ -1379,7 +1458,12 @@ namespace Private {
    * Find the drop target at the given client position.
    */
   export
-  function findDropTarget(panel: DockPanel, clientX: number, clientY: number): IDropTarget {
+  function findDropTarget(
+    panel: DockPanel,
+    clientX: number,
+    clientY: number,
+    edges: DockPanel.IEdges
+  ): IDropTarget {
     // Bail if the mouse is not over the dock panel.
     if (!ElementExt.hitTest(panel.node, clientX, clientY)) {
       return { zone: 'invalid', target: null };
@@ -1405,28 +1489,32 @@ namespace Private {
       let pb = panelRect.bottom - clientY;
 
       // Find the minimum distance to an edge.
-      let pd = Math.min(pl, pt, pr, pb);
+      let pd = Math.min(pt, pr, pb, pl);
 
       // Return a root zone if the mouse is within an edge.
-      if (pd <= EDGE_SIZE) {
-        let zone: DropZone;
-        switch (pd) {
-        case pl:
-          zone = 'root-left';
-          break;
+      switch (pd) {
         case pt:
-          zone = 'root-top';
+          if (pt < edges.top) {
+            return { zone: 'root-top', target: null };
+          }
           break;
         case pr:
-          zone = 'root-right';
+          if (pr < edges.right) {
+            return { zone: 'root-right', target: null };
+          }
           break;
         case pb:
-          zone = 'root-bottom';
+          if (pb < edges.bottom) {
+            return { zone: 'root-bottom', target: null };
+          }
+          break;
+        case pl:
+          if (pl < edges.left) {
+            return { zone: 'root-left', target: null };
+          }
           break;
         default:
           throw 'unreachable';
-        }
-        return { zone, target: null };
       }
     }
 
@@ -1448,6 +1536,11 @@ namespace Private {
     let at = target.y - target.top + 1;
     let ar = target.left + target.width - target.x;
     let ab = target.top + target.height - target.y;
+
+    const tabHeight = target.tabBar.node.getBoundingClientRect().height;
+    if (at < tabHeight) {
+      return { zone: 'widget-tab', target };
+    }
 
     // Get the X and Y edge sizes for the area.
     let rx = Math.round(target.width / 3);

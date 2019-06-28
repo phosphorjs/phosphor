@@ -1,5 +1,6 @@
 {
   "compilerOptions": {
+    "composite": true,
     "declaration": true,
     "noImplicitAny": true,
     "noEmitOnError": true,
@@ -8,9 +9,21 @@
     "module": "commonjs",
     "moduleResolution": "node",
     "target": "ES5",
-    "outDir": "./lib",
-    "lib": ["ES5", "ES2015.Collection", "DOM"],
-    "types": []
+    "outDir": "lib",
+    "lib": [
+      "ES5",
+      "ES2015.Collection",
+      "DOM"
+    ],
+    "types": [],
+    "rootDir": "src"
   },
-  "include": ["src/*"]
+  "include": [
+    "src/*"
+  ],
+  "references": [
+    {
+      "path": "../algorithm"
+    }
+  ]
 }

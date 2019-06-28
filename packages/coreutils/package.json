@@ -1,31 +1,12 @@
 {
   "name": "@phosphor/coreutils",
-  "version": "1.3.0",
+  "version": "1.3.1",
   "description": "PhosphorJS - Core Utilities",
-  "main": "lib/index.js",
-  "types": "lib/index.d.ts",
-  "files": [
-    "lib/*.d.ts",
-    "lib/*.js"
-  ],
-  "directories": {
-    "lib": "lib/"
+  "homepage": "https://github.com/phosphorjs/phosphor",
+  "bugs": {
+    "url": "https://github.com/phosphorjs/phosphor/issues"
   },
-  "dependencies": {},
-  "devDependencies": {
-    "rimraf": "^2.5.2",
-    "typedoc": "^0.7.0",
-    "typescript": "~2.4.0"
-  },
-  "scripts": {
-    "build": "tsc",
-    "clean": "rimraf lib",
-    "docs": "typedoc --options tdoptions.json ."
-  },
-  "repository": {
-    "type": "git",
-    "url": "https://github.com/phosphorjs/phosphor.git"
-  },
+  "license": "BSD-3-Clause",
   "author": "S. Chris Colbert <sccolbert@gmail.com>",
   "contributors": [
     "A. Darian <git@darian.af>",
@@ -33,9 +14,46 @@
     "S. Chris Colbert <sccolbert@gmail.com>",
     "Steven Silvester <steven.silvester@gmail.com>"
   ],
-  "license": "BSD-3-Clause",
-  "bugs": {
-    "url": "https://github.com/phosphorjs/phosphor/issues"
+  "files": [
+    "lib/*.d.ts",
+    "lib/*.js"
+  ],
+  "main": "lib/index.js",
+  "types": "lib/index.d.ts",
+  "directories": {
+    "lib": "lib/"
   },
-  "homepage": "https://github.com/phosphorjs/phosphor"
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/phosphorjs/phosphor.git"
+  },
+  "scripts": {
+    "build": "tsc --build",
+    "build:test": "tsc --build tests && cd tests && webpack",
+    "clean": "rimraf lib",
+    "clean:test": "rimraf tests/build",
+    "docs": "typedoc --options tdoptions.json src",
+    "test": "npm run test:firefox",
+    "test:chrome": "cd tests && karma start --browsers=Chrome",
+    "test:firefox": "cd tests && karma start --browsers=Firefox",
+    "test:ie": "cd tests && karma start --browsers=IE",
+    "watch": "tsc --build --watch"
+  },
+  "devDependencies": {
+    "@types/chai": "^3.4.35",
+    "@types/mocha": "^2.2.39",
+    "chai": "^3.5.0",
+    "es6-promise": "^4.0.5",
+    "karma": "^1.5.0",
+    "karma-chrome-launcher": "^2.0.0",
+    "karma-firefox-launcher": "^1.0.0",
+    "karma-ie-launcher": "^1.0.0",
+    "karma-mocha": "^1.3.0",
+    "karma-mocha-reporter": "^2.2.2",
+    "mocha": "^3.2.0",
+    "rimraf": "^2.5.2",
+    "typedoc": "~0.12.0",
+    "typescript": "~3.0.3",
+    "webpack": "^2.2.1"
+  }
 }

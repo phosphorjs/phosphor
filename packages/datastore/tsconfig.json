@@ -1,5 +1,6 @@
 {
   "compilerOptions": {
+    "composite": true,
     "declaration": true,
     "noImplicitAny": true,
     "noEmitOnError": true,
@@ -8,9 +9,15 @@
     "module": "commonjs",
     "moduleResolution": "node",
     "target": "ES5",
-    "outDir": "./lib",
+    "outDir": "lib",
+    "rootDir": "src",
     "lib": ["dom", "es5", "es2015.collection", "es2015.promise"],
     "types": []
   },
-  "include": ["src/*"]
+  "include": ["src/*"],
+  "references": [
+    {
+      "path": "../signaling"
+    }
+  ]
 }

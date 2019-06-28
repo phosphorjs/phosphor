@@ -69,6 +69,8 @@
 							<h3>Modules</h3>
 							<ul class="tsd-index-list">
 								<li class="tsd-kind-module"><a href="modules/jsonext.html" class="tsd-kind-icon">JSONExt</a></li>
+								<li class="tsd-kind-module"><a href="modules/random.html" class="tsd-kind-icon">Random</a></li>
+								<li class="tsd-kind-module"><a href="modules/uuid.html" class="tsd-kind-icon">UUID</a></li>
 							</ul>
 						</section>
 						<section class="tsd-index-section ">
@@ -84,6 +86,8 @@
 							<ul class="tsd-index-list">
 								<li class="tsd-kind-interface"><a href="interfaces/jsonarray.html" class="tsd-kind-icon">JSONArray</a></li>
 								<li class="tsd-kind-interface"><a href="interfaces/jsonobject.html" class="tsd-kind-icon">JSONObject</a></li>
+								<li class="tsd-kind-interface"><a href="interfaces/readonlyjsonarray.html" class="tsd-kind-icon">ReadonlyJSONArray</a></li>
+								<li class="tsd-kind-interface"><a href="interfaces/readonlyjsonobject.html" class="tsd-kind-icon">ReadonlyJSONObject</a></li>
 							</ul>
 						</section>
 						<section class="tsd-index-section ">
@@ -91,6 +95,7 @@
 							<ul class="tsd-index-list">
 								<li class="tsd-kind-type-alias"><a href="globals.html#jsonprimitive" class="tsd-kind-icon">JSONPrimitive</a></li>
 								<li class="tsd-kind-type-alias"><a href="globals.html#jsonvalue" class="tsd-kind-icon">JSONValue</a></li>
+								<li class="tsd-kind-type-alias"><a href="globals.html#readonlyjsonvalue" class="tsd-kind-icon">ReadonlyJSONValue</a></li>
 							</ul>
 						</section>
 					</div>
@@ -104,7 +109,7 @@
 					<div class="tsd-signature tsd-kind-icon">JSONPrimitive<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">boolean</span><span class="tsd-signature-symbol"> | </span><span class="tsd-signature-type">number</span><span class="tsd-signature-symbol"> | </span><span class="tsd-signature-type">string</span><span class="tsd-signature-symbol"> | </span><span class="tsd-signature-type">null</span></div>
 					<aside class="tsd-sources">
 						<ul>
-							<li>Defined in <a href="https://github.com/phosphorjs/phosphor/blob/1b1dfe3/packages/coreutils/src/json.ts#L14">json.ts:14</a></li>
+							<li>Defined in <a href="https://github.com/phosphorjs/phosphor/blob/8fee9108/packages/coreutils/src/json.ts#L14">json.ts:14</a></li>
 						</ul>
 					</aside>
 					<div class="tsd-comment tsd-typography">
@@ -119,12 +124,27 @@
 					<div class="tsd-signature tsd-kind-icon">JSONValue<span class="tsd-signature-symbol">:</span> <a href="globals.html#jsonprimitive" class="tsd-signature-type">JSONPrimitive</a><span class="tsd-signature-symbol"> | </span><a href="interfaces/jsonobject.html" class="tsd-signature-type">JSONObject</a><span class="tsd-signature-symbol"> | </span><a href="interfaces/jsonarray.html" class="tsd-signature-type">JSONArray</a></div>
 					<aside class="tsd-sources">
 						<ul>
-							<li>Defined in <a href="https://github.com/phosphorjs/phosphor/blob/1b1dfe3/packages/coreutils/src/json.ts#L21">json.ts:21</a></li>
+							<li>Defined in <a href="https://github.com/phosphorjs/phosphor/blob/8fee9108/packages/coreutils/src/json.ts#L21">json.ts:21</a></li>
 						</ul>
 					</aside>
 					<div class="tsd-comment tsd-typography">
 						<div class="lead">
 							<p>A type alias for a JSON value.</p>
+						</div>
+					</div>
+				</section>
+				<section class="tsd-panel tsd-member tsd-kind-type-alias">
+					<a name="readonlyjsonvalue" class="tsd-anchor"></a>
+					<h3>ReadonlyJSONValue</h3>
+					<div class="tsd-signature tsd-kind-icon">ReadonlyJSONValue<span class="tsd-signature-symbol">:</span> <a href="globals.html#jsonprimitive" class="tsd-signature-type">JSONPrimitive</a><span class="tsd-signature-symbol"> | </span><a href="interfaces/readonlyjsonobject.html" class="tsd-signature-type">ReadonlyJSONObject</a><span class="tsd-signature-symbol"> | </span><a href="interfaces/readonlyjsonarray.html" class="tsd-signature-type">ReadonlyJSONArray</a></div>
+					<aside class="tsd-sources">
+						<ul>
+							<li>Defined in <a href="https://github.com/phosphorjs/phosphor/blob/8fee9108/packages/coreutils/src/json.ts#L56">json.ts:56</a></li>
+						</ul>
+					</aside>
+					<div class="tsd-comment tsd-typography">
+						<div class="lead">
+							<p>A type alias for a readonly JSON value.</p>
 						</div>
 					</div>
 				</section>
@@ -138,6 +158,12 @@
 					</li>
 					<li class=" tsd-kind-module">
 						<a href="modules/jsonext.html">JSONExt</a>
+					</li>
+					<li class=" tsd-kind-module">
+						<a href="modules/random.html">Random</a>
+					</li>
+					<li class=" tsd-kind-module">
+						<a href="modules/uuid.html">UUID</a>
 					</li>
 				</ul>
 			</nav>
@@ -158,11 +184,20 @@
 					<li class=" tsd-kind-interface">
 						<a href="interfaces/jsonobject.html" class="tsd-kind-icon">JSONObject</a>
 					</li>
+					<li class=" tsd-kind-interface">
+						<a href="interfaces/readonlyjsonarray.html" class="tsd-kind-icon">ReadonlyJSONArray</a>
+					</li>
+					<li class=" tsd-kind-interface">
+						<a href="interfaces/readonlyjsonobject.html" class="tsd-kind-icon">ReadonlyJSONObject</a>
+					</li>
 					<li class=" tsd-kind-type-alias">
 						<a href="globals.html#jsonprimitive" class="tsd-kind-icon">JSONPrimitive</a>
 					</li>
 					<li class=" tsd-kind-type-alias">
 						<a href="globals.html#jsonvalue" class="tsd-kind-icon">JSONValue</a>
+					</li>
+					<li class=" tsd-kind-type-alias">
+						<a href="globals.html#readonlyjsonvalue" class="tsd-kind-icon">ReadonlyJSONValue</a>
 					</li>
 				</ul>
 			</nav>

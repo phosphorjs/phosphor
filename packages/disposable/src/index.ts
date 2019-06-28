@@ -9,6 +9,10 @@ import {
   IterableOrArrayLike, each
 } from '@phosphor/algorithm';
 
+import {
+  ISignal, Signal
+} from '@phosphor/signaling';
+
 
 /**
  * An object which implements the disposable pattern.
@@ -35,6 +39,18 @@ interface IDisposable {
    * after it has been disposed unless otherwise explicitly noted.
    */
   dispose(): void;
+}
+
+
+/**
+ * A disposable object with an observable `disposed` signal.
+ */
+export
+interface IObservableDisposable extends IDisposable {
+  /**
+   * A signal emitted when the object is disposed.
+   */
+  readonly disposed: ISignal<this, void>;
 }
 
 
@@ -76,6 +92,34 @@ class DisposableDelegate implements IDisposable {
 
 
 /**
+ * An observable disposable object which delegates to a callback function.
+ */
+export
+class ObservableDisposableDelegate extends DisposableDelegate implements IObservableDisposable {
+  /**
+   * A signal emitted when the delegate is disposed.
+   */
+  get disposed(): ISignal<this, void> {
+    return this._disposed;
+  }
+
+  /**
+   * Dispose of the delegate and invoke the callback function.
+   */
+  dispose(): void {
+    if (this.isDisposed) {
+      return;
+    }
+    super.dispose();
+    this._disposed.emit(undefined);
+    Signal.clearData(this);
+  }
+
+  private _disposed = new Signal<this, void>(this);
+}
+
+
+/**
  * An object which manages a collection of disposable items.
  */
 export
@@ -89,7 +133,7 @@ class DisposableSet implements IDisposable {
    * Test whether the set has been disposed.
    */
   get isDisposed(): boolean {
-    return this._disposed;
+    return this._isDisposed;
   }
 
   /**
@@ -99,10 +143,10 @@ class DisposableSet implements IDisposable {
    * Items are disposed in the order they are added to the set.
    */
   dispose(): void {
-    if (this._disposed) {
+    if (this._isDisposed) {
       return;
     }
-    this._disposed = true;
+    this._isDisposed = true;
     this._items.forEach(item => { item.dispose(); });
     this._items.clear();
   }
@@ -149,7 +193,7 @@ class DisposableSet implements IDisposable {
     this._items.clear();
   }
 
-  private _disposed = false;
+  private _isDisposed = false;
   private _items = new Set<IDisposable>();
 }
 
@@ -169,6 +213,58 @@ namespace DisposableSet {
   export
   function from(items: IterableOrArrayLike<IDisposable>): DisposableSet {
     let set = new DisposableSet();
+    each(items, item => { set.add(item) });
+    return set;
+  }
+}
+
+
+/**
+ * An observable object which manages a collection of disposable items.
+ */
+export
+class ObservableDisposableSet extends DisposableSet implements IObservableDisposable {
+  /**
+   * A signal emitted when the set is disposed.
+   */
+  get disposed(): ISignal<this, void> {
+    return this._disposed;
+  }
+
+  /**
+   * Dispose of the set and the items it contains.
+   *
+   * #### Notes
+   * Items are disposed in the order they are added to the set.
+   */
+  dispose(): void {
+    if (this.isDisposed) {
+      return;
+    }
+    super.dispose();
+    this._disposed.emit(undefined);
+    Signal.clearData(this);
+  }
+
+  private _disposed = new Signal<this, void>(this);
+}
+
+
+/**
+ * The namespace for the `ObservableDisposableSet` class statics.
+ */
+export
+namespace ObservableDisposableSet {
+  /**
+   * Create an observable disposable set from an iterable of items.
+   *
+   * @param items - The iterable or array-like object of interest.
+   *
+   * @returns A new disposable initialized with the given items.
+   */
+  export
+  function from(items: IterableOrArrayLike<IDisposable>): ObservableDisposableSet {
+    let set = new ObservableDisposableSet();
     each(items, item => { set.add(item) });
     return set;
   }

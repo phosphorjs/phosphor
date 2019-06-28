@@ -137,7 +137,8 @@ class CommandRegistry {
   /**
    * Notify listeners that the state of a command has changed.
    *
-   * @param id - The id of the command which has changed.
+   * @param id - The id of the command which has changed. If more than
+   *   one command has changed, this argument should be omitted.
    *
    * @throws An error if the given `id` is not registered.
    *
@@ -148,11 +149,11 @@ class CommandRegistry {
    *
    * This will cause the `commandChanged` signal to be emitted.
    */
-  notifyCommandChanged(id: string): void {
-    if (!(id in this._commands)) {
+  notifyCommandChanged(id?: string): void {
+    if (id !== undefined && !(id in this._commands)) {
       throw new Error(`Command '${id}' is not registered.`);
     }
-    this._commandChanged.emit({ id, type: 'changed' });
+    this._commandChanged.emit({ id, type: id ? 'changed' : 'many-changed' });
   }
 
   /**
@@ -486,7 +487,7 @@ class CommandRegistry {
    */
   private _startTimer(): void {
     this._clearTimer();
-    this._timerID = setTimeout(() => {
+    this._timerID = window.setTimeout(() => {
       this._onPendingTimeout();
     }, Private.CHORD_TIMEOUT);
   }
@@ -777,13 +778,15 @@ namespace CommandRegistry {
   interface ICommandChangedArgs {
     /**
      * The id of the associated command.
+     *
+     * This will be `undefined` when the type is `'many-changed'`.
      */
-    readonly id: string;
+    readonly id: string | undefined;
 
     /**
      * Whether the command was added, removed, or changed.
      */
-    readonly type: 'added' | 'removed' | 'changed';
+    readonly type: 'added' | 'removed' | 'changed' | 'many-changed';
   }
 
   /**
@@ -1041,6 +1044,40 @@ namespace CommandRegistry {
   }
 
   /**
+   * Format a keystroke for display on the local system.
+   */
+  export
+  function formatKeystroke(keystroke: string): string {
+    let mods = '';
+    let parts = parseKeystroke(keystroke);
+    if (Platform.IS_MAC) {
+      if (parts.ctrl) {
+        mods += '\u2303 ';
+      }
+      if (parts.alt) {
+        mods += '\u2325 ';
+      }
+      if (parts.shift) {
+        mods += '\u21E7 ';
+      }
+      if (parts.cmd) {
+        mods += '\u2318 ';
+      }
+    } else {
+      if (parts.ctrl) {
+        mods += 'Ctrl+';
+      }
+      if (parts.alt) {
+        mods += 'Alt+';
+      }
+      if (parts.shift) {
+        mods += 'Shift+';
+      }
+    }
+    return mods + parts.key;
+  }
+
+  /**
    * Create a normalized keystroke for a `'keydown'` event.
    *
    * @param event - The event object for a `'keydown'` event.
@@ -1234,7 +1271,7 @@ namespace Private {
    */
   export
   function replayKeyEvent(event: KeyboardEvent): void {
-    event.target.dispatchEvent(cloneKeyboardEvent(event));
+    event.target!.dispatchEvent(cloneKeyboardEvent(event));
   }
 
   /**

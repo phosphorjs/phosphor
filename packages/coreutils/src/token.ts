@@ -34,5 +34,6 @@ class Token<T> {
    */
   readonly name: string;
 
+  // @ts-ignore
   private _tokenStructuralPropertyT: T;
 }

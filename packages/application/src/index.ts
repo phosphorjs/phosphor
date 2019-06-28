@@ -452,7 +452,7 @@ class Application<T extends Widget> {
    * A subclass may reimplement this method as needed.
    */
   protected attachShell(id: string): void {
-    Widget.attach(this.shell, document.getElementById(id) || document.body);
+    Widget.attach(this.shell, (id && document.getElementById(id)) || document.body);
   }
 
   /**
@@ -690,8 +690,9 @@ namespace Private {
    */
   export
   function ensureNoCycle(data: IPluginData, pluginMap: PluginMap, serviceMap: ServiceMap): void {
+    let dependencies = data.requires.concat(data.optional);
     // Bail early if there cannot be a cycle.
-    if (!data.provides || data.requires.length === 0) {
+    if (!data.provides || dependencies.length === 0) {
       return;
     }
 
@@ -699,7 +700,7 @@ namespace Private {
     let trace = [data.id];
 
     // Throw an exception if a cycle is present.
-    if (data.requires.some(visit)) {
+    if (dependencies.some(visit)) {
       throw new Error(`Cycle detected: ${trace.join(' -> ')}.`);
     }
 
@@ -712,11 +713,12 @@ namespace Private {
         return false;
       }
       let other = pluginMap[id];
-      if (other.requires.length === 0) {
+      let otherDependencies = other.requires.concat(other.optional);
+      if (otherDependencies.length === 0) {
         return false;
       }
       trace.push(id);
-      if (other.requires.some(visit)) {
+      if (otherDependencies.some(visit)) {
         return true;
       }
       trace.pop();
