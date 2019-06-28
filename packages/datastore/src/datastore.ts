@@ -95,6 +95,7 @@ class Datastore implements IIterable<Table<Schema>>, IMessageHandler, IDisposabl
       return;
     }
     this._disposed = true;
+    Signal.clearData(this);
 
     this._broadcastHandler = null;
   }
