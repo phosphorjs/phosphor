@@ -136,26 +136,23 @@ describe('@phosphor/datastore', () => {
           remove: 0,
           values: [1, 2]
         };
-        field.applyUpdate({
+        const firstUpdate = field.applyUpdate({
           previous,
           update: splice1,
           metadata,
           version: 10, // later version
           storeId: 1
         });
-        let { value, change, patch } = field.applyUpdate({
-          previous,
+        const secondUpdate = field.applyUpdate({
+          previous: firstUpdate.value,
           update: splice2,
           metadata,
           version: 5, // earlier 
           storeId: 1
-        });
-
-        console.warn(change[0]);
-        console.warn(patch[0]);
-        expect(change[0]).to.eql({ index: 0, removed: [], inserted: [4, 5]});
-        expect(value).to.eql([4, 5, 1, 2]);
-        expect(patch.length).to.equal(1);
+        });        
+        expect(firstUpdate.change).to.eql([{ index: 0, removed: [], inserted: [4, 5]}]);
+        expect(secondUpdate.change).to.eql([{ index: 0, removed: [], inserted: [1, 2]}]);
+        expect(secondUpdate.value).to.eql([1, 2, 4, 5]);
       });
 
 
