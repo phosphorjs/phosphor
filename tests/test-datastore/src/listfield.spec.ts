@@ -10,10 +10,22 @@ import {
 } from 'chai';
 
 import {
-  ListField
+  Field, ListField
 } from '@phosphor/datastore';
 
 type ListValue = number;
+
+/**
+ * Return a shuffled copy of an array
+ */
+function shuffle<T>(array: ReadonlyArray<T>): T[] {
+  let ret = array.slice();
+  for (let i = ret.length - 1; i > 0; i--) {
+    let j = Math.floor(Math.random() * (i + 1)); // random index from 0 to i
+    [ret[i], ret[j]] = [ret[j], ret[i]]; // swap elements
+  }
+  return ret;
+}
 
 describe('@phosphor/datastore', () => {
 
@@ -123,50 +135,93 @@ describe('@phosphor/datastore', () => {
         expect(patch[1].insertedIds.length).to.equal(splice2.values.length);
       });
 
-      it('should allow for out-of-order updates', () => {
-        let previous = field.createValue();
-        let metadata = field.createMetadata();
-        let splice1 = {
-          index: 0,
-          remove: 0,
-          values: [4, 5]
-        };
-        let splice2 = {
-          index: 0,
-          remove: 0,
-          values: [1, 2]
-        };
-        const firstUpdate = field.applyUpdate({
-          previous,
-          update: splice1,
-          metadata,
-          version: 10, // later version
-          storeId: 1
-        });
-        const secondUpdate = field.applyUpdate({
-          previous: firstUpdate.value,
-          update: splice2,
-          metadata,
-          version: 5, // earlier 
-          storeId: 1
-        });        
-        expect(firstUpdate.change).to.eql([{ index: 0, removed: [], inserted: [4, 5]}]);
-        expect(secondUpdate.change).to.eql([{ index: 0, removed: [], inserted: [1, 2]}]);
-        expect(secondUpdate.value).to.eql([1, 2, 4, 5]);
-      });
-
-
-      it('should update the metadata with the patch ordering', () => {
-      });
-
     });
 
     describe('applyPatch', () => {
 
       it('should return the result of the patch', () => {
+        let previous = field.createValue();
+        let metadata = field.createMetadata();
+        // Create a patch
+        let { patch } = field.applyUpdate({
+          previous,
+          update: { index: 0, remove: 0, values: [1, 2, 3] },
+          metadata,
+          version: 1,
+          storeId: 1
+        });
+        // Reset the metadata
+        metadata = field.createMetadata();
+        // Apply the patch
+        let patched = field.applyPatch({
+          previous,
+          metadata,
+          patch
+        });
+        expect(patched.value).to.eql([1, 2, 3]);
+        expect(patched.change[0]).to.eql({
+          index: 0,
+          removed: [],
+          inserted: [1, 2, 3]
+        });
       });
 
-      it('should update the metadata with the patch ordering', () => {
+      it('should allow for out-of-order patches', () => {
+        let previous = field.createValue();
+        let metadata = field.createMetadata();
+        let firstUpdate = field.applyUpdate({
+          previous,
+          update: { index: 0, remove: 0, values: [1, 8, 4] },
+          metadata,
+          version: 1,
+          storeId: 1
+        });
+        let secondUpdate = field.applyUpdate({
+          previous: firstUpdate.value,
+          update: { index: 1, remove: 1, values: [2, 3] },
+          metadata,
+          version: 2,
+          storeId: 1
+        });
+        metadata = field.createMetadata(); // Reset the metadata
+        let firstPatch = field.applyPatch({
+          previous,
+          metadata,
+          patch: secondUpdate.patch
+        });
+        let secondPatch = field.applyPatch({
+          previous: firstPatch.value,
+          metadata,
+          patch: firstUpdate.patch
+        });
+        console.warn(secondUpdate.value);
+        console.warn(secondPatch.value);
+        expect(secondPatch.value).to.eql([1, 2, 3, 4]);
+      });
+
+      it('should allow for racing updates', () => {
+        let previous = field.createValue();
+        let metadata = field.createMetadata();
+        let values = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9];
+        let shuffled = shuffle(values);
+        let updated: undefined | Field.UpdateResult<
+          ListField.Value<ListValue>,
+          ListField.Change<ListValue>,
+          ListField.Patch<ListValue>
+        >;
+        shuffled.forEach(value => {
+          updated = field.applyUpdate({
+            previous: updated && updated.value || previous,
+            metadata,
+            update: {
+              index: 0,
+              remove: 0,
+              values: [value]
+            },
+            version: values.length - 1 - value,
+            storeId: 1
+          });
+        });
       });
 
     });
