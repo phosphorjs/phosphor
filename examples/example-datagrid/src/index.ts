@@ -235,14 +235,14 @@ function main(): void {
   let grid1 = new DataGrid({ style: blueStripeStyle });
   grid1.model = model1;
 
-  let grid2 = new DataGrid({ style: brownStripeStyle });
+  let grid2 = new DataGrid({ style: brownStripeStyle, uniformResizing: 'body-column' });
   grid2.model = model2;
 
   let grid3 = new DataGrid();
   grid3.cellRenderers.set('body', {}, fgColorFloatRenderer);
   grid3.model = model3;
 
-  let grid4 = new DataGrid();
+  let grid4 = new DataGrid({ uniformResizing: 'all' });
   grid4.cellRenderers.set('body', {}, bgColorFloatRenderer);
   grid4.model = model4;
 

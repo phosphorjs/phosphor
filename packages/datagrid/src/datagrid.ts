@@ -74,6 +74,7 @@ class DataGrid extends Widget {
     // Parse the simple options.
     this._style = options.style || DataGrid.defaultStyle;
     this._headerVisibility = options.headerVisibility || 'all';
+    this._uniformResizing = options.uniformResizing || 'none';
     this._cellRenderers = options.cellRenderers || new RendererMap();
     this._defaultRenderer = options.defaultRenderer || new TextRenderer();
 
@@ -345,6 +346,56 @@ class DataGrid extends Widget {
   }
 
   /**
+   * Get the uniform resizing mode for the data grid.
+   */
+  get uniformResizing(): DataGrid.UniformResizing {
+    return this._uniformResizing;
+  }
+
+  /**
+   * Set the uniform resizing mode for the data grid.
+   */
+  set uniformResizing(value: DataGrid.UniformResizing) {
+    // Bail if the mode does not change.
+    if (this._uniformResizing === value) {
+      return;
+    }
+
+    // Update the internal mode.
+    this._uniformResizing = value;
+
+    // Reset the baseSizes for the relevant sections.
+    switch (value) {
+      case 'all':
+        this.resetSections('row');
+        this.resetSections('column');
+        this.resetSections('row-header');
+        this.resetSections('column-header');
+        break;
+      case 'body':
+        this.resetSections('row');
+        this.resetSections('column');
+        break;
+      case 'header':
+        this.resetSections('row-header');
+        this.resetSections('column-header');
+        break;
+      case 'body-row':
+        this.resetSections('row');
+        break;
+      case 'body-column':
+        this.resetSections('column');
+        break;
+      case 'header-row':
+        this.resetSections('row-header');
+        break;
+      case 'header-column':
+        this.resetSections('column-header');
+        break;
+    }
+  }
+
+  /**
    * The scroll X offset of the viewport.
    */
   get scrollX(): number {
@@ -602,7 +653,24 @@ class DataGrid extends Widget {
    * This is a no-op if `index` is invalid.
    */
   resizeSection(area: 'row' | 'column' | 'row-header' | 'column-header', index: number, size: number): void {
-    this._resizeSection(this._getSectionList(area), index, size);
+    let type: 'body-row' | 'body-column' | 'header-row' | 'header-column';
+    switch (area) {
+      case 'row':
+        type = 'body-row';
+        break;
+      case 'column':
+        type = 'body-column';
+        break;
+      case 'row-header':
+        type = 'header-row';
+        break;
+      case 'column-header':
+        type = 'header-column';
+        break;
+      default:
+        throw "unreachable";
+    }
+    this._resizeSection(type, this._getSectionList(area), index, size);
   }
 
   /**
@@ -1231,7 +1299,8 @@ class DataGrid extends Widget {
    * #### Notes
    * This will update the scroll bars and repaint as needed.
    */
-  private _resizeSection(list: SectionList, index: number, size: number): void {
+  private _resizeSection(type: 'body-row' | 'body-column' | 'header-row' | 'header-column', list: SectionList, index: number, size: number): void {
+
     // Bail early if the index is out of range.
     if (index < 0 || index >= list.sectionCount) {
       return;
@@ -1248,8 +1317,27 @@ class DataGrid extends Widget {
       return;
     }
 
-    // Resize the section in the list.
-    list.resizeSection(index, newSize);
+    let uniformResizing = this._uniformResizing;
+
+    if (uniformResizing === 'all' ||
+      (uniformResizing === 'body' && (type === 'body-row' || type === 'body-column')) ||
+      (uniformResizing === 'header' && (type === 'header-row' || type === 'header-column' )) ||
+      (type === uniformResizing)) {
+      this._setBaseSize(list, newSize);
+
+      // Keep the scroll bar fixed (for uniform row or column resizing)
+      let delta = (newSize - oldSize);
+      switch (type) {
+        case 'body-column':
+          this._scrollX = Math.max(0, this._scrollX + (delta * index));
+          break;
+        case 'body-row':
+          this._scrollY = Math.max(0, this._scrollY + (delta * index));
+          break;
+      }
+    } else {
+      list.resizeSection(index, newSize);
+    }
 
     // Get the current size of the viewport.
     let vpWidth = this._viewportWidth;
@@ -1615,8 +1703,11 @@ class DataGrid extends Widget {
     // Override the document cursor.
     let override = Drag.overrideCursor(cursor);
 
+    let prevX = clientX;
+    let prevY = clientY;
+
     // Set up the press data.
-    this._pressData = { handle, clientX, clientY, override };
+    this._pressData = { handle, prevX, prevY, clientX, clientY, override };
 
     // Add the extra document listeners.
     document.addEventListener('mousemove', this, true);
@@ -1648,6 +1739,8 @@ class DataGrid extends Widget {
     event.stopPropagation();
 
     // Update the press data with the current mouse position.
+    this._pressData.prevX = this._pressData.clientX;
+    this._pressData.prevY = this._pressData.clientY;
     this._pressData.clientX = event.clientX;
     this._pressData.clientY = event.clientY;
 
@@ -1798,50 +1891,47 @@ class DataGrid extends Widget {
     }
 
     // Extract the relevant press data.
-    let { handle, clientX, clientY } = this._pressData;
+    let { handle, prevX, prevY, clientX, clientY } = this._pressData;
 
     // Convert the client position to viewport coordinates.
-    let rect = this._viewport.node.getBoundingClientRect();
-    let x = clientX - rect.left;
-    let y = clientY - rect.top;
+    let dx = clientX - prevX;
+    let dy = clientY - prevY;
 
     // Look up the section list and convert to section position.
-    let pos: number;
+    let delta: number;
+    let section_min: number;
     let list: SectionList;
+
     switch (handle.type) {
     case 'body-row':
-      pos = y + this._scrollY - this.headerHeight;
+      delta = dy;
+      section_min = 20;
       list = this._rowSections;
       break;
     case 'body-column':
-      pos = x + this._scrollX - this.headerWidth;
+      delta = dx;
+      section_min = 40;
       list = this._columnSections;
       break;
     case 'header-row':
-      pos = y;
+      delta = dy;
+      section_min = 20;
       list = this._columnHeaderSections;
       break;
     case 'header-column':
-      pos = x;
+      delta = dx;
+      section_min = 40;
       list = this._rowHeaderSections;
       break;
     default:
       throw 'unreachable';
     }
 
-    // Look up the offset for the handle.
-    let offset = list.sectionOffset(handle.index);
-
-    // Bail if the handle no longer exists.
-    if (offset < 0) {
-      return;
-    }
-
     // Compute the new size for the section.
-    let size = Math.max(4, pos - handle.delta - offset);
+    let size = Math.max(section_min, list.sectionSize(handle.index) + delta);
 
     // Resize the section to the computed size.
-    this._resizeSection(list, handle.index, size);
+    this._resizeSection(handle.type, list, handle.index, size);
   }
 
   /**
@@ -3332,6 +3422,7 @@ class DataGrid extends Widget {
   private _cellRenderers: RendererMap;
   private _defaultRenderer: CellRenderer;
   private _headerVisibility: DataGrid.HeaderVisibility;
+  private _uniformResizing: DataGrid.UniformResizing;
 }
 
 
@@ -3435,6 +3526,12 @@ namespace DataGrid {
   type HeaderVisibility = 'all' | 'row' | 'column' | 'none';
 
   /**
+   * A type alias for the supported header visibility modes.
+   */
+  export
+  type UniformResizing = 'all' | 'body' | 'header' | 'body-row' | 'body-column' | 'header-row' | 'header-column' | 'none';
+
+  /**
    * An options object for initializing a data grid.
    */
   export
@@ -3445,6 +3542,13 @@ namespace DataGrid {
      * The default is `DataGrid.defaultStyle`.
      */
     style?: IStyle;
+
+    /**
+     * The uniform resizing behavior for the data grid
+     *
+     * The default is 'none'
+     */
+    uniformResizing?: UniformResizing;
 
     /**
      * The header visibility for the data grid.
@@ -3662,6 +3766,16 @@ namespace Private {
      * The resize handle which was pressed.
      */
     handle: IResizeHandle;
+
+    /**
+     * The starting client X position of the mouse.
+     */
+    prevX: number;
+
+    /**
+     * The starting client Y position of the mouse.
+     */
+    prevY: number;
 
     /**
      * The most recent client X position of the mouse.
