@@ -7,6 +7,7 @@
 |----------------------------------------------------------------------------*/
 
 import './datastore.spec';
+import './fields.spec';
 import './listfield.spec';
 import './mapfield.spec';
 import './registerfield.spec';
