@@ -167,11 +167,11 @@ describe('@phosphor/datastore', () => {
       });
 
       it('should allow for out-of-order patches', () => {
-  
+        let previous = field.createValue();
         let metadata = field.createMetadata();
 
         let firstUpdate = field.applyUpdate({
-          previous: field.createValue(),
+          previous,
           update: { index: 0, remove: 0, values: [1, 8, 4] },
           metadata,
           version: 1,
@@ -184,14 +184,13 @@ describe('@phosphor/datastore', () => {
           version: 2,
           storeId: 1
         });
-
         expect(secondUpdate.value).to.eql([1, 2, 3, 4]);
 
         // Now if we apply these patches on another client in 
         // a different order, they should give the same result.
         metadata = field.createMetadata();
         let firstPatch = field.applyPatch({
-          previous: field.createValue(),
+          previous,
           metadata,
           patch: secondUpdate.patch
         });

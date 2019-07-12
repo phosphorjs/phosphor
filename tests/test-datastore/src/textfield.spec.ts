@@ -123,6 +123,62 @@ describe('@phosphor/datastore', () => {
     describe('applyPatch', () => {
 
       it('should return the result of the patch', () => {
+        let previous = field.createValue();
+        let metadata = field.createMetadata();
+        // Create a patch
+        let { patch } = field.applyUpdate({
+          previous,
+          update: { index: 0, remove: 0, text: 'abc' },
+          metadata,
+          version: 1,
+          storeId: 1
+        });
+        // Reset the metadata
+        metadata = field.createMetadata();
+        let patched = field.applyPatch({
+          previous,
+          metadata,
+          patch
+        });
+        expect(patched.value).to.equal('abc');
+        expect(patched.change[0]).to.eql({index: 0, removed: '', inserted: 'abc'});
+      });
+
+      it('should allow for out-of-order patches', () => {
+        let previous = field.createValue();
+        let metadata = field.createMetadata();
+
+        // Generate some patches.
+        let firstUpdate = field.applyUpdate({
+          previous,
+          update: { index: 0, remove: 0, text: 'agc' },
+          metadata,
+          version: 1,
+          storeId: 1
+        });
+        let secondUpdate = field.applyUpdate({
+          previous: firstUpdate.value,
+          update: { index: 1, remove: 1, text: 'b' },
+          metadata,
+          version: 2,
+          storeId: 1
+        });
+        expect(secondUpdate.value).to.equal('abc');
+
+        // Now apply the patches on another client in a different order.
+        // They should have the same resulting value.
+        metadata = field.createMetadata();
+        let firstPatch = field.applyPatch({
+          previous,
+          metadata,
+          patch: secondUpdate.patch
+        });
+        let secondPatch = field.applyPatch({
+          previous: firstPatch.value,
+          metadata,
+          patch: firstUpdate.patch
+        });
+        expect(secondPatch.value).to.equal('abc');
       });
 
     });
