@@ -298,6 +298,10 @@ describe('@phosphor/datastore', () => {
         expect(broadcastHandler.transactions.length).to.equal(1);
       });
 
+      it('should throw if there is not a transaction begun', () => {
+        expect(() => { datastore.endTransaction(); }).to.throw;
+      });
+
     });
 
     describe('undo()', () => {
