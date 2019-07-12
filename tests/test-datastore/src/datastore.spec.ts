@@ -186,6 +186,12 @@ describe('@phosphor/datastore', () => {
       });
 
       it('should recieve transactions from the datastore', () => {
+        let t2 = datastore.get(schema2);
+        datastore.beginTransaction();
+        t2.update({ 'my-record': { enabled: true } });
+        expect(broadcastHandler.transactions.length).to.equal(0);
+        datastore.endTransaction();
+        expect(broadcastHandler.transactions.length).to.equal(1);
       });
 
     });
