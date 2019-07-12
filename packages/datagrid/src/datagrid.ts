@@ -49,6 +49,10 @@ import {
   TextRenderer
 } from './textrenderer';
 
+import {
+  Signal, ISignal
+} from '@phosphor/signaling';
+
 
 /**
  * A widget which implements a high-performance tabular data grid.
@@ -1487,6 +1491,53 @@ class DataGrid extends Widget {
   }
 
   /**
+   * Hit tests the row and column headers.
+   *
+   * @param event - The mouse event that triggered the test.
+   */
+  private _hitTestHeaders(event: MouseEvent) : DataGrid.IGridClick | null {
+
+    // Adjust x/y values to account for viewport
+    const { clientX, clientY } = event;
+    const rect = this._viewport.node.getBoundingClientRect();
+    const x = clientX - rect.left;
+    const y = clientY - rect.top;
+
+    // Check for click on the row header
+    if (
+      (y > 0)
+      && (y <= this._columnHeaderSections.totalSize)
+      && (x <= this._rowHeaderSections.totalSize)
+     ) {
+      const metadata = this.model!.metadata('row-header', 0);
+      return {
+        type: 'row-header-click',
+        event: event,
+        metadata: metadata
+      };
+    }
+
+    // Adjust column x value to account for the space of the row header
+    const columnX = clientX - rect.left - this._rowHeaderSections.totalSize;
+
+    // Check for click on the column headers
+    if (y > 0 && y <= this._columnHeaderSections.totalSize) {
+      const clickedIndex = this._columnSections.sectionIndex(columnX);
+      if (clickedIndex !== -1) {
+        const metadata = this.model!.metadata('column-header', clickedIndex);
+        return {
+          type: 'column-header-click',
+          event: event,
+          metadata: metadata
+        };
+      }
+    }
+
+    // No click on headers was detected
+    return null;
+  }
+
+  /**
    * Hit test the grid headers for a resize handle.
    */
   private _hitTestResizeHandles(clientX: number, clientY: number): Private.IResizeHandle | null {
@@ -1594,35 +1645,37 @@ class DataGrid extends Widget {
       return;
     }
 
-    // Extract the client position.
-    let { clientX, clientY } = event;
+    const { clientX, clientY } = event;
 
-    // Hit test the grid headers for a resize handle.
-    let handle = this._hitTestResizeHandles(clientX, clientY);
+    // Perform hit testing for resize handles
+    const handle = this._hitTestResizeHandles(clientX, clientY);
+    if (handle) {
+      // Stop the event when a resize handle is pressed.
+      event.preventDefault();
+      event.stopPropagation();
 
-    // Bail early if no resize handle is pressed.
-    if (!handle) {
+      // Look up the cursor for the handle.
+      const cursor = Private.cursorForHandle(handle);
+
+      // Override the document cursor.
+      const override = Drag.overrideCursor(cursor);
+
+      // Set up the press data.
+      this._pressData = { handle, clientX, clientY, override };
+
+      // Add the extra document listeners.
+      document.addEventListener('mousemove', this, true);
+      document.addEventListener('mouseup', this, true);
+      document.addEventListener('keydown', this, true);
+      document.addEventListener('contextmenu', this, true);
       return;
     }
 
-    // Stop the event when a resize handle is pressed.
-    event.preventDefault();
-    event.stopPropagation();
-
-    // Look up the cursor for the handle.
-    let cursor = Private.cursorForHandle(handle);
-
-    // Override the document cursor.
-    let override = Drag.overrideCursor(cursor);
-
-    // Set up the press data.
-    this._pressData = { handle, clientX, clientY, override };
-
-    // Add the extra document listeners.
-    document.addEventListener('mousemove', this, true);
-    document.addEventListener('mouseup', this, true);
-    document.addEventListener('keydown', this, true);
-    document.addEventListener('contextmenu', this, true);
+    // Perform hit testing for column and row headers
+    const headerClick = this._hitTestHeaders(event);
+    if (headerClick) {
+      this.emitGridClick(headerClick);
+    }
   }
 
   /**
@@ -3298,6 +3351,20 @@ class DataGrid extends Widget {
     this._canvasGC.stroke();
   }
 
+  /**
+   * Emit the `gridClick` signal for the data grid.
+   */
+  protected emitGridClick(args: DataGrid.IGridClick): void {
+    this._gridClick.emit(args);
+  }
+
+  /**
+   * A signal emitted when the data grid has been clicked on.
+   */
+  get gridClick(): ISignal<this, DataGrid.IGridClick> {
+    return this._gridClick;
+  }
+
   private _viewport: Widget;
   private _vScrollBar: ScrollBar;
   private _hScrollBar: ScrollBar;
@@ -3332,6 +3399,8 @@ class DataGrid extends Widget {
   private _cellRenderers: RendererMap;
   private _defaultRenderer: CellRenderer;
   private _headerVisibility: DataGrid.HeaderVisibility;
+
+  private _gridClick = new Signal<this, DataGrid.IGridClick>(this);
 }
 
 
@@ -3495,6 +3564,84 @@ namespace DataGrid {
      */
     defaultRenderer?: CellRenderer;
   }
+
+  /**
+   * An arguments object for the `gridClick` signal.
+   */
+  export
+  interface IColumnHeaderClick {
+    /**
+     * The discriminated type of the args object.
+     */
+    readonly type: 'column-header-click',
+
+    /**
+     * The mouse event that triggered the `gridClick` signal.
+     */
+    readonly event: MouseEvent,
+
+    /**
+     * The metadata provided by the data model for the target of the click.
+     */
+    readonly metadata: DataModel.Metadata
+  }
+
+  /**
+   * An arguments object for the `gridClick` signal.
+   */
+  export
+  interface IRowHeaderClick {
+    /**
+     * The discriminated type of the args object.
+     */
+    readonly type: 'row-header-click',
+
+    /**
+     * The mouse event that triggered the `gridClick` signal.
+     */
+    readonly event: MouseEvent,
+
+    /**
+     * The metadata provided by the data model for the target of the click.
+     */
+    readonly metadata: DataModel.Metadata
+  }
+
+  /**
+   * An arguments object for the `gridClick` signal.
+   */
+  export
+  interface ICellClick {
+    /**
+     * The discriminated type of the args object.
+     */
+    readonly type: 'cell-click',
+
+    /**
+     * The mouse event that triggered the `gridClick` signal.
+     */
+    readonly event: MouseEvent,
+
+    /**
+     * The row index of the cell that was clicked on.
+     */
+    readonly rowIndex: number,
+
+    /**
+     * The row index of the cell that was clicked on.
+     */
+    readonly columnIndex: number
+  }
+
+  /**
+   * A type alias for the args objects of the `gridClick` signal.
+   */
+  export
+  type IGridClick = (
+    IColumnHeaderClick |
+    IRowHeaderClick |
+    ICellClick
+  )
 
   /**
    * The default theme for a data grid.
