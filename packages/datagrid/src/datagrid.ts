@@ -1491,49 +1491,73 @@ class DataGrid extends Widget {
   }
 
   /**
-   * Hit tests the row and column headers.
+   * Hit tests cells.
    *
    * @param event - The mouse event that triggered the test.
    */
-  private _hitTestHeaders(event: MouseEvent) : DataGrid.IGridClick | null {
-
+  private _hitTestCells(event: MouseEvent) : DataGrid.ICellHit | null {
     // Adjust x/y values to account for viewport
     const { clientX, clientY } = event;
     const rect = this._viewport.node.getBoundingClientRect();
     const x = clientX - rect.left;
     const y = clientY - rect.top;
 
-    // Check for click on the row header
+    // test for hit on the corner headers
     if (
-      (y > 0)
-      && (y <= this._columnHeaderSections.totalSize)
-      && (x <= this._rowHeaderSections.totalSize)
+      (y > 0 && y <= this._columnHeaderSections.totalSize) &&
+      (x > 0 && x <= this._rowHeaderSections.totalSize)
      ) {
-      const metadata = this.model!.metadata('row-header', 0);
-      return {
-        type: 'row-header-click',
-        event: event,
-        metadata: metadata
-      };
-    }
+      const rowIndex = this._columnHeaderSections.sectionIndex(y);
+      const columnIndex = this._rowHeaderSections.sectionIndex(x);
 
-    // Adjust column x value to account for the space of the row header
-    const columnX = clientX - rect.left - this._rowHeaderSections.totalSize;
-
-    // Check for click on the column headers
-    if (y > 0 && y <= this._columnHeaderSections.totalSize) {
-      const clickedIndex = this._columnSections.sectionIndex(columnX);
-      if (clickedIndex !== -1) {
-        const metadata = this.model!.metadata('column-header', clickedIndex);
+      if (rowIndex !== -1 && columnIndex !== -1) {
         return {
-          type: 'column-header-click',
-          event: event,
-          metadata: metadata
+          region: 'corner-header',
+          rowIndex: rowIndex,
+          columnIndex: columnIndex
         };
       }
     }
 
-    // No click on headers was detected
+    const bodyX = clientX + this._scrollX - rect.left - this._rowHeaderSections.totalSize;
+    const bodyY = clientY + this._scrollY - rect.top - this._columnHeaderSections.totalSize;
+    const bodyRowIndex = this._rowSections.sectionIndex(bodyY);
+
+    // test for hit on the row headers
+    if (x > 0 && x <= this._rowHeaderSections.totalSize) {
+      const columnIndex = this._rowHeaderSections.sectionIndex(x);
+
+      if (bodyRowIndex !== -1 && columnIndex !== -1) {
+        return {
+          region: 'row-header',
+          rowIndex: bodyRowIndex,
+          columnIndex: columnIndex
+        };
+      }
+    }
+
+    const bodyColumnIndex = this._columnSections.sectionIndex(bodyX);
+
+    // test for hit on the column headers
+    if (y > 0 && y <= this._columnHeaderSections.totalSize) {
+      const rowIndex = this._columnHeaderSections.sectionIndex(y);
+
+      return {
+        region: 'column-header',
+        rowIndex: rowIndex,
+        columnIndex: bodyColumnIndex
+      };
+    }
+
+    // test for hit on the body cells
+    if (bodyRowIndex !== -1 && bodyColumnIndex !== -1) {
+      return {
+        region: 'body',
+        rowIndex: bodyRowIndex,
+        columnIndex: bodyColumnIndex
+      };
+    }
+
     return null;
   }
 
@@ -1671,10 +1695,10 @@ class DataGrid extends Widget {
       return;
     }
 
-    // Perform hit testing for column and row headers
-    const headerClick = this._hitTestHeaders(event);
-    if (headerClick) {
-      this.emitGridClick(headerClick);
+    // Perform hit testing for cells
+    const cellHit = this._hitTestCells(event);
+    if (cellHit) {
+      this.emitCellClick({ cell: cellHit, event: event });
     }
   }
 
@@ -3352,17 +3376,17 @@ class DataGrid extends Widget {
   }
 
   /**
-   * Emit the `gridClick` signal for the data grid.
+   * Emit the `cellClick` signal for the data grid.
    */
-  protected emitGridClick(args: DataGrid.IGridClick): void {
-    this._gridClick.emit(args);
+  protected emitCellClick(args: DataGrid.ICellClick): void {
+    this._cellClick.emit(args);
   }
 
   /**
    * A signal emitted when the data grid has been clicked on.
    */
-  get gridClick(): ISignal<this, DataGrid.IGridClick> {
-    return this._gridClick;
+  get cellClick(): ISignal<this, DataGrid.ICellClick> {
+    return this._cellClick;
   }
 
   private _viewport: Widget;
@@ -3400,7 +3424,7 @@ class DataGrid extends Widget {
   private _defaultRenderer: CellRenderer;
   private _headerVisibility: DataGrid.HeaderVisibility;
 
-  private _gridClick = new Signal<this, DataGrid.IGridClick>(this);
+  private _cellClick = new Signal<this, DataGrid.ICellClick>(this);
 }
 
 
@@ -3566,82 +3590,43 @@ namespace DataGrid {
   }
 
   /**
-   * An arguments object for the `gridClick` signal.
+   * An arguments object for the cell hit test.
+   *
    */
   export
-  interface IColumnHeaderClick {
+  interface ICellHit {
     /**
-     * The discriminated type of the args object.
+     * The region which contains the cell.
      */
-    readonly type: 'column-header-click',
+    readonly region: DataModel.CellRegion;
 
     /**
-     * The mouse event that triggered the `gridClick` signal.
+     * The row index of the cell hit.
      */
-    readonly event: MouseEvent,
+    readonly rowIndex: number;
 
     /**
-     * The metadata provided by the data model for the target of the click.
+     * The column index of the cell hit.
      */
-    readonly metadata: DataModel.Metadata
+    readonly columnIndex: number;
   }
 
   /**
-   * An arguments object for the `gridClick` signal.
-   */
-  export
-  interface IRowHeaderClick {
-    /**
-     * The discriminated type of the args object.
-     */
-    readonly type: 'row-header-click',
-
-    /**
-     * The mouse event that triggered the `gridClick` signal.
-     */
-    readonly event: MouseEvent,
-
-    /**
-     * The metadata provided by the data model for the target of the click.
-     */
-    readonly metadata: DataModel.Metadata
-  }
-
-  /**
-   * An arguments object for the `gridClick` signal.
+   * An arguments object for `cellClick` signal.
+   *
    */
   export
   interface ICellClick {
     /**
-     * The discriminated type of the args object.
+     * The cell hit.
      */
-    readonly type: 'cell-click',
+    readonly cell: ICellHit;
 
     /**
-     * The mouse event that triggered the `gridClick` signal.
+     * The mouse event that triggered the `cellClick` signal.
      */
-    readonly event: MouseEvent,
-
-    /**
-     * The row index of the cell that was clicked on.
-     */
-    readonly rowIndex: number,
-
-    /**
-     * The row index of the cell that was clicked on.
-     */
-    readonly columnIndex: number
+    readonly event: MouseEvent;
   }
-
-  /**
-   * A type alias for the args objects of the `gridClick` signal.
-   */
-  export
-  type IGridClick = (
-    IColumnHeaderClick |
-    IRowHeaderClick |
-    ICellClick
-  )
 
   /**
    * The default theme for a data grid.
