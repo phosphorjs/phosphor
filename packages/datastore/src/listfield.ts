@@ -379,8 +379,9 @@ namespace Private {
 
     // Process the removed identifiers, if necessary.
     if (removedIds.length > 0) {
-      // Chunkify the removed identifiers.
-      let chunks = findRemoveChunks(removedIds, metadata.ids);
+      // Chunkify the removed identifiers,
+      // or increment the removed ids in the cemetery.
+      let chunks = findRemovedChunks(removedIds, metadata);
 
       // Process the chunks.
       while (chunks.length > 0) {
@@ -400,8 +401,9 @@ namespace Private {
 
     // Process the inserted identifiers, if necessary.
     if (insertedIds.length > 0) {
-      // Chunkify the inserted identifiers.
-      let chunks = findInsertChunks(insertedIds, insertedValues, metadata.ids);
+      // Chunkify the inserted identifiers, or decrement the removed
+      // ids in the cemetery.
+      let chunks = findInsertedChunks(insertedIds, insertedValues, metadata);
 
       // Process the chunks.
       while (chunks.length > 0) {
@@ -439,11 +441,14 @@ namespace Private {
    *
    * @param ids - The ids to remove from the metadta.
    *
-   * @param metadataIds - The metadata ids.
+   * @param metadata - The metadata for the list field.
    *
    * @returns The ordered chunks to remove.
+   *
+   * #### Notes
+   * The metadata may be mutated if concurrently removed chunks are encountered.
    */
-  function findRemoveChunks(ids: ReadonlyArray<string>, metadataIds: ReadonlyArray<string>): RemoveChunk[] {
+  function findRemovedChunks(ids: ReadonlyArray<string>, metadata: ListField.Metadata<any>): RemoveChunk[] {
     // Set up the chunks array.
     let chunks: RemoveChunk[] = [];
 
@@ -456,11 +461,15 @@ namespace Private {
     // Iterate over the identifiers to remove.
     while (i < n) {
       // Find the boundary identifier for the current id.
-      let j = ArrayExt.lowerBound(metadataIds, ids[i], StringExt.cmp);
+      let j = ArrayExt.lowerBound(metadata.ids, ids[i], StringExt.cmp);
 
-      // Bail early if the boundary is the end of the array.
-      if (j === metadataIds.length) {
-        break;
+      // If the boundary is the end of the array, then these are concurrently
+      // removed ids. Increment those ids in the cemetery and bail.
+      if (j === metadata.ids.length) {
+        let count = metadata.cemetery[ids[i]] || 0;
+        metadata.cemetery[ids[i]] = count + 1;
+        i++;
+        continue;
       }
 
       // Set up the chunk index.
@@ -470,7 +479,7 @@ namespace Private {
       let count = 0;
 
       // Find the extent of the chunk.
-      while (i < n && StringExt.cmp(ids[i], metadataIds[j]) === 0) {
+      while (i < n && StringExt.cmp(ids[i], metadata.ids[j]) === 0) {
         count++;
         i++;
         j++;
@@ -509,11 +518,14 @@ namespace Private {
    *
    * @param values - The values to be inserted.
    *
-   * @param metadataIds - The metadata ids.
+   * @param metadata - The metadata for the list field.
    *
    * @returns The ordered chunks to insert.
+   *
+   * #### Notes
+   * The metadata may be mutated if concurrently removed chunks are encountered.
    */
-  function findInsertChunks<T extends ReadonlyJSONValue>(ids: ReadonlyArray<string>, values: ReadonlyArray<T>, metadataIds: ReadonlyArray<string>): InsertChunk<T>[] {
+  function findInsertedChunks<T extends ReadonlyJSONValue>(ids: ReadonlyArray<string>, values: ReadonlyArray<T>, metadata: ListField.Metadata<any>): InsertChunk<T>[] {
     // Set up the chunks array.
     let chunks: InsertChunk<T>[] = [];
 
@@ -525,11 +537,24 @@ namespace Private {
 
     // Iterate over the identifiers to insert.
     while (i < n) {
+      // If the ids have been concurrently deleted, decrement the cemetery
+      // instead of inserting them into the current value.
+      let count = metadata.cemetery[ids[i]] || 0;
+      if (count === 1) {
+        delete metadata.cemetery[ids[i]];
+        i++;
+        continue;
+      } else if (count > 1) {
+        metadata.cemetery[ids[i]] = count - 1;
+        i++;
+        continue;
+      }
+
       // Find the boundary identifier for the current id.
-      let j = ArrayExt.lowerBound(metadataIds, ids[i], StringExt.cmp);
+      let j = ArrayExt.lowerBound(metadata.ids, ids[i], StringExt.cmp);
 
       // Bail early if the boundary is the end of the array.
-      if (j === metadataIds.length) {
+      if (j === metadata.ids.length) {
         chunks.push({ index: j, ids: ids.slice(i), values: values.slice(i) });
         break;
       }
@@ -541,7 +566,7 @@ namespace Private {
       let chunkValues: T[] = [];
 
       // Find the extent of the chunk.
-      while (i < n && StringExt.cmp(ids[i], metadataIds[j]) < 0) {
+      while (i < n && StringExt.cmp(ids[i], metadata.ids[j]) < 0) {
         chunkIds.push(ids[i]);
         chunkValues.push(values[i]);
         i++;
@@ -559,57 +584,3 @@ namespace Private {
     return chunks;
   }
 }
-
-
-// This is the logic for the cemetery - needed for undo/redo.
-// /**
-//    * A class which manages the id tombstones for a list.
-//    */
-//   export
-//   class Cemetery {
-//     /**
-//      * Get a copy of the raw data for a cemetery.
-//      *
-//      * @returns A new copy of the raw internal data.
-//      */
-//     data(): { [id: string]: number } {
-//       return { ...this._data };
-//     }
-
-//     /**
-//      * Assign raw data to the cemetery.
-//      *
-//      * @param data - The raw data to apply to the cemetery.
-//      */
-//     assign(data: { readonly [id: string]: number }): void {
-//       this._data = { ...data };
-//     }
-
-//     /**
-//      * Get the tombstone count for an identifier.
-//      *
-//      * @param id - The identifier of interest.
-//      *
-//      * @returns The tombstone count for the identifier `>= 0`.
-//      */
-//     get(id: string): number {
-//       return this._data[id] || 0;
-//     }
-
-//     /**
-//      * Set the tombstone count for an identifier.
-//      *
-//      * @param id - The identifier of interest.
-//      *
-//      * @parm count - The tombstone count `>= 0`.
-//      */
-//     set(id: string, count: number): void {
-//       if (count === 0) {
-//         delete this._data[id];
-//       } else {
-//         this._data[id] = count;
-//       }
-//     }
-
-//     private _data: { [id: string]: number } = {};
-//   }

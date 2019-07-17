@@ -172,14 +172,14 @@ describe('@phosphor/datastore', () => {
 
         let firstUpdate = field.applyUpdate({
           previous,
-          update: { index: 0, remove: 0, values: [1, 8, 4] },
+          update: { index: 0, remove: 0, values: [1, 8, 9, 4] },
           metadata,
           version: 1,
           storeId: 1
         });
         let secondUpdate = field.applyUpdate({
           previous: firstUpdate.value,
-          update: { index: 1, remove: 1, values: [2, 3] },
+          update: { index: 1, remove: 2, values: [2, 3] },
           metadata,
           version: 2,
           storeId: 1
