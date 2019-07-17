@@ -1698,7 +1698,7 @@ class DataGrid extends Widget {
     // Perform hit testing for cells
     const cellHit = this._hitTestCells(event);
     if (cellHit) {
-      this.emitCellClick({ cell: cellHit, event: event });
+      this._cellClick.emit({ cell: cellHit, event: event });
     }
   }
 
@@ -3376,13 +3376,6 @@ class DataGrid extends Widget {
   }
 
   /**
-   * Emit the `cellClick` signal for the data grid.
-   */
-  protected emitCellClick(args: DataGrid.ICellClick): void {
-    this._cellClick.emit(args);
-  }
-
-  /**
    * A signal emitted when the data grid has been clicked on.
    */
   get cellClick(): ISignal<this, DataGrid.ICellClick> {
@@ -3424,7 +3417,7 @@ class DataGrid extends Widget {
   private _defaultRenderer: CellRenderer;
   private _headerVisibility: DataGrid.HeaderVisibility;
 
-  private _cellClick = new Signal<this, DataGrid.ICellClick>(this);
+  protected _cellClick = new Signal<this, DataGrid.ICellClick>(this);
 }
 
 
