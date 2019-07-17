@@ -4,23 +4,23 @@ Chief Executive: Chris Colbert
 
 Package Maintainers:
 
-* `algorithm`:
-* `application`:
-* `collections`:
-* `commands`:
-* `coreutils`:
-* `datagrid`:
-* `datastore`:
-* `default-theme`:
-* `disposable`:
-* `domutils`:
-* `dragdrop`:
-* `keyboard`:
-* `messaging`:
-* `properties`:
-* `signaling`:
-* `virtualdom`:
-* `widgets`:
+* `algorithm`: Afshin T. Darian (@afshin), Steve Silvester (@blink1073)
+* `application`: Afshin T. Darian (@afshin), Steve Silvester (@blink1073)
+* `collections`: Afshin T. Darian (@afshin), Steve Silvester (@blink1073)
+* `commands`: Afshin T. Darian (@afshin), Steve Silvester (@blink1073)
+* `coreutils`: Afshin T. Darian (@afshin), Steve Silvester (@blink1073)
+* `datagrid`: Afshin T. Darian (@afshin), Steve Silvester (@blink1073)
+* `datastore`: Afshin T. Darian (@afshin), Steve Silvester (@blink1073)
+* `default-theme`: Afshin T. Darian (@afshin), Steve Silvester (@blink1073)
+* `disposable`: Afshin T. Darian (@afshin), Steve Silvester (@blink1073)
+* `domutils`: Afshin T. Darian (@afshin), Steve Silvester (@blink1073)
+* `dragdrop`: Afshin T. Darian (@afshin), Steve Silvester (@blink1073)
+* `keyboard`: Afshin T. Darian (@afshin), Steve Silvester (@blink1073)
+* `messaging`: Afshin T. Darian (@afshin), Steve Silvester (@blink1073)
+* `properties`: Afshin T. Darian (@afshin), Steve Silvester (@blink1073)
+* `signaling`: Afshin T. Darian (@afshin), Steve Silvester (@blink1073)
+* `virtualdom`: Afshin T. Darian (@afshin), Steve Silvester (@blink1073)
+* `widgets`: Afshin T. Darian (@afshin), Steve Silvester (@blink1073)
 
 ## Principles of PhosphorJS
 
