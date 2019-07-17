@@ -10,7 +10,7 @@ import {
 } from 'chai';
 
 import {
-  Field, ListField
+  ListField
 } from '@phosphor/datastore';
 
 type ListValue = number;
@@ -202,29 +202,46 @@ describe('@phosphor/datastore', () => {
         expect(secondPatch.value).to.eql([1, 2, 3, 4]);
       });
 
-      it('should allow for racing updates', () => {
-        let previous = field.createValue();
+      it('should allow for racing patches', () => {
+        let current = field.createValue();
         let metadata = field.createMetadata();
         let values = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9];
-        let shuffled = shuffle(values);
-        let updated: undefined | Field.UpdateResult<
-          ListField.Value<ListValue>,
-          ListField.Change<ListValue>,
-          ListField.Patch<ListValue>
-        >;
-        shuffled.forEach(value => {
-          updated = field.applyUpdate({
-            previous: updated && updated.value || previous,
+        let patches: ListField.Patch<ListValue>[] = [];
+        // Recreate the values array one update at a time,
+        // capturing the patches.
+        values.forEach(v => {
+          let { value, patch } = field.applyUpdate({
+            previous: current,
             metadata,
             update: {
-              index: 0,
+              index: v,
               remove: 0,
-              values: [value]
+              values: [v]
             },
-            version: values.length - 1 - value,
+            version: values.length - 1 - v,
             storeId: 1
           });
+          current = value;
+          patches.push(patch);
         });
+        expect(current).to.eql(values);
+        // Shuffle the patches and apply them in a random order to
+        // a new ListField. We try this multiple times to ensure we
+        // don't accidentally get it right.
+        for (let i = 0; i < 10; ++i) {
+          let shuffled = shuffle(patches);
+          current = field.createValue();
+          metadata = field.createMetadata();
+          shuffled.forEach(patch => {
+            let { value } = field.applyPatch({
+              previous: current,
+              metadata,
+              patch
+            });
+            current = value;
+          });
+          expect(current).to.eql(values);
+        }
       });
 
     });
