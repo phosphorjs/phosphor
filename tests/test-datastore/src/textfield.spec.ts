@@ -247,6 +247,85 @@ describe('@phosphor/datastore', () => {
         }
       });
 
+      it('should handle concurrently deleted values', () => {
+        let initial = field.createValue();
+        let metadata = field.createMetadata();
+        // First insert some values.
+        let commonUpdate = field.applyUpdate({
+          previous: initial,
+          metadata,
+          update: { index: 0, remove: 0, text: 'abcd' },
+          version: 1,
+          storeId: 1
+        });
+        // Two collaborators concurrently remove the same value.
+        let metadataA = field.createMetadata();
+        let patchA = field.applyPatch({
+          previous: initial,
+          metadata: metadataA,
+          patch: commonUpdate.patch
+        });
+        let updateA = field.applyUpdate({
+          previous: patchA.value,
+          metadata: metadataA,
+          update: { index: 1, remove: 2, text: '' },
+          version: 2,
+          storeId: 2
+        });
+        expect(updateA.value).to.eql('ad');
+        let metadataB = field.createMetadata();
+        let patchB = field.applyPatch({
+          previous: initial,
+          metadata: metadataB,
+          patch: commonUpdate.patch
+        });
+        let updateB = field.applyUpdate({
+          previous: patchB.value,
+          metadata: metadataB,
+          update: { index: 0, remove: 2, text: '' },
+          version: 2,
+          storeId: 3
+        });
+        expect(updateB.value).to.eql('cd');
+
+        // Apply the A patch to the B collaborator
+        let patchB2 = field.applyPatch({
+          previous: updateB.value,
+          metadata: metadataB,
+          patch: updateA.patch
+        });
+        expect(patchB2.value).to.eql('d');
+
+        // Apply the B patch to the A collaborator
+        let patchA2 = field.applyPatch({
+          previous: updateA.value,
+          metadata: metadataA,
+          patch: updateB.patch
+        });
+        expect(patchA2.value).to.eql('d');
+
+        // Apply the patches to a third collaborator out-of-order.
+        let metadataC = field.createMetadata();
+        let patchC1 = field.applyPatch({
+          previous: initial,
+          metadata: metadataC,
+          patch: updateB.patch
+        });
+        let patchC2 = field.applyPatch({
+          previous: patchC1.value,
+          metadata: metadataC,
+          patch: updateA.patch
+        });
+        let patchC3 = field.applyPatch({
+          previous: patchC2.value,
+          metadata: metadataC,
+          patch: commonUpdate.patch
+        });
+
+        // Check the final value.
+        expect(patchC3.value).to.eql('d');
+      });
+
     });
 
     describe('mergeChange', () => {
