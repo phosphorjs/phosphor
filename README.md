@@ -30,7 +30,7 @@ The API documentation for the phosphor packages can be found in the links below:
 
 ## Governance
 
-PhosphorJS is led by a Chief Executive, Chris Colbert, and team of Package
+PhosphorJS is led by a Chief Executive, S. Chris Colbert, and team of Package
 Maintainers according to the Principles of Phosphor. See our [Governance
 Document](https://github.com/phosphorjs/phosphor/blob/master/GOVERNANCE.md) for
 details.
