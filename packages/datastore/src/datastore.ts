@@ -280,7 +280,7 @@ class Datastore implements IIterable<Table<Schema>>, IMessageHandler, IDisposabl
    * the promise resolves.
    */
   undo(transactionId: string): Promise<void> {
-    throw '';
+    throw Error('Undo is not implemented');
   }
 
   /**
@@ -297,7 +297,7 @@ class Datastore implements IIterable<Table<Schema>>, IMessageHandler, IDisposabl
    * the promise resolves.
    */
   redo(transactionId: string): Promise<void> {
-    throw '';
+    throw Error('Redo is not implemented');
   }
 
   /**

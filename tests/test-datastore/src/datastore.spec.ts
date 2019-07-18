@@ -99,7 +99,7 @@ describe('@phosphor/datastore', () => {
         };
         expect(() => {
           Datastore.create({ id: 1, schemas: [invalid1] });
-        }).to.throw;
+        }).to.throw(/validation failed/);
         let invalid2 = {
           id: 'invalid-schema',
           fields: {
@@ -108,7 +108,7 @@ describe('@phosphor/datastore', () => {
         };
         expect(() => {
           Datastore.create({ id: 1, schemas: [invalid2] });
-        }).to.throw;
+        }).to.throw(/validation failed/);
       });
 
     });
@@ -243,7 +243,7 @@ describe('@phosphor/datastore', () => {
 
       it('should throw an error for a nonexistent schema', () => {
         let schema3 = { ...schema2, id: 'new-schema' };
-        expect(() => { datastore.get(schema3); }).to.throw;
+        expect(() => { datastore.get(schema3); }).to.throw(/No table found/);
       });
 
     });
@@ -255,7 +255,7 @@ describe('@phosphor/datastore', () => {
         expect(datastore.inTransaction).to.be.false;
         expect(() => {
           t1.update({ 'my-record': { enabled: true } });
-        }).to.throw;
+        }).to.throw(/A table can only be updated/);
         datastore.beginTransaction();
         t1.update({ 'my-record': { enabled: true } });
         expect(datastore.inTransaction).to.be.true;
@@ -266,6 +266,11 @@ describe('@phosphor/datastore', () => {
       it('should return a transaction id', () => {
         expect(datastore.beginTransaction()).to.not.equal('');
         datastore.endTransaction();
+      });
+
+      it('should throw if called multiple times', () => {
+        datastore.beginTransaction();
+        expect(() => datastore.beginTransaction()).to.throw(/Already/);
       });
 
     });
@@ -300,7 +305,7 @@ describe('@phosphor/datastore', () => {
       });
 
       it('should throw if there is not a transaction begun', () => {
-        expect(() => { datastore.endTransaction(); }).to.throw;
+        expect(() => datastore.endTransaction()).to.throw(/No transaction/);
       });
 
     });
@@ -308,7 +313,7 @@ describe('@phosphor/datastore', () => {
     describe('undo()', () => {
 
       it('should throw', () => {
-        expect(() => { datastore.undo(''); }).to.throw;
+        expect(() => { datastore.undo(''); }).to.throw(/not implemented/);
       });
 
     });
@@ -316,7 +321,7 @@ describe('@phosphor/datastore', () => {
     describe('redo()', () => {
 
       it('should throw', () => {
-        expect(() => { datastore.redo(''); }).to.throw;
+        expect(() => { datastore.redo(''); }).to.throw(/not implemented/);
       });
 
     });
