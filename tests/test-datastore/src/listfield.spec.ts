@@ -201,15 +201,35 @@ describe('@phosphor/datastore', () => {
           metadata,
           patch: thirdUpdate.patch
         });
+        expect(firstPatch.change[0]).to.eql({
+          index: 0,
+          removed: [],
+          inserted: [5, 6, 7]
+        });
         let secondPatch = field.applyPatch({
           previous: firstPatch.value,
           metadata,
           patch: secondUpdate.patch
         });
+        expect(secondPatch.change[0]).to.eql({
+          index: 0,
+          removed: [],
+          inserted: [2, 3]
+        });
         let thirdPatch = field.applyPatch({
           previous: secondPatch.value,
           metadata,
           patch: firstUpdate.patch
+        });
+        expect(thirdPatch.change[0]).to.eql({
+          index: 2,
+          removed: [],
+          inserted: [4]
+        });
+        expect(thirdPatch.change[1]).to.eql({
+          index: 0,
+          removed: [],
+          inserted: [1]
         });
         expect(thirdPatch.value).to.eql([1, 2, 3, 4, 5, 6, 7]);
       });
