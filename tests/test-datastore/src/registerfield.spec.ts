@@ -140,7 +140,6 @@ describe('@phosphor/datastore', () => {
           patch: update1.patch
         });
         expect(patch2.value.value).to.equal('updated-later');
-        console.warn(patch2.change);
         expect(patch2.change.current.value).to.equal('updated-later');
         expect(patch2.change.previous.value).to.equal('updated-later');
       });

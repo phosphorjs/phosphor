@@ -63,7 +63,7 @@ describe('@phosphor/datastore', () => {
 
     describe('applyUpdate', () => {
 
-      it ('should apply an update to a value', () => {
+      it('should apply an update to a value', () => {
         let previous = {'zero': 'zeroth'};
         let metadata = field.createMetadata();
         let update = {
@@ -85,7 +85,7 @@ describe('@phosphor/datastore', () => {
         expect(patch.values).to.eql(update);
       });
 
-      it ('should indicate changed values in the change object', () => {
+      it('should indicate changed values in the change object', () => {
         let previous = {'zero': 'zeroth', 'one': 'first' };
         let metadata = field.createMetadata();
         let update = {
@@ -108,7 +108,7 @@ describe('@phosphor/datastore', () => {
 
     describe('applyPatch', () => {
 
-      it ('should apply a patch to a value', () => {
+      it('should apply a patch to a value', () => {
         let previous = {'zero': 'zeroth'};
         let metadata = field.createMetadata();
         let update = field.applyUpdate({
@@ -126,7 +126,7 @@ describe('@phosphor/datastore', () => {
         expect(value).to.eql({ 'zero': 'zeroth', 'one': 'first', 'two': 'second' });
       });
 
-      it ('should indicate changed values in the change object', () => {
+      it('should indicate changed values in the change object', () => {
         let previous = {'zero': 'zeroth', 'one': 'first' };
         let metadata = field.createMetadata();
         let update = field.applyUpdate({
@@ -147,6 +147,46 @@ describe('@phosphor/datastore', () => {
         expect(value).to.eql({ 'zero': 'zeroth', 'two': 'second' });
         expect(change.previous).to.eql({ 'one': 'first', 'two': null });
         expect(change.current).to.eql({ 'one': null, 'two': 'second' });
+      });
+
+      it('should allow for out-of-order patches', () => {
+        let previous = field.createValue();
+        let metadata = field.createMetadata();
+        // Generate some patches.
+        let update1 = field.applyUpdate({
+          previous,
+          metadata,
+          update: { 'a': 'a', 'b': 'b' },
+          version: 1,
+          storeId: 1
+        });
+        let update2 = field.applyUpdate({
+          previous: update1.value,
+          metadata,
+          update: {'a': null, 'c': 'c' },
+          version: 2,
+          storeId: 1
+        });
+        expect(update2.value).to.eql({'b': 'b', 'c': 'c'});
+
+        //Reset the metadata and apply the patches out of order.
+        metadata = field.createMetadata();
+        let patch1 = field.applyPatch({
+          previous,
+          metadata,
+          patch: update2.patch
+        });
+        expect(patch1.value).to.eql({'c': 'c'})
+        expect(patch1.change.previous).to.eql({'a': null, 'c': null });
+        expect(patch1.change.current).to.eql({'a': null, 'c': 'c'});
+        let patch2 = field.applyPatch({
+          previous: patch1.value,
+          metadata,
+          patch: update1.patch
+        });
+        expect(patch2.value).to.eql({'b': 'b', 'c': 'c'});
+        expect(patch2.change.previous).to.eql({'a': null, 'b': null});
+        expect(patch2.change.current).to.eql({'a': null, 'b': 'b'});
       });
 
     });
