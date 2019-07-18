@@ -1,26 +1,75 @@
 # Governance of PhosphorJS
 
-Chief Executive: Chris Colbert
+Chief Executive: S. Chris Colbert (@sccolbert)
 
 Package Maintainers:
 
-* `algorithm`: Afshin T. Darian (@afshin), Steve Silvester (@blink1073)
-* `application`: Afshin T. Darian (@afshin), Steve Silvester (@blink1073)
-* `collections`: Afshin T. Darian (@afshin), Steve Silvester (@blink1073)
-* `commands`: Afshin T. Darian (@afshin), Steve Silvester (@blink1073)
-* `coreutils`: Afshin T. Darian (@afshin), Steve Silvester (@blink1073)
-* `datagrid`: Afshin T. Darian (@afshin), Steve Silvester (@blink1073)
-* `datastore`: Afshin T. Darian (@afshin), Steve Silvester (@blink1073)
-* `default-theme`: Afshin T. Darian (@afshin), Steve Silvester (@blink1073)
-* `disposable`: Afshin T. Darian (@afshin), Steve Silvester (@blink1073)
-* `domutils`: Afshin T. Darian (@afshin), Steve Silvester (@blink1073)
-* `dragdrop`: Afshin T. Darian (@afshin), Steve Silvester (@blink1073)
-* `keyboard`: Afshin T. Darian (@afshin), Steve Silvester (@blink1073)
-* `messaging`: Afshin T. Darian (@afshin), Steve Silvester (@blink1073)
-* `properties`: Afshin T. Darian (@afshin), Steve Silvester (@blink1073)
-* `signaling`: Afshin T. Darian (@afshin), Steve Silvester (@blink1073)
-* `virtualdom`: Afshin T. Darian (@afshin), Steve Silvester (@blink1073)
-* `widgets`: Afshin T. Darian (@afshin), Steve Silvester (@blink1073)
+* `algorithm`:
+  S. Chris Colbert (@sccolbert),
+  Afshin T. Darian (@afshin),
+  Steven Silvester (@blink1073)
+* `application`:
+  S. Chris Colbert (@sccolbert),
+  Afshin T. Darian (@afshin),
+  Steven Silvester (@blink1073)
+* `collections`:
+  S. Chris Colbert (@sccolbert),
+  Afshin T. Darian (@afshin),
+  Steven Silvester (@blink1073)
+* `commands`:
+  S. Chris Colbert (@sccolbert),
+  Afshin T. Darian (@afshin),
+  Steven Silvester (@blink1073)
+* `coreutils`:
+  S. Chris Colbert (@sccolbert),
+  Afshin T. Darian (@afshin),
+  Steven Silvester (@blink1073)
+* `datagrid`:
+  S. Chris Colbert (@sccolbert)
+* `datastore`:
+  S. Chris Colbert (@sccolbert),
+  Afshin T. Darian (@afshin),
+  Steven Silvester (@blink1073)
+* `default-theme`:
+  S. Chris Colbert (@sccolbert),
+  Afshin T. Darian (@afshin),
+  Steven Silvester (@blink1073)
+* `disposable`:
+  S. Chris Colbert (@sccolbert),
+  Afshin T. Darian (@afshin),
+  Steven Silvester (@blink1073)
+* `domutils`:
+  S. Chris Colbert (@sccolbert),
+  Afshin T. Darian (@afshin),
+  Steven Silvester (@blink1073)
+* `dragdrop`:
+  S. Chris Colbert (@sccolbert),
+  Afshin T. Darian (@afshin),
+  Steven Silvester (@blink1073)
+* `keyboard`:
+  S. Chris Colbert (@sccolbert),
+  Afshin T. Darian (@afshin),
+  Steven Silvester (@blink1073)
+* `messaging`:
+  S. Chris Colbert (@sccolbert),
+  Afshin T. Darian (@afshin),
+  Steven Silvester (@blink1073)
+* `properties`:
+  S. Chris Colbert (@sccolbert),
+  Afshin T. Darian (@afshin),
+  Steven Silvester (@blink1073)
+* `signaling`:
+  S. Chris Colbert (@sccolbert),
+  Afshin T. Darian (@afshin),
+  Steven Silvester (@blink1073)
+* `virtualdom`:
+  S. Chris Colbert (@sccolbert),
+  Afshin T. Darian (@afshin),
+  Steven Silvester (@blink1073)
+* `widgets`:
+  S. Chris Colbert (@sccolbert),
+  Afshin T. Darian (@afshin),
+  Steven Silvester (@blink1073)
 
 ## Principles of PhosphorJS
 
