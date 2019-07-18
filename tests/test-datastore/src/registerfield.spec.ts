@@ -13,10 +13,6 @@ import {
   RegisterField
 } from '@phosphor/datastore';
 
-import {
-  createDuplexId
-} from '@phosphor/datastore/lib/utilities';
-
 type RegisterValue = { value: string };
 
 describe('@phosphor/datastore', () => {
@@ -27,14 +23,14 @@ describe('@phosphor/datastore', () => {
 
     beforeEach(() => {
         field = new RegisterField<RegisterValue>({
-          value: { value: 'one' }
+          value: { value: 'a' }
         });
     });
 
     describe('constructor()', () => {
 
       it('should accept options', () => {
-        expect(field.value.value).to.equal('one');
+        expect(field.value.value).to.equal('a');
       });
 
     });
@@ -51,7 +47,7 @@ describe('@phosphor/datastore', () => {
 
       it('should create an initial value for the field', () => {
         let value = field.createValue();
-        expect(value.value).to.equal('one');
+        expect(value.value).to.equal('a');
       });
 
     });
@@ -88,128 +84,65 @@ describe('@phosphor/datastore', () => {
         expect(patch.value).to.eql(newValue);
       });
 
-      it('should allow for out-of-order updates', () => {
-        let metadata = field.createMetadata();
-        let update1 = {
-          previous: field.value,
-          metadata,
-          update: {
-            value: 'latest-version'
-          },
-          version: 100,
-          storeId: 2
-        };
-        let update2 = {
-          previous: field.value,
-          metadata,
-          update: {
-            value: 'later-version'
-          },
-          version: 10,
-          storeId: 1
-        };
-        let update3 = {
-          previous: field.value,
-          metadata,
-          update: {
-            value: 'earlier-version'
-          },
-          version: 1,
-          storeId: 2
-        };
-        field.applyUpdate(update1);
-        field.applyUpdate(update2);
-        let result = field.applyUpdate(update3);
-        let { value, change, patch } = result;
-        expect(value.value).to.equal('latest-version');
-        expect(change.current).to.eql(update1.update);
-        expect(patch.id).to.not.equal('');
-        expect(patch.value).to.eql(update3.update);
-      });
-
-      it('should update the metadata with the patch ordering', () => {
-        let metadata = field.createMetadata();
-        let update1 = {
-          previous: field.value,
-          metadata,
-          update: {
-            value: 'later-version'
-          },
-          version: 10,
-          storeId: 1
-        };
-        let update2 = {
-          previous: field.value,
-          metadata,
-          update: {
-            value: 'earlier-version'
-          },
-          version: 1,
-          storeId: 2
-        };
-        field.applyUpdate(update1);
-        field.applyUpdate(update2);
-        expect(metadata.values.length).to.equal(2);
-        expect(metadata.values[0]).to.equal(update2.update);
-        expect(metadata.values[1]).to.equal(update1.update);
-      });
-
     });
 
     describe('applyPatch', () => {
 
       it('should return the result of the patch', () => {
         let metadata = field.createMetadata();
-        let previous = field.value;
-        let update = {
-            value: 'updated'
-        };
-        let id = createDuplexId(2, 1);
-        let patch = { id, value: update };
-        let result = field.applyPatch({ previous, patch, metadata });
-        expect(result.value.value).to.equal('updated');
-        expect(result.change.current.value).to.equal('updated');
-        expect(result.change.previous.value).to.equal('one');
+        let update = field.applyUpdate({
+          previous: field.value,
+          metadata,
+          update: { value: 'updated' },
+          version: 1,
+          storeId: 1
+        });
+        expect(update.value.value).to.equal('updated');
+        metadata = field.createMetadata();
+        let patch = field.applyPatch({
+          previous: field.value,
+          metadata,
+          patch: update.patch
+        });
+        expect(patch.value.value).to.equal('updated');
+        expect(patch.change.current.value).to.equal('updated');
+        expect(patch.change.previous.value).to.equal('a');
       });
 
       it('should allow for out-of-order patches', () => {
         let metadata = field.createMetadata();
-        let previous = field.value;
-        let update1 = {
-            value: 'updated-later'
-        };
-        let update2 = {
-            value: 'updated'
-        };
-        let id1 = createDuplexId(10 /* later version */, 2);
-        let id2 = createDuplexId(1 /* earlier version */, 1);
-        let patch1 = { id: id1, value: update1 };
-        let patch2 = { id: id2, value: update2 };
-        field.applyPatch({ previous, patch: patch1, metadata });
-        let result = field.applyPatch({ previous, patch: patch2, metadata });
-        expect(result.value.value).to.equal('updated-later');
-        expect(result.change.current.value).to.equal('updated-later');
-        expect(result.change.previous.value).to.equal('one');
-      });
-
-      it('should update the metadata with the patch ordering', () => {
-        let metadata = field.createMetadata();
-        let previous = field.value;
-        let update1 = {
-            value: 'updated-later'
-        };
-        let update2 = {
-            value: 'updated'
-        };
-        let id1 = createDuplexId(10 /* later version */, 2);
-        let id2 = createDuplexId(1 /* earlier version */, 1);
-        let patch1 = { id: id1, value: update1 };
-        let patch2 = { id: id2, value: update2 };
-        field.applyPatch({ previous, patch: patch1, metadata });
-        field.applyPatch({ previous, patch: patch2, metadata });
-        expect(metadata.values.length).to.equal(2);
-        expect(metadata.values[0]).to.equal(update2);
-        expect(metadata.values[1]).to.equal(update1);
+        // Apply updates to generate patches.
+        let update1 = field.applyUpdate({
+          previous: field.value,
+          metadata,
+          update: { value: 'updated' },
+          version: 1,
+          storeId: 1
+        });
+        let update2 = field.applyUpdate({
+          previous: update1.value,
+          metadata,
+          update: { value: 'updated-later' },
+          version: 2,
+          storeId: 1
+        });
+        expect(update2.value.value).to.equal('updated-later');
+        // Apply the patches out of order.
+        metadata = field.createMetadata();
+        let patch1 = field.applyPatch({
+          previous: field.value,
+          metadata,
+          patch: update2.patch
+        });
+        let patch2 = field.applyPatch({
+          previous: patch1.value,
+          metadata,
+          patch: update1.patch
+        });
+        expect(patch2.value.value).to.equal('updated-later');
+        console.warn(patch2.change);
+        expect(patch2.change.current.value).to.equal('updated-later');
+        expect(patch2.change.previous.value).to.equal('updated-later');
       });
 
     });
@@ -226,7 +159,7 @@ describe('@phosphor/datastore', () => {
           current: { value: 'second-change' }
         };
         let merged = field.mergeChange(change1, change2);
-        expect(merged.previous.value).to.equal('one');
+        expect(merged.previous.value).to.equal('a');
         expect(merged.current.value).to.equal('second-change');
       });
 
