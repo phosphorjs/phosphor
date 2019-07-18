@@ -265,6 +265,7 @@ describe('@phosphor/datastore', () => {
 
       it('should return a transaction id', () => {
         expect(datastore.beginTransaction()).to.not.equal('');
+        datastore.endTransaction();
       });
 
     });
