@@ -14,7 +14,7 @@ import {
 } from '@phosphor/datastore';
 
 import {
-  IMessageHandler, Message
+  IMessageHandler, Message, MessageLoop
 } from '@phosphor/messaging';
 
 
@@ -271,6 +271,7 @@ describe('@phosphor/datastore', () => {
       it('should throw if called multiple times', () => {
         datastore.beginTransaction();
         expect(() => datastore.beginTransaction()).to.throw(/Already/);
+        datastore.endTransaction();
       });
 
     });
@@ -310,6 +311,37 @@ describe('@phosphor/datastore', () => {
 
     });
 
+    describe('processMessage()', () => {
+
+      it('should accept transaction messages from other stores', () => {
+        let t2 = datastore.get(schema2);
+        datastore.beginTransaction();
+        t2.update({ 'my-record': { count: 123, enabled: true } });
+        datastore.endTransaction();
+        datastore.beginTransaction();
+        t2.update({ 'my-other-record': { count: 456, enabled: true } });
+        datastore.endTransaction();
+        let newDatastore = Datastore.create({
+          id: DATASTORE_ID + 1,
+          schemas: [schema1, schema2]
+        });
+        MessageLoop.sendMessage(
+          newDatastore,
+          new Datastore.TransactionMessage(broadcastHandler.transactions[0])
+        );
+        MessageLoop.sendMessage(
+          newDatastore,
+          new Datastore.TransactionMessage(broadcastHandler.transactions[1])
+        );
+        t2 = newDatastore.get(schema2);
+        expect(t2.get('my-record')!.enabled).to.be.true;
+        expect(t2.get('my-record')!.count).to.equal(123);
+        expect(t2.get('my-other-record')!.enabled).to.be.true;
+        expect(t2.get('my-other-record')!.count).to.equal(456);
+      });
+
+    });
+
     describe('undo()', () => {
 
       it('should throw', () => {
@@ -329,4 +361,3 @@ describe('@phosphor/datastore', () => {
   });
 
 });
-
