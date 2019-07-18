@@ -163,7 +163,14 @@ describe('@phosphor/datastore', () => {
           version: 2,
           storeId: 1
         });
-        expect(secondUpdate.value).to.equal('abc');
+        let thirdUpdate = field.applyUpdate({
+          previous: secondUpdate.value,
+          update: { index: 3, remove: 0, text: 'def' },
+          metadata,
+          version: 3,
+          storeId: 1
+        });
+        expect(thirdUpdate.value).to.equal('abcdef');
 
         // Now apply the patches on another client in a different order.
         // They should have the same resulting value.
@@ -171,14 +178,19 @@ describe('@phosphor/datastore', () => {
         let firstPatch = field.applyPatch({
           previous,
           metadata,
-          patch: secondUpdate.patch
+          patch: thirdUpdate.patch
         });
         let secondPatch = field.applyPatch({
           previous: firstPatch.value,
           metadata,
+          patch: secondUpdate.patch
+        });
+        let thirdPatch = field.applyPatch({
+          previous: secondPatch.value,
+          metadata,
           patch: firstUpdate.patch
         });
-        expect(secondPatch.value).to.equal('abc');
+        expect(thirdPatch.value).to.equal('abcdef');
       });
 
     });

@@ -184,7 +184,14 @@ describe('@phosphor/datastore', () => {
           version: 2,
           storeId: 1
         });
-        expect(secondUpdate.value).to.eql([1, 2, 3, 4]);
+        let thirdUpdate = field.applyUpdate({
+          previous: secondUpdate.value,
+          update: { index: 4, remove: 0, values: [5, 6, 7] },
+          metadata,
+          version: 3,
+          storeId: 1
+        });
+        expect(thirdUpdate.value).to.eql([1, 2, 3, 4, 5, 6, 7]);
 
         // Now if we apply these patches on another client in 
         // a different order, they should give the same result.
@@ -192,14 +199,19 @@ describe('@phosphor/datastore', () => {
         let firstPatch = field.applyPatch({
           previous,
           metadata,
-          patch: secondUpdate.patch
+          patch: thirdUpdate.patch
         });
         let secondPatch = field.applyPatch({
           previous: firstPatch.value,
           metadata,
+          patch: secondUpdate.patch
+        });
+        let thirdPatch = field.applyPatch({
+          previous: secondPatch.value,
+          metadata,
           patch: firstUpdate.patch
         });
-        expect(secondPatch.value).to.eql([1, 2, 3, 4]);
+        expect(thirdPatch.value).to.eql([1, 2, 3, 4, 5, 6, 7]);
       });
 
       it('should allow for racing patches', () => {

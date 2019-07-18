@@ -544,7 +544,8 @@ namespace Private {
         delete metadata.cemetery[ids[i]];
         i++;
         continue;
-      } else if (count > 1) {
+      }
+      if (count > 1) {
         metadata.cemetery[ids[i]] = count - 1;
         i++;
         continue;
