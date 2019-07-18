@@ -541,7 +541,7 @@ namespace Private {
     while (i < n) {
       // If the id has been concurrently deleted, update the cemetery
       // and continue processing ids.
-      if (checkCemetery(ids[i], metadata.cemetery)) {
+      if (checkCemeteryForInsert(ids[i], metadata.cemetery)) {
         i++;
         continue;
       }
@@ -560,7 +560,7 @@ namespace Private {
         while (i < n) {
           // If the id has been concurrently deleted, update the cemetery
           // and continue processing ids.
-          if (checkCemetery(ids[i], metadata.cemetery)) {
+          if (checkCemeteryForInsert(ids[i], metadata.cemetery)) {
             i++;
             continue;
           }
@@ -579,7 +579,7 @@ namespace Private {
       while (i < n && StringExt.cmp(ids[i], metadata.ids[j]) < 0) {
         // If the id has been concurrently deleted, update the cemetery
         // and continue processing ids.
-        if (checkCemetery(ids[i], metadata.cemetery)) {
+        if (checkCemeteryForInsert(ids[i], metadata.cemetery)) {
           i++;
           continue;
         }
@@ -613,7 +613,7 @@ namespace Private {
    * If the ID *is* found in the cemetery, its value in the cemetery is decremented,
    * reflecting that it is closer to being shown.
    */
-  function checkCemetery(id: string, cemetery: { [x: string]: number }): boolean {
+  function checkCemeteryForInsert(id: string, cemetery: { [x: string]: number }): boolean {
     let count = cemetery[id] || 0;
     if (count === 1) {
       delete cemetery[id];
