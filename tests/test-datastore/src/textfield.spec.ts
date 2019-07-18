@@ -13,6 +13,18 @@ import {
   TextField
 } from '@phosphor/datastore';
 
+/**
+ * Return a shuffled copy of an array
+ */
+function shuffle<T>(array: ReadonlyArray<T>): T[] {
+  let ret = array.slice();
+  for (let i = ret.length - 1; i > 0; i--) {
+    let j = Math.floor(Math.random() * (i + 1)); // random index from 0 to i
+    [ret[i], ret[j]] = [ret[j], ret[i]]; // swap elements
+  }
+  return ret;
+}
+
 describe('@phosphor/datastore', () => {
 
   describe('TextField', () => {
@@ -191,6 +203,48 @@ describe('@phosphor/datastore', () => {
           patch: firstUpdate.patch
         });
         expect(thirdPatch.value).to.equal('abcdef');
+      });
+
+      it('should allow for racing patches', () => {
+        let current = field.createValue();
+        let metadata = field.createMetadata();
+        let values = 'abcdefghijk';
+        let patches: TextField.Patch[] = [];
+        // Recreate the values array one update at a time,
+        // capturing the patches.
+        for (let i = 0; i < values.length; i++) {
+          let { value, patch } = field.applyUpdate({
+            previous: current,
+            metadata,
+            update: {
+              index: i,
+              remove: 0,
+              text: values[i]
+            },
+            version: i,
+            storeId: 1
+          });
+          current = value;
+          patches.push(patch);
+        }
+        expect(current).to.eql(values);
+        // Shuffle the patches and apply them in a random order to
+        // a new ListField. We try this multiple times to ensure we
+        // don't accidentally get it right.
+        for (let i = 0; i < 10; ++i) {
+          let shuffled = shuffle(patches);
+          current = field.createValue();
+          metadata = field.createMetadata();
+          shuffled.forEach(patch => {
+            let { value } = field.applyPatch({
+              previous: current,
+              metadata,
+              patch
+            });
+            current = value;
+          });
+          expect(current).to.eql(values);
+        }
       });
 
     });
