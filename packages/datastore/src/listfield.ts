@@ -463,9 +463,11 @@ namespace Private {
       // Find the boundary identifier for the current id.
       let j = ArrayExt.lowerBound(metadata.ids, ids[i], StringExt.cmp);
 
-      // If the boundary is the end of the array, then these are concurrently
-      // removed ids. Increment those ids in the cemetery and bail.
-      if (j === metadata.ids.length) {
+      // If the boundary is at the end of the array, or if the boundary id
+      // does not match the id we are looking for, then we are dealing with
+      // a concurrently deleted value. In that case, increment its reference
+      // in the cemetery and continue processing ids.
+      if (j === metadata.ids.length || metadata.ids[j] !== ids[i]) {
         let count = metadata.cemetery[ids[i]] || 0;
         metadata.cemetery[ids[i]] = count + 1;
         i++;
