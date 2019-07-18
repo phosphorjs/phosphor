@@ -539,16 +539,9 @@ namespace Private {
 
     // Iterate over the identifiers to insert.
     while (i < n) {
-      // If the ids have been concurrently deleted, decrement the cemetery
-      // instead of inserting them into the current value.
-      let count = metadata.cemetery[ids[i]] || 0;
-      if (count === 1) {
-        delete metadata.cemetery[ids[i]];
-        i++;
-        continue;
-      }
-      if (count > 1) {
-        metadata.cemetery[ids[i]] = count - 1;
+      // If the id has been concurrently deleted, update the cemetery
+      // and continue processing ids.
+      if (checkCemetery(ids[i], metadata.cemetery)) {
         i++;
         continue;
       }
@@ -556,20 +549,40 @@ namespace Private {
       // Find the boundary identifier for the current id.
       let j = ArrayExt.lowerBound(metadata.ids, ids[i], StringExt.cmp);
 
-      // Bail early if the boundary is the end of the array.
-      if (j === metadata.ids.length) {
-        chunks.push({ index: j, ids: ids.slice(i), values: values.slice(i) });
-        break;
-      }
-
       // Set up the chunk ids.
       let chunkIds: string[] = [];
 
       // Set up the chunk values.
       let chunkValues: T[] = [];
 
-      // Find the extent of the chunk.
+      // Bail early if the boundary is the end of the array.
+      if (j === metadata.ids.length) {
+        while (i < n) {
+          // If the id has been concurrently deleted, update the cemetery
+          // and continue processing ids.
+          if (checkCemetery(ids[i], metadata.cemetery)) {
+            i++;
+            continue;
+          }
+          chunkIds.push(ids[i]);
+          chunkValues.push(values[i]);
+          i++;
+        }
+        // Add the chunk to the chunks array, or bump the id index.
+        if (chunkIds.length > 0) {
+          chunks.push({ index: j, ids: chunkIds, values: chunkValues });
+        }
+        break;
+      }
+
+      // Find the extent of the chunk if it is internal.
       while (i < n && StringExt.cmp(ids[i], metadata.ids[j]) < 0) {
+        // If the id has been concurrently deleted, update the cemetery
+        // and continue processing ids.
+        if (checkCemetery(ids[i], metadata.cemetery)) {
+          i++;
+          continue;
+        }
         chunkIds.push(ids[i]);
         chunkValues.push(values[i]);
         i++;
@@ -585,5 +598,31 @@ namespace Private {
 
     // Return the chunks array.
     return chunks;
+  }
+
+  /**
+   * Check if an id should be inserted, or if it has been concurrently deleted.
+   *
+   * @param id - the id to check.
+   *
+   * @param cemetery - the cemetery which determines whether the id should be inserted.
+   *
+   * @returns whether the id was found, indicating that it shouldn't be inserted.
+   *
+   * #### Notes
+   * If the ID *is* found in the cemetery, its value in the cemetery is decremented,
+   * reflecting that it is closer to being shown.
+   */
+  function checkCemetery(id: string, cemetery: { [x: string]: number }): boolean {
+    let count = cemetery[id] || 0;
+    if (count === 1) {
+      delete cemetery[id];
+      return true;
+    }
+    if (count > 1) {
+      cemetery[id] = count - 1;
+      return true;
+    }
+    return false;
   }
 }
