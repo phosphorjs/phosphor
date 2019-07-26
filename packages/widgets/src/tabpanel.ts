@@ -264,9 +264,13 @@ class TabPanel extends Widget {
     this.stackedPanel.insertWidget(index, widget);
     this.tabBar.insertTab(index, widget.title);
 
-    let tabId = this.tabBar.renderer.createTabKey({title: widget.title, current: false, zIndex: 0});
     widget.node.setAttribute('role', 'tabpanel');
-    widget.node.setAttribute('aria-labelledby', tabId);
+
+    let renderer = this.tabBar.renderer
+    if (renderer instanceof TabBar.Renderer) {
+      let tabId = renderer.createTabKey({title: widget.title, current: false, zIndex: 0});
+      widget.node.setAttribute('aria-labelledby', tabId);
+    }
   }
 
   /**

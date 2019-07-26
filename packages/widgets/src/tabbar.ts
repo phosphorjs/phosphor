@@ -1322,19 +1322,6 @@ namespace TabBar {
      * @returns A virtual element representing the tab.
      */
     renderTab(data: IRenderData<T>): VirtualElement;
-
-    /**
-     * Create a stable unique id for a tab based on the title.
-     *
-     * @param data - The data to use for the tab.
-     *
-     * @returns The unique id for a tab.
-     *
-     * #### Notes
-     * This method returns a stable unique id for a tab, depending only on the
-     * title. The tab DOM `id` is set to this value.
-     */
-    createTabKey(data: IRenderData<T>): string;
   }
 
   /**

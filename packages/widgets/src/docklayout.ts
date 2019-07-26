@@ -1982,14 +1982,17 @@ namespace Private {
   }
 
   export
-  async function addAria(widget: Widget, tabBar: TabBar<Widget>) {
-    let tabId = tabBar.renderer.createTabKey({title: widget.title, current: false, zIndex: 0});
+  function addAria(widget: Widget, tabBar: TabBar<Widget>) {
     widget.node.setAttribute('role', 'tabpanel');
-    widget.node.setAttribute('aria-labelledby', tabId);
+    let renderer = tabBar.renderer;
+    if (renderer instanceof TabBar.Renderer) {
+      let tabId = renderer.createTabKey({ title: widget.title, current: false, zIndex: 0 });
+      widget.node.setAttribute('aria-labelledby', tabId);  
+    }
   }
 
   export
-  async function removeAria(widget: Widget) {
+  function removeAria(widget: Widget) {
     widget.node.removeAttribute('role');
     widget.node.removeAttribute('aria-labelledby');
   }
