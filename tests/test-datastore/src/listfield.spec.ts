@@ -241,21 +241,36 @@ describe('@phosphor/datastore', () => {
         let patches: ListField.Patch<ListValue>[] = [];
         // Recreate the values array one update at a time,
         // capturing the patches.
-        values.forEach(v => {
-          let { value, patch } = field.applyUpdate({
+        for (let i = 0, version = 0; i < values.length; i++) {
+          let u1 = field.applyUpdate({
             previous: current,
             metadata,
             update: {
-              index: v,
+              index: i,
               remove: 0,
-              values: [v]
+              values: [values[i], values[i], values[i]]
             },
-            version: values.length - 1 - v,
+            version: version,
             storeId: 1
           });
-          current = value;
-          patches.push(patch);
-        });
+          version++;
+          current = u1.value;
+          patches.push(u1.patch);
+          let u2 = field.applyUpdate({
+            previous: current,
+            metadata,
+            update: {
+              index: i+1,
+              remove: 2,
+              values: []
+            },
+            version: version,
+            storeId: 1
+          });
+          version++;
+          current = u2.value;
+          patches.push(u2.patch);
+        };
         expect(current).to.eql(values);
         // Shuffle the patches and apply them in a random order to
         // a new ListField. We try this multiple times to ensure we

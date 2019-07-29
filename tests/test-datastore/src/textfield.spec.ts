@@ -232,20 +232,35 @@ describe('@phosphor/datastore', () => {
         let patches: TextField.Patch[] = [];
         // Recreate the values array one update at a time,
         // capturing the patches.
-        for (let i = 0; i < values.length; i++) {
-          let { value, patch } = field.applyUpdate({
+        for (let i = 0, version = 0; i < values.length; i++) {
+          let u1 = field.applyUpdate({
             previous: current,
             metadata,
             update: {
               index: i,
               remove: 0,
-              text: values[i]
+              text: values[i] + values[i] + values[i]
             },
-            version: i,
+            version,
             storeId: 1
           });
-          current = value;
-          patches.push(patch);
+          version++;
+          current = u1.value;
+          patches.push(u1.patch);
+          let u2 = field.applyUpdate({
+            previous: current,
+            metadata,
+            update: {
+              index: i+1,
+              remove: 2,
+              text: ''
+            },
+            version,
+            storeId: 1
+          });
+          version++;
+          current = u2.value;
+          patches.push(u2.patch);
         }
         expect(current).to.eql(values);
         // Shuffle the patches and apply them in a random order to
