@@ -528,75 +528,60 @@ namespace Private {
    * The metadata may be mutated if concurrently removed chunks are encountered.
    */
   function findInsertedChunks<T extends ReadonlyJSONValue>(ids: ReadonlyArray<string>, values: ReadonlyArray<T>, metadata: ListField.Metadata<any>): InsertChunk<T>[] {
-    // Set up the chunks array.
-    let chunks: InsertChunk<T>[] = [];
+    let indices: number[] = [];
+    let insertIds: string[] = [];
+    let insertValues: T[] = [];
 
-    // Set up the iteration index.
-    let i = 0;
-
-    // Fetch the identifier array length.
-    let n = ids.length;
-
-    // Iterate over the identifiers to insert.
-    while (i < n) {
-      // If the id has been concurrently deleted, update the cemetery
-      // and continue processing ids.
+     for (let i = 0; i < ids.length; i++) {
+       // Check if the id has been concurrently deleted. If so, update
+       // the cemetery, and continue processing without inserting the id.
       if (checkCemeteryForInsert(ids[i], metadata.cemetery)) {
-        i++;
         continue;
       }
 
-      // Find the boundary identifier for the current id.
-      let j = ArrayExt.lowerBound(metadata.ids, ids[i], StringExt.cmp);
+      // Add the id to the ids which will be actually inserted.
+      insertIds.push(ids[i]);
+      indices.push(ArrayExt.lowerBound(metadata.ids, ids[i], StringExt.cmp));
+      insertValues.push(values[i]);
+    }
+    return chunkifyInsertions(insertIds, insertValues, indices);
+  }
 
-      // Set up the chunk ids.
+  /**
+   * Consolidate inserted IDs into a set of chunks so that we can splice them
+   * into the existing value with a minimal number of splices.
+   *
+   * @param ids - The ids to be inserted.
+   *
+   * @param values - The values to be inserted. Should be the same length as ids.
+   *
+   * @param indices - The indices at which to insert the text. Should be the same length as ids.
+   *
+   * @returns The ordered chunks to insert.
+   */
+  function chunkifyInsertions<T extends ReadonlyJSONValue>(ids: ReadonlyArray<string>, values: ReadonlyArray<T>, indices: ReadonlyArray<number>): InsertChunk<T>[] {
+    // Set up the chunks array.
+    let chunks: InsertChunk<T>[] = [];
+
+    // Set up the loop over the ids to insert.
+    let insertIndex: number;
+    let i = 0;
+    while (i < ids.length) {
+      // Reset the insert chunk data
       let chunkIds: string[] = [];
-
-      // Set up the chunk values.
       let chunkValues: T[] = [];
+      insertIndex = indices[i];
 
-      // Bail early if the boundary is the end of the array.
-      if (j === metadata.ids.length) {
-        while (i < n) {
-          // If the id has been concurrently deleted, update the cemetery
-          // and continue processing ids.
-          if (checkCemeteryForInsert(ids[i], metadata.cemetery)) {
-            i++;
-            continue;
-          }
-          chunkIds.push(ids[i]);
-          chunkValues.push(values[i]);
-          i++;
-        }
-        // Add the chunk to the chunks array, or bump the id index.
-        if (chunkIds.length > 0) {
-          chunks.push({ index: j, ids: chunkIds, values: chunkValues });
-        }
-        break;
-      }
-
-      // Find the extent of the chunk if it is internal.
-      while (i < n && StringExt.cmp(ids[i], metadata.ids[j]) < 0) {
-        // If the id has been concurrently deleted, update the cemetery
-        // and continue processing ids.
-        if (checkCemeteryForInsert(ids[i], metadata.cemetery)) {
-          i++;
-          continue;
-        }
+      // Find the extent of the chunk
+      while (indices[i] === insertIndex && i < ids.length) {
         chunkIds.push(ids[i]);
         chunkValues.push(values[i]);
         i++;
       }
-
-      // Add the chunk to the chunks array, or bump the id index.
-      if (chunkIds.length > 0) {
-        chunks.push({ index: j, ids: chunkIds, values: chunkValues });
-      } else {
-        i++;
+      if (chunkValues.length) {
+        chunks.push({ index: insertIndex, ids: chunkIds, values: chunkValues });
       }
     }
-
-    // Return the chunks array.
     return chunks;
   }
 
