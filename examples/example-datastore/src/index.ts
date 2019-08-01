@@ -28,11 +28,14 @@ import {
   WSDatastoreAdapter
 } from './wsadapter';
 
+import * as monaco from 'monaco-editor';
+
 
 const rootSchema = {
   id: 'example-schema-root',
   fields: {
     toggle: new RegisterField<boolean>({value: false}),
+    text: new TextField(),
     shownMessages: new ListField<string>(),
   }
 };
@@ -110,6 +113,54 @@ class MyView extends Widget {
     this._div = document.createElement('div');
     this.node.appendChild(this._chk);
     this.node.appendChild(this._div);
+    const editorDiv = document.getElementById('container') as HTMLDivElement;
+    this._editor = monaco.editor.create(editorDiv, {
+      value: '',
+      language: 'typescript'
+    });
+    let changeGuard = false;
+
+    const model = this._editor.getModel()!;
+    model.onDidChangeContent(event => {
+      if (changeGuard) {
+        return;
+      }
+      const rootTable = this._store.get(rootSchema);
+      datastore.beginTransaction();
+      event.changes.forEach(change => {
+        rootTable.update({
+          root: {
+            text: {
+              index: change.rangeOffset,
+              remove: change.rangeLength,
+              text: change.text,
+            }
+          }
+        });
+      });
+      datastore.endTransaction();
+    });
+    datastore.changed.connect((_, change) => {
+      console.log(change);
+      if (change.storeId === datastore.id) {
+        return;
+      }
+      const c = change.change['example-schema-root'];
+      if (c && c.root && c.root.text) {
+        const textChanges = c.root.text as TextField.Change;
+        textChanges.forEach(textChange => {
+          const text = model.getValue();
+          const newText = 
+            text.slice(0, textChange.index) + 
+            textChange.inserted +
+            text.slice(textChange.index + textChange.removed.length);
+          
+          changeGuard = true;
+          model.setValue(newText);
+          changeGuard = false;
+        });
+      }
+    });
   }
 
   onUpdateRequest() {
@@ -175,6 +226,7 @@ class MyView extends Widget {
   private _store: Datastore;
   private _chk: HTMLInputElement;
   private _div: HTMLDivElement;
+  private _editor: monaco.editor.ICodeEditor;
   private _textareas: {[key: string]: HTMLTextAreaElement | undefined} = {};
 }
 

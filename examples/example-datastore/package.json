@@ -8,6 +8,8 @@
     "@phosphor/disposable": "^1.1.2",
     "@phosphor/widgets": "^1.6.0",
     "es6-promise": "^4.0.5",
+    "monaco-editor": "^0.17.1",
+    "monaco-editor-webpack-plugin": "^1.7.0",
     "websocket": "^1.0.28"
   },
   "devDependencies": {
