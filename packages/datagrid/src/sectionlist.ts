@@ -35,8 +35,8 @@ class SectionList {
    * #### Complexity
    * Constant.
    */
-  get totalSize(): number {
-    return this._totalSize;
+  get length(): number {
+    return this._length;
   }
 
   /**
@@ -45,8 +45,8 @@ class SectionList {
    * #### Complexity
    * Constant.
    */
-  get sectionCount(): number {
-    return this._sectionCount;
+  get count(): number {
+    return this._count;
   }
 
   /**
@@ -80,8 +80,8 @@ class SectionList {
     // Update the internal base size.
     this._baseSize = value;
 
-    // Update the total size.
-    this._totalSize += delta * (this._sectionCount - this._sections.length);
+    // Update the length.
+    this._length += delta * (this._count - this._sections.length);
 
     // Bail early if there are no modified sections.
     if (this._sections.length === 0) {
@@ -115,9 +115,9 @@ class SectionList {
    * #### Complexity
    * Logarithmic on the number of resized sections.
    */
-  sectionIndex(offset: number): number {
+  indexOf(offset: number): number {
     // Bail early if the offset is out of range.
-    if (offset < 0 || offset >= this._totalSize || this._sectionCount === 0) {
+    if (offset < 0 || offset >= this._length || this._count === 0) {
       return -1;
     }
 
@@ -159,9 +159,9 @@ class SectionList {
    * #### Complexity
    * Logarithmic on the number of resized sections.
    */
-  sectionOffset(index: number): number {
+  offsetOf(index: number): number {
     // Bail early if the index is out of range.
-    if (index < 0 || index >= this._sectionCount) {
+    if (index < 0 || index >= this._count) {
       return -1;
     }
 
@@ -203,9 +203,9 @@ class SectionList {
    * #### Complexity
    * Logarithmic on the number of resized sections.
    */
-  sectionSize(index: number): number {
+  sizeOf(index: number): number {
     // Bail early if the index is out of range.
-    if (index < 0 || index >= this._sectionCount) {
+    if (index < 0 || index >= this._count) {
       return -1;
     }
 
@@ -241,9 +241,9 @@ class SectionList {
    * #### Complexity
    * Linear on the number of resized sections.
    */
-  resizeSection(index: number, size: number): void {
+  resize(index: number, size: number): void {
     // Bail early if the index is out of range.
-    if (index < 0 || index >= this._sectionCount) {
+    if (index < 0 || index >= this._count) {
       return;
     }
 
@@ -271,8 +271,8 @@ class SectionList {
       delta = size - this._baseSize;
     }
 
-    // Adjust the totals.
-    this._totalSize += delta;
+    // Adjust the length.
+    this._length += delta;
 
     // Update all modified sections after the resized section.
     for (let j = i + 1, n = this._sections.length; j < n; ++j) {
@@ -295,19 +295,19 @@ class SectionList {
    * #### Complexity
    * Linear on the number of resized sections.
    */
-  insertSections(index: number, count: number): void {
+  insert(index: number, count: number): void {
     // Bail early if there are no sections to insert.
     if (count <= 0) {
       return;
     }
 
     // Clamp the index to the bounds of the list.
-    index = Math.max(0, Math.min(index, this._sectionCount));
+    index = Math.max(0, Math.min(index, this._count));
 
     // Add the new sections to the totals.
     let span = count * this._baseSize;
-    this._sectionCount += count;
-    this._totalSize += span;
+    this._count += count;
+    this._length += span;
 
     // Bail early if there are no modified sections to update.
     if (this._sections.length === 0) {
@@ -340,26 +340,26 @@ class SectionList {
    * #### Complexity
    * Linear on the number of resized sections.
    */
-  removeSections(index: number, count: number): void {
+  remove(index: number, count: number): void {
     // Bail early if there is nothing to remove.
-    if (index < 0 || index >= this._sectionCount || count <= 0) {
+    if (index < 0 || index >= this._count || count <= 0) {
       return;
     }
 
     // Clamp the count to the bounds of the list.
-    count = Math.min(this._sectionCount - index, count);
+    count = Math.min(this._count - index, count);
 
     // Handle the simple case of no modified sections to update.
     if (this._sections.length === 0) {
-      this._sectionCount -= count;
-      this._totalSize -= count * this._baseSize;
+      this._count -= count;
+      this._length -= count * this._baseSize;
       return;
     }
 
     // Handle the simple case of removing all sections.
-    if (count === this._sectionCount) {
-      this._totalSize = 0;
-      this._sectionCount = 0;
+    if (count === this._count) {
+      this._length = 0;
+      this._count = 0;
       this._sections.length = 0;
       return;
     }
@@ -380,8 +380,8 @@ class SectionList {
     }
 
     // Adjust the totals.
-    this._sectionCount -= count;
-    this._totalSize -= span;
+    this._count -= count;
+    this._length -= span;
 
     // Update all modified sections after the removed span.
     for (let k = i, n = this._sections.length; k < n; ++k) {
@@ -409,9 +409,9 @@ class SectionList {
    * #### Complexity
    * Linear on the number of moved resized sections.
    */
-  moveSections(index: number, count: number, destination: number): void {
+  move(index: number, count: number, destination: number): void {
     // Bail early if there is nothing to move.
-    if (index < 0 || index >= this._sectionCount || count <= 0) {
+    if (index < 0 || index >= this._count || count <= 0) {
       return;
     }
 
@@ -421,10 +421,10 @@ class SectionList {
     }
 
     // Clamp the move count to the limit.
-    count = Math.min(count, this._sectionCount - index);
+    count = Math.min(count, this._count - index);
 
     // Clamp the destination index to the limit.
-    destination = Math.min(Math.max(0, destination), this._sectionCount - count);
+    destination = Math.min(Math.max(0, destination), this._count - count);
 
     // Bail early if there is no effective move.
     if (index === destination) {
@@ -503,7 +503,7 @@ class SectionList {
    */
   reset(): void {
     this._sections.length = 0;
-    this._totalSize = this._sectionCount * this._baseSize;
+    this._length = this._count * this._baseSize;
   }
 
   /**
@@ -513,14 +513,14 @@ class SectionList {
    * Constant.
    */
   clear(): void {
-    this._totalSize = 0;
-    this._sectionCount = 0;
+    this._count = 0;
+    this._length = 0;
     this._sections.length = 0;
   }
 
-  private _totalSize = 0;
+  private _count = 0;
+  private _length = 0;
   private _baseSize: number;
-  private _sectionCount = 0;
   private _sections: Private.ISection[] = [];
 }
 
