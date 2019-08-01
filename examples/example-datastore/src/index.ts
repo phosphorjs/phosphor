@@ -17,7 +17,7 @@ import {
 } from '@phosphor/datastore';
 
 import {
-  IMessageHandler, Message
+  IMessageHandler, Message, MessageLoop
 } from '@phosphor/messaging';
 
 import {
@@ -57,8 +57,7 @@ class ClearingHouse implements IMessageHandler {
 
   async init(schemas: Schema[]): Promise<void> {
     const storeId = await this.adapter.createStoreId();
-    this.datastore = new Datastore(storeId, schemas);
-    this.datastore.transactionBroadcastHandler = this;
+    this.datastore = Datastore.create({ id: storeId, schemas, broadcastHandler: this });
     this.adapter.setMessageHandler(this);
   }
 
@@ -69,19 +68,19 @@ class ClearingHouse implements IMessageHandler {
     } else if (msg.type === 'remote-transactions') {
       const m = msg as WSDatastoreAdapter.RemoteTransactionMessage;
       if (this._initialHistoryReceived) {
-        this.datastore.apply(m.transaction);
+        MessageLoop.sendMessage(this.datastore, new Datastore.TransactionMessage(m.transaction));
       } else {
         this._initialHistoryBacklog.push(m.transaction);
       }
     } else if (msg.type === 'history') {
       const m = msg as WSDatastoreAdapter.HistoryMessage;
       for (let t of m.history.transactions) {
-        this.datastore.apply(t);
+        MessageLoop.sendMessage(this.datastore, new Datastore.TransactionMessage(t));
       }
       if (!this._initialHistoryReceived) {
         this._initialHistoryReceived = true;
         for (let t of this._initialHistoryBacklog) {
-          this.datastore.apply(t);
+          MessageLoop.sendMessage(this.datastore, new Datastore.TransactionMessage(t));
         }
         this._initialHistory.resolve(undefined);
         this._initialHistoryBacklog = [];
