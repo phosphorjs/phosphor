@@ -67,6 +67,7 @@ class ClearingHouse implements IMessageHandler {
   processMessage(msg: Message): void {
     if (msg.type === 'datastore-transaction') {
       const m = msg as Datastore.TransactionMessage;
+      console.log(m.transaction);
       this.adapter.broadcastTransactions([m.transaction]);
     } else if (msg.type === 'remote-transactions') {
       const m = msg as WSDatastoreAdapter.RemoteTransactionMessage;
@@ -131,8 +132,8 @@ class MyView extends Widget {
         return;
       }
       const rootTable = this._store.get(rootSchema);
-      datastore.beginTransaction();
       event.changes.forEach(change => {
+        datastore.beginTransaction();
         rootTable.update({
           root: {
             text: {
@@ -142,8 +143,8 @@ class MyView extends Widget {
             }
           }
         });
+        datastore.endTransaction();
       });
-      datastore.endTransaction();
     });
     datastore.changed.connect((_, change) => {
       if (change.storeId === datastore.id) {
