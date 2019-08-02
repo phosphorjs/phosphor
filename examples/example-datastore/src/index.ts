@@ -26,7 +26,7 @@ import {
 } from './wsadapter';
 
 import {
-  editorSchema, MonacoEditor
+  EDITOR_SCHEMA, MonacoEditor
 } from './widget';
 
 import '../style/index.css';
@@ -65,7 +65,7 @@ class ClearingHouse implements IMessageHandler {
    * @returns a promise that resolves when the datastore is ready.
    */
   async init(schemas: Schema[]): Promise<void> {
-    const storeId = await this.adapter.createStoreId();
+    let storeId = await this.adapter.createStoreId();
     this.datastore = Datastore.create({ id: storeId, schemas, broadcastHandler: this });
     this.adapter.setMessageHandler(this);
   }
@@ -78,18 +78,18 @@ class ClearingHouse implements IMessageHandler {
    */
   processMessage(msg: Message): void {
     if (msg.type === 'datastore-transaction') {
-      const m = msg as Datastore.TransactionMessage;
+      let m = msg as Datastore.TransactionMessage;
       console.log(m.transaction);
       this.adapter.broadcastTransactions([m.transaction]);
     } else if (msg.type === 'remote-transactions') {
-      const m = msg as WSDatastoreAdapter.RemoteTransactionMessage;
+      let m = msg as WSDatastoreAdapter.RemoteTransactionMessage;
       if (this._initialHistoryReceived) {
         MessageLoop.sendMessage(this.datastore, new Datastore.TransactionMessage(m.transaction));
       } else {
         this._initialHistoryBacklog.push(m.transaction);
       }
     } else if (msg.type === 'history') {
-      const m = msg as WSDatastoreAdapter.HistoryMessage;
+      let m = msg as WSDatastoreAdapter.HistoryMessage;
       for (let t of m.history.transactions) {
         MessageLoop.sendMessage(this.datastore, new Datastore.TransactionMessage(t));
       }
@@ -119,15 +119,15 @@ class ClearingHouse implements IMessageHandler {
 async function init(): Promise<void> {
 
   // Create a patch clearing house.
-  const serverConnection = new ClearingHouse(
+  let serverConnection = new ClearingHouse(
     () => new WebSocket('ws://localhost:8080'),
-    [editorSchema]
+    [EDITOR_SCHEMA]
   );
   await Promise.all([serverConnection.initialHistory, serverConnection.ready]);
 
   // Possibly initialize the datastore.
-  const store = serverConnection.datastore
-  const editorTable = store.get(editorSchema);
+  let store = serverConnection.datastore
+  let editorTable = store.get(EDITOR_SCHEMA);
   if (editorTable.isEmpty) {
     // Empty table -> Let us initialize some state
     store.beginTransaction();
@@ -143,15 +143,15 @@ async function init(): Promise<void> {
   }
 
   // Set up the text editors.
-  const e1 = new MonacoEditor(store, 'e1');
+  let e1 = new MonacoEditor(store, 'e1');
   e1.title.label = 'First Document';
-  const e2 = new MonacoEditor(store, 'e2');
+  let e2 = new MonacoEditor(store, 'e2');
   e2.title.label = 'Second Document';
-  const e3 = new MonacoEditor(store, 'e3');
+  let e3 = new MonacoEditor(store, 'e3');
   e3.title.label = 'Third Document';
 
   // Add the text editors to a dock panel.
-  const dock = new DockPanel({ spacing: 4 });
+  let dock = new DockPanel({ spacing: 4 });
   dock.addWidget(e1);
   dock.addWidget(e2, { mode: 'split-right', ref: e1 });
   dock.addWidget(e3, { mode: 'split-bottom', ref: e2 });

@@ -58,8 +58,8 @@ class WSDatastoreAdapter extends WSConnection<WSAdapterMessages.IMessage, WSAdap
    */
   async createStoreId(): Promise<number> {
     await this.ready;
-    const msg = WSAdapterMessages.createStoreIdRequestMessage();
-    const reply = await this._requestMessageReply(msg);
+    let msg = WSAdapterMessages.createStoreIdRequestMessage();
+    let reply = await this._requestMessageReply(msg);
     return reply.content.storeId;
   }
 
@@ -75,9 +75,9 @@ class WSDatastoreAdapter extends WSConnection<WSAdapterMessages.IMessage, WSAdap
       this._handleTransactions(this._unhandledTransactions);
       this._unhandledTransactions = [];
     }
-    const fetchMsg = WSAdapterMessages.createHistoryRequestMessage();
+    let fetchMsg = WSAdapterMessages.createHistoryRequestMessage();
     this._requestMessageReply(fetchMsg).then((historyMsg: WSAdapterMessages.IHistoryReplyMessage) => {
-      const message = new WSDatastoreAdapter.HistoryMessage(historyMsg.content.history);
+      let message = new WSDatastoreAdapter.HistoryMessage(historyMsg.content.history);
       handler.processMessage(message);
     });
   }
@@ -88,8 +88,8 @@ class WSDatastoreAdapter extends WSConnection<WSAdapterMessages.IMessage, WSAdap
    * @param {Datastore.Transaction[]} transactions The transactions to broadcast.
    */
   async broadcastTransactions(transactions: Datastore.Transaction[]): Promise<string[]> {
-    const msg = WSAdapterMessages.createTransactionBroadcastMessage(transactions);
-    const reply = await this._requestMessageReply(msg);
+    let msg = WSAdapterMessages.createTransactionBroadcastMessage(transactions);
+    let reply = await this._requestMessageReply(msg);
     return reply.content.transactionIds;
   }
 
@@ -136,7 +136,7 @@ class WSDatastoreAdapter extends WSConnection<WSAdapterMessages.IMessage, WSAdap
       return;
     }
     for (let t of transactions) {
-      const message = new WSDatastoreAdapter.RemoteTransactionMessage(t);
+      let message = new WSDatastoreAdapter.RemoteTransactionMessage(t);
       this._handler.processMessage(message);
     }
   }
@@ -149,10 +149,10 @@ class WSDatastoreAdapter extends WSConnection<WSAdapterMessages.IMessage, WSAdap
   private _requestMessageReply(msg: WSAdapterMessages.IHistoryRequestMessage): Promise<WSAdapterMessages.IHistoryReplyMessage>
   private _requestMessageReply(msg: WSAdapterMessages.ITransactionBroadcastMessage): Promise<WSAdapterMessages.ITransactionAckMessage>
   private _requestMessageReply(msg: WSAdapterMessages.IMessage): Promise<WSAdapterMessages.IReplyMessage> {
-    const delegate = new PromiseDelegate<WSAdapterMessages.IReplyMessage>();
+    let delegate = new PromiseDelegate<WSAdapterMessages.IReplyMessage>();
     this._delegates.set(msg.msgId, delegate);
 
-    const promise = delegate.promise.then((reply) => {
+    let promise = delegate.promise.then((reply) => {
       this._delegates.delete(msg.msgId);
       return reply;
     });
