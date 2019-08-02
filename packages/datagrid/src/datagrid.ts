@@ -66,6 +66,7 @@ class DataGrid extends Widget {
     // Parse the simple options.
     this._style = options.style || DataGrid.defaultStyle;
     this._headerVisibility = options.headerVisibility || 'all';
+    this._behaviors = options.behaviors || DataGrid.defaultBehaviors;
     this._cellRenderers = options.cellRenderers || new RendererMap();
     this._defaultRenderer = options.defaultRenderer || new TextRenderer();
 
@@ -168,6 +169,7 @@ class DataGrid extends Widget {
    */
   dispose(): void {
     this._model = null;
+    this._releaseMouse();
     this._rowSections.clear();
     this._columnSections.clear();
     this._rowHeaderSections.clear();
@@ -320,6 +322,9 @@ class DataGrid extends Widget {
     // Update the internal visibility.
     this._headerVisibility = value;
 
+    // Release the mouse.
+    this._releaseMouse();
+
     // Sync the viewport.
     this._syncViewport();
   }
@@ -327,7 +332,7 @@ class DataGrid extends Widget {
   /**
    * Get the default sizes for the various sections of the data grid.
    */
-  get baseSizes(): DataGrid.DefaultSizes {
+  get defaultSizes(): DataGrid.DefaultSizes {
     let rowHeight = this._rowSections.defaultSize;
     let columnWidth = this._columnSections.defaultSize;
     let rowHeaderWidth = this._rowHeaderSections.defaultSize;
@@ -336,14 +341,38 @@ class DataGrid extends Widget {
   }
 
   /**
-   * Set the base sizes for the various sections of the data grid.
+   * Set the default sizes for the various sections of the data grid.
    */
-  set baseSizes(value: DataGrid.DefaultSizes) {
+  set defaultSizes(value: DataGrid.DefaultSizes) {
+    // Update the section default sizes.
     this._rowSections.defaultSize = value.rowHeight;
     this._columnSections.defaultSize = value.columnWidth;
     this._rowHeaderSections.defaultSize = value.rowHeaderWidth;
     this._columnHeaderSections.defaultSize = value.columnHeaderHeight;
+
+    // Release the mouse.
+    this._releaseMouse();
+
+    // Sync the viewport.
     this._syncViewport();
+  }
+
+  /**
+   * Get the behaviors for the data grid.
+   */
+  get behaviors(): DataGrid.Behaviors {
+    return this._behaviors;
+  }
+
+  /**
+   * Set the behaviors for the data grid.
+   */
+  set behaviors(value: DataGrid.Behaviors) {
+    // Update the internal behaviors.
+    this._behaviors = { ...value };
+
+    // Release the mouse.
+    this._releaseMouse();
   }
 
   /**
@@ -400,11 +429,33 @@ class DataGrid extends Widget {
    */
   handleEvent(event: Event): void {
     switch (event.type) {
+    case 'mousemove':
+      this._evtMouseMove(event as MouseEvent);
+      break;
+    case 'mousein':
+      this._evtMouseIn(event as MouseEvent);
+      break;
+    case 'mouseout':
+      this._evtMouseOut(event as MouseEvent);
+      break;
+    case 'mousedown':
+      //this._evtMouseDown(event as MouseEvent);
+      break;
+    case 'mouseup':
+      //this._evtMouseUp(event as MouseEvent);
+      break;
     case 'wheel':
       this._evtWheel(event as WheelEvent);
       break;
+    case 'keydown':
+      //this._evtKeyDown(event as KeyboardEvent);
+      break;
     case 'resize':
       this._refreshDPI();
+      break;
+    case 'contextmenu':
+      event.preventDefault();
+      event.stopPropagation();
       break;
     }
   }
@@ -413,6 +464,10 @@ class DataGrid extends Widget {
    * A message handler invoked on a `'before-attach'` message.
    */
   protected onBeforeAttach(msg: Message): void {
+    this._viewport.node.addEventListener('mousedown', this);
+    this._viewport.node.addEventListener('mousemove', this);
+    this._viewport.node.addEventListener('mousein', this);
+    this._viewport.node.addEventListener('mouseout', this);
     this.node.addEventListener('wheel', this);
     window.addEventListener('resize', this);
     this._repaint();
@@ -422,6 +477,10 @@ class DataGrid extends Widget {
    * A message handler invoked on an `'after-detach'` message.
    */
   protected onAfterDetach(msg: Message): void {
+    this._viewport.node.removeEventListener('mousedown', this);
+    this._viewport.node.removeEventListener('mousemove', this);
+    this._viewport.node.removeEventListener('mousein', this);
+    this._viewport.node.removeEventListener('mouseout', this);
     this.node.removeEventListener('wheel', this);
     window.removeEventListener('resize', this);
   }
@@ -1447,6 +1506,64 @@ class DataGrid extends Widget {
   }
 
   /**
+   * Handle the `'mousemove'` event for the data grid.
+   */
+  private _evtMouseMove(event: MouseEvent): void {
+    // When not dragging, dispatch to the hover handlers.
+    if (!this._pressData) {
+      // Hit test the viewport.
+      let result = this._hitTest(event.clientX, event.clientY);
+
+      // Dispatch to the appropriate hover handler.
+      switch (result.region) {
+      case 'body':
+        this._hoverBody(result);
+        break;
+      case 'row-header':
+        this._hoverRowHeader(result);
+        break;
+      case 'column-header':
+        this._hoverColumnHeader(result);
+        break;
+      case 'corner-header':
+        this._hoverCornerHeader(result);
+        break;
+      default:
+        break;
+      }
+
+      // Done
+      return;
+    }
+  }
+
+  /**
+   * Handle the `'mousein'` event for the data grid.
+   */
+  private _evtMouseIn(event: MouseEvent): void {
+    // Ignore the event when dragging.
+    if (this._pressData) {
+      return;
+    }
+
+    // Otherwise, treat the mousein event the same as a mouse move.
+    this._evtMouseMove(event);
+  }
+
+  /**
+   * Handle the `'mouseout'` event for the data grid.
+   */
+  private _evtMouseOut(event: MouseEvent): void {
+    // Ignore the event when dragging.
+    if (this._pressData) {
+      return;
+    }
+
+    // Otherwise, clear the viewport cursor.
+    this._setViewportCursor('');
+  }
+
+  /**
    * Handle the `'wheel'` event for the data grid.
    */
   private _evtWheel(event: WheelEvent): void {
@@ -1486,6 +1603,203 @@ class DataGrid extends Widget {
 
     // Scroll by the desired amount.
     this._scrollBy(dx, dy);
+  }
+
+  /**
+   * Release the mouse grab for the data grid.
+   */
+  private _releaseMouse(): void {
+    // Bail early if no drag is in progress.
+    if (!this._pressData) {
+      return;
+    }
+
+    // Clear the press data and cursor override.
+    //this._pressData.override.dispose();
+    this._pressData = null;
+
+    // Remove the extra document listeners.
+    document.removeEventListener('mousemove', this, true);
+    document.removeEventListener('mouseup', this, true);
+    document.removeEventListener('keydown', this, true);
+    document.removeEventListener('contextmenu', this, true);
+  }
+
+  /**
+   *
+   */
+  private _hoverBody(result: Private.HitTestResult): void {
+    //
+    this._setViewportCursor('');
+  }
+
+  /**
+   *
+   */
+  private _hoverRowHeader(result: Private.HitTestResult): void {
+    //
+    if (result.row < 0) {
+      this._setViewportCursor('');
+      return;
+    }
+
+    //
+    let offsetY = this._rowSections.offsetOf(result.row);
+
+    //
+    let dy = result.virtualY - offsetY;
+
+    //
+    if (dy >= 0 && dy <= 2) {
+      this._setViewportCursor('ns-resize');
+      return;
+    }
+
+    //
+    let height = this._rowSections.sizeOf(result.row);
+
+    //
+    dy = offsetY + height - result.virtualY;
+
+    //
+    if (dy >= 0 && dy <= 2) {
+      this._setViewportCursor('ns-resize');
+      return;
+    }
+
+    //
+    this._setViewportCursor('');
+  }
+
+  /**
+   *
+   */
+  private _hoverColumnHeader(result: Private.HitTestResult): void {
+    //
+    if (result.column < 0) {
+      this._setViewportCursor('');
+      return;
+    }
+
+    //
+    let offsetX = this._columnSections.offsetOf(result.column);
+
+    //
+    let dx = result.virtualX - offsetX;
+
+    //
+    if (dx >= 0 && dx <=2) {
+      this._setViewportCursor('ew-resize');
+      return;
+    }
+
+    //
+    let width = this._columnSections.sizeOf(result.column);
+
+    //
+    dx = offsetX + width - result.virtualX;
+
+    //
+    if (dx >= 0 && dx <=2) {
+      this._setViewportCursor('ew-resize');
+      return;
+    }
+
+    //
+    this._setViewportCursor('');
+  }
+
+  /**
+   *
+   */
+  private _hoverCornerHeader(result: Private.HitTestResult): void {
+
+  }
+
+  /**
+   *
+   */
+  private _setViewportCursor(cursor: string): void {
+    this._viewport.node.style.cursor = cursor;
+  }
+
+  /**
+   * Hit test the viewport for the given client position.
+   */
+  private _hitTest(clientX: number, clientY: number): Private.HitTestResult {
+    // Fetch the viewport rect.
+    let rect = this._viewport.node.getBoundingClientRect();
+
+    // Sanity check the viewport bounds.
+    if (clientX < rect.left || clientY < rect.top) {
+      throw '_hitTest() out of bounds';
+    }
+    if (clientX >= rect.right || clientY >= rect.bottom) {
+      throw '_hitTest() out of bounds';
+    }
+
+    // Convert the mouse position into local coordinates.
+    let localX = clientX - rect.left;
+    let localY = clientY - rect.top;
+
+    // Fetch the header dimensions.
+    let headerWidth = this._headerWidth;
+    let headerHeight = this._headerHeight;
+
+    // Check for a corner hit.
+    if (localX < headerWidth && localY < headerHeight) {
+      // Convert to unscrolled virtual coordinates.
+      let virtualX = localX;
+      let virtualY = localY;
+
+      // Fetch the row and column index.
+      let row = this._columnHeaderSections.indexOf(virtualY);
+      let column = this._rowHeaderSections.indexOf(virtualX);
+
+      // Return the result.
+      return { region: 'corner-header', row, column, virtualX, virtualY };
+    }
+
+    // Check for a row header hit.
+    if (localX < headerWidth) {
+      // Convert to unscrolled virtual coordinates.
+      let virtualX = localX
+      let virtualY = localY + this._scrollY - headerHeight;
+
+      // Fetch the row and column index.
+      let row = this._rowSections.indexOf(virtualY);
+      let column = this._rowHeaderSections.indexOf(virtualX);
+
+      // Return the result.
+      return { region: 'row-header', row, column, virtualX, virtualY }
+    }
+
+    // Check for a column header hit.
+    if (localY < headerHeight) {
+      // Convert to unscrolled virtual coordinates.
+      let virtualX = localX + this._scrollX - headerWidth;
+      let virtualY = localY
+
+      // Fetch the row and column index.
+      let row = this._columnHeaderSections.indexOf(virtualY);
+      let column = this._columnSections.indexOf(virtualX);
+
+      // Return the result.
+      return { region: 'column-header', row, column, virtualX, virtualY };
+    }
+
+    // Otherwise, it's a body hit.
+
+    // Convert to unscrolled virtual coordinates.
+    let virtualX = localX + this._scrollX - headerWidth;
+    let virtualY = localY + this._scrollY - headerHeight;
+
+    // Fetch the row and column index.
+    let row = this._rowSections.indexOf(virtualY);
+    let column = this._columnSections.indexOf(virtualX);
+
+    // Return the result.
+    return { region: 'body', row, column, virtualX, virtualY };
   }
 
   /**
@@ -1795,7 +2109,7 @@ class DataGrid extends Widget {
     }
 
     // Create the paint region object.
-    let rgn: Private.IPaintRegion = {
+    let rgn: Private.PaintRegion = {
       region: 'body',
       xMin: x1, yMin: y1,
       xMax: x2, yMax: y2,
@@ -1907,7 +2221,7 @@ class DataGrid extends Widget {
     }
 
     // Create the paint region object.
-    let rgn: Private.IPaintRegion = {
+    let rgn: Private.PaintRegion = {
       region: 'row-header',
       xMin: x1, yMin: y1,
       xMax: x2, yMax: y2,
@@ -2013,7 +2327,7 @@ class DataGrid extends Widget {
     }
 
     // Create the paint region object.
-    let rgn: Private.IPaintRegion = {
+    let rgn: Private.PaintRegion = {
       region: 'column-header',
       xMin: x1, yMin: y1,
       xMax: x2, yMax: y2,
@@ -2119,7 +2433,7 @@ class DataGrid extends Widget {
     }
 
     // Create the paint region object.
-    let rgn: Private.IPaintRegion = {
+    let rgn: Private.PaintRegion = {
       region: 'corner-header',
       xMin: x1, yMin: y1,
       xMax: x2, yMax: y2,
@@ -2150,7 +2464,7 @@ class DataGrid extends Widget {
   /**
    * Draw the background for the given paint region.
    */
-  private _drawBackground(rgn: Private.IPaintRegion, color: string | undefined): void {
+  private _drawBackground(rgn: Private.PaintRegion, color: string | undefined): void {
     // Bail if there is no color to draw.
     if (!color) {
       return;
@@ -2167,7 +2481,7 @@ class DataGrid extends Widget {
   /**
    * Draw the row background for the given paint region.
    */
-  private _drawRowBackground(rgn: Private.IPaintRegion, colorFn: ((i: number) => string) | undefined): void {
+  private _drawRowBackground(rgn: Private.PaintRegion, colorFn: ((i: number) => string) | undefined): void {
     // Bail if there is no color function.
     if (!colorFn) {
       return;
@@ -2206,7 +2520,7 @@ class DataGrid extends Widget {
   /**
    * Draw the column background for the given paint region.
    */
-  private _drawColumnBackground(rgn: Private.IPaintRegion, colorFn: ((i: number) => string) | undefined): void {
+  private _drawColumnBackground(rgn: Private.PaintRegion, colorFn: ((i: number) => string) | undefined): void {
     // Bail if there is no color function.
     if (!colorFn) {
       return;
@@ -2245,7 +2559,7 @@ class DataGrid extends Widget {
   /**
    * Draw the cells for the given paint region.
    */
-  private _drawCells(rgn: Private.IPaintRegion): void {
+  private _drawCells(rgn: Private.PaintRegion): void {
     // Bail if there is no data model.
     if (!this._model) {
       return;
@@ -2388,7 +2702,7 @@ class DataGrid extends Widget {
   /**
    * Draw the horizontal grid lines for the given paint region.
    */
-  private _drawHorizontalGridLines(rgn: Private.IPaintRegion, color: string | undefined): void {
+  private _drawHorizontalGridLines(rgn: Private.PaintRegion, color: string | undefined): void {
     // Bail if there is no color to draw.
     if (!color) {
       return;
@@ -2435,7 +2749,7 @@ class DataGrid extends Widget {
   /**
    * Draw the vertical grid lines for the given paint region.
    */
-  private _drawVerticalGridLines(rgn: Private.IPaintRegion, color: string | undefined): void {
+  private _drawVerticalGridLines(rgn: Private.PaintRegion, color: string | undefined): void {
     // Bail if there is no color to draw.
     if (!color) {
       return;
@@ -2486,6 +2800,7 @@ class DataGrid extends Widget {
 
   private _inPaint = false;
   private _paintPending = false;  // TODO: would like to get rid of this flag
+  private _pressData: Private.PressData | null = null;
   private _dpiRatio = Math.ceil(window.devicePixelRatio);
 
   private _scrollX = 0;
@@ -2511,6 +2826,7 @@ class DataGrid extends Widget {
   private _style: DataGrid.Style;
   private _cellRenderers: RendererMap;
   private _defaultRenderer: CellRenderer;
+  private _behaviors: DataGrid.Behaviors;
   private _headerVisibility: DataGrid.HeaderVisibility;
 }
 
@@ -2641,27 +2957,27 @@ namespace DataGrid {
   type HeaderVisibility = 'all' | 'row' | 'column' | 'none';
 
   /**
-   *
+   * An object which defines the behaviors of a data grid.
    */
   export
-  type Interactions = {
+  type Behaviors = {
     /**
-     *
+     * Whether rows are resizable by the user.
      */
     readonly resizableRows: boolean;
 
     /**
-     *
+     * Whether columns are resizable by the user.
      */
     readonly resizableColumns: boolean;
 
     /**
-     *
+     * Whether row header columns are resizable by the user.
      */
     readonly resizableRowHeaders: boolean;
 
     /**
-     *
+     * Whether column header rows are resizable by the user.
      */
     readonly resizableColumnHeaders: boolean;
   };
@@ -2691,6 +3007,13 @@ namespace DataGrid {
      * The default is `'all'`.
      */
     headerVisibility?: HeaderVisibility;
+
+    /**
+     * The behaviors for the data grid.
+     *
+     * The default is `DataGrid.defaultBehaviors`.
+     */
+    behaviors?: Behaviors;
 
     /**
      * The cell renderer map for the data grid.
@@ -2731,10 +3054,10 @@ namespace DataGrid {
   };
 
   /**
-   * The default interactions for the datagrid.
+   * The default behaviors for the datagrid.
    */
   export
-  const defaultInteractions: DataGrid.Interactions = {
+  const defaultBehaviors: DataGrid.Behaviors = {
     resizableRows: true,
     resizableColumns: true,
     resizableRowHeaders: true,
@@ -2768,7 +3091,7 @@ namespace Private {
    * An object which represents a region to be painted.
    */
   export
-  interface IPaintRegion {
+  type PaintRegion = {
     /**
      * The min X coordinate the of the dirty viewport rect.
      *
@@ -2857,7 +3180,7 @@ namespace Private {
      * The column sizes for the columns in the region.
      */
     columnSizes: number[];
-  }
+  };
 
   /**
    * A conflatable message which merges dirty paint rects.
@@ -2927,4 +3250,41 @@ namespace Private {
     private _x2: number;
     private _y2: number;
   }
+
+  /**
+   *
+   */
+  export
+  type PressData = {};
+
+  /**
+   *
+   */
+  export
+  type HitTestResult = {
+    /**
+     *
+     */
+    region: DataModel.CellRegion;
+
+    /**
+     *
+     */
+    row: number;
+
+    /**
+     *
+     */
+    column: number;
+
+    /**
+     *
+     */
+    virtualX: number;
+
+    /**
+     *
+     */
+    virtualY: number;
+  };
 }
