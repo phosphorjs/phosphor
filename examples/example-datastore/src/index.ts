@@ -1,19 +1,16 @@
 /*-----------------------------------------------------------------------------
-| Copyright (c) 2014-2017, PhosphorJS Contributors
+| Copyright (c) 2019, PhosphorJS Contributors
 |
 | Distributed under the terms of the BSD 3-Clause License.
 |
 | The full license is in the file LICENSE, distributed with this software.
 |----------------------------------------------------------------------------*/
-
-import 'es6-promise/auto';  // polyfill Promise on IE
-
 import {
   PromiseDelegate
 } from '@phosphor/coreutils';
 
 import {
-  RegisterField, ListField, TextField, Datastore, Schema
+  Fields, Datastore, Schema, TextField
 } from '@phosphor/datastore';
 
 import {
@@ -33,18 +30,10 @@ import * as monaco from 'monaco-editor';
 import '../style/index.css';
 
 const rootSchema = {
-  id: 'example-schema-root',
+  id: 'root',
   fields: {
-    toggle: new RegisterField<boolean>({value: false}),
-    text: new TextField(),
-    shownMessages: new ListField<string>(),
-  }
-};
-
-const messageSchema = {
-  id: 'example-schema-messages',
-  fields: {
-    message: new TextField(),
+    readOnly: Fields.Boolean(),
+    text: new TextField()
   }
 };
 
@@ -108,14 +97,19 @@ class MonacoEditor extends Widget {
    */
   constructor(datastore: Datastore, record: string) {
     super();
+    this.addClass('content');
     this._store = datastore;
 
     const rootTable = this._store.get(rootSchema);
     const initialValue = rootTable.get(record)!.text;
+    const readOnly = rootTable.get(record)!.readOnly;
 
     this._editor = monaco.editor.create(this.node, {
       value: initialValue,
-      language: 'typescript'
+      readOnly,
+      lineNumbers: "off",
+      theme: 'vs-dark',
+      minimap: { enabled: false },
     });
     let changeGuard = false;
 
@@ -144,7 +138,7 @@ class MonacoEditor extends Widget {
       if (change.storeId === datastore.id) {
         return;
       }
-      const c = change.change['example-schema-root'];
+      const c = change.change['root'];
       if (c && c[record] && c[record].text) {
         const textChanges = c[record].text as TextField.Change;
         textChanges.forEach(textChange => {
@@ -179,14 +173,14 @@ class MonacoEditor extends Widget {
 
 async function init(): Promise<void> {
 
-  const main = new ClearingHouse(
+  const serverConnection = new ClearingHouse(
     () => new WebSocket('ws://localhost:8080'),
-    [messageSchema, rootSchema]
+    [rootSchema]
   );
 
-  await Promise.all([main.initialHistory, main.ready]);
+  await Promise.all([serverConnection.initialHistory, serverConnection.ready]);
 
-  const store = main.datastore
+  const store = serverConnection.datastore
 
   const rootTable = store.get(rootSchema);
   if (rootTable.isEmpty) {
@@ -204,26 +198,23 @@ async function init(): Promise<void> {
   }
 
   const e1 = new MonacoEditor(store, 'e1');
+  e1.title.label = 'First Document';
   const e2 = new MonacoEditor(store, 'e2');
+  e2.title.label = 'Second Document';
   const e3 = new MonacoEditor(store, 'e3');
+  e3.title.label = 'Third Document';
 
-  const dock = new DockPanel();
+  const dock = new DockPanel({ spacing: 2 });
   dock.addWidget(e1);
   dock.addWidget(e2);
   dock.addWidget(e3);
   dock.id = 'dock';
 
-  let box = new BoxPanel({ direction: 'left-to-right', spacing: 0 });
+  let box = new BoxPanel({ spacing: 2 });
   box.id = 'main';
   box.addWidget(dock);
 
   Widget.attach(box, document.body);
 }
 
-
-function main(): void {
-  init();
-}
-
-
-window.onload = main;
+window.onload = init;
