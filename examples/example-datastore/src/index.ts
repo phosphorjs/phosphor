@@ -10,7 +10,7 @@ import {
 } from '@phosphor/coreutils';
 
 import {
-  Fields, Datastore, Schema, TextField
+  Fields, Datastore, RegisterField, Schema, TextField
 } from '@phosphor/datastore';
 
 import {
@@ -112,10 +112,26 @@ class MonacoEditor extends Panel {
     this.addWidget(this._checkWidget);
     this.addWidget(this._editorWidget);
 
-    const check = document.createElement('input');
-    check.type = 'checkbox';
-    check.checked = readOnly;
-    this._checkWidget.node.appendChild(check);
+    this._check = document.createElement('input');
+    this._check.type = 'checkbox';
+    this._check.checked = readOnly;
+    this._checkWidget.node.appendChild(this._check);
+    this._check.onchange = () => {
+      this._editor.updateOptions({ readOnly: this._check.checked });
+      if (this._changeGuard) {
+        return;
+      }
+      const rootTable = this._store.get(rootSchema);
+      datastore.beginTransaction();
+      rootTable.update({
+        [record]: {
+          readOnly: this._check.checked
+        }
+      });
+      datastore.endTransaction();
+    };
+    datastore.changed.connect(this._onDatastoreChange, this);
+
 
     this._editor = monaco.editor.create(this.node, {
       value: initialValue,
@@ -179,6 +195,12 @@ class MonacoEditor extends Panel {
         this._changeGuard = false;
       });
     }
+
+    if(c && c[this._record] && c[this._record].readOnly) {
+      this._changeGuard = true;
+      this._check.checked = (c[this._record].readOnly as RegisterField.Change<boolean>).current;
+      this._changeGuard = false;
+    }
   }
 
   private _changeGuard: boolean = false;
@@ -187,6 +209,7 @@ class MonacoEditor extends Panel {
   private _editor: monaco.editor.ICodeEditor;
   private _editorWidget: Widget;
   private _checkWidget: Widget;
+  private _check: HTMLInputElement;
 }
 
 async function init(): Promise<void> {
