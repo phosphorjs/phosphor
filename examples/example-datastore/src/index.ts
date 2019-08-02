@@ -146,7 +146,6 @@ class MyView extends Widget {
       datastore.endTransaction();
     });
     datastore.changed.connect((_, change) => {
-      console.log(change);
       if (change.storeId === datastore.id) {
         return;
       }
@@ -154,14 +153,16 @@ class MyView extends Widget {
       if (c && c.root && c.root.text) {
         const textChanges = c.root.text as TextField.Change;
         textChanges.forEach(textChange => {
-          const text = model.getValue();
-          const newText = 
-            text.slice(0, textChange.index) + 
-            textChange.inserted +
-            text.slice(textChange.index + textChange.removed.length);
-          
+          const start = model.getPositionAt(textChange.index)
+          const end = model.getPositionAt(textChange.index + textChange.removed.length);
+          const range = monaco.Range.fromPositions(start, end);
+
+          const op: monaco.editor.IIdentifiedSingleEditOperation = {
+            text: textChange.inserted,
+            range
+          };
           changeGuard = true;
-          model.setValue(newText);
+          model.pushEditOperations([], [op], () => null);
           changeGuard = false;
         });
       }
