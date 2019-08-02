@@ -120,8 +120,8 @@ async function init(): Promise<void> {
 
   const dock = new DockPanel({ spacing: 4 });
   dock.addWidget(e1);
-  dock.addWidget(e2);
-  dock.addWidget(e3);
+  dock.addWidget(e2, { mode: 'split-right', ref: e1 });
+  dock.addWidget(e3, { mode: 'split-bottom', ref: e2 });
   dock.id = 'dock';
 
   let box = new BoxPanel({ spacing: 2 });
