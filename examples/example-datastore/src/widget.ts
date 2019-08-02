@@ -20,7 +20,7 @@ import * as monaco from 'monaco-editor';
  * value and whether the model is read only. Other fields could include
  * language, mimetype, and collaborator cursors.
  */
-export const editorSchema = {
+export const EDITOR_SCHEMA = {
   id: 'editor',
   fields: {
     readOnly: Fields.Boolean(),
@@ -35,7 +35,7 @@ export class MonacoEditor extends Panel {
   /**
    * Create a new editor widget.
    *
-   * @param datastore: a datastore which holds an editor table using `editorSchema`.
+   * @param datastore: a datastore which holds an editor table using `EDITOR_SCHEMA`.
    *
    * @param record: the record to watch in the editor table.
    */
@@ -46,9 +46,9 @@ export class MonacoEditor extends Panel {
     this._record = record;
 
     // Get initial values for the editor
-    const editorTable = this._store.get(editorSchema);
-    const initialValue = editorTable.get(record)!.text;
-    const readOnly = editorTable.get(record)!.readOnly;
+    let editorTable = this._store.get(EDITOR_SCHEMA);
+    let initialValue = editorTable.get(record)!.text;
+    let readOnly = editorTable.get(record)!.readOnly;
 
     // Set up the DOM structure
     this._editorWidget = new Widget();
@@ -72,7 +72,7 @@ export class MonacoEditor extends Panel {
         return;
       }
       // Update the table to broadcast the change.
-      const editorTable = this._store.get(editorSchema);
+      let editorTable = this._store.get(EDITOR_SCHEMA);
       datastore.beginTransaction();
       editorTable.update({
         [record]: {
@@ -92,14 +92,14 @@ export class MonacoEditor extends Panel {
     });
 
     // Listen for changes on the editor model.
-    const model = this._editor.getModel()!;
+    let model = this._editor.getModel()!;
     model.onDidChangeContent(event => {
       // If this was a remote change, we are done.
       if (this._changeGuard) {
         return;
       }
       // If this was a local change, update the table.
-      const editorTable = this._store.get(editorSchema);
+      let editorTable = this._store.get(EDITOR_SCHEMA);
       event.changes.forEach(change => {
         datastore.beginTransaction();
         editorTable.update({
@@ -143,18 +143,18 @@ export class MonacoEditor extends Panel {
       return;
     }
     // Apply text field changes to the monaco editor.
-    const model = this._editor.getModel()!;
-    const c = change.change['editor'];
+    let model = this._editor.getModel()!;
+    let c = change.change['editor'];
     if (c && c[this._record] && c[this._record].text) {
-      const textChanges = c[this._record].text as TextField.Change;
+      let textChanges = c[this._record].text as TextField.Change;
       textChanges.forEach(textChange => {
         // Convert the change data to monaco range and inserted text.
-        const start = model.getPositionAt(textChange.index)
-        const end = model.getPositionAt(textChange.index + textChange.removed.length);
-        const range = monaco.Range.fromPositions(start, end);
+        let start = model.getPositionAt(textChange.index)
+        let end = model.getPositionAt(textChange.index + textChange.removed.length);
+        let range = monaco.Range.fromPositions(start, end);
 
         // Construct the monaco operation.
-        const op: monaco.editor.IIdentifiedSingleEditOperation = {
+        let op: monaco.editor.IIdentifiedSingleEditOperation = {
           text: textChange.inserted,
           range
         };
@@ -170,7 +170,7 @@ export class MonacoEditor extends Panel {
     // change guard so we can ignore it in the onchange event.
     if(c && c[this._record] && c[this._record].readOnly) {
       this._changeGuard = true;
-      const checkChange = c[this._record].readOnly as RegisterField.Change<boolean>;
+      let checkChange = c[this._record].readOnly as RegisterField.Change<boolean>;
       this._check.checked = checkChange.current;
       this._changeGuard = false;
     }

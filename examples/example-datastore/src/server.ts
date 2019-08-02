@@ -21,7 +21,7 @@ import * as path from "path";
  * Create a HTTP static file server for serving the static
  * assets to the user.
  */
-const pageServer = http.createServer((request, response) => {
+let pageServer = http.createServer((request, response) => {
   console.log("request starting...");
 
   let filePath = "." + request.url;
@@ -29,7 +29,7 @@ const pageServer = http.createServer((request, response) => {
     filePath = "./index.html";
   }
 
-  const extname = path.extname(filePath);
+  let extname = path.extname(filePath);
   let contentType = "text/html";
   switch (extname) {
     case ".js":
@@ -62,12 +62,12 @@ pageServer.listen(8000, () => {
 /**
  * Create a websocket server for the patch server.
  */
-const httpServer = http.createServer((request, response) => {
+let httpServer = http.createServer((request, response) => {
   console.debug(new Date() + " Received request for " + request.url);
   response.writeHead(404);
   response.end();
 });
-const wsServer = new WebSocketServer({
+let wsServer = new WebSocketServer({
   httpServer,
   autoAcceptConnections: false,
   maxReceivedFrameSize: 10 * 1024 * 1024,
@@ -132,7 +132,7 @@ class TransactionStore {
    * @returns an array of transactions representing the whole history.
    */
   getHistory(): Datastore.Transaction[] {
-    const history = new Array();
+    let history = new Array();
     for (let id of this._order) {
       history.push(this._transactions[id]);
     }
@@ -144,10 +144,10 @@ class TransactionStore {
 }
 
 // Create a transaction store.
-const store = new TransactionStore();
+let store = new TransactionStore();
 let idCounter = 0;
 
-const connections: { [store: number]: connection } = {};
+let connections: { [store: number]: connection } = {};
 
 // Lifecycle for a collaborator.
 wsServer.on("request", request => {
@@ -169,7 +169,7 @@ wsServer.on("request", request => {
       console.debug("Received non-UTF8 Message: " + message);
       return;
     }
-    const data = JSON.parse(message.utf8Data!) as WSAdapterMessages.IMessage;
+    let data = JSON.parse(message.utf8Data!) as WSAdapterMessages.IMessage;
     console.debug(`Received message of type: ${data.msgType}`);
     let reply: WSAdapterMessages.IReplyMessage;
     switch (data.msgType) {
@@ -181,19 +181,19 @@ wsServer.on("request", request => {
         );
         break;
       case "transaction-broadcast":
-        const acks = [];
-        const propagate = [];
+        let acks = [];
+        let propagate = [];
         for (let t of data.content.transactions) {
           if (store.add(t)) {
             acks.push(t.id);
             propagate.push(t);
           }
         }
-        const propMsgStr = JSON.stringify(
+        let propMsgStr = JSON.stringify(
           WSAdapterMessages.createTransactionBroadcastMessage(propagate)
         );
         for (let storeId in connections) {
-          const c = connections[storeId];
+          let c = connections[storeId];
           if (c !== connection) {
             console.debug(`Broadcasting transactions to: ${storeId}`);
             c.sendUTF(propMsgStr);
@@ -202,7 +202,7 @@ wsServer.on("request", request => {
         reply = WSAdapterMessages.createTransactionAckMessage(data.msgId, acks);
         break;
       case "history-request":
-        const history = store.getHistory();
+        let history = store.getHistory();
         reply = WSAdapterMessages.createHistoryReplyMessage(data.msgId, {
           transactions: history
         });

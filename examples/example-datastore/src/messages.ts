@@ -149,7 +149,7 @@ namespace WSAdapterMessages {
     content?: T['content'],
     parentId?: string
   ): T {
-    const msgId = UUID.uuid4();
+    let msgId = UUID.uuid4();
     if (content === undefined) {
       content = {};
     }
@@ -176,7 +176,7 @@ namespace WSAdapterMessages {
     content: T['content'],
     parentId: string
   ): T {
-    const msgId = UUID.uuid4();
+    let msgId = UUID.uuid4();
     return {
       msgId,
       msgType,
