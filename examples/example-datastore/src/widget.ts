@@ -65,12 +65,12 @@ export class MonacoEditor extends Panel {
 
     // Listen to changes in the checkbox.
     this._check.onchange = () => {
-      // Update the readonly state
-      this._editor.updateOptions({ readOnly: this._check.checked });
       // If this was a remote change, we are done.
       if (this._changeGuard) {
         return;
       }
+      // Update the readonly state
+      this._editor.updateOptions({ readOnly: this._check.checked });
       // Update the table to broadcast the change.
       let editorTable = this._store.get(EDITOR_SCHEMA);
       datastore.beginTransaction();
@@ -172,6 +172,8 @@ export class MonacoEditor extends Panel {
       this._changeGuard = true;
       let checkChange = c[this._record].readOnly as RegisterField.Change<boolean>;
       this._check.checked = checkChange.current;
+      // Update the readonly state
+      this._editor.updateOptions({ readOnly: this._check.checked });
       this._changeGuard = false;
     }
   }
