@@ -79,7 +79,6 @@ class ClearingHouse implements IMessageHandler {
   processMessage(msg: Message): void {
     if (msg.type === 'datastore-transaction') {
       let m = msg as Datastore.TransactionMessage;
-      console.log(m.transaction);
       this.adapter.broadcastTransactions([m.transaction]);
     } else if (msg.type === 'remote-transactions') {
       let m = msg as WSDatastoreAdapter.RemoteTransactionMessage;
