@@ -114,11 +114,16 @@ class MyView extends Widget {
     this.node.appendChild(this._chk);
     this.node.appendChild(this._div);
     const editorDiv = document.getElementById('container') as HTMLDivElement;
+
+    const rootTable = this._store.get(rootSchema);
+    const initialValue = rootTable.get('root')!.text;
+
     this._editor = monaco.editor.create(editorDiv, {
-      value: '',
+      value: initialValue,
       language: 'typescript'
     });
     let changeGuard = false;
+
 
     const model = this._editor.getModel()!;
     model.onDidChangeContent(event => {
