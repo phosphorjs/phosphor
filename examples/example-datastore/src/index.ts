@@ -21,7 +21,7 @@ import {
 } from '@phosphor/messaging';
 
 import {
-  Widget
+  BoxPanel, DockPanel, Widget
 } from '@phosphor/widgets';
 
 import {
@@ -30,6 +30,7 @@ import {
 
 import * as monaco from 'monaco-editor';
 
+import '../style/index.css';
 
 const rootSchema = {
   id: 'example-schema-root',
@@ -101,25 +102,18 @@ class ClearingHouse implements IMessageHandler {
 }
 
 
-class MyView extends Widget {
+class MonacoEditor extends Widget {
   /**
    *
    */
   constructor(datastore: Datastore) {
     super();
     this._store = datastore;
-    this._chk = document.createElement('input');
-    this._chk.setAttribute('type', 'checkbox');
-    this._chk.onchange = this._onChkChange.bind(this);
-    this._div = document.createElement('div');
-    this.node.appendChild(this._chk);
-    this.node.appendChild(this._div);
-    const editorDiv = document.getElementById('container') as HTMLDivElement;
 
     const rootTable = this._store.get(rootSchema);
     const initialValue = rootTable.get('root')!.text;
 
-    this._editor = monaco.editor.create(editorDiv, {
+    this._editor = monaco.editor.create(this.node, {
       value: initialValue,
       language: 'typescript'
     });
@@ -170,71 +164,17 @@ class MyView extends Widget {
     });
   }
 
-  onUpdateRequest() {
-    const rootTable = this._store.get(rootSchema);
-    const messageTable = this._store.get(messageSchema);
-    const rootRecord = rootTable.get('root')!;
-    this._chk.checked = rootRecord.toggle;
-    this._div.innerHTML = '';
-    for (let msgId of rootRecord.shownMessages) {
-      const msgRecord = messageTable.get(msgId);
-      if (msgRecord === undefined) {
-        const entry = document.createElement('div');
-        entry.innerText = '<Missing message>';
-        entry.className = 'message message-missing';
-        this._div.appendChild(entry);
-      } else {
-        let entry = this._textareas[msgId];
-        if (entry === undefined) {
-          entry = this._textareas[msgId] = document.createElement('textarea');
-          entry.className = 'message';
-          entry.oninput = () => {
-            this._onTextInput(msgId);
-          }
-        }
-        entry.value = msgRecord.message;
-        this._div.appendChild(entry);
-      }
-    }
+
+  onResize() {
+    this._editor.layout();
   }
 
-  private _onChkChange(evt: Event) {
-    const rootTable = this._store.get(rootSchema);
-    this._store.beginTransaction();
-    try {
-      rootTable.update({
-        [rootTable.get('root')!.$id]: {
-          toggle: this._chk.checked,
-        }
-      })
-    } finally {
-      this._store.endTransaction();
-    }
-  }
-
-  private _onTextInput(msgId: string) {
-    const messageTable = this._store.get(messageSchema);
-    const msgRecord = messageTable.get(msgId)!;
-    const entry = this._textareas[msgId]!;
-    this._store.beginTransaction();
-    try {
-      messageTable.update({
-        [msgId]: { message: {
-          index: 0,
-          remove: msgRecord.message.length,
-          text: entry.value,
-        }}
-      });
-    } finally {
-      this._store.endTransaction();
-    }
+  onAfterShow() {
+    this._editor.layout();
   }
 
   private _store: Datastore;
-  private _chk: HTMLInputElement;
-  private _div: HTMLDivElement;
   private _editor: monaco.editor.ICodeEditor;
-  private _textareas: {[key: string]: HTMLTextAreaElement | undefined} = {};
 }
 
 async function init(): Promise<void> {
@@ -248,34 +188,14 @@ async function init(): Promise<void> {
 
   const store = main.datastore
 
-  const messageTable = store.get(messageSchema);
   const rootTable = store.get(rootSchema);
   if (rootTable.isEmpty) {
     // Empty table -> Let us initialize some state
     store.beginTransaction();
     try {
-      messageTable.update({
-        msg0: {
-          message: { index: 0, remove: 0, text: 'This is entry 0' }
-        },
-        msg1: {
-          message: { index: 0, remove: 0, text: 'And this is entry 1' }
-        },
-        msg2: {
-          message: { index: 0, remove: 0, text: 'This message is not shown' }
-        },
-        'other-msg-id': {
-          message: { index: 0, remove: 0, text: 'This entry has a different kind of ID' }
-        }
-      });
       rootTable.update({
         root: {
           toggle: true,
-          shownMessages: {
-            index: 0,
-            remove: 0,
-            values: ['msg1', 'msg0', 'other-msg-id']
-          }
         }
       });
     } finally {
@@ -283,14 +203,21 @@ async function init(): Promise<void> {
     }
   }
 
-  const widget = new MyView(store);
-  widget.update();
-  store.changed.connect((_, change) => {
-    if (change.storeId !== store.id) {
-      widget.update();
-    }
-  });
-  Widget.attach(widget, document.body);
+  const e1 = new MonacoEditor(store);
+  const e2 = new MonacoEditor(store);
+  const e3 = new MonacoEditor(store);
+
+  const dock = new DockPanel();
+  dock.addWidget(e1);
+  dock.addWidget(e2);
+  dock.addWidget(e3);
+  dock.id = 'dock';
+
+  let box = new BoxPanel({ direction: 'left-to-right', spacing: 0 });
+  box.id = 'main';
+  box.addWidget(dock);
+
+  Widget.attach(box, document.body);
 }
 
 
