@@ -27,13 +27,13 @@ type TransactionHistory = {
 
 
 /**
- *
+ * A namespace for messages for communicating with the patch server.
  */
 export
 namespace WSAdapterMessages {
 
   /**
-   *
+   * A base message for the patch server.
    */
   export
   type IBaseMessage = JSONObject & {
@@ -55,7 +55,7 @@ namespace WSAdapterMessages {
   }
 
   /**
-   *
+   * A message representing a request for a unique store ID from the server.
    */
   export
   type IStoreIdMessageRequest = IBaseMessage & {
@@ -64,7 +64,7 @@ namespace WSAdapterMessages {
   }
 
   /**
-   *
+   * A reply from the server containing a unique store ID.
    */
   export
   type IStoreIdMessageReply = IBaseReplyMessage & {
@@ -75,7 +75,7 @@ namespace WSAdapterMessages {
   }
 
   /**
-   *
+   * A message from a client broadcasting a transaction.
    */
   export
   type ITransactionBroadcastMessage = IBaseMessage & {
@@ -86,7 +86,7 @@ namespace WSAdapterMessages {
   }
 
   /**
-   *
+   * A message from the server acknowledging receipt of a transaction.
    */
   export
   type ITransactionAckMessage = IBaseReplyMessage & {
@@ -97,7 +97,7 @@ namespace WSAdapterMessages {
   }
 
   /**
-   *
+   * A request from a client for the patch history from the server.
    */
   export
   type IHistoryRequestMessage = IBaseMessage & {
@@ -106,7 +106,7 @@ namespace WSAdapterMessages {
   }
 
   /**
-   *
+   * A response from the server with the patch history.
    */
   export
   type IHistoryReplyMessage = IBaseReplyMessage & {
@@ -117,7 +117,7 @@ namespace WSAdapterMessages {
   }
 
   /**
-   *
+   * A base reply message from the server.
    */
   export
   type IReplyMessage = (
@@ -126,7 +126,7 @@ namespace WSAdapterMessages {
   );
 
   /**
-   *
+   * A WSAdapter message.
    */
   export
   type IMessage = (

@@ -17,6 +17,10 @@ import * as http from "http";
 
 import * as path from "path";
 
+/**
+ * Create a HTTP static file server for serving the static
+ * assets to the user.
+ */
 const pageServer = http.createServer((request, response) => {
   console.log("request starting...");
 
@@ -48,19 +52,21 @@ const pageServer = http.createServer((request, response) => {
   });
 });
 
+/**
+ * Start the page server.
+ */
 pageServer.listen(8000, () => {
   console.info(new Date() + " Page server is listening on port 8000");
 });
 
+/**
+ * Create a websocket server for the patch server.
+ */
 const httpServer = http.createServer((request, response) => {
   console.debug(new Date() + " Received request for " + request.url);
   response.writeHead(404);
   response.end();
 });
-httpServer.listen(8080, () => {
-  console.info(new Date() + " Server is listening on port 8080");
-});
-
 const wsServer = new WebSocketServer({
   httpServer,
   autoAcceptConnections: false,
@@ -68,14 +74,25 @@ const wsServer = new WebSocketServer({
   maxReceivedMessageSize: 1000 * 1024 * 1024
 });
 
+/**
+ * Start the patch server.
+ */
+httpServer.listen(8080, () => {
+  console.info(new Date() + " Server is listening on port 8080");
+});
+
+
 function originIsAllowed(origin: string) {
   // put logic here to detect whether the specified origin is allowed.
   return true;
 }
 
+/**
+ * A patch store for the server.
+ */
 class TransactionStore {
   /**
-   *
+   * Construct a new patch store.
    */
   constructor() {
     this._transactions = {};
@@ -83,10 +100,11 @@ class TransactionStore {
   }
 
   /**
+   * Add a transaction to the patch store.
    *
+   * @param The transaction to add to the store.
    *
-   * @param {Datastore.Transaction} transaction
-   * @returns {boolean}
+   * @returns whether it was successfully added.
    */
   add(transaction: Datastore.Transaction): boolean {
     if (this._transactions.hasOwnProperty(transaction.id)) {
@@ -97,10 +115,22 @@ class TransactionStore {
     return true;
   }
 
+  /**
+   * Get a transaction by id.
+   *
+   * @param transactionId: the id of the transaction.
+   *
+   * @returns the transaction, or undefined if it can't be found.
+   */
   get(transactionId: string): Datastore.Transaction | undefined {
     return this._transactions[transactionId];
   }
 
+  /**
+   * Get the entire history for the transaction store.
+   *
+   * @returns an array of transactions representing the whole history.
+   */
   getHistory(): Datastore.Transaction[] {
     const history = new Array();
     for (let id of this._order) {
@@ -113,11 +143,13 @@ class TransactionStore {
   private _transactions: { [id: string]: Datastore.Transaction };
 }
 
+// Create a transaction store.
 const store = new TransactionStore();
 let idCounter = 0;
 
 const connections: { [store: number]: connection } = {};
 
+// Lifecycle for a collaborator.
 wsServer.on("request", request => {
   if (!originIsAllowed(request.origin)) {
     // Make sure we only accept requests from an allowed origin
@@ -130,6 +162,8 @@ wsServer.on("request", request => {
 
   var connection = request.accept(undefined, request.origin);
   console.debug(new Date() + " Connection accepted.");
+
+  // Handle a message from a collaborator.
   connection.on("message", message => {
     if (message.type !== "utf8") {
       console.debug("Received non-UTF8 Message: " + message);
@@ -179,6 +213,8 @@ wsServer.on("request", request => {
     console.debug(`Sending reply: ${reply.msgType}`);
     connection.sendUTF(JSON.stringify(reply));
   });
+
+  // Handle a close event from a collaborator.
   connection.on("close", (reasonCode, description) => {
     let storeId;
     for (let id in connections) {
