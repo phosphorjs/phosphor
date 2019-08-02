@@ -2641,6 +2641,32 @@ namespace DataGrid {
   type HeaderVisibility = 'all' | 'row' | 'column' | 'none';
 
   /**
+   *
+   */
+  export
+  type Interactions = {
+    /**
+     *
+     */
+    readonly resizableRows: boolean;
+
+    /**
+     *
+     */
+    readonly resizableColumns: boolean;
+
+    /**
+     *
+     */
+    readonly resizableRowHeaders: boolean;
+
+    /**
+     *
+     */
+    readonly resizableColumnHeaders: boolean;
+  };
+
+  /**
    * An options object for initializing a data grid.
    */
   export
@@ -2702,6 +2728,17 @@ namespace DataGrid {
     columnWidth: 64,
     rowHeaderWidth: 64,
     columnHeaderHeight: 20
+  };
+
+  /**
+   * The default interactions for the datagrid.
+   */
+  export
+  const defaultInteractions: DataGrid.Interactions = {
+    resizableRows: true,
+    resizableColumns: true,
+    resizableRowHeaders: true,
+    resizableColumnHeaders: true
   };
 }
 
