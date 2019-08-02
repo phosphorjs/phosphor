@@ -72,29 +72,18 @@ class DataGrid extends Widget {
     // Connect to the renderer map changed signal
     this._cellRenderers.changed.connect(this._onRenderersChanged, this);
 
-    // Parse the base section sizes.
-    let brs = 20;
-    let bcs = 64;
-    let brhs = 64;
-    let bchs = 20;
-    if (options.baseRowSize !== undefined) {
-      brs = options.baseRowSize;
-    }
-    if (options.baseColumnSize !== undefined) {
-      bcs = options.baseColumnSize;
-    }
-    if (options.baseRowHeaderSize !== undefined) {
-      brhs = options.baseRowHeaderSize;
-    }
-    if (options.baseColumnHeaderSize !== undefined) {
-      bchs = options.baseColumnHeaderSize;
-    }
+    // Parse the default sizes.
+    let defaultSizes = options.defaultSizes || DataGrid.defaultSizes;
+    let rh = defaultSizes.rowHeight;
+    let cw = defaultSizes.columnWidth;
+    let rhw = defaultSizes.rowHeaderWidth;
+    let chh = defaultSizes.columnHeaderHeight;
 
     // Set up the sections lists.
-    this._rowSections = new SectionList({ baseSize: brs });
-    this._columnSections = new SectionList({ baseSize: bcs });
-    this._rowHeaderSections = new SectionList({ baseSize: brhs });
-    this._columnHeaderSections = new SectionList({ baseSize: bchs });
+    this._rowSections = new SectionList({ defaultSize: rh });
+    this._columnSections = new SectionList({ defaultSize: cw });
+    this._rowHeaderSections = new SectionList({ defaultSize: rhw });
+    this._columnHeaderSections = new SectionList({ defaultSize: chh });
 
     // Create the canvas and buffer objects.
     this._canvas = Private.createCanvas();
@@ -336,24 +325,24 @@ class DataGrid extends Widget {
   }
 
   /**
-   * Get the base sizes for the various sections of the data grid.
+   * Get the default sizes for the various sections of the data grid.
    */
-  get baseSizes(): DataGrid.BaseSizes {
-    let row = this._rowSections.baseSize;
-    let column = this._columnSections.baseSize;
-    let rowHeader = this._rowHeaderSections.baseSize;
-    let columnHeader = this._columnHeaderSections.baseSize;
-    return { row, column, rowHeader, columnHeader };
+  get baseSizes(): DataGrid.DefaultSizes {
+    let rowHeight = this._rowSections.defaultSize;
+    let columnWidth = this._columnSections.defaultSize;
+    let rowHeaderWidth = this._rowHeaderSections.defaultSize;
+    let columnHeaderHeight = this._columnHeaderSections.defaultSize;
+    return { rowHeight, columnWidth, rowHeaderWidth, columnHeaderHeight };
   }
 
   /**
    * Set the base sizes for the various sections of the data grid.
    */
-  set baseSizes(value: DataGrid.BaseSizes) {
-    this._rowSections.baseSize = value.row;
-    this._columnSections.baseSize = value.column;
-    this._rowHeaderSections.baseSize = value.rowHeader;
-    this._columnHeaderSections.baseSize = value.columnHeader;
+  set baseSizes(value: DataGrid.DefaultSizes) {
+    this._rowSections.defaultSize = value.rowHeight;
+    this._columnSections.defaultSize = value.columnWidth;
+    this._rowHeaderSections.defaultSize = value.rowHeaderWidth;
+    this._columnHeaderSections.defaultSize = value.columnHeaderHeight;
     this._syncViewport();
   }
 
@@ -531,6 +520,13 @@ class DataGrid extends Widget {
    */
   private get _maxScrollY(): number {
     return Math.max(0, this._bodyHeight - this._pageHeight - 1);
+  }
+
+  /**
+   * Scroll the viewport by the specified amount.
+   */
+  private _scrollBy(dx: number, dy: number): void {
+    this._scrollTo(this._hScrollBar.value + dx, this._vScrollBar.value + dy);
   }
 
   /**
@@ -1464,6 +1460,10 @@ class DataGrid extends Widget {
       return;
     }
 
+    // Mark the event as handled.
+    event.preventDefault();
+    event.stopPropagation();
+
     // Extract the delta X and Y movement.
     let dx = event.deltaX;
     let dy = event.deltaY;
@@ -1473,8 +1473,8 @@ class DataGrid extends Widget {
     case 0:  // DOM_DELTA_PIXEL
       break;
     case 1:  // DOM_DELTA_LINE
-      dx *= this._columnSections.baseSize;
-      dy *= this._rowSections.baseSize;
+      dx *= this._columnSections.defaultSize;
+      dy *= this._rowSections.defaultSize;
       break;
     case 2:  // DOM_DELTA_PAGE
       dx *= this._pageWidth;
@@ -1484,16 +1484,8 @@ class DataGrid extends Widget {
       throw 'unreachable';
     }
 
-    // Cancel the event if the grid is handling scrolling.
-    event.preventDefault();
-    event.stopPropagation();
-
-    // Get the current scroll position.
-    let x = this._hScrollBar.value;
-    let y = this._vScrollBar.value;
-
     // Scroll by the desired amount.
-    this._scrollTo(x + dx, y + dy);
+    this._scrollBy(dx, dy);
   }
 
   /**
@@ -2617,36 +2609,36 @@ namespace DataGrid {
   };
 
   /**
+   * An object which defines the default sizes for a data grid.
+   */
+  export
+  type DefaultSizes = {
+    /**
+     * The default height of a row.
+     */
+    readonly rowHeight: number;
+
+    /**
+     * The default width of a column.
+     */
+    readonly columnWidth: number;
+
+    /**
+     * The default width of a row header.
+     */
+    readonly rowHeaderWidth: number;
+
+    /**
+     * The default height of a column header.
+     */
+    readonly columnHeaderHeight: number;
+  };
+
+  /**
    * A type alias for the supported header visibility modes.
    */
   export
   type HeaderVisibility = 'all' | 'row' | 'column' | 'none';
-
-  /**
-   *
-   */
-  export
-  type BaseSizes = {
-    /**
-     *
-     */
-    row: number;
-
-    /**
-     *
-     */
-    column: number;
-
-    /**
-     *
-     */
-    rowHeader: number;
-
-    /**
-     *
-     */
-    columnHeader: number;
-  };
 
   /**
    * An options object for initializing a data grid.
@@ -2658,7 +2650,14 @@ namespace DataGrid {
      *
      * The default is `DataGrid.defaultStyle`.
      */
-    style?: IStyle;
+    style?: Style;
+
+    /**
+     * The default sizes for the data grid.
+     *
+     * The default is `DataGrid.defaultSizes`.
+     */
+    defaultSizes?: DefaultSizes;
 
     /**
      * The header visibility for the data grid.
@@ -2666,34 +2665,6 @@ namespace DataGrid {
      * The default is `'all'`.
      */
     headerVisibility?: HeaderVisibility;
-
-    /**
-     * The base size for rows in the data grid.
-     *
-     * The default is `20`.
-     */
-    baseRowSize?: number;
-
-    /**
-     * The base size for columns in the data grid.
-     *
-     * The default is `64`.
-     */
-    baseColumnSize?: number;
-
-    /**
-     * The base size for row headers in the data grid.
-     *
-     * The default is `64`.
-     */
-    baseRowHeaderSize?: number;
-
-    /**
-     * The base size for column headers in the data grid.
-     *
-     * The default is `20`.
-     */
-    baseColumnHeaderSize?: number;
 
     /**
      * The cell renderer map for the data grid.
@@ -2720,6 +2691,17 @@ namespace DataGrid {
     gridLineColor: 'rgba(20, 20, 20, 0.15)',
     headerBackgroundColor: '#F3F3F3',
     headerGridLineColor: 'rgba(20, 20, 20, 0.25)'
+  };
+
+  /**
+   * The default sizes for a data grid.
+   */
+  export
+  const defaultSizes: DataGrid.DefaultSizes = {
+    rowHeight: 20,
+    columnWidth: 64,
+    rowHeaderWidth: 64,
+    columnHeaderHeight: 20
   };
 }
 

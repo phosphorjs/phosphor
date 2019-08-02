@@ -202,18 +202,18 @@ function main(): void {
   let model4 = new RandomDataModel(80, 80);
   let model5 = new JSONModel(Data.cars);
 
-  let blueStripeStyle: DataGrid.IStyle = {
+  let blueStripeStyle: DataGrid.Style = {
     ...DataGrid.defaultStyle,
     rowBackgroundColor: i => i % 2 === 0 ? 'rgba(138, 172, 200, 0.3)' : '',
     columnBackgroundColor: i => i % 2 === 0 ? 'rgba(100, 100, 100, 0.1)' : ''
   };
 
-  let brownStripeStyle: DataGrid.IStyle = {
+  let brownStripeStyle: DataGrid.Style = {
     ...DataGrid.defaultStyle,
     columnBackgroundColor: i => i % 2 === 0 ? 'rgba(165, 143, 53, 0.2)' : ''
   };
 
-  let greenStripeStyle: DataGrid.IStyle = {
+  let greenStripeStyle: DataGrid.Style = {
     ...DataGrid.defaultStyle,
     rowBackgroundColor: i => i % 2 === 0 ? 'rgba(64, 115, 53, 0.2)' : ''
   };
@@ -248,10 +248,12 @@ function main(): void {
 
   let grid5 = new DataGrid({
     style: greenStripeStyle,
-    baseRowSize: 32,
-    baseColumnSize: 128,
-    baseRowHeaderSize: 64,
-    baseColumnHeaderSize: 32
+    defaultSizes: {
+      rowHeight: 32,
+      columnWidth: 128,
+      rowHeaderWidth: 64,
+      columnHeaderHeight: 32
+    }
   });
   grid5.model = model5;
 
