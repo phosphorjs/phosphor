@@ -106,12 +106,12 @@ class MonacoEditor extends Widget {
   /**
    *
    */
-  constructor(datastore: Datastore) {
+  constructor(datastore: Datastore, record: string) {
     super();
     this._store = datastore;
 
     const rootTable = this._store.get(rootSchema);
-    const initialValue = rootTable.get('root')!.text;
+    const initialValue = rootTable.get(record)!.text;
 
     this._editor = monaco.editor.create(this.node, {
       value: initialValue,
@@ -129,7 +129,7 @@ class MonacoEditor extends Widget {
       event.changes.forEach(change => {
         datastore.beginTransaction();
         rootTable.update({
-          root: {
+          [record]: {
             text: {
               index: change.rangeOffset,
               remove: change.rangeLength,
@@ -145,8 +145,8 @@ class MonacoEditor extends Widget {
         return;
       }
       const c = change.change['example-schema-root'];
-      if (c && c.root && c.root.text) {
-        const textChanges = c.root.text as TextField.Change;
+      if (c && c[record] && c[record].text) {
+        const textChanges = c[record].text as TextField.Change;
         textChanges.forEach(textChange => {
           const start = model.getPositionAt(textChange.index)
           const end = model.getPositionAt(textChange.index + textChange.removed.length);
@@ -194,18 +194,18 @@ async function init(): Promise<void> {
     store.beginTransaction();
     try {
       rootTable.update({
-        root: {
-          toggle: true,
-        }
+        e1: {},
+        e2: {},
+        e3: {}
       });
     } finally {
       store.endTransaction();
     }
   }
 
-  const e1 = new MonacoEditor(store);
-  const e2 = new MonacoEditor(store);
-  const e3 = new MonacoEditor(store);
+  const e1 = new MonacoEditor(store, 'e1');
+  const e2 = new MonacoEditor(store, 'e2');
+  const e3 = new MonacoEditor(store, 'e3');
 
   const dock = new DockPanel();
   dock.addWidget(e1);
