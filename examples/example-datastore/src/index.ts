@@ -10,7 +10,7 @@ import {
 } from '@phosphor/coreutils';
 
 import {
-  Fields, Datastore, RegisterField, Schema, TextField
+  Datastore, Schema
 } from '@phosphor/datastore';
 
 import {
@@ -18,24 +18,18 @@ import {
 } from '@phosphor/messaging';
 
 import {
-  BoxPanel, DockPanel, Panel, Widget
+  BoxPanel, DockPanel, Widget
 } from '@phosphor/widgets';
 
 import {
   WSDatastoreAdapter
 } from './wsadapter';
 
-import * as monaco from 'monaco-editor';
+import {
+  editorSchema, MonacoEditor
+} from './widget';
 
 import '../style/index.css';
-
-const rootSchema = {
-  id: 'root',
-  fields: {
-    readOnly: Fields.Boolean(),
-    text: new TextField()
-  }
-};
 
 
 class ClearingHouse implements IMessageHandler {
@@ -91,144 +85,23 @@ class ClearingHouse implements IMessageHandler {
 }
 
 
-class MonacoEditor extends Panel {
-  /**
-   *
-   */
-  constructor(datastore: Datastore, record: string) {
-    super();
-    this.addClass('content');
-    this._store = datastore;
-    this._record = record;
-
-    const rootTable = this._store.get(rootSchema);
-    const initialValue = rootTable.get(record)!.text;
-    const readOnly = rootTable.get(record)!.readOnly;
-
-    this._checkWidget = new Widget();
-    this._checkWidget.addClass('read-only-check');
-    this._checkWidget.node.textContent = 'Read Only';
-    this._editorWidget = new Widget();
-    this.addWidget(this._checkWidget);
-    this.addWidget(this._editorWidget);
-
-    this._check = document.createElement('input');
-    this._check.type = 'checkbox';
-    this._check.checked = readOnly;
-    this._checkWidget.node.appendChild(this._check);
-    this._check.onchange = () => {
-      this._editor.updateOptions({ readOnly: this._check.checked });
-      if (this._changeGuard) {
-        return;
-      }
-      const rootTable = this._store.get(rootSchema);
-      datastore.beginTransaction();
-      rootTable.update({
-        [record]: {
-          readOnly: this._check.checked
-        }
-      });
-      datastore.endTransaction();
-    };
-    datastore.changed.connect(this._onDatastoreChange, this);
-
-
-    this._editor = monaco.editor.create(this.node, {
-      value: initialValue,
-      readOnly,
-      lineNumbers: "off",
-      theme: 'vs-dark',
-      minimap: { enabled: false },
-    });
-
-    const model = this._editor.getModel()!;
-    model.onDidChangeContent(event => {
-      if (this._changeGuard) {
-        return;
-      }
-      const rootTable = this._store.get(rootSchema);
-      event.changes.forEach(change => {
-        datastore.beginTransaction();
-        rootTable.update({
-          [record]: {
-            text: {
-              index: change.rangeOffset,
-              remove: change.rangeLength,
-              text: change.text,
-            }
-          }
-        });
-        datastore.endTransaction();
-      });
-    });
-    datastore.changed.connect(this._onDatastoreChange, this);
-  }
-
-
-  onResize() {
-    this._editor.layout();
-  }
-
-  onAfterShow() {
-    this._editor.layout();
-  }
-
-  private _onDatastoreChange(store: Datastore, change: Datastore.IChangedArgs): void {
-    if (change.storeId === store.id) {
-      return;
-    }
-    const model = this._editor.getModel()!;
-    const c = change.change['root'];
-    if (c && c[this._record] && c[this._record].text) {
-      const textChanges = c[this._record].text as TextField.Change;
-      textChanges.forEach(textChange => {
-        const start = model.getPositionAt(textChange.index)
-        const end = model.getPositionAt(textChange.index + textChange.removed.length);
-        const range = monaco.Range.fromPositions(start, end);
-
-        const op: monaco.editor.IIdentifiedSingleEditOperation = {
-          text: textChange.inserted,
-          range
-        };
-        this._changeGuard = true;
-        model.pushEditOperations([], [op], () => null);
-        this._changeGuard = false;
-      });
-    }
-
-    if(c && c[this._record] && c[this._record].readOnly) {
-      this._changeGuard = true;
-      this._check.checked = (c[this._record].readOnly as RegisterField.Change<boolean>).current;
-      this._changeGuard = false;
-    }
-  }
-
-  private _changeGuard: boolean = false;
-  private _record: string;
-  private _store: Datastore;
-  private _editor: monaco.editor.ICodeEditor;
-  private _editorWidget: Widget;
-  private _checkWidget: Widget;
-  private _check: HTMLInputElement;
-}
-
 async function init(): Promise<void> {
 
   const serverConnection = new ClearingHouse(
     () => new WebSocket('ws://localhost:8080'),
-    [rootSchema]
+    [editorSchema]
   );
 
   await Promise.all([serverConnection.initialHistory, serverConnection.ready]);
 
   const store = serverConnection.datastore
 
-  const rootTable = store.get(rootSchema);
-  if (rootTable.isEmpty) {
+  const editorTable = store.get(editorSchema);
+  if (editorTable.isEmpty) {
     // Empty table -> Let us initialize some state
     store.beginTransaction();
     try {
-      rootTable.update({
+      editorTable.update({
         e1: {},
         e2: {},
         e3: {}
