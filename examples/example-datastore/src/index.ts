@@ -18,7 +18,7 @@ import {
 } from '@phosphor/messaging';
 
 import {
-  BoxPanel, DockPanel, Widget
+  BoxPanel, DockPanel, Panel, Widget
 } from '@phosphor/widgets';
 
 import {
@@ -91,7 +91,7 @@ class ClearingHouse implements IMessageHandler {
 }
 
 
-class MonacoEditor extends Widget {
+class MonacoEditor extends Panel {
   /**
    *
    */
@@ -99,10 +99,23 @@ class MonacoEditor extends Widget {
     super();
     this.addClass('content');
     this._store = datastore;
+    this._record = record;
 
     const rootTable = this._store.get(rootSchema);
     const initialValue = rootTable.get(record)!.text;
     const readOnly = rootTable.get(record)!.readOnly;
+
+    this._checkWidget = new Widget();
+    this._checkWidget.addClass('read-only-check');
+    this._checkWidget.node.textContent = 'Read Only';
+    this._editorWidget = new Widget();
+    this.addWidget(this._checkWidget);
+    this.addWidget(this._editorWidget);
+
+    const check = document.createElement('input');
+    check.type = 'checkbox';
+    check.checked = readOnly;
+    this._checkWidget.node.appendChild(check);
 
     this._editor = monaco.editor.create(this.node, {
       value: initialValue,
@@ -111,12 +124,10 @@ class MonacoEditor extends Widget {
       theme: 'vs-dark',
       minimap: { enabled: false },
     });
-    let changeGuard = false;
-
 
     const model = this._editor.getModel()!;
     model.onDidChangeContent(event => {
-      if (changeGuard) {
+      if (this._changeGuard) {
         return;
       }
       const rootTable = this._store.get(rootSchema);
@@ -134,28 +145,7 @@ class MonacoEditor extends Widget {
         datastore.endTransaction();
       });
     });
-    datastore.changed.connect((_, change) => {
-      if (change.storeId === datastore.id) {
-        return;
-      }
-      const c = change.change['root'];
-      if (c && c[record] && c[record].text) {
-        const textChanges = c[record].text as TextField.Change;
-        textChanges.forEach(textChange => {
-          const start = model.getPositionAt(textChange.index)
-          const end = model.getPositionAt(textChange.index + textChange.removed.length);
-          const range = monaco.Range.fromPositions(start, end);
-
-          const op: monaco.editor.IIdentifiedSingleEditOperation = {
-            text: textChange.inserted,
-            range
-          };
-          changeGuard = true;
-          model.pushEditOperations([], [op], () => null);
-          changeGuard = false;
-        });
-      }
-    });
+    datastore.changed.connect(this._onDatastoreChange, this);
   }
 
 
@@ -167,8 +157,36 @@ class MonacoEditor extends Widget {
     this._editor.layout();
   }
 
+  private _onDatastoreChange(store: Datastore, change: Datastore.IChangedArgs): void {
+    if (change.storeId === store.id) {
+      return;
+    }
+    const model = this._editor.getModel()!;
+    const c = change.change['root'];
+    if (c && c[this._record] && c[this._record].text) {
+      const textChanges = c[this._record].text as TextField.Change;
+      textChanges.forEach(textChange => {
+        const start = model.getPositionAt(textChange.index)
+        const end = model.getPositionAt(textChange.index + textChange.removed.length);
+        const range = monaco.Range.fromPositions(start, end);
+
+        const op: monaco.editor.IIdentifiedSingleEditOperation = {
+          text: textChange.inserted,
+          range
+        };
+        this._changeGuard = true;
+        model.pushEditOperations([], [op], () => null);
+        this._changeGuard = false;
+      });
+    }
+  }
+
+  private _changeGuard: boolean = false;
+  private _record: string;
   private _store: Datastore;
   private _editor: monaco.editor.ICodeEditor;
+  private _editorWidget: Widget;
+  private _checkWidget: Widget;
 }
 
 async function init(): Promise<void> {
@@ -204,7 +222,7 @@ async function init(): Promise<void> {
   const e3 = new MonacoEditor(store, 'e3');
   e3.title.label = 'Third Document';
 
-  const dock = new DockPanel({ spacing: 2 });
+  const dock = new DockPanel({ spacing: 4 });
   dock.addWidget(e1);
   dock.addWidget(e2);
   dock.addWidget(e3);
