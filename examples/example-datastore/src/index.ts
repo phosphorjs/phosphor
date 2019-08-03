@@ -161,6 +161,8 @@ async function init(): Promise<void> {
   box.id = 'main';
   box.addWidget(dock);
 
+  window.onresize = () => { box.update(); };
+
   Widget.attach(box, document.body);
 }
 
