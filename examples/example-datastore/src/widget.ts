@@ -143,27 +143,25 @@ export class MonacoEditor extends Panel {
       return;
     }
     // Apply text field changes to the monaco editor.
-    let model = this._editor.getModel()!;
     let c = change.change['editor'];
     if (c && c[this._record] && c[this._record].text) {
+      let model = this._editor.getModel()!;
       let textChanges = c[this._record].text as TextField.Change;
-      textChanges.forEach(textChange => {
+      let ops = textChanges.map(tc => {
         // Convert the change data to monaco range and inserted text.
-        let start = model.getPositionAt(textChange.index)
-        let end = model.getPositionAt(textChange.index + textChange.removed.length);
+        let start = model.getPositionAt(tc.index)
+        let end = model.getPositionAt(tc.index + tc.removed.length);
         let range = monaco.Range.fromPositions(start, end);
+        let text = tc.inserted;
 
-        // Construct the monaco operation.
-        let op: monaco.editor.IIdentifiedSingleEditOperation = {
-          text: textChange.inserted,
-          range
-        };
-        // Apply the operation, setting the change guard so we can ignore
-        // the change signals from monaco.
-        this._changeGuard = true;
-        model.pushEditOperations([], [op], () => null);
-        this._changeGuard = false;
+        // Return the monaco operation.
+        return { text, range } as monaco.editor.IIdentifiedSingleEditOperation;
       });
+      // Apply the operation, setting the change guard so we can ignore
+      // the change signals from monaco.
+      this._changeGuard = true;
+      model.pushEditOperations([], ops, () => null);
+      this._changeGuard = false;
     }
 
     // If the readonly state has changed, update the check box, setting the
