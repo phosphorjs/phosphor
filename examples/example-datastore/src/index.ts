@@ -119,7 +119,7 @@ async function init(): Promise<void> {
 
   // Create a patch clearing house.
   let serverConnection = new ClearingHouse(
-    () => new WebSocket('ws://localhost:8080'),
+    () => new WebSocket(window.location.origin.replace(/^http/, 'ws')),
     [EDITOR_SCHEMA]
   );
   await Promise.all([serverConnection.initialHistory, serverConnection.ready]);
