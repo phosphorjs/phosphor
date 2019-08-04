@@ -62,25 +62,12 @@ pageServer.listen(8000, () => {
 /**
  * Create a websocket server for the patch server.
  */
-let httpServer = http.createServer((request, response) => {
-  console.debug(new Date() + " Received request for " + request.url);
-  response.writeHead(404);
-  response.end();
-});
 let wsServer = new WebSocketServer({
-  httpServer,
+  httpServer: pageServer,
   autoAcceptConnections: false,
   maxReceivedFrameSize: 10 * 1024 * 1024,
   maxReceivedMessageSize: 1000 * 1024 * 1024
 });
-
-/**
- * Start the patch server.
- */
-httpServer.listen(8080, () => {
-  console.info(new Date() + " Server is listening on port 8080");
-});
-
 
 function originIsAllowed(origin: string) {
   // put logic here to detect whether the specified origin is allowed.
