@@ -1,5 +1,4 @@
 var path = require('path');
-var MonacoWebpackPlugin = require('monaco-editor-webpack-plugin');
 
 module.exports = {
   entry: './build/index.js',
@@ -15,6 +14,5 @@ module.exports = {
     ]
   },
   plugins: [
-    new MonacoWebpackPlugin()
   ]
 };

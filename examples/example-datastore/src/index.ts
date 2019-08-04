@@ -26,7 +26,7 @@ import {
 } from './wsadapter';
 
 import {
-  EDITOR_SCHEMA, MonacoEditor
+  EDITOR_SCHEMA, CodeMirrorEditor
 } from './widget';
 
 import '../style/index.css';
@@ -142,11 +142,11 @@ async function init(): Promise<void> {
   }
 
   // Set up the text editors.
-  let e1 = new MonacoEditor(store, 'e1');
+  let e1 = new CodeMirrorEditor(store, 'e1');
   e1.title.label = 'First Document';
-  let e2 = new MonacoEditor(store, 'e2');
+  let e2 = new CodeMirrorEditor(store, 'e2');
   e2.title.label = 'Second Document';
-  let e3 = new MonacoEditor(store, 'e3');
+  let e3 = new CodeMirrorEditor(store, 'e3');
   e3.title.label = 'Third Document';
 
   // Add the text editors to a dock panel.
