@@ -13,7 +13,7 @@ import {
   Panel, Widget
 } from '@phosphor/widgets';
 
-import * as monaco from 'monaco-editor';
+import * as CodeMirror from 'codemirror';
 
 /**
  * A schema for an editor model. Currently contains two fields, the current
@@ -29,9 +29,9 @@ export const EDITOR_SCHEMA = {
 };
 
 /**
- * A widget which hosts a collaborative monaco text editor.
+ * A widget which hosts a collaborative CodeMirror text editor.
  */
-export class MonacoEditor extends Panel {
+export class CodeMirrorEditor extends Panel {
   /**
    * Create a new editor widget.
    *
@@ -53,6 +53,7 @@ export class MonacoEditor extends Panel {
     // Set up the DOM structure
     this._editorWidget = new Widget();
     this._checkWidget = new Widget();
+    this._checkWidget.node.style.height = '24px';
     this._checkWidget.addClass('read-only-check');
     this._checkWidget.node.textContent = 'Read Only';
     this._check = document.createElement('input');
@@ -70,7 +71,7 @@ export class MonacoEditor extends Panel {
         return;
       }
       // Update the readonly state
-      this._editor.updateOptions({ readOnly: this._check.checked });
+      this._editor.setOption("readOnly", this._check.checked);
       // Update the table to broadcast the change.
       let editorTable = this._store.get(EDITOR_SCHEMA);
       datastore.beginTransaction();
@@ -83,36 +84,32 @@ export class MonacoEditor extends Panel {
     };
 
     // Create the editor instance.
-    this._editor = monaco.editor.create(this.node, {
+    this._editor = CodeMirror(this._editorWidget.node, {
       value: initialValue,
-      readOnly,
-      lineNumbers: 'off',
-      theme: 'vs-dark',
-      minimap: { enabled: false },
+      lineNumbers: true,
     });
 
     // Listen for changes on the editor model.
-    let model = this._editor.getModel()!;
-    model.onDidChangeContent(event => {
+    CodeMirror.on(this._editor.getDoc(), 'beforeChange', (doc, change) => {
       // If this was a remote change, we are done.
       if (this._changeGuard) {
         return;
       }
+      let start = doc.indexFromPos(change.from);
+      let end = doc.indexFromPos(change.to);
+      let text = change.text.join('\n');
       // If this was a local change, update the table.
-      let editorTable = this._store.get(EDITOR_SCHEMA);
-      event.changes.forEach(change => {
-        datastore.beginTransaction();
-        editorTable.update({
-          [record]: {
-            text: {
-              index: change.rangeOffset,
-              remove: change.rangeLength,
-              text: change.text,
-            }
+      datastore.beginTransaction();
+      editorTable.update({
+        [record]: {
+          text: {
+            index: start,
+            remove: end - start,
+            text: text,
           }
-        });
-        datastore.endTransaction();
+        }
       });
+      datastore.endTransaction();
     });
 
     // Listen for changes on the datastore.
@@ -121,17 +118,22 @@ export class MonacoEditor extends Panel {
 
 
   /**
-   * Handle a resize event for the editor.
+   * A message handler invoked on a `'resize'` message.
    */
-  onResize() {
-    this._editor.layout();
+  protected onResize(msg: Widget.ResizeMessage): void {
+    if (msg.width >= 0 && msg.height >= 0) {
+      this._editor.setSize(msg.width, msg.height - 24);
+    } else if (this.isVisible) {
+      this._editor.setSize(null, null);
+    }
+    this._editor.refresh();
   }
 
   /**
    * Handle a `after-show` message for the editor.
    */
   onAfterShow() {
-    this._editor.layout();
+    this._editor.refresh();
   }
 
   /**
@@ -142,26 +144,23 @@ export class MonacoEditor extends Panel {
     if (change.storeId === store.id) {
       return;
     }
-    // Apply text field changes to the monaco editor.
+    let doc = this._editor.getDoc();
+    // Apply text field changes to the editor.
     let c = change.change['editor'];
     if (c && c[this._record] && c[this._record].text) {
-      let model = this._editor.getModel()!;
       let textChanges = c[this._record].text as TextField.Change;
-      let ops = textChanges.map(tc => {
-        // Convert the change data to monaco range and inserted text.
-        let start = model.getPositionAt(tc.index)
-        let end = model.getPositionAt(tc.index + tc.removed.length);
-        let range = monaco.Range.fromPositions(start, end);
-        let text = tc.inserted;
+      textChanges.forEach(tc => {
+        // Convert the change data to codemirror range and inserted text.
+        let from = doc.posFromIndex(tc.index);
+        let to = doc.posFromIndex(tc.index + tc.removed.length);
 
-        // Return the monaco operation.
-        return { text, range } as monaco.editor.IIdentifiedSingleEditOperation;
+        let replacement = tc.inserted;
+        this._changeGuard = true;
+        doc.replaceRange(replacement, from, to, '+input');
+        this._changeGuard = false;
       });
       // Apply the operation, setting the change guard so we can ignore
-      // the change signals from monaco.
-      this._changeGuard = true;
-      model.pushEditOperations([], ops, () => null);
-      this._changeGuard = false;
+      // the change signals from codemirror.
     }
 
     // If the readonly state has changed, update the check box, setting the
@@ -171,7 +170,7 @@ export class MonacoEditor extends Panel {
       let checkChange = c[this._record].readOnly as RegisterField.Change<boolean>;
       this._check.checked = checkChange.current;
       // Update the readonly state
-      this._editor.updateOptions({ readOnly: this._check.checked });
+      this._editor.setOption("readOnly", this._check.checked);
       this._changeGuard = false;
     }
   }
@@ -179,7 +178,7 @@ export class MonacoEditor extends Panel {
   private _changeGuard: boolean = false;
   private _check: HTMLInputElement;
   private _checkWidget: Widget;
-  private _editor: monaco.editor.ICodeEditor;
+  private _editor: CodeMirror.Editor;
   private _editorWidget: Widget;
   private _record: string;
   private _store: Datastore;
