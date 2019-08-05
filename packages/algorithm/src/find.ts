@@ -57,6 +57,52 @@ function find<T>(object: IterableOrArrayLike<T>, fn: (value: T, index: number) =
 
 
 /**
+ * Find the index of the first value which matches a predicate.
+ *
+ * @param object - The iterable or array-like object to search.
+ *
+ * @param fn - The predicate function to apply to the values.
+ *
+ * @returns The index of the first matching value, or `-1` if no
+ *   matching value is found.
+ *
+ * #### Complexity
+ * Linear.
+ *
+ * #### Example
+ * ```typescript
+ * import { findIndex } from '@phosphor/algorithm';
+ *
+ * interface IAnimal { species: string, name: string };
+ *
+ * function isCat(value: IAnimal): boolean {
+ *   return value.species === 'cat';
+ * }
+ *
+ * let data: IAnimal[] = [
+ *   { species: 'dog', name: 'spot' },
+ *   { species: 'cat', name: 'fluffy' },
+ *   { species: 'alligator', name: 'pocho' }
+ * ];
+ *
+ * findIndex(data, isCat);  // 1
+ * ```
+ */
+export
+function findIndex<T>(object: IterableOrArrayLike<T>, fn: (value: T, index: number) => boolean): number {
+  let index = 0;
+  let it = iter(object);
+  let value: T | undefined;
+  while ((value = it.next()) !== undefined) {
+    if (fn(value, index++)) {
+      return index - 1;
+    }
+  }
+  return -1;
+}
+
+
+/**
  * Find the minimum value in an iterable.
  *
  * @param object - The iterable or array-like object to search.

@@ -1,3 +1,6 @@
+dist: xenial
+services:
+  - xvfb
 language: node_js
 node_js:
   '8'
@@ -8,8 +11,6 @@ install:
   - npm install -g yarn
   - yarn
 script:
-  - export DISPLAY=:99.0;
-    sh -e /etc/init.d/xvfb start;
     set -e;
     pushd packages/widgets;
     yarn build;

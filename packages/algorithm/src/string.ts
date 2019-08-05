@@ -197,4 +197,18 @@ namespace StringExt {
     // Return the highlighted result.
     return result;
   }
+
+  /**
+   * A 3-way string comparison function.
+   * 
+   * @param a - The first string of interest.
+   * 
+   * @param b - The second string of interest.
+   * 
+   * @returns `-1` if `a < b`, else `1` if `a > b`, else `0`.
+   */
+  export
+  function cmp(a: string, b: string): number {
+    return a < b ? -1 : a > b ? 1 : 0;
+  }
 }

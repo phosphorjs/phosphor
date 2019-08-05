@@ -27,7 +27,20 @@ class LinkedList<T> implements IIterable<T>, IRetroable<T> {
    * Constant.
    */
   get isEmpty(): boolean {
-    return this._length === 0;
+    return this._size === 0;
+  }
+
+  /**
+   * The size of the list.
+   *
+   * #### Complexity
+   * `O(1)`
+   *
+   * #### Notes
+   * This is equivalent to `length`.
+   */
+  get size(): number {
+    return this._size;
   }
 
   /**
@@ -35,9 +48,14 @@ class LinkedList<T> implements IIterable<T>, IRetroable<T> {
    *
    * #### Complexity
    * Constant.
+   *
+   * #### Notes
+   * This is equivalent to `size`.
+   *
+   * This property is deprecated.
    */
   get length(): number {
-    return this._length;
+    return this._size;
   }
 
   /**
@@ -137,6 +155,79 @@ class LinkedList<T> implements IIterable<T>, IRetroable<T> {
   }
 
   /**
+   * Assign new values to the list, replacing all current values.
+   *
+   * @param values - The values to assign to the list.
+   *
+   * #### Complexity
+   * Linear.
+   */
+  assign(values: IterableOrArrayLike<T>): void {
+    this.clear();
+    each(values, value => { this.addLast(value); });
+  }
+
+  /**
+   * Add a value to the end of the list.
+   *
+   * @param value - The value to add to the end of the list.
+   *
+   * #### Complexity
+   * Constant.
+   *
+   * #### Notes
+   * This is equivalent to `addLast`.
+   */
+  push(value: T): void {
+    this.addLast(value);
+  }
+
+  /**
+   * Remove and return the value at the end of the list.
+   *
+   * @returns The removed value, or `undefined` if the list is empty.
+   *
+   * #### Complexity
+   * Constant.
+   *
+   * #### Notes
+   * This is equivalent to `removeLast`.
+   */
+  pop(): T | undefined {
+    return this.removeLast();
+  }
+
+  /**
+   * Add a value to the beginning of the list.
+   *
+   * @param value - The value to add to the beginning of the list.
+   *
+   * #### Complexity
+   * Constant.
+   *
+   * #### Notes
+   * This is equivalent to `addFirst`.
+   */
+  shift(value: T): void {
+    this.addFirst(value);
+  }
+
+  /**
+   * Remove and return the value at the beginning of the list.
+   *
+   * @returns The removed value, or `undefined` if the list is empty.
+   *
+   * #### Complexity
+   * Constant.
+   *
+   * #### Notes
+   * This is equivalent to `removeFirst`.
+   */
+  unshift(): T | undefined {
+    return this.removeFirst();
+  }
+
+  /**
    * Add a value to the beginning of the list.
    *
    * @param value - The value to add to the beginning of the list.
@@ -156,7 +247,7 @@ class LinkedList<T> implements IIterable<T>, IRetroable<T> {
       this._first.prev = node;
       this._first = node;
     }
-    this._length++;
+    this._size++;
     return node;
   }
 
@@ -180,7 +271,7 @@ class LinkedList<T> implements IIterable<T>, IRetroable<T> {
       this._last.next = node;
       this._last = node;
     }
-    this._length++;
+    this._size++;
     return node;
   }
 
@@ -214,7 +305,7 @@ class LinkedList<T> implements IIterable<T>, IRetroable<T> {
     node.prev = prev;
     _ref.prev = node;
     prev.next = node;
-    this._length++;
+    this._size++;
     return node;
   }
 
@@ -248,7 +339,7 @@ class LinkedList<T> implements IIterable<T>, IRetroable<T> {
     node.prev = _ref;
     _ref.next = node;
     next.prev = node;
-    this._length++;
+    this._size++;
     return node;
   }
 
@@ -275,7 +366,7 @@ class LinkedList<T> implements IIterable<T>, IRetroable<T> {
     node.list = null;
     node.next = null;
     node.prev = null;
-    this._length--;
+    this._size--;
     return node.value;
   }
 
@@ -302,7 +393,7 @@ class LinkedList<T> implements IIterable<T>, IRetroable<T> {
     node.list = null;
     node.next = null;
     node.prev = null;
-    this._length--;
+    this._size--;
     return node.value;
   }
 
@@ -338,7 +429,7 @@ class LinkedList<T> implements IIterable<T>, IRetroable<T> {
     _node.list = null;
     _node.next = null;
     _node.prev = null;
-    this._length--;
+    this._size--;
   }
 
   /**
@@ -358,12 +449,12 @@ class LinkedList<T> implements IIterable<T>, IRetroable<T> {
     }
     this._first = null;
     this._last = null;
-    this._length = 0;
+    this._size = 0;
   }
 
   private _first: Private.LinkedListNode<T> | null = null;
   private _last: Private.LinkedListNode<T> | null = null;
-  private _length = 0;
+  private _size = 0;
 }
 
 
@@ -416,11 +507,14 @@ namespace LinkedList {
    * @param values - The iterable or array-like object of interest.
    *
    * @returns A new linked list initialized with the given values.
+   *
+   * #### Complexity
+   * Linear.
    */
   export
   function from<T>(values: IterableOrArrayLike<T>): LinkedList<T> {
     let list = new LinkedList<T>();
-    each(values, value => { list.addLast(value); });
+    list.assign(values);
     return list;
   }
 

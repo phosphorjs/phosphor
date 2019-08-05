@@ -100,6 +100,109 @@ function iter<T>(object: IterableOrArrayLike<T>): IIterator<T> {
 
 
 /**
+ * Create an iterator for the keys in an object.
+ *
+ * @param object - The object of interest.
+ *
+ * @returns A new iterator for the keys in the given object.
+ *
+ * #### Complexity
+ * Linear.
+ *
+ * #### Example
+ * ```typescript
+ * import { each, keys } from '@phosphor/algorithm';
+ *
+ * let data = { one: 1, two: 2, three: 3 };
+ *
+ * each(keys(data), key => { console.log(key); }); // 'one', 'two', 'three'
+ * ```
+ */
+export
+function iterKeys<T>(object: { readonly [key: string]: T }): IIterator<string> {
+  return new KeyIterator(object);
+}
+
+
+/**
+ * Create an iterator for the values in an object.
+ *
+ * @param object - The object of interest.
+ *
+ * @returns A new iterator for the values in the given object.
+ *
+ * #### Complexity
+ * Linear.
+ *
+ * #### Example
+ * ```typescript
+ * import { each, values } from '@phosphor/algorithm';
+ *
+ * let data = { one: 1, two: 2, three: 3 };
+ *
+ * each(values(data), value => { console.log(value); }); // 1, 2, 3
+ * ```
+ */
+export
+function iterValues<T>(object: { readonly [key: string]: T }): IIterator<T> {
+  return new ValueIterator<T>(object);
+}
+
+
+/**
+ * Create an iterator for the items in an object.
+ *
+ * @param object - The object of interest.
+ *
+ * @returns A new iterator for the items in the given object.
+ *
+ * #### Complexity
+ * Linear.
+ *
+ * #### Example
+ * ```typescript
+ * import { each, items } from '@phosphor/algorithm';
+ *
+ * let data = { one: 1, two: 2, three: 3 };
+ *
+ * each(items(data), value => { console.log(value); }); // ['one', 1], ['two', 2], ['three', 3]
+ * ```
+ */
+export
+function iterItems<T>(object: { readonly [key: string]: T }): IIterator<[string, T]> {
+  return new ItemIterator<T>(object);
+}
+
+
+/**
+ * Create an iterator for an iterator-like function.
+ *
+ * @param fn - A function which behaves like an iterator `next` method.
+ *
+ * @returns A new iterator for the given function.
+ *
+ * #### Notes
+ * The returned iterator **cannot** be cloned.
+ *
+ * #### Example
+ * ```typescript
+ * import { each, iterFn } from '@phosphor/algorithm';
+ *
+ * let it = iterFn((() => {
+ *   let i = 0;
+ *   return () => i > 3 ? undefined : i++;
+ * })());
+ *
+ * each(it, v => { console.log(v); }); // 0, 1, 2, 3
+ * ```
+ */
+export
+function iterFn<T>(fn: () => T | undefined): IIterator<T> {
+  return new FnIterator<T>(fn);
+}
+
+
+/**
  * Invoke a function for each value in an iterable.
  *
  * @param object - The iterable or array-like object of interest.
@@ -245,6 +348,34 @@ function toArray<T>(object: IterableOrArrayLike<T>): T[] {
 
 
 /**
+ * Create an object from an iterable of key/value pairs.
+ *
+ * @param object - The iterable or array-like object of interest.
+ *
+ * @returns A new object mapping keys to values.
+ *
+ * #### Example
+ * ```typescript
+ * import { toObject } from '@phosphor/algorithm';
+ *
+ * let data = [['one', 1], ['two', 2], ['three', 3]];
+ *
+ * toObject(data);  // { one: 1, two: 2, three: 3 }
+ * ```
+ */
+export
+function toObject<T>(object: IterableOrArrayLike<[string, T]>): { [key: string]: T } {
+  let it = iter(object);
+  let pair: [string, T] | undefined;
+  let result: { [key: string]: T } = {};
+  while ((pair = it.next()) !== undefined) {
+    result[pair[0]] = pair[1];
+  }
+  return result;
+}
+
+
+/**
  * An iterator for an array-like object.
  *
  * #### Notes
@@ -295,4 +426,235 @@ class ArrayIterator<T> implements IIterator<T> {
 
   private _index = 0;
   private _source: ArrayLike<T>;
+}
+
+
+/**
+ * An iterator for the keys in an object.
+ *
+ * #### Notes
+ * This iterator can be used for any JS object.
+ */
+export
+class KeyIterator implements IIterator<string> {
+  /**
+   * Construct a new key iterator.
+   *
+   * @param source - The object of interest.
+   *
+   * @param keys - The keys to iterate, if known.
+   */
+  constructor(source: { readonly [key: string]: any }, keys = Object.keys(source)) {
+    this._source = source;
+    this._keys = keys;
+  }
+
+  /**
+   * Get an iterator over the object's values.
+   *
+   * @returns An iterator which yields the object's values.
+   */
+  iter(): IIterator<string> {
+    return this;
+  }
+
+  /**
+   * Create an independent clone of the iterator.
+   *
+   * @returns A new independent clone of the iterator.
+   */
+  clone(): IIterator<string> {
+    let result = new KeyIterator(this._source, this._keys);
+    result._index = this._index;
+    return result;
+  }
+
+  /**
+   * Get the next value from the iterator.
+   *
+   * @returns The next value from the iterator, or `undefined`.
+   */
+  next(): string | undefined {
+    if (this._index >= this._keys.length) {
+      return undefined;
+    }
+    let key = this._keys[this._index++];
+    if (key in this._source) {
+      return key;
+    }
+    return this.next();
+  }
+
+  private _index = 0;
+  private _keys: string[];
+  private _source: { readonly [key: string]: any };
+}
+
+
+/**
+ * An iterator for the values in an object.
+ *
+ * #### Notes
+ * This iterator can be used for any JS object.
+ */
+export
+class ValueIterator<T> implements IIterator<T> {
+  /**
+   * Construct a new value iterator.
+   *
+   * @param source - The object of interest.
+   *
+   * @param keys - The keys to iterate, if known.
+   */
+  constructor(source: { readonly [key: string]: T }, keys = Object.keys(source)) {
+    this._source = source;
+    this._keys = keys;
+  }
+
+  /**
+   * Get an iterator over the object's values.
+   *
+   * @returns An iterator which yields the object's values.
+   */
+  iter(): IIterator<T> {
+    return this;
+  }
+
+  /**
+   * Create an independent clone of the iterator.
+   *
+   * @returns A new independent clone of the iterator.
+   */
+  clone(): IIterator<T> {
+    let result = new ValueIterator<T>(this._source, this._keys);
+    result._index = this._index;
+    return result;
+  }
+
+  /**
+   * Get the next value from the iterator.
+   *
+   * @returns The next value from the iterator, or `undefined`.
+   */
+  next(): T | undefined {
+    if (this._index >= this._keys.length) {
+      return undefined;
+    }
+    let key = this._keys[this._index++];
+    if (key in this._source) {
+      return this._source[key];
+    }
+    return this.next();
+  }
+
+  private _index = 0;
+  private _keys: string[];
+  private _source: { readonly [key: string]: T };
+}
+
+
+/**
+ * An iterator for the items in an object.
+ *
+ * #### Notes
+ * This iterator can be used for any JS object.
+ */
+export
+class ItemIterator<T> implements IIterator<[string, T]> {
+  /**
+   * Construct a new item iterator.
+   *
+   * @param source - The object of interest.
+   *
+   * @param keys - The keys to iterate, if known.
+   */
+  constructor(source: { readonly [key: string]: T }, keys = Object.keys(source)) {
+    this._source = source;
+    this._keys = keys;
+  }
+
+  /**
+   * Get an iterator over the object's values.
+   *
+   * @returns An iterator which yields the object's values.
+   */
+  iter(): IIterator<[string, T]> {
+    return this;
+  }
+
+  /**
+   * Create an independent clone of the iterator.
+   *
+   * @returns A new independent clone of the iterator.
+   */
+  clone(): IIterator<[string, T]> {
+    let result = new ItemIterator<T>(this._source, this._keys);
+    result._index = this._index;
+    return result;
+  }
+
+  /**
+   * Get the next value from the iterator.
+   *
+   * @returns The next value from the iterator, or `undefined`.
+   */
+  next(): [string, T] | undefined {
+    if (this._index >= this._keys.length) {
+      return undefined;
+    }
+    let key = this._keys[this._index++];
+    if (key in this._source) {
+      return [key, this._source[key]];
+    }
+    return this.next();
+  }
+
+  private _index = 0;
+  private _keys: string[];
+  private _source: { readonly [key: string]: T };
+}
+
+
+/**
+ * An iterator for an iterator-like function.
+ */
+export
+class FnIterator<T> implements IIterator<T> {
+  /**
+   * Construct a new function iterator.
+   *
+   * @param fn - The iterator-like function of interest.
+   */
+  constructor(fn: () => T | undefined) {
+    this._fn = fn;
+  }
+
+  /**
+   * Get an iterator over the object's values.
+   *
+   * @returns An iterator which yields the object's values.
+   */
+  iter(): IIterator<T> {
+    return this;
+  }
+
+  /**
+   * Create an independent clone of the iterator.
+   *
+   * @returns A new independent clone of the iterator.
+   */
+  clone(): IIterator<T> {
+    throw new Error('An `FnIterator` cannot be cloned.');
+  }
+
+  /**
+   * Get the next value from the iterator.
+   *
+   * @returns The next value from the iterator, or `undefined`.
+   */
+  next(): T | undefined {
+    return this._fn.call(undefined);
+  }
+
+  private _fn: () => T | undefined;
 }
