@@ -56,7 +56,7 @@ class GraphicsContext implements IDisposable {
   }
 
   get isDisposed(): boolean {
-    return !this._disposed;
+    return this._disposed;
   }
 
   get fillStyle(): string | CanvasGradient | CanvasPattern {

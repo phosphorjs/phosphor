@@ -1,15 +1,11 @@
 /*-----------------------------------------------------------------------------
-| Copyright (c) 2014-2017, PhosphorJS Contributors
+| Copyright (c) 2014-2018, PhosphorJS Contributors
 |
 | Distributed under the terms of the BSD 3-Clause License.
 |
 | The full license is in the file LICENSE, distributed with this software.
 |----------------------------------------------------------------------------*/
-@import '~@phosphor/dragdrop/style/index.css';
-@import '~@phosphor/widgets/style/index.css';
-@import './dockpanel.css';
-@import './scrollbar.css';
-@import './tabbar.css';
+@import '~@phosphor/default-theme/style/index.css';
 
 
 body {
@@ -29,29 +25,6 @@ body {
 #dock {
   flex: 1 1 auto;
   padding: 4px;
-}
-
-
-.p-DataGrid {
-  min-width: 64px;
-  min-height: 64px;
-  border: 1px solid #A0A0A0;
-}
-
-
-.p-DataGrid-scrollCorner {
-  background-color: #F0F0F0;
-}
-
-
-.p-DataGrid-scrollCorner::after {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: 0;
-  width: 1px;
-  height: 1px;
-  background-color: #A0A0A0;
 }
 
 
