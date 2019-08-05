@@ -1,3 +1,6 @@
+dist: xenial
+services:
+  - xvfb
 language: node_js
 node_js:
   - '5'
@@ -7,9 +10,7 @@ sudo: false
 install:
   - npm install
 script:
-  - export DISPLAY=:99.0;
-    sh -e /etc/init.d/xvfb start;
-    set -e;
+  - set -e;
     npm run clean;
     npm run build;
     npm run test;

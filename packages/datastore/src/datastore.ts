@@ -95,6 +95,7 @@ class Datastore implements IIterable<Table<Schema>>, IMessageHandler, IDisposabl
       return;
     }
     this._disposed = true;
+    Signal.clearData(this);
 
     this._broadcastHandler = null;
   }
@@ -279,7 +280,7 @@ class Datastore implements IIterable<Table<Schema>>, IMessageHandler, IDisposabl
    * the promise resolves.
    */
   undo(transactionId: string): Promise<void> {
-    throw '';
+    throw Error('Undo is not implemented');
   }
 
   /**
@@ -296,7 +297,7 @@ class Datastore implements IIterable<Table<Schema>>, IMessageHandler, IDisposabl
    * the promise resolves.
    */
   redo(transactionId: string): Promise<void> {
-    throw '';
+    throw Error('Redo is not implemented');
   }
 
   /**

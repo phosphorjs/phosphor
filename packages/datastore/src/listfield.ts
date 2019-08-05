@@ -379,8 +379,9 @@ namespace Private {
 
     // Process the removed identifiers, if necessary.
     if (removedIds.length > 0) {
-      // Chunkify the removed identifiers.
-      let chunks = findRemoveChunks(removedIds, metadata.ids);
+      // Chunkify the removed identifiers,
+      // or increment the removed ids in the cemetery.
+      let chunks = findRemovedChunks(removedIds, metadata);
 
       // Process the chunks.
       while (chunks.length > 0) {
@@ -400,8 +401,9 @@ namespace Private {
 
     // Process the inserted identifiers, if necessary.
     if (insertedIds.length > 0) {
-      // Chunkify the inserted identifiers.
-      let chunks = findInsertChunks(insertedIds, insertedValues, metadata.ids);
+      // Chunkify the inserted identifiers, or decrement the removed
+      // ids in the cemetery.
+      let chunks = findInsertedChunks(insertedIds, insertedValues, metadata);
 
       // Process the chunks.
       while (chunks.length > 0) {
@@ -439,11 +441,14 @@ namespace Private {
    *
    * @param ids - The ids to remove from the metadta.
    *
-   * @param metadataIds - The metadata ids.
+   * @param metadata - The metadata for the list field.
    *
    * @returns The ordered chunks to remove.
+   *
+   * #### Notes
+   * The metadata may be mutated if concurrently removed chunks are encountered.
    */
-  function findRemoveChunks(ids: ReadonlyArray<string>, metadataIds: ReadonlyArray<string>): RemoveChunk[] {
+  function findRemovedChunks(ids: ReadonlyArray<string>, metadata: ListField.Metadata<any>): RemoveChunk[] {
     // Set up the chunks array.
     let chunks: RemoveChunk[] = [];
 
@@ -456,11 +461,17 @@ namespace Private {
     // Iterate over the identifiers to remove.
     while (i < n) {
       // Find the boundary identifier for the current id.
-      let j = ArrayExt.lowerBound(metadataIds, ids[i], StringExt.cmp);
+      let j = ArrayExt.lowerBound(metadata.ids, ids[i], StringExt.cmp);
 
-      // Bail early if the boundary is the end of the array.
-      if (j === metadataIds.length) {
-        break;
+      // If the boundary is at the end of the array, or if the boundary id
+      // does not match the id we are looking for, then we are dealing with
+      // a concurrently deleted value. In that case, increment its reference
+      // in the cemetery and continue processing ids.
+      if (j === metadata.ids.length || metadata.ids[j] !== ids[i]) {
+        let count = metadata.cemetery[ids[i]] || 0;
+        metadata.cemetery[ids[i]] = count + 1;
+        i++;
+        continue;
       }
 
       // Set up the chunk index.
@@ -470,7 +481,7 @@ namespace Private {
       let count = 0;
 
       // Find the extent of the chunk.
-      while (i < n && StringExt.cmp(ids[i], metadataIds[j]) === 0) {
+      while (i < n && StringExt.cmp(ids[i], metadata.ids[j]) === 0) {
         count++;
         i++;
         j++;
@@ -509,107 +520,94 @@ namespace Private {
    *
    * @param values - The values to be inserted.
    *
-   * @param metadataIds - The metadata ids.
+   * @param metadata - The metadata for the list field.
+   *
+   * @returns The ordered chunks to insert.
+   *
+   * #### Notes
+   * The metadata may be mutated if concurrently removed chunks are encountered.
+   */
+  function findInsertedChunks<T extends ReadonlyJSONValue>(ids: ReadonlyArray<string>, values: ReadonlyArray<T>, metadata: ListField.Metadata<any>): InsertChunk<T>[] {
+    let indices: number[] = [];
+    let insertIds: string[] = [];
+    let insertValues: T[] = [];
+
+     for (let i = 0; i < ids.length; i++) {
+       // Check if the id has been concurrently deleted. If so, update
+       // the cemetery, and continue processing without inserting the id.
+      if (checkCemeteryForInsert(ids[i], metadata.cemetery)) {
+        continue;
+      }
+
+      // Add the id to the ids which will be actually inserted.
+      insertIds.push(ids[i]);
+      indices.push(ArrayExt.lowerBound(metadata.ids, ids[i], StringExt.cmp));
+      insertValues.push(values[i]);
+    }
+    return chunkifyInsertions(insertIds, insertValues, indices);
+  }
+
+  /**
+   * Consolidate inserted IDs into a set of chunks so that we can splice them
+   * into the existing value with a minimal number of splices.
+   *
+   * @param ids - The ids to be inserted.
+   *
+   * @param values - The values to be inserted. Should be the same length as ids.
+   *
+   * @param indices - The indices at which to insert the text. Should be the same length as ids.
    *
    * @returns The ordered chunks to insert.
    */
-  function findInsertChunks<T extends ReadonlyJSONValue>(ids: ReadonlyArray<string>, values: ReadonlyArray<T>, metadataIds: ReadonlyArray<string>): InsertChunk<T>[] {
+  function chunkifyInsertions<T extends ReadonlyJSONValue>(ids: ReadonlyArray<string>, values: ReadonlyArray<T>, indices: ReadonlyArray<number>): InsertChunk<T>[] {
     // Set up the chunks array.
     let chunks: InsertChunk<T>[] = [];
 
-    // Set up the iteration index.
+    // Set up the loop over the ids to insert.
+    let insertIndex: number;
     let i = 0;
-
-    // Fetch the identifier array length.
-    let n = ids.length;
-
-    // Iterate over the identifiers to insert.
-    while (i < n) {
-      // Find the boundary identifier for the current id.
-      let j = ArrayExt.lowerBound(metadataIds, ids[i], StringExt.cmp);
-
-      // Bail early if the boundary is the end of the array.
-      if (j === metadataIds.length) {
-        chunks.push({ index: j, ids: ids.slice(i), values: values.slice(i) });
-        break;
-      }
-
-      // Set up the chunk ids.
+    while (i < ids.length) {
+      // Reset the insert chunk data
       let chunkIds: string[] = [];
-
-      // Set up the chunk values.
       let chunkValues: T[] = [];
+      insertIndex = indices[i];
 
-      // Find the extent of the chunk.
-      while (i < n && StringExt.cmp(ids[i], metadataIds[j]) < 0) {
+      // Find the extent of the chunk
+      while (indices[i] === insertIndex && i < ids.length) {
         chunkIds.push(ids[i]);
         chunkValues.push(values[i]);
         i++;
       }
-
-      // Add the chunk to the chunks array, or bump the id index.
-      if (chunkIds.length > 0) {
-        chunks.push({ index: j, ids: chunkIds, values: chunkValues });
-      } else {
-        i++;
+      if (chunkValues.length) {
+        chunks.push({ index: insertIndex, ids: chunkIds, values: chunkValues });
       }
     }
-
-    // Return the chunks array.
     return chunks;
   }
+
+  /**
+   * Check if an id should be inserted, or if it has been concurrently deleted.
+   *
+   * @param id - the id to check.
+   *
+   * @param cemetery - the cemetery which determines whether the id should be inserted.
+   *
+   * @returns whether the id was found, indicating that it shouldn't be inserted.
+   *
+   * #### Notes
+   * If the ID *is* found in the cemetery, its value in the cemetery is decremented,
+   * reflecting that it is closer to being shown.
+   */
+  function checkCemeteryForInsert(id: string, cemetery: { [x: string]: number }): boolean {
+    let count = cemetery[id] || 0;
+    if (count === 1) {
+      delete cemetery[id];
+      return true;
+    }
+    if (count > 1) {
+      cemetery[id] = count - 1;
+      return true;
+    }
+    return false;
+  }
 }
-
-
-// This is the logic for the cemetery - needed for undo/redo.
-// /**
-//    * A class which manages the id tombstones for a list.
-//    */
-//   export
-//   class Cemetery {
-//     /**
-//      * Get a copy of the raw data for a cemetery.
-//      *
-//      * @returns A new copy of the raw internal data.
-//      */
-//     data(): { [id: string]: number } {
-//       return { ...this._data };
-//     }
-
-//     /**
-//      * Assign raw data to the cemetery.
-//      *
-//      * @param data - The raw data to apply to the cemetery.
-//      */
-//     assign(data: { readonly [id: string]: number }): void {
-//       this._data = { ...data };
-//     }
-
-//     /**
-//      * Get the tombstone count for an identifier.
-//      *
-//      * @param id - The identifier of interest.
-//      *
-//      * @returns The tombstone count for the identifier `>= 0`.
-//      */
-//     get(id: string): number {
-//       return this._data[id] || 0;
-//     }
-
-//     /**
-//      * Set the tombstone count for an identifier.
-//      *
-//      * @param id - The identifier of interest.
-//      *
-//      * @parm count - The tombstone count `>= 0`.
-//      */
-//     set(id: string, count: number): void {
-//       if (count === 0) {
-//         delete this._data[id];
-//       } else {
-//         this._data[id] = count;
-//       }
-//     }
-
-//     private _data: { [id: string]: number } = {};
-//   }

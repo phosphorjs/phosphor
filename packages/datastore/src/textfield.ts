@@ -258,7 +258,7 @@ namespace TextField {
     readonly removedIds: ReadonlyArray<string>;
 
     /**
-     * The text that were removed.
+     * The text that was removed.
      */
     readonly removedText: string;
 
@@ -268,7 +268,7 @@ namespace TextField {
     readonly insertedIds: ReadonlyArray<string>;
 
     /**
-     * The text that were inserted.
+     * The text that was inserted.
      */
     readonly insertedText: string;
   };
@@ -407,8 +407,9 @@ namespace Private {
 
     // Process the removed identifiers, if necessary.
     if (removedIds.length > 0) {
-      // Chunkify the removed identifiers.
-      let chunks = findRemoveChunks(removedIds, metadata.ids);
+      // Chunkify the removed identifiers,
+      // or increment the removed ids in the cemetery.
+      let chunks = findRemovedChunks(removedIds, metadata);
 
       // Process the chunks.
       while (chunks.length > 0) {
@@ -431,8 +432,9 @@ namespace Private {
 
     // Process the inserted identifiers, if necessary.
     if (insertedIds.length > 0) {
-      // Chunkify the inserted identifiers.
-      let chunks = findInsertChunks(insertedIds, insertedText, metadata.ids);
+      // Chunkify the inserted identifiers, or decrement the removed
+      // ids in the cemetery.
+      let chunks = findInsertedChunks(insertedIds, insertedText, metadata);
 
       // Process the chunks.
       while (chunks.length > 0) {
@@ -470,11 +472,14 @@ namespace Private {
    *
    * @param ids - The ids to remove from the metadta.
    *
-   * @param metadataIds - The metadata ids.
+   * @param metadata - The metadata for the text field.
    *
    * @returns The ordered chunks to remove.
+   *
+   * #### Notes
+   * The metadata may be mutated if concurrently removed chunks are encountered.
    */
-  function findRemoveChunks(ids: ReadonlyArray<string>, metadataIds: ReadonlyArray<string>): RemoveChunk[] {
+  function findRemovedChunks(ids: ReadonlyArray<string>, metadata: TextField.Metadata): RemoveChunk[] {
     // Set up the chunks array.
     let chunks: RemoveChunk[] = [];
 
@@ -487,11 +492,17 @@ namespace Private {
     // Iterate over the identifiers to remove.
     while (i < n) {
       // Find the boundary identifier for the current id.
-      let j = ArrayExt.lowerBound(metadataIds, ids[i], StringExt.cmp);
+      let j = ArrayExt.lowerBound(metadata.ids, ids[i], StringExt.cmp);
 
-      // Bail early if the boundary is the end of the array.
-      if (j === metadataIds.length) {
-        break;
+      // If the boundary is at the end of the array, or if the boundary id
+      // does not match the id we are looking for, then we are dealing with
+      // a concurrently deleted value. In that case, increment its reference
+      // in the cemetery and continue processing ids.
+      if (j === metadata.ids.length || metadata.ids[j] !== ids[i]) {
+        let count = metadata.cemetery[ids[i]] || 0;
+        metadata.cemetery[ids[i]] = count + 1;
+        i++
+        continue;
       }
 
       // Set up the chunk index.
@@ -501,7 +512,7 @@ namespace Private {
       let count = 0;
 
       // Find the extent of the chunk.
-      while (i < n && StringExt.cmp(ids[i], metadataIds[j]) === 0) {
+      while (i < n && StringExt.cmp(ids[i], metadata.ids[j]) === 0) {
         count++;
         i++;
         j++;
@@ -540,53 +551,94 @@ namespace Private {
    *
    * @param text - The text to be inserted.
    *
-   * @param metadataIds - The metadata ids.
+   * @param metadata - The metadata for the text field.
+   *
+   * @returns The ordered chunks to insert.
+   *
+   * #### Notes
+   * The metadata may be mutated if concurrently removed chunks are encountered.
+   */
+  function findInsertedChunks(ids: ReadonlyArray<string>, text: string, metadata: TextField.Metadata): InsertChunk[] {
+    let indices: number[] = [];
+    let insertIds: string[] = [];
+    let insertText = '';
+
+    for (let i = 0; i < ids.length; i++) {
+      // Check if the id has been concurrently deleted. If so, update
+      // the cemetery, and continue processing without inserting the id.
+      if (checkCemeteryForInsert(ids[i], metadata.cemetery)) {
+        continue;
+      }
+
+      // Add the id to the ids which will be actually inserted.
+      insertIds.push(ids[i]);
+      indices.push(ArrayExt.lowerBound(metadata.ids, ids[i], StringExt.cmp));
+      insertText += text[i];
+    }
+    return chunkifyInsertions(insertIds, insertText, indices);
+  }
+
+  /**
+   * Consolidate inserted IDs into a set of chunks so that we can splice them
+   * into the existing value with a minimal number of splices.
+   *
+   * @param ids - The ids to be inserted.
+   *
+   * @param text - The text to be inserted. Should be the same length as ids.
+   *
+   * @param indices - The indices at which to insert the text. Should be the same length as ids.
    *
    * @returns The ordered chunks to insert.
    */
-  function findInsertChunks(ids: ReadonlyArray<string>, text: string, metadataIds: ReadonlyArray<string>): InsertChunk[] {
+  function chunkifyInsertions(ids: ReadonlyArray<string>, text: string, indices: ReadonlyArray<number>): InsertChunk[] {
     // Set up the chunks array.
     let chunks: InsertChunk[] = [];
 
-    // Set up the iteration index.
+    // Set up the loop over the ids to insert.
+    let insertIndex: number;
     let i = 0;
-
-    // Fetch the identifier array length.
-    let n = ids.length;
-
-    // Iterate over the identifiers to insert.
-    while (i < n) {
-      // Find the boundary identifier for the current id.
-      let j = ArrayExt.lowerBound(metadataIds, ids[i], StringExt.cmp);
-
-      // Bail early if the boundary is the end of the array.
-      if (j === metadataIds.length) {
-        chunks.push({ index: j, ids: ids.slice(i), text: text.slice(i) });
-        break;
-      }
-
-      // Set up the chunk ids.
+    while (i < ids.length) {
+      // Reset the insert chunk data
       let chunkIds: string[] = [];
+      let chunkText = '';
+      insertIndex = indices[i];
 
-      // Set up the chunk text.
-      let chunkText: string = '';
-
-      // Find the extent of the chunk.
-      while (i < n && StringExt.cmp(ids[i], metadataIds[j]) < 0) {
+      // Find the extent of the chunk
+      while (indices[i] === insertIndex && i < ids.length) {
         chunkIds.push(ids[i]);
         chunkText += text[i];
         i++;
       }
-
-      // Add the chunk to the chunks array, or bump the id index.
-      if (chunkIds.length > 0) {
-        chunks.push({ index: j, ids: chunkIds, text: chunkText });
-      } else {
-        i++;
+      if (chunkText) {
+        chunks.push({ index: insertIndex, ids: chunkIds, text: chunkText });
       }
     }
-
-    // Return the chunks array.
     return chunks;
+  }
+
+  /**
+   * Check if an id should be inserted, or if it has been concurrently deleted.
+   *
+   * @param id - the id to check.
+   *
+   * @param cemetery - the cemetery which determines whether the id should be inserted.
+   *
+   * @returns whether the id was found, indicating that it shouldn't be inserted.
+   *
+   * #### Notes
+   * If the ID *is* found in the cemetery, its value in the cemetery is decremented,
+   * reflecting that it is closer to being shown.
+   */
+  function checkCemeteryForInsert(id: string, cemetery: { [x: string]: number }): boolean {
+    let count = cemetery[id] || 0;
+    if (count === 1) {
+      delete cemetery[id];
+      return true;
+    }
+    if (count > 1) {
+      cemetery[id] = count - 1;
+      return true;
+    }
+    return false;
   }
 }
