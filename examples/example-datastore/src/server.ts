@@ -5,49 +5,49 @@
 |
 | The full license is in the file LICENSE, distributed with this software.
 |----------------------------------------------------------------------------*/
-import { Datastore } from "@phosphor/datastore";
+import { Datastore } from '@phosphor/datastore';
 
-import { server as WebSocketServer, connection } from "websocket";
+import { server as WebSocketServer, connection } from 'websocket';
 
-import { WSAdapterMessages } from "./messages";
+import { WSAdapterMessages } from './messages';
 
-import * as fs from "fs";
+import * as fs from 'fs';
 
-import * as http from "http";
+import * as http from 'http';
 
-import * as path from "path";
+import * as path from 'path';
 
 /**
  * Create a HTTP static file server for serving the static
  * assets to the user.
  */
 let pageServer = http.createServer((request, response) => {
-  console.log("request starting...");
+  console.log('request starting...');
 
-  let filePath = "." + request.url;
-  if (filePath == "./") {
-    filePath = "./index.html";
+  let filePath = '.' + request.url;
+  if (filePath == './') {
+    filePath = './index.html';
   }
 
   let extname = path.extname(filePath);
-  let contentType = "text/html";
+  let contentType = 'text/html';
   switch (extname) {
-    case ".js":
-      contentType = "text/javascript";
+    case '.js':
+      contentType = 'text/javascript';
       break;
-    case ".css":
-      contentType = "text/css";
+    case '.css':
+      contentType = 'text/css';
       break;
   }
 
   fs.readFile(filePath, (error, content) => {
     if (error) {
-      console.error("Could not find file");
-      response.writeHead(404, { "Content-Type": contentType });
+      console.error('Could not find file');
+      response.writeHead(404, { 'Content-Type': contentType });
       response.end();
     } else {
-      response.writeHead(200, { "Content-Type": contentType });
-      response.end(content, "utf-8");
+      response.writeHead(200, { 'Content-Type': contentType });
+      response.end(content, 'utf-8');
     }
   });
 });
@@ -56,7 +56,7 @@ let pageServer = http.createServer((request, response) => {
  * Start the page server.
  */
 pageServer.listen(8000, () => {
-  console.info(new Date() + " Page server is listening on port 8000");
+  console.info(new Date() + ' Page server is listening on port 8000');
 });
 
 /**
@@ -69,6 +69,10 @@ let wsServer = new WebSocketServer({
   maxReceivedMessageSize: 1000 * 1024 * 1024
 });
 
+/**
+ * A stub for determining whether websocket connections from a particular
+ * origin should be accepted.
+ */
 function originIsAllowed(origin: string) {
   // put logic here to detect whether the specified origin is allowed.
   return true;
@@ -134,40 +138,41 @@ class TransactionStore {
 let store = new TransactionStore();
 let idCounter = 0;
 
+// Keep a running list of current connections.
 let connections: { [store: number]: connection } = {};
 
 // Lifecycle for a collaborator.
-wsServer.on("request", request => {
+wsServer.on('request', request => {
   if (!originIsAllowed(request.origin)) {
     // Make sure we only accept requests from an allowed origin
     request.reject();
     console.info(
-      new Date() + " Connection from origin " + request.origin + " rejected."
+      new Date() + ' Connection from origin ' + request.origin + ' rejected.'
     );
     return;
   }
 
   var connection = request.accept(undefined, request.origin);
-  console.debug(new Date() + " Connection accepted.");
+  console.debug(new Date() + ' Connection accepted.');
 
   // Handle a message from a collaborator.
-  connection.on("message", message => {
-    if (message.type !== "utf8") {
-      console.debug("Received non-UTF8 Message: " + message);
+  connection.on('message', message => {
+    if (message.type !== 'utf8') {
+      console.debug('Received non-UTF8 Message: ' + message);
       return;
     }
     let data = JSON.parse(message.utf8Data!) as WSAdapterMessages.IMessage;
     console.debug(`Received message of type: ${data.msgType}`);
     let reply: WSAdapterMessages.IReplyMessage;
     switch (data.msgType) {
-      case "storeid-request":
+      case 'storeid-request':
         connections[idCounter] = connection;
         reply = WSAdapterMessages.createStoreIdReplyMessage(
           data.msgId,
           idCounter++
         );
         break;
-      case "transaction-broadcast":
+      case 'transaction-broadcast':
         let acks = [];
         let propagate = [];
         for (let t of data.content.transactions) {
@@ -188,7 +193,7 @@ wsServer.on("request", request => {
         }
         reply = WSAdapterMessages.createTransactionAckMessage(data.msgId, acks);
         break;
-      case "history-request":
+      case 'history-request':
         let history = store.getHistory();
         reply = WSAdapterMessages.createHistoryReplyMessage(data.msgId, {
           transactions: history
@@ -202,7 +207,7 @@ wsServer.on("request", request => {
   });
 
   // Handle a close event from a collaborator.
-  connection.on("close", (reasonCode, description) => {
+  connection.on('close', (reasonCode, description) => {
     let storeId;
     for (let id in connections) {
       if (connections[id] === connection) {

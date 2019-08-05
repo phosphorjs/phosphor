@@ -114,7 +114,7 @@ export class CodeMirrorEditor extends Panel {
       return;
     }
     // Update the readonly state
-    this._editor.setOption("readOnly", this._check.checked);
+    this._editor.setOption('readOnly', this._check.checked);
     // Update the table to broadcast the change.
     let editorTable = this._store.get(EDITOR_SCHEMA);
     this._store.beginTransaction();
@@ -186,7 +186,7 @@ export class CodeMirrorEditor extends Panel {
         let checkChange = c[this._record].readOnly as RegisterField.Change<boolean>;
         this._check.checked = checkChange.current;
         // Update the readonly state
-        this._editor.setOption("readOnly", this._check.checked);
+        this._editor.setOption('readOnly', this._check.checked);
         this._changeGuard = false;
       }
     }
