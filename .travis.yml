@@ -3,14 +3,20 @@ services:
   - xvfb
 language: node_js
 node_js:
-  - '5'
+  - '6'
 addons:
   firefox: latest
 sudo: false
 install:
-  - npm install
+  - npm install -g yarn
+  - yarn
 script:
-  - set -e;
-    npm run clean;
-    npm run build;
-    npm run test;
+    set -e;
+    pushd packages/widgets;
+    yarn build;
+    popd;
+    yarn clean;
+    yarn build;
+    yarn build:test;
+    yarn test;
+    yarn docs;

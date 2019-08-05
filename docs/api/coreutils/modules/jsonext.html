@@ -85,7 +85,7 @@
 						<section class="tsd-index-section ">
 							<h3>Functions</h3>
 							<ul class="tsd-index-list">
-								<li class="tsd-kind-function tsd-parent-kind-module"><a href="jsonext.html#deepcopy" class="tsd-kind-icon">deep<wbr>Copy</a></li>
+								<li class="tsd-kind-function tsd-parent-kind-module tsd-has-type-parameter"><a href="jsonext.html#deepcopy" class="tsd-kind-icon">deep<wbr>Copy</a></li>
 								<li class="tsd-kind-function tsd-parent-kind-module"><a href="jsonext.html#deepequal" class="tsd-kind-icon">deep<wbr>Equal</a></li>
 								<li class="tsd-kind-function tsd-parent-kind-module"><a href="jsonext.html#isarray" class="tsd-kind-icon">is<wbr>Array</a></li>
 								<li class="tsd-kind-function tsd-parent-kind-module"><a href="jsonext.html#isobject" class="tsd-kind-icon">is<wbr>Object</a></li>
@@ -99,11 +99,11 @@
 				<h2>Variables</h2>
 				<section class="tsd-panel tsd-member tsd-kind-variable tsd-parent-kind-module">
 					<a name="emptyarray" class="tsd-anchor"></a>
-					<h3>empty<wbr>Array</h3>
-					<div class="tsd-signature tsd-kind-icon">empty<wbr>Array<span class="tsd-signature-symbol">:</span> <a href="../interfaces/jsonarray.html" class="tsd-signature-type">JSONArray</a><span class="tsd-signature-symbol"> =&nbsp;Object.freeze([]) as any as JSONArray</span></div>
+					<h3><span class="tsd-flag ts-flagConst">Const</span> empty<wbr>Array</h3>
+					<div class="tsd-signature tsd-kind-icon">empty<wbr>Array<span class="tsd-signature-symbol">:</span> <a href="../interfaces/readonlyjsonarray.html" class="tsd-signature-type">ReadonlyJSONArray</a><span class="tsd-signature-symbol"> =&nbsp;Object.freeze([]) as ReadonlyJSONArray</span></div>
 					<aside class="tsd-sources">
 						<ul>
-							<li>Defined in <a href="https://github.com/phosphorjs/phosphor/blob/1b1dfe3/packages/coreutils/src/json.ts#L53">json.ts:53</a></li>
+							<li>Defined in <a href="https://github.com/phosphorjs/phosphor/blob/8fee9108/packages/coreutils/src/json.ts#L74">json.ts:74</a></li>
 						</ul>
 					</aside>
 					<div class="tsd-comment tsd-typography">
@@ -114,11 +114,11 @@
 				</section>
 				<section class="tsd-panel tsd-member tsd-kind-variable tsd-parent-kind-module">
 					<a name="emptyobject" class="tsd-anchor"></a>
-					<h3>empty<wbr>Object</h3>
-					<div class="tsd-signature tsd-kind-icon">empty<wbr>Object<span class="tsd-signature-symbol">:</span> <a href="../interfaces/jsonobject.html" class="tsd-signature-type">JSONObject</a><span class="tsd-signature-symbol"> =&nbsp;Object.freeze({}) as JSONObject</span></div>
+					<h3><span class="tsd-flag ts-flagConst">Const</span> empty<wbr>Object</h3>
+					<div class="tsd-signature tsd-kind-icon">empty<wbr>Object<span class="tsd-signature-symbol">:</span> <a href="../interfaces/readonlyjsonobject.html" class="tsd-signature-type">ReadonlyJSONObject</a><span class="tsd-signature-symbol"> =&nbsp;Object.freeze({}) as ReadonlyJSONObject</span></div>
 					<aside class="tsd-sources">
 						<ul>
-							<li>Defined in <a href="https://github.com/phosphorjs/phosphor/blob/1b1dfe3/packages/coreutils/src/json.ts#L47">json.ts:47</a></li>
+							<li>Defined in <a href="https://github.com/phosphorjs/phosphor/blob/8fee9108/packages/coreutils/src/json.ts#L68">json.ts:68</a></li>
 						</ul>
 					</aside>
 					<div class="tsd-comment tsd-typography">
@@ -130,20 +130,17 @@
 			</section>
 			<section class="tsd-panel-group tsd-member-group ">
 				<h2>Functions</h2>
-				<section class="tsd-panel tsd-member tsd-kind-function tsd-parent-kind-module">
+				<section class="tsd-panel tsd-member tsd-kind-function tsd-parent-kind-module tsd-has-type-parameter">
 					<a name="deepcopy" class="tsd-anchor"></a>
 					<h3>deep<wbr>Copy</h3>
-					<ul class="tsd-signatures tsd-kind-function tsd-parent-kind-module">
-						<li class="tsd-signature tsd-kind-icon">deep<wbr>Copy<span class="tsd-signature-symbol">(</span>value<span class="tsd-signature-symbol">: </span><a href="../globals.html#jsonprimitive" class="tsd-signature-type">JSONPrimitive</a><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol">: </span><a href="../globals.html#jsonprimitive" class="tsd-signature-type">JSONPrimitive</a></li>
-						<li class="tsd-signature tsd-kind-icon">deep<wbr>Copy<span class="tsd-signature-symbol">(</span>value<span class="tsd-signature-symbol">: </span><a href="../interfaces/jsonarray.html" class="tsd-signature-type">JSONArray</a><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol">: </span><a href="../interfaces/jsonarray.html" class="tsd-signature-type">JSONArray</a></li>
-						<li class="tsd-signature tsd-kind-icon">deep<wbr>Copy<span class="tsd-signature-symbol">(</span>value<span class="tsd-signature-symbol">: </span><a href="../interfaces/jsonobject.html" class="tsd-signature-type">JSONObject</a><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol">: </span><a href="../interfaces/jsonobject.html" class="tsd-signature-type">JSONObject</a></li>
-						<li class="tsd-signature tsd-kind-icon">deep<wbr>Copy<span class="tsd-signature-symbol">(</span>value<span class="tsd-signature-symbol">: </span><a href="../globals.html#jsonvalue" class="tsd-signature-type">JSONValue</a><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol">: </span><a href="../globals.html#jsonvalue" class="tsd-signature-type">JSONValue</a></li>
+					<ul class="tsd-signatures tsd-kind-function tsd-parent-kind-module tsd-has-type-parameter">
+						<li class="tsd-signature tsd-kind-icon">deep<wbr>Copy&lt;T&gt;<span class="tsd-signature-symbol">(</span>value<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">T</span><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">T</span></li>
 					</ul>
 					<ul class="tsd-descriptions">
 						<li class="tsd-description">
 							<aside class="tsd-sources">
 								<ul>
-									<li>Defined in <a href="https://github.com/phosphorjs/phosphor/blob/1b1dfe3/packages/coreutils/src/json.ts#L143">json.ts:143</a></li>
+									<li>Defined in <a href="https://github.com/phosphorjs/phosphor/blob/8fee9108/packages/coreutils/src/json.ts#L172">json.ts:172</a></li>
 								</ul>
 							</aside>
 							<div class="tsd-comment tsd-typography">
@@ -151,59 +148,23 @@
 									<p>Create a deep copy of a JSON value.</p>
 								</div>
 							</div>
+							<h4 class="tsd-type-parameters-title">Type parameters</h4>
+							<ul class="tsd-type-parameters">
+								<li>
+									<h4>T<span class="tsd-signature-symbol">: </span><a href="../globals.html#readonlyjsonvalue" class="tsd-signature-type">ReadonlyJSONValue</a></h4>
+								</li>
+							</ul>
 							<h4 class="tsd-parameters-title">Parameters</h4>
 							<ul class="tsd-parameters">
 								<li>
-									<h5>value: <a href="../globals.html#jsonprimitive" class="tsd-signature-type">JSONPrimitive</a></h5>
+									<h5>value: <span class="tsd-signature-type">T</span></h5>
 									<div class="tsd-comment tsd-typography">
 										<p>The JSON value to copy.</p>
 									</div>
 								</li>
 							</ul>
-							<h4 class="tsd-returns-title">Returns <a href="../globals.html#jsonprimitive" class="tsd-signature-type">JSONPrimitive</a></h4>
+							<h4 class="tsd-returns-title">Returns <span class="tsd-signature-type">T</span></h4>
 							<p>A deep copy of the given JSON value.</p>
-						</li>
-						<li class="tsd-description">
-							<aside class="tsd-sources">
-								<ul>
-									<li>Defined in <a href="https://github.com/phosphorjs/phosphor/blob/1b1dfe3/packages/coreutils/src/json.ts#L145">json.ts:145</a></li>
-								</ul>
-							</aside>
-							<h4 class="tsd-parameters-title">Parameters</h4>
-							<ul class="tsd-parameters">
-								<li>
-									<h5>value: <a href="../interfaces/jsonarray.html" class="tsd-signature-type">JSONArray</a></h5>
-								</li>
-							</ul>
-							<h4 class="tsd-returns-title">Returns <a href="../interfaces/jsonarray.html" class="tsd-signature-type">JSONArray</a></h4>
-						</li>
-						<li class="tsd-description">
-							<aside class="tsd-sources">
-								<ul>
-									<li>Defined in <a href="https://github.com/phosphorjs/phosphor/blob/1b1dfe3/packages/coreutils/src/json.ts#L147">json.ts:147</a></li>
-								</ul>
-							</aside>
-							<h4 class="tsd-parameters-title">Parameters</h4>
-							<ul class="tsd-parameters">
-								<li>
-									<h5>value: <a href="../interfaces/jsonobject.html" class="tsd-signature-type">JSONObject</a></h5>
-								</li>
-							</ul>
-							<h4 class="tsd-returns-title">Returns <a href="../interfaces/jsonobject.html" class="tsd-signature-type">JSONObject</a></h4>
-						</li>
-						<li class="tsd-description">
-							<aside class="tsd-sources">
-								<ul>
-									<li>Defined in <a href="https://github.com/phosphorjs/phosphor/blob/1b1dfe3/packages/coreutils/src/json.ts#L149">json.ts:149</a></li>
-								</ul>
-							</aside>
-							<h4 class="tsd-parameters-title">Parameters</h4>
-							<ul class="tsd-parameters">
-								<li>
-									<h5>value: <a href="../globals.html#jsonvalue" class="tsd-signature-type">JSONValue</a></h5>
-								</li>
-							</ul>
-							<h4 class="tsd-returns-title">Returns <a href="../globals.html#jsonvalue" class="tsd-signature-type">JSONValue</a></h4>
 						</li>
 					</ul>
 				</section>
@@ -211,13 +172,13 @@
 					<a name="deepequal" class="tsd-anchor"></a>
 					<h3>deep<wbr>Equal</h3>
 					<ul class="tsd-signatures tsd-kind-function tsd-parent-kind-module">
-						<li class="tsd-signature tsd-kind-icon">deep<wbr>Equal<span class="tsd-signature-symbol">(</span>first<span class="tsd-signature-symbol">: </span><a href="../globals.html#jsonvalue" class="tsd-signature-type">JSONValue</a>, second<span class="tsd-signature-symbol">: </span><a href="../globals.html#jsonvalue" class="tsd-signature-type">JSONValue</a><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">boolean</span></li>
+						<li class="tsd-signature tsd-kind-icon">deep<wbr>Equal<span class="tsd-signature-symbol">(</span>first<span class="tsd-signature-symbol">: </span><a href="../globals.html#readonlyjsonvalue" class="tsd-signature-type">ReadonlyJSONValue</a>, second<span class="tsd-signature-symbol">: </span><a href="../globals.html#readonlyjsonvalue" class="tsd-signature-type">ReadonlyJSONValue</a><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">boolean</span></li>
 					</ul>
 					<ul class="tsd-descriptions">
 						<li class="tsd-description">
 							<aside class="tsd-sources">
 								<ul>
-									<li>Defined in <a href="https://github.com/phosphorjs/phosphor/blob/1b1dfe3/packages/coreutils/src/json.ts#L106">json.ts:106</a></li>
+									<li>Defined in <a href="https://github.com/phosphorjs/phosphor/blob/8fee9108/packages/coreutils/src/json.ts#L135">json.ts:135</a></li>
 								</ul>
 							</aside>
 							<div class="tsd-comment tsd-typography">
@@ -228,13 +189,13 @@
 							<h4 class="tsd-parameters-title">Parameters</h4>
 							<ul class="tsd-parameters">
 								<li>
-									<h5>first: <a href="../globals.html#jsonvalue" class="tsd-signature-type">JSONValue</a></h5>
+									<h5>first: <a href="../globals.html#readonlyjsonvalue" class="tsd-signature-type">ReadonlyJSONValue</a></h5>
 									<div class="tsd-comment tsd-typography">
 										<p>The first JSON value of interest.</p>
 									</div>
 								</li>
 								<li>
-									<h5>second: <a href="../globals.html#jsonvalue" class="tsd-signature-type">JSONValue</a></h5>
+									<h5>second: <a href="../globals.html#readonlyjsonvalue" class="tsd-signature-type">ReadonlyJSONValue</a></h5>
 									<div class="tsd-comment tsd-typography">
 										<p>The second JSON value of interest.</p>
 									</div>
@@ -250,12 +211,13 @@
 					<h3>is<wbr>Array</h3>
 					<ul class="tsd-signatures tsd-kind-function tsd-parent-kind-module">
 						<li class="tsd-signature tsd-kind-icon">is<wbr>Array<span class="tsd-signature-symbol">(</span>value<span class="tsd-signature-symbol">: </span><a href="../globals.html#jsonvalue" class="tsd-signature-type">JSONValue</a><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">boolean</span></li>
+						<li class="tsd-signature tsd-kind-icon">is<wbr>Array<span class="tsd-signature-symbol">(</span>value<span class="tsd-signature-symbol">: </span><a href="../globals.html#readonlyjsonvalue" class="tsd-signature-type">ReadonlyJSONValue</a><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">boolean</span></li>
 					</ul>
 					<ul class="tsd-descriptions">
 						<li class="tsd-description">
 							<aside class="tsd-sources">
 								<ul>
-									<li>Defined in <a href="https://github.com/phosphorjs/phosphor/blob/1b1dfe3/packages/coreutils/src/json.ts#L80">json.ts:80</a></li>
+									<li>Defined in <a href="https://github.com/phosphorjs/phosphor/blob/8fee9108/packages/coreutils/src/json.ts#L101">json.ts:101</a></li>
 								</ul>
 							</aside>
 							<div class="tsd-comment tsd-typography">
@@ -275,6 +237,20 @@
 							<h4 class="tsd-returns-title">Returns <span class="tsd-signature-type">boolean</span></h4>
 							<p><code>true</code> if the value is a an array, <code>false</code> otherwise.</p>
 						</li>
+						<li class="tsd-description">
+							<aside class="tsd-sources">
+								<ul>
+									<li>Defined in <a href="https://github.com/phosphorjs/phosphor/blob/8fee9108/packages/coreutils/src/json.ts#L103">json.ts:103</a></li>
+								</ul>
+							</aside>
+							<h4 class="tsd-parameters-title">Parameters</h4>
+							<ul class="tsd-parameters">
+								<li>
+									<h5>value: <a href="../globals.html#readonlyjsonvalue" class="tsd-signature-type">ReadonlyJSONValue</a></h5>
+								</li>
+							</ul>
+							<h4 class="tsd-returns-title">Returns <span class="tsd-signature-type">boolean</span></h4>
+						</li>
 					</ul>
 				</section>
 				<section class="tsd-panel tsd-member tsd-kind-function tsd-parent-kind-module">
@@ -282,12 +258,13 @@
 					<h3>is<wbr>Object</h3>
 					<ul class="tsd-signatures tsd-kind-function tsd-parent-kind-module">
 						<li class="tsd-signature tsd-kind-icon">is<wbr>Object<span class="tsd-signature-symbol">(</span>value<span class="tsd-signature-symbol">: </span><a href="../globals.html#jsonvalue" class="tsd-signature-type">JSONValue</a><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">boolean</span></li>
+						<li class="tsd-signature tsd-kind-icon">is<wbr>Object<span class="tsd-signature-symbol">(</span>value<span class="tsd-signature-symbol">: </span><a href="../globals.html#readonlyjsonvalue" class="tsd-signature-type">ReadonlyJSONValue</a><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">boolean</span></li>
 					</ul>
 					<ul class="tsd-descriptions">
 						<li class="tsd-description">
 							<aside class="tsd-sources">
 								<ul>
-									<li>Defined in <a href="https://github.com/phosphorjs/phosphor/blob/1b1dfe3/packages/coreutils/src/json.ts#L92">json.ts:92</a></li>
+									<li>Defined in <a href="https://github.com/phosphorjs/phosphor/blob/8fee9108/packages/coreutils/src/json.ts#L117">json.ts:117</a></li>
 								</ul>
 							</aside>
 							<div class="tsd-comment tsd-typography">
@@ -307,19 +284,33 @@
 							<h4 class="tsd-returns-title">Returns <span class="tsd-signature-type">boolean</span></h4>
 							<p><code>true</code> if the value is a an object, <code>false</code> otherwise.</p>
 						</li>
+						<li class="tsd-description">
+							<aside class="tsd-sources">
+								<ul>
+									<li>Defined in <a href="https://github.com/phosphorjs/phosphor/blob/8fee9108/packages/coreutils/src/json.ts#L119">json.ts:119</a></li>
+								</ul>
+							</aside>
+							<h4 class="tsd-parameters-title">Parameters</h4>
+							<ul class="tsd-parameters">
+								<li>
+									<h5>value: <a href="../globals.html#readonlyjsonvalue" class="tsd-signature-type">ReadonlyJSONValue</a></h5>
+								</li>
+							</ul>
+							<h4 class="tsd-returns-title">Returns <span class="tsd-signature-type">boolean</span></h4>
+						</li>
 					</ul>
 				</section>
 				<section class="tsd-panel tsd-member tsd-kind-function tsd-parent-kind-module">
 					<a name="isprimitive" class="tsd-anchor"></a>
 					<h3>is<wbr>Primitive</h3>
 					<ul class="tsd-signatures tsd-kind-function tsd-parent-kind-module">
-						<li class="tsd-signature tsd-kind-icon">is<wbr>Primitive<span class="tsd-signature-symbol">(</span>value<span class="tsd-signature-symbol">: </span><a href="../globals.html#jsonvalue" class="tsd-signature-type">JSONValue</a><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">boolean</span></li>
+						<li class="tsd-signature tsd-kind-icon">is<wbr>Primitive<span class="tsd-signature-symbol">(</span>value<span class="tsd-signature-symbol">: </span><a href="../globals.html#readonlyjsonvalue" class="tsd-signature-type">ReadonlyJSONValue</a><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">boolean</span></li>
 					</ul>
 					<ul class="tsd-descriptions">
 						<li class="tsd-description">
 							<aside class="tsd-sources">
 								<ul>
-									<li>Defined in <a href="https://github.com/phosphorjs/phosphor/blob/1b1dfe3/packages/coreutils/src/json.ts#L63">json.ts:63</a></li>
+									<li>Defined in <a href="https://github.com/phosphorjs/phosphor/blob/8fee9108/packages/coreutils/src/json.ts#L84">json.ts:84</a></li>
 								</ul>
 							</aside>
 							<div class="tsd-comment tsd-typography">
@@ -330,7 +321,7 @@
 							<h4 class="tsd-parameters-title">Parameters</h4>
 							<ul class="tsd-parameters">
 								<li>
-									<h5>value: <a href="../globals.html#jsonvalue" class="tsd-signature-type">JSONValue</a></h5>
+									<h5>value: <a href="../globals.html#readonlyjsonvalue" class="tsd-signature-type">ReadonlyJSONValue</a></h5>
 									<div class="tsd-comment tsd-typography">
 										<p>The JSON value of interest.</p>
 									</div>
@@ -352,6 +343,12 @@
 					<li class="current tsd-kind-module">
 						<a href="jsonext.html">JSONExt</a>
 					</li>
+					<li class=" tsd-kind-module">
+						<a href="random.html">Random</a>
+					</li>
+					<li class=" tsd-kind-module">
+						<a href="uuid.html">UUID</a>
+					</li>
 				</ul>
 			</nav>
 			<nav class="tsd-navigation secondary menu-sticky">
@@ -362,7 +359,7 @@
 					<li class=" tsd-kind-variable tsd-parent-kind-module">
 						<a href="jsonext.html#emptyobject" class="tsd-kind-icon">empty<wbr>Object</a>
 					</li>
-					<li class=" tsd-kind-function tsd-parent-kind-module">
+					<li class=" tsd-kind-function tsd-parent-kind-module tsd-has-type-parameter">
 						<a href="jsonext.html#deepcopy" class="tsd-kind-icon">deep<wbr>Copy</a>
 					</li>
 					<li class=" tsd-kind-function tsd-parent-kind-module">

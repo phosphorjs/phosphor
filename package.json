@@ -1,24 +1,32 @@
 {
   "private": true,
-  "dependencies": {},
-  "devDependencies": {
-    "lerna": "^2.11.0"
-  },
   "scripts": {
-    "install": "lerna bootstrap --hoist",
     "build": "lerna run build",
     "build:examples": "lerna run build --scope \"@phosphor/example-*\"",
     "build:src": "lerna run build --scope \"@phosphor/!(test-|example-)*\"",
-    "build:tests": "lerna run build --scope \"@phosphor/test-*\"",
+    "build:test": "lerna run build:test",
     "clean": "lerna run clean",
     "clean:examples": "lerna run clean --scope \"@phosphor/example-*\"",
     "clean:src": "lerna run clean --scope \"@phosphor/!(test-|example-)*\"",
-    "clean:tests": "lerna run clean --scope \"@phosphor/test-*\"",
+    "clean:tests": "lerna run clean:tests",
     "docs": "rimraf docs/api && lerna run docs",
-    "test": "lerna run test --scope \"@phosphor/test-*\"",
-    "test:chrome": "lerna run test:chrome --scope \"@phosphor/test-*\"",
-    "test:firefox": "lerna run test:firefox --scope \"@phosphor/test-*\"",
-    "test:ie": "lerna run test:ie --concurrency 1 --scope \"@phosphor/test-*\"",
-    "publish": "npm run clean && npm run build && lerna publish -m \"Publish\""
-  }
+    "get:dependency": "get-dependency",
+    "publish": "npm run clean && npm run build && lerna publish -m \"Publish\"",
+    "remove:dependency": "remove-dependency",
+    "test": "lerna run test",
+    "test:chrome": "lerna run test:chrome",
+    "test:firefox": "lerna run test:firefox",
+    "test:ie": "lerna run test:ie --concurrency 1",
+    "update:dependency": "update-dependency"
+  },
+  "dependencies": {},
+  "devDependencies": {
+    "@jupyterlab/buildutils": "^0.10.0",
+    "lerna": "^3.2.1"
+  },
+  "workspaces": [
+    "examples/*",
+    "packages/*",
+    "tests/*"
+  ]
 }

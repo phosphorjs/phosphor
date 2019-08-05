@@ -39,8 +39,25 @@
 }
 
 
+.p-CommandPalette-item {
+  display: flex;
+  flex-direction: row;
+}
+
+
+.p-CommandPalette-itemIcon {
+  flex: 0 0 auto;
+}
+
+
+.p-CommandPalette-itemContent {
+  flex: 1 1 auto;
+  overflow: hidden;
+}
+
+
 .p-CommandPalette-itemShortcut {
-  float: right;
+  flex: 0 0 auto;
 }
 
 

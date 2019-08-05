@@ -95,6 +95,7 @@
 						<section class="tsd-index-section ">
 							<h3>Methods</h3>
 							<ul class="tsd-index-list">
+								<li class="tsd-kind-method tsd-parent-kind-class"><a href="commandpalette.renderer.html#createiconclass" class="tsd-kind-icon">create<wbr>Icon<wbr>Class</a></li>
 								<li class="tsd-kind-method tsd-parent-kind-class"><a href="commandpalette.renderer.html#createitemclass" class="tsd-kind-icon">create<wbr>Item<wbr>Class</a></li>
 								<li class="tsd-kind-method tsd-parent-kind-class"><a href="commandpalette.renderer.html#createitemdataset" class="tsd-kind-icon">create<wbr>Item<wbr>Dataset</a></li>
 								<li class="tsd-kind-method tsd-parent-kind-class"><a href="commandpalette.renderer.html#formatemptymessage" class="tsd-kind-icon">format<wbr>Empty<wbr>Message</a></li>
@@ -106,6 +107,8 @@
 								<li class="tsd-kind-method tsd-parent-kind-class"><a href="commandpalette.renderer.html#renderheader" class="tsd-kind-icon">render<wbr>Header</a></li>
 								<li class="tsd-kind-method tsd-parent-kind-class"><a href="commandpalette.renderer.html#renderitem" class="tsd-kind-icon">render<wbr>Item</a></li>
 								<li class="tsd-kind-method tsd-parent-kind-class"><a href="commandpalette.renderer.html#renderitemcaption" class="tsd-kind-icon">render<wbr>Item<wbr>Caption</a></li>
+								<li class="tsd-kind-method tsd-parent-kind-class"><a href="commandpalette.renderer.html#renderitemcontent" class="tsd-kind-icon">render<wbr>Item<wbr>Content</a></li>
+								<li class="tsd-kind-method tsd-parent-kind-class"><a href="commandpalette.renderer.html#renderitemicon" class="tsd-kind-icon">render<wbr>Item<wbr>Icon</a></li>
 								<li class="tsd-kind-method tsd-parent-kind-class"><a href="commandpalette.renderer.html#renderitemlabel" class="tsd-kind-icon">render<wbr>Item<wbr>Label</a></li>
 								<li class="tsd-kind-method tsd-parent-kind-class"><a href="commandpalette.renderer.html#renderitemshortcut" class="tsd-kind-icon">render<wbr>Item<wbr>Shortcut</a></li>
 							</ul>
@@ -116,6 +119,38 @@
 			<section class="tsd-panel-group tsd-member-group ">
 				<h2>Methods</h2>
 				<section class="tsd-panel tsd-member tsd-kind-method tsd-parent-kind-class">
+					<a name="createiconclass" class="tsd-anchor"></a>
+					<h3>create<wbr>Icon<wbr>Class</h3>
+					<ul class="tsd-signatures tsd-kind-method tsd-parent-kind-class">
+						<li class="tsd-signature tsd-kind-icon">create<wbr>Icon<wbr>Class<span class="tsd-signature-symbol">(</span>data<span class="tsd-signature-symbol">: </span><a href="../interfaces/commandpalette.iitemrenderdata.html" class="tsd-signature-type">IItemRenderData</a><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">string</span></li>
+					</ul>
+					<ul class="tsd-descriptions">
+						<li class="tsd-description">
+							<aside class="tsd-sources">
+								<ul>
+									<li>Defined in <a href="https://github.com/phosphorjs/phosphor/blob/8fee9108/packages/widgets/src/commandpalette.ts#L869">commandpalette.ts:869</a></li>
+								</ul>
+							</aside>
+							<div class="tsd-comment tsd-typography">
+								<div class="lead">
+									<p>Create the class name for the command item icon.</p>
+								</div>
+							</div>
+							<h4 class="tsd-parameters-title">Parameters</h4>
+							<ul class="tsd-parameters">
+								<li>
+									<h5>data: <a href="../interfaces/commandpalette.iitemrenderdata.html" class="tsd-signature-type">IItemRenderData</a></h5>
+									<div class="tsd-comment tsd-typography">
+										<p>The data to use for the class name.</p>
+									</div>
+								</li>
+							</ul>
+							<h4 class="tsd-returns-title">Returns <span class="tsd-signature-type">string</span></h4>
+							<p>The full class name for the item icon.</p>
+						</li>
+					</ul>
+				</section>
+				<section class="tsd-panel tsd-member tsd-kind-method tsd-parent-kind-class">
 					<a name="createitemclass" class="tsd-anchor"></a>
 					<h3>create<wbr>Item<wbr>Class</h3>
 					<ul class="tsd-signatures tsd-kind-method tsd-parent-kind-class">
@@ -125,7 +160,7 @@
 						<li class="tsd-description">
 							<aside class="tsd-sources">
 								<ul>
-									<li>Defined in <a href="https://github.com/phosphorjs/phosphor/blob/1b1dfe3/packages/widgets/src/commandpalette.ts#L788">commandpalette.ts:788</a></li>
+									<li>Defined in <a href="https://github.com/phosphorjs/phosphor/blob/8fee9108/packages/widgets/src/commandpalette.ts#L826">commandpalette.ts:826</a></li>
 								</ul>
 							</aside>
 							<div class="tsd-comment tsd-typography">
@@ -157,7 +192,7 @@
 						<li class="tsd-description">
 							<aside class="tsd-sources">
 								<ul>
-									<li>Defined in <a href="https://github.com/phosphorjs/phosphor/blob/1b1dfe3/packages/widgets/src/commandpalette.ts#L820">commandpalette.ts:820</a></li>
+									<li>Defined in <a href="https://github.com/phosphorjs/phosphor/blob/8fee9108/packages/widgets/src/commandpalette.ts#L858">commandpalette.ts:858</a></li>
 								</ul>
 							</aside>
 							<div class="tsd-comment tsd-typography">
@@ -189,7 +224,7 @@
 						<li class="tsd-description">
 							<aside class="tsd-sources">
 								<ul>
-									<li>Defined in <a href="https://github.com/phosphorjs/phosphor/blob/1b1dfe3/packages/widgets/src/commandpalette.ts#L845">commandpalette.ts:845</a></li>
+									<li>Defined in <a href="https://github.com/phosphorjs/phosphor/blob/8fee9108/packages/widgets/src/commandpalette.ts#L896">commandpalette.ts:896</a></li>
 								</ul>
 							</aside>
 							<div class="tsd-comment tsd-typography">
@@ -221,7 +256,7 @@
 						<li class="tsd-description">
 							<aside class="tsd-sources">
 								<ul>
-									<li>Defined in <a href="https://github.com/phosphorjs/phosphor/blob/1b1dfe3/packages/widgets/src/commandpalette.ts#L831">commandpalette.ts:831</a></li>
+									<li>Defined in <a href="https://github.com/phosphorjs/phosphor/blob/8fee9108/packages/widgets/src/commandpalette.ts#L882">commandpalette.ts:882</a></li>
 								</ul>
 							</aside>
 							<div class="tsd-comment tsd-typography">
@@ -253,7 +288,7 @@
 						<li class="tsd-description">
 							<aside class="tsd-sources">
 								<ul>
-									<li>Defined in <a href="https://github.com/phosphorjs/phosphor/blob/1b1dfe3/packages/widgets/src/commandpalette.ts#L882">commandpalette.ts:882</a></li>
+									<li>Defined in <a href="https://github.com/phosphorjs/phosphor/blob/8fee9108/packages/widgets/src/commandpalette.ts#L933">commandpalette.ts:933</a></li>
 								</ul>
 							</aside>
 							<div class="tsd-comment tsd-typography">
@@ -285,7 +320,7 @@
 						<li class="tsd-description">
 							<aside class="tsd-sources">
 								<ul>
-									<li>Defined in <a href="https://github.com/phosphorjs/phosphor/blob/1b1dfe3/packages/widgets/src/commandpalette.ts#L868">commandpalette.ts:868</a></li>
+									<li>Defined in <a href="https://github.com/phosphorjs/phosphor/blob/8fee9108/packages/widgets/src/commandpalette.ts#L919">commandpalette.ts:919</a></li>
 								</ul>
 							</aside>
 							<div class="tsd-comment tsd-typography">
@@ -317,7 +352,7 @@
 						<li class="tsd-description">
 							<aside class="tsd-sources">
 								<ul>
-									<li>Defined in <a href="https://github.com/phosphorjs/phosphor/blob/1b1dfe3/packages/widgets/src/commandpalette.ts#L856">commandpalette.ts:856</a></li>
+									<li>Defined in <a href="https://github.com/phosphorjs/phosphor/blob/8fee9108/packages/widgets/src/commandpalette.ts#L907">commandpalette.ts:907</a></li>
 								</ul>
 							</aside>
 							<div class="tsd-comment tsd-typography">
@@ -350,7 +385,7 @@
 							<aside class="tsd-sources">
 								<p>Implementation of <a href="../interfaces/commandpalette.irenderer.html">IRenderer</a>.<a href="../interfaces/commandpalette.irenderer.html#renderemptymessage">renderEmptyMessage</a></p>
 								<ul>
-									<li>Defined in <a href="https://github.com/phosphorjs/phosphor/blob/1b1dfe3/packages/widgets/src/commandpalette.ts#L740">commandpalette.ts:740</a></li>
+									<li>Defined in <a href="https://github.com/phosphorjs/phosphor/blob/8fee9108/packages/widgets/src/commandpalette.ts#L750">commandpalette.ts:750</a></li>
 								</ul>
 							</aside>
 							<div class="tsd-comment tsd-typography">
@@ -383,7 +418,7 @@
 							<aside class="tsd-sources">
 								<p>Implementation of <a href="../interfaces/commandpalette.irenderer.html">IRenderer</a>.<a href="../interfaces/commandpalette.irenderer.html#renderheader">renderHeader</a></p>
 								<ul>
-									<li>Defined in <a href="https://github.com/phosphorjs/phosphor/blob/1b1dfe3/packages/widgets/src/commandpalette.ts#L709">commandpalette.ts:709</a></li>
+									<li>Defined in <a href="https://github.com/phosphorjs/phosphor/blob/8fee9108/packages/widgets/src/commandpalette.ts#L719">commandpalette.ts:719</a></li>
 								</ul>
 							</aside>
 							<div class="tsd-comment tsd-typography">
@@ -416,7 +451,7 @@
 							<aside class="tsd-sources">
 								<p>Implementation of <a href="../interfaces/commandpalette.irenderer.html">IRenderer</a>.<a href="../interfaces/commandpalette.irenderer.html#renderitem">renderItem</a></p>
 								<ul>
-									<li>Defined in <a href="https://github.com/phosphorjs/phosphor/blob/1b1dfe3/packages/widgets/src/commandpalette.ts#L721">commandpalette.ts:721</a></li>
+									<li>Defined in <a href="https://github.com/phosphorjs/phosphor/blob/8fee9108/packages/widgets/src/commandpalette.ts#L731">commandpalette.ts:731</a></li>
 								</ul>
 							</aside>
 							<div class="tsd-comment tsd-typography">
@@ -448,7 +483,7 @@
 						<li class="tsd-description">
 							<aside class="tsd-sources">
 								<ul>
-									<li>Defined in <a href="https://github.com/phosphorjs/phosphor/blob/1b1dfe3/packages/widgets/src/commandpalette.ts#L776">commandpalette.ts:776</a></li>
+									<li>Defined in <a href="https://github.com/phosphorjs/phosphor/blob/8fee9108/packages/widgets/src/commandpalette.ts#L802">commandpalette.ts:802</a></li>
 								</ul>
 							</aside>
 							<div class="tsd-comment tsd-typography">
@@ -471,6 +506,70 @@
 					</ul>
 				</section>
 				<section class="tsd-panel tsd-member tsd-kind-method tsd-parent-kind-class">
+					<a name="renderitemcontent" class="tsd-anchor"></a>
+					<h3>render<wbr>Item<wbr>Content</h3>
+					<ul class="tsd-signatures tsd-kind-method tsd-parent-kind-class">
+						<li class="tsd-signature tsd-kind-icon">render<wbr>Item<wbr>Content<span class="tsd-signature-symbol">(</span>data<span class="tsd-signature-symbol">: </span><a href="../interfaces/commandpalette.iitemrenderdata.html" class="tsd-signature-type">IItemRenderData</a><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">VirtualElement</span></li>
+					</ul>
+					<ul class="tsd-descriptions">
+						<li class="tsd-description">
+							<aside class="tsd-sources">
+								<ul>
+									<li>Defined in <a href="https://github.com/phosphorjs/phosphor/blob/8fee9108/packages/widgets/src/commandpalette.ts#L774">commandpalette.ts:774</a></li>
+								</ul>
+							</aside>
+							<div class="tsd-comment tsd-typography">
+								<div class="lead">
+									<p>Render the content for a command palette item.</p>
+								</div>
+							</div>
+							<h4 class="tsd-parameters-title">Parameters</h4>
+							<ul class="tsd-parameters">
+								<li>
+									<h5>data: <a href="../interfaces/commandpalette.iitemrenderdata.html" class="tsd-signature-type">IItemRenderData</a></h5>
+									<div class="tsd-comment tsd-typography">
+										<p>The data to use for rendering the content.</p>
+									</div>
+								</li>
+							</ul>
+							<h4 class="tsd-returns-title">Returns <span class="tsd-signature-type">VirtualElement</span></h4>
+							<p>A virtual element representing the content.</p>
+						</li>
+					</ul>
+				</section>
+				<section class="tsd-panel tsd-member tsd-kind-method tsd-parent-kind-class">
+					<a name="renderitemicon" class="tsd-anchor"></a>
+					<h3>render<wbr>Item<wbr>Icon</h3>
+					<ul class="tsd-signatures tsd-kind-method tsd-parent-kind-class">
+						<li class="tsd-signature tsd-kind-icon">render<wbr>Item<wbr>Icon<span class="tsd-signature-symbol">(</span>data<span class="tsd-signature-symbol">: </span><a href="../interfaces/commandpalette.iitemrenderdata.html" class="tsd-signature-type">IItemRenderData</a><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">VirtualElement</span></li>
+					</ul>
+					<ul class="tsd-descriptions">
+						<li class="tsd-description">
+							<aside class="tsd-sources">
+								<ul>
+									<li>Defined in <a href="https://github.com/phosphorjs/phosphor/blob/8fee9108/packages/widgets/src/commandpalette.ts#L762">commandpalette.ts:762</a></li>
+								</ul>
+							</aside>
+							<div class="tsd-comment tsd-typography">
+								<div class="lead">
+									<p>Render the icon for a command palette item.</p>
+								</div>
+							</div>
+							<h4 class="tsd-parameters-title">Parameters</h4>
+							<ul class="tsd-parameters">
+								<li>
+									<h5>data: <a href="../interfaces/commandpalette.iitemrenderdata.html" class="tsd-signature-type">IItemRenderData</a></h5>
+									<div class="tsd-comment tsd-typography">
+										<p>The data to use for rendering the icon.</p>
+									</div>
+								</li>
+							</ul>
+							<h4 class="tsd-returns-title">Returns <span class="tsd-signature-type">VirtualElement</span></h4>
+							<p>A virtual element representing the icon.</p>
+						</li>
+					</ul>
+				</section>
+				<section class="tsd-panel tsd-member tsd-kind-method tsd-parent-kind-class">
 					<a name="renderitemlabel" class="tsd-anchor"></a>
 					<h3>render<wbr>Item<wbr>Label</h3>
 					<ul class="tsd-signatures tsd-kind-method tsd-parent-kind-class">
@@ -480,7 +579,7 @@
 						<li class="tsd-description">
 							<aside class="tsd-sources">
 								<ul>
-									<li>Defined in <a href="https://github.com/phosphorjs/phosphor/blob/1b1dfe3/packages/widgets/src/commandpalette.ts#L764">commandpalette.ts:764</a></li>
+									<li>Defined in <a href="https://github.com/phosphorjs/phosphor/blob/8fee9108/packages/widgets/src/commandpalette.ts#L790">commandpalette.ts:790</a></li>
 								</ul>
 							</aside>
 							<div class="tsd-comment tsd-typography">
@@ -512,7 +611,7 @@
 						<li class="tsd-description">
 							<aside class="tsd-sources">
 								<ul>
-									<li>Defined in <a href="https://github.com/phosphorjs/phosphor/blob/1b1dfe3/packages/widgets/src/commandpalette.ts#L752">commandpalette.ts:752</a></li>
+									<li>Defined in <a href="https://github.com/phosphorjs/phosphor/blob/8fee9108/packages/widgets/src/commandpalette.ts#L814">commandpalette.ts:814</a></li>
 								</ul>
 							</aside>
 							<div class="tsd-comment tsd-typography">
@@ -564,6 +663,9 @@
 								<a href="commandpalette.renderer.html" class="tsd-kind-icon">Renderer</a>
 								<ul>
 									<li class=" tsd-kind-method tsd-parent-kind-class">
+										<a href="commandpalette.renderer.html#createiconclass" class="tsd-kind-icon">create<wbr>Icon<wbr>Class</a>
+									</li>
+									<li class=" tsd-kind-method tsd-parent-kind-class">
 										<a href="commandpalette.renderer.html#createitemclass" class="tsd-kind-icon">create<wbr>Item<wbr>Class</a>
 									</li>
 									<li class=" tsd-kind-method tsd-parent-kind-class">
@@ -597,6 +699,12 @@
 										<a href="commandpalette.renderer.html#renderitemcaption" class="tsd-kind-icon">render<wbr>Item<wbr>Caption</a>
 									</li>
 									<li class=" tsd-kind-method tsd-parent-kind-class">
+										<a href="commandpalette.renderer.html#renderitemcontent" class="tsd-kind-icon">render<wbr>Item<wbr>Content</a>
+									</li>
+									<li class=" tsd-kind-method tsd-parent-kind-class">
+										<a href="commandpalette.renderer.html#renderitemicon" class="tsd-kind-icon">render<wbr>Item<wbr>Icon</a>
+									</li>
+									<li class=" tsd-kind-method tsd-parent-kind-class">
 										<a href="commandpalette.renderer.html#renderitemlabel" class="tsd-kind-icon">render<wbr>Item<wbr>Label</a>
 									</li>
 									<li class=" tsd-kind-method tsd-parent-kind-class">
@@ -621,6 +729,9 @@
 						<a href="focustracker.html" class="tsd-kind-icon">Focus<wbr>Tracker</a>
 					</li>
 					<li class=" tsd-kind-class">
+						<a href="gridlayout.html" class="tsd-kind-icon">Grid<wbr>Layout</a>
+					</li>
+					<li class=" tsd-kind-class">
 						<a href="layout.html" class="tsd-kind-icon">Layout</a>
 					</li>
 					<li class=" tsd-kind-class">
@@ -637,6 +748,12 @@
 					</li>
 					<li class=" tsd-kind-class">
 						<a href="panellayout.html" class="tsd-kind-icon">Panel<wbr>Layout</a>
+					</li>
+					<li class=" tsd-kind-class">
+						<a href="scrollbar.html" class="tsd-kind-icon">Scroll<wbr>Bar</a>
+					</li>
+					<li class=" tsd-kind-class">
+						<a href="singletonlayout.html" class="tsd-kind-icon">Singleton<wbr>Layout</a>
 					</li>
 					<li class=" tsd-kind-class">
 						<a href="splitlayout.html" class="tsd-kind-icon">Split<wbr>Layout</a>

@@ -99,8 +99,8 @@
 						<section class="tsd-index-section ">
 							<h3>Type aliases</h3>
 							<ul class="tsd-index-list">
-								<li class="tsd-kind-type-alias"><a href="globals.html#iterableorarraylike" class="tsd-kind-icon">Iterable<wbr>OrArray<wbr>Like</a></li>
-								<li class="tsd-kind-type-alias"><a href="globals.html#retroableorarraylike" class="tsd-kind-icon">Retroable<wbr>OrArray<wbr>Like</a></li>
+								<li class="tsd-kind-type-alias tsd-has-type-parameter"><a href="globals.html#iterableorarraylike" class="tsd-kind-icon">Iterable<wbr>OrArray<wbr>Like</a></li>
+								<li class="tsd-kind-type-alias tsd-has-type-parameter"><a href="globals.html#retroableorarraylike" class="tsd-kind-icon">Retroable<wbr>OrArray<wbr>Like</a></li>
 							</ul>
 						</section>
 						<section class="tsd-index-section ">
@@ -135,13 +135,13 @@
 			</section>
 			<section class="tsd-panel-group tsd-member-group ">
 				<h2>Type aliases</h2>
-				<section class="tsd-panel tsd-member tsd-kind-type-alias">
+				<section class="tsd-panel tsd-member tsd-kind-type-alias tsd-has-type-parameter">
 					<a name="iterableorarraylike" class="tsd-anchor"></a>
 					<h3>Iterable<wbr>OrArray<wbr>Like</h3>
 					<div class="tsd-signature tsd-kind-icon">Iterable<wbr>OrArray<wbr>Like<span class="tsd-signature-symbol">:</span> <a href="interfaces/iiterable.html" class="tsd-signature-type">IIterable</a><span class="tsd-signature-symbol">&lt;</span><span class="tsd-signature-type">T</span><span class="tsd-signature-symbol">&gt;</span><span class="tsd-signature-symbol"> | </span><span class="tsd-signature-type">ArrayLike</span><span class="tsd-signature-symbol">&lt;</span><span class="tsd-signature-type">T</span><span class="tsd-signature-symbol">&gt;</span></div>
 					<aside class="tsd-sources">
 						<ul>
-							<li>Defined in <a href="https://github.com/phosphorjs/phosphor/blob/1b1dfe3/packages/algorithm/src/iter.ts#L76">iter.ts:76</a></li>
+							<li>Defined in <a href="https://github.com/phosphorjs/phosphor/blob/c832b0c3/packages/algorithm/src/iter.ts#L76">iter.ts:76</a></li>
 						</ul>
 					</aside>
 					<div class="tsd-comment tsd-typography">
@@ -150,13 +150,13 @@
 						</div>
 					</div>
 				</section>
-				<section class="tsd-panel tsd-member tsd-kind-type-alias">
+				<section class="tsd-panel tsd-member tsd-kind-type-alias tsd-has-type-parameter">
 					<a name="retroableorarraylike" class="tsd-anchor"></a>
 					<h3>Retroable<wbr>OrArray<wbr>Like</h3>
 					<div class="tsd-signature tsd-kind-icon">Retroable<wbr>OrArray<wbr>Like<span class="tsd-signature-symbol">:</span> <a href="interfaces/iretroable.html" class="tsd-signature-type">IRetroable</a><span class="tsd-signature-symbol">&lt;</span><span class="tsd-signature-type">T</span><span class="tsd-signature-symbol">&gt;</span><span class="tsd-signature-symbol"> | </span><span class="tsd-signature-type">ArrayLike</span><span class="tsd-signature-symbol">&lt;</span><span class="tsd-signature-type">T</span><span class="tsd-signature-symbol">&gt;</span></div>
 					<aside class="tsd-sources">
 						<ul>
-							<li>Defined in <a href="https://github.com/phosphorjs/phosphor/blob/1b1dfe3/packages/algorithm/src/retro.ts#L31">retro.ts:31</a></li>
+							<li>Defined in <a href="https://github.com/phosphorjs/phosphor/blob/c832b0c3/packages/algorithm/src/retro.ts#L31">retro.ts:31</a></li>
 						</ul>
 					</aside>
 					<div class="tsd-comment tsd-typography">
@@ -178,7 +178,7 @@
 						<li class="tsd-description">
 							<aside class="tsd-sources">
 								<ul>
-									<li>Defined in <a href="https://github.com/phosphorjs/phosphor/blob/1b1dfe3/packages/algorithm/src/chain.ts#L34">chain.ts:34</a></li>
+									<li>Defined in <a href="https://github.com/phosphorjs/phosphor/blob/c832b0c3/packages/algorithm/src/chain.ts#L34">chain.ts:34</a></li>
 								</ul>
 							</aside>
 							<div class="tsd-comment tsd-typography">
@@ -205,15 +205,14 @@
 							<p>An iterator which yields the values of the iterables
 							in the order in which they are supplied.</p>
 							<h4 id="example">Example</h4>
-							<pre><code class="lang-typescript"><span class="hljs-keyword">import</span> { chain, toArray } <span class="hljs-keyword">from</span> <span class="hljs-string">'@phosphor/algorithm'</span>;
+							<pre><code class="language-typescript"><span class="hljs-keyword">import</span> { chain, toArray } <span class="hljs-keyword">from</span> <span class="hljs-string">'@phosphor/algorithm'</span>;
 
 <span class="hljs-keyword">let</span> data1 = [<span class="hljs-number">1</span>, <span class="hljs-number">2</span>, <span class="hljs-number">3</span>];
 <span class="hljs-keyword">let</span> data2 = [<span class="hljs-number">4</span>, <span class="hljs-number">5</span>, <span class="hljs-number">6</span>];
 
 <span class="hljs-keyword">let</span> stream = chain(data1, data2);
 
-toArray(stream);  <span class="hljs-comment">// [1, 2, 3, 4, 5, 6]</span>
-</code></pre>
+toArray(stream);  <span class="hljs-comment">// [1, 2, 3, 4, 5, 6]</span></code></pre>
 						</li>
 					</ul>
 				</section>
@@ -227,7 +226,7 @@ toArray(stream);  <span class="hljs-comment">// [1, 2, 3, 4, 5, 6]</span>
 						<li class="tsd-description">
 							<aside class="tsd-sources">
 								<ul>
-									<li>Defined in <a href="https://github.com/phosphorjs/phosphor/blob/1b1dfe3/packages/algorithm/src/iter.ts#L126">iter.ts:126</a></li>
+									<li>Defined in <a href="https://github.com/phosphorjs/phosphor/blob/c832b0c3/packages/algorithm/src/iter.ts#L126">iter.ts:126</a></li>
 								</ul>
 							</aside>
 							<div class="tsd-comment tsd-typography">
@@ -259,12 +258,11 @@ toArray(stream);  <span class="hljs-comment">// [1, 2, 3, 4, 5, 6]</span>
 										<h4 id="complexity">Complexity</h4>
 										<p>Linear.</p>
 										<h4 id="example">Example</h4>
-										<pre><code class="lang-typescript"><span class="hljs-keyword">import</span> { each } <span class="hljs-keyword">from</span> <span class="hljs-string">'@phosphor/algorithm'</span>;
+										<pre><code class="language-typescript"><span class="hljs-keyword">import</span> { each } <span class="hljs-keyword">from</span> <span class="hljs-string">'@phosphor/algorithm'</span>;
 
 <span class="hljs-keyword">let</span> data = [<span class="hljs-number">5</span>, <span class="hljs-number">7</span>, <span class="hljs-number">0</span>, <span class="hljs-number">-2</span>, <span class="hljs-number">9</span>];
 
-each(data, <span class="hljs-function"><span class="hljs-params">value</span> =&gt;</span> { <span class="hljs-built_in">console</span>.log(value); });
-</code></pre>
+each(data, <span class="hljs-function"><span class="hljs-params">value</span> =&gt;</span> { <span class="hljs-built_in">console</span>.log(value); });</code></pre>
 									</div>
 									<ul class="tsd-parameters">
 										<li class="tsd-parameter-siganture">
@@ -306,7 +304,7 @@ each(data, <span class="hljs-function"><span class="hljs-params">value</span> =&
 						<li class="tsd-description">
 							<aside class="tsd-sources">
 								<ul>
-									<li>Defined in <a href="https://github.com/phosphorjs/phosphor/blob/1b1dfe3/packages/algorithm/src/empty.ts#L28">empty.ts:28</a></li>
+									<li>Defined in <a href="https://github.com/phosphorjs/phosphor/blob/c832b0c3/packages/algorithm/src/empty.ts#L28">empty.ts:28</a></li>
 								</ul>
 							</aside>
 							<div class="tsd-comment tsd-typography">
@@ -323,12 +321,11 @@ each(data, <span class="hljs-function"><span class="hljs-params">value</span> =&
 							<h4 class="tsd-returns-title">Returns <a href="interfaces/iiterator.html" class="tsd-signature-type">IIterator</a><span class="tsd-signature-symbol">&lt;</span><span class="tsd-signature-type">T</span><span class="tsd-signature-symbol">&gt;</span></h4>
 							<p>A new iterator which yields nothing.</p>
 							<h4 id="example">Example</h4>
-							<pre><code class="lang-typescript"><span class="hljs-keyword">import</span> { empty, toArray } <span class="hljs-keyword">from</span> <span class="hljs-string">'@phosphor/algorithm'</span>;
+							<pre><code class="language-typescript"><span class="hljs-keyword">import</span> { empty, toArray } <span class="hljs-keyword">from</span> <span class="hljs-string">'@phosphor/algorithm'</span>;
 
 <span class="hljs-keyword">let</span> stream = empty&lt;<span class="hljs-built_in">number</span>&gt;();
 
-toArray(stream);  <span class="hljs-comment">// []</span>
-</code></pre>
+toArray(stream);  <span class="hljs-comment">// []</span></code></pre>
 						</li>
 					</ul>
 				</section>
@@ -342,7 +339,7 @@ toArray(stream);  <span class="hljs-comment">// []</span>
 						<li class="tsd-description">
 							<aside class="tsd-sources">
 								<ul>
-									<li>Defined in <a href="https://github.com/phosphorjs/phosphor/blob/1b1dfe3/packages/algorithm/src/iter.ts#L164">iter.ts:164</a></li>
+									<li>Defined in <a href="https://github.com/phosphorjs/phosphor/blob/c832b0c3/packages/algorithm/src/iter.ts#L164">iter.ts:164</a></li>
 								</ul>
 							</aside>
 							<div class="tsd-comment tsd-typography">
@@ -399,13 +396,12 @@ toArray(stream);  <span class="hljs-comment">// []</span>
 							<h4 id="complexity">Complexity</h4>
 							<p>Linear.</p>
 							<h4 id="example">Example</h4>
-							<pre><code class="lang-typescript"><span class="hljs-keyword">import</span> { every } <span class="hljs-keyword">from</span> <span class="hljs-string">'@phosphor/algorithm'</span>;
+							<pre><code class="language-typescript"><span class="hljs-keyword">import</span> { every } <span class="hljs-keyword">from</span> <span class="hljs-string">'@phosphor/algorithm'</span>;
 
 <span class="hljs-keyword">let</span> data = [<span class="hljs-number">5</span>, <span class="hljs-number">7</span>, <span class="hljs-number">1</span>];
 
 every(data, <span class="hljs-function"><span class="hljs-params">value</span> =&gt;</span> value % <span class="hljs-number">2</span> === <span class="hljs-number">0</span>);  <span class="hljs-comment">// false</span>
-every(data, <span class="hljs-function"><span class="hljs-params">value</span> =&gt;</span> value % <span class="hljs-number">2</span> === <span class="hljs-number">1</span>);  <span class="hljs-comment">// true</span>
-</code></pre>
+every(data, <span class="hljs-function"><span class="hljs-params">value</span> =&gt;</span> value % <span class="hljs-number">2</span> === <span class="hljs-number">1</span>);  <span class="hljs-comment">// true</span></code></pre>
 						</li>
 					</ul>
 				</section>
@@ -419,7 +415,7 @@ every(data, <span class="hljs-function"><span class="hljs-params">value</span> =
 						<li class="tsd-description">
 							<aside class="tsd-sources">
 								<ul>
-									<li>Defined in <a href="https://github.com/phosphorjs/phosphor/blob/1b1dfe3/packages/algorithm/src/filter.ts#L34">filter.ts:34</a></li>
+									<li>Defined in <a href="https://github.com/phosphorjs/phosphor/blob/c832b0c3/packages/algorithm/src/filter.ts#L34">filter.ts:34</a></li>
 								</ul>
 							</aside>
 							<div class="tsd-comment tsd-typography">
@@ -472,14 +468,13 @@ every(data, <span class="hljs-function"><span class="hljs-params">value</span> =
 							<h4 class="tsd-returns-title">Returns <a href="interfaces/iiterator.html" class="tsd-signature-type">IIterator</a><span class="tsd-signature-symbol">&lt;</span><span class="tsd-signature-type">T</span><span class="tsd-signature-symbol">&gt;</span></h4>
 							<p>An iterator which yields the values which pass the test.</p>
 							<h4 id="example">Example</h4>
-							<pre><code class="lang-typescript"><span class="hljs-keyword">import</span> { filter, toArray } <span class="hljs-keyword">from</span> <span class="hljs-string">'@phosphor/algorithm'</span>;
+							<pre><code class="language-typescript"><span class="hljs-keyword">import</span> { filter, toArray } <span class="hljs-keyword">from</span> <span class="hljs-string">'@phosphor/algorithm'</span>;
 
 <span class="hljs-keyword">let</span> data = [<span class="hljs-number">1</span>, <span class="hljs-number">2</span>, <span class="hljs-number">3</span>, <span class="hljs-number">4</span>, <span class="hljs-number">5</span>, <span class="hljs-number">6</span>];
 
 <span class="hljs-keyword">let</span> stream = filter(data, <span class="hljs-function"><span class="hljs-params">value</span> =&gt;</span> value % <span class="hljs-number">2</span> === <span class="hljs-number">0</span>);
 
-toArray(stream);  <span class="hljs-comment">// [2, 4, 6]</span>
-</code></pre>
+toArray(stream);  <span class="hljs-comment">// [2, 4, 6]</span></code></pre>
 						</li>
 					</ul>
 				</section>
@@ -493,7 +488,7 @@ toArray(stream);  <span class="hljs-comment">// [2, 4, 6]</span>
 						<li class="tsd-description">
 							<aside class="tsd-sources">
 								<ul>
-									<li>Defined in <a href="https://github.com/phosphorjs/phosphor/blob/1b1dfe3/packages/algorithm/src/find.ts#L46">find.ts:46</a></li>
+									<li>Defined in <a href="https://github.com/phosphorjs/phosphor/blob/c832b0c3/packages/algorithm/src/find.ts#L46">find.ts:46</a></li>
 								</ul>
 							</aside>
 							<div class="tsd-comment tsd-typography">
@@ -552,7 +547,7 @@ toArray(stream);  <span class="hljs-comment">// [2, 4, 6]</span>
 							<h4 id="complexity">Complexity</h4>
 							<p>Linear.</p>
 							<h4 id="example">Example</h4>
-							<pre><code class="lang-typescript"><span class="hljs-keyword">import</span> { find } <span class="hljs-keyword">from</span> <span class="hljs-string">'@phosphor/algorithm'</span>;
+							<pre><code class="language-typescript"><span class="hljs-keyword">import</span> { find } <span class="hljs-keyword">from</span> <span class="hljs-string">'@phosphor/algorithm'</span>;
 
 <span class="hljs-keyword">interface</span> IAnimal { species: <span class="hljs-built_in">string</span>, name: <span class="hljs-built_in">string</span> };
 
@@ -566,8 +561,7 @@ toArray(stream);  <span class="hljs-comment">// [2, 4, 6]</span>
   { species: <span class="hljs-string">'alligator'</span>, name: <span class="hljs-string">'pocho'</span> }
 ];
 
-find(data, isCat).name;  <span class="hljs-comment">// 'fluffy'</span>
-</code></pre>
+find(data, isCat).name;  <span class="hljs-comment">// 'fluffy'</span></code></pre>
 						</li>
 					</ul>
 				</section>
@@ -581,7 +575,7 @@ find(data, isCat).name;  <span class="hljs-comment">// 'fluffy'</span>
 						<li class="tsd-description">
 							<aside class="tsd-sources">
 								<ul>
-									<li>Defined in <a href="https://github.com/phosphorjs/phosphor/blob/1b1dfe3/packages/algorithm/src/iter.ts#L91">iter.ts:91</a></li>
+									<li>Defined in <a href="https://github.com/phosphorjs/phosphor/blob/c832b0c3/packages/algorithm/src/iter.ts#L91">iter.ts:91</a></li>
 								</ul>
 							</aside>
 							<div class="tsd-comment tsd-typography">
@@ -622,7 +616,7 @@ find(data, isCat).name;  <span class="hljs-comment">// 'fluffy'</span>
 						<li class="tsd-description">
 							<aside class="tsd-sources">
 								<ul>
-									<li>Defined in <a href="https://github.com/phosphorjs/phosphor/blob/1b1dfe3/packages/algorithm/src/map.ts#L34">map.ts:34</a></li>
+									<li>Defined in <a href="https://github.com/phosphorjs/phosphor/blob/c832b0c3/packages/algorithm/src/map.ts#L34">map.ts:34</a></li>
 								</ul>
 							</aside>
 							<div class="tsd-comment tsd-typography">
@@ -678,14 +672,13 @@ find(data, isCat).name;  <span class="hljs-comment">// 'fluffy'</span>
 							<h4 class="tsd-returns-title">Returns <a href="interfaces/iiterator.html" class="tsd-signature-type">IIterator</a><span class="tsd-signature-symbol">&lt;</span><span class="tsd-signature-type">U</span><span class="tsd-signature-symbol">&gt;</span></h4>
 							<p>An iterator which yields the transformed values.</p>
 							<h4 id="example">Example</h4>
-							<pre><code class="lang-typescript"><span class="hljs-keyword">import</span> { map, toArray } <span class="hljs-keyword">from</span> <span class="hljs-string">'@phosphor/algorithm'</span>;
+							<pre><code class="language-typescript"><span class="hljs-keyword">import</span> { map, toArray } <span class="hljs-keyword">from</span> <span class="hljs-string">'@phosphor/algorithm'</span>;
 
 <span class="hljs-keyword">let</span> data = [<span class="hljs-number">1</span>, <span class="hljs-number">2</span>, <span class="hljs-number">3</span>];
 
 <span class="hljs-keyword">let</span> stream = map(data, <span class="hljs-function"><span class="hljs-params">value</span> =&gt;</span> value * <span class="hljs-number">2</span>);
 
-toArray(stream);  <span class="hljs-comment">// [2, 4, 6]</span>
-</code></pre>
+toArray(stream);  <span class="hljs-comment">// [2, 4, 6]</span></code></pre>
 						</li>
 					</ul>
 				</section>
@@ -699,7 +692,7 @@ toArray(stream);  <span class="hljs-comment">// [2, 4, 6]</span>
 						<li class="tsd-description">
 							<aside class="tsd-sources">
 								<ul>
-									<li>Defined in <a href="https://github.com/phosphorjs/phosphor/blob/1b1dfe3/packages/algorithm/src/find.ts#L133">find.ts:133</a></li>
+									<li>Defined in <a href="https://github.com/phosphorjs/phosphor/blob/c832b0c3/packages/algorithm/src/find.ts#L133">find.ts:133</a></li>
 								</ul>
 							</aside>
 							<div class="tsd-comment tsd-typography">
@@ -762,14 +755,13 @@ toArray(stream);  <span class="hljs-comment">// [2, 4, 6]</span>
 							<h4 id="complexity">Complexity</h4>
 							<p>Linear.</p>
 							<h4 id="example">Example</h4>
-							<pre><code class="lang-typescript"><span class="hljs-keyword">import</span> { max } <span class="hljs-keyword">from</span> <span class="hljs-string">'@phosphor/algorithm'</span>;
+							<pre><code class="language-typescript"><span class="hljs-keyword">import</span> { max } <span class="hljs-keyword">from</span> <span class="hljs-string">'@phosphor/algorithm'</span>;
 
 <span class="hljs-function"><span class="hljs-keyword">function</span> <span class="hljs-title">numberCmp</span>(<span class="hljs-params">a: <span class="hljs-built_in">number</span>, b: <span class="hljs-built_in">number</span></span>): <span class="hljs-title">number</span> </span>{
   <span class="hljs-keyword">return</span> a - b;
 }
 
-max([<span class="hljs-number">7</span>, <span class="hljs-number">4</span>, <span class="hljs-number">0</span>, <span class="hljs-number">3</span>, <span class="hljs-number">9</span>, <span class="hljs-number">4</span>], numberCmp);  <span class="hljs-comment">// 9</span>
-</code></pre>
+max([<span class="hljs-number">7</span>, <span class="hljs-number">4</span>, <span class="hljs-number">0</span>, <span class="hljs-number">3</span>, <span class="hljs-number">9</span>, <span class="hljs-number">4</span>], numberCmp);  <span class="hljs-comment">// 9</span></code></pre>
 						</li>
 					</ul>
 				</section>
@@ -783,7 +775,7 @@ max([<span class="hljs-number">7</span>, <span class="hljs-number">4</span>, <sp
 						<li class="tsd-description">
 							<aside class="tsd-sources">
 								<ul>
-									<li>Defined in <a href="https://github.com/phosphorjs/phosphor/blob/1b1dfe3/packages/algorithm/src/find.ts#L88">find.ts:88</a></li>
+									<li>Defined in <a href="https://github.com/phosphorjs/phosphor/blob/c832b0c3/packages/algorithm/src/find.ts#L88">find.ts:88</a></li>
 								</ul>
 							</aside>
 							<div class="tsd-comment tsd-typography">
@@ -846,14 +838,13 @@ max([<span class="hljs-number">7</span>, <span class="hljs-number">4</span>, <sp
 							<h4 id="complexity">Complexity</h4>
 							<p>Linear.</p>
 							<h4 id="example">Example</h4>
-							<pre><code class="lang-typescript"><span class="hljs-keyword">import</span> { min } <span class="hljs-keyword">from</span> <span class="hljs-string">'@phosphor/algorithm'</span>;
+							<pre><code class="language-typescript"><span class="hljs-keyword">import</span> { min } <span class="hljs-keyword">from</span> <span class="hljs-string">'@phosphor/algorithm'</span>;
 
 <span class="hljs-function"><span class="hljs-keyword">function</span> <span class="hljs-title">numberCmp</span>(<span class="hljs-params">a: <span class="hljs-built_in">number</span>, b: <span class="hljs-built_in">number</span></span>): <span class="hljs-title">number</span> </span>{
   <span class="hljs-keyword">return</span> a - b;
 }
 
-min([<span class="hljs-number">7</span>, <span class="hljs-number">4</span>, <span class="hljs-number">0</span>, <span class="hljs-number">3</span>, <span class="hljs-number">9</span>, <span class="hljs-number">4</span>], numberCmp);  <span class="hljs-comment">// 0</span>
-</code></pre>
+min([<span class="hljs-number">7</span>, <span class="hljs-number">4</span>, <span class="hljs-number">0</span>, <span class="hljs-number">3</span>, <span class="hljs-number">9</span>, <span class="hljs-number">4</span>], numberCmp);  <span class="hljs-comment">// 0</span></code></pre>
 						</li>
 					</ul>
 				</section>
@@ -867,7 +858,7 @@ min([<span class="hljs-number">7</span>, <span class="hljs-number">4</span>, <sp
 						<li class="tsd-description">
 							<aside class="tsd-sources">
 								<ul>
-									<li>Defined in <a href="https://github.com/phosphorjs/phosphor/blob/1b1dfe3/packages/algorithm/src/find.ts#L178">find.ts:178</a></li>
+									<li>Defined in <a href="https://github.com/phosphorjs/phosphor/blob/c832b0c3/packages/algorithm/src/find.ts#L178">find.ts:178</a></li>
 								</ul>
 							</aside>
 							<div class="tsd-comment tsd-typography">
@@ -930,14 +921,13 @@ min([<span class="hljs-number">7</span>, <span class="hljs-number">4</span>, <sp
 							<h4 id="complexity">Complexity</h4>
 							<p>Linear.</p>
 							<h4 id="example">Example</h4>
-							<pre><code class="lang-typescript"><span class="hljs-keyword">import</span> { minmax } <span class="hljs-keyword">from</span> <span class="hljs-string">'@phosphor/algorithm'</span>;
+							<pre><code class="language-typescript"><span class="hljs-keyword">import</span> { minmax } <span class="hljs-keyword">from</span> <span class="hljs-string">'@phosphor/algorithm'</span>;
 
 <span class="hljs-function"><span class="hljs-keyword">function</span> <span class="hljs-title">numberCmp</span>(<span class="hljs-params">a: <span class="hljs-built_in">number</span>, b: <span class="hljs-built_in">number</span></span>): <span class="hljs-title">number</span> </span>{
   <span class="hljs-keyword">return</span> a - b;
 }
 
-minmax([<span class="hljs-number">7</span>, <span class="hljs-number">4</span>, <span class="hljs-number">0</span>, <span class="hljs-number">3</span>, <span class="hljs-number">9</span>, <span class="hljs-number">4</span>], numberCmp);  <span class="hljs-comment">// [0, 9]</span>
-</code></pre>
+minmax([<span class="hljs-number">7</span>, <span class="hljs-number">4</span>, <span class="hljs-number">0</span>, <span class="hljs-number">3</span>, <span class="hljs-number">9</span>, <span class="hljs-number">4</span>], numberCmp);  <span class="hljs-comment">// [0, 9]</span></code></pre>
 						</li>
 					</ul>
 				</section>
@@ -951,7 +941,7 @@ minmax([<span class="hljs-number">7</span>, <span class="hljs-number">4</span>, 
 						<li class="tsd-description">
 							<aside class="tsd-sources">
 								<ul>
-									<li>Defined in <a href="https://github.com/phosphorjs/phosphor/blob/1b1dfe3/packages/algorithm/src/repeat.ts#L54">repeat.ts:54</a></li>
+									<li>Defined in <a href="https://github.com/phosphorjs/phosphor/blob/c832b0c3/packages/algorithm/src/repeat.ts#L54">repeat.ts:54</a></li>
 								</ul>
 							</aside>
 							<div class="tsd-comment tsd-typography">
@@ -977,12 +967,11 @@ minmax([<span class="hljs-number">7</span>, <span class="hljs-number">4</span>, 
 							<h4 class="tsd-returns-title">Returns <a href="interfaces/iiterator.html" class="tsd-signature-type">IIterator</a><span class="tsd-signature-symbol">&lt;</span><span class="tsd-signature-type">T</span><span class="tsd-signature-symbol">&gt;</span></h4>
 							<p>A new iterator which yields the value a single time.</p>
 							<h4 id="example">Example</h4>
-							<pre><code class="lang-typescript"><span class="hljs-keyword">import</span> { once, toArray } <span class="hljs-keyword">from</span> <span class="hljs-string">'@phosphor/algorithm'</span>;
+							<pre><code class="language-typescript"><span class="hljs-keyword">import</span> { once, toArray } <span class="hljs-keyword">from</span> <span class="hljs-string">'@phosphor/algorithm'</span>;
 
 <span class="hljs-keyword">let</span> stream = once(<span class="hljs-number">7</span>);
 
-toArray(stream);  <span class="hljs-comment">// [7]</span>
-</code></pre>
+toArray(stream);  <span class="hljs-comment">// [7]</span></code></pre>
 						</li>
 					</ul>
 				</section>
@@ -990,13 +979,13 @@ toArray(stream);  <span class="hljs-comment">// [7]</span>
 					<a name="range" class="tsd-anchor"></a>
 					<h3>range</h3>
 					<ul class="tsd-signatures tsd-kind-function">
-						<li class="tsd-signature tsd-kind-icon">range<span class="tsd-signature-symbol">(</span>start<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">number</span>, stop<span class="tsd-signature-symbol">?: </span><span class="tsd-signature-type">undefined</span><span class="tsd-signature-symbol"> | </span><span class="tsd-signature-type">number</span>, step<span class="tsd-signature-symbol">?: </span><span class="tsd-signature-type">undefined</span><span class="tsd-signature-symbol"> | </span><span class="tsd-signature-type">number</span><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol">: </span><a href="interfaces/iiterator.html" class="tsd-signature-type">IIterator</a><span class="tsd-signature-symbol">&lt;</span><span class="tsd-signature-type">number</span><span class="tsd-signature-symbol">&gt;</span></li>
+						<li class="tsd-signature tsd-kind-icon">range<span class="tsd-signature-symbol">(</span>start<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">number</span>, stop<span class="tsd-signature-symbol">?: </span><span class="tsd-signature-type">number</span>, step<span class="tsd-signature-symbol">?: </span><span class="tsd-signature-type">number</span><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol">: </span><a href="interfaces/iiterator.html" class="tsd-signature-type">IIterator</a><span class="tsd-signature-symbol">&lt;</span><span class="tsd-signature-type">number</span><span class="tsd-signature-symbol">&gt;</span></li>
 					</ul>
 					<ul class="tsd-descriptions">
 						<li class="tsd-description">
 							<aside class="tsd-sources">
 								<ul>
-									<li>Defined in <a href="https://github.com/phosphorjs/phosphor/blob/1b1dfe3/packages/algorithm/src/range.ts#L32">range.ts:32</a></li>
+									<li>Defined in <a href="https://github.com/phosphorjs/phosphor/blob/c832b0c3/packages/algorithm/src/range.ts#L32">range.ts:32</a></li>
 								</ul>
 							</aside>
 							<div class="tsd-comment tsd-typography">
@@ -1013,13 +1002,13 @@ toArray(stream);  <span class="hljs-comment">// [7]</span>
 									</div>
 								</li>
 								<li>
-									<h5><span class="tsd-flag ts-flagOptional">Optional</span> stop: <span class="tsd-signature-type">undefined</span><span class="tsd-signature-symbol"> | </span><span class="tsd-signature-type">number</span></h5>
+									<h5><span class="tsd-flag ts-flagOptional">Optional</span> stop: <span class="tsd-signature-type">number</span></h5>
 									<div class="tsd-comment tsd-typography">
 										<p>The stopping value for the range, exclusive.</p>
 									</div>
 								</li>
 								<li>
-									<h5><span class="tsd-flag ts-flagOptional">Optional</span> step: <span class="tsd-signature-type">undefined</span><span class="tsd-signature-symbol"> | </span><span class="tsd-signature-type">number</span></h5>
+									<h5><span class="tsd-flag ts-flagOptional">Optional</span> step: <span class="tsd-signature-type">number</span></h5>
 									<div class="tsd-comment tsd-typography">
 										<p>The distance between each value.</p>
 									</div>
@@ -1046,7 +1035,7 @@ toArray(stream);  <span class="hljs-comment">// [7]</span>
 						<li class="tsd-description">
 							<aside class="tsd-sources">
 								<ul>
-									<li>Defined in <a href="https://github.com/phosphorjs/phosphor/blob/1b1dfe3/packages/algorithm/src/reduce.ts#L51">reduce.ts:51</a></li>
+									<li>Defined in <a href="https://github.com/phosphorjs/phosphor/blob/c832b0c3/packages/algorithm/src/reduce.ts#L51">reduce.ts:51</a></li>
 								</ul>
 							</aside>
 							<div class="tsd-comment tsd-typography">
@@ -1114,17 +1103,16 @@ toArray(stream);  <span class="hljs-comment">// [7]</span>
 							<h4 id="complexity">Complexity</h4>
 							<p>Linear.</p>
 							<h4 id="example">Example</h4>
-							<pre><code class="lang-typescript"><span class="hljs-keyword">import</span> { reduce } <span class="hljs-keyword">from</span> <span class="hljs-string">'@phosphor/algorithm'</span>;
+							<pre><code class="language-typescript"><span class="hljs-keyword">import</span> { reduce } <span class="hljs-keyword">from</span> <span class="hljs-string">'@phosphor/algorithm'</span>;
 
 <span class="hljs-keyword">let</span> data = [<span class="hljs-number">1</span>, <span class="hljs-number">2</span>, <span class="hljs-number">3</span>, <span class="hljs-number">4</span>, <span class="hljs-number">5</span>];
 
-<span class="hljs-keyword">let</span> sum = reduce(data, <span class="hljs-function">(<span class="hljs-params">a, value</span>) =&gt;</span> a + value);  <span class="hljs-comment">// 15</span>
-</code></pre>
+<span class="hljs-keyword">let</span> sum = reduce(data, <span class="hljs-function">(<span class="hljs-params">a, value</span>) =&gt;</span> a + value);  <span class="hljs-comment">// 15</span></code></pre>
 						</li>
 						<li class="tsd-description">
 							<aside class="tsd-sources">
 								<ul>
-									<li>Defined in <a href="https://github.com/phosphorjs/phosphor/blob/1b1dfe3/packages/algorithm/src/reduce.ts#L53">reduce.ts:53</a></li>
+									<li>Defined in <a href="https://github.com/phosphorjs/phosphor/blob/c832b0c3/packages/algorithm/src/reduce.ts#L53">reduce.ts:53</a></li>
 								</ul>
 							</aside>
 							<h4 class="tsd-type-parameters-title">Type parameters</h4>
@@ -1186,7 +1174,7 @@ toArray(stream);  <span class="hljs-comment">// [7]</span>
 						<li class="tsd-description">
 							<aside class="tsd-sources">
 								<ul>
-									<li>Defined in <a href="https://github.com/phosphorjs/phosphor/blob/1b1dfe3/packages/algorithm/src/repeat.ts#L32">repeat.ts:32</a></li>
+									<li>Defined in <a href="https://github.com/phosphorjs/phosphor/blob/c832b0c3/packages/algorithm/src/repeat.ts#L32">repeat.ts:32</a></li>
 								</ul>
 							</aside>
 							<div class="tsd-comment tsd-typography">
@@ -1218,12 +1206,11 @@ toArray(stream);  <span class="hljs-comment">// [7]</span>
 							<h4 class="tsd-returns-title">Returns <a href="interfaces/iiterator.html" class="tsd-signature-type">IIterator</a><span class="tsd-signature-symbol">&lt;</span><span class="tsd-signature-type">T</span><span class="tsd-signature-symbol">&gt;</span></h4>
 							<p>A new iterator which repeats the specified value.</p>
 							<h4 id="example">Example</h4>
-							<pre><code class="lang-typescript"><span class="hljs-keyword">import</span> { repeat, toArray } <span class="hljs-keyword">from</span> <span class="hljs-string">'@phosphor/algorithm'</span>;
+							<pre><code class="language-typescript"><span class="hljs-keyword">import</span> { repeat, toArray } <span class="hljs-keyword">from</span> <span class="hljs-string">'@phosphor/algorithm'</span>;
 
 <span class="hljs-keyword">let</span> stream = repeat(<span class="hljs-number">7</span>, <span class="hljs-number">3</span>);
 
-toArray(stream);  <span class="hljs-comment">// [7, 7, 7]</span>
-</code></pre>
+toArray(stream);  <span class="hljs-comment">// [7, 7, 7]</span></code></pre>
 						</li>
 					</ul>
 				</section>
@@ -1237,7 +1224,7 @@ toArray(stream);  <span class="hljs-comment">// [7, 7, 7]</span>
 						<li class="tsd-description">
 							<aside class="tsd-sources">
 								<ul>
-									<li>Defined in <a href="https://github.com/phosphorjs/phosphor/blob/1b1dfe3/packages/algorithm/src/retro.ts#L53">retro.ts:53</a></li>
+									<li>Defined in <a href="https://github.com/phosphorjs/phosphor/blob/c832b0c3/packages/algorithm/src/retro.ts#L53">retro.ts:53</a></li>
 								</ul>
 							</aside>
 							<div class="tsd-comment tsd-typography">
@@ -1263,14 +1250,13 @@ toArray(stream);  <span class="hljs-comment">// [7, 7, 7]</span>
 							<h4 class="tsd-returns-title">Returns <a href="interfaces/iiterator.html" class="tsd-signature-type">IIterator</a><span class="tsd-signature-symbol">&lt;</span><span class="tsd-signature-type">T</span><span class="tsd-signature-symbol">&gt;</span></h4>
 							<p>An iterator which traverses the object&#39;s values in reverse.</p>
 							<h4 id="example">Example</h4>
-							<pre><code class="lang-typescript"><span class="hljs-keyword">import</span> { retro, toArray } <span class="hljs-keyword">from</span> <span class="hljs-string">'@phosphor/algorithm'</span>;
+							<pre><code class="language-typescript"><span class="hljs-keyword">import</span> { retro, toArray } <span class="hljs-keyword">from</span> <span class="hljs-string">'@phosphor/algorithm'</span>;
 
 <span class="hljs-keyword">let</span> data = [<span class="hljs-number">1</span>, <span class="hljs-number">2</span>, <span class="hljs-number">3</span>, <span class="hljs-number">4</span>, <span class="hljs-number">5</span>, <span class="hljs-number">6</span>];
 
 <span class="hljs-keyword">let</span> stream = retro(data);
 
-toArray(stream);  <span class="hljs-comment">// [6, 5, 4, 3, 2, 1]</span>
-</code></pre>
+toArray(stream);  <span class="hljs-comment">// [6, 5, 4, 3, 2, 1]</span></code></pre>
 						</li>
 					</ul>
 				</section>
@@ -1284,7 +1270,7 @@ toArray(stream);  <span class="hljs-comment">// [6, 5, 4, 3, 2, 1]</span>
 						<li class="tsd-description">
 							<aside class="tsd-sources">
 								<ul>
-									<li>Defined in <a href="https://github.com/phosphorjs/phosphor/blob/1b1dfe3/packages/algorithm/src/iter.ts#L203">iter.ts:203</a></li>
+									<li>Defined in <a href="https://github.com/phosphorjs/phosphor/blob/c832b0c3/packages/algorithm/src/iter.ts#L203">iter.ts:203</a></li>
 								</ul>
 							</aside>
 							<div class="tsd-comment tsd-typography">
@@ -1341,13 +1327,12 @@ toArray(stream);  <span class="hljs-comment">// [6, 5, 4, 3, 2, 1]</span>
 							<h4 id="complexity">Complexity</h4>
 							<p>Linear.</p>
 							<h4 id="example">Example</h4>
-							<pre><code class="lang-typescript"><span class="hljs-keyword">import</span> { some } <span class="hljs-keyword">from</span> <span class="hljs-string">'@phosphor/algorithm'</span>;
+							<pre><code class="language-typescript"><span class="hljs-keyword">import</span> { some } <span class="hljs-keyword">from</span> <span class="hljs-string">'@phosphor/algorithm'</span>;
 
 <span class="hljs-keyword">let</span> data = [<span class="hljs-number">5</span>, <span class="hljs-number">7</span>, <span class="hljs-number">1</span>];
 
 some(data, <span class="hljs-function"><span class="hljs-params">value</span> =&gt;</span> value === <span class="hljs-number">7</span>);  <span class="hljs-comment">// true</span>
-some(data, <span class="hljs-function"><span class="hljs-params">value</span> =&gt;</span> value === <span class="hljs-number">3</span>);  <span class="hljs-comment">// false</span>
-</code></pre>
+some(data, <span class="hljs-function"><span class="hljs-params">value</span> =&gt;</span> value === <span class="hljs-number">3</span>);  <span class="hljs-comment">// false</span></code></pre>
 						</li>
 					</ul>
 				</section>
@@ -1361,7 +1346,7 @@ some(data, <span class="hljs-function"><span class="hljs-params">value</span> =&
 						<li class="tsd-description">
 							<aside class="tsd-sources">
 								<ul>
-									<li>Defined in <a href="https://github.com/phosphorjs/phosphor/blob/1b1dfe3/packages/algorithm/src/stride.ts#L35">stride.ts:35</a></li>
+									<li>Defined in <a href="https://github.com/phosphorjs/phosphor/blob/c832b0c3/packages/algorithm/src/stride.ts#L35">stride.ts:35</a></li>
 								</ul>
 							</aside>
 							<div class="tsd-comment tsd-typography">
@@ -1394,14 +1379,13 @@ some(data, <span class="hljs-function"><span class="hljs-params">value</span> =&
 							<h4 class="tsd-returns-title">Returns <a href="interfaces/iiterator.html" class="tsd-signature-type">IIterator</a><span class="tsd-signature-symbol">&lt;</span><span class="tsd-signature-type">T</span><span class="tsd-signature-symbol">&gt;</span></h4>
 							<p>An iterator which traverses the iterable step-wise.</p>
 							<h4 id="example">Example</h4>
-							<pre><code class="lang-typescript"><span class="hljs-keyword">import</span> { stride, toArray } <span class="hljs-keyword">from</span> <span class="hljs-string">'@phosphor/algorithm'</span>;
+							<pre><code class="language-typescript"><span class="hljs-keyword">import</span> { stride, toArray } <span class="hljs-keyword">from</span> <span class="hljs-string">'@phosphor/algorithm'</span>;
 
 <span class="hljs-keyword">let</span> data = [<span class="hljs-number">1</span>, <span class="hljs-number">2</span>, <span class="hljs-number">3</span>, <span class="hljs-number">4</span>, <span class="hljs-number">5</span>, <span class="hljs-number">6</span>];
 
 <span class="hljs-keyword">let</span> stream = stride(data, <span class="hljs-number">2</span>);
 
-toArray(stream);  <span class="hljs-comment">// [1, 3, 5];</span>
-</code></pre>
+toArray(stream);  <span class="hljs-comment">// [1, 3, 5];</span></code></pre>
 						</li>
 					</ul>
 				</section>
@@ -1415,7 +1399,7 @@ toArray(stream);  <span class="hljs-comment">// [1, 3, 5];</span>
 						<li class="tsd-description">
 							<aside class="tsd-sources">
 								<ul>
-									<li>Defined in <a href="https://github.com/phosphorjs/phosphor/blob/1b1dfe3/packages/algorithm/src/take.ts#L28">take.ts:28</a></li>
+									<li>Defined in <a href="https://github.com/phosphorjs/phosphor/blob/c832b0c3/packages/algorithm/src/take.ts#L28">take.ts:28</a></li>
 								</ul>
 							</aside>
 							<div class="tsd-comment tsd-typography">
@@ -1463,7 +1447,7 @@ toArray(stream);  <span class="hljs-comment">// [1, 3, 5];</span>
 						<li class="tsd-description">
 							<aside class="tsd-sources">
 								<ul>
-									<li>Defined in <a href="https://github.com/phosphorjs/phosphor/blob/1b1dfe3/packages/algorithm/src/iter.ts#L235">iter.ts:235</a></li>
+									<li>Defined in <a href="https://github.com/phosphorjs/phosphor/blob/c832b0c3/packages/algorithm/src/iter.ts#L235">iter.ts:235</a></li>
 								</ul>
 							</aside>
 							<div class="tsd-comment tsd-typography">
@@ -1489,14 +1473,13 @@ toArray(stream);  <span class="hljs-comment">// [1, 3, 5];</span>
 							<h4 class="tsd-returns-title">Returns <span class="tsd-signature-type">T</span><span class="tsd-signature-symbol">[]</span></h4>
 							<p>A new array of values from the given object.</p>
 							<h4 id="example">Example</h4>
-							<pre><code class="lang-typescript"><span class="hljs-keyword">import</span> { iter, toArray } <span class="hljs-keyword">from</span> <span class="hljs-string">'@phosphor/algorithm'</span>;
+							<pre><code class="language-typescript"><span class="hljs-keyword">import</span> { iter, toArray } <span class="hljs-keyword">from</span> <span class="hljs-string">'@phosphor/algorithm'</span>;
 
 <span class="hljs-keyword">let</span> data = [<span class="hljs-number">1</span>, <span class="hljs-number">2</span>, <span class="hljs-number">3</span>, <span class="hljs-number">4</span>, <span class="hljs-number">5</span>, <span class="hljs-number">6</span>];
 
 <span class="hljs-keyword">let</span> stream = iter(data);
 
-toArray(stream);  <span class="hljs-comment">// [1, 2, 3, 4, 5, 6];</span>
-</code></pre>
+toArray(stream);  <span class="hljs-comment">// [1, 2, 3, 4, 5, 6];</span></code></pre>
 						</li>
 					</ul>
 				</section>
@@ -1510,7 +1493,7 @@ toArray(stream);  <span class="hljs-comment">// [1, 2, 3, 4, 5, 6];</span>
 						<li class="tsd-description">
 							<aside class="tsd-sources">
 								<ul>
-									<li>Defined in <a href="https://github.com/phosphorjs/phosphor/blob/1b1dfe3/packages/algorithm/src/sort.ts#L39">sort.ts:39</a></li>
+									<li>Defined in <a href="https://github.com/phosphorjs/phosphor/blob/c832b0c3/packages/algorithm/src/sort.ts#L39">sort.ts:39</a></li>
 								</ul>
 							</aside>
 							<div class="tsd-comment tsd-typography">
@@ -1540,7 +1523,7 @@ toArray(stream);  <span class="hljs-comment">// [1, 2, 3, 4, 5, 6];</span>
 							<p>If a cycle is present in the graph, the cycle will be ignored and
 							the return value will be only approximately sorted.</p>
 							<h4 id="example">Example</h4>
-							<p>```typescript
+							<p><code>`</code>typescript
 							import { topologicSort } from &#39;@phosphor/algorithm&#39;;</p>
 							<p>let data = [
 								[&#39;d&#39;, &#39;e&#39;],
@@ -1562,7 +1545,7 @@ toArray(stream);  <span class="hljs-comment">// [1, 2, 3, 4, 5, 6];</span>
 						<li class="tsd-description">
 							<aside class="tsd-sources">
 								<ul>
-									<li>Defined in <a href="https://github.com/phosphorjs/phosphor/blob/1b1dfe3/packages/algorithm/src/zip.ts#L35">zip.ts:35</a></li>
+									<li>Defined in <a href="https://github.com/phosphorjs/phosphor/blob/c832b0c3/packages/algorithm/src/zip.ts#L35">zip.ts:35</a></li>
 								</ul>
 							</aside>
 							<div class="tsd-comment tsd-typography">
@@ -1590,15 +1573,14 @@ toArray(stream);  <span class="hljs-comment">// [1, 2, 3, 4, 5, 6];</span>
 								each value is taken in turn from the provided iterables. It will
 							be as long as the shortest provided iterable.</p>
 							<h4 id="example">Example</h4>
-							<pre><code class="lang-typescript"><span class="hljs-keyword">import</span> { zip, toArray } <span class="hljs-keyword">from</span> <span class="hljs-string">'@phosphor/algorithm'</span>;
+							<pre><code class="language-typescript"><span class="hljs-keyword">import</span> { zip, toArray } <span class="hljs-keyword">from</span> <span class="hljs-string">'@phosphor/algorithm'</span>;
 
 <span class="hljs-keyword">let</span> data1 = [<span class="hljs-number">1</span>, <span class="hljs-number">2</span>, <span class="hljs-number">3</span>];
 <span class="hljs-keyword">let</span> data2 = [<span class="hljs-number">4</span>, <span class="hljs-number">5</span>, <span class="hljs-number">6</span>];
 
 <span class="hljs-keyword">let</span> stream = zip(data1, data2);
 
-toArray(stream);  <span class="hljs-comment">// [[1, 4], [2, 5], [3, 6]]</span>
-</code></pre>
+toArray(stream);  <span class="hljs-comment">// [[1, 4], [2, 5], [3, 6]]</span></code></pre>
 						</li>
 					</ul>
 				</section>
@@ -1662,10 +1644,10 @@ toArray(stream);  <span class="hljs-comment">// [[1, 4], [2, 5], [3, 6]]</span>
 					<li class=" tsd-kind-interface tsd-has-type-parameter">
 						<a href="interfaces/iretroable.html" class="tsd-kind-icon">IRetroable</a>
 					</li>
-					<li class=" tsd-kind-type-alias">
+					<li class=" tsd-kind-type-alias tsd-has-type-parameter">
 						<a href="globals.html#iterableorarraylike" class="tsd-kind-icon">Iterable<wbr>OrArray<wbr>Like</a>
 					</li>
-					<li class=" tsd-kind-type-alias">
+					<li class=" tsd-kind-type-alias tsd-has-type-parameter">
 						<a href="globals.html#retroableorarraylike" class="tsd-kind-icon">Retroable<wbr>OrArray<wbr>Like</a>
 					</li>
 					<li class=" tsd-kind-function tsd-has-type-parameter">
