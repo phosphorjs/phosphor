@@ -1,6 +1,6 @@
 {
   "name": "@phosphor/messaging",
-  "version": "1.2.3",
+  "version": "1.3.0",
   "description": "PhosphorJS - Message Passing",
   "homepage": "https://github.com/phosphorjs/phosphor",
   "bugs": {
@@ -40,8 +40,8 @@
     "watch": "tsc --build --watch"
   },
   "dependencies": {
-    "@phosphor/algorithm": "^1.1.3",
-    "@phosphor/collections": "^1.1.3"
+    "@phosphor/algorithm": "^1.2.0",
+    "@phosphor/collections": "^1.2.0"
   },
   "devDependencies": {
     "@types/chai": "^3.4.35",
