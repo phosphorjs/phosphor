@@ -13,9 +13,9 @@ import {
   ElementExt
 } from '@phosphor/domutils';
 
-// import {
-//   Drag
-// } from '@phosphor/dragdrop';
+import {
+  Drag
+} from '@phosphor/dragdrop';
 
 import {
   ConflatableMessage, IMessageHandler, Message, MessageLoop
@@ -83,10 +83,10 @@ class DataGrid extends Widget {
 
     // Parse the default sizes.
     let defaultSizes = options.defaultSizes || DataGrid.defaultSizes;
-    let rh = defaultSizes.rowHeight;
-    let cw = defaultSizes.columnWidth;
-    let rhw = defaultSizes.rowHeaderWidth;
-    let chh = defaultSizes.columnHeaderHeight;
+    let rh = Private.clampSectionSize(defaultSizes.rowHeight);
+    let cw = Private.clampSectionSize(defaultSizes.columnWidth);
+    let rhw = Private.clampSectionSize(defaultSizes.rowHeaderWidth);
+    let chh = Private.clampSectionSize(defaultSizes.columnHeaderHeight);
 
     // Set up the sections lists.
     this._rowSections = new SectionList({ defaultSize: rh });
@@ -200,6 +200,9 @@ class DataGrid extends Widget {
     if (this._model === value) {
       return;
     }
+
+    // Release the mouse.
+    this._releaseMouse();
 
     // Disconnect the change handler from the old model.
     if (this._model) {
@@ -352,11 +355,17 @@ class DataGrid extends Widget {
    * Set the default sizes for the various sections of the data grid.
    */
   set defaultSizes(value: DataGrid.DefaultSizes) {
+    // Clamp the sizes.
+    let rh = Private.clampSectionSize(value.rowHeight);
+    let cw = Private.clampSectionSize(value.columnWidth);
+    let rhw = Private.clampSectionSize(value.rowHeaderWidth);
+    let chh = Private.clampSectionSize(value.columnHeaderHeight);
+
     // Update the section default sizes.
-    this._rowSections.defaultSize = value.rowHeight;
-    this._columnSections.defaultSize = value.columnWidth;
-    this._rowHeaderSections.defaultSize = value.rowHeaderWidth;
-    this._columnHeaderSections.defaultSize = value.columnHeaderHeight;
+    this._rowSections.defaultSize = rh;
+    this._columnSections.defaultSize = cw;
+    this._rowHeaderSections.defaultSize = rhw;
+    this._columnHeaderSections.defaultSize = chh;
 
     // Release the mouse.
     this._releaseMouse();
@@ -456,7 +465,7 @@ class DataGrid extends Widget {
       this._evtWheel(event as WheelEvent);
       break;
     case 'keydown':
-      //this._evtKeyDown(event as KeyboardEvent);
+      this._evtKeyDown(event as KeyboardEvent);
       break;
     case 'resize':
       this._refreshDPI();
@@ -909,6 +918,8 @@ class DataGrid extends Widget {
     case 'paint-request':
       this._onViewportPaintRequest(msg as Private.PaintRequest);
       break;
+    case 'section-resize-request':
+      this._onViewportSectionResizeRequest(msg);
     default:
       break;
     }
@@ -1027,6 +1038,71 @@ class DataGrid extends Widget {
 
     // Paint the dirty rect.
     this._paint(x1, y1, x2 - x1 + 1, y2 - y1 + 1);
+  }
+
+  /**
+   * A message hook invoked on a viewport `'section-resize-request'` message.
+   */
+  private _onViewportSectionResizeRequest(msg: Message): void {
+    // Bail early if no drag is in progress.
+    if (!this._pressData) {
+      return;
+    }
+
+    // Extract the press data.
+    let { hitTest, clientX, clientY } = this._pressData;
+
+    // Convert the mouse position to local coordinates.
+    let rect = this._viewport.node.getBoundingClientRect();
+    let x = clientX - rect.left;
+    let y = clientY - rect.top;
+
+    // Fetch the details for the hit test part.
+    let pos: number;
+    let delta: number;
+    let index: number;
+    let list: SectionList;
+    switch (hitTest.part) {
+    case 'column-header-h-resize-handle':
+      pos = x + this._scrollX - this._headerWidth;
+      delta = hitTest.x;
+      index = hitTest.column;
+      list = this._columnSections;
+      break;
+    case 'row-header-v-resize-handle':
+      pos = y + this._scrollY - this._headerHeight;
+      delta = hitTest.y;
+      index = hitTest.row;
+      list = this._rowSections;
+      break;
+    case 'column-header-v-resize-handle':
+    case 'corner-header-v-resize-handle':
+      pos = y;
+      delta = hitTest.y;
+      index = hitTest.row;
+      list = this._columnHeaderSections;
+      break;
+    case 'row-header-h-resize-handle':
+    case 'corner-header-h-resize-handle':
+      pos = x;
+      delta = hitTest.x;
+      index = hitTest.column;
+      list = this._rowHeaderSections;
+      break;
+    default:
+      return;
+    }
+
+    // Fetch the offset of the section to resize.
+    let offset = list.offsetOf(index);
+
+    // Bail if that section no longer exists.
+    if (offset < 0) {
+      return;
+    }
+
+    // Resize the section to the target size.
+    this._resizeSection(list, index, pos - delta - offset);
   }
 
   /**
@@ -1517,34 +1593,40 @@ class DataGrid extends Widget {
    * Handle the `'mousemove'` event for the data grid.
    */
   private _evtMouseMove(event: MouseEvent): void {
-    // When not dragging, dispatch to the hover handlers.
+    // Stop the event propagation.
+    event.preventDefault();
+    event.stopPropagation();
+
+    // Handle the hover behavior if a drag is not in progress.
     if (!this._pressData) {
       // Hit test the viewport.
-      let result = this._hitTest(event.clientX, event.clientY);
+      let hitTest = this._hitTest(event.clientX, event.clientY);
 
-      // Get the mouse cursor for the hit test part.
-      let cursor: string;
-      switch (result.part) {
-      case 'row-header-h-resize-handle':
-      case 'corner-header-h-resize-handle':
-      case 'column-header-h-resize-handle':
-        cursor = 'ew-resize';
-        break;
-      case 'row-header-v-resize-handle':
-      case 'column-header-v-resize-handle':
-      case 'corner-header-v-resize-handle':
-        cursor = 'ns-resize';
-        break;
-      default:
-        cursor = '';
-        break;
-      }
+      // Fetch the mouse cursor.
+      let cursor = Private.cursorForPart(hitTest.part);
 
       // Apply the cursor to the viewport.
       this._viewport.node.style.cursor = cursor;
 
       // Done
       return;
+    }
+
+    // Update the press data with the current mouse position.
+    this._pressData.clientX = event.clientX;
+    this._pressData.clientY = event.clientY;
+
+    // Dispatch the behavior based on the hit test part.
+    switch (this._pressData.hitTest.part) {
+    case 'row-header-h-resize-handle':
+    case 'row-header-v-resize-handle':
+    case 'column-header-h-resize-handle':
+    case 'column-header-v-resize-handle':
+    case 'corner-header-h-resize-handle':
+    case 'corner-header-v-resize-handle':
+      // Post a section resize request to prevent mouse event flooding.
+      MessageLoop.postMessage(this._viewport, Private.SectionResizeRequest);
+      break;
     }
   }
 
@@ -1583,24 +1665,39 @@ class DataGrid extends Widget {
       return;
     }
 
-    // // Hit test the viewport.
-    // let result = this._hitTest(event.clientX, event.clientY);
+    // Bail early if the alt key is held.
+    // TODO - support cell events
+    if (event.altKey) {
+      return;
+    }
 
-    // // Bail early if the position is out of the viewport bounds.
-    // if (!result) {
-    //   return;
-    // }
+    // Extract the client position.
+    let { clientX, clientY } = event;
 
-    // // Bail early if the alt key is held.
-    // if (event.altKey) {
-    //   return;
-    // }
+    // Hit test the viewport.
+    let hitTest = this._hitTest(clientX, clientY);
 
-    // // Add the extra document listeners.
-    // document.addEventListener('mousemove', this, true);
-    // document.addEventListener('mouseup', this, true);
-    // document.addEventListener('keydown', this, true);
-    // document.addEventListener('contextmenu', this, true);
+    // Stop the event propagation.
+    event.preventDefault();
+    event.stopPropagation();
+
+    // Clear the viewport cursor.
+    this._viewport.node.style.cursor = '';
+
+    // Fetch the mouse cursor.
+    let cursor = Private.cursorForPart(hitTest.part);
+
+    // Override the document cursor.
+    let override = Drag.overrideCursor(cursor);
+
+    // Set up the press data.
+    this._pressData = { hitTest, clientX, clientY, override };
+
+    // Add the extra document listeners.
+    document.addEventListener('mousemove', this, true);
+    document.addEventListener('mouseup', this, true);
+    document.addEventListener('keydown', this, true);
+    document.addEventListener('contextmenu', this, true);
   }
 
   /**
@@ -1618,6 +1715,8 @@ class DataGrid extends Widget {
 
     // Finalize the mouse release.
     this._releaseMouse();
+
+    // TODO - test for viewport hover?
   }
 
   /**
@@ -1660,6 +1759,25 @@ class DataGrid extends Widget {
 
     // Scroll by the desired amount.
     this._scrollBy(dx, dy);
+  }
+
+  /**
+   * Handle the `'keydown'` event for the data grid.
+   */
+  private _evtKeyDown(event: KeyboardEvent): void {
+    // Bail early if a drag is not in progress.
+    if (!this._pressData) {
+      return;
+    }
+
+    // Stop input events during drag.
+    event.preventDefault();
+    event.stopPropagation();
+
+    // Release the mouse if `Escape` is pressed.
+    if (event.keyCode === 27) {
+      this._releaseMouse();
+    }
   }
 
   /**
@@ -1743,24 +1861,36 @@ class DataGrid extends Widget {
       let x2 = ox + w - vx - 1;
       let y2 = oy + h - vy - 1;
 
-      // Compute the hit test part.
+      // Compute the hit test part and coordinates.
+      let x: number;
+      let y: number;
       let part: Private.HitTestPart;
       if (rrh && (column > 0 && x1 < lrw)) {
         part = 'corner-header-h-resize-handle';
         column--;
+        x = x1;
+        y = y1;
       } else if (rrh && (x2 < trw)) {
         part = 'corner-header-h-resize-handle';
+        x = -x2;
+        y = y1;
       } else if (rch && (row > 0 && y1 < lrw)) {
         part = 'corner-header-v-resize-handle';
         row--;
+        x = x1;
+        y = y1;
       } else if (rch && (y2 < trw)) {
         part = 'corner-header-v-resize-handle';
+        x = x1;
+        y = -y2;
       } else {
         part = 'corner-header-cell';
+        x = x1;
+        y = y1;
       }
 
       // Return the result.
-      return { part, row, column };
+      return { part, row, column, x, y };
     }
 
     // Check for a column header hit.
@@ -1787,24 +1917,36 @@ class DataGrid extends Widget {
       let x2 = ox + w - vx - 1;
       let y2 = oy + h - vy - 1;
 
-      // Compute the hit test part.
+      // Compute the hit test part and coordinates.
+      let x: number;
+      let y: number;
       let part: Private.HitTestPart;
       if (rc && (column > 0 && x1 < lrw)) {
         part = 'column-header-h-resize-handle';
         column--;
+        x = x1;
+        y = y1;
       } else if (rc && (x2 < trw)) {
         part = 'column-header-h-resize-handle';
+        x = -x2;
+        y = y1;
       } else if (rch && (row > 0 && y1 < lrw)) {
         part = 'column-header-v-resize-handle';
         row--;
+        x = x1;
+        y = y1;
       } else if (rch && (y2 < trw)) {
         part = 'column-header-v-resize-handle';
+        x = x1;
+        y = -y2;
       } else {
         part = 'column-header-cell';
+        x = x1;
+        y = y1;
       }
 
       // Return the result.
-      return { part, row, column };
+      return { part, row, column, x, y };
     }
 
     // Check for a row header hit.
@@ -1831,24 +1973,36 @@ class DataGrid extends Widget {
       let x2 = ox + w - vx - 1;
       let y2 = oy + h - vy - 1;
 
-      // Compute the hit test part.
+      // Compute the hit test part and coordinates.
+      let x: number;
+      let y: number;
       let part: Private.HitTestPart;
       if (rrh && (column > 0 && x1 < lrw)) {
         part = 'row-header-h-resize-handle';
         column--;
+        x = x1;
+        y = y1;
       } else if (rrh && (x2 < trw)) {
         part = 'row-header-h-resize-handle';
+        x = -x2;
+        y = y1;
       } else if (rr && (row > 0 && y1 < lrw)) {
         part = 'row-header-v-resize-handle';
         row--;
+        x = x1;
+        y = y1;
       } else if (rr && (y2 < trw)) {
         part = 'row-header-v-resize-handle';
+        x = x1;
+        y = -y2;
       } else {
         part = 'row-header-cell';
+        x = x1;
+        y = y1;
       }
 
       // Return the result.
-      return { part, row, column };
+      return { part, row, column, x, y };
     }
 
     // Check for a body hit.
@@ -1861,12 +2015,281 @@ class DataGrid extends Widget {
       let row = this._rowSections.indexOf(vy);
       let column = this._columnSections.indexOf(vx);
 
+      // Fetch the cell offset position.
+      let ox = this._rowHeaderSections.offsetOf(column);
+      let oy = this._rowSections.offsetOf(row);
+
+      // Compute the part coordinates.
+      let x = vx - ox;
+      let y = vy - oy;
+
       // Return the result.
-      return { part: 'body-cell', row, column };
+      return { part: 'body-cell', row, column, x, y };
     }
 
     // Otherwise, it's a void space hit.
-    return { part: 'void-space', row: -1, column: -1 };
+    return { part: 'void-space', row: -1, column: -1, x: -1, y: -1 };
+  }
+
+  /**
+   * Resize a section in the given section list.
+   *
+   * #### Notes
+   * This will update the scroll bars and repaint as needed.
+   */
+  private _resizeSection(list: SectionList, index: number, size: number): void {
+    // Bail early if the index is out of range.
+    if (index < 0 || index >= list.count) {
+      return;
+    }
+
+    // Look up the old size of the section.
+    let oldSize = list.sizeOf(index);
+
+    // Normalize the new size of the section.
+    let newSize = Private.clampSectionSize(size);
+
+    // Bail early if the size does not change.
+    if (oldSize === newSize) {
+      return;
+    }
+
+    // Resize the section in the list.
+    list.resize(index, newSize);
+
+    // Get the current size of the viewport.
+    let vpWidth = this._viewportWidth;
+    let vpHeight = this._viewportHeight;
+
+    // If there is nothing to paint, sync the scroll state.
+    if (!this._viewport.isVisible || vpWidth === 0 || vpHeight === 0) {
+      this._syncScrollState();
+      return;
+    }
+
+    // If a paint is already pending, sync the viewport.
+    if (this._paintPending) {
+      this._syncViewport();
+      return;
+    }
+
+    // Compute the size delta.
+    let delta = newSize - oldSize;
+
+    // Paint the relevant dirty regions.
+    switch (list) {
+    case this._rowSections:
+    {
+      // Look up the column header height.
+      let hh = this._headerHeight;
+
+      // Compute the viewport offset of the section.
+      let offset = list.offsetOf(index) + hh - this._scrollY;
+
+      // Bail early if there is nothing to paint.
+      if (hh >= vpHeight || offset > vpHeight) {
+        break;
+      }
+
+      // Update the scroll position if the section is not visible.
+      if (offset + oldSize <= hh) {
+        this._scrollY += delta;
+        break;
+      }
+
+      // Compute the paint origin of the section.
+      let pos = Math.max(hh, offset);
+
+      // Paint from the section onward if it spans the viewport.
+      if (offset + oldSize >= vpHeight || offset + newSize >= vpHeight) {
+        this._paint(0, pos, vpWidth, vpHeight - pos);
+        break;
+      }
+
+      // Compute the X blit dimensions.
+      let sx = 0;
+      let sw = vpWidth;
+      let dx = 0;
+
+      // Compute the Y blit dimensions.
+      let sy: number;
+      let sh: number;
+      let dy: number;
+      if (offset + newSize <= hh) {
+        sy = hh - delta;
+        sh = vpHeight - sy;
+        dy = hh;
+      } else {
+        sy = offset + oldSize;
+        sh = vpHeight - sy;
+        dy = sy + delta;
+      }
+
+      // Blit the valid content to the destination.
+      this._blit(this._canvas, sx, sy, sw, sh, dx, dy);
+
+      // Repaint the section if needed.
+      if (newSize > 0 && offset + newSize > hh) {
+        this._paint(0, pos, vpWidth, offset + newSize - pos);
+      }
+
+      // Paint the trailing space if needed.
+      if (delta < 0) {
+        this._paint(0, vpHeight + delta, vpWidth, -delta);
+      }
+
+      // Done.
+      break;
+    }
+    case this._columnSections:
+    {
+      // Look up the row header width.
+      let hw = this._headerWidth;
+
+      // Compute the viewport offset of the section.
+      let offset = list.offsetOf(index) + hw - this._scrollX;
+
+      // Bail early if there is nothing to paint.
+      if (hw >= vpWidth || offset > vpWidth) {
+        break;
+      }
+
+      // Update the scroll position if the section is not visible.
+      if (offset + oldSize <= hw) {
+        this._scrollX += delta;
+        break;
+      }
+
+      // Compute the paint origin of the section.
+      let pos = Math.max(hw, offset);
+
+      // Paint from the section onward if it spans the viewport.
+      if (offset + oldSize >= vpWidth || offset + newSize >= vpWidth) {
+        this._paint(pos, 0, vpWidth - pos, vpHeight);
+        break;
+      }
+
+      // Compute the Y blit dimensions.
+      let sy = 0;
+      let sh = vpHeight;
+      let dy = 0;
+
+      // Compute the X blit dimensions.
+      let sx: number;
+      let sw: number;
+      let dx: number;
+      if (offset + newSize <= hw) {
+        sx = hw - delta;
+        sw = vpWidth - sx;
+        dx = hw;
+      } else {
+        sx = offset + oldSize;
+        sw = vpWidth - sx;
+        dx = sx + delta;
+      }
+
+      // Blit the valid content to the destination.
+      this._blit(this._canvas, sx, sy, sw, sh, dx, dy);
+
+      // Repaint the section if needed.
+      if (newSize > 0 && offset + newSize > hw) {
+        this._paint(pos, 0, offset + newSize - pos, vpHeight);
+      }
+
+      // Paint the trailing space if needed.
+      if (delta < 0) {
+        this._paint(vpWidth + delta, 0, -delta, vpHeight);
+      }
+
+      // Done.
+      break;
+    }
+    case this._rowHeaderSections:
+    {
+      // Look up the offset of the section.
+      let offset = list.offsetOf(index);
+
+      // Bail early if the section is fully outside the viewport.
+      if (offset >= vpWidth) {
+        break;
+      }
+
+      // Paint the entire tail if the section spans the viewport.
+      if (offset + oldSize >= vpWidth || offset + newSize >= vpWidth) {
+        this._paint(offset, 0, vpWidth - offset, vpHeight);
+        break;
+      }
+
+      // Compute the blit content dimensions.
+      let sx = offset + oldSize;
+      let sy = 0;
+      let sw = vpWidth - sx;
+      let sh = vpHeight;
+      let dx = sx + delta;
+      let dy = 0;
+
+      // Blit the valid contents to the destination.
+      this._blit(this._canvas, sx, sy, sw, sh, dx, dy);
+
+      // Repaint the header section if needed.
+      if (newSize > 0) {
+        this._paint(offset, 0, newSize, vpHeight);
+      }
+
+      // Paint the trailing space if needed.
+      if (delta < 0) {
+        this._paint(vpWidth + delta, 0, -delta, vpHeight);
+      }
+
+      // Done
+      break;
+    }
+    case this._columnHeaderSections:
+    {
+      // Look up the offset of the section.
+      let offset = list.offsetOf(index);
+
+      // Bail early if the section is fully outside the viewport.
+      if (offset >= vpHeight) {
+        break;
+      }
+
+      // Paint the entire tail if the section spans the viewport.
+      if (offset + oldSize >= vpHeight || offset + newSize >= vpHeight) {
+        this._paint(0, offset, vpWidth, vpHeight - offset);
+        break;
+      }
+
+      // Compute the blit content dimensions.
+      let sx = 0;
+      let sy = offset + oldSize;
+      let sw = vpWidth;
+      let sh = vpHeight - sy;
+      let dx = 0;
+      let dy = sy + delta;
+
+      // Blit the valid contents to the destination.
+      this._blit(this._canvas, sx, sy, sw, sh, dx, dy);
+
+      // Repaint the header section if needed.
+      if (newSize > 0) {
+        this._paint(0, offset, vpWidth, newSize);
+      }
+
+      // Paint the trailing space if needed.
+      if (delta < 0) {
+        this._paint(0, vpHeight + delta, vpWidth, -delta);
+      }
+
+      // Done
+      break;
+    }
+    default:
+      throw 'unreachable';
+    }
+
+    // Sync the scroll state after painting.
+    this._syncScrollState();
   }
 
   /**
@@ -3156,6 +3579,18 @@ namespace Private {
   const ScrollRequest = new ConflatableMessage('scroll-request');
 
   /**
+   * A singleton `section-resize-request` conflatable message.
+   */
+  export
+  const SectionResizeRequest = new ConflatableMessage('section-resize-request');
+
+  /**
+   * The minimum size for a section in the data grid.
+   */
+  export
+  const MIN_SECTION_SIZE = 10;
+
+  /**
    * The width of the header cell leading resize handle.
    */
   export
@@ -3172,6 +3607,14 @@ namespace Private {
   //  */
   // export
   // const GRAB_WIDTH = 5;
+
+  /**
+   * Clamp and normalize a section size.
+   */
+  export
+  function clampSectionSize(size: number): number {
+    return Math.max(MIN_SECTION_SIZE, Math.floor(size));
+  }
 
   /**
    * Create a new zero-sized canvas element.
@@ -3349,17 +3792,6 @@ namespace Private {
   }
 
   /**
-   * An object which holds the transient mouse press data.
-   */
-  export
-  type PressData = {
-    /**
-     *
-     */
-    override: IDisposable;
-  };
-
-  /**
    * A type which designates the data grid hit test parts.
    */
   export
@@ -3439,5 +3871,66 @@ namespace Private {
      * The column index of the cell that was hit.
      */
     column: number;
+
+    /**
+     * The X coordinate of the mouse in part coordinates.
+     */
+    x: number;
+
+    /**
+     * The Y coordinate of the mouse in part coordinates.
+     */
+    y: number;
+  };
+
+  /**
+   * An object which holds the transient mouse press data.
+   */
+  export
+  type PressData = {
+    /**
+     * The result of the mouse down hit test.
+     */
+    hitTest: HitTestResult;
+
+    /**
+     * The most recent client X position of the mouse.
+     */
+    clientX: number;
+
+    /**
+     * The most recent client Y position of the mouse.
+     */
+    clientY: number;
+
+    /**
+     * The cursor override.
+     */
+    override: IDisposable;
+  };
+
+  /**
+   * Get the mouse cursor for a hit test part.
+   */
+  export
+  function cursorForPart(part: HitTestPart): string {
+    return cursorTable[part];
+  }
+
+  /**
+   * A mapping of hit test part to mouse cursor.
+   */
+  const cursorTable = {
+    'body-cell': '',
+    'void-space': '',
+    'row-header-cell': '',
+    'column-header-cell': '',
+    'corner-header-cell': '',
+    'row-header-h-resize-handle': 'ew-resize',
+    'column-header-h-resize-handle': 'ew-resize',
+    'corner-header-h-resize-handle': 'ew-resize',
+    'row-header-v-resize-handle': 'ns-resize',
+    'column-header-v-resize-handle': 'ns-resize',
+    'corner-header-v-resize-handle': 'ns-resize'
   };
 }
