@@ -6,8 +6,16 @@
 | The full license is in the file LICENSE, distributed with this software.
 |----------------------------------------------------------------------------*/
 import {
+  IDisposable
+} from '@phosphor/disposable';
+
+import {
   ElementExt
 } from '@phosphor/domutils';
+
+// import {
+//   Drag
+// } from '@phosphor/dragdrop';
 
 import {
   ConflatableMessage, IMessageHandler, Message, MessageLoop
@@ -439,10 +447,10 @@ class DataGrid extends Widget {
       this._evtMouseOut(event as MouseEvent);
       break;
     case 'mousedown':
-      //this._evtMouseDown(event as MouseEvent);
+      this._evtMouseDown(event as MouseEvent);
       break;
     case 'mouseup':
-      //this._evtMouseUp(event as MouseEvent);
+      this._evtMouseUp(event as MouseEvent);
       break;
     case 'wheel':
       this._evtWheel(event as WheelEvent);
@@ -1514,23 +1522,26 @@ class DataGrid extends Widget {
       // Hit test the viewport.
       let result = this._hitTest(event.clientX, event.clientY);
 
-      // Dispatch to the appropriate hover handler.
-      switch (result.region) {
-      case 'body':
-        this._hoverBody(result);
+      // Get the mouse cursor for the hit test part.
+      let cursor: string;
+      switch (result.part) {
+      case 'row-header-h-resize-handle':
+      case 'corner-header-h-resize-handle':
+      case 'column-header-h-resize-handle':
+        cursor = 'ew-resize';
         break;
-      case 'row-header':
-        this._hoverRowHeader(result);
-        break;
-      case 'column-header':
-        this._hoverColumnHeader(result);
-        break;
-      case 'corner-header':
-        this._hoverCornerHeader(result);
+      case 'row-header-v-resize-handle':
+      case 'column-header-v-resize-handle':
+      case 'corner-header-v-resize-handle':
+        cursor = 'ns-resize';
         break;
       default:
+        cursor = '';
         break;
       }
+
+      // Apply the cursor to the viewport.
+      this._viewport.node.style.cursor = cursor;
 
       // Done
       return;
@@ -1546,7 +1557,7 @@ class DataGrid extends Widget {
       return;
     }
 
-    // Otherwise, treat the mousein event the same as a mouse move.
+    // Otherwise, treat the event the same as a mouse move.
     this._evtMouseMove(event);
   }
 
@@ -1560,17 +1571,63 @@ class DataGrid extends Widget {
     }
 
     // Otherwise, clear the viewport cursor.
-    this._setViewportCursor('');
+    this._viewport.node.style.cursor = '';
+  }
+
+  /**
+   * Handle the `'mousedown'` event for the data grid.
+   */
+  private _evtMouseDown(event: MouseEvent): void {
+    // Do nothing if the left mouse button is not pressed.
+    if (event.button !== 0) {
+      return;
+    }
+
+    // // Hit test the viewport.
+    // let result = this._hitTest(event.clientX, event.clientY);
+
+    // // Bail early if the position is out of the viewport bounds.
+    // if (!result) {
+    //   return;
+    // }
+
+    // // Bail early if the alt key is held.
+    // if (event.altKey) {
+    //   return;
+    // }
+
+    // // Add the extra document listeners.
+    // document.addEventListener('mousemove', this, true);
+    // document.addEventListener('mouseup', this, true);
+    // document.addEventListener('keydown', this, true);
+    // document.addEventListener('contextmenu', this, true);
+  }
+
+  /**
+   * Handle the `'mouseup'` event for the data grid.
+   */
+  private _evtMouseUp(event: MouseEvent): void {
+    // Do nothing if the left mouse button is not released.
+    if (event.button !== 0) {
+      return;
+    }
+
+    // Stop the event when releasing the mouse.
+    event.preventDefault();
+    event.stopPropagation();
+
+    // Finalize the mouse release.
+    this._releaseMouse();
   }
 
   /**
    * Handle the `'wheel'` event for the data grid.
    */
   private _evtWheel(event: WheelEvent): void {
-    // Do nothing if a drag is in progress.
-    // if (this._pressData) {
-    //   return;
-    // }
+    // TODO handle wheel while dragging!!!!
+    if (this._pressData) {
+      return;
+    }
 
     // Do nothing if the `Ctrl` key is held.
     if (event.ctrlKey) {
@@ -1615,7 +1672,7 @@ class DataGrid extends Widget {
     }
 
     // Clear the press data and cursor override.
-    //this._pressData.override.dispose();
+    this._pressData.override.dispose();
     this._pressData = null;
 
     // Remove the extra document listeners.
@@ -1626,111 +1683,15 @@ class DataGrid extends Widget {
   }
 
   /**
-   *
-   */
-  private _hoverBody(result: Private.HitTestResult): void {
-    //
-    this._setViewportCursor('');
-  }
-
-  /**
-   *
-   */
-  private _hoverRowHeader(result: Private.HitTestResult): void {
-    //
-    if (result.row < 0) {
-      this._setViewportCursor('');
-      return;
-    }
-
-    //
-    let offsetY = this._rowSections.offsetOf(result.row);
-
-    //
-    let dy = result.virtualY - offsetY;
-
-    //
-    if (dy >= 0 && dy <= 2) {
-      this._setViewportCursor('ns-resize');
-      return;
-    }
-
-    //
-    let height = this._rowSections.sizeOf(result.row);
-
-    //
-    dy = offsetY + height - result.virtualY;
-
-    //
-    if (dy >= 0 && dy <= 2) {
-      this._setViewportCursor('ns-resize');
-      return;
-    }
-
-    //
-    this._setViewportCursor('');
-  }
-
-  /**
-   *
-   */
-  private _hoverColumnHeader(result: Private.HitTestResult): void {
-    //
-    if (result.column < 0) {
-      this._setViewportCursor('');
-      return;
-    }
-
-    //
-    let offsetX = this._columnSections.offsetOf(result.column);
-
-    //
-    let dx = result.virtualX - offsetX;
-
-    //
-    if (dx >= 0 && dx <=2) {
-      this._setViewportCursor('ew-resize');
-      return;
-    }
-
-    //
-    let width = this._columnSections.sizeOf(result.column);
-
-    //
-    dx = offsetX + width - result.virtualX;
-
-    //
-    if (dx >= 0 && dx <=2) {
-      this._setViewportCursor('ew-resize');
-      return;
-    }
-
-    //
-    this._setViewportCursor('');
-  }
-
-  /**
-   *
-   */
-  private _hoverCornerHeader(result: Private.HitTestResult): void {
-
-  }
-
-  /**
-   *
-   */
-  private _setViewportCursor(cursor: string): void {
-    this._viewport.node.style.cursor = cursor;
-  }
-
-  /**
    * Hit test the viewport for the given client position.
+   *
+   * The client position must be within the viewport bounds.
    */
   private _hitTest(clientX: number, clientY: number): Private.HitTestResult {
     // Fetch the viewport rect.
     let rect = this._viewport.node.getBoundingClientRect();
 
-    // Sanity check the viewport bounds.
+    // Bail early if the position is out of the viewport bounds.
     if (clientX < rect.left || clientY < rect.top) {
       throw '_hitTest() out of bounds';
     }
@@ -1739,67 +1700,173 @@ class DataGrid extends Widget {
     }
 
     // Convert the mouse position into local coordinates.
-    let localX = clientX - rect.left;
-    let localY = clientY - rect.top;
+    let lx = clientX - rect.left;
+    let ly = clientY - rect.top;
 
-    // Fetch the header dimensions.
-    let headerWidth = this._headerWidth;
-    let headerHeight = this._headerHeight;
+    // Fetch the header and body dimensions.
+    let hw = this._headerWidth;
+    let hh = this._headerHeight;
+    let bw = this._bodyWidth;
+    let bh = this._bodyHeight;
 
-    // Check for a corner hit.
-    if (localX < headerWidth && localY < headerHeight) {
+    // Fetch the behaviors flags
+    let rr = this._behaviors.resizableRows;
+    let rc = this._behaviors.resizableColumns;
+    let rrh = this._behaviors.resizableRowHeaders;
+    let rch = this._behaviors.resizableColumnHeaders;
+
+    // Fetch the size constants.
+    let lrw = Private.LEADING_RESIZE_WIDTH;
+    let trw = Private.TRAILING_RESIZE_WIDTH;
+
+    // Check for a corner header hit.
+    if (lx < hw && ly < hh) {
       // Convert to unscrolled virtual coordinates.
-      let virtualX = localX;
-      let virtualY = localY;
+      let vx = lx;
+      let vy = ly;
 
       // Fetch the row and column index.
-      let row = this._columnHeaderSections.indexOf(virtualY);
-      let column = this._rowHeaderSections.indexOf(virtualX);
+      let row = this._columnHeaderSections.indexOf(vy);
+      let column = this._rowHeaderSections.indexOf(vx);
+
+      // Fetch the cell offset position.
+      let ox = this._rowHeaderSections.offsetOf(column);
+      let oy = this._columnHeaderSections.offsetOf(row);
+
+      // Fetch cell width and height.
+      let w = this._rowHeaderSections.sizeOf(column);
+      let h = this._columnHeaderSections.sizeOf(row);
+
+      // Compute the leading and trailing positions.
+      let x1 = vx - ox;
+      let y1 = vy - oy;
+      let x2 = ox + w - vx - 1;
+      let y2 = oy + h - vy - 1;
+
+      // Compute the hit test part.
+      let part: Private.HitTestPart;
+      if (rrh && (column > 0 && x1 < lrw)) {
+        part = 'corner-header-h-resize-handle';
+        column--;
+      } else if (rrh && (x2 < trw)) {
+        part = 'corner-header-h-resize-handle';
+      } else if (rch && (row > 0 && y1 < lrw)) {
+        part = 'corner-header-v-resize-handle';
+        row--;
+      } else if (rch && (y2 < trw)) {
+        part = 'corner-header-v-resize-handle';
+      } else {
+        part = 'corner-header-cell';
+      }
 
       // Return the result.
-      return { region: 'corner-header', row, column, virtualX, virtualY };
-    }
-
-    // Check for a row header hit.
-    if (localX < headerWidth) {
-      // Convert to unscrolled virtual coordinates.
-      let virtualX = localX
-      let virtualY = localY + this._scrollY - headerHeight;
-
-      // Fetch the row and column index.
-      let row = this._rowSections.indexOf(virtualY);
-      let column = this._rowHeaderSections.indexOf(virtualX);
-
-      // Return the result.
-      return { region: 'row-header', row, column, virtualX, virtualY }
+      return { part, row, column };
     }
 
     // Check for a column header hit.
-    if (localY < headerHeight) {
+    if (ly < hh && lx < (hw + bw)) {
       // Convert to unscrolled virtual coordinates.
-      let virtualX = localX + this._scrollX - headerWidth;
-      let virtualY = localY
+      let vx = lx + this._scrollX - hw;
+      let vy = ly
 
       // Fetch the row and column index.
-      let row = this._columnHeaderSections.indexOf(virtualY);
-      let column = this._columnSections.indexOf(virtualX);
+      let row = this._columnHeaderSections.indexOf(vy);
+      let column = this._columnSections.indexOf(vx);
+
+      // Fetch the cell offset position.
+      let ox = this._columnSections.offsetOf(column);
+      let oy = this._columnHeaderSections.offsetOf(row);
+
+      // Fetch the cell width and height.
+      let w = this._columnSections.sizeOf(column);
+      let h = this._columnHeaderSections.sizeOf(row);
+
+      // Compute the leading and trailing positions.
+      let x1 = vx - ox;
+      let y1 = vy - oy;
+      let x2 = ox + w - vx - 1;
+      let y2 = oy + h - vy - 1;
+
+      // Compute the hit test part.
+      let part: Private.HitTestPart;
+      if (rc && (column > 0 && x1 < lrw)) {
+        part = 'column-header-h-resize-handle';
+        column--;
+      } else if (rc && (x2 < trw)) {
+        part = 'column-header-h-resize-handle';
+      } else if (rch && (row > 0 && y1 < lrw)) {
+        part = 'column-header-v-resize-handle';
+        row--;
+      } else if (rch && (y2 < trw)) {
+        part = 'column-header-v-resize-handle';
+      } else {
+        part = 'column-header-cell';
+      }
 
       // Return the result.
-      return { region: 'column-header', row, column, virtualX, virtualY };
+      return { part, row, column };
     }
 
-    // Otherwise, it's a body hit.
+    // Check for a row header hit.
+    if (lx < hw && ly < (hh + bh)) {
+      // Convert to unscrolled virtual coordinates.
+      let vx = lx
+      let vy = ly + this._scrollY - hh;
 
-    // Convert to unscrolled virtual coordinates.
-    let virtualX = localX + this._scrollX - headerWidth;
-    let virtualY = localY + this._scrollY - headerHeight;
+      // Fetch the row and column index.
+      let row = this._rowSections.indexOf(vy);
+      let column = this._rowHeaderSections.indexOf(vx);
 
-    // Fetch the row and column index.
-    let row = this._rowSections.indexOf(virtualY);
-    let column = this._columnSections.indexOf(virtualX);
+      // Fetch the cell offset position.
+      let ox = this._rowHeaderSections.offsetOf(column);
+      let oy = this._rowSections.offsetOf(row);
 
-    // Return the result.
-    return { region: 'body', row, column, virtualX, virtualY };
+      // Fetch the cell width and height.
+      let w = this._rowHeaderSections.sizeOf(column);
+      let h = this._rowSections.sizeOf(row);
+
+      // Compute the leading and trailing positions.
+      let x1 = vx - ox;
+      let y1 = vy - oy;
+      let x2 = ox + w - vx - 1;
+      let y2 = oy + h - vy - 1;
+
+      // Compute the hit test part.
+      let part: Private.HitTestPart;
+      if (rrh && (column > 0 && x1 < lrw)) {
+        part = 'row-header-h-resize-handle';
+        column--;
+      } else if (rrh && (x2 < trw)) {
+        part = 'row-header-h-resize-handle';
+      } else if (rr && (row > 0 && y1 < lrw)) {
+        part = 'row-header-v-resize-handle';
+        row--;
+      } else if (rr && (y2 < trw)) {
+        part = 'row-header-v-resize-handle';
+      } else {
+        part = 'row-header-cell';
+      }
+
+      // Return the result.
+      return { part, row, column };
+    }
+
+    // Check for a body hit.
+    if (lx >= hw && lx < (hw + bw) && ly >= hh && ly < (hh + bh)) {
+      // Convert to unscrolled virtual coordinates.
+      let vx = lx + this._scrollX - hw
+      let vy = ly + this._scrollY - hh;
+
+      // Fetch the row and column index.
+      let row = this._rowSections.indexOf(vy);
+      let column = this._columnSections.indexOf(vx);
+
+      // Return the result.
+      return { part: 'body-cell', row, column };
+    }
+
+    // Otherwise, it's a void space hit.
+    return { part: 'void-space', row: -1, column: -1 };
   }
 
   /**
@@ -2980,6 +3047,16 @@ namespace DataGrid {
      * Whether column header rows are resizable by the user.
      */
     readonly resizableColumnHeaders: boolean;
+
+    // /**
+    //  * Whether rows are movable by the user.
+    //  */
+    // readonly movableRows: boolean;
+
+    // /**
+    //  * Whether columns are movable by the user.
+    //  */
+    // readonly movableColumns: boolean;
   };
 
   /**
@@ -3062,6 +3139,8 @@ namespace DataGrid {
     resizableColumns: true,
     resizableRowHeaders: true,
     resizableColumnHeaders: true
+    // movableRows: true,
+    // movableColumns: true
   };
 }
 
@@ -3075,6 +3154,24 @@ namespace Private {
    */
   export
   const ScrollRequest = new ConflatableMessage('scroll-request');
+
+  /**
+   * The width of the header cell leading resize handle.
+   */
+  export
+  const LEADING_RESIZE_WIDTH = 5;
+
+  /**
+   * The width of the header cell trailing resize handle.
+   */
+  export
+  const TRAILING_RESIZE_WIDTH = 6;
+
+  // /**
+  //  * The width of the header cell grab handle.
+  //  */
+  // export
+  // const GRAB_WIDTH = 5;
 
   /**
    * Create a new zero-sized canvas element.
@@ -3252,39 +3349,95 @@ namespace Private {
   }
 
   /**
-   *
+   * An object which holds the transient mouse press data.
    */
   export
-  type PressData = {};
+  type PressData = {
+    /**
+     *
+     */
+    override: IDisposable;
+  };
 
   /**
-   *
+   * A type which designates the data grid hit test parts.
+   */
+  export
+  type HitTestPart = (
+    /**
+     * The bulk space of a row header cell.
+     */
+    'row-header-cell' |
+
+    /**
+     * The horizontal resize handle of a row header cell.
+     */
+    'row-header-h-resize-handle' |
+
+    /**
+     * The vertical resize handle of a row header cell.
+     */
+    'row-header-v-resize-handle' |
+
+    /**
+     * The bulk space of a column header cell.
+     */
+    'column-header-cell' |
+
+    /**
+     * The horizontal resize handle of a column header cell.
+     */
+    'column-header-h-resize-handle' |
+
+    /**
+     * The vertical resize handle of a column header cell.
+     */
+    'column-header-v-resize-handle' |
+
+    /**
+     * The bulk space of a corner header cell.
+     */
+    'corner-header-cell' |
+
+    /**
+     * The horizontal resize handle of a corner header cell.
+     */
+    'corner-header-h-resize-handle' |
+
+    /**
+     * The vertical resize handle of a corner header cell.
+     */
+    'corner-header-v-resize-handle' |
+
+    /**
+     * The bulk space of a body cell.
+     */
+    'body-cell' |
+
+    /**
+     * The data grid void space.
+     */
+    'void-space'
+  );
+
+  /**
+   * An object which holds the result of a grid hit test.
    */
   export
   type HitTestResult = {
     /**
-     *
+     * The data grid part that was hit.
      */
-    region: DataModel.CellRegion;
+    part: HitTestPart;
 
     /**
-     *
+     * The row index of the cell that was hit.
      */
     row: number;
 
     /**
-     *
+     * The column index of the cell that was hit.
      */
     column: number;
-
-    /**
-     *
-     */
-    virtualX: number;
-
-    /**
-     *
-     */
-    virtualY: number;
   };
 }
