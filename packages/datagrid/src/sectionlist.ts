@@ -26,7 +26,7 @@ class SectionList {
    * @param options - The options for initializing the list.
    */
   constructor(options: SectionList.IOptions) {
-    this._baseSize = Math.max(0, Math.floor(options.baseSize));
+    this._defaultSize = Math.max(0, Math.floor(options.defaultSize));
   }
 
   /**
@@ -35,8 +35,8 @@ class SectionList {
    * #### Complexity
    * Constant.
    */
-  get totalSize(): number {
-    return this._totalSize;
+  get length(): number {
+    return this._length;
   }
 
   /**
@@ -45,43 +45,43 @@ class SectionList {
    * #### Complexity
    * Constant.
    */
-  get sectionCount(): number {
-    return this._sectionCount;
+  get count(): number {
+    return this._count;
   }
 
   /**
-   * Get the base size of sections in the list.
+   * Get the default size of sections in the list.
    *
    * #### Complexity
    * Constant.
    */
-  get baseSize(): number {
-    return this._baseSize;
+  get defaultSize(): number {
+    return this._defaultSize;
   }
 
   /**
-   * Set the base size of sections in the list.
+   * Set the default size of sections in the list.
    *
    * #### Complexity
    * Linear on the number of resized sections.
    */
-  set baseSize(value: number) {
+  set defaultSize(value: number) {
     // Normalize the value.
     value = Math.max(0, Math.floor(value));
 
     // Bail early if the value does not change.
-    if (this._baseSize === value) {
+    if (this._defaultSize === value) {
       return;
     }
 
-    // Compute the delta base size.
-    let delta = value - this._baseSize;
+    // Compute the delta default size.
+    let delta = value - this._defaultSize;
 
-    // Update the internal base size.
-    this._baseSize = value;
+    // Update the internal default size.
+    this._defaultSize = value;
 
-    // Update the total size.
-    this._totalSize += delta * (this._sectionCount - this._sections.length);
+    // Update the length.
+    this._length += delta * (this._count - this._sections.length);
 
     // Bail early if there are no modified sections.
     if (this._sections.length === 0) {
@@ -115,15 +115,15 @@ class SectionList {
    * #### Complexity
    * Logarithmic on the number of resized sections.
    */
-  sectionIndex(offset: number): number {
+  indexOf(offset: number): number {
     // Bail early if the offset is out of range.
-    if (offset < 0 || offset >= this._totalSize || this._sectionCount === 0) {
+    if (offset < 0 || offset >= this._length || this._count === 0) {
       return -1;
     }
 
     // Handle the simple case of no modified sections.
     if (this._sections.length === 0) {
-      return Math.floor(offset / this._baseSize);
+      return Math.floor(offset / this._defaultSize);
     }
 
     // Find the modified section for the given offset.
@@ -136,13 +136,13 @@ class SectionList {
 
     // Handle the case of no modified sections before the offset.
     if (i === 0) {
-      return Math.floor(offset / this._baseSize);
+      return Math.floor(offset / this._defaultSize);
     }
 
     // Compute the index from the previous modified section.
     let section = this._sections[i - 1];
     let span = offset - (section.offset + section.size);
-    return section.index + Math.floor(span / this._baseSize) + 1;
+    return section.index + Math.floor(span / this._defaultSize) + 1;
   }
 
   /**
@@ -159,15 +159,15 @@ class SectionList {
    * #### Complexity
    * Logarithmic on the number of resized sections.
    */
-  sectionOffset(index: number): number {
+  offsetOf(index: number): number {
     // Bail early if the index is out of range.
-    if (index < 0 || index >= this._sectionCount) {
+    if (index < 0 || index >= this._count) {
       return -1;
     }
 
     // Handle the simple case of no modified sections.
     if (this._sections.length === 0) {
-      return index * this._baseSize;
+      return index * this._defaultSize;
     }
 
     // Find the modified section for the given index.
@@ -180,13 +180,13 @@ class SectionList {
 
     // Handle the case of no modified sections before the index.
     if (i === 0) {
-      return index * this._baseSize;
+      return index * this._defaultSize;
     }
 
     // Compute the offset from the previous modified section.
     let section = this._sections[i - 1];
     let span = index - section.index - 1;
-    return section.offset + section.size + span * this._baseSize;
+    return section.offset + section.size + span * this._defaultSize;
   }
 
   /**
@@ -203,15 +203,15 @@ class SectionList {
    * #### Complexity
    * Logarithmic on the number of resized sections.
    */
-  sectionSize(index: number): number {
+  sizeOf(index: number): number {
     // Bail early if the index is out of range.
-    if (index < 0 || index >= this._sectionCount) {
+    if (index < 0 || index >= this._count) {
       return -1;
     }
 
     // Handle the simple case of no modified sections.
     if (this._sections.length === 0) {
-      return this._baseSize;
+      return this._defaultSize;
     }
 
     // Find the modified section for the given index.
@@ -222,8 +222,8 @@ class SectionList {
       return this._sections[i].size;
     }
 
-    // Return the base size for all other cases.
-    return this._baseSize;
+    // Return the default size for all other cases.
+    return this._defaultSize;
   }
 
   /**
@@ -241,9 +241,9 @@ class SectionList {
    * #### Complexity
    * Linear on the number of resized sections.
    */
-  resizeSection(index: number, size: number): void {
+  resize(index: number, size: number): void {
     // Bail early if the index is out of range.
-    if (index < 0 || index >= this._sectionCount) {
+    if (index < 0 || index >= this._count) {
       return;
     }
 
@@ -260,19 +260,19 @@ class SectionList {
       delta = size - section.size;
       section.size = size;
     } else if (i === 0) {
-      let offset = index * this._baseSize;
+      let offset = index * this._defaultSize;
       ArrayExt.insert(this._sections, i, { index, offset, size });
-      delta = size - this._baseSize;
+      delta = size - this._defaultSize;
     } else {
       let section = this._sections[i - 1];
       let span = index - section.index - 1;
-      let offset = section.offset + section.size + span * this._baseSize;
+      let offset = section.offset + section.size + span * this._defaultSize;
       ArrayExt.insert(this._sections, i, { index, offset, size });
-      delta = size - this._baseSize;
+      delta = size - this._defaultSize;
     }
 
-    // Adjust the totals.
-    this._totalSize += delta;
+    // Adjust the length.
+    this._length += delta;
 
     // Update all modified sections after the resized section.
     for (let j = i + 1, n = this._sections.length; j < n; ++j) {
@@ -295,19 +295,19 @@ class SectionList {
    * #### Complexity
    * Linear on the number of resized sections.
    */
-  insertSections(index: number, count: number): void {
+  insert(index: number, count: number): void {
     // Bail early if there are no sections to insert.
     if (count <= 0) {
       return;
     }
 
     // Clamp the index to the bounds of the list.
-    index = Math.max(0, Math.min(index, this._sectionCount));
+    index = Math.max(0, Math.min(index, this._count));
 
     // Add the new sections to the totals.
-    let span = count * this._baseSize;
-    this._sectionCount += count;
-    this._totalSize += span;
+    let span = count * this._defaultSize;
+    this._count += count;
+    this._length += span;
 
     // Bail early if there are no modified sections to update.
     if (this._sections.length === 0) {
@@ -340,26 +340,26 @@ class SectionList {
    * #### Complexity
    * Linear on the number of resized sections.
    */
-  removeSections(index: number, count: number): void {
+  remove(index: number, count: number): void {
     // Bail early if there is nothing to remove.
-    if (index < 0 || index >= this._sectionCount || count <= 0) {
+    if (index < 0 || index >= this._count || count <= 0) {
       return;
     }
 
     // Clamp the count to the bounds of the list.
-    count = Math.min(this._sectionCount - index, count);
+    count = Math.min(this._count - index, count);
 
     // Handle the simple case of no modified sections to update.
     if (this._sections.length === 0) {
-      this._sectionCount -= count;
-      this._totalSize -= count * this._baseSize;
+      this._count -= count;
+      this._length -= count * this._defaultSize;
       return;
     }
 
     // Handle the simple case of removing all sections.
-    if (count === this._sectionCount) {
-      this._totalSize = 0;
-      this._sectionCount = 0;
+    if (count === this._count) {
+      this._length = 0;
+      this._count = 0;
       this._sections.length = 0;
       return;
     }
@@ -374,14 +374,14 @@ class SectionList {
     let removed = this._sections.splice(i, j - i);
 
     // Compute the total removed span.
-    let span = (count - removed.length) * this._baseSize;
+    let span = (count - removed.length) * this._defaultSize;
     for (let k = 0, n = removed.length; k < n; ++k) {
       span += removed[k].size;
     }
 
     // Adjust the totals.
-    this._sectionCount -= count;
-    this._totalSize -= span;
+    this._count -= count;
+    this._length -= span;
 
     // Update all modified sections after the removed span.
     for (let k = i, n = this._sections.length; k < n; ++k) {
@@ -409,9 +409,9 @@ class SectionList {
    * #### Complexity
    * Linear on the number of moved resized sections.
    */
-  moveSections(index: number, count: number, destination: number): void {
+  move(index: number, count: number, destination: number): void {
     // Bail early if there is nothing to move.
-    if (index < 0 || index >= this._sectionCount || count <= 0) {
+    if (index < 0 || index >= this._count || count <= 0) {
       return;
     }
 
@@ -421,10 +421,10 @@ class SectionList {
     }
 
     // Clamp the move count to the limit.
-    count = Math.min(count, this._sectionCount - index);
+    count = Math.min(count, this._count - index);
 
     // Clamp the destination index to the limit.
-    destination = Math.min(Math.max(0, destination), this._sectionCount - count);
+    destination = Math.min(Math.max(0, destination), this._count - count);
 
     // Bail early if there is no effective move.
     if (index === destination) {
@@ -461,16 +461,16 @@ class SectionList {
     let count2 = i2 - pivot + 1;
 
     // Compute the span for each side of the pivot.
-    let span1 = count1 * this._baseSize;
-    let span2 = count2 * this._baseSize;
+    let span1 = count1 * this._defaultSize;
+    let span2 = count2 * this._defaultSize;
 
     // Adjust the spans for the modified sections.
     for (let j = k1; j <= k2; ++j) {
       let section = this._sections[j];
       if (section.index < pivot) {
-        span1 += section.size - this._baseSize;
+        span1 += section.size - this._defaultSize;
       } else {
-        span2 += section.size - this._baseSize;
+        span2 += section.size - this._defaultSize;
       }
     }
 
@@ -496,14 +496,14 @@ class SectionList {
   }
 
   /**
-   * Reset all modified sections to the base size.
+   * Reset all modified sections to the default size.
    *
    * #### Complexity
    * Constant.
    */
   reset(): void {
     this._sections.length = 0;
-    this._totalSize = this._sectionCount * this._baseSize;
+    this._length = this._count * this._defaultSize;
   }
 
   /**
@@ -513,14 +513,14 @@ class SectionList {
    * Constant.
    */
   clear(): void {
-    this._totalSize = 0;
-    this._sectionCount = 0;
+    this._count = 0;
+    this._length = 0;
     this._sections.length = 0;
   }
 
-  private _totalSize = 0;
-  private _baseSize: number;
-  private _sectionCount = 0;
+  private _count = 0;
+  private _length = 0;
+  private _defaultSize: number;
   private _sections: Private.ISection[] = [];
 }
 
@@ -538,7 +538,7 @@ namespace SectionList {
     /**
      * The size of new sections added to the list.
      */
-    baseSize: number;
+    defaultSize: number;
   }
 }
 
