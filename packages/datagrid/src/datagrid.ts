@@ -111,7 +111,6 @@ class DataGrid extends Widget {
 
     // Create the internal widgets for the data grid.
     this._viewport = new Widget();
-    this._viewport.node.style.cursor = 'inherit';
     this._vScrollBar = new ScrollBar({ orientation: 'vertical' });
     this._hScrollBar = new ScrollBar({ orientation: 'horizontal' });
     this._scrollCorner = new Widget();
@@ -176,8 +175,8 @@ class DataGrid extends Widget {
    * Dispose of the resources held by the widgets.
    */
   dispose(): void {
-    this._model = null;
     this._releaseMouse();
+    this._model = null;
     this._rowSections.clear();
     this._columnSections.clear();
     this._rowHeaderSections.clear();
