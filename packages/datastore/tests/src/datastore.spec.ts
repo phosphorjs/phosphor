@@ -143,6 +143,22 @@ describe('@phosphor/datastore', () => {
         expect(JSON.parse(reexport)).to.eql(state);
       });
 
+      it('should restore partial state', () => {
+        let partialState = {[schema1.id]: state[schema1.id] };
+        let datastore = Datastore.create({
+          id: 1,
+          schemas: [schema1, schema2],
+          restoreState: JSON.stringify(partialState)
+        });
+
+        let reexport = datastore.toString();
+        expect(JSON.parse(reexport)).to.eql(
+          {
+            ...partialState,
+            [schema2.id]: []
+          });
+      });
+
     });
 
     describe('dispose()', () => {
