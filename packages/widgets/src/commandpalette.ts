@@ -1006,7 +1006,7 @@ namespace Private {
     /**
      * The discriminated type of the object.
      */
-    type: 'item';
+    readonly type: 'item';
 
     /**
      * The command item which was matched.
