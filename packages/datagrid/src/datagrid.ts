@@ -46,6 +46,10 @@ import {
 } from './sectionlist';
 
 import {
+  SelectionModel
+} from './selectionmodel';
+
+import {
   TextRenderer
 } from './textrenderer';
 
@@ -94,13 +98,15 @@ class DataGrid extends Widget {
     this._rowHeaderSections = new SectionList({ defaultSize: rhw });
     this._columnHeaderSections = new SectionList({ defaultSize: chh });
 
-    // Create the canvas and buffer objects.
+    // Create the canvas, buffer, and overlay objects.
     this._canvas = Private.createCanvas();
     this._buffer = Private.createCanvas();
+    this._overlay = Private.createCanvas();
 
     // Get the graphics contexts for the canvases.
     this._canvasGC = this._canvas.getContext('2d')!;
     this._bufferGC = this._buffer.getContext('2d')!;
+    this._overlayGC = this._overlay.getContext('2d')!;
 
     // Set up the on-screen canvas.
     this._canvas.style.position = 'absolute';
@@ -108,6 +114,13 @@ class DataGrid extends Widget {
     this._canvas.style.left = '0px';
     this._canvas.style.width = '0px';
     this._canvas.style.height = '0px';
+
+    // Set up the on-screen overlay.
+    this._overlay.style.position = 'absolute';
+    this._overlay.style.top = '0px';
+    this._overlay.style.left = '0px';
+    this._overlay.style.width = '0px';
+    this._overlay.style.height = '0px';
 
     // Create the internal widgets for the data grid.
     this._viewport = new Widget();
@@ -123,6 +136,9 @@ class DataGrid extends Widget {
 
     // Add the on-screen canvas to the viewport node.
     this._viewport.node.appendChild(this._canvas);
+
+    // Add the on-screen overlay to the viewport node.
+    this._viewport.node.appendChild(this._overlay);
 
     // Install the message hook for the viewport.
     MessageLoop.installMessageHook(this._viewport, this);
@@ -236,6 +252,39 @@ class DataGrid extends Widget {
 
     // Sync the viewport.
     this._syncViewport();
+  }
+
+  /**
+   * Get the selection model for the data grid.
+   */
+  get selectionModel(): SelectionModel | null {
+    return this._selectionModel;
+  }
+
+  /**
+   * Set the selection model for the data grid.
+   */
+  set selectionModel(value: SelectionModel | null) {
+    // Do nothing if the selection model does not change.
+    if (this._selectionModel === value) {
+      return;
+    }
+
+    // Release the mouse.
+    this._releaseMouse();
+
+    // Disconnect the change handler from the old model.
+    if (this._selectionModel) {
+      this._selectionModel.changed.disconnect(this._onSelectionsChanged, this);
+    }
+
+    // Connect the change handler for the new model.
+    if (value) {
+      value.changed.connect(this._onSelectionsChanged, this);
+    }
+
+    // Schedule a repaint of the overlay.
+    this._repaintOverlay();
   }
 
   /**
@@ -726,6 +775,13 @@ class DataGrid extends Widget {
   }
 
   /**
+   * Schedule a repaint of the overlay.
+   */
+  private _repaintOverlay(): void {
+    MessageLoop.postMessage(this._viewport, Private.OverlayPaintRequest);
+  }
+
+  /**
    * Refresh the internal dpi ratio.
    *
    * This will update the canvas size and schedule a repaint if needed.
@@ -751,6 +807,10 @@ class DataGrid extends Widget {
     // Ensure the canvas style is scaled for the new ratio.
     this._canvas.style.width = `${this._canvas.width / this._dpiRatio}px`;
     this._canvas.style.height = `${this._canvas.height / this._dpiRatio}px`;
+
+    // Ensure the overlay style is scaled for the new ratio.
+    this._overlay.style.width = `${this._overlay.width / this._dpiRatio}px`;
+    this._overlay.style.height = `${this._overlay.height / this._dpiRatio}px`;
   }
 
   /**
@@ -783,8 +843,9 @@ class DataGrid extends Widget {
     // Set the transforms to the identity matrix.
     this._canvasGC.setTransform(1, 0, 0, 1, 0, 0);
     this._bufferGC.setTransform(1, 0, 0, 1, 0, 0);
+    this._overlayGC.setTransform(1, 0, 0, 1, 0, 0);
 
-    // Resize the buffer width if needed.
+    // Resize the buffer if needed.
     if (curW < width) {
       this._buffer.width = expW;
     } else if (curW > maxW) {
@@ -801,8 +862,9 @@ class DataGrid extends Widget {
     // Test whether there is content to blit.
     let needBlit = curH > 0 && curH > 0 && width > 0 && height > 0;
 
-    // Copy the valid content into the buffer if needed.
+    // Copy the valid canvas content into the buffer if needed.
     if (needBlit) {
+      this._bufferGC.clearRect(0, 0, this._buffer.width, this._buffer.height);
       this._bufferGC.drawImage(this._canvas, 0, 0);
     }
 
@@ -824,9 +886,38 @@ class DataGrid extends Widget {
       this._canvas.style.height = `${maxH / this._dpiRatio}px`;
     }
 
-    // Copy the valid content from the buffer if needed.
+    // Copy the valid canvas content from the buffer if needed.
     if (needBlit) {
       this._canvasGC.drawImage(this._buffer, 0, 0);
+    }
+
+    // Copy the valid overlay content into the buffer if needed.
+    if (needBlit) {
+      this._bufferGC.clearRect(0, 0, this._buffer.width, this._buffer.height);
+      this._bufferGC.drawImage(this._overlay, 0, 0);
+    }
+
+    // Resize the overlay width if needed.
+    if (curW < width) {
+      this._overlay.width = expW;
+      this._overlay.style.width = `${expW / this._dpiRatio}px`;
+    } else if (curW > maxW) {
+      this._overlay.width = maxW;
+      this._overlay.style.width = `${maxW / this._dpiRatio}px`;
+    }
+
+    // Resize the overlay height if needed.
+    if (curH < height) {
+      this._overlay.height = expH;
+      this._overlay.style.height = `${expH / this._dpiRatio}px`;
+    } else if (curH > maxH) {
+      this._overlay.height = maxH;
+      this._overlay.style.height = `${maxH / this._dpiRatio}px`;
+    }
+
+    // Copy the valid overlay content from the buffer if needed.
+    if (needBlit) {
+      this._overlayGC.drawImage(this._buffer, 0, 0);
     }
   }
 
@@ -917,8 +1008,12 @@ class DataGrid extends Widget {
     case 'paint-request':
       this._onViewportPaintRequest(msg as Private.PaintRequest);
       break;
+    case 'overlay-paint-request':
+      this._onViewportOverlayPaintRequest(msg);
+      break;
     case 'section-resize-request':
       this._onViewportSectionResizeRequest(msg);
+      break;
     default:
       break;
     }
@@ -1040,6 +1135,13 @@ class DataGrid extends Widget {
   }
 
   /**
+   * A message hook invoked on a viewport `'overlay-paint-request'` message.
+   */
+  private _onViewportOverlayPaintRequest(msg: Message): void {
+    this._paintOverlay();
+  }
+
+  /**
    * A message hook invoked on a viewport `'section-resize-request'` message.
    */
   private _onViewportSectionResizeRequest(msg: Message): void {
@@ -1157,6 +1259,13 @@ class DataGrid extends Widget {
     default:
       throw 'unreachable';
     }
+  }
+
+  /**
+   * A signal handler for the selection model `changed` signal.
+   */
+  private _onSelectionsChanged(sender: SelectionModel): void {
+    this._repaintOverlay();
   }
 
   /**
@@ -2468,19 +2577,21 @@ class DataGrid extends Widget {
     // Execute the actual drawing logic.
     try {
       this._inPaint = true;
-      this._draw(rx, ry, rw, rh);
+      this._paintGrid(rx, ry, rw, rh);
+      this._paintOverlay();
     } finally {
       this._inPaint = false;
     }
   }
 
+
   /**
-   * Draw the grid content for the given dirty rect.
+   * Paint the primary grid content for the given dirty rect.
    *
    * This method dispatches to the relevant `_draw*` methods.
    */
-  private _draw(rx: number, ry: number, rw: number, rh: number): void {
-    // Scale the canvas and buffer GC for the dpi ratio.
+  private _paintGrid(rx: number, ry: number, rw: number, rh: number): void {
+    // Scale the canvas and buffe GC for the dpi ratio.
     this._canvasGC.setTransform(this._dpiRatio, 0, 0, this._dpiRatio, 0, 0);
     this._bufferGC.setTransform(this._dpiRatio, 0, 0, this._dpiRatio, 0, 0);
 
@@ -2501,6 +2612,25 @@ class DataGrid extends Widget {
 
     // Draw the corner header region.
     this._drawCornerHeaderRegion(rx, ry, rw, rh);
+  }
+
+  /**
+   * Paint the overlay content for the entire grid.
+   *
+   * This method dispatches to the relevant `_draw*` methods.
+   */
+  private _paintOverlay(): void {
+    // Scale the overlay GC for the dpi ratio.
+    this._overlayGC.setTransform(this._dpiRatio, 0, 0, this._dpiRatio, 0, 0);
+
+    // Clear the overlay of all content.
+    this._overlayGC.clearRect(0, 0, this._overlay.width, this._overlay.height);
+
+    // Draw the selections.
+    this._drawSelections();
+
+    // Draw the cursor.
+    this._drawCursor();
   }
 
   /**
@@ -3282,6 +3412,20 @@ class DataGrid extends Widget {
     this._canvasGC.stroke();
   }
 
+  /**
+   * Draw the overlay selections for the data grid.
+   */
+  private _drawSelections(): void {
+
+  }
+
+  /**
+   * Draw the overlay cursor for the data grid.
+   */
+  private _drawCursor(): void {
+
+  }
+
   private _viewport: Widget;
   private _vScrollBar: ScrollBar;
   private _hScrollBar: ScrollBar;
@@ -3302,8 +3446,10 @@ class DataGrid extends Widget {
 
   private _canvas: HTMLCanvasElement;
   private _buffer: HTMLCanvasElement;
+  private _overlay: HTMLCanvasElement;
   private _canvasGC: CanvasRenderingContext2D;
   private _bufferGC: CanvasRenderingContext2D;
+  private _overlayGC: CanvasRenderingContext2D;
 
   private _rowSections: SectionList;
   private _columnSections: SectionList;
@@ -3311,6 +3457,7 @@ class DataGrid extends Widget {
   private _columnHeaderSections: SectionList;
 
   private _model: DataModel | null = null;
+  private _selectionModel: SelectionModel | null = null;
 
   private _style: DataGrid.Style;
   private _cellRenderers: RendererMap;
@@ -3582,6 +3729,12 @@ namespace Private {
    */
   export
   const SectionResizeRequest = new ConflatableMessage('section-resize-request');
+
+  /**
+   * A singleton `overlay-paint-request` conflatable message.
+   */
+  export
+  const OverlayPaintRequest = new ConflatableMessage('overlay-paint-request');
 
   /**
    * The minimum size for a section in the data grid.
