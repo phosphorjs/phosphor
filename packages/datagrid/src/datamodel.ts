@@ -96,7 +96,7 @@ abstract class DataModel {
    * Emit the `changed` signal for the data model.
    *
    * #### Notes
-   * Subclass should call this method whenever the data model has
+   * Subclasses should call this method whenever the data model has
    * changed so that attached data grids can update themselves.
    */
   protected emitChanged(args: DataModel.ChangedArgs): void {
