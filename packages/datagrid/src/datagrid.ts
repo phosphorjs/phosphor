@@ -283,6 +283,9 @@ class DataGrid extends Widget {
       value.changed.connect(this._onSelectionsChanged, this);
     }
 
+    // Update the internal selection model reference.
+    this._selectionModel = value;
+
     // Schedule a repaint of the overlay.
     this._repaintOverlay();
   }
