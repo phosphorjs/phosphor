@@ -44,12 +44,22 @@ class SimpleSelections extends SelectionModel {
   readonly model: DataModel;
 
   /**
+   * Whether the selection model is empty.
+   *
+   * #### Notes
+   * An empty selection model will have an empty regions iterator.
+   */
+  get isEmpty(): boolean {
+    return this._regions.length === 0;
+  }
+
+  /**
    * Get an iterator of the selected regions in the model.
    *
    * @returns A new iterator of selected regions in the model.
    */
-  selections(): IIterator<SelectionModel.Region> {
-    return iter(this._selections);
+  regions(): IIterator<SelectionModel.Region> {
+    return iter(this._regions);
   }
 
   /**
@@ -59,7 +69,7 @@ class SimpleSelections extends SelectionModel {
    */
   select(region: SelectionModel.Region): void {
     // Add the region to the array of selections.
-    this._selections.push(region);
+    this._regions.push(region);
 
     // Emit the changed signal.
     this.emitChanged();
@@ -71,19 +81,19 @@ class SimpleSelections extends SelectionModel {
    * @param region - The region to deselect in the model.
    */
   deselect(region: SelectionModel.Region): void {
-    // Bail early if the selections array is already empty.
-    if (this._selections.length === 0) {
+    // Bail early if the regions array is already empty.
+    if (this._regions.length === 0) {
       return;
     }
 
-    // Set up the new selections array.
+    // Set up the new regions array.
     let updated: SelectionModel.Region[] = [];
 
     // Fetch a common variable.
     let Region = SelectionModel.Region;
 
-    // Iterate over the existing selections.
-    for (let existing of this._selections) {
+    // Iterate over the existing regions.
+    for (let existing of this._regions) {
       // Skip the existing region if it should be completely removed.
       if (region.includes(existing)) {
         continue;
@@ -132,8 +142,8 @@ class SimpleSelections extends SelectionModel {
       }
     }
 
-    // Store the updated selections.
-    this._selections = updated;
+    // Store the updated regions.
+    this._regions = updated;
 
     // Emit the changed signal.
     this.emitChanged();
@@ -143,13 +153,13 @@ class SimpleSelections extends SelectionModel {
    * Clear all regions in the model.
    */
   clear(): void {
-    // Bail early if the selections array is already empty.
-    if (this._selections.length === 0) {
+    // Bail early if the regions array is already empty.
+    if (this._regions.length === 0) {
       return;
     }
 
-    // Clear the selections array.
-    this._selections.length = 0;
+    // Clear the regions array.
+    this._regions.length = 0;
 
     // Emit the changed signal.
     this.emitChanged();
@@ -186,8 +196,8 @@ class SimpleSelections extends SelectionModel {
    * A signal handler invoked when rows are inserted or removed.
    */
   private _onRowsChanged(args: DataModel.RowsChangedArgs): void {
-    // Bail early if the selections array is already empty.
-    if (this._selections.length === 0) {
+    // Bail early if the regions array is already empty.
+    if (this._regions.length === 0) {
       return;
     }
   }
@@ -196,8 +206,8 @@ class SimpleSelections extends SelectionModel {
    * A signal handler invoked when rows are moved.
    */
   private _onRowsMoved(args: DataModel.RowsMovedArgs): void {
-    // Bail early if the selections array is already empty.
-    if (this._selections.length === 0) {
+    // Bail early if the regions array is already empty.
+    if (this._regions.length === 0) {
       return;
     }
   }
@@ -206,8 +216,8 @@ class SimpleSelections extends SelectionModel {
    * A signal handler invoked when columns are inserted or removed.
    */
   private _onColumnsChanged(args: DataModel.ColumnsChangedArgs): void {
-    // Bail early if the selections array is already empty.
-    if (this._selections.length === 0) {
+    // Bail early if the regions array is already empty.
+    if (this._regions.length === 0) {
       return;
     }
   }
@@ -216,8 +226,8 @@ class SimpleSelections extends SelectionModel {
    * A signal handler invoked when columns are moved.
    */
   private _onColumnsMoved(args: DataModel.ColumnsMovedArgs): void {
-    // Bail early if the selections array is already empty.
-    if (this._selections.length === 0) {
+    // Bail early if the regions array is already empty.
+    if (this._regions.length === 0) {
       return;
     }
   }
@@ -226,19 +236,19 @@ class SimpleSelections extends SelectionModel {
    * A signal handler invoked when the data model is reset.
    */
   private _onModelReset(args: DataModel.ModelResetArgs): void {
-    // Bail early if the selections array is already empty.
-    if (this._selections.length === 0) {
+    // Bail early if the regions array is already empty.
+    if (this._regions.length === 0) {
       return;
     }
 
-    // Clear the selections array.
-    this._selections.length = 0;
+    // Clear the regions array.
+    this._regions.length = 0;
 
     // Emit the changed signal.
     this.emitChanged();
   }
 
-  private _selections: SelectionModel.Region[] = [];
+  private _regions: SelectionModel.Region[] = [];
 }
 
 

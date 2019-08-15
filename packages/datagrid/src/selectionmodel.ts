@@ -31,6 +31,14 @@ abstract class SelectionModel {
   }
 
   /**
+   * Whether the selection model is empty.
+   *
+   * #### Notes
+   * An empty selection model will have an empty regions iterator.
+   */
+  abstract readonly isEmpty: boolean;
+
+  /**
    * Get an iterator of the selected regions in the model.
    *
    * @returns A new iterator of selected regions in the model.
@@ -38,7 +46,7 @@ abstract class SelectionModel {
    * #### Notes
    * The data grid will render the selections in order.
    */
-  abstract selections(): IIterator<SelectionModel.Region>;
+  abstract regions(): IIterator<SelectionModel.Region>;
 
   /**
    * Select a region in the model.
