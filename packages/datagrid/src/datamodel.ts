@@ -150,7 +150,7 @@ namespace DataModel {
    * type when rows are inserted or removed.
    */
   export
-  interface IRowsChangedArgs {
+  type RowsChangedArgs = {
     /**
      * The discriminated type of the args object.
      */
@@ -170,7 +170,7 @@ namespace DataModel {
      * The number of modified rows.
      */
     readonly span: number;
-  }
+  };
 
   /**
    * An arguments object for the `changed` signal.
@@ -180,7 +180,7 @@ namespace DataModel {
    * type when columns are inserted or removed.
    */
   export
-  interface IColumnsChangedArgs {
+  type ColumnsChangedArgs = {
     /**
      * The discriminated type of the args object.
      */
@@ -200,7 +200,7 @@ namespace DataModel {
      * The number of modified columns.
      */
     readonly span: number;
-  }
+  };
 
   /**
    * An arguments object for the `changed` signal.
@@ -210,7 +210,7 @@ namespace DataModel {
    * type when rows are moved.
    */
   export
-  interface IRowsMovedArgs {
+  type RowsMovedArgs = {
     /**
      * The discriminated type of the args object.
      */
@@ -235,7 +235,7 @@ namespace DataModel {
      * The ending index of the first modified row.
      */
     readonly destination: number;
-  }
+  };
 
   /**
    * An arguments object for the `changed` signal.
@@ -245,7 +245,7 @@ namespace DataModel {
    * type when columns are moved.
    */
   export
-  interface IColumnsMovedArgs {
+  type ColumnsMovedArgs = {
     /**
      * The discriminated type of the args object.
      */
@@ -270,7 +270,7 @@ namespace DataModel {
      * The ending index of the first modified column.
      */
     readonly destination: number;
-  }
+  };
 
   /**
    * An arguments object for the `changed` signal.
@@ -280,7 +280,7 @@ namespace DataModel {
    * type when cells are changed in-place.
    */
   export
-  interface ICellsChangedArgs {
+  type CellsChangedArgs = {
     /**
      * The discriminated type of the args object.
      */
@@ -310,7 +310,7 @@ namespace DataModel {
      * The number of columns in the modified cell range.
      */
     readonly columnSpan: number;
-  }
+  };
 
   /**
    * An arguments object for the `changed` signal.
@@ -325,23 +325,23 @@ namespace DataModel {
    * should be used whenever possible.
    */
   export
-  interface IModelResetArgs {
+  type ModelResetArgs = {
     /**
      * The discriminated type of the args object.
      */
     readonly type: 'model-reset';
-  }
+  };
 
   /**
    * A type alias for the args objects of the `changed` signal.
    */
   export
   type ChangedArgs = (
-    IRowsChangedArgs |
-    IColumnsChangedArgs |
-    IRowsMovedArgs |
-    IColumnsMovedArgs |
-    ICellsChangedArgs |
-    IModelResetArgs
+    RowsChangedArgs |
+    ColumnsChangedArgs |
+    RowsMovedArgs |
+    ColumnsMovedArgs |
+    CellsChangedArgs |
+    ModelResetArgs
   );
 }

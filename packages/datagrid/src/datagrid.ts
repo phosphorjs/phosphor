@@ -1271,7 +1271,7 @@ class DataGrid extends Widget {
   /**
    * Handle sections changing in the data model.
    */
-  private _onSectionsChanged(args: DataModel.IRowsChangedArgs | DataModel.IColumnsChangedArgs): void {
+  private _onSectionsChanged(args: DataModel.RowsChangedArgs | DataModel.ColumnsChangedArgs): void {
     // TODO clean up this method. It's ugly.
 
     // Unpack the arg data.
@@ -1400,7 +1400,7 @@ class DataGrid extends Widget {
   /**
    * Handle sections moving in the data model.
    */
-  private _onSectionsMoved(args: DataModel.IRowsMovedArgs | DataModel.IColumnsMovedArgs): void {
+  private _onSectionsMoved(args: DataModel.RowsMovedArgs | DataModel.ColumnsMovedArgs): void {
     // Unpack the arg data.
     let { region, type, index, span, destination } = args;
 
@@ -1524,7 +1524,7 @@ class DataGrid extends Widget {
   /**
    * Handle cells changing in the data model.
    */
-  private _onCellsChanged(args: DataModel.ICellsChangedArgs): void {
+  private _onCellsChanged(args: DataModel.CellsChangedArgs): void {
     // Unpack the arg data.
     let { region, rowIndex, columnIndex, rowSpan, columnSpan } = args;
 
@@ -1645,7 +1645,7 @@ class DataGrid extends Widget {
   /**
    * Handle a full data model reset.
    */
-  private _onModelReset(args: DataModel.IModelResetArgs): void {
+  private _onModelReset(args: DataModel.ModelResetArgs): void {
     // Look up the various current section counts.
     let nr = this._rowSections.count;
     let nc = this._columnSections.count;

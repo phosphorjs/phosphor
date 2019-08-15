@@ -11,4 +11,6 @@ export * from './datamodel';
 export * from './graphicscontext';
 export * from './jsonmodel';
 export * from './renderermap';
+export * from './selectionmodel';
+export * from './simpleselections';
 export * from './textrenderer';
