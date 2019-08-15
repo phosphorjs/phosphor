@@ -3510,6 +3510,14 @@ class DataGrid extends Widget {
       x2 -= this._scrollX - this._headerWidth;
       y2 -= this._scrollY - this._headerHeight;
 
+      // Clamp the bounds to just outside of the clipping rect.
+      // This prevents drawing issues when the virtual grid size
+      // is large and entire rows or columns are selected.
+      x1 = Math.max(x - 1, x1);
+      y1 = Math.max(y - 1, y1);
+      x2 = Math.min(x + w + 1, x2);
+      y2 = Math.min(y + h + 1, y2);
+
       // Fill and stroke the rect for the selected region.
       gc.fillRect(x1, y1, x2 - x1, y2 - y1);
       gc.strokeRect(x1 - .5, y1 - .5, x2 - x1, y2 - y1);
