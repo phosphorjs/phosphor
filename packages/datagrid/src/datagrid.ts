@@ -1068,8 +1068,9 @@ class DataGrid extends Widget {
     let right = width - oldWidth;
     let bottom = height - oldHeight;
 
-    // Bail if nothing needs to be painted.
+    // If there is no dirty region, just paint the overlay.
     if (right <= 0 && bottom <= 0) {
+      this._paintOverlay();
       return;
     }
 
@@ -2643,6 +2644,9 @@ class DataGrid extends Widget {
 
     // Draw the cursor.
     this._drawCursor();
+
+    // Draw the shadows.
+    this._drawShadows();
   }
 
   /**
@@ -3543,6 +3547,156 @@ class DataGrid extends Widget {
 
   }
 
+  /**
+   * Draw the overlay shadows for the data grid.
+   */
+  private _drawShadows(): void {
+    // Fetch the scroll shadow from the style.
+    let shadow = this._style.scrollShadow;
+
+    // Bail early if there is no shadow to draw.
+    if (!shadow) {
+      return;
+    }
+
+    // Fetch the scroll position.
+    let sx = this._scrollX;
+    let sy = this._scrollY;
+
+    // Fetch maximum scroll position.
+    let sxx = this._hScrollBar.maximum;
+    let syx = this._vScrollBar.maximum;
+
+    // Fetch the header width and height.
+    let hw = this._headerWidth;
+    let hh = this._headerHeight;
+
+    // Fetch the page width and height.
+    let pw = this._pageWidth;
+    let ph = this._pageHeight;
+
+    // Fetch the virtual width and height.
+    let vw = this._columnSections.length;
+    let vh = this._rowSections.length;
+
+    // Fetch the gc object.
+    let gc = this._overlayGC;
+
+    // Save the gc state.
+    gc.save();
+
+    // Draw the column header shadow if needed.
+    if (sy > 0) {
+      // Set up the gradient coordinates.
+      let x0 = 0;
+      let y0 = hh;
+      let x1 = 0;
+      let y1 = y0 + shadow.size;
+
+      // Create the gradient object.
+      let grad = gc.createLinearGradient(x0, y0, x1, y1);
+
+      // Set the gradient stops.
+      grad.addColorStop(0, shadow.color1);
+      grad.addColorStop(0.5, shadow.color2);
+      grad.addColorStop(1, shadow.color3);
+
+      // Set up the rect coordinates.
+      let x = 0;
+      let y = hh;
+      let w = hw + Math.min(pw, vw - sx);
+      let h = shadow.size;
+
+      // Fill the shadow rect with the fill style.
+      gc.fillStyle = grad;
+      gc.fillRect(x, y, w, h);
+    }
+
+    // Draw the row header shadow if needed.
+    if (sx > 0) {
+      // Set up the gradient coordinates.
+      let x0 = hw;
+      let y0 = 0;
+      let x1 = x0 + shadow.size;
+      let y1 = 0;
+
+      // Create the gradient object.
+      let grad = gc.createLinearGradient(x0, y0, x1, y1);
+
+      // Set the gradient stops.
+      grad.addColorStop(0, shadow.color1);
+      grad.addColorStop(0.5, shadow.color2);
+      grad.addColorStop(1, shadow.color3);
+
+      // Set up the rect coordinates.
+      let x = hw;
+      let y = 0;
+      let w = shadow.size;
+      let h = hh + Math.min(ph, vh - sy);
+
+      // Fill the shadow rect with the fill style.
+      gc.fillStyle = grad;
+      gc.fillRect(x, y, w, h);
+    }
+
+    // Draw the column footer shadow if needed.
+    if (sy < syx) {
+      // Set up the gradient coordinates.
+      let x0 = 0;
+      let y0 = this._viewportHeight;
+      let x1 = 0;
+      let y1 = this._viewportHeight - shadow.size;
+
+      // Create the gradient object.
+      let grad = gc.createLinearGradient(x0, y0, x1, y1);
+
+      // Set the gradient stops.
+      grad.addColorStop(0, shadow.color1);
+      grad.addColorStop(0.5, shadow.color2);
+      grad.addColorStop(1, shadow.color3);
+
+      // Set up the rect coordinates.
+      let x = 0;
+      let y = this._viewportHeight - shadow.size;
+      let w = hw + Math.min(pw, vw - sx);
+      let h = shadow.size;
+
+      // Fill the shadow rect with the fill style.
+      gc.fillStyle = grad;
+      gc.fillRect(x, y, w, h);
+    }
+
+    // Draw the row footer shadow if needed.
+    if (sx < sxx) {
+      // Set up the gradient coordinates.
+      let x0 = this._viewportWidth;
+      let y0 = 0;
+      let x1 = x0 - shadow.size;
+      let y1 = 0;
+
+      // Create the gradient object.
+      let grad = gc.createLinearGradient(x0, y0, x1, y1);
+
+      // Set the gradient stops.
+      grad.addColorStop(0, shadow.color1);
+      grad.addColorStop(0.5, shadow.color2);
+      grad.addColorStop(1, shadow.color3);
+
+      // Set up the rect coordinates.
+      let x = this._viewportWidth - shadow.size;
+      let y = 0;
+      let w = shadow.size;
+      let h = hh + Math.min(ph, vh - sy);
+
+      // Fill the shadow rect with the fill style.
+      gc.fillStyle = grad;
+      gc.fillRect(x, y, w, h);
+    }
+
+    // Restore the gc state.
+    gc.restore();
+  }
+
   private _viewport: Widget;
   private _vScrollBar: ScrollBar;
   private _hScrollBar: ScrollBar;
@@ -3675,6 +3829,31 @@ namespace DataGrid {
      * This overrides the `headerGridLineColor` option.
      */
     readonly headerHorizontalGridLineColor?: string;
+
+    /**
+     * The drop shadow effect when the grid is scrolled.
+     */
+    readonly scrollShadow?: {
+      /**
+       * The size of the shadow, in pixels.
+       */
+      readonly size: number;
+
+      /**
+       * The first color stop for the shadow.
+       */
+      readonly color1: string;
+
+      /**
+       * The second color stop for the shadow.
+       */
+      readonly color2: string;
+
+      /**
+       * The third color stop for the shadow.
+       */
+      readonly color3: string;
+    };
   };
 
   /**
@@ -3802,7 +3981,12 @@ namespace DataGrid {
     backgroundColor: '#FFFFFF',
     gridLineColor: 'rgba(20, 20, 20, 0.15)',
     headerBackgroundColor: '#F3F3F3',
-    headerGridLineColor: 'rgba(20, 20, 20, 0.25)'
+    headerGridLineColor: 'rgba(20, 20, 20, 0.25)',
+    scrollShadow: {
+      size: 10,
+      color1: 'rgba(0, 0, 0, 0.20',
+      color2: 'rgba(0, 0, 0, 0.05',
+      color3: 'rgba(0, 0, 0, 0.00' }
   };
 
   /**
