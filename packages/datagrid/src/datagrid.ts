@@ -1920,17 +1920,26 @@ class DataGrid extends Widget {
     // Fetch the viewport rect.
     let rect = this._viewport.node.getBoundingClientRect();
 
+    // Extract the rect coordinates.
+    let { left, top, right, bottom } = rect;
+
+    // Floor the rect coordinates for sub-pixel positioning.
+    left = Math.floor(left);
+    top = Math.floor(top);
+    right = Math.floor(right);
+    bottom = Math.floor(bottom);
+
     // Bail early if the position is out of the viewport bounds.
-    if (clientX < rect.left || clientY < rect.top) {
+    if (clientX < left || clientY < top) {
       throw '_hitTest() out of bounds';
     }
-    if (clientX >= rect.right || clientY >= rect.bottom) {
+    if (clientX >= right || clientY >= bottom) {
       throw '_hitTest() out of bounds';
     }
 
     // Convert the mouse position into local coordinates.
-    let lx = clientX - rect.left;
-    let ly = clientY - rect.top;
+    let lx = clientX - left;
+    let ly = clientY - top;
 
     // Fetch the header and body dimensions.
     let hw = this._headerWidth;
