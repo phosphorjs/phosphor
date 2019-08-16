@@ -1923,17 +1923,17 @@ class DataGrid extends Widget {
     // Extract the rect coordinates.
     let { left, top, right, bottom } = rect;
 
-    // Floor the rect coordinates for sub-pixel positioning.
+    // Round the rect coordinates for sub-pixel positioning.
     left = Math.floor(left);
     top = Math.floor(top);
-    right = Math.floor(right);
-    bottom = Math.floor(bottom);
+    right = Math.ceil(right);
+    bottom = Math.ceil(bottom);
 
     // Bail early if the position is out of the viewport bounds.
     if (clientX < left || clientY < top) {
       throw '_hitTest() out of bounds';
     }
-    if (clientX >= right || clientY >= bottom) {
+    if (clientX > right || clientY > bottom) {
       throw '_hitTest() out of bounds';
     }
 
