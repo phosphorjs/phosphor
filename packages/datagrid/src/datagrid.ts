@@ -309,8 +309,11 @@ class DataGrid extends Widget {
     // Update the internal style.
     this._style = { ...value };
 
-    // Schedule a full repaint of the grid.
-    this._repaint();
+    // Schedule a repaint of the content.
+    this._repaintContent();
+
+    // Schedule a repaint of the overlay.
+    this._repaintOverlay();
   }
 
   /**
@@ -338,8 +341,8 @@ class DataGrid extends Widget {
     // Update the internal renderer map.
     this._cellRenderers = value;
 
-    // Schedule a full repaint of the grid.
-    this._repaint();
+    // Schedule a repaint of the grid content.
+    this._repaintContent();
   }
 
   /**
@@ -361,8 +364,8 @@ class DataGrid extends Widget {
     // Update the internal renderer.
     this._defaultRenderer = value;
 
-    // Schedule a full repaint of the grid.
-    this._repaint();
+    // Schedule a repaint of the grid content.
+    this._repaintContent();
   }
 
   /**
@@ -538,7 +541,8 @@ class DataGrid extends Widget {
     this._viewport.node.addEventListener('mouseout', this);
     this.node.addEventListener('wheel', this);
     window.addEventListener('resize', this);
-    this._repaint();
+    this._repaintContent();
+    this._repaintOverlay();
   }
 
   /**
@@ -557,7 +561,8 @@ class DataGrid extends Widget {
    * A message handler invoked on a `'before-show'` message.
    */
   protected onBeforeShow(msg: Message): void {
-    this._repaint();
+    this._repaintContent();
+    this._repaintOverlay();
   }
 
   /**
@@ -735,45 +740,18 @@ class DataGrid extends Widget {
   }
 
   /**
-   * Schedule a repaint of the data grid.
+   * Schedule a repaint of all of the grid content.
    */
-  private _repaint(): void;
-  private _repaint(x: number, y: number, w: number, h: number): void;
-  private _repaint(): void {
-    // Parse the arguments.
-    let x: number;
-    let y: number;
-    let w: number;
-    let h: number;
-    switch (arguments.length) {
-    case 0:
-      x = 0;
-      y = 0;
-      w = this._viewportWidth;
-      h = this._viewportHeight;
-      break;
-    case 4:
-      x = Math.floor(arguments[0]);
-      y = Math.floor(arguments[1]);
-      w = Math.floor(arguments[2]);
-      h = Math.floor(arguments[3]);
-      break;
-    default:
-      throw 'unreachable';
-    }
+  private _repaintContent(): void {
+    let msg = new Private.PaintRequest('all', 0, 0, 0, 0);
+    MessageLoop.postMessage(this._viewport, msg);
+  }
 
-    // Bail early if there is nothing to paint.
-    if (w <= 0 || h <= 0) {
-      return;
-    }
-
-    // Set the paint pending flag.
-    this._paintPending = true;
-
-    // Create the paint request message.
-    let msg = new Private.PaintRequest(x, y, x + w - 1, y + h - 1);
-
-    // Post the paint request to the viewport.
+  /**
+   * Schedule a repaint of specific grid content.
+   */
+  private _repaintRegion(region: DataModel.CellRegion, r1: number, c1: number, r2: number, c2: number): void {
+    let msg = new Private.PaintRequest(region, r1, c1, r2, c2);
     MessageLoop.postMessage(this._viewport, msg);
   }
 
@@ -801,8 +779,11 @@ class DataGrid extends Widget {
     // Update the internal dpi ratio.
     this._dpiRatio = dpiRatio;
 
-    // Schedule a full repaint of the grid.
-    this._repaint();
+    // Schedule a repaint of the content.
+    this._repaintContent();
+
+    // Schedule a repaint of the overlay.
+    this._repaintOverlay();
 
     // Update the canvas size for the new dpi ratio.
     this._resizeCanvasIfNeeded(this._viewportWidth, this._viewportHeight);
@@ -990,10 +971,8 @@ class DataGrid extends Widget {
    * This schedules a full repaint and syncs the scroll state.
    */
   private _syncViewport(): void {
-    // Schedule a full repaint of the viewport.
-    this._repaint();
-
-    // Sync the scroll state after requesting the repaint.
+    this._repaintContent();
+    this._repaintOverlay();
     this._syncScrollState();
   }
 
@@ -1068,32 +1047,28 @@ class DataGrid extends Widget {
     let right = width - oldWidth;
     let bottom = height - oldHeight;
 
-    // If there is no dirty region, just paint the overlay.
+    // Paint the overlay immediately.
+    this._paintOverlay();
+
+    // Bail early if there is no dirty region.
     if (right <= 0 && bottom <= 0) {
-      this._paintOverlay();
       return;
     }
 
-    // If there is a paint pending, ensure it paints everything.
-    if (this._paintPending) {
-      this._repaint();
-      return;
-    }
-
-    // Paint the whole viewport if the old size was zero.
+    // Paint the whole grid if the old size was zero.
     if (oldWidth === 0 || oldHeight === 0) {
-      this._paint(0, 0, width, height);
+      this._paintContent(0, 0, width, height);
       return;
     }
 
     // Paint the dirty region to the right, if needed.
     if (right > 0) {
-      this._paint(oldWidth, 0, right, height);
+      this._paintContent(oldWidth, 0, right, height);
     }
 
     // Paint the dirty region to the bottom, if needed.
     if (bottom > 0 && width > right) {
-      this._paint(0, oldHeight, width - right, bottom);
+      this._paintContent(0, oldHeight, width - right, bottom);
     }
   }
 
@@ -1101,9 +1076,6 @@ class DataGrid extends Widget {
    * A message hook invoked on a viewport `'paint-request'` message.
    */
   private _onViewportPaintRequest(msg: Private.PaintRequest): void {
-    // Clear the paint pending flag.
-    this._paintPending = false;
-
     // Bail early if the viewport is not visible.
     if (!this._viewport.isVisible) {
       return;
@@ -1114,14 +1086,86 @@ class DataGrid extends Widget {
       return;
     }
 
-    // Compute the paint bounds.
+    // Set up the paint limits.
     let xMin = 0;
     let yMin = 0;
     let xMax = this._viewportWidth - 1;
     let yMax = this._viewportHeight - 1;
 
+    // Fetch the scroll position.
+    let sx = this._scrollX;
+    let sy = this._scrollY;
+
+    // Fetch the header dimensions.
+    let hw = this._headerWidth;
+    let hh = this._headerHeight;
+
+    // Fetch the section lists.
+    let rs = this._rowSections;
+    let cs = this._columnSections;
+    let rhs = this._rowHeaderSections;
+    let chs = this._columnHeaderSections;
+
     // Unpack the message data.
-    let { x1, y1, x2, y2 } = msg;
+    let { region, r1, c1, r2, c2 } = msg;
+
+    // Set up the paint variables.
+    let x1: number;
+    let y1: number;
+    let x2: number;
+    let y2: number;
+
+    // Fill the paint variables based on the paint region.
+    switch (region) {
+    case 'all':
+      x1 = xMin;
+      y1 = yMin;
+      x2 = xMax;
+      y2 = yMax;
+      break;
+    case 'body':
+      r1 = Math.max(0, Math.min(r1, rs.count));
+      c1 = Math.max(0, Math.min(c1, cs.count));
+      r2 = Math.max(0, Math.min(r2, rs.count));
+      c2 = Math.max(0, Math.min(c2, cs.count));
+      x1 = cs.offsetOf(c1) - sx + hw;
+      y1 = rs.offsetOf(r1) - sy + hh;
+      x2 = cs.extentOf(c2) - sx + hw;
+      y2 = rs.extentOf(r2) - sy + hh;
+      break;
+    case 'row-header':
+      r1 = Math.max(0, Math.min(r1, rs.count));
+      c1 = Math.max(0, Math.min(c1, rhs.count));
+      r2 = Math.max(0, Math.min(r2, rs.count));
+      c2 = Math.max(0, Math.min(c2, rhs.count));
+      x1 = rhs.offsetOf(c1);
+      y1 = rs.offsetOf(r1) - sy + hh;
+      x2 = rhs.extentOf(c2);
+      y2 = rs.extentOf(r2) - sy + hh;
+      break;
+    case 'column-header':
+      r1 = Math.max(0, Math.min(r1, chs.count));
+      c1 = Math.max(0, Math.min(c1, cs.count));
+      r2 = Math.max(0, Math.min(r2, chs.count));
+      c2 = Math.max(0, Math.min(c2, cs.count));
+      x1 = cs.offsetOf(c1) - sx + hw;
+      y1 = chs.offsetOf(r1);
+      x2 = cs.extentOf(c2) - sx + hw;
+      y2 = chs.extentOf(r2);
+      break;
+    case 'corner-header':
+      r1 = Math.max(0, Math.min(r1, chs.count));
+      c1 = Math.max(0, Math.min(c1, rhs.count));
+      r2 = Math.max(0, Math.min(r2, chs.count));
+      c2 = Math.max(0, Math.min(c2, rhs.count));
+      x1 = rhs.offsetOf(c1);
+      y1 = chs.offsetOf(r1);
+      x2 = rhs.extentOf(c2);
+      y2 = chs.extentOf(r2);
+      break;
+    default:
+      throw 'unreachable';
+    }
 
     // Bail early if the dirty rect is outside the bounds.
     if (x2 < xMin || y2 < yMin || x1 > xMax || y1 > yMax) {
@@ -1134,14 +1178,25 @@ class DataGrid extends Widget {
     x2 = Math.max(xMin, Math.min(x2, xMax));
     y2 = Math.max(yMin, Math.min(y2, yMax));
 
-    // Paint the dirty rect.
-    this._paint(x1, y1, x2 - x1 + 1, y2 - y1 + 1);
+    // Paint the content of the dirty rect.
+    this._paintContent(x1, y1, x2 - x1 + 1, y2 - y1 + 1);
   }
 
   /**
    * A message hook invoked on a viewport `'overlay-paint-request'` message.
    */
   private _onViewportOverlayPaintRequest(msg: Message): void {
+    // Bail early if the viewport is not visible.
+    if (!this._viewport.isVisible) {
+      return;
+    }
+
+    // Bail early if the viewport has zero area.
+    if (this._viewportWidth === 0 || this._viewportHeight === 0) {
+      return;
+    }
+
+    // Paint the content of the overlay.
     this._paintOverlay();
   }
 
@@ -1244,15 +1299,23 @@ class DataGrid extends Widget {
    */
   private _onModelChanged(sender: DataModel, args: DataModel.ChangedArgs): void {
     switch (args.type) {
-    case 'rows-removed':
     case 'rows-inserted':
-    case 'columns-removed':
+      this._onRowsInserted(args);
+      break;
     case 'columns-inserted':
-      this._onSectionsChanged(args);
+      this._onColumnsInserted(args);
+      break;
+    case 'rows-removed':
+      this._onRowsRemoved(args);
+      break;
+    case 'columns-removed':
+      this._onColumnsRemoved(args);
       break;
     case 'rows-moved':
+      this._onRowsMoved(args);
+      break;
     case 'columns-moved':
-      this._onSectionsMoved(args);
+      this._onColumnsMoved(args);
       break;
     case 'cells-changed':
       this._onCellsChanged(args);
@@ -1273,155 +1336,185 @@ class DataGrid extends Widget {
   }
 
   /**
-   * Handle sections changing in the data model.
+   * Handle rows being inserted in the data model.
    */
-  private _onSectionsChanged(args: DataModel.RowsChangedArgs | DataModel.ColumnsChangedArgs): void {
-    // TODO clean up this method. It's ugly.
-
+  private _onRowsInserted(args: DataModel.RowsChangedArgs): void {
     // Unpack the arg data.
-    let { region, type, index, span } = args;
+    let { region, index, span } = args;
 
     // Bail early if there are no sections to insert.
     if (span <= 0) {
       return;
     }
 
-    // Determine the behavior of the change type.
-    let isRows = type === 'rows-inserted' || type === 'rows-removed';
-    let isRemove = type === 'rows-removed' || type === 'columns-removed';
-
     // Look up the relevant section list.
     let list: SectionList;
     if (region === 'body') {
-      list = isRows ? this._rowSections : this._columnSections;
+      list = this._rowSections;
     } else {
-      list = isRows ? this._columnHeaderSections : this._rowHeaderSections;
+      list = this._columnHeaderSections;
     }
 
-    // Bail if the index is out of range.
-    if (isRemove && (index < 0 || index >= list.count)) {
-      return;
-    }
-
-    // Compute the paint offset and handle region-specific behavior.
-    let offset: number;
-    if (region !== 'body') {
-      // Compute the paint offset.
-      if (index >= list.count) {
-        offset = list.length;
-      } else {
-        offset = list.offsetOf(index);
-      }
-
-      // Remove or insert the sections as needed.
-      if (isRemove) {
-        list.remove(index, span);
-      } else {
-        list.insert(index, span);
-      }
+    // Insert the span, maintaining the scroll position as needed.
+    if (this._scrollY === this._maxScrollY) {
+      list.insert(index, span);
+      this._scrollY = this._maxScrollY;
     } else {
-      // Look up the initial scroll geometry.
-      let scrollPos1: number;
-      let maxScrollPos1: number;
-      if (isRows) {
-        scrollPos1 = this._scrollY;
-        maxScrollPos1 = this._maxScrollY;
-      } else {
-        scrollPos1 = this._scrollX;
-        maxScrollPos1 = this._maxScrollX;
-      }
-
-      // Look up the target position.
-      let targetPos: number;
-      if (index >= list.count) {
-        targetPos = list.length;
-      } else {
-        targetPos = list.offsetOf(index);
-      }
-
-      // Remove or Insert the sections and save the pre- and post- size.
-      let size1 = list.length;
-      if (isRemove) {
-        list.remove(index, span);
-      } else {
-        list.insert(index, span);
-      }
-      let size2 = list.length;
-
-      // Fetch the new max scroll position.
-      let maxScrollPos2: number;
-      if (isRows) {
-        maxScrollPos2 = this._maxScrollY;
-      } else {
-        maxScrollPos2 = this._maxScrollX;
-      }
-
-      // Adjust the scroll position as needed.
-      let scrollPos2: number;
-      if (scrollPos1 === 0) {
-        scrollPos2 = 0;
-      } else if (scrollPos1 === maxScrollPos1) {
-        scrollPos2 = maxScrollPos2;
-      } else if (isRemove && targetPos <= scrollPos1) {
-        let delta = Math.min(scrollPos1 - targetPos, size1 - size2);
-        scrollPos2 = Math.min(scrollPos1 - delta, maxScrollPos2);
-      } else if (targetPos <= scrollPos1) {
-        scrollPos2 = Math.min(scrollPos1 + size2 - size1, maxScrollPos2);
-      } else {
-        scrollPos2 = scrollPos1;
-      }
-
-      // Update the scroll position and compute the paint offset.
-      if (isRows) {
-        this._scrollY = scrollPos2;
-        offset = this._headerHeight;
-      } else {
-        this._scrollX = scrollPos2;
-        offset = this._headerWidth;
-      }
-
-      // Adjust the paint offset if the scroll position did not change.
-      if (scrollPos1 === scrollPos2) {
-        offset = Math.max(offset, offset + targetPos - scrollPos1);
-      }
+      list.insert(index, span);
     }
 
-    // Compute the dirty area.
-    let x = isRows ? 0 : offset;
-    let y = isRows ? offset : 0;
-    let w = this._viewportWidth - x;
-    let h = this._viewportHeight - y;
+    // Schedule a repaint of the content.
+    this._repaintContent();
 
-    // Schedule a repaint of the dirty area, if needed.
-    if (w > 0 && h > 0) {
-      this._repaint(x, y, w, h);
-    }
+    // Schedule a repaint of the overlay.
+    this._repaintOverlay();
 
     // Sync the scroll state after queueing the repaint.
     this._syncScrollState();
   }
 
   /**
-   * Handle sections moving in the data model.
+   * Handle columns being inserted into the data model.
    */
-  private _onSectionsMoved(args: DataModel.RowsMovedArgs | DataModel.ColumnsMovedArgs): void {
+  private _onColumnsInserted(args: DataModel.ColumnsChangedArgs): void {
     // Unpack the arg data.
-    let { region, type, index, span, destination } = args;
+    let { region, index, span } = args;
+
+    // Bail early if there are no sections to insert.
+    if (span <= 0) {
+      return;
+    }
+
+    // Look up the relevant section list.
+    let list: SectionList;
+    if (region === 'body') {
+      list = this._columnSections;
+    } else {
+      list = this._rowHeaderSections;
+    }
+
+    // Insert the span, maintaining the scroll position as needed.
+    if (this._scrollX === this._maxScrollX) {
+      list.insert(index, span);
+      this._scrollX = this._maxScrollX;
+    } else {
+      list.insert(index, span);
+    }
+
+    // Schedule a repaint of the content.
+    this._repaintContent();
+
+    // Schedule a repaint of the overlay.
+    this._repaintOverlay();
+
+    // Sync the scroll state after queueing the repaint.
+    this._syncScrollState();
+  }
+
+  /**
+   * Handle rows being removed from the data model.
+   */
+  private _onRowsRemoved(args: DataModel.RowsChangedArgs): void {
+    // Unpack the arg data.
+    let { region, index, span } = args;
+
+    // Bail early if there are no sections to remove.
+    if (span <= 0) {
+      return;
+    }
+
+    // Look up the relevant section list.
+    let list: SectionList;
+    if (region === 'body') {
+      list = this._rowSections;
+    } else {
+      list = this._columnHeaderSections;
+    }
+
+    // Bail if the index or is invalid
+    if (index < 0 || index >= list.count) {
+      return;
+    }
+
+    // Remove the span, maintaining the scroll position as needed.
+    if (this._scrollY === this._maxScrollY) {
+      list.remove(index, span);
+      this._scrollY = this._maxScrollY;
+    } else {
+      list.remove(index, span);
+    }
+
+    // Schedule a repaint of the content.
+    this._repaintContent();
+
+    // Schedule a repaint of the overlay.
+    this._repaintOverlay();
+
+    // Sync the scroll state after queueing the repaint.
+    this._syncScrollState();
+  }
+
+  /**
+   * Handle columns being removed from the data model.
+   */
+  private _onColumnsRemoved(args: DataModel.ColumnsChangedArgs): void {
+    // Unpack the arg data.
+    let { region, index, span } = args;
+
+    // Bail early if there are no sections to remove.
+    if (span <= 0) {
+      return;
+    }
+
+    // Look up the relevant section list.
+    let list: SectionList;
+    if (region === 'body') {
+      list = this._columnSections;
+    } else {
+      list = this._rowHeaderSections;
+    }
+
+    // Bail if the index or is invalid
+    if (index < 0 || index >= list.count) {
+      return;
+    }
+
+    // Remove the span, maintaining the scroll position as needed.
+    if (this._scrollX === this._maxScrollX) {
+      list.remove(index, span);
+      this._scrollX = this._maxScrollX;
+    } else {
+      list.remove(index, span);
+    }
+
+    // Schedule a repaint of the content.
+    this._repaintContent();
+
+    // Schedule a repaint of the overlay.
+    this._repaintOverlay();
+
+    // Sync the scroll state after queueing the repaint.
+    this._syncScrollState();
+  }
+
+  /**
+   * Handle rows moving in the data model.
+   */
+  private _onRowsMoved(args: DataModel.RowsMovedArgs): void {
+    // Unpack the arg data.
+    let { region, index, span, destination } = args;
 
     // Bail early if there are no sections to move.
     if (span <= 0) {
       return;
     }
 
-    // Determine the behavior of the change type.
-    let isRows = type === 'rows-moved';
-
     // Look up the relevant section list.
     let list: SectionList;
     if (region === 'body') {
-      list = isRows ? this._rowSections : this._columnSections;
+      list = this._rowSections;
     } else {
-      list = isRows ? this._columnHeaderSections : this._rowHeaderSections;
+      list = this._columnHeaderSections;
     }
 
     // Bail early if the index is out of range.
@@ -1441,88 +1534,83 @@ class DataGrid extends Widget {
     }
 
     // Compute the first affected index.
-    let i1 = Math.min(index, destination);
+    let r1 = Math.min(index, destination);
 
     // Compute the last affected index.
-    let i2 = Math.max(index + span - 1, destination + span - 1);
+    let r2 = Math.max(index + span - 1, destination + span - 1);
 
-    // Compute the first paint boundary.
-    let p1 = list.offsetOf(i1);
+    // Move the sections in the list.
+    list.move(index, span, destination);
 
-    // Compute the last paint boundary.
-    let p2: number;
-    if (i2 >= list.count - 1) {
-      p2 = list.length - 1;
+    // Schedule a repaint of the dirty cells.
+    if (region === 'body') {
+      this._repaintRegion('body', r1, 0, r2, Infinity);
+      this._repaintRegion('row-header', r1, 0, r2, Infinity);
     } else {
-      p2 = list.offsetOf(i2 + 1) - 1;
+      this._repaintRegion('column-header', r1, 0, r2, Infinity);
+      this._repaintRegion('corner-header', r1, 0, r2, Infinity);
+    }
+
+    // Schedule a repaint of the overlay.
+    this._repaintOverlay();
+  }
+
+  /**
+   * Handle columns moving in the data model.
+   */
+  private _onColumnsMoved(args: DataModel.ColumnsMovedArgs): void {
+    // Unpack the arg data.
+    let { region, index, span, destination } = args;
+
+    // Bail early if there are no sections to move.
+    if (span <= 0) {
+      return;
+    }
+
+    // Look up the relevant section list.
+    let list: SectionList;
+    if (region === 'body') {
+      list = this._columnSections;
+    } else {
+      list = this._rowHeaderSections;
+    }
+
+    // Bail early if the index is out of range.
+    if (index < 0 || index >= list.count) {
+      return;
+    }
+
+    // Clamp the move span to the limit.
+    span = Math.min(span, list.count - index);
+
+    // Clamp the destination index to the limit.
+    destination = Math.min(Math.max(0, destination), list.count - span);
+
+    // Bail early if there is no effective move.
+    if (index === destination) {
+      return;
     }
 
     // Move the sections in the list.
     list.move(index, span, destination);
 
-    // Fetch the row header and column header sizes.
-    let hw = this._headerWidth;
-    let hh = this._headerHeight;
+    // Compute the first affected index.
+    let c1 = Math.min(index, destination);
 
-    // Set up the initial paint limits.
-    let xMin = 0;
-    let yMin = 0;
-    let xMax = this._viewportWidth - 1;
-    let yMax = this._viewportHeight - 1;
+    // Compute the last affected index.
+    let c2 = Math.max(index + span - 1, destination + span - 1);
 
-    // Set up the initial paint region.
-    let x1 = xMin;
-    let y1 = yMin;
-    let x2 = xMax;
-    let y2 = yMax;
-
-    // Adjust the limits and paint region.
-    switch (region) {
-    case 'body':
-      if (isRows) {
-        yMin = hh;
-        y1 = hh + p1 - this._scrollY;
-        y2 = hh + p2 - this._scrollY;
-      } else {
-        xMin = hw;
-        x1 = hw + p1 - this._scrollX;
-        x2 = hw + p2 - this._scrollX;
-      }
-      break;
-    case 'row-header':
-      xMax = Math.min(hw - 1, xMax);
-      x1 = p1;
-      x2 = p2;
-      break;
-    case 'column-header':
-      yMax = Math.min(hh - 1, yMax);
-      y1 = p1;
-      y2 = p2;
-      break;
-    default:
-      throw 'unreachable';
+    // Schedule a repaint of the dirty cells.
+    if (region === 'body') {
+      this._repaintRegion('body', 0, c1, Infinity, c2);
+      this._repaintRegion('column-header', 0, c1, Infinity, c2);
+    } else {
+      this._repaintRegion('row-header', 0, c1, Infinity, c2);
+      this._repaintRegion('corner-header', 0, c1, Infinity, c2);
     }
 
-    // Bail early if the paint limits are empty.
-    if (xMax < xMin || yMax < yMin) {
-      return;
-    }
-
-    // Bail early if the dirty region is out of range.
-    if (x2 < xMin || x1 > xMax || y2 < yMin || y1 > yMax) {
-      return;
-    }
-
-    // Compute the dirty area.
-    let x = Math.max(xMin, x1);
-    let y = Math.max(yMin, y1);
-    let w = Math.min(x2, xMax) - x + 1;
-    let h = Math.min(y2, yMax) - y + 1;
-
-    // Schedule a repaint of the dirty area, if needed.
-    if (w > 0 && h > 0) {
-      this._repaint(x, y, w, h);
-    }
+    // Schedule a repaint of the overlay.
+    this._repaintOverlay();
   }
 
   /**
@@ -1537,113 +1625,14 @@ class DataGrid extends Widget {
       return;
     }
 
-    // Look up the relevant row and column lists.
-    let rList: SectionList;
-    let cList: SectionList;
-    switch (region) {
-    case 'body':
-      rList = this._rowSections;
-      cList = this._columnSections;
-      break;
-    case 'row-header':
-      rList = this._rowSections;
-      cList = this._rowHeaderSections;
-      break;
-    case 'column-header':
-      rList = this._columnHeaderSections;
-      cList = this._columnSections;
-      break;
-    case 'corner-header':
-      rList = this._columnHeaderSections;
-      cList = this._rowHeaderSections;
-      break;
-    default:
-      throw 'unreachable';
-    }
+    // Compute the changed cell bounds.
+    let r1 = rowIndex;
+    let c1 = columnIndex;
+    let r2 = r1 + rowSpan - 1;
+    let c2 = c1 + columnSpan - 1;
 
-    // Bail early if the changed cells are out of range.
-    if (rowIndex >= rList.count || columnIndex >= cList.count) {
-      return;
-    }
-
-    // Look up the unscrolled top-left corner of the range.
-    let x1 = cList.offsetOf(columnIndex);
-    let y1 = rList.offsetOf(rowIndex);
-
-    // Look up the unscrolled bottom-right corner of the range.
-    let x2: number;
-    let y2: number;
-    if (columnIndex + columnSpan >= cList.count) {
-      x2 = cList.length - 1;
-    } else {
-      x2 = cList.offsetOf(columnIndex + columnSpan) - 1;
-    }
-    if (rowIndex + rowSpan >= rList.count) {
-      y2 = rList.length - 1;
-    } else {
-      y2 = rList.offsetOf(rowIndex + rowSpan) - 1;
-    }
-
-    // Fetch the row header and column header sizes.
-    let hw = this._headerWidth;
-    let hh = this._headerHeight;
-
-    // Set up the initial paint limits.
-    let xMin = 0;
-    let yMin = 0;
-    let xMax = this._viewportWidth - 1;
-    let yMax = this._viewportHeight - 1;
-
-    // Adjust the limits and paint region.
-    switch (region) {
-    case 'body':
-      xMin = hw;
-      yMin = hh;
-      x1 += hw - this._scrollX;
-      x2 += hw - this._scrollX;
-      y1 += hh - this._scrollY;
-      y2 += hh - this._scrollY;
-      break;
-    case 'row-header':
-      yMin = hh;
-      xMax = Math.min(hw - 1, xMax);
-      y1 += hh - this._scrollY;
-      y2 += hh - this._scrollY;
-      break;
-    case 'column-header':
-      xMin = hw;
-      yMax = Math.min(hh - 1, yMax);
-      x1 += hw - this._scrollX;
-      x2 += hw - this._scrollX;
-      break;
-    case 'corner-header':
-      xMax = Math.min(hw - 1, xMax);
-      yMax = Math.min(hh - 1, yMax);
-      break;
-    default:
-      throw 'unreachable';
-    }
-
-    // Bail early if the paint limits are empty.
-    if (xMax < xMin || yMax < yMin) {
-      return;
-    }
-
-    // Bail early if the dirty region is out of range.
-    if (x2 < xMin || x1 > xMax || y2 < yMin || y1 > yMax) {
-      return;
-    }
-
-    // Compute the dirty area.
-    let x = Math.max(xMin, x1);
-    let y = Math.max(yMin, y1);
-    let w = Math.min(x2, xMax) - x + 1;
-    let h = Math.min(y2, yMax) - y + 1;
-
-    // Schedule a repaint of the dirty area, if needed.
-    if (w > 0 && h > 0) {
-      this._repaint(x, y, w, h);
-    }
+    // Schedule a repaint of the cell content.
+    this._repaintRegion(region, r1, c1, r2, c2);
   }
 
   /**
@@ -1698,7 +1687,126 @@ class DataGrid extends Widget {
    * A signal handler for the renderer map `changed` signal.
    */
   private _onRenderersChanged(): void {
-    this._repaint();
+    this._repaintContent();
+  }
+
+  /**
+   * Handle the `'mousedown'` event for the data grid.
+   */
+  private _evtMouseDown(event: MouseEvent): void {
+    // Do nothing if the left mouse button is not pressed.
+    if (event.button !== 0) {
+      return;
+    }
+
+    // Bail early if the alt key is held.
+    // TODO - support cell-level events with alt key
+    if (event.altKey) {
+      return;
+    }
+
+    // Extract the relevant event data.
+    let { clientX, clientY, ctrlKey, shiftKey } = event;
+
+    // Hit test the viewport.
+    let hitTest = this._hitTest(clientX, clientY);
+
+    // Stop the event propagation.
+    event.preventDefault();
+    event.stopPropagation();
+
+    // Clear the viewport cursor.
+    this._viewport.node.style.cursor = '';
+
+    // Fetch the mouse cursor.
+    let cursor = Private.cursorForPart(hitTest.part);
+
+    // Override the document cursor.
+    let override = Drag.overrideCursor(cursor);
+
+    // Set up the transient selection.
+    let selection: SelectionModel.Region | null = null;
+
+    // Handle the mouse selection if needed.
+    if (this._selectionModel) {
+      // Convert the hit test into a selection region.
+      switch (hitTest.part) {
+      case 'body-cell':
+        selection = new SelectionModel.Region(hitTest.row, hitTest.column, 1, 1);
+        break;
+      case 'column-header-cell':
+        selection = new SelectionModel.Region(0, hitTest.column, Infinity, 1);
+        break;
+      case 'row-header-cell':
+        selection = new SelectionModel.Region(hitTest.row, 0, 1, Infinity);
+        break;
+      }
+    }
+
+    //
+    if (selection) {
+      this._repaintOverlay();
+    }
+
+    //
+    if (selection && (!ctrlKey || shiftKey)) {
+      this._selectionModel!.clear();
+    }
+
+    // //
+    // if (selection && shiftKey) {
+
+    // }
+
+    // Set up the press data.
+    this._pressData = {
+      hitTest,
+      clientX,
+      clientY,
+      ctrlKey,
+      shiftKey,
+      override,
+      selection
+    };
+
+    // Add the extra document listeners.
+    document.addEventListener('mousemove', this, true);
+    document.addEventListener('mouseup', this, true);
+    document.addEventListener('keydown', this, true);
+    document.addEventListener('contextmenu', this, true);
+  }
+
+  /**
+   * Handle the `'mouseup'` event for the data grid.
+   */
+  private _evtMouseUp(event: MouseEvent): void {
+    // Bail early if a press is not in progress.
+    if (!this._pressData) {
+      return;
+    }
+
+    // Do nothing if the left mouse button is not released.
+    if (event.button !== 0) {
+      return;
+    }
+
+    // Stop the event when releasing the mouse.
+    event.preventDefault();
+    event.stopPropagation();
+
+    //
+    let model = this._selectionModel;
+    let selection = this._pressData.selection;
+
+    //
+    if (model && selection) {
+      model.select(selection);
+    }
+
+    // Finalize the mouse release.
+    this._releaseMouse();
+
+    // TODO - test for viewport hover?
   }
 
   /**
@@ -1722,6 +1830,10 @@ class DataGrid extends Widget {
 
       // Done
       return;
+    }
+
+    if (this._pressData.selection) {
+      this._repaintOverlay();
     }
 
     // Update the press data with the current mouse position.
@@ -1769,73 +1881,10 @@ class DataGrid extends Widget {
   }
 
   /**
-   * Handle the `'mousedown'` event for the data grid.
-   */
-  private _evtMouseDown(event: MouseEvent): void {
-    // Do nothing if the left mouse button is not pressed.
-    if (event.button !== 0) {
-      return;
-    }
-
-    // Bail early if the alt key is held.
-    // TODO - support cell events
-    if (event.altKey) {
-      return;
-    }
-
-    // Extract the client position.
-    let { clientX, clientY } = event;
-
-    // Hit test the viewport.
-    let hitTest = this._hitTest(clientX, clientY);
-
-    // Stop the event propagation.
-    event.preventDefault();
-    event.stopPropagation();
-
-    // Clear the viewport cursor.
-    this._viewport.node.style.cursor = '';
-
-    // Fetch the mouse cursor.
-    let cursor = Private.cursorForPart(hitTest.part);
-
-    // Override the document cursor.
-    let override = Drag.overrideCursor(cursor);
-
-    // Set up the press data.
-    this._pressData = { hitTest, clientX, clientY, override };
-
-    // Add the extra document listeners.
-    document.addEventListener('mousemove', this, true);
-    document.addEventListener('mouseup', this, true);
-    document.addEventListener('keydown', this, true);
-    document.addEventListener('contextmenu', this, true);
-  }
-
-  /**
-   * Handle the `'mouseup'` event for the data grid.
-   */
-  private _evtMouseUp(event: MouseEvent): void {
-    // Do nothing if the left mouse button is not released.
-    if (event.button !== 0) {
-      return;
-    }
-
-    // Stop the event when releasing the mouse.
-    event.preventDefault();
-    event.stopPropagation();
-
-    // Finalize the mouse release.
-    this._releaseMouse();
-
-    // TODO - test for viewport hover?
-  }
-
-  /**
    * Handle the `'wheel'` event for the data grid.
    */
   private _evtWheel(event: WheelEvent): void {
-    // TODO handle wheel while dragging!!!!
+    // TODO handle wheel while dragging.
     if (this._pressData) {
       return;
     }
@@ -1904,6 +1953,10 @@ class DataGrid extends Widget {
     // Clear the press data and cursor override.
     this._pressData.override.dispose();
     this._pressData = null;
+
+    // Schedule a repaint of the overlay.
+    // TODO - right place for this?
+    this._repaintOverlay();
 
     // Remove the extra document listeners.
     document.removeEventListener('mousemove', this, true);
@@ -2188,11 +2241,8 @@ class DataGrid extends Widget {
       return;
     }
 
-    // If a paint is already pending, sync the viewport.
-    if (this._paintPending) {
-      this._syncViewport();
-      return;
-    }
+    // Paint the overlay.
+    this._paintOverlay();
 
     // Compute the size delta.
     let delta = newSize - oldSize;
@@ -2223,7 +2273,7 @@ class DataGrid extends Widget {
 
       // Paint from the section onward if it spans the viewport.
       if (offset + oldSize >= vpHeight || offset + newSize >= vpHeight) {
-        this._paint(0, pos, vpWidth, vpHeight - pos);
+        this._paintContent(0, pos, vpWidth, vpHeight - pos);
         break;
       }
 
@@ -2247,16 +2297,16 @@ class DataGrid extends Widget {
       }
 
       // Blit the valid content to the destination.
-      this._blit(this._canvas, sx, sy, sw, sh, dx, dy);
+      this._blitContent(this._canvas, sx, sy, sw, sh, dx, dy);
 
       // Repaint the section if needed.
       if (newSize > 0 && offset + newSize > hh) {
-        this._paint(0, pos, vpWidth, offset + newSize - pos);
+        this._paintContent(0, pos, vpWidth, offset + newSize - pos);
       }
 
       // Paint the trailing space if needed.
       if (delta < 0) {
-        this._paint(0, vpHeight + delta, vpWidth, -delta);
+        this._paintContent(0, vpHeight + delta, vpWidth, -delta);
       }
 
       // Done.
@@ -2286,7 +2336,7 @@ class DataGrid extends Widget {
 
       // Paint from the section onward if it spans the viewport.
       if (offset + oldSize >= vpWidth || offset + newSize >= vpWidth) {
-        this._paint(pos, 0, vpWidth - pos, vpHeight);
+        this._paintContent(pos, 0, vpWidth - pos, vpHeight);
         break;
       }
 
@@ -2310,16 +2360,16 @@ class DataGrid extends Widget {
       }
 
       // Blit the valid content to the destination.
-      this._blit(this._canvas, sx, sy, sw, sh, dx, dy);
+      this._blitContent(this._canvas, sx, sy, sw, sh, dx, dy);
 
       // Repaint the section if needed.
       if (newSize > 0 && offset + newSize > hw) {
-        this._paint(pos, 0, offset + newSize - pos, vpHeight);
+        this._paintContent(pos, 0, offset + newSize - pos, vpHeight);
       }
 
       // Paint the trailing space if needed.
       if (delta < 0) {
-        this._paint(vpWidth + delta, 0, -delta, vpHeight);
+        this._paintContent(vpWidth + delta, 0, -delta, vpHeight);
       }
 
       // Done.
@@ -2337,7 +2387,7 @@ class DataGrid extends Widget {
 
       // Paint the entire tail if the section spans the viewport.
       if (offset + oldSize >= vpWidth || offset + newSize >= vpWidth) {
-        this._paint(offset, 0, vpWidth - offset, vpHeight);
+        this._paintContent(offset, 0, vpWidth - offset, vpHeight);
         break;
       }
 
@@ -2350,16 +2400,16 @@ class DataGrid extends Widget {
       let dy = 0;
 
       // Blit the valid contents to the destination.
-      this._blit(this._canvas, sx, sy, sw, sh, dx, dy);
+      this._blitContent(this._canvas, sx, sy, sw, sh, dx, dy);
 
       // Repaint the header section if needed.
       if (newSize > 0) {
-        this._paint(offset, 0, newSize, vpHeight);
+        this._paintContent(offset, 0, newSize, vpHeight);
       }
 
       // Paint the trailing space if needed.
       if (delta < 0) {
-        this._paint(vpWidth + delta, 0, -delta, vpHeight);
+        this._paintContent(vpWidth + delta, 0, -delta, vpHeight);
       }
 
       // Done
@@ -2377,7 +2427,7 @@ class DataGrid extends Widget {
 
       // Paint the entire tail if the section spans the viewport.
       if (offset + oldSize >= vpHeight || offset + newSize >= vpHeight) {
-        this._paint(0, offset, vpWidth, vpHeight - offset);
+        this._paintContent(0, offset, vpWidth, vpHeight - offset);
         break;
       }
 
@@ -2390,16 +2440,16 @@ class DataGrid extends Widget {
       let dy = sy + delta;
 
       // Blit the valid contents to the destination.
-      this._blit(this._canvas, sx, sy, sw, sh, dx, dy);
+      this._blitContent(this._canvas, sx, sy, sw, sh, dx, dy);
 
       // Repaint the header section if needed.
       if (newSize > 0) {
-        this._paint(0, offset, vpWidth, newSize);
+        this._paintContent(0, offset, vpWidth, newSize);
       }
 
       // Paint the trailing space if needed.
       if (delta < 0) {
-        this._paint(0, vpHeight + delta, vpWidth, -delta);
+        this._paintContent(0, vpHeight + delta, vpWidth, -delta);
       }
 
       // Done
@@ -2431,14 +2481,6 @@ class DataGrid extends Widget {
 
     // Bail early if there is no effective scroll.
     if (dx === 0 && dy === 0) {
-      return;
-    }
-
-    // If there is a paint pending, ensure it paints everything.
-    if (this._paintPending) {
-      this._scrollX = x;
-      this._scrollY = y;
-      this._repaint();
       return;
     }
 
@@ -2499,7 +2541,8 @@ class DataGrid extends Widget {
     if ((dxArea + dyArea) >= (width * height)) {
       this._scrollX = x;
       this._scrollY = y;
-      this._paint(0, 0, width, height);
+      this._paintContent(0, 0, width, height);
+      this._paintOverlay();
       return;
     }
 
@@ -2511,14 +2554,14 @@ class DataGrid extends Widget {
     // valid content and paint the dirty region.
     if (dy !== 0 && contentHeight > 0) {
       if (Math.abs(dy) >= contentHeight) {
-        this._paint(0, contentY, width, contentHeight);
+        this._paintContent(0, contentY, width, contentHeight);
       } else {
         let x = 0;
         let y = dy < 0 ? contentY : contentY + dy;
         let w = width;
         let h = contentHeight - Math.abs(dy);
-        this._blit(this._canvas, x, y, w, h, x, y - dy);
-        this._paint(0, dy < 0 ? contentY : height - dy, width, Math.abs(dy));
+        this._blitContent(this._canvas, x, y, w, h, x, y - dy);
+        this._paintContent(0, dy < 0 ? contentY : height - dy, width, Math.abs(dy));
       }
     }
 
@@ -2530,26 +2573,29 @@ class DataGrid extends Widget {
     // valid content and paint the dirty region.
     if (dx !== 0 && contentWidth > 0) {
       if (Math.abs(dx) >= contentWidth) {
-        this._paint(contentX, 0, contentWidth, height);
+        this._paintContent(contentX, 0, contentWidth, height);
       } else {
         let x = dx < 0 ? contentX : contentX + dx;
         let y = 0;
         let w = contentWidth - Math.abs(dx);
         let h = height;
-        this._blit(this._canvas, x, y, w, h, x - dx, y);
-        this._paint(dx < 0 ? contentX : width - dx, 0, Math.abs(dx), height);
+        this._blitContent(this._canvas, x, y, w, h, x - dx, y);
+        this._paintContent(dx < 0 ? contentX : width - dx, 0, Math.abs(dx), height);
       }
     }
+
+    // Paint the overlay.
+    this._paintOverlay();
   }
 
   /**
-   * Blit content into the on-screen canvas.
+   * Blit content into the on-screen grid canvas.
    *
    * The rect should be expressed in viewport coordinates.
    *
    * This automatically accounts for the dpi ratio.
    */
-  private _blit(source: HTMLCanvasElement, x: number, y: number, w: number, h: number, dx: number, dy: number): void {
+  private _blitContent(source: HTMLCanvasElement, x: number, y: number, w: number, h: number, dx: number, dy: number): void {
     // Scale the blit coordinates by the dpi ratio.
     x *= this._dpiRatio;
     y *= this._dpiRatio;
@@ -2574,36 +2620,13 @@ class DataGrid extends Widget {
   /**
    * Paint the grid content for the given dirty rect.
    *
-   * The rect should be expressed in viewport coordinates.
+   * The rect should be expressed in valid viewport coordinates.
    *
    * This is the primary paint entry point. The individual `_draw*`
    * methods should not be invoked directly. This method dispatches
    * to the drawing methods in the correct order.
    */
-  private _paint(rx: number, ry: number, rw: number, rh: number): void {
-    // Warn and bail if recursive painting is detected.
-    if (this._inPaint) {
-      console.warn('Recursive paint detected.');
-      return;
-    }
-
-    // Execute the actual drawing logic.
-    try {
-      this._inPaint = true;
-      this._paintGrid(rx, ry, rw, rh);
-      this._paintOverlay();
-    } finally {
-      this._inPaint = false;
-    }
-  }
-
-
-  /**
-   * Paint the primary grid content for the given dirty rect.
-   *
-   * This method dispatches to the relevant `_draw*` methods.
-   */
-  private _paintGrid(rx: number, ry: number, rw: number, rh: number): void {
+  private _paintContent(rx: number, ry: number, rw: number, rh: number): void {
     // Scale the canvas and buffe GC for the dpi ratio.
     this._canvasGC.setTransform(this._dpiRatio, 0, 0, this._dpiRatio, 0, 0);
     this._bufferGC.setTransform(this._dpiRatio, 0, 0, this._dpiRatio, 0, 0);
@@ -2630,7 +2653,9 @@ class DataGrid extends Widget {
   /**
    * Paint the overlay content for the entire grid.
    *
-   * This method dispatches to the relevant `_draw*` methods.
+   * This is the primary overlay paint entry point. The individual
+   * `_draw*` methods should not be invoked directly. This method
+   * dispatches to the drawing methods in the correct order.
    */
   private _paintOverlay(): void {
     // Scale the overlay GC for the dpi ratio.
@@ -3321,7 +3346,7 @@ class DataGrid extends Widget {
       // canvas with a clip rect on the column. Managed column clipping
       // is required to prevent cell renderers from needing to set up a
       // clip rect for handling horizontal overflow text (slow!).
-      this._blit(this._buffer, x1, y1, x2 - x1 + 1, y2 - y1 + 1, x1, y1);
+      this._blitContent(this._buffer, x1, y1, x2 - x1 + 1, y2 - y1 + 1, x1, y1);
 
       // Increment the running X coordinate.
       x += width;
@@ -3702,8 +3727,6 @@ class DataGrid extends Widget {
   private _hScrollBar: ScrollBar;
   private _scrollCorner: Widget;
 
-  private _inPaint = false;
-  private _paintPending = false;  // TODO: would like to get rid of this flag
   private _pressData: Private.PressData | null = null;
   private _dpiRatio = Math.ceil(window.devicePixelRatio);
 
@@ -4176,72 +4199,100 @@ namespace Private {
   };
 
   /**
-   * A conflatable message which merges dirty paint rects.
+   * A conflatable message which merges dirty paint regions.
    */
   export
   class PaintRequest extends ConflatableMessage {
     /**
      * Construct a new paint request messages.
      *
-     * @param x1 - The top-left X coordinate of the rect.
+     * @param region - The cell region for the paint.
      *
-     * @param y1 - The top-left Y coordinate of the rect.
+     * @param r1 - The top-left row of the dirty region.
      *
-     * @param x2 - The bottom-right X coordinate of the rect.
+     * @param c1 - The top-left column of the dirty region.
      *
-     * @param y2 - The bottom-right Y coordinate of the rect.
+     * @param r2 - The bottom-right row of the dirty region.
+     *
+     * @param c2 - The bottom-right column of the dirty region.
      */
-    constructor(x1: number, y1: number, x2: number, y2: number) {
+    constructor(region: DataModel.CellRegion | 'all', r1: number, c1: number, r2: number, c2: number) {
       super('paint-request');
-      this._x1 = x1;
-      this._y1 = y1;
-      this._x2 = Math.max(x1, x2);
-      this._y2 = Math.max(y1, y2);
+      this._region = region;
+      this._r1 = r1;
+      this._c1 = c1;
+      this._r2 = r2;
+      this._c2 = c2;
     }
 
     /**
-     * The top-left X coordinate of the rect.
+     * The cell region for the paint.
      */
-    get x1(): number {
-      return this._x1;
+    get region(): DataModel.CellRegion | 'all' {
+      return this._region;
     }
 
     /**
-     * The top-left Y coordinate of the rect.
+     * The top-left row of the dirty region.
      */
-    get y1(): number {
-      return this._y1;
+    get r1(): number {
+      return this._r1;
     }
 
     /**
-     * The bottom-right X coordinate of the rect.
+     * The top-left column of the dirty region.
      */
-    get x2(): number {
-      return this._x2;
+    get c1(): number {
+      return this._c1;
     }
 
     /**
-     * The bottom-right Y coordinate of the rect.
+     * The bottom-right row of the dirty region.
      */
-    get y2(): number {
-      return this._y2;
+    get r2(): number {
+      return this._r2;
+    }
+
+    /**
+     * The bottom-right column of the dirty region.
+     */
+    get c2(): number {
+      return this._c2;
     }
 
     /**
      * Conflate this message with another paint request.
      */
     conflate(other: PaintRequest): boolean {
-      this._x1 = Math.min(this._x1, other._x1);
-      this._y1 = Math.min(this._y1, other._y1);
-      this._x2 = Math.max(this._x2, other._x2);
-      this._y2 = Math.max(this._y2, other._y2);
+      // Bail early if the request is already painting everything.
+      if (this._region === 'all') {
+        return true;
+      }
+
+      // Any region can conflate with the `'all'` region.
+      if (other._region === 'all') {
+        this._region = 'all';
+        return true;
+      }
+
+      // Otherwise, do not conflate with a different region.
+      if (this._region !== other._region) {
+        return false;
+      }
+
+      // Conflate the region to the total boundary.
+      this._r1 = Math.min(this._r1, other._r1);
+      this._c1 = Math.min(this._c1, other._c1);
+      this._r2 = Math.max(this._r2, other._r2);
+      this._c2 = Math.max(this._c2, other._c2);
       return true;
     }
 
-    private _x1: number;
-    private _y1: number;
-    private _x2: number;
-    private _y2: number;
+    private _region: DataModel.CellRegion | 'all';
+    private _r1: number;
+    private _c1: number;
+    private _r2: number;
+    private _c2: number;
   }
 
   /**
