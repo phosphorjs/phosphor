@@ -1803,6 +1803,9 @@ class DataGrid extends Widget {
       model.select(selection);
     }
 
+    // Schedule a repaint of the overlay.
+    this._repaintOverlay();
+
     // Finalize the mouse release.
     this._releaseMouse();
 
@@ -1937,6 +1940,7 @@ class DataGrid extends Widget {
 
     // Release the mouse if `Escape` is pressed.
     if (event.keyCode === 27) {
+      this._repaintOverlay();
       this._releaseMouse();
     }
   }
@@ -1953,10 +1957,6 @@ class DataGrid extends Widget {
     // Clear the press data and cursor override.
     this._pressData.override.dispose();
     this._pressData = null;
-
-    // Schedule a repaint of the overlay.
-    // TODO - right place for this?
-    this._repaintOverlay();
 
     // Remove the extra document listeners.
     document.removeEventListener('mousemove', this, true);
@@ -2666,6 +2666,9 @@ class DataGrid extends Widget {
 
     // Draw the selections.
     this._drawSelections();
+
+    // Draw the transient selection.
+    this._drawTransientSelection();
 
     // Draw the cursor.
     this._drawCursor();
@@ -3457,13 +3460,184 @@ class DataGrid extends Widget {
    * Draw the overlay selections for the data grid.
    */
   private _drawSelections(): void {
-    // Bail early if there is no selection model.
-    if (!this._selectionModel) {
+    // Bail early if there are no selections.
+    if (!this._selectionModel || this._selectionModel.isEmpty) {
       return;
     }
 
-    // Bail early if the selection model is empty.
-    if (this._selectionModel.isEmpty) {
+    // Fetch the scroll position.
+    let sx = this._scrollX;
+    let sy = this._scrollY;
+
+    // Get the first visible cell of the grid.
+    let r1 = this._rowSections.indexOf(sy);
+    let c1 = this._columnSections.indexOf(sx);
+
+    // Bail early if there are no visible cells.
+    if (r1 < 0 || c1 < 0) {
+      return;
+    }
+
+    // Fetch the header width and height.
+    let hw = this._headerWidth;
+    let hh = this._headerHeight;
+
+    // Fetch the page width and height.
+    let pw = this._pageWidth;
+    let ph = this._pageHeight;
+
+    // Fetch the max row and column.
+    let rMax = this._rowSections.count - 1;
+    let cMax = this._columnSections.count - 1;
+
+    // Get the last visible cell of the grid.
+    let r2 = this._rowSections.indexOf(sy + ph);
+    let c2 = this._columnSections.indexOf(sx + pw);
+
+    // Clamp the last cell if the void space is visible.
+    r2 = r2 < 0 ? rMax : r2;
+    c2 = c2 < 0 ? cMax : c2;
+
+    // Convert the boundary cells into a region.
+    let bounds = new SelectionModel.Region(r1, c1, r2 - r1 + 1, c2 - c1 + 1);
+
+    // Fetch and clear the row and column selection flags.
+    let rFlags = this._rowSelectionFlags;
+    let cFlags = this._columnSelectionFlags;
+    for (let i = 0, n = bounds.rowSpan; i < n; ++i) { rFlags[i] = false; }
+    for (let i = 0, n = bounds.columnSpan; i < n; ++i) { cFlags[i] = false; }
+
+    // Fetch the overlay gc.
+    let gc = this._overlayGC;
+
+    // Save the gc state.
+    gc.save();
+
+    // Set up the body clipping rect.
+    gc.beginPath();
+    gc.rect(hw, hh, pw, ph);
+    gc.clip();
+
+    // Set up the gc style.
+    gc.fillStyle = 'rgba(0, 0, 255, 0.1)'; // TODO grid style
+    gc.strokeStyle = 'rgb(0, 0, 255)';     // TODO grid style
+    gc.lineWidth = 1;
+
+    // Draw the selected body cells.
+    let it = this._selectionModel.regions();
+    let region: SelectionModel.Region | undefined;
+    while ((region = it.next()) !== undefined) {
+      // Flip the row and column selection flags.
+      let j1 = Math.max(r1, region.row);
+      let j2 = Math.min(r2, region.lastRow);
+      let k1 = Math.max(c1, region.column);
+      let k2 = Math.min(c2, region.lastColumn);
+      for (let i = j1; i <= j2; ++i) { rFlags[i - r1] = true; }
+      for (let i = k1; i <= k2; ++i) { cFlags[i - c1] = true; }
+
+      // Skip the region if it does not overlap the bounds.
+      if (!region.overlaps(bounds)) {
+        continue;
+      }
+
+      // Clamp the region to the limits.
+      let r11 = Math.max(0, Math.min(region.row, rMax));
+      let c11 = Math.max(0, Math.min(region.column, cMax));
+      let r22 = Math.max(0, Math.min(region.lastRow, rMax));
+      let c22 = Math.max(0, Math.min(region.lastColumn, cMax));
+
+      // Get the origin point.
+      let x1 = this._columnSections.offsetOf(c11) - sx + hh;
+      let y1 = this._rowSections.offsetOf(r11) - sy + hh;
+
+      // Get one pixel past the extent.
+      let x2 = this._columnSections.extentOf(c22) - sx + hh + 1;
+      let y2 = this._rowSections.extentOf(r22) - sy + hh + 1;
+
+      // Clamp the bounds to just outside of the clipping rect.
+      // This prevents drawing issues when the virtual grid size
+      // is large and entire rows or columns are selected.
+      x1 = Math.max(hw - 1, x1);
+      y1 = Math.max(hh - 1, y1);
+      x2 = Math.min(hw + pw + 1, x2);
+      y2 = Math.min(hh + ph + 1, y2);
+
+      // Fill and stroke the rect for the selected region.
+      gc.fillRect(x1, y1, x2 - x1, y2 - y1);
+      gc.strokeRect(x1 - .5, y1 - .5, x2 - x1, y2 - y1);
+    }
+
+    // Restore the gc state.
+    gc.restore();
+
+    // Draw the selected column header cells, if visible.
+    if (hh > 0) {
+      // Save the gc state.
+      gc.save();
+
+      // Set up the header clipping rect.
+      gc.beginPath();
+      gc.rect(hw, 0, pw, hh);
+      gc.clip();
+
+      // Set up the gc style. TODO grid style
+      gc.fillStyle = 'rgba(0, 0, 0, 0.2)';
+
+      //
+      for (let i = c1; i <= c2; ++i) {
+        if (cFlags[i - c1]) {
+          let x = this._columnSections.offsetOf(i) - sx + hw;
+          let w = this._columnSections.sizeOf(i);
+          gc.fillRect(x, 0, w, hh);
+        }
+      }
+
+      // Restore the gc state.
+      gc.restore();
+    }
+
+    // Draw the selected row header cells, if visible.
+    if (this._headerWidth > 0) {
+      //
+      gc.save();
+
+      //
+      gc.beginPath();
+      gc.rect(0, this._headerHeight, this._headerWidth, this._pageHeight);
+      gc.clip();
+
+      //
+      for (let j = 0, n = rowFlags.length; j < n; ++j) {
+        if (rowFlags[j]) {
+          let row = j + firstRow;
+          let x = 0;
+          let y = this._rowSections.offsetOf(row) - this._scrollY + this._headerHeight;
+          let w = this._headerWidth;
+          let h = this._rowSections.sizeOf(row);
+          gc.fillStyle = 'rgba(0, 0, 0, 0.2)';
+          gc.fillRect(x, y, w, h);
+        }
+      }
+
+      // Restore the gc state.
+      gc.restore();
+    }
+  }
+
+  /**
+   * Draw the transient overlay selection for the data grid.
+   */
+  private _drawTransientSelection(): void {
+    // Bail early if there is no press data.
+    if (!this._pressData) {
+      return;
+    }
+
+    // Fetch the transient selection region.
+    let region = this._pressData.selection;
+
+    // Bail early if there is no transient selection.
+    if (!region) {
       return;
     }
 
@@ -3491,16 +3665,16 @@ class DataGrid extends Widget {
     // Convert the boundary cells into a region.
     let bounds = new SelectionModel.Region(r1, c1, r2 - r1 + 1, c2 - c1 + 1);
 
+    // Bail early if the region does not overlap the bounds.
+    if (!region.overlaps(bounds)) {
+      return;
+    }
+
     // Fetch the overlay gc.
     let gc = this._overlayGC;
 
     // Save the gc state.
     gc.save();
-
-    // Set up the gc style.
-    gc.fillStyle = 'rgba(0, 0, 255, 0.1)'; // TODO grid style
-    gc.strokeStyle = 'rgb(0, 0, 255)';     // TODO grid style
-    gc.lineWidth = 1;
 
     // Get the visible bounds of the grid body.
     let x = this._headerWidth;
@@ -3513,53 +3687,47 @@ class DataGrid extends Widget {
     gc.rect(x, y, w, h);
     gc.clip();
 
-    // Fetch the regions iterator.
-    let it = this._selectionModel.regions();
+    // Set up the gc style.
+    gc.fillStyle = 'rgba(0, 0, 255, 0.05)'; // TODO grid style
+    gc.strokeStyle = 'rgb(0, 0, 255)';     // TODO grid style
+    gc.lineWidth = 1;
+    gc.setLineDash([4, 4]);
 
-    // Iterate over the selected regions.
-    let region: SelectionModel.Region | undefined;
-    while ((region = it.next()) !== undefined) {
-      // Skip the region if it does not overlap the bounds.
-      if (!region.overlaps(bounds)) {
-        continue;
-      }
+    // Clamp the region to the limits.
+    let rs1 = Math.max(0, Math.min(region.row, rMax));
+    let cs1 = Math.max(0, Math.min(region.column, cMax));
+    let rs2 = Math.max(0, Math.min(region.lastRow, rMax));
+    let cs2 = Math.max(0, Math.min(region.lastColumn, cMax));
 
-      // Clamp the region to the limits.
-      let r1 = Math.max(0, Math.min(region.row, rMax));
-      let c1 = Math.max(0, Math.min(region.column, cMax));
-      let r2 = Math.max(0, Math.min(region.lastRow, rMax));
-      let c2 = Math.max(0, Math.min(region.lastColumn, cMax));
+    // Get the origin point.
+    let x1 = this._columnSections.offsetOf(cs1);
+    let y1 = this._rowSections.offsetOf(rs1);
 
-      // Get the origin point.
-      let x1 = this._columnSections.offsetOf(c1);
-      let y1 = this._rowSections.offsetOf(r1);
+    // Get one pixel past the trailing point.
+    let x2 = this._columnSections.offsetOf(cs2);
+    let y2 = this._rowSections.offsetOf(rs2);
+    x2 += this._columnSections.sizeOf(cs2);
+    y2 += this._rowSections.sizeOf(rs2);
 
-      // Get one pixel past the trailing point.
-      let x2 = this._columnSections.offsetOf(c2);
-      let y2 = this._rowSections.offsetOf(r2);
-      x2 += this._columnSections.sizeOf(c2);
-      y2 += this._rowSections.sizeOf(r2);
+    // Offset the origin point by the scroll position.
+    x1 -= this._scrollX - this._headerWidth;
+    y1 -= this._scrollY - this._headerHeight;
 
-      // Offset the origin point by the scroll position.
-      x1 -= this._scrollX - this._headerWidth;
-      y1 -= this._scrollY - this._headerHeight;
+    // Offset the trailing point by the scroll position.
+    x2 -= this._scrollX - this._headerWidth;
+    y2 -= this._scrollY - this._headerHeight;
 
-      // Offset the trailing point by the scroll position.
-      x2 -= this._scrollX - this._headerWidth;
-      y2 -= this._scrollY - this._headerHeight;
+    // Clamp the bounds to just outside of the clipping rect.
+    // This prevents drawing issues when the virtual grid size
+    // is large and entire rows or columns are selected.
+    x1 = Math.max(x - 1, x1);
+    y1 = Math.max(y - 1, y1);
+    x2 = Math.min(x + w + 1, x2);
+    y2 = Math.min(y + h + 1, y2);
 
-      // Clamp the bounds to just outside of the clipping rect.
-      // This prevents drawing issues when the virtual grid size
-      // is large and entire rows or columns are selected.
-      x1 = Math.max(x - 1, x1);
-      y1 = Math.max(y - 1, y1);
-      x2 = Math.min(x + w + 1, x2);
-      y2 = Math.min(y + h + 1, y2);
-
-      // Fill and stroke the rect for the selected region.
-      gc.fillRect(x1, y1, x2 - x1, y2 - y1);
-      gc.strokeRect(x1 - .5, y1 - .5, x2 - x1, y2 - y1);
-    }
+    // Fill and stroke the rect for the selected region.
+    gc.fillRect(x1, y1, x2 - x1, y2 - y1);
+    gc.strokeRect(x1 - .5, y1 - .5, x2 - x1, y2 - y1);
 
     // Restore the gc state.
     gc.restore();
@@ -3749,6 +3917,9 @@ class DataGrid extends Widget {
   private _columnSections: SectionList;
   private _rowHeaderSections: SectionList;
   private _columnHeaderSections: SectionList;
+
+  private _rowSelectionFlags: boolean[] = [];
+  private _columnSelectionFlags: boolean[] = [];
 
   private _model: DataModel | null = null;
   private _selectionModel: SelectionModel | null = null;
@@ -4408,9 +4579,24 @@ namespace Private {
     clientY: number;
 
     /**
+     * Whether the control key was held during the press.
+     */
+    ctrlKey: boolean;
+
+    /**
+     * Whether the shift key was held during the press.
+     */
+    shiftKey: boolean;
+
+    /**
      * The cursor override.
      */
     override: IDisposable;
+
+    /**
+     * The transient selection region, if applicable.
+     */
+    selection: SelectionModel.Region | null;
   };
 
   /**
