@@ -53,6 +53,27 @@ let schema2: TestSchema = {
   }
 };
 
+let state = {
+  [schema1.id]: [
+    {
+      content: 'Lorem Ipsum',
+      count: 42,
+      enabled: true,
+      links: ['www.example.com'],
+      metadata: { id: 'myidentifier' }
+    }
+  ],
+  [schema2.id]: [
+    {
+      content: 'Ipsum Lorem',
+      count: 33,
+      enabled: false,
+      links: ['www.example.com', 'https://github.com/phosphor/phosphorjs'],
+      metadata: null
+    }
+  ]
+};
+
 class LoggingMessageHandler implements IMessageHandler {
   processMessage(msg: Message): void {
     switch(msg.type) {
@@ -109,6 +130,33 @@ describe('@phosphor/datastore', () => {
         expect(() => {
           Datastore.create({ id: 1, schemas: [invalid2] });
         }).to.throw(/validation failed/);
+      });
+
+      it('should restore valid state', () => {
+        let datastore = Datastore.create({
+          id: 1,
+          schemas: [schema1, schema2],
+          restoreState: JSON.stringify(state)
+        });
+
+        let reexport = datastore.toString();
+        expect(JSON.parse(reexport)).to.eql(state);
+      });
+
+      it('should restore partial state', () => {
+        let partialState = {[schema1.id]: state[schema1.id] };
+        let datastore = Datastore.create({
+          id: 1,
+          schemas: [schema1, schema2],
+          restoreState: JSON.stringify(partialState)
+        });
+
+        let reexport = datastore.toString();
+        expect(JSON.parse(reexport)).to.eql(
+          {
+            ...partialState,
+            [schema2.id]: []
+          });
       });
 
     });
