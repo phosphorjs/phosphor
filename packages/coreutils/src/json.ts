@@ -57,42 +57,42 @@ type ReadonlyJSONValue = JSONPrimitive | ReadonlyJSONObject | ReadonlyJSONArray;
 
 
 /**
- * A type alias for a JSON value.
+ * A type alias for a partial JSON value.
  */
 export
 type PartialJSONValue = JSONPrimitive | PartialJSONObject | PartialJSONArray;
 
 
 /**
- * A type definition for a JSON object.
+ * A type definition for a partial JSON object.
  */
 export
 interface PartialJSONObject { [key: string]: PartialJSONValue | undefined; }
 
 
 /**
- * A type definition for a JSON array.
+ * A type definition for a partial JSON array.
  */
 export
 interface PartialJSONArray extends Array<PartialJSONValue> { }
 
 
 /**
- * A type definition for a readonly JSON object.
+ * A type definition for a readonly partial JSON object.
  */
 export
 interface ReadonlyPartialJSONObject { readonly [key: string]: ReadonlyPartialJSONValue | undefined; }
 
 
 /**
- * A type definition for a readonly JSON array.
+ * A type definition for a readonly partial JSON array.
  */
 export
 interface ReadonlyPartialJSONArray extends ReadonlyArray<ReadonlyPartialJSONValue> { }
 
 
 /**
- * A type alias for a readonly JSON value.
+ * A type alias for a readonly partial JSON value.
  */
 export
 type ReadonlyPartialJSONValue = JSONPrimitive | ReadonlyPartialJSONObject | ReadonlyPartialJSONArray;

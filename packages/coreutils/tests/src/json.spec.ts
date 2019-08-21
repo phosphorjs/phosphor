@@ -89,6 +89,15 @@ describe('@phosphor/coreutils', () => {
         expect(JSONExt.deepEqual(c, a)).to.equal(true);
       });
 
+      it('should equate an object to its deepCopy', () => {
+        let a: IFoo = { };
+        let b: IFoo = { bar: 'a' };
+        let c: IFoo = { bar: undefined };
+        expect(JSONExt.deepEqual(a, JSONExt.deepCopy(a))).to.equal(true);
+        expect(JSONExt.deepEqual(b, JSONExt.deepCopy(b))).to.equal(true);
+        expect(JSONExt.deepEqual(c, JSONExt.deepCopy(c))).to.equal(true);
+      });
+
     });
 
     describe('deepCopy()', () => {
