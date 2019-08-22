@@ -1816,7 +1816,7 @@ class DataGrid extends Widget {
     let oldSize = list.sizeOf(index);
 
     // Normalize the new size of the section.
-    let newSize = Math.max(0, Math.floor(size));
+    let newSize = Private.clampSectionSize(size);
 
     // Bail early if the size does not change.
     if (oldSize === newSize) {
@@ -1924,7 +1924,7 @@ class DataGrid extends Widget {
     let oldSize = list.sizeOf(index);
 
     // Normalize the new size of the section.
-    let newSize = Math.max(0, Math.floor(size));
+    let newSize = Private.clampSectionSize(size);
 
     // Bail early if the size does not change.
     if (oldSize === newSize) {
@@ -2032,7 +2032,7 @@ class DataGrid extends Widget {
     let oldSize = list.sizeOf(index);
 
     // Normalize the new size of the section.
-    let newSize = Math.max(0, Math.floor(size));
+    let newSize = Private.clampSectionSize(size);
 
     // Bail early if the size does not change.
     if (oldSize === newSize) {
@@ -2116,7 +2116,7 @@ class DataGrid extends Widget {
     let oldSize = list.sizeOf(index);
 
     // Normalize the new size of the section.
-    let newSize = Math.max(0, Math.floor(size));
+    let newSize = Private.clampSectionSize(size);
 
     // Bail early if the size does not change.
     if (oldSize === newSize) {
@@ -2146,38 +2146,38 @@ class DataGrid extends Widget {
     let offset = list.offsetOf(index);
 
     // Bail early if the section is fully outside the viewport.
-    if (offset >= vw) {
+    if (offset >= vh) {
       this._syncScrollState();
       return;
     }
 
     // Paint the entire tail if the section spans the viewport.
-    if (offset + oldSize >= vw || offset + newSize >= vw) {
-      this._paintContent(offset, 0, vw - offset, vh);
+    if (offset + oldSize >= vh || offset + newSize >= vh) {
+      this._paintContent(0, offset, vw, vh - offset);
       this._paintOverlay();
       this._syncScrollState();
       return;
     }
 
     // Compute the blit content dimensions.
-    let sx = offset + oldSize;
-    let sy = 0;
-    let sw = vw - sx;
-    let sh = vh;
-    let dx = sx + delta;
-    let dy = 0;
+    let sx = 0;
+    let sy = offset + oldSize;
+    let sw = vw;
+    let sh = vh - sy;
+    let dx = 0;
+    let dy = sy + delta;
 
     // Blit the valid contents to the destination.
     this._blitContent(this._canvas, sx, sy, sw, sh, dx, dy);
 
     // Repaint the header section if needed.
     if (newSize > 0) {
-      this._paintContent(offset, 0, newSize, vh);
+      this._paintContent(0, offset, vw, newSize);
     }
 
     // Paint the trailing space if needed.
     if (delta < 0) {
-      this._paintContent(vw + delta, 0, -delta, vh);
+      this._paintContent(0, vh + delta, vw, -delta);
     }
 
     // Paint the overlay.
