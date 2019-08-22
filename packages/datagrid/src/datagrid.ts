@@ -6,20 +6,8 @@
 | The full license is in the file LICENSE, distributed with this software.
 |----------------------------------------------------------------------------*/
 import {
-  toArray
-} from '@phosphor/algorithm';
-
-import {
-  IDisposable
-} from '@phosphor/disposable';
-
-import {
   ElementExt
 } from '@phosphor/domutils';
-
-import {
-  Drag
-} from '@phosphor/dragdrop';
 
 import {
   ConflatableMessage, IMessageHandler, Message, MessageLoop
@@ -58,10 +46,6 @@ import {
 } from './textrenderer';
 
 
-import {
-  SimpleSelections
-} from './simpleselections';
-
 /**
  * A widget which implements a high-performance tabular data grid.
  *
@@ -86,7 +70,6 @@ class DataGrid extends Widget {
     // Parse the simple options.
     this._style = options.style || DataGrid.defaultStyle;
     this._headerVisibility = options.headerVisibility || 'all';
-    this._behaviors = options.behaviors || DataGrid.defaultBehaviors;
     this._cellRenderers = options.cellRenderers || new RendererMap();
     this._defaultRenderer = options.defaultRenderer || new TextRenderer();
 
@@ -199,7 +182,6 @@ class DataGrid extends Widget {
    * Dispose of the resources held by the widgets.
    */
   dispose(): void {
-    this._releaseMouse();
     this._model = null;
     this._rowSections.clear();
     this._columnSections.clear();
@@ -223,9 +205,6 @@ class DataGrid extends Widget {
     if (this._model === value) {
       return;
     }
-
-    // Release the mouse.
-    this._releaseMouse();
 
     // Disconnect the change handler from the old model.
     if (this._model) {
@@ -260,12 +239,6 @@ class DataGrid extends Widget {
 
     // Sync the viewport.
     this._syncViewport();
-
-    if (value) {
-      this.selectionModel = new SimpleSelections({ model: value });
-    } else {
-      this.selectionModel = null;
-    }
   }
 
   /**
@@ -283,9 +256,6 @@ class DataGrid extends Widget {
     if (this._selectionModel === value) {
       return;
     }
-
-    // Release the mouse.
-    this._releaseMouse();
 
     // Disconnect the change handler from the old model.
     if (this._selectionModel) {
@@ -401,9 +371,6 @@ class DataGrid extends Widget {
     // Update the internal visibility.
     this._headerVisibility = value;
 
-    // Release the mouse.
-    this._releaseMouse();
-
     // Sync the viewport.
     this._syncViewport();
   }
@@ -435,29 +402,487 @@ class DataGrid extends Widget {
     this._rowHeaderSections.defaultSize = rhw;
     this._columnHeaderSections.defaultSize = chh;
 
-    // Release the mouse.
-    this._releaseMouse();
-
     // Sync the viewport.
     this._syncViewport();
   }
 
   /**
-   * Get the behaviors for the data grid.
+   * The virtual width of the row headers.
    */
-  get behaviors(): DataGrid.Behaviors {
-    return this._behaviors;
+  get headerWidth(): number {
+    if (this._headerVisibility === 'none') {
+      return 0;
+    }
+    if (this._headerVisibility === 'column') {
+      return 0;
+    }
+    return this._rowHeaderSections.length;
   }
 
   /**
-   * Set the behaviors for the data grid.
+   * The virtual height of the column headers.
    */
-  set behaviors(value: DataGrid.Behaviors) {
-    // Update the internal behaviors.
-    this._behaviors = { ...value };
+  get headerHeight(): number {
+    if (this._headerVisibility === 'none') {
+      return 0;
+    }
+    if (this._headerVisibility === 'row') {
+      return 0;
+    }
+    return this._columnHeaderSections.length;
+  }
 
-    // Release the mouse.
-    this._releaseMouse();
+  /**
+   * The virtual width of the grid body.
+   */
+  get bodyWidth(): number {
+    return this._columnSections.length;
+  }
+
+  /**
+   * The virtual height of the grid body.
+   */
+  get bodyHeight(): number {
+    return this._rowSections.length;
+  }
+
+  /**
+   * The virtual width of the entire grid.
+   */
+  get totalWidth(): number {
+    return this.headerWidth + this.bodyWidth;
+  }
+
+  /**
+   * The virtual height of the entire grid.
+   */
+  get totalHeight(): number {
+    return this.headerHeight + this.bodyHeight;
+  }
+
+  /**
+   * The actual width of the viewport.
+   */
+  get viewportWidth(): number {
+    return this._viewportWidth;
+  }
+
+  /**
+   * The actual height of the viewport.
+   */
+  get viewportHeight(): number {
+    return this._viewportHeight;
+  }
+
+  /**
+   * The width of the visible portion of the grid body.
+   */
+  get pageWidth(): number {
+    return Math.max(0, this.viewportWidth - this.headerWidth);
+  }
+
+  /**
+   * The height of the visible portion of the grid body.
+   */
+  get pageHeight(): number {
+    return Math.max(0, this.viewportHeight - this.headerHeight);
+  }
+
+  /**
+   * The current scroll X position of the viewport.
+   */
+  get scrollX(): number {
+    return this._hScrollBar.value;
+  }
+
+  /**
+   * The current scroll Y position of the viewport.
+   */
+  get scrollY(): number {
+    return this._vScrollBar.value;
+  }
+
+  /**
+   * The maximum scroll X position for the grid.
+   */
+  get maxScrollX(): number {
+    return Math.max(0, this.bodyWidth - this.pageWidth - 1);
+  }
+
+  /**
+   * The maximum scroll Y position for the grid.
+   */
+  get maxScrollY(): number {
+    return Math.max(0, this.bodyHeight - this.pageHeight - 1);
+  }
+
+  /**
+   * The viewport widget for the data grid.
+   */
+  get viewport(): Widget {
+    return this._viewport;
+  }
+
+  /**
+   * Scroll the viewport by the specified amount.
+   *
+   * @param dx - The X scroll amount.
+   *
+   * @param dy - The Y scroll amount.
+   */
+  scrollBy(dx: number, dy: number): void {
+    this.scrollTo(this.scrollX + dx, this.scrollY + dy);
+  }
+
+  /**
+   * Scroll the viewport by one page.
+   *
+   * @param dir - The desired direction of the scroll.
+   */
+  scrollByPage(dir: 'up' | 'down' | 'left' | 'right'): void {
+    let dx = 0;
+    let dy = 0;
+    switch (dir) {
+    case 'up':
+      dy = -this.pageHeight;
+      break;
+    case 'down':
+      dy = this.pageHeight;
+      break;
+    case 'left':
+      dx = -this.pageWidth;
+      break;
+    case 'right':
+      dx = this.pageWidth;
+      break;
+    default:
+      throw 'unreachable';
+    }
+    this.scrollTo(this.scrollX + dx, this.scrollY + dy);
+  }
+
+  /**
+   * Scroll the viewport by one cell-aligned step.
+   *
+   * @param dir - The desired direction of the scroll.
+   */
+  scrollByStep(dir: 'up' | 'down' | 'left' | 'right'): void {
+    let r: number;
+    let c: number;
+    let x = this.scrollX;
+    let y = this.scrollY;
+    let rows = this._rowSections;
+    let columns = this._columnSections;
+    switch (dir) {
+    case 'up':
+      r = rows.indexOf(y - 1);
+      y = r < 0 ? y : rows.offsetOf(r);
+      break;
+    case 'down':
+      r = rows.indexOf(y);
+      y = r < 0 ? y : rows.offsetOf(r) + rows.sizeOf(r);
+      break;
+    case 'left':
+      c = columns.indexOf(x - 1);
+      x = c < 0 ? x : columns.offsetOf(c);
+      break;
+    case 'right':
+      c = columns.indexOf(x);
+      x = c < 0 ? x : columns.offsetOf(c) + columns.sizeOf(c);
+      break;
+    default:
+      throw 'unreachable';
+    }
+    this.scrollTo(x, y);
+  }
+
+  /**
+   * Scroll to the specified offset position.
+   *
+   * @param x - The desired X position.
+   *
+   * @param y - The desired Y position.
+   */
+  scrollTo(x: number, y: number): void {
+    // Floor and clamp the position to the allowable range.
+    x = Math.max(0, Math.min(Math.floor(x), this.maxScrollX));
+    y = Math.max(0, Math.min(Math.floor(y), this.maxScrollY));
+
+    // Update the scroll bar values with the desired position.
+    this._hScrollBar.value = x;
+    this._vScrollBar.value = y;
+
+    // Post a scroll request message to the viewport.
+    MessageLoop.postMessage(this._viewport, Private.ScrollRequest);
+  }
+
+  /**
+   * Resize a row in the data grid.
+   *
+   * @param region - The region which holds the row of interest.
+   *
+   * @param index - The index of the row of interest.
+   *
+   * @param size - The desired size of the row.
+   */
+  resizeRow(region: DataModel.RowRegion, index: number, size: number): void {
+    let msg = new Private.RowResizeRequest(region, index, size);
+    MessageLoop.postMessage(this._viewport, msg);
+  }
+
+  /**
+   * Resize a column in the data grid.
+   *
+   * @param region - The region which holds the column of interest.
+   *
+   * @param index - The index of the column of interest.
+   *
+   * @param size - The desired size of the column.
+   */
+  resizeColumn(region: DataModel.ColumnRegion, index: number, size: number): void {
+    let msg = new Private.ColumnResizeRequest(region, index, size);
+    MessageLoop.postMessage(this._viewport, msg);
+  }
+
+  /**
+   * Reset modified rows to their default size.
+   *
+   * @param region - The row region of interest.
+   */
+  resetRows(region: DataModel.RowRegion | 'all'): void {
+    switch (region) {
+    case 'all':
+      this._rowSections.reset();
+      this._columnHeaderSections.reset();
+      break;
+    case 'body':
+      this._rowSections.reset();
+      break;
+    case 'column-header':
+      this._columnHeaderSections.reset();
+      break;
+    default:
+      throw 'unreachable';
+    }
+    this._repaintContent();
+    this._repaintOverlay();
+  }
+
+  /**
+   * Reset modified columns to their default size.
+   *
+   * @param region - The column region of interest.
+   */
+  resetColumns(region: DataModel.ColumnRegion | 'all'): void {
+    switch (region) {
+    case 'all':
+      this._columnSections.reset();
+      this._rowHeaderSections.reset();
+      break;
+    case 'body':
+      this._columnSections.reset();
+      break;
+    case 'row-header':
+      this._rowHeaderSections.reset();
+      break;
+    default:
+      throw 'unreachable';
+    }
+    this._repaintContent();
+    this._repaintOverlay();
+  }
+
+  /**
+   * Hit test the viewport for the given client position.
+   *
+   * @param clientX - The client X position of the mouse.
+   *
+   * @param clientY - The client Y position of the mouse.
+   *
+   * @returns The hit test result, or `null` if the client
+   *   position is out of bounds.
+   */
+  hitTest(clientX: number, clientY: number): DataGrid.HitTestResult | null {
+    // Fetch the viewport rect.
+    let rect = this._viewport.node.getBoundingClientRect();
+
+    // Extract the rect coordinates.
+    let { left, top, right, bottom } = rect;
+
+    // Round the rect coordinates for sub-pixel positioning.
+    left = Math.floor(left);
+    top = Math.floor(top);
+    right = Math.ceil(right);
+    bottom = Math.ceil(bottom);
+
+    // Bail early if the position is out of the viewport bounds.
+    if (clientX < left || clientY < top) {
+      return null;
+    }
+    if (clientX > right || clientY > bottom) {
+      return null;
+    }
+
+    // Convert the mouse position into local coordinates.
+    let lx = clientX - left;
+    let ly = clientY - top;
+
+    // Fetch the header and body dimensions.
+    let hw = this.headerWidth;
+    let hh = this.headerHeight;
+    let bw = this.bodyWidth;
+    let bh = this.bodyHeight;
+
+    // Check for a corner header hit.
+    if (lx < hw && ly < hh) {
+      // Convert to unscrolled virtual coordinates.
+      let vx = lx;
+      let vy = ly;
+
+      // Fetch the row and column index.
+      let row = this._columnHeaderSections.indexOf(vy);
+      let column = this._rowHeaderSections.indexOf(vx);
+
+      // Fetch the cell offset position.
+      let ox = this._rowHeaderSections.offsetOf(column);
+      let oy = this._columnHeaderSections.offsetOf(row);
+
+      // Fetch cell width and height.
+      let width = this._rowHeaderSections.sizeOf(column);
+      let height = this._columnHeaderSections.sizeOf(row);
+
+      // Compute the leading and trailing positions.
+      let x = vx - ox;
+      let y = vy - oy;
+
+      // Return the hit test result.
+      return { region: 'corner-header', row, column, x, y, width, height };
+    }
+
+    // Check for a column header hit.
+    if (ly < hh && lx < (hw + bw)) {
+      // Convert to unscrolled virtual coordinates.
+      let vx = lx + this._scrollX - hw;
+      let vy = ly
+
+      // Fetch the row and column index.
+      let row = this._columnHeaderSections.indexOf(vy);
+      let column = this._columnSections.indexOf(vx);
+
+      // Fetch the cell offset position.
+      let ox = this._columnSections.offsetOf(column);
+      let oy = this._columnHeaderSections.offsetOf(row);
+
+      // Fetch the cell width and height.
+      let width = this._columnSections.sizeOf(column);
+      let height = this._columnHeaderSections.sizeOf(row);
+
+      // Compute the leading and trailing positions.
+      let x = vx - ox;
+      let y = vy - oy;
+
+      // Return the hit test result.
+      return { region: 'column-header', row, column, x, y, width, height };
+    }
+
+    // Check for a row header hit.
+    if (lx < hw && ly < (hh + bh)) {
+      // Convert to unscrolled virtual coordinates.
+      let vx = lx
+      let vy = ly + this._scrollY - hh;
+
+      // Fetch the row and column index.
+      let row = this._rowSections.indexOf(vy);
+      let column = this._rowHeaderSections.indexOf(vx);
+
+      // Fetch the cell offset position.
+      let ox = this._rowHeaderSections.offsetOf(column);
+      let oy = this._rowSections.offsetOf(row);
+
+      // Fetch the cell width and height.
+      let width = this._rowHeaderSections.sizeOf(column);
+      let height = this._rowSections.sizeOf(row);
+
+      // Compute the leading and trailing positions.
+      let x = vx - ox;
+      let y = vy - oy;
+
+      // Return the hit test result.
+      return { region: 'row-header', row, column, x, y, width, height };
+    }
+
+    // Check for a body hit.
+    if (lx >= hw && lx < (hw + bw) && ly >= hh && ly < (hh + bh)) {
+      // Convert to unscrolled virtual coordinates.
+      let vx = lx + this._scrollX - hw
+      let vy = ly + this._scrollY - hh;
+
+      // Fetch the row and column index.
+      let row = this._rowSections.indexOf(vy);
+      let column = this._columnSections.indexOf(vx);
+
+      // Fetch the cell offset position.
+      let ox = this._columnSections.offsetOf(column);
+      let oy = this._rowSections.offsetOf(row);
+
+      // Fetch the cell width and height.
+      let width = this._columnSections.sizeOf(column);
+      let height = this._rowSections.sizeOf(row);
+
+      // Compute the part coordinates.
+      let x = vx - ox;
+      let y = vy - oy;
+
+      // Return the result.
+      return { region: 'body', row, column, x, y, width, height };
+    }
+
+    // Otherwise, it's a void space hit.
+    let row = -1;
+    let column = -1;
+    let x = -1;
+    let y = -1;
+    let width = -1;
+    let height = -1;
+
+    // Return the hit test result.
+    return { region: 'row-header', row, column, x, y, width, height };
+  }
+
+  /**
+   * Refresh the internal dpi ratio.
+   *
+   * #### Notes
+   * This should be called whenever the browser dpi ratio changes.
+   */
+  refreshDPI(): void {
+    // Get the best integral value for the dpi ratio.
+    let dpiRatio = Math.ceil(window.devicePixelRatio);
+
+    // Bail early if the computed dpi ratio has not changed.
+    if (this._dpiRatio === dpiRatio) {
+      return;
+    }
+
+    // Update the internal dpi ratio.
+    this._dpiRatio = dpiRatio;
+
+    // Schedule a repaint of the content.
+    this._repaintContent();
+
+    // Schedule a repaint of the overlay.
+    this._repaintOverlay();
+
+    // Update the canvas size for the new dpi ratio.
+    this._resizeCanvasIfNeeded(this._viewportWidth, this._viewportHeight);
+
+    // Ensure the canvas style is scaled for the new ratio.
+    this._canvas.style.width = `${this._canvas.width / this._dpiRatio}px`;
+    this._canvas.style.height = `${this._canvas.height / this._dpiRatio}px`;
+
+    // Ensure the overlay style is scaled for the new ratio.
+    this._overlay.style.width = `${this._overlay.width / this._dpiRatio}px`;
+    this._overlay.style.height = `${this._overlay.height / this._dpiRatio}px`;
   }
 
   /**
@@ -503,72 +928,11 @@ class DataGrid extends Widget {
   }
 
   /**
-   * Handle the DOM events for the data grid.
-   *
-   * @param event - The DOM event sent to the data grid.
-   *
-   * #### Notes
-   * This method implements the DOM `EventListener` interface and is
-   * called in response to events on the data grid's DOM node. It
-   * should not be called directly by user code.
-   */
-  handleEvent(event: Event): void {
-    switch (event.type) {
-    case 'mousemove':
-      this._evtMouseMove(event as MouseEvent);
-      break;
-    case 'mousein':
-      this._evtMouseIn(event as MouseEvent);
-      break;
-    case 'mouseout':
-      this._evtMouseOut(event as MouseEvent);
-      break;
-    case 'mousedown':
-      this._evtMouseDown(event as MouseEvent);
-      break;
-    case 'mouseup':
-      this._evtMouseUp(event as MouseEvent);
-      break;
-    case 'wheel':
-      this._evtWheel(event as WheelEvent);
-      break;
-    case 'keydown':
-      this._evtKeyDown(event as KeyboardEvent);
-      break;
-    case 'resize':
-      this._refreshDPI();
-      break;
-    case 'contextmenu':
-      event.preventDefault();
-      event.stopPropagation();
-      break;
-    }
-  }
-
-  /**
    * A message handler invoked on a `'before-attach'` message.
    */
   protected onBeforeAttach(msg: Message): void {
-    this._viewport.node.addEventListener('mousedown', this);
-    this._viewport.node.addEventListener('mousemove', this);
-    this._viewport.node.addEventListener('mousein', this);
-    this._viewport.node.addEventListener('mouseout', this);
-    this.node.addEventListener('wheel', this);
-    window.addEventListener('resize', this);
     this._repaintContent();
     this._repaintOverlay();
-  }
-
-  /**
-   * A message handler invoked on an `'after-detach'` message.
-   */
-  protected onAfterDetach(msg: Message): void {
-    this._viewport.node.removeEventListener('mousedown', this);
-    this._viewport.node.removeEventListener('mousemove', this);
-    this._viewport.node.removeEventListener('mousein', this);
-    this._viewport.node.removeEventListener('mouseout', this);
-    this.node.removeEventListener('wheel', this);
-    window.removeEventListener('resize', this);
   }
 
   /**
@@ -584,173 +948,6 @@ class DataGrid extends Widget {
    */
   protected onResize(msg: Widget.ResizeMessage): void {
     this._syncScrollState();
-  }
-
-  /**
-   * The virtual width of the row headers.
-   *
-   * This will be `0` if the row headers are hidden.
-   */
-  private get _headerWidth(): number {
-    if (this._headerVisibility === 'none') {
-      return 0;
-    }
-    if (this._headerVisibility === 'column') {
-      return 0;
-    }
-    return this._rowHeaderSections.length;
-  }
-
-  /**
-   * The virtual height of the column headers.
-   *
-   * This will be `0` if the column headers are hidden.
-   */
-  private get _headerHeight(): number {
-    if (this._headerVisibility === 'none') {
-      return 0;
-    }
-    if (this._headerVisibility === 'row') {
-      return 0;
-    }
-    return this._columnHeaderSections.length;
-  }
-
-  /**
-   * The virtual width of the grid body.
-   */
-  private get _bodyWidth(): number {
-    return this._columnSections.length;
-  }
-
-  /**
-   * The virtual height of the grid body.
-   */
-  private get _bodyHeight(): number {
-    return this._rowSections.length;
-  }
-
-  /**
-   * The width of the visible portion of the body cells.
-   */
-  private get _pageWidth(): number {
-    return Math.max(0, this._viewportWidth - this._headerWidth);
-  }
-
-  /**
-   * The height of the visible portion of the body cells.
-   */
-  private get _pageHeight(): number {
-    return Math.max(0, this._viewportHeight - this._headerHeight);
-  }
-
-  /**
-   * The maximum scroll X position for the current grid dimensions.
-   *
-   * #### Notes
-   * This value is `1px` less than the theoretical maximum to allow the
-   * the right-most grid line to be clipped when the vertical scroll bar
-   * is visible.
-   */
-  private get _maxScrollX(): number {
-    return Math.max(0, this._bodyWidth - this._pageWidth - 1);
-  }
-
-  /**
-   * The maximum scroll Y position for the current grid dimensions.
-   *
-   * #### Notes
-   * This value is `1px` less than the theoretical maximum to allow the
-   * the bottom-most grid line to be clipped when the horizontal scroll
-   * bar is visible.
-   */
-  private get _maxScrollY(): number {
-    return Math.max(0, this._bodyHeight - this._pageHeight - 1);
-  }
-
-  /**
-   * Scroll the viewport by the specified amount.
-   */
-  private _scrollBy(dx: number, dy: number): void {
-    this._scrollTo(this._hScrollBar.value + dx, this._vScrollBar.value + dy);
-  }
-
-  /**
-   * Scroll the viewport by one page.
-   */
-  private _scrollByPage(dir: 'up' | 'down' | 'left' | 'right'): void {
-    let dx = 0;
-    let dy = 0;
-    let x = this._hScrollBar.value;
-    let y = this._vScrollBar.value;
-    switch (dir) {
-    case 'up':
-      dy = -this._pageHeight;
-      break;
-    case 'down':
-      dy = this._pageHeight;
-      break;
-    case 'left':
-      dx = -this._pageWidth;
-      break;
-    case 'right':
-      dx = this._pageWidth;
-      break;
-    default:
-      throw 'unreachable';
-    }
-    this._scrollTo(x + dx, y + dy);
-  }
-
-  /**
-   * Scroll the viewport by one cell-aligned step.
-   *
-   * @param - The desired direction of the scroll.
-   */
-  private _scrollByStep(dir: 'up' | 'down' | 'left' | 'right'): void {
-    let r: number;
-    let c: number;
-    let x = this._hScrollBar.value;
-    let y = this._vScrollBar.value;
-    let rows = this._rowSections;
-    let columns = this._columnSections;
-    switch (dir) {
-    case 'up':
-      r = rows.indexOf(y - 1);
-      y = r < 0 ? y : rows.offsetOf(r);
-      break;
-    case 'down':
-      r = rows.indexOf(y);
-      y = r < 0 ? y : rows.offsetOf(r) + rows.sizeOf(r);
-      break;
-    case 'left':
-      c = columns.indexOf(x - 1);
-      x = c < 0 ? x : columns.offsetOf(c);
-      break;
-    case 'right':
-      c = columns.indexOf(x);
-      x = c < 0 ? x : columns.offsetOf(c) + columns.sizeOf(c);
-      break;
-    default:
-      throw 'unreachable';
-    }
-    this._scrollTo(x, y);
-  }
-
-  /**
-   * Scroll to the specified offset position.
-   */
-  private _scrollTo(x: number, y: number): void {
-    // Floor and clamp the position to the allowable range.
-    x = Math.max(0, Math.min(Math.floor(x), this._maxScrollX));
-    y = Math.max(0, Math.min(Math.floor(y), this._maxScrollY));
-
-    // Update the scroll bar values with the desired position.
-    this._hScrollBar.value = x;
-    this._vScrollBar.value = y;
-
-    // Post a scroll request message to the viewport.
-    MessageLoop.postMessage(this._viewport, Private.ScrollRequest);
   }
 
   /**
@@ -774,41 +971,6 @@ class DataGrid extends Widget {
    */
   private _repaintOverlay(): void {
     MessageLoop.postMessage(this._viewport, Private.OverlayPaintRequest);
-  }
-
-  /**
-   * Refresh the internal dpi ratio.
-   *
-   * This will update the canvas size and schedule a repaint if needed.
-   */
-  private _refreshDPI(): void {
-    // Get the best integral value for the dpi ratio.
-    let dpiRatio = Math.ceil(window.devicePixelRatio);
-
-    // Bail early if the computed dpi ratio has not changed.
-    if (this._dpiRatio === dpiRatio) {
-      return;
-    }
-
-    // Update the internal dpi ratio.
-    this._dpiRatio = dpiRatio;
-
-    // Schedule a repaint of the content.
-    this._repaintContent();
-
-    // Schedule a repaint of the overlay.
-    this._repaintOverlay();
-
-    // Update the canvas size for the new dpi ratio.
-    this._resizeCanvasIfNeeded(this._viewportWidth, this._viewportHeight);
-
-    // Ensure the canvas style is scaled for the new ratio.
-    this._canvas.style.width = `${this._canvas.width / this._dpiRatio}px`;
-    this._canvas.style.height = `${this._canvas.height / this._dpiRatio}px`;
-
-    // Ensure the overlay style is scaled for the new ratio.
-    this._overlay.style.width = `${this._overlay.width / this._dpiRatio}px`;
-    this._overlay.style.height = `${this._overlay.height / this._dpiRatio}px`;
   }
 
   /**
@@ -927,10 +1089,10 @@ class DataGrid extends Widget {
    */
   private _syncScrollState(): void {
     // Fetch the viewport dimensions.
-    let bw = this._bodyWidth;
-    let bh = this._bodyHeight;
-    let pw = this._pageWidth;
-    let ph = this._pageHeight;
+    let bw = this.bodyWidth;
+    let bh = this.bodyHeight;
+    let pw = this.pageWidth;
+    let ph = this.pageHeight;
 
     // Get the current scroll bar visibility.
     let hasVScroll = !this._vScrollBar.isHidden;
@@ -967,13 +1129,13 @@ class DataGrid extends Widget {
     }
 
     // Update the scroll bar limits.
-    this._vScrollBar.maximum = this._maxScrollY;
-    this._vScrollBar.page = this._pageHeight;
-    this._hScrollBar.maximum = this._maxScrollX;
-    this._hScrollBar.page = this._pageWidth;
+    this._vScrollBar.maximum = this.maxScrollY;
+    this._vScrollBar.page = this.pageHeight;
+    this._hScrollBar.maximum = this.maxScrollX;
+    this._hScrollBar.page = this.pageWidth;
 
     // Re-clamp the scroll position.
-    this._scroll(this._scrollX, this._scrollY);
+    this._scrollTo(this._scrollX, this._scrollY);
   }
 
   /**
@@ -993,11 +1155,11 @@ class DataGrid extends Widget {
    */
   private _processViewportMessage(msg: Message): void {
     switch (msg.type) {
-    case 'scroll-request':
-      this._onViewportScrollRequest(msg);
-      break;
     case 'resize':
       this._onViewportResize(msg as Widget.ResizeMessage);
+      break;
+    case 'scroll-request':
+      this._onViewportScrollRequest(msg);
       break;
     case 'paint-request':
       this._onViewportPaintRequest(msg as Private.PaintRequest);
@@ -1005,19 +1167,15 @@ class DataGrid extends Widget {
     case 'overlay-paint-request':
       this._onViewportOverlayPaintRequest(msg);
       break;
-    case 'section-resize-request':
-      this._onViewportSectionResizeRequest(msg);
+    case 'row-resize-request':
+      this._onViewportRowResizeRequest(msg as Private.RowResizeRequest);
+      break;
+    case 'column-resize-request':
+      this._onViewportColumnResizeRequest(msg as Private.ColumnResizeRequest);
       break;
     default:
       break;
     }
-  }
-
-  /**
-   * A message hook invoked on a viewport `'scroll-request'` message.
-   */
-  private _onViewportScrollRequest(msg: Message): void {
-    this._scroll(this._hScrollBar.value, this._vScrollBar.value);
   }
 
   /**
@@ -1085,6 +1243,13 @@ class DataGrid extends Widget {
   }
 
   /**
+   * A message hook invoked on a viewport `'scroll-request'` message.
+   */
+  private _onViewportScrollRequest(msg: Message): void {
+    this._scrollTo(this._hScrollBar.value, this._vScrollBar.value);
+  }
+
+  /**
    * A message hook invoked on a viewport `'paint-request'` message.
    */
   private _onViewportPaintRequest(msg: Private.PaintRequest): void {
@@ -1109,8 +1274,8 @@ class DataGrid extends Widget {
     let sy = this._scrollY;
 
     // Fetch the header dimensions.
-    let hw = this._headerWidth;
-    let hh = this._headerHeight;
+    let hw = this.headerWidth;
+    let hh = this.headerHeight;
 
     // Fetch the section lists.
     let rs = this._rowSections;
@@ -1213,68 +1378,25 @@ class DataGrid extends Widget {
   }
 
   /**
-   * A message hook invoked on a viewport `'section-resize-request'` message.
+   * A message hook invoked on a viewport `'row-resize-request'` message.
    */
-  private _onViewportSectionResizeRequest(msg: Message): void {
-    // Bail early if no drag is in progress.
-    if (!this._pressData) {
-      return;
+  private _onViewportRowResizeRequest(msg: Private.RowResizeRequest): void {
+    if (msg.region === 'body') {
+      this._resizeRow(msg.index, msg.size);
+    } else {
+      this._resizeColumnHeader(msg.index, msg.size);
     }
+  }
 
-    // Extract the press data.
-    let { hitTest, clientX, clientY } = this._pressData;
-
-    // Convert the mouse position to local coordinates.
-    let rect = this._viewport.node.getBoundingClientRect();
-    let x = clientX - rect.left;
-    let y = clientY - rect.top;
-
-    // Fetch the details for the hit test part.
-    let pos: number;
-    let delta: number;
-    let index: number;
-    let list: SectionList;
-    switch (hitTest.part) {
-    case 'column-header-h-resize-handle':
-      pos = x + this._scrollX - this._headerWidth;
-      delta = hitTest.x;
-      index = hitTest.column;
-      list = this._columnSections;
-      break;
-    case 'row-header-v-resize-handle':
-      pos = y + this._scrollY - this._headerHeight;
-      delta = hitTest.y;
-      index = hitTest.row;
-      list = this._rowSections;
-      break;
-    case 'column-header-v-resize-handle':
-    case 'corner-header-v-resize-handle':
-      pos = y;
-      delta = hitTest.y;
-      index = hitTest.row;
-      list = this._columnHeaderSections;
-      break;
-    case 'row-header-h-resize-handle':
-    case 'corner-header-h-resize-handle':
-      pos = x;
-      delta = hitTest.x;
-      index = hitTest.column;
-      list = this._rowHeaderSections;
-      break;
-    default:
-      return;
+  /**
+   * A message hook invoked on a viewport `'column-resize-request'` message.
+   */
+  private _onViewportColumnResizeRequest(msg: Private.ColumnResizeRequest): void {
+    if (msg.region === 'body') {
+      this._resizeColumn(msg.index, msg.size);
+    } else {
+      this._resizeRowHeader(msg.index, msg.size);
     }
-
-    // Fetch the offset of the section to resize.
-    let offset = list.offsetOf(index);
-
-    // Bail if that section no longer exists.
-    if (offset < 0) {
-      return;
-    }
-
-    // Resize the section to the target size.
-    this._resizeSection(list, index, pos - delta - offset);
   }
 
   /**
@@ -1289,9 +1411,9 @@ class DataGrid extends Widget {
    */
   private _onPageRequested(sender: ScrollBar, dir: 'decrement' | 'increment'): void {
     if (sender === this._vScrollBar) {
-      this._scrollByPage(dir === 'decrement' ? 'up' : 'down');
+      this.scrollByPage(dir === 'decrement' ? 'up' : 'down');
     } else {
-      this._scrollByPage(dir === 'decrement' ? 'left' : 'right');
+      this.scrollByPage(dir === 'decrement' ? 'left' : 'right');
     }
   }
 
@@ -1300,9 +1422,9 @@ class DataGrid extends Widget {
    */
   private _onStepRequested(sender: ScrollBar, dir: 'decrement' | 'increment'): void {
     if (sender === this._vScrollBar) {
-      this._scrollByStep(dir === 'decrement' ? 'up' : 'down');
+      this.scrollByStep(dir === 'decrement' ? 'up' : 'down');
     } else {
-      this._scrollByStep(dir === 'decrement' ? 'left' : 'right');
+      this.scrollByStep(dir === 'decrement' ? 'left' : 'right');
     }
   }
 
@@ -1368,9 +1490,9 @@ class DataGrid extends Widget {
     }
 
     // Insert the span, maintaining the scroll position as needed.
-    if (this._scrollY === this._maxScrollY) {
+    if (this._scrollY === this.maxScrollY && this.maxScrollY > 0) {
       list.insert(index, span);
-      this._scrollY = this._maxScrollY;
+      this._scrollY = this.maxScrollY;
     } else {
       list.insert(index, span);
     }
@@ -1400,9 +1522,9 @@ class DataGrid extends Widget {
     }
 
     // Insert the span, maintaining the scroll position as needed.
-    if (this._scrollX === this._maxScrollX) {
+    if (this._scrollX === this.maxScrollX && this.maxScrollX > 0) {
       list.insert(index, span);
-      this._scrollX = this._maxScrollX;
+      this._scrollX = this.maxScrollX;
     } else {
       list.insert(index, span);
     }
@@ -1437,9 +1559,9 @@ class DataGrid extends Widget {
     }
 
     // Remove the span, maintaining the scroll position as needed.
-    if (this._scrollY === this._maxScrollY) {
+    if (this._scrollY === this.maxScrollY && this.maxScrollY > 0) {
       list.remove(index, span);
-      this._scrollY = this._maxScrollY;
+      this._scrollY = this.maxScrollY;
     } else {
       list.remove(index, span);
     }
@@ -1474,9 +1596,9 @@ class DataGrid extends Widget {
     }
 
     // Remove the span, maintaining the scroll position as needed.
-    if (this._scrollX === this._maxScrollX) {
+    if (this._scrollX === this.maxScrollX && this.maxScrollX > 0) {
       list.remove(index, span);
-      this._scrollX = this._maxScrollX;
+      this._scrollX = this.maxScrollX;
     } else {
       list.remove(index, span);
     }
@@ -1679,527 +1801,12 @@ class DataGrid extends Widget {
   }
 
   /**
-   * Handle the `'mousedown'` event for the data grid.
+   * Resize a row section immediately.
    */
-  private _evtMouseDown(event: MouseEvent): void {
-    // Do nothing if the left mouse button is not pressed.
-    if (event.button !== 0) {
-      return;
-    }
+  private _resizeRow(index: number, size: number): void {
+    // Look up the target section list.
+    let list = this._rowSections;
 
-    // Bail early if the alt key is held.
-    // TODO - support cell-level events with alt key
-    if (event.altKey) {
-      return;
-    }
-
-    // Extract the relevant event data.
-    let { clientX, clientY, ctrlKey, shiftKey } = event;
-
-    // Hit test the viewport.
-    let hitTest = this._hitTest(clientX, clientY);
-
-    // Stop the event propagation.
-    event.preventDefault();
-    event.stopPropagation();
-
-    // Clear the viewport cursor.
-    this._viewport.node.style.cursor = '';
-
-    // Fetch the mouse cursor.
-    let cursor = Private.cursorForPart(hitTest.part);
-
-    // Override the document cursor.
-    let override = Drag.overrideCursor(cursor);
-
-    // Set up the transient selection.
-    let selection: SelectionModel.Region | null = null;
-
-    // Handle the mouse selection if needed.
-    if (this._selectionModel) {
-      // Convert the hit test into a selection region.
-      switch (hitTest.part) {
-      case 'body-cell':
-        selection = new SelectionModel.Region(hitTest.row, hitTest.column, 1, 1);
-        break;
-      case 'column-header-cell':
-        selection = new SelectionModel.Region(0, hitTest.column, Infinity, 1);
-        break;
-      case 'row-header-cell':
-        selection = new SelectionModel.Region(hitTest.row, 0, 1, Infinity);
-        break;
-      }
-    }
-
-    //
-    if (selection) {
-      this._repaintOverlay();
-    }
-
-    //
-    if (selection && (!ctrlKey || shiftKey)) {
-      this._selectionModel!.clear();
-    }
-
-    // //
-    // if (selection && shiftKey) {
-
-    // }
-
-    // Set up the press data.
-    this._pressData = {
-      hitTest,
-      clientX,
-      clientY,
-      ctrlKey,
-      shiftKey,
-      override,
-      selection
-    };
-
-    // Add the extra document listeners.
-    document.addEventListener('mousemove', this, true);
-    document.addEventListener('mouseup', this, true);
-    document.addEventListener('keydown', this, true);
-    document.addEventListener('contextmenu', this, true);
-  }
-
-  /**
-   * Handle the `'mouseup'` event for the data grid.
-   */
-  private _evtMouseUp(event: MouseEvent): void {
-    // Bail early if a press is not in progress.
-    if (!this._pressData) {
-      return;
-    }
-
-    // Do nothing if the left mouse button is not released.
-    if (event.button !== 0) {
-      return;
-    }
-
-    // Stop the event when releasing the mouse.
-    event.preventDefault();
-    event.stopPropagation();
-
-    //
-    let model = this._selectionModel;
-    let selection = this._pressData.selection;
-
-    //
-    if (model && selection) {
-      model.select(selection);
-    }
-
-    // Schedule a repaint of the overlay.
-    this._repaintOverlay();
-
-    // Finalize the mouse release.
-    this._releaseMouse();
-
-    // TODO - test for viewport hover?
-  }
-
-  /**
-   * Handle the `'mousemove'` event for the data grid.
-   */
-  private _evtMouseMove(event: MouseEvent): void {
-    // Stop the event propagation.
-    event.preventDefault();
-    event.stopPropagation();
-
-    // Handle the hover behavior if a drag is not in progress.
-    if (!this._pressData) {
-      // Hit test the viewport.
-      let hitTest = this._hitTest(event.clientX, event.clientY);
-
-      // Fetch the mouse cursor.
-      let cursor = Private.cursorForPart(hitTest.part);
-
-      // Apply the cursor to the viewport.
-      this._viewport.node.style.cursor = cursor;
-
-      // Done
-      return;
-    }
-
-    if (this._pressData.selection) {
-      this._repaintOverlay();
-    }
-
-    // Update the press data with the current mouse position.
-    this._pressData.clientX = event.clientX;
-    this._pressData.clientY = event.clientY;
-
-    // Dispatch the behavior based on the hit test part.
-    switch (this._pressData.hitTest.part) {
-    case 'row-header-h-resize-handle':
-    case 'row-header-v-resize-handle':
-    case 'column-header-h-resize-handle':
-    case 'column-header-v-resize-handle':
-    case 'corner-header-h-resize-handle':
-    case 'corner-header-v-resize-handle':
-      // Post a section resize request to prevent mouse event flooding.
-      MessageLoop.postMessage(this._viewport, Private.SectionResizeRequest);
-      break;
-    }
-  }
-
-  /**
-   * Handle the `'mousein'` event for the data grid.
-   */
-  private _evtMouseIn(event: MouseEvent): void {
-    // Ignore the event when dragging.
-    if (this._pressData) {
-      return;
-    }
-
-    // Otherwise, treat the event the same as a mouse move.
-    this._evtMouseMove(event);
-  }
-
-  /**
-   * Handle the `'mouseout'` event for the data grid.
-   */
-  private _evtMouseOut(event: MouseEvent): void {
-    // Ignore the event when dragging.
-    if (this._pressData) {
-      return;
-    }
-
-    // Otherwise, clear the viewport cursor.
-    this._viewport.node.style.cursor = '';
-  }
-
-  /**
-   * Handle the `'wheel'` event for the data grid.
-   */
-  private _evtWheel(event: WheelEvent): void {
-    // TODO handle wheel while dragging.
-    if (this._pressData) {
-      return;
-    }
-
-    // Do nothing if the `Ctrl` key is held.
-    if (event.ctrlKey) {
-      return;
-    }
-
-    // Mark the event as handled.
-    event.preventDefault();
-    event.stopPropagation();
-
-    // Extract the delta X and Y movement.
-    let dx = event.deltaX;
-    let dy = event.deltaY;
-
-    // Convert the delta values to pixel values.
-    switch (event.deltaMode) {
-    case 0:  // DOM_DELTA_PIXEL
-      break;
-    case 1:  // DOM_DELTA_LINE
-      dx *= this._columnSections.defaultSize;
-      dy *= this._rowSections.defaultSize;
-      break;
-    case 2:  // DOM_DELTA_PAGE
-      dx *= this._pageWidth;
-      dy *= this._pageHeight;
-      break;
-    default:
-      throw 'unreachable';
-    }
-
-    // Scroll by the desired amount.
-    this._scrollBy(dx, dy);
-  }
-
-  /**
-   * Handle the `'keydown'` event for the data grid.
-   */
-  private _evtKeyDown(event: KeyboardEvent): void {
-    // Bail early if a drag is not in progress.
-    if (!this._pressData) {
-      return;
-    }
-
-    // Stop input events during drag.
-    event.preventDefault();
-    event.stopPropagation();
-
-    // Repain the overlay and release if `Escape` is pressed.
-    if (event.keyCode === 27) {
-      this._repaintOverlay();
-      this._releaseMouse();
-    }
-  }
-
-  /**
-   * Release the mouse grab for the data grid.
-   */
-  private _releaseMouse(): void {
-    // Bail early if no drag is in progress.
-    if (!this._pressData) {
-      return;
-    }
-
-    // Clear the press data and cursor override.
-    this._pressData.override.dispose();
-    this._pressData = null;
-
-    // Remove the extra document listeners.
-    document.removeEventListener('mousemove', this, true);
-    document.removeEventListener('mouseup', this, true);
-    document.removeEventListener('keydown', this, true);
-    document.removeEventListener('contextmenu', this, true);
-  }
-
-  /**
-   * Hit test the viewport for the given client position.
-   *
-   * The client position must be within the viewport bounds.
-   */
-  private _hitTest(clientX: number, clientY: number): Private.HitTestResult {
-    // Fetch the viewport rect.
-    let rect = this._viewport.node.getBoundingClientRect();
-
-    // Extract the rect coordinates.
-    let { left, top, right, bottom } = rect;
-
-    // Round the rect coordinates for sub-pixel positioning.
-    left = Math.floor(left);
-    top = Math.floor(top);
-    right = Math.ceil(right);
-    bottom = Math.ceil(bottom);
-
-    // Bail early if the position is out of the viewport bounds.
-    if (clientX < left || clientY < top) {
-      throw '_hitTest() out of bounds';
-    }
-    if (clientX > right || clientY > bottom) {
-      throw '_hitTest() out of bounds';
-    }
-
-    // Convert the mouse position into local coordinates.
-    let lx = clientX - left;
-    let ly = clientY - top;
-
-    // Fetch the header and body dimensions.
-    let hw = this._headerWidth;
-    let hh = this._headerHeight;
-    let bw = this._bodyWidth;
-    let bh = this._bodyHeight;
-
-    // Fetch the behaviors flags
-    let rr = this._behaviors.resizableRows;
-    let rc = this._behaviors.resizableColumns;
-    let rrh = this._behaviors.resizableRowHeaders;
-    let rch = this._behaviors.resizableColumnHeaders;
-
-    // Fetch the size constants.
-    let lrw = Private.LEADING_RESIZE_WIDTH;
-    let trw = Private.TRAILING_RESIZE_WIDTH;
-
-    // Check for a corner header hit.
-    if (lx < hw && ly < hh) {
-      // Convert to unscrolled virtual coordinates.
-      let vx = lx;
-      let vy = ly;
-
-      // Fetch the row and column index.
-      let row = this._columnHeaderSections.indexOf(vy);
-      let column = this._rowHeaderSections.indexOf(vx);
-
-      // Fetch the cell offset position.
-      let ox = this._rowHeaderSections.offsetOf(column);
-      let oy = this._columnHeaderSections.offsetOf(row);
-
-      // Fetch cell width and height.
-      let w = this._rowHeaderSections.sizeOf(column);
-      let h = this._columnHeaderSections.sizeOf(row);
-
-      // Compute the leading and trailing positions.
-      let x1 = vx - ox;
-      let y1 = vy - oy;
-      let x2 = ox + w - vx - 1;
-      let y2 = oy + h - vy - 1;
-
-      // Compute the hit test part and coordinates.
-      let x: number;
-      let y: number;
-      let part: Private.HitTestPart;
-      if (rrh && (column > 0 && x1 < lrw)) {
-        part = 'corner-header-h-resize-handle';
-        column--;
-        x = x1;
-        y = y1;
-      } else if (rrh && (x2 < trw)) {
-        part = 'corner-header-h-resize-handle';
-        x = -x2;
-        y = y1;
-      } else if (rch && (row > 0 && y1 < lrw)) {
-        part = 'corner-header-v-resize-handle';
-        row--;
-        x = x1;
-        y = y1;
-      } else if (rch && (y2 < trw)) {
-        part = 'corner-header-v-resize-handle';
-        x = x1;
-        y = -y2;
-      } else {
-        part = 'corner-header-cell';
-        x = x1;
-        y = y1;
-      }
-
-      // Return the result.
-      return { part, row, column, x, y };
-    }
-
-    // Check for a column header hit.
-    if (ly < hh && lx < (hw + bw)) {
-      // Convert to unscrolled virtual coordinates.
-      let vx = lx + this._scrollX - hw;
-      let vy = ly
-
-      // Fetch the row and column index.
-      let row = this._columnHeaderSections.indexOf(vy);
-      let column = this._columnSections.indexOf(vx);
-
-      // Fetch the cell offset position.
-      let ox = this._columnSections.offsetOf(column);
-      let oy = this._columnHeaderSections.offsetOf(row);
-
-      // Fetch the cell width and height.
-      let w = this._columnSections.sizeOf(column);
-      let h = this._columnHeaderSections.sizeOf(row);
-
-      // Compute the leading and trailing positions.
-      let x1 = vx - ox;
-      let y1 = vy - oy;
-      let x2 = ox + w - vx - 1;
-      let y2 = oy + h - vy - 1;
-
-      // Compute the hit test part and coordinates.
-      let x: number;
-      let y: number;
-      let part: Private.HitTestPart;
-      if (rc && (column > 0 && x1 < lrw)) {
-        part = 'column-header-h-resize-handle';
-        column--;
-        x = x1;
-        y = y1;
-      } else if (rc && (x2 < trw)) {
-        part = 'column-header-h-resize-handle';
-        x = -x2;
-        y = y1;
-      } else if (rch && (row > 0 && y1 < lrw)) {
-        part = 'column-header-v-resize-handle';
-        row--;
-        x = x1;
-        y = y1;
-      } else if (rch && (y2 < trw)) {
-        part = 'column-header-v-resize-handle';
-        x = x1;
-        y = -y2;
-      } else {
-        part = 'column-header-cell';
-        x = x1;
-        y = y1;
-      }
-
-      // Return the result.
-      return { part, row, column, x, y };
-    }
-
-    // Check for a row header hit.
-    if (lx < hw && ly < (hh + bh)) {
-      // Convert to unscrolled virtual coordinates.
-      let vx = lx
-      let vy = ly + this._scrollY - hh;
-
-      // Fetch the row and column index.
-      let row = this._rowSections.indexOf(vy);
-      let column = this._rowHeaderSections.indexOf(vx);
-
-      // Fetch the cell offset position.
-      let ox = this._rowHeaderSections.offsetOf(column);
-      let oy = this._rowSections.offsetOf(row);
-
-      // Fetch the cell width and height.
-      let w = this._rowHeaderSections.sizeOf(column);
-      let h = this._rowSections.sizeOf(row);
-
-      // Compute the leading and trailing positions.
-      let x1 = vx - ox;
-      let y1 = vy - oy;
-      let x2 = ox + w - vx - 1;
-      let y2 = oy + h - vy - 1;
-
-      // Compute the hit test part and coordinates.
-      let x: number;
-      let y: number;
-      let part: Private.HitTestPart;
-      if (rrh && (column > 0 && x1 < lrw)) {
-        part = 'row-header-h-resize-handle';
-        column--;
-        x = x1;
-        y = y1;
-      } else if (rrh && (x2 < trw)) {
-        part = 'row-header-h-resize-handle';
-        x = -x2;
-        y = y1;
-      } else if (rr && (row > 0 && y1 < lrw)) {
-        part = 'row-header-v-resize-handle';
-        row--;
-        x = x1;
-        y = y1;
-      } else if (rr && (y2 < trw)) {
-        part = 'row-header-v-resize-handle';
-        x = x1;
-        y = -y2;
-      } else {
-        part = 'row-header-cell';
-        x = x1;
-        y = y1;
-      }
-
-      // Return the result.
-      return { part, row, column, x, y };
-    }
-
-    // Check for a body hit.
-    if (lx >= hw && lx < (hw + bw) && ly >= hh && ly < (hh + bh)) {
-      // Convert to unscrolled virtual coordinates.
-      let vx = lx + this._scrollX - hw
-      let vy = ly + this._scrollY - hh;
-
-      // Fetch the row and column index.
-      let row = this._rowSections.indexOf(vy);
-      let column = this._columnSections.indexOf(vx);
-
-      // Fetch the cell offset position.
-      let ox = this._rowHeaderSections.offsetOf(column);
-      let oy = this._rowSections.offsetOf(row);
-
-      // Compute the part coordinates.
-      let x = vx - ox;
-      let y = vy - oy;
-
-      // Return the result.
-      return { part: 'body-cell', row, column, x, y };
-    }
-
-    // Otherwise, it's a void space hit.
-    return { part: 'void-space', row: -1, column: -1, x: -1, y: -1 };
-  }
-
-  /**
-   * Resize a section in the given section list.
-   *
-   * #### Notes
-   * This will update the scroll bars and repaint as needed.
-   */
-  private _resizeSection(list: SectionList, index: number, size: number): void {
     // Bail early if the index is out of range.
     if (index < 0 || index >= list.count) {
       return;
@@ -2209,7 +1816,7 @@ class DataGrid extends Widget {
     let oldSize = list.sizeOf(index);
 
     // Normalize the new size of the section.
-    let newSize = Private.clampSectionSize(size);
+    let newSize = Math.max(0, Math.floor(size));
 
     // Bail early if the size does not change.
     if (oldSize === newSize) {
@@ -2220,11 +1827,311 @@ class DataGrid extends Widget {
     list.resize(index, newSize);
 
     // Get the current size of the viewport.
-    let vpWidth = this._viewportWidth;
-    let vpHeight = this._viewportHeight;
+    let vw = this._viewportWidth;
+    let vh = this._viewportHeight;
 
     // If there is nothing to paint, sync the scroll state.
-    if (!this._viewport.isVisible || vpWidth === 0 || vpHeight === 0) {
+    if (!this._viewport.isVisible || vw === 0 || vh === 0) {
+      this._syncScrollState();
+      return;
+    }
+
+    // Compute the size delta.
+    let delta = newSize - oldSize;
+
+    // Look up the column header height.
+    let hh = this.headerHeight;
+
+    // Compute the viewport offset of the section.
+    let offset = list.offsetOf(index) + hh - this._scrollY;
+
+    // Bail early if there is nothing to paint.
+    if (hh >= vh || offset >= vh) {
+      this._syncScrollState();
+      return;
+    }
+
+    // Update the scroll position if the section is not visible.
+    if (offset + oldSize <= hh) {
+      this._scrollY += delta;
+      this._syncScrollState();
+      return;
+    }
+
+    // Compute the paint origin of the section.
+    let pos = Math.max(hh, offset);
+
+    // Paint from the section onward if it spans the viewport.
+    if (offset + oldSize >= vh || offset + newSize >= vh) {
+      this._paintContent(0, pos, vw, vh - pos);
+      this._paintOverlay();
+      this._syncScrollState();
+      return;
+    }
+
+    // Compute the X blit dimensions.
+    let sx = 0;
+    let sw = vw;
+    let dx = 0;
+
+    // Compute the Y blit dimensions.
+    let sy: number;
+    let sh: number;
+    let dy: number;
+    if (offset + newSize <= hh) {
+      sy = hh - delta;
+      sh = vh - sy;
+      dy = hh;
+    } else {
+      sy = offset + oldSize;
+      sh = vh - sy;
+      dy = sy + delta;
+    }
+
+    // Blit the valid content to the destination.
+    this._blitContent(this._canvas, sx, sy, sw, sh, dx, dy);
+
+    // Repaint the section if needed.
+    if (newSize > 0 && offset + newSize > hh) {
+      this._paintContent(0, pos, vw, offset + newSize - pos);
+    }
+
+    // Paint the trailing space if needed.
+    if (delta < 0) {
+      this._paintContent(0, vh + delta, vw, -delta);
+    }
+
+    // Paint the overlay.
+    this._paintOverlay();
+
+    // Sync the scroll state.
+    this._syncScrollState();
+  }
+
+  /**
+   * Resize a column section immediately.
+   */
+  private _resizeColumn(index: number, size: number): void {
+    // Look up the target section list.
+    let list = this._columnSections;
+
+    // Bail early if the index is out of range.
+    if (index < 0 || index >= list.count) {
+      return;
+    }
+
+    // Look up the old size of the section.
+    let oldSize = list.sizeOf(index);
+
+    // Normalize the new size of the section.
+    let newSize = Math.max(0, Math.floor(size));
+
+    // Bail early if the size does not change.
+    if (oldSize === newSize) {
+      return;
+    }
+
+    // Resize the section in the list.
+    list.resize(index, newSize);
+
+    // Get the current size of the viewport.
+    let vw = this._viewportWidth;
+    let vh = this._viewportHeight;
+
+    // If there is nothing to paint, sync the scroll state.
+    if (!this._viewport.isVisible || vw === 0 || vh === 0) {
+      this._syncScrollState();
+      return;
+    }
+
+    // Compute the size delta.
+    let delta = newSize - oldSize;
+
+    // Look up the row header width.
+    let hw = this.headerWidth;
+
+    // Compute the viewport offset of the section.
+    let offset = list.offsetOf(index) + hw - this._scrollX;
+
+    // Bail early if there is nothing to paint.
+    if (hw >= vw || offset >= vw) {
+      this._syncScrollState();
+      return;
+    }
+
+    // Update the scroll position if the section is not visible.
+    if (offset + oldSize <= hw) {
+      this._scrollX += delta;
+      this._syncScrollState();
+      return;
+    }
+
+    // Compute the paint origin of the section.
+    let pos = Math.max(hw, offset);
+
+    // Paint from the section onward if it spans the viewport.
+    if (offset + oldSize >= vw || offset + newSize >= vw) {
+      this._paintContent(pos, 0, vw - pos, vh);
+      this._paintOverlay();
+      this._syncScrollState();
+      return;
+    }
+
+    // Compute the Y blit dimensions.
+    let sy = 0;
+    let sh = vh;
+    let dy = 0;
+
+    // Compute the X blit dimensions.
+    let sx: number;
+    let sw: number;
+    let dx: number;
+    if (offset + newSize <= hw) {
+      sx = hw - delta;
+      sw = vw - sx;
+      dx = hw;
+    } else {
+      sx = offset + oldSize;
+      sw = vw - sx;
+      dx = sx + delta;
+    }
+
+    // Blit the valid content to the destination.
+    this._blitContent(this._canvas, sx, sy, sw, sh, dx, dy);
+
+    // Repaint the section if needed.
+    if (newSize > 0 && offset + newSize > hw) {
+      this._paintContent(pos, 0, offset + newSize - pos, vh);
+    }
+
+    // Paint the trailing space if needed.
+    if (delta < 0) {
+      this._paintContent(vw + delta, 0, -delta, vh);
+    }
+
+    // Paint the overlay.
+    this._paintOverlay();
+
+    // Sync the scroll state after painting.
+    this._syncScrollState();
+  }
+
+  /**
+   * Resize a row header section immediately.
+   */
+  private _resizeRowHeader(index: number, size: number): void {
+    // Look up the target section list.
+    let list = this._rowHeaderSections;
+
+    // Bail early if the index is out of range.
+    if (index < 0 || index >= list.count) {
+      return;
+    }
+
+    // Look up the old size of the section.
+    let oldSize = list.sizeOf(index);
+
+    // Normalize the new size of the section.
+    let newSize = Math.max(0, Math.floor(size));
+
+    // Bail early if the size does not change.
+    if (oldSize === newSize) {
+      return;
+    }
+
+    // Resize the section in the list.
+    list.resize(index, newSize);
+
+    // Get the current size of the viewport.
+    let vw = this._viewportWidth;
+    let vh = this._viewportHeight;
+
+    // If there is nothing to paint, sync the scroll state.
+    if (!this._viewport.isVisible || vw === 0 || vh === 0) {
+      this._syncScrollState();
+      return;
+    }
+
+    // Compute the size delta.
+    let delta = newSize - oldSize;
+
+    // Look up the offset of the section.
+    let offset = list.offsetOf(index);
+
+    // Bail early if the section is fully outside the viewport.
+    if (offset >= vw) {
+      this._syncScrollState();
+      return;
+    }
+
+    // Paint the entire tail if the section spans the viewport.
+    if (offset + oldSize >= vw || offset + newSize >= vw) {
+      this._paintContent(offset, 0, vw - offset, vh);
+      this._paintOverlay();
+      this._syncScrollState();
+      return;
+    }
+
+    // Compute the blit content dimensions.
+    let sx = offset + oldSize;
+    let sy = 0;
+    let sw = vw - sx;
+    let sh = vh;
+    let dx = sx + delta;
+    let dy = 0;
+
+    // Blit the valid contents to the destination.
+    this._blitContent(this._canvas, sx, sy, sw, sh, dx, dy);
+
+    // Repaint the header section if needed.
+    if (newSize > 0) {``
+      this._paintContent(offset, 0, newSize, vh);
+    }
+
+    // Paint the trailing space if needed.
+    if (delta < 0) {
+      this._paintContent(vw + delta, 0, -delta, vh);
+    }
+
+    // Paint the overlay.
+    this._paintOverlay();
+
+    // Sync the scroll state after painting.
+    this._syncScrollState();
+  }
+
+  /**
+   * Resize a column header section immediately.
+   */
+  private _resizeColumnHeader(index: number, size: number): void {
+    // Look up the target section list.
+    let list = this._columnHeaderSections;
+
+    // Bail early if the index is out of range.
+    if (index < 0 || index >= list.count) {
+      return;
+    }
+
+    // Look up the old size of the section.
+    let oldSize = list.sizeOf(index);
+
+    // Normalize the new size of the section.
+    let newSize = Math.max(0, Math.floor(size));
+
+    // Bail early if the size does not change.
+    if (oldSize === newSize) {
+      return;
+    }
+
+    // Resize the section in the list.
+    list.resize(index, newSize);
+
+    // Get the current size of the viewport.
+    let vw = this._viewportWidth;
+    let vh = this._viewportHeight;
+
+    // If there is nothing to paint, sync the scroll state.
+    if (!this._viewport.isVisible || vw === 0 || vh === 0) {
       this._syncScrollState();
       return;
     }
@@ -2235,217 +2142,46 @@ class DataGrid extends Widget {
     // Compute the size delta.
     let delta = newSize - oldSize;
 
-    // Paint the relevant dirty regions.
-    switch (list) {
-    case this._rowSections:
-    {
-      // Look up the column header height.
-      let hh = this._headerHeight;
+    // Look up the offset of the section.
+    let offset = list.offsetOf(index);
 
-      // Compute the viewport offset of the section.
-      let offset = list.offsetOf(index) + hh - this._scrollY;
-
-      // Bail early if there is nothing to paint.
-      if (hh >= vpHeight || offset > vpHeight) {
-        break;
-      }
-
-      // Update the scroll position if the section is not visible.
-      if (offset + oldSize <= hh) {
-        this._scrollY += delta;
-        break;
-      }
-
-      // Compute the paint origin of the section.
-      let pos = Math.max(hh, offset);
-
-      // Paint from the section onward if it spans the viewport.
-      if (offset + oldSize >= vpHeight || offset + newSize >= vpHeight) {
-        this._paintContent(0, pos, vpWidth, vpHeight - pos);
-        break;
-      }
-
-      // Compute the X blit dimensions.
-      let sx = 0;
-      let sw = vpWidth;
-      let dx = 0;
-
-      // Compute the Y blit dimensions.
-      let sy: number;
-      let sh: number;
-      let dy: number;
-      if (offset + newSize <= hh) {
-        sy = hh - delta;
-        sh = vpHeight - sy;
-        dy = hh;
-      } else {
-        sy = offset + oldSize;
-        sh = vpHeight - sy;
-        dy = sy + delta;
-      }
-
-      // Blit the valid content to the destination.
-      this._blitContent(this._canvas, sx, sy, sw, sh, dx, dy);
-
-      // Repaint the section if needed.
-      if (newSize > 0 && offset + newSize > hh) {
-        this._paintContent(0, pos, vpWidth, offset + newSize - pos);
-      }
-
-      // Paint the trailing space if needed.
-      if (delta < 0) {
-        this._paintContent(0, vpHeight + delta, vpWidth, -delta);
-      }
-
-      // Done.
-      break;
+    // Bail early if the section is fully outside the viewport.
+    if (offset >= vw) {
+      this._syncScrollState();
+      return;
     }
-    case this._columnSections:
-    {
-      // Look up the row header width.
-      let hw = this._headerWidth;
 
-      // Compute the viewport offset of the section.
-      let offset = list.offsetOf(index) + hw - this._scrollX;
-
-      // Bail early if there is nothing to paint.
-      if (hw >= vpWidth || offset > vpWidth) {
-        break;
-      }
-
-      // Update the scroll position if the section is not visible.
-      if (offset + oldSize <= hw) {
-        this._scrollX += delta;
-        break;
-      }
-
-      // Compute the paint origin of the section.
-      let pos = Math.max(hw, offset);
-
-      // Paint from the section onward if it spans the viewport.
-      if (offset + oldSize >= vpWidth || offset + newSize >= vpWidth) {
-        this._paintContent(pos, 0, vpWidth - pos, vpHeight);
-        break;
-      }
-
-      // Compute the Y blit dimensions.
-      let sy = 0;
-      let sh = vpHeight;
-      let dy = 0;
-
-      // Compute the X blit dimensions.
-      let sx: number;
-      let sw: number;
-      let dx: number;
-      if (offset + newSize <= hw) {
-        sx = hw - delta;
-        sw = vpWidth - sx;
-        dx = hw;
-      } else {
-        sx = offset + oldSize;
-        sw = vpWidth - sx;
-        dx = sx + delta;
-      }
-
-      // Blit the valid content to the destination.
-      this._blitContent(this._canvas, sx, sy, sw, sh, dx, dy);
-
-      // Repaint the section if needed.
-      if (newSize > 0 && offset + newSize > hw) {
-        this._paintContent(pos, 0, offset + newSize - pos, vpHeight);
-      }
-
-      // Paint the trailing space if needed.
-      if (delta < 0) {
-        this._paintContent(vpWidth + delta, 0, -delta, vpHeight);
-      }
-
-      // Done.
-      break;
+    // Paint the entire tail if the section spans the viewport.
+    if (offset + oldSize >= vw || offset + newSize >= vw) {
+      this._paintContent(offset, 0, vw - offset, vh);
+      this._paintOverlay();
+      this._syncScrollState();
+      return;
     }
-    case this._rowHeaderSections:
-    {
-      // Look up the offset of the section.
-      let offset = list.offsetOf(index);
 
-      // Bail early if the section is fully outside the viewport.
-      if (offset >= vpWidth) {
-        break;
-      }
+    // Compute the blit content dimensions.
+    let sx = offset + oldSize;
+    let sy = 0;
+    let sw = vw - sx;
+    let sh = vh;
+    let dx = sx + delta;
+    let dy = 0;
 
-      // Paint the entire tail if the section spans the viewport.
-      if (offset + oldSize >= vpWidth || offset + newSize >= vpWidth) {
-        this._paintContent(offset, 0, vpWidth - offset, vpHeight);
-        break;
-      }
+    // Blit the valid contents to the destination.
+    this._blitContent(this._canvas, sx, sy, sw, sh, dx, dy);
 
-      // Compute the blit content dimensions.
-      let sx = offset + oldSize;
-      let sy = 0;
-      let sw = vpWidth - sx;
-      let sh = vpHeight;
-      let dx = sx + delta;
-      let dy = 0;
-
-      // Blit the valid contents to the destination.
-      this._blitContent(this._canvas, sx, sy, sw, sh, dx, dy);
-
-      // Repaint the header section if needed.
-      if (newSize > 0) {
-        this._paintContent(offset, 0, newSize, vpHeight);
-      }
-
-      // Paint the trailing space if needed.
-      if (delta < 0) {
-        this._paintContent(vpWidth + delta, 0, -delta, vpHeight);
-      }
-
-      // Done
-      break;
+    // Repaint the header section if needed.
+    if (newSize > 0) {
+      this._paintContent(offset, 0, newSize, vh);
     }
-    case this._columnHeaderSections:
-    {
-      // Look up the offset of the section.
-      let offset = list.offsetOf(index);
 
-      // Bail early if the section is fully outside the viewport.
-      if (offset >= vpHeight) {
-        break;
-      }
-
-      // Paint the entire tail if the section spans the viewport.
-      if (offset + oldSize >= vpHeight || offset + newSize >= vpHeight) {
-        this._paintContent(0, offset, vpWidth, vpHeight - offset);
-        break;
-      }
-
-      // Compute the blit content dimensions.
-      let sx = 0;
-      let sy = offset + oldSize;
-      let sw = vpWidth;
-      let sh = vpHeight - sy;
-      let dx = 0;
-      let dy = sy + delta;
-
-      // Blit the valid contents to the destination.
-      this._blitContent(this._canvas, sx, sy, sw, sh, dx, dy);
-
-      // Repaint the header section if needed.
-      if (newSize > 0) {
-        this._paintContent(0, offset, vpWidth, newSize);
-      }
-
-      // Paint the trailing space if needed.
-      if (delta < 0) {
-        this._paintContent(0, vpHeight + delta, vpWidth, -delta);
-      }
-
-      // Done
-      break;
+    // Paint the trailing space if needed.
+    if (delta < 0) {
+      this._paintContent(vw + delta, 0, -delta, vh);
     }
-    default:
-      throw 'unreachable';
-    }
+
+    // Paint the overlay.
+    this._paintOverlay();
 
     // Sync the scroll state after painting.
     this._syncScrollState();
@@ -2454,10 +2190,10 @@ class DataGrid extends Widget {
   /**
    * Scroll immediately to the specified offset position.
    */
-  private _scroll(x: number, y: number): void {
+  private _scrollTo(x: number, y: number): void {
     // Floor and clamp the position to the allowable range.
-    x = Math.max(0, Math.min(Math.floor(x), this._maxScrollX));
-    y = Math.max(0, Math.min(Math.floor(y), this._maxScrollY));
+    x = Math.max(0, Math.min(Math.floor(x), this.maxScrollX));
+    y = Math.max(0, Math.min(Math.floor(y), this.maxScrollY));
 
     // Synchronize the scroll bar values.
     this._hScrollBar.value = x;
@@ -2491,8 +2227,8 @@ class DataGrid extends Widget {
     }
 
     // Get the visible content origin.
-    let contentX = this._headerWidth;
-    let contentY = this._headerHeight;
+    let contentX = this.headerWidth;
+    let contentY = this.headerHeight;
 
     // Get the visible content dimensions.
     let contentWidth = width - contentX;
@@ -2653,10 +2389,10 @@ class DataGrid extends Widget {
     this._overlayGC.clearRect(0, 0, this._overlay.width, this._overlay.height);
 
     // Draw the selections.
-    this._drawSelections();
+    //this._drawSelections();
 
     // Draw the cursor.
-    this._drawCursor();
+    //this._drawCursor();
 
     // Draw the shadows.
     this._drawShadows();
@@ -2693,8 +2429,8 @@ class DataGrid extends Widget {
     }
 
     // Get the visible content origin.
-    let contentX = this._headerWidth;
-    let contentY = this._headerHeight;
+    let contentX = this.headerWidth;
+    let contentY = this.headerHeight;
 
     // Bail if the dirty rect does not intersect the content area.
     if (rx + rw <= contentX) {
@@ -2796,8 +2532,8 @@ class DataGrid extends Widget {
    */
   private _drawRowHeaderRegion(rx: number, ry: number, rw: number, rh: number): void {
     // Get the visible content dimensions.
-    let contentW = this._headerWidth;
-    let contentH = this._rowSections.length - this._scrollY;
+    let contentW = this.headerWidth;
+    let contentH = this.bodyHeight - this._scrollY;
 
     // Bail if there is no content to draw.
     if (contentW <= 0 || contentH <= 0) {
@@ -2806,7 +2542,7 @@ class DataGrid extends Widget {
 
     // Get the visible content origin.
     let contentX = 0;
-    let contentY = this._headerHeight;
+    let contentY = this.headerHeight;
 
     // Bail if the dirty rect does not intersect the content area.
     if (rx + rw <= contentX) {
@@ -2902,8 +2638,8 @@ class DataGrid extends Widget {
    */
   private _drawColumnHeaderRegion(rx: number, ry: number, rw: number, rh: number): void {
     // Get the visible content dimensions.
-    let contentW = this._columnSections.length - this._scrollX;
-    let contentH = this._headerHeight;
+    let contentW = this.bodyWidth - this._scrollX;
+    let contentH = this.headerHeight;
 
     // Bail if there is no content to draw.
     if (contentW <= 0 || contentH <= 0) {
@@ -2911,7 +2647,7 @@ class DataGrid extends Widget {
     }
 
     // Get the visible content origin.
-    let contentX = this._headerWidth;
+    let contentX = this.headerWidth;
     let contentY = 0;
 
     // Bail if the dirty rect does not intersect the content area.
@@ -3008,8 +2744,8 @@ class DataGrid extends Widget {
    */
   private _drawCornerHeaderRegion(rx: number, ry: number, rw: number, rh: number): void {
     // Get the visible content dimensions.
-    let contentW = this._headerWidth;
-    let contentH = this._headerHeight;
+    let contentW = this.headerWidth;
+    let contentH = this.headerHeight;
 
     // Bail if there is no content to draw.
     if (contentW <= 0 || contentH <= 0) {
@@ -3441,280 +3177,277 @@ class DataGrid extends Widget {
     this._canvasGC.stroke();
   }
 
-  /**
-   * Draw the various selections for the data grid.
-   */
-  private _drawSelections(): void {
-    // Bail early if there is no selection model.
-    if (!this._selectionModel) {
-      return;
-    }
+  // /**
+  //  * Draw the various selections for the data grid.
+  //  */
+  // private _drawSelections(): void {
+  //   // Bail early if there is no selection model.
+  //   if (!this._selectionModel) {
+  //     return;
+  //   }
 
-    // Get the first visible cell of the grid.
-    let r1 = this._rowSections.indexOf(this._scrollY);
-    let c1 = this._columnSections.indexOf(this._scrollX);
+  //   // Get the first visible cell of the grid.
+  //   let r1 = this._rowSections.indexOf(this._scrollY);
+  //   let c1 = this._columnSections.indexOf(this._scrollX);
 
-    // Bail early if there are no visible cells.
-    if (r1 < 0 || c1 < 0) {
-      return;
-    }
+  //   // Bail early if there are no visible cells.
+  //   if (r1 < 0 || c1 < 0) {
+  //     return;
+  //   }
 
-    // Get the last visible cell of the grid.
-    let r2 = this._rowSections.indexOf(this._scrollY + this._pageHeight);
-    let c2 = this._columnSections.indexOf(this._scrollX + this._pageWidth);
+  //   // Get the last visible cell of the grid.
+  //   let r2 = this._rowSections.indexOf(this._scrollY + this.pageHeight);
+  //   let c2 = this._columnSections.indexOf(this._scrollX + this.pageWidth);
 
-    // Clamp the last cell if the void space is visible.
-    r2 = r2 < 0 ? (this._rowSections.count - 1) : r2;
-    c2 = c2 < 0 ? (this._columnSections.count - 1) : c2;
+  //   // Clamp the last cell if the void space is visible.
+  //   r2 = r2 < 0 ? (this._rowSections.count - 1) : r2;
+  //   c2 = c2 < 0 ? (this._columnSections.count - 1) : c2;
 
-    // Convert the boundary cells into a region.
-    let bounds = new SelectionModel.Region(r1, c1, r2 - r1 + 1, c2 - c1 + 1);
+  //   // Convert the boundary cells into a region.
+  //   let bounds = new SelectionModel.Region(r1, c1, r2 - r1 + 1, c2 - c1 + 1);
 
-    // Fetch the regions from the selection model.
-    let regions = toArray(this._selectionModel.regions());
+  //   // Fetch the regions from the selection model.
+  //   let regions = toArray(this._selectionModel.regions());
 
-    // Fetch the transient selection.
-    let transient = this._pressData ? this._pressData.selection : null;
+  //   // Fetch the transient selection.
+  //   let transient = this._pressData ? this._pressData.selection : null;
 
-    // Set up the selection info object.
-    let info = { bounds, regions, transient };
+  //   // Set up the selection info object.
+  //   let info = { bounds, regions, transient };
 
-    // Draw the cell selections.
-    this._drawCellSelections(info);
+  //   // Draw the cell selections.
+  //   this._drawCellSelections(info);
 
-    // Draw the row header selections.
-    this._drawRowHeaderSelections(info);
+  //   // Draw the row header selections.
+  //   this._drawRowHeaderSelections(info);
 
-    // Draw the column header selections.
-    this._drawColumnHeaderSelections(info);
+  //   // Draw the column header selections.
+  //   this._drawColumnHeaderSelections(info);
+  // }
 
-    // Draw the transient selection.
-    this._drawTransientSelection(info);
-  }
+  // /**
+  //  * Draw the cell selections for the data grid.
+  //  */
+  // private _drawCellSelections(info: Private.SelectionInfo): void {
+  //   // Extract the data from the info object.
+  //   let { bounds, regions } = info;
 
-  /**
-   * Draw the cell selections for the data grid.
-   */
-  private _drawCellSelections(info: Private.SelectionInfo): void {
-    // Extract the data from the info object.
-    let { bounds, regions } = info;
+  //   // Bail early if there are no regions to draw.
+  //   if (regions.length === 0) {
+  //     return;
+  //   }
 
-    // Bail early if there are no regions to draw.
-    if (regions.length === 0) {
-      return;
-    }
+  //   // Fetch the selection colors.
+  //   let fill = this._style.selectionColor;
+  //   let stroke = this._style.selectionBorderColor;
 
-    // Fetch the selection colors.
-    let fill = this._style.selectionColor;
-    let stroke = this._style.selectionBorderColor;
+  //   // Bail early if there is nothing to draw.
+  //   if (!fill && !stroke) {
+  //     return;
+  //   }
 
-    // Bail early if there is nothing to draw.
-    if (!fill && !stroke) {
-      return;
-    }
+  //   // Fetch common geometry.
+  //   let sx = this._scrollX;
+  //   let sy = this._scrollY;
+  //   let pw = this._pageWidth;
+  //   let ph = this._pageHeight;
+  //   let hw = this._headerWidth;
+  //   let hh = this._headerHeight;
 
-    // Fetch common geometry.
-    let sx = this._scrollX;
-    let sy = this._scrollY;
-    let pw = this._pageWidth;
-    let ph = this._pageHeight;
-    let hw = this._headerWidth;
-    let hh = this._headerHeight;
+  //   // Fetch the max cell.
+  //   let maxRow = this._rowSections.count - 1;
+  //   let maxCol = this._columnSections.count - 1;
 
-    // Fetch the max cell.
-    let maxRow = this._rowSections.count - 1;
-    let maxCol = this._columnSections.count - 1;
+  //   // Fetch the overlay gc.
+  //   let gc = this._overlayGC;
 
-    // Fetch the overlay gc.
-    let gc = this._overlayGC;
+  //   // Save the gc state.
+  //   gc.save();
 
-    // Save the gc state.
-    gc.save();
+  //   // Set up the body clipping rect.
+  //   gc.beginPath();
+  //   gc.rect(hw, hh, pw, ph);
+  //   gc.clip();
 
-    // Set up the body clipping rect.
-    gc.beginPath();
-    gc.rect(hw, hh, pw, ph);
-    gc.clip();
+  //   // Set up the gc style.
+  //   if (fill) {
+  //     gc.fillStyle = fill;
+  //   }
+  //   if (stroke) {
+  //     gc.strokeStyle = stroke;
+  //     gc.lineWidth = 1;
+  //   }
 
-    // Set up the gc style.
-    if (fill) {
-      gc.fillStyle = fill;
-    }
-    if (stroke) {
-      gc.strokeStyle = stroke;
-      gc.lineWidth = 1;
-    }
+  //   // Draw the selected body cells.
+  //   for (let region of regions) {
+  //     // Skip the region if it does not overlap the bounds.
+  //     if (!region.overlaps(bounds)) {
+  //       continue;
+  //     }
 
-    // Draw the selected body cells.
-    for (let region of regions) {
-      // Skip the region if it does not overlap the bounds.
-      if (!region.overlaps(bounds)) {
-        continue;
-      }
+  //     // Get the cell locations.
+  //     let r1 = region.row;
+  //     let c1 = region.column;
+  //     let r2 = region.lastRow;
+  //     let c2 = region.lastColumn;
 
-      // Get the cell locations.
-      let r1 = region.row;
-      let c1 = region.column;
-      let r2 = region.lastRow;
-      let c2 = region.lastColumn;
+  //     // Clamp the cell to the model bounds.
+  //     r1 = Math.max(0, Math.min(r1, maxRow));
+  //     c1 = Math.max(0, Math.min(c1, maxCol));
+  //     r2 = Math.max(0, Math.min(r2, maxRow));
+  //     c2 = Math.max(0, Math.min(c2, maxCol));
 
-      // Clamp the cell to the model bounds.
-      r1 = Math.max(0, Math.min(r1, maxRow));
-      c1 = Math.max(0, Math.min(c1, maxCol));
-      r2 = Math.max(0, Math.min(r2, maxRow));
-      c2 = Math.max(0, Math.min(c2, maxCol));
+  //     // Convert to pixel coordinates.
+  //     let x1 = this._columnSections.offsetOf(c1) - sx + hw;
+  //     let y1 = this._rowSections.offsetOf(r1) - sy + hh;
+  //     let x2 = this._columnSections.extentOf(c2) - sx + hw;
+  //     let y2 = this._rowSections.extentOf(r2) - sy + hh;
 
-      // Convert to pixel coordinates.
-      let x1 = this._columnSections.offsetOf(c1) - sx + hw;
-      let y1 = this._rowSections.offsetOf(r1) - sy + hh;
-      let x2 = this._columnSections.extentOf(c2) - sx + hw;
-      let y2 = this._rowSections.extentOf(r2) - sy + hh;
+  //     // Clamp the bounds to just outside of the clipping rect.
+  //     x1 = Math.max(hw - 1, x1);
+  //     y1 = Math.max(hh - 1, y1);
+  //     x2 = Math.min(hw + pw + 1, x2);
+  //     y2 = Math.min(hh + ph + 1, y2);
 
-      // Clamp the bounds to just outside of the clipping rect.
-      x1 = Math.max(hw - 1, x1);
-      y1 = Math.max(hh - 1, y1);
-      x2 = Math.min(hw + pw + 1, x2);
-      y2 = Math.min(hh + ph + 1, y2);
+  //     // Fill the rect if needed.
+  //     if (fill) {
+  //       gc.fillRect(x1, y1, x2 - x1 + 1, y2 - y1 + 1);
+  //     }
 
-      // Fill the rect if needed.
-      if (fill) {
-        gc.fillRect(x1, y1, x2 - x1 + 1, y2 - y1 + 1);
-      }
+  //     // Stroke the rect if needed.
+  //     // if (stroke) {
+  //     //   gc.strokeRect(x1 - .5, y1 - .5, x2 - x1 + 1, y2 - y1 + 1);
+  //     // }
+  //   }
 
-      // Stroke the rect if needed.
-      // if (stroke) {
-      //   gc.strokeRect(x1 - .5, y1 - .5, x2 - x1 + 1, y2 - y1 + 1);
-      // }
-    }
+  //   // Restore the gc state.
+  //   gc.restore();
+  // }
 
-    // Restore the gc state.
-    gc.restore();
-  }
+  // /**
+  //  * Draw the row header selections for the data grid.
+  //  */
+  // private _drawRowHeaderSelections(info: Private.SelectionInfo): void {
+  //   // Bail early if the row headers are not visible.
+  //   if (this._headerWidth === 0) {
+  //     return;
+  //   }
 
-  /**
-   * Draw the row header selections for the data grid.
-   */
-  private _drawRowHeaderSelections(info: Private.SelectionInfo): void {
-    // Bail early if the row headers are not visible.
-    if (this._headerWidth === 0) {
-      return;
-    }
+  //   //
+  //   let { bounds, regions } = info;
 
-    //
-    let { bounds, regions } = info;
+  //   //
+  //   if (regions.length === 0) {
+  //     return;
+  //   }
 
-    //
-    if (regions.length === 0) {
-      return;
-    }
+  //   // Fetch the selection colors.
+  //   let fill = this._style.selectionColor;
+  //   let stroke = this._style.selectionBorderColor;
 
-    // Fetch the selection colors.
-    let fill = this._style.selectionColor;
-    let stroke = this._style.selectionBorderColor;
+  //   // Bail early if there is nothing to draw.
+  //   if (!fill && !stroke) {
+  //     return;
+  //   }
 
-    // Bail early if there is nothing to draw.
-    if (!fill && !stroke) {
-      return;
-    }
+  //   // Fetch common geometry.
+  //   let sy = this._scrollY;
+  //   let ph = this._pageHeight;
+  //   let hw = this._headerWidth;
+  //   let hh = this._headerHeight;
 
-    // Fetch common geometry.
-    let sy = this._scrollY;
-    let ph = this._pageHeight;
-    let hw = this._headerWidth;
-    let hh = this._headerHeight;
+  //   //
+  //   let gc = this._overlayGC;
 
-    //
-    let gc = this._overlayGC;
+  //   // Save the gc state.
+  //   gc.save();
 
-    // Save the gc state.
-    gc.save();
+  //   // Set up the header clipping rect.
+  //   gc.beginPath();
+  //   gc.rect(0, hh, hw, ph);
+  //   gc.clip();
 
-    // Set up the header clipping rect.
-    gc.beginPath();
-    gc.rect(0, hh, hw, ph);
-    gc.clip();
+  //   // Set up the gc style.
+  //   if (fill) {
+  //     gc.fillStyle = fill;
+  //   }
+  //   if (stroke) {
+  //     gc.strokeStyle = stroke;
+  //     gc.lineWidth = 1;
+  //   }
 
-    // Set up the gc style.
-    if (fill) {
-      gc.fillStyle = fill;
-    }
-    if (stroke) {
-      gc.strokeStyle = stroke;
-      gc.lineWidth = 1;
-    }
+  //   //
+  //   let r1 = bounds.row;
+  //   let r2 = bounds.lastRow;
 
-    //
-    let r1 = bounds.row;
-    let r2 = bounds.lastRow;
+  //   //
+  //   for (let j = r1; j <= r2; ++j) {
+  //     for (let region of regions) {
+  //       if (region.containsRow(j)) {
+  //         //
+  //         let y = this._rowSections.offsetOf(j) - sy + hh;
+  //         let h = this._rowSections.sizeOf(j);
 
-    //
-    for (let j = r1; j <= r2; ++j) {
-      for (let region of regions) {
-        if (region.containsRow(j)) {
-          //
-          let y = this._rowSections.offsetOf(j) - sy + hh;
-          let h = this._rowSections.sizeOf(j);
+  //         //
+  //         if (fill) {
+  //           gc.fillRect(0, y, hw, h);
+  //         }
 
-          //
-          if (fill) {
-            gc.fillRect(0, y, hw, h);
-          }
+  //         //
+  //         if (stroke) {
+  //           gc.beginPath();
+  //           gc.moveTo(hw, y);
+  //           gc.lineTo(hw, y + h);
+  //           gc.stroke();
+  //         }
 
-          //
-          if (stroke) {
-            gc.beginPath();
-            gc.moveTo(hw, y);
-            gc.lineTo(hw, y + h);
-            gc.stroke();
-          }
+  //         //
+  //         break;
+  //       }
+  //     }
+  //   }
 
-          //
-          break;
-        }
-      }
-    }
+  //   // Restore the gc state.
+  //   gc.restore();
+  // }
 
-    // Restore the gc state.
-    gc.restore();
-  }
+  // /**
+  //  *
+  //  */
+  // private _drawColumnHeaderSelections(info: Private.SelectionInfo): void {
+  //   // // Draw the selected column header cells, if visible.
+  //   // if (hh > 0) {
+  //   //   // Save the gc state.
+  //   //   gc.save();
 
-  /**
-   *
-   */
-  private _drawColumnHeaderSelections(info: Private.SelectionInfo): void {
-    // // Draw the selected column header cells, if visible.
-    // if (hh > 0) {
-    //   // Save the gc state.
-    //   gc.save();
+  //   //   // Set up the header clipping rect.
+  //   //   gc.beginPath();
+  //   //   gc.rect(hw, 0, pw, hh);
+  //   //   gc.clip();
 
-    //   // Set up the header clipping rect.
-    //   gc.beginPath();
-    //   gc.rect(hw, 0, pw, hh);
-    //   gc.clip();
+  //   //   // Set up the gc style. TODO grid style
+  //   //   gc.fillStyle = 'rgba(0, 0, 0, 0.2)';
 
-    //   // Set up the gc style. TODO grid style
-    //   gc.fillStyle = 'rgba(0, 0, 0, 0.2)';
+  //   //   //
+  //   //   for (let i = c1; i <= c2; ++i) {
+  //   //     if (cFlags[i - c1]) {
+  //   //       let x = this._columnSections.offsetOf(i) - sx + hw;
+  //   //       let w = this._columnSections.sizeOf(i);
+  //   //       gc.fillRect(x, 0, w, hh);
+  //   //     }
+  //   //   }
 
-    //   //
-    //   for (let i = c1; i <= c2; ++i) {
-    //     if (cFlags[i - c1]) {
-    //       let x = this._columnSections.offsetOf(i) - sx + hw;
-    //       let w = this._columnSections.sizeOf(i);
-    //       gc.fillRect(x, 0, w, hh);
-    //     }
-    //   }
+  //   //   // Restore the gc state.
+  //   //   gc.restore();
+  //   // }
+  // }
 
-    //   // Restore the gc state.
-    //   gc.restore();
-    // }
-  }
+  // /**
+  //  * Draw the overlay cursor for the data grid.
+  //  */
+  // private _drawCursor(): void {
 
-  /**
-   * Draw the overlay cursor for the data grid.
-   */
-  private _drawCursor(): void {
-
-  }
+  // }
 
   /**
    * Draw the overlay shadows for the data grid.
@@ -3733,24 +3466,24 @@ class DataGrid extends Widget {
     let sy = this._scrollY;
 
     // Fetch maximum scroll position.
-    let sxMax = this._maxScrollX;
-    let syMax = this._maxScrollY;
+    let sxMax = this.maxScrollX;
+    let syMax = this.maxScrollY;
 
     // Fetch the header width and height.
-    let hw = this._headerWidth;
-    let hh = this._headerHeight;
+    let hw = this.headerWidth;
+    let hh = this.headerHeight;
 
     // Fetch the page width and height.
-    let pw = this._pageWidth;
-    let ph = this._pageHeight;
+    let pw = this.pageWidth;
+    let ph = this.pageHeight;
 
     // Fetch the viewport width and height.
-    let vpw = this._viewportWidth;
-    let vph = this._viewportHeight;
+    let vw = this._viewportWidth;
+    let vh = this._viewportHeight;
 
-    // Fetch the virtual width and height.
-    let vw = this._columnSections.length;
-    let vh = this._rowSections.length;
+    // Fetch the body width and height.
+    let bw = this.bodyWidth;
+    let bh = this.bodyHeight;
 
     // Fetch the gc object.
     let gc = this._overlayGC;
@@ -3777,7 +3510,7 @@ class DataGrid extends Widget {
       // Set up the rect coordinates.
       let x = 0;
       let y = hh;
-      let w = hw + Math.min(pw, vw - sx);
+      let w = hw + Math.min(pw, bw - sx);
       let h = shadow.size;
 
       // Fill the shadow rect with the fill style.
@@ -3805,7 +3538,7 @@ class DataGrid extends Widget {
       let x = hw;
       let y = 0;
       let w = shadow.size;
-      let h = hh + Math.min(ph, vh - sy);
+      let h = hh + Math.min(ph, bh - sy);
 
       // Fill the shadow rect with the fill style.
       gc.fillStyle = grad;
@@ -3816,9 +3549,9 @@ class DataGrid extends Widget {
     if (sy < syMax) {
       // Set up the gradient coordinates.
       let x0 = 0;
-      let y0 = vph;
+      let y0 = vh;
       let x1 = 0;
-      let y1 = vph - shadow.size;
+      let y1 = vh - shadow.size;
 
       // Create the gradient object.
       let grad = gc.createLinearGradient(x0, y0, x1, y1);
@@ -3830,8 +3563,8 @@ class DataGrid extends Widget {
 
       // Set up the rect coordinates.
       let x = 0;
-      let y = vph - shadow.size;
-      let w = hw + Math.min(pw, vw - sx);
+      let y = vh - shadow.size;
+      let w = hw + Math.min(pw, bw - sx);
       let h = shadow.size;
 
       // Fill the shadow rect with the fill style.
@@ -3842,9 +3575,9 @@ class DataGrid extends Widget {
     // Draw the row footer shadow if needed.
     if (sx < sxMax) {
       // Set up the gradient coordinates.
-      let x0 = vpw;
+      let x0 = vw;
       let y0 = 0;
-      let x1 = vpw - shadow.size;
+      let x1 = vw - shadow.size;
       let y1 = 0;
 
       // Create the gradient object.
@@ -3856,10 +3589,10 @@ class DataGrid extends Widget {
       grad.addColorStop(1, shadow.color3);
 
       // Set up the rect coordinates.
-      let x = vpw - shadow.size;
+      let x = vw - shadow.size;
       let y = 0;
       let w = shadow.size;
-      let h = hh + Math.min(ph, vh - sy);
+      let h = hh + Math.min(ph, bh - sy);
 
       // Fill the shadow rect with the fill style.
       gc.fillStyle = grad;
@@ -3875,9 +3608,6 @@ class DataGrid extends Widget {
   private _hScrollBar: ScrollBar;
   private _scrollCorner: Widget;
 
-  private _pressData: Private.PressData | null = null;
-  private _dpiRatio = Math.ceil(window.devicePixelRatio);
-
   private _scrollX = 0;
   private _scrollY = 0;
   private _viewportWidth = 0;
@@ -3885,6 +3615,7 @@ class DataGrid extends Widget {
 
   private _vScrollBarMinWidth = 0;
   private _hScrollBarMinHeight = 0;
+  private _dpiRatio = Math.ceil(window.devicePixelRatio);
 
   private _canvas: HTMLCanvasElement;
   private _buffer: HTMLCanvasElement;
@@ -3904,7 +3635,6 @@ class DataGrid extends Widget {
   private _style: DataGrid.Style;
   private _cellRenderers: RendererMap;
   private _defaultRenderer: CellRenderer;
-  private _behaviors: DataGrid.Behaviors;
   private _headerVisibility: DataGrid.HeaderVisibility;
 }
 
@@ -3914,11 +3644,6 @@ class DataGrid extends Widget {
  */
 export
 namespace DataGrid {
-  /**
-   *
-   */
-  export
-  interface IEvent
   /**
    * An object which defines the style for a data grid.
    *
@@ -4075,42 +3800,6 @@ namespace DataGrid {
   type HeaderVisibility = 'all' | 'row' | 'column' | 'none';
 
   /**
-   * An object which defines the behaviors of a data grid.
-   */
-  export
-  type Behaviors = {
-    /**
-     * Whether rows are resizable by the user.
-     */
-    readonly resizableRows: boolean;
-
-    /**
-     * Whether columns are resizable by the user.
-     */
-    readonly resizableColumns: boolean;
-
-    /**
-     * Whether row header columns are resizable by the user.
-     */
-    readonly resizableRowHeaders: boolean;
-
-    /**
-     * Whether column header rows are resizable by the user.
-     */
-    readonly resizableColumnHeaders: boolean;
-
-    // /**
-    //  * Whether rows are movable by the user.
-    //  */
-    // readonly movableRows: boolean;
-
-    // /**
-    //  * Whether columns are movable by the user.
-    //  */
-    // readonly movableColumns: boolean;
-  };
-
-  /**
    * An options object for initializing a data grid.
    */
   export
@@ -4137,13 +3826,6 @@ namespace DataGrid {
     headerVisibility?: HeaderVisibility;
 
     /**
-     * The behaviors for the data grid.
-     *
-     * The default is `DataGrid.defaultBehaviors`.
-     */
-    behaviors?: Behaviors;
-
-    /**
      * The cell renderer map for the data grid.
      *
      * The default is an empty renderer map.
@@ -4159,10 +3841,63 @@ namespace DataGrid {
   }
 
   /**
+   * An object which holds the result of a grid hit test.
+   */
+  export
+  type HitTestResult = {
+    /**
+     * The region of the data grid that was hit.
+     */
+    region: DataModel.CellRegion | 'void';
+
+    /**
+     * The row index of the cell that was hit.
+     *
+     * This will be `-1` for the void region.
+     */
+    row: number;
+
+    /**
+     * The column index of the cell that was hit.
+     *
+     * This will be `-1` for the void region.
+     */
+    column: number;
+
+    /**
+     * The X coordinate of the mouse in cell coordinates.
+     *
+     * This will be `-1` for the void region.
+     */
+    x: number;
+
+    /**
+     * The Y coordinate of the mouse in cell coordinates.
+     *
+     * This will be `-1` for the void region.
+     */
+    y: number;
+
+    /**
+     * The width of the cell.
+     *
+     * This will be `-1` for the void region.
+     */
+    width: number;
+
+    /**
+     * The height of the cell.
+     *
+     * This will be `-1` for the void region.
+     */
+    height: number;
+  };
+
+  /**
    * The default theme for a data grid.
    */
   export
-  const defaultStyle: DataGrid.Style = {
+  const defaultStyle: Style = {
     voidColor: '#F3F3F3',
     backgroundColor: '#FFFFFF',
     gridLineColor: 'rgba(20, 20, 20, 0.15)',
@@ -4181,24 +3916,11 @@ namespace DataGrid {
    * The default sizes for a data grid.
    */
   export
-  const defaultSizes: DataGrid.DefaultSizes = {
+  const defaultSizes: DefaultSizes = {
     rowHeight: 20,
     columnWidth: 64,
     rowHeaderWidth: 64,
     columnHeaderHeight: 20
-  };
-
-  /**
-   * The default behaviors for the datagrid.
-   */
-  export
-  const defaultBehaviors: DataGrid.Behaviors = {
-    resizableRows: true,
-    resizableColumns: true,
-    resizableRowHeaders: true,
-    resizableColumnHeaders: true
-    // movableRows: true,
-    // movableColumns: true
   };
 }
 
@@ -4226,38 +3948,6 @@ namespace Private {
   const OverlayPaintRequest = new ConflatableMessage('overlay-paint-request');
 
   /**
-   * The minimum size for a section in the data grid.
-   */
-  export
-  const MIN_SECTION_SIZE = 10;
-
-  /**
-   * The width of the header cell leading resize handle.
-   */
-  export
-  const LEADING_RESIZE_WIDTH = 5;
-
-  /**
-   * The width of the header cell trailing resize handle.
-   */
-  export
-  const TRAILING_RESIZE_WIDTH = 6;
-
-  // /**
-  //  * The width of the header cell grab handle.
-  //  */
-  // export
-  // const GRAB_WIDTH = 5;
-
-  /**
-   * Clamp and normalize a section size.
-   */
-  export
-  function clampSectionSize(size: number): number {
-    return Math.max(MIN_SECTION_SIZE, Math.floor(size));
-  }
-
-  /**
    * Create a new zero-sized canvas element.
    */
   export
@@ -4266,6 +3956,14 @@ namespace Private {
     canvas.width = 0;
     canvas.height = 0;
     return canvas;
+  }
+
+  /**
+   * Clamp a section size to the limits.
+   */
+  export
+  function clampSectionSize(size: number): number {
+    return Math.max(10, Math.floor(size));
   }
 
   /**
@@ -4361,27 +4059,6 @@ namespace Private {
      * The column sizes for the columns in the region.
      */
     columnSizes: number[];
-  };
-
-  /**
-   *
-   */
-  export
-  type SelectionInfo = {
-    /**
-     *
-     */
-    bounds: SelectionModel.Region;
-
-    /**
-     *
-     */
-    regions: SelectionModel.Region[];
-
-    /**
-     *
-     */
-    transient: SelectionModel.Region | null;
   };
 
   /**
@@ -4482,160 +4159,118 @@ namespace Private {
   }
 
   /**
-   * A type which designates the data grid hit test parts.
+   * A conflatable message for resizing rows.
    */
   export
-  type HitTestPart = (
+  class RowResizeRequest extends ConflatableMessage {
     /**
-     * The bulk space of a row header cell.
+     * Construct a new row resize request.
+     *
+     * @param region - The row region which holds the section.
+     *
+     * @param index - The index of row in the region.
+     *
+     * @param size - The target size of the section.
      */
-    'row-header-cell' |
+    constructor(region: DataModel.RowRegion, index: number, size: number) {
+      super('row-resize-request');
+      this._region = region;
+      this._index = index;
+      this._size = size;
+    }
 
     /**
-     * The horizontal resize handle of a row header cell.
+     * The row region which holds the section.
      */
-    'row-header-h-resize-handle' |
+    get region(): DataModel.RowRegion {
+      return this._region;
+    }
 
     /**
-     * The vertical resize handle of a row header cell.
+     * The index of the row in the region.
      */
-    'row-header-v-resize-handle' |
+    get index(): number {
+      return this._index;
+    }
 
     /**
-     * The bulk space of a column header cell.
+     * The target size of the section.
      */
-    'column-header-cell' |
+    get size(): number {
+      return this._size;
+    }
 
     /**
-     * The horizontal resize handle of a column header cell.
+     * Conflate this message with another row resize request.
      */
-    'column-header-h-resize-handle' |
+    conflate(other: RowResizeRequest): boolean {
+      if (this._region !== other._region || this._index !== other._index) {
+        return false;
+      }
+      this._size = other._size;
+      return true;
+    }
 
-    /**
-     * The vertical resize handle of a column header cell.
-     */
-    'column-header-v-resize-handle' |
-
-    /**
-     * The bulk space of a corner header cell.
-     */
-    'corner-header-cell' |
-
-    /**
-     * The horizontal resize handle of a corner header cell.
-     */
-    'corner-header-h-resize-handle' |
-
-    /**
-     * The vertical resize handle of a corner header cell.
-     */
-    'corner-header-v-resize-handle' |
-
-    /**
-     * The bulk space of a body cell.
-     */
-    'body-cell' |
-
-    /**
-     * The data grid void space.
-     */
-    'void-space'
-  );
-
-  /**
-   * An object which holds the result of a grid hit test.
-   */
-  export
-  type HitTestResult = {
-    /**
-     * The data grid part that was hit.
-     */
-    part: HitTestPart;
-
-    /**
-     * The row index of the cell that was hit.
-     */
-    row: number;
-
-    /**
-     * The column index of the cell that was hit.
-     */
-    column: number;
-
-    /**
-     * The X coordinate of the mouse in part coordinates.
-     */
-    x: number;
-
-    /**
-     * The Y coordinate of the mouse in part coordinates.
-     */
-    y: number;
-  };
-
-  /**
-   * An object which holds the transient mouse press data.
-   */
-  export
-  type PressData = {
-    /**
-     * The result of the mouse down hit test.
-     */
-    hitTest: HitTestResult;
-
-    /**
-     * The most recent client X position of the mouse.
-     */
-    clientX: number;
-
-    /**
-     * The most recent client Y position of the mouse.
-     */
-    clientY: number;
-
-    /**
-     * Whether the control key was held during the press.
-     */
-    ctrlKey: boolean;
-
-    /**
-     * Whether the shift key was held during the press.
-     */
-    shiftKey: boolean;
-
-    /**
-     * The cursor override.
-     */
-    override: IDisposable;
-
-    /**
-     * The transient selection region, if applicable.
-     */
-    selection: SelectionModel.Region | null;
-  };
-
-  /**
-   * Get the mouse cursor for a hit test part.
-   */
-  export
-  function cursorForPart(part: HitTestPart): string {
-    return cursorTable[part];
+    private _region: DataModel.RowRegion;
+    private _index: number;
+    private _size: number;
   }
 
   /**
-   * A mapping of hit test part to mouse cursor.
+   * A conflatable message for resizing columns.
    */
-  const cursorTable = {
-    'body-cell': '',
-    'void-space': '',
-    'row-header-cell': '',
-    'column-header-cell': '',
-    'corner-header-cell': '',
-    'row-header-h-resize-handle': 'ew-resize',
-    'column-header-h-resize-handle': 'ew-resize',
-    'corner-header-h-resize-handle': 'ew-resize',
-    'row-header-v-resize-handle': 'ns-resize',
-    'column-header-v-resize-handle': 'ns-resize',
-    'corner-header-v-resize-handle': 'ns-resize'
-  };
+  export
+  class ColumnResizeRequest extends ConflatableMessage {
+    /**
+     * Construct a new column resize request.
+     *
+     * @param region - The column region which holds the section.
+     *
+     * @param index - The index of column in the region.
+     *
+     * @param size - The target size of the section.
+     */
+    constructor(region: DataModel.ColumnRegion, index: number, size: number) {
+      super('column-resize-request');
+      this._region = region;
+      this._index = index;
+      this._size = size;
+    }
+
+    /**
+     * The column region which holds the section.
+     */
+    get region(): DataModel.ColumnRegion {
+      return this._region;
+    }
+
+    /**
+     * The index of the column in the region.
+     */
+    get index(): number {
+      return this._index;
+    }
+
+    /**
+     * The target size of the section.
+     */
+    get size(): number {
+      return this._size;
+    }
+
+    /**
+     * Conflate this message with another column resize request.
+     */
+    conflate(other: ColumnResizeRequest): boolean {
+      if (this._region !== other._region || this._index !== other._index) {
+        return false;
+      }
+      this._size = other._size;
+      return true;
+    }
+
+    private _region: DataModel.ColumnRegion;
+    private _index: number;
+    private _size: number;
+  }
 }
