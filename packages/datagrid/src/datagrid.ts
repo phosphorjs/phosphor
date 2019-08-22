@@ -617,6 +617,44 @@ class DataGrid extends Widget {
   }
 
   /**
+   * Get the offset of a row in the data grid.
+   *
+   * @param region - The region which holds the row of interest.
+   *
+   * @param index - The index of the row of interest.
+   *
+   * @returns The offset of the row, or `-1` if the index is out of range.
+   */
+  rowOffset(region: DataModel.RowRegion, index: number): number {
+    let offset: number;
+    if (region === 'body') {
+      offset = this._rowSections.offsetOf(index);
+    } else {
+      offset = this._columnHeaderSections.offsetOf(index);
+    }
+    return offset;
+  }
+
+  /**
+   * Get the offset of a column in the data grid.
+   *
+   * @param region - The region which holds the column of interest.
+   *
+   * @param index - The index of the column of interest.
+   *
+   * @returns The offset of the column, or `-1` if the index is out of range.
+   */
+  columnOffset(region: DataModel.ColumnRegion, index: number): number {
+    let offset: number;
+    if (region === 'body') {
+      offset = this._columnSections.offsetOf(index);
+    } else {
+      offset = this._rowHeaderSections.offsetOf(index);
+    }
+    return offset;
+  }
+
+  /**
    * Get the size of a row in the data grid.
    *
    * @param region - The region which holds the row of interest.
