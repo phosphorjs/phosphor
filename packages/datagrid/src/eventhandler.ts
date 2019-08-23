@@ -10,6 +10,10 @@ import {
 } from '@phosphor/disposable';
 
 import {
+  Drag
+} from '@phosphor/dragdrop';
+
+import {
   IMessageHandler, Message, MessageLoop
 } from '@phosphor/messaging';
 
@@ -20,6 +24,10 @@ import {
 import {
   DataGrid
 } from './datagrid';
+
+import {
+  DataModel
+} from './datamodel';
 
 
 /**
@@ -65,6 +73,11 @@ class EventHandler implements IDisposable, IMessageHandler {
     } else {
       this.resizableColumnHeaders = true;
     }
+    if (options.resizeHandleSize !== undefined) {
+      this.resizeHandleSize = Math.max(0, options.resizeHandleSize);
+    } else {
+      this.resizeHandleSize = 10;
+    }
 
     // Tie the handler lifetime to the grid.
     this.grid.disposed.connect(() => { this.dispose(); });
@@ -97,6 +110,12 @@ class EventHandler implements IDisposable, IMessageHandler {
 
     // Reset the state.
     this._state = 'default';
+
+    // Clear the resize data if needed.
+    if (this.resizeData) {
+      this.resizeData.override.dispose();
+      this.resizeData = null;
+    }
 
     // Ensure the document listeners are removed.
     document.removeEventListener('keydown', this, true);
@@ -147,6 +166,11 @@ class EventHandler implements IDisposable, IMessageHandler {
    * Whether the grid column headers are resizable by the user.
    */
   readonly resizableColumnHeaders: boolean;
+
+  /**
+   * The size of a resize handle.
+   */
+  readonly resizeHandleSize: number;
 
   /**
    * Whether the event handler is disposed.
@@ -210,84 +234,81 @@ class EventHandler implements IDisposable, IMessageHandler {
   }
 
   /**
-   * Get the cell part for a hit test result.
+   * Get the cell resize handle for a grid hit test result.
    *
-   * @param hitTest - The data grid hit test result.
+   * @param hit - The grid hit test result.
    *
-   * @returns The cell part that was hit, or null.
-   *
-   * #### Notes
-   * This method may be reimplemented by a subclass.
+   * @returns The resize handle for the hit test.
    */
-  protected partForHitTest(hitTest: DataGrid.HitTestResult): EventHandler.CellPart | null {
-    // Set up the result variable.
-    let result: EventHandler.CellPart | null;
-
+  protected resizeHandleForHitTest(hit: DataGrid.HitTestResult): EventHandler.ResizeHandle {
     // Fetch the behavior flags.
     let rr = this.resizableRows;
     let rc = this.resizableColumns;
     let rrh = this.resizableRowHeaders;
     let rch = this.resizableColumnHeaders;
 
-    //
-    let hs = 5;
+    // Fetch the resize handle size.
+    let rhs = Math.floor(this.resizeHandleSize / 2);
 
     // Fetch the row and column.
-    let r = hitTest.row;
-    let c = hitTest.column;
+    let r = hit.row;
+    let c = hit.column;
 
     // Fetch the leading and trailing sizes.
-    let lw = hitTest.x;
-    let lh = hitTest.y;
-    let tw = hitTest.width - hitTest.x;
-    let th = hitTest.height - hitTest.y;
+    let lw = hit.x;
+    let lh = hit.y;
+    let tw = hit.width - hit.x;
+    let th = hit.height - hit.y;
+
+    // Set up the result variable.
+    let result: EventHandler.ResizeHandle;
 
     // Dispatch based on hit test region.
-    switch (hitTest.region) {
+    switch (hit.region) {
     case 'corner-header':
-      if (c > 0 && rrh && lw <= hs) {
-        result = 'left-resize-handle';
-      } else if (rrh && tw <= hs) {
-        result = 'right-resize-handle';
-      } else if (r > 0 && rch && lh <= hs) {
-        result = 'top-resize-handle';
-      } else if (rch && th <= hs) {
-        result = 'bottom-resize-handle';
+      if (c > 0 && rrh && lw <= rhs) {
+        result = 'left';
+      } else if (rrh && tw <= rhs) {
+        result = 'right';
+      } else if (r > 0 && rch && lh <= rhs) {
+        result = 'top';
+      } else if (rch && th <= rhs) {
+        result = 'bottom';
       } else {
-        result = 'body';
+        result = 'none';
       }
       break;
     case 'column-header':
-      if (c > 0 && rc && lw <= hs) {
-        result = 'left-resize-handle';
-      } else if (rc && tw <= hs) {
-        result = 'right-resize-handle';
-      } else if (r > 0 && rch && lh <= hs) {
-        result = 'top-resize-handle';
-      } else if (rch && th <= hs) {
-        result = 'bottom-resize-handle';
+      if (c > 0 && rc && lw <= rhs) {
+        result = 'left';
+      } else if (rc && tw <= rhs) {
+        result = 'right';
+      } else if (r > 0 && rch && lh <= rhs) {
+        result = 'top';
+      } else if (rch && th <= rhs) {
+        result = 'bottom';
       } else {
-        result = 'body';
+        result = 'none';
       }
       break;
     case 'row-header':
-      if (c > 0 && rrh && lw <= hs) {
-        result = 'left-resize-handle';
-      } else if (rrh && tw <= hs) {
-        result = 'right-resize-handle';
-      } else if (r > 0 && rr && lh <= hs) {
-        result = 'top-resize-handle';
-      } else if (rr && th <= hs) {
-        result = 'bottom-resize-handle';
+      if (c > 0 && rrh && lw <= rhs) {
+        result = 'left';
+      } else if (rrh && tw <= rhs) {
+        result = 'right';
+      } else if (r > 0 && rr && lh <= rhs) {
+        result = 'top';
+      } else if (rr && th <= rhs) {
+        result = 'bottom';
       } else {
-        result = 'body';
+        result = 'none';
       }
       break;
     case 'body':
-      result = 'body';
+      result = 'none';
       break;
     case 'void':
-      result = null;
+      result = 'none';
       break;
     default:
       throw 'unreachable';
@@ -298,46 +319,20 @@ class EventHandler implements IDisposable, IMessageHandler {
   }
 
   /**
-   * Convert a cell part into a cursor for the grid.
+   * Handle the key down event for the `'default'` state.
    *
-   * @param part - The cell part of interest.
+   * @param event - The keyboard event of interest.
    *
-   * @returns The cursor for the given part.
+   * ##### Notes
    *
-   * #### Notes
    * This method may be reimplemented by a subclass.
    */
-  protected cursorForPart(part: EventHandler.CellPart): string {
-    // Set up the cursor variable.
-    let cursor: string;
-
-    // Dispatch based on the part.
-    switch (part) {
-    case 'left-resize-handle':
-    case 'right-resize-handle':
-      cursor = 'ew-resize';
-      break;
-    case 'top-resize-handle':
-    case 'bottom-resize-handle':
-      cursor = 'ns-resize';
-      break;
-    case 'body':
-      cursor = '';
-      break;
-    default:
-      throw 'unreachable';
-    }
-
-    // Return the cursor.
-    return cursor;
-  }
+  protected default_onKeyDown(event: KeyboardEvent): void { }
 
   /**
-   * Handle the mouse move event for the default state.
+   * Handle the mouse move event for the `'default'` state.
    *
    * @param event - The mouse event of interest.
-   *
-   * @param hitTest - The hit test at the current mouse position.
    *
    * #### Notes
    * The default implementation of this handler sets the mouse
@@ -346,26 +341,94 @@ class EventHandler implements IDisposable, IMessageHandler {
    *
    * This method may be reimplemented by a subclass.
    */
-  protected default_onMouseMove(event: MouseEvent, hitTest: DataGrid.HitTestResult | null): void {
+  protected default_onMouseMove(event: MouseEvent): void {
+    // Hit test the grid.
+    let hit = this.grid.hitTest(event.clientX, event.clientY);
+
     // If the hit test failed, clear the viewport cursor.
-    if (!hitTest) {
+    if (!hit) {
       this.grid.viewport.node.style.cursor = '';
       return;
     }
 
-    // Get the cell part for the hit test.
-    let part = this.partForHitTest(hitTest);
+    // TODO alt cursor
+
+    // TODO move cursor
+
+    // Get the resize handle for the hit test.
+    let handle = this.resizeHandleForHitTest(hit);
+
+    // Fetch the cursor for the handle.
+    let cursor = Private.cursorForHandle(handle);
 
     // Update the viewport cursor based on the part.
-    if (part === null) {
-      this.grid.viewport.node.style.cursor = '';
-    } else {
-      this.grid.viewport.node.style.cursor = this.cursorForPart(part);
-    }
+    this.grid.viewport.node.style.cursor = cursor;
   }
 
   /**
-   * Handle the wheel event for the default state.
+   * Handle the mouse leave event for the `'default'` state.
+   *
+   * @param event - The mouse event of interest.
+   *
+   * #### Notes
+   * The default implementation of this handler clears the
+   * viewport cursor.
+   *
+   * This method may be reimplemented by a subclass.
+   */
+  protected default_onMouseLeave(event: MouseEvent): void {
+    this.grid.viewport.node.style.cursor = '';
+  }
+
+  /**
+   * Handle the mouse down event for the `'default'` state.
+   *
+   * @param event - The mouse event of interest.
+   *
+   * @returns The new state for the handler.
+   *
+   * #### Notes
+   * This method determines the new state for the handler, based
+   * on where the mouse was pressed. If a state change results,
+   * the mouse down handler for the new state will also be called.
+   *
+   * This method may be reimplemented by a subclass.
+   */
+  protected default_onMouseDown(event: MouseEvent): EventHandler.State {
+    // Hit test the grid.
+    let hit = this.grid.hitTest(event.clientX, event.clientY);
+
+    // Bail early if the hit test was out of bounds.
+    if (hit === null) {
+      return 'default';
+    }
+
+    // Bail early if the hit was in the void region.
+    if (hit.region === 'void') {
+      return 'default';
+    }
+
+    // Transition to the alternate mode if the alt key is held.
+    if (event.altKey) {
+      return 'alt';
+    }
+
+    // move transition
+
+    // Get the resize handle for the hit test.
+    let handle = this.resizeHandleForHitTest(hit);
+
+    // Transition to the resize mode if possible.
+    if (handle !== 'none') {
+      return 'resize';
+    }
+
+    // Otherwise, transition to the select mode.
+    return 'select';
+  }
+
+  /**
+   * Handle the wheel event for the `'default'` state.
    *
    * @param event - The wheel event of interest.
    *
@@ -401,142 +464,262 @@ class EventHandler implements IDisposable, IMessageHandler {
   }
 
   /**
+   * Handle the context menu event for the `'default'` state.
    *
+   * @param event - The context menu event of interest.
+   *
+   * #### Notes
+   * The default implementation of this method is a no-op.
+   *
+   * This method may be reimplemented by a subclass.
    */
-  protected default_onContextMenu(event: MouseEvent): void {
+  protected default_onContextMenu(event: MouseEvent): void { }
 
+  /**
+   * The temporary data stored during the resize state.
+   */
+  protected resizeData: EventHandler.ResizeData | null = null;
+
+  /**
+   * Handle the mouse down event for the `'resize'` state.
+   *
+   * @param event - The mouse event of interest.
+   *
+   * #### Notes
+   * The default implementation of this method initializes a resize.
+   *
+   * This method may be reimplemented by a subclass.
+   */
+  protected resize_onMouseDown(event: MouseEvent): void {
+    // Unpack the event.
+    let { clientX, clientY } = event;
+
+    // Hit test the grid.
+    let hit = this.grid.hitTest(clientX, clientY);
+
+    // Test for invalid state.
+    if (!hit || hit.region === 'void' || hit.region === 'body') {
+      console.warn('invalid resize state');
+      return;
+    }
+
+    // Convert the hit test into a part.
+    let handle = this.resizeHandleForHitTest(hit);
+
+    // Test for invalid state.
+    if (handle === 'none') {
+      console.warn('invalid resize state');
+      return;
+    }
+
+    // Set up the temporary resize data.
+    if (handle === 'left' || handle === 'right' ) {
+      // Set up the resize data type.
+      let type: 'column' = 'column';
+
+      // Determine the column region.
+      let region: DataModel.ColumnRegion = (
+        hit.region === 'column-header' ? 'body' : 'row-header'
+      );
+
+      // Determine the section index.
+      let index = handle === 'left' ? hit.column - 1 : hit.column;
+
+      // Fetch the section size.
+      let size = this.grid.columnSize(region, index);
+
+      // Override the document cursor.
+      let override = Drag.overrideCursor('ew-resize');
+
+      // Create the temporary resize data.
+      this.resizeData = { type, region, index, size, clientX, override };
+    } else {
+      // Set up the resize data type.
+      let type: 'row' = 'row';
+
+      // Determine the row region.
+      let region: DataModel.RowRegion = (
+        hit.region === 'row-header' ? 'body' : 'column-header'
+      );
+
+      // Determine the section index.
+      let index = handle === 'top' ? hit.row - 1 : hit.row;
+
+      // Fetch the section size.
+      let size = this.grid.rowSize(region, index);
+
+      // Override the document cursor.
+      let override = Drag.overrideCursor('ns-resize');
+
+      // Create the temporary resize data.
+      this.resizeData = { type, region, index, size, clientY, override };
+    }
   }
+
+  /**
+   * Handle the mouse move event for the `'resize'` state.
+   *
+   * @param event - The mouse event of interest.
+   *
+   * #### Notes
+   * The default implementation of this method executes a resize.
+   *
+   * This method may be reimplemented by a subclass.
+   */
+  protected resize_onMouseMove(event: MouseEvent): void {
+    // Fetch the resize data.
+    let data = this.resizeData;
+
+    // Test for invalid state.
+    if (!data) {
+      console.warn('invalid resize state');
+      return;
+    }
+
+    // Dispatch to the proper grid resize method.
+    if (data.type === 'row') {
+      let dy = event.clientY - data.clientY;
+      this.grid.resizeRow(data.region, data.index, data.size + dy);
+    } else {
+      let dx = event.clientX - data.clientX;
+      this.grid.resizeColumn(data.region, data.index, data.size + dx);
+    }
+  }
+
+  /**
+   * Handle the mouse down event for the `'resize'` state.
+   *
+   * @param event - The mouse event of interest.
+   *
+   * #### Notes
+   * The default implementation of this method finalizes a resize.
+   *
+   * This method may be reimplemented by a subclass.
+   */
+  protected resize_onMouseUp(event: MouseEvent): void {
+    // Test for invalid state.
+    if (!this.resizeData) {
+      console.warn('invalid resize state');
+      return;
+    }
+
+    // Dispose of the cursor override.
+    this.resizeData.override.dispose();
+
+    // Clear the resize data.
+    this.resizeData = null;
+  }
+
+  /**
+   * Handle the wheel event for the `'resize'` state.
+   *
+   * @param event - The wheel event of interest.
+   *
+   * #### Notes
+   * The default implementation of this method is a no-op.
+   *
+   * This method may be reimplemented by a subclass.
+   */
+  protected resize_onWheel(event: WheelEvent): void { }
 
   /**
    *
    */
-  protected resize_onMouseDown(event: MouseEvent, hitTest: DataGrid.HitTestResult): boolean {
-    return false;
-  }
+  protected move_onMouseDown(event: MouseEvent): void { }
 
   /**
    *
    */
-  protected resize_onMouseMove(event: MouseEvent, hitTest: DataGrid.HitTestResult | null): void {
-
-  }
+  protected move_onMouseMove(event: MouseEvent): void { }
 
   /**
    *
    */
-  protected resize_onMouseUp(event: MouseEvent, hitTest: DataGrid.HitTestResult | null): void {
-
-  }
+  protected move_onMouseUp(event: MouseEvent): void { }
 
   /**
    *
    */
-  protected resize_onWheel(event: WheelEvent): void {
-
-  }
+  protected move_onWheel(event: WheelEvent): void { }
 
   /**
    *
    */
-  protected grab_onMouseDown(event: MouseEvent, hitTest: DataGrid.HitTestResult): boolean {
-    return false;
-  }
+  protected select_onMouseDown(event: MouseEvent): void { }
 
   /**
    *
    */
-  protected grab_onMouseMove(event: MouseEvent, hitTest: DataGrid.HitTestResult | null): void {
-
-  }
+  protected select_onMouseMove(event: MouseEvent): void { }
 
   /**
    *
    */
-  protected grab_onMouseUp(event: MouseEvent, hitTest: DataGrid.HitTestResult | null): void {
-
-  }
+  protected select_onMouseUp(event: MouseEvent): void { }
 
   /**
    *
    */
-  protected grab_onWheel(event: WheelEvent): void {
-
-  }
+  protected select_onWheel(event: WheelEvent): void { }
 
   /**
+   * Handle the mouse down event for the `'alt'` state.
    *
+   * @param event - The mouse event of interest.
+   *
+   * #### Notes
+   * The default implementation of this method is a no-op.
+   *
+   * This method may be reimplemented by a subclass.
    */
-  protected select_onMouseDown(event: MouseEvent, hitTest: DataGrid.HitTestResult): boolean {
-    return false;
-  }
+  protected alt_onMouseDown(event: MouseEvent): void { }
 
   /**
+   * Handle the mouse move event for the `'alt'` state.
    *
+   * @param event - The mouse event of interest.
+   *
+   * #### Notes
+   * The default implementation of this method is a no-op.
+   *
+   * This method may be reimplemented by a subclass.
    */
-  protected select_onMouseMove(event: MouseEvent, hitTest: DataGrid.HitTestResult | null): void {
-
-  }
+  protected alt_onMouseMove(event: MouseEvent): void { }
 
   /**
+   * Handle the mouse up event for the `'alt'` state.
    *
+   * @param event - The mouse event of interest.
+   *
+   * #### Notes
+   * The default implementation of this method is a no-op.
+   *
+   * This method may be reimplemented by a subclass.
    */
-  protected select_onMouseUp(event: MouseEvent, hitTest: DataGrid.HitTestResult | null): void {
-
-  }
+  protected alt_onMouseUp(event: MouseEvent): void { }
 
   /**
+   * Handle the wheel event for the `'alt'` state.
    *
-   */
-  protected select_onWheel(event: WheelEvent): void {
-
-  }
-
-  /**
+   * @param event - The wheel event of interest.
    *
-   */
-  protected cell_onMouseDown(event: MouseEvent, hitTest: DataGrid.HitTestResult): boolean {
-    return false;
-  }
-
-  /**
+   * #### Notes
+   * The default implementation of this method is a no-op.
    *
+   * This method may be reimplemented by a subclass.
    */
-  protected cell_onMouseMove(event: MouseEvent, hitTest: DataGrid.HitTestResult | null): void {
-
-  }
-
-  /**
-   *
-   */
-  protected cell_onMouseUp(event: MouseEvent, hitTest: DataGrid.HitTestResult | null): void {
-
-  }
-
-  /**
-   *
-   */
-  protected cell_onWheel(event: WheelEvent): void {
-
-  }
+  protected alt_onWheel(event: WheelEvent): void { }
 
   /**
    * Handle the `'keydown'` event for the data grid.
    */
   private _evtKeyDown(event: KeyboardEvent): void {
-    // // Bail early if a drag is not in progress.
-    // if (!this._pressData) {
-    //   return;
-    // }
-
-    // // Stop input events during drag.
-    // event.preventDefault();
-    // event.stopPropagation();
-
-    // // Repain the overlay and release if `Escape` is pressed.
-    // if (event.keyCode === 27) {
-    //   this._repaintOverlay();
-    //   this._releaseMouse();
-    // }
+    if (this._state === 'default') {
+      this.default_onKeyDown(event);
+    } else {
+      event.preventDefault();
+      event.stopPropagation();
+    }
   }
 
   /**
@@ -555,27 +738,8 @@ class EventHandler implements IDisposable, IMessageHandler {
       return;
     }
 
-    // Hit test the grid.
-    let hitTest = this.grid.hitTest(event.clientX, event.clientY);
-
-    // Bail early the hit test was out of bounds.
-    if (!hitTest) {
-      return;
-    }
-
     // Determine which state to enter.
-    let state: EventHandler.State;
-    if (this.resize_onMouseDown(event, hitTest)) {
-      state = 'resize';
-    } else if (this.grab_onMouseDown(event, hitTest)) {
-      state = 'grab';
-    } else if (this.select_onMouseDown(event, hitTest)) {
-      state = 'select';
-    } else if (this.cell_onMouseDown(event, hitTest)) {
-      state = 'cell';
-    } else {
-      state = 'default';
-    }
+    let state = this.default_onMouseDown(event);
 
     // Stop the event propagation.
     event.preventDefault();
@@ -588,6 +752,24 @@ class EventHandler implements IDisposable, IMessageHandler {
 
     // Update the internal state.
     this._state = state;
+
+    // Dispatch based on the current state.
+    switch (state) {
+    case 'resize':
+      this.resize_onMouseDown(event);
+      break;
+    case 'move':
+      this.move_onMouseDown(event);
+      break;
+    case 'select':
+      this.select_onMouseDown(event);
+      break;
+    case 'alt':
+      this.alt_onMouseDown(event);
+      break;
+    default:
+      throw 'unreachable';
+    }
 
     // Add the extra document listeners.
     document.addEventListener('keydown', this, true);
@@ -611,22 +793,19 @@ class EventHandler implements IDisposable, IMessageHandler {
       return;
     }
 
-    // Hit test the grid.
-    let ht = this.grid.hitTest(event.clientX, event.clientY);
-
     // Dispatch based on the current mode.
     switch (this._state) {
     case 'resize':
-      this.resize_onMouseUp(event, ht);
+      this.resize_onMouseUp(event);
       break;
-    case 'grab':
-      this.grab_onMouseUp(event, ht);
+    case 'move':
+      this.move_onMouseUp(event);
       break;
     case 'select':
-      this.select_onMouseUp(event, ht);
+      this.select_onMouseUp(event);
       break;
-    case 'cell':
-      this.cell_onMouseUp(event, ht);
+    case 'alt':
+      this.alt_onMouseUp(event);
       break;
     default:
       throw 'unreachable';
@@ -651,25 +830,22 @@ class EventHandler implements IDisposable, IMessageHandler {
    * Handle the `'mousemove'` event for the data grid.
    */
   private _evtMouseMove(event: MouseEvent): void {
-    // Hit test the grid.
-    let hitTest = this.grid.hitTest(event.clientX, event.clientY);
-
     // Dispatch based on the current state.
     switch (this._state) {
     case 'default':
-      this.default_onMouseMove(event, hitTest);
+      this.default_onMouseMove(event);
       break;
     case 'resize':
-      this.resize_onMouseMove(event, hitTest);
+      this.resize_onMouseMove(event);
       break;
-    case 'grab':
-      this.grab_onMouseMove(event, hitTest);
+    case 'move':
+      this.move_onMouseMove(event);
       break;
     case 'select':
-      this.select_onMouseMove(event, hitTest);
+      this.select_onMouseMove(event);
       break;
-    case 'cell':
-      this.cell_onMouseMove(event, hitTest);
+    case 'alt':
+      this.alt_onMouseMove(event);
       break;
     default:
       throw 'unreachable';
@@ -685,7 +861,7 @@ class EventHandler implements IDisposable, IMessageHandler {
    */
   private _evtMouseLeave(event: MouseEvent): void {
     if (this._state === 'default') {
-      this.default_onMouseMove(event, null);
+      this.default_onMouseLeave(event);
     }
   }
 
@@ -706,14 +882,14 @@ class EventHandler implements IDisposable, IMessageHandler {
     case 'resize':
       this.resize_onWheel(event);
       break;
-    case 'grab':
-      this.grab_onWheel(event);
+    case 'move':
+      this.move_onWheel(event);
       break;
     case 'select':
       this.select_onWheel(event);
       break;
-    case 'cell':
-      this.cell_onWheel(event);
+    case 'alt':
+      this.alt_onWheel(event);
       break;
     default:
       throw 'unreachable';
@@ -766,56 +942,25 @@ namespace EventHandler {
     'resize' |
 
     /**
-     * The grab state.
+     * The move state.
      *
      * This is the state when moving a section in the grid.
      */
-    'grab' |
+    'move' |
 
     /**
      * The select state.
      *
-     * This is the state when selecting sells in the grid.
+     * This is the state when selecting cells in the grid.
      */
     'select' |
 
     /**
-     * The cell state.
+     * The alternate state.
      *
-     * This is the state when interacting with a single cell.
+     * This is the state when the `alt` key is held.
      */
-    'cell'
-  );
-
-  /**
-   *
-   */
-  export
-  type CellPart = (
-    /**
-     *
-     */
-    'top-resize-handle' |
-
-    /**
-     *
-     */
-    'left-resize-handle' |
-
-    /**
-     *
-     */
-    'right-resize-handle' |
-
-    /**
-     *
-     */
-    'bottom-resize-handle' |
-
-    /**
-     *
-     */
-    'body'
+    'alt'
   );
 
   /**
@@ -855,72 +1000,121 @@ namespace EventHandler {
      * The default is `true`.
      */
     resizableColumnHeaders?: boolean;
+
+    /**
+     * The size of a section resize handle.
+     *
+     * The default is `10`.
+     */
+    resizeHandleSize?: number;
   }
+
+  /**
+   * A type alias for a cell resize handle.
+   */
+  export
+  type ResizeHandle = 'top' | 'left' | 'right' | 'bottom' | 'none';
+
+  /**
+   * A type alias for the row resize data.
+   */
+  export
+  type RowResizeData = {
+    /**
+     * The descriminated type for the data.
+     */
+    type: 'row';
+
+    /**
+     * The row region which holds the section being resized.
+     */
+    region: DataModel.RowRegion;
+
+    /**
+     * The index of the section being resized.
+     */
+    index: number;
+
+    /**
+     * The original size of the section.
+     */
+    size: number;
+
+    /**
+     * The original client Y position of the mouse.
+     */
+    clientY: number;
+
+    /**
+     * The disposable to clear the cursor override.
+     */
+    override: IDisposable;
+  };
+
+  /**
+   * A type alias for the column resize data.
+   */
+  export
+  type ColumnResizeData = {
+    /**
+     * The descriminated type for the data.
+     */
+    type: 'column';
+
+    /**
+     * The column region which holds the section being resized.
+     */
+    region: DataModel.ColumnRegion;
+
+    /**
+     * The index of the section being resized.
+     */
+    index: number;
+
+    /**
+     * The original size of the section.
+     */
+    size: number;
+
+    /**
+     * The original client X position of the mouse.
+     */
+    clientX: number;
+
+    /**
+     * The disposable to clear the cursor override.
+     */
+    override: IDisposable;
+  };
+
+  /**
+   * A type alias for the event handler resize data.
+   */
+  export
+  type ResizeData = RowResizeData | ColumnResizeData;
 }
 
 
+/**
+ * The namespace for the module implementation details.
+ */
+namespace Private {
+  /**
+   * Convert a resize handle into a cursor.
+   */
+  export
+  function cursorForHandle(handle: EventHandler.ResizeHandle): string {
+    return cursorMap[handle];
+  }
 
-  // /**
-  //  * A message hook invoked on a viewport `'section-resize-request'` message.
-  //  */
-  // private _onViewportSectionResizeRequest(msg: Message): void {
-  //   // Bail early if no drag is in progress.
-  //   if (!this._pressData) {
-  //     return;
-  //   }
-
-  //   // Extract the press data.
-  //   let { hitTest, clientX, clientY } = this._pressData;
-
-  //   // Convert the mouse position to local coordinates.
-  //   let rect = this._viewport.node.getBoundingClientRect();
-  //   let x = clientX - rect.left;
-  //   let y = clientY - rect.top;
-
-  //   // Fetch the details for the hit test part.
-  //   let pos: number;
-  //   let delta: number;
-  //   let index: number;
-  //   let list: SectionList;
-  //   switch (hitTest.part) {
-  //   case 'column-header-h-resize-handle':
-  //     pos = x + this._scrollX - this.headerWidth;
-  //     delta = hitTest.x;
-  //     index = hitTest.column;
-  //     list = this._columnSections;
-  //     break;
-  //   case 'row-header-v-resize-handle':
-  //     pos = y + this._scrollY - this.headerHeight;
-  //     delta = hitTest.y;
-  //     index = hitTest.row;
-  //     list = this._rowSections;
-  //     break;
-  //   case 'column-header-v-resize-handle':
-  //   case 'corner-header-v-resize-handle':
-  //     pos = y;
-  //     delta = hitTest.y;
-  //     index = hitTest.row;
-  //     list = this._columnHeaderSections;
-  //     break;
-  //   case 'row-header-h-resize-handle':
-  //   case 'corner-header-h-resize-handle':
-  //     pos = x;
-  //     delta = hitTest.x;
-  //     index = hitTest.column;
-  //     list = this._rowHeaderSections;
-  //     break;
-  //   default:
-  //     return;
-  //   }
-
-  //   // Fetch the offset of the section to resize.
-  //   let offset = list.offsetOf(index);
-
-  //   // Bail if that section no longer exists.
-  //   if (offset < 0) {
-  //     return;
-  //   }
-
-  //   // Resize the section to the target size.
-  //   this._resizeSection(list, index, pos - delta - offset);
-  // }
+  /**
+   * A mapping of resize handle to cursor.
+   */
+  const cursorMap = {
+    top: 'ns-resize',
+    left: 'ew-resize',
+    right: 'ew-resize',
+    bottom: 'ns-resize',
+    none: ''
+  };
+}
