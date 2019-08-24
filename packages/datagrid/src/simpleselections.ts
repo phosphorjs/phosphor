@@ -10,387 +10,157 @@ import {
 } from '@phosphor/algorithm';
 
 import {
-  DataModel
-} from './datamodel';
-
-import {
   SelectionModel
 } from './selectionmodel';
 
 
 /**
- * A selection model implementation for generic data models.
+ * A simple selection model implementation.
  *
  * #### Notes
- * This selection model is sufficient for most use cases where advanced
- * tracking of data during sorting or filtering is *not* required.
+ * This selection model is sufficient for most use cases where keeping
+ * track of mutations in the data model is *not* required.
  */
 export
 class SimpleSelections extends SelectionModel {
   /**
-   * Construction a new simple selection model.
-   *
-   * @param options - The options for constructing the model.
-   */
-  constructor(options: SimpleSelections.IOptions) {
-    super();
-    this.model = options.model;
-    this.model.changed.connect(this._onModelChanged, this);
-  }
-
-  /**
-   * The data model associated with the selection model.
-   */
-  readonly model: DataModel;
-
-  /**
-   * Whether the selection model is empty.
+   * Wether the selection model is empty.
    *
    * #### Notes
-   * An empty selection model will have an empty regions iterator.
+   * An empty selection model will yield an empty `selections` iterator.
    */
   get isEmpty(): boolean {
-    return this._regions.length === 0;
+    return this._selections.length === 0;
   }
 
   /**
-   * Get an iterator of the selected regions in the model.
+   * Get an iterator of the selections in the model.
    *
-   * @returns A new iterator of selected regions in the model.
+   * @returns A new iterator of the current selections.
+   *
+   * #### Notes
+   * The data grid will render the selections in order.
    */
-  regions(): IIterator<SelectionModel.Region> {
-    return iter(this._regions);
+  selections(): IIterator<SelectionModel.Selection> {
+    return iter(this._selections);
   }
 
   /**
-   * Select a region in the model.
+   * Test whether any selection intersects a row.
    *
-   * @param region - The region to select in the model.
+   * @param row - The row index of interest.
+   *
+   * @returns Whether any selection intersects the row.
    */
-  select(region: SelectionModel.Region): void {
-    // Add the region to the array of selections.
-    this._regions.push(region);
-
-    // Emit the changed signal.
-    this.emitChanged();
+  isRowSelected(row: number): boolean {
+    return this._selections.some(s => Private.containsRow(s, row));
   }
 
   /**
-   * Deselect a region in the model.
+   * Test whether any selection intersects a column.
    *
-   * @param region - The region to deselect in the model.
+   * @param column - The column index of interest.
+   *
+   * @returns Whether any selection intersects the column.
    */
-  deselect(region: SelectionModel.Region): void {
-    // Bail early if the regions array is already empty.
-    if (this._regions.length === 0) {
+  isColumnSelected(column: number): boolean {
+    return this._selections.some(s => Private.containsColumn(s, column));
+  }
+
+  /**
+   * Test whether any selection intersects a cell.
+   *
+   * @param row - The row index of interest.
+   *
+   * @param column - The column index of interest.
+   *
+   * @returns Whether any selection intersects the cell.
+   */
+  isCellSelected(row: number, column: number): boolean {
+    return this._selections.some(s => Private.containsCell(s, row, column));
+  }
+
+  /**
+   * Select cells in the selection model.
+   *
+   * @param args - The arguments for the selection.
+   */
+  select(args: SelectionModel.SelectArgs): void {
+    // Unpack the arguments.
+    let { clear, firstRow, firstColumn, lastRow, lastColumn } = args;
+
+    // Floor and clamp the leading index.
+    firstRow = Math.max(0, Math.floor(firstRow));
+    firstColumn = Math.max(0, Math.floor(firstColumn));
+
+    // Floor the trailing index.
+    lastRow = Math.floor(lastRow);
+    lastColumn = Math.floor(lastColumn);
+
+    // Bail if the selection is empty.
+    if (lastRow < firstRow || lastColumn < firstColumn) {
       return;
     }
 
-    // Set up the new regions array.
-    let updated: SelectionModel.Region[] = [];
-
-    // Fetch a common variable.
-    let Region = SelectionModel.Region;
-
-    // Iterate over the existing regions.
-    for (let existing of this._regions) {
-      // Skip the existing region if it should be completely removed.
-      if (region.includes(existing)) {
-        continue;
-      }
-
-      // Retain the existing region if the target does not overlap it.
-      if (!region.overlaps(existing)) {
-        updated.push(existing);
-        continue;
-      }
-
-      // Save the top of the existing region if needed.
-      if (region.row > existing.row) {
-        let r1 = existing.row;
-        let c1 = existing.column;
-        let r2 = region.row - 1;
-        let c2 = existing.lastColumn;
-        updated.push(new Region(r1, c1, r2 - r1 + 1, c2 - c1 + 1));
-      }
-
-      // Save the left side of the existing region if needed.
-      if (region.column > existing.column) {
-        let r1 = Math.max(existing.row, region.row);
-        let c1 = existing.column;
-        let r2 = Math.min(existing.lastRow, region.lastRow);
-        let c2 = region.column - 1;
-        updated.push(new Region(r1, c1, r2 - r1 + 1, c2 - c1 + 1));
-      }
-
-      // Save the right side of the existing region if needed.
-      if (region.lastColumn < existing.lastColumn) {
-        let r1 = Math.max(existing.row, region.row);
-        let c1 = region.lastColumn + 1;
-        let r2 = Math.min(existing.lastRow, region.lastRow);
-        let c2 = existing.lastColumn;
-        updated.push(new Region(r1, c1, r2 - r1 + 1, c2 - c1 + 1));
-      }
-
-      // Save the bottom of the existing region if needed.
-      if (region.lastRow < existing.lastRow) {
-        let r1 = region.lastRow + 1;
-        let c1 = existing.column;
-        let r2 = existing.lastRow;
-        let c2 = existing.lastColumn;
-        updated.push(new Region(r1, c1, r2 - r1 + 1, c2 - c1 + 1));
-      }
+    // Clear the appropriate exisiting selections.
+    if (clear === 'all') {
+      this._selections.length = 0;
+    } else if (clear === 'last') {
+      this._selections.pop();
     }
 
-    // Store the updated regions.
-    this._regions = updated;
+    // Add the new selection.
+    this._selections.push({ firstRow, firstColumn, lastRow, lastColumn });
 
     // Emit the changed signal.
     this.emitChanged();
   }
 
   /**
-   * Clear all regions in the model.
+   * Clear all selections in the selection model.
    */
   clear(): void {
-    // Bail early if the regions array is already empty.
-    if (this._regions.length === 0) {
+    // Bail early if there are no selections.
+    if (this._selections.length === 0) {
       return;
     }
 
-    // Clear the regions array.
-    this._regions.length = 0;
+    // Clear the selections.
+    this._selections.length = 0;
 
     // Emit the changed signal.
     this.emitChanged();
   }
 
-  /**
-   * A signal handler for the data model `changed` signal.
-   */
-  private _onModelChanged(sender: DataModel, args: DataModel.ChangedArgs): void {
-    switch (args.type) {
-    case 'rows-inserted':
-    case 'rows-removed':
-      this._onRowsChanged(args);
-      break;
-    case 'rows-moved':
-      this._onRowsMoved(args);
-      break;
-    case 'columns-inserted':
-    case 'columns-removed':
-      this._onColumnsChanged(args);
-      break;
-    case 'columns-moved':
-      this._onColumnsMoved(args);
-      break;
-    case 'model-reset':
-      this._onModelReset(args);
-      break;
-    default:
-      break;
-    }
-  }
-
-  /**
-   * A signal handler invoked when rows are inserted or removed.
-   */
-  private _onRowsChanged(args: DataModel.RowsChangedArgs): void {
-    // Bail early if the regions array is already empty.
-    if (this._regions.length === 0) {
-      return;
-    }
-  }
-
-  /**
-   * A signal handler invoked when rows are moved.
-   */
-  private _onRowsMoved(args: DataModel.RowsMovedArgs): void {
-    // Bail early if the regions array is already empty.
-    if (this._regions.length === 0) {
-      return;
-    }
-  }
-
-  /**
-   * A signal handler invoked when columns are inserted or removed.
-   */
-  private _onColumnsChanged(args: DataModel.ColumnsChangedArgs): void {
-    // Bail early if the regions array is already empty.
-    if (this._regions.length === 0) {
-      return;
-    }
-  }
-
-  /**
-   * A signal handler invoked when columns are moved.
-   */
-  private _onColumnsMoved(args: DataModel.ColumnsMovedArgs): void {
-    // Bail early if the regions array is already empty.
-    if (this._regions.length === 0) {
-      return;
-    }
-  }
-
-  /**
-   * A signal handler invoked when the data model is reset.
-   */
-  private _onModelReset(args: DataModel.ModelResetArgs): void {
-    // Bail early if the regions array is already empty.
-    if (this._regions.length === 0) {
-      return;
-    }
-
-    // Clear the regions array.
-    this._regions.length = 0;
-
-    // Emit the changed signal.
-    this.emitChanged();
-  }
-
-  private _regions: SelectionModel.Region[] = [];
+  private _selections: SelectionModel.Selection[] = [];
 }
 
 
 /**
- * The namespace for the `SimpleSelections` class statics.
+ * The namespace for the module implementation details.
  */
-export
-namespace SimpleSelections {
+namespace Private {
   /**
-   * An options object for initializing a simple selection model.
+   * Test whether a selection contains a given row.
    */
   export
-  interface IOptions {
-    /**
-     * The data model to associate with the selection model.
-     */
-    model: DataModel;
+  function containsRow(selection: SelectionModel.Selection, row: number): boolean {
+    return row >= selection.firstRow && row <= selection.lastRow;
+  }
+
+  /**
+   * Test whether a selection contains a given column.
+   */
+  export
+  function containsColumn(selection: SelectionModel.Selection, column: number): boolean {
+    return column >= selection.firstColumn && column <= selection.lastColumn;
+  }
+
+  /**
+   * Test whether a selection contains a given cell.
+   */
+  export
+  function containsCell(selection: SelectionModel.Selection, row: number, column: number): boolean {
+    return containsRow(selection, row) && containsColumn(selection, column);
   }
 }
-  /**
-   * A class which represents a selected region in the data grid.
-   */
-  export
-  class Region {
-    /**
-     * Construct a new region.
-     *
-     * @param row - The first row of the region.
-     *
-     * @param column - The first column of the region.
-     *
-     * @param rowSpan - The number of rows spanned by the region.
-     *
-     * @param columnSpan - The number of columns spanned by the region.
-     */
-    constructor(row: number, column: number, rowSpan: number, columnSpan: number) {
-      this.row = Math.max(0, Math.floor(row));
-      this.column = Math.max(0, Math.floor(column));
-      this.rowSpan = Math.max(0, Math.floor(rowSpan));
-      this.columnSpan = Math.max(0, Math.floor(columnSpan));
-    }
-
-    /**
-     * The first row of the span.
-     */
-    readonly row: number;
-
-    /**
-     * The first column of the span.
-     */
-    readonly column: number;
-
-    /**
-     * The number of rows spanned by the region.
-     */
-    readonly rowSpan: number;
-
-    /**
-     * The number of columns spanned by the region.
-     */
-    readonly columnSpan: number;
-
-    /**
-     * The last row in the region.
-     */
-    get lastRow(): number {
-      return this.row + this.rowSpan - 1;
-    }
-
-    /**
-     * The last column in the region.
-     */
-    get lastColumn(): number {
-      return this.column + this.columnSpan - 1;
-    }
-
-    /**
-     * Test whether the region contains the given row.
-     *
-     * @param row - The row index of interest.
-     *
-     * @returns Whether the region contains the given row.
-     */
-    containsRow(row: number): boolean {
-      return row >= this.row && row <= this.lastRow;
-    }
-
-    /**
-     * Test whether the region contains the given column.
-     *
-     * @param column - The column index of interest.
-     *
-     * @returns Whether the region contains the given column
-     */
-    containsColumn(column: number): boolean {
-      return column >= this.column && column <= this.lastColumn;
-    }
-
-    /**
-     * Test whether the region contains the given cell.
-     *
-     * @param row - The row index of interest.
-     *
-     * @param column - The column index of interest.
-     *
-     * @returns Whether the regions contains the given cell.
-     */
-    containsCell(row: number, column: number): boolean {
-      return this.containsRow(row) && this.containsColumn(column);
-    }
-
-    /**
-     * Test whether the region includes another region.
-     *
-     * @param other - The other region of interest.
-     *
-     * @returns Whether the region includes the given region.
-     */
-    includes(other: Region): boolean {
-      if (other.row < this.row || other.lastRow > this.lastRow) {
-        return false;
-      }
-      if (other.column < this.column || other.lastColumn > this.lastColumn) {
-        return false;
-      }
-      return true;
-    }
-
-    /**
-     * Test whether the region overlaps another region.
-     *
-     * @param other - The other region of interest.
-     *
-     * @returns Whether the region overlaps the other region.
-     */
-    overlaps(other: Region): boolean {
-      if (other.row > this.lastRow || other.lastRow < this.row) {
-        return false;
-      }
-      if (other.column > this.lastColumn || other.lastColumn < this.column) {
-        return false;
-      }
-      return true;
-    }
-  }
