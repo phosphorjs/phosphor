@@ -13,10 +13,6 @@ import {
   IIterator
 } from '@phosphor/algorithm';
 
-import {
-  DataModel
-} from './datamodel';
-
 
 /**
  * An object which provides selection regions for a data grid.
@@ -35,44 +31,63 @@ abstract class SelectionModel {
   }
 
   /**
+   * Wether the selection model has no selections.
    *
+   * #### Notes
+   * An empty selection model will yield an empty `selections` iterator.
    */
-  abstract cursor(): SelectionModel.ICursor | null;
+  abstract readonly isEmpty: boolean;
 
   /**
-   * Get an iterator of the selected regions in the model.
+   * Get an iterator of the selections in the model.
    *
-   * @returns A new iterator of selected regions in the model.
+   * @returns A new iterator of the current selections.
    *
    * #### Notes
    * The data grid will render the selections in order.
    */
-  abstract regions(): IIterator<SelectionModel.IRegion>;
+  abstract selections(): IIterator<SelectionModel.Selection>;
 
   /**
+   * Test whether any selection intersects a row.
    *
+   * @param row - The row index of interest.
+   *
+   * @returns Whether any selection intersects the row.
    */
-  abstract isRowSelected(row: number): void;
+  abstract isRowSelected(row: number): boolean;
 
   /**
+   * Test whether any selection intersects a column.
    *
+   * @param column - The column index of interest.
+   *
+   * @returns Whether any selection intersects the column.
    */
-  abstract isColumnSelected(column: number): void;
+  abstract isColumnSelected(column: number): boolean;
 
   /**
+   * Test whether any selection intersects a cell.
    *
+   * @param row - The row index of interest.
+   *
+   * @param column - The column index of interest.
+   *
+   * @returns Whether any selection intersects the cell.
    */
-  abstract isCellSelected(row: number, column: number): void;
+  abstract isCellSelected(row: number, column: number): boolean;
 
   /**
+   * Select cells in the selection model.
    *
+   * @param args - The arguments for the selection.
    */
-  abstract handleMouseEvent(args: SelectionModel.MouseEventArgs): void;
+  abstract select(args: SelectionModel.SelectArgs): void;
 
   /**
-   *
+   * Clear all selections in the selection model.
    */
-  abstract handleKeyEvent(args: SelectionModel.KeyEventArgs): void;
+  abstract clear(): void;
 
   /**
    * Emit the `changed` signal for the selection model.
@@ -95,141 +110,94 @@ abstract class SelectionModel {
 export
 namespace SelectionModel {
   /**
-   *
+   * A type alias for a selection in a selection model.
    */
   export
-  interface ICursor {
+  type Selection = {
     /**
+     * The first row of the selection.
      *
-     */
-    readonly row: number;
-
-    /**
-     *
-     */
-    readonly column: number;
-  }
-
-  /**
-   *
-   */
-  export
-  interface IRegion {
-    /**
-     *
+     * #### Notes
+     * This should be an integer `>= 0`.
      */
     readonly firstRow: number;
 
     /**
+     * The first column of the selection.
      *
+     * #### Notes
+     * This should be an integer `>= 0`.
      */
     readonly firstColumn: number;
 
     /**
+     * The last row of the selection.
      *
+     * #### Notes
+     * This should be an integer `>= firstRow`.
+     *
+     * A value of `Infinity` indicates a full row selection.
      */
     readonly lastRow: number;
 
     /**
+     * The last column of the selection.
      *
+     * #### Notes
+     * This should be an integer `>= firstColumn`.
+     *
+     * A value of `Infinity` indicates a full column selection.
      */
     readonly lastColumn: number;
-  }
-
-  /**
-   *
-   */
-  export
-  type MouseEventArgs = {
-    /**
-     *
-     */
-    type: 'mousedown' | 'mousemove' | 'mouseup';
-
-    /**
-     *
-     */
-    region: DataModel.CellRegion;
-
-    /**
-     *
-     */
-    row: number;
-
-    /**
-     *
-     */
-    column: number;
-
-    /**
-     *
-     */
-    firstVisibleRow: number;
-
-    /**
-     *
-     */
-    firstVisibleColumn: number;
-
-    /**
-     *
-     */
-    lastVisibleRow: number;
-
-    /**
-     *
-     */
-    lastVisibleColumn: number;
-
-    /**
-     *
-     */
-    shiftKey: boolean;
-
-    /**
-     *
-     */
-    ctrlKey: boolean;
   };
 
   /**
-   *
+   * A type alias for the selection model select args.
    */
   export
-  type KeyEventArgs = {
+  type SelectArgs = {
     /**
+     * The clear mode for the selection.
      *
+     * This controls which of the existing selections are cleared
+     * when making a new selection.
      */
-    key: 'ArrowUp' | 'ArrowDown' | 'ArrowLeft' | 'ArrowRight' | 'PageUp' | 'PageDown';
+    clear: 'all' | 'last' | 'none';
 
     /**
+     * The first row of the selection.
      *
+     * #### Notes
+     * This should be an integer `>= 0`.
      */
-    firstVisibleRow: number;
+    firstRow: number;
 
     /**
+     * The first column of the selection.
      *
+     * #### Notes
+     * This should be an integer `>= 0`.
      */
-    firstVisibleColumn: number;
+    firstColumn: number;
 
     /**
+     * The last row of the selection.
      *
+     * #### Notes
+     * This should be an integer `>= firstRow`.
+     *
+     * A value of `Infinity` indicates a full row selection.
      */
-    lastVisibleRow: number;
+    lastRow: number;
 
     /**
+     * The last column of the selection.
      *
-     */
-    lastVisibleColumn: number;
-
-    /**
+     * #### Notes
+     * This should be an integer `>= firstColumn`.
      *
+     * A value of `Infinity` indicates a full column selection.
      */
-    shiftKey: boolean;
-
-    /**
-     *
-     */
-    ctrlKey: boolean;
+    lastColumn: number;
   };
 }
