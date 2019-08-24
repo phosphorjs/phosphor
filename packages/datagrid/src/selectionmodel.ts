@@ -15,7 +15,7 @@ import {
 
 
 /**
- * An object which provides selection regions for a data grid.
+ * An object which controls selections for a data grid.
  *
  * #### Notes
  * If the predefined selection models are insufficient for a particular
@@ -31,7 +31,7 @@ abstract class SelectionModel {
   }
 
   /**
-   * Wether the selection model has no selections.
+   * Wether the selection model is empty.
    *
    * #### Notes
    * An empty selection model will yield an empty `selections` iterator.
