@@ -115,6 +115,7 @@ class DataGrid extends Widget {
 
     // Create the internal widgets for the data grid.
     this._viewport = new Widget();
+    this._viewport.node.tabIndex = -1;
     this._vScrollBar = new ScrollBar({ orientation: 'vertical' });
     this._hScrollBar = new ScrollBar({ orientation: 'horizontal' });
     this._scrollCorner = new Widget();
@@ -517,10 +518,130 @@ class DataGrid extends Widget {
   }
 
   /**
+   * The cursor row for the data grid.
+   */
+  get cursorRow(): number {
+    return this._cursorRow;
+  }
+
+  /**
+   * The cursor column for the data grid.
+   */
+  get cursorColumn(): number {
+    return this._cursorColumn;
+  }
+
+  /**
    * The viewport widget for the data grid.
    */
   get viewport(): Widget {
     return this._viewport;
+  }
+
+  /**
+   * Move the grid cursor to the specified row and column.
+   *
+   * @param row - The row index for the cursor.
+   *
+   * @param column - The column index for the cursor.
+   */
+  moveCursor(row: number, column: number): void {
+    // Floor the indices.
+    row = Math.floor(row);
+    column = Math.floor(column);
+
+    // Clamp the indices.
+    row = Math.max(0, Math.min(row, this._rowSections.count - 1));
+    column = Math.max(0, Math.min(column, this._columnSections.count - 1));
+
+    // Bail early if the index does not change.
+    if (row === this._cursorRow && column === this._cursorColumn) {
+      return;
+    }
+
+    // Update the internal indices.
+    this._cursorRow = row;
+    this._cursorColumn = column;
+
+    // Schedule a repaint of the overlay.
+    this._repaintOverlay();
+  }
+
+  /**
+   * Scroll the grid to the current cursor position.
+   *
+   * #### Notes
+   * This is a no-op if the cursor is already visible.
+   */
+  scrollToCursor(): void {
+    this.scrollToCell(this._cursorRow, this._cursorColumn);
+  }
+
+  /**
+   * Scroll the grid to the specified cell.
+   *
+   * @param row - The row index of the cell.
+   *
+   * @param column - The column index of the cell.
+   *
+   * #### Notes
+   * This is a no-op if the cell is already visible.
+   */
+  scrollToCell(row: number, column: number): void {
+    // Fetch the row and column count.
+    let nr = this._rowSections.count;
+    let nc = this._columnSections.count;
+
+    // Bail early if there is no content.
+    if (nr === 0 || nc === 0) {
+      return;
+    }
+
+    // Floor the cell index.
+    row = Math.floor(row);
+    column = Math.floor(column);
+
+    // Clamp the cell index.
+    row = Math.max(0, Math.min(row, nr - 1));
+    column = Math.max(0, Math.min(column, nc - 1));
+
+    // Get the virtual bounds of the cell.
+    let x1 = this._columnSections.offsetOf(column);
+    let x2 = this._columnSections.extentOf(column);
+    let y1 = this._rowSections.offsetOf(row);
+    let y2 = this._rowSections.extentOf(row);
+
+    // Get the virtual bounds of the viewport.
+    let vx1 = this._scrollX;
+    let vx2 = this._scrollX + this.pageWidth - 1;
+    let vy1 = this._scrollY;
+    let vy2 = this._scrollY + this.pageHeight - 1;
+
+    // Set up the delta variables.
+    let dx = 0;
+    let dy = 0;
+
+    // Compute the delta X scroll.
+    if (x1 < vx1) {
+      dx = x1 - vx1 - 10;
+    } else if (x2 > vx2) {
+      dx = x2 - vx2 + 10;
+    }
+
+    // Compute the delta Y scroll.
+    if (y1 < vy1) {
+      dy = y1 - vy1 - 10;
+    } else if (y2 > vy2) {
+      dy = y2 - vy2 + 10;
+    }
+
+    // Bail early if no scroll is needed.
+    if (dx === 0 && dy === 0) {
+      return;
+    }
+
+    // Scroll by the computed delta.
+    this.scrollBy(dx, dy);
   }
 
   /**
@@ -1001,6 +1122,13 @@ class DataGrid extends Widget {
       this._processViewportMessage(msg);
     }
     return true;
+  }
+
+  /**
+   * A message handler invoked on an `'activate-request'` message.
+   */
+  protected onActivateRequest(msg: Message): void {
+    this.viewport.node.focus();
   }
 
   /**
@@ -2468,7 +2596,7 @@ class DataGrid extends Widget {
     //this._drawSelections();
 
     // Draw the cursor.
-    //this._drawCursor();
+    this._drawCursor();
 
     // Draw the shadows.
     this._drawShadows();
@@ -3518,12 +3646,90 @@ class DataGrid extends Widget {
   //   // }
   // }
 
-  // /**
-  //  * Draw the overlay cursor for the data grid.
-  //  */
-  // private _drawCursor(): void {
+  /**
+   * Draw the overlay cursor for the data grid.
+   */
+  private _drawCursor(): void {
+    // Extract the style information.
+    let fill = this._style.cursorFillColor;
+    let stroke = this._style.cursorBorderColor;
 
-  // }
+    // Bail early if there is nothing to draw.
+    if (!fill && !stroke) {
+      return;
+    }
+
+    // Fetch geometry.
+    let sx = this._scrollX;
+    let sy = this._scrollY;
+    let pw = this.pageWidth;
+    let ph = this.pageHeight;
+    let hw = this.headerWidth;
+    let hh = this.headerHeight;
+    let vw = this._viewportWidth;
+    let vh = this._viewportHeight;
+
+    // Get the cursor bounds in viewport coordinates.
+    let x1 = this._columnSections.offsetOf(this._cursorColumn) - sx + hw;
+    let x2 = this._columnSections.extentOf(this._cursorColumn) - sx + hw;
+    let y1 = this._rowSections.offsetOf(this._cursorRow) - sy + hh;
+    let y2 = this._rowSections.extentOf(this._cursorRow) - sy + hh;
+
+    // Bail early if the cursor is off the screen.
+    if ((x1 - 1) >= vw || (y1 - 1) >= vh || (x2 + 1) < hw || (y2 + 1) < hh) {
+      return;
+    }
+
+    // Fetch the overlay gc.
+    let gc = this._overlayGC;
+
+    // Save the gc state.
+    gc.save();
+
+    // Set up the body clipping rect.
+    gc.beginPath();
+    gc.rect(hw, hh, pw, ph);
+    gc.clip();
+
+    // Clear any existing overlay content.
+    gc.clearRect(x1, y1, x2 - x1 + 1, y2 - y1 + 1);
+
+    // Fill the cursor rect if needed.
+    if (fill) {
+      // Set up the fill style.
+      gc.fillStyle = fill;
+
+      // Fill the cursor rect.
+      gc.fillRect(x1, y1, x2 - x1 + 1, y2 - y1 + 1)
+    }
+
+    // Stroke the cursor border if needed.
+    if (stroke) {
+      // Adjust the X limits for boundary columns.
+      if (this._cursorColumn === 0) {
+        x1 += 1;
+      } else if (this._cursorColumn === this._columnSections.count - 1) {
+        x2 -= 1;
+      }
+
+      // Adjust the Y limits for boundary rows.
+      if (this._cursorRow === 0) {
+        y1 += 1;
+      } else if (this._cursorRow === this._rowSections.count - 1) {
+        y2 -= 1;
+      }
+
+      // Set up the stroke style.
+      gc.strokeStyle = stroke;
+      gc.lineWidth = 2;
+
+      // Stroke the cursor rect.
+      gc.strokeRect(x1 - 0.5, y1 - 0.5, x2 - x1 + 1, y2 - y1 + 1);
+    }
+
+    // Restore the gc state.
+    gc.restore();
+  }
 
   /**
    * Draw the overlay shadows for the data grid.
@@ -3686,6 +3892,8 @@ class DataGrid extends Widget {
 
   private _scrollX = 0;
   private _scrollY = 0;
+  private _cursorRow = 0;
+  private _cursorColumn = 0;
   private _viewportWidth = 0;
   private _viewportHeight = 0;
 
@@ -3808,14 +4016,24 @@ namespace DataGrid {
     readonly headerHorizontalGridLineColor?: string;
 
     /**
-     *
+     * The fill color for a selection.
      */
-    readonly selectionColor?: string;
+    readonly selectionFillColor?: string;
 
     /**
-     *
+     * The border color for a selection.
      */
     readonly selectionBorderColor?: string;
+
+    /**
+     * The fill color for the cursor.
+     */
+    readonly cursorFillColor?: string;
+
+    /**
+     * The border color for the cursor.
+     */
+    readonly cursorBorderColor?: string;
 
     /**
      * The drop shadow effect when the grid is scrolled.
@@ -3924,49 +4142,49 @@ namespace DataGrid {
     /**
      * The region of the data grid that was hit.
      */
-    region: DataModel.CellRegion | 'void';
+    readonly region: DataModel.CellRegion | 'void';
 
     /**
      * The row index of the cell that was hit.
      *
      * This will be `-1` for the void region.
      */
-    row: number;
+    readonly row: number;
 
     /**
      * The column index of the cell that was hit.
      *
      * This will be `-1` for the void region.
      */
-    column: number;
+    readonly column: number;
 
     /**
      * The X coordinate of the mouse in cell coordinates.
      *
      * This will be `-1` for the void region.
      */
-    x: number;
+    readonly x: number;
 
     /**
      * The Y coordinate of the mouse in cell coordinates.
      *
      * This will be `-1` for the void region.
      */
-    y: number;
+    readonly y: number;
 
     /**
      * The width of the cell.
      *
      * This will be `-1` for the void region.
      */
-    width: number;
+    readonly width: number;
 
     /**
      * The height of the cell.
      *
      * This will be `-1` for the void region.
      */
-    height: number;
+    readonly height: number;
   };
 
   /**
@@ -3979,8 +4197,9 @@ namespace DataGrid {
     gridLineColor: 'rgba(20, 20, 20, 0.15)',
     headerBackgroundColor: '#F3F3F3',
     headerGridLineColor: 'rgba(20, 20, 20, 0.25)',
-    selectionColor: 'rgba(49, 119, 229, 0.2)',
+    selectionFillColor: 'rgba(49, 119, 229, 0.2)',
     selectionBorderColor: 'rgba(49, 119, 229, 1.0)',
+    cursorBorderColor: 'rgba(49, 119, 229, 1.0)',
     scrollShadow: {
       size: 10,
       color1: 'rgba(0, 0, 0, 0.20',
