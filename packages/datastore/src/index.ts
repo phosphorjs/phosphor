@@ -13,5 +13,6 @@ export * from './mapfield';
 export * from './record';
 export * from './registerfield';
 export * from './schema';
+export * from './serveradapter';
 export * from './table';
 export * from './textfield';

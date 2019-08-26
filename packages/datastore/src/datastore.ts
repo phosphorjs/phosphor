@@ -241,7 +241,7 @@ class Datastore implements IIterable<Table<Schema>>, IMessageHandler, IDisposabl
     this._finalizeTransaction();
     const {patch, change, storeId, transactionId, version} = this._context;
     if (this._adapter && !Private.isPatchEmpty(patch)) {
-      this._adapter.broadcastTransaction({
+      this._adapter.broadcast({
         id: transactionId,
         storeId,
         patch,
@@ -258,14 +258,11 @@ class Datastore implements IIterable<Table<Schema>>, IMessageHandler, IDisposabl
     }
   }
 
+  /**
+   * Handle a message sent to the Datastore.
+   */
   processMessage(msg: Message): void {
     switch (msg.type) {
-    // External messages:
-    case 'datastore-transaction':
-      const m = msg as Datastore.TransactionMessage;
-      this._applyTransaction(m.transaction);
-      break;
-
     // Internal messages (posted from `this`):
     case 'transaction-begun':
       if (this._context.inTransaction) {
@@ -296,7 +293,10 @@ class Datastore implements IIterable<Table<Schema>>, IMessageHandler, IDisposabl
    * the promise resolves.
    */
   undo(transactionId: string): Promise<void> {
-    throw Error('Undo is not implemented');
+    if (!this._adapter) {
+      return Promise.resolve(undefined);
+    }
+    return this._adapter.undo(transactionId);
   }
 
   /**
@@ -313,7 +313,10 @@ class Datastore implements IIterable<Table<Schema>>, IMessageHandler, IDisposabl
    * the promise resolves.
    */
   redo(transactionId: string): Promise<void> {
-    throw Error('Redo is not implemented');
+    if (!this._adapter) {
+      return Promise.resolve(undefined);
+    }
+    return this._adapter.redo(transactionId);
   }
 
   /**
@@ -353,7 +356,7 @@ class Datastore implements IIterable<Table<Schema>>, IMessageHandler, IDisposabl
     this._adapter = adapter || null;
     this._transactionIdFactory = transactionIdFactory || createDuplexId;
     if (this._adapter) {
-      this._adapter.transactionReceived.connect(
+      this._adapter.received.connect(
         this._onRemoteTransaction,
         this
       );
@@ -365,7 +368,7 @@ class Datastore implements IIterable<Table<Schema>>, IMessageHandler, IDisposabl
    */
   private _onRemoteTransaction(
     sender: IServerAdapter,
-    args: IServerAdapter.ITransactionArgs
+    args: IServerAdapter.IReceivedArgs
   ): void {
     let { transaction, type } = args;
     let count: number;

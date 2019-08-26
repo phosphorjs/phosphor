@@ -10,12 +10,16 @@ import {
 } from 'chai';
 
 import {
-  Datastore, Fields, ListField, RegisterField, TextField
+  Datastore, Fields, IServerAdapter, ListField, RegisterField, TextField
 } from '@phosphor/datastore';
 
 import {
-  IMessageHandler, Message, MessageLoop
+  MessageLoop
 } from '@phosphor/messaging';
+
+import {
+  ISignal, Signal
+} from '@phosphor/signaling';
 
 
 type CustomMetadata = { id: string };
@@ -74,18 +78,42 @@ let state = {
   ]
 };
 
-class LoggingMessageHandler implements IMessageHandler {
-  processMessage(msg: Message): void {
-    switch(msg.type) {
-    case 'datastore-transaction':
-      this.transactions.push((msg as Datastore.TransactionMessage).transaction);
-      break;
-    default:
-      throw Error('Unexpected message');
-      break;
-    }
+class InMemoryServerAdapter implements IServerAdapter {
+  broadcast(transaction: Datastore.Transaction): void {
+    this._transactions[transaction.id] = transaction;
   }
-  transactions: Datastore.Transaction[] = [];
+
+  undo(id: string): Promise<void> {
+    return Promise.resolve(undefined);
+  }
+
+  redo(id: string): Promise<void> {
+    return Promise.resolve(undefined);
+  }
+
+  get received(): ISignal<this, IServerAdapter.IReceivedArgs> {
+    return this._received;
+  }
+
+  get transactions(): { [id: string]: Datastore.Transaction } {
+    return this._transactions;
+  }
+
+  get isDisposed(): boolean {
+    return this._isDisposed;
+  }
+
+  dispose(): void {
+    if (this._isDisposed) {
+      return;
+    }
+    this._isDisposed = true;
+    Signal.clearData(this);
+  }
+
+  private _isDisposed = false;
+  private _received = new Signal<this, IServerAdapter.IReceivedArgs>(this);
+  private _transactions: { [id: string]: Datastore.Transaction } = {};
 }
 
 describe('@phosphor/datastore', () => {
@@ -93,14 +121,14 @@ describe('@phosphor/datastore', () => {
   describe('Datastore', () => {
 
     let datastore: Datastore;
-    let broadcastHandler: LoggingMessageHandler;
+    let adapter: InMemoryServerAdapter;
     const DATASTORE_ID = 1234;
     beforeEach(() => {
-      broadcastHandler = new LoggingMessageHandler();
+      adapter = new InMemoryServerAdapter();
       datastore = Datastore.create({
         id: DATASTORE_ID,
         schemas: [schema1, schema2],
-        broadcastHandler
+        adapter
       });
     });
 
@@ -164,9 +192,9 @@ describe('@phosphor/datastore', () => {
     describe('dispose()', () => {
 
       it('should dispose of the resources held by the datastore', () => {
-        expect(datastore.broadcastHandler).to.not.be.null;
+        expect(datastore.adapter).to.not.be.null;
         datastore.dispose();
-        expect(datastore.broadcastHandler).to.be.null;
+        expect(datastore.adapter).to.be.null;
       });
 
       it('should be safe to call more than once', () => {
@@ -227,19 +255,19 @@ describe('@phosphor/datastore', () => {
 
     });
 
-    describe('broadcastHandler', () => {
+    describe('adapter', () => {
 
-      it('should be the broadcastHandler for the datastore', () => {
-        expect(datastore.broadcastHandler).to.equal(broadcastHandler);
+      it('should be the adapter for the datastore', () => {
+        expect(datastore.adapter).to.equal(adapter);
       });
 
       it('should recieve transactions from the datastore', () => {
         let t2 = datastore.get(schema2);
         datastore.beginTransaction();
         t2.update({ 'my-record': { enabled: true } });
-        expect(broadcastHandler.transactions.length).to.equal(0);
+        expect(Object.keys(adapter.transactions).length).to.equal(0);
         datastore.endTransaction();
-        expect(broadcastHandler.transactions.length).to.equal(1);
+        expect(Object.keys(adapter.transactions).length).to.equal(1);
       });
 
     });
@@ -344,13 +372,13 @@ describe('@phosphor/datastore', () => {
         expect(called).to.be.true;
       });
 
-      it('should send a transaction to the broadcast handler', () => {
+      it('should broadcast the transaction to the server adapter', () => {
         let t2 = datastore.get(schema2);
         datastore.beginTransaction();
         t2.update({ 'my-record': { enabled: true } });
-        expect(broadcastHandler.transactions.length).to.equal(0);
+        expect(Object.keys(adapter.transactions).length).to.equal(0);
         datastore.endTransaction();
-        expect(broadcastHandler.transactions.length).to.equal(1);
+        expect(Object.keys(adapter.transactions).length).to.equal(1);
       });
 
       it('should throw if there is not a transaction begun', () => {
@@ -375,11 +403,11 @@ describe('@phosphor/datastore', () => {
         });
         MessageLoop.sendMessage(
           newDatastore,
-          new Datastore.TransactionMessage(broadcastHandler.transactions[0])
+          new Datastore.TransactionMessage(adapter.transactions[0])
         );
         MessageLoop.sendMessage(
           newDatastore,
-          new Datastore.TransactionMessage(broadcastHandler.transactions[1])
+          new Datastore.TransactionMessage(adapter.transactions[1])
         );
         t2 = newDatastore.get(schema2);
         expect(t2.get('my-record')!.enabled).to.be.true;

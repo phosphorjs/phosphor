@@ -35,7 +35,7 @@ interface IServerAdapter extends IDisposable {
    * This is expected to be called by a datastore, and not by any other
    * user. Direct invocations of this function may have unexpected results.
    */
-  broadcastTransaction(transaction: Datastore.Transaction): void;
+  broadcast(transaction: Datastore.Transaction): void;
 
   /**
    * Undo a transaction by id. This sends an undo message to the patch server,
@@ -44,21 +44,21 @@ interface IServerAdapter extends IDisposable {
    *
    * @param id: the transaction to undo.
    */
-  undoTransaction(id: string): void;
+  undo(id: string): Promise<void>;
 
   /**
    * Redo a transaction by id.
    *
    * @param id: the transaction to redo.
    */
-  redoTransaction(id: string): void;
+  redo(id: string): Promise<void>;
 
   /**
    * A signal that is fired when a transaction is received from the server.
    * Intended to be consumed by a datastore, though other objects may snoop
    * on the messages.
    */
-  transactionReceived: ISignal<this, IServerAdapter.ITransactionArgs>;
+  received: ISignal<this, IServerAdapter.IReceivedArgs>;
 }
 
 /**
@@ -70,7 +70,7 @@ namespace IServerAdapter {
    * A payload for a transaction received signal.
    */
   export
-  interface ITransactionArgs {
+  interface IReceivedArgs {
     /**
      * The type of the transaction, either a user transaction,
      * or an undo or redo of a transaction.
@@ -83,6 +83,3 @@ namespace IServerAdapter {
     transaction: Datastore.Transaction;
   }
 }
-
-
-
