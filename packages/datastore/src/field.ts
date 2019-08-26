@@ -114,6 +114,15 @@ abstract class Field<Value extends ReadonlyJSONValue, Update extends ReadonlyJSO
   abstract applyPatch(args: Field.PatchArgs<Value, Patch, Metadata>): Field.PatchResult<Value, Change>;
 
   /**
+   * Unapply a system patch to the field.
+   *
+   * @param args - The arguments for the patch.
+   *
+   * @returns The result of unapplying the patch.
+   */
+  abstract unapplyPatch(args: Field.PatchArgs<Value, Patch, Metadata>): Field.PatchResult<Value, Change>;
+
+  /**
    * Merge two change objects into a single change object.
    *
    * @param first - The first change object of interest.
