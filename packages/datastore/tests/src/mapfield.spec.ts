@@ -118,6 +118,7 @@ describe('@phosphor/datastore', () => {
           version: 1,
           storeId: 1
         });
+        metadata = field.createMetadata();
         let { value } = field.applyPatch({
           previous,
           patch: update.patch,
@@ -139,6 +140,7 @@ describe('@phosphor/datastore', () => {
           version: 1,
           storeId: 1
         });
+        metadata = field.createMetadata();
         let { value, change } = field.applyPatch({
           previous,
           patch: update.patch,
@@ -190,6 +192,39 @@ describe('@phosphor/datastore', () => {
       });
 
     });
+
+    describe('unapplyPatch', () => {
+
+      it('should unapply a patch to a map', () => {
+        let metadata = field.createMetadata();
+        let update = field.applyUpdate({
+          previous: field.createValue(),
+          metadata,
+          update: { 'one': 'first', 'two': 'second' },
+          version: 1,
+          storeId: 1
+        });
+        // Reset the metadata.
+        metadata = field.createMetadata();
+        let { value } = field.applyPatch({
+          previous: field.createValue(),
+          patch: update.patch,
+          metadata
+        });
+        expect(value).to.eql({ 'one': 'first', 'two': 'second' });
+        let unpatched = field.unapplyPatch({
+          previous: value,
+          patch: update.patch,
+          metadata
+        });
+        expect(unpatched.value).to.eql(field.createValue());
+        expect(unpatched.change.previous).to.eql({ 'one': 'first', 'two': 'second'});
+        expect(unpatched.change.current).to.eql({ 'one': null, 'two': null});
+
+      });
+
+    });
+
 
     describe('mergeChange', () => {
 

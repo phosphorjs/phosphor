@@ -146,6 +146,65 @@ describe('@phosphor/datastore', () => {
 
     });
 
+    describe('unapplyPatch', () => {
+
+      it('should remove a patch from a field', () => {
+        // Create the patch
+        let metadata = field.createMetadata();
+        let update1 = field.applyUpdate({
+          previous: field.value,
+          metadata,
+          update: { value: 'updated' },
+          version: 1,
+          storeId: 1
+        });
+        let update2 = field.applyUpdate({
+          previous: update1.value,
+          metadata,
+          update: { value: 'updated-later' },
+          version: 2,
+          storeId: 1
+        });
+        expect(update1.value.value).to.equal('updated');
+        expect(update2.value.value).to.equal('updated-later');
+        // Reset the metadata and apply the patches.
+        metadata = field.createMetadata();
+        let patched1 = field.applyPatch({
+          previous: field.value,
+          metadata,
+          patch: update1.patch
+        });
+        let patched2 = field.applyPatch({
+          previous: patched1.value,
+          metadata,
+          patch: update2.patch
+        });
+        expect(patched2.value.value).to.equal('updated-later');
+        expect(patched2.change.current.value).to.equal('updated-later');
+        expect(patched2.change.previous.value).to.equal('updated');
+        // Unapply the patches one at a time.
+        let unpatched1 = field.unapplyPatch({
+          previous: patched2.value,
+          metadata,
+          patch: update2.patch
+        });
+        expect(unpatched1.value.value).to.equal('updated');
+        expect(unpatched1.change.current.value).to.equal('updated');
+        expect(unpatched1.change.previous.value).to.equal('updated-later');
+        let unpatched2 = field.unapplyPatch({
+          previous: unpatched1.value,
+          metadata,
+          patch: update1.patch
+        });
+        // If all the patches have been unapplied, revert to the initial value.
+        expect(unpatched2.value.value).to.equal('a');
+        expect(unpatched2.change.current.value).to.equal('a');
+        expect(unpatched2.change.previous.value).to.equal('updated');
+      });
+
+    });
+
+
     describe('mergeChange', () => {
 
       it('should merge two successive changes', () => {
