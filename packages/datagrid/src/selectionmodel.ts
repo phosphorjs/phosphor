@@ -39,6 +39,13 @@ abstract class SelectionModel {
   abstract readonly isEmpty: boolean;
 
   /**
+   * Get the last selection in the selection model.
+   *
+   * @returns The last selection in the selection model, or `null`.
+   */
+  abstract last(): SelectionModel.Selection | null;
+
+  /**
    * Get an iterator of the selections in the model.
    *
    * @returns A new iterator of the current selections.
@@ -120,7 +127,7 @@ namespace SelectionModel {
      * #### Notes
      * This should be an integer `>= 0`.
      */
-    readonly firstRow: number;
+    readonly r1: number;
 
     /**
      * The first column of the selection.
@@ -128,27 +135,27 @@ namespace SelectionModel {
      * #### Notes
      * This should be an integer `>= 0`.
      */
-    readonly firstColumn: number;
+    readonly c1: number;
 
     /**
      * The last row of the selection.
      *
      * #### Notes
-     * This should be an integer `>= firstRow`.
+     * This should be an integer `>= r1`.
      *
      * A value of `Infinity` indicates a full row selection.
      */
-    readonly lastRow: number;
+    readonly r2: number;
 
     /**
      * The last column of the selection.
      *
      * #### Notes
-     * This should be an integer `>= firstColumn`.
+     * This should be an integer `>= c1`.
      *
      * A value of `Infinity` indicates a full column selection.
      */
-    readonly lastColumn: number;
+    readonly c2: number;
   };
 
   /**
@@ -170,7 +177,7 @@ namespace SelectionModel {
      * #### Notes
      * This should be an integer `>= 0`.
      */
-    firstRow: number;
+    r1: number;
 
     /**
      * The first column of the selection.
@@ -178,26 +185,26 @@ namespace SelectionModel {
      * #### Notes
      * This should be an integer `>= 0`.
      */
-    firstColumn: number;
+    c1: number;
 
     /**
      * The last row of the selection.
      *
      * #### Notes
-     * This should be an integer `>= firstRow`.
+     * This should be an integer `>= r1`.
      *
      * A value of `Infinity` indicates a full row selection.
      */
-    lastRow: number;
+    r2: number;
 
     /**
      * The last column of the selection.
      *
      * #### Notes
-     * This should be an integer `>= firstColumn`.
+     * This should be an integer `>= c1`.
      *
      * A value of `Infinity` indicates a full column selection.
      */
-    lastColumn: number;
+    c2: number;
   };
 }

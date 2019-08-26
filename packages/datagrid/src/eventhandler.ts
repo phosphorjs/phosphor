@@ -10,14 +10,6 @@ import {
 } from '@phosphor/disposable';
 
 import {
-  Drag
-} from '@phosphor/dragdrop';
-
-import {
-  IMessageHandler, Message, MessageLoop
-} from '@phosphor/messaging';
-
-import {
   Signal
 } from '@phosphor/signaling';
 
@@ -25,59 +17,30 @@ import {
   DataGrid
 } from './datagrid';
 
-import {
-  DataModel
-} from './datamodel';
-
 
 /**
- * A base class for implementing data grid event handlers.
+ * A generic data grid event handler.
  *
  * #### Notes
- * This class implements a small state machine, and dispatches events
- * to different handlers based on the current state. It should be a
- * sufficient starting point for most use cases. However, if this class
- * proves to be insufficient for a particular use case, an entirely new
- * class may be defined. The data grid has no direct dependency on this
- * `EventHandler` class.
+ * This class makes some basic common assumptions about how events
+ * should be handled, and dispatches the majority of its behavior
+ * to proxy handlers.
+ *
+ * If this class is insufficient for a particular use case, a new
+ * class may be defined. The grid has no dependency on this class.
  */
 export
-class EventHandler implements IDisposable, IMessageHandler {
+class EventHandler implements IDisposable {
   /**
    * Construct a new event handler object.
    *
    * @param options - The options for initializing the handler.
    */
   constructor(options: EventHandler.IOptions) {
-    // Fetch the data grid.
+    // Parse the options.
     this.grid = options.grid;
-
-    // Parse the rest of the options.
-    if (options.resizableRows !== undefined) {
-      this.resizableRows = options.resizableRows;
-    } else {
-      this.resizableRows = true;
-    }
-    if (options.resizableColumns !== undefined) {
-      this.resizableColumns = options.resizableColumns;
-    } else {
-      this.resizableColumns = true;
-    }
-    if (options.resizableRowHeaders !== undefined) {
-      this.resizableRowHeaders = options.resizableRowHeaders;
-    } else {
-      this.resizableRowHeaders = true;
-    }
-    if (options.resizableColumnHeaders !== undefined) {
-      this.resizableColumnHeaders = options.resizableColumnHeaders;
-    } else {
-      this.resizableColumnHeaders = true;
-    }
-    if (options.resizeHandleSize !== undefined) {
-      this.resizeHandleSize = Math.max(0, options.resizeHandleSize);
-    } else {
-      this.resizeHandleSize = 10;
-    }
+    this.keyHandler = options.keyHandler;
+    this.mouseHandler = options.mouseHandler;
 
     // Tie the handler lifetime to the grid.
     this.grid.disposed.connect(() => { this.dispose(); });
@@ -108,14 +71,12 @@ class EventHandler implements IDisposable, IMessageHandler {
     // Flip the disposed flag.
     this._disposed = true;
 
-    // Reset the state.
+    // Reset the internal state.
     this._state = 'default';
 
-    // Clear the resize data if needed.
-    if (this.resizeData) {
-      this.resizeData.override.dispose();
-      this.resizeData = null;
-    }
+    // Dispose of the handlers.
+    this.keyHandler.dispose();
+    this.mouseHandler.dispose();
 
     // Ensure the document listeners are removed.
     document.removeEventListener('keydown', this, true);
@@ -139,7 +100,6 @@ class EventHandler implements IDisposable, IMessageHandler {
 
     // Clear the signal and message data.
     Signal.clearData(this);
-    MessageLoop.clearData(this);
   }
 
   /**
@@ -148,50 +108,20 @@ class EventHandler implements IDisposable, IMessageHandler {
   readonly grid: DataGrid;
 
   /**
-   * Whether the grid rows are resizable by the user.
+   * The key handler for the data grid.
    */
-  readonly resizableRows: boolean;
+  readonly keyHandler: EventHandler.IKeyHandler;
 
   /**
-   * Whether the grid columns are resizable by the user.
+   * The mouse handler for the data grid.
    */
-  readonly resizableColumns: boolean;
-
-  /**
-   * Whether the grid row headers are resizable by the user.
-   */
-  readonly resizableRowHeaders: boolean;
-
-  /**
-   * Whether the grid column headers are resizable by the user.
-   */
-  readonly resizableColumnHeaders: boolean;
-
-  /**
-   * The size of a resize handle.
-   */
-  readonly resizeHandleSize: number;
+  readonly mouseHandler: EventHandler.IMouseHandler;
 
   /**
    * Whether the event handler is disposed.
    */
   get isDisposed(): boolean {
     return this._disposed;
-  }
-
-  /**
-   * The current state of the event handler
-   */
-  get state(): EventHandler.State {
-    return this._state;
-  }
-
-  /**
-   *
-   * @param msg
-   */
-  processMessage(msg: Message): void {
-
   }
 
   /**
@@ -206,26 +136,26 @@ class EventHandler implements IDisposable, IMessageHandler {
    */
   handleEvent(event: Event): void {
     switch (event.type) {
+    case 'keydown':
+      this._evtKeyDown(event as KeyboardEvent);
+      break;
     case 'mousedown':
       this._evtMouseDown(event as MouseEvent);
-      break;
-    case 'mouseup':
-      this._evtMouseUp(event as MouseEvent);
       break;
     case 'mousemove':
       this._evtMouseMove(event as MouseEvent);
       break;
+    case 'mouseup':
+      this._evtMouseUp(event as MouseEvent);
+      break;
     case 'mouseleave':
       this._evtMouseLeave(event as MouseEvent);
       break;
-    case 'wheel':
-      this._evtWheel(event as WheelEvent);
-      break;
-    case 'keydown':
-      this._evtKeyDown(event as KeyboardEvent);
-      break;
     case 'contextmenu':
       this._evtContextMenu(event as MouseEvent);
+      break;
+    case 'wheel':
+      this._evtWheel(event as WheelEvent);
       break;
     case 'resize':
       this.grid.refreshDPI();
@@ -234,491 +164,14 @@ class EventHandler implements IDisposable, IMessageHandler {
   }
 
   /**
-   * Get the cell resize handle for a grid hit test result.
-   *
-   * @param hit - The grid hit test result.
-   *
-   * @returns The resize handle for the hit test.
-   */
-  protected resizeHandleForHitTest(hit: DataGrid.HitTestResult): EventHandler.ResizeHandle {
-    // Fetch the behavior flags.
-    let rr = this.resizableRows;
-    let rc = this.resizableColumns;
-    let rrh = this.resizableRowHeaders;
-    let rch = this.resizableColumnHeaders;
-
-    // Fetch the resize handle size.
-    let rhs = Math.floor(this.resizeHandleSize / 2);
-
-    // Fetch the row and column.
-    let r = hit.row;
-    let c = hit.column;
-
-    // Fetch the leading and trailing sizes.
-    let lw = hit.x;
-    let lh = hit.y;
-    let tw = hit.width - hit.x;
-    let th = hit.height - hit.y;
-
-    // Set up the result variable.
-    let result: EventHandler.ResizeHandle;
-
-    // Dispatch based on hit test region.
-    switch (hit.region) {
-    case 'corner-header':
-      if (c > 0 && rrh && lw <= rhs) {
-        result = 'left';
-      } else if (rrh && tw <= rhs) {
-        result = 'right';
-      } else if (r > 0 && rch && lh <= rhs) {
-        result = 'top';
-      } else if (rch && th <= rhs) {
-        result = 'bottom';
-      } else {
-        result = 'none';
-      }
-      break;
-    case 'column-header':
-      if (c > 0 && rc && lw <= rhs) {
-        result = 'left';
-      } else if (rc && tw <= rhs) {
-        result = 'right';
-      } else if (r > 0 && rch && lh <= rhs) {
-        result = 'top';
-      } else if (rch && th <= rhs) {
-        result = 'bottom';
-      } else {
-        result = 'none';
-      }
-      break;
-    case 'row-header':
-      if (c > 0 && rrh && lw <= rhs) {
-        result = 'left';
-      } else if (rrh && tw <= rhs) {
-        result = 'right';
-      } else if (r > 0 && rr && lh <= rhs) {
-        result = 'top';
-      } else if (rr && th <= rhs) {
-        result = 'bottom';
-      } else {
-        result = 'none';
-      }
-      break;
-    case 'body':
-      result = 'none';
-      break;
-    case 'void':
-      result = 'none';
-      break;
-    default:
-      throw 'unreachable';
-    }
-
-    // Return the result.
-    return result;
-  }
-
-  /**
-   * Handle the key down event for the `'default'` state.
-   *
-   * @param event - The keyboard event of interest.
-   *
-   * ##### Notes
-   *
-   * This method may be reimplemented by a subclass.
-   */
-  protected default_onKeyDown(event: KeyboardEvent): void { }
-
-  /**
-   * Handle the mouse move event for the `'default'` state.
-   *
-   * @param event - The mouse event of interest.
-   *
-   * #### Notes
-   * The default implementation of this handler sets the mouse
-   * cursor for the viewport, taking into account the various
-   * behavior flags.
-   *
-   * This method may be reimplemented by a subclass.
-   */
-  protected default_onMouseMove(event: MouseEvent): void {
-    // Hit test the grid.
-    let hit = this.grid.hitTest(event.clientX, event.clientY);
-
-    // If the hit test failed, clear the viewport cursor.
-    if (!hit) {
-      this.grid.viewport.node.style.cursor = '';
-      return;
-    }
-
-    // TODO alt cursor
-
-    // TODO move cursor
-
-    // Get the resize handle for the hit test.
-    let handle = this.resizeHandleForHitTest(hit);
-
-    // Fetch the cursor for the handle.
-    let cursor = Private.cursorForHandle(handle);
-
-    // Update the viewport cursor based on the part.
-    this.grid.viewport.node.style.cursor = cursor;
-  }
-
-  /**
-   * Handle the mouse leave event for the `'default'` state.
-   *
-   * @param event - The mouse event of interest.
-   *
-   * #### Notes
-   * The default implementation of this handler clears the
-   * viewport cursor.
-   *
-   * This method may be reimplemented by a subclass.
-   */
-  protected default_onMouseLeave(event: MouseEvent): void {
-    this.grid.viewport.node.style.cursor = '';
-  }
-
-  /**
-   * Handle the mouse down event for the `'default'` state.
-   *
-   * @param event - The mouse event of interest.
-   *
-   * @returns The new state for the handler.
-   *
-   * #### Notes
-   * This method determines the new state for the handler, based
-   * on where the mouse was pressed. If a state change results,
-   * the mouse down handler for the new state will also be called.
-   *
-   * This method may be reimplemented by a subclass.
-   */
-  protected default_onMouseDown(event: MouseEvent): EventHandler.State {
-    // Hit test the grid.
-    let hit = this.grid.hitTest(event.clientX, event.clientY);
-
-    // Bail early if the hit test was out of bounds.
-    if (hit === null) {
-      return 'default';
-    }
-
-    // Bail early if the hit was in the void region.
-    if (hit.region === 'void') {
-      return 'default';
-    }
-
-    // Transition to the alternate mode if the alt key is held.
-    if (event.altKey) {
-      return 'alt';
-    }
-
-    // move transition
-
-    // Get the resize handle for the hit test.
-    let handle = this.resizeHandleForHitTest(hit);
-
-    // Transition to the resize mode if possible.
-    if (handle !== 'none') {
-      return 'resize';
-    }
-
-    // Otherwise, transition to the select mode.
-    return 'select';
-  }
-
-  /**
-   * Handle the wheel event for the `'default'` state.
-   *
-   * @param event - The wheel event of interest.
-   *
-   * #### Notes
-   * The defualt implementation scrolls the data grid.
-   *
-   * This method may be reimplemented by a subclass.
-   */
-  protected default_onWheel(event: WheelEvent): void {
-    // Extract the delta X and Y movement.
-    let dx = event.deltaX;
-    let dy = event.deltaY;
-
-    // Convert the delta values to pixel values.
-    switch (event.deltaMode) {
-    case 0:  // DOM_DELTA_PIXEL
-      break;
-    case 1:  // DOM_DELTA_LINE
-      let ds = this.grid.defaultSizes;
-      dx *= ds.columnWidth;
-      dy *= ds.rowHeight;
-      break;
-    case 2:  // DOM_DELTA_PAGE
-      dx *= this.grid.pageWidth;
-      dy *= this.grid.pageHeight;
-      break;
-    default:
-      throw 'unreachable';
-    }
-
-    // Scroll by the desired amount.
-    this.grid.scrollBy(dx, dy);
-  }
-
-  /**
-   * Handle the context menu event for the `'default'` state.
-   *
-   * @param event - The context menu event of interest.
-   *
-   * #### Notes
-   * The default implementation of this method is a no-op.
-   *
-   * This method may be reimplemented by a subclass.
-   */
-  protected default_onContextMenu(event: MouseEvent): void { }
-
-  /**
-   * The temporary data stored during the resize state.
-   */
-  protected resizeData: EventHandler.ResizeData | null = null;
-
-  /**
-   * Handle the mouse down event for the `'resize'` state.
-   *
-   * @param event - The mouse event of interest.
-   *
-   * #### Notes
-   * The default implementation of this method initializes a resize.
-   *
-   * This method may be reimplemented by a subclass.
-   */
-  protected resize_onMouseDown(event: MouseEvent): void {
-    // Unpack the event.
-    let { clientX, clientY } = event;
-
-    // Hit test the grid.
-    let hit = this.grid.hitTest(clientX, clientY);
-
-    // Test for invalid state.
-    if (!hit || hit.region === 'void' || hit.region === 'body') {
-      console.warn('invalid resize state');
-      return;
-    }
-
-    // Convert the hit test into a part.
-    let handle = this.resizeHandleForHitTest(hit);
-
-    // Test for invalid state.
-    if (handle === 'none') {
-      console.warn('invalid resize state');
-      return;
-    }
-
-    // Set up the temporary resize data.
-    if (handle === 'left' || handle === 'right' ) {
-      // Set up the resize data type.
-      let type: 'column' = 'column';
-
-      // Determine the column region.
-      let region: DataModel.ColumnRegion = (
-        hit.region === 'column-header' ? 'body' : 'row-header'
-      );
-
-      // Determine the section index.
-      let index = handle === 'left' ? hit.column - 1 : hit.column;
-
-      // Fetch the section size.
-      let size = this.grid.columnSize(region, index);
-
-      // Override the document cursor.
-      let override = Drag.overrideCursor('ew-resize');
-
-      // Create the temporary resize data.
-      this.resizeData = { type, region, index, size, clientX, override };
-    } else {
-      // Set up the resize data type.
-      let type: 'row' = 'row';
-
-      // Determine the row region.
-      let region: DataModel.RowRegion = (
-        hit.region === 'row-header' ? 'body' : 'column-header'
-      );
-
-      // Determine the section index.
-      let index = handle === 'top' ? hit.row - 1 : hit.row;
-
-      // Fetch the section size.
-      let size = this.grid.rowSize(region, index);
-
-      // Override the document cursor.
-      let override = Drag.overrideCursor('ns-resize');
-
-      // Create the temporary resize data.
-      this.resizeData = { type, region, index, size, clientY, override };
-    }
-  }
-
-  /**
-   * Handle the mouse move event for the `'resize'` state.
-   *
-   * @param event - The mouse event of interest.
-   *
-   * #### Notes
-   * The default implementation of this method executes a resize.
-   *
-   * This method may be reimplemented by a subclass.
-   */
-  protected resize_onMouseMove(event: MouseEvent): void {
-    // Fetch the resize data.
-    let data = this.resizeData;
-
-    // Test for invalid state.
-    if (!data) {
-      console.warn('invalid resize state');
-      return;
-    }
-
-    // Dispatch to the proper grid resize method.
-    if (data.type === 'row') {
-      let dy = event.clientY - data.clientY;
-      this.grid.resizeRow(data.region, data.index, data.size + dy);
-    } else {
-      let dx = event.clientX - data.clientX;
-      this.grid.resizeColumn(data.region, data.index, data.size + dx);
-    }
-  }
-
-  /**
-   * Handle the mouse down event for the `'resize'` state.
-   *
-   * @param event - The mouse event of interest.
-   *
-   * #### Notes
-   * The default implementation of this method finalizes a resize.
-   *
-   * This method may be reimplemented by a subclass.
-   */
-  protected resize_onMouseUp(event: MouseEvent): void {
-    // Test for invalid state.
-    if (!this.resizeData) {
-      console.warn('invalid resize state');
-      return;
-    }
-
-    // Dispose of the cursor override.
-    this.resizeData.override.dispose();
-
-    // Clear the resize data.
-    this.resizeData = null;
-  }
-
-  /**
-   * Handle the wheel event for the `'resize'` state.
-   *
-   * @param event - The wheel event of interest.
-   *
-   * #### Notes
-   * The default implementation of this method is a no-op.
-   *
-   * This method may be reimplemented by a subclass.
-   */
-  protected resize_onWheel(event: WheelEvent): void { }
-
-  /**
-   *
-   */
-  protected move_onMouseDown(event: MouseEvent): void { }
-
-  /**
-   *
-   */
-  protected move_onMouseMove(event: MouseEvent): void { }
-
-  /**
-   *
-   */
-  protected move_onMouseUp(event: MouseEvent): void { }
-
-  /**
-   *
-   */
-  protected move_onWheel(event: WheelEvent): void { }
-
-  /**
-   *
-   */
-  protected select_onMouseDown(event: MouseEvent): void { }
-
-  /**
-   *
-   */
-  protected select_onMouseMove(event: MouseEvent): void { }
-
-  /**
-   *
-   */
-  protected select_onMouseUp(event: MouseEvent): void { }
-
-  /**
-   *
-   */
-  protected select_onWheel(event: WheelEvent): void { }
-
-  /**
-   * Handle the mouse down event for the `'alt'` state.
-   *
-   * @param event - The mouse event of interest.
-   *
-   * #### Notes
-   * The default implementation of this method is a no-op.
-   *
-   * This method may be reimplemented by a subclass.
-   */
-  protected alt_onMouseDown(event: MouseEvent): void { }
-
-  /**
-   * Handle the mouse move event for the `'alt'` state.
-   *
-   * @param event - The mouse event of interest.
-   *
-   * #### Notes
-   * The default implementation of this method is a no-op.
-   *
-   * This method may be reimplemented by a subclass.
-   */
-  protected alt_onMouseMove(event: MouseEvent): void { }
-
-  /**
-   * Handle the mouse up event for the `'alt'` state.
-   *
-   * @param event - The mouse event of interest.
-   *
-   * #### Notes
-   * The default implementation of this method is a no-op.
-   *
-   * This method may be reimplemented by a subclass.
-   */
-  protected alt_onMouseUp(event: MouseEvent): void { }
-
-  /**
-   * Handle the wheel event for the `'alt'` state.
-   *
-   * @param event - The wheel event of interest.
-   *
-   * #### Notes
-   * The default implementation of this method is a no-op.
-   *
-   * This method may be reimplemented by a subclass.
-   */
-  protected alt_onWheel(event: WheelEvent): void { }
-
-  /**
    * Handle the `'keydown'` event for the data grid.
    */
   private _evtKeyDown(event: KeyboardEvent): void {
-    if (this._state === 'default') {
-      this.default_onKeyDown(event);
-    } else {
+    if (this._state === 'mouse') {
       event.preventDefault();
       event.stopPropagation();
+    } else {
+      this.keyHandler.onKeyDown(this.grid, event);
     }
   }
 
@@ -726,50 +179,14 @@ class EventHandler implements IDisposable, IMessageHandler {
    * Handle the `'mousedown'` event for the data grid.
    */
   private _evtMouseDown(event: MouseEvent): void {
-    // Bail early if not in the default state.
-    if (this._state !== 'default') {
-      event.preventDefault();
-      event.stopPropagation();
-      return;
-    }
-
-    // Do nothing if the left mouse button is not pressed.
+    // Ignore everything except the left mouse button.
     if (event.button !== 0) {
       return;
     }
 
-    // Determine which state to enter.
-    let state = this.default_onMouseDown(event);
-
     // Stop the event propagation.
     event.preventDefault();
     event.stopPropagation();
-
-    // Bail early if still in the default state.
-    if (state === 'default') {
-      return;
-    }
-
-    // Update the internal state.
-    this._state = state;
-
-    // Dispatch based on the current state.
-    switch (state) {
-    case 'resize':
-      this.resize_onMouseDown(event);
-      break;
-    case 'move':
-      this.move_onMouseDown(event);
-      break;
-    case 'select':
-      this.select_onMouseDown(event);
-      break;
-    case 'alt':
-      this.alt_onMouseDown(event);
-      break;
-    default:
-      throw 'unreachable';
-    }
 
     // Add the extra document listeners.
     document.addEventListener('keydown', this, true);
@@ -777,46 +194,42 @@ class EventHandler implements IDisposable, IMessageHandler {
     document.addEventListener('mousedown', this, true);
     document.addEventListener('mousemove', this, true);
     document.addEventListener('contextmenu', this, true);
+
+    // Transition to the mouse capture state.
+    this._state = 'mouse';
+
+    // Dispatch to the mouse handler.
+    this.mouseHandler.onMouseDown(this.grid, event);
+  }
+
+  /**
+   * Handle the `'mousemove'` event for the data grid.
+   */
+  private _evtMouseMove(event: MouseEvent): void {
+    if (this._state === 'mouse') {
+      event.preventDefault();
+      event.stopPropagation();
+      this.mouseHandler.onMouseMove(this.grid, event);
+    } else {
+      this.mouseHandler.onMouseHover(this.grid, event);
+    }
   }
 
   /**
    * Handle the `'mouseup'` event for the data grid.
    */
   private _evtMouseUp(event: MouseEvent): void {
-    // Bail early if in the default state.
-    if (this._state === 'default') {
-      return;
-    }
-
-    // Do nothing if the left mouse button is not released.
+    // Ignore everything except the left mouse button.
     if (event.button !== 0) {
       return;
     }
 
-    // Dispatch based on the current mode.
-    switch (this._state) {
-    case 'resize':
-      this.resize_onMouseUp(event);
-      break;
-    case 'move':
-      this.move_onMouseUp(event);
-      break;
-    case 'select':
-      this.select_onMouseUp(event);
-      break;
-    case 'alt':
-      this.alt_onMouseUp(event);
-      break;
-    default:
-      throw 'unreachable';
-    }
+    // Transition to the default state.
+    this._state = 'default';
 
     // Stop the event propagation.
     event.preventDefault();
     event.stopPropagation();
-
-    // Reset the state.
-    this._state = 'default';
 
     // Remove the document listeners.
     document.removeEventListener('keydown', this, true);
@@ -824,44 +237,32 @@ class EventHandler implements IDisposable, IMessageHandler {
     document.removeEventListener('mousedown', this, true);
     document.removeEventListener('mousemove', this, true);
     document.removeEventListener('contextmenu', this, true);
-  }
 
-  /**
-   * Handle the `'mousemove'` event for the data grid.
-   */
-  private _evtMouseMove(event: MouseEvent): void {
-    // Dispatch based on the current state.
-    switch (this._state) {
-    case 'default':
-      this.default_onMouseMove(event);
-      break;
-    case 'resize':
-      this.resize_onMouseMove(event);
-      break;
-    case 'move':
-      this.move_onMouseMove(event);
-      break;
-    case 'select':
-      this.select_onMouseMove(event);
-      break;
-    case 'alt':
-      this.alt_onMouseMove(event);
-      break;
-    default:
-      throw 'unreachable';
-    }
-
-    // Stop the event propagation.
-    event.preventDefault();
-    event.stopPropagation();
+    // Dispatch to the mouse handler.
+    this.mouseHandler.onMouseUp(this.grid, event);
   }
 
   /**
    * Handle the `'mouseleave'` event for the data grid.
    */
   private _evtMouseLeave(event: MouseEvent): void {
-    if (this._state === 'default') {
-      this.default_onMouseLeave(event);
+    if (this._state === 'mouse') {
+      event.preventDefault();
+      event.stopPropagation();
+    } else {
+      this.mouseHandler.onMouseLeave(this.grid, event);
+    }
+  }
+
+  /**
+   * Handle the `'contextmenu'` event for the data grid.
+   */
+  private _evtContextMenu(event: MouseEvent): void {
+    if (this._state === 'mouse') {
+      event.preventDefault();
+      event.stopPropagation();
+    } else {
+      this.mouseHandler.onContextMenu(this.grid, event);
     }
   }
 
@@ -869,51 +270,16 @@ class EventHandler implements IDisposable, IMessageHandler {
    * Handle the `'wheel'` event for the data grid.
    */
   private _evtWheel(event: WheelEvent): void {
-    // Do nothing if the control key is held.
-    if (event.ctrlKey) {
-      return;
-    }
-
-    // Dispatch based on the state.
-    switch (this._state) {
-    case 'default':
-      this.default_onWheel(event);
-      break;
-    case 'resize':
-      this.resize_onWheel(event);
-      break;
-    case 'move':
-      this.move_onWheel(event);
-      break;
-    case 'select':
-      this.select_onWheel(event);
-      break;
-    case 'alt':
-      this.alt_onWheel(event);
-      break;
-    default:
-      throw 'unreachable';
-    }
-
-    // Mark the event as handled.
-    event.preventDefault();
-    event.stopPropagation();
-  }
-
-  /**
-   * Handle the `'contextmenu'` event for the data grid.
-   */
-  private _evtContextMenu(event: MouseEvent): void {
-    if (this._state === 'default') {
-      this.default_onContextMenu(event);
-    } else {
+    if (this._state === 'mouse') {
       event.preventDefault();
       event.stopPropagation();
+    } else {
+      this.mouseHandler.onWheel(this.grid, event);
     }
   }
 
   private _disposed = false;
-  private _state: EventHandler.State = 'default';
+  private _state: 'default' | 'mouse' = 'default';
 }
 
 
@@ -923,45 +289,91 @@ class EventHandler implements IDisposable, IMessageHandler {
 export
 namespace EventHandler {
   /**
-   * A type alias for the state of the event handler.
+   * An object which handles keydown events for the data grid.
    */
   export
-  type State = (
+  interface IKeyHandler extends IDisposable {
     /**
-     * The default state.
+     * Handle the key down event for the data grid.
      *
-     * This is the state when no mouse button is pressed.
+     * @param grid - The data grid of interest.
+     *
+     * @param event - The keydown event of interest.
+     *
+     * #### Notes
+     * This will not be called if the mouse button is pressed.
      */
-    'default' |
+    onKeyDown(grid: DataGrid, event: KeyboardEvent): void;
+  }
+
+  /**
+   * An object which handles mouse events for the data grid.
+   */
+  export
+  interface IMouseHandler extends IDisposable {
+    /**
+     * Handle the mouse hover event for the data grid.
+     *
+     * @param grid - The data grid of interest.
+     *
+     * @param event - The mouse hover event of interest.
+     */
+    onMouseHover(grid: DataGrid, event: MouseEvent): void;
 
     /**
-     * The resize state.
+     * Handle the mouse leave event for the data grid.
      *
-     * This is the state when resizing a section in the grid.
+     * @param grid - The data grid of interest.
+     *
+     * @param event - The mouse hover event of interest.
      */
-    'resize' |
+    onMouseLeave(grid: DataGrid, event: MouseEvent): void;
 
     /**
-     * The move state.
+     * Handle the mouse down event for the data grid.
      *
-     * This is the state when moving a section in the grid.
+     * @param grid - The data grid of interest.
+     *
+     * @param event - The mouse down event of interest.
      */
-    'move' |
+    onMouseDown(grid: DataGrid, event: MouseEvent): void;
 
     /**
-     * The select state.
+     * Handle the mouse move event for the data grid.
      *
-     * This is the state when selecting cells in the grid.
+     * @param grid - The data grid of interest.
+     *
+     * @param event - The mouse move event of interest.
      */
-    'select' |
+    onMouseMove(grid: DataGrid, event: MouseEvent): void;
 
     /**
-     * The alternate state.
+     * Handle the mouse up event for the data grid.
      *
-     * This is the state when the `alt` key is held.
+     * @param grid - The data grid of interest.
+     *
+     * @param event - The mouse up event of interest.
      */
-    'alt'
-  );
+    onMouseUp(grid: DataGrid, event: MouseEvent): void;
+
+    /**
+     * Handle the context menu event for the data grid.
+     *
+     * @param grid - The data grid of interest.
+     *
+     * @param event - The context menu event of interest.
+     */
+    onContextMenu(grid: DataGrid, event: MouseEvent): void;
+
+    /**
+     * Handle the wheel event for the data grid.
+     *
+     * @param grid - The data grid of interest.
+     *
+     * @param event - The wheel event of interest.
+     */
+    onWheel(grid: DataGrid, event: WheelEvent): void;
+  }
 
   /**
    * An options object for initializing an event handler.
@@ -974,147 +386,13 @@ namespace EventHandler {
     grid: DataGrid;
 
     /**
-     * Whether grid rows are resizable.
-     *
-     * The default is `true`.
+     * The key handler for the data grid.
      */
-    resizableRows?: boolean;
+    keyHandler: IKeyHandler;
 
     /**
-     * Whether grid columns are resizable.
-     *
-     * The default is `true`.
+     * The mouse handler for the data grid.
      */
-    resizableColumns?: boolean;
-
-    /**
-     * Whether grid row headers are resizable.
-     *
-     * The default is `true`.
-     */
-    resizableRowHeaders?: boolean;
-
-    /**
-     * Whether grid column headers are resizabe.
-     *
-     * The default is `true`.
-     */
-    resizableColumnHeaders?: boolean;
-
-    /**
-     * The size of a section resize handle.
-     *
-     * The default is `10`.
-     */
-    resizeHandleSize?: number;
+    mouseHandler: IMouseHandler;
   }
-
-  /**
-   * A type alias for a cell resize handle.
-   */
-  export
-  type ResizeHandle = 'top' | 'left' | 'right' | 'bottom' | 'none';
-
-  /**
-   * A type alias for the row resize data.
-   */
-  export
-  type RowResizeData = {
-    /**
-     * The descriminated type for the data.
-     */
-    type: 'row';
-
-    /**
-     * The row region which holds the section being resized.
-     */
-    region: DataModel.RowRegion;
-
-    /**
-     * The index of the section being resized.
-     */
-    index: number;
-
-    /**
-     * The original size of the section.
-     */
-    size: number;
-
-    /**
-     * The original client Y position of the mouse.
-     */
-    clientY: number;
-
-    /**
-     * The disposable to clear the cursor override.
-     */
-    override: IDisposable;
-  };
-
-  /**
-   * A type alias for the column resize data.
-   */
-  export
-  type ColumnResizeData = {
-    /**
-     * The descriminated type for the data.
-     */
-    type: 'column';
-
-    /**
-     * The column region which holds the section being resized.
-     */
-    region: DataModel.ColumnRegion;
-
-    /**
-     * The index of the section being resized.
-     */
-    index: number;
-
-    /**
-     * The original size of the section.
-     */
-    size: number;
-
-    /**
-     * The original client X position of the mouse.
-     */
-    clientX: number;
-
-    /**
-     * The disposable to clear the cursor override.
-     */
-    override: IDisposable;
-  };
-
-  /**
-   * A type alias for the event handler resize data.
-   */
-  export
-  type ResizeData = RowResizeData | ColumnResizeData;
-}
-
-
-/**
- * The namespace for the module implementation details.
- */
-namespace Private {
-  /**
-   * Convert a resize handle into a cursor.
-   */
-  export
-  function cursorForHandle(handle: EventHandler.ResizeHandle): string {
-    return cursorMap[handle];
-  }
-
-  /**
-   * A mapping of resize handle to cursor.
-   */
-  const cursorMap = {
-    top: 'ns-resize',
-    left: 'ew-resize',
-    right: 'ew-resize',
-    bottom: 'ns-resize',
-    none: ''
-  };
 }

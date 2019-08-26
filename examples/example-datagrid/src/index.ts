@@ -8,7 +8,7 @@
 import 'es6-promise/auto';  // polyfill Promise on IE
 
 import {
-  CellRenderer, DataGrid, DataModel, JSONModel, TextRenderer
+  CellRenderer, DataGrid, DataModel, EventHandler, JSONModel, TextRenderer
 } from '@phosphor/datagrid';
 
 import {
@@ -234,6 +234,8 @@ function main(): void {
 
   let grid1 = new DataGrid({ style: blueStripeStyle });
   grid1.model = model1;
+  //grid1.selectionModel = new SimpleSelections({ model: model1 });
+  //(window as any).selections = grid1.selectionModel;
 
   let grid2 = new DataGrid({ style: brownStripeStyle });
   grid2.model = model2;
@@ -241,6 +243,7 @@ function main(): void {
   let grid3 = new DataGrid();
   grid3.cellRenderers.set('body', {}, fgColorFloatRenderer);
   grid3.model = model3;
+  (window as any).grid3 = grid3;
 
   let grid4 = new DataGrid();
   grid4.cellRenderers.set('body', {}, bgColorFloatRenderer);
@@ -256,6 +259,13 @@ function main(): void {
     }
   });
   grid5.model = model5;
+  (window as any).grid = grid5;
+
+  new EventHandler({ grid: grid1 });
+  new EventHandler({ grid: grid2 });
+  new EventHandler({ grid: grid3 });
+  new EventHandler({ grid: grid4 });
+  new EventHandler({ grid: grid5 });
 
   let wrapper1 = createWrapper(grid1, 'Trillion Rows/Cols');
   let wrapper2 = createWrapper(grid2, 'Streaming Rows');

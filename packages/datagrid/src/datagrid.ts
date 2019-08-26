@@ -738,6 +738,40 @@ class DataGrid extends Widget {
   }
 
   /**
+   * Get the row count for a particular region in the data grid.
+   *
+   * @param region - The row region of interest.
+   *
+   * @returns The row count for the specified region.
+   */
+  rowCount(region: DataModel.RowRegion): number {
+    let count: number;
+    if (region === 'body') {
+      count = this._rowSections.count;
+    } else {
+      count = this._columnHeaderSections.count;
+    }
+    return count;
+  }
+
+  /**
+   * Get the column count for a particular region in the data grid.
+   *
+   * @param region - The column region of interest.
+   *
+   * @returns The column count for the specified region.
+   */
+  columnCount(region: DataModel.RowRegion): number {
+    let count: number;
+    if (region === 'body') {
+      count = this._columnSections.count;
+    } else {
+      count = this._rowHeaderSections.count;
+    }
+    return count;
+  }
+
+  /**
    * Get the offset of a row in the data grid.
    *
    * @param region - The region which holds the row of interest.
