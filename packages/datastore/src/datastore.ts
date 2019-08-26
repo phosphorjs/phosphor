@@ -1,5 +1,5 @@
 /*-----------------------------------------------------------------------------
-| Copyright (c) 2014-2018, PhosphorJS Contributors
+| Copyright (c) 2014-2019, PhosphorJS Contributors
 |
 | Distributed under the terms of the BSD 3-Clause License.
 |
@@ -34,6 +34,10 @@ import {
 } from './schema';
 
 import {
+  IServerAdapter
+} from './serveradapter';
+
+import {
   Table
 } from './table';
 
@@ -52,12 +56,6 @@ import {
  *
  * https://en.wikipedia.org/wiki/Conflict-free_replicated_data_type
  * https://hal.inria.fr/file/index/docid/555588/filename/techreport.pdf
- *
- * The internal algorithms require transactions to be delivered in causal
- * order to guarantee stability. E.g. a transaction that removes some text
- * must be delivered *after* the transaction that adds that text. Any
- * deviation from this will *not* raise an error, but can lead to
- * diverging state between peers.
  */
 export
 class Datastore implements IIterable<Table<Schema>>, IMessageHandler, IDisposable {
@@ -100,9 +98,12 @@ class Datastore implements IIterable<Table<Schema>>, IMessageHandler, IDisposabl
       }));
     }
 
-    return new Datastore(context, tables, options.broadcastHandler);
+    return new Datastore(context, tables, options.adapter);
   }
 
+  /**
+   * Dispose of the resources held by the datastore.
+   */
   dispose(): void {
     // Bail if already disposed.
     if (this._disposed) {
@@ -111,9 +112,12 @@ class Datastore implements IIterable<Table<Schema>>, IMessageHandler, IDisposabl
     this._disposed = true;
     Signal.clearData(this);
 
-    this._broadcastHandler = null;
+    this._adapter = null;
   }
 
+  /**
+   * Whether the datastore has been disposed.
+   */
   get isDisposed(): boolean {
     return this._disposed;
   }
@@ -236,15 +240,13 @@ class Datastore implements IIterable<Table<Schema>>, IMessageHandler, IDisposabl
   endTransaction(): void {
     this._finalizeTransaction();
     const {patch, change, storeId, transactionId, version} = this._context;
-    if (this.broadcastHandler && !Private.isPatchEmpty(patch)) {
-      MessageLoop.sendMessage(
-        this.broadcastHandler,
-        new Datastore.TransactionMessage({
-          id: transactionId,
-          storeId,
-          patch,
-          version
-      }));
+    if (this._adapter && !Private.isPatchEmpty(patch)) {
+      this._adapter.broadcastTransaction({
+        id: transactionId,
+        storeId,
+        patch,
+        version
+      });
     }
     if (!Private.isChangeEmpty(this._context.change)) {
       this._changed.emit({
@@ -317,8 +319,8 @@ class Datastore implements IIterable<Table<Schema>>, IMessageHandler, IDisposabl
   /**
    * The handler for broadcasting transactions to peers.
    */
-  get broadcastHandler(): IMessageHandler | null {
-    return this._broadcastHandler;
+  get adapter(): IServerAdapter | null {
+    return this._adapter;
   }
 
   /**
@@ -343,15 +345,53 @@ class Datastore implements IIterable<Table<Schema>>, IMessageHandler, IDisposabl
   private constructor(
     context: Datastore.Context,
     tables: BPlusTree<Table<Schema>>,
-    broadcastHandler?: IMessageHandler,
+    adapter?: IServerAdapter,
     transactionIdFactory?: Datastore.TransactionIdFactory
   ) {
     this._context = context;
     this._tables = tables;
-    this._broadcastHandler = broadcastHandler || null;
+    this._adapter = adapter || null;
     this._transactionIdFactory = transactionIdFactory || createDuplexId;
+    if (this._adapter) {
+      this._adapter.transactionReceived.connect(
+        this._onRemoteTransaction,
+        this
+      );
+    }
   }
 
+  /**
+   * Handle a transaction from the server adapter.
+   */
+  private _onRemoteTransaction(
+    sender: IServerAdapter,
+    args: IServerAdapter.ITransactionArgs
+  ): void {
+    let { transaction, type } = args;
+    let count: number;
+    switch (type) {
+      case 'transaction':
+        this._applyTransaction(transaction);
+        break;
+      case 'undo':
+        count = this._cemetery[transaction.id] || 0;
+        this._cemetery[transaction.id] = count + 1;
+        this._applyTransaction(transaction, false, 'unapply');
+        break;
+      case 'redo':
+        count = this._cemetery[transaction.id] || 0;
+        if (count === 1) {
+          delete this._cemetery[transaction.id];
+          return;
+        }
+        if (count > 1) {
+          this._cemetery[transaction.id] = count - 1;
+          return;
+        }
+        this._applyTransaction(transaction)
+        break;
+    }
+  }
 
   /**
    * Apply a transaction to the datastore.
@@ -363,13 +403,13 @@ class Datastore implements IIterable<Table<Schema>>, IMessageHandler, IDisposabl
    * #### Notes
    * If changes are made, the `changed` signal will be emitted.
    */
-  private _applyTransaction(transaction: Datastore.Transaction, fromQueue=false): void {
+  private _applyTransaction(transaction: Datastore.Transaction, fromQueue=false, which: 'apply' | 'unapply' = 'apply'): void {
     if (!this._transactionQueue.isEmpty && !fromQueue) {
       // We have queued transactions waiting to be applied.
       // As we need to retain causal order of incoming transactions,
       // we simply add the new one to the end of that queue.
       this._queueTransaction(transaction);
-      return
+      return;
     }
 
     const {storeId, patch} = transaction;
@@ -393,7 +433,11 @@ class Datastore implements IIterable<Table<Schema>>, IMessageHandler, IDisposabl
           this._finalizeTransaction();
           return;
         }
-        change[schemaId] = Table.patch(table, tablePatch);
+        if (which === 'apply') {
+          change[schemaId] = Table.patch(table, tablePatch);
+        } else {
+          change[schemaId] = Table.unpatch(table, tablePatch);
+        }
       });
     } finally {
       this._finalizeTransaction();
@@ -480,7 +524,8 @@ class Datastore implements IIterable<Table<Schema>>, IMessageHandler, IDisposabl
     }
   }
 
-  private _broadcastHandler: IMessageHandler | null;
+  private _adapter: IServerAdapter | null;
+  private _cemetery: { [id: string]: number } = {};
   private _disposed = false;
   private _tables: BPlusTree<Table<Schema>>;
   private _context: Datastore.Context;
@@ -513,7 +558,7 @@ namespace Datastore {
     /**
      * An optional handler for broadcasting transactions to peers.
      */
-    broadcastHandler?: IMessageHandler;
+    adapter?: IServerAdapter;
 
     /**
      * An optional transaction id factory to override the default.
