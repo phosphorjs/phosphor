@@ -383,13 +383,14 @@ class Datastore implements IIterable<Table<Schema>>, IMessageHandler, IDisposabl
         break;
       case 'redo':
         count = this._cemetery[transaction.id] || 0;
-        if (count === 1) {
-          delete this._cemetery[transaction.id];
-          return;
-        }
         if (count > 1) {
           this._cemetery[transaction.id] = count - 1;
           return;
+        }
+        // Unlike in the cemeteries for ListField and TextField,
+        // a tie in undo/redo count goes to the redo.
+        if (count === 1) {
+          delete this._cemetery[transaction.id];
         }
         this._applyTransaction(transaction)
         break;

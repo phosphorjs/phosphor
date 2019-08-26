@@ -14,10 +14,6 @@ import {
 } from '@phosphor/datastore';
 
 import {
-  MessageLoop
-} from '@phosphor/messaging';
-
-import {
   ISignal, Signal
 } from '@phosphor/signaling';
 
@@ -84,10 +80,18 @@ class InMemoryServerAdapter implements IServerAdapter {
   }
 
   undo(id: string): Promise<void> {
+    this._received.emit({
+      type: 'undo',
+      transaction: this._transactions[id]
+    });
     return Promise.resolve(undefined);
   }
 
   redo(id: string): Promise<void> {
+    this._received.emit({
+      type: 'redo',
+      transaction: this._transactions[id]
+    });
     return Promise.resolve(undefined);
   }
 
@@ -387,49 +391,96 @@ describe('@phosphor/datastore', () => {
 
     });
 
-    describe('processMessage()', () => {
-
-      it('should accept transaction messages from other stores', () => {
-        let t2 = datastore.get(schema2);
-        datastore.beginTransaction();
-        t2.update({ 'my-record': { count: 123, enabled: true } });
-        datastore.endTransaction();
-        datastore.beginTransaction();
-        t2.update({ 'my-other-record': { count: 456, enabled: true } });
-        datastore.endTransaction();
-        let newDatastore = Datastore.create({
-          id: DATASTORE_ID + 1,
-          schemas: [schema1, schema2]
-        });
-        MessageLoop.sendMessage(
-          newDatastore,
-          new Datastore.TransactionMessage(adapter.transactions[0])
-        );
-        MessageLoop.sendMessage(
-          newDatastore,
-          new Datastore.TransactionMessage(adapter.transactions[1])
-        );
-        t2 = newDatastore.get(schema2);
-        expect(t2.get('my-record')!.enabled).to.be.true;
-        expect(t2.get('my-record')!.count).to.equal(123);
-        expect(t2.get('my-other-record')!.enabled).to.be.true;
-        expect(t2.get('my-other-record')!.count).to.equal(456);
-      });
-
-    });
-
     describe('undo()', () => {
 
-      it('should throw', () => {
-        expect(() => { datastore.undo(''); }).to.throw(/not implemented/);
+      it('should be a no-op without a patch server', async () => {
+        datastore = Datastore.create({
+          id: DATASTORE_ID,
+          schemas: [schema1, schema2],
+          adapter
+        });
+        let t2 = datastore.get(schema2);
+        let id = datastore.beginTransaction();
+        t2.update({ 'my-record': { enabled: true } });
+        datastore.endTransaction();
+        let record = t2.get('my-record')!;
+        expect(record.enabled).to.be.true;
+        await datastore.redo(id);
+        record = t2.get('my-record')!;
+        expect(record.enabled).to.be.true;
+      });
+
+      it('should unapply a transaction by id', async () => {
+        let t2 = datastore.get(schema2);
+        let id = datastore.beginTransaction();
+        t2.update({ 'my-record': { enabled: true } });
+        datastore.endTransaction();
+        await datastore.undo(id);
+        let record = t2.get('my-record')!;
+        expect(record.enabled).to.be.false;
+      });
+
+      it ('should allow for multiple undos', async () => {
+        let t2 = datastore.get(schema2);
+        let id = datastore.beginTransaction();
+        t2.update({ 'my-record': { enabled: true } });
+        datastore.endTransaction();
+        await datastore.undo(id);
+        await datastore.undo(id);
+        await datastore.undo(id);
+        let record = t2.get('my-record')!;
+        expect(record.enabled).to.be.false;
       });
 
     });
 
     describe('redo()', () => {
 
-      it('should throw', () => {
-        expect(() => { datastore.redo(''); }).to.throw(/not implemented/);
+      it('should be a no-op without a patch server', async () => {
+        datastore = Datastore.create({
+          id: DATASTORE_ID,
+          schemas: [schema1, schema2],
+          adapter
+        });
+        let t2 = datastore.get(schema2);
+        let id = datastore.beginTransaction();
+        t2.update({ 'my-record': { enabled: true } });
+        datastore.endTransaction();
+        let record = t2.get('my-record')!;
+        expect(record.enabled).to.be.true;
+        await datastore.redo(id);
+        record = t2.get('my-record')!;
+        expect(record.enabled).to.be.true;
+      });
+
+      it('should reapply a transaction by id', async () => {
+        let t2 = datastore.get(schema2);
+        let id = datastore.beginTransaction();
+        t2.update({ 'my-record': { enabled: true } });
+        datastore.endTransaction();
+        let record = t2.get('my-record')!;
+        expect(record.enabled).to.be.true;
+        await datastore.undo(id);
+        record = t2.get('my-record')!;
+        expect(record.enabled).to.be.false;
+        await datastore.redo(id);
+        record = t2.get('my-record')!;
+        expect(record.enabled).to.be.true;
+      });
+
+      it ('should have redos winning in a tie', async () => {
+        let t2 = datastore.get(schema2);
+        let id = datastore.beginTransaction();
+        t2.update({ 'my-record': { enabled: true } });
+        datastore.endTransaction();
+        await datastore.undo(id);
+        await datastore.undo(id);
+        await datastore.undo(id);
+        await datastore.redo(id);
+        await datastore.redo(id);
+        await datastore.redo(id);
+        let record = t2.get('my-record')!;
+        expect(record.enabled).to.be.true;
       });
 
     });
