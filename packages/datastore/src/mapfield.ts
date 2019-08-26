@@ -159,6 +159,53 @@ class MapField<T extends ReadonlyJSONValue> extends Field<MapField.Value<T>, Map
   }
 
   /**
+   * Apply a system patch to the field.
+   *
+   * @param args - The arguments for the patch.
+   *
+   * @returns The result of applying the patch.
+   */
+  unapplyPatch(args: Field.PatchArgs<MapField.Value<T>, MapField.Patch<T>, MapField.Metadata<T>>): Field.PatchResult<MapField.Value<T>, MapField.Change<T>> {
+    // Unpack the arguments.
+    let { previous, patch, metadata } = args;
+
+    // Unpack the patch.
+    let { id, values } = patch;
+
+    // Create a clone of the previous value.
+    let clone = { ...previous };
+
+    // Set up the previous and current change parts.
+    let prev: { [key: string]: T | null } = {};
+    let curr: { [key: string]: T | null } = {};
+
+    // Iterate over the values.
+    for (let key in values) {
+      // Insert the patch value into the metadata.
+      let value = Private.removeFromMetadata(metadata, key, id);
+
+      // Update the clone with the new value.
+      if (value === null) {
+        delete clone[key];
+      } else {
+        clone[key] = value;
+      }
+
+      // Update the previous change part.
+      prev[key] = key in previous ? previous[key] : null;
+
+      // Update the current change part.
+      curr[key] = value;
+    }
+
+    // Create the change object.
+    let change = { previous: prev, current: curr };
+
+    // Return the patch result.
+    return { value: clone, change };
+  }
+
+  /**
    * Merge two change objects into a single change object.
    *
    * @param first - The first change object of interest.
@@ -304,5 +351,38 @@ namespace Private {
 
     // Return the current value for the key.
     return values[values.length - 1];
+  }
+
+  /**
+   * Remove a value from the map field metadata.
+   *
+   * @param metadata - The metadata of interest.
+   *
+   * @param key - The key of interest.
+   *
+   * @param id - The unique id for the value.
+   *
+   * @returns The current value for the key, or null if there is no value.
+   *
+   * #### Notes
+   * If the id is not in the metadata, this is a no-op.
+   */
+  export
+  function removeFromMetadata<T extends ReadonlyJSONValue>(metadata: MapField.Metadata<T>, key: string, id: string): T | null {
+    // Fetch the id and value arrays for the given key.
+    let ids = metadata.ids[key] || (metadata.ids[key] = []);
+    let values = metadata.values[key] || (metadata.values[key] = []);
+
+    // Find the insert index for the id.
+    let i = ArrayExt.lowerBound(ids, id, StringExt.cmp);
+
+    // Find and remove the index for the id.
+    if (ids[i] === id) {
+      ArrayExt.removeAt(ids, i);
+      ArrayExt.removeAt(values, i);
+    }
+
+    // Return the current value for the key.
+    return values.length ? values[values.length - 1] : null;
   }
 }
