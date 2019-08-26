@@ -10,7 +10,7 @@ import {
 } from 'chai';
 
 import {
-  Datastore, Fields, ListField, RegisterField, TextField
+  Datastore, Fields, ListField, RegisterField, TextField, Schema
 } from '@phosphor/datastore';
 
 import {
@@ -78,21 +78,21 @@ class LoggingMessageHandler implements IMessageHandler {
   processMessage(msg: Message): void {
     switch(msg.type) {
     case 'datastore-transaction':
-      this.transactions.push((msg as Datastore.TransactionMessage).transaction);
+      this.transactions.push((msg as Datastore.TransactionMessage<Schema>).transaction);
       break;
     default:
       throw Error('Unexpected message');
       break;
     }
   }
-  transactions: Datastore.Transaction[] = [];
+  transactions: Datastore.Transaction<Schema>[] = [];
 }
 
 describe('@phosphor/datastore', () => {
 
   describe('Datastore', () => {
 
-    let datastore: Datastore;
+    let datastore: Datastore<[typeof schema1, typeof schema2]>;
     let broadcastHandler: LoggingMessageHandler;
     const DATASTORE_ID = 1234;
     beforeEach(() => {
