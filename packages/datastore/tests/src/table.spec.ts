@@ -263,6 +263,38 @@ describe('@phosphor/datastore', () => {
 
     });
 
+    describe('unpatch()', () => {
+
+      it('should create a record if it does not exist', () => {
+        expect(table.get('my-record')).to.be.undefined;
+        let patch = { 'my-record': { count: { id: 'unique-id', value: 2 } } };
+        Table.unpatch(table, patch);
+        expect(table.get('my-record')).to.not.be.undefined;
+      });
+
+      it('should patch an existing record', () => {
+        context.inTransaction = true;
+        table.update({ 'my-record': { count: 1 } });
+        context.inTransaction = false;
+        expect(table.get('my-record')!.count).to.equal(1);
+        let patch = { 'my-record': { count: { id: 'unique-id', value: 2 } } };
+        Table.patch(table, patch);
+        Table.unpatch(table, patch);
+        expect(table.get('my-record')!.count).to.equal(1);
+      });
+
+      it('should return a user-facing change for the patch', () => {
+        let patch = {
+          'my-record': { enabled: { id: 'unique-id', value: true } }
+        };
+        Table.patch(table, patch);
+        let change = Table.unpatch(table, patch);
+        expect(change['my-record']!.enabled!.previous).to.be.true;
+        expect(change['my-record']!.enabled!.current).to.be.false;
+      });
+
+    });
+
   });
 
 });

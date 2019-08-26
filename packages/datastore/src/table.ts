@@ -87,7 +87,7 @@ class Table<S extends Schema> implements IIterable<Record<S>> {
       let old = records.get(id, cmp) || Private.createRecord(schema, id);
 
       // Apply the patch and create the new record.
-      let { record, change } = Private.applyPatch(schema, old, data[id]);
+      let { record, change } = Private.patch(schema, old, data[id], 'apply');
 
       // Replace the old record in the table.
       records.insert(record);
@@ -100,6 +100,44 @@ class Table<S extends Schema> implements IIterable<Record<S>> {
     return tc;
   }
 
+  /**
+   * @internal
+   *
+   * Unapply a patch to a datastore table, thereby undoing that patch.
+   *
+   * @param table - The table of interest.
+   *
+   * @param data - The patch to apply to the table.
+   *
+   * @returns The user-facing change to the table.
+   */
+  static unpatch<U extends Schema>(table: Table<U>, data: Table.Patch<U>): Table.Change<U> {
+    // Create the change object.
+    let tc: Table.MutableChange<U> = {};
+
+    // Fetch common variables.
+    let schema = table.schema;
+    let records = table._records;
+    let cmp = Private.recordIdCmp;
+
+    // Iterate over the dataset.
+    for (let id in data) {
+      // Get or create the old record.
+      let old = records.get(id, cmp) || Private.createRecord(schema, id);
+
+      // Apply the patch and create the new record.
+      let { record, change } = Private.patch(schema, old, data[id], 'unapply');
+
+      // Replace the old record in the table.
+      records.insert(record);
+
+      // Update the change object.
+      tc[id] = change;
+    }
+
+    // Return the change object.
+    return tc;
+  }
   /**
    * The schema for the table.
    *
@@ -416,7 +454,7 @@ namespace Private {
   };
 
   /**
-   * Apply a patch to a record.
+   * Apply or unapply a patch to a record.
    *
    * @param schema - The schema for the record.
    *
@@ -424,10 +462,12 @@ namespace Private {
    *
    * @param patch - The patch to apply to the record.
    *
+   * @param which - whether to apply or unapply the patch.
+   *
    * @return The result of applying the patch.
    */
   export
-  function applyPatch<S extends Schema>(schema: S, record: Record<S>, patch: Record.Patch<S>): PatchResult<S> {
+  function patch<S extends Schema>(schema: S, record: Record<S>, patch: Record.Patch<S>, which: 'apply' | 'unapply'): PatchResult<S> {
     // Create the change object.
     let rc: Record.MutableChange<S> = {};
 
@@ -445,18 +485,33 @@ namespace Private {
       // Fetch the relevant field.
       let field = schema.fields[name];
 
-      // Apply the patch for the field.
-      let { value, change } = field.applyPatch({
-        previous: previous[name],
-        patch: patch[name]!,
-        metadata: metadata[name]
-      });
+      if (which === 'apply') {
+        // Apply the patch for the field.
+        let { value, change } = field.applyPatch({
+          previous: previous[name],
+          patch: patch[name]!,
+          metadata: metadata[name]
+        });
 
-      // Assign the new value to the clone.
-      clone[name] = value;
+        // Assign the new value to the clone.
+        clone[name] = value;
 
-      // Update the change object.
-      rc[name] = change;
+        // Update the change object.
+        rc[name] = change;
+      } else {
+        // Apply the patch for the field.
+        let { value, change } = field.unapplyPatch({
+          previous: previous[name],
+          patch: patch[name]!,
+          metadata: metadata[name]
+        });
+
+        // Assign the new value to the clone.
+        clone[name] = value;
+
+        // Update the change object.
+        rc[name] = change;
+      }
     }
 
     // Return the patch result.
