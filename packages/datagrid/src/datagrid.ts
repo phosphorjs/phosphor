@@ -3955,129 +3955,173 @@ class DataGrid extends Widget {
    * Draw the row header selections for the data grid.
    */
   private _drawRowHeaderSelections(): void {
+    // Fetch the selection model.
+    let model = this._selectionModel;
 
+    // Bail early if there is no selection model.
+    if (!model) {
+      return;
+    }
+
+    // Bail early if the row headers are not visible.
+    if (this.headerWidth === 0) {
+      return;
+    }
+    // Fetch the selection colors.
+    let fill = this._style.headerSelectionFillColor;
+    let stroke = this._style.headerSelectionBorderColor;
+
+    // Bail early if there is nothing to draw.
+    if (!fill && !stroke) {
+      return;
+    }
+
+    // Fetch common geometry.
+    let sy = this._scrollY;
+    let ph = this.pageHeight;
+    let hw = this.headerWidth;
+    let hh = this.headerHeight;
+    let rs = this._rowSections;
+
+    // Fetch the overlay gc.
+    let gc = this._overlayGC;
+
+    // Save the gc state.
+    gc.save();
+
+    // Set up the header clipping rect.
+    gc.beginPath();
+    gc.rect(0, hh, hw, ph);
+    gc.clip();
+
+    // Set up the gc style.
+    if (fill) {
+      gc.fillStyle = fill;
+    }
+    if (stroke) {
+      gc.strokeStyle = stroke;
+      gc.lineWidth = 1;
+    }
+
+    // Fetch the visible rows.
+    let r1 = rs.indexOf(sy);
+    let r2 = rs.indexOf(sy + ph - 1);
+    r2 = r2 < 0 ? rs.count - 1 : r2;
+
+    // Iterate over the visible rows.
+    for (let j = r1; j <= r2; ++j) {
+      // Skip rows which aren't selected.
+      if (!model.isRowSelected(j)) {
+        continue;
+      }
+
+      // Get the dimensions of the row.
+      let y = rs.offsetOf(j) - sy + hh;
+      let h = rs.sizeOf(j);
+
+      // Fill the rect if needed.
+      if (fill) {
+        gc.fillRect(0, y, hw, h);
+      }
+
+      // Draw the border if needed.
+      if (stroke) {
+        gc.beginPath();
+        gc.moveTo(hw - .5, y);
+        gc.lineTo(hw - .5, y + h);
+        gc.stroke();
+      }
+    }
+
+    // Restore the gc state.
+    gc.restore();
   }
 
   /**
    * Draw the column header selections for the data grid.
    */
   private _drawColumnHeaderSelections(): void {
+    // Fetch the selection model.
+    let model = this._selectionModel;
 
+    // Bail early if there is no selection model.
+    if (!model) {
+      return;
+    }
+
+    // Bail early if the column headers are not visible.
+    if (this.headerHeight === 0) {
+      return;
+    }
+    // Fetch the selection colors.
+    let fill = this._style.headerSelectionFillColor;
+    let stroke = this._style.headerSelectionBorderColor;
+
+    // Bail early if there is nothing to draw.
+    if (!fill && !stroke) {
+      return;
+    }
+
+    // Fetch common geometry.
+    let sx = this._scrollX;
+    let pw = this.pageWidth;
+    let hw = this.headerWidth;
+    let hh = this.headerHeight;
+    let cs = this._columnSections;
+
+    // Fetch the overlay gc.
+    let gc = this._overlayGC;
+
+    // Save the gc state.
+    gc.save();
+
+    // Set up the header clipping rect.
+    gc.beginPath();
+    gc.rect(hw, 0, pw, hh);
+    gc.clip();
+
+    // Set up the gc style.
+    if (fill) {
+      gc.fillStyle = fill;
+    }
+    if (stroke) {
+      gc.strokeStyle = stroke;
+      gc.lineWidth = 1;
+    }
+
+    // Fetch the visible columns.
+    let c1 = cs.indexOf(sx);
+    let c2 = cs.indexOf(sx + pw - 1);
+    c2 = c2 < 0 ? cs.count - 1 : c2;
+
+    // Iterate over the visible columns.
+    for (let i = c1; i <= c2; ++i) {
+      // Skip columns which aren't selected.
+      if (!model.isColumnSelected(i)) {
+        continue;
+      }
+
+      // Get the dimensions of the column.
+      let x = cs.offsetOf(i) - sx + hw;
+      let w = cs.sizeOf(i);
+
+      // Fill the rect if needed.
+      if (fill) {
+        gc.fillRect(x, 0, w, hh);
+      }
+
+      // Draw the border if needed.
+      if (stroke) {
+        gc.beginPath();
+        gc.moveTo(x, hh - .5);
+        gc.lineTo(x + w, hh - .5);
+        gc.stroke();
+      }
+    }
+
+    // Restore the gc state.
+    gc.restore();
   }
-
-  //   // Bail early if the row headers are not visible.
-  //   if (this._headerWidth === 0) {
-  //     return;
-  //   }
-
-  //   //
-  //   let { bounds, regions } = info;
-
-  //   //
-  //   if (regions.length === 0) {
-  //     return;
-  //   }
-
-  //   // Fetch the selection colors.
-  //   let fill = this._style.selectionColor;
-  //   let stroke = this._style.selectionBorderColor;
-
-  //   // Bail early if there is nothing to draw.
-  //   if (!fill && !stroke) {
-  //     return;
-  //   }
-
-  //   // Fetch common geometry.
-  //   let sy = this._scrollY;
-  //   let ph = this._pageHeight;
-  //   let hw = this._headerWidth;
-  //   let hh = this._headerHeight;
-
-  //   //
-  //   let gc = this._overlayGC;
-
-  //   // Save the gc state.
-  //   gc.save();
-
-  //   // Set up the header clipping rect.
-  //   gc.beginPath();
-  //   gc.rect(0, hh, hw, ph);
-  //   gc.clip();
-
-  //   // Set up the gc style.
-  //   if (fill) {
-  //     gc.fillStyle = fill;
-  //   }
-  //   if (stroke) {
-  //     gc.strokeStyle = stroke;
-  //     gc.lineWidth = 1;
-  //   }
-
-  //   //
-  //   let r1 = bounds.row;
-  //   let r2 = bounds.lastRow;
-
-  //   //
-  //   for (let j = r1; j <= r2; ++j) {
-  //     for (let region of regions) {
-  //       if (region.containsRow(j)) {
-  //         //
-  //         let y = this._rowSections.offsetOf(j) - sy + hh;
-  //         let h = this._rowSections.sizeOf(j);
-
-  //         //
-  //         if (fill) {
-  //           gc.fillRect(0, y, hw, h);
-  //         }
-
-  //         //
-  //         if (stroke) {
-  //           gc.beginPath();
-  //           gc.moveTo(hw, y);
-  //           gc.lineTo(hw, y + h);
-  //           gc.stroke();
-  //         }
-
-  //         //
-  //         break;
-  //       }
-  //     }
-  //   }
-
-  //   // Restore the gc state.
-  //   gc.restore();
-  // }
-
-  // /**
-  //  *
-  //  */
-  // private _drawColumnHeaderSelections(info: Private.SelectionInfo): void {
-  //   // // Draw the selected column header cells, if visible.
-  //   // if (hh > 0) {
-  //   //   // Save the gc state.
-  //   //   gc.save();
-
-  //   //   // Set up the header clipping rect.
-  //   //   gc.beginPath();
-  //   //   gc.rect(hw, 0, pw, hh);
-  //   //   gc.clip();
-
-  //   //   // Set up the gc style. TODO grid style
-  //   //   gc.fillStyle = 'rgba(0, 0, 0, 0.2)';
-
-  //   //   //
-  //   //   for (let i = c1; i <= c2; ++i) {
-  //   //     if (cFlags[i - c1]) {
-  //   //       let x = this._columnSections.offsetOf(i) - sx + hw;
-  //   //       let w = this._columnSections.sizeOf(i);
-  //   //       gc.fillRect(x, 0, w, hh);
-  //   //     }
-  //   //   }
-
-  //   //   // Restore the gc state.
-  //   //   gc.restore();
-  //   // }
-  // }
 
   /**
    * Draw the overlay cursor for the data grid.
@@ -4473,6 +4517,16 @@ namespace DataGrid {
     readonly cursorBorderColor?: string;
 
     /**
+     * The fill color for a header selection.
+     */
+    readonly headerSelectionFillColor?: string;
+
+    /**
+     * The border color for a header selection.
+     */
+    readonly headerSelectionBorderColor?: string;
+
+    /**
      * The drop shadow effect when the grid is scrolled.
      */
     readonly scrollShadow?: {
@@ -4733,6 +4787,8 @@ namespace DataGrid {
     selectionFillColor: 'rgba(49, 119, 229, 0.2)',
     selectionBorderColor: 'rgba(49, 119, 229, 1.0)',
     cursorBorderColor: 'rgba(49, 119, 229, 1.0)',
+    headerSelectionFillColor: 'rgba(20, 20, 20, 0.1)',
+    headerSelectionBorderColor: 'rgba(49, 119, 229, 1.0)',
     scrollShadow: {
       size: 10,
       color1: 'rgba(0, 0, 0, 0.20',
