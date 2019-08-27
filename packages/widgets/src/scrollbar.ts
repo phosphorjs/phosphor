@@ -366,6 +366,10 @@ class ScrollBar extends Widget {
       return;
     }
 
+    // Send an activate request to the scroll bar. This can be
+    // used by message hooks to activate something relevant.
+    this.activate();
+
     // Do nothing if the mouse is already captured.
     if (this._pressData) {
       return;
