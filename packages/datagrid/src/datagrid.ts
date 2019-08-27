@@ -3936,6 +3936,11 @@ class DataGrid extends Widget {
       x2 = Math.min(hw + pw + 1, x2);
       y2 = Math.min(hh + ph + 1, y2);
 
+      // Skip zero sized ranges.
+      if (x2 < x1 || y2 < y1) {
+        continue;
+      }
+
       // Fill the rect if needed.
       if (fill) {
         gc.fillRect(x1, y1, x2 - x1 + 1, y2 - y1 + 1);
@@ -3967,6 +3972,7 @@ class DataGrid extends Widget {
     if (this.headerWidth === 0) {
       return;
     }
+
     // Fetch the selection colors.
     let fill = this._style.headerSelectionFillColor;
     let stroke = this._style.headerSelectionBorderColor;
@@ -4019,6 +4025,11 @@ class DataGrid extends Widget {
       let y = rs.offsetOf(j) - sy + hh;
       let h = rs.sizeOf(j);
 
+      // Skip zero sized rows.
+      if (h === 0) {
+        continue;
+      }
+
       // Fill the rect if needed.
       if (fill) {
         gc.fillRect(0, y, hw, h);
@@ -4053,6 +4064,7 @@ class DataGrid extends Widget {
     if (this.headerHeight === 0) {
       return;
     }
+
     // Fetch the selection colors.
     let fill = this._style.headerSelectionFillColor;
     let stroke = this._style.headerSelectionBorderColor;
@@ -4105,6 +4117,11 @@ class DataGrid extends Widget {
       let x = cs.offsetOf(i) - sx + hw;
       let w = cs.sizeOf(i);
 
+      // Skip zero sized columns.
+      if (w === 0) {
+        continue;
+      }
+
       // Fill the rect if needed.
       if (fill) {
         gc.fillRect(x, 0, w, hh);
@@ -4144,6 +4161,15 @@ class DataGrid extends Widget {
       return;
     }
 
+    // Fetch the cursor location.
+    let row = model.cursorRow;
+    let column = model.cursorColumn;
+
+    // Bail early if there is no cursor.
+    if (row < 0 || column < 0) {
+      return;
+    }
+
     // Fetch geometry.
     let sx = this._scrollX;
     let sy = this._scrollY;
@@ -4154,10 +4180,6 @@ class DataGrid extends Widget {
     let vw = this._viewportWidth;
     let vh = this._viewportHeight;
 
-    // Fetch the cursor location.
-    let row = model.cursorRow;
-    let column = model.cursorColumn;
-
     // Clamp the cursor.
     row = Math.max(0, Math.min(row, this._rowSections.count));
     column = Math.max(0, Math.min(column, this._columnSections.count));
@@ -4167,6 +4189,11 @@ class DataGrid extends Widget {
     let x2 = this._columnSections.extentOf(column) - sx + hw;
     let y1 = this._rowSections.offsetOf(row) - sy + hh;
     let y2 = this._rowSections.extentOf(row) - sy + hh;
+
+    // Skip zero sized cursors.
+    if (x2 < x1 || y2 < y1) {
+      return;
+    }
 
     // Bail early if the cursor is off the screen.
     if ((x1 - 1) >= vw || (y1 - 1) >= vh || (x2 + 1) < hw || (y2 + 1) < hh) {
@@ -4785,10 +4812,10 @@ namespace DataGrid {
     headerBackgroundColor: '#F3F3F3',
     headerGridLineColor: 'rgba(20, 20, 20, 0.25)',
     selectionFillColor: 'rgba(49, 119, 229, 0.2)',
-    selectionBorderColor: 'rgba(49, 119, 229, 1.0)',
-    cursorBorderColor: 'rgba(49, 119, 229, 1.0)',
+    selectionBorderColor: 'rgba(0, 107, 247, 1.0)',
+    cursorBorderColor: 'rgba(0, 107, 247, 1.0)',
     headerSelectionFillColor: 'rgba(20, 20, 20, 0.1)',
-    headerSelectionBorderColor: 'rgba(49, 119, 229, 1.0)',
+    headerSelectionBorderColor: 'rgba(0, 107, 247, 1.0)',
     scrollShadow: {
       size: 10,
       color1: 'rgba(0, 0, 0, 0.20',
