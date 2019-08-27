@@ -396,8 +396,7 @@ describe('@phosphor/datastore', () => {
       it('should be a no-op without a patch server', async () => {
         datastore = Datastore.create({
           id: DATASTORE_ID,
-          schemas: [schema1, schema2],
-          adapter
+          schemas: [schema1, schema2]
         });
         let t2 = datastore.get(schema2);
         let id = datastore.beginTransaction();
@@ -405,7 +404,7 @@ describe('@phosphor/datastore', () => {
         datastore.endTransaction();
         let record = t2.get('my-record')!;
         expect(record.enabled).to.be.true;
-        await datastore.redo(id);
+        await datastore.undo(id);
         record = t2.get('my-record')!;
         expect(record.enabled).to.be.true;
       });
@@ -432,55 +431,130 @@ describe('@phosphor/datastore', () => {
         expect(record.enabled).to.be.false;
       });
 
+      it('should allow for concurrent undos', async () => {
+        // Create a transaction.
+        let t2 = datastore.get(schema2);
+        let id = datastore.beginTransaction();
+        t2.update({
+          'my-record': {
+            enabled: true,
+            content: { index: 0, remove: 0, text: 'hello, world' }
+          }
+        });
+        datastore.endTransaction();
+        let transaction = adapter.transactions[id];
+        // Create a new datastore and undo the transaction before it's applied.
+        let datastore2 = Datastore.create({
+          id: 5678,
+          schemas: [schema1, schema2],
+          adapter
+        });
+        t2 = datastore2.get(schema2);
+        // No change for concurrently undone transaction.
+        (adapter.received as Signal<any, IServerAdapter.IReceivedArgs>).emit({
+          type: 'undo',
+          transaction
+        });
+        let record = t2.get('my-record')!;
+        expect(record.enabled).to.be.false;
+        expect(record.content).to.equal('');
+        // Now apply the transaction, it should be undone still
+        (adapter.received as Signal<any, IServerAdapter.IReceivedArgs>).emit({
+          type: 'transaction',
+          transaction
+        });
+        record = t2.get('my-record')!;
+        expect(record.enabled).to.be.false;
+        expect(record.content).to.equal('');
+        // Now redo the transaction, it should appear.
+        (adapter.received as Signal<any, IServerAdapter.IReceivedArgs>).emit({
+          type: 'redo',
+          transaction
+        });
+        datastore2.redo(id);
+        record = t2.get('my-record')!;
+        expect(record.enabled).to.be.true;
+        expect(record.content).to.equal('hello, world');
+      });
+
     });
 
     describe('redo()', () => {
 
-      it('should be a no-op without a patch server', async () => {
-        datastore = Datastore.create({
-          id: DATASTORE_ID,
-          schemas: [schema1, schema2],
-          adapter
-        });
-        let t2 = datastore.get(schema2);
-        let id = datastore.beginTransaction();
-        t2.update({ 'my-record': { enabled: true } });
-        datastore.endTransaction();
-        let record = t2.get('my-record')!;
-        expect(record.enabled).to.be.true;
-        await datastore.redo(id);
-        record = t2.get('my-record')!;
-        expect(record.enabled).to.be.true;
-      });
-
       it('should reapply a transaction by id', async () => {
         let t2 = datastore.get(schema2);
         let id = datastore.beginTransaction();
-        t2.update({ 'my-record': { enabled: true } });
+        t2.update({
+          'my-record': {
+            enabled: true,
+            content: { index: 0, remove: 0, text: 'hello, world' }
+          }
+        });
         datastore.endTransaction();
         let record = t2.get('my-record')!;
         expect(record.enabled).to.be.true;
+        expect(record.content).to.equal('hello, world');
         await datastore.undo(id);
         record = t2.get('my-record')!;
         expect(record.enabled).to.be.false;
+        expect(record.content).to.equal('');
         await datastore.redo(id);
         record = t2.get('my-record')!;
         expect(record.enabled).to.be.true;
+        expect(record.content).to.equal('hello, world');
       });
 
       it ('should have redos winning in a tie', async () => {
         let t2 = datastore.get(schema2);
         let id = datastore.beginTransaction();
-        t2.update({ 'my-record': { enabled: true } });
+        t2.update({
+          'my-record': {
+            enabled: true,
+            content: { index: 0, remove: 0, text: 'hello, world' }
+          }
+        });
         datastore.endTransaction();
-        await datastore.undo(id);
-        await datastore.undo(id);
-        await datastore.undo(id);
-        await datastore.redo(id);
-        await datastore.redo(id);
-        await datastore.redo(id);
         let record = t2.get('my-record')!;
         expect(record.enabled).to.be.true;
+        expect(record.content).to.equal('hello, world');
+        await datastore.undo(id);
+        await datastore.undo(id);
+        await datastore.undo(id);
+        record = t2.get('my-record')!;
+        expect(record.enabled).to.be.false;
+        expect(record.content).to.equal('');
+        await datastore.redo(id);
+        await datastore.redo(id);
+        await datastore.redo(id);
+        record = t2.get('my-record')!;
+        expect(record.enabled).to.be.true;
+        expect(record.content).to.equal('hello, world');
+      });
+
+      it ('should be safe to call extra times', async () => {
+        let t2 = datastore.get(schema2);
+        let id = datastore.beginTransaction();
+        t2.update({
+          'my-record': {
+            enabled: true,
+            content: { index: 0, remove: 0, text: 'hello, world' }
+          }
+        });
+        datastore.endTransaction();
+        let record = t2.get('my-record')!;
+        expect(record.enabled).to.be.true;
+        expect(record.content).to.equal('hello, world');
+        await datastore.undo(id);
+        record = t2.get('my-record')!;
+        expect(record.enabled).to.be.false;
+        expect(record.content).to.equal('');
+        // Try to redo extra times, should not duplicate the patch.
+        await datastore.redo(id);
+        await datastore.redo(id);
+        await datastore.redo(id);
+        record = t2.get('my-record')!;
+        expect(record.enabled).to.be.true;
+        expect(record.content).to.equal('hello, world');
       });
 
     });

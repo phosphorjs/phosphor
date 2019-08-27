@@ -374,12 +374,20 @@ class Datastore implements IIterable<Table<Schema>>, IMessageHandler, IDisposabl
     let count: number;
     switch (type) {
       case 'transaction':
-        this._applyTransaction(transaction);
+        count = this._cemetery[transaction.id] || 0;
+        // If the transaction has been concurrently undone, don't process it.
+        if (count > 0) {
+          return;
+        }
+        this._processTransaction(transaction)
         break;
       case 'undo':
         count = this._cemetery[transaction.id] || 0;
         this._cemetery[transaction.id] = count + 1;
-        this._applyTransaction(transaction, false, 'unapply');
+        // If the transaction hasn't already been unapplied, do so.
+        if (count === 0) {
+          this._processTransaction(transaction, false, 'unapply');
+        }
         break;
       case 'redo':
         count = this._cemetery[transaction.id] || 0;
@@ -391,8 +399,12 @@ class Datastore implements IIterable<Table<Schema>>, IMessageHandler, IDisposabl
         // a tie in undo/redo count goes to the redo.
         if (count === 1) {
           delete this._cemetery[transaction.id];
+          this._processTransaction(transaction)
+          return;
         }
-        this._applyTransaction(transaction)
+        break;
+      default:
+        throw 'Unreachable';
         break;
     }
   }
@@ -407,7 +419,7 @@ class Datastore implements IIterable<Table<Schema>>, IMessageHandler, IDisposabl
    * #### Notes
    * If changes are made, the `changed` signal will be emitted.
    */
-  private _applyTransaction(transaction: Datastore.Transaction, fromQueue=false, which: 'apply' | 'unapply' = 'apply'): void {
+  private _processTransaction(transaction: Datastore.Transaction, fromQueue=false, which: 'apply' | 'unapply' = 'apply'): void {
     if (!this._transactionQueue.isEmpty && !fromQueue) {
       // We have queued transactions waiting to be applied.
       // As we need to retain causal order of incoming transactions,
@@ -524,7 +536,7 @@ class Datastore implements IIterable<Table<Schema>>, IMessageHandler, IDisposabl
       }
 
       // Apply the transaction.
-      this._applyTransaction(transaction, true);
+      this._processTransaction(transaction, true);
     }
   }
 
