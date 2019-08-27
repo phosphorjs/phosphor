@@ -294,12 +294,12 @@ namespace DataModel {
     /**
      * The row index of the first modified cell.
      */
-    readonly rowIndex: number;
+    readonly row: number;
 
     /**
      * The column index of the first modified cell.
      */
-    readonly columnIndex: number;
+    readonly column: number;
 
     /**
      * The number of rows in the modified cell range.

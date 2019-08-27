@@ -13,6 +13,10 @@ import {
   IIterator
 } from '@phosphor/algorithm';
 
+import {
+  DataModel
+} from './datamodel';
+
 
 /**
  * An object which controls selections for a data grid.
@@ -31,7 +35,22 @@ abstract class SelectionModel {
   }
 
   /**
-   * Wether the selection model is empty.
+   * The data model associated with the selection model.
+   */
+  abstract readonly model: DataModel;
+
+  /**
+   * The row index of the cursor.
+   */
+  abstract readonly cursorRow: number;
+
+  /**
+   * The column index of the cursor.
+   */
+  abstract readonly cursorColumn: number;
+
+  /**
+   * Whether the selection model is empty.
    *
    * #### Notes
    * An empty selection model will yield an empty `selections` iterator.
@@ -39,16 +58,9 @@ abstract class SelectionModel {
   abstract readonly isEmpty: boolean;
 
   /**
-   * Get the last selection in the selection model.
-   *
-   * @returns The last selection in the selection model, or `null`.
-   */
-  abstract last(): SelectionModel.Selection | null;
-
-  /**
    * Get an iterator of the selections in the model.
    *
-   * @returns A new iterator of the current selections.
+   * @returns A new iterator of the selections in the model.
    *
    * #### Notes
    * The data grid will render the selections in order.
@@ -58,20 +70,20 @@ abstract class SelectionModel {
   /**
    * Test whether any selection intersects a row.
    *
-   * @param row - The row index of interest.
+   * @param index - The row index of interest.
    *
    * @returns Whether any selection intersects the row.
    */
-  abstract isRowSelected(row: number): boolean;
+  abstract isRowSelected(index: number): boolean;
 
   /**
    * Test whether any selection intersects a column.
    *
-   * @param column - The column index of interest.
+   * @param index - The column index of interest.
    *
    * @returns Whether any selection intersects the column.
    */
-  abstract isColumnSelected(column: number): boolean;
+  abstract isColumnSelected(index: number): boolean;
 
   /**
    * Test whether any selection intersects a cell.
@@ -85,11 +97,59 @@ abstract class SelectionModel {
   abstract isCellSelected(row: number, column: number): boolean;
 
   /**
-   * Select cells in the selection model.
+   * Select the specified cells.
    *
-   * @param args - The arguments for the selection.
+   * @param r1 - The first row of interest.
+   *
+   * @param c1 - The first column of interest.
+   *
+   * @param r2 - The second row of interest. The default is `r1`.
+   *
+   * @param c2 - The second column of interest. The default is `c1`.
+   *
+   * @returns The current selection or `null`.
    */
-  abstract select(args: SelectionModel.SelectArgs): void;
+  abstract select(r1: number, c1: number, r2?: number, c2?: number): SelectionModel.Selection | null;
+
+  /**
+   * Resize the current selection to cover all columns up the given row.
+   *
+   * @param index - The row index of interest.
+   *
+   * @returns The current selection or `null`.
+   */
+  abstract resizeToRow(index: number): SelectionModel.Selection | null;
+
+  /**
+   * Resize the current selection to cover all rows up the given column.
+   *
+   * @param index - The column index of interest.
+   *
+   * @returns The current selection or `null`.
+   */
+  abstract resizeToColumn(index: number): SelectionModel.Selection | null;
+
+  /**
+   * Resize the current selection to the specified cell.
+   *
+   * @param row - The row index of interest.
+   *
+   * @param column - The column index of interest.
+   *
+   * @returns The current selection or `null`.
+   */
+  abstract resizeTo(row: number, column: number): SelectionModel.Selection | null;
+
+  /**
+   * Resize the current selection by the specified delta.
+   *
+   * @param rows - The delta number of rows.
+   *
+   * @param columns - The delta number of columns.
+   *
+   * @returns The current selection or `null`.
+   */
+  abstract resizeBy(rows: number, columns: number): SelectionModel.Selection | null;
 
   /**
    * Clear all selections in the selection model.
@@ -124,87 +184,29 @@ namespace SelectionModel {
     /**
      * The first row of the selection.
      *
-     * #### Notes
-     * This should be an integer `>= 0`.
+     * This is an integer `0 <= r1`.
      */
     readonly r1: number;
 
     /**
-     * The first column of the selection.
+     * The first column index the selection.
      *
-     * #### Notes
-     * This should be an integer `>= 0`.
+     * This is an integer `0 <= c1`.
      */
     readonly c1: number;
 
     /**
-     * The last row of the selection.
+     * The second row of the selection.
      *
-     * #### Notes
-     * This should be an integer `>= r1`.
-     *
-     * A value of `Infinity` indicates a full row selection.
+     * This is an integer `0 <= r2`.
      */
     readonly r2: number;
 
     /**
-     * The last column of the selection.
+     * The second column of the selection.
      *
-     * #### Notes
-     * This should be an integer `>= c1`.
-     *
-     * A value of `Infinity` indicates a full column selection.
+     * This is an integer `0 <= c2`.
      */
     readonly c2: number;
-  };
-
-  /**
-   * A type alias for the selection model select args.
-   */
-  export
-  type SelectArgs = {
-    /**
-     * The clear mode for the selection.
-     *
-     * This controls which of the existing selections are cleared
-     * when making a new selection.
-     */
-    clear: 'all' | 'last' | 'none';
-
-    /**
-     * The first row of the selection.
-     *
-     * #### Notes
-     * This should be an integer `>= 0`.
-     */
-    r1: number;
-
-    /**
-     * The first column of the selection.
-     *
-     * #### Notes
-     * This should be an integer `>= 0`.
-     */
-    c1: number;
-
-    /**
-     * The last row of the selection.
-     *
-     * #### Notes
-     * This should be an integer `>= r1`.
-     *
-     * A value of `Infinity` indicates a full row selection.
-     */
-    r2: number;
-
-    /**
-     * The last column of the selection.
-     *
-     * #### Notes
-     * This should be an integer `>= c1`.
-     *
-     * A value of `Infinity` indicates a full column selection.
-     */
-    c2: number;
   };
 }

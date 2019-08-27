@@ -6,6 +6,10 @@
 | The full license is in the file LICENSE, distributed with this software.
 |----------------------------------------------------------------------------*/
 import {
+  IDisposable
+} from '@phosphor/disposable';
+
+import {
   ElementExt
 } from '@phosphor/domutils';
 
@@ -116,6 +120,7 @@ class DataGrid extends Widget {
     // Create the internal widgets for the data grid.
     this._viewport = new Widget();
     this._viewport.node.tabIndex = -1;
+    this._viewport.node.style.outline = 'none';
     this._vScrollBar = new ScrollBar({ orientation: 'vertical' });
     this._hScrollBar = new ScrollBar({ orientation: 'horizontal' });
     this._scrollCorner = new Widget();
@@ -183,11 +188,27 @@ class DataGrid extends Widget {
    * Dispose of the resources held by the widgets.
    */
   dispose(): void {
+    // Release the mouse.
+    this._releaseMouse();
+
+    // Dispose of the handlers.
+    if (this._keyHandler) {
+      this._keyHandler.dispose();
+    }
+    if (this._mouseHandler) {
+      this._mouseHandler.dispose();
+    }
+
+    // Clear the model.
     this._model = null;
+
+    // Clear the section lists.
     this._rowSections.clear();
     this._columnSections.clear();
     this._rowHeaderSections.clear();
     this._columnHeaderSections.clear();
+
+    // Dispose of the base class.
     super.dispose();
   }
 
@@ -200,12 +221,21 @@ class DataGrid extends Widget {
 
   /**
    * Set the data model for the data grid.
+   *
+   * #### Notes
+   * This will automatically remove the current selection model.
    */
   set model(value: DataModel | null) {
     // Do nothing if the model does not change.
     if (this._model === value) {
       return;
     }
+
+    // Release the mouse.
+    this._releaseMouse();
+
+    // Clear the selection model.
+    this.selectionModel = null;
 
     // Disconnect the change handler from the old model.
     if (this._model) {
@@ -258,6 +288,14 @@ class DataGrid extends Widget {
       return;
     }
 
+    // Release the mouse.
+    this._releaseMouse();
+
+    // Ensure the data models are a match.
+    if (value && value.model !== this._model) {
+      throw new Error('Selection.model !== DataGrid.model');
+    }
+
     // Disconnect the change handler from the old model.
     if (this._selectionModel) {
       this._selectionModel.changed.disconnect(this._onSelectionsChanged, this);
@@ -273,6 +311,43 @@ class DataGrid extends Widget {
 
     // Schedule a repaint of the overlay.
     this._repaintOverlay();
+  }
+
+  /**
+   * Get the key handler for the data grid.
+   */
+  get keyHandler(): DataGrid.IKeyHandler | null {
+    return this._keyHandler;
+  }
+
+  /**
+   * Set the key handler for the data grid.
+   */
+  set keyHandler(value: DataGrid.IKeyHandler | null) {
+    this._keyHandler = value;
+  }
+
+  /**
+   * Get the mouse handler for the data grid.
+   */
+  get mouseHandler(): DataGrid.IMouseHandler | null {
+    return this._mouseHandler;
+  }
+
+  /**
+   * Set the mouse handler for the data grid.
+   */
+  set mouseHandler(value: DataGrid.IMouseHandler | null) {
+    // Bail early if the mouse handler does not change.
+    if (this._mouseHandler === value) {
+      return;
+    }
+
+    // Release the mouse.
+    this._releaseMouse();
+
+    // Update the internal mouse handler.
+    this._mouseHandler = null;
   }
 
   /**
@@ -518,20 +593,6 @@ class DataGrid extends Widget {
   }
 
   /**
-   * The cursor row for the data grid.
-   */
-  get cursorRow(): number {
-    return this._cursorRow;
-  }
-
-  /**
-   * The cursor column for the data grid.
-   */
-  get cursorColumn(): number {
-    return this._cursorColumn;
-  }
-
-  /**
    * The viewport widget for the data grid.
    */
   get viewport(): Widget {
@@ -539,42 +600,103 @@ class DataGrid extends Widget {
   }
 
   /**
-   * Move the grid cursor to the specified row and column.
+   * Scroll the grid to the specified row.
    *
-   * @param row - The row index for the cursor.
+   * @param row - The row index of the cell.
    *
-   * @param column - The column index for the cursor.
+   * #### Notes
+   * This is a no-op if the row is already visible.
    */
-  moveCursor(row: number, column: number): void {
-    // Floor the indices.
-    row = Math.floor(row);
-    column = Math.floor(column);
+  scrollToRow(row: number): void {
+    // Fetch the row count.
+    let nr = this._rowSections.count;
 
-    // Clamp the indices.
-    row = Math.max(0, Math.min(row, this._rowSections.count - 1));
-    column = Math.max(0, Math.min(column, this._columnSections.count - 1));
-
-    // Bail early if the index does not change.
-    if (row === this._cursorRow && column === this._cursorColumn) {
+    // Bail early if there is no content.
+    if (nr === 0) {
       return;
     }
 
-    // Update the internal indices.
-    this._cursorRow = row;
-    this._cursorColumn = column;
+    // Floor the row index.
+    row = Math.floor(row);
 
-    // Schedule a repaint of the overlay.
-    this._repaintOverlay();
+    // Clamp the row index.
+    row = Math.max(0, Math.min(row, nr - 1));
+
+    // Get the virtual bounds of the row.
+    let y1 = this._rowSections.offsetOf(row);
+    let y2 = this._rowSections.extentOf(row);
+
+    // Get the virtual bounds of the viewport.
+    let vy1 = this._scrollY;
+    let vy2 = this._scrollY + this.pageHeight - 1;
+
+    // Set up the delta variables.
+    let dy = 0;
+
+    // Compute the delta Y scroll.
+    if (y1 < vy1) {
+      dy = y1 - vy1 - 10;
+    } else if (y2 > vy2) {
+      dy = y2 - vy2 + 10;
+    }
+
+    // Bail early if no scroll is needed.
+    if (dy === 0) {
+      return;
+    }
+
+    // Scroll by the computed delta.
+    this.scrollBy(0, dy);
   }
 
   /**
-   * Scroll the grid to the current cursor position.
+   * Scroll the grid to the specified column.
+   *
+   * @param column - The column index of the cell.
    *
    * #### Notes
-   * This is a no-op if the cursor is already visible.
+   * This is a no-op if the column is already visible.
    */
-  scrollToCursor(): void {
-    this.scrollToCell(this._cursorRow, this._cursorColumn);
+  scrollToColumn(column: number): void {
+    // Fetch the column count.
+    let nc = this._columnSections.count;
+
+    // Bail early if there is no content.
+    if (nc === 0) {
+      return;
+    }
+
+    // Floor the column index.
+    column = Math.floor(column);
+
+    // Clamp the column index.
+    column = Math.max(0, Math.min(column, nc - 1));
+
+    // Get the virtual bounds of the column.
+    let x1 = this._columnSections.offsetOf(column);
+    let x2 = this._columnSections.extentOf(column);
+
+    // Get the virtual bounds of the viewport.
+    let vx1 = this._scrollX;
+    let vx2 = this._scrollX + this.pageWidth - 1;
+
+    // Set up the delta variables.
+    let dx = 0;
+
+    // Compute the delta X scroll.
+    if (x1 < vx1) {
+      dx = x1 - vx1 - 10;
+    } else if (x2 > vx2) {
+      dx = x2 - vx2 + 10;
+    }
+
+    // Bail early if no scroll is needed.
+    if (dx === 0) {
+      return;
+    }
+
+    // Scroll by the computed delta.
+    this.scrollBy(dx, 0);
   }
 
   /**
@@ -642,6 +764,27 @@ class DataGrid extends Widget {
 
     // Scroll by the computed delta.
     this.scrollBy(dx, dy);
+  }
+
+  /**
+   * Scroll the grid to the current cursor position.
+   *
+   * #### Notes
+   * This is a no-op if the cursor is already visible or
+   * if there is no selection model installed on the grid.
+   */
+  scrollToCursor(): void {
+    // Bail early if there is no selection model.
+    if (!this._selectionModel) {
+      return;
+    }
+
+    // Fetch the cursor row and column.
+    let row = this._selectionModel.cursorRow;
+    let column = this._selectionModel.cursorColumn;
+
+    // Scroll to the cursor cell.
+    this.scrollToCell(row, column);
   }
 
   /**
@@ -769,6 +912,44 @@ class DataGrid extends Widget {
       count = this._rowHeaderSections.count;
     }
     return count;
+  }
+
+  /**
+   * Get the row at a virtual offset in the data grid.
+   *
+   * @param region - The region which holds the row of interest.
+   *
+   * @param offset - The virtual offset of the row of interest.
+   *
+   * @returns The index of the row, or `-1` if the offset is out of range.
+   */
+  rowAt(region: DataModel.RowRegion, offset: number): number {
+    let index: number;
+    if (region === 'body') {
+      index = this._rowSections.indexOf(offset);
+    } else {
+      index = this._columnHeaderSections.indexOf(offset);
+    }
+    return index;
+  }
+
+  /**
+   * Get the column at a virtual offset in the data grid.
+   *
+   * @param region - The region which holds the column of interest.
+   *
+   * @param offset - The virtual offset of the column of interest.
+   *
+   * @returns The index of the column, or `-1` if the offset is out of range.
+   */
+  columnAt(region: DataModel.RowRegion, offset: number): number {
+    let index: number;
+    if (region === 'body') {
+      index = this._columnSections.indexOf(offset);
+    } else {
+      index = this._rowHeaderSections.indexOf(offset);
+    }
+    return index;
   }
 
   /**
@@ -1081,42 +1262,6 @@ class DataGrid extends Widget {
   }
 
   /**
-   * Refresh the internal dpi ratio.
-   *
-   * #### Notes
-   * This should be called whenever the browser dpi ratio changes.
-   */
-  refreshDPI(): void {
-    // Get the best integral value for the dpi ratio.
-    let dpiRatio = Math.ceil(window.devicePixelRatio);
-
-    // Bail early if the computed dpi ratio has not changed.
-    if (this._dpiRatio === dpiRatio) {
-      return;
-    }
-
-    // Update the internal dpi ratio.
-    this._dpiRatio = dpiRatio;
-
-    // Schedule a repaint of the content.
-    this._repaintContent();
-
-    // Schedule a repaint of the overlay.
-    this._repaintOverlay();
-
-    // Update the canvas size for the new dpi ratio.
-    this._resizeCanvasIfNeeded(this._viewportWidth, this._viewportHeight);
-
-    // Ensure the canvas style is scaled for the new ratio.
-    this._canvas.style.width = `${this._canvas.width / this._dpiRatio}px`;
-    this._canvas.style.height = `${this._canvas.height / this._dpiRatio}px`;
-
-    // Ensure the overlay style is scaled for the new ratio.
-    this._overlay.style.width = `${this._overlay.width / this._dpiRatio}px`;
-    this._overlay.style.height = `${this._overlay.height / this._dpiRatio}px`;
-  }
-
-  /**
    * Process a message sent to the widget.
    *
    * @param msg - The message sent to the widget.
@@ -1159,6 +1304,45 @@ class DataGrid extends Widget {
   }
 
   /**
+   * Handle the DOM events for the data grid.
+   *
+   * @param event - The DOM event sent to the data grid.
+   *
+   * #### Notes
+   * This method implements the DOM `EventListener` interface and is
+   * called in response to events on the data grid's DOM node. It
+   * should not be called directly by user code.
+   */
+  handleEvent(event: Event): void {
+    switch (event.type) {
+    case 'keydown':
+      this._evtKeyDown(event as KeyboardEvent);
+      break;
+    case 'mousedown':
+      this._evtMouseDown(event as MouseEvent);
+      break;
+    case 'mousemove':
+      this._evtMouseMove(event as MouseEvent);
+      break;
+    case 'mouseup':
+      this._evtMouseUp(event as MouseEvent);
+      break;
+    case 'mouseleave':
+      this._evtMouseLeave(event as MouseEvent);
+      break;
+    case 'contextmenu':
+      this._evtContextMenu(event as MouseEvent);
+      break;
+    case 'wheel':
+      this._evtWheel(event as WheelEvent);
+      break;
+    case 'resize':
+      this._refreshDPI();
+      break;
+    }
+  }
+
+  /**
    * A message handler invoked on an `'activate-request'` message.
    */
   protected onActivateRequest(msg: Message): void {
@@ -1169,8 +1353,29 @@ class DataGrid extends Widget {
    * A message handler invoked on a `'before-attach'` message.
    */
   protected onBeforeAttach(msg: Message): void {
+    window.addEventListener('resize', this);
+    this.node.addEventListener('wheel', this);
+    this._viewport.node.addEventListener('keydown', this);
+    this._viewport.node.addEventListener('mousedown', this);
+    this._viewport.node.addEventListener('mousemove', this);
+    this._viewport.node.addEventListener('mouseleave', this);
+    this._viewport.node.addEventListener('contextmenu', this);
     this._repaintContent();
     this._repaintOverlay();
+  }
+
+  /**
+   * A message handler invoked on an `'after-detach'` message.
+   */
+  protected onAfterDetach(msg: Message): void {
+    window.removeEventListener('resize', this);
+    this.node.removeEventListener('wheel', this);
+    this._viewport.node.removeEventListener('keydown', this);
+    this._viewport.node.removeEventListener('mousedown', this);
+    this._viewport.node.removeEventListener('mousemove', this);
+    this._viewport.node.removeEventListener('mouseleave', this);
+    this._viewport.node.removeEventListener('contextmenu', this);
+    this._releaseMouse();
   }
 
   /**
@@ -1966,7 +2171,7 @@ class DataGrid extends Widget {
    */
   private _onCellsChanged(args: DataModel.CellsChangedArgs): void {
     // Unpack the arg data.
-    let { region, rowIndex, columnIndex, rowSpan, columnSpan } = args;
+    let { region, row, column, rowSpan, columnSpan } = args;
 
     // Bail early if there are no cells to modify.
     if (rowSpan <= 0 && columnSpan <= 0) {
@@ -1974,8 +2179,8 @@ class DataGrid extends Widget {
     }
 
     // Compute the changed cell bounds.
-    let r1 = rowIndex;
-    let c1 = columnIndex;
+    let r1 = row;
+    let c1 = column;
     let r2 = r1 + rowSpan - 1;
     let c2 = c1 + columnSpan - 1;
 
@@ -2036,6 +2241,177 @@ class DataGrid extends Widget {
    */
   private _onRenderersChanged(): void {
     this._repaintContent();
+  }
+
+  /**
+   * Handle the `'keydown'` event for the data grid.
+   */
+  private _evtKeyDown(event: KeyboardEvent): void {
+    if (this._mousedown) {
+      event.preventDefault();
+      event.stopPropagation();
+    } else if (this._keyHandler) {
+      this._keyHandler.onKeyDown(this, event);
+    }
+  }
+
+  /**
+   * Handle the `'mousedown'` event for the data grid.
+   */
+  private _evtMouseDown(event: MouseEvent): void {
+    // Ignore everything except the left mouse button.
+    if (event.button !== 0) {
+      return;
+    }
+
+    // Activate the grid.
+    this.activate();
+
+    // Stop the event propagation.
+    event.preventDefault();
+    event.stopPropagation();
+
+    // Add the extra document listeners.
+    document.addEventListener('keydown', this, true);
+    document.addEventListener('mouseup', this, true);
+    document.addEventListener('mousedown', this, true);
+    document.addEventListener('mousemove', this, true);
+    document.addEventListener('contextmenu', this, true);
+
+    // Flip the mousedown flag.
+    this._mousedown = true;
+
+    // Dispatch to the mouse handler.
+    if (this._mouseHandler) {
+      this._mouseHandler.onMouseDown(this, event);
+    }
+  }
+
+  /**
+   * Handle the `'mousemove'` event for the data grid.
+   */
+  private _evtMouseMove(event: MouseEvent): void {
+    // Stop the event propagation if the mouse is down.
+    if (this._mousedown) {
+      event.preventDefault();
+      event.stopPropagation();
+    }
+
+    // Dispatch to the mouse handler.
+    if (this._mouseHandler) {
+      this._mouseHandler.onMouseMove(this, event);
+    }
+  }
+
+  /**
+   * Handle the `'mouseup'` event for the data grid.
+   */
+  private _evtMouseUp(event: MouseEvent): void {
+    // Ignore everything except the left mouse button.
+    if (event.button !== 0) {
+      return;
+    }
+
+    // Stop the event propagation.
+    event.preventDefault();
+    event.stopPropagation();
+
+    // Dispatch to the mouse handler.
+    if (this._mouseHandler) {
+      this._mouseHandler.onMouseUp(this, event);
+    }
+
+    // Release the mouse.
+    this._releaseMouse();
+  }
+
+  /**
+   * Handle the `'mouseleave'` event for the data grid.
+   */
+  private _evtMouseLeave(event: MouseEvent): void {
+    if (this._mousedown) {
+      event.preventDefault();
+      event.stopPropagation();
+    } else if (this._mouseHandler) {
+      this._mouseHandler.onMouseLeave(this, event);
+    }
+  }
+
+  /**
+   * Handle the `'contextmenu'` event for the data grid.
+   */
+  private _evtContextMenu(event: MouseEvent): void {
+    if (this._mousedown) {
+      event.preventDefault();
+      event.stopPropagation();
+    } else if (this._mouseHandler) {
+      this._mouseHandler.onContextMenu(this, event);
+    }
+  }
+
+  /**
+   * Handle the `'wheel'` event for the data grid.
+   */
+  private _evtWheel(event: WheelEvent): void {
+    if (this._mousedown) {
+      event.preventDefault();
+      event.stopPropagation();
+    } else if (this._mouseHandler) {
+      this._mouseHandler.onWheel(this, event);
+    }
+  }
+
+  /**
+   * Release the mouse grab.
+   */
+  private _releaseMouse(): void {
+    // Clear the mousedown flag.
+    this._mousedown = false;
+
+    // Relase the mouse handler.
+    if (this._mouseHandler) {
+      this._mouseHandler.release();
+    }
+
+    // Remove the document listeners.
+    document.removeEventListener('keydown', this, true);
+    document.removeEventListener('mouseup', this, true);
+    document.removeEventListener('mousedown', this, true);
+    document.removeEventListener('mousemove', this, true);
+    document.removeEventListener('contextmenu', this, true);
+  }
+
+  /**
+   * Refresh the dpi ratio.
+   */
+  private _refreshDPI(): void {
+    // Get the best integral value for the dpi ratio.
+    let dpiRatio = Math.ceil(window.devicePixelRatio);
+
+    // Bail early if the computed dpi ratio has not changed.
+    if (this._dpiRatio === dpiRatio) {
+      return;
+    }
+
+    // Update the internal dpi ratio.
+    this._dpiRatio = dpiRatio;
+
+    // Schedule a repaint of the content.
+    this._repaintContent();
+
+    // Schedule a repaint of the overlay.
+    this._repaintOverlay();
+
+    // Update the canvas size for the new dpi ratio.
+    this._resizeCanvasIfNeeded(this._viewportWidth, this._viewportHeight);
+
+    // Ensure the canvas style is scaled for the new ratio.
+    this._canvas.style.width = `${this._canvas.width / this._dpiRatio}px`;
+    this._canvas.style.height = `${this._canvas.height / this._dpiRatio}px`;
+
+    // Ensure the overlay style is scaled for the new ratio.
+    this._overlay.style.width = `${this._overlay.width / this._dpiRatio}px`;
+    this._overlay.style.height = `${this._overlay.height / this._dpiRatio}px`;
   }
 
   /**
@@ -2626,8 +3002,14 @@ class DataGrid extends Widget {
     // Clear the overlay of all content.
     this._overlayGC.clearRect(0, 0, this._overlay.width, this._overlay.height);
 
-    // Draw the selections.
-    //this._drawSelections();
+    // Draw the body selections.
+    this._drawBodySelections();
+
+    // Draw the row header selections.
+    this._drawRowHeaderSelections();
+
+    // Draw the column header selections.
+    this._drawColumnHeaderSelections();
 
     // Draw the cursor.
     this._drawCursor();
@@ -3415,157 +3797,156 @@ class DataGrid extends Widget {
     this._canvasGC.stroke();
   }
 
-  // /**
-  //  * Draw the various selections for the data grid.
-  //  */
-  // private _drawSelections(): void {
-  //   // Bail early if there is no selection model.
-  //   if (!this._selectionModel) {
-  //     return;
-  //   }
+  /**
+   * Draw the body selections for the data grid.
+   */
+  private _drawBodySelections(): void {
+    // Fetch the selection model.
+    let model = this._selectionModel;
 
-  //   // Get the first visible cell of the grid.
-  //   let r1 = this._rowSections.indexOf(this._scrollY);
-  //   let c1 = this._columnSections.indexOf(this._scrollX);
+    // Bail early if there are no selections.
+    if (!model || model.isEmpty) {
+      return;
+    }
 
-  //   // Bail early if there are no visible cells.
-  //   if (r1 < 0 || c1 < 0) {
-  //     return;
-  //   }
+    // Fetch the selection colors.
+    let fill = this._style.selectionFillColor;
+    let stroke = this._style.selectionBorderColor;
 
-  //   // Get the last visible cell of the grid.
-  //   let r2 = this._rowSections.indexOf(this._scrollY + this.pageHeight);
-  //   let c2 = this._columnSections.indexOf(this._scrollX + this.pageWidth);
+    // Bail early if there is nothing to draw.
+    if (!fill && !stroke) {
+      return;
+    }
 
-  //   // Clamp the last cell if the void space is visible.
-  //   r2 = r2 < 0 ? (this._rowSections.count - 1) : r2;
-  //   c2 = c2 < 0 ? (this._columnSections.count - 1) : c2;
+    // Fetch the scroll geometry.
+    let sx = this._scrollX;
+    let sy = this._scrollY;
 
-  //   // Convert the boundary cells into a region.
-  //   let bounds = new SelectionModel.Region(r1, c1, r2 - r1 + 1, c2 - c1 + 1);
+    // Get the first visible cell of the grid.
+    let r1 = this._rowSections.indexOf(sy);
+    let c1 = this._columnSections.indexOf(sx);
 
-  //   // Fetch the regions from the selection model.
-  //   let regions = toArray(this._selectionModel.regions());
+    // Bail early if there are no visible cells.
+    if (r1 < 0 || c1 < 0) {
+      return;
+    }
 
-  //   // Fetch the transient selection.
-  //   let transient = this._pressData ? this._pressData.selection : null;
+    // Fetch the extra geometry.
+    let pw = this.pageWidth;
+    let ph = this.pageHeight;
+    let hw = this.headerWidth;
+    let hh = this.headerHeight;
 
-  //   // Set up the selection info object.
-  //   let info = { bounds, regions, transient };
+    // Get the last visible cell of the grid.
+    let r2 = this._rowSections.indexOf(sy + ph);
+    let c2 = this._columnSections.indexOf(sx + pw);
 
-  //   // Draw the cell selections.
-  //   this._drawCellSelections(info);
+    // Clamp the last cell if the void space is visible.
+    r2 = r2 < 0 ? (this._rowSections.count - 1) : r2;
+    c2 = c2 < 0 ? (this._columnSections.count - 1) : c2;
 
-  //   // Draw the row header selections.
-  //   this._drawRowHeaderSelections(info);
+    // Fetch the max cell.
+    let maxRow = this._rowSections.count - 1;
+    let maxCol = this._columnSections.count - 1;
 
-  //   // Draw the column header selections.
-  //   this._drawColumnHeaderSelections(info);
-  // }
+    // Fetch the overlay gc.
+    let gc = this._overlayGC;
 
-  // /**
-  //  * Draw the cell selections for the data grid.
-  //  */
-  // private _drawCellSelections(info: Private.SelectionInfo): void {
-  //   // Extract the data from the info object.
-  //   let { bounds, regions } = info;
+    // Save the gc state.
+    gc.save();
 
-  //   // Bail early if there are no regions to draw.
-  //   if (regions.length === 0) {
-  //     return;
-  //   }
+    // Set up the body clipping rect.
+    gc.beginPath();
+    gc.rect(hw, hh, pw, ph);
+    gc.clip();
 
-  //   // Fetch the selection colors.
-  //   let fill = this._style.selectionColor;
-  //   let stroke = this._style.selectionBorderColor;
+    // Set up the gc style.
+    if (fill) {
+      gc.fillStyle = fill;
+    }
+    if (stroke) {
+      gc.strokeStyle = stroke;
+      gc.lineWidth = 1;
+    }
 
-  //   // Bail early if there is nothing to draw.
-  //   if (!fill && !stroke) {
-  //     return;
-  //   }
+    // Iterate over the selections.
+    let it = model.selections();
+    let s: SelectionModel.Selection | undefined;
+    while ((s = it.next()) !== undefined) {
+      // Skip the section if it's not visible.
+      if (s.r1 < r1 && s.r2 < r1) {
+        continue;
+      }
+      if (s.r1 > r2 && s.r2 > r2) {
+        continue
+      }
+      if (s.c1 < c1 && s.c2 < c1) {
+        continue;
+      }
+      if (s.c1 > c2 && s.c2 > c2) {
+        continue
+      }
 
-  //   // Fetch common geometry.
-  //   let sx = this._scrollX;
-  //   let sy = this._scrollY;
-  //   let pw = this._pageWidth;
-  //   let ph = this._pageHeight;
-  //   let hw = this._headerWidth;
-  //   let hh = this._headerHeight;
+      // Clamp the cell to the model bounds.
+      let sr1 = Math.max(0, Math.min(s.r1, maxRow));
+      let sc1 = Math.max(0, Math.min(s.c1, maxCol));
+      let sr2 = Math.max(0, Math.min(s.r2, maxRow));
+      let sc2 = Math.max(0, Math.min(s.c2, maxCol));
 
-  //   // Fetch the max cell.
-  //   let maxRow = this._rowSections.count - 1;
-  //   let maxCol = this._columnSections.count - 1;
+      // Swap index order if needed.
+      let tmp: number;
+      if (sr1 > sr2) {
+        tmp = sr1;
+        sr1 = sr2;
+        sr2 = tmp;
+      }
+      if (sc1 > sc2) {
+        tmp = sc1;
+        sc1 = sc2;
+        sc2 = tmp;
+      }
 
-  //   // Fetch the overlay gc.
-  //   let gc = this._overlayGC;
+      // Convert to pixel coordinates.
+      let x1 = this._columnSections.offsetOf(sc1) - sx + hw;
+      let y1 = this._rowSections.offsetOf(sr1) - sy + hh;
+      let x2 = this._columnSections.extentOf(sc2) - sx + hw;
+      let y2 = this._rowSections.extentOf(sr2) - sy + hh;
 
-  //   // Save the gc state.
-  //   gc.save();
+      // Clamp the bounds to just outside of the clipping rect.
+      x1 = Math.max(hw - 1, x1);
+      y1 = Math.max(hh - 1, y1);
+      x2 = Math.min(hw + pw + 1, x2);
+      y2 = Math.min(hh + ph + 1, y2);
 
-  //   // Set up the body clipping rect.
-  //   gc.beginPath();
-  //   gc.rect(hw, hh, pw, ph);
-  //   gc.clip();
+      // Fill the rect if needed.
+      if (fill) {
+        gc.fillRect(x1, y1, x2 - x1 + 1, y2 - y1 + 1);
+      }
 
-  //   // Set up the gc style.
-  //   if (fill) {
-  //     gc.fillStyle = fill;
-  //   }
-  //   if (stroke) {
-  //     gc.strokeStyle = stroke;
-  //     gc.lineWidth = 1;
-  //   }
+      // Stroke the rect if needed.
+      if (stroke) {
+        gc.strokeRect(x1 - .5, y1 - .5, x2 - x1 + 1, y2 - y1 + 1);
+      }
+    }
 
-  //   // Draw the selected body cells.
-  //   for (let region of regions) {
-  //     // Skip the region if it does not overlap the bounds.
-  //     if (!region.overlaps(bounds)) {
-  //       continue;
-  //     }
+    // Restore the gc state.
+    gc.restore();
+  }
 
-  //     // Get the cell locations.
-  //     let r1 = region.row;
-  //     let c1 = region.column;
-  //     let r2 = region.lastRow;
-  //     let c2 = region.lastColumn;
+  /**
+   * Draw the row header selections for the data grid.
+   */
+  private _drawRowHeaderSelections(): void {
 
-  //     // Clamp the cell to the model bounds.
-  //     r1 = Math.max(0, Math.min(r1, maxRow));
-  //     c1 = Math.max(0, Math.min(c1, maxCol));
-  //     r2 = Math.max(0, Math.min(r2, maxRow));
-  //     c2 = Math.max(0, Math.min(c2, maxCol));
+  }
 
-  //     // Convert to pixel coordinates.
-  //     let x1 = this._columnSections.offsetOf(c1) - sx + hw;
-  //     let y1 = this._rowSections.offsetOf(r1) - sy + hh;
-  //     let x2 = this._columnSections.extentOf(c2) - sx + hw;
-  //     let y2 = this._rowSections.extentOf(r2) - sy + hh;
+  /**
+   * Draw the column header selections for the data grid.
+   */
+  private _drawColumnHeaderSelections(): void {
 
-  //     // Clamp the bounds to just outside of the clipping rect.
-  //     x1 = Math.max(hw - 1, x1);
-  //     y1 = Math.max(hh - 1, y1);
-  //     x2 = Math.min(hw + pw + 1, x2);
-  //     y2 = Math.min(hh + ph + 1, y2);
+  }
 
-  //     // Fill the rect if needed.
-  //     if (fill) {
-  //       gc.fillRect(x1, y1, x2 - x1 + 1, y2 - y1 + 1);
-  //     }
-
-  //     // Stroke the rect if needed.
-  //     // if (stroke) {
-  //     //   gc.strokeRect(x1 - .5, y1 - .5, x2 - x1 + 1, y2 - y1 + 1);
-  //     // }
-  //   }
-
-  //   // Restore the gc state.
-  //   gc.restore();
-  // }
-
-  // /**
-  //  * Draw the row header selections for the data grid.
-  //  */
-  // private _drawRowHeaderSelections(info: Private.SelectionInfo): void {
   //   // Bail early if the row headers are not visible.
   //   if (this._headerWidth === 0) {
   //     return;
@@ -3684,6 +4065,14 @@ class DataGrid extends Widget {
    * Draw the overlay cursor for the data grid.
    */
   private _drawCursor(): void {
+    // Fetch the selection model.
+    let model = this._selectionModel;
+
+    // Bail early if there is no selection model.
+    if (!model) {
+      return;
+    }
+
     // Extract the style information.
     let fill = this._style.cursorFillColor;
     let stroke = this._style.cursorBorderColor;
@@ -3703,11 +4092,19 @@ class DataGrid extends Widget {
     let vw = this._viewportWidth;
     let vh = this._viewportHeight;
 
+    // Fetch the cursor location.
+    let row = model.cursorRow;
+    let column = model.cursorColumn;
+
+    // Clamp the cursor.
+    row = Math.max(0, Math.min(row, this._rowSections.count));
+    column = Math.max(0, Math.min(column, this._columnSections.count));
+
     // Get the cursor bounds in viewport coordinates.
-    let x1 = this._columnSections.offsetOf(this._cursorColumn) - sx + hw;
-    let x2 = this._columnSections.extentOf(this._cursorColumn) - sx + hw;
-    let y1 = this._rowSections.offsetOf(this._cursorRow) - sy + hh;
-    let y2 = this._rowSections.extentOf(this._cursorRow) - sy + hh;
+    let x1 = this._columnSections.offsetOf(column) - sx + hw;
+    let x2 = this._columnSections.extentOf(column) - sx + hw;
+    let y1 = this._rowSections.offsetOf(row) - sy + hh;
+    let y2 = this._rowSections.extentOf(row) - sy + hh;
 
     // Bail early if the cursor is off the screen.
     if ((x1 - 1) >= vw || (y1 - 1) >= vh || (x2 + 1) < hw || (y2 + 1) < hh) {
@@ -3739,26 +4136,12 @@ class DataGrid extends Widget {
 
     // Stroke the cursor border if needed.
     if (stroke) {
-      // Adjust the X limits for boundary columns.
-      if (this._cursorColumn === 0) {
-        x1 += 1;
-      } else if (this._cursorColumn === this._columnSections.count - 1) {
-        x2 -= 1;
-      }
-
-      // Adjust the Y limits for boundary rows.
-      if (this._cursorRow === 0) {
-        y1 += 1;
-      } else if (this._cursorRow === this._rowSections.count - 1) {
-        y2 -= 1;
-      }
-
       // Set up the stroke style.
       gc.strokeStyle = stroke;
       gc.lineWidth = 2;
 
       // Stroke the cursor rect.
-      gc.strokeRect(x1 - 0.5, y1 - 0.5, x2 - x1 + 1, y2 - y1 + 1);
+      gc.strokeRect(x1, y1, x2 - x1, y2 - y1);
     }
 
     // Restore the gc state.
@@ -3926,10 +4309,12 @@ class DataGrid extends Widget {
 
   private _scrollX = 0;
   private _scrollY = 0;
-  private _cursorRow = 0;
-  private _cursorColumn = 0;
   private _viewportWidth = 0;
   private _viewportHeight = 0;
+
+  private _mousedown = false;
+  private _keyHandler: DataGrid.IKeyHandler | null = null;
+  private _mouseHandler: DataGrid.IMouseHandler | null = null;
 
   private _vScrollBarMinWidth = 0;
   private _hScrollBarMinHeight = 0;
@@ -4166,6 +4551,102 @@ namespace DataGrid {
      * The default is a new `TextRenderer`.
      */
     defaultRenderer?: CellRenderer;
+  }
+
+  /**
+   * An object which handles keydown events for the data grid.
+   */
+  export
+  interface IKeyHandler extends IDisposable {
+    /**
+     * Handle the key down event for the data grid.
+     *
+     * @param grid - The data grid of interest.
+     *
+     * @param event - The keydown event of interest.
+     *
+     * #### Notes
+     * This will not be called if the mouse button is pressed.
+     */
+    onKeyDown(grid: DataGrid, event: KeyboardEvent): void;
+  }
+
+  /**
+   * An object which handles mouse events for the data grid.
+   */
+  export
+  interface IMouseHandler extends IDisposable {
+    /**
+     * Release any resources acquired during a mouse press.
+     *
+     * #### Notes
+     * This method is called when the mouse should be released
+     * independent of a mouseup event, such as an early detach.
+     */
+    release(): void;
+
+    /**
+     * Handle the mouse hover event for the data grid.
+     *
+     * @param grid - The data grid of interest.
+     *
+     * @param event - The mouse hover event of interest.
+     */
+    onMouseHover(grid: DataGrid, event: MouseEvent): void;
+
+    /**
+     * Handle the mouse leave event for the data grid.
+     *
+     * @param grid - The data grid of interest.
+     *
+     * @param event - The mouse hover event of interest.
+     */
+    onMouseLeave(grid: DataGrid, event: MouseEvent): void;
+
+    /**
+     * Handle the mouse down event for the data grid.
+     *
+     * @param grid - The data grid of interest.
+     *
+     * @param event - The mouse down event of interest.
+     */
+    onMouseDown(grid: DataGrid, event: MouseEvent): void;
+
+    /**
+     * Handle the mouse move event for the data grid.
+     *
+     * @param grid - The data grid of interest.
+     *
+     * @param event - The mouse move event of interest.
+     */
+    onMouseMove(grid: DataGrid, event: MouseEvent): void;
+
+    /**
+     * Handle the mouse up event for the data grid.
+     *
+     * @param grid - The data grid of interest.
+     *
+     * @param event - The mouse up event of interest.
+     */
+    onMouseUp(grid: DataGrid, event: MouseEvent): void;
+
+    /**
+     * Handle the context menu event for the data grid.
+     *
+     * @param grid - The data grid of interest.
+     *
+     * @param event - The context menu event of interest.
+     */
+    onContextMenu(grid: DataGrid, event: MouseEvent): void;
+
+    /**
+     * Handle the wheel event for the data grid.
+     *
+     * @param grid - The data grid of interest.
+     *
+     * @param event - The wheel event of interest.
+     */
+    onWheel(grid: DataGrid, event: WheelEvent): void;
   }
 
   /**

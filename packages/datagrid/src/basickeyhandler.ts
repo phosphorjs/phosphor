@@ -13,10 +13,6 @@ import {
   DataGrid
 } from './datagrid';
 
-import {
-  EventHandler
-} from "./eventhandler";
-
 
 /**
  * A basic implementation of a data grid key handler.
@@ -25,7 +21,7 @@ import {
  * This class may be subclassed and customized as needed.
  */
 export
-class BasicKeyHandler implements EventHandler.IKeyHandler {
+class BasicKeyHandler implements DataGrid.IKeyHandler {
   /**
    * Whether the key handler is disposed.
    */
@@ -85,56 +81,36 @@ class BasicKeyHandler implements EventHandler.IKeyHandler {
     event.preventDefault();
     event.stopPropagation();
 
+    // Fetch the selection model.
+    let model = grid.selectionModel;
+
     // Fetch the modifier flags.
     let ctrl = event.ctrlKey;
     let shift = event.shiftKey;
 
-    // Fetch the selection model.
-    let smdl = grid.selectionModel;
+    // Set up the row and column variables.
+    let row = model ? model.cursorRow : 0;
+    let column = model ? model.cursorColumn : 0;
 
-    // Set the bit flags for the relevant state.
-    let flags = (ctrl ? 0x1 : 0) & (shift ? 0x2 : 0) & (smdl ? 0x4 : 0);
-
-    //
-    let r = grid.cursorRow;
-    let c = grid.cursorColumn;
-    let nr = grid.rowCount('body');
-    let nc = grid.columnCount('body');
-
-    // Dispatch based on the flags.
-    switch (flags) {
-    case 0x0: // !ctrl, !shift, !sm
-      grid.moveCursor(r, c - 1);
+    // Dispatch based on the modifier keys.
+    if (!model && ctrl) {
+      grid.scrollTo(0, grid.scrollY);
+    } else if (!model) {
+      grid.scrollByStep('left');
+    } else if (ctrl && shift) {
+      let sel = model.resizeBy(0, -Infinity);
+      if (sel) grid.scrollToColumn(sel.c2);
+    } else if (shift) {
+      let sel = model.resizeBy(0, -1);
+      if (sel) grid.scrollToColumn(sel.c2);
+    } else if (ctrl) {
+      model.clear();
+      model.select(row, 0);
       grid.scrollToCursor();
-      break;
-    case 0x1: // ctrl, !shift, !sm
-      grid.moveCursor(r, 0);
+    } else {
+      model.clear();
+      model.select(row, column - 1);
       grid.scrollToCursor();
-      break;
-    case 0x2: // !ctrl, shift, !sm
-      grid.moveCursor(r, c - 1);
-      grid.scrollToCursor();
-      break;
-    case 0x3: // ctrl, shift, !sm
-      grid.moveCursor(r, 0);
-      grid.scrollToCursor();
-      break;
-    case 0x4: // !ctrl, !shift, sm
-      smdl!.select({ clear: 'all', r1: r, c1: c, r2: r, c2: c - 1 });
-      grid.moveCursor(r, c - 1);
-      grid.scrollToCursor();
-      break;
-    case 0x5: // ctrl, !shift, sm
-      smdl!.select({ clear: 'all', r1: r, c1: 0, r2: r, c2: 0 });
-      grid.moveCursor(r, c - 1);
-      grid.scrollToCursor();
-      break;
-    case 0x6: // !ctrl, shift, sm
-      break;
-    case 0x7: // ctrl, shift, sm
-      break;
-    default:
-      throw 'unreachable';
     }
   }
 
@@ -150,44 +126,36 @@ class BasicKeyHandler implements EventHandler.IKeyHandler {
     event.preventDefault();
     event.stopPropagation();
 
+    // Fetch the selection model.
+    let model = grid.selectionModel;
+
     // Fetch the modifier flags.
     let ctrl = event.ctrlKey;
     let shift = event.shiftKey;
 
-    // Fetch the selection model.
-    let smdl = grid.selectionModel;
+    // Set up the row and column variables.
+    let row = model ? model.cursorRow : 0;
+    let column = model ? model.cursorColumn : 0;
 
-    // Set the bit flags for the relevant state.
-    let flags = (ctrl ? 0x1 : 0) & (shift ? 0x2 : 0) & (smdl ? 0x4 : 0);
-
-    // Dispatch based on the flags.
-    switch (flags) {
-    case 0x0: // !ctrl, !shift, !sm
-      grid.moveCursor(grid.cursorRow, grid.cursorColumn + 1);
+    // Dispatch based on the modifier keys.
+    if (!model && ctrl) {
+      grid.scrollTo(grid.maxScrollX, grid.scrollY);
+    } else if (!model) {
+      grid.scrollByStep('right');
+    } else if (ctrl && shift) {
+      let sel = model.resizeBy(0, Infinity);
+      if (sel) grid.scrollToColumn(sel.c2);
+    } else if (shift) {
+      let sel = model.resizeBy(0, 1);
+      if (sel) grid.scrollToColumn(sel.c2);
+    } else if (ctrl) {
+      model.clear();
+      model.select(row, Infinity);
       grid.scrollToCursor();
-      break;
-    case 0x1: // ctrl, !shift, !sm
-      grid.moveCursor(grid.cursorRow, grid.columnCount('body') - 1);
+    } else {
+      model.clear();
+      model.select(row, column + 1);
       grid.scrollToCursor();
-      break;
-    case 0x2: // !ctrl, shift, !sm
-      grid.moveCursor(grid.cursorRow, grid.cursorColumn + 1);
-      grid.scrollToCursor();
-      break;
-    case 0x3: // ctrl, shift, !sm
-      grid.moveCursor(grid.cursorRow, grid.columnCount('body') - 1);
-      grid.scrollToCursor();
-      break;
-    case 0x4: // !ctrl, !shift, sm
-      break;
-    case 0x5: // ctrl, !shift, sm
-      break;
-    case 0x6: // !ctrl, shift, sm
-      break;
-    case 0x7: // ctrl, shift, sm
-      break;
-    default:
-      throw 'unreachable';
     }
   }
 
@@ -203,51 +171,36 @@ class BasicKeyHandler implements EventHandler.IKeyHandler {
     event.preventDefault();
     event.stopPropagation();
 
+    // Fetch the selection model.
+    let model = grid.selectionModel;
+
     // Fetch the modifier flags.
     let ctrl = event.ctrlKey;
     let shift = event.shiftKey;
 
-    // Fetch the selection model.
-    let smdl = grid.selectionModel;
+    // Set up the row and column variables.
+    let row = model ? model.cursorRow : 0;
+    let column = model ? model.cursorColumn : 0;
 
-    // Set the bit flags for the relevant state.
-    let flags = (ctrl ? 0x1 : 0) & (shift ? 0x2 : 0) & (smdl ? 0x4 : 0);
-
-    //
-    let r = grid.cursorRow;
-    let c = grid.cursorColumn;
-    let nr = grid.rowCount('body');
-    let nc = grid.columnCount('body');
-
-    // Dispatch based on the flags.
-    switch (flags) {
-    case 0x0: // !ctrl, !shift, !sm
-      grid.moveCursor(grid.cursorRow - 1, grid.cursorColumn);
+    // Dispatch based on the modifier keys.
+    if (!model && ctrl) {
+      grid.scrollTo(grid.scrollX, 0);
+    } else if (!model) {
+      grid.scrollByStep('up');
+    } else if (ctrl && shift) {
+      let sel = model.resizeBy(-Infinity, 0);
+      if (sel) grid.scrollToRow(sel.r2);
+    } else if (shift) {
+      let sel = model.resizeBy(-1, 0);
+      if (sel) grid.scrollToRow(sel.r2);
+    } else if (ctrl) {
+      model.clear();
+      model.select(0, column);
       grid.scrollToCursor();
-      break;
-    case 0x1: // ctrl, !shift, !sm
-      grid.moveCursor(0, grid.cursorColumn);
+    } else {
+      model.clear();
+      model.select(row - 1, column);
       grid.scrollToCursor();
-      break;
-    case 0x2: // !ctrl, shift, !sm
-      grid.moveCursor(grid.cursorRow - 1, grid.cursorColumn);
-      grid.scrollToCursor();
-      break;
-    case 0x3: // ctrl, shift, !sm
-      grid.moveCursor(0, grid.cursorColumn);
-      grid.scrollToCursor();
-      break;
-    case 0x4: // !ctrl, !shift, sm
-
-      break;
-    case 0x5: // ctrl, !shift, sm
-      break;
-    case 0x6: // !ctrl, shift, sm
-      break;
-    case 0x7: // ctrl, shift, sm
-      break;
-    default:
-      throw 'unreachable';
     }
   }
 
@@ -263,44 +216,36 @@ class BasicKeyHandler implements EventHandler.IKeyHandler {
     event.preventDefault();
     event.stopPropagation();
 
+    // Fetch the selection model.
+    let model = grid.selectionModel;
+
     // Fetch the modifier flags.
     let ctrl = event.ctrlKey;
     let shift = event.shiftKey;
 
-    // Fetch the selection model.
-    let smdl = grid.selectionModel;
+    // Set up the row and column variables.
+    let row = model ? model.cursorRow : 0;
+    let column = model ? model.cursorColumn : 0;
 
-    // Set the bit flags for the relevant state.
-    let flags = (ctrl ? 0x1 : 0) & (shift ? 0x2 : 0) & (smdl ? 0x4 : 0);
-
-    // Dispatch based on the flags.
-    switch (flags) {
-    case 0x0: // !ctrl, !shift, !sm
-      grid.moveCursor(grid.cursorRow + 1, grid.cursorColumn);
+    // Dispatch based on the modifier keys.
+    if (!model && ctrl) {
+      grid.scrollTo(grid.scrollX, grid.maxScrollY);
+    } else if (!model) {
+      grid.scrollByStep('down');
+    } else if (ctrl && shift) {
+      let sel = model.resizeBy(Infinity, 0);
+      if (sel) grid.scrollToRow(sel.r2);
+    } else if (shift) {
+      let sel = model.resizeBy(1, 0);
+      if (sel) grid.scrollToRow(sel.r2);
+    } else if (ctrl) {
+      model.clear();
+      model.select(Infinity, column);
       grid.scrollToCursor();
-      break;
-    case 0x1: // ctrl, !shift, !sm
-      grid.moveCursor(grid.rowCount('body') - 1, grid.cursorColumn);
+    } else {
+      model.clear();
+      model.select(row + 1, column);
       grid.scrollToCursor();
-      break;
-    case 0x2: // !ctrl, shift, !sm
-      grid.moveCursor(grid.cursorRow + 1, grid.cursorColumn);
-      grid.scrollToCursor();
-      break;
-    case 0x3: // ctrl, shift, !sm
-      grid.moveCursor(grid.rowCount('body') - 1, grid.cursorColumn);
-      grid.scrollToCursor();
-      break;
-    case 0x4: // !ctrl, !shift, sm
-      break;
-    case 0x5: // ctrl, !shift, sm
-      break;
-    case 0x6: // !ctrl, shift, sm
-      break;
-    case 0x7: // ctrl, shift, sm
-      break;
-    default:
-      throw 'unreachable';
     }
   }
 
@@ -312,9 +257,40 @@ class BasicKeyHandler implements EventHandler.IKeyHandler {
    * @param event - The keyboard event of interest.
    */
   protected onPageUp(grid: DataGrid, event: KeyboardEvent): void {
+    // Ignore the event if the ctrl key is pressed.
+    if (event.ctrlKey) {
+      return;
+    }
+
+    // Stop the event propagation.
     event.preventDefault();
     event.stopPropagation();
-    grid.scrollByPage('up');
+
+    // Fetch the selection model.
+    let model = grid.selectionModel;
+
+    // Scroll by page if there is no selection model.
+    if (!model) {
+      grid.scrollByPage('up');
+      return;
+    }
+
+    // Set up the row and column variables.
+    let row = model.cursorRow;
+    let column = model.cursorColumn;
+
+    // Get the normal number of cells in the page height.
+    let n =  Math.floor(grid.pageHeight / grid.defaultSizes.rowHeight);
+
+    // Select or resize as needed.
+    if (event.shiftKey) {
+      let sel = model.resizeBy(-n, 0);
+      if (sel) grid.scrollToRow(sel.r2);
+    } else {
+      model.clear();
+      model.select(row - n, column);
+      grid.scrollToCursor();
+    }
   }
 
   /**
@@ -325,9 +301,40 @@ class BasicKeyHandler implements EventHandler.IKeyHandler {
    * @param event - The keyboard event of interest.
    */
   protected onPageDown(grid: DataGrid, event: KeyboardEvent): void {
+    // Ignore the event if the ctrl key is pressed.
+    if (event.ctrlKey) {
+      return;
+    }
+
+    // Stop the event propagation.
     event.preventDefault();
     event.stopPropagation();
-    grid.scrollByPage('down');
+
+    // Fetch the selection model.
+    let model = grid.selectionModel;
+
+    // Scroll by page if there is no selection model.
+    if (!model) {
+      grid.scrollByPage('down');
+      return;
+    }
+
+    // Set up the row and column variables.
+    let row = model.cursorRow;
+    let column = model.cursorColumn;
+
+    // Get the normal number of cells in the page height.
+    let n =  Math.floor(grid.pageHeight / grid.defaultSizes.rowHeight);
+
+    // Select or resize as needed.
+    if (event.shiftKey) {
+      let sel = model.resizeBy(n, 0);
+      if (sel) grid.scrollToRow(sel.r2);
+    } else {
+      model.clear();
+      model.select(row + n, column);
+      grid.scrollToCursor();
+    }
   }
 
   private _disposed = false;
