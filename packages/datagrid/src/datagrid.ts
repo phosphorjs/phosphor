@@ -137,8 +137,10 @@ class DataGrid extends Widget {
     // Add the on-screen overlay to the viewport node.
     this._viewport.node.appendChild(this._overlay);
 
-    // Install the message hook for the viewport.
+    // Install the message hooks.
     MessageLoop.installMessageHook(this._viewport, this);
+    MessageLoop.installMessageHook(this._hScrollBar, this);
+    MessageLoop.installMessageHook(this._vScrollBar, this);
 
     // Hide the scroll bars and corner from the outset.
     this._vScrollBar.hide();
@@ -1297,9 +1299,25 @@ class DataGrid extends Widget {
    *   as normal, or `false` if processing should cease immediately.
    */
   messageHook(handler: IMessageHandler, msg: Message): boolean {
+    // Process viewport messages.
     if (handler === this._viewport) {
       this._processViewportMessage(msg);
+      return true;
     }
+
+    // Process horizontal scroll bar messages.
+    if (handler === this._hScrollBar && msg.type === 'activate-request') {
+      this.activate();
+      return false;
+    }
+
+    // Process vertical scroll bar messages.
+    if (handler === this._vScrollBar && msg.type === 'activate-request') {
+      this.activate();
+      return false;
+    }
+
+    // Ignore all other messages.
     return true;
   }
 
