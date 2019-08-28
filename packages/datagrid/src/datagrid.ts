@@ -349,7 +349,7 @@ class DataGrid extends Widget {
     this._releaseMouse();
 
     // Update the internal mouse handler.
-    this._mouseHandler = null;
+    this._mouseHandler = value;
   }
 
   /**
@@ -2315,9 +2315,16 @@ class DataGrid extends Widget {
       event.stopPropagation();
     }
 
+    // Bail if there is no mouse handler.
+    if (!this._mouseHandler) {
+      return;
+    }
+
     // Dispatch to the mouse handler.
-    if (this._mouseHandler) {
+    if (this._mousedown) {
       this._mouseHandler.onMouseMove(this, event);
+    } else {
+      this._mouseHandler.onMouseHover(this, event);
     }
   }
 
