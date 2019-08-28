@@ -3963,7 +3963,7 @@ class DataGrid extends Widget {
     // Fetch the selection model.
     let model = this._selectionModel;
 
-    // Bail early if there are no selection.
+    // Bail early if there are no selections.
     if (!model || model.isEmpty) {
       return;
     }
@@ -4055,7 +4055,7 @@ class DataGrid extends Widget {
     // Fetch the selection model.
     let model = this._selectionModel;
 
-    // Bail early if there are no selection.
+    // Bail early if there are no selections.
     if (!model || model.isEmpty) {
       return;
     }
@@ -4148,7 +4148,7 @@ class DataGrid extends Widget {
     let model = this._selectionModel;
 
     // Bail early if there is no cursor.
-    if (!model || !model.hasCursor) {
+    if (!model || model.isEmpty || model.selectionMode !== 'cell') {
       return;
     }
 
