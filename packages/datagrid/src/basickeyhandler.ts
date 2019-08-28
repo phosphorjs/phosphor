@@ -66,6 +66,9 @@ class BasicKeyHandler implements DataGrid.IKeyHandler {
     case 'PageDown':
       this.onPageDown(grid, event);
       break;
+    case 'Escape':
+      this.onEscape(grid, event);
+      break;
     }
   }
 
@@ -139,7 +142,7 @@ class BasicKeyHandler implements DataGrid.IKeyHandler {
     }
 
     // Scroll the grid appropriately.
-    if (shift) {
+    if (shift || mode === 'column') {
       grid.scrollToColumn(cs.c2);
     } else {
       grid.scrollToCursor();
@@ -216,7 +219,7 @@ class BasicKeyHandler implements DataGrid.IKeyHandler {
     }
 
     // Scroll the grid appropriately.
-    if (shift) {
+    if (shift || mode === 'column') {
       grid.scrollToColumn(cs.c2);
     } else {
       grid.scrollToCursor();
@@ -293,7 +296,7 @@ class BasicKeyHandler implements DataGrid.IKeyHandler {
     }
 
     // Scroll the grid appropriately.
-    if (shift) {
+    if (shift || mode === 'row') {
       grid.scrollToRow(cs.r2);
     } else {
       grid.scrollToCursor();
@@ -370,7 +373,7 @@ class BasicKeyHandler implements DataGrid.IKeyHandler {
     }
 
     // Scroll the grid appropriately.
-    if (shift) {
+    if (shift || mode === 'row') {
       grid.scrollToRow(cs.r2);
     } else {
       grid.scrollToCursor();
@@ -426,11 +429,7 @@ class BasicKeyHandler implements DataGrid.IKeyHandler {
     }
 
     // Scroll the grid appropriately.
-    if (event.shiftKey) {
-      grid.scrollToRow(cs.r2);
-    } else {
-      grid.scrollToCursor();
-    }
+    grid.scrollToRow(cs.r2);
   }
 
   /**
@@ -482,10 +481,19 @@ class BasicKeyHandler implements DataGrid.IKeyHandler {
     }
 
     // Scroll the grid appropriately.
-    if (event.shiftKey) {
-      grid.scrollToRow(cs.r2);
-    } else {
-      grid.scrollToCursor();
+    grid.scrollToRow(cs.r2);
+  }
+
+  /**
+   * Handle the `'Escape'` key press for the data grid.
+   *
+   * @param grid - The data grid of interest.
+   *
+   * @param event - The keyboard event of interest.
+   */
+  protected onEscape(grid: DataGrid, event: KeyboardEvent): void {
+    if (grid.selectionModel) {
+      grid.selectionModel.clear();
     }
   }
 
