@@ -40,12 +40,24 @@ abstract class SelectionModel {
   abstract readonly model: DataModel;
 
   /**
+   * Whether the selection model has a cursor.
+   *
+   * #### Notes
+   * If this is `false`, the grid will not render a cursor.
+   */
+  abstract readonly hasCursor: boolean;
+
+  /**
    * The row index of the cursor.
+   *
+   * This will be `-1` if `hasCursor` is `false`.
    */
   abstract readonly cursorRow: number;
 
   /**
    * The column index of the cursor.
+   *
+   * This will be `-1` if `hasCursor` is `false`.
    */
   abstract readonly cursorColumn: number;
 

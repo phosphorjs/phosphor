@@ -4147,8 +4147,8 @@ class DataGrid extends Widget {
     // Fetch the selection model.
     let model = this._selectionModel;
 
-    // Bail early if there is no selection model.
-    if (!model) {
+    // Bail early if there is no cursor.
+    if (!model || !model.hasCursor) {
       return;
     }
 
@@ -4165,8 +4165,11 @@ class DataGrid extends Widget {
     let row = model.cursorRow;
     let column = model.cursorColumn;
 
-    // Bail early if there is no cursor.
-    if (row < 0 || column < 0) {
+    // Bail early if the cursor is out of bounds.
+    if (row < 0 || row >= this._rowSections.count) {
+      return;
+    }
+    if (column < 0 || column >= this._columnSections.count) {
       return;
     }
 
@@ -4179,10 +4182,6 @@ class DataGrid extends Widget {
     let hh = this.headerHeight;
     let vw = this._viewportWidth;
     let vh = this._viewportHeight;
-
-    // Clamp the cursor.
-    row = Math.max(0, Math.min(row, this._rowSections.count));
-    column = Math.max(0, Math.min(column, this._columnSections.count));
 
     // Get the cursor bounds in viewport coordinates.
     let x1 = this._columnSections.offsetOf(column) - sx + hw;
