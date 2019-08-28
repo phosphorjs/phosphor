@@ -10,10 +10,6 @@ import {
 } from '@phosphor/algorithm';
 
 import {
-  DataModel
-} from './datamodel';
-
-import {
   SelectionModel
 } from './selectionmodel';
 
@@ -28,135 +24,36 @@ import {
 export
 class BasicSelectionModel extends SelectionModel {
   /**
-   * Construct a new basic selection model.
-   *
-   * @param options - The options for initializing the model.
+   * Wether the selection model is empty.
    */
-  constructor(options: BasicSelectionModel.IOptions) {
-    super();
-    this.model = options.model;
-    this._selectionMode = options.selectionMode || 'multiple-cell';
-  }
-
-  /**
-   * The data model associated with the selection model.
-   */
-  readonly model: DataModel;
-
-  /**
-   * Get the selection model for the model.
-   */
-  get selectionMode(): BasicSelectionModel.SelectionMode {
-    return this._selectionMode;
-  }
-
-  /**
-   * Set the selection mode for the model.
-   *
-   * #### Notes
-   * This will clear the selection model.
-   */
-  set selectionMode(value: BasicSelectionModel.SelectionMode) {
-    // Bail early if the mode does not change.
-    if (this._selectionMode === value) {
-      return;
-    }
-
-    // Update the internal mode.
-    this._selectionMode = value;
-
-    // Clear the current selections.
-    this.clear();
-  }
-
-  /**
-   * Get whether selection ranges are allowed.
-   */
-  get allowSelectionRanges(): boolean {
-    return this._allowSelectionRanges;
-  }
-
-  /**
-   * Set whether selection ranges are allowed.
-   *
-   * #### Notes
-   * This will clear the selection model.
-   */
-  set allowSelectionRanges(value: boolean) {
-    // Bail early if the flag does not change.
-    if (this._allowSelectionRanges === value) {
-      return;
-    }
-
-    // Update the internal flag.
-    this._allowSelectionRanges = value;
-
-    // Clear the current selections.
-    this.clear();
-  }
-
-  /**
-   * Get whether multiple selections are allowed.
-   */
-  get allowMultipleSelections(): boolean {
-    return this._allowMultipleSelections;
-  }
-
-  /**
-   * Set whether multiple selections are allowed.
-   *
-   * #### Notes
-   * This will clear the selection model.
-   */
-  set allowMultipleSelections(value: boolean) {
-    // Bail early if the flag does not change.
-    if (this._allowMultipleSelections === value) {
-      return;
-    }
-
-    // Update the internal flag.
-    this._allowMultipleSelections = value;
-
-    // Clear the current selections.
-    this.clear();
-  }
-
-  /**
-   * Whether the selection model has a cursor.
-   *
-   * #### Notes
-   * If this is `false`, the grid will not render a cursor.
-   */
-  get hasCursor(): boolean {
-    return this._selectionMode === 'cell';
+  get isEmpty(): boolean {
+    return this._selections.length === 0;
   }
 
   /**
    * The row index of the cursor.
-   *
-   * This will be `-1` if `hasCursor` is `false`.
    */
   get cursorRow(): number {
-    return this.hasCursor ? this._cursorRow : -1;
+    return this._cursorRow;
   }
 
   /**
    * The column index of the cursor.
-   *
-   * This will be `-1` if `hasCursor` is `false`.
    */
   get cursorColumn(): number {
-    return this.hasCursor ? this._cursorColumn : -1;
+    return this._cursorColumn;
   }
 
   /**
-   * Wether the selection model is empty.
+   * Get the current selection in the selection model.
+   *
+   * @returns The current selection or `null`.
    *
    * #### Notes
-   * An empty selection model will yield an empty `selections` iterator.
+   * This is the selection which holds the cursor.
    */
-  get isEmpty(): boolean {
-    return this._selections.length === 0;
+  currentSelection(): SelectionModel.Selection | null {
+    return this._selections[this._selections.length - 1] || null;
   }
 
   /**
@@ -172,428 +69,80 @@ class BasicSelectionModel extends SelectionModel {
   }
 
   /**
-   * Test whether any selection intersects a row.
-   *
-   * @param row - The row index of interest.
-   *
-   * @returns Whether any selection intersects the row.
-   */
-  isRowSelected(row: number): boolean {
-    return this._selections.some(s => Private.containsRow(s, row));
-  }
-
-  /**
-   * Test whether any selection intersects a column.
-   *
-   * @param column - The column index of interest.
-   *
-   * @returns Whether any selection intersects the column.
-   */
-  isColumnSelected(column: number): boolean {
-    return this._selections.some(s => Private.containsColumn(s, column));
-  }
-
-  /**
-   * Test whether any selection intersects a cell.
-   *
-   * @param row - The row index of interest.
-   *
-   * @param column - The column index of interest.
-   *
-   * @returns Whether any selection intersects the cell.
-   */
-  isCellSelected(row: number, column: number): boolean {
-    return this._selections.some(s => Private.containsCell(s, row, column));
-  }
-
-  /**
    * Select the specified cells.
    *
-   * @param r1 - The first row of interest.
-   *
-   * @param c1 - The first column of interest.
-   *
-   * @param r2 - The second row of interest. The default is `r1`.
-   *
-   * @param c2 - The second column of interest. The default is `c1`.
-   *
-   * @returns The current selection.
+   * @param args - The arguments for making the selection.
    */
-  select(r1: number, c1: number, r2?: number, c2?: number): SelectionModel.Selection | null {
-    // Fetch the current row and column count.
+  select(args: SelectionModel.SelectArgs): void {
+    // Fetch the current row and column counts;
     let rowCount = this.model.rowCount('body');
     let columnCount = this.model.columnCount('body');
 
     // Bail early if there is no content.
     if (rowCount <= 0 || columnCount <= 0) {
-      return null;
+      return;
     }
 
-    // Handle the optional arguments.
-    r2 = r2 === undefined ? r1 : r2;
-    c2 = c2 === undefined ? c1 : c2;
+    // Unpack the arguments.
+    let { r1, c1, r2, c2, clear } = args;
 
-    // Clamp to the bounds.
+    // Clear the necessary selections.
+    if (!this.allowMultipleSelections) {
+      this._selections.length = 0;
+    } else if (clear === 'all') {
+      this._selections.length = 0;
+    } else if (clear === 'current') {
+      this._selections.pop();
+    }
+
+    // Clamp to the data model bounds.
     r1 = Math.max(0, Math.min(r1, rowCount - 1));
     r2 = Math.max(0, Math.min(r2, rowCount - 1));
     c1 = Math.max(0, Math.min(c1, columnCount - 1));
     c2 = Math.max(0, Math.min(c2, columnCount - 1));
 
+    // Handle the selection mode and range flag.
+    let ar = this.allowSelectionRanges;
+    switch (this.selectionMode) {
+    case 'row':
+      r2 = ar ? r2 : r1;
+      c1 = 0;
+      c2 = columnCount - 1;
+      break;
+    case 'column':
+      r1 = 0;
+      r2 = rowCount - 1;
+      c2 = ar ? c2 : c1;
+      break;
+    case 'cell':
+      r2 = ar ? r2 : r1;
+      c2 = ar ? c2 : c1;
+      break;
+    default:
+      throw 'unreachable';
+    }
+
+    // Fetch the cursor row and column.
+    let cr = this._cursorRow;
+    let cc = this._cursorColumn;
+
+    // Compute the new cursor location.
+    if (cr < 0 || (cr < r1 && cr < r2) || (cr > r1 && cr > r2)) {
+      cr = r1;
+    }
+    if (cc < 0 || (cc < c1 && cc < c2) || (cc > c1 && cc > c2)) {
+      cc = c1;
+    }
+
     // Update the cursor.
-    this._cursorRow = r1;
-    this._cursorColumn = c1;
-
-    // Dispatch based on the selection mode.
-    switch (this._selectionMode) {
-    case 'single-row':
-      this._selections.length = 0;
-      r2 = r1;
-      c1 = 0;
-      c2 = columnCount - 1;
-      break;
-    case 'single-column':
-      this._selections.length = 0;
-      c2 = c1;
-      r1 = 0;
-      r2 = rowCount - 1;
-      break;
-    case 'single-cell':
-      this._selections.length = 0;
-      r2 = r1;
-      c2 = c1;
-      break;
-    case 'multiple-row':
-      c1 = 0;
-      c2 = columnCount - 1;
-      break;
-    case 'multiple-column':
-      r1 = 0;
-      r2 = rowCount - 1;
-      break;
-    case 'multiple-cell':
-      break;
-    default:
-      throw 'unreachable';
-    }
-
-    // Create the new selection.
-    let selection = { r1, c1, r2, c2 };
-
-    // Add the new selection.
-    this._selections.push(selection);
-
-    // Emit the changed signal.
-    this.emitChanged();
-
-    // Return the new selection.
-    return selection;
-  }
-
-  /**
-   * Resize the current selection to cover all columns up the given row.
-   *
-   * @param index - The row index of interest.
-   *
-   * @returns The current selection.
-   */
-  resizeToRow(index: number): SelectionModel.Selection | null {
-    // Bail early if the selection mode only allows columns.
-    if (this._selectionMode === 'single-column') {
-      return null;
-    }
-    if (this._selectionMode === 'multiple-column') {
-      return null;
-    }
-
-    // Fetch the current row and column count.
-    let rowCount = this.model.rowCount('body');
-    let columnCount = this.model.columnCount('body');
-
-    // Bail early if there is no content.
-    if (rowCount <= 0 || columnCount <= 0) {
-      return null;
-    }
-
-    // Pop the current selection.
-    this._selections.pop();
-
-    // Normalize the index.
-    index = Math.max(0, Math.min(Math.floor(index), rowCount - 1));
-
-    // Fetch the cursor location.
-    let cr = Math.max(0, this._cursorRow);
-    let cc = Math.max(0, this._cursorColumn);
-
-    // Set up the row and column variables.
-    let r1: number;
-    let r2: number;
-    let c1: number;
-    let c2: number;
-
-    // Dispatch based on the selection mode.
-    switch (this._selectionMode) {
-    case 'single-row':
-      r1 = index;
-      r2 = index;
-      c1 = 0;
-      c2 = columnCount - 1;
-      cr = index;
-      break;
-    case 'single-cell':
-      r1 = index;
-      r2 = index;
-      c1 = cc;
-      c2 = cc;
-      cr = index;
-      break;
-    case 'multiple-row':
-      r1 = cr;
-      r2 = index;
-      c1 = 0;
-      c2 = columnCount - 1;
-      break;
-    case 'multiple-cell':
-      r1 = cr;
-      r2 = index;
-      c1 = 0;
-      c2 = columnCount - 1;
-      break;
-    default:
-      throw 'unreachable';
-    }
-
-    // Update the internal cursor.
     this._cursorRow = cr;
     this._cursorColumn = cc;
 
-    // Create the new selection.
-    let selection = { r1, c1, r2, c2 };
-
     // Add the new selection.
-    this._selections.push(selection);
+    this._selections.push({ r1, c1, r2, c2 });
 
     // Emit the changed signal.
     this.emitChanged();
-
-    // Return the selection.
-    return selection;
-  }
-
-  /**
-   * Resize the current selection to cover all rows up the given column.
-   *
-   * @param index - The column index of interest.
-   *
-   * @returns The current selection.
-   */
-  resizeToColumn(index: number): SelectionModel.Selection | null {
-    // Bail early if the selection mode only allows rows.
-    if (this._selectionMode === 'single-row') {
-      return null;
-    }
-    if (this._selectionMode === 'multiple-row') {
-      return null;
-    }
-
-    // Fetch the current row and column count.
-    let rowCount = this.model.rowCount('body');
-    let columnCount = this.model.columnCount('body');
-
-    // Bail early if there is no content.
-    if (rowCount <= 0 || columnCount <= 0) {
-      return null;
-    }
-
-    // Pop the current selection.
-    this._selections.pop();
-
-    // Normalize the index.
-    index = Math.max(0, Math.min(Math.floor(index), columnCount - 1));
-
-    // Fetch the cursor location.
-    let cr = Math.max(0, this._cursorRow);
-    let cc = Math.max(0, this._cursorColumn);
-
-    // Set up the row and column variables.
-    let r1: number;
-    let r2: number;
-    let c1: number;
-    let c2: number;
-
-    // Dispatch based on the selection mode.
-    switch (this._selectionMode) {
-    case 'single-column':
-      r1 = 0;
-      r2 = rowCount - 1;
-      c1 = index;
-      c2 = index;
-      cc = index;
-      break;
-    case 'single-cell':
-      r1 = cr;
-      r2 = cr;
-      c1 = index;
-      c2 = index;
-      cc = index;
-      break;
-    case 'multiple-column':
-      r1 = 0;
-      r2 = rowCount - 1;
-      c1 = cc;
-      c2 = index;
-      break;
-    case 'multiple-cell':
-      r1 = 0;
-      r2 = rowCount - 1;
-      c1 = cc;
-      c2 = index;
-      break;
-    default:
-      throw 'unreachable';
-    }
-
-    // Update the internal cursor.
-    this._cursorRow = cr;
-    this._cursorColumn = cc;
-
-    // Create the new selection.
-    let selection = { r1, c1, r2, c2 };
-
-    // Add the new selection.
-    this._selections.push(selection);
-
-    // Emit the changed signal.
-    this.emitChanged();
-
-    // Return the selection.
-    return selection;
-  }
-
-  /**
-   * Resize the current selection to the specified cell.
-   *
-   * @param row - The row index of interest.
-   *
-   * @param column - The column index of interest.
-   *
-   * @returns The current selection.
-   */
-  resizeTo(row: number, column: number): SelectionModel.Selection | null {
-    // Fetch the current row and column count.
-    let rowCount = this.model.rowCount('body');
-    let columnCount = this.model.columnCount('body');
-
-    // Bail early if there is no content.
-    if (rowCount <= 0 || columnCount <= 0) {
-      return null;
-    }
-
-    // Pop the current selection.
-    this._selections.pop();
-
-    // Normalize the indices.
-    row = Math.max(0, Math.min(Math.floor(row), rowCount - 1));
-    column = Math.max(0, Math.min(Math.floor(column), columnCount - 1));
-
-    // Fetch the cursor location.
-    let cr = Math.max(0, this._cursorRow);
-    let cc = Math.max(0, this._cursorColumn);
-
-    // Set up the row and column variables.
-    let r1: number;
-    let r2: number;
-    let c1: number;
-    let c2: number;
-
-    // Dispatch based on the selection mode.
-    switch (this._selectionMode) {
-    case 'single-row':
-      r1 = row;
-      r2 = row;
-      c1 = 0;
-      c2 = columnCount - 1;
-      cr = row;
-      break;
-    case 'single-column':
-      r1 = 0;
-      r2 = rowCount - 1;
-      c1 = column;
-      c2 = column;
-      cc = column;
-      break;
-    case 'single-cell':
-      r1 = row;
-      r2 = row;
-      c1 = column;
-      c2 = column;
-      cr = row;
-      cc = column;
-      break;
-    case 'multiple-row':
-      r1 = cr;
-      r2 = row;
-      c1 = 0;
-      c2 = columnCount - 1;
-      break;
-    case 'multiple-column':
-      r1 = 0;
-      r2 = rowCount - 1;
-      c1 = cc;
-      c2 = column;
-      break;
-    case 'multiple-cell':
-      r1 = cr;
-      r2 = row;
-      c1 = cc;
-      c2 = column;
-      break;
-    default:
-      throw 'unreachable';
-    }
-
-    // Update the internal cursor.
-    this._cursorRow = cr;
-    this._cursorColumn = cc;
-
-    // Create the new selection.
-    let selection = { r1, c1, r2, c2 };
-
-    // Add the new selection.
-    this._selections.push(selection);
-
-    // Emit the changed signal.
-    this.emitChanged();
-
-    // Return the selection.
-    return selection;
-  }
-
-  /**
-   * Resize the current selection by the specified delta.
-   *
-   * @param rows - The delta number of rows.
-   *
-   * @param columns - The delta number of columns.
-   *
-   * @returns The current selection.
-   */
-  resizeBy(rows: number, columns: number): SelectionModel.Selection | null {
-    // Fetch the last selection.
-    let last = this._selections[this._selections.length - 1] || null;
-
-    // Get the trailing row and column.
-    let row: number;
-    let column: number;
-    if (last) {
-      row = last.r2 + Math.floor(rows);
-      column = last.c2 + Math.floor(columns);
-    } else {
-      row = Math.floor(rows);
-      column = Math.floor(columns);
-    }
-
-    // Resize to the computed cell.
-    return this.resizeTo(row, column);
   }
 
   /**
@@ -616,85 +165,5 @@ class BasicSelectionModel extends SelectionModel {
 
   private _cursorRow = -1;
   private _cursorColumn = -1;
-  private _allowSelectionRanges: boolean;
-  private _allowMultipleSelections: boolean;
   private _selections: SelectionModel.Selection[] = [];
-  private _selectionMode: BasicSelectionModel.SelectionMode;
-}
-
-
-/**
- * The namespace for the `BasicSelectionModel` class statics.
- */
-export
-namespace BasicSelectionModel {
-  /**
-   * A type alias for the selection mode.
-   */
-  export
-  type SelectionMode = 'row' | 'column' | 'cell';
-
-  /**
-   * An options object for initializing a basic selection model.
-   */
-  export
-  interface IOptions {
-    /**
-     * The data model for the selection model.
-     */
-    model: DataModel;
-
-    /**
-     * The selection mode for the model.
-     *
-     * The default is `'cell'`.
-     */
-    selectionMode?: SelectionMode;
-
-    /**
-     * Whether selection ranges are allowed.
-     *
-     * The default is `true`.
-     */
-    allowSelectionRanges?: boolean;
-
-    /**
-     * Whether multiple selections are allowed.
-     *
-     * The default is `true`.
-     */
-    allowMultipleSelections?: boolean;
-  }
-}
-
-
-/**
- * The namespace for the module implementation details.
- */
-namespace Private {
-  /**
-   * Test whether a selection contains a given row.
-   */
-  export
-  function containsRow(selection: SelectionModel.Selection, row: number): boolean {
-    let { r1, r2 } = selection;
-    return (row >= r1 && row <= r2) || (row >= r2 && row <= r1);
-  }
-
-  /**
-   * Test whether a selection contains a given column.
-   */
-  export
-  function containsColumn(selection: SelectionModel.Selection, column: number): boolean {
-    let { c1, c2 } = selection;
-    return (column >= c1 && column <= c2) || (column >= c2 && column <= c1);
-  }
-
-  /**
-   * Test whether a selection contains a given cell.
-   */
-  export
-  function containsCell(selection: SelectionModel.Selection, row: number, column: number): boolean {
-    return containsRow(selection, row) && containsColumn(selection, column);
-  }
 }
