@@ -4038,7 +4038,7 @@ class DataGrid extends Widget {
       // Draw the border if needed.
       if (stroke) {
         gc.beginPath();
-        gc.moveTo(hw - .5, y);
+        gc.moveTo(hw - .5, y - 1);
         gc.lineTo(hw - .5, y + h);
         gc.stroke();
       }
@@ -4130,7 +4130,7 @@ class DataGrid extends Widget {
       // Draw the border if needed.
       if (stroke) {
         gc.beginPath();
-        gc.moveTo(x, hh - .5);
+        gc.moveTo(x - 1, hh - .5);
         gc.lineTo(x + w, hh - .5);
         gc.stroke();
       }
