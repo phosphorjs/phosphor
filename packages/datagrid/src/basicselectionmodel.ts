@@ -22,8 +22,8 @@ import {
  * A basic selection model implementation.
  *
  * #### Notes
- * This selection model is sufficient for most use cases where keeping
- * track of mutations in the data model is *not* required.
+ * This selection model is sufficient for most use cases where
+ * structural knowledge of the underlying data source *not* required.
  */
 export
 class BasicSelectionModel extends SelectionModel {
@@ -52,6 +52,9 @@ class BasicSelectionModel extends SelectionModel {
 
   /**
    * Set the selection mode for the model.
+   *
+   * #### Notes
+   * This will clear the selection model.
    */
   set selectionMode(value: BasicSelectionModel.SelectionMode) {
     // Bail early if the mode does not change.
@@ -67,17 +70,83 @@ class BasicSelectionModel extends SelectionModel {
   }
 
   /**
+   * Get whether selection ranges are allowed.
+   */
+  get allowSelectionRanges(): boolean {
+    return this._allowSelectionRanges;
+  }
+
+  /**
+   * Set whether selection ranges are allowed.
+   *
+   * #### Notes
+   * This will clear the selection model.
+   */
+  set allowSelectionRanges(value: boolean) {
+    // Bail early if the flag does not change.
+    if (this._allowSelectionRanges === value) {
+      return;
+    }
+
+    // Update the internal flag.
+    this._allowSelectionRanges = value;
+
+    // Clear the current selections.
+    this.clear();
+  }
+
+  /**
+   * Get whether multiple selections are allowed.
+   */
+  get allowMultipleSelections(): boolean {
+    return this._allowMultipleSelections;
+  }
+
+  /**
+   * Set whether multiple selections are allowed.
+   *
+   * #### Notes
+   * This will clear the selection model.
+   */
+  set allowMultipleSelections(value: boolean) {
+    // Bail early if the flag does not change.
+    if (this._allowMultipleSelections === value) {
+      return;
+    }
+
+    // Update the internal flag.
+    this._allowMultipleSelections = value;
+
+    // Clear the current selections.
+    this.clear();
+  }
+
+  /**
+   * Whether the selection model has a cursor.
+   *
+   * #### Notes
+   * If this is `false`, the grid will not render a cursor.
+   */
+  get hasCursor(): boolean {
+    return this._selectionMode === 'cell';
+  }
+
+  /**
    * The row index of the cursor.
+   *
+   * This will be `-1` if `hasCursor` is `false`.
    */
   get cursorRow(): number {
-    return this._cursorRow;
+    return this.hasCursor ? this._cursorRow : -1;
   }
 
   /**
    * The column index of the cursor.
+   *
+   * This will be `-1` if `hasCursor` is `false`.
    */
   get cursorColumn(): number {
-    return this._cursorColumn;
+    return this.hasCursor ? this._cursorColumn : -1;
   }
 
   /**
@@ -547,6 +616,8 @@ class BasicSelectionModel extends SelectionModel {
 
   private _cursorRow = -1;
   private _cursorColumn = -1;
+  private _allowSelectionRanges: boolean;
+  private _allowMultipleSelections: boolean;
   private _selections: SelectionModel.Selection[] = [];
   private _selectionMode: BasicSelectionModel.SelectionMode;
 }
@@ -561,37 +632,7 @@ namespace BasicSelectionModel {
    * A type alias for the selection mode.
    */
   export
-  type SelectionMode = (
-    /**
-     * Only a single full-row can be selected at a time.
-     */
-    'single-row' |
-
-    /**
-     * Only a single full-column can be selected at a time.
-     */
-    'single-column' |
-
-    /**
-     * Only a single cell can be selected at a time.
-     */
-    'single-cell' |
-
-    /**
-     * Multiple full-rows may be selected at a time.
-     */
-    'multiple-row' |
-
-    /**
-     * Multiple full-columns may be selected at a time.
-     */
-    'multiple-column' |
-
-    /**
-     * Multiple cells may be selected at a time.
-     */
-    'multiple-cell'
-  );
+  type SelectionMode = 'row' | 'column' | 'cell';
 
   /**
    * An options object for initializing a basic selection model.
@@ -606,9 +647,23 @@ namespace BasicSelectionModel {
     /**
      * The selection mode for the model.
      *
-     * The default is `'multiple-cell'`.
+     * The default is `'cell'`.
      */
     selectionMode?: SelectionMode;
+
+    /**
+     * Whether selection ranges are allowed.
+     *
+     * The default is `true`.
+     */
+    allowSelectionRanges?: boolean;
+
+    /**
+     * Whether multiple selections are allowed.
+     *
+     * The default is `true`.
+     */
+    allowMultipleSelections?: boolean;
   }
 }
 
