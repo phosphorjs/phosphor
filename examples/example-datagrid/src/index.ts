@@ -211,19 +211,20 @@ function main(): void {
 
   let brownStripeStyle: DataGrid.Style = {
     ...DataGrid.defaultStyle,
-    columnBackgroundColor: i => i % 2 === 0 ? 'rgba(165, 143, 53, 0.2)' : '',
-    cursorBorderColor: ''
+    columnBackgroundColor: i => i % 2 === 0 ? 'rgba(165, 143, 53, 0.2)' : ''
   };
 
   let greenStripeStyle: DataGrid.Style = {
     ...DataGrid.defaultStyle,
-    rowBackgroundColor: i => i % 2 === 0 ? 'rgba(64, 115, 53, 0.2)' : '',
-    cursorBorderColor: ''
+    rowBackgroundColor: i => i % 2 === 0 ? 'rgba(64, 115, 53, 0.2)' : ''
   };
 
-  let noCursorStyle: DataGrid.Style = {
+  let lightSelectionStyle: DataGrid.Style = {
     ...DataGrid.defaultStyle,
-    cursorBorderColor: '',
+    selectionFillColor: 'rgba(255, 255, 255, 0.2)',
+    selectionBorderColor: 'white',
+    headerSelectionBorderColor: 'white',
+    cursorBorderColor: 'white'
   };
 
   let fgColorFloatRenderer = new TextRenderer({
@@ -252,27 +253,29 @@ function main(): void {
   grid2.mouseHandler = new BasicMouseHandler();
   grid2.selectionModel = new BasicSelectionModel({
     model: model2,
-    selectionMode: 'single-column'
+    selectionMode: 'column',
+    allowSelectionRanges: false
   });
 
-  let grid3 = new DataGrid({ style: noCursorStyle });
+  let grid3 = new DataGrid();
   grid3.cellRenderers.set('body', {}, fgColorFloatRenderer);
   grid3.model = model3;
   grid3.keyHandler = new BasicKeyHandler();
   grid3.mouseHandler = new BasicMouseHandler();
   grid3.selectionModel = new BasicSelectionModel({
     model: model3,
-    selectionMode: 'single-row'
+    selectionMode: 'row',
+    allowSelectionRanges: false
   });
 
-  let grid4 = new DataGrid({ style: noCursorStyle });
+  let grid4 = new DataGrid({ style: lightSelectionStyle });
   grid4.cellRenderers.set('body', {}, bgColorFloatRenderer);
   grid4.model = model4;
   grid4.keyHandler = new BasicKeyHandler();
   grid4.mouseHandler = new BasicMouseHandler();
   grid4.selectionModel = new BasicSelectionModel({
     model: model4,
-    selectionMode: 'multiple-column'
+    selectionMode: 'column'
   });
 
   let grid5 = new DataGrid({
@@ -289,7 +292,7 @@ function main(): void {
   grid5.mouseHandler = new BasicMouseHandler();
   grid5.selectionModel = new BasicSelectionModel({
     model: model5,
-    selectionMode: 'multiple-row'
+    selectionMode: 'row'
   });
 
   let wrapper1 = createWrapper(grid1, 'Trillion Rows/Cols');
