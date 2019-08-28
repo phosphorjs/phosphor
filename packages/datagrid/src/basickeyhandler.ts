@@ -88,28 +88,60 @@ class BasicKeyHandler implements DataGrid.IKeyHandler {
     let ctrl = event.ctrlKey;
     let shift = event.shiftKey;
 
-    // Set up the row and column variables.
-    let row = model ? model.cursorRow : 0;
-    let column = model ? model.cursorColumn : 0;
-
-    // Dispatch based on the modifier keys.
+    // Handle no model with the ctrl modifier.
     if (!model && ctrl) {
       grid.scrollTo(0, grid.scrollY);
-    } else if (!model) {
+      return;
+    }
+
+    // Handle no model and no modifier. (ignore shift)
+    if (!model) {
       grid.scrollByStep('left');
-    } else if (ctrl && shift) {
-      let sel = model.resizeBy(0, -Infinity);
-      if (sel) grid.scrollToColumn(sel.c2);
+      return;
+    }
+
+    // Fetch the selection mode.
+    let mode = model.selectionMode;
+
+    // Handle the row selection mode with ctrl key.
+    if (mode === 'row' && ctrl) {
+      grid.scrollTo(0, grid.scrollY);
+      return;
+    }
+
+    // Handle the row selection mode with no modifier. (ignore shift)
+    if (mode === 'row') {
+      grid.scrollByStep('left');
+      return;
+    }
+
+    // Fetch the cursor row and column.
+    let r = model.cursorRow;
+    let c = model.cursorColumn;
+
+    // Dispatch based on the modifier keys.
+    if (ctrl && shift) {
+      model.resizeBy(0, -Infinity);
     } else if (shift) {
-      let sel = model.resizeBy(0, -1);
-      if (sel) grid.scrollToColumn(sel.c2);
+      model.resizeBy(0, -1);
     } else if (ctrl) {
-      model.clear();
-      model.select(row, 0);
-      grid.scrollToCursor();
+      model.select({ r1: r, r2: r, c1: 0, c2: 0, clear: 'all' });
     } else {
-      model.clear();
-      model.select(row, column - 1);
+      model.select({ r1: r, r2: r, c1: c - 1, c2: c - 1, clear: 'all' });
+    }
+
+    // Fetch the current selection.
+    let cs = model.currentSelection();
+
+    // Bail if there is no selection.
+    if (!cs) {
+      return;
+    }
+
+    // Scroll the grid appropriately.
+    if (shift) {
+      grid.scrollToColumn(cs.c2);
+    } else {
       grid.scrollToCursor();
     }
   }
@@ -133,28 +165,60 @@ class BasicKeyHandler implements DataGrid.IKeyHandler {
     let ctrl = event.ctrlKey;
     let shift = event.shiftKey;
 
-    // Set up the row and column variables.
-    let row = model ? model.cursorRow : 0;
-    let column = model ? model.cursorColumn : 0;
-
-    // Dispatch based on the modifier keys.
+    // Handle no model with the ctrl modifier.
     if (!model && ctrl) {
       grid.scrollTo(grid.maxScrollX, grid.scrollY);
-    } else if (!model) {
+      return;
+    }
+
+    // Handle no model and no modifier. (ignore shift)
+    if (!model) {
       grid.scrollByStep('right');
-    } else if (ctrl && shift) {
-      let sel = model.resizeBy(0, Infinity);
-      if (sel) grid.scrollToColumn(sel.c2);
+      return;
+    }
+
+    // Fetch the selection mode.
+    let mode = model.selectionMode;
+
+    // Handle the row selection model with ctrl key.
+    if (mode === 'row' && ctrl) {
+      grid.scrollTo(grid.maxScrollX, grid.scrollY);
+      return;
+    }
+
+    // Handle the row selection mode with no modifier. (ignore shift)
+    if (mode === 'row') {
+      grid.scrollByStep('right');
+      return;
+    }
+
+    // Fetch the cursor row and column.
+    let r = model.cursorRow;
+    let c = model.cursorColumn;
+
+    // Dispatch based on the modifier keys.
+    if (ctrl && shift) {
+      model.resizeBy(0, Infinity);
     } else if (shift) {
-      let sel = model.resizeBy(0, 1);
-      if (sel) grid.scrollToColumn(sel.c2);
+      model.resizeBy(0, 1);
     } else if (ctrl) {
-      model.clear();
-      model.select(row, Infinity);
-      grid.scrollToCursor();
+      model.select({ r1: r, r2: r, c1: Infinity, c2: Infinity, clear: 'all' });
     } else {
-      model.clear();
-      model.select(row, column + 1);
+      model.select({ r1: r, r2: r, c1: c + 1, c2: c + 1, clear: 'all' });
+    }
+
+    // Fetch the current selection.
+    let cs = model.currentSelection();
+
+    // Bail if there is no selection.
+    if (!cs) {
+      return;
+    }
+
+    // Scroll the grid appropriately.
+    if (shift) {
+      grid.scrollToColumn(cs.c2);
+    } else {
       grid.scrollToCursor();
     }
   }
@@ -178,28 +242,60 @@ class BasicKeyHandler implements DataGrid.IKeyHandler {
     let ctrl = event.ctrlKey;
     let shift = event.shiftKey;
 
-    // Set up the row and column variables.
-    let row = model ? model.cursorRow : 0;
-    let column = model ? model.cursorColumn : 0;
-
-    // Dispatch based on the modifier keys.
+    // Handle no model with the ctrl modifier.
     if (!model && ctrl) {
       grid.scrollTo(grid.scrollX, 0);
-    } else if (!model) {
+      return;
+    }
+
+    // Handle no model and no modifier. (ignore shift)
+    if (!model) {
       grid.scrollByStep('up');
-    } else if (ctrl && shift) {
-      let sel = model.resizeBy(-Infinity, 0);
-      if (sel) grid.scrollToRow(sel.r2);
+      return;
+    }
+
+    // Fetch the selection mode.
+    let mode = model.selectionMode;
+
+    // Handle the column selection mode with ctrl key.
+    if (mode === 'column' && ctrl) {
+      grid.scrollTo(grid.scrollX, 0);
+      return;
+    }
+
+    // Handle the column selection mode with no modifier. (ignore shift)
+    if (mode === 'column') {
+      grid.scrollByStep('up');
+      return;
+    }
+
+    // Fetch the cursor row and column.
+    let r = model.cursorRow;
+    let c = model.cursorColumn;
+
+    // Dispatch based on the modifier keys.
+    if (ctrl && shift) {
+      model.resizeBy(-Infinity, 0);
     } else if (shift) {
-      let sel = model.resizeBy(-1, 0);
-      if (sel) grid.scrollToRow(sel.r2);
+      model.resizeBy(-1, 0);
     } else if (ctrl) {
-      model.clear();
-      model.select(0, column);
-      grid.scrollToCursor();
+      model.select({ r1: 0, r2: 0, c1: c, c2: c, clear: 'all' });
     } else {
-      model.clear();
-      model.select(row - 1, column);
+      model.select({ r1: r - 1, r2: r - 1, c1: c, c2: c, clear: 'all' });
+    }
+
+    // Fetch the current selection.
+    let cs = model.currentSelection();
+
+    // Bail if there is no selection.
+    if (!cs) {
+      return;
+    }
+
+    // Scroll the grid appropriately.
+    if (shift) {
+      grid.scrollToRow(cs.r2);
+    } else {
       grid.scrollToCursor();
     }
   }
@@ -223,28 +319,60 @@ class BasicKeyHandler implements DataGrid.IKeyHandler {
     let ctrl = event.ctrlKey;
     let shift = event.shiftKey;
 
-    // Set up the row and column variables.
-    let row = model ? model.cursorRow : 0;
-    let column = model ? model.cursorColumn : 0;
-
-    // Dispatch based on the modifier keys.
+    // Handle no model with the ctrl modifier.
     if (!model && ctrl) {
       grid.scrollTo(grid.scrollX, grid.maxScrollY);
-    } else if (!model) {
+      return;
+    }
+
+    // Handle no model and no modifier. (ignore shift)
+    if (!model) {
       grid.scrollByStep('down');
-    } else if (ctrl && shift) {
-      let sel = model.resizeBy(Infinity, 0);
-      if (sel) grid.scrollToRow(sel.r2);
+      return;
+    }
+
+    // Fetch the selection mode.
+    let mode = model.selectionMode;
+
+    // Handle the column selection mode with ctrl key.
+    if (mode === 'column' && ctrl) {
+      grid.scrollTo(grid.scrollX, grid.maxScrollY);
+      return;
+    }
+
+    // Handle the column selection mode with no modifier. (ignore shift)
+    if (mode === 'column') {
+      grid.scrollByStep('down');
+      return;
+    }
+
+    // Fetch the cursor row and column.
+    let r = model.cursorRow;
+    let c = model.cursorColumn;
+
+    // Dispatch based on the modifier keys.
+    if (ctrl && shift) {
+      model.resizeBy(Infinity, 0);
     } else if (shift) {
-      let sel = model.resizeBy(1, 0);
-      if (sel) grid.scrollToRow(sel.r2);
+      model.resizeBy(1, 0);
     } else if (ctrl) {
-      model.clear();
-      model.select(Infinity, column);
-      grid.scrollToCursor();
+      model.select({ r1: Infinity, r2: Infinity, c1: c, c2: c, clear: 'all' });
     } else {
-      model.clear();
-      model.select(row + 1, column);
+      model.select({ r1: r + 1, r2: r + 1, c1: c, c2: c, clear: 'all' });
+    }
+
+    // Fetch the current selection.
+    let cs = model.currentSelection();
+
+    // Bail if there is no selection.
+    if (!cs) {
+      return;
+    }
+
+    // Scroll the grid appropriately.
+    if (shift) {
+      grid.scrollToRow(cs.r2);
+    } else {
       grid.scrollToCursor();
     }
   }
@@ -270,25 +398,37 @@ class BasicKeyHandler implements DataGrid.IKeyHandler {
     let model = grid.selectionModel;
 
     // Scroll by page if there is no selection model.
-    if (!model) {
+    if (!model || model.selectionMode === 'column') {
       grid.scrollByPage('up');
       return;
     }
 
     // Set up the row and column variables.
-    let row = model.cursorRow;
-    let column = model.cursorColumn;
+    let r = Math.max(0, model.cursorRow);
+    let c = Math.max(0, model.cursorColumn);
 
     // Get the normal number of cells in the page height.
     let n =  Math.floor(grid.pageHeight / grid.defaultSizes.rowHeight);
 
     // Select or resize as needed.
     if (event.shiftKey) {
-      let sel = model.resizeBy(-n, 0);
-      if (sel) grid.scrollToRow(sel.r2);
+      model.resizeBy(-n, 0);
     } else {
-      model.clear();
-      model.select(row - n, column);
+      model.select({ r1: r - n, r2: r - n, c1: c, c2: c, clear: 'all' });
+    }
+
+    // Fetch the current selection.
+    let cs = model.currentSelection();
+
+    // Bail if there is no selection.
+    if (!cs) {
+      return;
+    }
+
+    // Scroll the grid appropriately.
+    if (event.shiftKey) {
+      grid.scrollToRow(cs.r2);
+    } else {
       grid.scrollToCursor();
     }
   }
@@ -314,25 +454,37 @@ class BasicKeyHandler implements DataGrid.IKeyHandler {
     let model = grid.selectionModel;
 
     // Scroll by page if there is no selection model.
-    if (!model) {
+    if (!model || model.selectionMode === 'column') {
       grid.scrollByPage('down');
       return;
     }
 
     // Set up the row and column variables.
-    let row = model.cursorRow;
-    let column = model.cursorColumn;
+    let r = Math.max(0, model.cursorRow);
+    let c = Math.max(0, model.cursorColumn);
 
     // Get the normal number of cells in the page height.
     let n =  Math.floor(grid.pageHeight / grid.defaultSizes.rowHeight);
 
     // Select or resize as needed.
     if (event.shiftKey) {
-      let sel = model.resizeBy(n, 0);
-      if (sel) grid.scrollToRow(sel.r2);
+      model.resizeBy(n, 0);
     } else {
-      model.clear();
-      model.select(row + n, column);
+      model.select({ r1: r + n, r2: r + n, c1: c, c2: c, clear: 'all' });
+    }
+
+    // Fetch the current selection.
+    let cs = model.currentSelection();
+
+    // Bail if there is no selection.
+    if (!cs) {
+      return;
+    }
+
+    // Scroll the grid appropriately.
+    if (event.shiftKey) {
+      grid.scrollToRow(cs.r2);
+    } else {
       grid.scrollToCursor();
     }
   }
