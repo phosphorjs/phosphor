@@ -3963,13 +3963,13 @@ class DataGrid extends Widget {
     // Fetch the selection model.
     let model = this._selectionModel;
 
-    // Bail early if there is no selection model.
-    if (!model) {
+    // Bail early if there are no selection.
+    if (!model || model.isEmpty) {
       return;
     }
 
     // Bail early if the row headers are not visible.
-    if (this.headerWidth === 0) {
+    if (this.headerWidth === 0 || this.pageHeight === 0) {
       return;
     }
 
@@ -4055,13 +4055,13 @@ class DataGrid extends Widget {
     // Fetch the selection model.
     let model = this._selectionModel;
 
-    // Bail early if there is no selection model.
-    if (!model) {
+    // Bail early if there are no selection.
+    if (!model || model.isEmpty) {
       return;
     }
 
     // Bail early if the column headers are not visible.
-    if (this.headerHeight === 0) {
+    if (this.headerHeight === 0 || this.pageWidth === 0) {
       return;
     }
 
