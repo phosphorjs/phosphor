@@ -253,8 +253,7 @@ function main(): void {
   grid2.mouseHandler = new BasicMouseHandler();
   grid2.selectionModel = new BasicSelectionModel({
     model: model2,
-    selectionMode: 'column',
-    allowSelectionRanges: false
+    selectionMode: 'column'
   });
 
   let grid3 = new DataGrid();
@@ -262,21 +261,14 @@ function main(): void {
   grid3.model = model3;
   grid3.keyHandler = new BasicKeyHandler();
   grid3.mouseHandler = new BasicMouseHandler();
-  grid3.selectionModel = new BasicSelectionModel({
-    model: model3,
-    selectionMode: 'row',
-    allowSelectionRanges: false
-  });
+  grid3.selectionModel = new BasicSelectionModel({ model: model3 });
 
   let grid4 = new DataGrid({ style: lightSelectionStyle });
   grid4.cellRenderers.set('body', {}, bgColorFloatRenderer);
   grid4.model = model4;
   grid4.keyHandler = new BasicKeyHandler();
   grid4.mouseHandler = new BasicMouseHandler();
-  grid4.selectionModel = new BasicSelectionModel({
-    model: model4,
-    selectionMode: 'column'
-  });
+  grid4.selectionModel = new BasicSelectionModel({ model: model4 });
 
   let grid5 = new DataGrid({
     style: greenStripeStyle,
