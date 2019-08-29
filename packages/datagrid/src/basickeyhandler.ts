@@ -12,6 +12,7 @@ import {
 import {
   DataGrid
 } from './datagrid';
+import { SelectionModel } from './selectionmodel';
 
 
 /**
@@ -118,23 +119,60 @@ class BasicKeyHandler implements DataGrid.IKeyHandler {
       return;
     }
 
-    // Fetch the cursor row and column.
+    // Fetch the cursor and selection.
     let r = model.cursorRow;
     let c = model.cursorColumn;
+    let cs = model.currentSelection();
+
+    // Set up the selection variables.
+    let r1: number;
+    let r2: number;
+    let c1: number;
+    let c2: number;
+    let cr: number;
+    let cc: number;
+    let clear: SelectionModel.ClearMode;
 
     // Dispatch based on the modifier keys.
     if (ctrl && shift) {
-      model.resizeBy(0, -Infinity);
+      r1 = cs ? cs.r1 : 0;
+      r2 = cs ? cs.r2 : 0;
+      c1 = cs ? cs.c1 : 0;
+      c2 = 0;
+      cr = r;
+      cc = c;
+      clear = 'current';
     } else if (shift) {
-      model.resizeBy(0, -1);
+      r1 = cs ? cs.r1 : 0;
+      r2 = cs ? cs.r2 : 0;
+      c1 = cs ? cs.c1 : 0;
+      c2 = cs ? cs.c2 - 1 : 0;
+      cr = r;
+      cc = c;
+      clear = 'current';
     } else if (ctrl) {
-      model.select(r, 0, r, 0, 'all');
+      r1 = r;
+      r2 = r;
+      c1 = 0;
+      c2 = 0;
+      cr = r1;
+      cc = c1;
+      clear = 'all';
     } else {
-      model.select(r, c - 1, r, c - 1, 'all');
+      r1 = r;
+      r2 = r;
+      c1 = c - 1;
+      c2 = c - 1;
+      cr = r1;
+      cc = c1;
+      clear = 'all';
     }
 
-    // Fetch the current selection.
-    let cs = model.currentSelection();
+    // Create the new selection.
+    model.select({ r1, c1, r2, c2, cursorRow: cr, cursorColumn: cc, clear });
+
+    // Re-fetch the current selection.
+    cs = model.currentSelection();
 
     // Bail if there is no selection.
     if (!cs) {
@@ -195,23 +233,60 @@ class BasicKeyHandler implements DataGrid.IKeyHandler {
       return;
     }
 
-    // Fetch the cursor row and column.
+    // Fetch the cursor and selection.
     let r = model.cursorRow;
     let c = model.cursorColumn;
+    let cs = model.currentSelection();
+
+    // Set up the selection variables.
+    let r1: number;
+    let r2: number;
+    let c1: number;
+    let c2: number;
+    let cr: number;
+    let cc: number;
+    let clear: SelectionModel.ClearMode;
 
     // Dispatch based on the modifier keys.
     if (ctrl && shift) {
-      model.resizeBy(0, Infinity);
+      r1 = cs ? cs.r1 : 0;
+      r2 = cs ? cs.r2 : 0;
+      c1 = cs ? cs.c1 : 0;
+      c2 = Infinity;
+      cr = r;
+      cc = c;
+      clear = 'current';
     } else if (shift) {
-      model.resizeBy(0, 1);
+      r1 = cs ? cs.r1 : 0;
+      r2 = cs ? cs.r2 : 0;
+      c1 = cs ? cs.c1 : 0;
+      c2 = cs ? cs.c2 + 1 : 0;
+      cr = r;
+      cc = c;
+      clear = 'current';
     } else if (ctrl) {
-      model.select(r, Infinity, r, Infinity, 'all');
+      r1 = r;
+      r2 = r;
+      c1 = Infinity;
+      c2 = Infinity;
+      cr = r1;
+      cc = c1;
+      clear = 'all';
     } else {
-      model.select(r, c + 1, r, c + 1, 'all' );
+      r1 = r;
+      r2 = r;
+      c1 = c + 1;
+      c2 = c + 1;
+      cr = r1;
+      cc = c1;
+      clear = 'all';
     }
 
-    // Fetch the current selection.
-    let cs = model.currentSelection();
+    // Create the new selection.
+    model.select({ r1, c1, r2, c2, cursorRow: cr, cursorColumn: cc, clear });
+
+    // Re-fetch the current selection.
+    cs = model.currentSelection();
 
     // Bail if there is no selection.
     if (!cs) {
@@ -272,23 +347,60 @@ class BasicKeyHandler implements DataGrid.IKeyHandler {
       return;
     }
 
-    // Fetch the cursor row and column.
+    // Fetch the cursor and selection.
     let r = model.cursorRow;
     let c = model.cursorColumn;
+    let cs = model.currentSelection();
+
+    // Set up the selection variables.
+    let r1: number;
+    let r2: number;
+    let c1: number;
+    let c2: number;
+    let cr: number;
+    let cc: number;
+    let clear: SelectionModel.ClearMode;
 
     // Dispatch based on the modifier keys.
     if (ctrl && shift) {
-      model.resizeBy(-Infinity, 0);
+      r1 = cs ? cs.r1 : 0;
+      r2 = 0;
+      c1 = cs ? cs.c1 : 0;
+      c2 = cs ? cs.c2 : 0;
+      cr = r;
+      cc = c;
+      clear = 'current';
     } else if (shift) {
-      model.resizeBy(-1, 0);
+      r1 = cs ? cs.r1 : 0;
+      r2 = cs ? cs.r2 - 1 : 0;
+      c1 = cs ? cs.c1 : 0;
+      c2 = cs ? cs.c2 : 0;
+      cr = r;
+      cc = c;
+      clear = 'current';
     } else if (ctrl) {
-      model.select(0, c, 0, c, 'all');
+      r1 = 0;
+      r2 = 0;
+      c1 = c;
+      c2 = c;
+      cr = r1;
+      cc = c1;
+      clear = 'all';
     } else {
-      model.select(r - 1, c, r - 1, c, 'all');
+      r1 = r - 1;
+      r2 = r - 1;
+      c1 = c;
+      c2 = c;
+      cr = r1;
+      cc = c1;
+      clear = 'all';
     }
 
-    // Fetch the current selection.
-    let cs = model.currentSelection();
+    // Create the new selection.
+    model.select({ r1, c1, r2, c2, cursorRow: cr, cursorColumn: cc, clear });
+
+    // Re-fetch the current selection.
+    cs = model.currentSelection();
 
     // Bail if there is no selection.
     if (!cs) {
@@ -349,23 +461,60 @@ class BasicKeyHandler implements DataGrid.IKeyHandler {
       return;
     }
 
-    // Fetch the cursor row and column.
+    // Fetch the cursor and selection.
     let r = model.cursorRow;
     let c = model.cursorColumn;
+    let cs = model.currentSelection();
+
+    // Set up the selection variables.
+    let r1: number;
+    let r2: number;
+    let c1: number;
+    let c2: number;
+    let cr: number;
+    let cc: number;
+    let clear: SelectionModel.ClearMode;
 
     // Dispatch based on the modifier keys.
     if (ctrl && shift) {
-      model.resizeBy(Infinity, 0);
+      r1 = cs ? cs.r1 : 0;
+      r2 = Infinity;
+      c1 = cs ? cs.c1 : 0;
+      c2 = cs ? cs.c2 : 0;
+      cr = r;
+      cc = c;
+      clear = 'current';
     } else if (shift) {
-      model.resizeBy(1, 0);
+      r1 = cs ? cs.r1 : 0;
+      r2 = cs ? cs.r2 + 1 : 0;
+      c1 = cs ? cs.c1 : 0;
+      c2 = cs ? cs.c2 : 0;
+      cr = r;
+      cc = c;
+      clear = 'current';
     } else if (ctrl) {
-      model.select(Infinity, c, Infinity, c, 'all');
+      r1 = Infinity;
+      r2 = Infinity;
+      c1 = c;
+      c2 = c;
+      cr = r1;
+      cc = c1;
+      clear = 'all';
     } else {
-      model.select(r + 1, c, r + 1, c, 'all');
+      r1 = r + 1;
+      r2 = r + 1;
+      c1 = c;
+      c2 = c;
+      cr = r1;
+      cc = c1;
+      clear = 'all';
     }
 
-    // Fetch the current selection.
-    let cs = model.currentSelection();
+    // Create the new selection.
+    model.select({ r1, c1, r2, c2, cursorRow: cr, cursorColumn: cc, clear });
+
+    // Re-fetch the current selection.
+    cs = model.currentSelection();
 
     // Bail if there is no selection.
     if (!cs) {
@@ -406,22 +555,47 @@ class BasicKeyHandler implements DataGrid.IKeyHandler {
       return;
     }
 
-    // Set up the row and column variables.
-    let r = Math.max(0, model.cursorRow);
-    let c = Math.max(0, model.cursorColumn);
-
     // Get the normal number of cells in the page height.
     let n =  Math.floor(grid.pageHeight / grid.defaultSizes.rowHeight);
 
+    // Fetch the cursor and selection.
+    let r = model.cursorRow;
+    let c = model.cursorColumn;
+    let cs = model.currentSelection();
+
+    // Set up the selection variables.
+    let r1: number;
+    let r2: number;
+    let c1: number;
+    let c2: number;
+    let cr: number;
+    let cc: number;
+    let clear: SelectionModel.ClearMode;
+
     // Select or resize as needed.
     if (event.shiftKey) {
-      model.resizeBy(-n, 0);
+      r1 = cs ? cs.r1 : 0;
+      r2 = cs ? cs.r2 - n : 0;
+      c1 = cs ? cs.c1 : 0;
+      c2 = cs ? cs.c2 : 0;
+      cr = r;
+      cc = c;
+      clear = 'current';
     } else {
-      model.select(r - n, c, r - n, c, 'all');
+      r1 = cs ? cs.r1 - n : 0;
+      r2 = r1;
+      c1 = c;
+      c2 = c;
+      cr = r1;
+      cc = c;
+      clear = 'all';
     }
 
-    // Fetch the current selection.
-    let cs = model.currentSelection();
+    // Create the new selection.
+    model.select({ r1, c1, r2, c2, cursorRow: cr, cursorColumn: cc, clear });
+
+    // Re-fetch the current selection.
+    cs = model.currentSelection();
 
     // Bail if there is no selection.
     if (!cs) {
@@ -458,22 +632,47 @@ class BasicKeyHandler implements DataGrid.IKeyHandler {
       return;
     }
 
-    // Set up the row and column variables.
-    let r = Math.max(0, model.cursorRow);
-    let c = Math.max(0, model.cursorColumn);
-
     // Get the normal number of cells in the page height.
     let n =  Math.floor(grid.pageHeight / grid.defaultSizes.rowHeight);
 
+    // Fetch the cursor and selection.
+    let r = model.cursorRow;
+    let c = model.cursorColumn;
+    let cs = model.currentSelection();
+
+    // Set up the selection variables.
+    let r1: number;
+    let r2: number;
+    let c1: number;
+    let c2: number;
+    let cr: number;
+    let cc: number;
+    let clear: SelectionModel.ClearMode;
+
     // Select or resize as needed.
     if (event.shiftKey) {
-      model.resizeBy(n, 0);
+      r1 = cs ? cs.r1 : 0;
+      r2 = cs ? cs.r2 + n : 0;
+      c1 = cs ? cs.c1 : 0;
+      c2 = cs ? cs.c2 : 0;
+      cr = r;
+      cc = c;
+      clear = 'current';
     } else {
-      model.select(r + n, c, r + n, c, 'all');
+      r1 = cs ? cs.r1 + n : 0;
+      r2 = r1;
+      c1 = c;
+      c2 = c;
+      cr = r1;
+      cc = c;
+      clear = 'all';
     }
 
-    // Fetch the current selection.
-    let cs = model.currentSelection();
+    // Create the new selection.
+    model.select({ r1, c1, r2, c2, cursorRow: cr, cursorColumn: cc, clear });
+
+    // Re-fetch the current selection.
+    cs = model.currentSelection();
 
     // Bail if there is no selection.
     if (!cs) {

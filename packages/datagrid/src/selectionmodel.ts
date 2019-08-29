@@ -19,7 +19,7 @@ import {
 
 
 /**
- * An object which controls selections for a data grid.
+ * A base class for creating data grid selection models.
  *
  * #### Notes
  * If the predefined selection models are insufficient for a particular
@@ -56,14 +56,14 @@ abstract class SelectionModel {
   /**
    * The row index of the cursor.
    *
-   * The grid only renders the cursor for the `'cell'` selection mode.
+   * This is `-1` if the selection model is empty.
    */
   abstract readonly cursorRow: number;
 
   /**
    * The column index of the cursor.
    *
-   * The grid only renders the cursor for the `'cell'` selection mode.
+   * This is `-1` if the selection model is empty.
    */
   abstract readonly cursorColumn: number;
 
@@ -90,17 +90,9 @@ abstract class SelectionModel {
   /**
    * Select the specified cells.
    *
-   * @param r1 - The first row of the selection.
-   *
-   * @param c1 - The first column of the selection.
-   *
-   * @param r2 - The last row of the selection.
-   *
-   * @param c2 - The last column of the selection.
-   *
-   * @param clear - The clear operation to perform when selecting.
+   * @param args - The arguments for the selection.
    */
-  abstract select(r1: number, c1: number, r2: number, c2: number, clear: 'all' | 'current' | 'none'): void;
+  abstract select(args: SelectionModel.SelectArgs): void;
 
   /**
    * Clear all selections in the selection model.
@@ -242,138 +234,6 @@ abstract class SelectionModel {
   }
 
   /**
-   * Resize the current selection to cover all columns up the given row.
-   *
-   * @param index - The row index of interest.
-   */
-  resizeToRow(index: number): void {
-    // Bail early if the selection mode doesn't support rows.
-    if (this._selectionMode === 'column') {
-      return;
-    }
-
-    // Fetch the necessary data.
-    let cr = this.cursorRow;
-    let cc = this.cursorColumn;
-    let ar = this._allowSelectionRanges;
-
-    // Set up the selection variables.
-    let r1: number;
-    let c1: number;
-    let r2: number;
-    let c2: number;
-
-    // Compute the variables based on the selection mode.
-    if (this._selectionMode === 'row') {
-      r1 = ar ? (cr < 0 ? 0 : cr) : index;
-      r2 = index;
-      c1 = 0
-      c2 = Infinity;
-    } else {
-      r1 = ar ? (cr < 0 ? 0 : cr) : index;
-      r2 = index;
-      c1 = ar ? 0 : (cc < 0 ? 0 : cc);
-      c2 = ar ? Infinity : (cc < 0 ? 0 : cc);
-    }
-
-    // Select the computed range, clearing the current selection.
-    this.select(r1, c1, r2, c2, 'current');
-  }
-
-  /**
-   * Resize the current selection to cover all rows up the given column.
-   *
-   * @param index - The column index of interest.
-   */
-  resizeToColumn(index: number): void {
-    // Bail early if the selection mode doesn't support columns.
-    if (this._selectionMode === 'row') {
-      return;
-    }
-
-    // Fetch the necessary data.
-    let cr = this.cursorRow;
-    let cc = this.cursorColumn;
-    let ar = this._allowSelectionRanges;
-
-    // Set up the selection variables.
-    let r1: number;
-    let c1: number;
-    let r2: number;
-    let c2: number;
-
-    // Compute the variables based on the selection mode.
-    if (this._selectionMode === 'column') {
-      r1 = 0
-      r2 = Infinity;
-      c1 = ar ? (cc < 0 ? 0 : cc) : index;
-      c2 = index;
-    } else {
-      r1 = ar ? 0 : (cr < 0 ? 0 : cr);
-      r2 = ar ? Infinity : (cr < 0 ? 0 : cr);
-      c1 = ar ? (cc < 0 ? 0 : cc) : index;
-      c2 = index;
-    }
-
-    // Select the computed range, clearing the current selection.
-    this.select(r1, c1, r2, c2, 'current');
-  }
-
-  /**
-   * Resize the current selection to the specified cell.
-   *
-   * @param row - The row index of interest.
-   *
-   * @param column - The column index of interest.
-   */
-  resizeTo(row: number, column: number): void {
-    // Handle the row selection mode.
-    if (this._selectionMode === 'row') {
-      this.resizeToRow(row);
-      return;
-    }
-
-    // Handle the column selection mode.
-    if (this._selectionMode === 'column') {
-      this.resizeToColumn(column);
-      return;
-    }
-
-    // Fetch the necessary data.
-    let cr = this.cursorRow;
-    let cc = this.cursorColumn;
-    let ar = this._allowSelectionRanges;
-
-    // Set up the selection variables.
-    let r1 = ar ? (cr < 0 ? 0 : cr) : row;
-    let c1 = ar ? (cc < 0 ? 0 : cc) : column;
-    let r2 = row;
-    let c2 = column;
-
-    // Select the computed range, clearing the current selection.
-    this.select(r1, c1, r2, c2, 'current');
-  }
-
-  /**
-   * Resize the current selection by the specified delta.
-   *
-   * @param rows - The delta number of rows.
-   *
-   * @param columns - The delta number of columns.
-   */
-  resizeBy(rows: number, columns: number): void {
-    // Fetch the current selection.
-    let cs = this.currentSelection();
-
-    // Determine the target location.
-    let r = cs ? cs.r2 + rows : rows;
-    let c = cs ? cs.c2 + columns : columns;
-
-    // Resize to the target.
-    this.resizeTo(r, c);
-  }
-
-  /**
    * Emit the `changed` signal for the selection model.
    *
    * #### Notes
@@ -401,6 +261,53 @@ namespace SelectionModel {
    */
   export
   type SelectionMode = 'row' | 'column' | 'cell';
+
+  /**
+   * A type alias for the clear mode.
+   */
+  export
+  type ClearMode = 'all' | 'current' | 'none';
+
+  /**
+   * A type alias for the select args.
+   */
+  export
+  type SelectArgs = {
+    /**
+     * The first row of the selection.
+     */
+    r1: number;
+
+    /**
+     * The first column of the selection.
+     */
+    c1: number;
+
+    /**
+     * The second row of the selection.
+     */
+    r2: number;
+
+    /**
+     * The second column of the selection.
+     */
+    c2: number;
+
+    /**
+     * The row index for the cursor.
+     */
+    cursorRow: number;
+
+    /**
+     * The column index for the cursor.
+     */
+    cursorColumn: number;
+
+    /**
+     * Which of the existing selections to clear.
+     */
+    clear: ClearMode;
+  };
 
   /**
    * A type alias for a selection in a selection model.
