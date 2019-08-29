@@ -21,6 +21,10 @@ import {
   DataModel
 } from './datamodel';
 
+import {
+  SelectionModel
+} from './selectionmodel';
+
 
 /**
  * A basic implementation of a data grid key handler.
@@ -78,11 +82,6 @@ class BasicMouseHandler implements DataGrid.IMouseHandler {
     // Hit test the grid.
     let hit = grid.hitTest(event.clientX, event.clientY);
 
-    // Bail if the client position is out of bounds.
-    if (!hit) {
-      return;
-    }
-
     // Get the resize handle for the hit test.
     let handle = Private.resizeHandleForHitTest(hit);
 
@@ -123,16 +122,16 @@ class BasicMouseHandler implements DataGrid.IMouseHandler {
     // Hit test the grid.
     let hit = grid.hitTest(clientX, clientY);
 
-    // Bail if the hit test is on an uninteresting region.
-    if (!hit || hit.region === 'void') {
-      return;
-    }
-
     // Unpack the hit test.
     let { region, row, column } = hit;
 
+    // Bail if the hit test is on an uninteresting region.
+    if (region === 'void') {
+      return;
+    }
+
     // If the hit test is the body region, the only option is select.
-    if (hit.region === 'body') {
+    if (region === 'body') {
       // Fetch the selection model.
       let model = grid.selectionModel;
 
@@ -145,24 +144,46 @@ class BasicMouseHandler implements DataGrid.IMouseHandler {
       let override = Drag.overrideCursor('default');
 
       // Set up the press data.
-      this._pressData = {
-        type: 'select', region, row, column, ctrlKey, shiftKey, override
-      };
+      this._pressData = { type: 'select', region, row, column, override };
+
+      // Set up the selection variables.
+      let r1: number;
+      let c1: number;
+      let r2: number;
+      let c2: number;
+      let cursorRow: number;
+      let cursorColumn: number;
+      let clear: SelectionModel.ClearMode;
 
       // Ctrl == new selection, keep old selections.
       if (ctrlKey) {
-        model.select(row, column, row, column, 'none');
-        return;
+        r1 = row;
+        r2 = row;
+        c1 = column;
+        c2 = column;
+        cursorRow = row;
+        cursorColumn = column;
+        clear = 'none';
+      } else if (shiftKey) {
+        r1 = model.cursorRow;
+        r2 = row;
+        c1 = model.cursorColumn;
+        c2 = column;
+        cursorRow = model.cursorRow;
+        cursorColumn = model.cursorColumn;
+        clear = 'current';
+      } else {
+        r1 = row;
+        r2 = row;
+        c1 = column;
+        c2 = column;
+        cursorRow = row;
+        cursorColumn = column;
+        clear = 'all';
       }
 
-      // Shift == resize current selection.
-      if (shiftKey) {
-        model.resizeTo(row, column);
-        return;
-      }
-
-      // No mods == new selection, clear old selections.
-      model.select(row, column, row, column, 'all');
+      // Make the selection.
+      model.select({ r1, c1, r2, c2, cursorRow, cursorColumn, clear });
 
       // Done.
       return;
@@ -242,57 +263,54 @@ class BasicMouseHandler implements DataGrid.IMouseHandler {
     let override = Drag.overrideCursor('default');
 
     // Set up the press data.
-    this._pressData = {
-      type: 'select', region, row, column, ctrlKey, shiftKey, override
-    };
+    this._pressData = { type: 'select', region, row, column, override };
 
-    // Handle corner header select.
+    // Set up the selection variables.
+    let r1: number;
+    let c1: number;
+    let r2: number;
+    let c2: number;
+    let cursorRow: number;
+    let cursorColumn: number;
+    let clear: SelectionModel.ClearMode;
+
+    // Compute the selection based on the pressed region.
     if (region === 'corner-header') {
-      model.select(0, 0, Infinity, Infinity, ctrlKey ? 'none' : shiftKey ? 'current' : 'all');
-      return;
+      r1 = 0;
+      r2 = Infinity;
+      c1 = 0;
+      c2 = Infinity;
+      cursorRow = ctrlKey ? 0 : shiftKey ? model.cursorRow : 0;
+      cursorColumn = ctrlKey ? 0 : shiftKey ? model.cursorColumn : 0;
+      clear = ctrlKey ? 'none' : shiftKey ? 'current' : 'all';
+    } else if (region === 'row-header') {
+      r1 = ctrlKey ? row : shiftKey ? model.cursorRow : row;
+      r2 = row;
+      c1 = 0;
+      c2 = Infinity;
+      cursorRow = ctrlKey ? row : shiftKey ? model.cursorRow : row;
+      cursorColumn = ctrlKey ? 0 : shiftKey ? model.cursorColumn : 0;
+      clear = ctrlKey ? 'none' : shiftKey ? 'current' : 'all';
+    } else if (region === 'column-header') {
+      r1 = 0;
+      r2 = Infinity;
+      c1 = ctrlKey ? column : shiftKey ? model.cursorColumn : column;
+      c2 = column;
+      cursorRow = ctrlKey ? 0 : shiftKey ? model.cursorRow : 0;
+      cursorColumn = ctrlKey ? column : shiftKey ? model.cursorColumn : column;
+      clear = ctrlKey ? 'none' : shiftKey ? 'current' : 'all';
+    } else {
+      r1 = ctrlKey ? row : shiftKey ? model.cursorRow : row;
+      r2 = row;
+      c1 = ctrlKey ? column : shiftKey ? model.cursorColumn : column;
+      c2 = column;
+      cursorRow = ctrlKey ? row : shiftKey ? model.cursorRow : row;
+      cursorColumn = ctrlKey ? column : shiftKey ? model.cursorColumn : column;
+      clear = ctrlKey ? 'none' : shiftKey ? 'current' : 'all';
     }
 
-    // Handle row header select.
-    if (region === 'row-header') {
-      //
-      if (ctrlKey) {
-        model.select(row, 0, row, Infinity, 'none');
-        return;
-      }
-
-      //
-      if (shiftKey) {
-        model.resizeToRow(row);
-        return;
-      }
-
-      //
-      model.select(row, 0, row, Infinity, 'all');
-
-      // Done.
-      return;
-    }
-
-    // Handle column header select.
-    if (region === 'column-header') {
-      //
-      if (ctrlKey) {
-        model.select(0, column, Infinity, column, 'none');
-        return;
-      }
-
-      if (shiftKey) {
-        model.resizeToColumn(column);
-        return;
-      }
-
-      model.select(0, column, Infinity, column, 'all');
-      // Done.
-      return;
-    }
-
-    // Unreachable.
-    throw 'unreachable';
+    // Make the selection.
+    model.select({ r1, c1, r2, c2, cursorRow, cursorColumn, clear });
   }
 
   /**
@@ -311,24 +329,67 @@ class BasicMouseHandler implements DataGrid.IMouseHandler {
       return;
     }
 
-    // Dispatch to the proper grid resize method.
+    // Handle a row resize.
     if (data.type === 'row-resize') {
       let dy = event.clientY - data.clientY;
       grid.resizeRow(data.region, data.index, data.size + dy);
-    } else if (data.type === 'column-resize') {
+      return;
+    }
+
+    // Handle a column resize.
+    if (data.type === 'column-resize') {
       let dx = event.clientX - data.clientX;
       grid.resizeColumn(data.region, data.index, data.size + dx);
-    } else if (data.type === 'select') {
-      let model = grid.selectionModel;
-      if (!model) {
-        return;
-      }
-      let hit = grid.hitTest(event.clientX, event.clientY);
-      if (!hit || hit.region === 'void') {
-        return;
-      }
-      model.resizeTo(hit.row, hit.column);
+      return;
     }
+
+    // Otherwise, it's a select.
+
+    // Mouse moves during a corner header press are a no-op.
+    if (data.region === 'corner-header') {
+      return;
+    }
+
+    // Fetch the selection model.
+    let model = grid.selectionModel;
+
+    // Bail early if the selection model was removed.
+    if (!model) {
+      return;
+    }
+
+    // Hit test the grid.
+    let hit = grid.hitTest(event.clientX, event.clientY);
+
+    // Set up the selection variables.
+    let r1: number;
+    let c1: number;
+    let r2: number;
+    let c2: number;
+    let cursorRow = model.cursorRow;
+    let cursorColumn = model.cursorColumn;
+    let clear: SelectionModel.ClearMode = 'current';
+
+    // Compute the selection based pressed region.
+    if (data.region === 'row-header') {
+      r1 = data.row;
+      r2 = hit.row;
+      c1 = 0;
+      c2 = Infinity;
+    } else if (data.region === 'column-header') {
+      r1 = 0;
+      r2 = Infinity;
+      c1 = data.column;
+      c2 = hit.column;
+    } else {
+      r1 = cursorRow;
+      r2 = hit.row;
+      c1 = cursorColumn;
+      c2 = hit.column;
+    }
+
+    // Make the selection.
+    model.select({ r1, c1, r2, c2, cursorRow, cursorColumn, clear });
   }
 
   /**
@@ -361,6 +422,11 @@ class BasicMouseHandler implements DataGrid.IMouseHandler {
    * @param event - The wheel event of interest.
    */
   onWheel(grid: DataGrid, event: WheelEvent): void {
+    // Bail if a mouse press is in progress.
+    if (this._pressData) {
+      return;
+    }
+
     // Extract the delta X and Y movement.
     let dx = event.deltaX;
     let dy = event.deltaY;
@@ -491,16 +557,6 @@ namespace Private {
      * The original column that was selected.
      */
     readonly column: number;
-
-    /**
-     * Whether the control key was held.
-     */
-    readonly ctrlKey: boolean;
-
-    /**
-     * Whether the shift key was held.
-     */
-    readonly shiftKey: boolean;
 
     /**
      * The disposable to clear the cursor override.
