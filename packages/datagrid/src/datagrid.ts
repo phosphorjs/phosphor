@@ -1243,16 +1243,35 @@ class DataGrid extends Widget {
       return { region: 'body', row, column, x, y, width, height };
     }
 
-
     // Otherwise, it's a void space hit.
 
     // Convert to virtual coordinates.
     let vx = lx + this._scrollX - hw;
     let vy = ly + this._scrollY - hh;
 
-    // Fetch the row and column.
-    let row = this._rowSections.indexOf(vy);
-    let column = this._columnSections.indexOf(vy);
+    // Compute the row index.
+    let row: number;
+    if (this._rowSections.length === 0) {
+      row = -1;
+    } else if (vy < 0) {
+      row = 0;
+    } else if (vy >= this._rowSections.length) {
+      row = this._rowSections.count - 1;
+    } else {
+      row = this._rowSections.indexOf(vy);
+    }
+
+    // Compute the column index.
+    let column: number;
+    if (this._columnSections.length === 0) {
+      column = -1;
+    } else if (vx < 0) {
+      column = 0;
+    } else if (vx >= this._columnSections.length) {
+      column = this._columnSections.count - 1;
+    } else {
+      column = this._columnSections.indexOf(vx);
+    }
 
     // Set up the geometry variables.
     let x = -1;
@@ -4790,16 +4809,14 @@ namespace DataGrid {
     /**
      * The row index of the cell that was hit.
      *
-     * For the `void` region, this will be the row that intersects
-     * the mouse Y coordinate, if any, or `-1`.
+     * For the `void` region, this will be the nearest row.
      */
     readonly row: number;
 
     /**
      * The column index of the cell that was hit.
      *
-     * For the `void` region, this will be the column that intersects
-     * the mouse X coordinate, if any, or `-1`.
+     * For the `void` region, this will be the nearest column.
      */
     readonly column: number;
 
