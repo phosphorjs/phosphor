@@ -2391,12 +2391,22 @@ class DataGrid extends Widget {
    * Handle the `'wheel'` event for the data grid.
    */
   private _evtWheel(event: WheelEvent): void {
-    if (this._mousedown) {
-      event.preventDefault();
-      event.stopPropagation();
-    } else if (this._mouseHandler) {
-      this._mouseHandler.onWheel(this, event);
+    // Ignore the event if `ctrl` is held.
+    if (event.ctrlKey) {
+      return;
     }
+
+    // Bail early if there is no mouse handler.
+    if (!this._mouseHandler) {
+      return;
+    }
+
+    // Stop the event propagation.
+    event.preventDefault();
+    event.stopPropagation();
+
+    // Dispatch to the mouse handler.
+    this._mouseHandler.onWheel(this, event);
   }
 
   /**
