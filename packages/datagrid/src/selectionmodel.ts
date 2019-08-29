@@ -90,9 +90,17 @@ abstract class SelectionModel {
   /**
    * Select the specified cells.
    *
-   * @param args - The arguments for making the selection.
+   * @param r1 - The first row of the selection.
+   *
+   * @param c1 - The first column of the selection.
+   *
+   * @param r2 - The last row of the selection.
+   *
+   * @param c2 - The last column of the selection.
+   *
+   * @param clear - The clear operation to perform when selecting.
    */
-  abstract select(args: SelectionModel.SelectArgs): void;
+  abstract select(r1: number, c1: number, r2: number, c2: number, clear: 'all' | 'current' | 'none'): void;
 
   /**
    * Clear all selections in the selection model.
@@ -269,7 +277,7 @@ abstract class SelectionModel {
     }
 
     // Select the computed range, clearing the current selection.
-    this.select({ r1, c1, r2, c2, clear: 'current' });
+    this.select(r1, c1, r2, c2, 'current');
   }
 
   /**
@@ -308,7 +316,7 @@ abstract class SelectionModel {
     }
 
     // Select the computed range, clearing the current selection.
-    this.select({ r1, c1, r2, c2, clear: 'current' });
+    this.select(r1, c1, r2, c2, 'current');
   }
 
   /**
@@ -343,7 +351,7 @@ abstract class SelectionModel {
     let c2 = column;
 
     // Select the computed range, clearing the current selection.
-    this.select({ r1, c1, r2, c2, clear: 'current' });
+    this.select(r1, c1, r2, c2, 'current');
   }
 
   /**
@@ -418,37 +426,6 @@ namespace SelectionModel {
      * The second column of the selection.
      */
     readonly c2: number;
-  };
-
-  /**
-   * A type alias for the arguments to the select function.
-   */
-  export
-  type SelectArgs = {
-    /**
-     * The first row of the selection.
-     */
-    r1: number;
-
-    /**
-     * The first column of the selection.
-     */
-    c1: number;
-
-    /**
-     * The second row of the selection.
-     */
-    r2: number;
-
-    /**
-     * The second column of the selection.
-     */
-    c2: number;
-
-    /**
-     * Which selection(s) to clear in the model.
-     */
-    clear: 'all' | 'current' | 'none';
   };
 
   /**

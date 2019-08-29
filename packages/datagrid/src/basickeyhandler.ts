@@ -128,9 +128,9 @@ class BasicKeyHandler implements DataGrid.IKeyHandler {
     } else if (shift) {
       model.resizeBy(0, -1);
     } else if (ctrl) {
-      model.select({ r1: r, r2: r, c1: 0, c2: 0, clear: 'all' });
+      model.select(r, 0, r, 0, 'all');
     } else {
-      model.select({ r1: r, r2: r, c1: c - 1, c2: c - 1, clear: 'all' });
+      model.select(r, c - 1, r, c - 1, 'all');
     }
 
     // Fetch the current selection.
@@ -205,9 +205,9 @@ class BasicKeyHandler implements DataGrid.IKeyHandler {
     } else if (shift) {
       model.resizeBy(0, 1);
     } else if (ctrl) {
-      model.select({ r1: r, r2: r, c1: Infinity, c2: Infinity, clear: 'all' });
+      model.select(r, Infinity, r, Infinity, 'all');
     } else {
-      model.select({ r1: r, r2: r, c1: c + 1, c2: c + 1, clear: 'all' });
+      model.select(r, c + 1, r, c + 1, 'all' );
     }
 
     // Fetch the current selection.
@@ -282,9 +282,9 @@ class BasicKeyHandler implements DataGrid.IKeyHandler {
     } else if (shift) {
       model.resizeBy(-1, 0);
     } else if (ctrl) {
-      model.select({ r1: 0, r2: 0, c1: c, c2: c, clear: 'all' });
+      model.select(0, c, 0, c, 'all');
     } else {
-      model.select({ r1: r - 1, r2: r - 1, c1: c, c2: c, clear: 'all' });
+      model.select(r - 1, c, r - 1, c, 'all');
     }
 
     // Fetch the current selection.
@@ -359,9 +359,9 @@ class BasicKeyHandler implements DataGrid.IKeyHandler {
     } else if (shift) {
       model.resizeBy(1, 0);
     } else if (ctrl) {
-      model.select({ r1: Infinity, r2: Infinity, c1: c, c2: c, clear: 'all' });
+      model.select(Infinity, c, Infinity, c, 'all');
     } else {
-      model.select({ r1: r + 1, r2: r + 1, c1: c, c2: c, clear: 'all' });
+      model.select(r + 1, c, r + 1, c, 'all');
     }
 
     // Fetch the current selection.
@@ -417,7 +417,7 @@ class BasicKeyHandler implements DataGrid.IKeyHandler {
     if (event.shiftKey) {
       model.resizeBy(-n, 0);
     } else {
-      model.select({ r1: r - n, r2: r - n, c1: c, c2: c, clear: 'all' });
+      model.select(r - n, c, r - n, c, 'all');
     }
 
     // Fetch the current selection.
@@ -469,7 +469,7 @@ class BasicKeyHandler implements DataGrid.IKeyHandler {
     if (event.shiftKey) {
       model.resizeBy(n, 0);
     } else {
-      model.select({ r1: r + n, r2: r + n, c1: c, c2: c, clear: 'all' });
+      model.select(r + n, c, r + n, c, 'all');
     }
 
     // Fetch the current selection.

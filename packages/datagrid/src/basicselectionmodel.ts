@@ -71,9 +71,17 @@ class BasicSelectionModel extends SelectionModel {
   /**
    * Select the specified cells.
    *
-   * @param args - The arguments for making the selection.
+   * @param r1 - The first row of the selection.
+   *
+   * @param c1 - The first column of the selection.
+   *
+   * @param r2 - The last row of the selection.
+   *
+   * @param c2 - The last column of the selection.
+   *
+   * @param clear - The clear operation to perform when selecting.
    */
-  select(args: SelectionModel.SelectArgs): void {
+  select(r1: number, c1: number, r2: number, c2: number, clear: 'all' | 'current' | 'none'): void {
     // Fetch the current row and column counts;
     let rowCount = this.model.rowCount('body');
     let columnCount = this.model.columnCount('body');
@@ -82,9 +90,6 @@ class BasicSelectionModel extends SelectionModel {
     if (rowCount <= 0 || columnCount <= 0) {
       return;
     }
-
-    // Unpack the arguments.
-    let { r1, c1, r2, c2, clear } = args;
 
     // Clear the necessary selections.
     if (!this.allowMultipleSelections) {
