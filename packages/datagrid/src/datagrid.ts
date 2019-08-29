@@ -1116,7 +1116,7 @@ class DataGrid extends Widget {
    * @returns The hit test result, or `null` if the client
    *   position is out of bounds.
    */
-  hitTest(clientX: number, clientY: number): DataGrid.HitTestResult | null {
+  hitTest(clientX: number, clientY: number): DataGrid.HitTestResult {
     // Fetch the viewport rect.
     let rect = this._viewport.node.getBoundingClientRect();
 
@@ -1129,14 +1129,6 @@ class DataGrid extends Widget {
     right = Math.ceil(right);
     bottom = Math.ceil(bottom);
 
-    // Bail early if the position is out of the viewport bounds.
-    if (clientX < left || clientY < top) {
-      return null;
-    }
-    if (clientX > right || clientY > bottom) {
-      return null;
-    }
-
     // Convert the mouse position into local coordinates.
     let lx = clientX - left;
     let ly = clientY - top;
@@ -1148,7 +1140,7 @@ class DataGrid extends Widget {
     let bh = this.bodyHeight;
 
     // Check for a corner header hit.
-    if (lx < hw && ly < hh) {
+    if (lx >= 0 && lx < hw && ly >= 0 && ly < hh) {
       // Convert to unscrolled virtual coordinates.
       let vx = lx;
       let vy = ly;
@@ -1174,7 +1166,7 @@ class DataGrid extends Widget {
     }
 
     // Check for a column header hit.
-    if (ly < hh && lx < (hw + bw)) {
+    if (ly >= 0 && ly < hh && lx >= 0 && lx < (hw + bw)) {
       // Convert to unscrolled virtual coordinates.
       let vx = lx + this._scrollX - hw;
       let vy = ly
@@ -1200,7 +1192,7 @@ class DataGrid extends Widget {
     }
 
     // Check for a row header hit.
-    if (lx < hw && ly < (hh + bh)) {
+    if (lx >= 0 && lx < hw && ly >= 0 && ly < (hh + bh)) {
       // Convert to unscrolled virtual coordinates.
       let vx = lx
       let vy = ly + this._scrollY - hh;
@@ -1251,13 +1243,34 @@ class DataGrid extends Widget {
       return { region: 'body', row, column, x, y, width, height };
     }
 
+
     // Otherwise, it's a void space hit.
-    let row = -1;
-    let column = -1;
+
+    // Convert to virtual coordinates.
+    let vx = lx + this._scrollX - hw;
+    let vy = ly + this._scrollY - hh;
+
+    // Fetch the row and column.
+    let row = this._rowSections.indexOf(vy);
+    let column = this._columnSections.indexOf(vy);
+
+    // Set up the geometry variables.
     let x = -1;
     let y = -1;
     let width = -1;
     let height = -1;
+
+    // Fill in the vertical geometry if possible.
+    if (row >= 0) {
+      y = vy - this._rowSections.offsetOf(row);
+      height = this._rowSections.sizeOf(row);
+    }
+
+    // Fill in the horizontal geometry if possible.
+    if (column >= 0) {
+      x = vx - this._columnSections.offsetOf(column);
+      width = this._columnSections.sizeOf(column);
+    }
 
     // Return the hit test result.
     return { region: 'void', row, column, x, y, width, height };
@@ -4767,42 +4780,36 @@ namespace DataGrid {
     /**
      * The row index of the cell that was hit.
      *
-     * This will be `-1` for the void region.
+     * For the `void` region, this will be the row that intersects
+     * the mouse Y coordinate, if any, or `-1`.
      */
     readonly row: number;
 
     /**
      * The column index of the cell that was hit.
      *
-     * This will be `-1` for the void region.
+     * For the `void` region, this will be the column that intersects
+     * the mouse X coordinate, if any, or `-1`.
      */
     readonly column: number;
 
     /**
      * The X coordinate of the mouse in cell coordinates.
-     *
-     * This will be `-1` for the void region.
      */
     readonly x: number;
 
     /**
      * The Y coordinate of the mouse in cell coordinates.
-     *
-     * This will be `-1` for the void region.
      */
     readonly y: number;
 
     /**
      * The width of the cell.
-     *
-     * This will be `-1` for the void region.
      */
     readonly width: number;
 
     /**
      * The height of the cell.
-     *
-     * This will be `-1` for the void region.
      */
     readonly height: number;
   };
