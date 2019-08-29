@@ -12,7 +12,10 @@ import {
 import {
   DataGrid
 } from './datagrid';
-import { SelectionModel } from './selectionmodel';
+
+import {
+  SelectionModel
+} from './selectionmodel';
 
 
 /**
