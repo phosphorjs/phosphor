@@ -118,69 +118,181 @@ class BasicMouseHandler implements DataGrid.IMouseHandler {
    */
   onMouseDown(grid: DataGrid, event: MouseEvent): void {
     // Unpack the event.
-    let { clientX, clientY } = event;
+    let { clientX, clientY, ctrlKey, shiftKey } = event;
 
     // Hit test the grid.
     let hit = grid.hitTest(clientX, clientY);
 
-    // Bail if the hit test is on an invalid region.
-    if (!hit || hit.region === 'void' || hit.region === 'body') {
+    // Bail if the hit test is on an uninteresting region.
+    if (!hit || hit.region === 'void') {
       return;
     }
+
+    // Unpack the hit test.
+    let { region, row, column } = hit;
+
+    // If the hit test is the body region, the only option is select.
+    if (hit.region === 'body') {
+      // Fetch the selection model.
+      let model = grid.selectionModel;
+
+      // Bail early if there is no selection model.
+      if (!model) {
+        return;
+      }
+
+      // Override the document cursor.
+      let override = Drag.overrideCursor('default');
+
+      // Set up the press data.
+      this._pressData = {
+        type: 'select', region, row, column, ctrlKey, shiftKey, override
+      };
+
+      // Ctrl == new selection, keep old selections.
+      if (ctrlKey) {
+        model.select(row, column, row, column, 'none');
+        return;
+      }
+
+      // Shift == resize current selection.
+      if (shiftKey) {
+        model.resizeTo(row, column);
+        return;
+      }
+
+      // No mods == new selection, clear old selections.
+      model.select(row, column, row, column, 'all');
+
+      // Done.
+      return;
+    }
+
+    // Otherwise, the hit test is on a header region.
 
     // Convert the hit test into a part.
     let handle = Private.resizeHandleForHitTest(hit);
 
-    // Bail if the hit test is not on a resize handle.
-    if (handle === 'none') {
-      return;
-    }
-
     // Fetch the cursor for the handle.
     let cursor = Private.cursorForHandle(handle);
 
-    // Set up the temporary resize data.
+    // Handle horizontal resize.
     if (handle === 'left' || handle === 'right' ) {
       // Set up the resize data type.
-      let type: 'column' = 'column';
+      let type: 'column-resize' = 'column-resize';
 
       // Determine the column region.
-      let region: DataModel.ColumnRegion = (
-        hit.region === 'column-header' ? 'body' : 'row-header'
+      let rgn: DataModel.ColumnRegion = (
+        region === 'column-header' ? 'body' : 'row-header'
       );
 
       // Determine the section index.
-      let index = handle === 'left' ? hit.column - 1 : hit.column;
+      let index = handle === 'left' ? column - 1 : column;
 
       // Fetch the section size.
-      let size = grid.columnSize(region, index);
+      let size = grid.columnSize(rgn, index);
 
       // Override the document cursor.
       let override = Drag.overrideCursor(cursor);
 
       // Create the temporary press data.
-      this._pressData = { type, region, index, size, clientX, override };
-    } else {
+      this._pressData = { type, region: rgn, index, size, clientX, override };
+
+      // Done.
+      return;
+    }
+
+    // Handle vertical resize
+    if (handle === 'top' || handle === 'bottom') {
       // Set up the resize data type.
-      let type: 'row' = 'row';
+      let type: 'row-resize' = 'row-resize';
 
       // Determine the row region.
-      let region: DataModel.RowRegion = (
-        hit.region === 'row-header' ? 'body' : 'column-header'
+      let rgn: DataModel.RowRegion = (
+        region === 'row-header' ? 'body' : 'column-header'
       );
 
       // Determine the section index.
-      let index = handle === 'top' ? hit.row - 1 : hit.row;
+      let index = handle === 'top' ? row - 1 : row;
 
       // Fetch the section size.
-      let size = grid.rowSize(region, index);
+      let size = grid.rowSize(rgn, index);
 
       // Override the document cursor.
       let override = Drag.overrideCursor(cursor);
 
       // Create the temporary press data.
-      this._pressData = { type, region, index, size, clientY, override };
+      this._pressData = { type, region: rgn, index, size, clientY, override };
+
+      // Done.
+      return;
     }
+
+    // Otherwise, the only option is select.
+
+    // Fetch the selection model.
+    let model = grid.selectionModel;
+
+    // Bail if there is no selection model.
+    if (!model) {
+      return;
+    }
+
+    // Override the document cursor.
+    let override = Drag.overrideCursor('default');
+
+    // Set up the press data.
+    this._pressData = {
+      type: 'select', region, row, column, ctrlKey, shiftKey, override
+    };
+
+    // Handle corner header select.
+    if (region === 'corner-header') {
+      model.select(0, 0, Infinity, Infinity, ctrlKey ? 'none' : shiftKey ? 'current' : 'all');
+      return;
+    }
+
+    // Handle row header select.
+    if (region === 'row-header') {
+      //
+      if (ctrlKey) {
+        model.select(row, 0, row, Infinity, 'none');
+        return;
+      }
+
+      //
+      if (shiftKey) {
+        model.resizeToRow(row);
+        return;
+      }
+
+      //
+      model.select(row, 0, row, Infinity, 'all');
+
+      // Done.
+      return;
+    }
+
+    // Handle column header select.
+    if (region === 'column-header') {
+      //
+      if (ctrlKey) {
+        model.select(0, column, Infinity, column, 'none');
+        return;
+      }
+
+      if (shiftKey) {
+        model.resizeToColumn(column);
+        return;
+      }
+
+      model.select(0, column, Infinity, column, 'all');
+      // Done.
+      return;
+    }
+
+    // Unreachable.
+    throw 'unreachable';
   }
 
   /**
@@ -200,12 +312,22 @@ class BasicMouseHandler implements DataGrid.IMouseHandler {
     }
 
     // Dispatch to the proper grid resize method.
-    if (data.type === 'row') {
+    if (data.type === 'row-resize') {
       let dy = event.clientY - data.clientY;
       grid.resizeRow(data.region, data.index, data.size + dy);
-    } else {
+    } else if (data.type === 'column-resize') {
       let dx = event.clientX - data.clientX;
       grid.resizeColumn(data.region, data.index, data.size + dx);
+    } else if (data.type === 'select') {
+      let model = grid.selectionModel;
+      if (!model) {
+        return;
+      }
+      let hit = grid.hitTest(event.clientX, event.clientY);
+      if (!hit || hit.region === 'void') {
+        return;
+      }
+      model.resizeTo(hit.row, hit.column);
     }
   }
 
@@ -274,22 +396,22 @@ class BasicMouseHandler implements DataGrid.IMouseHandler {
  */
 namespace Private {
   /**
-   * A type alias for the row press data.
+   * A type alias for the row resize data.
    */
   export
-  type RowPressData = {
+  type RowResizeData = {
     /**
      * The descriminated type for the data.
      */
-    readonly type: 'row';
+    readonly type: 'row-resize';
 
     /**
-     * The row region which holds the section being pressed.
+     * The row region which holds the section being resized.
      */
     readonly region: DataModel.RowRegion;
 
     /**
-     * The index of the section being pressed.
+     * The index of the section being resized.
      */
     readonly index: number;
 
@@ -310,22 +432,22 @@ namespace Private {
   };
 
   /**
-   * A type alias for the column press data.
+   * A type alias for the column resize data.
    */
   export
-  type ColumnPressData = {
+  type ColumnResizeData = {
     /**
      * The descriminated type for the data.
      */
-    readonly type: 'column';
+    readonly type: 'column-resize';
 
     /**
-     * The column region which holds the section being pressed.
+     * The column region which holds the section being resized.
      */
     readonly region: DataModel.ColumnRegion;
 
     /**
-     * The index of the section being pressed.
+     * The index of the section being resized.
      */
     readonly index: number;
 
@@ -346,10 +468,51 @@ namespace Private {
   };
 
   /**
+   * A type alias for the select data.
+   */
+  export
+  type SelectData = {
+    /**
+     * The descriminated type for the data.
+     */
+    readonly type: 'select';
+
+    /**
+     * The original region for the mouse press.
+     */
+    readonly region: DataModel.CellRegion;
+
+    /**
+     * The original row that was selected.
+     */
+    readonly row: number;
+
+    /**
+     * The original column that was selected.
+     */
+    readonly column: number;
+
+    /**
+     * Whether the control key was held.
+     */
+    readonly ctrlKey: boolean;
+
+    /**
+     * Whether the shift key was held.
+     */
+    readonly shiftKey: boolean;
+
+    /**
+     * The disposable to clear the cursor override.
+     */
+    readonly override: IDisposable;
+  };
+
+  /**
    * A type alias for the resize handler press data.
    */
   export
-  type PressData = RowPressData | ColumnPressData;
+  type PressData = RowResizeData | ColumnResizeData | SelectData ;
 
   /**
    * A type alias for the resize handle types.
@@ -446,6 +609,6 @@ namespace Private {
     left: 'ew-resize',
     right: 'ew-resize',
     bottom: 'ns-resize',
-    none: ''
+    none: 'default'
   };
 }
