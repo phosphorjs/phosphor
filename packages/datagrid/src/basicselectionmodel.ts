@@ -87,9 +87,7 @@ class BasicSelectionModel extends SelectionModel {
     let { r1, c1, r2, c2, cursorRow, cursorColumn, clear } = args;
 
     // Clear the necessary selections.
-    if (!this.allowMultipleSelections) {
-      this._selections.length = 0;
-    } else if (clear === 'all') {
+    if (clear === 'all') {
       this._selections.length = 0;
     } else if (clear === 'current') {
       this._selections.pop();
@@ -101,25 +99,13 @@ class BasicSelectionModel extends SelectionModel {
     c1 = Math.max(0, Math.min(c1, columnCount - 1));
     c2 = Math.max(0, Math.min(c2, columnCount - 1));
 
-    // Handle the selection mode and range flag.
-    let ar = this.allowSelectionRanges;
-    switch (this.selectionMode) {
-    case 'row':
-      r2 = ar ? r2 : r1;
+    // Handle the selection mode.
+    if (this.selectionMode === 'row') {
       c1 = 0;
       c2 = columnCount - 1;
-      break;
-    case 'column':
+    } else if (this.selectionMode === 'column') {
       r1 = 0;
       r2 = rowCount - 1;
-      c2 = ar ? c2 : c1;
-      break;
-    case 'cell':
-      r2 = ar ? r2 : r1;
-      c2 = ar ? c2 : c1;
-      break;
-    default:
-      throw 'unreachable';
     }
 
     // Alias the cursor row and column.

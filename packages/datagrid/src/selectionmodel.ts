@@ -34,15 +34,7 @@ abstract class SelectionModel {
    */
   constructor(options: SelectionModel.IOptions) {
     this.model = options.model;
-    if (options.selectionMode !== undefined) {
-      this._selectionMode = options.selectionMode;
-    }
-    if (options.allowSelectionRanges !== undefined) {
-      this._allowSelectionRanges = options.allowSelectionRanges;
-    }
-    if (options.allowMultipleSelections !== undefined) {
-      this._allowMultipleSelections = options.allowMultipleSelections;
-    }
+    this._selectionMode = options.selectionMode || 'cell';
   }
 
   /**
@@ -138,58 +130,6 @@ abstract class SelectionModel {
   }
 
   /**
-   * Get whether selection ranges are allowed.
-   */
-  get allowSelectionRanges(): boolean {
-    return this._allowSelectionRanges;
-  }
-
-  /**
-   * Set whether selection ranges are allowed.
-   *
-   * #### Notes
-   * This will clear the selection model.
-   */
-  set allowSelectionRanges(value: boolean) {
-    // Bail early if the flag does not change.
-    if (this._allowSelectionRanges === value) {
-      return;
-    }
-
-    // Update the internal flag.
-    this._allowSelectionRanges = value;
-
-    // Clear the current selections.
-    this.clear();
-  }
-
-  /**
-   * Get whether multiple selections are allowed.
-   */
-  get allowMultipleSelections(): boolean {
-    return this._allowMultipleSelections;
-  }
-
-  /**
-   * Set whether multiple selections are allowed.
-   *
-   * #### Notes
-   * This will clear the selection model.
-   */
-  set allowMultipleSelections(value: boolean) {
-    // Bail early if the flag does not change.
-    if (this._allowMultipleSelections === value) {
-      return;
-    }
-
-    // Update the internal flag.
-    this._allowMultipleSelections = value;
-
-    // Clear the current selections.
-    this.clear();
-  }
-
-  /**
    * Test whether any selection intersects a row.
    *
    * @param index - The row index of interest.
@@ -245,8 +185,6 @@ abstract class SelectionModel {
   }
 
   private _changed = new Signal<this, void>(this);
-  private _allowSelectionRanges = true;
-  private _allowMultipleSelections = true;
   private _selectionMode: SelectionModel.SelectionMode = 'cell';
 }
 
@@ -351,20 +289,6 @@ namespace SelectionModel {
      * The default is `'cell'`.
      */
     selectionMode?: SelectionMode;
-
-    /**
-     * Whether selection ranges are allowed.
-     *
-     * The default is `true`.
-     */
-    allowSelectionRanges?: boolean;
-
-    /**
-     * Whether multiple selections are allowed.
-     *
-     * The default is `true`.
-     */
-    allowMultipleSelections?: boolean;
   }
 }
 
