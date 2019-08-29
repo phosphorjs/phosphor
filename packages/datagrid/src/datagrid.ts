@@ -1260,7 +1260,7 @@ class DataGrid extends Widget {
     let height = -1;
 
     // Return the hit test result.
-    return { region: 'row-header', row, column, x, y, width, height };
+    return { region: 'void', row, column, x, y, width, height };
   }
 
   /**
