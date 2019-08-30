@@ -103,6 +103,12 @@ class TransactionStore {
     }
     this._transactions[transaction.id] = transaction;
     this._order.push(transaction.id);
+    let count = this._cemetery[transaction.id];
+    if (count === undefined) {
+      this._cemetery[transaction.id] = 1;
+    } else {
+      this._cemetery[transaction.id] = count + 1;
+    }
     return true;
   }
 
@@ -118,6 +124,30 @@ class TransactionStore {
   }
 
   /**
+   * Handle a transaction undo.
+   */
+  undo(transactionId: string): void {
+    let count = this._cemetery[transactionId];
+    if (count === undefined) {
+      this._cemetery[transactionId] = -1;
+    } else {
+      this._cemetery[transactionId] = count - 1;
+    }
+  }
+
+  /**
+   * Handle a transaction redo.
+   */
+ redo(transactionId: string): void {
+    let count = this._cemetery[transactionId];
+    if (count === undefined) {
+      this._cemetery[transactionId] = 0;
+    } else {
+      this._cemetery[transactionId] = count + 1;
+    }
+  }
+
+  /**
    * Get the entire history for the transaction store.
    *
    * @returns an array of transactions representing the whole history.
@@ -125,13 +155,17 @@ class TransactionStore {
   getHistory(): Datastore.Transaction[] {
     let history = new Array();
     for (let id of this._order) {
-      history.push(this._transactions[id]);
+      let count = this._cemetery[id] || 0;
+      if (count > 0) {
+        history.push(this._transactions[id]);
+      }
     }
     return history;
   }
 
   private _order: string[];
   private _transactions: { [id: string]: Datastore.Transaction };
+  private _cemetery: { [id: string]: number } = {};
 }
 
 // Create a transaction store.
@@ -199,6 +233,7 @@ wsServer.on('request', request => {
         if (!transaction) {
           return;
         }
+        store.undo(transaction.id);
         reply = WSAdapterMessages.createUndoReplyMessage(
           data.msgId,
           transaction
@@ -216,6 +251,7 @@ wsServer.on('request', request => {
         if (!transaction) {
           return;
         }
+        store.redo(transaction.id);
         reply = WSAdapterMessages.createRedoReplyMessage(
           data.msgId,
           transaction
