@@ -237,6 +237,7 @@ describe('@phosphor/datastore', () => {
         datastore.endTransaction();
         expect(called).to.be.true;
       });
+
     });
 
     describe('id', () => {
@@ -476,6 +477,43 @@ describe('@phosphor/datastore', () => {
         expect(record.content).to.equal('hello, world');
       });
 
+      it('should emit a changed signal when undoing a change', async () => {
+        let t2 = datastore.get(schema2);
+        let id = datastore.beginTransaction();
+        t2.update({ 'my-record': { enabled: true } });
+        datastore.endTransaction();
+        let record = t2.get('my-record')!;
+        expect(record.enabled).to.be.true;
+
+        let called = false;
+        datastore.changed.connect((sender, args) => {
+          expect(args.type).to.equal('undo');
+          expect(args.transactionId).to.equal(id);
+          called = true;
+        });
+        await datastore.undo(id);
+        expect(called).to.be.true;
+      });
+
+      it('should not emit a changed signal when there is nothing to undo', async () => {
+        let t2 = datastore.get(schema2);
+        let id = datastore.beginTransaction();
+        t2.update({ 'my-record': { enabled: true } });
+        datastore.endTransaction();
+        let record = t2.get('my-record')!;
+        expect(record.enabled).to.be.true;
+        await datastore.undo(id);
+
+        let called = false;
+        datastore.changed.connect((sender, args) => {
+          console.log(args, args.change);
+          called = true;
+        });
+        // Already undone, so no signal should be emitted.
+        await datastore.undo(id);
+        expect(called).to.be.false;
+      });
+
     });
 
     describe('redo()', () => {
@@ -554,6 +592,45 @@ describe('@phosphor/datastore', () => {
         record = t2.get('my-record')!;
         expect(record.enabled).to.be.true;
         expect(record.content).to.equal('hello, world');
+      });
+
+      it('should emit a changed signal when redoing a change', async () => {
+        let t2 = datastore.get(schema2);
+        let id = datastore.beginTransaction();
+        t2.update({ 'my-record': { enabled: true } });
+        datastore.endTransaction();
+        let record = t2.get('my-record')!;
+        expect(record.enabled).to.be.true;
+        await datastore.undo(id);
+
+        let called = false;
+        datastore.changed.connect((sender, args) => {
+          expect(args.type).to.equal('redo');
+          expect(args.transactionId).to.equal(id);
+          called = true;
+        });
+        await datastore.redo(id);
+        expect(called).to.be.true;
+      });
+
+      it('should not emit a changed signal when there is nothing to redo', async () => {
+        let t2 = datastore.get(schema2);
+        let id = datastore.beginTransaction();
+        t2.update({ 'my-record': { enabled: true } });
+        datastore.endTransaction();
+        let record = t2.get('my-record')!;
+        expect(record.enabled).to.be.true;
+        await datastore.undo(id);
+        await datastore.redo(id);
+
+        let called = false;
+        datastore.changed.connect((sender, args) => {
+          console.log(args, args.change);
+          called = true;
+        });
+        // Already redone, so no signal should be emitted.
+        await datastore.redo(id);
+        expect(called).to.be.false;
       });
 
     });

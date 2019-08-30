@@ -418,12 +418,14 @@ class Datastore implements IIterable<Table<Schema>>, IDisposable {
     } finally {
       this._finalizeTransaction();
     }
-    this._changed.emit({
-      storeId,
-      transactionId: transaction.id,
-      type: which,
-      change,
-    });
+    if (!Private.isChangeEmpty(change)) {
+      this._changed.emit({
+        storeId,
+        transactionId: transaction.id,
+        type: which,
+        change,
+      });
+    }
   }
 
   /**
