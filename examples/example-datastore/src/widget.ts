@@ -85,6 +85,35 @@ export class CodeMirrorEditor extends Panel {
     datastore.changed.connect(this._onDatastoreChange, this);
   }
 
+  /**
+   * Undo the last user action.
+   */
+  undo(): void {
+    let id = this._undo.pop();
+    if (id) {
+      this._redo.push(id);
+      this._store.undo(id);
+    }
+  }
+
+
+  /**
+   * Redo the last user action.
+   */
+  redo(): void {
+    let id = this._redo.pop();
+    if (id) {
+      this._undo.push(id);
+      this._store.redo(id);
+    }
+  }
+
+  /**
+   * Whether the editor is currently focused.
+   */
+  hasFocus(): boolean {
+    return this._editor.hasFocus();
+  }
 
   /**
    * A message handler invoked on a `'resize'` message.
@@ -101,7 +130,7 @@ export class CodeMirrorEditor extends Panel {
   /**
    * Handle a `after-show` message for the editor.
    */
-  onAfterShow() {
+  protected onAfterShow() {
     this._editor.refresh();
   }
 
@@ -117,13 +146,14 @@ export class CodeMirrorEditor extends Panel {
     this._editor.setOption('readOnly', this._check.checked);
     // Update the table to broadcast the change.
     let editorTable = this._store.get(EDITOR_SCHEMA);
-    this._store.beginTransaction();
+    let id = this._store.beginTransaction();
     editorTable.update({
       [this._record]: {
         readOnly: this._check.checked
       }
     });
     this._store.endTransaction();
+    this._undo.push(id);
   }
 
   /**
@@ -139,7 +169,7 @@ export class CodeMirrorEditor extends Panel {
     let end = doc.indexFromPos(change.to);
     let text = change.text.join('\n');
     // If this was a local change, update the table.
-    this._store.beginTransaction();
+    let id = this._store.beginTransaction();
     editorTable.update({
       [this._record]: {
         text: {
@@ -150,6 +180,7 @@ export class CodeMirrorEditor extends Panel {
       }
     });
     this._store.endTransaction();
+    this._undo.push(id);
   }
 
   /**
@@ -157,7 +188,7 @@ export class CodeMirrorEditor extends Panel {
    */
   private _onDatastoreChange(store: Datastore, change: Datastore.IChangedArgs): void {
     // Ignore changes that have already been applied locally.
-    if (change.storeId === store.id) {
+    if (change.type === 'transaction' && change.storeId === store.id) {
       return;
     }
     let doc = this._editor.getDoc();
@@ -166,37 +197,39 @@ export class CodeMirrorEditor extends Panel {
     if (c && c[this._record] && c[this._record].text) {
       let textChanges = c[this._record].text as TextField.Change;
       textChanges.forEach(tc => {
-        // Convert the change data to codemirror range and inserted text.
-        let from = doc.posFromIndex(tc.index);
-        let to = doc.posFromIndex(tc.index + tc.removed.length);
-        let replacement = tc.inserted;
+      // Convert the change data to codemirror range and inserted text.
+      let from = doc.posFromIndex(tc.index);
+      let to = doc.posFromIndex(tc.index + tc.removed.length);
+      let replacement = tc.inserted;
 
-          // Apply the operation, setting the change guard so we can ignore
-          // the change signals from codemirror.
-          this._changeGuard = true;
-          doc.replaceRange(replacement, from, to, '+input');
-          this._changeGuard = false;
-        });
-      }
-
-      // If the readonly state has changed, update the check box, setting the
-      // change guard so we can ignore it in the onchange event.
-      if(c && c[this._record] && c[this._record].readOnly) {
+        // Apply the operation, setting the change guard so we can ignore
+        // the change signals from codemirror.
         this._changeGuard = true;
-        let checkChange = c[this._record].readOnly as RegisterField.Change<boolean>;
-        this._check.checked = checkChange.current;
-        // Update the readonly state
-        this._editor.setOption('readOnly', this._check.checked);
+        doc.replaceRange(replacement, from, to, '+input');
         this._changeGuard = false;
-      }
+      });
     }
 
-    private _changeGuard: boolean = false;
-    private _check: HTMLInputElement;
-    private _checkWidget: Widget;
-    private _editor: CodeMirror.Editor;
-    private _editorWidget: Widget;
-    private _record: string;
-    private _store: Datastore;
-    private _toolbarHeight = 24;
+    // If the readonly state has changed, update the check box, setting the
+    // change guard so we can ignore it in the onchange event.
+    if(c && c[this._record] && c[this._record].readOnly) {
+      this._changeGuard = true;
+      let checkChange = c[this._record].readOnly as RegisterField.Change<boolean>;
+      this._check.checked = checkChange.current;
+      // Update the readonly state
+      this._editor.setOption('readOnly', this._check.checked);
+      this._changeGuard = false;
+    }
   }
+
+  private _changeGuard: boolean = false;
+  private _check: HTMLInputElement;
+  private _checkWidget: Widget;
+  private _editor: CodeMirror.Editor;
+  private _editorWidget: Widget;
+  private _record: string;
+  private _store: Datastore;
+  private _toolbarHeight = 24;
+  private _undo: string[] = [];
+  private _redo: string[] = [];
+}

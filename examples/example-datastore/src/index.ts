@@ -5,6 +5,15 @@
 |
 | The full license is in the file LICENSE, distributed with this software.
 |----------------------------------------------------------------------------*/
+
+import {
+  ArrayExt
+} from '@phosphor/algorithm';
+
+import {
+  CommandRegistry
+} from '@phosphor/commands';
+
 import {
   PromiseDelegate
 } from '@phosphor/coreutils';
@@ -35,6 +44,7 @@ import {
 
 import '../style/index.css';
 
+const commands = new CommandRegistry();
 
 /**
  * A message handler that initializes communication with the patch server.
@@ -227,6 +237,40 @@ async function init(): Promise<void> {
   window.onresize = () => { box.update(); };
 
   Widget.attach(box, document.body);
+
+  commands.addCommand('undo', {
+    label: 'Undo',
+    execute: () => {
+      let editor = ArrayExt.findFirstValue([e1, e2, e3], e => e.hasFocus());
+      if (editor) {
+        editor.undo();
+      }
+    }
+  });
+  commands.addCommand('redo', {
+    label: 'Redo',
+    execute: () => {
+      let editor = ArrayExt.findFirstValue([e1, e2, e3], e => e.hasFocus());
+      if (editor) {
+        editor.redo();
+      }
+    }
+  });
+  commands.addKeyBinding({
+    keys: ['Accel Z'],
+    selector: 'body',
+    command: 'undo'
+  });
+
+  commands.addKeyBinding({
+    keys: ['Accel Shift Z'],
+    selector: 'body',
+    command: 'redo'
+  });
+
+  document.addEventListener('keydown', (event: KeyboardEvent) => {
+    commands.processKeydownEvent(event);
+  }, true);
 }
 
 window.onload = init;

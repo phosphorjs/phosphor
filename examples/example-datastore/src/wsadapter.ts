@@ -98,7 +98,8 @@ class WSDatastoreAdapter extends WSConnection<WSAdapterMessages.IMessage, WSAdap
    */
   async requestUndo(id: string): Promise<void> {
     let msg = WSAdapterMessages.createUndoRequestMessage(id);
-    await this._requestMessageReply(msg);
+    let reply = await this._requestMessageReply(msg);
+    this._handleUndo(reply.content.transaction);
   }
 
   /**
@@ -106,7 +107,8 @@ class WSDatastoreAdapter extends WSConnection<WSAdapterMessages.IMessage, WSAdap
    */
   async requestRedo(id: string): Promise<void> {
     let msg = WSAdapterMessages.createRedoRequestMessage(id);
-    await this._requestMessageReply(msg);
+    let reply = await this._requestMessageReply(msg);
+    this._handleRedo(reply.content.transaction);
   }
 
   /**
@@ -134,14 +136,6 @@ class WSDatastoreAdapter extends WSConnection<WSAdapterMessages.IMessage, WSAdap
     }
     if (msg.msgType === 'transaction-broadcast') {
       this._handleTransactions(msg.content.transactions);
-      return true;
-    }
-    if (msg.msgType === 'undo-reply') {
-      this._handleUndo(msg.content.transaction);
-      return true;
-    }
-    if (msg.msgType === 'redo-reply') {
-      this._handleRedo(msg.content.transaction);
       return true;
     }
     return false;
