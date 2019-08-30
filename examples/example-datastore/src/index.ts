@@ -10,12 +10,16 @@ import {
 } from '@phosphor/coreutils';
 
 import {
-  Datastore, Schema
+  Datastore, IServerAdapter, Schema
 } from '@phosphor/datastore';
 
 import {
-  IMessageHandler, Message, MessageLoop
+  IMessageHandler, Message
 } from '@phosphor/messaging';
+
+import {
+  ISignal, Signal
+} from '@phosphor/signaling';
 
 import {
   BoxPanel, DockPanel, Widget
@@ -35,7 +39,7 @@ import '../style/index.css';
 /**
  * A message handler that initializes communication with the patch server.
  */
-class ClearingHouse implements IMessageHandler {
+class ClearingHouse implements IServerAdapter, IMessageHandler {
   /**
    * Construct a new clearing house.
    *
@@ -66,8 +70,50 @@ class ClearingHouse implements IMessageHandler {
    */
   async init(schemas: Schema[]): Promise<void> {
     let storeId = await this.adapter.createStoreId();
-    this.datastore = Datastore.create({ id: storeId, schemas, broadcastHandler: this });
+    this.datastore = Datastore.create({ id: storeId, schemas, adapter: this });
     this.adapter.setMessageHandler(this);
+  }
+
+  /**
+   * Broadcast a transaction from a datastore to collaborators.
+   *
+   * @param transaction - the transaction to broadcast to collaborators.
+   *
+   * #### Notes
+   * This is expected to be called by a datastore, and not by any other
+   * user. Direct invocations of this function may have unexpected results.
+   */
+  broadcast(transaction: Datastore.Transaction): void {
+    this.adapter.broadcastTransactions([transaction]);
+  }
+
+  /**
+   * Undo a transaction by id. This sends an undo message to the patch server,
+   * but the undo is not actually done until the datastore recieves the
+   * corresponding transaction and applies it.
+   *
+   * @param id: the transaction to undo.
+   */
+  undo(id: string): Promise<void> {
+    return Promise.resolve(void 0);
+  }
+
+  /**
+   * Redo a transaction by id.
+   *
+   * @param id: the transaction to redo.
+   */
+  redo(id: string): Promise<void> {
+    return Promise.resolve(void 0);
+  }
+
+  /**
+   * A signal that is fired when a transaction is received from the server.
+   * Intended to be consumed by a datastore, though other objects may snoop
+   * on the messages.
+   */
+  get received(): ISignal<this, IServerAdapter.IReceivedArgs> {
+    return this._received;
   }
 
   /**
@@ -77,30 +123,39 @@ class ClearingHouse implements IMessageHandler {
    * messages from the datastore, forwarding them as appropriate.
    */
   processMessage(msg: Message): void {
-    if (msg.type === 'datastore-transaction') {
-      let m = msg as Datastore.TransactionMessage;
-      this.adapter.broadcastTransactions([m.transaction]);
-    } else if (msg.type === 'remote-transactions') {
+    if (msg.type === 'remote-transactions') {
       let m = msg as WSDatastoreAdapter.RemoteTransactionMessage;
       if (this._initialHistoryReceived) {
-        MessageLoop.sendMessage(this.datastore, new Datastore.TransactionMessage(m.transaction));
+        this._received.emit({ type: 'transaction', transaction: m.transaction });
       } else {
         this._initialHistoryBacklog.push(m.transaction);
       }
     } else if (msg.type === 'history') {
       let m = msg as WSDatastoreAdapter.HistoryMessage;
       for (let t of m.history.transactions) {
-        MessageLoop.sendMessage(this.datastore, new Datastore.TransactionMessage(t));
+        this._received.emit({ type: 'transaction', transaction: t });
       }
       if (!this._initialHistoryReceived) {
         this._initialHistoryReceived = true;
         for (let t of this._initialHistoryBacklog) {
-          MessageLoop.sendMessage(this.datastore, new Datastore.TransactionMessage(t));
+          this._received.emit({ type: 'transaction', transaction: t });
         }
         this._initialHistory.resolve(undefined);
         this._initialHistoryBacklog = [];
       }
     }
+  }
+
+  dispose(): void {
+    if (this._isDisposed) {
+      return;
+    }
+    this._isDisposed = true;
+    Signal.clearData(this);
+  }
+
+  get isDisposed(): boolean {
+    return this._isDisposed;
   }
 
   adapter: WSDatastoreAdapter;
@@ -109,6 +164,8 @@ class ClearingHouse implements IMessageHandler {
   private _initialHistory = new PromiseDelegate<void>();
   private _initialHistoryReceived = false;
   private _initialHistoryBacklog: Datastore.Transaction[] = [];
+  private _received = new Signal<this, IServerAdapter.IReceivedArgs>(this);
+  private _isDisposed = false;
 }
 
 
