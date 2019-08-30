@@ -138,6 +138,14 @@ class WSDatastoreAdapter extends WSConnection<WSAdapterMessages.IMessage, WSAdap
       this._handleTransactions(msg.content.transactions);
       return true;
     }
+    if (msg.msgType === 'undo-reply') {
+      this._handleUndo(msg.content.transaction);
+      return true;
+    }
+    if (msg.msgType === 'redo-reply') {
+      this._handleRedo(msg.content.transaction);
+      return true;
+    }
     return false;
   }
 

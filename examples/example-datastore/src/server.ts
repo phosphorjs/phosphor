@@ -203,6 +203,13 @@ wsServer.on('request', request => {
           data.msgId,
           transaction
         );
+        for (let storeId in connections) {
+          let c = connections[storeId];
+          if (c !== connection) {
+            console.debug(`Broadcasting undo to: ${storeId}`);
+            c.sendUTF(JSON.stringify(reply));
+          }
+        }
         break;
       case 'redo-request':
         transaction = store.get(data.content.transactionId);
@@ -213,6 +220,13 @@ wsServer.on('request', request => {
           data.msgId,
           transaction
         );
+        for (let storeId in connections) {
+          let c = connections[storeId];
+          if (c !== connection) {
+            console.debug(`Broadcasting redo to: ${storeId}`);
+            c.sendUTF(JSON.stringify(reply));
+          }
+        }
         break;
       case 'history-request':
         let history = store.getHistory();
