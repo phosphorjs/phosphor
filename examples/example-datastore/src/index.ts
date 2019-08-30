@@ -48,7 +48,7 @@ class ClearingHouse implements IServerAdapter, IMessageHandler {
    * @param schemas: a list of schemas for the collaborator datastores.
    */
   constructor(wsFactory: () => WebSocket, schemas: Schema[]) {
-    this.adapter = new WSDatastoreAdapter(wsFactory);
+    this._adapter = new WSDatastoreAdapter(wsFactory);
     this.ready = this.init(schemas);
   }
 
@@ -69,9 +69,9 @@ class ClearingHouse implements IServerAdapter, IMessageHandler {
    * @returns a promise that resolves when the datastore is ready.
    */
   async init(schemas: Schema[]): Promise<void> {
-    let storeId = await this.adapter.createStoreId();
+    let storeId = await this._adapter.createStoreId();
     this.datastore = Datastore.create({ id: storeId, schemas, adapter: this });
-    this.adapter.setMessageHandler(this);
+    this._adapter.setMessageHandler(this);
   }
 
   /**
@@ -84,7 +84,7 @@ class ClearingHouse implements IServerAdapter, IMessageHandler {
    * user. Direct invocations of this function may have unexpected results.
    */
   broadcast(transaction: Datastore.Transaction): void {
-    this.adapter.broadcastTransactions([transaction]);
+    this._adapter.broadcastTransactions([transaction]);
   }
 
   /**
@@ -95,7 +95,7 @@ class ClearingHouse implements IServerAdapter, IMessageHandler {
    * @param id: the transaction to undo.
    */
   undo(id: string): Promise<void> {
-    return Promise.resolve(void 0);
+    return this._adapter.requestUndo(id);
   }
 
   /**
@@ -104,7 +104,7 @@ class ClearingHouse implements IServerAdapter, IMessageHandler {
    * @param id: the transaction to redo.
    */
   redo(id: string): Promise<void> {
-    return Promise.resolve(void 0);
+    return this._adapter.requestRedo(id);
   }
 
   /**
@@ -143,6 +143,12 @@ class ClearingHouse implements IServerAdapter, IMessageHandler {
         this._initialHistory.resolve(undefined);
         this._initialHistoryBacklog = [];
       }
+    } else if (msg.type === 'undo') {
+      let m = msg as WSDatastoreAdapter.UndoMessage;
+      this._received.emit({ type: 'undo', transaction: m.transaction });
+    } else if (msg.type === 'redo') {
+      let m = msg as WSDatastoreAdapter.RedoMessage;
+      this._received.emit({ type: 'redo', transaction: m.transaction });
     }
   }
 
@@ -158,7 +164,7 @@ class ClearingHouse implements IServerAdapter, IMessageHandler {
     return this._isDisposed;
   }
 
-  adapter: WSDatastoreAdapter;
+  private _adapter: WSDatastoreAdapter;
   datastore: Datastore;
   ready: Promise<void>;
   private _initialHistory = new PromiseDelegate<void>();

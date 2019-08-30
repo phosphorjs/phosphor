@@ -164,6 +164,7 @@ wsServer.on('request', request => {
     let data = JSON.parse(message.utf8Data!) as WSAdapterMessages.IMessage;
     console.debug(`Received message of type: ${data.msgType}`);
     let reply: WSAdapterMessages.IReplyMessage;
+    let transaction: Datastore.Transaction | undefined;
     switch (data.msgType) {
       case 'storeid-request':
         connections[idCounter] = connection;
@@ -192,6 +193,26 @@ wsServer.on('request', request => {
           }
         }
         reply = WSAdapterMessages.createTransactionAckMessage(data.msgId, acks);
+        break;
+      case 'undo-request':
+        transaction = store.get(data.content.transactionId);
+        if (!transaction) {
+          return;
+        }
+        reply = WSAdapterMessages.createUndoReplyMessage(
+          data.msgId,
+          transaction
+        );
+        break;
+      case 'redo-request':
+        transaction = store.get(data.content.transactionId);
+        if (!transaction) {
+          return;
+        }
+        reply = WSAdapterMessages.createRedoReplyMessage(
+          data.msgId,
+          transaction
+        );
         break;
       case 'history-request':
         let history = store.getHistory();

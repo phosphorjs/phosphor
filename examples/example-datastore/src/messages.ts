@@ -40,6 +40,8 @@ namespace WSAdapterMessages {
     msgId: string;
     msgType: (
       'storeid-request' | 'storeid-reply'|
+      'undo-request' | 'undo-reply' |
+      'redo-request' | 'redo-reply' |
       'transaction-broadcast' | 'transaction-ack' |
       'history-request' | 'history-reply' |
       'fetch-transaction-request' | 'fetch-transaction-reply'
@@ -72,6 +74,50 @@ namespace WSAdapterMessages {
     content: {
       readonly storeId: number
     };
+  }
+
+  /**
+   * A message representing a request to undo a transaction.
+   */
+  export
+  type IUndoMessageRequest = IBaseMessage & {
+    msgType: 'undo-request';
+    content: {
+      readonly transactionId: string;
+    };
+  }
+
+  /**
+   * A reply from the server containing a transaction to undo.
+   */
+  export
+  type IUndoMessageReply = IBaseReplyMessage & {
+    msgType: 'undo-reply';
+    content: {
+      readonly transaction: Datastore.Transaction
+    };
+  }
+
+  /**
+   * A message representing a request to redo a transaction.
+   */
+  export
+  type IRedoMessageRequest = IBaseMessage & {
+    msgType: 'redo-request';
+    content: {
+      readonly transactionId: string;
+    };
+  }
+
+  /**
+   * A reply from the server containing a transaction to redo.
+   */
+  export
+  type IRedoMessageReply = IBaseReplyMessage & {
+    msgType: 'redo-reply';
+    content: {
+      readonly transaction: Datastore.Transaction
+    }
   }
 
   /**
@@ -122,6 +168,7 @@ namespace WSAdapterMessages {
   export
   type IReplyMessage = (
     IStoreIdMessageReply | ITransactionAckMessage |
+    IUndoMessageReply | IRedoMessageReply |
     IHistoryReplyMessage
   );
 
@@ -131,6 +178,7 @@ namespace WSAdapterMessages {
   export
   type IMessage = (
     IStoreIdMessageRequest | ITransactionBroadcastMessage |
+    IUndoMessageRequest | IRedoMessageRequest |
     IHistoryRequestMessage | IReplyMessage
   );
 
@@ -205,6 +253,50 @@ namespace WSAdapterMessages {
   export
   function createStoreIdReplyMessage(parentId: string, storeId: number): IStoreIdMessageReply {
     return createReply('storeid-reply', {storeId}, parentId);
+  }
+
+  /**
+   * Create a `'undo-request'` message.
+   *
+   * @returns {IUndoMessageRequest} The created message.
+   */
+  export
+  function createUndoRequestMessage(id: string): IUndoMessageRequest {
+    return createMessage<IUndoMessageRequest>('undo-request', { transactionId: id });
+  }
+
+  /**
+   * Create a `'undo-reply'` message.
+   * 
+   * @param {string} parentId The id of the parent of this reply.
+   * @param {string} storeId The assigned storeId.
+   * @returns {IStoreIdMessageReply} The created message.
+   */
+  export
+  function createUndoReplyMessage(parentId: string, transaction: Datastore.Transaction): IUndoMessageReply {
+    return createReply('undo-reply', { transaction: transaction as any }, parentId);
+  }
+
+  /**
+   * Create a `'redo-request'` message.
+   *
+   * @returns {IRedoMessageRequest} The created message.
+   */
+  export
+  function createRedoRequestMessage(id: string): IRedoMessageRequest {
+    return createMessage('redo-request', { transactionId: id });
+  }
+
+  /**
+   * Create a `'undo-reply'` message.
+   * 
+   * @param {string} parentId The id of the parent of this reply.
+   * @param {string} storeId The assigned storeId.
+   * @returns {IStoreIdMessageReply} The created message.
+   */
+  export
+  function createRedoReplyMessage(parentId: string, transaction: Datastore.Transaction): IRedoMessageReply {
+    return createReply('redo-reply', { transaction: transaction as any }, parentId);
   }
 
   /**

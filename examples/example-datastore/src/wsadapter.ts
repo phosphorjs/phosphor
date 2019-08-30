@@ -93,6 +93,21 @@ class WSDatastoreAdapter extends WSConnection<WSAdapterMessages.IMessage, WSAdap
     return reply.content.transactionIds;
   }
 
+  /**
+   * Request an undo by id.
+   */
+  async requestUndo(id: string): Promise<void> {
+    let msg = WSAdapterMessages.createUndoRequestMessage(id);
+    await this._requestMessageReply(msg);
+  }
+
+  /**
+   * Request a redo by id.
+   */
+  async requestRedo(id: string): Promise<void> {
+    let msg = WSAdapterMessages.createRedoRequestMessage(id);
+    await this._requestMessageReply(msg);
+  }
 
   /**
    * Process messages received over the websocket.
@@ -121,9 +136,50 @@ class WSDatastoreAdapter extends WSConnection<WSAdapterMessages.IMessage, WSAdap
       this._handleTransactions(msg.content.transactions);
       return true;
     }
+    if (msg.msgType === 'undo-reply') {
+      this._handleUndo(msg.content.transaction);
+      return true;
+    }
+    if (msg.msgType === 'redo-reply') {
+      this._handleRedo(msg.content.transaction);
+      return true;
+    }
     return false;
   }
 
+  /**
+   * Process undo message received over the websocket.
+   */
+  private _handleUndo(transaction: Datastore.Transaction) {
+    if (this._handler === null) {
+      if (this.isDisposed) {
+        return;
+      }
+      // TODO how to deal with unhandled undo/redo ?
+      return;
+    }
+    let message = new WSDatastoreAdapter.UndoMessage(transaction);
+    this._handler.processMessage(message);
+  }
+
+  /**
+   * Process redo message received over the websocket.
+   */
+  private _handleRedo(transaction: Datastore.Transaction) {
+    if (this._handler === null) {
+      if (this.isDisposed) {
+        return;
+      }
+      // TODO how to deal with unhandled undo/redo ?
+      return;
+    }
+    let message = new WSDatastoreAdapter.RedoMessage(transaction);
+    this._handler.processMessage(message);
+  }
+
+  /**
+   * Send a message to the server and resolve the reply message.
+   */
   /**
    * Process transactions received over the websocket.
    */
@@ -141,11 +197,12 @@ class WSDatastoreAdapter extends WSConnection<WSAdapterMessages.IMessage, WSAdap
     }
   }
 
-
   /**
    * Send a message to the server and resolve the reply message.
    */
   private _requestMessageReply(msg: WSAdapterMessages.IStoreIdMessageRequest): Promise<WSAdapterMessages.IStoreIdMessageReply>
+  private _requestMessageReply(msg: WSAdapterMessages.IUndoMessageRequest): Promise<WSAdapterMessages.IUndoMessageReply>
+  private _requestMessageReply(msg: WSAdapterMessages.IRedoMessageRequest): Promise<WSAdapterMessages.IRedoMessageReply>
   private _requestMessageReply(msg: WSAdapterMessages.IHistoryRequestMessage): Promise<WSAdapterMessages.IHistoryReplyMessage>
   private _requestMessageReply(msg: WSAdapterMessages.ITransactionBroadcastMessage): Promise<WSAdapterMessages.ITransactionAckMessage>
   private _requestMessageReply(msg: WSAdapterMessages.IMessage): Promise<WSAdapterMessages.IReplyMessage> {
@@ -158,7 +215,6 @@ class WSDatastoreAdapter extends WSConnection<WSAdapterMessages.IMessage, WSAdap
     });
 
     this.sendMessage(msg);
-
     return promise;
   }
 
@@ -208,6 +264,48 @@ namespace WSDatastoreAdapter {
      */
     constructor(transaction: Datastore.Transaction) {
       super('remote-transactions');
+      this.transaction = transaction;
+    }
+
+    /**
+     * The patch object.
+     */
+    readonly transaction: Datastore.Transaction;
+  }
+
+  /**
+   * A message class for `'undo'` messages.
+   */
+  export
+  class UndoMessage extends Message {
+    /**
+     * Construct a new undo message.
+     *
+     * @param transaction - The transaction object
+     */
+    constructor(transaction: Datastore.Transaction) {
+      super('undo');
+      this.transaction = transaction;
+    }
+
+    /**
+     * The patch object.
+     */
+    readonly transaction: Datastore.Transaction;
+  }
+
+  /**
+   * A message class for `'redo'` messages.
+   */
+  export
+  class RedoMessage extends Message {
+    /**
+     * Construct a new redo message.
+     *
+     * @param transaction - The transaction object
+     */
+    constructor(transaction: Datastore.Transaction) {
+      super('redo');
       this.transaction = transaction;
     }
 
