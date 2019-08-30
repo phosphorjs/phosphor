@@ -10,7 +10,7 @@ import {
 } from '@phosphor/disposable';
 
 import {
-  ElementExt
+  ElementExt, Platform
 } from '@phosphor/domutils';
 
 import {
@@ -2410,8 +2410,8 @@ class DataGrid extends Widget {
    * Handle the `'wheel'` event for the data grid.
    */
   private _evtWheel(event: WheelEvent): void {
-    // Ignore the event if `ctrl` is held.
-    if (event.ctrlKey) {
+    // Ignore the event if `accel` is held.
+    if (Platform.accelKey(event)) {
       return;
     }
 

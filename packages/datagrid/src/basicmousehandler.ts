@@ -10,6 +10,10 @@ import {
 } from '@phosphor/disposable';
 
 import {
+  Platform
+} from '@phosphor/domutils';
+
+import {
   Drag
 } from '@phosphor/dragdrop';
 
@@ -117,7 +121,7 @@ class BasicMouseHandler implements DataGrid.IMouseHandler {
    */
   onMouseDown(grid: DataGrid, event: MouseEvent): void {
     // Unpack the event.
-    let { clientX, clientY, ctrlKey, shiftKey } = event;
+    let { clientX, clientY } = event;
 
     // Hit test the grid.
     let hit = grid.hitTest(clientX, clientY);
@@ -129,6 +133,10 @@ class BasicMouseHandler implements DataGrid.IMouseHandler {
     if (region === 'void') {
       return;
     }
+
+    // Fetch the modifier flags.
+    let shift = event.shiftKey;
+    let accel = Platform.accelKey(event);
 
     // If the hit test is the body region, the only option is select.
     if (region === 'body') {
@@ -155,8 +163,8 @@ class BasicMouseHandler implements DataGrid.IMouseHandler {
       let cursorColumn: number;
       let clear: SelectionModel.ClearMode;
 
-      // Ctrl == new selection, keep old selections.
-      if (ctrlKey) {
+      // Accel == new selection, keep old selections.
+      if (accel) {
         r1 = row;
         r2 = row;
         c1 = column;
@@ -164,7 +172,7 @@ class BasicMouseHandler implements DataGrid.IMouseHandler {
         cursorRow = row;
         cursorColumn = column;
         clear = 'none';
-      } else if (shiftKey) {
+      } else if (shift) {
         r1 = model.cursorRow;
         r2 = row;
         c1 = model.cursorColumn;
@@ -280,33 +288,33 @@ class BasicMouseHandler implements DataGrid.IMouseHandler {
       r2 = Infinity;
       c1 = 0;
       c2 = Infinity;
-      cursorRow = ctrlKey ? 0 : shiftKey ? model.cursorRow : 0;
-      cursorColumn = ctrlKey ? 0 : shiftKey ? model.cursorColumn : 0;
-      clear = ctrlKey ? 'none' : shiftKey ? 'current' : 'all';
+      cursorRow = accel ? 0 : shift ? model.cursorRow : 0;
+      cursorColumn = accel ? 0 : shift ? model.cursorColumn : 0;
+      clear = accel ? 'none' : shift ? 'current' : 'all';
     } else if (region === 'row-header') {
-      r1 = ctrlKey ? row : shiftKey ? model.cursorRow : row;
+      r1 = accel ? row : shift ? model.cursorRow : row;
       r2 = row;
       c1 = 0;
       c2 = Infinity;
-      cursorRow = ctrlKey ? row : shiftKey ? model.cursorRow : row;
-      cursorColumn = ctrlKey ? 0 : shiftKey ? model.cursorColumn : 0;
-      clear = ctrlKey ? 'none' : shiftKey ? 'current' : 'all';
+      cursorRow = accel ? row : shift ? model.cursorRow : row;
+      cursorColumn = accel ? 0 : shift ? model.cursorColumn : 0;
+      clear = accel ? 'none' : shift ? 'current' : 'all';
     } else if (region === 'column-header') {
       r1 = 0;
       r2 = Infinity;
-      c1 = ctrlKey ? column : shiftKey ? model.cursorColumn : column;
+      c1 = accel ? column : shift ? model.cursorColumn : column;
       c2 = column;
-      cursorRow = ctrlKey ? 0 : shiftKey ? model.cursorRow : 0;
-      cursorColumn = ctrlKey ? column : shiftKey ? model.cursorColumn : column;
-      clear = ctrlKey ? 'none' : shiftKey ? 'current' : 'all';
+      cursorRow = accel ? 0 : shift ? model.cursorRow : 0;
+      cursorColumn = accel ? column : shift ? model.cursorColumn : column;
+      clear = accel ? 'none' : shift ? 'current' : 'all';
     } else {
-      r1 = ctrlKey ? row : shiftKey ? model.cursorRow : row;
+      r1 = accel ? row : shift ? model.cursorRow : row;
       r2 = row;
-      c1 = ctrlKey ? column : shiftKey ? model.cursorColumn : column;
+      c1 = accel ? column : shift ? model.cursorColumn : column;
       c2 = column;
-      cursorRow = ctrlKey ? row : shiftKey ? model.cursorRow : row;
-      cursorColumn = ctrlKey ? column : shiftKey ? model.cursorColumn : column;
-      clear = ctrlKey ? 'none' : shiftKey ? 'current' : 'all';
+      cursorRow = accel ? row : shift ? model.cursorRow : row;
+      cursorColumn = accel ? column : shift ? model.cursorColumn : column;
+      clear = accel ? 'none' : shift ? 'current' : 'all';
     }
 
     // Make the selection.

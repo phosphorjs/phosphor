@@ -6,6 +6,10 @@
 | The full license is in the file LICENSE, distributed with this software.
 |----------------------------------------------------------------------------*/
 import {
+  Platform
+} from '@phosphor/domutils';
+
+import {
   getKeyboardLayout
 } from '@phosphor/keyboard';
 
@@ -92,11 +96,11 @@ class BasicKeyHandler implements DataGrid.IKeyHandler {
     let model = grid.selectionModel;
 
     // Fetch the modifier flags.
-    let ctrl = event.ctrlKey;
     let shift = event.shiftKey;
+    let accel = Platform.accelKey(event);
 
-    // Handle no model with the ctrl modifier.
-    if (!model && ctrl) {
+    // Handle no model with the accel modifier.
+    if (!model && accel) {
       grid.scrollTo(0, grid.scrollY);
       return;
     }
@@ -110,8 +114,8 @@ class BasicKeyHandler implements DataGrid.IKeyHandler {
     // Fetch the selection mode.
     let mode = model.selectionMode;
 
-    // Handle the row selection mode with ctrl key.
-    if (mode === 'row' && ctrl) {
+    // Handle the row selection mode with accel key.
+    if (mode === 'row' && accel) {
       grid.scrollTo(0, grid.scrollY);
       return;
     }
@@ -137,7 +141,7 @@ class BasicKeyHandler implements DataGrid.IKeyHandler {
     let clear: SelectionModel.ClearMode;
 
     // Dispatch based on the modifier keys.
-    if (ctrl && shift) {
+    if (accel && shift) {
       r1 = cs ? cs.r1 : 0;
       r2 = cs ? cs.r2 : 0;
       c1 = cs ? cs.c1 : 0;
@@ -153,7 +157,7 @@ class BasicKeyHandler implements DataGrid.IKeyHandler {
       cr = r;
       cc = c;
       clear = 'current';
-    } else if (ctrl) {
+    } else if (accel) {
       r1 = r;
       r2 = r;
       c1 = 0;
@@ -206,11 +210,11 @@ class BasicKeyHandler implements DataGrid.IKeyHandler {
     let model = grid.selectionModel;
 
     // Fetch the modifier flags.
-    let ctrl = event.ctrlKey;
     let shift = event.shiftKey;
+    let accel = Platform.accelKey(event);
 
-    // Handle no model with the ctrl modifier.
-    if (!model && ctrl) {
+    // Handle no model with the accel modifier.
+    if (!model && accel) {
       grid.scrollTo(grid.maxScrollX, grid.scrollY);
       return;
     }
@@ -224,8 +228,8 @@ class BasicKeyHandler implements DataGrid.IKeyHandler {
     // Fetch the selection mode.
     let mode = model.selectionMode;
 
-    // Handle the row selection model with ctrl key.
-    if (mode === 'row' && ctrl) {
+    // Handle the row selection model with accel key.
+    if (mode === 'row' && accel) {
       grid.scrollTo(grid.maxScrollX, grid.scrollY);
       return;
     }
@@ -251,7 +255,7 @@ class BasicKeyHandler implements DataGrid.IKeyHandler {
     let clear: SelectionModel.ClearMode;
 
     // Dispatch based on the modifier keys.
-    if (ctrl && shift) {
+    if (accel && shift) {
       r1 = cs ? cs.r1 : 0;
       r2 = cs ? cs.r2 : 0;
       c1 = cs ? cs.c1 : 0;
@@ -267,7 +271,7 @@ class BasicKeyHandler implements DataGrid.IKeyHandler {
       cr = r;
       cc = c;
       clear = 'current';
-    } else if (ctrl) {
+    } else if (accel) {
       r1 = r;
       r2 = r;
       c1 = Infinity;
@@ -320,11 +324,11 @@ class BasicKeyHandler implements DataGrid.IKeyHandler {
     let model = grid.selectionModel;
 
     // Fetch the modifier flags.
-    let ctrl = event.ctrlKey;
     let shift = event.shiftKey;
+    let accel = Platform.accelKey(event);
 
-    // Handle no model with the ctrl modifier.
-    if (!model && ctrl) {
+    // Handle no model with the accel modifier.
+    if (!model && accel) {
       grid.scrollTo(grid.scrollX, 0);
       return;
     }
@@ -338,8 +342,8 @@ class BasicKeyHandler implements DataGrid.IKeyHandler {
     // Fetch the selection mode.
     let mode = model.selectionMode;
 
-    // Handle the column selection mode with ctrl key.
-    if (mode === 'column' && ctrl) {
+    // Handle the column selection mode with accel key.
+    if (mode === 'column' && accel) {
       grid.scrollTo(grid.scrollX, 0);
       return;
     }
@@ -365,7 +369,7 @@ class BasicKeyHandler implements DataGrid.IKeyHandler {
     let clear: SelectionModel.ClearMode;
 
     // Dispatch based on the modifier keys.
-    if (ctrl && shift) {
+    if (accel && shift) {
       r1 = cs ? cs.r1 : 0;
       r2 = 0;
       c1 = cs ? cs.c1 : 0;
@@ -381,7 +385,7 @@ class BasicKeyHandler implements DataGrid.IKeyHandler {
       cr = r;
       cc = c;
       clear = 'current';
-    } else if (ctrl) {
+    } else if (accel) {
       r1 = 0;
       r2 = 0;
       c1 = c;
@@ -434,11 +438,11 @@ class BasicKeyHandler implements DataGrid.IKeyHandler {
     let model = grid.selectionModel;
 
     // Fetch the modifier flags.
-    let ctrl = event.ctrlKey;
     let shift = event.shiftKey;
+    let accel = Platform.accelKey(event);
 
-    // Handle no model with the ctrl modifier.
-    if (!model && ctrl) {
+    // Handle no model with the accel modifier.
+    if (!model && accel) {
       grid.scrollTo(grid.scrollX, grid.maxScrollY);
       return;
     }
@@ -452,8 +456,8 @@ class BasicKeyHandler implements DataGrid.IKeyHandler {
     // Fetch the selection mode.
     let mode = model.selectionMode;
 
-    // Handle the column selection mode with ctrl key.
-    if (mode === 'column' && ctrl) {
+    // Handle the column selection mode with accel key.
+    if (mode === 'column' && accel) {
       grid.scrollTo(grid.scrollX, grid.maxScrollY);
       return;
     }
@@ -479,7 +483,7 @@ class BasicKeyHandler implements DataGrid.IKeyHandler {
     let clear: SelectionModel.ClearMode;
 
     // Dispatch based on the modifier keys.
-    if (ctrl && shift) {
+    if (accel && shift) {
       r1 = cs ? cs.r1 : 0;
       r2 = Infinity;
       c1 = cs ? cs.c1 : 0;
@@ -495,7 +499,7 @@ class BasicKeyHandler implements DataGrid.IKeyHandler {
       cr = r;
       cc = c;
       clear = 'current';
-    } else if (ctrl) {
+    } else if (accel) {
       r1 = Infinity;
       r2 = Infinity;
       c1 = c;
@@ -540,8 +544,8 @@ class BasicKeyHandler implements DataGrid.IKeyHandler {
    * @param event - The keyboard event of interest.
    */
   protected onPageUp(grid: DataGrid, event: KeyboardEvent): void {
-    // Ignore the event if the ctrl key is pressed.
-    if (event.ctrlKey) {
+    // Ignore the event if the accel key is pressed.
+    if (Platform.accelKey(event)) {
       return;
     }
 
@@ -617,8 +621,8 @@ class BasicKeyHandler implements DataGrid.IKeyHandler {
    * @param event - The keyboard event of interest.
    */
   protected onPageDown(grid: DataGrid, event: KeyboardEvent): void {
-    // Ignore the event if the ctrl key is pressed.
-    if (event.ctrlKey) {
+    // Ignore the event if the accel key is pressed.
+    if (Platform.accelKey(event)) {
       return;
     }
 
