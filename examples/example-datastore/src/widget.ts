@@ -112,7 +112,7 @@ export class CodeMirrorEditor extends Panel {
    * Whether the editor is currently focused.
    */
   hasFocus(): boolean {
-    return this._editor.hasFocus();
+    return this.node.contains(document.activeElement);
   }
 
   /**
