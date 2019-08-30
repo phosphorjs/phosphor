@@ -75,7 +75,7 @@ namespace IServerAdapter {
      * The type of the transaction, either a user transaction,
      * or an undo or redo of a transaction.
      */
-    type: 'transaction' | 'undo' | 'redo';
+    type: Datastore.TransactionType;
 
     /**
      * The payload transaction.
