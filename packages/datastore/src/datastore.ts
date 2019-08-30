@@ -10,16 +10,12 @@ import {
 } from '@phosphor/algorithm';
 
 import {
-  BPlusTree, LinkedList
+  BPlusTree
 } from '@phosphor/collections';
 
 import {
   IDisposable
 } from '@phosphor/disposable';
-
-import {
-  IMessageHandler, Message, MessageLoop, ConflatableMessage
-} from '@phosphor/messaging';
 
 import {
   ISignal, Signal
@@ -58,7 +54,7 @@ import {
  * https://hal.inria.fr/file/index/docid/555588/filename/techreport.pdf
  */
 export
-class Datastore implements IIterable<Table<Schema>>, IMessageHandler, IDisposable {
+class Datastore implements IIterable<Table<Schema>>, IDisposable {
 
   /**
    * Create a new datastore.
@@ -225,7 +221,6 @@ class Datastore implements IIterable<Table<Schema>>, IMessageHandler, IDisposabl
     const newVersion = this._context.version + 1;
     const id = this._transactionIdFactory(newVersion, this.id);
     this._initTransaction(id, newVersion);
-    MessageLoop.postMessage(this, new ConflatableMessage('transaction-begun'));
     return id;
   }
 
@@ -240,6 +235,7 @@ class Datastore implements IIterable<Table<Schema>>, IMessageHandler, IDisposabl
   endTransaction(): void {
     this._finalizeTransaction();
     const {patch, change, storeId, transactionId, version} = this._context;
+    // Possibly broadcast the transaction to collaborators.
     if (this._adapter && !Private.isPatchEmpty(patch)) {
       this._adapter.broadcast({
         id: transactionId,
@@ -248,6 +244,9 @@ class Datastore implements IIterable<Table<Schema>>, IMessageHandler, IDisposabl
         version
       });
     }
+    // Add the transation to the cemetery to indicate it is visible.
+    this._cemetery[transactionId] = 1;
+    // Emit a change signal
     if (!Private.isChangeEmpty(this._context.change)) {
       this._changed.emit({
         storeId,
@@ -255,27 +254,6 @@ class Datastore implements IIterable<Table<Schema>>, IMessageHandler, IDisposabl
         type: 'transaction',
         change,
       });
-    }
-  }
-
-  /**
-   * Handle a message sent to the Datastore.
-   */
-  processMessage(msg: Message): void {
-    switch (msg.type) {
-    // Internal messages (posted from `this`):
-    case 'transaction-begun':
-      if (this._context.inTransaction) {
-        console.warn(
-          `Automatically ending transaction (did you forget to end it?): ${
-            this._context.transactionId
-          }`);
-        this.endTransaction();
-      }
-      break;
-    case 'queued-transaction':
-      this._processQueue();
-      break;
     }
   }
 
@@ -371,37 +349,13 @@ class Datastore implements IIterable<Table<Schema>>, IMessageHandler, IDisposabl
     args: IServerAdapter.IReceivedArgs
   ): void {
     let { transaction, type } = args;
-    let count: number;
     switch (type) {
-      case 'transaction':
-        count = this._cemetery[transaction.id] || 0;
-        // If the transaction has been concurrently undone, don't process it.
-        if (count > 0) {
-          return;
-        }
-        this._processTransaction(transaction)
-        break;
       case 'undo':
-        count = this._cemetery[transaction.id] || 0;
-        this._cemetery[transaction.id] = count + 1;
-        // If the transaction hasn't already been unapplied, do so.
-        if (count === 0) {
-          this._processTransaction(transaction, false, 'unapply');
-        }
+        this._processTransaction(transaction, 'unapply');
         break;
       case 'redo':
-        count = this._cemetery[transaction.id] || 0;
-        if (count > 1) {
-          this._cemetery[transaction.id] = count - 1;
-          return;
-        }
-        // Unlike in the cemeteries for ListField and TextField,
-        // a tie in undo/redo count goes to the redo.
-        if (count === 1) {
-          delete this._cemetery[transaction.id];
-          this._processTransaction(transaction)
-          return;
-        }
+      case 'transaction':
+        this._processTransaction(transaction);
         break;
       default:
         throw 'Unreachable';
@@ -419,24 +373,10 @@ class Datastore implements IIterable<Table<Schema>>, IMessageHandler, IDisposabl
    * #### Notes
    * If changes are made, the `changed` signal will be emitted.
    */
-  private _processTransaction(transaction: Datastore.Transaction, fromQueue=false, which: 'apply' | 'unapply' = 'apply'): void {
-    if (!this._transactionQueue.isEmpty && !fromQueue) {
-      // We have queued transactions waiting to be applied.
-      // As we need to retain causal order of incoming transactions,
-      // we simply add the new one to the end of that queue.
-      this._queueTransaction(transaction);
-      return;
-    }
-
+  private _processTransaction(transaction: Datastore.Transaction, which: 'apply' | 'unapply' = 'apply'): void {
     const {storeId, patch} = transaction;
 
-    try {
-      this._initTransaction(transaction.id, Math.max(this._context.version, transaction.version));
-    } catch (e) {
-      // Already in a transaction. Put transaction in queue to reapply later.
-      this._queueTransaction(transaction);
-      return;
-    }
+    this._initTransaction(transaction.id, Math.max(this._context.version, transaction.version));
     const change: Datastore.MutableChange = {};
     try {
       each(iterItems(patch), ([schemaId, tablePatch]) => {
@@ -450,9 +390,29 @@ class Datastore implements IIterable<Table<Schema>>, IMessageHandler, IDisposabl
           return;
         }
         if (which === 'apply') {
-          change[schemaId] = Table.patch(table, tablePatch);
+          let count = this._cemetery[transaction.id];
+          if (count === undefined) {
+            this._cemetery[transaction.id] = 1;
+            change[schemaId] = Table.patch(table, tablePatch);
+            return;
+          }
+          this._cemetery[transaction.id] = count + 1;
+          // If the transaction is just now positive, apply it to the store.
+          if (this._cemetery[transaction.id] === 1) {
+            change[schemaId] = Table.patch(table, tablePatch);
+            return;
+          }
         } else {
-          change[schemaId] = Table.unpatch(table, tablePatch);
+          let count = this._cemetery[transaction.id];
+          if (count === undefined) {
+            this._cemetery[transaction.id] = -1;
+            return;
+          }
+          this._cemetery[transaction.id] = count - 1;
+          // If the transaction hasn't already been unapplied, do so.
+          if (this._cemetery[transaction.id] === 0) {
+            change[schemaId] = Table.unpatch(table, tablePatch);
+          }
         }
       });
     } finally {
@@ -499,47 +459,6 @@ class Datastore implements IIterable<Table<Schema>>, IMessageHandler, IDisposabl
     context.inTransaction = false;
   }
 
-  /**
-   * Queue a transaction for later application.
-   *
-   * @param transaction - The transaction to queue.
-   */
-  private _queueTransaction(transaction: Datastore.Transaction): void {
-    this._transactionQueue.addLast(transaction);
-    MessageLoop.postMessage(this, new ConflatableMessage('queued-transaction'));
-  }
-
-  /**
-   * Process all transactions currently queued.
-   */
-  private _processQueue(): void {
-    const queue = this._transactionQueue;
-    // If the message queue is empty, there is nothing else to do.
-    if (queue.isEmpty) {
-      return;
-    }
-
-    // Add a sentinel value to the end of the queue. The queue will
-    // only be processed up to the sentinel. Transactions added during
-    // this cycle will execute on the next cycle.
-    const sentinel = {};
-    queue.addLast(sentinel as any);
-
-    // Enter the processing loop.
-    while (true) {
-      // Remove the first transaction in the queue.
-      let transaction = queue.removeFirst()!;
-
-      // If the value is the sentinel, exit the loop.
-      if (transaction === sentinel) {
-        return;
-      }
-
-      // Apply the transaction.
-      this._processTransaction(transaction, true);
-    }
-  }
-
   private _adapter: IServerAdapter | null;
   private _cemetery: { [id: string]: number } = {};
   private _disposed = false;
@@ -547,7 +466,6 @@ class Datastore implements IIterable<Table<Schema>>, IMessageHandler, IDisposabl
   private _context: Datastore.Context;
   private _changed = new Signal<Datastore, Datastore.IChangedArgs>(this);
   private _transactionIdFactory: Datastore.TransactionIdFactory;
-  private _transactionQueue = new LinkedList<Datastore.Transaction>();
 }
 
 
@@ -670,23 +588,6 @@ namespace Datastore {
      * The version of the source datastore.
      */
     readonly version: number;
-  }
-
-  /**
-   * A message of a datastore transaction.
-   */
-  export
-  class TransactionMessage extends Message {
-    constructor(transaction: Transaction) {
-      super('datastore-transaction');
-      this.transaction = transaction;
-    }
-    /**
-     * The transaction associated with the change.
-     */
-    readonly transaction: Transaction;
-
-    readonly type: 'datastore-transaction';
   }
 
   /**

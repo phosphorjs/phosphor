@@ -414,8 +414,10 @@ describe('@phosphor/datastore', () => {
         let id = datastore.beginTransaction();
         t2.update({ 'my-record': { enabled: true } });
         datastore.endTransaction();
-        await datastore.undo(id);
         let record = t2.get('my-record')!;
+        expect(record.enabled).to.be.true;
+        await datastore.undo(id);
+        record = t2.get('my-record')!;
         expect(record.enabled).to.be.false;
       });
 
@@ -455,23 +457,20 @@ describe('@phosphor/datastore', () => {
           type: 'undo',
           transaction
         });
-        let record = t2.get('my-record')!;
-        expect(record.enabled).to.be.false;
-        expect(record.content).to.equal('');
+        let record = t2.get('my-record');
+        expect(record).to.be.undefined;
         // Now apply the transaction, it should be undone still
         (adapter.received as Signal<any, IServerAdapter.IReceivedArgs>).emit({
           type: 'transaction',
           transaction
         });
         record = t2.get('my-record')!;
-        expect(record.enabled).to.be.false;
-        expect(record.content).to.equal('');
+        expect(record).to.be.undefined;
         // Now redo the transaction, it should appear.
         (adapter.received as Signal<any, IServerAdapter.IReceivedArgs>).emit({
           type: 'redo',
           transaction
         });
-        datastore2.redo(id);
         record = t2.get('my-record')!;
         expect(record.enabled).to.be.true;
         expect(record.content).to.equal('hello, world');
