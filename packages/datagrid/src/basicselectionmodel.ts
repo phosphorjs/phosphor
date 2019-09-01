@@ -10,6 +10,10 @@ import {
 } from '@phosphor/algorithm';
 
 import {
+  DataModel
+} from './datamodel';
+
+import {
   SelectionModel
 } from './selectionmodel';
 
@@ -144,6 +148,83 @@ class BasicSelectionModel extends SelectionModel {
     this._cursorRow = -1;
     this._cursorColumn = -1;
     this._selections.length = 0;
+
+    // Emit the changed signal.
+    this.emitChanged();
+  }
+
+  /**
+   * A signal handler for the data model `changed` signal.
+   *
+   * @param args - The arguments for the signal.
+   */
+  protected onModelChanged(sender: DataModel, args: DataModel.ChangedArgs): void {
+    // Bail early if the model has no current selections.
+    if (this._selections.length === 0) {
+      return;
+    }
+
+    // Bail early if the cells have changed in place.
+    if (args.type === 'cells-changed') {
+      return;
+    }
+
+    // Bail early if there is no change to the row or column count.
+    if (args.type === 'rows-moved' || args.type === 'columns-moved') {
+      return;
+    }
+
+    // Fetch the last row and column index.
+    let lr = sender.rowCount('body') - 1;
+    let lc = sender.columnCount('body') - 1;
+
+    // Bail early if the data model is empty.
+    if (lr < 0 || lc < 0) {
+      this._selections.length = 0;
+      this.emitChanged();
+      return;
+    }
+
+    // Fetch the selection mode.
+    let mode = this.selectionMode;
+
+    // Set up the assignment index variable.
+    let j = 0;
+
+    // Iterate over the current selections.
+    for (let i = 0, n = this._selections.length; i < n; ++i) {
+      // Unpack the selection.
+      let { r1, c1, r2, c2 } = this._selections[i];
+
+      // Skip the selection if it will disappear.
+      if ((lr < r1 && lr < r2) || (lc < c1 && lc < c2)) {
+        continue;
+      }
+
+      // Modify the bounds based on the selection mode.
+      if (mode === 'row') {
+        r1 = Math.max(0, Math.min(r1, lr));
+        r2 = Math.max(0, Math.min(r2, lr));
+        c1 = 0;
+        c2 = lc;
+      } else if (mode === 'column') {
+        r1 = 0;
+        r2 = lr;
+        c1 = Math.max(0, Math.min(c1, lc));
+        c2 = Math.max(0, Math.min(c2, lc));
+      } else {
+        r1 = Math.max(0, Math.min(r1, lr));
+        r2 = Math.max(0, Math.min(r2, lr));
+        c1 = Math.max(0, Math.min(c1, lc));
+        c2 = Math.max(0, Math.min(c2, lc));
+      }
+
+      // Assign the modified selection to the array.
+      this._selections[j++] = { r1, c1, r2, c2 };
+    }
+
+    // Remove the stale selections.
+    this._selections.length = j;
 
     // Emit the changed signal.
     this.emitChanged();
