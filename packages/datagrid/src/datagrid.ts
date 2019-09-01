@@ -1107,6 +1107,55 @@ class DataGrid extends Widget {
   }
 
   /**
+   * Map a client position to local viewport coordinates.
+   *
+   * @param clientX - The client X position of the mouse.
+   *
+   * @param clientY - The client Y position of the mouse.
+   *
+   * @returns The local viewport coordinates for the position.
+   */
+  mapToLocal(clientX: number, clientY: number): { lx: number, ly: number } {
+    // Fetch the viewport rect.
+    let rect = this._viewport.node.getBoundingClientRect();
+
+    // Extract the rect coordinates.
+    let { left, top } = rect;
+
+    // Round the rect coordinates for sub-pixel positioning.
+    left = Math.floor(left);
+    top = Math.floor(top);
+
+    // Convert to local coordinates.
+    let lx = clientX - left;
+    let ly = clientY - top;
+
+    // Return the local coordinates.
+    return { lx, ly };
+  }
+
+  /**
+   * Map a client position to virtual grid coordinates.
+   *
+   * @param clientX - The client X position of the mouse.
+   *
+   * @param clientY - The client Y position of the mouse.
+   *
+   * @returns The virtual grid coordinates for the position.
+   */
+  mapToVirtual(clientX: number, clientY: number): { vx: number, vy: number } {
+    // Convert to local coordiates.
+    let { lx, ly } = this.mapToLocal(clientX, clientY);
+
+    // Converrt to virtual coordinates.
+    let vx = lx + this.scrollX - this.headerWidth;
+    let vy = ly + this.scrollY - this.headerHeight;
+
+    // Return the local coordinates.
+    return { vx, vy };
+  }
+
+  /**
    * Hit test the viewport for the given client position.
    *
    * @param clientX - The client X position of the mouse.
@@ -1117,21 +1166,8 @@ class DataGrid extends Widget {
    *   position is out of bounds.
    */
   hitTest(clientX: number, clientY: number): DataGrid.HitTestResult {
-    // Fetch the viewport rect.
-    let rect = this._viewport.node.getBoundingClientRect();
-
-    // Extract the rect coordinates.
-    let { left, top, right, bottom } = rect;
-
-    // Round the rect coordinates for sub-pixel positioning.
-    left = Math.floor(left);
-    top = Math.floor(top);
-    right = Math.ceil(right);
-    bottom = Math.ceil(bottom);
-
     // Convert the mouse position into local coordinates.
-    let lx = clientX - left;
-    let ly = clientY - top;
+    let { lx, ly } = this.mapToLocal(clientX, clientY);
 
     // Fetch the header and body dimensions.
     let hw = this.headerWidth;
@@ -1244,52 +1280,12 @@ class DataGrid extends Widget {
     }
 
     // Otherwise, it's a void space hit.
-
-    // Convert to virtual coordinates.
-    let vx = lx + this._scrollX - hw;
-    let vy = ly + this._scrollY - hh;
-
-    // Compute the row index.
-    let row: number;
-    if (this._rowSections.length === 0) {
-      row = -1;
-    } else if (vy < 0) {
-      row = 0;
-    } else if (vy >= this._rowSections.length) {
-      row = this._rowSections.count - 1;
-    } else {
-      row = this._rowSections.indexOf(vy);
-    }
-
-    // Compute the column index.
-    let column: number;
-    if (this._columnSections.length === 0) {
-      column = -1;
-    } else if (vx < 0) {
-      column = 0;
-    } else if (vx >= this._columnSections.length) {
-      column = this._columnSections.count - 1;
-    } else {
-      column = this._columnSections.indexOf(vx);
-    }
-
-    // Set up the geometry variables.
+    let row = -1;
+    let column = -1;
     let x = -1;
     let y = -1;
     let width = -1;
     let height = -1;
-
-    // Fill in the vertical geometry if possible.
-    if (row >= 0) {
-      y = vy - this._rowSections.offsetOf(row);
-      height = this._rowSections.sizeOf(row);
-    }
-
-    // Fill in the horizontal geometry if possible.
-    if (column >= 0) {
-      x = vx - this._columnSections.offsetOf(column);
-      width = this._columnSections.sizeOf(column);
-    }
 
     // Return the hit test result.
     return { region: 'void', row, column, x, y, width, height };
@@ -4809,34 +4805,42 @@ namespace DataGrid {
     /**
      * The row index of the cell that was hit.
      *
-     * For the `void` region, this will be the nearest row.
+     * This is `-1` for the `void` region.
      */
     readonly row: number;
 
     /**
      * The column index of the cell that was hit.
      *
-     * For the `void` region, this will be the nearest column.
+     * This is `-1` for the `void` region.
      */
     readonly column: number;
 
     /**
      * The X coordinate of the mouse in cell coordinates.
+     *
+     * This is `-1` for the `void` region.
      */
     readonly x: number;
 
     /**
      * The Y coordinate of the mouse in cell coordinates.
+     *
+     * This is `-1` for the `void` region.
      */
     readonly y: number;
 
     /**
      * The width of the cell.
+     *
+     * This is `-1` for the `void` region.
      */
     readonly width: number;
 
     /**
      * The height of the cell.
+     *
+     * This is `-1` for the `void` region.
      */
     readonly height: number;
   };
