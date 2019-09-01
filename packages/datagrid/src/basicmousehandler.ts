@@ -70,6 +70,11 @@ class BasicMouseHandler implements DataGrid.IMouseHandler {
       return;
     }
 
+    // Clear the autoselect timeout.
+    if (this._pressData.type === 'select') {
+      this._pressData.timeout = -1;
+    }
+
     // Clear the press data.
     this._pressData.override.dispose();
     this._pressData = null;
@@ -152,7 +157,10 @@ class BasicMouseHandler implements DataGrid.IMouseHandler {
       let override = Drag.overrideCursor('default');
 
       // Set up the press data.
-      this._pressData = { type: 'select', region, row, column, override };
+      this._pressData = {
+        type: 'select', region, row, column, override,
+        localX: -1, localY: -1, timeout: -1
+      };
 
       // Set up the selection variables.
       let r1: number;
@@ -271,7 +279,10 @@ class BasicMouseHandler implements DataGrid.IMouseHandler {
     let override = Drag.overrideCursor('default');
 
     // Set up the press data.
-    this._pressData = { type: 'select', region, row, column, override };
+    this._pressData = {
+      type: 'select', region, row, column, override,
+      localX: -1, localY: -1, timeout: -1
+    };
 
     // Set up the selection variables.
     let r1: number;
@@ -330,7 +341,7 @@ class BasicMouseHandler implements DataGrid.IMouseHandler {
    */
   onMouseMove(grid: DataGrid, event: MouseEvent): void {
     // Fetch the press data.
-    let data = this._pressData;
+    const data = this._pressData;
 
     // Bail early if there is no press data.
     if (!data) {
@@ -366,8 +377,70 @@ class BasicMouseHandler implements DataGrid.IMouseHandler {
       return;
     }
 
-    // Hit test the grid.
-    let hit = grid.hitTest(event.clientX, event.clientY);
+    // Map to local coordinates.
+    let { lx, ly } = grid.mapToLocal(event.clientX, event.clientY);
+
+    // Update the local mouse coordinates in the press data.
+    data.localX = lx;
+    data.localY = ly;
+
+    // Fetch the grid geometry.
+    let hw = grid.headerWidth;
+    let hh = grid.headerHeight;
+    let vpw = grid.viewportWidth;
+    let vph = grid.viewportHeight;
+
+    // Fetch the selection mode.
+    let mode = model.selectionMode;
+
+    // Set up the timeout variable.
+    let timeout = -1;
+
+    // Compute the timemout based on hit region and mouse position.
+    if (data.region === 'row-header' || mode === 'row') {
+      if (ly < hh) {
+        timeout = Private.computeTimeout(hh - ly);
+      } else if (ly >= vph) {
+        timeout = Private.computeTimeout(ly - vph);
+      }
+    } else if (data.region === 'column-header' || mode === 'column') {
+      if (lx < hw) {
+        timeout = Private.computeTimeout(hw - lx);
+      } else if (lx >= vpw) {
+        timeout = Private.computeTimeout(lx - vpw);
+      }
+    } else {
+      if (lx < hw) {
+        timeout = Private.computeTimeout(hw - lx);
+      } else if (lx >= vpw) {
+        timeout = Private.computeTimeout(lx - vpw);
+      } else if (ly < hh) {
+        timeout = Private.computeTimeout(hh - ly);
+      } else if (ly >= vph) {
+        timeout = Private.computeTimeout(ly - vph);
+      }
+    }
+
+    // Update or initiate the autoselect if needed.
+    if (timeout >= 0) {
+      if (data.timeout < 0) {
+        data.timeout = timeout;
+        setTimeout(() => { Private.autoselect(grid, data); }, timeout);
+      } else {
+        data.timeout = timeout;
+      }
+      return;
+    }
+
+    // Otherwise, clear the autoselect timeout.
+    data.timeout = -1;
+
+    // Map the position to virtual coordinates.
+    let { vx, vy } = grid.mapToVirtual(event.clientX, event.clientY);
+
+    // Clamp the coordinates to the limits.
+    vx = Math.max(0, Math.min(vx, grid.bodyWidth -1));
+    vy = Math.max(0, Math.min(vy, grid.bodyHeight - 1));
 
     // Set up the selection variables.
     let r1: number;
@@ -379,21 +452,21 @@ class BasicMouseHandler implements DataGrid.IMouseHandler {
     let clear: SelectionModel.ClearMode = 'current';
 
     // Compute the selection based pressed region.
-    if (data.region === 'row-header') {
+    if (data.region === 'row-header' || mode === 'row') {
       r1 = data.row;
-      r2 = hit.row;
+      r2 = grid.rowAt('body', vy);
       c1 = 0;
       c2 = Infinity;
-    } else if (data.region === 'column-header') {
+    } else if (data.region === 'column-header' || mode === 'column') {
       r1 = 0;
       r2 = Infinity;
       c1 = data.column;
-      c2 = hit.column;
+      c2 = grid.columnAt('body', vx);
     } else {
       r1 = cursorRow;
-      r2 = hit.row;
+      r2 = grid.rowAt('body', vy);
       c1 = cursorColumn;
-      c2 = hit.column;
+      c2 = grid.columnAt('body', vx);
     }
 
     // Make the selection.
@@ -570,6 +643,21 @@ namespace Private {
      * The disposable to clear the cursor override.
      */
     readonly override: IDisposable;
+
+    /**
+     * The current local X position of the mouse.
+     */
+    localX: number;
+
+    /**
+     * The current local Y position of the mouse.
+     */
+    localY: number;
+
+    /**
+     * The timeout delay for the autoselect loop.
+     */
+    timeout: number;
   };
 
   /**
@@ -663,6 +751,104 @@ namespace Private {
   export
   function cursorForHandle(handle: ResizeHandle): string {
     return cursorMap[handle];
+  }
+
+  /**
+   * A timer callback for the autoselect loop.
+   *
+   * @param grid - The datagrid of interest.
+   *
+   * @param data - The select data of interest.
+   */
+  export
+  function autoselect(grid: DataGrid, data: SelectData): void {
+    // Bail early if the timeout has been reset.
+    if (data.timeout < 0) {
+      return;
+    }
+
+    // Fetch the selection model.
+    let model = grid.selectionModel;
+
+    // Bail early if the selection model has been removed.
+    if (!model) {
+      return;
+    }
+
+    // Fetch the current selection.
+    let cs = model.currentSelection();
+
+    // Bail early if there is no current selection.
+    if (!cs) {
+      return;
+    }
+
+    // Fetch local X and Y coordinates of the mouse.
+    let lx = data.localX;
+    let ly = data.localY;
+
+    // Set up the selection variables.
+    let r1 = cs.r1;
+    let c1 = cs.c1;
+    let r2 = cs.r2;
+    let c2 = cs.c2;
+    let cursorRow = model.cursorRow;
+    let cursorColumn = model.cursorColumn;
+    let clear: SelectionModel.ClearMode = 'current';
+
+    // Fetch the grid geometry.
+    let hw = grid.headerWidth;
+    let hh = grid.headerHeight;
+    let vpw = grid.viewportWidth;
+    let vph = grid.viewportHeight;
+
+    // Fetch the selection mode.
+    let mode = model.selectionMode;
+
+    // Update the selection based on the hit region.
+    if (data.region === 'row-header' || mode === 'row') {
+      r2 += ly <= hh ? -1 : ly >= vph ? 1 : 0;
+    } else if (data.region === 'column-header' || mode === 'column') {
+      c2 += lx <= hw ? -1 : lx >= vpw ? 1 : 0;
+    } else {
+      r2 += ly <= hh ? -1 : ly >= vph ? 1 : 0;
+      c2 += lx <= hw ? -1 : lx >= vpw ? 1 : 0;
+    }
+
+    // Update the current selection.
+    model.select({ r1, c1, r2, c2, cursorRow, cursorColumn, clear });
+
+    // Re-fetch the current selection.
+    cs = model.currentSelection();
+
+    // Bail if there is no selection.
+    if (!cs) {
+      return
+    }
+
+    // Scroll the grid based on the hit region.
+    if (data.region === 'row-header' || mode === 'row') {
+      grid.scrollToRow(cs.r2);
+    } else if (data.region === 'column-header' || mode == 'column') {
+      grid.scrollToColumn(cs.c2);
+    } else if (mode === 'cell') {
+      grid.scrollToCell(cs.r2, cs.c2);
+    }
+
+    // Schedule the next call with the current timeout.
+    setTimeout(() => { autoselect(grid, data); }, data.timeout);
+  }
+
+  /**
+   * Compute the scroll timeout for the given delta distance.
+   *
+   * @param delta - The delta pixels from the origin.
+   *
+   * @returns The scaled timeout in milliseconds.
+   */
+  export
+  function computeTimeout(delta: number): number {
+    return 5 + 120 * (1 - Math.min(128, Math.abs(delta)) / 128);
   }
 
   /**
