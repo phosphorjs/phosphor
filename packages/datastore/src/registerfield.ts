@@ -126,7 +126,7 @@ class RegisterField<T extends ReadonlyJSONValue> extends Field<RegisterField.Val
     // Unpack the arguments.
     let { previous, patch, metadata } = args;
 
-    // Insert the patch value into the metadata.
+    // Remove the patch value from the metadata.
     let value = Private.removeFromMetadata(metadata, patch.id, this.value);
 
     // Create the change object.

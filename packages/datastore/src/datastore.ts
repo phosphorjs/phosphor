@@ -264,7 +264,8 @@ class Datastore implements IIterable<Table<Schema>>, IDisposable {
    *
    * @returns A promise which resolves when the action is complete.
    *
-   * @throws An exception if `undo` is called during a mutation.
+   * @throws An exception if `undo` is called during a mutation, or if no
+   *   server adapter has been set for the datastore.
    *
    * #### Notes
    * If changes are made, the `changed` signal will be emitted before
@@ -272,7 +273,10 @@ class Datastore implements IIterable<Table<Schema>>, IDisposable {
    */
   undo(transactionId: string): Promise<void> {
     if (!this._adapter) {
-      return Promise.resolve(undefined);
+      throw Error('No server adapter has been set for the datastore');
+    }
+    if (this.inTransaction) {
+      throw Error('Cannot undo during a transaction');
     }
     return this._adapter.undo(transactionId);
   }
@@ -284,7 +288,8 @@ class Datastore implements IIterable<Table<Schema>>, IDisposable {
    *
    * @returns A promise which resolves when the action is complete.
    *
-   * @throws An exception if `redo` is called during a mutation.
+   * @throws An exception if `redo` is called during a mutation, or if no
+   *   server adapter has been set for the datastore.
    *
    * #### Notes
    * If changes are made, the `changed` signal will be emitted before
@@ -292,7 +297,10 @@ class Datastore implements IIterable<Table<Schema>>, IDisposable {
    */
   redo(transactionId: string): Promise<void> {
     if (!this._adapter) {
-      return Promise.resolve(undefined);
+      throw Error('No server adapter has been set for the datastore');
+    }
+    if (this.inTransaction) {
+      throw Error('Cannot redo during a transaction');
     }
     return this._adapter.redo(transactionId);
   }

@@ -136,6 +136,11 @@ describe('@phosphor/datastore', () => {
       });
     });
 
+    afterEach(() => {
+      datastore.dispose();
+      adapter.dispose();
+    });
+
     describe('create()', () => {
 
       it('should create a new datastore', () => {
@@ -394,20 +399,33 @@ describe('@phosphor/datastore', () => {
 
     describe('undo()', () => {
 
-      it('should be a no-op without a patch server', async () => {
-        datastore = Datastore.create({
+      it('should be throw without a patch server', async () => {
+        let datastore = Datastore.create({
           id: DATASTORE_ID,
           schemas: [schema1, schema2]
         });
-        let t2 = datastore.get(schema2);
-        let id = datastore.beginTransaction();
-        t2.update({ 'my-record': { enabled: true } });
-        datastore.endTransaction();
-        let record = t2.get('my-record')!;
-        expect(record.enabled).to.be.true;
-        await datastore.undo(id);
-        record = t2.get('my-record')!;
-        expect(record.enabled).to.be.true;
+        let thrown = false;
+        try {
+          await datastore.undo('');
+        } catch {
+          thrown = true;
+        } finally {
+          expect(thrown).to.be.true;
+          datastore.dispose();
+        }
+      });
+
+      it('should throw if invoked during a transaction',  async () => {
+        let thrown = false;
+        try {
+          datastore.beginTransaction();
+          await datastore.undo('');
+          datastore.endTransaction();
+        } catch {
+          thrown = true;
+        } finally {
+          expect(thrown).to.be.true;
+        }
       });
 
       it('should unapply a transaction by id', async () => {
@@ -517,6 +535,35 @@ describe('@phosphor/datastore', () => {
     });
 
     describe('redo()', () => {
+
+      it('should be throw without a patch server', async () => {
+        let datastore = Datastore.create({
+          id: DATASTORE_ID,
+          schemas: [schema1, schema2]
+        });
+        let thrown = false;
+        try {
+          await datastore.redo('');
+        } catch {
+          thrown = true;
+        } finally {
+          expect(thrown).to.be.true;
+          datastore.dispose();
+        }
+      });
+
+      it('should throw if invoked during a transaction',  async () => {
+        let thrown = false;
+        try {
+          datastore.beginTransaction();
+          await datastore.redo('');
+          datastore.endTransaction();
+        } catch {
+          thrown = true;
+        } finally {
+          expect(thrown).to.be.true;
+        }
+      });
 
       it('should reapply a transaction by id', async () => {
         let t2 = datastore.get(schema2);

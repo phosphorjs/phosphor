@@ -181,7 +181,7 @@ class MapField<T extends ReadonlyJSONValue> extends Field<MapField.Value<T>, Map
 
     // Iterate over the values.
     for (let key in values) {
-      // Insert the patch value into the metadata.
+      // Remove the patch value from the metadata.
       let value = Private.removeFromMetadata(metadata, key, id);
 
       // Update the clone with the new value.
