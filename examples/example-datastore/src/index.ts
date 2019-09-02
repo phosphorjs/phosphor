@@ -44,7 +44,7 @@ import {
 
 import '../style/index.css';
 
-const commands = new CommandRegistry();
+let commands = new CommandRegistry();
 
 /**
  * A message handler that initializes communication with the patch server.

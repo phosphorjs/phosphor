@@ -153,7 +153,9 @@ export class CodeMirrorEditor extends Panel {
       }
     });
     this._store.endTransaction();
+    // Update the undo/redo stack.
     this._undo.push(id);
+    this._redo.length = 0;
   }
 
   /**
@@ -180,7 +182,9 @@ export class CodeMirrorEditor extends Panel {
       }
     });
     this._store.endTransaction();
+    // Update the undo/redo stack.
     this._undo.push(id);
+    this._redo.length = 0;
   }
 
   /**
