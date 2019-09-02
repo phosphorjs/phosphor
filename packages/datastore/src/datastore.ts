@@ -410,6 +410,7 @@ class Datastore implements IDisposable, IIterable<Table<Schema>>, IMessageHandle
       // Already in a transaction. Put the transaction in the queue to apply
       // later.
       this._queueTransaction(args);
+      return;
     }
     let change: Datastore.MutableChange = {};
     try {

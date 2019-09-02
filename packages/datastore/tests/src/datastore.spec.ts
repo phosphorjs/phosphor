@@ -14,7 +14,11 @@ import {
 } from '@phosphor/datastore';
 
 import {
-  ISignal, Signal
+  MessageLoop
+} from '@phosphor/messaging';
+
+import {
+  Signal
 } from '@phosphor/signaling';
 
 
@@ -74,6 +78,9 @@ let state = {
   ]
 };
 
+/**
+ * An in-memory implementation of a patch store.
+ */
 class InMemoryServerAdapter implements IServerAdapter {
   broadcast(transaction: Datastore.Transaction): void {
     this._transactions[transaction.id] = transaction;
@@ -95,7 +102,7 @@ class InMemoryServerAdapter implements IServerAdapter {
     return Promise.resolve(undefined);
   }
 
-  get received(): ISignal<this, IServerAdapter.IReceivedArgs> {
+  get received(): Signal<this, IServerAdapter.IReceivedArgs> {
     return this._received;
   }
 
@@ -360,6 +367,56 @@ describe('@phosphor/datastore', () => {
         datastore.endTransaction();
       });
 
+      it('should queue additional transactions for processing later', async () => {
+        // First, generate a transaction to apply later.
+        let id = datastore.beginTransaction();
+        let t2 = datastore.get(schema2);
+        t2.update({
+          'my-record': {
+            content: { index: 0, remove: 0, text: 'hello, world' }
+          }
+        });
+        datastore.endTransaction();
+        // Create a new datastore
+        let adapter2 = new InMemoryServerAdapter();
+        let datastore2 = Datastore.create({
+          id: 5678,
+          schemas: [schema1, schema2],
+          adapter: adapter2
+        });
+        // Begin a transaction in the new datastore
+        datastore2.beginTransaction();
+        t2 = datastore2.get(schema2);
+        t2.update({
+          'my-record': {
+            enabled: true
+          }
+        });
+        // Trigger a remote transaction. It should be queued.
+        adapter2.received.emit({
+          type: 'transaction',
+          transaction: adapter.transactions[id]
+        });
+        datastore2.endTransaction();
+        expect(t2.get('my-record')!.enabled).to.be.true;
+        expect(t2.get('my-record')!.content).to.equal('');
+        // Flush the message loop to trigger processing of the queue.
+        MessageLoop.flush();
+        expect(t2.get('my-record')!.enabled).to.be.true;
+        expect(t2.get('my-record')!.content).to.equal('hello, world');
+
+        datastore2.dispose();
+        adapter2.dispose();
+      });
+
+      it('should automatically close a transaction later', async () => {
+        datastore.beginTransaction();
+        expect(datastore.inTransaction).to.be.true;
+        // Flush the message loop to trigger processing of the queue.
+        MessageLoop.flush();
+        expect(datastore.inTransaction).to.be.false;
+      });
+
     });
 
     describe('endTransaction()', () => {
@@ -420,10 +477,10 @@ describe('@phosphor/datastore', () => {
         try {
           datastore.beginTransaction();
           await datastore.undo('');
-          datastore.endTransaction();
         } catch {
           thrown = true;
         } finally {
+          datastore.endTransaction();
           expect(thrown).to.be.true;
         }
       });
@@ -472,24 +529,15 @@ describe('@phosphor/datastore', () => {
         });
         t2 = datastore2.get(schema2);
         // No change for concurrently undone transaction.
-        (adapter.received as Signal<any, IServerAdapter.IReceivedArgs>).emit({
-          type: 'undo',
-          transaction
-        });
+        adapter.received.emit({ type: 'undo', transaction });
         let record = t2.get('my-record');
         expect(record).to.be.undefined;
         // Now apply the transaction, it should be undone still
-        (adapter.received as Signal<any, IServerAdapter.IReceivedArgs>).emit({
-          type: 'transaction',
-          transaction
-        });
+        adapter.received.emit({ type: 'transaction', transaction });
         record = t2.get('my-record')!;
         expect(record).to.be.undefined;
         // Now redo the transaction, it should appear.
-        (adapter.received as Signal<any, IServerAdapter.IReceivedArgs>).emit({
-          type: 'redo',
-          transaction
-        });
+        adapter.received.emit({ type: 'redo', transaction });
         record = t2.get('my-record')!;
         expect(record.enabled).to.be.true;
         expect(record.content).to.equal('hello, world');
@@ -557,10 +605,10 @@ describe('@phosphor/datastore', () => {
         try {
           datastore.beginTransaction();
           await datastore.redo('');
-          datastore.endTransaction();
         } catch {
           thrown = true;
         } finally {
+          datastore.endTransaction();
           expect(thrown).to.be.true;
         }
       });
