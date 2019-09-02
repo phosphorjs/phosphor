@@ -70,11 +70,11 @@ class Datastore implements IDisposable, IIterable<Table<Schema>>, IMessageHandle
    * @throws An exception if any of the schema definitions are invalid.
    */
   static create(options: Datastore.IOptions): Datastore {
-    const {schemas} = options;
+    let {schemas} = options;
     // Throws an error for invalid schemas:
     Private.validateSchemas(schemas);
 
-    const context =  {
+    let context =  {
       inTransaction: false,
       transactionId: '',
       version: 0,
@@ -83,11 +83,11 @@ class Datastore implements IDisposable, IIterable<Table<Schema>>, IMessageHandle
       patch: {},
     };
 
-    const tables = new BPlusTree<Table<Schema>>(Private.recordCmp);
+    let tables = new BPlusTree<Table<Schema>>(Private.recordCmp);
     if (options.restoreState) {
       // If passed state to restore, pass the intital state to recreate each
       // table
-      const state = JSON.parse(options.restoreState);
+      let state = JSON.parse(options.restoreState);
       tables.assign(map(schemas, s => {
         return Table.recreate(s, context, state[s.id] || []);
       }));
@@ -200,7 +200,7 @@ class Datastore implements IDisposable, IIterable<Table<Schema>>, IMessageHandle
    * `O(log32 n)`
    */
   get<S extends Schema>(schema: S): Table<S> {
-    const t = this._tables.get(schema.id, Private.recordIdCmp);
+    let t = this._tables.get(schema.id, Private.recordIdCmp);
     if (t === undefined) {
       throw new Error(`No table found for schema with id: ${schema.id}`);
     }
@@ -222,8 +222,8 @@ class Datastore implements IDisposable, IIterable<Table<Schema>>, IMessageHandle
    * be called.
    */
   beginTransaction(): string {
-    const newVersion = this._context.version + 1;
-    const id = this._transactionIdFactory(newVersion, this.id);
+    let newVersion = this._context.version + 1;
+    let id = this._transactionIdFactory(newVersion, this.id);
     this._initTransaction(id, newVersion);
     MessageLoop.postMessage(this, new ConflatableMessage('transaction-begun'));
     return id;
@@ -239,7 +239,7 @@ class Datastore implements IDisposable, IIterable<Table<Schema>>, IMessageHandle
    */
   endTransaction(): void {
     this._finalizeTransaction();
-    const {patch, change, storeId, transactionId, version} = this._context;
+    let {patch, change, storeId, transactionId, version} = this._context;
     // Possibly broadcast the transaction to collaborators.
     if (this._adapter && !Private.isPatchEmpty(patch)) {
       this._adapter.broadcast({
@@ -384,39 +384,22 @@ class Datastore implements IDisposable, IIterable<Table<Schema>>, IMessageHandle
     sender: IServerAdapter,
     args: IServerAdapter.IReceivedArgs
   ): void {
-    let { transaction, type } = args;
-    switch (type) {
-      case 'undo':
-        this._processTransaction(transaction, type);
-        break;
-      case 'redo':
-      case 'transaction':
-        this._processTransaction(transaction, type);
-        break;
-      default:
-        throw 'Unreachable';
-        break;
-    }
+    this._processTransaction(args);
   }
 
   /**
    * Apply a transaction to the datastore.
    *
-   * @param transaction - The data of the transaction.
+   * @param transactionApplication - The data of the transaction.
    *
    * @throws An exception if `processTransaction` is called during a mutation.
    *
    * #### Notes
    * If changes are made, the `changed` signal will be emitted.
    */
-  private _processTransaction(transaction: Datastore.Transaction, which: Datastore.TransactionType = 'transaction', fromQueue = false): void {
-    if (!this._transactionQueue.isEmpty && !fromQueue) {
-      // We have queued transactions waiting to be applied.
-      this._queueTransaction(transaction);
-      return;
-    }
-
-    const {storeId, patch} = transaction;
+  private _processTransaction(args: IServerAdapter.IReceivedArgs): void {
+    let { transaction, type } = args;
+    let {storeId, patch} = transaction;
 
     try {
       this._initTransaction(
@@ -426,12 +409,12 @@ class Datastore implements IDisposable, IIterable<Table<Schema>>, IMessageHandle
     } catch (e) {
       // Already in a transaction. Put the transaction in the queue to apply
       // later.
-      this._queueTransaction(transaction);
+      this._queueTransaction(args);
     }
-    const change: Datastore.MutableChange = {};
+    let change: Datastore.MutableChange = {};
     try {
       each(iterItems(patch), ([schemaId, tablePatch]) => {
-        const table = this._tables.get(schemaId, Private.recordIdCmp);
+        let table = this._tables.get(schemaId, Private.recordIdCmp);
         if (table === undefined) {
           console.warn(
             `Missing table for schema id '${
@@ -440,7 +423,7 @@ class Datastore implements IDisposable, IIterable<Table<Schema>>, IMessageHandle
           this._finalizeTransaction();
           return;
         }
-        if (which === 'transaction' || which === 'redo') {
+        if (type === 'transaction' || type === 'redo') {
           let count = this._cemetery[transaction.id];
           if (count === undefined) {
             this._cemetery[transaction.id] = 1;
@@ -473,7 +456,7 @@ class Datastore implements IDisposable, IIterable<Table<Schema>>, IMessageHandle
       this._changed.emit({
         storeId,
         transactionId: transaction.id,
-        type: which,
+        type,
         change,
       });
     }
@@ -484,8 +467,8 @@ class Datastore implements IDisposable, IIterable<Table<Schema>>, IMessageHandle
    *
    * @param transaction - the transaction to queue.
    */
-  private _queueTransaction(transaction: Datastore.Transaction): void {
-    this._transactionQueue.addLast(transaction);
+  private _queueTransaction(args: IServerAdapter.IReceivedArgs): void {
+    this._transactionQueue.addLast(args);
     MessageLoop.postMessage(this, new ConflatableMessage('queued-transaction'));
   }
 
@@ -493,7 +476,7 @@ class Datastore implements IDisposable, IIterable<Table<Schema>>, IMessageHandle
    * Process all transactions currently queued.
    */
   private _processQueue(): void {
-    const queue = this._transactionQueue;
+    let queue = this._transactionQueue;
     // If the transaction queue is empty, bail.
     if (queue.isEmpty) {
       return;
@@ -502,7 +485,7 @@ class Datastore implements IDisposable, IIterable<Table<Schema>>, IMessageHandle
     // Add a sentinel value to the end of the queue. The queue will
     // only be processed up to the sentinel. Transactions added during
     // this cycle will execute on the next cycle.
-    const sentinel = {};
+    let sentinel = {};
     queue.addLast(sentinel as any);
 
     // Enter the processing loop.
@@ -516,7 +499,7 @@ class Datastore implements IDisposable, IIterable<Table<Schema>>, IMessageHandle
       }
 
       // Apply the transaction.
-      this._processTransaction(transaction, 'transaction', true);
+      this._processTransaction(transaction);
     }
   }
 
@@ -529,7 +512,7 @@ class Datastore implements IDisposable, IIterable<Table<Schema>>, IMessageHandle
    * @throws An exception if a transaction is already in progress.
    */
   private _initTransaction(id: string, newVersion: number): void {
-    const context = this._context as Private.MutableContext;
+    let context = this._context as Private.MutableContext;
     if (context.inTransaction) {
       throw new Error(`Already in a transaction: ${this._context.transactionId}`);
     }
@@ -546,7 +529,7 @@ class Datastore implements IDisposable, IIterable<Table<Schema>>, IMessageHandle
    * @throws An exception if no transaction is in progress.
    */
   private _finalizeTransaction(): void {
-    const context = this._context as Private.MutableContext;
+    let context = this._context as Private.MutableContext;
     if (!context.inTransaction) {
       throw new Error('No transaction in progress.');
     }
@@ -560,7 +543,7 @@ class Datastore implements IDisposable, IIterable<Table<Schema>>, IMessageHandle
   private _context: Datastore.Context;
   private _changed = new Signal<Datastore, Datastore.IChangedArgs>(this);
   private _transactionIdFactory: Datastore.TransactionIdFactory;
-  private _transactionQueue = new LinkedList<Datastore.Transaction>();
+  private _transactionQueue = new LinkedList<IServerAdapter.IReceivedArgs>();
 }
 
 
@@ -710,9 +693,9 @@ namespace Private {
    */
   export
   function validateSchemas(schemas: ReadonlyArray<Schema>) {
-    const errors = [];
+    let errors = [];
     for (let s of schemas) {
-      const err = validateSchema(s);
+      let err = validateSchema(s);
       if (err.length) {
         errors.push(`Schema '${s.id}' validation failed: \n${err.join('\n')}`);
       }
