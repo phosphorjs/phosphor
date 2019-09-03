@@ -31,7 +31,7 @@ import {
 
 
 /**
- * A basic implementation of a data grid key handler.
+ * A basic implementation of a data grid mouse handler.
  *
  * #### Notes
  * This class may be subclassed and customized as needed.

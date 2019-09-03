@@ -1147,7 +1147,7 @@ class DataGrid extends Widget {
     // Convert to local coordiates.
     let { lx, ly } = this.mapToLocal(clientX, clientY);
 
-    // Converrt to virtual coordinates.
+    // Convert to virtual coordinates.
     let vx = lx + this.scrollX - this.headerWidth;
     let vy = ly + this.scrollY - this.headerHeight;
 

@@ -30,7 +30,7 @@ abstract class SelectionModel {
   /**
    * Construct a new selection model.
    *
-   * @param options - The options for initializing the model
+   * @param options - The options for initializing the model.
    */
   constructor(options: SelectionModel.IOptions) {
     this.model = options.model;
@@ -116,7 +116,7 @@ abstract class SelectionModel {
   readonly model: DataModel;
 
   /**
-   * Get the selection model for the model.
+   * Get the selection mode for the model.
    */
   get selectionMode(): SelectionModel.SelectionMode {
     return this._selectionMode;

@@ -23,7 +23,7 @@ import {
  *
  * #### Notes
  * This selection model is sufficient for most use cases where
- * structural knowledge of the underlying data source *not* required.
+ * structural knowledge of the data source is *not* required.
  */
 export
 class BasicSelectionModel extends SelectionModel {
