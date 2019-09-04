@@ -242,33 +242,33 @@ function main(): void {
   });
 
   let grid1 = new DataGrid({ style: blueStripeStyle });
-  grid1.model = model1;
+  grid1.dataModel = model1;
   grid1.keyHandler = new BasicKeyHandler();
   grid1.mouseHandler = new BasicMouseHandler();
-  grid1.selectionModel = new BasicSelectionModel({ model: model1 });
+  grid1.selectionModel = new BasicSelectionModel({ dataModel: model1 });
 
   let grid2 = new DataGrid({ style: brownStripeStyle });
-  grid2.model = model2;
+  grid2.dataModel = model2;
   grid2.keyHandler = new BasicKeyHandler();
   grid2.mouseHandler = new BasicMouseHandler();
   grid2.selectionModel = new BasicSelectionModel({
-    model: model2,
+    dataModel: model2,
     selectionMode: 'column'
   });
 
   let grid3 = new DataGrid();
   grid3.cellRenderers.set('body', {}, fgColorFloatRenderer);
-  grid3.model = model3;
+  grid3.dataModel = model3;
   grid3.keyHandler = new BasicKeyHandler();
   grid3.mouseHandler = new BasicMouseHandler();
-  grid3.selectionModel = new BasicSelectionModel({ model: model3 });
+  grid3.selectionModel = new BasicSelectionModel({ dataModel: model3 });
 
   let grid4 = new DataGrid({ style: lightSelectionStyle });
   grid4.cellRenderers.set('body', {}, bgColorFloatRenderer);
-  grid4.model = model4;
+  grid4.dataModel = model4;
   grid4.keyHandler = new BasicKeyHandler();
   grid4.mouseHandler = new BasicMouseHandler();
-  grid4.selectionModel = new BasicSelectionModel({ model: model4 });
+  grid4.selectionModel = new BasicSelectionModel({ dataModel: model4 });
 
   let grid5 = new DataGrid({
     style: greenStripeStyle,
@@ -279,11 +279,11 @@ function main(): void {
       columnHeaderHeight: 32
     }
   });
-  grid5.model = model5;
+  grid5.dataModel = model5;
   grid5.keyHandler = new BasicKeyHandler();
   grid5.mouseHandler = new BasicMouseHandler();
   grid5.selectionModel = new BasicSelectionModel({
-    model: model5,
+    dataModel: model5,
     selectionMode: 'row'
   });
 
