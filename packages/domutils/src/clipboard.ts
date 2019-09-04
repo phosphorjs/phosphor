@@ -31,7 +31,7 @@ namespace ClipboardExt {
       event.clipboardData!.setData('text', text);
 
       // Remove the event listener.
-      body.removeEventListener('copy', handler);
+      body.removeEventListener('copy', handler, true);
     };
 
     // Add the event listener.
