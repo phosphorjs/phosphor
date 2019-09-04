@@ -5,6 +5,7 @@
 |
 | The full license is in the file LICENSE, distributed with this software.
 |----------------------------------------------------------------------------*/
+export * from './clipboard';
 export * from './element';
 export * from './platform';
 export * from './selector';
