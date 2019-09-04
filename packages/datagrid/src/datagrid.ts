@@ -1317,7 +1317,7 @@ class DataGrid extends Widget {
    * Copy the current selection to the clipboard.
    *
    * #### Notes
-   * The grid must have a data model, selection model, and copy handler.
+   * The grid must have a data model and selection model.
    */
   copy(): void {
     // Fetch the data model.
