@@ -389,6 +389,10 @@ class BasicMouseHandler implements DataGrid.IMouseHandler {
     let hh = grid.headerHeight;
     let vpw = grid.viewportWidth;
     let vph = grid.viewportHeight;
+    let sx = grid.scrollX;
+    let sy = grid.scrollY;
+    let msx = grid.maxScrollY;
+    let msy = grid.maxScrollY;
 
     // Fetch the selection mode.
     let mode = model.selectionMode;
@@ -398,25 +402,25 @@ class BasicMouseHandler implements DataGrid.IMouseHandler {
 
     // Compute the timemout based on hit region and mouse position.
     if (data.region === 'row-header' || mode === 'row') {
-      if (ly < hh) {
+      if (ly < hh && sy > 0) {
         timeout = Private.computeTimeout(hh - ly);
-      } else if (ly >= vph) {
+      } else if (ly >= vph && sy < msy) {
         timeout = Private.computeTimeout(ly - vph);
       }
     } else if (data.region === 'column-header' || mode === 'column') {
-      if (lx < hw) {
+      if (lx < hw && sx < 0) {
         timeout = Private.computeTimeout(hw - lx);
-      } else if (lx >= vpw) {
+      } else if (lx >= vpw && sx < msx) {
         timeout = Private.computeTimeout(lx - vpw);
       }
     } else {
-      if (lx < hw) {
+      if (lx < hw && sx > 0) {
         timeout = Private.computeTimeout(hw - lx);
-      } else if (lx >= vpw) {
+      } else if (lx >= vpw && sx < msx) {
         timeout = Private.computeTimeout(lx - vpw);
-      } else if (ly < hh) {
+      } else if (ly < hh && sy > 0) {
         timeout = Private.computeTimeout(hh - ly);
-      } else if (ly >= vph) {
+      } else if (ly >= vph && sy < msy) {
         timeout = Private.computeTimeout(ly - vph);
       }
     }
