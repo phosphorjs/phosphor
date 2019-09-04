@@ -27,10 +27,6 @@ import {
 } from '@phosphor/messaging';
 
 import {
-  ISignal, Signal
-} from '@phosphor/signaling';
-
-import {
   BoxPanel, DockPanel, Widget
 } from '@phosphor/widgets';
 
@@ -118,12 +114,33 @@ class ClearingHouse implements IServerAdapter, IMessageHandler {
   }
 
   /**
-   * A signal that is fired when a transaction is received from the server.
-   * Intended to be consumed by a datastore, though other objects may snoop
-   * on the messages.
+   * A callback for when a remote transaction is received by the server adapter.
    */
-  get received(): ISignal<this, IServerAdapter.IReceivedArgs> {
-    return this._received;
+  get onRemoteTransaction(): ((transaction: Datastore.Transaction) => void) | null {
+    return this._onRemoteTransaction;
+  }
+  set onRemoteTransaction(value: ((transaction: Datastore.Transaction) => void) | null) {
+    this._onRemoteTransaction = value;
+  }
+
+  /**
+   * A callback for when an undo is received by the server adapter.
+   */
+  get onUndo(): ((transaction: Datastore.Transaction) => void) | null {
+    return this._onUndo;
+  }
+  set onUndo(value: ((transaction: Datastore.Transaction) => void) | null) {
+    this._onUndo = value;
+  }
+
+  /**
+   * A callback for when a redo is received by the server adapter.
+   */
+  get onRedo(): ((transaction: Datastore.Transaction) => void) | null {
+    return this._onRedo;
+  }
+  set onRedo(value: ((transaction: Datastore.Transaction) => void) | null) {
+    this._onRedo = value;
   }
 
   /**
@@ -136,29 +153,39 @@ class ClearingHouse implements IServerAdapter, IMessageHandler {
     if (msg.type === 'remote-transactions') {
       let m = msg as WSDatastoreAdapter.RemoteTransactionMessage;
       if (this._initialHistoryReceived) {
-        this._received.emit({ type: 'transaction', transaction: m.transaction });
+        if (this.onRemoteTransaction) {
+          this.onRemoteTransaction(m.transaction);
+        }
       } else {
         this._initialHistoryBacklog.push(m.transaction);
       }
     } else if (msg.type === 'history') {
       let m = msg as WSDatastoreAdapter.HistoryMessage;
-      for (let t of m.history.transactions) {
-        this._received.emit({ type: 'transaction', transaction: t });
+      if (this.onRemoteTransaction) {
+        for (let t of m.history.transactions) {
+          this.onRemoteTransaction(t);
+        }
       }
       if (!this._initialHistoryReceived) {
         this._initialHistoryReceived = true;
-        for (let t of this._initialHistoryBacklog) {
-          this._received.emit({ type: 'transaction', transaction: t });
+        if (this.onRemoteTransaction) {
+          for (let t of this._initialHistoryBacklog) {
+            this.onRemoteTransaction(t);
+          }
         }
         this._initialHistory.resolve(undefined);
         this._initialHistoryBacklog = [];
       }
     } else if (msg.type === 'undo') {
       let m = msg as WSDatastoreAdapter.UndoMessage;
-      this._received.emit({ type: 'undo', transaction: m.transaction });
+      if (this.onUndo) {
+        this.onUndo(m.transaction);
+      }
     } else if (msg.type === 'redo') {
       let m = msg as WSDatastoreAdapter.RedoMessage;
-      this._received.emit({ type: 'redo', transaction: m.transaction });
+      if (this.onRedo) {
+        this.onRedo(m.transaction);
+      }
     }
   }
 
@@ -167,7 +194,6 @@ class ClearingHouse implements IServerAdapter, IMessageHandler {
       return;
     }
     this._isDisposed = true;
-    Signal.clearData(this);
   }
 
   get isDisposed(): boolean {
@@ -180,7 +206,9 @@ class ClearingHouse implements IServerAdapter, IMessageHandler {
   private _initialHistory = new PromiseDelegate<void>();
   private _initialHistoryReceived = false;
   private _initialHistoryBacklog: Datastore.Transaction[] = [];
-  private _received = new Signal<this, IServerAdapter.IReceivedArgs>(this);
+  private _onRemoteTransaction: ((transaction: Datastore.Transaction) => void) | null = null
+  private _onUndo: ((transaction: Datastore.Transaction) => void) | null = null
+  private _onRedo: ((transaction: Datastore.Transaction) => void) | null = null
   private _isDisposed = false;
 }
 
