@@ -190,6 +190,50 @@ class SectionList {
   }
 
   /**
+   * Find the extent of the section at the given index.
+   *
+   * @param index - The index of the section of interest.
+   *
+   * @returns The extent of the section at the given index, or `-1`
+   *   if the index is out of range.
+   *
+   * #### Undefined Behavior
+   * An `index` which is non-integral.
+   *
+   * #### Complexity
+   * Logarithmic on the number of resized sections.
+   */
+  extentOf(index: number): number {
+    // Bail early if the index is out of range.
+    if (index < 0 || index >= this._count) {
+      return -1;
+    }
+
+    // Handle the simple case of no modified sections.
+    if (this._sections.length === 0) {
+      return (index + 1) * this._defaultSize - 1;
+    }
+
+    // Find the modified section for the given index.
+    let i = ArrayExt.lowerBound(this._sections, index, Private.indexCmp);
+
+    // Return the offset of an exact match.
+    if (i < this._sections.length && this._sections[i].index === index) {
+      return this._sections[i].offset + this._sections[i].size - 1;
+    }
+
+    // Handle the case of no modified sections before the index.
+    if (i === 0) {
+      return (index + 1) * this._defaultSize - 1;
+    }
+
+    // Compute the offset from the previous modified section.
+    let section = this._sections[i - 1];
+    let span = index - section.index;
+    return section.offset + section.size + span * this._defaultSize - 1;
+  }
+
+  /**
    * Find the size of the section at the given index.
    *
    * @param index - The index of the section of interest.

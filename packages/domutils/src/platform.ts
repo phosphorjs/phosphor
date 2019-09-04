@@ -35,4 +35,20 @@ namespace Platform {
    */
   export
   const IS_EDGE = /Edge/.test(navigator.userAgent);
+
+  /**
+   * Test whether the `accel` key is pressed.
+   *
+   * @param event - The keyboard or mouse event of interest.
+   *
+   * @returns Whether the `accel` key is pressed.
+   *
+   * #### Notes
+   * On Mac the `accel` key is the command key. On all other
+   * platforms the `accel` key is the control key.
+   */
+  export
+  function accelKey(event: KeyboardEvent | MouseEvent): boolean {
+    return IS_MAC ? event.metaKey : event.ctrlKey;
+  }
 }

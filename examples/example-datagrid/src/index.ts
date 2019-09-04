@@ -8,7 +8,8 @@
 import 'es6-promise/auto';  // polyfill Promise on IE
 
 import {
-  CellRenderer, DataGrid, DataModel, JSONModel, TextRenderer
+  BasicKeyHandler, BasicMouseHandler, BasicSelectionModel, CellRenderer,
+  DataGrid, DataModel, JSONModel, TextRenderer
 } from '@phosphor/datagrid';
 
 import {
@@ -145,8 +146,8 @@ class RandomDataModel extends DataModel {
     this.emitChanged({
       type: 'cells-changed',
       region: 'body',
-      rowIndex: r,
-      columnIndex: c,
+      row: r,
+      column: c,
       rowSpan: 1,
       columnSpan: 1
     });
@@ -218,6 +219,14 @@ function main(): void {
     rowBackgroundColor: i => i % 2 === 0 ? 'rgba(64, 115, 53, 0.2)' : ''
   };
 
+  let lightSelectionStyle: DataGrid.Style = {
+    ...DataGrid.defaultStyle,
+    selectionFillColor: 'rgba(255, 255, 255, 0.2)',
+    selectionBorderColor: 'white',
+    headerSelectionBorderColor: 'white',
+    cursorBorderColor: 'white'
+  };
+
   let fgColorFloatRenderer = new TextRenderer({
     font: 'bold 12px sans-serif',
     textColor: redGreenBlack,
@@ -234,17 +243,32 @@ function main(): void {
 
   let grid1 = new DataGrid({ style: blueStripeStyle });
   grid1.model = model1;
+  grid1.keyHandler = new BasicKeyHandler();
+  grid1.mouseHandler = new BasicMouseHandler();
+  grid1.selectionModel = new BasicSelectionModel({ model: model1 });
 
   let grid2 = new DataGrid({ style: brownStripeStyle });
   grid2.model = model2;
+  grid2.keyHandler = new BasicKeyHandler();
+  grid2.mouseHandler = new BasicMouseHandler();
+  grid2.selectionModel = new BasicSelectionModel({
+    model: model2,
+    selectionMode: 'column'
+  });
 
   let grid3 = new DataGrid();
   grid3.cellRenderers.set('body', {}, fgColorFloatRenderer);
   grid3.model = model3;
+  grid3.keyHandler = new BasicKeyHandler();
+  grid3.mouseHandler = new BasicMouseHandler();
+  grid3.selectionModel = new BasicSelectionModel({ model: model3 });
 
-  let grid4 = new DataGrid();
+  let grid4 = new DataGrid({ style: lightSelectionStyle });
   grid4.cellRenderers.set('body', {}, bgColorFloatRenderer);
   grid4.model = model4;
+  grid4.keyHandler = new BasicKeyHandler();
+  grid4.mouseHandler = new BasicMouseHandler();
+  grid4.selectionModel = new BasicSelectionModel({ model: model4 });
 
   let grid5 = new DataGrid({
     style: greenStripeStyle,
@@ -256,6 +280,12 @@ function main(): void {
     }
   });
   grid5.model = model5;
+  grid5.keyHandler = new BasicKeyHandler();
+  grid5.mouseHandler = new BasicMouseHandler();
+  grid5.selectionModel = new BasicSelectionModel({
+    model: model5,
+    selectionMode: 'row'
+  });
 
   let wrapper1 = createWrapper(grid1, 'Trillion Rows/Cols');
   let wrapper2 = createWrapper(grid2, 'Streaming Rows');
