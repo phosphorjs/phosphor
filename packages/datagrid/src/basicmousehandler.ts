@@ -408,7 +408,7 @@ class BasicMouseHandler implements DataGrid.IMouseHandler {
         timeout = Private.computeTimeout(ly - vph);
       }
     } else if (data.region === 'column-header' || mode === 'column') {
-      if (lx < hw && sx < 0) {
+      if (lx < hw && sx > 0) {
         timeout = Private.computeTimeout(hw - lx);
       } else if (lx >= vpw && sx < msx) {
         timeout = Private.computeTimeout(lx - vpw);
