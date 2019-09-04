@@ -93,17 +93,6 @@ abstract class SelectionModel {
   abstract clear(): void;
 
   /**
-   * A signal handler for the data model `changed` signal.
-   *
-   * @param args - The arguments for the signal.
-   *
-   * #### Notes
-   * Selection model implementations should update their selections
-   * in a manner that is relevant for the changes to the data model.
-   */
-  protected abstract onModelChanged(sender: DataModel, args: DataModel.ChangedArgs): void;
-
-  /**
    * A signal emitted when the selection model has changed.
    */
   get changed(): ISignal<this, void> {
@@ -186,6 +175,19 @@ abstract class SelectionModel {
   }
 
   /**
+   * A signal handler for the data model `changed` signal.
+   *
+   * @param args - The arguments for the signal.
+   *
+   * #### Notes
+   * Selection model implementations should update their selections
+   * in a manner that is relevant for the changes to the data model.
+   *
+   * The default implementation of this method is a no-op.
+   */
+  protected onModelChanged(sender: DataModel, args: DataModel.ChangedArgs): void { }
+
+  /**
    * Emit the `changed` signal for the selection model.
    *
    * #### Notes
@@ -225,31 +227,43 @@ namespace SelectionModel {
   type SelectArgs = {
     /**
      * The first row of the selection.
+     *
+     * This may be greater than `r2`.
      */
     r1: number;
 
     /**
      * The first column of the selection.
+     *
+     * This may be greater than `c2`.
      */
     c1: number;
 
     /**
-     * The second row of the selection.
+     * The last row of the selection.
+     *
+     * This may be less than `r1`.
      */
     r2: number;
 
     /**
-     * The second column of the selection.
+     * The last column of the selection.
+     *
+     * This may be less than `c1`.
      */
     c2: number;
 
     /**
      * The row index for the cursor.
+     *
+     * This should be contained within the selection.
      */
     cursorRow: number;
 
     /**
      * The column index for the cursor.
+     *
+     * This should be contained within the selection.
      */
     cursorColumn: number;
 
@@ -266,21 +280,29 @@ namespace SelectionModel {
   type Selection = {
     /**
      * The first row of the selection.
+     *
+     * This may be greater than `r2`.
      */
     readonly r1: number;
 
     /**
      * The first column of the selection.
+     *
+     * This may be greater than `c2`.
      */
     readonly c1: number;
 
     /**
-     * The second row of the selection.
+     * The last row of the selection.
+     *
+     * This may be less than `r1`.
      */
     readonly r2: number;
 
     /**
-     * The second column of the selection.
+     * The last column of the selection.
+     *
+     * This may be less than `c1`.
      */
     readonly c2: number;
   };
