@@ -10,7 +10,13 @@ import {
 } from 'chai';
 
 import {
-  Datastore, Fields, IServerAdapter, ListField, RegisterField, TextField
+  Datastore,
+  Fields,
+  IServerAdapter,
+  ListField,
+  MapField,
+  RegisterField,
+  TextField
 } from '@phosphor/datastore';
 
 import {
@@ -30,6 +36,7 @@ type TestSchema = {
     content: TextField,
     count: RegisterField<number>,
     enabled: RegisterField<boolean>,
+    tags: MapField<string>,
     links: ListField<string>,
     metadata: RegisterField<CustomMetadata>
   }
@@ -41,6 +48,7 @@ let schema1: TestSchema = {
     content: Fields.Text(),
     count:Fields.Number(),
     enabled: Fields.Boolean(),
+    tags: Fields.Map<string>(),
     links: Fields.List<string>(),
     metadata: Fields.Register<CustomMetadata>({ value: { id: 'identifier' }})
   }
@@ -52,6 +60,7 @@ let schema2: TestSchema = {
     content: Fields.Text(),
     count:Fields.Number(),
     enabled: Fields.Boolean(),
+    tags: Fields.Map<string>(),
     links: Fields.List<string>(),
     metadata: Fields.Register<CustomMetadata>({ value: { id: 'identifier' }})
   }
@@ -77,6 +86,18 @@ let state = {
     }
   ]
 };
+
+/**
+ * Return a shuffled copy of an array
+ */
+function shuffle<T>(array: ReadonlyArray<T>): T[] {
+  let ret = array.slice();
+  for (let i = ret.length - 1; i > 0; i--) {
+    let j = Math.floor(Math.random() * (i + 1)); // random index from 0 to i
+    [ret[i], ret[j]] = [ret[j], ret[i]]; // swap elements
+  }
+  return ret;
+}
 
 /**
  * An in-memory implementation of a patch store.
@@ -574,7 +595,6 @@ describe('@phosphor/datastore', () => {
 
         let called = false;
         datastore.changed.connect((sender, args) => {
-          console.log(args, args.change);
           called = true;
         });
         // Already undone, so no signal should be emitted.
@@ -722,12 +742,73 @@ describe('@phosphor/datastore', () => {
 
         let called = false;
         datastore.changed.connect((sender, args) => {
-          console.log(args, args.change);
           called = true;
         });
         // Already redone, so no signal should be emitted.
         await datastore.redo(id);
         expect(called).to.be.false;
+      });
+
+      it('should be insensitive to causality', async () => {
+        // Generate transactions that add then delete a value in a map.
+        let t2 = datastore.get(schema2);
+        let id1 = datastore.beginTransaction();
+        t2.update({ 'record': { tags: { value: 'tagged' } } });
+        datastore.endTransaction();
+        expect(t2.get('record')!.tags.value).to.equal('tagged');
+        let id2 = datastore.beginTransaction();
+        t2.update({ 'record': { tags: { value: null } } });
+        datastore.endTransaction();
+        expect(t2.get('record')!.tags.value).to.be.undefined;
+        let transaction1 = adapter.transactions[id1];
+        let transaction2 = adapter.transactions[id2];
+
+
+        // Design a set of undo and redo operations, after which
+        // transaction1 should be showing, and transaction 2 should not.
+        let operations = ['t1', 't2', 'u1', 'r1', 'u2', 'u1', 'r1', 'u2', 'r2'];
+        // Shuffle the operations many times so that we don't accidentally
+        // get the right answer.
+        for (let i = 0; i < 20; i++) {
+          let ops = shuffle(operations);
+          // Create a new datastore
+          let adapt = new InMemoryServerAdapter();
+          let store = Datastore.create({
+            id: 5678,
+            schemas: [schema1, schema2],
+            adapter: adapt
+          });
+          let table = store.get(schema2);
+          for (let op of ops) {
+            switch (op) {
+              case 't1':
+                adapt.onRemoteTransaction!(transaction1);
+                break;
+              case 't2':
+                adapt.onRemoteTransaction!(transaction2);
+                break;
+              case 'u1':
+                adapt.onUndo!(transaction1);
+                break;
+              case 'u2':
+                adapt.onUndo!(transaction2);
+                break;
+              case 'r1':
+                adapt.onRedo!(transaction1);
+                break;
+              case 'r2':
+                adapt.onRedo!(transaction2);
+                break;
+              default:
+                throw 'Unreachable';
+                break;
+            }
+          }
+          expect(table.get('record')!.tags.value).to.equal('tagged');
+          adapt.dispose();
+          store.dispose();
+        }
+
       });
 
     });
