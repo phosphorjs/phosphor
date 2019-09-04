@@ -79,8 +79,8 @@ class BasicSelectionModel extends SelectionModel {
    */
   select(args: SelectionModel.SelectArgs): void {
     // Fetch the current row and column counts;
-    let rowCount = this.model.rowCount('body');
-    let columnCount = this.model.columnCount('body');
+    let rowCount = this.dataModel.rowCount('body');
+    let columnCount = this.dataModel.columnCount('body');
 
     // Bail early if there is no content.
     if (rowCount <= 0 || columnCount <= 0) {
@@ -158,7 +158,7 @@ class BasicSelectionModel extends SelectionModel {
    *
    * @param args - The arguments for the signal.
    */
-  protected onModelChanged(sender: DataModel, args: DataModel.ChangedArgs): void {
+  protected onDataModelChanged(sender: DataModel, args: DataModel.ChangedArgs): void {
     // Bail early if the model has no current selections.
     if (this._selections.length === 0) {
       return;

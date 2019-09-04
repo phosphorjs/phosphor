@@ -201,8 +201,9 @@ class DataGrid extends Widget {
       this._mouseHandler.dispose();
     }
 
-    // Clear the model.
-    this._model = null;
+    // Clear the models.
+    this._dataModel = null;
+    this._selectionModel = null;
 
     // Clear the section lists.
     this._rowSections.clear();
@@ -217,8 +218,8 @@ class DataGrid extends Widget {
   /**
    * Get the data model for the data grid.
    */
-  get model(): DataModel | null {
-    return this._model;
+  get dataModel(): DataModel | null {
+    return this._dataModel;
   }
 
   /**
@@ -227,9 +228,9 @@ class DataGrid extends Widget {
    * #### Notes
    * This will automatically remove the current selection model.
    */
-  set model(value: DataModel | null) {
+  set dataModel(value: DataModel | null) {
     // Do nothing if the model does not change.
-    if (this._model === value) {
+    if (this._dataModel === value) {
       return;
     }
 
@@ -240,17 +241,17 @@ class DataGrid extends Widget {
     this.selectionModel = null;
 
     // Disconnect the change handler from the old model.
-    if (this._model) {
-      this._model.changed.disconnect(this._onModelChanged, this);
+    if (this._dataModel) {
+      this._dataModel.changed.disconnect(this._onDataModelChanged, this);
     }
 
     // Connect the change handler for the new model.
     if (value) {
-      value.changed.connect(this._onModelChanged, this);
+      value.changed.connect(this._onDataModelChanged, this);
     }
 
     // Update the internal model reference.
-    this._model = value;
+    this._dataModel = value;
 
     // Clear the section lists.
     this._rowSections.clear();
@@ -294,8 +295,8 @@ class DataGrid extends Widget {
     this._releaseMouse();
 
     // Ensure the data models are a match.
-    if (value && value.model !== this._model) {
-      throw new Error('Selection.model !== DataGrid.model');
+    if (value && value.dataModel !== this._dataModel) {
+      throw new Error('SelectionModel.dataModel !== DataGrid.dataModel');
     }
 
     // Disconnect the change handler from the old model.
@@ -1920,7 +1921,7 @@ class DataGrid extends Widget {
   /**
    * A signal handler for the data model `changed` signal.
    */
-  private _onModelChanged(sender: DataModel, args: DataModel.ChangedArgs): void {
+  private _onDataModelChanged(sender: DataModel, args: DataModel.ChangedArgs): void {
     switch (args.type) {
     case 'rows-inserted':
       this._onRowsInserted(args);
@@ -2245,10 +2246,10 @@ class DataGrid extends Widget {
     let nch = this._columnHeaderSections.count;
 
     // Compute the delta count for each region.
-    let dr = this._model!.rowCount('body') - nr;
-    let dc = this._model!.columnCount('body') - nc;
-    let drh = this._model!.columnCount('row-header') - nrh;
-    let dch = this._model!.rowCount('column-header') - nch;
+    let dr = this._dataModel!.rowCount('body') - nr;
+    let dc = this._dataModel!.columnCount('body') - nc;
+    let drh = this._dataModel!.columnCount('row-header') - nrh;
+    let dch = this._dataModel!.rowCount('column-header') - nch;
 
     // Update the row sections, if needed.
     if (dr > 0) {
@@ -3628,7 +3629,7 @@ class DataGrid extends Widget {
    */
   private _drawCells(rgn: Private.PaintRegion): void {
     // Bail if there is no data model.
-    if (!this._model) {
+    if (!this._dataModel) {
       return;
     }
 
@@ -3665,7 +3666,7 @@ class DataGrid extends Widget {
       // Get the metadata for the column.
       let metadata: DataModel.Metadata;
       try {
-        metadata = this._model.metadata(rgn.region, column);
+        metadata = this._dataModel.metadata(rgn.region, column);
       } catch (err) {
         metadata = DataModel.emptyMetadata;
         console.error(err);
@@ -3711,7 +3712,7 @@ class DataGrid extends Widget {
         // Get the data value for the cell.
         let value: any;
         try {
-          value = this._model.data(rgn.region, row, column);
+          value = this._dataModel.data(rgn.region, row, column);
         } catch (err) {
           value = undefined;
           console.error(err);
@@ -4465,7 +4466,7 @@ class DataGrid extends Widget {
   private _rowHeaderSections: SectionList;
   private _columnHeaderSections: SectionList;
 
-  private _model: DataModel | null = null;
+  private _dataModel: DataModel | null = null;
   private _selectionModel: SelectionModel | null = null;
 
   private _style: DataGrid.Style;
