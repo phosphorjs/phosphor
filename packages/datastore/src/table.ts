@@ -87,7 +87,7 @@ class Table<S extends Schema> implements IIterable<Record<S>> {
       let old = records.get(id, cmp) || Private.createRecord(schema, id);
 
       // Apply the patch and create the new record.
-      let { record, change } = Private.patch(schema, old, data[id], 'apply');
+      let { record, change } = Private.applyPatch(schema, old, data[id]);
 
       // Replace the old record in the table.
       records.insert(record);
@@ -126,7 +126,7 @@ class Table<S extends Schema> implements IIterable<Record<S>> {
       let old = records.get(id, cmp) || Private.createRecord(schema, id);
 
       // Apply the patch and create the new record.
-      let { record, change } = Private.patch(schema, old, data[id], 'unapply');
+      let { record, change } = Private.unapplyPatch(schema, old, data[id]);
 
       // Replace the old record in the table.
       records.insert(record);
@@ -454,7 +454,7 @@ namespace Private {
   };
 
   /**
-   * Apply or unapply a patch to a record.
+   * Apply a patch to a record.
    *
    * @param schema - The schema for the record.
    *
@@ -462,12 +462,10 @@ namespace Private {
    *
    * @param patch - The patch to apply to the record.
    *
-   * @param which - whether to apply or unapply the patch.
-   *
    * @return The result of applying the patch.
    */
   export
-  function patch<S extends Schema>(schema: S, record: Record<S>, patch: Record.Patch<S>, which: 'apply' | 'unapply'): PatchResult<S> {
+  function applyPatch<S extends Schema>(schema: S, record: Record<S>, patch: Record.Patch<S>): PatchResult<S> {
     // Create the change object.
     let rc: Record.MutableChange<S> = {};
 
@@ -485,33 +483,66 @@ namespace Private {
       // Fetch the relevant field.
       let field = schema.fields[name];
 
-      if (which === 'apply') {
-        // Apply the patch for the field.
-        let { value, change } = field.applyPatch({
-          previous: previous[name],
-          patch: patch[name]!,
-          metadata: metadata[name]
-        });
+      // Apply the patch for the field.
+      let { value, change } = field.applyPatch({
+        previous: previous[name],
+        patch: patch[name]!,
+        metadata: metadata[name]
+      });
 
-        // Assign the new value to the clone.
-        clone[name] = value;
+      // Assign the new value to the clone.
+      clone[name] = value;
 
-        // Update the change object.
-        rc[name] = change;
-      } else {
-        // Apply the patch for the field.
-        let { value, change } = field.unapplyPatch({
-          previous: previous[name],
-          patch: patch[name]!,
-          metadata: metadata[name]
-        });
+      // Update the change object.
+      rc[name] = change;
+    }
 
-        // Assign the new value to the clone.
-        clone[name] = value;
+    // Return the patch result.
+    return { record: clone, change: rc };
+  }
 
-        // Update the change object.
-        rc[name] = change;
-      }
+  /**
+   * Unapply a patch to a record.
+   *
+   * @param schema - The schema for the record.
+   *
+   * @param record - The record of interest.
+   *
+   * @param patch - The patch to unapply to the record.
+   *
+   * @return The result of unapplying the patch.
+   */
+  export
+  function unapplyPatch<S extends Schema>(schema: S, record: Record<S>, patch: Record.Patch<S>): PatchResult<S> {
+    // Create the change object.
+    let rc: Record.MutableChange<S> = {};
+
+    // Cast the record to a value object.
+    let previous = record as Record.Value<S>;
+
+    // Fetch the record metadata.
+    let metadata = record['@@metadata'];
+
+    // Create a clone of the record.
+    let clone = { ...(record as any) };
+
+    // Iterate over the patch.
+    for (let name in patch) {
+      // Fetch the relevant field.
+      let field = schema.fields[name];
+
+      // Apply the patch for the field.
+      let { value, change } = field.unapplyPatch({
+        previous: previous[name],
+        patch: patch[name]!,
+        metadata: metadata[name]
+      });
+
+      // Assign the new value to the clone.
+      clone[name] = value;
+
+      // Update the change object.
+      rc[name] = change;
     }
 
     // Return the patch result.
