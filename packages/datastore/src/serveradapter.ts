@@ -11,10 +11,6 @@ import {
 } from '@phosphor/disposable';
 
 import {
-  ISignal
-} from '@phosphor/signaling';
-
-import {
   Datastore
 } from './datastore';
 
@@ -54,32 +50,20 @@ interface IServerAdapter extends IDisposable {
   redo(id: string): Promise<void>;
 
   /**
-   * A signal that is fired when a transaction is received from the server.
-   * Intended to be consumed by a datastore, though other objects may snoop
-   * on the messages.
+   * A callback to be invoked when a remote transaction is received by the
+   * server adapter.
    */
-  received: ISignal<this, IServerAdapter.IReceivedArgs>;
-}
+  onRemoteTransaction: ((transaction: Datastore.Transaction) => void) | null;
 
-/**
- * A namespace for IServerAdapter statics.
- */
-export
-namespace IServerAdapter {
   /**
-   * A payload for a transaction received signal.
+   * A callback to be invoked when an undo message is received by the server
+   * adapter.
    */
-  export
-  interface IReceivedArgs {
-    /**
-     * The type of the transaction, either a user transaction,
-     * or an undo or redo of a transaction.
-     */
-    type: Datastore.TransactionType;
+  onUndo: ((transaction: Datastore.Transaction) => void) | null;
 
-    /**
-     * The payload transaction.
-     */
-    transaction: Datastore.Transaction;
-  }
+  /**
+   * A callback to be invoked when an redo message is received by the server
+   * adapter.
+   */
+  onRedo: ((transaction: Datastore.Transaction) => void) | null;
 }

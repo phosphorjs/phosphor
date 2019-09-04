@@ -370,21 +370,31 @@ class Datastore implements IDisposable, IIterable<Table<Schema>>, IMessageHandle
     this._adapter = adapter || null;
     this._transactionIdFactory = transactionIdFactory || createDuplexId;
     if (this._adapter) {
-      this._adapter.received.connect(
-        this._onRemoteTransaction,
-        this
-      );
+      this._adapter.onRemoteTransaction = this._onRemoteTransaction.bind(this);
+      this._adapter.onUndo = this._onUndo.bind(this);
+      this._adapter.onRedo = this._onRedo.bind(this);
     }
   }
 
   /**
    * Handle a transaction from the server adapter.
    */
-  private _onRemoteTransaction(
-    sender: IServerAdapter,
-    args: IServerAdapter.IReceivedArgs
-  ): void {
-    this._processTransaction(args);
+  private _onRemoteTransaction(transaction: Datastore.Transaction): void {
+    this._processTransaction(transaction, 'transaction');
+  }
+
+  /**
+   * Handle an undo from the server adapter.
+   */
+  private _onUndo(transaction: Datastore.Transaction): void {
+    this._processTransaction(transaction, 'undo');
+  }
+
+  /**
+   * Handle a redo from the server adapter.
+   */
+  private _onRedo(transaction: Datastore.Transaction): void {
+    this._processTransaction(transaction, 'redo');
   }
 
   /**
@@ -397,8 +407,7 @@ class Datastore implements IDisposable, IIterable<Table<Schema>>, IMessageHandle
    * #### Notes
    * If changes are made, the `changed` signal will be emitted.
    */
-  private _processTransaction(args: IServerAdapter.IReceivedArgs): void {
-    let { transaction, type } = args;
+  private _processTransaction(transaction: Datastore.Transaction, type: Datastore.TransactionType): void {
     let {storeId, patch} = transaction;
 
     try {
@@ -409,7 +418,7 @@ class Datastore implements IDisposable, IIterable<Table<Schema>>, IMessageHandle
     } catch (e) {
       // Already in a transaction. Put the transaction in the queue to apply
       // later.
-      this._queueTransaction(args);
+      this._queueTransaction(transaction, type);
       return;
     }
     let change: Datastore.MutableChange = {};
@@ -424,7 +433,7 @@ class Datastore implements IDisposable, IIterable<Table<Schema>>, IMessageHandle
           this._finalizeTransaction();
           return;
         }
-        if (type === 'transaction' || type === 'redo') {
+        if ( type === 'transaction' || type === 'redo') {
           let count = this._cemetery[transaction.id];
           if (count === undefined) {
             this._cemetery[transaction.id] = 1;
@@ -468,8 +477,8 @@ class Datastore implements IDisposable, IIterable<Table<Schema>>, IMessageHandle
    *
    * @param transaction - the transaction to queue.
    */
-  private _queueTransaction(args: IServerAdapter.IReceivedArgs): void {
-    this._transactionQueue.addLast(args);
+  private _queueTransaction(transaction: Datastore.Transaction, type: Datastore.TransactionType): void {
+    this._transactionQueue.addLast([transaction, type]);
     MessageLoop.postMessage(this, new ConflatableMessage('queued-transaction'));
   }
 
@@ -492,7 +501,7 @@ class Datastore implements IDisposable, IIterable<Table<Schema>>, IMessageHandle
     // Enter the processing loop.
     while (true) {
       // Remove the first transaction in the queue.
-      let transaction = queue.removeFirst()!;
+      let [transaction, type] = queue.removeFirst()!;
 
       // If the value is the sentinel, exit the loop.
       if (transaction === sentinel) {
@@ -500,7 +509,7 @@ class Datastore implements IDisposable, IIterable<Table<Schema>>, IMessageHandle
       }
 
       // Apply the transaction.
-      this._processTransaction(transaction);
+      this._processTransaction(transaction, type);
     }
   }
 
@@ -544,7 +553,10 @@ class Datastore implements IDisposable, IIterable<Table<Schema>>, IMessageHandle
   private _context: Datastore.Context;
   private _changed = new Signal<Datastore, Datastore.IChangedArgs>(this);
   private _transactionIdFactory: Datastore.TransactionIdFactory;
-  private _transactionQueue = new LinkedList<IServerAdapter.IReceivedArgs>();
+  private _transactionQueue = new LinkedList<[
+    Datastore.Transaction,
+    Datastore.TransactionType
+  ]>();
 }
 
 

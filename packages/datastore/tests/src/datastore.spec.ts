@@ -82,29 +82,35 @@ let state = {
  * An in-memory implementation of a patch store.
  */
 class InMemoryServerAdapter implements IServerAdapter {
+  constructor() {
+    this.onRemoteTransaction = null;
+    this.onUndo = null;
+    this.onRedo = null;
+  }
+
   broadcast(transaction: Datastore.Transaction): void {
     this._transactions[transaction.id] = transaction;
   }
 
   undo(id: string): Promise<void> {
-    this._received.emit({
-      type: 'undo',
-      transaction: this._transactions[id]
-    });
+    if (this.onUndo) {
+      this.onUndo(this._transactions[id]);
+    }
     return Promise.resolve(undefined);
   }
 
   redo(id: string): Promise<void> {
-    this._received.emit({
-      type: 'redo',
-      transaction: this._transactions[id]
-    });
+    if (this.onRedo) {
+      this.onRedo(this._transactions[id]);
+    }
     return Promise.resolve(undefined);
   }
 
-  get received(): Signal<this, IServerAdapter.IReceivedArgs> {
-    return this._received;
-  }
+  onRemoteTransaction: ((transaction: Datastore.Transaction) => void) | null;
+
+  onUndo: ((transaction: Datastore.Transaction) => void) | null;
+
+  onRedo: ((transaction: Datastore.Transaction) => void) | null;
 
   get transactions(): { [id: string]: Datastore.Transaction } {
     return this._transactions;
@@ -123,7 +129,6 @@ class InMemoryServerAdapter implements IServerAdapter {
   }
 
   private _isDisposed = false;
-  private _received = new Signal<this, IServerAdapter.IReceivedArgs>(this);
   private _transactions: { [id: string]: Datastore.Transaction } = {};
 }
 
@@ -393,10 +398,7 @@ describe('@phosphor/datastore', () => {
           }
         });
         // Trigger a remote transaction. It should be queued.
-        adapter2.received.emit({
-          type: 'transaction',
-          transaction: adapter.transactions[id]
-        });
+        adapter2.onRemoteTransaction!(adapter.transactions[id]);
         datastore2.endTransaction();
         expect(t2.get('my-record')!.enabled).to.be.true;
         expect(t2.get('my-record')!.content).to.equal('');
@@ -529,15 +531,15 @@ describe('@phosphor/datastore', () => {
         });
         t2 = datastore2.get(schema2);
         // No change for concurrently undone transaction.
-        adapter.received.emit({ type: 'undo', transaction });
+        adapter.onUndo!(transaction);
         let record = t2.get('my-record');
         expect(record).to.be.undefined;
         // Now apply the transaction, it should be undone still
-        adapter.received.emit({ type: 'transaction', transaction });
+        adapter.onRemoteTransaction!(transaction);
         record = t2.get('my-record')!;
         expect(record).to.be.undefined;
         // Now redo the transaction, it should appear.
-        adapter.received.emit({ type: 'redo', transaction });
+        adapter.onRedo!(transaction);
         record = t2.get('my-record')!;
         expect(record.enabled).to.be.true;
         expect(record.content).to.equal('hello, world');
