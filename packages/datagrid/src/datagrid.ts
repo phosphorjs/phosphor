@@ -1413,7 +1413,6 @@ class DataGrid extends Widget {
      }
    }
 
-
    // Fetch the formatted values.
    let values: string[][];
    switch (includedHeaders) {
