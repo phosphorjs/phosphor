@@ -6,11 +6,15 @@
 | The full license is in the file LICENSE, distributed with this software.
 |----------------------------------------------------------------------------*/
 import {
+  toArray
+} from '@phosphor/algorithm';
+
+import {
   IDisposable
 } from '@phosphor/disposable';
 
 import {
-  ElementExt, Platform
+  ClipboardExt, ElementExt, Platform
 } from '@phosphor/domutils';
 
 import {
@@ -75,6 +79,7 @@ class DataGrid extends Widget {
     this._style = options.style || DataGrid.defaultStyle;
     this._headerVisibility = options.headerVisibility || 'all';
     this._cellRenderers = options.cellRenderers || new RendererMap();
+    this._copyConfig = options.copyConfig || DataGrid.defaultCopyConfig;
     this._defaultRenderer = options.defaultRenderer || new TextRenderer();
 
     // Connect to the renderer map changed signal
@@ -200,9 +205,12 @@ class DataGrid extends Widget {
     if (this._mouseHandler) {
       this._mouseHandler.dispose();
     }
+    this._keyHandler = null;
+    this._mouseHandler = null;
 
-    // Clear the model.
-    this._model = null;
+    // Clear the models.
+    this._dataModel = null;
+    this._selectionModel = null;
 
     // Clear the section lists.
     this._rowSections.clear();
@@ -217,8 +225,8 @@ class DataGrid extends Widget {
   /**
    * Get the data model for the data grid.
    */
-  get model(): DataModel | null {
-    return this._model;
+  get dataModel(): DataModel | null {
+    return this._dataModel;
   }
 
   /**
@@ -227,9 +235,9 @@ class DataGrid extends Widget {
    * #### Notes
    * This will automatically remove the current selection model.
    */
-  set model(value: DataModel | null) {
+  set dataModel(value: DataModel | null) {
     // Do nothing if the model does not change.
-    if (this._model === value) {
+    if (this._dataModel === value) {
       return;
     }
 
@@ -240,17 +248,17 @@ class DataGrid extends Widget {
     this.selectionModel = null;
 
     // Disconnect the change handler from the old model.
-    if (this._model) {
-      this._model.changed.disconnect(this._onModelChanged, this);
+    if (this._dataModel) {
+      this._dataModel.changed.disconnect(this._onDataModelChanged, this);
     }
 
     // Connect the change handler for the new model.
     if (value) {
-      value.changed.connect(this._onModelChanged, this);
+      value.changed.connect(this._onDataModelChanged, this);
     }
 
     // Update the internal model reference.
-    this._model = value;
+    this._dataModel = value;
 
     // Clear the section lists.
     this._rowSections.clear();
@@ -294,8 +302,8 @@ class DataGrid extends Widget {
     this._releaseMouse();
 
     // Ensure the data models are a match.
-    if (value && value.model !== this._model) {
-      throw new Error('Selection.model !== DataGrid.model');
+    if (value && value.dataModel !== this._dataModel) {
+      throw new Error('SelectionModel.dataModel !== DataGrid.dataModel');
     }
 
     // Disconnect the change handler from the old model.
@@ -482,6 +490,20 @@ class DataGrid extends Widget {
 
     // Sync the viewport.
     this._syncViewport();
+  }
+
+  /**
+   * Get the copy configuration for the data grid.
+   */
+  get copyConfig(): DataGrid.CopyConfig {
+    return this._copyConfig;
+  }
+
+  /**
+   * Set the copy configuration for the data grid.
+   */
+  set copyConfig(value: DataGrid.CopyConfig) {
+    this._copyConfig = value;
   }
 
   /**
@@ -1292,6 +1314,180 @@ class DataGrid extends Widget {
   }
 
   /**
+   * Copy the current selection to the system clipboard.
+   *
+   * #### Notes
+   * The grid must have a data model and a selection model.
+   *
+   * The behavior can be configured via `DataGrid.copyConfig`.
+   */
+  copyToClipboard(): void {
+    // Fetch the data model.
+    let dataModel = this._dataModel;
+
+    // Bail early if there is no data model.
+    if (!dataModel) {
+      return;
+    }
+
+    // Fetch the selection model.
+    let selectionModel = this._selectionModel;
+
+    // Bail early if there is no selection model.
+    if (!selectionModel) {
+      return;
+    }
+
+    // Coerce the selections to an array.
+    let selections = toArray(selectionModel.selections());
+
+    // Bail early if there are no selections.
+    if (selections.length === 0) {
+      return;
+    }
+
+    // Alert that multiple selections cannot be copied.
+    if (selections.length > 1) {
+      alert('Cannot copy multiple grid selections.');
+      return;
+    }
+
+    // Fetch the model counts.
+    let br = dataModel.rowCount('body');
+    let bc = dataModel.columnCount('body');
+
+    // Bail early if there is nothing to copy.
+    if (br === 0 || bc === 0) {
+      return;
+    }
+
+    // Unpack the selection.
+    let { r1, c1, r2, c2 } = selections[0];
+
+    // Clamp the selection to the model bounds.
+    r1 = Math.max(0, Math.min(r1, br - 1));
+    c1 = Math.max(0, Math.min(c1, bc - 1));
+    r2 = Math.max(0, Math.min(r2, br - 1));
+    c2 = Math.max(0, Math.min(c2, bc - 1));
+
+    // Ensure the limits are well-orderd.
+    if (r2 < r1) [r1, r2] = [r2, r1];
+    if (c2 < c1) [c1, c2] = [c2, c1];
+
+    // Fetch the header counts.
+    let rhc = dataModel.columnCount('row-header');
+    let chr = dataModel.rowCount('column-header');
+
+    // Unpack the copy config.
+    let separator = this._copyConfig.separator;
+    let format = this._copyConfig.format;
+    let headers = this._copyConfig.headers;
+    let warningThreshold = this._copyConfig.warningThreshold;
+
+    // Compute the number of cells to be copied.
+    let rowCount = r2 - r1 + 1;
+    let colCount = c2 - c1 + 1;
+    switch (headers) {
+    case 'none':
+      rhc = 0;
+      chr = 0;
+      break;
+    case 'row':
+      chr = 0;
+      colCount += rhc;
+      break;
+    case 'column':
+      rhc = 0;
+      rowCount += chr;
+      break;
+    case 'all':
+      rowCount += chr;
+      colCount += rhc;
+      break;
+    default:
+      throw 'unreachable';
+    }
+
+    // Compute the total cell count.
+    let cellCount = rowCount * colCount;
+
+    // Allow the user to cancel a large copy request.
+    if (cellCount > warningThreshold) {
+      let msg = `Copying ${cellCount} cells may take a while. Continue?`;
+      if (!window.confirm(msg)) {
+        return;
+      }
+    }
+
+    // Set up the format args.
+    let args = {
+      region: 'body' as DataModel.CellRegion,
+      row: 0,
+      column: 0,
+      value: null as any,
+      metadata: {} as DataModel.Metadata
+    };
+
+    // Allocate the array of rows.
+    let rows = new Array<string[]>(rowCount);
+
+    // Iterate over the rows.
+    for (let j = 0; j < rowCount; ++j) {
+      // Allocate the array of cells.
+      let cells = new Array<string>(colCount);
+
+      // Iterate over the columns.
+      for (let i = 0; i < colCount; ++i) {
+        // Set up the format variables.
+        let region: DataModel.CellRegion;
+        let row: number;
+        let column: number;
+
+        // Populate the format variables.
+        if (j < chr && i < rhc) {
+          region = 'corner-header';
+          row = j;
+          column = i;
+        } else if (j < chr) {
+          region = 'column-header';
+          row = j;
+          column = i - rhc + c1;
+        } else if (i < rhc) {
+          region = 'row-header';
+          row = j - chr + r1;
+          column = i;
+        } else {
+          region = 'body';
+          row = j - chr + r1;
+          column = i - rhc + c1;
+        }
+
+        // Populate the format args.
+        args.region = region;
+        args.row = row;
+        args.column = column;
+        args.value = dataModel.data(region, row, column);
+        args.metadata = dataModel.metadata(region, column);
+
+        // Format the cell.
+        cells[i] = format(args);
+      }
+
+      // Save the row of cells.
+      rows[j] = cells;
+    }
+
+    // Convert the cells into lines.
+    let lines = rows.map(cells => cells.join(separator));
+
+    // Convert the lines into text.
+    let text = lines.join('\n');
+
+    // Copy the text to the clipboard.
+    ClipboardExt.copyText(text);
+  }
+
+  /**
    * Process a message sent to the widget.
    *
    * @param msg - The message sent to the widget.
@@ -1920,7 +2116,7 @@ class DataGrid extends Widget {
   /**
    * A signal handler for the data model `changed` signal.
    */
-  private _onModelChanged(sender: DataModel, args: DataModel.ChangedArgs): void {
+  private _onDataModelChanged(sender: DataModel, args: DataModel.ChangedArgs): void {
     switch (args.type) {
     case 'rows-inserted':
       this._onRowsInserted(args);
@@ -2245,10 +2441,10 @@ class DataGrid extends Widget {
     let nch = this._columnHeaderSections.count;
 
     // Compute the delta count for each region.
-    let dr = this._model!.rowCount('body') - nr;
-    let dc = this._model!.columnCount('body') - nc;
-    let drh = this._model!.columnCount('row-header') - nrh;
-    let dch = this._model!.rowCount('column-header') - nch;
+    let dr = this._dataModel!.rowCount('body') - nr;
+    let dc = this._dataModel!.columnCount('body') - nc;
+    let drh = this._dataModel!.columnCount('row-header') - nrh;
+    let dch = this._dataModel!.rowCount('column-header') - nch;
 
     // Update the row sections, if needed.
     if (dr > 0) {
@@ -3628,7 +3824,7 @@ class DataGrid extends Widget {
    */
   private _drawCells(rgn: Private.PaintRegion): void {
     // Bail if there is no data model.
-    if (!this._model) {
+    if (!this._dataModel) {
       return;
     }
 
@@ -3665,7 +3861,7 @@ class DataGrid extends Widget {
       // Get the metadata for the column.
       let metadata: DataModel.Metadata;
       try {
-        metadata = this._model.metadata(rgn.region, column);
+        metadata = this._dataModel.metadata(rgn.region, column);
       } catch (err) {
         metadata = DataModel.emptyMetadata;
         console.error(err);
@@ -3711,7 +3907,7 @@ class DataGrid extends Widget {
         // Get the data value for the cell.
         let value: any;
         try {
-          value = this._model.data(rgn.region, row, column);
+          value = this._dataModel.data(rgn.region, row, column);
         } catch (err) {
           value = undefined;
           console.error(err);
@@ -4465,12 +4661,13 @@ class DataGrid extends Widget {
   private _rowHeaderSections: SectionList;
   private _columnHeaderSections: SectionList;
 
-  private _model: DataModel | null = null;
+  private _dataModel: DataModel | null = null;
   private _selectionModel: SelectionModel | null = null;
 
   private _style: DataGrid.Style;
   private _cellRenderers: RendererMap;
   private _defaultRenderer: CellRenderer;
+  private _copyConfig: DataGrid.CopyConfig;
   private _headerVisibility: DataGrid.HeaderVisibility;
 }
 
@@ -4656,6 +4853,69 @@ namespace DataGrid {
   type HeaderVisibility = 'all' | 'row' | 'column' | 'none';
 
   /**
+   * A type alias for the arguments to a copy format function.
+   */
+  export
+  type CopyFormatArgs = {
+    /**
+     * The cell region for the value.
+     */
+    region: DataModel.CellRegion;
+
+    /**
+     * The row index of the value.
+     */
+    row: number;
+
+    /**
+     * The column index of the value.
+     */
+    column: number;
+
+    /**
+     * The value of the cell.
+     */
+    value: any;
+
+    /**
+     * The metadata for the column.
+     */
+    metadata: DataModel.Metadata;
+  };
+
+  /**
+   * A type alias for a copy format function.
+   */
+  export
+  type CopyFormatFunc = (args: CopyFormatArgs) => string;
+
+  /**
+   * A type alias for the data grid copy config.
+   */
+  export
+  type CopyConfig = {
+    /**
+     * The separator to use between values.
+     */
+    readonly separator: string;
+
+    /**
+     * The headers to included in the copied output.
+     */
+    readonly headers: 'none' | 'row' | 'column' | 'all';
+
+    /**
+     * The function for formatting the data values.
+     */
+    readonly format: CopyFormatFunc;
+
+    /**
+     * The cell count threshold for a copy to be considered "large".
+     */
+    readonly warningThreshold: number;
+  };
+
+  /**
    * An options object for initializing a data grid.
    */
   export
@@ -4694,6 +4954,13 @@ namespace DataGrid {
      * The default is a new `TextRenderer`.
      */
     defaultRenderer?: CellRenderer;
+
+    /**
+     * The copy configuration data for the grid.
+     *
+     * The default is `DataGrid.defaultCopyConfig`.
+     */
+    copyConfig?: CopyConfig;
   }
 
   /**
@@ -4846,6 +5113,24 @@ namespace DataGrid {
   };
 
   /**
+   * A generic format function for the copy handler.
+   *
+   * @param args - The format args for the function.
+   *
+   * @returns The string representation of the value.
+   *
+   * #### Notes
+   * This function uses `String()` to coerce values to a string.
+   */
+  export
+  function copyFormatGeneric(args: CopyFormatArgs): string {
+    if (args.value === null || args.value === undefined) {
+      return '';
+    }
+    return String(args.value);
+  }
+
+  /**
    * The default theme for a data grid.
    */
   export
@@ -4876,6 +5161,17 @@ namespace DataGrid {
     columnWidth: 64,
     rowHeaderWidth: 64,
     columnHeaderHeight: 20
+  };
+
+  /**
+   * The default copy config for a data grid.
+   */
+  export
+  const defaultCopyConfig: CopyConfig = {
+    separator: '\t',
+    format: copyFormatGeneric,
+    headers: 'none',
+    warningThreshold: 1e6
   };
 }
 

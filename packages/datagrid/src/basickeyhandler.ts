@@ -77,6 +77,9 @@ class BasicKeyHandler implements DataGrid.IKeyHandler {
     case 'Escape':
       this.onEscape(grid, event);
       break;
+    case 'C':
+      this.onKeyC(grid, event);
+      break;
     }
   }
 
@@ -701,6 +704,27 @@ class BasicKeyHandler implements DataGrid.IKeyHandler {
     if (grid.selectionModel) {
       grid.selectionModel.clear();
     }
+  }
+
+  /**
+   * Handle the `'C'` key press for the data grid.
+   *
+   * @param grid - The data grid of interest.
+   *
+   * @param event - The keyboard event of interest.
+   */
+  protected onKeyC(grid: DataGrid, event: KeyboardEvent): void {
+    // Bail early if the modifiers aren't correct for copy.
+    if (event.shiftKey || !Platform.accelKey(event)) {
+      return;
+    }
+
+    // Stop the event propagation.
+    event.preventDefault();
+    event.stopPropagation();
+
+    // Copy the current selection to the clipboard.
+    grid.copyToClipboard();
   }
 
   private _disposed = false;

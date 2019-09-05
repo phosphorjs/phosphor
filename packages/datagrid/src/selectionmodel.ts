@@ -33,9 +33,9 @@ abstract class SelectionModel {
    * @param options - The options for initializing the model.
    */
   constructor(options: SelectionModel.IOptions) {
-    this.model = options.model;
+    this.dataModel = options.dataModel;
     this._selectionMode = options.selectionMode || 'cell';
-    this.model.changed.connect(this.onModelChanged, this);
+    this.dataModel.changed.connect(this.onDataModelChanged, this);
   }
 
   /**
@@ -102,7 +102,7 @@ abstract class SelectionModel {
   /**
    * The data model associated with the selection model.
    */
-  readonly model: DataModel;
+  readonly dataModel: DataModel;
 
   /**
    * Get the selection mode for the model.
@@ -185,7 +185,7 @@ abstract class SelectionModel {
    *
    * The default implementation of this method is a no-op.
    */
-  protected onModelChanged(sender: DataModel, args: DataModel.ChangedArgs): void { }
+  protected onDataModelChanged(sender: DataModel, args: DataModel.ChangedArgs): void { }
 
   /**
    * Emit the `changed` signal for the selection model.
@@ -315,7 +315,7 @@ namespace SelectionModel {
     /**
      * The data model for the selection model.
      */
-    model: DataModel;
+    dataModel: DataModel;
 
     /**
      * The selection mode for the model.
