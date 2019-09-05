@@ -5126,7 +5126,7 @@ namespace DataGrid {
     separator: '\t',
     format: copyFormatGeneric,
     includedHeaders: 'none',
-    cellCountWarningLimit: 10000
+    cellCountWarningLimit: 1e6
   };
 }
 
