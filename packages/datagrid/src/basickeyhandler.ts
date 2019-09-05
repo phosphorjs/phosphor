@@ -724,7 +724,7 @@ class BasicKeyHandler implements DataGrid.IKeyHandler {
     event.stopPropagation();
 
     // Copy the current selection to the clipboard.
-    grid.copy();
+    grid.copyToClipboard();
   }
 
   private _disposed = false;

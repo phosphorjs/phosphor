@@ -1314,12 +1314,14 @@ class DataGrid extends Widget {
   }
 
   /**
-   * Copy the current selection to the clipboard.
+   * Copy the current selection to the system clipboard.
    *
    * #### Notes
-   * The grid must have a data model and selection model.
+   * The grid must have a data model and a selection model.
+   *
+   * The behavior can be configured via `DataGrid.copyConfig`.
    */
-  copy(): void {
+  copyToClipboard(): void {
     // Fetch the data model.
     let dataModel = this._dataModel;
 
@@ -1368,72 +1370,115 @@ class DataGrid extends Widget {
     r2 = Math.max(0, Math.min(r2, br - 1));
     c2 = Math.max(0, Math.min(c2, bc - 1));
 
-    // Ensure the bounds are well ordered.
-    if (r2 < r1) {
-      let rt = r1;
-      r1 = r2;
-      r2 = rt;
-    }
-    if (c2 < c1) {
-      let ct = c1;
-      c1 = c2;
-      c2 = ct;
-    }
+    // Ensure the limits are well-orderd.
+    if (r2 < r1) [r1, r2] = [r2, r1];
+    if (c2 < c1) [c1, c2] = [c2, c1];
+
+    // Fetch the header counts.
+    let rhc = dataModel.columnCount('row-header');
+    let chr = dataModel.rowCount('column-header');
 
     // Unpack the copy config.
     let separator = this._copyConfig.separator;
     let format = this._copyConfig.format;
-    let includedHeaders = this._copyConfig.includedHeaders;
-    let cellCountWarningLimit = this._copyConfig.cellCountWarningLimit;
+    let headers = this._copyConfig.headers;
+    let warningThreshold = this._copyConfig.warningThreshold;
 
     // Compute the number of cells to be copied.
-    let count: number;
-    switch (includedHeaders) {
+    let rowCount = r2 - r1 + 1;
+    let colCount = c2 - c1 + 1;
+    switch (headers) {
     case 'none':
-      count = Private.countBody({ dataModel, r1, c1, r2, c2 });
+      rhc = 0;
+      chr = 0;
       break;
     case 'row':
-      count = Private.countRows({ dataModel, r1, c1, r2, c2 });
+      chr = 0;
+      colCount += rhc;
       break;
     case 'column':
-      count = Private.countColumns({ dataModel, r1, c1, r2, c2 });
+      rhc = 0;
+      rowCount += chr;
       break;
     case 'all':
-      count = Private.countAll({ dataModel, r1, c1, r2, c2 });
+      rowCount += chr;
+      colCount += rhc;
       break;
     default:
       throw 'unreachable';
     }
 
+    // Compute the total cell count.
+    let cellCount = rowCount * colCount;
+
     // Allow the user to cancel a large copy request.
-    if (count > cellCountWarningLimit) {
-      let msg = `Copying ${count} cells may take a while. Continue?`;
+    if (cellCount > warningThreshold) {
+      let msg = `Copying ${cellCount} cells may take a while. Continue?`;
       if (!window.confirm(msg)) {
         return;
       }
     }
 
-    // Fetch the formatted values.
-    let values: string[][];
-    switch (includedHeaders) {
-    case 'none':
-      values = Private.fetchBody({ dataModel, format, r1, c1, r2, c2 });
-      break;
-    case 'row':
-      values = Private.fetchRows({ dataModel, format, r1, c1, r2, c2 });
-      break;
-    case 'column':
-      values = Private.fetchColumns({ dataModel, format, r1, c1, r2, c2 });
-      break;
-    case 'all':
-      values = Private.fetchAll({ dataModel, format, r1, c1, r2, c2 });
-      break;
-    default:
-      throw 'unreachable';
+    // Set up the format args.
+    let args = {
+      region: 'body' as DataModel.CellRegion,
+      row: 0,
+      column: 0,
+      value: null as any,
+      metadata: {} as DataModel.Metadata
+    };
+
+    // Allocate the array of rows.
+    let rows = new Array<string[]>(rowCount);
+
+    // Iterate over the rows.
+    for (let j = 0; j < rowCount; ++j) {
+      // Allocate the array of cells.
+      let cells = new Array<string>(colCount);
+
+      // Iterate over the columns.
+      for (let i = 0; i < colCount; ++i) {
+        // Set up the format variables.
+        let region: DataModel.CellRegion;
+        let row: number;
+        let column: number;
+
+        // Populate the format variables.
+        if (j < chr && i < rhc) {
+          region = 'corner-header';
+          row = j;
+          column = i;
+        } else if (j < chr) {
+          region = 'column-header';
+          row = j;
+          column = i - rhc + c1;
+        } else if (i < rhc) {
+          region = 'row-header';
+          row = j - chr + r1;
+          column = i;
+        } else {
+          region = 'body';
+          row = j - chr + r1;
+          column = i - rhc + c1;
+        }
+
+        // Populate the format args.
+        args.region = region;
+        args.row = row;
+        args.column = column;
+        args.value = dataModel.data(region, row, column);
+        args.metadata = dataModel.metadata(region, column);
+
+        // Format the cell.
+        cells[i] = format(args);
+      }
+
+      // Save the row of cells.
+      rows[j] = cells;
     }
 
-    // Convert the values into lines.
-    let lines = values.map(cells => cells.join(separator));
+    // Convert the cells into lines.
+    let lines = rows.map(cells => cells.join(separator));
 
     // Convert the lines into text.
     let text = lines.join('\n');
@@ -4857,7 +4902,7 @@ namespace DataGrid {
     /**
      * The headers to included in the copied output.
      */
-    readonly includedHeaders: 'none' | 'row' | 'column' | 'all';
+    readonly headers: 'none' | 'row' | 'column' | 'all';
 
     /**
      * The function for formatting the data values.
@@ -4865,9 +4910,9 @@ namespace DataGrid {
     readonly format: CopyFormatFunc;
 
     /**
-     * The cell count limit for a copy to be considered "large".
+     * The cell count threshold for a copy to be considered "large".
      */
-    readonly cellCountWarningLimit: number;
+    readonly warningThreshold: number;
   };
 
   /**
@@ -5125,8 +5170,8 @@ namespace DataGrid {
   const defaultCopyConfig: CopyConfig = {
     separator: '\t',
     format: copyFormatGeneric,
-    includedHeaders: 'none',
-    cellCountWarningLimit: 1e6
+    headers: 'none',
+    warningThreshold: 1e6
   };
 }
 
@@ -5478,318 +5523,5 @@ namespace Private {
     private _region: DataModel.ColumnRegion;
     private _index: number;
     private _size: number;
-  }
-
-  /**
-   * A type alias for the count args.
-   */
-  export
-  type CountArgs = {
-    /**
-     * The data model of interest.
-     */
-    dataModel: DataModel;
-
-    /**
-     * The first row of the selection.
-     */
-    r1: number;
-
-    /**
-     * The first column of the selection.
-     */
-    c1: number;
-
-    /**
-     * The last row of the selection.
-     */
-    r2: number;
-
-    /**
-     * The last column of the selection.
-     */
-    c2: number;
-  };
-
-  /**
-   * A type alias for the fetch args.
-   */
-  export
-  type FetchArgs = {
-    /**
-     * The data model of interest.
-     */
-    dataModel: DataModel;
-
-    /**
-     * The format function.
-     */
-    format: DataGrid.CopyFormatFunc;
-
-    /**
-     * The first row of the selection.
-     */
-    r1: number;
-
-    /**
-     * The first column of the selection.
-     */
-    c1: number;
-
-    /**
-     * The last row of the selection.
-     */
-    r2: number;
-
-    /**
-     * The last column of the selection.
-     */
-    c2: number;
-  };
-
-  /**
-   * Compute the number of selected body cells.
-   */
-  export
-  function countBody(args: CountArgs): number {
-    let { r1, r2, c1, c2 } = args;
-    return (r2 - r1 + 1) * (c2 - c1 + 1);
-  }
-
-  /**
-   * Compute the number of selected row header and body cells.
-   */
-  export
-  function countRows(args: CountArgs): number {
-    let { dataModel, r1, r2, c1, c2 } = args;
-    let rhc = dataModel.columnCount('row-header');
-    return (r2 - r1 + 1) * (c2 - c1 + 1) + rhc * (r2 - r1 + 1);
-  }
-
-  /**
-   * Compute the number of selected column header and body cells.
-   */
-  export
-  function countColumns(args: CountArgs): number {
-    let { dataModel, r1, r2, c1, c2 } = args;
-    let chr = dataModel.rowCount('column-header');
-    return (r2 - r1 + 1) * (c2 - c1 + 1) + chr * (c2 - c1 + 1);
-  }
-
-  /**
-   * Compute the number of selected header and body cells.
-   */
-  export
-  function countAll(args: CountArgs): number {
-    let { dataModel, r1, r2, c1, c2 } = args;
-    let rhc = dataModel.columnCount('row-header');
-    let chr = dataModel.rowCount('column-header');
-    return (
-      (r2 - r1 + 1) * (c2 - c1 + 1) +
-      rhc * (r2 - r1 + 1) +
-      chr * (c2 - c1 + 1) +
-      rhc * chr
-    );
-  }
-
-  /**
-   * Fetch the contents for just body cells.
-   */
-  export
-  function fetchBody(args: FetchArgs): string[][] {
-    // Unpack the arguments.
-    let { dataModel, format, r1, c1, r2, c2 } = args;
-
-    // Set up the rows array.
-    let rows = new Array<string[]>(r2 - r1 + 1);
-
-    // Set up the format args.
-    let fmtArgs = {
-      region: 'body' as DataModel.CellRegion,
-      row: 0,
-      column: 0,
-      value: null as any,
-      metadata: {} as DataModel.Metadata
-    };
-
-    // Fetch the contents.
-    fmtArgs.region = 'body';
-    for (let j = r1; j <= r2; ++j) {
-      fmtArgs.row = j;
-      let row = rows[j - r1] = new Array<string>(c2 - c1 + 1);
-      for (let i = c1; i <= c2; ++i) {
-        fmtArgs.column = i;
-        fmtArgs.metadata = dataModel.metadata(fmtArgs.region, i);
-        fmtArgs.value = dataModel.data(fmtArgs.region, j, i);
-        row[i - c1] = format(fmtArgs);
-      }
-    }
-
-    // Return the rows.
-    return rows;
-  }
-
-  /**
-   * Fetch the contents for row headers and body cells.
-   */
-  export
-  function fetchRows(args: FetchArgs): string[][] {
-    // Unpack the arguments.
-    let { dataModel, format, r1, c1, r2, c2 } = args;
-
-    // Fetch the row header column count.
-    let rhc = dataModel.columnCount('row-header');
-
-    // Set up the rows array.
-    let rows = new Array<string[]>(r2 - r1 + 1);
-
-    // Set up the format args.
-    let fmtArgs = {
-      region: 'body' as DataModel.CellRegion,
-      row: 0,
-      column: 0,
-      value: null as any,
-      metadata: {} as DataModel.Metadata
-    };
-
-    // Fetch the contents.
-    for (let j = r1; j <= r2; ++j) {
-      fmtArgs.row = j;
-      fmtArgs.region = 'row-header';
-      let row = rows[j - r1] = new Array<string>(rhc + (c2 - c1) + 1);
-      for (let i = 0; i < rhc; ++i) {
-        fmtArgs.column = i;
-        fmtArgs.metadata = dataModel.metadata(fmtArgs.region, i);
-        fmtArgs.value = dataModel.data(fmtArgs.region, j, i);
-        row[i] = format(fmtArgs);
-      }
-      fmtArgs.region = 'body';
-      for (let i = c1; i <= c2; ++i) {
-        fmtArgs.column = i;
-        fmtArgs.metadata = dataModel.metadata(fmtArgs.region, i);
-        fmtArgs.value = dataModel.data(fmtArgs.region, j, i);
-        row[i - c1 + rhc] = format(fmtArgs);
-      }
-    }
-
-    // Return the rows.
-    return rows;
-  }
-
-  /**
-   * Fetch the contents for column headers and body cells.
-   */
-  export
-  function fetchColumns(args: FetchArgs): string[][] {
-    // Unpack the arguments.
-    let { dataModel, format, r1, c1, r2, c2 } = args;
-
-    // Fetch the column header row count.
-    let chr = dataModel.rowCount('column-header');
-
-    // Set up the rows array.
-    let rows = new Array<string[]>(r2 - r1 + 1 + chr);
-
-    // Set up the format args.
-    let fmtArgs = {
-      region: 'body' as DataModel.CellRegion,
-      row: 0,
-      column: 0,
-      value: null as any,
-      metadata: {} as DataModel.Metadata
-    };
-
-    // Fetch the contents
-    fmtArgs.region = 'column-header'
-    for (let j = 0; j < chr; ++j) {
-      fmtArgs.row = j;
-      let row = rows[j] = new Array<string>(c2 - c1 + 1);
-      for (let i = c1; i <= c2; ++i) {
-        fmtArgs.column = i;
-        fmtArgs.metadata = dataModel.metadata(fmtArgs.region, i);
-        fmtArgs.value = dataModel.data(fmtArgs.region, j, i);
-        row[i - c1] = format(fmtArgs);
-      }
-    }
-    fmtArgs.region = 'body'
-    for (let j = r1; j <= r2; ++j) {
-      fmtArgs.row = j;
-      let row = rows[j - r1 + chr] = new Array<string>(c2 - c1 + 1);
-      for (let i = c1; i <= c2; ++i) {
-        fmtArgs.column = i;
-        fmtArgs.metadata = dataModel.metadata(fmtArgs.region, i);
-        fmtArgs.value = dataModel.data(fmtArgs.region, j, i);
-        row[i - c1] = format(fmtArgs);
-      }
-    }
-
-    // Return the rows.
-    return rows;
-  }
-
-  /**
-   * Fetch the context for all headers and body cells.
-   */
-  export
-  function fetchAll(args: FetchArgs): string[][] {
-    // Unpack the arguments.
-    let { dataModel, format, r1, c1, r2, c2 } = args;
-
-    // Fetch the header counts.
-    let rhc = dataModel.columnCount('row-header');
-    let chr = dataModel.rowCount('column-header');
-
-    // Set up the rows array.
-    let rows = new Array<string[]>(r2 - r1 + 1 + chr);
-
-    // Set up the format args.
-    let fmtArgs = {
-      region: 'body' as DataModel.CellRegion,
-      row: 0,
-      column: 0,
-      value: null as any,
-      metadata: {} as DataModel.Metadata
-    };
-
-    // Fetch the contents.
-    for (let j = 0; j < chr; ++j) {
-      fmtArgs.row = j;
-      fmtArgs.region = 'corner-header';
-      let row = rows[j] = new Array<string>(c2 - c1 + 1 + rhc);
-      for (let i = 0; i < rhc; ++i) {
-        fmtArgs.column = i;
-        fmtArgs.metadata = dataModel.metadata(fmtArgs.region, i);
-        fmtArgs.value = dataModel.data(fmtArgs.region, j, i);
-        row[i] = format(fmtArgs);
-      }
-      fmtArgs.region = 'column-header';
-      for (let i = c1; i <= c2; ++i) {
-        fmtArgs.column = i;
-        fmtArgs.metadata = dataModel.metadata(fmtArgs.region, i);
-        fmtArgs.value = dataModel.data(fmtArgs.region, j, i);
-        row[i - c1 + rhc] = format(fmtArgs);
-      }
-    }
-    for (let j = r1; j <= r2; ++j) {
-      fmtArgs.row = j;
-      fmtArgs.region = 'row-header';
-      let row = rows[j - r1 + chr] = new Array<string>(c2 - c1 + 1 + rhc);
-      for (let i = 0; i < rhc; ++i) {
-        fmtArgs.column = i;
-        fmtArgs.metadata = dataModel.metadata(fmtArgs.region, i);
-        fmtArgs.value = dataModel.data(fmtArgs.region, j, i);
-        row[i] = format(fmtArgs);
-      }
-      fmtArgs.region = 'body';
-      for (let i = c1; i <= c2; ++i) {
-        fmtArgs.column = i;
-        fmtArgs.metadata = dataModel.metadata(fmtArgs.region, i);
-        fmtArgs.value = dataModel.data(fmtArgs.region, j, i);
-        row[i - c1 + rhc] = format(fmtArgs);
-      }
-    }
-
-    // Return the rows.
-    return rows;
   }
 }
