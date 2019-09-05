@@ -11,11 +11,11 @@ import {
 } from '@phosphor/coreutils';
 
 import {
-  IMessageHandler, Message
+  Message
 } from '@phosphor/messaging';
 
 import {
-  Datastore
+  Datastore, IServerAdapter, Schema
 } from '@phosphor/datastore';
 
 import {
@@ -32,7 +32,7 @@ import {
  * A websocket based adapter for a datastore.
  */
 export
-class WSDatastoreAdapter extends WSConnection<WSAdapterMessages.IMessage, WSAdapterMessages.IMessage> {
+class WSAdapter extends WSConnection<WSAdapterMessages.IMessage, WSAdapterMessages.IMessage> implements IServerAdapter {
   /**
    * Create a new websocket adapter for a datastore.
    */
@@ -46,7 +46,9 @@ class WSDatastoreAdapter extends WSConnection<WSAdapterMessages.IMessage, WSAdap
    * Dispose of the resources held by the adapter.
    */
   dispose(): void {
-    this._handler = null;
+    this._onRemoteTransaction = null;
+    this._onUndo = null;
+    this._onRedo = null;
     super.dispose();
   }
 
@@ -56,30 +58,29 @@ class WSDatastoreAdapter extends WSConnection<WSAdapterMessages.IMessage, WSAdap
    *
    * @returns {Promise<number>} A promise to the new store id.
    */
-  async createStoreId(): Promise<number> {
+  private async _createStoreId(): Promise<number> {
     await this.ready;
     let msg = WSAdapterMessages.createStoreIdRequestMessage();
     let reply = await this._requestMessageReply(msg);
     return reply.content.storeId;
   }
 
+
   /**
-   * Set the handler for messages from the server adaptor.
-   *
-   * @param {number} storeId - The store id of the handler.
-   * @param {IMessageHandler} handler - The transaction handler to register.
+   * Create a new datastore connected to the server.
    */
-  setMessageHandler(handler: IMessageHandler) {
-    this._handler = handler;
-    if (this._unhandledTransactions.length > 0) {
-      this._handleTransactions(this._unhandledTransactions);
-      this._unhandledTransactions = [];
-    }
+  async createStore(schemas: Schema[]): Promise<Datastore> {
+    let storeId = await this._createStoreId();
+    let datastore = Datastore.create({ id: storeId, schemas, adapter: this });
     let fetchMsg = WSAdapterMessages.createHistoryRequestMessage();
     this._requestMessageReply(fetchMsg).then((historyMsg: WSAdapterMessages.IHistoryReplyMessage) => {
-      let message = new WSDatastoreAdapter.HistoryMessage(historyMsg.content.history);
-      handler.processMessage(message);
+      if (this.onRemoteTransaction) {
+        for (let t of historyMsg.content.history.transactions) {
+          this.onRemoteTransaction(t);
+        }
+      }
     });
+    return datastore;
   }
 
   /**
@@ -87,16 +88,15 @@ class WSDatastoreAdapter extends WSConnection<WSAdapterMessages.IMessage, WSAdap
    *
    * @param {Datastore.Transaction[]} transactions The transactions to broadcast.
    */
-  async broadcastTransactions(transactions: Datastore.Transaction[]): Promise<string[]> {
-    let msg = WSAdapterMessages.createTransactionBroadcastMessage(transactions);
-    let reply = await this._requestMessageReply(msg);
-    return reply.content.transactionIds;
+  broadcast(transaction: Datastore.Transaction): void {
+    let msg = WSAdapterMessages.createTransactionBroadcastMessage([transaction]);
+    void this._requestMessageReply(msg);
   }
 
   /**
    * Request an undo by id.
    */
-  async requestUndo(id: string): Promise<void> {
+  async undo(id: string): Promise<void> {
     let msg = WSAdapterMessages.createUndoRequestMessage(id);
     let reply = await this._requestMessageReply(msg);
     this._handleUndo(reply.content.transaction);
@@ -105,10 +105,40 @@ class WSDatastoreAdapter extends WSConnection<WSAdapterMessages.IMessage, WSAdap
   /**
    * Request a redo by id.
    */
-  async requestRedo(id: string): Promise<void> {
+  async redo(id: string): Promise<void> {
     let msg = WSAdapterMessages.createRedoRequestMessage(id);
     let reply = await this._requestMessageReply(msg);
     this._handleRedo(reply.content.transaction);
+  }
+
+  /**
+   * A callback for when a remote transaction is received by the server adapter.
+   */
+  get onRemoteTransaction(): ((transaction: Datastore.Transaction) => void) | null {
+    return this._onRemoteTransaction;
+  }
+  set onRemoteTransaction(value: ((transaction: Datastore.Transaction) => void) | null) {
+    this._onRemoteTransaction = value;
+  }
+
+  /**
+   * A callback for when an undo is received by the server adapter.
+   */
+  get onUndo(): ((transaction: Datastore.Transaction) => void) | null {
+    return this._onUndo;
+  }
+  set onUndo(value: ((transaction: Datastore.Transaction) => void) | null) {
+    this._onUndo = value;
+  }
+
+  /**
+   * A callback for when a redo is received by the server adapter.
+   */
+  get onRedo(): ((transaction: Datastore.Transaction) => void) | null {
+    return this._onRedo;
+  }
+  set onRedo(value: ((transaction: Datastore.Transaction) => void) | null) {
+    this._onRedo = value;
   }
 
   /**
@@ -150,52 +180,34 @@ class WSDatastoreAdapter extends WSConnection<WSAdapterMessages.IMessage, WSAdap
   }
 
   /**
-   * Process undo message received over the websocket.
+   * Handle an undo message received over the websocket.
    */
-  private _handleUndo(transaction: Datastore.Transaction) {
-    if (this._handler === null) {
-      if (this.isDisposed) {
-        return;
-      }
-      // TODO how to deal with unhandled undo/redo ?
-      return;
+  private _handleUndo(transaction: Datastore.Transaction): void {
+    if (this.onUndo) {
+      this.onUndo(transaction);
     }
-    let message = new WSDatastoreAdapter.UndoMessage(transaction);
-    this._handler.processMessage(message);
   }
 
   /**
-   * Process redo message received over the websocket.
+   * Handle an undo message received over the websocket.
    */
-  private _handleRedo(transaction: Datastore.Transaction) {
-    if (this._handler === null) {
-      if (this.isDisposed) {
-        return;
-      }
-      // TODO how to deal with unhandled undo/redo ?
-      return;
+  private _handleRedo(transaction: Datastore.Transaction): void {
+    if (this.onRedo) {
+      this.onRedo(transaction);
     }
-    let message = new WSDatastoreAdapter.RedoMessage(transaction);
-    this._handler.processMessage(message);
   }
 
-  /**
-   * Send a message to the server and resolve the reply message.
-   */
   /**
    * Process transactions received over the websocket.
    */
-  private _handleTransactions(transactions: ReadonlyArray<Datastore.Transaction>) {
-    if (this._handler === null) {
-      if (this.isDisposed) {
-        return;
-      }
-      this._unhandledTransactions.push(...transactions);
+  private _handleTransactions(transactions: ReadonlyArray<Datastore.Transaction>): void {
+    if (this.isDisposed) {
       return;
     }
-    for (let t of transactions) {
-      let message = new WSDatastoreAdapter.RemoteTransactionMessage(t);
-      this._handler.processMessage(message);
+    if (this.onRemoteTransaction) {
+      for (let t of transactions) {
+        this.onRemoteTransaction(t);
+      }
     }
   }
 
@@ -221,8 +233,9 @@ class WSDatastoreAdapter extends WSConnection<WSAdapterMessages.IMessage, WSAdap
   }
 
   private _delegates: Map<string, PromiseDelegate<WSAdapterMessages.IReplyMessage>>;
-  private _handler: IMessageHandler | null = null;
-  private _unhandledTransactions: Datastore.Transaction[] = [];
+  private _onRemoteTransaction: ((transaction: Datastore.Transaction) => void) | null = null
+  private _onUndo: ((transaction: Datastore.Transaction) => void) | null = null
+  private _onRedo: ((transaction: Datastore.Transaction) => void) | null = null
 }
 
 
