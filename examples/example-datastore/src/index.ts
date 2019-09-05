@@ -35,16 +35,19 @@ let commands = new CommandRegistry();
  */
 async function init(): Promise<void> {
 
-  // Create a patch clearing house.
+  // Create a transaction server adapter, which is responsible for creating
+  // a new datastore as well as managing its connection to the server.
   let adapter = new WSAdapter(
     () => new WebSocket(window.location.origin.replace(/^http/, 'ws')),
   );
+  // Create the datastore.
   let store = await adapter.createStore([EDITOR_SCHEMA]);
 
-  // Possibly initialize the datastore.
+  // The datastore may come prepopulated with a transaction history.
+  // If it is empty, that means we are the first collaborator, in
+  // which case we initialize it.
   let editorTable = store.get(EDITOR_SCHEMA);
   if (editorTable.isEmpty) {
-    // Empty table -> Let us initialize some state
     store.beginTransaction();
     try {
       editorTable.update({
@@ -78,9 +81,9 @@ async function init(): Promise<void> {
   box.addWidget(dock);
 
   window.onresize = () => { box.update(); };
-
   Widget.attach(box, document.body);
 
+  // Add commands for undo and redo.
   commands.addCommand('undo', {
     label: 'Undo',
     execute: () => {
@@ -99,18 +102,18 @@ async function init(): Promise<void> {
       }
     }
   });
+
+  // Add keybindings for undo and redo.
   commands.addKeyBinding({
     keys: ['Accel Z'],
     selector: 'body',
     command: 'undo'
   });
-
   commands.addKeyBinding({
     keys: ['Accel Shift Z'],
     selector: 'body',
     command: 'redo'
   });
-
   document.addEventListener('keydown', (event: KeyboardEvent) => {
     commands.processKeydownEvent(event);
   }, true);

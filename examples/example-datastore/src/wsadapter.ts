@@ -11,15 +11,11 @@ import {
 } from '@phosphor/coreutils';
 
 import {
-  Message
-} from '@phosphor/messaging';
-
-import {
   Datastore, IServerAdapter, Schema
 } from '@phosphor/datastore';
 
 import {
-  WSAdapterMessages, TransactionHistory
+  WSAdapterMessages
 } from './messages';
 
 import {
@@ -41,52 +37,33 @@ class WSAdapter extends WSConnection<WSAdapterMessages.IMessage, WSAdapterMessag
     this._delegates = new Map<string, PromiseDelegate<WSAdapterMessages.IReplyMessage>>();
   }
 
-
-  /**
-   * Dispose of the resources held by the adapter.
-   */
-  dispose(): void {
-    this._onRemoteTransaction = null;
-    this._onUndo = null;
-    this._onRedo = null;
-    super.dispose();
-  }
-
-
-  /**
-   * Create a new, unique store id.
-   *
-   * @returns {Promise<number>} A promise to the new store id.
-   */
-  private async _createStoreId(): Promise<number> {
-    await this.ready;
-    let msg = WSAdapterMessages.createStoreIdRequestMessage();
-    let reply = await this._requestMessageReply(msg);
-    return reply.content.storeId;
-  }
-
-
   /**
    * Create a new datastore connected to the server.
+   *
+   * @param schemas - the schemas for the datastore.
+   *
+   * @returns a promise that resolves with the datastore that was created.
+   *
+   * #### Notes this does not resolve until the datastore is created
+   * and its entire history has been applied.
    */
   async createStore(schemas: Schema[]): Promise<Datastore> {
     let storeId = await this._createStoreId();
     let datastore = Datastore.create({ id: storeId, schemas, adapter: this });
     let fetchMsg = WSAdapterMessages.createHistoryRequestMessage();
-    this._requestMessageReply(fetchMsg).then((historyMsg: WSAdapterMessages.IHistoryReplyMessage) => {
-      if (this.onRemoteTransaction) {
-        for (let t of historyMsg.content.history.transactions) {
-          this.onRemoteTransaction(t);
-        }
+    let historyMsg = await this._requestMessageReply(fetchMsg);
+    if (this.onRemoteTransaction) {
+      for (let t of historyMsg.content.history.transactions) {
+        this.onRemoteTransaction(t);
       }
-    });
+    }
     return datastore;
   }
 
   /**
-   * Broadcast transactions to all datastores.
+   * Broadcast a transaction to all datastores.
    *
-   * @param {Datastore.Transaction[]} transactions The transactions to broadcast.
+   * @param transaction - the transaction to broadcast.
    */
   broadcast(transaction: Datastore.Transaction): void {
     let msg = WSAdapterMessages.createTransactionBroadcastMessage([transaction]);
@@ -95,6 +72,10 @@ class WSAdapter extends WSConnection<WSAdapterMessages.IMessage, WSAdapterMessag
 
   /**
    * Request an undo by id.
+   *
+   * @param id - The id of the transaction to undo.
+   *
+   * @returns a promise that resolves when the undo is complete.
    */
   async undo(id: string): Promise<void> {
     let msg = WSAdapterMessages.createUndoRequestMessage(id);
@@ -104,6 +85,10 @@ class WSAdapter extends WSConnection<WSAdapterMessages.IMessage, WSAdapterMessag
 
   /**
    * Request a redo by id.
+   *
+   * @param id - The id of the transaction to redo.
+   *
+   * @returns a promise that resolves when the redo is complete.
    */
   async redo(id: string): Promise<void> {
     let msg = WSAdapterMessages.createRedoRequestMessage(id);
@@ -142,6 +127,17 @@ class WSAdapter extends WSConnection<WSAdapterMessages.IMessage, WSAdapterMessag
   }
 
   /**
+   * Dispose of the resources held by the adapter.
+   */
+  dispose(): void {
+    this._onRemoteTransaction = null;
+    this._onUndo = null;
+    this._onRedo = null;
+    this._delegates.clear();
+    super.dispose();
+  }
+
+  /**
    * Process messages received over the websocket.
    *
    * @param msg - The decoded message that was received.
@@ -158,7 +154,7 @@ class WSAdapter extends WSConnection<WSAdapterMessages.IMessage, WSAdapterMessag
     }
 
     if (WSAdapterMessages.isReply(msg)) {
-      let delegate = this._delegates && this._delegates.get(msg.parentId!);
+      let delegate = this._delegates.get(msg.parentId!);
       if (delegate) {
         delegate.resolve(msg);
         return true;
@@ -177,6 +173,18 @@ class WSAdapter extends WSConnection<WSAdapterMessages.IMessage, WSAdapterMessag
       return true;
     }
     return false;
+  }
+
+  /**
+   * Create a new, unique store id.
+   *
+   * @returns A promise that resolves with the new store id.
+   */
+  private async _createStoreId(): Promise<number> {
+    await this.ready;
+    let msg = WSAdapterMessages.createStoreIdRequestMessage();
+    let reply = await this._requestMessageReply(msg);
+    return reply.content.storeId;
   }
 
   /**
@@ -236,97 +244,4 @@ class WSAdapter extends WSConnection<WSAdapterMessages.IMessage, WSAdapterMessag
   private _onRemoteTransaction: ((transaction: Datastore.Transaction) => void) | null = null
   private _onUndo: ((transaction: Datastore.Transaction) => void) | null = null
   private _onRedo: ((transaction: Datastore.Transaction) => void) | null = null
-}
-
-
-/**
- * The namespace for WSDatastoreAdapter statics.
- */
-export
-namespace WSDatastoreAdapter {
-
-  /**
-   * A message class for `'history'` messages.
-   */
-  export
-  class HistoryMessage extends Message {
-    /**
-     * Construct a new history message.
-     *
-     * @param history - The patch history
-     */
-    constructor(history: TransactionHistory) {
-      super('history');
-      this.history = history;
-    }
-
-    /**
-     * The patch history
-     */
-    readonly history: TransactionHistory;
-  }
-
-
-  /**
-   * A message class for `'remote-transactions'` messages.
-   */
-  export
-  class RemoteTransactionMessage extends Message {
-    /**
-     * Construct a new remote transactions message.
-     *
-     * @param transaction - The transaction object
-     */
-    constructor(transaction: Datastore.Transaction) {
-      super('remote-transactions');
-      this.transaction = transaction;
-    }
-
-    /**
-     * The patch object.
-     */
-    readonly transaction: Datastore.Transaction;
-  }
-
-  /**
-   * A message class for `'undo'` messages.
-   */
-  export
-  class UndoMessage extends Message {
-    /**
-     * Construct a new undo message.
-     *
-     * @param transaction - The transaction object
-     */
-    constructor(transaction: Datastore.Transaction) {
-      super('undo');
-      this.transaction = transaction;
-    }
-
-    /**
-     * The patch object.
-     */
-    readonly transaction: Datastore.Transaction;
-  }
-
-  /**
-   * A message class for `'redo'` messages.
-   */
-  export
-  class RedoMessage extends Message {
-    /**
-     * Construct a new redo message.
-     *
-     * @param transaction - The transaction object
-     */
-    constructor(transaction: Datastore.Transaction) {
-      super('redo');
-      this.transaction = transaction;
-    }
-
-    /**
-     * The patch object.
-     */
-    readonly transaction: Datastore.Transaction;
-  }
 }
