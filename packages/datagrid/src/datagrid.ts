@@ -1336,110 +1336,110 @@ class DataGrid extends Widget {
       return;
     }
 
-   // Coerce the selections to an array.
-   let selections = toArray(selectionModel.selections());
+    // Coerce the selections to an array.
+    let selections = toArray(selectionModel.selections());
 
-   // Bail early if there are no selections.
-   if (selections.length === 0) {
-     return;
-   }
+    // Bail early if there are no selections.
+    if (selections.length === 0) {
+      return;
+    }
 
-   // Alert that multiple selections cannot be copied.
-   if (selections.length > 1) {
-     alert('Cannot copy multiple grid selections.');
-     return;
-   }
+    // Alert that multiple selections cannot be copied.
+    if (selections.length > 1) {
+      alert('Cannot copy multiple grid selections.');
+      return;
+    }
 
-   // Fetch the model counts.
-   let br = dataModel.rowCount('body');
-   let bc = dataModel.columnCount('body');
+    // Fetch the model counts.
+    let br = dataModel.rowCount('body');
+    let bc = dataModel.columnCount('body');
 
-   // Bail early if there is nothing to copy.
-   if (br === 0 || bc === 0) {
-     return;
-   }
+    // Bail early if there is nothing to copy.
+    if (br === 0 || bc === 0) {
+      return;
+    }
 
-   // Unpack the selection.
-   let { r1, c1, r2, c2 } = selections[0];
+    // Unpack the selection.
+    let { r1, c1, r2, c2 } = selections[0];
 
-   // Clamp the selection to the model bounds.
-   r1 = Math.max(0, Math.min(r1, br - 1));
-   c1 = Math.max(0, Math.min(c1, bc - 1));
-   r2 = Math.max(0, Math.min(r2, br - 1));
-   c2 = Math.max(0, Math.min(c2, bc - 1));
+    // Clamp the selection to the model bounds.
+    r1 = Math.max(0, Math.min(r1, br - 1));
+    c1 = Math.max(0, Math.min(c1, bc - 1));
+    r2 = Math.max(0, Math.min(r2, br - 1));
+    c2 = Math.max(0, Math.min(c2, bc - 1));
 
-   // Ensure the bounds are well ordered.
-   if (r2 < r1) {
-     let rt = r1;
-     r1 = r2;
-     r2 = rt;
-   }
-   if (c2 < c1) {
-     let ct = c1;
-     c1 = c2;
-     c2 = ct;
-   }
+    // Ensure the bounds are well ordered.
+    if (r2 < r1) {
+      let rt = r1;
+      r1 = r2;
+      r2 = rt;
+    }
+    if (c2 < c1) {
+      let ct = c1;
+      c1 = c2;
+      c2 = ct;
+    }
 
-   // Unpack the copy config.
-   let separator = this._copyConfig.separator;
-   let format = this._copyConfig.format;
-   let includedHeaders = this._copyConfig.includedHeaders;
-   let cellCountWarningLimit = this._copyConfig.cellCountWarningLimit;
+    // Unpack the copy config.
+    let separator = this._copyConfig.separator;
+    let format = this._copyConfig.format;
+    let includedHeaders = this._copyConfig.includedHeaders;
+    let cellCountWarningLimit = this._copyConfig.cellCountWarningLimit;
 
-   // Compute the number of cells to be copied.
-   let count: number;
-   switch (includedHeaders) {
-   case 'none':
-     count = Private.countBody({ dataModel, r1, c1, r2, c2 });
-     break;
-   case 'row':
-     count = Private.countRows({ dataModel, r1, c1, r2, c2 });
-     break;
-   case 'column':
-     count = Private.countColumns({ dataModel, r1, c1, r2, c2 });
-     break;
-   case 'all':
-     count = Private.countAll({ dataModel, r1, c1, r2, c2 });
-     break;
-   default:
-     throw 'unreachable';
-   }
+    // Compute the number of cells to be copied.
+    let count: number;
+    switch (includedHeaders) {
+    case 'none':
+      count = Private.countBody({ dataModel, r1, c1, r2, c2 });
+      break;
+    case 'row':
+      count = Private.countRows({ dataModel, r1, c1, r2, c2 });
+      break;
+    case 'column':
+      count = Private.countColumns({ dataModel, r1, c1, r2, c2 });
+      break;
+    case 'all':
+      count = Private.countAll({ dataModel, r1, c1, r2, c2 });
+      break;
+    default:
+      throw 'unreachable';
+    }
 
-   // Allow the user to cancel a large copy request.
-   if (count > cellCountWarningLimit) {
-     let msg = `Copying ${count} cells may take a while. Continue?`;
-     if (!window.confirm(msg)) {
-       return;
-     }
-   }
+    // Allow the user to cancel a large copy request.
+    if (count > cellCountWarningLimit) {
+      let msg = `Copying ${count} cells may take a while. Continue?`;
+      if (!window.confirm(msg)) {
+        return;
+      }
+    }
 
-   // Fetch the formatted values.
-   let values: string[][];
-   switch (includedHeaders) {
-   case 'none':
-     values = Private.fetchBody({ dataModel, format, r1, c1, r2, c2 });
-     break;
-   case 'row':
-     values = Private.fetchRows({ dataModel, format, r1, c1, r2, c2 });
-     break;
-   case 'column':
-     values = Private.fetchColumns({ dataModel, format, r1, c1, r2, c2 });
-     break;
-   case 'all':
-     values = Private.fetchAll({ dataModel, format, r1, c1, r2, c2 });
-     break;
-   default:
-     throw 'unreachable';
-   }
+    // Fetch the formatted values.
+    let values: string[][];
+    switch (includedHeaders) {
+    case 'none':
+      values = Private.fetchBody({ dataModel, format, r1, c1, r2, c2 });
+      break;
+    case 'row':
+      values = Private.fetchRows({ dataModel, format, r1, c1, r2, c2 });
+      break;
+    case 'column':
+      values = Private.fetchColumns({ dataModel, format, r1, c1, r2, c2 });
+      break;
+    case 'all':
+      values = Private.fetchAll({ dataModel, format, r1, c1, r2, c2 });
+      break;
+    default:
+      throw 'unreachable';
+    }
 
-   // Convert the values into lines.
-   let lines = values.map(cells => cells.join(separator));
+    // Convert the values into lines.
+    let lines = values.map(cells => cells.join(separator));
 
-   // Convert the lines into text.
-   let text = lines.join('\n');
+    // Convert the lines into text.
+    let text = lines.join('\n');
 
-   // Copy the text to the clipboard.
-   ClipboardExt.copyText(text);
+    // Copy the text to the clipboard.
+    ClipboardExt.copyText(text);
   }
 
   /**
