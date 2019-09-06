@@ -5,7 +5,6 @@
 |
 | The full license is in the file LICENSE, distributed with this software.
 |----------------------------------------------------------------------------*/
-
 import {
   ArrayExt
 } from '@phosphor/algorithm';
@@ -114,6 +113,8 @@ async function init(): Promise<void> {
     selector: 'body',
     command: 'redo'
   });
+  // Add an event listener to the document. Mark it as capturing so that we can
+  // intercept undo/redo handling for the CodeMirror instances.
   document.addEventListener('keydown', (event: KeyboardEvent) => {
     commands.processKeydownEvent(event);
   }, true);

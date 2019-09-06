@@ -186,10 +186,13 @@ namespace WSAdapterMessages {
   /**
    * Create a WSServerAdapter message.
    *
-   * @param {string} msgType The message type.
-   * @param {ReadonlyJSONObject} content The content of the message.
-   * @param {string} parentId An optional id of the parent of this message.
-   * @returns {ITransactionBroadcastMessage} The created message.
+   * @param msgType - The message type.
+   *
+   * @param content - The content of the message.
+   *
+   * @param parentId - An optional id of the parent of this message.
+   *
+   * @returns The created message.
    */
   export
   function createMessage<T extends IMessage>(
@@ -213,10 +216,13 @@ namespace WSAdapterMessages {
   /**
    * Create a WSServerAdapter message.
    *
-   * @param {string} msgType The message type.
-   * @param {ReadonlyJSONObject} content The content of the message.
-   * @param {string} parentId The id of the parent of this reply.
-   * @returns {ITransactionBroadcastMessage} The created message.
+   * @param msgType - The message type.
+   *
+   * @param content - The content of the message.
+   *
+   * @param parentId - The id of the parent of this reply.
+   *
+   * @returns The created message.
    */
   export
   function createReply<T extends IBaseReplyMessage>(
@@ -236,7 +242,7 @@ namespace WSAdapterMessages {
   /**
    * Create a `'storeid-request'` message.
    *
-   * @returns {IStoreIdMessageRequest} The created message.
+   * @returns The created message.
    */
   export
   function createStoreIdRequestMessage(): IStoreIdMessageRequest {
@@ -246,9 +252,11 @@ namespace WSAdapterMessages {
   /**
    * Create a `'storeid-reply'` message.
    * 
-   * @param {string} parentId The id of the parent of this reply.
-   * @param {string} storeId The assigned storeId.
-   * @returns {IStoreIdMessageReply} The created message.
+   * @param parentId - The id of the parent of this reply.
+   *
+   * @param storeId - The assigned storeId.
+   *
+   * @returns The created message.
    */
   export
   function createStoreIdReplyMessage(parentId: string, storeId: number): IStoreIdMessageReply {
@@ -268,9 +276,11 @@ namespace WSAdapterMessages {
   /**
    * Create a `'undo-reply'` message.
    * 
-   * @param {string} parentId The id of the parent of this reply.
-   * @param {string} storeId The assigned storeId.
-   * @returns {IStoreIdMessageReply} The created message.
+   * @param parentId - The id of the parent of this reply.
+   *
+   * @param storeId - The assigned storeId.
+   *
+   * @returns The created message.
    */
   export
   function createUndoReplyMessage(parentId: string, transaction: Datastore.Transaction): IUndoMessageReply {
@@ -280,7 +290,7 @@ namespace WSAdapterMessages {
   /**
    * Create a `'redo-request'` message.
    *
-   * @returns {IRedoMessageRequest} The created message.
+   * @returns The created message.
    */
   export
   function createRedoRequestMessage(id: string): IRedoMessageRequest {
@@ -290,9 +300,11 @@ namespace WSAdapterMessages {
   /**
    * Create a `'undo-reply'` message.
    * 
-   * @param {string} parentId The id of the parent of this reply.
-   * @param {string} storeId The assigned storeId.
-   * @returns {IStoreIdMessageReply} The created message.
+   * @param parentId - The id of the parent of this reply.
+   *
+   * @param storeId - The assigned storeId.
+   *
+   * @returns The created message.
    */
   export
   function createRedoReplyMessage(parentId: string, transaction: Datastore.Transaction): IRedoMessageReply {
@@ -302,8 +314,9 @@ namespace WSAdapterMessages {
   /**
    * Create a `'transaction-broadcast'` message.
    *
-   * @param {Datastore.Transaction[]} transactions The transactions of the message.
-   * @returns {ITransactionBroadcastMessage} The created message.
+   * @param transactions - The transactions of the message.
+   *
+   * @returns The created message.
    */
   export
   function createTransactionBroadcastMessage(transactions: Datastore.Transaction[]): ITransactionBroadcastMessage {
@@ -315,9 +328,11 @@ namespace WSAdapterMessages {
   /**
    * Create a `'transaction-ack'` message.
    *
-   * @param {string} parentId The id of the parent of this reply.
-   * @param {string[]} transactionIds The ids of the acknowledged transactions.
-   * @returns {ITransactionBroadcastMessage} The created message.
+   * @param parentId - The id of the parent of this reply.
+   *
+   * @param transactionIds - The ids of the acknowledged transactions.
+   *
+   * @returns The created message.
    */
   export
   function createTransactionAckMessage(parentId: string, transactionIds: string[]): ITransactionAckMessage {
@@ -338,18 +353,26 @@ namespace WSAdapterMessages {
   /**
    * Create a `'history-reply'` message.
    *
-   * @param {string} parentId The id of the parent of this reply.
-   * @param {History} history The history of this reply.
-   * @returns {IHistoryRequestMessage} The created message.
+   * @param parentId - The id of the parent of this reply.
+   *
+   * @param history - The history of this reply.
+   *
+   * @returns The created message.
    */
   export
   function createHistoryReplyMessage(parentId: string, history: TransactionHistory): IHistoryReplyMessage {
     return createReply('history-reply', { history } as any, parentId);
   }
 
+  /**
+   * A type guard for whether a given message is a reply message.
+   *
+   * @param message - the message in question
+   *
+   * @returns whether the message is a reply message.
+   */
   export
   function isReply(message: IMessage): message is IReplyMessage {
     return message.parentId !== undefined;
   }
-
 }

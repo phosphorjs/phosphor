@@ -21,7 +21,7 @@ import * as path from 'path';
  * Create a HTTP static file server for serving the static
  * assets to the user.
  */
-let pageServer = http.createServer((request, response) => {
+let server = http.createServer((request, response) => {
   console.log('request starting...');
 
   let filePath = '.' + request.url;
@@ -52,18 +52,14 @@ let pageServer = http.createServer((request, response) => {
   });
 });
 
-/**
- * Start the page server.
- */
-pageServer.listen(8000, () => {
+// Start the server
+server.listen(8000, () => {
   console.info(new Date() + ' Page server is listening on port 8000');
 });
 
-/**
- * Create a websocket server for the patch server.
- */
+// Create a websocket server for communication of transactions.
 let wsServer = new WebSocketServer({
-  httpServer: pageServer,
+  httpServer: server,
   autoAcceptConnections: false,
   maxReceivedFrameSize: 10 * 1024 * 1024,
   maxReceivedMessageSize: 1000 * 1024 * 1024
@@ -125,6 +121,13 @@ class TransactionStore {
 
   /**
    * Handle a transaction undo.
+   *
+   * @param transactionId - the ID of the transaction to undo.
+   *
+   * #### Notes
+   * This has no effect on the content of the transaction. Instead, it
+   * updates its undo count in the internal cemetery, determining whether
+   * the transaction should be applied at any given time.
    */
   undo(transactionId: string): void {
     let count = this._cemetery[transactionId];
@@ -137,6 +140,13 @@ class TransactionStore {
 
   /**
    * Handle a transaction redo.
+   *
+   * @param transactionId - the ID of the transaction to redo.
+   *
+   * #### Notes
+   * This has no effect on the content of the transaction. Instead, it
+   * updates its undo count in the internal cemetery, determining whether
+   * the transaction should be applied at any given time.
    */
  redo(transactionId: string): void {
     let count = this._cemetery[transactionId];
@@ -191,6 +201,7 @@ wsServer.on('request', request => {
 
   // Handle a message from a collaborator.
   connection.on('message', message => {
+    // Only allow UTF-8 encoded messages.
     if (message.type !== 'utf8') {
       console.debug('Received non-UTF8 Message: ' + message);
       return;
@@ -199,6 +210,7 @@ wsServer.on('request', request => {
     console.debug(`Received message of type: ${data.msgType}`);
     let reply: WSAdapterMessages.IReplyMessage;
     let transaction: Datastore.Transaction | undefined;
+
     switch (data.msgType) {
       case 'storeid-request':
         connections[idCounter] = connection;
@@ -219,6 +231,7 @@ wsServer.on('request', request => {
         let propMsgStr = JSON.stringify(
           WSAdapterMessages.createTransactionBroadcastMessage(propagate)
         );
+        // Broadcast the transaction to all the other collaborators
         for (let storeId in connections) {
           let c = connections[storeId];
           if (c !== connection) {
@@ -233,11 +246,14 @@ wsServer.on('request', request => {
         if (!transaction) {
           return;
         }
+        // Mark the transaction as undone in the datastore, which decrements
+        // its count in the cemetery.
         store.undo(transaction.id);
         reply = WSAdapterMessages.createUndoReplyMessage(
           data.msgId,
           transaction
         );
+        // Broadcast the undo reply to all the other collaborators
         for (let storeId in connections) {
           let c = connections[storeId];
           if (c !== connection) {
@@ -251,11 +267,14 @@ wsServer.on('request', request => {
         if (!transaction) {
           return;
         }
+        // Mark the transaction as redone in the datastore, which increments
+        // its count in the cemetery.
         store.redo(transaction.id);
         reply = WSAdapterMessages.createRedoReplyMessage(
           data.msgId,
           transaction
         );
+        // Broadcast the undo reply to all the other collaborators
         for (let storeId in connections) {
           let c = connections[storeId];
           if (c !== connection) {

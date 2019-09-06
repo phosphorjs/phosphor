@@ -5,7 +5,6 @@
 |
 | The full license is in the file LICENSE, distributed with this software.
 |----------------------------------------------------------------------------*/
-
 import {
   PromiseDelegate
 } from '@phosphor/coreutils';
@@ -31,6 +30,8 @@ export
 class WSAdapter extends WSConnection<WSAdapterMessages.IMessage, WSAdapterMessages.IMessage> implements IServerAdapter {
   /**
    * Create a new websocket adapter for a datastore.
+   *
+   * @param wsFactory - a factory function wich creates a websocket connection.
    */
   constructor(wsFactory: WSConnection.WSFactory) {
     super(wsFactory);
@@ -145,14 +146,6 @@ class WSAdapter extends WSConnection<WSAdapterMessages.IMessage, WSAdapterMessag
    * @returns Whether the message was handled.
    */
   protected handleMessage(msg: WSAdapterMessages.IMessage): boolean {
-    try {
-      // TODO: Write a validator?
-      // validate.validateMessage(msg);
-    } catch (error) {
-      console.error(`Invalid message: ${error.message}`);
-      return false;
-    }
-
     if (WSAdapterMessages.isReply(msg)) {
       let delegate = this._delegates.get(msg.parentId!);
       if (delegate) {
@@ -189,6 +182,8 @@ class WSAdapter extends WSConnection<WSAdapterMessages.IMessage, WSAdapterMessag
 
   /**
    * Handle an undo message received over the websocket.
+   *
+   * @param transaction - the transaction which should be undone.
    */
   private _handleUndo(transaction: Datastore.Transaction): void {
     if (this.onUndo) {
@@ -198,6 +193,8 @@ class WSAdapter extends WSConnection<WSAdapterMessages.IMessage, WSAdapterMessag
 
   /**
    * Handle an undo message received over the websocket.
+   *
+   * @param transaction - the transaction which should be redone.
    */
   private _handleRedo(transaction: Datastore.Transaction): void {
     if (this.onRedo) {
@@ -207,6 +204,8 @@ class WSAdapter extends WSConnection<WSAdapterMessages.IMessage, WSAdapterMessag
 
   /**
    * Process transactions received over the websocket.
+   *
+   * @param transactions - the transactions which should be applied.
    */
   private _handleTransactions(transactions: ReadonlyArray<Datastore.Transaction>): void {
     if (this.isDisposed) {
@@ -221,6 +220,10 @@ class WSAdapter extends WSConnection<WSAdapterMessages.IMessage, WSAdapterMessag
 
   /**
    * Send a message to the server and resolve the reply message.
+   *
+   * @param msg: the message to send to the server.
+   *
+   * @returns a the reply from the server.
    */
   private _requestMessageReply(msg: WSAdapterMessages.IStoreIdMessageRequest): Promise<WSAdapterMessages.IStoreIdMessageReply>
   private _requestMessageReply(msg: WSAdapterMessages.IUndoMessageRequest): Promise<WSAdapterMessages.IUndoMessageReply>

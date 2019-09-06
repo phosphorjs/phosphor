@@ -92,7 +92,7 @@ export class CodeMirrorEditor extends Panel {
     let id = this._undo.pop();
     if (id) {
       this._redo.push(id);
-      this._store.undo(id);
+      void this._store.undo(id);
     }
   }
 
@@ -104,7 +104,7 @@ export class CodeMirrorEditor extends Panel {
     let id = this._redo.pop();
     if (id) {
       this._undo.push(id);
-      this._store.redo(id);
+      void this._store.redo(id);
     }
   }
 
@@ -117,6 +117,8 @@ export class CodeMirrorEditor extends Panel {
 
   /**
    * A message handler invoked on a `'resize'` message.
+   *
+   * @param msg - the resize message.
    */
   protected onResize(msg: Widget.ResizeMessage): void {
     if (msg.width >= 0 && msg.height >= 0) {
@@ -160,6 +162,10 @@ export class CodeMirrorEditor extends Panel {
 
   /**
    * Handle a local editor change.
+   *
+   * @param doc - the CodeMirror doc which changed.
+   *
+   * @param change - the CodeMirror change payload.
    */
   private _onEditorChange(doc: CodeMirror.Doc, change: CodeMirror.EditorChange): void {
     // If this was a remote change, we are done.
@@ -189,6 +195,10 @@ export class CodeMirrorEditor extends Panel {
 
   /**
    * Respond to a change on the datastore.
+   *
+   * @param store - the datastore which changed.
+   *
+   * @param change - the change content.
    */
   private _onDatastoreChange(store: Datastore, change: Datastore.IChangedArgs): void {
     // Ignore changes that have already been applied locally.

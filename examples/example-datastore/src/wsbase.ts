@@ -59,9 +59,8 @@ abstract class WSConnection<T extends JSONValue, U extends JSONValue> implements
    * Send a message over the websocket.
    *
    * @param msg - The JSON value to send.
-   *
    */
-  protected sendMessage(msg: T) {
+  protected sendMessage(msg: T): void {
     if (!this._ws || this._wsStopped) {
       throw new Error('Web socket not connected');
     } else {
@@ -108,12 +107,20 @@ abstract class WSConnection<T extends JSONValue, U extends JSONValue> implements
   }
 
 
-  private _onWSOpen(evt: Event): void {
+  /**
+   * Handle the websocket opening.
+   */
+  private _onWSOpen(): void {
     this._wsStopped = false;
     this._ready.resolve(undefined);
   }
 
-  private _onWSMessage(evt: MessageEvent) {
+  /**
+   * Handle a message from the websocket.
+   *
+   * @param evt - the message received.
+   */
+  private _onWSMessage(evt: MessageEvent): void {
     if (this._wsStopped) {
       // If the socket is being closed, ignore any messages
       return;
@@ -132,7 +139,10 @@ abstract class WSConnection<T extends JSONValue, U extends JSONValue> implements
     }
   }
 
-  private _onWSClose(evt: Event) {
+  /**
+   * Handle the websocket closing.
+   */
+  private _onWSClose() {
     if (this._wsStopped || !this._ws) {
       return;
     }
