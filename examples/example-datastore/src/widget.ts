@@ -6,7 +6,7 @@
 | The full license is in the file LICENSE, distributed with this software.
 |----------------------------------------------------------------------------*/
 import {
-  JSONExt, JSONObject, UUID
+  JSONExt, JSONObject
 } from '@phosphor/coreutils';
 
 import {
@@ -31,8 +31,6 @@ import {
  * The time that a collaborator name hover persists.
  */
 const HOVER_TIMEOUT = 1000;
-
-const ID = UUID.uuid4();
 
 /**
  * A schema for an editor model. Currently contains two fields, the current
@@ -204,7 +202,7 @@ export class CodeMirrorEditor extends Panel {
       this._editor.setSize(null, null);
     }
     this._editor.refresh();
-    this._cleanSelections();
+    this._clearHover();
   }
 
   /**
@@ -338,10 +336,10 @@ export class CodeMirrorEditor extends Panel {
     if(c && c[this._record] && c[this._record].collaborators) {
       let record = store.get(EDITOR_SCHEMA).get(this._record)!;
       let { collaborators } = record;
-      this._cleanSelections();
+      this._clearAllSelections();
       let ids = Object.keys(collaborators);
       for (let id of ids) {
-        if (id !== ID) {
+        if (id !== COLLABORATOR_ID) {
           this._markSelections(id, collaborators[id]!);
         }
       }
@@ -351,11 +349,21 @@ export class CodeMirrorEditor extends Panel {
   /**
    * Clean currently shown selections for the editor.
    */
-  private _cleanSelections() {
+  private _clearAllSelections() {
+    this._clearHover();
     let ids = Object.keys(this._selectionMarkers);
-    if (this._hover) {
-      this._hover.dispose();
-      this._hover = null;
+    for (let id of ids) {
+      this._clearSelections(id);
+    }
+  }
+
+  /**
+   * Clean currently shown selections for a given collaborator.
+   */
+  private _clearSelections(id: string) {
+    let ids = Object.keys(this._selectionMarkers);
+    if (this._hoverId === id) {
+      this._clearHover();
     }
     for (let id of ids) {
       let markers = this._selectionMarkers[id]!;
@@ -406,6 +414,19 @@ export class CodeMirrorEditor extends Panel {
       }
     });
     this._selectionMarkers[uuid] = markers;
+    // Set a timer to auto-dispose of these markers, cleaning up after
+    // collaborators who might have left. We choose a random time between one
+    // and two minutes to avoid racing between active collaborators.
+    if (this._timers[uuid]) {
+      window.clearTimeout(this._timers[uuid]);
+    }
+    this._timers[uuid] = window.setTimeout(
+      () => {
+        this._clearSelections(uuid);
+        delete this._timers[uuid];
+      },
+      60*1000*(1 + Math.random())
+    );
   }
 
   /**
@@ -419,10 +440,7 @@ export class CodeMirrorEditor extends Panel {
     caret.className = 'collaborator-cursor';
     caret.style.borderBottomColor = color;
     caret.onmouseenter = () => {
-      if (this._hover) {
-        this._hover.dispose();
-        this._hover = null;
-      }
+      this._clearHover();
       let rect = caret.getBoundingClientRect();
       // Construct and place the hover box.
       let hover = document.createElement('div');
@@ -438,13 +456,11 @@ export class CodeMirrorEditor extends Panel {
       };
       hover.onmouseleave = () => {
         hoverTimeout = window.setTimeout(() => {
-          if (this._hover) {
-            this._hover.dispose();
-            this._hover = null;
-          }
+          this._clearHover();
         }, HOVER_TIMEOUT);
       };
       document.body.appendChild(hover);
+      this._hoverId = uuid;
       this._hover = new DisposableDelegate(() => {
         window.clearTimeout(hoverTimeout);
         document.body.removeChild(hover);
@@ -452,14 +468,21 @@ export class CodeMirrorEditor extends Panel {
     };
     caret.onmouseleave = () => {
       hoverTimeout = window.setTimeout(() => {
-        if (this._hover) {
-          this._hover.dispose();
-          this._hover = null;
-        }
+        this._clearHover();
       }, HOVER_TIMEOUT);
     };
-
     return caret;
+  }
+
+  /**
+   * If there is currently a hover box of a collaborator name, clear it.
+   */
+  private _clearHover(): void {
+    this._hoverId = '';
+    if (this._hover) {
+      this._hover.dispose();
+      this._hover = null;
+    }
   }
 
   /**
@@ -471,11 +494,13 @@ export class CodeMirrorEditor extends Panel {
   private _editor: CodeMirror.Editor;
   private _editorWidget: Widget;
   private _hover: IDisposable | null = null;
+  private _hoverId: string = '';
   private _record: string;
   private _selectionMarkers: {
     [key: string]: CodeMirror.TextMarker[] | undefined;
   } = {};
   private _store: Datastore;
+  private _timers: { [key: string]: number } = {};
   private _toolbarHeight = 24;
   private _undo: string[] = [];
   private _redo: string[] = [];
