@@ -23,6 +23,10 @@ import {
 
 import * as CodeMirror from 'codemirror';
 
+import {
+  COLLABORATOR_ID, COLLABORATOR_COLOR, COLLABORATOR_NAME
+} from './collaborator';
+
 /**
  * The time that a collaborator name hover persists.
  */
@@ -275,13 +279,13 @@ export class CodeMirrorEditor extends Panel {
     // triggering of cursor activity due to other collaborator actions.
     if (this._editor.hasFocus()) {
       let selections = Private.getSelections(this._editor.getDoc());
-      let name = 'Anonymous';
-      let color = '#00FF00';
+      let name = COLLABORATOR_NAME;
+      let color = COLLABORATOR_COLOR;
       let editorTable = this._store.get(EDITOR_SCHEMA);
       this._store.beginTransaction();
       editorTable.update({
         [this._record]: { collaborators: {
-          [ID]: { name, color, selections } }
+          [COLLABORATOR_ID]: { name, color, selections } }
         }
       });
       this._store.endTransaction();
