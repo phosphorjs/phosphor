@@ -19,6 +19,11 @@ import {
 
 import * as CodeMirror from 'codemirror';
 
+/**
+ * The time that a collaborator name hover persists.
+ */
+const HOVER_TIMEOUT = 1000;
+
 const ID = UUID.uuid4();
 
 /**
@@ -362,8 +367,9 @@ export class CodeMirrorEditor extends Panel {
       this._cleanSelections();
       let ids = Object.keys(collaborators);
       for (let id of ids) {
-        let collaborator = collaborators[id]!;
-        this._markSelections(id, collaborator);
+        if (id !== ID) {
+          this._markSelections(id, collaborators[id]!);
+        }
       }
     }
   }
@@ -394,9 +400,10 @@ export class CodeMirrorEditor extends Panel {
 
     // If we are marking selections corresponding to an active hover,
     // remove it.
-    // if (uuid === this._hoverId) {
-    //this._clearHover();
-    //}
+    if (uuid === this._hoverId) {
+      this._clearHover();
+    }
+
     // Style each selection for the uuid.
     collaborator.selections.forEach(selection => {
       // Only render selections if the start is not equal to the end.
@@ -418,15 +425,69 @@ export class CodeMirrorEditor extends Panel {
         let markerOptions = this._toTextMarkerOptions(collaborator);
         markers.push(doc.markText(anchor, head, markerOptions));
       } else {
-        // let caret = this._getCaret(collaborator);
-        // markers.push(
-        //  doc.setBookmark(this._toCodeMirrorPosition(selection.end), {
-        //    widget: caret
-        //  })
-        //);
+        let caret = this._getCaret(uuid, collaborator);
+         markers.push(
+          doc.setBookmark(this._toCodeMirrorPosition(selection.end), {
+            widget: caret
+          })
+        );
       }
     });
     this._selectionMarkers[uuid] = markers;
+  }
+
+  /**
+   * Construct a caret element representing the position
+   * of a collaborator's cursor.
+   */
+  private _getCaret(uuid: string, collaborator: ICollaboratorState): HTMLElement {
+    let { name, color } = collaborator;
+    let caret: HTMLElement = document.createElement('span');
+    caret.className = 'collaborator-cursor';
+    caret.style.borderBottomColor = color;
+    caret.onmouseenter = () => {
+      this._clearHover();
+      this._hoverId = uuid;
+      let rect = caret.getBoundingClientRect();
+      // Construct and place the hover box.
+      let hover = document.createElement('div');
+      hover.className = 'collaborator-cursor-hover';
+      hover.style.left = String(rect.left) + 'px';
+      hover.style.top = String(rect.bottom) + 'px';
+      hover.textContent = name;
+      hover.style.backgroundColor = color;
+
+      // If the user mouses over the hover, take over the timer.
+      hover.onmouseenter = () => {
+        window.clearTimeout(this._hoverTimeout);
+      };
+      hover.onmouseleave = () => {
+        this._hoverTimeout = window.setTimeout(() => {
+          this._clearHover();
+        }, HOVER_TIMEOUT);
+      };
+      this._caretHover = hover;
+      document.body.appendChild(hover);
+    };
+    caret.onmouseleave = () => {
+      this._hoverTimeout = window.setTimeout(() => {
+        this._clearHover();
+      }, HOVER_TIMEOUT);
+    };
+    return caret;
+  }
+
+  /**
+   * Clear the hover for a caret, due to things like
+   * scrolling, resizing, deactivation, etc, where
+   * the position is no longer valid.
+   */
+  private _clearHover(): void {
+    if (this._caretHover) {
+      window.clearTimeout(this._hoverTimeout);
+      document.body.removeChild(this._caretHover);
+      this._caretHover = null;
+    }
   }
 
   /**
@@ -458,11 +519,14 @@ export class CodeMirrorEditor extends Panel {
   /**
    * Converts an editor selection to a code mirror selection.
    */
+  private _caretHover: HTMLElement | null;
   private _changeGuard: boolean = false;
   private _check: HTMLInputElement;
   private _checkWidget: Widget;
   private _editor: CodeMirror.Editor;
   private _editorWidget: Widget;
+  private _hoverTimeout: number;
+  private _hoverId: string;
   private _record: string;
   private _selectionMarkers: {
     [key: string]: CodeMirror.TextMarker[] | undefined;
