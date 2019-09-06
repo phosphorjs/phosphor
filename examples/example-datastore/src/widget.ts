@@ -191,6 +191,26 @@ export class CodeMirrorEditor extends Panel {
   }
 
   /**
+   * Handle the DOM events for the editor.
+   *
+   * @param event - The DOM event sent to the editor.
+   *
+   * #### Notes
+   * This method implements the DOM `EventListener` interface and is
+   * called in response to events on the editor's DOM node. It should
+   * not be called directly by user code.
+   */
+  handleEvent(event: Event): void {
+    switch (event.type) {
+      case 'scroll':
+        this._clearHover();
+        break;
+      default:
+        break;
+    }
+  }
+
+  /**
    * A message handler invoked on a `'resize'` message.
    *
    * @param msg - the resize message.
@@ -210,6 +230,20 @@ export class CodeMirrorEditor extends Panel {
    */
   protected onAfterShow() {
     this._editor.refresh();
+  }
+
+  /**
+   * Handle a `after-attach` message for the editor.
+   */
+  protected onAfterAttach() {
+    this.node.addEventListener('scroll', this, true);
+  }
+
+  /**
+   * Handle a `before-detach` message for the editor.
+   */
+  protected onBeforeDetach() {
+    this.node.removeEventListener('scroll', this, true);
   }
 
   /**
