@@ -6,6 +6,10 @@
 | The full license is in the file LICENSE, distributed with this software.
 |----------------------------------------------------------------------------*/
 import {
+  JSONExt, JSONObject, UUID
+} from '@phosphor/coreutils';
+
+import {
   Fields, Datastore, RegisterField, TextField
 } from '@phosphor/datastore';
 
@@ -14,6 +18,8 @@ import {
 } from '@phosphor/widgets';
 
 import * as CodeMirror from 'codemirror';
+
+const ID = UUID.uuid4();
 
 /**
  * A schema for an editor model. Currently contains two fields, the current
@@ -24,9 +30,60 @@ export const EDITOR_SCHEMA = {
   id: 'editor',
   fields: {
     readOnly: Fields.Boolean(),
-    text: new TextField()
+    text: Fields.Text(),
+    collaborators: Fields.Map<ICollaboratorState>()
   }
 };
+
+/**
+ * An interface representing a location in an editor.
+ */
+export interface IPosition extends JSONObject {
+  /**
+   * The cursor line number.
+   */
+  readonly line: number;
+
+  /**
+   * The cursor column number.
+   */
+  readonly column: number;
+}
+
+/**
+ * An interface representing a user selection.
+ */
+export interface ITextSelection extends JSONObject {
+  /**
+   * The start of the selection.
+   */
+  readonly start: IPosition;
+
+  /**
+   * The end of the selection.
+   */
+  readonly end: IPosition;
+}
+
+/**
+ * An interface representing collaborator cursor state.
+ */
+export interface ICollaboratorState extends JSONObject {
+  /**
+   * The current cursor selections.
+   */
+  selections: ITextSelection[];
+
+  /**
+   * A display name for the collaborator.
+   */
+  name: string;
+
+  /**
+   * A display color for the collaborator.
+   */
+  color: string;
+}
 
 /**
  * A widget which hosts a collaborative CodeMirror text editor.
@@ -79,6 +136,13 @@ export class CodeMirrorEditor extends Panel {
       this._editor.getDoc(),
       'beforeChange',
       this._onEditorChange.bind(this)
+    );
+
+    // Listen for changes to the editor cursors.
+    CodeMirror.on(
+      this._editor,
+      'cursorActivity',
+      this._onCursorActivity.bind(this)
     );
 
     // Listen for changes on the datastore.
@@ -194,6 +258,63 @@ export class CodeMirrorEditor extends Panel {
   }
 
   /**
+   * Respond to a change in the editor cursors.
+   */
+  private _onCursorActivity(): void {
+    // Only add selections inf the editor has focus. This avoids unwanted
+    // triggering of cursor activity due to other collaborator actions.
+    if (this._editor.hasFocus()) {
+      let selections = this._getSelections();
+      let name = 'Anonymous';
+      let color = '#00FF00';
+      let editorTable = this._store.get(EDITOR_SCHEMA);
+      this._store.beginTransaction();
+      editorTable.update({
+        [this._record]: { collaborators: {
+          [ID]: { name, color, selections } }
+        }
+      });
+      this._store.endTransaction();
+    }
+  }
+
+  /**
+   * Gets the selections for all the cursors, never `null` or empty.
+   */
+  private _getSelections(): ITextSelection[] {
+    let doc = this._editor.getDoc();
+    let selections = doc.listSelections();
+    if (selections.length > 0) {
+      return selections.map(selection => this._toSelection(selection));
+    }
+    let cursor = doc.getCursor();
+    let selection = this._toSelection({ anchor: cursor, head: cursor });
+    return [selection];
+  }
+
+  /**
+   * Converts a code mirror selection to an editor selection.
+   */
+  private _toSelection(
+    selection: { anchor: CodeMirror.Position, head: CodeMirror.Position }
+  ): ITextSelection {
+    return {
+      start: this._toPosition(selection.anchor),
+      end: this._toPosition(selection.head)
+    };
+  }
+
+  /**
+   * Convert a code mirror position to an editor position.
+   */
+  private _toPosition(position: CodeMirror.Position): IPosition {
+    return {
+      line: position.line,
+      column: position.ch
+    };
+  }
+
+  /**
    * Respond to a change on the datastore.
    *
    * @param store - the datastore which changed.
@@ -234,14 +355,118 @@ export class CodeMirrorEditor extends Panel {
       this._editor.setOption('readOnly', this._check.checked);
       this._changeGuard = false;
     }
+
+    if(c && c[this._record] && c[this._record].collaborators) {
+      let record = store.get(EDITOR_SCHEMA).get(this._record)!;
+      let { collaborators } = record;
+      this._cleanSelections();
+      let ids = Object.keys(collaborators);
+      for (let id of ids) {
+        let collaborator = collaborators[id]!;
+        this._markSelections(id, collaborator);
+      }
+    }
   }
 
+  /**
+   * Clean selections for the given uuid.
+   */
+  private _cleanSelections() {
+    let ids = Object.keys(this._selectionMarkers);
+    for (let id of ids) {
+      let markers = this._selectionMarkers[id]!;
+      markers.forEach(marker => {
+        marker.clear();
+      });
+      delete this._selectionMarkers[id];
+    }
+  }
+
+  /**
+   * Marks selections.
+   */
+  private _markSelections(
+    uuid: string,
+    collaborator: ICollaboratorState
+  ) {
+    let markers: CodeMirror.TextMarker[] = [];
+    let doc = this._editor.getDoc();
+
+    // If we are marking selections corresponding to an active hover,
+    // remove it.
+    // if (uuid === this._hoverId) {
+    //this._clearHover();
+    //}
+    // Style each selection for the uuid.
+    collaborator.selections.forEach(selection => {
+      // Only render selections if the start is not equal to the end.
+      // In that case, we don't need to render the cursor.
+      if (!JSONExt.deepEqual(selection.start, selection.end)) {
+        // Selections only appear to render correctly if the anchor
+        // is before the head in the document. That is, reverse selections
+        // do not appear as intended.
+        let forward: boolean =
+          selection.start.line < selection.end.line ||
+          (selection.start.line === selection.end.line &&
+            selection.start.column <= selection.end.column);
+        let anchor = this._toCodeMirrorPosition(
+          forward ? selection.start : selection.end
+        );
+        let head = this._toCodeMirrorPosition(
+          forward ? selection.end : selection.start
+        );
+        let markerOptions = this._toTextMarkerOptions(collaborator);
+        markers.push(doc.markText(anchor, head, markerOptions));
+      } else {
+        // let caret = this._getCaret(collaborator);
+        // markers.push(
+        //  doc.setBookmark(this._toCodeMirrorPosition(selection.end), {
+        //    widget: caret
+        //  })
+        //);
+      }
+    });
+    this._selectionMarkers[uuid] = markers;
+  }
+
+  /**
+   * Convert an editor position to a code mirror position.
+   */
+  private _toCodeMirrorPosition(position: IPosition) {
+    return {
+      line: position.line,
+      ch: position.column
+    };
+  }
+
+  /**
+   * Converts the selection style to a text marker options.
+   */
+  private _toTextMarkerOptions(
+    collaborator: ICollaboratorState
+  ): CodeMirror.TextMarkerOptions {
+    let r = parseInt(collaborator.color.slice(1, 3), 16);
+    let g = parseInt(collaborator.color.slice(3, 5), 16);
+    let b = parseInt(collaborator.color.slice(5, 7), 16);
+    let css = `background-color: rgba( ${r}, ${g}, ${b}, 0.15)`;
+    return {
+      title: collaborator.name,
+      css
+    };
+  }
+
+  /**
+   * Converts an editor selection to a code mirror selection.
+   */
   private _changeGuard: boolean = false;
   private _check: HTMLInputElement;
   private _checkWidget: Widget;
   private _editor: CodeMirror.Editor;
   private _editorWidget: Widget;
   private _record: string;
+  private _selectionMarkers: {
+    [key: string]: CodeMirror.TextMarker[] | undefined;
+  } = {};
   private _store: Datastore;
   private _toolbarHeight = 24;
   private _undo: string[] = [];
