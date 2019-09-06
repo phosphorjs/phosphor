@@ -14,6 +14,10 @@ import {
 } from '@phosphor/datastore';
 
 import {
+  DisposableDelegate, IDisposable
+} from '@phosphor/disposable';
+
+import {
   Panel, Widget
 } from '@phosphor/widgets';
 
@@ -196,6 +200,7 @@ export class CodeMirrorEditor extends Panel {
       this._editor.setSize(null, null);
     }
     this._editor.refresh();
+    this._cleanSelections();
   }
 
   /**
@@ -344,6 +349,10 @@ export class CodeMirrorEditor extends Panel {
    */
   private _cleanSelections() {
     let ids = Object.keys(this._selectionMarkers);
+    if (this._hover) {
+      this._hover.dispose();
+      this._hover = null;
+    }
     for (let id of ids) {
       let markers = this._selectionMarkers[id]!;
       markers.forEach(marker => {
@@ -362,12 +371,6 @@ export class CodeMirrorEditor extends Panel {
   ) {
     let markers: CodeMirror.TextMarker[] = [];
     let doc = this._editor.getDoc();
-
-    // If we are marking selections corresponding to an active hover,
-    // remove it.
-    if (uuid === this._hoverId) {
-      this._clearHover();
-    }
 
     // Style each selection for the uuid.
     collaborator.selections.forEach(selection => {
@@ -407,12 +410,15 @@ export class CodeMirrorEditor extends Panel {
    */
   private _getCaret(uuid: string, collaborator: ICollaboratorState): HTMLElement {
     let { name, color } = collaborator;
+    let hoverTimeout: number;
     let caret: HTMLElement = document.createElement('span');
     caret.className = 'collaborator-cursor';
     caret.style.borderBottomColor = color;
     caret.onmouseenter = () => {
-      this._clearHover();
-      this._hoverId = uuid;
+      if (this._hover) {
+        this._hover.dispose();
+        this._hover = null;
+      }
       let rect = caret.getBoundingClientRect();
       // Construct and place the hover box.
       let hover = document.createElement('div');
@@ -424,48 +430,43 @@ export class CodeMirrorEditor extends Panel {
 
       // If the user mouses over the hover, take over the timer.
       hover.onmouseenter = () => {
-        window.clearTimeout(this._hoverTimeout);
+        window.clearTimeout(hoverTimeout);
       };
       hover.onmouseleave = () => {
-        this._hoverTimeout = window.setTimeout(() => {
-          this._clearHover();
+        hoverTimeout = window.setTimeout(() => {
+          if (this._hover) {
+            this._hover.dispose();
+            this._hover = null;
+          }
         }, HOVER_TIMEOUT);
       };
-      this._caretHover = hover;
       document.body.appendChild(hover);
+      this._hover = new DisposableDelegate(() => {
+        window.clearTimeout(hoverTimeout);
+        document.body.removeChild(hover);
+      });
     };
     caret.onmouseleave = () => {
-      this._hoverTimeout = window.setTimeout(() => {
-        this._clearHover();
+      hoverTimeout = window.setTimeout(() => {
+        if (this._hover) {
+          this._hover.dispose();
+          this._hover = null;
+        }
       }, HOVER_TIMEOUT);
     };
-    return caret;
-  }
 
-  /**
-   * Clear the hover for a caret, due to things like
-   * scrolling, resizing, deactivation, etc, where
-   * the position is no longer valid.
-   */
-  private _clearHover(): void {
-    if (this._caretHover) {
-      window.clearTimeout(this._hoverTimeout);
-      document.body.removeChild(this._caretHover);
-      this._caretHover = null;
-    }
+    return caret;
   }
 
   /**
    * Converts an editor selection to a code mirror selection.
    */
-  private _caretHover: HTMLElement | null;
   private _changeGuard: boolean = false;
   private _check: HTMLInputElement;
   private _checkWidget: Widget;
   private _editor: CodeMirror.Editor;
   private _editorWidget: Widget;
-  private _hoverTimeout: number;
-  private _hoverId: string;
+  private _hover: IDisposable | null = null;
   private _record: string;
   private _selectionMarkers: {
     [key: string]: CodeMirror.TextMarker[] | undefined;
