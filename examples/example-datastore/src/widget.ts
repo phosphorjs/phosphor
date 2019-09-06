@@ -269,7 +269,7 @@ export class CodeMirrorEditor extends Panel {
     // Only add selections inf the editor has focus. This avoids unwanted
     // triggering of cursor activity due to other collaborator actions.
     if (this._editor.hasFocus()) {
-      let selections = this._getSelections();
+      let selections = Private.getSelections(this._editor.getDoc());
       let name = 'Anonymous';
       let color = '#00FF00';
       let editorTable = this._store.get(EDITOR_SCHEMA);
@@ -281,42 +281,6 @@ export class CodeMirrorEditor extends Panel {
       });
       this._store.endTransaction();
     }
-  }
-
-  /**
-   * Gets the selections for all the cursors, never `null` or empty.
-   */
-  private _getSelections(): ITextSelection[] {
-    let doc = this._editor.getDoc();
-    let selections = doc.listSelections();
-    if (selections.length > 0) {
-      return selections.map(selection => this._toSelection(selection));
-    }
-    let cursor = doc.getCursor();
-    let selection = this._toSelection({ anchor: cursor, head: cursor });
-    return [selection];
-  }
-
-  /**
-   * Converts a code mirror selection to an editor selection.
-   */
-  private _toSelection(
-    selection: { anchor: CodeMirror.Position, head: CodeMirror.Position }
-  ): ITextSelection {
-    return {
-      start: this._toPosition(selection.anchor),
-      end: this._toPosition(selection.head)
-    };
-  }
-
-  /**
-   * Convert a code mirror position to an editor position.
-   */
-  private _toPosition(position: CodeMirror.Position): IPosition {
-    return {
-      line: position.line,
-      column: position.ch
-    };
   }
 
   /**
@@ -361,6 +325,7 @@ export class CodeMirrorEditor extends Panel {
       this._changeGuard = false;
     }
 
+    // If the collaborator state has changed, rerender any selections.
     if(c && c[this._record] && c[this._record].collaborators) {
       let record = store.get(EDITOR_SCHEMA).get(this._record)!;
       let { collaborators } = record;
@@ -375,7 +340,7 @@ export class CodeMirrorEditor extends Panel {
   }
 
   /**
-   * Clean selections for the given uuid.
+   * Clean currently shown selections for the editor.
    */
   private _cleanSelections() {
     let ids = Object.keys(this._selectionMarkers);
@@ -416,18 +381,18 @@ export class CodeMirrorEditor extends Panel {
           selection.start.line < selection.end.line ||
           (selection.start.line === selection.end.line &&
             selection.start.column <= selection.end.column);
-        let anchor = this._toCodeMirrorPosition(
+        let anchor = Private.toCodeMirrorPosition(
           forward ? selection.start : selection.end
         );
-        let head = this._toCodeMirrorPosition(
+        let head = Private.toCodeMirrorPosition(
           forward ? selection.end : selection.start
         );
-        let markerOptions = this._toTextMarkerOptions(collaborator);
+        let markerOptions = Private.toTextMarkerOptions(collaborator);
         markers.push(doc.markText(anchor, head, markerOptions));
       } else {
         let caret = this._getCaret(uuid, collaborator);
-         markers.push(
-          doc.setBookmark(this._toCodeMirrorPosition(selection.end), {
+        markers.push(
+          doc.setBookmark(Private.toCodeMirrorPosition(selection.end), {
             widget: caret
           })
         );
@@ -491,32 +456,6 @@ export class CodeMirrorEditor extends Panel {
   }
 
   /**
-   * Convert an editor position to a code mirror position.
-   */
-  private _toCodeMirrorPosition(position: IPosition) {
-    return {
-      line: position.line,
-      ch: position.column
-    };
-  }
-
-  /**
-   * Converts the selection style to a text marker options.
-   */
-  private _toTextMarkerOptions(
-    collaborator: ICollaboratorState
-  ): CodeMirror.TextMarkerOptions {
-    let r = parseInt(collaborator.color.slice(1, 3), 16);
-    let g = parseInt(collaborator.color.slice(3, 5), 16);
-    let b = parseInt(collaborator.color.slice(5, 7), 16);
-    let css = `background-color: rgba( ${r}, ${g}, ${b}, 0.15)`;
-    return {
-      title: collaborator.name,
-      css
-    };
-  }
-
-  /**
    * Converts an editor selection to a code mirror selection.
    */
   private _caretHover: HTMLElement | null;
@@ -535,4 +474,70 @@ export class CodeMirrorEditor extends Panel {
   private _toolbarHeight = 24;
   private _undo: string[] = [];
   private _redo: string[] = [];
+}
+
+/**
+ * A namespace for module-private functionality.
+ */
+namespace Private {
+  /**
+   * Create CodeMirror text marker options for a collaborator.
+   */
+  export function toTextMarkerOptions(
+    collaborator: ICollaboratorState
+  ): CodeMirror.TextMarkerOptions {
+    let r = parseInt(collaborator.color.slice(1, 3), 16);
+    let g = parseInt(collaborator.color.slice(3, 5), 16);
+    let b = parseInt(collaborator.color.slice(5, 7), 16);
+    let css = `background-color: rgba( ${r}, ${g}, ${b}, 0.15)`;
+    return {
+      title: collaborator.name,
+      css
+    };
+  }
+
+  /**
+   * Convert an editor position to a code mirror position.
+   */
+  export function toCodeMirrorPosition(position: IPosition) {
+    return {
+      line: position.line,
+      ch: position.column
+    };
+  }
+
+  /**
+   * Converts a code mirror selection to an editor selection.
+   */
+  export function toSelection(
+    selection: { anchor: CodeMirror.Position, head: CodeMirror.Position }
+  ): ITextSelection {
+    return {
+      start: toPosition(selection.anchor),
+      end: toPosition(selection.head)
+    };
+  }
+
+  /**
+   * Convert a code mirror position to an editor position.
+   */
+  export function toPosition(position: CodeMirror.Position): IPosition {
+    return {
+      line: position.line,
+      column: position.ch
+    };
+  }
+
+  /**
+   * Gets the selections for all the cursors, never `null` or empty.
+   */
+  export function getSelections(doc: CodeMirror.Doc): ITextSelection[] {
+    let selections = doc.listSelections();
+    if (selections.length > 0) {
+      return selections.map(selection => Private.toSelection(selection));
+    }
+    let cursor = doc.getCursor();
+    let selection = Private.toSelection({ anchor: cursor, head: cursor });
+    return [selection];
+  }
 }
