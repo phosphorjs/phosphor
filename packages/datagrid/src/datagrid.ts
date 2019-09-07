@@ -77,6 +77,7 @@ class DataGrid extends Widget {
 
     // Parse the simple options.
     this._style = options.style || DataGrid.defaultStyle;
+    this._expansionMode = options.expansionMode || 'none';
     this._headerVisibility = options.headerVisibility || 'all';
     this._cellRenderers = options.cellRenderers || new RendererMap();
     this._copyConfig = options.copyConfig || DataGrid.defaultCopyConfig;
@@ -504,6 +505,29 @@ class DataGrid extends Widget {
    */
   set copyConfig(value: DataGrid.CopyConfig) {
     this._copyConfig = value;
+  }
+
+  /**
+   * Get the expansion mode for the data grid.
+   */
+  get expansionMode(): DataGrid.ExpansionMode {
+    return this._expansionMode;
+  }
+
+  /**
+   * Set the expansion mode for the data grid.
+   */
+  set expansionMode(value: DataGrid.ExpansionMode) {
+    // Bail early if the expansion mode does not change.
+    if (value === this._expansionMode) {
+      return;
+    }
+
+    // Update the internal mode.
+    this._expansionMode = value;
+
+    // Sync the viewport
+    this._syncViewport();
   }
 
   /**
@@ -1910,8 +1934,13 @@ class DataGrid extends Widget {
       return;
     }
 
+    // Fetch the expansion state.
+    let em = this._expansionMode;
+    let elr = em === 'last-row' || em === 'both';
+    let elc = em === 'last-column' || em === 'both';
+
     // Paint the right edge as needed.
-    if (this._expandLastColumn && this.pageWidth > this.bodyWidth) {
+    if (elc && this.pageWidth > this.bodyWidth) {
       let bx = this._columnSections.offsetOf(this._columnSections.count - 1);
       let x = Math.min(this.headerWidth + bx, oldWidth);
       this._paintContent(x, 0, width - x, height);
@@ -1920,7 +1949,7 @@ class DataGrid extends Widget {
     }
 
     // Paint the bottom edge as needed.
-    if (this._expandLastRow && this.pageHeight > this.bodyHeight) {
+    if (elr && this.pageHeight > this.bodyHeight) {
       let by = this._rowSections.offsetOf(this._rowSections.count - 1);
       let y = Math.min(this.headerHeight + by, oldHeight);
       this._paintContent(0, y, width, height - y);
@@ -2714,8 +2743,12 @@ class DataGrid extends Widget {
       return;
     }
 
+    // Fetch the expansion state.
+    let em = this._expansionMode;
+    let elr = em === 'last-row' || em === 'both';
+
     // If the last row needs expanding, paint from the index down.
-    if (this._expandLastRow && this.pageHeight > this.bodyHeight) {
+    if (elr && this.pageHeight > this.bodyHeight) {
       let y = this.headerHeight + this._rowSections.offsetOf(index);
       this._paintContent(0, y, vw, vh - y);
       this._paintOverlay();
@@ -2831,8 +2864,12 @@ class DataGrid extends Widget {
       return;
     }
 
+    // Fetch the expansion state.
+    let em = this._expansionMode;
+    let elc = em === 'last-column' || em === 'both';
+
     // If the last column needs expanding, paint from the index right.
-    if (this._expandLastColumn && this.pageWidth > this.bodyWidth) {
+    if (elc && this.pageWidth > this.bodyWidth) {
       let x = this.headerWidth + this._columnSections.offsetOf(index);
       this._paintContent(x, 0, vw - x, vh);
       this._paintOverlay();
@@ -3348,6 +3385,12 @@ class DataGrid extends Widget {
       return;
     }
 
+    // Fetch the geometry.
+    let bh = this.bodyHeight;
+    let bw = this.bodyWidth;
+    let ph = this.pageHeight;
+    let pw = this.pageWidth;
+
     // Get the upper and lower bounds of the dirty content area.
     let x1 = Math.max(rx, contentX);
     let y1 = Math.max(ry, contentY);
@@ -3360,12 +3403,16 @@ class DataGrid extends Widget {
     let r2 = this._rowSections.indexOf(y2 - contentY + this._scrollY);
     let c2 = this._columnSections.indexOf(x2 - contentX + this._scrollX);
 
+    // Fetch the max row and column.
+    let maxRow = this._rowSections.count - 1;
+    let maxColumn = this._columnSections.count - 1;
+
     // Handle a dirty content area larger than the cell count.
     if (r2 < 0) {
-      r2 = this._rowSections.count - 1;
+      r2 = maxRow;
     }
     if (c2 < 0) {
-      c2 = this._columnSections.count - 1;
+      c2 = maxColumn;
     }
 
     // Convert the cell bounds back to visible coordinates.
@@ -3394,24 +3441,25 @@ class DataGrid extends Widget {
       width += size;
     }
 
+    // Fetch the expansion state.
+    let em = this._expansionMode;
+    let elr = em === 'last-row' || em === 'both';
+    let elc = em === 'last-column' || em === 'both';
+
     // Adjust the geometry if the last row needs expanding.
-    if (this._expandLastRow && this.pageHeight > this.bodyHeight) {
-      if (r2 === this._rowSections.count - 1) {
-        let dh = this.pageHeight - this.bodyHeight;
-        rowSizes[rowSizes.length - 1] += dh;
-        height += dh;
-        y2 += dh;
-      }
+    if (elr && ph > bh && r2 === maxRow) {
+      let dh = this.pageHeight - this.bodyHeight;
+      rowSizes[rowSizes.length - 1] += dh;
+      height += dh;
+      y2 += dh;
     }
 
     // Adjust the geometry if the last column needs expanding.
-    if (this._expandLastColumn && this.pageWidth > this.bodyWidth) {
-      if (c2 === this._columnSections.count - 1) {
-        let dw = this.pageWidth - this.bodyWidth;
-        columnSizes[columnSizes.length - 1] += dw;
-        width += dw;
-        x2 += dw;
-      }
+    if (elc && pw > bw && c2 === maxColumn) {
+      let dw = this.pageWidth - this.bodyWidth;
+      columnSizes[columnSizes.length - 1] += dw;
+      width += dw;
+      x2 += dw;
     }
 
     // Create the paint region object.
@@ -3480,6 +3528,10 @@ class DataGrid extends Widget {
       return;
     }
 
+    // Fetch the geometry.
+    let bh = this.bodyHeight;
+    let ph = this.pageHeight;
+
     // Get the upper and lower bounds of the dirty content area.
     let x1 = rx;
     let y1 = Math.max(ry, contentY);
@@ -3492,12 +3544,16 @@ class DataGrid extends Widget {
     let r2 = this._rowSections.indexOf(y2 - contentY + this._scrollY);
     let c2 = this._rowHeaderSections.indexOf(x2);
 
+    // Fetch max row and column.
+    let maxRow = this._rowSections.count - 1;
+    let maxColumn = this._rowHeaderSections.count - 1;
+
     // Handle a dirty content area larger than the cell count.
     if (r2 < 0) {
-      r2 = this._rowSections.count - 1;
+      r2 = maxRow;
     }
     if (c2 < 0) {
-      c2 = this._rowHeaderSections.count - 1;
+      c2 = maxColumn;
     }
 
     // Convert the cell bounds back to visible coordinates.
@@ -3526,14 +3582,16 @@ class DataGrid extends Widget {
       width += size;
     }
 
+    // Fetch the expansion flags.
+    let em = this._expansionMode;
+    let elr = em === 'last-row' || em === 'both';
+
     // Adjust the geometry if the last row needs expanding.
-    if (this._expandLastRow && this.pageHeight > this.bodyHeight) {
-      if (r2 === this._rowSections.count - 1) {
-        let dh = this.pageHeight - this.bodyHeight;
-        rowSizes[rowSizes.length - 1] += dh;
-        height += dh;
-        y2 += dh;
-      }
+    if (elr && ph > bh && r2 === maxRow) {
+      let dh = this.pageHeight - this.bodyHeight;
+      rowSizes[rowSizes.length - 1] += dh;
+      height += dh;
+      y2 += dh;
     }
 
     // Create the paint region object.
@@ -3596,6 +3654,10 @@ class DataGrid extends Widget {
       return;
     }
 
+    // Fetch the geometry.
+    let bw = this.bodyWidth;
+    let pw = this.pageWidth;
+
     // Get the upper and lower bounds of the dirty content area.
     let x1 = Math.max(rx, contentX);
     let y1 = ry;
@@ -3608,12 +3670,16 @@ class DataGrid extends Widget {
     let r2 = this._columnHeaderSections.indexOf(y2);
     let c2 = this._columnSections.indexOf(x2 - contentX + this._scrollX);
 
+    // Fetch the max row and column.
+    let maxRow = this._columnHeaderSections.count - 1;
+    let maxColumn = this._columnSections.count - 1;
+
     // Handle a dirty content area larger than the cell count.
     if (r2 < 0) {
-      r2 = this._columnHeaderSections.count - 1;
+      r2 = maxRow;
     }
     if (c2 < 0) {
-      c2 = this._columnSections.count - 1;
+      c2 = maxColumn;
     }
 
     // Convert the cell bounds back to visible coordinates.
@@ -3642,14 +3708,16 @@ class DataGrid extends Widget {
       width += size;
     }
 
+    // Fetch the expansion flags.
+    let em = this._expansionMode;
+    let elc = em === 'last-column' || em === 'both';
+
     // Adjust the geometry if the last column needs expanding.
-    if (this._expandLastColumn && this.pageWidth > this.bodyWidth) {
-      if (c2 === this._columnSections.count - 1) {
-        let dw = this.pageWidth - this.bodyWidth;
-        columnSizes[columnSizes.length - 1] += dw;
-        width += dw;
-        x2 += dw;
-      }
+    if (elc && pw > bw && c2 === maxColumn) {
+      let dw = this.pageWidth - this.bodyWidth;
+      columnSizes[columnSizes.length - 1] += dw;
+      width += dw;
+      x2 += dw;
     }
 
     // Create the paint region object.
@@ -4044,14 +4112,20 @@ class DataGrid extends Widget {
     // Set the line width for the grid lines.
     this._canvasGC.lineWidth = 1;
 
+    // Fetch the geometry.
+    let bh = this.bodyHeight;
+    let ph = this.pageHeight;
+
+    // Fetch the expansion flags.
+    let em = this._expansionMode;
+    let elr = em === 'last-row' || em === 'both';
+
     // Fetch the number of grid lines to be drawn.
     let n = rgn.rowSizes.length;
 
     // Adjust the count down if the last line shouldn't be drawn.
-    if (this._expandLastRow && this.pageHeight > this.bodyHeight) {
-      if (rgn.row + n === this._rowSections.count) {
-        n -= 1;
-      }
+    if (elr && ph > bh && (rgn.row + n === this._rowSections.count)) {
+      n -= 1;
     }
 
     // Draw the horizontal grid lines.
@@ -4101,14 +4175,20 @@ class DataGrid extends Widget {
     // Set the line width for the grid lines.
     this._canvasGC.lineWidth = 1;
 
+    // Fetch the geometry.
+    let bw = this.bodyWidth;
+    let pw = this.pageWidth;
+
+    // Fetch the expansion flags.
+    let em = this._expansionMode;
+    let elc = em === 'last-column' || em === 'both';
+
     // Fetch the number of grid lines to be drawn.
     let n = rgn.columnSizes.length;
 
     // Adjust the count down if the last line shouldn't be drawn.
-    if (this._expandLastColumn && this.pageWidth > this.bodyWidth) {
-      if (rgn.column + n === this._columnSections.count) {
-        n -= 1;
-      }
+    if (elc && pw > bw && (rgn.column + n === this._columnSections.count)) {
+      n -= 1;
     }
 
     // Draw the vertical grid lines.
@@ -4180,8 +4260,11 @@ class DataGrid extends Widget {
     let ph = this.pageHeight;
     let hw = this.headerWidth;
     let hh = this.headerHeight;
-    let elr = this._expandLastRow;
-    let elc = this._expandLastColumn;
+
+    // Fetch the expansion flags.
+    let em = this._expansionMode;
+    let elr = em === 'last-row' || em === 'both';
+    let elc = em === 'last-column' || em === 'both';
 
     // Get the last visible cell of the grid.
     let r2 = this._rowSections.indexOf(sy + ph);
@@ -4327,7 +4410,10 @@ class DataGrid extends Widget {
     let hw = this.headerWidth;
     let hh = this.headerHeight;
     let rs = this._rowSections;
-    let elr = this._expandLastRow;
+
+    // Fetch the expansion flags.
+    let em = this._expansionMode;
+    let elr = em === 'last-row' || em === 'both';
 
     // Fetch the overlay gc.
     let gc = this._overlayGC;
@@ -4429,7 +4515,10 @@ class DataGrid extends Widget {
     let hw = this.headerWidth;
     let hh = this.headerHeight;
     let cs = this._columnSections;
-    let elc = this._expandLastColumn;
+
+    // Fetch the expansion flags.
+    let em = this._expansionMode;
+    let elc = em === 'last-column' || em === 'both';
 
     // Fetch the overlay gc.
     let gc = this._overlayGC;
@@ -4546,8 +4635,11 @@ class DataGrid extends Widget {
     let hh = this.headerHeight;
     let vw = this._viewportWidth;
     let vh = this._viewportHeight;
-    let elr = this._expandLastRow;
-    let elc = this._expandLastColumn;
+
+    // Fetch the expansion flags.
+    let em = this._expansionMode;
+    let elr = em === 'last-row' || em === 'both';
+    let elc = em === 'last-column' || em === 'both';
 
     // Get the cursor bounds in viewport coordinates.
     let x1 = this._columnSections.offsetOf(column) - sx + hw;
@@ -4648,11 +4740,16 @@ class DataGrid extends Widget {
     let bw = this.bodyWidth;
     let bh = this.bodyHeight;
 
+    // Fetch the expansion mode.
+    let em = this._expansionMode;
+    let elr = em === 'last-row' || em === 'both';
+    let elc = em === 'last-column' || em === 'both';
+
     // Adjust the body size for row and column expansion.
-    if (this._expandLastRow && ph > bh) {
+    if (elr && ph > bh) {
       bh = ph;
     }
-    if (this._expandLastColumn && pw > bw) {
+    if (elc && pw > bw) {
       bw = pw;
     }
 
@@ -4807,13 +4904,12 @@ class DataGrid extends Widget {
   private _dataModel: DataModel | null = null;
   private _selectionModel: SelectionModel | null = null;
 
-  private _expandLastRow = true;
-  private _expandLastColumn = true;
 
   private _style: DataGrid.Style;
   private _cellRenderers: RendererMap;
   private _defaultRenderer: CellRenderer;
   private _copyConfig: DataGrid.CopyConfig;
+  private _expansionMode: DataGrid.ExpansionMode;
   private _headerVisibility: DataGrid.HeaderVisibility;
 }
 
@@ -4999,6 +5095,12 @@ namespace DataGrid {
   type HeaderVisibility = 'all' | 'row' | 'column' | 'none';
 
   /**
+   * A type alias for the expansion mode of the data grid.
+   */
+  export
+  type ExpansionMode = 'none' | 'last-row' | 'last-column' | 'both';
+
+  /**
    * A type alias for the arguments to a copy format function.
    */
   export
@@ -5107,6 +5209,13 @@ namespace DataGrid {
      * The default is `DataGrid.defaultCopyConfig`.
      */
     copyConfig?: CopyConfig;
+
+    /**
+     * The expansion mode for the data grid.
+     *
+     * The default is `'none'`.
+     */
+    expansionMode?: ExpansionMode;
   }
 
   /**
