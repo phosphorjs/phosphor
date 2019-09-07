@@ -1898,17 +1898,8 @@ class DataGrid extends Widget {
     // Resize the canvas if needed.
     this._resizeCanvasIfNeeded(width, height);
 
-    // Compute the sizes of the dirty regions.
-    let right = width - oldWidth;
-    let bottom = height - oldHeight;
-
     // Paint the overlay immediately.
     this._paintOverlay();
-
-    // Bail early if there is no dirty region.
-    if (right <= 0 && bottom <= 0) {
-      return;
-    }
 
     // Paint the whole grid if the old size was zero.
     if (oldWidth === 0 || oldHeight === 0) {
@@ -1916,14 +1907,22 @@ class DataGrid extends Widget {
       return;
     }
 
-    // Paint the dirty region to the right, if needed.
-    if (right > 0) {
-      this._paintContent(oldWidth, 0, right, height);
+    // Paint the right edge as needed.
+    if (this._expandLastColumn && this.pageWidth > this.bodyWidth) {
+      let last = this._columnSections.count - 1;
+      let x = this._columnSections.offsetOf(last);
+      this._paintContent(x, 0, width - x, height);
+    } else if (width > oldWidth) {
+      this._paintContent(oldWidth, 0, width - oldWidth, height);
     }
 
-    // Paint the dirty region to the bottom, if needed.
-    if (bottom > 0 && width > right) {
-      this._paintContent(0, oldHeight, width - right, bottom);
+    // Paint the bottom edge as needed.
+    if (this._expandLastRow && this.pageHeight > this.bodyHeight) {
+      let last = this._rowSections.count - 1;
+      let y = this._rowSections.offsetOf(last);
+      this._paintContent(0, y, width, height - y);
+    } else if (height > oldHeight) {
+      this._paintContent(0, oldHeight, width, height - oldHeight);
     }
   }
 
@@ -2709,6 +2708,15 @@ class DataGrid extends Widget {
       return;
     }
 
+    // If the last row needs expanding, paint from the index down.
+    if (this._expandLastRow && this.pageHeight > this.bodyHeight) {
+      let y = this.headerHeight + this._rowSections.offsetOf(index);
+      this._paintContent(0, y, vw, vh - y);
+      this._paintOverlay();
+      this._syncScrollState();
+      return;
+    }
+
     // Compute the size delta.
     let delta = newSize - oldSize;
 
@@ -2813,6 +2821,15 @@ class DataGrid extends Widget {
 
     // If there is nothing to paint, sync the scroll state.
     if (!this._viewport.isVisible || vw === 0 || vh === 0) {
+      this._syncScrollState();
+      return;
+    }
+
+    // If the last column needs expanding, paint from the index right.
+    if (this._expandLastColumn && this.pageWidth > this.bodyWidth) {
+      let x = this.headerWidth + this._columnSections.offsetOf(index);
+      this._paintContent(x, 0, vw - x, vh);
+      this._paintOverlay();
       this._syncScrollState();
       return;
     }
@@ -3371,6 +3388,22 @@ class DataGrid extends Widget {
       width += size;
     }
 
+    let lr = this._rowSections.count - 1;
+    if (this._expandLastRow && r2 === lr && this.pageHeight > this.bodyHeight) {
+      let dh = this.pageHeight - this.bodyHeight;
+      rowSizes[rowSizes.length - 1] += dh + 1;
+      height += dh;
+      y2 += dh;
+    }
+
+    let lc = this._columnSections.count - 1;
+    if (this._expandLastColumn && c2 === lc && this.pageWidth > this.bodyWidth) {
+      let dw = this.pageWidth - this.bodyWidth;
+      columnSizes[columnSizes.length - 1] += dw + 1;
+      width += dw;
+      x2 += dw;
+    }
+
     // Create the paint region object.
     let rgn: Private.PaintRegion = {
       region: 'body',
@@ -3483,6 +3516,14 @@ class DataGrid extends Widget {
       width += size;
     }
 
+    let lr = this._rowSections.count - 1;
+    if (this._expandLastRow && r2 === lr && this.pageHeight > this.bodyHeight) {
+      let dh = this.pageHeight - this.bodyHeight;
+      rowSizes[rowSizes.length - 1] += dh + 1;
+      height += dh;
+      y2 += dh;
+    }
+
     // Create the paint region object.
     let rgn: Private.PaintRegion = {
       region: 'row-header',
@@ -3587,6 +3628,14 @@ class DataGrid extends Widget {
       let size = this._columnSections.sizeOf(i);
       columnSizes[i - c1] = size;
       width += size;
+    }
+
+    let lc = this._columnSections.count - 1;
+    if (this._expandLastColumn && c2 === lc && this.pageWidth > this.bodyWidth) {
+      let dw = this.pageWidth - this.bodyWidth;
+      columnSizes[columnSizes.length - 1] += dw + 1;
+      width += dw;
+      x2 += dw;
     }
 
     // Create the paint region object.
@@ -4663,6 +4712,9 @@ class DataGrid extends Widget {
 
   private _dataModel: DataModel | null = null;
   private _selectionModel: SelectionModel | null = null;
+
+  private _expandLastRow = true;
+  private _expandLastColumn = true;
 
   private _style: DataGrid.Style;
   private _cellRenderers: RendererMap;
