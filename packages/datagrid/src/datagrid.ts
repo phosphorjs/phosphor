@@ -558,6 +558,9 @@ class DataGrid extends Widget {
 
   /**
    * The virtual width of the grid body.
+   *
+   * #### Notes
+   * This does *not* account for an expanded last column.
    */
   get bodyWidth(): number {
     return this._columnSections.length;
@@ -565,6 +568,9 @@ class DataGrid extends Widget {
 
   /**
    * The virtual height of the grid body.
+   *
+   * #### Notes
+   * This does *not* account for an expanded last row.
    */
   get bodyHeight(): number {
     return this._rowSections.length;
@@ -572,6 +578,9 @@ class DataGrid extends Widget {
 
   /**
    * The virtual width of the entire grid.
+   *
+   * #### Notes
+   * This does *not* account for an expanded last column.
    */
   get totalWidth(): number {
     return this.headerWidth + this.bodyWidth;
@@ -579,6 +588,9 @@ class DataGrid extends Widget {
 
   /**
    * The virtual height of the entire grid.
+   *
+   * #### Notes
+   * This does *not* account for an expanded last row.
    */
   get totalHeight(): number {
     return this.headerHeight + this.bodyHeight;
@@ -970,15 +982,44 @@ class DataGrid extends Widget {
    * @param offset - The virtual offset of the row of interest.
    *
    * @returns The index of the row, or `-1` if the offset is out of range.
+   *
+   * #### Notes
+   * This method accounts for an expanded last row.
    */
   rowAt(region: DataModel.RowRegion, offset: number): number {
-    let index: number;
-    if (region === 'body') {
-      index = this._rowSections.indexOf(offset);
-    } else {
-      index = this._columnHeaderSections.indexOf(offset);
+    // Bail early if the offset is negative.
+    if (offset < 0) {
+      return -1;
     }
-    return index;
+
+    // Return early for the column header region.
+    if (region === 'column-header') {
+      return this._columnHeaderSections.indexOf(offset);
+    }
+
+    // Fetch the index.
+    let index = this._rowSections.indexOf(offset);
+
+    // Return early if the section is found.
+    if (index >= 0) {
+      return index;
+    }
+
+    // Fetch the geometry.
+    let bh = this.bodyHeight;
+    let ph = this.pageHeight;
+
+    // Fetch the expansion flags.
+    let em = this._expansionMode;
+    let elr = em === 'last-row' || em === 'both';
+
+    // Return the last row if the offset is in the expanded range.
+    if (elr && ph > bh && offset < (this._rowSections.length + ph - bh)) {
+      return this._rowSections.count - 1;
+    }
+
+    // Otherwise, the offset is out of range.
+    return -1;
   }
 
   /**
@@ -989,15 +1030,43 @@ class DataGrid extends Widget {
    * @param offset - The virtual offset of the column of interest.
    *
    * @returns The index of the column, or `-1` if the offset is out of range.
+   *
+   * #### Notes
+   * This method accounts for an expanded last column.
    */
-  columnAt(region: DataModel.RowRegion, offset: number): number {
-    let index: number;
-    if (region === 'body') {
-      index = this._columnSections.indexOf(offset);
-    } else {
-      index = this._rowHeaderSections.indexOf(offset);
+  columnAt(region: DataModel.ColumnRegion, offset: number): number {
+    if (offset < 0) {
+      return -1;
     }
-    return index;
+
+    // Return early for the row header region.
+    if (region === 'row-header') {
+      return this._rowHeaderSections.indexOf(offset);
+    }
+
+    // Fetch the index.
+    let index = this._columnSections.indexOf(offset);
+
+    // Return early if the section is found.
+    if (index >= 0) {
+      return index;
+    }
+
+    // Fetch the geometry.
+    let bw = this.bodyWidth;
+    let pw = this.pageWidth;
+
+    // Fetch the expansion flags.
+    let em = this._expansionMode;
+    let elc = em === 'last-column' || em === 'both';
+
+    // Return the last column if the offset is in the expanded range.
+    if (elc && pw > bw && offset < (this._columnSections.length + pw - bw)) {
+      return this._columnSections.count - 1;
+    }
+
+    // Otherwise, the offset is out of range.
+    return -1;
   }
 
   /**
@@ -1008,6 +1077,9 @@ class DataGrid extends Widget {
    * @param index - The index of the row of interest.
    *
    * @returns The offset of the row, or `-1` if the index is out of range.
+   *
+   * #### Notes
+   * An expanded last row has no effect on the return value.
    */
   rowOffset(region: DataModel.RowRegion, index: number): number {
     let offset: number;
@@ -1027,6 +1099,9 @@ class DataGrid extends Widget {
    * @param index - The index of the column of interest.
    *
    * @returns The offset of the column, or `-1` if the index is out of range.
+   *
+   * #### Notes
+   * An expanded last column has no effect on the return value.
    */
   columnOffset(region: DataModel.ColumnRegion, index: number): number {
     let offset: number;
@@ -1046,14 +1121,38 @@ class DataGrid extends Widget {
    * @param index - The index of the row of interest.
    *
    * @returns The size of the row, or `-1` if the index is out of range.
+   *
+   * #### Notes
+   * This method accounts for an expanded last row.
    */
   rowSize(region: DataModel.RowRegion, index: number): number {
-    let size: number;
-    if (region === 'body') {
-      size = this._rowSections.sizeOf(index);
-    } else {
-      size = this._columnHeaderSections.sizeOf(index);
+    // Return early for the column header region.
+    if (region === 'column-header') {
+      return this._columnHeaderSections.sizeOf(index);
     }
+
+    // Fetch the row size.
+    let size = this._rowSections.sizeOf(index);
+
+    // Bail early if the index is out of bounds.
+    if (size < 0) {
+      return size;
+    }
+
+    // Fetch the expansion flags.
+    let em = this._expansionMode;
+    let elr = em === 'last-row' || em === 'both';
+
+    // Fetch the geometry.
+    let bh = this.bodyHeight;
+    let ph = this.pageHeight;
+
+    // Adjust the size for the expanded last row if needed.
+    if (elr && ph > bh && index === (this._rowSections.count - 1)) {
+      size += ph - bh;
+    }
+
+    // Return the size.
     return size;
   }
 
@@ -1065,14 +1164,38 @@ class DataGrid extends Widget {
    * @param index - The index of the column of interest.
    *
    * @returns The size of the column, or `-1` if the index is out of range.
+   *
+   * #### Notes
+   * This method accounts for an expanded last column.
    */
   columnSize(region: DataModel.ColumnRegion, index: number): number {
-    let size: number;
-    if (region === 'body') {
-      size = this._columnSections.sizeOf(index);
-    } else {
-      size = this._rowHeaderSections.sizeOf(index);
+    // Return early for the row header region.
+    if (region === 'row-header') {
+      return this._rowHeaderSections.sizeOf(index);
     }
+
+    // Fetch the column size.
+    let size = this._columnSections.sizeOf(index);
+
+    // Bail early if the index is out of bounds.
+    if (size < 0) {
+      return size;
+    }
+
+    // Fetch the expansion flags.
+    let em = this._expansionMode;
+    let elc = em === 'last-column' || em === 'both';
+
+    // Fetch the geometry.
+    let bw = this.bodyWidth;
+    let pw = this.pageWidth;
+
+    // Adjust the size for the expanded last column if needed.
+    if (elc && pw > bw && index === (this._columnSections.count - 1)) {
+      size += pw - bw;
+    }
+
+    // Return the size.
     return size;
   }
 
@@ -1210,6 +1333,9 @@ class DataGrid extends Widget {
    *
    * @returns The hit test result, or `null` if the client
    *   position is out of bounds.
+   *
+   * #### Notes
+   * This method accounts for an expanded last row and/or column.
    */
   hitTest(clientX: number, clientY: number): DataGrid.HitTestResult {
     // Convert the mouse position into local coordinates.
@@ -1220,6 +1346,23 @@ class DataGrid extends Widget {
     let hh = this.headerHeight;
     let bw = this.bodyWidth;
     let bh = this.bodyHeight;
+    let ph = this.pageHeight;
+    let pw = this.pageWidth;
+
+    // Fetch the expansion flags.
+    let em = this._expansionMode;
+    let elr = em === 'last-row' || em === 'both';
+    let elc = em === 'last-column' || em === 'both';
+
+    // Adjust the body width for an expanded last column.
+    if (elc && pw > bw) {
+      bw = pw;
+    }
+
+    // Adjust the body height for an expanded last row.
+    if (elr && ph > bh) {
+      bh = ph;
+    }
 
     // Check for a corner header hit.
     if (lx >= 0 && lx < hw && ly >= 0 && ly < hh) {
@@ -1228,16 +1371,16 @@ class DataGrid extends Widget {
       let vy = ly;
 
       // Fetch the row and column index.
-      let row = this._columnHeaderSections.indexOf(vy);
-      let column = this._rowHeaderSections.indexOf(vx);
+      let row = this.rowAt('column-header', vy);
+      let column = this.columnAt('row-header', vx);
 
       // Fetch the cell offset position.
-      let ox = this._rowHeaderSections.offsetOf(column);
-      let oy = this._columnHeaderSections.offsetOf(row);
+      let ox = this.columnOffset('row-header', column);
+      let oy = this.rowOffset('column-header', row);
 
       // Fetch cell width and height.
-      let width = this._rowHeaderSections.sizeOf(column);
-      let height = this._columnHeaderSections.sizeOf(row);
+      let width = this.columnSize('row-header', column);
+      let height = this.rowSize('column-header', row);
 
       // Compute the leading and trailing positions.
       let x = vx - ox;
@@ -1254,16 +1397,16 @@ class DataGrid extends Widget {
       let vy = ly
 
       // Fetch the row and column index.
-      let row = this._columnHeaderSections.indexOf(vy);
-      let column = this._columnSections.indexOf(vx);
+      let row = this.rowAt('column-header', vy);
+      let column = this.columnAt('body', vx);
 
       // Fetch the cell offset position.
-      let ox = this._columnSections.offsetOf(column);
-      let oy = this._columnHeaderSections.offsetOf(row);
+      let ox = this.columnOffset('body', column);
+      let oy = this.rowOffset('column-header', row);
 
       // Fetch the cell width and height.
-      let width = this._columnSections.sizeOf(column);
-      let height = this._columnHeaderSections.sizeOf(row);
+      let width = this.columnSize('body', column);
+      let height = this.rowSize('column-header', row);
 
       // Compute the leading and trailing positions.
       let x = vx - ox;
@@ -1280,16 +1423,16 @@ class DataGrid extends Widget {
       let vy = ly + this._scrollY - hh;
 
       // Fetch the row and column index.
-      let row = this._rowSections.indexOf(vy);
-      let column = this._rowHeaderSections.indexOf(vx);
+      let row = this.rowAt('body', vy);
+      let column = this.columnAt('row-header', vx);
 
       // Fetch the cell offset position.
-      let ox = this._rowHeaderSections.offsetOf(column);
-      let oy = this._rowSections.offsetOf(row);
+      let ox = this.columnOffset('row-header', column);
+      let oy = this.rowOffset('body', row);
 
       // Fetch the cell width and height.
-      let width = this._rowHeaderSections.sizeOf(column);
-      let height = this._rowSections.sizeOf(row);
+      let width = this.columnSize('row-header', column);
+      let height = this.rowSize('body', row);
 
       // Compute the leading and trailing positions.
       let x = vx - ox;
@@ -1306,16 +1449,16 @@ class DataGrid extends Widget {
       let vy = ly + this._scrollY - hh;
 
       // Fetch the row and column index.
-      let row = this._rowSections.indexOf(vy);
-      let column = this._columnSections.indexOf(vx);
+      let row = this.rowAt('body', vy);
+      let column = this.columnAt('body', vx);
 
       // Fetch the cell offset position.
-      let ox = this._columnSections.offsetOf(column);
-      let oy = this._rowSections.offsetOf(row);
+      let ox = this.columnOffset('body', column);
+      let oy = this.rowOffset('body', row);
 
       // Fetch the cell width and height.
-      let width = this._columnSections.sizeOf(column);
-      let height = this._rowSections.sizeOf(row);
+      let width = this.columnSize('body', column);
+      let height = this.rowSize('body', row);
 
       // Compute the part coordinates.
       let x = vx - ox;
@@ -4903,7 +5046,6 @@ class DataGrid extends Widget {
 
   private _dataModel: DataModel | null = null;
   private _selectionModel: SelectionModel | null = null;
-
 
   private _style: DataGrid.Style;
   private _cellRenderers: RendererMap;
