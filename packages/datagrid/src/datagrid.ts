@@ -83,7 +83,7 @@ class DataGrid extends Widget {
     this._copyConfig = options.copyConfig || DataGrid.defaultCopyConfig;
     this._defaultRenderer = options.defaultRenderer || new TextRenderer();
 
-    // Connect to the renderer map changed signal
+    // Connect to the renderer map changed signal.
     this._cellRenderers.changed.connect(this._onRenderersChanged, this);
 
     // Parse the default sizes.
@@ -4548,7 +4548,7 @@ class DataGrid extends Widget {
 
     // Fetch common geometry.
     let sy = this._scrollY;
-    let bh = this.bodyHeight
+    let bh = this.bodyHeight;
     let ph = this.pageHeight;
     let hw = this.headerWidth;
     let hh = this.headerHeight;
