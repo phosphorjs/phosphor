@@ -3190,13 +3190,16 @@ class DataGrid extends Widget {
     this._blitContent(this._canvas, sx, sy, sw, sh, dx, dy);
 
     // Repaint the header section if needed.
-    if (newSize > 0) {``
+    if (newSize > 0) {
       this._paintContent(offset, 0, newSize, vh);
     }
 
-    // Paint the trailing space if needed.
-    if (delta < 0) {
-      console.log('trailing', vw + delta, -delta);
+    // Paint the trailing space as needed.
+    if (this._stretchLastColumn && this.pageWidth > this.bodyWidth) {
+      let c = this._columnSections.count - 1;
+      let x = this.headerWidth + this._columnSections.offsetOf(c);
+      this._paintContent(x, 0, vw - x, vh);
+    } else if (delta < 0) {
       this._paintContent(vw + delta, 0, -delta, vh);
     }
 
@@ -3282,8 +3285,12 @@ class DataGrid extends Widget {
       this._paintContent(0, offset, vw, newSize);
     }
 
-    // Paint the trailing space if needed.
-    if (delta < 0) {
+    // Paint the trailing space as needed.
+    if (this._stretchLastRow && this.pageHeight > this.bodyHeight) {
+      let r = this._rowSections.count - 1;
+      let y = this.headerHeight + this._rowSections.offsetOf(r);
+      this._paintContent(0, y, vw, vh - y);
+    } else if (delta < 0) {
       this._paintContent(0, vh + delta, vw, -delta);
     }
 
@@ -3458,7 +3465,7 @@ class DataGrid extends Widget {
    * to the drawing methods in the correct order.
    */
   private _paintContent(rx: number, ry: number, rw: number, rh: number): void {
-    // Scale the canvas and buffe GC for the dpi ratio.
+    // Scale the canvas and buffer GC for the dpi ratio.
     this._canvasGC.setTransform(this._dpiRatio, 0, 0, this._dpiRatio, 0, 0);
     this._bufferGC.setTransform(this._dpiRatio, 0, 0, this._dpiRatio, 0, 0);
 
