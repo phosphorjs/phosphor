@@ -1189,7 +1189,7 @@ class DataGrid extends Widget {
     let bh = this.bodyHeight;
     let ph = this.pageHeight;
 
-    // Return early if no stretchin is needed.
+    // Return early if no stretching is needed.
     if (ph <= bh) {
       return size;
     }
@@ -1238,7 +1238,7 @@ class DataGrid extends Widget {
     let bw = this.bodyWidth;
     let pw = this.pageWidth;
 
-    // Return early if no stretchin is needed.
+    // Return early if no stretching is needed.
     if (pw <= bw) {
       return size;
     }
