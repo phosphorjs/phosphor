@@ -2924,15 +2924,6 @@ class DataGrid extends Widget {
       return;
     }
 
-    // If the last row is stretched, paint from the index down.
-    if (this._stretchLastRow && this.pageHeight > this.bodyHeight) {
-      let y = this.headerHeight + this._rowSections.offsetOf(index);
-      this._paintContent(0, y, vw, vh - y);
-      this._paintOverlay();
-      this._syncScrollState();
-      return;
-    }
-
     // Compute the size delta.
     let delta = newSize - oldSize;
 
@@ -2993,8 +2984,12 @@ class DataGrid extends Widget {
       this._paintContent(0, pos, vw, offset + newSize - pos);
     }
 
-    // Paint the trailing space if needed.
-    if (delta < 0) {
+    // Paint the trailing space as needed.
+    if (this._stretchLastRow && this.pageHeight > this.bodyHeight) {
+      let r = this._rowSections.count - 1;
+      let y = hh + this._rowSections.offsetOf(r);
+      this._paintContent(0, y, vw, vh - y);
+    } else if (delta < 0) {
       this._paintContent(0, vh + delta, vw, -delta);
     }
 
@@ -3037,15 +3032,6 @@ class DataGrid extends Widget {
 
     // If there is nothing to paint, sync the scroll state.
     if (!this._viewport.isVisible || vw === 0 || vh === 0) {
-      this._syncScrollState();
-      return;
-    }
-
-    // If the last column is stretched, paint from the index right.
-    if (this._stretchLastColumn && this.pageWidth > this.bodyWidth) {
-      let x = this.headerWidth + this._columnSections.offsetOf(index);
-      this._paintContent(x, 0, vw - x, vh);
-      this._paintOverlay();
       this._syncScrollState();
       return;
     }
@@ -3110,8 +3096,12 @@ class DataGrid extends Widget {
       this._paintContent(pos, 0, offset + newSize - pos, vh);
     }
 
-    // Paint the trailing space if needed.
-    if (delta < 0) {
+    // Paint the trailing space as needed.
+    if (this._stretchLastColumn && this.pageWidth > this.bodyWidth) {
+      let c = this._columnSections.count - 1;
+      let x = hw + this._columnSections.offsetOf(c);
+      this._paintContent(x, 0, vw - x, vh);
+    } else if (delta < 0) {
       this._paintContent(vw + delta, 0, -delta, vh);
     }
 
