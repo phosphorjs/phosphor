@@ -77,12 +77,14 @@ class DataGrid extends Widget {
 
     // Parse the simple options.
     this._style = options.style || DataGrid.defaultStyle;
+    this._stretchLastRow = options.stretchLastRow || false;
+    this._stretchLastColumn = options.stretchLastColumn || false;
     this._headerVisibility = options.headerVisibility || 'all';
     this._cellRenderers = options.cellRenderers || new RendererMap();
     this._copyConfig = options.copyConfig || DataGrid.defaultCopyConfig;
     this._defaultRenderer = options.defaultRenderer || new TextRenderer();
 
-    // Connect to the renderer map changed signal
+    // Connect to the renderer map changed signal.
     this._cellRenderers.changed.connect(this._onRenderersChanged, this);
 
     // Parse the default sizes.
@@ -507,6 +509,52 @@ class DataGrid extends Widget {
   }
 
   /**
+   * Get whether the last row is stretched.
+   */
+  get stretchLastRow(): boolean {
+    return this._stretchLastRow;
+  }
+
+  /**
+   * Set whether the last row is stretched.
+   */
+  set stretchLastRow(value: boolean) {
+    // Bail early if the value does not change.
+    if (value === this._stretchLastRow) {
+      return;
+    }
+
+    // Update the internal value.
+    this._stretchLastRow = value;
+
+    // Sync the viewport
+    this._syncViewport();
+  }
+
+  /**
+   * Get whether the last column is stretched.
+   */
+  get stretchLastColumn(): boolean {
+    return this._stretchLastColumn;
+  }
+
+  /**
+   * Set whether the last column is stretched.
+   */
+  set stretchLastColumn(value: boolean) {
+    // Bail early if the value does not change.
+    if (value === this._stretchLastColumn) {
+      return;
+    }
+
+    // Update the internal value.
+    this._stretchLastColumn = value;
+
+    // Sync the viewport
+    this._syncViewport();
+  }
+
+  /**
    * The virtual width of the row headers.
    */
   get headerWidth(): number {
@@ -534,6 +582,9 @@ class DataGrid extends Widget {
 
   /**
    * The virtual width of the grid body.
+   *
+   * #### Notes
+   * This does *not* account for a stretched last column.
    */
   get bodyWidth(): number {
     return this._columnSections.length;
@@ -541,6 +592,9 @@ class DataGrid extends Widget {
 
   /**
    * The virtual height of the grid body.
+   *
+   * #### Notes
+   * This does *not* account for a stretched last row.
    */
   get bodyHeight(): number {
     return this._rowSections.length;
@@ -548,6 +602,9 @@ class DataGrid extends Widget {
 
   /**
    * The virtual width of the entire grid.
+   *
+   * #### Notes
+   * This does *not* account for a stretched last column.
    */
   get totalWidth(): number {
     return this.headerWidth + this.bodyWidth;
@@ -555,6 +612,9 @@ class DataGrid extends Widget {
 
   /**
    * The virtual height of the entire grid.
+   *
+   * #### Notes
+   * This does *not* account for a stretched last row.
    */
   get totalHeight(): number {
     return this.headerHeight + this.bodyHeight;
@@ -946,15 +1006,50 @@ class DataGrid extends Widget {
    * @param offset - The virtual offset of the row of interest.
    *
    * @returns The index of the row, or `-1` if the offset is out of range.
+   *
+   * #### Notes
+   * This method accounts for a stretched last row.
    */
   rowAt(region: DataModel.RowRegion, offset: number): number {
-    let index: number;
-    if (region === 'body') {
-      index = this._rowSections.indexOf(offset);
-    } else {
-      index = this._columnHeaderSections.indexOf(offset);
+    // Bail early if the offset is negative.
+    if (offset < 0) {
+      return -1;
     }
-    return index;
+
+    // Return early for the column header region.
+    if (region === 'column-header') {
+      return this._columnHeaderSections.indexOf(offset);
+    }
+
+    // Fetch the index.
+    let index = this._rowSections.indexOf(offset);
+
+    // Return early if the section is found.
+    if (index >= 0) {
+      return index;
+    }
+
+    // Bail early if the last row is not stretched.
+    if (!this._stretchLastRow) {
+      return -1;
+    }
+
+    // Fetch the geometry.
+    let bh = this.bodyHeight;
+    let ph = this.pageHeight;
+
+    // Bail early if no row stretching is required.
+    if (ph <= bh) {
+      return -1;
+    }
+
+    // Bail early if the offset is out of bounds.
+    if (offset >= ph) {
+      return -1;
+    }
+
+    // Otherwise, return the last row.
+    return this._rowSections.count - 1;
   }
 
   /**
@@ -965,15 +1060,49 @@ class DataGrid extends Widget {
    * @param offset - The virtual offset of the column of interest.
    *
    * @returns The index of the column, or `-1` if the offset is out of range.
+   *
+   * #### Notes
+   * This method accounts for a stretched last column.
    */
-  columnAt(region: DataModel.RowRegion, offset: number): number {
-    let index: number;
-    if (region === 'body') {
-      index = this._columnSections.indexOf(offset);
-    } else {
-      index = this._rowHeaderSections.indexOf(offset);
+  columnAt(region: DataModel.ColumnRegion, offset: number): number {
+    if (offset < 0) {
+      return -1;
     }
-    return index;
+
+    // Return early for the row header region.
+    if (region === 'row-header') {
+      return this._rowHeaderSections.indexOf(offset);
+    }
+
+    // Fetch the index.
+    let index = this._columnSections.indexOf(offset);
+
+    // Return early if the section is found.
+    if (index >= 0) {
+      return index;
+    }
+
+    // Bail early if the last column is not stretched.
+    if (!this._stretchLastColumn) {
+      return -1;
+    }
+
+    // Fetch the geometry.
+    let bw = this.bodyWidth;
+    let pw = this.pageWidth;
+
+    // Bail early if no column stretching is required.
+    if (pw <= bw) {
+      return -1;
+    }
+
+    // Bail early if the offset is out of bounds.
+    if (offset >= pw) {
+      return -1;
+    }
+
+    // Otherwise, return the last column.
+    return this._columnSections.count - 1;
   }
 
   /**
@@ -984,6 +1113,9 @@ class DataGrid extends Widget {
    * @param index - The index of the row of interest.
    *
    * @returns The offset of the row, or `-1` if the index is out of range.
+   *
+   * #### Notes
+   * A stretched last row has no effect on the return value.
    */
   rowOffset(region: DataModel.RowRegion, index: number): number {
     let offset: number;
@@ -1003,6 +1135,9 @@ class DataGrid extends Widget {
    * @param index - The index of the column of interest.
    *
    * @returns The offset of the column, or `-1` if the index is out of range.
+   *
+   * #### Notes
+   * A stretched last column has no effect on the return value.
    */
   columnOffset(region: DataModel.ColumnRegion, index: number): number {
     let offset: number;
@@ -1022,15 +1157,45 @@ class DataGrid extends Widget {
    * @param index - The index of the row of interest.
    *
    * @returns The size of the row, or `-1` if the index is out of range.
+   *
+   * #### Notes
+   * This method accounts for a stretched last row.
    */
   rowSize(region: DataModel.RowRegion, index: number): number {
-    let size: number;
-    if (region === 'body') {
-      size = this._rowSections.sizeOf(index);
-    } else {
-      size = this._columnHeaderSections.sizeOf(index);
+    // Return early for the column header region.
+    if (region === 'column-header') {
+      return this._columnHeaderSections.sizeOf(index);
     }
-    return size;
+
+    // Fetch the row size.
+    let size = this._rowSections.sizeOf(index);
+
+    // Bail early if the index is out of bounds.
+    if (size < 0) {
+      return size;
+    }
+
+    // Return early if the last row is not stretched.
+    if (!this._stretchLastRow) {
+      return size;
+    }
+
+    // Return early if its not the last row.
+    if (index < this._rowSections.count - 1) {
+      return size;
+    }
+
+    // Fetch the geometry.
+    let bh = this.bodyHeight;
+    let ph = this.pageHeight;
+
+    // Return early if no stretching is needed.
+    if (ph <= bh) {
+      return size;
+    }
+
+    // Return the adjusted size.
+    return size + (ph - bh);
   }
 
   /**
@@ -1041,15 +1206,45 @@ class DataGrid extends Widget {
    * @param index - The index of the column of interest.
    *
    * @returns The size of the column, or `-1` if the index is out of range.
+   *
+   * #### Notes
+   * This method accounts for a stretched last column.
    */
   columnSize(region: DataModel.ColumnRegion, index: number): number {
-    let size: number;
-    if (region === 'body') {
-      size = this._columnSections.sizeOf(index);
-    } else {
-      size = this._rowHeaderSections.sizeOf(index);
+    // Return early for the row header region.
+    if (region === 'row-header') {
+      return this._rowHeaderSections.sizeOf(index);
     }
-    return size;
+
+    // Fetch the column size.
+    let size = this._columnSections.sizeOf(index);
+
+    // Bail early if the index is out of bounds.
+    if (size < 0) {
+      return size;
+    }
+
+    // Return early if the last column is not stretched.
+    if (!this._stretchLastColumn) {
+      return size;
+    }
+
+    // Return early if its not the last column.
+    if (index < this._columnSections.count - 1) {
+      return size;
+    }
+
+    // Fetch the geometry.
+    let bw = this.bodyWidth;
+    let pw = this.pageWidth;
+
+    // Return early if no stretching is needed.
+    if (pw <= bw) {
+      return size;
+    }
+
+    // Return the adjusted size.
+    return size + (pw - bw);
   }
 
   /**
@@ -1186,6 +1381,9 @@ class DataGrid extends Widget {
    *
    * @returns The hit test result, or `null` if the client
    *   position is out of bounds.
+   *
+   * #### Notes
+   * This method accounts for a stretched last row and/or column.
    */
   hitTest(clientX: number, clientY: number): DataGrid.HitTestResult {
     // Convert the mouse position into local coordinates.
@@ -1196,6 +1394,18 @@ class DataGrid extends Widget {
     let hh = this.headerHeight;
     let bw = this.bodyWidth;
     let bh = this.bodyHeight;
+    let ph = this.pageHeight;
+    let pw = this.pageWidth;
+
+    // Adjust the body width for a stretched last column.
+    if (this._stretchLastColumn && pw > bw) {
+      bw = pw;
+    }
+
+    // Adjust the body height for a stretched last row.
+    if (this._stretchLastRow && ph > bh) {
+      bh = ph;
+    }
 
     // Check for a corner header hit.
     if (lx >= 0 && lx < hw && ly >= 0 && ly < hh) {
@@ -1204,16 +1414,16 @@ class DataGrid extends Widget {
       let vy = ly;
 
       // Fetch the row and column index.
-      let row = this._columnHeaderSections.indexOf(vy);
-      let column = this._rowHeaderSections.indexOf(vx);
+      let row = this.rowAt('column-header', vy);
+      let column = this.columnAt('row-header', vx);
 
       // Fetch the cell offset position.
-      let ox = this._rowHeaderSections.offsetOf(column);
-      let oy = this._columnHeaderSections.offsetOf(row);
+      let ox = this.columnOffset('row-header', column);
+      let oy = this.rowOffset('column-header', row);
 
       // Fetch cell width and height.
-      let width = this._rowHeaderSections.sizeOf(column);
-      let height = this._columnHeaderSections.sizeOf(row);
+      let width = this.columnSize('row-header', column);
+      let height = this.rowSize('column-header', row);
 
       // Compute the leading and trailing positions.
       let x = vx - ox;
@@ -1230,16 +1440,16 @@ class DataGrid extends Widget {
       let vy = ly
 
       // Fetch the row and column index.
-      let row = this._columnHeaderSections.indexOf(vy);
-      let column = this._columnSections.indexOf(vx);
+      let row = this.rowAt('column-header', vy);
+      let column = this.columnAt('body', vx);
 
       // Fetch the cell offset position.
-      let ox = this._columnSections.offsetOf(column);
-      let oy = this._columnHeaderSections.offsetOf(row);
+      let ox = this.columnOffset('body', column);
+      let oy = this.rowOffset('column-header', row);
 
       // Fetch the cell width and height.
-      let width = this._columnSections.sizeOf(column);
-      let height = this._columnHeaderSections.sizeOf(row);
+      let width = this.columnSize('body', column);
+      let height = this.rowSize('column-header', row);
 
       // Compute the leading and trailing positions.
       let x = vx - ox;
@@ -1256,16 +1466,16 @@ class DataGrid extends Widget {
       let vy = ly + this._scrollY - hh;
 
       // Fetch the row and column index.
-      let row = this._rowSections.indexOf(vy);
-      let column = this._rowHeaderSections.indexOf(vx);
+      let row = this.rowAt('body', vy);
+      let column = this.columnAt('row-header', vx);
 
       // Fetch the cell offset position.
-      let ox = this._rowHeaderSections.offsetOf(column);
-      let oy = this._rowSections.offsetOf(row);
+      let ox = this.columnOffset('row-header', column);
+      let oy = this.rowOffset('body', row);
 
       // Fetch the cell width and height.
-      let width = this._rowHeaderSections.sizeOf(column);
-      let height = this._rowSections.sizeOf(row);
+      let width = this.columnSize('row-header', column);
+      let height = this.rowSize('body', row);
 
       // Compute the leading and trailing positions.
       let x = vx - ox;
@@ -1282,16 +1492,16 @@ class DataGrid extends Widget {
       let vy = ly + this._scrollY - hh;
 
       // Fetch the row and column index.
-      let row = this._rowSections.indexOf(vy);
-      let column = this._columnSections.indexOf(vx);
+      let row = this.rowAt('body', vy);
+      let column = this.columnAt('body', vx);
 
       // Fetch the cell offset position.
-      let ox = this._columnSections.offsetOf(column);
-      let oy = this._rowSections.offsetOf(row);
+      let ox = this.columnOffset('body', column);
+      let oy = this.rowOffset('body', row);
 
       // Fetch the cell width and height.
-      let width = this._columnSections.sizeOf(column);
-      let height = this._rowSections.sizeOf(row);
+      let width = this.columnSize('body', column);
+      let height = this.rowSize('body', row);
 
       // Compute the part coordinates.
       let x = vx - ox;
@@ -1898,33 +2108,38 @@ class DataGrid extends Widget {
     // Resize the canvas if needed.
     this._resizeCanvasIfNeeded(width, height);
 
-    // Compute the sizes of the dirty regions.
-    let right = width - oldWidth;
-    let bottom = height - oldHeight;
-
-    // Paint the overlay immediately.
-    this._paintOverlay();
-
-    // Bail early if there is no dirty region.
-    if (right <= 0 && bottom <= 0) {
+    // Bail early if there is nothing to paint.
+    if (width === 0 || height === 0) {
       return;
     }
 
     // Paint the whole grid if the old size was zero.
     if (oldWidth === 0 || oldHeight === 0) {
       this._paintContent(0, 0, width, height);
+      this._paintOverlay();
       return;
     }
 
-    // Paint the dirty region to the right, if needed.
-    if (right > 0) {
-      this._paintContent(oldWidth, 0, right, height);
+    // Paint the right edge as needed.
+    if (this._stretchLastColumn && this.pageWidth > this.bodyWidth) {
+      let bx = this._columnSections.offsetOf(this._columnSections.count - 1);
+      let x = Math.min(this.headerWidth + bx, oldWidth);
+      this._paintContent(x, 0, width - x, height);
+    } else if (width > oldWidth) {
+      this._paintContent(oldWidth, 0, width - oldWidth, height);
     }
 
-    // Paint the dirty region to the bottom, if needed.
-    if (bottom > 0 && width > right) {
-      this._paintContent(0, oldHeight, width - right, bottom);
+    // Paint the bottom edge as needed.
+    if (this._stretchLastRow && this.pageHeight > this.bodyHeight) {
+      let by = this._rowSections.offsetOf(this._rowSections.count - 1);
+      let y = Math.min(this.headerHeight + by, oldHeight);
+      this._paintContent(0, y, width, height - y);
+    } else if (height > oldHeight) {
+      this._paintContent(0, oldHeight, width, height - oldHeight);
     }
+
+    // Paint the overlay.
+    this._paintOverlay();
   }
 
   /**
@@ -2769,8 +2984,12 @@ class DataGrid extends Widget {
       this._paintContent(0, pos, vw, offset + newSize - pos);
     }
 
-    // Paint the trailing space if needed.
-    if (delta < 0) {
+    // Paint the trailing space as needed.
+    if (this._stretchLastRow && this.pageHeight > this.bodyHeight) {
+      let r = this._rowSections.count - 1;
+      let y = hh + this._rowSections.offsetOf(r);
+      this._paintContent(0, y, vw, vh - y);
+    } else if (delta < 0) {
       this._paintContent(0, vh + delta, vw, -delta);
     }
 
@@ -2877,8 +3096,12 @@ class DataGrid extends Widget {
       this._paintContent(pos, 0, offset + newSize - pos, vh);
     }
 
-    // Paint the trailing space if needed.
-    if (delta < 0) {
+    // Paint the trailing space as needed.
+    if (this._stretchLastColumn && this.pageWidth > this.bodyWidth) {
+      let c = this._columnSections.count - 1;
+      let x = hw + this._columnSections.offsetOf(c);
+      this._paintContent(x, 0, vw - x, vh);
+    } else if (delta < 0) {
       this._paintContent(vw + delta, 0, -delta, vh);
     }
 
@@ -2957,12 +3180,16 @@ class DataGrid extends Widget {
     this._blitContent(this._canvas, sx, sy, sw, sh, dx, dy);
 
     // Repaint the header section if needed.
-    if (newSize > 0) {``
+    if (newSize > 0) {
       this._paintContent(offset, 0, newSize, vh);
     }
 
-    // Paint the trailing space if needed.
-    if (delta < 0) {
+    // Paint the trailing space as needed.
+    if (this._stretchLastColumn && this.pageWidth > this.bodyWidth) {
+      let c = this._columnSections.count - 1;
+      let x = this.headerWidth + this._columnSections.offsetOf(c);
+      this._paintContent(x, 0, vw - x, vh);
+    } else if (delta < 0) {
       this._paintContent(vw + delta, 0, -delta, vh);
     }
 
@@ -3048,8 +3275,12 @@ class DataGrid extends Widget {
       this._paintContent(0, offset, vw, newSize);
     }
 
-    // Paint the trailing space if needed.
-    if (delta < 0) {
+    // Paint the trailing space as needed.
+    if (this._stretchLastRow && this.pageHeight > this.bodyHeight) {
+      let r = this._rowSections.count - 1;
+      let y = this.headerHeight + this._rowSections.offsetOf(r);
+      this._paintContent(0, y, vw, vh - y);
+    } else if (delta < 0) {
       this._paintContent(0, vh + delta, vw, -delta);
     }
 
@@ -3224,7 +3455,7 @@ class DataGrid extends Widget {
    * to the drawing methods in the correct order.
    */
   private _paintContent(rx: number, ry: number, rw: number, rh: number): void {
-    // Scale the canvas and buffe GC for the dpi ratio.
+    // Scale the canvas and buffer GC for the dpi ratio.
     this._canvasGC.setTransform(this._dpiRatio, 0, 0, this._dpiRatio, 0, 0);
     this._bufferGC.setTransform(this._dpiRatio, 0, 0, this._dpiRatio, 0, 0);
 
@@ -3325,6 +3556,12 @@ class DataGrid extends Widget {
       return;
     }
 
+    // Fetch the geometry.
+    let bh = this.bodyHeight;
+    let bw = this.bodyWidth;
+    let ph = this.pageHeight;
+    let pw = this.pageWidth;
+
     // Get the upper and lower bounds of the dirty content area.
     let x1 = Math.max(rx, contentX);
     let y1 = Math.max(ry, contentY);
@@ -3337,12 +3574,16 @@ class DataGrid extends Widget {
     let r2 = this._rowSections.indexOf(y2 - contentY + this._scrollY);
     let c2 = this._columnSections.indexOf(x2 - contentX + this._scrollX);
 
+    // Fetch the max row and column.
+    let maxRow = this._rowSections.count - 1;
+    let maxColumn = this._columnSections.count - 1;
+
     // Handle a dirty content area larger than the cell count.
     if (r2 < 0) {
-      r2 = this._rowSections.count - 1;
+      r2 = maxRow;
     }
     if (c2 < 0) {
-      c2 = this._columnSections.count - 1;
+      c2 = maxColumn;
     }
 
     // Convert the cell bounds back to visible coordinates.
@@ -3369,6 +3610,22 @@ class DataGrid extends Widget {
       let size = this._columnSections.sizeOf(i);
       columnSizes[i - c1] = size;
       width += size;
+    }
+
+    // Adjust the geometry if the last row is streched.
+    if (this._stretchLastRow && ph > bh && r2 === maxRow) {
+      let dh = this.pageHeight - this.bodyHeight;
+      rowSizes[rowSizes.length - 1] += dh;
+      height += dh;
+      y2 += dh;
+    }
+
+    // Adjust the geometry if the last column is streched.
+    if (this._stretchLastColumn && pw > bw && c2 === maxColumn) {
+      let dw = this.pageWidth - this.bodyWidth;
+      columnSizes[columnSizes.length - 1] += dw;
+      width += dw;
+      x2 += dw;
     }
 
     // Create the paint region object.
@@ -3437,6 +3694,10 @@ class DataGrid extends Widget {
       return;
     }
 
+    // Fetch the geometry.
+    let bh = this.bodyHeight;
+    let ph = this.pageHeight;
+
     // Get the upper and lower bounds of the dirty content area.
     let x1 = rx;
     let y1 = Math.max(ry, contentY);
@@ -3449,12 +3710,16 @@ class DataGrid extends Widget {
     let r2 = this._rowSections.indexOf(y2 - contentY + this._scrollY);
     let c2 = this._rowHeaderSections.indexOf(x2);
 
+    // Fetch max row and column.
+    let maxRow = this._rowSections.count - 1;
+    let maxColumn = this._rowHeaderSections.count - 1;
+
     // Handle a dirty content area larger than the cell count.
     if (r2 < 0) {
-      r2 = this._rowSections.count - 1;
+      r2 = maxRow;
     }
     if (c2 < 0) {
-      c2 = this._rowHeaderSections.count - 1;
+      c2 = maxColumn;
     }
 
     // Convert the cell bounds back to visible coordinates.
@@ -3481,6 +3746,14 @@ class DataGrid extends Widget {
       let size = this._rowHeaderSections.sizeOf(i);
       columnSizes[i - c1] = size;
       width += size;
+    }
+
+    // Adjust the geometry if the last row is stretched.
+    if (this._stretchLastRow && ph > bh && r2 === maxRow) {
+      let dh = this.pageHeight - this.bodyHeight;
+      rowSizes[rowSizes.length - 1] += dh;
+      height += dh;
+      y2 += dh;
     }
 
     // Create the paint region object.
@@ -3543,6 +3816,10 @@ class DataGrid extends Widget {
       return;
     }
 
+    // Fetch the geometry.
+    let bw = this.bodyWidth;
+    let pw = this.pageWidth;
+
     // Get the upper and lower bounds of the dirty content area.
     let x1 = Math.max(rx, contentX);
     let y1 = ry;
@@ -3555,12 +3832,16 @@ class DataGrid extends Widget {
     let r2 = this._columnHeaderSections.indexOf(y2);
     let c2 = this._columnSections.indexOf(x2 - contentX + this._scrollX);
 
+    // Fetch the max row and column.
+    let maxRow = this._columnHeaderSections.count - 1;
+    let maxColumn = this._columnSections.count - 1;
+
     // Handle a dirty content area larger than the cell count.
     if (r2 < 0) {
-      r2 = this._columnHeaderSections.count - 1;
+      r2 = maxRow;
     }
     if (c2 < 0) {
-      c2 = this._columnSections.count - 1;
+      c2 = maxColumn;
     }
 
     // Convert the cell bounds back to visible coordinates.
@@ -3587,6 +3868,14 @@ class DataGrid extends Widget {
       let size = this._columnSections.sizeOf(i);
       columnSizes[i - c1] = size;
       width += size;
+    }
+
+    // Adjust the geometry if the last column is stretched.
+    if (this._stretchLastColumn && pw > bw && c2 === maxColumn) {
+      let dw = this.pageWidth - this.bodyWidth;
+      columnSizes[columnSizes.length - 1] += dw;
+      width += dw;
+      x2 += dw;
     }
 
     // Create the paint region object.
@@ -3981,8 +4270,22 @@ class DataGrid extends Widget {
     // Set the line width for the grid lines.
     this._canvasGC.lineWidth = 1;
 
+    // Fetch the geometry.
+    let bh = this.bodyHeight;
+    let ph = this.pageHeight;
+
+    // Fetch the number of grid lines to be drawn.
+    let n = rgn.rowSizes.length;
+
+    // Adjust the count down if the last line shouldn't be drawn.
+    if (this._stretchLastRow && ph > bh) {
+      if (rgn.row + n === this._rowSections.count) {
+        n -= 1;
+      }
+    }
+
     // Draw the horizontal grid lines.
-    for (let y = rgn.y, j = 0, n = rgn.rowSizes.length; j < n; ++j) {
+    for (let y = rgn.y, j = 0; j < n; ++j) {
       // Fetch the size of the row.
       let size = rgn.rowSizes[j];
 
@@ -4028,8 +4331,22 @@ class DataGrid extends Widget {
     // Set the line width for the grid lines.
     this._canvasGC.lineWidth = 1;
 
+    // Fetch the geometry.
+    let bw = this.bodyWidth;
+    let pw = this.pageWidth;
+
+    // Fetch the number of grid lines to be drawn.
+    let n = rgn.columnSizes.length;
+
+    // Adjust the count down if the last line shouldn't be drawn.
+    if (this._stretchLastColumn && pw > bw) {
+      if (rgn.column + n === this._columnSections.count) {
+        n -= 1;
+      }
+    }
+
     // Draw the vertical grid lines.
-    for (let x = rgn.x, i = 0, n = rgn.columnSizes.length; i < n; ++i) {
+    for (let x = rgn.x, i = 0; i < n; ++i) {
       // Fetch the size of the column.
       let size = rgn.columnSizes[i];
 
@@ -4091,6 +4408,8 @@ class DataGrid extends Widget {
     }
 
     // Fetch the extra geometry.
+    let bw = this.bodyWidth;
+    let bh = this.bodyHeight;
     let pw = this.pageWidth;
     let ph = this.pageHeight;
     let hw = this.headerWidth;
@@ -4100,13 +4419,13 @@ class DataGrid extends Widget {
     let r2 = this._rowSections.indexOf(sy + ph);
     let c2 = this._columnSections.indexOf(sx + pw);
 
-    // Clamp the last cell if the void space is visible.
-    r2 = r2 < 0 ? (this._rowSections.count - 1) : r2;
-    c2 = c2 < 0 ? (this._columnSections.count - 1) : c2;
-
-    // Fetch the max cell.
+    // Fetch the max row and column.
     let maxRow = this._rowSections.count - 1;
-    let maxCol = this._columnSections.count - 1;
+    let maxColumn = this._columnSections.count - 1;
+
+    // Clamp the last cell if the void space is visible.
+    r2 = r2 < 0 ? maxRow : r2;
+    c2 = c2 < 0 ? maxColumn : c2;
 
     // Fetch the overlay gc.
     let gc = this._overlayGC;
@@ -4148,9 +4467,9 @@ class DataGrid extends Widget {
 
       // Clamp the cell to the model bounds.
       let sr1 = Math.max(0, Math.min(s.r1, maxRow));
-      let sc1 = Math.max(0, Math.min(s.c1, maxCol));
+      let sc1 = Math.max(0, Math.min(s.c1, maxColumn));
       let sr2 = Math.max(0, Math.min(s.r2, maxRow));
-      let sc2 = Math.max(0, Math.min(s.c2, maxCol));
+      let sc2 = Math.max(0, Math.min(s.c2, maxColumn));
 
       // Swap index order if needed.
       let tmp: number;
@@ -4170,6 +4489,16 @@ class DataGrid extends Widget {
       let y1 = this._rowSections.offsetOf(sr1) - sy + hh;
       let x2 = this._columnSections.extentOf(sc2) - sx + hw;
       let y2 = this._rowSections.extentOf(sr2) - sy + hh;
+
+      // Adjust the trailing X coordinate for column stretch.
+      if (this._stretchLastColumn && pw > bw && sc2 === maxColumn) {
+        x2 = hw + pw - 1;
+      }
+
+      // Adjust the trailing Y coordinate for row stretch.
+      if (this._stretchLastRow && ph > bh && sr2 === maxRow) {
+        y2 = hh + ph - 1;
+      }
 
       // Clamp the bounds to just outside of the clipping rect.
       x1 = Math.max(hw - 1, x1);
@@ -4225,6 +4554,7 @@ class DataGrid extends Widget {
 
     // Fetch common geometry.
     let sy = this._scrollY;
+    let bh = this.bodyHeight;
     let ph = this.pageHeight;
     let hw = this.headerWidth;
     let hh = this.headerHeight;
@@ -4250,10 +4580,13 @@ class DataGrid extends Widget {
       gc.lineWidth = 1;
     }
 
+    // Fetch the max row.
+    let maxRow = rs.count - 1;
+
     // Fetch the visible rows.
     let r1 = rs.indexOf(sy);
     let r2 = rs.indexOf(sy + ph - 1);
-    r2 = r2 < 0 ? rs.count - 1 : r2;
+    r2 = r2 < 0 ? maxRow : r2;
 
     // Iterate over the visible rows.
     for (let j = r1; j <= r2; ++j) {
@@ -4265,6 +4598,11 @@ class DataGrid extends Widget {
       // Get the dimensions of the row.
       let y = rs.offsetOf(j) - sy + hh;
       let h = rs.sizeOf(j);
+
+      // Adjust the height for row stretch.
+      if (this._stretchLastRow && ph > bh && j === maxRow) {
+        h = hh + ph - y;
+      }
 
       // Skip zero sized rows.
       if (h === 0) {
@@ -4317,6 +4655,7 @@ class DataGrid extends Widget {
 
     // Fetch common geometry.
     let sx = this._scrollX;
+    let bw = this.bodyWidth;
     let pw = this.pageWidth;
     let hw = this.headerWidth;
     let hh = this.headerHeight;
@@ -4342,10 +4681,13 @@ class DataGrid extends Widget {
       gc.lineWidth = 1;
     }
 
+    // Fetch the max column.
+    let maxCol = cs.count - 1;
+
     // Fetch the visible columns.
     let c1 = cs.indexOf(sx);
     let c2 = cs.indexOf(sx + pw - 1);
-    c2 = c2 < 0 ? cs.count - 1 : c2;
+    c2 = c2 < 0 ? maxCol : c2;
 
     // Iterate over the visible columns.
     for (let i = c1; i <= c2; ++i) {
@@ -4357,6 +4699,11 @@ class DataGrid extends Widget {
       // Get the dimensions of the column.
       let x = cs.offsetOf(i) - sx + hw;
       let w = cs.sizeOf(i);
+
+      // Adjust the width for column stretch.
+      if (this._stretchLastColumn && pw > bw && i === maxCol) {
+        w = hw + pw - x;
+      }
 
       // Skip zero sized columns.
       if (w === 0) {
@@ -4406,17 +4753,23 @@ class DataGrid extends Widget {
     let row = model.cursorRow;
     let column = model.cursorColumn;
 
+    // Fetch the max row and column.
+    let maxRow = this._rowSections.count - 1;
+    let maxColumn = this._columnSections.count - 1;
+
     // Bail early if the cursor is out of bounds.
-    if (row < 0 || row >= this._rowSections.count) {
+    if (row < 0 || row > maxRow) {
       return;
     }
-    if (column < 0 || column >= this._columnSections.count) {
+    if (column < 0 || column > maxColumn) {
       return;
     }
 
     // Fetch geometry.
     let sx = this._scrollX;
     let sy = this._scrollY;
+    let bw = this.bodyWidth;
+    let bh = this.bodyHeight;
     let pw = this.pageWidth;
     let ph = this.pageHeight;
     let hw = this.headerWidth;
@@ -4429,6 +4782,16 @@ class DataGrid extends Widget {
     let x2 = this._columnSections.extentOf(column) - sx + hw;
     let y1 = this._rowSections.offsetOf(row) - sy + hh;
     let y2 = this._rowSections.extentOf(row) - sy + hh;
+
+    // Adjust the trailing X coordinate for column stretch.
+    if (this._stretchLastColumn && pw > bw && column === maxColumn) {
+      x2 = vw - 1;
+    }
+
+    // Adjust the trailing Y coordinate for row stretch.
+    if (this._stretchLastRow && ph > bh && row === maxRow) {
+      y2 = vh - 1;
+    }
 
     // Skip zero sized cursors.
     if (x2 < x1 || y2 < y1) {
@@ -4512,6 +4875,14 @@ class DataGrid extends Widget {
     // Fetch the body width and height.
     let bw = this.bodyWidth;
     let bh = this.bodyHeight;
+
+    // Adjust the body size for row and column stretch.
+    if (this._stretchLastRow && ph > bh) {
+      bh = ph;
+    }
+    if (this._stretchLastColumn && pw > bw) {
+      bw = pw;
+    }
 
     // Fetch the gc object.
     let gc = this._overlayGC;
@@ -4663,6 +5034,9 @@ class DataGrid extends Widget {
 
   private _dataModel: DataModel | null = null;
   private _selectionModel: SelectionModel | null = null;
+
+  private _stretchLastRow: boolean;
+  private _stretchLastColumn: boolean;
 
   private _style: DataGrid.Style;
   private _cellRenderers: RendererMap;
@@ -4961,6 +5335,20 @@ namespace DataGrid {
      * The default is `DataGrid.defaultCopyConfig`.
      */
     copyConfig?: CopyConfig;
+
+    /**
+     * Whether to stretch the last row of the grid.
+     *
+     * The default is `false`.
+     */
+    stretchLastRow?: boolean;
+
+    /**
+     * Whether to stretch the last column of the grid.
+     *
+     * The default is `false`.
+     */
+    stretchLastColumn?: boolean;
   }
 
   /**
