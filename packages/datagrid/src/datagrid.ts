@@ -1383,7 +1383,7 @@ class DataGrid extends Widget {
    *   position is out of bounds.
    *
    * #### Notes
-   * This method accounts for an expanded last row and/or column.
+   * This method accounts for a stretched last row and/or column.
    */
   hitTest(clientX: number, clientY: number): DataGrid.HitTestResult {
     // Convert the mouse position into local coordinates.
@@ -2924,7 +2924,7 @@ class DataGrid extends Widget {
       return;
     }
 
-    // If the last row needs expanding, paint from the index down.
+    // If the last row is stretched, paint from the index down.
     if (this._stretchLastRow && this.pageHeight > this.bodyHeight) {
       let y = this.headerHeight + this._rowSections.offsetOf(index);
       this._paintContent(0, y, vw, vh - y);
@@ -3041,7 +3041,7 @@ class DataGrid extends Widget {
       return;
     }
 
-    // If the last column needs expanding, paint from the index right.
+    // If the last column is stretched, paint from the index right.
     if (this._stretchLastColumn && this.pageWidth > this.bodyWidth) {
       let x = this.headerWidth + this._columnSections.offsetOf(index);
       this._paintContent(x, 0, vw - x, vh);
@@ -3615,7 +3615,7 @@ class DataGrid extends Widget {
       width += size;
     }
 
-    // Adjust the geometry if the last row needs expanding.
+    // Adjust the geometry if the last row is streched.
     if (this._stretchLastRow && ph > bh && r2 === maxRow) {
       let dh = this.pageHeight - this.bodyHeight;
       rowSizes[rowSizes.length - 1] += dh;
@@ -3623,7 +3623,7 @@ class DataGrid extends Widget {
       y2 += dh;
     }
 
-    // Adjust the geometry if the last column needs expanding.
+    // Adjust the geometry if the last column is streched.
     if (this._stretchLastColumn && pw > bw && c2 === maxColumn) {
       let dw = this.pageWidth - this.bodyWidth;
       columnSizes[columnSizes.length - 1] += dw;
@@ -3751,7 +3751,7 @@ class DataGrid extends Widget {
       width += size;
     }
 
-    // Adjust the geometry if the last row needs expanding.
+    // Adjust the geometry if the last row is stretched.
     if (this._stretchLastRow && ph > bh && r2 === maxRow) {
       let dh = this.pageHeight - this.bodyHeight;
       rowSizes[rowSizes.length - 1] += dh;
@@ -3873,7 +3873,7 @@ class DataGrid extends Widget {
       width += size;
     }
 
-    // Adjust the geometry if the last column needs expanding.
+    // Adjust the geometry if the last column is stretched.
     if (this._stretchLastColumn && pw > bw && c2 === maxColumn) {
       let dw = this.pageWidth - this.bodyWidth;
       columnSizes[columnSizes.length - 1] += dw;
@@ -4493,12 +4493,12 @@ class DataGrid extends Widget {
       let x2 = this._columnSections.extentOf(sc2) - sx + hw;
       let y2 = this._rowSections.extentOf(sr2) - sy + hh;
 
-      // Adjust the trailing X coordinate for column expansion.
+      // Adjust the trailing X coordinate for column stretch.
       if (this._stretchLastColumn && pw > bw && sc2 === maxColumn) {
         x2 = hw + pw - 1;
       }
 
-      // Adjust the trailing Y coordinate for row expansion.
+      // Adjust the trailing Y coordinate for row stretch.
       if (this._stretchLastRow && ph > bh && sr2 === maxRow) {
         y2 = hh + ph - 1;
       }
@@ -4602,7 +4602,7 @@ class DataGrid extends Widget {
       let y = rs.offsetOf(j) - sy + hh;
       let h = rs.sizeOf(j);
 
-      // Adjust the height for row expansion.
+      // Adjust the height for row stretch.
       if (this._stretchLastRow && ph > bh && j === maxRow) {
         h = hh + ph - y;
       }
@@ -4703,7 +4703,7 @@ class DataGrid extends Widget {
       let x = cs.offsetOf(i) - sx + hw;
       let w = cs.sizeOf(i);
 
-      // Adjust the width for column expansion.
+      // Adjust the width for column stretch.
       if (this._stretchLastColumn && pw > bw && i === maxCol) {
         w = hw + pw - x;
       }
@@ -4786,12 +4786,12 @@ class DataGrid extends Widget {
     let y1 = this._rowSections.offsetOf(row) - sy + hh;
     let y2 = this._rowSections.extentOf(row) - sy + hh;
 
-    // Adjust the trailing X coordinate for an expanding last column.
+    // Adjust the trailing X coordinate for column stretch.
     if (this._stretchLastColumn && pw > bw && column === maxColumn) {
       x2 = vw - 1;
     }
 
-    // Adjust the trailing Y coordinate for an expanding last row.
+    // Adjust the trailing Y coordinate for row stretch.
     if (this._stretchLastRow && ph > bh && row === maxRow) {
       y2 = vh - 1;
     }
@@ -4879,7 +4879,7 @@ class DataGrid extends Widget {
     let bw = this.bodyWidth;
     let bh = this.bodyHeight;
 
-    // Adjust the body size for row and column expansion.
+    // Adjust the body size for row and column stretch.
     if (this._stretchLastRow && ph > bh) {
       bh = ph;
     }
