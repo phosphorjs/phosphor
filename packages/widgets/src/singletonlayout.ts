@@ -59,6 +59,12 @@ class SingletonLayout extends Layout {
    * of the old child to `null` before assigning a new child.
    */
   set widget(widget: Widget | null) {
+    // Remove the widget from its current parent. This is a no-op
+    // if the widget's parent is already the layout parent widget.
+    if (widget) {
+      widget.parent = this.parent;
+    }
+
     // Bail early if the widget does not change.
     if (this._widget === widget) {
       return;
