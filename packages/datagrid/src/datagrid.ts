@@ -77,7 +77,8 @@ class DataGrid extends Widget {
 
     // Parse the simple options.
     this._style = options.style || DataGrid.defaultStyle;
-    this._expansionMode = options.expansionMode || 'none';
+    this._stretchLastRow = options.stretchLastRow || false;
+    this._stretchLastColumn = options.stretchLastColumn || false;
     this._headerVisibility = options.headerVisibility || 'all';
     this._cellRenderers = options.cellRenderers || new RendererMap();
     this._copyConfig = options.copyConfig || DataGrid.defaultCopyConfig;
@@ -508,23 +509,46 @@ class DataGrid extends Widget {
   }
 
   /**
-   * Get the expansion mode for the data grid.
+   * Get whether the last row is stretched.
    */
-  get expansionMode(): DataGrid.ExpansionMode {
-    return this._expansionMode;
+  get stretchLastRow(): boolean {
+    return this._stretchLastRow;
   }
 
   /**
-   * Set the expansion mode for the data grid.
+   * Set whether the last row is stretched.
    */
-  set expansionMode(value: DataGrid.ExpansionMode) {
-    // Bail early if the expansion mode does not change.
-    if (value === this._expansionMode) {
+  set stretchLastRow(value: boolean) {
+    // Bail early if the value does not change.
+    if (value === this._stretchLastRow) {
       return;
     }
 
-    // Update the internal mode.
-    this._expansionMode = value;
+    // Update the internal value.
+    this._stretchLastRow = value;
+
+    // Sync the viewport
+    this._syncViewport();
+  }
+
+  /**
+   * Get whether the last column is stretched.
+   */
+  get stretchLastColumn(): boolean {
+    return this._stretchLastColumn;
+  }
+
+  /**
+   * Set whether the last column is stretched.
+   */
+  set stretchLastColumn(value: boolean) {
+    // Bail early if the value does not change.
+    if (value === this._stretchLastColumn) {
+      return;
+    }
+
+    // Update the internal value.
+    this._stretchLastColumn = value;
 
     // Sync the viewport
     this._syncViewport();
@@ -560,7 +584,7 @@ class DataGrid extends Widget {
    * The virtual width of the grid body.
    *
    * #### Notes
-   * This does *not* account for an expanded last column.
+   * This does *not* account for a stretched last column.
    */
   get bodyWidth(): number {
     return this._columnSections.length;
@@ -570,7 +594,7 @@ class DataGrid extends Widget {
    * The virtual height of the grid body.
    *
    * #### Notes
-   * This does *not* account for an expanded last row.
+   * This does *not* account for a stretched last row.
    */
   get bodyHeight(): number {
     return this._rowSections.length;
@@ -580,7 +604,7 @@ class DataGrid extends Widget {
    * The virtual width of the entire grid.
    *
    * #### Notes
-   * This does *not* account for an expanded last column.
+   * This does *not* account for a stretched last column.
    */
   get totalWidth(): number {
     return this.headerWidth + this.bodyWidth;
@@ -590,7 +614,7 @@ class DataGrid extends Widget {
    * The virtual height of the entire grid.
    *
    * #### Notes
-   * This does *not* account for an expanded last row.
+   * This does *not* account for a stretched last row.
    */
   get totalHeight(): number {
     return this.headerHeight + this.bodyHeight;
@@ -984,7 +1008,7 @@ class DataGrid extends Widget {
    * @returns The index of the row, or `-1` if the offset is out of range.
    *
    * #### Notes
-   * This method accounts for an expanded last row.
+   * This method accounts for a stretched last row.
    */
   rowAt(region: DataModel.RowRegion, offset: number): number {
     // Bail early if the offset is negative.
@@ -1005,21 +1029,27 @@ class DataGrid extends Widget {
       return index;
     }
 
+    // Bail early if the last row is not stretched.
+    if (!this._stretchLastRow) {
+      return -1;
+    }
+
     // Fetch the geometry.
     let bh = this.bodyHeight;
     let ph = this.pageHeight;
 
-    // Fetch the expansion flags.
-    let em = this._expansionMode;
-    let elr = em === 'last-row' || em === 'both';
-
-    // Return the last row if the offset is in the expanded range.
-    if (elr && ph > bh && offset < (this._rowSections.length + ph - bh)) {
-      return this._rowSections.count - 1;
+    // Bail early if no row stretching is required.
+    if (ph <= bh) {
+      return -1;
     }
 
-    // Otherwise, the offset is out of range.
-    return -1;
+    // Bail early if the offset is out of bounds.
+    if (offset >= ph) {
+      return -1;
+    }
+
+    // Otherwise, return the last row.
+    return this._rowSections.count - 1;
   }
 
   /**
@@ -1032,7 +1062,7 @@ class DataGrid extends Widget {
    * @returns The index of the column, or `-1` if the offset is out of range.
    *
    * #### Notes
-   * This method accounts for an expanded last column.
+   * This method accounts for a stretched last column.
    */
   columnAt(region: DataModel.ColumnRegion, offset: number): number {
     if (offset < 0) {
@@ -1052,21 +1082,27 @@ class DataGrid extends Widget {
       return index;
     }
 
+    // Bail early if the last column is not stretched.
+    if (!this._stretchLastColumn) {
+      return -1;
+    }
+
     // Fetch the geometry.
     let bw = this.bodyWidth;
     let pw = this.pageWidth;
 
-    // Fetch the expansion flags.
-    let em = this._expansionMode;
-    let elc = em === 'last-column' || em === 'both';
-
-    // Return the last column if the offset is in the expanded range.
-    if (elc && pw > bw && offset < (this._columnSections.length + pw - bw)) {
-      return this._columnSections.count - 1;
+    // Bail early if no column stretching is required.
+    if (pw <= bw) {
+      return -1;
     }
 
-    // Otherwise, the offset is out of range.
-    return -1;
+    // Bail early if the offset is out of bounds.
+    if (offset >= pw) {
+      return -1;
+    }
+
+    // Otherwise, return the last column.
+    return this._columnSections.count - 1;
   }
 
   /**
@@ -1079,7 +1115,7 @@ class DataGrid extends Widget {
    * @returns The offset of the row, or `-1` if the index is out of range.
    *
    * #### Notes
-   * An expanded last row has no effect on the return value.
+   * A stretched last row has no effect on the return value.
    */
   rowOffset(region: DataModel.RowRegion, index: number): number {
     let offset: number;
@@ -1101,7 +1137,7 @@ class DataGrid extends Widget {
    * @returns The offset of the column, or `-1` if the index is out of range.
    *
    * #### Notes
-   * An expanded last column has no effect on the return value.
+   * A stretched last column has no effect on the return value.
    */
   columnOffset(region: DataModel.ColumnRegion, index: number): number {
     let offset: number;
@@ -1123,7 +1159,7 @@ class DataGrid extends Widget {
    * @returns The size of the row, or `-1` if the index is out of range.
    *
    * #### Notes
-   * This method accounts for an expanded last row.
+   * This method accounts for a stretched last row.
    */
   rowSize(region: DataModel.RowRegion, index: number): number {
     // Return early for the column header region.
@@ -1139,21 +1175,27 @@ class DataGrid extends Widget {
       return size;
     }
 
-    // Fetch the expansion flags.
-    let em = this._expansionMode;
-    let elr = em === 'last-row' || em === 'both';
+    // Return early if the last row is not stretched.
+    if (!this._stretchLastRow) {
+      return size;
+    }
+
+    // Return early if its not the last row.
+    if (index < this._rowSections.count - 1) {
+      return size;
+    }
 
     // Fetch the geometry.
     let bh = this.bodyHeight;
     let ph = this.pageHeight;
 
-    // Adjust the size for the expanded last row if needed.
-    if (elr && ph > bh && index === (this._rowSections.count - 1)) {
-      size += ph - bh;
+    // Return early if no stretchin is needed.
+    if (ph <= bh) {
+      return size;
     }
 
-    // Return the size.
-    return size;
+    // Return the adjusted size.
+    return size + (ph - bh);
   }
 
   /**
@@ -1166,7 +1208,7 @@ class DataGrid extends Widget {
    * @returns The size of the column, or `-1` if the index is out of range.
    *
    * #### Notes
-   * This method accounts for an expanded last column.
+   * This method accounts for a stretched last column.
    */
   columnSize(region: DataModel.ColumnRegion, index: number): number {
     // Return early for the row header region.
@@ -1182,21 +1224,27 @@ class DataGrid extends Widget {
       return size;
     }
 
-    // Fetch the expansion flags.
-    let em = this._expansionMode;
-    let elc = em === 'last-column' || em === 'both';
+    // Return early if the last column is not stretched.
+    if (!this._stretchLastColumn) {
+      return size;
+    }
+
+    // Return early if its not the last column.
+    if (index < this._columnSections.count - 1) {
+      return size;
+    }
 
     // Fetch the geometry.
     let bw = this.bodyWidth;
     let pw = this.pageWidth;
 
-    // Adjust the size for the expanded last column if needed.
-    if (elc && pw > bw && index === (this._columnSections.count - 1)) {
-      size += pw - bw;
+    // Return early if no stretchin is needed.
+    if (pw <= bw) {
+      return size;
     }
 
-    // Return the size.
-    return size;
+    // Return the adjusted size.
+    return size + (pw - bw);
   }
 
   /**
@@ -1349,18 +1397,13 @@ class DataGrid extends Widget {
     let ph = this.pageHeight;
     let pw = this.pageWidth;
 
-    // Fetch the expansion flags.
-    let em = this._expansionMode;
-    let elr = em === 'last-row' || em === 'both';
-    let elc = em === 'last-column' || em === 'both';
-
-    // Adjust the body width for an expanded last column.
-    if (elc && pw > bw) {
+    // Adjust the body width for a stretched last column.
+    if (this._stretchLastColumn && pw > bw) {
       bw = pw;
     }
 
-    // Adjust the body height for an expanded last row.
-    if (elr && ph > bh) {
+    // Adjust the body height for a stretched last row.
+    if (this._stretchLastRow && ph > bh) {
       bh = ph;
     }
 
@@ -2077,13 +2120,8 @@ class DataGrid extends Widget {
       return;
     }
 
-    // Fetch the expansion state.
-    let em = this._expansionMode;
-    let elr = em === 'last-row' || em === 'both';
-    let elc = em === 'last-column' || em === 'both';
-
     // Paint the right edge as needed.
-    if (elc && this.pageWidth > this.bodyWidth) {
+    if (this._stretchLastColumn && this.pageWidth > this.bodyWidth) {
       let bx = this._columnSections.offsetOf(this._columnSections.count - 1);
       let x = Math.min(this.headerWidth + bx, oldWidth);
       this._paintContent(x, 0, width - x, height);
@@ -2092,7 +2130,7 @@ class DataGrid extends Widget {
     }
 
     // Paint the bottom edge as needed.
-    if (elr && this.pageHeight > this.bodyHeight) {
+    if (this._stretchLastRow && this.pageHeight > this.bodyHeight) {
       let by = this._rowSections.offsetOf(this._rowSections.count - 1);
       let y = Math.min(this.headerHeight + by, oldHeight);
       this._paintContent(0, y, width, height - y);
@@ -2886,12 +2924,8 @@ class DataGrid extends Widget {
       return;
     }
 
-    // Fetch the expansion state.
-    let em = this._expansionMode;
-    let elr = em === 'last-row' || em === 'both';
-
     // If the last row needs expanding, paint from the index down.
-    if (elr && this.pageHeight > this.bodyHeight) {
+    if (this._stretchLastRow && this.pageHeight > this.bodyHeight) {
       let y = this.headerHeight + this._rowSections.offsetOf(index);
       this._paintContent(0, y, vw, vh - y);
       this._paintOverlay();
@@ -3007,12 +3041,8 @@ class DataGrid extends Widget {
       return;
     }
 
-    // Fetch the expansion state.
-    let em = this._expansionMode;
-    let elc = em === 'last-column' || em === 'both';
-
     // If the last column needs expanding, paint from the index right.
-    if (elc && this.pageWidth > this.bodyWidth) {
+    if (this._stretchLastColumn && this.pageWidth > this.bodyWidth) {
       let x = this.headerWidth + this._columnSections.offsetOf(index);
       this._paintContent(x, 0, vw - x, vh);
       this._paintOverlay();
@@ -3166,6 +3196,7 @@ class DataGrid extends Widget {
 
     // Paint the trailing space if needed.
     if (delta < 0) {
+      console.log('trailing', vw + delta, -delta);
       this._paintContent(vw + delta, 0, -delta, vh);
     }
 
@@ -3584,13 +3615,8 @@ class DataGrid extends Widget {
       width += size;
     }
 
-    // Fetch the expansion state.
-    let em = this._expansionMode;
-    let elr = em === 'last-row' || em === 'both';
-    let elc = em === 'last-column' || em === 'both';
-
     // Adjust the geometry if the last row needs expanding.
-    if (elr && ph > bh && r2 === maxRow) {
+    if (this._stretchLastRow && ph > bh && r2 === maxRow) {
       let dh = this.pageHeight - this.bodyHeight;
       rowSizes[rowSizes.length - 1] += dh;
       height += dh;
@@ -3598,7 +3624,7 @@ class DataGrid extends Widget {
     }
 
     // Adjust the geometry if the last column needs expanding.
-    if (elc && pw > bw && c2 === maxColumn) {
+    if (this._stretchLastColumn && pw > bw && c2 === maxColumn) {
       let dw = this.pageWidth - this.bodyWidth;
       columnSizes[columnSizes.length - 1] += dw;
       width += dw;
@@ -3725,12 +3751,8 @@ class DataGrid extends Widget {
       width += size;
     }
 
-    // Fetch the expansion flags.
-    let em = this._expansionMode;
-    let elr = em === 'last-row' || em === 'both';
-
     // Adjust the geometry if the last row needs expanding.
-    if (elr && ph > bh && r2 === maxRow) {
+    if (this._stretchLastRow && ph > bh && r2 === maxRow) {
       let dh = this.pageHeight - this.bodyHeight;
       rowSizes[rowSizes.length - 1] += dh;
       height += dh;
@@ -3851,12 +3873,8 @@ class DataGrid extends Widget {
       width += size;
     }
 
-    // Fetch the expansion flags.
-    let em = this._expansionMode;
-    let elc = em === 'last-column' || em === 'both';
-
     // Adjust the geometry if the last column needs expanding.
-    if (elc && pw > bw && c2 === maxColumn) {
+    if (this._stretchLastColumn && pw > bw && c2 === maxColumn) {
       let dw = this.pageWidth - this.bodyWidth;
       columnSizes[columnSizes.length - 1] += dw;
       width += dw;
@@ -4259,16 +4277,14 @@ class DataGrid extends Widget {
     let bh = this.bodyHeight;
     let ph = this.pageHeight;
 
-    // Fetch the expansion flags.
-    let em = this._expansionMode;
-    let elr = em === 'last-row' || em === 'both';
-
     // Fetch the number of grid lines to be drawn.
     let n = rgn.rowSizes.length;
 
     // Adjust the count down if the last line shouldn't be drawn.
-    if (elr && ph > bh && (rgn.row + n === this._rowSections.count)) {
-      n -= 1;
+    if (this._stretchLastRow && ph > bh) {
+      if (rgn.row + n === this._rowSections.count) {
+        n -= 1;
+      }
     }
 
     // Draw the horizontal grid lines.
@@ -4322,16 +4338,14 @@ class DataGrid extends Widget {
     let bw = this.bodyWidth;
     let pw = this.pageWidth;
 
-    // Fetch the expansion flags.
-    let em = this._expansionMode;
-    let elc = em === 'last-column' || em === 'both';
-
     // Fetch the number of grid lines to be drawn.
     let n = rgn.columnSizes.length;
 
     // Adjust the count down if the last line shouldn't be drawn.
-    if (elc && pw > bw && (rgn.column + n === this._columnSections.count)) {
-      n -= 1;
+    if (this._stretchLastColumn && pw > bw) {
+      if (rgn.column + n === this._columnSections.count) {
+        n -= 1;
+      }
     }
 
     // Draw the vertical grid lines.
@@ -4403,11 +4417,6 @@ class DataGrid extends Widget {
     let ph = this.pageHeight;
     let hw = this.headerWidth;
     let hh = this.headerHeight;
-
-    // Fetch the expansion flags.
-    let em = this._expansionMode;
-    let elr = em === 'last-row' || em === 'both';
-    let elc = em === 'last-column' || em === 'both';
 
     // Get the last visible cell of the grid.
     let r2 = this._rowSections.indexOf(sy + ph);
@@ -4485,12 +4494,12 @@ class DataGrid extends Widget {
       let y2 = this._rowSections.extentOf(sr2) - sy + hh;
 
       // Adjust the trailing X coordinate for column expansion.
-      if (elc && pw > bw && sc2 === maxColumn) {
+      if (this._stretchLastColumn && pw > bw && sc2 === maxColumn) {
         x2 = hw + pw - 1;
       }
 
       // Adjust the trailing Y coordinate for row expansion.
-      if (elr && ph > bh && sr2 === maxRow) {
+      if (this._stretchLastRow && ph > bh && sr2 === maxRow) {
         y2 = hh + ph - 1;
       }
 
@@ -4554,10 +4563,6 @@ class DataGrid extends Widget {
     let hh = this.headerHeight;
     let rs = this._rowSections;
 
-    // Fetch the expansion flags.
-    let em = this._expansionMode;
-    let elr = em === 'last-row' || em === 'both';
-
     // Fetch the overlay gc.
     let gc = this._overlayGC;
 
@@ -4598,7 +4603,7 @@ class DataGrid extends Widget {
       let h = rs.sizeOf(j);
 
       // Adjust the height for row expansion.
-      if (elr && ph > bh && j === maxRow) {
+      if (this._stretchLastRow && ph > bh && j === maxRow) {
         h = hh + ph - y;
       }
 
@@ -4659,10 +4664,6 @@ class DataGrid extends Widget {
     let hh = this.headerHeight;
     let cs = this._columnSections;
 
-    // Fetch the expansion flags.
-    let em = this._expansionMode;
-    let elc = em === 'last-column' || em === 'both';
-
     // Fetch the overlay gc.
     let gc = this._overlayGC;
 
@@ -4703,7 +4704,7 @@ class DataGrid extends Widget {
       let w = cs.sizeOf(i);
 
       // Adjust the width for column expansion.
-      if (elc && pw > bw && i === maxCol) {
+      if (this._stretchLastColumn && pw > bw && i === maxCol) {
         w = hw + pw - x;
       }
 
@@ -4779,11 +4780,6 @@ class DataGrid extends Widget {
     let vw = this._viewportWidth;
     let vh = this._viewportHeight;
 
-    // Fetch the expansion flags.
-    let em = this._expansionMode;
-    let elr = em === 'last-row' || em === 'both';
-    let elc = em === 'last-column' || em === 'both';
-
     // Get the cursor bounds in viewport coordinates.
     let x1 = this._columnSections.offsetOf(column) - sx + hw;
     let x2 = this._columnSections.extentOf(column) - sx + hw;
@@ -4791,12 +4787,12 @@ class DataGrid extends Widget {
     let y2 = this._rowSections.extentOf(row) - sy + hh;
 
     // Adjust the trailing X coordinate for an expanding last column.
-    if (elc && pw > bw && column === maxColumn) {
+    if (this._stretchLastColumn && pw > bw && column === maxColumn) {
       x2 = vw - 1;
     }
 
     // Adjust the trailing Y coordinate for an expanding last row.
-    if (elr && ph > bh && row === maxRow) {
+    if (this._stretchLastRow && ph > bh && row === maxRow) {
       y2 = vh - 1;
     }
 
@@ -4883,16 +4879,11 @@ class DataGrid extends Widget {
     let bw = this.bodyWidth;
     let bh = this.bodyHeight;
 
-    // Fetch the expansion mode.
-    let em = this._expansionMode;
-    let elr = em === 'last-row' || em === 'both';
-    let elc = em === 'last-column' || em === 'both';
-
     // Adjust the body size for row and column expansion.
-    if (elr && ph > bh) {
+    if (this._stretchLastRow && ph > bh) {
       bh = ph;
     }
-    if (elc && pw > bw) {
+    if (this._stretchLastColumn && pw > bw) {
       bw = pw;
     }
 
@@ -5047,11 +5038,13 @@ class DataGrid extends Widget {
   private _dataModel: DataModel | null = null;
   private _selectionModel: SelectionModel | null = null;
 
+  private _stretchLastRow: boolean;
+  private _stretchLastColumn: boolean;
+
   private _style: DataGrid.Style;
   private _cellRenderers: RendererMap;
   private _defaultRenderer: CellRenderer;
   private _copyConfig: DataGrid.CopyConfig;
-  private _expansionMode: DataGrid.ExpansionMode;
   private _headerVisibility: DataGrid.HeaderVisibility;
 }
 
@@ -5237,12 +5230,6 @@ namespace DataGrid {
   type HeaderVisibility = 'all' | 'row' | 'column' | 'none';
 
   /**
-   * A type alias for the expansion mode of the data grid.
-   */
-  export
-  type ExpansionMode = 'none' | 'last-row' | 'last-column' | 'both';
-
-  /**
    * A type alias for the arguments to a copy format function.
    */
   export
@@ -5353,11 +5340,18 @@ namespace DataGrid {
     copyConfig?: CopyConfig;
 
     /**
-     * The expansion mode for the data grid.
+     * Whether to stretch the last row of the grid.
      *
-     * The default is `'none'`.
+     * The default is `false`.
      */
-    expansionMode?: ExpansionMode;
+    stretchLastRow?: boolean;
+
+    /**
+     * Whether to stretch the last column of the grid.
+     *
+     * The default is `false`.
+     */
+    stretchLastColumn?: boolean;
   }
 
   /**

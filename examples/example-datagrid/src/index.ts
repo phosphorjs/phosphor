@@ -256,7 +256,7 @@ function main(): void {
     selectionMode: 'column'
   });
 
-  let grid3 = new DataGrid({ expansionMode: 'both' });
+  let grid3 = new DataGrid({ stretchLastColumn: true });
   grid3.cellRenderers.set('body', {}, fgColorFloatRenderer);
   grid3.dataModel = model3;
   grid3.keyHandler = new BasicKeyHandler();
