@@ -1,5 +1,5 @@
 /*-----------------------------------------------------------------------------
-| Copyright (c) 2014-2017, PhosphorJS Contributors
+| Copyright (c) 2014-2019, PhosphorJS Contributors
 |
 | Distributed under the terms of the BSD 3-Clause License.
 |
@@ -565,7 +565,7 @@ class SectionList {
   private _count = 0;
   private _length = 0;
   private _defaultSize: number;
-  private _sections: Private.ISection[] = [];
+  private _sections: Private.Section[] = [];
 }
 
 
@@ -595,7 +595,7 @@ namespace Private {
    * An object which represents a modified section.
    */
   export
-  interface ISection {
+  type Section = {
     /**
      * The index of the section.
      *
@@ -614,13 +614,13 @@ namespace Private {
      * This is always `>= 0`.
      */
     size: number;
-  }
+  };
 
   /**
    * A comparison function for searching by offset.
    */
   export
-  function offsetCmp(section: ISection, offset: number): number {
+  function offsetCmp(section: Section, offset: number): number {
     if (offset < section.offset) {
       return 1;
     }
@@ -634,7 +634,7 @@ namespace Private {
    * A comparison function for searching by index.
    */
   export
-  function indexCmp(section: ISection, index: number): number {
+  function indexCmp(section: Section, index: number): number {
     return section.index - index;
   }
 }

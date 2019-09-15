@@ -1,5 +1,5 @@
 /*-----------------------------------------------------------------------------
-| Copyright (c) 2014-2017, PhosphorJS Contributors
+| Copyright (c) 2014-2019, PhosphorJS Contributors
 |
 | Distributed under the terms of the BSD 3-Clause License.
 |
@@ -62,22 +62,6 @@ class JSONModel extends DataModel {
   }
 
   /**
-   * Get the metadata for a column in the data model.
-   *
-   * @param region - The cell region of interest.
-   *
-   * @param column - The index of the column of interest.
-   *
-   * @returns The metadata for the column.
-   */
-  metadata(region: DataModel.CellRegion, column: number): DataModel.Metadata {
-    if (region === 'body' || region === 'column-header') {
-      return this._bodyFields[column];
-    }
-    return this._headerFields[column];
-  }
-
-  /**
    * Get the data value for a cell in the data model.
    *
    * @param region - The cell region of interest.
@@ -93,7 +77,7 @@ class JSONModel extends DataModel {
    */
   data(region: DataModel.CellRegion, row: number, column: number): any {
     // Set up the field and value variables.
-    let field: JSONModel.IField;
+    let field: JSONModel.Field;
     let value: any;
 
     // Look up the field and value for the region.
@@ -129,9 +113,27 @@ class JSONModel extends DataModel {
     return missing ? null : value;
   }
 
+  /**
+   * Get the metadata for a cell in the data model.
+   *
+   * @param region - The cell region of interest.
+   *
+   * @param row - The row index of the cell of of interest.
+   *
+   * @param column - The column index of the cell of interest.
+   *
+   * @returns The metadata for the cell.
+   */
+  metadata(region: DataModel.CellRegion, row: number, column: number): DataModel.Metadata {
+    if (region === 'body' || region === 'column-header') {
+      return this._bodyFields[column];
+    }
+    return this._headerFields[column];
+  }
+
   private _data: JSONModel.DataSource;
-  private _bodyFields: JSONModel.IField[];
-  private _headerFields: JSONModel.IField[];
+  private _bodyFields: JSONModel.Field[];
+  private _headerFields: JSONModel.Field[];
   private _missingValues: Private.MissingValuesMap | null;
 }
 
@@ -149,7 +151,7 @@ namespace JSONModel {
    * https://specs.frictionlessdata.io/table-schema/
    */
   export
-  interface IField {
+  type Field = {
     /**
      * The name of the column.
      *
@@ -180,7 +182,7 @@ namespace JSONModel {
     // description?: string;
     // constraints?: IConstraints;
     // rdfType?: string;
-  }
+  };
 
   /**
    * An object when specifies the schema for a data model.
@@ -190,13 +192,13 @@ namespace JSONModel {
    * https://specs.frictionlessdata.io/table-schema/
    */
   export
-  interface ISchema {
+  type Schema = {
     /**
      * The fields which describe the data model columns.
      *
      * Primary key fields are rendered as row header columns.
      */
-    readonly fields: IField[];
+    readonly fields: Field[];
 
     /**
      * The values to treat as "missing" data.
@@ -214,7 +216,7 @@ namespace JSONModel {
 
     // TODO want/need support for this?
     // foreignKeys?: IForeignKey[];
-  }
+  };
 
   /**
    * A type alias for a data source for a JSON data model.
@@ -236,7 +238,7 @@ namespace JSONModel {
      *
      * The schema should be treated as an immutable object.
      */
-    schema: ISchema;
+    schema: Schema;
 
     /**
      * The data source for the data model.
@@ -256,23 +258,23 @@ namespace Private {
    * An object which holds the results of splitting schema fields.
    */
   export
-  interface ISplitFieldsResult {
+  type SplitFieldsResult = {
     /**
      * The non-primary key fields to use for the grid body.
      */
-    bodyFields: JSONModel.IField[];
+    bodyFields: JSONModel.Field[];
 
     /**
      * The primary key fields to use for the grid headers.
      */
-    headerFields: JSONModel.IField[];
-  }
+    headerFields: JSONModel.Field[];
+  };
 
   /**
    * Split the schema fields into header and body fields.
    */
   export
-  function splitFields(schema: JSONModel.ISchema): ISplitFieldsResult {
+  function splitFields(schema: JSONModel.Schema): SplitFieldsResult {
     // Normalize the primary keys.
     let primaryKeys: string[];
     if (schema.primaryKey === undefined) {
@@ -284,8 +286,8 @@ namespace Private {
     }
 
     // Separate the fields for the body and header.
-    let bodyFields: JSONModel.IField[] = [];
-    let headerFields: JSONModel.IField[] = [];
+    let bodyFields: JSONModel.Field[] = [];
+    let headerFields: JSONModel.Field[] = [];
     for (let field of schema.fields) {
       if (primaryKeys.indexOf(field.name) === -1) {
         bodyFields.push(field);
@@ -310,7 +312,7 @@ namespace Private {
    * This returns `null` if there are no missing values.
    */
   export
-  function createMissingMap(schema: JSONModel.ISchema): MissingValuesMap | null {
+  function createMissingMap(schema: JSONModel.Schema): MissingValuesMap | null {
     // Bail early if there are no missing values.
     if (!schema.missingValues || schema.missingValues.length === 0) {
       return null;

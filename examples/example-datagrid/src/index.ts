@@ -257,14 +257,14 @@ function main(): void {
   });
 
   let grid3 = new DataGrid({ stretchLastColumn: true });
-  grid3.cellRenderers.set('body', {}, fgColorFloatRenderer);
+  grid3.cellRenderers.update({ 'body': fgColorFloatRenderer });
   grid3.dataModel = model3;
   grid3.keyHandler = new BasicKeyHandler();
   grid3.mouseHandler = new BasicMouseHandler();
   grid3.selectionModel = new BasicSelectionModel({ dataModel: model3 });
 
   let grid4 = new DataGrid({ style: lightSelectionStyle });
-  grid4.cellRenderers.set('body', {}, bgColorFloatRenderer);
+  grid4.cellRenderers.update({ 'body': bgColorFloatRenderer });
   grid4.dataModel = model4;
   grid4.keyHandler = new BasicKeyHandler();
   grid4.mouseHandler = new BasicMouseHandler();
