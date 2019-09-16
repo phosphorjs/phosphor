@@ -49,10 +49,6 @@ import {
   SelectionModel
 } from './selectionmodel';
 
-import {
-  TextRenderer
-} from './textrenderer';
-
 
 /**
  * A widget which implements a high-performance tabular data grid.
@@ -82,7 +78,6 @@ class DataGrid extends Widget {
     this._headerVisibility = options.headerVisibility || 'all';
     this._cellRenderers = options.cellRenderers || new RendererMap();
     this._copyConfig = options.copyConfig || DataGrid.defaultCopyConfig;
-    this._defaultRenderer = options.defaultRenderer || new TextRenderer();
 
     // Connect to the renderer map changed signal.
     this._cellRenderers.changed.connect(this._onRenderersChanged, this);
@@ -412,29 +407,6 @@ class DataGrid extends Widget {
 
     // Update the internal renderer map.
     this._cellRenderers = value;
-
-    // Schedule a repaint of the grid content.
-    this._repaintContent();
-  }
-
-  /**
-   * Get the default cell renderer for the data grid.
-   */
-  get defaultRenderer(): CellRenderer {
-    return this._defaultRenderer;
-  }
-
-  /**
-   * Set the default cell renderer for the data grid.
-   */
-  set defaultRenderer(value: CellRenderer) {
-    // Bail if the renderer does not change.
-    if (this._defaultRenderer === value) {
-      return;
-    }
-
-    // Update the internal renderer.
-    this._defaultRenderer = value;
 
     // Schedule a repaint of the grid content.
     this._repaintContent();
@@ -1677,7 +1649,7 @@ class DataGrid extends Widget {
         args.row = row;
         args.column = column;
         args.value = dataModel.data(region, row, column);
-        args.metadata = dataModel.metadata(region, column);
+        args.metadata = dataModel.metadata(region, row, column);
 
         // Format the cell.
         cells[i] = format(args);
@@ -4121,7 +4093,7 @@ class DataGrid extends Widget {
     let config = {
       x: 0, y: 0, width: 0, height: 0,
       region: rgn.region, row: 0, column: 0,
-      metadata: DataModel.emptyMetadata, value: (null as any)
+      value: (null as any), metadata: DataModel.emptyMetadata
     };
 
     // Save the buffer gc before wrapping.
@@ -4147,38 +4119,16 @@ class DataGrid extends Widget {
       // Compute the column index.
       let column = rgn.column + i;
 
-      // Get the metadata for the column.
-      let metadata: DataModel.Metadata;
-      try {
-        metadata = this._dataModel.metadata(rgn.region, column);
-      } catch (err) {
-        metadata = DataModel.emptyMetadata;
-        console.error(err);
-      }
-
       // Update the config for the current column.
       config.x = x;
       config.width = width;
       config.column = column;
-      config.metadata = metadata;
 
       // Clear the buffer rect for the column.
       gc.clearRect(x, rgn.y, width, rgn.height);
 
       // Save the GC state.
       gc.save();
-
-      // Look up the renderer for the column.
-      let renderer = (
-        this._cellRenderers.get(rgn.region, metadata) || this._defaultRenderer
-      );
-
-      // Prepare the cell renderer for drawing the column.
-      try {
-        renderer.prepare(gc, config);
-      } catch (err) {
-        console.error(err);
-      }
 
       // Loop over the rows in the column.
       for (let y = rgn.y, j = 0, n = rgn.rowSizes.length; j < n; ++j) {
@@ -4193,7 +4143,7 @@ class DataGrid extends Widget {
         // Compute the row index.
         let row = rgn.row + j;
 
-        // Get the data value for the cell.
+        // Get the value for the cell.
         let value: any;
         try {
           value = this._dataModel.data(rgn.region, row, column);
@@ -4202,11 +4152,24 @@ class DataGrid extends Widget {
           console.error(err);
         }
 
+        // Get the metadata for the cell.
+        let metadata: DataModel.Metadata;
+        try {
+          metadata = this._dataModel.metadata(rgn.region, row, column);
+        } catch (err) {
+          metadata = DataModel.emptyMetadata;
+          console.error(err);
+        }
+
         // Update the config for the current cell.
         config.y = y;
         config.height = height;
         config.row = row;
         config.value = value;
+        config.metadata = metadata;
+
+        // Get the renderer for the cell.
+        let renderer = this._cellRenderers.get(config);
 
         // Save the GC state.
         gc.save();
@@ -5040,7 +5003,6 @@ class DataGrid extends Widget {
 
   private _style: DataGrid.Style;
   private _cellRenderers: RendererMap;
-  private _defaultRenderer: CellRenderer;
   private _copyConfig: DataGrid.CopyConfig;
   private _headerVisibility: DataGrid.HeaderVisibility;
 }
@@ -5247,12 +5209,12 @@ namespace DataGrid {
     column: number;
 
     /**
-     * The value of the cell.
+     * The value for the cell.
      */
     value: any;
 
     /**
-     * The metadata for the column.
+     * The metadata for the cell.
      */
     metadata: DataModel.Metadata;
   };
@@ -5508,7 +5470,7 @@ namespace DataGrid {
    * @returns The string representation of the value.
    *
    * #### Notes
-   * This function uses `String()` to coerce values to a string.
+   * This function uses `String()` to coerce a value to a string.
    */
   export
   function copyFormatGeneric(args: CopyFormatArgs): string {

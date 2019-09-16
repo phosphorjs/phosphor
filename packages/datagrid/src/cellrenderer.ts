@@ -1,5 +1,5 @@
 /*-----------------------------------------------------------------------------
-| Copyright (c) 2014-2017, PhosphorJS Contributors
+| Copyright (c) 2014-2019, PhosphorJS Contributors
 |
 | Distributed under the terms of the BSD 3-Clause License.
 |
@@ -44,26 +44,7 @@ abstract class CellRenderer {
    *
    * The renderer **must not** draw outside the cell bounding height.
    */
-  abstract paint(gc: GraphicsContext, config: CellRenderer.ICellConfig): void;
-
-  /**
-   * Prepare the graphics context for drawing a column of cells.
-   *
-   * @param gc - The graphics context to prepare.
-   *
-   * @param config - The configuration data for the column.
-   *
-   * #### Notes
-   * This method is called just before the grid renders the cells in
-   * a column. It allows the renderer an opportunity to set defaults
-   * on the `gc` or pre-compute column render state. This can reduce
-   * the need for costly `gc` state changes when painting each cell.
-   *
-   * The renderer **must not** draw to the `gc` in this method.
-   *
-   * The default implementation is a no-op.
-   */
-  prepare(gc: GraphicsContext, config: CellRenderer.IColumnConfig): void { }
+  abstract paint(gc: GraphicsContext, config: CellRenderer.CellConfig): void;
 }
 
 
@@ -73,41 +54,10 @@ abstract class CellRenderer {
 export
 namespace CellRenderer {
   /**
-   * An object which holds the configuration data for a column.
-   */
-  export
-  interface IColumnConfig {
-    /**
-     * The X position of the column, in viewport coordinates.
-     */
-    readonly x: number;
-
-    /**
-     * The width of the column, in viewport pixels.
-     */
-    readonly width: number;
-
-    /**
-     * The region for the column.
-     */
-    readonly region: DataModel.CellRegion;
-
-    /**
-     * The column index.
-     */
-    readonly column: number;
-
-    /**
-     * The metadata for the column.
-     */
-    readonly metadata: DataModel.Metadata;
-  }
-
-  /**
    * An object which holds the configuration data for a cell.
    */
   export
-  interface ICellConfig {
+  type CellConfig = {
     /**
      * The X position of the cell rectangle, in viewport coordinates.
      */
@@ -144,15 +94,15 @@ namespace CellRenderer {
     readonly column: number;
 
     /**
-     * The metadata for the column.
-     */
-    readonly metadata: DataModel.Metadata;
-
-    /**
-     * The data value for the cell.
+     * The value for the cell.
      */
     readonly value: any;
-  }
+
+    /**
+     * The metadata for the cell.
+     */
+    readonly metadata: DataModel.Metadata;
+  };
 
   /**
    * A type alias for a cell renderer config function.
@@ -160,7 +110,7 @@ namespace CellRenderer {
    * This type is used to compute a value from a cell config object.
    */
   export
-  type ConfigFunc<T> = (config: ICellConfig) => T;
+  type ConfigFunc<T> = (config: CellConfig) => T;
 
   /**
    * A type alias for a cell renderer config option.
@@ -180,7 +130,7 @@ namespace CellRenderer {
    * @returns The resolved value for the option.
    */
   export
-  function resolveOption<T>(option: ConfigOption<T>, config: ICellConfig): T {
+  function resolveOption<T>(option: ConfigOption<T>, config: CellConfig): T {
     return typeof option === 'function' ? option(config) : option;
   }
 }

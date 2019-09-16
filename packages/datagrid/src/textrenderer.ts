@@ -1,5 +1,5 @@
 /*-----------------------------------------------------------------------------
-| Copyright (c) 2014-2017, PhosphorJS Contributors
+| Copyright (c) 2014-2019, PhosphorJS Contributors
 |
 | Distributed under the terms of the BSD 3-Clause License.
 |
@@ -71,47 +71,9 @@ class TextRenderer extends CellRenderer {
    *
    * @param config - The configuration data for the cell.
    */
-  paint(gc: GraphicsContext, config: CellRenderer.ICellConfig): void {
+  paint(gc: GraphicsContext, config: CellRenderer.CellConfig): void {
     this.drawBackground(gc, config);
     this.drawText(gc, config);
-  }
-
-  /**
-   * Prepare the graphics context for drawing a column of cells.
-   *
-   * @param gc - The graphics context to prepare.
-   *
-   * @param row - The index of the first row to be rendered.
-   *
-   * @param col - The index of the column to be rendered.
-   *
-   * @param field - The field descriptor for the column, or `null`.
-   */
-  prepare(gc: GraphicsContext, config: CellRenderer.IColumnConfig): void {
-    // Look up the default state from the renderer.
-    let { font, textColor, backgroundColor, horizontalAlignment } = this;
-
-    // Set up the default font.
-    if (font && typeof font === 'string') {
-      gc.font = font;
-    }
-
-    // Set up the default fill style.
-    if (backgroundColor && typeof backgroundColor === 'string') {
-      gc.fillStyle = backgroundColor;
-    } else if (textColor && typeof textColor === 'string') {
-      gc.fillStyle = textColor;
-    }
-
-    // Set up the default text alignment.
-    if (typeof horizontalAlignment === 'string') {
-      gc.textAlign = horizontalAlignment;
-    } else {
-      gc.textAlign = 'left';
-    }
-
-    // Set up the default text baseline.
-    gc.textBaseline = 'bottom';
   }
 
   /**
@@ -121,7 +83,7 @@ class TextRenderer extends CellRenderer {
    *
    * @param config - The configuration data for the cell.
    */
-  drawBackground(gc: GraphicsContext, config: CellRenderer.ICellConfig): void {
+  drawBackground(gc: GraphicsContext, config: CellRenderer.CellConfig): void {
     // Resolve the background color for the cell.
     let color = CellRenderer.resolveOption(this.backgroundColor, config);
 
@@ -142,7 +104,7 @@ class TextRenderer extends CellRenderer {
    *
    * @param config - The configuration data for the cell.
    */
-  drawText(gc: GraphicsContext, config: CellRenderer.ICellConfig): void {
+  drawText(gc: GraphicsContext, config: CellRenderer.CellConfig): void {
     // Resolve the font for the cell.
     let font = CellRenderer.resolveOption(this.font, config);
 

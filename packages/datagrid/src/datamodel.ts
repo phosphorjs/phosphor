@@ -1,5 +1,5 @@
 /*-----------------------------------------------------------------------------
-| Copyright (c) 2014-2017, PhosphorJS Contributors
+| Copyright (c) 2014-2019, PhosphorJS Contributors
 |
 | Distributed under the terms of the BSD 3-Clause License.
 |
@@ -59,36 +59,34 @@ abstract class DataModel {
    *
    * @param column - The column index of the cell of interest.
    *
-   * @param returns - The data value for the specified cell.
+   * @param returns The data value for the specified cell.
    *
    * #### Notes
+   * The returned data should be treated as immutable.
+   *
    * This method is called often, and so should be efficient.
    */
   abstract data(region: DataModel.CellRegion, row: number, column: number): any;
 
   /**
-   * Get the metadata for a column in the data model.
+   * Get the metadata for a cell in the data model.
    *
    * @param region - The cell region of interest.
    *
-   * @param column - The index of the column of interest.
+   * @param row - The row index of the cell of interest.
    *
-   * @returns The metadata for the column.
+   * @param column - The column index of the cell of interest.
+   *
+   * @returns The metadata for the specified cell.
    *
    * #### Notes
    * The returned metadata should be treated as immutable.
-   *
-   * Models which support columnar data may reimplement this method to
-   * return the metadata for a column.
-   *
-   * The metadata can be used by custom cell renderers and cell editors
-   * to customize handling of specific cell data types.
    *
    * This method is called often, and so should be efficient.
    *
    * The default implementation returns `{}`.
    */
-  metadata(region: DataModel.CellRegion, column: number): DataModel.Metadata {
+  metadata(region: DataModel.CellRegion, row: number, column: number): DataModel.Metadata {
     return DataModel.emptyMetadata;
   }
 
