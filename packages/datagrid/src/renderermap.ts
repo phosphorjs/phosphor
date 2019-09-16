@@ -34,7 +34,7 @@ class RendererMap {
    *
    * @param fallback - The renderer of last resort.
    */
-  constructor(values: RendererMap.Map = {}, fallback?: CellRenderer) {
+  constructor(values: RendererMap.Values = {}, fallback?: CellRenderer) {
     this._values = { ...values };
     this._fallback = fallback || new TextRenderer();
   }
@@ -81,14 +81,14 @@ class RendererMap {
    * #### Notes
    * This method always emits the `changed` signal.
    */
-  update(values: RendererMap.Map = {}, fallback?: CellRenderer): void {
+  update(values: RendererMap.Values = {}, fallback?: CellRenderer): void {
     this._values = { ...this._values, ...values };
     this._fallback = fallback || this._fallback;
     this._changed.emit(undefined);
   }
 
-  private _fallback: CellRenderer
-  private _values: RendererMap.Map;
+  private _fallback: CellRenderer;
+  private _values: RendererMap.Values;
   private _changed = new Signal<this, void>(this);
 }
 
@@ -102,17 +102,13 @@ namespace RendererMap {
    * A type alias for a cell renderer resolver function.
    */
   export
-  type Resolver = (config: CellRenderer.CellConfig) => CellRenderer | undefined;
+  type Resolver = CellRenderer.ConfigFunc<CellRenderer | undefined>;
 
   /**
-   * A type alias for a `RendererMap` value type.
+   * A type alias for a `RendererMap` values type.
    */
   export
-  type Value = Resolver | CellRenderer | undefined;
-
-  /**
-   * A type alias for a `RendererMap` map type.
-   */
-  export
-  type Map = { [R in DataModel.CellRegion]?: Value };
+  type Values = {
+    [R in DataModel.CellRegion]?: Resolver | CellRenderer | undefined;
+  };
 }
