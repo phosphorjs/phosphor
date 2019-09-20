@@ -830,7 +830,7 @@ namespace Private {
     }
 
     // Remove the extra sizers.
-    if (sizers.length < count) {
+    if (sizers.length > count) {
       sizers.length = count;
     }
   }
