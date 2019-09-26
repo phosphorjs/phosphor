@@ -45,7 +45,7 @@ let schema: TestSchema = {
 /**
  * Remove readonly guards from Context for testing purposes.
  */
-type MutableContext = { -readonly [K in keyof Datastore.Context]: Datastore.Context[K] };
+type MutableContext = { -readonly [K in keyof Datastore.Context<TestSchema>]: Datastore.Context<TestSchema>[K] };
 
 describe('@phosphor/datastore', () => {
 
