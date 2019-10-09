@@ -747,12 +747,33 @@ class VirtualElement {
   }
 }
 
+export
+class VirtualElementPass {
+  /**
+   * The type of the node.
+   *
+   * This value can be used as a type guard for discriminating the
+   * `VirtualNode` union type.
+   */
+  readonly type: 'passthru' = 'passthru';
+
+  /**
+   * Construct a new virtual element pass thru node.
+   *
+   * @param callback - a function that takes a host HTMLElement and returns void
+   */
+  constructor(readonly callback: VirtualElementPass.ICallBack) {}
+}
+
+namespace VirtualElementPass {
+  export type ICallBack = (host: HTMLElement) => void;
+}
 
 /**
  * A type alias for a general virtual node.
  */
 export
-type VirtualNode = VirtualElement | VirtualText;
+type VirtualNode = VirtualElement | VirtualElementPass | VirtualText;
 
 
 /**
@@ -931,6 +952,9 @@ namespace h {
   export const wbr: IFactory = h.bind(undefined, 'wbr');
 }
 
+export function hpass(callback: (host: HTMLElement) => void): VirtualElementPass {
+  return new VirtualElementPass(callback);
+}
 
 /**
  * The namespace for the virtual DOM rendering functions.
@@ -1063,6 +1087,14 @@ namespace Private {
     let currElem = host.firstChild;
     let newCount = newContent.length;
     for (let i = 0; i < newCount; ++i) {
+      // Lookup the new virtual node.
+      let newVNode = newContent[i];
+
+      // If the new content is a pass thru, let it handle diffing
+      if (newVNode.type === 'passthru') {
+        newVNode.callback(host);
+        continue;
+      }
 
       // If the old content is exhausted, create a new node.
       if (i >= oldCopy.length) {
@@ -1070,9 +1102,8 @@ namespace Private {
         continue;
       }
 
-      // Lookup the old and new virtual nodes.
+      // Lookup the old virtual node.
       let oldVNode = oldCopy[i];
-      let newVNode = newContent[i];
 
       // If both elements are identical, there is nothing to do.
       if (oldVNode === newVNode) {
