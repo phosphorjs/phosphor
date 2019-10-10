@@ -60,6 +60,8 @@ abstract class SelectionModel {
    */
   abstract readonly cursorColumn: number;
 
+  abstract incrementCursor(): void;
+
   /**
    * Get the current selection in the selection model.
    *

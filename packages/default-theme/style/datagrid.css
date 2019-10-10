@@ -27,3 +27,16 @@
   height: 1px;
   background-color: #A0A0A0;
 }
+
+.cell-editor {
+  position: absolute;
+  box-sizing: border-box;
+  outline: none;
+  box-shadow: 0px 0px 6px #006bf7;
+  border: 2px solid #006bf7;
+}
+
+.input-cell-editor {
+  padding: 0 0 1px 0;
+  background-color: #ffffff;
+}

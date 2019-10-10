@@ -22,13 +22,13 @@ import {
 } from './datagrid';
 
 import {
-  DataModel
+  DataModel, MutableDataModel
 } from './datamodel';
 
 import {
   SelectionModel
 } from './selectionmodel';
-
+import { ICellEditResponse } from './celleditor';
 
 /**
  * A basic implementation of a data grid mouse handler.
@@ -485,6 +485,51 @@ class BasicMouseHandler implements DataGrid.IMouseHandler {
    * @param event - The mouse up event of interest.
    */
   onMouseUp(grid: DataGrid, event: MouseEvent): void {
+    this.release();
+  }
+
+  /**
+   * Handle the mouse double click event for the data grid.
+   *
+   * @param grid - The data grid of interest.
+   *
+   * @param event - The mouse up event of interest.
+   */
+  onMouseDoubleClick(grid: DataGrid, event: MouseEvent): void {
+    if (!grid.dataModel) {
+      this.release();
+      return;
+    }
+
+    // Unpack the event.
+    let { clientX, clientY } = event;
+
+    // Hit test the grid.
+    let hit = grid.hitTest(clientX, clientY);
+
+    // Unpack the hit test.
+    let { region, row, column } = hit;
+
+    if (region === 'void') {
+      this.release();
+      return;
+    }
+
+    if (region === 'body') {
+      grid.cellEditorController
+      .edit({
+        grid: grid,
+        row: row,
+        column: column,
+        metadata: grid.dataModel!.metadata('body', row, column)})
+      .then((response: ICellEditResponse) => {
+        if (grid.dataModel instanceof MutableDataModel) {
+          const dataModel = grid.dataModel as MutableDataModel;
+          dataModel.setData('body', row, column, response.value);
+        }
+      });
+    }
+
     this.release();
   }
 

@@ -48,6 +48,7 @@ import {
 import {
   SelectionModel
 } from './selectionmodel';
+import { CellEditorController, TextCellEditor, EnumCellEditor, DateCellEditor } from './celleditor';
 
 
 /**
@@ -126,6 +127,11 @@ class DataGrid extends Widget {
     this._vScrollBar = new ScrollBar({ orientation: 'vertical' });
     this._hScrollBar = new ScrollBar({ orientation: 'horizontal' });
     this._scrollCorner = new Widget();
+
+    this._cellEditorController = new CellEditorController();
+    this._cellEditorController.registerEditor(new TextCellEditor());
+    this._cellEditorController.registerEditor(new EnumCellEditor());
+    this._cellEditorController.registerEditor(new DateCellEditor());
 
     // Add the extra class names to the child widgets.
     this._viewport.addClass('p-DataGrid-viewport');
@@ -1751,6 +1757,9 @@ class DataGrid extends Widget {
     case 'mouseup':
       this._evtMouseUp(event as MouseEvent);
       break;
+    case 'dblclick':
+      this._evtMouseDoubleClick(event as MouseEvent);
+      break;
     case 'mouseleave':
       this._evtMouseLeave(event as MouseEvent);
       break;
@@ -1782,6 +1791,7 @@ class DataGrid extends Widget {
     this._viewport.node.addEventListener('keydown', this);
     this._viewport.node.addEventListener('mousedown', this);
     this._viewport.node.addEventListener('mousemove', this);
+    this._viewport.node.addEventListener('dblclick', this);
     this._viewport.node.addEventListener('mouseleave', this);
     this._viewport.node.addEventListener('contextmenu', this);
     this._repaintContent();
@@ -1798,6 +1808,7 @@ class DataGrid extends Widget {
     this._viewport.node.removeEventListener('mousedown', this);
     this._viewport.node.removeEventListener('mousemove', this);
     this._viewport.node.removeEventListener('mouseleave', this);
+    this._viewport.node.removeEventListener('dblclick', this);
     this._viewport.node.removeEventListener('contextmenu', this);
     this._releaseMouse();
   }
@@ -2755,6 +2766,28 @@ class DataGrid extends Widget {
     // Dispatch to the mouse handler.
     if (this._mouseHandler) {
       this._mouseHandler.onMouseUp(this, event);
+    }
+
+    // Release the mouse.
+    this._releaseMouse();
+  }
+
+  /**
+   * Handle the `'dblclick'` event for the data grid.
+   */
+  private _evtMouseDoubleClick(event: MouseEvent): void {
+    // Ignore everything except the left mouse button.
+    if (event.button !== 0) {
+      return;
+    }
+
+    // Stop the event propagation.
+    event.preventDefault();
+    event.stopPropagation();
+
+    // Dispatch to the mouse handler.
+    if (this._mouseHandler) {
+      this._mouseHandler.onMouseDoubleClick(this, event);
     }
 
     // Release the mouse.
@@ -4965,6 +4998,10 @@ class DataGrid extends Widget {
     gc.restore();
   }
 
+  get cellEditorController(): CellEditorController {
+    return this._cellEditorController;
+  }
+
   private _viewport: Widget;
   private _vScrollBar: ScrollBar;
   private _hScrollBar: ScrollBar;
@@ -5005,6 +5042,7 @@ class DataGrid extends Widget {
   private _cellRenderers: RendererMap;
   private _copyConfig: DataGrid.CopyConfig;
   private _headerVisibility: DataGrid.HeaderVisibility;
+  private _cellEditorController: CellEditorController;
 }
 
 
@@ -5389,6 +5427,15 @@ namespace DataGrid {
      * @param event - The mouse up event of interest.
      */
     onMouseUp(grid: DataGrid, event: MouseEvent): void;
+
+    /**
+     * Handle the mouse double click event for the data grid.
+     *
+     * @param grid - The data grid of interest.
+     *
+     * @param event - The mouse double click event of interest.
+     */
+    onMouseDoubleClick(grid: DataGrid, event: MouseEvent): void;
 
     /**
      * Handle the context menu event for the data grid.

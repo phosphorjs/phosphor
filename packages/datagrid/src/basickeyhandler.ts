@@ -20,6 +20,9 @@ import {
 import {
   SelectionModel
 } from './selectionmodel';
+import { ICellEditResponse } from './celleditor';
+
+import { MutableDataModel } from './datamodel';
 
 
 /**
@@ -55,6 +58,29 @@ class BasicKeyHandler implements DataGrid.IKeyHandler {
    * This will not be called if the mouse button is pressed.
    */
   onKeyDown(grid: DataGrid, event: KeyboardEvent): void {
+    if (!event.shiftKey && !Platform.accelKey(event)) {
+      const inp = String.fromCharCode(event.keyCode);
+      if (/[a-zA-Z0-9-_ ]/.test(inp)) {
+        if (grid.selectionModel) {
+          const row = grid.selectionModel.cursorRow;
+          const column = grid.selectionModel.cursorColumn;
+          if (row != -1 && column != -1) {
+            grid.cellEditorController.edit({
+              grid: grid,
+              row: row,
+              column: column,
+              metadata: grid.dataModel!.metadata('body', row, column)
+            }).then((response: ICellEditResponse) => {
+              if (grid.dataModel instanceof MutableDataModel) {
+                const dataModel = grid.dataModel as MutableDataModel;
+                dataModel.setData('body', row, column, response.value);
+              }
+            });
+          }
+        }
+      }
+    }
+
     switch (getKeyboardLayout().keyForKeydownEvent(event)) {
     case 'ArrowLeft':
       this.onArrowLeft(grid, event);
@@ -79,6 +105,12 @@ class BasicKeyHandler implements DataGrid.IKeyHandler {
       break;
     case 'C':
       this.onKeyC(grid, event);
+      break;
+    case 'Enter':
+      if (grid.selectionModel) {
+        grid.selectionModel.incrementCursor();
+        grid.scrollToCursor();
+      }
       break;
     }
   }

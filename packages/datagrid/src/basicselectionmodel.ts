@@ -48,6 +48,28 @@ class BasicSelectionModel extends SelectionModel {
     return this._cursorColumn;
   }
 
+  incrementCursor(): void {
+    const newRow = this._cursorRow + 1;
+    if (this._selections.length === 1 && (
+      this._selections[0].r1 === this._cursorRow &&
+      this._selections[0].c1 === this._cursorColumn &&
+      this._selections[0].r2 === this._cursorRow &&
+      this._selections[0].c2 === this._cursorColumn
+    )) {
+      this._selections[0] = {
+        r1: newRow,
+        c1: this._cursorColumn,
+        r2: newRow,
+        c2: this._cursorColumn
+      };
+    }
+    
+    this._cursorRow = newRow;
+
+    // Emit the changed signal.
+    this.emitChanged();
+  }
+
   /**
    * Get the current selection in the selection model.
    *
