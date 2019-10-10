@@ -14,24 +14,29 @@ interface ICellEditResponse {
 };
 
 export
+interface ICellInputValidator {
+  validate(cell: CellEditor.CellConfig, value: any): boolean;
+};
+
+export
 class CellEditorController {
   registerEditor(editor: CellEditor) {
     this._editors.push(editor);
   }
 
-  edit(cell: CellEditor.CellConfig, validator?: any): Promise<ICellEditResponse> {
+  edit(cell: CellEditor.CellConfig, validator?: ICellInputValidator): Promise<ICellEditResponse> {
     const numEditors = this._editors.length;
     for (let i = numEditors - 1; i >= 0; --i) {
       const editor = this._editors[i];
       if (editor.canEdit(cell)) {
-        return editor.edit(cell);
+        return editor.edit(cell, validator);
       }
     }
 
     const data = cell.grid.dataModel ? cell.grid.dataModel.data('body', cell.row, cell.column) : undefined;
     if (!data || typeof data !== 'object') {
       const editor = new TextCellEditor();
-      return editor.edit(cell);
+      return editor.edit(cell, validator);
     }
 
     return new Promise<ICellEditResponse>((resolve, reject) => {
@@ -45,9 +50,23 @@ class CellEditorController {
 export
 abstract class CellEditor {
   abstract canEdit(cell: CellEditor.CellConfig): boolean;
-  abstract edit(cell: CellEditor.CellConfig): Promise<ICellEditResponse>;
 
-  getCellInfo(cell: CellEditor.CellConfig) {
+  edit(cell: CellEditor.CellConfig, validator?: ICellInputValidator): Promise<ICellEditResponse> {
+    return new Promise<ICellEditResponse>((resolve, reject) => {
+      this._cell = cell;
+      this._validator = validator;
+      this._resolve = resolve;
+      this._reject = reject;
+
+      cell.grid.node.addEventListener('wheel', () => {
+        this.updatePosition();
+      });
+
+      this.startEdit();
+    });
+  }
+
+  protected getCellInfo(cell: CellEditor.CellConfig) {
     const { grid, row, column } = cell;
     const data = grid.dataModel!.data('body', row, column);
 
@@ -68,11 +87,14 @@ abstract class CellEditor {
     };
   }
 
-  updatePosition() {
-  }
+  protected abstract startEdit(): void;
+  protected abstract updatePosition(): void;
+  protected abstract endEditing(): void;
 
-  endEditing() {
-  }
+  protected _resolve: {(response: ICellEditResponse): void };
+  protected _reject: {(reason: any): void };
+  protected _cell: CellEditor.CellConfig;
+  protected _validator: ICellInputValidator | undefined;
 }
 
 export
@@ -82,52 +104,54 @@ class TextCellEditor extends CellEditor {
     return metadata.type === 'string';
   }
 
-  edit(cell: CellEditor.CellConfig): Promise<ICellEditResponse> {
-    return new Promise<ICellEditResponse>((resolve, reject) => {
-      this._resolve = resolve;
-      this._reject = reject;
+  startEdit() {
+    const cell = this._cell;
+    const grid = cell.grid;
+    const cellInfo = this.getCellInfo(cell);
 
-      this._cell = cell;
-      const grid = cell.grid;
-      const cellInfo = this.getCellInfo(cell);
+    const form = document.createElement('form');
+    const input = document.createElement('input');
+    input.classList.add('cell-editor');
+    input.classList.add('input-cell-editor');
+    input.spellcheck = false;
+    input.required = false;
 
-      const input = document.createElement('input');
-      input.classList.add('cell-editor');
-      input.classList.add('input-cell-editor');
-      input.spellcheck = false;
+    input.value = cellInfo.data;
 
-      input.value = cellInfo.data;
+    this._input = input;
 
-      this._input = input;
+    form.appendChild(input);
+    grid.node.appendChild(form);
 
-      grid.node.appendChild(input);
+    this.updatePosition();
 
-      this.updatePosition();
+    input.select();
 
-      input.select();
+    input.addEventListener("keydown", (event) => {
+      this._onKeyDown(event);
+    });
 
-      input.addEventListener("keydown", (event) => {
-        this._onKeyDown(event);
-      });
-
-      input.addEventListener("blur", (event) => {
-        this._saveInput();
+    input.addEventListener("blur", (event) => {
+      if (this._saveInput()) {
         this.endEditing();
-      });
+      } else {
+        this._input!.focus();
+      }
+    });
 
-      grid.node.addEventListener('wheel', () => {
-        this.updatePosition();
-      });
+    input.addEventListener("input", (event) => {
+      this._input!.setCustomValidity("");
     });
   }
 
   _onKeyDown(event: KeyboardEvent) {
     switch (event.keyCode) {
       case 13: // return
-        this._saveInput();
-        this.endEditing();
-        this._cell.grid.selectionModel!.incrementCursor();
-        this._cell.grid.scrollToCursor();
+        if (this._saveInput()) {
+          this.endEditing();
+          this._cell.grid.selectionModel!.incrementCursor();
+          this._cell.grid.scrollToCursor();
+        }
         break;
       case 27: // escape
         this.endEditing();
@@ -144,12 +168,21 @@ class TextCellEditor extends CellEditor {
       cellInfo.y >= grid.headerHeight && (cellInfo.y + cellInfo.height) <= grid.viewportHeight + 1;
   }
 
-  _saveInput() {
+  _saveInput(): boolean {
     if (!this._input) {
-      return;
+      return false;
+    }
+
+    const value = this._input.value;
+    if (this._validator && ! this._validator.validate(this._cell, value)) {
+      this._input.setCustomValidity("Invalid input");
+      this._input.checkValidity();
+      return false;
     }
 
     this._resolve({ cell: this._cell, value: this._input!.value });
+
+    return true;
   }
 
   updatePosition() {
@@ -183,9 +216,6 @@ class TextCellEditor extends CellEditor {
     this._cell.grid.viewport.node.focus();
   }
 
-  _resolve: {(response: ICellEditResponse): void };
-  _reject: {(reason: any): void };
-  _cell: CellEditor.CellConfig;
   _input: HTMLInputElement | null;
 }
 
@@ -196,52 +226,43 @@ class EnumCellEditor extends CellEditor {
     return metadata.constraint && metadata.constraint.enum;
   }
 
-  edit(cell: CellEditor.CellConfig): Promise<ICellEditResponse> {
-    return new Promise<ICellEditResponse>((resolve, reject) => {
-      this._resolve = resolve;
-      this._reject = reject;
+  startEdit() {
+    const cell = this._cell;
+    const grid = cell.grid;
+    const cellInfo = this.getCellInfo(cell);
+    const metadata = cell.grid.dataModel!.metadata('body', cell.row, cell.column);
+    const items = metadata.constraint.enum;
 
-      this._cell = cell;
-      const grid = cell.grid;
-      const cellInfo = this.getCellInfo(cell);
-      const metadata = cell.grid.dataModel!.metadata('body', cell.row, cell.column);
-      const items = metadata.constraint.enum;
+    const select = document.createElement('select');
+    select.classList.add('cell-editor');
+    select.classList.add('select-cell-editor');
+    for (let item of items) {
+      const option = document.createElement("option");
+      option.value = item;
+      option.text = item;
+      select.appendChild(option);
+    }
 
-      const select = document.createElement('select');
-      select.classList.add('cell-editor');
-      select.classList.add('select-cell-editor');
-      for (let item of items) {
-        const option = document.createElement("option");
-        option.value = item;
-        option.text = item;
-        select.appendChild(option);
-      }
+    select.value = cellInfo.data;
 
-      select.value = cellInfo.data;
+    this._select = select;
 
-      this._select = select;
+    grid.node.appendChild(select);
 
-      grid.node.appendChild(select);
+    this.updatePosition();
 
-      this.updatePosition();
+    select.addEventListener("keydown", (event) => {
+      this._onKeyDown(event);
+    });
 
-      select.addEventListener("keydown", (event) => {
-        this._onKeyDown(event);
-      });
+    select.addEventListener("blur", (event) => {
+      this._saveInput();
+      this.endEditing();
+    });
 
-      select.addEventListener("blur", (event) => {
-        this._saveInput();
-        this.endEditing();
-      });
-
-      select.addEventListener("change", (event) => {
-        this._saveInput();
-        this.endEditing();
-      });
-
-      grid.node.addEventListener('wheel', () => {
-        this.updatePosition();
-      });
+    select.addEventListener("change", (event) => {
+      this._saveInput();
+      this.endEditing();
     });
   }
 
@@ -273,7 +294,12 @@ class EnumCellEditor extends CellEditor {
       return;
     }
 
-    this._resolve({ cell: this._cell, value: this._select!.value });
+    const value = this._select.value;
+    if (this._validator && ! this._validator.validate(this._cell, value)) {
+      return;
+    }
+
+    this._resolve({ cell: this._cell, value: value });
   }
 
   updatePosition() {
@@ -307,9 +333,6 @@ class EnumCellEditor extends CellEditor {
     this._cell.grid.viewport.node.focus();
   }
 
-  _resolve: {(response: ICellEditResponse): void };
-  _reject: {(reason: any): void };
-  _cell: CellEditor.CellConfig;
   _select: HTMLSelectElement | null;
 }
 
@@ -320,49 +343,40 @@ class DateCellEditor extends CellEditor {
     return metadata.type === 'date';
   }
 
-  edit(cell: CellEditor.CellConfig): Promise<ICellEditResponse> {
-    return new Promise<ICellEditResponse>((resolve, reject) => {
-      this._resolve = resolve;
-      this._reject = reject;
+  startEdit() {
+    const cell = this._cell;
+    const grid = cell.grid;
+    const cellInfo = this.getCellInfo(cell);
 
-      this._cell = cell;
-      const grid = cell.grid;
-      const cellInfo = this.getCellInfo(cell);
+    const input = document.createElement('input');
+    input.type = 'date';
+    input.pattern = "\d{4}-\d{2}-\d{2}";
+    input.classList.add('cell-editor');
+    input.classList.add('input-cell-editor');
+    input.spellcheck = false;
 
-      const input = document.createElement('input');
-      input.type = 'date';
-      input.pattern = "\d{4}-\d{2}-\d{2}";
-      input.classList.add('cell-editor');
-      input.classList.add('input-cell-editor');
-      input.spellcheck = false;
+    input.value = cellInfo.data;
 
-      input.value = cellInfo.data;
+    this._input = input;
 
-      this._input = input;
+    grid.node.appendChild(input);
 
-      grid.node.appendChild(input);
+    this.updatePosition();
 
-      this.updatePosition();
+    input.select();
 
-      input.select();
+    input.addEventListener("keydown", (event) => {
+      this._onKeyDown(event);
+    });
 
-      input.addEventListener("keydown", (event) => {
-        this._onKeyDown(event);
-      });
+    input.addEventListener("blur", (event) => {
+      this._saveInput();
+      this.endEditing();
+    });
 
-      input.addEventListener("blur", (event) => {
-        this._saveInput();
-        this.endEditing();
-      });
-
-      input.addEventListener("change", (event) => {
-        this._saveInput();
-        //this.endEditing();
-      });
-
-      grid.node.addEventListener('wheel', () => {
-        this.updatePosition();
-      });
+    input.addEventListener("change", (event) => {
+      this._saveInput();
+      //this.endEditing();
     });
   }
 
@@ -391,6 +405,11 @@ class DateCellEditor extends CellEditor {
 
   _saveInput() {
     if (!this._input) {
+      return;
+    }
+
+    const value = this._input.value;
+    if (this._validator && !this._validator.validate(this._cell, value)) {
       return;
     }
 
@@ -428,9 +447,6 @@ class DateCellEditor extends CellEditor {
     this._cell.grid.viewport.node.focus();
   }
 
-  _resolve: {(response: ICellEditResponse): void };
-  _reject: {(reason: any): void };
-  _cell: CellEditor.CellConfig;
   _input: HTMLInputElement | null;
 }
 
