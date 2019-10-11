@@ -11,12 +11,21 @@ export
 interface ICellEditResponse {
   cell: CellEditor.CellConfig;
   value: any;
+  returnPressed: boolean;
+};
+
+export
+interface ICellInputValidatorResponse {
+  valid: boolean;
+  message?: string;
 };
 
 export
 interface ICellInputValidator {
-  validate(cell: CellEditor.CellConfig, value: any): boolean;
+  validate(cell: CellEditor.CellConfig, value: any): ICellInputValidatorResponse;
 };
+
+const DEFAULT_INVALID_INPUT_MESSAGE = "Invalid input!";
 
 export
 class CellEditorController {
@@ -62,7 +71,9 @@ abstract class CellEditor {
         this.updatePosition();
       });
 
-      this.startEdit();
+      this._addContainer();
+
+      this.startEditing();
     });
   }
 
@@ -87,14 +98,46 @@ abstract class CellEditor {
     };
   }
 
-  protected abstract startEdit(): void;
-  protected abstract updatePosition(): void;
-  protected abstract endEditing(): void;
+  private _addContainer() {
+    this._viewportOccluder = document.createElement('div');
+    this._viewportOccluder.className = 'cell-editor-occluder';
+    this._cell.grid.node.appendChild(this._viewportOccluder);
+
+    this._cellContainer = document.createElement('div');
+    this._cellContainer.className = 'cell-editor-container';
+    this._viewportOccluder.appendChild(this._cellContainer);
+  }
+
+  protected abstract startEditing(): void;
+
+  protected updatePosition(): void {
+    const grid = this._cell.grid;
+    const cellInfo = this.getCellInfo(this._cell);
+    const headerHeight = grid.headerHeight;
+    const headerWidth = grid.headerWidth;
+
+    this._viewportOccluder.style.top = headerHeight + 'px';
+    this._viewportOccluder.style.left = headerWidth + 'px';
+    this._viewportOccluder.style.width = (grid.viewportWidth - headerWidth) + 'px';
+    this._viewportOccluder.style.height = (grid.viewportHeight - headerHeight) + 'px';
+
+    this._cellContainer.style.left = (cellInfo.x - 1 - headerWidth) + 'px';
+    this._cellContainer.style.top = (cellInfo.y - 1 - headerHeight) + 'px';
+    this._cellContainer.style.width = (cellInfo.width + 1) + 'px';
+    this._cellContainer.style.height = (cellInfo.height + 1) + 'px';
+    this._cellContainer.style.visibility = 'visible';
+  }
+
+  protected endEditing(): void {
+    this._cell.grid.node.removeChild(this._viewportOccluder);
+  }
 
   protected _resolve: {(response: ICellEditResponse): void };
   protected _reject: {(reason: any): void };
   protected _cell: CellEditor.CellConfig;
   protected _validator: ICellInputValidator | undefined;
+  protected _viewportOccluder: HTMLDivElement;
+  protected _cellContainer: HTMLDivElement;
 }
 
 export
@@ -104,9 +147,8 @@ class TextCellEditor extends CellEditor {
     return metadata.type === 'string';
   }
 
-  startEdit() {
+  startEditing() {
     const cell = this._cell;
-    const grid = cell.grid;
     const cellInfo = this.getCellInfo(cell);
 
     const form = document.createElement('form');
@@ -121,11 +163,12 @@ class TextCellEditor extends CellEditor {
     this._input = input;
 
     form.appendChild(input);
-    grid.node.appendChild(form);
+    this._cellContainer.appendChild(form);
 
     this.updatePosition();
 
     input.select();
+    input.focus();
 
     input.addEventListener("keydown", (event) => {
       this._onKeyDown(event);
@@ -134,8 +177,6 @@ class TextCellEditor extends CellEditor {
     input.addEventListener("blur", (event) => {
       if (this._saveInput()) {
         this.endEditing();
-      } else {
-        this._input!.focus();
       }
     });
 
@@ -147,10 +188,8 @@ class TextCellEditor extends CellEditor {
   _onKeyDown(event: KeyboardEvent) {
     switch (event.keyCode) {
       case 13: // return
-        if (this._saveInput()) {
+        if (this._saveInput(true)) {
           this.endEditing();
-          this._cell.grid.selectionModel!.incrementCursor();
-          this._cell.grid.scrollToCursor();
         }
         break;
       case 27: // escape
@@ -161,48 +200,24 @@ class TextCellEditor extends CellEditor {
     }
   }
 
-  _isCellFullyVisible(cellInfo: any): boolean {
-    const grid = cellInfo.grid;
-
-    return cellInfo.x >= grid.headerWidth && (cellInfo.x + cellInfo.width) <= grid.viewportWidth + 1 &&
-      cellInfo.y >= grid.headerHeight && (cellInfo.y + cellInfo.height) <= grid.viewportHeight + 1;
-  }
-
-  _saveInput(): boolean {
+  _saveInput(returnPressed: boolean = false): boolean {
     if (!this._input) {
       return false;
     }
 
     const value = this._input.value;
-    if (this._validator && ! this._validator.validate(this._cell, value)) {
-      this._input.setCustomValidity("Invalid input");
-      this._input.checkValidity();
-      return false;
+    if (this._validator) {
+      const result = this._validator.validate(this._cell, value);
+      if (!result.valid) {
+        this._input.setCustomValidity(result.message || DEFAULT_INVALID_INPUT_MESSAGE);
+        this._input.checkValidity();
+        return false;
+      }
     }
 
-    this._resolve({ cell: this._cell, value: this._input!.value });
+    this._resolve({ cell: this._cell, value: this._input!.value, returnPressed: returnPressed });
 
     return true;
-  }
-
-  updatePosition() {
-    if (!this._input) {
-      return;
-    }
-
-    const cellInfo = this.getCellInfo(this._cell);
-    const input = this._input;
-
-    if (!this._isCellFullyVisible(cellInfo)) {
-      input.style.visibility = 'hidden';
-    } else {
-      input.style.left = (cellInfo.x - 1) + 'px';
-      input.style.top = (cellInfo.y - 1) + 'px';
-      input.style.width = (cellInfo.width + 1) + 'px';
-      input.style.height = (cellInfo.height + 1) + 'px';
-      input.style.visibility = 'visible';
-      input.focus();
-    }
   }
 
   endEditing() {
@@ -210,10 +225,9 @@ class TextCellEditor extends CellEditor {
       return;
     }
 
-    this._input.style.display = 'none';
-    //this._input.remove();
     this._input = null;
-    this._cell.grid.viewport.node.focus();
+
+    super.endEditing();
   }
 
   _input: HTMLInputElement | null;
@@ -226,9 +240,8 @@ class EnumCellEditor extends CellEditor {
     return metadata.constraint && metadata.constraint.enum;
   }
 
-  startEdit() {
+  startEditing() {
     const cell = this._cell;
-    const grid = cell.grid;
     const cellInfo = this.getCellInfo(cell);
     const metadata = cell.grid.dataModel!.metadata('body', cell.row, cell.column);
     const items = metadata.constraint.enum;
@@ -247,9 +260,10 @@ class EnumCellEditor extends CellEditor {
 
     this._select = select;
 
-    grid.node.appendChild(select);
+    this._cellContainer.appendChild(select);
 
     this.updatePosition();
+    select.focus();
 
     select.addEventListener("keydown", (event) => {
       this._onKeyDown(event);
@@ -269,10 +283,8 @@ class EnumCellEditor extends CellEditor {
   _onKeyDown(event: KeyboardEvent) {
     switch (event.keyCode) {
       case 13: // return
-        this._saveInput();
+        this._saveInput(true);
         this.endEditing();
-        this._cell.grid.selectionModel!.incrementCursor();
-        this._cell.grid.scrollToCursor();
         break;
       case 27: // escape
         this.endEditing();
@@ -282,14 +294,7 @@ class EnumCellEditor extends CellEditor {
     }
   }
 
-  _isCellFullyVisible(cellInfo: any): boolean {
-    const grid = cellInfo.grid;
-
-    return cellInfo.x >= grid.headerWidth && (cellInfo.x + cellInfo.width) <= grid.viewportWidth + 1 &&
-      cellInfo.y >= grid.headerHeight && (cellInfo.y + cellInfo.height) <= grid.viewportHeight + 1;
-  }
-
-  _saveInput() {
+  _saveInput(returnPressed: boolean = false) {
     if (!this._select) {
       return;
     }
@@ -299,27 +304,7 @@ class EnumCellEditor extends CellEditor {
       return;
     }
 
-    this._resolve({ cell: this._cell, value: value });
-  }
-
-  updatePosition() {
-    if (!this._select) {
-      return;
-    }
-
-    const cellInfo = this.getCellInfo(this._cell);
-    const input = this._select;
-
-    if (!this._isCellFullyVisible(cellInfo)) {
-      input.style.visibility = 'hidden';
-    } else {
-      input.style.left = (cellInfo.x - 1) + 'px';
-      input.style.top = (cellInfo.y - 1) + 'px';
-      input.style.width = (cellInfo.width + 1) + 'px';
-      input.style.height = (cellInfo.height + 1) + 'px';
-      input.style.visibility = 'visible';
-      input.focus();
-    }
+    this._resolve({ cell: this._cell, value: value, returnPressed: returnPressed });
   }
 
   endEditing() {
@@ -327,10 +312,9 @@ class EnumCellEditor extends CellEditor {
       return;
     }
 
-    this._select.style.display = 'none';
-    //this._select.remove();
     this._select = null;
-    this._cell.grid.viewport.node.focus();
+
+    super.endEditing();
   }
 
   _select: HTMLSelectElement | null;
@@ -343,9 +327,8 @@ class DateCellEditor extends CellEditor {
     return metadata.type === 'date';
   }
 
-  startEdit() {
+  startEditing() {
     const cell = this._cell;
-    const grid = cell.grid;
     const cellInfo = this.getCellInfo(cell);
 
     const input = document.createElement('input');
@@ -359,11 +342,12 @@ class DateCellEditor extends CellEditor {
 
     this._input = input;
 
-    grid.node.appendChild(input);
+    this._cellContainer.appendChild(input);
 
     this.updatePosition();
 
     input.select();
+    input.focus();
 
     input.addEventListener("keydown", (event) => {
       this._onKeyDown(event);
@@ -385,8 +369,6 @@ class DateCellEditor extends CellEditor {
       case 13: // return
         this._saveInput();
         this.endEditing();
-        this._cell.grid.selectionModel!.incrementCursor();
-        this._cell.grid.scrollToCursor();
         break;
       case 27: // escape
         this.endEditing();
@@ -396,14 +378,7 @@ class DateCellEditor extends CellEditor {
     }
   }
 
-  _isCellFullyVisible(cellInfo: any): boolean {
-    const grid = cellInfo.grid;
-
-    return cellInfo.x >= grid.headerWidth && (cellInfo.x + cellInfo.width) <= grid.viewportWidth + 1 &&
-      cellInfo.y >= grid.headerHeight && (cellInfo.y + cellInfo.height) <= grid.viewportHeight + 1;
-  }
-
-  _saveInput() {
+  _saveInput(returnPressed: boolean = false) {
     if (!this._input) {
       return;
     }
@@ -413,27 +388,7 @@ class DateCellEditor extends CellEditor {
       return;
     }
 
-    this._resolve({ cell: this._cell, value: this._input!.value });
-  }
-
-  updatePosition() {
-    if (!this._input) {
-      return;
-    }
-
-    const cellInfo = this.getCellInfo(this._cell);
-    const input = this._input;
-
-    if (!this._isCellFullyVisible(cellInfo)) {
-      input.style.visibility = 'hidden';
-    } else {
-      input.style.left = (cellInfo.x - 1) + 'px';
-      input.style.top = (cellInfo.y - 1) + 'px';
-      input.style.width = (cellInfo.width + 1) + 'px';
-      input.style.height = (cellInfo.height + 1) + 'px';
-      input.style.visibility = 'visible';
-      input.focus();
-    }
+    this._resolve({ cell: this._cell, value: this._input!.value, returnPressed: returnPressed });
   }
 
   endEditing() {
@@ -441,10 +396,9 @@ class DateCellEditor extends CellEditor {
       return;
     }
 
-    this._input.style.display = 'none';
-    //this._input.remove();
     this._input = null;
-    this._cell.grid.viewport.node.focus();
+
+    super.endEditing();
   }
 
   _input: HTMLInputElement | null;

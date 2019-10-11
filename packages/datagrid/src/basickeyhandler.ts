@@ -75,6 +75,11 @@ class BasicKeyHandler implements DataGrid.IKeyHandler {
                 const dataModel = grid.dataModel as MutableDataModel;
                 dataModel.setData('body', row, column, response.value);
               }
+              grid.viewport.node.focus();
+              if (response.returnPressed) {
+                grid.selectionModel!.incrementCursor();
+                grid.scrollToCursor();
+              }
             });
           }
         }
