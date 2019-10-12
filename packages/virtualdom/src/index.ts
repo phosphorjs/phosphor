@@ -1062,34 +1062,61 @@ namespace Private {
   export
   function createDOMNode(node: VirtualNode): HTMLElement | Text;
   export
+  function createDOMNode(node: VirtualNode, host: HTMLElement): HTMLElement | Text;
+  export
+  function createDOMNode(node: VirtualNode, host: HTMLElement, before: Node | null): HTMLElement | Text;
+  export
   function createDOMNode(node: VirtualNode): HTMLElement | Text {
-    // Create a text node for a virtual text node.
-    if (node.type === 'text') {
-      return document.createTextNode(node.content);
-    } else if (node.type === 'passthru') {
-      console.error("createDOMNode should not be called on vdom nodes of type === 'passthru'");
-      return node.realize();
-    }
-
-    // Create the HTML element with the specified tag.
-    let element = document.createElement(node.tag);
-
-    // Add the attributes for the new element.
-    addAttrs(element, node.attrs);
-
-    // Recursively populate the element with child content.
-    for (let i = 0, n = node.children.length; i < n; ++i) {
-      const child = node.children[i];
-
-      if (child.type === 'passthru') {
-        child.render(element);
-      } else {
-        element.appendChild(createDOMNode(child));
+    if (arguments.length === 1) {
+      // Create a text node for a virtual text node.
+      if (node.type === 'text') {
+        return document.createTextNode(node.content);
+      } else if (node.type === 'passthru') {
+        throw new Error("createDOMNode should not be called with only one argument on vdom nodes of type === 'passthru'");
       }
-    }
 
-    // Return the populated element.
-    return element;
+      // Create the HTML element with the specified tag.
+      let element = document.createElement(node.tag);
+
+      // Add the attributes for the new element.
+      addAttrs(element, node.attrs);
+
+      // Recursively populate the element with child content.
+      for (let i = 0, n = node.children.length; i < n; ++i) {
+        const child = node.children[i];
+
+        if (child.type === 'passthru') {
+          child.render(element);
+        } else {
+          element.appendChild(createDOMNode(child));
+        }
+      }
+
+      // Return the populated element.
+      return element;
+    } else if (arguments.length === 2) {
+      const host = arguments[1];
+
+      if (node.type === 'passthru') {
+        node.render(host);
+      } else {
+        host.appendChild(createDOMNode(node));
+      }
+
+      return host;
+    } else {
+      const host = arguments[1];
+      const before = arguments[2];
+
+      if (node.type === 'passthru') {
+        // TODO: figure out how to do an "insert before" with a passthru node
+        node.render(host);
+      } else {
+        host.insertBefore(createDOMNode(node), before);
+      }
+
+      return host;
+    }
   }
 
   /**
@@ -1119,21 +1146,16 @@ namespace Private {
     let currElem = host.firstChild;
     let newCount = newContent.length;
     for (let i = 0; i < newCount; ++i) {
-      // Lookup the new virtual node.
-      let newVNode = newContent[i];
 
       // If the old content is exhausted, create a new node.
       if (i >= oldCopy.length) {
-        if (newVNode.type === 'passthru') {
-          newVNode.render(host);
-        } else {
-          host.appendChild(createDOMNode(newVNode));
-        }
+        createDOMNode(newContent[i], host);
         continue;
       }
 
-      // Lookup the old virtual node.
+      // Lookup the old and new virtual nodes.
       let oldVNode = oldCopy[i];
+      let newVNode = newContent[i];
 
       // If both elements are identical, there is nothing to do.
       if (oldVNode === newVNode) {
@@ -1160,15 +1182,11 @@ namespace Private {
       if (oldVNode.type === 'text' || newVNode.type === 'text' ||
         oldVNode.type === 'passthru' || newVNode.type === 'passthru') {
         ArrayExt.insert(oldCopy, i, newVNode);
-        if (newVNode.type === 'passthru') {
-          newVNode.render(host);
-        } else {
-          host.insertBefore(createDOMNode(newVNode), currElem);
-        }
+        createDOMNode(newVNode, host, currElem);
         continue;
       }
 
-      // At this point, both nodes are known to be of type element.
+      // At this point, both nodes are known to be element nodes.
 
       // If the new elem is keyed, move an old keyed elem to the proper
       // location before proceeding with the diff. The search can start
@@ -1197,14 +1215,14 @@ namespace Private {
       let oldKey = oldVNode.attrs.key;
       if (oldKey && oldKey !== newKey) {
         ArrayExt.insert(oldCopy, i, newVNode);
-        host.insertBefore(createDOMNode(newVNode), currElem);
+        createDOMNode(newVNode, host, currElem);
         continue;
       }
 
       // If the tags are different, create a new node.
       if (oldVNode.tag !== newVNode.tag) {
         ArrayExt.insert(oldCopy, i, newVNode);
-        host.insertBefore(createDOMNode(newVNode), currElem);
+        createDOMNode(newVNode, host, currElem);
         continue;
       }
 
