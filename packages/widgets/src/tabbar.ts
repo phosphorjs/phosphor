@@ -30,7 +30,7 @@ import {
 } from '@phosphor/signaling';
 
 import {
-  ElementDataset, ElementInlineStyle, VirtualDOM, VirtualElement, h
+  ElementDataset, ElementInlineStyle, VirtualDOM, VirtualElement, h, hpass, VirtualNode
 } from '@phosphor/virtualdom';
 
 import {
@@ -1337,9 +1337,15 @@ namespace TabBar {
      *
      * @returns A virtual element representing the tab icon.
      */
-    renderIcon(data: IRenderData<any>): VirtualElement {
+    renderIcon(data: IRenderData<any>): VirtualNode {
+      const { title } = data;
       let className = this.createIconClass(data);
-      return h.div({ className }, data.title.iconLabel);
+
+      if (title.iconPass) {
+        return hpass(title.iconPass);
+      } else {
+        return h.div({className}, data.title.iconLabel);
+      }
     }
 
     /**
