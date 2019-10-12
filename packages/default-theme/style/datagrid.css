@@ -37,6 +37,7 @@
 
 .cell-editor-container {
   position: absolute;
+  background-color: #ffffff;
 }
 
 .cell-editor-container > form {

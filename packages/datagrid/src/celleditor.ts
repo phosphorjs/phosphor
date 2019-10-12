@@ -27,24 +27,61 @@ interface ICellInputValidator {
 
 const DEFAULT_INVALID_INPUT_MESSAGE = "Invalid input!";
 
+//type CellDataType = 'string' | 'integer' | 'number' | 'boolean' | 'date' | string;
+
 export
 class CellEditorController {
-  registerEditor(editor: CellEditor) {
-    this._editors.push(editor);
+  private _getKey(cell: CellEditor.CellConfig): string {
+    const metadata = cell.grid.dataModel ? cell.grid.dataModel.metadata('body', cell.row, cell.column) : null;
+
+    if (!metadata) {
+      return 'undefined';
+    }
+
+    let key = '';
+
+    if (metadata) {
+      key = metadata.type;  
+    }
+
+    if (metadata.constraint && metadata.constraint.enum) {
+      key += ':enum';
+    }
+
+    return key;
   }
 
-  edit(cell: CellEditor.CellConfig, validator?: ICellInputValidator): Promise<ICellEditResponse> {
-    const numEditors = this._editors.length;
-    for (let i = numEditors - 1; i >= 0; --i) {
-      const editor = this._editors[i];
-      if (editor.canEdit(cell)) {
-        return editor.edit(cell, validator);
-      }
+  private _getEditor(cell: CellEditor.CellConfig): CellEditor | null {
+    const key = this._getKey(cell);
+
+    switch (key) {
+      case 'string':
+      case 'number':
+        return new TextCellEditor();
+      case 'integer':
+        return new IntegerCellEditor();
+      case 'boolean':
+        return new BooleanCellEditor();
+      case 'date':
+        return new DateCellEditor();
+      case 'string:enum':
+      case 'number:enum':
+      case 'integer:enum':
+      case 'date:enum':
+        return new SelectCellEditor();
     }
 
     const data = cell.grid.dataModel ? cell.grid.dataModel.data('body', cell.row, cell.column) : undefined;
     if (!data || typeof data !== 'object') {
-      const editor = new TextCellEditor();
+      return new TextCellEditor();
+    }
+
+    return null;
+  }
+
+  edit(cell: CellEditor.CellConfig, validator?: ICellInputValidator): Promise<ICellEditResponse> {
+    const editor = this._getEditor(cell);
+    if (editor) {
       return editor.edit(cell, validator);
     }
 
@@ -52,14 +89,10 @@ class CellEditorController {
       reject('Editor not found');
     });
   }
-
-  private _editors: CellEditor[] = [];
 }
 
 export
 abstract class CellEditor {
-  abstract canEdit(cell: CellEditor.CellConfig): boolean;
-
   edit(cell: CellEditor.CellConfig, validator?: ICellInputValidator): Promise<ICellEditResponse> {
     return new Promise<ICellEditResponse>((resolve, reject) => {
       this._cell = cell;
@@ -142,11 +175,6 @@ abstract class CellEditor {
 
 export
 class TextCellEditor extends CellEditor {
-  canEdit(cell: CellEditor.CellConfig): boolean {
-    const metadata = cell.grid.dataModel ? cell.grid.dataModel.metadata('body', cell.row, cell.column) : {};
-    return metadata.type === 'string';
-  }
-
   startEditing() {
     const cell = this._cell;
     const cellInfo = this.getCellInfo(cell);
@@ -215,7 +243,7 @@ class TextCellEditor extends CellEditor {
       }
     }
 
-    this._resolve({ cell: this._cell, value: this._input!.value, returnPressed: returnPressed });
+    this._resolve({ cell: this._cell, value: value, returnPressed: returnPressed });
 
     return true;
   }
@@ -234,12 +262,185 @@ class TextCellEditor extends CellEditor {
 }
 
 export
-class EnumCellEditor extends CellEditor {
-  canEdit(cell: CellEditor.CellConfig): boolean {
-    const metadata = cell.grid.dataModel ? cell.grid.dataModel.metadata('body', cell.row, cell.column) : {};
-    return metadata.constraint && metadata.constraint.enum;
+class IntegerCellEditor extends CellEditor {
+  startEditing() {
+    const cell = this._cell;
+    const cellInfo = this.getCellInfo(cell);
+
+    const form = document.createElement('form');
+    const input = document.createElement('input');
+    input.classList.add('cell-editor');
+    input.classList.add('input-cell-editor');
+    input.type = 'number';
+    input.spellcheck = false;
+    input.required = false;
+
+    input.value = cellInfo.data;
+
+    this._input = input;
+
+    form.appendChild(input);
+    this._cellContainer.appendChild(form);
+
+    this.updatePosition();
+
+    input.select();
+    input.focus();
+
+    input.addEventListener("keydown", (event) => {
+      this._onKeyDown(event);
+    });
+
+    input.addEventListener("blur", (event) => {
+      if (this._saveInput()) {
+        this.endEditing();
+      }
+    });
+
+    input.addEventListener("input", (event) => {
+      this._input!.setCustomValidity("");
+    });
   }
 
+  _onKeyDown(event: KeyboardEvent) {
+    switch (event.keyCode) {
+      case 13: // return
+        if (this._saveInput(true)) {
+          this.endEditing();
+        }
+        break;
+      case 27: // escape
+        this.endEditing();
+        break;
+      default:
+        break;
+    }
+  }
+
+  _saveInput(returnPressed: boolean = false): boolean {
+    if (!this._input) {
+      return false;
+    }
+
+    const value = this._input.value;
+    if (this._validator) {
+      const result = this._validator.validate(this._cell, value);
+      if (!result.valid) {
+        this._input.setCustomValidity(result.message || DEFAULT_INVALID_INPUT_MESSAGE);
+        this._input.checkValidity();
+        return false;
+      }
+    }
+
+    this._resolve({ cell: this._cell, value: value, returnPressed: returnPressed });
+
+    return true;
+  }
+
+  endEditing() {
+    if (!this._input) {
+      return;
+    }
+
+    this._input = null;
+
+    super.endEditing();
+  }
+
+  _input: HTMLInputElement | null;
+}
+
+export
+class BooleanCellEditor extends CellEditor {
+  startEditing() {
+    const cell = this._cell;
+    const cellInfo = this.getCellInfo(cell);
+
+    const form = document.createElement('form');
+    const input = document.createElement('input');
+    input.classList.add('cell-editor');
+    input.classList.add('input-cell-editor');
+    input.type = 'checkbox';
+    input.spellcheck = false;
+    input.required = false;
+
+    input.checked = cellInfo.data == true;
+
+    this._input = input;
+
+    form.appendChild(input);
+    this._cellContainer.appendChild(form);
+
+    this.updatePosition();
+
+    input.select();
+    input.focus();
+
+    input.addEventListener("keydown", (event) => {
+      this._onKeyDown(event);
+    });
+
+    input.addEventListener("blur", (event) => {
+      if (this._saveInput()) {
+        this.endEditing();
+      }
+    });
+
+    input.addEventListener("input", (event) => {
+      this._input!.setCustomValidity("");
+    });
+  }
+
+  _onKeyDown(event: KeyboardEvent) {
+    switch (event.keyCode) {
+      case 13: // return
+        if (this._saveInput(true)) {
+          this.endEditing();
+        }
+        break;
+      case 27: // escape
+        this.endEditing();
+        break;
+      default:
+        break;
+    }
+  }
+
+  _saveInput(returnPressed: boolean = false): boolean {
+    if (!this._input) {
+      return false;
+    }
+
+    const value = this._input.checked;
+    if (this._validator) {
+      const result = this._validator.validate(this._cell, value);
+      if (!result.valid) {
+        this._input.setCustomValidity(result.message || DEFAULT_INVALID_INPUT_MESSAGE);
+        this._input.checkValidity();
+        return false;
+      }
+    }
+
+    this._resolve({ cell: this._cell, value: value, returnPressed: returnPressed });
+
+    return true;
+  }
+
+  endEditing() {
+    if (!this._input) {
+      return;
+    }
+
+    this._input = null;
+
+    super.endEditing();
+  }
+
+  _input: HTMLInputElement | null;
+}
+
+export
+class SelectCellEditor extends CellEditor {
   startEditing() {
     const cell = this._cell;
     const cellInfo = this.getCellInfo(cell);
@@ -322,11 +523,6 @@ class EnumCellEditor extends CellEditor {
 
 export
 class DateCellEditor extends CellEditor {
-  canEdit(cell: CellEditor.CellConfig): boolean {
-    const metadata = cell.grid.dataModel ? cell.grid.dataModel.metadata('body', cell.row, cell.column) : {};
-    return metadata.type === 'date';
-  }
-
   startEditing() {
     const cell = this._cell;
     const cellInfo = this.getCellInfo(cell);
@@ -388,7 +584,7 @@ class DateCellEditor extends CellEditor {
       return;
     }
 
-    this._resolve({ cell: this._cell, value: this._input!.value, returnPressed: returnPressed });
+    this._resolve({ cell: this._cell, value: value, returnPressed: returnPressed });
   }
 
   endEditing() {
