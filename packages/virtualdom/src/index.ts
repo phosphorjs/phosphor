@@ -1062,12 +1062,24 @@ namespace Private {
   export
   function createDOMNode(node: VirtualNode): HTMLElement | Text;
   export
-  function createDOMNode(node: VirtualNode, host: HTMLElement): HTMLElement | Text;
+  function createDOMNode(node: VirtualNode, host: HTMLElement | null): HTMLElement | Text;
   export
-  function createDOMNode(node: VirtualNode, host: HTMLElement, before: Node | null): HTMLElement | Text;
+  function createDOMNode(node: VirtualNode, host: HTMLElement | null, before: Node | null): HTMLElement | Text;
   export
   function createDOMNode(node: VirtualNode): HTMLElement | Text {
-    if (arguments.length === 1) {
+    const host = arguments[1] || null;
+    const before = arguments[2] || null;
+
+    if (host) {
+      if (node.type === 'passthru') {
+        // TODO: figure out how to do an "insert before" with a passthru node
+        node.render(host);
+      } else {
+        host.insertBefore(createDOMNode(node), before);
+      }
+
+      return host;
+    } else {
       // Create a text node for a virtual text node.
       if (node.type === 'text') {
         return document.createTextNode(node.content);
@@ -1083,39 +1095,11 @@ namespace Private {
 
       // Recursively populate the element with child content.
       for (let i = 0, n = node.children.length; i < n; ++i) {
-        const child = node.children[i];
-
-        if (child.type === 'passthru') {
-          child.render(element);
-        } else {
-          element.appendChild(createDOMNode(child));
-        }
+        createDOMNode(node.children[i], element);
       }
 
       // Return the populated element.
       return element;
-    } else if (arguments.length === 2) {
-      const host = arguments[1];
-
-      if (node.type === 'passthru') {
-        node.render(host);
-      } else {
-        host.appendChild(createDOMNode(node));
-      }
-
-      return host;
-    } else {
-      const host = arguments[1];
-      const before = arguments[2];
-
-      if (node.type === 'passthru') {
-        // TODO: figure out how to do an "insert before" with a passthru node
-        node.render(host);
-      } else {
-        host.insertBefore(createDOMNode(node), before);
-      }
-
-      return host;
     }
   }
 
