@@ -165,12 +165,26 @@ abstract class CellEditor {
     this._cell.grid.node.removeChild(this._viewportOccluder);
   }
 
+  protected set validInput(value: boolean) {
+    this._validInput = value;
+    if (this._validInput) {
+      this._cellContainer.classList.remove('invalid');
+    } else {
+      this._cellContainer.classList.add('invalid');
+    }
+  }
+
+  protected get validInput(): boolean {
+    return this._validInput;
+  }
+
   protected _resolve: {(response: ICellEditResponse): void };
   protected _reject: {(reason: any): void };
   protected _cell: CellEditor.CellConfig;
   protected _validator: ICellInputValidator | undefined;
   protected _viewportOccluder: HTMLDivElement;
   protected _cellContainer: HTMLDivElement;
+  private _validInput: boolean = true;
 }
 
 export
@@ -189,6 +203,7 @@ class TextCellEditor extends CellEditor {
     input.value = cellInfo.data;
 
     this._input = input;
+    this._form = form;    
 
     form.appendChild(input);
     this._cellContainer.appendChild(form);
@@ -205,11 +220,15 @@ class TextCellEditor extends CellEditor {
     input.addEventListener("blur", (event) => {
       if (this._saveInput()) {
         this.endEditing();
+        event.preventDefault();
+        event.stopPropagation();
+        this._input!.focus();
       }
     });
 
     input.addEventListener("input", (event) => {
       this._input!.setCustomValidity("");
+      this.validInput = true;
     });
   }
 
@@ -218,6 +237,8 @@ class TextCellEditor extends CellEditor {
       case 13: // return
         if (this._saveInput(true)) {
           this.endEditing();
+          event.preventDefault();
+          event.stopPropagation();
         }
         break;
       case 27: // escape
@@ -237,8 +258,9 @@ class TextCellEditor extends CellEditor {
     if (this._validator) {
       const result = this._validator.validate(this._cell, value);
       if (!result.valid) {
+        this.validInput = false;
         this._input.setCustomValidity(result.message || DEFAULT_INVALID_INPUT_MESSAGE);
-        this._input.checkValidity();
+        this._form.reportValidity();
         return false;
       }
     }
@@ -259,6 +281,7 @@ class TextCellEditor extends CellEditor {
   }
 
   _input: HTMLInputElement | null;
+  _form: HTMLFormElement;
 }
 
 export
@@ -299,6 +322,7 @@ class IntegerCellEditor extends CellEditor {
 
     input.addEventListener("input", (event) => {
       this._input!.setCustomValidity("");
+      this.validInput = true;
     });
   }
 
@@ -326,6 +350,7 @@ class IntegerCellEditor extends CellEditor {
     if (this._validator) {
       const result = this._validator.validate(this._cell, value);
       if (!result.valid) {
+        this.validInput = false;
         this._input.setCustomValidity(result.message || DEFAULT_INVALID_INPUT_MESSAGE);
         this._input.checkValidity();
         return false;
@@ -359,7 +384,7 @@ class BooleanCellEditor extends CellEditor {
     const form = document.createElement('form');
     const input = document.createElement('input');
     input.classList.add('cell-editor');
-    input.classList.add('input-cell-editor');
+    input.classList.add('boolean-cell-editor');
     input.type = 'checkbox';
     input.spellcheck = false;
     input.required = false;
@@ -388,6 +413,7 @@ class BooleanCellEditor extends CellEditor {
 
     input.addEventListener("input", (event) => {
       this._input!.setCustomValidity("");
+      this.validInput = true;
     });
   }
 
@@ -415,6 +441,7 @@ class BooleanCellEditor extends CellEditor {
     if (this._validator) {
       const result = this._validator.validate(this._cell, value);
       if (!result.valid) {
+        this.validInput = false;
         this._input.setCustomValidity(result.message || DEFAULT_INVALID_INPUT_MESSAGE);
         this._input.checkValidity();
         return false;
@@ -502,6 +529,7 @@ class SelectCellEditor extends CellEditor {
 
     const value = this._select.value;
     if (this._validator && ! this._validator.validate(this._cell, value)) {
+      this.validInput = false;
       return;
     }
 
@@ -581,6 +609,7 @@ class DateCellEditor extends CellEditor {
 
     const value = this._input.value;
     if (this._validator && !this._validator.validate(this._cell, value)) {
+      this.validInput = false;
       return;
     }
 
