@@ -1067,40 +1067,39 @@ namespace Private {
   function createDOMNode(node: VirtualNode, host: HTMLElement | null, before: Node | null): HTMLElement | Text;
   export
   function createDOMNode(node: VirtualNode): HTMLElement | Text {
-    const host = arguments[1] || null;
+    let host = arguments[1] || null;
     const before = arguments[2] || null;
 
-    if (host) {
-      if (node.type === 'passthru') {
+    if (node.type === 'passthru') {
+      if (host) {
         // TODO: figure out how to do an "insert before" with a passthru node
         node.render(host);
       } else {
-        host.insertBefore(createDOMNode(node), before);
-      }
-
-      return host;
-    } else {
-      // Create a text node for a virtual text node.
-      if (node.type === 'text') {
-        return document.createTextNode(node.content);
-      } else if (node.type === 'passthru') {
         throw new Error("createDOMNode should not be called with only one argument on vdom nodes of type === 'passthru'");
       }
+    } else {
+      if (host) {
+        host.insertBefore(createDOMNode(node), before);
+      } else {
+        // Create a text node for a virtual text node.
+        if (node.type === 'text') {
+          return document.createTextNode(node.content);
+        }
 
-      // Create the HTML element with the specified tag.
-      let element = document.createElement(node.tag);
+        // Create the HTML element with the specified tag.
+        host = document.createElement(node.tag);
 
-      // Add the attributes for the new element.
-      addAttrs(element, node.attrs);
+        // Add the attributes for the new element.
+        addAttrs(host, node.attrs);
 
-      // Recursively populate the element with child content.
-      for (let i = 0, n = node.children.length; i < n; ++i) {
-        createDOMNode(node.children[i], element);
+        // Recursively populate the element with child content.
+        for (let i = 0, n = node.children.length; i < n; ++i) {
+          createDOMNode(node.children[i], host);
+        }
       }
-
-      // Return the populated element.
-      return element;
     }
+
+    return host;
   }
 
   /**
