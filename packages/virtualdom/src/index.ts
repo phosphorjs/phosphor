@@ -763,11 +763,11 @@ class VirtualElementPass{
    *
    * @param render - a function that takes a host HTMLElement and returns void
    */
-  constructor(readonly render: VirtualElementPass.IRender, readonly tag: string, readonly attrs: ElementAttrs) {}
+  constructor(readonly renderer: VirtualElementPass.IRenderer, readonly tag: string, readonly attrs: ElementAttrs) {}
 }
 
 export namespace VirtualElementPass {
-  export type IRender = (host: HTMLElement) => void;
+  export type IRenderer = {render: (host: HTMLElement) => void, unrender: (host: HTMLElement) => void};
 }
 
 /**
@@ -957,7 +957,7 @@ namespace h {
   export const wbr: IFactory = h.bind(undefined, 'wbr');
 }
 
-export function hpass(render: VirtualElementPass.IRender, tag: string, attrs: ElementAttrs = {}): VirtualElementPass {
+export function hpass(render: VirtualElementPass.IRenderer, tag: string, attrs: ElementAttrs = {}): VirtualElementPass {
   return new VirtualElementPass(render, tag, attrs);
 }
 
@@ -1069,7 +1069,7 @@ namespace Private {
       addAttrs(host, node.attrs);
 
       if (node.type === 'passthru') {
-        node.render(host);
+        node.renderer.render(host);
         return host;
       }
 
@@ -1135,7 +1135,7 @@ namespace Private {
 
       // Handle the case of passthru update.
       if (oldVNode.type === 'passthru' && newVNode.type === 'passthru') {
-        newVNode.render(currElem as HTMLElement);
+        newVNode.renderer.render(currElem as HTMLElement);
         currElem = currElem!.nextSibling;
         continue;
       }
@@ -1201,8 +1201,23 @@ namespace Private {
       currElem = currElem!.nextSibling;
     }
 
+    // Cleanup stale DOM
+    removeContent(host, oldCopy, newCount);
+  }
+
+  function removeContent(host: HTMLElement, oldContent: ReadonlyArray<VirtualNode>, newCount: number) {
     // Dispose of the old nodes pushed to the end of the host.
-    for (let i = oldCopy.length - newCount; i > 0; --i) {
+    for (let i = oldContent.length - 1; i >= newCount; --i) {
+      const oldNode = oldContent[i];
+
+      // recursively clean up host children
+      if (oldNode.type === 'text') {} else if (oldNode.type === 'passthru') {
+        oldNode.renderer.unrender!(host.lastChild as HTMLElement);
+      } else {
+        removeContent((host.lastChild as HTMLElement)!, oldNode.children, 0);
+      }
+
+
       host.removeChild(host.lastChild!);
     }
   }
