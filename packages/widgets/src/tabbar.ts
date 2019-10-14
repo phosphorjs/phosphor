@@ -1341,8 +1341,8 @@ namespace TabBar {
       const { title } = data;
       let className = this.createIconClass(data);
 
-      if (title.iconPass) {
-        return hpass(title.iconPass);
+      if (title.iconRender) {
+        return hpass(title.iconRender, 'div');
       } else {
         return h.div({className}, data.title.iconLabel);
       }

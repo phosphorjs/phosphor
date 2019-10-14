@@ -748,10 +748,7 @@ class VirtualElement {
 }
 
 export
-class VirtualElementPass {
-  readonly realize: VirtualElementPass.IRealize;
-
-  readonly render: VirtualElementPass.IRender;
+class VirtualElementPass{
 
   /**
    * The type of the node.
@@ -764,26 +761,13 @@ class VirtualElementPass {
   /**
    * Construct a new virtual element pass thru node.
    *
-   * @param realize - a function that takes no arguments and returns an HTMLElement
-   *
    * @param render - a function that takes a host HTMLElement and returns void
    */
-  constructor({realize, render}: VirtualElementPass.IProps) {
-    this.render = render;
-    this.realize = realize || (() => {const host = document.createElement('div'); this.render(host); return host});
-  }
+  constructor(readonly render: VirtualElementPass.IRender, readonly tag: string, readonly attrs: ElementAttrs) {}
 }
 
 export namespace VirtualElementPass {
-  export type IRealize = () => HTMLElement;
-
   export type IRender = (host: HTMLElement) => void;
-
-  export interface IProps {
-    realize?: IRealize;
-
-    render: IRender;
-  }
 }
 
 /**
@@ -973,8 +957,8 @@ namespace h {
   export const wbr: IFactory = h.bind(undefined, 'wbr');
 }
 
-export function hpass(props: VirtualElementPass.IProps): VirtualElementPass {
-  return new VirtualElementPass(props);
+export function hpass(render: VirtualElementPass.IRender, tag: string, attrs: ElementAttrs = {}): VirtualElementPass {
+  return new VirtualElementPass(render, tag, attrs);
 }
 
 /**
@@ -1070,32 +1054,28 @@ namespace Private {
     let host = arguments[1] || null;
     const before = arguments[2] || null;
 
-    if (node.type === 'passthru') {
-      if (host) {
-        // TODO: figure out how to do an "insert before" with a passthru node
-        node.render(host);
-      } else {
-        throw new Error("createDOMNode should not be called with only one argument on vdom nodes of type === 'passthru'");
-      }
+    if (host) {
+      host.insertBefore(createDOMNode(node), before);
     } else {
-      if (host) {
-        host.insertBefore(createDOMNode(node), before);
-      } else {
-        // Create a text node for a virtual text node.
-        if (node.type === 'text') {
-          return document.createTextNode(node.content);
-        }
+      // Create a text node for a virtual text node.
+      if (node.type === 'text') {
+        return document.createTextNode(node.content);
+      }
 
-        // Create the HTML element with the specified tag.
-        host = document.createElement(node.tag);
+      // Create the HTML element with the specified tag.
+      host = document.createElement(node.tag);
 
-        // Add the attributes for the new element.
-        addAttrs(host, node.attrs);
+      // Add the attributes for the new element.
+      addAttrs(host, node.attrs);
 
-        // Recursively populate the element with child content.
-        for (let i = 0, n = node.children.length; i < n; ++i) {
-          createDOMNode(node.children[i], host);
-        }
+      if (node.type === 'passthru') {
+        node.render(host);
+        return host;
+      }
+
+      // Recursively populate the element with child content.
+      for (let i = 0, n = node.children.length; i < n; ++i) {
+        createDOMNode(node.children[i], host);
       }
     }
 
@@ -1155,7 +1135,7 @@ namespace Private {
 
       // Handle the case of passthru update.
       if (oldVNode.type === 'passthru' && newVNode.type === 'passthru') {
-        newVNode.render(host);
+        newVNode.render(currElem as HTMLElement);
         currElem = currElem!.nextSibling;
         continue;
       }
