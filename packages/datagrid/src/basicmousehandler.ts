@@ -28,7 +28,7 @@ import {
 import {
   SelectionModel
 } from './selectionmodel';
-import { ICellEditResponse, ICellInputValidatorResponse } from './celleditor';
+import { ICellEditResponse } from './celleditor';
 
 /**
  * A basic implementation of a data grid mouse handler.
@@ -521,22 +521,15 @@ class BasicMouseHandler implements DataGrid.IMouseHandler {
         grid: grid,
         row: row,
         column: column,
-        metadata: grid.dataModel!.metadata('body', row, column)},
-        {
-          validate: (value: any): ICellInputValidatorResponse => {
-            return {
-              valid: true
-            };
-          }
-        })
+        metadata: grid.dataModel!.metadata('body', row, column)})
       .then((response: ICellEditResponse) => {
         if (grid.dataModel instanceof MutableDataModel) {
           const dataModel = grid.dataModel as MutableDataModel;
           dataModel.setData('body', row, column, response.value);
         }
         grid.viewport.node.focus();
-        if (response.returnPressed) {
-          grid.selectionModel!.incrementCursor();
+        if (response.cursorMovement !== 'none') {
+          grid.incrementCursor(response.cursorMovement);
           grid.scrollToCursor();
         }
       });

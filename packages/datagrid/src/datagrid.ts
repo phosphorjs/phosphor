@@ -826,6 +826,61 @@ class DataGrid extends Widget {
   }
 
   /**
+   * Move cursor down/up while making sure it remains
+   * within the bounds of selected rectangles
+   */
+  incrementCursor(direction: SelectionModel.CursorMoveDirection): void {
+    // Bail early if there is no selection
+    if (!this.dataModel ||
+      !this._selectionModel ||
+      this._selectionModel.isEmpty) {
+      return;
+    }
+
+    const iter = this._selectionModel.selections();
+    const onlyOne = iter.next() && !iter.next();
+
+    // if there is a single selection that is a single cell selection
+    // then move the selection and cursor within grid bounds
+    if (onlyOne) {
+      const currentSel = this._selectionModel.currentSelection()!;
+      if (currentSel.r1 === currentSel.r2 &&
+        currentSel.c1 === currentSel.c2
+      ) {
+        let newRow = currentSel.r1 + (direction === 'down' ? 1 : -1);
+        let newColumn = currentSel.c1;
+        const rowCount = this.dataModel.rowCount('body');
+        const columnCount = this.dataModel.columnCount('body');
+        if (newRow >= rowCount) {
+          newRow = 0;
+          newColumn += 1;
+        } else if (newRow === -1) {
+          newRow = rowCount - 1;
+          newColumn -= 1;
+        }
+        if (newColumn >= columnCount) {
+          newColumn = 0;
+        } else if (newColumn === -1) {
+          newColumn = columnCount - 1;
+        }
+
+        this._selectionModel.select({
+          r1: newRow, c1: newColumn,
+          r2: newRow, c2: newColumn,
+          cursorRow: newRow, cursorColumn: newColumn,
+          clear: 'all'
+        });
+
+        return;
+      }
+    }
+
+    // if there are multiple selections, move cursor
+    // within selection rectangles
+    this._selectionModel!.incrementCursorWithinSelections(direction);
+  }
+
+  /**
    * Scroll the grid to the current cursor position.
    *
    * #### Notes

@@ -48,23 +48,64 @@ class BasicSelectionModel extends SelectionModel {
     return this._cursorColumn;
   }
 
-  incrementCursor(): void {
-    const newRow = this._cursorRow + 1;
-    if (this._selections.length === 1 && (
-      this._selections[0].r1 === this._cursorRow &&
-      this._selections[0].c1 === this._cursorColumn &&
-      this._selections[0].r2 === this._cursorRow &&
-      this._selections[0].c2 === this._cursorColumn
-    )) {
-      this._selections[0] = {
-        r1: newRow,
-        c1: this._cursorColumn,
-        r2: newRow,
-        c2: this._cursorColumn
-      };
+  /**
+   * Move cursor down/up while making sure it remains
+   * within the bounds of selected rectangles
+   */
+  incrementCursorWithinSelections(direction: SelectionModel.CursorMoveDirection): void {
+    // Bail early if there are no selections or no existing cursor
+    if (this.isEmpty || this.cursorRow === -1 || this._cursorColumn === -1) {
+      return;
     }
-    
+
+    // Bail early if only single cell is selected
+    const firstSelection = this._selections[0];
+    if (this._selections.length === 1 &&
+      firstSelection.r1 === firstSelection.r2 &&
+      firstSelection.c1 === firstSelection.c2) {
+      return;
+    }
+
+    // start from last selection rectangle
+    if (this._cursorRectIndex === -1) {
+      this._cursorRectIndex = this._selections.length - 1;
+    }
+
+    let cursorRect = this._selections[this._cursorRectIndex];
+    let newRow = this._cursorRow + (direction === 'down' ? 1 : -1);
+    let newColumn = this._cursorColumn;
+    const r1 = Math.min(cursorRect.r1, cursorRect.r2);
+    const r2 = Math.max(cursorRect.r1, cursorRect.r2);
+    const c1 = Math.min(cursorRect.c1, cursorRect.c2);
+    const c2 = Math.max(cursorRect.c1, cursorRect.c2);
+
+    if (newRow > r2) {
+      newRow = r1;
+      newColumn += 1;
+    } else if (newRow < r1) {
+      newRow = r2;
+      newColumn -= 1;
+    }
+
+    // if going downward and the last cell in the selection rectangle visited,
+    // move to next rectangle
+    if (newColumn > c2) {
+      this._cursorRectIndex = (this._cursorRectIndex + 1) % this._selections.length;
+      cursorRect = this._selections[this._cursorRectIndex];
+      newRow = Math.min(cursorRect.r1, cursorRect.r2);
+      newColumn = Math.min(cursorRect.c1, cursorRect.c2);
+    }
+    // if going upward and the first cell in the selection rectangle visited,
+    // move to previous rectangle
+    else if (newColumn < c1) {
+      this._cursorRectIndex = this._cursorRectIndex === 0 ? this._selections.length - 1 : this._cursorRectIndex - 1;
+      cursorRect = this._selections[this._cursorRectIndex];
+      newRow = Math.max(cursorRect.r1, cursorRect.r2);
+      newColumn = Math.max(cursorRect.c1, cursorRect.c2);
+    }
+
     this._cursorRow = newRow;
+    this._cursorColumn = newColumn;
 
     // Emit the changed signal.
     this.emitChanged();
@@ -149,6 +190,7 @@ class BasicSelectionModel extends SelectionModel {
     // Update the cursor.
     this._cursorRow = cr;
     this._cursorColumn = cc;
+    this._cursorRectIndex = this._selections.length;
 
     // Add the new selection.
     this._selections.push({ r1, c1, r2, c2 });
@@ -169,6 +211,7 @@ class BasicSelectionModel extends SelectionModel {
     // Reset the internal state.
     this._cursorRow = -1;
     this._cursorColumn = -1;
+    this._cursorRectIndex = -1;
     this._selections.length = 0;
 
     // Emit the changed signal.
@@ -254,5 +297,6 @@ class BasicSelectionModel extends SelectionModel {
 
   private _cursorRow = -1;
   private _cursorColumn = -1;
+  private _cursorRectIndex = -1;
   private _selections: SelectionModel.Selection[] = [];
 }

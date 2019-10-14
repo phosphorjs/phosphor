@@ -6,12 +6,13 @@ import {
   DataGrid
 } from './datagrid';
 import { DataModel } from './datamodel';
+import { SelectionModel } from './selectionmodel';
 
 export
 interface ICellEditResponse {
   cell: CellEditor.CellConfig;
   value: any;
-  returnPressed: boolean;
+  cursorMovement: SelectionModel.CursorMoveDirection;
 };
 
 export
@@ -235,7 +236,7 @@ class TextCellEditor extends CellEditor {
   _onKeyDown(event: KeyboardEvent) {
     switch (event.keyCode) {
       case 13: // return
-        if (this._saveInput(true)) {
+        if (this._saveInput(event.shiftKey ? 'up' : 'down')) {
           this.endEditing();
           event.preventDefault();
           event.stopPropagation();
@@ -249,7 +250,7 @@ class TextCellEditor extends CellEditor {
     }
   }
 
-  _saveInput(returnPressed: boolean = false): boolean {
+  _saveInput(cursorMovement: SelectionModel.CursorMoveDirection = 'none'): boolean {
     if (!this._input) {
       return false;
     }
@@ -265,7 +266,7 @@ class TextCellEditor extends CellEditor {
       }
     }
 
-    this._resolve({ cell: this._cell, value: value, returnPressed: returnPressed });
+    this._resolve({ cell: this._cell, value: value, cursorMovement: cursorMovement });
 
     return true;
   }
@@ -329,7 +330,7 @@ class IntegerCellEditor extends CellEditor {
   _onKeyDown(event: KeyboardEvent) {
     switch (event.keyCode) {
       case 13: // return
-        if (this._saveInput(true)) {
+        if (this._saveInput('down')) {
           this.endEditing();
         }
         break;
@@ -341,7 +342,7 @@ class IntegerCellEditor extends CellEditor {
     }
   }
 
-  _saveInput(returnPressed: boolean = false): boolean {
+  _saveInput(cursorMovement: SelectionModel.CursorMoveDirection = 'none'): boolean {
     if (!this._input) {
       return false;
     }
@@ -357,7 +358,7 @@ class IntegerCellEditor extends CellEditor {
       }
     }
 
-    this._resolve({ cell: this._cell, value: value, returnPressed: returnPressed });
+    this._resolve({ cell: this._cell, value: value, cursorMovement: cursorMovement });
 
     return true;
   }
@@ -420,7 +421,7 @@ class BooleanCellEditor extends CellEditor {
   _onKeyDown(event: KeyboardEvent) {
     switch (event.keyCode) {
       case 13: // return
-        if (this._saveInput(true)) {
+        if (this._saveInput('down')) {
           this.endEditing();
         }
         break;
@@ -432,7 +433,7 @@ class BooleanCellEditor extends CellEditor {
     }
   }
 
-  _saveInput(returnPressed: boolean = false): boolean {
+  _saveInput(cursorMovement: SelectionModel.CursorMoveDirection = 'none'): boolean {
     if (!this._input) {
       return false;
     }
@@ -448,7 +449,7 @@ class BooleanCellEditor extends CellEditor {
       }
     }
 
-    this._resolve({ cell: this._cell, value: value, returnPressed: returnPressed });
+    this._resolve({ cell: this._cell, value: value, cursorMovement: cursorMovement });
 
     return true;
   }
@@ -511,7 +512,7 @@ class SelectCellEditor extends CellEditor {
   _onKeyDown(event: KeyboardEvent) {
     switch (event.keyCode) {
       case 13: // return
-        this._saveInput(true);
+        this._saveInput('down');
         this.endEditing();
         break;
       case 27: // escape
@@ -522,7 +523,7 @@ class SelectCellEditor extends CellEditor {
     }
   }
 
-  _saveInput(returnPressed: boolean = false) {
+  _saveInput(cursorMovement: SelectionModel.CursorMoveDirection = 'none') {
     if (!this._select) {
       return;
     }
@@ -533,7 +534,7 @@ class SelectCellEditor extends CellEditor {
       return;
     }
 
-    this._resolve({ cell: this._cell, value: value, returnPressed: returnPressed });
+    this._resolve({ cell: this._cell, value: value, cursorMovement: cursorMovement });
   }
 
   endEditing() {
@@ -602,7 +603,7 @@ class DateCellEditor extends CellEditor {
     }
   }
 
-  _saveInput(returnPressed: boolean = false) {
+  _saveInput(cursorMovement: SelectionModel.CursorMoveDirection = 'none') {
     if (!this._input) {
       return;
     }
@@ -613,7 +614,7 @@ class DateCellEditor extends CellEditor {
       return;
     }
 
-    this._resolve({ cell: this._cell, value: value, returnPressed: returnPressed });
+    this._resolve({ cell: this._cell, value: value, cursorMovement: cursorMovement });
   }
 
   endEditing() {
