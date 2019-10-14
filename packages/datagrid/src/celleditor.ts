@@ -42,7 +42,7 @@ class CellEditorController {
     let key = '';
 
     if (metadata) {
-      key = metadata.type;  
+      key = metadata.type;
     }
 
     if (metadata.constraint && metadata.constraint.enum) {
@@ -52,7 +52,7 @@ class CellEditorController {
     return key;
   }
 
-  private _getEditor(cell: CellEditor.CellConfig): CellEditor | null {
+  private _createEditor(cell: CellEditor.CellConfig): CellEditor | null {
     const key = this._getKey(cell);
 
     switch (key) {
@@ -81,7 +81,7 @@ class CellEditorController {
   }
 
   edit(cell: CellEditor.CellConfig, validator?: ICellInputValidator): Promise<ICellEditResponse> {
-    const editor = this._getEditor(cell);
+    const editor = this._createEditor(cell);
     if (editor) {
       return editor.edit(cell, validator);
     }
@@ -93,13 +93,155 @@ class CellEditorController {
 }
 
 export
+class TextInputValidator implements ICellInputValidator {
+  validate(cell: CellEditor.CellConfig, value: any): ICellInputValidatorResponse {
+    if (typeof value !== 'string') {
+      return {
+        valid: false,
+        message: 'Input must be valid text'
+      };
+    }
+
+    return {
+      valid: true
+    };
+  }
+};
+
+export
+class IntegerInputValidator implements ICellInputValidator {
+  validate(cell: CellEditor.CellConfig, value: any): ICellInputValidatorResponse {
+    const parsed = Number.parseInt(value);
+    if (parsed === Number.NaN) {
+      return {
+        valid: false,
+        message: 'Input must be valid integer'
+      };
+    }
+    if (this.min !== Number.NaN && parsed < this.min) {
+      return {
+        valid: false,
+        message: `Input must be greater than ${this.min}`
+      };
+    }
+
+    if (this.max !== Number.NaN && parsed > this.max) {
+      return {
+        valid: false,
+        message: `Input must be less than ${this.max}`
+      };
+    }
+
+    return {
+      valid: true
+    };
+  }
+
+  min: number = Number.NaN;
+  max: number = Number.NaN;
+};
+
+export
+class NumberInputValidator implements ICellInputValidator {
+  validate(cell: CellEditor.CellConfig, value: any): ICellInputValidatorResponse {
+    const parsed = Number.parseFloat(value);
+    if (parsed === Number.NaN) {
+      return {
+        valid: false,
+        message: 'Input must be valid number'
+      };
+    }
+    if (this.min !== Number.NaN && parsed < this.min) {
+      return {
+        valid: false,
+        message: `Input must be greater than ${this.min}`
+      };
+    }
+
+    if (this.max !== Number.NaN && parsed > this.max) {
+      return {
+        valid: false,
+        message: `Input must be less than ${this.max}`
+      };
+    }
+
+    return {
+      valid: true
+    };
+  }
+
+  min: number = Number.NaN;
+  max: number = Number.NaN;
+};
+
+export
+class BooleanInputValidator implements ICellInputValidator {
+  validate(cell: CellEditor.CellConfig, value: any): ICellInputValidatorResponse {
+    if (typeof value !== 'boolean') {
+      return {
+        valid: false,
+        message: 'Input must be a valid boolean'
+      };
+    }
+
+    return {
+      valid: true
+    };
+  }
+};
+
+
+export
 abstract class CellEditor {
   edit(cell: CellEditor.CellConfig, validator?: ICellInputValidator): Promise<ICellEditResponse> {
     return new Promise<ICellEditResponse>((resolve, reject) => {
       this._cell = cell;
-      this._validator = validator;
       this._resolve = resolve;
       this._reject = reject;
+
+      if (validator) {
+        this._validator = validator;
+      } else {
+        const metadata = cell.grid.dataModel ? cell.grid.dataModel.metadata('body', cell.row, cell.column) : null;
+
+        switch (metadata && metadata.type) {
+          case 'string':
+            this._validator = new TextInputValidator();
+            break;
+          case 'number':
+            {
+              const validator = new NumberInputValidator();
+              if (metadata!.constraint) {
+                if (metadata!.constraint.minimum) {
+                  validator.min = metadata!.constraint.minimum;
+                }
+                if (metadata!.constraint.maximum) {
+                  validator.max = metadata!.constraint.maximum;
+                }
+              }
+              this._validator = validator;
+            }
+            break;
+          case 'integer':
+            {
+              const validator = new IntegerInputValidator();
+              if (metadata!.constraint) {
+                if (metadata!.constraint.minimum) {
+                  validator.min = metadata!.constraint.minimum;
+                }
+                if (metadata!.constraint.maximum) {
+                  validator.max = metadata!.constraint.maximum;
+                }
+              }
+              this._validator = validator;
+            }
+            break;
+          case 'boolean':
+              this._validator = new BooleanInputValidator();
+              break;
+        }
+
+      }
 
       cell.grid.node.addEventListener('wheel', () => {
         this.updatePosition();
@@ -298,6 +440,17 @@ class IntegerCellEditor extends CellEditor {
     input.type = 'number';
     input.spellcheck = false;
     input.required = false;
+
+    const metadata = cell.grid.dataModel!.metadata('body', cell.row, cell.column);
+    const constraint = metadata.constraint;
+    if (constraint) {
+      if (constraint.minimum) {
+        input.min = constraint.minimum;
+      }
+      if (constraint.maximum) {
+        input.max = constraint.maximum;
+      }
+    }
 
     input.value = cellInfo.data;
 
