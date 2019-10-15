@@ -747,6 +747,17 @@ class VirtualElement {
   }
 }
 
+
+/**
+ * A "pass thru" virtual node whose children are managed by a render and an
+ * unrender callback. The intent of this flavor of virtual node is to make
+ * it easy to blend other kinds of virtualdom (eg React) into Phosphor's
+ * virtualdom.
+ *
+ * #### Notes
+ * User code will not typically create a `VirtualElementPass` node directly.
+ * Instead, the `hpass()` function will be used to create an element tree.
+ */
 export
 class VirtualElementPass{
 
@@ -761,14 +772,28 @@ class VirtualElementPass{
   /**
    * Construct a new virtual element pass thru node.
    *
-   * @param render - a function that takes a host HTMLElement and returns void
+   * @param renderer - an object with render and unrender functions,
+   * each of which should take a single argument of type HTMLElement
+   * and return nothing
+   *
+   * @param tag - the tag of the parent element of this node. Once the parent
+   * element is rendered, it will be passed as an argument to
+   * renderer.render
+   *
+   * @param attrs - optional attributes that will assigned to the
+   * parent element
    */
   constructor(readonly renderer: VirtualElementPass.IRenderer, readonly tag: string, readonly attrs: ElementAttrs) {}
 }
 
+
+/**
+ * The namespace for the VirtualElementPass class statics.
+ */
 export namespace VirtualElementPass {
   export type IRenderer = {render: (host: HTMLElement) => void, unrender: (host: HTMLElement) => void};
 }
+
 
 /**
  * A type alias for a general virtual node.
@@ -957,9 +982,23 @@ namespace h {
   export const wbr: IFactory = h.bind(undefined, 'wbr');
 }
 
-export function hpass(render: VirtualElementPass.IRenderer, tag: string, attrs: ElementAttrs = {}): VirtualElementPass {
-  return new VirtualElementPass(render, tag, attrs);
+
+/**
+ * Create a new "pass thru" virtual element node.
+ *
+ * @param renderer - an object with render and unrender functions.
+ *
+ * @param tag - The tag name for the parent element.
+ *
+ * @param attrs - The attributes for the parent element, if any.
+ *
+ * @returns A new "pass thru" virtual element node for the given parameters.
+ *
+ */
+export function hpass(renderer: VirtualElementPass.IRenderer, tag: string, attrs: ElementAttrs = {}): VirtualElementPass {
+  return new VirtualElementPass(renderer, tag, attrs);
 }
+
 
 /**
  * The namespace for the virtual DOM rendering functions.
@@ -1197,6 +1236,12 @@ namespace Private {
     removeContent(host, oldCopy, newCount, true);
   }
 
+  /**
+   * Handle cleanup of stale vdom and its associated DOM. Stale nodes are
+   * traversed recursively and any needed explicit cleanup is carried out (
+   * in particular, the unrender callback of VirtualElementPass nodes). The
+   * stale children of the top level node are removed using removeChild.
+   */
   function removeContent(host: HTMLElement, oldContent: ReadonlyArray<VirtualNode>, newCount: number, _sentinel = false) {
     // Dispose of the old nodes pushed to the end of the host.
     for (let i = oldContent.length - 1; i >= newCount; --i) {
