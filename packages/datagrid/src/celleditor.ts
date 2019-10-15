@@ -5,8 +5,11 @@ import {
 import {
   DataGrid
 } from './datagrid';
+
 import { DataModel } from './datamodel';
+
 import { SelectionModel } from './selectionmodel';
+
 import { Signal, ISignal } from '@phosphor/signaling';
 
 export
@@ -36,7 +39,6 @@ interface ICellEditor {
 
 const DEFAULT_INVALID_INPUT_MESSAGE = "Invalid input!";
 
-//type CellDataType = 'string' | 'integer' | 'number' | 'boolean' | 'date' | string;
 
 export
 class CellEditorController {
@@ -65,8 +67,9 @@ class CellEditorController {
 
     switch (key) {
       case 'string':
-      case 'number':
         return new TextCellEditor();
+      case 'number':
+        return new NumberCellEditor();
       case 'integer':
         return new IntegerCellEditor();
       case 'boolean':
@@ -108,7 +111,7 @@ class PassInputValidator implements ICellInputValidator {
 
 export
 class TextInputValidator implements ICellInputValidator {
-  validate(cell: CellEditor.CellConfig, value: any): ICellInputValidatorResponse {
+  validate(cell: CellEditor.CellConfig, value: string): ICellInputValidatorResponse {
     if (typeof value !== 'string') {
       return {
         valid: false,
@@ -122,22 +125,21 @@ class TextInputValidator implements ICellInputValidator {
 
 export
 class IntegerInputValidator implements ICellInputValidator {
-  validate(cell: CellEditor.CellConfig, value: any): ICellInputValidatorResponse {
-    const parsed = Number.parseInt(value);
-    if (Number.isNaN(parsed)) {
+  validate(cell: CellEditor.CellConfig, value: number): ICellInputValidatorResponse {
+    if (Number.isNaN(value) || (value % 1 !== 0)) {
       return {
         valid: false,
         message: 'Input must be valid integer'
       };
     }
-    if (!Number.isNaN(this.min) && parsed < this.min) {
+    if (!Number.isNaN(this.min) && value < this.min) {
       return {
         valid: false,
         message: `Input must be greater than ${this.min}`
       };
     }
 
-    if (!Number.isNaN(this.max) && parsed > this.max) {
+    if (!Number.isNaN(this.max) && value > this.max) {
       return {
         valid: false,
         message: `Input must be less than ${this.max}`
@@ -153,22 +155,21 @@ class IntegerInputValidator implements ICellInputValidator {
 
 export
 class NumberInputValidator implements ICellInputValidator {
-  validate(cell: CellEditor.CellConfig, value: any): ICellInputValidatorResponse {
-    const parsed = Number.parseFloat(value);
-    if (Number.isNaN(parsed)) {
+  validate(cell: CellEditor.CellConfig, value: number): ICellInputValidatorResponse {
+    if (Number.isNaN(value)) {
       return {
         valid: false,
         message: 'Input must be valid number'
       };
     }
-    if (!Number.isNaN(this.min) && parsed < this.min) {
+    if (!Number.isNaN(this.min) && value < this.min) {
       return {
         valid: false,
         message: `Input must be greater than ${this.min}`
       };
     }
 
-    if (!Number.isNaN(this.max) && parsed > this.max) {
+    if (!Number.isNaN(this.max) && value > this.max) {
       return {
         valid: false,
         message: `Input must be less than ${this.max}`
@@ -182,19 +183,6 @@ class NumberInputValidator implements ICellInputValidator {
   max: number = Number.NaN;
 }
 
-export
-class BooleanInputValidator implements ICellInputValidator {
-  validate(cell: CellEditor.CellConfig, value: any): ICellInputValidatorResponse {
-    if (typeof value !== 'boolean') {
-      return {
-        valid: false,
-        message: 'Input must be a valid boolean'
-      };
-    }
-
-    return { valid: true };
-  }
-}
 
 export
 abstract class CellEditor implements ICellEditor {
@@ -238,9 +226,6 @@ abstract class CellEditor implements ICellEditor {
             this._validator = validator;
           }
           break;
-        case 'boolean':
-            this._validator = new BooleanInputValidator();
-            break;
       }
 
     }
@@ -283,6 +268,10 @@ abstract class CellEditor implements ICellEditor {
     this._cellContainer = document.createElement('div');
     this._cellContainer.className = 'cell-editor-container';
     this._viewportOccluder.appendChild(this._cellContainer);
+
+    this._form = document.createElement('form');
+    this._form.className = 'cell-editor-form';
+    this._cellContainer.appendChild(this._form);
   }
 
   protected abstract startEditing(): void;
@@ -336,6 +325,7 @@ abstract class CellEditor implements ICellEditor {
   protected _validator: ICellInputValidator | undefined;
   protected _viewportOccluder: HTMLDivElement;
   protected _cellContainer: HTMLDivElement;
+  protected _form: HTMLFormElement;
   private _validInput: boolean = true;
 }
 
@@ -345,7 +335,6 @@ class TextCellEditor extends CellEditor {
     const cell = this._cell;
     const cellInfo = this.getCellInfo(cell);
 
-    const form = document.createElement('form');
     const input = document.createElement('input');
     input.classList.add('cell-editor');
     input.classList.add('input-cell-editor');
@@ -355,10 +344,8 @@ class TextCellEditor extends CellEditor {
     input.value = cellInfo.data;
 
     this._input = input;
-    this._form = form;    
 
-    form.appendChild(input);
-    this._cellContainer.appendChild(form);
+    this._form.appendChild(input);
 
     this.updatePosition();
 
@@ -433,20 +420,17 @@ class TextCellEditor extends CellEditor {
   }
 
   _input: HTMLInputElement | null;
-  _form: HTMLFormElement;
 }
 
 export
-class IntegerCellEditor extends CellEditor {
+class NumberCellEditor extends CellEditor {
   startEditing() {
     const cell = this._cell;
     const cellInfo = this.getCellInfo(cell);
 
-    const form = document.createElement('form');
     const input = document.createElement('input');
     input.classList.add('cell-editor');
     input.classList.add('input-cell-editor');
-    input.type = 'number';
     input.spellcheck = false;
     input.required = false;
 
@@ -465,8 +449,7 @@ class IntegerCellEditor extends CellEditor {
 
     this._input = input;
 
-    form.appendChild(input);
-    this._cellContainer.appendChild(form);
+    this._form.appendChild(input);
 
     this.updatePosition();
 
@@ -509,18 +492,136 @@ class IntegerCellEditor extends CellEditor {
       return false;
     }
 
-    const value = this._input.value;
+    let value = this._input.value;
+    let floatValue = Number.parseFloat(value);
+    if (Number.isNaN(floatValue)) {
+      this._input.setCustomValidity('Input must be valid integer');
+      this._form.reportValidity();
+      return false;
+    }
+
+    this._input.value = floatValue.toString();
+
     if (this._validator) {
-      const result = this._validator.validate(this._cell, value);
+      const result = this._validator.validate(this._cell, floatValue);
       if (!result.valid) {
         this.validInput = false;
         this._input.setCustomValidity(result.message || DEFAULT_INVALID_INPUT_MESSAGE);
-        this._input.checkValidity();
+        this._form.reportValidity();
         return false;
       }
     }
 
-    this._onCommit.emit({ cell: this._cell, value: value, cursorMovement: cursorMovement });
+    this._onCommit.emit({ cell: this._cell, value: floatValue, cursorMovement: cursorMovement });
+
+    return true;
+  }
+
+  endEditing() {
+    if (!this._input) {
+      return;
+    }
+
+    this._input = null;
+
+    super.endEditing();
+  }
+
+  _input: HTMLInputElement | null;
+}
+
+export
+class IntegerCellEditor extends CellEditor {
+  startEditing() {
+    const cell = this._cell;
+    const cellInfo = this.getCellInfo(cell);
+
+    const input = document.createElement('input');
+    input.classList.add('cell-editor');
+    input.classList.add('input-cell-editor');
+    input.type = 'number';
+    input.spellcheck = false;
+    input.required = false;
+
+    const metadata = cell.grid.dataModel!.metadata('body', cell.row, cell.column);
+    const constraint = metadata.constraint;
+    if (constraint) {
+      if (constraint.minimum) {
+        input.min = constraint.minimum;
+      }
+      if (constraint.maximum) {
+        input.max = constraint.maximum;
+      }
+    }
+
+    input.value = cellInfo.data;
+
+    this._input = input;
+
+    this._form.appendChild(input);
+
+    this.updatePosition();
+
+    input.select();
+    input.focus();
+
+    input.addEventListener("keydown", (event) => {
+      this._onKeyDown(event);
+    });
+
+    input.addEventListener("blur", (event) => {
+      if (this._saveInput()) {
+        this.endEditing();
+      }
+    });
+
+    input.addEventListener("input", (event) => {
+      this._input!.setCustomValidity("");
+      this.validInput = true;
+    });
+  }
+
+  _onKeyDown(event: KeyboardEvent) {
+    switch (event.keyCode) {
+      case 13: // return
+        if (this._saveInput('down')) {
+          this.endEditing();
+        }
+        break;
+      case 27: // escape
+        this.endEditing();
+        break;
+      default:
+        break;
+    }
+  }
+
+  _saveInput(cursorMovement: SelectionModel.CursorMoveDirection = 'none'): boolean {
+    if (!this._input) {
+      return false;
+    }
+
+    let value = this._input.value;
+    let intValue = Number.parseInt(value);
+    if (Number.isNaN(intValue)) {
+      this._input.setCustomValidity('Input must be valid integer');
+      this._form.reportValidity();
+      return false;
+    }
+
+    this._input.value = intValue.toString();
+
+    if (this._validator) {
+      const result = this._validator.validate(this._cell, intValue);
+      if (!result.valid) {
+        this.validInput = false;
+        this._input.setCustomValidity(result.message || DEFAULT_INVALID_INPUT_MESSAGE);
+        this._form.reportValidity();
+        return false;
+      }
+    }
+
+    this._onCommit.emit({ cell: this._cell, value: intValue, cursorMovement: cursorMovement });
 
     return true;
   }
@@ -544,7 +645,6 @@ class BooleanCellEditor extends CellEditor {
     const cell = this._cell;
     const cellInfo = this.getCellInfo(cell);
 
-    const form = document.createElement('form');
     const input = document.createElement('input');
     input.classList.add('cell-editor');
     input.classList.add('boolean-cell-editor');
@@ -555,9 +655,7 @@ class BooleanCellEditor extends CellEditor {
     input.checked = cellInfo.data == true;
 
     this._input = input;
-
-    form.appendChild(input);
-    this._cellContainer.appendChild(form);
+    this._form.appendChild(input);
 
     this.updatePosition();
 
@@ -606,7 +704,7 @@ class BooleanCellEditor extends CellEditor {
       if (!result.valid) {
         this.validInput = false;
         this._input.setCustomValidity(result.message || DEFAULT_INVALID_INPUT_MESSAGE);
-        this._input.checkValidity();
+        this._form.reportValidity();
         return false;
       }
     }
@@ -651,7 +749,7 @@ class SelectCellEditor extends CellEditor {
 
     this._select = select;
 
-    this._cellContainer.appendChild(select);
+    this._form.appendChild(select);
 
     this.updatePosition();
     select.focus();
@@ -729,7 +827,7 @@ class DateCellEditor extends CellEditor {
 
     this._input = input;
 
-    this._cellContainer.appendChild(input);
+    this._form.appendChild(input);
 
     this.updatePosition();
 
