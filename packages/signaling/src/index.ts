@@ -10,6 +10,7 @@ import {
 } from '@phosphor/algorithm';
 
 
+
 /**
  * A type alias for a slot function.
  *
@@ -606,6 +607,7 @@ namespace Private {
    */
   const schedule = (() => {
     let ok = typeof requestAnimationFrame === 'function';
+    // @ts-ignore
     return ok ? requestAnimationFrame : setImmediate;
   })();
 
