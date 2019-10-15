@@ -7,24 +7,32 @@ import {
 } from './datagrid';
 import { DataModel } from './datamodel';
 import { SelectionModel } from './selectionmodel';
+import { Signal, ISignal } from '@phosphor/signaling';
+
+export
+interface ICellInputValidatorResponse {
+  valid: boolean;
+  message?: string;
+}
+
+export
+interface ICellInputValidator {
+  validate(cell: CellEditor.CellConfig, value: any): ICellInputValidatorResponse;
+}
 
 export
 interface ICellEditResponse {
   cell: CellEditor.CellConfig;
   value: any;
   cursorMovement: SelectionModel.CursorMoveDirection;
-};
+}
 
 export
-interface ICellInputValidatorResponse {
-  valid: boolean;
-  message?: string;
-};
-
-export
-interface ICellInputValidator {
-  validate(cell: CellEditor.CellConfig, value: any): ICellInputValidatorResponse;
-};
+interface ICellEditor {
+  edit(cell: CellEditor.CellConfig, validator?: ICellInputValidator): void;
+  readonly onCommit: ISignal<this, ICellEditResponse>;
+  readonly onCancel?: ISignal<this, void>;
+}
 
 const DEFAULT_INVALID_INPUT_MESSAGE = "Invalid input!";
 
@@ -52,7 +60,7 @@ class CellEditorController {
     return key;
   }
 
-  private _createEditor(cell: CellEditor.CellConfig): CellEditor | null {
+  createEditor(cell: CellEditor.CellConfig): ICellEditor | null {
     const key = this._getKey(cell);
 
     switch (key) {
@@ -80,15 +88,21 @@ class CellEditorController {
     return null;
   }
 
-  edit(cell: CellEditor.CellConfig, validator?: ICellInputValidator): Promise<ICellEditResponse> {
-    const editor = this._createEditor(cell);
+  edit(cell: CellEditor.CellConfig, validator?: ICellInputValidator): boolean {
+    const editor = this.createEditor(cell);
     if (editor) {
-      return editor.edit(cell, validator);
+      editor.edit(cell, validator);
+      return true;
     }
 
-    return new Promise<ICellEditResponse>((resolve, reject) => {
-      reject('Editor not found');
-    });
+    return false;
+  }
+}
+
+export
+class PassInputValidator implements ICellInputValidator {
+  validate(cell: CellEditor.CellConfig, value: any): ICellInputValidatorResponse {
+    return { valid: true };
   }
 }
 
@@ -102,11 +116,9 @@ class TextInputValidator implements ICellInputValidator {
       };
     }
 
-    return {
-      valid: true
-    };
+    return { valid: true };
   }
-};
+}
 
 export
 class IntegerInputValidator implements ICellInputValidator {
@@ -132,14 +144,12 @@ class IntegerInputValidator implements ICellInputValidator {
       };
     }
 
-    return {
-      valid: true
-    };
+    return { valid: true };
   }
 
   min: number = Number.NaN;
   max: number = Number.NaN;
-};
+}
 
 export
 class NumberInputValidator implements ICellInputValidator {
@@ -165,14 +175,12 @@ class NumberInputValidator implements ICellInputValidator {
       };
     }
 
-    return {
-      valid: true
-    };
+    return { valid: true };
   }
 
   min: number = Number.NaN;
   max: number = Number.NaN;
-};
+}
 
 export
 class BooleanInputValidator implements ICellInputValidator {
@@ -184,73 +192,66 @@ class BooleanInputValidator implements ICellInputValidator {
       };
     }
 
-    return {
-      valid: true
-    };
+    return { valid: true };
   }
-};
-
+}
 
 export
-abstract class CellEditor {
-  edit(cell: CellEditor.CellConfig, validator?: ICellInputValidator): Promise<ICellEditResponse> {
-    return new Promise<ICellEditResponse>((resolve, reject) => {
-      this._cell = cell;
-      this._resolve = resolve;
-      this._reject = reject;
+abstract class CellEditor implements ICellEditor {
+  edit(cell: CellEditor.CellConfig, validator?: ICellInputValidator) {
+    this._cell = cell;
 
-      if (validator) {
-        this._validator = validator;
-      } else {
-        const metadata = cell.grid.dataModel ? cell.grid.dataModel.metadata('body', cell.row, cell.column) : null;
+    if (validator) {
+      this._validator = validator;
+    } else {
+      const metadata = cell.grid.dataModel ? cell.grid.dataModel.metadata('body', cell.row, cell.column) : null;
 
-        switch (metadata && metadata.type) {
-          case 'string':
-            this._validator = new TextInputValidator();
-            break;
-          case 'number':
-            {
-              const validator = new NumberInputValidator();
-              if (metadata!.constraint) {
-                if (metadata!.constraint.minimum) {
-                  validator.min = metadata!.constraint.minimum;
-                }
-                if (metadata!.constraint.maximum) {
-                  validator.max = metadata!.constraint.maximum;
-                }
+      switch (metadata && metadata.type) {
+        case 'string':
+          this._validator = new TextInputValidator();
+          break;
+        case 'number':
+          {
+            const validator = new NumberInputValidator();
+            if (metadata!.constraint) {
+              if (metadata!.constraint.minimum) {
+                validator.min = metadata!.constraint.minimum;
               }
-              this._validator = validator;
-            }
-            break;
-          case 'integer':
-            {
-              const validator = new IntegerInputValidator();
-              if (metadata!.constraint) {
-                if (metadata!.constraint.minimum) {
-                  validator.min = metadata!.constraint.minimum;
-                }
-                if (metadata!.constraint.maximum) {
-                  validator.max = metadata!.constraint.maximum;
-                }
+              if (metadata!.constraint.maximum) {
+                validator.max = metadata!.constraint.maximum;
               }
-              this._validator = validator;
             }
+            this._validator = validator;
+          }
+          break;
+        case 'integer':
+          {
+            const validator = new IntegerInputValidator();
+            if (metadata!.constraint) {
+              if (metadata!.constraint.minimum) {
+                validator.min = metadata!.constraint.minimum;
+              }
+              if (metadata!.constraint.maximum) {
+                validator.max = metadata!.constraint.maximum;
+              }
+            }
+            this._validator = validator;
+          }
+          break;
+        case 'boolean':
+            this._validator = new BooleanInputValidator();
             break;
-          case 'boolean':
-              this._validator = new BooleanInputValidator();
-              break;
-        }
-
       }
 
-      cell.grid.node.addEventListener('wheel', () => {
-        this.updatePosition();
-      });
+    }
 
-      this._addContainer();
-
-      this.startEditing();
+    cell.grid.node.addEventListener('wheel', () => {
+      this.updatePosition();
     });
+
+    this._addContainer();
+
+    this.startEditing();
   }
 
   protected getCellInfo(cell: CellEditor.CellConfig) {
@@ -321,8 +322,16 @@ abstract class CellEditor {
     return this._validInput;
   }
 
-  protected _resolve: {(response: ICellEditResponse): void };
-  protected _reject: {(reason: any): void };
+  get onCommit(): ISignal<this, ICellEditResponse> {
+    return this._onCommit;
+  }
+
+  get onCancel(): ISignal<this, void> {
+    return this._onCancel;
+  }
+
+  protected _onCommit = new Signal<this, ICellEditResponse>(this);
+  protected _onCancel = new Signal<this, void>(this);
   protected _cell: CellEditor.CellConfig;
   protected _validator: ICellInputValidator | undefined;
   protected _viewportOccluder: HTMLDivElement;
@@ -408,7 +417,7 @@ class TextCellEditor extends CellEditor {
       }
     }
 
-    this._resolve({ cell: this._cell, value: value, cursorMovement: cursorMovement });
+    this._onCommit.emit({ cell: this._cell, value: value, cursorMovement: cursorMovement });
 
     return true;
   }
@@ -511,7 +520,7 @@ class IntegerCellEditor extends CellEditor {
       }
     }
 
-    this._resolve({ cell: this._cell, value: value, cursorMovement: cursorMovement });
+    this._onCommit.emit({ cell: this._cell, value: value, cursorMovement: cursorMovement });
 
     return true;
   }
@@ -602,7 +611,7 @@ class BooleanCellEditor extends CellEditor {
       }
     }
 
-    this._resolve({ cell: this._cell, value: value, cursorMovement: cursorMovement });
+    this._onCommit.emit({ cell: this._cell, value: value, cursorMovement: cursorMovement });
 
     return true;
   }
@@ -687,7 +696,7 @@ class SelectCellEditor extends CellEditor {
       return;
     }
 
-    this._resolve({ cell: this._cell, value: value, cursorMovement: cursorMovement });
+    this._onCommit.emit({ cell: this._cell, value: value, cursorMovement: cursorMovement });
   }
 
   endEditing() {
@@ -767,7 +776,7 @@ class DateCellEditor extends CellEditor {
       return;
     }
 
-    this._resolve({ cell: this._cell, value: value, cursorMovement: cursorMovement });
+    this._onCommit.emit({ cell: this._cell, value: value, cursorMovement: cursorMovement });
   }
 
   endEditing() {

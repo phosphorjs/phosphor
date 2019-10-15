@@ -516,23 +516,27 @@ class BasicMouseHandler implements DataGrid.IMouseHandler {
     }
 
     if (region === 'body') {
-      grid.cellEditorController
-      .edit({
+      const cell = {
         grid: grid,
         row: row,
         column: column,
-        metadata: grid.dataModel!.metadata('body', row, column)})
-      .then((response: ICellEditResponse) => {
-        if (grid.dataModel instanceof MutableDataModel) {
-          const dataModel = grid.dataModel as MutableDataModel;
-          dataModel.setData('body', row, column, response.value);
-        }
-        grid.viewport.node.focus();
-        if (response.cursorMovement !== 'none') {
-          grid.incrementCursor(response.cursorMovement);
-          grid.scrollToCursor();
-        }
-      });
+        metadata: grid.dataModel!.metadata('body', row, column)
+      };
+      const editor = grid.cellEditorController.createEditor(cell);
+      if (editor) {
+        editor.onCommit.connect((_, args: ICellEditResponse) => {
+          if (grid.dataModel instanceof MutableDataModel) {
+            const dataModel = grid.dataModel as MutableDataModel;
+            dataModel.setData('body', row, column, args.value);
+          }
+          grid.viewport.node.focus();
+          if (args.cursorMovement !== 'none') {
+            grid.incrementCursor(args.cursorMovement);
+            grid.scrollToCursor();
+          }
+        });
+        editor.edit(cell);
+      }
     }
 
     this.release();
