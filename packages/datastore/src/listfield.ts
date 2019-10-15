@@ -381,8 +381,8 @@ namespace Private {
     let ids = createTriplexIds(values.length, version, storeId, lower, upper);
 
     // Apply the splice to the ids and values.
-    let removedIds = metadata.ids.splice(index, count, ...ids);
-    let removedValues = array.splice(index, count, ...values);
+    let removedIds = spliceArray(metadata.ids, index, count, ids);
+    let removedValues = spliceArray(array, index, count, values);
 
     // Create the change object.
     let change = { index, removed: removedValues, inserted: values };
@@ -447,10 +447,10 @@ namespace Private {
         let { index, ids, values } = chunks.pop()!;
 
         // Insert the identifiers into the metadata.
-        metadata.ids.splice(index, 0, ...ids);
+        spliceArray(metadata.ids, index, 0, ids);
 
         // Insert the values into the array.
-        value.splice(index, 0, ...values);
+        spliceArray(value, index, 0, values);
 
         // Add the change part to the change array.
         change.push({ index, removed: [], inserted: values });
@@ -645,5 +645,41 @@ namespace Private {
       return true;
     }
     return false;
+  }
+
+  /**
+   * Splice data into an array.
+   *
+   * #### Notes
+   * This is intentionally similar to Array.splice, but chunks the splices into
+   * multiple splices so that it does not crash if the number of spliced IDs
+   * is greater than the maximum number of arguments for a function.
+   *
+   * @param arr - the array on which to perform the splice.
+   *
+   * @param start - the start index for the splice.
+   *
+   * @param deleteCount - how many indices to remove.
+   *
+   * @param items - the items to splice into the array.
+   *
+   * @returns an array of the deleted elements.
+   */
+  function spliceArray<T>(arr: T[], start: number, deleteCount?: number, items?: ReadonlyArray<T>): ReadonlyArray<T> {
+    if (!items) {
+      return arr.splice(start, deleteCount);
+    }
+    let size = 100000;
+    if (items.length < size) {
+      return arr.splice(start, deleteCount || 0, ...items);
+    }
+    let deleted = arr.splice(start, deleteCount);
+    let n = Math.floor(items.length / size);
+    let idx = 0;
+    for (let i = 0; i < n; i++, idx += size) {
+      arr.splice(idx, 0, ...items.slice(idx, size));
+    }
+    arr.splice(idx, 0, ...items.slice(idx));
+    return deleted;
   }
 }

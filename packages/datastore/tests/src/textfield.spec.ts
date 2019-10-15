@@ -130,6 +130,25 @@ describe('@phosphor/datastore', () => {
         expect(patch[1].insertedIds.length).to.equal(splice2.text.length);
       });
 
+      it('should accept long splices', () => {
+        let previous = field.createValue();
+        let text = 'a'.repeat(1000000);
+        let metadata = field.createMetadata();
+        let splice = {
+          index: 0,
+          remove: 0,
+          text
+        };
+        let { value } = field.applyUpdate({
+          previous,
+          update: [splice],
+          metadata,
+          version: 1,
+          storeId: 1
+        });
+        expect(value).to.equal(text);
+      });
+
     });
 
     describe('applyPatch', () => {
