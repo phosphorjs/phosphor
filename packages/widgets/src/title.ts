@@ -175,10 +175,22 @@ class Title<T> {
     this._changed.emit(undefined);
   }
 
+  /**
+   * Get the icon renderer for the title.
+   *
+   * #### Notes
+   * The default value is undefined.
+   */
   get iconRenderer(): VirtualElementPass.IRenderer {
     return this._iconRenderer;
   }
 
+  /**
+   * Set the icon renderer for the title.
+   *
+   * #### Notes
+   * A renderer is an object that supplies a render and unrender function.
+   */
   set iconRenderer(value: VirtualElementPass.IRenderer) {
     if (this._iconRenderer === value) {
       return;
@@ -339,6 +351,10 @@ namespace Title {
      */
     iconLabel?: string;
 
+    /**
+     * An object that supplies render and unrender functions used
+     * to create and cleanup the icon of the title.
+     */
     iconRenderer?: VirtualElementPass.IRenderer;
 
     /**
