@@ -1017,14 +1017,12 @@ namespace Private {
   /**
    * A weak mapping of host element to virtual DOM content.
    */
-  export
-  const hostMap = new WeakMap<HTMLElement, ReadonlyArray<VirtualNode>>();
+  export const hostMap = new WeakMap<HTMLElement, ReadonlyArray<VirtualNode>>();
 
   /**
    * Cast a content value to a content array.
    */
-  export
-  function asContentArray(value: VirtualNode | ReadonlyArray<VirtualNode> | null): ReadonlyArray<VirtualNode> {
+  export function asContentArray(value: VirtualNode | ReadonlyArray<VirtualNode> | null): ReadonlyArray<VirtualNode> {
     if (!value) {
       return [];
     }
@@ -1037,20 +1035,13 @@ namespace Private {
   /**
    * Create a new DOM element for a virtual node.
    */
-  export
-  function createDOMNode(node: VirtualText): Text;
-  export
-  function createDOMNode(node: VirtualElement): HTMLElement;
-  export
-  function createDOMNode(node: VirtualElementPass): HTMLElement;
-  export
-  function createDOMNode(node: VirtualNode): HTMLElement | Text;
-  export
-  function createDOMNode(node: VirtualNode, host: HTMLElement | null): HTMLElement | Text;
-  export
-  function createDOMNode(node: VirtualNode, host: HTMLElement | null, before: Node | null): HTMLElement | Text;
-  export
-  function createDOMNode(node: VirtualNode): HTMLElement | Text {
+  export function createDOMNode(node: VirtualText): Text;
+  export function createDOMNode(node: VirtualElement): HTMLElement;
+  export function createDOMNode(node: VirtualElementPass): HTMLElement;
+  export function createDOMNode(node: VirtualNode): HTMLElement | Text;
+  export function createDOMNode(node: VirtualNode, host: HTMLElement | null): HTMLElement | Text;
+  export function createDOMNode(node: VirtualNode, host: HTMLElement | null, before: Node | null): HTMLElement | Text;
+  export function createDOMNode(node: VirtualNode): HTMLElement | Text {
     let host = arguments[1] || null;
     const before = arguments[2] || null;
 
@@ -1088,8 +1079,7 @@ namespace Private {
    * This is the core "diff" algorithm. There is no explicit "patch"
    * phase. The host is patched at each step as the diff progresses.
    */
-  export
-  function updateContent(host: HTMLElement, oldContent: ReadonlyArray<VirtualNode>, newContent: ReadonlyArray<VirtualNode>): void {
+  export function updateContent(host: HTMLElement, oldContent: ReadonlyArray<VirtualNode>, newContent: ReadonlyArray<VirtualNode>): void {
     // Bail early if the content is identical.
     if (oldContent === newContent) {
       return;
@@ -1202,23 +1192,25 @@ namespace Private {
     }
 
     // Cleanup stale DOM
-    removeContent(host, oldCopy, newCount);
+    removeContent(host, oldCopy, newCount, true);
   }
 
-  function removeContent(host: HTMLElement, oldContent: ReadonlyArray<VirtualNode>, newCount: number) {
+  function removeContent(host: HTMLElement, oldContent: ReadonlyArray<VirtualNode>, newCount: number, _sentinel = false) {
     // Dispose of the old nodes pushed to the end of the host.
     for (let i = oldContent.length - 1; i >= newCount; --i) {
       const oldNode = oldContent[i];
+      const child = (_sentinel ? host.lastChild : host.childNodes[i]) as HTMLElement;
 
       // recursively clean up host children
       if (oldNode.type === 'text') {} else if (oldNode.type === 'passthru') {
-        oldNode.renderer.unrender!(host.lastChild as HTMLElement);
+        oldNode.renderer.unrender!(child!);
       } else {
-        removeContent((host.lastChild as HTMLElement)!, oldNode.children, 0);
+        removeContent(child!, oldNode.children, 0);
       }
 
-
-      host.removeChild(host.lastChild!);
+      if (_sentinel) {
+        host.removeChild(child!);
+      }
     }
   }
 
