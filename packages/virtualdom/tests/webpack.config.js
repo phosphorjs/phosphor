@@ -6,4 +6,4 @@ module.exports = {
     filename: './build/bundle.test.js'
   },
   devtool: 'inline-source-map'
-}
+};

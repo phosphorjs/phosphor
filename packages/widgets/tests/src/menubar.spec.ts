@@ -30,7 +30,7 @@ import {
 } from '@phosphor/messaging';
 
 import {
-  VirtualDOM
+  VirtualDOM, VirtualElement
 } from '@phosphor/virtualdom';
 
 import {
@@ -871,7 +871,7 @@ describe('@phosphor/widgets', () => {
           data.title.mnemonic = 1;
           let label = renderer.formatLabel(data);
           expect((label as any)[0]).to.equal('f');
-          let node = VirtualDOM.realize((label as any)[1]);
+          let node = VirtualDOM.realize(((label as any)[1]) as VirtualElement);
           expect(node.className).to.contain('p-MenuBar-itemMnemonic');
           expect(node.textContent).to.equal('o');
           expect((label as any)[2]).to.equal('o');

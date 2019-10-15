@@ -979,8 +979,10 @@ namespace VirtualDOM {
    *
    * If virtual diffing is desired, use the `render` function instead.
    */
-  export
-  function realize(node: VirtualElement): HTMLElement {
+  export function realize(node: VirtualText): Text;
+  export function realize(node: VirtualElement): HTMLElement;
+  export function realize(node: VirtualElementPass): HTMLElement;
+  export function realize(node: VirtualNode): HTMLElement | Text {
     return Private.createDOMNode(node);
   }
 

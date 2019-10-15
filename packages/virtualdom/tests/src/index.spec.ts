@@ -491,13 +491,13 @@ describe('@phosphor/virtualdom', () => {
   });
 
   describe('VirtualDOM passthru', () => {
-    const rendererClosure = (record = {child: undefined, cleanedUp: false}) => {
+    const rendererClosure = (record: any = {}) => {
       return {
         render: (host: HTMLElement) => {
           const renderNode = document.createElement('div');
           renderNode.className = 'p-render';
           host.appendChild(renderNode);
-          (record.child as any) = renderNode;
+          record.child = renderNode;
         },
         unrender: (host: HTMLElement) => {
           host.removeChild(host.lastChild as HTMLElement);
@@ -506,10 +506,30 @@ describe('@phosphor/virtualdom', () => {
       }
     };
 
+    describe('realize()', () => {
+      it('should realize successfully', () => {
+        let node = VirtualDOM.realize(hpass(rendererClosure(), 'span'));
+        expect(node.tagName.toLowerCase()).to.equal('span');
+        expect(node.children[0].tagName.toLowerCase()).to.equal('div');
+        expect(node.children[0].className).to.equal('p-render');
+      });
+
+    });
+
     describe('render()', () => {
+      it('should render successfully at top of tree', () => {
+        let host = document.createElement('div');
+
+        VirtualDOM.render(hpass(rendererClosure(), 'span'), host);
+        expect(host.children[0].tagName.toLowerCase()).to.equal('span');
+        expect(host.children[0].children[0].tagName.toLowerCase()).to.equal('div');
+        expect(host.children[0].children[0].className).to.equal('p-render');
+      });
+
       it('should render child node', () => {
         let host = document.createElement('div');
-        let record: any = {};
+        let record: any = {child: undefined, cleanedUp: false};
+
         let children = [h.a(), h.span(), h.div(h.div(), hpass(rendererClosure(record), 'span'), h.div())];
         VirtualDOM.render(children, host);
         expect(host.children[2].children[1].children[0]).to.equal(record.child);
@@ -518,7 +538,7 @@ describe('@phosphor/virtualdom', () => {
 
       it('should cleanup child node', () => {
         let host = document.createElement('div');
-        let record: any = {};
+        let record: any = {child: undefined, cleanedUp: false};
 
         // first pass, render the hpass children
         let children0 = [h.a(), h.span(), h.div(h.div(), hpass(rendererClosure(record), 'span'), h.div())];

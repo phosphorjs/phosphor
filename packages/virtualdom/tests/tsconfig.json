@@ -9,6 +9,7 @@
     "moduleResolution": "node",
     "target": "ES5",
     "outDir": "build",
+    "sourceMap": true,
     "lib": [
       "ES5",
       "DOM"
