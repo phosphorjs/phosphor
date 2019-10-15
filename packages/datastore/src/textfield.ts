@@ -133,6 +133,45 @@ class TextField extends Field<TextField.Value, TextField.Update, TextField.Metad
   }
 
   /**
+   * Unapply a system patch to the field.
+   *
+   * @param args - The arguments for the patch.
+   *
+   * @returns The result of unapplying the patch.
+   */
+  unapplyPatch(args: Field.PatchArgs<TextField.Value, TextField.Patch, TextField.Metadata>): Field.PatchResult<TextField.Value, TextField.Change> {
+    // Unpack the arguments.
+    let { previous, patch, metadata } = args;
+
+    // Set up a variable to hold the current value.
+    let value = previous;
+
+    // Set up the change array.
+    let change: TextField.ChangePart[] = [];
+
+    // Iterate over the patch.
+    for (let part of patch) {
+      let reversed = {
+        removedIds: part.insertedIds,
+        insertedIds: part.removedIds,
+        removedText: part.insertedText,
+        insertedText: part.removedText
+      };
+      // Apply the patch part to the value.
+      let obj = Private.applyPatch(value, reversed, metadata);
+
+      // Update the change array.
+      change.push(...obj.change);
+
+      // Update the current value.
+      value = obj.value;
+    }
+
+    // Return the patch result.
+    return { value, change };
+  }
+
+  /**
    * Merge two change objects into a single change object.
    *
    * @param first - The first change object of interest.

@@ -131,6 +131,42 @@ class ListField<T extends ReadonlyJSONValue> extends Field<ListField.Value<T>, L
   }
 
   /**
+   * Unapply a system patch to the field.
+   *
+   * @param args - The arguments for the patch.
+   *
+   * @returns The result of unapplying the patch.
+   */
+  unapplyPatch(args: Field.PatchArgs<ListField.Value<T>, ListField.Patch<T>, ListField.Metadata<T>>): Field.PatchResult<ListField.Value<T>, ListField.Change<T>> {
+    // Unpack the arguments.
+    let { previous, patch, metadata } = args;
+
+    // Create a clone of the previous value.
+    let clone = [...previous];
+
+    // Set up the change array.
+    let change: ListField.ChangePart<T>[] = [];
+
+    // Iterate over the patch.
+    for (let part of patch) {
+      let reversed = {
+        removedIds: part.insertedIds,
+        insertedIds: part.removedIds,
+        removedValues: part.insertedValues,
+        insertedValues: part.removedValues
+      };
+      // Apply the patch part to the value.
+      let result = Private.applyPatch(clone, reversed, metadata);
+
+      // Update the change array.
+      change.push(...result);
+    }
+
+    // Return the patch result.
+    return { value: clone, change };
+  }
+
+  /**
    * Merge two change objects into a single change object.
    *
    * @param first - The first change object of interest.

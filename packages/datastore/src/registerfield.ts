@@ -116,6 +116,27 @@ class RegisterField<T extends ReadonlyJSONValue> extends Field<RegisterField.Val
   }
 
   /**
+   * Unapply a system patch to the field.
+   *
+   * @param args - The arguments for the patch.
+   *
+   * @returns The result of unapplying the patch.
+   */
+  unapplyPatch(args: Field.PatchArgs<RegisterField.Value<T>, RegisterField.Patch<T>, RegisterField.Metadata<T>>): Field.PatchResult<RegisterField.Value<T>, RegisterField.Change<T>> {
+    // Unpack the arguments.
+    let { previous, patch, metadata } = args;
+
+    // Remove the patch value from the metadata.
+    let value = Private.removeFromMetadata(metadata, patch.id, this.value);
+
+    // Create the change object.
+    let change = { previous, current: value };
+
+    // Return the result of the patch.
+    return { value, change };
+  }
+
+  /**
    * Merge two change objects into a single change object.
    *
    * @param first - The first change object of interest.
@@ -257,5 +278,35 @@ namespace Private {
 
     // Return the current value for the register field.
     return values[values.length - 1];
+  }
+
+  /**
+   * Remove a value from the register field metadata.
+   *
+   * @param metadata - The metadata of interest.
+   *
+   * @param id - The unique id for the value.
+   *
+   * @param initial - The default value for the field
+   *
+   * @returns The current value for the register field.
+   *
+   * #### Notes
+   * If the id does not exist in the metadata, this is a no-op.
+   */
+  export
+  function removeFromMetadata<T extends ReadonlyJSONValue>(metadata: RegisterField.Metadata<T>, id: string, initial: T): T {
+    // Unpack the metadata.
+    let { ids, values } = metadata;
+
+    // Find the remove index for the id.
+    let i = ArrayExt.lowerBound(ids, id, StringExt.cmp);
+    if (ids[i] === id) {
+      ArrayExt.removeAt(ids, i);
+      ArrayExt.removeAt(values, i);
+    }
+    // Return the current value for the register field.
+    // If there are no values in the metadata, return the default value.
+    return values.length ? values[values.length - 1] : initial;
   }
 }

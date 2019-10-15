@@ -363,6 +363,88 @@ describe('@phosphor/datastore', () => {
 
     });
 
+    describe('unapplyPatch', () => {
+
+      it('should remove a patch from the history', () => {
+        let previous = field.createValue();
+        let metadata = field.createMetadata();
+        // Create a patch
+        let updated1 = field.applyUpdate({
+          previous,
+          update: { index: 0, remove: 0, text: 'abcp' },
+          metadata,
+          version: 1,
+          storeId: 1
+        });
+        let updated2 = field.applyUpdate({
+          previous: updated1.value,
+          update: { index: 3, remove: 1, text: 'def' },
+          metadata,
+          version: 2,
+          storeId: 1
+        });
+        expect(updated2.value).to.equal('abcdef');
+        // Reset the metadata and apply the patches
+        metadata = field.createMetadata();
+        let patched1 = field.applyPatch({
+          previous,
+          metadata,
+          patch: updated1.patch
+        });
+        let patched2 = field.applyPatch({
+          previous: patched1.value,
+          metadata,
+          patch: updated2.patch
+        });
+        expect(patched2.value).to.equal('abcdef');
+        // Unapply the patches out of order.
+        let unpatched1 = field.unapplyPatch({
+          previous: patched2.value,
+          metadata,
+          patch: updated1.patch
+        });
+        expect(unpatched1.value).to.equal('def');
+        expect(unpatched1.change[0]).to.eql({index: 0, removed: 'abc', inserted: ''});
+        let unpatched2 = field.unapplyPatch({
+          previous: unpatched1.value,
+          metadata,
+          patch: updated2.patch
+        });
+        expect(unpatched2.value).to.equal('');
+        expect(unpatched2.change[0]).to.eql({index: 0, removed: 'def', inserted: ''});
+      });
+
+      it('should handle concurrently deleted text', () => {
+        let previous = field.createValue();
+        let metadata = field.createMetadata();
+        // Create a patch
+        let { patch } = field.applyUpdate({
+          previous,
+          update: { index: 0, remove: 0, text: 'abc' },
+          metadata,
+          version: 1,
+          storeId: 1
+        });
+        // Reset the metadata and unnaply the patch before applying it.
+        metadata = field.createMetadata();
+        let unpatched = field.unapplyPatch({
+          previous,
+          metadata,
+          patch
+        });
+        expect(unpatched.value).to.equal('');
+        expect(unpatched.change.length).to.equal(0);
+        let patched = field.applyPatch({
+          previous: unpatched.value,
+          metadata,
+          patch
+        });
+        expect(patched.value).to.equal('');
+        expect(patched.change.length).to.equal(0);
+      });
+
+    });
+
     describe('mergeChange', () => {
 
       it('should merge two successive changes', () => {
