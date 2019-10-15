@@ -24,6 +24,7 @@
   },
   "scripts": {
     "build": "tsc && webpack",
-    "clean": "rimraf build"
+    "clean": "rimraf build",
+    "start": "node build/server.js"
   }
 }
