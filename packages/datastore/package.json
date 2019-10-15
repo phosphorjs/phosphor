@@ -1,6 +1,6 @@
 {
   "name": "@phosphor/datastore",
-  "version": "0.7.3",
+  "version": "0.8.0",
   "description": "PhosphorJS - DataStore",
   "homepage": "https://github.com/phosphorjs/phosphor",
   "bugs": {
@@ -43,9 +43,9 @@
     "@phosphor/algorithm": "^1.2.0",
     "@phosphor/collections": "^1.2.0",
     "@phosphor/coreutils": "^1.3.1",
-    "@phosphor/disposable": "^1.3.0",
+    "@phosphor/disposable": "^1.3.1",
     "@phosphor/messaging": "^1.3.0",
-    "@phosphor/signaling": "^1.3.0"
+    "@phosphor/signaling": "^1.3.1"
   },
   "devDependencies": {
     "rimraf": "^2.5.2",
