@@ -535,6 +535,9 @@ class BasicMouseHandler implements DataGrid.IMouseHandler {
             grid.scrollToCursor();
           }
         });
+        editor.onCancel.connect((_, args: void) => {
+          grid.viewport.node.focus();
+        });
         editor.edit(cell);
       }
     }
