@@ -3,6 +3,10 @@ import {
 } from '@phosphor/widgets';
 
 import {
+  IDisposable
+} from '@phosphor/disposable';
+
+import {
   DataGrid
 } from './datagrid';
 
@@ -11,6 +15,8 @@ import { DataModel } from './datamodel';
 import { SelectionModel } from './selectionmodel';
 
 import { Signal, ISignal } from '@phosphor/signaling';
+
+import { getKeyboardLayout } from '@phosphor/keyboard';
 
 export
 interface ICellInputValidatorResponse {
@@ -34,7 +40,7 @@ export
 interface ICellEditor {
   edit(cell: CellEditor.CellConfig, validator?: ICellInputValidator): void;
   readonly onCommit: ISignal<this, ICellEditResponse>;
-  readonly onCancel?: ISignal<this, void>;
+  readonly onCancel: ISignal<this, void>;
 }
 
 const DEFAULT_INVALID_INPUT_MESSAGE = "Invalid input!";
@@ -185,7 +191,26 @@ class NumberInputValidator implements ICellInputValidator {
 
 
 export
-abstract class CellEditor implements ICellEditor {
+abstract class CellEditor implements ICellEditor, IDisposable {
+  protected abstract startEditing(): void;
+  protected abstract serialize(): any;
+  protected abstract deserialize(value: any): any;
+
+  /**
+   * Whether the cell editor is disposed.
+   */
+  get isDisposed(): boolean {
+    return this._disposed;
+  }
+
+  /**
+   * Dispose of the resources held by cell editor handler.
+   */
+  dispose(): void {
+    this._disposed = true;
+    this._cell.grid.node.removeChild(this._viewportOccluder);
+  }
+
   edit(cell: CellEditor.CellConfig, validator?: ICellInputValidator) {
     this._cell = cell;
 
@@ -227,7 +252,6 @@ abstract class CellEditor implements ICellEditor {
           }
           break;
       }
-
     }
 
     cell.grid.node.addEventListener('wheel', () => {
@@ -236,6 +260,7 @@ abstract class CellEditor implements ICellEditor {
 
     this._addContainer();
 
+    this.updatePosition();
     this.startEditing();
   }
 
@@ -274,8 +299,6 @@ abstract class CellEditor implements ICellEditor {
     this._cellContainer.appendChild(this._form);
   }
 
-  protected abstract startEditing(): void;
-
   protected updatePosition(): void {
     const grid = this._cell.grid;
     const cellInfo = this.getCellInfo(this._cell);
@@ -294,10 +317,6 @@ abstract class CellEditor implements ICellEditor {
     this._cellContainer.style.visibility = 'visible';
   }
 
-  protected endEditing(): void {
-    this._cell.grid.node.removeChild(this._viewportOccluder);
-  }
-
   protected set validInput(value: boolean) {
     this._validInput = value;
     if (this._validInput) {
@@ -309,6 +328,25 @@ abstract class CellEditor implements ICellEditor {
 
   protected get validInput(): boolean {
     return this._validInput;
+  }
+
+  protected commit(cursorMovement: SelectionModel.CursorMoveDirection = 'none'): boolean {
+    let value;
+    try {
+      value = this.serialize();
+    } catch (error) {
+      console.error(error);
+      return false;
+    }
+
+    this.dispose();
+    this._onCommit.emit({
+      cell: this._cell,
+      value: value,
+      cursorMovement: cursorMovement
+    });
+
+    return true;
   }
 
   get onCommit(): ISignal<this, ICellEditResponse> {
@@ -327,177 +365,142 @@ abstract class CellEditor implements ICellEditor {
   protected _cellContainer: HTMLDivElement;
   protected _form: HTMLFormElement;
   private _validInput: boolean = true;
+  private _disposed = false;
 }
 
 export
 class TextCellEditor extends CellEditor {
   startEditing() {
+    this._createWidget();
+
     const cell = this._cell;
     const cellInfo = this.getCellInfo(cell);
+    this._input.value = this.deserialize(cellInfo.data);
+    this._form.appendChild(this._input);
+    this._input.select();
+    this._input.focus();
 
+    this._bindEvents();
+  }
+
+  _createWidget() {
     const input = document.createElement('input');
     input.classList.add('cell-editor');
     input.classList.add('input-cell-editor');
     input.spellcheck = false;
-    input.required = false;
-
-    input.value = cellInfo.data;
 
     this._input = input;
+  }
 
-    this._form.appendChild(input);
+  _bindEvents() {
+    this._input.addEventListener('keydown', this);
+    this._input.addEventListener('blur', this);
+    this._input.addEventListener('input', this);
+  }
 
-    this.updatePosition();
+  _unbindEvents() {
+    this._input.removeEventListener('keydown', this);
+    this._input.removeEventListener('blur', this);
+    this._input.removeEventListener('input', this);
+  }
 
-    input.select();
-    input.focus();
-
-    input.addEventListener("keydown", (event) => {
-      this._onKeyDown(event);
-    });
-
-    input.addEventListener("blur", (event) => {
-      if (this._saveInput()) {
-        this.endEditing();
-        event.preventDefault();
-        event.stopPropagation();
-        this._input!.focus();
-      }
-    });
-
-    input.addEventListener("input", (event) => {
-      this._input!.setCustomValidity("");
-      this.validInput = true;
-    });
+  handleEvent(event: Event): void {
+    switch (event.type) {
+      case 'keydown':
+        this._onKeyDown(event as KeyboardEvent);
+        break;
+      case 'blur':
+        this._onBlur(event as FocusEvent);
+        break;
+      case 'input':
+        this._onInput(event);
+        break;
+    }
   }
 
   _onKeyDown(event: KeyboardEvent) {
-    switch (event.keyCode) {
-      case 13: // return
-        if (this._saveInput(event.shiftKey ? 'up' : 'down')) {
-          this.endEditing();
-          event.preventDefault();
-          event.stopPropagation();
-        }
+    switch (getKeyboardLayout().keyForKeydownEvent(event)) {
+      case 'Enter':
+        this.commit(event.shiftKey ? 'up' : 'down');
         break;
-      case 27: // escape
-        this.endEditing();
+      case 'Tab':
+        this.commit(event.shiftKey ? 'left' : 'right');
+        break;
+      case 'Escape':
+        this.dispose();
         break;
       default:
         break;
     }
   }
 
-  _saveInput(cursorMovement: SelectionModel.CursorMoveDirection = 'none'): boolean {
-    if (!this._input) {
-      return false;
+  _onBlur(event: FocusEvent) {
+    if (!this.commit()) {
+      event.preventDefault();
+      event.stopPropagation();
+      this._input.focus();
+    }
+  }
+
+  _onInput(event: Event) {
+    this._input.setCustomValidity("");
+    this.validInput = true;
+  }
+
+  protected serialize(): any {
+    const value = this._input.value;
+
+    if (value.trim() === '') {
+      return null;
     }
 
-    const value = this._input.value;
     if (this._validator) {
       const result = this._validator.validate(this._cell, value);
       if (!result.valid) {
         this.validInput = false;
         this._input.setCustomValidity(result.message || DEFAULT_INVALID_INPUT_MESSAGE);
         this._form.reportValidity();
-        return false;
+        throw new Error('Invalid input');
       }
     }
 
-    this._onCommit.emit({ cell: this._cell, value: value, cursorMovement: cursorMovement });
-
-    return true;
+    return value;
   }
 
-  endEditing() {
-    if (!this._input) {
+  protected deserialize(value: any): any {
+    if (value === null || value === undefined) {
+      return '';
+    }
+
+    return value.toString();
+  }
+
+  dispose() {
+    if (this.isDisposed) {
       return;
     }
 
-    this._input = null;
+    this._unbindEvents();
 
-    super.endEditing();
+    super.dispose();
   }
 
-  _input: HTMLInputElement | null;
+  protected _input: HTMLInputElement;
 }
 
 export
-class NumberCellEditor extends CellEditor {
-  startEditing() {
-    const cell = this._cell;
-    const cellInfo = this.getCellInfo(cell);
-
-    const input = document.createElement('input');
-    input.classList.add('cell-editor');
-    input.classList.add('input-cell-editor');
-    input.spellcheck = false;
-    input.required = false;
-
-    const metadata = cell.grid.dataModel!.metadata('body', cell.row, cell.column);
-    const constraint = metadata.constraint;
-    if (constraint) {
-      if (constraint.minimum) {
-        input.min = constraint.minimum;
-      }
-      if (constraint.maximum) {
-        input.max = constraint.maximum;
-      }
-    }
-
-    input.value = cellInfo.data;
-
-    this._input = input;
-
-    this._form.appendChild(input);
-
-    this.updatePosition();
-
-    input.select();
-    input.focus();
-
-    input.addEventListener("keydown", (event) => {
-      this._onKeyDown(event);
-    });
-
-    input.addEventListener("blur", (event) => {
-      if (this._saveInput()) {
-        this.endEditing();
-      }
-    });
-
-    input.addEventListener("input", (event) => {
-      this._input!.setCustomValidity("");
-      this.validInput = true;
-    });
-  }
-
-  _onKeyDown(event: KeyboardEvent) {
-    switch (event.keyCode) {
-      case 13: // return
-        if (this._saveInput('down')) {
-          this.endEditing();
-        }
-        break;
-      case 27: // escape
-        this.endEditing();
-        break;
-      default:
-        break;
-    }
-  }
-
-  _saveInput(cursorMovement: SelectionModel.CursorMoveDirection = 'none'): boolean {
-    if (!this._input) {
-      return false;
-    }
-
+class NumberCellEditor extends TextCellEditor {
+  protected serialize(): any {
     let value = this._input.value;
+    if (value.trim() === '') {
+      return null;
+    }
+
     let floatValue = Number.parseFloat(value);
     if (Number.isNaN(floatValue)) {
-      this._input.setCustomValidity('Input must be valid integer');
+      this._input.setCustomValidity('Input must be valid number');
       this._form.reportValidity();
-      return false;
+      throw new Error('Invalid input');
     }
 
     this._input.value = floatValue.toString();
@@ -508,105 +511,53 @@ class NumberCellEditor extends CellEditor {
         this.validInput = false;
         this._input.setCustomValidity(result.message || DEFAULT_INVALID_INPUT_MESSAGE);
         this._form.reportValidity();
-        return false;
+        throw new Error('Invalid input');
       }
     }
 
-    this._onCommit.emit({ cell: this._cell, value: floatValue, cursorMovement: cursorMovement });
-
-    return true;
+    return floatValue;
   }
-
-  endEditing() {
-    if (!this._input) {
-      return;
-    }
-
-    this._input = null;
-
-    super.endEditing();
-  }
-
-  _input: HTMLInputElement | null;
 }
 
 export
-class IntegerCellEditor extends CellEditor {
+class IntegerCellEditor extends NumberCellEditor {
   startEditing() {
+    this._createWidget();
+    this._input.type = 'number';
+
     const cell = this._cell;
     const cellInfo = this.getCellInfo(cell);
-
-    const input = document.createElement('input');
-    input.classList.add('cell-editor');
-    input.classList.add('input-cell-editor');
-    input.type = 'number';
-    input.spellcheck = false;
-    input.required = false;
+    this._input.value = this.deserialize(cellInfo.data);
 
     const metadata = cell.grid.dataModel!.metadata('body', cell.row, cell.column);
     const constraint = metadata.constraint;
     if (constraint) {
       if (constraint.minimum) {
-        input.min = constraint.minimum;
+        this._input.min = constraint.minimum;
       }
       if (constraint.maximum) {
-        input.max = constraint.maximum;
+        this._input.max = constraint.maximum;
       }
     }
 
-    input.value = cellInfo.data;
+    this._form.appendChild(this._input);
+    this._input.select();
+    this._input.focus();
 
-    this._input = input;
-
-    this._form.appendChild(input);
-
-    this.updatePosition();
-
-    input.select();
-    input.focus();
-
-    input.addEventListener("keydown", (event) => {
-      this._onKeyDown(event);
-    });
-
-    input.addEventListener("blur", (event) => {
-      if (this._saveInput()) {
-        this.endEditing();
-      }
-    });
-
-    input.addEventListener("input", (event) => {
-      this._input!.setCustomValidity("");
-      this.validInput = true;
-    });
+    this._bindEvents();
   }
 
-  _onKeyDown(event: KeyboardEvent) {
-    switch (event.keyCode) {
-      case 13: // return
-        if (this._saveInput('down')) {
-          this.endEditing();
-        }
-        break;
-      case 27: // escape
-        this.endEditing();
-        break;
-      default:
-        break;
-    }
-  }
-
-  _saveInput(cursorMovement: SelectionModel.CursorMoveDirection = 'none'): boolean {
-    if (!this._input) {
-      return false;
-    }
-
+  protected serialize(): any {
     let value = this._input.value;
+    if (value.trim() === '') {
+      return null;
+    }
+
     let intValue = Number.parseInt(value);
     if (Number.isNaN(intValue)) {
-      this._input.setCustomValidity('Input must be valid integer');
+      this._input.setCustomValidity('Input must be valid number');
       this._form.reportValidity();
-      return false;
+      throw new Error('Invalid input');
     }
 
     this._input.value = intValue.toString();
@@ -617,121 +568,222 @@ class IntegerCellEditor extends CellEditor {
         this.validInput = false;
         this._input.setCustomValidity(result.message || DEFAULT_INVALID_INPUT_MESSAGE);
         this._form.reportValidity();
-        return false;
+        throw new Error('Invalid input');
       }
     }
 
-    this._onCommit.emit({ cell: this._cell, value: intValue, cursorMovement: cursorMovement });
-
-    return true;
+    return intValue;
   }
-
-  endEditing() {
-    if (!this._input) {
-      return;
-    }
-
-    this._input = null;
-
-    super.endEditing();
-  }
-
-  _input: HTMLInputElement | null;
 }
 
 export
-class BooleanCellEditor extends CellEditor {
+class DateCellEditor extends CellEditor {
   startEditing() {
+    this._createWidget();
+
     const cell = this._cell;
     const cellInfo = this.getCellInfo(cell);
+    this._input.value = this.deserialize(cellInfo.data);
+    this._form.appendChild(this._input);
+    this._input.focus();
 
+    this._bindEvents();
+  }
+
+  _createWidget() {
     const input = document.createElement('input');
+    input.type = 'date';
+    input.pattern = "\d{4}-\d{2}-\d{2}";
     input.classList.add('cell-editor');
-    input.classList.add('boolean-cell-editor');
-    input.type = 'checkbox';
-    input.spellcheck = false;
-    input.required = false;
-
-    input.checked = cellInfo.data == true;
+    input.classList.add('input-cell-editor');
 
     this._input = input;
-    this._form.appendChild(input);
+  }
 
-    this.updatePosition();
+  _bindEvents() {
+    this._input.addEventListener('keydown', this);
+    this._input.addEventListener('blur', this);
+  }
 
-    input.select();
-    input.focus();
+  _unbindEvents() {
+    this._input.removeEventListener('keydown', this);
+    this._input.removeEventListener('blur', this);
+  }
 
-    input.addEventListener("keydown", (event) => {
-      this._onKeyDown(event);
-    });
-
-    input.addEventListener("blur", (event) => {
-      if (this._saveInput()) {
-        this.endEditing();
-      }
-    });
-
-    input.addEventListener("input", (event) => {
-      this._input!.setCustomValidity("");
-      this.validInput = true;
-    });
+  handleEvent(event: Event): void {
+    switch (event.type) {
+      case 'keydown':
+        this._onKeyDown(event as KeyboardEvent);
+        break;
+      case 'blur':
+          this._onBlur(event as FocusEvent);
+          break;
+    }
   }
 
   _onKeyDown(event: KeyboardEvent) {
-    switch (event.keyCode) {
-      case 13: // return
-        if (this._saveInput('down')) {
-          this.endEditing();
-        }
+    switch (getKeyboardLayout().keyForKeydownEvent(event)) {
+      case 'Enter':
+        this.commit(event.shiftKey ? 'up' : 'down');
         break;
-      case 27: // escape
-        this.endEditing();
+      case 'Tab':
+        this.commit(event.shiftKey ? 'left' : 'right');
+        break;
+      case 'Escape':
+        this.dispose();
         break;
       default:
         break;
     }
   }
 
-  _saveInput(cursorMovement: SelectionModel.CursorMoveDirection = 'none'): boolean {
-    if (!this._input) {
-      return false;
+  _onBlur(event: FocusEvent) {
+    if (!this.commit()) {
+      event.preventDefault();
+      event.stopPropagation();
+      this._input.focus();
     }
+  }
 
-    const value = this._input.checked;
+  protected serialize(): any {
+    const value = this._input.value;
+
     if (this._validator) {
       const result = this._validator.validate(this._cell, value);
       if (!result.valid) {
         this.validInput = false;
         this._input.setCustomValidity(result.message || DEFAULT_INVALID_INPUT_MESSAGE);
         this._form.reportValidity();
-        return false;
+        throw new Error('Invalid input');
       }
     }
 
-    this._onCommit.emit({ cell: this._cell, value: value, cursorMovement: cursorMovement });
-
-    return true;
+    return value;
   }
 
-  endEditing() {
-    if (!this._input) {
-      return;
+  protected deserialize(value: any): any {
+    if (value === null || value === undefined) {
+      return '';
     }
 
-    this._input = null;
-
-    super.endEditing();
+    return value.toString();
   }
 
-  _input: HTMLInputElement | null;
+  _input: HTMLInputElement;
+}
+
+export
+class BooleanCellEditor extends CellEditor {
+  startEditing() {
+    this._createWidget();
+
+    const cell = this._cell;
+    const cellInfo = this.getCellInfo(cell);
+    this._input.checked = this.deserialize(cellInfo.data);
+    this._form.appendChild(this._input);
+    this._input.focus();
+
+    this._bindEvents();
+  }
+
+  _createWidget() {
+    const input = document.createElement('input');
+    input.classList.add('cell-editor');
+    input.classList.add('boolean-cell-editor');
+    input.type = 'checkbox';
+    input.spellcheck = false;
+
+    this._input = input;
+  }
+
+  _bindEvents() {
+    this._input.addEventListener('keydown', this);
+    this._input.addEventListener('blur', this);
+  }
+
+  _unbindEvents() {
+    this._input.removeEventListener('keydown', this);
+    this._input.removeEventListener('blur', this);
+  }
+
+  handleEvent(event: Event): void {
+    switch (event.type) {
+      case 'keydown':
+        this._onKeyDown(event as KeyboardEvent);
+        break;
+      case 'blur':
+        this._onBlur(event as FocusEvent);
+        break;
+    }
+  }
+
+  _onKeyDown(event: KeyboardEvent) {
+    switch (getKeyboardLayout().keyForKeydownEvent(event)) {
+      case 'Enter':
+        this.commit(event.shiftKey ? 'up' : 'down');
+        break;
+      case 'Tab':
+        this.commit(event.shiftKey ? 'left' : 'right');
+        break;
+      case 'Escape':
+        this.dispose();
+        break;
+      default:
+        break;
+    }
+  }
+
+  _onBlur(event: FocusEvent) {
+    if (!this.commit()) {
+      event.preventDefault();
+      event.stopPropagation();
+      this._input.focus();
+    }
+  }
+
+  protected serialize(): any {
+    const value = this._input.checked;
+
+    if (this._validator) {
+      const result = this._validator.validate(this._cell, value);
+      if (!result.valid) {
+        this.validInput = false;
+        this._input.setCustomValidity(result.message || DEFAULT_INVALID_INPUT_MESSAGE);
+        this._form.reportValidity();
+        throw new Error('Invalid input');
+      }
+    }
+
+    return value;
+  }
+
+  protected deserialize(value: any): any {
+    if (value === null || value === undefined) {
+      return false;
+    }
+
+    return value == true;
+  }
+
+  _input: HTMLInputElement;
 }
 
 export
 class SelectCellEditor extends CellEditor {
   startEditing() {
+    this._createWidget();
+
     const cell = this._cell;
     const cellInfo = this.getCellInfo(cell);
+    this._select.value = this.deserialize(cellInfo.data);
+    this._form.appendChild(this._select);
+    this._select.focus();
+
+    this._bindEvents();
+  }
+
+  _createWidget() {
+    const cell = this._cell;
     const metadata = cell.grid.dataModel!.metadata('body', cell.row, cell.column);
     const items = metadata.constraint.enum;
 
@@ -745,150 +797,81 @@ class SelectCellEditor extends CellEditor {
       select.appendChild(option);
     }
 
-    select.value = cellInfo.data;
-
     this._select = select;
+  }
 
-    this._form.appendChild(select);
+  _bindEvents() {
+    this._select.addEventListener('keydown', this);
+    this._select.addEventListener('blur', this);
+  }
 
-    this.updatePosition();
-    select.focus();
+  _unbindEvents() {
+    this._select.removeEventListener('keydown', this);
+    this._select.removeEventListener('blur', this);
+  }
 
-    select.addEventListener("keydown", (event) => {
-      this._onKeyDown(event);
-    });
-
-    select.addEventListener("blur", (event) => {
-      this._saveInput();
-      this.endEditing();
-    });
-
-    select.addEventListener("change", (event) => {
-      this._saveInput();
-      this.endEditing();
-    });
+  handleEvent(event: Event): void {
+    switch (event.type) {
+      case 'keydown':
+        this._onKeyDown(event as KeyboardEvent);
+        break;
+      case 'blur':
+        this._onBlur(event as FocusEvent);
+        break;
+    }
   }
 
   _onKeyDown(event: KeyboardEvent) {
-    switch (event.keyCode) {
-      case 13: // return
-        this._saveInput('down');
-        this.endEditing();
+    switch (getKeyboardLayout().keyForKeydownEvent(event)) {
+      case 'Enter':
+        this.commit(event.shiftKey ? 'up' : 'down');
         break;
-      case 27: // escape
-        this.endEditing();
+      case 'Tab':
+        this.commit(event.shiftKey ? 'left' : 'right');
+        break;
+      case 'Escape':
+        this.dispose();
         break;
       default:
         break;
     }
   }
 
-  _saveInput(cursorMovement: SelectionModel.CursorMoveDirection = 'none') {
-    if (!this._select) {
-      return;
+  _onBlur(event: FocusEvent) {
+    if (!this.commit()) {
+      event.preventDefault();
+      event.stopPropagation();
+      this._select.focus();
     }
+  }
 
+  protected serialize(): any {
     const value = this._select.value;
-    if (this._validator && ! this._validator.validate(this._cell, value)) {
-      this.validInput = false;
-      return;
+
+    if (this._validator) {
+      const result = this._validator.validate(this._cell, value);
+      if (!result.valid) {
+        this.validInput = false;
+        this._select.setCustomValidity(result.message || DEFAULT_INVALID_INPUT_MESSAGE);
+        this._form.reportValidity();
+        throw new Error('Invalid input');
+      }
     }
 
-    this._onCommit.emit({ cell: this._cell, value: value, cursorMovement: cursorMovement });
+    return value;
   }
 
-  endEditing() {
-    if (!this._select) {
-      return;
+  protected deserialize(value: any): any {
+    if (value === null || value === undefined) {
+      return '';
     }
 
-    this._select = null;
-
-    super.endEditing();
+    return value.toString();
   }
 
-  _select: HTMLSelectElement | null;
+  _select: HTMLSelectElement;
 }
 
-export
-class DateCellEditor extends CellEditor {
-  startEditing() {
-    const cell = this._cell;
-    const cellInfo = this.getCellInfo(cell);
-
-    const input = document.createElement('input');
-    input.type = 'date';
-    input.pattern = "\d{4}-\d{2}-\d{2}";
-    input.classList.add('cell-editor');
-    input.classList.add('input-cell-editor');
-    input.spellcheck = false;
-
-    input.value = cellInfo.data;
-
-    this._input = input;
-
-    this._form.appendChild(input);
-
-    this.updatePosition();
-
-    input.select();
-    input.focus();
-
-    input.addEventListener("keydown", (event) => {
-      this._onKeyDown(event);
-    });
-
-    input.addEventListener("blur", (event) => {
-      this._saveInput();
-      this.endEditing();
-    });
-
-    input.addEventListener("change", (event) => {
-      this._saveInput();
-      //this.endEditing();
-    });
-  }
-
-  _onKeyDown(event: KeyboardEvent) {
-    switch (event.keyCode) {
-      case 13: // return
-        this._saveInput();
-        this.endEditing();
-        break;
-      case 27: // escape
-        this.endEditing();
-        break;
-      default:
-        break;
-    }
-  }
-
-  _saveInput(cursorMovement: SelectionModel.CursorMoveDirection = 'none') {
-    if (!this._input) {
-      return;
-    }
-
-    const value = this._input.value;
-    if (this._validator && !this._validator.validate(this._cell, value)) {
-      this.validInput = false;
-      return;
-    }
-
-    this._onCommit.emit({ cell: this._cell, value: value, cursorMovement: cursorMovement });
-  }
-
-  endEditing() {
-    if (!this._input) {
-      return;
-    }
-
-    this._input = null;
-
-    super.endEditing();
-  }
-
-  _input: HTMLInputElement | null;
-}
 
 export
 namespace CellEditor {

@@ -216,7 +216,7 @@ namespace SelectionModel {
   export
   type SelectionMode = 'row' | 'column' | 'cell';
 
-  export type CursorMoveDirection = 'up' | 'down' | 'none';
+  export type CursorMoveDirection = 'up' | 'down' | 'left' | 'right' | 'none';
 
   /**
    * A type alias for the clear mode.
