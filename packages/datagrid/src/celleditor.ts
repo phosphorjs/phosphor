@@ -37,6 +37,7 @@ interface ICellEditResponse {
 export
 interface ICellEditor {
   edit(cell: CellEditor.CellConfig, validator?: ICellInputValidator): void;
+  cancel(): void;
   readonly onCommit: ISignal<this, ICellEditResponse>;
   readonly onCancel: ISignal<this, void>;
 }
@@ -262,6 +263,11 @@ abstract class CellEditor implements ICellEditor, IDisposable {
     this.startEditing();
   }
 
+  cancel() {
+    this.dispose();
+    this._onCancel.emit(void 0);
+  }
+
   protected getCellInfo(cell: CellEditor.CellConfig) {
     const { grid, row, column } = cell;
     const data = grid.dataModel!.data('body', row, column);
@@ -427,7 +433,7 @@ class TextCellEditor extends CellEditor {
         event.preventDefault();
         break;
       case 'Escape':
-        this.dispose();
+        this.cancel();
         break;
       default:
         break;
@@ -636,7 +642,7 @@ class DateCellEditor extends CellEditor {
         event.preventDefault();
         break;
       case 'Escape':
-        this.dispose();
+        this.cancel();
         break;
       default:
         break;
@@ -738,7 +744,7 @@ class BooleanCellEditor extends CellEditor {
         event.preventDefault();
         break;
       case 'Escape':
-        this.dispose();
+        this.cancel();
         break;
       default:
         break;
@@ -848,7 +854,7 @@ class SelectCellEditor extends CellEditor {
         event.preventDefault();
         break;
       case 'Escape':
-        this.dispose();
+        this.cancel();
         break;
       default:
         break;
