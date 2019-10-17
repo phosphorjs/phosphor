@@ -829,7 +829,7 @@ class DataGrid extends Widget {
    * Move cursor down/up while making sure it remains
    * within the bounds of selected rectangles
    */
-  incrementCursor(direction: SelectionModel.CursorMoveDirection): void {
+  moveCursor(direction: SelectionModel.CursorMoveDirection): void {
     // Bail early if there is no selection
     if (!this.dataModel ||
       !this._selectionModel ||
@@ -847,8 +847,10 @@ class DataGrid extends Widget {
       if (currentSel.r1 === currentSel.r2 &&
         currentSel.c1 === currentSel.c2
       ) {
-        let newRow = currentSel.r1 + (direction === 'down' ? 1 : -1);
-        let newColumn = currentSel.c1;
+        const dr = direction === 'down' ? 1 : direction === 'up' ? -1 : 0;
+        const dc = direction === 'right' ? 1 : direction === 'left' ? -1 : 0;
+        let newRow = currentSel.r1 + dr;
+        let newColumn = currentSel.c1 + dc;
         const rowCount = this.dataModel.rowCount('body');
         const columnCount = this.dataModel.columnCount('body');
         if (newRow >= rowCount) {
@@ -860,8 +862,16 @@ class DataGrid extends Widget {
         }
         if (newColumn >= columnCount) {
           newColumn = 0;
+          newRow += 1;
+          if (newRow >= rowCount) {
+            newRow = 0;
+          }
         } else if (newColumn === -1) {
           newColumn = columnCount - 1;
+          newRow -= 1;
+          if (newRow === -1) {
+            newRow = rowCount - 1;
+          }
         }
 
         this._selectionModel.select({
@@ -877,7 +887,7 @@ class DataGrid extends Widget {
 
     // if there are multiple selections, move cursor
     // within selection rectangles
-    this._selectionModel!.incrementCursorWithinSelections(direction);
+    this._selectionModel.moveCursorWithinSelections(direction);
   }
 
   /**

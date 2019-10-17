@@ -425,6 +425,8 @@ class TextCellEditor extends CellEditor {
         break;
       case 'Tab':
         this.commit(event.shiftKey ? 'left' : 'right');
+        event.stopPropagation();
+        event.preventDefault();
         break;
       case 'Escape':
         this.dispose();
@@ -632,6 +634,8 @@ class DateCellEditor extends CellEditor {
         break;
       case 'Tab':
         this.commit(event.shiftKey ? 'left' : 'right');
+        event.stopPropagation();
+        event.preventDefault();
         break;
       case 'Escape':
         this.dispose();
@@ -732,6 +736,8 @@ class BooleanCellEditor extends CellEditor {
         break;
       case 'Tab':
         this.commit(event.shiftKey ? 'left' : 'right');
+        event.stopPropagation();
+        event.preventDefault();
         break;
       case 'Escape':
         this.dispose();
@@ -840,6 +846,8 @@ class SelectCellEditor extends CellEditor {
         break;
       case 'Tab':
         this.commit(event.shiftKey ? 'left' : 'right');
+        event.stopPropagation();
+        event.preventDefault();
         break;
       case 'Escape':
         this.dispose();

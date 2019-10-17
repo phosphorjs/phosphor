@@ -52,7 +52,7 @@ class BasicSelectionModel extends SelectionModel {
    * Move cursor down/up while making sure it remains
    * within the bounds of selected rectangles
    */
-  incrementCursorWithinSelections(direction: SelectionModel.CursorMoveDirection): void {
+  moveCursorWithinSelections(direction: SelectionModel.CursorMoveDirection): void {
     // Bail early if there are no selections or no existing cursor
     if (this.isEmpty || this.cursorRow === -1 || this._cursorColumn === -1) {
       return;
@@ -72,8 +72,10 @@ class BasicSelectionModel extends SelectionModel {
     }
 
     let cursorRect = this._selections[this._cursorRectIndex];
-    let newRow = this._cursorRow + (direction === 'down' ? 1 : -1);
-    let newColumn = this._cursorColumn;
+    const dr = direction === 'down' ? 1 : direction === 'up' ? -1 : 0;
+    const dc = direction === 'right' ? 1 : direction === 'left' ? -1 : 0;
+    let newRow = this._cursorRow + dr;
+    let newColumn = this._cursorColumn + dc;
     const r1 = Math.min(cursorRect.r1, cursorRect.r2);
     const r2 = Math.max(cursorRect.r1, cursorRect.r2);
     const c1 = Math.min(cursorRect.c1, cursorRect.c2);
@@ -87,7 +89,15 @@ class BasicSelectionModel extends SelectionModel {
       newColumn -= 1;
     }
 
-    // if going downward and the last cell in the selection rectangle visited,
+    if (newColumn > c2 && newRow != r2) {
+      newColumn = c1;
+      newRow += 1;
+    } else if (newColumn < c1 && newRow != r1) {
+      newColumn = c2;
+      newRow -= 1;
+    }
+
+    // if going downward/right and the last cell in the selection rectangle visited,
     // move to next rectangle
     if (newColumn > c2) {
       this._cursorRectIndex = (this._cursorRectIndex + 1) % this._selections.length;
@@ -95,7 +105,7 @@ class BasicSelectionModel extends SelectionModel {
       newRow = Math.min(cursorRect.r1, cursorRect.r2);
       newColumn = Math.min(cursorRect.c1, cursorRect.c2);
     }
-    // if going upward and the first cell in the selection rectangle visited,
+    // if going upward/left and the first cell in the selection rectangle visited,
     // move to previous rectangle
     else if (newColumn < c1) {
       this._cursorRectIndex = this._cursorRectIndex === 0 ? this._selections.length - 1 : this._cursorRectIndex - 1;
