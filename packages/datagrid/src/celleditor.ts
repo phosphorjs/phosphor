@@ -435,6 +435,10 @@ class TextCellEditor extends CellEditor {
   }
 
   _onBlur(event: FocusEvent) {
+    if (this.isDisposed) {
+      return;
+    }
+
     if (!this.commit()) {
       event.preventDefault();
       event.stopPropagation();
@@ -638,6 +642,10 @@ class DateCellEditor extends CellEditor {
   }
 
   _onBlur(event: FocusEvent) {
+    if (this.isDisposed) {
+      return;
+    }
+
     if (!this.commit()) {
       event.preventDefault();
       event.stopPropagation();
@@ -734,6 +742,10 @@ class BooleanCellEditor extends CellEditor {
   }
 
   _onBlur(event: FocusEvent) {
+    if (this.isDisposed) {
+      return;
+    }
+
     if (!this.commit()) {
       event.preventDefault();
       event.stopPropagation();
@@ -838,6 +850,10 @@ class SelectCellEditor extends CellEditor {
   }
 
   _onBlur(event: FocusEvent) {
+    if (this.isDisposed) {
+      return;
+    }
+
     if (!this.commit()) {
       event.preventDefault();
       event.stopPropagation();
