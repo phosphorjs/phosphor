@@ -10,8 +10,6 @@ import {
   DataGrid
 } from './datagrid';
 
-import { DataModel } from './datamodel';
-
 import { SelectionModel } from './selectionmodel';
 
 import { Signal, ISignal } from '@phosphor/signaling';
@@ -915,6 +913,9 @@ namespace CellEditor {
    */
   export
   type CellConfig = {
+    /**
+     * The grid containing the cell.
+     */
     readonly grid: DataGrid;
     /**
      * The row index of the cell.
@@ -925,10 +926,5 @@ namespace CellEditor {
      * The column index of the cell.
      */
     readonly column: number;
-
-    /**
-     * The metadata for the cell.
-     */
-    readonly metadata: DataModel.Metadata;
   };
 }

@@ -20,7 +20,8 @@ import {
 import {
   SelectionModel
 } from './selectionmodel';
-import { ICellEditResponse } from './celleditor';
+
+import { ICellEditResponse, CellEditor } from './celleditor';
 
 import { MutableDataModel } from './datamodel';
 
@@ -65,11 +66,10 @@ class BasicKeyHandler implements DataGrid.IKeyHandler {
           const row = grid.selectionModel.cursorRow;
           const column = grid.selectionModel.cursorColumn;
           if (row != -1 && column != -1) {
-            const cell = {
+            const cell: CellEditor.CellConfig = {
               grid: grid,
               row: row,
-              column: column,
-              metadata: grid.dataModel!.metadata('body', row, column)
+              column: column
             };
             const editor = grid.cellEditorController.createEditor(cell);
             if (editor) {
