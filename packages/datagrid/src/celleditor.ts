@@ -124,8 +124,33 @@ class TextInputValidator implements ICellInputValidator {
       };
     }
 
+    if (!Number.isNaN(this.minLength) && value.length < this.minLength) {
+      return {
+        valid: false,
+        message: `Text length must be greater than ${this.minLength}`
+      };
+    }
+
+    if (!Number.isNaN(this.maxLength) && value.length > this.maxLength) {
+      return {
+        valid: false,
+        message: `Text length must be less than ${this.maxLength}`
+      };
+    }
+
+    if (this.pattern && !this.pattern.test(value)) {
+      return {
+        valid: false,
+        message: `Text doesn't match the required pattern`
+      };
+    }
+
     return { valid: true };
   }
+
+  minLength: number = Number.NaN;
+  maxLength: number = Number.NaN;
+  pattern: RegExp | null = null;
 }
 
 export
@@ -220,16 +245,30 @@ abstract class CellEditor implements ICellEditor, IDisposable {
 
       switch (metadata && metadata.type) {
         case 'string':
-          this._validator = new TextInputValidator();
+          {
+            const validator = new TextInputValidator();
+            if (metadata!.constraint) {
+              if (metadata!.constraint.minLength !== undefined) {
+                validator.minLength = metadata!.constraint.minLength;
+              }
+              if (metadata!.constraint.maxLength !== undefined) {
+                validator.maxLength = metadata!.constraint.maxLength;
+              }
+              if (typeof(metadata!.constraint.pattern) === 'string') {
+                validator.pattern = new RegExp(metadata!.constraint.pattern);
+              }
+            }
+            this._validator = validator;
+          }
           break;
         case 'number':
           {
             const validator = new NumberInputValidator();
             if (metadata!.constraint) {
-              if (metadata!.constraint.minimum) {
+              if (metadata!.constraint.minimum !== undefined) {
                 validator.min = metadata!.constraint.minimum;
               }
-              if (metadata!.constraint.maximum) {
+              if (metadata!.constraint.maximum !== undefined) {
                 validator.max = metadata!.constraint.maximum;
               }
             }
@@ -240,10 +279,10 @@ abstract class CellEditor implements ICellEditor, IDisposable {
           {
             const validator = new IntegerInputValidator();
             if (metadata!.constraint) {
-              if (metadata!.constraint.minimum) {
+              if (metadata!.constraint.minimum !== undefined) {
                 validator.min = metadata!.constraint.minimum;
               }
-              if (metadata!.constraint.maximum) {
+              if (metadata!.constraint.maximum !== undefined) {
                 validator.max = metadata!.constraint.maximum;
               }
             }
