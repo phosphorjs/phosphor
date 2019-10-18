@@ -247,6 +247,24 @@ abstract class CellEditor implements ICellEditor, IDisposable {
         case 'string':
           {
             const validator = new TextInputValidator();
+            if (typeof(metadata!.format) === 'string') {
+              const format = metadata!.format;
+              switch (format) {
+                case 'email':
+                  validator.pattern = new RegExp("^([a-z0-9_\.-]+)@([\da-z\.-]+)\.([a-z\.]{2,6})$");
+                  break;
+                case 'uuid':
+                  validator.pattern = new RegExp("[0-9a-fA-F]{8}\-[0-9a-fA-F]{4}\-[0-9a-fA-F]{4}\-[0-9a-fA-F]{4}\-[0-9a-fA-F]{12}");
+                  break;
+                case 'uri':
+                  // TODO
+                  break;
+                case 'binary':
+                  // TODO
+                  break;
+              }
+            }
+
             if (metadata!.constraint) {
               if (metadata!.constraint.minLength !== undefined) {
                 validator.minLength = metadata!.constraint.minLength;
