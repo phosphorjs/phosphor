@@ -9,6 +9,7 @@ export * from './basickeyhandler';
 export * from './basicmousehandler';
 export * from './basicselectionmodel';
 export * from './cellrenderer';
+export * from './celleditor';
 export * from './datagrid';
 export * from './datamodel';
 export * from './graphicscontext';

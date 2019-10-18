@@ -547,6 +547,7 @@ class NumberCellEditor extends TextCellEditor {
 
     let floatValue = Number.parseFloat(value);
     if (Number.isNaN(floatValue)) {
+      this.validInput = false;
       this._input.setCustomValidity('Input must be valid number');
       this._form.reportValidity();
       throw new Error('Invalid input');
@@ -604,6 +605,7 @@ class IntegerCellEditor extends NumberCellEditor {
 
     let intValue = Number.parseInt(value);
     if (Number.isNaN(intValue)) {
+      this.validInput = false;
       this._input.setCustomValidity('Input must be valid number');
       this._form.reportValidity();
       throw new Error('Invalid input');
