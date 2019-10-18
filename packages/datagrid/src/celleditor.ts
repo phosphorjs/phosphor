@@ -61,7 +61,11 @@ class CellEditorController {
     }
 
     if (metadata.constraint && metadata.constraint.enum) {
-      key += ':enum';
+      if (metadata.constraint.enum === 'dynamic') {
+        key += ':dynamic-enum';
+      } else {
+        key += ':enum';
+      }
     }
 
     return key;
@@ -85,7 +89,12 @@ class CellEditorController {
       case 'number:enum':
       case 'integer:enum':
       case 'date:enum':
-        return new SelectCellEditor();
+        return new OptionCellEditor();
+      case 'string:dynamic-enum':
+      case 'number:dynamic-enum':
+      case 'integer:dynamic-enum':
+      case 'date:dynamic-enum':
+        return new DynamicOptionCellEditor();
     }
 
     const data = cell.grid.dataModel ? cell.grid.dataModel.data('body', cell.row, cell.column) : undefined;
@@ -850,7 +859,7 @@ class BooleanCellEditor extends CellEditor {
 }
 
 export
-class SelectCellEditor extends CellEditor {
+class OptionCellEditor extends CellEditor {
   startEditing() {
     this._createWidget();
 
@@ -957,6 +966,130 @@ class SelectCellEditor extends CellEditor {
   }
 
   _select: HTMLSelectElement;
+}
+
+export
+class DynamicOptionCellEditor extends CellEditor {
+  startEditing() {
+    this._createWidget();
+
+    const cell = this._cell;
+    const cellInfo = this.getCellInfo(cell);
+    this._input.value = this.deserialize(cellInfo.data);
+    this._form.appendChild(this._input);
+    this._input.select();
+    this._input.focus();
+
+    this._bindEvents();
+  }
+
+  _createWidget() {
+    const cell = this._cell;
+    const grid = cell.grid;
+    const dataModel = grid.dataModel!;
+    const rowCount = dataModel.rowCount('body');
+
+    const listId = 'cell-editor-list';
+    const list = document.createElement('datalist');
+    list.id = listId;
+    const input = document.createElement('input');
+    input.classList.add('cell-editor');
+    input.classList.add('input-cell-editor');
+    const valueSet = new Set<string>();
+    for (let r = 0; r < rowCount; ++r) {
+      const data = dataModel.data('body', r, cell.column);
+      if (data) {
+        valueSet.add(data);
+      }
+    }
+    valueSet.forEach((value: string) => {
+      const option = document.createElement("option");
+      option.value = value;
+      option.text = value;
+      list.appendChild(option);
+    });
+    this._form.appendChild(list);
+    input.setAttribute('list', listId);
+
+    this._input = input;
+  }
+
+  _bindEvents() {
+    this._input.addEventListener('keydown', this);
+    this._input.addEventListener('blur', this);
+  }
+
+  _unbindEvents() {
+    this._input.removeEventListener('keydown', this);
+    this._input.removeEventListener('blur', this);
+  }
+
+  handleEvent(event: Event): void {
+    switch (event.type) {
+      case 'keydown':
+        this._onKeyDown(event as KeyboardEvent);
+        break;
+      case 'blur':
+        this._onBlur(event as FocusEvent);
+        break;
+    }
+  }
+
+  _onKeyDown(event: KeyboardEvent) {
+    switch (getKeyboardLayout().keyForKeydownEvent(event)) {
+      case 'Enter':
+        this.commit(event.shiftKey ? 'up' : 'down');
+        break;
+      case 'Tab':
+        this.commit(event.shiftKey ? 'left' : 'right');
+        event.stopPropagation();
+        event.preventDefault();
+        break;
+      case 'Escape':
+        this.cancel();
+        break;
+      default:
+        break;
+    }
+  }
+
+  _onBlur(event: FocusEvent) {
+    if (this.isDisposed) {
+      return;
+    }
+
+    if (!this.commit()) {
+      event.preventDefault();
+      event.stopPropagation();
+      this._input.focus();
+    }
+  }
+
+  protected serialize(): any {
+    const value = this._input.value;
+
+    if (this._validator) {
+      const result = this._validator.validate(this._cell, value);
+      if (!result.valid) {
+        this.validInput = false;
+        this._input.setCustomValidity(result.message || DEFAULT_INVALID_INPUT_MESSAGE);
+        this._form.reportValidity();
+        throw new Error('Invalid input');
+      }
+    }
+
+    return value;
+  }
+
+  protected deserialize(value: any): any {
+    if (value === null || value === undefined) {
+      return '';
+    }
+
+    return value.toString();
+  }
+
+  _input: HTMLInputElement;
 }
 
 
