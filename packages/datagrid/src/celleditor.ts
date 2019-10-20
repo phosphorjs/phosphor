@@ -12,8 +12,6 @@ import {
 
 import { SelectionModel } from './selectionmodel';
 
-import { Signal, ISignal } from '@phosphor/signaling';
-
 import { getKeyboardLayout } from '@phosphor/keyboard';
 
 export
@@ -36,17 +34,59 @@ interface ICellEditResponse {
 
 export
 interface ICellEditor {
-  edit(cell: CellEditor.CellConfig, validator?: ICellInputValidator): void;
+  edit(cell: CellEditor.CellConfig, options?: ICellEditOptions): void;
   cancel(): void;
-  readonly onCommit: ISignal<this, ICellEditResponse>;
-  readonly onCancel: ISignal<this, void>;
 }
 
 const DEFAULT_INVALID_INPUT_MESSAGE = "Invalid input!";
 
+export
+interface ICellEditOptions {
+  editor?: ICellEditor;
+  validator?: ICellInputValidator;
+  onCommit?: (response: ICellEditResponse) => void;
+  onCancel?: () => void;
+}
 
 export
-class CellEditorController {
+interface ICellEditorController {
+  edit(cell: CellEditor.CellConfig, options?: ICellEditOptions): boolean;
+  cancel(): void;
+}
+
+export
+class CellEditorController implements ICellEditorController {
+  edit(cell: CellEditor.CellConfig, options?: ICellEditOptions): boolean {
+    const grid = cell.grid;
+
+    if (!grid.editable) {
+      console.error('Grid cannot be edited!');
+      return false;
+    }
+
+    this.cancel();
+
+    if (options && options.editor) {
+      options.editor.edit(cell, options);
+      return true;
+    }
+
+    const editor = this._createEditor(cell);
+    if (editor) {
+      editor.edit(cell, options);
+      return true;
+    }
+
+    return false;
+  }
+
+  cancel(): void {
+    if (this._editor) {
+      this._editor.cancel();
+      this._editor = null;
+    }
+  }
+
   private _getKey(cell: CellEditor.CellConfig): string {
     const metadata = cell.grid.dataModel ? cell.grid.dataModel.metadata('body', cell.row, cell.column) : null;
 
@@ -71,7 +111,7 @@ class CellEditorController {
     return key;
   }
 
-  createEditor(cell: CellEditor.CellConfig): ICellEditor | null {
+  private _createEditor(cell: CellEditor.CellConfig): ICellEditor | null {
     const key = this._getKey(cell);
 
     switch (key) {
@@ -97,7 +137,7 @@ class CellEditorController {
         return new DynamicOptionCellEditor();
     }
 
-    const data = cell.grid.dataModel ? cell.grid.dataModel.data('body', cell.row, cell.column) : undefined;
+    const data = cell.grid.dataModel!.data('body', cell.row, cell.column);
     if (!data || typeof data !== 'object') {
       return new TextCellEditor();
     }
@@ -105,15 +145,7 @@ class CellEditorController {
     return null;
   }
 
-  edit(cell: CellEditor.CellConfig, validator?: ICellInputValidator): boolean {
-    const editor = this.createEditor(cell);
-    if (editor) {
-      editor.edit(cell, validator);
-      return true;
-    }
-
-    return false;
-  }
+  private _editor: ICellEditor | null = null;
 }
 
 export
@@ -244,11 +276,12 @@ abstract class CellEditor implements ICellEditor, IDisposable {
     this._cell.grid.node.removeChild(this._viewportOccluder);
   }
 
-  edit(cell: CellEditor.CellConfig, validator?: ICellInputValidator) {
+  edit(cell: CellEditor.CellConfig, options?: ICellEditOptions): void {
     this._cell = cell;
+    this._onCommit = options && options.onCommit;
 
-    if (validator) {
-      this._validator = validator;
+    if (options && options.validator) {
+      this._validator = options.validator;
     } else {
       const metadata = cell.grid.dataModel ? cell.grid.dataModel.metadata('body', cell.row, cell.column) : null;
 
@@ -331,7 +364,9 @@ abstract class CellEditor implements ICellEditor, IDisposable {
 
   cancel() {
     this.dispose();
-    this._onCancel.emit(void 0);
+    if (this._onCancel) {
+      this._onCancel();
+    }
   }
 
   protected getCellInfo(cell: CellEditor.CellConfig) {
@@ -410,25 +445,20 @@ abstract class CellEditor implements ICellEditor, IDisposable {
     }
 
     this.dispose();
-    this._onCommit.emit({
-      cell: this._cell,
-      value: value,
-      cursorMovement: cursorMovement
-    });
+
+    if (this._onCommit) {
+      this._onCommit({
+        cell: this._cell,
+        value: value,
+        cursorMovement: cursorMovement
+      });
+    }
 
     return true;
   }
 
-  get onCommit(): ISignal<this, ICellEditResponse> {
-    return this._onCommit;
-  }
-
-  get onCancel(): ISignal<this, void> {
-    return this._onCancel;
-  }
-
-  protected _onCommit = new Signal<this, ICellEditResponse>(this);
-  protected _onCancel = new Signal<this, void>(this);
+  protected _onCommit?: (response: ICellEditResponse) => void;
+  protected _onCancel: () => void;
   protected _cell: CellEditor.CellConfig;
   protected _validator: ICellInputValidator | undefined;
   protected _viewportOccluder: HTMLDivElement;

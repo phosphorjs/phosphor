@@ -30,7 +30,7 @@ import {
 } from './cellrenderer';
 
 import {
-  DataModel
+  DataModel, MutableDataModel
 } from './datamodel';
 
 import {
@@ -48,7 +48,7 @@ import {
 import {
   SelectionModel
 } from './selectionmodel';
-import { CellEditorController } from './celleditor';
+import { ICellEditorController, CellEditorController } from './celleditor';
 
 
 /**
@@ -128,7 +128,7 @@ class DataGrid extends Widget {
     this._hScrollBar = new ScrollBar({ orientation: 'horizontal' });
     this._scrollCorner = new Widget();
 
-    this._cellEditorController = new CellEditorController();
+    this._editorController = new CellEditorController();
 
     // Add the extra class names to the child widgets.
     this._viewport.addClass('p-DataGrid-viewport');
@@ -5060,8 +5060,27 @@ class DataGrid extends Widget {
     gc.restore();
   }
 
-  get cellEditorController(): CellEditorController {
-    return this._cellEditorController;
+  get editorController(): ICellEditorController | null {
+    return this._editorController;
+  }
+
+  set editorController(controller: ICellEditorController | null) {
+    this._editorController = controller;
+  }
+
+  get editingEnabled(): boolean {
+    return this._editingEnabled;
+  }
+
+  set editingEnabled(enabled: boolean) {
+    this._editingEnabled = enabled;
+  }
+
+  get editable(): boolean {
+    return this._editingEnabled &&
+      this._selectionModel !== null &&
+      this._editorController !== null &&
+      this.dataModel instanceof MutableDataModel;
   }
 
   private _viewport: Widget;
@@ -5104,7 +5123,8 @@ class DataGrid extends Widget {
   private _cellRenderers: RendererMap;
   private _copyConfig: DataGrid.CopyConfig;
   private _headerVisibility: DataGrid.HeaderVisibility;
-  private _cellEditorController: CellEditorController;
+  private _editorController: ICellEditorController | null;
+  private _editingEnabled: boolean = false;
 }
 
 

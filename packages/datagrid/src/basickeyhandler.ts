@@ -59,38 +59,37 @@ class BasicKeyHandler implements DataGrid.IKeyHandler {
    * This will not be called if the mouse button is pressed.
    */
   onKeyDown(grid: DataGrid, event: KeyboardEvent): void {
-    if (!Platform.accelKey(event)) {
+    if (grid.editable && 
+      grid.selectionModel!.cursorRow !== -1 &&
+      grid.selectionModel!.cursorColumn !== -1) {
       const inp = String.fromCharCode(event.keyCode);
       if (/[a-zA-Z0-9-_ ]/.test(inp)) {
-        if (grid.selectionModel) {
-          const row = grid.selectionModel.cursorRow;
-          const column = grid.selectionModel.cursorColumn;
-          if (row != -1 && column != -1) {
-            const cell: CellEditor.CellConfig = {
-              grid: grid,
-              row: row,
-              column: column
-            };
-            const editor = grid.cellEditorController.createEditor(cell);
-            if (editor) {
-              editor.onCommit.connect((_, args: ICellEditResponse) => {
-                if (grid.dataModel instanceof MutableDataModel) {
-                  const dataModel = grid.dataModel as MutableDataModel;
-                  dataModel.setData('body', row, column, args.value);
-                }
-                grid.viewport.node.focus();
-                if (args.cursorMovement) {
-                  grid.moveCursor(args.cursorMovement);
-                  grid.scrollToCursor();
-                }
-              });
-              editor.onCancel.connect((_, args: void) => {
-                grid.viewport.node.focus();
-              });
-              editor.edit(cell);
+        const row = grid.selectionModel!.cursorRow;
+        const column = grid.selectionModel!.cursorColumn;
+        const cell: CellEditor.CellConfig = {
+          grid: grid,
+          row: row,
+          column: column
+        };
+        grid.editorController!.edit(cell, {
+          onCommit: (response: ICellEditResponse) => {
+            const dataModel = grid.dataModel as MutableDataModel;
+            dataModel.setData('body', row, column, response.value);
+            grid.viewport.node.focus();
+            if (response.cursorMovement) {
+              grid.moveCursor(response.cursorMovement);
+              grid.scrollToCursor();
             }
+          },
+          onCancel: () => {
+            grid.viewport.node.focus();
           }
+        });
+        if (getKeyboardLayout().keyForKeydownEvent(event) === 'Space') {
+          event.stopPropagation();
+          event.preventDefault();
         }
+        return;
       }
     }
 
