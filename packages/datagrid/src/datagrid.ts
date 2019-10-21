@@ -48,7 +48,7 @@ import {
 import {
   SelectionModel
 } from './selectionmodel';
-import { ICellEditorController, CellEditorController } from './celleditor';
+import { ICellEditorController, CellEditorController } from './celleditorcontroller';
 
 
 /**
