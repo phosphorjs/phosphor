@@ -6,10 +6,6 @@
 | The full license is in the file LICENSE, distributed with this software.
 |----------------------------------------------------------------------------*/
 import {
-  Widget
-} from '@phosphor/widgets';
-
-import {
   IDisposable
 } from '@phosphor/disposable';
 
@@ -642,8 +638,8 @@ class DateCellEditor extends CellEditor {
         this._onKeyDown(event as KeyboardEvent);
         break;
       case 'blur':
-          this._onBlur(event as FocusEvent);
-          break;
+        this._onBlur(event as FocusEvent);
+        break;
     }
   }
 
@@ -1043,17 +1039,6 @@ class DynamicOptionCellEditor extends CellEditor {
 
 export
 namespace CellEditor {
-  export
-  interface IOptions extends Widget.IOptions {
-    grid: DataGrid;
-    row: number;
-    column: number;
-  }
-
-  export
-  interface IInputOptions extends IOptions {
-  }
-
   /**
    * An object which holds the configuration data for a cell.
    */
