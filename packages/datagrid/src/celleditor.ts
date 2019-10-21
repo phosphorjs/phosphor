@@ -175,7 +175,6 @@ export
 abstract class CellEditor implements ICellEditor, IDisposable {
   protected abstract startEditing(): void;
   protected abstract serialize(): any;
-  protected abstract deserialize(value: any): any;
 
   /**
    * Whether the cell editor is disposed.
@@ -196,77 +195,7 @@ abstract class CellEditor implements ICellEditor, IDisposable {
     this._cell = cell;
     this._onCommit = options && options.onCommit;
 
-    if (options && options.validator) {
-      this._validator = options.validator;
-    } else {
-      const metadata = cell.grid.dataModel ? cell.grid.dataModel.metadata('body', cell.row, cell.column) : null;
-
-      switch (metadata && metadata.type) {
-        case 'string':
-          {
-            const validator = new TextInputValidator();
-            if (typeof(metadata!.format) === 'string') {
-              const format = metadata!.format;
-              switch (format) {
-                case 'email':
-                  validator.pattern = new RegExp("^([a-z0-9_\.-]+)@([\da-z\.-]+)\.([a-z\.]{2,6})$");
-                  break;
-                case 'uuid':
-                  validator.pattern = new RegExp("[0-9a-fA-F]{8}\-[0-9a-fA-F]{4}\-[0-9a-fA-F]{4}\-[0-9a-fA-F]{4}\-[0-9a-fA-F]{12}");
-                  break;
-                case 'uri':
-                  // TODO
-                  break;
-                case 'binary':
-                  // TODO
-                  break;
-              }
-            }
-
-            if (metadata!.constraint) {
-              if (metadata!.constraint.minLength !== undefined) {
-                validator.minLength = metadata!.constraint.minLength;
-              }
-              if (metadata!.constraint.maxLength !== undefined) {
-                validator.maxLength = metadata!.constraint.maxLength;
-              }
-              if (typeof(metadata!.constraint.pattern) === 'string') {
-                validator.pattern = new RegExp(metadata!.constraint.pattern);
-              }
-            }
-            this._validator = validator;
-          }
-          break;
-        case 'number':
-          {
-            const validator = new NumberInputValidator();
-            if (metadata!.constraint) {
-              if (metadata!.constraint.minimum !== undefined) {
-                validator.min = metadata!.constraint.minimum;
-              }
-              if (metadata!.constraint.maximum !== undefined) {
-                validator.max = metadata!.constraint.maximum;
-              }
-            }
-            this._validator = validator;
-          }
-          break;
-        case 'integer':
-          {
-            const validator = new IntegerInputValidator();
-            if (metadata!.constraint) {
-              if (metadata!.constraint.minimum !== undefined) {
-                validator.min = metadata!.constraint.minimum;
-              }
-              if (metadata!.constraint.maximum !== undefined) {
-                validator.max = metadata!.constraint.maximum;
-              }
-            }
-            this._validator = validator;
-          }
-          break;
-      }
-    }
+    this._validator = (options && options.validator) ? options.validator : this.createValidatorBasedOnType();
 
     cell.grid.node.addEventListener('wheel', () => {
       this.updatePosition();
@@ -283,6 +212,79 @@ abstract class CellEditor implements ICellEditor, IDisposable {
     if (this._onCancel) {
       this._onCancel();
     }
+  }
+
+  protected createValidatorBasedOnType(): ICellInputValidator | undefined {
+    const cell = this._cell;
+    const metadata = cell.grid.dataModel!.metadata('body', cell.row, cell.column);
+
+    switch (metadata && metadata.type) {
+      case 'string':
+        {
+          const validator = new TextInputValidator();
+          if (typeof(metadata!.format) === 'string') {
+            const format = metadata!.format;
+            switch (format) {
+              case 'email':
+                validator.pattern = new RegExp("^([a-z0-9_\.-]+)@([\da-z\.-]+)\.([a-z\.]{2,6})$");
+                break;
+              case 'uuid':
+                validator.pattern = new RegExp("[0-9a-fA-F]{8}\-[0-9a-fA-F]{4}\-[0-9a-fA-F]{4}\-[0-9a-fA-F]{4}\-[0-9a-fA-F]{12}");
+                break;
+              case 'uri':
+                // TODO
+                break;
+              case 'binary':
+                // TODO
+                break;
+            }
+          }
+
+          if (metadata!.constraint) {
+            if (metadata!.constraint.minLength !== undefined) {
+              validator.minLength = metadata!.constraint.minLength;
+            }
+            if (metadata!.constraint.maxLength !== undefined) {
+              validator.maxLength = metadata!.constraint.maxLength;
+            }
+            if (typeof(metadata!.constraint.pattern) === 'string') {
+              validator.pattern = new RegExp(metadata!.constraint.pattern);
+            }
+          }
+          return validator;
+        }
+        break;
+      case 'number':
+        {
+          const validator = new NumberInputValidator();
+          if (metadata!.constraint) {
+            if (metadata!.constraint.minimum !== undefined) {
+              validator.min = metadata!.constraint.minimum;
+            }
+            if (metadata!.constraint.maximum !== undefined) {
+              validator.max = metadata!.constraint.maximum;
+            }
+          }
+          return validator;
+        }
+        break;
+      case 'integer':
+        {
+          const validator = new IntegerInputValidator();
+          if (metadata!.constraint) {
+            if (metadata!.constraint.minimum !== undefined) {
+              validator.min = metadata!.constraint.minimum;
+            }
+            if (metadata!.constraint.maximum !== undefined) {
+              validator.max = metadata!.constraint.maximum;
+            }
+          }
+          return validator;
+        }
+        break;
+    }
+
+    return undefined;
   }
 
   protected getCellInfo(cell: CellEditor.CellConfig) {
