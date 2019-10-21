@@ -63,6 +63,7 @@ interface ICellEditOptions {
 
 export
 interface ICellEditorController {
+  setEditor(identifier: CellDataType | DataModel.Metadata, editor: ICellEditor): void;
   edit(cell: CellEditor.CellConfig, options?: ICellEditOptions): boolean;
   cancel(): void;
 }
