@@ -21,9 +21,14 @@ import {
   SelectionModel
 } from './selectionmodel';
 
-import { ICellEditResponse, CellEditor } from './celleditor';
+import {
+  ICellEditResponse,
+  CellEditor
+} from './celleditor';
 
-import { MutableDataModel } from './datamodel';
+import {
+  MutableDataModel
+} from './datamodel';
 
 
 /**
@@ -62,8 +67,8 @@ class BasicKeyHandler implements DataGrid.IKeyHandler {
     if (grid.editable && 
       grid.selectionModel!.cursorRow !== -1 &&
       grid.selectionModel!.cursorColumn !== -1) {
-      const inp = String.fromCharCode(event.keyCode);
-      if (/[a-zA-Z0-9-_ ]/.test(inp)) {
+      const input = String.fromCharCode(event.keyCode);
+      if (/[a-zA-Z0-9-_ ]/.test(input)) {
         const row = grid.selectionModel!.cursorRow;
         const column = grid.selectionModel!.cursorColumn;
         const cell: CellEditor.CellConfig = {
@@ -769,16 +774,14 @@ class BasicKeyHandler implements DataGrid.IKeyHandler {
    * @param event - The keyboard event of interest.
    */
   protected onDelete(grid: DataGrid, event: KeyboardEvent): void {
-    if (grid.selectionModel &&
-      !grid.selectionModel.isEmpty &&
-      grid.dataModel instanceof MutableDataModel) {
-
+    if (grid.editable &&
+      !grid.selectionModel!.isEmpty) {
       const dataModel = grid.dataModel as MutableDataModel;
       // Fetch the max row and column.
       let maxRow = dataModel.rowCount('body') - 1;
       let maxColumn = dataModel.columnCount('body') - 1;
 
-      const it = grid.selectionModel.selections();
+      const it = grid.selectionModel!.selections();
       let s: SelectionModel.Selection | undefined;
       while ((s = it.next()) !== undefined) {
         // Clamp the cell to the model bounds.

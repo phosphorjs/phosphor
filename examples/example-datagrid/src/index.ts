@@ -16,6 +16,10 @@ import {
   DockPanel, StackedPanel, Widget
 } from '@phosphor/widgets';
 
+import {
+  getKeyboardLayout
+} from '@phosphor/keyboard';
+
 import '../style/index.css';
 
 
@@ -202,13 +206,17 @@ class JSONCellEditor extends CellEditor {
     textarea.value = JSON.stringify(data);
 
     textarea.addEventListener('keydown', (event: KeyboardEvent) => {
-      if (event.keyCode === 13) {
-        if (!this.commit(event.shiftKey ? "up" : "down")) {
+      const key = getKeyboardLayout().keyForKeydownEvent(event);
+      if (key === 'Enter' || key === 'Tab' ) {
+        const next = key === 'Enter' ?
+          (event.shiftKey ? "up" : "down") :
+          (event.shiftKey ? "left" : "right");
+        if (!this.commit(next)) {
           this.validInput = false;
-          event.preventDefault();
-          event.stopPropagation();
         }
-      } else if (event.keyCode === 27) {
+        event.preventDefault();
+        event.stopPropagation();
+      } else if (key === 'Escape') {
         this.cancel();
       }
     });

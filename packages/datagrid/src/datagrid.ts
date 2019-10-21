@@ -48,7 +48,11 @@ import {
 import {
   SelectionModel
 } from './selectionmodel';
-import { ICellEditorController, CellEditorController } from './celleditorcontroller';
+
+import {
+  ICellEditorController,
+  CellEditorController
+} from './celleditorcontroller';
 
 
 /**
@@ -826,7 +830,7 @@ class DataGrid extends Widget {
   }
 
   /**
-   * Move cursor down/up while making sure it remains
+   * Move cursor down/up/left/right while making sure it remains
    * within the bounds of selected rectangles
    */
   moveCursor(direction: SelectionModel.CursorMoveDirection): void {

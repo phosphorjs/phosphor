@@ -190,6 +190,7 @@ abstract class CellEditor implements ICellEditor, IDisposable {
   edit(cell: CellEditor.CellConfig, options?: ICellEditOptions): void {
     this._cell = cell;
     this._onCommit = options && options.onCommit;
+    this._onCancel = options && options.onCancel;
 
     this._validator = (options && options.validator) ? options.validator : this.createValidatorBasedOnType();
 
@@ -372,7 +373,7 @@ abstract class CellEditor implements ICellEditor, IDisposable {
   }
 
   protected _onCommit?: (response: ICellEditResponse) => void;
-  protected _onCancel: () => void;
+  protected _onCancel?: () => void;
   protected _cell: CellEditor.CellConfig;
   protected _validator: ICellInputValidator | undefined;
   protected _viewportOccluder: HTMLDivElement;

@@ -28,7 +28,11 @@ import {
 import {
   SelectionModel
 } from './selectionmodel';
-import { ICellEditResponse, CellEditor } from './celleditor';
+
+import {
+  ICellEditResponse,
+  CellEditor
+} from './celleditor';
 
 /**
  * A basic implementation of a data grid mouse handler.
