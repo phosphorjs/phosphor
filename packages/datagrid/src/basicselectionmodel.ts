@@ -81,37 +81,44 @@ class BasicSelectionModel extends SelectionModel {
     const c1 = Math.min(cursorRect.c1, cursorRect.c2);
     const c2 = Math.max(cursorRect.c1, cursorRect.c2);
 
-    if (newRow > r2) {
-      newRow = r1;
-      newColumn += 1;
-    } else if (newRow < r1) {
-      newRow = r2;
-      newColumn -= 1;
-    }
-
-    if (newColumn > c2 && newRow != r2) {
-      newColumn = c1;
-      newRow += 1;
-    } else if (newColumn < c1 && newRow != r1) {
-      newColumn = c2;
-      newRow -= 1;
-    }
-
-    // if going downward/right and the last cell in the selection rectangle visited,
-    // move to next rectangle
-    if (newColumn > c2) {
+    const moveToNextRect = () => {
       this._cursorRectIndex = (this._cursorRectIndex + 1) % this._selections.length;
       cursorRect = this._selections[this._cursorRectIndex];
       newRow = Math.min(cursorRect.r1, cursorRect.r2);
       newColumn = Math.min(cursorRect.c1, cursorRect.c2);
-    }
-    // if going upward/left and the first cell in the selection rectangle visited,
-    // move to previous rectangle
-    else if (newColumn < c1) {
+    };
+    
+    const moveToPreviousRect = () => {
       this._cursorRectIndex = this._cursorRectIndex === 0 ? this._selections.length - 1 : this._cursorRectIndex - 1;
       cursorRect = this._selections[this._cursorRectIndex];
       newRow = Math.max(cursorRect.r1, cursorRect.r2);
       newColumn = Math.max(cursorRect.c1, cursorRect.c2);
+    };
+
+    if (newRow > r2) {
+      newRow = r1;
+      newColumn += 1;
+      if (newColumn > c2) {
+        moveToNextRect();
+      }
+    } else if (newRow < r1) {
+      newRow = r2;
+      newColumn -= 1;
+      if (newColumn < c1) {
+        moveToPreviousRect();
+      }
+    } else if (newColumn > c2) {
+      newColumn = c1;
+      newRow += 1;
+      if (newRow > r2) {
+        moveToNextRect();
+      }
+    } else if (newColumn < c1) {
+      newColumn = c2;
+      newRow -= 1;
+      if (newRow < r1) {
+        moveToPreviousRect();
+      }
     }
 
     this._cursorRow = newRow;
