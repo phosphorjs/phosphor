@@ -10,9 +10,17 @@ import {
   DataGrid
 } from './datagrid';
 
-import { SelectionModel } from './selectionmodel';
+import {
+  SelectionModel
+} from './selectionmodel';
 
-import { getKeyboardLayout } from '@phosphor/keyboard';
+import {
+  getKeyboardLayout
+} from '@phosphor/keyboard';
+
+import {
+  DataModel
+} from './datamodel';
 
 export
 interface ICellInputValidatorResponse {
@@ -39,6 +47,11 @@ interface ICellEditor {
 }
 
 const DEFAULT_INVALID_INPUT_MESSAGE = "Invalid input!";
+
+export
+type CellDataType = 'string' | 'number' | 'integer' | 'boolean' | 'date' |
+                    'string:option' | 'number:option' | 'integer:option'| 'date:option'|
+                    'string:dynamic-option' | 'number:dynamic-option' | 'integer:dynamic-option' | 'date:dynamic-option';
 
 export
 interface ICellEditOptions {
@@ -71,7 +84,7 @@ class CellEditorController implements ICellEditorController {
       return true;
     }
 
-    const editor = this._createEditor(cell);
+    const editor = this._getEditor(cell);
     if (editor) {
       editor.edit(cell, options);
       return true;
@@ -87,7 +100,7 @@ class CellEditorController implements ICellEditorController {
     }
   }
 
-  private _getKey(cell: CellEditor.CellConfig): string {
+  private _getDataTypeKey(cell: CellEditor.CellConfig): string {
     const metadata = cell.grid.dataModel ? cell.grid.dataModel.metadata('body', cell.row, cell.column) : null;
 
     if (!metadata) {
@@ -102,19 +115,80 @@ class CellEditorController implements ICellEditorController {
 
     if (metadata.constraint && metadata.constraint.enum) {
       if (metadata.constraint.enum === 'dynamic') {
-        key += ':dynamic-enum';
+        key += ':dynamic-option';
       } else {
-        key += ':enum';
+        key += ':option';
       }
     }
 
     return key;
   }
 
-  private _createEditor(cell: CellEditor.CellConfig): ICellEditor | null {
-    const key = this._getKey(cell);
+  private _objectToKey(object: any): string {
+    let str = '';
+    for (let key in object) {
+      const value = object[key];
+      if (typeof value === 'object') {
+        str += `${key}:${this._objectToKey(value)}`;
+      } else {
+        str += `[${key}:${value}]`;
+      }
+    }
 
-    switch (key) {
+    return str;
+  }
+
+  private _metadataIdentifierToKey(metadata: DataModel.Metadata): string {
+    return this._objectToKey(metadata);
+  }
+
+  private _metadataMatchesIdentifier(metadata: DataModel.Metadata, identifier: DataModel.Metadata): boolean {
+    for (let key in identifier) {
+      if (!metadata.hasOwnProperty(key)) {
+        return false;
+      }
+
+      const identifierValue = identifier[key];
+      const metadataValue = metadata[key];
+      if (typeof identifierValue === 'object') {
+        if (!this._metadataMatchesIdentifier(metadataValue, identifierValue)) {
+          return false;
+        }
+      } else if (metadataValue !== identifierValue) {
+        return false;
+      }
+    }
+
+    return true;
+  }
+
+  private _getMetadataBasedEditor(metadata: DataModel.Metadata): ICellEditor | undefined {
+    for (let key of Array.from(this._metadataBasedOverrides.keys())) {
+      const [identifier, editor] = this._metadataBasedOverrides.get(key)!; 
+      if (this._metadataMatchesIdentifier(metadata, identifier)) {
+        return editor;
+      }
+    }
+
+    return undefined;
+  }
+
+  private _getEditor(cell: CellEditor.CellConfig): ICellEditor | undefined {
+    const dtKey = this._getDataTypeKey(cell);
+
+    if (this._typeBasedOverrides.has(dtKey)) {
+      return this._typeBasedOverrides.get(dtKey);
+    } else {
+      const metadata = cell.grid.dataModel!.metadata('body', cell.row, cell.column);
+      if (metadata) {
+        const editor = this._getMetadataBasedEditor(metadata);
+        if (editor) {
+          return editor;
+        }
+      }
+    }
+
+    switch (dtKey) {
       case 'string':
         return new TextCellEditor();
       case 'number':
@@ -125,15 +199,15 @@ class CellEditorController implements ICellEditorController {
         return new BooleanCellEditor();
       case 'date':
         return new DateCellEditor();
-      case 'string:enum':
-      case 'number:enum':
-      case 'integer:enum':
-      case 'date:enum':
+      case 'string:option':
+      case 'number:option':
+      case 'integer:option':
+      case 'date:option':
         return new OptionCellEditor();
-      case 'string:dynamic-enum':
-      case 'number:dynamic-enum':
-      case 'integer:dynamic-enum':
-      case 'date:dynamic-enum':
+      case 'string:dynamic-option':
+      case 'number:dynamic-option':
+      case 'integer:dynamic-option':
+      case 'date:dynamic-option':
         return new DynamicOptionCellEditor();
     }
 
@@ -142,10 +216,21 @@ class CellEditorController implements ICellEditorController {
       return new TextCellEditor();
     }
 
-    return null;
+    return undefined;
+  }
+
+  setEditor(identifier: CellDataType | DataModel.Metadata, editor: ICellEditor) {
+    if (typeof identifier === 'string') {
+      this._typeBasedOverrides.set(identifier, editor);
+    } else {
+      const key = this._metadataIdentifierToKey(identifier);
+      this._metadataBasedOverrides.set(key, [identifier, editor]);
+    }
   }
 
   private _editor: ICellEditor | null = null;
+  private _typeBasedOverrides: Map<string, ICellEditor> = new Map();
+  private _metadataBasedOverrides: Map<string, [DataModel.Metadata, ICellEditor]> = new Map();
 }
 
 export
