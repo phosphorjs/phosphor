@@ -4496,8 +4496,8 @@ class DataGrid extends Widget {
     // Fetch the selection model.
     let model = this._selectionModel;
 
-    // Bail early if there are no selections.
-    if (!model || model.isEmpty) {
+    // Bail early if there are no selections or if the selectionMode is the entire column.
+    if (!model || model.isEmpty || model.selectionMode == 'column') {
       return;
     }
 
@@ -4597,8 +4597,8 @@ class DataGrid extends Widget {
     // Fetch the selection model.
     let model = this._selectionModel;
 
-    // Bail early if there are no selections.
-    if (!model || model.isEmpty) {
+    // Bail early if there are no selections or if the selectionMode is the entire row
+    if (!model || model.isEmpty || model.selectionMode == 'row') {
       return;
     }
 
