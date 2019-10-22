@@ -183,6 +183,10 @@ abstract class CellEditor implements ICellEditor, IDisposable {
    * Dispose of the resources held by cell editor handler.
    */
   dispose(): void {
+    if (this._disposed) {
+      return;
+    }
+
     this._disposed = true;
     this._cell.grid.node.removeChild(this._viewportOccluder);
   }
@@ -205,6 +209,10 @@ abstract class CellEditor implements ICellEditor, IDisposable {
   }
 
   cancel() {
+    if (this._disposed) {
+      return;
+    }
+
     this.dispose();
     if (this._onCancel) {
       this._onCancel();
