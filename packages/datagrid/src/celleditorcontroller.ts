@@ -41,12 +41,14 @@ class CellEditorController implements ICellEditorController {
     this.cancel();
 
     if (options && options.editor) {
+      this._editor = options.editor;
       options.editor.edit(cell, options);
       return true;
     }
 
     const editor = this._getEditor(cell);
     if (editor) {
+      this._editor = editor;
       editor.edit(cell, options);
       return true;
     }

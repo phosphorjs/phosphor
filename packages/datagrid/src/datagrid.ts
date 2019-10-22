@@ -1891,6 +1891,10 @@ class DataGrid extends Widget {
    * A message handler invoked on a `'resize'` message.
    */
   protected onResize(msg: Widget.ResizeMessage): void {
+    if (this._editorController) {
+      this._editorController.cancel();
+    }
+
     this._syncScrollState();
   }
 
