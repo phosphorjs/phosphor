@@ -23,9 +23,45 @@ import { DataModel } from './datamodel';
 
 export
 interface ICellEditorController {
-  setEditor(identifier: CellDataType | DataModel.Metadata, editor: ICellEditor): void;
+  setEditor(identifier: CellDataType | DataModel.Metadata, editor: ICellEditor | Resolver): void;
   edit(cell: CellEditor.CellConfig, options?: ICellEditOptions): boolean;
   cancel(): void;
+}
+
+/**
+ * A type alias for a cell editor config function.
+ *
+ * This type is used to compute a value from a cell config object.
+ */
+export
+type ConfigFunc<T> = (config: CellEditor.CellConfig) => T;
+
+/**
+ * A type alias for a cell editor config option.
+ *
+ * A config option can be a static value or a config function.
+ */
+export
+type ConfigOption<T> = T | ConfigFunc<T>;
+
+/**
+ * A type alias for a cell editor resolver function.
+ */
+export
+type Resolver = ConfigFunc<ICellEditor | undefined>;
+
+/**
+ * Resolve a config option for a cell editor.
+ *
+ * @param option - The config option to resolve.
+ *
+ * @param config - The cell config object.
+ *
+ * @returns The resolved value for the option.
+ */
+export
+function resolveOption<T>(option: ConfigOption<T>, config: CellEditor.CellConfig): T {
+  return typeof option === 'function' ? option(config) : option;
 }
 
 export
@@ -125,11 +161,14 @@ class CellEditorController implements ICellEditorController {
     return true;
   }
 
-  private _getMetadataBasedEditor(metadata: DataModel.Metadata): ICellEditor | undefined {
-    for (let key of Array.from(this._metadataBasedOverrides.keys())) {
-      const [identifier, editor] = this._metadataBasedOverrides.get(key)!; 
-      if (this._metadataMatchesIdentifier(metadata, identifier)) {
-        return editor;
+  private _getMetadataBasedEditor(cell: CellEditor.CellConfig): ICellEditor | undefined {
+    const metadata = cell.grid.dataModel!.metadata('body', cell.row, cell.column);
+    if (metadata) {
+      for (let key of Array.from(this._metadataBasedOverrides.keys())) {
+        let [identifier, editor] = this._metadataBasedOverrides.get(key)!; 
+        if (this._metadataMatchesIdentifier(metadata, identifier)) {
+          return resolveOption(editor, cell);
+        }
       }
     }
 
@@ -140,14 +179,12 @@ class CellEditorController implements ICellEditorController {
     const dtKey = this._getDataTypeKey(cell);
 
     if (this._typeBasedOverrides.has(dtKey)) {
-      return this._typeBasedOverrides.get(dtKey);
-    } else {
-      const metadata = cell.grid.dataModel!.metadata('body', cell.row, cell.column);
-      if (metadata) {
-        const editor = this._getMetadataBasedEditor(metadata);
-        if (editor) {
-          return editor;
-        }
+      let editor = this._typeBasedOverrides.get(dtKey);
+      return resolveOption(editor!, cell);
+    } else if (this._metadataBasedOverrides.size > 0) {
+      const editor = this._getMetadataBasedEditor(cell);
+      if (editor) {
+        return editor;
       }
     }
 
@@ -182,7 +219,7 @@ class CellEditorController implements ICellEditorController {
     return undefined;
   }
 
-  setEditor(identifier: CellDataType | DataModel.Metadata, editor: ICellEditor) {
+  setEditor(identifier: CellDataType | DataModel.Metadata, editor: ICellEditor | Resolver) {
     if (typeof identifier === 'string') {
       this._typeBasedOverrides.set(identifier, editor);
     } else {
@@ -192,6 +229,6 @@ class CellEditorController implements ICellEditorController {
   }
 
   private _editor: ICellEditor | null = null;
-  private _typeBasedOverrides: Map<string, ICellEditor> = new Map();
-  private _metadataBasedOverrides: Map<string, [DataModel.Metadata, ICellEditor]> = new Map();
+  private _typeBasedOverrides: Map<string, ICellEditor | Resolver> = new Map();
+  private _metadataBasedOverrides: Map<string, [DataModel.Metadata, ICellEditor | Resolver]> = new Map();
 }

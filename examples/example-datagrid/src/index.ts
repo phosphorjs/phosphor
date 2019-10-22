@@ -9,7 +9,7 @@ import 'es6-promise/auto';  // polyfill Promise on IE
 
 import {
   BasicKeyHandler, BasicMouseHandler, BasicSelectionModel, CellRenderer,
-  DataGrid, DataModel, JSONModel, TextRenderer, MutableDataModel, CellEditor
+  DataGrid, DataModel, JSONModel, TextRenderer, MutableDataModel, CellEditor, ICellEditor
 } from '@phosphor/datagrid';
 
 import {
@@ -445,9 +445,10 @@ function main(): void {
     selectionMode: 'cell'
   });
   grid6.editingEnabled = true;
-  const jsonCellEditor = new JSONCellEditor();
   const columnIdentifier = {'name': 'Corp. Data'};
-  grid6.editorController!.setEditor(columnIdentifier, jsonCellEditor);
+  grid6.editorController!.setEditor(columnIdentifier, (config: CellEditor.CellConfig): ICellEditor => {
+    return new JSONCellEditor();
+  });
 
   let grid7 = new DataGrid();
   grid7.dataModel = model6;
