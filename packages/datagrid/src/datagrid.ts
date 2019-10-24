@@ -5497,9 +5497,9 @@ namespace DataGrid {
     headerSelectionBorderColor: 'rgba(0, 107, 247, 1.0)',
     scrollShadow: {
       size: 10,
-      color1: 'rgba(0, 0, 0, 0.20',
-      color2: 'rgba(0, 0, 0, 0.05',
-      color3: 'rgba(0, 0, 0, 0.00' }
+      color1: 'rgba(0, 0, 0, 0.20)',
+      color2: 'rgba(0, 0, 0, 0.05)',
+      color3: 'rgba(0, 0, 0, 0.00)' }
   };
 
   /**
