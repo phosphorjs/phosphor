@@ -735,11 +735,13 @@ class BooleanCellEditor extends CellEditor {
 
   _bindEvents() {
     this._input.addEventListener('keydown', this);
+    this._input.addEventListener('mousedown', this);
     this._input.addEventListener('blur', this);
   }
 
   _unbindEvents() {
     this._input.removeEventListener('keydown', this);
+    this._input.removeEventListener('mousedown', this);
     this._input.removeEventListener('blur', this);
   }
 
@@ -747,6 +749,12 @@ class BooleanCellEditor extends CellEditor {
     switch (event.type) {
       case 'keydown':
         this._onKeyDown(event as KeyboardEvent);
+        break;
+      case 'mousedown':
+        // fix focus loss problem in Safari and Firefox
+        this._input.focus();
+        event.stopPropagation();
+        event.preventDefault();
         break;
       case 'blur':
         this._onBlur(event as FocusEvent);
