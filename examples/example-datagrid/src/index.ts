@@ -194,6 +194,7 @@ class JSONCellEditor extends CellEditor {
     const textarea = document.createElement('textarea');
     textarea.style.pointerEvents = 'auto';
     textarea.style.position = 'absolute';
+    textarea.style.outline = 'none';
     const buttonRect = this._button.getBoundingClientRect();
     const top = buttonRect.bottom + 2;
     const left = buttonRect.left;
@@ -221,6 +222,20 @@ class JSONCellEditor extends CellEditor {
       }
     });
 
+    textarea.addEventListener('blur', (event: FocusEvent) => {
+      if (this.isDisposed) {
+        return;
+      }
+
+      if (!this.commit()) {
+        this.validInput = false;
+      }
+    });
+
+    textarea.addEventListener('input', (event: FocusEvent) => {
+      this.validInput = true;
+    });
+
     this._textarea = textarea;
 
     document.body.appendChild(this._textarea);
@@ -236,9 +251,13 @@ class JSONCellEditor extends CellEditor {
   }
 
   dispose(): void {
-    this._textarea.remove();
+    if (this.isDisposed) {
+      return;
+    }
 
     super.dispose();
+
+    document.body.removeChild(this._textarea);
   }
   
   private _button: HTMLButtonElement;
