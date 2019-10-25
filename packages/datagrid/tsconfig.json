@@ -12,7 +12,7 @@
     "outDir": "lib",
     "lib": [
       "ES5",
-      "es2015",
+      "ES2015.Collection",
       "DOM"
     ],
     "types": [],

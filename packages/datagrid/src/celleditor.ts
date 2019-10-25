@@ -77,14 +77,14 @@ class TextInputValidator implements ICellInputValidator {
       };
     }
 
-    if (!Number.isNaN(this.minLength) && value.length < this.minLength) {
+    if (!isNaN(this.minLength) && value.length < this.minLength) {
       return {
         valid: false,
         message: `Text length must be greater than ${this.minLength}`
       };
     }
 
-    if (!Number.isNaN(this.maxLength) && value.length > this.maxLength) {
+    if (!isNaN(this.maxLength) && value.length > this.maxLength) {
       return {
         valid: false,
         message: `Text length must be less than ${this.maxLength}`
@@ -109,20 +109,20 @@ class TextInputValidator implements ICellInputValidator {
 export
 class IntegerInputValidator implements ICellInputValidator {
   validate(cell: CellEditor.CellConfig, value: number): ICellInputValidatorResponse {
-    if (Number.isNaN(value) || (value % 1 !== 0)) {
+    if (isNaN(value) || (value % 1 !== 0)) {
       return {
         valid: false,
         message: 'Input must be valid integer'
       };
     }
-    if (!Number.isNaN(this.min) && value < this.min) {
+    if (!isNaN(this.min) && value < this.min) {
       return {
         valid: false,
         message: `Input must be greater than ${this.min}`
       };
     }
 
-    if (!Number.isNaN(this.max) && value > this.max) {
+    if (!isNaN(this.max) && value > this.max) {
       return {
         valid: false,
         message: `Input must be less than ${this.max}`
@@ -139,20 +139,20 @@ class IntegerInputValidator implements ICellInputValidator {
 export
 class NumberInputValidator implements ICellInputValidator {
   validate(cell: CellEditor.CellConfig, value: number): ICellInputValidatorResponse {
-    if (Number.isNaN(value)) {
+    if (isNaN(value)) {
       return {
         valid: false,
         message: 'Input must be valid number'
       };
     }
-    if (!Number.isNaN(this.min) && value < this.min) {
+    if (!isNaN(this.min) && value < this.min) {
       return {
         valid: false,
         message: `Input must be greater than ${this.min}`
       };
     }
 
-    if (!Number.isNaN(this.max) && value > this.max) {
+    if (!isNaN(this.max) && value > this.max) {
       return {
         valid: false,
         message: `Input must be less than ${this.max}`
@@ -525,8 +525,8 @@ class NumberCellEditor extends TextCellEditor {
       return null;
     }
 
-    let floatValue = Number.parseFloat(value);
-    if (Number.isNaN(floatValue)) {
+    let floatValue = parseFloat(value);
+    if (isNaN(floatValue)) {
       this.validInput = false;
       this._input.setCustomValidity('Input must be valid number');
       this._form.reportValidity();
@@ -583,8 +583,8 @@ class IntegerCellEditor extends NumberCellEditor {
       return null;
     }
 
-    let intValue = Number.parseInt(value);
-    if (Number.isNaN(intValue)) {
+    let intValue = parseInt(value);
+    if (isNaN(intValue)) {
       this.validInput = false;
       this._input.setCustomValidity('Input must be valid number');
       this._form.reportValidity();

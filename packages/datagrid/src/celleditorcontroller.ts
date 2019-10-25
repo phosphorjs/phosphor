@@ -162,17 +162,20 @@ class CellEditorController implements ICellEditorController {
   }
 
   private _getMetadataBasedEditor(cell: CellEditor.CellConfig): ICellEditor | undefined {
+    let editorMatched: ICellEditor | undefined;
     const metadata = cell.grid.dataModel!.metadata('body', cell.row, cell.column);
     if (metadata) {
-      for (let key of Array.from(this._metadataBasedOverrides.keys())) {
-        let [identifier, editor] = this._metadataBasedOverrides.get(key)!; 
-        if (this._metadataMatchesIdentifier(metadata, identifier)) {
-          return resolveOption(editor, cell);
+      this._metadataBasedOverrides.forEach((value) => {
+        if (!editorMatched) {
+          let [identifier, editor] = value;
+          if (this._metadataMatchesIdentifier(metadata, identifier)) {
+            editorMatched = resolveOption(editor, cell);
+          }
         }
-      }
+      });
     }
 
-    return undefined;
+    return editorMatched;
   }
 
   private _getEditor(cell: CellEditor.CellConfig): ICellEditor | undefined {
