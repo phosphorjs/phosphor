@@ -350,7 +350,7 @@ class GridLayout extends Layout {
     let i = ArrayExt.findFirstIndex(this._items, it => it.widget === widget);
 
     // Bail if the widget is not in the layout.
-    if (i !== -1) {
+    if (i === -1) {
       return;
     }
 
