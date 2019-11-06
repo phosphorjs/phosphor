@@ -1,0 +1,37 @@
+{
+  "name": "@phosphor/vdom",
+  "version": "0.0.1",
+  "description": "PhosphorJS - VDOM",
+  "homepage": "https://github.com/phosphorjs/phosphor",
+  "bugs": {
+    "url": "https://github.com/phosphorjs/phosphor/issues"
+  },
+  "license": "BSD-3-Clause",
+  "author": "S. Chris Colbert <sccolbert@gmail.com>",
+  "contributors": [
+    "S. Chris Colbert <sccolbert@gmail.com>"
+  ],
+  "files": [
+    "lib/*.d.ts",
+    "lib/*.js"
+  ],
+  "main": "lib/index.js",
+  "types": "lib/index.d.ts",
+  "directories": {
+    "lib": "lib/"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/phosphorjs/phosphor.git"
+  },
+  "scripts": {
+    "build": "tsc --build",
+    "clean": "rimraf lib",
+    "watch": "tsc --build --watch"
+  },
+  "dependencies": {},
+  "devDependencies": {
+    "rimraf": "^2.5.2",
+    "typescript": "~3.6.0"
+  }
+}

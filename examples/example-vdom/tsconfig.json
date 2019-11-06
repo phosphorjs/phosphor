@@ -1,0 +1,18 @@
+{
+    "compilerOptions": {
+      "declaration": false,
+      "noImplicitAny": true,
+      "noEmitOnError": true,
+      "noUnusedLocals": true,
+      "strictNullChecks": true,
+      "module": "commonjs",
+      "moduleResolution": "node",
+      "target": "es5",
+      "outDir": "./build",
+      "jsx": "react",
+      "jsxFactory": "VDOM.createElement",
+      "lib": ["es2015", "dom"],
+      "types": []
+    },
+    "include": ["src/*"]
+  }
