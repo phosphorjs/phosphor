@@ -19,6 +19,91 @@ import {
 import '../style/index.css';
 
 
+class H5ServDataModel extends DataModel {
+
+  constructor(url: string) {
+    super();
+    this._url = url;
+    fetch(url).then(function(response) {
+      return response.json();
+    }).then((metadata) => {
+      [this._rowCount, this._columnCount] = metadata['shape']['dims'];
+      this.emitChanged({ type: 'rows-inserted', region: 'body',
+                        index: 0, span: this._rowCount });
+      this.emitChanged({ type: 'columns-inserted', region: 'body',
+                        index: 0, span: this._columnCount });
+    });
+  }
+
+  rowCount(region: DataModel.RowRegion): number {
+    return region === 'body' ? this._rowCount : 1;
+  }
+
+  columnCount(region: DataModel.ColumnRegion): number {
+    return region === 'body' ? this._columnCount : 1;
+  }
+
+  data(region: DataModel.CellRegion, row: number, column: number): any {
+    if (region === 'row-header') {
+      return `${row}`;
+    }
+    if (region === 'column-header') {
+      return `${column}`;
+    }
+    if (region === 'corner-header') {
+      return null;
+    }
+    const relRow = row % this._blockSize;
+    const relColumn = column % this._blockSize;
+    const rowBlock = (row - relRow) / this._blockSize;
+    const columnBlock = (column - relColumn) / this._blockSize;
+    if (this._blocks[rowBlock]) {
+      if (this._blocks[rowBlock][columnBlock]) {
+        // This data has already been loaded.
+        return this._blocks[rowBlock][columnBlock][relRow][relColumn]
+      }
+    }
+    // This data has not yet been loaded. Fetch the block that it is in.
+    // When the data is received, this will be updated by emitChanged.
+    this._fetchBlock(rowBlock, columnBlock);
+    return null;
+  }
+
+  private _fetchBlock = (rowBlock: number, columnBlock: number) => {
+    const rowStart : number = rowBlock * this._blockSize;
+    const rowStop : number = Math.min(rowStart + this._blockSize,
+                                      this._rowCount);
+    const columnStart : number = columnBlock * this._blockSize;
+    const columnStop: number = Math.min(columnStart + this._blockSize,
+                                        this._columnCount);
+    const query_params : string = `select=[${rowStart}:${rowStop},${columnStart}:${columnStop}]`
+    fetch(this._url + '/value?' + query_params).then(function(response) {
+      return response.json();
+    }).then((data) => {
+      if (!this._blocks[rowBlock]) {
+        this._blocks[rowBlock] = Object();
+      }
+      this._blocks[rowBlock][columnBlock] = data['value'];
+      this.emitChanged({
+        type: 'cells-changed',
+        region: 'body',
+        rowIndex: rowBlock * this._blockSize,
+        columnIndex: columnBlock * this._blockSize,
+        rowSpan: this._blockSize,
+        columnSpan: this._blockSize
+      });
+    });
+  };
+
+  private _url: string = '';
+  private _rowCount: number = 0;
+  private _columnCount: number = 0;
+  private _blockSize: number = 100;
+  private _blocks: any = Object();
+}
+
+
+
 class LargeDataModel extends DataModel {
 
   rowCount(region: DataModel.RowRegion): number {
@@ -202,6 +287,7 @@ function main(): void {
   let model3 = new RandomDataModel(15, 10);
   let model4 = new RandomDataModel(80, 80);
   let model5 = new JSONModel(Data.cars);
+  let model6 = new H5ServDataModel('http://example.public.localhost:5000/datasets/fd57f262-8b5b-11e7-a672-9cf387bf83a8');
 
   let blueStripeStyle: DataGrid.Style = {
     ...DataGrid.defaultStyle,
@@ -287,11 +373,15 @@ function main(): void {
     selectionMode: 'row'
   });
 
+  let grid6 = new DataGrid()
+  grid6.model = model6
+
   let wrapper1 = createWrapper(grid1, 'Trillion Rows/Cols');
   let wrapper2 = createWrapper(grid2, 'Streaming Rows');
   let wrapper3 = createWrapper(grid3, 'Random Ticks 1');
   let wrapper4 = createWrapper(grid4, 'Random Ticks 2');
   let wrapper5 = createWrapper(grid5, 'JSON Data');
+  let wrapper6 = createWrapper(grid6, 'HDF5 Data');
 
   let dock = new DockPanel();
   dock.id = 'dock';
@@ -301,6 +391,7 @@ function main(): void {
   dock.addWidget(wrapper3, { mode: 'split-bottom', ref: wrapper1 });
   dock.addWidget(wrapper4, { mode: 'split-bottom', ref: wrapper2 });
   dock.addWidget(wrapper5, { mode: 'split-bottom', ref: wrapper2 });
+  dock.addWidget(wrapper6, { mode: 'split-bottom', ref: wrapper2 });
 
   window.onresize = () => { dock.update(); };
 
