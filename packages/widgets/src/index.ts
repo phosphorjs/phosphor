@@ -10,6 +10,8 @@ export * from './boxlayout';
 export * from './boxpanel';
 export * from './commandpalette';
 export * from './contextmenu';
+export * from './dashboardlayout';
+export * from './dashboardpanel';
 export * from './docklayout';
 export * from './dockpanel';
 export * from './focustracker';
