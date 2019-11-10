@@ -10,8 +10,14 @@ import {
 } from 'chai';
 
 import {
-  JSONArray, JSONExt, JSONObject, JSONPrimitive
+  JSONArray, JSONExt, JSONObject, JSONPrimitive,
+  PartialJSONObject
 } from '@phosphor/coreutils';
+
+
+interface IFoo extends PartialJSONObject {
+  bar?: string;
+}
 
 
 describe('@phosphor/coreutils', () => {
@@ -74,6 +80,24 @@ describe('@phosphor/coreutils', () => {
         expect(JSONExt.deepEqual({ b: 1 }, { a: 1 })).to.equal(false);
       });
 
+      it('should handle optional keys on partials', () => {
+        let a: IFoo = { };
+        let b: IFoo = { bar: 'a' };
+        let c: IFoo = { bar: undefined };
+        expect(JSONExt.deepEqual(a, b)).to.equal(false);
+        expect(JSONExt.deepEqual(a, c)).to.equal(true);
+        expect(JSONExt.deepEqual(c, a)).to.equal(true);
+      });
+
+      it('should equate an object to its deepCopy', () => {
+        let a: IFoo = { };
+        let b: IFoo = { bar: 'a' };
+        let c: IFoo = { bar: undefined };
+        expect(JSONExt.deepEqual(a, JSONExt.deepCopy(a))).to.equal(true);
+        expect(JSONExt.deepEqual(b, JSONExt.deepCopy(b))).to.equal(true);
+        expect(JSONExt.deepEqual(c, JSONExt.deepCopy(c))).to.equal(true);
+      });
+
     });
 
     describe('deepCopy()', () => {
@@ -108,6 +132,18 @@ describe('@phosphor/coreutils', () => {
         expect(v7['b']).to.not.equal(r7['b']);
         expect((v7['b'] as JSONArray)[1]).to.not.equal((r7['b'] as JSONArray)[1]);
         expect(v7['c']).to.not.equal(r7['c']);
+      });
+
+      it('should handle optional keys on partials', () => {
+        let v1: IFoo = { };
+        let v2: IFoo = { bar: 'a' };
+        let v3 = { a: false, b: { bar: undefined }};
+        let r1 = JSONExt.deepCopy(v1);
+        let r2 = JSONExt.deepCopy(v2);
+        let r3 = JSONExt.deepCopy(v3);
+        expect(Object.keys(r1).length).to.equal(0);
+        expect(v2.bar).to.equal(r2.bar);
+        expect(Object.keys(r3.b).length).to.equal(0);
       });
 
     });
