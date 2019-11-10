@@ -27,49 +27,49 @@ export
 type ElementAttrNames = (
   'abbr' |
   'accept' |
-  'accept-charset' |
-  'accesskey' |
+  'acceptCharset' |
+  'accessKey' |
   'action' |
-  'allowfullscreen' |
+  'allowFullScreen' |
   'alt' |
-  'autocomplete' |
-  'autofocus' |
-  'autoplay' |
-  'autosave' |
+  'autoComplete' |
+  'autoFocus' |
+  'autoPlay' |
+  'autoSave' |
   'checked' |
   'cite' |
   'cols' |
-  'colspan' |
-  'contenteditable' |
+  'colSpan' |
+  'contentEditable' |
   'controls' |
   'coords' |
-  'crossorigin' |
+  'crossOrigin' |
   'data' |
-  'datetime' |
+  'dateTime' |
   'default' |
   'dir' |
-  'dirname' |
+  'dirName' |
   'disabled' |
   'download' |
   'draggable' |
-  'dropzone' |
-  'enctype' |
+  'dropZone' |
+  'encType' |
   'form' |
-  'formaction' |
-  'formenctype' |
-  'formmethod' |
-  'formnovalidate' |
-  'formtarget' |
+  'formAction' |
+  'formEncType' |
+  'formMethod' |
+  'formNoValidate' |
+  'formTarget' |
   'headers' |
   'height' |
   'hidden' |
   'high' |
   'href' |
-  'hreflang' |
+  'hrefLang' |
   'id' |
-  'inputmode' |
+  'inputMode' |
   'integrity' |
-  'ismap' |
+  'isMap' |
   'kind' |
   'label' |
   'lang' |
@@ -77,27 +77,27 @@ type ElementAttrNames = (
   'loop' |
   'low' |
   'max' |
-  'maxlength' |
+  'maxLength' |
   'media' |
-  'mediagroup' |
+  'mediaGroup' |
   'method' |
   'min' |
-  'minlength' |
+  'minLength' |
   'multiple' |
   'muted' |
   'name' |
-  'novalidate' |
+  'noValidate' |
   'optimum' |
   'pattern' |
   'placeholder' |
   'poster' |
   'preload' |
-  'readonly' |
+  'readOnly' |
   'rel' |
   'required' |
   'reversed' |
   'rows' |
-  'rowspan' |
+  'rowSpan' |
   'sandbox' |
   'scope' |
   'selected' |
@@ -105,19 +105,19 @@ type ElementAttrNames = (
   'size' |
   'sizes' |
   'span' |
-  'spellcheck' |
+  'spellCheck' |
   'src' |
-  'srcdoc' |
-  'srclang' |
-  'srcset' |
+  'srcDoc' |
+  'srcLang' |
+  'srcSet' |
   'start' |
   'step' |
-  'tabindex' |
+  'tabIndex' |
   'target' |
   'title' |
   'type' |
-  'typemustmatch' |
-  'usemap' |
+  'typeMustMatch' |
+  'useMap' |
   'value' |
   'width' |
   'wrap'
@@ -484,75 +484,75 @@ type CSSPropertyNames = (
  */
 export
 type ElementEventMap = {
-  onabort: UIEvent;
-  onauxclick: MouseEvent;
-  onblur: FocusEvent;
-  oncanplay: Event;
-  oncanplaythrough: Event;
-  onchange: Event;
-  onclick: MouseEvent;
-  oncontextmenu: PointerEvent;
-  oncopy: ClipboardEvent;
-  oncuechange: Event;
-  oncut: ClipboardEvent;
-  ondblclick: MouseEvent;
-  ondrag: DragEvent;
-  ondragend: DragEvent;
-  ondragenter: DragEvent;
-  ondragexit: DragEvent;
-  ondragleave: DragEvent;
-  ondragover: DragEvent;
-  ondragstart: DragEvent;
-  ondrop: DragEvent;
-  ondurationchange: Event;
-  onemptied: Event;
-  onended: MediaStreamErrorEvent;
-  onerror: ErrorEvent;
-  onfocus: FocusEvent;
-  oninput: Event;
-  oninvalid: Event;
-  onkeydown: KeyboardEvent;
-  onkeypress: KeyboardEvent;
-  onkeyup: KeyboardEvent;
-  onload: Event;
-  onloadeddata: Event;
-  onloadedmetadata: Event;
-  onloadend: Event;
-  onloadstart: Event;
-  onmousedown: MouseEvent;
-  onmouseenter: MouseEvent;
-  onmouseleave: MouseEvent;
-  onmousemove: MouseEvent;
-  onmouseout: MouseEvent;
-  onmouseover: MouseEvent;
-  onmouseup: MouseEvent;
-  onmousewheel: WheelEvent;
-  onpaste: ClipboardEvent;
-  onpause: Event;
-  onplay: Event;
-  onplaying: Event;
-  onpointercancel: PointerEvent;
-  onpointerdown: PointerEvent;
-  onpointerenter: PointerEvent;
-  onpointerleave: PointerEvent;
-  onpointermove: PointerEvent;
-  onpointerout: PointerEvent;
-  onpointerover: PointerEvent;
-  onpointerup: PointerEvent;
-  onprogress: ProgressEvent;
-  onratechange: Event;
-  onreset: Event;
-  onscroll: UIEvent;
-  onseeked: Event;
-  onseeking: Event;
-  onselect: UIEvent;
-  onselectstart: Event;
-  onstalled: Event;
-  onsubmit: Event;
-  onsuspend: Event;
-  ontimeupdate: Event;
-  onvolumechange: Event;
-  onwaiting: Event;
+  onAbort: UIEvent;
+  onAuxclick: MouseEvent;
+  onBlur: FocusEvent;
+  onCanPlay: Event;
+  onCanPlayThrough: Event;
+  onChange: Event;
+  onClick: MouseEvent;
+  onContextMenu: PointerEvent;
+  onCopy: ClipboardEvent;
+  onCueChange: Event;
+  onCut: ClipboardEvent;
+  onDblClick: MouseEvent;
+  onDrag: DragEvent;
+  onDragEnd: DragEvent;
+  onDragEnter: DragEvent;
+  onDragExit: DragEvent;
+  onDragLeave: DragEvent;
+  onDragOver: DragEvent;
+  onDragStart: DragEvent;
+  onDrop: DragEvent;
+  onDurationChange: Event;
+  onEmptied: Event;
+  onEnded: MediaStreamErrorEvent;
+  onError: ErrorEvent;
+  onFocus: FocusEvent;
+  onInput: Event;
+  onInvalid: Event;
+  onKeyDown: KeyboardEvent;
+  onKeyPress: KeyboardEvent;
+  onKeyUp: KeyboardEvent;
+  onLoad: Event;
+  onLoadedData: Event;
+  onLoadedMetadata: Event;
+  onLoadEnd: Event;
+  onLoadStart: Event;
+  onMouseDown: MouseEvent;
+  onMouseEnter: MouseEvent;
+  onMouseLeave: MouseEvent;
+  onMouseMove: MouseEvent;
+  onMouseOut: MouseEvent;
+  onMouseOver: MouseEvent;
+  onMouseUp: MouseEvent;
+  onMouseWheel: WheelEvent;
+  onPaste: ClipboardEvent;
+  onPause: Event;
+  onPlay: Event;
+  onPlaying: Event;
+  onPointerCancel: PointerEvent;
+  onPointerDown: PointerEvent;
+  onPointerEnter: PointerEvent;
+  onPointerLeave: PointerEvent;
+  onPointerMove: PointerEvent;
+  onPointerOut: PointerEvent;
+  onPointerOver: PointerEvent;
+  onPointerUp: PointerEvent;
+  onProgress: ProgressEvent;
+  onRateChange: Event;
+  onReset: Event;
+  onScroll: UIEvent;
+  onSeeked: Event;
+  onSeeking: Event;
+  onSelect: UIEvent;
+  onSelectStart: Event;
+  onStalled: Event;
+  onSubmit: Event;
+  onSuspend: Event;
+  onTimeUpdate: Event;
+  onVolumeChange: Event;
+  onWaiting: Event;
 };
 
 
