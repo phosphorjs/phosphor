@@ -31,6 +31,7 @@ class TextRenderer extends CellRenderer {
     this.backgroundColor = options.backgroundColor || '';
     this.verticalAlignment = options.verticalAlignment || 'center';
     this.horizontalAlignment = options.horizontalAlignment || 'left';
+    this.overflow = options.overflow || 'clip';
     this.format = options.format || TextRenderer.formatGeneric();
   }
 
@@ -58,6 +59,11 @@ class TextRenderer extends CellRenderer {
    * The horizontal alignment for the cell text.
    */
   readonly horizontalAlignment: CellRenderer.ConfigOption<TextRenderer.HorizontalAlignment>;
+
+  /**
+   * The overflow behavior for the cell text.
+   */
+  readonly overflow: CellRenderer.ConfigOption<TextRenderer.Overflow>;
 
   /**
    * The format function for the cell value.
@@ -148,6 +154,7 @@ class TextRenderer extends CellRenderer {
     // Set up the text position variables.
     let textX: number;
     let textY: number;
+    let boxWidth: number;
 
     // Compute the Y position for the text.
     switch (vAlign) {
@@ -167,13 +174,16 @@ class TextRenderer extends CellRenderer {
     // Compute the X position for the text.
     switch (hAlign) {
     case 'left':
-      textX = config.x + 2;
+      textX = config.x + 8;
+      boxWidth = config.width - 14;
       break;
     case 'center':
       textX = config.x + config.width / 2;
+      boxWidth = config.width;
       break;
     case 'right':
-      textX = config.x + config.width - 3;
+      textX = config.x + config.width - 8;
+      boxWidth = config.width - 14;
       break;
     default:
       throw 'unreachable';
@@ -184,6 +194,25 @@ class TextRenderer extends CellRenderer {
       gc.beginPath();
       gc.rect(config.x, config.y, config.width, config.height - 1);
       gc.clip();
+    }
+
+    let overflow = CellRenderer.resolveOption(this.overflow, config);
+
+    if (overflow === 'ellipsis') {
+      let elide = '\u2026';
+      let textWidth = gc.measureText(text).width;
+
+      // Compute elided text
+      while ((textWidth > boxWidth) && (text.length > 1)) {
+        if (text.length > 4 && textWidth >= 2 * boxWidth) {
+          // If text width is substantially bigger, take half the string
+          text = text.substr(0, (text.length / 2) + 1) + elide;
+        } else {
+          // Otherwise incrementally remove the last character
+          text = text.substr(0, text.length - 2) + elide;
+        }
+        textWidth = gc.measureText(text).width;
+      }
     }
 
     // Set the gc state.
@@ -214,6 +243,12 @@ namespace TextRenderer {
    */
   export
   type HorizontalAlignment = 'left' | 'center' | 'right';
+
+  /**
+   * A type alias for the supported overflow modes.
+   */
+  export
+  type Overflow = 'clip' | 'ellipsis';
 
   /**
    * An options object for initializing a text renderer.
@@ -254,6 +289,13 @@ namespace TextRenderer {
      * The default is `'left'`.
      */
     horizontalAlignment?: CellRenderer.ConfigOption<HorizontalAlignment>;
+
+    /**
+     * The overflow behavior for text.
+     *
+     * The default is `'clip'`.
+     */
+    overflow?: CellRenderer.ConfigOption<Overflow>;
 
     /**
      * The format function for the renderer.
