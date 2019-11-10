@@ -346,6 +346,7 @@ class DockLayout extends Layout {
     // Parse the options.
     let ref = options.ref || null;
     let mode = options.mode || 'tab-after';
+    let proportion = options.proportion || 0.5;
 
     // Find the tab node which holds the reference widget.
     let refNode: Private.TabLayoutNode | null = null;
@@ -370,16 +371,16 @@ class DockLayout extends Layout {
       this._insertTab(widget, ref, refNode, false);
       break;
     case 'split-top':
-      this._insertSplit(widget, ref, refNode, 'vertical', false);
+      this._insertSplit(widget, ref, refNode, 'vertical', false, proportion);
       break;
     case 'split-left':
-      this._insertSplit(widget, ref, refNode, 'horizontal', false);
+      this._insertSplit(widget, ref, refNode, 'horizontal', false, proportion);
       break;
     case 'split-right':
-      this._insertSplit(widget, ref, refNode, 'horizontal', true);
+      this._insertSplit(widget, ref, refNode, 'horizontal', true, proportion);
       break;
     case 'split-bottom':
-      this._insertSplit(widget, ref, refNode, 'vertical', true);
+      this._insertSplit(widget, ref, refNode, 'vertical', true, proportion);
       break;
     }
 
@@ -797,7 +798,7 @@ class DockLayout extends Layout {
    * #### Notes
    * This does not attach the widget to the parent widget.
    */
-  private _insertSplit(widget: Widget, ref: Widget | null, refNode: Private.TabLayoutNode | null, orientation: Private.Orientation, after: boolean): void {
+  private _insertSplit(widget: Widget, ref: Widget | null, refNode: Private.TabLayoutNode | null, orientation: Private.Orientation, after: boolean, proportion: number): void {
     // Do nothing if there is no effective split.
     if (widget === ref && refNode && refNode.tabBar.titles.length === 1) {
       return;
@@ -857,12 +858,15 @@ class DockLayout extends Layout {
       splitNode.normalizeSizes();
 
       // Consume half the space for the insert location.
-      let s = splitNode.sizers[i].sizeHint /= 2;
+      if (proportion >= 1 || proportion <= 0) {
+        proportion = 0.5;
+      }
+      splitNode.sizers[i].sizeHint = (1 - proportion);
 
       // Insert the tab node sized to the other half.
       let j = i + (after ? 1 : 0);
       ArrayExt.insert(splitNode.children, j, tabNode);
-      ArrayExt.insert(splitNode.sizers, j, Private.createSizer(s));
+      ArrayExt.insert(splitNode.sizers, j, Private.createSizer(proportion));
       ArrayExt.insert(splitNode.handles, j, this._createHandle());
       tabNode.parent = splitNode;
 
@@ -1192,6 +1196,13 @@ namespace DockLayout {
      * The default is `null`.
      */
     ref?: Widget | null;
+
+    /**
+     * The proportion the widget is to take up in the location
+     * 
+     * The default is `0.5`.
+     */
+    proportion?: number;
   }
 
   /**
