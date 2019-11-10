@@ -263,6 +263,14 @@ class TabPanel extends Widget {
     }
     this.stackedPanel.insertWidget(index, widget);
     this.tabBar.insertTab(index, widget.title);
+
+    widget.node.setAttribute('role', 'tabpanel');
+
+    let renderer = this.tabBar.renderer
+    if (renderer instanceof TabBar.Renderer) {
+      let tabId = renderer.createTabKey({title: widget.title, current: false, zIndex: 0});
+      widget.node.setAttribute('aria-labelledby', tabId);
+    }
   }
 
   /**
@@ -322,6 +330,8 @@ class TabPanel extends Widget {
    * Handle the `widgetRemoved` signal from the stacked panel.
    */
   private _onWidgetRemoved(sender: StackedPanel, widget: Widget): void {
+    widget.node.removeAttribute('role');
+    widget.node.removeAttribute('aria-labelledby');
     this.tabBar.removeTab(widget.title);
   }
 
