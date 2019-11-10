@@ -81,6 +81,72 @@ class CommandRegistry {
     return this._keyBindings;
   }
 
+  get contextEvent(): MouseEvent | null {
+    return this._contextEvent;
+  }
+
+  set contextEvent(event: MouseEvent | null) {
+    if (event === null) {
+      this._contextEvent = null;
+      this._contextEventCurrentTarget = null;
+    }
+    else {
+      this._contextEvent = event;
+      // event.currentTarget is nulled when the next event occurs, so record for later
+      this._contextEventCurrentTarget = event.currentTarget as (Element | null);
+    }
+  }
+
+  contextEventTarget(selector: string): Element | null {
+    // Validate the selector
+    if (selector.indexOf(',') !== -1) {
+      throw new Error(`Selector cannot contain commas: ${selector}`);
+    }
+    if (!Selector.isValid(selector)) {
+      throw new Error(`Invalid selector: ${selector}`);
+    }
+
+    let event = this._contextEvent;
+    let currentTarget = this._contextEventCurrentTarget;
+    if (!event || !currentTarget) {
+      return null;
+    }
+
+    // Look up the target of the event.
+    let target = event.target as (Element | null);
+
+    // Bail if there is no target.
+    if (!target) {
+      return null;
+    }
+
+    // There are some third party libraries that cause the `target` to
+    // be detached from the DOM before Phosphor can process the event.
+    if (!currentTarget.contains(target)) {
+      target = document.elementFromPoint(event.clientX, event.clientY);
+      if (!target || !currentTarget.contains(target)) {
+        return null;
+      }
+    }
+
+    while (target !== null) {
+      // Return the first Element that matches the selector
+      if (Selector.matches(target, selector)) {
+        return target;
+      }
+
+      // Stop searching at the limits of the DOM range.
+      if (target === currentTarget) {
+        return null;
+      }
+
+      // Step to the parent DOM level.
+      target = target.parentElement;
+    }
+
+    return null;
+  }
+
   /**
    * List the ids of the registered commands.
    *
@@ -565,6 +631,8 @@ class CommandRegistry {
   private _commandChanged = new Signal<this, CommandRegistry.ICommandChangedArgs>(this);
   private _commandExecuted = new Signal<this, CommandRegistry.ICommandExecutedArgs>(this);
   private _keyBindingChanged = new Signal<this, CommandRegistry.IKeyBindingChangedArgs>(this);
+  private _contextEvent: MouseEvent | null = null;
+  private _contextEventCurrentTarget: Element | null = null;
 }
 
 
