@@ -92,7 +92,7 @@
 					<div class="tsd-signature tsd-kind-icon">uuid4<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">uuid4</span><span class="tsd-signature-symbol"> =&nbsp;(() &#x3D;&gt; {// Create a 16 byte array to hold the random values.const bytes &#x3D; new Uint8Array(16);// Create a look up table from bytes to hex strings.const lut &#x3D; new Array&lt;string&gt;(256);// Pad the single character hex digits with a leading zero.for (let i &#x3D; 0; i &lt; 16; ++i) {lut[i] &#x3D; &#x27;0&#x27; + i.toString(16);}// Populate the rest of the hex digits.for (let i &#x3D; 16; i &lt; 256; ++i) {lut[i] &#x3D; i.toString(16);}// Return a function which generates the UUID.return function uuid4(): string {// Get a new batch of random values.Random.getRandomValues(bytes);// Set the UUID version number to 4.bytes[6] &#x3D; 0x40 | (bytes[6] &amp; 0x0F);// Set the clock sequence bit to the RFC spec.bytes[8] &#x3D; 0x80 | (bytes[8] &amp; 0x3F);// Assemble the UUID string.return (lut[bytes[0]] +lut[bytes[1]] +lut[bytes[2]] +lut[bytes[3]] +&#x27;-&#x27;           +lut[bytes[4]] +lut[bytes[5]] +&#x27;-&#x27;           +lut[bytes[6]] +lut[bytes[7]] +&#x27;-&#x27;           +lut[bytes[8]] +lut[bytes[9]] +&#x27;-&#x27;           +lut[bytes[10]] +lut[bytes[11]] +lut[bytes[12]] +lut[bytes[13]] +lut[bytes[14]] +lut[bytes[15]]);}})()</span></div>
 					<aside class="tsd-sources">
 						<ul>
-							<li>Defined in <a href="https://github.com/phosphorjs/phosphor/blob/8fee9108/packages/coreutils/src/uuid.ts#L31">uuid.ts:31</a></li>
+							<li>Defined in <a href="https://github.com/phosphorjs/phosphor/blob/849b2fbb/packages/coreutils/src/uuid.ts#L31">uuid.ts:31</a></li>
 						</ul>
 					</aside>
 					<div class="tsd-comment tsd-typography">
