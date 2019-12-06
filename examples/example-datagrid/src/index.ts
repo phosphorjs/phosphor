@@ -9,12 +9,16 @@ import 'es6-promise/auto';  // polyfill Promise on IE
 
 import {
   BasicKeyHandler, BasicMouseHandler, BasicSelectionModel, CellRenderer,
-  DataGrid, DataModel, JSONModel, TextRenderer
+  DataGrid, DataModel, JSONModel, TextRenderer, MutableDataModel, CellEditor, ICellEditor
 } from '@phosphor/datagrid';
 
 import {
   DockPanel, StackedPanel, Widget
 } from '@phosphor/widgets';
+
+import {
+  getKeyboardLayout
+} from '@phosphor/keyboard';
 
 import '../style/index.css';
 
@@ -158,6 +162,162 @@ class RandomDataModel extends DataModel {
   private _data: number[] = [];
 }
 
+class JSONCellEditor extends CellEditor {
+  startEditing() {
+    this._createWidgets();
+  }
+
+  _createWidgets() {
+    const cell = this._cell;
+    const grid = this._cell.grid;
+    if (!grid.dataModel) {
+      this.cancel();
+      return;
+    }
+
+    let data = grid.dataModel.data('body', cell.row, cell.column);
+
+    const button = document.createElement('button');
+    button.type = 'button';
+    button.classList.add('cell-editor');
+    button.style.whiteSpace = 'nowrap';
+    button.style.overflow = 'hidden';
+    button.style.textOverflow = 'ellipsis';
+
+    button.textContent = this.deserialize(data);
+    this._form.appendChild(button);
+
+    this._button = button;
+
+    const width = 200;
+    const height = 50;
+    const textarea = document.createElement('textarea');
+    textarea.style.pointerEvents = 'auto';
+    textarea.style.position = 'absolute';
+    textarea.style.outline = 'none';
+    const buttonRect = this._button.getBoundingClientRect();
+    const top = buttonRect.bottom + 2;
+    const left = buttonRect.left;
+
+    textarea.style.top = top + 'px';
+    textarea.style.left = left + 'px';
+    textarea.style.width = width + 'px';
+    textarea.style.height = height + 'px';
+
+    textarea.value = JSON.stringify(data);
+
+    textarea.addEventListener('keydown', (event: KeyboardEvent) => {
+      const key = getKeyboardLayout().keyForKeydownEvent(event);
+      if (key === 'Enter' || key === 'Tab' ) {
+        const next = key === 'Enter' ?
+          (event.shiftKey ? "up" : "down") :
+          (event.shiftKey ? "left" : "right");
+        if (!this.commit(next)) {
+          this.validInput = false;
+        }
+        event.preventDefault();
+        event.stopPropagation();
+      } else if (key === 'Escape') {
+        this.cancel();
+      }
+    });
+
+    textarea.addEventListener('blur', (event: FocusEvent) => {
+      if (this.isDisposed) {
+        return;
+      }
+
+      if (!this.commit()) {
+        this.validInput = false;
+      }
+    });
+
+    textarea.addEventListener('input', (event: FocusEvent) => {
+      this.validInput = true;
+    });
+
+    this._textarea = textarea;
+
+    document.body.appendChild(this._textarea);
+    this._textarea.focus();
+  }
+
+  protected getInput(): any {
+    return JSON.parse(this._textarea.value);
+  }
+
+  deserialize(value: any): any {
+    return JSON.stringify(value);
+  }
+
+  dispose(): void {
+    if (this.isDisposed) {
+      return;
+    }
+
+    super.dispose();
+
+    document.body.removeChild(this._textarea);
+  }
+  
+  private _button: HTMLButtonElement;
+  private _textarea: HTMLTextAreaElement;
+}
+
+class MutableJSONModel extends MutableDataModel {
+  constructor(options: JSONModel.IOptions) {
+    super();
+
+    this._jsonModel = new JSONModel(options);
+  }
+
+  rowCount(region: DataModel.RowRegion): number {
+    return this._jsonModel.rowCount(region);
+  }
+
+  columnCount(region: DataModel.ColumnRegion): number {
+    return this._jsonModel.columnCount(region);
+  }
+
+  metadata(region: DataModel.CellRegion, row: number, column: number): DataModel.Metadata {
+    return this._jsonModel.metadata(region, row, column);
+  }
+
+  data(region: DataModel.CellRegion, row: number, column: number): any {
+    return this._jsonModel.data(region, row, column);
+  }
+
+  setData(region: DataModel.CellRegion, row: number, column: number, value: any): boolean {
+    const model = this._jsonModel as any;
+    
+    // Set up the field and value variables.
+    let field: JSONModel.Field;
+
+    // Look up the field and value for the region.
+    switch (region) {
+    case 'body':
+      field = model._bodyFields[column];
+      model._data[row][field.name] = value;
+      break;
+    default:
+      throw 'cannot change header data';
+    }
+
+    this.emitChanged({
+      type: 'cells-changed',
+      region: 'body',
+      row: row,
+      column: column,
+      rowSpan: 1,
+      columnSpan: 1
+    });
+
+    return true;
+  }
+
+  private _jsonModel: JSONModel;
+}
+
 
 const redGreenBlack: CellRenderer.ConfigFunc<string> = ({ value }) => {
   if (value <= 1 / 3) {
@@ -202,6 +362,7 @@ function main(): void {
   let model3 = new RandomDataModel(15, 10);
   let model4 = new RandomDataModel(80, 80);
   let model5 = new JSONModel(Data.cars);
+  let model6 = new MutableJSONModel(Data.editable_test_data);
 
   let blueStripeStyle: DataGrid.Style = {
     ...DataGrid.defaultStyle,
@@ -287,11 +448,37 @@ function main(): void {
     selectionMode: 'row'
   });
 
+  let grid6 = new DataGrid({
+    defaultSizes: {
+      rowHeight: 32,
+      columnWidth: 90,
+      rowHeaderWidth: 64,
+      columnHeaderHeight: 32
+    }
+  });
+  grid6.dataModel = model6;
+  grid6.keyHandler = new BasicKeyHandler();
+  grid6.mouseHandler = new BasicMouseHandler();
+  grid6.selectionModel = new BasicSelectionModel({
+    dataModel: model6,
+    selectionMode: 'cell'
+  });
+  grid6.editingEnabled = true;
+  const columnIdentifier = {'name': 'Corp. Data'};
+  grid6.editorController!.setEditor(columnIdentifier, (config: CellEditor.CellConfig): ICellEditor => {
+    return new JSONCellEditor();
+  });
+
+  let grid7 = new DataGrid();
+  grid7.dataModel = model6;
+
   let wrapper1 = createWrapper(grid1, 'Trillion Rows/Cols');
   let wrapper2 = createWrapper(grid2, 'Streaming Rows');
   let wrapper3 = createWrapper(grid3, 'Random Ticks 1');
   let wrapper4 = createWrapper(grid4, 'Random Ticks 2');
   let wrapper5 = createWrapper(grid5, 'JSON Data');
+  let wrapper6 = createWrapper(grid6, 'Editable Grid');
+  let wrapper7 = createWrapper(grid7, 'Copy');
 
   let dock = new DockPanel();
   dock.id = 'dock';
@@ -301,6 +488,9 @@ function main(): void {
   dock.addWidget(wrapper3, { mode: 'split-bottom', ref: wrapper1 });
   dock.addWidget(wrapper4, { mode: 'split-bottom', ref: wrapper2 });
   dock.addWidget(wrapper5, { mode: 'split-bottom', ref: wrapper2 });
+  dock.addWidget(wrapper6, { mode: 'tab-before', ref: wrapper1 });
+  dock.addWidget(wrapper7, { mode: 'split-bottom', ref: wrapper6 });
+  dock.activateWidget(wrapper6);
 
   window.onresize = () => { dock.update(); };
 
@@ -1005,6 +1195,154 @@ namespace Data {
         {
           "name": "Year",
           "type": "string"
+        }
+      ],
+      "pandas_version": "0.20.0"
+    }
+  }
+
+  export
+  const editable_test_data = {
+    "data": [
+      {
+        "index": 0,
+        "Name": "Chevrolet",
+        "Contact": "info@chevrolet.com",
+        "Origin": "USA",
+        "Cylinders": 8,
+        "Horsepower": 130.0,
+        "Models": 2,
+        "Automatic": true,
+        "Date in Service": "1980-01-02",
+        "Corp. Data": {"headquarter": "USA", "num_employees": 100, "locations": 80}
+      },
+      {
+        "index": 1,
+        "Name": "BMW",
+        "Contact": "info@bmw.com",
+        "Origin": "Germany",
+        "Cylinders": 8,
+        "Horsepower": 120.0,
+        "Models": 3,
+        "Automatic": true,
+        "Date in Service": "1990-11-22",
+        "Corp. Data": {"headquarter": "Germany", "num_employees": 200, "locations": 20}
+      },
+      {
+        "index": 2,
+        "Name": "Mercedes",
+        "Contact": "info@mbusa.com",
+        "Origin": "Germany",
+        "Cylinders": 4,
+        "Horsepower": 100.0,
+        "Models": 5,
+        "Automatic": false,
+        "Date in Service": "1970-06-13",
+        "Corp. Data": {"headquarter": "Germany", "num_employees": 250, "locations": 45}
+      },
+      {
+        "index": 3,
+        "Name": "Honda",
+        "Contact": "info@honda.com",
+        "Origin": "Japan",
+        "Cylinders": 4,
+        "Horsepower": 90.0,
+        "Models": 5,
+        "Automatic": true,
+        "Date in Service": "1985-05-09",
+        "Corp. Data": {"headquarter": "Germany", "num_employees": 200, "locations": 40}
+      },
+      {
+        "index": 4,
+        "Name": "Toyota",
+        "Contact": "info@toyota.com",
+        "Origin": "Japan",
+        "Cylinders": 8,
+        "Horsepower": 95.0,
+        "Models": 7,
+        "Automatic": true,
+        "Date in Service": "1975-05-19",
+        "Corp. Data": {"headquarter": "Japan", "num_employees": 500, "locations": 70}
+      },
+      {
+        "index": 5,
+        "Name": "Renault",
+        "Contact": "info@renault.com",
+        "Origin": "France",
+        "Cylinders": 4,
+        "Horsepower": 75.0,
+        "Models": 4,
+        "Automatic": false,
+        "Date in Service": "1962-07-28",
+        "Corp. Data": {"headquarter": "France", "num_employees": 400, "locations": 80}
+      },
+    ],
+    "schema": {
+      "primaryKey": [
+        "index"
+      ],
+      "fields": [
+        {
+          "name": "index",
+          "type": "integer"
+        },
+        {
+          "name": "Name",
+          "type": "string",
+          "constraint": {
+            "minLength": 2,
+            "maxLength": 100,
+            "pattern": "[a-zA-Z]"
+          }
+        },
+        {
+          "name": "Origin",
+          "type": "string",
+          "constraint": {
+            "enum": "dynamic"
+          }
+        },
+        {
+          "name": "Cylinders",
+          "type": "integer",
+          "constraint": {
+            "enum": [
+              2, 3, 4, 6, 8, 16
+            ]
+          }
+        },
+        {
+          "name": "Horsepower",
+          "type": "number",
+          "constraint": {
+            "minimum": 50,
+            "maximum": 900
+          }
+        },
+        {
+          "name": "Models",
+          "type": "integer",
+          "constraint": {
+            "minimum": 1,
+            "maximum": 30
+          }
+        },
+        {
+          "name": "Automatic",
+          "type": "boolean"
+        },
+        {
+          "name": "Date in Service",
+          "type": "date"
+        },
+        {
+          "name": "Contact",
+          "type": "string",
+          "format": "email"
+        },
+        {
+          "name": "Corp. Data",
+          "type": "object"
         }
       ],
       "pandas_version": "0.20.0"

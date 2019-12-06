@@ -30,7 +30,7 @@ import {
 } from './cellrenderer';
 
 import {
-  DataModel
+  DataModel, MutableDataModel
 } from './datamodel';
 
 import {
@@ -48,6 +48,11 @@ import {
 import {
   SelectionModel
 } from './selectionmodel';
+
+import {
+  ICellEditorController,
+  CellEditorController
+} from './celleditorcontroller';
 
 
 /**
@@ -126,6 +131,8 @@ class DataGrid extends Widget {
     this._vScrollBar = new ScrollBar({ orientation: 'vertical' });
     this._hScrollBar = new ScrollBar({ orientation: 'horizontal' });
     this._scrollCorner = new Widget();
+
+    this._editorController = new CellEditorController();
 
     // Add the extra class names to the child widgets.
     this._viewport.addClass('p-DataGrid-viewport');
@@ -820,6 +827,71 @@ class DataGrid extends Widget {
 
     // Scroll by the computed delta.
     this.scrollBy(dx, dy);
+  }
+
+  /**
+   * Move cursor down/up/left/right while making sure it remains
+   * within the bounds of selected rectangles
+   */
+  moveCursor(direction: SelectionModel.CursorMoveDirection): void {
+    // Bail early if there is no selection
+    if (!this.dataModel ||
+      !this._selectionModel ||
+      this._selectionModel.isEmpty) {
+      return;
+    }
+
+    const iter = this._selectionModel.selections();
+    const onlyOne = iter.next() && !iter.next();
+
+    // if there is a single selection that is a single cell selection
+    // then move the selection and cursor within grid bounds
+    if (onlyOne) {
+      const currentSel = this._selectionModel.currentSelection()!;
+      if (currentSel.r1 === currentSel.r2 &&
+        currentSel.c1 === currentSel.c2
+      ) {
+        const dr = direction === 'down' ? 1 : direction === 'up' ? -1 : 0;
+        const dc = direction === 'right' ? 1 : direction === 'left' ? -1 : 0;
+        let newRow = currentSel.r1 + dr;
+        let newColumn = currentSel.c1 + dc;
+        const rowCount = this.dataModel.rowCount('body');
+        const columnCount = this.dataModel.columnCount('body');
+        if (newRow >= rowCount) {
+          newRow = 0;
+          newColumn += 1;
+        } else if (newRow === -1) {
+          newRow = rowCount - 1;
+          newColumn -= 1;
+        }
+        if (newColumn >= columnCount) {
+          newColumn = 0;
+          newRow += 1;
+          if (newRow >= rowCount) {
+            newRow = 0;
+          }
+        } else if (newColumn === -1) {
+          newColumn = columnCount - 1;
+          newRow -= 1;
+          if (newRow === -1) {
+            newRow = rowCount - 1;
+          }
+        }
+
+        this._selectionModel.select({
+          r1: newRow, c1: newColumn,
+          r2: newRow, c2: newColumn,
+          cursorRow: newRow, cursorColumn: newColumn,
+          clear: 'all'
+        });
+
+        return;
+      }
+    }
+
+    // if there are multiple selections, move cursor
+    // within selection rectangles
+    this._selectionModel.moveCursorWithinSelections(direction);
   }
 
   /**
@@ -1751,6 +1823,9 @@ class DataGrid extends Widget {
     case 'mouseup':
       this._evtMouseUp(event as MouseEvent);
       break;
+    case 'dblclick':
+      this._evtMouseDoubleClick(event as MouseEvent);
+      break;
     case 'mouseleave':
       this._evtMouseLeave(event as MouseEvent);
       break;
@@ -1782,6 +1857,7 @@ class DataGrid extends Widget {
     this._viewport.node.addEventListener('keydown', this);
     this._viewport.node.addEventListener('mousedown', this);
     this._viewport.node.addEventListener('mousemove', this);
+    this._viewport.node.addEventListener('dblclick', this);
     this._viewport.node.addEventListener('mouseleave', this);
     this._viewport.node.addEventListener('contextmenu', this);
     this._repaintContent();
@@ -1798,6 +1874,7 @@ class DataGrid extends Widget {
     this._viewport.node.removeEventListener('mousedown', this);
     this._viewport.node.removeEventListener('mousemove', this);
     this._viewport.node.removeEventListener('mouseleave', this);
+    this._viewport.node.removeEventListener('dblclick', this);
     this._viewport.node.removeEventListener('contextmenu', this);
     this._releaseMouse();
   }
@@ -1814,6 +1891,10 @@ class DataGrid extends Widget {
    * A message handler invoked on a `'resize'` message.
    */
   protected onResize(msg: Widget.ResizeMessage): void {
+    if (this._editorController) {
+      this._editorController.cancel();
+    }
+
     this._syncScrollState();
   }
 
@@ -2755,6 +2836,28 @@ class DataGrid extends Widget {
     // Dispatch to the mouse handler.
     if (this._mouseHandler) {
       this._mouseHandler.onMouseUp(this, event);
+    }
+
+    // Release the mouse.
+    this._releaseMouse();
+  }
+
+  /**
+   * Handle the `'dblclick'` event for the data grid.
+   */
+  private _evtMouseDoubleClick(event: MouseEvent): void {
+    // Ignore everything except the left mouse button.
+    if (event.button !== 0) {
+      return;
+    }
+
+    // Stop the event propagation.
+    event.preventDefault();
+    event.stopPropagation();
+
+    // Dispatch to the mouse handler.
+    if (this._mouseHandler) {
+      this._mouseHandler.onMouseDoubleClick(this, event);
     }
 
     // Release the mouse.
@@ -4965,6 +5068,29 @@ class DataGrid extends Widget {
     gc.restore();
   }
 
+  get editorController(): ICellEditorController | null {
+    return this._editorController;
+  }
+
+  set editorController(controller: ICellEditorController | null) {
+    this._editorController = controller;
+  }
+
+  get editingEnabled(): boolean {
+    return this._editingEnabled;
+  }
+
+  set editingEnabled(enabled: boolean) {
+    this._editingEnabled = enabled;
+  }
+
+  get editable(): boolean {
+    return this._editingEnabled &&
+      this._selectionModel !== null &&
+      this._editorController !== null &&
+      this.dataModel instanceof MutableDataModel;
+  }
+
   private _viewport: Widget;
   private _vScrollBar: ScrollBar;
   private _hScrollBar: ScrollBar;
@@ -5005,6 +5131,8 @@ class DataGrid extends Widget {
   private _cellRenderers: RendererMap;
   private _copyConfig: DataGrid.CopyConfig;
   private _headerVisibility: DataGrid.HeaderVisibility;
+  private _editorController: ICellEditorController | null;
+  private _editingEnabled: boolean = false;
 }
 
 
@@ -5389,6 +5517,15 @@ namespace DataGrid {
      * @param event - The mouse up event of interest.
      */
     onMouseUp(grid: DataGrid, event: MouseEvent): void;
+
+    /**
+     * Handle the mouse double click event for the data grid.
+     *
+     * @param grid - The data grid of interest.
+     *
+     * @param event - The mouse double click event of interest.
+     */
+    onMouseDoubleClick(grid: DataGrid, event: MouseEvent): void;
 
     /**
      * Handle the context menu event for the data grid.

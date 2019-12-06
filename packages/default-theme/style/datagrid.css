@@ -27,3 +27,46 @@
   height: 1px;
   background-color: #A0A0A0;
 }
+
+.cell-editor-occluder {
+  pointer-events: none;
+  position: absolute;
+  overflow: hidden;
+}
+
+.cell-editor-container {
+  pointer-events: auto;
+  position: absolute;
+  background-color: #ffffff;
+  box-sizing: border-box;
+  box-shadow: 0px 0px 6px #006bf7;
+  border: 2px solid #006bf7;
+}
+
+.cell-editor-container.invalid {
+  box-shadow: 0px 0px 6px red;
+  border: 2px solid red;
+}
+
+.cell-editor-container > form {
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+}
+
+.cell-editor {
+  pointer-events: auto;
+  width: 100%;
+  height: 100%;
+  outline: none;
+  box-sizing: border-box;
+}
+
+.input-cell-editor {
+  background-color: #ffffff;
+  border: 0;
+}
+
+.boolean-cell-editor {
+  margin: 0;
+}

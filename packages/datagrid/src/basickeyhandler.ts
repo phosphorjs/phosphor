@@ -21,6 +21,15 @@ import {
   SelectionModel
 } from './selectionmodel';
 
+import {
+  ICellEditResponse,
+  CellEditor
+} from './celleditor';
+
+import {
+  MutableDataModel
+} from './datamodel';
+
 
 /**
  * A basic implementation of a data grid key handler.
@@ -55,6 +64,40 @@ class BasicKeyHandler implements DataGrid.IKeyHandler {
    * This will not be called if the mouse button is pressed.
    */
   onKeyDown(grid: DataGrid, event: KeyboardEvent): void {
+    if (grid.editable && 
+      grid.selectionModel!.cursorRow !== -1 &&
+      grid.selectionModel!.cursorColumn !== -1) {
+      const input = String.fromCharCode(event.keyCode);
+      if (/[a-zA-Z0-9-_ ]/.test(input)) {
+        const row = grid.selectionModel!.cursorRow;
+        const column = grid.selectionModel!.cursorColumn;
+        const cell: CellEditor.CellConfig = {
+          grid: grid,
+          row: row,
+          column: column
+        };
+        grid.editorController!.edit(cell, {
+          onCommit: (response: ICellEditResponse) => {
+            const dataModel = grid.dataModel as MutableDataModel;
+            dataModel.setData('body', row, column, response.value);
+            grid.viewport.node.focus();
+            if (response.cursorMovement) {
+              grid.moveCursor(response.cursorMovement);
+              grid.scrollToCursor();
+            }
+          },
+          onCancel: () => {
+            grid.viewport.node.focus();
+          }
+        });
+        if (getKeyboardLayout().keyForKeydownEvent(event) === 'Space') {
+          event.stopPropagation();
+          event.preventDefault();
+        }
+        return;
+      }
+    }
+
     switch (getKeyboardLayout().keyForKeydownEvent(event)) {
     case 'ArrowLeft':
       this.onArrowLeft(grid, event);
@@ -77,8 +120,25 @@ class BasicKeyHandler implements DataGrid.IKeyHandler {
     case 'Escape':
       this.onEscape(grid, event);
       break;
+    case 'Delete':
+      this.onDelete(grid, event);
+      break;
     case 'C':
       this.onKeyC(grid, event);
+      break;
+    case 'Enter':
+      if (grid.selectionModel) {
+        grid.moveCursor(event.shiftKey ? 'up' : 'down');
+        grid.scrollToCursor();
+      }
+      break;
+    case 'Tab':
+      if (grid.selectionModel) {
+        grid.moveCursor(event.shiftKey ? 'left' : 'right');
+        grid.scrollToCursor();
+        event.stopPropagation();
+        event.preventDefault();
+      }
       break;
     }
   }
@@ -703,6 +763,39 @@ class BasicKeyHandler implements DataGrid.IKeyHandler {
   protected onEscape(grid: DataGrid, event: KeyboardEvent): void {
     if (grid.selectionModel) {
       grid.selectionModel.clear();
+    }
+  }
+
+  /**
+   * Handle the `'Delete'` key press for the data grid.
+   *
+   * @param grid - The data grid of interest.
+   *
+   * @param event - The keyboard event of interest.
+   */
+  protected onDelete(grid: DataGrid, event: KeyboardEvent): void {
+    if (grid.editable &&
+      !grid.selectionModel!.isEmpty) {
+      const dataModel = grid.dataModel as MutableDataModel;
+      // Fetch the max row and column.
+      let maxRow = dataModel.rowCount('body') - 1;
+      let maxColumn = dataModel.columnCount('body') - 1;
+
+      const it = grid.selectionModel!.selections();
+      let s: SelectionModel.Selection | undefined;
+      while ((s = it.next()) !== undefined) {
+        // Clamp the cell to the model bounds.
+        let sr1 = Math.max(0, Math.min(s.r1, maxRow));
+        let sc1 = Math.max(0, Math.min(s.c1, maxColumn));
+        let sr2 = Math.max(0, Math.min(s.r2, maxRow));
+        let sc2 = Math.max(0, Math.min(s.c2, maxColumn));
+
+        for (let r = sr1; r <= sr2; ++r) {
+          for (let c = sc1; c <= sc2; ++c) {
+            dataModel.setData('body', r, c, null);
+          }
+        }
+      }
     }
   }
 

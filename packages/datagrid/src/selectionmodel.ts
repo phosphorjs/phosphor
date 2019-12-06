@@ -60,6 +60,8 @@ abstract class SelectionModel {
    */
   abstract readonly cursorColumn: number;
 
+  abstract moveCursorWithinSelections(direction: SelectionModel.CursorMoveDirection): void;
+
   /**
    * Get the current selection in the selection model.
    *
@@ -213,6 +215,8 @@ namespace SelectionModel {
    */
   export
   type SelectionMode = 'row' | 'column' | 'cell';
+
+  export type CursorMoveDirection = 'up' | 'down' | 'left' | 'right' | 'none';
 
   /**
    * A type alias for the clear mode.

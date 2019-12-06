@@ -22,13 +22,17 @@ import {
 } from './datagrid';
 
 import {
-  DataModel
+  DataModel, MutableDataModel
 } from './datamodel';
 
 import {
   SelectionModel
 } from './selectionmodel';
 
+import {
+  ICellEditResponse,
+  CellEditor
+} from './celleditor';
 
 /**
  * A basic implementation of a data grid mouse handler.
@@ -485,6 +489,60 @@ class BasicMouseHandler implements DataGrid.IMouseHandler {
    * @param event - The mouse up event of interest.
    */
   onMouseUp(grid: DataGrid, event: MouseEvent): void {
+    this.release();
+  }
+
+  /**
+   * Handle the mouse double click event for the data grid.
+   *
+   * @param grid - The data grid of interest.
+   *
+   * @param event - The mouse up event of interest.
+   */
+  onMouseDoubleClick(grid: DataGrid, event: MouseEvent): void {
+    if (!grid.dataModel) {
+      this.release();
+      return;
+    }
+
+    // Unpack the event.
+    let { clientX, clientY } = event;
+
+    // Hit test the grid.
+    let hit = grid.hitTest(clientX, clientY);
+
+    // Unpack the hit test.
+    let { region, row, column } = hit;
+
+    if (region === 'void') {
+      this.release();
+      return;
+    }
+
+    if (region === 'body') {
+      if (grid.editable) {
+        const cell: CellEditor.CellConfig = {
+          grid: grid,
+          row: row,
+          column: column
+        };
+        grid.editorController!.edit(cell, {
+          onCommit: (response: ICellEditResponse) => {
+            const dataModel = grid.dataModel as MutableDataModel;
+            dataModel.setData('body', row, column, response.value);
+            grid.viewport.node.focus();
+            if (response.cursorMovement !== 'none') {
+              grid.moveCursor(response.cursorMovement);
+              grid.scrollToCursor();
+            }
+          },
+          onCancel: () => {
+            grid.viewport.node.focus();
+          }
+        });
+      }
+    }
+
     this.release();
   }
 

@@ -104,6 +104,11 @@ abstract class DataModel {
   private _changed = new Signal<this, DataModel.ChangedArgs>(this);
 }
 
+export
+abstract class MutableDataModel extends DataModel {
+  abstract setData(region: DataModel.CellRegion, row: number, column: number, value: any): boolean;
+}
+
 
 /**
  * The namespace for the `DataModel` class statics.

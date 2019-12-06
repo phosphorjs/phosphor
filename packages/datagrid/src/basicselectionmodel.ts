@@ -49,6 +49,86 @@ class BasicSelectionModel extends SelectionModel {
   }
 
   /**
+   * Move cursor down/up/left/right while making sure it remains
+   * within the bounds of selected rectangles
+   */
+  moveCursorWithinSelections(direction: SelectionModel.CursorMoveDirection): void {
+    // Bail early if there are no selections or no existing cursor
+    if (this.isEmpty || this.cursorRow === -1 || this._cursorColumn === -1) {
+      return;
+    }
+
+    // Bail early if only single cell is selected
+    const firstSelection = this._selections[0];
+    if (this._selections.length === 1 &&
+      firstSelection.r1 === firstSelection.r2 &&
+      firstSelection.c1 === firstSelection.c2) {
+      return;
+    }
+
+    // start from last selection rectangle
+    if (this._cursorRectIndex === -1) {
+      this._cursorRectIndex = this._selections.length - 1;
+    }
+
+    let cursorRect = this._selections[this._cursorRectIndex];
+    const dr = direction === 'down' ? 1 : direction === 'up' ? -1 : 0;
+    const dc = direction === 'right' ? 1 : direction === 'left' ? -1 : 0;
+    let newRow = this._cursorRow + dr;
+    let newColumn = this._cursorColumn + dc;
+    const r1 = Math.min(cursorRect.r1, cursorRect.r2);
+    const r2 = Math.max(cursorRect.r1, cursorRect.r2);
+    const c1 = Math.min(cursorRect.c1, cursorRect.c2);
+    const c2 = Math.max(cursorRect.c1, cursorRect.c2);
+
+    const moveToNextRect = () => {
+      this._cursorRectIndex = (this._cursorRectIndex + 1) % this._selections.length;
+      cursorRect = this._selections[this._cursorRectIndex];
+      newRow = Math.min(cursorRect.r1, cursorRect.r2);
+      newColumn = Math.min(cursorRect.c1, cursorRect.c2);
+    };
+    
+    const moveToPreviousRect = () => {
+      this._cursorRectIndex = this._cursorRectIndex === 0 ? this._selections.length - 1 : this._cursorRectIndex - 1;
+      cursorRect = this._selections[this._cursorRectIndex];
+      newRow = Math.max(cursorRect.r1, cursorRect.r2);
+      newColumn = Math.max(cursorRect.c1, cursorRect.c2);
+    };
+
+    if (newRow > r2) {
+      newRow = r1;
+      newColumn += 1;
+      if (newColumn > c2) {
+        moveToNextRect();
+      }
+    } else if (newRow < r1) {
+      newRow = r2;
+      newColumn -= 1;
+      if (newColumn < c1) {
+        moveToPreviousRect();
+      }
+    } else if (newColumn > c2) {
+      newColumn = c1;
+      newRow += 1;
+      if (newRow > r2) {
+        moveToNextRect();
+      }
+    } else if (newColumn < c1) {
+      newColumn = c2;
+      newRow -= 1;
+      if (newRow < r1) {
+        moveToPreviousRect();
+      }
+    }
+
+    this._cursorRow = newRow;
+    this._cursorColumn = newColumn;
+
+    // Emit the changed signal.
+    this.emitChanged();
+  }
+
+  /**
    * Get the current selection in the selection model.
    *
    * @returns The current selection or `null`.
@@ -127,6 +207,7 @@ class BasicSelectionModel extends SelectionModel {
     // Update the cursor.
     this._cursorRow = cr;
     this._cursorColumn = cc;
+    this._cursorRectIndex = this._selections.length;
 
     // Add the new selection.
     this._selections.push({ r1, c1, r2, c2 });
@@ -147,6 +228,7 @@ class BasicSelectionModel extends SelectionModel {
     // Reset the internal state.
     this._cursorRow = -1;
     this._cursorColumn = -1;
+    this._cursorRectIndex = -1;
     this._selections.length = 0;
 
     // Emit the changed signal.
@@ -232,5 +314,6 @@ class BasicSelectionModel extends SelectionModel {
 
   private _cursorRow = -1;
   private _cursorColumn = -1;
+  private _cursorRectIndex = -1;
   private _selections: SelectionModel.Selection[] = [];
 }
