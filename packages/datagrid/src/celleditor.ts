@@ -21,6 +21,10 @@ import {
   getKeyboardLayout
 } from '@phosphor/keyboard';
 
+import {
+  Signal
+} from '@phosphor/signaling';
+
 export
 interface ICellInputValidatorResponse {
   valid: boolean;
@@ -70,6 +74,10 @@ class PassInputValidator implements ICellInputValidator {
 export
 class TextInputValidator implements ICellInputValidator {
   validate(cell: CellEditor.CellConfig, value: string): ICellInputValidatorResponse {
+    if (value === null) {
+      return { valid: true };
+    }
+
     if (typeof value !== 'string') {
       return {
         valid: false,
@@ -109,12 +117,17 @@ class TextInputValidator implements ICellInputValidator {
 export
 class IntegerInputValidator implements ICellInputValidator {
   validate(cell: CellEditor.CellConfig, value: number): ICellInputValidatorResponse {
+    if (value === null) {
+      return { valid: true };
+    }
+
     if (isNaN(value) || (value % 1 !== 0)) {
       return {
         valid: false,
         message: 'Input must be valid integer'
       };
     }
+
     if (!isNaN(this.min) && value < this.min) {
       return {
         valid: false,
@@ -139,12 +152,17 @@ class IntegerInputValidator implements ICellInputValidator {
 export
 class NumberInputValidator implements ICellInputValidator {
   validate(cell: CellEditor.CellConfig, value: number): ICellInputValidatorResponse {
+    if (value === null) {
+      return { valid: true };
+    }
+
     if (isNaN(value)) {
       return {
         valid: false,
         message: 'Input must be valid number'
       };
     }
+
     if (!isNaN(this.min) && value < this.min) {
       return {
         valid: false,
@@ -170,7 +188,45 @@ class NumberInputValidator implements ICellInputValidator {
 export
 abstract class CellEditor implements ICellEditor, IDisposable {
   protected abstract startEditing(): void;
-  protected abstract serialize(): any;
+  protected abstract getInput(): any;
+  protected inputChanged = new Signal<this, void>(this);
+
+  constructor() {
+    this.inputChanged.connect(() => {
+      this.validate();
+    });
+  }
+
+  protected validate() {
+    let value;
+    try {
+      value = this.getInput();
+    } catch (error) {
+      console.log(`Input error: ${error.message}`);
+      this.setValidity(false, error.message || DEFAULT_INVALID_INPUT_MESSAGE);
+      return;
+    }
+
+    if (this._validator) {
+      const result = this._validator.validate(this._cell, value);
+      if (result.valid) {
+        this.setValidity(true);
+      } else {
+        this.setValidity(false, result.message || DEFAULT_INVALID_INPUT_MESSAGE);
+      }
+    } else {
+      this.setValidity(true);
+    }
+  }
+
+  protected setValidity(valid: boolean, message: string = "") {
+    this.validInput = valid;
+
+    this._validityReportInput.setCustomValidity(message);
+    if (message !== "") {
+      this._form.reportValidity();
+    }
+  }
 
   /**
    * Whether the cell editor is disposed.
@@ -325,6 +381,25 @@ abstract class CellEditor implements ICellEditor, IDisposable {
     this._form = document.createElement('form');
     this._form.className = 'cell-editor-form';
     this._cellContainer.appendChild(this._form);
+
+    this._validityReportInput = document.createElement('input');
+    this._validityReportInput.style.opacity = '0';
+    this._validityReportInput.style.zIndex = '-1';
+    this._validityReportInput.style.position = 'absolute';
+    this._validityReportInput.style.left = '0';
+    this._validityReportInput.style.top = '0';
+    this._validityReportInput.style.width = '100%';
+    this._validityReportInput.style.height = '100%';
+    this._validityReportInput.style.visibility = 'visible';
+    this._form.appendChild(this._validityReportInput);
+
+    // update mouse event pass-through state based on input validity
+    this._cellContainer.addEventListener('mouseleave', (event: MouseEvent) => {
+      this._viewportOccluder.style.pointerEvents = this.validInput ? 'none' : 'auto';
+    });
+    this._cellContainer.addEventListener('mouseenter', (event: MouseEvent) => {
+      this._viewportOccluder.style.pointerEvents = 'none';
+    });
   }
 
   protected updatePosition(): void {
@@ -359,11 +434,17 @@ abstract class CellEditor implements ICellEditor, IDisposable {
   }
 
   protected commit(cursorMovement: SelectionModel.CursorMoveDirection = 'none'): boolean {
+    this.validate();
+
+    if (!this.validInput) {
+      return false;
+    }
+
     let value;
     try {
-      value = this.serialize();
+      value = this.getInput();
     } catch (error) {
-      console.error(error);
+      console.log(`Input error: ${error.message}`);
       return false;
     }
 
@@ -387,6 +468,7 @@ abstract class CellEditor implements ICellEditor, IDisposable {
   protected _viewportOccluder: HTMLDivElement;
   protected _cellContainer: HTMLDivElement;
   protected _form: HTMLFormElement;
+  protected _validityReportInput: HTMLInputElement;
   private _validInput: boolean = true;
   private _disposed = false;
 }
@@ -472,28 +554,11 @@ class TextCellEditor extends CellEditor {
   }
 
   _onInput(event: Event) {
-    this._input.setCustomValidity("");
-    this.validInput = true;
+    this.inputChanged.emit(void 0);
   }
 
-  protected serialize(): any {
-    const value = this._input.value;
-
-    if (value.trim() === '') {
-      return null;
-    }
-
-    if (this._validator) {
-      const result = this._validator.validate(this._cell, value);
-      if (!result.valid) {
-        this.validInput = false;
-        this._input.setCustomValidity(result.message || DEFAULT_INVALID_INPUT_MESSAGE);
-        this._form.reportValidity();
-        throw new Error('Invalid input');
-      }
-    }
-
-    return value;
+  protected getInput(): any {
+    return this._input.value;
   }
 
   protected deserialize(value: any): any {
@@ -519,30 +584,15 @@ class TextCellEditor extends CellEditor {
 
 export
 class NumberCellEditor extends TextCellEditor {
-  protected serialize(): any {
+  protected getInput(): any {
     let value = this._input.value;
     if (value.trim() === '') {
       return null;
     }
 
-    let floatValue = parseFloat(value);
+    const floatValue = parseFloat(value);
     if (isNaN(floatValue)) {
-      this.validInput = false;
-      this._input.setCustomValidity('Input must be valid number');
-      this._form.reportValidity();
       throw new Error('Invalid input');
-    }
-
-    this._input.value = floatValue.toString();
-
-    if (this._validator) {
-      const result = this._validator.validate(this._cell, floatValue);
-      if (!result.valid) {
-        this.validInput = false;
-        this._input.setCustomValidity(result.message || DEFAULT_INVALID_INPUT_MESSAGE);
-        this._form.reportValidity();
-        throw new Error('Invalid input');
-      }
     }
 
     return floatValue;
@@ -577,7 +627,7 @@ class IntegerCellEditor extends NumberCellEditor {
     this._bindEvents();
   }
 
-  protected serialize(): any {
+  protected getInput(): any {
     let value = this._input.value;
     if (value.trim() === '') {
       return null;
@@ -585,22 +635,7 @@ class IntegerCellEditor extends NumberCellEditor {
 
     let intValue = parseInt(value);
     if (isNaN(intValue)) {
-      this.validInput = false;
-      this._input.setCustomValidity('Input must be valid number');
-      this._form.reportValidity();
       throw new Error('Invalid input');
-    }
-
-    this._input.value = intValue.toString();
-
-    if (this._validator) {
-      const result = this._validator.validate(this._cell, intValue);
-      if (!result.valid) {
-        this.validInput = false;
-        this._input.setCustomValidity(result.message || DEFAULT_INVALID_INPUT_MESSAGE);
-        this._form.reportValidity();
-        throw new Error('Invalid input');
-      }
     }
 
     return intValue;
@@ -682,20 +717,8 @@ class DateCellEditor extends CellEditor {
     }
   }
 
-  protected serialize(): any {
-    const value = this._input.value;
-
-    if (this._validator) {
-      const result = this._validator.validate(this._cell, value);
-      if (!result.valid) {
-        this.validInput = false;
-        this._input.setCustomValidity(result.message || DEFAULT_INVALID_INPUT_MESSAGE);
-        this._form.reportValidity();
-        throw new Error('Invalid input');
-      }
-    }
-
-    return value;
+  protected getInput(): any {
+    return this._input.value;
   }
 
   protected deserialize(value: any): any {
@@ -792,20 +815,8 @@ class BooleanCellEditor extends CellEditor {
     }
   }
 
-  protected serialize(): any {
-    const value = this._input.checked;
-
-    if (this._validator) {
-      const result = this._validator.validate(this._cell, value);
-      if (!result.valid) {
-        this.validInput = false;
-        this._input.setCustomValidity(result.message || DEFAULT_INVALID_INPUT_MESSAGE);
-        this._form.reportValidity();
-        throw new Error('Invalid input');
-      }
-    }
-
-    return value;
+  protected getInput(): any {
+    return this._input.checked;
   }
 
   protected deserialize(value: any): any {
@@ -902,20 +913,8 @@ class OptionCellEditor extends CellEditor {
     }
   }
 
-  protected serialize(): any {
-    const value = this._select.value;
-
-    if (this._validator) {
-      const result = this._validator.validate(this._cell, value);
-      if (!result.valid) {
-        this.validInput = false;
-        this._select.setCustomValidity(result.message || DEFAULT_INVALID_INPUT_MESSAGE);
-        this._form.reportValidity();
-        throw new Error('Invalid input');
-      }
-    }
-
-    return value;
+  protected getInput(): any {
+    return this._select.value;
   }
 
   protected deserialize(value: any): any {
@@ -1026,20 +1025,8 @@ class DynamicOptionCellEditor extends CellEditor {
     }
   }
 
-  protected serialize(): any {
-    const value = this._input.value;
-
-    if (this._validator) {
-      const result = this._validator.validate(this._cell, value);
-      if (!result.valid) {
-        this.validInput = false;
-        this._input.setCustomValidity(result.message || DEFAULT_INVALID_INPUT_MESSAGE);
-        this._form.reportValidity();
-        throw new Error('Invalid input');
-      }
-    }
-
-    return value;
+  protected getInput(): any {
+    return this._input.value;
   }
 
   protected deserialize(value: any): any {
