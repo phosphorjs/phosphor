@@ -15,6 +15,7 @@
       "ES2015.Collection",
       "DOM"
     ],
+    "sourceMap": true,
     "types": [],
     "rootDir": "src"
   },

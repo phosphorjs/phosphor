@@ -9,6 +9,8 @@ import {
   ISignal, Signal
 } from '@phosphor/signaling';
 
+import { VirtualElementPass } from "@phosphor/virtualdom";
+
 
 /**
  * An object which holds data related to an object's title.
@@ -41,6 +43,9 @@ class Title<T> {
     }
     if (options.iconLabel !== undefined) {
       this._iconLabel = options.iconLabel;
+    }
+    if (options.iconRenderer !== undefined) {
+      this._iconRenderer = options.iconRenderer;
     }
     if (options.caption !== undefined) {
       this._caption = options.caption;
@@ -171,6 +176,30 @@ class Title<T> {
   }
 
   /**
+   * Get the icon renderer for the title.
+   *
+   * #### Notes
+   * The default value is undefined.
+   */
+  get iconRenderer(): VirtualElementPass.IRenderer {
+    return this._iconRenderer;
+  }
+
+  /**
+   * Set the icon renderer for the title.
+   *
+   * #### Notes
+   * A renderer is an object that supplies a render and unrender function.
+   */
+  set iconRenderer(value: VirtualElementPass.IRenderer) {
+    if (this._iconRenderer === value) {
+      return;
+    }
+    this._iconRenderer = value;
+    this._changed.emit(undefined);
+  }
+
+  /**
    * Get the caption for the title.
    *
    * #### Notes
@@ -268,6 +297,7 @@ class Title<T> {
   private _mnemonic = -1;
   private _iconClass = '';
   private _iconLabel = '';
+  private _iconRenderer: VirtualElementPass.IRenderer;
   private _className = '';
   private _closable = false;
   private _dataset: Title.Dataset;
@@ -320,6 +350,12 @@ namespace Title {
      * The icon label for the title.
      */
     iconLabel?: string;
+
+    /**
+     * An object that supplies render and unrender functions used
+     * to create and cleanup the icon of the title.
+     */
+    iconRenderer?: VirtualElementPass.IRenderer;
 
     /**
      * The caption for the title.

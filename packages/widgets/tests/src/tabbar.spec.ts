@@ -26,7 +26,7 @@ import {
 } from '@phosphor/widgets';
 
 import {
-  VirtualDOM
+  VirtualDOM, VirtualElement
 } from '@phosphor/virtualdom';
 
 
@@ -1308,7 +1308,7 @@ describe('@phosphor/widgets', () => {
         it('should render the icon element for a tab', () => {
           let renderer = new TabBar.Renderer();
           let vNode = renderer.renderIcon({ title, current: true, zIndex: 1 });
-          let node = VirtualDOM.realize(vNode);
+          let node = VirtualDOM.realize(vNode as VirtualElement);
           expect(node.className).to.contain('p-TabBar-tabIcon');
           expect(node.classList.contains(title.icon)).to.equal(true);
         });

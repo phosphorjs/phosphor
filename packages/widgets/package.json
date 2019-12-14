@@ -36,8 +36,13 @@
     "clean:test": "rimraf tests/build",
     "docs": "typedoc --options tdoptions.json src",
     "test": "npm run test:firefox",
+    "test:debug": "npm run test:debug:firefox",
     "test:chrome": "cd tests && karma start --browsers=Chrome",
+    "test:chrome-headless": "cd tests && karma start --browsers=ChromeHeadless",
     "test:firefox": "cd tests && karma start --browsers=Firefox",
+    "test:debug:chrome": "cd tests && karma start --browsers=Chrome --singleRun=false --debug=true --browserNoActivityTimeout=10000000 --browserDisconnectTimeout=10000000",
+    "test:debug:chrome-headless": "cd tests && karma start  --browsers=ChromeHeadless --singleRun=false --debug=true --browserNoActivityTimeout=10000000 --browserDisconnectTimeout=10000000",
+    "test:debug:firefox": "cd tests && karma start --browsers=Firefox --singleRun=false --debug=true --browserNoActivityTimeout=10000000 --browserDisconnectTimeout=10000000",
     "test:ie": "cd tests && karma start --browsers=IE",
     "watch": "tsc --build --watch"
   },

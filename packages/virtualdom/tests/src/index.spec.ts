@@ -10,7 +10,7 @@ import {
 } from 'chai';
 
 import {
-  VirtualDOM, VirtualElement, VirtualText, h
+  VirtualDOM, VirtualElement, VirtualElementPass, VirtualText, h, hpass
 } from '@phosphor/virtualdom';
 
 
@@ -92,6 +92,61 @@ describe('@phosphor/virtualdom', () => {
         let children = [h.a(), h.img()];
         let vnode = new VirtualElement('div', {}, children);
         expect(vnode.children).to.equal(children);
+      });
+
+    });
+
+  });
+
+  describe('VirtualElementPass', () => {
+    let mockRenderer = {
+      render: (host: HTMLElement) => {},
+      unrender: (host: HTMLElement) =>{}
+    };
+
+    describe('#constructor()', () => {
+
+      it('should create a virtual element node', () => {
+        let vnode = new VirtualElementPass(mockRenderer, 'div', {});
+        expect(vnode).to.be.an.instanceof(VirtualElementPass);
+      });
+
+    });
+
+    describe('#type', () => {
+
+      it('should be `element`', () => {
+        let vnode = new VirtualElementPass(mockRenderer,'div', {});
+        expect(vnode.type).to.equal('passthru');
+      });
+
+    });
+
+    describe('#renderer', () => {
+
+      it('should be the element children renderer', () => {
+        let vnode = new VirtualElementPass(mockRenderer, 'div', {});
+        expect(vnode.renderer.render).to.equal(mockRenderer.render);
+        expect(vnode.renderer.unrender).to.equal(mockRenderer.unrender);
+      });
+
+    });
+
+    describe('#tag', () => {
+
+      it('should be the element tag name', () => {
+        let vnode = new VirtualElementPass(mockRenderer,'img', {});
+        expect(vnode.tag).to.equal('img');
+      });
+
+    });
+
+    describe('#attrs', () => {
+
+      it('should be the element attrs', () => {
+        let attrs = { className: 'baz' };
+        let vnode = new VirtualElementPass(mockRenderer,'img', attrs);
+        expect(vnode.attrs).to.deep.equal(attrs);
       });
 
     });
@@ -288,8 +343,22 @@ describe('@phosphor/virtualdom', () => {
 
   });
 
-  describe('VirtualDOM', () => {
+  describe('hpass()', () => {
 
+    it('should create a new virtual element passthru node', () => {
+      let vnode = hpass(
+        {
+          render: (host: HTMLElement) => {},
+          unrender: (host: HTMLElement) =>{}
+        },
+        'div'
+      );
+      expect(vnode).to.be.an.instanceof(VirtualElementPass);
+    });
+
+  });
+
+  describe('VirtualDOM', () => {
     describe('realize()', () => {
 
       it('should create a real DOM node from a virtual DOM node', () => {
@@ -417,6 +486,69 @@ describe('@phosphor/virtualdom', () => {
         expect(div.textContent).to.equal('bar');
       });
 
+    });
+
+  });
+
+  describe('VirtualDOM passthru', () => {
+    const rendererClosure = (record: any = {}) => {
+      return {
+        render: (host: HTMLElement) => {
+          const renderNode = document.createElement('div');
+          renderNode.className = 'p-render';
+          host.appendChild(renderNode);
+          record.child = renderNode;
+        },
+        unrender: (host: HTMLElement) => {
+          host.removeChild(host.lastChild as HTMLElement);
+          record.cleanedUp = true;
+        }
+      }
+    };
+
+    describe('realize()', () => {
+      it('should realize successfully', () => {
+        let node = VirtualDOM.realize(hpass(rendererClosure(), 'span'));
+        expect(node.tagName.toLowerCase()).to.equal('span');
+        expect(node.children[0].tagName.toLowerCase()).to.equal('div');
+        expect(node.children[0].className).to.equal('p-render');
+      });
+
+    });
+
+    describe('render()', () => {
+      it('should render successfully at top of tree', () => {
+        let host = document.createElement('div');
+
+        VirtualDOM.render(hpass(rendererClosure(), 'span'), host);
+        expect(host.children[0].tagName.toLowerCase()).to.equal('span');
+        expect(host.children[0].children[0].tagName.toLowerCase()).to.equal('div');
+        expect(host.children[0].children[0].className).to.equal('p-render');
+      });
+
+      it('should render child node', () => {
+        let host = document.createElement('div');
+        let record: any = {child: undefined, cleanedUp: false};
+
+        let children = [h.a(), h.span(), h.div(h.div(), hpass(rendererClosure(record), 'span'), h.div())];
+        VirtualDOM.render(children, host);
+        expect(host.children[2].children[1].children[0]).to.equal(record.child);
+        expect(host.children[2].children[1].children[0].className).to.equal('p-render');
+      });
+
+      it('should cleanup child node', () => {
+        let host = document.createElement('div');
+        let record: any = {child: undefined, cleanedUp: false};
+
+        // first pass, render the hpass children
+        let children0 = [h.a(), h.span(), h.div(h.div(), hpass(rendererClosure(record), 'span'), h.div())];
+        VirtualDOM.render(children0, host);
+
+        // second pass, explicitly unrender the hpass children
+        let children1 = [h.a(), h.span(), h.label()];
+        VirtualDOM.render(children1, host);
+        expect(record.cleanedUp).to.equal(true);
+      });
     });
 
   });

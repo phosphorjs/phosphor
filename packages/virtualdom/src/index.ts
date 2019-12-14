@@ -749,10 +749,57 @@ class VirtualElement {
 
 
 /**
+ * A "pass thru" virtual node whose children are managed by a render and an
+ * unrender callback. The intent of this flavor of virtual node is to make
+ * it easy to blend other kinds of virtualdom (eg React) into Phosphor's
+ * virtualdom.
+ *
+ * #### Notes
+ * User code will not typically create a `VirtualElementPass` node directly.
+ * Instead, the `hpass()` function will be used to create an element tree.
+ */
+export
+class VirtualElementPass{
+
+  /**
+   * The type of the node.
+   *
+   * This value can be used as a type guard for discriminating the
+   * `VirtualNode` union type.
+   */
+  readonly type: 'passthru' = 'passthru';
+
+  /**
+   * Construct a new virtual element pass thru node.
+   *
+   * @param renderer - an object with render and unrender functions,
+   * each of which should take a single argument of type HTMLElement
+   * and return nothing
+   *
+   * @param tag - the tag of the parent element of this node. Once the parent
+   * element is rendered, it will be passed as an argument to
+   * renderer.render
+   *
+   * @param attrs - optional attributes that will assigned to the
+   * parent element
+   */
+  constructor(readonly renderer: VirtualElementPass.IRenderer, readonly tag: string, readonly attrs: ElementAttrs) {}
+}
+
+
+/**
+ * The namespace for the VirtualElementPass class statics.
+ */
+export namespace VirtualElementPass {
+  export type IRenderer = {render: (host: HTMLElement) => void, unrender: (host: HTMLElement) => void};
+}
+
+
+/**
  * A type alias for a general virtual node.
  */
 export
-type VirtualNode = VirtualElement | VirtualText;
+type VirtualNode = VirtualElement | VirtualElementPass | VirtualText;
 
 
 /**
@@ -790,6 +837,8 @@ export function h(tag: string): VirtualElement {
       children.push(arg);
     } else if (arg instanceof VirtualElement) {
       children.push(arg);
+    } else if (arg instanceof VirtualElementPass) {
+      children.push(arg);
     } else if (arg instanceof Array) {
       extend(children, arg);
     } else if (i === 1 && arg && typeof arg === 'object') {
@@ -805,6 +854,8 @@ export function h(tag: string): VirtualElement {
       } else if (child instanceof VirtualText) {
         array.push(child);
       } else if (child instanceof VirtualElement) {
+        array.push(child);
+      } else if (child instanceof VirtualElementPass) {
         array.push(child);
       }
     }
@@ -933,6 +984,23 @@ namespace h {
 
 
 /**
+ * Create a new "pass thru" virtual element node.
+ *
+ * @param renderer - an object with render and unrender functions.
+ *
+ * @param tag - The tag name for the parent element.
+ *
+ * @param attrs - The attributes for the parent element, if any.
+ *
+ * @returns A new "pass thru" virtual element node for the given parameters.
+ *
+ */
+export function hpass(renderer: VirtualElementPass.IRenderer, tag: string, attrs: ElementAttrs = {}): VirtualElementPass {
+  return new VirtualElementPass(renderer, tag, attrs);
+}
+
+
+/**
  * The namespace for the virtual DOM rendering functions.
  */
 export
@@ -950,8 +1018,10 @@ namespace VirtualDOM {
    *
    * If virtual diffing is desired, use the `render` function instead.
    */
-  export
-  function realize(node: VirtualElement): HTMLElement {
+  export function realize(node: VirtualText): Text;
+  export function realize(node: VirtualElement): HTMLElement;
+  export function realize(node: VirtualElementPass): HTMLElement;
+  export function realize(node: VirtualNode): HTMLElement | Text {
     return Private.createDOMNode(node);
   }
 
@@ -988,14 +1058,12 @@ namespace Private {
   /**
    * A weak mapping of host element to virtual DOM content.
    */
-  export
-  const hostMap = new WeakMap<HTMLElement, ReadonlyArray<VirtualNode>>();
+  export const hostMap = new WeakMap<HTMLElement, ReadonlyArray<VirtualNode>>();
 
   /**
    * Cast a content value to a content array.
    */
-  export
-  function asContentArray(value: VirtualNode | ReadonlyArray<VirtualNode> | null): ReadonlyArray<VirtualNode> {
+  export function asContentArray(value: VirtualNode | ReadonlyArray<VirtualNode> | null): ReadonlyArray<VirtualNode> {
     if (!value) {
       return [];
     }
@@ -1008,32 +1076,42 @@ namespace Private {
   /**
    * Create a new DOM element for a virtual node.
    */
-  export
-  function createDOMNode(node: VirtualText): Text;
-  export
-  function createDOMNode(node: VirtualElement): HTMLElement;
-  export
-  function createDOMNode(node: VirtualNode): HTMLElement | Text;
-  export
-  function createDOMNode(node: VirtualNode): HTMLElement | Text {
-    // Create a text node for a virtual text node.
-    if (node.type === 'text') {
-      return document.createTextNode(node.content);
+  export function createDOMNode(node: VirtualText): Text;
+  export function createDOMNode(node: VirtualElement): HTMLElement;
+  export function createDOMNode(node: VirtualElementPass): HTMLElement;
+  export function createDOMNode(node: VirtualNode): HTMLElement | Text;
+  export function createDOMNode(node: VirtualNode, host: HTMLElement | null): HTMLElement | Text;
+  export function createDOMNode(node: VirtualNode, host: HTMLElement | null, before: Node | null): HTMLElement | Text;
+  export function createDOMNode(node: VirtualNode): HTMLElement | Text {
+    let host = arguments[1] || null;
+    const before = arguments[2] || null;
+
+    if (host) {
+      host.insertBefore(createDOMNode(node), before);
+    } else {
+      // Create a text node for a virtual text node.
+      if (node.type === 'text') {
+        return document.createTextNode(node.content);
+      }
+
+      // Create the HTML element with the specified tag.
+      host = document.createElement(node.tag);
+
+      // Add the attributes for the new element.
+      addAttrs(host, node.attrs);
+
+      if (node.type === 'passthru') {
+        node.renderer.render(host);
+        return host;
+      }
+
+      // Recursively populate the element with child content.
+      for (let i = 0, n = node.children.length; i < n; ++i) {
+        createDOMNode(node.children[i], host);
+      }
     }
 
-    // Create the HTML element with the specified tag.
-    let element = document.createElement(node.tag);
-
-    // Add the attributes for the new element.
-    addAttrs(element, node.attrs);
-
-    // Recursively populate the element with child content.
-    for (let i = 0, n = node.children.length; i < n; ++i) {
-      element.appendChild(createDOMNode(node.children[i]));
-    }
-
-    // Return the populated element.
-    return element;
+    return host;
   }
 
   /**
@@ -1042,8 +1120,7 @@ namespace Private {
    * This is the core "diff" algorithm. There is no explicit "patch"
    * phase. The host is patched at each step as the diff progresses.
    */
-  export
-  function updateContent(host: HTMLElement, oldContent: ReadonlyArray<VirtualNode>, newContent: ReadonlyArray<VirtualNode>): void {
+  export function updateContent(host: HTMLElement, oldContent: ReadonlyArray<VirtualNode>, newContent: ReadonlyArray<VirtualNode>): void {
     // Bail early if the content is identical.
     if (oldContent === newContent) {
       return;
@@ -1066,7 +1143,7 @@ namespace Private {
 
       // If the old content is exhausted, create a new node.
       if (i >= oldCopy.length) {
-        host.appendChild(createDOMNode(newContent[i]));
+        createDOMNode(newContent[i], host);
         continue;
       }
 
@@ -1087,11 +1164,19 @@ namespace Private {
         continue;
       }
 
-      // If the old or new node is a text node, the other node is now
-      // known to be an element node, so create and insert a new node.
-      if (oldVNode.type === 'text' || newVNode.type === 'text') {
+      // Handle the case of passthru update.
+      if (oldVNode.type === 'passthru' && newVNode.type === 'passthru') {
+        newVNode.renderer.render(currElem as HTMLElement);
+        currElem = currElem!.nextSibling;
+        continue;
+      }
+
+      // If the types of the old and new nodes differ,
+      // create and insert a new node.
+      if (oldVNode.type === 'text' || newVNode.type === 'text' ||
+        oldVNode.type === 'passthru' || newVNode.type === 'passthru') {
         ArrayExt.insert(oldCopy, i, newVNode);
-        host.insertBefore(createDOMNode(newVNode), currElem);
+        createDOMNode(newVNode, host, currElem);
         continue;
       }
 
@@ -1124,14 +1209,14 @@ namespace Private {
       let oldKey = oldVNode.attrs.key;
       if (oldKey && oldKey !== newKey) {
         ArrayExt.insert(oldCopy, i, newVNode);
-        host.insertBefore(createDOMNode(newVNode), currElem);
+        createDOMNode(newVNode, host, currElem);
         continue;
       }
 
       // If the tags are different, create a new node.
       if (oldVNode.tag !== newVNode.tag) {
         ArrayExt.insert(oldCopy, i, newVNode);
-        host.insertBefore(createDOMNode(newVNode), currElem);
+        createDOMNode(newVNode, host, currElem);
         continue;
       }
 
@@ -1147,9 +1232,32 @@ namespace Private {
       currElem = currElem!.nextSibling;
     }
 
+    // Cleanup stale DOM
+    removeContent(host, oldCopy, newCount, true);
+  }
+
+  /**
+   * Handle cleanup of stale vdom and its associated DOM. Stale nodes are
+   * traversed recursively and any needed explicit cleanup is carried out (
+   * in particular, the unrender callback of VirtualElementPass nodes). The
+   * stale children of the top level node are removed using removeChild.
+   */
+  function removeContent(host: HTMLElement, oldContent: ReadonlyArray<VirtualNode>, newCount: number, _sentinel = false) {
     // Dispose of the old nodes pushed to the end of the host.
-    for (let i = oldCopy.length - newCount; i > 0; --i) {
-      host.removeChild(host.lastChild!);
+    for (let i = oldContent.length - 1; i >= newCount; --i) {
+      const oldNode = oldContent[i];
+      const child = (_sentinel ? host.lastChild : host.childNodes[i]) as HTMLElement;
+
+      // recursively clean up host children
+      if (oldNode.type === 'text') {} else if (oldNode.type === 'passthru') {
+        oldNode.renderer.unrender!(child!);
+      } else {
+        removeContent(child!, oldNode.children, 0);
+      }
+
+      if (_sentinel) {
+        host.removeChild(child!);
+      }
     }
   }
 
